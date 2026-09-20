@@ -1,0 +1,393 @@
+<!-- Contabilidad para quien no lleva libros. La pantalla contesta cuatro
+     preguntas, en el orden en que se hacen, y cada sección es una de ellas.
+     Ver el JSDoc de `Resumen` para el porqué de cada decisión. -->
+<app-page-header
+  title="Contabilidad"
+  subtitle="Cuánto entró, en qué se te va, quién te debe y a quién le debés."
+/>
+
+<!-- La práctica sólo se pregunta si hay más de una. Con una sola, el selector
+     es una pregunta cuya respuesta ya sabemos. -->
+@if (hayVariasPracticas()) {
+  <div class="eleccion">
+    <app-form-field icon="building" label="Consultorio" hint="Los números son los de este consultorio">
+      <app-select
+        [options]="opcionesDePractica()"
+        [(value)]="practicaElegida"
+        placeholder="Elegí un consultorio"
+      />
+    </app-form-field>
+  </div>
+}
+
+<app-view-state-host [state]="estadoDelDinero()" (retry)="recargar()" (refresh)="recargar()">
+  @if (datos(); as d) {
+    <!-- ═══ 1 · ¿Cuánto hiciste? ══════════════════════════════════════════
+         Los tres tramos a la vez y sin tocar nada: era la primera de las
+         cuatro cosas que el propietario pidió ver. -->
+    <section class="bloque" aria-labelledby="titulo-cuanto">
+      <app-section-heading icono="chart" titulo="¿Cuánto hiciste?" id="titulo-cuanto" />
+      <p class="bloque__bajada">
+        Lo que ya está registrado en tus libros. Lo que cobraste y todavía no
+        registraste no entra acá todavía.
+      </p>
+
+      <div class="tramos">
+        @for (t of tramos(); track t.clave) {
+          <app-card
+            class="tramo"
+            [class.tramo--destacado]="t.destacado"
+            [variant]="t.destacado ? 'elevated' : 'outlined'"
+          >
+            <p class="tramo__rotulo">
+              {{ t.rotulo }}
+              <span class="tramo__aclaracion">{{ t.aclaracion }}</span>
+            </p>
+
+            <p class="tramo__cifra">{{ importe(t.entro) }}</p>
+            <p class="tramo__pie">entró</p>
+
+            @if (t.comparacion; as c) {
+              <p
+                class="comparacion"
+                [class.comparacion--sube]="c.direccion === 'sube'"
+                [class.comparacion--baja]="c.direccion === 'baja'"
+              >
+                <span class="comparacion__flecha" aria-hidden="true">
+                  {{ c.direccion === 'sube' ? '▲' : c.direccion === 'baja' ? '▼' : '=' }}
+                </span>
+                @if (c.direccion === 'igual') {
+                  Igual que {{ c.rotuloPrevio }}
+                } @else {
+                  {{ c.porcentaje }}% {{ c.direccion === 'sube' ? 'más' : 'menos' }} que
+                  {{ c.rotuloPrevio }}
+                }
+              </p>
+            }
+
+            <dl class="tramo__cuentas">
+              <div class="tramo__cuenta">
+                <dt>Se fue en gastos</dt>
+                <dd>{{ importe(t.salio) }}</dd>
+              </div>
+              <div class="tramo__cuenta tramo__cuenta--total">
+                <dt>Te quedó</dt>
+                <dd [class.tramo__negativo]="negativo(t.quedo)">{{ importe(t.quedo) }}</dd>
+              </div>
+            </dl>
+
+            @if (negativo(t.quedo)) {
+              <p class="tramo__alerta">
+                Gastaste más de lo que entró. Mirá abajo en qué se te fue.
+              </p>
+            }
+          </app-card>
+        }
+      </div>
+    </section>
+
+    <!-- ═══ 2 · ¿En qué se te va? ═════════════════════════════════════════ -->
+    <section class="bloque" aria-labelledby="titulo-gastos">
+      <app-section-heading icono="billing" titulo="¿En qué se te va la plata?" id="titulo-gastos" />
+      <p class="bloque__bajada">Tus gastos de este mes, del más grande al más chico.</p>
+
+      <div class="dos-columnas">
+        <app-card class="panel" data-testid="panel-gastos">
+          <div class="panel__cabecera">
+            <h3 class="panel__titulo">Gastos del mes</h3>
+            <p class="panel__total">{{ importe(d.mes.totalExpense) }}</p>
+          </div>
+
+          @if (gastosDelMes().length === 0) {
+            <p class="nota">Todavía no hay gastos registrados este mes.</p>
+          } @else {
+            @if (gastoMasGrande(); as mayor) {
+              <p class="panel__lectura">
+                Lo que más te cuesta es <strong>{{ mayor.nombre }}</strong
+                >: se lleva el {{ mayor.porcentaje }}% de tus gastos del mes.
+              </p>
+            }
+
+            <ul class="barras">
+              @for (g of gastosDelMes(); track g.id) {
+                <li class="barra">
+                  <div class="barra__fila">
+                    <span class="barra__nombre">{{ g.nombre }}</span>
+                    <span class="barra__importe">{{ importe(g.importe) }}</span>
+                    <span class="barra__porcentaje">{{ g.porcentaje }}%</span>
+                  </div>
+                  <!-- La barra es decoración de un dato que ya está escrito al
+                       lado en cifras y en por ciento: no aporta nada a un
+                       lector de pantalla y se le esconde. -->
+                  <div class="barra__pista" aria-hidden="true">
+                    <div class="barra__relleno" [style.inline-size.%]="g.porcentaje"></div>
+                  </div>
+                  @if (g.aclaracion) {
+                    <p class="barra__aclaracion">{{ g.aclaracion }}</p>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+
+        <app-card class="panel" data-testid="panel-ingresos">
+          <div class="panel__cabecera">
+            <h3 class="panel__titulo">De dónde vino</h3>
+            <p class="panel__total">{{ importe(d.mes.totalRevenue) }}</p>
+          </div>
+
+          @if (ingresosDelMes().length === 0) {
+            <p class="nota">Todavía no hay ingresos registrados este mes.</p>
+          } @else {
+            <ul class="barras">
+              @for (i of ingresosDelMes(); track i.id) {
+                <li class="barra">
+                  <div class="barra__fila">
+                    <span class="barra__nombre">{{ i.nombre }}</span>
+                    <span class="barra__importe">{{ importe(i.importe) }}</span>
+                    <span class="barra__porcentaje">{{ i.porcentaje }}%</span>
+                  </div>
+                  <div class="barra__pista" aria-hidden="true">
+                    <div
+                      class="barra__relleno barra__relleno--ingreso"
+                      [style.inline-size.%]="i.porcentaje"
+                    ></div>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+      </div>
+    </section>
+
+    <!-- ═══ 3 · ¿Quién te debe y a quién le debés? ════════════════════════
+         Las dos preguntas van juntas y en paralelo: son la misma pregunta
+         mirada desde los dos lados, y ponerlas en pantallas distintas obliga
+         a recordar un número para compararlo con el otro. -->
+    <section class="bloque" aria-labelledby="titulo-pendientes">
+      <app-section-heading icono="clipboard" titulo="Lo que está pendiente" id="titulo-pendientes" />
+      <p class="bloque__bajada">
+        Facturas que quedaron abiertas: las que te tienen que pagar y las que
+        tenés que pagar vos.
+      </p>
+
+      <div class="dos-columnas">
+        <app-card class="panel panel--cobrar">
+          <div class="panel__cabecera">
+            <h3 class="panel__titulo">Te deben</h3>
+            <p class="panel__total">{{ importe(d.partidas.totalReceivable) }}</p>
+          </div>
+          <p class="panel__lectura">
+            @if (teDeben().length === 0) {
+              Nadie te debe nada. Todo cobrado.
+            } @else if (vencidasQueTeDeben() > 0) {
+              {{ teDeben().length }}
+              {{ teDeben().length === 1 ? 'factura abierta' : 'facturas abiertas' }} ·
+              <strong
+                >{{ vencidasQueTeDeben() }} ya
+                {{ vencidasQueTeDeben() === 1 ? 'venció' : 'vencieron' }}</strong
+              >
+            } @else {
+              {{ teDeben().length }}
+              {{ teDeben().length === 1 ? 'factura abierta' : 'facturas abiertas' }}, ninguna
+              vencida.
+            }
+          </p>
+
+          @if (teDeben().length > 0) {
+            <ul class="pendientes">
+              @for (p of teDeben(); track p.id) {
+                <li class="pendiente">
+                  <div class="pendiente__quien">
+                    <span class="pendiente__nombre">{{ p.quien }}</span>
+                    <span class="pendiente__doc">{{ p.documento }}</span>
+                  </div>
+                  <div class="pendiente__estado">
+                    <span class="pendiente__importe">{{ importe(p.importe) }}</span>
+                    <app-chip
+                      [variant]="p.tono === 'neutral' ? 'info' : p.tono"
+                      size="sm"
+                      >{{ p.aviso }}</app-chip
+                    >
+                  </div>
+                  <button
+                    app-button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    class="pendiente__accion"
+                    [disabled]="saldando() !== null"
+                    (click)="saldar(p, 'cobro')"
+                  >
+                    Ya me pagaron
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+
+        <app-card class="panel panel--pagar">
+          <div class="panel__cabecera">
+            <h3 class="panel__titulo">Tenés que pagar</h3>
+            <p class="panel__total">{{ importe(d.partidas.totalPayable) }}</p>
+          </div>
+          <p class="panel__lectura">
+            @if (tenesQuePagar().length === 0) {
+              No debés nada. Todo pagado.
+            } @else if (vencidasQueDebes() > 0) {
+              {{ tenesQuePagar().length }}
+              {{ tenesQuePagar().length === 1 ? 'cuenta abierta' : 'cuentas abiertas' }} ·
+              <strong
+                >{{ vencidasQueDebes() }} ya
+                {{ vencidasQueDebes() === 1 ? 'venció' : 'vencieron' }}</strong
+              >
+            } @else {
+              {{ tenesQuePagar().length }}
+              {{ tenesQuePagar().length === 1 ? 'cuenta abierta' : 'cuentas abiertas' }}, ninguna
+              vencida.
+            }
+          </p>
+
+          @if (tenesQuePagar().length > 0) {
+            <ul class="pendientes">
+              @for (p of tenesQuePagar(); track p.id) {
+                <li class="pendiente">
+                  <div class="pendiente__quien">
+                    <span class="pendiente__nombre">{{ p.quien }}</span>
+                    <span class="pendiente__doc">{{ p.documento }}</span>
+                  </div>
+                  <div class="pendiente__estado">
+                    <span class="pendiente__importe">{{ importe(p.importe) }}</span>
+                    <app-chip
+                      [variant]="p.tono === 'neutral' ? 'info' : p.tono"
+                      size="sm"
+                      >{{ p.aviso }}</app-chip
+                    >
+                  </div>
+                  <button
+                    app-button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    class="pendiente__accion"
+                    [disabled]="saldando() !== null"
+                    (click)="saldar(p, 'pago')"
+                  >
+                    Ya lo pagué
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+      </div>
+    </section>
+
+    <!-- ═══ 4 · ¿Qué tenés y qué debés? ═══════════════════════════════════
+         Activos y pasivos, que hasta el 19/09/2026 eran una entrada suelta
+         del menú. El propietario pidió que estuvieran dentro de Contabilidad:
+         son la foto del consultorio, y la foto se mira junto al movimiento. -->
+    <section class="bloque" aria-labelledby="titulo-patrimonio">
+      <app-section-heading
+        icono="briefcase"
+        titulo="Lo que tenés y lo que debés"
+        id="titulo-patrimonio"
+      />
+      <p class="bloque__bajada">
+        La foto del consultorio hoy, sin importar cuándo entró o salió cada
+        boliviano.
+      </p>
+
+      <div class="patrimonio">
+        <app-card class="patrimonio__tile">
+          <p class="patrimonio__rotulo">Lo que tenés</p>
+          <p class="patrimonio__cifra">{{ importe(d.situacion.totalAssets) }}</p>
+          <p class="patrimonio__pie">
+            Plata en caja y en el banco, lo que te deben, y tus equipos.
+          </p>
+        </app-card>
+
+        <app-card class="patrimonio__tile">
+          <p class="patrimonio__rotulo">Lo que debés</p>
+          <p class="patrimonio__cifra">{{ importe(d.situacion.totalLiabilities) }}</p>
+          <p class="patrimonio__pie">Préstamos, proveedores e impuestos por pagar.</p>
+        </app-card>
+
+        <app-card class="patrimonio__tile patrimonio__tile--neto" variant="elevated">
+          <p class="patrimonio__rotulo">Te queda tuyo</p>
+          <p
+            class="patrimonio__cifra"
+            [class.patrimonio__cifra--negativa]="negativo(d.situacion.totalEquity)"
+          >
+            {{ importe(d.situacion.totalEquity) }}
+          </p>
+          <p class="patrimonio__pie">
+            Lo que quedaría si cobraras todo lo que te deben y pagaras todo lo que
+            debés.
+          </p>
+        </app-card>
+      </div>
+
+      @if (equiposConValor().length > 0) {
+        <app-card class="panel">
+          <div class="panel__cabecera">
+            <h3 class="panel__titulo">Tus equipos</h3>
+            <p class="panel__total">{{ importe(d.equipos.totalNetBookValue) }}</p>
+          </div>
+          <p class="panel__lectura">
+            Lo que valen hoy, ya descontado el uso. Este mes se desgastan
+            <strong>{{ importe(d.equipos.monthlyCharge) }}</strong> — no sale plata de
+            tu cuenta, pero es un costo real que ya está contado arriba.
+          </p>
+          <ul class="equipos">
+            @for (e of equiposConValor(); track e.id) {
+              <li class="equipo">
+                <span class="equipo__nombre">{{ e.name }}</span>
+                <span class="equipo__valor">{{ importe(e.netBookValue) }}</span>
+                <span class="equipo__origen">costó {{ importe(e.acquisitionCost) }}</span>
+              </li>
+            }
+          </ul>
+        </app-card>
+      }
+
+      <p class="patrimonio__acceso">
+        <a
+          app-button
+          variant="outline"
+          routerLink="/administration/accounting/activos-y-pasivos"
+          data-testid="ir-a-activos-y-pasivos"
+        >
+          Dar de alta un equipo o un préstamo
+        </a>
+        <span class="patrimonio__nota">
+          Ahí se cargan los equipos que comprás y las deudas que tomás, y se
+          registra cada cuota.
+        </span>
+      </p>
+    </section>
+
+    <!-- ═══ Para quien sí lleva los libros ════════════════════════════════
+         Nada se borró: el cockpit y los libros están enteros, a un clic. Van
+         al pie y con su nombre técnico, que es donde los busca quien los
+         necesita — y donde no molestan a quien no. -->
+    <section class="bloque bloque--pie" aria-labelledby="titulo-contable">
+      <h2 class="pie__titulo" id="titulo-contable">¿Llevás vos la contabilidad?</h2>
+      <p class="pie__bajada">
+        El detalle contable está entero: el estado del ejercicio, los documentos
+        frenados en el flujo, la cartera por antigüedad y el cierre del período.
+      </p>
+      <p class="pie__acciones">
+        <a app-button variant="outline" routerLink="/administration/accounting/cockpit">
+          Vista contable
+        </a>
+        <a app-button variant="outline" routerLink="/administration/accounting/libros">
+          Balance y libro diario
+        </a>
+      </p>
+    </section>
+  }
+</app-view-state-host>
