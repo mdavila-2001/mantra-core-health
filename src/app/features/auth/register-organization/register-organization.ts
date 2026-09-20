@@ -403,18 +403,18 @@ export class RegisterOrganization {
       commercialManager: grupoDeGerente(),
       marketingManager: grupoDeGerente(),
     }),
-    // Datos del owner. El nombre va en sus cinco partes, igual que el
-    // resto de las personas de este alta: el backend sigue sin columna de
-    // tercer nombre, así que `thirdName` se pliega en `middleName` al
-    // enviar — ver `datos()` y `unirNombres`.
-    name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    middleName: new FormControl('', { nonNullable: true }),
-    thirdName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(MAX_PARTE_NOMBRE)],
-    }),
-    lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    motherLastName: new FormControl('', { nonNullable: true }),
+    // Datos del owner. El nombre va en sus cinco partes como un ÚNICO grupo
+    // (`grupoDeNombre`), igual que el representante legal y las tres
+    // gerencias. Eran cinco controles sueltos, y el motor —que corta de a
+    // cuatro— dejaba el apellido materno en la página siguiente, separado
+    // del paterno. Como grupo entran los cinco en una sola página, con el
+    // mismo reparto de anchos que el resto del alta, y de paso alcanza al
+    // owner el tope de 200 caracteres del nombre compuesto, que depende de
+    // las cinco partes juntas y por eso no puede vivir en un control suelto.
+    //
+    // El backend sigue sin columna de tercer nombre: `thirdName` se pliega
+    // en `middleName` al enviar — ver `datos()` y `unirNombres`.
+    ownerName: grupoDeNombre(),
     email: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
@@ -482,10 +482,16 @@ export class RegisterOrganization {
    * Ya no hay un paso de «Cómo se la identifica»: el código de tenant y el
    * de aseguradora se derivan de la sigla (`codigoDesdeSigla`, en `datos()`)
    * y no son algo que la persona escriba. Para un país de zona única
-   * (Bolivia, Argentina…) el alta queda en **9 páginas**; para uno
+   * (Bolivia, Argentina…) el alta queda en **8 páginas**; para uno
    * multizona (Estados Unidos, Brasil, México) el selector de zona horaria
    * en «Datos de la aseguradora» suma un quinto campo a esa sección, que el
-   * motor parte en dos — **10 páginas** sólo ahí.
+   * motor parte en dos — **9 páginas** sólo ahí.
+   *
+   * Eran 9 y 10: «Tu cuenta» tenía siete campos —los cinco nombres del
+   * owner, el correo y la contraseña— y el motor la partía en dos, con el
+   * apellido materno huérfano al principio de la segunda. Desde que los
+   * cinco nombres viajan como un único campo `custom` (el grupo
+   * `ownerName`), la sección son tres campos y entra en una sola página.
    *
    * `computed`, y no una constante: las opciones del tipo societario y de
    * zona horaria cambian con el país elegido (subtareas 1.1 y ésta).
@@ -665,67 +671,47 @@ export class RegisterOrganization {
       },
       {
         titulo: 'Tu cuenta',
+        clave: 'owner',
         hint: 'Quien administra la aseguradora en la plataforma.',
         campos: [
-        {
-          key: 'name',
-          label: 'Nombre',
-          control: 'text' as const,
-          required: true,
-          autocomplete: 'given-name',
-          testId: 'registro-organizacion-owner-nombre',
-          mensajeDeError: 'Ingresá tu nombre.',
-        },
-        {
-          key: 'middleName',
-          label: 'Segundo nombre (opcional)',
-          control: 'text' as const,
-          autocomplete: 'additional-name',
-          testId: 'registro-organizacion-owner-segundo-nombre',
-        },
-        {
-          key: 'thirdName',
-          label: 'Tercer nombre u otros (opcional)',
-          control: 'text' as const,
-          testId: 'registro-organizacion-owner-tercer-nombre',
-        },
-        {
-          key: 'lastName',
-          label: 'Apellido paterno',
-          control: 'text' as const,
-          required: true,
-          autocomplete: 'family-name',
-          testId: 'registro-organizacion-owner-apellido-paterno',
-          mensajeDeError: 'Ingresá tu apellido paterno.',
-        },
-        {
-          key: 'motherLastName',
-          label: 'Apellido materno (opcional)',
-          control: 'text' as const,
-          autocomplete: 'family-name',
-          testId: 'registro-organizacion-owner-apellido-materno',
-        },
-        {
-          key: 'email',
-          label: 'Correo',
-          hint: 'Con este correo vas a iniciar sesión.',
-          control: 'email' as const,
-          required: true,
-          autocomplete: 'username',
-          testId: 'registro-organizacion-owner-correo',
-          mensajeDeError: 'Ingresá un correo válido.',
-        },
-        {
-          key: 'password',
-          label: 'Contraseña',
-          hint: 'Al menos 8 caracteres.',
-          control: 'password' as const,
-          required: true,
-          autocomplete: 'new-password',
-          testId: 'registro-organizacion-owner-password',
-          mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
-        },
-      ],
+          {
+            // Sin rótulo, mismo motivo que `legalRepresentative` y
+            // `executives`: el `app-form-field` externo de un campo
+            // `custom` pintaría un `<label for>` hacia un control que no
+            // existe, y el título de la página ya dice de qué se trata.
+            //
+            // Los cinco nombres entran como UN campo —el grupo
+            // `ownerName`— para que el motor no los reparta en dos
+            // páginas. La plantilla los pinta con la misma grilla que el
+            // representante legal, y los `data-testid` siguen siendo los
+            // de antes (`registro-organizacion-owner-…`).
+            key: 'ownerName',
+            label: '',
+            control: 'custom' as const,
+            ancho: 'completo' as const,
+            mensajeDeError: 'Completá tu nombre y tu apellido paterno.',
+          },
+          {
+            key: 'email',
+            label: 'Correo',
+            hint: 'Con este correo vas a iniciar sesión.',
+            control: 'email' as const,
+            required: true,
+            autocomplete: 'username',
+            testId: 'registro-organizacion-owner-correo',
+            mensajeDeError: 'Ingresá un correo válido.',
+          },
+          {
+            key: 'password',
+            label: 'Contraseña',
+            hint: 'Al menos 8 caracteres.',
+            control: 'password' as const,
+            required: true,
+            autocomplete: 'new-password',
+            testId: 'registro-organizacion-owner-password',
+            mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
+          },
+        ],
     },
     ]),
   );
@@ -1029,6 +1015,13 @@ export class RegisterOrganization {
     return this.form.controls.legalRepresentative.controls[campoKey];
   }
 
+  /** El `FormControl` de un campo de nombre del owner. */
+  protected controlDelOwner(
+    campoKey: 'name' | 'middleName' | 'thirdName' | 'lastName' | 'motherLastName',
+  ): FormControl<string> {
+    return this.form.controls.ownerName.controls[campoKey];
+  }
+
   /**
    * El error de un nombre compuesto (>200 caracteres en total), a nivel de
    * `FormGroup` — nunca del `FormControl` de una parte: el validador vive
@@ -1077,6 +1070,18 @@ export class RegisterOrganization {
     return this.errorDeNombreLargo(this.form.controls.legalRepresentative);
   }
 
+  /** Mismo criterio que `errorDelRepresentante`, sobre el grupo del owner. */
+  protected errorDelOwner(campo: {
+    readonly key: 'name' | 'middleName' | 'thirdName' | 'lastName' | 'motherLastName';
+    readonly label: string;
+  }): string {
+    const mensajePropio = mensajeDeError(this.controlDelOwner(campo.key), {
+      label: campo.label,
+    });
+    if (mensajePropio !== '' || campo.key !== 'lastName') return mensajePropio;
+    return this.errorDeNombreLargo(this.form.controls.ownerName);
+  }
+
   /**
    * Marca y despliega el acordeón cuando el motor bloquea «Siguiente» en la
    * página `executives` (salida `rechazada` del motor, subtarea 1.4).
@@ -1087,6 +1092,12 @@ export class RegisterOrganization {
    * que esto viva acá y no escuchando el propio `FormGroup`.
    */
   protected alRechazarPagina(pagina: PaginaDeFormulario): void {
+    if (pagina.clave === 'owner') {
+      // Mismo motivo que abajo: el motor sólo marca el GRUPO
+      // (`markAsTouched`), y sin esto las casillas vacías no se pintarían.
+      this.form.controls.ownerName.markAllAsTouched();
+      return;
+    }
     if (pagina.clave === 'legal-representative') {
       // Mismo motivo que para `executives`: el motor sólo marca el GRUPO
       // (`markAsTouched`), no a sus cinco hijos.
@@ -1149,8 +1160,8 @@ export class RegisterOrganization {
     const codigo = codigoDesdeSigla(raw.sigla);
     // El backend no tiene columna de tercer nombre: se pliega en
     // `middleName`, igual que en el alta de paciente y de médico.
-    const segundoNombre = unirNombres([raw.middleName, raw.thirdName]);
-    const apellidoMaterno = raw.motherLastName.trim();
+    const segundoNombre = unirNombres([raw.ownerName.middleName, raw.ownerName.thirdName]);
+    const apellidoMaterno = raw.ownerName.motherLastName.trim();
     const casaMatriz = this.gpsCasaMatriz();
     const telefonoRepresentante = raw.legalRepresentativePhone.trim();
     const gerente = (g: {
@@ -1185,8 +1196,8 @@ export class RegisterOrganization {
       owner: {
         email: raw.email.trim(),
         password: raw.password,
-        name: raw.name.trim(),
-        lastName: raw.lastName.trim(),
+        name: raw.ownerName.name.trim(),
+        lastName: raw.ownerName.lastName.trim(),
         ...(segundoNombre === '' ? {} : { middleName: segundoNombre }),
         ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
       },
