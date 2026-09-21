@@ -369,6 +369,22 @@ export interface CupoVisible {
 }
 
 /**
+ * Los estados en los que la cita **ya pasó**: no se atiende porque terminó.
+ *
+ * Se usa sólo para elegir cómo se dice que no se puede entrar a atender —«ya
+ * está cerrada» en vez de «todavía no se atiende»—, nunca para decidir qué se
+ * puede hacer: eso lo deciden `sePuedeIniciar` y `sePuedeCompletar`, que salen
+ * del ciclo. Los códigos son los del catálogo, sin prefijo de módulo.
+ */
+const CODIGOS_YA_CERRADOS: ReadonlySet<string> = new Set([
+  'BOOKING_COMPLETED',
+  'EV_BOOKING_DONE',
+  'BOOKING_CANCELLED',
+  'BOOKING_NO_SHOW',
+  'BOOKING_RESCHEDULED',
+]);
+
+/**
  * Lo mínimo que hace falta para mover una cita a un rato: su identificador y
  * cuándo empieza.
  *
@@ -2019,12 +2035,77 @@ export class Agenda {
     this.irAAtender(cita);
   }
 
+  /**
+   * C-04 · tocaron la tarjeta de una cita del calendario.
+   *
+   * La tarjeta **no repite un botón**: hace lo que la cita admite en su estado.
+   * Una confirmada se inicia; una ya en curso se continúa —volver a iniciarla
+   * es el 409 de arriba—; y una que ni se inicia ni está en curso (una
+   * solicitud sin aceptar, una cancelada) no navega a ninguna parte: se abre su
+   * detalle, que es lo único que se puede hacer con ella.
+   *
+   * El estado se lee del ciclo (`sePuedeIniciar` / `sePuedeCompletar`, que
+   * salen de `booking-status.ts`) y no de una bandera nueva.
+   */
+  protected atenderDesdeLaTarjeta(booking: Booking): void {
+    const cita = this.citaDelDia(booking);
+
+    if (this.sePuedeCompletar(cita)) {
+      this.continuarAtencion(cita);
+      return;
+    }
+    if (this.sePuedeIniciar(cita) && this.puedeAtender()) {
+      this.iniciarAtencion(cita);
+      return;
+    }
+    void this.verDetalleDeLaCita(cita);
+  }
+
+  /**
+   * El detalle de una cita que no se puede atender todavía.
+   *
+   * Es el mismo diálogo que el «Ver detalle» de la fila, y dice por qué no se
+   * puede entrar: sin esto, tocar una solicitud sin aceptar no hacía nada, y un
+   * clic que no hace nada enseña a no confiar en los clics.
+   */
+  private async verDetalleDeLaCita(cita: CitaVisible): Promise<void> {
+    // El título separa los dos casos y no los junta en un «todavía»: una cita
+    // ya atendida no está esperando nada, y decirle que «todavía no se atiende»
+    // es informarle mal a quien la toca para revisarla.
+    const yaPaso = CODIGOS_YA_CERRADOS.has(cita.estado.code);
+    await this.dialogs.confirm({
+      title: yaPaso ? 'Esta cita ya está cerrada' : 'Esta cita todavía no se atiende',
+      message: this.porResponder(cita)
+        ? 'Está esperando respuesta: aceptala primero y ahí se puede iniciar la atención.'
+        : `Su estado es «${cita.estado.label}», y desde ese estado no se entra a atender.`,
+      details: [
+        { label: 'Paciente', value: cita.paciente },
+        { label: 'Estado', value: cita.estado.label },
+        ...(cita.motivoCrudo === null ? [] : [{ label: 'Motivo', value: cita.motivoCrudo }]),
+      ],
+      confirmLabel: 'Entendido',
+      cancelLabel: 'Cerrar',
+    });
+  }
+
   /** El paso a la pantalla de atención, con el motivo y el turno que la originó. */
   private irAAtender(cita: CitaVisible): void {
     const ruta = cita.rutaAtencion;
     if (ruta === null) {
       // Sin permiso para expedientes no hay a dónde ir: la cita quedó iniciada
       // igual y la tabla tiene que reflejarlo.
+      //
+      // C-04 (H4.S3.M3) · **y se dice qué falta.** Antes esto era silencioso:
+      // se apretaba «Iniciar», la cita cambiaba de estado y la pantalla se
+      // quedaba igual, sin decir por qué no se había entrado a atender. Dos
+      // causas distintas, y las dos se nombran: o la sesión no abre
+      // expedientes, o la reserva no tiene paciente al que abrirle uno.
+      this.toast.info(
+        cita.rutaExpediente === null && !this.puedeVerExpedientes()
+          ? 'La atención quedó iniciada, pero esta sesión no puede abrir expedientes: pedí el permiso de historia clínica para entrar a atender.'
+          : 'La atención quedó iniciada, pero esta reserva no tiene un paciente registrado al que abrirle el expediente.',
+        'No se pudo entrar a atender',
+      );
       this.trasOperar();
       return;
     }

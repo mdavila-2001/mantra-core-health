@@ -231,6 +231,27 @@
           }
           @switch (bloque.tipo) {
             @case ('cita') {
+              <!-- C-04 (2026-09-20) · «las tarjetas de /schedule tienen que
+                   llevar a iniciar el encuentro».
+
+                   Es un botón que cubre la tarjeta y queda DETRAS del
+                   contenido, no un `(click)` en el `<li>`: asi el destino
+                   aparece en el arbol de accesibilidad con su nombre, se llega
+                   con `Tab` y se activa con `Enter` o `Espacio` sin escribir un
+                   `keydown` a mano. Y los botones de adentro —«Ver detalle»,
+                   las acciones de la fila— siguen siendo botones hermanos, no
+                   anidados: un `<button>` dentro de otro es HTML invalido y
+                   dispara los dos. Por eso la capa va por debajo (`z-index`) y
+                   lo de arriba no necesita detener la propagacion. -->
+              @if (bloque.cita; as cita) {
+                <button
+                  type="button"
+                  class="dia__ir-a-atender"
+                  data-testid="dia-ir-a-atender"
+                  [attr.aria-label]="'Atender a ' + bloque.paciente + ', ' + (bloque.desde | date: 'HH:mm')"
+                  (click)="citaActivada.emit(cita)"
+                ></button>
+              }
               <span class="dia__hora">
                 {{ bloque.desde | date: 'HH:mm' }}–{{ bloque.hasta | date: 'HH:mm' }}
               </span>
@@ -429,3 +450,4 @@
     </ol>
   }
 </div>
+

@@ -22,6 +22,13 @@ import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { nextControlId } from '@shared/forms/form-control.context';
 import type { EstadoResuelto } from '../day-view/day-view';
 import {
+  toBookingStatusPresentation,
+  type BookingStatusPresentation,
+} from '../../booking-status';
+import { pacienteDeLaCita } from '../detalle-de-la-cita';
+import type { ValueSetOption } from '../../../../core/data-access/terminology/terminology.types';
+import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
+import {
   claveDelDia,
   DIAS_DE_LA_SEMANA,
   fechaLarga,
@@ -89,8 +96,21 @@ export interface DayDetailRow {
   readonly time: string;
   /** El paciente (citas) o cuántos lugares quedan (disponibles). */
   readonly primary: string;
-  /** El estado de la cita, cuando está resuelto. */
+  /** Una segunda línea, cuando la fila la tiene. Los cupos la usan. */
   readonly secondary: string | null;
+  /**
+   * El estado de la cita como CHIP — C-08 (2026-09-20).
+   *
+   * Antes este dato era `secondary: etiquetas.get(...).display`, o sea el
+   * `display` del catálogo, **que viene en inglés**: el globo del mes anunciaba
+   * «Booking in progress» sobre una cita en curso. `booking-status.ts` ya
+   * resuelve las tres formas que la identidad exige —color, silueta y palabra
+   * en castellano— y era el único lugar de la agenda que no lo usaba.
+   *
+   * `null` en las filas que no son citas: un cupo libre no tiene estado de
+   * cita, y ponerle uno neutro sería inventar información.
+   */
+  readonly estado: BookingStatusPresentation | null;
 }
 
 /**
@@ -121,7 +141,7 @@ export interface DayDetailRow {
  */
 @Component({
   selector: 'app-month-view',
-  imports: [AppButton, NgTemplateOutlet],
+  imports: [AppButton, NgTemplateOutlet, StatusSeal],
   templateUrl: './month-view.html',
   styleUrl: './month-view.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -408,8 +428,14 @@ export class MonthView implements OnDestroy {
             ? hora(cita.startAt as Date)
             : `${hora(cita.startAt as Date)}–${hora(cita.endAt)}`,
         // Mismas palabras que el día y la semana: sin nombre no se inventa uno.
-        primary: cita.patientName ?? 'Paciente sin nombre registrado',
-        secondary: this.etiquetas().get(cita.statusConceptId)?.display ?? null,
+        primary: pacienteDeLaCita(cita),
+        secondary: null,
+        // C-08 · el chip sale del mapa único de `booking-status.ts`, no de una
+        // lista nueva y no del `display` inglés del catálogo.
+        estado: toBookingStatusPresentation(
+          this.conceptoDe(cita.statusConceptId),
+          'Reservada',
+        ),
       }));
   }
 
@@ -445,7 +471,30 @@ export class MonthView implements OnDestroy {
             ? 'Libre'
             : `${cupo.remainingCapacity} de ${cupo.capacity} lugares libres`,
         secondary: null,
+        estado: null,
       }));
+  }
+
+  /**
+   * El concepto de estado, con la forma que espera `booking-status.ts`.
+   *
+   * La agenda guarda los estados resueltos como `{code, display}` y el mapa de
+   * presentación pide un `ValueSetOption`. Se adapta acá en vez de cambiar
+   * cualquiera de los dos: el mapa lo comparten cuatro pantallas y `EstadoResuelto`
+   * es lo mínimo que la agenda necesita del catálogo.
+   */
+  private conceptoDe(conceptId: string): ValueSetOption | undefined {
+    const resuelto = this.etiquetas().get(conceptId);
+    return resuelto === undefined
+      ? undefined
+      : {
+          conceptId,
+          code: resuelto.code,
+          display: resuelto.display,
+          // El catálogo no viaja hasta acá y el mapa no lo mira: sólo usa
+          // `code`. Se declara vacío en vez de inventar un identificador.
+          codeSystemVersionId: '',
+        };
   }
 
   /** Los bloqueos que tocan esa fecha, en orden. */

@@ -528,3 +528,51 @@
 .dia__no-disponible-motivo {
   color: var(--text-tertiary, var(--text-secondary));
 }
+
+
+/* C-04 (2026-09-20) · la tarjeta entera lleva a atender.
+
+   Una capa transparente que cubre el bloque y queda DEBAJO del contenido: los
+   botones de adentro —«Ver detalle», las acciones de la fila— la tapan en su
+   propia superficie, asi que tocarlos hace lo del boton y no lo de la tarjeta,
+   sin tener que detener la propagacion en cada uno.
+
+   `position: absolute` sobre el `<li>`, que ya es `relative`. */
+.dia__ir-a-atender {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  cursor: pointer;
+}
+
+.dia__ir-a-atender:hover {
+  background: var(--bg-surface-alt);
+}
+
+.dia__ir-a-atender:focus-visible {
+  outline: 2px solid var(--c-aqua-500);
+  outline-offset: -2px;
+}
+
+/* Lo de la tarjeta se dibuja por encima de la capa, para que siga siendo
+   seleccionable y para que los botones reciban sus propios clics. */
+.dia__bloque[data-tipo='cita'] > .dia__hora,
+.dia__bloque[data-tipo='cita'] > .dia__cuerpo,
+.dia__bloque[data-tipo='cita'] > .dia__detalle {
+  position: relative;
+  z-index: 1;
+}
+
+/* El cuerpo no captura el puntero salvo en sus partes interactivas: si lo
+   hiciera entero, la mitad de la tarjeta dejaria de llevar a atender. */
+.dia__bloque[data-tipo='cita'] > .dia__cuerpo {
+  pointer-events: none;
+}
+
+.dia__bloque[data-tipo='cita'] > .dia__cuerpo :is(button, a, [role='button']) {
+  pointer-events: auto;
+}

@@ -164,15 +164,103 @@
    entera. En un renglón compartido, «09:30 Concepción Guadalupe Ávila Roque» en
    una de siete columnas deja al nombre noventa píxeles. Cada turno es una
    fichita con filo de color: se cuentan de un vistazo. */
+/* C-08 (2026-09-20) · la cita de la semana se despliega.
+
+   El `<li>` pasa a ser el ancla del globo (`position: relative`) y el renglón
+   en sí es un botón: cada cita tiene su propia parada de teclado, y activarla
+   abre el mismo detalle que el día. */
 .semana__cita {
+  position: relative;
+}
+
+.semana__cita-boton {
   display: grid;
   gap: 1px;
+  width: 100%;
   padding: var(--sp-1) var(--sp-2);
+  border: 0;
   border-inline-start: 3px solid var(--dia-tono);
   border-radius: var(--r-xs, 4px);
   background: var(--bg-active);
+  font: inherit;
   font-size: var(--fs-caption);
   line-height: 1.3;
+  text-align: start;
+  cursor: pointer;
+}
+
+.semana__cita-boton:hover {
+  background: var(--bg-surface-alt);
+}
+
+.semana__cita-boton:focus-visible {
+  outline: 2px solid var(--c-aqua-500);
+  outline-offset: 2px;
+}
+
+/* EL GLOBO. Cerrado por omisión y abierto por `:hover` y por `:focus-visible`
+   del botón hermano: el pedido dice «hover», y un hover que sólo responde al
+   puntero deja afuera a quien navega con teclado.
+
+   `visibility` y no `display: none`: un `display` que cambia no se puede
+   transicionar, y además saca el globo del árbol de accesibilidad, con lo que
+   el `aria-describedby` del botón apuntaría a la nada. */
+.semana__globo {
+  position: absolute;
+  z-index: 20;
+  inset-inline-start: 0;
+  top: calc(100% + var(--sp-1));
+  min-width: 14rem;
+  max-width: 18rem;
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-md, 0 4px 16px rgb(0 0 0 / 0.16));
+  font-size: var(--fs-caption);
+  line-height: 1.35;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.semana__cita:hover .semana__globo,
+.semana__cita-boton:focus-visible + .semana__globo {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+}
+
+/* Sin movimiento: aparece y desaparece, no se desliza. La preferencia no es
+   negociable (regla 95.5.1). */
+@media (prefers-reduced-motion: reduce) {
+  .semana__globo {
+    transition: none;
+    transform: none;
+  }
+}
+
+.semana__globo-par {
+  display: grid;
+  grid-template-columns: minmax(4.5rem, auto) 1fr;
+  gap: var(--sp-2);
+}
+
+.semana__globo-rotulo {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* La última columna de la semana no puede abrir el globo hacia afuera de la
+   pantalla: ahí se ancla por la derecha. */
+.semana__dia:nth-child(n + 6) .semana__globo {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
 }
 
 .semana__hora {
