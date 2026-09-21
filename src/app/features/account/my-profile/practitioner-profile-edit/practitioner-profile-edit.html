@@ -27,10 +27,10 @@
             <form class="edicion__formulario" (submit)="$event.preventDefault()">
               <!-- Vacío BORRA el dato opcional, que es cómo se quita un segundo
                    nombre que no se lleva. -->
-              <app-form-field label="Nombre">
+              <app-form-field label="Nombre" [errorMessage]="errorDelServidor('name')">
                 <app-input [(value)]="nombre" placeholder="Tu nombre" />
               </app-form-field>
-              <app-form-field label="Segundo nombre (opcional)">
+              <app-form-field label="Segundo nombre (opcional)" [errorMessage]="errorDelServidor('middleName')">
                 <app-input
                   data-testid="edicion-segundo-nombre"
                   [(value)]="segundoNombre"
@@ -88,10 +88,10 @@
                   + Agregar otro nombre
                 </button>
               </p>
-              <app-form-field label="Apellido paterno">
+              <app-form-field label="Apellido paterno" [errorMessage]="errorDelServidor('lastName')">
                 <app-input [(value)]="apellidoPaterno" />
               </app-form-field>
-              <app-form-field label="Apellido materno (opcional)">
+              <app-form-field label="Apellido materno (opcional)" [errorMessage]="errorDelServidor('motherLastName')">
                 <app-input [(value)]="apellidoMaterno" />
               </app-form-field>
 
@@ -99,6 +99,7 @@
                    ofrecía; la ficha los mostraba sin forma de corregirlos. -->
               <app-form-field
                 label="Fecha de nacimiento"
+                [errorMessage]="errorDelServidor('birthDate')"
                 hint="Se usa para calcular tu edad en la ficha. No se publica."
               >
                 <app-date-picker [(value)]="fechaNacimiento" data-testid="edicion-nacimiento" />
@@ -110,6 +111,7 @@
                    terminaba en cuatro variantes. -->
               <app-form-field
                 label="Título profesional"
+                [errorMessage]="errorDelServidor('professionalTitle')"
                 hint="Sale de la misma lista que el registro, para que la misma profesión no figure escrita de varias maneras."
               >
                 <app-select
@@ -132,6 +134,7 @@
               <app-form-field
                 class="edicion__campo-ancho"
                 label="Biografía"
+                [errorMessage]="errorDelServidor('professionalBio')"
                 hint="Tu presentación en pocas palabras. Es lo que hace que tu perfil se lea como vos."
               >
                 <app-textarea
@@ -148,6 +151,35 @@
                    pregunta; ver `guardarPresentacion`. -->
               <app-switch [(checked)]="telemedicina" label="Atiendo por telemedicina" />
             </form>
+
+            <!-- ─── Lo que se muestra y no se corrige acá ──────────────────
+                 «Editar muestre TODOS los campos» (C-05). El documento y el
+                 departamento que lo emitió son del alta, y el contrato de
+                 corrección del perfil no los acepta —el propio tipo de la
+                 lectura lo dice: «no editable desde el perfil: tiene su
+                 circuito propio»—. Hasta hoy el editor no los mostraba, así
+                 que quien venía a corregirlos no encontraba ni el dato ni el
+                 motivo.
+
+                 Renglones de ficha y no campos deshabilitados: un control
+                 apagado invita a buscar cómo encenderlo, y acá no hay forma. -->
+            @if (soloLectura(); as fijos) {
+              <section class="edicion__fijos" data-testid="edicion-documento">
+                <h3 class="edicion__subtitulo">Tu documento</h3>
+                <p class="edicion__nota">
+                  Sale de tu documento de identidad y no se corrige desde el perfil.
+                </p>
+                <dl class="edicion__fijo">
+                  <dt>Documento de identidad</dt>
+                  <dd>
+                    {{ fijos.documento || 'Sin registrar' }}
+                    @if (fijos.departamento) {
+                      <span class="edicion__fijo-sufijo">{{ fijos.departamento }}</span>
+                    }
+                  </dd>
+                </dl>
+              </section>
+            }
           </app-tab>
 
           <!-- ─── Contacto ──────────────────────────────────────────────── -->
@@ -195,6 +227,7 @@
                 <app-form-field
                   class="edicion__campo-ancho"
                   label="Dirección"
+                [errorMessage]="errorDelServidor('homeAddressLines')"
                   hint="Dónde atendés o dónde te ubican tus pacientes."
                 >
                   <app-input
@@ -231,7 +264,7 @@
                 <app-form-field
                   label="Celular personal"
                   hint="Elegí el país si tu número no es de Bolivia. No se publica en tu ficha."
-                  [errorMessage]="enRojo(celularPersonal) ? mensajeTelefonoIncompleto : ''"
+                  [errorMessage]="enRojo(celularPersonal) ? mensajeTelefonoIncompleto : errorDelServidor('mobilePhone')"
                 >
                   <app-phone-input
                     [formControl]="celularPersonal"
@@ -241,6 +274,7 @@
                 </app-form-field>
                 <app-form-field
                   label="Correo personal"
+                [errorMessage]="errorDelServidor('personalEmail')"
                   hint="Distinto del de trabajo. No se publica en tu ficha."
                 >
                   <app-input [(value)]="correoPersonal" placeholder="tu.correo@ejemplo.com" />
@@ -248,7 +282,7 @@
                 <app-form-field
                   label="Celular del trabajo (opcional)"
                   hint="Elegí el país si tu número no es de Bolivia."
-                  [errorMessage]="enRojo(celularTrabajo) ? mensajeTelefonoIncompleto : ''"
+                  [errorMessage]="enRojo(celularTrabajo) ? mensajeTelefonoIncompleto : errorDelServidor('workMobilePhone')"
                 >
                   <app-phone-input
                     [formControl]="celularTrabajo"
@@ -259,7 +293,7 @@
                 <app-form-field
                   label="Fijo del trabajo (opcional)"
                   hint="El de la línea del consultorio."
-                  [errorMessage]="enRojo(fijoTrabajo) ? mensajeTelefonoIncompleto : ''"
+                  [errorMessage]="enRojo(fijoTrabajo) ? mensajeTelefonoIncompleto : errorDelServidor('workLandline')"
                 >
                   <app-phone-input
                     [formControl]="fijoTrabajo"
@@ -268,6 +302,24 @@
                   />
                 </app-form-field>
               </form>
+
+              <!-- El cuarto contacto del alta. Se muestra y no se edita, y esto
+                   sí es una decisión y no un hueco: es la identidad con la que
+                   se entra, y cambiarla desde un formulario de perfil dejaría
+                   a cualquiera que tome la sesión un minuto quedándose con la
+                   cuenta. El contrato lo excluye con esa misma razón escrita. -->
+              @if (soloLectura(); as fijos) {
+                <section class="edicion__fijos" data-testid="edicion-correo-trabajo">
+                  <h3 class="edicion__subtitulo">Tu correo de trabajo</h3>
+                  <p class="edicion__nota">
+                    Es con el que entrás. Se cambia por su propio trámite, no desde acá.
+                  </p>
+                  <dl class="edicion__fijo">
+                    <dt>Correo de trabajo</dt>
+                    <dd>{{ fijos.correoDeTrabajo || 'Sin registrar' }}</dd>
+                  </dl>
+                </section>
+              }
             }
           </app-tab>
 
@@ -289,6 +341,7 @@
             <form class="edicion__formulario" (submit)="$event.preventDefault()">
               <app-form-field
                 label="NIT"
+                [errorMessage]="errorDelServidor('taxId')"
                 hint="Para que las facturas salgan a tu nombre. Vaciarlo lo quita."
               >
                 <app-input data-testid="edicion-nit" [(value)]="nit" placeholder="1234567" />
@@ -296,6 +349,7 @@
 
               <app-form-field
                 label="Razón social"
+                [errorMessage]="errorDelServidor('taxHolderName')"
                 hint="A nombre de quién sale el comprobante."
               >
                 <app-input
@@ -675,6 +729,40 @@
                 />
               }
             </section>
+          </app-tab>
+
+          <!-- ─── Actividad ─────────────────────────────────────────────────
+               «Necesito que TODAS las pestañas sean editables, o sea su
+               información» —doctor, 20/09/2026 (C-05)—. Ésta es la única que
+               no tiene ni un campo, y estaba directamente ausente del editor:
+               quien la buscaba no la encontraba y tampoco sabía por qué.
+
+               No se hizo editable porque los cuatro son CUENTAS de lo que ya
+               pasó, no datos declarados: un contador que se escribe a mano
+               deja de contar y pasa a ser una afirmación sin respaldo sobre
+               actos clínicos. Lo que sí se puede hacer es contestar la
+               pregunta en la pantalla en vez de en un informe: acá está cada
+               contador, qué cuenta y qué hay que hacer para que se mueva. -->
+          <app-tab [label]="pestanas[6]">
+            <p class="edicion__nota">
+              Acá no hay nada que escribir, y es a propósito: estas cuatro cifras las lleva la
+              plataforma a partir de lo que vas registrando.
+            </p>
+
+            <ul class="edicion__contadores" data-testid="edicion-actividad">
+              @for (contador of contadores; track contador.clave) {
+                <li class="edicion__contador">
+                  <p class="edicion__contador-rotulo">{{ contador.rotulo }}</p>
+                  <p class="edicion__contador-pie">{{ contador.pie }}</p>
+                  <p class="edicion__contador-pie">{{ contador.seMueveCon }}</p>
+                </li>
+              }
+            </ul>
+
+            <p class="edicion__nota">
+              Los números, su evolución mes a mes y los indicadores de calidad se leen en
+              <a routerLink="/my-account">tu perfil</a>, en esta misma pestaña.
+            </p>
           </app-tab>
         </app-tabs>
 

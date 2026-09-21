@@ -68,19 +68,28 @@ export const PESTANA_MEDICO = {
 } as const;
 
 /**
- * Las pestañas del **editor** del perfil médico: las mismas de la ficha, menos
- * dos.
+ * Las pestañas del **editor** del perfil médico: **las mismas de la ficha**.
  *
  * Pedido del cliente, repetido el 2026-09-11: editar el perfil tiene que ser
  * «en varias pestañas». Hasta hoy el editor eran cuatro tarjetas apiladas con
  * cuatro botones de guardar, que es justo lo que prohíbe
  * `docs/components/composition-rules.md` §5.
  *
- * Son las de {@link PESTANAS_DEL_PERFIL_MEDICO} en el mismo orden, salteando la
- * única que no tiene nada que editar acá:
+ * Son las de {@link PESTANAS_DEL_PERFIL_MEDICO}, las siete, en el mismo orden.
  *
- * - **Actividad** — son los contadores de la plataforma. No se editan: se
- *   miran.
+ * ## «Actividad» está, y no tiene ni un campo
+ *
+ * El doctor pidió el 20/09/2026 que «TODAS las pestañas sean editables, o sea
+ * su información» (C-05). «Actividad» son cuatro contadores de lo que la
+ * persona ya hizo, y un contador que se escribe a mano deja de contar: pasa a
+ * ser una afirmación sin respaldo sobre actos clínicos. Así que no se hizo
+ * editable **ni se dejó afuera**: la pestaña existe, enumera los cuatro con lo
+ * que cuenta cada uno y dice qué hay que hacer para que el número se mueva
+ * ({@link CONTADORES_DE_ACTIVIDAD}).
+ *
+ * El desvío es deliberado y esta es la diferencia que importa: antes faltaba
+ * la pestaña y quien la buscaba no encontraba nada ni sabía por qué; ahora la
+ * encuentra y lee el motivo en la pantalla, no en un informe.
  *
  * ## «Dónde atiendo» volvió, y por qué
  *
@@ -119,9 +128,16 @@ export const PESTANAS_DEL_EDITOR_MEDICO = [
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.dondeAtiendo],
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.trayectoria],
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.credenciales],
+  PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.actividad],
 ] as const;
 
-/** Los índices con nombre del editor. No son los de la ficha: son seis. */
+/**
+ * Los índices con nombre del editor. Desde el 20/09/2026 **son los mismos que
+ * los de la ficha**: quien pulsa el lápiz en una pestaña llega a esa pestaña, y
+ * el índice no hay que traducirlo. Se conservan como constante propia porque
+ * eso puede volver a dejar de ser cierto, y entonces el lugar donde arreglarlo
+ * es uno solo.
+ */
 export const PESTANA_EDITOR = {
   personales: 0,
   contacto: 1,
@@ -129,6 +145,7 @@ export const PESTANA_EDITOR = {
   dondeAtiendo: 3,
   trayectoria: 4,
   credenciales: 5,
+  actividad: 6,
 } as const;
 
 /**
@@ -152,8 +169,11 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
   nationalId: PESTANA_MEDICO.personales,
   issuerAdministrativeAreaConceptId: PESTANA_MEDICO.personales,
 
-  /* 3 · Contanos un poco sobre vos */
-  sexAtBirth: PESTANA_MEDICO.personales,
+  /* 3 · Contanos un poco sobre vos.
+     `sexAtBirth` estaba acá y era MENTIRA: se movió a
+     `CAMPOS_DEL_ALTA_SIN_PESTANA` el 21/09/2026 con su motivo. Este mapa
+     existe justamente para que un campo no apunte a una pestaña donde no
+     está, y éste apuntaba a una donde nunca estuvo. */
   birthDate: PESTANA_MEDICO.personales,
 
   /* 4 · Cómo te contactamos en privado */
@@ -208,14 +228,20 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
 };
 
 /**
- * El campo del alta que la ficha NO muestra, y por qué.
+ * Los campos del alta que la ficha NO muestra, y por qué.
  *
- * Uno solo. Se declara acá para que el spec pueda distinguir «se olvidaron de
- * mapearlo» de «se decidió no mostrarlo», que es la diferencia entre un defecto
- * y una decisión.
+ * Se declaran acá para que el spec pueda distinguir «se olvidaron de mapearlo»
+ * de «se decidió no mostrarlo», que es la diferencia entre un defecto y una
+ * decisión.
  */
 export const CAMPOS_DEL_ALTA_SIN_PESTANA: Readonly<Record<string, string>> = {
   password:
     'Una contraseña no se muestra nunca. La ficha ofrece el camino para cambiarla ' +
     '(«Cambiar contraseña»), que es lo único que se puede hacer con ella.',
+  sexAtBirth:
+    'El alta lo pregunta y la lectura del perfil médico no lo devuelve, así que no hay ' +
+    'dato que mostrar: la ficha no lo enseña en ninguna pestaña y el editor no lo puede ' +
+    'ofrecer. Estuvo declarado como si viviera en «Datos personales» hasta el 21/09/2026, ' +
+    'y ahí no estaba. Que la persona no pueda ver ni corregir lo que declaró en el alta es ' +
+    'un hueco del contrato, no una decisión de diseño: queda registrado como Q-I5.',
 };
