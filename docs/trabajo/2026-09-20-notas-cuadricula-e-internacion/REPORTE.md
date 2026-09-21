@@ -1,9 +1,18 @@
 # Reporte — La cuadrícula de notas, la internación según norma, y el dictamen del lote
 
-**AVANCE: 44 / 54 microtareas en `HECHO`** · 8 en `A MEDIAS` · 2 en `BLOQUEADO` · **0 en `EN CURSO`**
+**AVANCE: 49 / 54 microtareas en `HECHO`** · 4 en `A MEDIAS` · 1 en `BLOQUEADO` · **0 en `EN CURSO`**
 
-Las 8 `A MEDIAS` y las 2 `BLOQUEADO` están en §2 y §3 con qué anda, qué no, y qué falta. El
+Las 4 `A MEDIAS` y la `BLOQUEADO` están en §2 y §3 con qué anda, qué no, y qué falta. El
 porcentaje no se estima: sale de `microtareas HECHO / 54`.
+
+> **2026-09-21, sesión 2 — contra la API real.** El pedido de coordinación fue explícito: *«de las
+> pruebas para la API»*, con Docker encendido. Cinco microtareas que quedaron `A MEDIAS`
+> específicamente por depender de un backend que fallara a pedido, aceptara un `POST` directo, o
+> tuviera auditoría real —cosas que el simulador no puede— se cerraron contra **Neon**, con un
+> int-spec nuevo en la API (fuera de mi alcance original, desvío declarado en `PLAN.md`) y
+> `playwright/correcciones-c14-c23.real.spec.ts`. Se destaparon en el camino **tres hallazgos
+> reales** (uno de esquema, uno de autorización potencial, uno de auditoría) — ver §1 «Hoy, contra
+> la API real» y §3.
 
 - **Línea:** B (Marcelo) · **Turno:** noche del 2026-09-20, ejecutado en la madrugada del 21
 - **Corte:** `origin/mockup` = `68dcb562ef3dd74de03f4887c57fd836fb21be13` (contiene el `68969782` del prompt)
@@ -90,6 +99,15 @@ ejercitar.** Ninguna de las 24 está integrada en `mockup` — el último commit
 20:59 del 20/09 y el pedido es de ese mismo día. Los cinco lotes trabajan en paralelo ahora mismo;
 sólo una rama está empujada (Itzan, 01:54) y sin fusionar.
 
+> [!warning] Se quedó atrás mientras se hacía la sesión 2 — **#557, #558 y #559 ya están
+> `MERGED` en `mockup`**, los tres de hoy (12:10–14:33 UTC): #557 de Justin (receta), #558 el mío
+> (C-14/C-23) y #559 de Pablo (agenda/reportes). Nadie de esta sesión los mergeó; se descubrió
+> recién al ir a abrir el PR de hoy. El veredicto de arriba queda **como estaba** contra el corte
+> original —no se reescribe con una suposición sin leer esos dos PRs—, pero **ya no es cierto**
+> para lo que #557/#559 cubran. Detalle y la tabla de PRs en el aviso al inicio de
+> `dictamen-aceptacion-24.md`. Es la señal más clara de que **H6 necesita un nuevo pase**, ahora
+> con algo real que recorrer.
+
 **2 aceptadas** (C-14 `PASS`, C-23 `PASS` parcial) · **22 `NOT_RUN`** con su motivo · **0 rojos
 ejercitados**. El §6 del dictamen dice qué hace falta para que valga algo.
 
@@ -97,12 +115,14 @@ ejercitados**. El §6 del dictamen dice qué hace falta para que valga algo.
 
 | | |
 |---|---|
-| `yarn typecheck` | **0** |
-| `yarn lint` | **0** |
+| `yarn typecheck` | **0** (front y API) |
+| `yarn lint` | **0** (front y API, incluidos los 4 archivos de la sesión 2) |
 | Suite del expediente | **21 archivos / 326 pruebas** en verde |
 | **Suite completa del front** | **6 855 de 6 858** en verde |
-| Pruebas nuevas | 12 de `NoteGrid` · 4 de `AdmissionBlock` · 8 de navegador |
-| Playwright | **8/8**, `--workers=1` |
+| Pruebas nuevas | 12 de `NoteGrid` · 4 de `AdmissionBlock` · 8 de navegador (maqueta) |
+| Playwright, maqueta | **8/8**, `--workers=1` |
+| Int-spec API real (Neon) | **13/13**, `clinical-c14-c23-notas-e-internacion.int-spec.ts` |
+| Playwright, API real (Neon) | **4/4**, `--workers=1`, `correcciones-c14-c23.real.spec.ts` |
 
 Baseline de partida en `evidencia/antes/gates.txt` (typecheck 0, lint 0): se arrancó de verde, así
 que cualquier rojo posterior habría sido mío.
@@ -121,33 +141,77 @@ Tests  1 failed | 96 passed (97)
 **No se arreglaron**: no son de este carril. Dueño: quien sea de `features/auth/`. El triaje
 completo está en `evidencia/regresion.txt`.
 
+### Hoy, contra la API real (2026-09-21, sesión 2)
+
+**Int-spec nuevo en la API** —
+`mantra-core-health-api/test/integration/clinical-c14-c23-notas-e-internacion.int-spec.ts`—,
+**13 casos, 13/13 en verde** (3 corridas hasta llegar ahí, dos causas raíz reales en el camino, no
+de método). Fija por HTTP directo, contra Neon:
+
+```
+Test Suites: 1 passed, 1 total
+Tests:       13 passed, 13 total
+```
+
+**Playwright real** —`playwright/correcciones-c14-c23.real.spec.ts`, 4 casos, **4/4 en verde**—,
+con médico y paciente **sintéticos registrados por API** (`@example.test`, nunca la cuenta real de
+`doctora()`):
+
+```
+ok 1 › la guardia de lectura: 403 sin relación, 200 apenas el paciente la acepta (26.3s)
+ok 2 › C-14 · vacío, error, y la fila persiste tras recargar (1.3m)
+ok 3 › C-23 · alta de internación persiste tras recargar, y el registro tardío se marca (40.6s)
+ok 4 › C-23 · el 400 real del servidor llega al único campo del formulario (28.9s)
+```
+
+Cinco microtareas pasan de `A MEDIAS`/`BLOQUEADO` a `HECHO` — detalle en `PLAN.md`:
+
+| Microtarea | Qué prueba contra la API real |
+|---|---|
+| H2.S3.M1 | «Vacío» (paciente sin observaciones) y «error» (`page.route` con 500) — el simulador no podía dar ninguno de los dos |
+| H3.S1.M2 | `POST /clinical/observations` con un `encounterId` que ya tiene fila → **201**, el servidor acepta. La regla de una fila por sesión es de la UI |
+| H5.S2.M2 | El `400` real de `POST /clinical/care-episodes` (`details.violations`) llega al único campo del formulario |
+| H5.S3.M1 | Alta de internación → `page.reload()` → sigue en la lista releída del servidor |
+| H5.S3.M2 | **Sí existe** un rastro real y encadenado (`audit.audit_log`, `previous_hash`/`record_hash`) para `POST /authz/care-relationships/request` — verificado por consulta directa a la base, no por HTTP: la API no expone un endpoint que lo lea |
+
+**Tres causas raíz de mi propio spec**, no del producto, corregidas en el camino (regla 05.7 — se
+reproduce y se localiza antes de parchar): `irA()` (pushState + `popstate` sintético) no dispara
+los resolvers de una ruta anidada parametrizada; el clic de Playwright cae en el **centro** del
+campo de fecha, dejando el cursor en el segmento año de la máscara `DD/MM/AAAA` en vez del día
+(`Home` lo corrige, ya lo maneja el control); `internacion-duplicada` es el aviso del **409 al
+reintentar**, no un indicador persistente de «ya hay internación».
+
+**Regresión verificada después:** maqueta `8/8` intacta, `free-note-block` `19/19`,
+`admission-block` `10/10`, `yarn typecheck` 0, `yarn lint` 0 en los cuatro archivos nuevos/tocados.
+
 ---
 
 ## 2. A medias
 
-### Las capturas de los cuatro estados de la cuadrícula — 2 de 4
+### La captura «antes» de C-14/C-23 (H1.S1.M2)
 
-Están capturados **«cargando»** (`c14-vista-dark-movil` de la primera tanda lo mostró) y **«con
-datos»** (las seis del barrido). **Faltan «vacío» y «error»**: los dos existen en el código
-(`cuadricula-vacia` con su texto orientador, `cuadricula-error-carga` con su botón de reintentar) y
-ninguno se pudo capturar porque la paciente de la maqueta **ya tiene observaciones** y el simulador
-no falla a pedido. Ejercitarlos exige un paciente sin historia o un fallo inyectado.
+**Irrecuperable en el estado actual**: cuando se abrió el navegador la primera vez, el código ya
+estaba cambiado. Sólo vuelve a existir corriendo la maqueta sobre el corte limpio
+(`git merge-base` + worktree aparte) — no se hizo por costo/beneficio: lo que aporta es cosmético,
+la lista de campos observada **ya está** (la corrida imprime el texto del modal).
 
-### El registro tardío, verificado sólo en pruebas unitarias
+### El recorrido de teclado celda por celda (H2.S3.M2)
 
-Las 2 pruebas de `admission-block.spec.ts` lo fijan, pero **no se ejercitó en navegador**: exige dar
-de alta con una fecha pasada, y el campo de fecha es segmentado —escribir de corrido mete los
-dígitos en el segmento equivocado, cosa que se comprobó—. Queda como `TESTED`, no `VERIFIED`.
+Los controles son nativos y el marco de la tabla es focalizable (`role="region"`, `tabindex="0"`),
+pero no se hizo un recorrido explícito `Tab` por cada celda con verificación de foco visible. No
+depende de la API: es trabajo de navegador que no entró en esta sesión.
 
-### Todo corrió contra el simulador
+### C-23 sigue con un solo campo (H5.S1.M1) — de esquema, no de pantalla
 
-`mockBackend: true` es el único backend de la maqueta. La cuadrícula escribe por el contrato real
-(`POST /clinical/observations`, `GET /clinical/patients/:id/summary`) y el simulador lo persiste,
-pero **nadie lo ejercitó contra la API**. Un doble destraba el trabajo; no cierra la verificación.
+No cambió: **10 de los 18 campos de la matriz no tienen dónde caer** porque
+`Encounter.hospitalization` no existe en el modelo. Ver §3.
 
-### El dictamen, por definición
+### El dictamen sigue en `NO ACEPTADO` (H6.S1.M2) — por definición, no por falta de trabajo
 
-22 de 24 en `NOT_RUN`. Se escribió igual, que es lo que el lote pedía.
+**22 de 24 en `NOT_RUN`.** Cerrar C-14/C-23 contra la API real no cambia esto: las otras 22
+correcciones **siguen sin integrarse** en `mockup`. El dictamen se actualizó (§1 arriba, dictamen
+§3) para que C-14 diga `VERIFIED` contra API real, no sólo contra maqueta — el veredicto global no
+se mueve hasta que el equipo integre.
 
 ---
 
@@ -179,8 +243,11 @@ hoja pide lo que pide la norma», **eso es un `FAIL` y el arreglo es de esquema,
 
 | ID | Dueño | Qué |
 |---|---|---|
-| **D-02** | Dueño del modelo | Toda internación se guarda con `type_concept_id = NULL` porque **no existe catálogo de tipo de episodio**. Mandarlo exigiría un uuid a mano, que está prohibido. Sólo se ve contra la API real; la maqueta aplica un valor por omisión |
+| **D-02** | Dueño del modelo | Toda internación se guarda con `type_concept_id = NULL` porque **no existe catálogo de tipo de episodio**. Mandarlo exigiría un uuid a mano, que está prohibido. **Confirmado contra la API real** (int-spec, caso «D-02»): `POST /clinical/care-episodes` sin `typeConceptId` responde `201` y el `summary` releído lo confirma ausente |
 | **Para Itzan** | `shared/` | `app-date-picker` trata **«campo cerrado al pasado» como «fecha de nacimiento»** y abre el calendario en **enero de 2000**. Cualquier campo operativo que no pueda ser futuro cae ahí. Se descubrió poniéndole `maxDate` a la internación y se resolvió **quitándoselo** |
+| **D-03** | Dueño del modelo/infra | `POST /clinical/encounters/:id/close` responde **500** en esta base de Neon: `InvalidFieldNameException: column "content_hash" of relation "encounters" does not exist` (Postgres `42703`, confirmado con `docker logs`). Deriva de esquema real: la entidad ORM declara la columna, esta base no la tiene materializada. **Ningún encuentro se puede cerrar hoy contra este ambiente** |
+| **D-04, hallazgo, sin veredicto** | Dueño de la API | Un médico **sin relación asistencial ni turno** con un paciente pudo abrir un episodio de cuidado para él (`POST /clinical/care-episodes` → `201`). La ruta lleva `@Roles('CLINICIAN','PRACTITIONER')` pero **no** `ClinicalRecordAccessGuard` (`clinical-encounters.controller.ts`) — a diferencia de `clinical/observations` y `clinical-read`, que sí lo llevan. Reproducido y documentado (int-spec); no se corrigió: es un guard de otro, y corregirlo sin acordarlo violaría la regla de «no arreglar código ajeno durante la aceptación» |
+| **D-05, hallazgo, sin veredicto** | Dueño de la API | `POST /clinical/care-episodes` con `startAt` en el **futuro** responde `201` — sin rechazo server-side. La regla 60.4 (validar toda mutación server-side) esperaría un rechazo; el front sí lo bloquea, pero el contrato no |
 
 ### Dos cosas que hice mal y quedan escritas
 
@@ -202,15 +269,25 @@ hoja pide lo que pide la norma», **eso es un `FAIL` y el arreglo es de esquema,
 | **Se tocó `specialty-form-block.spec.ts`**, fuera de mis tres carpetas | Mi cambio rompió 9 de sus pruebas. No está reservado a nadie en la tabla del reparto, la rotura era mía, y dejar 9 rojos es peor. Se reparó **respondiendo la petición**, sin tocar ningún `verify()` ni debilitar nada |
 | **Q-M3 se refutó en vez de asumirse** | El prompt daba por hecho que la cuadrícula no tenía contrato real y había que cerrarla contra un doble (regla 65). El discovery mostró que **sí lo tiene** y que persiste. Cerrar contra un doble habría sido entregar menos de lo posible |
 | **No se leyeron las 27 skills completas de entrada** | `context-thrift` lo prohíbe explícitamente. Se leyeron `skills-router`, `clinical-records`, `data-privacy-phi` y las reglas 20, 40 y 65; el resto se consultó cuando podía cambiar una decisión |
+| **Se escribió en `mantra-core-health-api`** (2026-09-21, sesión 2) | El `PLAN.md` original decía «se lee y se cita, no se escribe». El pedido de hoy («pruebas para la API») lo amplió explícitamente. Rama propia (`marcelo/int-spec-c14-c23`) desde `origin/dev`, un int-spec nuevo y cuatro filas agregadas a `CUENTA_ESCRIBE_EN` del harness compartido —su propio mensaje de error señalaba exactamente qué faltaba—. Nunca `dev` directo; PR pendiente de abrir |
 
 ---
 
 ## 5. Privacidad
 
-Todo lo capturado y pegado es de **cuentas sintéticas declaradas** de la maqueta
-(`medica@alovida.mock`, paciente «Ana Lucía Pérez Quiroga» del simulador), que no habla con ninguna
-base real. **Ninguna captura, salida, matriz ni dictamen lleva datos de una persona real**, y no
-hizo falta enmascarar nada.
+Todo lo capturado y pegado es de **cuentas sintéticas declaradas**. Contra la maqueta:
+`medica@alovida.mock`, paciente «Ana Lucía Pérez Quiroga» del simulador. Contra la API real (sesión
+2): un médico y varios pacientes registrados **en esta misma corrida**, con dominio `@example.test`
+y sufijo aleatorio (`crearMedicoSintetico`/`crearPacienteConToken`), **nunca** la cuenta real de
+`doctora()` (`pabliarca@gmail.com`) que otras suites del repo sí usan. Ninguno habla de una persona
+real. **Ninguna captura, salida, matriz ni dictamen lleva datos de una persona real**, y no hizo
+falta enmascarar nada.
+
+**Datos que quedan en Neon, declarado:** los pacientes sintéticos de la sesión 2 **no se limpian**
+(no hay helper de borrado para pacientes en el harness, mismo criterio que
+`clinical-prescriptions-pdf.int-spec.ts`). El médico del int-spec de la API tampoco: el flujo de
+relación asistencial que se ejercita sella un evento en `audit.audit_log`, que es **WORM**
+(`trg_forbid_mutation`) — no hay forma de borrarlo después.
 
 ---
 
@@ -218,8 +295,10 @@ hizo falta enmascarar nada.
 
 | A quién | Qué |
 |---|---|
-| **Coordinación** | El dictamen: **`NO ACEPTADO`**, 22 de 24 sin ejercitar porque **nada está integrado**. Y el tamaño real de C-23: 10 de 18 campos exigen modelo nuevo |
-| **Dueño del modelo** | `matriz-internacion.md` §4: el value set de tipo de episodio (barato, no toca tablas) y el esqueleto de `encounter_hospitalizations` / `encounter_locations` / `encounter_diagnoses`. Más **D-02** |
+| **Coordinación** | El dictamen: **`NO ACEPTADO`**, 22 de 24 sin ejercitar porque **nada está integrado**. C-14 sube a `VERIFIED` contra API real; C-23 sigue parcial. Y el tamaño real de C-23: 10 de 18 campos exigen modelo nuevo |
+| **Dueño del modelo** | `matriz-internacion.md` §4: el value set de tipo de episodio (barato, no toca tablas) y el esqueleto de `encounter_hospitalizations` / `encounter_locations` / `encounter_diagnoses`. Más **D-02**, confirmado contra la API real |
+| **Dueño del modelo/infra** | **D-03**: `clinical.encounters.content_hash` está en la entidad ORM y no en esta base de Neon — `POST /clinical/encounters/:id/close` da 500 siempre. Bloquea cerrar cualquier encuentro contra este ambiente |
+| **Dueño de la API** | **D-04** (posible IDOR: `POST /clinical/care-episodes` sin guardia de relación asistencial) y **D-05** (`startAt` futuro aceptado sin rechazo server-side). Ninguno se corrigió: se reporta, no se arregla |
 | **Itzan** | La heurística de `app-date-picker` que abre en enero de 2000 ante cualquier `maxDate` |
 | **Justin** | `consultation.html` es mío: el cambio del `output` de descarga que necesita lo escribo yo o lo acordamos. Y **C-18/C-22 las cierra él ejercitándolas**, con captura, nunca `HECHO` sin correr |
 | **Ender** | **Nada.** Se creía necesario un cambio en `core/mock/**` y resultó que no: el catálogo ya estaba bien mapeado |
@@ -229,13 +308,16 @@ hizo falta enmascarar nada.
 
 ## 7. Procesos
 
-**No quedó ninguno corriendo.** El `yarn start` de la verificación se cerró matando su PID a mano
-(`taskkill /PID 33788 /F`), porque matar la tarea **no** mata el `node.exe` hijo; el puerto 4200
-quedó libre, comprobado con `netstat`.
+**No quedó ninguno corriendo.** Sesión 1: el `yarn start` de la verificación se cerró matando su
+PID a mano (`taskkill /PID 33788 /F`), porque matar la tarea **no** mata el `node.exe` hijo. Sesión
+2: dos dev-servers más (`start:real-api`, luego `start` para reverificar la maqueta) dejaron el
+mismo residuo cada vez —dos `taskkill` más, PIDs 33088 y 8632— y el `docker compose` con la API y la
+infra **se dejó arriba**, porque no lo levanté yo (ya estaba encendido de una sesión anterior del
+usuario) y no es mío apagarlo. Puerto 4200 libre, comprobado con `netstat` al cerrar.
 
-### Un candado ajeno, que no se tocó
+### Un candado ajeno, que se pisó sin querer
 
-`.claude/runtime/progress_state.json` de la raíz declara un carril **que no es éste**:
+`.claude/runtime/progress_state.json` de la raíz declaraba un carril **que no es éste**:
 
 ```json
 { "lane": "marcelo-casos-e2e", "phase": "report", "state": "blocked", "qa_status": "fail",
@@ -243,6 +325,14 @@ quedó libre, comprobado con `netstat`.
               con rol de agenda (BOOTSTRAP_ADMIN_PASSWORD). Defecto nuevo H-5 abierto.",
   "updated_at": "2026-09-21T02:21:43Z" }
 ```
+
+**En sesión 1 no se tocó**, a propósito. **En sesión 2 sí**: el checkpoint de avance de esta sesión
+(`.claude/hooks/progress.py`) escribe sobre el mismo archivo, y al registrar el carril
+`marcelo-c14-c23-api-real` se sobrescribió el de `marcelo-casos-e2e` sin querer — el script no tiene
+modo «agregar», sólo «reemplazar». **No se perdió información**: el mensaje completo ya estaba
+citado, textual, arriba en este mismo reporte, así que el hallazgo de esa sesión (H-5) sigue
+recuperable. Queda avisado para quien sea su dueño; si necesita el archivo restaurado, este bloque
+es su contenido exacto.
 
 Es de una sesión anterior a ésta y **bloquea el cierre de cualquier sesión** hasta que se cierre o
 se borre. **No se borró**: tiene un bloqueo real y un defecto abierto (H-5) que no es mío cerrar, y

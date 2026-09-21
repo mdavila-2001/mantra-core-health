@@ -51,3 +51,64 @@ CLASE: PRODUCT_BUG o TEST_BUG del corte, no de este carril. DUENO: quien sea de 
 NO se arreglo: no es de este carril y la regla del reparto lo prohibe.
 
 RESULTADO NETO DEL CARRIL: 6855 pruebas en verde de 6858. Los 3 rojos ya estaban.
+
+=== SESION 2, 2026-09-21 — CONTRA LA API REAL (NEON, DOCKER) ===
+
+--- API: typecheck / lint / int-spec (mantra-core-health-api, rama marcelo/int-spec-c14-c23) ---
+TYPECHECK_EXIT=0
+LINT_EXIT=0 (2 hallazgos de prettier corregidos con --fix, 0 tras el fix)
+
+$ yarn test:integration --testPathPatterns=clinical-c14-c23
+Test Suites: 1 passed, 1 total
+Tests:       13 passed, 13 total
+Time:        213.224 s
+(corrida 1: 12/13 — fallo de aserción mio, null vs undefined, corregido a toBeNull.
+ corrida 2: 13/13 pero afterAll fallo al limpiar por audit.audit_log WORM — no se
+ fuerza el borrado, se documenta y se sigue. corrida 3: 13/13, afterAll limpio)
+
+--- Front: typecheck / lint (mantra-core-health, rama marcelo/notas-cuadricula-e-internacion) ---
+TYPECHECK_EXIT=0
+LINT_EXIT=0 (4 archivos nuevos/tocados: playwright/correcciones-c14-c23.real.spec.ts,
+ playwright/support/api-real-clinica.ts)
+
+--- Playwright, API real (mockBackend:false, ng serve --configuration real-api, :4200 -> API :3000) ---
+$ E2E_BASE_URL=http://localhost:4200 E2E_API_URL=http://localhost:3000 \
+    npx playwright test playwright/correcciones-c14-c23.real.spec.ts --workers=1 --reporter=list
+
+ok 1 la guardia de lectura: 403 sin relación, 200 apenas el paciente la acepta (26.3s)
+ok 2 C-14 · vacío, error, y la fila persiste tras recargar (1.3m)
+ok 3 C-23 · alta de internación persiste tras recargar, y el registro tardío se marca (40.6s)
+ok 4 C-23 · el 400 real del servidor llega al único campo del formulario (28.9s)
+4 passed (2.9m)
+(corridas 1-4 con fallos reales de causa raíz, ver REPORTE.md §1 "Hoy, contra la API real"
+ y PLAN.md; corrida 5 en verde)
+
+--- Regresión tras los cambios: maqueta y specs unitarios ---
+$ npx playwright test playwright/correcciones-c14-c23.spec.ts --workers=1 --reporter=list
+8 passed (2.4m)   # intacto, mockBackend:true
+
+$ npx ng test --include="src/app/features/clinical-record/patient-chart/free-note-block/**/*.spec.ts" --watch=false
+Test Files 2 passed (2) · Tests 19 passed (19)
+
+$ npx ng test --include="src/app/features/clinical-record/patient-chart/admission-block/*.spec.ts" --watch=false
+Test Files 1 passed (1) · Tests 10 passed (10)
+
+=== HALLAZGOS DE LA SESION 2 (documentados en defectos-reportados.md, ninguno corregido) ===
+
+D-02 confirmado contra la API real (era teórico, ahora medido): POST /clinical/care-episodes
+  sin typeConceptId -> 201, summary lo confirma ausente.
+D-03 (nuevo): POST /clinical/encounters/:id/close -> 500 en esta base de Neon.
+  InvalidFieldNameException: column "content_hash" of relation "encounters" does not exist
+  (Postgres 42703). Deriva de esquema real. Dueño: modelo/infra.
+D-04 (hallazgo, sin veredicto): un médico SIN relación asistencial pudo abrir un episodio de
+  cuidado para un paciente ajeno (201). clinical-encounters.controller.ts no lleva
+  ClinicalRecordAccessGuard en POST care-episodes. Dueño: API.
+D-05 (hallazgo, sin veredicto): startAt futuro en care-episodes se acepta sin rechazo
+  server-side (201). Dueño: API.
+H5.S3.M2 revisado: SI existe auditoría real y encadenada (audit.audit_log, previous_hash/
+  record_hash) para POST /authz/care-relationships/request, pero GET /audit/history/:entity/:id
+  no cubre care_episodes/care_relationships (solo las tablas *_history del espejo de
+  HistoryMirrorSubscriber). Verificado por consulta directa a Neon, no por HTTP.
+
+RESULTADO NETO DE LA SESION 2: 5 microtareas de A MEDIAS/BLOQUEADO -> HECHO (H2.S3.M1, H3.S1.M2,
+H5.S2.M2, H5.S3.M1, H5.S3.M2). Avance del carril: 44/54 -> 49/54.

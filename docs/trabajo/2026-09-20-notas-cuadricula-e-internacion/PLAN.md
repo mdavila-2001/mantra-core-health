@@ -40,6 +40,17 @@ Skills cargadas de entrada: `skills-router`, `clinical-records`, `data-privacy-p
 20, 40 y **65**. El resto se carga cuando pueda cambiar una decisión concreta (`context-thrift`),
 no de entrada — leer 27 skills completas antes de empezar es exactamente lo que esa skill prohíbe.
 
+## Desvío declarado (2026-09-21) — hoy sí se escribió en `mantra-core-health-api`
+
+Este `PLAN.md` decía en su cabecera «`mantra-core-health-api` … se lee y se cita, no se escribe».
+Cuando el pedido pasó a «pruebas para la API» se amplió: **rama propia**
+(`marcelo/int-spec-c14-c23`, desde `origin/dev`), **un archivo nuevo**
+(`test/integration/clinical-c14-c23-notas-e-internacion.int-spec.ts`, 13 casos) y **una adición**
+al harness compartido (`CUENTA_ESCRIBE_EN` en `test/integration/harness.ts`: cuatro tablas que la
+propia limpieza señaló como faltantes con su error). Nunca `dev` directo: PR pendiente de abrir
+(ver §5 del reporte). No se tocó ningún archivo de dominio de la API — sólo el arnés de pruebas
+y las pruebas mismas.
+
 ## Alcance
 
 - **IN:** corte y capturas previas · marco normativo con procedencia o `UNKNOWN` · descarte escrito
@@ -148,8 +159,9 @@ confirmado está `UNKNOWN`. **DoD:** cero campos sin fuente ni marca; cero fuent
 de cada cabecera y se carga una fila, con los cuatro estados resueltos y usable con teclado.
 **DoD:** las 9 en `HECHO` o `BLOQUEADO`; la fila **releída** del servidor; los 4 estados capturados.
 **Kill-test:** cargar fila → recargar → reabrir. Si no está, estaba pintada.
-**Estado:** A MEDIAS — 7 de 9 en `HECHO`. **El kill-test pasa en navegador.** Faltan 2 de los 4
-estados capturados (vacío y error) y el recorrido de teclado celda por celda
+**Estado:** A MEDIAS — 8 de 9 en `HECHO`. **El kill-test pasa en navegador y contra la API real.**
+Los 4 estados (H2.S3.M1) se cerraron contra Neon (`correcciones-c14-c23.real.spec.ts`), no contra
+la maqueta: ésta no falla a pedido. Falta H2.S3.M2, el recorrido de teclado celda por celda.
 
 ### H2.S1 — Las cabeceras se eligen
 | ID | Microtarea | CA (binario) | DoD | Estado |
@@ -168,7 +180,7 @@ estados capturados (vacío y error) y el recorrido de teclado celda por celda
 ### H2.S3 — Los cuatro estados y el teclado
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
-| H2.S3.M1 | Resolver los 4 estados, con el vacío orientando | Los 4 existen; el vacío dice qué hacer | 4 capturas. Regla 95.2: vacío mudo prohibido | A MEDIAS — «cargando» y «con datos» capturados; **«vacío» y «error» no**: la paciente de la maqueta ya tiene observaciones y el simulador no falla a pedido |
+| H2.S3.M1 | Resolver los 4 estados, con el vacío orientando | Los 4 existen; el vacío dice qué hacer | 4 capturas. Regla 95.2: vacío mudo prohibido | HECHO — «cargando» y «con datos» ya estaban (maqueta); **«vacío» y «error» cerrados contra la API real** (`c14-real-vacio.png`, `c14-real-error.png`): un paciente recién registrado sin observaciones para el vacío, `page.route` con 500 para el error — ninguno de los dos era posible contra el simulador |
 | H2.S3.M2 | Recorrido con teclado por celda | Se llega a cada celda sin ratón | Recorrido + captura del foco | A MEDIAS — los controles son nativos y el marco de la tabla es focalizable, pero **no se hizo un recorrido de teclado celda por celda** |
 | H2.S3.M3 | Móvil estrecho sigue usable | Sin desborde ni celdas inalcanzables | Captura móvil. Regla 95.4.4 | HECHO |
 
@@ -179,14 +191,15 @@ explica que por integridad sólo se admite una —sin eso no se sabría a qué s
 registro—; y las filas anteriores se cargan y se ven.
 **DoD:** las 9 en `HECHO` o `BLOQUEADO`; la segunda fila **no** queda guardada.
 **Kill-test:** intentar la segunda y recargar. Si quedaron dos, la restricción está sólo en el cartel.
-**Estado:** A MEDIAS — 8 de 9 en `HECHO`. **El kill-test pasa.** Falta forzar un `POST` directo
-para ver qué contesta el servidor si la petición llega igual (H3.S1.M2)
+**Estado:** HECHO — 9 de 9. **El kill-test pasa.** El `POST` directo se forzó contra la API real
+(H3.S1.M2): el servidor **acepta** una tercera observación con el mismo `encounterId` — la regla de
+«una fila por sesión» es de la UI, el contrato no la tiene.
 
 ### H3.S1 — La restricción donde se escribe
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
 | H3.S1.M1 | Freno en la UI con fila ya registrada | El camino no está disponible | Captura | HECHO |
-| H3.S1.M2 | Qué hace el servidor si la petición llega igual | Respuesta real registrada | Petición y respuesta pegadas. Regla 96.3.2 | A MEDIAS — el camino de la UI desaparece; **no se forzó un `POST` directo** para ver qué responde el simulador con la fila ya existente |
+| H3.S1.M2 | Qué hace el servidor si la petición llega igual | Respuesta real registrada | Petición y respuesta pegadas. Regla 96.3.2 | HECHO — forzado contra la API real: `POST /clinical/observations` con el mismo `encounterId` responde **201**. `clinical-c14-c23-notas-e-internacion.int-spec.ts`, caso «H3.S1.M2» |
 | H3.S1.M3 | Releer tras el intento: una sola fila | Hay exactamente una | Captura tras recargar | HECHO |
 
 ### H3.S2 — El mensaje que explica, no el que sólo niega
@@ -239,8 +252,10 @@ soportados, valida, y la internación se relee con esos datos.
 **DoD:** las 9 en `HECHO` o `BLOQUEADO`; releído tras recargar; el `409` sigue contándose como «ya
 está internada».
 **Kill-test:** dar de alta, recargar, reabrir. Si los campos nuevos no están, se guardaron en la pantalla.
-**Estado:** A MEDIAS — 5 de 9 en `HECHO`. **No se pudo agregar ningún campo de entrada: el contrato
-no admite otro.** Lo que entró fueron lecturas que se descartaban. El tamaño real está en la matriz
+**Estado:** A MEDIAS — 7 de 9 en `HECHO`. **No se pudo agregar ningún campo de entrada: el contrato
+no admite otro.** Lo que entró fueron lecturas que se descartaban. El tamaño real está en la matriz.
+El error de campo y la relectura tras recargar (H5.S2.M2, H5.S3.M1) se cerraron contra la API real;
+el rastro de auditoría (H5.S3.M2) sigue sin verse desde la UI, pero ahora se sabe que **sí existe**.
 
 ### H5.S1 — Los campos que entran hoy
 | ID | Microtarea | CA (binario) | DoD | Estado |
@@ -253,14 +268,14 @@ no admite otro.** Lo que entró fueron lecturas que se descartaban. El tamaño r
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
 | H5.S2.M1 | Validar lo obligatorio según la fuente | No se manda sin eso | Caso + captura | HECHO |
-| H5.S2.M2 | Error de campo del servidor mapeado a su campo | Llega a su campo | Caso ejercitado. Regla 95.3.2 | A MEDIAS — **no se ejercitó** un error de campo del servidor; el `409` sí |
+| H5.S2.M2 | Error de campo del servidor mapeado a su campo | Llega a su campo | Caso ejercitado. Regla 95.3.2 | HECHO — cuerpo del `400` capturado contra la API real (`details.violations`, int-spec) y reproducido en navegador con `page.route`; llega a `internacion-error`, el único campo del formulario. Declarado: el contrato no manda nombre de campo estructurado, así que «a su campo» es por adyacencia (un solo campo) |
 | H5.S2.M3 | El `409` sigue siendo «ya está internada» | El ámbar sigue apareciendo | Caso + captura | HECHO |
 
 ### H5.S3 — Guardado real y rastro
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
-| H5.S3.M1 | Alta con los campos nuevos y relectura | Los datos están tras recargar | Captura tras recargar | A MEDIAS — la lista sale de releer el expediente del servidor tras el alta, pero **no se recargó la página** para comprobarlo |
-| H5.S3.M2 | Rastro de acción sensible | Hay rastro o `NOT_RUN` con motivo | Evidencia o declaración. Regla 90.2.7 | BLOQUEADO — el rastro de auditoría **no es verificable en la maqueta**: el simulador no expone bitácora. Exige la API real |
+| H5.S3.M1 | Alta con los campos nuevos y relectura | Los datos están tras recargar | Captura tras recargar | HECHO — cerrado contra la API real: alta → `page.reload()` → la lista releída del servidor sigue mostrando la internación (`c23-real-tras-recargar.png`) |
+| H5.S3.M2 | Rastro de acción sensible | Hay rastro o `NOT_RUN` con motivo | Evidencia o declaración. Regla 90.2.7 | A MEDIAS, con hallazgo — **sí existe** un rastro real y encadenado (`audit.audit_log`, hash previo/actual) para `POST /authz/care-relationships/request` (`authz-care-relationships.service.ts:149`), pero **la API no expone ningún endpoint de lectura para él**: `GET /audit/history/:entity/:id` sólo cubre las tablas `*_history` del espejo de `HistoryMirrorSubscriber`, y `care_episodes`/`care_relationships` no están entre ellas. No hay pantalla que lo muestre; verificado por consulta directa a la base, no por HTTP |
 | H5.S3.M3 | Ninguna captura con paciente real | Todo sintético | Revisión. Regla 90.2.3 | HECHO |
 
 ## H6 — El dictamen de aceptación de las 24 correcciones
