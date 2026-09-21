@@ -333,6 +333,35 @@
               </div>
             }
 
+            @case ('no-disponible') {
+              <!-- C-10 · el cupo que EXISTE y no se puede tomar: cerrado o sin
+                   lugar. Se ve, porque el día tiene que leerse completo, pero
+                   no invita y no es tocable. Y lo dice con la palabra: en
+                   escala de grises «no disponible» y «disponible» tienen que
+                   seguir distinguiéndose (regla 95.4.6). -->
+              <span class="dia__hora">
+                {{ bloque.desde | date: 'HH:mm' }}–{{ bloque.hasta | date: 'HH:mm' }}
+              </span>
+              <div class="dia__cuerpo">
+                <p class="dia__no-disponible" data-testid="dia-no-disponible">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="m6 6 12 12" />
+                  </svg>
+                  No disponible<span class="dia__no-disponible-motivo">
+                    · {{ bloque.motivo ?? 'sin lugar' }}</span
+                  >
+                </p>
+              </div>
+            }
+
             @case ('libre') {
               <span class="dia__hora">
                 {{ bloque.desde | date: 'HH:mm' }}–{{ bloque.hasta | date: 'HH:mm' }}

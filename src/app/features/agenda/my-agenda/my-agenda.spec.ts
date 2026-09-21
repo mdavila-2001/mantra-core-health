@@ -5,6 +5,8 @@ import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import type { DialogConfig } from '../../../shared/components/molecules/dialog/dialog.types';
 import { MyAgenda } from './my-agenda';
 
 const TENANT = '11111111-1111-1111-1111-111111111111';
@@ -279,6 +281,148 @@ describe('MyAgenda', () => {
       fixture.detectChanges();
       sinOcupacion();
       expect($('app-day-view')).not.toBeNull();
+    });
+  });
+
+  /* -- El horario extra del final del día (C-10, 2026-09-20) ---------------- */
+
+  /**
+   * «Poder agregar un horario al final en caso de emergencia».
+   *
+   * Lo que estas pruebas fijan, y por qué importa cada una:
+   *
+   * 1. **Se pregunta antes**, con un diálogo que nombra que se sale del horario
+   *    de atención. Cancelar no manda nada.
+   * 2. **Es una excepción `EXTRA` con `isAvailable: true`**, no un cupo
+   *    inventado. `EXTRA` es el único tipo del catálogo con `blocks: false`: el
+   *    único que AÑADE disponibilidad. Un cupo escrito por el cliente sería
+   *    disponibilidad que el horario publicado no respalda.
+   * 3. **La franja arranca después de lo último que hay ese día**, para que
+   *    extender dos veces no pise la primera extensión.
+   */
+  describe('agregar un horario al final del día (C-10)', () => {
+    function calendarioConHorario(
+      rules: unknown[] = [{ dayOfWeek: new Date().getDay(), startTime: '09:00:00', endTime: '13:00:00', slotMinutes: 30 }],
+    ): void {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([]),
+          {
+            provide: AuthService,
+            useValue: {
+              practitionerProfileId: signal<string | null>(PERFIL),
+              activeTenantId: signal<string | null>(TENANT),
+              roles: signal<readonly string[]>(['PRACTITIONER']),
+            },
+          },
+        ],
+      });
+      fixture = TestBed.createComponent(MyAgenda);
+      fixture.componentRef.setInput('mode', 'calendar');
+      http = TestBed.inject(HttpTestingController);
+      fixture.detectChanges();
+      conRecurso();
+      conPlantilla(rules);
+      for (const req of http.match(
+        (r) =>
+          r.url === '/scheduling/slots' ||
+          r.url === '/scheduling/bookings' ||
+          r.url === '/scheduling/resources/res-1/exceptions',
+      )) {
+        req.flush({ items: [], count: 0 });
+      }
+      fixture.detectChanges();
+    }
+
+    /** Lo que la prueba invoca del componente, tipado. */
+    interface Extra {
+      agregarHorarioExtra(dia: Date): Promise<void>;
+    }
+    const extra = (): Extra => fixture.componentInstance as unknown as Extra;
+
+    /**
+     * Responde el diálogo del sistema y devuelve la configuración con que se
+     * abrió.
+     *
+     * Se espía `DialogService` en vez de buscar el `<dialog>` en el fixture:
+     * el servicio monta el modal en el `body`, fuera del árbol del componente,
+     * así que `fixture.nativeElement` no lo ve. Y además deja mirar el TEXTO
+     * exacto con que se preguntó, que es la mitad de lo que estas pruebas
+     * fijan.
+     */
+    function conDialogo(acepta: boolean): { config(): DialogConfig | undefined } {
+      const espia = vi
+        .spyOn(TestBed.inject(DialogService), 'confirm')
+        .mockResolvedValue(acepta);
+      return { config: () => espia.mock.calls[0]?.[0] };
+    }
+
+    it('NIVEL CORRECTO · confirmar manda una excepción EXTRA que ABRE disponibilidad', async () => {
+      calendarioConHorario();
+      conDialogo(true);
+      await extra().agregarHorarioExtra(new Date());
+      fixture.detectChanges();
+
+      const req = http.expectOne(
+        (r) => r.url === '/scheduling/resources/res-1/exceptions' && r.method === 'POST',
+      );
+      // Los tres campos que hacen que esto sea un horario extra y no un bloqueo.
+      expect(req.request.body.exceptionType).toBe('EXTRA');
+      expect(req.request.body.isAvailable).toBe(true);
+      // Arranca al final del horario publicado —13:00— y dura un turno.
+      const desde = new Date(req.request.body.startAt as string);
+      const hasta = new Date(req.request.body.endAt as string);
+      expect(desde.getHours()).toBe(13);
+      expect((hasta.getTime() - desde.getTime()) / 60_000).toBe(30);
+      req.flush({ id: 'exc-extra', blockedSlots: 0 });
+      // Y vuelve a leer el día y el mes: la disponibilidad cambió.
+      for (const r of http.match(() => true)) r.flush({ items: [], count: 0 });
+      fixture.detectChanges();
+    });
+
+    it('NIVEL LÍMITE · un día SIN horario publicado también se puede extender, y el aviso lo dice', async () => {
+      // El borde del contrato: no hay `endTime` del que partir. La franja no se
+      // inventa a las 00:00 ni se cae: se propone el final de la tarde y el
+      // diálogo dice que ese día no se atiende.
+      calendarioConHorario([{ dayOfWeek: (new Date().getDay() + 3) % 7, startTime: '09:00:00', endTime: '13:00:00' }]);
+      const dialogo = conDialogo(true);
+      await extra().agregarHorarioExtra(new Date());
+      fixture.detectChanges();
+
+      expect(dialogo.config()?.message).toContain('no atendés');
+
+      const req = http.expectOne(
+        (r) => r.url === '/scheduling/resources/res-1/exceptions' && r.method === 'POST',
+      );
+      expect(new Date(req.request.body.startAt as string).getHours()).toBe(18);
+      req.flush({ id: 'exc-extra', blockedSlots: 0 });
+      for (const r of http.match(() => true)) r.flush({ items: [], count: 0 });
+      fixture.detectChanges();
+    });
+
+    it('NIVEL INVÁLIDO · cancelar no manda NADA: la pregunta no es una formalidad', async () => {
+      calendarioConHorario();
+      conDialogo(false);
+      await extra().agregarHorarioExtra(new Date());
+      fixture.detectChanges();
+
+      http.expectNone((r) => r.method === 'POST');
+      http.verify();
+    });
+
+    it('y el diálogo NOMBRA que se sale del horario de atención, con la hora', async () => {
+      calendarioConHorario();
+      const dialogo = conDialogo(false);
+      await extra().agregarHorarioExtra(new Date());
+
+      expect(dialogo.config()?.title).toContain('fuera de tu horario de atención');
+      expect(dialogo.config()?.message).toContain('termina a las 13:00');
+      expect(dialogo.config()?.message).toContain('se puede reservar');
+      // Y el botón dice qué hace, no «Aceptar».
+      expect(dialogo.config()?.confirmLabel).toBe('Agregar el horario extra');
     });
   });
 
