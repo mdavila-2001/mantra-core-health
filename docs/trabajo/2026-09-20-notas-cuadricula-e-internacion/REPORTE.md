@@ -1,9 +1,25 @@
 # Reporte — La cuadrícula de notas, la internación según norma, y el dictamen del lote
 
-**AVANCE: 51 / 54 microtareas en `HECHO`** · 3 en `A MEDIAS` · 0 en `BLOQUEADO` · **0 en `EN CURSO`**
+**AVANCE: 50 / 54 microtareas en `HECHO`** · 4 en `A MEDIAS` · 0 en `BLOQUEADO` · **0 en `EN CURSO`**
 
-Las 3 `A MEDIAS` están en §2 con qué anda, qué no, y qué falta. El porcentaje no se estima: sale
+Las 4 `A MEDIAS` están en §2 con qué anda, qué no, y qué falta. El porcentaje no se estima: sale
 de `microtareas HECHO / 54`.
+
+> **El avance BAJÓ de 51 a 50, y es correcto.** H6.S1.M3 («recorrer otras cuentas donde
+> corresponda») estaba en `HECHO` porque **ninguna corrección integrada pedía otra cuenta**. Hoy
+> C-13 se integró (#564) y sí la pide: el guion la quiere con médica **y** visitador, y se ejercitó
+> una. Un hito no se queda en `HECHO` porque ya lo estuvo; se queda si su DoD sigue cumpliéndose.
+
+> **2026-09-21, sesión 4 — la segunda tanda del recorrido (#561, #562, #563, #564).** Mientras se
+> resolvía el conflicto que GitHub marcaba en el PR #565 —que **no era real**: el merge local de
+> `origin/mockup` salió limpio y el PR volvió a `MERGEABLE`— aparecieron **cuatro PRs más** ya
+> integrados. Entre #561 (Itzan, perfil) y #564 (Pablo, consultas) dejaron recorribles **trece** de
+> las catorce correcciones que seguían en `NOT_RUN`. Se recorrieron
+> (`playwright/dictamen-h6-recorrido-2.spec.ts`, **14/14**, ninguno de los cuatro PRs es mío) y el
+> dictamen pasó de **8 aceptadas / 2 `BLOCKED` / 14 `NOT_RUN`** a **19 aceptadas / 1 `FAIL` /
+> 3 `BLOCKED` / 1 `NOT_RUN`**. Se destapó **D-07**, que es el `FAIL` de C-06: el interruptor de
+> tema del encabezado es sólo-icono y no da globo, y vive en el marco, así que está en toda ruta.
+> Detalle en §1 «Hoy, la segunda tanda» y en el dictamen §4.6.
 
 > **2026-09-21, sesión 3 — el recorrido del dictamen (H6.S1.M2/M3).** Al abrir el PR de la sesión 2
 > se descubrió que #557 (Justin) y #559 (Ender/Pablo) ya estaban `MERGED` en `mockup`, sin que
@@ -227,6 +243,40 @@ encima colgaba buscando un hijo que no existe); `getByPlaceholder` es ambiguo po
 por texto suelto («Paracetamol») caía sobre una receta **ya existente** en la historia de la
 paciente —texto estático, no elegible— en vez de la opción del buscador.
 
+### Hoy, la segunda tanda del recorrido (2026-09-21, sesión 4)
+
+**El disparador fue un falso conflicto.** El PR #565 aparecía `CONFLICTING` en GitHub; al traer
+`origin/mockup` el merge local se resolvió **limpio, sin un solo marcador** (`c138cd3e`), y tras
+empujar el PR volvió a `MERGEABLE`. Era una comprobación vieja de GitHub contra otra base, no un
+conflicto de texto. Lo importante fue lo que apareció al mirar: **cuatro PRs más ya integrados**
+—#561 (Itzan), #562, #563 y #564 (Pablo)— que dejaron recorribles **trece** de las catorce
+correcciones que seguían `NOT_RUN`.
+
+Se recorrieron en `playwright/dictamen-h6-recorrido-2.spec.ts`, **14/14 en verde**, con
+`medica@alovida.mock` sobre la maqueta. Ninguno de los cuatro PRs lo escribí yo (regla 70.4.8).
+
+| Verdicto | Correcciones |
+|---|---|
+| `PASS` | C-01, C-02, C-04, C-05, C-07, C-08, C-09, C-10, C-11, C-12 |
+| `PASS` parcial | C-13 — recorrida con la médica; falta la cuenta del visitador que el guion pide |
+| `PASS` (media corrección) | C-21 en el perfil: **las siete** pestañas del editor, ninguna elige con radios |
+| **`FAIL`** | **C-06**, por el defecto nuevo **D-07** |
+
+**D-07, el rojo:** el interruptor de tema del encabezado es sólo-icono, tiene nombre accesible y
+**no da globo** —ni al apuntarlo ni al enfocarlo aparece un `role="tooltip"`—. ADR-0012 admite
+sólo-icono **con** globo; éste no lo tiene. Vive en `shell-layout`, así que **no es una pantalla:
+son todas**. Itzan ya lo había declarado en el cuerpo de #561 como hallazgo fuera de su frontera;
+acá está reproducido aparte, con captura, por quien no lo escribió — que es lo que hace falta para
+poder llamarlo `FAIL` en un dictamen. **No se corrigió:** el marco no es de esta línea, y quien
+verifica no corrige.
+
+**Cuatro casos míos estaban mal antes de que llegaran al dictamen**, y los corregí antes de dar
+veredicto (regla 05.7): la rejilla de especialidades monta `app-specialty-badge`, no `app-badge`;
+`app-tabs` **no dibuja el panel de una pestaña cerrada**, así que contar los controles del editor
+de una sola vez medía sobre la nada; la primera tarjeta del día es una cita ya «Atendida» y sobre
+ella la tarjeta **explica** en vez de navegar —que es lo que #564 promete, no un fallo—; y tanto
+la visita de laboratorio como el primer rato libre caen en días posteriores al de hoy.
+
 ---
 
 ## 2. A medias
@@ -312,7 +362,10 @@ hoja pide lo que pide la norma», **eso es un `FAIL` y el arreglo es de esquema,
 ## 5. Privacidad
 
 Todo lo capturado y pegado es de **cuentas sintéticas declaradas**. Contra la maqueta:
-`medica@alovida.mock`, paciente «Ana Lucía Pérez Quiroga» del simulador. Contra la API real (sesión
+`medica@alovida.mock`, paciente «Ana Lucía Pérez Quiroga» del simulador. Las capturas de la
+sesión 4 (`evidencia/dictamen/c01…c13`, `d07`) muestran además la agenda del día con los nombres
+que **siembra el simulador** (`core/mock/fixtures/`): son personas inventadas por el paquete de
+datos de prueba, no pacientes. Contra la API real (sesión
 2): un médico y varios pacientes registrados **en esta misma corrida**, con dominio `@example.test`
 y sufijo aleatorio (`crearMedicoSintetico`/`crearPacienteConToken`), **nunca** la cuenta real de
 `doctora()` (`pabliarca@gmail.com`) que otras suites del repo sí usan. Ninguno habla de una persona
@@ -331,11 +384,14 @@ relación asistencial que se ejercita sella un evento en `audit.audit_log`, que 
 
 | A quién | Qué |
 |---|---|
-| **Coordinación** | El dictamen: **`NO ACEPTADO`**, pero ya no «nada está integrado» — **8 `PASS`** (C-14, C-15…C-19, C-23 parcial, C-24), **2 `BLOCKED`** (C-20, C-22, por D-06) y **14 `NOT_RUN`** con dueño y motivo. Y el tamaño real de C-23: 10 de 18 campos exigen modelo nuevo |
+| **Coordinación** | El dictamen: sigue **`NO ACEPTADO`**, pero el motivo cambió. Hoy son **19 aceptadas** (17 plenas + C-13 y C-23 parciales), **1 `FAIL`** (C-06, por D-07), **3 `BLOCKED`** (C-20, C-21, C-22, por D-06) y **1 `NOT_RUN`** (C-03, la única sin rama fusionada). **Ya no es «no hay nada que mirar»: lo que queda rojo es rojo de verdad**, y son dos defectos con dueño. Y el tamaño real de C-23 sigue igual: 10 de 18 campos exigen modelo nuevo |
+| **El marco (quien sea su dueño)** | **D-07**, reproducido con captura: el interruptor de tema de `shell-layout.html:362` es sólo-icono y **no lleva `appTooltip`**. Es una línea, y mientras no esté **C-06 sigue en `FAIL`** para toda ruta con cabecera |
+| **Pablo** | Su lote #564 se recorrió entero y **las ocho correcciones dieron `PASS`** (C-04, C-06 en su área, C-07, C-08, C-10, C-11, C-12; C-13 en parcial). Lo único que le falta a C-13 es la mitad del **visitador**, que necesita esa cuenta — si tiene una sintética declarada, se cierra en una corrida |
+| **Itzan** | Su lote #561 se recorrió entero y **las cinco dieron `PASS`** (C-01, C-02, C-05, C-09, y C-21 en el perfil: cero radios en las siete pestañas). El hallazgo del interruptor de tema que él mismo declaró está ahora **confirmado por separado como D-07** — no era sólo una observación de paso |
 | **Dueño del modelo** | `matriz-internacion.md` §4: el value set de tipo de episodio (barato, no toca tablas) y el esqueleto de `encounter_hospitalizations` / `encounter_locations` / `encounter_diagnoses`. Más **D-02**, confirmado contra la API real |
 | **Dueño del modelo/infra** | **D-03**: `clinical.encounters.content_hash` está en la entidad ORM y no en esta base de Neon — `POST /clinical/encounters/:id/close` da 500 siempre. Bloquea cerrar cualquier encuentro contra este ambiente |
 | **Dueño de la API** | **D-04** (posible IDOR: `POST /clinical/care-episodes` sin guardia de relación asistencial) y **D-05** (`startAt` futuro aceptado sin rechazo server-side). Ninguno se corrigió: se reporta, no se arregla |
-| **Itzan** | La heurística de `app-date-picker` que abre en enero de 2000 ante cualquier `maxDate` |
+| **Itzan** (aparte, `shared/`) | La heurística de `app-date-picker` que abre en enero de 2000 ante cualquier `maxDate` |
 | **Justin** | `consultation.html` es mío: el cambio del `output` de descarga que necesita lo escribo yo o lo acordamos. **C-18 ya se recorrió y dio `PASS`** (su lote #557 quedó integrado) — no hace falta que la cierre él. **C-20 sigue necesitando** que `medication-block.ts` lea `default_frequency`, además de que se resuelva D-06 |
 | **Ender** | **D-06**, con reproducción: `misc.handlers.ts` no tiene patrón `ENUMS` para `medication_requests.medication_concept_id` y el buscador de «Medicamento» cae a `VS_RECORD_STATUS`. Bloquea C-20, C-22 y la mitad de C-21 hasta que se agregue la línea |
 | **Quien retome** | `consulta-rejilla.spec.ts` busca el rótulo viejo del buscador del archivo clínico («Buscar por nombre o código»); el real es «Nombre o código». No se tocó: no es de este carril |

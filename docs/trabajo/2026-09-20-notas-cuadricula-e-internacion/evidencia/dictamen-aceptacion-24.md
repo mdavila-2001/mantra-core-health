@@ -26,30 +26,47 @@
 > dos PRs es mío: `playwright/dictamen-h6-recorrido.spec.ts`, 10 casos, **10/10 en verde** (el
 > «verde» de la corrida no es el veredicto — cada caso afirma lo que el guion de §1 pide, incluido
 > el `BLOCKED` de tres de ellos). **§0 y §2 de abajo ya están actualizados** con los resultados
-> reales. C-08 y C-10 de Pablo (agenda/tabla de horarios) **no** están en #559 —ese PR trae
-> reporte del dashboard y fixes de contrato, no la agenda— así que siguen `NOT_RUN`.
+> reales.
+>
+> **Y volvió a avanzar, otra vez mientras se escribía.** Al resolver el conflicto del PR #565
+> aparecieron **cuatro PRs más** ya `MERGED` en `mockup` — #561 (Itzan), #562, #563 y #564
+> (Pablo) —, que entre los dos cubren **trece** de las catorce que quedaban. Se recorrieron
+> también: `playwright/dictamen-h6-recorrido-2.spec.ts`, 14 casos, **14/14 en verde**, con la
+> misma cuenta sintética. Tampoco escribí ninguno de los cuatro. El detalle está en **§4.6**, y
+> de ahí sale el `FAIL` de C-06 (defecto **D-07**). **La única sin integrar es C-03.**
 
 ## 0. VEREDICTO GLOBAL — `NO ACEPTADO`
 
-**El veredicto global es el más bajo de sus partes.** Ya no son «casi todas `NOT_RUN`» — con
-#557 y #559 integrados y recorridos, la mayoría de lo alcanzable dio `PASS` — pero sigue habiendo
-un `BLOCKED` real (D-06) y 14 de 24 sin ejercitar porque los otros tres lotes no están.
+**El veredicto global es el más bajo de sus partes.** El tablero cambió dos veces en un día: hoy
+**23 de las 24 están integradas y recorridas**, y la enorme mayoría dio `PASS`. Pero sigue siendo
+`NO ACEPTADO`, y por dos motivos que no son de conteo: hay **un `FAIL` con reproducción** (C-06,
+defecto **D-07**) y **tres `BLOCKED`** que ningún avance de integración destraba, porque los
+bloquea un defecto del simulador (**D-06**).
 
 | | |
 |---|---|
-| **Aceptadas con evidencia** | **8** de 24 — C-14, C-15, C-16, C-17, C-18, C-19, C-24 en `PASS`; C-23 en `PASS` parcial |
-| **Rechazadas** | 0 |
-| **Bloqueadas (`BLOCKED`)** | **2** — C-20 y C-22, por D-06 (ver §5) |
-| **Sin ejercitar (`NOT_RUN`)** | **14** de 24 — C-01…C-13 y C-21 (transversal), sin lote integrado |
-| **Rojos abiertos** | 0 de los ejercitados dio `FAIL`; el estado de las 14 `NOT_RUN` sigue **desconocido** |
+| **Aceptadas con evidencia** | **19** de 24 — 17 plenas (C-01, C-02, C-04, C-05, C-07…C-12, C-14…C-19, C-24) y 2 parciales con su límite declarado (C-13, C-23) |
+| **Rechazadas (`FAIL`)** | **1** — C-06, por **D-07** (ver §5) |
+| **Bloqueadas (`BLOCKED`)** | **3** — C-20, C-21 y C-22, por **D-06** (ver §5) |
+| **Sin ejercitar (`NOT_RUN`)** | **1** — C-03 (Ender), la única que no tiene rama fusionada |
+| **Rojos abiertos** | **2** — D-06 (dueño Ender) y D-07 (dueño: transversal, el marco) |
 
 ### El hecho que explica el dictamen entero
 
-**14 de las 24 correcciones no están integradas en `mockup` todavía.** El corte original (20:59
-del 20/09) no tenía ninguna; después llegaron #557 (Justin), #558 (yo) y #559 (Ender/Pablo), que
-cubren C-14, C-15…C-20, C-22…C-24 — **10** correcciones. Las otras 14 —Itzan (C-01, C-02, C-05,
-C-06, C-09), Pablo (C-04, C-07, C-08, C-10, C-11), la mitad de Pablo en C-12/C-13, y C-21 completo
-(transversal, necesita el patrón de Itzan aplicado en los cinco)— siguen sin rama fusionada.
+**Ya no es «no está integrado»: es que lo que queda rojo es rojo de verdad.** El corte original
+(20:59 del 20/09) no tenía ninguna corrección. En el día entraron siete PRs:
+
+| PR | Autor | Cubre | Recorrido en |
+|---|---|---|---|
+| #557 | Justin | C-15…C-20, C-22, la parte de medicación de C-21 | §4.5 |
+| #558 | Marcelo (yo) | C-14, C-23 | §3 y §4 — **no lo dictamino yo** salvo por evidencia propia declarada |
+| #559 | Ender/Pablo | C-24 + contratos | §4.5 |
+| #561 | Itzan | C-01, C-02, C-05, C-09, y la parte de perfil de C-06/C-21 | §4.6 |
+| #562 | Pablo | contratos de scheduling | — (sin correción propia del lote) |
+| #563 | Ender | datos del simulador para C-24 | §4.5 |
+| #564 | Pablo | C-04, C-06, C-07, C-08, C-10, C-11, C-12, C-13 | §4.6 |
+
+**La única que sigue sin integrar es C-03** (Ender, globo del panel principal).
 
 ```
 $ git log --since="2026-09-20 00:00" --format='%h %ad %an | %s' --date=format:'%d/%m %H:%M' origin/mockup | head -3
@@ -117,19 +134,19 @@ kill-test, se usa ése y no se reinventa.
 
 | ID | Dueño | Veredicto | Evidencia / motivo |
 |---|---|---|---|
-| C-01 | Itzan | `NOT_RUN` | No integrada en el corte. Rama de Itzan empujada 01:54, **sin fusionar** |
-| C-02 | Itzan | `NOT_RUN` | Ídem |
-| C-03 | Ender | `NOT_RUN` | No integrada. Sin rama en el remoto |
-| C-04 | Pablo | `NOT_RUN` | No integrada. Sin rama en el remoto |
-| C-05 | Itzan | `NOT_RUN` | No integrada |
-| C-06 | Itzan + los cinco | `NOT_RUN` | Transversal: no se puede dictaminar hasta que esté el patrón de Itzan **y** su aplicación en los cinco lotes |
-| C-07 | Pablo | `NOT_RUN` | No integrada |
-| C-08 | Pablo | `NOT_RUN` | No integrada |
-| C-09 | Itzan | `NOT_RUN` | No integrada |
-| C-10 | Pablo | `NOT_RUN` | No integrada |
-| C-11 | Pablo | `NOT_RUN` | No integrada |
-| C-12 | Pablo + Ender | `NOT_RUN` | No integrada. Cruza dos lotes |
-| C-13 | Pablo + Ender | `NOT_RUN` | No integrada. Cruza dos lotes |
+| C-01 | Itzan | `PASS` | #561 integrado. Recorrida: «Dónde atiendo» ya no tiene la sección «Cómo atendés». [`c01-sin-como-atendes.png`](dictamen/c01-sin-como-atendes.png) |
+| C-02 | Itzan | `PASS` | #561 integrado. Recorrida: no existe ningún enlace «Mi consultorio propio» ni «Mi organización médica»; el consultorio se edita **dentro** de la pestaña. [`c02-consultorio-en-el-perfil.png`](dictamen/c02-consultorio-en-el-perfil.png) |
+| C-03 | Ender | `NOT_RUN` | **La única que sigue sin integrar.** Sin rama en el remoto |
+| C-04 | Pablo | `PASS` | #564 integrado. Recorrida en sus dos mitades: sobre una cita «Atendida» la tarjeta **explica** que está cerrada; sobre una «En consulta» **lleva a atenderla**. [`c04-tarjeta-cita-cerrada.png`](dictamen/c04-tarjeta-cita-cerrada.png) · [`c04-tarjeta-lleva-a-atender.png`](dictamen/c04-tarjeta-lleva-a-atender.png) |
+| C-05 | Itzan | `PASS` | #561 integrado. Recorrida: el editor abre con las **siete** pestañas de la ficha. [`c05-editor-siete-pestanas.png`](dictamen/c05-editor-siete-pestanas.png) |
+| **C-06** | **Itzan + los cinco** | **`FAIL`** | #561 y #564 integrados. Las dos áreas ejercitadas **cumplen**: las acciones de la fila del día son un desplegable y **cada ítem lleva texto**, no sólo icono. Pero el barrido transversal tiene un contraejemplo reproducido: **D-07** — el interruptor de tema del encabezado es sólo-icono **y no da globo**, y vive en el marco, así que se repite en toda ruta. Un `FAIL` necesita un contraejemplo y lo hay. [`c06-acciones-desplegable.png`](dictamen/c06-acciones-desplegable.png) · [`d07-interruptor-de-tema-sin-globo.png`](dictamen/d07-interruptor-de-tema-sin-globo.png) |
+| C-07 | Pablo | `PASS` | #564 integrado. Recorrida: `?vista=table` ya no dibuja tabla ninguna, cae al calendario **y no redirige** (la dirección se conserva, así que «atrás» no se rompe). [`c07-sin-tabla.png`](dictamen/c07-sin-tabla.png) |
+| C-08 | Pablo | `PASS` | #564 integrado. Recorrida: la solapa se llama «Consultas»; no queda ninguna llamada «Calendario». [`c08-solapa-consultas.png`](dictamen/c08-solapa-consultas.png) |
+| C-09 | Itzan | `PASS` | #561 integrado. Recorrida: rejilla de insignias, cada una **con el nombre escrito** (no sólo color). [`c09-insignias-especialidad.png`](dictamen/c09-insignias-especialidad.png) |
+| C-10 | Pablo | `PASS` | #564 integrado. Recorrida entera: no hay solapa «Cupos» para quien tiene calendario · tocar un rato libre abre un **modal** · sobre un cupo la franja es **dato** y no se pregunta la hora («Desde»/«Hasta» no existen). [`c10-sin-solapa-cupos.png`](dictamen/c10-sin-solapa-cupos.png) · [`c10-modal-sin-preguntar-la-hora.png`](dictamen/c10-modal-sin-preguntar-la-hora.png) |
+| C-11 | Pablo | `PASS` | #564 integrado. Recorrida en sus dos mitades: el encabezado ya no lleva los tres botones sueltos, **y** con una consulta en curso abrir otra se rechaza diciendo cuál está abierta. [`c11-encabezado-sin-botones.png`](dictamen/c11-encabezado-sin-botones.png) · [`c11-una-consulta-a-la-vez.png`](dictamen/c11-una-consulta-a-la-vez.png) |
+| C-12 | Pablo + Ender | `PASS` | #564 integrado. Recorrida de punta a punta: «Programar horario» recicla la grilla del horario, avisa **antes** de guardar con qué razón va a aparecer, y el rato queda en la agenda clínica como «Otros servicios». [`c12-programar-horario.png`](dictamen/c12-programar-horario.png) · [`c12-agenda-otros-servicios.png`](dictamen/c12-agenda-otros-servicios.png) |
+| C-13 | Pablo + Ender | `PASS` parcial | #564 integrado. Recorrida con la cuenta médica: la visita se ve como tarjeta con insignia «Visitador» y **su bloque no publica un solo dato clínico** (se buscó «diagnóstico», «receta», «medicamento» y «alergia» en el texto del bloque: ninguno). **Límite declarado:** falta la mitad del visitador — el guion pide esa cuenta y no se ejercitó. [`c13-tarjeta-visitador.png`](dictamen/c13-tarjeta-visitador.png) |
 | **C-14** | **Marcelo** | **`PASS`** | **Ejercitada en navegador y contra la API real** (Neon), ver §3 |
 | C-15 | Justin | `PASS` | #557 integrado. Recorrida: sin botón de descargar en la pantalla de escritura. `dictamen-h6-recorrido.spec.ts` |
 | C-16 | Justin | `PASS` | #557 integrado. Recorrida: sin barra de demostración al registrar |
@@ -137,7 +154,7 @@ kill-test, se usa ése y no se reinventa.
 | C-18 | Justin | `PASS` | #557 integrado. Recorrida: «¿De qué consulta es la receta?» ofrece diagnóstico **y** «Otro motivo — escribirlo», que abre el campo de texto libre |
 | C-19 | Justin | `PASS` | #557 integrado. Recorrida: la dosis acepta texto libre («500 mg»); «Unidad» no existe en el formulario |
 | C-20 | Justin + Ender | `BLOCKED` | #557+#559 integrados, pero **D-06** (nuevo, ver §5) rompe el buscador de medicamentos: cae al catálogo de reserva `VS_RECORD_STATUS`, así que no se puede elegir NINGÚN medicamento real para ver si la frecuencia se completa sola. Aparte, por lectura de código: `onMedicamentoElegido()` nunca consume `default_frequency` — aunque D-06 se arreglara, el CA seguiría sin cumplirse |
-| C-21 | Itzan + Justin + los cinco | `NOT_RUN` | Transversal, mismo caso que C-06: sólo se recorrió la parte de medicación (ver «C-21 parcial» abajo), que quedó `BLOCKED`. El barrido completo sigue esperando el patrón de Itzan en los cinco lotes |
+| C-21 | Itzan + Justin + los cinco | `BLOCKED` | Transversal, y sus dos mitades recorridas dan cosas distintas. **Perfil (#561): cumple** — las **siete** pestañas del editor se recorrieron una por una y **ninguna elige de una lista con radios**; todo lo que elige es un `select`. **Medicación (#557): `BLOCKED` por D-06** (abajo). Como una parte no se puede ejercitar, la corrección entera queda `BLOCKED`. [`c21-editor-controles.png`](dictamen/c21-editor-controles.png) |
 | C-21 (parcial, medicación) | Justin | `BLOCKED` | Bloqueada por D-06: no se puede crear una receta nueva (todas las existentes ya están emitidas) para comprobar el menú de acciones |
 | C-22 | Justin | `BLOCKED` | Bloqueada por D-06: el CA exige elegir un medicamento y dejar el motivo vacío; sin poder elegir medicamento no hay nada que ejercitar |
 | **C-23** | **Marcelo** | **`PASS` parcial** | **Ejercitada**, y su límite está declarado. Ver §4 |
@@ -278,11 +295,64 @@ era «no encuentra el medicamento», era «elige el texto equivocado y nunca sel
 
 ---
 
+## 4.6. C-01…C-13 y C-21(perfil) — la segunda tanda, con #561 y #564
+
+Los cuatro PRs de la tarde (#561 Itzan, #562, #563 y #564 Pablo) dejaron recorribles **trece** de
+las catorce que quedaban. Recorrido en `playwright/dictamen-h6-recorrido-2.spec.ts`, cuenta
+`medica@alovida.mock`, maqueta (`mockBackend: true`), `--workers=1`:
+
+```
+ok  1 C-01 - «Dónde atiendo» ya no tiene la sección «Cómo atendés» (12.5s)
+ok  2 C-02 - el consultorio propio es una pestaña del perfil, no un enlace afuera (10.2s)
+ok  3 C-05 - el editor tiene las siete pestañas de la ficha (11.6s)
+ok  4 C-09 - las especialidades se ven como una rejilla de insignias (11.0s)
+ok  5 C-21 (parcial, perfil) - ninguna de las siete pestañas del editor elige con radios (14.0s)
+ok  6 C-08 - la solapa se llama «Consultas» y ya no «Calendario» (9.7s)
+ok  7 C-07 - «vista=table» ya no dibuja la tabla y no redirige (12.2s)
+ok  8 C-10 - sin solapa «Cupos», el alta es un modal y sobre un cupo no se pregunta la hora (12.1s)
+ok  9 C-06 - las acciones de la fila del día son un desplegable con icono y texto (9.3s)
+ok 10 C-04 - la tarjeta del día hace lo que la cita admite en su estado (10.3s)
+ok 11 C-13 (parcial, médica) - la visita de laboratorio es una tarjeta de «Visitador» sin dato clínico (9.6s)
+ok 12 C-06 (transversal) - D-07: el interruptor de tema del encabezado es sólo-icono y no da globo (11.1s)
+ok 13 C-12 - «Mis servicios» programa su horario y el rato queda como «Otros servicios» (17.4s)
+ok 14 C-11 - el encabezado pierde los tres botones y no se abre una segunda consulta (10.1s)
+14 passed (2.7m)
+```
+
+**El verde de la corrida no es el veredicto.** El caso 12 pasa **afirmando un defecto**: que el
+interruptor no da globo. Es la forma de dejarlo reproducible en vez de anotado.
+
+### Lo que la corrida contestó y no estaba decidido
+
+- **C-21, la mitad del perfil, se cierra en `PASS`.** El guion pide que «todo lo que elige un valor
+  de una lista sea un `select`». Se recorrieron las **siete** pestañas del editor una por una —el
+  panel de una pestaña cerrada **no existe en el DOM**, así que contarlas de una sola vez habría
+  medido sobre la nada— y el conteo por pestaña fue: `Datos personales` 0 radios / 1 select ·
+  `Contacto` 0 / 1 · `Facturación` 0 / 0 · `Dónde atiendo` 0 / 0 · `Trayectoria` 0 / 2 ·
+  `Credenciales` 0 / 2 · `Actividad` 0 / 0. **Cero radios en las siete.**
+- **C-04 tiene dos comportamientos, no uno.** «La tarjeta lleva a iniciar el encuentro» se cumple
+  sobre una cita abierta; sobre una ya atendida la tarjeta **responde igual**, explicando que está
+  cerrada. Se ejercitaron los dos: primero fallé el caso dando por sentado que toda tarjeta navega
+  —la primera del día era «Atendida»— y la corrida lo desmintió antes de que llegara al dictamen.
+- **C-07 no rompe el «atrás».** La dirección `?vista=table` se conserva tal cual: cae al calendario
+  **sin** redirigir, que es lo que Pablo declaró y lo que evita meter una entrada al historial.
+- **C-06 no se cierra con las dos áreas ejercitadas.** Las acciones de fila cumplen, pero el barrido
+  transversal tiene un contraejemplo en el marco — **D-07**, abajo.
+
+### El límite de esta tanda, declarado
+
+- **C-13 queda `PASS` parcial**: el guion pide **médica + visitador**, y sólo se ejercitó la médica.
+- **C-06 y C-21 siguen siendo transversales.** Lo recorrido son las áreas donde el patrón ya está
+  aplicado; un barrido del proyecto entero sigue sin hacerse.
+- **C-03 no se recorrió**: no está integrada.
+
+---
+
 ## 5. Rojos, y su clasificación
 
-**No hay rojos ejercitados de las 24**, porque no hubo qué ejercitar. Sí hay hallazgos —de esquema
-y de contrato, destapados al cerrar C-14/C-23 contra la API real (sesión 2)— en
-[`defectos-reportados.md`](./defectos-reportados.md):
+**Hay un rojo ejercitado de las 24 —C-06, por D-07—** y dos `BLOCKED` que dependen de D-06. El
+resto de los hallazgos son de esquema y de contrato, destapados al cerrar C-14/C-23 contra la API
+real (sesión 2). Todos en [`defectos-reportados.md`](./defectos-reportados.md):
 
 | ID | Clase | Dueño | Estado |
 |---|---|---|---|
@@ -292,6 +362,7 @@ y de contrato, destapados al cerrar C-14/C-23 contra la API real (sesión 2)— 
 | D-04 | Hallazgo, sin veredicto | Dueño de la API | `POST /clinical/care-episodes` no lleva `ClinicalRecordAccessGuard`: un médico sin relación con el paciente pudo internarlo. Reproducido, no corregido |
 | D-05 | Hallazgo, sin veredicto | Dueño de la API | `startAt` futuro en `care-episodes` se acepta sin rechazo server-side |
 | D-06 | `PRODUCT_BUG` (maqueta) | Ender — `core/mock/handlers/misc.handlers.ts` | Abierto. El buscador de «Medicamento» del bloque de medicación cae al catálogo de reserva `VS_RECORD_STATUS` (Activo/Inactivo) porque la tabla `ENUMS` no tiene patrón para `medication_requests.medication_concept_id`. **Reproducido con captura y sin adivinar** (mismo mecanismo del D-01 retirado, pero real esta vez): buscar cualquier medicamento no devuelve nada; buscar «Activo» sí. Bloquea C-20 y C-22 completos y la mitad de C-21 |
+| **D-07** | **`PRODUCT_BUG`** | Transversal — `features/shell-layout/shell-layout.html:362` + `core/alovida/alovida-theme-toggle.directive.ts` | **Abierto, y es el `FAIL` de C-06.** El interruptor de tema del encabezado es sólo-icono, tiene nombre accesible («Cambiar a modo claro/oscuro») y **no tiene globo**: ni al apuntarlo ni al enfocarlo aparece ningún `role="tooltip"`. Vive en el marco, así que se repite en **toda** ruta con cabecera. Lo había declarado **Itzan** en el cuerpo de #561 como hallazgo fuera de su frontera; acá está **reproducido por separado**, con captura, por quien no lo escribió |
 
 **Un hallazgo más, de `shared/`, para Itzan** (no es defecto de las 24, y no se reportó como tal
 porque no lo pidió nadie): `app-date-picker` trata **«campo cerrado al pasado» como «es una fecha
@@ -304,18 +375,22 @@ se resolvió **quitándoselo**; la heurística sigue ahí para el próximo que l
 
 ## 6. Qué hace falta para que este dictamen valga algo
 
-1. **Integrar los tres lotes que faltan** (Itzan, Pablo, y la mitad de Pablo+Ender en C-12/C-13)
-   **en `mockup`.** Hasta entonces las 14 `NOT_RUN` siguen sin nada que aceptar.
-2. **Recorrer esas 14** con el guion de §1, por alguien que no las escribió, apenas se integren.
-3. **D-06 lo cierra Ender** (`misc.handlers.ts`, es suyo): una línea en la tabla `ENUMS` con el
+1. **Integrar C-03** (Ender, globo del panel principal). Es la única sin rama fusionada, y la única
+   `NOT_RUN` que queda. Al integrarse, se recorre con el guion de §1 por quien no la escribió.
+2. **D-07 lo cierra quien sea dueño del marco.** Es una línea: el interruptor de tema de
+   `shell-layout.html:362` necesita su `appTooltip`, igual que el resto de los sólo-icono del
+   proyecto. Hasta entonces **C-06 sigue en `FAIL`**, y el `FAIL` alcanza a toda ruta con cabecera.
+3. **Cerrar la mitad que falta de C-13**: el guion pide la cuenta del visitador y sólo se ejercitó
+   la médica. Mientras tanto queda `PASS` parcial, no `PASS`.
+4. **D-06 lo cierra Ender** (`misc.handlers.ts`, es suyo): una línea en la tabla `ENUMS` con el
    patrón `/medication_requests\.medication_concept_id/` → `VS_MEDICAMENTO` (o el nombre que use
    el fixture real de medicamentos). Sin eso, C-20/C-22/C-21(parcial) siguen `BLOCKED` aunque el
    resto de #557 ya esté integrado.
-4. **C-20 tiene una segunda causa, de Justin**: aunque D-06 se arregle, `onMedicamentoElegido()`
+5. **C-20 tiene una segunda causa, de Justin**: aunque D-06 se arregle, `onMedicamentoElegido()`
    (`medication-block.ts`) no lee `default_frequency` de la ficha del concepto — sólo
    `dose_forms`/`strengths`. Sin esa línea el CA sigue sin cumplirse.
-5. **C-06 y C-21 son transversales** y no se dictaminan por lote: exigen un barrido del proyecto
-   entero después de que los cinco apliquen el patrón. La mitad de C-21 (medicación) ya se recorrió
-   y quedó `BLOCKED` por D-06, no por el patrón de Itzan.
-6. **C-23 necesita una decisión que no es técnica**: o se acepta que la hoja de internación es una
+6. **C-06 y C-21 son transversales** y no se cierran con lo recorrido: falta el barrido del
+   proyecto entero. De C-21 ya están las dos mitades que se pueden mirar hoy — el perfil en `PASS`,
+   la medicación `BLOCKED` por D-06 —, y de C-06 está el contraejemplo que la manda a `FAIL`.
+7. **C-23 necesita una decisión que no es técnica**: o se acepta que la hoja de internación es una
    fecha hasta que el modelo crezca, o se prioriza el cambio de modelo de `matriz-internacion.md` §4.

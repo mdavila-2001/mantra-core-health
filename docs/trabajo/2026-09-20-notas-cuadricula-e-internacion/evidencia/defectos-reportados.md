@@ -347,3 +347,58 @@ escribir la línea).
 
 **No se aplicó desde este carril**: `core/mock/**` está reservado a Ender y la regla del reparto
 dice que quien necesite un cambio ahí lo pide, no lo escribe.
+
+---
+
+## D-07 · El interruptor de tema del encabezado es sólo-icono y no da globo, en toda ruta
+
+| Campo | Valor |
+|---|---|
+| **Dueño** | **Transversal — el marco.** `src/app/features/shell-layout/shell-layout.html:362` y la directiva `src/app/core/alovida/alovida-theme-toggle.directive.ts` |
+| **Clase** | `PRODUCT_BUG` |
+| **Encontrado** | 2026-09-21 (sesión 4), recorriendo C-06 de #561/#564 para el dictamen H6 |
+| **Preexistente** | Sí — el interruptor volvió al encabezado el 18/09, antes del lote de las 24 correcciones |
+| **Declarado antes por su vecino** | **Itzan lo escribió en el cuerpo del PR #561**, como hallazgo fuera de su frontera. Acá está **reproducido por separado**, con captura, por quien no lo escribió — que es lo que un dictamen necesita para poder llamarlo `FAIL` |
+| **Es el `FAIL` de C-06** | Sí. Un `FAIL` necesita un contraejemplo, no un censo: éste alcanza |
+
+### Qué pasa
+
+C-06 pide que un botón lleve **icono y texto**, y ADR-0012 —la regla que escribió Itzan al aplicar
+el patrón— admite la variante sólo-icono **siempre que dé un globo**. El interruptor de tema no
+cumple ninguna de las dos formas:
+
+- no tiene texto visible: su contenido son dos `<svg>` marcados `aria-hidden="true"` más la perilla,
+  también `aria-hidden`;
+- **no tiene globo**: no lleva `appTooltip`, y ni al apuntarlo ni al enfocarlo aparece ningún
+  elemento con `role="tooltip"`;
+- sí tiene **nombre accesible**, que la directiva pone en el host
+  (`'[attr.aria-label]': "esOscuro() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"`).
+
+O sea: **para un lector de pantalla está bien; para quien mira la pantalla, no hay manera de saber
+qué hace ese control sin apretarlo.** Ésa es exactamente la mitad de la regla que falta.
+
+### Por qué importa más que un botón suelto
+
+Vive en `shell-layout`, el marco. **No es una pantalla: son todas.** Cualquier recorrido de C-06
+que mire una ruta con cabecera lo encuentra.
+
+### Cómo se reprodujo (en `dictamen-h6-recorrido-2.spec.ts`, caso «C-06 (transversal) · D-07»)
+
+1. Entrar con `medica@alovida.mock` y quedarse en cualquier ruta con marco.
+2. Localizar `[data-testid="header-theme-toggle"]`.
+3. Leer su `aria-label` → `Cambiar a modo oscuro` (o claro). **Tiene nombre.**
+4. Leer su texto visible → cadena vacía. **No tiene texto.**
+5. `hover()` + 1,2 s → `getByRole('tooltip')` da **0**.
+6. `focus()` + 1,2 s → `getByRole('tooltip')` da **0**.
+
+Captura: [`dictamen/d07-interruptor-de-tema-sin-globo.png`](dictamen/d07-interruptor-de-tema-sin-globo.png).
+
+### Qué lo arregla
+
+Una línea: agregarle `appTooltip` con el mismo texto que ya usa el `aria-label`, como hace el resto
+de los sólo-icono del proyecto (por ejemplo `dia-agregar`, que lleva
+`appTooltip="Agregar una cita o un rato ocupado"`).
+
+**No se aplicó desde este carril**: `features/shell-layout/**` no es de la línea B, y la regla del
+reparto dice que quien necesita un cambio ajeno lo pide por la daily, no lo escribe. Además,
+arreglarlo yo invalidaría el dictamen: quien verifica no corrige (regla 70.4.8).
