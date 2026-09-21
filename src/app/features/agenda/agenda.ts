@@ -967,6 +967,17 @@ export class Agenda {
     return ROLES_QUE_ATIENDEN.some((rol) => roles.includes(rol));
   });
 
+  /**
+   * Si la fila tiene alguna acción que ofrecer — C-06.
+   *
+   * Con el estado sin resolver no hay ninguna, y un desplegable vacío es peor
+   * que ninguno: promete algo y no lo cumple. «Ver detalle» existe en toda fila
+   * con estado, así que basta con que el estado esté resuelto.
+   */
+  protected hayAlgunaAccion(cita: CitaVisible): boolean {
+    return cita.estado.code !== '';
+  }
+
   /** La cita espera respuesta: se ofrece aceptar o rechazar. */
   protected porResponder(cita: CitaVisible): boolean {
     return CODIGOS_POR_RESPONDER.has(cita.estado.code);
