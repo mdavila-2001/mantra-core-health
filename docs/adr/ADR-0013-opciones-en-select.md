@@ -98,6 +98,44 @@ con su motivo y su fecha. Sin eso no es una excepción: es una omisión.
                   └─ No → `app-select`   ← el caso normal (C-21)
 ```
 
+## Antes de convertir: medí el rótulo más largo a 375 px
+
+Un `<select>` **no parte líneas**. Tres radios con un rótulo largo lo muestran
+completo en dos renglones; el mismo rótulo dentro de un desplegable se corta
+contra la flecha, sin puntos suspensivos.
+
+Medido en la primera conversión de esta regla —el formato del certificado de
+portabilidad— con la tipografía calculada del propio control:
+
+```text
+== 375 px ==   select = 269 px   hueco útil = 245 px (relleno derecho 24 px)
+   SE CORTA   247 px   «PDF oficial certificado con código QR»
+   entra      184 px   «Archivo JSON interoperable»
+   entra      217 px   «Paquete completo (PDF + JSON)»
+
+== 768 px ==   hueco útil = 510 px   → las tres entran
+== 1440 px ==  hueco útil = 567 px   → las tres entran
+```
+
+Se pasó **por 2 px**, en una sola opción y sólo en el ancho más chico. No es
+un defecto de accesibilidad —al abrir la lista el sistema la muestra entera, y
+el nombre accesible del control siempre está completo— pero sí es información
+que se pierde de un vistazo.
+
+**La regla operativa, entonces:**
+
+1. Antes de convertir, medí el rótulo más largo contra el hueco útil del
+   `app-select` a 375 px. El hueco útil es el ancho del control menos su
+   relleno; hoy ese relleno es de 24 px del lado de la flecha.
+2. Si se pasa, **no toques el átomo**: lo montan 34 plantillas y moverle el
+   relleno le cambia el ancho útil a todas.
+3. Tampoco acortes el rótulo por tu cuenta si el texto es del cliente o del
+   dominio: C-21 cambia el control, no lo que dice. Registralo como lo que es
+   —un costo medido de la conversión— y, si molesta de verdad, que la decisión
+   de reescribir la opción la tome quien es dueño de esas palabras.
+4. Si el rótulo es tuyo y se puede decir más corto sin perder nada, decilo más
+   corto: es la salida barata y es preferible a las otras tres.
+
 ## Consecuencias
 
 - **Lo que se convierte** es lo que cae en el caso 1. En el territorio del
