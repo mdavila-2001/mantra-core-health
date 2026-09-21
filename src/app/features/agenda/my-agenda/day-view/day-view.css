@@ -576,3 +576,21 @@
 .dia__bloque[data-tipo='cita'] > .dia__cuerpo :is(button, a, [role='button']) {
   pointer-events: auto;
 }
+
+
+/* C-13 (2026-09-20) · la tarjeta del visitador.
+
+   Tono propio, distinto del de una consulta, para que el doctor vea de un
+   vistazo que ese rato no es un paciente. El tono NO es la informacion: al lado
+   del nombre va la palabra «Visitador», y en escala de grises eso es lo unico
+   que queda. */
+.dia__bloque[data-tipo='visita'] {
+  --dia-tono: var(--c-plum-500, var(--c-petrol-500));
+  border-inline-start-color: var(--dia-tono);
+  background: var(--bg-surface-alt);
+}
+
+.dia__visita-bandeja {
+  margin: 0;
+  font-size: var(--fs-caption);
+}

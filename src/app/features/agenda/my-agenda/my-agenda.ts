@@ -30,7 +30,14 @@ import type {
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
-import type { BloqueDelDia } from './day-view/day-view';
+import type { BloqueDelDia, VisitaDelDia } from './day-view/day-view';
+import { PharmaLabClient } from '../../../core/data-access/pharma-lab/pharma-lab.client';
+import {
+  PharmaLabConcepts,
+  type ConceptDictionary,
+} from '../../../core/data-access/pharma-lab/pharma-lab-concepts.client';
+import type { VisitRequest } from '../../../core/data-access/pharma-lab/pharma-lab.types';
+import { toVisitStatusPresentation } from '../../pharma-lab/visit-status';
 import { detalleDeLaCita } from './detalle-de-la-cita';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
@@ -152,6 +159,37 @@ interface Patron {
 /** Lo que se muestra cuando un dato no está. */
 const SIN_DATO = 'Sin registrar';
 
+/**
+ * Cuánto dura una visita de laboratorio cuando el dato no alcanza — C-13.
+ *
+ * El pedido dice «de 15 minutos, configurable por el doctor en la pantalla de
+ * horarios». La duración **sale del dato**: `VisitRequest.durationMinutes` es
+ * parte del contrato y es lo que se usa. Este número es sólo el respaldo para
+ * cuando ese campo llega ausente o absurdo (cero, negativo), no la fuente.
+ *
+ * **La CONFIGURACIÓN no existe todavía**: ningún contrato de `pharma_lab`
+ * publica una duración por omisión elegible por el doctor (ver `Q-P4` del
+ * encargo). Lo que falta es la configuración, no el valor: el mecanismo lee lo
+ * que venga y cae acá sólo si no vino nada.
+ */
+const MINUTOS_DE_VISITA_POR_OMISION = 15;
+
+/**
+ * Los estados en que una visita **ya no ocupa** el rato — C-13.
+ *
+ * Una rechazada, una cancelada o una que se mudó de horario no comprometen
+ * nada: dibujarlas diría que ese rato está tomado cuando está libre. Los
+ * códigos son los del catálogo de `pharma_lab`, sin prefijo de módulo, igual
+ * que hace `visit-status.ts`.
+ */
+const VISITAS_QUE_NO_OCUPAN: ReadonlySet<string> = new Set([
+  'PHL_VISIT_REJECTED',
+  'PHL_VISIT_CANCELLED',
+  'PHL_VISIT_CANCELLED_BY_VISITOR',
+  'PHL_VISIT_CANCELLED_BY_DOCTOR',
+  'PHL_VISIT_RESCHEDULED',
+]);
+
 @Component({
   selector: 'app-my-agenda',
   imports: [
@@ -266,6 +304,9 @@ export class MyAgenda implements OnInit {
   protected readonly idioma = inject(LOCALE_ID);
   private readonly terminology = inject(TerminologyClient);
   private readonly toast = inject(ToastService);
+  private readonly pharmaLab = inject(PharmaLabClient);
+  private readonly conceptosApi = inject(PharmaLabConcepts);
+  private readonly conceptosDeVisitas$ = this.conceptosApi.load();
 
   /** El recurso del profesional; sin él no hay agenda que mostrar. */
   protected readonly recurso = signal<AgendaResource | null>(null);
@@ -462,6 +503,96 @@ export class MyAgenda implements OnInit {
   protected readonly cuposDelDia = signal<readonly AgendaSlot[]>([]);
   protected readonly citasDelDia = signal<readonly Booking[]>([]);
 
+  /* -- Las visitas de laboratorio del doctor (C-13) -------------------------- */
+
+  /** Las solicitudes de visita del doctor, tal como llegan. */
+  private readonly visitasDelDoctor = signal<readonly VisitRequest[]>([]);
+
+  /** El diccionario de conceptos del laboratorio, para traducir los estados. */
+  private readonly conceptosDeVisitas = signal<ConceptDictionary | null>(null);
+
+  /**
+   * Las visitas que caen en el día abierto, ya listas para dibujar.
+   *
+   * Sólo las que **están en pie**: una rechazada o cancelada no ocupa el rato y
+   * pintarla diría que sí. El estado se compara por código de catálogo
+   * (`visit-status.ts`), nunca por rótulo ni por uuid.
+   */
+  protected readonly visitasDelDia = computed<readonly VisitaDelDia[]>(() => {
+    const dia = this.diaAbierto();
+    const conceptos = this.conceptosDeVisitas();
+    if (dia === null) return [];
+
+    const inicio = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate()).getTime();
+    const fin = inicio + 24 * 60 * 60 * 1000;
+
+    return this.visitasDelDoctor()
+      .map((visita) => {
+        // El horario vigente es el propuesto cuando lo hay: una reprogramación
+        // en curso que muestre la fecha original muestra una que ya no existe.
+        const desde = visita.proposedStartAt ?? visita.requestedStartAt;
+        const minutos =
+          visita.durationMinutes > 0 ? visita.durationMinutes : MINUTOS_DE_VISITA_POR_OMISION;
+        const estado = toVisitStatusPresentation(
+          conceptos?.code(visita.statusConceptId),
+          conceptos?.label(visita.statusConceptId) ?? 'Visita',
+        );
+        return {
+          id: visita.id,
+          desde,
+          hasta: new Date(desde.getTime() + minutos * 60_000),
+          // **Con quién no se puede decir, y no se inventa.**
+          //
+          // `VisitRequest` trae `medicalVisitorId` y `pharmaLabId` y ningún
+          // nombre: el contrato del doctor no publica cómo se llama el
+          // visitador ni su laboratorio (se comprobó contra
+          // `pharma-lab.types.ts:125-142` y contra lo que muestra la propia
+          // bandeja, que tampoco los nombra). Mostrar el uuid está prohibido
+          // por las convenciones de la casa, y traducirlo con el diccionario de
+          // CONCEPTOS es un error de categoría: ese diccionario tiene estados y
+          // tipos, no personas — devuelve el propio identificador y lo pinta.
+          //
+          // Así que la tarjeta dice qué es y dónde, que es lo que sí sabe. El
+          // nombre queda registrado como hallazgo para quien tenga el contrato.
+          conQuien: 'Visita de laboratorio',
+          motivo:
+            visita.location === undefined || visita.location === ''
+              ? visita.reason
+              : `${visita.reason} · ${visita.location}`,
+          estado: estado.label,
+          statusVariant: estado.variant,
+          code: estado.code,
+        };
+      })
+      .filter(
+        (v) =>
+          v.desde.getTime() >= inicio &&
+          v.desde.getTime() < fin &&
+          !VISITAS_QUE_NO_OCUPAN.has(v.code),
+      )
+      .map(({ code: _code, ...visita }) => visita)
+      .sort((a, b) => a.desde.getTime() - b.desde.getTime());
+  });
+
+  /**
+   * Las visitas del doctor, leídas una vez por sesión de calendario.
+   *
+   * Un fallo acá **no rompe la agenda**: el día sigue mostrando las consultas y
+   * simplemente no dibuja visitas. Es la misma indulgencia que el resto de los
+   * catálogos accesorios, y se declara: lo que se pierde es la tarjeta, no la
+   * jornada.
+   */
+  private leerVisitasDeLaboratorio(): void {
+    this.pharmaLab.listDoctorVisitRequests().subscribe({
+      next: (visitas) => this.visitasDelDoctor.set(visitas),
+      error: () => this.visitasDelDoctor.set([]),
+    });
+    this.conceptosDeVisitas$.subscribe({
+      next: (dic) => this.conceptosDeVisitas.set(dic),
+      error: () => this.conceptosDeVisitas.set(null),
+    });
+  }
+
   /**
    * Las citas de la semana mirada, para que la semana diga **con quién**.
    *
@@ -616,6 +747,9 @@ export class MyAgenda implements OnInit {
         if (this.mode() === 'calendar') {
           this.cargarMes();
           this.openDay(this.diaDeReferencia());
+          // C-13 · las visitas de laboratorio del doctor, para que el día las
+          // muestre. Se leen una vez: son de la persona, no del día.
+          this.leerVisitasDeLaboratorio();
         }
         // Los cupos se leen sólo si hay horario: sin plantilla no puede haber
         // ninguno, y preguntarlo sería un viaje para confirmar un cero.

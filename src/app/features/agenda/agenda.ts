@@ -972,6 +972,29 @@ export class Agenda {
     return CODIGOS_POR_RESPONDER.has(cita.estado.code);
   }
 
+  /**
+   * La consulta que está en curso ahora mismo, si hay alguna — C-11.
+   *
+   * «Sólo puede haber una consulta a la vez»: el dato que lo dice **ya existe**
+   * y es un estado del ciclo, `BOOKING_IN_PROGRESS` (ver `booking-status.ts` y
+   * {@link CODIGO_EN_CURSO}). No se agrega ninguna bandera en el cliente: una
+   * bandera local se desincroniza en cuanto alguien atiende desde otra pestaña
+   * o desde el teléfono, y entonces la pantalla frena lo que el servidor deja
+   * pasar, o al revés.
+   *
+   * Se mira sobre la lectura de la ventana, que es lo que esta pantalla tiene.
+   * **No es una garantía**: una consulta iniciada fuera de la ventana mirada no
+   * aparece acá. Por eso el freno del cliente no reemplaza la validación del
+   * servidor (regla 95.6.1), y el 409 se sigue manejando donde llega.
+   */
+  protected readonly consultaEnCurso = computed<CitaVisible | null>(() => {
+    const estado = this.citas();
+    if (estado.status !== 'ready' && estado.status !== 'stale') {
+      return null;
+    }
+    return estado.data.find((cita) => cita.estado.code === CODIGO_EN_CURSO) ?? null;
+  });
+
   /** Se puede empezar a atender, sin importar qué día es hoy. */
   protected sePuedeIniciar(cita: CitaVisible): boolean {
     return CODIGOS_INICIABLES.has(cita.estado.code);
@@ -2011,6 +2034,16 @@ export class Agenda {
     if (this.operando() !== null) {
       return;
     }
+
+    // C-11 · «sólo puede haber una consulta a la vez». No se frena en silencio
+    // con un botón apagado: se dice cuál está abierta y se ofrece ir a ella,
+    // que es lo que la persona necesita hacer para poder empezar ésta.
+    const abierta = this.consultaEnCurso();
+    if (abierta !== null && abierta.id !== cita.id) {
+      void this.avisarConsultaAbierta(abierta);
+      return;
+    }
+
     this.operando.set(cita.id);
 
     this.scheduling.startBooking(cita.id).subscribe({
@@ -2033,6 +2066,41 @@ export class Agenda {
    */
   protected continuarAtencion(cita: CitaVisible): void {
     this.irAAtender(cita);
+  }
+
+  /**
+   * C-11 · dice qué consulta está abierta y ofrece continuarla.
+   *
+   * Un botón deshabilitado y mudo deja a quien atiende sin saber por qué no
+   * arranca ni qué hacer: lo que falta hacer es cerrar —o volver a— la que ya
+   * está abierta, y ésta es la única pantalla que sabe cuál es.
+   */
+  private async avisarConsultaAbierta(abierta: CitaVisible): Promise<void> {
+    const ir = await this.dialogs.confirm({
+      title: 'Ya tenés una consulta en curso',
+      message:
+        `No se puede iniciar una segunda: primero cerrá la que está abierta, o volvé a ella ` +
+        `para terminarla.`,
+      details: [
+        { label: 'En curso con', value: abierta.paciente },
+        ...(abierta.cuando === null
+          ? []
+          : [
+              {
+                label: 'Desde',
+                value: formatDate(abierta.cuando, "HH:mm, EEEE d 'de' MMMM", this.idioma),
+              },
+            ]),
+        ...(abierta.motivoCrudo === null
+          ? []
+          : [{ label: 'Motivo', value: abierta.motivoCrudo }]),
+      ],
+      confirmLabel: 'Ir a la consulta abierta',
+      cancelLabel: 'Quedarme acá',
+    });
+    if (ir) {
+      this.continuarAtencion(abierta);
+    }
   }
 
   /**

@@ -354,6 +354,45 @@
               </div>
             }
 
+            @case ('visita') {
+              <!-- C-13 (2026-09-20) · la visita de laboratorio, en la MISMA
+                   pestaña de consultas y como tarjeta de VISITADOR.
+
+                   Tiene su propio tono —`data-tipo="visita"` en el CSS— y lleva
+                   la palabra «Visitador» escrita: en escala de grises el tono
+                   solo no la distingue de una consulta, y la regla 95.4.6
+                   prohíbe que la información dependa del color.
+
+                   **No lleva ni un dato clínico.** No hay paciente, ni motivo
+                   de consulta, ni expediente: lo que se muestra es con quién es
+                   la visita comercial y por qué, que es lo que el visitador
+                   declaró. El límite está citado en `pharma-lab.types.ts:9-11`
+                   y no se toca desde acá. -->
+              <span class="dia__hora">
+                {{ bloque.desde | date: 'HH:mm' }}–{{ bloque.hasta | date: 'HH:mm' }}
+              </span>
+              <div class="dia__cuerpo">
+                <p class="dia__paciente">
+                  {{ bloque.paciente }}
+                  <app-badge variant="secondary" data-testid="dia-visitador">Visitador</app-badge>
+                </p>
+                <p class="dia__estado">
+                  <app-status-seal [variant]="bloque.statusVariant" [label]="bloque.estado" />
+                </p>
+                @if (bloque.motivo; as motivo) {
+                  <p class="dia__motivo">{{ motivo }}</p>
+                }
+                <!-- La bandeja sigue siendo una sección aparte y sigue siendo
+                     alcanzable: acá está su puerta, que es lo que reemplaza al
+                     botón que C-11 quitó del encabezado. -->
+                <p class="dia__visita-bandeja">
+                  <a routerLink="/lab-visits" data-testid="dia-ir-a-lab-visits"
+                    >Ver la bandeja de visitas</a
+                  >
+                </p>
+              </div>
+            }
+
             @case ('no-disponible') {
               <!-- C-10 · el cupo que EXISTE y no se puede tomar: cerrado o sin
                    lugar. Se ve, porque el día tiene que leerse completo, pero
@@ -450,4 +489,3 @@
     </ol>
   }
 </div>
-
