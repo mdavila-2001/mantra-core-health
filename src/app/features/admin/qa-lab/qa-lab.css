@@ -1,0 +1,66 @@
+.qa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.qa__acciones {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.qa__tabla {
+  inline-size: 100%;
+  border-collapse: collapse;
+}
+
+.qa__tabla th,
+.qa__tabla td {
+  padding: var(--e2) var(--e3);
+  border-block-end: 1px solid var(--border-subtle);
+  text-align: start;
+  vertical-align: top;
+}
+
+.qa__tabla th {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.qa__nota {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.qa__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qa__oculto {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Una tabla ancha se desplaza dentro de su caja, no rompe la página. Misma
+   receta que `data-table__scroll`, y por los mismos dos motivos medidos allá:
+   `min-inline-size: 0` porque el ancho mínimo por defecto de un elemento es el
+   de su contenido —sin eso la caja nunca llega a ser más angosta que la tabla—,
+   y `position: relative` para que el `<caption>` sólo-lectores, que es
+   absoluto, quede recortado acá dentro en vez de estirar la página. */
+.qa__scroll {
+  overflow-x: auto;
+  min-inline-size: 0;
+  position: relative;
+}
