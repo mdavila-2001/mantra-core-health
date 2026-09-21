@@ -270,3 +270,80 @@ regla 60 §3 del propio `PLAN.md`), pero el contrato la acepta igual. Regla 60.4
 mutación server-side): si el front es la única barrera, cualquier cliente que hable el protocolo
 directo la salta. **No se corrigió**: es una decisión de validación del dueño de la API, y podría
 ser deliberada (una internación "programada" es un caso de uso legítimo que este lote no conoce).
+
+---
+
+## D-06 · El buscador de «Medicamento» ofrece Activo/Inactivo, no medicamentos
+
+| Campo | Valor |
+|---|---|
+| **Dueño** | **Ender** — `src/app/core/mock/handlers/misc.handlers.ts` es suyo |
+| **Clase** | `PRODUCT_BUG` (en la maqueta) |
+| **Encontrado** | 2026-09-21 (sesión 2), recorriendo C-20/C-21/C-22 de #557 para el dictamen H6 |
+| **Preexistente** | Sí — el bloque de medicación no cambió esto en #557; el hueco está en el manejador del catálogo, que #557 no toca |
+| **Mismo mecanismo que D-01, esta vez real** | El D-01 de C-14 se **retiró**: reporté un `grep` vacío sin reproducir y el navegador lo desmintió (`VS_OBSERVATION_CODE` sí estaba mapeado). Acá se reprodujo **antes** de escribir el defecto, exactamente por la lección de esa retractación |
+
+### Qué pasa
+
+`ConceptSelect`/`ReferenceCombobox` piden las opciones a
+`GET /system-context/dynamic-enums?target=…`. El manejador del simulador
+(`misc.handlers.ts:307-313`) busca el `target` en la tabla `ENUMS` y, **si ningún patrón casa,
+cae a `VS_RECORD_STATUS`**:
+
+```ts
+const [, valueSet, name] = ENUMS.find(([patron]) => patron.test(target)) ?? [
+  null,
+  'VS_RECORD_STATUS',
+  'Estado',
+];
+```
+
+**No hay ningún patrón para `medication_requests.medication_concept_id`** en la tabla `ENUMS`
+(31 entradas, líneas 31-128): verificado leyendo el archivo entero, no con un `grep` que puede
+fallar por un typo. El campo «Medicamento» de la casilla de medicación busca sobre el catálogo
+equivocado.
+
+| Debería ofrecer (medicamentos, `conceptos.ts:920-934`) | Ofrece hoy (`VS_RECORD_STATUS`) |
+|---|---|
+| Paracetamol 500 mg comprimidos · Ibuprofeno 400 mg comprimidos · Loratadina 10 mg · Sulfato ferroso 300 mg · Ciprofloxacino 500 mg · Insulina NPH 100 UI/ml | Activo (`ST-ACTIVE`) · Inactivo (`ST-INACTIVE`) |
+
+### Cómo se reprodujo (en `dictamen-h6-recorrido.spec.ts`, caso «D-06»)
+
+```
+1. Abrir la casilla de medicación con un encuentro en curso.
+2. Escribir «Paracetamol» en «Medicamento».
+   Observado: «Ningún medicamento coincide». Esperado: la opción del catálogo.
+3. Escribir «Activo» en el MISMO campo.
+   Observado: aparece la opción «Activo» con el hint «ST-ACTIVE».
+```
+
+El paso 3 es la prueba de que el catálogo **no está vacío ni con fallo de red** — está cargado,
+y es el equivocado. Un catálogo equivocado se ve como un catálogo, no como un error: no hay
+alerta, no hay traza de consola, la pantalla ofrece un desplegable con opciones y se puede
+«elegir» una que no significa nada.
+
+### Qué bloquea, y qué no
+
+**No bloquea C-15, C-16, C-17, C-18 ni C-19** (no necesitan elegir un medicamento real: leen
+o escriben otros campos del formulario). **Bloquea C-20 completo** (no se puede elegir un
+medicamento con posología de fábrica si no se puede elegir ningún medicamento), **C-22 completo**
+(el CA exige elegir medicamento y dejar el motivo vacío) y **la mitad de C-21** que este carril
+recorrió (crear una receta nueva para ver el menú de acciones exige, primero, elegir un
+medicamento).
+
+### Qué lo arregla
+
+Una línea en la tabla `ENUMS`, mismo patrón que ya usan los demás catálogos clínicos (regla del
+proyecto: la tabla va en el patrón porque `*_concept_id` se repite en media docena de tablas):
+
+```ts
+[/medication_requests\.medication_concept_id/, 'VS_MEDICAMENTO', 'Medicamento'],
+```
+
+El nombre exacto del value set (`VS_MEDICAMENTO` es un supuesto de este reporte, no una cita) lo
+decide quien tenga el fixture real de medicamentos (`conceptos.ts` los declara con builder propio,
+no con `conjunto(...)` genérico — hay que confirmar cuál `internalCode` les corresponde antes de
+escribir la línea).
+
+**No se aplicó desde este carril**: `core/mock/**` está reservado a Ender y la regla del reparto
+dice que quien necesite un cambio ahí lo pide, no lo escribe.

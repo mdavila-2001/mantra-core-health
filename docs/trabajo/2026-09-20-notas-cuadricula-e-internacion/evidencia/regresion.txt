@@ -112,3 +112,49 @@ H5.S3.M2 revisado: SI existe auditoría real y encadenada (audit.audit_log, prev
 
 RESULTADO NETO DE LA SESION 2: 5 microtareas de A MEDIAS/BLOQUEADO -> HECHO (H2.S3.M1, H3.S1.M2,
 H5.S2.M2, H5.S3.M1, H5.S3.M2). Avance del carril: 44/54 -> 49/54.
+
+=== SESION 3, 2026-09-21 — EL RECORRIDO DEL DICTAMEN (H6.S1.M2/M3) ===
+
+Al abrir el PR de la sesion 2 se descubrio que #557 (Justin) y #559 (Ender/Pablo) ya estaban
+MERGED en mockup (12:10-14:33 UTC), sin que nadie de esta sesion los mergeara. Se hizo el merge
+de origin/mockup a la rama del carril (c43c3441, sin conflictos) y se recorrieron las 10
+correcciones que quedaron integradas (regla 70.4.8: ninguna de las dos la escribi).
+
+$ npx playwright test playwright/dictamen-h6-recorrido.spec.ts --workers=1 --reporter=list
+ok  1 C-15 - sin boton de descargar (16.9s)
+ok  2 C-16 - sin barra de demostracion (17.8s)
+ok  3 C-17 - sin favoritos (16.0s)
+ok  4 C-18 - diagnostico o motivo libre (17.7s)
+ok  5 C-19 - dosis texto libre, sin "Unidad" (15.2s)
+ok  6 D-06 - el buscador de Medicamento ofrece Activo/Inactivo, no medicamentos (14.9s)
+ok  7 C-20 - BLOCKED por D-06 (15.8s)
+ok  8 C-21 (parcial, medicacion) - BLOCKED por D-06 (14.4s)
+ok  9 C-22 - BLOCKED por D-06 (15.4s)
+ok 10 C-24 - panel de consultas, mapa de calor, canceladas (8.6s)
+10 passed (2.6m)
+
+TYPECHECK_EXIT=0
+LINT_EXIT=0
+
+Tres causas raiz de mis propios selectores, corregidas antes de dar veredicto (no del producto):
+- data-testid de app-input cae DIRECTO en el <input> (input.html: [attr.data-testid]="testId()").
+  .locator('input') encima buscaba un hijo que no existe y colgaba 3 minutos hasta el timeout.
+- getByPlaceholder es ambiguo: app-reference-combobox expone el atributo "placeholder" en su HOST
+  ademas del <input> interno -> "resolved to 2 elements". Se fue por getByRole('combobox', {name}).
+- Un clic por texto suelto ("Paracetamol") caia sobre una receta YA EXISTENTE en la historia de
+  la paciente (texto estatico, no elegible) en vez de la opcion del buscador -> puedeRecetar()
+  quedaba false para siempre. Se fue por getByRole('option', {name}), scopeado al listbox real.
+
+D-06 (nuevo, reproducido antes de escribirlo -- mismo mecanismo del D-01 ya retirado):
+  misc.handlers.ts no tiene patron ENUMS para medication_requests.medication_concept_id.
+  El buscador de "Medicamento" cae al fallback VS_RECORD_STATUS.
+  Reproducido: buscar "Paracetamol" -> "Ningun medicamento coincide".
+               buscar "Activo" -> aparece, con el hint ST-ACTIVE.
+  Bloquea: C-20 completo, C-22 completo, la mitad de C-21 (medicacion). Dueno: Ender.
+
+C-18 se recorrio y dio PASS (opciones reales: diagnosticos + "Otro motivo - escribirlo" que abre
+el campo de texto libre) - ya no hace falta esperar a que Justin la cierre DESCARTADO.
+
+RESULTADO NETO DE LA SESION 3: H6.S1.M2 y H6.S1.M3 de A MEDIAS/BLOQUEADO -> HECHO.
+8 PASS + 2 BLOCKED (nuevo) de las 24 correcciones, sobre 14 NOT_RUN restantes (antes 22).
+Avance del carril: 49/54 -> 51/54.

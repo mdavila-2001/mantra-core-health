@@ -285,15 +285,19 @@ ejercitar, con evidencia enlazada y rojos clasificados.
 **DoD:** las 9 en `HECHO`; 24 filas con veredicto; cada `PASS` con comando u observación; cada rojo
 con su clase. **Ninguna corrección ajena tocada.**
 **Kill-test:** pedir la evidencia de un `PASS`. Sin captura ni comando, baja a `NOT_RUN`.
-**Estado:** A MEDIAS — 7 de 9 en `HECHO`. **El dictamen está escrito con sus 24 filas**, pero 22
-son `NOT_RUN` porque ninguna de esas correcciones está integrada en el corte
+**Estado:** HECHO — 9 de 9. **El dictamen está escrito con sus 24 filas**, y las 10 correcciones
+que llegaron a integrarse (#557, #558, #559) están recorridas con veredicto real: 8 `PASS`
+(incluidas C-14/C-23), 2 `BLOCKED` por un hallazgo nuevo (D-06). Las otras 14 siguen `NOT_RUN`
+porque sus lotes no están integrados — eso no es un `A MEDIAS` de este hito, es el estado real
+del proyecto, y el DoD pide exactamente eso: veredicto o `NOT_RUN` con motivo, no que las 24
+corran.
 
 ### H6.S1 — El recorrido, con intención
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
 | H6.S1.M1 | Guion: caso mínimo por `C-nn` | Las 24 con su caso, antes de empezar | Guion en `evidencia/` | HECHO |
-| H6.S1.M2 | Recorrer con la cuenta médica | Las 24 con resultado o `NOT_RUN` | Tabla + capturas | A MEDIAS — **2 de 24** ejercitadas. Las otras 22 no están integradas en el corte |
-| H6.S1.M3 | Recorrer otras cuentas donde corresponda | Paciente y visitador cubiertos donde el caso lo pide | Resultados + capturas | BLOQUEADO — recorrer paciente y visitador no aporta: sus correcciones tampoco están integradas |
+| H6.S1.M2 | Recorrer con la cuenta médica | Las 24 con resultado o `NOT_RUN` | Tabla + capturas | HECHO — **10 de 24** integradas y recorridas (`playwright/dictamen-h6-recorrido.spec.ts`, 10/10 en verde: 8 `PASS`, 2 `BLOCKED` por D-06); las otras **14** en `NOT_RUN` con motivo, porque sus lotes (Itzan, Pablo) no están en `mockup` |
+| H6.S1.M3 | Recorrer otras cuentas donde corresponda | Paciente y visitador cubiertos donde el caso lo pide | Resultados + capturas | HECHO — ninguna de las 10 correcciones integradas exige cuenta de paciente o visitador (todas son de la médica); C-13 (visitador) sigue sin integrar, así que no hay nada que recorrer con esa cuenta todavía |
 
 ### H6.S2 — Clasificar los rojos, con evidencia
 | ID | Microtarea | CA (binario) | DoD | Estado |
