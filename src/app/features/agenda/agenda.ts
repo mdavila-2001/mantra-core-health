@@ -45,6 +45,8 @@ import { AppButtonLink } from '../../shared/components/atoms/button/button-link'
 import { Badge } from '../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../shared/components/atoms/badge/badge.types';
 import { Menu } from '../../shared/components/molecules/menu/menu';
+import { RowActions } from '../../shared/components/molecules/row-actions/row-actions';
+import type { RowAction } from '../../shared/components/molecules/row-actions/row-actions.types';
 import { MenuItem } from '../../shared/components/molecules/menu/menu-item/menu-item';
 import { MenuTrigger } from '../../shared/components/molecules/menu/menu-trigger/menu-trigger';
 import { Link } from '../../shared/components/atoms/link/link';
@@ -466,6 +468,7 @@ type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'slots';
     Menu,
     MenuItem,
     MenuTrigger,
+    RowActions,
     StatusSeal,
     DataTable,
     DatePipe,
@@ -968,14 +971,167 @@ export class Agenda {
   });
 
   /**
-   * Si la fila tiene alguna acción que ofrecer — C-06.
+   * Las acciones de una fila, **por datos** — C-06.
    *
-   * Con el estado sin resolver no hay ninguna, y un desplegable vacío es peor
-   * que ninguno: promete algo y no lo cumple. «Ver detalle» existe en toda fila
-   * con estado, así que basta con que el estado esté resuelto.
+   * ## Por qué por datos y no dibujando botones acá
+   *
+   * Porque las dibuja `app-row-actions`, que es el componente que el sistema de
+   * diseño publicó para esto (`shared/components/molecules/row-actions/`), y su
+   * contrato es una lista: con dos o menos las pone en la fila y con tres o más
+   * las manda a un desplegable. **El mismo nodo no puede vivir en los dos
+   * lugares; los datos sí.** Ese umbral —y el motivo, que con texto cinco
+   * botones hacían crecer la fila a tres renglones— es la misma decisión del
+   * 2026-09-13 que ADR-0012 conserva, y no se vuelve a tomar acá.
+   *
+   * ## Por qué algunas no llevan ícono
+   *
+   * El set de íconos del sistema es **cerrado a propósito** y todavía no cubre
+   * las acciones de fila más comunes: no tiene ver, aceptar, completar ni
+   * registrar llegada. El propio contrato de `RowAction` dice que el ícono es
+   * opcional y que «agregar nombres al set es una decisión de quien lo lleva y
+   * no se toma de paso». Así que se usan los cinco que existen y el resto va
+   * con su texto, que es lo que C-06 exige. Pedido a Itzan en el daily.
+   *
+   * ## Los códigos no cambiaron
+   *
+   * Cada `code` es el `data-testid` que la acción tenía cuando era un botón
+   * suelto. La acción es la misma y se llama igual; lo que cambió es quién la
+   * dibuja.
    */
-  protected hayAlgunaAccion(cita: CitaVisible): boolean {
-    return cita.estado.code !== '';
+  protected accionesDe(cita: CitaVisible): readonly RowAction[] {
+    // Con el estado sin resolver no se ofrece ninguna: no se opera sobre un
+    // estado que no se conoce.
+    if (cita.estado.code === '') {
+      return [];
+    }
+
+    const acciones: RowAction[] = [
+      // «Ver detalle» va PRIMERO y en TODA fila: en una solicitud, lo primero
+      // que uno hace no es responder sino mirar qué le están pidiendo; en una
+      // cita atendida es lo único que queda.
+      {
+        code: 'agenda-detalle',
+        label: this.porResponder(cita) ? 'Ver detalle de la solicitud' : 'Ver detalle de la cita',
+      },
+    ];
+
+    // Cada acción se ofrece SOLO en el estado en que el backend la acepta: una
+    // opción que va a volver con 422 es un error con forma de oferta.
+    if (this.porResponder(cita)) {
+      if (cita.patientProfileId !== null) {
+        acciones.push({
+          code: 'agenda-historial',
+          label: 'Ver el historial del paciente',
+          icon: 'history',
+        });
+      }
+      acciones.push({ code: 'agenda-aceptar', label: 'Aceptar la solicitud' });
+      acciones.push({
+        code: 'agenda-rechazar',
+        label: 'Rechazar la solicitud',
+        destructive: true,
+      });
+    }
+
+    if (this.sePuedeIniciar(cita)) {
+      acciones.push({
+        code: 'agenda-iniciar',
+        label: 'Iniciar la consulta',
+        icon: 'stethoscope',
+      });
+    }
+
+    if (this.sePuedeCompletar(cita)) {
+      acciones.push({
+        code: 'agenda-continuar',
+        label: 'Continuar la consulta',
+        icon: 'arrow-right',
+      });
+      acciones.push({ code: 'agenda-completar', label: 'Completar la cita' });
+    }
+
+    if (this.puedeOperarCitas() && this.estaVigente(cita)) {
+      acciones.push(
+        cita.llegadaRegistrada
+          ? { code: 'agenda-llego', label: 'Ya llegó', disabled: true }
+          : { code: 'agenda-llegada', label: 'Registrar que llegó' },
+      );
+    }
+
+    if (this.puedeAtender() && this.estaVigente(cita)) {
+      acciones.push({ code: 'agenda-demorar', label: 'Avisar una demora', icon: 'bell' });
+      acciones.push({
+        code: 'agenda-reprogramar',
+        label: 'Mover a otro horario',
+        icon: 'calendar',
+      });
+    }
+
+    if (this.estaVigente(cita) || this.porResponder(cita)) {
+      acciones.push({
+        code: 'agenda-cancelar',
+        label: 'Cancelar la cita',
+        icon: 'remove',
+        destructive: true,
+      });
+    }
+
+    return acciones;
+  }
+
+  /** De qué fila son las acciones, para su nombre accesible. */
+  protected filaDe(cita: CitaVisible): string {
+    return cita.cuando === null
+      ? `la cita de ${cita.paciente}`
+      : `la cita de ${cita.paciente}, ${formatDate(cita.cuando, 'HH:mm', this.idioma)}`;
+  }
+
+  /**
+   * Ejecuta la acción elegida en la fila.
+   *
+   * Un `switch` sobre el código y no un mapa de funciones: el código es la
+   * identidad de la acción y este es el único lugar que la traduce a una
+   * llamada, así que verlas todas juntas es lo que hace obvio si falta alguna.
+   */
+  protected ejecutarAccionDeFila(cita: CitaVisible, code: string): void {
+    switch (code) {
+      case 'agenda-detalle':
+        void this.verDetalle(cita);
+        return;
+      case 'agenda-historial':
+        void this.verHistorialDelPaciente(cita);
+        return;
+      case 'agenda-aceptar':
+        this.aceptarCita(cita);
+        return;
+      case 'agenda-rechazar':
+        void this.rechazarCita(cita);
+        return;
+      case 'agenda-iniciar':
+        this.iniciarAtencion(cita);
+        return;
+      case 'agenda-continuar':
+        this.continuarAtencion(cita);
+        return;
+      case 'agenda-completar':
+        this.completarCita(cita);
+        return;
+      case 'agenda-llegada':
+        this.registrarLlegada(cita);
+        return;
+      case 'agenda-demorar':
+        this.abrirDemoraDeCita(cita);
+        return;
+      case 'agenda-reprogramar':
+        this.iniciarReprogramacion(cita);
+        return;
+      case 'agenda-cancelar':
+        void this.cancelarCita(cita);
+        return;
+      default:
+        // `agenda-llego` es informativa y llega deshabilitada: no hace nada.
+        return;
+    }
   }
 
   /** La cita espera respuesta: se ofrece aceptar o rechazar. */
