@@ -240,8 +240,52 @@ export class DayView {
    */
   readonly etiquetas = input<ReadonlyMap<string, EstadoResuelto>>(new Map());
 
+  /**
+   * Si se está moviendo una cita y este día es donde se elige el destino.
+   *
+   * Existe porque la solapa «Cupos» se retiró (C-07/C-10, 2026-09-20) y con
+   * ella el único lugar donde se veían los huecos disponibles. El gesto es el
+   * mismo de siempre —tocar un rato libre—, pero **el mismo hueco no puede
+   * significar dos cosas a la vez**: mientras dura el modo el rato es un
+   * destino, no una invitación a crear.
+   */
+  readonly moviendoCita = input<boolean>(false);
+
+  /**
+   * El cupo destino mientras el movimiento está en vuelo, sólo para la hilera.
+   *
+   * Se pasa el id y no un booleano porque hay muchos ratos libres en el día:
+   * con un booleano giran todos, y eso miente sobre cuál se está usando.
+   */
+  readonly ratoEnVuelo = input<string | null>(null);
+
+  /** Si esta sesión puede registrar un ingreso por mostrador (AC-C3-03). */
+  readonly puedeIngresarPorMostrador = input<boolean>(false);
+
+  /** Si esta sesión puede avisar una demora de la jornada (P8). */
+  readonly puedeAvisarDemora = input<boolean>(false);
+
   /** Pidieron hacer algo con una cita. */
   readonly accionPedida = output<PedidoDeAccion>();
+
+  /**
+   * Eligieron este rato libre como destino del movimiento en curso.
+   *
+   * Emite el identificador del cupo —que para un bloque libre es su `clave`— y
+   * cuándo empieza, que es lo que el diálogo de confirmación necesita nombrar.
+   */
+  readonly ratoElegidoParaMover = output<{ id: string; desde: Date }>();
+
+  /**
+   * Pidieron el ingreso por mostrador desde el encabezado del día.
+   *
+   * Bajó de las acciones de la página (C-11): quien lo usa está atendiendo el
+   * mostrador y mira este día, con alguien parado enfrente.
+   */
+  readonly mostradorPedido = output<void>();
+
+  /** Pidieron avisar la demora de esta jornada. Bajó de la página (C-11). */
+  readonly demoraPedida = output<void>();
 
   /** Tocaron un rato vacío (o el «+») para crear algo ahí. */
   readonly ratoTocado = output<RatoTocado>();
@@ -505,6 +549,16 @@ export class DayView {
   /** Tocar un bloque libre o el aire abre la tarjeta con el rango puesto. */
   protected tocar(bloque: BloqueDelDia): void {
     if (bloque.tipo !== 'libre' && bloque.tipo !== 'aire') return;
+
+    // Moviendo una cita, el rato es un DESTINO y no una invitación a crear.
+    // Sólo un bloque `libre` sirve: el aire no tiene cupo detrás —su `clave` es
+    // `aire-<timestamp>`, no un id— y mover una cita a la nada no existe.
+    if (this.moviendoCita()) {
+      if (bloque.tipo !== 'libre') return;
+      this.ratoElegidoParaMover.emit({ id: bloque.clave, desde: bloque.desde });
+      return;
+    }
+
     this.ratoTocado.emit({ desde: bloque.desde, hasta: bloque.hasta });
   }
 
