@@ -140,6 +140,7 @@ desplegable**, que va a ser el correcto en cuanto entre esa línea.
 | **Encontrado** | 2026-09-21, haciendo la matriz de C-23 |
 | **Preexistente** | Sí |
 | **Sólo en la API real** | Sí. La maqueta aplica `datos.typeConceptId ?? TIPO_EPISODIO` (`clinical.handlers.ts:264`), así que ahí no se ve |
+| **Confirmado 2026-09-21 (sesión 2)** | Contra Neon: `POST /clinical/care-episodes` sin `typeConceptId` → `201`; el `summary` releído confirma el campo **ausente**. `clinical-c14-c23-notas-e-internacion.int-spec.ts`, caso «D-02» |
 
 `clinical.care_episodes` tiene `type_concept_id` (`care_episodes.entity.ts:40`), el DTO lo acepta
 (`care-episode.dto.ts:40-46`), el cliente lo tipa (`clinical.types.ts:261`) y el servicio lo guarda
@@ -160,3 +161,112 @@ va a rechazar, o —peor— un uuid de otro conjunto que va a aceptar».
 **Queda como propuesta de modelo**, con el value set y el binding, en
 [`matriz-internacion.md`](./matriz-internacion.md) §4.1. Es el cambio más barato de toda la matriz
 y el que más devuelve: no toca ninguna tabla.
+
+---
+
+## D-03 · `POST /clinical/encounters/:id/close` da 500: deriva de esquema real
+
+| Campo | Valor |
+|---|---|
+| **Dueño** | **Dueño del modelo/infra** — no se puede cerrar desde el frontend |
+| **Clase** | `PRODUCT_BUG` |
+| **Encontrado** | 2026-09-21 (sesión 2), sembrando datos para el kill-test de C-14 contra la API real |
+| **Preexistente** | Sí — es la base de Neon la que le falta la columna, no algo que este carril introdujo |
+| **Ambiente** | Sólo se ve contra la API real. No hay equivalente en la maqueta: el simulador siempre responde `200` al cierre |
+
+`EncountersService.close()` intenta actualizar `clinical.encounters` incluyendo la columna
+`content_hash`, que la **entidad ORM declara** pero **esta base de Neon no tiene materializada**.
+Postgres rechaza el `UPDATE` completo:
+
+```
+InvalidFieldNameException: column "content_hash" of relation "encounters" does not exist
+code: 42703 (undefined_column)
+    at ChangeSetPersister.persistManagedEntity (…UnitOfWork.js)
+```
+
+Cuerpo que devuelve la API (sanitizado, sin `stack`):
+
+```json
+{"code":"INTERNAL","message":"Error interno del servidor","correlationId":"3972",
+ "path":"/clinical/encounters/102b34e7-a45d-4b5a-b421-1e40cf6e3d58/close"}
+```
+
+### Cómo se reprodujo
+
+```
+$ curl -X POST http://localhost:3000/clinical/encounters/<id>/close \
+    -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d '{}'
+→ 500
+
+$ docker logs mantra-redesa-api-1 --since 10m | grep '"reqId":3972'
+→ InvalidFieldNameException (arriba)
+```
+
+### Impacto
+
+**Ningún encuentro se puede cerrar hoy contra este ambiente.** Efecto lateral medido: dos
+encuentros del mismo paciente pueden quedar simultáneamente «en curso» (uno sembrado, otro abierto
+por la UI), y `encuentroActual` (`consultation.ts`, `encuentrosEnCurso()[0]`) elige uno sin garantía
+de cuál — la cuadrícula puede terminar creyendo que «esta consulta» ya tiene su fila cuando en
+realidad es una anterior. Se lo rodeó en el spec real **sin cerrar el encuentro**
+(`sembrarObservacionPrevia`, `playwright/support/api-real-clinica.ts`), no arreglándolo.
+
+### Qué lo arregla
+
+Aplicar a esta base de Neon el patch de `SQL/` que agrega `clinical.encounters.content_hash` (fuera
+de alcance: escribir DDL o aplicar patches es del dueño del modelo, regla 97.1.3). Alternativa más
+rápida si la columna es prescindible en este entorno: que `EncountersService.close()` no la incluya
+en el `UPDATE` cuando la fidelidad del esquema detecte que no existe — decisión de la API, no mía.
+
+---
+
+## D-04 · Un médico sin relación asistencial pudo internar a un paciente ajeno
+
+| Campo | Valor |
+|---|---|
+| **Dueño** | **Dueño de la API** — `clinical-encounters.controller.ts` |
+| **Clase** | Hallazgo, **sin veredicto** — no se afirma `FAIL` de regla 40 sin que el dueño confirme que es autorización, no un permiso deliberado |
+| **Encontrado** | 2026-09-21 (sesión 2), explorando el contrato de `care-episodes` para el int-spec |
+| **Preexistente** | Sí |
+
+`POST /clinical/care-episodes` lleva `@Roles('CLINICIAN', 'PRACTITIONER')` pero **no**
+`@UseGuards(ClinicalRecordAccessGuard)` — a diferencia de `clinical/observations`,
+`clinical/service-requests`, `clinical/diagnostic-reports` y `clinical-read`, que sí lo llevan
+(`clinical-observations.controller.ts:43`, `clinical-orders.controller.ts:73,85`,
+`clinical-read.controller.ts:45`). Un médico registrado sin ninguna relación asistencial ni turno
+con un paciente pudo abrir un episodio de cuidado para él:
+
+```
+$ curl -X POST http://localhost:3000/clinical/care-episodes -H "Authorization: Bearer <token-médico-sin-relación>" \
+    -d '{"patientProfileId":"<paciente-ajeno>","tenantId":"<tenant>","responsiblePractitionerId":"<hpid>"}'
+→ 201 {"id":"3689771a-…","status":"902abacd-…","startAt":"2026-09-21T13:26:18.008Z",…}
+```
+
+**No se corrigió.** El archivo es del dueño de la API, y la regla de la aceptación es «se reporta,
+no se arregla» — máxime tratándose de un guard de autorización que puede tener una razón que este
+carril no conoce (por ejemplo, si `care-episodes` se pensó como acción de emergencia sin relación
+previa). **Se reporta con evidencia y se deja la decisión a su dueño.**
+
+---
+
+## D-05 · Una internación con fecha de inicio futura se acepta sin rechazo del servidor
+
+| Campo | Valor |
+|---|---|
+| **Dueño** | **Dueño de la API** |
+| **Clase** | Hallazgo, **sin veredicto** |
+| **Encontrado** | 2026-09-21 (sesión 2), en el mismo int-spec |
+| **Preexistente** | Sí |
+
+```
+$ curl -X POST http://localhost:3000/clinical/care-episodes -H "Authorization: Bearer <token>" \
+    -d '{"patientProfileId":"<pid>","tenantId":"<tenant>","responsiblePractitionerId":"<hpid>",
+        "startAt":"2026-09-22T13:26:10.335Z"}'
+→ 201
+```
+
+El front **sí** rechaza una fecha de inicio futura (`admission-block.ts`, `inicioEnElFuturo()`,
+regla 60 §3 del propio `PLAN.md`), pero el contrato la acepta igual. Regla 60.4 (validar toda
+mutación server-side): si el front es la única barrera, cualquier cliente que hable el protocolo
+directo la salta. **No se corrigió**: es una decisión de validación del dueño de la API, y podría
+ser deliberada (una internación "programada" es un caso de uso legítimo que este lote no conoce).

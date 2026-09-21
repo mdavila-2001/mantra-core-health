@@ -105,7 +105,7 @@ kill-test, se usa ése y no se reinventa.
 | C-11 | Pablo | `NOT_RUN` | No integrada |
 | C-12 | Pablo + Ender | `NOT_RUN` | No integrada. Cruza dos lotes |
 | C-13 | Pablo + Ender | `NOT_RUN` | No integrada. Cruza dos lotes |
-| **C-14** | **Marcelo** | **`PASS`** | **Ejercitada en navegador**, ver §3 |
+| **C-14** | **Marcelo** | **`PASS`** | **Ejercitada en navegador y contra la API real** (Neon), ver §3 |
 | C-15 | Justin | `NOT_RUN` | No integrada |
 | C-16 | Justin | `NOT_RUN` | No integrada |
 | C-17 | Justin | `NOT_RUN` | No integrada |
@@ -150,10 +150,24 @@ Lo que esa corrida demuestra, punto por punto contra el pedido del cliente:
 **Cobertura unitaria:** 12 pruebas en `note-grid.spec.ts`, dentro de **21 archivos / 326 pruebas**
 en verde del expediente.
 
-**Lo que queda pendiente de verificar contra lo real:** todo esto corrió contra el **simulador**
-(`mockBackend: true`), que es el único backend que la maqueta tiene. La cuadrícula escribe por el
-contrato real (`POST /clinical/observations`, `GET /clinical/patients/:id/summary`), pero
-**nadie la ejercitó contra la API**.
+**Actualizado 2026-09-21 (sesión 2): ejercitada también contra la API real.** Lo de arriba corrió
+contra el simulador; después se cerró contra Neon (Docker encendido, sin `mockBackend`):
+
+```
+# API, por HTTP directo — clinical-c14-c23-notas-e-internacion.int-spec.ts
+Tests: 13 passed, 13 total
+
+# Navegador, contra la API real — correcciones-c14-c23.real.spec.ts
+ok 1 › la guardia de lectura: 403 sin relación, 200 apenas el paciente la acepta (26.3s)
+ok 2 › C-14 · vacío, error, y la fila persiste tras recargar (1.3m)
+4 passed
+```
+
+Cierra lo que el simulador no podía dar: los estados «vacío» y «error» (no falla a pedido), y qué
+responde el servidor si la petición de una segunda fila llega igual (**acepta**, `201` — la regla
+de una fila por sesión es de la UI). **Peldaño: `VERIFIED` contra API real**, no sólo contra
+maqueta. Tres hallazgos nuevos en el camino (esquema, autorización potencial, auditoría real sin
+endpoint de lectura) — ver `defectos-reportados.md`.
 
 ---
 
@@ -196,13 +210,17 @@ columnas, en `matriz-internacion.md` §4, y **no se tocó la base** (regla 97.1.
 
 ## 5. Rojos, y su clasificación
 
-**No hay rojos ejercitados**, porque no hubo qué ejercitar. Los dos hallazgos del turno son de
-otra naturaleza y están en [`defectos-reportados.md`](./defectos-reportados.md):
+**No hay rojos ejercitados de las 24**, porque no hubo qué ejercitar. Sí hay hallazgos —de esquema
+y de contrato, destapados al cerrar C-14/C-23 contra la API real (sesión 2)— en
+[`defectos-reportados.md`](./defectos-reportados.md):
 
 | ID | Clase | Dueño | Estado |
 |---|---|---|---|
 | ~~D-01~~ | — | — | **RETIRADO.** Lo reporté mal: clasifiqué desde un `grep` vacío sin reproducir, y el navegador lo desmintió. Queda escrito con su error de método en vez de borrarse |
-| D-02 | `PRODUCT_BUG` | Dueño del modelo | Abierto. Toda internación se guarda con `type_concept_id = NULL` porque no existe catálogo de tipo de episodio. **Sólo se ve contra la API real** |
+| D-02 | `PRODUCT_BUG` | Dueño del modelo | Abierto. Toda internación se guarda con `type_concept_id = NULL` porque no existe catálogo de tipo de episodio. **Confirmado contra la API real** |
+| D-03 | `PRODUCT_BUG` | Dueño del modelo/infra | Abierto. `POST /clinical/encounters/:id/close` da `500` en esta base de Neon: falta la columna `content_hash` que la entidad ORM declara. Ningún encuentro se puede cerrar hoy |
+| D-04 | Hallazgo, sin veredicto | Dueño de la API | `POST /clinical/care-episodes` no lleva `ClinicalRecordAccessGuard`: un médico sin relación con el paciente pudo internarlo. Reproducido, no corregido |
+| D-05 | Hallazgo, sin veredicto | Dueño de la API | `startAt` futuro en `care-episodes` se acepta sin rechazo server-side |
 
 **Un hallazgo más, de `shared/`, para Itzan** (no es defecto de las 24, y no se reportó como tal
 porque no lo pidió nadie): `app-date-picker` trata **«campo cerrado al pasado» como «es una fecha
