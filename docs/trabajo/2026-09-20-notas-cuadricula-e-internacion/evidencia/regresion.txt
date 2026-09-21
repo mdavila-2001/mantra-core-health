@@ -219,3 +219,57 @@ RESULTADO NETO DE LA SESION 4 (el dictamen):
 El veredicto global sigue NO ACEPTADO, y ahora por un motivo mejor: ya no es "no hay nada que
 mirar", es que lo que queda rojo es rojo de verdad (C-06 por D-07; C-20/C-21/C-22 por D-06).
 La unica NOT_RUN es C-03 (Ender), que sigue sin rama fusionada.
+
+=== SESION 5, 2026-09-21 — #566, EL REFACTOR DE C-06 QUE LA EMPEORO ===
+
+Pablo integro #566 ("las acciones de la fila usan app-row-actions, el componente del sistema").
+Traido a la rama con git merge origin/mockup: limpio. Se recorrio de nuevo el dictamen entero.
+
+$ npx playwright test playwright/dictamen-h6-recorrido-2.spec.ts --workers=1 --reporter=list
+15 passed (2.4m)
+   (el caso de C-06 se partio en dos: "ninguna accion es solo-icono" y "D-08")
+C-06 - acciones con texto: 2 en la fila, 38 en desplegables
+D-08 - acciones sin icono, observadas: agenda-detalle, agenda-completar, agenda-llego,
+       agenda-llegada, agenda-aceptar, agenda-rechazar
+
+TYPECHECK_EXIT=0
+LINT_EXIT=0
+
+$ npx ng test --include="src/app/features/agenda/*.spec.ts"
+       --include="src/app/shared/components/molecules/row-actions/*.spec.ts" --watch=false
+Test Files 4 passed (4) · Tests 141 passed (141)
+
+D-08 (nuevo, REGRESION introducida por #566): app-row-actions dibuja el icono solo si la accion
+lo declara (@if (action.icon)), y en accionesDe() de agenda.ts SEIS de las doce no lo declaran.
+Las seis tenian su SVG escrito a mano en #564. Verificado contra el commit anterior:
+
+  $ git show cfa889c9:src/app/features/agenda/agenda.html | grep -A6 'data-testid="agenda-detalle"' | grep -c 'slot="icon"'
+  1
+  (idem para agenda-aceptar, agenda-rechazar, agenda-completar, agenda-llegada, agenda-llego)
+
+C-06 pide icono Y texto. El texto quedo; el icono no. agenda-detalle sale en TODA fila.
+Dueno: Pablo. No se toco desde este carril.
+
+Lo que NO es defecto y se registra como ambiguedad (regla 00.6): app-row-actions deja las
+acciones en la fila cuando son dos o menos, y solo colapsa con tres o mas. El guion de C-06 dice
+"en una tabla, las acciones estan en un desplegable", sin excepcion. Con una sola accion, un
+desplegable de un item es peor. Decision de coordinacion.
+
+MI PROPIO CASO DE D-08 SE QUEDO CORTO Y LA CORRIDA LO CORRIGIO: la primera version listaba CINCO
+acciones, sacadas de leer agenda.ts. El caso afirma que toda accion muda este en la lista
+reportada, y la corrida destapo la sexta (agenda-rechazar). Leer el codigo habria dejado el
+defecto corto; ejecutarlo no.
+
+POR QUE NINGUNA HERRAMIENTA LO VIO: el tipo RowAction declara `icon` como opcional -correcto para
+un componente generico- y las 141 unitarias de la agenda comprueban QUE acciones se ofrecen en
+cada estado, no COMO se dibujan.
+
+AVISO DE LECTURA, SIN VEREDICTO: los data-testid por accion pasaron a data-action. Los codigos son
+los mismos; el atributo no. playwright/carril-13-solicitudes-de-consulta.spec.ts todavia los busca
+con getByTestId. NO se pudo comprobar si eso lo rompe: esa suite corre contra la API real con la
+cuenta doctora() y aca falla antes, al entrar (TimeoutError en support/sesion.ts:105). Esa falla
+es preexistente y NO es de #566.
+
+RESULTADO NETO DE LA SESION 5: el conteo del dictamen no se mueve (19 aceptadas / 1 FAIL /
+3 BLOCKED / 1 NOT_RUN), pero el FAIL de C-06 pasa de tener UN motivo a tener DOS, y el segundo lo
+metio el PR que dice cerrarla. Rojos abiertos: 3 (D-06 Ender, D-07 el marco, D-08 Pablo).

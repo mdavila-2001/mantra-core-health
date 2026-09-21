@@ -172,21 +172,106 @@ test.describe('H6 · recorrido de #564 (Pablo, consultas)', () => {
     await page.screenshot({ path: join(SALIDA, 'c10-modal-sin-preguntar-la-hora.png') });
   });
 
-  test('C-06 · las acciones de la fila del día son un desplegable con icono y texto', async ({
+  test('C-06 · ninguna acción de fila es sólo-icono: todas dicen su palabra', async ({ page }) => {
+    // Desde #566 las acciones las dibuja `app-row-actions`: con tres o más van a
+    // un desplegable y con dos o menos quedan en la fila. Las dos formas cuentan,
+    // así que se recorren los dos caminos y no se asume ninguno.
+    const grupos = page.getByTestId('dia-acciones');
+    await expect(grupos.first()).toBeVisible({ timeout: 30_000 });
+
+    let enFila = 0;
+    let enMenu = 0;
+
+    for (const grupo of await grupos.all()) {
+      const disparador = grupo.getByTestId('row-actions-trigger');
+      if ((await disparador.count()) > 0) {
+        // El disparador mismo lleva icono y texto.
+        expect(((await disparador.innerText()) ?? '').trim().length).toBeGreaterThan(0);
+        expect(await disparador.locator('svg').count()).toBeGreaterThan(0);
+        await disparador.click();
+        const items = page.getByRole('menuitem');
+        await expect(items.first()).toBeVisible({ timeout: 15_000 });
+        for (const item of await items.all()) {
+          const code = await item.getAttribute('data-action');
+          expect(
+            ((await item.textContent()) ?? '').trim().length,
+            `la acción «${code}» del desplegable no tiene texto`,
+          ).toBeGreaterThan(0);
+          enMenu += 1;
+        }
+        await page.keyboard.press('Escape');
+        await estable(page);
+      } else {
+        for (const boton of await grupo.locator('[data-action]').all()) {
+          const code = await boton.getAttribute('data-action');
+          expect(
+            ((await boton.textContent()) ?? '').trim().length,
+            `la acción «${code}» de la fila no tiene texto`,
+          ).toBeGreaterThan(0);
+          enFila += 1;
+        }
+      }
+    }
+
+    console.log(`C-06 · acciones con texto: ${enFila} en la fila, ${enMenu} en desplegables`);
+    expect(enFila + enMenu).toBeGreaterThan(0);
+    await page.screenshot({ path: join(SALIDA, 'c06-acciones-desplegable.png') });
+  });
+
+  test('C-06 · D-08: seis acciones perdieron su icono al migrar a `app-row-actions`', async ({
     page,
   }) => {
-    const acciones = page.getByTestId('dia-acciones').first();
-    await expect(acciones).toBeVisible({ timeout: 30_000 });
-    const disparador = acciones.getByRole('button').first();
-    await disparador.click();
-    const menu = page.getByRole('menu').first();
-    await expect(menu).toBeVisible({ timeout: 15_000 });
-    const items = menu.getByRole('menuitem');
-    expect(await items.count()).toBeGreaterThan(0);
-    for (const item of await items.all()) {
-      expect(((await item.textContent()) ?? '').trim().length).toBeGreaterThan(0);
+    // C-06 pide icono **y** texto. Hasta #564 cada opción llevaba su SVG escrito
+    // a mano; #566 las migró al componente del sistema, que dibuja el icono sólo
+    // si la acción lo declara (`@if (action.icon)`), y seis no lo declaran.
+    // Se afirma el defecto para que quede reproducible, no para aprobarlo.
+    //
+    // Las seis salieron de la corrida, no de leer `agenda.ts`: la primera
+    // versión de este caso listaba cinco y la corrida destapó `agenda-rechazar`.
+    const SIN_ICONO = [
+      'agenda-detalle',
+      'agenda-aceptar',
+      'agenda-rechazar',
+      'agenda-completar',
+      'agenda-llegada',
+      'agenda-llego',
+    ];
+
+    const grupos = page.getByTestId('dia-acciones');
+    await expect(grupos.first()).toBeVisible({ timeout: 30_000 });
+
+    const vistas = new Map<string, boolean>();
+    for (const grupo of await grupos.all()) {
+      const disparador = grupo.getByTestId('row-actions-trigger');
+      if ((await disparador.count()) > 0) {
+        await disparador.click();
+        const items = page.getByRole('menuitem');
+        await expect(items.first()).toBeVisible({ timeout: 15_000 });
+        for (const item of await items.all()) {
+          const code = (await item.getAttribute('data-action')) ?? '';
+          vistas.set(code, (await item.locator('svg').count()) > 0);
+        }
+        await page.keyboard.press('Escape');
+        await estable(page);
+      } else {
+        for (const boton of await grupo.locator('[data-action]').all()) {
+          const code = (await boton.getAttribute('data-action')) ?? '';
+          vistas.set(code, (await boton.locator('svg').count()) > 0);
+        }
+      }
     }
-    await page.screenshot({ path: join(SALIDA, 'c06-acciones-desplegable.png') });
+
+    const mudas = [...vistas.entries()].filter(([, tiene]) => !tiene).map(([code]) => code);
+    console.log(`D-08 · acciones sin icono, observadas: ${mudas.join(', ') || '(ninguna)'}`);
+
+    // Las que el día alcanza a mostrar tienen que estar entre las cinco
+    // declaradas sin icono en `agenda.ts`; si apareciera una que no está en la
+    // lista, el defecto es más grande de lo reportado y hay que volver a medirlo.
+    for (const code of mudas) {
+      expect(SIN_ICONO, `«${code}» tampoco tiene icono y no estaba reportada`).toContain(code);
+    }
+    expect(mudas.length, 'D-08 ya no se reproduce: ¿lo arreglaron?').toBeGreaterThan(0);
+    await page.screenshot({ path: join(SALIDA, 'd08-acciones-sin-icono.png') });
   });
 
   test('C-04 · la tarjeta del día hace lo que la cita admite en su estado', async ({ page }) => {

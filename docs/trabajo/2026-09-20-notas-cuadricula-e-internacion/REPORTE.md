@@ -10,6 +10,15 @@ de `microtareas HECHO / 54`.
 > C-13 se integró (#564) y sí la pide: el guion la quiere con médica **y** visitador, y se ejercitó
 > una. Un hito no se queda en `HECHO` porque ya lo estuvo; se queda si su DoD sigue cumpliéndose.
 
+> **2026-09-21, sesión 5 — #566 y el `FAIL` que el propio PR se metió.** Pablo integró **#566**,
+> que refactoriza C-06 al componente `app-row-actions` del sistema de diseño. La migración es la
+> decisión correcta —no tener un desplegable propio cuando el sistema publica uno— pero el
+> componente **dibuja el icono sólo si la acción lo declara**, y **seis no lo declaran**: las seis
+> perdieron el icono que sí tenían en #564. C-06 pide icono **y** texto. Eso es **D-08**, y lo
+> introdujo el PR que dice cerrar esa misma corrección. **Pasó `typecheck`, `lint` y 141/141
+> pruebas unitarias** — ninguna comprueba que una acción tenga icono. Recorrido entero de nuevo:
+> **15/15**. C-06 sigue en `FAIL`, ahora por dos defectos. Detalle en §1 «Hoy, #566».
+
 > **2026-09-21, sesión 4 — la segunda tanda del recorrido (#561, #562, #563, #564).** Mientras se
 > resolvía el conflicto que GitHub marcaba en el PR #565 —que **no era real**: el merge local de
 > `origin/mockup` salió limpio y el PR volvió a `MERGEABLE`— aparecieron **cuatro PRs más** ya
@@ -277,6 +286,45 @@ de una sola vez medía sobre la nada; la primera tarjeta del día es una cita ya
 ella la tarjeta **explica** en vez de navegar —que es lo que #564 promete, no un fallo—; y tanto
 la visita de laboratorio como el primer rato libre caen en días posteriores al de hoy.
 
+### Hoy, #566: el refactor de C-06 que la empeoró (2026-09-21, sesión 5)
+
+Pablo integró **#566**, que lleva las acciones de fila a `app-row-actions`, el componente que el
+sistema de diseño publicó para esto. **La decisión es la correcta** —#564 había escrito un
+desplegable propio sobre `app-menu`, y tener una implementación paralela de algo que el sistema ya
+resuelve es deuda—. El problema está en lo que se perdió al migrar.
+
+**D-08:** `app-row-actions` dibuja el icono sólo si la acción lo declara
+(`@if (action.icon)`), y en `accionesDe()` de `agenda.ts` **seis de las doce no lo declaran**:
+
+| Sin icono hoy | ¿Tenía SVG en #564? |
+|---|---|
+| `agenda-detalle` — **está en toda fila** | Sí |
+| `agenda-aceptar`, `agenda-rechazar`, `agenda-completar`, `agenda-llegada`, `agenda-llego` | Sí, las cinco |
+
+Comprobado con `git show cfa889c9:…/agenda.html`: cada una tenía su bloque `slot="icon"`. C-06 pide
+icono **y** texto; quedó sólo el texto.
+
+**Lo que sí sigue cumpliendo**, verificado contra las dos formas nuevas del componente: **ninguna
+acción es sólo-icono**. 2 acciones quedan en la fila y 38 en desplegables, y las 40 dicen su
+palabra.
+
+**Una ambigüedad que registro y no decido** (regla 00.6): `app-row-actions` deja las acciones **en
+la fila cuando son dos o menos** y sólo colapsa con tres o más. El guion de C-06 dice «en una
+tabla, las acciones están en un desplegable», sin excepción. Con una sola acción, un desplegable de
+un ítem es peor — las dos lecturas se defienden. Es decisión de coordinación, no mía.
+
+**Lo que más preocupa de D-08 no es el icono: es que nada lo vio.** `yarn typecheck` 0, `yarn lint`
+0, y **141/141** pruebas unitarias de `features/agenda/` + `shared/…/row-actions/` en verde. El
+tipo `RowAction` declara `icon` como opcional —correcto para un componente genérico— y las pruebas
+de la agenda comprueban **qué** acciones se ofrecen en cada estado, no **cómo** se dibujan. El
+arreglo debería venir con esa prueba.
+
+**Y un aviso de lectura, sin veredicto:** los `data-testid` por acción pasaron a ser
+`data-action`. Los códigos no cambiaron; el atributo sí.
+`playwright/carril-13-solicitudes-de-consulta.spec.ts` todavía los busca con `getByTestId`. **No
+pude comprobar si eso lo rompe**: esa suite corre contra la API real y acá falla antes, al entrar
+con `doctora()`. Se reporta como lo que es —una lectura del código—, no como defecto verificado.
+
 ---
 
 ## 2. A medias
@@ -384,9 +432,9 @@ relación asistencial que se ejercita sella un evento en `audit.audit_log`, que 
 
 | A quién | Qué |
 |---|---|
-| **Coordinación** | El dictamen: sigue **`NO ACEPTADO`**, pero el motivo cambió. Hoy son **19 aceptadas** (17 plenas + C-13 y C-23 parciales), **1 `FAIL`** (C-06, por D-07), **3 `BLOCKED`** (C-20, C-21, C-22, por D-06) y **1 `NOT_RUN`** (C-03, la única sin rama fusionada). **Ya no es «no hay nada que mirar»: lo que queda rojo es rojo de verdad**, y son dos defectos con dueño. Y el tamaño real de C-23 sigue igual: 10 de 18 campos exigen modelo nuevo |
+| **Coordinación** | El dictamen: sigue **`NO ACEPTADO`**, pero el motivo cambió. Hoy son **19 aceptadas** (17 plenas + C-13 y C-23 parciales), **1 `FAIL`** (C-06, por **D-07 y D-08**), **3 `BLOCKED`** (C-20, C-21, C-22, por D-06) y **1 `NOT_RUN`** (C-03, la única sin rama fusionada). **Ya no es «no hay nada que mirar»: lo que queda rojo es rojo de verdad**, y son **tres** defectos con dueño. Y una decisión que es suya, no mía: `app-row-actions` deja las acciones en la fila cuando son dos o menos, y el guion de C-06 pide desplegable sin excepción — hay que decir cuál vale. El tamaño real de C-23 sigue igual: 10 de 18 campos exigen modelo nuevo |
 | **El marco (quien sea su dueño)** | **D-07**, reproducido con captura: el interruptor de tema de `shell-layout.html:362` es sólo-icono y **no lleva `appTooltip`**. Es una línea, y mientras no esté **C-06 sigue en `FAIL`** para toda ruta con cabecera |
-| **Pablo** | Su lote #564 se recorrió entero y **las ocho correcciones dieron `PASS`** (C-04, C-06 en su área, C-07, C-08, C-10, C-11, C-12; C-13 en parcial). Lo único que le falta a C-13 es la mitad del **visitador**, que necesita esa cuenta — si tiene una sintética declarada, se cierra en una corrida |
+| **Pablo** | **D-08, lo primero**: su #566 dejó **seis acciones sin icono** (`agenda-detalle`, que sale en toda fila, más `agenda-aceptar`, `agenda-rechazar`, `agenda-completar`, `agenda-llegada`, `agenda-llego`). Son seis `icon:` en `accionesDe()` de `agenda.ts`, y conviene que vayan con la prueba que faltaba: sus 141 unitarias pasan sin mirar si una acción tiene icono. Del resto, #564 se recorrió entero y **las ocho dieron `PASS`** (C-04, C-07, C-08, C-10, C-11, C-12; C-13 en parcial). A C-13 le falta la mitad del **visitador**, que necesita esa cuenta — si tiene una sintética declarada, se cierra en una corrida |
 | **Itzan** | Su lote #561 se recorrió entero y **las cinco dieron `PASS`** (C-01, C-02, C-05, C-09, y C-21 en el perfil: cero radios en las siete pestañas). El hallazgo del interruptor de tema que él mismo declaró está ahora **confirmado por separado como D-07** — no era sólo una observación de paso |
 | **Dueño del modelo** | `matriz-internacion.md` §4: el value set de tipo de episodio (barato, no toca tablas) y el esqueleto de `encounter_hospitalizations` / `encounter_locations` / `encounter_diagnoses`. Más **D-02**, confirmado contra la API real |
 | **Dueño del modelo/infra** | **D-03**: `clinical.encounters.content_hash` está en la entidad ORM y no en esta base de Neon — `POST /clinical/encounters/:id/close` da 500 siempre. Bloquea cerrar cualquier encuentro contra este ambiente |

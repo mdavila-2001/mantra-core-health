@@ -31,25 +31,34 @@
 > **Y volvió a avanzar, otra vez mientras se escribía.** Al resolver el conflicto del PR #565
 > aparecieron **cuatro PRs más** ya `MERGED` en `mockup` — #561 (Itzan), #562, #563 y #564
 > (Pablo) —, que entre los dos cubren **trece** de las catorce que quedaban. Se recorrieron
-> también: `playwright/dictamen-h6-recorrido-2.spec.ts`, 14 casos, **14/14 en verde**, con la
-> misma cuenta sintética. Tampoco escribí ninguno de los cuatro. El detalle está en **§4.6**, y
-> de ahí sale el `FAIL` de C-06 (defecto **D-07**). **La única sin integrar es C-03.**
+> también: `playwright/dictamen-h6-recorrido-2.spec.ts`, con la misma cuenta sintética. Tampoco
+> escribí ninguno de los cuatro. **La única sin integrar es C-03.**
+>
+> **Y una tercera vez, ya escrito todo lo anterior:** entró **#566** (Pablo), que refactoriza C-06
+> al componente del sistema. Se volvió a recorrer entero — **15/15** — y el veredicto de C-06
+> **empeoró**: además de D-07, el propio #566 introdujo **D-08** (seis acciones perdieron su
+> icono). El detalle está en **§4.6**.
 
 ## 0. VEREDICTO GLOBAL — `NO ACEPTADO`
 
-**El veredicto global es el más bajo de sus partes.** El tablero cambió dos veces en un día: hoy
+**El veredicto global es el más bajo de sus partes.** El tablero cambió tres veces en un día: hoy
 **23 de las 24 están integradas y recorridas**, y la enorme mayoría dio `PASS`. Pero sigue siendo
 `NO ACEPTADO`, y por dos motivos que no son de conteo: hay **un `FAIL` con reproducción** (C-06,
-defecto **D-07**) y **tres `BLOCKED`** que ningún avance de integración destraba, porque los
-bloquea un defecto del simulador (**D-06**).
+defectos **D-07** y **D-08**) y **tres `BLOCKED`** que ningún avance de integración destraba,
+porque los bloquea un defecto del simulador (**D-06**).
+
+> **Ojo con C-06: el último PR la empeoró.** #566 migró las acciones de fila al componente del
+> sistema —que es lo correcto— y en el camino **seis acciones perdieron su icono** (D-08). La
+> corrección que #566 dice cerrar pide «icono **y** texto»: el texto quedó, el icono no. Pasó
+> `typecheck`, `lint` y **141/141** pruebas unitarias sin que ninguna lo viera.
 
 | | |
 |---|---|
 | **Aceptadas con evidencia** | **19** de 24 — 17 plenas (C-01, C-02, C-04, C-05, C-07…C-12, C-14…C-19, C-24) y 2 parciales con su límite declarado (C-13, C-23) |
-| **Rechazadas (`FAIL`)** | **1** — C-06, por **D-07** (ver §5) |
+| **Rechazadas (`FAIL`)** | **1** — C-06, por **D-07** y **D-08** (ver §5) |
 | **Bloqueadas (`BLOCKED`)** | **3** — C-20, C-21 y C-22, por **D-06** (ver §5) |
 | **Sin ejercitar (`NOT_RUN`)** | **1** — C-03 (Ender), la única que no tiene rama fusionada |
-| **Rojos abiertos** | **2** — D-06 (dueño Ender) y D-07 (dueño: transversal, el marco) |
+| **Rojos abiertos** | **3** — D-06 (Ender), D-07 (el marco) y **D-08** (Pablo, regresión metida por #566) |
 
 ### El hecho que explica el dictamen entero
 
@@ -65,6 +74,7 @@ bloquea un defecto del simulador (**D-06**).
 | #562 | Pablo | contratos de scheduling | — (sin correción propia del lote) |
 | #563 | Ender | datos del simulador para C-24 | §4.5 |
 | #564 | Pablo | C-04, C-06, C-07, C-08, C-10, C-11, C-12, C-13 | §4.6 |
+| #566 | Pablo | C-06 otra vez: migra las acciones de fila a `app-row-actions` | §4.6 — **introduce D-08** |
 
 **La única que sigue sin integrar es C-03** (Ender, globo del panel principal).
 
@@ -139,7 +149,7 @@ kill-test, se usa ése y no se reinventa.
 | C-03 | Ender | `NOT_RUN` | **La única que sigue sin integrar.** Sin rama en el remoto |
 | C-04 | Pablo | `PASS` | #564 integrado. Recorrida en sus dos mitades: sobre una cita «Atendida» la tarjeta **explica** que está cerrada; sobre una «En consulta» **lleva a atenderla**. [`c04-tarjeta-cita-cerrada.png`](dictamen/c04-tarjeta-cita-cerrada.png) · [`c04-tarjeta-lleva-a-atender.png`](dictamen/c04-tarjeta-lleva-a-atender.png) |
 | C-05 | Itzan | `PASS` | #561 integrado. Recorrida: el editor abre con las **siete** pestañas de la ficha. [`c05-editor-siete-pestanas.png`](dictamen/c05-editor-siete-pestanas.png) |
-| **C-06** | **Itzan + los cinco** | **`FAIL`** | #561 y #564 integrados. Las dos áreas ejercitadas **cumplen**: las acciones de la fila del día son un desplegable y **cada ítem lleva texto**, no sólo icono. Pero el barrido transversal tiene un contraejemplo reproducido: **D-07** — el interruptor de tema del encabezado es sólo-icono **y no da globo**, y vive en el marco, así que se repite en toda ruta. Un `FAIL` necesita un contraejemplo y lo hay. [`c06-acciones-desplegable.png`](dictamen/c06-acciones-desplegable.png) · [`d07-interruptor-de-tema-sin-globo.png`](dictamen/d07-interruptor-de-tema-sin-globo.png) |
+| **C-06** | **Itzan + Pablo + los cinco** | **`FAIL`** (dos defectos) | #561, #564 y **#566** integrados. Lo que cumple: **ninguna acción de fila es sólo-icono** — las 2 que quedan en la fila y las 38 del desplegable llevan su palabra. Lo que no: **D-08**, que lo metió #566 — al migrar a `app-row-actions`, **seis acciones perdieron su icono** (`agenda-detalle`, que está en toda fila, `agenda-aceptar`, `agenda-rechazar`, `agenda-completar`, `agenda-llegada`, `agenda-llego`); C-06 pide icono **y** texto, y ahora falta el icono. Y **D-07**, transversal: el interruptor de tema del encabezado es sólo-icono **y no da globo**, en toda ruta con cabecera. [`c06-acciones-desplegable.png`](dictamen/c06-acciones-desplegable.png) · [`d08-acciones-sin-icono.png`](dictamen/d08-acciones-sin-icono.png) · [`d07-interruptor-de-tema-sin-globo.png`](dictamen/d07-interruptor-de-tema-sin-globo.png) |
 | C-07 | Pablo | `PASS` | #564 integrado. Recorrida: `?vista=table` ya no dibuja tabla ninguna, cae al calendario **y no redirige** (la dirección se conserva, así que «atrás» no se rompe). [`c07-sin-tabla.png`](dictamen/c07-sin-tabla.png) |
 | C-08 | Pablo | `PASS` | #564 integrado. Recorrida: la solapa se llama «Consultas»; no queda ninguna llamada «Calendario». [`c08-solapa-consultas.png`](dictamen/c08-solapa-consultas.png) |
 | C-09 | Itzan | `PASS` | #561 integrado. Recorrida: rejilla de insignias, cada una **con el nombre escrito** (no sólo color). [`c09-insignias-especialidad.png`](dictamen/c09-insignias-especialidad.png) |
@@ -339,6 +349,31 @@ interruptor no da globo. Es la forma de dejarlo reproducible en vez de anotado.
 - **C-06 no se cierra con las dos áreas ejercitadas.** Las acciones de fila cumplen, pero el barrido
   transversal tiene un contraejemplo en el marco — **D-07**, abajo.
 
+### Y una tercera vuelta: #566, el PR que refactoriza C-06
+
+Ya escrito lo de arriba, se integró **#566** («las acciones de la fila usan `app-row-actions`, el
+componente del sistema»). Se volvió a recorrer entero: **15/15**. Cambia dos cosas que importan
+para el veredicto:
+
+1. **Las acciones ya no van siempre a un desplegable.** `app-row-actions` las deja **en la fila
+   cuando son dos o menos** y sólo colapsa con tres o más. En el día de la médica: 2 en la fila
+   (una cita «Atendida» ofrece sólo «Ver detalle») y 38 en desplegables. **El guion de C-06 dice
+   «en una tabla, las acciones están en un desplegable», sin excepción.** Las dos lecturas son
+   defendibles y **no la resuelvo yo**: queda registrada como ambigüedad para coordinación
+   (regla 00.6), no como defecto.
+2. **Seis acciones perdieron su icono: D-08.** Esto sí es defecto, y no es ambiguo — C-06 pide
+   icono **y** texto, y seis quedaron sin icono, entre ellas la que aparece en **toda** fila. Las
+   seis lo tenían en #564.
+
+**Lo que sigue cumpliendo, y se verificó de nuevo contra las dos formas nuevas:** ninguna acción es
+sólo-icono. Las 40 dicen su palabra.
+
+**Una nota para quien mantenga otras suites:** los `data-testid` por acción (`agenda-detalle`,
+`agenda-aceptar`, …) pasaron a ser **`data-action`**. Los códigos son los mismos; el atributo no.
+`playwright/carril-13-solicitudes-de-consulta.spec.ts` todavía los busca con `getByTestId`. **No
+se pudo comprobar si eso lo rompe**: esa suite corre contra la API real y acá falla antes, al
+entrar. Queda como aviso de lectura, no como defecto verificado.
+
 ### El límite de esta tanda, declarado
 
 - **C-13 queda `PASS` parcial**: el guion pide **médica + visitador**, y sólo se ejercitó la médica.
@@ -364,6 +399,8 @@ real (sesión 2). Todos en [`defectos-reportados.md`](./defectos-reportados.md):
 | D-06 | `PRODUCT_BUG` (maqueta) | Ender — `core/mock/handlers/misc.handlers.ts` | Abierto. El buscador de «Medicamento» del bloque de medicación cae al catálogo de reserva `VS_RECORD_STATUS` (Activo/Inactivo) porque la tabla `ENUMS` no tiene patrón para `medication_requests.medication_concept_id`. **Reproducido con captura y sin adivinar** (mismo mecanismo del D-01 retirado, pero real esta vez): buscar cualquier medicamento no devuelve nada; buscar «Activo» sí. Bloquea C-20 y C-22 completos y la mitad de C-21 |
 | **D-07** | **`PRODUCT_BUG`** | Transversal — `features/shell-layout/shell-layout.html:362` + `core/alovida/alovida-theme-toggle.directive.ts` | **Abierto, y es el `FAIL` de C-06.** El interruptor de tema del encabezado es sólo-icono, tiene nombre accesible («Cambiar a modo claro/oscuro») y **no tiene globo**: ni al apuntarlo ni al enfocarlo aparece ningún `role="tooltip"`. Vive en el marco, así que se repite en **toda** ruta con cabecera. Lo había declarado **Itzan** en el cuerpo de #561 como hallazgo fuera de su frontera; acá está **reproducido por separado**, con captura, por quien no lo escribió |
 
+| **D-08** | **`PRODUCT_BUG`** (regresión) | **Pablo** — `src/app/features/agenda/agenda.ts`, `accionesDe()` | **Abierto, y es el segundo motivo del `FAIL` de C-06.** #566 migró las acciones de fila a `app-row-actions` —correcto— pero el componente dibuja el icono sólo si la acción lo declara, y **seis no lo declaran**: `agenda-detalle` (está en toda fila), `agenda-aceptar`, `agenda-rechazar`, `agenda-completar`, `agenda-llegada`, `agenda-llego`. **Las seis tenían su SVG en #564**, verificado con `git show cfa889c9`. Lo introdujo el PR que dice cerrar C-06 |
+
 **Un hallazgo más, de `shared/`, para Itzan** (no es defecto de las 24, y no se reportó como tal
 porque no lo pidió nadie): `app-date-picker` trata **«campo cerrado al pasado» como «es una fecha
 de nacimiento»** y abre el calendario en **enero de 2000**. Cualquier campo operativo que
@@ -377,20 +414,24 @@ se resolvió **quitándoselo**; la heurística sigue ahí para el próximo que l
 
 1. **Integrar C-03** (Ender, globo del panel principal). Es la única sin rama fusionada, y la única
    `NOT_RUN` que queda. Al integrarse, se recorre con el guion de §1 por quien no la escribió.
-2. **D-07 lo cierra quien sea dueño del marco.** Es una línea: el interruptor de tema de
+2. **D-08 lo cierra Pablo**, y es lo más barato de la lista: seis `icon:` en `accionesDe()`
+   (`agenda.ts`). Es una regresión de su propio #566 sobre la corrección que ese PR refactoriza.
+   Y conviene que el arreglo venga con la prueba que faltaba: las 141 unitarias de la agenda pasan
+   **sin mirar si una acción tiene icono**.
+3. **D-07 lo cierra quien sea dueño del marco.** Es una línea: el interruptor de tema de
    `shell-layout.html:362` necesita su `appTooltip`, igual que el resto de los sólo-icono del
    proyecto. Hasta entonces **C-06 sigue en `FAIL`**, y el `FAIL` alcanza a toda ruta con cabecera.
-3. **Cerrar la mitad que falta de C-13**: el guion pide la cuenta del visitador y sólo se ejercitó
+4. **Cerrar la mitad que falta de C-13**: el guion pide la cuenta del visitador y sólo se ejercitó
    la médica. Mientras tanto queda `PASS` parcial, no `PASS`.
-4. **D-06 lo cierra Ender** (`misc.handlers.ts`, es suyo): una línea en la tabla `ENUMS` con el
+5. **D-06 lo cierra Ender** (`misc.handlers.ts`, es suyo): una línea en la tabla `ENUMS` con el
    patrón `/medication_requests\.medication_concept_id/` → `VS_MEDICAMENTO` (o el nombre que use
    el fixture real de medicamentos). Sin eso, C-20/C-22/C-21(parcial) siguen `BLOCKED` aunque el
    resto de #557 ya esté integrado.
-5. **C-20 tiene una segunda causa, de Justin**: aunque D-06 se arregle, `onMedicamentoElegido()`
+6. **C-20 tiene una segunda causa, de Justin**: aunque D-06 se arregle, `onMedicamentoElegido()`
    (`medication-block.ts`) no lee `default_frequency` de la ficha del concepto — sólo
    `dose_forms`/`strengths`. Sin esa línea el CA sigue sin cumplirse.
-6. **C-06 y C-21 son transversales** y no se cierran con lo recorrido: falta el barrido del
+7. **C-06 y C-21 son transversales** y no se cierran con lo recorrido: falta el barrido del
    proyecto entero. De C-21 ya están las dos mitades que se pueden mirar hoy — el perfil en `PASS`,
    la medicación `BLOCKED` por D-06 —, y de C-06 está el contraejemplo que la manda a `FAIL`.
-7. **C-23 necesita una decisión que no es técnica**: o se acepta que la hoja de internación es una
+8. **C-23 necesita una decisión que no es técnica**: o se acepta que la hoja de internación es una
    fecha hasta que el modelo crezca, o se prioriza el cambio de modelo de `matriz-internacion.md` §4.

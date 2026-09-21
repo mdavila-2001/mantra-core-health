@@ -402,3 +402,88 @@ de los sólo-icono del proyecto (por ejemplo `dia-agregar`, que lleva
 **No se aplicó desde este carril**: `features/shell-layout/**` no es de la línea B, y la regla del
 reparto dice que quien necesita un cambio ajeno lo pide por la daily, no lo escribe. Además,
 arreglarlo yo invalidaría el dictamen: quien verifica no corrige (regla 70.4.8).
+
+---
+
+## D-08 · Seis acciones de fila perdieron su icono al migrar a `app-row-actions`
+
+| Campo | Valor |
+|---|---|
+| **Dueño** | **Pablo** — `src/app/features/agenda/agenda.ts`, método `accionesDe()` |
+| **Clase** | `PRODUCT_BUG` (regresión) |
+| **Encontrado** | 2026-09-21 (sesión 5), recorriendo C-06 después de que **#566** se integrara |
+| **Preexistente** | **No.** Lo introdujo #566: las seis tenían su icono en #564 |
+| **Lo mete el PR que dice arreglar C-06** | Sí. #566 refactoriza C-06 al componente del sistema y, en el camino, se lleva puesta la mitad «icono» de la propia corrección |
+
+### Qué pasa
+
+C-06 pide que un botón tenga **icono y texto**. #564 lo cumplía escribiendo el SVG de cada opción
+a mano en `agenda.html`. #566 migró esas opciones a `app-row-actions`, que es lo correcto —no
+tener un desplegable propio cuando el sistema publica uno—, pero el componente **sólo dibuja el
+icono si la acción lo declara**:
+
+```html
+@if (action.icon) {
+  <app-nav-icon slot="icon" [name]="action.icon" />
+}
+```
+
+Y en `accionesDe()` **seis de las doce acciones no declaran `icon`**:
+
+| Acción | `icon` en `agenda.ts` | ¿Tenía SVG antes de #566? |
+|---|---|---|
+| `agenda-detalle` («Ver detalle…») | — | **Sí** |
+| `agenda-aceptar` («Aceptar la solicitud») | — | **Sí** |
+| `agenda-rechazar` («Rechazar la solicitud») | — | **Sí** |
+| `agenda-completar` («Completar la cita») | — | **Sí** |
+| `agenda-llegada` («Registrar que llegó») | — | **Sí** |
+| `agenda-llego` («Ya llegó») | — | **Sí** |
+| `agenda-historial` · `agenda-iniciar` · `agenda-continuar` · `agenda-demorar` · `agenda-reprogramar` · `agenda-cancelar` | `history` · `stethoscope` · `arrow-right` · `bell` · `calendar` · `remove` | Sí, y lo conservan |
+
+**`agenda-detalle` está en TODA fila**, así que el faltante se ve siempre, no en un caso de borde.
+
+### Cómo se comprobó que no era así antes
+
+```
+$ git show cfa889c9:src/app/features/agenda/agenda.html | grep -A6 'data-testid="agenda-detalle"' | grep -c 'slot="icon"'
+1
+```
+Lo mismo para las otras cinco: **1** en cada una. El SVG estaba y ya no está.
+
+### Cómo se reprodujo (en `dictamen-h6-recorrido-2.spec.ts`, caso «D-08»)
+
+1. Entrar con `medica@alovida.mock` e ir a `/schedule`.
+2. Recorrer **cada** grupo `[data-testid="dia-acciones"]` del día. Desde #566 hay dos formas y se
+   miran las dos: con tres o más acciones hay un `row-actions-trigger` que abre el desplegable; con
+   dos o menos los botones quedan en la fila.
+3. Por cada acción, contar sus `<svg>`.
+4. Observado: `agenda-detalle, agenda-completar, agenda-llego, agenda-llegada, agenda-aceptar,
+   agenda-rechazar` → **0 iconos**. Las otras seis → 1.
+
+Captura: [`dictamen/d08-acciones-sin-icono.png`](dictamen/d08-acciones-sin-icono.png).
+
+> **La primera versión de este caso listaba cinco**, sacadas de leer `agenda.ts`. La corrida
+> destapó la sexta (`agenda-rechazar`) porque el caso afirma que **toda** acción muda esté en la
+> lista reportada. Leer el código habría dejado el defecto corto.
+
+### Por qué ninguna herramienta lo vio
+
+`yarn typecheck` 0 · `yarn lint` 0 · `ng test` de `features/agenda/` + `shared/…/row-actions/`
+**141/141 en verde**. Ninguna comprueba que una acción tenga icono: el tipo `RowAction` declara
+`icon` como **opcional**, que es correcto para un componente genérico, y las pruebas de la agenda
+verifican qué acciones se ofrecen en cada estado, no cómo se dibujan.
+
+### Qué lo arregla
+
+Seis `icon:` en `accionesDe()` de `agenda.ts`, con nombres que el catálogo de `app-nav-icon` ya
+publique. **No se aplicó desde este carril**: `features/agenda/**` es de Pablo, y quien verifica no
+corrige (regla 70.4.8).
+
+### Y una ambigüedad para registrar, que no es defecto
+
+`app-row-actions` pone las acciones **en la fila cuando son dos o menos**, y sólo usa desplegable
+con tres o más. El guion de C-06 dice «en una tabla, las acciones están en un desplegable», sin
+excepción. Las dos lecturas son defendibles —con una sola acción, un desplegable de un ítem es
+peor— y **no la resuelvo yo** (regla 00.6: la ambigüedad se registra, no se decide). Queda para
+coordinación. Lo que sí es verificable y está verde: **ninguna acción es sólo-icono**; las 2 de la
+fila y las 38 del desplegable llevan su palabra.
