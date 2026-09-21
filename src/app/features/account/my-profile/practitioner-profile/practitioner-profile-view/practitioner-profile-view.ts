@@ -24,7 +24,12 @@ import { WorkHistory } from '../../work-history/work-history';
 import { PractitionerActivity } from './practitioner-activity/practitioner-activity';
 import { PracticeSitesMap } from './practice-sites-map/practice-sites-map';
 import { CredentialsPanel } from './credentials-panel/credentials-panel';
-import { PESTANAS_DEL_PERFIL_MEDICO, PESTANA_MEDICO } from '../../pestanas-del-perfil-medico';
+import {
+  PESTANAS_DEL_EDITOR_MEDICO,
+  PESTANAS_DEL_PERFIL_MEDICO,
+  PESTANA_EDITOR,
+  PESTANA_MEDICO,
+} from '../../pestanas-del-perfil-medico';
 import { Avatar } from '../../../../../shared/components/atoms/avatar/avatar';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
@@ -375,6 +380,27 @@ export class PractitionerProfileView {
   protected readonly pestanaVisibleSeleccionada = computed<string | undefined>(
     () => this.pestanasVisibles()[this.pestanaSeleccionada()],
   );
+
+  /**
+   * La pestaña con la que el lápiz abre el editor.
+   *
+   * El editor decía en su propio comentario que «el lápiz abre el formulario en
+   * la pestaña que se estaba mirando», y **no era cierto**: el enlace iba a
+   * `/my-account/edit` a secas, así que desde «Credenciales» se entraba a
+   * editar en «Datos personales». Se resuelve acá, que es donde se sabe qué
+   * pestaña está abierta.
+   *
+   * Se traduce por ETIQUETA y no pasando el índice tal cual, por la misma razón
+   * que existe {@link pestanasVisibles}: la ficha suprime «Facturación» cuando
+   * no la tiene, así que a partir de ahí sus índices y los del editor no son
+   * los mismos. Una etiqueta que el editor no tenga cae en la primera, que es
+   * el comportamiento de siempre.
+   */
+  protected readonly pestanaDeEdicion = computed<number>(() => {
+    const abierta = this.pestanaVisibleSeleccionada();
+    const indice = abierta ? PESTANAS_DEL_EDITOR_MEDICO.findIndex((p) => p === abierta) : -1;
+    return indice >= 0 ? indice : PESTANA_EDITOR.personales;
+  });
 
   /**
    * Adónde va «Cambiar contraseña».

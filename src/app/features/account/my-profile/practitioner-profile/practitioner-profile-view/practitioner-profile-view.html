@@ -84,7 +84,14 @@
 
       <!-- El lápiz, igual que en la ficha del paciente: botón de ícono, con el
            nombre accesible en `aria-label` y en el globo. Va a la pantalla de
-           edición del médico, que es donde hoy vive su formulario. -->
+           edición del médico, que es donde hoy vive su formulario.
+
+           Y le dice EN QUÉ PESTAÑA se estaba: el editor prometía en su propio
+           comentario abrirse donde uno venía mirando, pero nadie le pasaba el
+           índice, así que desde «Credenciales» se entraba a editar en «Datos
+           personales». Se manda el índice del editor, no el de acá: la ficha
+           suprime «Facturación» cuando no la tiene y a partir de ahí las dos
+           numeraciones dejan de coincidir (`pestanaDeEdicion`). -->
       <a
         app-button
         variant="outline"
@@ -94,6 +101,7 @@
         appTooltip="Editar"
         data-testid="mi-perfil-editar"
         routerLink="/my-account/edit"
+        [queryParams]="{ pestana: pestanaDeEdicion() }"
       >
         <app-nav-icon name="edit" />
       </a>
