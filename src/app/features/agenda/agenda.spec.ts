@@ -1612,10 +1612,11 @@ describe('Agenda', () => {
    * El control de una acción de la fila, abriendo el desplegable si hace falta.
    *
    * C-06 (2026-09-20): las acciones de la tabla pasaron de ocho botones de sólo
-   * ícono en línea a un **desplegable** con icono y texto. `app-menu` no
-   * renderiza sus ítems mientras está cerrado —por costo, no por
-   * accesibilidad—, así que preguntar «¿la fila ofrece Aceptar?» ahora exige
-   * abrirlo, que es lo que hace una persona.
+   * ícono en línea a `app-row-actions`, que con tres o más las manda a un
+   * **desplegable**. `app-menu` no renderiza sus ítems mientras está cerrado
+   * —por costo, no por accesibilidad—, así que preguntar «¿la fila ofrece
+   * Aceptar?» ahora exige abrirlo, que es lo que hace una persona. Con dos o
+   * menos van en la fila y se encuentran directo.
    *
    * La pregunta no cambió y la respuesta tampoco: si la acción no se ofrece, el
    * desplegable se abre y no está. Lo que cambió es dónde hay que mirar.
@@ -1624,14 +1625,19 @@ describe('Agenda', () => {
     // El desplegable abierto se cuelga del `<body>` —`app-menu` lo mueve ahí
     // para que ningún `overflow` lo recorte—, así que buscar sólo dentro de la
     // ruta no lo encuentra.
+    // `app-row-actions` identifica cada acción con `data-action`, que lleva el
+    // mismo código que la acción tenía como `data-testid` cuando era un botón
+    // suelto: la acción es la misma y se llama igual.
     const buscar = (): HTMLElement | null =>
-      harness.routeNativeElement?.ownerDocument.querySelector(`[data-testid="${testid}"]`) ?? null;
+      harness.routeNativeElement?.ownerDocument.querySelector(
+        `[data-testid="${testid}"], [data-action="${testid}"]`,
+      ) ?? null;
 
     const directo = buscar();
     if (directo !== null) return directo;
 
     const disparador = harness.routeNativeElement?.querySelector<HTMLButtonElement>(
-      '[data-testid="agenda-acciones"]',
+      '[data-testid="row-actions-trigger"]',
     );
     if (disparador === null || disparador === undefined) return null;
     disparador.click();
@@ -1649,69 +1655,99 @@ describe('Agenda', () => {
    * resuelve la misma tensión de otra manera, y ahora la fila sigue en un
    * renglón Y cada opción tiene su palabra.
    */
-  describe('las acciones de la fila son un desplegable con icono y texto (C-06)', () => {
-    it('la fila ofrece UN control de acciones, con su texto, en vez de ocho iconos', async () => {
+  describe('las acciones de la fila las dibuja `app-row-actions` (C-06)', () => {
+    /** El componente compartido, montado en la celda de acciones. */
+    function rowActions(): HTMLElement | null {
+      return harness.routeNativeElement?.querySelector('app-row-actions') ?? null;
+    }
+
+    it('es el componente del sistema de diseno, no un desplegable escrito aca', async () => {
       await montar();
       await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
       await verSolapaDeCitas();
 
+      // La primera version de este turno escribio su propio bloque sobre
+      // `app-menu`, antes de que el componente estuviera publicado. Esta prueba
+      // fija que se migro: una implementacion paralela de algo que el sistema
+      // ya resuelve es el defecto que la regla 95.1 nombra.
+      expect(rowActions()).not.toBeNull();
+    });
+
+    it('con muchas acciones la fila no crece: van a un desplegable con su texto', async () => {
+      await montar();
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      await verSolapaDeCitas();
+
+      // Una confirmada ofrece seis: detalle, iniciar, llegada, demora, mover y
+      // cancelar. Con tres o mas, `app-row-actions` las colapsa.
+      expect(interno<(c: unknown) => readonly unknown[]>('accionesDe')(citas().data?.[0]).length)
+        .toBeGreaterThan(2);
       const disparador = harness.routeNativeElement?.querySelector(
-        '[data-testid="agenda-acciones"]',
+        '[data-testid="row-actions-trigger"]',
       ) as HTMLElement;
       expect(disparador).not.toBeNull();
       expect(disparador.textContent?.trim()).toContain('Acciones');
-      // Y cerrado no hay ninguna opción suelta en la fila.
+      // Cerrado, ninguna opcion suelta en la fila.
       expect(
-        harness.routeNativeElement?.querySelectorAll('.agenda__acciones [role="menuitem"]'),
+        harness.routeNativeElement?.querySelectorAll('[role="menuitem"]'),
       ).toHaveLength(0);
     });
 
-    it('cada opcion del desplegable lleva icono Y texto, no sólo un glifo', async () => {
+    it('cada opcion lleva su TEXTO, y las que el set cubre llevan ademas su icono', async () => {
       await montar();
       await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
       await verSolapaDeCitas();
       (
-        harness.routeNativeElement?.querySelector('[data-testid="agenda-acciones"]') as HTMLElement
+        harness.routeNativeElement?.querySelector(
+          '[data-testid="row-actions-trigger"]',
+        ) as HTMLElement
       ).click();
       harness.detectChanges();
 
       const opciones = Array.from(
         harness.routeNativeElement?.ownerDocument.querySelectorAll('[role="menuitem"]') ?? [],
       ) as HTMLElement[];
-      expect(opciones.length).toBeGreaterThan(1);
+      expect(opciones.length).toBeGreaterThan(2);
+
       for (const opcion of opciones) {
-        expect(opcion.textContent?.trim(), 'una opción sin texto es C-06 sin cumplir').not.toBe('');
-        expect(opcion.querySelector('svg'), 'una opción sin ícono tampoco cumple').not.toBeNull();
+        expect(opcion.textContent?.trim(), 'una opcion sin texto es C-06 sin cumplir').not.toBe('');
       }
+      // El set de iconos del sistema es cerrado y todavia no cubre «ver»,
+      // «aceptar», «completar» ni «registrar llegada»: esas van con su texto,
+      // que es lo que el contrato de `RowAction` declara. Lo que esta prueba
+      // fija es que las que SI tienen icono lo llevan.
+      const conIcono = opciones.filter((o) => o.querySelector('app-nav-icon') !== null);
+      expect(conIcono.length).toBeGreaterThan(0);
     });
 
-    it('es el menu del sistema de diseno, no uno escrito acá', async () => {
+    it('con dos acciones o menos van EN la fila, con su texto, sin desplegable', async () => {
+      // Una cita ya atendida ofrece una sola: ver su detalle.
       await montar();
-      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      await responderConEstado('BOOKING_COMPLETED', 'Atendida');
       await verSolapaDeCitas();
-      const disparador = harness.routeNativeElement?.querySelector(
-        '[data-testid="agenda-acciones"]',
+
+      expect(interno<(c: unknown) => readonly unknown[]>('accionesDe')(citas().data?.[0]))
+        .toHaveLength(1);
+      expect(
+        harness.routeNativeElement?.querySelector('[data-testid="row-actions-trigger"]'),
+      ).toBeNull();
+      const enLinea = harness.routeNativeElement?.querySelector(
+        '[data-action="agenda-detalle"]',
       ) as HTMLElement;
-      disparador.click();
+      expect(enLinea).not.toBeNull();
+      expect(enLinea.textContent?.trim()).toContain('Ver detalle de la cita');
+    });
+
+    it('sin estado resuelto no se ofrece ninguna accion', async () => {
+      // No se opera sobre un estado que no se conoce: un desplegable vacio
+      // promete algo y no lo cumple.
+      await montar();
+      await responderRecursos();
+      responderResto();
       harness.detectChanges();
 
-      const doc = harness.routeNativeElement?.ownerDocument as Document;
-      // `app-menu` con el patrón ARIA de menú: eso es lo que trae las flechas,
-      // `Escape`, el foco devuelto y el cierre al tocar afuera. Que ESO funcione
-      // ya lo prueba `menu.spec.ts`; lo que fija esta prueba es que se reusa en
-      // vez de reimplementarse, y el recorrido de teclado real se ejercita en
-      // el navegador (`evidencia/h6/`).
-      expect(doc.querySelector('app-menu[role="menu"], app-menu [role="menu"]')).not.toBeNull();
-      const opciones = doc.querySelectorAll('[role="menuitem"]');
-      expect(opciones.length).toBeGreaterThan(1);
-      // Los ítems no entran en el orden de tabulación por su cuenta: los
-      // recorre el menú con las flechas, que es el patrón correcto.
-      for (const opcion of Array.from(opciones)) {
-        expect(opcion.getAttribute('tabindex')).toBe('-1');
-      }
-      // Y el disparador dice que es un menú y si está abierto.
-      expect(disparador.getAttribute('aria-haspopup')).toBe('menu');
-      expect(disparador.getAttribute('aria-expanded')).toBe('true');
+      const sinEstado = { ...(citas().data?.[0] as object), estado: { code: '', label: '' } };
+      expect(interno<(c: unknown) => readonly unknown[]>('accionesDe')(sinEstado)).toHaveLength(0);
     });
   });
 
