@@ -255,9 +255,27 @@ const MOTIVOS = [
   'Segunda opinión',
 ];
 
+/**
+ * La tipología de actividad de una reserva generada, determinista (C-24 /
+ * hallazgo D5 post-#559): antes las tres asignaciones de `serviceConceptId`
+ * de este archivo eran `ACT-CONSULTA` fijo, así que "otras atenciones" del
+ * panel (`consultas-resumen.ts`) nunca tenía nada que clasificar — la lógica
+ * era correcta, faltaba el dato. La teleconsulta se deduce del canal, que ya
+ * la distingue; procedimientos y exámenes salen con una cadencia fija sobre
+ * el índice, para que la cifra del panel se pueda contar a mano dos veces y
+ * dé lo mismo.
+ */
+function servicioDe(indice: number, canal: string): string {
+  if (canal === CANAL['CH-TELECONSULTA']) return ACTIVIDAD['ACT-TELECONSULTA']!;
+  if (indice % 11 === 5) return ACTIVIDAD['ACT-PROCEDIMIENTO']!;
+  if (indice % 13 === 7) return ACTIVIDAD['ACT-EXAMEN']!;
+  return ACTIVIDAD['ACT-CONSULTA']!;
+}
+
 function reserva(indice: number, cupo: CupoSimulado, estado: keyof typeof ESTADO_RESERVA, extra: Partial<ReservaSimulada> = {}): ReservaSimulada {
   const paciente = PACIENTES[indice % PACIENTES.length]!;
   const confirmada = ['BK-CONFIRMED', 'BK-CHECKED-IN', 'BK-IN-PROGRESS', 'BK-COMPLETED'].includes(estado);
+  const canal = indice % 3 === 0 ? CANAL['CH-TELECONSULTA']! : CANAL['CH-PRESENCIAL']!;
   return {
     id: uuid(`booking-${cupo.id}`),
     patientProfileId: paciente.id,
@@ -268,8 +286,8 @@ function reserva(indice: number, cupo: CupoSimulado, estado: keyof typeof ESTADO
     startAt: cupo.startAt,
     endAt: cupo.endAt,
     statusConceptId: ESTADO_RESERVA[estado]!,
-    serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
-    bookingChannelConceptId: indice % 3 === 0 ? CANAL['CH-TELECONSULTA']! : CANAL['CH-PRESENCIAL']!,
+    serviceConceptId: servicioDe(indice, canal),
+    bookingChannelConceptId: canal,
     confirmedAt: confirmada ? masMinutos(cupo.startAt, -60 * 24 * 2) : null,
     checkedInAt: ['BK-CHECKED-IN', 'BK-IN-PROGRESS', 'BK-COMPLETED'].includes(estado) ? masMinutos(cupo.startAt, -10) : null,
     reasonText: MOTIVOS[indice % MOTIVOS.length]!,
