@@ -56,6 +56,26 @@
         <div class="mi-perfil__rotulo">
           <h2 class="mi-perfil__titulo">Tus datos</h2>
           <p class="mi-perfil__nombre">{{ perfil().nombre }}</p>
+          <!-- «Telemedicina», reubicada acá al quitar «Cómo atendés» de la
+               pestaña «Dónde atiendo» (C-01, 20/09/2026).
+
+               No estaba de más: la ficha AJENA ya lo dice como chip en su
+               portada, pero la propia lo decía **sólo** dentro de esa
+               sección, así que quitarla sin más lo borraba de la vista del
+               propio médico. Acá queda en el mismo lugar y con la misma
+               forma que en la ficha que ve un paciente —un chip en la
+               cabecera— y no dentro de una pestaña, que es donde nadie lo
+               busca.
+
+               Sólo cuando es cierto, igual que allá: un chip que dijera «no
+               ofrecés telemedicina» estamparía en TODA ficha el valor por
+               omisión de quien nunca tocó el ajuste. Es la misma lección que
+               dejó «Acepto pacientes nuevos». -->
+          @if (perfil().telemedicina) {
+            <app-chip class="mi-perfil__modalidad" variant="info">
+              Atendés por telemedicina
+            </app-chip>
+          }
           @if (errorDeFoto(); as fallo) {
             <p class="mi-perfil__foto-error" role="alert">{{ fallo }}</p>
           }
@@ -386,51 +406,66 @@
       }
 
       <!-- ─── Dónde atiendo ────────────────────────────────────────────────
-           Paso 7 del alta («tu consultorio propio») más la disponibilidad.
-           Es la pregunta que la trayectoria no contesta: dónde encontrarlo HOY. -->
+           Paso 7 del alta («tu consultorio propio»). Es la pregunta que la
+           trayectoria no contesta: dónde encontrarlo HOY.
+
+           **«Cómo atendés» ya no está acá** (C-01, pedido del doctor del
+           20/09/2026). Los dos datos que mostraba no se perdieron en silencio:
+
+           - «Telemedicina» sigue dibujándose, en la portada de la ficha —el
+             chip de más abajo en este mismo archivo—, que es donde se ve sin
+             abrir una pestaña y en las dos fichas, la propia y la pública.
+             Acá se decía por segunda vez.
+           - «Pacientes nuevos» se **retira**. Desde el 13/09/2026 el
+             propietario sacó la pregunta del alta y del editor, y el editor lo
+             fuerza a sí en el primer guardado
+             (`practitioner-profile-edit.ts:1014-1018`): la sección sólo podía
+             repetir un valor que nadie puede cambiar o, en un perfil que nunca
+             se guardó, decir «No los aceptás» de alguien que sí los acepta —la
+             frase exacta por la que ya se lo había sacado de la portada y de la
+             tarjeta del Directorio—. -->
       <app-tab [label]="pestanas[3]">
-        <section class="mi-perfil__seccion" data-testid="perfil-sedes">
-          <h3 class="mi-perfil__subtitulo">Tus consultorios y sedes</h3>
-          <!-- La ficha MUESTRA; no da de alta. El botón de agregar vivía acá
-               al lado en «Trayectoria», que es de dónde salió el 13/09/2026: la
-               ficha es para mirar tus datos, y cargar un consultorio es
-               editarlos. El camino se dice, no se esconde. -->
-          <p class="mi-perfil__nota mi-perfil__nota--primera">
-            Se agregan y se retiran desde «Editar tu info», en «Dónde atiendo».
-          </p>
-          @if (perfil().sedes?.length) {
+        @if (perfil().sedes?.length) {
+          <section class="mi-perfil__seccion" data-testid="perfil-sedes">
+            <h2 class="mi-perfil__titulo">Dónde caen en el mapa</h2>
             <!-- El mapa y su índice, en un componente propio: son cuatro
                  direcciones de la misma ciudad y la pregunta es dónde caen
                  unas respecto de otras, que una lista no contesta (pedido del
                  19/09/2026). Vive aparte porque trae su propia hoja de
-                 estilos, y ésta ya no tiene margen. -->
-            <app-practice-sites-map [sedes]="perfil().sedes ?? []" />
-          } @else {
-            <p class="mi-perfil__nota">
-              Todavía no registraste dónde atendés. Es lo que un paciente usa para llegar a tu
-              consultorio.
-            </p>
-          }
-        </section>
+                 estilos, y ésta ya no tiene margen.
 
-        <!-- «Cómo atendés» es otra pregunta que «dónde»: va en su propio
-             bloque, fuera del de las sedes y en la misma pestaña (pedido del
-             19/09/2026). Pegado al mapa se leía como un pie de la lista. -->
-        <app-card class="mi-perfil__bloque-interno" variant="outlined" padding="md">
-          <h3 class="mi-perfil__subtitulo mi-perfil__subtitulo--primero">Cómo atendés</h3>
-          <dl class="mi-perfil__datos">
-            <div class="mi-perfil__dato">
-              <dt>Telemedicina</dt>
-              <dd>{{ perfil().telemedicina ? 'Atendés por telemedicina' : 'No la ofrecés' }}</dd>
-            </div>
-            <div class="mi-perfil__dato">
-              <dt>Pacientes nuevos</dt>
-              <dd>
-                {{ perfil().aceptaPacientesNuevos ? 'Aceptás pacientes nuevos' : 'No los aceptás' }}
-              </dd>
-            </div>
-          </dl>
-        </app-card>
+                 El título dice lo que el bloque contesta y no «Tus
+                 consultorios y sedes», que es lo que contesta el bloque de
+                 abajo: con los dos nombrados igual, la pestaña parecía
+                 mostrar la misma lista dos veces. Y es `h2` y ya no `h3`
+                 porque abajo entra `app-work-history`, cuyo título es `h2`:
+                 dejarlo en `h3` ponía un `h3` antes de un `h2` dentro del
+                 mismo panel, que es un salto de jerarquía para quien navega
+                 por encabezados. -->
+            <app-practice-sites-map [sedes]="perfil().sedes ?? []" />
+          </section>
+        }
+
+        <!-- ─── El consultorio, adentro del perfil (C-02) ───────────────────
+             «Solo en caso de mi consultorio se ve como pestaña para
+             personalizarle el QR y todo lo que ofrece esa view» —doctor,
+             20/09/2026—. «Esa view» es `/administration/my-practice`, y su
+             plantilla entera son una cabecera y este mismo componente en modo
+             `consultorios` (`my-practice.html`). Así que acá no se copia nada
+             ni se rehace el QR: se monta **el mismo** `app-work-history` que
+             montan esa pantalla y la pestaña «Dónde atiendo» del editor, con
+             su alta, su corrección, su retiro, su búsqueda en el padrón y su
+             diálogo de QR bancario. Un arreglo sigue llegando a las tres.
+
+             Esto vuelve editable una pestaña de la ficha, y la ficha venía
+             siendo sólo de lectura (13/09/2026). El desvío es deliberado y es
+             el pedido: sin él, para cargar el QR de cobro había que salir del
+             perfil. Queda dentro de `esPropio() && !previewMode()` —el `@if`
+             que abre este bloque de pestañas—, así que ni un colega en la Guía
+             ni la vista previa del perfil público lo ven. -->
+        <section class="mi-perfil__seccion" data-testid="perfil-consultorio">
+          <app-work-history secciones="consultorios" (added)="trayectoriaCambio.emit()" />
+        </section>
       </app-tab>
 
       <!-- ─── Trayectoria ──────────────────────────────────────────────────

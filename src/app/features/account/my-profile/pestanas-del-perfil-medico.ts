@@ -95,9 +95,19 @@ export const PESTANA_MEDICO = {
  * ficha **muestra**, y cargar un consultorio es editar. Así que el bloque viene
  * acá, que es donde alguien que quiere cambiar dónde atiende lo va a buscar.
  *
- * **No se duplica nada**: las tres superficies montan el MISMO
- * `app-work-history` —esta pestaña, «Mis organizaciones» y Trayectoria— con
- * distinto valor de su input `secciones`. Un arreglo llega a las tres.
+ * **La ficha sí se lo quedó, el 20/09/2026.** El doctor pidió que el
+ * consultorio «se vea como pestaña para personalizarle el QR y todo lo que
+ * ofrece esa view» (C-02), y con eso el enlace suelto del perfil a
+ * `/administration/my-practice` se retiró. El argumento de arriba no era
+ * malo —la ficha muestra— pero perdió contra el pedido: sin esa pestaña, para
+ * cargar el QR de cobro hay que salir del perfil. El desvío queda anotado acá
+ * en vez de borrar el párrafo que lo contradice: el que viene tiene que poder
+ * ver que hubo una decisión, no una distracción.
+ *
+ * **No se duplica nada**: las cuatro superficies montan el MISMO
+ * `app-work-history` —esta pestaña, la de la ficha, «Mis organizaciones» y
+ * Trayectoria— con distinto valor de su input `secciones`. Un arreglo llega a
+ * las cuatro.
  *
  * El orden importa: quien viene de la ficha encuentra las pestañas donde las
  * dejó.
@@ -160,7 +170,12 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
   homeAddressLines: PESTANA_MEDICO.contacto,
   gpsDomicilio: PESTANA_MEDICO.contacto,
 
-  /* 7 · Tu consultorio propio */
+  /* 7 · Tu consultorio propio.
+     Los cuatro siguen en «Dónde atiendo», y desde el 20/09/2026 el mapa dice
+     más verdad que antes sin haber cambiado una línea: esa pestaña montaba
+     sólo el mapa de sedes —que enseña el nombre, la dirección y el pin, pero
+     no el municipio suelto— y ahora monta además el bloque del consultorio,
+     donde los cuatro se ven y se corrigen con su propio control (C-02). */
   officeName: PESTANA_MEDICO.dondeAtiendo,
   municipioConsultorio: PESTANA_MEDICO.dondeAtiendo,
   officeAddressLines: PESTANA_MEDICO.dondeAtiendo,

@@ -138,15 +138,21 @@ describe('PractitionerProfileView', () => {
    * iniciarse. Sin responderle, `http.verify()` fallaría en cualquier prueba
    * que monte la vista como dueño.
    *
-   * **Una sola lectura, no dos.** Acá se respondía también
-   * `/practitioners/prac-1/sites`, porque el bloque pedía los consultorios
-   * aunque no fuera a dibujarlos. Desde el 13/09/2026 «Dónde atiendo» salió de
-   * Trayectoria —la pestaña se monta con `secciones="historial"`— y esa
-   * petición ya no se hace: pedir lo que no se dibuja era una llamada por
-   * visita a una pantalla que no la usa.
+   * **Una lectura por montaje, y cada montaje pide sólo lo suyo.** La ficha
+   * propia monta el bloque dos veces: en «Trayectoria» con
+   * `secciones="historial"` —que pide las afiliaciones y no los
+   * consultorios— y en «Dónde atiendo» con `secciones="consultorios"`
+   * —que pide los consultorios y no las afiliaciones— (C-02, 20/09/2026).
+   *
+   * Las dos asimetrías están guardadas en el propio componente
+   * (`work-history.ts`, `cargar` y `cargarSedes`), y el conteo de este helper
+   * es lo que las fija: si alguien quita un guarda, acá aparece una petición
+   * de más y `http.verify()` la delata. Pedir lo que no se dibuja es una
+   * llamada por visita a una pantalla que no la usa.
    */
   function responderWorkHistory(): void {
     http.expectOne('/profiles/practitioners/me/affiliations').flush({ items: [], count: 0 });
+    http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
   }
 
   /**
@@ -1143,6 +1149,77 @@ describe('PractitionerProfileView', () => {
       expect(rotulos).not.toContain('Facturación');
       expect(host.querySelector('[data-testid="perfil-facturacion"]')).toBeNull();
       expect(host.textContent).not.toContain('8812345011');
+    });
+  });
+
+  /* -- «Dónde atiendo» después de C-01 y C-02 (doctor, 20/09/2026) --------- */
+
+  describe('la pestaña «Dónde atiendo»', () => {
+    it('ya no muestra «Cómo atendés»', () => {
+      // El kill-test del hito, en prueba: «abrí Dónde atiendo; si ves
+      // Telemedicina o Pacientes nuevos, C-01 no está hecho».
+      const host = montar(PERFIL, true);
+      seleccionarPestana(host, 'Dónde atiendo');
+      const panel = host.querySelector('[role="tabpanel"]')!;
+
+      expect(panel.textContent).not.toContain('Cómo atendés');
+      expect(panel.textContent).not.toContain('Pacientes nuevos');
+      expect(panel.textContent).not.toContain('Telemedicina');
+    });
+
+    it('«Telemedicina» no se perdió: se dice en la cabecera de la ficha propia', () => {
+      // La otra mitad de C-01, y la que encontró el defecto: el chip de
+      // telemedicina vivía sólo en la ficha AJENA
+      // (`.profesional__disponibilidad`), así que quitar «Cómo atendés»
+      // borraba el dato de la vista del propio médico. Sin esta prueba, el
+      // borrado se habría visto igual de verde que la reubicación.
+      const host = montar({ ...PERFIL, telemedicina: true }, true);
+
+      expect(host.querySelector('.mi-perfil__cabecera')?.textContent).toContain(
+        'Atendés por telemedicina',
+      );
+    });
+
+    it('y no se estampa cuando no la ofrece', () => {
+      // El valor por omisión de quien nunca tocó el ajuste no se anuncia. Es
+      // la lección de «Acepto pacientes nuevos», que se estampaba en toda
+      // ficha diciendo lo contrario de la verdad.
+      const host = montar({ ...PERFIL, telemedicina: false }, true);
+
+      expect(host.querySelector('.mi-perfil__cabecera')?.textContent).not.toContain(
+        'telemedicina',
+      );
+    });
+
+    it('el consultorio se administra dentro del perfil, con el mismo bloque de «Mis organizaciones»', () => {
+      // C-02: el enlace suelto se fue de `my-profile.html`, y lo que ese
+      // enlace daba tiene que estar acá. Se comprueba el componente y su
+      // modo, no un `data-testid` del bloque: lo que importa es que sea EL
+      // mismo `app-work-history` —con su alta, su retiro y su QR— y no una
+      // copia parecida.
+      const host = montar(PERFIL, true);
+      seleccionarPestana(host, 'Dónde atiendo');
+      const bloque = host.querySelector('[data-testid="perfil-consultorio"] app-work-history');
+
+      expect(bloque).not.toBeNull();
+      expect(bloque?.getAttribute('secciones')).toBe('consultorios');
+    });
+
+    it('en la ficha de OTRO no se administra nada: sólo se mira dónde atiende', () => {
+      // La ficha ajena es la misma vista (la Guía la monta con `esPropio`
+      // en falso, y `practitioner-detail.ts` la importa tal cual). Un bloque
+      // de edición ahí adentro sería ofrecerle a un paciente el alta del
+      // consultorio de su médico.
+      const host = montar(PERFIL, false);
+
+      expect(host.querySelector('[data-testid="perfil-consultorio"]')).toBeNull();
+      expect(host.querySelector('app-work-history[secciones="consultorios"]')).toBeNull();
+    });
+
+    it('la vista previa del perfil público tampoco lo ofrece', () => {
+      const host = montar(PERFIL, true, true);
+
+      expect(host.querySelector('[data-testid="perfil-consultorio"]')).toBeNull();
     });
   });
 });

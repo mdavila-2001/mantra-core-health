@@ -116,17 +116,10 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* §4.H del plan de UX · los enlaces a lo que salió del menú del médico. En
-   fila y con separación clara: son dos destinos hermanos, no una lista.
-
-   Sin filo: desde que «Tu acceso» se fue (13/09/2026) la tira ya no cuelga del
-   pie de una tarjeta sino de la columna, y una línea a todo el ancho por encima
-   de dos enlaces parece el borde de una caja que no existe. */
-.mi-perfil__enlaces {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-4);
-  padding-inline: var(--sp-1);
-}
+/* Acá vivía `.mi-perfil__enlaces`, la tira de enlaces a lo que había salido
+   del menú del médico (§4.H del plan de UX). Se retiró con su único enlace el
+   20/09/2026 (C-02): el consultorio se administra ahora dentro del perfil y
+   ya no hay a qué saltar. Una regla sin quién la use es una pista falsa para
+   el próximo que lea este archivo. */
 
 .mi-perfil__coverages { gap: var(--sp-4); }
