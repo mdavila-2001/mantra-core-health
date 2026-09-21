@@ -285,15 +285,23 @@ ejercitar, con evidencia enlazada y rojos clasificados.
 **DoD:** las 9 en `HECHO`; 24 filas con veredicto; cada `PASS` con comando u observación; cada rojo
 con su clase. **Ninguna corrección ajena tocada.**
 **Kill-test:** pedir la evidencia de un `PASS`. Sin captura ni comando, baja a `NOT_RUN`.
-**Estado:** A MEDIAS — 7 de 9 en `HECHO`. **El dictamen está escrito con sus 24 filas**, pero 22
-son `NOT_RUN` porque ninguna de esas correcciones está integrada en el corte
+**Estado:** A MEDIAS — 8 de 9. **El dictamen está escrito con sus 24 filas**, y **23 de las 24
+están recorridas** con veredicto real, en dos tandas: #557/#559 primero y #561/#564 después.
+Resultado: **19 aceptadas · 1 `FAIL` (C-06, por el defecto nuevo D-07) · 3 `BLOCKED` (C-20, C-21
+y C-22, por D-06) · 1 `NOT_RUN`** (C-03, la única sin rama fusionada).
+
+**Lo que falta para cerrar el hito es H6.S1.M3, y bajó a `A MEDIAS` a propósito**: C-13 se
+integró en #564 y su guion pide dos cuentas —médica y visitador—; se ejercitó una. Estaba en
+`HECHO` cuando C-13 no existía en `mockup`; ahora existe, así que el hito vuelve a tener trabajo
+real pendiente. Subirlo a `HECHO` sin esa cuenta sería exactamente el `PASS` sin evidencia que el
+kill-test de este hito prohíbe.
 
 ### H6.S1 — El recorrido, con intención
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
 | H6.S1.M1 | Guion: caso mínimo por `C-nn` | Las 24 con su caso, antes de empezar | Guion en `evidencia/` | HECHO |
-| H6.S1.M2 | Recorrer con la cuenta médica | Las 24 con resultado o `NOT_RUN` | Tabla + capturas | A MEDIAS — **2 de 24** ejercitadas. Las otras 22 no están integradas en el corte |
-| H6.S1.M3 | Recorrer otras cuentas donde corresponda | Paciente y visitador cubiertos donde el caso lo pide | Resultados + capturas | BLOQUEADO — recorrer paciente y visitador no aporta: sus correcciones tampoco están integradas |
+| H6.S1.M2 | Recorrer con la cuenta médica | Las 24 con resultado o `NOT_RUN` | Tabla + capturas | HECHO — **23 de 24** integradas y recorridas, en dos tandas. `dictamen-h6-recorrido.spec.ts` 10/10 (#557, #559) y `dictamen-h6-recorrido-2.spec.ts` 14/14 (#561, #564). Resultado: **19 aceptadas · 1 `FAIL` (C-06, por D-07) · 3 `BLOCKED` (C-20/C-21/C-22, por D-06) · 1 `NOT_RUN`** (C-03, la única sin rama fusionada) |
+| H6.S1.M3 | Recorrer otras cuentas donde corresponda | Paciente y visitador cubiertos donde el caso lo pide | Resultados + capturas | A MEDIAS — C-13 **ya está integrada** (#564) y se recorrió con la médica: la tarjeta de «Visitador» se ve y no publica un solo dato clínico. Falta la mitad que el guion pide con la **cuenta del visitador**, que no se ejercitó. Las otras 22 recorridas son todas de la médica |
 
 ### H6.S2 — Clasificar los rojos, con evidencia
 | ID | Microtarea | CA (binario) | DoD | Estado |

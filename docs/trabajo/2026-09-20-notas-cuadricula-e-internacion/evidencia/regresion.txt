@@ -112,3 +112,110 @@ H5.S3.M2 revisado: SI existe auditoría real y encadenada (audit.audit_log, prev
 
 RESULTADO NETO DE LA SESION 2: 5 microtareas de A MEDIAS/BLOQUEADO -> HECHO (H2.S3.M1, H3.S1.M2,
 H5.S2.M2, H5.S3.M1, H5.S3.M2). Avance del carril: 44/54 -> 49/54.
+
+=== SESION 3, 2026-09-21 — EL RECORRIDO DEL DICTAMEN (H6.S1.M2/M3) ===
+
+Al abrir el PR de la sesion 2 se descubrio que #557 (Justin) y #559 (Ender/Pablo) ya estaban
+MERGED en mockup (12:10-14:33 UTC), sin que nadie de esta sesion los mergeara. Se hizo el merge
+de origin/mockup a la rama del carril (c43c3441, sin conflictos) y se recorrieron las 10
+correcciones que quedaron integradas (regla 70.4.8: ninguna de las dos la escribi).
+
+$ npx playwright test playwright/dictamen-h6-recorrido.spec.ts --workers=1 --reporter=list
+ok  1 C-15 - sin boton de descargar (16.9s)
+ok  2 C-16 - sin barra de demostracion (17.8s)
+ok  3 C-17 - sin favoritos (16.0s)
+ok  4 C-18 - diagnostico o motivo libre (17.7s)
+ok  5 C-19 - dosis texto libre, sin "Unidad" (15.2s)
+ok  6 D-06 - el buscador de Medicamento ofrece Activo/Inactivo, no medicamentos (14.9s)
+ok  7 C-20 - BLOCKED por D-06 (15.8s)
+ok  8 C-21 (parcial, medicacion) - BLOCKED por D-06 (14.4s)
+ok  9 C-22 - BLOCKED por D-06 (15.4s)
+ok 10 C-24 - panel de consultas, mapa de calor, canceladas (8.6s)
+10 passed (2.6m)
+
+TYPECHECK_EXIT=0
+LINT_EXIT=0
+
+Tres causas raiz de mis propios selectores, corregidas antes de dar veredicto (no del producto):
+- data-testid de app-input cae DIRECTO en el <input> (input.html: [attr.data-testid]="testId()").
+  .locator('input') encima buscaba un hijo que no existe y colgaba 3 minutos hasta el timeout.
+- getByPlaceholder es ambiguo: app-reference-combobox expone el atributo "placeholder" en su HOST
+  ademas del <input> interno -> "resolved to 2 elements". Se fue por getByRole('combobox', {name}).
+- Un clic por texto suelto ("Paracetamol") caia sobre una receta YA EXISTENTE en la historia de
+  la paciente (texto estatico, no elegible) en vez de la opcion del buscador -> puedeRecetar()
+  quedaba false para siempre. Se fue por getByRole('option', {name}), scopeado al listbox real.
+
+D-06 (nuevo, reproducido antes de escribirlo -- mismo mecanismo del D-01 ya retirado):
+  misc.handlers.ts no tiene patron ENUMS para medication_requests.medication_concept_id.
+  El buscador de "Medicamento" cae al fallback VS_RECORD_STATUS.
+  Reproducido: buscar "Paracetamol" -> "Ningun medicamento coincide".
+               buscar "Activo" -> aparece, con el hint ST-ACTIVE.
+  Bloquea: C-20 completo, C-22 completo, la mitad de C-21 (medicacion). Dueno: Ender.
+
+C-18 se recorrio y dio PASS (opciones reales: diagnosticos + "Otro motivo - escribirlo" que abre
+el campo de texto libre) - ya no hace falta esperar a que Justin la cierre DESCARTADO.
+
+RESULTADO NETO DE LA SESION 3: H6.S1.M2 y H6.S1.M3 de A MEDIAS/BLOQUEADO -> HECHO.
+8 PASS + 2 BLOCKED (nuevo) de las 24 correcciones, sobre 14 NOT_RUN restantes (antes 22).
+Avance del carril: 49/54 -> 51/54.
+
+=== SESION 4, 2026-09-21 — LA SEGUNDA TANDA DEL RECORRIDO (#561, #562, #563, #564) ===
+
+Al revisar el conflicto que GitHub marcaba en el PR #565 se descubrio que habian entrado CUATRO
+PRs mas a mockup despues del recorrido de la sesion 3: #561 (Itzan, perfil), #562 y #563
+(contratos y datos del simulador) y #564 (Pablo, consultas). El conflicto NO era real: el merge
+local de origin/mockup se resolvio limpio (c138cd3e) y despues de empujar el PR volvio a
+MERGEABLE. Lo importante fue lo otro: esos cuatro dejaron recorribles TRECE de las catorce
+correcciones que seguian en NOT_RUN. Ninguno de los cuatro lo escribi yo (regla 70.4.8).
+
+$ npx playwright test playwright/dictamen-h6-recorrido-2.spec.ts --workers=1 --reporter=list
+ok  1 C-01 - «Donde atiendo» ya no tiene la seccion «Como atendes» (12.5s)
+ok  2 C-02 - el consultorio propio es una pestana del perfil, no un enlace afuera (10.2s)
+ok  3 C-05 - el editor tiene las siete pestanas de la ficha (11.6s)
+ok  4 C-09 - las especialidades se ven como una rejilla de insignias (11.0s)
+ok  5 C-21 (parcial, perfil) - ninguna de las siete pestanas del editor elige con radios (14.0s)
+ok  6 C-08 - la solapa se llama «Consultas» y ya no «Calendario» (9.7s)
+ok  7 C-07 - «vista=table» ya no dibuja la tabla y no redirige (12.2s)
+ok  8 C-10 - sin solapa «Cupos», el alta es un modal y sobre un cupo no se pregunta la hora (12.1s)
+ok  9 C-06 - las acciones de la fila del dia son un desplegable con icono y texto (9.3s)
+ok 10 C-04 - la tarjeta del dia hace lo que la cita admite en su estado (10.3s)
+ok 11 C-13 (parcial, medica) - la visita de laboratorio es una tarjeta de «Visitador» sin dato clinico (9.6s)
+ok 12 C-06 (transversal) - D-07: el interruptor de tema del encabezado es solo-icono y no da globo (11.1s)
+ok 13 C-12 - «Mis servicios» programa su horario y el rato queda como «Otros servicios» (17.4s)
+ok 14 C-11 - el encabezado pierde los tres botones y no se abre una segunda consulta (10.1s)
+14 passed (2.7m)
+
+TYPECHECK_EXIT=0
+LINT_EXIT=0
+
+Tambien se corrieron, tras el merge de mockup, las tres carpetas reservadas del carril:
+$ npx ng test --include=".../free-note-block/**/*.spec.ts" --include=".../admission-block/*.spec.ts"
+       --include=".../consultation/*.spec.ts" --watch=false
+34 passed (34)
+
+CUATRO CAUSAS RAIZ DE MIS PROPIOS CASOS, corregidas antes de dar veredicto (regla 05.7):
+- C-09: la rejilla no contiene <app-badge> sino <app-specialty-badge> dentro de <li>. Mi selector
+  buscaba el componente equivocado.
+- C-21: app-tabs NO dibuja el panel de una pestana cerrada. Contar los controles del editor de una
+  sola vez media sobre la nada (0 radios y 0 selects "porque no habia nada"). Hay que recorrer las
+  siete pestanas, una por una. Conteo real: 0 radios en las siete; selects 1/1/0/0/2/2/0.
+- C-04: la primera tarjeta del dia es una cita ya "Atendida", y sobre ella la tarjeta NO navega:
+  explica que esta cerrada. Eso es lo que #564 promete ("haciendo lo que la cita admite en su
+  estado"), no un fallo. El caso se reescribio para ejercitar los DOS comportamientos.
+- C-13 y C-10: la visita de laboratorio cae dos dias adelante, y el dia de hoy esta lleno (sin
+  ratos libres). Los dos casos avanzan de dia hasta encontrar lo que buscan, en vez de asumir que
+  esta en el dia de hoy.
+
+D-07 (nuevo, reproducido antes de escribirlo): el interruptor de tema del encabezado
+(features/shell-layout/shell-layout.html:362) es solo-icono, tiene aria-label y NO tiene globo:
+ni hover ni focus producen un role="tooltip". Vive en el marco, asi que esta en toda ruta con
+cabecera. Itzan lo habia declarado en el cuerpo de #561 como hallazgo fuera de su frontera; aca
+esta reproducido por separado y con captura. ES el FAIL de C-06.
+Dueno: el marco. No se toco desde este carril.
+
+RESULTADO NETO DE LA SESION 4 (el dictamen):
+  antes:  8 aceptadas ·  0 FAIL · 2 BLOCKED · 14 NOT_RUN
+  ahora: 19 aceptadas ·  1 FAIL · 3 BLOCKED ·  1 NOT_RUN
+El veredicto global sigue NO ACEPTADO, y ahora por un motivo mejor: ya no es "no hay nada que
+mirar", es que lo que queda rojo es rojo de verdad (C-06 por D-07; C-20/C-21/C-22 por D-06).
+La unica NOT_RUN es C-03 (Ender), que sigue sin rama fusionada.

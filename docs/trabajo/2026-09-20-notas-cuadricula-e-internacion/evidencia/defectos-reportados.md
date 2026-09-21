@@ -270,3 +270,135 @@ regla 60 §3 del propio `PLAN.md`), pero el contrato la acepta igual. Regla 60.4
 mutación server-side): si el front es la única barrera, cualquier cliente que hable el protocolo
 directo la salta. **No se corrigió**: es una decisión de validación del dueño de la API, y podría
 ser deliberada (una internación "programada" es un caso de uso legítimo que este lote no conoce).
+
+---
+
+## D-06 · El buscador de «Medicamento» ofrece Activo/Inactivo, no medicamentos
+
+| Campo | Valor |
+|---|---|
+| **Dueño** | **Ender** — `src/app/core/mock/handlers/misc.handlers.ts` es suyo |
+| **Clase** | `PRODUCT_BUG` (en la maqueta) |
+| **Encontrado** | 2026-09-21 (sesión 2), recorriendo C-20/C-21/C-22 de #557 para el dictamen H6 |
+| **Preexistente** | Sí — el bloque de medicación no cambió esto en #557; el hueco está en el manejador del catálogo, que #557 no toca |
+| **Mismo mecanismo que D-01, esta vez real** | El D-01 de C-14 se **retiró**: reporté un `grep` vacío sin reproducir y el navegador lo desmintió (`VS_OBSERVATION_CODE` sí estaba mapeado). Acá se reprodujo **antes** de escribir el defecto, exactamente por la lección de esa retractación |
+
+### Qué pasa
+
+`ConceptSelect`/`ReferenceCombobox` piden las opciones a
+`GET /system-context/dynamic-enums?target=…`. El manejador del simulador
+(`misc.handlers.ts:307-313`) busca el `target` en la tabla `ENUMS` y, **si ningún patrón casa,
+cae a `VS_RECORD_STATUS`**:
+
+```ts
+const [, valueSet, name] = ENUMS.find(([patron]) => patron.test(target)) ?? [
+  null,
+  'VS_RECORD_STATUS',
+  'Estado',
+];
+```
+
+**No hay ningún patrón para `medication_requests.medication_concept_id`** en la tabla `ENUMS`
+(31 entradas, líneas 31-128): verificado leyendo el archivo entero, no con un `grep` que puede
+fallar por un typo. El campo «Medicamento» de la casilla de medicación busca sobre el catálogo
+equivocado.
+
+| Debería ofrecer (medicamentos, `conceptos.ts:920-934`) | Ofrece hoy (`VS_RECORD_STATUS`) |
+|---|---|
+| Paracetamol 500 mg comprimidos · Ibuprofeno 400 mg comprimidos · Loratadina 10 mg · Sulfato ferroso 300 mg · Ciprofloxacino 500 mg · Insulina NPH 100 UI/ml | Activo (`ST-ACTIVE`) · Inactivo (`ST-INACTIVE`) |
+
+### Cómo se reprodujo (en `dictamen-h6-recorrido.spec.ts`, caso «D-06»)
+
+```
+1. Abrir la casilla de medicación con un encuentro en curso.
+2. Escribir «Paracetamol» en «Medicamento».
+   Observado: «Ningún medicamento coincide». Esperado: la opción del catálogo.
+3. Escribir «Activo» en el MISMO campo.
+   Observado: aparece la opción «Activo» con el hint «ST-ACTIVE».
+```
+
+El paso 3 es la prueba de que el catálogo **no está vacío ni con fallo de red** — está cargado,
+y es el equivocado. Un catálogo equivocado se ve como un catálogo, no como un error: no hay
+alerta, no hay traza de consola, la pantalla ofrece un desplegable con opciones y se puede
+«elegir» una que no significa nada.
+
+### Qué bloquea, y qué no
+
+**No bloquea C-15, C-16, C-17, C-18 ni C-19** (no necesitan elegir un medicamento real: leen
+o escriben otros campos del formulario). **Bloquea C-20 completo** (no se puede elegir un
+medicamento con posología de fábrica si no se puede elegir ningún medicamento), **C-22 completo**
+(el CA exige elegir medicamento y dejar el motivo vacío) y **la mitad de C-21** que este carril
+recorrió (crear una receta nueva para ver el menú de acciones exige, primero, elegir un
+medicamento).
+
+### Qué lo arregla
+
+Una línea en la tabla `ENUMS`, mismo patrón que ya usan los demás catálogos clínicos (regla del
+proyecto: la tabla va en el patrón porque `*_concept_id` se repite en media docena de tablas):
+
+```ts
+[/medication_requests\.medication_concept_id/, 'VS_MEDICAMENTO', 'Medicamento'],
+```
+
+El nombre exacto del value set (`VS_MEDICAMENTO` es un supuesto de este reporte, no una cita) lo
+decide quien tenga el fixture real de medicamentos (`conceptos.ts` los declara con builder propio,
+no con `conjunto(...)` genérico — hay que confirmar cuál `internalCode` les corresponde antes de
+escribir la línea).
+
+**No se aplicó desde este carril**: `core/mock/**` está reservado a Ender y la regla del reparto
+dice que quien necesite un cambio ahí lo pide, no lo escribe.
+
+---
+
+## D-07 · El interruptor de tema del encabezado es sólo-icono y no da globo, en toda ruta
+
+| Campo | Valor |
+|---|---|
+| **Dueño** | **Transversal — el marco.** `src/app/features/shell-layout/shell-layout.html:362` y la directiva `src/app/core/alovida/alovida-theme-toggle.directive.ts` |
+| **Clase** | `PRODUCT_BUG` |
+| **Encontrado** | 2026-09-21 (sesión 4), recorriendo C-06 de #561/#564 para el dictamen H6 |
+| **Preexistente** | Sí — el interruptor volvió al encabezado el 18/09, antes del lote de las 24 correcciones |
+| **Declarado antes por su vecino** | **Itzan lo escribió en el cuerpo del PR #561**, como hallazgo fuera de su frontera. Acá está **reproducido por separado**, con captura, por quien no lo escribió — que es lo que un dictamen necesita para poder llamarlo `FAIL` |
+| **Es el `FAIL` de C-06** | Sí. Un `FAIL` necesita un contraejemplo, no un censo: éste alcanza |
+
+### Qué pasa
+
+C-06 pide que un botón lleve **icono y texto**, y ADR-0012 —la regla que escribió Itzan al aplicar
+el patrón— admite la variante sólo-icono **siempre que dé un globo**. El interruptor de tema no
+cumple ninguna de las dos formas:
+
+- no tiene texto visible: su contenido son dos `<svg>` marcados `aria-hidden="true"` más la perilla,
+  también `aria-hidden`;
+- **no tiene globo**: no lleva `appTooltip`, y ni al apuntarlo ni al enfocarlo aparece ningún
+  elemento con `role="tooltip"`;
+- sí tiene **nombre accesible**, que la directiva pone en el host
+  (`'[attr.aria-label]': "esOscuro() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"`).
+
+O sea: **para un lector de pantalla está bien; para quien mira la pantalla, no hay manera de saber
+qué hace ese control sin apretarlo.** Ésa es exactamente la mitad de la regla que falta.
+
+### Por qué importa más que un botón suelto
+
+Vive en `shell-layout`, el marco. **No es una pantalla: son todas.** Cualquier recorrido de C-06
+que mire una ruta con cabecera lo encuentra.
+
+### Cómo se reprodujo (en `dictamen-h6-recorrido-2.spec.ts`, caso «C-06 (transversal) · D-07»)
+
+1. Entrar con `medica@alovida.mock` y quedarse en cualquier ruta con marco.
+2. Localizar `[data-testid="header-theme-toggle"]`.
+3. Leer su `aria-label` → `Cambiar a modo oscuro` (o claro). **Tiene nombre.**
+4. Leer su texto visible → cadena vacía. **No tiene texto.**
+5. `hover()` + 1,2 s → `getByRole('tooltip')` da **0**.
+6. `focus()` + 1,2 s → `getByRole('tooltip')` da **0**.
+
+Captura: [`dictamen/d07-interruptor-de-tema-sin-globo.png`](dictamen/d07-interruptor-de-tema-sin-globo.png).
+
+### Qué lo arregla
+
+Una línea: agregarle `appTooltip` con el mismo texto que ya usa el `aria-label`, como hace el resto
+de los sólo-icono del proyecto (por ejemplo `dia-agregar`, que lleva
+`appTooltip="Agregar una cita o un rato ocupado"`).
+
+**No se aplicó desde este carril**: `features/shell-layout/**` no es de la línea B, y la regla del
+reparto dice que quien necesita un cambio ajeno lo pide por la daily, no lo escribe. Además,
+arreglarlo yo invalidaría el dictamen: quien verifica no corrige (regla 70.4.8).
