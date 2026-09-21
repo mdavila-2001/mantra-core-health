@@ -256,6 +256,19 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     ],
   },
   {
+    label: 'Plataforma',
+    group: 'Administración',
+    icon: 'monitor',
+    // El portal administrativo de la plataforma misma: qué datos guarda y por
+    // qué, cómo la usan, cómo se prueba y si está lista para producción.
+    paths: [
+      'administration/data-catalog',
+      'administration/web-analytics',
+      'administration/qa-lab',
+      'administration/operations',
+    ],
+  },
+  {
     label: 'Farmacia',
     group: 'Administración',
     icon: 'bag',

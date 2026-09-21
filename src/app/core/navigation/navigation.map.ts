@@ -861,6 +861,52 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M19 community',
   },
   {
+    // Portal administrativo · catálogo de datos (API módulo 67). Los roles son
+    // los mismos que exige `GET /admin/catalog/*`: la guarda evita llegar a
+    // una pantalla que sólo devolvería 403; la autoridad sigue siendo la API.
+    path: 'administration/data-catalog',
+    label: 'Catálogo de datos',
+    group: 'Administración',
+    icon: 'book',
+    roles: ['SECURITY_ADMIN', 'PLATFORM_ADMIN', 'GOVERNANCE_ADMIN', 'DATA_PLATFORM_ADMIN', 'DPO'],
+    availability: 'disponible',
+    summary: 'Qué tablas existen, por qué existen, quién responde por ellas y con qué evidencia.',
+    module: 'M67 data_catalog',
+  },
+  {
+    // Analítica de producto y RUM sobre `telemetry` (`/admin/analytics`).
+    path: 'administration/web-analytics',
+    label: 'Analítica web',
+    group: 'Administración',
+    icon: 'chart',
+    roles: ['PLATFORM_ADMIN', 'SECURITY_ADMIN', 'DATA_PLATFORM_ADMIN', 'MARKETING_MANAGER', 'DPO'],
+    availability: 'disponible',
+    summary: 'Tráfico, embudos, Core Web Vitals y salud del pipeline de eventos.',
+    module: 'M28 telemetry',
+  },
+  {
+    // QA Lab: lectura del laboratorio (M36) y runner en el servidor (M68).
+    path: 'administration/qa-lab',
+    label: 'QA Lab',
+    group: 'Administración',
+    icon: 'flask',
+    roles: ['QA_ADMIN', 'QA_ENGINEER', 'RELEASE_MANAGER', 'PLATFORM_ADMIN'],
+    availability: 'disponible',
+    summary: 'Suites, planes de ejecución con aprobación y resultados con evidencia.',
+    module: 'M36 qa_lab · M68 qa_execution',
+  },
+  {
+    // Consola de operación y preparación para producción (`/admin/ops`).
+    path: 'administration/operations',
+    label: 'Operación',
+    group: 'Administración',
+    icon: 'monitor',
+    roles: ['PLATFORM_ADMIN', 'SRE', 'SECURITY_ADMIN', 'RELEASE_MANAGER', 'GOVERNANCE_ADMIN'],
+    availability: 'disponible',
+    summary: 'Preparación para producción con evidencia, incidentes, SLO y backups.',
+    module: 'M11 system_ops · M46 platform_ops',
+  },
+  {
     // W5/M44. El backend tiene **una** lectura —`GET /health-context/contexts/
     // resolve`— y doce comandos, así que la sección entra como panel de
     // operaciones, igual que M29, M40 y M27: la portada agrupa lo que se puede
