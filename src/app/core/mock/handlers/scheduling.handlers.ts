@@ -16,7 +16,7 @@ import { emitirNotificacion } from './notifications.handlers';
 import { solicitudDeLaCita } from './insurance.handlers';
 import { pacientePorId } from '../fixtures/personas';
 import { representaA } from './profiles.handlers';
-import { conflict, noContent, notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, noContent, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -571,14 +571,26 @@ export function registrarAgenda(router: MockRouter): void {
   router.post('/scheduling/resources/:id/exceptions', (request) => {
     const datos = cuerpo<{ exceptionType: string; startAt: string; endAt: string; reason?: string; isAvailable?: boolean }>(request);
     const tipo = TIPOS_DE_BLOQUEO.find((t) => t.type === datos.exceptionType);
+    // El doble no puede ser más permisivo que el contrato real: la API valida
+    // `exceptionType` contra la lista cerrada de 7 con `@IsIn(EXCEPTION_TYPES)`
+    // (scheduling-catalog.dto.ts:754). Sin este rechazo, quien programa contra
+    // el simulador escribe código que el backend real va a rechazar.
+    if (tipo === undefined) {
+      return validation(`Tipo de excepción no reconocido: «${datos.exceptionType}». Los tipos válidos son: ${TIPOS_DE_BLOQUEO.map((t) => t.type).join(', ')}.`);
+    }
+    const inicio = datos.startAt ?? ahora();
+    const fin = datos.endAt ?? masMinutos(inicio, 60);
+    if (fin <= inicio) {
+      return validation('El fin de la excepción tiene que ser posterior a su inicio.');
+    }
     const nuevo: BloqueoSimulado = {
       id: nuevoId('exception'),
       resourceId: request.params['id']!,
       exceptionTypeConceptId: tipo?.conceptId ?? TIPO_BLOQUEO['EXC-PERSONAL']!,
-      exceptionType: datos.exceptionType ?? 'OTHER',
-      startAt: datos.startAt ?? ahora(),
-      endAt: datos.endAt ?? masMinutos(ahora(), 60),
-      reasonLabel: tipo?.label ?? 'Otro',
+      exceptionType: tipo.type,
+      startAt: inicio,
+      endAt: fin,
+      reasonLabel: tipo.label,
       reason: datos.reason ?? '',
       isAvailable: datos.isAvailable ?? false,
     };
@@ -593,6 +605,9 @@ export function registrarAgenda(router: MockRouter): void {
     if (b === undefined) return notFound();
     const datos = cuerpo<{ exceptionType?: string; reason?: string; startAt?: string; endAt?: string }>(request);
     const tipo = datos.exceptionType === undefined ? undefined : TIPOS_DE_BLOQUEO.find((t) => t.type === datos.exceptionType);
+    if (datos.exceptionType !== undefined && tipo === undefined) {
+      return validation(`Tipo de excepción no reconocido: «${datos.exceptionType}». Los tipos válidos son: ${TIPOS_DE_BLOQUEO.map((t) => t.type).join(', ')}.`);
+    }
     const actualizado = bloqueos.actualizar(b.id, {
       ...(datos.reason === undefined ? {} : { reason: datos.reason }),
       ...(datos.startAt === undefined ? {} : { startAt: datos.startAt }),

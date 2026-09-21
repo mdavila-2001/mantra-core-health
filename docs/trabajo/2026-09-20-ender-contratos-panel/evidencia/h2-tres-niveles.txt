@@ -1,0 +1,29 @@
+H2 — motivo "Otros servicios" (OTHER) y horario extra (EXTRA)
+
+Hallazgo: TIPOS_DE_BLOQUEO ya declaraba OTHER (requiresText:true) y EXTRA (blocks:false) desde
+antes de esta noche — el mecanismo de negocio ya existía. El gap real, exactamente el que nombra
+el kill-test de H2 en la ficha, era que el manejador NO rechazaba un exceptionType fuera de la
+lista cerrada de 7 ni una franja inválida. Se corrigió en scheduling.handlers.ts (POST y PATCH de
+/scheduling/.../exceptions): ahora responde 422 (`validation(...)`) con la lista de tipos válidos.
+
+$ yarn test --include=src/app/core/mock/handlers/scheduling.handlers.spec.ts --include=src/app/core/mock/mock-backend.spec.ts
+ Test Files  2 passed (2)
+      Tests  29 passed (29)
+
+Casos cubiertos (regla 65, tres niveles):
+- Correcto: OTHER + reason "Otros servicios" → reasonLabel "Otro", texto persistido.
+- Correcto: EXTRA → blockedSlots:0 (no cierra cupos), reasonLabel "Horario extra".
+- Límite: franja de 1 minuto → 201.
+- Inválido: exceptionType "SERVICE" (fuera de la lista de 7) → 422.
+- Inválido: franja invertida (endAt < startAt) → 422.
+- Inválido: franja de cero minutos (endAt === startAt) → 422.
+- Inválido en PATCH: exceptionType "NOPE" → 422 (antes se ignoraba en silencio).
+
+$ yarn typecheck
+(sin salida — exit 0)
+
+Q-D6 (decisión de negocio registrada, no resuelta por mí): "OTROS SERVICIOS" no amplía el enum
+`ExceptionType` real. Si el negocio decide que necesita un tipo propio en vez de reusar OTHER,
+eso es un cambio de contrato en la API (nuevo `exception_type_concept_id` en
+`terminology.catalog_concepts`, más el DTO), no un ajuste del simulador. Queda registrado para
+quien decida el alcance del backend real.

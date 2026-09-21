@@ -1,6 +1,6 @@
 import { conceptos, ESPECIALIDAD, ESTADO } from '../fixtures/conceptos';
 import { MEDICA, PROFESIONALES } from '../fixtures/personas';
-import { notFound, type MockRequest, type MockRouter } from '../mock-router';
+import { notFound, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { IDS, TENANT_FARMACIA } from '../mock-session';
 import { ahora, Coleccion, cuerpo, iso, isoDia, nuevoId, uuid } from '../mock-store';
 
@@ -185,6 +185,28 @@ export function registrarLaboratorioFarmaceutico(router: MockRouter): void {
   router.post('/visit-requests', (request) => {
     const datos = cuerpo<{ doctorUserId: string; doctorTenantId?: string; reason: string; requestedStartAt: string; durationMinutes: number; modalityConceptId: string; location?: string; observations?: string }>(request);
     const agenda = agendaDe(datos.doctorUserId ?? MEDICA.userId);
+    // 15 minutos por omisión (C-13): "cuando el profesional no definió nada,
+    // dura 15; cuando definió otra cosa, dura eso" — el "otra cosa" es
+    // `maxDurationMinutes` de SU política, no un número fijo del cliente.
+    const duracion = datos.durationMinutes ?? 15;
+    // Mismo contrato que el `ValidationPipe` real: `visits.dto.ts` declara
+    // `durationMinutes` con `@IsInt() @Min(5) @Max(240)`. Sin este rechazo el
+    // doble es más permisivo que la API real.
+    if (!Number.isInteger(duracion) || duracion < 5 || duracion > 240) {
+      return reply(400, {
+        statusCode: 400,
+        code: 'VALIDATION_FAILED',
+        message: 'Validation failed',
+        error: 'Bad Request',
+        details: { messages: ['durationMinutes must be an integer number not less than 5 and not greater than 240'] },
+      });
+    }
+    // Precondición de negocio (no de forma): `visit-agenda.service.ts` la
+    // valida contra la política del doctor con `PreconditionFailedException`,
+    // que en este proyecto es 422 (no 412 — ver `domain.exception.ts`).
+    if (duracion > agenda.maxDurationMinutes) {
+      return validation(`La duración máxima admitida es de ${agenda.maxDurationMinutes} minutos`);
+    }
     const nueva = solicitudes.agregar({
       id: nuevoId('visit-request'),
       medicalVisitorId: VISITADOR_ID,
@@ -193,7 +215,7 @@ export function registrarLaboratorioFarmaceutico(router: MockRouter): void {
       doctorTenantId: datos.doctorTenantId ?? '',
       reason: datos.reason ?? '',
       requestedStartAt: datos.requestedStartAt ?? ahora(),
-      durationMinutes: datos.durationMinutes ?? 15,
+      durationMinutes: duracion,
       timeZone: agenda.timeZone,
       modalityConceptId: datos.modalityConceptId ?? MODALIDAD.PRESENCIAL,
       location: datos.location ?? '',

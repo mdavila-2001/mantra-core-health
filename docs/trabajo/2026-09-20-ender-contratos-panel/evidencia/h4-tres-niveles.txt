@@ -1,0 +1,54 @@
+H4 — propiedad de frecuencia por defecto del medicamento (C-20)
+
+Corrección de una premisa de la ficha (H4.S1.M1 decía "verificar cómo se publican HOY dose_forms
+y strengths, y seguir ese patrón" dando por hecho que ya se servían). Verificado contra mi corte
+(22 commits después del de la ficha): `GET /terminology/concepts/:id` en
+`terminology.handlers.ts` NO devolvía ningún campo `properties` — el mecanismo entero no existía
+todavía en el simulador, aunque `ConceptDetail.properties` YA estaba declarado en
+`core/data-access/terminology/terminology.types.ts` (TAREA-25, con su propio `listaDeTextos()`).
+Se construyó el mecanismo general (no sólo el caso de la frecuencia):
+
+- `ConceptoSimulado.properties?` + `declararPropiedades(code, props)` en `fixtures/conceptos.ts`.
+- `GET /terminology/concepts/:id` ahora expone `properties: c.properties ?? {}` — **sólo en la
+  ficha, nunca en `/terminology/concepts` (lista/búsqueda)**, igual que el contrato real
+  (`mantra-core-health-api/src/modules/terminology/dto/search-concepts.dto.ts`: "va sólo en la
+  ficha... son varias filas por concepto y traerlas para cada resultado de un autocompletar es
+  peso que la lista no usa").
+- `valorDeTexto()` nuevo en `terminology.types.ts`, lectura defensiva simétrica a `listaDeTextos()`
+  ya existente (mismo criterio: forma inesperada → `undefined`, nunca una excepción).
+
+Property code `default_frequency`: EXTENSIÓN DECLARADA del simulador (regla 65), no un campo del
+vademécum real. Verificado con:
+  $ git -C mantra-core-health-api show origin/dev:src/common/seed/data/vademecum/vademecum.dataset.json \
+      | python3 -c "import json,sys; d=json.load(sys.stdin); print(set(p['property_code'] for p in d['properties']))"
+  {'strengths', 'atc_route_variants', 'routes', 'therapeutic_class', 'dose_forms'}
+Cero apariciones de `frequency`. Mismo camino que B-13 (`REGISTRO-DEFECTOS.md:101` de la API):
+dato de desarrollo, declarado, "no apto para uso clínico ni producción", en el propio valor de
+cada propiedad. Q-D6 (quién provee la fuente autoritativa real): negocio + un profesional
+prescriptor — registrado en el PLAN.md, no resuelto acá.
+
+$ yarn test --include=.../terminology.handlers.spec.ts --include=.../terminology.types.spec.ts
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+
+Tres niveles (regla 65):
+- Correcto: MED-PARACETAMOL trae `properties.default_frequency` como texto, leído con
+  `valorDeTexto()`.
+- Correcto (ausencia): MED-LOSARTAN no la trae; `valorDeTexto()` → undefined, sin romper.
+- Inválido: MED-INSULINA-NPH declara `default_frequency: 42` (número, mal formado) a propósito;
+  `valorDeTexto()` lo trata como ausente sin lanzar — la receta seguiría funcionando.
+- Contrato de superficie: la lista/búsqueda de conceptos (`GET /terminology/concepts?ids=`) NO
+  trae `properties` en ningún ítem — verificado explícitamente.
+
+$ yarn test (regresión completa: mock-backend + scheduling + pharma-lab + terminology + types)
+ Test Files  5 passed (5)
+      Tests  48 passed (48)
+
+$ yarn typecheck
+(sin salida — exit 0)
+
+Handoff a Justin (H4 destraba su H5, según §7 de la ficha): la clave es
+`properties.default_frequency` (string), servida por `GET /terminology/concepts/:id` SOLAMENTE
+(no en listas), leíble con `valorDeTexto(ficha.properties, 'default_frequency')` desde
+`core/data-access/terminology/terminology.types.ts`. Puede faltar (medicamento sin la propiedad)
+o venir mal formada — en los dos casos devuelve `undefined`, nunca lanza.
