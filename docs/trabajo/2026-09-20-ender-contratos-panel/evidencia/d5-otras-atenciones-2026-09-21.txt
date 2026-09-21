@@ -1,0 +1,52 @@
+D5 — "Otras atenciones" nunca renderizaba (hallazgo real de la sesión paralela, PR #18 de
+AlovidaPromptManager, doc hallazgos-post-559.md)
+
+Verificado: las tres asignaciones de `serviceConceptId` en `fixtures/agenda.ts` (líneas 233, 271
+y 393 antes de este fix) eran `ACT-CONSULTA` fijo. `consultas-resumen.ts` clasifica por
+`serviceConceptId` contra `activity-types` y descarta `CONSULTATION`/`FOLLOW_UP` — la lógica del
+panel era correcta, pero como ninguna reserva generada tenía otro tipo, la sección nunca tenía
+nada que mostrar. Corregido en `reserva()` (la que alimenta `GET /scheduling/bookings`, el dato
+real que lee el panel): la teleconsulta se deriva del canal (ya distinguía teleconsulta de
+presencial); procedimientos y exámenes salen con una cadencia fija sobre el índice
+(`indice % 11 === 5` y `indice % 13 === 7`), determinista entre corridas.
+
+No se tocó el `serviceConceptId` de los CUPOS (fixtures/agenda.ts:233) ni el de la excepción de
+"cupo por liberarse" (:393): ese primero pertenece al dominio de Pablo (agenda/cupos) y tocarlo
+tiene más superficie de la que este hallazgo puntual justifica; el segundo es un cupo de utilería
+para un recorrido específico (el aviso de demora), sin relación con C-24.
+
+$ yarn test (completo)
+ Test Files  1 failed | 560 passed (561)
+      Tests  1 failed | 6944 passed (6945)
+(el único rojo es features/accounting/resumen — preexistente, ajeno, no tocado; ver REPORTE.md)
+
+$ yarn typecheck
+(sin salida — exit 0)
+
+Verificación visual real (no sólo el test unitario con datos mockeados): capturas
+`h5-consultas-resumen-*.png` regeneradas tras el fix — la sección "Otras atenciones" ahora
+muestra "Procedimiento · 10", "Teleconsulta · 81", "Examen · 7" con datos reales del simulador,
+donde antes no aparecía.
+
+Hallazgos D1, D2 y D4 del mismo documento (hallazgos-post-559.md), verificados y NO adoptados —
+la evidencia real los contradice:
+
+- D1 (derivar isAvailable de exceptionType): `scheduling-catalog.service.ts:1299` de la API real
+  — `const isAvailable = dto.isAvailable ?? false;` — sin ninguna rama por tipo. `blocks` en el
+  catálogo (`GET /scheduling/exception-types`) es sólo la etiqueta informativa; no determina el
+  `isAvailable` de una excepción concreta. Ya cubierto con test explícito en
+  `evidencia/h2-correccion-2026-09-21.txt`.
+- D2 (exponer exceptionType/blocks en el GET de listado): el DTO real de esa lista
+  (`AvailabilityExceptionDto`, scheduling-catalog.dto.ts:576-611) tiene exactamente
+  `id, exceptionTypeConceptId, reasonLabel, startAt, endAt, reason?, isAvailable?` — SIN
+  `exceptionType` (string) ni `blocks`. El simulador ya coincide con esto tal cual estaba;
+  agregar esos dos campos habría sido apartarse del contrato real, no acercarse.
+- D4 (todos los rechazos deberían ser 400): matizado, no descartado — el `exceptionType` inválido
+  sí es 400 (`@IsIn` a nivel de DTO, corregido en #562), pero "OTHER sin reason" y "franja
+  invertida" son `PreconditionFailedException` en la API real (422 en este proyecto, no 400) —
+  ya implementado así en #562, con más precisión que la propuesta original.
+- D3 (requiresText sólo en OTHER): confirmado y ya corregido en #562.
+
+En limpio: de las 5 divergencias que señaló la otra sesión, 2 eran reales (D3, D5) y ya están
+corregidas; 1 tenía razón a medias (D4) y quedó resuelta con más precisión; 2 eran incorrectas
+(D1, D2) y no se tocaron, con la cita exacta de por qué.
