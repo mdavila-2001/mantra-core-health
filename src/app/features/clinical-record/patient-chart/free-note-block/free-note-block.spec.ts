@@ -62,9 +62,40 @@ describe('FreeNoteBlock', () => {
     fixture.componentRef.setInput('patientProfileId', 'pac-1');
     fixture.componentRef.setInput('encounterId', 'enc-1');
     fixture.detectChanges();
+    atenderALaCuadricula();
   });
 
   afterEach(() => http.verify());
+
+  /**
+   * Responde la lectura del expediente que hace la cuadrícula al montarse.
+   *
+   * Desde **C-14** el bloque tiene dos vistas y la segunda es `app-note-grid`,
+   * que pide el expediente por su cuenta. Con la pestaña «Escribir» abierta —que
+   * es la de arranque— el panel de la cuadrícula **no se dibuja** y esa petición
+   * no existe, así que casi siempre esto no drena nada.
+   *
+   * Se deja igual, y a propósito: el día que una prueba abra la otra vista, la
+   * petición aparece y acá está contestada. Es `match` y no `expectOne`
+   * justamente porque cero es un resultado válido.
+   */
+  function atenderALaCuadricula(): void {
+    http
+      .match((r) => r.url.endsWith('/clinical/patients/pac-1/summary'))
+      .forEach((peticion) =>
+        peticion.flush({
+          patientProfileId: 'pac-1',
+          conditions: [],
+          allergies: [],
+          medicationRequests: [],
+          observations: [],
+          encounters: [],
+          careEpisodes: [],
+          limit: 50,
+          truncated: [],
+        }),
+      );
+  }
 
   it('sin texto no guarda nada: no se pide ni el perfil', () => {
     interno<() => void>('guardar').call(fixture.componentInstance);

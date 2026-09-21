@@ -16,8 +16,11 @@ import type { SelectOption } from '../../../../shared/components/atoms/select/se
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { RichTextEditor } from '../../../../shared/components/molecules/rich-text-editor/rich-text-editor';
+import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
+import { NoteGrid } from './note-grid/note-grid';
 
 /**
  * La hoja en blanco: escribir la consulta sin completar campos.
@@ -53,7 +56,7 @@ import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
  */
 @Component({
   selector: 'app-free-note-block',
-  imports: [AppButton, Alert, FormField, RichTextEditor, Select],
+  imports: [AppButton, Alert, FormField, NoteGrid, RichTextEditor, Select, Tab, Tabs],
   templateUrl: './free-note-block.html',
   styleUrl: './free-note-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -84,6 +87,15 @@ export class FreeNoteBlock {
    * pestaña «Notas» sin desmontar nada, atarlo es una línea.
    */
   readonly guardada = output<void>();
+
+  /**
+   * Qué vista está abierta: `0` escribir, `1` la cuadrícula (C-14).
+   *
+   * Arranca en «Escribir» porque es lo que el bloque hacía y lo que la mayoría
+   * de las consultas necesita; la cuadrícula es para lo que se compara entre
+   * consultas.
+   */
+  protected readonly vista = signal(0);
 
   /** Lo escrito, como HTML saneado por el editor. */
   protected readonly contenido = signal('');
