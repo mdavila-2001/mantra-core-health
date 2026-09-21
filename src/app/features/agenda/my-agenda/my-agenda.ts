@@ -6,6 +6,7 @@ import {
   inject,
   input,
   LOCALE_ID,
+  output,
   signal,
   type OnInit,
   type TemplateRef,
@@ -202,6 +203,34 @@ export class MyAgenda implements OnInit {
    * suyas, pero el día lo lee esta agenda, así que hay que avisarle que relea.
    */
   readonly reloadToken = input(0);
+
+  /**
+   * Si quien contiene la agenda está moviendo una cita y usa este día para
+   * elegir el destino.
+   *
+   * Es puro paso a `day-view`: la agenda no sabe de reprogramaciones —eso vive
+   * en `/schedule`—, pero sí es quien monta el día. Existe porque la solapa
+   * «Cupos», que era donde se elegía el destino, se retiró (C-07/C-10).
+   */
+  readonly moviendoCita = input<boolean>(false);
+
+  /** El rato destino mientras el movimiento está en vuelo, para su hilera. */
+  readonly ratoEnVuelo = input<string | null>(null);
+
+  /** Si la sesión puede registrar un ingreso por mostrador (C-11, AC-C3-03). */
+  readonly puedeIngresarPorMostrador = input<boolean>(false);
+
+  /** Si la sesión puede avisar una demora de la jornada (C-11, P8). */
+  readonly puedeAvisarDemora = input<boolean>(false);
+
+  /** Eligieron un rato libre del día como destino del movimiento en curso. */
+  readonly ratoElegidoParaMover = output<{ id: string; desde: Date }>();
+
+  /** Pidieron el ingreso por mostrador desde el encabezado del día. */
+  readonly mostradorPedido = output<void>();
+
+  /** Pidieron avisar la demora de la jornada desde el encabezado del día. */
+  readonly demoraPedida = output<void>();
 
   private readonly releerTrasOperar = effect(() => {
     if (this.reloadToken() === 0) return;

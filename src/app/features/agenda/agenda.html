@@ -1,13 +1,31 @@
+<!-- C-11 (2026-09-20) · quien tiene calendario NO ve botones de acción acá.
+
+     Eran tres —«Ingreso Mostrador», «Avisar demora» y «Visitas de laboratorio»—
+     y para quien atiende con su agenda los tres se fueron del encabezado.
+     Dónde vive ahora cada uno:
+
+     - «Ingreso Mostrador» y «Avisar demora» bajaron al encabezado del DÍA
+       (`day-view`), que es donde se decide: la demora es de la jornada que se
+       está mirando y el ingreso por mostrador ocurre con alguien parado
+       enfrente, mirando ese día. Viajan por `[puedeIngresarPorMostrador]` /
+       `[puedeAvisarDemora]` y vuelven por `(mostradorPedido)` / `(demoraPedida)`.
+     - «Visitas de laboratorio» pasa a ser la tarjeta de visitador dentro de la
+       propia solapa de Consultas (C-13, H5.S2), que es lo que el doctor pidió:
+       verla en la misma pestaña. La bandeja `/lab-visits` no se borra y sigue
+       alcanzable desde esa tarjeta.
+
+     **Sin calendario los tres siguen acá, y no es una excepción de
+     conveniencia:** quien reparte turnos y quien todavía no publicó su agenda
+     no tienen día que mirar, así que no tienen dónde recibirlos. Quitárselos
+     también a ellos sería sacarles la función, no moverla — y el pedido del
+     doctor es sobre SU pantalla, la del calendario. -->
 <app-page-header
   title="Consultas"
   subtitle="Las consultas comprometidas y los cupos que quedan por ofrecer."
   [breadcrumbs]="breadcrumbs()"
 >
-  @if (puedeIngresarPorMostrador()) {
-    <!-- AC-C3-03 · el ingreso por mostrador. Va en las acciones de la página y
-         no dentro del día: quien lo usa está atendiendo el mostrador y llega a
-         esta pantalla con alguien parado enfrente, así que el gesto tiene que
-         estar donde se entra, no donde se navega. -->
+  @if (!tieneCalendario() && puedeIngresarPorMostrador()) {
+    <!-- AC-C3-03 · el ingreso por mostrador. -->
     <button
       app-button
       page-actions
@@ -18,10 +36,9 @@
       Ingreso Mostrador
     </button>
   }
-  @if (puedeAvisarDemora()) {
+  @if (!tieneCalendario() && puedeAvisarDemora()) {
     <!-- P8 · registro del cliente 4.2: «el médico informa a los pacientes que
-         se va a demorar». Va en las acciones de la página porque la demora es
-         de la jornada, no de un turno suelto. -->
+         se va a demorar». La demora es de la jornada, no de un turno suelto. -->
     <button
       app-button
       page-actions
@@ -32,20 +49,9 @@
       Avisar demora
     </button>
   }
-  <!-- Ni «Mi agenda» ni «Crear agenda» viven ya en el encabezado. El primero se
-       volvió solapa, al lado de Consultas y Cupos. El segundo repetía dos
-       puertas que ya existen: quien no publicó horario ve «Publicar mi agenda»
-       en el aviso de abajo, y quien sí lo publicó lo cambia desde el lápiz de
-       la solapa «Mi agenda». Un tercer botón para lo mismo era ruido. -->
-  @if (esQuienAtiende()) {
-    <!-- §4.H del plan de UX del 22/08/2026 · el camino de vuelta a las visitas.
-
-         «Visitas de laboratorio» salió del menú del médico —la lista cerrada
-         del cliente son ocho opciones y no está—, y la especificación (línea
-         5399) exige que una visita comercial **no se mezcle** con la agenda
-         clínica. Las dos cosas se cumplen: la bandeja sigue siendo una sección
-         aparte, con su ruta y sus datos, y lo único que perdió es el renglón
-         lateral. Este enlace es por dónde se llega ahora. -->
+  @if (!tieneCalendario() && esQuienAtiende()) {
+    <!-- §4.H del plan de UX del 22/08/2026 · el camino de vuelta a las visitas
+         para quien no tiene calendario donde verlas. -->
     <a app-button page-actions variant="ghost" routerLink="/lab-visits">
       Visitas de laboratorio
     </a>
@@ -203,61 +209,73 @@
       (selectedIndexChange)="elegirPestana($event)"
       appTutorialTarget="agenda-pestanas"
     >
-      <!-- ─── Calendario ────────────────────────────────────────────────────
-           La agenda del día, con Semana y Mes: lo que `/schedule` abre por
-           defecto a quien atiende (propietario, 18/09). Las citas del día
-           llevan las MISMAS acciones que la fila de Consultas: se les pasa la
-           celda de la tabla, no una copia. -->
+      <!-- ─── Consultas (el calendario) ─────────────────────────────────────
+           C-08 · se llama «Consultas» y ES el calendario. El renombre y el
+           retiro de la tabla van en el MISMO cambio a propósito: en dos pasos
+           el intermedio tendría dos solapas llamadas «Consultas».
+
+           C-07 · la tabla de consultas y la grilla de cupos ya no están acá.
+           Lo que vivía sólo ahí se reubicó, no se perdió: reservar un cupo es
+           ahora tocar un rato libre del día, y mover una cita marca los ratos
+           libres del día como destino (ver `iniciarReprogramacion`). -->
       @if (tieneCalendario()) {
-        <app-tab label="Calendario">
+        <app-tab label="Consultas">
           @if (enCalendario()) {
             <app-my-agenda
               mode="calendar"
               [appointmentActions]="accionesDeLaCitaDelDia"
               [reloadToken]="versionDeAcciones()"
+              [moviendoCita]="enReprogramacion()"
+              [ratoEnVuelo]="cupoDestino()"
+              [puedeIngresarPorMostrador]="puedeIngresarPorMostrador()"
+              [puedeAvisarDemora]="puedeAvisarDemora()"
+              (ratoElegidoParaMover)="reprogramarA($event)"
+              (mostradorPedido)="abrirMostrador()"
+              (demoraPedida)="abrirDemoraDeAgenda()"
             />
           }
         </app-tab>
       }
 
-      <!-- ─── Consultas ─────────────────────────────────────────────────────
-           El ciclo completo en una sola lista (ALV-019): lo que espera
-           respuesta y lo que ya está agendado eran dos solapas de la MISMA
-           lectura, filtrada por estado. Mirar el día obligaba a mirar dos
-           veces, y una solicitud aceptada parecía perderse. Los cupos siguen
-           aparte: son disponibilidad, no consultas. -->
-      <app-tab [label]="rotuloDeConsultas()">
-        <ng-container [ngTemplateOutlet]="filtrosDeListas" />
-        @if (cuantasEsperanRespuesta() > 0) {
-          <p class="agenda__aviso" role="status">
-            Hay
-            <strong
-              >{{ cuantasEsperanRespuesta() }}
-              {{ cuantasEsperanRespuesta() === 1 ? 'consulta' : 'consultas' }}</strong
-            >
-            que esperan respuesta. Se reconocen por su estado y encabezan la lista.
-          </p>
-        }
+      <!-- ─── Consultas (la lista) ──────────────────────────────────────────
+           Sólo donde NO hay calendario: quien reparte turnos y quien todavía no
+           publicó su agenda no tienen día que mirar, y dejarlos con una sola
+           solapa de horario sería quitarles la pantalla, no limpiarla. Es
+           excluyente con la de arriba, así que nunca hay dos «Consultas». -->
+      @if (!tieneCalendario()) {
+        <app-tab [label]="rotuloDeConsultas()">
+          <ng-container [ngTemplateOutlet]="filtrosDeListas" />
+          @if (cuantasEsperanRespuesta() > 0) {
+            <p class="agenda__aviso" role="status">
+              Hay
+              <strong
+                >{{ cuantasEsperanRespuesta() }}
+                {{ cuantasEsperanRespuesta() === 1 ? 'consulta' : 'consultas' }}</strong
+              >
+              que esperan respuesta. Se reconocen por su estado y encabezan la lista.
+            </p>
+          }
 
-        @if (citasRecortadas()) {
-          <p class="agenda__aviso" role="status">
-            Se muestran las primeras {{ tope }} consultas de la ventana. Acote la ventana o
-            seleccione un recurso para verlas todas.
-          </p>
-        }
+          @if (citasRecortadas()) {
+            <p class="agenda__aviso" role="status">
+              Se muestran las primeras {{ tope }} consultas de la ventana. Acote la ventana o
+              seleccione un recurso para verlas todas.
+            </p>
+          }
 
-        <app-data-table
-          class="agenda__tabla-consultas"
-          appTutorialTarget="agenda-tabla-citas"
-          [state]="consultas()"
-          [columns]="columnasDeConsultas()"
-          [trackBy]="porCita"
-          [rowLabel]="nombreDeCita"
-          caption="Consultas de la ventana consultada"
-          (retry)="recargar()"
-        />
-        <ng-container [ngTemplateOutlet]="navegacionVentana" />
-      </app-tab>
+          <app-data-table
+            class="agenda__tabla-consultas"
+            appTutorialTarget="agenda-tabla-citas"
+            [state]="consultas()"
+            [columns]="columnasDeConsultas()"
+            [trackBy]="porCita"
+            [rowLabel]="nombreDeCita"
+            caption="Consultas de la ventana consultada"
+            (retry)="recargar()"
+          />
+          <ng-container [ngTemplateOutlet]="navegacionVentana" />
+        </app-tab>
+      }
 
       <!-- ─── Mis horarios ──────────────────────────────────────────────────
            El horario publicado. Se llama «Mis horarios» y no «Mi agenda»
@@ -277,25 +295,30 @@
         </app-tab>
       }
 
-      <!-- ─── Cupos ─────────────────────────────────────────────────────── -->
-      <app-tab [label]="rotuloDeCupos()">
-        <ng-container [ngTemplateOutlet]="filtrosDeListas" />
-        @if (cuposRecortados()) {
-          <p class="agenda__aviso" role="status">
-            Se muestran los primeros {{ tope }} cupos de la ventana. Una agenda a la que le faltan
-            huecos sin avisar se lee como una agenda llena.
-          </p>
-        }
+      <!-- ─── Cupos ─────────────────────────────────────────────────────────
+           Mismo criterio que la lista: sobrevive sólo donde no hay calendario,
+           porque es el único lugar en que esa persona ve los huecos y puede
+           reservarlos o elegirlos como destino de un movimiento. -->
+      @if (!tieneCalendario()) {
+        <app-tab [label]="rotuloDeCupos()">
+          <ng-container [ngTemplateOutlet]="filtrosDeListas" />
+          @if (cuposRecortados()) {
+            <p class="agenda__aviso" role="status">
+              Se muestran los primeros {{ tope }} cupos de la ventana. Una agenda a la que le faltan
+              huecos sin avisar se lee como una agenda llena.
+            </p>
+          }
 
-        <app-data-table
-          [state]="cupos()"
-          [columns]="columnasDeCupos()"
-          [trackBy]="porCupo"
-          caption="Cupos de la ventana consultada"
-          (retry)="recargar()"
-        />
-        <ng-container [ngTemplateOutlet]="navegacionVentana" />
-      </app-tab>
+          <app-data-table
+            [state]="cupos()"
+            [columns]="columnasDeCupos()"
+            [trackBy]="porCupo"
+            caption="Cupos de la ventana consultada"
+            (retry)="recargar()"
+          />
+          <ng-container [ngTemplateOutlet]="navegacionVentana" />
+        </app-tab>
+      }
     </app-tabs>
   }
 </div>

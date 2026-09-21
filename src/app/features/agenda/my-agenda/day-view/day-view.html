@@ -47,6 +47,36 @@
       </div>
 
       <div class="dia__acciones-barra">
+        <!-- C-11 (2026-09-20) · los dos que bajaron del encabezado de la página.
+
+             «Avisar demora» es de la jornada que se está mirando, y el ingreso
+             por mostrador ocurre con alguien parado enfrente mirando este día:
+             los dos pertenecen acá y no a un encabezado que no sabe qué día es.
+             Llevan texto y no sólo ícono desde el primer día (C-06). -->
+        @if (puedeAvisarDemora()) {
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            type="button"
+            data-testid="dia-avisar-demora"
+            (clicked)="demoraPedida.emit()"
+          >
+            Avisar demora
+          </button>
+        }
+        @if (puedeIngresarPorMostrador()) {
+          <button
+            app-button
+            variant="secondary"
+            size="sm"
+            type="button"
+            data-testid="dia-ingreso-mostrador"
+            (clicked)="mostradorPedido.emit()"
+          >
+            Ingreso Mostrador
+          </button>
+        }
         <!-- «Mover horario» del pedido. Va en la barra del día y no dentro de
              una tarjeta: lo que se corre es la agenda, no una cita suelta. -->
         <button
@@ -307,24 +337,46 @@
               <span class="dia__hora">
                 {{ bloque.desde | date: 'HH:mm' }}–{{ bloque.hasta | date: 'HH:mm' }}
               </span>
-              <!-- El hueco invita: tocarlo abre la tarjeta con el rango puesto. -->
-              <button class="dia__libre" type="button" (click)="tocar(bloque)">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
-                Disponible
-              </button>
+              <!-- El hueco invita: tocarlo abre la tarjeta con el rango puesto.
+                   Moviendo una cita significa otra cosa —es el destino— y lo
+                   dice con todas las letras, como decía la grilla de cupos que
+                   reemplaza. Con texto y no sólo ícono: es la acción que la
+                   pantalla está pidiendo en ese momento. -->
+              @if (moviendoCita()) {
+                <button
+                  app-button
+                  variant="primary"
+                  size="sm"
+                  type="button"
+                  data-testid="dia-mover-aca"
+                  [isLoading]="ratoEnVuelo() === bloque.clave"
+                  (clicked)="tocar(bloque)"
+                >
+                  Mover acá
+                </button>
+              } @else {
+                <button class="dia__libre" type="button" (click)="tocar(bloque)">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                  Disponible
+                </button>
+              }
               <!-- «Cerrar» un rato libre: lo bloquea Y deja la excepción, para
                    que volver a publicar el horario no lo devuelva. Sin esa
-                   segunda parte, cerrar dura hasta la próxima generación. -->
-              <button
-                app-button
-                variant="ghost"
-                size="sm"
-                type="button"
-                data-testid="dia-cerrar-rato"
-                (clicked)="cierrePedido.emit(bloque)"
-              >
-                Cerrar este rato
-              </button>
+                   segunda parte, cerrar dura hasta la próxima generación.
+                   Mientras se elige destino no se ofrece: cerrar el hueco al
+                   que se está por mover una cita es la acción contraria. -->
+              @if (!moviendoCita()) {
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="dia-cerrar-rato"
+                  (clicked)="cierrePedido.emit(bloque)"
+                >
+                  Cerrar este rato
+                </button>
+              }
             }
 
             @default {

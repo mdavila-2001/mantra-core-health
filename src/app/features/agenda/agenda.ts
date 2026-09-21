@@ -369,11 +369,25 @@ export interface CupoVisible {
 }
 
 /**
- * `vista` de la lista de Consultas cuando `/schedule` a secas es la agenda del
- * día. En inglés por la regla 29; los valores viejos (`agenda`, `cupos`,
- * `citas`, `solicitudes`) siguen valiendo para no romper enlaces.
+ * Lo mínimo que hace falta para mover una cita a un rato: su identificador y
+ * cuándo empieza.
+ *
+ * Es un tipo estructural a propósito. `CupoVisible` lo cumple —la grilla de
+ * cupos sigue siendo el camino de quien reparte turnos— y un rato libre del
+ * calendario también, sin tener que fabricar un `CupoVisible` completo con
+ * campos inventados (`capacidad`, `disponibilidad`) que nadie va a leer.
  */
-const TABLE_VIEW = 'table';
+export interface RatoDestino {
+  readonly id: string;
+  readonly desde: Date;
+}
+
+/**
+ * `vista=table` **ya no existe como solapa** (C-07, 2026-09-20): con calendario
+ * no hay ninguna tabla de consultas. La constante se retiró con la solapa; el
+ * valor sigue llegando por enlaces viejos y lo absorbe `pestanaActual()`, que
+ * manda al calendario todo lo que no sea el horario. Ver `PLAN.md` D1.
+ */
 
 /** `vista` del horario publicado («Mis horarios»). Valor histórico: se conserva. */
 const SCHEDULE_VIEW = 'agenda';
@@ -381,7 +395,12 @@ const SCHEDULE_VIEW = 'agenda';
 /** `vista` de los cupos. Valor histórico: se conserva. */
 const SLOTS_VIEW = 'cupos';
 
-/** Las cuatro solapas de `/schedule`, en el orden en que se muestran. */
+/**
+ * Las solapas posibles de `/schedule`. **Nunca están las cuatro a la vez**
+ * (C-07, C-10): con calendario son «Consultas» (el calendario) y «Mis
+ * horarios»; sin calendario —quien reparte turnos, o quien todavía no publicó
+ * la suya— siguen siendo la lista y los cupos, que es su único camino.
+ */
 type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'slots';
 
 /**
@@ -783,33 +802,49 @@ export class Agenda {
   );
 
   /**
-   * Las solapas, en orden. **Una sola barra de cuatro** (propietario, 18/09):
-   * antes eran dos barras distintas —«Calendario · Mi agenda» al entrar y
-   * «Consultas · Mi agenda · Cupos» detrás de «Ver como tabla»— y la barra
-   * cambiaba bajo los pies al pasar de una vista a la otra.
+   * Las solapas, en orden. **Dos, no cuatro** (C-07 y C-10, 2026-09-20):
+   * «Consultas» —que es el calendario— y «Mis horarios». La tabla de consultas
+   * y la de cupos se fueron: el calendario ya muestra las dos cosas, y la barra
+   * de cuatro obligaba a mirar el mismo día en dos lugares distintos.
+   *
+   * **La lista y los cupos sobreviven sólo donde no hay calendario.** Quien
+   * reparte turnos y quien todavía no publicó su agenda no tienen calendario
+   * que mirar: dejarlos con una sola solapa de horario sería quitarles la
+   * pantalla entera, no limpiarla. Como son excluyentes con el calendario,
+   * **en ningún momento hay dos solapas llamadas «Consultas»**.
    *
    * «Mis horarios» —el horario publicado— sólo existe para quien atiende: quien
    * reparte turnos no tiene agenda propia y no se le ofrece una puerta que la
    * otra pantalla no va a reconocer como suya.
    */
-  protected readonly pestanas = computed<readonly AgendaTab[]>(() => [
-    ...(this.tieneCalendario() ? (['calendar'] as const) : []),
-    'consultations',
-    ...(this.esQuienAtiende() ? (['schedule'] as const) : []),
-    'slots',
-  ]);
+  protected readonly pestanas = computed<readonly AgendaTab[]>(() =>
+    this.tieneCalendario()
+      ? (['calendar', ...(this.esQuienAtiende() ? (['schedule'] as const) : [])] as const)
+      : ([
+          'consultations',
+          ...(this.esQuienAtiende() ? (['schedule'] as const) : []),
+          'slots',
+        ] as const),
+  );
 
   /**
    * La solapa abierta, leída de la URL para que un enlace pueda apuntar a una
-   * en concreto. Los valores viejos siguen valiendo: `vista=cupos`,
-   * `vista=agenda` (el horario) y `vista=citas`/`vista=solicitudes`, que llevan
-   * a la lista unificada de Consultas (ALV-019).
+   * en concreto. Los valores viejos **siguen llegando y ninguno rompe**, pero
+   * desde C-07 (2026-09-20) ya no significan lo mismo: con calendario, todo lo
+   * que no sea `vista=agenda` cae en «Consultas», que es el calendario. Sin
+   * calendario siguen como estaban: `cupos` a los cupos, y `table`, `citas` y
+   * `solicitudes` a la lista unificada (ALV-019).
    */
   protected readonly pestanaActual = computed<AgendaTab>(() => {
     const vista = this.params()?.get('vista');
-    if (vista === SLOTS_VIEW) return 'slots';
     if (vista === SCHEDULE_VIEW && this.esQuienAtiende()) return 'schedule';
-    if (!vista && this.tieneCalendario()) return 'calendar';
+    // C-07 · con calendario no hay ninguna tabla: `table`, `citas`,
+    // `solicitudes`, `cupos` y cualquier valor viejo caen acá, que es lo que
+    // `/schedule` a secas abre. No se redirige la URL a propósito: una
+    // redirección le mete una entrada al historial y le rompe el «atrás» a
+    // quien llegó por un enlace viejo.
+    if (this.tieneCalendario()) return 'calendar';
+    if (vista === SLOTS_VIEW) return 'slots';
     return 'consultations';
   });
 
@@ -1302,7 +1337,10 @@ export class Agenda {
    * agenda del día, así que la lista necesita nombrarse.
    */
   private vistaDeConsultas(): string | null {
-    return this.tieneCalendario() ? TABLE_VIEW : null;
+    // Sin calendario, `/schedule` a secas YA es la lista: no necesita nombrarse.
+    // Con calendario la lista no existe como solapa (C-07), así que este camino
+    // no se alcanza — y si se alcanzara, el destino correcto es el calendario.
+    return null;
   }
 
   protected recargar(): void {
@@ -1463,16 +1501,24 @@ export class Agenda {
   });
 
   /**
-   * Entra al modo: se abre «Cupos», que es donde están los destinos posibles.
+   * Entra al modo, y el salto depende de dónde estén los destinos posibles.
    *
-   * Sin ese salto el botón no haría nada visible desde la lista de consultas.
+   * Con calendario (C-07/C-10) la solapa «Cupos» ya no existe: los destinos son
+   * los ratos libres del día, así que el modo se queda **sobre el calendario** y
+   * cada hueco pasa a significar «mover acá» en vez de «agregar algo». Sin
+   * calendario —quien reparte turnos— la grilla de cupos sigue siendo el único
+   * lugar donde se ven los huecos, y el salto se mantiene.
+   *
+   * Sin uno de los dos saltos el botón no haría nada visible desde la lista.
    */
   protected iniciarReprogramacion(cita: CitaVisible): void {
     if (this.operando() !== null) {
       return;
     }
     this.reprogramando.set(cita.id);
-    this.publicar({ vista: SLOTS_VIEW });
+    if (!this.tieneCalendario()) {
+      this.publicar({ vista: SLOTS_VIEW });
+    }
   }
 
   /**
@@ -1482,7 +1528,11 @@ export class Agenda {
   protected cancelarReprogramacion(): void {
     this.reprogramando.set(null);
     this.cupoDestino.set(null);
-    this.publicar({ vista: this.vistaDeConsultas() });
+    // Con calendario nunca se saltó de solapa, así que tampoco se vuelve: el
+    // día que se estaba mirando es el que hay que seguir mirando.
+    if (!this.tieneCalendario()) {
+      this.publicar({ vista: this.vistaDeConsultas() });
+    }
   }
 
   /**
@@ -1494,7 +1544,7 @@ export class Agenda {
    * (corrección #14) y el paciente lo ve junto al horario nuevo — moverle el
    * día a alguien sin decirle por qué es la mitad del aviso.
    */
-  protected async reprogramarA(cupo: CupoVisible): Promise<void> {
+  protected async reprogramarA(cupo: RatoDestino): Promise<void> {
     const origenId = this.reprogramando();
     if (origenId === null || this.operando() !== null) {
       return;
@@ -1527,8 +1577,11 @@ export class Agenda {
         this.reprogramando.set(null);
         this.toast.success('La cita quedó en el horario nuevo.', 'Reprogramación');
         // De vuelta a «Consultas»: el resultado del movimiento se ve ahí, no en
-        // la grilla de cupos desde la que se eligió el destino.
-        this.publicar({ vista: this.vistaDeConsultas() });
+        // la grilla de cupos desde la que se eligió el destino. Con calendario
+        // nunca se salió de la solapa, así que no hay a dónde volver.
+        if (!this.tieneCalendario()) {
+          this.publicar({ vista: this.vistaDeConsultas() });
+        }
         this.trasOperar();
       },
       error: (error: unknown) => {
@@ -1548,7 +1601,7 @@ export class Agenda {
   }
 
   /** Cómo se nombra el cupo destino en el diálogo. */
-  private nombreDelCupo(cupo: CupoVisible): string {
+  private nombreDelCupo(cupo: RatoDestino): string {
     return formatDate(cupo.desde, "EEEE d 'de' MMMM, HH:mm", this.idioma);
   }
 
