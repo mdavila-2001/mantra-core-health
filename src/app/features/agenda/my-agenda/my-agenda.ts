@@ -6,6 +6,7 @@ import {
   inject,
   input,
   LOCALE_ID,
+  output,
   signal,
   type OnInit,
   type TemplateRef,
@@ -29,7 +30,15 @@ import type {
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
-import type { BloqueDelDia } from './day-view/day-view';
+import type { BloqueDelDia, VisitaDelDia } from './day-view/day-view';
+import { PharmaLabClient } from '../../../core/data-access/pharma-lab/pharma-lab.client';
+import {
+  PharmaLabConcepts,
+  type ConceptDictionary,
+} from '../../../core/data-access/pharma-lab/pharma-lab-concepts.client';
+import type { VisitRequest } from '../../../core/data-access/pharma-lab/pharma-lab.types';
+import { toVisitStatusPresentation } from '../../pharma-lab/visit-status';
+import { detalleDeLaCita } from './detalle-de-la-cita';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
@@ -150,6 +159,37 @@ interface Patron {
 /** Lo que se muestra cuando un dato no está. */
 const SIN_DATO = 'Sin registrar';
 
+/**
+ * Cuánto dura una visita de laboratorio cuando el dato no alcanza — C-13.
+ *
+ * El pedido dice «de 15 minutos, configurable por el doctor en la pantalla de
+ * horarios». La duración **sale del dato**: `VisitRequest.durationMinutes` es
+ * parte del contrato y es lo que se usa. Este número es sólo el respaldo para
+ * cuando ese campo llega ausente o absurdo (cero, negativo), no la fuente.
+ *
+ * **La CONFIGURACIÓN no existe todavía**: ningún contrato de `pharma_lab`
+ * publica una duración por omisión elegible por el doctor (ver `Q-P4` del
+ * encargo). Lo que falta es la configuración, no el valor: el mecanismo lee lo
+ * que venga y cae acá sólo si no vino nada.
+ */
+const MINUTOS_DE_VISITA_POR_OMISION = 15;
+
+/**
+ * Los estados en que una visita **ya no ocupa** el rato — C-13.
+ *
+ * Una rechazada, una cancelada o una que se mudó de horario no comprometen
+ * nada: dibujarlas diría que ese rato está tomado cuando está libre. Los
+ * códigos son los del catálogo de `pharma_lab`, sin prefijo de módulo, igual
+ * que hace `visit-status.ts`.
+ */
+const VISITAS_QUE_NO_OCUPAN: ReadonlySet<string> = new Set([
+  'PHL_VISIT_REJECTED',
+  'PHL_VISIT_CANCELLED',
+  'PHL_VISIT_CANCELLED_BY_VISITOR',
+  'PHL_VISIT_CANCELLED_BY_DOCTOR',
+  'PHL_VISIT_RESCHEDULED',
+]);
+
 @Component({
   selector: 'app-my-agenda',
   imports: [
@@ -203,6 +243,43 @@ export class MyAgenda implements OnInit {
    */
   readonly reloadToken = input(0);
 
+  /**
+   * Si quien contiene la agenda está moviendo una cita y usa este día para
+   * elegir el destino.
+   *
+   * Es puro paso a `day-view`: la agenda no sabe de reprogramaciones —eso vive
+   * en `/schedule`—, pero sí es quien monta el día. Existe porque la solapa
+   * «Cupos», que era donde se elegía el destino, se retiró (C-07/C-10).
+   */
+  readonly moviendoCita = input<boolean>(false);
+
+  /** El rato destino mientras el movimiento está en vuelo, para su hilera. */
+  readonly ratoEnVuelo = input<string | null>(null);
+
+  /** Si la sesión puede registrar un ingreso por mostrador (C-11, AC-C3-03). */
+  readonly puedeIngresarPorMostrador = input<boolean>(false);
+
+  /** Si la sesión puede avisar una demora de la jornada (C-11, P8). */
+  readonly puedeAvisarDemora = input<boolean>(false);
+
+  /** Eligieron un rato libre del día como destino del movimiento en curso. */
+  readonly ratoElegidoParaMover = output<{ id: string; desde: Date }>();
+
+  /** Pidieron el ingreso por mostrador desde el encabezado del día. */
+  readonly mostradorPedido = output<void>();
+
+  /** Pidieron avisar la demora de la jornada desde el encabezado del día. */
+  readonly demoraPedida = output<void>();
+
+  /**
+   * Activaron la tarjeta de una cita del día — C-04.
+   *
+   * Puro paso hacia arriba: iniciar o continuar una atención es una acción de
+   * `/schedule`, que es quien tiene la máquina de estados de la cita. La agenda
+   * no sabe de eso.
+   */
+  readonly citaActivada = output<Booking>();
+
   private readonly releerTrasOperar = effect(() => {
     if (this.reloadToken() === 0) return;
     untracked(() => {
@@ -217,9 +294,19 @@ export class MyAgenda implements OnInit {
   private readonly dialogs = inject(DialogService);
   private readonly router = inject(Router);
   /** El idioma activo, para formatear fechas fuera de la plantilla. */
-  private readonly idioma = inject(LOCALE_ID);
+  /**
+   * El idioma activo, para formatear fechas fuera de la plantilla.
+   *
+   * `protected` y no `private` desde C-08: la semana lo recibe por input
+   * —es presentacional y se monta en pruebas sin `LOCALE_ID` configurado—, y
+   * pasárselo desde la plantilla exige que sea visible para ella.
+   */
+  protected readonly idioma = inject(LOCALE_ID);
   private readonly terminology = inject(TerminologyClient);
   private readonly toast = inject(ToastService);
+  private readonly pharmaLab = inject(PharmaLabClient);
+  private readonly conceptosApi = inject(PharmaLabConcepts);
+  private readonly conceptosDeVisitas$ = this.conceptosApi.load();
 
   /** El recurso del profesional; sin él no hay agenda que mostrar. */
   protected readonly recurso = signal<AgendaResource | null>(null);
@@ -416,6 +503,96 @@ export class MyAgenda implements OnInit {
   protected readonly cuposDelDia = signal<readonly AgendaSlot[]>([]);
   protected readonly citasDelDia = signal<readonly Booking[]>([]);
 
+  /* -- Las visitas de laboratorio del doctor (C-13) -------------------------- */
+
+  /** Las solicitudes de visita del doctor, tal como llegan. */
+  private readonly visitasDelDoctor = signal<readonly VisitRequest[]>([]);
+
+  /** El diccionario de conceptos del laboratorio, para traducir los estados. */
+  private readonly conceptosDeVisitas = signal<ConceptDictionary | null>(null);
+
+  /**
+   * Las visitas que caen en el día abierto, ya listas para dibujar.
+   *
+   * Sólo las que **están en pie**: una rechazada o cancelada no ocupa el rato y
+   * pintarla diría que sí. El estado se compara por código de catálogo
+   * (`visit-status.ts`), nunca por rótulo ni por uuid.
+   */
+  protected readonly visitasDelDia = computed<readonly VisitaDelDia[]>(() => {
+    const dia = this.diaAbierto();
+    const conceptos = this.conceptosDeVisitas();
+    if (dia === null) return [];
+
+    const inicio = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate()).getTime();
+    const fin = inicio + 24 * 60 * 60 * 1000;
+
+    return this.visitasDelDoctor()
+      .map((visita) => {
+        // El horario vigente es el propuesto cuando lo hay: una reprogramación
+        // en curso que muestre la fecha original muestra una que ya no existe.
+        const desde = visita.proposedStartAt ?? visita.requestedStartAt;
+        const minutos =
+          visita.durationMinutes > 0 ? visita.durationMinutes : MINUTOS_DE_VISITA_POR_OMISION;
+        const estado = toVisitStatusPresentation(
+          conceptos?.code(visita.statusConceptId),
+          conceptos?.label(visita.statusConceptId) ?? 'Visita',
+        );
+        return {
+          id: visita.id,
+          desde,
+          hasta: new Date(desde.getTime() + minutos * 60_000),
+          // **Con quién no se puede decir, y no se inventa.**
+          //
+          // `VisitRequest` trae `medicalVisitorId` y `pharmaLabId` y ningún
+          // nombre: el contrato del doctor no publica cómo se llama el
+          // visitador ni su laboratorio (se comprobó contra
+          // `pharma-lab.types.ts:125-142` y contra lo que muestra la propia
+          // bandeja, que tampoco los nombra). Mostrar el uuid está prohibido
+          // por las convenciones de la casa, y traducirlo con el diccionario de
+          // CONCEPTOS es un error de categoría: ese diccionario tiene estados y
+          // tipos, no personas — devuelve el propio identificador y lo pinta.
+          //
+          // Así que la tarjeta dice qué es y dónde, que es lo que sí sabe. El
+          // nombre queda registrado como hallazgo para quien tenga el contrato.
+          conQuien: 'Visita de laboratorio',
+          motivo:
+            visita.location === undefined || visita.location === ''
+              ? visita.reason
+              : `${visita.reason} · ${visita.location}`,
+          estado: estado.label,
+          statusVariant: estado.variant,
+          code: estado.code,
+        };
+      })
+      .filter(
+        (v) =>
+          v.desde.getTime() >= inicio &&
+          v.desde.getTime() < fin &&
+          !VISITAS_QUE_NO_OCUPAN.has(v.code),
+      )
+      .map(({ code: _code, ...visita }) => visita)
+      .sort((a, b) => a.desde.getTime() - b.desde.getTime());
+  });
+
+  /**
+   * Las visitas del doctor, leídas una vez por sesión de calendario.
+   *
+   * Un fallo acá **no rompe la agenda**: el día sigue mostrando las consultas y
+   * simplemente no dibuja visitas. Es la misma indulgencia que el resto de los
+   * catálogos accesorios, y se declara: lo que se pierde es la tarjeta, no la
+   * jornada.
+   */
+  private leerVisitasDeLaboratorio(): void {
+    this.pharmaLab.listDoctorVisitRequests().subscribe({
+      next: (visitas) => this.visitasDelDoctor.set(visitas),
+      error: () => this.visitasDelDoctor.set([]),
+    });
+    this.conceptosDeVisitas$.subscribe({
+      next: (dic) => this.conceptosDeVisitas.set(dic),
+      error: () => this.conceptosDeVisitas.set(null),
+    });
+  }
+
   /**
    * Las citas de la semana mirada, para que la semana diga **con quién**.
    *
@@ -570,6 +747,9 @@ export class MyAgenda implements OnInit {
         if (this.mode() === 'calendar') {
           this.cargarMes();
           this.openDay(this.diaDeReferencia());
+          // C-13 · las visitas de laboratorio del doctor, para que el día las
+          // muestre. Se leen una vez: son de la persona, no del día.
+          this.leerVisitasDeLaboratorio();
         }
         // Los cupos se leen sólo si hay horario: sin plantilla no puede haber
         // ninguno, y preguntarlo sería un viaje para confirmar un cero.
@@ -781,6 +961,117 @@ export class MyAgenda implements OnInit {
       });
   }
 
+  /* -- El horario extra del final del día (C-10) ----------------------------- */
+
+  /**
+   * Hasta qué hora atiende el día mirado, según el **horario publicado**.
+   *
+   * `null` cuando ese día no tiene regla: no atiende, y entonces cualquier hora
+   * que se agregue está fuera de horario por definición.
+   */
+  private finDelHorarioPublicado(dia: Date): Date | null {
+    const actual = this.estado();
+    if (actual.status !== 'ready') return null;
+    const reglas = actual.data.rules.filter((regla) => regla.dayOfWeek === dia.getDay());
+    if (reglas.length === 0) return null;
+    const ultima = reglas.reduce((a, b) => (a.endTime >= b.endTime ? a : b));
+    const [hh, mm] = ultima.endTime.split(':');
+    const fin = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate());
+    fin.setHours(Number(hh ?? 0), Number(mm ?? 0), 0, 0);
+    return fin;
+  }
+
+  /** Cuánto dura un turno según el horario publicado; 30 si no lo declara. */
+  private duracionDelTurno(dia: Date): number {
+    const actual = this.estado();
+    if (actual.status !== 'ready') return 30;
+    const regla = actual.data.rules.find((r) => r.dayOfWeek === dia.getDay());
+    return regla?.slotMinutes ?? actual.data.slotMinutes ?? 30;
+  }
+
+  /**
+   * Desde cuándo arranca el horario extra: después de lo último que hay ese día.
+   *
+   * Se toma el máximo entre el fin del horario publicado y el fin de la última
+   * actividad cargada. Sin esto, un día que ya se extendió una vez propondría
+   * la misma hora otra vez y la segunda excepción pisaría a la primera.
+   */
+  private arranqueDelExtra(dia: Date): Date {
+    const candidatos = [
+      this.finDelHorarioPublicado(dia),
+      ...this.cuposDelDia().map((c) => c.endAt ?? c.startAt),
+      ...this.citasDelDia().map((c) => c.endAt),
+    ].filter((f): f is Date => f instanceof Date);
+
+    if (candidatos.length === 0) {
+      // Un día sin horario ni actividad: se propone el final de la tarde, que
+      // es cuando se extiende en la práctica.
+      const tarde = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate());
+      tarde.setHours(18, 0, 0, 0);
+      return tarde;
+    }
+    return new Date(Math.max(...candidatos.map((f) => f.getTime())));
+  }
+
+  /**
+   * C-10 · agrega un horario **al final del día**, fuera del horario de atención.
+   *
+   * Es una **excepción `EXTRA`**, no un cupo inventado: `EXTRA` es el único
+   * tipo del catálogo con `blocks: false`, o sea el único que AÑADE
+   * disponibilidad en vez de cerrarla
+   * (`GET /scheduling/exception-types`). Inventar un cupo por el lado del
+   * cliente sería crear disponibilidad que el horario publicado no respalda, y
+   * el día siguiente la regeneración la borraría sin avisar.
+   *
+   * Se pregunta antes, con un diálogo que **nombra** que se sale del horario:
+   * quien extiende tiene que saber que está aceptando atender fuera de hora, no
+   * descubrirlo cuando llegue el paciente. El diálogo es el del sistema y no
+   * `confirm()` del navegador, que congela la página y no cumple 95.4.2.
+   */
+  protected async agregarHorarioExtra(dia: Date): Promise<void> {
+    const recurso = this.recurso();
+    if (recurso === null) return;
+
+    const desde = this.arranqueDelExtra(dia);
+    const hasta = new Date(desde.getTime() + this.duracionDelTurno(dia) * 60_000);
+    const finPublicado = this.finDelHorarioPublicado(dia);
+    const hora = (f: Date): string => formatDate(f, 'HH:mm', this.idioma);
+
+    const confirmado = await this.dialogs.confirm({
+      title: 'Agregar un horario fuera de tu horario de atención',
+      message:
+        finPublicado === null
+          ? `Este día no está en tu horario publicado: no atendés. Si seguís, queda abierto de ` +
+            `${hora(desde)} a ${hora(hasta)} como horario extra, y ese rato se puede reservar.`
+          : `Tu horario de atención de este día termina a las ${hora(finPublicado)}. Si seguís, ` +
+            `queda abierto de ${hora(desde)} a ${hora(hasta)} como horario extra, y ese rato se ` +
+            `puede reservar. No cambia tu horario publicado: vale sólo para este día.`,
+      confirmLabel: 'Agregar el horario extra',
+      cancelLabel: 'No agregar nada',
+    });
+    if (!confirmado) return;
+
+    this.scheduling
+      .createException(recurso.id, {
+        exceptionType: 'EXTRA',
+        startAt: desde.toISOString(),
+        endAt: hasta.toISOString(),
+        // Lo que separa `EXTRA` de los otros seis: abre en vez de cerrar.
+        isAvailable: true,
+      })
+      .subscribe({
+        next: () => {
+          this.toast.success(
+            `Queda abierto de ${hora(desde)} a ${hora(hasta)}, fuera de tu horario de atención.`,
+            'Horario extra agregado',
+          );
+          this.cargarDia(dia);
+          this.cargarMes();
+        },
+        error: (error: unknown) => this.estado.set(errorToViewState<PublishedTemplate>(error)),
+      });
+  }
+
   /* -- El mes ---------------------------------------------------------------- */
 
   /** Cambia de solapa; la del mes carga sus datos la primera vez. */
@@ -908,11 +1199,13 @@ export class MyAgenda implements OnInit {
         desde: cupo.startAt,
         hasta: cupo.endAt ?? cupo.startAt,
         rotulo: `la cita de ${porSlot.get(cupo.id)?.patientName ?? 'un paciente'}`,
+        tipo: 'cita' as const,
       }));
     const deOcupados = this.bloqueosDelMes().map((b) => ({
       desde: b.desde,
       hasta: b.hasta,
       rotulo: b.motivo === null ? 'un rato ocupado' : `«${b.motivo}»`,
+      tipo: 'bloqueo' as const,
     }));
     return [...deCitas, ...deOcupados];
   });
@@ -993,35 +1286,72 @@ export class MyAgenda implements OnInit {
    */
   protected async verDetalleDelBloque(bloque: BloqueDelDia): Promise<void> {
     const hora = (valor: Date): string => formatDate(valor, 'HH:mm', this.idioma);
+
+    if (bloque.tipo === 'cita' && bloque.cita !== null) {
+      // La MISMA función que arma el globo de la semana (C-08): si acá se
+      // armara la lista a mano, agregar un campo dejaría vieja a una de las dos
+      // y nadie se enteraría hasta mirarlas juntas.
+      await this.verDetalleDeLaCita(bloque.cita, bloque.estado, {
+        desde: bloque.desde,
+        hasta: bloque.hasta,
+      });
+      return;
+    }
+
     const detalles: DialogDetail[] = [
       { label: 'Cuándo', value: `${hora(bloque.desde)} – ${hora(bloque.hasta)}` },
-      { label: 'Qué es', value: bloque.tipo === 'cita' ? 'Cita' : 'Tiempo ocupado' },
+      { label: 'Qué es', value: 'Tiempo ocupado' },
     ];
-
-    if (bloque.tipo === 'cita') {
-      detalles.push({ label: 'Estado', value: bloque.estado });
-      detalles.push({ label: 'Paciente', value: bloque.paciente || SIN_DATO });
-      if (bloque.cita?.reasonText !== undefined) {
-        detalles.push({ label: 'Motivo', value: bloque.cita.reasonText });
-      }
-    } else if (bloque.motivo !== null) {
+    if (bloque.motivo !== null) {
       detalles.push({ label: 'Motivo', value: bloque.motivo });
     }
 
-    const perfil = bloque.cita?.patientProfileId;
-    const puedeAbrirExpediente = bloque.tipo === 'cita' && perfil !== undefined;
-
-    const ir = await this.dialogs.confirm({
-      title: bloque.tipo === 'cita' ? 'Detalle de la cita' : 'Detalle del rato ocupado',
+    await this.dialogs.confirm({
+      title: 'Detalle del rato ocupado',
       message: formatDate(bloque.desde, "EEEE d 'de' MMMM", this.idioma),
       details: detalles,
+      confirmLabel: 'Cerrar',
+      cancelLabel: 'Volver',
+    });
+  }
+
+  /**
+   * El detalle de una cita, desde donde sea que se lo pida.
+   *
+   * Lo abren dos caminos y **es el mismo diálogo**: «Ver detalle» del día y una
+   * cita de la semana (C-08). Los pares los arma `detalleDeLaCita`, que también
+   * alimenta el globo del `hover` de la semana; así el globo y el diálogo no
+   * pueden decir cosas distintas de la misma cita.
+   */
+  protected async verDetalleDeLaCita(
+    cita: Booking,
+    estado: string,
+    franja?: { readonly desde: Date; readonly hasta: Date },
+  ): Promise<void> {
+    const perfil = cita.patientProfileId;
+    const puedeAbrirExpediente = perfil !== undefined;
+    const cuando = franja?.desde ?? cita.startAt;
+
+    const ir = await this.dialogs.confirm({
+      title: 'Detalle de la cita',
+      message:
+        cuando === undefined
+          ? SIN_DATO
+          : formatDate(cuando, "EEEE d 'de' MMMM", this.idioma),
+      details: [...detalleDeLaCita(cita, estado, this.idioma, franja)],
       confirmLabel: puedeAbrirExpediente ? 'Abrir expediente' : 'Cerrar',
       cancelLabel: puedeAbrirExpediente ? 'Cerrar' : 'Volver',
     });
 
-    if (ir && puedeAbrirExpediente && perfil !== undefined) {
+    if (ir && perfil !== undefined) {
       void this.router.navigate([patientChartRoute(perfil)]);
     }
+  }
+
+  /** Activaron una cita desde la semana: el mismo detalle que desde el día. */
+  protected verDetalleDeLaSemana(cita: Booking): void {
+    const estado = this.estadosResueltos().get(cita.statusConceptId)?.display ?? 'Reservado';
+    void this.verDetalleDeLaCita(cita, estado);
   }
 
   /**

@@ -77,16 +77,18 @@
         <app-alert appAnuncio tone="error" data-testid="portability-export-error">{{ mensaje }}</app-alert>
       }
 
+      <!-- Tres formatos, se elige uno: el caso 1 de ADR-0013 y por eso un
+           desplegable y no tres radios. No son el sí y el no de una misma
+           afirmación —son tres valores distintos del mismo campo— y esconder
+           las opciones no pierde nada: no hay orden ni distancia entre ellas
+           que el control tenga que enseñar. -->
       <app-form-field label="Formato">
-        <app-radio-group
+        <app-select
           data-testid="portability-format"
+          [options]="formatos"
           [value]="format()"
           (valueChange)="setFormat($event)"
-        >
-          <app-radio value="PDF" label="PDF oficial certificado con código QR" data-testid="radio-format-pdf" />
-          <app-radio value="JSON" label="Archivo JSON interoperable" data-testid="radio-format-json" />
-          <app-radio value="BUNDLE" label="Paquete completo (PDF + JSON)" data-testid="radio-format-both" />
-        </app-radio-group>
+        />
       </app-form-field>
     }
   }

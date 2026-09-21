@@ -16,7 +16,7 @@ import { emitirNotificacion } from './notifications.handlers';
 import { solicitudDeLaCita } from './insurance.handlers';
 import { pacientePorId } from '../fixtures/personas';
 import { representaA } from './profiles.handlers';
-import { conflict, noContent, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, noContent, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -25,12 +25,24 @@ import { ahora, cuerpo, masMinutos, nuevoId, texto, uuid } from '../mock-store';
     (reservar → aceptar → llegada → atender → cobrar) se puede recorrer.
     ========================================================================== */
 
+/**
+ * `requiresText` sólo es `true` en `OTHER`.
+ *
+ * Antes lo llevaban también `ABSENCE`, `CONFERENCE` y `ERRAND` — divergía del
+ * contrato real, que declara un único motivo que exige explicación:
+ * `MOTIVO_QUE_EXIGE_TEXTO: ExceptionType = 'OTHER'`
+ * (`scheduling-catalog.service.ts:163`, con `requiresText: type ===
+ * MOTIVO_QUE_EXIGE_TEXTO` en la 1245). Con el doble como estaba, un
+ * formulario que sólo manda `reason` cuando el usuario escribió algo podía
+ * dar 201 contra la API real y un rechazo (por falta de texto en pantalla)
+ * contra la maqueta — el error simétrico de "más permisivo que la API".
+ */
 const TIPOS_DE_BLOQUEO = [
-  { type: 'ABSENCE', conceptId: TIPO_BLOQUEO['EXC-PERSONAL']!, label: 'Ausencia', requiresText: true, blocks: true },
+  { type: 'ABSENCE', conceptId: TIPO_BLOQUEO['EXC-PERSONAL']!, label: 'Ausencia', requiresText: false, blocks: true },
   { type: 'HOLIDAY', conceptId: TIPO_BLOQUEO['EXC-FERIADO']!, label: 'Feriado', requiresText: false, blocks: true },
   { type: 'VACATION', conceptId: TIPO_BLOQUEO['EXC-VACACIONES']!, label: 'Vacaciones', requiresText: false, blocks: true },
-  { type: 'CONFERENCE', conceptId: TIPO_BLOQUEO['EXC-CONGRESO']!, label: 'Congreso', requiresText: true, blocks: true },
-  { type: 'ERRAND', conceptId: TIPO_BLOQUEO['EXC-PERSONAL']!, label: 'Trámite personal', requiresText: true, blocks: true },
+  { type: 'CONFERENCE', conceptId: TIPO_BLOQUEO['EXC-CONGRESO']!, label: 'Congreso', requiresText: false, blocks: true },
+  { type: 'ERRAND', conceptId: TIPO_BLOQUEO['EXC-PERSONAL']!, label: 'Trámite personal', requiresText: false, blocks: true },
   { type: 'EXTRA', conceptId: TIPO_BLOQUEO['EXC-CIRUGIA']!, label: 'Horario extra', requiresText: false, blocks: false },
   { type: 'OTHER', conceptId: TIPO_BLOQUEO['EXC-PERSONAL']!, label: 'Otro', requiresText: true, blocks: true },
 ] as const;
@@ -571,17 +583,34 @@ export function registrarAgenda(router: MockRouter): void {
   router.post('/scheduling/resources/:id/exceptions', (request) => {
     const datos = cuerpo<{ exceptionType: string; startAt: string; endAt: string; reason?: string; isAvailable?: boolean }>(request);
     const tipo = TIPOS_DE_BLOQUEO.find((t) => t.type === datos.exceptionType);
-    // El doble no puede ser más permisivo que el contrato real: la API valida
-    // `exceptionType` contra la lista cerrada de 7 con `@IsIn(EXCEPTION_TYPES)`
-    // (scheduling-catalog.dto.ts:754). Sin este rechazo, quien programa contra
-    // el simulador escribe código que el backend real va a rechazar.
+    // El doble no puede ser más permisivo que el contrato real. `exceptionType`
+    // se valida a nivel de DTO con `@IsIn(EXCEPTION_TYPES)`
+    // (scheduling-catalog.dto.ts:754): sin `exceptionFactory` propio, el
+    // `ValidationPipe` global de la API devuelve 400 ante esto (main.ts:158-165),
+    // no 422 — mismo contrato que el `ValidationPipe` real, igual que el resto
+    // de las validaciones de forma del proyecto (ver auth.handlers.ts).
     if (tipo === undefined) {
-      return validation(`Tipo de excepción no reconocido: «${datos.exceptionType}». Los tipos válidos son: ${TIPOS_DE_BLOQUEO.map((t) => t.type).join(', ')}.`);
+      return reply(400, {
+        statusCode: 400,
+        code: 'VALIDATION_FAILED',
+        message: 'Validation failed',
+        error: 'Bad Request',
+        details: { messages: [`exceptionType must be one of the following values: ${TIPOS_DE_BLOQUEO.map((t) => t.type).join(', ')}`] },
+      });
+    }
+    // «Otro» sin explicación no dice nada: regla del catálogo, no de la
+    // pantalla. En la API es una precondición de negocio —
+    // `PreconditionFailedException` en `createException`
+    // (scheduling-catalog.service.ts:1262), que en este proyecto es 422, no
+    // 412 (domain.exception.ts:106-118)— y no una validación de forma: por
+    // eso va después del `@IsIn` (400) y no junto a él.
+    if (tipo.requiresText && (datos.reason === undefined || datos.reason.trim() === '')) {
+      return validation('Elegiste «Otro» como motivo: escribí cuál es.');
     }
     const inicio = datos.startAt ?? ahora();
     const fin = datos.endAt ?? masMinutos(inicio, 60);
     if (fin <= inicio) {
-      return validation('El fin de la excepción tiene que ser posterior a su inicio.');
+      return validation('La excepción debe empezar antes de terminar.');
     }
     const nuevo: BloqueoSimulado = {
       id: nuevoId('exception'),
@@ -606,7 +635,14 @@ export function registrarAgenda(router: MockRouter): void {
     const datos = cuerpo<{ exceptionType?: string; reason?: string; startAt?: string; endAt?: string }>(request);
     const tipo = datos.exceptionType === undefined ? undefined : TIPOS_DE_BLOQUEO.find((t) => t.type === datos.exceptionType);
     if (datos.exceptionType !== undefined && tipo === undefined) {
-      return validation(`Tipo de excepción no reconocido: «${datos.exceptionType}». Los tipos válidos son: ${TIPOS_DE_BLOQUEO.map((t) => t.type).join(', ')}.`);
+      // Mismo contrato que el POST: `@IsIn` a nivel de DTO es 400, no 422.
+      return reply(400, {
+        statusCode: 400,
+        code: 'VALIDATION_FAILED',
+        message: 'Validation failed',
+        error: 'Bad Request',
+        details: { messages: [`exceptionType must be one of the following values: ${TIPOS_DE_BLOQUEO.map((t) => t.type).join(', ')}`] },
+      });
     }
     const actualizado = bloqueos.actualizar(b.id, {
       ...(datos.reason === undefined ? {} : { reason: datos.reason }),

@@ -95,6 +95,32 @@ describe('handlers de bloqueos de agenda (excepciones)', () => {
     expect(propia.isAvailable).toBe(false); // isAvailable no viajó: el default es "no libera cupos", coherente con "no bloquea" != "es disponibilidad publicada"
   });
 
+  /**
+   * `isAvailable` viaja del cuerpo del pedido, NUNCA del tipo — verificado
+   * contra `scheduling-catalog.service.ts:1299` de la API real:
+   * `const isAvailable = dto.isAvailable ?? false;`, sin ninguna rama que lo
+   * derive de `exceptionType`. El catálogo de tipos SÍ declara
+   * `blocks: type !== 'EXTRA'` (línea 1249 del mismo archivo), pero es sólo
+   * la etiqueta informativa de `GET /scheduling/exception-types` — no
+   * determina el `isAvailable` de una excepción concreta. Derivarlo del tipo
+   * en el simulador sería MÁS permisivo que la API real, no menos: abriría
+   * disponibilidad sin que quien crea la excepción lo haya pedido.
+   */
+  it('isAvailable es del cuerpo del pedido, no se deriva del tipo (ni siquiera para EXTRA)', () => {
+    const path = `/scheduling/resources/${RECURSO_MEDICA}/exceptions`;
+    const creado = call<{ id: string }>('POST', path, {
+      exceptionType: 'EXTRA',
+      isAvailable: true,
+      startAt: '2026-10-09T18:00:00.000Z',
+      endAt: '2026-10-09T19:00:00.000Z',
+    });
+    const { items } = call<{ items: readonly { id: string; isAvailable: boolean }[] }>(
+      'GET',
+      `/scheduling/resources/${RECURSO_MEDICA}/exceptions`,
+    );
+    expect(items.find((i) => i.id === creado.id)?.isAvailable).toBe(true);
+  });
+
   it('límite — una franja de 1 minuto se acepta', () => {
     const path = `/scheduling/resources/${RECURSO_MEDICA}/exceptions`;
     expect(
@@ -102,11 +128,31 @@ describe('handlers de bloqueos de agenda (excepciones)', () => {
     ).toBe(201);
   });
 
-  it('inválido — un exceptionType fuera de la lista de 7 se rechaza con 422, no se acepta en silencio', () => {
+  it('inválido — un exceptionType fuera de la lista de 7 se rechaza con 400 (contrato de forma, @IsIn), no se acepta en silencio', () => {
     const path = `/scheduling/resources/${RECURSO_MEDICA}/exceptions`;
     expect(estado('POST', path, { exceptionType: 'SERVICE', startAt: '2026-10-04T08:00:00.000Z', endAt: '2026-10-04T09:00:00.000Z' })).toBe(
+      400,
+    );
+  });
+
+  it('inválido — OTHER sin reason se rechaza con 422 (precondición de negocio, no de forma)', () => {
+    const path = `/scheduling/resources/${RECURSO_MEDICA}/exceptions`;
+    expect(estado('POST', path, { exceptionType: 'OTHER', startAt: '2026-10-04T08:00:00.000Z', endAt: '2026-10-04T09:00:00.000Z' })).toBe(
       422,
     );
+    expect(
+      estado('POST', path, { exceptionType: 'OTHER', reason: '   ', startAt: '2026-10-04T08:00:00.000Z', endAt: '2026-10-04T09:00:00.000Z' }),
+    ).toBe(422);
+  });
+
+  it('correcto — ABSENCE, CONFERENCE y ERRAND NO exigen reason (requiresText sólo en OTHER)', () => {
+    const path = `/scheduling/resources/${RECURSO_MEDICA}/exceptions`;
+    for (const tipo of ['ABSENCE', 'CONFERENCE', 'ERRAND']) {
+      expect(
+        estado('POST', path, { exceptionType: tipo, startAt: '2026-10-08T08:00:00.000Z', endAt: '2026-10-08T09:00:00.000Z' }),
+        tipo,
+      ).toBe(201);
+    }
   });
 
   it('inválido — una franja invertida (fin antes que inicio) se rechaza', () => {
@@ -130,6 +176,6 @@ describe('handlers de bloqueos de agenda (excepciones)', () => {
       startAt: '2026-10-07T08:00:00.000Z',
       endAt: '2026-10-07T09:00:00.000Z',
     });
-    expect(estado('PATCH', `/scheduling/exceptions/${creado.id}`, { exceptionType: 'NOPE' })).toBe(422);
+    expect(estado('PATCH', `/scheduling/exceptions/${creado.id}`, { exceptionType: 'NOPE' })).toBe(400);
   });
 });

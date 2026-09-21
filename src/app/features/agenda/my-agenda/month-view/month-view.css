@@ -272,6 +272,14 @@
   border-top: 1px solid var(--border-subtle);
 }
 
+/* C-08 · el chip de estado cierra la fila, alineado al final. `flex: none` para
+   que no lo apriete un nombre largo: «No asistió» cortado a «No asis…» pierde
+   exactamente la información que el chip existe para dar. */
+.mes__globo-chip {
+  flex: none;
+  margin-inline-start: auto;
+}
+
 .mes__globo-hora {
   flex: none;
   min-inline-size: 6.5em;

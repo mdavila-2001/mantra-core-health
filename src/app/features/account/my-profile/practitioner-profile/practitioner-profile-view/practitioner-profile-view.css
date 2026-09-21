@@ -685,3 +685,15 @@
 .trayecto__nodo--unknown {
   --trayecto-color: var(--border-strong);
 }
+
+/* ─── El chip de telemedicina en la cabecera de la ficha propia ────────────
+   Vive acá y no en `ficha-de-perfil.css` a propósito: ese archivo lo comparte
+   literalmente la ficha del paciente —el cliente pidió que las dos se vean
+   igual—, y un paciente no atiende por telemedicina.
+
+   `justify-self: start` porque `.mi-perfil__rotulo` es una rejilla: sin esto
+   el chip se estira al ancho de la columna y deja de leerse como una
+   etiqueta. */
+.mi-perfil__modalidad {
+  justify-self: start;
+}

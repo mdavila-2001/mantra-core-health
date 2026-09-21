@@ -503,3 +503,106 @@
     padding-inline-end: 16rem;
   }
 }
+
+/* C-10 (2026-09-20) · el rato que existe y no se puede tomar.
+
+   Se lee, pero no invita: sin borde punteado de «tocame», sin cursor de mano y
+   en tono apagado. La palabra va SIEMPRE —«No disponible», y el motivo al
+   lado—: en escala de grises un hueco apagado y uno disponible se parecen
+   demasiado, y la regla 95.4.6 prohíbe que el estado dependa sólo del color. */
+.dia__no-disponible {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.dia__no-disponible svg {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+}
+
+.dia__no-disponible-motivo {
+  color: var(--text-tertiary, var(--text-secondary));
+}
+
+
+/* C-04 (2026-09-20) · la tarjeta entera lleva a atender.
+
+   Una capa transparente que cubre el bloque y queda DEBAJO del contenido: los
+   botones de adentro —«Ver detalle», las acciones de la fila— la tapan en su
+   propia superficie, asi que tocarlos hace lo del boton y no lo de la tarjeta,
+   sin tener que detener la propagacion en cada uno.
+
+   `position: absolute` sobre el `<li>`, que ya es `relative`. */
+.dia__ir-a-atender {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  cursor: pointer;
+}
+
+.dia__ir-a-atender:hover {
+  background: var(--bg-surface-alt);
+}
+
+.dia__ir-a-atender:focus-visible {
+  outline: 2px solid var(--c-aqua-500);
+  outline-offset: -2px;
+}
+
+/* Lo de la tarjeta se dibuja por encima de la capa, para que siga siendo
+   seleccionable y para que los botones reciban sus propios clics. */
+.dia__bloque[data-tipo='cita'] > .dia__hora,
+.dia__bloque[data-tipo='cita'] > .dia__cuerpo,
+.dia__bloque[data-tipo='cita'] > .dia__detalle {
+  position: relative;
+  z-index: 1;
+}
+
+/* El cuerpo no captura el puntero: si lo hiciera, la mitad de la tarjeta
+   dejaria de llevar a atender. Lo que SI lo captura es la caja de acciones, y
+   de ahi hacia adentro se hereda.
+
+   **Tiene que ser una clase de ESTA vista, no un selector de descendientes.**
+   Las acciones de la fila son contenido PROYECTADO desde `/schedule`: con
+   encapsulacion emulada, los nodos proyectados llevan el atributo del
+   componente que los escribio, no el de este, asi que un
+   `.dia__cuerpo :is(button, a)` de esta hoja nunca los alcanza. Escrito asi,
+   el desplegable de acciones quedaba debajo de la capa de «atender» y no se
+   podia abrir — en todos los viewports, no solo en el telefono. Lo encontro la
+   prueba visual de H6, no el tipo ni los tests. */
+.dia__bloque[data-tipo='cita'] > .dia__cuerpo {
+  pointer-events: none;
+}
+
+/* `.dia__acciones` SI es de esta vista —el `<div>` que recibe la proyeccion—,
+   asi que la clase casa y `pointer-events` se hereda a lo que venga adentro. */
+.dia__bloque[data-tipo='cita'] .dia__acciones {
+  pointer-events: auto;
+}
+
+
+/* C-13 (2026-09-20) · la tarjeta del visitador.
+
+   Tono propio, distinto del de una consulta, para que el doctor vea de un
+   vistazo que ese rato no es un paciente. El tono NO es la informacion: al lado
+   del nombre va la palabra «Visitador», y en escala de grises eso es lo unico
+   que queda. */
+.dia__bloque[data-tipo='visita'] {
+  --dia-tono: var(--c-plum-500, var(--c-petrol-500));
+  border-inline-start-color: var(--dia-tono);
+  background: var(--bg-surface-alt);
+}
+
+.dia__visita-bandeja {
+  margin: 0;
+  font-size: var(--fs-caption);
+}

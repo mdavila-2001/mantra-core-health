@@ -33,3 +33,40 @@
 .mis-servicios__rejilla {
   --rejilla-min: 18rem;
 }
+
+
+/* C-12 (2026-09-20) · el modal que programa el horario de un servicio. */
+.programar-servicio {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.programar-servicio__campos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.programar-servicio__dia {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.programar-servicio__rotulo {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.programar-servicio__rango {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+
+.programar-servicio__motivo {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}

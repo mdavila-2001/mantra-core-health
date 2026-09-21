@@ -83,6 +83,15 @@ export type {
   SpecialtyItemContext,
 } from './specialty-browser/specialty-browser.types';
 
+/* La insignia de especialidad (C-09): UNA forma de mostrar una especialidad en
+   todo el proyecto. El grid va al lado porque el orden —la principal primero—
+   y el hueco entre insignias son decisiones del sistema, no de cada pantalla.
+   Están acá y no en `molecules/` porque la insignia monta `StatusSeal`; el
+   porqué completo, en el encabezado de `specialty-badge.ts`. */
+export { SpecialtyBadge } from './specialty-badge/specialty-badge';
+export { SpecialtyBadgeGrid } from './specialty-badge-grid/specialty-badge-grid';
+export type { SpecialtyBadgeItem } from './specialty-badge/specialty-badge.types';
+
 export { StatusSeal } from './status-seal/status-seal';
 export { STATUS_SEAL_VARIANTS, UNKNOWN_STATUS_VARIANT } from './status-seal/status-seal.types';
 export type { StatusSealVariant } from './status-seal/status-seal.types';

@@ -13,6 +13,8 @@ import { Checkbox } from '../../atoms/checkbox/checkbox';
 import { Textarea } from '../../atoms/textarea/textarea';
 import { Card } from '../../molecules/card/card';
 import { FormField } from '../../molecules/form-field/form-field';
+import { Select } from '../../atoms/select/select';
+import type { SelectOption } from '../../atoms/select/select.types';
 import { Radio } from '../../molecules/radio/radio';
 import { RadioGroup } from '../../molecules/radio-group/radio-group';
 
@@ -53,7 +55,7 @@ export type RespuestasDelCuestionario = ReadonlyMap<string, ValorDeRespuesta>;
  */
 @Component({
   selector: 'app-survey-form',
-  imports: [Card, Checkbox, FormField, Radio, RadioGroup, Textarea],
+  imports: [Card, Checkbox, FormField, Radio, RadioGroup, Select, Textarea],
   templateUrl: './survey-form.html',
   styleUrl: './survey-form.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -86,6 +88,33 @@ export class SurveyForm {
   protected textoDe(questionId: string): string {
     const valor = this.respuestas().get(questionId);
     return typeof valor === 'string' ? valor : '';
+  }
+
+  /**
+   * Las opciones de una pregunta de opción única, en la forma que pide el
+   * desplegable.
+   *
+   * La etiqueta y el valor son **la misma cadena**, que es lo que ya pasaba
+   * cuando eran radios (`[value]="opcion" [label]="opcion"`): el cuestionario
+   * guarda el texto elegido, no un código. Cambiar eso acá cambiaría lo que se
+   * envía, y la corrección C-21 es sobre el control, no sobre el dato.
+   */
+  protected opcionesDe(pregunta: SurveyQuestion): readonly SelectOption<string>[] {
+    return (pregunta.options ?? []).map((opcion) => ({ value: opcion, label: opcion }));
+  }
+
+  /**
+   * Lo elegido en una pregunta de opción única.
+   *
+   * Aparte de {@link seleccionDe} porque el desplegable es de cadenas y aquél
+   * devuelve además números y booleanos —los de la escala y los de sí/no—. Un
+   * número que llegue acá se lee como «nada elegido» en vez de colarse como
+   * valor: es lo mismo que hacía el grupo de radios, que sólo casaba con la
+   * opción idéntica.
+   */
+  protected opcionElegidaDe(questionId: string): string | null {
+    const valor = this.respuestas().get(questionId);
+    return typeof valor === 'string' ? valor : null;
   }
 
   protected seleccionDe(questionId: string): string | number | boolean | null {

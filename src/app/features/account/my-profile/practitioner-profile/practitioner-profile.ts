@@ -24,6 +24,7 @@ import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import type { StatusSealVariant } from '../../../../shared/components/organisms/status-seal/status-seal.types';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
+import { CONTADORES_DE_ACTIVIDAD } from '../contadores-de-actividad';
 import { PractitionerProfileView } from './practitioner-profile-view/practitioner-profile-view';
 import type {
   AfiliacionVisible,
@@ -210,32 +211,18 @@ export class PractitionerProfile {
       aceptaPacientesNuevos: perfil.acceptsNewPatients,
       telemedicina: perfil.telehealthAvailable,
       bio: perfil.professionalBio ?? '',
-      actividad: [
-        {
-          clave: 'encuentros',
-          rotulo: 'Encuentros atendidos',
-          valor: perfil.activity.encounters,
-          pie: 'Consultas que cerraste con una persona atendida.',
-        },
-        {
-          clave: 'recetas',
-          rotulo: 'Recetas emitidas',
-          valor: perfil.activity.medicationRequests,
-          pie: 'Prescripciones firmadas desde tu cuenta.',
-        },
-        {
-          clave: 'notas',
-          rotulo: 'Notas clínicas',
-          valor: perfil.activity.clinicalNotes,
-          pie: 'Evoluciones asentadas en el expediente.',
-        },
-        {
-          clave: 'documentos',
-          rotulo: 'Documentos publicados',
-          valor: perfil.activity.documents,
-          pie: 'Informes, certificados y adjuntos que emitiste.',
-        },
-      ],
+      /* Los rótulos y los pies salen de `CONTADORES_DE_ACTIVIDAD`, que es la
+         misma lista que enumera la pestaña «Actividad» del editor para decir
+         que ninguno se edita. Estaban escritos acá a mano y eran el único
+         lugar que los mostraba; con dos superficies, una lista sola se despega
+         en el primer retoque. Acá se le agrega el valor; el editor no lo
+         necesita. */
+      actividad: CONTADORES_DE_ACTIVIDAD.map(({ clave, rotulo, pie, campo }) => ({
+        clave,
+        rotulo,
+        pie,
+        valor: perfil.activity[campo],
+      })),
       actividadMensual: serieMensual(perfil.activity.monthlyEncounters),
       calidad: indicadoresDeCalidad(perfil.activity.quality),
       especialidades,

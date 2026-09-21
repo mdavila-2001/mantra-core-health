@@ -182,7 +182,13 @@ describe('MonthView', () => {
     return Array.from(
       fixture.nativeElement.querySelectorAll('[data-testid="mes-globo-lista"] li') as NodeListOf<HTMLElement>,
     ).map((li) =>
-      Array.from(li.querySelectorAll('.mes__globo-hora, .mes__globo-primario, .mes__globo-secundario'))
+      Array.from(
+        li.querySelectorAll(
+          // El estado dejó de ser una línea secundaria y pasó a ser un chip
+          // (C-08, 2026-09-20): se lee de ahí, no de `.mes__globo-secundario`.
+          '.mes__globo-hora, .mes__globo-primario, .mes__globo-secundario, [data-testid="mes-globo-chip"]',
+        ),
+      )
         .map((parte) => parte.textContent?.trim() ?? '')
         .join(' '),
     );
@@ -341,6 +347,63 @@ describe('MonthView', () => {
     expect(filas[0]).toBe('08:00–08:30 Paciente sin nombre registrado Confirmada');
     expect(filas[11]).toBe('19:00–19:30 Paciente 0 Confirmada');
     expect(texto).not.toContain('Ajena');
+  });
+
+  /**
+   * C-08 (2026-09-20) — el chip de estado del globo del mes.
+   *
+   * Antes el estado salía del `display` del catálogo, **que viene en inglés**:
+   * el globo anunciaba «Booking in progress» sobre una cita en curso. El mapa
+   * de `booking-status.ts` ya resolvía las tres formas que la identidad exige
+   * —color, silueta y palabra en castellano— y era el único lugar de la agenda
+   * que no lo usaba.
+   */
+  it('el chip dice el estado en castellano, y no el display inglés del catálogo', async () => {
+    TestBed.resetTestingModule();
+    fixture = TestBed.createComponent(MonthView);
+    const r = fixture.componentRef;
+    r.setInput('mes', FUTURO);
+    r.setInput('cupos', [turno(15, 8, 1, 0, 'x')]);
+    r.setInput('bloqueos', []);
+    r.setInput('selectable', true);
+    r.setInput('dayDetail', 'bookings');
+    r.setInput(
+      'etiquetas',
+      new Map([
+        // Tal como llega del catálogo: en inglés.
+        ['st-curso', { code: 'scheduling:BOOKING_IN_PROGRESS', display: 'Booking in progress' }],
+        ['st-noshow', { code: 'BOOKING_NO_SHOW', display: 'Booking no-show' }],
+        ['st-hecha', { code: 'BOOKING_COMPLETED', display: 'Booking completed' }],
+      ]),
+    );
+    r.setInput('citas', [
+      { id: 'b1', statusConceptId: 'st-curso', startAt: new Date(2030, 0, 15, 9, 0), endAt: new Date(2030, 0, 15, 9, 30), patientName: 'Ana' },
+      { id: 'b2', statusConceptId: 'st-noshow', startAt: new Date(2030, 0, 15, 10, 0), endAt: new Date(2030, 0, 15, 10, 30), patientName: 'Beto' },
+      { id: 'b3', statusConceptId: 'st-hecha', startAt: new Date(2030, 0, 15, 11, 0), endAt: new Date(2030, 0, 15, 11, 30), patientName: 'Cora' },
+    ]);
+    fixture.detectChanges();
+
+    const texto = await globoDe(15);
+    expect(texto).toContain('En curso');
+    expect(texto).toContain('No asistió');
+    expect(texto).toContain('Atendida');
+    // Y NADA del catálogo en inglés.
+    expect(texto).not.toContain('Booking');
+
+    // El estado va con color Y con palabra: tres chips, tres etiquetas legibles.
+    const chips = Array.from(
+      fixture.nativeElement.querySelectorAll('[data-testid="mes-globo-chip"]') as NodeListOf<HTMLElement>,
+    ).map((c) => c.textContent?.trim());
+    expect(chips).toEqual(['En curso', 'No asistió', 'Atendida']);
+  });
+
+  it('un cupo libre no lleva chip: no tiene estado de cita que mostrar', async () => {
+    montar([turno(15, 8, 2, 0, 'x')], [], FUTURO);
+    await globoDe(15);
+
+    expect(
+      fixture.nativeElement.querySelectorAll('[data-testid="mes-globo-chip"]'),
+    ).toHaveLength(0);
   });
 
   it('en la agenda, si las citas no llegaron el globo lo dice en vez de «sin citas»', async () => {
