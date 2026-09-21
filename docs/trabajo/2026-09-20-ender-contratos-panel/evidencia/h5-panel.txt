@@ -1,0 +1,49 @@
+H5 — "El panel dice la verdad" (C-24)
+
+Componente nuevo: src/app/features/dashboard/consultas-resumen/
+  consultas-resumen.ts / .html / .css / .spec.ts
+Montado en dashboard.html, sólo para quien atiende (@if atiendePacientes()), @defer (on immediate).
+
+Decisión de origen de datos (H5.S1): no existe ningún endpoint de analítica de consultas en la
+API real. Verificado:
+  $ git -C mantra-core-health-api grep -n "@Get(" origin/dev -- src/modules/reporting/controllers/
+  (todos los verbos servidos por ese módulo son POST — data-sources, definitions, executions,
+  dashboards; ninguna lectura de agregación)
+Se sigue el precedente de analítica SÍ servida (seguros): GET /insurance/analytics/loss-ratio
+(core/mock/handlers/insurance-analytics.handlers.ts), pero el patrón elegido es agregar en el
+CLIENTE sobre GET /scheduling/bookings — mismo endpoint que ya usa AgendaDeHoy, mismo
+misRecursosDeAgenda() (features/agenda/mi-recurso.ts, sólo leído/importado, nunca editado).
+
+$ yarn test --include=.../consultas-resumen.spec.ts
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+
+Casos: gating sin perfil, semana/mes excluyendo canceladas por omisión, toggle incluye
+canceladas, semana <= mes, heatmap ubica una cita de lunes 09:00 en [0][3], una cancelada no
+entra al mapa de calor, "otras atenciones" separa PROCEDURE de CONSULTATION.
+
+$ yarn test --include=.../dashboard.spec.ts --include=.../consultas-resumen.spec.ts
+ Test Files  2 passed (2)
+      Tests  40 passed (40)
+
+Verificación visual real (Playwright, --workers=1, contra `yarn start` en localhost:4200):
+  playwright/ender-contratos-panel-evidencia.spec.ts
+  4/4 PASS — sin desborde horizontal en 390/768/1024/1440/1920 ni en oscuro (1440), consola y
+  red limpias (0 errores nuevos, 0 respuestas >=400 inesperadas), globo accesible por teclado.
+
+Capturas miradas (no sólo tomadas):
+  artifacts/ender-contratos-panel/h5-consultas-resumen-390.png    — mobile: tabla de calor con
+    scroll horizontal propio, contenida en su tarjeta; cifras y "29 canceladas" legibles.
+  artifacts/ender-contratos-panel/h5-consultas-resumen-1440.png   — escritorio: 48 esta semana,
+    184 este mes, heatmap 7×13 completo con números en cada celda, sin "otras atenciones" este
+    mes (la sección se oculta sola cuando no hay ninguna — comprobado que el @if funciona).
+  artifacts/ender-contratos-panel/h5-consultas-resumen-1440-oscuro.png — mismos datos, escala de
+    calor con override de contraste para oscuro, status-seal "cancelada" legible.
+
+Ambigüedad Q-E1 (de quién es la cifra) — supuesto tomado, igual que registra la ficha: es del
+profesional de la sesión, en la organización activa (se filtra por `resourceId` de sus propias
+agendas vía `misRecursosDeAgenda`, no por tenant completo).
+
+Ambigüedad Q-E4 (dónde vive la agregación) — resuelta: en el cliente, declarando la consecuencia
+en el propio código (JSDoc de `consultas-resumen.ts`): esta cifra no existe fuera de la maqueta
+hasta que exista un endpoint de agregación real.

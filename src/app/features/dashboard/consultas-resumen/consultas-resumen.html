@@ -1,0 +1,96 @@
+<app-card variant="outlined" padding="lg" class="panel__bloque--ancho" data-testid="panel-consultas-resumen">
+  <h2 class="consultas-resumen__titulo">
+    Tus consultas
+    <span
+      class="consultas-resumen__ayuda"
+      tabindex="0"
+      aria-label="Más información sobre este reporte"
+      appTooltip="Cuenta lo que ya leyó tu agenda este mes: no es un dato que exista fuera de la maqueta todavía."
+    >
+      ⓘ
+    </span>
+  </h2>
+
+  <app-view-state-host [state]="estado()" (retry)="reintentar()">
+    <div vsh-skeleton class="consultas-resumen__skeleton"></div>
+
+    <div class="consultas-resumen">
+      <div class="consultas-resumen__toggle">
+        <app-switch [(checked)]="incluirCanceladas" ariaLabel="Incluir las consultas canceladas" />
+        <span>Incluir canceladas</span>
+      </div>
+
+      <div class="consultas-resumen__cifras">
+        <div class="consultas-resumen__cifra" data-testid="consultas-resumen-semana">
+          <span class="consultas-resumen__numero">{{ resumenSemana().total }}</span>
+          <span class="consultas-resumen__etiqueta">esta semana</span>
+        </div>
+        <div class="consultas-resumen__cifra" data-testid="consultas-resumen-mes">
+          <span class="consultas-resumen__numero">{{ resumenMes().total }}</span>
+          <span class="consultas-resumen__etiqueta">este mes</span>
+        </div>
+        <div class="consultas-resumen__cifra" data-testid="consultas-resumen-canceladas">
+          <app-status-seal variant="rejected" [label]="canceladasDelMes() + ' canceladas'" />
+          <span class="consultas-resumen__etiqueta">este mes</span>
+        </div>
+      </div>
+
+      @if (otrasAtenciones().length > 0) {
+        <div class="consultas-resumen__otras" data-testid="consultas-resumen-otras-atenciones">
+          <h3 class="consultas-resumen__subtitulo">Otras atenciones</h3>
+          <ul class="consultas-resumen__lista-otras">
+            @for (actividad of otrasAtenciones(); track actividad.label) {
+              <li>
+                <app-chip [variant]="actividad.tone">{{ actividad.label }} · {{ actividad.total }}</app-chip>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <div class="consultas-resumen__calor">
+        <h3 class="consultas-resumen__subtitulo">
+          Cuándo se concentra tu mes
+          <span
+            class="consultas-resumen__ayuda"
+            tabindex="0"
+            aria-label="Más información sobre el mapa de calor"
+            appTooltip="Cada celda muestra cuántas consultas tuviste en esa hora y ese día. El color acompaña; el número siempre está."
+          >
+            ⓘ
+          </span>
+        </h3>
+        <div class="consultas-resumen__tabla-scroll">
+          <table class="consultas-resumen__tabla">
+            <caption class="sr-only">
+              Cantidad de consultas por día de la semana y hora, este mes.
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col"></th>
+                @for (hora of mapaDeCalor().celdas[0]; track $index) {
+                  <th scope="col">{{ labelDeHora($index + 6) }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (fila of mapaDeCalor().celdas; track $index; let dia = $index) {
+                <tr>
+                  <th scope="row">{{ labelDeDia(dia) }}</th>
+                  @for (valor of fila; track $index; let hora = $index) {
+                    <td
+                      [attr.data-intensidad]="intensidad(valor, mapaDeCalor().maximo)"
+                      [attr.aria-label]="celdaAriaLabel(dia, hora, valor)"
+                    >
+                      {{ valor === 0 ? "–" : valor }}
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </app-view-state-host>
+</app-card>

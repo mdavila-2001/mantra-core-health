@@ -1,0 +1,179 @@
+.consultas-resumen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4, 1rem);
+}
+
+.consultas-resumen__skeleton {
+  min-height: 12rem;
+}
+
+/* Mismo tratamiento que `.panel__card-title` de `dashboard.css`: no se
+   comparte la clase entre componentes porque el encapsulamiento de Angular
+   la deja sin efecto acá adentro (regla `native-code-patterns`: se copia la
+   receta visual, no el selector). */
+.consultas-resumen__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-3);
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 500;
+}
+
+.consultas-resumen__ayuda {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25em;
+  height: 1.25em;
+  border-radius: var(--r-full, 999px);
+  color: var(--text-secondary, currentColor);
+  cursor: help;
+}
+
+.consultas-resumen__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2, 0.5rem);
+}
+
+.consultas-resumen__cifras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-5, 1.25rem);
+}
+
+.consultas-resumen__cifra {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1, 0.25rem);
+  min-width: 8rem;
+}
+
+.consultas-resumen__numero {
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.consultas-resumen__etiqueta {
+  color: var(--text-secondary, currentColor);
+  font-size: var(--fs-caption);
+}
+
+.consultas-resumen__subtitulo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2, 0.5rem);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  margin: 0 0 var(--sp-2, 0.5rem);
+}
+
+.consultas-resumen__lista-otras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2, 0.5rem);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.consultas-resumen__tabla-scroll {
+  overflow-x: auto;
+}
+
+.consultas-resumen__tabla {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 44rem;
+  font-size: var(--fs-caption);
+}
+
+.consultas-resumen__tabla th,
+.consultas-resumen__tabla td {
+  padding: var(--sp-1, 0.25rem) var(--sp-2, 0.5rem);
+  text-align: center;
+  border: 1px solid var(--border-default, #d0d5dd);
+}
+
+.consultas-resumen__tabla th[scope='row'] {
+  text-align: left;
+  font-weight: 600;
+}
+
+/* Escala de calor: misma familia de marca (petróleo), nunca ámbar — el ámbar
+   es el único punto de acción del sistema y una celda de reporte no lo es.
+   El número siempre está en el texto: la intensidad es un refuerzo visual,
+   nunca el único portador del dato (regla 95.4.6). */
+.consultas-resumen__tabla td[data-intensidad='0'] {
+  background: transparent;
+}
+
+.consultas-resumen__tabla td[data-intensidad='1'] {
+  background: var(--c-petrol-100);
+}
+
+.consultas-resumen__tabla td[data-intensidad='2'] {
+  background: var(--c-petrol-200);
+  font-weight: 600;
+}
+
+.consultas-resumen__tabla td[data-intensidad='3'] {
+  background: var(--c-petrol-400);
+  color: var(--c-petrol-900);
+  font-weight: 600;
+}
+
+.consultas-resumen__tabla td[data-intensidad='4'] {
+  background: var(--c-petrol-600);
+  color: var(--c-ivory-50);
+  font-weight: 700;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .consultas-resumen__tabla td[data-intensidad='1'] {
+    background: var(--c-petrol-800);
+    color: var(--c-ivory-100);
+  }
+
+  :root:not([data-theme='light']) .consultas-resumen__tabla td[data-intensidad='2'] {
+    background: var(--c-petrol-700);
+    color: var(--c-ivory-50);
+  }
+
+  :root:not([data-theme='light']) .consultas-resumen__tabla td[data-intensidad='3'] {
+    background: var(--c-petrol-500);
+    color: var(--c-petrol-900);
+  }
+
+  :root:not([data-theme='light']) .consultas-resumen__tabla td[data-intensidad='4'] {
+    background: var(--c-petrol-300);
+    color: var(--c-petrol-900);
+  }
+}
+
+:root[data-theme='dark'] .consultas-resumen__tabla td[data-intensidad='1'] {
+  background: var(--c-petrol-800);
+  color: var(--c-ivory-100);
+}
+
+:root[data-theme='dark'] .consultas-resumen__tabla td[data-intensidad='2'] {
+  background: var(--c-petrol-700);
+  color: var(--c-ivory-50);
+}
+
+:root[data-theme='dark'] .consultas-resumen__tabla td[data-intensidad='3'] {
+  background: var(--c-petrol-500);
+  color: var(--c-petrol-900);
+}
+
+:root[data-theme='dark'] .consultas-resumen__tabla td[data-intensidad='4'] {
+  background: var(--c-petrol-300);
+  color: var(--c-petrol-900);
+}

@@ -6,12 +6,9 @@ import { TestBed } from '@angular/core/testing';
 
 import { SessionStore } from '../../../../core/auth/session.store';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
-import { CASOS_RECETA_DEMO } from '../demo-presets';
 import {
   MedicationBlock,
   TARGET_MEDICAMENTO,
-  TARGET_UNIDAD,
-  TARGET_VIA,
   type RecetaEnFicha,
 } from './medication-block';
 
@@ -115,22 +112,10 @@ describe('MedicationBlock', () => {
     fixture.componentRef.setInput('recetas', []);
   });
 
-  /**
-   * Vía y unidad se piden cuando el formulario se pinta, que puede ser después
-   * de `responderCatalogo` —en cuanto una prueba llama a `detectChanges`—. Se
-   * drenan acá para que `verify()` no tropiece con ellas: lo que gobierna si el
-   * alta se ofrece es el catálogo del medicamento, y eso lo cubren las pruebas
-   * de arriba.
-   */
+  /** La vía se pide cuando el formulario se pinta, después del catálogo. */
   afterEach(() => {
     for (const opcional of http.match((r) => r.url === '/system-context/dynamic-enums')) {
       opcional.flush(CATALOGO_OPCIONAL);
-    }
-    // El bloque pide sus favoritos al montarse (v4.1.7). Es una lectura de
-    // conveniencia que no condiciona nada del alta, así que se drena vacía en
-    // los casos que no la afirman; el que sí la ejercita la responde antes.
-    for (const favoritos of http.match((r) => r.url === '/prescription-favorites')) {
-      favoritos.flush([]);
     }
     http.verify();
   });
@@ -198,6 +183,16 @@ describe('MedicationBlock', () => {
 
     expect(interno<() => boolean | null>('catalogoListo')()).toBe(true);
     expect((fixture.nativeElement as HTMLElement).querySelector('form')).not.toBeNull();
+  });
+
+  it('no ofrece descarga, demostración ni favoritos y tampoco los consulta', () => {
+    responderCatalogo();
+    fixture.detectChanges();
+
+    expect(texto()).not.toContain('Descargar PDF');
+    expect(texto()).not.toContain('Casos de demostración');
+    expect(texto()).not.toContain('favorito');
+    expect(http.match('/prescription-favorites')).toHaveLength(0);
   });
 
   it('sin encuentro abierto no receta: la receta vive dentro de la consulta', () => {
@@ -289,102 +284,6 @@ describe('MedicationBlock', () => {
     expect(opciones[3]?.label).toBe('Otro motivo — escribirlo');
   });
 
-  /* ── v4.1.7 · los favoritos de prescripción ───────────────────────────── */
-
-  it('aplicar un favorito rellena el formulario sin prescribir nada', async () => {
-    responderCatalogo();
-    http.expectOne('/prescription-favorites').flush([
-      {
-        id: 'fav-1',
-        name: 'ATB post extracción',
-        medicationConceptId: 'med-amoxi',
-        doseText: '500 mg',
-        frequencyText: 'cada 8 horas',
-        patientInstructionsText: 'Con las comidas',
-      },
-    ]);
-
-    await interno<(id: string | null) => Promise<void>>('aplicarFavorito')('fav-1');
-
-    expect(señal<string | null>('medicamento')()).toBe('med-amoxi');
-    expect(señal<string>('dosis')()).toBe('500 mg');
-    expect(señal<string>('frecuencia')()).toBe('cada 8 horas');
-    expect(señal<string>('indicacionesPaciente')()).toBe('Con las comidas');
-    // Rellenar no es prescribir: no salió ninguna petición de alta.
-    http.expectNone('/clinical/medication-requests');
-  });
-
-  it('no pisa lo ya cargado sin confirmarlo', async () => {
-    responderCatalogo();
-    http.expectOne('/prescription-favorites').flush([
-      { id: 'fav-1', name: 'ATB post extracción', medicationConceptId: 'med-amoxi' },
-    ]);
-
-    señal<string>('dosis').set('lo que venía escribiendo');
-    let preguntó = false;
-    TestBed.inject(DialogService).confirm = () => {
-      preguntó = true;
-      return Promise.resolve(false);
-    };
-
-    await interno<(id: string | null) => Promise<void>>('aplicarFavorito')('fav-1');
-
-    expect(preguntó).toBe(true);
-    expect(señal<string>('dosis')()).toBe('lo que venía escribiendo');
-    expect(señal<string | null>('medicamento')()).toBeNull();
-  });
-
-  it('guardar como favorito manda el rótulo y lo cargado', async () => {
-    responderCatalogo();
-    http.expectOne('/prescription-favorites').flush([]);
-
-    señal<string>('medicamento').set('med-amoxi');
-    señal<string>('dosis').set('500 mg');
-    TestBed.inject(DialogService).confirmWithReason = () =>
-      Promise.resolve('ATB post extracción');
-
-    await interno<() => Promise<void>>('guardarFavorito')();
-
-    const req = http.expectOne(
-      (r) => r.url === '/prescription-favorites' && r.method === 'POST',
-    );
-    const body = req.request.body as Record<string, unknown>;
-    expect(body['name']).toBe('ATB post extracción');
-    expect(body['medicationConceptId']).toBe('med-amoxi');
-    expect(body['doseText']).toBe('500 mg');
-
-    req.flush({ id: 'fav-9', name: 'ATB post extracción', medicationConceptId: 'med-amoxi' });
-  });
-
-  it('un rótulo repetido se explica y no se traga', async () => {
-    responderCatalogo();
-    http.expectOne('/prescription-favorites').flush([]);
-
-    señal<string>('medicamento').set('med-amoxi');
-    TestBed.inject(DialogService).confirmWithReason = () =>
-      Promise.resolve('ATB post extracción');
-    await interno<() => Promise<void>>('guardarFavorito')();
-
-    http
-      .expectOne((r) => r.url === '/prescription-favorites' && r.method === 'POST')
-      .flush(
-        { code: 'CONFLICT', message: 'Ya tenés un favorito con ese nombre' },
-        { status: 409, statusText: 'Conflict' },
-      );
-
-    expect(señal<string | null>('errorDelFavorito')()).toContain('Probá con otro');
-  });
-
-  it('una cuenta sin perfil profesional no ve la sección ni un error', () => {
-    responderCatalogo();
-    http
-      .expectOne('/prescription-favorites')
-      .flush({ code: 'FORBIDDEN', message: 'sin perfil' }, { status: 403, statusText: 'Forbidden' });
-
-    expect(interno<() => boolean>('hayFavoritos')()).toBe(false);
-    expect(señal<string | null>('errorDelFavorito')()).toBeNull();
-  });
-
   it('manda dosis, frecuencia y cantidad cuando se cargaron', async () => {
     responderCatalogo();
 
@@ -404,28 +303,21 @@ describe('MedicationBlock', () => {
     req.flush(RESPUESTA);
   });
 
-  /**
-   * Vía y unidad son opcionales del DTO: se mandan si se eligieron y, si no, la
-   * clave no viaja. Es el mismo criterio que los textos libres, y el que
-   * permite que el alta funcione aunque sus catálogos no estén publicados.
-   */
-  it('manda vía y unidad como conceptos cuando se eligieron', async () => {
+  it('manda la vía como concepto cuando se eligió', async () => {
     responderCatalogo();
 
     señal<string>('medicamento').set('med-amoxi');
     señal<string>('via').set('via-oral');
-    señal<string>('unidad').set('u-mg');
     await interno<() => Promise<void>>('recetar')();
 
     const req = http.expectOne('/clinical/medication-requests');
     const body = req.request.body as Record<string, unknown>;
     expect(body['routeConceptId']).toBe('via-oral');
-    expect(body['unitConceptId']).toBe('u-mg');
 
     req.flush(RESPUESTA);
   });
 
-  it('sin elegir vía ni unidad, esas claves no viajan', async () => {
+  it('sin elegir vía, su clave no viaja', async () => {
     responderCatalogo();
 
     señal<string>('medicamento').set('med-amoxi');
@@ -434,7 +326,6 @@ describe('MedicationBlock', () => {
     const req = http.expectOne('/clinical/medication-requests');
     const body = req.request.body as object;
     expect('routeConceptId' in body).toBe(false);
-    expect('unitConceptId' in body).toBe(false);
 
     req.flush(RESPUESTA);
   });
@@ -537,90 +428,18 @@ describe('MedicationBlock', () => {
     expect(interno<() => Date | null>('validTo')()).toBeNull();
   });
 
-  /* ---- los casos de demostración ------------------------------------------ */
-
-  /**
-   * Lo que estas dos fijan: el caso resuelve vía y unidad a conceptId por
-   * código EXACTO —escribir el código en la señal fue el 400 de la primera
-   * versión— y SELECCIONA el medicamento buscado —buscar sin elegir dejaba
-   * `puedeRecetar()` en falso y el caso no era prescribible—. Y lo que el
-   * catálogo no tiene queda sin elegir, jamás «el primer resultado».
-   */
-  it('un caso de demostración resuelve los códigos y selecciona el medicamento', () => {
-    fixture.detectChanges();
-    http.expectOne((r) => r.params.get('target') === TARGET_MEDICAMENTO).flush(CATALOGO);
-    fixture.detectChanges();
-    http
-      .expectOne((r) => r.params.get('target') === TARGET_VIA)
-      .flush({
-        ...CATALOGO,
-        options: [{ conceptId: 'via-oral', code: 'ROUTE_ORAL', display: 'Oral', ordinal: 1 }],
-      });
-    http
-      .expectOne((r) => r.params.get('target') === TARGET_UNIDAD)
-      .flush({
-        ...CATALOGO,
-        options: [{ conceptId: 'u-tab', code: 'UNIT_{tablet}', display: 'Tablet', ordinal: 1 }],
-      });
-
-    // Amoxicilina 500 mg · cada 8 horas · oral · 21 comprimidos · 7 días.
-    const caso = CASOS_RECETA_DEMO[0];
-    componente.aplicarCasoDemo(caso);
-
-    const busqueda = http.expectOne(
-      (r) => r.url === '/terminology/concepts' && r.params.get('q') === caso.medicamentoQuery,
-    );
-    busqueda.flush({
-      items: [
-        {
-          conceptId: 'med-amoxi',
-          code: 'J01CA04',
-          display: 'Amoxicilina',
-          codeSystemVersionId: 'csv-vademecum',
-        },
-      ],
-      count: 1,
-      limit: 20,
-    });
-    // Elegirlo lee la ficha, exactamente como una selección manual.
-    http.expectOne('/terminology/concepts/med-amoxi').flush({
-      conceptId: 'med-amoxi',
-      code: 'J01CA04',
-      display: 'Amoxicilina',
-      codeSystemVersionId: 'csv-vademecum',
-      properties: {},
-    });
-
-    expect(interno<() => string | null>('medicamento')()).toBe('med-amoxi');
-    expect(interno<() => string | null>('via')()).toBe('via-oral');
-    expect(interno<() => string | null>('unidad')()).toBe('u-tab');
-    expect(interno<() => string>('dosis')()).toBe(caso.dosis);
-    expect(interno<() => string>('frecuencia')()).toBe(caso.frecuencia);
-    expect(String(señal<string | number | null>('cantidad')())).toBe(String(caso.cantidad));
-    expect(interno<() => string>('indicacionesPaciente')()).toBe(caso.indicaciones);
-    expect(interno<() => Date | null>('validFrom')()).not.toBeNull();
-    expect(interno<() => Date | null>('validTo')()).not.toBeNull();
-
-    // El porqué de la receta es obligatorio desde que el cliente lo pidió como
-    // regla, y el caso de demostración no lo trae: se pone acá para que esta
-    // prueba siga midiendo lo suyo —que el caso resuelve los códigos— y no la
-    // regla, que tiene sus propias pruebas.
-    señal<string | null>('indicacion').set('cond-1');
-    expect(interno<() => boolean>('puedeRecetar')()).toBe(true);
-  });
-
-  it('si la búsqueda no trae el medicamento pedido, queda sin elegir', () => {
+  it('usa selects para las pautas y conserva la frecuencia como texto editable', () => {
     responderCatalogo();
+    fixture.detectChanges();
 
-    componente.aplicarCasoDemo(CASOS_RECETA_DEMO[0]);
+    const pantalla = fixture.nativeElement as HTMLElement;
+    expect(pantalla.querySelectorAll('app-select').length).toBeGreaterThanOrEqual(3);
+    expect(pantalla.querySelector('app-chip')).toBeNull();
 
-    const busqueda = http.expectOne(
-      (r) => r.url === '/terminology/concepts' && r.params.get('q') === 'Amoxicilina',
-    );
-    busqueda.flush({ items: [], count: 0, limit: 20 });
-
-    expect(interno<() => string | null>('medicamento')()).toBeNull();
-    expect(interno<() => boolean>('puedeRecetar')()).toBe(false);
+    interno<(pauta: string) => void>('fijarFrecuenciaRapida')('Cada 12 horas');
+    expect(señal<string>('frecuencia')()).toBe('Cada 12 horas');
+    señal<string>('frecuencia').set('cada 10 horas según evolución');
+    expect(señal<string>('frecuencia')()).toBe('cada 10 horas según evolución');
   });
 
   /* ---- el chequeo de interacciones ---------------------------------------- */
@@ -835,29 +654,14 @@ describe('MedicationBlock', () => {
     expect(texto).not.toContain('Emitir');
   });
 
-  /**
-   * La descarga es lo único que una receta emitida sí ofrece (corrección #16):
-   * es justamente el momento en que se pide en papel.
-   */
-  it('la receta emitida sí se puede descargar, y avisa cuál', () => {
-    fixture.componentRef.setInput('recetas', [
-      { ...BORRADOR, firmada: true, emitida: true, estado: 'Emitida' },
-    ]);
+  it('agrupa las acciones editables en el menú estándar', () => {
+    fixture.componentRef.setInput('recetas', [BORRADOR]);
     responderCatalogo();
     fixture.detectChanges();
 
-    const pedidas: { id: string }[] = [];
-    fixture.componentInstance.descargar.subscribe((receta) => pedidas.push(receta));
-
-    const boton = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
-      '[data-testid="receta-descargar"]',
-    );
-    expect(boton).not.toBeNull();
-    boton?.click();
-
-    // El bloque no arma el documento: dice cuál se pidió y el expediente lo
-    // construye desde los datos persistidos.
-    expect(pedidas.map((receta) => receta.id)).toEqual([BORRADOR.id]);
+    const pantalla = fixture.nativeElement as HTMLElement;
+    expect(pantalla.querySelector('app-menu')).not.toBeNull();
+    expect(pantalla.querySelector('[aria-label="Acciones de la receta"]')).not.toBeNull();
   });
 
   it('el sello distingue las tres etapas del ciclo', () => {
@@ -953,21 +757,22 @@ describe('MedicationBlock', () => {
     expect(interno<() => boolean>('hayPosologia')()).toBe(true);
   });
 
-  it('compone doseText con lo elegido: concentración primero', async () => {
+  it('los valores del catálogo completan la dosis, pero el texto libre manda', async () => {
     responderCatalogo();
 
     señal<string>('medicamento').set(VANCOMICINA.value);
     interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
     responderFicha({ dose_forms: ['oral capsule'], strengths: ['1 g'] });
 
-    señal<string>('concentracion').set('1 g');
-    señal<string>('presentacion').set('oral capsule');
+    interno<(valor: string | null) => void>('elegirConcentracion')('1 g');
+    interno<(valor: string | null) => void>('elegirPresentacion')('oral capsule');
+    expect(señal<string>('dosis')()).toBe('1 g · oral capsule');
+
+    señal<string>('dosis').set('900 mg ajustados');
     await interno<() => Promise<void>>('recetar')();
 
     const req = http.expectOne('/clinical/medication-requests');
-    // El modelo no tiene columna para presentación ni concentración: viajan
-    // compuestas en el texto de posología que el contrato sí declara.
-    expect((req.request.body as Record<string, unknown>)['doseText']).toBe('1 g · oral capsule');
+    expect((req.request.body as Record<string, unknown>)['doseText']).toBe('900 mg ajustados');
 
     req.flush(RESPUESTA);
   });
@@ -1009,9 +814,6 @@ describe('MedicationBlock', () => {
       );
 
     expect(interno<() => boolean>('hayPosologia')()).toBe(false);
-    // Con el porqué declarado: lo que mide esta prueba es que la ficha caída no
-    // impida prescribir, no la regla del diagnóstico.
-    señal<string | null>('indicacion').set('cond-1');
     expect(interno<() => boolean>('puedeRecetar')()).toBe(true);
   });
 
@@ -1032,16 +834,11 @@ describe('MedicationBlock', () => {
   /* -- El porqué de la receta (pedido del cliente) ------------------------- */
 
   describe('el porqué de la receta', () => {
-    /**
-     * «Siempre que se haga una receta médica debe de poderse poner un
-     * diagnóstico o porqué de la receta.» La regla se cumple sin cerrar ningún
-     * caso: o se elige un diagnóstico de la historia, o se escribe el motivo.
-     */
-    it('sin diagnóstico ni motivo no deja prescribir', () => {
+    it('sin diagnóstico ni motivo sigue dejando prescribir: ambos son opcionales', () => {
       responderCatalogo();
       señal<string>('medicamento').set('med-amoxi');
 
-      expect(interno<() => boolean>('puedeRecetar')()).toBe(false);
+      expect(interno<() => boolean>('puedeRecetar')()).toBe(true);
     });
 
     it('un diagnóstico de la historia alcanza', () => {
@@ -1057,16 +854,27 @@ describe('MedicationBlock', () => {
      * necesitaría diagnóstico existente previo, sobre todo casos
      * psiquiátricos».
      */
-    it('«Otro motivo» pide escribirlo, y recién entonces deja prescribir', () => {
+    it('ofrece motivo libre aun sin diagnóstico asociado', () => {
       responderCatalogo();
       señal<string>('medicamento').set('med-amoxi');
-      interno<(v: string | null) => void>('elegirIndicacion')('__otro_motivo__');
 
       expect(interno<() => boolean>('motivoEsLibre')()).toBe(true);
-      expect(interno<() => boolean>('puedeRecetar')()).toBe(false);
-
       señal<string>('motivoLibre').set('Trastorno de ansiedad generalizada');
       expect(interno<() => boolean>('puedeRecetar')()).toBe(true);
+    });
+
+    it('sin diagnóstico, un motivo libre viaja como texto', async () => {
+      responderCatalogo();
+      señal<string>('medicamento').set('med-amoxi');
+      señal<string>('motivoLibre').set('Control de síntomas');
+
+      await interno<() => Promise<void>>('recetar')();
+
+      const req = http.expectOne('/clinical/medication-requests');
+      const body = req.request.body as Record<string, unknown>;
+      expect(body['indicationText']).toBe('Control de síntomas');
+      expect('indicationConditionId' in body).toBe(false);
+      req.flush(RESPUESTA);
     });
 
     /** Son excluyentes: `__otro_motivo__` no es el id de ninguna condición. */
