@@ -229,6 +229,21 @@ hizo falta enmascarar nada.
 
 ## 7. Procesos
 
-No quedó ninguno corriendo: el `yarn start` de la verificación se cierra al terminar el turno.
-**Ojo conocido:** `TaskStop` no mata el `node.exe` hijo del servidor de desarrollo — si el puerto
-4200 queda tomado, hay que matar el PID a mano.
+**No quedó ninguno corriendo.** El `yarn start` de la verificación se cerró matando su PID a mano
+(`taskkill /PID 33788 /F`), porque matar la tarea **no** mata el `node.exe` hijo; el puerto 4200
+quedó libre, comprobado con `netstat`.
+
+### Un candado ajeno, que no se tocó
+
+`.claude/runtime/progress_state.json` de la raíz declara un carril **que no es éste**:
+
+```json
+{ "lane": "marcelo-casos-e2e", "phase": "report", "state": "blocked", "qa_status": "fail",
+  "message": "Guion reejecutado entero: 18/35 PASA. Quedan 8 BLOQUEADO por falta de una sesion
+              con rol de agenda (BOOTSTRAP_ADMIN_PASSWORD). Defecto nuevo H-5 abierto.",
+  "updated_at": "2026-09-21T02:21:43Z" }
+```
+
+Es de una sesión anterior a ésta y **bloquea el cierre de cualquier sesión** hasta que se cierre o
+se borre. **No se borró**: tiene un bloqueo real y un defecto abierto (H-5) que no es mío cerrar, y
+borrarlo destruiría el estado de otro carril. Queda avisado para quien sea su dueño.
