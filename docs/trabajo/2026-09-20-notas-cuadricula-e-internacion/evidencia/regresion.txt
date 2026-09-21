@@ -273,3 +273,34 @@ es preexistente y NO es de #566.
 RESULTADO NETO DE LA SESION 5: el conteo del dictamen no se mueve (19 aceptadas / 1 FAIL /
 3 BLOCKED / 1 NOT_RUN), pero el FAIL de C-06 pasa de tener UN motivo a tener DOS, y el segundo lo
 metio el PR que dice cerrarla. Rojos abiertos: 3 (D-06 Ender, D-07 el marco, D-08 Pablo).
+
+--- POSTDATA DE LA SESION 5: EL CI ESTA ROJO PARA TODOS, Y NO ES DE ESTE CARRIL ---
+
+Al confirmar el estado del PR #565 despues de empujar, los checks aparecieron en ROJO. Antes dije
+que estaban "pendientes, nada en rojo": eso era cierto cuando lo mire, y terminaron en rojo. Se
+investigo en vez de dejarlo pasar.
+
+$ gh pr checks 565 / 566 / 564 / 561
+  los CUATRO iguales:  e2e fail | verificar fail | dependencias pass
+  (#561, #564 y #566 son ajenos y estan MERGEADOS igual)
+
+Causa raiz de `verificar`:
+  $ gh run view <id> --log-failed
+  error TS2307: Cannot find module './component-index.generated'
+  + seis TS7006 en cascada
+  $ git check-ignore -v src/app/features/component-stock/component-index.generated.ts
+  .gitignore:160
+  $ grep -n "run:" .github/workflows/ci.yml
+  linea 85: yarn env:generate     <- si
+  (ningun `yarn stock:generate`)  <- falta
+El archivo lo genera `yarn stock:generate`, esta en .gitignore, y el workflow nunca lo genera. El
+paso "Tipos" (linea 91) muere siempre. Es una linea que falta en ci.yml.
+
+`e2e` falla en Cypress sobre tokens de auth (activar-token-malo, nueva-clave-error), que es
+features/auth/** -- la misma zona de los 3 rojos preexistentes ya triados en la sesion 1.
+
+CONCLUSION: los dos rojos son PREEXISTENTES y del repo, no de este carril. Mi rama no toca un solo
+archivo de src/: son documentos y un spec de playwright. Y lo importante para el dictamen: mientras
+el gate `verificar` este roto para todos, EL CI NO ES BARRERA DE NADA. Es exactamente como D-08
+llego a mockup pasando por todos los gates.
+No se toco .github/**: es infraestructura compartida y no es de esta linea.
