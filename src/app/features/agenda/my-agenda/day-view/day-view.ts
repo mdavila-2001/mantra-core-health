@@ -8,6 +8,7 @@ import {
   type TemplateRef,
 } from '@angular/core';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 import type {
   ActivityTypeOption,
@@ -36,6 +37,32 @@ export type AccionDeCita = 'llegó' | 'demora' | 'cancelar';
 export interface PedidoDeAccion {
   readonly bookingId: string;
   readonly accion: AccionDeCita;
+}
+
+/**
+ * Una visita de laboratorio que cae en el día — C-13 (2026-09-20).
+ *
+ * «Que la visita de laboratorio se vea en la misma pestaña de consultas, como
+ * tarjeta de visitador, de 15 minutos.»
+ *
+ * **No lleva ni un dato clínico, y no puede llevarlo.** La especificación es
+ * explícita (`core/data-access/pharma-lab/pharma-lab.types.ts:9-11`): el
+ * visitador no accede a información clínica y la visita comercial no se mezcla
+ * con la agenda clínica. Traer la tarjeta al día es **presentación**: se ve
+ * cuándo y con quién, para que el doctor sepa que ese rato está comprometido.
+ * El límite de acceso no se toca.
+ */
+export interface VisitaDelDia {
+  readonly id: string;
+  readonly desde: Date;
+  readonly hasta: Date;
+  /** Con quién: el laboratorio o el visitador, nunca un paciente. */
+  readonly conQuien: string;
+  /** El motivo comercial que declaró el visitador. */
+  readonly motivo: string;
+  /** El estado de la visita, con su sello y su palabra. */
+  readonly estado: string;
+  readonly statusVariant: StatusSealVariant;
 }
 
 /** El rato que se tocó para crear algo ahí (AG-5: la tarjeta única). */
@@ -88,7 +115,7 @@ export interface BloqueDelDia {
    * tabla de Consultas ya lo derivaba bien (`disponible: remainingCapacity > 0`
    * en `agenda.ts`); el día no. Ahora las dos dicen lo mismo.
    */
-  readonly tipo: 'cita' | 'libre' | 'no-disponible' | 'ocupado' | 'aire';
+  readonly tipo: 'cita' | 'visita' | 'libre' | 'no-disponible' | 'ocupado' | 'aire';
   /** La cita, cuando la hay. */
   readonly cita: Booking | null;
   /** Cómo se llama quien viene. */
@@ -186,7 +213,7 @@ const YA_LLEGO: ReadonlySet<string> = new Set(['BOOKING_CHECKED_IN', 'BOOKING_CO
  */
 @Component({
   selector: 'app-day-view',
-  imports: [AppButton, Badge, DatePipe, NgTemplateOutlet, StatusSeal, Tooltip],
+  imports: [AppButton, Badge, DatePipe, NgTemplateOutlet, RouterLink, StatusSeal, Tooltip],
   templateUrl: './day-view.html',
   styleUrl: './day-view.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -279,6 +306,14 @@ export class DayView {
 
   /** Si esta sesión puede avisar una demora de la jornada (P8). */
   readonly puedeAvisarDemora = input<boolean>(false);
+
+  /**
+   * Las visitas de laboratorio del día — C-13.
+   *
+   * Entran por input ya resueltas: esta vista sólo dibuja, y quién las lee y
+   * cómo se traduce su estado es de quien contiene la agenda.
+   */
+  readonly visitas = input<readonly VisitaDelDia[]>([]);
 
   /** Pidieron hacer algo con una cita. */
   readonly accionPedida = output<PedidoDeAccion>();
@@ -448,6 +483,27 @@ export class DayView {
       });
     }
 
+    // 1-bis · las visitas de laboratorio, como bloques propios (C-13). Van con
+    // los bloqueos y no con los cupos porque no salen de un cupo: son otro
+    // calendario que cae encima del mismo día.
+    for (const visita of this.visitas()) {
+      delDia.push({
+        clave: `visita-${visita.id}`,
+        desde: visita.desde,
+        hasta: visita.hasta,
+        tipo: 'visita',
+        cita: null,
+        paciente: visita.conQuien,
+        estado: visita.estado,
+        statusCode: '',
+        statusVariant: visita.statusVariant,
+        tipologia: null,
+        motivo: visita.motivo,
+        excepcionId: null,
+        alturaPx: this.altura(visita.desde, visita.hasta, true),
+      });
+    }
+
     // 2 · los cupos: cita o libre. Un LIBRE dentro de un ocupado se omite —la
     // API ya lo retiró de la oferta, y pintarlo además del bloque ocupado diría
     // dos cosas sobre el mismo rato—. Una CITA dentro de un bloqueo se muestra
@@ -456,6 +512,10 @@ export class DayView {
       const hasta = cupo.endAt ?? cupo.startAt;
       const cita = porSlot.get(cupo.id) ?? null;
       if (cita === null && this.dentroDeOcupado(cupo.startAt, hasta)) continue;
+      // Un cupo libre debajo de una visita de laboratorio tampoco se ofrece: el
+      // rato está comprometido, y pintarlo «Disponible» al lado de la visita
+      // diría dos cosas del mismo rato (mismo criterio que el bloqueo).
+      if (cita === null && this.dentroDeUnaVisita(cupo.startAt, hasta)) continue;
 
       if (cita === null) {
         // C-10 · un cupo sin capacidad libre NO es un rato disponible, aunque
@@ -657,6 +717,13 @@ export class DayView {
         desde: b.desde.getTime() < inicio.getTime() ? inicio : b.desde,
         hasta: b.hasta.getTime() > fin.getTime() ? fin : b.hasta,
       }));
+  }
+
+  /** Si ese rato lo pisa una visita de laboratorio aceptada (C-13). */
+  private dentroDeUnaVisita(desde: Date, hasta: Date): boolean {
+    return this.visitas().some(
+      (v) => v.desde.getTime() < hasta.getTime() && v.hasta.getTime() > desde.getTime(),
+    );
   }
 
   private dentroDeOcupado(desde: Date, hasta: Date): boolean {

@@ -1870,6 +1870,152 @@ describe('Agenda', () => {
   });
 
   /**
+   * C-11 (2026-09-20) — **una sola consulta a la vez**.
+   *
+   * El dato que lo dice ya existe y es un estado del ciclo
+   * (`BOOKING_IN_PROGRESS`, `booking-status.ts`): no se agrega ninguna bandera
+   * en el cliente, que se desincronizaria en cuanto alguien atienda desde otra
+   * pestana.
+   *
+   * ## Los tres niveles del contrato del servidor (regla 65)
+   *
+   * `POST /scheduling/bookings/:id/start` **no valida nada en el manejador
+   * simulado**: transiciona a «en curso» sea cual sea el estado anterior y haya
+   * o no otra consulta abierta (`core/mock/handlers/scheduling.handlers.ts:301`
+   * y `:308`). Es una brecha del contrato, no una funcionalidad: el freno del
+   * cliente **no reemplaza** la validacion del servidor (regla 95.6.1), y por
+   * eso aca se ejercita el camino del 409 contra un doble del endpoint,
+   * declarado como tal. Lo que queda pendiente de verificar contra el servidor
+   * real es que el 409 exista; lo que queda verificado es que si llega, la
+   * pantalla lo trata bien y no deja la segunda cita cambiada.
+   */
+  describe('una sola consulta a la vez (C-11)', () => {
+    /** Dos citas de la ventana: una en curso y otra confirmada. */
+    async function conUnaEnCursoYOtraConfirmada(): Promise<void> {
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+      await responderRecursos();
+      primeraPeticion('/scheduling/bookings').flush({
+        items: [
+          { ...CITA, id: 'b-curso', statusConceptId: 'c-curso', reasonText: 'Dolor de pecho' },
+          { ...CITA, id: 'b-otra', statusConceptId: 'c-confirmada' },
+        ],
+        count: 2,
+        limit: 100,
+        truncated: false,
+      });
+      primeraPeticion('/scheduling/slots').flush({ items: [], count: 0, limit: 100, truncated: false });
+      primeraPeticion('/terminology/concepts').flush({
+        items: [
+          { conceptId: 'c-curso', code: 'BOOKING_IN_PROGRESS', display: 'En curso', codeSystemVersionId: 'csv-1' },
+          { conceptId: 'c-confirmada', code: 'BOOKING_CONFIRMED', display: 'Confirmada', codeSystemVersionId: 'csv-1' },
+        ],
+        count: 2,
+        limit: 200,
+      });
+      harness.detectChanges();
+    }
+
+    function laCita(id: string): unknown {
+      return (citas().data ?? []).find((c) => (c as { id: string }).id === id);
+    }
+
+    it('reconoce cual es la consulta en curso, del estado del ciclo y no de una bandera', async () => {
+      await conUnaEnCursoYOtraConfirmada();
+
+      const enCurso = interno<() => { id: string } | null>('consultaEnCurso')();
+      expect(enCurso?.id).toBe('b-curso');
+    });
+
+    it('con una en curso, iniciar OTRA no la inicia y dice cual esta abierta', async () => {
+      await conUnaEnCursoYOtraConfirmada();
+      const confirmar = vi
+        .spyOn(TestBed.inject(DialogService), 'confirm')
+        .mockResolvedValue(false);
+
+      interno<(c: unknown) => void>('iniciarAtencion')(laCita('b-otra'));
+      await harness.fixture.whenStable();
+
+      // Nada salio a la red: el `http.verify()` del afterEach lo confirma.
+      const config = confirmar.mock.calls[0]?.[0];
+      expect(config?.title).toContain('Ya tenés una consulta en curso');
+      // «Paciente asignado» y no el nombre: esta sesión no tiene permiso de
+      // padrón, y la compuerta del nombre es la misma de siempre. Lo que el
+      // aviso tiene que decir es CUÁL está abierta, no quién es.
+      expect(config?.details).toContainEqual({ label: 'En curso con', value: 'Paciente asignado' });
+      expect(config?.details).toContainEqual({ label: 'Motivo', value: 'Dolor de pecho' });
+      expect(config?.details?.map((d) => d.label)).toContain('Desde');
+      expect(config?.confirmLabel).toBe('Ir a la consulta abierta');
+      // Y la segunda NO cambio de estado.
+      expect((laCita('b-otra') as { estado: { code: string } }).estado.code).toBe(
+        'BOOKING_CONFIRMED',
+      );
+    });
+
+    it('y ofrece SALIR a la que esta abierta, no solo frenar', async () => {
+      await conUnaEnCursoYOtraConfirmada();
+      vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+      interno<(c: unknown) => void>('iniciarAtencion')(laCita('b-otra'));
+      await harness.fixture.whenStable();
+
+      expect(navegar).toHaveBeenCalledTimes(1);
+      const [ruta, extras] = navegar.mock.calls[0] as [string[], { queryParams: unknown }];
+      expect(ruta[0]).toMatch(/consultation$/);
+      // Con los datos de la ABIERTA, no los de la que se quiso iniciar.
+      expect(extras.queryParams).toEqual(
+        (laCita('b-curso') as { paramsDeLaAtencion: unknown }).paramsDeLaAtencion,
+      );
+    });
+
+    it('sin ninguna en curso, iniciar arranca normalmente', async () => {
+      // El nivel CORRECTO del contrato: sin conflicto, el camino es el de
+      // siempre y el freno no molesta.
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+      expect(interno<() => unknown>('consultaEnCurso')()).toBeNull();
+      interno<(c: unknown) => void>('iniciarAtencion')(citas().data?.[0]);
+
+      http.expectOne('/scheduling/bookings/b-1/start').flush({
+        bookingId: 'b-1',
+        statusConceptId: 'c-curso',
+        occurredAt: '2026-08-15T12:00:00.000Z',
+      });
+      await harness.fixture.whenStable();
+      expect(navegar).toHaveBeenCalledTimes(1);
+    });
+
+    it('NIVEL INVALIDO · si el servidor responde 409 igual, se dice y no se navega', async () => {
+      // El doble: el manejador simulado NO valida esto, asi que el 409 se
+      // fabrica aca para ejercitar el camino. Queda declarado como simulacion;
+      // lo que falta verificar contra el servidor real es que el 409 exista.
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const avisarError = vi.spyOn(TestBed.inject(ToastService), 'error');
+
+      interno<(c: unknown) => void>('iniciarAtencion')(citas().data?.[0]);
+      http.expectOne('/scheduling/bookings/b-1/start').flush(
+        { message: 'Ya hay una consulta en curso para este profesional.' },
+        { status: 409, statusText: 'Conflict' },
+      );
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(navegar).not.toHaveBeenCalled();
+      expect(avisarError).toHaveBeenCalledTimes(1);
+      const [mensaje] = avisarError.mock.calls[0] as [string];
+      expect(mensaje).toContain('No se pudo iniciar la atención');
+      // Y la cita sigue confirmada: un 409 no la deja «en curso» en la pantalla.
+      expect((citas().data?.[0] as { estado: { code: string } }).estado.code).toBe(
+        'BOOKING_CONFIRMED',
+      );
+    });
+  });
+
+  /**
    * C-04 (2026-09-20) — «las tarjetas de /schedule llevan a iniciar el
    * encuentro».
    *

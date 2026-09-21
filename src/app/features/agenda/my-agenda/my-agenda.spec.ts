@@ -210,13 +210,21 @@ describe('MyAgenda', () => {
       fixture.detectChanges();
     }
 
-    /** Responde vacío todo lo que el calendario pide al abrir. */
+    /**
+     * Responde vacío todo lo que el calendario pide al abrir.
+     *
+     * Desde C-13 (2026-09-20) eso incluye las visitas de laboratorio del doctor
+     * y el diccionario de conceptos que traduce sus estados: el día las dibuja
+     * como tarjetas de visitador, así que el calendario las pide al montar.
+     */
     function sinOcupacion(): void {
       for (const req of http.match(
         (r) =>
           r.url === '/scheduling/slots' ||
           r.url === '/scheduling/bookings' ||
-          r.url === '/scheduling/resources/res-1/exceptions',
+          r.url === '/scheduling/resources/res-1/exceptions' ||
+          r.url === '/visit-requests/inbox' ||
+          r.url === '/pharma-labs/reference/concepts',
       )) {
         req.flush({ items: [], count: 0 });
       }
@@ -284,6 +292,183 @@ describe('MyAgenda', () => {
     });
   });
 
+  /* -- La visita de laboratorio en la agenda (C-13, 2026-09-20) ------------- */
+
+  /**
+   * «Que la visita de laboratorio se vea en la misma pestana de consultas, como
+   * tarjeta de visitador, de 15 minutos.»
+   *
+   * Lo que estas pruebas fijan:
+   *
+   * 1. **La duracion sale del DATO**, no de un numero escrito en la plantilla:
+   *    `VisitRequest.durationMinutes` es parte del contrato. Los 15 minutos son
+   *    el respaldo para cuando el campo no viene o viene absurdo.
+   * 2. **Ni un dato clinico en la tarjeta.** El visitador no accede a
+   *    informacion clinica (`pharma-lab.types.ts:9-11`), y la tarjeta no puede
+   *    ser la grieta por donde eso entre.
+   * 3. **Una visita que ya no esta en pie no ocupa el rato**: rechazada,
+   *    cancelada o reprogramada no se dibujan.
+   */
+  describe('la visita de laboratorio en el dia (C-13)', () => {
+    const HOY = new Date();
+    const A_LAS_DIEZ = new Date(HOY.getFullYear(), HOY.getMonth(), HOY.getDate(), 10, 0);
+
+    function visita(extra: Record<string, unknown> = {}): Record<string, unknown> {
+      return {
+        id: 'vr-1',
+        medicalVisitorId: 'mv-1',
+        pharmaLabId: 'lab-1',
+        doctorUserId: 'u-1',
+        reason: 'Presentacion de linea cardiologica',
+        requestedStartAt: A_LAS_DIEZ.toISOString(),
+        durationMinutes: 15,
+        timeZone: 'America/La_Paz',
+        modalityConceptId: 'mod-1',
+        statusConceptId: 'st-confirmada',
+        ...extra,
+      };
+    }
+
+    const CONCEPTOS = [
+      { id: 'st-confirmada', code: 'PHL_VISIT_CONFIRMED', display: 'Confirmada' },
+      { id: 'st-rechazada', code: 'PHL_VISIT_REJECTED', display: 'Rechazada' },
+      { id: 'mv-1', code: 'PHL_VISITOR', display: 'Laboratorio Andes · Rita Pena' },
+    ];
+
+    /** Monta el calendario y responde lo del dia, con las visitas indicadas. */
+    function conVisitas(visitas: readonly Record<string, unknown>[]): void {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([]),
+          {
+            provide: AuthService,
+            useValue: {
+              practitionerProfileId: signal<string | null>(PERFIL),
+              activeTenantId: signal<string | null>(TENANT),
+              roles: signal<readonly string[]>(['PRACTITIONER']),
+            },
+          },
+        ],
+      });
+      fixture = TestBed.createComponent(MyAgenda);
+      fixture.componentRef.setInput('mode', 'calendar');
+      http = TestBed.inject(HttpTestingController);
+      fixture.detectChanges();
+      conRecurso();
+      conPlantilla([{ dayOfWeek: HOY.getDay(), startTime: '09:00:00', endTime: '13:00:00' }]);
+      for (const req of http.match(() => true)) {
+        const url = req.request.url;
+        req.flush(
+          url === '/visit-requests/inbox'
+            ? visitas
+            : url === '/pharma-labs/reference/concepts'
+              ? CONCEPTOS
+              : { items: [], count: 0 },
+        );
+      }
+      fixture.detectChanges();
+    }
+
+    function tarjetas(): string[] {
+      return Array.from(
+        fixture.nativeElement.querySelectorAll(
+          '.dia__bloque[data-tipo="visita"]',
+        ) as NodeListOf<HTMLElement>,
+      ).map((el) => (el.textContent ?? '').replace(/\s+/g, ' ').trim());
+    }
+
+    it('una visita aceptada se dibuja en el dia, con la palabra «Visitador»', () => {
+      conVisitas([visita()]);
+
+      expect(tarjetas()).toHaveLength(1);
+      expect(tarjetas()[0]).toContain('Visitador');
+      expect(tarjetas()[0]).toContain('Visita de laboratorio');
+      expect(tarjetas()[0]).toContain('10:00');
+      // Y NUNCA un uuid: el contrato del doctor no publica el nombre del
+      // visitador, y mostrar su identificador es peor que no nombrarlo.
+      expect(tarjetas()[0]).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}/);
+      // Y su puerta a la bandeja, que C-11 quito del encabezado.
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="dia-ir-a-lab-visits"]'),
+      ).not.toBeNull();
+    });
+
+    it('la duracion sale del DATO: 30 minutos se dibujan como 30, no como 15', () => {
+      conVisitas([visita({ durationMinutes: 30 })]);
+
+      expect(tarjetas()[0]).toContain('10:00');
+      expect(tarjetas()[0]).toContain('10:30');
+    });
+
+    it('sin duracion valida cae a los 15 por omision, que es el respaldo y no la fuente', () => {
+      conVisitas([visita({ durationMinutes: 0 })]);
+
+      expect(tarjetas()[0]).toContain('10:00');
+      expect(tarjetas()[0]).toContain('10:15');
+    });
+
+    it('la tarjeta no dice NADA clinico: ni paciente, ni expediente, ni diagnostico', () => {
+      conVisitas([visita()]);
+
+      const texto = tarjetas()[0];
+      // Lo unico que se muestra es la visita comercial y con quien es.
+      expect(texto).not.toMatch(/paciente/i);
+      expect(texto).not.toMatch(/expediente/i);
+      expect(texto).not.toMatch(/diagn/i);
+      // Y no hay ningun enlace al expediente desde esta tarjeta.
+      const tarjeta = fixture.nativeElement.querySelector('.dia__bloque[data-tipo="visita"]');
+      const enlaces = Array.from(tarjeta.querySelectorAll('a')).map((a) =>
+        (a as HTMLAnchorElement).getAttribute('href'),
+      );
+      expect(enlaces.every((h) => (h ?? '').includes('/lab-visits'))).toBe(true);
+    });
+
+    it('una visita RECHAZADA no ocupa el rato: no se dibuja', () => {
+      conVisitas([visita({ statusConceptId: 'st-rechazada' })]);
+
+      expect(tarjetas()).toHaveLength(0);
+    });
+
+    it('si la lectura de visitas falla, el dia sigue mostrando las consultas', () => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([]),
+          {
+            provide: AuthService,
+            useValue: {
+              practitionerProfileId: signal<string | null>(PERFIL),
+              activeTenantId: signal<string | null>(TENANT),
+              roles: signal<readonly string[]>(['PRACTITIONER']),
+            },
+          },
+        ],
+      });
+      fixture = TestBed.createComponent(MyAgenda);
+      fixture.componentRef.setInput('mode', 'calendar');
+      http = TestBed.inject(HttpTestingController);
+      fixture.detectChanges();
+      conRecurso();
+      conPlantilla([{ dayOfWeek: HOY.getDay(), startTime: '09:00:00', endTime: '13:00:00' }]);
+      for (const req of http.match(() => true)) {
+        if (req.request.url === '/visit-requests/inbox') {
+          req.flush({ message: 'caido' }, { status: 503, statusText: 'Service Unavailable' });
+        } else {
+          req.flush({ items: [], count: 0 });
+        }
+      }
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('app-day-view')).not.toBeNull();
+      expect(tarjetas()).toHaveLength(0);
+    });
+  });
+
   /* -- El horario extra del final del día (C-10, 2026-09-20) ---------------- */
 
   /**
@@ -330,7 +515,9 @@ describe('MyAgenda', () => {
         (r) =>
           r.url === '/scheduling/slots' ||
           r.url === '/scheduling/bookings' ||
-          r.url === '/scheduling/resources/res-1/exceptions',
+          r.url === '/scheduling/resources/res-1/exceptions' ||
+          r.url === '/visit-requests/inbox' ||
+          r.url === '/pharma-labs/reference/concepts',
       )) {
         req.flush({ items: [], count: 0 });
       }
