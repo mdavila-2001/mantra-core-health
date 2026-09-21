@@ -14,7 +14,17 @@ import { entrar, estable, irA } from './support/sesion';
  * doctora de `actores.ts` no existe ahí. El alta es el mismo endpoint que usa
  * el registro del front.
  */
-const RUTA_PERFIL = '/my-account';
+/**
+ * Dónde se cargan y se retiran los consultorios.
+ *
+ * **No es `/my-account`.** La ficha monta `app-work-history` dos veces y las
+ * dos en modo `secciones="historial"`
+ * (`practitioner-profile-view.html:590` y `:1141`), así que su bloque «Dónde
+ * atiendo» —el que lleva `data-testid="sedes-propias"`— no se renderiza ahí.
+ * El único montaje con `secciones="consultorios"` es el del editor
+ * (`practitioner-profile-edit.html:325`).
+ */
+const RUTA_PERFIL = '/my-account/edit';
 
 async function profesionalNuevo(): Promise<Actor> {
   const api = await contextoDeApi();
@@ -35,11 +45,21 @@ async function profesionalNuevo(): Promise<Actor> {
   return { rol: 'doctora', identificador, clave, nombre: 'Valeria Fuentes' };
 }
 
-/** La sección «Dónde atiendo», esté al pie del perfil o dentro de Trayectoria. */
+/**
+ * La sección «Dónde atiendo» del editor, detrás de su pestaña.
+ *
+ * El panel de una pestaña inactiva **no está en el DOM**, así que la sección
+ * no se encuentra hasta abrirla. Se busca primero por si ya está abierta
+ * —tras recargar, el editor puede volver a su primera pestaña— y sólo
+ * entonces se hace clic.
+ */
 async function seccionDeSedes(page: Page) {
   const seccion = page.getByTestId('sedes-propias').first();
   if (!(await seccion.isVisible().catch(() => false))) {
-    await page.getByRole('tab', { name: /Trayectoria/i }).first().click();
+    await page
+      .getByRole('tab', { name: /Dónde atiendo/i })
+      .first()
+      .click();
     await estable(page);
   }
   await expect(seccion).toBeVisible();
