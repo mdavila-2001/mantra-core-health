@@ -291,16 +291,9 @@ app-tab > .mi-perfil__seccion:first-child > .mi-perfil__subtitulo:first-child {
   gap: var(--sp-2);
 }
 
-/* Un bloque con caja propia DENTRO de una pestaña. Lo usa «Cómo atendés», que
-   contesta otra pregunta que el mapa de sedes de arriba y pegado a él se leía
-   como su pie. */
-.mi-perfil__bloque-interno {
-  display: block;
-  margin-block-start: var(--sp-5);
-}
-
-/* Un subtítulo que abre su propia caja: el aire de arriba ya lo pone el
-   `padding` de la tarjeta. */
-.mi-perfil__subtitulo--primero {
-  margin-block-start: 0;
-}
+/* Acá vivían `.mi-perfil__bloque-interno` y `.mi-perfil__subtitulo--primero`.
+   Existían para una sola caja, «Cómo atendés», que se retiró el 20/09/2026
+   (C-01). Se van con ella y no se dejan «por si acaso»: ningún otro
+   `.html` del repo las nombraba —comprobado antes de borrarlas—, así que
+   sacarlas no le cambia el dibujo a nadie, tampoco a la ficha del paciente,
+   que comparte este archivo. */

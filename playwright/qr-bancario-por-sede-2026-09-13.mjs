@@ -2,13 +2,17 @@
  * Evidencia del pedido del cliente del 13/09/2026 sobre «Dónde atiendo»
  * (`/my-account/edit`, pestaña 3):
  *
- *   1. Editar y retirar son **íconos descriptivos con su globo de ayuda**, y el
- *      globo aparece también con el teclado.
- *   2. Cada sede tiene un **botón de QR** que abre el QR bancario con el que el
+ *   1. Editar y retirar **se leen con su texto**. Nacieron como íconos con
+ *      globo; ADR-0012 (20/09/2026) invirtió la regla, porque el globo era el
+ *      parche de un botón mudo. Lo que se comprueba ahora es que el texto
+ *      esté a la vista, y que el disparador diga de qué sede son.
+ *   2. Cada sede ofrece la acción del **QR bancario** con el que el
  *      profesional cobra ahí. Sin uno cargado, el modal **es** la zona de
  *      soltar; con uno cargado, el lápiz de la esquina pide el reemplazo.
- *   3. Sin QR configurado, el botón va **en ámbar** — y lo dice también con
- *      palabras, porque el color solo no alcanza (WCAG 1.4.1).
+ *   3. Sin QR configurado lo dice con palabras, dos veces: la acción se llama
+ *      «Configurar QR bancario» y la fila lleva su aviso en ámbar, que es el
+ *      que se ve sin abrir nada. El color nunca fue la única señal
+ *      (WCAG 1.4.1), y el ámbar que queda es texto: se le mide 4,5:1.
  *
  * Un solo navegador, un contexto por vez: serie estricta, como exige
  * `.claude/rules/20-resource-control.md`. El navegador se cierra en `finally` y
@@ -75,14 +79,17 @@ async function abrirDondeAtiendo(pagina) {
 }
 
 /**
- * Lo que dice y cómo se pinta el botón de QR de cada fila.
+ * Lo que cada fila dice sobre su QR, y cómo se pinta el aviso.
  *
- * El contraste se calcula en el navegador y contra el fondo **realmente
- * pintado**, subiendo por los ancestros hasta encontrar uno no transparente:
- * comparar contra un hex escrito a mano en el guion sería comprobar la
- * aritmética del guion, no lo que se ve.
+ * Ya no se mide la tinta de un glifo: desde ADR-0012 la señal son las
+ * palabras. Se mide el aviso de la fila —el que se ve sin abrir el
+ * desplegable— contra el fondo **realmente pintado**, subiendo por los
+ * ancestros hasta encontrar uno no transparente: comparar contra un hex
+ * escrito a mano en el guion sería comprobar la aritmética del guion, no lo
+ * que se ve. Y el umbral es 4,5:1 y no 3:1, porque ahora es texto chico
+ * (WCAG 1.4.3) y no un objeto gráfico.
  */
-function medirBotonesDeQr(pagina) {
+function medirAvisosDeQr(pagina) {
   return pagina.locator('[data-testid="sede-propia"]').evaluateAll((filas) => {
     const canal = (v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
     const luminancia = (rgb) => {
@@ -101,81 +108,108 @@ function medirBotonesDeQr(pagina) {
     };
 
     return filas.map((fila) => {
-      const boton = fila.querySelector('[data-testid="sede-qr"]');
-      const svg = boton?.querySelector('svg');
-      const tinta = svg ? getComputedStyle(svg).color : 'rgb(0, 0, 0)';
+      const aviso = fila.querySelector('[data-testid="sede-sin-qr"]');
+      const tinta = aviso ? getComputedStyle(aviso).color : 'rgb(0, 0, 0)';
       const a = luminancia(aRgb(tinta));
-      const b = luminancia(fondoPintado(boton ?? fila));
+      const b = luminancia(fondoPintado(aviso ?? fila));
       return {
         sede: fila.querySelector('strong')?.textContent?.trim() ?? '',
-        nombreAccesible: boton?.getAttribute('aria-label') ?? '',
-        ambar: boton?.classList.contains('historial__qr--sin-configurar') ?? false,
+        avisa: aviso !== null,
         tinta,
         contraste: Number(
           ((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)).toFixed(2),
         ),
-        conTexto: (boton?.textContent ?? '').trim() !== '',
       };
     });
   });
+}
+
+/**
+ * El texto de una acción de esa sede, abriendo el desplegable si hace falta.
+ *
+ * La forma sale de cuántas acciones tiene la sede, no de una decisión de esta
+ * pantalla: la propia son tres y se pliegan, la ajena son dos y quedan en la
+ * fila. El recorrido pregunta por la acción, no por la forma.
+ */
+async function textoDeAccion(pagina, indice, code) {
+  const fila = pagina.locator('[data-testid="sede-propia"]').nth(indice);
+  const disparador = fila.locator('[data-testid="row-actions-trigger"]');
+  if ((await disparador.count()) === 0) {
+    return (
+      (await fila.locator(`app-row-actions [data-action="${code}"]`).textContent()) ?? ''
+    ).trim();
+  }
+  await disparador.click();
+  await pagina.locator('app-menu [role="menuitem"]').first().waitFor({ timeout: 10_000 });
+  const texto = (
+    (await pagina.locator(`app-menu [data-action="${code}"]`).textContent()) ?? ''
+  ).trim();
+  await pagina.keyboard.press('Escape');
+  await pagina
+    .locator('app-menu [role="menuitem"]')
+    .first()
+    .waitFor({ state: 'detached', timeout: 10_000 });
+  return texto;
+}
+
+/** Ejecuta esa acción en la fila n de la lista de sedes. */
+async function accionarSede(pagina, indice, code) {
+  const fila = pagina.locator('[data-testid="sede-propia"]').nth(indice);
+  const disparador = fila.locator('[data-testid="row-actions-trigger"]');
+  if ((await disparador.count()) > 0) {
+    await disparador.click();
+    await pagina.locator('app-menu [role="menuitem"]').first().waitFor({ timeout: 10_000 });
+    await pagina.locator(`app-menu [data-action="${code}"]`).click();
+    return;
+  }
+  await fila.locator(`app-row-actions [data-action="${code}"]`).click();
 }
 
 async function recorrer(pagina, tema) {
   await pagina.emulateMedia({ colorScheme: tema === 'oscuro' ? 'dark' : 'light' });
   await abrirDondeAtiendo(pagina);
 
-  const filas = await medirBotonesDeQr(pagina);
+  const filas = await medirAvisosDeQr(pagina);
   await pagina.screenshot({ path: `${SALIDA}/sedes-acciones-${tema}.png`, fullPage: true });
 
-  ok(`[${tema}] las cuatro sedes tienen botón de QR`, filas.length === 4, `${filas.length} filas`);
-  ok(
-    `[${tema}] ningún botón de acción lleva texto visible`,
-    filas.every((f) => !f.conTexto),
-  );
+  ok(`[${tema}] las cuatro sedes siguen en la lista`, filas.length === 4, `${filas.length} filas`);
 
-  const sinQr = filas.filter((f) => f.ambar);
-  const conQr = filas.filter((f) => !f.ambar);
+  const sinQr = filas.filter((f) => f.avisa);
+  const conQr = filas.filter((f) => !f.avisa);
   ok(
     `[${tema}] sólo el consultorio propio tiene QR cargado`,
     conQr.length === 1 && conQr[0].sede.includes('Rojas'),
     conQr.map((f) => f.sede).join(' · '),
   );
   ok(
-    `[${tema}] los que faltan van en ámbar Y lo dicen con palabras`,
-    sinQr.length === 3 && sinQr.every((f) => f.nombreAccesible.startsWith('Configurar el QR')),
-    sinQr[0]?.tinta ?? '',
+    `[${tema}] a los que les falta se les ve el aviso sin abrir nada`,
+    sinQr.length === 3,
+    sinQr.map((f) => f.sede).join(' · '),
   );
-  /* WCAG 1.4.11: un objeto gráfico necesita 3:1 contra lo que tiene detrás. Un
+  /* WCAG 1.4.3: texto chico necesita 4,5:1 contra lo que tiene detrás. Un
      ámbar que no se distingue del fondo no avisa de nada. */
   ok(
-    `[${tema}] el ámbar llega a 3:1 sobre el fondo real`,
-    sinQr.every((f) => f.contraste >= 3),
+    `[${tema}] el aviso en ámbar llega a 4,5:1 sobre el fondo real`,
+    sinQr.every((f) => f.contraste >= 4.5),
     sinQr.map((f) => `${f.contraste}:1`).join(' · '),
   );
+
+  /* ---- Y la acción también lo dice, con su propio texto ------------------ */
+  const textoPropio = await textoDeAccion(pagina, 0, 'qr');
+  const indiceSinQr = filas.findIndex((f) => f.avisa);
+  const textoSinQr = await textoDeAccion(pagina, indiceSinQr, 'qr');
   ok(
-    `[${tema}] el que ya está se nombra distinto`,
-    conQr[0]?.nombreAccesible.startsWith('Ver el QR'),
-    conQr[0]?.nombreAccesible ?? '',
+    `[${tema}] el que ya está se nombra distinto del que falta`,
+    textoPropio === 'Ver QR bancario' && textoSinQr === 'Configurar QR bancario',
+    `${textoPropio} · ${textoSinQr}`,
   );
 
-  /* ---- El globo, con el teclado y no sólo con el puntero ----------------- */
-  await pagina.locator('[data-testid="sede-editar"]').first().focus();
-  const globo = pagina.locator('app-tooltip-panel');
-  await globo.waitFor({ timeout: 10_000 });
-  const textoDelGlobo = (await globo.textContent())?.trim() ?? '';
-  ok(
-    `[${tema}] el lápiz se explica con el teclado`,
-    textoDelGlobo.startsWith('Editar '),
-    textoDelGlobo,
-  );
-  await pagina.keyboard.press('Escape');
+  /* ---- Editar se lee sin apuntar: ya no hay globo que esperar ------------ */
+  const textoEditar = await textoDeAccion(pagina, 0, 'editar');
+  ok(`[${tema}] editar se lee con su texto`, textoEditar === 'Editar', textoEditar);
 
   /* ---- El modal del QR que YA está cargado ------------------------------- */
-  await pagina
-    .locator('[data-testid="sede-propia"]')
-    .first()
-    .locator('[data-testid="sede-qr"]')
-    .click();
+  await accionarSede(pagina, 0, 'qr');
   await pagina.locator('[data-testid="sede-qr-imagen"]').waitFor({ timeout: 30_000 });
   await pagina.screenshot({ path: `${SALIDA}/qr-cargado-${tema}.png` });
   ok(
@@ -202,11 +236,7 @@ async function recorrer(pagina, tema) {
   await pagina.getByTestId('content-dialog-close').click();
 
   /* ---- El modal del QR que FALTA: es la zona de soltar ------------------- */
-  await pagina
-    .locator('[data-testid="sede-propia"]')
-    .nth(1)
-    .locator('[data-testid="sede-qr"]')
-    .click();
+  await accionarSede(pagina, 1, 'qr');
   await pagina.locator('[data-testid="sede-qr-archivo"]').waitFor({ timeout: 30_000 });
   await pagina.screenshot({ path: `${SALIDA}/qr-vacio-${tema}.png` });
   ok(
@@ -235,11 +265,12 @@ async function recorrer(pagina, tema) {
   );
 
   await pagina.getByTestId('content-dialog-close').click();
-  const despues = await medirBotonesDeQr(pagina);
+  const despues = await medirAvisosDeQr(pagina);
+  const nombreTrasSubir = await textoDeAccion(pagina, 1, 'qr');
   ok(
-    '[claro] la fila que recibió el QR deja el ámbar',
-    despues[1]?.ambar === false && despues[1]?.nombreAccesible.startsWith('Ver el QR'),
-    despues[1]?.nombreAccesible ?? '',
+    '[claro] la fila que recibió el QR deja el aviso, y su acción cambia de nombre',
+    despues[1]?.avisa === false && nombreTrasSubir === 'Ver QR bancario',
+    `avisa=${despues[1]?.avisa} · ${nombreTrasSubir}`,
   );
   await pagina.screenshot({ path: `${SALIDA}/sedes-tras-subir.png`, fullPage: true });
 }

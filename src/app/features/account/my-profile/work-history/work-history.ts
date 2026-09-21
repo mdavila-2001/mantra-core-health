@@ -37,9 +37,10 @@ import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
+import { RowActions } from '../../../../shared/components/molecules/row-actions/row-actions';
+import type { RowAction } from '../../../../shared/components/molecules/row-actions/row-actions.types';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
-import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
@@ -123,9 +124,9 @@ import type { PinMapa, PuntoGeo } from '../../../../shared/components/organisms/
     LocationPicker,
     NgTemplateOutlet,
     ReferenceCombobox,
+    RowActions,
     Select,
     SiteBankQrDialog,
-    Tooltip,
     UpperCasePipe,
   ],
   templateUrl: './work-history.html',
@@ -162,12 +163,15 @@ export class WorkHistory implements OnInit {
    *
    * Quién usa cada uno:
    *
-   * - `'consultorios'` — «Mis organizaciones» (`administration/my-practice`)
-   *   y la pestaña «Dónde atiendo» del editor del perfil. No se copió el
-   *   formulario a ninguna de las dos: crear, ubicar en el mapa y retirar un
-   *   consultorio vive acá —con su catálogo de municipios, su confirmación y
-   *   sus pruebas— y tenerlo dos veces garantiza que el arreglo de uno no
-   *   llegue al otro.
+   * - `'consultorios'` — «Mis organizaciones» (`administration/my-practice`),
+   *   la pestaña «Dónde atiendo» del editor del perfil y, desde el
+   *   20/09/2026, la pestaña «Dónde atiendo» de la **ficha** (C-02: el
+   *   consultorio se administra dentro del perfil y el enlace suelto a
+   *   «Mis organizaciones» se retiró). No se copió el formulario a ninguna de
+   *   las tres: crear, ubicar en el mapa y retirar un consultorio vive acá
+   *   —con su catálogo de municipios, su confirmación y sus pruebas— y
+   *   tenerlo tres veces garantiza que el arreglo de una no llegue a las
+   *   otras.
    * - `'historial'` — la pestaña «Trayectoria» de la ficha del médico.
    * - `'ambas'` — nadie hoy; queda como el valor neutro del componente.
    */
@@ -918,30 +922,71 @@ export class WorkHistory implements OnInit {
   }
 
   /**
-   * Qué dice el botón del QR de esa sede, en el globo y para el lector.
+   * Qué dice la acción del QR de esa sede.
    *
    * Dos textos y no uno porque son dos cosas distintas: mirar el que ya está y
-   * cargar el que falta. Con un único «QR bancario» el ámbar sería la única
-   * pista de que hay algo pendiente, y el color solo no alcanza para decirlo
-   * (WCAG 1.4.1).
+   * cargar el que falta. Antes el botón era sólo un ícono y se pintaba en
+   * ámbar cuando faltaba; el color solo no alcanza para decirlo (WCAG 1.4.1),
+   * así que el aviso siempre vivió en el texto. Ahora el texto está a la
+   * vista, y el aviso además sigue escrito en la fila (`sede-sin-qr`).
+   *
+   * No lleva ícono: el set cerrado del sistema no tiene uno de QR, y `scan` es
+   * imagenología clínica —su propia ficha lo aclara—, no un código de cobro.
+   * Una acción sin ícono se dibuja con su texto, que es lo que pide ADR-0012.
    */
   protected etiquetaDelQr(sede: PracticeSite): string {
-    return this.tieneQrBancario(sede)
-      ? `Ver el QR bancario de ${sede.name}`
-      : `Configurar el QR bancario de ${sede.name}`;
+    return this.tieneQrBancario(sede) ? 'Ver QR bancario' : 'Configurar QR bancario';
   }
 
   /**
-   * Qué dice el botón de retirar, que no es el mismo acto en las dos sedes.
+   * Qué dice la acción de retirar, que no es el mismo acto en las dos sedes.
    *
    * En la propia se deja de ofrecer un consultorio que es suyo; en la ajena se
-   * corta un vínculo con una organización. El glifo es el mismo —el de borrar,
-   * que es el que se reconoce— y el texto es el que aclara que nada se borra.
+   * corta un vínculo con una organización. Esa distinción es del negocio y se
+   * conserva. De qué sede se trata ya no lo repite cada etiqueta: lo pone
+   * `app-row-actions` en el nombre accesible, a partir de `fila`.
    */
   protected etiquetaDeRetiro(sede: PracticeSite): string {
-    return sede.isOwnSite === true
-      ? `Retirar ${sede.name} de tus consultorios`
-      : `Dejar de atender en ${sede.name}`;
+    return sede.isOwnSite === true ? 'Retirar' : 'Dejar de atender';
+  }
+
+  /**
+   * Las acciones de una sede, como datos (ADR-0012).
+   *
+   * Son dos o tres según de quién sea la sede, y de eso —no de una decisión de
+   * esta pantalla— sale la forma: en la propia son tres y se colapsan en un
+   * desplegable; en la ajena son dos y quedan en la fila con su texto.
+   *
+   * El orden no es casual: el QR va primero porque es el único que avisa de
+   * algo pendiente, y retirar va último porque es el que no se deshace.
+   */
+  protected accionesDeSede(sede: PracticeSite): readonly RowAction[] {
+    const acciones: RowAction[] = [{ code: 'qr', label: this.etiquetaDelQr(sede) }];
+    if (sede.isOwnSite) {
+      acciones.push({ code: 'editar', label: 'Editar', icon: 'edit' });
+    }
+    acciones.push({
+      code: 'retirar',
+      label: this.etiquetaDeRetiro(sede),
+      icon: 'remove',
+      destructive: true,
+    });
+    return acciones;
+  }
+
+  /** Despacha el `code` que emitió `app-row-actions` sobre esa sede. */
+  protected ejecutarAccionDeSede(code: string, sede: PracticeSite): void {
+    if (code === 'qr') {
+      this.abrirQrDeSede(sede);
+      return;
+    }
+    if (code === 'editar') {
+      this.abrirEdicionDeSede(sede);
+      return;
+    }
+    if (code === 'retirar') {
+      void this.quitarSede(sede);
+    }
   }
 
   protected abrirQrDeSede(sede: PracticeSite): void {
@@ -1016,6 +1061,23 @@ export class WorkHistory implements OnInit {
   }
 
   private cargar(): void {
+    /* La simétrica de la de `cargarSedes`, y faltaba. Montado como «sólo los
+       consultorios» —«Mis organizaciones», la pestaña «Dónde atiendo» del
+       editor y ahora también la de la ficha— el historial no se dibuja, así
+       que pedirlo es una petición por visita a una pantalla que no lo usa.
+       `afiliaciones()` sólo se consume dentro de `@if (muestraHistorial())`
+       (`work-history.html:311`), así que no leerlo no deja nada sin dato; se
+       deja en `ready([])` por lo mismo que la rama sin perfil de `ngOnInit`:
+       un `loading()` eterno haría girar un esqueleto que nadie mira.
+
+       Hasta hoy costaba una petición de más por visita a «Mis
+       organizaciones»; con el consultorio dentro del perfil pasaba a costar
+       dos por visita al perfil, porque la ficha monta este componente dos
+       veces. */
+    if (!this.muestraHistorial()) {
+      this.historial.set(ready([]));
+      return;
+    }
     this.historial.set(loading());
     this.profiles.listAffiliations().subscribe({
       next: (pagina) => this.historial.set(ready(pagina.items)),

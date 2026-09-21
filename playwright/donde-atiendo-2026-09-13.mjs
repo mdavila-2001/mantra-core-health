@@ -139,7 +139,7 @@ async function elEditor(pagina) {
   const filas = pagina.locator('[data-testid="sede-propia"]');
   const cuantas = await filas.count();
   ok('[editor] lista las sedes', cuantas > 1, `${cuantas} sedes`);
-  const conEditar = await pagina.locator('[data-testid="sede-editar"]').count();
+  const conEditar = await sedesQueOfrecen(pagina, 'editar');
   ok(
     '[editor] sólo el propio se puede editar',
     conEditar === 1,
@@ -162,7 +162,7 @@ async function elEditor(pagina) {
   });
 
   /* 7 · Editar abre el formulario con lo que el consultorio ya tiene. */
-  await pagina.locator('[data-testid="sede-editar"]').first().click();
+  await accionarSede(pagina, 0, 'editar');
   await pagina.waitForTimeout(600);
   const nombre = await pagina.locator('[data-testid="sede-nombre"] input').inputValue();
   ok('[editor] «Editar» abre con el nombre cargado', nombre.trim() !== '', nombre);
@@ -257,3 +257,51 @@ main().catch(async (e) => {
   process.stderr.write(String(e && e.stack ? e.stack : e) + '\n');
   process.exit(2);
 });
+
+/**
+ * Cuántas sedes de la lista ofrecen esa acción.
+ *
+ * Desde ADR-0012 las acciones de una fila no son botones sueltos con su
+ * `data-testid`: son una lista, y la forma sale de cuántas hay. Con tres o más
+ * se pliegan en un desplegable cuyo panel se muda al `<body>`, así que
+ * buscarlas dentro de la fila no las encuentra; con dos quedan en la fila. El
+ * recorrido pregunta por la acción y no por la forma.
+ */
+async function sedesQueOfrecen(pagina, code) {
+  const filas = pagina.locator('[data-testid="sede-propia"]');
+  const total = await filas.count();
+  let cuantas = 0;
+  for (let i = 0; i < total; i += 1) {
+    const fila = filas.nth(i);
+    const disparador = fila.locator('[data-testid="row-actions-trigger"]');
+    if ((await disparador.count()) > 0) {
+      await disparador.click();
+      /* `count()` NO espera: preguntado en el instante del clic devuelve 0
+         siempre, y el recorrido informaba «0 de 4 con Editar» con la pantalla
+         andando. Primero se espera a que el panel exista. */
+      await pagina.locator('app-menu [role="menuitem"]').first().waitFor({ timeout: 10_000 });
+      cuantas += await pagina.locator(`app-menu [data-action="${code}"]`).count();
+      await pagina.keyboard.press('Escape');
+      await pagina
+        .locator('app-menu [role="menuitem"]')
+        .first()
+        .waitFor({ state: 'detached', timeout: 10_000 });
+    } else {
+      cuantas += await fila.locator(`app-row-actions [data-action="${code}"]`).count();
+    }
+  }
+  return cuantas;
+}
+
+/** Ejecuta esa acción en la fila n de la lista de sedes. */
+async function accionarSede(pagina, indice, code) {
+  const fila = pagina.locator('[data-testid="sede-propia"]').nth(indice);
+  const disparador = fila.locator('[data-testid="row-actions-trigger"]');
+  if ((await disparador.count()) > 0) {
+    await disparador.click();
+    await pagina.locator('app-menu [role="menuitem"]').first().waitFor({ timeout: 10_000 });
+    await pagina.locator(`app-menu [data-action="${code}"]`).click();
+    return;
+  }
+  await fila.locator(`app-row-actions [data-action="${code}"]`).click();
+}

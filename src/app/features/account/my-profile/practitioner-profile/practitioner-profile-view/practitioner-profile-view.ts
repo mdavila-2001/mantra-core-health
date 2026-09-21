@@ -24,7 +24,12 @@ import { WorkHistory } from '../../work-history/work-history';
 import { PractitionerActivity } from './practitioner-activity/practitioner-activity';
 import { PracticeSitesMap } from './practice-sites-map/practice-sites-map';
 import { CredentialsPanel } from './credentials-panel/credentials-panel';
-import { PESTANAS_DEL_PERFIL_MEDICO, PESTANA_MEDICO } from '../../pestanas-del-perfil-medico';
+import {
+  PESTANAS_DEL_EDITOR_MEDICO,
+  PESTANAS_DEL_PERFIL_MEDICO,
+  PESTANA_EDITOR,
+  PESTANA_MEDICO,
+} from '../../pestanas-del-perfil-medico';
 import { Avatar } from '../../../../../shared/components/atoms/avatar/avatar';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
@@ -38,15 +43,15 @@ import { TabHelpBlock } from '../../../../../shared/components/molecules/tab-hel
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
 import { ToastService } from '../../../../../shared/components/molecules/toast/toast.service';
+import { SpecialtyBadge } from '../../../../../shared/components/organisms/specialty-badge/specialty-badge';
+import { SpecialtyBadgeGrid } from '../../../../../shared/components/organisms/specialty-badge-grid/specialty-badge-grid';
 import { StatusSeal } from '../../../../../shared/components/organisms/status-seal/status-seal';
 import { HelpBlockDismissalStore } from '../../../../../core/tutorials/help-block-dismissal.store';
 import { TutorialTarget } from '../../../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import type {
-  EspecialidadVisible,
   FormacionVisible,
   PerfilProfesionalVisible,
 } from './practitioner-profile-view.types';
-import type { ChipVariant } from '../../../../../shared/components/atoms/chip/chip.types';
 
 /** Índice de cada pestaña superior — nombrado para no repetir números mágicos. */
 const TAB = { TRAYECTORIA: 0, CREDENCIALES: 1, PREVIEW: 2 } as const;
@@ -76,41 +81,16 @@ const AVISO_DE_CREDENCIALES =
   'Acá se separa lo que declaraste de lo que ya fue verificado contra una fuente ' +
   '—el colegio médico, el registro de matrículas—. Declarar no exige verificación previa.';
 
-/**
- * Los tonos con los que se pintan las especialidades en «Datos personales».
- *
- * **El ámbar queda afuera a propósito**, igual que en el Avatar: en este
- * sistema es el color de la acción única, y una lista de etiquetas
- * informativas que lo use compite con el botón que sí hay que tocar. `error`
- * tampoco entra —una especialidad no es un fallo— ni `neutral`, que es justo
- * el gris que el cliente pidió dejar de ver.
- */
-const TONOS_DE_ESPECIALIDAD: readonly ChipVariant[] = ['primary', 'info', 'success', 'secondary'];
+/* El hash que repartia un tono por especialidad se retiro con C-09. Dos
+   motivos, y ninguno es estetico. Repartia `info` y `success`, que en este
+   sistema significan un estado, asi que una especialidad podia leerse como el
+   estado de un tramite. Y el color, aun estable, no identificaba nada que el
+   nombre no dijera ya: lo que distingue una especialidad de otra ahora es el
+   icono de `app-specialty-badge`, que es reconocimiento de verdad.
 
-/** Una especialidad lista para pintar como chip. */
-interface EspecialidadEnChip {
-  readonly id: string;
-  readonly nombre: string;
-  readonly tono: ChipVariant;
-  readonly principal: boolean;
-  /** Lo que el lector de pantalla dice del chip, con su estado en palabras. */
-  readonly etiqueta: string;
-}
-
-/**
- * Reparte un tono estable a partir del nombre (djb2, el mismo hash con el que
- * el Avatar elige el color de las iniciales).
- *
- * Estable importa: «Cardiología» tiene que salir del mismo color en cada
- * recarga y en cada ficha, o el color deja de identificar nada.
- */
-function tonoDe(nombre: string): ChipVariant {
-  let hash = 5381;
-  for (const caracter of nombre) {
-    hash = (hash * 33 + caracter.codePointAt(0)!) % 0xffffffff;
-  }
-  return TONOS_DE_ESPECIALIDAD[hash % TONOS_DE_ESPECIALIDAD.length]!;
-}
+   La restriccion que este bloque protegia sigue viva, dentro de la insignia:
+   ni ambar —el color de la accion unica— ni gris, que es el que el cliente
+   pidio dejar de ver el 19/09/2026. */
 
 /** Una fila de la agrupación declarado/verificado de la pestaña Credenciales. */
 interface FilaCredencial {
@@ -166,6 +146,8 @@ interface FilaCredencial {
     NavIcon,
     Tooltip,
     RouterLink,
+    SpecialtyBadge,
+    SpecialtyBadgeGrid,
     StatusSeal,
     Tabs,
     Tab,
@@ -400,6 +382,27 @@ export class PractitionerProfileView {
   );
 
   /**
+   * La pestaña con la que el lápiz abre el editor.
+   *
+   * El editor decía en su propio comentario que «el lápiz abre el formulario en
+   * la pestaña que se estaba mirando», y **no era cierto**: el enlace iba a
+   * `/my-account/edit` a secas, así que desde «Credenciales» se entraba a
+   * editar en «Datos personales». Se resuelve acá, que es donde se sabe qué
+   * pestaña está abierta.
+   *
+   * Se traduce por ETIQUETA y no pasando el índice tal cual, por la misma razón
+   * que existe {@link pestanasVisibles}: la ficha suprime «Facturación» cuando
+   * no la tiene, así que a partir de ahí sus índices y los del editor no son
+   * los mismos. Una etiqueta que el editor no tenga cae en la primera, que es
+   * el comportamiento de siempre.
+   */
+  protected readonly pestanaDeEdicion = computed<number>(() => {
+    const abierta = this.pestanaVisibleSeleccionada();
+    const indice = abierta ? PESTANAS_DEL_EDITOR_MEDICO.findIndex((p) => p === abierta) : -1;
+    return indice >= 0 ? indice : PESTANA_EDITOR.personales;
+  });
+
+  /**
    * Adónde va «Cambiar contraseña».
    *
    * Al flujo de recuperación por correo, igual que en la ficha del paciente: es
@@ -407,36 +410,13 @@ export class PractitionerProfileView {
    */
   protected readonly rutaDeCambioDeContrasena = '/auth/forgot-password';
 
-  /**
-   * Las especialidades listas para pintarse como chips en «Datos personales».
-   *
-   * Suben de «Credenciales» a la primera pestaña por pedido del cliente
-   * (19/09/2026): la especialidad es parte de quién es el profesional —lo
-   * primero que alguien mira—, no un trámite. En «Credenciales» **siguen**,
-   * pero ahí con su vigencia y su sello, que es otra pregunta.
-   *
-   * La principal va primero y con el tono de marca; el resto reparte color
-   * por {@link tonoDe}, estable para un mismo nombre.
-   */
-  protected readonly especialidadesEnChips = computed<readonly EspecialidadEnChip[]>(() =>
-    [...this.perfil().especialidades]
-      .sort((a, b) => Number(b.principal) - Number(a.principal))
-      .map((especialidad: EspecialidadVisible) => ({
-        id: especialidad.id,
-        nombre: especialidad.nombre,
-        tono: especialidad.principal ? ('primary' as const) : tonoDe(especialidad.nombre),
-        principal: especialidad.principal,
-        // El color no comunica solo: lo que distingue a la principal y lo que
-        // dice que está certificada tiene que oírse.
-        etiqueta: [
-          especialidad.nombre,
-          especialidad.principal ? 'especialidad principal' : null,
-          especialidad.certificada ? 'certificada' : null,
-        ]
-          .filter((parte) => parte !== null)
-          .join(', '),
-      })),
-  );
+  /* Las especialidades ya no se preparan aca: `app-specialty-badge-grid`
+     recibe `perfil().especialidades` tal cual —`EspecialidadVisible` tiene los
+     campos que la insignia pide—, ordena la principal primero y dice en
+     palabras lo que antes iba en el `aria-label` del chip. Suben de
+     «Credenciales» a la primera pestania por pedido del cliente (19/09/2026);
+     en «Credenciales» siguen, con su vigencia y su sello, que es otra
+     pregunta. */
 
   /** Especialidades, formación y matrículas agrupadas en declarado vs. verificado. */
   protected readonly credenciales = computed<{

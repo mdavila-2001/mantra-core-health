@@ -86,6 +86,67 @@ interface UnMiembro {
  * sabe qué guarda cada señal—, así que el tipo se declara acá, en la prueba que
  * sí lo sabe, en vez de aflojar el helper para todas.
  */
+/**
+ * Las acciones de una sede, sin importar en qué forma las dibuje ADR-0012.
+ *
+ * En la sede propia son tres y viven en un desplegable —cuyo panel se muda al
+ * `<body>` mientras está abierto, así que buscarlo dentro de la fila no lo
+ * encuentra—; en la ajena son dos y se quedan en la fila. El spec pregunta por
+ * la acción y no por la forma: preguntar por la forma lo rompería cada vez que
+ * una sede gane o pierda una acción, aunque la pantalla siguiera funcionando.
+ */
+function accionesDeSede(
+  fixture: ComponentFixture<WorkHistory>,
+  fila: HTMLElement,
+): HTMLElement[] {
+  const disparador = fila.querySelector<HTMLButtonElement>(
+    '[data-testid="row-actions-trigger"]',
+  );
+  if (disparador === null) {
+    return [...fila.querySelectorAll<HTMLElement>('app-row-actions [data-action]')];
+  }
+  cerrarAcciones(fixture);
+  disparador.click();
+  fixture.detectChanges();
+  return [...document.querySelectorAll<HTMLElement>('app-menu [role="menuitem"]')];
+}
+
+/** Una acción de esa sede por su código, o `null` si esa sede no la ofrece. */
+function accionDeSede(
+  fixture: ComponentFixture<WorkHistory>,
+  fila: HTMLElement,
+  code: string,
+): HTMLElement | null {
+  return accionesDeSede(fixture, fila).find((el) => el.dataset['action'] === code) ?? null;
+}
+
+/**
+ * Los códigos que esa sede ofrece, en orden.
+ *
+ * Pedilos UNA vez por fila y repartí de ahí: volver a abrir el mismo
+ * desplegable dentro de la misma prueba devuelve vacío, porque el disparador
+ * acaba de recibir el foco de vuelta del cierre y se come ese clic.
+ */
+function codigosDeSede(
+  fixture: ComponentFixture<WorkHistory>,
+  fila: HTMLElement,
+): (string | undefined)[] {
+  return accionesDeSede(fixture, fila).map((el) => el.dataset['action']);
+}
+
+/**
+ * Cierra el desplegable que hubiera abierto. Si quedara abierto entre dos
+ * filas, la siguiente leería el panel de la anterior y el spec mediría otra
+ * sede sin avisar.
+ */
+function cerrarAcciones(fixture: ComponentFixture<WorkHistory>): void {
+  if (document.querySelector('app-menu [role="menuitem"]') === null) {
+    return;
+  }
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  fixture.detectChanges();
+}
+
 function leer<T>(componente: Record<string, UnMiembro>, nombre: string): T {
   return componente[nombre]() as T;
 }
@@ -671,7 +732,15 @@ async function montarConSedes(
   }
   fixture.detectChanges();
   const http = TestBed.inject(HttpTestingController);
-  http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+  /* Cada modo pide sólo lo que dibuja. `historial` no lee las sedes —eso ya
+     estaba— y desde el 20/09/2026 `consultorios` tampoco lee el historial
+     (`work-history.ts`, guarda de `cargar`): con el consultorio adentro del
+     perfil, la ficha monta este componente dos veces y esa lectura se hacía
+     por duplicado para no dibujarse nunca. El helper espeja la asimetría; el
+     `http.verify()` de cada prueba es lo que la fija. */
+  if (secciones !== 'consultorios') {
+    http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+  }
   return { fixture, http, dialogs };
 }
 
@@ -865,6 +934,10 @@ describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', (
 
   it('con `secciones="consultorios"» no dibuja el historial laboral', async () => {
     const { fixture, http } = await montarConSedes(true, 'consultorios');
+    // Ni lo pide. Es la simétrica de la prueba de arriba, y la que faltaba:
+    // la ficha del médico monta este componente dos veces, así que una
+    // lectura que no se dibuja se paga dos veces por visita.
+    expect(http.match(AFILIACIONES)).toHaveLength(0);
     http.expectOne(SITIOS).flush({ items: [], count: 0 });
     fixture.detectChanges();
 
@@ -892,12 +965,16 @@ describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', (
       ...fixture.nativeElement.querySelectorAll('[data-testid="sede-propia"]'),
     ] as HTMLElement[];
     expect(filas).toHaveLength(2);
-    expect(filas[0].querySelector('[data-testid="sede-editar"]')).not.toBeNull();
-    expect(filas[1].querySelector('[data-testid="sede-editar"]')).toBeNull();
+    const propiaOfrece = codigosDeSede(fixture, filas[0]!);
+    const ajenaOfrece = codigosDeSede(fixture, filas[1]!);
+
+    expect(propiaOfrece).toContain('editar');
+    expect(ajenaOfrece).not.toContain('editar');
     // Retirar sigue estando en los dos: dejar de atender en un lugar vale para
     // el propio y para el ajeno.
-    expect(filas[0].querySelector('[data-testid="sede-quitar"]')).not.toBeNull();
-    expect(filas[1].querySelector('[data-testid="sede-quitar"]')).not.toBeNull();
+    expect(propiaOfrece).toContain('retirar');
+    expect(ajenaOfrece).toContain('retirar');
+    cerrarAcciones(fixture);
   });
 
   it('teniendo uno propio, ya no ofrece crear otro', async () => {
@@ -993,32 +1070,38 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
     return [...fixture.nativeElement.querySelectorAll('[data-testid="sede-propia"]')];
   }
 
-  it('editar y retirar son íconos con nombre accesible y globo', async () => {
+  /**
+   * Antes esta prueba exigía lo contrario: que editar y retirar fueran glifos
+   * sin texto, cada uno con su globo. ADR-0012 invirtió la regla —el globo era
+   * el parche de un botón mudo— y lo que se exige ahora es el texto a la vista.
+   * No se debilitó: cambió de exigencia junto con la decisión, y sigue
+   * midiendo lo mismo, que es si se entiende qué hace cada acción.
+   */
+  it('editar y retirar se leen con su texto, y el disparador dice de qué sede', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [conQr()], count: 1 });
     fixture.detectChanges();
 
-    const editar = filas(fixture)[0]!.querySelector('[data-testid="sede-editar"]')!;
-    const retirar = filas(fixture)[0]!.querySelector('[data-testid="sede-quitar"]')!;
+    const fila = filas(fixture)[0]!;
 
-    // Sin texto visible: lo que queda es el glifo.
-    expect(editar.textContent?.trim()).toBe('');
-    expect(retirar.textContent?.trim()).toBe('');
+    // Tres acciones: la sede propia colapsa. El disparador nombra la sede,
+    // porque «Acciones» repetido cuatro veces no le sirve a quien navega por
+    // lista de botones.
+    const disparador = fila.querySelector('[data-testid="row-actions-trigger"]')!;
+    expect(disparador.getAttribute('aria-label')).toBe('Acciones de Consultorio Dra. Pérez');
+
+    const acciones = accionesDeSede(fixture, fila);
+    const editar = acciones.find((el) => el.dataset['action'] === 'editar')!;
+    const retirar = acciones.find((el) => el.dataset['action'] === 'retirar')!;
+
+    expect(editar.textContent?.trim()).toBe('Editar');
+    expect(retirar.textContent?.trim()).toBe('Retirar');
+
+    // El ícono sigue estando: acompaña al texto, no lo sustituye.
     expect(editar.querySelector('svg')).not.toBeNull();
     expect(retirar.querySelector('svg')).not.toBeNull();
 
-    // Y el nombre nombra la sede: «Editar» repetido cuatro veces no le sirve a
-    // quien navega por lista de botones.
-    expect(editar.getAttribute('aria-label')).toBe('Editar Consultorio Dra. Pérez');
-
-    // El globo, con el teclado y no sólo con el puntero: un ícono sin texto
-    // que sólo se explica al apuntarlo no se explica a quien no apunta.
-    editar.dispatchEvent(new FocusEvent('focus'));
-    fixture.detectChanges();
-    expect(document.body.querySelector('app-tooltip-panel')?.textContent?.trim()).toBe(
-      'Editar Consultorio Dra. Pérez',
-    );
-    editar.dispatchEvent(new FocusEvent('blur'));
+    cerrarAcciones(fixture);
   });
 
   /**
@@ -1030,13 +1113,18 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
     http.expectOne(SITIOS).flush({ items: [conQr(), sinQr()], count: 2 });
     fixture.detectChanges();
 
-    const nombres = filas(fixture).map((fila) =>
-      fila.querySelector('[data-testid="sede-quitar"]')!.getAttribute('aria-label'),
+    const [propiaFila, ajenaFila] = filas(fixture);
+    expect(accionDeSede(fixture, propiaFila!, 'retirar')!.textContent?.trim()).toBe('Retirar');
+    expect(accionDeSede(fixture, ajenaFila!, 'retirar')!.textContent?.trim()).toBe(
+      'Dejar de atender',
     );
-    expect(nombres).toEqual([
-      'Retirar Consultorio Dra. Pérez de tus consultorios',
-      'Dejar de atender en Hospital San Lucas',
-    ]);
+
+    // De qué sede se trata ya no lo repite cada etiqueta: en la ajena, que se
+    // dibuja en la fila, lo dice el nombre accesible.
+    expect(accionDeSede(fixture, ajenaFila!, 'retirar')!.getAttribute('aria-label')).toBe(
+      'Dejar de atender — Hospital San Lucas',
+    );
+    cerrarAcciones(fixture);
   });
 
   it('toda sede tiene su botón de QR, propia o ajena', async () => {
@@ -1044,30 +1132,36 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
     http.expectOne(SITIOS).flush({ items: [conQr(), sinQr()], count: 2 });
     fixture.detectChanges();
 
-    expect(
-      filas(fixture).map((fila) => fila.querySelector('[data-testid="sede-qr"]') !== null),
-    ).toEqual([true, true]);
+    expect(filas(fixture).map((fila) => codigosDeSede(fixture, fila).includes('qr'))).toEqual([
+      true,
+      true,
+    ]);
+    cerrarAcciones(fixture);
   });
 
-  it('sin QR configurado el botón va en ámbar Y lo dice con palabras', async () => {
+  /**
+   * El ámbar se fue con el botón sólo-ícono: ADR-0012 no le deja tono propio a
+   * una acción suelta. Lo que decía sigue dicho en palabras, y en dos lugares:
+   * el nombre de la acción y el aviso de la fila. Lo que se perdió está
+   * anotado en el `.css`: el ámbar avisaba sin abrir el desplegable.
+   */
+  it('sin QR configurado lo dice con palabras, y en la fila', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [conQr(), sinQr()], count: 2 });
     fixture.detectChanges();
 
-    const [conImagen, sinImagen] = filas(fixture).map(
-      (fila) => fila.querySelector('[data-testid="sede-qr"]')!,
-    );
+    const [conImagen, sinImagen] = filas(fixture);
 
-    expect(sinImagen!.classList).toContain('historial__qr--sin-configurar');
-    expect(conImagen!.classList).not.toContain('historial__qr--sin-configurar');
+    expect(accionDeSede(fixture, sinImagen!, 'qr')!.textContent?.trim()).toBe(
+      'Configurar QR bancario',
+    );
+    expect(accionDeSede(fixture, conImagen!, 'qr')!.textContent?.trim()).toBe('Ver QR bancario');
 
-    // El color no puede ser la única señal.
-    expect(sinImagen!.getAttribute('aria-label')).toBe(
-      'Configurar el QR bancario de Hospital San Lucas',
-    );
-    expect(conImagen!.getAttribute('aria-label')).toBe(
-      'Ver el QR bancario de Consultorio Dra. Pérez',
-    );
+    // Y el aviso de la fila, que no depende de abrir nada, sigue apareciendo
+    // sólo en la que no lo tiene.
+    expect(sinImagen!.querySelector('[data-testid="sede-sin-qr"]')).not.toBeNull();
+    expect(conImagen!.querySelector('[data-testid="sede-sin-qr"]')).toBeNull();
+    cerrarAcciones(fixture);
   });
 
   /**
@@ -1080,9 +1174,10 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
     http.expectOne(SITIOS).flush({ items: [sedeEnCable()], count: 1 });
     fixture.detectChanges();
 
-    expect(filas(fixture)[0]!.querySelector('[data-testid="sede-qr"]')!.classList).toContain(
-      'historial__qr--sin-configurar',
+    expect(accionDeSede(fixture, filas(fixture)[0]!, 'qr')!.textContent?.trim()).toBe(
+      'Configurar QR bancario',
     );
+    cerrarAcciones(fixture);
   });
 
   /**
@@ -1096,7 +1191,7 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
 
     expect(fixture.nativeElement.querySelector('app-site-bank-qr-dialog')).toBeNull();
 
-    filas(fixture)[0]!.querySelector<HTMLButtonElement>('[data-testid="sede-qr"]')!.click();
+    accionDeSede(fixture, filas(fixture)[0]!, 'qr')!.click();
     fixture.detectChanges();
 
     expect(
@@ -1105,11 +1200,11 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
   });
 
   /**
-   * Tras guardar, lo único visible es que esa fila deja el ámbar. Releer las
-   * cuatro sedes para enterarse de eso es una vuelta completa por un dato que
-   * ya está en la mano.
+   * Tras guardar, lo único que cambia es que esa sede pasa de «Configurar» a
+   * «Ver». Releer las cuatro sedes para enterarse de eso es una vuelta
+   * completa por un dato que ya está en la mano.
    */
-  it('guardar un QR apaga el ámbar de esa fila sin releer la lista', async () => {
+  it('guardar un QR cambia lo que ofrece esa fila, sin releer la lista', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [sinQr()], count: 1 });
     fixture.detectChanges();
@@ -1119,9 +1214,10 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
     (componente['qrGuardado'] as unknown as (f: string) => void)('file-nuevo');
     fixture.detectChanges();
 
-    expect(filas(fixture)[0]!.querySelector('[data-testid="sede-qr"]')!.classList).not.toContain(
-      'historial__qr--sin-configurar',
+    expect(accionDeSede(fixture, filas(fixture)[0]!, 'qr')!.textContent?.trim()).toBe(
+      'Ver QR bancario',
     );
+    cerrarAcciones(fixture);
     // Y no se volvió a pedir la lista de sedes.
     expect(http.match(SITIOS).length).toBe(0);
     // El modal, que sigue abierto, sí baja la imagen nueva: es el contenido del
@@ -1152,10 +1248,14 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     const marcas = fixture.nativeElement.querySelectorAll('[data-testid="sede-propia-marca"]');
     expect(marcas.length).toBe(1);
     // Corregir alcanza sólo al propio: la sede del hospital es de él.
-    const editar = fixture.nativeElement.querySelectorAll('[data-testid="sede-editar"]');
-    expect(editar.length).toBe(1);
+    const sedes = [
+      ...fixture.nativeElement.querySelectorAll('[data-testid="sede-propia"]'),
+    ] as HTMLElement[];
+    const ofrecen = sedes.map((fila) => codigosDeSede(fixture, fila));
+    expect(ofrecen.filter((codigos) => codigos.includes('editar'))).toHaveLength(1);
     // El QR, en cambio, va en las dos: también se cobra donde no sos dueño.
-    expect(fixture.nativeElement.querySelectorAll('[data-testid="sede-qr"]').length).toBe(2);
+    expect(ofrecen.filter((codigos) => codigos.includes('qr'))).toHaveLength(2);
+    cerrarAcciones(fixture);
     http.verify();
   });
 
@@ -1186,8 +1286,12 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     http.expectOne(SITIOS).flush({ items: [sedeEnCable()], count: 1 });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('[data-testid="sede-editar"]')).toBeNull();
+    const fila = fixture.nativeElement.querySelector(
+      '[data-testid="sede-propia"]',
+    ) as HTMLElement;
+    expect(codigosDeSede(fixture, fila)).not.toContain('editar');
     expect(fixture.nativeElement.querySelector('[data-testid="sede-agregar"]')).not.toBeNull();
+    cerrarAcciones(fixture);
     http.verify();
   });
 
@@ -1281,9 +1385,13 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     fixture.detectChanges();
     const componente = api(fixture);
 
+    // La distinción es del negocio y se conserva: en la propia se deja de
+    // ofrecer un consultorio que es suyo, en la ajena se corta un vínculo con
+    // una organización. Lo que ya no hace la etiqueta es repetir el nombre de
+    // la sede: eso lo pone el nombre accesible, a partir de `fila`.
     const etiqueta = componente['etiquetaDeRetiro'] as unknown as (s: unknown) => string;
-    expect(etiqueta(PROPIA)).toBe('Retirar Consultorio Dra. Pérez de tus consultorios');
-    expect(etiqueta(AJENA)).toBe('Dejar de atender en Hospital San Lucas');
+    expect(etiqueta(PROPIA)).toBe('Retirar');
+    expect(etiqueta(AJENA)).toBe('Dejar de atender');
     http.verify();
   });
 });

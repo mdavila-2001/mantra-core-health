@@ -195,12 +195,12 @@
    van juntas al final de la fila, no apiladas. En ícono: con los tres rótulos
    completos la fila se partía en dos renglones apenas el nombre del hospital
    pasaba de corto. */
+/* Sólo dónde se para dentro de la fila. Cómo se acomodan las acciones entre
+   sí —dirección, envoltura, separación— es del propio `app-row-actions` desde
+   ADR-0012; repetirlo acá sería competirle al componente por su propio layout. */
 .historial__acciones {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1);
-  /* Los tres botones no siguen la línea de base del nombre: el `baseline` de la
-     fila los subiría, y un ícono no tiene línea de base que alinear. */
+  /* Las acciones no siguen la línea de base del nombre: el `baseline` de la
+     fila las subiría. */
   align-self: center;
 }
 
@@ -211,7 +211,11 @@
    la fila (`.historial__sede`) pero en el ámbar del botón al que acompaña: son
    una sola advertencia dicha dos veces, para quien mira y para quien lee. */
 .historial__aviso-qr {
-  color: var(--c-warning-600);
+  /* La tinta semántica de aviso, no un escalón suelto de la rampa. Con
+     `--c-warning-600` este texto daba 3,09:1 sobre la superficie de la
+     tarjeta en tema claro, y texto chico necesita 4,5:1 (WCAG 1.4.3).
+     `--st-warning-fg` además cambia sola entre claro y oscuro. */
+  color: var(--st-warning-fg);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
 }
@@ -241,21 +245,15 @@
    variables de `styles.css`, y ningún componente escribe `prefers-color-scheme`.
 
    El trazo sube a 2 px: a 3:1 justo, una línea de 1,6 px se desdibuja. */
-.historial__qr--sin-configurar {
-  color: var(--c-warning-600);
-}
-
-.historial__qr--sin-configurar svg {
-  stroke-width: 2;
-}
-
-/* Retirar es destructivo en su efecto aunque no borre la sede: la tinta lo
-   dice antes de que nadie lea el globo. Sólo al apuntarlo, para que cuatro
-   filas no se lean como cuatro advertencias. */
-.historial__retirar:hover,
-.historial__retirar:focus-visible {
-  color: var(--text-danger);
-}
+/* Acá vivían dos reglas de los botones sólo-ícono que ADR-0012 retiró:
+   el QR en ámbar cuando faltaba configurarlo, y la tinta de peligro de
+   «Retirar» al apuntarlo. Las dos decían con color algo que ahora dice el
+   texto: la acción se llama «Configurar QR bancario» cuando falta —y el aviso
+   en palabras sigue en la fila, en `.historial__aviso-qr`—, y la de retirar va
+   marcada como destructiva, que es lo que `app-row-actions` sabe pintar.
+   El ámbar no se fue de la fila: `.historial__aviso-qr` usa el mismo token y
+   sigue a la vista sin abrir nada. Lo que se fue es la SEGUNDA copia del
+   mismo aviso, la que vivía en el glifo. */
 
 /* La segunda puerta: buscar un establecimiento que ya existe. Va separada del
    alta del consultorio propio por una línea, porque son dos operaciones

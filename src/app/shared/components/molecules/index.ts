@@ -103,6 +103,12 @@ export {
 } from './reference-combobox/reference-combobox.types';
 export type { ReferenceOption } from './reference-combobox/reference-combobox.types';
 
+/* Las acciones de una fila, según ADR-0012: hasta dos van en la fila con su
+   texto, con más van a un desplegable sobre `menu`. */
+export { RowActions } from './row-actions/row-actions';
+export { ROW_ACTIONS_INLINE_MAX } from './row-actions/row-actions.types';
+export type { RowAction } from './row-actions/row-actions.types';
+
 export { SectionHeading } from './section-heading/section-heading';
 
 export { SearchField } from './search-field/search-field';

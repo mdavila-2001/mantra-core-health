@@ -85,6 +85,21 @@ describe('PostPreferencesMenu', () => {
       expect(disparador().getAttribute('aria-haspopup')).toBe('menu');
     });
 
+    /**
+     * El disparador es sólo-icono, así que ADR-0012 le exige las dos mitades:
+     * el nombre para quien escucha (`aria-label`) **y** el globo para quien
+     * ve. Tenía sólo la primera, aunque su propio comentario prometía las dos.
+     */
+    it('el disparador muestra el globo con el mismo texto al enfocarlo', () => {
+      disparador().dispatchEvent(new FocusEvent('focus'));
+      fixture.detectChanges();
+
+      const globo = document.body.querySelector('app-tooltip-panel');
+      expect(globo).not.toBeNull();
+      expect(globo?.getAttribute('role')).toBe('tooltip');
+      expect(globo?.textContent?.trim()).toBe('Preferencias de la publicación');
+    });
+
     it('son exactamente siete, en el orden del pedido', async () => {
       await abrir();
       const rotulos = items().map((i) => i.textContent?.trim());

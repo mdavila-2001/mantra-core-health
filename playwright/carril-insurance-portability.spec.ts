@@ -75,32 +75,35 @@ for (const viewport of [
 
       await abrirDialogo(page);
 
-      // PDF ya viene preseleccionado — el radio group nace en 'PDF'.
-      const radioPdf = page.getByTestId('radio-format-pdf');
-      await expect(radioPdf.locator('input[type="radio"]')).toBeChecked();
+      // PDF ya viene preseleccionado. Desde C-21 (ADR-0013) los tres formatos
+      // son un desplegable y no tres radios, así que la preselección se lee en
+      // la opción marcada y por su TEXTO: `app-select` guarda el índice de la
+      // opción en el `value` del `<option>`, y afirmar sobre ese número no
+      // diría nada de lo que el médico ve.
+      const selectorDeFormato = page.getByTestId('portability-format').locator('select');
+      await expect(selectorDeFormato.locator('option:checked')).toHaveText(
+        'PDF oficial certificado con código QR',
+      );
 
       const desborde = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
       );
       expect(desborde, `desborde con el diálogo abierto (${viewport.width})`).toBeLessThanOrEqual(1);
 
-      // Objetivos táctiles de los radios: **antes** de generar. Emitido el
-      // certificado, el `@switch` del diálogo reemplaza el selector de formato
-      // por el sello y las descargas, así que después de este punto los radios
-      // ya no existen en el DOM.
+      // Objetivo táctil del selector de formato: **antes** de generar. Emitido
+      // el certificado, el `@switch` del diálogo lo reemplaza por el sello y
+      // las descargas, así que después de este punto ya no existe en el DOM.
       //
       // El umbral es el que el sistema de diseño promete PARA ESE ANCHO, no un
-      // 44 universal: tanto el radio (`molecules/radio/radio.css:56-58`) como
-      // el botón `md` (`atoms/button/button.css:128-146`) declaran 44 px en
-      // móvil y **bajan a 40 px desde 780 px a propósito** —«cada talle
-      // recupera su geometría del spec», dice el propio CSS—. Medido en 1440:
-      // 39,99 px el radio, 40 px el botón. Los 40 siguen muy por encima del
-      // mínimo de WCAG 2.2 AA (24 px, SC 2.5.8); los 44 son el nivel AAA.
+      // 44 universal: tanto el select (`atoms/select/select.css:15` y `:26-28`)
+      // como el botón `md` (`atoms/button/button.css:128-146`) declaran 44 px
+      // en móvil y **bajan a 40 px desde 780 px a propósito** —«cada talle
+      // recupera su geometría del spec», dice el propio CSS—. Los 40 siguen muy
+      // por encima del mínimo de WCAG 2.2 AA (24 px, SC 2.5.8); los 44 son el
+      // nivel AAA.
       const altoMinimoTactil = viewport.width >= 780 ? 40 : 44;
       const objetivos = [
-        ['radio-format-pdf', page.getByTestId('radio-format-pdf').locator('label')],
-        ['radio-format-json', page.getByTestId('radio-format-json').locator('label')],
-        ['radio-format-both', page.getByTestId('radio-format-both').locator('label')],
+        ['portability-format', selectorDeFormato],
         ['btn-cancel-portability-dialog', page.getByTestId('btn-cancel-portability-dialog')],
         ['btn-generate-portability-download', page.getByTestId('btn-generate-portability-download')],
       ] as const;
@@ -240,8 +243,11 @@ for (const viewport of [
     }, info) => {
       await abrirDialogo(page);
 
-      await page.getByTestId('radio-format-json').locator('label').click();
-      await expect(page.getByTestId('radio-format-json').locator('input[type="radio"]')).toBeChecked();
+      const selectorDeFormato = page.getByTestId('portability-format').locator('select');
+      await selectorDeFormato.selectOption({ label: 'Archivo JSON interoperable' });
+      await expect(selectorDeFormato.locator('option:checked')).toHaveText(
+        'Archivo JSON interoperable',
+      );
 
       const [descarga] = await Promise.all([
         page.waitForEvent('download'),

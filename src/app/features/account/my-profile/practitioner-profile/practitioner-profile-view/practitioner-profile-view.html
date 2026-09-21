@@ -56,6 +56,26 @@
         <div class="mi-perfil__rotulo">
           <h2 class="mi-perfil__titulo">Tus datos</h2>
           <p class="mi-perfil__nombre">{{ perfil().nombre }}</p>
+          <!-- «Telemedicina», reubicada acá al quitar «Cómo atendés» de la
+               pestaña «Dónde atiendo» (C-01, 20/09/2026).
+
+               No estaba de más: la ficha AJENA ya lo dice como chip en su
+               portada, pero la propia lo decía **sólo** dentro de esa
+               sección, así que quitarla sin más lo borraba de la vista del
+               propio médico. Acá queda en el mismo lugar y con la misma
+               forma que en la ficha que ve un paciente —un chip en la
+               cabecera— y no dentro de una pestaña, que es donde nadie lo
+               busca.
+
+               Sólo cuando es cierto, igual que allá: un chip que dijera «no
+               ofrecés telemedicina» estamparía en TODA ficha el valor por
+               omisión de quien nunca tocó el ajuste. Es la misma lección que
+               dejó «Acepto pacientes nuevos». -->
+          @if (perfil().telemedicina) {
+            <app-chip class="mi-perfil__modalidad" variant="info">
+              Atendés por telemedicina
+            </app-chip>
+          }
           @if (errorDeFoto(); as fallo) {
             <p class="mi-perfil__foto-error" role="alert">{{ fallo }}</p>
           }
@@ -64,7 +84,14 @@
 
       <!-- El lápiz, igual que en la ficha del paciente: botón de ícono, con el
            nombre accesible en `aria-label` y en el globo. Va a la pantalla de
-           edición del médico, que es donde hoy vive su formulario. -->
+           edición del médico, que es donde hoy vive su formulario.
+
+           Y le dice EN QUÉ PESTAÑA se estaba: el editor prometía en su propio
+           comentario abrirse donde uno venía mirando, pero nadie le pasaba el
+           índice, así que desde «Credenciales» se entraba a editar en «Datos
+           personales». Se manda el índice del editor, no el de acá: la ficha
+           suprime «Facturación» cuando no la tiene y a partir de ahí las dos
+           numeraciones dejan de coincidir (`pestanaDeEdicion`). -->
       <a
         app-button
         variant="outline"
@@ -74,6 +101,7 @@
         appTooltip="Editar"
         data-testid="mi-perfil-editar"
         routerLink="/my-account/edit"
+        [queryParams]="{ pestana: pestanaDeEdicion() }"
       >
         <app-nav-icon name="edit" />
       </a>
@@ -152,26 +180,25 @@
             </dd>
           </div>
 
-          <!-- Las especialidades, en chips de color (pedido del 19/09/2026).
-               Van con la identidad y no en «Credenciales»: contestan «¿de qué
-               es médico?», la pregunta que se hace antes que ninguna. En
-               «Credenciales» siguen, con su vigencia y su sello.
+          <!-- Las especialidades (pedido del 19/09/2026). Van con la identidad
+               y no en «Credenciales»: contestan «¿de qué es médico?», la
+               pregunta que se hace antes que ninguna. En «Credenciales»
+               siguen, con su vigencia y su sello.
 
-               El color lo reparte un hash del nombre, así que una misma
-               especialidad sale siempre del mismo tono; la principal se lleva
-               el de marca. Y como el color no comunica solo, el chip dice su
-               estado en palabras en el nombre accesible. -->
+               Desde C-09 es la insignia compartida, la misma en toda la
+               aplicación. El hash de color se retiró: repartía tonos que en
+               este sistema significan un estado, y una especialidad no es un
+               estado. Lo que distingue una de otra ahora es el ícono. El gris
+               tampoco volvió — es el que el cliente pidió dejar de ver. -->
           <div class="mi-perfil__dato mi-perfil__dato--ancho">
             <dt>Especialidades</dt>
             <dd>
-              @if (especialidadesEnChips().length > 0) {
-                <span class="mi-perfil__chips" data-testid="perfil-especialidades-chips">
-                  @for (especialidad of especialidadesEnChips(); track especialidad.id) {
-                    <app-chip size="sm" [variant]="especialidad.tono" [label]="especialidad.etiqueta">
-                      {{ especialidad.nombre }}
-                    </app-chip>
-                  }
-                </span>
+              @if (perfil().especialidades.length > 0) {
+                <app-specialty-badge-grid
+                  class="mi-perfil__especialidades"
+                  data-testid="perfil-especialidades-chips"
+                  [especialidades]="perfil().especialidades"
+                />
               } @else {
                 <span class="mi-perfil__ausente">Sin registrar</span>
               }
@@ -387,51 +414,66 @@
       }
 
       <!-- ─── Dónde atiendo ────────────────────────────────────────────────
-           Paso 7 del alta («tu consultorio propio») más la disponibilidad.
-           Es la pregunta que la trayectoria no contesta: dónde encontrarlo HOY. -->
+           Paso 7 del alta («tu consultorio propio»). Es la pregunta que la
+           trayectoria no contesta: dónde encontrarlo HOY.
+
+           **«Cómo atendés» ya no está acá** (C-01, pedido del doctor del
+           20/09/2026). Los dos datos que mostraba no se perdieron en silencio:
+
+           - «Telemedicina» sigue dibujándose, en la portada de la ficha —el
+             chip de más abajo en este mismo archivo—, que es donde se ve sin
+             abrir una pestaña y en las dos fichas, la propia y la pública.
+             Acá se decía por segunda vez.
+           - «Pacientes nuevos» se **retira**. Desde el 13/09/2026 el
+             propietario sacó la pregunta del alta y del editor, y el editor lo
+             fuerza a sí en el primer guardado
+             (`practitioner-profile-edit.ts:1014-1018`): la sección sólo podía
+             repetir un valor que nadie puede cambiar o, en un perfil que nunca
+             se guardó, decir «No los aceptás» de alguien que sí los acepta —la
+             frase exacta por la que ya se lo había sacado de la portada y de la
+             tarjeta del Directorio—. -->
       <app-tab [label]="pestanas[3]">
-        <section class="mi-perfil__seccion" data-testid="perfil-sedes">
-          <h3 class="mi-perfil__subtitulo">Tus consultorios y sedes</h3>
-          <!-- La ficha MUESTRA; no da de alta. El botón de agregar vivía acá
-               al lado en «Trayectoria», que es de dónde salió el 13/09/2026: la
-               ficha es para mirar tus datos, y cargar un consultorio es
-               editarlos. El camino se dice, no se esconde. -->
-          <p class="mi-perfil__nota mi-perfil__nota--primera">
-            Se agregan y se retiran desde «Editar tu info», en «Dónde atiendo».
-          </p>
-          @if (perfil().sedes?.length) {
+        @if (perfil().sedes?.length) {
+          <section class="mi-perfil__seccion" data-testid="perfil-sedes">
+            <h2 class="mi-perfil__titulo">Dónde caen en el mapa</h2>
             <!-- El mapa y su índice, en un componente propio: son cuatro
                  direcciones de la misma ciudad y la pregunta es dónde caen
                  unas respecto de otras, que una lista no contesta (pedido del
                  19/09/2026). Vive aparte porque trae su propia hoja de
-                 estilos, y ésta ya no tiene margen. -->
-            <app-practice-sites-map [sedes]="perfil().sedes ?? []" />
-          } @else {
-            <p class="mi-perfil__nota">
-              Todavía no registraste dónde atendés. Es lo que un paciente usa para llegar a tu
-              consultorio.
-            </p>
-          }
-        </section>
+                 estilos, y ésta ya no tiene margen.
 
-        <!-- «Cómo atendés» es otra pregunta que «dónde»: va en su propio
-             bloque, fuera del de las sedes y en la misma pestaña (pedido del
-             19/09/2026). Pegado al mapa se leía como un pie de la lista. -->
-        <app-card class="mi-perfil__bloque-interno" variant="outlined" padding="md">
-          <h3 class="mi-perfil__subtitulo mi-perfil__subtitulo--primero">Cómo atendés</h3>
-          <dl class="mi-perfil__datos">
-            <div class="mi-perfil__dato">
-              <dt>Telemedicina</dt>
-              <dd>{{ perfil().telemedicina ? 'Atendés por telemedicina' : 'No la ofrecés' }}</dd>
-            </div>
-            <div class="mi-perfil__dato">
-              <dt>Pacientes nuevos</dt>
-              <dd>
-                {{ perfil().aceptaPacientesNuevos ? 'Aceptás pacientes nuevos' : 'No los aceptás' }}
-              </dd>
-            </div>
-          </dl>
-        </app-card>
+                 El título dice lo que el bloque contesta y no «Tus
+                 consultorios y sedes», que es lo que contesta el bloque de
+                 abajo: con los dos nombrados igual, la pestaña parecía
+                 mostrar la misma lista dos veces. Y es `h2` y ya no `h3`
+                 porque abajo entra `app-work-history`, cuyo título es `h2`:
+                 dejarlo en `h3` ponía un `h3` antes de un `h2` dentro del
+                 mismo panel, que es un salto de jerarquía para quien navega
+                 por encabezados. -->
+            <app-practice-sites-map [sedes]="perfil().sedes ?? []" />
+          </section>
+        }
+
+        <!-- ─── El consultorio, adentro del perfil (C-02) ───────────────────
+             «Solo en caso de mi consultorio se ve como pestaña para
+             personalizarle el QR y todo lo que ofrece esa view» —doctor,
+             20/09/2026—. «Esa view» es `/administration/my-practice`, y su
+             plantilla entera son una cabecera y este mismo componente en modo
+             `consultorios` (`my-practice.html`). Así que acá no se copia nada
+             ni se rehace el QR: se monta **el mismo** `app-work-history` que
+             montan esa pantalla y la pestaña «Dónde atiendo» del editor, con
+             su alta, su corrección, su retiro, su búsqueda en el padrón y su
+             diálogo de QR bancario. Un arreglo sigue llegando a las tres.
+
+             Esto vuelve editable una pestaña de la ficha, y la ficha venía
+             siendo sólo de lectura (13/09/2026). El desvío es deliberado y es
+             el pedido: sin él, para cargar el QR de cobro había que salir del
+             perfil. Queda dentro de `esPropio() && !previewMode()` —el `@if`
+             que abre este bloque de pestañas—, así que ni un colega en la Guía
+             ni la vista previa del perfil público lo ven. -->
+        <section class="mi-perfil__seccion" data-testid="perfil-consultorio">
+          <app-work-history secciones="consultorios" (added)="trayectoriaCambio.emit()" />
+        </section>
       </app-tab>
 
       <!-- ─── Trayectoria ──────────────────────────────────────────────────
@@ -719,7 +761,11 @@
             <p class="profesional__titulo">{{ perfil().titulo }}</p>
           }
 
-          @if (perfil().especialidadPrincipal) {
+          <!-- C-09: la especialidad principal ya se ve abajo, en su insignia y
+               con la palabra «Principal». Este renglón queda sólo para el caso
+               en que el perfil declare una principal y NO tenga la lista
+               cargada: ahí no habría insignia y el dato se perdería. -->
+          @if (perfil().especialidadPrincipal && perfil().especialidades.length === 0) {
             <p class="profesional__especialidad">{{ perfil().especialidadPrincipal }}</p>
           }
 
@@ -768,10 +814,15 @@
         @if (perfil().telemedicina) {
           <app-chip variant="info">Atiende por telemedicina</app-chip>
         }
-        @for (especialidad of perfil().especialidades; track especialidad.id) {
-          <app-chip [variant]="especialidad.principal ? 'primary' : 'neutral'">
-            {{ especialidad.nombre }}
-          </app-chip>
+        <!-- C-09: la MISMA insignia que en «Datos personales». Antes acá el
+             tono era `principal ? primary : neutral` y allá lo repartía un
+             hash: la misma especialidad del mismo médico cambiaba de color
+             según quién la mirara. -->
+        @if (perfil().especialidades.length > 0) {
+          <app-specialty-badge-grid
+            class="profesional__especialidades"
+            [especialidades]="perfil().especialidades"
+          />
         }
         @for (idioma of perfil().idiomas; track idioma.id) {
           <app-chip variant="neutral">
@@ -1229,16 +1280,24 @@
                     class="profesional__item"
                     [class.profesional__item--pasado]="especialidad.hasta"
                   >
+                    <!-- C-09: la misma insignia que arriba. Antes acá el nombre
+                         iba en un `<span>` y «Principal» y «Certificada» en dos
+                         `app-badge` sueltos, con tonos que sólo existían en esta
+                         lista. El estado sube del renglón de fechas al sello de
+                         la insignia: no se pierde, se dice una sola vez y en el
+                         mismo lugar que en el resto de la aplicación. -->
                     <div class="profesional__item-encabezado">
-                      <span class="profesional__item-titulo">{{ especialidad.nombre }}</span>
-                      @if (especialidad.principal) {
-                        <app-badge variant="primary" value="Principal" />
-                      }
-                      @if (especialidad.certificada) {
-                        <app-badge variant="success" value="Certificada" />
-                      }
+                      <app-specialty-badge
+                        [especialidad]="especialidad.nombre"
+                        [principal]="especialidad.principal"
+                        [certificada]="especialidad.certificada"
+                        [estado]="especialidad.estado"
+                        [sello]="especialidad.sello"
+                      />
                     </div>
 
+                    <!-- Alcance y fechas NO entran en la insignia y por eso
+                         siguen acá: unificar la forma no es recortar el dato. -->
                     @if (especialidad.alcance) {
                       <p class="profesional__item-texto">{{ especialidad.alcance }}</p>
                     }
@@ -1252,7 +1311,6 @@
                       } @else if (especialidad.desde) {
                         · en ejercicio
                       }
-                      · {{ especialidad.estado }}
                     </p>
                   </li>
                 }

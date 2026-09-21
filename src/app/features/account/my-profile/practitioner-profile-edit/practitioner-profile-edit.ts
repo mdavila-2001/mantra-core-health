@@ -8,7 +8,7 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   FormControl,
   ReactiveFormsModule,
@@ -79,8 +79,9 @@ import { DatePicker } from '../../../../shared/components/organisms/date-picker/
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { WorkHistory } from '../work-history/work-history';
+import { CONTADORES_DE_ACTIVIDAD } from '../contadores-de-actividad';
 import { PESTANA_EDITOR, PESTANAS_DEL_EDITOR_MEDICO } from '../pestanas-del-perfil-medico';
+import { WorkHistory } from '../work-history/work-history';
 
 /** El tipo de título (formación), del catálogo dinámico: los cinco `CREDENTIAL_TYPE_*`. */
 const TARGET_CREDENCIAL = 'profiles.professional_credentials.credential_type_concept_id';
@@ -257,6 +258,7 @@ export class PractitionerProfileEdit {
   private readonly navigation = inject(NavigationService);
   private readonly catalogo = inject(MedicalSpecialtiesCatalog);
   private readonly terminologia = inject(TerminologyClient);
+  private readonly ruta = inject(ActivatedRoute);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -265,10 +267,30 @@ export class PractitionerProfileEdit {
    * que en el editor del paciente: el lápiz de la ficha abre el formulario en la
    * pestaña que se estaba mirando, y para eso el índice tiene que poder venir de
    * afuera.
+   *
+   * **Y hasta el 21/09/2026 no venía.** El párrafo de arriba describía la
+   * intención, pero nadie le pasaba el índice: el lápiz apuntaba a
+   * `/my-account/edit` a secas y desde «Credenciales» se entraba a editar en
+   * «Datos personales». Ahora la ficha manda `?pestana=` y acá se lee del
+   * parámetro. Se lee **una sola vez, del snapshot**: si se leyera en vivo, un
+   * cambio de pestaña de la persona quedaría peleando con el de la URL.
+   *
+   * El valor se acota al rango: un `?pestana=99` escrito a mano no puede dejar
+   * el editor sin ningún panel abierto.
    */
   readonly pestana = model<number>(PESTANA_EDITOR.personales);
   protected readonly pestanas = PESTANAS_DEL_EDITOR_MEDICO;
   protected readonly pestanaEditor = PESTANA_EDITOR;
+
+  /**
+   * Los cuatro contadores de «Actividad», sin sus valores.
+   *
+   * La pestaña existe para decir que **ninguno** se edita, y el porqué de cada
+   * uno ({@link CONTADORES_DE_ACTIVIDAD}). Los números se leen en la ficha:
+   * duplicar acá el tablero sería mostrar dos veces lo mismo y prometer que
+   * desde el editor se tocan.
+   */
+  protected readonly contadores = CONTADORES_DE_ACTIVIDAD;
 
   /**
    * Si la pestaña abierta es de las que se corrigen.
@@ -797,6 +819,31 @@ export class PractitionerProfileEdit {
   }
 
   /**
+   * Los datos del alta que el editor **muestra y no deja tocar**.
+   *
+   * El doctor pidió que editar muestre todos los campos (C-05). Éstos no se
+   * pueden escribir —el contrato de corrección del perfil no los acepta, y en
+   * el caso del correo de trabajo está excluido a propósito porque es la
+   * identidad de acceso—, pero eso no es razón para que no aparezcan: quien
+   * entra a corregir su documento hoy no encuentra ni el dato ni el motivo.
+   *
+   * Se dibujan como renglones de ficha y **no como campos deshabilitados**: un
+   * control apagado invita a buscar cómo encenderlo, y acá no hay forma.
+   *
+   * `undefined` en los tres cuando el perfil todavía no cargó; vacío cuando la
+   * persona no lo tiene, que es distinto y se dice distinto.
+   */
+  protected readonly soloLectura = computed(() => {
+    const perfil = this.datos();
+    if (perfil === null) return null;
+    return {
+      documento: perfil.nationalId ?? '',
+      departamento: this.etiqueta(perfil.issuerAdministrativeAreaConceptId, ''),
+      correoDeTrabajo: perfil.email ?? '',
+    };
+  });
+
+  /**
    * Pide las etiquetas de lo que muestran las tablas. Un fallo no rompe nada:
    * las tablas siguen, con «Pendiente de verificación» en vez del estado.
    */
@@ -805,6 +852,9 @@ export class PractitionerProfileEdit {
       ...perfil.specialties.flatMap((e) => [e.specialtyConceptId, e.verificationStatusConceptId]),
       ...perfil.credentials.flatMap((c) => [c.credentialTypeConceptId, c.stateConceptId]),
       ...perfil.licenses.map((m) => m.stateConceptId),
+      // El departamento que emitió el documento: se muestra al lado del número
+      // y sin su etiqueta el renglón diría un uuid.
+      perfil.issuerAdministrativeAreaConceptId,
     ].filter((id): id is string => id !== undefined);
     this.terminologia
       .readConceptLabels(ids)
@@ -813,8 +863,24 @@ export class PractitionerProfileEdit {
   }
 
   constructor() {
+    this.abrirEnLaPestanaPedida();
     this.cargar();
     this.cargarEspecialidades();
+  }
+
+  /**
+   * Abre el editor en la pestaña que traiga `?pestana=`, si es una que existe.
+   *
+   * Del snapshot y no del observable: es la pestaña con la que se ENTRA, no una
+   * que la URL siga mandando después. Sin número, número ilegible o número
+   * fuera de rango, queda la primera — que es lo que pasaba siempre hasta que
+   * el lápiz empezó a decir de dónde venía.
+   */
+  private abrirEnLaPestanaPedida(): void {
+    const pedida = Number(this.ruta.snapshot.queryParamMap.get('pestana'));
+    if (Number.isInteger(pedida) && pedida >= 0 && pedida < PESTANAS_DEL_EDITOR_MEDICO.length) {
+      this.pestana.set(pedida);
+    }
   }
 
   /**
@@ -1063,6 +1129,7 @@ export class PractitionerProfileEdit {
     }
 
     this.guardandoPresentacion.set(true);
+    this.erroresDelServidor.set(new Map());
     this.profiles.updateOwnPractitionerProfile(cambios).subscribe({
       next: (perfil) => {
         this.guardandoPresentacion.set(false);
@@ -1070,11 +1137,59 @@ export class PractitionerProfileEdit {
         this.perfil.set(ready(perfil));
         this.toasts.success('Tu perfil quedó actualizado.', 'Perfil');
       },
-      error: () => {
+      error: (error: unknown) => {
         this.guardandoPresentacion.set(false);
-        this.toasts.error('No se pudo guardar el cambio. Probá de nuevo.', 'Perfil');
+        this.anclarErroresDelServidor(error);
       },
     });
+  }
+
+  /**
+   * Los rechazos del servidor, por campo.
+   *
+   * Hasta el 21/09/2026 un `PATCH` rechazado mostraba **sólo** «No se pudo
+   * guardar el cambio. Probá de nuevo.»: el detalle que el servidor manda
+   * —`details.violations`, que `errorToViewState` ya desarma en problemas con
+   * su campo— se descartaba entero. Con quince campos en un solo formulario,
+   * eso deja a la persona probando de nuevo lo mismo sin saber cuál está mal.
+   *
+   * La clave es el nombre del campo **del contrato** (`taxId`,
+   * `personalEmail`), no el del control: es lo que devuelve el servidor y lo
+   * que la plantilla pide con {@link errorDelServidor}.
+   */
+  private readonly erroresDelServidor = signal<ReadonlyMap<string, string>>(new Map());
+
+  /** El mensaje que el servidor dio para ese campo, o vacío. */
+  protected errorDelServidor(campo: string): string {
+    return this.erroresDelServidor().get(campo) ?? '';
+  }
+
+  /**
+   * Reparte el rechazo entre los campos que nombra, y avisa una sola vez.
+   *
+   * Lo que no se puede anclar a un campo —un conflicto, un 500, un problema de
+   * red— sigue saliendo por el aviso general, que es donde se puede leer sin
+   * tener que buscar en siete pestañas. Y se avisa **igual** aunque el detalle
+   * sí tenga campo, porque el campo puede estar en una pestaña cerrada: sin el
+   * aviso, guardar parecería no haber hecho nada.
+   */
+  private anclarErroresDelServidor(error: unknown): void {
+    const estado = errorToViewState<unknown>(error);
+    const problemas = estado.status === 'validation' ? estado.issues : [];
+    const porCampo = new Map<string, string>();
+    for (const problema of problemas) {
+      if (problema.field !== undefined && !porCampo.has(problema.field)) {
+        porCampo.set(problema.field, problema.message);
+      }
+    }
+    this.erroresDelServidor.set(porCampo);
+
+    if (porCampo.size > 0) {
+      this.toasts.error('Revisá los campos marcados y volvé a guardar.', 'Perfil');
+      return;
+    }
+    const sueltos = problemas.map((problema) => problema.message).join(' ');
+    this.toasts.error(sueltos || 'No se pudo guardar el cambio. Probá de nuevo.', 'Perfil');
   }
 
   /**
