@@ -567,220 +567,25 @@
 </ng-template>
 
 <ng-template #celdaAccionesCita let-cita>
-  <!-- C-06 (2026-09-20) · «los botones tienen que ser icono + texto, y las
-       acciones de una tabla van en un desplegable».
+  <!-- C-06 (2026-09-20) · «botón = icono + texto; las acciones de una tabla, en
+       un desplegable».
 
-       ## Qué cambió, y qué NO
+       Lo dibuja `app-row-actions`, el componente que el sistema de diseño
+       publicó para esto: con dos o menos las pone en la fila y con tres o más
+       las manda a un desplegable. **No se escribió un desplegable propio** —y la
+       primera versión de este turno sí lo había hecho, sobre `app-menu`, antes
+       de que el componente estuviera publicado: se migró en cuanto apareció,
+       porque una implementación paralela de algo que el sistema ya resuelve es
+       el defecto que la regla 95.1 nombra.
 
-       Hasta acá esta celda eran hasta ocho botones de sólo ícono en línea, con
-       su globo. El motivo estaba escrito al lado y era bueno: con texto, una
-       solicitud ofrecía cinco botones y la fila crecía a tres renglones. El
-       pedido nuevo resuelve esa misma tensión de otra manera —un desplegable—,
-       así que la fila sigue en un renglón Y cada opción recupera su palabra.
-
-       El desplegable es `app-menu`, el del sistema de diseño, que esta misma
-       pantalla ya usa para el estado del pago: flechas, `Escape`, foco
-       devuelto y cierre al tocar afuera vienen con él. No se escribió uno.
-
-       Cada opción lleva su ícono en el slot `icon` **y** su texto. El nombre
-       accesible deja de depender de un `aria-label` invisible: ahora está
-       escrito donde todos lo leen.
-
-       Los `data-testid` de cada acción no cambiaron: la acción es la misma y se
-       llama igual; lo que cambió es dónde vive. -->
-  <div class="agenda__acciones">
-    @if (hayAlgunaAccion(cita)) {
-      <button
-        app-button
-        variant="ghost"
-        size="sm"
-        data-testid="agenda-acciones"
-        [attr.aria-label]="'Acciones de la cita: ' + cita.paciente + ', ' + (cita.cuando | date: 'HH:mm')"
-        [appMenuTrigger]="menuDeAcciones"
-        [isLoading]="operando() === cita.id"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="5" cy="12" r="1" />
-          <circle cx="12" cy="12" r="1" />
-          <circle cx="19" cy="12" r="1" />
-        </svg>
-        Acciones
-      </button>
-
-      <app-menu #menuDeAcciones>
-        <!-- «Ver detalle» va PRIMERO y en TODA fila: en una solicitud, lo
-             primero que uno hace no es responder sino mirar qué le están
-             pidiendo; en una cita atendida es lo único que queda. -->
-        <app-menu-item data-testid="agenda-detalle" (selected)="verDetalle(cita)">
-          <span slot="icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-          </span>
-          {{ porResponder(cita) ? 'Ver detalle de la solicitud' : 'Ver detalle de la cita' }}
-        </app-menu-item>
-
-        <!-- Cada acción se ofrece SOLO en el estado en que el backend la
-             acepta: una opción que va a volver con 422 es un error con forma de
-             oferta. Con el estado sin resolver no se ofrece ninguna. -->
-        @if (porResponder(cita)) {
-          @if (cita.patientProfileId) {
-            <app-menu-item
-              data-testid="agenda-historial"
-              (selected)="verHistorialDelPaciente(cita)"
-            >
-              <span slot="icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
-                     aria-hidden="true">
-                  <path d="M12 8v4l3 2" />
-                  <path d="M3.05 11a9 9 0 1 1 .5 4" />
-                  <path d="M3 4v5h5" />
-                </svg>
-              </span>
-              Ver el historial del paciente
-            </app-menu-item>
-          }
-          <app-menu-item data-testid="agenda-aceptar" (selected)="aceptarCita(cita)">
-            <span slot="icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
-                   aria-hidden="true">
-                <path d="m4 12 5 5L20 6" />
-              </svg>
-            </span>
-            Aceptar la solicitud
-          </app-menu-item>
-          <app-menu-item
-            data-testid="agenda-rechazar"
-            [destructive]="true"
-            (selected)="rechazarCita(cita)"
-          >
-            <span slot="icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
-                   aria-hidden="true">
-                <path d="m6 6 12 12M18 6 6 18" />
-              </svg>
-            </span>
-            Rechazar la solicitud
-          </app-menu-item>
-        }
-
-        @if (sePuedeIniciar(cita)) {
-          <app-menu-item data-testid="agenda-iniciar" (selected)="iniciarAtencion(cita)">
-            <span slot="icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
-                   aria-hidden="true">
-                <path d="M6 4l14 8-14 8V4Z" />
-              </svg>
-            </span>
-            Iniciar la consulta
-          </app-menu-item>
-        }
-
-        @if (sePuedeCompletar(cita)) {
-          <app-menu-item data-testid="agenda-continuar" (selected)="continuarAtencion(cita)">
-            <span slot="icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
-                   aria-hidden="true">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                <path d="m10 17 5-5-5-5M15 12H3" />
-              </svg>
-            </span>
-            Continuar la consulta
-          </app-menu-item>
-          <app-menu-item data-testid="agenda-completar" (selected)="completarCita(cita)">
-            <span slot="icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
-                   aria-hidden="true">
-                <path d="M9 11l3 3L22 4" />
-                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-              </svg>
-            </span>
-            Completar la cita
-          </app-menu-item>
-        }
-
-        @if (puedeOperarCitas() && estaVigente(cita)) {
-          @if (!cita.llegadaRegistrada) {
-            <app-menu-item data-testid="agenda-llegada" (selected)="registrarLlegada(cita)">
-              <span slot="icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
-                     aria-hidden="true">
-                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                  <path d="m10 17 5-5-5-5M15 12H3" />
-                </svg>
-              </span>
-              Registrar que llegó
-            </app-menu-item>
-          } @else {
-            <app-menu-item data-testid="agenda-llego" [disabled]="true">
-              <span slot="icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
-                     aria-hidden="true">
-                  <path d="m4 12 5 5L20 6" />
-                </svg>
-              </span>
-              Ya llegó
-            </app-menu-item>
-          }
-        }
-
-        @if (puedeAtender() && estaVigente(cita)) {
-          <app-menu-item data-testid="agenda-demorar" (selected)="abrirDemoraDeCita(cita)">
-            <span slot="icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
-                   aria-hidden="true">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 7v5l3 2" />
-              </svg>
-            </span>
-            Avisar una demora
-          </app-menu-item>
-          <app-menu-item data-testid="agenda-reprogramar" (selected)="iniciarReprogramacion(cita)">
-            <span slot="icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
-                   aria-hidden="true">
-                <path d="M3 9h18M8 2v4M16 2v4" />
-                <rect x="3" y="4" width="18" height="17" rx="2" />
-                <path d="m14 13-3 3 3 3" />
-              </svg>
-            </span>
-            Mover a otro horario
-          </app-menu-item>
-        }
-
-        @if (estaVigente(cita) || porResponder(cita)) {
-          <app-menu-item
-            data-testid="agenda-cancelar"
-            [destructive]="true"
-            (selected)="cancelarCita(cita)"
-          >
-            <span slot="icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
-                   aria-hidden="true">
-                <circle cx="12" cy="12" r="9" />
-                <path d="m8 8 8 8M16 8l-8 8" />
-              </svg>
-            </span>
-            Cancelar la cita
-          </app-menu-item>
-        }
-      </app-menu>
-    }
-  </div>
+       Las acciones viajan por DATOS (`accionesDe`): el mismo nodo no puede
+       vivir en la fila y dentro del menú, y los datos sí. -->
+  <app-row-actions
+    class="agenda__acciones"
+    [actions]="accionesDe(cita)"
+    [fila]="filaDe(cita)"
+    (actionSelected)="ejecutarAccionDeFila(cita, $event)"
+  />
 </ng-template>
 
 <!-- Las acciones de una cita del Calendario: la MISMA celda de la tabla de
@@ -889,3 +694,4 @@
       </p>
     }
 </ng-template>
+
