@@ -54,3 +54,33 @@
   display: grid;
   gap: var(--sp-4);
 }
+
+/* ─── Lo que el servidor ya mandaba (C-23) ─────────────────────────────────
+   El ítem pasó de una línea a tres, así que el `flex` de arriba ya no alcanza:
+   el estado y las fechas siguen en fila, y el detalle y el aviso de registro
+   tardío ocupan el ancho entero debajo. */
+
+.internacion__item {
+  row-gap: var(--sp-1);
+}
+
+.internacion__detalle {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  color: var(--text-muted);
+  font-size: var(--fs-overline);
+}
+
+.internacion__dato--falta {
+  font-style: italic;
+}
+
+/* Sin color propio y sin icono: es una aclaración del registro, no una
+   advertencia. Pintarla de ámbar diría que algo hay que arreglar. */
+.internacion__tardio {
+  flex-basis: 100%;
+  color: var(--text-muted);
+  font-size: var(--fs-overline);
+}

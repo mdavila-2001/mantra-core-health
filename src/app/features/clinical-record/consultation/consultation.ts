@@ -518,14 +518,31 @@ export class Consultation {
 
   /* -- Lo que los bloques necesitan de la consulta ------------------------- */
 
-  protected readonly internaciones = computed<readonly InternacionEnFicha[]>(() =>
-    (this.datos()?.resumen.careEpisodes ?? []).map((episodio) => ({
+  /**
+   * Las internaciones, con todo lo que la lectura devuelve (C-23).
+   *
+   * Hasta acá se proyectaban cuatro campos de ocho: el estado del catálogo, el
+   * tipo de episodio, el profesional a cargo y la fecha de registro llegaban en
+   * la misma respuesta y se tiraban. El bloque no pedía poco porque el contrato
+   * diera poco.
+   *
+   * El responsable se resuelve a **«tuya» o «de otro»** en vez de mostrarse: es
+   * un `practitionerProfileId`, y un uuid en pantalla no es un nombre. Ponerle
+   * nombre exigiría una lectura de perfiles que esta pantalla no hace.
+   */
+  protected readonly internaciones = computed<readonly InternacionEnFicha[]>(() => {
+    const propio = this.auth.practitionerProfileId();
+    return (this.datos()?.resumen.careEpisodes ?? []).map((episodio) => ({
       id: episodio.id,
       abierta: episodio.endAt === undefined,
       desde: episodio.startAt ?? null,
       hasta: episodio.endAt ?? null,
-    })),
-  );
+      tipo: this.labelOpcional(episodio.typeConceptId),
+      conResponsable: episodio.responsiblePractitionerId !== undefined,
+      aMiCargo: propio !== null && episodio.responsiblePractitionerId === propio,
+      registradaEl: episodio.createdAt,
+    }));
+  });
 
   protected readonly recetas = computed<readonly RecetaEnFicha[]>(() =>
     (this.datos()?.resumen.medicationRequests ?? []).map((receta) => ({
@@ -778,6 +795,20 @@ export class Consultation {
     }
     return this.etiquetas().get(conceptId)?.display ?? SIN_DATO;
   }
+
+  /**
+   * La etiqueta de un concepto, o **nada**.
+   *
+   * Distinta de `label` a propósito: donde el consumidor tiene su propio texto
+   * de reserva —el bloque de internación deriva «En curso» de la fecha de
+   * cierre— devolver «Sin registrar» pisaría algo mejor con algo peor.
+   */
+  private labelOpcional(conceptId: string | undefined): string | undefined {
+    if (conceptId === undefined) {
+      return undefined;
+    }
+    return this.etiquetas().get(conceptId)?.display;
+  }
 }
 
 /** Los conceptos que esta pantalla traduce: los que muestra, y no más. */
@@ -789,5 +820,9 @@ function conceptosDe({ resumen }: Consulta): readonly string[] {
       fila.statusConceptId,
     ]),
     ...resumen.encounters.flatMap((fila) => [fila.statusConceptId, fila.classConceptId]),
+    // El tipo de episodio (C-23): la ficha lo muestra desde que la internación
+    // dejó de ser «En curso» y una fecha. El **estado** no se traduce a
+    // propósito: su rótulo de catálogo es «Activo», y la ficha dice «En curso».
+    ...resumen.careEpisodes.map((fila) => fila.typeConceptId),
   ].filter((id): id is string => id !== undefined);
 }

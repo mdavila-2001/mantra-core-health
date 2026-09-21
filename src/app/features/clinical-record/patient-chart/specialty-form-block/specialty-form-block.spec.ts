@@ -84,6 +84,27 @@ describe('SpecialtyFormBlock', () => {
         perfil.flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
       }
     }
+    // Y desde C-14, la hoja en blanco trae su cuadrícula, que lee el expediente
+    // para saber si esta consulta ya tiene su fila. Mismo criterio que el
+    // perfil: se drena con una respuesta válida en vez de relajar el `verify`,
+    // que es lo que dejaría pasar sin ruido una petición de más.
+    for (const expediente of http.match((r) =>
+      r.url.endsWith('/clinical/patients/pac-1/summary'),
+    )) {
+      if (!expediente.cancelled) {
+        expediente.flush({
+          patientProfileId: 'pac-1',
+          conditions: [],
+          allergies: [],
+          medicationRequests: [],
+          observations: [],
+          encounters: [],
+          careEpisodes: [],
+          limit: 50,
+          truncated: [],
+        });
+      }
+    }
     http.verify();
   });
 

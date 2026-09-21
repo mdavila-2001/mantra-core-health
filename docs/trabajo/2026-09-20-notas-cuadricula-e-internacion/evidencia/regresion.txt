@@ -1,0 +1,53 @@
+=== REGRESION 2026-09-21T02:52:51-04:00 ===
+--- typecheck ---
+TYPECHECK_EXIT=0
+--- lint ---
+LINT_EXIT=0
+--- suite completa ---
+    [90m   |[39m                                                                      [31m^[39m
+    [90m151|[39m       expect(ventanas.every((v) => v.from !== null && v.to !== null)).…
+    [90m152|[39m       [90m// Y todas cuelgan de la práctica elegida.[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/auth/register-practitioner/register-practitioner.spec.ts[2m > [22mRegisterPractitioner con mockBackend[2m > [22mresuelve los cinco tipos canónicos de credencial desde el backend simulado
+[31m[1mError[22m: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[36m [2m❯[22m src/app/features/auth/register-practitioner/register-practitioner.spec.ts:[2m2002:3[22m[39m
+    [90m2000|[39m
+    [90m2001|[39m [34mdescribe[39m([32m'RegisterPractitioner con mockBackend'[39m[33m,[39m () [33m=>[39m {
+    [90m2002|[39m   it('resuelve los cinco tipos canónicos de credencial desde el backen…
+    [90m   |[39m   [31m^[39m
+    [90m2003|[39m     [33mTestBed[39m[33m.[39m[34mresetTestingModule[39m()[33m;[39m
+    [90m2004|[39m     [35mawait[39m [33mTestBed[39m[33m.[39m[34mconfigureTestingModule[39m({
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m551 passed[39m[22m[90m (554)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m6855 passed[39m[22m[90m (6858)[39m
+[2m   Start at [22m 02:59:12
+[2m   Duration [22m 143.66s[2m (transform 308.50s, setup 93.58s, import 479.32s, tests 786.41s, environment 25629.78s)[22m
+
+TEST_EXIT=1
+
+=== TRIAJE DE LOS 3 ROJOS ===
+
+Los 3 fallos de la suite completa son de `src/app/features/auth/register-practitioner/`, que este
+carril NO toca. Se comprobó que son PREEXISTENTES corriéndolos sobre el corte limpio:
+
+  $ git stash push -u -m "lote-B-temporal"
+  $ yarn stock:generate          # el indice generado no esta versionado y habia que rehacerlo
+  $ npx ng test --include="src/app/features/auth/register-practitioner/register-practitioner.spec.ts" --watch=false
+
+  FAIL src/app/features/auth/register-practitioner/register-practitioner.spec.ts
+    > RegisterPractitioner con mockBackend
+    > resuelve los cinco tipos canonicos de credencial desde el backend simulado
+  Error: Test timed out in 5000ms.
+  Test Files  1 failed (1)
+       Tests  1 failed | 96 passed (97)
+
+CLASE: PRODUCT_BUG o TEST_BUG del corte, no de este carril. DUENO: quien sea de `features/auth/`.
+NO se arreglo: no es de este carril y la regla del reparto lo prohibe.
+
+RESULTADO NETO DEL CARRIL: 6855 pruebas en verde de 6858. Los 3 rojos ya estaban.

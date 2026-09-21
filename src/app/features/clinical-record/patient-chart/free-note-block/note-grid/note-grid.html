@@ -1,0 +1,188 @@
+<section class="cuadricula" aria-labelledby="cuadricula-titulo">
+  <h4 class="cuadricula__titulo" id="cuadricula-titulo">Cuadrícula de la consulta</h4>
+  <p class="cuadricula__ayuda">
+    Elegí qué querés registrar en cada columna y cargá los valores de hoy. Lo de las consultas
+    anteriores se ve abajo y no se edita desde acá.
+  </p>
+
+  <!-- ─── 1 · Cargando ──────────────────────────────────────────────────── -->
+  @if (cargando()) {
+    <p class="cuadricula__cargando" data-testid="cuadricula-cargando">
+      <app-spinner size="sm" label="Cargando la cuadrícula" />
+      <span>Buscando lo registrado en las consultas anteriores…</span>
+    </p>
+  } @else if (falloAlCargar()) {
+    <!-- ─── 2 · Error ───────────────────────────────────────────────────── -->
+    <app-alert tone="error" title="No se pudo cargar" data-testid="cuadricula-error-carga">
+      No pudimos leer lo registrado antes. Sin eso no se puede saber si esta consulta ya tiene su
+      fila, así que la carga queda cerrada hasta reintentar.
+      <button app-button variant="outline" size="sm" type="button" (click)="reintentar()"
+        data-testid="cuadricula-reintentar">
+        Reintentar
+      </button>
+    </app-alert>
+  } @else {
+    @if (errorAlGuardar(); as mensaje) {
+      <app-alert tone="error" title="No se guardó" data-testid="cuadricula-error-guardar">
+        {{ mensaje }}
+      </app-alert>
+    }
+
+    <!-- ─── La restricción del pedido ─────────────────────────────────────
+         Va en ámbar y no en rojo: no es un fallo, es el expediente negándose a
+         dejar dos filas de la misma sesión. Y dice el motivo, porque «no se
+         puede» sin explicar obliga a adivinar. `app-alert` le pone
+         `role="status"` a los tonos que no son error, así que un lector de
+         pantalla lo anuncia sin que haya que declararlo acá. -->
+    @if (yaTieneFila()) {
+      <app-alert tone="warning" title="Esta consulta ya tiene su fila"
+        data-testid="cuadricula-una-por-sesion">
+        Por motivos de integridad de los datos se permite <strong>una sola fila por sesión</strong>:
+        sin eso no se podría saber qué registro corresponde a cada consulta. La fila de hoy es la
+        primera de la tabla.
+      </app-alert>
+    } @else if (!hayEncuentro()) {
+      <app-alert tone="info" title="Abrí el encuentro para cargar la fila">
+        La fila pertenece a una consulta. Registrá el encuentro y la cuadrícula se abre para cargar.
+      </app-alert>
+    } @else if (sinOrganizacion()) {
+      <app-alert tone="info" title="Elegí una organización">
+        Lo registrado queda bajo la custodia de una organización. Elegí una en el encabezado.
+      </app-alert>
+    }
+
+    <!-- ─── 3 · Vacío ───────────────────────────────────────────────────── -->
+    @if (vacio()) {
+      <div class="cuadricula__vacio" data-testid="cuadricula-vacia">
+        <p class="cuadricula__vacio-titulo">Todavía no hay ninguna columna</p>
+        <p class="cuadricula__vacio-ayuda">
+          Una columna es algo que vas a querer comparar consulta a consulta —la presión, el peso,
+          una escala—. Elegí la primera abajo y cargá su valor de hoy.
+        </p>
+      </div>
+    }
+
+    <!-- ─── Elegir el nombre de una cabecera ────────────────────────────── -->
+    @if (puedeCargarFila()) {
+      <div class="cuadricula__nueva-columna">
+        <app-form-field
+          icon="results"
+          label="Agregar una columna"
+          hint="El nombre sale del catálogo de mediciones. No se escribe a mano."
+        >
+          <app-concept-select
+            data-testid="cuadricula-columna"
+            [target]="targetMedicion"
+            [(value)]="columnaElegida"
+            placeholder="Elegí qué medir"
+          />
+        </app-form-field>
+        <button
+          app-button
+          variant="outline"
+          type="button"
+          [disabled]="columnaElegida() === null || columnaElegida() === ''"
+          (click)="agregarColumna()"
+          data-testid="cuadricula-agregar-columna"
+        >
+          Agregar columna
+        </button>
+      </div>
+    }
+
+    <!-- ─── 4 · Con datos ───────────────────────────────────────────────── -->
+    @if (columnas().length > 0) {
+      <!-- La región desplazable es focalizable y se anuncia: en pantalla chica
+           la tabla se desplaza a lo ancho, y sin esto quien navega con teclado
+           no puede llegar a las columnas de la derecha. -->
+      <div
+        class="cuadricula__marco"
+        role="region"
+        aria-labelledby="cuadricula-titulo"
+        tabindex="0"
+      >
+        <table class="cuadricula__tabla" data-testid="cuadricula-tabla">
+          <caption class="cuadricula__caption">
+            Una fila por consulta. La primera es la de hoy.
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col" class="cuadricula__th-sesion">Sesión</th>
+              @for (columna of columnas(); track columna.conceptId) {
+                <th scope="col">{{ columna.nombre }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            <!-- La fila editable de hoy, sólo mientras no exista ya. -->
+            @if (puedeCargarFila()) {
+              <tr class="cuadricula__fila cuadricula__fila--hoy" data-testid="cuadricula-fila-nueva">
+                <th scope="row" class="cuadricula__sesion">
+                  <span class="cuadricula__sesion-rotulo">Esta consulta</span>
+                </th>
+                @for (columna of columnas(); track columna.conceptId) {
+                  <td>
+                    <app-input
+                      type="text"
+                      [testId]="'cuadricula-celda-' + columna.conceptId"
+                      [value]="valorDeColumna(columna.conceptId)"
+                      (valueChange)="escribir(columna.conceptId, $event === null ? '' : '' + $event)"
+                      [placeholder]="columna.nombre"
+                    />
+                  </td>
+                }
+              </tr>
+            }
+
+            @for (fila of filasVisibles(); track fila.encounterId) {
+              <tr
+                class="cuadricula__fila"
+                [class.cuadricula__fila--hoy]="fila.esLaDeAhora"
+                [attr.data-testid]="fila.esLaDeAhora ? 'cuadricula-fila-hoy' : 'cuadricula-fila'"
+              >
+                <th scope="row" class="cuadricula__sesion">
+                  @if (fila.esLaDeAhora) {
+                    <span class="cuadricula__sesion-rotulo">Esta consulta</span>
+                  } @else if (fila.fecha) {
+                    <span class="cuadricula__sesion-rotulo">
+                      {{ fila.fecha | date: 'dd/MM/yyyy' }}
+                    </span>
+                  } @else {
+                    <span class="cuadricula__sesion-rotulo">Consulta sin fecha</span>
+                  }
+                  <span class="cuadricula__sesion-motivo">{{ fila.motivo }}</span>
+                </th>
+                @for (columna of columnas(); track columna.conceptId) {
+                  <td>{{ celdaDe(fila, columna.conceptId) }}</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (filasOcultas() > 0) {
+        <p class="cuadricula__tope" data-testid="cuadricula-tope">
+          Se muestran las {{ filasVisibles().length }} consultas más recientes.
+          Hay {{ filasOcultas() }} anteriores que no entran acá.
+        </p>
+      }
+    }
+
+    @if (puedeCargarFila() && columnas().length > 0) {
+      <div class="cuadricula__pie">
+        <button
+          app-button
+          variant="primary"
+          type="button"
+          [disabled]="!puedeGuardar()"
+          [isLoading]="guardando()"
+          (click)="guardar()"
+          data-testid="cuadricula-guardar"
+        >
+          Registrar la fila de hoy
+        </button>
+      </div>
+    }
+  }
+</section>
