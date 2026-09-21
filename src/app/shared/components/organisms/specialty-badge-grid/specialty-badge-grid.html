@@ -1,0 +1,13 @@
+<ul class="specialty-badge-grid__lista" [attr.aria-label]="etiqueta()">
+  @for (especialidad of ordenadas(); track especialidad.id) {
+    <li class="specialty-badge-grid__item">
+      <app-specialty-badge
+        [especialidad]="especialidad.nombre"
+        [principal]="especialidad.principal"
+        [certificada]="especialidad.certificada"
+        [estado]="especialidad.estado"
+        [sello]="especialidad.sello"
+      />
+    </li>
+  }
+</ul>
