@@ -84,6 +84,20 @@ jobs:
       - name: Entorno público
         run: yarn env:generate
 
+      # Mismo problema, segundo archivo generado y en `.gitignore`:
+      # `src/app/features/component-stock/component-index.generated.ts`.
+      #
+      # Acá la lista de scripts que lo encadenan es MÁS CORTA que la de arriba:
+      # sólo `start` y `build`. `test` y `test:coverage` encadenan `env:generate`
+      # y **no** éste, así que sin esta etapa fallaban DOS: «Tipos» —`tsc`
+      # directo— y «Pruebas y cobertura», las dos con `TS2307: Cannot find
+      # module './component-index.generated'` y seis `TS7006` en cascada.
+      #
+      # El trabajo `e2e` no lo necesita: su `tsc` es el de `cypress/tsconfig.json`
+      # y sus etapas de navegador pasan por `build`, que sí lo encadena.
+      - name: Índice de componentes
+        run: yarn stock:generate
+
       - name: Lint
         run: yarn lint
 
