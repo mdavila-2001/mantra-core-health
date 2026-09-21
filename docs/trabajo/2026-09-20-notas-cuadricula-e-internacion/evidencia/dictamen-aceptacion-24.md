@@ -9,6 +9,28 @@
 
 ---
 
+> [!warning] Actualización 2026-09-21, ~15:00 — **la integración avanzó mientras se escribía esto**
+> Al ir a abrir el PR de la sesión 2 se descubrió que **tres PRs de este mismo lote ya están
+> `MERGED` en `mockup`**, todos hoy, después del corte de este dictamen (20/09 20:59):
+>
+> | PR | Autor | Título | Merge |
+> |---|---|---|---|
+> | #557 | Justin | Simplificar el formulario de receta | 12:10:35 UTC |
+> | #558 | Marcelo (yo) | C-14 y C-23: la cuadrícula de la consulta, y la internación… | 12:11:04 UTC |
+> | #559 | Pablo | reporte de consultas + fix de contratos de agenda, visita y terminología | 14:33:42 UTC |
+>
+> **Esto no lo hice yo** en esta sesión — nadie de esta sesión mergeó nada — y **no se descubrió
+> hasta ahora** porque el trabajo de hoy se hizo contra la API real, no releyendo `mockup`.
+> Consecuencia honesta: **el hecho central del veredicto de abajo («ninguna de las 24 está
+> integrada») ya no es cierto para las correcciones que #557 y #559 puedan cubrir** —
+> probablemente algunas de C-15…C-22 (receta, Justin) y C-08/C-10/C-24 (agenda/reportes, Pablo),
+> a confirmar leyendo esos PRs, cosa que **no se hizo en esta sesión** por alcance: hoy se pidió
+> «C-14/C-23 contra la API real y pruebas para la API», no un re-barrido de las 24.
+> **El §0 y §2 de abajo quedan tal como se escribieron contra el corte original** — no se
+> reescriben con una suposición de qué cubren #557/#559 sin leerlos. Queda para quien retome H6:
+> los candidatos correctos a recorrer ahora son las correcciones de esos dos PRs, con la cuenta
+> médica, siguiendo el guion de §1.
+
 ## 0. VEREDICTO GLOBAL — `NO ACEPTADO`
 
 **El veredicto global es el más bajo de sus partes, y sus partes son casi todas `NOT_RUN`.**

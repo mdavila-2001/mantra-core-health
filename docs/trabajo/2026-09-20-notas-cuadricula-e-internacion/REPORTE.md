@@ -99,6 +99,15 @@ ejercitar.** Ninguna de las 24 está integrada en `mockup` — el último commit
 20:59 del 20/09 y el pedido es de ese mismo día. Los cinco lotes trabajan en paralelo ahora mismo;
 sólo una rama está empujada (Itzan, 01:54) y sin fusionar.
 
+> [!warning] Se quedó atrás mientras se hacía la sesión 2 — **#557, #558 y #559 ya están
+> `MERGED` en `mockup`**, los tres de hoy (12:10–14:33 UTC): #557 de Justin (receta), #558 el mío
+> (C-14/C-23) y #559 de Pablo (agenda/reportes). Nadie de esta sesión los mergeó; se descubrió
+> recién al ir a abrir el PR de hoy. El veredicto de arriba queda **como estaba** contra el corte
+> original —no se reescribe con una suposición sin leer esos dos PRs—, pero **ya no es cierto**
+> para lo que #557/#559 cubran. Detalle y la tabla de PRs en el aviso al inicio de
+> `dictamen-aceptacion-24.md`. Es la señal más clara de que **H6 necesita un nuevo pase**, ahora
+> con algo real que recorrer.
+
 **2 aceptadas** (C-14 `PASS`, C-23 `PASS` parcial) · **22 `NOT_RUN`** con su motivo · **0 rojos
 ejercitados**. El §6 del dictamen dice qué hace falta para que valga algo.
 
