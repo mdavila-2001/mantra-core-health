@@ -30,7 +30,10 @@ describe('TarjetaDelDia', () => {
   let fixture: ComponentFixture<TarjetaDelDia>;
   let http: HttpTestingController;
 
-  async function montar(ratosTomados: readonly RatoDelDia[] = []): Promise<void> {
+  async function montar(
+    ratosTomados: readonly RatoDelDia[] = [],
+    cupoId: string | null = null,
+  ): Promise<void> {
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [TarjetaDelDia],
@@ -44,6 +47,7 @@ describe('TarjetaDelDia', () => {
     fixture.componentRef.setInput('desdeInicial', DESDE);
     fixture.componentRef.setInput('hastaInicial', HASTA);
     fixture.componentRef.setInput('ratosTomados', ratosTomados);
+    fixture.componentRef.setInput('cupoId', cupoId);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -75,6 +79,10 @@ describe('TarjetaDelDia', () => {
      * miembro que no declara». Se descubrió compilando.
      */
     readonly candidatos: Signal<readonly ReferenceOption[]>;
+    /** Si hay algo que se perdería al cerrar: decide si `Escape` pregunta (C-10). */
+    readonly hayAlgoEscrito: Signal<boolean>;
+    /** Si el alta salió de un cupo ya programado: la franja no se pregunta (C-10). */
+    readonly desdeUnCupo: Signal<boolean>;
     buscarPaciente(texto: string): void;
     guardar(): void;
   }
@@ -256,6 +264,7 @@ describe('TarjetaDelDia', () => {
         desde: new Date(2026, 8, 10, 10, 15),
         hasta: new Date(2026, 8, 10, 10, 45),
         rotulo: 'la cita de Beto Peña',
+        tipo: 'cita' as const,
       },
     ]);
     fixture.detectChanges();
@@ -269,6 +278,7 @@ describe('TarjetaDelDia', () => {
         desde: new Date(2026, 8, 10, 14, 0),
         hasta: new Date(2026, 8, 10, 15, 0),
         rotulo: 'la cita de Beto Peña',
+        tipo: 'cita' as const,
       },
     ]);
     fixture.detectChanges();
@@ -306,6 +316,158 @@ describe('TarjetaDelDia', () => {
 
     // El toast informa; acá alcanza con que el guardado emitió `creada`.
     http.verify();
+  });
+
+  /**
+   * C-10 (2026-09-20) — **el cupo manda la hora**, y la tarjeta es un MODAL.
+   *
+   * Dos cosas distintas que el pedido junta en un punto:
+   *
+   * 1. Sobre un cupo ya programado la franja no se pregunta: se muestra. Y no
+   *    alcanza con esconder los campos —sus señales siguen vivas—, así que lo
+   *    que se guarda sale del cupo, no de ellas.
+   * 2. El formulario dejó de dibujarse al pie y pasó a un `<dialog>` modal, con
+   *    lo que eso trae: rol, nombre, foco atrapado, `Escape` y foco devuelto.
+   */
+  describe('el cupo manda la hora (C-10)', () => {
+    it('sobre un cupo no hay campos de hora: la franja se muestra como dato', async () => {
+      await montar([], 's-1');
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="tarjeta-franja-del-cupo"]')?.textContent).toContain(
+        '10:00–10:45',
+      );
+      // Ni un solo campo de texto para la hora en este camino.
+      expect(raiz.querySelector('.tarjeta__rango')).toBeNull();
+    });
+
+    it('sobre AIRE los campos siguen: ahí la franja no existe hasta que se escriba', async () => {
+      await montar([], null);
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('.tarjeta__rango')).not.toBeNull();
+      expect(raiz.querySelector('[data-testid="tarjeta-franja-del-cupo"]')).toBeNull();
+    });
+
+    it('la cita queda en la franja DEL CUPO, aunque alguien escriba otra hora', async () => {
+      await montar([], 's-1');
+      api().paciente.set({ value: 'pp-ana', label: 'Ana Quispe' });
+      // El campo ya no se dibuja, pero su señal existe: si el guardado la
+      // mirara, esto mandaría la cita a las 08:00. La prueba es que no la mira.
+      api().desde.set('08:00');
+      api().hasta.set('08:15');
+      fixture.detectChanges();
+
+      api().guardar();
+      const req = http.expectOne(
+        (r) => r.url === '/scheduling/appointments/direct' && r.method === 'POST',
+      );
+      expect(req.request.body.startAt).toBe(DESDE.toISOString());
+      expect(req.request.body.durationMinutes).toBe(45);
+      req.flush({ bookingId: 'bk-1', bookableSlotId: 's-1', statusConceptId: 'c', retractedSlots: 0 });
+      http.verify();
+    });
+
+    it('es un diálogo modal con nombre, no un formulario al pie', async () => {
+      await montar([], 's-1');
+
+      const dialogo = (fixture.nativeElement as HTMLElement).querySelector('dialog');
+      expect(dialogo).not.toBeNull();
+      // Su nombre accesible es el título, y el título es el día.
+      const titulo = (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="content-dialog-title"]',
+      );
+      expect(dialogo?.getAttribute('aria-labelledby')).toBe(titulo?.id);
+      expect(titulo?.textContent?.trim().toLowerCase()).toContain('septiembre');
+    });
+
+    it('vacío se cierra solo; con algo escrito, `Escape` pregunta antes de perderlo', async () => {
+      await montar([], 's-1');
+      expect(api().hayAlgoEscrito()).toBe(false);
+
+      api().motivo.set('Control');
+      fixture.detectChanges();
+      expect(api().hayAlgoEscrito()).toBe(true);
+    });
+  });
+
+  /**
+   * C-10 (2026-09-20) — sobre un BLOQUEO no se crea nada, y se dice por qué.
+   *
+   * La diferencia con el choque de una cita es deliberada: un cupo de capacidad
+   * 2 admite una segunda cita y la autoridad de eso es el servidor, así que ahí
+   * el aviso sigue siendo aviso. Un bloqueo, no: es el doctor diciendo que no
+   * atiende, y agendar encima es exactamente lo que el pedido prohíbe.
+   */
+  describe('el bloqueo no deja crear (C-10)', () => {
+    const BLOQUEO: RatoDelDia = {
+      desde: new Date(2026, 8, 10, 9, 30),
+      hasta: new Date(2026, 8, 10, 11, 0),
+      rotulo: '«Reunión de equipo»',
+      tipo: 'bloqueo',
+    };
+
+    it('con un bloqueo encima no se puede guardar, aunque esté todo completo', async () => {
+      await montar([BLOQUEO]);
+      api().paciente.set({ value: 'pp-ana', label: 'Ana Quispe' });
+      fixture.detectChanges();
+
+      expect(api().puedeGuardar()).toBe(false);
+    });
+
+    it('y dice qué lo bloquea y qué hacer, no sólo que está tomado', async () => {
+      await montar([BLOQUEO]);
+      fixture.detectChanges();
+
+      const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('está bloqueado por «Reunión de equipo»');
+      expect(texto).toContain('quitá el bloqueo primero');
+    });
+
+    it('llamar a guardar igual NO manda nada: la regla no es el botón', async () => {
+      // El botón deshabilitado no es una regla: `guardar()` se alcanza por
+      // teclado, por el `submit` del formulario y desde acá.
+      await montar([BLOQUEO]);
+      api().paciente.set({ value: 'pp-ana', label: 'Ana Quispe' });
+      fixture.detectChanges();
+
+      api().guardar();
+
+      http.expectNone(() => true);
+      http.verify();
+    });
+
+    it('con una CITA encima, en cambio, avisa y deja seguir: eso lo decide el servidor', async () => {
+      await montar([
+        {
+          desde: new Date(2026, 8, 10, 9, 30),
+          hasta: new Date(2026, 8, 10, 11, 0),
+          rotulo: 'la cita de Beto Peña',
+          tipo: 'cita',
+        },
+      ]);
+      api().paciente.set({ value: 'pp-ana', label: 'Ana Quispe' });
+      fixture.detectChanges();
+
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain('pisa la cita de Beto');
+      expect(api().puedeGuardar()).toBe(true);
+    });
+  });
+
+  /**
+   * C-21 (2026-09-20) — las opciones excluyentes son alternancia, no radios.
+   */
+  it('la modalidad se elige con el control segmentado, sin un solo radio', async () => {
+    await montar();
+    api().paciente.set({ value: 'pp-ana', label: 'Ana Quispe' });
+    fixture.detectChanges();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelector('[data-testid="tarjeta-modalidad"]')).not.toBeNull();
+    expect(raiz.querySelectorAll('input[type="radio"]')).toHaveLength(0);
+    // Se anuncia como grupo y con su pregunta: un grupo sin nombre no se lee.
+    const grupo = raiz.querySelector('[role="radiogroup"]');
+    expect(grupo?.getAttribute('aria-label')).toBe('¿Cómo lo atendés?');
   });
 
   it('un rango invertido no deja guardar', async () => {

@@ -12,7 +12,11 @@ import {
 import { SchedulingClient } from '../../../../core/data-access/scheduling/scheduling.client';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
+import { SegmentedControl } from '../../../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
@@ -28,6 +32,16 @@ export interface RatoDelDia {
   readonly desde: Date;
   readonly hasta: Date;
   readonly rotulo: string;
+  /**
+   * Qué lo ocupa, y con eso qué peso tiene el choque.
+   *
+   * C-10 (2026-09-20) pide que **no se pueda** elegir un rato bloqueado ni de
+   * descanso. Un choque con otra CITA, en cambio, sigue siendo un aviso: un
+   * cupo de capacidad 2 admite una segunda, y la autoridad de eso es el
+   * servidor, no esta pantalla (regla 95.6.1). La diferencia entre «no te dejo»
+   * y «mirá que» no se puede tomar sin saber cuál de las dos cosas es.
+   */
+  readonly tipo: 'cita' | 'bloqueo';
 }
 
 /**
@@ -57,7 +71,16 @@ export interface RatoDelDia {
  */
 @Component({
   selector: 'app-tarjeta-del-dia',
-  imports: [Alert, AppButton, FormField, Input, ReferenceCombobox, RouterLink],
+  imports: [
+    Alert,
+    AppButton,
+    ContentDialog,
+    FormField,
+    Input,
+    ReferenceCombobox,
+    RouterLink,
+    SegmentedControl,
+  ],
   templateUrl: './tarjeta-del-dia.html',
   styleUrl: './tarjeta-del-dia.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -66,6 +89,7 @@ export class TarjetaDelDia {
   private readonly scheduling = inject(SchedulingClient);
   private readonly profiles = inject(ProfilesClient);
   private readonly toasts = inject(ToastService);
+  private readonly dialogs = inject(DialogService);
 
   /** El día sobre el que se crea. */
   readonly dia = input.required<Date>();
@@ -76,6 +100,19 @@ export class TarjetaDelDia {
   /** El rato tocado, para prellenar. */
   readonly desdeInicial = input.required<Date>();
   readonly hastaInicial = input.required<Date>();
+
+  /**
+   * El cupo del que salió el rato, o `null` si se tocó aire.
+   *
+   * C-10 (2026-09-20) · **el cupo manda la hora.** Cuando el rato viene de un
+   * cupo ya programado, la franja es un dato y no una pregunta: los campos de
+   * hora desaparecen y se muestra la franja. Preguntar la hora sobre un cupo
+   * que ya la tiene es ofrecer contradecir al horario publicado.
+   *
+   * Sobre aire —un hueco sin cupo detrás— los campos siguen, porque ahí la
+   * franja no existe hasta que alguien la escribe.
+   */
+  readonly cupoId = input<string | null>(null);
 
   /** Lo que el día ya tiene tomado, para avisar el choque antes de guardar. */
   readonly ratosTomados = input<readonly RatoDelDia[]>([]);
@@ -101,6 +138,25 @@ export class TarjetaDelDia {
    */
   protected readonly modalidad = signal<ModalidadDeAtencion>('PRESENCIAL');
   protected readonly modalidades = MODALIDADES;
+
+  /**
+   * Las modalidades como opciones del control segmentado.
+   *
+   * C-21 y C-10 (2026-09-20): el doctor pidió alternancia en vez de radios.
+   * Se reusa `segmented-control`, que es el `radiogroup` del sistema de diseño
+   * —con flechas y un solo tabulador—, en vez de escribir otro control: son
+   * tres opciones excluyentes, que es exactamente para lo que existe.
+   */
+  protected readonly opcionesDeModalidad: readonly SegmentedOption<ModalidadDeAtencion>[] =
+    MODALIDADES.map((m) => ({ value: m.valor, label: m.nombre }));
+
+  /** Si el alta salió de un cupo ya programado: la franja no se pregunta. */
+  protected readonly desdeUnCupo = computed(() => this.cupoId() !== null);
+
+  /** La franja del cupo, en palabras, para mostrarla como dato. */
+  protected readonly franjaDelCupo = computed(
+    () => `${horaDe(this.desdeInicial())}–${horaDe(this.hastaInicial())}`,
+  );
   protected readonly candidatos = signal<readonly ReferenceOption[]>([]);
   protected readonly buscando = signal(false);
   protected readonly guardando = signal(false);
@@ -153,22 +209,44 @@ export class TarjetaDelDia {
    * Sólo mira lo que la pantalla ya sabe — sin viaje extra—. El servidor cruza
    * además las otras sedes al guardar.
    */
-  protected readonly choqueEnVivo = computed<string | null>(() => {
+  /** El rato ya tomado que pisa lo que se está por crear, si hay alguno. */
+  private readonly loQuePisa = computed<RatoDelDia | null>(() => {
     const rango = this.rango();
     if (rango === null) return null;
-    const pisa = this.ratosTomados().find(
-      (rato) => rato.desde.getTime() < rango.hasta.getTime() && rato.hasta.getTime() > rango.desde.getTime(),
+    return (
+      this.ratosTomados().find(
+        (rato) =>
+          rato.desde.getTime() < rango.hasta.getTime() &&
+          rato.hasta.getTime() > rango.desde.getTime(),
+      ) ?? null
     );
-    return pisa === null || pisa === undefined
-      ? null
-      : `Ese rato pisa ${pisa.rotulo} (${horaDe(pisa.desde)}–${horaDe(pisa.hasta)}).`;
   });
+
+  protected readonly choqueEnVivo = computed<string | null>(() => {
+    const pisa = this.loQuePisa();
+    if (pisa === null) return null;
+    const cuando = `(${horaDe(pisa.desde)}–${horaDe(pisa.hasta)})`;
+    return pisa.tipo === 'bloqueo'
+      ? `Ese rato está bloqueado por ${pisa.rotulo} ${cuando}. No se puede agendar ahí: quitá el bloqueo primero, o elegí otro rato.`
+      : `Ese rato pisa ${pisa.rotulo} ${cuando}.`;
+  });
+
+  /**
+   * C-10 · sobre un bloqueo o un descanso **no se crea nada**.
+   *
+   * La regla se aplica donde se crea y no escondiendo el botón: el bloque ya no
+   * es tocable en el día, pero al alta se puede llegar por el «+» del
+   * encabezado con cualquier franja escrita a mano, y por ahí el bloqueo
+   * quedaba sin defensa. El aviso dice además QUÉ lo bloquea y qué hacer.
+   */
+  protected readonly bloqueadoPorUnRato = computed(() => this.loQuePisa()?.tipo === 'bloqueo');
 
   protected readonly puedeGuardar = computed(() => {
     const rango = this.rango();
     return (
       rango !== null &&
       !this.guardando() &&
+      !this.bloqueadoPorUnRato() &&
       (this.paciente() !== null || this.motivo().trim() !== '')
     );
   });
@@ -208,7 +286,10 @@ export class TarjetaDelDia {
    */
   protected guardar(): void {
     const rango = this.rango();
-    if (rango === null || !this.puedeGuardar()) return;
+    // `puedeGuardar()` ya incluye el bloqueo; se vuelve a mirar acá porque un
+    // botón deshabilitado no es una regla: esta función se puede invocar por
+    // teclado, por `submit` del formulario y desde una prueba.
+    if (rango === null || this.bloqueadoPorUnRato() || !this.puedeGuardar()) return;
 
     this.guardando.set(true);
     this.error.set(null);
@@ -265,14 +346,56 @@ export class TarjetaDelDia {
       });
   }
 
-  /** El rango elegido como fechas del día mirado, o `null` si no cierra. */
+  /**
+   * El rango elegido como fechas del día mirado, o `null` si no cierra.
+   *
+   * **Sobre un cupo la franja sale del cupo y no de los campos** (C-10): no
+   * alcanza con esconder los campos de hora, porque sus señales siguen vivas y
+   * cualquier cosa que las escribiera terminaría en la cita. Acá se corta:
+   * viniendo de un cupo, lo que se guarda es su franja, punto.
+   */
   private rango(): { desde: Date; hasta: Date } | null {
+    if (this.desdeUnCupo()) {
+      return { desde: this.desdeInicial(), hasta: this.hastaInicial() };
+    }
     const desde = conHora(this.dia(), this.desde());
     const hasta = conHora(this.dia(), this.hasta());
     if (desde === null || hasta === null || desde.getTime() >= hasta.getTime()) {
       return null;
     }
     return { desde, hasta };
+  }
+
+  /**
+   * Si hay algo que se perdería al cerrar.
+   *
+   * Decide si `Escape` y el clic en el fondo cierran solos o preguntan. Un
+   * modal vacío que exige confirmar para salir es una traba; uno con un
+   * paciente ya elegido que se cierra de un `Escape` de reflejo es una pérdida.
+   */
+  protected readonly hayAlgoEscrito = computed(
+    () => this.paciente() !== null || this.motivo().trim() !== '',
+  );
+
+  /**
+   * Intentaron cerrar con algo escrito: se pregunta antes de perderlo.
+   *
+   * Se usa el diálogo del sistema y no `confirm()` del navegador: `confirm()`
+   * congela la página, no se puede recorrer con lector de pantalla y bloquea
+   * cualquier automatización (regla 95.4.2).
+   */
+  protected pedirDescarte(): void {
+    void this.dialogs
+      .confirm({
+        title: '¿Descartar lo que escribiste?',
+        message: 'Lo que cargaste en esta tarjeta se pierde y no se crea nada.',
+        confirmLabel: 'Descartar',
+        cancelLabel: 'Seguir editando',
+        destructive: true,
+      })
+      .then((descarta) => {
+        if (descarta) this.cerrada.emit();
+      });
   }
 
   private fallo(error: unknown): void {

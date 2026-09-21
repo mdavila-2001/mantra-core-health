@@ -42,6 +42,14 @@ export interface PedidoDeAccion {
 export interface RatoTocado {
   readonly desde: Date;
   readonly hasta: Date;
+  /**
+   * El cupo del que salió, o `null` si se tocó aire.
+   *
+   * C-10 (2026-09-20): la tarjeta lo usa para decidir si pregunta la hora. Un
+   * bloque `libre` lleva el id del cupo en su `clave`; el aire lleva
+   * `aire-<timestamp>`, que no es un cupo y por eso viaja como `null`.
+   */
+  readonly cupoId: string | null;
 }
 
 /** Un bloque de la línea de horas. */
@@ -72,8 +80,15 @@ export interface BloqueDelDia {
    * Qué hay en ese rato. `aire` es el hueco entre bloques — el receso del
    * doctor o simplemente tiempo sin agenda: no invita, no tiene borde, pero
    * OCUPA su altura para que el día se lea como es.
+   *
+   * `no-disponible` es el cupo que **existe y no se puede tomar**: cerrado, o
+   * sin capacidad que quede. Se agregó con C-10 (2026-09-20) porque hasta
+   * entonces el día lo pintaba «Disponible» —cualquier cupo sin cita encima lo
+   * era— y eso ofrecía reservar un rato que el servidor iba a rechazar. La
+   * tabla de Consultas ya lo derivaba bien (`disponible: remainingCapacity > 0`
+   * en `agenda.ts`); el día no. Ahora las dos dicen lo mismo.
    */
-  readonly tipo: 'cita' | 'libre' | 'ocupado' | 'aire';
+  readonly tipo: 'cita' | 'libre' | 'no-disponible' | 'ocupado' | 'aire';
   /** La cita, cuando la hay. */
   readonly cita: Booking | null;
   /** Cómo se llama quien viene. */
@@ -433,18 +448,24 @@ export class DayView {
       if (cita === null && this.dentroDeOcupado(cupo.startAt, hasta)) continue;
 
       if (cita === null) {
+        // C-10 · un cupo sin capacidad libre NO es un rato disponible, aunque
+        // no tenga una cita de este día encima: puede estar cerrado, o tomado
+        // por una reserva que esta lectura no trae. Ofrecerlo sería invitar a
+        // un 409. La regla se aplica donde se dibuja Y donde se crea
+        // (`tocar()`), no sólo escondiendo el botón.
+        const tomado = cupo.remainingCapacity <= 0;
         delDia.push({
           clave: cupo.id,
           desde: cupo.startAt,
           hasta,
-          tipo: 'libre',
+          tipo: tomado ? 'no-disponible' : 'libre',
           cita: null,
           paciente: '',
           estado: '',
           statusCode: '',
           statusVariant: UNKNOWN_STATUS_VARIANT,
           tipologia: null,
-          motivo: null,
+          motivo: tomado ? 'Sin lugar' : null,
           excepcionId: null,
           alturaPx: this.altura(cupo.startAt, hasta, true),
         });
@@ -559,7 +580,11 @@ export class DayView {
       return;
     }
 
-    this.ratoTocado.emit({ desde: bloque.desde, hasta: bloque.hasta });
+    this.ratoTocado.emit({
+      desde: bloque.desde,
+      hasta: bloque.hasta,
+      cupoId: bloque.tipo === 'libre' ? bloque.clave : null,
+    });
   }
 
   /**
@@ -574,7 +599,8 @@ export class DayView {
     const hora = base.toDateString() === ahora.toDateString() ? ahora.getHours() + 1 : 9;
     base.setHours(hora, 0, 0, 0);
     const hasta = new Date(base.getTime() + 30 * 60_000);
-    this.ratoTocado.emit({ desde: base, hasta });
+    // Sin cupo: el «+» del encabezado propone una franja, no la toma de uno.
+    this.ratoTocado.emit({ desde: base, hasta, cupoId: null });
   }
 
   /** El código del estado, sin el prefijo de módulo. */

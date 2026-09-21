@@ -503,3 +503,28 @@
     padding-inline-end: 16rem;
   }
 }
+
+/* C-10 (2026-09-20) · el rato que existe y no se puede tomar.
+
+   Se lee, pero no invita: sin borde punteado de «tocame», sin cursor de mano y
+   en tono apagado. La palabra va SIEMPRE —«No disponible», y el motivo al
+   lado—: en escala de grises un hueco apagado y uno disponible se parecen
+   demasiado, y la regla 95.4.6 prohíbe que el estado dependa sólo del color. */
+.dia__no-disponible {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.dia__no-disponible svg {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+}
+
+.dia__no-disponible-motivo {
+  color: var(--text-tertiary, var(--text-secondary));
+}

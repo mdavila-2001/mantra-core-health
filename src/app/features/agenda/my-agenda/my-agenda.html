@@ -160,6 +160,7 @@
                       [resourceId]="elRecurso.id"
                       [desdeInicial]="rato.desde"
                       [hastaInicial]="rato.hasta"
+                      [cupoId]="rato.cupoId"
                       [ratosTomados]="ratosTomadosDelDia()"
                       (creada)="tarjetaCreo(dia)"
                       (cerrada)="cerrarTarjeta()"
@@ -167,6 +168,20 @@
                   }
                 }
                 <div class="calendario__pie">
+                  <!-- C-10 · «poder agregar un horario al final en caso de
+                       emergencia». Es una excepción EXTRA —el único tipo del
+                       catálogo que ABRE disponibilidad—, y se pregunta antes,
+                       nombrando que se sale del horario de atención. -->
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    data-testid="agregar-horario-extra"
+                    (clicked)="agregarHorarioExtra(dia)"
+                  >
+                    Agregar un horario al final
+                  </button>
                   <button
                     app-button
                     variant="ghost"

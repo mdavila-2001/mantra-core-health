@@ -810,6 +810,117 @@ export class MyAgenda implements OnInit {
       });
   }
 
+  /* -- El horario extra del final del día (C-10) ----------------------------- */
+
+  /**
+   * Hasta qué hora atiende el día mirado, según el **horario publicado**.
+   *
+   * `null` cuando ese día no tiene regla: no atiende, y entonces cualquier hora
+   * que se agregue está fuera de horario por definición.
+   */
+  private finDelHorarioPublicado(dia: Date): Date | null {
+    const actual = this.estado();
+    if (actual.status !== 'ready') return null;
+    const reglas = actual.data.rules.filter((regla) => regla.dayOfWeek === dia.getDay());
+    if (reglas.length === 0) return null;
+    const ultima = reglas.reduce((a, b) => (a.endTime >= b.endTime ? a : b));
+    const [hh, mm] = ultima.endTime.split(':');
+    const fin = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate());
+    fin.setHours(Number(hh ?? 0), Number(mm ?? 0), 0, 0);
+    return fin;
+  }
+
+  /** Cuánto dura un turno según el horario publicado; 30 si no lo declara. */
+  private duracionDelTurno(dia: Date): number {
+    const actual = this.estado();
+    if (actual.status !== 'ready') return 30;
+    const regla = actual.data.rules.find((r) => r.dayOfWeek === dia.getDay());
+    return regla?.slotMinutes ?? actual.data.slotMinutes ?? 30;
+  }
+
+  /**
+   * Desde cuándo arranca el horario extra: después de lo último que hay ese día.
+   *
+   * Se toma el máximo entre el fin del horario publicado y el fin de la última
+   * actividad cargada. Sin esto, un día que ya se extendió una vez propondría
+   * la misma hora otra vez y la segunda excepción pisaría a la primera.
+   */
+  private arranqueDelExtra(dia: Date): Date {
+    const candidatos = [
+      this.finDelHorarioPublicado(dia),
+      ...this.cuposDelDia().map((c) => c.endAt ?? c.startAt),
+      ...this.citasDelDia().map((c) => c.endAt),
+    ].filter((f): f is Date => f instanceof Date);
+
+    if (candidatos.length === 0) {
+      // Un día sin horario ni actividad: se propone el final de la tarde, que
+      // es cuando se extiende en la práctica.
+      const tarde = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate());
+      tarde.setHours(18, 0, 0, 0);
+      return tarde;
+    }
+    return new Date(Math.max(...candidatos.map((f) => f.getTime())));
+  }
+
+  /**
+   * C-10 · agrega un horario **al final del día**, fuera del horario de atención.
+   *
+   * Es una **excepción `EXTRA`**, no un cupo inventado: `EXTRA` es el único
+   * tipo del catálogo con `blocks: false`, o sea el único que AÑADE
+   * disponibilidad en vez de cerrarla
+   * (`GET /scheduling/exception-types`). Inventar un cupo por el lado del
+   * cliente sería crear disponibilidad que el horario publicado no respalda, y
+   * el día siguiente la regeneración la borraría sin avisar.
+   *
+   * Se pregunta antes, con un diálogo que **nombra** que se sale del horario:
+   * quien extiende tiene que saber que está aceptando atender fuera de hora, no
+   * descubrirlo cuando llegue el paciente. El diálogo es el del sistema y no
+   * `confirm()` del navegador, que congela la página y no cumple 95.4.2.
+   */
+  protected async agregarHorarioExtra(dia: Date): Promise<void> {
+    const recurso = this.recurso();
+    if (recurso === null) return;
+
+    const desde = this.arranqueDelExtra(dia);
+    const hasta = new Date(desde.getTime() + this.duracionDelTurno(dia) * 60_000);
+    const finPublicado = this.finDelHorarioPublicado(dia);
+    const hora = (f: Date): string => formatDate(f, 'HH:mm', this.idioma);
+
+    const confirmado = await this.dialogs.confirm({
+      title: 'Agregar un horario fuera de tu horario de atención',
+      message:
+        finPublicado === null
+          ? `Este día no está en tu horario publicado: no atendés. Si seguís, queda abierto de ` +
+            `${hora(desde)} a ${hora(hasta)} como horario extra, y ese rato se puede reservar.`
+          : `Tu horario de atención de este día termina a las ${hora(finPublicado)}. Si seguís, ` +
+            `queda abierto de ${hora(desde)} a ${hora(hasta)} como horario extra, y ese rato se ` +
+            `puede reservar. No cambia tu horario publicado: vale sólo para este día.`,
+      confirmLabel: 'Agregar el horario extra',
+      cancelLabel: 'No agregar nada',
+    });
+    if (!confirmado) return;
+
+    this.scheduling
+      .createException(recurso.id, {
+        exceptionType: 'EXTRA',
+        startAt: desde.toISOString(),
+        endAt: hasta.toISOString(),
+        // Lo que separa `EXTRA` de los otros seis: abre en vez de cerrar.
+        isAvailable: true,
+      })
+      .subscribe({
+        next: () => {
+          this.toast.success(
+            `Queda abierto de ${hora(desde)} a ${hora(hasta)}, fuera de tu horario de atención.`,
+            'Horario extra agregado',
+          );
+          this.cargarDia(dia);
+          this.cargarMes();
+        },
+        error: (error: unknown) => this.estado.set(errorToViewState<PublishedTemplate>(error)),
+      });
+  }
+
   /* -- El mes ---------------------------------------------------------------- */
 
   /** Cambia de solapa; la del mes carga sus datos la primera vez. */
@@ -937,11 +1048,13 @@ export class MyAgenda implements OnInit {
         desde: cupo.startAt,
         hasta: cupo.endAt ?? cupo.startAt,
         rotulo: `la cita de ${porSlot.get(cupo.id)?.patientName ?? 'un paciente'}`,
+        tipo: 'cita' as const,
       }));
     const deOcupados = this.bloqueosDelMes().map((b) => ({
       desde: b.desde,
       hasta: b.hasta,
       rotulo: b.motivo === null ? 'un rato ocupado' : `«${b.motivo}»`,
+      tipo: 'bloqueo' as const,
     }));
     return [...deCitas, ...deOcupados];
   });
