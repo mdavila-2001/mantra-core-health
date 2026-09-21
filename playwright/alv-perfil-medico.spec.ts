@@ -85,8 +85,16 @@ test.describe('ALV-005/006/010 · dónde atiendo', () => {
     const sedesTrasRecargar = await seccionDeSedes(page);
     await expect(sedesTrasRecargar.getByTestId('sede-propia')).toHaveCount(1);
 
-    // Retirar, con confirmación.
-    await sedesTrasRecargar.getByTestId('sede-quitar').first().click();
+    // Retirar, con confirmación. Desde ADR-0012 la sede propia tiene tres
+    // acciones y por eso van plegadas: primero se abre el desplegable de esa
+    // fila. El `data-action` es el código de la acción, no su texto, que
+    // cambia según de quién sea la sede.
+    await sedesTrasRecargar
+      .getByTestId('sede-propia')
+      .first()
+      .getByTestId('row-actions-trigger')
+      .click();
+    await page.locator('app-menu [data-action="retirar"]').click();
     await page.getByRole('dialog').getByRole('button', { name: /^Retirar$/ }).click();
     await estable(page);
     await expect(sedesTrasRecargar.getByTestId('sede-propia')).toHaveCount(0);
