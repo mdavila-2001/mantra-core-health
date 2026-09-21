@@ -17,6 +17,10 @@
         }
 
         @case ('SCALE') {
+          <!-- Sigue dibujada entera, y es el caso 3 de ADR-0013: una escala no
+               es una lista de opciones — el orden y la distancia entre los
+               puntos SON el dato. Colapsada en un desplegable deja de ser una
+               escala y pasa a ser cinco palabras sueltas. -->
           <app-radio-group
             [value]="seleccionDe(pregunta.id)"
             (valueChange)="responder(pregunta.id, $event)"
@@ -38,6 +42,11 @@
         }
 
         @case ('BOOLEAN') {
+          <!-- Sigue con las dos opciones a la vista, y es el caso 2 de
+               ADR-0013: son el sí y el no de una misma afirmación, no dos
+               valores de una lista. Un desplegable de dos esconde la mitad de
+               la respuesta detrás de un clic. Es lo mismo que pide C-10 para
+               el modal de cupos. -->
           <app-radio-group
             [value]="seleccionDe(pregunta.id)"
             (valueChange)="responder(pregunta.id, $event)"
@@ -50,16 +59,24 @@
         }
 
         @case ('SINGLE_CHOICE') {
-          <app-radio-group
-            [value]="seleccionDe(pregunta.id)"
+          <!-- Desplegable y no radios: es el caso 1 de ADR-0013 (C-21). Las
+               opciones son valores distintos del mismo campo, las escribe quien
+               arma el cuestionario y pueden ser tres o quince — no hay entre
+               ellas ni orden ni distancia que el control tenga que enseñar.
+               Las otras dos preguntas de opción de este archivo SÍ siguen
+               dibujadas enteras, y cada una dice por qué.
+
+               Sin `[disabled]="soloLectura()"` a propósito: este componente
+               declara que «`soloLectura` no es deshabilitado», y ninguno de
+               sus otros controles lo apaga. Agregárselo sólo a éste habría
+               cambiado el contrato del organismo de paso. -->
+          <app-select
+            [options]="opcionesDe(pregunta)"
+            [value]="opcionElegidaDe(pregunta.id)"
             (valueChange)="responder(pregunta.id, $event)"
             [hasError]="falta(pregunta.id)"
             [attr.data-testid]="testIdPrefijo() + '-' + pregunta.id"
-          >
-            @for (opcion of pregunta.options ?? []; track opcion) {
-              <app-radio [value]="opcion" [label]="opcion" />
-            }
-          </app-radio-group>
+          />
         }
 
         @case ('MULTIPLE_CHOICE') {

@@ -32,6 +32,7 @@ Registro de las decisiones que gobiernan el frontend.
 | [0010](ADR-0010-css-critico-en-linea.md) | CSS crítico en línea desactivado | **Observado, sin motivo recuperable** | `angular.json` |
 | [0011](ADR-0011-api-mismo-dominio.md) | **La API va detrás del mismo dominio** | Aceptado | Decisión del equipo, 2026-08-01 |
 | [0012](ADR-0012-botones-con-texto-y-acciones-de-fila.md) | **Todo botón lleva icono y texto; las acciones de fila van en un desplegable** | Aceptado — reemplaza la decisión del 2026-09-13 | Corrección C-06, 2026-09-20 |
+| [0013](ADR-0013-opciones-en-select.md) | **Elegir un valor de una lista se hace con un `select`**; alternar dos estados, con un toggle | Aceptado — con una lectura por confirmar | Correcciones C-21 y C-10, 2026-09-20 |
 
 ## Plantilla
 
