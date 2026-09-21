@@ -1429,6 +1429,41 @@ describe('PractitionerProfileEdit', () => {
     });
 
     /**
+     * El nivel inválido del contrato: un cuerpo que NO tiene la forma que el
+     * proyecto documenta. Pasa de verdad —un balanceador que devuelve su
+     * propio HTML, un servicio que contesta texto plano— y lo que no puede
+     * pasar es que el formulario se quede mudo o se caiga: sin campo que
+     * señalar, el mensaje tiene que salir igual por el aviso general.
+     */
+    it('un cuerpo que no respeta el contrato de errores no deja al formulario mudo', () => {
+      rechazar('502 Bad Gateway' as unknown as object, 502);
+
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe('');
+      // Y lo que se escribió sigue ahí: un cuerpo raro no puede costarle a
+      // nadie lo que ya había tecleado.
+      expect(señal<string>('nit')()).toBe('12345678');
+    });
+
+    /**
+     * Segundo nivel inválido: el cuerpo tiene la forma correcta pero
+     * `violations` no es la lista de textos que el contrato promete. Leerla
+     * como si lo fuera es la forma más barata de romper la pantalla con un
+     * dato del servidor.
+     */
+    it('unas violaciones con la forma equivocada tampoco rompen nada', () => {
+      rechazar({
+        code: 'VALIDATION_ERROR',
+        message: 'Revisá los datos',
+        timestamp: '2026-09-21T00:00:00.000Z',
+        path: '/profiles/practitioners/me',
+        details: { violations: { taxId: 'no es una lista' } },
+      });
+
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe('');
+      expect(señal<string>('nit')()).toBe('12345678');
+    });
+
+    /**
      * Que el getter devuelva el mensaje no prueba que se vea: falta que esté
      * enlazado al campo correcto, que es el error que un `errorMessage` mal
      * puesto comete en silencio. Esta prueba mira el DOM del panel abierto.
