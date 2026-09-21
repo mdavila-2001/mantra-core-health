@@ -7,12 +7,10 @@ import {
   output,
   signal,
 } from '@angular/core';
-import type { WritableSignal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
-import { PrescriptionFavoritesClient } from '../../../../core/data-access/prescription-favorites/prescription-favorites.client';
 import { SystemContextClient } from '../../../../core/data-access/system-context/system-context.client';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import { listaDeTextos } from '../../../../core/data-access/terminology/terminology.types';
@@ -20,8 +18,6 @@ import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
-import { Badge } from '../../../../shared/components/atoms/badge/badge';
-import { Chip } from '../../../../shared/components/atoms/chip/chip';
 import { AttachmentUploader } from '../../../../shared/components/organisms/attachment-uploader/attachment-uploader';
 import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../shared/components/atoms/select/select';
@@ -31,6 +27,9 @@ import { Card } from '../../../../shared/components/molecules/card/card';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
+import { Menu } from '../../../../shared/components/molecules/menu/menu';
+import { MenuItem } from '../../../../shared/components/molecules/menu/menu-item/menu-item';
+import { MenuTrigger } from '../../../../shared/components/molecules/menu/menu-trigger/menu-trigger';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
@@ -39,9 +38,6 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
 import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import type { DynamicEnumOption } from '../../../../core/data-access/system-context/system-context.types';
-import { environment } from '../../../../../environments/environment';
-import { CASOS_RECETA_DEMO, conceptIdPorCodigo } from '../demo-presets';
-import type { CasoRecetaDemo } from '../demo-presets';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
 import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
 
@@ -67,9 +63,6 @@ const OTRO_MOTIVO = '__otro_motivo__';
 /** La vía de administración. Opcional en el DTO: sin binding, se omite y ya. */
 export const TARGET_VIA = 'clinical.medication_requests.route_concept_id';
 
-/** La unidad de la cantidad. Mismo trato que la vía. */
-export const TARGET_UNIDAD = 'clinical.medication_requests.unit_concept_id';
-
 /**
  * Las vías en castellano, por código estable.
  *
@@ -84,16 +77,6 @@ const ETIQUETAS_DE_VIA: Readonly<Record<string, string>> = {
   ROUTE_SC: 'Subcutánea',
   ROUTE_TOP: 'Tópica',
   ROUTE_INH: 'Inhalatoria',
-};
-
-/** Las unidades en castellano. Mismo criterio que {@link ETIQUETAS_DE_VIA}. */
-const ETIQUETAS_DE_UNIDAD: Readonly<Record<string, string>> = {
-  UNIT_mg: 'mg',
-  UNIT_g: 'g',
-  UNIT_mL: 'mL',
-  'UNIT_{tablet}': 'Comprimidos',
-  'UNIT_{capsule}': 'Cápsulas',
-  'UNIT_[drp]': 'Gotas',
 };
 
 /** Largo máximo de los dos textos libres. El backend no los acota; la legibilidad sí. */
@@ -113,20 +96,6 @@ const PROPIEDAD_PRESENTACIONES = 'dose_forms';
 const PROPIEDAD_CONCENTRACIONES = 'strengths';
 
 /**
- * Separador con el que presentación y concentración se componen en `doseText`.
- *
- * El modelo **no tiene columna** para ninguna de las dos: `medication_requests`
- * guarda el medicamento como concepto y la posología como texto (`dose_text`).
- * Componerlas acá es lo que permite que el profesional las elija de una lista en
- * vez de teclearlas, sin inventar esquema. El mismo separador que usa el PDF
- * para unir las partes de la línea del medicamento.
- */
-const SEPARADOR_DE_DOSIS = ' · ';
-
-/** Largo máximo del rótulo de un favorito. Es el del DTO (`@MaxLength(120)`). */
-const TOPE_DEL_ROTULO = 120;
-
-/**
  * Un diagnóstico de la persona, ya traducido, para elegirlo como indicación.
  *
  * Baja del expediente hecho —`id` y palabras— por lo mismo que las recetas: acá
@@ -138,26 +107,6 @@ export interface DiagnosticoEnFicha {
   readonly id: string;
   /** El diagnóstico en palabras. Nunca el uuid del concepto. */
   readonly etiqueta: string;
-}
-
-/**
- * Un favorito de prescripción del profesional, en la forma que este bloque usa.
- *
- * Se declara acá —y no se importa del cliente— a propósito: el bloque consume
- * exactamente estas claves, y `quantityDecimal` se acepta como número **o**
- * texto porque la columna es `numeric` y el transporte la devuelve como cadena.
- * {@link cantidadDe} la normaliza en el único punto donde importa.
- */
-interface FavoritoDeReceta {
-  readonly id: string;
-  readonly name: string;
-  readonly medicationConceptId: string;
-  readonly doseText?: string;
-  readonly routeConceptId?: string;
-  readonly frequencyText?: string;
-  readonly quantityDecimal?: number | string;
-  readonly unitConceptId?: string;
-  readonly patientInstructionsText?: string;
 }
 
 /** Una receta del expediente, ya sin uuid y con su ciclo resuelto. */
@@ -202,13 +151,12 @@ export interface RecetaEnFicha {
  * publicado. Sigue sin haber texto libre —lo que se guarda es el `conceptId` de
  * lo elegido—, que es la garantía que importa.
  *
- * ## La posología sale del catálogo cuando el catálogo la declara
+ * ## El catálogo puede completar la dosis sin reemplazarla
  *
  * Al elegir se lee la ficha del concepto: si publica `dose_forms` y `strengths`
- * —como hace el vademécum—, presentación y concentración se **eligen** y viajan
- * compuestas en `doseText`, porque el modelo no tiene una columna para cada
- * una. Si no las declara, la dosis sigue siendo el texto libre de siempre. Es
- * degradación, no dos modos: el formulario nunca ofrece las dos cosas a la vez.
+ * —como hace el vademécum—, presentación y concentración se pueden elegir para
+ * completar el texto. La dosis siempre queda visible y editable: el texto que
+ * confirma quien prescribe es el único que viaja en `doseText`.
  *
  * ## El binding del catálogo se verifica antes de ofrecer nada
  *
@@ -234,15 +182,6 @@ export interface RecetaEnFicha {
  * verdad: una receta sintomática o profiláctica no tiene diagnóstico detrás y
  * se guarda igual, así que la opción vacía existe y es la de arranque.
  *
- * ## Los favoritos rellenan el formulario; jamás prescriben
- *
- * Aplicar un favorito escribe los campos y **no guarda nada**: quien receta
- * revisa, ajusta y prescribe por el camino de siempre, con su firma y su
- * emisión. Un atajo que creara la receta desde el favorito sería una segunda
- * puerta a la prescripción con la mitad de los controles. Y si el formulario ya
- * tiene datos, aplicar pide confirmación: pisar en silencio lo que alguien
- * escribió es cómo se receta otra cosa sin enterarse.
- *
  * ## Después de cada acción se relee
  *
  * Nada de mutar la lista en memoria. Las tres escrituras devuelven el estado
@@ -256,15 +195,16 @@ export interface RecetaEnFicha {
   imports: [
     Alert,
     AppButton,
-    Badge,
     AppInput,
     Card,
-    Chip,
     AttachmentUploader,
     ConceptSelect,
     DatePicker,
     FormActions,
     FormField,
+    Menu,
+    MenuItem,
+    MenuTrigger,
     ReferenceCombobox,
     Select,
     StatusSeal,
@@ -276,7 +216,6 @@ export interface RecetaEnFicha {
 })
 export class MedicationBlock {
   private readonly clinical = inject(ClinicalClient);
-  private readonly favoritos = inject(PrescriptionFavoritesClient);
   private readonly systemContext = inject(SystemContextClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly auth = inject(AuthService);
@@ -307,19 +246,6 @@ export class MedicationBlock {
    * opcional en el contrato.
    */
   readonly diagnosticos = input<readonly DiagnosticoEnFicha[]>([]);
-
-  /**
-   * Si la receta exige declarar para qué es.
-   *
-   * El cliente lo pidió como regla: «siempre que se haga una receta médica debe
-   * de poderse poner un diagnóstico o porqué de la receta». Se cumple sin
-   * cerrar ningún caso: o se elige un diagnóstico de la historia, o se escribe
-   * el motivo. La opción «sin diagnóstico asociado» sigue existiendo en el
-   * contrato —hay recetas sintomáticas y profilácticas— y por eso esto es un
-   * input y no una constante: quien monte el bloque en otro contexto puede
-   * apagarlo.
-   */
-  readonly exigeDiagnostico = input(true);
 
   /**
    * Las citas del paciente, para elegir de qué consulta es la receta.
@@ -380,39 +306,28 @@ export class MedicationBlock {
   protected readonly topeDelTexto = TOPE_DEL_TEXTO;
   protected readonly targetMedicamento = TARGET_MEDICAMENTO;
   protected readonly targetVia = TARGET_VIA;
-  protected readonly targetUnidad = TARGET_UNIDAD;
   protected readonly etiquetasDeVia = ETIQUETAS_DE_VIA;
-  protected readonly etiquetasDeUnidad = ETIQUETAS_DE_UNIDAD;
 
-  /* -- Casos de demostración ------------------------------------------------ */
-
-  /** La barra existe sólo donde el despliegue la pidió (`PUBLIC_DEMO_PRESETS`). */
-  protected readonly demoActiva = environment.demoPresets;
-  protected readonly casosDemo = CASOS_RECETA_DEMO;
-
-  /** Opciones de pautas rápidas de dosificación. */
-  protected readonly opcionesFrecuenciaRapida: readonly string[] = [
-    'Cada 8 horas',
-    'Cada 12 horas',
-    'Cada 24 horas (1 vez al día)',
-    'Cada 6 horas',
-    'En ayunas',
-    'Antes de dormir',
-    'Según necesidad (SOS)',
+  /** Atajos existentes, sin una pauta seleccionada por defecto. */
+  protected readonly opcionesFrecuenciaRapida: readonly SelectOption<string>[] = [
+    { value: 'Cada 8 horas', label: 'Cada 8 horas' },
+    { value: 'Cada 12 horas', label: 'Cada 12 horas' },
+    { value: 'Cada 24 horas (1 vez al día)', label: 'Cada 24 horas (1 vez al día)' },
+    { value: 'Cada 6 horas', label: 'Cada 6 horas' },
+    { value: 'En ayunas', label: 'En ayunas' },
+    { value: 'Antes de dormir', label: 'Antes de dormir' },
+    { value: 'Según necesidad (SOS)', label: 'Según necesidad (SOS)' },
   ];
 
   /** Opciones de duración rápida del tratamiento. */
-  protected readonly opcionesDuracionRapida: readonly {
-    readonly dias: number | null;
-    readonly label: string;
-  }[] = [
-    { dias: 3, label: '3 días' },
-    { dias: 5, label: '5 días' },
-    { dias: 7, label: '7 días' },
-    { dias: 10, label: '10 días' },
-    { dias: 14, label: '14 días' },
-    { dias: 30, label: '30 días' },
-    { dias: null, label: 'Crónico / Continuo' },
+  protected readonly opcionesDuracionRapida: readonly SelectOption<number | 'continuo'>[] = [
+    { value: 3, label: '3 días' },
+    { value: 5, label: '5 días' },
+    { value: 7, label: '7 días' },
+    { value: 10, label: '10 días' },
+    { value: 14, label: '14 días' },
+    { value: 30, label: '30 días' },
+    { value: 'continuo', label: 'Crónico / Continuo' },
   ];
 
   /**
@@ -431,7 +346,6 @@ export class MedicationBlock {
   /** El control numérico devuelve texto: se convierte al enviar, no al teclear. */
   protected readonly cantidad = signal<string | number | null>('');
   protected readonly via = signal<string | null>(null);
-  protected readonly unidad = signal<string | null>(null);
 
   /* -- Vigencia y duración estructurada ------------------------------------- */
 
@@ -439,6 +353,7 @@ export class MedicationBlock {
   protected readonly validTo = signal<Date | null>(null);
   protected readonly duracionDias = signal<number | null>(null);
   protected readonly esCronico = signal(false);
+  protected readonly duracionRapidaElegida = signal<number | 'continuo' | null>(null);
 
   /** Indicaciones al paciente. Viajan como `patientInstructionsText` (v4.1.3). */
   protected readonly indicacionesPaciente = signal<string>('');
@@ -468,7 +383,7 @@ export class MedicationBlock {
     ],
   );
 
-  /** El motivo escrito a mano, cuando se eligió «Otro motivo». */
+  /** El motivo escrito a mano cuando no se eligió un diagnóstico. */
   protected readonly motivoLibre = signal('');
 
   /* -- Adjuntos de la receta ------------------------------------------------ */
@@ -490,31 +405,21 @@ export class MedicationBlock {
     this.recetaRecienCreada.set(null);
   }
 
-  /** Si se eligió escribir el motivo en vez de elegir un diagnóstico. */
-  protected readonly motivoEsLibre = computed(() => this.indicacion() === OTRO_MOTIVO);
+  /** Si no hay diagnóstico asociado, el motivo puede escribirse libremente. */
+  protected readonly motivoEsLibre = computed(
+    () => this.indicacion() === null || this.indicacion() === OTRO_MOTIVO,
+  );
 
   /**
-   * Guarda la indicación elegida, y limpia el texto al dejar de escribirlo.
+   * Guarda la indicación elegida, y limpia el texto al elegir un diagnóstico.
    *
    * Mismo criterio que la ocupación del alta: un motivo a mano que ya no
    * describe nada no debe viajar.
    */
   protected elegirIndicacion(valor: string | null): void {
     this.indicacion.set(valor);
-    if (valor !== OTRO_MOTIVO) this.motivoLibre.set('');
+    if (valor !== null && valor !== OTRO_MOTIVO) this.motivoLibre.set('');
   }
-
-  /**
-   * Si hay un porqué declarado para esta receta.
-   *
-   * Un diagnóstico de la historia, o un motivo escrito. La opción vacía no
-   * cuenta: es justamente la que {@link exigeDiagnostico} viene a impedir.
-   */
-  protected readonly hayMotivo = computed(
-    () =>
-      (this.indicacion() !== null && !this.motivoEsLibre()) ||
-      (this.motivoEsLibre() && this.motivoLibre().trim() !== ''),
-  );
 
   /**
    * La última cantidad que sugirió la pauta. Distinguirla de una tecleada a
@@ -522,14 +427,6 @@ export class MedicationBlock {
    * que quien receta escribió.
    */
   private ultimaCantidadSugerida: string | null = null;
-
-  /**
-   * Las opciones de vía y unidad, guardadas para resolver los casos de
-   * demostración por **código**. Mismas peticiones que ya hacen los selectores:
-   * el cliente memoiza por target.
-   */
-  private readonly opcionesVia = signal<readonly DynamicEnumOption[]>([]);
-  private readonly opcionesUnidad = signal<readonly DynamicEnumOption[]>([]);
 
   /* -- Buscar el medicamento en el catálogo -------------------------------- */
 
@@ -613,75 +510,6 @@ export class MedicationBlock {
    */
   private readonly falloAlPrescribir = signal(false);
 
-  /* -- Favoritos de prescripción (v4.1.7) ----------------------------------- */
-
-  /** Los favoritos propios. Lista completa: la API no la pagina. */
-  protected readonly favoritosPropios = signal<readonly FavoritoDeReceta[]>([]);
-
-  /**
-   * Si la cuenta puede tener favoritos.
-   *
-   * `false` sólo ante el `403` de una cuenta sin perfil profesional, que **no
-   * es un error**: es «esto no aplica». Se apaga la sección entera en vez de
-   * mostrar un aviso rojo por una función que esa cuenta nunca va a usar.
-   */
-  protected readonly favoritosAplican = signal(true);
-
-  /** El favorito elegido en el selector, para poder volver a elegir el mismo. */
-  protected readonly favoritoElegido = signal<string | null>(null);
-
-  protected readonly guardandoFavorito = signal(false);
-
-  /**
-   * El fallo de guardar un favorito, en palabras.
-   *
-   * Aparte de {@link errorDeLaReceta} a propósito: guardar un atajo personal no
-   * es prescribir, y un aviso que dijera «receta» sobre un rótulo repetido
-   * mandaría a buscar el problema donde no está.
-   */
-  protected readonly errorDelFavorito = signal<string | null>(null);
-
-  /** Los favoritos como opciones del desplegable, en el orden que llegaron. */
-  protected readonly opcionesDeFavorito = computed<readonly SelectOption<string>[]>(() =>
-    this.favoritosPropios().map((favorito) => ({ value: favorito.id, label: favorito.name })),
-  );
-
-  /**
-   * Si el selector de favoritos se ofrece.
-   *
-   * Con la lista vacía no se dibuja: un desplegable sin nada que desplegar se
-   * lee como algo roto, y el primer día de cualquier profesional la lista está
-   * vacía. Lo que sí queda visible es «Guardar como favorito», que es como se
-   * llena.
-   */
-  protected readonly hayFavoritos = computed(
-    () => this.favoritosAplican() && this.favoritosPropios().length > 0,
-  );
-
-  /**
-   * Si hay algo cargado que aplicar un favorito pisaría.
-   *
-   * El medicamento cuenta como dato aunque sea lo único elegido: reemplazarlo
-   * sin avisar es exactamente cómo se termina prescribiendo otra cosa.
-   */
-  protected readonly formularioConDatos = computed(
-    () =>
-      this.medicamento() !== null ||
-      this.dosis().trim() !== '' ||
-      this.frecuencia().trim() !== '' ||
-      String(this.cantidad() ?? '').trim() !== '' ||
-      this.via() !== null ||
-      this.unidad() !== null ||
-      this.concentracion() !== null ||
-      this.presentacion() !== null ||
-      this.indicacionesPaciente().trim() !== '',
-  );
-
-  /** Sin medicamento no hay favorito que guardar: es el único obligatorio. */
-  protected readonly puedeGuardarFavorito = computed(
-    () => this.favoritosAplican() && this.medicamento() !== null && !this.guardandoFavorito(),
-  );
-
   /** La cita elegida, o `null` por «sin cita asociada». */
   protected readonly citaElegida = signal<string | null>(null);
 
@@ -727,7 +555,6 @@ export class MedicationBlock {
       (this.hayEncuentro() || this.sinExigirEncuentro()) &&
       !this.sinOrganizacion() &&
       this.medicamento() !== null &&
-      (!this.exigeDiagnostico() || this.hayMotivo()) &&
       !this.registrando(),
   );
 
@@ -806,41 +633,6 @@ export class MedicationBlock {
       // Sin binding declarado la API responde 404. No es un fallo transitorio
       // que convenga reintentar: es un dato que falta en el catálogo.
       error: () => this.catalogoListo.set(false),
-    });
-    this.cargarOpciones(TARGET_VIA, this.opcionesVia);
-    this.cargarOpciones(TARGET_UNIDAD, this.opcionesUnidad);
-    this.cargarFavoritos();
-  }
-
-  /**
-   * Trae los favoritos propios, sin ruido si no hay ninguno ni si no aplican.
-   *
-   * Dos silencios distintos y deliberados: el `403` de una cuenta sin perfil
-   * profesional **apaga la sección** —no aplica, y decirlo en rojo sería
-   * regañar a alguien por no ser médico—, y cualquier otro fallo deja la lista
-   * vacía sin apagar «Guardar como favorito», porque puede ser transitorio y
-   * guardar uno nuevo sí tiene sentido.
-   */
-  private cargarFavoritos(): void {
-    this.favoritos.listOwn().subscribe({
-      next: (lista) => this.favoritosPropios.set(lista),
-      error: (error: unknown) => {
-        this.favoritosPropios.set([]);
-        if (errorToViewState<null>(error).status === 'forbidden') {
-          this.favoritosAplican.set(false);
-        }
-      },
-    });
-  }
-
-  /** Guarda las opciones de un catálogo. Sin catálogo, lista vacía y ya. */
-  private cargarOpciones(
-    target: string,
-    destino: WritableSignal<readonly DynamicEnumOption[]>,
-  ): void {
-    this.systemContext.dynamicEnum(target).subscribe({
-      next: (enumeracion) => destino.set(enumeracion.options),
-      error: () => destino.set([]),
     });
   }
 
@@ -921,20 +713,30 @@ export class MedicationBlock {
     this.concentracion.set(null);
   }
 
-  /**
-   * La posología que viaja en `doseText`.
-   *
-   * Compone lo elegido —concentración primero, que es lo que primero se lee en
-   * una indicación— o devuelve el texto libre cuando el medicamento no declara
-   * listas. Vacío significa «no mandar la clave».
-   */
+  /** El texto de dosis confirmado por quien prescribe, o vacío si no lo indicó. */
   private posologia(): string {
-    if (!this.hayPosologia()) {
-      return this.dosis().trim();
+    return this.dosis().trim();
+  }
+
+  /** Un valor del catálogo completa el texto, que luego sigue siendo editable. */
+  protected elegirConcentracion(valor: string | null): void {
+    this.concentracion.set(valor);
+    this.completarDosisDesdeCatalogo();
+  }
+
+  /** Un valor del catálogo completa el texto, que luego sigue siendo editable. */
+  protected elegirPresentacion(valor: string | null): void {
+    this.presentacion.set(valor);
+    this.completarDosisDesdeCatalogo();
+  }
+
+  private completarDosisDesdeCatalogo(): void {
+    const partes = [this.concentracion(), this.presentacion()].filter(
+      (parte): parte is string => parte !== null && parte !== '',
+    );
+    if (partes.length > 0) {
+      this.dosis.set(partes.join(' · '));
     }
-    return [this.concentracion(), this.presentacion()]
-      .filter((parte): parte is string => parte !== null && parte !== '')
-      .join(SEPARADOR_DE_DOSIS);
   }
 
   /**
@@ -945,6 +747,7 @@ export class MedicationBlock {
    */
   protected fijarDuracion(dias: number | null): void {
     this.duracionDias.set(dias);
+    this.duracionRapidaElegida.set(dias ?? 'continuo');
     if (dias === null) {
       this.esCronico.set(true);
       this.validTo.set(null);
@@ -967,6 +770,14 @@ export class MedicationBlock {
     this.sugerirCantidad();
   }
 
+  protected elegirDuracionRapida(valor: number | 'continuo' | null): void {
+    if (valor === null) {
+      this.duracionRapidaElegida.set(null);
+      return;
+    }
+    this.fijarDuracion(valor === 'continuo' ? null : valor);
+  }
+
   /**
    * Sugiere la cantidad a dispensar cuando la pauta la determina: con
    * frecuencia «Cada N horas» y duración en días, son `24/N` tomas diarias por
@@ -985,90 +796,6 @@ export class MedicationBlock {
     if (actual === '' || actual === this.ultimaCantidadSugerida) {
       this.cantidad.set(sugerida);
       this.ultimaCantidadSugerida = sugerida;
-    }
-  }
-
-  /**
-   * Precarga el formulario con un caso de demostración.
-   *
-   * La vía y la unidad se resuelven al `conceptId` del catálogo por código
-   * EXACTO; el medicamento se busca en terminología y se selecciona sólo si el
-   * resultado coincide con lo pedido. Lo que no resuelve queda sin elegir y se
-   * avisa — nunca se cae a «la primera opción de la lista».
-   *
-   * Pública a propósito: los escenarios combinados del expediente la invocan.
-   */
-  aplicarCasoDemo(caso: CasoRecetaDemo): void {
-    const faltantes: string[] = [];
-    const via = conceptIdPorCodigo(this.opcionesVia(), caso.viaCodigo);
-    if (via === null) {
-      faltantes.push(`vía (${caso.viaCodigo})`);
-    }
-    const unidad = conceptIdPorCodigo(this.opcionesUnidad(), caso.unidadCodigo);
-    if (unidad === null) {
-      faltantes.push(`unidad (${caso.unidadCodigo})`);
-    }
-
-    this.via.set(via);
-    this.unidad.set(unidad);
-    this.dosis.set(caso.dosis);
-    this.frecuencia.set(caso.frecuencia);
-    this.indicacionesPaciente.set(caso.indicaciones);
-    this.validFrom.set(new Date());
-    this.fijarDuracion(caso.diasTratamiento);
-    this.cantidad.set(String(caso.cantidad));
-
-    this.seleccionarMedicamentoDelCaso(caso, faltantes);
-  }
-
-  /**
-   * Busca el medicamento del caso y lo elige si el catálogo lo tiene.
-   *
-   * La selección exige que el `display` coincida con lo pedido (exacto, o como
-   * prefijo): elegir «el primer resultado» de una búsqueda es cómo se receta
-   * otra cosa. El aviso del caso sale recién acá, porque hasta que la búsqueda
-   * no responde no se sabe si quedó completo.
-   */
-  private seleccionarMedicamentoDelCaso(caso: CasoRecetaDemo, faltantes: string[]): void {
-    const query = caso.medicamentoQuery;
-    this.buscandoMedicamento.set(true);
-    this.terminology.searchConcepts({ query, limit: TOPE_DE_LA_BUSQUEDA }).subscribe({
-      next: (pagina) => {
-        const opciones = pagina.items.map(comoOpcionDeMedicamento);
-        this.opcionesDeMedicamento.set(opciones);
-        this.buscandoMedicamento.set(false);
-
-        const buscado = query.toLowerCase();
-        const elegido =
-          opciones.find((opcion) => opcion.label.toLowerCase() === buscado) ??
-          opciones.find((opcion) => opcion.label.toLowerCase().startsWith(buscado)) ??
-          null;
-        if (elegido === null) {
-          faltantes.push(`medicamento («${query}»)`);
-        } else {
-          this.medicamento.set(elegido.value);
-          this.onMedicamentoElegido(elegido);
-        }
-        this.avisarCasoAplicado(caso.label, faltantes);
-      },
-      error: () => {
-        this.opcionesDeMedicamento.set([]);
-        this.buscandoMedicamento.set(false);
-        faltantes.push(`medicamento («${query}» — la búsqueda no respondió)`);
-        this.avisarCasoAplicado(caso.label, faltantes);
-      },
-    });
-  }
-
-  /** Cuenta cómo quedó el caso: completo, o con lo que no resolvió. */
-  private avisarCasoAplicado(label: string, faltantes: readonly string[]): void {
-    if (faltantes.length > 0) {
-      this.toasts.warning(
-        `Sin correspondencia en el catálogo: ${faltantes.join(', ')}. Elegilos a mano.`,
-        `Caso «${label}» aplicado parcialmente`,
-      );
-    } else {
-      this.toasts.info('Revisá y prescribí cuando quieras.', `Caso «${label}» aplicado`);
     }
   }
 
@@ -1116,7 +843,6 @@ export class MedicationBlock {
     const frecuencia = this.frecuencia().trim();
     const cantidad = cantidadDe(this.cantidad());
     const via = this.via();
-    const unidad = this.unidad();
     const validFrom = this.validFrom() ?? undefined;
     const validTo = this.validTo() ?? undefined;
     const indicacion = this.indicacion();
@@ -1138,7 +864,6 @@ export class MedicationBlock {
         ...(frecuencia === '' ? {} : { frequencyText: frecuencia }),
         ...(cantidad === null ? {} : { quantityDecimal: cantidad }),
         ...(via === null ? {} : { routeConceptId: via }),
-        ...(unidad === null ? {} : { unitConceptId: unidad }),
         ...(validFrom === undefined ? {} : { validFrom }),
         ...(validTo === undefined ? {} : { validTo }),
         ...(indicaciones === '' ? {} : { patientInstructionsText: indicaciones }),
@@ -1149,7 +874,7 @@ export class MedicationBlock {
         ...(indicacion === null || indicacion === OTRO_MOTIVO
           ? {}
           : { indicationConditionId: indicacion }),
-        ...(indicacion === OTRO_MOTIVO && this.motivoLibre().trim() !== ''
+        ...(this.motivoEsLibre() && this.motivoLibre().trim() !== ''
           ? { indicationText: this.motivoLibre().trim() }
           : {}),
       })
@@ -1174,147 +899,6 @@ export class MedicationBlock {
           this.registro.set(errorToViewState<null>(error));
         },
       });
-  }
-
-  /**
-   * Vuelca un favorito en el formulario, sin guardar nada.
-   *
-   * Rellenar no es prescribir: lo que queda cargado se revisa, se ajusta y se
-   * receta por el camino de siempre —con su firma y su emisión—. Por eso no
-   * toca el diagnóstico: el favorito es la indicación repetida, y para qué es
-   * esta receta lo decide esta consulta.
-   *
-   * Si el formulario ya tiene algo escrito, se pide confirmación: perder lo
-   * tipeado por elegir una opción de una lista es exactamente el gesto que
-   * nadie espera que borre.
-   */
-  protected async aplicarFavorito(favoritoId: string | null): Promise<void> {
-    this.favoritoElegido.set(favoritoId);
-    if (favoritoId === null) {
-      return;
-    }
-    const favorito = this.favoritosPropios().find((item) => item.id === favoritoId);
-    if (favorito === undefined) {
-      return;
-    }
-
-    if (this.formularioConDatos()) {
-      const sigue = await this.dialogs.confirm({
-        title: '¿Reemplazar lo que cargaste?',
-        message: `Se va a sobrescribir el formulario con «${favorito.name}».`,
-        confirmLabel: 'Reemplazar',
-        cancelLabel: 'Dejar como está',
-      });
-      if (!sigue) {
-        this.favoritoElegido.set(null);
-        return;
-      }
-    }
-
-    this.medicamento.set(favorito.medicationConceptId);
-    this.dosis.set(favorito.doseText ?? '');
-    this.frecuencia.set(favorito.frequencyText ?? '');
-    this.cantidad.set(favorito.quantityDecimal ?? '');
-    this.via.set(favorito.routeConceptId ?? null);
-    this.unidad.set(favorito.unitConceptId ?? null);
-    this.indicacionesPaciente.set(favorito.patientInstructionsText ?? '');
-    // La posología del favorito es texto: las listas de concentración y
-    // presentación se recalculan si el medicamento las declara.
-    this.limpiarPosologia();
-  }
-
-  /**
-   * Guarda lo que hay cargado como un favorito propio, con el rótulo que se pida.
-   *
-   * El rótulo es con lo que se lo va a reconocer en la lista, así que se pide
-   * antes de guardar y no se deriva del medicamento: dos esquemas del mismo
-   * fármaco son dos favoritos distintos.
-   */
-  protected async guardarFavorito(): Promise<void> {
-    const medicationConceptId = this.medicamento();
-    if (medicationConceptId === null || this.guardandoFavorito()) {
-      return;
-    }
-
-    const rotulo = await this.dialogs.confirmWithReason(
-      {
-        title: 'Guardar como favorito',
-        message: 'Queda en tu lista personal para reutilizarlo cuando lo necesites.',
-        confirmLabel: 'Guardar',
-      },
-      {
-        label: 'Nombre del favorito',
-        hint: 'Con este nombre lo vas a encontrar en tu lista',
-        placeholder: 'ATB post extracción',
-        minLength: 1,
-        maxLength: TOPE_DEL_ROTULO,
-      },
-    );
-    if (rotulo === null) {
-      return;
-    }
-
-    const dosis = this.posologia();
-    const frecuencia = this.frecuencia().trim();
-    const cantidad = cantidadDe(this.cantidad());
-    const via = this.via();
-    const unidad = this.unidad();
-    const indicaciones = this.indicacionesPaciente().trim();
-
-    this.guardandoFavorito.set(true);
-    this.errorDelFavorito.set(null);
-    this.favoritos
-      .create({
-        name: rotulo,
-        medicationConceptId,
-        ...(dosis === '' ? {} : { doseText: dosis }),
-        ...(frecuencia === '' ? {} : { frequencyText: frecuencia }),
-        ...(cantidad === null ? {} : { quantityDecimal: cantidad }),
-        ...(via === null ? {} : { routeConceptId: via }),
-        ...(unidad === null ? {} : { unitConceptId: unidad }),
-        ...(indicaciones === '' ? {} : { patientInstructionsText: indicaciones }),
-      })
-      .subscribe({
-        next: (favorito) => {
-          this.guardandoFavorito.set(false);
-          this.favoritosPropios.set(
-            [...this.favoritosPropios(), favorito].sort((uno, otro) =>
-              uno.name.localeCompare(otro.name),
-            ),
-          );
-          this.toasts.success('Lo vas a encontrar en «Usar un favorito».', 'Favorito guardado');
-        },
-        error: (error: unknown) => {
-          this.guardandoFavorito.set(false);
-          this.errorDelFavorito.set(this.motivoDelFavorito(error));
-        },
-      });
-  }
-
-  /**
-   * Traduce el fallo al guardar en algo que diga qué hacer.
-   *
-   * Los dos casos que el servidor distingue —rótulo repetido y lista llena—
-   * tienen salida distinta, y «no se pudo guardar» las esconde a las dos.
-   */
-  private motivoDelFavorito(error: unknown): string {
-    const estado = errorToViewState<null>(error);
-    if (estado.status !== 'validation') {
-      return 'No se pudo guardar el favorito. Intentá de nuevo.';
-    }
-    // El rótulo repetido (409 CONFLICT) y la lista llena (422) llegan los dos
-    // como validación: los distingue el `code`, y cada uno tiene una salida
-    // distinta que «no se pudo guardar» escondería.
-    if (estado.issues.some((issue) => issue.code === 'CONFLICT')) {
-      return 'Ya tenés un favorito con ese nombre. Probá con otro.';
-    }
-    const delServidor = estado.issues
-      .map((issue) => issue.message)
-      .filter((mensaje) => mensaje !== '')
-      .join(' ');
-    return delServidor === ''
-      ? 'No se pudo guardar el favorito. Intentá de nuevo.'
-      : delServidor;
   }
 
   /**
@@ -1469,19 +1053,16 @@ export class MedicationBlock {
     this.frecuencia.set('');
     this.cantidad.set('');
     this.via.set(null);
-    this.unidad.set(null);
     this.validFrom.set(new Date());
     this.validTo.set(null);
     this.duracionDias.set(null);
     this.esCronico.set(false);
+    this.duracionRapidaElegida.set(null);
     this.motivoLibre.set('');
     this.indicacionesPaciente.set('');
-    // El diagnóstico y el favorito elegidos son de ESTA receta: la siguiente
-    // arranca sin ellos, aunque sea para el mismo paciente.
+    // El diagnóstico elegido pertenece a esta receta; la siguiente arranca limpia.
     this.indicacion.set(null);
     this.citaElegida.set(null);
-    this.favoritoElegido.set(null);
-    this.errorDelFavorito.set(null);
     this.ultimaCantidadSugerida = null;
   }
 }
