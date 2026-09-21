@@ -12,31 +12,40 @@ import type {
  * por esa lectura y nadie más se entera.
  */
 
-/** Lo que se lee en la fila del movimiento cuando no hay detalle propio. */
+/**
+ * Lo que se lee en la fila del movimiento cuando la lectura no trae detalle.
+ *
+ * Las claves son los códigos del catálogo del backend; el castellano vive acá y
+ * sólo acá. Un motivo que la API no reconoció llega como `null` y se dice de la
+ * forma más neutra posible, sin adivinar.
+ */
 const ETIQUETAS: Readonly<Record<MotivoDePuntos, string>> = {
-  BIENVENIDA: 'Bienvenida',
-  COMPRA: 'Compra',
-  CANJE: 'Canje',
-  VENCIMIENTO: 'Puntos vencidos',
-  AJUSTE: 'Ajuste',
+  REASON_SIGNUP: 'Bienvenida',
+  REASON_EVENT: 'Actividad en la app',
+  REASON_REDEMPTION: 'Canje',
+  REASON_EXPIRY: 'Puntos vencidos',
+  REASON_REFERRAL: 'Referido',
+  REASON_MANUAL: 'Ajuste',
 };
 
-export function etiquetaDeMotivo(motivo: MotivoDePuntos): string {
-  return ETIQUETAS[motivo];
+export function etiquetaDeMotivo(motivo: MotivoDePuntos | null): string {
+  return motivo === null ? 'Movimiento' : ETIQUETAS[motivo];
 }
 
 /**
  * El tono del badge sale de la **dirección**, no del motivo.
  *
- * Por dos razones. Una: un `AJUSTE` puede sumar o restar, así que el motivo no
- * alcanza para saber de qué lado está. Otra: el único tono que distinguiría a
- * `VENCIMIENTO` del resto es el ámbar, y el sistema lo reserva para el punto de
+ * Por dos razones. Una: un ajuste puede sumar o restar, así que el motivo no
+ * alcanza para saber de qué lado está. Otra: el único tono que distinguiría al
+ * vencimiento del resto es el ámbar, y el sistema lo reserva para el punto de
  * acción único de la pantalla —acá, canjear—: una lista con cinco ámbares se lo
  * comería. Y no hace falta, porque el badge dice «Puntos vencidos» con todas
  * las letras, que es más claro que un color.
  */
-export function tonoDeMovimiento(direccion: DireccionDePuntos): 'success' | 'secondary' {
-  return direccion === 'CREDITO' ? 'success' : 'secondary';
+export function tonoDeMovimiento(
+  direccion: DireccionDePuntos | null,
+): 'success' | 'secondary' {
+  return direccion === 'POINTS_EARN' ? 'success' : 'secondary';
 }
 
 /**
@@ -44,10 +53,17 @@ export function tonoDeMovimiento(direccion: DireccionDePuntos): 'success' | 'sec
  *
  * El color no alcanza para decir si sumaste o restaste —la regla del sistema es
  * que el color nunca sea el único portador de significado— así que el signo va
- * en el texto.
+ * en el texto. Un ajuste no lleva signo: la dirección del catálogo no dice
+ * hacia dónde movió, y ponerle uno sería inventarlo.
  */
-export function signoDe(direccion: DireccionDePuntos): string {
-  return direccion === 'CREDITO' ? '+' : '−';
+export function signoDe(direccion: DireccionDePuntos | null): string {
+  if (direccion === 'POINTS_EARN') {
+    return '+';
+  }
+  if (direccion === 'POINTS_REDEEM' || direccion === 'POINTS_EXPIRE') {
+    return '−';
+  }
+  return '';
 }
 
 /**
@@ -77,12 +93,19 @@ export function unidadDePuntos(puntos: string): string {
  * palabras, que es lo que se escucha bien.
  */
 export function movimientoEnPalabras(
-  direccion: DireccionDePuntos,
+  direccion: DireccionDePuntos | null,
   puntos: string,
-  motivo: MotivoDePuntos,
+  motivo: MotivoDePuntos | null,
 ): string {
-  const verbo = direccion === 'CREDITO' ? 'Sumaste' : 'Restaste';
-  return `${verbo} ${puntosEnPalabras(puntos)} — ${etiquetaDeMotivo(motivo).toLowerCase()}`;
+  const cola = etiquetaDeMotivo(motivo).toLowerCase();
+  if (direccion === 'POINTS_EARN') {
+    return `Sumaste ${puntosEnPalabras(puntos)} — ${cola}`;
+  }
+  if (direccion === 'POINTS_REDEEM' || direccion === 'POINTS_EXPIRE') {
+    return `Restaste ${puntosEnPalabras(puntos)} — ${cola}`;
+  }
+  // Sin dirección conocida no se afirma el sentido del movimiento.
+  return `Movimiento de ${puntosEnPalabras(puntos)} — ${cola}`;
 }
 
 /**

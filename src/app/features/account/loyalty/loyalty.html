@@ -115,44 +115,6 @@
             }
           </section>
 
-          @if (demo) {
-            <!-- F4.5 · Promoción de ejemplo (`loyalty.fixtures.ts`): ningún
-                 backend conoce un multiplicador de promoción, por eso lleva el
-                 chip DEMO. Sin enlace por la decisión D-T-E6-01: el enlace a la
-                 promoción lo completa T-E7 cuando exista su sección. -->
-            <section
-              class="promocion"
-              aria-labelledby="promocion-titulo"
-              data-testid="puntos-promocion"
-            >
-              <div class="promocion__marcas">
-                <app-badge variant="primary" data-testid="puntos-promocion-multiplicador">
-                  {{ etiquetaDePromocion }}
-                </app-badge>
-                <app-badge variant="info" data-testid="puntos-promocion-chip-demo">
-                  DEMO — promoción de ejemplo
-                </app-badge>
-              </div>
-              <h2 id="promocion-titulo" class="promocion__titulo">
-                Promoción activa: puntos {{ etiquetaDePromocion }} hasta el
-                {{ promocion.hasta | date: 'dd/MM' }}
-              </h2>
-              <p class="promocion__detalle">
-                Las compras que hagas con esta promoción aparecen marcadas con
-                {{ etiquetaDePromocion }} en tus movimientos.
-              </p>
-              <button
-                app-button
-                variant="outline"
-                type="button"
-                data-testid="puntos-simular-compra"
-                (clicked)="simularCompra()"
-              >
-                Simular compra
-              </button>
-            </section>
-          }
-
           <section class="movimientos" aria-labelledby="movimientos-titulo">
             <h2 id="movimientos-titulo" class="movimientos__titulo">Tus movimientos</h2>
 
@@ -176,11 +138,6 @@
                       <app-badge [variant]="tonoDe(movimiento)">
                         {{ etiquetaDe(movimiento) }}
                       </app-badge>
-                      @if (conMultiplicador(movimiento)) {
-                        <app-badge variant="primary" data-testid="movimiento-multiplicador">
-                          {{ etiquetaDePromocion }}
-                        </app-badge>
-                      }
                     </span>
                     <!-- El signo va en el texto: el color no puede ser lo único
                          que diga si sumaste o restaste. -->

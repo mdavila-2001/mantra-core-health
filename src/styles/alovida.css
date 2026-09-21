@@ -605,18 +605,66 @@ app-shell-layout { display: block; }
   outline: 2px solid var(--aguamarina); outline-offset: 2px;
 }
 .app-side-nav__marca img { display: block; width: 34px; height: auto; flex: none; }
-.app-side-nav__marca span {
+.app-side-nav__palabra {
   font-family: var(--f-titulo); font-size: 22px; line-height: 28px; font-weight: 600;
   letter-spacing: .01em; color: #fff;
+  white-space: nowrap; overflow: hidden;
 }
-/* Los dos escalones plegables de la barra.
 
-   El grupo (`General`, `Atención`, …) es un `<details>`, y adentro cada bloque
-   de cosas parecidas (`Directorios`, `Mi salud`) es otro. Se dibujan distinto a
-   propósito: el grupo es un rótulo —tipografía chica, en mayúsculas, sin fondo—
-   y el bloque es un renglón como los demás, porque a la vista tiene que
-   parecerse a lo que contiene. Si los dos se pintaran igual, con la barra
-   cerrada no se distinguiría un dominio de un destino. */
+/* La cabecera de la barra: la marca y el botón que la recoge, en una fila. */
+.app-side-nav__cabecera {
+  display: flex; align-items: center; gap: var(--e3);
+}
+.app-side-nav__cabecera .app-side-nav__marca { flex: 1 1 auto; min-width: 0; }
+
+/* El botón de recoger (AC-E1-01).
+
+   Es del talle de un control normal (40 px), con caja propia y un borde que se
+   ve antes de tocarlo: recogida la barra es **lo único** que queda de la
+   cabecera —un trazo sobre un carril de 76 px—, y apagado hasta que se lo mira
+   ahí no se encuentra.
+
+   **El borde sale de un token con gemelo oscuro.** La barra es petróleo en los
+   dos temas, así que el borde es claro en ambos; lo que cambia es cuánto. En
+   claro la página de al lado es casi blanca y el ojo llega al botón con el iris
+   cerrado: necesita más cuerpo. En oscuro todo está apagado y el mismo borde
+   gritaría más que los destinos, que son lo que de verdad hay que leer. */
+:root {
+  --nav-recoger-borde: rgba(255, 255, 255, .42);
+  --nav-recoger-fondo: rgba(255, 255, 255, .10);
+  --nav-recoger-tinta: rgba(255, 255, 255, .85);
+}
+:root[data-tema="oscuro"], :root[data-theme="dark"] {
+  --nav-recoger-borde: rgba(159, 216, 208, .48);
+  --nav-recoger-fondo: rgba(159, 216, 208, .10);
+  --nav-recoger-tinta: rgba(255, 255, 255, .78);
+}
+.app-side-nav__recoger {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--h-ctrl); height: var(--h-ctrl); flex: none;
+  padding: 0; border-radius: var(--r-ctrl);
+  border: 1px solid var(--nav-recoger-borde);
+  background: var(--nav-recoger-fondo); color: var(--nav-recoger-tinta);
+  cursor: pointer;
+  transition: color .16s ease, background-color .16s ease, border-color .16s ease;
+}
+.app-side-nav__recoger svg { width: 1.35rem; height: 1.35rem; }
+.app-side-nav__recoger:hover {
+  color: #fff;
+  border-color: var(--aguamarina);
+  background: rgba(159, 216, 208, .22);
+}
+.app-side-nav__recoger:focus-visible {
+  outline: 2px solid var(--aguamarina); outline-offset: 2px;
+}
+/* Recogida, las dos flechas apuntan al otro lado: el botón dice hacia dónde va
+   la barra si se lo toca, que es lo único que un ícono puede decir acá. */
+.app-shell.is-nav-recogido .app-side-nav__recoger svg { transform: rotate(180deg); }
+/* El escalón plegable de la barra.
+
+   El dominio (`General`, `Atención`, …) es un `<details>`, y es el único: se
+   dibuja como rótulo —tipografía chica, en mayúsculas, sin fondo— y no como un
+   renglón, para que un dominio no se confunda con un destino. */
 /* Los destinos fijos de arriba —«Mi perfil» y «Notificaciones»—. Mismo ítem
    que dentro de un grupo; lo único propio es que no tienen rótulo encima y que
    una línea los separa de los dominios que siguen. */
@@ -625,6 +673,12 @@ app-shell-layout { display: block; }
   padding-bottom: var(--e3); margin-bottom: var(--e2);
   border-bottom: 1px solid rgba(255, 255, 255, .08);
 }
+
+/* Un dominio aplanado (AC-E1-02): sus destinos se apilan como los fijos de
+   arriba, sin rótulo que los encabece ni sangría que los hunda. La línea
+   separadora la ponen los fijos; acá no va otra, o la barra del paciente
+   terminaría más rayada que ordenada. */
+.app-side-nav__sueltos { display: flex; flex-direction: column; gap: 2px; }
 
 .app-side-nav__group { display: flex; flex-direction: column; gap: 2px; }
 .app-side-nav__group-summary {
@@ -651,25 +705,9 @@ app-shell-layout { display: block; }
 .app-side-nav__group-summary.tiene-la-pantalla app-nav-icon { opacity: 1; }
 .app-side-nav__group-cuerpo { display: flex; flex-direction: column; gap: 2px; }
 .app-side-nav__eyebrow { padding: 0; color: inherit; flex: 1 1 auto; }
-/* El bloque es `display: contents`: no aporta caja propia, así que sus renglones
-   se apilan con los sueltos del grupo como si fueran hermanos. Sin esto, un
-   grupo con bloques y destinos sueltos mezclados los separaría en dos columnas
-   de espaciado distinto. */
-.app-side-nav__block { display: contents; }
-.app-side-nav__block > summary { list-style: none; cursor: pointer; }
-.app-side-nav__block > summary::-webkit-details-marker { display: none; }
-.app-side-nav__block[open] > summary .app-side-nav__chevron { transform: rotate(180deg); }
-/* Un bloque abierto no marca «acá estás»: lo marca el renglón de adentro, que
-   ya se ve. La marca del `summary` es para cuando está plegado y el destino
-   activo no está a la vista. */
-.app-side-nav__block[open] > summary.is-activo {
-  background: none; box-shadow: none; font-weight: inherit;
-  color: rgba(255, 255, 255, .84);
-}
-.app-side-nav__block[open] > summary.is-activo::before { content: none; }
-.app-side-nav__block[open] > summary.is-activo:hover {
-  color: #fff; background: rgba(159, 216, 208, .16);
-}
+/* Acá vivían las reglas del segundo `<details>` —el bloque de cosas parecidas—.
+   Se retiran con él (AC-E1-02): el bloque ya no se dibuja, sólo decide en qué
+   orden salen los destinos que contiene. */
 
 .app-side-nav__item {
   position: relative;
@@ -712,14 +750,108 @@ app-shell-layout { display: block; }
   color: rgba(255, 255, 255, .72);
 }
 .app-side-nav__sub .app-side-nav__item.is-activo { color: #fff; }
-/* La flecha la comparten los dos escalones: gira al abrirse, y es la única
-   señal de que el renglón despliega algo en vez de llevar a una pantalla.
-   En el rótulo del grupo va más chica, como su tipografía. */
+/* La flecha del único escalón plegable que queda —el dominio—: gira al abrirse,
+   y es la única señal de que el renglón despliega algo en vez de llevar a una
+   pantalla. Va más chica que un ícono de destino, como su tipografía. */
 .app-side-nav__chevron { width: 1rem; height: 1rem; margin-left: auto; transition: transform .16s ease; }
 .app-side-nav__group-summary .app-side-nav__chevron { width: .85rem; height: .85rem; }
 .app-side-nav__group[open] > summary .app-side-nav__chevron { transform: rotate(180deg); }
 @media (prefers-reduced-motion: reduce) {
   .app-side-nav__chevron { transition: none; }
+}
+
+/* ── La barra recogida (AC-E1-01) ──────────────────────────────────────────
+   Recogerla deja un carril de íconos: la marca sin su palabra, los destinos
+   con su ícono y el rótulo de cada dominio, también sólo su ícono. Lo que se
+   va es el texto; lo que se gana es el ancho, que en una tabla de nueve
+   columnas se nota.
+
+   Todo cuelga de `--w-nav`, que es la misma variable de la que ya colgaban el
+   ancho del nav, el hueco que le reserva el marco, la viñeta y la textura. Por
+   eso alcanza con redeclararla en `.app-shell`: las cuatro geometrías se
+   mueven juntas y no hay forma de que una quede desfasada de las otras.
+
+   Sólo por encima de 900 px. Más abajo la barra es un cajón que se abre sobre
+   el contenido, y recoger un cajón no significa nada — el botón se retira. */
+@media (max-width: 900px) {
+  .app-side-nav__recoger { display: none; }
+}
+
+@media (min-width: 901px) {
+  .app-shell.is-nav-recogido { --w-nav: 76px; }
+
+  /* El botón deja de compartir fila con el logotipo y baja: es lo único que
+     queda de la cabecera, y centrado se toca sin apuntar. */
+  .app-shell.is-nav-recogido .app-side-nav__cabecera {
+    flex-direction: column; gap: var(--e2); padding-inline: var(--e2);
+  }
+  .app-shell.is-nav-recogido .app-side-nav__marca { justify-content: center; padding: 0; }
+  /* La palabra se va de la vista **y** del árbol: no es el nombre de nada —el
+     enlace ya se llama «AloVida — ir al panel» por su `aria-label`—, así que
+     dejarla `solo-lectores` sólo lograría que el lector la dijera dos veces. */
+  .app-shell.is-nav-recogido .app-side-nav__palabra { display: none; }
+  /* Los renglones: el ícono al medio y el texto fuera de la vista. El rótulo
+     sigue en el árbol (`solo-lectores`, desde la plantilla), así que el enlace
+     conserva su nombre accesible; para quien mira, vuelve como globo de
+     ayuda. */
+  .app-shell.is-nav-recogido .app-side-nav__item,
+  .app-shell.is-nav-recogido .app-side-nav__group-summary {
+    justify-content: center; gap: 0;
+    padding-inline: 0; margin-inline: var(--e2);
+  }
+  /* La marca de «acá estás» se acerca al borde: con el margen chico, los
+     −12 px de siempre la dejaban fuera del carril. */
+  .app-shell.is-nav-recogido .app-side-nav__item[aria-current="true"]::before,
+  .app-shell.is-nav-recogido .app-side-nav__item.is-activo::before { left: -6px; }
+
+  /* El cuerpo del dominio no se dibuja: en 76 px no entra un renglón con
+     texto, y sin texto un destino es indistinguible del de al lado. El
+     `<details>` conserva su estado —no se lo toca— y tocar el rótulo despliega
+     la barra con ese dominio abierto (`alTocarElDominio`). */
+  .app-shell.is-nav-recogido .app-side-nav__group-cuerpo { display: none; }
+  .app-shell.is-nav-recogido .app-side-nav__chevron { display: none; }
+
+  /* Y entonces el dominio pasa a ser el que marca «acá estás».
+
+     Desplegada la barra, el renglón activo está a la vista y al rótulo le
+     alcanza con aclararse. Recogida, el renglón activo vive dentro del cuerpo
+     que no se dibuja: si el dominio no toma la marca, el carril deja de
+     contestar la única pregunta que la barra contesta siempre. Es la misma
+     marca del destino activo —fondo y barrita—, sobre el único renglón del
+     dominio que queda. */
+  .app-shell.is-nav-recogido .app-side-nav__group-summary { position: relative; }
+  .app-shell.is-nav-recogido .app-side-nav__group-summary.tiene-la-pantalla {
+    color: #fff;
+    background: rgba(159, 216, 208, .22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
+  }
+  .app-shell.is-nav-recogido .app-side-nav__group-summary.tiene-la-pantalla::before {
+    content: ""; position: absolute; left: -6px; top: 6px; bottom: 6px;
+    width: 3px; border-radius: var(--r-pill); background: var(--aguamarina);
+  }
+
+  /* El recuento no cabe al lado del ícono: se apoya sobre su esquina, que es
+     donde lo pone cualquier barra recogida. */
+  .app-shell.is-nav-recogido .app-side-nav__item { position: relative; }
+  .app-shell.is-nav-recogido .app-side-nav__item .app-badge {
+    position: absolute; top: 2px; right: 6px;
+    min-width: 16px; padding: 0 4px; font-size: 10px; line-height: 16px;
+  }
+
+  /* El ancho se mueve con la misma curva que el resto del marco. La barra se
+     anima sola; el hueco del contenido lo sigue porque es el mismo valor. */
+  .app-shell,
+  .app-side-nav,
+  .app-side-nav::before,
+  .app-side-nav__fondo {
+    transition: width var(--mov-medio) var(--curva), padding-left var(--mov-medio) var(--curva);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .app-shell,
+    .app-side-nav,
+    .app-side-nav::before,
+    .app-side-nav__fondo { transition: none; }
+  }
 }
 
 /* El header deja ver el fondo de la vista, pero con suficiente blanco encima

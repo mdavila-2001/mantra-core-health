@@ -143,6 +143,23 @@ export function etiquetaDeMedioDePago(pago: PagoDelPedido | null): string | null
 }
 
 /**
+ * Un paso del recorrido antes de resolver cómo se dibuja.
+ *
+ * `pasadoDemostrable` es la regla de R-T-E4: un paso **anterior** al actual
+ * sólo entra en la línea de tiempo si el backend garantiza que ocurrió. El
+ * contrato publica el estado de hoy y no un historial, y la máquina de estados
+ * admite saltos, así que dar por cumplido un paso por su posición en la fila
+ * sería inventar un hecho.
+ */
+interface PasoDelRecorrido {
+  /** Estados del contrato que ponen a este paso como el actual. */
+  readonly estados: readonly EstadoDePedido[];
+  readonly label: string;
+  /** `true` sólo si, superado el paso, el backend demuestra que pasó. */
+  readonly pasadoDemostrable: boolean;
+}
+
+/**
  * La línea de tiempo del pedido para el `app-stepper`, ya resuelta.
  *
  * El recorrido feliz es fijo; el paso de la decisión sólo aparece mientras la
@@ -154,6 +171,28 @@ export function etiquetaDeMedioDePago(pago: PagoDelPedido | null): string | null
  * registrado**. Sin pago, la línea de tiempo es la de siempre y el pedido se
  * paga al retirar. Con pago, va después de «Enviado» —el pago del checkout
  * sale junto con el pedido— y antes de «En preparación».
+ *
+ * ## Qué se puede afirmar del pasado (R-T-E4)
+ *
+ * El pedido real no trae historial: `GET /pharmacy/orders/:id` publica el
+ * estado actual, `createdAt` y `expiresAt`, y nada más. Y la máquina del
+ * backend permite saltarse etapas — `ENVIADO → CONFIRMADO` y
+ * `ENVIADO → ACEPTACION_PENDIENTE` son transiciones legales
+ * (`api:pharmacy_inventory/services/pharmacy-orders.service.ts:163-171`), y a
+ * `LISTO_PARA_RETIRO` se llega tanto desde `CONFIRMADO` como desde `ACEPTADO`.
+ * Por eso un paso ya superado se dibuja sólo cuando es **demostrable**:
+ *
+ * - **Enviado** — siempre: todo pedido nace `ENVIADO`.
+ * - **Pagado** — cuando hay pago registrado; es un hecho observado, no una
+ *   inferencia de posición.
+ * - **Listo para retirar** — con el pedido `RETIRADO`: la dispensa exige el
+ *   estado previo (`…/pharmacy-orders.service.ts:1299`).
+ *
+ * Los demás —«En revisión», «En preparación», «Tu decisión», «En camino»— se
+ * muestran como paso actual o como paso por venir, pero **desaparecen** de la
+ * línea de tiempo una vez que el pedido los dejó atrás: el contrato no puede
+ * probar que sucedieran. Una fila más corta dice la verdad; una fila llena de
+ * ✓ inventa un recorrido.
  *
  * Los terminales que cortan el recorrido (`RECHAZADO`, `VENCIDO`,
  * `CANCELADO`) devuelven vacío: un final anticipado se cuenta con un aviso y
@@ -170,19 +209,24 @@ export function pasosDeLaLineaDeTiempo(
 
   const conDecision = estado === 'ACEPTACION_PENDIENTE' || estado === 'ACEPTADO';
   // Con envío el tramo final es otro (FAR-I3): no hay mostrador ni retiro —
-  // la farmacia marca «en camino» y la entrega cierra el pedido.
-  const esEnvio = pedido.modalidad !== 'RETIRO';
-  const recorrido: readonly { readonly estados: readonly EstadoDePedido[]; readonly label: string }[] = [
-    { estados: ['ENVIADO'], label: 'Enviado' },
+  // la farmacia marca «en camino» y la entrega cierra el pedido. Se exige la
+  // modalidad declarada: el contrato admite `deliveryMode: null` en pedidos
+  // anteriores a v4.2.1, y «no declarada» no es «es un envío».
+  const esEnvio = pedido.modalidad === 'DOMICILIO' || pedido.modalidad === 'TRABAJO';
+  const recorrido: readonly PasoDelRecorrido[] = [
+    { estados: ['ENVIADO'], label: 'Enviado', pasadoDemostrable: true },
     // Como «en camino», el pago no es un estado del contrato: viaja aparte.
-    ...(pagado ? [{ estados: [] as readonly EstadoDePedido[], label: 'Pagado' }] : []),
-    { estados: ['EN_REVISION'], label: 'En revisión' },
-    { estados: ['CONFIRMADO'], label: 'En preparación' },
+    ...(pagado
+      ? [{ estados: [] as readonly EstadoDePedido[], label: 'Pagado', pasadoDemostrable: true }]
+      : []),
+    { estados: ['EN_REVISION'], label: 'En revisión', pasadoDemostrable: false },
+    { estados: ['CONFIRMADO'], label: 'En preparación', pasadoDemostrable: false },
     ...(conDecision
       ? [
           {
-            estados: ['ACEPTACION_PENDIENTE', 'ACEPTADO'] as const,
+            estados: ['ACEPTACION_PENDIENTE', 'ACEPTADO'] as readonly EstadoDePedido[],
             label: estado === 'ACEPTACION_PENDIENTE' ? 'Tu decisión' : 'Propuesta aceptada',
+            pasadoDemostrable: false,
           },
         ]
       : []),
@@ -190,12 +234,26 @@ export function pasosDeLaLineaDeTiempo(
       ? [
           // El hito «en camino» no es un estado del contrato: viaja aparte
           // en `pedido.envio`, y por eso su paso no mapea a ningún estado.
-          { estados: [] as readonly EstadoDePedido[], label: 'En camino' },
-          { estados: ['RETIRADO'] as readonly EstadoDePedido[], label: 'Entregado' },
+          {
+            estados: [] as readonly EstadoDePedido[],
+            label: 'En camino',
+            pasadoDemostrable: false,
+          },
+          {
+            estados: ['RETIRADO'] as readonly EstadoDePedido[],
+            label: 'Entregado',
+            pasadoDemostrable: false,
+          },
         ]
       : [
-          { estados: ['LISTO_PARA_RETIRO'] as readonly EstadoDePedido[], label: 'Listo para retirar' },
-          { estados: ['RETIRADO'] as readonly EstadoDePedido[], label: 'Retirado' },
+          {
+            estados: ['LISTO_PARA_RETIRO'] as readonly EstadoDePedido[],
+            label: 'Listo para retirar',
+            // La dispensa sólo procede desde LISTO_PARA_RETIRO: con el pedido
+            // retirado, el paso está demostrado por el propio backend.
+            pasadoDemostrable: true,
+          },
+          { estados: ['RETIRADO'] as readonly EstadoDePedido[], label: 'Retirado', pasadoDemostrable: false },
         ]),
   ];
 
@@ -206,13 +264,18 @@ export function pasosDeLaLineaDeTiempo(
         ? // Enviado y pagado a la vez: lo último que pasó es el pago.
           recorrido.findIndex((paso) => paso.label === 'Pagado')
         : recorrido.findIndex((paso) => paso.estados.includes(estado));
-  return recorrido.map((paso, indice) => ({
-    label: paso.label,
-    status:
-      indice < actual || estado === 'RETIRADO'
+  // El recorrido terminó: el paso actual también queda cumplido.
+  const terminado = estado === 'RETIRADO';
+  return recorrido.flatMap((paso, indice) => {
+    if (indice < actual && !paso.pasadoDemostrable) {
+      return [];
+    }
+    const status: StepperStep['status'] =
+      indice < actual || (indice === actual && terminado)
         ? 'complete'
         : indice === actual
           ? 'current'
-          : 'upcoming',
-  }));
+          : 'upcoming';
+    return [{ label: paso.label, status }];
+  });
 }

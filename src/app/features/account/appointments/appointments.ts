@@ -611,10 +611,12 @@ export class Appointments {
         previos.push(recurso);
       }
     }
-    return [...grupos].map(([clave, recursos]) => ({
-      clave,
-      etiqueta: etiquetaDeAgenda(recursos),
-      recursos,
+    const armadas = [...grupos].map(([clave, recursos]) => ({ clave, recursos }));
+    const etiquetas = etiquetasSinColision(armadas);
+    return armadas.map((agenda, indice) => ({
+      clave: agenda.clave,
+      etiqueta: etiquetas[indice],
+      recursos: agenda.recursos,
     }));
   });
 
@@ -639,15 +641,7 @@ export class Appointments {
   protected readonly opcionesDeSede = computed<readonly SelectOption<string>[]>(() => {
     const agenda = this.agendaActual();
     if (agenda === null || agenda.recursos.length < 2) return [];
-    const lugares = new Map<string, string>();
-    for (const recurso of agenda.recursos) {
-      lugares.set(claveDeSede(recurso), nombreDeSede(recurso));
-    }
-    if (lugares.size < 2) return [];
-    return [
-      { value: SEDE_CUALQUIERA, label: 'Cualquier lugar — ver todos los horarios' },
-      ...[...lugares].map(([value, label]) => ({ value, label })),
-    ];
+    return opcionesDeSedeDe(agenda.recursos);
   });
 
   /** Si hay que hacer la pregunta del lugar. */
@@ -1628,6 +1622,140 @@ export function etiquetaDeAgenda(recursos: readonly AgendaResource[]): string {
   if (recursos.length === 1) return etiquetaDeRecurso(primero);
   const persona = primero.practitionerName ?? '';
   return persona === '' ? primero.name : persona;
+}
+
+/**
+ * Lo que diferencia a una agenda de otra del mismo nombre: primero el lugar,
+ * después el nombre interno del recurso.
+ *
+ * El lugar va primero porque es lo que le sirve a quien tiene que ir hasta
+ * ahí; «Consultorio Martes» le dice mucho menos que una dirección. Devuelve
+ * vacío cuando no hay ninguna de las dos cosas, que es el caso de las agendas
+ * sin sede cargada.
+ */
+function distintivoDeAgenda(recursos: readonly AgendaResource[]): string {
+  const sedes = [...new Set(recursos.filter((r) => r.site !== null).map(nombreDeSede))];
+  if (sedes.length > 0) return sedes.join(' · ');
+  return [...new Set(recursos.map((r) => r.name))].join(', ');
+}
+
+/**
+ * Los rótulos de la lista «¿con quién te querés atender?», garantizando que no
+ * haya dos iguales.
+ *
+ * ## Por qué hace falta
+ *
+ * Dos médicos pueden llamarse igual, y `claveDeAgenda` los separa bien —son
+ * personas distintas, cada una con su perfil—, pero {@link etiquetaDeAgenda}
+ * los rotula idéntico en cuanto tienen más de un consultorio. La lista quedaba
+ * con dos entradas del mismo texto: quien pedía turno elegía una, veía «no hay
+ * horarios libres» y no tenía forma de saber que la otra —la misma palabra en
+ * la pantalla— tenía los cupos. Observado en el recorrido con usuarios reales:
+ * dos agendas homónimas, una con 22 cupos libres y la otra con ninguno.
+ *
+ * **Fusionarlas sería peor.** Son dos profesionales distintos: reservar con el
+ * que no era es un daño mayor que una lista confusa.
+ *
+ * ## Cómo desempata
+ *
+ * En tres pasos, y sólo sobre las que chocan: el rótulo limpio se conserva
+ * para todas las demás, que es lo que F-23 vino a lograr.
+ *
+ * 1. El rótulo a secas.
+ * 2. Si se repite, se le agrega lo que las diferencia: la sede, o los nombres
+ *    internos de sus consultorios.
+ * 3. Si aun así son idénticas —mismo nombre, mismos consultorios y ninguna con
+ *    sede cargada, que es exactamente el caso que se encontró—, se numeran.
+ *    Numerar no ayuda a elegir, pero **deja ver que son dos**, y eso es lo que
+ *    permite probar la otra.
+ */
+export function etiquetasSinColision(
+  agendas: readonly { readonly recursos: readonly AgendaResource[] }[],
+): readonly string[] {
+  return desambiguar(
+    agendas.map((agenda) => etiquetaDeAgenda(agenda.recursos)),
+    (indice) => distintivoDeAgenda(agendas[indice].recursos),
+  );
+}
+
+/**
+ * Las opciones del desplegable «¿Dónde querés atenderte?».
+ *
+ * Vacío cuando hay un solo lugar: preguntar con una única respuesta posible es
+ * hacerle trabajo a la persona para nada.
+ *
+ * **Sin sede cargada todos los lugares se llaman igual** —«Sin consultorio
+ * registrado»—, y el desplegable quedaba con cuatro opciones idénticas: el
+ * mismo defecto que {@link etiquetasSinColision} arregla un campo más arriba,
+ * observado en la misma pantalla. Acá lo que las distingue es el nombre interno
+ * del recurso, que es lo único que queda cuando no hay sede.
+ */
+export function opcionesDeSedeDe(
+  recursos: readonly AgendaResource[],
+): readonly SelectOption<string>[] {
+  const lugares = new Map<string, { nombre: string; recursos: string[] }>();
+  for (const recurso of recursos) {
+    const clave = claveDeSede(recurso);
+    const previo = lugares.get(clave);
+    if (previo === undefined) {
+      lugares.set(clave, { nombre: nombreDeSede(recurso), recursos: [recurso.name] });
+    } else {
+      previo.recursos.push(recurso.name);
+    }
+  }
+  if (lugares.size < 2) return [];
+
+  const entradas = [...lugares];
+  const etiquetas = desambiguar(
+    entradas.map(([, lugar]) => lugar.nombre),
+    (indice) => [...new Set(entradas[indice][1].recursos)].join(', '),
+  );
+  return [
+    { value: SEDE_CUALQUIERA, label: 'Cualquier lugar — ver todos los horarios' },
+    ...entradas.map(([value], indice) => ({ value, label: etiquetas[indice] })),
+  ];
+}
+
+/**
+ * Hace únicos unos rótulos sin tocar los que ya lo eran.
+ *
+ * Lo usan los dos desplegables de «Agendar una cita» —con quién y dónde—,
+ * porque los dos pueden quedar con opciones que dicen exactamente lo mismo y
+ * en los dos eso significa lo mismo: quien elige no puede saber cuál es cuál,
+ * y elegir mal esconde horarios que sí existen.
+ *
+ * @param base - El rótulo de cada opción, en orden.
+ * @param distintivoDe - Qué agregarle a la de la posición `i` si choca con
+ *   otra. Devolver `''` significa «no tengo nada con qué distinguirla».
+ */
+function desambiguar(
+  base: readonly string[],
+  distintivoDe: (indice: number) => string,
+): readonly string[] {
+  const contar = (valores: readonly string[]): ReadonlyMap<string, number> => {
+    const cuenta = new Map<string, number>();
+    for (const valor of valores) cuenta.set(valor, (cuenta.get(valor) ?? 0) + 1);
+    return cuenta;
+  };
+
+  const repetidasBase = contar(base);
+  const conDistintivo = base.map((etiqueta, indice) => {
+    if ((repetidasBase.get(etiqueta) ?? 0) < 2) return etiqueta;
+    const distintivo = distintivoDe(indice);
+    return distintivo === '' ? etiqueta : `${etiqueta} — ${distintivo}`;
+  });
+
+  // Último recurso: cuando ni el distintivo las separa, numerarlas. No ayuda a
+  // elegir, pero deja ver que son varias, y eso es lo que permite probar otra.
+  const repetidasFinales = contar(conDistintivo);
+  const vistas = new Map<string, number>();
+  return conDistintivo.map((etiqueta) => {
+    const total = repetidasFinales.get(etiqueta) ?? 0;
+    if (total < 2) return etiqueta;
+    const orden = (vistas.get(etiqueta) ?? 0) + 1;
+    vistas.set(etiqueta, orden);
+    return `${etiqueta} (${orden} de ${total})`;
+  });
 }
 
 /**

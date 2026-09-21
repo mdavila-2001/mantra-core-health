@@ -1,0 +1,133 @@
+<!-- `dismissible` queda en `true`: lo que se pierde al cerrar son cuatro campos
+     que se vuelven a teclear en veinte segundos, y atrapar a quien atiende el
+     mostrador detrás de una pregunta de confirmación es peor que eso. -->
+<app-content-dialog heading="Ingreso por mostrador" size="md" (closed)="cerrado.emit()">
+  <div class="mostrador">
+    @if (error(); as mensaje) {
+      <!-- El texto del servidor, tal cual. `role="alert"` lo da `app-alert`. -->
+      <app-alert tone="error" data-testid="mostrador-error">{{ mensaje }}</app-alert>
+    }
+
+    @if (paso() === 'buscando') {
+      <app-form-field
+        label="¿A quién atendés?"
+        hint="Buscá por cédula, nombre o código de paciente."
+        [required]="true"
+      >
+        <app-reference-combobox
+          data-testid="mostrador-paciente"
+          [selected]="paciente()"
+          [options]="candidatos()"
+          [loading]="buscando()"
+          placeholder="Cédula, nombre o código"
+          emptyMessage="Nadie coincide. Si no está en el sistema, registralo abajo."
+          (searched)="buscarPaciente($event)"
+          (selectionChange)="paciente.set($event)"
+        />
+      </app-form-field>
+
+      <p class="mostrador__salida">
+        ¿No está en el sistema?
+        <button
+          app-button
+          type="button"
+          variant="ghost"
+          size="sm"
+          data-testid="mostrador-registrar"
+          (clicked)="registrarNuevo()"
+        >
+          Registrarlo ahora
+        </button>
+      </p>
+    } @else {
+      <fieldset class="mostrador__alta" data-testid="mostrador-alta">
+        <legend class="mostrador__alta-titulo">Paciente nuevo</legend>
+        <!-- Cuatro campos y no once: son los que la API exige. El resto de la
+             ficha se completa después, y decirlo acá evita que alguien deje a
+             la persona esperando mientras busca un dato que nadie pidió. -->
+        <p class="mostrador__alta-nota">
+          Con esto alcanza para atenderlo. El resto de su ficha se completa después.
+        </p>
+
+        <div class="mostrador__grilla">
+          <app-form-field label="Nombre" [required]="true">
+            <app-input data-testid="mostrador-nombre" [(value)]="nuevoNombre" />
+          </app-form-field>
+          <app-form-field label="Apellido" [required]="true">
+            <app-input data-testid="mostrador-apellido" [(value)]="nuevoApellido" />
+          </app-form-field>
+          <app-form-field label="Cédula de identidad" [required]="true">
+            <app-input
+              data-testid="mostrador-documento"
+              inputMode="numeric"
+              [(value)]="nuevoDocumento"
+            />
+          </app-form-field>
+          <app-form-field label="Teléfono" hint="Para poder volver a llamarlo." [required]="true">
+            <!-- `inputMode="tel"` y no `type="tel"`: el átomo no declara ese
+                 tipo, y lo que hace falta acá es el teclado numérico del
+                 teléfono, que es justamente lo que `inputMode` da. -->
+            <app-input
+              data-testid="mostrador-telefono"
+              inputMode="tel"
+              autocomplete="tel"
+              [(value)]="nuevoTelefono"
+            />
+          </app-form-field>
+        </div>
+
+        <p class="mostrador__salida">
+          <button
+            app-button
+            type="button"
+            variant="ghost"
+            size="sm"
+            data-testid="mostrador-volver"
+            (clicked)="volverABuscar()"
+          >
+            ← Buscarlo en el sistema
+          </button>
+        </p>
+      </fieldset>
+    }
+
+    <div class="mostrador__grilla">
+      <app-form-field label="¿Cuánto dura?">
+        <app-select
+          data-testid="mostrador-duracion"
+          [options]="opcionesDeDuracion"
+          [value]="duracionElegida()"
+          (valueChange)="cambiarDuracion($event)"
+        />
+      </app-form-field>
+      <app-form-field label="Motivo" hint="Opcional. Lo ve quien lo atiende.">
+        <app-input data-testid="mostrador-motivo" [(value)]="motivo" />
+      </app-form-field>
+    </div>
+
+    <!-- «Empieza ahora» no es un campo: es lo que significa un turno de
+         mostrador. Se dice, para que nadie busque dónde elegir la hora. -->
+    <p class="mostrador__ahora">La atención empieza ahora, en la agenda que estás mirando.</p>
+  </div>
+
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    variant="ghost"
+    (clicked)="cerrado.emit()"
+  >
+    Cancelar
+  </button>
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    data-testid="mostrador-guardar"
+    [disabled]="!puedeGuardar()"
+    [isLoading]="guardando()"
+    (clicked)="guardar()"
+  >
+    Registrar ingreso
+  </button>
+</app-content-dialog>

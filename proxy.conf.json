@@ -78,6 +78,7 @@
       "/pharma-labs",
       "/pharmacy",
       "/pharmacy-inventory",
+      "/loyalty",
       "/visit-agenda",
       "/visit-requests",
       "/visit-records",
@@ -97,9 +98,10 @@
       "/admin/content-packs",
       "/insurance-plans",
       "/insurance-products",
-      "/insurance/analytics"
+      "/insurance/analytics",
+      "/insurance/portability"
     ],
-    "target": "http://localhost:3125",
+    "target": "http://localhost:3000",
     "secure": false,
     "changeOrigin": true
   },
@@ -123,7 +125,7 @@
     "context": [
       "/socket.io"
     ],
-    "target": "http://localhost:3125",
+    "target": "http://localhost:3000",
     "secure": false,
     "changeOrigin": true,
     "ws": true

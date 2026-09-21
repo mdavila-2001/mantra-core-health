@@ -410,6 +410,44 @@ describe('NavigationService', () => {
       expect(service.menu().map((g) => g.label)).toContain('Administración');
     });
 
+    it('sólo «Administración» sigue plegada; los otros cuatro dominios vienen aplanados', () => {
+      // Lo que la barra necesita para no dibujar un contenedor (AC-E1-02). El
+      // paciente llegaba a «Mis citas» abriendo dos desplegables que no llevan a
+      // ninguna pantalla; aplanado, el dominio suelta sus destinos en la barra y
+      // sigue ofreciendo exactamente los mismos. Vale lo mismo para quien
+      // ejerce: «Atención» y «Facturación» son los dos únicos dominios de
+      // trabajo que ve, y eran lo único que le hacían abrir.
+      abrirSesion(['SECURITY_ADMIN', 'CLINICIAN', 'BILLING']);
+
+      const aplanados = service
+        .menu()
+        .filter((grupo) => grupo.aplanado)
+        .map((grupo) => grupo.label);
+
+      expect(aplanados).toEqual(['General', 'Atención', 'Facturación', 'Mi cuenta']);
+      // Aplanar no filtra: el grupo conserva su reparto en bloques, que es lo
+      // que lo deja volver a plegarse sin recalcular nada.
+      for (const grupo of service.menu()) {
+        expect(grupo.blocks.length, grupo.label).toBeGreaterThan(0);
+      }
+    });
+
+    it('quien ejerce no abre ningún dominio: su menú entero viene aplanado', () => {
+      // El caso que motivó el pedido. El médico veía «Atención» y «Facturación»
+      // plegadas y no veía «Administración», así que los dos desplegables eran
+      // todo lo que su barra le ofrecía abrir.
+      abrirSesion(['PRACTITIONER']);
+
+      for (const grupo of service.menu()) {
+        expect(grupo.aplanado, grupo.label).toBe(true);
+      }
+
+      // Y no perdió un destino en el camino: los que colgaban del desplegable
+      // siguen ahí, ahora sueltos.
+      expect(rutasDelMenu()).toContain('/schedule');
+      expect(rutasDelMenu()).toContain('/medical-records');
+    });
+
     it('los grupos salen en el orden declarado, no en el del registro', () => {
       abrirSesion(['SECURITY_ADMIN', 'CLINICIAN', 'BILLING']);
 

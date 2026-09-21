@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { esperarSinViolaciones } from '../../../../testing/a11y';
 import { CsvExportService } from '../../../shared/utils/csv-export/csv-export';
 import { InsuranceAnalytics } from './insurance-analytics';
 
@@ -153,6 +154,9 @@ describe('InsuranceAnalytics', () => {
     for (const testId of tiles) {
       expect(fixture.nativeElement.querySelector(`[data-testid="${testId}"]`)).not.toBeNull();
     }
+
+    // El boliviano se muestra como «Bs», no como «Boliviano» (display-currency.ts).
+    expect(texto).toContain('Moneda de reporte: Bs');
   });
 
   it('cambiar a «90 días» vuelve a pedir el tablero con la ventana correcta', async () => {
@@ -242,5 +246,35 @@ describe('InsuranceAnalytics', () => {
     expect(tile.textContent).toContain('Sin prima registrada');
     expect(tile.textContent).toContain('3 cobertura(s) sin prima');
     expect(tile.textContent).not.toContain('NaN');
+  });
+
+  it('muestra la prima devengada: es el denominador del loss ratio', () => {
+    const req = mount();
+    req.flush(dashboardWire());
+    fixture.detectChanges();
+
+    const tile = fixture.nativeElement.querySelector('[data-testid="kpi-earned-premium"]');
+    expect(tile.textContent).toContain('400.000,00 Bs');
+    // Sin coberturas sin prima, la cifra no se rotula «estimada».
+    expect(tile.textContent).not.toContain('Estimada');
+    expect(tile.textContent).toContain('47 afiliado(s) activo(s)');
+  });
+
+  it('con coberturas sin prima, la cifra se declara estimada', () => {
+    const req = mount();
+    req.flush(dashboardWire({ kpis: { coveragesWithoutPremiumCount: 4 } }));
+    fixture.detectChanges();
+
+    const tile = fixture.nativeElement.querySelector('[data-testid="kpi-earned-premium"]');
+    expect(tile.textContent).toContain('Estimada');
+    expect(tile.textContent).toContain('4 cobertura(s) sin prima');
+  });
+
+  it('el tablero no tiene violaciones mecánicas de accesibilidad', async () => {
+    const req = mount();
+    req.flush(dashboardWire());
+    fixture.detectChanges();
+
+    await esperarSinViolaciones(fixture.nativeElement as HTMLElement);
   });
 });

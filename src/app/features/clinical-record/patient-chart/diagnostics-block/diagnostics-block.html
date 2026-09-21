@@ -65,6 +65,13 @@
         />
       </app-form-field>
 
+      @if (checkingDuplicate()) {
+        <!-- Corta a propósito: alimentar `[pending]` acá correría el foco
+             antes de que el diálogo de antiduplicación, si aparece, pueda
+             capturarlo. -->
+        <p class="estudios__revisando" role="status">Revisando estudios previos…</p>
+      }
+
       <app-form-actions
         submitLabel="Pedir estudio"
         [pending]="pidiendo()"
@@ -72,6 +79,16 @@
         (submitted)="pedir()"
       />
     </form>
+  }
+
+  @if (duplicateCheck(); as chequeo) {
+    <app-duplicate-study-warning-dialog
+      [check]="chequeo"
+      [sending]="pidiendo()"
+      (reused)="confirmReuse()"
+      (justified)="confirmRepeat($event)"
+      (closed)="closeDuplicateDialog()"
+    />
   }
 
   <!-- ─── El histórico ─────────────────────────────────────────────────
@@ -99,9 +116,21 @@
             </div>
             <div class="estudios__meta">
               <span class="estudios__estado">{{ estudio.estado }}</span>
-              <!-- «Con resultado» quiere decir liberado, no redactado: un
-                   informe con versión vigente pero sin liberar es un borrador. -->
-              @if (estudio.conResultado) {
+              <!-- Antiduplicación (v4.2.17, T-26): estas dos líneas priman
+                   sobre «con resultado» — una orden reutilizada o repetida ya
+                   dice de dónde viene, y no tiene sentido además decir si
+                   «tiene resultado» como si fuera un pedido cualquiera. -->
+              @if (estudio.duplicado === 'reused') {
+                <span class="estudios__resultado" data-testid="estudios-duplicado">
+                  Satisfecha por el informe del {{ estudio.informePrevioDel | date: 'd MMM y' }}
+                </span>
+              } @else if (estudio.duplicado === 'repeated') {
+                <span class="estudios__resultado" data-testid="estudios-duplicado">
+                  Repetida con justificación
+                </span>
+              } @else if (estudio.conResultado) {
+                <!-- «Con resultado» quiere decir liberado, no redactado: un
+                     informe con versión vigente pero sin liberar es un borrador. -->
                 <span class="estudios__resultado estudios__resultado--listo">Resultado listo</span>
               } @else {
                 <span class="estudios__resultado">Sin resultado todavía</span>

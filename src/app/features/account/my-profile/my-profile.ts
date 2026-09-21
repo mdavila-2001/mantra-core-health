@@ -1,3 +1,4 @@
+import { InsurancePortabilityCard } from './insurance-portability-card/insurance-portability-card';
 import { PatientCoverageCard } from '../../../shared/components/molecules/patient-coverage-card/patient-coverage-card';
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { DatePipe } from '@angular/common';
@@ -132,6 +133,7 @@ const ROLES_DE_TRABAJO: readonly string[] = [
     Badge,
     Card,
     DatePipe,
+    InsurancePortabilityCard,
     Link,
     NavIcon,
     PageHeader,

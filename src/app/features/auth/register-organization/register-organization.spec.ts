@@ -32,6 +32,8 @@ const CATALOGO_TIPO_SOCIETARIO = {
     { conceptId: 'c-srl', code: 'SRL', display: 'Limited liability company (S.R.L.)', ordinal: 1, isDefault: false },
     { conceptId: 'c-br-ltda', code: 'BR_LTDA', display: 'Sociedade Limitada (Brazil)', ordinal: 8, isDefault: false },
     { conceptId: 'c-br-sa', code: 'BR_SA', display: 'Sociedade Anônima (Brazil)', ordinal: 9, isDefault: false },
+    { conceptId: 'c-us-llc', code: 'US_LLC', display: 'Limited Liability Company (US)', ordinal: 12, isDefault: false },
+    { conceptId: 'c-ar-sas', code: 'AR_SAS', display: 'Sociedad por Acciones Simplificada (Argentina)', ordinal: 16, isDefault: false },
   ],
 };
 
@@ -85,27 +87,66 @@ describe('RegisterOrganization', () => {
     healthAuthorityCertificateFileId: 'file-sedes',
   };
 
-  /** El representante legal que `completar()` usa por defecto (subtarea 1.4). */
+  /** El representante legal que `completar()` usa por defecto (subtarea 1.4 + desglose de nombre). */
   const REPRESENTANTE_DE_PRUEBA = {
-    legalRepresentativeFullName: 'Mariana Siles Justiniano',
     legalRepresentativeIdNumber: '4872190 SC',
     legalRepresentativeEmail: 'legal@andina.test',
     powerOfAttorneyFileId: 'file-poder',
   };
 
-  /** Las tres gerencias que `completar()` usa por defecto (subtarea 1.4). */
+  /** Las cinco partes del nombre del representante legal, por defecto: sólo las obligatorias. */
+  const NOMBRE_REPRESENTANTE_DE_PRUEBA = {
+    name: 'Mariana',
+    middleName: '',
+    thirdName: '',
+    lastName: 'Siles',
+    motherLastName: 'Justiniano',
+  };
+
+  /**
+   * Las tres gerencias que `completar()` usa por defecto (subtarea 1.4 +
+   * desglose de nombre). AC-01: la general trae las cinco partes; AC-02:
+   * comercial y marketing sólo las obligatorias.
+   */
   const GERENCIAS_DE_PRUEBA = {
     generalManager: {
-      fullName: 'Carlos Mendoza',
+      name: 'Carlos',
+      middleName: 'Eduardo',
+      thirdName: 'Andrés',
+      lastName: 'Mendoza',
+      motherLastName: 'Rivero',
+      phone: '+591 70000001',
+      email: 'gm@andina.test',
+    },
+    commercialManager: {
+      name: 'Ana',
+      middleName: '',
+      thirdName: '',
+      lastName: 'Paz',
+      motherLastName: '',
+      phone: '+591 70000002',
+      email: 'cm@andina.test',
+    },
+    marketingManager: {
+      name: 'Luis',
+      middleName: '',
+      thirdName: '',
+      lastName: 'Rojas',
+      motherLastName: '',
+      phone: '+591 70000003',
+      email: 'mm@andina.test',
+    },
+  };
+
+  /** El cuerpo esperado de cada gerencia: el `fullName` compuesto de sus partes. */
+  const GERENCIAS_ESPERADAS = {
+    generalManager: {
+      fullName: 'Carlos Eduardo Andrés Mendoza Rivero',
       phone: '+591 70000001',
       email: 'gm@andina.test',
     },
     commercialManager: { fullName: 'Ana Paz', phone: '+591 70000002', email: 'cm@andina.test' },
-    marketingManager: {
-      fullName: 'Luis Rojas',
-      phone: '+591 70000003',
-      email: 'mm@andina.test',
-    },
+    marketingManager: { fullName: 'Luis Rojas', phone: '+591 70000003', email: 'mm@andina.test' },
   };
 
   function completar(
@@ -114,6 +155,7 @@ describe('RegisterOrganization', () => {
         | 'tradeName'
         | 'timeZone'
         | 'middleName'
+        | 'thirdName'
         | 'motherLastName'
         | 'incorporationCountry'
         | 'legalEntityType'
@@ -122,23 +164,34 @@ describe('RegisterOrganization', () => {
         | keyof typeof REPRESENTANTE_DE_PRUEBA,
         string
       >
-    > = {},
+    > & {
+      /** Sobrescribe alguna de las cinco partes del nombre del representante legal. */
+      legalRepresentativeNombre?: Partial<typeof NOMBRE_REPRESENTANTE_DE_PRUEBA>;
+      /** Sobrescribe las tres gerencias enteras (para probar combinaciones de partes). */
+      executives?: typeof GERENCIAS_DE_PRUEBA;
+    } = {},
   ): void {
     component.form.setValue({
-      code: 'ANDINA-SALUD',
       legalName: 'Andina Salud S.A.',
       incorporationCountry: extra.incorporationCountry ?? 'BO',
       legalEntityType: extra.legalEntityType ?? 'SRL',
       tradeName: extra.tradeName ?? '',
-      sigla: 'AS',
+      // `code`/`carrierCode` derivan de esto: no son controles del form. La
+      // sigla necesita al menos 3 caracteres (MIN_SIGLA); 'AS' ya no alcanza.
+      sigla: 'ANDINA',
       regulatorIdentifier: 'NIT-123456',
       address: 'Av. Siempre Viva 123',
-      carrierCode: 'CARRIER-AS',
-      timeZone: extra.timeZone ?? '',
-      name: 'Ana',
-      middleName: extra.middleName ?? '',
-      lastName: 'Paz',
-      motherLastName: extra.motherLastName ?? '',
+      // `incorporationCountry` se declara antes que `timeZone` en el form:
+      // el valor explícito de acá siempre gana sobre el default que dispara
+      // la suscripción al cambiar de país (ver `acomodarPaisYTipoSocietario`).
+      timeZone: extra.timeZone ?? 'America/La_Paz',
+      ownerName: {
+        name: 'Ana',
+        middleName: extra.middleName ?? '',
+        thirdName: extra.thirdName ?? '',
+        lastName: 'Paz',
+        motherLastName: extra.motherLastName ?? '',
+      },
       email: 'admin@andina.test',
       password: 'secreto12',
       constitutionFileId: extra.constitutionFileId ?? DOCUMENTOS_DE_PRUEBA.constitutionFileId,
@@ -150,8 +203,10 @@ describe('RegisterOrganization', () => {
       healthAuthorityCertificateFileId:
         extra.healthAuthorityCertificateFileId ??
         DOCUMENTOS_DE_PRUEBA.healthAuthorityCertificateFileId,
-      legalRepresentativeFullName:
-        extra.legalRepresentativeFullName ?? REPRESENTANTE_DE_PRUEBA.legalRepresentativeFullName,
+      legalRepresentative: {
+        ...NOMBRE_REPRESENTANTE_DE_PRUEBA,
+        ...extra.legalRepresentativeNombre,
+      },
       legalRepresentativeIdNumber:
         extra.legalRepresentativeIdNumber ??
         REPRESENTANTE_DE_PRUEBA.legalRepresentativeIdNumber,
@@ -160,7 +215,7 @@ describe('RegisterOrganization', () => {
       legalRepresentativePhone: extra.legalRepresentativePhone ?? '',
       powerOfAttorneyFileId:
         extra.powerOfAttorneyFileId ?? REPRESENTANTE_DE_PRUEBA.powerOfAttorneyFileId,
-      executives: GERENCIAS_DE_PRUEBA,
+      executives: extra.executives ?? GERENCIAS_DE_PRUEBA,
     });
   }
 
@@ -205,7 +260,6 @@ describe('RegisterOrganization', () => {
     expect(component.form.controls.sigla.touched).toBe(true);
     expect(component.form.controls.regulatorIdentifier.touched).toBe(true);
     expect(component.form.controls.address.touched).toBe(true);
-    expect(component.form.controls.carrierCode.touched).toBe(true);
     // `http.verify()` del afterEach falla si algo hubiera salido a la red.
   });
 
@@ -218,12 +272,15 @@ describe('RegisterOrganization', () => {
     expect(component.form.invalid).toBe(true);
   });
 
-  it('rechaza un código con caracteres que el backend no admite', () => {
+  it('una sigla que no deriva en un código válido queda inválida', () => {
     fixture.detectChanges();
     completar();
-    component.form.controls.code.setValue('ANDINA SALUD*');
+    // Tres guiones cumplen el largo mínimo (3) pero derivan en un código sin
+    // ningún carácter alfanumérico: lo rechaza `siglaDerivaCodigo`, no `minLength`.
+    component.form.controls.sigla.setValue('---');
 
-    expect(component.form.controls.code.invalid).toBe(true);
+    expect(component.form.controls.sigla.invalid).toBe(true);
+    expect(component.form.controls.sigla.hasError('siglaSinCodigo')).toBe(true);
   });
 
   it('exige los 8 caracteres de contraseña que pide el backend', () => {
@@ -243,24 +300,29 @@ describe('RegisterOrganization', () => {
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({
       organization: {
-        code: 'ANDINA-SALUD',
+        code: 'ANDINA',
         legalName: 'Andina Salud S.A.',
         legalEntityType: 'SRL',
         tenantType: 'PAYER',
+        // Zona única (Bolivia, país por defecto): viaja siempre, asignada
+        // en segundo plano — nadie la eligió en pantalla.
+        timeZone: 'America/La_Paz',
         payer: {
-          carrierCode: 'CARRIER-AS',
+          // `code` y `carrierCode` son el mismo valor: los dos se derivan
+          // de la sigla con `codigoDesdeSigla`.
+          carrierCode: 'ANDINA',
           regulatorIdentifier: 'NIT-123456',
-          sigla: 'AS',
+          sigla: 'ANDINA',
           address: 'Av. Siempre Viva 123',
         },
         legalDocuments: DOCUMENTOS_DE_PRUEBA,
         legalRepresentative: {
-          fullName: REPRESENTANTE_DE_PRUEBA.legalRepresentativeFullName,
+          fullName: 'Mariana Siles Justiniano',
           idNumber: REPRESENTANTE_DE_PRUEBA.legalRepresentativeIdNumber,
           email: REPRESENTANTE_DE_PRUEBA.legalRepresentativeEmail,
           powerOfAttorneyFileId: REPRESENTANTE_DE_PRUEBA.powerOfAttorneyFileId,
         },
-        executives: GERENCIAS_DE_PRUEBA,
+        executives: GERENCIAS_ESPERADAS,
       },
       owner: {
         email: 'admin@andina.test',
@@ -279,6 +341,7 @@ describe('RegisterOrganization', () => {
       tradeName: 'Andina',
       timeZone: 'America/La_Paz',
       middleName: 'María',
+      thirdName: 'José',
       motherLastName: 'Quiroga',
     });
     component.submit();
@@ -286,8 +349,33 @@ describe('RegisterOrganization', () => {
     const req = http.expectOne('/iam/auth/register-organization');
     expect(req.request.body.organization.tradeName).toBe('Andina');
     expect(req.request.body.organization.timeZone).toBe('America/La_Paz');
-    expect(req.request.body.owner.middleName).toBe('María');
+    // El backend no tiene columna de tercer nombre: se pliega en `middleName`.
+    expect(req.request.body.owner.middleName).toBe('María José');
     expect(req.request.body.owner.motherLastName).toBe('Quiroga');
+    // El cuerpo nunca lleva `thirdName`: no es una clave del contrato del owner.
+    expect('thirdName' in req.request.body.owner).toBe(false);
+
+    req.flush(RESPUESTA);
+  });
+
+  it('el owner con sólo tercer nombre lo manda como middleName', () => {
+    fixture.detectChanges();
+    completar({ thirdName: 'José' });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-organization');
+    expect(req.request.body.owner.middleName).toBe('José');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('el owner sin segundo ni tercer nombre no manda la clave middleName', () => {
+    fixture.detectChanges();
+    completar();
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-organization');
+    expect('middleName' in req.request.body.owner).toBe(false);
 
     req.flush(RESPUESTA);
   });
@@ -300,9 +388,9 @@ describe('RegisterOrganization', () => {
     const req = http.expectOne('/iam/auth/register-organization');
     expect(req.request.body.organization.tenantType).toBe('PAYER');
     expect(req.request.body.organization.payer).toEqual({
-      carrierCode: 'CARRIER-AS',
+      carrierCode: 'ANDINA',
       regulatorIdentifier: 'NIT-123456',
-      sigla: 'AS',
+      sigla: 'ANDINA',
       address: 'Av. Siempre Viva 123',
     });
 
@@ -479,9 +567,9 @@ describe('RegisterOrganization', () => {
 
       const req = http.expectOne('/iam/auth/register-organization');
       expect(req.request.body.organization.payer).toEqual({
-        carrierCode: 'CARRIER-AS',
+        carrierCode: 'ANDINA',
         regulatorIdentifier: 'NIT-123456',
-        sigla: 'AS',
+        sigla: 'ANDINA',
         address: 'Av. Siempre Viva 123',
         latitude: -17.7833,
         longitude: -63.1821,
@@ -548,13 +636,13 @@ describe('RegisterOrganization', () => {
 
       const req = http.expectOne('/iam/auth/register-organization');
       expect(req.request.body.organization.legalRepresentative).toEqual({
-        fullName: REPRESENTANTE_DE_PRUEBA.legalRepresentativeFullName,
+        fullName: 'Mariana Siles Justiniano',
         idNumber: REPRESENTANTE_DE_PRUEBA.legalRepresentativeIdNumber,
         email: REPRESENTANTE_DE_PRUEBA.legalRepresentativeEmail,
         phone: '+591 70099999',
         powerOfAttorneyFileId: REPRESENTANTE_DE_PRUEBA.powerOfAttorneyFileId,
       });
-      expect(req.request.body.organization.executives).toEqual(GERENCIAS_DE_PRUEBA);
+      expect(req.request.body.organization.executives).toEqual(GERENCIAS_ESPERADAS);
       expect('legalRepresentative' in req.request.body.organization.payer).toBe(false);
       expect('executives' in req.request.body.organization.payer).toBe(false);
 
@@ -613,7 +701,7 @@ describe('RegisterOrganization', () => {
     it('con la gerencia de marketing incompleta, «Continuar» no avanza y su panel se despliega solo', () => {
       fixture.detectChanges();
       completar();
-      component.form.controls.executives.controls.marketingManager.controls.fullName.setValue('');
+      component.form.controls.executives.controls.marketingManager.controls.lastName.setValue('');
       fixture.detectChanges();
       avanzarHasta('Directorio ejecutivo');
 
@@ -652,15 +740,277 @@ describe('RegisterOrganization', () => {
       completar();
       fixture.detectChanges();
       avanzarHasta('Directorio ejecutivo');
-      avanzarHasta('Tu cuenta (1 de 2)');
+      avanzarHasta('Tu cuenta');
       fixture.debugElement
         .query(By.css('[data-testid="paginated-form-atras"]'))
         .nativeElement.click();
       fixture.detectChanges();
 
       expect(
-        component.form.controls.executives.controls.generalManager.controls.fullName.value,
-      ).toBe(GERENCIAS_DE_PRUEBA.generalManager.fullName);
+        component.form.controls.executives.controls.generalManager.controls.name.value,
+      ).toBe(GERENCIAS_DE_PRUEBA.generalManager.name);
+    });
+
+    it('en «Representante legal (1 de 2)» con los nombres vacíos, «Continuar» no avanza y los cinco campos quedan marcados', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+      avanzarHasta('Representante legal (1 de 2)');
+
+      const grupo = component.form.controls.legalRepresentative;
+      grupo.controls.name.setValue('');
+      grupo.controls.lastName.setValue('');
+      fixture.detectChanges();
+
+      fixture.debugElement
+        .query(By.css('[data-testid="paginated-form-continuar"]'))
+        .nativeElement.click();
+      fixture.detectChanges();
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('.paginated-form__titulo')
+          ?.textContent,
+      ).toContain('Representante legal (1 de 2)');
+      for (const testId of [
+        'registro-organizacion-representante-nombre',
+        'registro-organizacion-representante-segundo-nombre',
+        'registro-organizacion-representante-tercer-nombre',
+        'registro-organizacion-representante-apellido-paterno',
+        'registro-organizacion-representante-apellido-materno',
+      ]) {
+        expect(
+          (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testId}"]`),
+        ).not.toBeNull();
+      }
+      expect(grupo.touched).toBe(true);
+    });
+  });
+
+  describe('nombre en cinco partes del representante legal y las gerencias', () => {
+    it('el representante legal compone su fullName con las cinco partes', () => {
+      fixture.detectChanges();
+      completar({
+        legalRepresentativeNombre: {
+          name: 'Mariana',
+          middleName: 'Elena',
+          thirdName: 'Sofía',
+          lastName: 'Siles',
+          motherLastName: 'Justiniano',
+        },
+      });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.legalRepresentative.fullName).toBe(
+        'Mariana Elena Sofía Siles Justiniano',
+      );
+
+      req.flush(RESPUESTA);
+    });
+
+    it('el representante legal sin los opcionales compone sólo nombre y apellido paterno', () => {
+      fixture.detectChanges();
+      completar({
+        legalRepresentativeNombre: {
+          name: 'Mariana',
+          middleName: '',
+          thirdName: '',
+          lastName: 'Siles',
+          motherLastName: '',
+        },
+      });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.legalRepresentative.fullName).toBe('Mariana Siles');
+
+      req.flush(RESPUESTA);
+    });
+
+    it('AC-01: la gerencia general compone su fullName con las cinco partes', () => {
+      fixture.detectChanges();
+      completar();
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.executives.generalManager.fullName).toBe(
+        'Carlos Eduardo Andrés Mendoza Rivero',
+      );
+
+      req.flush(RESPUESTA);
+    });
+
+    it('AC-02: las gerencias comercial y de marketing componen su fullName con los opcionales vacíos', () => {
+      fixture.detectChanges();
+      completar();
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.executives.commercialManager.fullName).toBe(
+        'Ana Paz',
+      );
+      expect(req.request.body.organization.executives.marketingManager.fullName).toBe(
+        'Luis Rojas',
+      );
+
+      req.flush(RESPUESTA);
+    });
+
+    it('en el representante legal, nombre y apellido paterno vacíos invalidan el grupo; los otros tres no', () => {
+      fixture.detectChanges();
+      completar();
+
+      const grupo = component.form.controls.legalRepresentative;
+      grupo.controls.middleName.setValue('');
+      grupo.controls.thirdName.setValue('');
+      grupo.controls.motherLastName.setValue('');
+      expect(grupo.valid).toBe(true);
+
+      grupo.controls.name.setValue('');
+      expect(grupo.invalid).toBe(true);
+      grupo.controls.name.setValue('Mariana');
+      grupo.controls.lastName.setValue('');
+      expect(grupo.invalid).toBe(true);
+    });
+
+    it('en cada gerencia, nombre y apellido paterno vacíos invalidan el grupo; los otros tres no', () => {
+      fixture.detectChanges();
+      completar();
+
+      const grupo = component.form.controls.executives.controls.generalManager;
+      grupo.controls.middleName.setValue('');
+      grupo.controls.thirdName.setValue('');
+      grupo.controls.motherLastName.setValue('');
+      expect(grupo.valid).toBe(true);
+
+      grupo.controls.lastName.setValue('');
+      expect(grupo.invalid).toBe(true);
+      grupo.controls.lastName.setValue('Mendoza');
+      grupo.controls.name.setValue('');
+      expect(grupo.invalid).toBe(true);
+    });
+
+    it('un nombre compuesto de más de 200 caracteres marca el grupo inválido, aunque cada parte cumpla su propio tope', () => {
+      fixture.detectChanges();
+      completar();
+
+      const grupo = component.form.controls.legalRepresentative;
+      grupo.controls.name.setValue('A'.repeat(60));
+      grupo.controls.middleName.setValue('B'.repeat(60));
+      grupo.controls.thirdName.setValue('C'.repeat(60));
+      grupo.controls.lastName.setValue('D'.repeat(60));
+      grupo.controls.motherLastName.setValue('');
+
+      // Cada parte, sola, respeta su propio tope de 100.
+      expect(grupo.controls.name.valid).toBe(true);
+      expect(grupo.controls.lastName.valid).toBe(true);
+      // El compuesto (60*4 + 3 espacios = 243) supera el `@MaxLength(200)` de `fullName`.
+      expect(grupo.hasError('nombreCompletoLargo')).toBe(true);
+      expect(component.form.invalid).toBe(true);
+    });
+  });
+
+  describe('nombre en cinco partes del owner', () => {
+    it('«Tu cuenta» es UNA sola página y trae las cinco partes del nombre juntas', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+      avanzarHasta('Tu cuenta');
+
+      // Era la sección que el motor partía en dos, con el apellido materno
+      // huérfano al principio de la segunda página. Las cinco casillas —y el
+      // correo y la contraseña— tienen que verse a la vez.
+      for (const testId of [
+        'registro-organizacion-owner-nombre',
+        'registro-organizacion-owner-segundo-nombre',
+        'registro-organizacion-owner-tercer-nombre',
+        'registro-organizacion-owner-apellido-paterno',
+        'registro-organizacion-owner-apellido-materno',
+        'registro-organizacion-owner-correo',
+        'registro-organizacion-owner-password',
+      ]) {
+        expect(
+          fixture.nativeElement.querySelector(`[data-testid="${testId}"]`),
+        ).not.toBeNull();
+      }
+
+      // Y el título no lleva numeración: «(1 de 2)» era justamente el síntoma.
+      const titulo = fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent;
+      expect(titulo).toContain('Tu cuenta');
+      expect(titulo).not.toContain('de 2');
+    });
+
+    it('los tres nombres ocupan un tercio y los dos apellidos una mitad', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+      avanzarHasta('Tu cuenta');
+
+      const grilla: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="registro-organizacion-owner-nombres"]',
+      );
+      expect(grilla).not.toBeNull();
+      expect(grilla.querySelectorAll('.register-org__nombre--tercio').length).toBe(3);
+      expect(grilla.querySelectorAll('.register-org__nombre--mitad').length).toBe(2);
+    });
+
+    it('con los nombres vacíos, «Continuar» no avanza y las cinco casillas quedan marcadas', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+      avanzarHasta('Tu cuenta');
+
+      const grupo = component.form.controls.ownerName;
+      grupo.reset({ name: '', middleName: '', thirdName: '', lastName: '', motherLastName: '' });
+      fixture.detectChanges();
+
+      fixture.nativeElement
+        .querySelector('[data-testid="paginated-form-continuar"]')
+        ?.click();
+      fixture.detectChanges();
+
+      // El motor sólo marca el GRUPO; `alRechazarPagina` es quien alcanza a
+      // sus cinco hijos — sin eso las casillas vacías no se pintarían.
+      expect(grupo.controls.name.touched).toBe(true);
+      expect(grupo.controls.motherLastName.touched).toBe(true);
+      expect(
+        fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent,
+      ).toContain('Tu cuenta');
+    });
+
+    it('el owner compone su nombre en las claves del contrato, sin fullName', () => {
+      fixture.detectChanges();
+      completar({ middleName: 'María', thirdName: 'José', motherLastName: 'Quiroga' });
+
+      component.submit();
+      const req = http.expectOne('/iam/auth/register-organization');
+
+      expect(req.request.body.owner.name).toBe('Ana');
+      expect(req.request.body.owner.lastName).toBe('Paz');
+      // El backend no tiene columna de tercer nombre: se pliega en `middleName`.
+      expect(req.request.body.owner.middleName).toBe('María José');
+      expect(req.request.body.owner.motherLastName).toBe('Quiroga');
+      // El owner viaja en partes, no compuesto: `fullName` es de los contactos
+      // (representante legal y gerencias), no de la cuenta.
+      expect('fullName' in req.request.body.owner).toBe(false);
+      req.flush(RESPUESTA);
+    });
+
+    it('el tope de 200 caracteres del nombre compuesto alcanza también al owner', () => {
+      fixture.detectChanges();
+      completar();
+
+      const grupo = component.form.controls.ownerName;
+      grupo.controls.name.setValue('A'.repeat(60));
+      grupo.controls.middleName.setValue('B'.repeat(60));
+      grupo.controls.thirdName.setValue('C'.repeat(60));
+      grupo.controls.lastName.setValue('D'.repeat(60));
+
+      // Antes no había dónde ponerlo: eran cinco controles sueltos, y el tope
+      // depende de las cinco partes juntas. Como grupo, lo hereda de
+      // `grupoDeNombre()` igual que el representante legal.
+      expect(grupo.hasError('nombreCompletoLargo')).toBe(true);
+      expect(component.form.invalid).toBe(true);
     });
   });
 
@@ -723,6 +1073,27 @@ describe('RegisterOrganization', () => {
       expect(component.registered()).toBe(false);
     });
 
+    it('el 409 de código en uso se traduce nombrando la sigla, no el código invisible', () => {
+      fixture.detectChanges();
+      completar();
+      component.form.controls.sigla.setValue('ANDINA');
+      component.submit();
+      http.expectOne('/iam/auth/register-organization').flush(
+        {
+          code: 'CONFLICT',
+          // Mensaje literal de `iam-organization-self-registration.service.ts`.
+          message: 'El código de organización ya existe',
+          timestamp: 't',
+          path: '/iam/auth/register-organization',
+        },
+        { status: 409, statusText: 'Conflict' },
+      );
+
+      expect(component.errorMessage()).toBe(
+        'La sigla «ANDINA» ya está en uso en la plataforma. Elegí otra.',
+      );
+    });
+
     it('sin conexión lo dice como tal', () => {
       fixture.detectChanges();
       completar();
@@ -732,6 +1103,175 @@ describe('RegisterOrganization', () => {
         .error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
 
       expect(component.errorMessage()).toContain('conexión');
+    });
+  });
+
+  describe('códigos desde la sigla y zona horaria por país', () => {
+    /** El total de páginas del asistente, leído del anuncio `aria-live` (siempre en el DOM). */
+    function totalDePaginas(): number {
+      const texto =
+        fixture.nativeElement.querySelector('.paginated-form__anuncio')?.textContent ?? '';
+      const match = /de (\d+)/.exec(texto);
+      if (match === null) {
+        throw new Error(`No se pudo leer el total de páginas del anuncio: "${texto}"`);
+      }
+      return Number(match[1]);
+    }
+
+    /** Los títulos de TODAS las páginas del recorrido, sin navegar (los pinta el stepper). */
+    function titulosDeLosPasos(): string[] {
+      const elementos: NodeListOf<HTMLElement> =
+        fixture.nativeElement.querySelectorAll('.stepper__label');
+      return Array.from(elementos).map((el) => el.textContent?.trim() ?? '');
+    }
+
+    it('AC-01: la sigla «APT» autogenera code y carrierCode iguales a «APT»', () => {
+      fixture.detectChanges();
+      completar();
+      component.form.controls.sigla.setValue('APT');
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.code).toBe('APT');
+      expect(req.request.body.organization.payer.carrierCode).toBe('APT');
+
+      req.flush(RESPUESTA);
+    });
+
+    it('normaliza la sigla de punta a punta: espacios y minúsculas se vuelven guion bajo y mayúsculas', () => {
+      fixture.detectChanges();
+      completar();
+      component.form.controls.sigla.setValue('la vitalicia');
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.code).toBe('LA_VITALICIA');
+      expect(req.request.body.organization.payer.carrierCode).toBe('LA_VITALICIA');
+
+      req.flush(RESPUESTA);
+    });
+
+    it('una sigla de 2 caracteres queda inválida y el envío no sale a la red', () => {
+      fixture.detectChanges();
+      completar();
+      component.form.controls.sigla.setValue('AS');
+      component.submit();
+
+      expect(component.form.controls.sigla.invalid).toBe(true);
+      http.expectNone('/iam/auth/register-organization');
+    });
+
+    it('AC-02 y AC-04: Bolivia (zona única) queda en 8 páginas, sin «Cómo se la identifica» y sin selector de zona', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+
+      // Ocho, no nueve: «Tu cuenta» dejó de partirse en dos cuando los cinco
+      // nombres del owner pasaron a viajar como un único campo (`ownerName`),
+      // que es lo que los deja en una sola pantalla con su reparto de anchos.
+      expect(totalDePaginas()).toBe(8);
+      expect(titulosDeLosPasos().some((titulo) => titulo.includes('identifica'))).toBe(false);
+
+      // «La empresa»: nombre, sigla, país, tipo societario — sin código ni
+      // código de aseguradora, que ya no son campos.
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-sigla"]'),
+      ).not.toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-codigo"]'),
+      ).toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-carrier"]'),
+      ).toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-comercial"]'),
+      ).toBeNull();
+
+      avanzarHasta('Datos de la aseguradora');
+      // El nombre comercial se mudó acá; la zona horaria no se pregunta.
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-comercial"]'),
+      ).not.toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-zona"]'),
+      ).toBeNull();
+
+      component.submit();
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.timeZone).toBe('America/La_Paz');
+      req.flush(RESPUESTA);
+    });
+
+    it('AC-03: Estados Unidos (multizona) ofrece el selector de zona horaria, preseleccionado en la del Este', () => {
+      fixture.detectChanges();
+      completar({ incorporationCountry: 'US', legalEntityType: 'US_LLC' });
+      // `completar()` fija `timeZone` en 'America/La_Paz' de forma explícita
+      // (su valor por defecto para cualquier país, para no tener que
+      // repetirlo en cada llamada): eso pisa el default que la suscripción
+      // ya había puesto para EE. UU. Un re-disparo del cambio de país dispara
+      // el default de nuevo, sin nada después que lo vuelva a pisar — así es
+      // como lo vive una persona real, que nunca pasa por `completar()`.
+      component.form.controls.incorporationCountry.setValue('US');
+      fixture.detectChanges();
+
+      // Una más que Bolivia: el selector de zona horaria es el quinto campo
+      // de «Datos de la aseguradora», y el motor parte esa sección en dos.
+      expect(totalDePaginas()).toBe(9);
+
+      avanzarHasta('Datos de la aseguradora');
+      // `[data-testid]` va en el host `<app-select>`; el `<select>` nativo
+      // (donde vive `aria-required`, ver `select.html`) es su descendiente.
+      const contenedor: HTMLElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="registro-organizacion-zona"]',
+      );
+      const nativo: HTMLSelectElement | null | undefined = contenedor?.querySelector('select');
+      expect(contenedor).not.toBeNull();
+      expect(nativo?.getAttribute('aria-required')).toBe('true');
+      expect(contenedor?.querySelectorAll('option:not([hidden])').length).toBe(7);
+      expect(component.form.controls.timeZone.value).toBe('America/New_York');
+
+      // Elegir el Pacífico y enviar: el valor viaja en el cuerpo.
+      component.form.controls.timeZone.setValue('America/Los_Angeles');
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.timeZone).toBe('America/Los_Angeles');
+      req.flush(RESPUESTA);
+    });
+
+    it('AC-03: la zona horaria elegida sobrevive a ir a «La empresa» y volver', () => {
+      fixture.detectChanges();
+      completar({ incorporationCountry: 'US', legalEntityType: 'US_LLC' });
+      fixture.detectChanges();
+      avanzarHasta('Datos de la aseguradora');
+      component.form.controls.timeZone.setValue('America/Los_Angeles');
+      fixture.detectChanges();
+
+      const atras: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="paginated-form-atras"]',
+      );
+      atras?.click();
+      fixture.detectChanges();
+      avanzarHasta('Datos de la aseguradora');
+
+      expect(component.form.controls.timeZone.value).toBe('America/Los_Angeles');
+    });
+
+    it('cambiar de país reasigna la zona horaria a la del país nuevo', () => {
+      fixture.detectChanges();
+
+      component.form.controls.incorporationCountry.setValue('US');
+      expect(component.form.controls.timeZone.value).toBe('America/New_York');
+
+      component.form.controls.incorporationCountry.setValue('BR');
+      expect(component.form.controls.timeZone.value).toBe('America/Sao_Paulo');
+
+      // Bolivia es zona única: el valor vuelve al de siempre.
+      component.form.controls.incorporationCountry.setValue('BO');
+      expect(component.form.controls.timeZone.value).toBe('America/La_Paz');
+
+      component.form.controls.incorporationCountry.setValue('AR');
+      expect(component.form.controls.timeZone.value).toBe('America/Argentina/Buenos_Aires');
     });
   });
 });

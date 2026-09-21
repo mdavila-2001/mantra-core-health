@@ -44,7 +44,7 @@
         <p class="analytics__period">
           Período: {{ dashboard.startDate }} a {{ dashboard.endDate }}
           @if (dashboard.currency) {
-            · Moneda de reporte: {{ dashboard.currency.display }}
+            · Moneda de reporte: {{ moneda(dashboard.currency.display) }}
           } @else {
             · Sin reclamos en el período: no hay moneda de reporte.
           }
@@ -80,6 +80,23 @@
             <p class="tile__pie">
               Facturado {{ formatear(dashboard.kpis.totalBilledAmount) }} · Denegado
               {{ formatear(dashboard.kpis.totalDeniedAmount) }}
+            </p>
+          </app-card>
+
+          <!-- La prima es el DENOMINADOR del loss ratio de la primera tarjeta:
+               sin verla, un 120 % no se puede interpretar —no se sabe si sobró
+               siniestro o faltó prima—. Por eso lleva al pie cuántas coberturas
+               no aportan prima: es lo que vuelve estimada a la cifra. -->
+          <app-card variant="outlined" padding="md" class="tile" data-testid="kpi-earned-premium">
+            <p class="tile__rotulo">Prima neta devengada</p>
+            <p class="tile__cifra">{{ formatear(dashboard.kpis.estimatedPremiumsTotal) }}</p>
+            <p class="tile__pie">
+              @if (dashboard.kpis.coveragesWithoutPremiumCount > 0) {
+                Estimada · {{ dashboard.kpis.coveragesWithoutPremiumCount }} cobertura(s) sin prima
+                registrada
+              } @else {
+                Sobre {{ dashboard.kpis.activeAffiliatesCount }} afiliado(s) activo(s)
+              }
             </p>
           </app-card>
 

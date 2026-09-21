@@ -63,6 +63,7 @@ import type { ColumnDef } from '../../shared/components/organisms/data-table/dat
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { AGENDA_CREATE_ROUTE, bookingNewRoute } from './agenda.routes';
 import { MyAgenda } from './my-agenda/my-agenda';
+import { WalkInForm, type TurnoDeMostrador } from './walk-in/walk-in-form';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 
 /**
@@ -393,6 +394,7 @@ export interface CupoVisible {
     Tabs,
     Textarea,
     MyAgenda,
+    WalkInForm,
   ],
   templateUrl: './agenda.html',
   styleUrl: './agenda.css',
@@ -881,6 +883,60 @@ export class Agenda {
   protected readonly puedeAvisarDemora = computed(
     () => this.puedeAtender() && this.recursoElegido() !== null,
   );
+
+  /* -- Ingreso por mostrador (AC-C3-03) ------------------------------------- */
+
+  /** Si el modal de ingreso por mostrador está abierto. */
+  protected readonly mostradorAbierto = signal(false);
+
+  /**
+   * Si se puede registrar un ingreso por mostrador.
+   *
+   * Exige recurso elegido por la misma razón que la demora: el turno se crea
+   * **en una agenda**, y sin saber cuál no hay dónde ponerlo. Los roles son los
+   * que declara `POST /scheduling/appointments/walk-in`
+   * —`SCHEDULING_ADMIN`, `SCHEDULING_AGENT`, `PRACTITIONER`—, que es
+   * exactamente {@link ROLES_QUE_ATIENDEN} salvo el comodín `SUPERADMIN`, al
+   * que el `RolesGuard` le responde igual.
+   */
+  protected readonly puedeIngresarPorMostrador = computed(
+    () => this.puedeAtender() && this.recursoElegido() !== null,
+  );
+
+  protected abrirMostrador(): void {
+    this.mostradorAbierto.set(true);
+  }
+
+  protected cerrarMostrador(): void {
+    this.mostradorAbierto.set(false);
+  }
+
+  /**
+   * El turno de mostrador quedó creado.
+   *
+   * Se recarga la agenda y **no** se navega a ningún lado: quien atiende el
+   * mostrador suele tener a la siguiente persona esperando, y sacarlo de la
+   * lista del día para mostrarle lo que acaba de crear le cuesta volver.
+   *
+   * El código de paciente va en el aviso cuando el alta acaba de asignarlo:
+   * es lo que se dice en voz alta, y si no se lee acá hay que ir a buscarlo.
+   */
+  protected mostradorCreado(turno: TurnoDeMostrador): void {
+    this.mostradorAbierto.set(false);
+    const quitados =
+      turno.retractedSlots > 0
+        ? ` Esto quitó ${turno.retractedSlots} ${
+            turno.retractedSlots === 1 ? 'horario disponible' : 'horarios disponibles'
+          }.`
+        : '';
+    this.toast.success(
+      turno.esAltaNueva
+        ? `Quedó registrado con el código ${turno.patientCode} y la atención ya está abierta.${quitados}`
+        : `El turno quedó agendado y empieza ahora.${quitados}`,
+      turno.esAltaNueva ? 'Ingreso por mostrador' : 'Turno creado',
+    );
+    this.recargar();
+  }
 
   /** Abre el panel para avisar la demora de toda la agenda. */
   protected abrirDemoraDeAgenda(): void {

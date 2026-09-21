@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ScheduleGrid } from './schedule-grid';
+import { ScheduleGrid, type RangoDeGrilla } from './schedule-grid';
 import type { PublishedRule } from '../../../../core/data-access/scheduling/scheduling.types';
+import type { BloqueoDelMes } from '../month-view/month-view';
 
 /**
  * EL HORARIO POR HORAS — punto 1 del carril 10.
@@ -26,14 +27,29 @@ describe('ScheduleGrid', () => {
 
   function montar(
     reglas: readonly PublishedRule[],
-    entradas: Partial<{ semana: Date; conFechas: boolean; nombre: string; vigencia: string }> = {},
+    entradas: Partial<{
+      semana: Date;
+      conFechas: boolean;
+      nombre: string;
+      vigencia: string;
+      slotMinutes: number;
+      bloqueos: readonly BloqueoDelMes[];
+      rango: RangoDeGrilla;
+    }> = {},
   ): void {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({});
     fixture = TestBed.createComponent(ScheduleGrid);
     fixture.componentRef.setInput('reglas', reglas);
     fixture.componentRef.setInput('semana', entradas.semana ?? MIERCOLES);
-    for (const clave of ['conFechas', 'nombre', 'vigencia'] as const) {
+    for (const clave of [
+      'conFechas',
+      'nombre',
+      'vigencia',
+      'slotMinutes',
+      'bloqueos',
+      'rango',
+    ] as const) {
       if (entradas[clave] !== undefined) fixture.componentRef.setInput(clave, entradas[clave]);
     }
     fixture.detectChanges();
@@ -66,13 +82,15 @@ describe('ScheduleGrid', () => {
     return Array.from(fixture.nativeElement.querySelectorAll('.grilla__dia'));
   }
 
-  it('sólo dibuja las horas que se usan', () => {
-    // Un día de 24 filas con dos pintadas obliga a buscar dónde está lo que
-    // importa, y las 22 vacías no dicen nada que la ausencia no diga.
+  it('dibuja las 24 horas del día, como un calendario', () => {
+    // Pedido del cliente: todas las horas, no sólo las que se atienden — un
+    // bloqueo fuera de horario también tiene que tener dónde verse.
     montar([regla(1, '09:00:00', '13:00:00')]);
 
-    expect(horas()[0]).toBe(9);
-    expect(horas().at(-1)).toBe(12);
+    expect(horas()).toHaveLength(24);
+    expect(horas()[0]).toBe(0);
+    expect(horas().at(-1)).toBe(23);
+    expect(fixture.nativeElement.querySelectorAll('.grilla__hora')).toHaveLength(24);
   });
 
   it('el fin es EXCLUSIVO: una franja hasta las 13:00 no ocupa esa fila', () => {
@@ -99,9 +117,6 @@ describe('ScheduleGrid', () => {
     expect(atiende(1, 9)).toBe(true);
     expect(atiende(3, 9)).toBe(false);
     expect(atiende(3, 15)).toBe(true);
-    // Y la grilla abarca de la primera a la última: de 9 a 17.
-    expect(horas()[0]).toBe(9);
-    expect(horas().at(-1)).toBe(17);
   });
 
   it('los días van de lunes a domingo, no como los numera la API', () => {
@@ -127,35 +142,45 @@ describe('ScheduleGrid', () => {
     // los martes de 9 a 13» tiene que leerse como «mañana a las 9».
     montar([regla(1, '09:00:00', '13:00:00')]);
 
-    expect(fixture.nativeElement.textContent).toContain('Semana del 7 al 11 de septiembre');
-    const numeros = cabeceras().map((c) => c.querySelector('.grilla__dia-numero')?.textContent?.trim());
-    expect(numeros).toEqual(['7', '8', '9', '10', '11']);
+    expect(fixture.nativeElement.textContent).toContain('Semana del 7 al 13 de septiembre');
+    const numeros = cabeceras().map((c) =>
+      c.querySelector('.grilla__dia-numero')?.textContent?.trim(),
+    );
+    expect(numeros).toEqual(['7', '8', '9', '10', '11', '12', '13']);
 
     const hoy = cabeceras().filter((c) => c.getAttribute('aria-current') === 'date');
     expect(hoy).toHaveLength(1);
     expect(hoy[0].textContent).toContain('9');
   });
 
-  it('va de lunes al último día atendido, con viernes como mínimo', () => {
-    // Un fin de semana vacío no dice nada que la ausencia no diga; pero el
-    // sábado, si se atiende, entra.
+  it('muestra la semana entera, de lunes a domingo, aunque no se atienda el fin de semana', () => {
+    // Pedido del cliente: faltaban sábado y domingo.
     montar([regla(2, '09:00:00', '13:00:00')]);
-    expect(cabeceras()).toHaveLength(5);
+    expect(cabeceras()).toHaveLength(7);
+    expect(cabeceras().at(-2)?.textContent).toContain('Sáb');
+    expect(cabeceras().at(-1)?.textContent).toContain('Dom');
+  });
 
-    montar([regla(6, '09:00:00', '13:00:00')]);
-    expect(cabeceras()).toHaveLength(6);
-    expect(cabeceras().at(-1)?.textContent).toContain('Sáb');
+  it('un día sin nada asignado va en una columna angosta', () => {
+    // Lo práctico: se ve que el día existe, pero no le roba ancho a los que
+    // se atienden.
+    montar([regla(1, '09:00:00', '13:00:00'), regla(6, '09:00:00', '13:00:00')]);
+
+    const vacios = cabeceras().map((c) => c.classList.contains('grilla__dia--vacio'));
+    expect(vacios).toEqual([false, true, true, true, true, false, true]);
+    const tabla: HTMLElement = fixture.nativeElement.querySelector('.grilla__tabla');
+    expect(tabla.style.gridTemplateColumns).toContain('var(--ancho-dia-vacio)');
   });
 
   it('la franja es UN bloque continuo, con alto proporcional a lo que dura', () => {
-    // De 8:30 a 12:30 sobre una grilla de 8 a 12 (cinco horas, 300 min): el
-    // bloque arranca a los 30 min (10 %) y dura 240 (80 %). Pintar la fila
-    // de las 8 entera diría que atendés desde las 8.
+    // De 8:30 a 12:30 sobre las 24 horas (1440 min): el bloque arranca a los
+    // 510 min (35,42 %) y dura 240 (16,67 %). Pintar la fila de las 8 entera
+    // diría que atendés desde las 8.
     montar([regla(1, '08:30:00', '12:30:00')]);
 
     const [bloque] = bloques();
-    expect(bloque.style.top).toBe('10%');
-    expect(bloque.style.height).toBe('80%');
+    expect(parseFloat(bloque.style.top)).toBeCloseTo((510 / 1440) * 100, 2);
+    expect(parseFloat(bloque.style.height)).toBeCloseTo((240 / 1440) * 100, 2);
     expect(bloque.textContent).toContain('08:30 – 12:30');
     expect(bloque.getAttribute('aria-label')).toBe('lunes de 08:30 a 12:30: atendés');
   });
@@ -166,9 +191,11 @@ describe('ScheduleGrid', () => {
     const columnas: HTMLElement[] = Array.from(
       fixture.nativeElement.querySelectorAll('.grilla__columna'),
     );
-    const conBloque = columnas.map((c) => c.querySelectorAll('[data-testid="horario-bloque"]').length);
-    // lunes, martes, miércoles, jueves, viernes
-    expect(conBloque).toEqual([1, 0, 1, 0, 0]);
+    const conBloque = columnas.map(
+      (c) => c.querySelectorAll('[data-testid="horario-bloque"]').length,
+    );
+    // lunes a domingo
+    expect(conBloque).toEqual([1, 0, 1, 0, 0, 0, 0]);
   });
 
   it('sin fechas —el horario retirado del diálogo— sólo lleva los nombres de los días', () => {
@@ -177,6 +204,177 @@ describe('ScheduleGrid', () => {
     expect(fixture.nativeElement.querySelector('.grilla__dia-numero')).toBeNull();
     expect(fixture.nativeElement.querySelector('[aria-current="date"]')).toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('Semana del');
+  });
+
+  /* -- El tamaño del turno -------------------------------------------------- */
+
+  it('cada franja dice el tamaño de su turno', () => {
+    montar([regla(1, '09:00:00', '13:00:00', { slotMinutes: 30 })]);
+    expect(bloques()[0].textContent).toContain('consultas de 30 min');
+  });
+
+  it('sin tamaño propio usa el de la plantilla', () => {
+    montar([regla(1, '09:00:00', '13:00:00')], { slotMinutes: 45 });
+    expect(bloques()[0].textContent).toContain('consultas de 45 min');
+  });
+
+  it('una franja dinámica, sin tamaño, dice «tamaño libre»', () => {
+    montar([regla(1, '09:00:00', '13:00:00')]);
+    expect(bloques()[0].textContent).toContain('tamaño libre');
+
+    bloques()[0].dispatchEvent(new Event('mouseenter'));
+    fixture.detectChanges();
+    const globo = fixture.nativeElement.querySelector('[data-testid="horario-globo"]');
+    expect(globo?.textContent).toContain('Tamaño libre');
+  });
+
+  /* -- El selector de rango (AC-C3-01) -------------------------------------- */
+
+  it('con rango «atencion» recorta la grilla a las horas que se atienden', () => {
+    // De 9 a 13 el lunes y de 14 a 18 el miércoles: se dibuja de las 9 a las 17
+    // —el fin es exclusivo, así que las 18 no cuentan—, nueve filas.
+    montar([regla(1, '09:00:00', '13:00:00'), regla(3, '14:00:00', '18:00:00')], {
+      rango: 'atencion',
+    });
+
+    expect(horas()[0]).toBe(9);
+    expect(horas().at(-1)).toBe(17);
+    expect(horas()).toHaveLength(9);
+    expect(fixture.nativeElement.querySelectorAll('.grilla__hora')).toHaveLength(9);
+  });
+
+  it('el rango no cambia qué se atiende, sólo cuánto día se ve', () => {
+    // La misma pregunta, los dos rangos: recortar la grilla no puede volver
+    // atendida una hora que no lo es, ni al revés.
+    for (const rango of ['completo', 'atencion'] as const) {
+      montar([regla(1, '09:00:00', '13:00:00')], { rango });
+      expect(atiende(1, 9), rango).toBe(true);
+      expect(atiende(1, 13), rango).toBe(false);
+    }
+  });
+
+  it('recortado, el bloque se mide contra las horas visibles y no contra el día', () => {
+    // De 9 a 13 sobre una grilla de 9 a 12:59 (4 h = 240 min): el bloque
+    // arranca arriba del todo y ocupa el alto entero. Sobre 24 h ocuparía 17%.
+    montar([regla(1, '09:00:00', '13:00:00')], { rango: 'atencion' });
+
+    const [b] = bloques();
+    expect(parseFloat(b.style.top)).toBeCloseTo(0, 2);
+    expect(parseFloat(b.style.height)).toBeCloseTo(100, 2);
+  });
+
+  it('recortado, el bloqueo se mide igual — y el que queda fuera no se dibuja', () => {
+    // Grilla de 9 a 12:59 (240 min). El bloqueo de 10 a 11 arranca al 25% y
+    // ocupa el 25%; el de las 20:00 cae fuera de la ventana y no se pinta.
+    montar([regla(1, '09:00:00', '13:00:00')], {
+      rango: 'atencion',
+      bloqueos: [
+        {
+          id: 'dentro',
+          desde: new Date(2026, 8, 9, 10, 0),
+          hasta: new Date(2026, 8, 9, 11, 0),
+          motivo: 'Reunión',
+        },
+        {
+          id: 'fuera',
+          desde: new Date(2026, 8, 9, 20, 0),
+          hasta: new Date(2026, 8, 9, 22, 0),
+          motivo: 'Guardia',
+        },
+      ],
+    });
+
+    const pintados = bloqueosPintados();
+    expect(pintados).toHaveLength(1);
+    expect(pintados[0].textContent).toContain('Reunión');
+    expect(parseFloat(pintados[0].style.top)).toBeCloseTo(25, 2);
+    expect(parseFloat(pintados[0].style.height)).toBeCloseTo(25, 2);
+  });
+
+  it('el bloqueo recortado sigue diciendo sus horas reales, no las visibles', () => {
+    // Empieza a las 7 y termina a las 20, y la grilla va de 9 a 13. Lo que se
+    // dibuja es lo que entra; lo que se LEE es cuánto dura de verdad.
+    montar([regla(1, '09:00:00', '13:00:00')], {
+      rango: 'atencion',
+      bloqueos: [
+        {
+          id: 'largo',
+          desde: new Date(2026, 8, 9, 7, 0),
+          hasta: new Date(2026, 8, 9, 20, 0),
+          motivo: null,
+        },
+      ],
+    });
+
+    const [b] = bloqueosPintados();
+    expect(b.textContent).toContain('07:00 – 20:00');
+    expect(parseFloat(b.style.top)).toBeCloseTo(0, 2);
+    expect(parseFloat(b.style.height)).toBeCloseTo(100, 2);
+  });
+
+  /* -- Los bloqueos, en rojo ------------------------------------------------ */
+
+  function bloqueosPintados(): HTMLElement[] {
+    return Array.from(fixture.nativeElement.querySelectorAll('[data-testid="horario-bloqueo"]'));
+  }
+
+  it('pinta el bloqueo en la columna de su día, medido contra las 24 horas', () => {
+    montar([regla(1, '09:00:00', '13:00:00')], {
+      bloqueos: [
+        {
+          id: 'b',
+          desde: new Date(2026, 8, 9, 12, 0),
+          hasta: new Date(2026, 8, 9, 18, 0),
+          motivo: 'Congreso',
+        },
+      ],
+    });
+
+    const columnas: HTMLElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('.grilla__columna'),
+    );
+    const conBloqueo = columnas.map(
+      (c) => c.querySelectorAll('[data-testid="horario-bloqueo"]').length,
+    );
+    expect(conBloqueo).toEqual([0, 0, 1, 0, 0, 0, 0]);
+    const [b] = bloqueosPintados();
+    expect(parseFloat(b.style.top)).toBeCloseTo(50, 2);
+    expect(parseFloat(b.style.height)).toBeCloseTo(25, 2);
+    expect(b.textContent).toContain('Bloqueado');
+    expect(b.textContent).toContain('12:00 – 18:00');
+    expect(b.textContent).toContain('Congreso');
+    expect(b.getAttribute('aria-label')).toBe('miércoles de 12:00 a 18:00: bloqueado (Congreso)');
+  });
+
+  it('un bloqueo de varios días se parte por día y cubre enteros los del medio', () => {
+    montar([regla(1, '09:00:00', '13:00:00')], {
+      bloqueos: [
+        { desde: new Date(2026, 8, 7, 20, 0), hasta: new Date(2026, 8, 9, 8, 0), motivo: null },
+      ],
+    });
+
+    const pintados = bloqueosPintados();
+    expect(pintados).toHaveLength(3);
+    expect(pintados[1].textContent).toContain('00:00 – 24:00');
+    expect(pintados[2].textContent).toContain('00:00 – 08:00');
+  });
+
+  it('los bloqueos de otra semana no se pintan, ni en un horario sin fechas', () => {
+    const fuera: BloqueoDelMes = {
+      desde: new Date(2026, 8, 20, 9),
+      hasta: new Date(2026, 8, 20, 10),
+      motivo: null,
+    };
+    montar([regla(1, '09:00:00', '13:00:00')], { bloqueos: [fuera] });
+    expect(bloqueosPintados()).toHaveLength(0);
+
+    const dentro: BloqueoDelMes = {
+      ...fuera,
+      desde: new Date(2026, 8, 8, 9),
+      hasta: new Date(2026, 8, 8, 10),
+    };
+    montar([regla(1, '09:00:00', '13:00:00')], { bloqueos: [dentro], conFechas: false });
+    expect(bloqueosPintados()).toHaveLength(0);
   });
 
   /* -- El globo de detalle -------------------------------------------------- */

@@ -5,6 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { subirLosCincoDocumentos } from './helpers/documentos-legales';
 import { centroDelPin, tocar } from './helpers/mapa';
+import { completarCuentaDelOwner } from './helpers/owner';
 import { completarGerencias, completarRepresentanteLegal } from './helpers/representante-legal';
 
 /**
@@ -44,18 +45,13 @@ async function abrirElAlta(page: Page): Promise<void> {
   ).toBeAttached({ timeout: 20_000 });
 }
 
-/** Completa los dos primeros pasos (subtarea 1.1) y llega a «Datos de la aseguradora». */
+/** Completa el primer paso (subtarea 1.1 + códigos desde la sigla) y llega a «Datos de la aseguradora». */
 async function llegarADatosDeAseguradora(page: Page): Promise<void> {
   await page.getByLabel('Nombre de la empresa').fill('Andina Salud S.A.');
+  await page.getByTestId('registro-organizacion-sigla').fill('ANDINA');
   await page
     .getByLabel('Tipo societario')
     .selectOption({ label: 'S.R.L. · Sociedad de Responsabilidad Limitada' });
-  await page.getByTestId('paginated-form-continuar').click();
-
-  await expect(page.locator('.paginated-form__titulo')).toHaveText('Cómo se la identifica');
-  await page.getByTestId('registro-organizacion-codigo').fill('ANDINA-SALUD');
-  await page.getByTestId('registro-organizacion-sigla').fill('AS');
-  await page.getByTestId('registro-organizacion-carrier').fill('CARRIER-AS');
   await page.getByTestId('paginated-form-continuar').click();
 
   await expect(page.locator('.paginated-form__titulo')).toHaveText('Datos de la aseguradora');
@@ -201,14 +197,7 @@ test.describe('alta pública de aseguradora — casa matriz georreferenciada (su
     await completarGerencias(page);
 
     await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-    await page.getByTestId('registro-organizacion-owner-nombre').fill('Ana');
-    await page.getByTestId('registro-organizacion-owner-apellido-paterno').fill('Paz');
-    await page.getByTestId('paginated-form-continuar').click();
-
-    await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-    await page.getByTestId('registro-organizacion-owner-correo').fill('sin-casa-matriz@andina.test');
-    await page.getByTestId('registro-organizacion-owner-password').fill('secreto12');
-    await page.getByTestId('paginated-form-continuar').click();
+    await completarCuentaDelOwner(page, { email: 'sin-casa-matriz@andina.test' });
 
     await expect(page.getByTestId('registro-organizacion-exito')).toBeVisible({ timeout: 20_000 });
   });
@@ -249,14 +238,7 @@ test.describe('alta pública de aseguradora — casa matriz georreferenciada (su
     await completarGerencias(page);
 
     await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-    await page.getByTestId('registro-organizacion-owner-nombre').fill('Ana');
-    await page.getByTestId('registro-organizacion-owner-apellido-paterno').fill('Paz');
-    await page.getByTestId('paginated-form-continuar').click();
-
-    await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-    await page.getByTestId('registro-organizacion-owner-correo').fill('con-casa-matriz@andina.test');
-    await page.getByTestId('registro-organizacion-owner-password').fill('secreto12');
-    await page.getByTestId('paginated-form-continuar').click();
+    await completarCuentaDelOwner(page, { email: 'con-casa-matriz@andina.test' });
 
     await expect(page.getByTestId('registro-organizacion-exito')).toBeVisible({ timeout: 20_000 });
     await capturar(page, 'exito-con-casa-matriz');

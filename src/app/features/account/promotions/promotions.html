@@ -4,36 +4,4 @@
   [breadcrumbs]="breadcrumbs()"
 />
 
-<app-view-state-host [state]="state()" (retry)="cargar()">
-  @if (promociones().length > 0) {
-    <p class="promociones__aviso" role="note">
-      <app-badge variant="info" data-testid="promociones-chip-demo">
-        DEMO — promociones de ejemplo
-      </app-badge>
-    </p>
-
-    <ul class="promociones__lista" data-testid="promociones-lista">
-      @for (promocion of promociones(); track promocion.id) {
-        <li>
-          <app-promotion-card [promocion]="promocion" variante="completa" />
-        </li>
-      }
-    </ul>
-
-    @if (ejemploDeNotificacion(); as ejemplo) {
-      <section
-        class="promociones__notificacion"
-        aria-labelledby="notificacion-titulo"
-        data-testid="promociones-notificacion"
-      >
-        <h2 id="notificacion-titulo" class="promociones__subtitulo">
-          Así te llega como notificación
-        </h2>
-        <p class="promociones__secundario">
-          Un ejemplo: la misma promoción, en el formato corto de tus avisos.
-        </p>
-        <app-promotion-card [promocion]="ejemplo" variante="compacta" />
-      </section>
-    }
-  }
-</app-view-state-host>
+<app-view-state-host [state]="state" />

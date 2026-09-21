@@ -494,10 +494,15 @@ describe('AppointmentNew', () => {
     });
 
     /**
-     * El alta primero y la cita después, con el perfil que devolvió el alta —
-     * no con nada inventado por la pantalla.
+     * UNA petición y una transacción — P22 cerrado.
+     *
+     * Esto eran dos: `POST /profiles/patients` y después la cita. Y no
+     * funcionaba: `CreatePatientDto` no declara cédula ni celular, así que
+     * `forbidNonWhitelisted` rechazaba la petición entera con 400 contra la API
+     * real. La prueba fija ahora el endpoint atómico, con la filiación entera
+     * adentro de `patient`, y **que ya no se llame al alta suelta**.
      */
-    it('da de alta al paciente y agenda con el perfil que devolvió el alta', () => {
+    it('registra y atiende en una sola petición al walk-in', () => {
       crear();
       conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
 
@@ -508,36 +513,43 @@ describe('AppointmentNew', () => {
       completarAlta();
       c.guardar();
 
-      const alta = http.expectOne('/profiles/patients');
-      expect(alta.request.method).toBe('POST');
-      expect(alta.request.body.name).toBe('Rosa');
-      expect(alta.request.body.lastName).toBe('Ticona');
-      expect(alta.request.body.middleName).toBe('Elena');
-      expect(alta.request.body.nationalId).toBe('8123456');
-      expect(alta.request.body.phone).toBe('+591 71234567');
+      // El alta suelta ya no existe: si vuelve, esta línea falla.
+      http.expectNone('/profiles/patients');
+      http.expectNone('/scheduling/appointments/direct');
+
+      const turno = http.expectOne('/scheduling/appointments/walk-in');
+      expect(turno.request.method).toBe('POST');
+      expect(turno.request.body.patient.name).toBe('Rosa');
+      expect(turno.request.body.patient.lastName).toBe('Ticona');
+      expect(turno.request.body.patient.middleName).toBe('Elena');
+      expect(turno.request.body.patient.nationalId).toBe('8123456');
+      expect(turno.request.body.patient.phone).toBe('+591 71234567');
       // El mostrador no acuña códigos de paciente: son únicos en toda la
       // instalación y el servidor ya los emite él.
-      expect(alta.request.body.patientCode).toBeUndefined();
-      alta.flush({
-        profileId: 'pac-nuevo',
+      expect(turno.request.body.patient.patientCode).toBeUndefined();
+      // Ni nombre visible: `WalkInPatientDto` no lo declara, y mandarlo haría
+      // rebotar la petición entera con 400.
+      expect(turno.request.body.patient.displayName).toBeUndefined();
+      // El rato viaja afuera de la filiación, no adentro.
+      expect(turno.request.body.resourceId).toBe('res-1');
+      expect(typeof turno.request.body.startAt).toBe('string');
+      expect(turno.request.body.durationMinutes).toBeGreaterThan(0);
+
+      turno.flush({
+        patientProfileId: 'pac-nuevo',
         personId: 'per-nuevo',
         patientCode: 'PAC-99',
-        recordLinkageStatus: 'UNLINKED',
-        createdAt: new Date().toISOString(),
-      });
-
-      const cita = http.expectOne('/scheduling/appointments/direct');
-      expect(cita.request.body.patientProfileId).toBe('pac-nuevo');
-      cita.flush({
         bookingId: 'book-1',
         bookableSlotId: 'slot-1',
+        appointmentId: 'appt-1',
+        encounterId: 'enc-1',
         statusConceptId: 'st-1',
         retractedSlots: 0,
       });
     });
 
-    /** Si el alta falla, no se agenda nada y se dice qué pasó. */
-    it('si el alta del paciente falla, no llega a agendar', () => {
+    /** El 409 dice dónde seguir: buscarlo arriba, no volver a teclear la cédula. */
+    it('si el documento ya está registrado, lo dice y manda a buscarlo', () => {
       crear();
       conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
 
@@ -547,15 +559,17 @@ describe('AppointmentNew', () => {
       completarAlta();
       c.guardar();
 
-      http.expectOne('/profiles/patients').flush(
+      http.expectOne('/scheduling/appointments/walk-in').flush(
         { code: 'CONFLICT', message: 'Ya hay un paciente con esa cédula.' },
         { status: 409, statusText: 'Conflict' },
       );
       fixture.detectChanges();
 
-      http.expectNone('/scheduling/appointments/direct');
+      // Una sola transacción: nada quedó creado por el camino.
+      http.expectNone('/profiles/patients');
       const aviso = fixture.nativeElement.querySelector('[data-testid="cita-error"]');
-      expect(aviso?.textContent).toContain('esa cédula');
+      expect(aviso?.textContent).toContain('ya está registrado');
+      expect(aviso?.textContent).toContain('cédula');
     });
 
     /** «Otra ocupación» es la que destraba el oficio escrito a mano (§1.1.7). */

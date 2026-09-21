@@ -51,6 +51,20 @@
   rx: 2;
 }
 
+/* Cada barra es una parada de teclado, así que necesita foco visible.
+
+   Se marca con `stroke`, no sólo con `outline`: el soporte de `outline` sobre
+   formas SVG es desparejo entre navegadores, y una barra de 14 px de ancho con
+   el anillo recortado no se distingue de la de al lado. El `stroke` lo dibuja
+   el propio motor SVG y siempre se ve. El `outline` va igual, de refuerzo,
+   para quien fuerza el modo de alto contraste. */
+.trend-chart__bar:focus-visible {
+  outline: 4px solid var(--focus-ring);
+  outline-offset: 2px;
+  stroke: var(--text-primary);
+  stroke-width: 2;
+}
+
 .trend-chart__bar--billed {
   fill: var(--c-petrol-500);
 }

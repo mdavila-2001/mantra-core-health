@@ -1,226 +1,51 @@
 <app-page-header
-  title="Entrega y pago"
-  subtitle="Elegí cómo recibís tu pedido y cómo lo pagás, revisá el resumen y confirmá."
+  title="Confirmá tu pedido"
+  subtitle="Revisá cómo lo retirás y qué pedís, y confirmá para enviarlo a la farmacia."
   [breadcrumbs]="breadcrumbs()"
 />
 
-<app-view-state-host [state]="estado()" (retry)="cargar()">
-  <div vsh-skeleton class="checkout" data-testid="checkout-cargando">
-    <app-skeleton variant="rect" height="var(--sp-10)" />
-    <app-skeleton variant="text" [lines]="2" />
-    <app-skeleton variant="rect" height="var(--sp-20)" />
-  </div>
-
+<app-view-state-host [state]="estado()">
   @if (borrador; as pedido) {
     <div class="checkout" data-testid="checkout">
       <app-stepper
-        label="Entrega y pago"
+        label="Confirmá tu pedido"
         interactive
         data-testid="checkout-stepper"
         [steps]="pasosDelStepper()"
         (stepSelected)="alPedirPaso($event)"
       />
 
-      <p class="checkout__secundario">
-        {{ pedido.farmacia }} · {{ pedido.sede }}
-        @if (pedido.direccion !== null) {
-          · {{ pedido.direccion }}
-        }
-      </p>
-
       <section class="checkout__paso" aria-labelledby="checkout-paso-titulo" data-testid="checkout-paso">
         @switch (pasoActual()) {
-          <!-- ─── 1 · Entrega ────────────────────────────────────────────── -->
+          <!-- ─── 1 · Entrega: lo único que el backend acepta hoy ─────────── -->
           @case ('ENTREGA') {
             <h2 id="checkout-paso-titulo" class="checkout__titulo" tabindex="-1">Cómo lo recibís</h2>
-            <app-form-field label="Entrega">
-              <app-radio-group
-                data-testid="checkout-entrega"
-                [value]="entrega()"
-                (valueChange)="alElegirEntrega($event)"
-              >
-                <app-radio value="RETIRO" label="Recojo en la farmacia" />
-                <app-radio value="DELIVERY" label="Delivery" />
-              </app-radio-group>
-            </app-form-field>
-            @if (entrega() === 'DELIVERY') {
-              <p class="checkout__nota" data-testid="checkout-entrega-delivery">
-                La farmacia sigue siendo {{ pedido.farmacia }} · {{ pedido.sede }}: desde ahí sale tu
-                pedido. En el paso siguiente elegís la dirección.
-              </p>
-            }
-          }
-
-          <!-- ─── 2 · Dirección registrada (sólo delivery, maqueta) ──────── -->
-          @case ('DIRECCION') {
-            <h2 id="checkout-paso-titulo" class="checkout__titulo" tabindex="-1">Dirección de entrega</h2>
-            <p class="checkout__etiquetas">
-              <app-badge variant="info">Maqueta</app-badge>
-              <span class="checkout__secundario">
-                Las direcciones son de ejemplo: todavía no se guardan en tu cuenta.
-              </span>
+            <p class="checkout__principal" data-testid="checkout-entrega">
+              Retiro en la farmacia
             </p>
-            @if (sinDirecciones()) {
-              <app-alert tone="info" title="No tenés una dirección registrada" data-testid="checkout-sin-direccion">
-                Para recibir el pedido con delivery necesitás una dirección. También podés volver y
-                elegir recojo en la farmacia.
-              </app-alert>
-            } @else {
-              <ul class="checkout__direcciones" data-testid="checkout-direcciones">
-                @for (opcion of direccionesDisponibles(); track opcion.id) {
-                  <li
-                    class="checkout__direccion"
-                    data-testid="checkout-direccion"
-                    [class.checkout__direccion--elegida]="direccionElegida() === opcion.id"
-                  >
-                    <span class="checkout__direccion-datos">
-                      <span class="checkout__principal">{{ opcion.rotulo }}</span>
-                      <span class="checkout__secundario">{{ opcion.linea }}</span>
-                      @if (opcion.referencia !== null) {
-                        <span class="checkout__secundario">{{ opcion.referencia }}</span>
-                      }
-                    </span>
-                    @if (direccionElegida() === opcion.id) {
-                      <app-badge variant="success" data-testid="checkout-direccion-elegida">En uso</app-badge>
-                    } @else {
-                      <button
-                        app-button
-                        variant="outline"
-                        size="sm"
-                        type="button"
-                        data-testid="checkout-usar-direccion"
-                        [attr.aria-label]="'Usar la dirección ' + opcion.rotulo"
-                        (clicked)="usarDireccion(opcion.id)"
-                      >
-                        Usar esta
-                      </button>
-                    }
-                  </li>
-                }
-              </ul>
-            }
-            <div>
-              <button
-                app-button
-                variant="ghost"
-                size="sm"
-                type="button"
-                data-testid="checkout-agregar-direccion"
-                disabled
-              >
-                Agregar otra
-              </button>
-              <span class="checkout__secundario">Maqueta: agregar direcciones todavía no está disponible.</span>
-            </div>
-          }
-
-          <!-- ─── 3 · Medio de pago (maqueta; igual para recojo y delivery) ─ -->
-          @case ('PAGO') {
-            <h2 id="checkout-paso-titulo" class="checkout__titulo" tabindex="-1">Medio de pago</h2>
-            <app-form-field label="Cómo pagás">
-              <app-radio-group
-                data-testid="checkout-medio-de-pago"
-                [value]="medioDePago()"
-                (valueChange)="alElegirMedioDePago($event)"
-              >
-                <app-radio value="QR" label="QR" />
-                <app-radio value="TARJETA" label="Tarjeta de débito / crédito" />
-              </app-radio-group>
-            </app-form-field>
-
-            @if (medioDePago() === 'QR') {
-              <div class="checkout__pago" data-testid="checkout-pago-qr">
-                <!-- El chip va fijo: no hay pasarela y este QR no cobra nada. -->
-                <app-badge variant="info" data-testid="checkout-pago-chip-demo">
-                  DEMO — el pago real llega con la pasarela
-                </app-badge>
-                @if (qrDemoActiva && qrDisponible()) {
-                  <div class="checkout__qr" aria-hidden="true">
-                    <canvas #lienzoQr [width]="ladoDelQr" [height]="ladoDelQr"></canvas>
-                  </div>
-                  <p class="checkout__secundario">QR de ejemplo: escanearlo no paga nada.</p>
-                } @else {
-                  <p class="checkout__secundario" data-testid="checkout-pago-qr-no-disponible">
-                    El QR de ejemplo no está disponible.
-                  </p>
-                }
-              </div>
-            } @else {
-              <div class="checkout__pago" data-testid="checkout-pago-tarjeta">
-                <app-badge variant="info">Maqueta</app-badge>
-                <div class="checkout__tarjeta" aria-hidden="true">
-                  <span class="checkout__tarjeta-numero cifras-tabulares">{{ tarjeta.numero }}</span>
-                  <span class="checkout__tarjeta-pie">
-                    <span>{{ tarjeta.titular }}</span>
-                    <span class="cifras-tabulares">{{ tarjeta.vence }}</span>
-                  </span>
-                </div>
-                <app-form-field label="Número de tarjeta">
-                  <app-input [value]="tarjeta.numero" [disabled]="true" />
-                </app-form-field>
-                <div class="checkout__campos">
-                  <app-form-field label="Vencimiento">
-                    <app-input [value]="tarjeta.vence" [disabled]="true" />
-                  </app-form-field>
-                  <app-form-field label="Titular">
-                    <app-input [value]="tarjeta.titular" [disabled]="true" />
-                  </app-form-field>
-                </div>
-                <p class="checkout__secundario">
-                  Formulario de ejemplo deshabilitado: todavía no se pueden cargar tarjetas.
-                </p>
-              </div>
-            }
-            <p class="checkout__nota" data-testid="checkout-pago-nota">
-              Este paso es una maqueta: no se procesa ningún pago.
+            <p class="checkout__secundario">
+              {{ pedido.farmacia }} · {{ pedido.sede }}
+              @if (pedido.direccion !== null) {
+                · {{ pedido.direccion }}
+              }
+            </p>
+            <!-- Sin libreta de direcciones ni envío en el contrato, ofrecer
+                 «Delivery» sería prometer algo que el pedido no puede llevar. -->
+            <p class="checkout__nota" data-testid="checkout-envio-no-disponible">
+              El envío a domicilio todavía no está disponible: los pedidos se retiran en la
+              farmacia.
             </p>
           }
 
-          <!-- ─── 4 · Resumen y confirmación final ───────────────────────── -->
+          <!-- ─── 2 · Resumen y confirmación final ───────────────────────── -->
           @case ('RESUMEN') {
             <h2 id="checkout-paso-titulo" class="checkout__titulo" tabindex="-1">Revisá y confirmá</h2>
-            <p class="checkout__etiquetas">
-              <app-badge variant="info">{{ notaDeEjemplo }}</app-badge>
-              <span class="checkout__secundario">
-                El descuento, el coaseguro, el envío y los puntos son valores de ejemplo.
-              </span>
-            </p>
-            <dl class="checkout__elecciones">
-              <div>
-                <dt>Entrega</dt>
-                <dd data-testid="checkout-resumen-entrega">
-                  @if (entrega() === 'DELIVERY') {
-                    Delivery{{ direccion() ? ' · ' + direccion()!.rotulo : '' }}
-                  } @else {
-                    Recojo en {{ pedido.farmacia }} · {{ pedido.sede }}
-                  }
-                </dd>
-              </div>
-              <div>
-                <dt>Medio de pago</dt>
-                <dd>{{ medioDePago() === 'QR' ? 'QR (demo)' : 'Tarjeta (maqueta)' }}</dd>
-              </div>
-            </dl>
 
             <app-order-summary [resumen]="resumen()" />
-
-            @if (hayAlternativas) {
-              <p class="checkout__nota" data-testid="checkout-nota-alternativas">
-                Las alternativas son de demostración: el pedido se envía con el medicamento recetado
-                y el precio final lo confirma la farmacia.
-              </p>
-            }
 
             @if (productosSinPublicar.length > 0) {
               <app-alert tone="warning" title="Este pedido todavía no puede confirmarse">
                 No hay un producto publicado para: {{ productosSinPublicar.join(', ') }}.
-              </app-alert>
-            }
-
-            @if (entrega() === 'DELIVERY') {
-              <app-alert tone="warning" title="Con delivery todavía no se puede confirmar" data-testid="checkout-delivery-no-disponible">
-                El envío a domicilio todavía no está disponible para crear pedidos. Para confirmar,
-                volvé al paso de entrega y elegí «Recojo en la farmacia».
               </app-alert>
             }
 
@@ -230,8 +55,10 @@
               </app-alert>
             }
 
-            <p class="checkout__nota">
-              Al confirmar, el pedido se envía a la farmacia. No se cobra nada ahora.
+            <!-- El pago no pasa por acá: el contrato no tiene ningún medio de
+                 pago del paciente, así que la pantalla no simula uno. -->
+            <p class="checkout__nota" data-testid="checkout-pago-nota">
+              Acá no se cobra nada: el pago lo coordinás con la farmacia cuando retirás.
             </p>
           }
         }
@@ -250,29 +77,6 @@
           >
             {{ falloAlConfirmar() ? 'Reintentar' : 'Confirmar pedido' }}
           </button>
-        } @else {
-          <button
-            app-button
-            variant="primary"
-            type="button"
-            data-testid="checkout-siguiente"
-            [disabled]="!puedeSeguir()"
-            (clicked)="siguiente()"
-          >
-            Siguiente
-          </button>
-        }
-        @if (pasoActual() === 'ENTREGA') {
-          <button
-            app-button
-            variant="ghost"
-            type="button"
-            data-testid="checkout-volver-a-la-orden"
-            (clicked)="volverALaOrden()"
-          >
-            Volver a la orden
-          </button>
-        } @else {
           <button
             app-button
             variant="ghost"
@@ -282,6 +86,25 @@
             (clicked)="anterior()"
           >
             Anterior
+          </button>
+        } @else {
+          <button
+            app-button
+            variant="primary"
+            type="button"
+            data-testid="checkout-siguiente"
+            (clicked)="siguiente()"
+          >
+            Siguiente
+          </button>
+          <button
+            app-button
+            variant="ghost"
+            type="button"
+            data-testid="checkout-volver-a-la-orden"
+            (clicked)="volverALaOrden()"
+          >
+            Volver a la orden
           </button>
         }
       </div>

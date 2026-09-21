@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -13,6 +14,7 @@ import { InsuranceClient } from '../../../core/data-access/insurance/insurance.c
 import type {
   ClaimDetail,
   ClaimLine,
+  ClaimLineDuplicateStudy,
 } from '../../../core/data-access/insurance/insurance.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
@@ -27,6 +29,7 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { currencySuffix, formatAmount, formatMoney } from '../money-format';
+import { displayCurrency } from '../../../core/money/display-currency';
 import { InsuranceContactChannels } from './insurance-contact-channels/insurance-contact-channels';
 
 /**
@@ -80,6 +83,11 @@ import { InsuranceContactChannels } from './insurance-contact-channels/insurance
     Tooltip,
     ViewStateHost,
   ],
+  // `imports` sólo habilita `| date` en la plantilla; `duplicateSummary()`
+  // arma el texto del globo en esta clase e inyecta `DatePipe` directo, que
+  // necesita el proveedor explícito (NG0201 si falta — visto en el diálogo
+  // de antiduplicación de `DiagnosticsBlock`).
+  providers: [DatePipe],
   templateUrl: './insurance-claim-detail.html',
   styleUrl: './insurance-claim-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -90,6 +98,7 @@ export class InsuranceClaimDetail {
   private readonly route = inject(ActivatedRoute);
   private readonly dialogs = inject(DialogService);
   private readonly toast = inject(ToastService);
+  private readonly datePipe = inject(DatePipe);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -146,6 +155,14 @@ export class InsuranceClaimDetail {
   protected currency = currencySuffix;
 
   /**
+   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
+   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
+   */
+  protected moneda(code?: string | null): string {
+    return displayCurrency(code);
+  }
+
+  /**
    * Resumen del documento clínico que respalda un ítem.
    *
    * **Nombra qué es** cuando el modelo lo sabe, y dice que no lo sabe cuando
@@ -184,6 +201,23 @@ export class InsuranceClaimDetail {
     if (line.referenceType === 'DIAGNOSTIC_STUDY') return 'Estudio';
     if (line.referenceType === 'MEDICATION_DISPENSATION') return 'Dispensación';
     return 'Tipo no registrado';
+  }
+
+  /**
+   * El globo del badge «Posible duplicado» (antiduplicación de estudios,
+   * v4.2.17, T-26, subtarea 3.2): fecha, prestador y la justificación del
+   * médico si repitió el estudio. Nunca el informe en sí — eso es
+   * `duplicateStudy` sin más que metadatos, por diseño (FT-32-R02).
+   *
+   * @param duplicate - El estudio duplicado del ítem.
+   * @returns El texto del globo.
+   */
+  protected duplicateSummary(duplicate: ClaimLineDuplicateStudy): string {
+    const fecha = this.datePipe.transform(duplicate.performedAt, 'd MMM y') ?? '';
+    const base = `Estudio idéntico (${duplicate.studyName}) realizado el ${fecha} en ${duplicate.providerName}.`;
+    return duplicate.reused
+      ? `${base} Reutilizó el informe previo en vez de repetirlo.`
+      : `${base} Justificación médica: ${duplicate.justification ?? 'sin registrar'}`;
   }
 
   /**

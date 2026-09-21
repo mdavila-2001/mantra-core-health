@@ -1,12 +1,10 @@
 /**
  * Tipos de la billetera de puntos del paciente (carril FAR-I6).
  *
- * El backend tiene las tablas (`promotions.loyalty_programs`, `loyalty_tiers`,
- * `loyalty_memberships`, `points_ledger_entries`) y las escrituras, pero **no
- * tiene ninguna lectura para el paciente**: hoy los saldos sólo vuelven como
- * efecto colateral de un `POST`. Estos tipos espejan lo que devolverán las dos
- * lecturas pedidas en `COORDINACION-AGENTES.md`; cuando existan, el ajuste vive
- * acá y en el cliente, y las pantallas no se enteran.
+ * Espejan el contrato real del portal: `GET loyalty/me`,
+ * `GET loyalty/me/points` y `POST loyalty/me/points/redeem`. Los códigos son
+ * los del catálogo del backend; la traducción del cable a estos tipos vive en
+ * `loyalty.adapter.ts`.
  *
  * Misma convención de cifras que el pedido de farmacia: **texto exacto**. Los
  * puntos son `numeric` en la base y un `numeric` no cabe sin pérdida en un
@@ -26,40 +24,36 @@ export const NOMBRE_PROGRAMA_PUNTOS = 'Puntos AloVida';
 /**
  * Hacia dónde mueve los puntos una entrada del ledger.
  *
- * Provisorio del front, como `ESTADOS_DE_PEDIDO`: en la base esto es
- * `direction_concept_id`, un concepto de terminología. Estos códigos son la
- * identidad mientras el catálogo no llegue, y **jamás se muestran** — la
- * etiqueta en castellano vive en la pantalla.
- *
- * TODO(FAR-E?): reemplazar por el concepto resuelto que devuelva la lectura.
+ * Son los **códigos reales del catálogo** que publica la API
+ * (`promotions:points-direction:*`), no un value set provisional del front.
+ * Jamás se muestran: la etiqueta en castellano vive en `punto-motivo.ts`.
  */
-export const DIRECCIONES_DE_PUNTOS = ['CREDITO', 'DEBITO'] as const;
+export const DIRECCIONES_DE_PUNTOS = [
+  'POINTS_EARN',
+  'POINTS_REDEEM',
+  'POINTS_EXPIRE',
+  'POINTS_ADJUST',
+] as const;
 
 export type DireccionDePuntos = (typeof DIRECCIONES_DE_PUNTOS)[number];
 
 /**
- * Por qué se movieron los puntos. Provisorio del front, igual que la dirección
- * (en la base es `reason_concept_id`).
+ * Por qué se movieron los puntos.
  *
- * `AJUSTE` es la compensación de una reversa: el ledger es append-only, así que
- * devolver puntos no borra la entrada original, agrega una nueva.
- *
- * TODO(FAR-E?): reemplazar por el concepto resuelto que devuelva la lectura.
+ * Códigos reales del catálogo (`promotions:points-reason:*`). Un ajuste manual
+ * es la compensación de una reversa: el ledger es append-only, así que devolver
+ * puntos no borra la entrada original, agrega una nueva.
  */
 export const MOTIVOS_DE_PUNTOS = [
-  'BIENVENIDA',
-  'COMPRA',
-  'CANJE',
-  'VENCIMIENTO',
-  'AJUSTE',
+  'REASON_SIGNUP',
+  'REASON_EVENT',
+  'REASON_REDEMPTION',
+  'REASON_EXPIRY',
+  'REASON_REFERRAL',
+  'REASON_MANUAL',
 ] as const;
 
 export type MotivoDePuntos = (typeof MOTIVOS_DE_PUNTOS)[number];
-
-/** Provisorio del front; en la base es `status_concept_id`. */
-export const ESTADOS_DE_MEMBRESIA = ['ACTIVA', 'SUSPENDIDA', 'CERRADA'] as const;
-
-export type EstadoDeMembresia = (typeof ESTADOS_DE_MEMBRESIA)[number];
 
 /**
  * El nivel de la membresía. Multiplica lo que se acumula: la regla dice cuántos
@@ -69,8 +63,8 @@ export type EstadoDeMembresia = (typeof ESTADOS_DE_MEMBRESIA)[number];
 export interface NivelDeMembresia {
   readonly codigo: string;
   readonly nombre: string;
-  /** Cuánto multiplica la acumulación. Texto exacto: es `numeric`. */
-  readonly multiplicador: string;
+  /** Cuánto multiplica la acumulación, o `null` si el nivel no lo declara. */
+  readonly multiplicador: string | null;
   /** Desde cuántos puntos de por vida se alcanza. Texto exacto. */
   readonly puntosMinimos: string;
 }
@@ -97,8 +91,10 @@ export interface Membresia {
    */
   readonly puntosDePorVida: string;
   readonly nivel: NivelDeMembresia | null;
-  readonly inscritaEl: Date;
-  readonly estado: EstadoDeMembresia;
+  /** Cuándo se inscribió, si la lectura lo trae. */
+  readonly inscritaEl: Date | null;
+  /** Si la membresía está activa. El estado como concepto no se publica. */
+  readonly activa: boolean;
 }
 
 /**
@@ -109,10 +105,14 @@ export interface Membresia {
  */
 export interface MovimientoDePuntos {
   readonly id: string;
-  readonly direccion: DireccionDePuntos;
+  /**
+   * `null` cuando la API no reconoce el concepto como uno de puntos. Es raro y
+   * se dice: antes que inventar una dirección, la fila va sin signo.
+   */
+  readonly direccion: DireccionDePuntos | null;
   /** Siempre positivo; el signo lo dice `direccion`. Texto exacto. */
   readonly puntos: string;
-  readonly motivo: MotivoDePuntos;
+  readonly motivo: MotivoDePuntos | null;
   /** El saldo que quedó después, o `null` si el origen no lo registró. */
   readonly saldoDespues: string | null;
   /** «Compra en Farmacia Central», o `null` si no hay de dónde decirlo. */

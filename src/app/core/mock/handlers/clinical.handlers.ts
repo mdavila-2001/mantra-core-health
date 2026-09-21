@@ -23,8 +23,13 @@ import {
 } from '../fixtures/clinica';
 import { CLASE_ENCUENTRO, ESPECIALIDAD, ESTADO, ESTADO_CONDICION, ESTADO_ENCUENTRO, ESTADO_RECETA, INTENCION_DEL_PLAN, SEVERIDAD, VERIFICACION_DX } from '../fixtures/conceptos';
 import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/personas';
-import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
+import { forbidden, notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, isoDia, nuevoId, uuid } from '../mock-store';
+import {
+  DUPLICATE_STUDY_WINDOW_DAYS,
+  estudioDuplicado,
+  estudioPrevio,
+} from './diagnostics.handlers';
 import { emitirNotificacion } from './notifications.handlers';
 import { enlazarArchivo, pdfMinimo } from './files.handlers';
 import { FICHAS_ESTANDAR } from '../fixtures/fichas-estandar.generated';
@@ -514,20 +519,66 @@ export function registrarClinica(router: MockRouter): void {
   router.post('/clinical/diagnostic-reports/:id/release', ({ params }) => ({ id: params['id'], patientProfileId: '', lifecycleStatus: 'FINAL', resultReleaseStatus: 'RELEASED', serviceRequestId: null, createdAt: ahora() }));
 
   router.post('/clinical/service-requests', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; codeConceptId: string; categoryConceptId?: string; priorityConceptId?: string; reasonText?: string; encounterId?: string }>(request);
+    const datos = cuerpo<{
+      patientProfileId: string;
+      codeConceptId: string;
+      categoryConceptId?: string;
+      priorityConceptId?: string;
+      reasonText?: string;
+      encounterId?: string;
+      // Antiduplicación de estudios (v4.2.17, T-26, subtarea 3.2).
+      previousDiagnosticReportId?: string;
+      reusePreviousReport?: boolean;
+      duplicateOverrideReason?: string;
+    }>(request);
+
+    const patientProfileId = datos.patientProfileId ?? '';
+    const codeConceptId = datos.codeConceptId ?? '';
+    const conDecision = datos.previousDiagnosticReportId !== undefined;
+
+    // Sin decisión, el alta vuelve a correr el mismo detector que el
+    // chequeo: la UI no es la barrera. Con decisión, se confía en lo que el
+    // diálogo ya mostró — el mock no reproduce la carrera check→alta del
+    // servidor (`DUPLICATE_STUDY_MISMATCH`).
+    if (!conDecision) {
+      const duplicado = estudioDuplicado(patientProfileId, codeConceptId, DUPLICATE_STUDY_WINDOW_DAYS);
+      if (duplicado !== null) {
+        const previousStudy = estudioPrevio(duplicado.informe, duplicado.performedAt, request.user);
+        return preconditionFailed('Ya existe un estudio igual reciente.', {
+          reason: 'DUPLICATE_STUDY_DETECTED',
+          previousStudy,
+        });
+      }
+    }
+
+    const reutilizada = conDecision && datos.reusePreviousReport === true;
     const nueva = ordenes.agregar({
       id: nuevoId('order'),
-      patientProfileId: datos.patientProfileId ?? '',
-      codeConceptId: datos.codeConceptId ?? '',
+      patientProfileId,
+      codeConceptId,
       categoryConceptId: datos.categoryConceptId ?? '',
       priorityConceptId: datos.priorityConceptId ?? '',
-      statusConceptId: ESTADO['ST-PENDING']!,
+      statusConceptId: reutilizada ? ESTADO['ST-SATISFIED-BY-PRIOR']! : ESTADO['ST-PENDING']!,
       requesterProfileId: request.user?.practitionerProfileId ?? MEDICA.id,
       ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
       reasonText: datos.reasonText ?? '',
       createdAt: ahora(),
+      ...(datos.previousDiagnosticReportId === undefined
+        ? {}
+        : { previousDiagnosticReportId: datos.previousDiagnosticReportId }),
+      ...(datos.duplicateOverrideReason === undefined
+        ? {}
+        : { duplicateOverrideReason: datos.duplicateOverrideReason }),
     });
-    return { status: 201, body: { id: nueva.id, patientProfileId: nueva.patientProfileId, status: 'ACTIVE', createdAt: nueva.createdAt } };
+    return {
+      status: 201,
+      body: {
+        id: nueva.id,
+        patientProfileId: nueva.patientProfileId,
+        status: reutilizada ? 'SATISFIED_BY_PRIOR' : 'ACTIVE',
+        createdAt: nueva.createdAt,
+      },
+    };
   });
 
   router.post('/cds/check-interactions', (request) => {

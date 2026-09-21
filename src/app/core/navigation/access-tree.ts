@@ -186,6 +186,12 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
     icon: 'building',
     tone: 'success',
     paths: [
+      // Declarada, aunque el cajón `Administración` ya la recogería: `paths`
+      // fija el ORDEN, y para quien administra una aseguradora el tablero de
+      // siniestralidad es a lo que viene, no lo último de la zona. Del médico
+      // la aparta `hiddenFor: ['PATIENT', 'PRACTITIONER']` en el registro de
+      // navegación, no este archivo.
+      'administration/insurance-analytics',
       'administration/my-organization',
       'administration/my-practice',
       'administration/medical-organization',

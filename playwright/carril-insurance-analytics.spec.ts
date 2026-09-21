@@ -36,10 +36,15 @@ const PACIENTE_MOCK: Actor = {
   nombre: 'Paciente (maqueta)',
 };
 
+// Los cinco anchos obligatorios del gate visual del repositorio
+// (`.claude/skills/visual-quality-gate`). Faltaban los dos del medio y el
+// grande: un tablero de ocho columnas es exactamente donde se rompen.
 const VIEWPORTS = [
   { nombre: 'movil', width: 390, height: 844 },
   { nombre: 'tablet', width: 768, height: 1024 },
+  { nombre: 'tablet-horizontal', width: 1024, height: 768 },
   { nombre: 'escritorio', width: 1440, height: 900 },
+  { nombre: 'escritorio-grande', width: 1920, height: 1080 },
 ] as const;
 
 /** Lee el cuerpo de un JWT sin verificarlo: sólo para contar membresías. */
@@ -49,7 +54,7 @@ function decodeJwt(token: string): Record<string, unknown> {
 }
 
 test.describe('el tablero de siniestralidad (maqueta)', () => {
-  test('muestra las cinco tarjetas KPI, el gráfico mensual y las tres tablas', async ({ page }) => {
+  test('muestra las seis tarjetas KPI, el gráfico mensual y las tres tablas', async ({ page }) => {
     await entrar(page, ASEGURADORA_MOCK);
     await irA(page, RUTA);
     await expect(page.getByTestId('insurance-analytics-container')).toBeVisible({
@@ -60,6 +65,9 @@ test.describe('el tablero de siniestralidad (maqueta)', () => {
     for (const testId of [
       'kpi-loss-ratio',
       'kpi-total-approved',
+      // El denominador del loss ratio de la primera tarjeta: sin verlo, un
+      // 120 % no se puede interpretar.
+      'kpi-earned-premium',
       'kpi-per-capita',
       'kpi-claims',
       'kpi-affiliates',
@@ -118,8 +126,61 @@ test.describe('el tablero de siniestralidad (maqueta)', () => {
     ).toHaveCount(0);
   });
 
+  /*
+    El criterio pide que el auditor recorra la serie con el teclado.
+
+    Se comprueba en el navegador y no sólo en la prueba de componente porque
+    `tabindex` sobre una forma SVG depende del motor: jsdom lo acepta siempre,
+    y un navegador real es el único que dice si la barra recibe el foco de
+    verdad.
+  */
+  test('cada barra del gráfico recibe el foco y dice su cifra', async ({ page }) => {
+    await entrar(page, ASEGURADORA_MOCK);
+    await irA(page, RUTA);
+    await expect(page.getByTestId('chart-monthly-trend')).toBeVisible({ timeout: 30_000 });
+    await estable(page);
+
+    const barras = page.locator('.trend-chart__bar');
+    expect(await barras.count()).toBeGreaterThan(0);
+
+    const primera = barras.first();
+    await primera.focus();
+    await expect(primera).toBeFocused();
+
+    // Lo que anuncia el lector al parar acá: mes e importe, no «gráfico».
+    const etiqueta = (await primera.getAttribute('aria-label')) ?? '';
+    expect(etiqueta).toMatch(/facturado/);
+    expect(etiqueta).toMatch(/\d/);
+
+    // El grupo no puede ser `role="img"`: eso volvería hoja al SVG y callaría
+    // las etiquetas de las barras.
+    const svg = page.locator('.trend-chart__svg');
+    expect(await svg.getAttribute('role')).toBe('group');
+
+    // El anillo de foco se dibuja con `stroke` porque `outline` sobre formas
+    // SVG es desparejo entre navegadores: se comprueba que el motor lo aplique
+    // de verdad, y se guarda la captura para el gate visual.
+    const trazo = await primera.evaluate((el) => getComputedStyle(el).strokeWidth);
+    expect(trazo).not.toBe('0px');
+
+    await page.locator('.trend-chart').screenshot({
+      path: 'docs/frontend/evidence/insurance-analytics/barra-con-foco.png',
+    });
+  });
+
   for (const viewport of VIEWPORTS) {
     test(`sin desborde horizontal en ${viewport.width} px`, async ({ page }) => {
+      /*
+        Excepciones sin capturar, no «errores de consola».
+
+        La CSP del servidor de desarrollo bloquea sus propios scripts en línea
+        y eso ensucia la consola en TODAS las pantallas (medido en el carril
+        16). Un `pageerror`, en cambio, es una excepción que se escapó: eso sí
+        es de la pantalla y no admite matices.
+      */
+      const excepciones: string[] = [];
+      page.on('pageerror', (error) => excepciones.push(error.message));
+
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await entrar(page, ASEGURADORA_MOCK);
       await irA(page, RUTA);
@@ -159,9 +220,11 @@ test.describe('el tablero de siniestralidad (maqueta)', () => {
       }
 
       await page.screenshot({
-        path: `artifacts/playwright/subtarea-3.1/tablero-${viewport.nombre}.png`,
+        path: `docs/frontend/evidence/insurance-analytics/tablero-${viewport.nombre}.png`,
         fullPage: true,
       });
+
+      expect(excepciones, 'el tablero lanzó una excepción sin capturar').toEqual([]);
     });
   }
 });

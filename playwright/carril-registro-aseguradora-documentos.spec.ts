@@ -10,6 +10,7 @@ import {
   subirArchivo,
   subirLosCincoDocumentos,
 } from './helpers/documentos-legales';
+import { completarCuentaDelOwner } from './helpers/owner';
 import { completarGerencias, completarRepresentanteLegal } from './helpers/representante-legal';
 
 /**
@@ -47,18 +48,13 @@ async function abrirElAlta(page: Page): Promise<void> {
   ).toBeAttached({ timeout: 20_000 });
 }
 
-/** Completa los tres primeros pasos (subtarea 1.1) y llega a la sección de documentos. */
+/** Completa los dos primeros pasos (subtarea 1.1 + códigos desde la sigla) y llega a la sección de documentos. */
 async function llegarADocumentos(page: Page): Promise<void> {
   await page.getByLabel('Nombre de la empresa').fill('Andina Salud S.A.');
+  await page.getByTestId('registro-organizacion-sigla').fill('ANDINA');
   await page
     .getByLabel('Tipo societario')
     .selectOption({ label: 'S.R.L. · Sociedad de Responsabilidad Limitada' });
-  await page.getByTestId('paginated-form-continuar').click();
-
-  await expect(page.locator('.paginated-form__titulo')).toHaveText('Cómo se la identifica');
-  await page.getByTestId('registro-organizacion-codigo').fill('ANDINA-SALUD');
-  await page.getByTestId('registro-organizacion-sigla').fill('AS');
-  await page.getByTestId('registro-organizacion-carrier').fill('CARRIER-AS');
   await page.getByTestId('paginated-form-continuar').click();
 
   await expect(page.locator('.paginated-form__titulo')).toHaveText('Datos de la aseguradora');
@@ -195,14 +191,7 @@ test.describe('alta pública de aseguradora — documentación legal en PDF (sub
     await completarGerencias(page);
 
     await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-    await page.getByTestId('registro-organizacion-owner-nombre').fill('Ana');
-    await page.getByTestId('registro-organizacion-owner-apellido-paterno').fill('Paz');
-    await page.getByTestId('paginated-form-continuar').click();
-
-    await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-    await page.getByTestId('registro-organizacion-owner-correo').fill('admin@andina.test');
-    await page.getByTestId('registro-organizacion-owner-password').fill('secreto12');
-    await page.getByTestId('paginated-form-continuar').click();
+    await completarCuentaDelOwner(page, { email: 'admin@andina.test' });
 
     await expect(page.getByTestId('registro-organizacion-exito')).toBeVisible({ timeout: 20_000 });
     await capturar(page, 'exito-con-documentos');
