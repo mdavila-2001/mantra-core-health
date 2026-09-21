@@ -33,7 +33,12 @@
 #   cp deploy/mockup.env.example .env      # y poner el dominio en APP_DOMAIN
 #   docker compose --env-file .env up -d --build
 #
-#   → http://<ip-o-dominio>:8080   (HTTP_PORT lo cambia)
+#   → http://127.0.0.1:8080   (HTTP_PORT lo cambia)
+#
+#   Sólo desde la propia máquina, a propósito: el puerto ya no se publica en
+#   todas las interfaces. Para llegar desde fuera hay que pasar por el proxy
+#   con su dominio y su TLS, que es el único camino que debería existir. Para
+#   mirarlo desde tu equipo sin proxy: `ssh -L 8080:127.0.0.1:8080 <host>`.
 #
 # ─── En Coolify ───────────────────────────────────────────────────────────
 #
@@ -88,9 +93,25 @@ services:
       # Ver la nota de APP_DOMAIN arriba: sin esto el dominio devuelve 400.
       SSR_ALLOWED_HOSTS: ${APP_DOMAIN:-localhost}
     ports:
-      # Con Traefik/Coolify delante esto no hace falta —enruta al puerto
-      # expuesto por la red de Docker— pero publicado tampoco molesta.
-      - '${HTTP_PORT:-8080}:4000'
+      # Publicado SOLO en el bucle local del host, y el `127.0.0.1:` de delante
+      # es la mitad que importa.
+      #
+      # Con Traefik/Coolify delante esto no hace falta —enruta por la red de
+      # Docker al puerto expuesto—, y decir que «publicado tampoco molesta» era
+      # falso: sin ese prefijo Docker abre el puerto en TODAS las interfaces, y
+      # encima lo hace POR DEBAJO del firewall. Docker escribe sus reglas antes
+      # en la cadena, así que un `ufw deny 8080` no lo tapa: el puerto queda
+      # abierto a internet, sin TLS y saltándose el proxy, creyendo que está
+      # cerrado.
+      #
+      # Traefik corre en esta misma máquina y alcanza el bucle local igual de
+      # bien, así que no se pierde nada.
+      #
+      # Si Coolify tiene activado el despliegue sin cortes —levanta el
+      # contenedor nuevo antes de bajar el viejo—, este bloque sobra entero:
+      # quitarlo y dejar sólo `expose`, como hace
+      # `deploy/docker-compose.coolify.yml`.
+      - '127.0.0.1:${HTTP_PORT:-8080}:4000'
     expose:
       - '4000'
     deploy:
