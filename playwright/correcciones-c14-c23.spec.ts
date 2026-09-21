@@ -53,11 +53,62 @@ async function abrirConsultaConEncuentro(page: Page): Promise<void> {
   await page.waitForURL(/\/medical-records\/[^/]+\/consultation$/, { timeout: 60_000 });
   await estable(page);
 
+  // El clic sobre «Abrir encuentro» **a veces no toma**: el botón queda en
+  // pantalla, sin aviso ni error de consola, y la espera de abajo se agota. Se
+  // midió: la misma captura falló dos corridas seguidas y pasó a la tercera, así
+  // que es intermitente y no depende del ancho ni del tema (la primera lectura,
+  // «sólo falla en oscuro y escritorio», la desmintió volver a correrla).
+  //
+  // Esto NO debilita nada: el encuentro sigue teniendo que abrirse para que el
+  // ayudante devuelva. Lo único que cambia es que se vuelve a intentar en vez de
+  // esperar treinta segundos a un clic que se perdió.
+  const ruido: string[] = [];
+  page.on('console', (m) => {
+    if (m.type() === 'error' || m.type() === 'warning') ruido.push(`${m.type()}: ${m.text()}`);
+  });
+  page.on('pageerror', (e) => ruido.push(`pageerror: ${e.message}`));
+
   const abrir = page.getByTestId('consulta-abrir-encuentro');
-  if ((await abrir.count()) > 0) {
-    await abrir.click();
+  const enCurso = page.getByTestId('encuentros-en-curso');
+
+  // Se vuelve a apretar SÓLO si el botón sigue en pantalla, que es la señal de
+  // que el clic anterior no tomó. Si ya no está, el encuentro abrió y lo único
+  // que falta es que termine de dibujarse: ahí se espera, no se reintenta.
+  //
+  // (La primera versión de este reintento daba por perdido justamente ese caso
+  // —botón ausente, lista todavía sin pintar— y rompía tres corridas de nueve.
+  // El ayudante con diagnóstico de abajo fue lo que lo destapó.)
+  for (let intento = 1; intento <= 3; intento += 1) {
+    if ((await enCurso.count()) > 0) break;
+    if ((await abrir.count()) > 0) await abrir.click();
+    try {
+      await expect(enCurso).toBeVisible({ timeout: 15_000 });
+      break;
+    } catch {
+      await estable(page);
+    }
   }
-  await expect(page.getByTestId('encuentros-en-curso')).toBeVisible({ timeout: 30_000 });
+
+  // Si igual no apareció, el fallo viaja CON su evidencia: si el botón sigue
+  // ahí, qué anunció la región viva y qué dijo la consola. Sin esto, un no-op
+  // silencioso se ve igual que una espera corta y se clasifica mal.
+  try {
+    await expect(enCurso).toBeVisible({ timeout: 30_000 });
+  } catch {
+    const sigueElBoton = (await abrir.count()) > 0;
+    const anuncio = await page
+      .locator('[role="status"], [role="alert"]')
+      .allInnerTexts()
+      .catch(() => []);
+    throw new Error(
+      [
+        'El encuentro no abrió tras 3 intentos sobre «Abrir encuentro».',
+        `¿sigue el botón en pantalla?: ${sigueElBoton}`,
+        `regiones vivas: ${JSON.stringify(anuncio)}`,
+        `consola: ${ruido.length === 0 ? '(sin errores ni avisos)' : JSON.stringify(ruido.slice(-8))}`,
+      ].join('\n'),
+    );
+  }
 }
 
 async function abrirCasilla(page: Page, clave: string): Promise<void> {
@@ -188,6 +239,124 @@ test.describe('C-14 · la cuadrícula de la consulta', () => {
     await expect(recargado.getByTestId('cuadricula-tabla')).toBeVisible();
     expect(await desbordeHorizontal(page)).toBe(0);
     await page.screenshot({ path: join(SALIDA, 'c14-5-movil-390.png') });
+  });
+});
+
+/**
+ * Dónde está el foco ahora, y si se ve.
+ *
+ * `:focus-visible` se pregunta con `matches()` y **no** con `getComputedStyle(el,
+ * ':focus-visible')`, que en Chromium devuelve `NaN` para toda propiedad: la
+ * pseudoclase no es un pseudoelemento y no tiene estilo propio que leer.
+ */
+async function foco(page: Page): Promise<{ testId: string | null; rol: string | null; visible: boolean }> {
+  return page.evaluate(() => {
+    const el = document.activeElement as HTMLElement | null;
+    if (!el) return { testId: null, rol: null, visible: false };
+    let visible: boolean;
+    try {
+      visible = el.matches(':focus-visible');
+    } catch {
+      visible = false;
+    }
+    return {
+      testId: el.getAttribute('data-testid'),
+      rol: el.getAttribute('role'),
+      visible,
+    };
+  });
+}
+
+test.describe('C-14 · la cuadrícula se recorre sin ratón', () => {
+  test('desde la cabecera, Tab llega al marco, a cada celda y a «Registrar»', async ({ page }) => {
+    test.setTimeout(6 * 60_000);
+    mkdirSync(SALIDA, { recursive: true });
+
+    await abrirConsultaConEncuentro(page);
+    await abrirLaCuadricula(page);
+
+    const modal = page.getByRole('dialog');
+    const selector = modal.getByTestId('cuadricula-columna').locator('select');
+    await expect(selector).toBeVisible({ timeout: 30_000 });
+
+    // El catálogo de mediciones llega por `dynamic-enums` y tarda: que el
+    // `<select>` sea visible NO quiere decir que ya tenga sus opciones. Leerlas
+    // antes devuelve sólo el marcador vacío y «Peso» parece no existir.
+    await expect(selector).toContainText('Peso', { timeout: 30_000 });
+
+    // Preparar con ratón DOS columnas: el recorrido por teclado empieza después,
+    // y con dos celdas se ve que el orden sigue el de las columnas y no salta.
+    const opciones = (await selector.locator('option').allTextContents()).map((t) => t.trim());
+    for (const nombre of ['Peso', 'Talla']) {
+      const indice = opciones.indexOf(nombre);
+      expect(indice, `«${nombre}» no está en el catálogo de mediciones`).toBeGreaterThan(0);
+      await selector.selectOption({ index: indice });
+      await modal.getByTestId('cuadricula-agregar-columna').click();
+    }
+    await expect(modal.getByTestId('cuadricula-tabla')).toBeVisible();
+    await estable(page);
+
+    // La cuadrícula ya trae las columnas de lo que la persona tiene registrado
+    // en su historia, así que son más que las dos recién agregadas. Se recorren
+    // TODAS las que haya: el número no se fija, se mide.
+    const celdas = modal.locator('[data-testid^="cuadricula-celda-"]');
+    const cuantasCeldas = await celdas.count();
+    expect(cuantasCeldas).toBeGreaterThanOrEqual(2);
+    const idsDeCelda: string[] = [];
+    for (const celda of await celdas.all()) {
+      idsDeCelda.push((await celda.getAttribute('data-testid')) ?? '');
+    }
+
+    /* ---- el recorrido: desde acá y hasta el final, NINGÚN clic ------------ */
+
+    await selector.focus();
+    const paradas: string[] = [];
+    const sinAnillo: string[] = [];
+
+    for (let n = 0; n < cuantasCeldas + 8; n += 1) {
+      await page.keyboard.press('Tab');
+      const actual = await foco(page);
+      const nombre = actual.testId ?? `(${actual.rol ?? 'sin rol'})`;
+      paradas.push(nombre);
+      if (!actual.visible) sinAnillo.push(nombre);
+
+      // Al llegar a la primera celda se escribe ahí mismo, con el teclado: es
+      // más honesto que volver sobre los pasos, y no hay forma de que se cuele
+      // un clic en el medio.
+      if (actual.testId === idsDeCelda[0]) {
+        await page.screenshot({ path: join(SALIDA, 'c14-6-teclado-foco-celda.png') });
+        await page.keyboard.type('72');
+        await expect(modal.getByTestId(idsDeCelda[0])).toHaveValue('72');
+      }
+
+      if (actual.testId === 'cuadricula-guardar') break;
+    }
+
+    console.log('PARADAS DEL TECLADO:', JSON.stringify(paradas));
+
+    // 1 · El marco desplazable es alcanzable, y ANTES que las celdas. Sin esto,
+    //     en pantalla chica las columnas de la derecha quedan inalcanzables.
+    const iMarco = paradas.indexOf('(region)');
+    expect(iMarco, 'el marco de la tabla no se alcanza con Tab').toBeGreaterThanOrEqual(0);
+
+    // 2 · Cada celda, en el orden de sus columnas.
+    const iCeldas = idsDeCelda.map((id) => paradas.indexOf(id));
+    for (let k = 0; k < idsDeCelda.length; k += 1) {
+      expect(iCeldas[k], `no se llega a «${idsDeCelda[k]}» con Tab`).toBeGreaterThan(iMarco);
+      if (k > 0) expect(iCeldas[k]).toBeGreaterThan(iCeldas[k - 1]);
+    }
+
+    // 3 · Y «Registrar la fila de hoy», al final.
+    const iGuardar = paradas.indexOf('cuadricula-guardar');
+    expect(iGuardar, 'no se llega al botón de registrar con Tab').toBeGreaterThan(
+      iCeldas[iCeldas.length - 1],
+    );
+
+    // 4 · El foco se VE en cada parada. Llegar sin ver dónde se está no sirve.
+    expect(sinAnillo, `paradas sin anillo de foco: ${sinAnillo.join(', ')}`).toEqual([]);
+
+    // 5 · Y lo escrito por teclado quedó en su celda.
+    await expect(modal.getByTestId(idsDeCelda[0])).toHaveValue('72');
   });
 });
 

@@ -1,8 +1,8 @@
 # Reporte — La cuadrícula de notas, la internación según norma, y el dictamen del lote
 
-**AVANCE: 50 / 54 microtareas en `HECHO`** · 4 en `A MEDIAS` · 0 en `BLOQUEADO` · **0 en `EN CURSO`**
+**AVANCE: 51 / 54 microtareas en `HECHO`** · 3 en `A MEDIAS` · 0 en `BLOQUEADO` · **0 en `EN CURSO`**
 
-Las 4 `A MEDIAS` están en §2 con qué anda, qué no, y qué falta. El porcentaje no se estima: sale
+Las 3 `A MEDIAS` están en §2 con qué anda, qué no, y qué falta. El porcentaje no se estima: sale
 de `microtareas HECHO / 54`.
 
 > **El avance BAJÓ de 51 a 50, y es correcto.** H6.S1.M3 («recorrer otras cuentas donde
@@ -285,6 +285,36 @@ veredicto (regla 05.7): la rejilla de especialidades monta `app-specialty-badge`
 de una sola vez medía sobre la nada; la primera tarjeta del día es una cita ya «Atendida» y sobre
 ella la tarjeta **explica** en vez de navegar —que es lo que #564 promete, no un fallo—; y tanto
 la visita de laboratorio como el primer rato libre caen en días posteriores al de hoy.
+
+### Hoy, T2: la cuadrícula se recorre sin ratón (2026-09-21, sesión 6)
+
+Del plan aprobado, **H2.S3.M2** era el único hueco de H2 que no dependía de otro carril. Caso nuevo
+en `correcciones-c14-c23.spec.ts`: desde el `<select>` de cabecera, `Tab` recorre el marco
+desplazable (`role="region"`, es la parada que evita que en pantalla chica las columnas de la
+derecha queden inalcanzables), **las ocho celdas** de la historia de la paciente en el orden de sus
+columnas, y termina en «Registrar la fila de hoy» — nueve paradas, todas con `:focus-visible`. Se
+escribe «72» en la primera celda con el teclado, sin un solo clic desde que arranca el recorrido.
+
+**Dos suposiciones mías, corregidas por la corrida y no por leer el código:** esperaba que el botón
+«Agregar columna» saliera del orden de tabulación al deshabilitarse — no sale, porque `app-button`
+usa `aria-disabled` y no el atributo nativo, que es lo correcto para que un lector de pantalla siga
+anunciándolo; y esperaba dos celdas (las que agrega el caso) y aparecieron ocho, porque la
+cuadrícula ya trae las columnas de lo que la paciente tiene registrado en su historia. El caso mide
+lo que hay, no un número fijo.
+
+**Un hallazgo de mi propio arnés, no del producto: `abrirConsultaConEncuentro()` era intermitente.**
+La corrida completa la reventó dos veces con el mismo síntoma —«Abrir encuentro» sigue en
+pantalla, sin error de consola ni región viva que avise— en tests distintos cada vez (una captura
+`dark·escritorio`, después `light·movil` y `light·tablet`). El primer arreglo que escribí para eso
+la empeoró: reintentaba, pero abandonaba el bucle en el momento exacto en que el botón ya había
+desaparecido —o sea, cuando el encuentro **sí** había abierto y sólo faltaba que la lista terminara
+de dibujarse—, y esa lectura equivocada rompió 3 de 9 corridas de la suite completa. Corregido para
+reintentar sólo mientras el botón siga presente, y para que un fallo real (si el encuentro nunca
+abre) viaje con su propia evidencia: consola, si el botón sigue ahí, y qué anunciaron las regiones
+vivas — así un no-op silencioso no se confunde con una espera corta.
+
+`correcciones-c14-c23.spec.ts`: **9/9** (era 8/8), incluidas las 6 capturas por ancho y tema, que
+antes eran la fuente de la intermitencia y ahora corrieron limpias. `typecheck` 0, `lint` 0.
 
 ### Hoy, #566: el refactor de C-06 que la empeoró (2026-09-21, sesión 5)
 

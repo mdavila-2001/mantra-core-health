@@ -304,3 +304,44 @@ archivo de src/: son documentos y un spec de playwright. Y lo importante para el
 el gate `verificar` este roto para todos, EL CI NO ES BARRERA DE NADA. Es exactamente como D-08
 llego a mockup pasando por todos los gates.
 No se toco .github/**: es infraestructura compartida y no es de esta linea.
+
+=== SESION 6, 2026-09-21 — T2: LA CUADRICULA SE RECORRE SIN RATON (H2.S3.M2) ===
+
+Del plan aprobado, T2 era el unico hueco de H2 que no dependia de otro carril. Caso nuevo en
+correcciones-c14-c23.spec.ts.
+
+$ npx playwright test playwright/correcciones-c14-c23.spec.ts --workers=1 --reporter=list
+9 passed (era 8; +1 el caso de teclado)
+
+PARADAS DEL TECLADO: agregar-columna -> (region) marco -> 8 celdas en el orden de sus columnas ->
+cuadricula-guardar. Las nueve con :focus-visible. Se escribe "72" en la primera celda por teclado,
+sin un solo clic desde que arranca el recorrido.
+
+TYPECHECK_EXIT=0
+LINT_EXIT=0 (1 hallazgo de no-useless-assignment corregido: `let visible = false` con try/catch
+             que siempre la reasigna -> `let visible: boolean`)
+
+DOS SUPOSICIONES MIAS CORREGIDAS POR LA CORRIDA, NO POR LEER EL CODIGO:
+- Esperaba que "Agregar columna" saliera del orden de tabulacion al deshabilitarse. NO sale:
+  app-button usa aria-disabled, no el atributo nativo disabled -correcto para que un lector de
+  pantalla lo siga anunciando-.
+- Esperaba 2 celdas (las que agrega el caso) y aparecieron 8: la cuadricula ya trae las columnas
+  de lo que la paciente tiene registrado en su historia. El caso se escribio para medir lo que
+  hay (toBeGreaterThanOrEqual), no un numero fijo.
+
+HALLAZGO DE MI PROPIO ARNES, NO DEL PRODUCTO: abrirConsultaConEncuentro() era intermitente.
+La corrida completa la revento 2 veces con el mismo sintoma -"Abrir encuentro" sigue en pantalla,
+sin error de consola ni region viva- en tests DISTINTOS cada vez (dark-escritorio, despues
+light-movil y light-tablet). Confirmado que no era de un tema/ancho puntual: se re-corrio cada uno
+por separado y paso solo.
+
+Mi primer arreglo del reintento LA EMPEORO: abandonaba el bucle justo cuando el boton ya habia
+desaparecido -o sea, cuando el encuentro SI habia abierto y solo faltaba que la lista terminara de
+dibujarse- y esa lectura equivocada rompio 3 de 9 corridas de la suite completa. Corregido:
+- se reintenta SOLO mientras el boton siga presente (ausencia de boton = ya abrio, hay que
+  esperar, no reintentar);
+- si de verdad no abre, el error viaja con su propia evidencia (consola, boton presente si/no,
+  regiones vivas), para que un no-op silencioso no se confunda con una espera corta.
+
+RESULTADO NETO DE LA SESION 6: H2.S3.M2 A MEDIAS -> HECHO. H2 completo: 9/9. Avance del carril:
+50/54 -> 51/54.

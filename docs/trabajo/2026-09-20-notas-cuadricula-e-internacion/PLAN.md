@@ -159,9 +159,12 @@ confirmado está `UNKNOWN`. **DoD:** cero campos sin fuente ni marca; cero fuent
 de cada cabecera y se carga una fila, con los cuatro estados resueltos y usable con teclado.
 **DoD:** las 9 en `HECHO` o `BLOQUEADO`; la fila **releída** del servidor; los 4 estados capturados.
 **Kill-test:** cargar fila → recargar → reabrir. Si no está, estaba pintada.
-**Estado:** A MEDIAS — 8 de 9 en `HECHO`. **El kill-test pasa en navegador y contra la API real.**
+**Estado:** HECHO — 9 de 9. **El kill-test pasa en navegador y contra la API real.**
 Los 4 estados (H2.S3.M1) se cerraron contra Neon (`correcciones-c14-c23.real.spec.ts`), no contra
-la maqueta: ésta no falla a pedido. Falta H2.S3.M2, el recorrido de teclado celda por celda.
+la maqueta: ésta no falla a pedido. **H2.S3.M2 cerrado**: recorrido de teclado celda por celda en
+`correcciones-c14-c23.spec.ts` — desde el `<select>` de cabecera, `Tab` llega al marco desplazable
+(`role="region"`), a cada una de las celdas en el orden de sus columnas y a «Registrar», con
+`:focus-visible` en las nueve paradas; se escribe en la celda con el teclado, sin un solo clic.
 
 ### H2.S1 — Las cabeceras se eligen
 | ID | Microtarea | CA (binario) | DoD | Estado |
@@ -181,7 +184,7 @@ la maqueta: ésta no falla a pedido. Falta H2.S3.M2, el recorrido de teclado cel
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
 | H2.S3.M1 | Resolver los 4 estados, con el vacío orientando | Los 4 existen; el vacío dice qué hacer | 4 capturas. Regla 95.2: vacío mudo prohibido | HECHO — «cargando» y «con datos» ya estaban (maqueta); **«vacío» y «error» cerrados contra la API real** (`c14-real-vacio.png`, `c14-real-error.png`): un paciente recién registrado sin observaciones para el vacío, `page.route` con 500 para el error — ninguno de los dos era posible contra el simulador |
-| H2.S3.M2 | Recorrido con teclado por celda | Se llega a cada celda sin ratón | Recorrido + captura del foco | A MEDIAS — los controles son nativos y el marco de la tabla es focalizable, pero **no se hizo un recorrido de teclado celda por celda** |
+| H2.S3.M2 | Recorrido con teclado por celda | Se llega a cada celda sin ratón | Recorrido + captura del foco | HECHO — `correcciones-c14-c23.spec.ts`, caso «se recorre sin ratón»: nueve paradas (marco + 8 celdas + Registrar), todas con `:focus-visible`; captura `c14-6-teclado-foco-celda.png` |
 | H2.S3.M3 | Móvil estrecho sigue usable | Sin desborde ni celdas inalcanzables | Captura móvil. Regla 95.4.4 | HECHO |
 
 ## H3 — Una fila por sesión, explicada, y las anteriores a la vista
