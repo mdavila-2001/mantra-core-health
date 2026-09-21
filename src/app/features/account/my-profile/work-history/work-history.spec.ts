@@ -732,7 +732,15 @@ async function montarConSedes(
   }
   fixture.detectChanges();
   const http = TestBed.inject(HttpTestingController);
-  http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+  /* Cada modo pide sólo lo que dibuja. `historial` no lee las sedes —eso ya
+     estaba— y desde el 20/09/2026 `consultorios` tampoco lee el historial
+     (`work-history.ts`, guarda de `cargar`): con el consultorio adentro del
+     perfil, la ficha monta este componente dos veces y esa lectura se hacía
+     por duplicado para no dibujarse nunca. El helper espeja la asimetría; el
+     `http.verify()` de cada prueba es lo que la fija. */
+  if (secciones !== 'consultorios') {
+    http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+  }
   return { fixture, http, dialogs };
 }
 
@@ -926,6 +934,10 @@ describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', (
 
   it('con `secciones="consultorios"» no dibuja el historial laboral', async () => {
     const { fixture, http } = await montarConSedes(true, 'consultorios');
+    // Ni lo pide. Es la simétrica de la prueba de arriba, y la que faltaba:
+    // la ficha del médico monta este componente dos veces, así que una
+    // lectura que no se dibuja se paga dos veces por visita.
+    expect(http.match(AFILIACIONES)).toHaveLength(0);
     http.expectOne(SITIOS).flush({ items: [], count: 0 });
     fixture.detectChanges();
 

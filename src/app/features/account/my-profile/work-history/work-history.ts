@@ -163,12 +163,15 @@ export class WorkHistory implements OnInit {
    *
    * Quién usa cada uno:
    *
-   * - `'consultorios'` — «Mis organizaciones» (`administration/my-practice`)
-   *   y la pestaña «Dónde atiendo» del editor del perfil. No se copió el
-   *   formulario a ninguna de las dos: crear, ubicar en el mapa y retirar un
-   *   consultorio vive acá —con su catálogo de municipios, su confirmación y
-   *   sus pruebas— y tenerlo dos veces garantiza que el arreglo de uno no
-   *   llegue al otro.
+   * - `'consultorios'` — «Mis organizaciones» (`administration/my-practice`),
+   *   la pestaña «Dónde atiendo» del editor del perfil y, desde el
+   *   20/09/2026, la pestaña «Dónde atiendo» de la **ficha** (C-02: el
+   *   consultorio se administra dentro del perfil y el enlace suelto a
+   *   «Mis organizaciones» se retiró). No se copió el formulario a ninguna de
+   *   las tres: crear, ubicar en el mapa y retirar un consultorio vive acá
+   *   —con su catálogo de municipios, su confirmación y sus pruebas— y
+   *   tenerlo tres veces garantiza que el arreglo de una no llegue a las
+   *   otras.
    * - `'historial'` — la pestaña «Trayectoria» de la ficha del médico.
    * - `'ambas'` — nadie hoy; queda como el valor neutro del componente.
    */
@@ -1058,6 +1061,23 @@ export class WorkHistory implements OnInit {
   }
 
   private cargar(): void {
+    /* La simétrica de la de `cargarSedes`, y faltaba. Montado como «sólo los
+       consultorios» —«Mis organizaciones», la pestaña «Dónde atiendo» del
+       editor y ahora también la de la ficha— el historial no se dibuja, así
+       que pedirlo es una petición por visita a una pantalla que no lo usa.
+       `afiliaciones()` sólo se consume dentro de `@if (muestraHistorial())`
+       (`work-history.html:311`), así que no leerlo no deja nada sin dato; se
+       deja en `ready([])` por lo mismo que la rama sin perfil de `ngOnInit`:
+       un `loading()` eterno haría girar un esqueleto que nadie mira.
+
+       Hasta hoy costaba una petición de más por visita a «Mis
+       organizaciones»; con el consultorio dentro del perfil pasaba a costar
+       dos por visita al perfil, porque la ficha monta este componente dos
+       veces. */
+    if (!this.muestraHistorial()) {
+      this.historial.set(ready([]));
+      return;
+    }
     this.historial.set(loading());
     this.profiles.listAffiliations().subscribe({
       next: (pagina) => this.historial.set(ready(pagina.items)),
