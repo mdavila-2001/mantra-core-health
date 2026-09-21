@@ -1,0 +1,29 @@
+/* ============================================================================
+    Acciones de fila (ADR-0012) — MOBILE-FIRST (§0.1): sólo `min-width`.
+
+    El desplegable lo estila `molecules/menu`; los botones, `atoms/button`.
+    Acá vive nada más que cómo se acomodan dentro de la celda.
+    ========================================================================== */
+
+:host {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+
+    /* La celda de acciones es la más angosta de la tabla. Con dos botones en
+       pantalla chica, envolver es preferible a desbordar la fila. */
+    flex-wrap: wrap;
+
+    /* El contenido manda el ancho: una celda de acciones no se estira. */
+    inline-size: max-content;
+}
+
+/* El disparador no compite con la acción principal de la pantalla: es `ghost`
+   y se alinea con el texto de la fila, no con los botones del encabezado. */
+.row-actions__trigger {
+    white-space: nowrap;
+}
+
+.row-actions__inline {
+    white-space: nowrap;
+}
