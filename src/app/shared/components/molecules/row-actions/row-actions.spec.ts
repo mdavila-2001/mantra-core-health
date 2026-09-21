@@ -121,6 +121,27 @@ describe('RowActions', () => {
     expect(disparador().getAttribute('aria-label')).toBe('Acciones');
   });
 
+  it('en la fila, cada acción se anuncia con la fila a la que pertenece', async () => {
+    host.acciones.set(DOS);
+    host.fila.set('la sede Clínica Foianini');
+    await fixture.whenStable();
+
+    expect(botonesEnFila().map((b) => b.getAttribute('aria-label'))).toEqual([
+      'Ver detalle — la sede Clínica Foianini',
+      'Editar — la sede Clínica Foianini',
+    ]);
+  });
+
+  it('sin fila, la acción en la fila no lleva `aria-label` y vale su texto', async () => {
+    host.acciones.set(DOS);
+    host.fila.set('');
+    await fixture.whenStable();
+
+    for (const boton of botonesEnFila()) {
+      expect(boton.getAttribute('aria-label')).toBeNull();
+    }
+  });
+
   /* ---- abre, lista, emite y cierra ----------------------------------------- */
 
   it('abre y lista las cinco acciones', async () => {

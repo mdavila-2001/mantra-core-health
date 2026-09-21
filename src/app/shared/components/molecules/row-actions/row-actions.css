@@ -14,8 +14,13 @@
        pantalla chica, envolver es preferible a desbordar la fila. */
     flex-wrap: wrap;
 
-    /* El contenido manda el ancho: una celda de acciones no se estira. */
-    inline-size: max-content;
+    /* El contenido manda el ancho, pero hasta donde haya lugar. `max-content`
+       no se deja achicar: a 375 px las dos acciones en fila empujaban la
+       página 8 px hacia afuera (medido: `scrollWidth` 383 contra 375, contra
+       375/375 antes del cambio). `fit-content` crece con el texto y se
+       detiene en el contenedor, que es lo que deja actuar al `flex-wrap`. */
+    inline-size: fit-content;
+    max-inline-size: 100%;
 }
 
 /* El disparador no compite con la acción principal de la pantalla: es `ghost`
@@ -26,4 +31,12 @@
 
 .row-actions__inline {
     white-space: nowrap;
+}
+
+/* Destructivo en su efecto, discreto en reposo: la tinta aparece cuando la
+   acción está por ejecutarse. En una lista, pintarla siempre convierte cada
+   fila en una advertencia y deja de avisar de nada. */
+.row-actions__inline--destructive:hover,
+.row-actions__inline--destructive:focus-visible {
+    color: var(--text-danger);
 }

@@ -45,6 +45,11 @@ import { ROW_ACTIONS_INLINE_MAX, type RowAction } from './row-actions.types';
  * pertenece y el disparador se anuncia «Acciones de la solicitud de Ana
  * Pérez». Sin `fila` el botón se anuncia con su texto visible, que es lo
  * mínimo aceptable, no lo bueno.
+ *
+ * Vale igual para la forma en fila: veinte botones «Retirar» son tan
+ * indistinguibles como veinte «Acciones». Con `fila`, cada uno se anuncia
+ * «Retirar — la sede X». Ese pegado usa una raya y no «de»; el porqué está en
+ * `inlineLabel`.
  */
 @Component({
   selector: 'app-row-actions',
@@ -80,6 +85,27 @@ export class RowActions {
     const fila = this.fila().trim();
     return fila === '' ? this.label() : `${this.label()} de ${fila}`;
   });
+
+  /**
+   * El nombre accesible de una accion dibujada en la fila.
+   *
+   * Sin `fila` devuelve `null`, y entonces el nombre es el texto visible, que
+   * es lo correcto: un `aria-label` que repite el texto solo agrega ruido.
+   *
+   * Con `fila` se pega con una raya y no con «de», al reves que el disparador.
+   * No es un capricho: el texto del disparador es un sustantivo puesto por
+   * este componente («Acciones»), y «Acciones de la sede X» se lee natural; el
+   * de una accion es una frase verbal que escribe quien lo usa —«Dejar de
+   * atender»— y ninguna preposicion fija sirve para todas. La raya se lee como
+   * una pausa y no le impone gramatica al texto ajeno.
+   *
+   * El texto visible queda dentro del nombre accesible, que es lo que pide
+   * WCAG 2.5.3: quien dicta por voz lo que ve sigue pudiendo activarlo.
+   */
+  protected inlineLabel(action: RowAction): string | null {
+    const fila = this.fila().trim();
+    return fila === '' ? null : `${action.label} — ${fila}`;
+  }
 
   protected select(action: RowAction): void {
     if (action.disabled) {

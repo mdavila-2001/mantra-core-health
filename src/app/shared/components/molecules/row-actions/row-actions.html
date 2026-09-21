@@ -33,15 +33,24 @@
     }
   </app-menu>
 } @else {
-  <!-- Dos o menos: en la fila, con su texto. La fila no crece por dos botones. -->
+  <!-- Dos o menos: en la fila, con su texto. La fila no crece por dos botones.
+
+       Todas van en `ghost`, incluida la destructiva. Una lista repite estas
+       mismas acciones en cada fila: con botones sólidos, veinte filas son
+       cuarenta bloques de color compitiendo con el contenido, y la acción
+       destructiva —en rojo lleno, repetida— termina siendo lo más gritón de
+       la pantalla. La destructiva se distingue por su tinta al apuntarla o
+       enfocarla, no por gritar en reposo. -->
   @for (action of actions(); track action.code) {
     <button
       app-button
       type="button"
       size="sm"
+      variant="ghost"
       class="row-actions__inline"
+      [class.row-actions__inline--destructive]="action.destructive ?? false"
       [attr.data-action]="action.code"
-      [variant]="action.destructive ? 'danger' : 'secondary'"
+      [attr.aria-label]="inlineLabel(action)"
       [disabled]="action.disabled ?? false"
       (click)="select(action)"
     >
