@@ -28,18 +28,22 @@ import type { StatusSealVariant } from '../status-seal/status-seal.types';
  *
  * ## El tono: sólo dos, y la distinción no la hace el color
  *
- * `primary` para la principal, `neutral` para el resto. Nada más.
+ * `primary` para la principal, `secondary` para el resto. Nada más.
  *
- * El hash quedó afuera por un motivo que no es estético: repartía `success`,
- * `warning`, `info` y `error`, que en este sistema **significan algo** —el
- * propio `tone.css` llama al ámbar «el punto cálido único de la pantalla»—, así
- * que «Traumatología» podía salir en ámbar y leerse como una advertencia sobre
- * esa especialidad. Un color arbitrario que aparenta ser una categoría es peor
- * que ningún color: es información falsa.
+ * **Por qué no el hash.** Repartía `success`, `info` y `secondary` entre
+ * especialidades, y los dos primeros **significan algo** en este sistema, así
+ * que una especialidad podía leerse como el estado de un trámite. Un color
+ * arbitrario que aparenta ser una categoría es peor que ningún color: es
+ * información falsa.
  *
- * Lo que distingue una especialidad de otra es el **ícono**, que es
- * reconocimiento de verdad, y no un color sorteado. Los siete tonos del sistema
- * pasan 4,5:1 en los dos temas, así que la elección nunca fue de contraste.
+ * **Por qué no `neutral`.** Porque el gris ya se probó y el cliente pidió
+ * dejar de verlo (19/09/2026, registrado en `practitioner-profile-view.ts`).
+ * Una especialidad no es un dato apagado.
+ *
+ * Queda `secondary`: de marca, sin significado de estado, y no gris. Lo que
+ * distingue una especialidad de otra es el **ícono**, que es reconocimiento de
+ * verdad y no un color sorteado. Los siete tonos del sistema pasan 4,5:1 en los
+ * dos temas, así que la elección nunca fue de contraste — fue de significado.
  *
  * ## Nada se dice sólo con color
  *
@@ -82,7 +86,7 @@ export class SpecialtyBadge {
   readonly sello = input<StatusSealVariant | null>(null);
 
   protected readonly badgeClasses = computed(
-    () => `specialty-badge tone--${this.principal() ? 'primary' : 'neutral'}`,
+    () => `specialty-badge tone--${this.principal() ? 'primary' : 'secondary'}`,
   );
 
   /**

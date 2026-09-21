@@ -293,6 +293,55 @@ describe('PractitionerProfileView', () => {
     expect(disponibilidad?.textContent).toContain('Medicina interna');
   });
 
+  /* -- C-09: una sola forma de mostrar una especialidad --------------------
+     Estas tres pruebas existen porque la migración a la insignia pasó por la
+     suite sin que una sola prueba se enterara: 350 en verde antes y 350 en
+     verde después, con cinco formas reemplazadas en el medio. Una suite que
+     no nota el cambio tampoco va a notar la vuelta atrás. */
+
+  it('la especialidad se pinta SIEMPRE con la insignia compartida', () => {
+    const host = montar();
+
+    const insignias = [...host.querySelectorAll('app-specialty-badge')];
+    expect(insignias.length).toBeGreaterThan(0);
+    expect(
+      insignias.map((i) => i.querySelector('.specialty-badge__nombre')?.textContent?.trim()),
+    ).toContain('Cardiología');
+  });
+
+  it('no queda ningún chip ni badge de especialidad armado a mano', () => {
+    const host = montar();
+
+    // Las formas que la insignia reemplazó: el chip con tono propio y los dos
+    // `app-badge` sueltos que decían «Principal» y «Certificada».
+    const sueltos = [...host.querySelectorAll('app-chip, app-badge')].filter((e) =>
+      /Cardiología|Medicina interna|^Principal$|^Certificada$/.test(
+        (e.textContent ?? '').trim(),
+      ),
+    );
+    expect(sueltos).toHaveLength(0);
+  });
+
+  it('el tono no depende de quién mira: propia y ajena pintan igual', () => {
+    const tonos = (esPropio: boolean): string[] => {
+      // `montar` configura el módulo de prueba, y eso sólo se puede hacer una
+      // vez por instancia: para montar la segunda variante hay que resetearlo.
+      TestBed.resetTestingModule();
+      const host = montar(PERFIL, esPropio);
+      return [
+        ...new Set(
+          [...host.querySelectorAll('app-specialty-badge')].map(
+            (i) => [...i.classList].find((c) => c.startsWith('tone--')) ?? 'sin-tono',
+          ),
+        ),
+      ].sort();
+    };
+
+    // Antes de C-09 la propia repartía color por un hash del nombre y la
+    // ajena pintaba todo gris: la misma especialidad, dos colores.
+    expect(tonos(true)).toEqual(tonos(false));
+  });
+
   /* -- Las 3 pestañas superiores (carril 05) -------------------------------- */
 
   it('el dueño ve las seis pestañas del alta de médico, y ninguna vista previa', () => {

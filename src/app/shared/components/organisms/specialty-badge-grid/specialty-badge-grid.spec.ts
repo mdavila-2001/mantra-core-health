@@ -128,7 +128,7 @@ describe('SpecialtyBadgeGrid', () => {
         }),
       ],
     });
-    const insignia = insignias()[0];
+    const insignia = insignias()[0]!;
     expect(insignia.classList).toContain('tone--primary');
     expect(insignia.querySelector('.specialty-badge__certificada')).not.toBeNull();
     expect(insignia.querySelector('app-status-seal')).not.toBeNull();

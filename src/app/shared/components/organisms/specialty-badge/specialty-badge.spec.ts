@@ -53,17 +53,24 @@ describe('SpecialtyBadge', () => {
       expect(host().classList).toContain('tone--primary');
     });
 
-    it('el resto va en neutro, no en un color sorteado', async () => {
+    it('el resto va en el secundario de marca, no en un color sorteado', async () => {
       await setInputs({ principal: false });
-      expect(host().classList).toContain('tone--neutral');
+      expect(host().classList).toContain('tone--secondary');
     });
 
-    it('no usa ningún otro tono del sistema', async () => {
+    it('nunca en gris: el cliente pidió dejar de ver el neutro', async () => {
+      for (const principal of [true, false]) {
+        await setInputs({ principal });
+        expect(host().classList).not.toContain('tone--neutral');
+      }
+    });
+
+    it('nunca en un tono que signifique un estado', async () => {
       for (const principal of [true, false]) {
         await setInputs({ principal });
         const tonos = [...host().classList].filter((c) => c.startsWith('tone--'));
         expect(tonos).toHaveLength(1);
-        expect(['tone--primary', 'tone--neutral']).toContain(tonos[0]);
+        expect(['tone--primary', 'tone--secondary']).toContain(tonos[0]);
       }
     });
 

@@ -152,26 +152,25 @@
             </dd>
           </div>
 
-          <!-- Las especialidades, en chips de color (pedido del 19/09/2026).
-               Van con la identidad y no en «Credenciales»: contestan «¿de qué
-               es médico?», la pregunta que se hace antes que ninguna. En
-               «Credenciales» siguen, con su vigencia y su sello.
+          <!-- Las especialidades (pedido del 19/09/2026). Van con la identidad
+               y no en «Credenciales»: contestan «¿de qué es médico?», la
+               pregunta que se hace antes que ninguna. En «Credenciales»
+               siguen, con su vigencia y su sello.
 
-               El color lo reparte un hash del nombre, así que una misma
-               especialidad sale siempre del mismo tono; la principal se lleva
-               el de marca. Y como el color no comunica solo, el chip dice su
-               estado en palabras en el nombre accesible. -->
+               Desde C-09 es la insignia compartida, la misma en toda la
+               aplicación. El hash de color se retiró: repartía tonos que en
+               este sistema significan un estado, y una especialidad no es un
+               estado. Lo que distingue una de otra ahora es el ícono. El gris
+               tampoco volvió — es el que el cliente pidió dejar de ver. -->
           <div class="mi-perfil__dato mi-perfil__dato--ancho">
             <dt>Especialidades</dt>
             <dd>
-              @if (especialidadesEnChips().length > 0) {
-                <span class="mi-perfil__chips" data-testid="perfil-especialidades-chips">
-                  @for (especialidad of especialidadesEnChips(); track especialidad.id) {
-                    <app-chip size="sm" [variant]="especialidad.tono" [label]="especialidad.etiqueta">
-                      {{ especialidad.nombre }}
-                    </app-chip>
-                  }
-                </span>
+              @if (perfil().especialidades.length > 0) {
+                <app-specialty-badge-grid
+                  class="mi-perfil__especialidades"
+                  data-testid="perfil-especialidades-chips"
+                  [especialidades]="perfil().especialidades"
+                />
               } @else {
                 <span class="mi-perfil__ausente">Sin registrar</span>
               }
@@ -719,7 +718,11 @@
             <p class="profesional__titulo">{{ perfil().titulo }}</p>
           }
 
-          @if (perfil().especialidadPrincipal) {
+          <!-- C-09: la especialidad principal ya se ve abajo, en su insignia y
+               con la palabra «Principal». Este renglón queda sólo para el caso
+               en que el perfil declare una principal y NO tenga la lista
+               cargada: ahí no habría insignia y el dato se perdería. -->
+          @if (perfil().especialidadPrincipal && perfil().especialidades.length === 0) {
             <p class="profesional__especialidad">{{ perfil().especialidadPrincipal }}</p>
           }
 
@@ -768,10 +771,15 @@
         @if (perfil().telemedicina) {
           <app-chip variant="info">Atiende por telemedicina</app-chip>
         }
-        @for (especialidad of perfil().especialidades; track especialidad.id) {
-          <app-chip [variant]="especialidad.principal ? 'primary' : 'neutral'">
-            {{ especialidad.nombre }}
-          </app-chip>
+        <!-- C-09: la MISMA insignia que en «Datos personales». Antes acá el
+             tono era `principal ? primary : neutral` y allá lo repartía un
+             hash: la misma especialidad del mismo médico cambiaba de color
+             según quién la mirara. -->
+        @if (perfil().especialidades.length > 0) {
+          <app-specialty-badge-grid
+            class="profesional__especialidades"
+            [especialidades]="perfil().especialidades"
+          />
         }
         @for (idioma of perfil().idiomas; track idioma.id) {
           <app-chip variant="neutral">
@@ -1229,16 +1237,24 @@
                     class="profesional__item"
                     [class.profesional__item--pasado]="especialidad.hasta"
                   >
+                    <!-- C-09: la misma insignia que arriba. Antes acá el nombre
+                         iba en un `<span>` y «Principal» y «Certificada» en dos
+                         `app-badge` sueltos, con tonos que sólo existían en esta
+                         lista. El estado sube del renglón de fechas al sello de
+                         la insignia: no se pierde, se dice una sola vez y en el
+                         mismo lugar que en el resto de la aplicación. -->
                     <div class="profesional__item-encabezado">
-                      <span class="profesional__item-titulo">{{ especialidad.nombre }}</span>
-                      @if (especialidad.principal) {
-                        <app-badge variant="primary" value="Principal" />
-                      }
-                      @if (especialidad.certificada) {
-                        <app-badge variant="success" value="Certificada" />
-                      }
+                      <app-specialty-badge
+                        [especialidad]="especialidad.nombre"
+                        [principal]="especialidad.principal"
+                        [certificada]="especialidad.certificada"
+                        [estado]="especialidad.estado"
+                        [sello]="especialidad.sello"
+                      />
                     </div>
 
+                    <!-- Alcance y fechas NO entran en la insignia y por eso
+                         siguen acá: unificar la forma no es recortar el dato. -->
                     @if (especialidad.alcance) {
                       <p class="profesional__item-texto">{{ especialidad.alcance }}</p>
                     }
@@ -1252,7 +1268,6 @@
                       } @else if (especialidad.desde) {
                         · en ejercicio
                       }
-                      · {{ especialidad.estado }}
                     </p>
                   </li>
                 }
