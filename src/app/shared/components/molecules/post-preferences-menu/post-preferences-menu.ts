@@ -40,6 +40,7 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 
+import { Tooltip } from '../../atoms/tooltip/tooltip';
 import { Menu } from '../menu/menu';
 import { MenuItem } from '../menu/menu-item/menu-item';
 import { MenuTrigger } from '../menu/menu-trigger/menu-trigger';
@@ -53,7 +54,7 @@ import {
 
 @Component({
   selector: 'app-post-preferences-menu',
-  imports: [Menu, MenuItem, MenuTrigger],
+  imports: [Menu, MenuItem, MenuTrigger, Tooltip],
   templateUrl: './post-preferences-menu.html',
   styleUrl: './post-preferences-menu.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
