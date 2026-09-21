@@ -162,6 +162,18 @@
                     <span class="mes__globo-secundario">{{ fila.secondary }}</span>
                   }
                 </span>
+                <!-- C-08 · el chip dice si está atendida o no, con color, con
+                     silueta Y con la palabra. `app-status-seal` da las tres:
+                     en escala de grises «Atendida» y «No asistió» se siguen
+                     distinguiendo, que es lo que la regla 95.4.6 exige. -->
+                @if (fila.estado; as estado) {
+                  <app-status-seal
+                    class="mes__globo-chip"
+                    data-testid="mes-globo-chip"
+                    [variant]="estado.variant"
+                    [label]="estado.label"
+                  />
+                }
               </li>
             }
           </ul>

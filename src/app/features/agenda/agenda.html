@@ -229,6 +229,7 @@
               [ratoEnVuelo]="cupoDestino()"
               [puedeIngresarPorMostrador]="puedeIngresarPorMostrador()"
               [puedeAvisarDemora]="puedeAvisarDemora()"
+              (citaActivada)="atenderDesdeLaTarjeta($event)"
               (ratoElegidoParaMover)="reprogramarA($event)"
               (mostradorPedido)="abrirMostrador()"
               (demoraPedida)="abrirDemoraDeAgenda()"

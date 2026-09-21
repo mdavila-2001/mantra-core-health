@@ -309,6 +309,16 @@ export class DayView {
   readonly quitarOcupado = output<string>();
 
   /**
+   * Activaron la tarjeta de una cita — C-04 (2026-09-20).
+   *
+   * «Las tarjetas de /schedule tienen que llevar a iniciar el encuentro». Qué
+   * significa «iniciar» depende del estado de la cita —una confirmada se
+   * inicia, una en curso se continúa— y eso lo sabe quien contiene el día, que
+   * es el dueño de las acciones. Esta vista sólo avisa que la tocaron.
+   */
+  readonly citaActivada = output<Booking>();
+
+  /**
    * Ir al día siguiente o al anterior — «un botón de ver mañana, y así
    * sucesivamente» del pedido original.
    *

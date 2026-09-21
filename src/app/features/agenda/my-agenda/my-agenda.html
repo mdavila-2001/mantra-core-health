@@ -106,8 +106,10 @@
                 [citas]="citasDeLaSemana()"
                 [etiquetas]="estadosResueltos()"
                 [bloqueos]="bloqueosDelMes()"
+                [idioma]="idioma"
                 (semanaElegida)="cambiarSemana($event)"
                 (diaElegido)="openDay($event)"
+                (citaElegida)="verDetalleDeLaSemana($event)"
               />
             }
             @case ('month') {
@@ -145,6 +147,7 @@
                   (movimientoPedido)="moverHorario($event)"
                   (cierrePedido)="cerrarRato($event)"
                   (ratoTocado)="abrirTarjeta($event)"
+                  (citaActivada)="citaActivada.emit($event)"
                   (ratoElegidoParaMover)="ratoElegidoParaMover.emit($event)"
                   (mostradorPedido)="mostradorPedido.emit()"
                   (demoraPedida)="demoraPedida.emit()"

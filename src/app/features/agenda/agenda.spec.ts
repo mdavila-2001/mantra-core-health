@@ -10,6 +10,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 
 import { SessionStore } from '../../core/auth/session.store';
 import { DialogService } from '../../shared/components/molecules/dialog/dialog-service';
+import { ToastService } from '../../shared/components/molecules/toast/toast.service';
 import { Agenda } from './agenda';
 
 /**
@@ -1866,6 +1867,101 @@ describe('Agenda', () => {
 
     expect(navegar).toHaveBeenCalledTimes(1);
     // El `http.verify()` del afterEach falla si esto salió a la red.
+  });
+
+  /**
+   * C-04 (2026-09-20) — «las tarjetas de /schedule llevan a iniciar el
+   * encuentro».
+   *
+   * La tarjeta no repite un botón: hace lo que la cita admite en su estado, y
+   * el estado sale del ciclo (`booking-status.ts`), no de una bandera nueva.
+   */
+  describe('la tarjeta del calendario lleva a atender (C-04)', () => {
+    /** Activa la tarjeta como lo hace el día, con la reserva cruda. */
+    function tocarLaTarjeta(): void {
+      const cruda = { ...CITA, statusConceptId: 'c-estado', bookableSlotId: CUPO.id };
+      interno<(b: unknown) => void>('atenderDesdeLaTarjeta')(cruda);
+    }
+
+    it('una cita CONFIRMADA se inicia y se entra a atender', async () => {
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+      tocarLaTarjeta();
+      http.expectOne('/scheduling/bookings/b-1/start').flush({
+        bookingId: 'b-1',
+        statusConceptId: 'c-curso',
+        occurredAt: '2026-08-15T12:00:00.000Z',
+      });
+      await harness.fixture.whenStable();
+
+      expect(navegar).toHaveBeenCalledTimes(1);
+      const [ruta] = navegar.mock.calls[0] as [string[]];
+      expect(ruta[0]).toMatch(/\/medical-records\/[^/]+\/consultation$/);
+    });
+
+    it('una cita EN CURSO se continúa, sin repetir la transición', async () => {
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+      await responderConEstado('BOOKING_IN_PROGRESS', 'En curso');
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+      tocarLaTarjeta();
+      await harness.fixture.whenStable();
+
+      expect(navegar).toHaveBeenCalledTimes(1);
+      // Y no salió ninguna petición: `start` sobre una en curso es un 409.
+      // El `http.verify()` del afterEach lo confirma.
+    });
+
+    it('una SOLICITUD sin aceptar no navega: abre su detalle y dice por qué', async () => {
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+      await responderConEstado('BOOKING_PENDING_CONFIRMATION', 'Por confirmar');
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmar = vi
+        .spyOn(TestBed.inject(DialogService), 'confirm')
+        .mockResolvedValue(false);
+
+      tocarLaTarjeta();
+      await harness.fixture.whenStable();
+
+      expect(navegar).not.toHaveBeenCalled();
+      const config = confirmar.mock.calls[0]?.[0];
+      expect(config?.title).toContain('todavía no se atiende');
+      expect(config?.message).toContain('aceptala primero');
+    });
+
+    it('sin permiso de expediente la atención se inicia igual, y se DICE que no se entró', async () => {
+      // `rutaAtencion` es `null` sin permiso de expedientes: antes esto era
+      // silencioso —la cita cambiaba de estado y la pantalla se quedaba igual—.
+      await montar({ roles: ['SCHEDULING_ADMIN'] });
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      // El contenedor de avisos no se monta en esta prueba —vive en el
+      // armazón—, así que el mensaje se mira donde se emite.
+      const avisar = vi.spyOn(TestBed.inject(ToastService), 'info');
+
+      expect(interno<() => boolean>('puedeVerExpedientes')()).toBe(false);
+      tocarLaTarjeta();
+      http.expectOne('/scheduling/bookings/b-1/start').flush({
+        bookingId: 'b-1',
+        statusConceptId: 'c-curso',
+        occurredAt: '2026-08-15T12:00:00.000Z',
+      });
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(navegar).not.toHaveBeenCalled();
+      expect(avisar).toHaveBeenCalledTimes(1);
+      const [mensaje, titulo] = avisar.mock.calls[0] as [string, string];
+      expect(titulo).toBe('No se pudo entrar a atender');
+      expect(mensaje).toContain('no puede abrir expedientes');
+      expect(mensaje).toContain('La atención quedó iniciada');
+      // Y la lista se releyó: la cita quedó iniciada y tiene que verse.
+      for (const req of http.match(() => true)) {
+        req.flush({ items: [], count: 0, limit: 100, truncated: false });
+      }
+    });
   });
 
   it('una cita en curso ofrece completarla, y solo eso', async () => {

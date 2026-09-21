@@ -31,6 +31,7 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import type { BloqueDelDia } from './day-view/day-view';
+import { detalleDeLaCita } from './detalle-de-la-cita';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
@@ -232,6 +233,15 @@ export class MyAgenda implements OnInit {
   /** Pidieron avisar la demora de la jornada desde el encabezado del día. */
   readonly demoraPedida = output<void>();
 
+  /**
+   * Activaron la tarjeta de una cita del día — C-04.
+   *
+   * Puro paso hacia arriba: iniciar o continuar una atención es una acción de
+   * `/schedule`, que es quien tiene la máquina de estados de la cita. La agenda
+   * no sabe de eso.
+   */
+  readonly citaActivada = output<Booking>();
+
   private readonly releerTrasOperar = effect(() => {
     if (this.reloadToken() === 0) return;
     untracked(() => {
@@ -246,7 +256,14 @@ export class MyAgenda implements OnInit {
   private readonly dialogs = inject(DialogService);
   private readonly router = inject(Router);
   /** El idioma activo, para formatear fechas fuera de la plantilla. */
-  private readonly idioma = inject(LOCALE_ID);
+  /**
+   * El idioma activo, para formatear fechas fuera de la plantilla.
+   *
+   * `protected` y no `private` desde C-08: la semana lo recibe por input
+   * —es presentacional y se monta en pruebas sin `LOCALE_ID` configurado—, y
+   * pasárselo desde la plantilla exige que sea visible para ella.
+   */
+  protected readonly idioma = inject(LOCALE_ID);
   private readonly terminology = inject(TerminologyClient);
   private readonly toast = inject(ToastService);
 
@@ -1135,35 +1152,72 @@ export class MyAgenda implements OnInit {
    */
   protected async verDetalleDelBloque(bloque: BloqueDelDia): Promise<void> {
     const hora = (valor: Date): string => formatDate(valor, 'HH:mm', this.idioma);
+
+    if (bloque.tipo === 'cita' && bloque.cita !== null) {
+      // La MISMA función que arma el globo de la semana (C-08): si acá se
+      // armara la lista a mano, agregar un campo dejaría vieja a una de las dos
+      // y nadie se enteraría hasta mirarlas juntas.
+      await this.verDetalleDeLaCita(bloque.cita, bloque.estado, {
+        desde: bloque.desde,
+        hasta: bloque.hasta,
+      });
+      return;
+    }
+
     const detalles: DialogDetail[] = [
       { label: 'Cuándo', value: `${hora(bloque.desde)} – ${hora(bloque.hasta)}` },
-      { label: 'Qué es', value: bloque.tipo === 'cita' ? 'Cita' : 'Tiempo ocupado' },
+      { label: 'Qué es', value: 'Tiempo ocupado' },
     ];
-
-    if (bloque.tipo === 'cita') {
-      detalles.push({ label: 'Estado', value: bloque.estado });
-      detalles.push({ label: 'Paciente', value: bloque.paciente || SIN_DATO });
-      if (bloque.cita?.reasonText !== undefined) {
-        detalles.push({ label: 'Motivo', value: bloque.cita.reasonText });
-      }
-    } else if (bloque.motivo !== null) {
+    if (bloque.motivo !== null) {
       detalles.push({ label: 'Motivo', value: bloque.motivo });
     }
 
-    const perfil = bloque.cita?.patientProfileId;
-    const puedeAbrirExpediente = bloque.tipo === 'cita' && perfil !== undefined;
-
-    const ir = await this.dialogs.confirm({
-      title: bloque.tipo === 'cita' ? 'Detalle de la cita' : 'Detalle del rato ocupado',
+    await this.dialogs.confirm({
+      title: 'Detalle del rato ocupado',
       message: formatDate(bloque.desde, "EEEE d 'de' MMMM", this.idioma),
       details: detalles,
+      confirmLabel: 'Cerrar',
+      cancelLabel: 'Volver',
+    });
+  }
+
+  /**
+   * El detalle de una cita, desde donde sea que se lo pida.
+   *
+   * Lo abren dos caminos y **es el mismo diálogo**: «Ver detalle» del día y una
+   * cita de la semana (C-08). Los pares los arma `detalleDeLaCita`, que también
+   * alimenta el globo del `hover` de la semana; así el globo y el diálogo no
+   * pueden decir cosas distintas de la misma cita.
+   */
+  protected async verDetalleDeLaCita(
+    cita: Booking,
+    estado: string,
+    franja?: { readonly desde: Date; readonly hasta: Date },
+  ): Promise<void> {
+    const perfil = cita.patientProfileId;
+    const puedeAbrirExpediente = perfil !== undefined;
+    const cuando = franja?.desde ?? cita.startAt;
+
+    const ir = await this.dialogs.confirm({
+      title: 'Detalle de la cita',
+      message:
+        cuando === undefined
+          ? SIN_DATO
+          : formatDate(cuando, "EEEE d 'de' MMMM", this.idioma),
+      details: [...detalleDeLaCita(cita, estado, this.idioma, franja)],
       confirmLabel: puedeAbrirExpediente ? 'Abrir expediente' : 'Cerrar',
       cancelLabel: puedeAbrirExpediente ? 'Cerrar' : 'Volver',
     });
 
-    if (ir && puedeAbrirExpediente && perfil !== undefined) {
+    if (ir && perfil !== undefined) {
       void this.router.navigate([patientChartRoute(perfil)]);
     }
+  }
+
+  /** Activaron una cita desde la semana: el mismo detalle que desde el día. */
+  protected verDetalleDeLaSemana(cita: Booking): void {
+    const estado = this.estadosResueltos().get(cita.statusConceptId)?.display ?? 'Reservado';
+    void this.verDetalleDeLaCita(cita, estado);
   }
 
   /**
