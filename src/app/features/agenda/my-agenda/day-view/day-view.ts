@@ -8,6 +8,7 @@ import {
   type TemplateRef,
 } from '@angular/core';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 import type {
   ActivityTypeOption,
@@ -38,10 +39,44 @@ export interface PedidoDeAccion {
   readonly accion: AccionDeCita;
 }
 
+/**
+ * Una visita de laboratorio que cae en el día — C-13 (2026-09-20).
+ *
+ * «Que la visita de laboratorio se vea en la misma pestaña de consultas, como
+ * tarjeta de visitador, de 15 minutos.»
+ *
+ * **No lleva ni un dato clínico, y no puede llevarlo.** La especificación es
+ * explícita (`core/data-access/pharma-lab/pharma-lab.types.ts:9-11`): el
+ * visitador no accede a información clínica y la visita comercial no se mezcla
+ * con la agenda clínica. Traer la tarjeta al día es **presentación**: se ve
+ * cuándo y con quién, para que el doctor sepa que ese rato está comprometido.
+ * El límite de acceso no se toca.
+ */
+export interface VisitaDelDia {
+  readonly id: string;
+  readonly desde: Date;
+  readonly hasta: Date;
+  /** Con quién: el laboratorio o el visitador, nunca un paciente. */
+  readonly conQuien: string;
+  /** El motivo comercial que declaró el visitador. */
+  readonly motivo: string;
+  /** El estado de la visita, con su sello y su palabra. */
+  readonly estado: string;
+  readonly statusVariant: StatusSealVariant;
+}
+
 /** El rato que se tocó para crear algo ahí (AG-5: la tarjeta única). */
 export interface RatoTocado {
   readonly desde: Date;
   readonly hasta: Date;
+  /**
+   * El cupo del que salió, o `null` si se tocó aire.
+   *
+   * C-10 (2026-09-20): la tarjeta lo usa para decidir si pregunta la hora. Un
+   * bloque `libre` lleva el id del cupo en su `clave`; el aire lleva
+   * `aire-<timestamp>`, que no es un cupo y por eso viaja como `null`.
+   */
+  readonly cupoId: string | null;
 }
 
 /** Un bloque de la línea de horas. */
@@ -72,8 +107,15 @@ export interface BloqueDelDia {
    * Qué hay en ese rato. `aire` es el hueco entre bloques — el receso del
    * doctor o simplemente tiempo sin agenda: no invita, no tiene borde, pero
    * OCUPA su altura para que el día se lea como es.
+   *
+   * `no-disponible` es el cupo que **existe y no se puede tomar**: cerrado, o
+   * sin capacidad que quede. Se agregó con C-10 (2026-09-20) porque hasta
+   * entonces el día lo pintaba «Disponible» —cualquier cupo sin cita encima lo
+   * era— y eso ofrecía reservar un rato que el servidor iba a rechazar. La
+   * tabla de Consultas ya lo derivaba bien (`disponible: remainingCapacity > 0`
+   * en `agenda.ts`); el día no. Ahora las dos dicen lo mismo.
    */
-  readonly tipo: 'cita' | 'libre' | 'ocupado' | 'aire';
+  readonly tipo: 'cita' | 'visita' | 'libre' | 'no-disponible' | 'ocupado' | 'aire';
   /** La cita, cuando la hay. */
   readonly cita: Booking | null;
   /** Cómo se llama quien viene. */
@@ -171,7 +213,7 @@ const YA_LLEGO: ReadonlySet<string> = new Set(['BOOKING_CHECKED_IN', 'BOOKING_CO
  */
 @Component({
   selector: 'app-day-view',
-  imports: [AppButton, Badge, DatePipe, NgTemplateOutlet, StatusSeal, Tooltip],
+  imports: [AppButton, Badge, DatePipe, NgTemplateOutlet, RouterLink, StatusSeal, Tooltip],
   templateUrl: './day-view.html',
   styleUrl: './day-view.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -240,14 +282,76 @@ export class DayView {
    */
   readonly etiquetas = input<ReadonlyMap<string, EstadoResuelto>>(new Map());
 
+  /**
+   * Si se está moviendo una cita y este día es donde se elige el destino.
+   *
+   * Existe porque la solapa «Cupos» se retiró (C-07/C-10, 2026-09-20) y con
+   * ella el único lugar donde se veían los huecos disponibles. El gesto es el
+   * mismo de siempre —tocar un rato libre—, pero **el mismo hueco no puede
+   * significar dos cosas a la vez**: mientras dura el modo el rato es un
+   * destino, no una invitación a crear.
+   */
+  readonly moviendoCita = input<boolean>(false);
+
+  /**
+   * El cupo destino mientras el movimiento está en vuelo, sólo para la hilera.
+   *
+   * Se pasa el id y no un booleano porque hay muchos ratos libres en el día:
+   * con un booleano giran todos, y eso miente sobre cuál se está usando.
+   */
+  readonly ratoEnVuelo = input<string | null>(null);
+
+  /** Si esta sesión puede registrar un ingreso por mostrador (AC-C3-03). */
+  readonly puedeIngresarPorMostrador = input<boolean>(false);
+
+  /** Si esta sesión puede avisar una demora de la jornada (P8). */
+  readonly puedeAvisarDemora = input<boolean>(false);
+
+  /**
+   * Las visitas de laboratorio del día — C-13.
+   *
+   * Entran por input ya resueltas: esta vista sólo dibuja, y quién las lee y
+   * cómo se traduce su estado es de quien contiene la agenda.
+   */
+  readonly visitas = input<readonly VisitaDelDia[]>([]);
+
   /** Pidieron hacer algo con una cita. */
   readonly accionPedida = output<PedidoDeAccion>();
+
+  /**
+   * Eligieron este rato libre como destino del movimiento en curso.
+   *
+   * Emite el identificador del cupo —que para un bloque libre es su `clave`— y
+   * cuándo empieza, que es lo que el diálogo de confirmación necesita nombrar.
+   */
+  readonly ratoElegidoParaMover = output<{ id: string; desde: Date }>();
+
+  /**
+   * Pidieron el ingreso por mostrador desde el encabezado del día.
+   *
+   * Bajó de las acciones de la página (C-11): quien lo usa está atendiendo el
+   * mostrador y mira este día, con alguien parado enfrente.
+   */
+  readonly mostradorPedido = output<void>();
+
+  /** Pidieron avisar la demora de esta jornada. Bajó de la página (C-11). */
+  readonly demoraPedida = output<void>();
 
   /** Tocaron un rato vacío (o el «+») para crear algo ahí. */
   readonly ratoTocado = output<RatoTocado>();
 
   /** Pidieron quitar un tiempo ocupado. */
   readonly quitarOcupado = output<string>();
+
+  /**
+   * Activaron la tarjeta de una cita — C-04 (2026-09-20).
+   *
+   * «Las tarjetas de /schedule tienen que llevar a iniciar el encuentro». Qué
+   * significa «iniciar» depende del estado de la cita —una confirmada se
+   * inicia, una en curso se continúa— y eso lo sabe quien contiene el día, que
+   * es el dueño de las acciones. Esta vista sólo avisa que la tocaron.
+   */
+  readonly citaActivada = output<Booking>();
 
   /**
    * Ir al día siguiente o al anterior — «un botón de ver mañana, y así
@@ -379,6 +483,27 @@ export class DayView {
       });
     }
 
+    // 1-bis · las visitas de laboratorio, como bloques propios (C-13). Van con
+    // los bloqueos y no con los cupos porque no salen de un cupo: son otro
+    // calendario que cae encima del mismo día.
+    for (const visita of this.visitas()) {
+      delDia.push({
+        clave: `visita-${visita.id}`,
+        desde: visita.desde,
+        hasta: visita.hasta,
+        tipo: 'visita',
+        cita: null,
+        paciente: visita.conQuien,
+        estado: visita.estado,
+        statusCode: '',
+        statusVariant: visita.statusVariant,
+        tipologia: null,
+        motivo: visita.motivo,
+        excepcionId: null,
+        alturaPx: this.altura(visita.desde, visita.hasta, true),
+      });
+    }
+
     // 2 · los cupos: cita o libre. Un LIBRE dentro de un ocupado se omite —la
     // API ya lo retiró de la oferta, y pintarlo además del bloque ocupado diría
     // dos cosas sobre el mismo rato—. Una CITA dentro de un bloqueo se muestra
@@ -387,20 +512,30 @@ export class DayView {
       const hasta = cupo.endAt ?? cupo.startAt;
       const cita = porSlot.get(cupo.id) ?? null;
       if (cita === null && this.dentroDeOcupado(cupo.startAt, hasta)) continue;
+      // Un cupo libre debajo de una visita de laboratorio tampoco se ofrece: el
+      // rato está comprometido, y pintarlo «Disponible» al lado de la visita
+      // diría dos cosas del mismo rato (mismo criterio que el bloqueo).
+      if (cita === null && this.dentroDeUnaVisita(cupo.startAt, hasta)) continue;
 
       if (cita === null) {
+        // C-10 · un cupo sin capacidad libre NO es un rato disponible, aunque
+        // no tenga una cita de este día encima: puede estar cerrado, o tomado
+        // por una reserva que esta lectura no trae. Ofrecerlo sería invitar a
+        // un 409. La regla se aplica donde se dibuja Y donde se crea
+        // (`tocar()`), no sólo escondiendo el botón.
+        const tomado = cupo.remainingCapacity <= 0;
         delDia.push({
           clave: cupo.id,
           desde: cupo.startAt,
           hasta,
-          tipo: 'libre',
+          tipo: tomado ? 'no-disponible' : 'libre',
           cita: null,
           paciente: '',
           estado: '',
           statusCode: '',
           statusVariant: UNKNOWN_STATUS_VARIANT,
           tipologia: null,
-          motivo: null,
+          motivo: tomado ? 'Sin lugar' : null,
           excepcionId: null,
           alturaPx: this.altura(cupo.startAt, hasta, true),
         });
@@ -505,7 +640,21 @@ export class DayView {
   /** Tocar un bloque libre o el aire abre la tarjeta con el rango puesto. */
   protected tocar(bloque: BloqueDelDia): void {
     if (bloque.tipo !== 'libre' && bloque.tipo !== 'aire') return;
-    this.ratoTocado.emit({ desde: bloque.desde, hasta: bloque.hasta });
+
+    // Moviendo una cita, el rato es un DESTINO y no una invitación a crear.
+    // Sólo un bloque `libre` sirve: el aire no tiene cupo detrás —su `clave` es
+    // `aire-<timestamp>`, no un id— y mover una cita a la nada no existe.
+    if (this.moviendoCita()) {
+      if (bloque.tipo !== 'libre') return;
+      this.ratoElegidoParaMover.emit({ id: bloque.clave, desde: bloque.desde });
+      return;
+    }
+
+    this.ratoTocado.emit({
+      desde: bloque.desde,
+      hasta: bloque.hasta,
+      cupoId: bloque.tipo === 'libre' ? bloque.clave : null,
+    });
   }
 
   /**
@@ -520,7 +669,8 @@ export class DayView {
     const hora = base.toDateString() === ahora.toDateString() ? ahora.getHours() + 1 : 9;
     base.setHours(hora, 0, 0, 0);
     const hasta = new Date(base.getTime() + 30 * 60_000);
-    this.ratoTocado.emit({ desde: base, hasta });
+    // Sin cupo: el «+» del encabezado propone una franja, no la toma de uno.
+    this.ratoTocado.emit({ desde: base, hasta, cupoId: null });
   }
 
   /** El código del estado, sin el prefijo de módulo. */
@@ -567,6 +717,13 @@ export class DayView {
         desde: b.desde.getTime() < inicio.getTime() ? inicio : b.desde,
         hasta: b.hasta.getTime() > fin.getTime() ? fin : b.hasta,
       }));
+  }
+
+  /** Si ese rato lo pisa una visita de laboratorio aceptada (C-13). */
+  private dentroDeUnaVisita(desde: Date, hasta: Date): boolean {
+    return this.visitas().some(
+      (v) => v.desde.getTime() < hasta.getTime() && v.hasta.getTime() > desde.getTime(),
+    );
   }
 
   private dentroDeOcupado(desde: Date, hasta: Date): boolean {

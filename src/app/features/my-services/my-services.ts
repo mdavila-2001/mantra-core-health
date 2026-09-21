@@ -14,6 +14,17 @@ import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
 import { ServicesCatalogClient } from '../../core/data-access/services-catalog/services-catalog.client';
+import { SchedulingClient } from '../../core/data-access/scheduling/scheduling.client';
+import type {
+  AgendaResource,
+  PublishedRule,
+} from '../../core/data-access/scheduling/scheduling.types';
+import { AuthService } from '../../core/auth/auth.service';
+import { ScheduleGrid } from '../agenda/my-agenda/schedule-grid/schedule-grid';
+import type { BloqueoDelMes } from '../agenda/my-agenda/month-view/month-view';
+import { ContentDialog } from '../../shared/components/organisms/content-dialog/content-dialog';
+import { SegmentedControl } from '../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../shared/components/molecules/segmented-control/segmented-control.types';
 import type {
   Practice,
   ServiceCatalogItem,
@@ -21,6 +32,7 @@ import type {
   ServiceCatalogQuery,
 } from '../../core/data-access/services-catalog/services-catalog.types';
 import { Input } from '../../shared/components/atoms/input/input';
+import { Alert } from '../../shared/components/molecules/alert/alert';
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
 import { readApiError } from '../../core/http/api-error';
 import { errorToViewState } from '../../core/http/error-to-view-state';
@@ -124,11 +136,43 @@ const SIN_PRACTICA_ELEGIDA = empty(
  * la API —opaco— se reenvía tal cual. Cambiar de práctica descarta lo
  * acumulado, porque ese cursor sólo sabe seguir la lista de la que salió.
  */
+/**
+ * El texto con que se etiqueta el bloqueo que deja un servicio propio — C-12.
+ *
+ * ## Por qué `OTHER` y no un tipo propio
+ *
+ * «OTROS SERVICIOS» **no existe** en la lista cerrada de motivos de
+ * `GET /scheduling/exception-types`: son siete —`ABSENCE`, `HOLIDAY`,
+ * `VACATION`, `CONFERENCE`, `ERRAND`, `EXTRA`, `OTHER`— y ninguno es éste.
+ * Ampliar el enum es una decisión de negocio (ambigüedad `Q-D6` del reparto),
+ * no una decisión de esta pantalla, así que se usa la salida que el propio
+ * contrato documenta: `OTHER` es el único que **exige texto**
+ * (`requiresText: true`), y el texto es exactamente para esto.
+ *
+ * El día que negocio decida el tipo propio, lo que cambia es una constante.
+ */
+const MOTIVO_DE_OTROS_SERVICIOS = 'Otros servicios';
+
+/** Los siete días, como los numera `PublishedRule.dayOfWeek` (0 = domingo). */
+const DIAS_DE_LA_SEMANA: readonly SegmentedOption<string>[] = [
+  { value: '1', label: 'Lun' },
+  { value: '2', label: 'Mar' },
+  { value: '3', label: 'Mié' },
+  { value: '4', label: 'Jue' },
+  { value: '5', label: 'Vie' },
+  { value: '6', label: 'Sáb' },
+  { value: '0', label: 'Dom' },
+];
+
 @Component({
   selector: 'app-my-services',
   imports: [
     AppButton,
     Badge,
+    Alert,
+    ContentDialog,
+    ScheduleGrid,
+    SegmentedControl,
     FilterBar,
     FormField,
     Input,
@@ -151,7 +195,184 @@ const SIN_PRACTICA_ELEGIDA = empty(
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyServices {
+  /* -- Programar el horario de un servicio propio (C-12) -------------------- */
+
+  /** El servicio cuyo horario se está programando, o `null`. */
+  protected readonly programando = signal<ServiceCatalogItem | null>(null);
+
+  /** La agenda del profesional: es sobre ella que se bloquea el rato. */
+  private readonly recursoPropio = signal<AgendaResource | null>(null);
+
+  /** El horario publicado, para dibujar la MISMA grilla que «Mis horarios». */
+  protected readonly reglasDelHorario = signal<readonly PublishedRule[]>([]);
+
+  /** Lo ya bloqueado de la semana, para que la grilla lo pinte igual que allá. */
+  protected readonly bloqueosDeLaSemana = signal<readonly BloqueoDelMes[]>([]);
+
+  protected readonly diasDeLaSemana = DIAS_DE_LA_SEMANA;
+  protected readonly diaElegido = signal('1');
+  protected readonly desdeElegido = signal('14:00');
+  protected readonly hastaElegido = signal('16:00');
+  protected readonly guardandoHorario = signal(false);
+  protected readonly errorDelHorario = signal<string | null>(null);
+
+  /** Sin agenda propia no hay dónde bloquear: se dice, no se ofrece a medias. */
+  protected readonly sinAgendaPropia = computed(() => this.recursoPropio() === null);
+
+  /**
+   * Abre la programación del horario de un servicio.
+   *
+   * **Recicla las vistas del horario, no crea unas nuevas** (C-12 lo pide con
+   * esas palabras): el modal monta `app-schedule-grid` —el mismo organismo que
+   * dibuja «Mis horarios de atención»— con las reglas publicadas y los bloqueos
+   * ya creados, para que el rato del servicio se elija mirando el horario real
+   * y no una grilla inventada al lado.
+   */
+  protected programarHorario(servicio: ServiceCatalogItem): void {
+    this.errorDelHorario.set(null);
+    this.programando.set(servicio);
+    this.leerAgendaDelProfesional();
+  }
+
+  /**
+   * Las horas del rango, desde el campo de texto.
+   *
+   * `app-input` emite `string | number | null` —sirve también para campos
+   * numéricos—, y acá siempre es texto: se normaliza en un solo lugar en vez de
+   * castear en la plantilla, donde el error no se ve.
+   */
+  protected fijarDesde(valor: string | number | null): void {
+    this.desdeElegido.set(valor === null ? '' : String(valor));
+  }
+
+  protected fijarHasta(valor: string | number | null): void {
+    this.hastaElegido.set(valor === null ? '' : String(valor));
+  }
+
+  protected cerrarProgramacion(): void {
+    this.programando.set(null);
+  }
+
+  /**
+   * Guarda el rato del servicio como una **excepción de disponibilidad** sobre
+   * la agenda del profesional.
+   *
+   * Es lo que produce el bloqueo que el pedido exige: el mismo mecanismo con
+   * que se bloquea un día, aplicado a un rato. No es una agenda propia del
+   * servicio —eso sería un segundo calendario que nadie cruza con el clínico—,
+   * y el supuesto está declarado como `Q-P5`.
+   */
+  protected guardarHorarioDelServicio(): void {
+    const servicio = this.programando();
+    const recurso = this.recursoPropio();
+    if (servicio === null || recurso === null || this.guardandoHorario()) return;
+
+    const rango = this.rangoElegido();
+    if (rango === null) {
+      this.errorDelHorario.set('El horario tiene que empezar antes de terminar.');
+      return;
+    }
+
+    this.guardandoHorario.set(true);
+    this.errorDelHorario.set(null);
+    this.scheduling
+      .createException(recurso.id, {
+        exceptionType: 'OTHER',
+        startAt: rango.desde.toISOString(),
+        endAt: rango.hasta.toISOString(),
+        reason: `${MOTIVO_DE_OTROS_SERVICIOS} · ${servicio.name}`,
+      })
+      .subscribe({
+        next: (creada) => {
+          this.guardandoHorario.set(false);
+          this.programando.set(null);
+          this.toasts.success(
+            creada.blockedSlots === 0
+              ? `Ese rato queda bloqueado en tu agenda como «${MOTIVO_DE_OTROS_SERVICIOS}».`
+              : `Ese rato queda bloqueado como «${MOTIVO_DE_OTROS_SERVICIOS}» y dejaron de ofrecerse ${creada.blockedSlots} turnos.`,
+            servicio.name,
+          );
+        },
+        error: (error: unknown) => {
+          this.guardandoHorario.set(false);
+          this.errorDelHorario.set(
+            (error instanceof HttpErrorResponse ? readApiError(error)?.message : null) ??
+              'No se pudo bloquear ese rato. Probá de nuevo.',
+          );
+        },
+      });
+  }
+
+  /** El rato elegido, sobre la próxima fecha de ese día de la semana. */
+  private rangoElegido(): { desde: Date; hasta: Date } | null {
+    const dia = Number(this.diaElegido());
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    // El próximo día de la semana elegido, hoy incluido: programar «los martes»
+    // desde un martes tiene que empezar hoy, no dentro de siete días.
+    base.setDate(base.getDate() + ((dia - base.getDay() + 7) % 7));
+
+    const desde = this.conHora(base, this.desdeElegido());
+    const hasta = this.conHora(base, this.hastaElegido());
+    if (desde === null || hasta === null || desde.getTime() >= hasta.getTime()) return null;
+    return { desde, hasta };
+  }
+
+  private conHora(dia: Date, hhmm: string): Date | null {
+    const match = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(hhmm.trim());
+    if (match === null) return null;
+    const fecha = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate());
+    fecha.setHours(Number(match[1]), Number(match[2]), 0, 0);
+    return fecha;
+  }
+
+  /** La agenda del profesional y su horario, para la grilla reciclada. */
+  private leerAgendaDelProfesional(): void {
+    const tenantId = this.auth.activeTenantId();
+    const perfil = this.auth.practitionerProfileId();
+    if (tenantId === null || perfil === null) {
+      this.recursoPropio.set(null);
+      return;
+    }
+    this.scheduling.listResources({ tenantId }).subscribe({
+      next: (pagina) => {
+        const propio = pagina.items.find((r) => r.resourceRefId === perfil) ?? null;
+        this.recursoPropio.set(propio);
+        if (propio === null) return;
+        this.scheduling.listTemplates(propio.id).subscribe({
+          next: (plantillas) =>
+            this.reglasDelHorario.set(
+              plantillas.items.find((t) => !t.retired)?.rules ?? [],
+            ),
+          error: () => this.reglasDelHorario.set([]),
+        });
+        const lunes = new Date();
+        lunes.setHours(0, 0, 0, 0);
+        lunes.setDate(lunes.getDate() - ((lunes.getDay() + 6) % 7));
+        const siguiente = new Date(lunes);
+        siguiente.setDate(siguiente.getDate() + 7);
+        this.scheduling.listExceptions(propio.id, { from: lunes, to: siguiente }).subscribe({
+          next: (pagina2) =>
+            this.bloqueosDeLaSemana.set(
+              pagina2.items
+                .filter((e) => e.isAvailable !== true)
+                .map((e) => ({
+                  id: e.id,
+                  desde: new Date(e.startAt),
+                  hasta: new Date(e.endAt),
+                  motivo: e.reason ?? null,
+                })),
+            ),
+          error: () => this.bloqueosDeLaSemana.set([]),
+        });
+      },
+      error: () => this.recursoPropio.set(null),
+    });
+  }
+
   private readonly catalog = inject(ServicesCatalogClient);
+  private readonly scheduling = inject(SchedulingClient);
+  private readonly auth = inject(AuthService);
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
   private readonly toasts = inject(ToastService);
