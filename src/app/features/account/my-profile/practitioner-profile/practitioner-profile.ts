@@ -474,6 +474,14 @@ export function conceptosDe(perfil: OwnPractitionerProfile): readonly string[] {
     perfil.practitionerCategoryConceptId,
     perfil.verificationStatusConceptId,
     perfil.practiceStatusConceptId,
+    // Los dos conceptos de la filiación. La ficha los dibuja desde que existe
+    // —el departamento como sufijo del documento, «5414404 Santa Cruz», y la
+    // localidad de residencia—, pero nadie pedía sus etiquetas: el `Map`
+    // llegaba sin ellos, `etiquetaOpcional` devolvía cadena vacía y los dos
+    // renglones se veían como si el dato no estuviera. El dato estaba; faltaba
+    // pedir cómo se llama.
+    perfil.issuerAdministrativeAreaConceptId,
+    perfil.residenceMunicipalityConceptId,
     ...perfil.specialties.flatMap((especialidad) => [
       especialidad.specialtyConceptId,
       especialidad.verificationStatusConceptId,
@@ -491,5 +499,8 @@ export function conceptosDe(perfil: OwnPractitionerProfile): readonly string[] {
         ? [idioma.languageConceptId]
         : [idioma.languageConceptId, idioma.proficiencyConceptId],
     ),
-  ];
+    // Los opcionales que no vinieron se descartan acá: mandar `undefined` en
+    // la lista de ids lo convertiría en la cadena «undefined» dentro del
+    // `?ids=` de la petición.
+  ].filter((id): id is string => id !== undefined);
 }
