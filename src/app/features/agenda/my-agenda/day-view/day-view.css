@@ -567,13 +567,25 @@
   z-index: 1;
 }
 
-/* El cuerpo no captura el puntero salvo en sus partes interactivas: si lo
-   hiciera entero, la mitad de la tarjeta dejaria de llevar a atender. */
+/* El cuerpo no captura el puntero: si lo hiciera, la mitad de la tarjeta
+   dejaria de llevar a atender. Lo que SI lo captura es la caja de acciones, y
+   de ahi hacia adentro se hereda.
+
+   **Tiene que ser una clase de ESTA vista, no un selector de descendientes.**
+   Las acciones de la fila son contenido PROYECTADO desde `/schedule`: con
+   encapsulacion emulada, los nodos proyectados llevan el atributo del
+   componente que los escribio, no el de este, asi que un
+   `.dia__cuerpo :is(button, a)` de esta hoja nunca los alcanza. Escrito asi,
+   el desplegable de acciones quedaba debajo de la capa de «atender» y no se
+   podia abrir — en todos los viewports, no solo en el telefono. Lo encontro la
+   prueba visual de H6, no el tipo ni los tests. */
 .dia__bloque[data-tipo='cita'] > .dia__cuerpo {
   pointer-events: none;
 }
 
-.dia__bloque[data-tipo='cita'] > .dia__cuerpo :is(button, a, [role='button']) {
+/* `.dia__acciones` SI es de esta vista —el `<div>` que recibe la proyeccion—,
+   asi que la clase casa y `pointer-events` se hereda a lo que venga adentro. */
+.dia__bloque[data-tipo='cita'] .dia__acciones {
   pointer-events: auto;
 }
 

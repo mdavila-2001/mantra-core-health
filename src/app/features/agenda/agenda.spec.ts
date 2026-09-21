@@ -1608,9 +1608,112 @@ describe('Agenda', () => {
     }
   }
 
-  function boton(testid: string): HTMLButtonElement | null {
-    return harness.routeNativeElement?.querySelector(`[data-testid="${testid}"]`) ?? null;
+  /**
+   * El control de una acción de la fila, abriendo el desplegable si hace falta.
+   *
+   * C-06 (2026-09-20): las acciones de la tabla pasaron de ocho botones de sólo
+   * ícono en línea a un **desplegable** con icono y texto. `app-menu` no
+   * renderiza sus ítems mientras está cerrado —por costo, no por
+   * accesibilidad—, así que preguntar «¿la fila ofrece Aceptar?» ahora exige
+   * abrirlo, que es lo que hace una persona.
+   *
+   * La pregunta no cambió y la respuesta tampoco: si la acción no se ofrece, el
+   * desplegable se abre y no está. Lo que cambió es dónde hay que mirar.
+   */
+  function boton(testid: string): HTMLElement | null {
+    // El desplegable abierto se cuelga del `<body>` —`app-menu` lo mueve ahí
+    // para que ningún `overflow` lo recorte—, así que buscar sólo dentro de la
+    // ruta no lo encuentra.
+    const buscar = (): HTMLElement | null =>
+      harness.routeNativeElement?.ownerDocument.querySelector(`[data-testid="${testid}"]`) ?? null;
+
+    const directo = buscar();
+    if (directo !== null) return directo;
+
+    const disparador = harness.routeNativeElement?.querySelector<HTMLButtonElement>(
+      '[data-testid="agenda-acciones"]',
+    );
+    if (disparador === null || disparador === undefined) return null;
+    disparador.click();
+    harness.detectChanges();
+    return buscar();
   }
+
+
+  /**
+   * C-06 (2026-09-20) — «botón = icono + texto; las acciones de una tabla, en
+   * un desplegable».
+   *
+   * La celda eran hasta ocho botones de sólo ícono en línea. El motivo estaba
+   * escrito y era bueno —con texto la fila crecía a tres renglones—; el pedido
+   * resuelve la misma tensión de otra manera, y ahora la fila sigue en un
+   * renglón Y cada opción tiene su palabra.
+   */
+  describe('las acciones de la fila son un desplegable con icono y texto (C-06)', () => {
+    it('la fila ofrece UN control de acciones, con su texto, en vez de ocho iconos', async () => {
+      await montar();
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      await verSolapaDeCitas();
+
+      const disparador = harness.routeNativeElement?.querySelector(
+        '[data-testid="agenda-acciones"]',
+      ) as HTMLElement;
+      expect(disparador).not.toBeNull();
+      expect(disparador.textContent?.trim()).toContain('Acciones');
+      // Y cerrado no hay ninguna opción suelta en la fila.
+      expect(
+        harness.routeNativeElement?.querySelectorAll('.agenda__acciones [role="menuitem"]'),
+      ).toHaveLength(0);
+    });
+
+    it('cada opcion del desplegable lleva icono Y texto, no sólo un glifo', async () => {
+      await montar();
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      await verSolapaDeCitas();
+      (
+        harness.routeNativeElement?.querySelector('[data-testid="agenda-acciones"]') as HTMLElement
+      ).click();
+      harness.detectChanges();
+
+      const opciones = Array.from(
+        harness.routeNativeElement?.ownerDocument.querySelectorAll('[role="menuitem"]') ?? [],
+      ) as HTMLElement[];
+      expect(opciones.length).toBeGreaterThan(1);
+      for (const opcion of opciones) {
+        expect(opcion.textContent?.trim(), 'una opción sin texto es C-06 sin cumplir').not.toBe('');
+        expect(opcion.querySelector('svg'), 'una opción sin ícono tampoco cumple').not.toBeNull();
+      }
+    });
+
+    it('es el menu del sistema de diseno, no uno escrito acá', async () => {
+      await montar();
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      await verSolapaDeCitas();
+      const disparador = harness.routeNativeElement?.querySelector(
+        '[data-testid="agenda-acciones"]',
+      ) as HTMLElement;
+      disparador.click();
+      harness.detectChanges();
+
+      const doc = harness.routeNativeElement?.ownerDocument as Document;
+      // `app-menu` con el patrón ARIA de menú: eso es lo que trae las flechas,
+      // `Escape`, el foco devuelto y el cierre al tocar afuera. Que ESO funcione
+      // ya lo prueba `menu.spec.ts`; lo que fija esta prueba es que se reusa en
+      // vez de reimplementarse, y el recorrido de teclado real se ejercita en
+      // el navegador (`evidencia/h6/`).
+      expect(doc.querySelector('app-menu[role="menu"], app-menu [role="menu"]')).not.toBeNull();
+      const opciones = doc.querySelectorAll('[role="menuitem"]');
+      expect(opciones.length).toBeGreaterThan(1);
+      // Los ítems no entran en el orden de tabulación por su cuenta: los
+      // recorre el menú con las flechas, que es el patrón correcto.
+      for (const opcion of Array.from(opciones)) {
+        expect(opcion.getAttribute('tabindex')).toBe('-1');
+      }
+      // Y el disparador dice que es un menú y si está abierto.
+      expect(disparador.getAttribute('aria-haspopup')).toBe('menu');
+      expect(disparador.getAttribute('aria-expanded')).toBe('true');
+    });
+  });
 
   it('una solicitud pendiente ofrece aceptar y rechazar, no iniciar', async () => {
     await montar();
@@ -2463,8 +2566,11 @@ describe('Agenda', () => {
       await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
       await verSolapaDeCitas();
 
+      // C-06 · el nombre de la acción dejó de vivir en un `aria-label`
+      // invisible y pasó a ser el TEXTO de la opción, que es el punto del
+      // pedido: se lee sin lector de pantalla y sin pasar el puntero.
       const detalle = boton('agenda-detalle');
-      expect(detalle?.getAttribute('aria-label')).toContain('Ver detalle de la cita');
+      expect(detalle?.textContent?.trim()).toContain('Ver detalle de la cita');
     });
 
     it('muestra el nombre del paciente cuando la API lo mandó', async () => {
