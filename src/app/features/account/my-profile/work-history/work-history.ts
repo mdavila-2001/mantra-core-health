@@ -37,9 +37,10 @@ import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
+import { RowActions } from '../../../../shared/components/molecules/row-actions/row-actions';
+import type { RowAction } from '../../../../shared/components/molecules/row-actions/row-actions.types';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
-import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
@@ -123,9 +124,9 @@ import type { PinMapa, PuntoGeo } from '../../../../shared/components/organisms/
     LocationPicker,
     NgTemplateOutlet,
     ReferenceCombobox,
+    RowActions,
     Select,
     SiteBankQrDialog,
-    Tooltip,
     UpperCasePipe,
   ],
   templateUrl: './work-history.html',
@@ -918,30 +919,71 @@ export class WorkHistory implements OnInit {
   }
 
   /**
-   * Qué dice el botón del QR de esa sede, en el globo y para el lector.
+   * Qué dice la acción del QR de esa sede.
    *
    * Dos textos y no uno porque son dos cosas distintas: mirar el que ya está y
-   * cargar el que falta. Con un único «QR bancario» el ámbar sería la única
-   * pista de que hay algo pendiente, y el color solo no alcanza para decirlo
-   * (WCAG 1.4.1).
+   * cargar el que falta. Antes el botón era sólo un ícono y se pintaba en
+   * ámbar cuando faltaba; el color solo no alcanza para decirlo (WCAG 1.4.1),
+   * así que el aviso siempre vivió en el texto. Ahora el texto está a la
+   * vista, y el aviso además sigue escrito en la fila (`sede-sin-qr`).
+   *
+   * No lleva ícono: el set cerrado del sistema no tiene uno de QR, y `scan` es
+   * imagenología clínica —su propia ficha lo aclara—, no un código de cobro.
+   * Una acción sin ícono se dibuja con su texto, que es lo que pide ADR-0012.
    */
   protected etiquetaDelQr(sede: PracticeSite): string {
-    return this.tieneQrBancario(sede)
-      ? `Ver el QR bancario de ${sede.name}`
-      : `Configurar el QR bancario de ${sede.name}`;
+    return this.tieneQrBancario(sede) ? 'Ver QR bancario' : 'Configurar QR bancario';
   }
 
   /**
-   * Qué dice el botón de retirar, que no es el mismo acto en las dos sedes.
+   * Qué dice la acción de retirar, que no es el mismo acto en las dos sedes.
    *
    * En la propia se deja de ofrecer un consultorio que es suyo; en la ajena se
-   * corta un vínculo con una organización. El glifo es el mismo —el de borrar,
-   * que es el que se reconoce— y el texto es el que aclara que nada se borra.
+   * corta un vínculo con una organización. Esa distinción es del negocio y se
+   * conserva. De qué sede se trata ya no lo repite cada etiqueta: lo pone
+   * `app-row-actions` en el nombre accesible, a partir de `fila`.
    */
   protected etiquetaDeRetiro(sede: PracticeSite): string {
-    return sede.isOwnSite === true
-      ? `Retirar ${sede.name} de tus consultorios`
-      : `Dejar de atender en ${sede.name}`;
+    return sede.isOwnSite === true ? 'Retirar' : 'Dejar de atender';
+  }
+
+  /**
+   * Las acciones de una sede, como datos (ADR-0012).
+   *
+   * Son dos o tres según de quién sea la sede, y de eso —no de una decisión de
+   * esta pantalla— sale la forma: en la propia son tres y se colapsan en un
+   * desplegable; en la ajena son dos y quedan en la fila con su texto.
+   *
+   * El orden no es casual: el QR va primero porque es el único que avisa de
+   * algo pendiente, y retirar va último porque es el que no se deshace.
+   */
+  protected accionesDeSede(sede: PracticeSite): readonly RowAction[] {
+    const acciones: RowAction[] = [{ code: 'qr', label: this.etiquetaDelQr(sede) }];
+    if (sede.isOwnSite) {
+      acciones.push({ code: 'editar', label: 'Editar', icon: 'edit' });
+    }
+    acciones.push({
+      code: 'retirar',
+      label: this.etiquetaDeRetiro(sede),
+      icon: 'remove',
+      destructive: true,
+    });
+    return acciones;
+  }
+
+  /** Despacha el `code` que emitió `app-row-actions` sobre esa sede. */
+  protected ejecutarAccionDeSede(code: string, sede: PracticeSite): void {
+    if (code === 'qr') {
+      this.abrirQrDeSede(sede);
+      return;
+    }
+    if (code === 'editar') {
+      this.abrirEdicionDeSede(sede);
+      return;
+    }
+    if (code === 'retirar') {
+      void this.quitarSede(sede);
+    }
   }
 
   protected abrirQrDeSede(sede: PracticeSite): void {
