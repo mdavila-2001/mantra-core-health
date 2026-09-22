@@ -255,6 +255,72 @@
         <app-alert tone="error" data-testid="afiliacion-error">{{ mensaje }}</app-alert>
       }
 
+      <!-- ─── Lo que se puede corregir o retirar (sólo en «Trayectoria») ─────
+           La pestaña ya pinta la historia entera arriba, así que acá no se
+           repite: se lista únicamente lo accionable —lo declarado por el
+           profesional y lo que ninguna institución contestó todavía—, y va
+           pegado al formulario que es el que corrige. Sin nada que tocar, el
+           bloque no existe. -->
+      @if (layout() === 'timeline' && vinculosEditables().length > 0) {
+        <h3 class="historial__subtitulo">Corregir o retirar</h3>
+        <p class="historial__intro">
+          Lo que declaraste vos, y las solicitudes que todavía nadie contestó. Lo que una
+          institución ya confirmó o rechazó no se edita desde acá.
+        </p>
+        <ul class="historial__lista" data-testid="vinculos-editables">
+          @for (afiliacion of vinculosEditables(); track afiliacion.id) {
+            <li class="historial__item">
+              <div class="historial__institucion">
+                <strong>{{ afiliacion.organizationName }}</strong>
+                @if (afiliacion.roleTitle) {
+                  <span class="historial__cargo">{{ afiliacion.roleTitle }}</span>
+                }
+              </div>
+
+              <div class="historial__periodo">
+                <span class="historial__fechas">
+                  {{ afiliacion.startDate | date: 'MM/yyyy' }} —
+                  @if (afiliacion.endDate) {
+                    {{ afiliacion.endDate | date: 'MM/yyyy' }}
+                  } @else {
+                    actualidad
+                  }
+                </span>
+              </div>
+
+              <div class="historial__acciones-sede">
+                @if (puedeCorregirse(afiliacion)) {
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    data-testid="vinculo-editar"
+                    [attr.aria-label]="'Corregir el vínculo con ' + afiliacion.organizationName"
+                    (clicked)="abrirEdicionDeVinculo(afiliacion)"
+                  >
+                    Editar
+                  </button>
+                }
+                @if (puedeRetirarse(afiliacion)) {
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    data-testid="vinculo-retirar"
+                    [attr.aria-label]="'Retirar el vínculo con ' + afiliacion.organizationName"
+                    (clicked)="retirarVinculo(afiliacion)"
+                  >
+                    Retirar
+                  </button>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      }
+
       <!-- ─── La línea de tiempo ──────────────────────────────────────────────
            Mismo reparto visual que el historial de verificaciones de arriba: una
            lista con su sello a la izquierda y el período a la derecha.
@@ -299,6 +365,41 @@
                     {{ aviso }}
                   </p>
                 }
+
+                <!-- Corregir alcanza sólo a lo que el profesional declaró por su
+                     cuenta; retirar, también a la solicitud que todavía nadie
+                     contestó. Lo que una organización ya decidió no se toca
+                     desde acá: ver `puedeCorregirse` y `puedeRetirarse`. -->
+                @if (puedeCorregirse(afiliacion) || puedeRetirarse(afiliacion)) {
+                  <div class="historial__acciones-sede">
+                    @if (puedeCorregirse(afiliacion)) {
+                      <button
+                        app-button
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        data-testid="vinculo-editar"
+                        [attr.aria-label]="'Corregir el vínculo con ' + afiliacion.organizationName"
+                        (clicked)="abrirEdicionDeVinculo(afiliacion)"
+                      >
+                        Editar
+                      </button>
+                    }
+                    @if (puedeRetirarse(afiliacion)) {
+                      <button
+                        app-button
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        data-testid="vinculo-retirar"
+                        [attr.aria-label]="'Retirar el vínculo con ' + afiliacion.organizationName"
+                        (clicked)="retirarVinculo(afiliacion)"
+                      >
+                        Retirar
+                      </button>
+                    }
+                  </div>
+                }
               </li>
             }
           </ul>
@@ -321,7 +422,13 @@
 
       <!-- ─── Agregar ─────────────────────────────────────────────────────── -->
       <form class="historial__formulario" (submit)="$event.preventDefault()">
-        <h3 class="historial__subtitulo">Agregar un vínculo</h3>
+        <h3 class="historial__subtitulo">
+          @if (vinculoEnEdicion(); as enEdicion) {
+            Corregir «{{ enEdicion.organizationName }}»
+          } @else {
+            Agregar un vínculo
+          }
+        </h3>
 
         <!-- Dos formas de nombrar la institución, nunca las dos a la vez: elegirla
              del padrón y además escribirla serían dos respuestas a una pregunta. -->
@@ -373,8 +480,11 @@
         </app-form-field>
 
         <!-- El desplegable sólo aparece si hay consultorios que ofrecer: un
-             selector vacío es una pregunta sin respuestas posibles. -->
-        @if (opcionesDeSede().length > 0) {
+             selector vacío es una pregunta sin respuestas posibles. Y no
+             aparece corrigiendo: el `PATCH` no admite la sede a propósito
+             —para cambiar de consultorio se carga otro vínculo—, así que
+             ofrecerla sería un campo que no guarda lo que se elija. -->
+        @if (opcionesDeSede().length > 0 && vinculoEnEdicion() === null) {
           <app-form-field
             label="Consultorio de la plataforma"
             hint="Opcional. Si la institución es una de las sedes donde ya atendés, atalo acá."
@@ -402,10 +512,12 @@
         </app-form-field>
 
         <app-form-actions
-          submitLabel="Agregar al historial"
+          [submitLabel]="vinculoEnEdicion() === null ? 'Agregar al historial' : 'Guardar los cambios'"
+          [cancelLabel]="vinculoEnEdicion() === null ? '' : 'Cancelar'"
           [pending]="registrando()"
           [disabled]="!puedeRegistrar()"
-          (submitted)="registrar()"
+          (submitted)="guardarVinculo()"
+          (cancelled)="cancelarEdicionDeVinculo()"
         />
       </form>
     }

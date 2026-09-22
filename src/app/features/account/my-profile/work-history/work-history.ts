@@ -238,6 +238,16 @@ export class WorkHistory {
 
   protected readonly registrando = signal(false);
 
+  /**
+   * El vínculo que se está corrigiendo, o `null` si el formulario da de alta.
+   *
+   * Mismo formulario para las dos cosas, como en el alta de sedes: son los
+   * mismos cinco campos y tener dos pantallas casi iguales es lo que hace que
+   * una se quede atrás cuando la otra cambia.
+   */
+  protected readonly vinculoEnEdicion = signal<PractitionerAffiliation | null>(null);
+
+
   /** El resultado de la última escritura. */
   protected readonly registro = signal<ViewState<null>>(ready(null));
 
@@ -465,6 +475,172 @@ export class WorkHistory {
           this.registro.set(errorToViewState<null>(error));
         },
       });
+  }
+
+  /**
+   * Los vínculos sobre los que hay algo que hacer.
+   *
+   * En la pestaña «Trayectoria» la historia completa ya está pintada arriba, y
+   * volver a listarla entera acá sería el mismo dato dos veces. Lo que ahí NO
+   * hay es dónde corregir o retirar, así que este bloque lista **sólo** lo
+   * accionable: lo que el profesional declaró por su cuenta y lo que todavía
+   * nadie contestó. Si no hay nada que tocar, no se dibuja.
+   */
+  protected readonly vinculosEditables = computed<readonly PractitionerAffiliation[]>(() =>
+    this.afiliaciones().filter(
+      (afiliacion) => this.puedeCorregirse(afiliacion) || this.puedeRetirarse(afiliacion),
+    ),
+  );
+
+  /**
+   * Si este vínculo lo puede corregir el profesional.
+   *
+   * Sólo los `declarado`: son los que él mismo afirmó y que ninguna
+   * organización confirma. Un vínculo aprobado, o uno que una institución está
+   * revisando, **no** se reescribe desde acá — cambiarle la institución o las
+   * fechas a algo que alguien ya selló (o está por sellar) convierte el sello
+   * en una mentira, y quien lo firmó no se entera.
+   *
+   * @param afiliacion - El vínculo del renglón.
+   */
+  protected puedeCorregirse(afiliacion: PractitionerAffiliation): boolean {
+    return afiliacion.statusKind === 'declarado';
+  }
+
+  /**
+   * Si este vínculo se puede retirar del historial.
+   *
+   * Los `declarado` —son suyos— y los `pendiente`, que es retirar la solicitud
+   * antes de que la institución decida: mientras nadie contestó, arrepentirse
+   * es del profesional. Lo ya decidido por una organización queda: el historial
+   * no es un lugar donde se borre un rechazo.
+   *
+   * @param afiliacion - El vínculo del renglón.
+   */
+  protected puedeRetirarse(afiliacion: PractitionerAffiliation): boolean {
+    return afiliacion.statusKind === 'declarado' || afiliacion.statusKind === 'pendiente';
+  }
+
+  /**
+   * Abre el formulario cargado con el vínculo que se va a corregir.
+   *
+   * La institución entra por el camino de texto libre aunque haya salido del
+   * padrón: lo que se guardó es el nombre canónico, y volver a resolverlo
+   * contra el catálogo para dejarlo igual sería una búsqueda para no cambiar
+   * nada. La sede **no** se prellena ni se edita —el contrato del `PATCH` no
+   * la admite—: para cambiar de consultorio se carga otro vínculo.
+   *
+   * @param afiliacion - El vínculo a corregir.
+   */
+  protected abrirEdicionDeVinculo(afiliacion: PractitionerAffiliation): void {
+    this.limpiar();
+    this.vinculoEnEdicion.set(afiliacion);
+    this.modoDeInstitucion.set('libre');
+    this.institucion.set(afiliacion.organizationName);
+    this.cargo.set(afiliacion.roleTitle ?? '');
+    this.desde.set(afiliacion.startDate);
+    this.hasta.set(afiliacion.endDate);
+  }
+
+  /** Sale de la corrección y deja el formulario como estaba para un alta. */
+  protected cancelarEdicionDeVinculo(): void {
+    this.vinculoEnEdicion.set(null);
+    this.limpiar();
+  }
+
+  /**
+   * Guarda el formulario: da de alta un vínculo nuevo, o corrige el que se
+   * está editando. Son dos escrituras distintas y cada una tiene su método.
+   */
+  protected guardarVinculo(): void {
+    const enEdicion = this.vinculoEnEdicion();
+    if (enEdicion === null) {
+      this.registrar();
+    } else {
+      this.corregirVinculo(enEdicion);
+    }
+  }
+
+  /**
+   * Corrige un vínculo laboral (`PATCH`).
+   *
+   * El fin viaja **siempre**, y ahí está la gracia: vaciar el campo manda
+   * `null`, que es como el contrato dice «volvió a estar en curso». Omitirlo
+   * dejaría al profesional sin forma de deshacer un cierre puesto por error.
+   *
+   * @param afiliacion - El vínculo que se está corrigiendo.
+   */
+  private corregirVinculo(afiliacion: PractitionerAffiliation): void {
+    const desde = this.desde();
+    if (!this.puedeRegistrar() || desde === null) {
+      return;
+    }
+
+    const hasta = this.hasta();
+    const cargo = this.cargo().trim();
+
+    this.registrando.set(true);
+    this.registro.set(loading());
+
+    this.profiles
+      .updateAffiliation(afiliacion.id, {
+        organizationName: this.nombreDeLaInstitucion(),
+        roleTitle: cargo,
+        startDate: soloFecha(desde),
+        endDate: hasta === null ? null : soloFecha(hasta),
+      })
+      .subscribe({
+        next: () => {
+          this.registrando.set(false);
+          this.registro.set(ready(null));
+          this.cancelarEdicionDeVinculo();
+          this.toasts.success('Los cambios ya figuran en tu historial.', 'Vínculo corregido');
+          this.cargar();
+          this.added.emit();
+        },
+        error: (error: unknown) => {
+          this.registrando.set(false);
+          this.registro.set(errorToViewState<null>(error));
+        },
+      });
+  }
+
+  /**
+   * Retira un vínculo del historial (`DELETE`), con confirmación.
+   *
+   * Lleva diálogo y el alta no, porque no son el mismo acto: agregar una línea
+   * al currículum no saca nada de la vista, y esto sí.
+   *
+   * @param afiliacion - El vínculo a retirar.
+   */
+  protected async retirarVinculo(afiliacion: PractitionerAffiliation): Promise<void> {
+    const confirmado = await this.dialogs.confirm({
+      title: 'Retirar del historial',
+      message:
+        `¿Retirar «${afiliacion.organizationName}» de tu historial laboral? ` +
+        'Deja de figurar en tu ficha y en tu perfil público.',
+      confirmLabel: 'Retirar',
+      cancelLabel: 'Cancelar',
+    });
+    if (!confirmado) {
+      return;
+    }
+
+    this.profiles.removeAffiliation(afiliacion.id).subscribe({
+      next: () => {
+        // Si se retiró justo el que estaba abierto en el formulario, el
+        // formulario apuntaba a algo que ya no existe.
+        if (this.vinculoEnEdicion()?.id === afiliacion.id) {
+          this.cancelarEdicionDeVinculo();
+        }
+        this.toasts.success('Ya no figura en tu historial.', 'Vínculo retirado');
+        this.cargar();
+        this.added.emit();
+      },
+      error: (error: unknown) => {
+        this.registro.set(errorToViewState<null>(error));
+      },
+    });
   }
 
   /**
