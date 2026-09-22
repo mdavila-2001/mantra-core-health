@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpEvent, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
@@ -23,6 +23,7 @@ import type {
   RegisteredPatient,
   RegisteredPractitioner,
   Session,
+  UploadedRegistrationDocument,
   UserListItem,
   UserPage,
   UserSearchQuery,
@@ -241,6 +242,9 @@ export class IamClient {
       ...(registration.homeLatitude === undefined || registration.homeLongitude === undefined
         ? {}
         : { homeLatitude: registration.homeLatitude, homeLongitude: registration.homeLongitude }),
+      // El consultorio propio. Va acá por lo mismo que los tres de arriba: lo
+      // que el contrato declara y esta lista no repita se descarta en silencio.
+      ...(registration.ownSite === undefined ? {} : { ownSite: registration.ownSite }),
       licenseNumber: registration.licenseNumber,
       sedesLicenseNumber: registration.sedesLicenseNumber,
       ...(registration.regulatoryAuthority === undefined
@@ -284,6 +288,13 @@ export class IamClient {
       // El institucional. El de acceso es `email`, que desde el cambio de
       // identidad de acceso lleva el correo PERSONAL del profesional.
       ...(registration.workEmail === undefined ? {} : { workEmail: registration.workEmail }),
+      // Los títulos declarados en el alta (subtarea 1.6). Van acá por lo mismo
+      // que avisa el comentario de arriba: sin este renglón la pantalla
+      // preguntaría títulos que nadie guarda. La lista vacía no viaja: un alta
+      // sin títulos es el caso normal y el contrato la omite.
+      ...(registration.credentials === undefined || registration.credentials.length === 0
+        ? {}
+        : { credentials: registration.credentials.map((credencial) => ({ ...credencial })) }),
     });
   }
 
@@ -302,6 +313,7 @@ export class IamClient {
       organization: {
         code: registration.code,
         legalName: registration.legalName,
+        legalEntityType: registration.legalEntityType,
         ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
         tenantType: 'PAYER',
         ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),
@@ -310,7 +322,36 @@ export class IamClient {
           regulatorIdentifier: registration.payer.regulatorIdentifier,
           sigla: registration.payer.sigla,
           address: registration.payer.address,
+          // Casa matriz georreferenciada (subtarea 1.3): ambas o ninguna —
+          // el backend rechaza con 400 una sola de las dos. Una clave no
+          // copiada acá se perdería en silencio; una que el DTO no declare
+          // se rechaza por `forbidNonWhitelisted`.
+          ...(registration.payer.latitude === undefined ||
+          registration.payer.longitude === undefined
+            ? {}
+            : {
+                latitude: registration.payer.latitude,
+                longitude: registration.payer.longitude,
+              }),
         },
+        // Documentos legales de afiliación (subtarea 1.2): van DENTRO de
+        // `organization`, como los declara `RegisterOrganizationDetailsDto`
+        // del backend — no al lado, o el servidor los ignora en silencio (el
+        // DTO no reconocería una clave de más ahí y `forbidNonWhitelisted`
+        // la rechazaría con 400).
+        ...(registration.legalDocuments === undefined
+          ? {}
+          : { legalDocuments: registration.legalDocuments }),
+        // Representante legal y gerencias de contacto (subtarea 1.4): mismo
+        // criterio que `legalDocuments` — dentro de `organization`, nunca
+        // dentro de `payer` (el registro de procesos repite el mismo bloque
+        // para farmacia/laboratorio/imagenología; no es dato de aseguradora).
+        ...(registration.legalRepresentative === undefined
+          ? {}
+          : { legalRepresentative: registration.legalRepresentative }),
+        ...(registration.executives === undefined
+          ? {}
+          : { executives: registration.executives }),
       },
       owner: {
         email: registration.owner.email,
@@ -328,6 +369,25 @@ export class IamClient {
           : { motherLastName: registration.owner.motherLastName }),
       },
     });
+  }
+
+  /**
+   * `POST /iam/auth/upload-registration-document`. Pre-carga pública de un
+   * documento legal en PDF (subtarea 1.2): quien todavía no tiene cuenta
+   * sube el archivo antes del alta y reenvía el `fileId` que devuelve.
+   *
+   * Multipart sin fijar `Content-Type` a mano: el navegador pone el
+   * `boundary`. `observe: 'events'` + `reportProgress: true` para que la
+   * zona de arrastre pueda dibujar el avance de la subida.
+   */
+  uploadRegistrationDocument(file: File): Observable<HttpEvent<UploadedRegistrationDocument>> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<UploadedRegistrationDocument>(
+      this.url('/iam/auth/upload-registration-document'),
+      form,
+      { reportProgress: true, observe: 'events' },
+    );
   }
 
   /** `POST /iam/auth/verify-email`. No desbloquea nada: deja constancia. */

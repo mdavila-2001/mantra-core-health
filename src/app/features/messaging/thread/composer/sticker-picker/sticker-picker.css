@@ -1,0 +1,57 @@
+/* El panel de stickers: la rejilla y, al pie, la atribución que la licencia
+   de las ilustraciones exige mostrar. Mismo alto tope que la rejilla de
+   emojis, para que abrir una u otra pestaña no cambie de tamaño el panel. */
+
+.stickers {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+}
+
+.stickers__rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: var(--e1);
+  padding: var(--e3);
+  max-block-size: 15rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.stickers__sticker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--e1);
+  border: 0;
+  border-radius: var(--r-ctrl);
+  background: none;
+  cursor: pointer;
+}
+
+.stickers__sticker:hover {
+  background: var(--sup-inset);
+}
+
+.stickers__sticker:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: -2px;
+}
+
+.stickers__sticker img {
+  inline-size: 72px;
+  block-size: 72px;
+}
+
+.stickers__creditos {
+  flex: none;
+  margin: 0;
+  padding: var(--e2) var(--e3);
+  border-block-start: 1px solid var(--filete-2);
+  font-size: var(--fs-caption);
+  color: var(--tinta-3);
+}
+
+.stickers__creditos a {
+  color: inherit;
+}

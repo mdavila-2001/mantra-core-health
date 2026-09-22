@@ -22,6 +22,7 @@ import type {
   ConversationsQuery,
   DirectMessage,
   DirectMessagePage,
+  EditDirectMessage,
   FeedListItem,
   FeedPage,
   FeedQuery,
@@ -312,6 +313,24 @@ export class CommunityClient {
       .get(this.url(`/community/comments/media/${encodeURIComponent(fileId)}/content`), {
         responseType: 'blob',
       })
+      .pipe(switchMap((bytes) => blobToDataUrl(bytes)));
+  }
+
+  /** Bytes del adjunto autorizados por conversación y perfil participante. */
+  conversationAttachmentDataUrl(
+    conversationId: string,
+    profileId: string,
+    fileId: string,
+  ): Observable<string> {
+    const params = new HttpParams().set('profileId', profileId);
+    return this.http
+      .get(
+        this.url(
+          `/community/conversations/${encodeURIComponent(conversationId)}` +
+            `/attachments/${encodeURIComponent(fileId)}/content`,
+        ),
+        { params, responseType: 'blob' },
+      )
       .pipe(switchMap((bytes) => blobToDataUrl(bytes)));
   }
 
@@ -720,6 +739,27 @@ export class CommunityClient {
   }
 
   /**
+   * `POST /patients/me/reviews` — califico **la atención que recibí**, sin
+   * nombrar la vitrina del profesional (C.2).
+   *
+   * Es la que usa el portal del paciente. `publishReview` sigue existiendo y
+   * hace lo mismo: es la que usa quien ya tiene el id de la vitrina en la mano
+   * —el panel interno—. Acá no lo tenemos y no deberíamos: la ficha pública se
+   * abre por slug y **no publica su id**, así que el destinatario lo deriva el
+   * servidor del encuentro declarado.
+   *
+   * El servidor comprueba, como siempre, que la atención sea mía, que haya
+   * terminado, que la haya atendido ese profesional y que no la haya
+   * calificado ya.
+   *
+   * @param review - Atención, estrellas, texto y cómo quiero firmar.
+   * @returns El id de la reseña y si quedó verificada.
+   */
+  publishOwnReview(review: NewReview): Observable<ReviewCreated> {
+    return this.http.post<ReviewCreated>(this.url('/patients/me/reviews'), review);
+  }
+
+  /**
    * `POST /community/profiles/:profileId/reviews/:reviewId/responses` —
    * el profesional contesta una reseña de su propia vitrina.
    *
@@ -1084,6 +1124,34 @@ export class CommunityClient {
           ...fecha('sentAt', body.sentAt),
         })),
       );
+  }
+
+  /**
+   * `PATCH /community/conversations/:id/messages/:messageId` — cambia el texto
+   * de un mensaje propio (F4.5).
+   *
+   * El servidor lo marca `isEdited` y empuja `conversation:message:updated` a
+   * los demás participantes. Rechaza con **422** el mensaje ajeno, el ya
+   * eliminado y el que quedó fuera de la ventana de edición.
+   *
+   * @param conversationId - El hilo.
+   * @param messageId - Qué mensaje.
+   * @param datos - Quién lo escribió y el texto nuevo.
+   * @returns El mensaje ya editado.
+   */
+  editMessage(
+    conversationId: string,
+    messageId: string,
+    datos: EditDirectMessage,
+  ): Observable<DirectMessage> {
+    return this.http
+      .patch<WireMessage>(
+        this.url(
+          `/community/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}`,
+        ),
+        datos,
+      )
+      .pipe(map(toMessage));
   }
 
   /**

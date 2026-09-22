@@ -1,0 +1,173 @@
+<app-page-header
+  title="Operación"
+  subtitle="¿Está la plataforma lista para producción? Cada control con su evidencia; nada se promedia."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="operacion">
+  <div class="operacion__acciones">
+    <button app-button variant="outline" (clicked)="cargar()">Volver a evaluar</button>
+  </div>
+
+  <app-card variant="outlined" padding="md">
+    <app-tabs [(selectedIndex)]="pestana" data-testid="ops-tabs">
+      <app-tab label="Preparación">
+        <app-view-state-host [state]="preparacion()" (retry)="cargar()">
+          @if (preparacion(); as estado) {
+            @if (estado.status === 'ready') {
+              @let r = estado.data;
+              <section class="operacion__veredicto" data-testid="ops-readiness">
+                <app-badge [variant]="readinessStatus(r.status).tone" size="lg">{{ readinessStatus(r.status).label }}</app-badge>
+                <span class="operacion__nota">Evaluado {{ r.evaluatedAt | date: 'medium' }} · modelo {{ r.modelVersion }}</span>
+              </section>
+              @if (r.blockingFailures.length > 0) {
+                <app-alert tone="error" title="Bloquean por fallar">{{ r.blockingFailures.join(', ') }}</app-alert>
+              }
+              @if (r.blockingUnknown.length > 0) {
+                <app-alert tone="warning" title="Bloquean por falta de evidencia">
+                  {{ r.blockingUnknown.join(', ') }}. No saber no es lo mismo que estar bien.
+                </app-alert>
+              }
+
+              <ul class="operacion__controles">
+                @for (c of r.controls; track c.code) {
+                  <li class="operacion__control" [attr.data-status]="c.status">
+                    <div class="operacion__control-cabecera">
+                      <app-badge [variant]="controlStatus(c.status).tone">{{ controlStatus(c.status).label }}</app-badge>
+                      <strong>{{ c.title }}</strong>
+                      @if (c.blocking) {
+                        <app-badge variant="secondary">Bloqueante</app-badge>
+                      } @else {
+                        <app-badge variant="info">Informativo</app-badge>
+                      }
+                    </div>
+                    <p class="operacion__razon">{{ c.reason }}</p>
+                    @if (c.evidence.length > 0) {
+                      <ul class="operacion__evidencia">
+                        @for (e of c.evidence; track $index) {
+                          <li><code>{{ e.ref }}</code> · {{ e.detail }} @if (e.at) { · {{ e.at | date: 'short' }} }</li>
+                        }
+                      </ul>
+                    }
+                    @if (c.staleAfterDays) {
+                      <span class="operacion__nota">La evidencia caduca a los {{ c.staleAfterDays }} días.</span>
+                    }
+                  </li>
+                }
+              </ul>
+
+              @if (r.notImplemented.length > 0) {
+                <app-alert tone="info" title="Controles que todavía no existen">
+                  <ul>
+                    @for (n of r.notImplemented; track n) {
+                      <li>{{ n }}</li>
+                    }
+                  </ul>
+                </app-alert>
+              }
+            }
+          }
+        </app-view-state-host>
+      </app-tab>
+
+      <app-tab label="Incidentes">
+        <app-view-state-host [state]="incidentes()" (retry)="cargar()">
+          <div class="operacion__scroll">
+            <table class="operacion__tabla" data-testid="ops-incidents">
+              <caption class="operacion__oculto">Incidentes</caption>
+              <thead><tr><th scope="col">Incidente</th><th scope="col">Severidad</th><th scope="col">Estado</th><th scope="col">Abierto</th><th scope="col">Resuelto</th></tr></thead>
+              <tbody>
+                @for (i of listaDe(incidentes()); track i.id) {
+                  <tr>
+                    <td>{{ i.number }} @if (i.title) { · {{ i.title }} } @if (i.component) { <span class="operacion__nota">{{ i.component.name ?? i.component.code }}</span> }</td>
+                    <td><app-badge [variant]="conceptStatus(i.severity).tone">{{ conceptStatus(i.severity).label }}</app-badge></td>
+                    <td>{{ conceptStatus(i.status).label }}</td>
+                    <td>{{ i.openedAt | date: 'short' }}</td>
+                    <td>{{ (i.resolvedAt | date: 'short') ?? '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </app-view-state-host>
+      </app-tab>
+
+      <app-tab label="Despliegues">
+        <app-view-state-host [state]="despliegues()" (retry)="cargar()">
+          <div class="operacion__scroll">
+            <table class="operacion__tabla" data-testid="ops-deployments">
+              <caption class="operacion__oculto">Despliegues</caption>
+              <thead><tr><th scope="col">Despliegue</th><th scope="col">Entorno</th><th scope="col">Estado</th><th scope="col">Versión</th><th scope="col">Terminado</th></tr></thead>
+              <tbody>
+                @for (d of listaDe(despliegues()); track d.id) {
+                  <tr>
+                    <td>{{ d.number }} @if (d.isCurrent) { <app-badge variant="primary">Vigente</app-badge> }</td>
+                    <td>{{ conceptStatus(d.environment).label }}</td>
+                    <td><app-badge [variant]="conceptStatus(d.status).tone">{{ conceptStatus(d.status).label }}</app-badge></td>
+                    <td><code>{{ d.gitRef ?? '—' }}</code></td>
+                    <td>{{ d.finishedAt | date: 'short' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </app-view-state-host>
+      </app-tab>
+
+      <app-tab label="SLO">
+        <app-view-state-host [state]="slos()" (retry)="cargar()">
+          <div class="operacion__scroll">
+            <table class="operacion__tabla" data-testid="ops-slos">
+              <caption class="operacion__oculto">Objetivos de nivel de servicio</caption>
+              <thead><tr><th scope="col">Indicador</th><th scope="col">Objetivo</th><th scope="col">Última medición</th><th scope="col">Base</th></tr></thead>
+              <tbody>
+                @for (s of listaDe(slos()); track s.id) {
+                  <tr>
+                    <td>{{ s.indicator?.name ?? s.indicator?.code ?? s.id }}</td>
+                    <td>{{ porcentaje(s.target) }}</td>
+                    <td>
+                      @if (s.lastMeasurement; as m) {
+                        <app-badge [variant]="conceptStatus(m.status).tone">{{ conceptStatus(m.status).label }}</app-badge>
+                        {{ porcentaje(m.attained) }} <span class="operacion__nota">{{ m.measuredAt | date: 'short' }}</span>
+                      } @else {
+                        <span class="operacion__nota">Sin medición</span>
+                      }
+                    </td>
+                    <td>
+                      @if (s.lastMeasurement; as m) {
+                        {{ entero(m.goodEvents) }} de {{ entero(m.totalEvents) }} eventos
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </app-view-state-host>
+      </app-tab>
+
+      <app-tab label="Backups">
+        <app-view-state-host [state]="backups()" (retry)="cargar()">
+          <ul class="operacion__controles" data-testid="ops-backups">
+            @for (b of listaDe(backups()); track b.policyId) {
+              <li class="operacion__control">
+                <strong>RPO {{ horas(b.rpoSeconds) }} · RTO {{ horas(b.rtoSeconds) }}</strong>
+                <span class="operacion__nota">Prueba de restauración cada {{ b.restoreTestFrequencyDays ?? 90 }} días</span>
+                @if (b.lastRestoreTest; as t) {
+                  <p class="operacion__razon">
+                    Última restauración {{ t.finishedAt | date: 'short' }}:
+                    <app-badge [variant]="t.outcome === 'PASS' ? 'success' : 'error'">{{ t.outcome === 'PASS' ? 'Correcta' : 'Fallida' }}</app-badge>
+                    · RPO medido {{ horas(t.measuredRpoSeconds) }} · RTO medido {{ horas(t.measuredRtoSeconds) }}
+                    · integridad {{ t.integrityCheckPassed === null ? 'sin verificar' : t.integrityCheckPassed ? 'verificada' : 'fallida' }}
+                  </p>
+                } @else {
+                  <app-alert tone="warning">Nunca se probó restaurar: un backup sin restauración probada no cuenta.</app-alert>
+                }
+              </li>
+            }
+          </ul>
+        </app-view-state-host>
+      </app-tab>
+    </app-tabs>
+  </app-card>
+</div>

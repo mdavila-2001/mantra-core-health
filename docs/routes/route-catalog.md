@@ -1,6 +1,6 @@
 # Catálogo de rutas
 
-Las 11 entradas de `src/app/app.routes.ts`, con su ficha completa. El inventario
+Las 12 entradas de `src/app/app.routes.ts`, con su ficha completa. El inventario
 automático está en
 [el inventario de rutas generado](../reports/generated/route-inventory.md); esta
 página es su lectura.
@@ -28,6 +28,7 @@ página es su lectura.
 | `/auth/forgot-password` | `ForgotPassword` | Pública | **Prerender** | `POST /iam/auth/forgot-password` | [ficha](auth-forgot-password.md) |
 | `/auth/reset-password` | `ResetPassword` | Pública | Cliente | `POST /iam/auth/reset-password` | [ficha](auth-reset-password.md) |
 | `/design-system` | `DesignSystemSample` | Pública | **Prerender** | — | [ficha](design-system.md) |
+| `/verify/portability/:manifestHash` | `PortabilityVerify` | Pública | Cliente | `GET /public/portability/verify/:manifestHash` | [ficha](verify-portability.md) |
 | `/error` | `ErrorRecovery` | Pública | Cliente | — | [ficha](error-y-404.md) |
 | `**` | `NotFound` | Pública | Cliente | — | [ficha](error-y-404.md) |
 | `''` (hija) | redirige a `/dashboard` | `authGuard` | — | — | — |

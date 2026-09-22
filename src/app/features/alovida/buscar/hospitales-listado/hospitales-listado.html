@@ -19,10 +19,41 @@
     <div class="app-page-header__titulo"><h1>Hospitales y clínicas</h1></div>
     <p class="caption">
       Dónde te pueden atender: qué es cada centro, en qué ciudad y en qué calle queda, y si su
-      identidad está verificada. La ficha pública la publica la propia organización.
+      identidad está verificada. Tocá un departamento en el mapa y aparecen sus ciudades para
+      acotar más. La ficha pública la publica la propia organización.
     </p>
   </div>
 </div>
+
+<!-- ─── El mapa de Bolivia como filtro ───────────────────────────────────────
+     El departamento es lo primero que acota una búsqueda de lugares: a nadie le
+     sirve un hospital excelente al otro lado del país. Los chips de ciudad
+     cuelgan de él —ver el JSDoc de la clase— y el mapa es el corte de arriba.
+
+     Se dibuja el país entero, con los nueve departamentos, y no sólo los que
+     tienen algo publicado; cada uno dice cuántos tiene en la línea de abajo. -->
+@if (catalogoGeoCaido()) {
+  <p class="mapa-directorio__caido" role="status">
+    No pudimos leer el catálogo de departamentos, así que el mapa no está. El resto del
+    directorio funciona igual.
+    <button app-button="" data-variante="secundario" data-tam="sm" type="button" (click)="reintentarGeo()">
+      Reintentar
+    </button>
+  </p>
+} @else if (departamentos().length > 0) {
+  <section class="mapa-directorio" aria-label="Filtrar por departamento">
+    <app-department-map
+      testId="hospitales-mapa"
+      [departamentos]="departamentos()"
+      [value]="departamentoElegido()"
+      (valueChange)="elegirDepartamento($event)"
+      etiqueta="Mapa de Bolivia: elegí el departamento donde buscás"
+    />
+    @if (resumenDelMapa(); as resumen) {
+      <p class="mapa-directorio__resumen" data-testid="hospitales-mapa-resumen">{{ resumen }}</p>
+    }
+  </section>
+}
 
 <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros de la búsqueda">
   <label class="app-search-field" app-search-field="">
@@ -46,40 +77,43 @@
       type="search"
       name="q"
       placeholder="Buscá por nombre de la clínica, el hospital o la calle"
-      [value]="busqueda.texto()"
+      [value]="texto()"
       (input)="alEscribir($any($event.target).value)"
     />
   </label>
 
-  <!-- Los chips de ciudad. Filtran de verdad: `city` está implementado en la
-       API en los dos caminos, el del índice y el de SQL. Ver el JSDoc de la
-       clase — un filtro que no filtra no se dibuja. -->
-  <div class="centros__chips" role="group" aria-label="Ciudad">
-    <button
-      type="button"
-      class="centros__chip"
-      [class.centros__chip--activo]="ciudad() === null"
-      [attr.aria-pressed]="ciudad() === null"
-      (click)="alElegirCiudad(null)"
-    >
-      Todas las ciudades
-    </button>
-    @for (nombre of CIUDADES; track nombre) {
+  <!-- Los chips de ciudad, que son los del departamento elegido en el mapa.
+       Sin departamento no se dibuja ninguno: ofrecer las dos escalas a la vez
+       es hacer dos preguntas para una sola decisión. Ver el JSDoc de la clase. -->
+  @if (ciudades().length > 1) {
+    <div class="centros__chips" role="group" aria-label="Ciudad" data-testid="hospitales-chips-ciudad">
       <button
         type="button"
         class="centros__chip"
-        [class.centros__chip--activo]="ciudad() === nombre"
-        [attr.aria-pressed]="ciudad() === nombre"
-        (click)="alElegirCiudad(nombre)"
+        [class.centros__chip--activo]="ciudad() === null"
+        [attr.aria-pressed]="ciudad() === null"
+        (click)="alElegirCiudad(null)"
       >
-        {{ nombre }}
+        Todo el departamento
       </button>
-    }
-  </div>
+      @for (nombre of ciudades(); track nombre) {
+        <button
+          type="button"
+          class="centros__chip"
+          data-testid="hospitales-chip-ciudad"
+          [class.centros__chip--activo]="ciudad() === nombre"
+          [attr.aria-pressed]="ciudad() === nombre"
+          (click)="alElegirCiudad(nombre)"
+        >
+          {{ nombre }}
+        </button>
+      }
+    </div>
+  }
 </section>
 
 <section class="app-view-state-host" app-view-state-host="">
-  @switch (busqueda.estado()) {
+  @switch (estado()) {
     @case ('datos') {
       <div data-estado="datos">
         <!-- El recuento va arriba de la grilla y no en el pie: es lo primero
@@ -87,6 +121,9 @@
              llega después de haber recorrido la lista entera. Dice
              «aproximadamente» cuando el total es una estimación, porque lo es:
              `totalHint` es una pista, no un `COUNT`. -->
+        @if (aviso(); as texto) {
+          <p class="centros__recuento" role="status">{{ texto }}</p>
+        }
         <p class="centros__recuento" aria-live="polite">{{ recuento() }}</p>
 
         <ul class="centros__grilla">
@@ -127,14 +164,14 @@
         </ul>
 
         <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
-          <p class="app-pagination__nota">{{ busqueda.rotuloDePagina() }}</p>
+          <p class="app-pagination__nota">{{ rotuloDePagina() }}</p>
           <button
             app-button=""
             data-variante="secundario"
             data-tam="sm"
             type="button"
-            [disabled]="!busqueda.hayAnteriores()"
-            (click)="busqueda.anterior()"
+            [disabled]="!hayAnteriores()"
+            (click)="anterior()"
           >
             Anteriores
           </button>
@@ -143,8 +180,8 @@
             data-variante="secundario"
             data-tam="sm"
             type="button"
-            [disabled]="!busqueda.haySiguientes()"
-            (click)="busqueda.siguiente()"
+            [disabled]="!haySiguientes()"
+            (click)="siguiente()"
           >
             Siguientes
           </button>
@@ -181,7 +218,15 @@
               en la plataforma y no son visibles sin sesión.
             </p>
             <button app-button="" data-variante="primario" type="button" (click)="alElegirCiudad(null)">
-              Buscar en todas las ciudades
+              Buscar en todo el departamento
+            </button>
+          } @else if (departamentoElegido() !== null) {
+            <p>
+              Todavía no hay centros publicados en ese departamento. Tocalo otra vez en el mapa
+              para ver todo el país.
+            </p>
+            <button app-button="" data-variante="primario" type="button" (click)="elegirDepartamento(null)">
+              Ver todo el país
             </button>
           } @else {
             <p>
@@ -244,7 +289,7 @@
               app-button=""
               data-variante="secundario"
               type="button"
-              (click)="busqueda.reintentar()"
+              (click)="reintentar()"
             >
               <svg
                 class="icono"

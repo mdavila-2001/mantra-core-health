@@ -10,93 +10,14 @@
   }}</app-alert>
 }
 
-<form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="alta-sucursal-form">
-  <app-form-section legend="Identificación" description="Con qué se la nombra dentro de la organización.">
-    <app-form-field
-      label="Código"
-      hint="Único dentro de esta organización. Es sobre lo que ordena el listado."
-      [required]="true"
-      [errorMessage]="
-        codigoEnConflicto()
-          ? 'Ya existe una sede con este código en la organización. Probá con otro.'
-          : form.controls.code.touched && form.controls.code.invalid
-            ? 'Escribí el código de la sede.'
-            : ''
-      "
-    >
-      <app-input formControlName="code" type="text" testId="alta-sucursal-codigo" />
-    </app-form-field>
-
-    <app-form-field
-      label="Nombre"
-      [required]="true"
-      [errorMessage]="
-        form.controls.name.touched && form.controls.name.invalid
-          ? 'Escribí el nombre de la sede (hasta 300 caracteres).'
-          : ''
-      "
-    >
-      <app-input formControlName="name" type="text" testId="alta-sucursal-nombre" />
-    </app-form-field>
-
-    <app-form-field label="Tipo de sede" hint="Opcional. Cómo se atiende en esta dirección.">
-      <app-select
-        [value]="tipo()"
-        (valueChange)="cambiarTipo($event)"
-        [options]="opcionesDeTipo"
-        placeholder="Elegí un tipo"
-      />
-    </app-form-field>
-  </app-form-section>
-
-  <app-form-section
-    legend="Datos operativos"
-    description="Se pueden completar después, pero la zona horaria es lo que hace que un turno signifique la misma hora para todos."
-  >
-    <app-form-field
-      label="Zona horaria"
-      hint="Opcional, en formato IANA (por ejemplo, America/La_Paz)."
-      [errorMessage]="
-        form.controls.timeZone.touched && form.controls.timeZone.invalid
-          ? 'La zona horaria no puede superar los 100 caracteres.'
-          : ''
-      "
-    >
-      <app-input formControlName="timeZone" type="text" testId="alta-sucursal-zona" />
-    </app-form-field>
-
-    <app-form-field
-      label="Latitud"
-      hint="Opcional. Va junto con la longitud."
-      [errorMessage]="
-        form.controls.latitude.touched && form.controls.latitude.invalid
-          ? 'La latitud va entre -90 y 90.'
-          : coordenadaIncompleta()
-            ? 'Cargá las dos coordenadas o ninguna: una sola no ubica la sede.'
-            : ''
-      "
-    >
-      <app-input formControlName="latitude" type="number" testId="alta-sucursal-latitud" />
-    </app-form-field>
-
-    <app-form-field
-      label="Longitud"
-      hint="Opcional. Va junto con la latitud."
-      [errorMessage]="
-        form.controls.longitude.touched && form.controls.longitude.invalid
-          ? 'La longitud va entre -180 y 180.'
-          : ''
-      "
-    >
-      <app-input formControlName="longitude" type="number" testId="alta-sucursal-longitud" />
-    </app-form-field>
-  </app-form-section>
-
-  <app-form-actions
-    submitLabel="Abrir sede"
-    cancelLabel="Cancelar"
-    [pending]="enviando()"
-    (submitted)="submit()"
-    (cancelled)="cancelar()"
-  />
-</form>
+<app-paginated-form
+  [paginas]="paginas()"
+  [form]="form"
+  label="Nueva sucursal"
+  submitLabel="Abrir sede"
+  cancelLabel="Cancelar"
+  [pending]="enviando()"
+  (enviado)="submit()"
+  (cancelado)="cancelar()"
+  data-testid="alta-sucursal-form"
+/>

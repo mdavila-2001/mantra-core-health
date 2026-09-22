@@ -12,7 +12,9 @@ import {
   type ReservaSimulada,
 } from '../fixtures/agenda';
 import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from '../fixtures/conceptos';
+import { emitirNotificacion } from './notifications.handlers';
 import { pacientePorId } from '../fixtures/personas';
+import { representaA } from './profiles.handlers';
 import { conflict, noContent, notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
@@ -46,7 +48,12 @@ function reservaVisible(request: MockRequest, r: ReservaSimulada): boolean {
   const user = request.user;
   if (user === null) return false;
   if (user.patientProfileId !== undefined && user.practitionerProfileId === undefined) {
-    return r.patientProfileId === user.patientProfileId;
+    // Lo suyo, y lo de quienes representa (B.1): quien pidió el turno de su hijo
+    // tiene que verlo en su listado.
+    return (
+      r.patientProfileId === user.patientProfileId ||
+      representaA(user.patientProfileId, r.patientProfileId)
+    );
   }
   return true;
 }
@@ -55,6 +62,48 @@ function cambiarEstado(id: string, estado: keyof typeof ESTADO_RESERVA, extra: P
   const r = reservas.get(id);
   if (r === undefined) return undefined;
   return reservas.actualizar(id, { statusConceptId: ESTADO_RESERVA[estado]!, ...extra });
+}
+
+/**
+ * Deja el aviso de demora en la campana del paciente de una reserva.
+ *
+ * El aviso ya viajaba pegado a la cita —la portada del paciente y su listado lo
+ * muestran—, pero eso sólo se ve si la persona ENTRA a mirar. La demora se
+ * avisa justo cuando el paciente no está en la aplicación: está yendo al
+ * consultorio. Por eso además se le deja una notificación, que es lo que el
+ * registro de procesos pide en el módulo Paciente («SI EL MEDICO SE DEMORARÁ
+ * PUEDES RECIBIR UNA NOTIFICACION DE LA APP») y en el módulo Médico («EL
+ * PACIENTE RECIBIRA UNA NOTIFICACION DEL COMUNICADO DEL MEDICO»).
+ *
+ * @returns `true` si el paciente tiene cuenta y se le pudo dejar el aviso.
+ */
+function avisarDemoraAlPaciente(
+  reserva: ReservaSimulada,
+  minutos: number,
+  mensaje: string | undefined,
+): boolean {
+  const paciente = pacientePorId(reserva.patientProfileId);
+  if (paciente === undefined) return false;
+
+  const hora = new Date(reserva.startAt).toLocaleTimeString('es-BO', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  // El mensaje del profesional va DESPUÉS del dato duro y entre comillas: es su
+  // voz, no la del sistema, y quien lee necesita primero cuánto y de qué cita.
+  const explicacion = mensaje === undefined || mensaje.trim() === '' ? '' : ` «${mensaje.trim()}»`;
+
+  emitirNotificacion({
+    userId: paciente.userId,
+    category: 'SCHEDULING',
+    subject: `Tu cita de las ${hora} se demora ${minutos} minutos`,
+    // El nombre sale del RECURSO, que es donde vive: la reserva guarda el del
+    // paciente, no el de quien atiende.
+    bodyText: `${recursos.get(reserva.resourceId)?.practitionerName ?? 'Tu profesional'} avisó una demora de ${minutos} minutos en tu cita de las ${hora}.${explicacion}`,
+    destination: { type: 'APPOINTMENT', id: reserva.id },
+    payloadJson: { bookingId: reserva.id, delayMinutes: minutos },
+  });
+  return true;
 }
 
 export function registrarAgenda(router: MockRouter): void {
@@ -262,8 +311,10 @@ export function registrarAgenda(router: MockRouter): void {
     const r = reservas.get(request.params['id']!);
     if (r === undefined) return notFound();
     const datos = cuerpo<{ delayMinutes: number; message?: string }>(request);
-    reservas.actualizar(r.id, { delayNotice: { delayMinutes: datos.delayMinutes ?? 15, message: datos.message ?? 'Demora en la atención', announcedAt: ahora() } });
-    return { notified: 1, affected: 1, bookingIds: [r.id], detail: `Se avisó a ${r.patientName} una demora de ${datos.delayMinutes ?? 15} minutos.` };
+    const minutos = datos.delayMinutes ?? 15;
+    reservas.actualizar(r.id, { delayNotice: { delayMinutes: minutos, message: datos.message ?? 'Demora en la atención', announcedAt: ahora() } });
+    const avisado = avisarDemoraAlPaciente(r, minutos, datos.message);
+    return { notified: avisado ? 1 : 0, affected: 1, bookingIds: [r.id], detail: avisado ? `Se avisó a ${r.patientName} una demora de ${minutos} minutos.` : `${r.patientName} no tiene cuenta de portal: avisale por otro medio.` };
   });
 
   router.post('/scheduling/resources/:id/delay', (request) => {
@@ -273,10 +324,13 @@ export function registrarAgenda(router: MockRouter): void {
       .todos()
       .filter((r) => r.resourceId === request.params['id'] && new Date(r.startAt).toDateString() === hoy && estadoEs(r, 'BK-CONFIRMED', 'BK-CHECKED-IN'))
       .filter((r) => new Date(r.startAt).getTime() > Date.now());
+    const minutos = datos.delayMinutes ?? 15;
+    let avisados = 0;
     for (const r of afectadas) {
-      reservas.actualizar(r.id, { delayNotice: { delayMinutes: datos.delayMinutes ?? 15, message: datos.message ?? 'Demora en la atención', announcedAt: ahora() } });
+      reservas.actualizar(r.id, { delayNotice: { delayMinutes: minutos, message: datos.message ?? 'Demora en la atención', announcedAt: ahora() } });
+      if (avisarDemoraAlPaciente(r, minutos, datos.message)) avisados += 1;
     }
-    return { notified: afectadas.length, affected: afectadas.length, bookingIds: afectadas.map((r) => r.id), detail: `${afectadas.length} pacientes avisados.` };
+    return { notified: avisados, affected: afectadas.length, bookingIds: afectadas.map((r) => r.id), detail: `${avisados} de ${afectadas.length} pacientes avisados.` };
   });
 
   router.post('/scheduling/appointments/direct', (request) => {
@@ -358,9 +412,30 @@ export function registrarAgenda(router: MockRouter): void {
     return resto;
   });
 
+  /**
+   * Retira un horario publicado.
+   *
+   * **Responde 409 con las citas comprometidas**, igual que el contrato: sin
+   * eso la maqueta dejaba retirar cualquier horario y el camino del error —el
+   * que impide mover turnos de pacientes sin avisar— no se podía ni ver ni
+   * probar.
+   */
   router.delete('/scheduling/templates/:id', ({ params }) => {
     const t = plantillas.get(params['id']!);
     if (t === undefined) return notFound();
+    const delHorario = new Set(cupos.filtrar((c) => c.scheduleTemplateId === t.id).map((c) => c.id));
+    const comprometidas = reservas.filtrar(
+      (r) =>
+        delHorario.has(r.bookableSlotId) &&
+        r.startAt > ahora() &&
+        estadoEs(r, 'BK-CONFIRMED', 'BK-CHECKED-IN', 'BK-IN-PROGRESS'),
+    );
+    if (comprometidas.length > 0) {
+      return conflict(
+        `El horario tiene ${comprometidas.length} ${comprometidas.length === 1 ? 'cita comprometida' : 'citas comprometidas'}: resolvelas antes de cambiarlo.`,
+        { bookingIds: comprometidas.map((r) => r.id) },
+      );
+    }
     plantillas.actualizar(t.id, { retired: true, statusConceptId: ESTADO['ST-ARCHIVED']! });
     const libres = cupos.filtrar((c) => c.scheduleTemplateId === t.id && c.remainingCapacity > 0 && c.startAt > ahora());
     for (const c of libres) cupos.borrar(c.id);

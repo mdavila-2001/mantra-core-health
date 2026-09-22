@@ -1,67 +1,67 @@
 # =========================================================================
-# Mantra Core Technologies · ALOVIDA — rama `mockup` en Coolify
+# Mantra Core Technologies · ALOVIDA — rama `test` en Coolify
 # -------------------------------------------------------------------------
-# UN SOLO CONTENEDOR. Sin nginx, sin red compartida y SIN NINGÚN BIND MOUNT.
+# DOS SERVICIOS Y NINGÚN BIND MOUNT: el servidor de renderizado (`web`) y el
+# reverse proxy que reparte los prefijos de la API (`proxy`).
 #
-# ─── Por qué en esta rama no hay proxy ────────────────────────────────────
+# Es la aplicación REAL, no la maqueta: las peticiones salen del navegador y
+# tienen que llegar a la API. Por eso hace falta el proxy, y por eso este
+# archivo se separó del de `mockup`, donde el backend simulado vive dentro del
+# propio paquete y ningún servicio más hace falta.
 #
-# En `dev` este archivo levanta dos servicios: el servidor de renderizado y un
-# nginx que reparte los prefijos de la API hacia el stack de la API por la red
-# `alovida`. Eso existe porque allí la API y el frontend comparten dominio.
+# ─── Las tres cosas que rompieron esto antes, y cómo se resuelven ─────────
 #
-# En `mockup` no hay API. La rama trae un backend simulado dentro del propio
-# frontend (`src/app/core/mock`) y **ninguna petición sale del navegador**: las
-# contesta el interceptor. Un nginx acá no repartiría nada — resolvería el
-# upstream `api`, no lo encontraría y ni siquiera arrancaría.
+#  1. `context: ..` — el despliegue del 14/09 murió con «failed to read
+#     dockerfile: open Dockerfile: no such file or directory». Compose resuelve
+#     los contextos relativos contra el DIRECTORIO DE PROYECTO, y Coolify lo
+#     fija en la raíz del repositorio (`--project-directory /artifacts/<uuid>`),
+#     no en `deploy/`. El `..` apuntaba, por tanto, al padre de la raíz.
+#     Acá el contexto es `.` = la raíz, y los `dockerfile:` llevan el prefijo
+#     `deploy/` cuando viven en esta carpeta.
 #
-# ─── Y por qué se quitó, además de ser inútil ─────────────────────────────
+#     ⚠️  El precio: a mano hay que invocarlo con el mismo directorio de
+#     proyecto, o compose tomará `deploy/` como raíz y volverá a fallar:
+#         docker compose -f deploy/docker-compose.coolify.yml \
+#                        --project-directory . up --build
 #
-# Porque rompía el despliegue. El servicio `proxy` montaba tres archivos de
-# configuración por bind (`../deploy/nginx.coolify.conf` y compañía). Coolify
-# reescribe esas rutas relativas contra el directorio persistente de la
-# aplicación, y el `..` acababa produciendo una ruta pegada:
+#  2. La configuración de nginx MONTADA. Coolify clona el repositorio dentro de
+#     un contenedor auxiliar y habla con el demonio del host: cualquier ruta
+#     relativa del repositorio llega vacía o directamente no existe. La
+#     configuración viaja ahora DENTRO de la imagen del proxy; ver
+#     `deploy/Dockerfile.proxy`.
 #
-#   /data/coolify/applications/<uuid>./deploy/nginx.coolify.conf
-#                                    ^ el punto, pegado al uuid
-#
-# Esa ruta no existe, así que Docker la creaba como directorio vacío y runc se
-# negaba: «not a directory: Are you trying to mount a directory onto a file?».
-# El `web` llegaba a `Healthy` y el despliegue moría igual, en el `proxy`.
-#
-# Un archivo de configuración montado por bind no sobrevive a un desplegador
-# que no tiene el repositorio en el disco. Acá se resuelve quitando la pieza
-# que no hacía falta; en `dev`, donde el proxy sí hace falta, esa configuración
-# tendría que viajar DENTRO de una imagen y no montada.
+#  3. El puerto 4000 publicado en el host. Esta máquina ya tiene el despliegue
+#     de `dev` ocupando `127.0.0.1:4000` (contenedor `alovida-web`, fuera de
+#     Coolify). Publicar aquí el mismo puerto daría «port is already
+#     allocated». Ninguno de los dos servicios publica nada: Traefik alcanza al
+#     `proxy` por la red interna, que es todo lo que necesita.
 #
 # ─── En Coolify ───────────────────────────────────────────────────────────
 #
-#   Nuevo recurso → Docker Compose → este repositorio, rama `mockup`
-#   Compose file: deploy/docker-compose.coolify.yml  (o el de la raíz: los dos
-#                 levantan exactamente lo mismo en esta rama)
-#   Dominio: asignarlo al servicio `web`, puerto 4000
+#   Recurso `alovida-web` → Docker Compose → este repositorio, rama `test`
+#   Compose file: deploy/docker-compose.coolify.yml
+#   Dominio: asignado al servicio `proxy`, puerto 80
 #   Variable: APP_DOMAIN = ese dominio, SIN `https://`
 #
-# ─── Cuentas ──────────────────────────────────────────────────────────────
-#
-#   medica@alovida.mock · paciente@alovida.mock · admin@alovida.mock
-#   superadmin@alovida.mock · visitador@alovida.mock — cualquier contraseña.
-#
-# Los datos viven en memoria del navegador: lo que se crea dura lo que dura la
-# pestaña, y cada visitante ve el mismo punto de partida.
+# La API tiene que estar en pie: este stack toma la red `alovida` como externa
+# y la crea el stack de `mantra-core-health-api`. Si la API no está desplegada,
+# este despliegue falla al arrancar con «network alovida not found», y eso es
+# lo correcto: un frontend sin API no sirve de nada.
 # =========================================================================
 
 services:
   web:
     build:
-      # El contexto es la RAÍZ del repositorio, no `deploy/`: el Dockerfile
-      # copia `package.json`, `src/` y el resto desde ahí.
-      context: ..
+      # La RAÍZ del repositorio: el Dockerfile copia `package.json`, `src/` y
+      # `.git` (de donde sale el commit que se estampa en el paquete).
+      context: .
       dockerfile: Dockerfile
       args:
-        # VACÍA, y no es un descuido: es la decisión de arquitectura de la
-        # cabecera. Tiene que coincidir con la variable de entorno de abajo —
-        # son las dos mitades de lo mismo, una para el paquete del navegador y
-        # otra para la `connect-src` que emite el servidor.
+        # VACÍA a propósito, y es la decisión de arquitectura de todo el
+        # montaje: la API vive detrás del MISMO dominio que el frontend, así
+        # que las peticiones salen relativas. Sin CORS que negociar y con la
+        # CSP en `connect-src 'self'`. Quien hace que eso sea verdad es el
+        # `proxy` de abajo.
         PUBLIC_API_BASE_URL: ''
     restart: always
     environment:
@@ -73,26 +73,61 @@ services:
       # `AngularNodeAppEngine` compara el `Host` de cada petición contra su
       # lista de hosts permitidos y responde **400 a todo lo que no esté**:
       # «Header "host" with value "…" is not allowed». La lista horneada en el
-      # artefacto (`angular.json`, `security.allowedHosts`) solo conoce lo que
+      # artefacto (`angular.json`, `security.allowedHosts`) sólo conoce lo que
       # se sabía al compilar —`localhost`, `127.0.0.1`, `frontend`—, y el
       # dominio público no es una de esas cosas.
       #
-      # Sin esta variable el despliegue arranca sano —los contenedores en pie,
-      # el healthcheck en verde, porque pide `localhost`— y devuelve 400 en
-      # CADA página al primer visitante real. Es la comprobación que ningún
-      # health check puede hacer por uno.
+      # El proxy reenvía el `Host` original (`proxy_set_header Host $host`), así
+      # que lo que llega aquí es el dominio de Coolify, no `proxy`.
       #
-      # Varios dominios van separados por coma. `*` se rechaza a propósito.
-      SSR_ALLOWED_HOSTS: ${APP_DOMAIN}
+      # Sin esta variable el despliegue arranca sano —contenedores en pie,
+      # healthcheck en verde, porque pide `localhost`— y devuelve 400 en CADA
+      # página al primer visitante real.
+      SSR_ALLOWED_HOSTS: '${APP_DOMAIN}'
     expose:
       - '4000'
+    networks:
+      alovida:
+        # Coolify renombra los contenedores (`web-<uuid>-<fecha>`), así que el
+        # `upstream frontend { server web:4000; }` del nginx no resolvería. El
+        # alias explícito es lo que lo mantiene en pie, igual que hace el stack
+        # de la API con el suyo.
+        aliases:
+          - web
     deploy:
       resources:
         limits:
-          # El renderizado en servidor de esta aplicación se mide en ~400 MB en
-          # marcha; 768 MB deja aire para picos sin permitir que una fuga se
-          # coma el VPS entero.
+          # El renderizado en servidor se mide en ~400 MB en marcha; 768 MB deja
+          # aire para picos sin que una fuga se coma la máquina.
           memory: 768M
-    # El `HEALTHCHECK` viene en la imagen: pide `/auth`, que comprueba que el
-    # proceso responde Y que el artefacto del navegador está donde el servidor
-    # lo busca.
+
+  proxy:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.proxy
+    restart: always
+    # Que el proxy no acepte tráfico antes de que haya algo detrás. El
+    # healthcheck del `web` pide `/auth`, o sea que comprueba el artefacto del
+    # navegador además del proceso.
+    depends_on:
+      web:
+        condition: service_healthy
+    expose:
+      - '80'
+    networks:
+      alovida:
+        aliases:
+          - alovida-front-test
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+networks:
+  # La declara el stack de la API (`mantra-core-health-api`), que es quien tiene
+  # dentro al `api:3000`. Aquí se toma como externa: si la creara este stack,
+  # Docker se negaría a que dos proyectos reclamaran la misma red con etiquetas
+  # distintas.
+  alovida:
+    external: true
+    name: ${ALOVIDA_NETWORK:-alovida}

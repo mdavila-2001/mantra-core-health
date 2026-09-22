@@ -127,3 +127,44 @@ form {
   line-height: var(--lh-caption);
   color: var(--text-secondary);
 }
+
+/* Las cinco partes del nombre (representante legal y cada gerencia): seis
+   columnas para repartir tercios (nombre, segundo, tercero) y mitades
+   (apellido paterno, materno) sin que ninguna quede más angosta que lo que
+   se escribe adentro; una sola columna en pantalla angosta. */
+.register-org__nombres {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--sp-3);
+  padding-block: var(--sp-2);
+}
+
+.register-org__nombre--tercio {
+  grid-column: span 2;
+}
+
+.register-org__nombre--mitad {
+  grid-column: span 3;
+}
+
+/* El acordeón de las tres gerencias (subtarea 1.4): dos columnas para celular
+   y correo cuando entran; una sola en pantalla angosta, antes que estrechar
+   los controles a menos de lo que se escribe adentro. */
+.register-org__executive-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+  padding-block: var(--sp-2);
+}
+
+@media (max-width: 768px) {
+  .register-org__nombres,
+  .register-org__executive-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .register-org__nombre--tercio,
+  .register-org__nombre--mitad {
+    grid-column: auto;
+  }
+}

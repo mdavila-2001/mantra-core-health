@@ -5,14 +5,12 @@ import { ShellLayout } from './features/shell-layout/shell-layout';
 import { Login } from './features/auth/login/login';
 import { TenantSelection } from './features/auth/tenant-selection/tenant-selection';
 import { RegisterAccountType } from './features/auth/register-account-type/register-account-type';
-import { RegisterOrganization } from './features/auth/register-organization/register-organization';
 import { VerifyEmail } from './features/auth/verify-email/verify-email';
 import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
 import { ResetPassword } from './features/auth/reset-password/reset-password';
 import { ActivateAccount } from './features/auth/activate-account/activate-account';
 import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
-import { IdentityVerification } from './features/identity-verification/identity-verification';
 import { NotFound } from './features/not-found/not-found';
 import { ALOVIDA_ROUTES } from './features/alovida/alovida.routes';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
@@ -58,7 +56,6 @@ function soloDeQuienAtiende(): Pick<Routes[number], 'canActivate' | 'data'> {
  */
 const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
   dashboard: Dashboard,
-  'my-account/identity/verify': IdentityVerification,
 };
 
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
@@ -114,7 +111,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // Diferidas como el resto: sólo las alcanza quien atiende, y el presupuesto
   // del bundle inicial está al límite —cargarlas de entrada lo pasaba por 4 kB
   // y le costaba la descarga a todo el mundo, paciente incluido—.
-  consultation: () => import('./features/consultation/consultation').then((m) => m.Consultation),
   'progress-notes': () =>
     import('./features/progress-notes/progress-notes').then((m) => m.ProgressNotes),
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
@@ -160,8 +156,17 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/insurance/insurance-claims/insurance-claims').then(
       (m) => m.InsuranceClaims,
     ),
+  'administration/insurance-analytics': () =>
+    import('./features/insurance/insurance-analytics/insurance-analytics').then(
+      (m) => m.InsuranceAnalytics,
+    ),
+  // Contabilidad abre en el **cockpit**: el estado del ejercicio, los documentos
+  // frenados y la cartera. Los libros —balance, diario y el registro de
+  // movimientos— viven en `administration/accounting/libros`, a un clic. El
+  // orden es el que pidió el propietario el 2026-09-12: primero cómo va el
+  // ejercicio, después el renglón por renglón.
   'administration/accounting': () =>
-    import('./features/accounting/accounting').then((m) => m.Accounting),
+    import('./features/accounting/cockpit/cockpit').then((m) => m.Cockpit),
   // FT-26 · activos y pasivos, en auto-servicio del doctor.
   'assets-liabilities': () =>
     import('./features/assets-liabilities/assets-liabilities').then(
@@ -175,8 +180,17 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/content-packs/content-packs').then((m) => m.ContentPacks),
   'administration/moderation': () =>
     import('./features/admin/moderation/moderation').then((m) => m.Moderation),
+  'administration/data-catalog': () =>
+    import('./features/admin/data-catalog/data-catalog').then((m) => m.DataCatalog),
+  'administration/web-analytics': () =>
+    import('./features/admin/web-analytics/web-analytics').then((m) => m.WebAnalytics),
+  'administration/qa-lab': () => import('./features/admin/qa-lab/qa-lab').then((m) => m.QaLab),
+  'administration/operations': () =>
+    import('./features/admin/operations/operations').then((m) => m.Operations),
   tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
   'my-account': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
+  'my-account/dependents': () =>
+    import('./features/account/dependents/dependents').then((m) => m.Dependents),
   'my-account/appointments': () =>
     import('./features/account/appointments/appointments').then((m) => m.Appointments),
   'my-account/medical-record': () =>
@@ -193,6 +207,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
   'my-account/loyalty': () =>
     import('./features/account/loyalty/loyalty').then((m) => m.Loyalty),
+  'my-account/promotions': () =>
+    import('./features/account/promotions/promotions').then((m) => m.Promotions),
   'administration/pharmacy-orders': () =>
     import('./features/organization/pharmacy-inbox/pharmacy-inbox').then(
       (m) => m.PharmacyInbox,
@@ -200,9 +216,33 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // FAR-I7: las campañas de la farmacia. Ruta hermana de la bandeja y no una
   // sección dentro del panel de organización, por el mismo motivo que aquélla:
   // el panel es de TP-1 y así no se le toca una línea.
+  // **La verificación de identidad dejó de ir directa** (2026-09-10). Iba, y el
+  // motivo era bueno mientras la ruta apuntaba a una pantalla sola: es la salida
+  // del 403 `IDENTITY_VERIFICATION_REQUIRED`, y diferirla agrega una descarga
+  // donde alguien ya está esperando.
+  //
+  // Al unificarla con «Mis trámites» dejó de ser una pantalla y pasó a ser un
+  // centro con pestañas, y con él entraron al paquete inicial las pestañas y la
+  // tarjeta. El bundle quedó **9 kB por encima del techo de `angular.json`** y el
+  // build pasó a fallar. El reparto correcto cambió con el tamaño: la descarga
+  // la paga una vez quien cae en un 403 —un camino de error, ya interrumpido— en
+  // vez de pagarla **toda** primera visita a la aplicación.
+  'my-account/identity': () =>
+    import('./features/identity-verification/identity-hub/identity-hub').then(
+      (m) => m.IdentityHub,
+    ),
+  'administration/my-practice': () =>
+    import('./features/practice/my-practice/my-practice').then((m) => m.MyPractice),
   'administration/pharmacy-campaigns': () =>
     import('./features/organization/pharmacy-campaigns/pharmacy-campaigns').then(
       (m) => m.PharmacyCampaigns,
+    ),
+  // La ficha legal de la farmacia. Ruta hermana de las dos de arriba y no una
+  // sección del panel de organización, por el mismo motivo: el panel es de
+  // TP-1 y así no se le toca una línea. Diferida: arrastra el mapa.
+  'administration/pharmacy-profile': () =>
+    import('./features/organization/pharmacy-profile/pharmacy-profile').then(
+      (m) => m.PharmacyProfile,
     ),
   'my-account/identity/cases': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
@@ -286,18 +326,17 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  */
 const PANTALLAS_HIJAS: Routes = [
   {
-    // Carril P2 · el hilo de una conversación. Cuelga de `messaging` y se llega
-    // desde la bandeja o desde una notificación de la campana, no desde el
-    // menú: es la ficha de una conversación concreta.
-    //
-    // Sin `seccionRolesGuard` explícito porque su sección no declara roles; el
-    // backend comprueba que quien lee participe del hilo, que es la única
-    // barrera que importa acá.
-    path: 'messaging/:conversationId',
-    title: `${APP_TITLE} - Conversación`,
+    // Los libros: balance de sumas y saldos, diario y el registro de ingresos y
+    // gastos. Era la pantalla de Contabilidad hasta el 2026-09-12; ahora esa
+    // dirección abre el cockpit y esto queda un clic más adentro. **No** entra
+    // al menú: la lista de secciones del médico es cerrada y hay un spec que
+    // falla si alguien le agrega una (carril 9).
+    path: 'administration/accounting/libros',
+    title: `${APP_TITLE} - Libros contables`,
+    canActivate: [seccionRolesGuard],
     loadComponent: () =>
-      import('./features/messaging/thread/thread')
-        .then((m) => m.Thread)
+      import('./features/accounting/accounting')
+        .then((m) => m.Accounting)
         .catch(() => chunkFallido()),
   },
   {
@@ -362,6 +401,18 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // El checkout del pedido (T-E3 · pantalla G): entrega, dirección, medio de
+    // pago y resumen. Sin `:orderId`: el pedido se crea recién en su
+    // confirmación final (D-FARMOCK-T-E1-01). Antes de `:orderId`, como `new`.
+    path: 'my-account/pharmacy-orders/checkout',
+    title: `${APP_TITLE} - Confirmá tu pedido`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy-orders/checkout/checkout')
+        .then((m) => m.Checkout)
+        .catch(() => chunkFallido()),
+  },
+  {
     // La ficha de un pedido concreto: línea de tiempo, decisión de sustitución
     // y código de retiro. `new` va declarada antes: el router prueba en orden
     // y el parámetro se la tragaría.
@@ -386,6 +437,18 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // La factura del pedido (T-E4 · F2.1.12, F3.3). Hermana del comprobante
+    // interno y distinta de él: el comprobante dice que no es una factura.
+    // Sin contrato de facturación, un pedido sin factura dice su vacío honesto.
+    path: 'my-account/pharmacy-orders/:orderId/invoice',
+    title: `${APP_TITLE} - Factura`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy-orders/order-invoice/order-invoice')
+        .then((m) => m.OrderInvoice)
+        .catch(() => chunkFallido()),
+  },
+  {
     // El mismo pedido, visto desde el mostrador (carril FAR-I3): la
     // «recepción por un link» del registro del cliente. Hija de la bandeja;
     // hereda por prefijo su regla de acceso por membresía.
@@ -407,6 +470,20 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/clinical-record/patient-chart/patient-chart')
         .then((m) => m.PatientChart)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La atención: todo lo que se ESCRIBE durante una consulta. Cuelga del
+    // expediente y comparte su compuerta de roles porque es la misma persona y
+    // el mismo permiso; lo que cambia es el modo de trabajo. Vivía dentro del
+    // expediente y se separó: leer una historia y registrar una consulta son
+    // dos cosas distintas, y compartiendo pantalla se estorbaban.
+    path: 'medical-records/:profileId/encounter',
+    title: `${APP_TITLE} - Atención clínica`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/clinical-record/encounter-workspace/encounter-workspace')
+        .then((m) => m.EncounterWorkspace)
         .catch(() => chunkFallido()),
   },
   {
@@ -595,16 +672,6 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // La vitrina pública: se configura y se ve en la misma pantalla.
-    path: 'my-account/preview',
-    title: `${APP_TITLE} - Tu perfil público`,
-    ...soloDeQuienAtiende(),
-    loadComponent: () =>
-      import('./features/account/my-profile/public-profile-preview/public-profile-preview')
-        .then((m) => m.PublicProfilePreview)
-        .catch(() => chunkFallido()),
-  },
-  {
     // Publicar, revisar lo publicado y sus comentarios. Cuelga de la vitrina:
     // sin vitrina, no hay dónde publicar un artículo.
     path: 'my-account/articles',
@@ -638,6 +705,27 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/getting-started/getting-started')
         .then((m) => m.GettingStarted)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Detalle de un plan de QA. Hereda los roles de `administration/qa-lab`.
+    path: 'administration/qa-lab/plans/:planId',
+    title: `${APP_TITLE} - Plan de QA`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/qa-lab/plan-detail/qa-plan-detail')
+        .then((m) => m.QaPlanDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Ficha de un objeto del catálogo. Hereda los roles de la sección
+    // `administration/data-catalog` (prefijo más largo).
+    path: 'administration/data-catalog/:objectId',
+    title: `${APP_TITLE} - Ficha del catálogo`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/data-catalog/object-detail/catalog-object-detail')
+        .then((m) => m.CatalogObjectDetail)
         .catch(() => chunkFallido()),
   },
   {
@@ -831,10 +919,56 @@ function pantallaDeGeolocalizacion(
  * nadie declaró. Menú y rutas salen del mismo array, así que o existen las dos
  * cosas o no existe ninguna.
  */
+/**
+ * Las secciones que además son un marco: la pantalla queda montada y lo que
+ * cambia es lo que se pinta en su `router-outlet`.
+ *
+ * Hoy es una sola, la mensajería. El hilo de una conversación **no** es otra
+ * pantalla: es el panel derecho del chat, y declararlo como hermana hacía que
+ * abrir una conversación destruyera la bandeja y la volviera a pedir —la lista
+ * parpadeaba, el scroll se perdía y durante un instante no había nada—. Es lo
+ * primero que separa esto de cualquier chat que la gente ya usa.
+ *
+ * La sección sigue siendo una sola entrada del registro, así que el menú, el
+ * título y `seccionRolesGuard` no cambian: el guard del padre cubre a las
+ * hijas, que es justo lo que se quiere.
+ */
+const RUTAS_ANIDADAS: Readonly<Record<string, Routes>> = {
+  messaging: [
+    {
+      // Sin hilo abierto. No pinta nada a propósito: el hueco de la derecha
+      // —«elegí una conversación»— lo dibuja el propio marco, y un componente
+      // aparte para eso sería un fragmento más que descargar para no mostrar
+      // nada. Tiene que existir igual: una ruta con hijas sólo casa si alguna
+      // consume lo que queda de la dirección, y sin ésta `/messaging` a secas
+      // caía en el comodín de «no encontrada».
+      //
+      // `children: []` y no una ruta pelada: el router exige que toda ruta
+      // declare con qué se resuelve (NG04014), y una lista de hijas vacía es
+      // la forma de decir «con nada».
+      path: '',
+      children: [],
+    },
+    {
+      // Carril P2 · el hilo de una conversación, dentro del marco del chat. Se
+      // llega desde la bandeja o desde una notificación de la campana.
+      path: ':conversationId',
+      title: `${APP_TITLE} - Conversación`,
+      loadComponent: () =>
+        import('./features/messaging/thread/thread')
+          .then((m) => m.Thread)
+          .catch(() => chunkFallido()),
+    },
+  ],
+};
+
 function rutasDeSecciones(): Routes {
   return APP_SECTIONS.map((section) => ({
     path: section.path,
     title: titleOf(section),
+    ...(RUTAS_ANIDADAS[section.path] === undefined
+      ? {}
+      : { children: RUTAS_ANIDADAS[section.path] }),
     // Los roles que el registro declara se hacen cumplir **también por ruta**
     // (carril 02). Filtrar el menú es cortesía; quien escribe la dirección a
     // mano llega igual, y la corrección #2 pide que la Guía de profesionales no
@@ -913,8 +1047,15 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   contabilidad: '/administration/accounting',
   'mi-cuenta': '/my-account',
   'mi-cuenta/turnos': '/my-account/appointments',
-  'identidad/verificar': '/my-account/identity/verify',
-  'identidad/casos': '/my-account/identity/cases',
+  'identidad/verificar': '/my-account/identity',
+  'identidad/casos': '/my-account/identity',
+  // Las dos rutas propias de antes de unificar (2026-09-10). Están en
+  // historiales, en favoritos y en los correos que la plataforma ya mandó.
+  'my-account/identity/verify': '/my-account/identity',
+  'my-account/identity/cases': '/my-account/identity',
+  // «Mis organizaciones» pasó a ser una pestaña de «Organización médica»
+  // (2026-09-10). Está en historiales y en el lateral de «Mi perfil».
+  'my-organizations': '/administration/medical-organization',
   'administracion/pacientes': '/administration/patients',
   'administracion/usuarios': '/administration/users',
   'administracion/organizaciones': '/administration/organizations',
@@ -1659,6 +1800,19 @@ export const routes: Routes = [
     title: 'AloVida - Stock de componentes',
   },
   {
+    // Verificación pública del certificado de portabilidad de póliza y
+    // siniestralidad (subtarea 3.3): a donde apunta el código QR del PDF.
+    // Va fuera del armazón, igual que la vitrina — quien escanea el QR (una
+    // aseguradora, un auditor) no tiene ni necesita sesión en AloVida — y sin
+    // entrada de menú: se llega por el QR, nunca por navegación.
+    path: 'verify/portability/:manifestHash',
+    loadComponent: () =>
+      import('./features/insurance/portability-verify/portability-verify').then(
+        (m) => m.PortabilityVerify,
+      ),
+    title: 'AloVida - Verificar certificado',
+  },
+  {
     path: 'auth',
     component: Login,
     pathMatch: 'full',
@@ -1706,9 +1860,47 @@ export const routes: Routes = [
   {
     // Signup público de una organización aseguradora: crea el tenant `PAYER`
     // y su usuario owner en la misma operación.
+    // Diferida desde la subtarea 1.2: la documentación legal en PDF arrastra
+    // `app-file-input` (y con él `FilePreview`/`pdfjs-dist`, diferido a su vez).
     path: 'auth/register/organization',
-    component: RegisterOrganization,
+    loadComponent: () =>
+      import('./features/auth/register-organization/register-organization').then(
+        (m) => m.RegisterOrganization,
+      ),
     title: 'AloVida - Registrar aseguradora',
+  },
+  {
+    // El alta del laboratorio de sangre: los dieciocho puntos de datos legales
+    // del proceso 4.1 del stakeholder. Todavía sin endpoint —cierra con una
+    // solicitud, no con una cuenta—; ver el JSDoc de `RegisterLaboratory`.
+    path: 'auth/register/laboratory',
+    // Diferida por lo mismo que las otras dos altas largas: arrastra el mapa,
+    // que no tiene por qué viajar en el paquete inicial de toda visita.
+    loadComponent: () =>
+      import('./features/auth/register-laboratory/register-laboratory').then(
+        (m) => m.RegisterLaboratory,
+      ),
+    title: 'AloVida - Registrar laboratorio',
+  },
+  {
+    // El alta del centro de imagenología: el módulo «ANÁLISIS MÉDICOS (RAYOS X,
+    // RESONANCIA, ETC.)» del registro del stakeholder. Los dieciocho puntos de
+    // datos legales son los mismos que los del laboratorio de sangre —la fuente
+    // los repite enteros—, y lo que cambia es qué estudios hace el centro; ver
+    // el JSDoc de `RegisterImagingCenter`. Tampoco tiene endpoint todavía:
+    // cierra con una solicitud, no con una cuenta.
+    //
+    // La ruta dice `imaging-center` y no `imaging` a secas para no chocar con
+    // `?kind=IMAGING`, que es la **categoría** del directorio de laboratorios:
+    // aquélla filtra una vitrina, ésta da de alta una empresa.
+    path: 'auth/register/imaging-center',
+    // Diferida por lo mismo que las otras altas largas: arrastra el mapa, que
+    // no tiene por qué viajar en el paquete inicial de toda visita.
+    loadComponent: () =>
+      import('./features/auth/register-imaging-center/register-imaging-center').then(
+        (m) => m.RegisterImagingCenter,
+      ),
+    title: 'AloVida - Registrar centro de imagenología',
   },
   {
     // El enlace del correo trae el token por query string: /auth/verificar?token=…

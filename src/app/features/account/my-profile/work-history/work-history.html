@@ -20,20 +20,69 @@
             <li class="historial__item" data-testid="sede-propia">
               <div class="historial__institucion">
                 <strong>{{ sede.name }}</strong>
+                <!-- Qué clase de sede es. Sin esto, «Consultorio Dra. Rojas» y
+                     «Hospital San Lucas» se leían idénticos, con el mismo
+                     «Retirar» al lado — y retirar lo propio no es el mismo
+                     acto que desvincularse de un hospital. -->
+                @if (sede.isOwnSite) {
+                  <span class="historial__marca historial__marca--propia" data-testid="sede-propia-marca">
+                    Consultorio propio
+                  </span>
+                } @else {
+                  <span class="historial__marca" data-testid="sede-ajena-marca">
+                    Atendés acá
+                  </span>
+                }
                 @if (sede.addressText) {
                   <span class="historial__sede">{{ sede.addressText | uppercase }}</span>
                 }
+                @if (!sede.bankQrFileId) {
+                  <span class="historial__aviso-qr" data-testid="sede-sin-qr">
+                    Sin QR de cobro configurado
+                  </span>
+                }
               </div>
-              <button
-                app-button
-                variant="ghost"
-                size="sm"
-                type="button"
-                data-testid="sede-quitar"
-                (clicked)="quitarSede(sede)"
-              >
-                Retirar
-              </button>
+              <div class="historial__acciones-sede">
+                <!-- El QR va en todas: también se cobra en la clínica donde
+                     atiende sin ser dueño de la sede. -->
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="sede-qr"
+                  [attr.aria-label]="'QR bancario de ' + sede.name"
+                  (clicked)="abrirQrDeSede(sede)"
+                >
+                  QR bancario
+                </button>
+                <!-- Corregir sólo alcanza al propio: la sede de un hospital es
+                     de él, y lo que se tiene con él es una vinculación. -->
+                @if (sede.isOwnSite) {
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    data-testid="sede-editar"
+                    [attr.aria-label]="'Corregir ' + sede.name"
+                    (clicked)="abrirEdicionDeSede(sede)"
+                  >
+                    Editar
+                  </button>
+                }
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="sede-quitar"
+                  [attr.aria-label]="etiquetaDeRetiro(sede)"
+                  (clicked)="quitarSede(sede)"
+                >
+                  Retirar
+                </button>
+              </div>
             </li>
           }
         </ul>
@@ -48,25 +97,35 @@
       }
 
       @if (!altaDeSedeAbierta()) {
-        <p class="historial__escape">
-          <button
-            app-button
-            variant="secondary"
-            size="sm"
-            type="button"
-            data-testid="sede-agregar"
-            (clicked)="abrirAltaDeSede()"
-          >
-            Agregar un consultorio propio
-          </button>
-        </p>
+        @if (!consultorioPropio()) {
+          <p class="historial__escape">
+            <button
+              app-button
+              variant="secondary"
+              size="sm"
+              type="button"
+              data-testid="sede-agregar"
+              (clicked)="abrirAltaDeSede()"
+            >
+              Agregar un consultorio propio
+            </button>
+          </p>
+        }
       } @else {
         <form
           class="historial__formulario"
           data-testid="sede-formulario"
           (submit)="$event.preventDefault()"
         >
-          <h3 class="historial__subtitulo">Nuevo consultorio</h3>
+          <h3 class="historial__subtitulo">
+            {{ sedeEnEdicion() ? 'Corregir el consultorio' : 'Nuevo consultorio' }}
+          </h3>
+          @if (sedeEnEdicion()) {
+            <p class="historial__intro" data-testid="sede-edicion-aviso">
+              Lo que dejes en blanco queda como está. Para cambiar la dirección,
+              escribila entera de nuevo.
+            </p>
+          }
 
           <app-form-field label="Nombre" hint="Como lo va a ver el paciente." [required]="true">
             <app-input
@@ -156,183 +215,200 @@
             cancelLabel="Cancelar"
             [pending]="registrandoSede()"
             [disabled]="!puedeRegistrarSede()"
-            (submitted)="registrarSede()"
+            (submitted)="guardarSede()"
             (cancelled)="cerrarAltaDeSede()"
           />
         </form>
       }
+
+      <!-- El QR bancario de la sede (P33). Vive fuera de la lista porque es un
+           modal: colgarlo de cada renglón instanciaría uno por sede, y sólo
+           puede haber uno abierto. -->
+      @if (sedeConQrAbierto(); as sedeDelQr) {
+        <app-site-bank-qr-dialog
+          [site]="sedeDelQr"
+          (saved)="qrGuardado($event)"
+          (closed)="cerrarQrDeSede()"
+        />
+      }
     </section>
 
-    @if (layout() === 'flat') {
-      <h2 class="historial__titulo">Historial laboral</h2>
-      <p class="historial__intro">
-        Los hospitales y entidades médicas donde ejerciste. Lo administrás vos: es tu
-        trayectoria, no un dato que cargue la organización.
-      </p>
-    }
+    <!-- El historial laboral. Se suprime entero cuando esta pantalla se monta
+         como «Mi consultorio propio»: allá la pregunta es dónde atiende hoy,
+         no dónde ejerció antes. -->
+    @if (!soloConsultorios()) {
+      @if (layout() === 'flat') {
+        <h2 class="historial__titulo">Historial laboral</h2>
+        <p class="historial__intro">
+          Los hospitales y entidades médicas donde ejerciste. Lo administrás vos: es tu
+          trayectoria, no un dato que cargue la organización.
+        </p>
+      }
 
-    @if (avisoDeDuplicado(); as aviso) {
-      <app-alert tone="warning" title="Ya estaba registrado" data-testid="afiliacion-duplicada">
-        {{ aviso }}
-      </app-alert>
-    }
+      @if (avisoDeDuplicado(); as aviso) {
+        <app-alert tone="warning" title="Ya estaba registrado" data-testid="afiliacion-duplicada">
+          {{ aviso }}
+        </app-alert>
+      }
 
-    @if (errorDelRegistro(); as mensaje) {
-      <app-alert tone="error" data-testid="afiliacion-error">{{ mensaje }}</app-alert>
-    }
+      @if (errorDelRegistro(); as mensaje) {
+        <app-alert tone="error" data-testid="afiliacion-error">{{ mensaje }}</app-alert>
+      }
 
-    <!-- ─── La línea de tiempo ──────────────────────────────────────────────
-         Mismo reparto visual que el historial de verificaciones de arriba: una
-         lista con su sello a la izquierda y el período a la derecha.
+      <!-- ─── La línea de tiempo ──────────────────────────────────────────────
+           Mismo reparto visual que el historial de verificaciones de arriba: una
+           lista con su sello a la izquierda y el período a la derecha.
 
-         En layout="timeline" este listado se suprime: la pestaña Trayectoria
-         del perfil ya pinta el mismo historial por fases, y mostrarlo acá
-         también sería el mismo dato dos veces con dos formas distintas. -->
-    @if (layout() === 'flat') {
-      @if (afiliaciones().length > 0) {
-        <ul class="historial__lista">
-          @for (afiliacion of afiliaciones(); track afiliacion.id) {
-            <li class="historial__item">
-              <div class="historial__institucion">
-                <strong>{{ afiliacion.organizationName }}</strong>
-                <!-- ALV-007: sin cargo no se dibuja el renglón, no un guion. -->
-                @if (afiliacion.roleTitle) {
-                  <span class="historial__cargo">{{ afiliacion.roleTitle }}</span>
-                }
-                @if (nombreDeSede(afiliacion); as sede) {
-                  <span class="historial__sede">Consultorio: {{ sede }}</span>
-                }
-              </div>
-
-              <div class="historial__periodo">
-                <span class="historial__fechas">
-                  {{ afiliacion.startDate | date: 'MM/yyyy' }} —
-                  @if (afiliacion.endDate) {
-                    {{ afiliacion.endDate | date: 'MM/yyyy' }}
-                  } @else {
-                    actualidad
+           En layout="timeline" este listado se suprime: la pestaña Trayectoria
+           del perfil ya pinta el mismo historial por fases, y mostrarlo acá
+           también sería el mismo dato dos veces con dos formas distintas. -->
+      @if (layout() === 'flat') {
+        @if (afiliaciones().length > 0) {
+          <ul class="historial__lista">
+            @for (afiliacion of afiliaciones(); track afiliacion.id) {
+              <li class="historial__item">
+                <div class="historial__institucion">
+                  <strong>{{ afiliacion.organizationName }}</strong>
+                  <!-- ALV-007: sin cargo no se dibuja el renglón, no un guion. -->
+                  @if (afiliacion.roleTitle) {
+                    <span class="historial__cargo">{{ afiliacion.roleTitle }}</span>
                   }
-                </span>
-                <span class="historial__estado">{{ periodo(afiliacion) }}</span>
-              </div>
+                  @if (nombreDeSede(afiliacion); as sede) {
+                    <span class="historial__sede">Consultorio: {{ sede }}</span>
+                  }
+                </div>
 
-              <!-- Si la organización todavía no decidió, o dijo que no, el médico
-                   tiene que enterarse acá: es el único lugar donde puede mirar el
-                   trámite que él mismo inició. Un vínculo aprobado no se anuncia
-                   —es lo esperable— y uno sin sede nunca pasó por una aprobación. -->
-              @if (avisoDelVinculo(afiliacion); as aviso) {
-                <p class="historial__vinculo historial__vinculo--{{ afiliacion.statusKind }}">
-                  {{ aviso }}
-                </p>
-              }
-            </li>
-          }
-        </ul>
-      } @else if (historial().status === 'ready') {
-        <p class="historial__vacio">
-          Todavía no cargaste ningún vínculo laboral. Es lo que le dice a un paciente
-          dónde ejerciste antes de llegar acá.
-        </p>
-      } @else if (historial().status !== 'loading') {
-        <!-- El fallo de la lectura no tumba el formulario: cargar un vínculo
-             nuevo sigue siendo posible aunque no se hayan podido leer los viejos. -->
-        <p class="historial__vacio">
-          No pudimos leer tu historial.
-          <button type="button" class="historial__reintento" (click)="recargar()">
-            Reintentar
-          </button>
-        </p>
+                <div class="historial__periodo">
+                  <span class="historial__fechas">
+                    {{ afiliacion.startDate | date: 'MM/yyyy' }} —
+                    @if (afiliacion.endDate) {
+                      {{ afiliacion.endDate | date: 'MM/yyyy' }}
+                    } @else {
+                      actualidad
+                    }
+                  </span>
+                  <span class="historial__estado">{{ periodo(afiliacion) }}</span>
+                </div>
+
+                <!-- Si la organización todavía no decidió, o dijo que no, el médico
+                     tiene que enterarse acá: es el único lugar donde puede mirar el
+                     trámite que él mismo inició. Un vínculo aprobado no se anuncia
+                     —es lo esperable— y uno sin sede nunca pasó por una aprobación. -->
+                @if (avisoDelVinculo(afiliacion); as aviso) {
+                  <p class="historial__vinculo historial__vinculo--{{ afiliacion.statusKind }}">
+                    {{ aviso }}
+                  </p>
+                }
+              </li>
+            }
+          </ul>
+        } @else if (historial().status === 'ready') {
+          <p class="historial__vacio">
+            Todavía no cargaste ningún vínculo laboral. Es lo que le dice a un paciente
+            dónde ejerciste antes de llegar acá.
+          </p>
+        } @else if (historial().status !== 'loading') {
+          <!-- El fallo de la lectura no tumba el formulario: cargar un vínculo
+               nuevo sigue siendo posible aunque no se hayan podido leer los viejos. -->
+          <p class="historial__vacio">
+            No pudimos leer tu historial.
+            <button type="button" class="historial__reintento" (click)="recargar()">
+              Reintentar
+            </button>
+          </p>
+        }
       }
+
+      <!-- ─── Agregar ─────────────────────────────────────────────────────── -->
+      <form class="historial__formulario" (submit)="$event.preventDefault()">
+        <h3 class="historial__subtitulo">Agregar un vínculo</h3>
+
+        <!-- Dos formas de nombrar la institución, nunca las dos a la vez: elegirla
+             del padrón y además escribirla serían dos respuestas a una pregunta. -->
+        @if (modoDeInstitucion() === 'padron') {
+          <app-form-field
+            label="Institución"
+            hint="Escribí el nombre y elegila del padrón oficial de salud."
+            [required]="true"
+          >
+            <app-reference-combobox
+              [selected]="establecimiento()"
+              [options]="resultados()"
+              [loading]="buscandoEnPadron()"
+              placeholder="Clínica Foianini"
+              emptyMessage="Ningún establecimiento coincide"
+              (searched)="buscarEnPadron($event)"
+              (selectionChange)="establecimiento.set($event)"
+            />
+          </app-form-field>
+
+          <p class="historial__escape">
+            <!-- El padrón cubre sólo Santa Cruz: quien trabajó en otro
+                 departamento necesita esta salida, y decirlo evita que la busque
+                 como si fuera una falla. -->
+            ¿Trabajaste fuera de Santa Cruz o no la encontrás?
+            <button app-button variant="ghost" size="sm" type="button" (click)="escribirAMano()">
+              Escribir el nombre a mano
+            </button>
+          </p>
+        } @else {
+          <app-form-field
+            label="Institución"
+            hint="El hospital o la entidad, como se llama. No hace falta que esté en la plataforma."
+            [required]="true"
+          >
+            <app-input [(value)]="institucion" placeholder="Hospital Obrero N.º 1" />
+          </app-form-field>
+
+          <p class="historial__escape">
+            <button app-button variant="ghost" size="sm" type="button" (click)="buscarEnElPadron()">
+              Buscarla en el padrón
+            </button>
+          </p>
+        }
+
+        <!-- ALV-007: opcional. Un vínculo con tu propio consultorio no tiene cargo. -->
+        <app-form-field label="Cargo" hint="Opcional. El puesto que ejerciste ahí, si aplica.">
+          <app-input [(value)]="cargo" placeholder="Médico de planta" />
+        </app-form-field>
+
+        <!-- El desplegable sólo aparece si hay consultorios que ofrecer: un
+             selector vacío es una pregunta sin respuestas posibles. -->
+        @if (opcionesDeSede().length > 0) {
+          <app-form-field
+            label="Consultorio de la plataforma"
+            hint="Opcional. Si la institución es una de las sedes donde ya atendés, atalo acá."
+          >
+            <app-select
+              [(value)]="sede"
+              [options]="opcionesDeSede()"
+              placeholder="Sin atar a un consultorio"
+            />
+          </app-form-field>
+        }
+
+        <app-form-field label="Desde" hint="Cuándo empezaste." [required]="true">
+          <app-date-picker [(value)]="desde" />
+        </app-form-field>
+
+        <!-- El período invertido se marca en el propio campo y no como aviso
+             suelto: el error está ahí y ahí hay que corregirlo. -->
+        <app-form-field
+          label="Hasta"
+          hint="Dejalo vacío si seguís ejerciendo ahí."
+          [errorMessage]="periodoInvertido() ? 'El fin no puede ser anterior al inicio.' : ''"
+        >
+          <app-date-picker [(value)]="hasta" [hasError]="periodoInvertido()" />
+        </app-form-field>
+
+        <app-form-actions
+          submitLabel="Agregar al historial"
+          [pending]="registrando()"
+          [disabled]="!puedeRegistrar()"
+          (submitted)="registrar()"
+        />
+      </form>
     }
 
-    <!-- ─── Agregar ─────────────────────────────────────────────────────── -->
-    <form class="historial__formulario" (submit)="$event.preventDefault()">
-      <h3 class="historial__subtitulo">Agregar un vínculo</h3>
-
-      <!-- Dos formas de nombrar la institución, nunca las dos a la vez: elegirla
-           del padrón y además escribirla serían dos respuestas a una pregunta. -->
-      @if (modoDeInstitucion() === 'padron') {
-        <app-form-field
-          label="Institución"
-          hint="Escribí el nombre y elegila del padrón oficial de salud."
-          [required]="true"
-        >
-          <app-reference-combobox
-            [selected]="establecimiento()"
-            [options]="resultados()"
-            [loading]="buscandoEnPadron()"
-            placeholder="Clínica Foianini"
-            emptyMessage="Ningún establecimiento coincide"
-            (searched)="buscarEnPadron($event)"
-            (selectionChange)="establecimiento.set($event)"
-          />
-        </app-form-field>
-
-        <p class="historial__escape">
-          <!-- El padrón cubre sólo Santa Cruz: quien trabajó en otro
-               departamento necesita esta salida, y decirlo evita que la busque
-               como si fuera una falla. -->
-          ¿Trabajaste fuera de Santa Cruz o no la encontrás?
-          <button app-button variant="ghost" size="sm" type="button" (click)="escribirAMano()">
-            Escribir el nombre a mano
-          </button>
-        </p>
-      } @else {
-        <app-form-field
-          label="Institución"
-          hint="El hospital o la entidad, como se llama. No hace falta que esté en la plataforma."
-          [required]="true"
-        >
-          <app-input [(value)]="institucion" placeholder="Hospital Obrero N.º 1" />
-        </app-form-field>
-
-        <p class="historial__escape">
-          <button app-button variant="ghost" size="sm" type="button" (click)="buscarEnElPadron()">
-            Buscarla en el padrón
-          </button>
-        </p>
-      }
-
-      <!-- ALV-007: opcional. Un vínculo con tu propio consultorio no tiene cargo. -->
-      <app-form-field label="Cargo" hint="Opcional. El puesto que ejerciste ahí, si aplica.">
-        <app-input [(value)]="cargo" placeholder="Médico de planta" />
-      </app-form-field>
-
-      <!-- El desplegable sólo aparece si hay consultorios que ofrecer: un
-           selector vacío es una pregunta sin respuestas posibles. -->
-      @if (opcionesDeSede().length > 0) {
-        <app-form-field
-          label="Consultorio de la plataforma"
-          hint="Opcional. Si la institución es una de las sedes donde ya atendés, atalo acá."
-        >
-          <app-select
-            [(value)]="sede"
-            [options]="opcionesDeSede()"
-            placeholder="Sin atar a un consultorio"
-          />
-        </app-form-field>
-      }
-
-      <app-form-field label="Desde" hint="Cuándo empezaste." [required]="true">
-        <app-date-picker [(value)]="desde" />
-      </app-form-field>
-
-      <!-- El período invertido se marca en el propio campo y no como aviso
-           suelto: el error está ahí y ahí hay que corregirlo. -->
-      <app-form-field
-        label="Hasta"
-        hint="Dejalo vacío si seguís ejerciendo ahí."
-        [errorMessage]="periodoInvertido() ? 'El fin no puede ser anterior al inicio.' : ''"
-      >
-        <app-date-picker [(value)]="hasta" [hasError]="periodoInvertido()" />
-      </app-form-field>
-
-      <app-form-actions
-        submitLabel="Agregar al historial"
-        [pending]="registrando()"
-        [disabled]="!puedeRegistrar()"
-        (submitted)="registrar()"
-      />
-    </form>
   </app-card>
 }

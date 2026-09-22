@@ -31,7 +31,7 @@
 
             <app-form-field
               label="Puntos a canjear"
-              hint="Después te mostramos el código para presentar en el mostrador."
+              hint="Después te mostramos el código para presentar en la caja del supermercado."
               [errorMessage]="errorDeCanje() ?? ''"
             >
               <app-input
@@ -68,7 +68,17 @@
 
         @default {
           <section class="saldo" aria-labelledby="saldo-titulo" data-testid="puntos-saldo">
-            <h2 id="saldo-titulo" class="saldo__programa">{{ cuenta.programa }}</h2>
+            <div class="saldo__encabezado">
+              <h2 id="saldo-titulo" class="saldo__programa">{{ cuenta.programa }}</h2>
+              <!-- F4.1: el nombre lo decide el cliente después. La marca va
+                   sólo mientras se muestre el nombre provisorio del front; el
+                   que publique el backend no la lleva. -->
+              @if (cuenta.programa === nombreDelPrograma) {
+                <app-badge variant="secondary" data-testid="puntos-nombre-provisional">
+                  nombre provisional
+                </app-badge>
+              }
+            </div>
 
             <p class="saldo__cifra">
               <strong class="cifras-tabulares" data-testid="puntos-disponibles">
@@ -124,9 +134,11 @@
                         {{ movimiento.ocurrioEl | date: 'dd/MM/yyyy' }}
                       </span>
                     </div>
-                    <app-badge [variant]="tonoDe(movimiento)">
-                      {{ etiquetaDe(movimiento) }}
-                    </app-badge>
+                    <span class="movimientos__etiquetas">
+                      <app-badge [variant]="tonoDe(movimiento)">
+                        {{ etiquetaDe(movimiento) }}
+                      </app-badge>
+                    </span>
                     <!-- El signo va en el texto: el color no puede ser lo único
                          que diga si sumaste o restaste. -->
                     <span class="movimientos__puntos cifras-tabulares" aria-hidden="true">

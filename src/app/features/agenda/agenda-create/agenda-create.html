@@ -276,22 +276,23 @@
 
           @for (dia of vistaPrevia().porDia; track dia.dia) {
             <p class="agenda-create__previa-dia">
-              <strong class="agenda-create__previa-cuenta"
-                >{{ dia.dia | titlecase }}: {{ dia.turnos.length }}
-                {{ dia.turnos.length === 1 ? 'turno' : 'turnos' }}</strong
-              >
+              <strong class="agenda-create__previa-cuenta">{{ dia.dia | titlecase }}:</strong>
+              <!-- El rango, y no una tira de horas de inicio.
+                   Antes decía «08:00 · 08:30 · 09:00 · … · 11:30» para una
+                   franja de 08:00 a 12:00, y `11:30` es cuando **empieza** el
+                   último turno: se leía como que el día termina ahí. La hora
+                   que a nadie le da lo mismo es la de cierre. -->
               @if (dia.turnos.length > 0) {
                 <span class="agenda-create__previa-horas">
-                  @for (turno of dia.turnos.slice(0, 3); track turno.desde) {
-                    {{ turno.desde }} ·
-                  }
-                  @if (dia.turnos.length > 4) {
-                    …·
-                  }
-                  @if (dia.turnos.length > 3) {
-                    {{ dia.turnos[dia.turnos.length - 1].desde }}
-                  }
+                  de {{ dia.turnos[0].desde }} a {{ dia.turnos[dia.turnos.length - 1].hasta }}
+                  <span class="agenda-create__previa-detalle">
+                    · {{ dia.turnos.length }}
+                    {{ dia.turnos.length === 1 ? 'turno' : 'turnos' }} de
+                    {{ dia.turnos[0].minutos }} min
+                  </span>
                 </span>
+              } @else {
+                <span class="agenda-create__previa-horas">no entra ningún turno</span>
               }
             </p>
 
@@ -440,7 +441,17 @@
     }
 
     @if (errorMessage(); as mensaje) {
-      <app-alert tone="error" title="No se pudo publicar">{{ mensaje }}</app-alert>
+      <app-alert tone="error" title="No se pudo publicar">
+        {{ mensaje }}
+        <!-- Con citas comprometidas el mensaje dice qué hay que resolver, y el
+             enlace dice dónde: sin él, «resolvelas» es una instrucción sin
+             destino. -->
+        @if (citasQueFrenan()) {
+          <a app-link [routerLink]="[rutaDeMiAgenda]" data-testid="agenda-create-ver-citas">
+            Ver esas citas en Mi agenda
+          </a>
+        }
+      </app-alert>
     }
 
     <div class="agenda-create__acciones">

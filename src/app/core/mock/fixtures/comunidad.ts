@@ -1,7 +1,7 @@
 import { ESPECIALIDAD, ESTADO } from './conceptos';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from './personas';
 import { TENANT_CLINICA, TENANT_FARMACIA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_PLATAFORMA } from '../mock-session';
-import { avatarSvg, Coleccion, imagenSvg, iso, uuid } from '../mock-store';
+import { avatarSvg, Coleccion, imagenSvg, iso, portadaSvg, uuid } from '../mock-store';
 
 /* ============================================================================
     La red social: vitrinas públicas (personas y organizaciones), publicaciones,
@@ -90,6 +90,8 @@ export const CONCEPTO = {
   conversationDirect: uuid('concept-conversation-direct'),
   conversationGroup: uuid('concept-conversation-group'),
   messageText: uuid('concept-message-content-text'),
+  /** Un mensaje que lleva adjunto: foto, documento o nota de voz. */
+  messageMedia: uuid('concept-message-content-media'),
   badgeVerified: uuid('concept-badge-verified-practitioner'),
   badgeMethod: uuid('concept-badge-method-registry'),
   prestigeLevel: uuid('concept-prestige-level-gold'),
@@ -129,7 +131,7 @@ function vitrinaDeProfesional(p: ProfesionalSimulado): VitrinaSimulada {
     headline: p.especialidades.length === 0 ? p.professionalTitle : `${p.professionalTitle} · ${p.organizacion}`,
     biography: p.professionalBio,
     avatarUrl: avatarSvg(p.displayName, ['#1f6f8b', '#0f766e', '#7c3aed', '#b45309', '#be123c'][PROFESIONALES.indexOf(p) % 5]),
-    coverUrl: imagenSvg(p.professionalTitle),
+    coverUrl: portadaSvg(),
     avatarFileId: p.photoFileId,
     coverFileId: uuid(`cover-${p.id}`),
     verified: p.verified,
@@ -158,7 +160,7 @@ function organizacion(clave: string, datos: { kind: Exclude<ClaseDeVitrina, 'PRA
     headline: datos.headline,
     biography: datos.bio,
     avatarUrl: avatarSvg(datos.name, datos.color),
-    coverUrl: imagenSvg(datos.name, '#f1f5f9', datos.color),
+    coverUrl: portadaSvg(datos.color),
     avatarFileId: uuid(`avatar-${clave}`),
     coverFileId: uuid(`cover-${clave}`),
     verified: true,
@@ -502,11 +504,14 @@ export interface MensajeSimulado {
 export const SOPORTE_ID = uuid('public-profile-support-admin');
 
 export const conversaciones = new Coleccion<ConversacionSimulada>([
-  { id: uuid('conv-medica-paciente'), conversationTypeConceptId: CONCEPTO.conversationDirect, groupId: null, participantes: [VITRINA_MEDICA.id, VITRINA_PACIENTE.id], noLeidosPor: { [VITRINA_MEDICA.id]: 1, [VITRINA_PACIENTE.id]: 0 } },
+  { id: uuid('conv-medica-paciente'), conversationTypeConceptId: CONCEPTO.conversationDirect, groupId: null, participantes: [VITRINA_MEDICA.id, VITRINA_PACIENTE.id], noLeidosPor: { [VITRINA_MEDICA.id]: 0, [VITRINA_PACIENTE.id]: 1 } },
   { id: uuid('conv-medica-pediatra'), conversationTypeConceptId: CONCEPTO.conversationDirect, groupId: null, participantes: [VITRINA_MEDICA.id, vitrinaDe(PROFESIONALES[1]!.id)!.id], noLeidosPor: { [VITRINA_MEDICA.id]: 0 } },
   { id: uuid('conv-medica-endocrino'), conversationTypeConceptId: CONCEPTO.conversationDirect, groupId: null, participantes: [VITRINA_MEDICA.id, vitrinaDe(PROFESIONALES[9]!.id)!.id], noLeidosPor: { [VITRINA_MEDICA.id]: 2 } },
   { id: uuid('conv-paciente-soporte'), conversationTypeConceptId: CONCEPTO.conversationDirect, groupId: null, participantes: [VITRINA_PACIENTE.id, SOPORTE_ID], noLeidosPor: { [VITRINA_PACIENTE.id]: 1 } },
   { id: uuid('conv-paciente-dermatologo'), conversationTypeConceptId: CONCEPTO.conversationDirect, groupId: null, participantes: [VITRINA_PACIENTE.id, vitrinaDe(PROFESIONALES[3]!.id)!.id], noLeidosPor: { [VITRINA_PACIENTE.id]: 0 } },
+  // Un grupo: es lo que hace ver el nombre de quien habla arriba de cada
+  // burbuja, el subtítulo con los participantes y «Nombre:» en la bandeja.
+  { id: uuid('conv-equipo-cardio'), conversationTypeConceptId: CONCEPTO.conversationGroup, groupId: uuid('group-cardio'), participantes: [VITRINA_MEDICA.id, vitrinaDe(PROFESIONALES[1]!.id)!.id, vitrinaDe(PROFESIONALES[9]!.id)!.id], noLeidosPor: { [VITRINA_MEDICA.id]: 2 } },
 ]);
 
 function mensaje(conv: string, sender: string, texto: string, dias: number, hora: number, minutos = 0, extra: Partial<MensajeSimulado> = {}): MensajeSimulado {
@@ -529,6 +534,7 @@ const C2 = uuid('conv-medica-pediatra');
 const C3 = uuid('conv-medica-endocrino');
 const C4 = uuid('conv-paciente-soporte');
 const C5 = uuid('conv-paciente-dermatologo');
+const C6 = uuid('conv-equipo-cardio');
 const PEDIATRA_V = vitrinaDe(PROFESIONALES[1]!.id)!.id;
 const ENDO_V = vitrinaDe(PROFESIONALES[9]!.id)!.id;
 const DERMA_V = vitrinaDe(PROFESIONALES[3]!.id)!.id;
@@ -539,6 +545,8 @@ export const mensajes = new Coleccion<MensajeSimulado>([
   mensaje(C1, VITRINA_PACIENTE.id, 'Perfecto, gracias. Entonces cambio a paracetamol.', -3, 17, 55),
   mensaje(C1, VITRINA_MEDICA.id, 'Sí. Y si el dolor sigue más de una semana, avisame y lo vemos en consulta.', -3, 18, 2),
   mensaje(C1, VITRINA_PACIENTE.id, 'Doctora, ya me llegaron los resultados del laboratorio. ¿Se los mando por acá o los llevo a la consulta del jueves?', 0, 9, 12),
+  // Una respuesta con cita, para que la burbuja con el bloque citado se vea sin tener que provocarla.
+  mensaje(C1, VITRINA_MEDICA.id, 'Mandámelos por acá así los miro antes del jueves. Si preferís, subilos a tu historia clínica desde https://alovida.bo/mi-historia y los veo ahí.', 0, 9, 30, { replyToMessageId: uuid(`msg-${C1}-0-9-12`) }),
   mensaje(C2, PEDIATRA_V, 'Vale, te derivo a la mamá de un paciente de 14 años con soplo. ¿Tenés turno esta semana?', -7, 11),
   mensaje(C2, VITRINA_MEDICA.id, 'Sí, decile que reserve el jueves a la tarde. Pasame el nombre y lo priorizo.', -7, 11, 30),
   mensaje(C2, PEDIATRA_V, 'Gracias. Es Martín Rocha Antelo.', -7, 11, 32),
@@ -548,6 +556,12 @@ export const mensajes = new Coleccion<MensajeSimulado>([
   mensaje(C5, VITRINA_PACIENTE.id, 'Doctor, le mando la foto del lunar que le comenté.', -12, 19, 0, { attachmentFileId: uuid('file-lunar') }),
   mensaje(C5, DERMA_V, 'Recibido. Por la foto no parece nada preocupante, pero quiero verlo con el dermatoscopio. Reservá un turno cuando puedas.', -12, 20, 15),
   mensaje(C5, VITRINA_PACIENTE.id, 'Listo, reservé para el mes que viene. ¡Gracias!', -11, 8, 30),
+  // El grupo: tres voces, un documento, una foto y dos citas.
+  mensaje(C6, ENDO_V, 'Colegas, les comparto la guía actualizada de anticoagulación en fibrilación auricular. Cambió el umbral de CHA2DS2-VASc para iniciar.', -2, 8, 10, { contentTypeConceptId: CONCEPTO.messageMedia, attachmentFileId: uuid('file-guia-anticoagulacion') }),
+  mensaje(C6, PEDIATRA_V, '¡Gracias! ¿Aplica también para adolescentes con cardiopatía congénita?', -2, 8, 40, { replyToMessageId: uuid(`msg-${C6}--2-8-10`) }),
+  mensaje(C6, VITRINA_MEDICA.id, 'Para mayores de 15 sí, con ajuste por peso. Menores los vemos caso por caso.', -2, 9, 5),
+  mensaje(C6, ENDO_V, 'Les paso el Holter de la paciente con hipotiroidismo que les comenté.', 0, 8, 20, { contentTypeConceptId: CONCEPTO.messageMedia, attachmentFileId: uuid('file-holter') }),
+  mensaje(C6, PEDIATRA_V, 'Yo veo extrasístoles aisladas nada más. ¿Vos, Vale?', 0, 8, 35, { replyToMessageId: uuid(`msg-${C6}-0-8-20`) }),
 ]);
 
 /* ---- encuestas de publicación ---------------------------------------------- */

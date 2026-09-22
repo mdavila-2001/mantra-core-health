@@ -1,0 +1,48 @@
+<section class="resumen" aria-labelledby="resumen-titulo" data-testid="resumen">
+  <h2 id="resumen-titulo" class="resumen__titulo">Resumen</h2>
+
+  <ul class="resumen__renglones" data-testid="resumen-renglones">
+    @for (renglon of resumen().renglones; track renglon.indice) {
+      <li class="resumen__renglon" data-testid="resumen-renglon">
+        <span class="resumen__renglon-datos">
+          <span class="resumen__principal">{{ renglon.cantidad }} × {{ renglon.medicamento }}</span>
+          @if (renglon.presentacion !== null) {
+            <span class="resumen__secundario">{{ renglon.presentacion }}</span>
+          }
+          @if (renglon.disponible && renglon.precioUnitario !== null && renglon.cantidad > 1) {
+            <span class="resumen__secundario">{{ importe(renglon.precioUnitario) }} cada uno</span>
+          }
+        </span>
+        <span class="cifras-tabulares">
+          @if (!renglon.disponible) {
+            <app-badge variant="warning">La farmacia no la tiene</app-badge>
+          } @else if (importe(renglon.subtotal); as subtotal) {
+            {{ subtotal }}
+          } @else {
+            <span class="resumen__secundario">Sin precio publicado</span>
+          }
+        </span>
+      </li>
+    }
+  </ul>
+
+  <dl class="resumen__cuentas">
+    <div class="resumen__cuenta resumen__cuenta--total" data-testid="resumen-total">
+      <dt>Total estimado</dt>
+      <dd class="cifras-tabulares">
+        @if (importe(resumen().total); as total) {
+          {{ total }}
+        } @else {
+          No disponible: falta algún precio publicado
+        }
+      </dd>
+    </div>
+  </dl>
+
+  <!-- Lo que el contrato no produce todavía no se pinta con un número
+       inventado: se dice en palabras y sin cifra. -->
+  <p class="resumen__secundario" data-testid="resumen-nota">
+    Es el precio que publica la farmacia; el total final lo confirma al revisar tu pedido. Si tu
+    seguro cubre parte, la liquidación llega después, sobre el pedido ya creado.
+  </p>
+</section>

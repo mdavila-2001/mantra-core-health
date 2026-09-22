@@ -155,6 +155,10 @@ describe('NavigationService', () => {
         // «Mi perfil» tampoco aparece acá: desde el 07/09/2026 es un destino
         // fijo y se dibuja arriba de todo, fuera de «Mi cuenta». Sigue estando
         // —encabeza la lista—, sólo que ya no cuelga del grupo.
+        // Los dependientes (B.1) tampoco exigen rol: el filtro real es tener
+        // perfil de paciente, que no es un rol sino un dato de la cuenta, y la
+        // pantalla lo dice cuando falta. Mismo criterio que «Mis citas».
+        '/my-account/dependents',
         '/my-account/appointments',
         // El archivo clínico propio (carril 09), por lo mismo que «Mis turnos»:
         // el filtro real es tener perfil de paciente, y lo resuelve la pantalla.
@@ -404,6 +408,44 @@ describe('NavigationService', () => {
 
       expect(rutasDelMenu()).toContain('/administration/my-organization');
       expect(service.menu().map((g) => g.label)).toContain('Administración');
+    });
+
+    it('sólo «Administración» sigue plegada; los otros cuatro dominios vienen aplanados', () => {
+      // Lo que la barra necesita para no dibujar un contenedor (AC-E1-02). El
+      // paciente llegaba a «Mis citas» abriendo dos desplegables que no llevan a
+      // ninguna pantalla; aplanado, el dominio suelta sus destinos en la barra y
+      // sigue ofreciendo exactamente los mismos. Vale lo mismo para quien
+      // ejerce: «Atención» y «Facturación» son los dos únicos dominios de
+      // trabajo que ve, y eran lo único que le hacían abrir.
+      abrirSesion(['SECURITY_ADMIN', 'CLINICIAN', 'BILLING']);
+
+      const aplanados = service
+        .menu()
+        .filter((grupo) => grupo.aplanado)
+        .map((grupo) => grupo.label);
+
+      expect(aplanados).toEqual(['General', 'Atención', 'Facturación', 'Mi cuenta']);
+      // Aplanar no filtra: el grupo conserva su reparto en bloques, que es lo
+      // que lo deja volver a plegarse sin recalcular nada.
+      for (const grupo of service.menu()) {
+        expect(grupo.blocks.length, grupo.label).toBeGreaterThan(0);
+      }
+    });
+
+    it('quien ejerce no abre ningún dominio: su menú entero viene aplanado', () => {
+      // El caso que motivó el pedido. El médico veía «Atención» y «Facturación»
+      // plegadas y no veía «Administración», así que los dos desplegables eran
+      // todo lo que su barra le ofrecía abrir.
+      abrirSesion(['PRACTITIONER']);
+
+      for (const grupo of service.menu()) {
+        expect(grupo.aplanado, grupo.label).toBe(true);
+      }
+
+      // Y no perdió un destino en el camino: los que colgaban del desplegable
+      // siguen ahí, ahora sueltos.
+      expect(rutasDelMenu()).toContain('/schedule');
+      expect(rutasDelMenu()).toContain('/medical-records');
     });
 
     it('los grupos salen en el orden declarado, no en el del registro', () => {

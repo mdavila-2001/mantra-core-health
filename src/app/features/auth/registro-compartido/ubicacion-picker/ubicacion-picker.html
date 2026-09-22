@@ -1,18 +1,57 @@
-@if (punto(); as coordenadas) {
+@if (mapaAbierto()) {
   <div class="registro__ubicacion">
     <!-- El mapa reemplazó al par de coordenadas. Un «-17,7833, -63,1821» no le
          dice a nadie si el punto cayó en su casa; el pin sobre el plano se lee
-         de un vistazo, que es justo lo que hay que confirmar. -->
+         de un vistazo, que es justo lo que hay que confirmar.
+
+         Y es también el selector: tocar el plano pone el pin, o lo corre si ya
+         había uno. Sin pin todavía, `centro` va en `null` y el organismo abre
+         su vista por defecto, que es donde hay que empezar a buscar. -->
     <app-map
       class="registro__mapa"
       [attr.data-testid]="ids().mapa"
       [pines]="pines()"
-      [centro]="coordenadas"
+      [centro]="punto()"
       [zoom]="17"
       [etiqueta]="etiquetaMapa()"
+      [seleccionable]="true"
+      (pointPicked)="fijarPunto($event)"
     />
 
-    @if (confirmada()) {
+    @if (punto() === null) {
+      <p class="registro__ubicacion-estado" [attr.data-testid]="ids().marcarEnMapa + '-indicacion'">
+        {{ indicacionMarcar() }}
+      </p>
+      <div class="registro__ubicacion-acciones">
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          [attr.data-testid]="ids().usarUbicacion"
+          [isLoading]="pidiendo()"
+          (clicked)="usarMiUbicacion()"
+        >
+          {{ etiquetaPedir() }}
+        </button>
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          [iconOnly]="true"
+          [attr.aria-label]="etiquetaQuitar()"
+          [appTooltip]="etiquetaQuitar()"
+          [attr.data-testid]="ids().quitar"
+          (clicked)="quitarUbicacion()"
+        >
+          <app-nav-icon name="remove" />
+        </button>
+      </div>
+      @if (rechazado()) {
+        <p class="registro__ubicacion-aviso">
+          No pudimos obtener tu ubicación. Podés marcar el punto tocando el mapa.
+        </p>
+      }
+    } @else if (confirmada()) {
       <p appAnuncio class="registro__ubicacion-estado" [attr.data-testid]="ids().confirmada">
         Listo, guardamos esta dirección.
       </p>
@@ -22,6 +61,7 @@
       <p class="registro__ubicacion-aviso" [attr.data-testid]="ids().avisoGeocodificacion">
         {{ avisoSinGeocodificacion }}
       </p>
+      <p class="registro__ubicacion-aviso">{{ avisoMoverPin }}</p>
       <div class="registro__ubicacion-acciones">
         <button
           app-button
@@ -53,6 +93,7 @@
       <p class="registro__ubicacion-aviso" [attr.data-testid]="ids().sinConfirmar">
         {{ avisoUbicacionSinConfirmar }}
       </p>
+      <p class="registro__ubicacion-aviso">{{ avisoMoverPin }}</p>
       <div class="registro__ubicacion-acciones">
         <button
           app-button
@@ -72,10 +113,26 @@
         >
           Volver a ubicarme
         </button>
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          [iconOnly]="true"
+          [attr.aria-label]="etiquetaQuitar()"
+          [appTooltip]="etiquetaQuitar()"
+          [attr.data-testid]="ids().quitar"
+          (clicked)="quitarUbicacion()"
+        >
+          <app-nav-icon name="remove" />
+        </button>
       </div>
     }
   </div>
 } @else {
+  <!-- Dos puertas, ninguna obligatoria: la ubicación del navegador, para quien
+       está ahora mismo en el lugar que declara; y el mapa vacío, para quien no
+       —la casa se declara desde el trabajo, o desde el teléfono de otro— o para
+       quien negó el permiso. -->
   <p class="registro__ubicacion">
     <button
       app-button
@@ -87,9 +144,18 @@
     >
       {{ etiquetaPedir() }}
     </button>
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      [attr.data-testid]="ids().marcarEnMapa"
+      (clicked)="marcarEnMapa()"
+    >
+      {{ etiquetaMarcar() }}
+    </button>
     @if (rechazado()) {
       <span class="registro__ubicacion-aviso">
-        No pudimos obtener tu ubicación. Podés seguir sin esto.
+        No pudimos obtener tu ubicación. Podés marcarla en el mapa, o seguir sin esto.
       </span>
     }
   </p>

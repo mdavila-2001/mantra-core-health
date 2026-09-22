@@ -53,7 +53,9 @@ export const environment: Environment = {
   /**
    * Siempre encendido en la rama `mockup`: es lo que la define. No lee el
    * entorno del proceso a propósito, para que no haya forma de apuntar esta
-   * rama a una API real por accidente.
+   * rama a una API real por accidente. Contra la API real se corre con la
+   * configuración explícita `real-api` (`yarn start:real-api`), que lo apaga
+   * sin tocar este archivo: ver `environment.real-api.ts`.
    */
   mockBackend: true,
 

@@ -1,0 +1,233 @@
+@if (error(); as mensaje) {
+  <p class="composer__error" role="alert">
+    {{ mensaje }}
+    <button type="button" (click)="error.set('')">Entendido</button>
+  </p>
+}
+
+<!-- La tira de «editando». Misma forma que la de responder y en el mismo lugar:
+     las dos dicen «lo que escribas ahora va a otro lado que un mensaje nuevo». -->
+@if (editando(); as enEdicion) {
+  <div class="composer__respuesta composer__respuesta--edicion" data-testid="composer-editando">
+    <div class="composer__respuesta-texto">
+      <span class="composer__respuesta-autor">Editando tu mensaje</span>
+      <span class="composer__respuesta-cuerpo">{{ enEdicion.bodyText }}</span>
+    </div>
+    <button type="button" data-testid="composer-editar-cancelar" aria-label="Cancelar la edición" (click)="cancelarEdicion()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
+    </button>
+  </div>
+}
+
+<!-- La tira de «respondiendo a». Va pegada arriba del campo, que es donde se
+     está mirando cuando se elige responder. -->
+@if (store.respondiendoA(); as citado) {
+  <div class="composer__respuesta" data-testid="composer-respuesta">
+    <div class="composer__respuesta-texto">
+      <span class="composer__respuesta-autor">Respondiendo a</span>
+      <span class="composer__respuesta-cuerpo">{{ citado.bodyText || 'Archivo adjunto' }}</span>
+    </div>
+    <button type="button" aria-label="Cancelar la respuesta" (click)="cancelarRespuesta()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
+    </button>
+  </div>
+}
+
+<!-- El archivo elegido, antes de mandarlo. Con leyenda: mandar una foto y
+     después escribir de qué es son dos mensajes que se leen al revés. -->
+@if (adjunto(); as archivo) {
+  <div class="composer__adjunto" data-testid="composer-adjunto">
+    <app-file-preview [file]="archivo" />
+    <span class="composer__adjunto-nombre">{{ nombreDelAdjunto() }}</span>
+    <button type="button" aria-label="Quitar el archivo" (click)="limpiarAdjunto()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
+    </button>
+  </div>
+}
+
+<!-- Los paneles se abren SOBRE el composer, que es donde se usan. -->
+@if (panel() === 'emojis') {
+  <div class="composer__panel">
+    <div class="composer__solapas" role="tablist" aria-label="Emojis o stickers">
+      <button
+        class="composer__solapa"
+        type="button"
+        role="tab"
+        data-testid="composer-solapa-emojis"
+        [class.is-activa]="solapa() === 'emojis'"
+        [attr.aria-selected]="solapa() === 'emojis'"
+        (click)="solapa.set('emojis')"
+      >
+        Emojis
+      </button>
+      <button
+        class="composer__solapa"
+        type="button"
+        role="tab"
+        data-testid="composer-solapa-stickers"
+        [class.is-activa]="solapa() === 'stickers'"
+        [attr.aria-selected]="solapa() === 'stickers'"
+        (click)="solapa.set('stickers')"
+      >
+        Stickers
+      </button>
+    </div>
+
+    @if (solapa() === 'emojis') {
+      <!-- Diferido: el catálogo son 1 946 emojis con su nombre en castellano, y
+           es lo más pesado del chat. Quien nunca abre el panel no lo descarga, y
+           quien lo abre ve el marcador un cuadro antes de tenerlo. -->
+      @defer (on immediate) {
+        <app-selector-emojis (elegido)="insertar($event)" />
+      } @placeholder {
+        <p class="composer__panel-cargando" role="status">Cargando emojis…</p>
+      }
+    } @else {
+      <app-sticker-picker (elegido)="mandarSticker($event)" />
+    }
+  </div>
+}
+
+@if (panel() === 'adjuntar') {
+  <ul class="composer__panel composer__adjuntar" role="menu">
+    <li role="none">
+      <button role="menuitem" type="button" data-testid="composer-fotos" (click)="elegirArchivo(true)">
+        <span aria-hidden="true">🖼️</span> Fotos y videos
+      </button>
+    </li>
+    <li role="none">
+      <button role="menuitem" type="button" data-testid="composer-documento" (click)="elegirArchivo(false)">
+        <span aria-hidden="true">📄</span> Documento
+      </button>
+    </li>
+    <li role="none">
+      <button role="menuitem" type="button" (click)="alternar('plantillas')">
+        <span aria-hidden="true">📋</span> Plantilla
+      </button>
+    </li>
+  </ul>
+}
+
+@if (panel() === 'plantillas') {
+  <div class="composer__panel composer__plantillas">
+    <ul class="composer__plantillas-lista">
+      @for (plantilla of plantillasDisponibles(); track plantilla) {
+        <li class="composer__plantilla">
+          <button
+            class="composer__plantilla-texto"
+            type="button"
+            data-testid="hilo-plantilla"
+            (click)="usarPlantilla(plantilla)"
+          >
+            {{ plantilla }}
+          </button>
+          @if (esPropia(plantilla)) {
+            <button
+              class="composer__plantilla-quitar"
+              type="button"
+              [attr.aria-label]="'Quitar la plantilla: ' + plantilla"
+              (click)="olvidarPlantilla(plantilla)"
+            >
+              Quitar
+            </button>
+          }
+        </li>
+      }
+    </ul>
+
+    <div class="composer__plantilla-nueva">
+      <label>
+        <span class="solo-lectores">Nueva plantilla</span>
+        <input
+          type="text"
+          data-testid="hilo-plantilla-nueva"
+          placeholder="Guardar una frase que uses seguido"
+          [ngModel]="plantillaNueva()"
+          (ngModelChange)="plantillaNueva.set($event)"
+          name="plantillaNueva"
+        />
+      </label>
+      <button type="button" data-testid="hilo-plantilla-guardar" (click)="guardarPlantilla()">
+        Guardar
+      </button>
+    </div>
+  </div>
+}
+
+<form [appFileDropTarget]="archivo" (fileDropRejected)="error.set($event)" class="composer" (submit)="$event.preventDefault(); enviar()">
+  <!-- Editando no se adjunta: la edición cambia el texto de un mensaje que ya
+       salió, y agregarle un archivo sería otro mensaje. -->
+  @if (editando() === null) {
+    <button
+      class="composer__icono"
+      type="button"
+      data-testid="composer-adjuntar"
+      aria-label="Adjuntar un archivo"
+      [attr.aria-expanded]="panel() === 'adjuntar'"
+      (click)="alternar('adjuntar')"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" /></svg>
+    </button>
+  }
+
+  <button
+    class="composer__icono"
+    type="button"
+    data-testid="composer-emojis"
+    aria-label="Elegir un emoji o un sticker"
+    [attr.aria-expanded]="panel() === 'emojis'"
+    (click)="alternar('emojis')"
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9" /><path d="M9 10h.01M15 10h.01M8.5 14.5a4.5 4.5 0 0 0 7 0" /></svg>
+  </button>
+
+  <label class="composer__campo">
+    <span class="solo-lectores">Escribí tu mensaje</span>
+    <textarea
+      #campo
+      data-testid="hilo-texto"
+      rows="1"
+      [placeholder]="editando() === null ? 'Escribí un mensaje' : 'Editá tu mensaje'"
+      title="Enter envía · Shift+Enter hace salto de línea"
+      [ngModel]="texto()"
+      (ngModelChange)="alEscribir($event)"
+      name="borrador"
+      (keydown)="alTeclear($event)"
+    ></textarea>
+  </label>
+
+  @if (editando() !== null) {
+    <!-- Guardar, no enviar: el tilde dice que esto corrige algo que ya existe.
+         Y nunca el grabador — una nota de voz no edita un texto. -->
+    <button
+      class="composer__enviar"
+      type="submit"
+      data-testid="composer-editar-guardar"
+      aria-label="Guardar el cambio"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m4 12.5 5 5L20 6.5" /></svg>
+    </button>
+  } @else if (puedeEnviar()) {
+    <button
+      class="composer__enviar"
+      type="submit"
+      data-testid="hilo-enviar"
+      aria-label="Enviar mensaje"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3.4 20.4 17.3-8.4L3.4 3.6 3.4 10l12 2-12 2z" /></svg>
+    </button>
+  } @else {
+    <app-grabador (grabado)="alGrabar($event)" (fallo)="alFallarElMicrofono($event)" />
+  }
+</form>
+
+<!-- El selector de archivos vive fuera del menú: si se desmontara con él, el
+     `change` llegaría a un elemento que ya no está en el documento. -->
+<input
+  #archivo
+  class="solo-lectores"
+  type="file"
+  tabindex="-1"
+  aria-hidden="true"
+  (change)="alElegir($event)"
+/>

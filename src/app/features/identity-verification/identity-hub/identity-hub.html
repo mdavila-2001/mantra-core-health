@@ -1,0 +1,39 @@
+<app-page-header
+  title="Verificación de identidad"
+  subtitle="Pedí una verificación y seguí el estado de tus trámites."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<!-- UNA tarjeta con pestañas, a lo ancho y centrada: la regla de la casa
+     (`docs/components/composition-rules.md` §5). -->
+<app-card padding="lg" class="identidad__tarjeta">
+  <app-tabs
+    [selectedIndex]="pestana()"
+    (selectedIndexChange)="elegirPestana($event)"
+    data-testid="identidad-pestanas"
+  >
+    <app-tab [label]="pestanas[0]">
+      <app-identity-verification [embedded]="true" />
+    </app-tab>
+    <app-tab [label]="pestanas[1]">
+      <!-- **Diferida.** La tabla de trámites arrastra el organismo de tabla, el
+           diálogo y la descarga de evidencia: antes de unificar era una ruta
+           `loadComponent`, y montarla acá de forma directa la metió en el
+           paquete inicial. Eso empujó el bundle 29 kB por encima del techo de
+           `angular.json` y **rompió el build** al mezclar con `mockup`.
+
+           El `@defer` le devuelve su propio trozo sin perder lo que la unión
+           buscaba: sigue siendo una pestaña de la misma pantalla. La pestaña
+           «Verificar» se queda directa a propósito — es la salida del 403
+           `IDENTITY_VERIFICATION_REQUIRED` y diferirla agregaría una descarga
+           justo donde alguien ya está esperando (ver el JSDoc de `PANTALLAS`). -->
+      @defer (when pestana() === 1) {
+        <app-verification-cases [embedded]="true" />
+      } @placeholder {
+        <p class="identidad__cargando">Abrí esta pestaña para ver tus trámites.</p>
+      } @loading {
+        <app-spinner label="Cargando tus trámites" />
+      }
+    </app-tab>
+  </app-tabs>
+</app-card>

@@ -2,9 +2,29 @@
 
 import type { BirthSexCode } from '../iam/iam.types';
 
-/** Alta de un perfil de paciente hecha por personal (no auto-registro). */
+/**
+ * Alta de un perfil de paciente hecha por personal (no auto-registro).
+ *
+ * ## El código de paciente es opcional acá, y no en el DTO
+ *
+ * Porque en el mostrador nadie lo sabe. `patient_code` es único en toda la
+ * instalación y el servidor ya lo acuña él mismo en el alta que la persona hace
+ * de sí misma (`PAT-<uuid>`); pedirle uno al navegador es pedirle que garantice
+ * una unicidad que no puede ver. La pantalla de administración —que lo tiene
+ * porque viene de una historia clínica en papel— lo sigue mandando.
+ *
+ * ## El bloque de filiación
+ *
+ * Los campos desde `name` para abajo son los que el registro de procesos del
+ * cliente exige en la recepción del paciente (módulo Paciente §1.1) y que hoy
+ * **sólo acepta el alta que la propia persona hace de sí misma**
+ * (`RegisterPatientDto`). Están declarados acá porque son los que la pantalla
+ * necesita; contra la API de hoy los rechaza `forbidNonWhitelisted` con un 400.
+ * Ver `PENDIENTES-BACKEND.md` (P22): el destino no es este endpoint sino el
+ * registro asistido, extendido con este mismo bloque.
+ */
 export interface NewPatientProfile {
-  readonly patientCode: string;
+  readonly patientCode?: string;
   readonly displayName?: string;
   /** ISO `YYYY-MM-DD`. */
   readonly birthDate?: string;
@@ -16,6 +36,27 @@ export interface NewPatientProfile {
   readonly sexAtBirthConceptId?: string;
   /** Código del índice maestro de pacientes. Único en toda la instalación. */
   readonly masterPatientIndexCode?: string;
+
+  /* -- filiación de mostrador (§1.1) — pendiente en el backend, P22 --------- */
+
+  /** Nombre de pila. */
+  readonly name?: string;
+  /** Los nombres que no son el primero, ya unidos en uno solo. */
+  readonly middleName?: string;
+  readonly lastName?: string;
+  readonly motherLastName?: string;
+  /** Cédula de identidad. Va a `common.identifiers` como identificador oficial. */
+  readonly nationalId?: string;
+  /** Departamento que expidió la cédula (`VS_BO_DEPARTMENT`). */
+  readonly issuerAdministrativeAreaConceptId?: string;
+  readonly phone?: string;
+  /** Ocupación del catálogo `VS_BO_OCCUPATION`. */
+  readonly occupationConceptId?: string;
+  /** El oficio escrito a mano, sólo cuando se eligió «Otra ocupación». */
+  readonly occupationFreeText?: string;
+  /** Tutor o persona autorizada, para quien no puede responder por sí mismo. */
+  readonly guardianName?: string;
+  readonly guardianPhone?: string;
 }
 
 export interface PatientProfile {
@@ -588,20 +629,45 @@ export interface OwnAddress {
   readonly longitude?: number;
 }
 
-/**
- * Un seguro declarado.
- *
- * La aseguradora y el plan llegan **en palabras** y no como uuid: el backend
- * los resuelve para que la pantalla no tenga que pedir dos catálogos más sólo
- * para pintar una línea de texto.
- */
+export type CoverageValidity = 'CURRENT' | 'UPCOMING' | 'EXPIRED' | 'INACTIVE' | 'UNKNOWN';
+
+/** Una regla del plan de seguro, sin convertir ausencias en ceros. */
+export interface CoverageBenefitSummary {
+  readonly id: string;
+  readonly categoryCode?: string;
+  readonly categoryName?: string;
+  readonly serviceConceptId?: string;
+  readonly serviceName?: string;
+  readonly coveragePercent?: string;
+  readonly copayAmount?: string;
+  readonly deductibleAmount?: string;
+  readonly effectiveFrom?: string;
+  readonly effectiveTo?: string;
+  readonly validityStatus?: CoverageValidity;
+  readonly statusCode?: string;
+}
+
+/** Un seguro declarado por el paciente. */
 export interface OwnCoverage {
+  readonly id: string;
+  readonly planId?: string;
+  readonly coverageOrder?: number;
   readonly carrierName: string;
   readonly planName?: string;
   readonly isPublic: boolean;
+  readonly policyIdentifier?: string;
   readonly memberIdentifier?: string;
-  /** Lo declarado al registrarse nace SIN verificar. */
   readonly verified: boolean;
+  readonly status?: string;
+  readonly statusCode?: string;
+  readonly validityStatus?: CoverageValidity;
+  readonly referenceDate?: string;
+  readonly effectiveFrom?: string;
+  readonly effectiveTo?: string;
+  readonly currencyCode?: string;
+  readonly carrierWhatsappNumber?: string;
+  readonly carrierCallCenterPhone?: string;
+  readonly benefits: readonly CoverageBenefitSummary[];
 }
 
 /** Un tutor o persona autorizada, con su teléfono. */
@@ -720,12 +786,27 @@ export interface OwnPatientProfileChanges {
   /**
    * El texto del domicilio (§1.8) y el de la dirección de trabajo (§1.10).
    *
-   * Sólo el texto: el municipio viaja por `residenceMunicipalityConceptId`,
-   * porque sale de un catálogo, y las coordenadas las conserva el backend de la
-   * dirección anterior. `''` quita la dirección.
+   * El municipio viaja aparte, por `residenceMunicipalityConceptId`, porque
+   * sale de un catálogo. `''` quita la dirección.
    */
   readonly homeAddressLines?: string;
   readonly workAddressLines?: string;
+  /**
+   * El punto en el mapa de cada dirección.
+   *
+   * Antes no existían y el comentario de este bloque decía que «las coordenadas
+   * las conserva el backend de la dirección anterior» — que es otra forma de
+   * decir que **el paciente no tenía cómo cambiarlas**: el alta las manda una
+   * vez y después quedaban congeladas para siempre, aunque se mudara.
+   *
+   * Van de a pares y nunca sueltas: media coordenada no ubica nada. Para
+   * **quitar** el punto se mandan los dos en `null`, que es una afirmación
+   * distinta de no mandarlos —eso es «no lo toqué»—.
+   */
+  readonly homeLatitude?: number | null;
+  readonly homeLongitude?: number | null;
+  readonly workLatitude?: number | null;
+  readonly workLongitude?: number | null;
 }
 
 /* ============================================================================
@@ -875,4 +956,73 @@ export interface LinkableOrganizationPage {
   readonly items: readonly LinkableOrganization[];
   readonly count: number;
   readonly limit: number;
+}
+
+
+/**
+ * Qué es el dependiente para quien lo representa, ya dado vuelta por el
+ * servidor.
+ *
+ * La columna del modelo describe a la persona **relacionada** —«soy su
+ * madre»—, y la tarjeta necesita decir lo contrario —«Hijo/a»—. La inversión la
+ * hace la API para que ningún cliente tenga que conocer los conceptos del
+ * catálogo para nombrar a un hijo.
+ */
+export type DependentRelationshipCode = 'CHILD' | 'PARENT' | 'SPOUSE' | 'WARD' | 'OTHER';
+
+/**
+ * Una persona a cargo: un menor sin teléfono propio, una madre tutelada.
+ *
+ * `patientProfileId` es lo que viaja en las reservas y en la lectura de su
+ * historia; `id` es el apoderamiento que sostiene la representación, y hará
+ * falta el día que se pueda revocar.
+ */
+export interface Dependent {
+  /** El apoderamiento que habilita a actuar por esta persona. */
+  readonly id: string;
+  /** Su perfil de paciente: el sujeto de sus turnos y de su historia. */
+  readonly patientProfileId: string;
+  readonly personId: string;
+  /** Nombre visible, ya compuesto por el servidor. */
+  readonly fullName: string;
+  readonly name?: string;
+  readonly lastName?: string;
+  readonly birthDate?: Date;
+  /**
+   * Edad cumplida, calculada por el servidor.
+   *
+   * No se deriva acá a propósito: hacerlo en el navegador daría edades
+   * distintas según la hora del aparato.
+   */
+  readonly ageYears?: number;
+  readonly nationalId?: string;
+  readonly relationshipCode: DependentRelationshipCode;
+  /** Cómo se dice ese parentesco en pantalla («Hijo/a»). */
+  readonly relationshipDisplay: string;
+  /** Si el vínculo afirma la tutela legal. */
+  readonly isLegalGuardian: boolean;
+}
+
+/**
+ * Lo que el formulario manda para registrar a un dependiente.
+ *
+ * `relationshipConceptId` es qué es **el titular** para él —«soy su madre»—, no
+ * al revés: es el sentido que esa columna tiene en todas las filas que ya
+ * existen.
+ *
+ * Sin correo ni contraseña: el dependiente no inicia sesión, que es justamente
+ * el caso.
+ */
+export interface NewDependent {
+  readonly name: string;
+  readonly middleName?: string;
+  readonly lastName: string;
+  readonly motherLastName?: string;
+  /** `YYYY-MM-DD`. Obligatoria: la edad distingue a un menor de un tutelado. */
+  readonly birthDate: string;
+  readonly sexAtBirth?: 'MALE' | 'FEMALE' | 'INTERSEX' | 'UNKNOWN';
+  /** Opcional: un recién nacido todavía no tiene cédula. */
+  readonly nationalId?: string;
+  readonly issuerAdministrativeAreaConceptId?: string;
+  readonly relationshipConceptId: string;
 }

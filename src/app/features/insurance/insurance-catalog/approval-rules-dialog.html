@@ -1,0 +1,69 @@
+<app-content-dialog
+  heading="Reglas de aprobación"
+  [description]="(benefit().service?.display ?? benefit().category.display) + ' · ' + planName()"
+  [dismissible]="!saving()"
+  (closed)="closed.emit()"
+>
+  @if (errorMessage(); as message) {
+    <app-alert appAnuncio tone="error">{{ message }}</app-alert>
+  }
+  <form class="insurance-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-checkbox
+      formControlName="requiresPriorAuthorization"
+      label="Requiere autorización previa"
+    />
+
+    <app-form-field
+      label="Documentos requeridos"
+      hint="Seleccioná todos los que debe presentar el prestador."
+    >
+      <div class="insurance-form__checks">
+        <app-checkbox formControlName="firmaMedico" label="Firma del médico tratante" />
+        <app-checkbox formControlName="selloMedico" label="Sello profesional y matrícula" />
+        <app-checkbox formControlName="ordenMedica" label="Orden médica justificativa" />
+        <app-checkbox
+          formControlName="informeClinico"
+          label="Informe clínico o resumen de historia"
+        />
+      </div>
+    </app-form-field>
+
+    <app-form-field
+      label="Cláusula de exclusión"
+      hint="Dejala vacía para eliminar la exclusión vigente."
+      [errorMessage]="
+        form.controls.exclusionNotes.touched && form.controls.exclusionNotes.invalid
+          ? 'La exclusión no puede superar 1.000 caracteres.'
+          : ''
+      "
+    >
+      <app-textarea
+        formControlName="exclusionNotes"
+        [maxLength]="1000"
+        [autoResize]="true"
+        [rows]="4"
+      />
+    </app-form-field>
+  </form>
+
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    variant="ghost"
+    [disabled]="saving()"
+    (clicked)="dialog().close()"
+  >
+    Cancelar
+  </button>
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    [isLoading]="saving()"
+    [disabled]="saving()"
+    (clicked)="submit()"
+  >
+    Guardar reglas
+  </button>
+</app-content-dialog>

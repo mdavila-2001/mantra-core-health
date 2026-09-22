@@ -1,5 +1,5 @@
 <section class="canje" aria-labelledby="canje-titulo" data-testid="canje-comprobante">
-  <h3 id="canje-titulo" class="canje__titulo">Mostrá esto en el mostrador</h3>
+  <h3 id="canje-titulo" class="canje__titulo">Código de canje</h3>
 
   <!-- El chip DEMO va quemado a propósito: no existe input ni prop que lo
        quite — quien escanea este código todavía no existe, y se dice. -->
@@ -20,6 +20,7 @@
   <p class="canje__codigo cifras-tabulares" data-testid="canje-codigo">
     {{ comprobante().codigo }}
   </p>
+  <p class="canje__caja" data-testid="canje-caja">Mostrá este código en la caja del supermercado</p>
   <p class="canje__ayuda">
     Si el escáner no lo toma, dictá este código.
   </p>

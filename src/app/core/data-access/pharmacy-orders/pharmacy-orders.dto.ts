@@ -1,3 +1,5 @@
+import type { PatientSettlementFields } from '../insurance/patient-insurance-settlement.types';
+
 /** Wire contracts published by the pharmacy-orders API. */
 
 export interface PharmacyOrderConceptDto {
@@ -35,7 +37,7 @@ export interface PharmacyOrderSubstitutionDto {
   readonly decidedAt: string | null;
 }
 
-export interface PharmacyOrderDto {
+export interface PharmacyOrderDto extends PatientSettlementFields {
   readonly id: string;
   readonly status: PharmacyOrderConceptDto;
   readonly createdAt: string;

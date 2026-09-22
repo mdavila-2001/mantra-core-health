@@ -20,6 +20,19 @@ export function patientChartRoute(profileId: string): string {
   return `${CLINICAL_RECORD_ROUTE}/${profileId}`;
 }
 
+/**
+ * La atención clínica de esa persona: donde se abre el encuentro y se registra
+ * sobre él.
+ *
+ * Cuelga del expediente y no es una sección del menú, por lo mismo que
+ * `request-access`: no se entra a atender «a nadie», se entra a atender a
+ * alguien, y la persona ya está elegida cuando se llega —desde la agenda, desde
+ * «Consultas médicas» o desde el propio expediente—.
+ */
+export function encounterWorkspaceRoute(profileId: string): string {
+  return `${CLINICAL_RECORD_ROUTE}/${profileId}/encounter`;
+}
+
 /** Pedir el vínculo con esta persona, sin turno confirmado (FT-07-R05). */
 export function requestAccessRoute(profileId: string): string {
   return `${CLINICAL_RECORD_ROUTE}/${profileId}/request-access`;

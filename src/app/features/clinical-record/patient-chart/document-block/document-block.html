@@ -1,0 +1,107 @@
+<app-card variant="outlined" padding="lg" class="documento">
+  <h2 class="documento__titulo">Documento del expediente</h2>
+
+  @if (errorDelDocumento(); as mensaje) {
+    <app-alert tone="error" data-testid="documento-error">{{ mensaje }}</app-alert>
+  }
+
+  @if (descartados().length > 0) {
+    <app-alert tone="warning" title="Quedaron fuera algunos archivos">
+      {{ descartados().join(', ') }}. Se aceptan {{ formatosEnPalabras }}, hasta 10 MB cada uno.
+    </app-alert>
+  }
+
+  @if (sinOrganizacion()) {
+    <app-alert tone="info" title="Elegí una organización">
+      El documento queda bajo la custodia de una organización. Elegí una en el encabezado para poder
+      registrarlo.
+    </app-alert>
+  } @else {
+    <form class="documento__form app-form-grid" (submit)="$event.preventDefault(); registrar()">
+      <app-form-field
+        class="app-form-grid__ancho"
+        icon="folder"
+        label="Título"
+        hint="Con qué nombre se lo va a buscar. «Laboratorio completo», «Radiografía de tórax — informe»."
+        [required]="true"
+      >
+        <app-input
+          type="text"
+          testId="documento-titulo"
+          [(value)]="titulo"
+          placeholder="Título del documento"
+        />
+      </app-form-field>
+
+      <app-form-field label="Categoría" hint="Opcional. Qué clase de papel es.">
+        <app-concept-select
+          data-testid="documento-categoria"
+          [target]="targetCategoria"
+          [(value)]="categoria"
+          placeholder="Sin especificar"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Autor"
+        hint="Opcional. Quién lo firma. Para lo que viene de afuera, el nombre del centro."
+      >
+        <app-input
+          type="text"
+          testId="documento-autor"
+          [(value)]="autor"
+          placeholder="Laboratorio Central"
+        />
+      </app-form-field>
+
+      @if (opcionesDeCita().length > 1) {
+        <app-form-field
+          icon="calendar"
+          label="¿De qué cita es?"
+          hint="Opcional. La consulta en la que se trajo o se emitió."
+        >
+          <app-select
+            data-testid="documento-cita"
+            [value]="citaElegida()"
+            (valueChange)="citaElegida.set($event)"
+            [options]="opcionesDeCita()"
+          />
+        </app-form-field>
+      }
+
+      <app-form-field
+        class="app-form-grid__ancho"
+        label="¿Viene de afuera?"
+        hint="Marcá si lo emitió otra institución. Cambia cómo se lee su autoría en la historia."
+      >
+        <app-switch [(checked)]="esExterno" label="Documento externo" />
+      </app-form-field>
+
+      <!-- Los archivos se eligen ACÁ y se suben antes del alta: el contrato
+           recibe los `fileId` en el propio `POST /charts/documents` y no hay
+           ruta para colgarle un archivo a un documento ya creado. -->
+      <app-form-field
+        class="app-form-grid__ancho"
+        label="El archivo"
+        [hint]="'Opcional. Se aceptan ' + formatosEnPalabras + ', hasta 10 MB cada uno. El primero es el documento; el resto lo acompaña.'"
+      >
+        <app-file-input
+          [(files)]="archivos"
+          [multiple]="true"
+          [accept]="formatosAceptados"
+          [maxSizeBytes]="tamanoMaximo"
+          label="Elegir archivos"
+          testId="documento-archivos"
+          (rejected)="alDescartar($event)"
+        />
+      </app-form-field>
+
+      <app-form-actions
+        [submitLabel]="rotuloDeEnvio()"
+        [pending]="registrando()"
+        [disabled]="!puedeRegistrar()"
+        (submitted)="registrar()"
+      />
+    </form>
+  }
+</app-card>

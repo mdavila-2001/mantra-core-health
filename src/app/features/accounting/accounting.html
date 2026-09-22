@@ -23,6 +23,23 @@
   "
 />
 
+<!-- La vuelta al cockpit. Desde el 2026-09-12 Contabilidad abre ahí y estos son
+     los libros, un clic más adentro: quien lleva la contabilidad entra a mirar
+     cómo va el ejercicio, no a leer el diario renglón por renglón. -->
+<p class="acceso-al-cockpit">
+  <a
+    app-button
+    variant="outline"
+    routerLink="/administration/accounting"
+    data-testid="volver-al-cockpit"
+  >
+    Volver al cockpit
+  </a>
+  <span class="acceso-al-cockpit__nota">
+    Estado del ejercicio, documentos frenados en el flujo, cartera y cierre del período.
+  </span>
+</p>
+
 @if (esMedico()) {
   <app-alert tone="info" class="explicacion">
     <p>

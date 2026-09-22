@@ -1,0 +1,11 @@
+.factura-pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.factura-pagina__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}

@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -13,6 +14,7 @@ import { InsuranceClient } from '../../../core/data-access/insurance/insurance.c
 import type {
   ClaimDetail,
   ClaimLine,
+  ClaimLineDuplicateStudy,
 } from '../../../core/data-access/insurance/insurance.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
@@ -27,6 +29,8 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { currencySuffix, formatAmount, formatMoney } from '../money-format';
+import { displayCurrency } from '../../../core/money/display-currency';
+import { InsuranceContactChannels } from './insurance-contact-channels/insurance-contact-channels';
 
 /**
  * Detalle de una solicitud de seguro — `administration/insurance-claims/:claimId`.
@@ -49,15 +53,23 @@ import { currencySuffix, formatAmount, formatMoney } from '../money-format';
  * **dice** en vez de taparlo — un descuadre entre lo facturado y la suma de
  * los ítems es exactamente lo que alguien tiene que ver.
  *
- * ## Lo que no se muestra por ítem, y por qué
+ * ## La cláusula y la justificación son del ítem; la disposición, de la versión
  *
- * `claim_line_adjudications` tiene motivo catalogado de rechazo
- * (`reason_concept_id`) pero **no** tiene texto libre por ítem: el único texto
- * de la disposición es `claim_adjudication_versions.disposition_text`, que es
- * **de la versión entera**. Se muestra donde corresponde —una vez, con el
- * dictamen— y la tabla dice que la descripción por ítem no está registrada.
- * Repetir el texto de la versión en cada fila lo haría pasar por un motivo
- * particular de ese ítem.
+ * `claim_line_adjudications` tiene el motivo catalogado (`reason_concept_id`,
+ * todavía sin catálogo real — P-16-4) y, desde v4.2.9 (subtarea 2.2), la cita
+ * textual de la cláusula contractual (`policy_clause_reference`) y la
+ * justificación circunstanciada (`denial_rationale`) **por ítem**. El texto de
+ * `claim_adjudication_versions.disposition_text` sigue siendo **de la versión
+ * entera** y se muestra donde corresponde, una vez, con el dictamen: repetirlo
+ * en cada fila lo haría pasar por un motivo particular de ese ítem.
+ *
+ * ## El contacto de la aseguradora es un enlace, no una acción (subtarea 2.3)
+ *
+ * `app-insurance-contact-channels` dibuja WhatsApp/call center/correo de
+ * `detail.header` — la cabecera de la solicitud ya trae los tres canales, sin
+ * una consulta aparte. Esta pantalla no envía nada por su cuenta: los botones
+ * son anclas que abren el canal con el destino y, en el caso de WhatsApp, el
+ * mensaje ya cargados; el resto lo hace el teléfono o el correo del usuario.
  */
 @Component({
   selector: 'app-insurance-claim-detail',
@@ -65,11 +77,17 @@ import { currencySuffix, formatAmount, formatMoney } from '../money-format';
     Alert,
     AppButton,
     Badge,
+    InsuranceContactChannels,
     PageHeader,
     RouterLink,
     Tooltip,
     ViewStateHost,
   ],
+  // `imports` sólo habilita `| date` en la plantilla; `duplicateSummary()`
+  // arma el texto del globo en esta clase e inyecta `DatePipe` directo, que
+  // necesita el proveedor explícito (NG0201 si falta — visto en el diálogo
+  // de antiduplicación de `DiagnosticsBlock`).
+  providers: [DatePipe],
   templateUrl: './insurance-claim-detail.html',
   styleUrl: './insurance-claim-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -80,6 +98,7 @@ export class InsuranceClaimDetail {
   private readonly route = inject(ActivatedRoute);
   private readonly dialogs = inject(DialogService);
   private readonly toast = inject(ToastService);
+  private readonly datePipe = inject(DatePipe);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -136,6 +155,14 @@ export class InsuranceClaimDetail {
   protected currency = currencySuffix;
 
   /**
+   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
+   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
+   */
+  protected moneda(code?: string | null): string {
+    return displayCurrency(code);
+  }
+
+  /**
    * Resumen del documento clínico que respalda un ítem.
    *
    * **Nombra qué es** cuando el modelo lo sabe, y dice que no lo sabe cuando
@@ -174,6 +201,23 @@ export class InsuranceClaimDetail {
     if (line.referenceType === 'DIAGNOSTIC_STUDY') return 'Estudio';
     if (line.referenceType === 'MEDICATION_DISPENSATION') return 'Dispensación';
     return 'Tipo no registrado';
+  }
+
+  /**
+   * El globo del badge «Posible duplicado» (antiduplicación de estudios,
+   * v4.2.17, T-26, subtarea 3.2): fecha, prestador y la justificación del
+   * médico si repitió el estudio. Nunca el informe en sí — eso es
+   * `duplicateStudy` sin más que metadatos, por diseño (FT-32-R02).
+   *
+   * @param duplicate - El estudio duplicado del ítem.
+   * @returns El texto del globo.
+   */
+  protected duplicateSummary(duplicate: ClaimLineDuplicateStudy): string {
+    const fecha = this.datePipe.transform(duplicate.performedAt, 'd MMM y') ?? '';
+    const base = `Estudio idéntico (${duplicate.studyName}) realizado el ${fecha} en ${duplicate.providerName}.`;
+    return duplicate.reused
+      ? `${base} Reutilizó el informe previo en vez de repetirlo.`
+      : `${base} Justificación médica: ${duplicate.justification ?? 'sin registrar'}`;
   }
 
   /**

@@ -4,6 +4,8 @@
  * transporte, no de la pantalla.
  */
 
+import type { NewOwnSite } from '../practice-sites/practice-sites.types';
+
 /**
  * Credenciales de inicio de sesión.
  *
@@ -302,6 +304,18 @@ export interface PractitionerRegistration {
   /** Longitud del domicilio. Ver {@link homeLatitude}. */
   readonly homeLongitude?: number;
 
+  /**
+   * El consultorio propio, si declaró uno al registrarse.
+   *
+   * Es el mismo cuerpo que ya recibe `POST /practitioners/me/sites`
+   * (ALV-005/006), reutilizado a propósito: el alta pública no puede llamar a
+   * esa ruta —termina en el login, sin sesión— así que el dato viaja adentro
+   * del alta y el backend usa el servicio que ya tiene.
+   *
+   * **La API todavía no lo acepta**; ver `PENDIENTES-BACKEND.md`.
+   */
+  readonly ownSite?: NewOwnSite;
+
   readonly licenseNumber: string;
   /**
    * Registro del SEDES: la habilitación departamental.
@@ -366,6 +380,32 @@ export interface PractitionerRegistration {
   readonly occupationConceptId?: string;
   /** Ocupación en texto libre, para cuando no está en el catálogo. */
   readonly occupationFreeText?: string;
+  /**
+   * Los títulos académicos declarados en el alta (subtarea 1.6).
+   *
+   * Cada elemento es una credencial: el alta las crea en la misma transacción
+   * que la cuenta y el perfil. **No se manda junto con un `credentialNumber`
+   * suelto**: la API responde 422 porque no sabría si es el mismo título dos
+   * veces.
+   */
+  readonly credentials?: readonly NewRegistrationCredential[];
+}
+
+/**
+ * Un título declarado en el alta pública.
+ *
+ * Es el subconjunto mínimo de {@link NewOwnCredential} que el alta sabe
+ * persistir hoy. El nombre del título, el país, la ciudad y el diploma **no
+ * viajan**: no tienen dónde guardarse sin cambiar el modelo, y esta pantalla no
+ * es donde eso se decide.
+ */
+export interface NewRegistrationCredential {
+  /** Uno de los cinco `CREDENTIAL_TYPE_*` del catálogo, por concept id. */
+  readonly credentialTypeConceptId: string;
+  /** Número o código del diploma. Obligatorio: la columna es NOT NULL. */
+  readonly number: string;
+  /** Dónde se cursó, como texto libre. */
+  readonly issuingInstitutionText?: string;
 }
 
 export interface RegisteredPractitioner {
@@ -389,6 +429,13 @@ export interface RegisteredPractitioner {
 export interface OrganizationRegistration {
   readonly code: string;
   readonly legalName: string;
+  /**
+   * Tipo societario del diccionario internacional (subtarea 1.1), p. ej.
+   * `SRL`, `US_LLC`. El backend deriva de él el país de constitución cuando
+   * no se declara `countryConceptId` (que `PAYER` no exige: no es un tipo
+   * territorial).
+   */
+  readonly legalEntityType: string;
   readonly tradeName?: string;
   readonly timeZone?: string;
   readonly payer: {
@@ -396,6 +443,12 @@ export interface OrganizationRegistration {
     readonly regulatorIdentifier: string;
     readonly sigla: string;
     readonly address: string;
+    /**
+     * Coordenadas de la casa matriz (subtarea 1.3). Ambas o ninguna: el
+     * backend rechaza con 400 una sola de las dos (`PayerProfileDto`).
+     */
+    readonly latitude?: number;
+    readonly longitude?: number;
   };
   readonly owner: {
     readonly email: string;
@@ -409,6 +462,70 @@ export interface OrganizationRegistration {
     /** Apellido materno. Opcional: no todas las jurisdicciones lo emiten. */
     readonly motherLastName?: string;
   };
+  /**
+   * Documentos legales de afiliación en PDF (subtarea 1.2), ya subidos por
+   * `IamClient.uploadRegistrationDocument`. Opcional en el contrato —igual
+   * que `legalEntityType`—; obligatorio en el formulario público.
+   */
+  readonly legalDocuments?: OrganizationLegalDocuments;
+  /**
+   * El representante legal de la organización, con su poder notariado
+   * (subtarea 1.4). Va acá y no dentro de `payer`: el registro de procesos
+   * repite el mismo bloque para farmacia, laboratorio e imagenología — es
+   * onboarding del tenant, no de la aseguradora. Opcional en el contrato,
+   * obligatorio en el formulario.
+   */
+  readonly legalRepresentative?: OrganizationLegalRepresentative;
+  /**
+   * Las tres gerencias de contacto (subtarea 1.4). Ver
+   * {@link OrganizationRegistration.legalRepresentative}.
+   */
+  readonly executives?: OrganizationExecutives;
+}
+
+/** Nombre, celular y correo de una gerencia de contacto (subtarea 1.4). */
+export interface OrganizationContactPerson {
+  readonly fullName: string;
+  readonly phone: string;
+  readonly email: string;
+}
+
+/** El representante legal declarado en el alta, con su poder notariado ya subido. */
+export interface OrganizationLegalRepresentative {
+  readonly fullName: string;
+  readonly idNumber: string;
+  readonly email: string;
+  /** Opcional: el registro de procesos no lo pide, pero si se captura no se tira. */
+  readonly phone?: string;
+  /** `fileId` del poder, ya subido por `IamClient.uploadRegistrationDocument`. */
+  readonly powerOfAttorneyFileId: string;
+}
+
+/** Las tres gerencias de contacto de la organización (subtarea 1.4). */
+export interface OrganizationExecutives {
+  readonly generalManager: OrganizationContactPerson;
+  readonly commercialManager: OrganizationContactPerson;
+  readonly marketingManager: OrganizationContactPerson;
+}
+
+/**
+ * Los cinco documentos que el registro de procesos exige (1.1.2 · 1.2.1 ·
+ * 1.3 · 1.4 · 1.5): cada valor es el `fileId` de una pre-carga ya subida.
+ */
+export interface OrganizationLegalDocuments {
+  readonly constitutionFileId: string;
+  readonly taxIdentifierFileId: string;
+  readonly commerceRegistryFileId: string;
+  readonly operatingLicenseFileId: string;
+  readonly healthAuthorityCertificateFileId: string;
+}
+
+/** Lo que devuelve la pre-carga de un documento legal, listo para reenviar en el alta. */
+export interface UploadedRegistrationDocument {
+  readonly fileId: string;
+  readonly originalName: string;
+  readonly sizeBytes: number;
+  readonly mimeType: string;
 }
 
 /** Lo que devuelve el alta de organización: el tenant y su owner recién creados. */
@@ -420,6 +537,17 @@ export interface RegisteredOrganization {
   readonly status: string;
   /** `false` cuando el owner no tiene correo pendiente de verificar: no es un fallo. */
   readonly emailVerificationSent: boolean;
+  /**
+   * Cuántos documentos legales quedaron registrados, pendientes de
+   * verificación. Ausente si el alta no declaró `legalDocuments`.
+   */
+  readonly legalDocumentsRegistered?: number;
+  /**
+   * Cuántos vínculos de representación quedaron registrados —el representante
+   * legal más las tres gerencias— (subtarea 1.4). Ausente si el alta no
+   * declaró ninguno de los dos bloques.
+   */
+  readonly representativesRegistered?: number;
 }
 
 /**

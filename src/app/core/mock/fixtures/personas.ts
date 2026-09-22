@@ -70,9 +70,15 @@ export interface PacienteSimulado {
   readonly lastName: string;
   readonly motherLastName: string;
   readonly birthDate: string;
-  readonly sexAtBirth: 'MALE' | 'FEMALE';
-  readonly generoId: string;
-  readonly sexoId: string;
+  /**
+   * Sexo y género son opcionales desde que existe el alta de mostrador: al
+   * paciente que llega sin estar registrado se le piden nombre, cédula y
+   * celular, no su sexo. Inventarlo para completar la fila sería peor que no
+   * tenerlo — la ficha sabe mostrarse sin ellos.
+   */
+  readonly sexAtBirth?: 'MALE' | 'FEMALE';
+  readonly generoId?: string;
+  readonly sexoId?: string;
   readonly nationalId: string;
   readonly email: string;
   readonly phone: string;
@@ -85,6 +91,23 @@ export interface PacienteSimulado {
   readonly photoFileId?: string;
   readonly aseguradora?: string;
   readonly plan?: string;
+  /**
+   * El punto en el mapa de cada dirección, cuando el paciente lo declaró.
+   *
+   * Opcionales porque los datos de ejemplo no los traen: se llenan cuando
+   * alguien edita su perfil y confirma la ubicación. Ver el PATCH de
+   * `/profiles/patients/me`.
+   *
+   * `null` es «lo quitaron» (subtarea B.2), distinto de `undefined` —«nunca
+   * se tocó»—: sin la distinción, quitar el pin de la casa y volver a leer el
+   * perfil lo devolvía al punto de la plaza principal.
+   */
+  readonly homeLat?: number | null;
+  readonly homeLng?: number | null;
+  readonly workLat?: number | null;
+  readonly workLng?: number | null;
+  /** La dirección de trabajo, que antes no se guardaba en ningún lado. */
+  readonly direccionTrabajo?: string;
 }
 
 const CIUDADES = [
@@ -358,7 +381,7 @@ function paciente(
     phone: `+591 6${String(2000000 + indice * 5431).slice(0, 7)}`,
     municipioId: lugar.municipio,
     departamentoId: lugar.departamento,
-    ocupacionId: OCUPACION[datos.ocupacion] ?? OCUPACION['OCC-OTRA']!,
+    ocupacionId: OCUPACION[datos.ocupacion] ?? OCUPACION['occupation:bo:OTRA']!,
     direccion: `Calle ${['Libertad', 'Sucre', 'Ayacucho', 'Junín', 'Bolívar', 'Warnes'][indice % 6]} N.º ${45 + indice * 17}, ${lugar.ciudad}`,
     deceased: datos.fallecido ?? false,
     identityVerified: datos.verificado ?? true,
@@ -368,19 +391,19 @@ function paciente(
 }
 
 const PACIENTES_ESCRITOS: readonly PacienteSimulado[] = [
-  paciente('paciente', { nombre: 'Ana', segundo: 'Lucía', apellidos: ['Pérez', 'Quiroga'], nacimiento: '1990-06-21', sexo: 'FEMALE', ocupacion: 'OCC-CONTADOR', aseguradora: 'Seguros Andina', plan: 'Plan Integral', ids: IDS.paciente }, 0),
-  paciente('p-mamani', { nombre: 'Jorge', segundo: 'Luis', apellidos: ['Mamani', 'Choque'], nacimiento: '1958-11-03', sexo: 'MALE', ocupacion: 'OCC-JUBILADO', ciudad: 1 }, 1),
-  paciente('p-flores', { nombre: 'Daniela', apellidos: ['Flores', 'Cuéllar'], nacimiento: '1985-02-14', sexo: 'FEMALE', ocupacion: 'OCC-DOCENTE', aseguradora: 'La Vitalicia' }, 2),
-  paciente('p-rocha', { nombre: 'Martín', apellidos: ['Rocha', 'Antelo'], nacimiento: '2015-09-30', sexo: 'MALE', ocupacion: 'OCC-ESTUDIANTE' }, 3),
-  paciente('p-guzman', { nombre: 'Elena', segundo: 'María', apellidos: ['Guzmán', 'Arauz'], nacimiento: '1972-07-08', sexo: 'FEMALE', ocupacion: 'OCC-COMERCIANTE', ciudad: 2 }, 4),
-  paciente('p-torrez', { nombre: 'Pablo', apellidos: ['Torrez', 'Nina'], nacimiento: '1995-12-25', sexo: 'MALE', ocupacion: 'OCC-INGENIERO', aseguradora: 'Seguros Andina' }, 5),
-  paciente('p-vaca', { nombre: 'Lucía', apellidos: ['Vaca', 'Díez'], nacimiento: '2001-03-19', sexo: 'FEMALE', ocupacion: 'OCC-ESTUDIANTE', verificado: false }, 6),
-  paciente('p-condori', { nombre: 'Ricardo', apellidos: ['Condori', 'Apaza'], nacimiento: '1949-01-10', sexo: 'MALE', ocupacion: 'OCC-AGRICULTOR', ciudad: 1 }, 7),
-  paciente('p-medina', { nombre: 'Valentina', apellidos: ['Medina', 'Roca'], nacimiento: '1988-08-02', sexo: 'FEMALE', ocupacion: 'OCC-ABOGADO', aseguradora: 'Alianza Seguros', plan: 'Plan Oro' }, 8),
-  paciente('p-soliz', { nombre: 'Andrés', apellidos: ['Solíz', 'Rojas'], nacimiento: '1979-05-27', sexo: 'MALE', ocupacion: 'OCC-CHOFER' }, 9),
-  paciente('p-quispe', { nombre: 'Marta', apellidos: ['Quispe', 'Huanca'], nacimiento: '1966-10-15', sexo: 'FEMALE', ocupacion: 'OCC-HOGAR', ciudad: 2 }, 10),
-  paciente('p-rivero', { nombre: 'Sebastián', apellidos: ['Rivero', 'Melgar'], nacimiento: '2010-04-04', sexo: 'MALE', ocupacion: 'OCC-ESTUDIANTE' }, 11),
-  paciente('p-paredes', { nombre: 'Carmen', apellidos: ['Paredes', 'Ibáñez'], nacimiento: '1938-02-28', sexo: 'FEMALE', ocupacion: 'OCC-JUBILADO', fallecido: true }, 12),
+  paciente('paciente', { nombre: 'Ana', segundo: 'Lucía', apellidos: ['Pérez', 'Quiroga'], nacimiento: '1990-06-21', sexo: 'FEMALE', ocupacion: 'occupation:bo:CONTADOR', aseguradora: 'Seguros Andina', plan: 'Plan Integral', ids: IDS.paciente }, 0),
+  paciente('p-mamani', { nombre: 'Jorge', segundo: 'Luis', apellidos: ['Mamani', 'Choque'], nacimiento: '1958-11-03', sexo: 'MALE', ocupacion: 'occupation:bo:JUBILADO', ciudad: 1 }, 1),
+  paciente('p-flores', { nombre: 'Daniela', apellidos: ['Flores', 'Cuéllar'], nacimiento: '1985-02-14', sexo: 'FEMALE', ocupacion: 'occupation:bo:DOCENTE', aseguradora: 'La Vitalicia' }, 2),
+  paciente('p-rocha', { nombre: 'Martín', apellidos: ['Rocha', 'Antelo'], nacimiento: '2015-09-30', sexo: 'MALE', ocupacion: 'occupation:bo:ESTUDIANTE' }, 3),
+  paciente('p-guzman', { nombre: 'Elena', segundo: 'María', apellidos: ['Guzmán', 'Arauz'], nacimiento: '1972-07-08', sexo: 'FEMALE', ocupacion: 'occupation:bo:COMERCIANTE', ciudad: 2 }, 4),
+  paciente('p-torrez', { nombre: 'Pablo', apellidos: ['Torrez', 'Nina'], nacimiento: '1995-12-25', sexo: 'MALE', ocupacion: 'occupation:bo:INGENIERO', aseguradora: 'Seguros Andina' }, 5),
+  paciente('p-vaca', { nombre: 'Lucía', apellidos: ['Vaca', 'Díez'], nacimiento: '2001-03-19', sexo: 'FEMALE', ocupacion: 'occupation:bo:ESTUDIANTE', verificado: false }, 6),
+  paciente('p-condori', { nombre: 'Ricardo', apellidos: ['Condori', 'Apaza'], nacimiento: '1949-01-10', sexo: 'MALE', ocupacion: 'occupation:bo:AGRICULTOR', ciudad: 1 }, 7),
+  paciente('p-medina', { nombre: 'Valentina', apellidos: ['Medina', 'Roca'], nacimiento: '1988-08-02', sexo: 'FEMALE', ocupacion: 'occupation:bo:ABOGADO', aseguradora: 'Alianza Seguros', plan: 'Plan Oro' }, 8),
+  paciente('p-soliz', { nombre: 'Andrés', apellidos: ['Solíz', 'Rojas'], nacimiento: '1979-05-27', sexo: 'MALE', ocupacion: 'occupation:bo:CHOFER' }, 9),
+  paciente('p-quispe', { nombre: 'Marta', apellidos: ['Quispe', 'Huanca'], nacimiento: '1966-10-15', sexo: 'FEMALE', ocupacion: 'occupation:bo:EMPLEADA_HOGAR', ciudad: 2 }, 10),
+  paciente('p-rivero', { nombre: 'Sebastián', apellidos: ['Rivero', 'Melgar'], nacimiento: '2010-04-04', sexo: 'MALE', ocupacion: 'occupation:bo:ESTUDIANTE' }, 11),
+  paciente('p-paredes', { nombre: 'Carmen', apellidos: ['Paredes', 'Ibáñez'], nacimiento: '1938-02-28', sexo: 'FEMALE', ocupacion: 'occupation:bo:JUBILADO', fallecido: true }, 12),
 ];
 
 /* ---- y los generados ------------------------------------------------------
@@ -392,21 +415,21 @@ const PACIENTES_ESCRITOS: readonly PacienteSimulado[] = [
    con una sola franja no se ve si están bien. */
 
 const OCUPACIONES_POR_EDAD: Readonly<Record<string, readonly string[]>> = {
-  nino: ['OCC-ESTUDIANTE'],
-  joven: ['OCC-ESTUDIANTE', 'OCC-COMERCIANTE', 'OCC-CHOFER', 'OCC-ENFERMERIA', 'OCC-OTRA'],
+  nino: ['occupation:bo:ESTUDIANTE'],
+  joven: ['occupation:bo:ESTUDIANTE', 'occupation:bo:COMERCIANTE', 'occupation:bo:CHOFER', 'occupation:bo:ENFERMERO', 'occupation:bo:OTRA'],
   adulto: [
-    'OCC-DOCENTE',
-    'OCC-COMERCIANTE',
-    'OCC-INGENIERO',
-    'OCC-ABOGADO',
-    'OCC-CONTADOR',
-    'OCC-AGRICULTOR',
-    'OCC-CHOFER',
-    'OCC-ENFERMERIA',
-    'OCC-ADMINISTRATIVO',
-    'OCC-HOGAR',
+    'occupation:bo:DOCENTE',
+    'occupation:bo:COMERCIANTE',
+    'occupation:bo:INGENIERO',
+    'occupation:bo:ABOGADO',
+    'occupation:bo:CONTADOR',
+    'occupation:bo:AGRICULTOR',
+    'occupation:bo:CHOFER',
+    'occupation:bo:ENFERMERO',
+    'occupation:bo:EMPLEADO',
+    'occupation:bo:EMPLEADA_HOGAR',
   ],
-  mayor: ['OCC-JUBILADO', 'OCC-HOGAR', 'OCC-AGRICULTOR', 'OCC-COMERCIANTE'],
+  mayor: ['occupation:bo:JUBILADO', 'occupation:bo:EMPLEADA_HOGAR', 'occupation:bo:AGRICULTOR', 'occupation:bo:COMERCIANTE'],
 };
 
 function pacienteGenerado(indice: number): PacienteSimulado {
@@ -451,7 +474,7 @@ function pacienteGenerado(indice: number): PacienteSimulado {
     phone: fk.celular(f),
     municipioId: lugarDeVida.municipioId,
     departamentoId: lugarDeVida.departamentoId,
-    ocupacionId: OCUPACION[f.helpers.arrayElement(OCUPACIONES_POR_EDAD[tramo]!)] ?? OCUPACION['OCC-OTRA']!,
+    ocupacionId: OCUPACION[f.helpers.arrayElement(OCUPACIONES_POR_EDAD[tramo]!)] ?? OCUPACION['occupation:bo:OTRA']!,
     direccion: `${fk.direccion(f, lugarDeVida)}, ${lugarDeVida.ciudad}`,
     // Un padrón sin ningún fallecido no deja probar la marca de fallecimiento,
     // que cambia media pantalla de expediente. Uno de cada cincuenta, y sólo
@@ -500,7 +523,7 @@ export function credencialesDe(p: ProfesionalSimulado) {
   return [
     {
       id: uuid(`cred-titulo-${p.id}`),
-      credentialTypeConceptId: TIPO_CREDENCIAL['CRED-TITULO']!,
+      credentialTypeConceptId: TIPO_CREDENCIAL['CREDENTIAL_TYPE_DEGREE']!,
       number: `TIT-${p.practitionerCode.slice(4)}`,
       issuingInstitutionText: 'Universidad Mayor de San Andrés',
       issueDate: isoDia(-365 * 12),
@@ -513,7 +536,7 @@ export function credencialesDe(p: ProfesionalSimulado) {
       : [
           {
             id: uuid(`cred-esp-${p.id}`),
-            credentialTypeConceptId: TIPO_CREDENCIAL['CRED-ESPECIALIDAD']!,
+            credentialTypeConceptId: TIPO_CREDENCIAL['CREDENTIAL_TYPE_SPECIALTY']!,
             number: `ESP-${p.practitionerCode.slice(4)}`,
             issuingInstitutionText: 'Colegio Médico de Bolivia',
             issueDate: isoDia(-365 * 7),
@@ -521,15 +544,6 @@ export function credencialesDe(p: ProfesionalSimulado) {
             ...(p.verified ? { verifiedAt: iso(-180) } : {}),
           },
         ]),
-    {
-      id: uuid(`cred-sedes-${p.id}`),
-      credentialTypeConceptId: TIPO_CREDENCIAL['CRED-SEDES']!,
-      number: `SEDES-${p.matricula}`,
-      issuingInstitutionText: 'SEDES Santa Cruz',
-      issueDate: isoDia(-365 * 6),
-      expiryDate: isoDia(365 * 2),
-      stateConceptId: ESTADO['ST-ACTIVE']!,
-    },
   ];
 }
 
@@ -542,6 +556,16 @@ export function licenciasDe(p: ProfesionalSimulado) {
       regulatoryAuthority: 'Ministerio de Salud y Deportes',
       stateConceptId: ESTADO['ST-ACTIVE']!,
       validFrom: isoDia(-365 * 10),
+    },
+    {
+      // SEDES es una habilitación departamental, no formación académica.
+      id: uuid(`lic-sedes-${p.id}`),
+      jurisdictionConceptId: JURISDICCION['JUR-SC']!,
+      licenseNumber: `SEDES-${p.matricula}`,
+      regulatoryAuthority: 'SEDES Santa Cruz',
+      stateConceptId: ESTADO['ST-ACTIVE']!,
+      validFrom: isoDia(-365 * 6),
+      validTo: isoDia(365 * 2),
     },
   ];
 }
@@ -626,8 +650,8 @@ export const afiliaciones = new Coleccion<AfiliacionSimulada>(afiliacionesInicia
 /** Familiares y contactos de cada paciente. */
 export function personasRelacionadasDe(p: PacienteSimulado) {
   const base = [
-    { id: uuid(`rel-1-${p.id}`), displayName: `${['Rosa', 'Juan', 'Marta', 'Carlos'][p.patientCode.charCodeAt(6) % 4]} ${p.lastName}`, relationshipConceptId: PARENTESCO[p.sexAtBirth === 'FEMALE' ? 'REL-MADRE' : 'REL-PADRE']!, isEmergencyContact: true, isLegalGuardian: p.birthDate > '2007-01-01' },
-    { id: uuid(`rel-2-${p.id}`), displayName: `${['Pedro', 'Laura', 'Raúl', 'Inés'][p.patientCode.charCodeAt(7) % 4]} ${p.motherLastName}`, relationshipConceptId: PARENTESCO['REL-HERMANO']!, isEmergencyContact: false, isLegalGuardian: false },
+    { id: uuid(`rel-1-${p.id}`), displayName: `${['Rosa', 'Juan', 'Marta', 'Carlos'][p.patientCode.charCodeAt(6) % 4]} ${p.lastName}`, relationshipConceptId: PARENTESCO[p.sexAtBirth === 'FEMALE' ? 'RELATIONSHIP_MOTHER' : 'RELATIONSHIP_FATHER']!, isEmergencyContact: true, isLegalGuardian: p.birthDate > '2007-01-01' },
+    { id: uuid(`rel-2-${p.id}`), displayName: `${['Pedro', 'Laura', 'Raúl', 'Inés'][p.patientCode.charCodeAt(7) % 4]} ${p.motherLastName}`, relationshipConceptId: PARENTESCO['RELATIONSHIP_SIBLING']!, isEmergencyContact: false, isLegalGuardian: false },
   ];
   return p.aseguradora === undefined ? base.slice(0, 1) : base;
 }

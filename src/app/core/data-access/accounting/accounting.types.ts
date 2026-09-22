@@ -49,6 +49,15 @@ export interface JournalTransaction {
   /** Decimal como texto. No convertir a número: ver la cabecera del archivo. */
   readonly totalAmount?: string;
   readonly postedAt?: Date;
+  /**
+   * Dónde está el documento en el flujo de seis pasos.
+   *
+   * Es distinto de `statusConceptId`, que es el concepto de terminología: éste
+   * es el **código** del estado, que es lo que la pantalla necesita para saber
+   * qué acción ofrecer. Opcional porque la API todavía no lo publica en el
+   * listado; cuando falta, un asiento con `postedAt` se lee como posteado.
+   */
+  readonly status?: WorkflowStatus;
 }
 
 /** Una línea del asiento: contra qué cuenta y de qué lado. */
@@ -309,4 +318,168 @@ export interface BalanceSheet {
   readonly limit: number;
   readonly nextCursor: string | null;
   readonly truncated: boolean;
+}
+
+/* ============================================================================
+    El plano SAP: ejercicio y períodos, flujo del documento, partidas abiertas
+    y objetos de controlling.
+
+    Los nombres son los de las tablas del módulo 16 del modelo canónico
+    —`fiscal_periods`, `open_items`, `clearing_documents`, `cost_centers`,
+    `profit_centers`, `segments`— y los estados, los que la API declara en
+    `accounting.concepts.ts`. No se inventó vocabulario: el día que la API
+    publique estas lecturas, la pantalla no cambia de idioma.
+    ========================================================================== */
+
+/** Los seis estados por los que pasa un asiento antes de existir en el mayor. */
+export type WorkflowStatus =
+  | 'DRAFT'
+  | 'AUTO_CLASSIFIED'
+  | 'PENDING_REVIEW'
+  | 'APPROVED'
+  | 'POSTED'
+  | 'REVERSED';
+
+/** Las cinco acciones que mueven ese estado. Son las de la API, no más. */
+export type WorkflowAction = 'classify' | 'submit-review' | 'approve' | 'post' | 'reverse';
+
+/** Un período contable. Cerrado no admite asientos: eso es cerrar el mes. */
+export interface FiscalPeriod {
+  readonly id: string;
+  readonly periodNumber: number;
+  readonly name: string;
+  readonly startsOn: string;
+  readonly endsOn: string;
+  readonly status: 'CLOSED' | 'OPEN' | 'PLANNED';
+  readonly closedAt?: string;
+}
+
+export interface FiscalYear {
+  readonly fiscalYearId: string;
+  readonly name: string;
+  readonly startsOn: string;
+  readonly endsOn: string;
+  readonly currentPeriodId: string;
+  readonly periods: readonly FiscalPeriod[];
+}
+
+/** Una factura pendiente de cobro o de pago, con su antigüedad. */
+export interface OpenItem {
+  readonly id: string;
+  readonly documentNumber: string;
+  readonly accountCode: string;
+  readonly accountName: string;
+  readonly partnerName: string;
+  readonly side: 'RECEIVABLE' | 'PAYABLE';
+  readonly documentDate: string;
+  readonly dueDate: string;
+  readonly amount: string;
+  readonly clearedAmount: string;
+  readonly openAmount: string;
+  readonly overdueDays: number;
+  readonly agingBucket: string;
+}
+
+/** Un tramo de antigüedad de la cartera. */
+export interface AgingBucket {
+  readonly bucket: string;
+  readonly label: string;
+  readonly receivable: string;
+  readonly payable: string;
+  readonly count: number;
+}
+
+export interface OpenItemsPage {
+  readonly items: readonly OpenItem[];
+  readonly aging: readonly AgingBucket[];
+  readonly totalReceivable: string;
+  readonly totalPayable: string;
+}
+
+/** Un centro de coste, de beneficio o un segmento, con su resultado. */
+export interface ControllingObject {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly kind: 'COST_CENTER' | 'PROFIT_CENTER' | 'SEGMENT';
+  readonly debit: string;
+  readonly credit: string;
+  readonly result: string;
+}
+
+/** Un documento del flujo: el original, éste, y sus reversiones. */
+export interface DocumentFlowNode {
+  readonly id: string;
+  readonly role: string;
+  readonly transactionNumber: string;
+  readonly transactionDate: string;
+  readonly totalAmount: string;
+  readonly status: WorkflowStatus;
+}
+
+/** Lo que devuelve compensar un grupo de partidas. */
+export interface ClearingResult {
+  readonly clearingDocumentId: string;
+  readonly clearedItems: number;
+  readonly clearedAmount: string;
+}
+
+/** Un activo fijo con su clase, su amortización acumulada y su valor neto. */
+export interface FixedAsset {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly className: string;
+  readonly classCode: string;
+  readonly usefulLifeMonths: number;
+  readonly acquisitionCost: string;
+  readonly accumulatedDepreciation: string;
+  readonly netBookValue: string;
+  readonly monthlyDepreciation: string;
+  /** Si entra en la próxima corrida. Un activo en cero o de baja, no. */
+  readonly depreciable: boolean;
+  readonly status: 'ACTIVE' | 'RETIRED';
+}
+
+export interface FixedAssetRegister {
+  readonly items: readonly FixedAsset[];
+  readonly totalAcquisition: string;
+  readonly totalAccumulated: string;
+  readonly totalNetBookValue: string;
+  /** Lo que costará la próxima corrida de amortización. */
+  readonly monthlyCharge: string;
+}
+
+/** Un gasto o un ingreso cobrado por adelantado, repartido en períodos. */
+export interface AccrualObject {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly kind: 'EXPENSE' | 'REVENUE';
+  readonly totalAmount: string;
+  readonly periods: number;
+  readonly postedPeriods: number;
+  readonly remainingPeriods: number;
+  readonly periodAmount: string;
+  readonly recognizedAmount: string;
+  readonly pendingAmount: string;
+  readonly startsOn: string;
+  readonly completed: boolean;
+}
+
+export interface AccrualRegister {
+  readonly items: readonly AccrualObject[];
+  readonly pendingTotal: string;
+  /** Lo que reconocerá la próxima corrida de devengo. */
+  readonly periodCharge: string;
+}
+
+/** Lo que devuelve una corrida: su documento y cuánto movió. */
+export interface RunResult {
+  readonly amount: string;
+  readonly periodName: string;
+  readonly transactionNumber?: string;
+  readonly transactionNumbers?: readonly string[];
+  readonly assets?: number;
+  readonly objects?: number;
 }

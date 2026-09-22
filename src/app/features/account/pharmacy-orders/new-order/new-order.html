@@ -1,10 +1,17 @@
 <app-page-header
   title="Confirmá tu pedido"
-  subtitle="Revisá los renglones y elegí cómo lo recibís antes de enviarlo."
+  subtitle="Revisá tu receta como pedido y cómo lo recibís."
   [breadcrumbs]="breadcrumbs()"
 />
 
-<app-view-state-host [state]="estado">
+<app-view-state-host [state]="estado()">
+  <div vsh-skeleton class="confirmacion" data-testid="pedido-cargando">
+    <app-skeleton variant="text" [lines]="2" />
+    <app-skeleton variant="rect" height="var(--sp-20)" />
+    <app-skeleton variant="rect" height="var(--sp-20)" />
+    <app-skeleton variant="text" [lines]="1" />
+  </div>
+
   @if (borrador; as pedido) {
     <div class="confirmacion" data-testid="pedido-confirmacion">
       <!-- ─── La sede elegida ────────────────────────────────────────────── -->
@@ -34,41 +41,60 @@
         }
 
         <ul class="confirmacion__lineas" data-testid="pedido-lineas">
-          @for (linea of pedido.lineas; track $index) {
-            <li class="confirmacion__linea">
-              <div class="confirmacion__linea-datos">
-                <span class="confirmacion__principal">{{ linea.medicamento }}</span>
-                @if (linea.presentacion !== null) {
-                  <span class="confirmacion__secundario">{{ linea.presentacion }}</span>
-                }
-                <span class="confirmacion__secundario">Cantidad: {{ linea.cantidad }}</span>
+          @for (renglon of renglones(); track renglon.indice) {
+            <li
+              class="confirmacion__linea"
+              data-testid="pedido-linea"
+            >
+              <div class="confirmacion__linea-cuerpo">
+                <div class="confirmacion__linea-datos">
+                  <span class="confirmacion__principal" data-testid="pedido-linea-medicamento">
+                    {{ renglon.medicamento }}
+                  </span>
+                  @if (renglon.presentacion !== null) {
+                    <span class="confirmacion__secundario">{{ renglon.presentacion }}</span>
+                  }
+                </div>
+                <div class="confirmacion__linea-precio">
+                  @if (renglon.precioPromocional; as promocional) {
+                    <!-- El tachado es sólo visual: sin decir cuál es cuál, un
+                         lector de pantalla anuncia dos precios seguidos y quien
+                         escucha no sabe cuál va a pagar. -->
+                    <s class="confirmacion__secundario cifras-tabulares">
+                      <span class="sr-only">Antes:</span>
+                      {{ renglon.precioDeLista }} {{ renglon.linea.moneda }}
+                    </s>
+                    <strong class="cifras-tabulares">
+                      <span class="sr-only">Precio de campaña:</span>
+                      {{ promocional }} {{ renglon.linea.moneda }}
+                    </strong>
+                  } @else if (renglon.precioDeLista !== null) {
+                    <span class="cifras-tabulares">
+                      {{ renglon.precioDeLista }} {{ renglon.linea.moneda }}
+                    </span>
+                  } @else {
+                    <span class="confirmacion__secundario">Sin precio publicado</span>
+                  }
+                  @if (renglon.subtotal !== null) {
+                    <span class="confirmacion__subtotal cifras-tabulares" data-testid="pedido-linea-subtotal">
+                      Subtotal: {{ renglon.subtotal }} {{ renglon.linea.moneda }}
+                    </span>
+                  }
+                  @if (!renglon.linea.disponible) {
+                    <app-badge variant="warning">La farmacia no la tiene</app-badge>
+                  }
+                </div>
               </div>
-              <div class="confirmacion__linea-precio">
-                @if (precioPromocionalDe(linea.productId); as promocional) {
-                  <!-- El tachado es sólo visual: sin decir cuál es cuál, un
-                       lector de pantalla anuncia dos precios seguidos y quien
-                       escucha no sabe cuál va a pagar. -->
-                  <s class="confirmacion__secundario cifras-tabulares">
-                    <span class="sr-only">Antes:</span>
-                    {{ precioNormalizado(linea.precio) }} {{ linea.moneda }}
-                  </s>
-                  <strong class="cifras-tabulares">
-                    <span class="sr-only">Precio de campaña:</span>
-                    {{ promocional }} {{ linea.moneda }}
-                  </strong>
-                } @else if (linea.precio !== null) {
-                  <span class="cifras-tabulares">{{ linea.precio }} {{ linea.moneda }}</span>
-                } @else {
-                  <span class="confirmacion__secundario">Sin precio publicado</span>
-                }
-                @if (!linea.disponible) {
-                  <app-badge variant="warning">La farmacia no la tiene</app-badge>
-                }
-              </div>
+
+              <p class="confirmacion__linea-controles confirmacion__secundario">
+                Cantidad:
+                <span class="cifras-tabulares" data-testid="pedido-linea-cantidad">{{ renglon.cantidad }}</span>
+              </p>
             </li>
           }
         </ul>
-        <p class="confirmacion__total">
+
+        <p class="confirmacion__total" data-testid="pedido-total">
           @if (totalConPromocion; as conPromocion) {
             Total estimado:
             <s class="confirmacion__secundario cifras-tabulares">
@@ -95,10 +121,11 @@
             El precio de campaña lo confirma la farmacia al revisar tu pedido.
           </p>
         }
-        <!-- El pedido reserva, no cobra: decirlo evita el susto del «pagué y
-             no me llegó nada». El flujo de pago no existe y no se finge. -->
-        <p class="confirmacion__nota">
-          Pagás al retirar, en la farmacia. Enviar el pedido no es un pago.
+        <!-- D-FARMOCK-T-E1-01: el pedido se crea en la confirmación final del
+             checkout. Desde acá no se envía nada y el texto lo dice. -->
+        <p class="confirmacion__nota" data-testid="pedido-nota-sin-envio">
+          Todavía no se envía nada a la farmacia: la entrega y el pago se eligen en el paso
+          siguiente.
         </p>
       </section>
 
@@ -122,15 +149,9 @@
       </section>
 
       @if (hasUnresolvedProducts) {
-        <app-alert tone="warning" title="Este pedido todavía no se puede enviar">
+        <app-alert tone="warning" title="Este pedido todavía no puede continuar">
           No hay un producto publicado para: {{ unresolvedProductNames.join(', ') }}. El pedido
           completo queda sin enviar; no se quitará ningún medicamento.
-        </app-alert>
-      }
-
-      @if (fallo()) {
-        <app-alert tone="error" title="No pudimos enviar tu pedido">
-          Probá de nuevo en un momento. Tu receta no se pierde: sigue en tu historia clínica.
         </app-alert>
       }
 
@@ -139,15 +160,19 @@
           app-button
           variant="primary"
           type="button"
-          data-testid="pedido-enviar"
-          [disabled]="hasUnresolvedProducts"
-          [isLoading]="enviando()"
-          (clicked)="enviar()"
+          data-testid="pedido-continuar"
+          [disabled]="!puedeContinuar()"
+          (clicked)="continuar()"
         >
-          Enviar pedido
+          Continuar
         </button>
         <a app-button variant="ghost" [routerLink]="rutaDeVuelta">Volver a las sucursales</a>
       </div>
+      @if (rutaDelCheckout === null) {
+        <p class="confirmacion__nota" data-testid="pedido-continuar-pendiente">
+          «Continuar» lleva al paso de entrega y pago, que todavía no está disponible.
+        </p>
+      }
     </div>
   }
 </app-view-state-host>

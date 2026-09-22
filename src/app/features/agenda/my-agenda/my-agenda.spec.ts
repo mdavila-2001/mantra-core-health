@@ -89,13 +89,27 @@ describe('MyAgenda', () => {
     fixture.detectChanges();
   }
 
-  /** Responde los cupos con su último inicio. */
+  /** Responde los cupos con su último inicio, y los bloqueos de la semana. */
   function conCuposHasta(fecha: Date | null): void {
     const req = http.expectOne((r) => r.url === '/scheduling/slots');
     req.flush({
       items: fecha === null ? [] : [{ id: 's', startAt: fecha.toISOString() }],
       count: 1,
     });
+    conBloqueosDeLaSemana();
+  }
+
+  /**
+   * Responde la lectura de bloqueos que la grilla pinta en rojo (AC-C3-02).
+   *
+   * Con `match` y no `expectOne`: la pantalla la dispara cada vez que relee la
+   * plantilla —reactivar o retirar un horario lo hace—, así que un test que
+   * recarga deja dos en vuelo y `expectOne` fallaría por la segunda.
+   */
+  function conBloqueosDeLaSemana(items: unknown[] = []): void {
+    for (const req of http.match((r) => r.url === '/scheduling/resources/res-1/exceptions')) {
+      req.flush({ items, count: items.length });
+    }
     fixture.detectChanges();
   }
 
@@ -181,6 +195,196 @@ describe('MyAgenda', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-tarjeta-del-dia')).toBeNull();
+  });
+
+  /* -- El selector de rango de la grilla (AC-C3-01) -------------------------- */
+
+  it('ofrece elegir entre el horario de consulta y el día completo', () => {
+    crear();
+    conRecurso();
+    conPlantilla([{ dayOfWeek: 4, startTime: '09:00:00', endTime: '13:00:00' }]);
+    conCuposHasta(new Date('2030-01-01'));
+
+    const consulta: HTMLElement = fixture.nativeElement.querySelector(
+      '[data-testid="grilla-rango-atencion"]',
+    );
+    const completo: HTMLElement = fixture.nativeElement.querySelector(
+      '[data-testid="grilla-rango-completo"]',
+    );
+    expect(consulta, 'falta el selector de rango').not.toBeNull();
+    // El rótulo lleva las horas: «día completo» a secas no dice qué se gana.
+    expect(completo.textContent).toContain('00:00');
+    expect(completo.textContent).toContain('23:59');
+    // Arranca en el día completo, que es lo único que muestra un bloqueo de
+    // madrugada; y el que rige se anuncia, no sólo se pinta.
+    expect(completo.getAttribute('aria-pressed')).toBe('true');
+    expect(consulta.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('elegir «horario de consulta» recorta la grilla, y se puede volver', () => {
+    crear();
+    conRecurso();
+    conPlantilla([{ dayOfWeek: 4, startTime: '09:00:00', endTime: '13:00:00' }]);
+    conCuposHasta(new Date('2030-01-01'));
+
+    function filas(): number {
+      return fixture.nativeElement.querySelectorAll('.grilla__hora').length;
+    }
+    expect(filas()).toBe(24);
+
+    fixture.nativeElement.querySelector('[data-testid="grilla-rango-atencion"]').click();
+    fixture.detectChanges();
+    // De 9 a 12:59 — el fin es exclusivo, así que las 13 no cuentan.
+    expect(filas()).toBe(4);
+
+    fixture.nativeElement.querySelector('[data-testid="grilla-rango-completo"]').click();
+    fixture.detectChanges();
+    expect(filas()).toBe(24);
+  });
+
+  it('pide los bloqueos de esta semana para pintarlos en rojo en la grilla', () => {
+    // Lectura propia y no la del mes: la solapa del horario abre primero y no
+    // carga el mes, así que esperar a «Ocupación» dejaría la grilla sin ellos.
+    crear();
+    conRecurso();
+    conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }]);
+    http
+      .expectOne((r) => r.url === '/scheduling/slots')
+      .flush({ items: [{ id: 's', startAt: '2030-01-01T00:00:00Z' }], count: 1 });
+
+    const req = http.expectOne((r) => r.url === '/scheduling/resources/res-1/exceptions');
+    const desde = new Date(req.request.params.get('from') as string);
+    const hasta = new Date(req.request.params.get('to') as string);
+    expect(desde.getDay(), 'la ventana arranca un lunes').toBe(1);
+    expect(Math.round((hasta.getTime() - desde.getTime()) / 86_400_000)).toBe(7);
+
+    const inicio = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate(), 10);
+    const fin = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate(), 11);
+    req.flush({
+      items: [
+        { id: 'ex-1', startAt: inicio.toISOString(), endAt: fin.toISOString(), reason: 'Congreso' },
+        // Las que ABREN disponibilidad no son bloqueos: pintarlas en rojo diría
+        // lo contrario de lo que pasa.
+        { id: 'ex-2', startAt: inicio.toISOString(), endAt: fin.toISOString(), isAvailable: true },
+      ],
+      count: 2,
+    });
+    fixture.detectChanges();
+
+    const pintados = fixture.nativeElement.querySelectorAll('[data-testid="horario-bloqueo"]');
+    expect(pintados).toHaveLength(1);
+    expect(pintados[0].textContent).toContain('Congreso');
+  });
+
+  it('si los bloqueos no cargan, la grilla se ve igual', () => {
+    // Un bloqueo que no llegó no puede llevarse puesto el horario, que es el
+    // dato principal de esta pantalla.
+    crear();
+    conRecurso();
+    conPlantilla([{ dayOfWeek: 2, startTime: '09:00:00', endTime: '13:00:00' }]);
+    http
+      .expectOne((r) => r.url === '/scheduling/slots')
+      .flush({ items: [{ id: 's', startAt: '2030-01-01T00:00:00Z' }], count: 1 });
+    http
+      .expectOne((r) => r.url === '/scheduling/resources/res-1/exceptions')
+      .flush({ message: 'x' }, { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-schedule-grid')).not.toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('[data-testid="horario-bloqueo"]')).toHaveLength(
+      0,
+    );
+  });
+
+  /* -- La semana con nombres ------------------------------------------------ */
+
+  /**
+   * «El médico puede revisar su calendario de citas con horarios y **nombre
+   * completo del paciente** de forma diaria, semanal y mensual.»
+   *
+   * La semana ya existía y sabía contar libres y tomados. Lo que no hacía era
+   * pedir las citas: sin esta lectura, `app-week-view` recibe una lista vacía y
+   * la mitad del pedido —con quién— no tiene de dónde salir.
+   */
+  describe('la semana trae a quién atiende', () => {
+    /** Deja la pantalla en la vista de semana y devuelve la petición de citas. */
+    function verLaSemana() {
+      const componente = fixture.componentInstance as unknown as {
+        solapa: { set(v: 'patron' | 'mes'): void };
+        verSemana(): void;
+      };
+      componente.solapa.set('mes');
+      componente.verSemana();
+      fixture.detectChanges();
+      return http.expectOne((r) => r.url === '/scheduling/bookings');
+    }
+
+    it('pide las citas de los siete días en UNA sola llamada, acotada por recurso', () => {
+      // Una y no siete: `searchBookings` acepta ventana, y pedir siete veces lo
+      // mismo para agrupar después en el cliente es cara la red por comodidad.
+      crear();
+      conRecurso();
+      conPlantilla([{ dayOfWeek: 4, startTime: '09:00:00', endTime: '13:00:00' }]);
+      conCuposHasta(new Date('2030-01-01'));
+
+      const req = verLaSemana();
+      req.flush({ items: [], count: 0 });
+
+      // Acotada por recurso: sin filtro la API contesta 422, igual que el día.
+      expect(req.request.params.get('resourceId')).toBe('res-1');
+
+      const desde = new Date(req.request.params.get('from') as string);
+      const hasta = new Date(req.request.params.get('to') as string);
+      const dias = Math.round((hasta.getTime() - desde.getTime()) / 86_400_000);
+      expect(dias, 'la ventana tiene que ser de siete días').toBe(7);
+      expect(desde.getDay(), 'la ventana arranca un lunes').toBe(1);
+    });
+
+    it('las citas llegan a la vista de semana', () => {
+      crear();
+      conRecurso();
+      conPlantilla([{ dayOfWeek: 4, startTime: '09:00:00', endTime: '13:00:00' }]);
+      conCuposHasta(new Date('2030-01-01'));
+
+      const req = verLaSemana();
+      const desde = new Date(req.request.params.get('from') as string);
+      req.flush({
+        items: [
+          {
+            id: 'b-1',
+            statusConceptId: 'st-1',
+            startAt: new Date(
+              desde.getFullYear(),
+              desde.getMonth(),
+              desde.getDate(),
+              9,
+            ).toISOString(),
+            patientName: 'Ana Paz',
+          },
+        ],
+        count: 1,
+      });
+      // La traducción de estados sale detrás de la lectura de citas.
+      http.expectOne((r) => r.url.includes('concept')).flush({ items: [] });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('Ana Paz');
+    });
+
+    it('si la lectura falla la semana sigue mostrando la ocupación, sin nombres', () => {
+      // Los libres y los tomados salen de los cupos del mes, que ya están
+      // cargados: perder los nombres no justifica perder la agenda.
+      crear();
+      conRecurso();
+      conPlantilla([{ dayOfWeek: 4, startTime: '09:00:00', endTime: '13:00:00' }]);
+      conCuposHasta(new Date('2030-01-01'));
+
+      verLaSemana().flush(null, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('app-week-view')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="semana-citas"]')).toBeNull();
+    });
   });
 
   /* -- El horario vigente, el retirado y el histórico (TAREA-10) ------------ */
@@ -402,6 +606,7 @@ describe('MyAgenda', () => {
     expect(dias).toBeLessThanOrEqual(92);
 
     req.flush({ items: [], count: 0 });
+    conBloqueosDeLaSemana();
   });
 
   it('avisa cuando los turnos publicados se están por agotar', () => {
@@ -434,7 +639,7 @@ describe('MyAgenda', () => {
     http
       .expectOne((r) => r.url === '/scheduling/slots')
       .flush({ message: 'x' }, { status: 500, statusText: 'Server Error' });
-    fixture.detectChanges();
+    conBloqueosDeLaSemana();
 
     expect(fixture.nativeElement.textContent).toContain('Martes de 09:00 a 13:00');
   });

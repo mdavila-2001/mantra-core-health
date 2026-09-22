@@ -37,6 +37,9 @@ import type {
   PractitionerSpecialty,
   RelatedPerson,
   RelatedPersonCreated,
+  Dependent,
+  DependentRelationshipCode,
+  NewDependent,
   PractitionerOnboarding,
   LinkableOrganizationPage,
 } from './profiles.types';
@@ -66,6 +69,40 @@ function fechaIso(fecha: Date): string {
  * person_profiles → *_profiles` en una sola transacción), así que acá alcanza
  * con una petición: nunca hay que crear la persona por separado.
  */
+/**
+ * Un dependiente tal como viaja por el cable.
+ *
+ * La fecha llega como instante ISO aunque la columna sea `date`, y los
+ * opcionales vacíos llegan como `null`: las dos cosas las arregla
+ * {@link toDependent} en la frontera, que es donde corresponde.
+ */
+interface WireDependent {
+  id: string;
+  patientProfileId: string;
+  personId: string;
+  fullName: string;
+  name?: string;
+  lastName?: string;
+  birthDate?: string;
+  ageYears?: number;
+  nationalId?: string;
+  relationshipCode: DependentRelationshipCode;
+  relationshipDisplay: string;
+  isLegalGuardian: boolean;
+}
+
+/**
+ * Normaliza un dependiente del transporte al tipo de la vista.
+ *
+ * `maybeDateOnly` y no `new Date(...)`: una fecha anclada a medianoche UTC
+ * pintada en hora local retrocede un día al oeste de Greenwich, y un cumpleaños
+ * corrido un día es exactamente el defecto que `wire.ts` existe para evitar.
+ */
+function toDependent(body: ConNulos<WireDependent>): Dependent {
+  const limpio = sinNulos<WireDependent>(body);
+  return { ...limpio, birthDate: maybeDateOnly(limpio.birthDate) };
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -247,6 +284,43 @@ export class ProfilesClient {
   }
 
   /**
+   * `GET /profiles/patients/me/dependents` — a quiénes representa el titular.
+   *
+   * Autoservicio, como el resto de `patients/me`: el sujeto sale de la sesión.
+   * Lo que devuelve no es «quién está a su cargo» sino «por quién puede
+   * actuar» — la API lista los apoderamientos vigentes, que es lo que de verdad
+   * habilita a pedir un turno o a abrir una historia.
+   *
+   * @returns Sus dependientes, del más reciente al más viejo.
+   */
+  listOwnDependents(): Observable<readonly Dependent[]> {
+    return this.http
+      .get<ConNulos<WireDependent>[]>(this.url('/profiles/patients/me/dependents'))
+      .pipe(map((body) => body.map((fila) => toDependent(fila))));
+  }
+
+  /**
+   * `POST /profiles/patients/me/dependents` — registra a una persona a cargo.
+   *
+   * Crea su persona y su perfil de paciente y deja al titular como su
+   * representante, todo en una transacción del servidor. **No crea una cuenta**.
+   *
+   * Las claves sin valor se quitan porque el backend valida con
+   * `forbidNonWhitelisted`: una clave declarada en `undefined` vuelve `400`.
+   *
+   * @param dependiente - Filiación y parentesco declarado.
+   * @returns El dependiente recién creado, ya con su apoderamiento.
+   */
+  registerOwnDependent(dependiente: NewDependent): Observable<Dependent> {
+    return this.http
+      .post<ConNulos<WireDependent>>(
+        this.url('/profiles/patients/me/dependents'),
+        stripUndefined({ ...dependiente }),
+      )
+      .pipe(map((body) => toDependent(body)));
+  }
+
+  /**
    * `GET /profiles/practitioners/me/summary` — el perfil profesional propio.
    *
    * Autoservicio, igual que el resumen del paciente: el sujeto lo resuelve el
@@ -407,8 +481,11 @@ export class ProfilesClient {
          marcó un punto, las dos coordenadas juntas — el municipio ya viaja
          arriba y el backend conserva lo que no llega. */
       readonly homeAddressLines: string;
-      readonly homeLatitude: number;
-      readonly homeLongitude: number;
+      /* `null` en los dos QUITA el punto; ausentes es «no lo toqué». La
+         distinción hace falta desde que el perfil deja moverlo: sin ella no
+         habría forma de borrar una ubicación mal puesta. */
+      readonly homeLatitude: number | null;
+      readonly homeLongitude: number | null;
     }>,
   ): Observable<OwnPractitionerProfile> {
     return this.http
@@ -801,7 +878,14 @@ function toOwnPatientProfile(body: ConNulos<WireOwnPatientProfile>): OwnPatientP
     // Las listas son obligatorias en el contrato, pero se defienden igual: una
     // API anterior a este cambio las omite, y la pantalla las recorre sin
     // preguntar. Vacías dicen «no declaró ninguna», que es lo correcto ahí.
-    coverages: limpio.coverages ?? [],
+    coverages: (limpio.coverages ?? []).map((coverage, index) => ({
+      ...sinNulos(coverage),
+      id: coverage.id ?? `legacy:${coverage.policyIdentifier ?? coverage.memberIdentifier ?? coverage.planId ?? 'coverage'}:${index}`,
+      benefits: (coverage.benefits ?? []).map((benefit, benefitIndex) => ({
+        ...sinNulos(benefit),
+        id: benefit.id ?? `legacy-benefit:${index}:${benefitIndex}`,
+      })),
+    })),
     guardians: limpio.guardians ?? [],
   };
 }

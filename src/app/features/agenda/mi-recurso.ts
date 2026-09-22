@@ -15,7 +15,7 @@ import type { AgendaResource } from '@core/data-access/scheduling/scheduling.typ
  *
  * ## Por qué vive suelto y no dentro de una pantalla
  *
- * Lo necesitan «Mi agenda», «Consulta médica» y «Evoluciones», y las tres hacen
+ * Lo necesitan «Mi agenda», «Consultas médicas» y «Evoluciones», y las tres hacen
  * exactamente la misma pareja de llamadas. La tercera copia es donde una de las
  * tres se queda con el criterio viejo.
  */
@@ -46,7 +46,7 @@ export function miRecursoDeAgenda(
  * ## Qué NO cambia
  *
  * `miRecursoDeAgenda` sigue devolviendo la primera y sigue siendo lo que usan
- * «Consulta médica» y «Evoluciones». Esas dos también tendrían que preguntar
+ * «Consultas médicas» y «Evoluciones». Esas dos también tendrían que preguntar
  * cuál, pero cambiarlas acá sería tocar tres pantallas en un arreglo que se
  * pidió para una. Queda dicho para no perderlo.
  *

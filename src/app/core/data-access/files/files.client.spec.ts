@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { FilesClient } from './files.client';
-import type { LinkedFilePage } from './files.types';
+import type { LinkedFilePage, StoredFileContent } from './files.types';
 
 /**
  * Lo que estas pruebas fijan.
@@ -160,6 +160,77 @@ describe('FilesClient', () => {
     req.flush(new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' }));
 
     await expect(recibido).resolves.toMatch(/^data:image\/png;base64,/);
+  });
+
+  /**
+   * 5.2 · la metadata sale de la respuesta que ya se pide.
+   *
+   * Esto es lo que hace innecesario un `GET /common/files/:id`: el tipo y el
+   * tamaño son los del `Blob`, y el nombre viene en `Content-Disposition`. La
+   * prueba va acá, en la frontera HTTP, porque lo que hay que demostrar no es
+   * el parseo —eso está en `content-disposition.spec.ts`— sino que el método
+   * **conserva la respuesta** (`observe: 'response'`) y llega a leer la
+   * cabecera: con `responseType: 'blob'` a secas no hay `headers` que leer.
+   */
+  it('storedFileContent trae tipo, tamaño y nombre de la propia respuesta', async () => {
+    const recibido = new Promise<StoredFileContent>((resolve) => {
+      client.storedFileContent('f-1').subscribe(resolve);
+    });
+
+    const req = http.expectOne((r) => r.url === '/common/files/f-1/content');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+    // Misma ruta que `contentDataUrl`: no se abre un camino nuevo al binario
+    // ni se pasa por `/download-url`.
+    expect(req.request.url).not.toContain('download-url');
+
+    req.flush(new Blob([new Uint8Array([1, 2, 3, 4])], { type: 'application/pdf' }), {
+      headers: { 'Content-Disposition': "attachment; filename*=UTF-8''an%C3%A1lisis.pdf" },
+    });
+
+    await expect(recibido).resolves.toMatchObject({
+      mimeType: 'application/pdf',
+      sizeBytes: 4,
+      originalName: 'análisis.pdf',
+    });
+  });
+
+  /**
+   * El caso que ocurre hoy de verdad: `common.files.original_name` es nullable
+   * y el backend simulado sirve los bytes sin emitir la cabecera. El contrato
+   * debe dejar `originalName` **ausente** —ni vacío ni inventado— para que la
+   * pantalla ponga su propio texto de reserva.
+   */
+  it('sin Content-Disposition no hay nombre, pero sí tipo y tamaño', async () => {
+    const recibido = new Promise<StoredFileContent>((resolve) => {
+      client.storedFileContent('f-2').subscribe(resolve);
+    });
+
+    http
+      .expectOne((r) => r.url === '/common/files/f-2/content')
+      .flush(new Blob([new Uint8Array([9])], { type: 'image/png' }));
+
+    const contenido = await recibido;
+    expect(contenido.mimeType).toBe('image/png');
+    expect(contenido.sizeBytes).toBe(1);
+    expect(contenido.originalName).toBeUndefined();
+  });
+
+  /**
+   * Un adjunto ajeno responde 403 y el error tiene que **propagarse**: quien
+   * llama degrada a un aviso. Convertirlo en un contenido vacío sería fabricar
+   * un archivo que no se puede ver, y de paso disimular un control de acceso.
+   */
+  it('propaga el 403 en vez de devolver un contenido vacío', async () => {
+    const fallo = new Promise<{ status: number }>((resolve) => {
+      client.storedFileContent('f-ajeno').subscribe({ error: resolve });
+    });
+
+    http
+      .expectOne((r) => r.url === '/common/files/f-ajeno/content')
+      .flush(null, { status: 403, statusText: 'Forbidden' });
+
+    await expect(fallo).resolves.toMatchObject({ status: 403 });
   });
 
   /**

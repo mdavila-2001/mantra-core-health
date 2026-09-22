@@ -29,6 +29,7 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
+import { Link } from '../../../shared/components/atoms/link/link';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
@@ -168,6 +169,7 @@ interface DiaVisible {
     Alert,
     AppButton,
     AppButtonLink,
+    Link,
     DatePicker,
     FormField,
     Input,
@@ -358,6 +360,17 @@ export class AgendaCreate {
     errorMessageOf(this.estado(), 'No tenés permiso para configurar agenda.'),
   );
   protected readonly publicado = signal(false);
+
+  /**
+   * Si el fallo es el de las citas comprometidas.
+   *
+   * Se reconoce por el **código** del contrato y no por el texto: el mensaje es
+   * del servidor y puede cambiar de redacción sin avisar.
+   */
+  protected readonly citasQueFrenan = computed(() => {
+    const estado = this.estado();
+    return estado.status === 'validation' && estado.issues.some((i) => i.code === 'CONFLICT');
+  });
 
   /* -- Cambiar un horario que ya existe (D2 del plan de UX) ---------------- */
 
@@ -817,7 +830,7 @@ export class AgendaCreate {
 
   private crearPolitica(tenantId: string, resourceId: string): void {
     if (!this.usarPolitica() || this.policyId() !== null) {
-      this.crearPlantilla(resourceId, this.policyId());
+      this.retirarVigenteYCrear(resourceId, this.policyId());
       return;
     }
 
@@ -836,11 +849,63 @@ export class AgendaCreate {
       .subscribe({
         next: (politica) => {
           this.policyId.set(politica.id);
-          this.crearPlantilla(resourceId, politica.id);
+          this.retirarVigenteYCrear(resourceId, politica.id);
         },
         error: (error: unknown) => this.fallar(error),
       });
   }
+
+  /**
+   * Retira el horario vigente antes de publicar el nuevo, cuando esto es un
+   * cambio y no un alta.
+   *
+   * ## El defecto que corrige
+   *
+   * Publicar un cambio creaba una plantilla **más**, sin tocar la anterior, y
+   * los cupos viejos seguían publicados. Y `generate-slots` es idempotente
+   * **por instante de inicio** —lo dice su propio contrato, y el simulador hace
+   * lo mismo—: el cupo de las 08:00 que ya existía se contaba como `skipped`,
+   * así que al pasar las consultas de 30 a 45 minutos el turno de las 08:00
+   * seguía terminando a las 08:30. La cita no acababa a la hora que decía el
+   * horario nuevo, que es exactamente lo que se reportó.
+   *
+   * Retirar **no borra**: el contrato suelta los cupos libres y conserva los que
+   * tienen una cita detrás. Por eso el retiro va primero y la plantilla nueva
+   * sólo se crea si aquél salió bien; al revés quedarían dos horarios vigentes
+   * sobre la misma agenda.
+   *
+   * El **409** —el horario tiene citas comprometidas— se muestra tal cual y no
+   * se publica nada: quien atiende tiene que resolver esas citas primero, y
+   * decidirlo por él sería mover turnos de pacientes sin avisar.
+   */
+  private retirarVigenteYCrear(resourceId: string, policyId: string | null): void {
+    const anterior = this.vigente();
+    // `yaRetirado` y no `vigente === null`: el vigente se conserva porque
+    // `esCambio()` cuelga de él —el modal de éxito dice «quedó cambiado»—, y
+    // reintentar tras un fallo posterior no debe volver a retirar lo que ya
+    // está retirado.
+    if (anterior === null || this.yaRetirado() || this.templateId() !== null) {
+      this.crearPlantilla(resourceId, policyId);
+      return;
+    }
+
+    this.scheduling.retireTemplate(anterior.id).subscribe({
+      next: (retiro) => {
+        this.yaRetirado.set(true);
+        this.cuposSoltados.set(retiro.releasedSlots);
+        this.cuposConservados.set(retiro.keptSlots);
+        this.crearPlantilla(resourceId, policyId);
+      },
+      error: (error: unknown) => this.fallar(error),
+    });
+  }
+
+  /** Si el horario anterior ya se retiró en este intento de publicación. */
+  private readonly yaRetirado = signal(false);
+
+  /** Cupos que el retiro del horario anterior soltó y conservó. */
+  protected readonly cuposSoltados = signal<number | null>(null);
+  protected readonly cuposConservados = signal<number | null>(null);
 
   private crearPlantilla(resourceId: string, policyId: string | null): void {
     const yaEsta = this.templateId();
@@ -934,6 +999,19 @@ export class AgendaCreate {
           label: 'Turnos abiertos',
           value: `${cupos} para los próximos meses`,
         },
+        // Lo que pasó con el horario anterior, dicho y no callado: los turnos
+        // conservados son citas de pacientes que siguen en pie, y quien acaba
+        // de cambiar el horario necesita saber que están.
+        ...(this.cuposSoltados() === null
+          ? []
+          : [
+              {
+                label: 'Del horario anterior',
+                value: `${this.cuposSoltados()} turnos libres se retiraron; ${
+                  this.cuposConservados()
+                } con cita siguen en pie`,
+              },
+            ]),
       ],
       confirmLabel: 'Ver mi agenda',
       cancelLabel: 'Quedarme acá',

@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-402 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+415 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -131,6 +131,7 @@ Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
 | `POST` | `/cds/check-interactions` |
 | `GET` | `/charts/patients/:patientProfileId/chart` |
 | `POST` | `/clinical/allergy-intolerances` |
+| `POST` | `/clinical/allergy-intolerances/:allergyId/attachments` |
 | `POST` | `/clinical/care-episodes` |
 | `POST` | `/clinical/conditions` |
 | `POST` | `/clinical/conditions/:conditionId/attachments` |
@@ -144,9 +145,26 @@ Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
 | `POST` | `/clinical/medication-requests` |
 | `POST` | `/clinical/medication-requests/:medicationRequestId/issue` |
 | `POST` | `/clinical/medication-requests/:medicationRequestId/sign` |
+| `POST` | `/clinical/medication-requests/:requestId/attachments` |
 | `POST` | `/clinical/observations` |
 | `GET` | `/clinical/patients/:patientProfileId/summary` |
 | `POST` | `/clinical/procedures/:procedureId/attachments` |
+
+## `ChartCarePlansClient`
+
+Archivo: `src/app/core/data-access/chart-care-plans/chart-care-plans.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/charts/care-plans` |
+
+## `ChartDocumentsClient`
+
+Archivo: `src/app/core/data-access/chart-documents/chart-documents.client.ts`
+
+| Método | Ruta |
+|---|---|
+| `POST` | `/charts/documents` |
 
 ## `ChartNotesClient`
 
@@ -311,8 +329,12 @@ Archivo: `src/app/core/data-access/forms/forms.client.ts`
 | Método | Ruta |
 |---|---|
 | `POST` | `/forms/assignments` |
+| `DELETE` | `/forms/assignments/:assignmentId` |
+| `PATCH` | `/forms/assignments/:assignmentId` |
 | `GET` | `/forms/assignments/budget` |
+| `PUT` | `/forms/assignments/order` |
 | `POST` | `/forms/field-definitions` |
+| `PATCH` | `/forms/field-definitions/:fieldId` |
 | `GET` | `/forms/instances` |
 | `POST` | `/forms/instances` |
 | `GET` | `/forms/instances/:instanceId` |
@@ -412,6 +434,7 @@ Archivo: `src/app/core/data-access/identity/identity.client.ts`
 | `POST` | `/identity/me/tenants/:tenantId/verification` |
 | `GET` | `/identity/me/verification-cases` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
+| `GET` | `/identity/me/verification-types` |
 
 ## `InsuranceClient`
 
@@ -655,8 +678,12 @@ Archivo: `src/app/core/data-access/surveys/surveys.client.ts`
 | `GET` | `/surveys/templates` |
 | `POST` | `/surveys/templates` |
 | `GET` | `/surveys/templates/:surveyId` |
+| `PATCH` | `/surveys/templates/:surveyId` |
 | `POST` | `/surveys/templates/:surveyId/deactivate` |
 | `POST` | `/surveys/templates/:surveyId/questions` |
+| `DELETE` | `/surveys/templates/:surveyId/questions/:questionId` |
+| `PATCH` | `/surveys/templates/:surveyId/questions/:questionId` |
+| `PUT` | `/surveys/templates/:surveyId/questions/order` |
 | `GET` | `/surveys/templates/:surveyId/responses` |
 | `POST` | `/surveys/templates/:surveyId/versions` |
 | `POST` | `/surveys/templates/:surveyId/versions/:versionNumber/publish` |

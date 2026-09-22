@@ -1,0 +1,184 @@
+/* El selector de emojis: buscador arriba, la fila de categorías debajo y la
+   rejilla al pie — lo único que scrollea.
+
+   La rejilla tiene alto propio porque el catálogo pasó de 150 emojis a 1 946:
+   sin un tope, el grupo «Gente» empujaría el composer fuera de la pantalla. */
+
+.emojis {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+}
+
+.emojis__categorias {
+  display: flex;
+  gap: var(--e1);
+  padding: var(--e2) var(--e3);
+  border-block-end: 1px solid var(--filete-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.emojis__categorias::-webkit-scrollbar {
+  display: none;
+}
+
+.emojis__categoria {
+  flex: none;
+  inline-size: 32px;
+  block-size: 32px;
+  border: 0;
+  border-radius: var(--r-ctrl);
+  background: none;
+  /* Mide un glifo, no un texto: la escala tipográfica no aplica. */
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: .6;
+}
+
+.emojis__categoria:hover {
+  background: var(--sup-inset);
+  opacity: 1;
+}
+
+.emojis__categoria.is-activa {
+  background: var(--info-bg);
+  opacity: 1;
+}
+
+.emojis__rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+  gap: 2px;
+  padding: var(--e2) var(--e3) var(--e3);
+}
+
+.emojis__emoji {
+  inline-size: 100%;
+  block-size: 36px;
+  border: 0;
+  border-radius: var(--r-ctrl);
+  background: none;
+  /* Ídem: el emoji de la rejilla se dimensiona como icono, no como texto. */
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.emojis__emoji:hover,
+.emojis__emoji:focus-visible {
+  background: var(--sup-inset);
+}
+
+/* --- Buscador ------------------------------------------------------------ */
+
+.emojis__buscador {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: var(--e2) var(--e3);
+  border-block-end: 1px solid var(--filete-2);
+  color: var(--tinta-3);
+}
+
+.emojis__buscador-icono {
+  flex: none;
+  display: inline-flex;
+}
+
+.emojis__buscador-icono svg {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+.emojis__buscador-campo {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  display: block;
+}
+
+.emojis__buscador-campo input {
+  inline-size: 100%;
+  border: 0;
+  background: none;
+  color: var(--tinta);
+  font: inherit;
+  font-size: var(--fs-body);
+}
+
+/* Fuera la cruz nativa de `type="search"`: el panel ya tiene la suya, y las dos
+   juntas se ven como un defecto —se midió en la evidencia—. Misma receta que el
+   buscador de la bandeja (`messaging.css`). */
+.emojis__buscador-campo input::-webkit-search-cancel-button {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.emojis__buscador-campo input::placeholder {
+  color: var(--tinta-3);
+}
+
+.emojis__buscador-campo input:focus {
+  outline: none;
+}
+
+/* El foco se ve en la fila entera: el campo no tiene borde propio, así que un
+   anillo sobre el `input` a secas no se distinguiría de nada. */
+.emojis__buscador:focus-within {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: -2px;
+  border-radius: var(--r-ctrl);
+}
+
+.emojis__buscador-limpiar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--tinta-3);
+  cursor: pointer;
+}
+
+.emojis__buscador-limpiar:hover {
+  background: var(--sup-inset);
+  color: var(--tinta);
+}
+
+.emojis__buscador-limpiar svg {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+/* --- Rótulo de lo que se está viendo ------------------------------------- */
+
+.emojis__rotulo {
+  flex: none;
+  margin: 0;
+  padding: var(--e2) var(--e3) 0;
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+
+/* --- Rejilla -------------------------------------------------------------- */
+
+.emojis__rejilla {
+  /* Ocho filas de alto: se ve una cantidad útil sin tapar la conversación. */
+  max-block-size: 15rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.emojis__emoji:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: -2px;
+}

@@ -26,7 +26,7 @@
   display: grid;
   gap: var(--sp-2);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-2);
+  border-radius: var(--r-md);
   padding: var(--sp-4);
 }
 

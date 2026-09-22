@@ -38,17 +38,69 @@
   }
 }
 
+/* La celda es la tarjeta: el borde y el tono pasaron acá del botón, porque
+   ahora el día tiene dos partes —la cabecera que se toca y los nombres, que se
+   leen— y las dos tienen que verse como una sola cosa. */
+.semana__dia {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md, 8px);
+  overflow: hidden;
+}
+
 .semana__boton {
   width: 100%;
   display: grid;
   gap: 2px;
   padding: var(--sp-3) var(--sp-2);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md, 8px);
+  border: 0;
   background: none;
   color: inherit;
   cursor: pointer;
   text-align: left;
+}
+
+/* Con quién viene el día. Sin viñetas: son datos en una celda, no una lista
+   de lectura. */
+.semana__citas {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--sp-2) var(--sp-2);
+  display: grid;
+  gap: 2px;
+}
+
+/* La hora arriba y el nombre debajo, para que el nombre disponga de la columna
+   entera. En un renglón compartido, «09:30 Concepción Guadalupe Ávila Roque» en
+   una de siete columnas deja al nombre noventa píxeles. */
+.semana__cita {
+  display: grid;
+  gap: 0;
+  font-size: var(--fs-caption);
+  padding-block: 2px;
+}
+
+.semana__cita + .semana__cita {
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.semana__hora {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+/* El nombre va ENTERO, aunque ocupe dos renglones.
+   El pedido dice «nombre completo del paciente», y un «Yolanda …» no identifica
+   a nadie: recortarlo con puntos suspensivos ahorraba alto a cambio de anular
+   la razón por la que el nombre está acá. `anywhere` es para los apellidos
+   compuestos que no tienen dónde partir sin desbordar la columna. */
+.semana__paciente {
+  overflow-wrap: anywhere;
+}
+
+.semana__cita--resto {
+  color: var(--text-secondary);
 }
 
 .semana__nombre {
@@ -69,15 +121,15 @@
 }
 
 /* El color acompaña a la palabra, no la reemplaza. */
-.semana__dia[data-estado='bloqueado'] .semana__boton {
+.semana__dia[data-estado='bloqueado'] {
   border-color: var(--st-error-bd, var(--border-subtle));
 }
 
-.semana__dia[data-estado='lleno'] .semana__boton {
+.semana__dia[data-estado='lleno'] {
   border-color: var(--st-warning-bd, var(--border-subtle));
 }
 
-.semana__dia[data-estado='libre'] .semana__boton,
-.semana__dia[data-estado='con-reservas'] .semana__boton {
+.semana__dia[data-estado='libre'],
+.semana__dia[data-estado='con-reservas'] {
   border-color: var(--st-success-bd, var(--border-subtle));
 }

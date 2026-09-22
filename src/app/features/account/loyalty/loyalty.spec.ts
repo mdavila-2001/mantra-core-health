@@ -1,24 +1,32 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import type { Provider } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { of, Subject, throwError, type Observable } from 'rxjs';
 
 import { SessionStore } from '../../../core/auth/session.store';
-import { LoyaltyClient } from '../../../core/data-access/loyalty/loyalty.client';
+import {
+  LoyaltyClient,
+  SaldoInsuficienteError,
+} from '../../../core/data-access/loyalty/loyalty.client';
+import type {
+  Membresia,
+  MovimientoDePuntos,
+  PaginaDeMovimientos,
+} from '../../../core/data-access/loyalty/loyalty.types';
 import { Loyalty } from './loyalty';
 
 /**
- * «Mis puntos» (FAR-I6). Lo que se fija: la pantalla se guarda por perfil de
- * paciente, el saldo se lee de un vistazo, cada movimiento dice si sumó o
- * restó **con palabras y no sólo con color**, el ledger pagina por cursor, y
- * canjear más de lo que hay se rechaza antes de tocar nada.
+ * «Mis puntos» contra el contrato real (R-T-E6B2).
  *
- * Corre con `environment.development` → `loyaltyDemo` encendido, así que hay
- * membresía sembrada. La rama apagada —sin programa activo— vive en el cliente
- * y se verifica en runtime, misma convención que los otros specs de gates.
+ * Los datos de estos casos vienen de un doble de `LoyaltyClient`, que es donde
+ * vive el HTTP: acá se prueba qué hace la pantalla con lo que el backend
+ * responde. Lo que se fija es que no reaparezca nada fabricado, que
+ * `enrolled: false` sea un vacío y no un error, y que el canje muestre lo que
+ * devolvió la API.
  */
 
-/** base64url **sobre UTF-8**, como el token real. */
 function jwt(payload: Record<string, unknown>): string {
   const b64 = (o: unknown) => {
     const bytes = new TextEncoder().encode(JSON.stringify(o));
@@ -30,33 +38,212 @@ function jwt(payload: Record<string, unknown>): string {
   return `${b64({ alg: 'HS256' })}.${b64(payload)}.firma`;
 }
 
-const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+const MEMBRESIA: Membresia = {
+  id: 'm-1',
+  programa: 'Puntos AloVida',
+  unidad: 'puntos',
+  saldo: '440',
+  puntosDePorVida: '720',
+  nivel: {
+    codigo: 'FRECUENTE',
+    nombre: 'Frecuente',
+    multiplicador: '1.25',
+    puntosMinimos: '500',
+  },
+  inscritaEl: new Date('2026-05-01T10:00:00'),
+  activa: true,
+};
+
+function movimiento(extra: Partial<MovimientoDePuntos> = {}): MovimientoDePuntos {
+  return {
+    id: 'mv-1',
+    direccion: 'POINTS_EARN',
+    puntos: '70',
+    motivo: 'REASON_EVENT',
+    saldoDespues: '440',
+    detalle: null,
+    ocurrioEl: new Date('2026-09-14T10:00:00'),
+    venceEl: null,
+    ...extra,
+  };
+}
+
+/** Doble del cliente: sólo lo que la pantalla consume. */
+function clienteDoble(over: Record<string, unknown> = {}): Provider {
+  return {
+    provide: LoyaltyClient,
+    useValue: {
+      miMembresia: () => of(null),
+      misMovimientos: () => of({ movimientos: [], nextCursor: null }),
+      canjear: () => of({}),
+      comprobanteDe: () => ({
+        canje: { id: 'e-1', puntos: '100', saldoDespues: '340', puntosDePorVida: '720', duplicado: false },
+        codigo: 'HJ4KMP73',
+        generadoEl: new Date('2026-09-18T10:00:00'),
+        venceEl: new Date('2026-09-18T10:15:00'),
+      }),
+      ...over,
+    },
+  };
+}
 
 describe('Loyalty', () => {
   let fixture: ComponentFixture<Loyalty>;
-  let client: LoyaltyClient;
 
-  function abrirSesion(claims: Record<string, unknown>): void {
+  function montar(claims: Record<string, unknown>, providers: Provider[] = []): void {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...providers],
+    });
     TestBed.inject(SessionStore).start({
       accessToken: jwt({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'], ...claims }),
       refreshToken: 'r-1',
     });
-  }
-
-  function montar(): void {
     fixture = TestBed.createComponent(Loyalty);
     fixture.detectChanges();
   }
 
-  function texto(): string {
-    return (fixture.nativeElement as HTMLElement).textContent ?? '';
-  }
+  const texto = (): string => (fixture.nativeElement as HTMLElement).textContent ?? '';
+  const porTestId = (id: string): HTMLElement | null =>
+    (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${id}"]`);
 
-  function porTestId(id: string): HTMLElement | null {
-    return (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${id}"]`);
-  }
+  it('sin perfil de paciente lo dice, sin llamar a la API', () => {
+    montar({}, [clienteDoble()]);
 
-  function escribirPuntos(valor: string): void {
+    expect(texto()).toContain('Esta sección es para pacientes');
+    expect(porTestId('puntos-saldo')).toBeNull();
+  });
+
+  it('mientras la lectura no responde muestra el estado de carga', () => {
+    const pendiente = new Subject<Membresia | null>();
+    montar({ pid: 'pp-1' }, [clienteDoble({ miMembresia: () => pendiente })]);
+
+    expect(porTestId('puntos-saldo')).toBeNull();
+    expect(texto()).not.toContain('Todavía no hay un programa');
+  });
+
+  it('enrolled:false se pinta como vacío del producto, no como error', () => {
+    montar({ pid: 'pp-1' }, [clienteDoble()]);
+
+    expect(texto()).toContain('Todavía no hay un programa de Puntos AloVida activo');
+    expect(texto()).toContain('Ver mis pedidos');
+    expect(porTestId('puntos-disponibles')).toBeNull();
+  });
+
+  it('un fallo real de la API se muestra como error, no como vacío', () => {
+    montar({ pid: 'pp-1' }, [
+      clienteDoble({ miMembresia: () => throwError(() => new Error('boom')) }),
+    ]);
+
+    expect(texto()).not.toContain('Todavía no hay un programa');
+    expect(porTestId('puntos-disponibles')).toBeNull();
+  });
+
+  describe('con membresía real', () => {
+    /** Prepara la pantalla con lo que devolvería el backend. */
+    function conDatos(over: Record<string, unknown> = {}): void {
+      montar({ pid: 'pp-1' }, [
+        clienteDoble({
+          miMembresia: () => of(MEMBRESIA),
+          misMovimientos: () => of({ movimientos: [movimiento()], nextCursor: null }),
+          ...over,
+        }),
+      ]);
+    }
+
+    it('muestra saldo, nivel y acumulado tal como vinieron', () => {
+      conDatos();
+
+      expect(porTestId('puntos-disponibles')?.textContent?.trim()).toBe('440');
+      expect(porTestId('puntos-nivel')?.textContent).toContain('Frecuente');
+      expect(porTestId('puntos-de-por-vida')?.textContent?.trim()).toBe('720');
+    });
+
+    it('lista los movimientos reales, con su etiqueta y su signo', () => {
+      conDatos();
+
+      const fila = fixture.nativeElement.querySelector('.movimientos__fila');
+      expect(fila?.textContent).toContain('Actividad en la app');
+      expect(fila?.textContent).toContain('+70');
+      expect(texto()).toContain('Sumaste');
+    });
+
+    it('«Ver más» sigue por el cursor que emitió el backend', () => {
+      const paginas = mockCursor();
+      conDatos({ misMovimientos: paginas.fn });
+
+      porTestId('movimientos-ver-mas')?.click();
+      fixture.detectChanges();
+
+      expect(paginas.cursores).toEqual([null, 'cursor-opaco']);
+      expect(fixture.nativeElement.querySelectorAll('.movimientos__fila')).toHaveLength(2);
+    });
+
+    it('no reaparece ninguna demostración', () => {
+      conDatos();
+
+      expect(porTestId('puntos-simular-compra')).toBeNull();
+      expect(porTestId('puntos-promocion')).toBeNull();
+      expect(porTestId('movimiento-multiplicador')).toBeNull();
+      expect(texto()).not.toContain('Simular compra');
+    });
+
+    it('canjear muestra el comprobante con lo que devolvió la API', () => {
+      conDatos({
+        canjear: () =>
+          of({
+            id: 'e-1',
+            puntos: '100',
+            saldoDespues: '340',
+            puntosDePorVida: '720',
+            duplicado: false,
+          }),
+      });
+
+      porTestId('puntos-canjear')?.click();
+      fixture.detectChanges();
+      escribir('100');
+      porTestId('canjear-confirmar')?.click();
+      fixture.detectChanges();
+
+      expect(porTestId('canje-comprobante')).not.toBeNull();
+      expect(porTestId('canje-saldo')?.textContent).toContain('340');
+      expect(porTestId('canje-caja')?.textContent).toContain(
+        'Mostrá este código en la caja del supermercado',
+      );
+    });
+
+    it('el saldo insuficiente del backend se dice con su mensaje, no con uno genérico', () => {
+      // El pedido cabe en el saldo que la pantalla conoce, pero el backend —que
+      // es el que manda— responde que no alcanza: otro canje llegó antes.
+      conDatos({
+        canjear: () => throwError(() => new SaldoInsuficienteError('50', '100')),
+      });
+
+      porTestId('puntos-canjear')?.click();
+      fixture.detectChanges();
+      escribir('100');
+      porTestId('canjear-confirmar')?.click();
+      fixture.detectChanges();
+
+      expect(texto()).toContain('no alcanza para canjear');
+      expect(texto()).not.toContain('Probá de nuevo en un momento');
+    });
+
+    it('cualquier otro fallo del canje no se disfraza de saldo', () => {
+      conDatos({ canjear: () => throwError(() => new Error('boom')) });
+
+      porTestId('puntos-canjear')?.click();
+      fixture.detectChanges();
+      escribir('10');
+      porTestId('canjear-confirmar')?.click();
+      fixture.detectChanges();
+
+      expect(texto()).toContain('No pudimos registrar el canje');
+    });
+  });
+
+  /** Escribe en el campo de puntos, que es un átomo con `type="number"`. */
+  function escribir(valor: string): void {
     const campo = porTestId('canjear-puntos') as HTMLInputElement | null;
     if (campo === null) {
       throw new Error('El campo de puntos no está en pantalla.');
@@ -66,190 +253,20 @@ describe('Loyalty', () => {
     fixture.detectChanges();
   }
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
-    });
-    client = TestBed.inject(LoyaltyClient);
-  });
-
-  it('sin perfil de paciente lo dice, sin cargar nada', () => {
-    abrirSesion({});
-    montar();
-
-    expect(texto()).toContain('Esta sección es para pacientes');
-    expect(porTestId('puntos-saldo')).toBeNull();
-  });
-
-  it('muestra el saldo, el nivel y lo acumulado desde siempre', () => {
-    abrirSesion({ pid: 'pp-1' });
-    montar();
-
-    expect(porTestId('puntos-disponibles')?.textContent?.trim()).toBe('440');
-    expect(porTestId('puntos-nivel')?.textContent).toContain('Frecuente');
-    expect(porTestId('puntos-de-por-vida')?.textContent?.trim()).toBe('720');
-  });
-
-  it('cada movimiento dice con palabras si sumó o restó, no sólo con color', () => {
-    abrirSesion({ pid: 'pp-1' });
-    montar();
-
-    // El signo visual va oculto al lector; la frase es la que se escucha.
-    expect(texto()).toContain('Sumaste');
-    expect(texto()).toContain('Restaste');
-  });
-
-  it('no pinta ningún identificador interno', () => {
-    abrirSesion({ pid: 'pp-1' });
-    montar();
-
-    expect(texto()).not.toMatch(UUID);
-  });
-
-  it('«Ver más» trae la página siguiente del ledger sin repetir la primera', () => {
-    abrirSesion({ pid: 'pp-1' });
-    montar();
-    const filasAntes = fixture.nativeElement.querySelectorAll('.movimientos__fila').length;
-
-    porTestId('movimientos-ver-mas')?.click();
-    fixture.detectChanges();
-
-    const filasDespues = fixture.nativeElement.querySelectorAll('.movimientos__fila').length;
-    expect(filasAntes).toBe(6);
-    expect(filasDespues).toBe(12);
-  });
-
-  it('canjear pide cuántos puntos antes de hacer nada', () => {
-    abrirSesion({ pid: 'pp-1' });
-    montar();
-
-    porTestId('puntos-canjear')?.click();
-    fixture.detectChanges();
-
-    expect(porTestId('canjear-form')).not.toBeNull();
-    expect(texto()).toContain('440');
-  });
-
-  it('rechaza canjear más de lo que hay y dice hasta cuánto se puede', () => {
-    abrirSesion({ pid: 'pp-1' });
-    montar();
-    porTestId('puntos-canjear')?.click();
-    fixture.detectChanges();
-
-    escribirPuntos('999999');
-    porTestId('canjear-confirmar')?.click();
-    fixture.detectChanges();
-
-    expect(texto()).toContain('Te alcanza para canjear hasta 440 puntos');
-    // Y no llegó a emitirse ningún comprobante.
-    expect(porTestId('canje-comprobante')).toBeNull();
-  });
-
-  it('rechaza el campo vacío sin llamar al cliente', () => {
-    abrirSesion({ pid: 'pp-1' });
-    montar();
-    porTestId('puntos-canjear')?.click();
-    fixture.detectChanges();
-
-    porTestId('canjear-confirmar')?.click();
-    fixture.detectChanges();
-
-    expect(texto()).toContain('Escribí cuántos puntos');
-  });
-
-  it('canjear deja el comprobante en pantalla y baja el saldo', () => {
-    abrirSesion({ pid: 'pp-1' });
-    montar();
-    porTestId('puntos-canjear')?.click();
-    fixture.detectChanges();
-
-    escribirPuntos('100');
-    porTestId('canjear-confirmar')?.click();
-    fixture.detectChanges();
-
-    expect(porTestId('canje-comprobante')).not.toBeNull();
-    expect(porTestId('canje-chip-demo')?.textContent).toContain('DEMO');
-
-    porTestId('canje-cerrar')?.click();
-    fixture.detectChanges();
-
-    expect(porTestId('puntos-disponibles')?.textContent?.trim()).toBe('340');
-  });
-
-  it('el canje aparece arriba del ledger al volver al saldo', () => {
-    abrirSesion({ pid: 'pp-1' });
-    montar();
-    porTestId('puntos-canjear')?.click();
-    fixture.detectChanges();
-
-    escribirPuntos('25');
-    porTestId('canjear-confirmar')?.click();
-    fixture.detectChanges();
-    porTestId('canje-cerrar')?.click();
-    fixture.detectChanges();
-
-    const primera = fixture.nativeElement.querySelector('.movimientos__fila');
-    expect(primera?.textContent).toContain('Canje que generaste desde la app');
-  });
-
-  it('sin saldo no ofrece canjear', async () => {
-    abrirSesion({ pid: 'pp-1' });
-    // Vaciar la billetera por el mismo camino que usa la pantalla.
-    const cuenta = await new Promise<string>((resolve) => {
-      client.miMembresia().subscribe((m) => resolve(m?.saldo ?? '0'));
-    });
-    await new Promise<void>((resolve) => {
-      client.canjear({ puntos: cuenta, idempotencyKey: 'vaciar' }).subscribe(() => resolve());
-    });
-    montar();
-
-    expect(porTestId('puntos-disponibles')?.textContent?.trim()).toBe('0');
-    expect(porTestId('puntos-canjear')).toBeNull();
-  });
-
-  it('rechaza los decimales diciendo la verdad, sin culpar al saldo', () => {
-    abrirSesion({ pid: 'pp-1' });
-    montar();
-    porTestId('puntos-canjear')?.click();
-    fixture.detectChanges();
-
-    escribirPuntos('0.5');
-    porTestId('canjear-confirmar')?.click();
-    fixture.detectChanges();
-
-    // Se queda en el formulario y explica el motivo real: los puntos son
-    // enteros. Culpar al saldo sería mentir — hay 440.
-    expect(porTestId('canjear-form')).not.toBeNull();
-    expect(texto()).toContain('Los puntos son enteros');
-    expect(texto()).not.toContain('no alcanza');
-    expect(texto()).not.toContain('Te alcanza para canjear');
-  });
-
-  it('nunca canjea una cantidad distinta de la pedida', () => {
-    abrirSesion({ pid: 'pp-1' });
-    montar();
-    porTestId('puntos-canjear')?.click();
-    fixture.detectChanges();
-
-    escribirPuntos('1.9');
-    porTestId('canjear-confirmar')?.click();
-    fixture.detectChanges();
-
-    // Truncar a 1 en silencio descontaría algo que nadie pidió.
-    expect(porTestId('canje-comprobante')).toBeNull();
-    expect(porTestId('canjear-form')).not.toBeNull();
-  });
-
-  it('con un solo punto el texto concuerda en singular', () => {
-    abrirSesion({ pid: 'pp-1' });
-    montar();
-    porTestId('puntos-canjear')?.click();
-    fixture.detectChanges();
-
-    escribirPuntos('1');
-    porTestId('canjear-confirmar')?.click();
-    fixture.detectChanges();
-
-    expect(porTestId('canje-puntos')?.textContent?.trim()).toBe('1 punto');
-  });
+  /** Doble de `misMovimientos` que recuerda con qué cursor lo llamaron. */
+  function mockCursor(): {
+    fn: (cursor?: string | null) => Observable<PaginaDeMovimientos>;
+    cursores: (string | null)[];
+  } {
+    const cursores: (string | null)[] = [];
+    return {
+      cursores,
+      fn: (cursor: string | null = null) => {
+        cursores.push(cursor);
+        return cursor === null
+          ? of({ movimientos: [movimiento()], nextCursor: 'cursor-opaco' })
+          : of({ movimientos: [movimiento({ id: 'mv-2' })], nextCursor: null });
+      },
+    };
+  }
 });

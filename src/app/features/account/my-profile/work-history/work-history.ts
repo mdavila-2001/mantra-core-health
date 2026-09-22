@@ -1,5 +1,6 @@
 import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -36,6 +37,7 @@ import { Input } from '../../../../shared/components/atoms/input/input';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { SiteBankQrDialog } from './site-bank-qr-dialog/site-bank-qr-dialog';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
@@ -105,6 +107,7 @@ import type { PinMapa, PuntoGeo } from '../../../../shared/components/organisms/
   imports: [
     Alert,
     AppButton,
+    SiteBankQrDialog,
     AppMap,
     Card,
     DatePicker,
@@ -138,6 +141,24 @@ export class WorkHistory {
    * mismo dato dos veces con dos formas distintas.
    */
   readonly layout = input<'flat' | 'timeline'>('flat');
+
+  /**
+   * `true` para dibujar **sólo** «Dónde atiendo»: los consultorios propios y su
+   * alta, sin el historial laboral.
+   *
+   * Es otro eje que `layout`, no otro valor suyo: `layout` dice **cómo** se
+   * pinta el historial y esto dice **si** se pinta. Mezclarlos en un solo input
+   * daría un `'timeline' | 'flat' | 'sin-historial'` donde el tercer valor no
+   * responde la misma pregunta que los otros dos.
+   *
+   * Lo usa «Mi consultorio propio» (`administration/my-practice`), que es la
+   * pantalla que el propietario pidió el 2026-09-10 en lugar de «Tu
+   * organización». No se copió el formulario allá: crear, ubicar en el mapa y
+   * retirar un consultorio ya vive acá —con su catálogo de municipios, su
+   * confirmación y sus pruebas— y tenerlo dos veces garantiza que el arreglo de
+   * uno no llegue al otro.
+   */
+  readonly soloConsultorios = input(false, { transform: booleanAttribute });
 
   /** Se emite tras un alta exitosa, para que quien embebe el formulario recargue lo que ya tenía leído. */
   readonly added = output<void>();
@@ -338,6 +359,49 @@ export class WorkHistory {
     return rama?.conceptId ?? null;
   });
 
+  /**
+   * El consultorio propio, si ya tiene uno. **Hay uno solo.**
+   *
+   * No es una regla de pantalla: es lo que el backend modela. `POST
+   * /practitioners/me/sites` crea —o **reutiliza**— la práctica personal del
+   * profesional, así que la práctica propia es una sola por persona. Lo que
+   * faltaba era decirlo en la interfaz: el botón «Agregar un consultorio
+   * propio» seguía ahí después de crear el primero, invitando a cargar el
+   * segundo.
+   *
+   * `isOwnSite` lo manda la API desde el cierre del P32-a. Si llegara ausente
+   * —un frontend desplegado contra una API anterior— todo se lee como ajeno y
+   * el botón de alta sigue disponible: la degradación prudente nunca esconde
+   * un camino.
+   */
+  protected readonly consultorioPropio = computed<PracticeSite | null>(
+    () => this.sedes().find((sede) => sede.isOwnSite === true) ?? null,
+  );
+
+  /**
+   * La sede que se está corrigiendo, o `null` si el formulario da de alta una.
+   *
+   * Un solo formulario para las dos cosas y no dos: los campos son los mismos
+   * —nombre, calle, ciudad, municipio y punto— y duplicarlo garantizaría que
+   * el arreglo de uno no llegue al otro.
+   */
+  protected readonly sedeEnEdicion = signal<PracticeSite | null>(null);
+
+  /** La sede cuyo QR bancario está abierto, o `null` si no hay ninguno. */
+  protected readonly sedeConQrAbiertoId = signal<string | null>(null);
+
+  /**
+   * La sede del modal de QR, releída de la lista.
+   *
+   * Se resuelve por id contra `sedes()` y no se guarda la sede entera para que
+   * el modal vea el `bankQrFileId` recién guardado sin que haya que pasárselo
+   * a mano.
+   */
+  protected readonly sedeConQrAbierto = computed<PracticeSite | null>(() => {
+    const id = this.sedeConQrAbiertoId();
+    return id === null ? null : (this.sedes().find((s) => s.id === id) ?? null);
+  });
+
   protected readonly puedeRegistrarSede = computed(
     () => this.nombreDeSedeNueva().trim() !== '' && !this.registrandoSede(),
   );
@@ -466,6 +530,7 @@ export class WorkHistory {
 
   protected cerrarAltaDeSede(): void {
     this.altaDeSedeAbierta.set(false);
+    this.sedeEnEdicion.set(null);
     this.limpiarSede();
   }
 
@@ -495,26 +560,8 @@ export class WorkHistory {
    * dirección es válida —se puede cargar después— y mandar una dirección
    * vacía no es «sin dirección», es una fila vacía en `common.addresses`.
    */
-  protected registrarSede(): void {
-    if (!this.puedeRegistrarSede()) {
-      return;
-    }
-    const direccion = this.direccionDeSede().trim();
-    const ciudad = this.ciudadDeSede().trim();
-    const municipio = this.municipioDeSede();
-    const departamento = this.departamentoDeSede();
-    const punto = this.puntoDeSede();
-
-    const address: NewOwnSite['address'] =
-      direccion === ''
-        ? undefined
-        : {
-            lines: [direccion],
-            ...(ciudad === '' ? {} : { city: ciudad }),
-            ...(municipio === null ? {} : { municipalityConceptId: municipio }),
-            ...(departamento === null ? {} : { administrativeAreaConceptId: departamento }),
-            ...(punto === null ? {} : { latitude: punto.lat, longitude: punto.lng }),
-          };
+  private registrarSede(): void {
+    const address = this.direccionDelFormulario();
 
     this.registrandoSede.set(true);
     this.registroDeSede.set(loading());
@@ -537,6 +584,151 @@ export class WorkHistory {
           this.registroDeSede.set(errorToViewState<null>(error));
         },
       });
+  }
+
+  /**
+   * Abre el formulario ya cargado con la sede que se va a corregir (P32-b).
+   *
+   * Prellena el nombre y el punto, y **deja la dirección en blanco a
+   * propósito**: la lista trae `addressText` ya compuesta por el backend y
+   * descomponerla en calle, ciudad y municipio sería adivinar. Vacía significa
+   * «no la toques», que es exactamente lo que el `PATCH` hace con lo que no
+   * viaja en el cuerpo — y el formulario lo dice con todas las letras.
+   *
+   * @param sede - El consultorio propio a corregir.
+   */
+  protected abrirEdicionDeSede(sede: PracticeSite): void {
+    this.limpiarSede();
+    this.sedeEnEdicion.set(sede);
+    this.nombreDeSedeNueva.set(sede.name);
+    if (sede.latitude !== null && sede.longitude !== null) {
+      this.puntoDeSede.set({ lat: sede.latitude, lng: sede.longitude });
+    }
+    this.altaDeSedeAbierta.set(true);
+    if (this.ramasMunicipios().length === 0) {
+      this.cargarMunicipios();
+    }
+  }
+
+  /**
+   * Guarda el formulario: da de alta una sede nueva, o corrige la que se está
+   * editando. Son dos escrituras distintas y cada una tiene su método.
+   */
+  protected guardarSede(): void {
+    if (!this.puedeRegistrarSede()) {
+      return;
+    }
+    const enEdicion = this.sedeEnEdicion();
+    if (enEdicion === null) {
+      this.registrarSede();
+    } else {
+      this.corregirSede(enEdicion);
+    }
+  }
+
+  /** Abre el QR bancario de una sede, propia o ajena. */
+  protected abrirQrDeSede(sede: PracticeSite): void {
+    this.sedeConQrAbiertoId.set(sede.id);
+  }
+
+  protected cerrarQrDeSede(): void {
+    this.sedeConQrAbiertoId.set(null);
+  }
+
+  /**
+   * Refleja el QR recién guardado sin volver a pedir la lista entera.
+   *
+   * El modal ya habló con la API y sabe el `fileId` que quedó; recargar sería
+   * una petición de más para un dato que ya está en la mano.
+   *
+   * @param fileId - El archivo que quedó como QR de esa sede.
+   */
+  protected qrGuardado(fileId: string): void {
+    const id = this.sedeConQrAbiertoId();
+    if (id === null) {
+      return;
+    }
+    this.sedes.update((sedes) =>
+      sedes.map((sede) => (sede.id === id ? { ...sede, bankQrFileId: fileId } : sede)),
+    );
+  }
+
+  /**
+   * Qué dice el botón de retirar, que no nombra el mismo acto en las dos sedes.
+   *
+   * En la propia se deja de ofrecer un consultorio que es suyo; en la ajena se
+   * corta un vínculo con una organización. El glifo es el mismo —el de
+   * retirar, que es el que se reconoce— y el texto es el que aclara que nada
+   * se borra.
+   *
+   * @param sede - La sede del renglón.
+   * @returns El nombre accesible del botón.
+   */
+  protected etiquetaDeRetiro(sede: PracticeSite): string {
+    return sede.isOwnSite === true
+      ? `Retirar ${sede.name} de tus consultorios`
+      : `Dejar de atender en ${sede.name}`;
+  }
+
+  /**
+   * Corrige el consultorio propio (P32-b).
+   *
+   * La dirección sólo viaja si el formulario tiene una calle escrita: vacía
+   * significa «conservá la que ya tenía», no «borrala».
+   *
+   * @param sede - El consultorio que se está corrigiendo.
+   */
+  private corregirSede(sede: PracticeSite): void {
+    const address = this.direccionDelFormulario();
+    this.registrandoSede.set(true);
+    this.registroDeSede.set(loading());
+    this.sites
+      .updateOwnSite(sede.id, {
+        name: this.nombreDeSedeNueva().trim(),
+        ...(address === undefined ? {} : { address }),
+      })
+      .subscribe({
+        next: () => {
+          this.registrandoSede.set(false);
+          this.registroDeSede.set(ready(null));
+          this.cerrarAltaDeSede();
+          this.toasts.success('Los cambios ya figuran en tu ficha.', 'Consultorio corregido');
+          this.cargarSedes();
+          this.added.emit();
+        },
+        error: (error: unknown) => {
+          this.registrandoSede.set(false);
+          this.registroDeSede.set(errorToViewState<null>(error));
+        },
+      });
+  }
+
+  /**
+   * La dirección tal como la declara el formulario, o `undefined` si no hay
+   * calle escrita.
+   *
+   * Una sede sin dirección es válida —se puede cargar después— y mandar una
+   * dirección vacía no es «sin dirección», es una fila vacía en
+   * `common.addresses`.
+   *
+   * @returns La dirección a mandar, o `undefined` para no mandar ninguna.
+   */
+  private direccionDelFormulario(): NewOwnSite['address'] {
+    const direccion = this.direccionDeSede().trim();
+    if (direccion === '') {
+      return undefined;
+    }
+    const ciudad = this.ciudadDeSede().trim();
+    const municipio = this.municipioDeSede();
+    const departamento = this.departamentoDeSede();
+    const punto = this.puntoDeSede();
+    return {
+      lines: [direccion],
+      ...(ciudad === '' ? {} : { city: ciudad }),
+      ...(municipio === null ? {} : { municipalityConceptId: municipio }),
+      ...(departamento === null ? {} : { administrativeAreaConceptId: departamento }),
+      ...(punto === null ? {} : { latitude: punto.lat, longitude: punto.lng }),
+    };
   }
 
   /**

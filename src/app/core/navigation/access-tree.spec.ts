@@ -92,6 +92,74 @@ describe('buildAccessTree', () => {
     expect(rutasRepartidas(['PRACTITIONER'])).not.toContain('dashboard');
   });
 
+  /**
+   * El tablero de siniestralidad — carril `insurance-analytics`.
+   *
+   * Dos afirmaciones que se sostienen mutuamente: si alguien quita
+   * `hiddenFor` del registro para «que lo vea todo el mundo», falla la segunda;
+   * si alguien lo saca de `paths` creyendo que el cajón basta, falla la primera
+   * —el cajón lo pondría en la zona, pero al final, y para quien administra una
+   * aseguradora es a lo que viene—.
+   */
+  describe('el tablero de siniestralidad', () => {
+    const TABLERO = 'administration/insurance-analytics';
+
+    it('encabeza la zona de administración de quien administra', () => {
+      const zona = buildAccessTree(seccionesDe(['SUPERADMIN'])).find(
+        (z) => z.area.id === 'organizacion',
+      );
+      const rutas = zona?.sections.map((seccion) => seccion.path) ?? [];
+
+      expect(rutas).toContain(TABLERO);
+      expect(rutas[0]).toBe(TABLERO);
+    });
+
+    it('no estorba el «¿a qué vine hoy?» del médico', () => {
+      expect(rutasRepartidas(['PRACTITIONER'])).not.toContain(TABLERO);
+    });
+
+    it('tampoco lo ve el paciente', () => {
+      expect(rutasRepartidas(['PATIENT'])).not.toContain(TABLERO);
+    });
+  });
+
+  /**
+   * Corrección del 10/09/2026 · la tarjeta genérica «Directorios».
+   *
+   * La aserción es **localizada** a propósito: no dice «no existe el texto
+   * Directorios», porque el rótulo de la zona y el renglón del menú lateral
+   * tienen que seguir estando. Dice que el panel no ofrece la portada
+   * (`directories`) y que sí ofrece los directorios concretos.
+   */
+  it('la zona Directorios no ofrece la portada, y sí los directorios concretos', () => {
+    const red = buildAccessTree(seccionesDe(['PRACTITIONER'])).find(
+      (zona) => zona.area.id === 'red',
+    );
+
+    // La zona sigue en pie, con su rótulo.
+    expect(red?.area.label).toBe('Directorios');
+
+    const rutas = red?.sections.map((seccion) => seccion.path) ?? [];
+    expect(rutas).not.toContain('directories');
+    expect(rutas).toContain('clinics-directory');
+    expect(rutas).toContain('laboratory-directory');
+    expect(rutas).toContain('pharmacies-directory');
+  });
+
+  /**
+   * La otra mitad del pedido: sacarla del panel **no** puede sacarla del menú.
+   * Sin esto, un `filter` de más en el registro haría desaparecer el renglón sin
+   * que ninguna prueba se queje.
+   */
+  it('la portada sigue en el registro, para el menú lateral', () => {
+    const portada = APP_SECTIONS.find((seccion) => seccion.path === 'directories');
+
+    expect(portada).toBeDefined();
+    expect(portada?.label).toBe('Directorios');
+    // Fuera del menú NO está: es la sección que ocupa el renglón desde el 08/09.
+    expect(portada?.fueraDelMenuPara).toBeUndefined();
+  });
+
   it('lo declarado explícitamente le gana al cajón del grupo', () => {
     // «Chats» es del grupo `General` —cuyo cajón es «La red»— y su lugar es
     // «Mi gente». Si el explícito no ganara, dependería del orden de las zonas.

@@ -169,3 +169,7 @@ src/app/features/component-stock/component-index.generated.ts
 /scripts/visual_qa_audit*.mjs
 /scripts/analyze_views*.mjs
 /scripts/capture_medica*.mjs
+
+# Las fuentes de Unicode/CLDR que baja `yarn emoji:catalog`. El catálogo
+# generado SÍ se versiona; estas son el insumo, pesan y se vuelven a bajar.
+/.cache/

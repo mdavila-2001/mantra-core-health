@@ -48,6 +48,7 @@ function conjunto(internalCode: string, name: string, description: string): Conj
 function definir(
   valueSet: string,
   entradas: readonly (readonly [code: string, display: string, definition?: string])[],
+  ordinalInicial = 1,
 ): Readonly<Record<string, string>> {
   const ids: Record<string, string> = {};
   entradas.forEach(([code, display, definition], indice) => {
@@ -65,7 +66,7 @@ function definir(
       ...(definition === undefined ? {} : { definition }),
       valueSets: [valueSet],
       selectable: true,
-      ordinal: indice + 1,
+      ordinal: indice + ordinalInicial,
     });
     ids[code] = id;
   });
@@ -115,32 +116,111 @@ export const MUNICIPIO = definir('VS_BO_MUNICIPALITY', [
   ['PD-COB', 'Cobija'],
 ]);
 
+/* Las ocupaciones y los empleadores llevan el código del catálogo real por lo
+   mismo que los departamentos de acá arriba, y es la tercera vez que muerde: la
+   pantalla decide por código, no por nombre.
+
+   El alta de paciente ofrece «Otra ocupación» al final de la lista —el registro
+   de procesos lo pide así (módulo Paciente §1.4.1: «dejar uno al final libre
+   para que él pueda detallar la ocupación que no encontró»)— y, elegida ésa y
+   sólo ésa, destraba un «¿Cuál?» escrito a mano que viaja en
+   `occupationFreeText`. Quién decide si es «Otra» compara contra
+   `CODIGO_OCUPACION_OTRA` (`bo-occupations.service.ts`), que vale
+   **`occupation:bo:OTRA`**. Con los `OCC-*` inventados que había antes esa
+   comparación nunca daba verdadera, así que el campo escrito a mano **no
+   aparecía nunca**: la ocupación personalizada estaba construida y era
+   inalcanzable. Lo mismo le pasaba a «Otra empresa» con `employer:bo:OTRA`.
+
+   El prefijo no es adorno, y el backend explica por qué: `catalog_concepts.code`
+   es único por versión del sistema de códigos y todo el catálogo interno
+   comparte una sola, así que un `MEDICO` a secas chocaría con el de otro
+   catálogo.
+
+   Las ocupaciones son las 64 del catálogo real (`bo-occupations.catalog.ts`,
+   COB-2023 del INE — el SEGIP no publica su lista; el porqué está en el
+   encabezado de ese archivo). Los empleadores siguen siendo un puñado: son 155
+   allá y esto es una maqueta, no el paquete de seeds. Lo que no se recorta son
+   las cuatro salidas del final, que son las que la pantalla necesita para
+   ofrecerle una respuesta a quien no se encuentra en la lista. */
 conjunto('VS_BO_OCCUPATION', 'Ocupaciones', 'Catálogo normado de ocupaciones.');
 export const OCUPACION = definir('VS_BO_OCCUPATION', [
-  ['OCC-DOCENTE', 'Docente'],
-  ['OCC-COMERCIANTE', 'Comerciante'],
-  ['OCC-INGENIERO', 'Ingeniero/a'],
-  ['OCC-ABOGADO', 'Abogado/a'],
-  ['OCC-CONTADOR', 'Contador/a'],
-  ['OCC-ESTUDIANTE', 'Estudiante'],
-  ['OCC-AGRICULTOR', 'Agricultor/a'],
-  ['OCC-CHOFER', 'Chofer'],
-  ['OCC-ENFERMERIA', 'Enfermero/a'],
-  ['OCC-ADMINISTRATIVO', 'Administrativo/a'],
-  ['OCC-HOGAR', 'Trabajo del hogar'],
-  ['OCC-JUBILADO', 'Jubilado/a'],
-  ['OCC-OTRA', 'Otra ocupación'],
+  ['occupation:bo:ABOGADO', 'Abogado / Abogada'],
+  ['occupation:bo:ADMINISTRADOR', 'Administrador / Administradora'],
+  ['occupation:bo:AGRICULTOR', 'Agricultor / Agricultora'],
+  ['occupation:bo:ALBANIL', 'Albañil'],
+  ['occupation:bo:ARQUITECTO', 'Arquitecto / Arquitecta'],
+  ['occupation:bo:ARTESANO', 'Artesano / Artesana'],
+  ['occupation:bo:ARTISTA', 'Artista'],
+  ['occupation:bo:AUXILIAR_ENFERMERIA', 'Auxiliar de enfermería'],
+  ['occupation:bo:BIOQUIMICO', 'Bioquímico / Bioquímica'],
+  ['occupation:bo:CARNICERO', 'Carnicero / Carnicera'],
+  ['occupation:bo:CARPINTERO', 'Carpintero / Carpintera'],
+  ['occupation:bo:CHOFER', 'Chofer'],
+  ['occupation:bo:COCINERO', 'Cocinero / Cocinera'],
+  ['occupation:bo:COMERCIANTE', 'Comerciante'],
+  ['occupation:bo:CONTADOR', 'Contador / Contadora'],
+  ['occupation:bo:COSTURERO', 'Costurero / Costurera'],
+  ['occupation:bo:DEPORTISTA', 'Deportista'],
+  ['occupation:bo:DOCENTE', 'Docente'],
+  ['occupation:bo:ECONOMISTA', 'Economista'],
+  ['occupation:bo:ELECTRICISTA', 'Electricista'],
+  ['occupation:bo:EMPLEADA_HOGAR', 'Empleada / Empleado del hogar'],
+  ['occupation:bo:EMPLEADO', 'Empleado / Empleada'],
+  ['occupation:bo:EMPRESARIO', 'Empresario / Empresaria'],
+  ['occupation:bo:ENFERMERO', 'Enfermero / Enfermera'],
+  ['occupation:bo:ESTUDIANTE', 'Estudiante'],
+  ['occupation:bo:FARMACEUTICO', 'Farmacéutico / Farmacéutica'],
+  ['occupation:bo:FOTOGRAFO', 'Fotógrafo / Fotógrafa'],
+  ['occupation:bo:FUNCIONARIO_PUBLICO', 'Funcionario público / Funcionaria pública'],
+  ['occupation:bo:GANADERO', 'Ganadero / Ganadera'],
+  ['occupation:bo:GASTRONOMO', 'Gastrónomo / Gastrónoma'],
+  ['occupation:bo:INGENIERO', 'Ingeniero / Ingeniera'],
+  ['occupation:bo:JOYERO', 'Joyero / Joyera'],
+  ['occupation:bo:JUBILADO', 'Jubilado / Jubilada'],
+  ['occupation:bo:LABORES_CASA', 'Labores de casa'],
+  ['occupation:bo:MECANICO', 'Mecánico / Mecánica'],
+  ['occupation:bo:MEDICO', 'Médico / Médica'],
+  ['occupation:bo:MILITAR', 'Militar'],
+  ['occupation:bo:MINERO', 'Minero / Minera'],
+  ['occupation:bo:MUSICO', 'Músico / Música'],
+  ['occupation:bo:NUTRICIONISTA', 'Nutricionista'],
+  ['occupation:bo:OBRERO', 'Obrero / Obrera'],
+  ['occupation:bo:ODONTOLOGO', 'Odontólogo / Odontóloga'],
+  ['occupation:bo:PANADERO', 'Panadero / Panadera'],
+  ['occupation:bo:PELUQUERO', 'Peluquero / Peluquera'],
+  ['occupation:bo:PERIODISTA', 'Periodista'],
+  ['occupation:bo:PESCADOR', 'Pescador / Pescadora'],
+  ['occupation:bo:PILOTO', 'Piloto'],
+  ['occupation:bo:PINTOR', 'Pintor / Pintora'],
+  ['occupation:bo:PLOMERO', 'Plomero / Plomera'],
+  ['occupation:bo:POLICIA', 'Policía'],
+  ['occupation:bo:PSICOLOGO', 'Psicólogo / Psicóloga'],
+  ['occupation:bo:RELIGIOSO', 'Religioso / Religiosa'],
+  ['occupation:bo:SASTRE', 'Sastre'],
+  ['occupation:bo:SECRETARIO', 'Secretario / Secretaria'],
+  ['occupation:bo:SEGURIDAD', 'Personal de seguridad'],
+  ['occupation:bo:SIN_OCUPACION', 'Sin ocupación'],
+  ['occupation:bo:SOLDADOR', 'Soldador / Soldadora'],
+  ['occupation:bo:TECNICO', 'Técnico / Técnica'],
+  ['occupation:bo:TRABAJADOR_SOCIAL', 'Trabajador social / Trabajadora social'],
+  ['occupation:bo:TRANSPORTISTA', 'Transportista'],
+  ['occupation:bo:VENDEDOR', 'Vendedor / Vendedora'],
+  ['occupation:bo:VETERINARIO', 'Veterinario / Veterinaria'],
+  ['occupation:bo:ZAPATERO', 'Zapatero / Zapatera'],
+  ['occupation:bo:OTRA', 'Otra ocupación'], // la salida escrita a mano
 ]);
 
 conjunto('VS_BO_EMPLOYER', 'Empleadores', 'Empresas e instituciones registradas.');
 export const EMPLEADOR = definir('VS_BO_EMPLOYER', [
-  ['EMP-YPFB', 'YPFB'],
-  ['EMP-UAGRM', 'Universidad Autónoma Gabriel René Moreno'],
-  ['EMP-CRE', 'Cooperativa Rural de Electrificación'],
-  ['EMP-BNB', 'Banco Nacional de Bolivia'],
-  ['EMP-ENTEL', 'ENTEL'],
-  ['EMP-SEDES', 'SEDES Santa Cruz'],
-  ['EMP-INDEP', 'Independiente'],
+  ['employer:bo:YPFB_ANDINA', 'YPFB Andina'],
+  ['employer:bo:UAGRM', 'UAGRM (Universidad Autónoma Gabriel René Moreno)'],
+  ['employer:bo:CRE', 'CRE (Cooperativa Rural de Electrificación)'],
+  ['employer:bo:BANCO_UNION', 'Banco Unión'],
+  ['employer:bo:ENTEL', 'Entel (Empresa Nacional de Telecomunicaciones)'],
+  ['employer:bo:INDEPENDIENTE', 'Trabajo por mi cuenta (independiente)'],
+  ['employer:bo:NEGOCIO_PROPIO', 'Tengo mi propio negocio'],
+  ['employer:bo:SIN_EMPLEADOR', 'No estoy trabajando'],
+  ['employer:bo:OTRA', 'Otra empresa (la escribo)'], // la salida escrita a mano
 ]);
 
 /* ---- especialidades médicas ----------------------------------------------
@@ -197,14 +277,14 @@ export const ESPECIALIDAD = definir('VS_MEDICAL_SPECIALTY', [
   ['MEDICINA_EMERGENCIA', 'Medicina de Emergencia'],
   ['MEDICINA_INTENSIVA', 'Medicina Intensiva'],
   ['NUTRICION', 'Nutrición y Dietética', 'Alimentación y metabolismo.'],
-  ['ODONTOLOGIA', 'Odontología', 'Salud bucal.'],  // odontológica
+  ['ODONTOLOGIA', 'Odontología', 'Salud bucal.'], // odontológica
   ['FISIOTERAPIA', 'Fisioterapia y Rehabilitación', 'Rehabilitación física.'],
   ['ENFERMERIA', 'Enfermería'],
   ['BIOQUIMICA_CLINICA', 'Bioquímica Clínica'],
   ['OBSTETRICIA', 'Obstetricia'],
   ['MEDICINA_DEPORTIVA', 'Medicina Deportiva'],
   ['ANATOMIA_PATOLOGICA', 'Anatomía Patológica'],
-  ['CIRUGIA_BUCOMAXILOFACIAL', 'Cirugía Bucomaxilofacial'],  // odontológica
+  ['CIRUGIA_BUCOMAXILOFACIAL', 'Cirugía Bucomaxilofacial'], // odontológica
   ['CIRUGIA_PEDIATRICA', 'Cirugía Pediátrica'],
   ['MEDICINA_DEL_TRABAJO', 'Medicina del Trabajo'],
   ['MEDICINA_FISICA_REHABILITACION', 'Medicina Física y Rehabilitación'],
@@ -221,20 +301,24 @@ export const ESPECIALIDAD = definir('VS_MEDICAL_SPECIALTY', [
   ['ONCOLOGIA_PEDIATRICA', 'Oncología Pediátrica'],
   ['ORTOPEDIA_PEDIATRICA', 'Ortopedia Pediátrica'],
   ['TERAPIA_INTENSIVA_PEDIATRICA', 'Terapia Intensiva Pediátrica'],
-  ['ENDODONCIA', 'Endodoncia'],  // odontológica
-  ['ORTODONCIA', 'Ortodoncia'],  // odontológica
-  ['PERIODONCIA', 'Periodoncia'],  // odontológica
-  ['ESTETICA_DENTAL', 'Estética Dental'],  // odontológica
-  ['REHABILITACION_ORAL', 'Rehabilitación Oral'],  // odontológica
-  ['CIRUGIA_ORAL_MAXILOFACIAL', 'Cirugía Oral y Maxilofacial'],  // odontológica
-  ['ODONTOPEDIATRIA', 'Odontopediatría'],  // odontológica
-  ['IMPLANTOLOGIA_ORAL', 'Implantología Oral'],  // odontológica
-  ['ARMONIZACION_OROFACIAL', 'Armonización Orofacial'],  // odontológica
+  ['ENDODONCIA', 'Endodoncia'], // odontológica
+  ['ORTODONCIA', 'Ortodoncia'], // odontológica
+  ['PERIODONCIA', 'Periodoncia'], // odontológica
+  ['ESTETICA_DENTAL', 'Estética Dental'], // odontológica
+  ['REHABILITACION_ORAL', 'Rehabilitación Oral'], // odontológica
+  ['CIRUGIA_ORAL_MAXILOFACIAL', 'Cirugía Oral y Maxilofacial'], // odontológica
+  ['ODONTOPEDIATRIA', 'Odontopediatría'], // odontológica
+  ['IMPLANTOLOGIA_ORAL', 'Implantología Oral'], // odontológica
+  ['ARMONIZACION_OROFACIAL', 'Armonización Orofacial'], // odontológica
 ]);
 
 /* ---- demografía y contactos ---------------------------------------------- */
 
-conjunto('VS_ADMINISTRATIVE_GENDER', 'Género administrativo', 'Género con el que se registra la persona.');
+conjunto(
+  'VS_ADMINISTRATIVE_GENDER',
+  'Género administrativo',
+  'Género con el que se registra la persona.',
+);
 export const GENERO = definir('VS_ADMINISTRATIVE_GENDER', [
   ['GEN-F', 'Femenino'],
   ['GEN-M', 'Masculino'],
@@ -250,16 +334,20 @@ export const SEXO = definir('VS_BIRTH_SEX', [
   ['SEX-U', 'Desconocido'],
 ]);
 
-conjunto('VS_RELATED_PERSON_RELATIONSHIP', 'Parentesco', 'Relación de una persona con el paciente.');
+conjunto(
+  'VS_RELATED_PERSON_RELATIONSHIP',
+  'Parentesco',
+  'Relación de una persona con el paciente.',
+);
 export const PARENTESCO = definir('VS_RELATED_PERSON_RELATIONSHIP', [
-  ['REL-MADRE', 'Madre'],
-  ['REL-PADRE', 'Padre'],
-  ['REL-CONYUGE', 'Cónyuge'],
-  ['REL-HIJO', 'Hijo/a'],
-  ['REL-HERMANO', 'Hermano/a'],
-  ['REL-TUTOR', 'Tutor/a legal'],
-  ['REL-AMIGO', 'Amigo/a'],
-  ['REL-OTRO', 'Otro'],
+  ['RELATIONSHIP_MOTHER', 'Madre'],
+  ['RELATIONSHIP_FATHER', 'Padre'],
+  ['RELATIONSHIP_SPOUSE', 'Cónyuge'],
+  ['RELATIONSHIP_CHILD', 'Hijo/a'],
+  ['RELATIONSHIP_SIBLING', 'Hermano/a'],
+  ['RELATIONSHIP_GUARDIAN', 'Tutor/a legal'],
+  ['RELATIONSHIP_FRIEND', 'Amigo/a'],
+  ['RELATIONSHIP_OTHER', 'Otro'],
 ]);
 
 conjunto('VS_LANGUAGE', 'Idiomas', 'Idiomas de atención.');
@@ -302,7 +390,11 @@ export const RH = definir('VS_RH_FACTOR', [
 
 /* ---- estados genéricos --------------------------------------------------- */
 
-conjunto('VS_RECORD_STATUS', 'Estados de registro', 'Estados administrativos de personas y perfiles.');
+conjunto(
+  'VS_RECORD_STATUS',
+  'Estados de registro',
+  'Estados administrativos de personas y perfiles.',
+);
 export const ESTADO = definir('VS_RECORD_STATUS', [
   ['ST-ACTIVE', 'Activo'],
   ['ST-INACTIVE', 'Inactivo'],
@@ -322,6 +414,14 @@ export const ESTADO = definir('VS_RECORD_STATUS', [
   ['ST-UNLINKED', 'Sin vincular'],
   ['ST-ALIVE', 'Con vida'],
   ['ST-DECEASED', 'Fallecido/a'],
+  /**
+   * Antiduplicación de estudios (v4.2.17, T-26, subtarea 3.2): el estado de
+   * una orden que el médico decidió NO repetir — nace satisfecha por el
+   * informe previo, sin ser facturable. Espejo del concepto dinámico
+   * `SERVICE_REQUEST_SATISFIED_BY_PRIOR` (`SR_SATISFIED_BY_PRIOR`) que la API
+   * siembra al arrancar.
+   */
+  ['ST-SATISFIED-BY-PRIOR', 'Satisfecha por informe previo'],
 ]);
 
 /* ---- profesionales ------------------------------------------------------- */
@@ -338,13 +438,12 @@ export const CATEGORIA_PROFESIONAL = definir('VS_PRACTITIONER_CATEGORY', [
 
 conjunto('VS_CREDENTIAL_TYPE', 'Tipos de credencial', 'Títulos y certificaciones.');
 export const TIPO_CREDENCIAL = definir('VS_CREDENTIAL_TYPE', [
-  ['CRED-TITULO', 'Título profesional'],
-  ['CRED-ESPECIALIDAD', 'Título de especialidad'],
-  ['CRED-MAESTRIA', 'Maestría'],
-  ['CRED-DOCTORADO', 'Doctorado'],
-  ['CRED-DIPLOMADO', 'Diplomado'],
-  ['CRED-SEDES', 'Registro SEDES'],
-]);
+  ['CREDENTIAL_TYPE_DEGREE', 'Academic degree credential'],
+  ['CREDENTIAL_TYPE_DIPLOMA', 'Diploma course credential'],
+  ['CREDENTIAL_TYPE_MASTER', "Master's degree credential"],
+  ['CREDENTIAL_TYPE_DOCTORATE', 'Doctorate degree credential'],
+  ['CREDENTIAL_TYPE_SPECIALTY', 'Specialty degree credential'],
+], 0);
 
 conjunto('VS_JURISDICTION', 'Jurisdicciones', 'Ámbito de la matrícula.');
 export const JURISDICCION = definir('VS_JURISDICTION', [
@@ -353,7 +452,11 @@ export const JURISDICCION = definir('VS_JURISDICTION', [
   ['JUR-LP', 'Departamental La Paz'],
 ]);
 
-conjunto('VS_AFFILIATION_TYPE', 'Tipos de vínculo laboral', 'Cómo se vincula el profesional con una organización.');
+conjunto(
+  'VS_AFFILIATION_TYPE',
+  'Tipos de vínculo laboral',
+  'Cómo se vincula el profesional con una organización.',
+);
 export const TIPO_VINCULO = definir('VS_AFFILIATION_TYPE', [
   ['AFF-PLANTA', 'Personal de planta'],
   ['AFF-CONSULTOR', 'Consultor/a'],
@@ -423,6 +526,43 @@ export const ESTADO_CONDICION = definir('VS_CONDITION_CLINICAL_STATUS', [
   ['COND-RECURRENCE', 'Recurrente'],
 ]);
 
+/* Los tres catálogos del diagnóstico que faltaban, con **los códigos del
+   backend** (`clinical.concepts.ts`) y no con unos inventados: el bloque de
+   diagnóstico traduce por código —`ETIQUETAS_DE_CURSO`, `ETIQUETAS_DE_CATEGORIA`,
+   `ETIQUETAS_DE_LATERALIDAD`—, así que un código distinto deja el selector
+   mostrando el `display` en inglés. Es la misma clase de defecto que ya mordió
+   con los departamentos, las especialidades y las ocupaciones. */
+
+conjunto(
+  'VS_CONDITION_CLINICAL_COURSE',
+  'Curso clínico del diagnóstico',
+  'Si la condición es aguda —con resolución esperada— o crónica —seguimiento continuo—. Eje distinto del estado clínico.',
+);
+export const CURSO_CLINICO = definir('VS_CONDITION_CLINICAL_COURSE', [
+  ['COND_COURSE_ACUTE', 'Aguda'],
+  ['COND_COURSE_CHRONIC', 'Crónica'],
+  ['COND_COURSE_SUBACUTE', 'Subaguda'],
+  ['COND_COURSE_RECURRENT', 'Recurrente'],
+  ['COND_COURSE_UNKNOWN', 'Sin determinar'],
+]);
+
+conjunto(
+  'VS_CONDITION_CATEGORY',
+  'Categoría del diagnóstico',
+  'Si el registro es un diagnóstico del encuentro o un problema de la lista.',
+);
+export const CATEGORIA_CONDICION = definir('VS_CONDITION_CATEGORY', [
+  ['COND_DIAGNOSIS', 'Diagnóstico del encuentro'],
+  ['COND_PROBLEM', 'Problema de la lista'],
+]);
+
+conjunto('VS_CONDITION_LATERALITY', 'Lateralidad', 'Lado del cuerpo afectado, cuando aplica.');
+export const LATERALIDAD = definir('VS_CONDITION_LATERALITY', [
+  ['COND_LAT_LEFT', 'Izquierda'],
+  ['COND_LAT_RIGHT', 'Derecha'],
+  ['COND_LAT_BILATERAL', 'Bilateral'],
+]);
+
 conjunto('VS_CONDITION_VERIFICATION', 'Verificación diagnóstica', 'Certeza del diagnóstico.');
 export const VERIFICACION_DX = definir('VS_CONDITION_VERIFICATION', [
   ['DXV-CONFIRMED', 'Confirmado'],
@@ -436,6 +576,56 @@ export const SEVERIDAD = definir('VS_SEVERITY', [
   ['SEV-MILD', 'Leve'],
   ['SEV-MODERATE', 'Moderada'],
   ['SEV-SEVERE', 'Grave'],
+]);
+
+/* Los catálogos de la alergia.
+   ⚠️ **Provisionales, y declarados como tales.** El backend tiene cinco
+   conceptos sueltos de alergia (`ALG_ACTIVE`, `ALG_TYPE`, `ALG_HIGH`…) y
+   **ningún binding de enum dinámico**: `dynamic-enum-catalog.ts` no declara un
+   solo `target` de `clinical.allergy_intolerances.*`. Sin catálogo no hay
+   formulario, así que acá se acuñan los mínimos para que la maqueta funcione,
+   con el mismo criterio que `bo-occupations.catalog.ts`: cierran hoy el campo
+   sin fingir que son un catálogo clínico publicado. El real —un subconjunto
+   SNOMED, o el que el equipo clínico apruebe— es P26. */
+
+conjunto('VS_ALLERGY_TYPE', 'Tipo', 'Si es alergia inmunológica o intolerancia.');
+export const TIPO_ALERGIA = definir('VS_ALLERGY_TYPE', [
+  ['ALG_TYPE', 'Alergia'],
+  ['ALG_TYPE_INTOLERANCE', 'Intolerancia'],
+]);
+
+conjunto(
+  'VS_ALLERGY_MANIFESTATION',
+  'Manifestación',
+  'Qué le pasó a la persona. Provisional: ver P26.',
+);
+export const MANIFESTACION = definir('VS_ALLERGY_MANIFESTATION', [
+  ['ALG_MANIF_URTICARIA', 'Urticaria'],
+  ['ALG_MANIF_ANGIOEDEMA', 'Angioedema'],
+  ['ALG_MANIF_ANAPHYLAXIS', 'Anafilaxia'],
+  ['ALG_MANIF_BRONCHOSPASM', 'Broncoespasmo'],
+  ['ALG_MANIF_RASH', 'Erupción cutánea'],
+  ['ALG_MANIF_PRURITUS', 'Prurito'],
+  ['ALG_MANIF_NAUSEA', 'Náuseas o vómitos'],
+  ['ALG_MANIF_DIARRHEA', 'Diarrea'],
+]);
+
+conjunto(
+  'VS_ALLERGY_SUBSTANCE',
+  'Sustancia',
+  'Alérgenos que no son medicamentos. Los medicamentos salen del vademécum.',
+);
+export const SUSTANCIA_ALERGENO = definir('VS_ALLERGY_SUBSTANCE', [
+  ['ALG_SUB_PEANUT', 'Maní'],
+  ['ALG_SUB_SHELLFISH', 'Mariscos'],
+  ['ALG_SUB_EGG', 'Huevo'],
+  ['ALG_SUB_MILK', 'Leche de vaca'],
+  ['ALG_SUB_GLUTEN', 'Gluten'],
+  ['ALG_SUB_LATEX', 'Látex'],
+  ['ALG_SUB_DUST', 'Ácaros del polvo'],
+  ['ALG_SUB_POLLEN', 'Polen'],
+  ['ALG_SUB_HYMENOPTERA', 'Picadura de abeja o avispa'],
+  ['ALG_SUB_IODINE', 'Contraste yodado'],
 ]);
 
 conjunto('VS_ALLERGY_CATEGORY', 'Categoría de alergia', 'Qué clase de alérgeno.');
@@ -489,6 +679,77 @@ export const OBSERVACION = definir('VS_OBSERVATION_CODE', [
   ['OBS-HBA1C', 'Hemoglobina glicosilada'],
 ]);
 
+/* ---- lo que la observación, el plan y el documento necesitan para su alta ---
+   Los tres bloques nuevos del expediente —observación, plan de cuidados y
+   documento— llenan columnas `*_concept_id` que el catálogo real todavía no
+   publica con un binding declarado. Se acuñan acá con el mismo criterio que los
+   de alergia: cierran hoy el campo sin fingir que son un catálogo clínico
+   aprobado. El real —UCUM para las unidades, un subconjunto SNOMED/LOINC para
+   el resto— sigue siendo P26. */
+
+conjunto('VS_OBSERVATION_UNIT', 'Unidad de medida', 'Unidades de una medición clínica.');
+export const UNIDAD_OBSERVACION = definir('VS_OBSERVATION_UNIT', [
+  ['OBSU-MMHG', 'mmHg'],
+  ['OBSU-BPM', 'latidos por minuto'],
+  ['OBSU-CELSIUS', '°C'],
+  ['OBSU-KG', 'kg'],
+  ['OBSU-CM', 'cm'],
+  ['OBSU-PERCENT', '%'],
+  ['OBSU-MGDL', 'mg/dL'],
+  ['OBSU-KGM2', 'kg/m²'],
+]);
+
+conjunto('VS_OBSERVATION_CATEGORY', 'Categoría de observación', 'De dónde sale la medición.');
+export const CATEGORIA_OBSERVACION = definir('VS_OBSERVATION_CATEGORY', [
+  ['OBSC-VITALS', 'Signos vitales'],
+  ['OBSC-EXAM', 'Examen físico'],
+  ['OBSC-LAB', 'Laboratorio'],
+  ['OBSC-SURVEY', 'Cuestionario'],
+]);
+
+conjunto('VS_OBSERVATION_INTERPRETATION', 'Interpretación', 'Cómo se lee el valor.');
+export const INTERPRETACION = definir('VS_OBSERVATION_INTERPRETATION', [
+  ['OBSI-NORMAL', 'Dentro de lo esperado'],
+  ['OBSI-HIGH', 'Por encima de lo esperado'],
+  ['OBSI-LOW', 'Por debajo de lo esperado'],
+  ['OBSI-CRITICAL', 'Valor crítico'],
+]);
+
+conjunto('VS_OBSERVATION_PERFORMER_TYPE', 'Tipo de ejecutante', 'Quién tomó la medición.');
+export const TIPO_DE_EJECUTANTE = definir('VS_OBSERVATION_PERFORMER_TYPE', [
+  ['OBSP-PRACTITIONER', 'Profesional que atiende'],
+  ['OBSP-LAB', 'Laboratorio'],
+  ['OBSP-DEVICE', 'Dispositivo'],
+  ['OBSP-PATIENT', 'La propia persona'],
+]);
+
+conjunto('VS_CARE_PLAN_INTENT', 'Intención del plan', 'Qué clase de plan es.');
+export const INTENCION_DEL_PLAN = definir('VS_CARE_PLAN_INTENT', [
+  ['CP-INTENT-PROPOSAL', 'Propuesta'],
+  ['CP-INTENT-PLAN', 'Plan'],
+  ['CP-INTENT-ORDER', 'Indicación'],
+]);
+
+conjunto('VS_CARE_PLAN_ACTIVITY', 'Actividad del plan', 'Qué clase de paso es.');
+export const ACTIVIDAD_DEL_PLAN = definir('VS_CARE_PLAN_ACTIVITY', [
+  ['CP-ACT-CONTROL', 'Control clínico'],
+  ['CP-ACT-STUDY', 'Estudio o laboratorio'],
+  ['CP-ACT-TREATMENT', 'Tratamiento'],
+  ['CP-ACT-EDUCATION', 'Educación de la persona'],
+  ['CP-ACT-REFERRAL', 'Derivación'],
+]);
+
+conjunto('VS_DOCUMENT_CATEGORY', 'Categoría documental', 'Qué clase de papel es.');
+export const CATEGORIA_DOCUMENTAL = definir('VS_DOCUMENT_CATEGORY', [
+  ['DOC-CAT-REPORT', 'Informe clínico'],
+  ['DOC-CAT-LAB', 'Resultado de laboratorio'],
+  ['DOC-CAT-IMAGING', 'Estudio de imagen'],
+  ['DOC-CAT-CONSENT', 'Consentimiento informado'],
+  ['DOC-CAT-CERTIFICATE', 'Certificado'],
+  ['DOC-CAT-DISCHARGE', 'Epicrisis o alta'],
+  ['DOC-CAT-EXTERNAL', 'Documento externo'],
+]);
+
 conjunto('VS_ROUTE', 'Vía de administración', 'Vía por la que se administra.');
 export const VIA = definir('VS_ROUTE', [
   ['ROUTE-ORAL', 'Vía oral'],
@@ -507,7 +768,11 @@ export const UNIDAD = definir('VS_DOSE_UNIT', [
   ['UNIT-GOTAS', 'gotas'],
 ]);
 
-conjunto('VS_SERVICE_REQUEST_CATEGORY', 'Categoría de orden', 'Laboratorio, imagen, interconsulta.');
+conjunto(
+  'VS_SERVICE_REQUEST_CATEGORY',
+  'Categoría de orden',
+  'Laboratorio, imagen, interconsulta.',
+);
 export const CATEGORIA_ORDEN = definir('VS_SERVICE_REQUEST_CATEGORY', [
   ['SRQ-LAB', 'Laboratorio'],
   ['SRQ-IMAGING', 'Imagenología'],
@@ -577,16 +842,32 @@ export const PROCEDIMIENTO = definir('VS_PROCEDURE', [
 
 conjunto('VS_CONDITION_CODE', 'Diagnósticos (CIE-10)', 'Códigos de diagnóstico.');
 export const DIAGNOSTICO = definir('VS_CONDITION_CODE', [
-  ['I10', 'Hipertensión arterial esencial', 'Presión arterial persistentemente elevada sin causa secundaria identificada.'],
-  ['E11', 'Diabetes mellitus tipo 2', 'Trastorno metabólico crónico con hiperglucemia por resistencia a la insulina.'],
+  [
+    'I10',
+    'Hipertensión arterial esencial',
+    'Presión arterial persistentemente elevada sin causa secundaria identificada.',
+  ],
+  [
+    'E11',
+    'Diabetes mellitus tipo 2',
+    'Trastorno metabólico crónico con hiperglucemia por resistencia a la insulina.',
+  ],
   ['E78.5', 'Dislipidemia', 'Alteración de los niveles de lípidos en sangre.'],
   ['J45', 'Asma bronquial', 'Enfermedad inflamatoria crónica de las vías respiratorias.'],
   ['M54.5', 'Lumbalgia', 'Dolor en la región lumbar.'],
   ['K21.0', 'Enfermedad por reflujo gastroesofágico', 'Retorno del contenido gástrico al esófago.'],
-  ['F41.1', 'Trastorno de ansiedad generalizada', 'Ansiedad y preocupación excesivas y persistentes.'],
+  [
+    'F41.1',
+    'Trastorno de ansiedad generalizada',
+    'Ansiedad y preocupación excesivas y persistentes.',
+  ],
   ['E03.9', 'Hipotiroidismo', 'Producción insuficiente de hormona tiroidea.'],
   ['N39.0', 'Infección urinaria', 'Infección del tracto urinario.'],
-  ['J06.9', 'Infección respiratoria aguda', 'Infección aguda de las vías respiratorias superiores.'],
+  [
+    'J06.9',
+    'Infección respiratoria aguda',
+    'Infección aguda de las vías respiratorias superiores.',
+  ],
   ['M17', 'Gonartrosis', 'Artrosis de la rodilla.'],
   ['G43', 'Migraña', 'Cefalea primaria recurrente.'],
   ['E66', 'Obesidad', 'Exceso de grasa corporal.'],
@@ -628,6 +909,39 @@ export const TIPO_ORGANIZACION = definir('VS_ORGANIZATION_TYPE', [
   ['ORG-CONSULTORIO', 'Consultorio'],
 ]);
 
+// El `display` en inglés técnico es a propósito: es lo que devuelve el
+// catálogo real (`legal-entity-type` en `dynamic-enum-catalog.ts` de la API).
+// La etiqueta que ve la persona sale de `legal-entity-types.dictionary.ts`,
+// por código — este conjunto sólo simula los VALORES y sus `conceptId`.
+conjunto(
+  'VS_LEGAL_ENTITY_TYPE',
+  'Forma societaria',
+  'Figura jurídica de la organización, por país.',
+);
+export const TIPO_SOCIETARIO = definir('VS_LEGAL_ENTITY_TYPE', [
+  ['UNIPERSONAL', 'Sole proprietorship'],
+  ['SRL', 'Limited liability company (S.R.L.)'],
+  ['LTDA', 'Limited company (Ltda.)'],
+  ['SA', 'Corporation (S.A.)'],
+  ['SOCIEDAD_COLECTIVA', 'General partnership'],
+  ['COMANDITA_SIMPLE', 'Limited partnership'],
+  ['COMANDITA_ACCIONES', 'Partnership limited by shares'],
+  ['SUCURSAL_EXTRANJERA', 'Branch of a foreign company'],
+  ['BR_LTDA', 'Sociedade Limitada (Brazil)'],
+  ['BR_SA', 'Sociedade Anônima (Brazil)'],
+  ['BR_MEI', 'Microempreendedor Individual (Brazil)'],
+  ['BR_EI', 'Empresário Individual (Brazil)'],
+  ['BR_SLU', 'Sociedade Limitada Unipessoal (Brazil)'],
+  ['BR_FILIAL_EST', 'Foreign company branch (Brazil)'],
+  ['US_LLC', 'Limited Liability Company (US)'],
+  ['US_CORP', 'Corporation (US)'],
+  ['US_SOLE_PROP', 'Sole Proprietorship (US)'],
+  ['US_LLP', 'Limited Liability Partnership (US)'],
+  ['US_BRANCH', 'Foreign company branch (US)'],
+  ['AR_SAS', 'Sociedad por Acciones Simplificada (Argentina)'],
+  ['MX_S_RL', 'Sociedad de Responsabilidad Limitada (Mexico)'],
+]);
+
 conjunto('VS_FACILITY', 'Establecimientos de salud', 'Padrón de establecimientos.');
 export const ESTABLECIMIENTO = definir('VS_FACILITY', [
   ['FAC-OLIVOS', 'Clínica Los Olivos'],
@@ -661,7 +975,11 @@ export const ESTADO_SOLICITUD = definir('VS_CLAIM_STATUS', [
 
 /* ---- glosario: categorías --------------------------------------------- */
 
-conjunto('glossary-all-terms', 'Glosario de terminología médica', 'Todos los términos del glosario.');
+conjunto(
+  'glossary-all-terms',
+  'Glosario de terminología médica',
+  'Todos los términos del glosario.',
+);
 conjunto('glossary-diseases', 'Enfermedades', 'Diagnósticos y enfermedades.');
 conjunto('glossary-symptoms', 'Síntomas', 'Síntomas y signos.');
 conjunto('glossary-procedures', 'Procedimientos', 'Procedimientos y cirugías.');
@@ -693,7 +1011,11 @@ export const OTRO_TERMINO = definir('glossary-other', [
   ['OT-TRIAJE', 'Triaje', 'Clasificación de pacientes según la urgencia de su atención.'],
   ['OT-INTERCONSULTA', 'Interconsulta', 'Consulta a otro especialista sobre un paciente.'],
   ['OT-ALTA', 'Alta médica', 'Fin de la atención por recuperación o derivación.'],
-  ['OT-CONSENTIMIENTO', 'Consentimiento informado', 'Autorización del paciente tras conocer riesgos y beneficios.'],
+  [
+    'OT-CONSENTIMIENTO',
+    'Consentimiento informado',
+    'Autorización del paciente tras conocer riesgos y beneficios.',
+  ],
 ]);
 
 // Los diagnósticos, medicamentos, procedimientos y estudios también son
@@ -714,6 +1036,61 @@ for (const [code, c] of registro) {
     registro.set(code, { ...c, valueSets: [...c.valueSets, 'glossary-all-terms'] });
   }
 }
+
+/* ---- Estados de un caso de verificación de identidad ---------------------- *
+   Los nueve que `identity_assurance` emite, con el código **tal como llega al
+   catálogo**: `identity_assurance:CASE_*`. El módulo los declara internamente
+   como `IDA_CASE_*`, pero ese código nunca sale — ver el comentario de cabecera
+   de `features/identity-verification/case-status.ts`.
+
+   Sin estos nueve, `CaseStatusCatalog` busca por el prefijo, no encuentra nada,
+   y las dos pantallas que muestran un trámite pintan «Desconocido» en todas las
+   filas sin romper nada. Es exactamente lo que se veía antes del 2026-09-10. */
+conjunto(
+  'VS_IDENTITY_CASE_STATUS',
+  'Estados de un caso de verificación',
+  'El ciclo de vida de un trámite de identidad.',
+);
+
+export const ESTADO_DE_CASO = definir('VS_IDENTITY_CASE_STATUS', [
+  ['identity_assurance:CASE_OPEN', 'Case open'],
+  ['identity_assurance:CASE_CHECKS_PENDING', 'Case checks pending'],
+  ['identity_assurance:CASE_IN_VERIFICATION', 'Case in verification'],
+  ['identity_assurance:CASE_MANUAL_REVIEW', 'Case in manual review'],
+  ['identity_assurance:CASE_AT_RISK', 'Case at risk'],
+  ['identity_assurance:CASE_VERIFIED', 'Case verified'],
+  ['identity_assurance:CASE_ASSERTED', 'Case asserted'],
+  ['identity_assurance:CASE_REJECTED', 'Case rejected'],
+  ['identity_assurance:CASE_REVOKED', 'Case revoked'],
+  ['identity_assurance:CASE_EXPIRED', 'Case expired'],
+]);
+
+/* ---- Catálogos administrativos de seguros -------------------------------- */
+conjunto(
+  'VS_INSURANCE_PLAN_CURRENCY',
+  'Monedas de planes de seguro',
+  'Monedas admitidas para los importes de planes y coberturas.',
+);
+
+export const MONEDA_PLAN_SEGURO = definir('VS_INSURANCE_PLAN_CURRENCY', [
+  ['BOB', 'Boliviano'],
+  ['USD', 'Dólar estadounidense'],
+]);
+
+conjunto(
+  'VS_INSURANCE_BENEFIT_CATEGORY',
+  'Categorías de cobertura',
+  'Categorías administrables de prestaciones cubiertas por un plan.',
+);
+
+export const CATEGORIA_COBERTURA = definir('VS_INSURANCE_BENEFIT_CATEGORY', [
+  ['BENEFIT_CATEGORY_GENERAL', 'General'],
+  ['BENEFIT_CATEGORY_OUTPATIENT', 'Consulta externa'],
+  ['BENEFIT_CATEGORY_EMERGENCY', 'Emergencias'],
+  ['BENEFIT_CATEGORY_HOSPITALIZATION', 'Hospitalización'],
+  ['BENEFIT_CATEGORY_LAB_IMAGING', 'Laboratorio e imagen'],
+  ['BENEFIT_CATEGORY_PHARMACY', 'Farmacia'],
+]);
 
 /* ---- consultas ----------------------------------------------------------- */
 

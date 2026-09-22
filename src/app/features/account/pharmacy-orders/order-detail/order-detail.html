@@ -18,6 +18,11 @@
             <app-badge [variant]="estado.tone" data-testid="pedido-estado-badge">
               {{ estado.label }}
             </app-badge>
+            <!-- El medio de pago, sólo si el contrato publica un pago: hoy no
+                 lo publica y el badge no aparece (R-T-E4). -->
+            @if (medioDePago(); as medio) {
+              <app-badge variant="success" data-testid="pedido-medio-de-pago">{{ medio }}</app-badge>
+            }
             <span class="pedido__secundario">{{ estado.descripcion }}</span>
           </p>
         </section>
@@ -103,7 +108,11 @@
             }
           </p>
           <p class="pedido__secundario">
-            Es un código de identificación, no un pago: pagás al retirar, en la farmacia.
+            @if (pagado()) {
+              Es un código de identificación: tu pedido ya está pagado.
+            } @else {
+              Es un código de identificación, no un pago: pagás al retirar, en la farmacia.
+            }
           </p>
         </section>
       }
@@ -182,6 +191,39 @@
           }
         </p>
       </section>
+
+      <!-- ─── Los avisos que el backend emitió por este pedido (R-T-E4) ──── -->
+      @if (avisos().length > 0) {
+        <section class="pedido__bloque" aria-labelledby="pedido-avisos" data-testid="pedido-avisos">
+          <h3 id="pedido-avisos" class="pedido__subtitulo">Avisos de este pedido</h3>
+          <p class="pedido__secundario">
+            Los avisos que te enviamos sobre este pedido. Pueden no estar todos.
+          </p>
+          <ul class="pedido__avisos">
+            @for (aviso of avisos(); track aviso.id) {
+              <li class="pedido__aviso">
+                <span class="pedido__principal">{{ aviso.titulo }}</span>
+                @if (aviso.detalle !== null) {
+                  <span>{{ aviso.detalle }}</span>
+                }
+                <span class="pedido__secundario">
+                  {{ aviso.fecha | date: 'dd/MM/yyyy HH:mm' }}
+                </span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      <app-patient-insurance-settlement
+        [settlement]="abierto.insuranceSettlement ?? null"
+        [availability]="abierto.insuranceSettlementAvailability ?? 'NOT_AVAILABLE'"
+      />
+
+      <!-- ─── Tu factura (T-E4) ──────────────────────────────────────────── -->
+      @if (mostrarFactura()) {
+        <app-tu-factura [orderId]="abierto.id" [estado]="abierto.estado" [factura]="factura()" />
+      }
 
       <!-- ─── Cancelar, mientras el estado lo permite ────────────────────── -->
       @if (puedeCancelar()) {

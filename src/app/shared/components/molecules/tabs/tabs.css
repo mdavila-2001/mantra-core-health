@@ -1,6 +1,18 @@
 /* ============================================================================
     Tabs — la pestaña activa se marca con la línea de marca abajo Y con peso
     tipográfico: el color no puede ser el único portador del estado.
+
+    Dos apariencias (ver `TabsAppearance`):
+
+    - `underline` (la de siempre) — rótulos sobre una línea divisoria. Es lo
+      correcto para dos o tres secciones dentro de una tarjeta que ya trae su
+      propio marco.
+
+    - `browser` — marco de ventana. La tira apoya sobre un fondo hundido y el
+      panel es la superficie que sigue debajo: la pestaña activa comparte su
+      color con el panel, así que deja de ser un rótulo y pasa a ser el borde
+      superior del documento que está abierto. Es la disposición que hace
+      legible una ficha de ocho secciones.
     ========================================================================== */
 
 :host {
@@ -16,15 +28,32 @@
     min-width: 0;
 }
 
+/* La fila que envuelve la tira y sus dos flechas. En la apariencia de siempre
+   no dibuja nada; es la que lleva el marco en `browser`. */
+.tabs__bar {
+    display: flex;
+    align-items: stretch;
+    /* la tira mide su desborde contra ESTE ancho, no contra el de la página */
+    min-width: 0;
+}
+
 .tabs__list {
     display: flex;
     align-items: stretch;
     gap: var(--sp-1);
+    /* cede el ancho que se lleven las flechas, y no al revés */
+    flex: 1 1 auto;
+    min-width: 0;
     border-bottom: 1px solid var(--border-default);
     /* una ficha con muchas secciones desborda: se desplaza, no se apila */
     overflow-x: auto;
     /* deja lugar al anillo de foco, que si no queda recortado por el scroll */
     padding-bottom: 2px;
+    /* La barra del sistema no: el desplazamiento lo ofrecen las flechas, que
+       además dicen de qué lado queda tira. Ocupaba tanto como una pestaña, y
+       una barra que aparece y desaparece movía la tira entera. La rueda y el
+       gesto táctil siguen funcionando igual. */
+    scrollbar-width: none;
 
     /* Regla de UI de ALOVIDA: las pestañas ocupan el ancho máximo posible y van
        centradas, nunca apelotonadas contra el borde izquierdo.
@@ -35,6 +64,44 @@
        teclado. `safe center` centra mientras entra y se comporta como
        `flex-start` en cuanto no entra. */
     justify-content: safe center;
+}
+
+.tabs__list::-webkit-scrollbar {
+    display: none;
+}
+
+/* ---- las flechas del desborde -------------------------------------------
+   Aparecen sólo cuando la tira no entra, y quedan a la vista deshabilitadas
+   al llegar al extremo: una flecha que desaparece al final mueve las pestañas
+   justo cuando se les está apuntando. */
+
+.tabs__desplazar {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 1.75rem;
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-family: inherit;
+    font-size: var(--fs-h3);
+    line-height: 1;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: var(--r-sm);
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.tabs__desplazar:hover:not(:disabled) {
+    color: var(--text-primary);
+    background: var(--bg-surface-alt);
+}
+
+.tabs__desplazar:disabled {
+    color: var(--text-muted);
+    opacity: 0.45;
+    cursor: default;
 }
 
 .tabs__tab {
@@ -98,11 +165,93 @@
     min-width: 0;
 }
 
+/* ============================================================================
+    Apariencia `browser` — el marco de ventana.
+    ========================================================================== */
+
+/* El marco es la suma de la tira y el panel, y el anfitrión es lo único que los
+   abarca a los dos: la sombra va acá. Sin fondo propio — `box-shadow` sigue el
+   radio igual, y pintarlo taparía el redondeo de las dos piezas. */
+:host(.tabs--browser) {
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Las pestañas apoyan en el filo de abajo de la tira: ahí es donde la activa se
+   continúa en el panel. De ahí que no haya relleno abajo. */
+:host(.tabs--browser) .tabs__bar {
+    align-items: stretch;
+    gap: var(--sp-1);
+    padding: var(--sp-2) var(--sp-2) 0;
+    background: var(--bg-inset);
+    border: 1px solid var(--border-default);
+    border-bottom: none;
+    border-radius: var(--r-md) var(--r-md) 0 0;
+}
+
+:host(.tabs--browser) .tabs__list {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+/* Sin borde arriba y con el mismo fondo que la pestaña activa: la costura entre
+   la tira y el documento es el cambio de color, y bajo la activa no hay cambio
+   de color que dibujar. */
+:host(.tabs--browser) .tabs__panels {
+    padding-inline: var(--sp-5);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-top: none;
+    border-radius: 0 0 var(--r-md) var(--r-md);
+}
+
+:host(.tabs--browser) .tabs__tab {
+    padding: var(--sp-2) var(--sp-4);
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: var(--r-sm) var(--r-sm) 0 0;
+    /* el anillo de foco hacia adentro: la tira recorta lo que se salga */
+    outline-offset: -3px;
+}
+
+/* Un rótulo partido en dos renglones deforma la tira entera: la pestaña de al
+   lado se estira con ella. Fuera de este marco se sigue permitiendo. */
+:host(.tabs--browser) .tabs__rotulo {
+    white-space: nowrap;
+}
+
+:host(.tabs--browser) .tabs__tab:hover:not(:disabled):not(.is-selected) {
+    background: var(--bg-surface-alt);
+}
+
+:host(.tabs--browser) .tabs__tab.is-selected {
+    background: var(--bg-surface);
+    border-color: var(--border-default);
+    /* el color de marca ya lo pone la línea de arriba; el rótulo activo gana
+       más contraste con la tinta primaria sobre la superficie clara */
+    color: var(--text-primary);
+}
+
+/* La línea de marca sube al filo de arriba y se come el borde: abajo no puede
+   ir, porque abajo la pestaña activa ya no tiene borde que marcar. */
+:host(.tabs--browser) .tabs__tab::after {
+    inset-inline: -1px;
+    top: -1px;
+    bottom: auto;
+    border-radius: var(--r-sm) var(--r-sm) 0 0;
+}
+
 /* ---- orientación vertical ------------------------------------------------ */
 
 :host(.tabs--vertical) {
     display: flex;
     gap: var(--sp-4);
+}
+
+/* En vertical la fila envolvente es la columna de rótulos; las flechas no
+   aparecen porque la tira no desborda a lo ancho. */
+:host(.tabs--vertical) .tabs__bar {
+    flex-direction: column;
 }
 
 /* En vertical el reparto del ancho no aplica: la columna ya es del ancho de la

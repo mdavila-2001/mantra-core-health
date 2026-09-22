@@ -101,6 +101,12 @@ export const NAV_ICON_NAMES = [
   'arrow-right',
   'remove',
 
+  // `edit`, la cuarta acción del set: el lápiz que habilita los campos de un
+  // formulario que entró en sólo lectura («Mi perfil», FT-11-R04). Estaba en
+  // `atoms/nav-icon/nav-icon.types.ts` —y dibujado— y faltaba acá, que es
+  // justo la separación que esta lista existe para impedir.
+  'edit',
+
   // Preferencia del dispositivo (TAREA-17): los tres de «Apariencia» y el que
   // le falta a «Permisos». Igual que `arrow-left`/`remove`, no nombran una
   // sección. El porqué está donde se dibujan: `atoms/nav-icon/nav-icon.types.ts`.
@@ -169,6 +175,18 @@ export interface NavMenuSection {
   readonly items: readonly NavMenuItem[];
 
   readonly blocks: readonly NavMenuBlock[];
+
+  /**
+   * Si el grupo se dibuja **sin contenedor**: sus destinos van sueltos en la
+   * barra, al mismo nivel que los fijos de arriba, y ni el dominio ni sus
+   * bloques ocupan un renglón plegable.
+   *
+   * Es presentación, no permiso: un grupo aplanado ofrece exactamente los
+   * mismos destinos que uno plegado. Quiénes lo son lo declara
+   * `GRUPOS_APLANADOS` en `navigation.subgroups.ts`, por la misma razón que el
+   * reparto en bloques vive ahí y no en el registro.
+   */
+  readonly aplanado: boolean;
 }
 
 /**

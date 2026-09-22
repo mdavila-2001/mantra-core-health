@@ -9,9 +9,11 @@
       "rolesExclusivos": false,
       "componente": "Dashboard",
       "apis": [
+        "ClinicalClient",
         "IdentityClient",
         "ProfilesClient",
-        "PublicClient"
+        "PublicClient",
+        "SchedulingClient"
       ],
       "estado": "conectada con deuda",
       "parametrizada": false
@@ -28,8 +30,32 @@
       "parametrizada": false
     },
     {
+      "ruta": "/messaging",
+      "etiqueta": "Chats",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "Messaging",
+      "apis": [
+        "CommunityClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/directories",
+      "etiqueta": "Directorios",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "DirectoriesOverview",
+      "apis": [],
+      "estado": "presentacional",
+      "parametrizada": false
+    },
+    {
       "ruta": "/directory",
-      "etiqueta": "Guía de profesionales",
+      "etiqueta": "Directorio de médicos",
       "grupo": "General",
       "roles": [
         "PATIENT"
@@ -39,6 +65,36 @@
       "apis": [
         "ProfilesClient",
         "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/nearby-places",
+      "etiqueta": "Lugares cercanos",
+      "grupo": "General",
+      "roles": [
+        "PATIENT"
+      ],
+      "rolesExclusivos": false,
+      "componente": "NearbyPlaces",
+      "apis": [
+        "ClinicalClient",
+        "PublicDirectoryClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/groups",
+      "etiqueta": "Grupos y foros",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "Groups",
+      "apis": [
+        "CommunityClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -57,8 +113,34 @@
       "parametrizada": false
     },
     {
+      "ruta": "/clinics-directory",
+      "etiqueta": "Directorio de clínicas",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "ClinicsDirectory",
+      "apis": [
+        "PublicDirectoryClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/pharmacies-directory",
+      "etiqueta": "Directorio de farmacias",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmaciesDirectory",
+      "apis": [
+        "PublicDirectoryClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/schedule",
-      "etiqueta": "Agenda",
+      "etiqueta": "Consultas médicas",
       "grupo": "Atención",
       "roles": [
         "SCHEDULING_ADMIN",
@@ -68,11 +150,12 @@
       "rolesExclusivos": false,
       "componente": "Agenda",
       "apis": [
+        "MedicalOrganizationClient",
         "ProfilesClient",
         "SchedulingClient",
         "TerminologyClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -86,14 +169,37 @@
       "rolesExclusivos": false,
       "componente": "ClinicalRecord",
       "apis": [
+        "AuthzClient",
+        "ChartCarePlansClient",
+        "ChartDocumentsClient",
+        "ChartNotesClient",
         "ChartTemplatesClient",
         "ClinicalClient",
         "DiagnosticsClient",
         "FilesClient",
         "FormsClient",
+        "PrescriptionFavoritesClient",
         "ProceduresClient",
         "ProfilesClient",
         "SystemContextClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/progress-notes",
+      "etiqueta": "Evoluciones",
+      "grupo": "Atención",
+      "roles": [
+        "CLINICIAN",
+        "PRACTITIONER"
+      ],
+      "rolesExclusivos": false,
+      "componente": "ProgressNotes",
+      "apis": [
+        "ClinicalClient",
+        "SchedulingClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
@@ -117,6 +223,57 @@
       "parametrizada": false
     },
     {
+      "ruta": "/interventions",
+      "etiqueta": "Intervenciones",
+      "grupo": "Atención",
+      "roles": [
+        "SURGEON",
+        "ANESTHESIOLOGIST",
+        "PERIOP_NURSE",
+        "SURGERY_SCHEDULER",
+        "PERIOP_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "Interventions",
+      "apis": [
+        "ProceduresClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/lab-visits",
+      "etiqueta": "Visitas de laboratorio",
+      "grupo": "Atención",
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "DoctorVisits",
+      "apis": [
+        "PharmaLabClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-visits",
+      "etiqueta": "Mis visitas médicas",
+      "grupo": "Atención",
+      "roles": [
+        "MEDICAL_VISITOR"
+      ],
+      "rolesExclusivos": false,
+      "componente": "VisitorVisits",
+      "apis": [
+        "PharmaLabClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/glossary",
       "etiqueta": "Glosario",
       "grupo": "Atención",
@@ -125,6 +282,63 @@
       "componente": "Glossary",
       "apis": [
         "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/form-builder",
+      "etiqueta": "Formularios",
+      "grupo": "Atención",
+      "roles": [],
+      "rolesExclusivos": true,
+      "componente": "FormBuilder",
+      "apis": [
+        "ChartTemplatesClient",
+        "FormsClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-services",
+      "etiqueta": "Mis servicios",
+      "grupo": "Atención",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "MyServices",
+      "apis": [
+        "ServicesCatalogClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-quotations",
+      "etiqueta": "Cotizaciones",
+      "grupo": "Atención",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "QuotationList",
+      "apis": [
+        "ProfilesClient",
+        "QuotationsClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/questionnaires",
+      "etiqueta": "Encuestas",
+      "grupo": "Atención",
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "SurveysHome",
+      "apis": [
+        "SurveysClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -171,6 +385,64 @@
       "apis": [
         "DirectoryClient",
         "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/insurance",
+      "etiqueta": "Aseguradora",
+      "grupo": "Administración",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "InsuranceCatalog",
+      "apis": [
+        "InsuranceClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/brokers",
+      "etiqueta": "Brokers",
+      "grupo": "Administración",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "BrokerDirectory",
+      "apis": [
+        "InsuranceClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/insurance-claims",
+      "etiqueta": "Solicitudes de seguro",
+      "grupo": "Administración",
+      "roles": [
+        "BILLING_OPERATOR",
+        "SECURITY_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "InsuranceClaims",
+      "apis": [
+        "InsuranceClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/insurance-analytics",
+      "etiqueta": "Siniestralidad y analítica",
+      "grupo": "Administración",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "InsuranceAnalytics",
+      "apis": [
+        "InsuranceAnalyticsClient",
+        "InsuranceClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -225,6 +497,36 @@
       "componente": "TerminologyCatalog",
       "apis": [
         "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/content-packs",
+      "etiqueta": "Paquetes de contenido",
+      "grupo": "Administración",
+      "roles": [
+        "SUPERADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "ContentPacks",
+      "apis": [
+        "ContentPacksClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/moderation",
+      "etiqueta": "Moderación",
+      "grupo": "Administración",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "Moderation",
+      "apis": [
+        "CommunityClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -301,7 +603,8 @@
       "rolesExclusivos": false,
       "componente": "MedicalLaboratory",
       "apis": [
-        "DiagnosticUnitsAdminClient"
+        "DiagnosticUnitsAdminClient",
+        "SystemContextClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -339,6 +642,23 @@
       "parametrizada": false
     },
     {
+      "ruta": "/administration/pharma-lab",
+      "etiqueta": "Laboratorio farmacéutico",
+      "grupo": "Administración",
+      "roles": [
+        "PHARMA_LAB_ADMIN",
+        "BUSINESS_ADMIN",
+        "PLATFORM_ADMIN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "PharmaLabHome",
+      "apis": [
+        "PharmaLabClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/administration/accounting",
       "etiqueta": "Contabilidad",
       "grupo": "Facturación",
@@ -348,9 +668,25 @@
         "PRACTITIONER"
       ],
       "rolesExclusivos": false,
-      "componente": "Accounting",
+      "componente": "Cockpit",
       "apis": [
         "AccountingClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/assets-liabilities",
+      "etiqueta": "Activos y pasivos",
+      "grupo": "Facturación",
+      "roles": [
+        "PRACTITIONER"
+      ],
+      "rolesExclusivos": false,
+      "componente": "AssetsLiabilities",
+      "apis": [
+        "AccountingClient",
+        "AssetsLiabilitiesClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -370,12 +706,12 @@
         "ProfilesClient",
         "TerminologyClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
       "ruta": "/my-account/appointments",
-      "etiqueta": "Mis turnos",
+      "etiqueta": "Mis citas",
       "grupo": "Mi cuenta",
       "roles": [],
       "rolesExclusivos": false,
@@ -396,41 +732,223 @@
       "componente": "MedicalRecord",
       "apis": [
         "ClinicalClient",
+        "DiagnosticsClient",
+        "FormsClient",
+        "PharmacyCampaignsClient",
+        "PharmacyOrdersClient",
+        "PharmacyClient",
         "TerminologyClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
-      "ruta": "/my-account/identity/verify",
-      "etiqueta": "Verificar identidad",
+      "ruta": "/my-account/diagnostic-results",
+      "etiqueta": "Mis resultados",
       "grupo": "Mi cuenta",
       "roles": [],
       "rolesExclusivos": false,
-      "componente": "IdentityVerification",
+      "componente": "DiagnosticResults",
       "apis": [
+        "DiagnosticsClient",
         "FilesClient",
-        "IdentityClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
       "parametrizada": false
     },
     {
-      "ruta": "/my-account/identity/cases",
-      "etiqueta": "Mis verificaciones",
+      "ruta": "/my-account/diagnostic-orders",
+      "etiqueta": "Mis órdenes",
       "grupo": "Mi cuenta",
       "roles": [],
       "rolesExclusivos": false,
-      "componente": "VerificationCases",
+      "componente": "DiagnosticOrders",
       "apis": [
-        "IdentityClient"
+        "DiagnosticsClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada con deuda",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/questionnaires",
+      "etiqueta": "Mis cuestionarios",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "Questionnaires",
+      "apis": [
+        "ClinicalClient",
+        "SurveysClient"
       ],
       "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/settings",
+      "etiqueta": "Ajustes",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "Settings",
+      "apis": [],
+      "estado": "presentacional",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/notification-center",
+      "etiqueta": "Notificaciones",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "NotificationCenter",
+      "apis": [
+        "NotificationsClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/identity",
+      "etiqueta": "Mi identidad",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "IdentityHub",
+      "apis": [],
+      "estado": "presentacional",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/pharmacy-orders",
+      "etiqueta": "Mis pedidos",
+      "grupo": "Mi cuenta",
+      "roles": [
+        "PATIENT"
+      ],
+      "rolesExclusivos": false,
+      "componente": "PharmacyOrders",
+      "apis": [
+        "PharmacyCampaignsClient",
+        "PharmacyOrdersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/loyalty",
+      "etiqueta": "Mis puntos",
+      "grupo": "Mi cuenta",
+      "roles": [
+        "PATIENT"
+      ],
+      "rolesExclusivos": false,
+      "componente": "Loyalty",
+      "apis": [
+        "LoyaltyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/my-practice",
+      "etiqueta": "Mi consultorio propio",
+      "grupo": "Administración",
+      "roles": [
+        "PRACTITIONER"
+      ],
+      "rolesExclusivos": false,
+      "componente": "MyPractice",
+      "apis": [],
+      "estado": "presentacional",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/my-organization",
+      "etiqueta": "Tu organización",
+      "grupo": "Administración",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "OrganizationPanel",
+      "apis": [
+        "DirectoryClient",
+        "PharmacyCampaignsClient",
+        "PharmacyOrdersClient",
+        "PharmacyClient"
+      ],
+      "estado": "conectada con deuda",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-orders",
+      "etiqueta": "Pedidos de farmacia",
+      "grupo": "Administración",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyInbox",
+      "apis": [
+        "PharmacyOrdersClient",
+        "PharmacyClient"
+      ],
+      "estado": "conectada con deuda",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-campaigns",
+      "etiqueta": "Promociones",
+      "grupo": "Administración",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyCampaigns",
+      "apis": [
+        "PharmacyCampaignsClient",
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-profile",
+      "etiqueta": "Ficha de la farmacia",
+      "grupo": "Administración",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyProfile",
+      "apis": [],
+      "estado": "con deuda",
       "parametrizada": false
     }
   ],
   "hijas": [
+    {
+      "ruta": "/administration/accounting/libros",
+      "seccion": "Contabilidad",
+      "roles": [
+        "SECURITY_ADMIN",
+        "ACCOUNTING_APPROVER",
+        "PRACTITIONER"
+      ],
+      "componente": "Accounting",
+      "apis": [
+        "AccountingClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/brokers/:brokerId",
+      "seccion": "Brokers",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "BrokerDetail",
+      "apis": [
+        "InsuranceClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
     {
       "ruta": "/administration/delegated-access/assignments/edit",
       "seccion": "Acceso delegado",
@@ -713,6 +1231,18 @@
       "componente": "TripForm",
       "apis": [
         "GeoClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/getting-started",
+      "seccion": "—",
+      "roles": [],
+      "componente": "GettingStarted",
+      "apis": [
+        "DirectoryClient",
+        "TerminologyClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -1273,12 +1803,82 @@
       "parametrizada": false
     },
     {
+      "ruta": "/administration/insurance-claims/:claimId",
+      "seccion": "Solicitudes de seguro",
+      "roles": [
+        "BILLING_OPERATOR",
+        "SECURITY_ADMIN"
+      ],
+      "componente": "InsuranceClaimDetail",
+      "apis": [
+        "InsuranceClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
       "ruta": "/administration/organizations/:tenantId",
       "seccion": "Organizaciones",
       "roles": [
         "SECURITY_ADMIN"
       ],
       "componente": "OrganizationDetail",
+      "apis": [
+        "DirectoryClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/administration/organizations/:tenantId/branches/new",
+      "seccion": "Organizaciones",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "BranchNew",
+      "apis": [
+        "DirectoryClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/administration/organizations/:tenantId/child-organizations/new",
+      "seccion": "Organizaciones",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "ChildOrganizationNew",
+      "apis": [
+        "DirectoryClient",
+        "IamClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/administration/organizations/:tenantId/memberships/new",
+      "seccion": "Organizaciones",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "MembershipNew",
+      "apis": [
+        "DirectoryClient",
+        "IamClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/administration/organizations/:tenantId/verify",
+      "seccion": "Organizaciones",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "OrganizationVerify",
       "apis": [
         "DirectoryClient",
         "TerminologyClient"
@@ -1298,7 +1898,7 @@
         "IamClient",
         "TerminologyClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -1356,8 +1956,46 @@
       "parametrizada": false
     },
     {
+      "ruta": "/administration/pharmacy-orders/:orderId",
+      "seccion": "Pedidos de farmacia",
+      "roles": [],
+      "componente": "InboxOrder",
+      "apis": [
+        "PharmacyOrdersClient",
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/administration/services-catalog/import",
+      "seccion": "Catálogo de servicios",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "ProcedureImport",
+      "apis": [
+        "ServicesCatalogClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/terminology/import",
+      "seccion": "Terminología",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "VersionImport",
+      "apis": [
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/directory/:profileId",
-      "seccion": "Guía de profesionales",
+      "seccion": "Directorio de médicos",
       "roles": [
         "PATIENT"
       ],
@@ -1382,6 +2020,17 @@
       "parametrizada": true
     },
     {
+      "ruta": "/groups/:groupId",
+      "seccion": "Grupos y foros",
+      "roles": [],
+      "componente": "GroupDetail",
+      "apis": [
+        "CommunityClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
       "ruta": "/laboratory-directory/:unitId",
       "seccion": "Directorio de laboratorios",
       "roles": [],
@@ -1401,11 +2050,15 @@
       ],
       "componente": "PatientChart",
       "apis": [
+        "ChartCarePlansClient",
+        "ChartDocumentsClient",
+        "ChartNotesClient",
         "ChartTemplatesClient",
         "ClinicalClient",
         "DiagnosticsClient",
         "FilesClient",
         "FormsClient",
+        "PrescriptionFavoritesClient",
         "ProceduresClient",
         "ProfilesClient",
         "SystemContextClient",
@@ -1415,8 +2068,51 @@
       "parametrizada": true
     },
     {
+      "ruta": "/medical-records/:profileId/encounter",
+      "seccion": "Archivo clínico",
+      "roles": [
+        "CLINICIAN",
+        "PRACTITIONER"
+      ],
+      "componente": "EncounterWorkspace",
+      "apis": [
+        "ClinicalClient",
+        "ProfilesClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/medical-records/:profileId/request-access",
+      "seccion": "Archivo clínico",
+      "roles": [
+        "CLINICIAN",
+        "PRACTITIONER"
+      ],
+      "componente": "RequestAccess",
+      "apis": [
+        "AuthzClient",
+        "ProfilesClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/my-account/access-requests",
+      "seccion": "Mi perfil",
+      "roles": [],
+      "componente": "AccessRequests",
+      "apis": [
+        "AuthzClient",
+        "ProfilesClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/my-account/appointments/book/:slotId",
-      "seccion": "Mis turnos",
+      "seccion": "Mis citas",
       "roles": [],
       "componente": "BookingNew",
       "apis": [
@@ -1443,6 +2139,7 @@
       "roles": [],
       "componente": "PractitionerProfileEdit",
       "apis": [
+        "FilesClient",
         "ProfilesClient"
       ],
       "estado": "conectada",
@@ -1450,7 +2147,7 @@
     },
     {
       "ruta": "/my-account/identity/cases/:caseId",
-      "seccion": "Mis verificaciones",
+      "seccion": "Mi identidad",
       "roles": [],
       "componente": "VerificationCaseDetail",
       "apis": [
@@ -1460,19 +2157,155 @@
       "parametrizada": true
     },
     {
-      "ruta": "/my-account/preview",
-      "seccion": "Mi perfil",
+      "ruta": "/my-account/medical-record/where-to-buy/:requestId",
+      "seccion": "Mi historia clínica",
       "roles": [],
-      "componente": "PublicProfilePreview",
+      "componente": "WhereToBuy",
       "apis": [
-        "CommunityClient"
+        "ClinicalClient",
+        "PharmacyCampaignsClient",
+        "PharmacyOrdersClient",
+        "PharmacyClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada con deuda",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/my-account/pharmacy-orders/:orderId",
+      "seccion": "Mis pedidos",
+      "roles": [
+        "PATIENT"
+      ],
+      "componente": "OrderDetail",
+      "apis": [
+        "PharmacyOrdersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/my-account/pharmacy-orders/:orderId/receipt",
+      "seccion": "Mis pedidos",
+      "roles": [
+        "PATIENT"
+      ],
+      "componente": "OrderReceipt",
+      "apis": [
+        "PharmacyOrdersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/my-account/pharmacy-orders/new",
+      "seccion": "Mis pedidos",
+      "roles": [
+        "PATIENT"
+      ],
+      "componente": "NewOrder",
+      "apis": [
+        "PharmacyCampaignsClient",
+        "PharmacyOrdersClient"
       ],
       "estado": "conectada",
       "parametrizada": false
     },
     {
+      "ruta": "/my-account/profile/edit",
+      "seccion": "Mi perfil",
+      "roles": [],
+      "componente": "PatientProfileEdit",
+      "apis": [
+        "ProfilesClient"
+      ],
+      "estado": "conectada con deuda",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/questionnaires/:invitationId",
+      "seccion": "Mis cuestionarios",
+      "roles": [],
+      "componente": "QuestionnaireAnswer",
+      "apis": [
+        "SurveysClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/my-quotations/new",
+      "seccion": "Cotizaciones",
+      "roles": [],
+      "componente": "QuotationForm",
+      "apis": [
+        "ProfilesClient",
+        "QuotationsClient",
+        "SchedulingClient",
+        "ServicesCatalogClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/onboarding",
+      "seccion": "—",
+      "roles": [],
+      "componente": "OnboardingPractitioner",
+      "apis": [
+        "ProfilesClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/questionnaires/:surveyId",
+      "seccion": "Encuestas",
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN"
+      ],
+      "componente": "SurveyDetailScreen",
+      "apis": [
+        "SurveysClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/schedule/appointment/new",
+      "seccion": "Consultas médicas",
+      "roles": [
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "PRACTITIONER"
+      ],
+      "componente": "AppointmentNew",
+      "apis": [
+        "ProfilesClient",
+        "SchedulingClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/schedule/blocks",
+      "seccion": "Consultas médicas",
+      "roles": [
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "PRACTITIONER"
+      ],
+      "componente": "Blocks",
+      "apis": [
+        "SchedulingClient"
+      ],
+      "estado": "conectada con deuda",
+      "parametrizada": false
+    },
+    {
       "ruta": "/schedule/book/:slotId",
-      "seccion": "Agenda",
+      "seccion": "Consultas médicas",
       "roles": [
         "SCHEDULING_ADMIN",
         "SCHEDULING_AGENT",
@@ -1487,8 +2320,8 @@
       "parametrizada": true
     },
     {
-      "ruta": "/schedule/new",
-      "seccion": "Agenda",
+      "ruta": "/schedule/edit",
+      "seccion": "Consultas médicas",
       "roles": [
         "SCHEDULING_ADMIN",
         "SCHEDULING_AGENT",
@@ -1496,6 +2329,23 @@
       ],
       "componente": "AgendaCreate",
       "apis": [
+        "MedicalOrganizationClient",
+        "SchedulingClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/schedule/new",
+      "seccion": "Consultas médicas",
+      "roles": [
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "PRACTITIONER"
+      ],
+      "componente": "AgendaCreate",
+      "apis": [
+        "MedicalOrganizationClient",
         "SchedulingClient"
       ],
       "estado": "conectada",
@@ -2396,7 +3246,7 @@
       "codigo": "V65-01",
       "actor": "publico",
       "componente": "BuscarBuscadorListado",
-      "estado": "maqueta portada",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -2404,7 +3254,7 @@
       "codigo": "V65-02",
       "actor": "publico",
       "componente": "BuscarProfesionalesListado",
-      "estado": "maqueta portada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -2412,7 +3262,7 @@
       "codigo": "V65-03",
       "actor": "publico",
       "componente": "BuscarMedicamentosListado",
-      "estado": "maqueta portada",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -2420,7 +3270,7 @@
       "codigo": "V65-04",
       "actor": "publico",
       "componente": "BuscarHospitalesListado",
-      "estado": "maqueta portada",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -2428,7 +3278,7 @@
       "codigo": "V65-05",
       "actor": "publico",
       "componente": "BuscarLaboratoriosListado",
-      "estado": "maqueta portada",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -2436,7 +3286,7 @@
       "codigo": "V65-06",
       "actor": "publico",
       "componente": "BuscarAseguradorasListado",
-      "estado": "maqueta portada",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -2484,7 +3334,7 @@
       "codigo": "V65-12",
       "actor": "publico",
       "componente": "BuscarCercaniaDetalle",
-      "estado": "maqueta portada",
+      "estado": "conectada",
       "parametrizada": false
     },
     {

@@ -25,43 +25,14 @@
               Activo dado de alta.
             </app-alert>
           }
-          <form [formGroup]="formularioDeActivo" (ngSubmit)="darDeAltaActivo()" novalidate class="app-form-grid">
-            <app-form-field icon="labels" label="Código" [required]="true">
-              <app-input formControlName="code" type="text" />
-            </app-form-field>
-            <app-form-field icon="tag" label="Nombre" [required]="true">
-              <app-input formControlName="name" type="text" />
-            </app-form-field>
-            <app-form-field icon="billing" label="Cuenta de adquisición (débito)" [required]="true">
-              <app-select
-                formControlName="acquisitionAccountId"
-                [options]="opcionesDeCuenta()"
-                placeholder="Elegí una cuenta"
-              />
-            </app-form-field>
-            <app-form-field icon="billing" label="Cuenta banco/proveedor (crédito)" [required]="true">
-              <app-select
-                formControlName="offsetAccountId"
-                [options]="opcionesDeCuenta()"
-                placeholder="Elegí una cuenta"
-              />
-            </app-form-field>
-            <app-form-field icon="chart" label="Costo de adquisición" [required]="true" hint="Decimal, hasta dos posiciones.">
-              <app-input formControlName="acquisitionCost" type="text" inputmode="decimal" />
-            </app-form-field>
-            <app-form-field icon="calendar" label="Fecha de adquisición" [required]="true" hint="AAAA-MM-DD">
-              <app-input formControlName="acquisitionDate" type="text" inputmode="numeric" />
-            </app-form-field>
-            <app-form-field icon="history" label="Vida útil, en meses" hint="Opcional: sin ella no se puede depreciar">
-              <app-input formControlName="usefulLifeMonths" type="text" inputmode="numeric" />
-            </app-form-field>
-            <app-form-field icon="chart" label="Valor residual" hint="Opcional, por omisión 0">
-              <app-input formControlName="salvageValue" type="text" inputmode="decimal" />
-            </app-form-field>
-            <button app-button variant="primary" type="submit" [disabled]="enviandoAltaDeActivo()">
-              {{ enviandoAltaDeActivo() ? 'Guardando…' : 'Dar de alta' }}
-            </button>
-          </form>
+                    <app-paginated-form
+            [paginas]="paginasDeActivo()"
+            [form]="formularioDeActivo"
+            label="Alta de activo"
+            submitLabel="Dar de alta"
+            [pending]="enviandoAltaDeActivo()"
+            (enviado)="darDeAltaActivo()"
+          />
         </app-card>
 
         <h2 class="titulo-de-seccion">Cuentas para registrar avance</h2>
@@ -148,39 +119,14 @@
               Pasivo dado de alta, con su cronograma de cuotas.
             </app-alert>
           }
-          <form [formGroup]="formularioDePasivo" (ngSubmit)="darDeAltaPasivo()" novalidate class="app-form-grid">
-            <app-form-field icon="labels" label="Código" [required]="true">
-              <app-input formControlName="code" type="text" />
-            </app-form-field>
-            <app-form-field icon="tag" label="Nombre" [required]="true">
-              <app-input formControlName="name" type="text" />
-            </app-form-field>
-            <app-form-field icon="people" label="Acreedor" hint="Opcional">
-              <app-input formControlName="creditorName" type="text" />
-            </app-form-field>
-            <app-form-field icon="billing" label="Cuenta contable del pasivo" [required]="true">
-              <app-select
-                formControlName="accountId"
-                [options]="opcionesDeCuenta()"
-                placeholder="Elegí una cuenta"
-              />
-            </app-form-field>
-            <app-form-field icon="chart" label="Monto del préstamo" [required]="true" hint="Decimal, hasta dos posiciones.">
-              <app-input formControlName="principalAmount" type="text" inputmode="decimal" />
-            </app-form-field>
-            <app-form-field icon="chart" label="Tasa de interés anual (%)" hint="Opcional, por omisión 0">
-              <app-input formControlName="interestRate" type="text" inputmode="decimal" />
-            </app-form-field>
-            <app-form-field icon="history" label="Número de cuotas mensuales" [required]="true">
-              <app-input formControlName="installments" type="text" inputmode="numeric" />
-            </app-form-field>
-            <app-form-field icon="calendar" label="Fecha de alta" [required]="true" hint="AAAA-MM-DD">
-              <app-input formControlName="startDate" type="text" inputmode="numeric" />
-            </app-form-field>
-            <button app-button variant="primary" type="submit" [disabled]="enviandoAltaDePasivo()">
-              {{ enviandoAltaDePasivo() ? 'Guardando…' : 'Dar de alta' }}
-            </button>
-          </form>
+                    <app-paginated-form
+            [paginas]="paginasDePasivo()"
+            [form]="formularioDePasivo"
+            label="Alta de pasivo"
+            submitLabel="Dar de alta"
+            [pending]="enviandoAltaDePasivo()"
+            (enviado)="darDeAltaPasivo()"
+          />
         </app-card>
 
         <h2 class="titulo-de-seccion">Cuentas para registrar avance</h2>

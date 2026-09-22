@@ -48,7 +48,7 @@ import {
 import { TarjetaDelDia, type RatoDelDia } from './tarjeta-del-dia/tarjeta-del-dia';
 import { MonthView, type BloqueoDelMes } from './month-view/month-view';
 import { WeekView, lunesDe } from './week-view/week-view';
-import { ScheduleGrid } from './schedule-grid/schedule-grid';
+import { ScheduleGrid, type RangoDeGrilla } from './schedule-grid/schedule-grid';
 import { AGENDA_CREATE_ROUTE, APPOINTMENT_NEW_ROUTE } from '../agenda.routes';
 
 /** Los días de la semana en el orden en que se leen; el índice es `dayOfWeek`. */
@@ -236,11 +236,12 @@ export class MyAgenda {
     // de octubre y aterrizar en septiembre se lee como un error.
     const mes = this.mesVisible();
     const hoy = new Date();
-    this.semanaVisible.set(
+    const lunes =
       mes.getMonth() === hoy.getMonth() && mes.getFullYear() === hoy.getFullYear()
         ? lunesDe(hoy)
-        : lunesDe(mes),
-    );
+        : lunesDe(mes);
+    this.semanaVisible.set(lunes);
+    this.cargarSemana(lunes);
   }
 
   /**
@@ -252,6 +253,7 @@ export class MyAgenda {
    */
   protected cambiarSemana(nueva: Date): void {
     this.semanaVisible.set(nueva);
+    this.cargarSemana(nueva);
     const mes = this.mesVisible();
     const finDeSemana = new Date(nueva.getFullYear(), nueva.getMonth(), nueva.getDate() + 6);
     const cruza =
@@ -266,6 +268,30 @@ export class MyAgenda {
 
   protected readonly cuposDelMes = signal<readonly AgendaSlot[]>([]);
   protected readonly bloqueosDelMes = signal<readonly BloqueoDelMes[]>([]);
+
+  /**
+   * Los bloqueos de la semana en curso, para pintarlos en rojo en la grilla
+   * del horario (AC-C3-02).
+   *
+   * Señal aparte de `bloqueosDelMes` y no la misma: la solapa del horario abre
+   * primero y **no** carga el mes, así que reusarla dejaría la grilla sin
+   * bloqueos hasta que alguien tocara «Ocupación».
+   */
+  protected readonly bloqueosDeLaSemana = signal<readonly BloqueoDelMes[]>([]);
+
+  /**
+   * Cuánto día dibuja la grilla del horario — el selector de AC-C3-01.
+   *
+   * Arranca en `completo`: es lo único que muestra un bloqueo de madrugada o
+   * una guardia de fin de semana, y la caja abre igual en la primera hora
+   * atendida, así que el día entero no cuesta buscar nada. Quien prefiera ver
+   * sólo sus horas de consulta lo dice, y la grilla se recorta.
+   */
+  protected readonly rangoDeGrilla = signal<RangoDeGrilla>('completo');
+
+  protected verRango(rango: RangoDeGrilla): void {
+    this.rangoDeGrilla.set(rango);
+  }
 
   /**
    * Las tipologías de actividad, para pintar el día.
@@ -298,6 +324,15 @@ export class MyAgenda {
   protected readonly diaAbierto = signal<Date | null>(null);
   protected readonly cuposDelDia = signal<readonly AgendaSlot[]>([]);
   protected readonly citasDelDia = signal<readonly Booking[]>([]);
+
+  /**
+   * Las citas de la semana mirada, para que la semana diga **con quién**.
+   *
+   * Señal aparte de `citasDelDia` y no la misma con otra ventana: el día se
+   * abre y se cierra sobre la semana, y compartir la señal haría que abrir el
+   * martes vaciara los otros seis. Son dos preguntas con dos ciclos de vida.
+   */
+  protected readonly citasDeLaSemana = signal<readonly Booking[]>([]);
 
   /**
    * Los estados del catálogo, ya resueltos.
@@ -457,8 +492,39 @@ export class MyAgenda {
         // Los cupos se leen sólo si hay horario: sin plantilla no puede haber
         // ninguno, y preguntarlo sería un viaje para confirmar un cero.
         this.leerHastaCuandoHayCupos(resourceId);
+        this.leerBloqueosDeLaSemana(resourceId);
       },
       error: (error: unknown) => this.estado.set(errorToViewState<PublishedTemplate>(error)),
+    });
+  }
+
+  /**
+   * Los bloqueos de la semana en curso, para pintarlos en rojo en la grilla
+   * del horario (AC-C3-02).
+   *
+   * Lectura aparte de la del mes: la solapa del horario abre primero y no
+   * carga el mes, así que esperar a `cargarMes()` dejaría la grilla sin
+   * bloqueos hasta que alguien tocara «Ocupación». Si falla, la grilla se ve
+   * sin ellos — el horario sigue sirviendo, que es lo que se vino a mirar.
+   */
+  private leerBloqueosDeLaSemana(resourceId: string): void {
+    const lunes = lunesDe(new Date());
+    const siguiente = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 7);
+    this.scheduling.listExceptions(resourceId, { from: lunes, to: siguiente }).subscribe({
+      next: (pagina) =>
+        this.bloqueosDeLaSemana.set(
+          pagina.items
+            // Las excepciones que ABREN disponibilidad no son bloqueos: pintarlas
+            // en rojo diría lo contrario de lo que pasa.
+            .filter((e) => e.isAvailable !== true)
+            .map((e) => ({
+              id: e.id,
+              desde: new Date(e.startAt),
+              hasta: new Date(e.endAt),
+              motivo: e.reason ?? null,
+            })),
+        ),
+      error: () => this.bloqueosDeLaSemana.set([]),
     });
   }
 
@@ -955,6 +1021,12 @@ export class MyAgenda {
     return e.status === 'ready' || e.status === 'stale' ? (e.data?.name ?? null) : null;
   });
 
+  /** El tamaño de turno de la plantilla, para las franjas que no declaran el suyo. */
+  protected readonly slotDelHorario = computed(() => {
+    const e = this.estado();
+    return e.status === 'ready' || e.status === 'stale' ? (e.data?.slotMinutes ?? null) : null;
+  });
+
   protected readonly rutaEditarHorario = '/schedule/edit';
 
   /** Los bloqueos, que desde el carril 11 tienen su propio flujo. */
@@ -1104,24 +1176,65 @@ export class MyAgenda {
       });
   }
 
-  /** Pide las etiquetas de los estados que aparecieron, y sólo de ésos. */
+  /**
+   * Los cupos no: sólo las citas de la semana mirada, en una llamada.
+   *
+   * Una y no siete: `searchBookings` acepta ventana, igual que la del día, y
+   * pedir siete veces lo mismo para agrupar después en el cliente es cara la
+   * red por comodidad de código. El tope es alto a propósito —una semana de
+   * consultorio lleno pasa holgada las cien— y la vista recorta a tres por día
+   * después, que es lo que entra en la celda.
+   *
+   * El fallo deja la semana **sin nombres, no rota**: los libres y los tomados
+   * salen de los cupos del mes, que ya están cargados. Perder los nombres no
+   * justifica perder la ocupación.
+   */
+  private cargarSemana(lunes: Date): void {
+    const recurso = this.recurso();
+    if (recurso === null) return;
+
+    const desde = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate());
+    const hasta = new Date(desde);
+    hasta.setDate(hasta.getDate() + 7);
+
+    this.scheduling
+      .searchBookings({ resourceId: recurso.id, from: desde, to: hasta, limit: 200 })
+      .subscribe({
+        next: (pagina: { items: readonly Booking[] }) => {
+          this.citasDeLaSemana.set(pagina.items);
+          this.traducirEstados(pagina.items);
+        },
+        error: () => this.citasDeLaSemana.set([]),
+      });
+  }
+
+  /**
+   * Pide las etiquetas de los estados que aparecieron, y sólo de ésos.
+   *
+   * **Fusiona con lo ya resuelto en vez de reemplazarlo.** Desde que la semana
+   * también traduce sus estados hay dos llamadores, y con un `set` a secas
+   * abrir un día de una jornada confirmada borraba las etiquetas de la semana
+   * —que las tenía— y la semana volvía a mostrar como «viene» a un paciente
+   * cancelado. Un mapa por uuid no puede discrepar consigo mismo: lo que llega
+   * después completa, no pisa.
+   */
   private traducirEstados(citas: readonly Booking[]): void {
     const ids = [...new Set(citas.map((cita) => cita.statusConceptId))];
     if (ids.length === 0) return;
 
     this.terminology.readConceptLabels(ids).subscribe({
       next: (etiquetas) =>
-        this.estadosResueltos.set(
-          new Map(
-            [...etiquetas].map(([id, opcion]) => [
-              id,
-              { code: opcion.code, display: opcion.display },
-            ]),
-          ),
-        ),
+        this.estadosResueltos.update((resueltos) => {
+          const fusionado = new Map(resueltos);
+          for (const [id, opcion] of etiquetas) {
+            fusionado.set(id, { code: opcion.code, display: opcion.display });
+          }
+          return fusionado;
+        }),
       // Si el catálogo no responde, las filas igual se muestran con su texto
-      // neutro: perder la etiqueta no justifica perder la agenda del día.
-      error: () => this.estadosResueltos.set(new Map()),
+      // neutro: perder la etiqueta no justifica perder la agenda del día. Lo
+      // ya resuelto se conserva por el mismo motivo.
+      error: () => undefined,
     });
   }
 

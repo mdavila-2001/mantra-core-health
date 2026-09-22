@@ -35,7 +35,7 @@
 
           <ul class="ordenes__lista">
             @for (orden of grupo.ordenes; track orden.id) {
-              <li class="ordenes__item">
+              <li class="ordenes__item" data-testid="diagnostic-order" [attr.data-order-id]="orden.id">
                 <header class="ordenes__encabezado">
                   <div>
                     <h3 class="ordenes__titulo">{{ orden.estudio }}</h3>
@@ -64,6 +64,11 @@
                     {{ orden.preparacion }}
                   </app-alert>
                 }
+
+                <app-patient-insurance-settlement
+                  [settlement]="orden.insuranceSettlement ?? null"
+                  [availability]="orden.insuranceSettlementAvailability ?? 'NOT_AVAILABLE'"
+                />
 
                 <footer class="ordenes__acciones">
                   @if (orden.tieneResultado) {

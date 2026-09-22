@@ -19,6 +19,7 @@ import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { NotificationPreferences } from '../account/notification-preferences/notification-preferences';
+import { ChatPreferences } from './chat-preferences/chat-preferences';
 
 /** Quién administra los permisos delegados del M29. Mismo rol que su sección. */
 const PERMISSION_ADMIN_ROLES: readonly string[] = ['SECURITY_ADMIN'];
@@ -119,7 +120,7 @@ const PERMISSION_STATES: Readonly<Record<EstadoPermiso, { text: string; tone: st
  */
 @Component({
   selector: 'app-settings',
-  imports: [AppButton, NavIcon, NotificationPreferences, PageHeader, RouterLink, Tab, Tabs],
+  imports: [AppButton, ChatPreferences, NavIcon, NotificationPreferences, PageHeader, RouterLink, Tab, Tabs],
   templateUrl: './settings.html',
   styleUrl: './settings.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

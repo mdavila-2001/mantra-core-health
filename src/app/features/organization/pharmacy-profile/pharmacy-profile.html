@@ -1,0 +1,59 @@
+<app-page-header
+  title="Ficha de la farmacia"
+  subtitle="Lo que tu empresa es en los papeles: sus datos, su carpeta legal y quién responde por ella."
+  [breadcrumbs]="breadcrumbs()"
+>
+  <!-- Toda la ficha es maqueta todavía: el cartel va arriba de todo. -->
+  <app-chip page-meta variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+</app-page-header>
+
+<!-- El aviso vive fuera de las pestañas a propósito: un papel vencido no es
+     noticia sólo mientras alguien está mirando la carpeta. Por eso lleva
+     hasta ella en vez de estar adentro. -->
+@if (aviso(); as vencimientos) {
+  <app-alert
+    class="ficha__aviso"
+    data-testid="ficha-aviso-documentos"
+    [tone]="vencimientos.tono"
+    [title]="vencimientos.titulo"
+  >
+    {{ vencimientos.mensaje }}
+    <!-- Estando ya en la carpeta no hay adónde llevar a nadie: el aviso se
+         queda (se lee desde las tres pestañas) pero su acción se retira. -->
+    @if (!enDocumentos()) {
+      <div alert-actions>
+        <button
+          app-button
+          variant="secondary"
+          size="sm"
+          type="button"
+          data-testid="ficha-ir-a-documentos"
+          (clicked)="verDocumentos()"
+        >
+          Ver los documentos
+        </button>
+      </div>
+    }
+  </app-alert>
+}
+
+<app-tabs [(selectedIndex)]="pestana">
+  <app-tab label="Empresa">
+    <app-datos-de-la-empresa [state]="empresa()" (retry)="recargar()" />
+  </app-tab>
+
+  <!-- La referencia no se llama «documentos» a propósito: en una plantilla la
+       referencia gana sobre la propiedad del componente, y taparía la señal
+       `documentos()` que alimenta a esta misma pestaña. -->
+  <app-tab label="Documentos" #panelDeDocumentos>
+    <app-documentos-legales [state]="documentos()" (retry)="recargar()" />
+  </app-tab>
+
+  <app-tab label="Representante y gerentes">
+    <app-representante-y-gerentes
+      [state]="gente()"
+      (retry)="recargar()"
+      (poderPedido)="verDocumentos()"
+    />
+  </app-tab>
+</app-tabs>

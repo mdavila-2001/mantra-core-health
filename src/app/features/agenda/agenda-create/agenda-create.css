@@ -247,6 +247,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* La cuenta y la duración, en segundo plano: lo que se lee de un vistazo es el
+   rango, y esto lo confirma. */
+.agenda-create__previa-detalle {
+  font-size: var(--fs-caption);
+}
+
 .agenda-create__previa-resto {
   margin: 0 0 var(--sp-2);
   color: var(--text-secondary);

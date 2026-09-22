@@ -1,7 +1,11 @@
+import { patientSettlementForItems } from '../fixtures/patient-settlements';
 import { vitrinas } from '../fixtures/comunidad';
 import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
 import { recetas } from '../fixtures/clinica';
 import { PACIENTE, pacientePorId } from '../fixtures/personas';
+// T-I3 · los identificadores de los pedidos de ejemplo de la bandeja viven en
+// un solo lugar, porque la pantalla también los usa.
+import { ID_PEDIDO_CON_DELIVERY, ID_PEDIDO_CON_SEGURO } from '../fixtures/pedidos-de-farmacia';
 import { notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, contiene, cuerpo, iso, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
@@ -150,11 +154,39 @@ const pedidos = new Coleccion<PedidoSimulado>(
       { id: uuid('pharmacy-order-4'), estado: 'RECHAZADO' as const, createdAt: iso(-30, 11), expiresAt: iso(-25, 11), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: PACIENTE.id, patientName: PACIENTE.displayName, pickupCode: 'AV-2214', rejectionReasonText: 'La receta adjunta está vencida. Pedí una nueva a tu médico.', lineas: [{ productId: productoDe(f0.id, 'MED-SERTRALINA').id, requestedQuantity: 1, reservedQuantity: 0, fulfilledQuantity: 0, status: 'RELEASED' as const }], sustituciones: [] },
       { id: uuid('pharmacy-order-5'), estado: 'ENVIADO' as const, createdAt: iso(0, 8, 20), expiresAt: iso(3, 8), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-flores'), patientName: 'Daniela Flores Cuéllar', pickupCode: 'AV-6001', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-SALBUTAMOL').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
       { id: uuid('pharmacy-order-6'), estado: 'EN_REVISION' as const, createdAt: iso(0, 9, 5), expiresAt: iso(3, 9), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-mamani'), patientName: 'Jorge Luis Mamani Choque', pickupCode: 'AV-6002', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-METFORMINA').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-LOSARTAN').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
+      // T-I3 · el pedido de una persona CON seguro: la bandeja del mostrador lo usa para mostrar
+      // lo aprobado y lo no aprobado renglón por renglón. La cobertura no viaja en este DTO —el
+      // contrato de `pharmacy-orders` no la publica—, así que vive junto a la pantalla y se
+      // reconoce por el identificador; acá sólo nace el pedido.
+      { id: ID_PEDIDO_CON_SEGURO, estado: 'EN_REVISION' as const, createdAt: iso(0, 10, 15), expiresAt: iso(3, 10), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-quispe'), patientName: 'Rosa Elena Quispe Vargas', pickupCode: 'AV-6003', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-LEVOTIROXINA').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-SERTRALINA').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
+      // T-I3 · el pedido que sale a domicilio. `dto()` responde `RETIRO` para todos los pedidos
+      // (`:195`) y esa línea es compartida: el medio de entrega de este ejemplo también se lo
+      // pone la pantalla, por identificador, y se rotula como maqueta.
+      { id: ID_PEDIDO_CON_DELIVERY, estado: 'EN_REVISION' as const, createdAt: iso(0, 11, 40), expiresAt: iso(3, 11), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-gutierrez'), patientName: 'Vania Gutiérrez Peña', pickupCode: 'AV-6004', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-IBUPROFENO').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-OMEPRAZOL').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
     ];
   })(),
 );
 
-function dto(p: PedidoSimulado) {
+for (const suffix of ['partial', 'denied', 'pending']) {
+  const original = pedidos.get(uuid('pharmacy-order-1'))!;
+  pedidos.agregar({ ...original, id: uuid(`pharmacy-copay-${suffix}`), estado: 'CONFIRMADO' });
+}
+
+function settlementForOrder(order: PedidoSimulado) {
+  if (['CANCELADO', 'RECHAZADO', 'VENCIDO'].includes(order.estado)) return { insuranceSettlement: null, insuranceSettlementAvailability: 'NOT_AVAILABLE' };
+  if (order.sustituciones.some((substitution) => substitution.status === 'PROPOSED')) return { insuranceSettlement: null, insuranceSettlementAvailability: 'UNDER_REVIEW' };
+  if (order.id === uuid('pharmacy-copay-pending')) return { insuranceSettlement: null, insuranceSettlementAvailability: 'PENDING_PUBLICATION' };
+  const result = order.id === uuid('pharmacy-order-1') ? 'APPROVED'
+    : order.id === uuid('pharmacy-copay-partial') ? 'PARTIALLY_APPROVED'
+      : order.id === uuid('pharmacy-copay-denied') ? 'DENIED' : undefined;
+  if (result) return patientSettlementForItems(order.id, result, order.lineas.map((line) => {
+    const product = productos.get(line.productId)!;
+    return { id: line.productId, name: product.brandName ?? product.genericName ?? product.productCode, unitAmount: product.price, quantity: line.requestedQuantity };
+  }));
+  return { insuranceSettlement: null, insuranceSettlementAvailability: order.estado === 'ENVIADO' ? 'PENDING_PUBLICATION' : 'NOT_AVAILABLE' };
+}
+
+function dto(p: PedidoSimulado, owner = false) {
   const farmacia = FARMACIAS.find((f) => f.id === p.pharmacyId) ?? FARMACIAS[0]!;
   const lineas = p.lineas.map((l) => {
     const prod = productos.get(l.productId);
@@ -189,6 +221,7 @@ function dto(p: PedidoSimulado) {
     patientName: p.patientName,
     deliveryMode: c('PINV_DELIVERY_RETIRO', 'Retiro en farmacia'),
     pickupCode: p.pickupCode,
+    ...(owner ? settlementForOrder(p) : {}),
     totalAmount: total.toFixed(2),
     currency: BOB,
     rejectionReasonText: p.rejectionReasonText,
@@ -265,7 +298,7 @@ export function registrarFarmacia(router: MockRouter): void {
   });
 
   router.get('/pharmacy/orders/me', (request) => {
-    const items = pedidosVisibles(request).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map(dto);
+    const items = pedidosVisibles(request).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map((order) => dto(order, true));
     return { items, count: items.length };
   });
 
@@ -275,7 +308,7 @@ export function registrarFarmacia(router: MockRouter): void {
       .todos()
       .filter((p) => status === null || p.estado === status || `PINV_ORDER_${p.estado}` === status)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .map(dto);
+      .map((order) => dto(order));
     return { items, count: items.length };
   });
 
@@ -304,9 +337,9 @@ export function registrarFarmacia(router: MockRouter): void {
     return { status: 201, body: dto(nuevo) };
   });
 
-  router.get('/pharmacy/orders/:id', ({ params }) => {
-    const p = pedidos.get(params['id']!);
-    return p === undefined ? notFound('Pedido no encontrado') : dto(p);
+  router.get('/pharmacy/orders/:id', (request) => {
+    const p = pedidos.get(request.params['id']!);
+    return p === undefined ? notFound('Pedido no encontrado') : dto(p, p.patientProfileId === request.user?.patientProfileId);
   });
 
   router.post('/pharmacy/orders/:id/review', ({ params }) => cambiar(params['id']!, 'EN_REVISION'));

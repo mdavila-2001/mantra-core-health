@@ -21,6 +21,7 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
+import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
 
 /**
  * Una internación tal como la muestra la ficha: sin uuid y con el «sigue
@@ -169,19 +170,7 @@ export class AdmissionBlock {
     if (state.status === 'validation') {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no permite dar de alta internaciones.';
-    }
-    if (state.status === 'not-found') {
-      return 'El expediente ya no existe. Recargá la pantalla.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
+    return mensajeDeFalloDeEscritura(state, { accion: 'dar de alta internaciones', sinPermiso: 'Tu rol no permite dar de alta internaciones.' });
   });
 
   /**

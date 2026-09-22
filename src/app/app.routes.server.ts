@@ -31,8 +31,8 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Prerender,
   },
   {
-    // La rejilla de tipos de cuenta y las tres altas: públicas e iguales para
-    // todo el mundo, así que salen del servidor ya pintadas.
+    // La rejilla de tipos de cuenta y las altas que cuelgan de ella: públicas e
+    // iguales para todo el mundo, así que salen del servidor ya pintadas.
     path: 'auth/register',
     renderMode: RenderMode.Prerender,
   },
@@ -46,6 +46,10 @@ export const serverRoutes: ServerRoute[] = [
   },
   {
     path: 'auth/register/organization',
+    renderMode: RenderMode.Prerender,
+  },
+  {
+    path: 'auth/register/laboratory',
     renderMode: RenderMode.Prerender,
   },
   {

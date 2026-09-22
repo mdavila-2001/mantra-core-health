@@ -1,0 +1,89 @@
+{
+  "formato": "alovida.conversacion",
+  "version": 1,
+  "exportadoEn": "2026-09-11T09:24:35.065Z",
+  "conversacion": {
+    "id": "e233f099-f7c3-473d-ac0e-19c456375ba6",
+    "esGrupo": false,
+    "participantes": [
+      {
+        "profileId": "64902038-f1c6-4262-af3a-b92a72c418ba",
+        "nombre": "Yo",
+        "soyYo": true
+      },
+      {
+        "profileId": "b091cf86-bcb9-4e42-ae61-7f7c38e111e8",
+        "nombre": "Ana Lucía Pérez Quiroga",
+        "soyYo": false
+      }
+    ]
+  },
+  "mensajes": [
+    {
+      "id": "cba32737-5a6a-4ff5-a32c-af9eccbd167c",
+      "autorProfileId": "b091cf86-bcb9-4e42-ae61-7f7c38e111e8",
+      "autor": "Ana Lucía Pérez Quiroga",
+      "propio": false,
+      "texto": "Hola doctora, buenas tardes. Quería consultarle si puedo tomar el enalapril junto con el ibuprofeno que me dieron para la espalda.",
+      "enviadoEn": "2026-09-08T20:05:00.000Z",
+      "editado": false,
+      "respondeA": null,
+      "adjunto": null
+    },
+    {
+      "id": "eed7f8d1-54bd-40b1-a0e4-42008f672492",
+      "autorProfileId": "64902038-f1c6-4262-af3a-b92a72c418ba",
+      "autor": "Yo",
+      "propio": true,
+      "texto": "Hola Ana. Mejor evitar el ibuprofeno por más de 2 o 3 días mientras tomás enalapril: puede subir la presión y afectar el riñón. Para el dolor usá paracetamol.",
+      "enviadoEn": "2026-09-08T21:40:00.000Z",
+      "editado": false,
+      "respondeA": null,
+      "adjunto": null
+    },
+    {
+      "id": "edd5b8a7-6bf8-4bf1-a8da-582a195e73a8",
+      "autorProfileId": "b091cf86-bcb9-4e42-ae61-7f7c38e111e8",
+      "autor": "Ana Lucía Pérez Quiroga",
+      "propio": false,
+      "texto": "Perfecto, gracias. Entonces cambio a paracetamol.",
+      "enviadoEn": "2026-09-08T21:55:00.000Z",
+      "editado": false,
+      "respondeA": null,
+      "adjunto": null
+    },
+    {
+      "id": "91be1540-bdef-42b0-a3f4-75702eac22f0",
+      "autorProfileId": "64902038-f1c6-4262-af3a-b92a72c418ba",
+      "autor": "Yo",
+      "propio": true,
+      "texto": "Sí. Y si el dolor sigue más de una semana, avisame y lo vemos en consulta.",
+      "enviadoEn": "2026-09-08T22:02:00.000Z",
+      "editado": false,
+      "respondeA": null,
+      "adjunto": null
+    },
+    {
+      "id": "421840dd-f16a-4203-a25a-1cc64a26a310",
+      "autorProfileId": "b091cf86-bcb9-4e42-ae61-7f7c38e111e8",
+      "autor": "Ana Lucía Pérez Quiroga",
+      "propio": false,
+      "texto": "Doctora, ya me llegaron los resultados del laboratorio. ¿Se los mando por acá o los llevo a la consulta del jueves?",
+      "enviadoEn": "2026-09-11T13:12:00.000Z",
+      "editado": false,
+      "respondeA": null,
+      "adjunto": null
+    },
+    {
+      "id": "3413ada5-cbd7-49ab-aa39-80a6bd62c200",
+      "autorProfileId": "64902038-f1c6-4262-af3a-b92a72c418ba",
+      "autor": "Yo",
+      "propio": true,
+      "texto": "Mandámelos por acá así los miro antes del jueves. Si preferís, subilos a tu historia clínica desde https://alovida.bo/mi-historia y los veo ahí.",
+      "enviadoEn": "2026-09-11T13:30:00.000Z",
+      "editado": false,
+      "respondeA": "421840dd-f16a-4203-a25a-1cc64a26a310",
+      "adjunto": null
+    }
+  ]
+}

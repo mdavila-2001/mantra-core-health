@@ -1,6 +1,7 @@
 import { comentarios, CONCEPTO, publicaciones, vitrinaPorSlug, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
 import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
 import { afiliaciones, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
+import { sedesDe } from './practice.handlers';
 import { notFound, type MockRouter } from '../mock-router';
 import { ahora, contiene, iso, isoDia, paginar, texto, uuid } from '../mock-store';
 
@@ -185,6 +186,21 @@ export function registrarPublico(router: MockRouter): void {
           : afiliaciones
               .filtrar((a) => a.practitionerProfileId === profesional.id)
               .map((a) => ({ organizationName: a.organizationName, roleTitle: a.roleTitle ?? 'Profesional', departmentText: null, startDate: a.startDate, endDate: a.endDate })),
+      // Los lugares donde atiende (P16). `city`/`address` de arriba siguen
+      // siendo el respaldo: una ficha sin sedes se sigue leyendo como antes.
+      practiceSites:
+        profesional === undefined
+          ? []
+          : sedesDe(profesional.id).map((sede) => ({
+              id: sede.id,
+              name: sede.name,
+              addressText: sede.addressText,
+              location:
+                sede.latitude === null || sede.longitude === null
+                  ? null
+                  : { lat: sede.latitude, lng: sede.longitude },
+              isOwn: sede.esPropio,
+            })),
       ratingAverage: v.ratingAverage,
       ratingCount: v.ratingCount,
       acceptsReviews: v.acceptsReviews,

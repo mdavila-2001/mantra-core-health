@@ -7,6 +7,7 @@ import { TracingService } from '../../observability/tracing/tracing.service';
 import { API_BASE_URL, apiUrl } from '../api';
 import { sinNulos } from '../wire';
 import { blobToDataUrl } from './blob-to-data-url';
+import { nombreDeContentDisposition } from './content-disposition';
 import type {
   DownloadUrl,
   FileLink,
@@ -14,6 +15,7 @@ import type {
   LinkedFilePage,
   LinkedFilesQuery,
   NewFileLink,
+  StoredFileContent,
 } from './files.types';
 
 /** Los dos únicos valores que admite el backend. */
@@ -207,6 +209,57 @@ export class FilesClient {
         responseType: 'blob',
       })
       .pipe(switchMap((bytes) => blobToDataUrl(bytes)));
+  }
+
+  /**
+   * El contenido de un archivo propio **con la metadata que lo acompaña**.
+   *
+   * ## Por qué no hay un endpoint de metadata
+   *
+   * Porque no hace falta: el tipo, el tamaño y el nombre **ya vienen** en la
+   * respuesta que hay que pedir de todos modos para mostrar el archivo. El
+   * `Blob` trae el `Content-Type` en su `type` y los bytes en su `size`, y
+   * `Content-Disposition` trae el nombre. Un `GET /common/files/:id` sería una
+   * petición extra para volver a preguntar lo que ya está en la mano.
+   *
+   * ## Qué cambia respecto de `contentDataUrl`
+   *
+   * Sólo `observe: 'response'`. Aquél descarta la respuesta y se queda con los
+   * bytes; éste la conserva para poder leer una cabecera. Misma ruta, mismo
+   * método, misma autorización: **no abre ningún camino nuevo al binario**.
+   *
+   * ## Qué pasa si el nombre no viene
+   *
+   * `originalName` queda ausente y quien llama pone su propio texto. Pasa de
+   * verdad y no es un caso raro: `common.files.original_name` es nullable, y el
+   * backend simulado sirve los bytes sin emitir la cabecera. Inventar un nombre
+   * ahí sería mostrar un dato falso en una pantalla clínica.
+   *
+   * **Quién puede.** Lo mismo que `contentDataUrl`: quien subió el archivo o un
+   * rol de revisión. Para un adjunto ajeno responde 403, y quien llama degrada.
+   *
+   * @param fileId - El archivo a leer.
+   * @returns Los bytes con su tipo, su tamaño y —si se pudo leer— su nombre.
+   */
+  storedFileContent(fileId: string): Observable<StoredFileContent> {
+    return this.http
+      .get(apiUrl(this.baseUrl, `/common/files/${encodeURIComponent(fileId)}/content`), {
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(
+        map((respuesta) => {
+          const blob = respuesta.body ?? new Blob([]);
+          return sinNulos({
+            blob,
+            mimeType: blob.type,
+            sizeBytes: blob.size,
+            originalName: nombreDeContentDisposition(
+              respuesta.headers.get('Content-Disposition'),
+            ),
+          }) as StoredFileContent;
+        }),
+      );
   }
 
   /**

@@ -216,10 +216,17 @@
 }
 
 .registro-respaldos__error,
-.registro-titulos__error {
+.registro-titulos__error,
+.registro-titulo__error {
   font-size: var(--fs-caption);
   color: var(--text-danger);
   margin: 0;
+}
+
+/* El campo que falta completar se señala también por color, no sólo por el
+   texto de al lado; `aria-invalid` lo dice a quien usa lector de pantalla. */
+.registro-titulo__dato--invalido {
+  border-color: var(--text-danger);
 }
 
 /* ------------------------------------------------------------------ títulos */
@@ -246,10 +253,20 @@
 .registro-titulo {
   display: flex;
   flex-direction: column;
+  /* Los botones de la fila —«Adjuntar archivo» y «Quitar»— son hijos directos:
+     sin esto se estiran a lo ancho de la fila y su rótulo queda centrado en
+     medio de la nada, como si fuera un título. */
+  align-items: flex-start;
   gap: var(--sp-2);
   width: 100%;
   padding: var(--sp-3) 0;
   border-top: 1px solid var(--border-default);
+}
+
+/* Las casillas de texto sí ocupan el ancho: son el contenido de la fila. */
+.registro-titulo > .registro-titulo__campo,
+.registro-titulo__estudio {
+  align-self: stretch;
 }
 
 .registro-titulo__campo {
@@ -257,7 +274,8 @@
   width: 100%;
 }
 
-.registro-titulo__nombre {
+.registro-titulo__nombre,
+.registro-titulo__dato {
   width: 100%;
   font: inherit;
   color: var(--text-primary);
@@ -267,18 +285,37 @@
   background-color: var(--surface-raised);
 }
 
-.registro-titulo__nombre:focus-visible {
+.registro-titulo__nombre:focus-visible,
+.registro-titulo__dato:focus-visible {
   outline: 2px solid var(--brand-primary);
   outline-offset: 1px;
 }
 
-@media (min-width: 640px) {
-  .registro-titulo {
-    flex-direction: row;
-    align-items: center;
-  }
+/* Universidad, país y ciudad de una fila. En teléfono se apilan; desde 640 px
+   entran las tres en un renglón, que es como se leen: son un solo dato. */
+.registro-titulo__estudio {
+  display: grid;
+  gap: var(--sp-2);
+  width: 100%;
+}
 
-  .registro-titulo__campo {
-    flex: 1 1 auto;
+/* Universidad, país y ciudad del título con el que ejerce. Mismo criterio que
+   el de la fila; acá los hijos son `app-form-field`, que traen su propio
+   rótulo. */
+.registro__estudio {
+  display: grid;
+  gap: var(--sp-3);
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  /* La fila dejó de ser un renglón: con el nombre, tres casillas de dónde se
+     cursó, el adjunto y el botón de quitar, en línea quedaba cada campo en
+     ochenta píxeles. Se apila, y lo que se agrupa en renglón es el bloque de
+     estudio. */
+  .registro-titulo__estudio,
+  .registro__estudio {
+    grid-template-columns: 2fr 1fr 1fr;
+    align-items: start;
   }
 }

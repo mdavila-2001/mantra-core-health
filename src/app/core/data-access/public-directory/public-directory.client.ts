@@ -13,7 +13,9 @@ import type {
   PublicPostReaction,
   PublicPostSummary,
   PublicPractitionerQuery,
+  PublicPracticeSite,
   PublicProfileDetail,
+  PublicProfileReviewsPage,
   PublicSearchQuery,
   PublicSearchResult,
 } from './public-directory.types';
@@ -45,9 +47,16 @@ type WireFeedPost = Omit<PublicFeedPost, 'publishedAt'> & {
   readonly publishedAt: string;
 };
 
-type WireProfile = Omit<PublicProfileDetail, 'posts' | 'updatedAt'> & {
+type WireProfile = Omit<PublicProfileDetail, 'posts' | 'updatedAt' | 'practiceSites'> & {
   readonly posts: readonly WirePost[];
   readonly updatedAt: string;
+  /**
+   * **Opcional en el cable y obligatorio en la vista.** La API todavía no lo
+   * manda (P16 de `PENDIENTES-BACKEND.md`); el simulador sí. Que el contrato de
+   * la pantalla prometa siempre un arreglo es lo que evita que cada consumidor
+   * tenga que acordarse de que puede faltar — {@link toProfile} lo garantiza.
+   */
+  readonly practiceSites?: readonly PublicPracticeSite[];
 };
 
 /**
@@ -239,6 +248,40 @@ export class PublicDirectoryClient {
       .pipe(map(toProfile));
   }
 
+  /**
+   * `GET /public/profiles/:prefijo/:slug/reviews` — las opiniones de la ficha
+   * y el promedio del perfil (P31).
+   *
+   * Cuelga del mismo `/public/profiles/...` que {@link getProfile} y por el
+   * mismo motivo: `/p/:slug` es también la URL de esta pantalla, y mandarla a
+   * la API se comería la ruta del router.
+   *
+   * El promedio viaja con la lista y no se pide aparte porque la cabecera de
+   * opiniones y la lista se dibujan juntas: en dos peticiones, la pantalla
+   * queda con «4,6 de 5» arriba y un hueco abajo.
+   *
+   * @param kind - Qué clase de sujeto se espera. Fija el prefijo; un slug de
+   *   otra clase da 404 en vez de redirigir.
+   * @param slug - El slug tal como aparece en la URL.
+   * @param opciones - Cursor de continuación y tope de filas.
+   * @returns La página de opiniones y las dos cifras de la cabecera.
+   */
+  profileReviews(
+    kind: PublicProfileDetail['kind'],
+    slug: string,
+    opciones: { cursor?: string; limit?: number } = {},
+  ): Observable<PublicProfileReviewsPage> {
+    const prefijo = PUBLIC_PROFILE_PREFIX[kind];
+    return this.http
+      .get<WireReviewsPage>(
+        this.url(
+          `/public/profiles/${prefijo}/${encodeURIComponent(slug)}/reviews`,
+        ),
+        { params: this.paginaParams(opciones) },
+      )
+      .pipe(map(toReviewsPage));
+  }
+
   /* ---- las tres lecturas sociales públicas (TAREA 01 §5.1) --------------- */
 
   /**
@@ -364,10 +407,66 @@ function toPage<T>(body: WirePage<T>): PublicPage<T> {
 function toProfile(body: WireProfile): PublicProfileDetail {
   return {
     ...body,
+    // Sin sedes en la respuesta, la ficha cae a `city`/`address`, que es el
+    // comportamiento que ya tenía. Ver la nota de `WireProfile`.
+    practiceSites: body.practiceSites ?? [],
     posts: body.posts.map((post) => ({
       ...post,
       publishedAt: new Date(post.publishedAt),
     })),
     updatedAt: new Date(body.updatedAt),
+  };
+}
+
+/** La página de opiniones tal como llega por el cable. */
+interface WireReviewsPage {
+  readonly items: readonly WireReview[];
+  readonly nextCursor: string | null;
+  readonly ratingAverage: number | null;
+  readonly ratingCount: number;
+}
+
+/** Una opinión tal como llega por el cable, con las fechas en texto. */
+interface WireReview {
+  readonly id: string;
+  readonly overallRating: number;
+  readonly reviewText: string | null;
+  readonly reviewerDisplayName?: string | null;
+  readonly publishedAt: string | null;
+  readonly editedAt: string | null;
+  readonly responses: readonly {
+    readonly id: string;
+    readonly responseText: string;
+    readonly publishedAt: string | null;
+  }[];
+}
+
+/**
+ * Las opiniones, con las fechas convertidas.
+ *
+ * `reviewerDisplayName` se normaliza a `null` cuando no viene: el campo es
+ * opcional en el contrato, y `undefined` en la vista obligaría a cada plantilla
+ * a distinguir dos ausencias que significan lo mismo — «esta opinión no lleva
+ * nombre» —.
+ */
+function toReviewsPage(body: WireReviewsPage): PublicProfileReviewsPage {
+  return {
+    items: body.items.map((review) => ({
+      id: review.id,
+      overallRating: review.overallRating,
+      reviewText: review.reviewText,
+      reviewerDisplayName: review.reviewerDisplayName ?? null,
+      publishedAt: review.publishedAt === null ? null : new Date(review.publishedAt),
+      editedAt: review.editedAt === null ? null : new Date(review.editedAt),
+      responses: review.responses.map((response) => ({
+        id: response.id,
+        responseText: response.responseText,
+        publishedAt:
+          response.publishedAt === null ? null : new Date(response.publishedAt),
+      })),
+    })),
+    nextCursor: body.nextCursor,
+    ratingAverage: body.ratingAverage,
+    ratingCount: body.ratingCount,
   };
 }

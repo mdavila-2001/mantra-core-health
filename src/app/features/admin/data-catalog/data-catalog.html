@@ -1,0 +1,156 @@
+<app-page-header
+  title="Catálogo de datos"
+  subtitle="Qué tablas existen, por qué existen, quién responde por ellas y con qué evidencia."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="catalogo">
+  <div class="catalogo__acciones">
+    <button
+      app-button
+      variant="primary"
+      data-testid="catalog-request-scan"
+      [isLoading]="pidiendoEscaneo()"
+      (clicked)="solicitarEscaneo()"
+    >
+      Solicitar escaneo
+    </button>
+  </div>
+
+  @if (avisoEscaneo(); as aviso) {
+    <app-alert tone="success">{{ aviso }}</app-alert>
+  }
+  @if (errorEscaneo(); as error) {
+    <app-alert tone="error">{{ error }}</app-alert>
+  }
+
+  <!-- Cobertura: cinco dimensiones medidas por el servidor, cada una con su
+       denominador. Sin escaneo es «Sin medición», con denominador cero «No
+       aplica»; nunca un porcentaje inventado. -->
+  <app-card variant="outlined" padding="md">
+    <app-view-state-host [state]="cobertura()" (retry)="cargarCobertura()">
+      @if (cobertura(); as estado) {
+        @if (estado.status === 'ready') {
+          <section class="catalogo__cobertura" aria-label="Cobertura del catálogo" data-testid="catalog-coverage">
+            @for (d of dimensiones; track d.key) {
+              <div class="catalogo__dimension">
+                <span class="catalogo__dimension-valor">
+                  {{ porcentaje(estado.data.dimensions[d.key].ratio, estado.data.dimensions[d.key].status) }}
+                </span>
+                <span class="catalogo__dimension-nombre">{{ d.label }}</span>
+                <span class="catalogo__dimension-base">
+                  @if (estado.data.dimensions[d.key].status === 'MEASURED') {
+                    {{ estado.data.dimensions[d.key].covered }} de {{ estado.data.dimensions[d.key].denominator }}
+                  } @else {
+                    {{ d.help }}
+                  }
+                </span>
+              </div>
+            }
+          </section>
+          <p class="catalogo__nota">
+            @if (estado.data.lastScan; as escaneo) {
+              Sobre {{ estado.data.denominator }} objetos observados en el último escaneo
+              ({{ escaneo.finishedAt | date: 'short' }}).
+            } @else {
+              Sin un escaneo terminado no se puede medir nada.
+            }
+            @if (estado.data.declaredDebt > 0) {
+              {{ estado.data.declaredDebt }} con la justificación declarada como deuda pendiente.
+            }
+            Modelo {{ estado.data.modelVersion }}.
+          </p>
+        }
+      }
+    </app-view-state-host>
+  </app-card>
+
+  <app-card variant="outlined" padding="md">
+    <app-tabs [(selectedIndex)]="pestana" data-testid="catalog-tabs">
+      <app-tab label="Inventario">
+        <section class="catalogo__filtros" aria-label="Filtros del inventario">
+          <app-search-field
+            label="Buscar por nombre técnico o de negocio"
+            placeholder="Ej.: appointments"
+            [(value)]="busqueda"
+            (searched)="filtrar()"
+          />
+          <app-select
+            ariaLabel="Schema"
+            [options]="opcionesSchema()"
+            [value]="schema()"
+            (valueChange)="cambiarSchema($event)"
+          />
+          <app-select
+            ariaLabel="Estado de la ficha"
+            [options]="opcionesRevision"
+            [value]="revision()"
+            (valueChange)="revision.set($event); filtrar()"
+          />
+          <app-select
+            ariaLabel="Faltantes"
+            [options]="opcionesFaltante"
+            [value]="faltante()"
+            (valueChange)="faltante.set($event); filtrar()"
+          />
+        </section>
+
+        <app-view-state-host [state]="filas()" (retry)="cargar()">
+          <app-data-table
+            data-testid="catalog-objects"
+            caption="Objetos del catálogo"
+            [state]="filas()"
+            [columns]="columnas()"
+            [trackBy]="byId"
+            [cursor]="cursor()"
+            rowNavigable
+            (cursorChanged)="mover($event)"
+            (rowActivated)="abrir($event)"
+            (retry)="cargar()"
+          />
+        </app-view-state-host>
+      </app-tab>
+
+      <app-tab label="Escaneos">
+        <app-view-state-host [state]="escaneos()" (retry)="cargarEscaneos()">
+          @if (escaneos(); as estado) {
+            @if (estado.status === 'ready') {
+              <ol class="catalogo__escaneos" data-testid="catalog-scans">
+                @for (scan of estado.data; track scan.id) {
+                  <li class="catalogo__escaneo">
+                    <app-badge [variant]="scanStatus(scan.status).tone">{{ scanStatus(scan.status).label }}</app-badge>
+                    <span>{{ scan.requestedAt | date: 'short' }}</span>
+                    <span class="catalogo__secundario">{{ contadores(scan) }}</span>
+                    @if (scan.error; as e) {
+                      <span class="catalogo__error">{{ e.code }}: {{ e.message }}</span>
+                    }
+                    @if (scan.limitations.length > 0) {
+                      <ul class="catalogo__limitaciones">
+                        @for (l of scan.limitations; track l.code) {
+                          <li>{{ l.detail }}</li>
+                        }
+                      </ul>
+                    }
+                  </li>
+                }
+              </ol>
+            }
+          }
+        </app-view-state-host>
+      </app-tab>
+    </app-tabs>
+  </app-card>
+</div>
+
+<ng-template #nombreCell let-row>
+  <a class="catalogo__nombre" [routerLink]="['/administration/data-catalog', row.id]">
+    <span class="catalogo__schema">{{ row.schemaName }}.</span>{{ row.objectName }}
+  </a>
+  @if (row.annotation?.businessName; as negocio) {
+    <span class="catalogo__secundario">{{ negocio }}</span>
+  }
+</ng-template>
+
+<ng-template #fichaCell let-row>
+  <app-badge [variant]="row.fichaTone">{{ row.fichaLabel }}</app-badge>
+</ng-template>

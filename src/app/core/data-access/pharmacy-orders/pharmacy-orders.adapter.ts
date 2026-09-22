@@ -1,3 +1,4 @@
+import { normalizePatientSettlement } from '../insurance/patient-insurance-settlement.types';
 import type {
   AjusteDeLinea,
   EnvioDePedido,
@@ -47,6 +48,7 @@ export function pharmacyOrderFromDto(
   viewer: 'owner' | 'staff' = 'owner',
 ): PedidoFarmacia {
   return {
+    ...normalizePatientSettlement(viewer === 'owner' ? dto : {}),
     id: dto.id,
     estado: requiredOrderStatus(dto.status.code),
     creadoEl: requiredDate(dto.createdAt, 'createdAt'),

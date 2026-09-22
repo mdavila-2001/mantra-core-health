@@ -1,4 +1,4 @@
-<ul class="conversaciones" [class.is-compacta]="compacta()">
+<ul class="conversaciones">
   @for (conversacion of conversaciones(); track conversacion.id) {
     <li
       class="conversaciones__fila"
@@ -20,36 +20,107 @@
 
         <span class="conversaciones__texto">
           <span class="conversaciones__cabecera">
-            <span class="conversaciones__con-quien">{{ conQuien(conversacion) }}</span>
-            @if (conversacion.lastMessageAt; as cuando) {
-              <span class="conversaciones__cuando">
-                {{ relativo(cuando) ?? (cuando | date: 'short') }}
-              </span>
-            }
+            <span class="conversaciones__con-quien">
+              @if (trozos(conversacion.id)[1]) {
+                {{ trozos(conversacion.id)[0]
+                }}<mark class="conversaciones__marca">{{ trozos(conversacion.id)[1] }}</mark
+                >{{ trozos(conversacion.id)[2] }}
+              } @else {
+                {{ conQuien(conversacion) }}
+              }
+            </span>
+            <span class="conversaciones__cuando">{{ hora(conversacion) }}</span>
           </span>
 
           <span class="conversaciones__pie">
-            @if (!compacta() && conversacion.lastMessage?.bodyText) {
-              <span class="conversaciones__vista-previa">
-                {{ conversacion.lastMessage?.bodyText }}
-              </span>
-            } @else {
-              <span class="conversaciones__vista-previa"></span>
-            }
+            <span class="conversaciones__vista-previa">
+              @if (esPropio(conversacion)) {
+                <!-- Un tilde: salió. El contrato de la bandeja todavía no dice
+                     si el otro lado lo leyó —está pedido al backend—, y pintar
+                     dos sin saberlo sería mentir sobre lo único que la gente
+                     mira antes de volver a escribir. -->
+                <span class="conversaciones__tick" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="m3 12.6 4.6 4.6L18.5 6.4" /></svg>
+                </span>
+                <span class="solo-lectores">Enviado por vos: </span>
+              } @else if (prefijo(conversacion); as autor) {
+                <span class="conversaciones__autor">{{ autor }}</span>
+              }
 
-            @if (conversacion.unreadCount > 0) {
-              <app-badge
-                class="conversaciones__sin-leer"
-                variant="info"
-                [value]="conversacion.unreadCount"
-                [max]="99"
-                label="mensajes sin leer"
-                data-testid="conversacion-sin-leer"
-              />
-            }
+              @if (esSticker(conversacion)) {
+                <span class="conversaciones__texto-previa" data-testid="conversacion-sticker">Sticker</span>
+              } @else if (esAdjunto(conversacion)) {
+                <span class="conversaciones__clip" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M20 11.5 12.2 19a4.6 4.6 0 0 1-6.5-6.5l8-7.8a3 3 0 0 1 4.3 4.3l-8 7.8a1.5 1.5 0 0 1-2.1-2.1l7.4-7.2" /></svg>
+                </span>
+              }
+
+              @if (!esSticker(conversacion)) {
+                <span class="conversaciones__texto-previa">{{ vistaPrevia(conversacion) }}</span>
+              }
+            </span>
+
+            <span class="conversaciones__marcas">
+              @if (esFavorito(conversacion.id)) {
+                <span class="conversaciones__estrella" aria-label="Favorito" title="Favorito">
+                  <svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="m12 3.6 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.8l5.9-.9z" /></svg>
+                </span>
+              }
+              @if (conversacion.unreadCount > 0) {
+                <span
+                  class="conversaciones__sin-leer"
+                  data-testid="conversacion-sin-leer"
+                  [attr.aria-label]="conversacion.unreadCount + ' mensajes sin leer'"
+                >
+                  {{ conversacion.unreadCount > 99 ? '99+' : conversacion.unreadCount }}
+                </span>
+              }
+            </span>
           </span>
         </span>
       </a>
+
+      <!-- El menú de la fila. Fuera del enlace: un botón dentro de un `<a>` no
+           es marcado válido y el lector de pantalla anuncia una sola cosa. -->
+      <button
+        class="conversaciones__mas"
+        type="button"
+        data-testid="conversacion-menu"
+        [attr.aria-label]="'Opciones de la conversación con ' + conQuien(conversacion)"
+        [attr.aria-expanded]="menuAbierto() === conversacion.id"
+        (click)="alternarMenu(conversacion.id, $event)"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg>
+      </button>
+
+      @if (menuAbierto() === conversacion.id) {
+        <ul class="conversaciones__menu" role="menu">
+          <li role="none">
+            <button role="menuitem" type="button" (click)="ejecutar('favorito', conversacion.id, $event)">
+              {{ esFavorito(conversacion.id) ? 'Quitar de favoritos' : 'Marcar como favorito' }}
+            </button>
+          </li>
+          <li role="none">
+            <button role="menuitem" type="button" (click)="ejecutar('archivar', conversacion.id, $event)">
+              {{ estaArchivado(conversacion.id) ? 'Desarchivar' : 'Archivar' }}
+            </button>
+          </li>
+          @if (conversacion.unreadCount > 0) {
+            <li role="none">
+              <button role="menuitem" type="button" (click)="ejecutar('leer', conversacion.id, $event)">
+                Marcar como leído
+              </button>
+            </li>
+          }
+          @if (!esGrupo(conversacion)) {
+            <li role="none">
+              <button role="menuitem" type="button" (click)="ejecutar('perfil', conversacion.id, $event)">
+                Ver perfil
+              </button>
+            </li>
+          }
+        </ul>
+      }
     </li>
   }
 </ul>

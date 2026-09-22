@@ -1,0 +1,163 @@
+.analitica {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.analitica__ventana {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e3);
+}
+
+.analitica__totales {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--e3);
+  margin-block-end: var(--e4);
+}
+
+.analitica__total {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--e3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.analitica__valor {
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--text-primary);
+}
+
+.analitica__rotulo {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.analitica__ayuda {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.analitica__serie {
+  margin: 0 0 var(--e4);
+}
+
+.analitica__barras {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-1);
+  block-size: 8rem;
+  padding: var(--e2);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.analitica__barra {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  block-size: 100%;
+}
+
+.analitica__barra-relleno {
+  inline-size: 100%;
+  min-block-size: 2px;
+  border-radius: var(--r-xs) var(--r-xs) 0 0;
+  background: var(--brand-primary);
+}
+
+.analitica__columnas {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--e4);
+}
+
+@media (min-width: 1120px) {
+  .analitica__columnas {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.analitica__tabla {
+  inline-size: 100%;
+  border-collapse: collapse;
+}
+
+.analitica__tabla caption {
+  padding-block-end: var(--e2);
+  text-align: start;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.analitica__tabla th,
+.analitica__tabla td {
+  padding: var(--e2) var(--e3);
+  border-block-end: 1px solid var(--border-subtle);
+  text-align: start;
+}
+
+.analitica__tabla th {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.analitica__embudo-selector {
+  max-inline-size: 28rem;
+  margin-block-end: var(--e4);
+}
+
+.analitica__pasos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.analitica__paso {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) 2fr auto;
+  align-items: center;
+  gap: var(--e2) var(--e3);
+}
+
+.analitica__paso-barra {
+  display: block;
+  block-size: var(--sp-3);
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+}
+
+.analitica__paso-relleno {
+  display: block;
+  block-size: 100%;
+  border-radius: var(--r-full);
+  background: var(--brand-primary);
+}
+
+.analitica__no-medido {
+  margin: 0;
+  padding-inline-start: var(--e4);
+}
+
+/* Una tabla ancha se desplaza dentro de su caja, no rompe la página. Misma
+   receta que `data-table__scroll`, y por los mismos dos motivos medidos allá:
+   `min-inline-size: 0` porque el ancho mínimo por defecto de un elemento es el
+   de su contenido —sin eso la caja nunca llega a ser más angosta que la tabla—,
+   y `position: relative` para que el `<caption>` sólo-lectores, que es
+   absoluto, quede recortado acá dentro en vez de estirar la página. */
+.analitica__scroll {
+  overflow-x: auto;
+  min-inline-size: 0;
+  position: relative;
+}

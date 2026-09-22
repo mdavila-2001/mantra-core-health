@@ -16,6 +16,10 @@ import {
 import { nextControlId } from '@shared/forms/form-control.context';
 import { AppButton } from '../../atoms/button/button';
 
+/** Los cuatro anchos de referencia del panel. Ver {@link ContentDialog.size}. */
+export const CONTENT_DIALOG_SIZES = ['sm', 'md', 'lg', 'xl'] as const;
+export type ContentDialogSize = (typeof CONTENT_DIALOG_SIZES)[number];
+
 /**
  * Un modal **con contenido propio**, sobre el `<dialog>` nativo.
  *
@@ -47,6 +51,34 @@ import { AppButton } from '../../atoms/button/button';
  * `<dialog>` todavía cerrado, mide 0×0 y se dibuja gris. Por eso el evento se
  * emite **después** de `showModal()`: quien lo escucha recién ahí instancia el
  * mapa.
+ *
+ * ## El pie de acciones se proyecta y no se recorre
+ *
+ * Lo que se marque con el atributo `dialog-actions` viaja al pie, fuera del
+ * área con scroll: en un formulario largo, el botón que guarda tiene que seguir
+ * alcanzable sin llegar al final del cuerpo.
+ *
+ * ```html
+ * <app-content-dialog heading="Adjuntar archivos" size="lg" [dismissible]="false"
+ *                     (dismissAttempt)="preguntarSiSeDescarta()" (closed)="cerrar()">
+ *   …el formulario…
+ *   <button dialog-actions app-button (clicked)="guardar()">Adjuntar archivos</button>
+ * </app-content-dialog>
+ * ```
+ *
+ * ## `size` son objetivos de ancho, no una caja fija
+ *
+ * Cuatro medidas —confirmación breve, formulario clínico, cola de adjuntos,
+ * listados— porque un formulario de dos campos en 58rem queda perdido y una
+ * conversación de grupo en 30rem no se lee. En teléfono las cuatro colapsan al
+ * mismo modal casi completo: la medida es un techo, no un piso.
+ *
+ * ## `dismissible` es para las ediciones, y no atrapa a nadie
+ *
+ * Con `false`, el clic en el fondo y `Escape` dejan de cerrar solos y pasan a
+ * emitir {@link dismissAttempt}: quien lo escucha pregunta si se descarta lo
+ * escrito y recién entonces cierra. El gesto no se bloquea —eso dejaría un
+ * modal sin salida de teclado—, se le cambia el destino.
  */
 @Component({
   selector: 'app-content-dialog',
@@ -75,8 +107,31 @@ export class ContentDialog implements OnDestroy {
    */
   readonly closeGuard = input<(() => boolean | Promise<boolean>) | null>(null);
 
+  /**
+   * Ancho de referencia del panel.
+   *
+   * `sm` una confirmación breve, `md` un formulario clínico, `lg` una cola de
+   * adjuntos con su contexto, `xl` un listado con navegación interna.
+   */
+  readonly size = input<ContentDialogSize>('md');
+
+  /**
+   * Si el fondo y `Escape` cierran solos.
+   *
+   * `false` en una edición con cambios pendientes: el gesto pasa a
+   * {@link dismissAttempt} en vez de perder lo escrito.
+   */
+  readonly dismissible = input(true);
+
   /** Se emite **después** de `showModal()`: recién ahí hay layout real. */
   readonly opened = output<void>();
+
+  /**
+   * Alguien intentó cerrar por el fondo o con `Escape` teniendo
+   * `dismissible` en `false`. Quien lo escucha decide: confirmar el descarte y
+   * llamar a {@link close}, o dejar el modal donde está.
+   */
+  readonly dismissAttempt = output<void>();
 
   /** Se cerró, por el botón, por `Escape` o por el fondo. */
   readonly closed = output<void>();
@@ -143,12 +198,26 @@ export class ContentDialog implements OnDestroy {
   }
 
   /**
+   * El camino de los tres gestos de cierre —el botón, `Escape` y el fondo—.
+   *
+   * Uno solo y no tres: si el botón cerrara de una mientras `Escape` pregunta,
+   * la confirmación de descarte sería una formalidad que se esquiva con el ratón.
+   */
+  protected solicitarCierre(): void {
+    if (!this.dismissible()) {
+      this.dismissAttempt.emit();
+      return;
+    }
+    this.close();
+  }
+
+  /**
    * `Escape` lo maneja el navegador y dispara `cancel`: se lo escucha en vez de
    * bloquearlo, para que cerrar siga siendo una sola cosa.
    */
   protected handleNativeCancel(event: Event): void {
     event.preventDefault();
-    this.close();
+    this.solicitarCierre();
   }
 
   /**
@@ -160,9 +229,10 @@ export class ContentDialog implements OnDestroy {
     if (panel === null || !(event.target instanceof Node)) {
       return;
     }
-    if (!panel.contains(event.target)) {
-      this.close();
+    if (panel.contains(event.target)) {
+      return;
     }
+    this.solicitarCierre();
   }
 
   /**

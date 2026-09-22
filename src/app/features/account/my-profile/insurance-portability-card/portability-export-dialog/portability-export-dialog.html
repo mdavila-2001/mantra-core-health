@@ -1,0 +1,128 @@
+<app-content-dialog
+  data-testid="portability-export-dialog"
+  heading="Exportar certificado de portabilidad"
+  description="El certificado incluye tus pólizas registradas, los siniestros cubiertos y una certificación con código QR de verificación."
+  [dismissible]="state() !== 'loading'"
+  (dismissAttempt)="close()"
+  (closed)="close()"
+>
+  @switch (state()) {
+    @case ('ready') {
+      @if (result(); as certificado) {
+        <p class="portability-dialog__estado">
+          Certificado emitido — {{ certificado.recordCount }} registro(s) de {{ certificado.policiesCount }} póliza(s).
+        </p>
+
+        <p class="portability-dialog__rotulo" id="portability-hash-rotulo">Sello digital (SHA-256)</p>
+        <code
+          class="portability-dialog__hash"
+          data-testid="portability-manifest-hash"
+          aria-describedby="portability-hash-rotulo"
+        >{{ certificado.manifestHash }}</code>
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="btn-copy-portability-hash"
+          (clicked)="copyHash()"
+        >
+          Copiar hash
+        </button>
+        <span
+          role="status"
+          aria-live="polite"
+          class="portability-dialog__copiado"
+          data-testid="portability-hash-copiado"
+          >@if (copied()) {
+            Sello copiado al portapapeles
+          }</span
+        >
+
+        <p>
+          <a app-link [href]="certificado.verificationUrl" data-testid="portability-verification-link">
+            Verificar este certificado en línea
+          </a>
+        </p>
+
+        <div class="portability-dialog__descargas">
+          <button
+            app-button
+            type="button"
+            variant="outline"
+            data-testid="btn-download-portability-pdf"
+            (clicked)="downloadPdfOnly()"
+          >
+            Descargar PDF
+          </button>
+          <button
+            app-button
+            type="button"
+            variant="outline"
+            data-testid="btn-download-portability-json"
+            (clicked)="downloadJsonOnly()"
+          >
+            Descargar JSON
+          </button>
+        </div>
+      }
+    }
+    @default {
+      <p>
+        Vas a exportar tus pólizas registradas, los siniestros cubiertos y una certificación con
+        código QR de verificación.
+      </p>
+
+      @if (state() === 'error' && errorMessage(); as mensaje) {
+        <app-alert appAnuncio tone="error" data-testid="portability-export-error">{{ mensaje }}</app-alert>
+      }
+
+      <app-form-field label="Formato">
+        <app-radio-group
+          data-testid="portability-format"
+          [value]="format()"
+          (valueChange)="setFormat($event)"
+        >
+          <app-radio value="PDF" label="PDF oficial certificado con código QR" data-testid="radio-format-pdf" />
+          <app-radio value="JSON" label="Archivo JSON interoperable" data-testid="radio-format-json" />
+          <app-radio value="BUNDLE" label="Paquete completo (PDF + JSON)" data-testid="radio-format-both" />
+        </app-radio-group>
+      </app-form-field>
+    }
+  }
+
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    variant="ghost"
+    data-testid="btn-cancel-portability-dialog"
+    [disabled]="state() === 'loading'"
+    (clicked)="close()"
+  >
+    Cerrar
+  </button>
+  @if (state() !== 'ready') {
+    <button
+      dialog-actions
+      app-button
+      type="button"
+      data-testid="btn-generate-portability-download"
+      [isLoading]="state() === 'loading'"
+      [disabled]="state() === 'loading'"
+      (clicked)="generate()"
+    >
+      Descargar archivo certificado
+    </button>
+  } @else {
+    <button
+      dialog-actions
+      app-button
+      type="button"
+      data-testid="btn-generate-portability-download"
+      (clicked)="redownload()"
+    >
+      Volver a descargar
+    </button>
+  }
+</app-content-dialog>

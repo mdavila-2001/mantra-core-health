@@ -1,0 +1,38 @@
+.calificar {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+/* En columna y no en fila: cada opción lleva su leyenda («4 · Buena»), y en
+   fila las cinco se parten en renglones desalineados apenas la pantalla es
+   angosta. */
+.calificar__estrellas {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.calificar__estrella {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+  cursor: pointer;
+}
+
+.calificar__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  justify-content: flex-end;
+}
+
+.calificar__anonimo {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.calificar__ayuda {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}

@@ -79,9 +79,18 @@ export class ChatSocketService {
   private readonly messages$ = new Subject<ChatMessageEvent>();
   private readonly reads$ = new Subject<ChatReadEvent>();
   private readonly newConversations$ = new Subject<ChatNewConversationEvent>();
+  private readonly updated$ = new Subject<ChatMessageEvent>();
 
   /** `conversation:message`, sin filtrar — cada pantalla filtra lo suyo. */
   readonly onMessage = this.messages$.asObservable();
+  /**
+   * `conversation:message:updated` — alguien editó un mensaje suyo (F4.5).
+   *
+   * Trae el mensaje entero, con el mismo cuerpo que `conversation:message`, así
+   * que se convierte con la misma función: sin eso la fecha llegaría como texto
+   * con tipo de `Date`, que es el defecto que ya costó una vez el hilo entero.
+   */
+  readonly onMessageUpdated = this.updated$.asObservable();
   /** `conversation:read`. */
   readonly onRead = this.reads$.asObservable();
   /** `conversation:new`. */
@@ -115,6 +124,9 @@ export class ChatSocketService {
     socket.on('disconnect', () => this.connected.set(false));
     socket.on('conversation:message', (payload: MensajeDelCable) =>
       this.messages$.next(aMensaje(payload)),
+    );
+    socket.on('conversation:message:updated', (payload: MensajeDelCable) =>
+      this.updated$.next(aMensaje(payload)),
     );
     socket.on('conversation:read', (payload: ChatReadEvent) =>
       this.reads$.next(payload),

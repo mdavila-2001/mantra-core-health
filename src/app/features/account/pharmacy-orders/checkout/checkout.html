@@ -1,0 +1,113 @@
+<app-page-header
+  title="Confirmá tu pedido"
+  subtitle="Revisá cómo lo retirás y qué pedís, y confirmá para enviarlo a la farmacia."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="estado()">
+  @if (borrador; as pedido) {
+    <div class="checkout" data-testid="checkout">
+      <app-stepper
+        label="Confirmá tu pedido"
+        interactive
+        data-testid="checkout-stepper"
+        [steps]="pasosDelStepper()"
+        (stepSelected)="alPedirPaso($event)"
+      />
+
+      <section class="checkout__paso" aria-labelledby="checkout-paso-titulo" data-testid="checkout-paso">
+        @switch (pasoActual()) {
+          <!-- ─── 1 · Entrega: lo único que el backend acepta hoy ─────────── -->
+          @case ('ENTREGA') {
+            <h2 id="checkout-paso-titulo" class="checkout__titulo" tabindex="-1">Cómo lo recibís</h2>
+            <p class="checkout__principal" data-testid="checkout-entrega">
+              Retiro en la farmacia
+            </p>
+            <p class="checkout__secundario">
+              {{ pedido.farmacia }} · {{ pedido.sede }}
+              @if (pedido.direccion !== null) {
+                · {{ pedido.direccion }}
+              }
+            </p>
+            <!-- Sin libreta de direcciones ni envío en el contrato, ofrecer
+                 «Delivery» sería prometer algo que el pedido no puede llevar. -->
+            <p class="checkout__nota" data-testid="checkout-envio-no-disponible">
+              El envío a domicilio todavía no está disponible: los pedidos se retiran en la
+              farmacia.
+            </p>
+          }
+
+          <!-- ─── 2 · Resumen y confirmación final ───────────────────────── -->
+          @case ('RESUMEN') {
+            <h2 id="checkout-paso-titulo" class="checkout__titulo" tabindex="-1">Revisá y confirmá</h2>
+
+            <app-order-summary [resumen]="resumen()" />
+
+            @if (productosSinPublicar.length > 0) {
+              <app-alert tone="warning" title="Este pedido todavía no puede confirmarse">
+                No hay un producto publicado para: {{ productosSinPublicar.join(', ') }}.
+              </app-alert>
+            }
+
+            @if (falloAlConfirmar()) {
+              <app-alert tone="error" title="No pudimos confirmar tu pedido" data-testid="checkout-error-al-confirmar">
+                No se creó ningún pedido duplicado. Podés reintentar.
+              </app-alert>
+            }
+
+            <!-- El pago no pasa por acá: el contrato no tiene ningún medio de
+                 pago del paciente, así que la pantalla no simula uno. -->
+            <p class="checkout__nota" data-testid="checkout-pago-nota">
+              Acá no se cobra nada: el pago lo coordinás con la farmacia cuando retirás.
+            </p>
+          }
+        }
+      </section>
+
+      <div class="checkout__acciones">
+        @if (pasoActual() === 'RESUMEN') {
+          <button
+            app-button
+            variant="primary"
+            type="button"
+            data-testid="checkout-confirmar"
+            [disabled]="!puedeConfirmar() && !enviando()"
+            [isLoading]="enviando()"
+            (clicked)="confirmar()"
+          >
+            {{ falloAlConfirmar() ? 'Reintentar' : 'Confirmar pedido' }}
+          </button>
+          <button
+            app-button
+            variant="ghost"
+            type="button"
+            data-testid="checkout-anterior"
+            [disabled]="enviando()"
+            (clicked)="anterior()"
+          >
+            Anterior
+          </button>
+        } @else {
+          <button
+            app-button
+            variant="primary"
+            type="button"
+            data-testid="checkout-siguiente"
+            (clicked)="siguiente()"
+          >
+            Siguiente
+          </button>
+          <button
+            app-button
+            variant="ghost"
+            type="button"
+            data-testid="checkout-volver-a-la-orden"
+            (clicked)="volverALaOrden()"
+          >
+            Volver a la orden
+          </button>
+        }
+      </div>
+    </div>
+  }
+</app-view-state-host>

@@ -1,0 +1,93 @@
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+Using Vitest configuration file: /private/tmp/mch-upload-baseline/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                              | Names                                                         |  Raw size
+spec-app-features-identity-verification-identity-verification.js | spec-app-features-identity-verification-identity-verification | 353.09 kB |
+styles.css                                                       | styles                                                        | 161.21 kB |
+chunk-JBWBLPNK.js                                                | -                                                             |   5.19 kB |
+init-testbed.js                                                  | init-testbed                                                  |   1.21 kB |
+vitest-mock-patch.js                                             | vitest-mock-patch                                             | 974 bytes |
+setup-test-setup.js                                              | setup-test-setup                                              | 250 bytes |
+
+                                                                 | Initial total                                                 | 521.92 kB
+
+Application bundle generation complete. [14.736 seconds] - 2026-09-10T00:59:34.334Z
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of MyProfile [plugin angular-compiler]
+
+    src/app/features/account/my-profile/my-profile.ts:126:4:
+      126 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: PractitionerProfileView is not used within the template of PractitionerProfileView [plugin angular-compiler]
+
+    src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.ts:97:4:
+      97 │     PractitionerProfileView,
+         ╵     ~~~~~~~~~~~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:72:4:
+      72 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:96:30:
+      96 │   imports: [Alert, AppButton, Card, Chip, RouterLink, Textarea],
+         ╵                               ~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:96:42:
+      96 │   imports: [Alert, AppButton, Card, Chip, RouterLink, Textarea],
+         ╵                                           ~~~~~~~~~~
+
+
+
+ RUN  v4.1.10 /private/tmp/mch-upload-baseline
+
+ ❯ |mantra-core-health| src/app/features/identity-verification/identity-verification.spec.ts (20 tests | 1 failed) 145ms
+     × encadena la apertura del caso con el identificador de la subida 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |mantra-core-health| src/app/features/identity-verification/identity-verification.spec.ts > IdentityVerification > encadena la apertura del caso con el identificador de la subida
+AssertionError: expected { id: 'c-1', status: 'PENDING', …(1) } to deeply equal { id: 'c-1', status: 'PENDING' }
+
+- Expected
++ Received
+
+  {
+    "id": "c-1",
+    "status": "PENDING",
++   "type": "PATIENT_IDENTITY",
+  }
+
+ ❯ src/app/features/identity-verification/identity-verification.spec.ts:168:76
+    166|     responderHistorial();
+    167|
+    168|     expect(interno<() => { id: string; status: string } | null>('caso'…
+       |                                                                            ^
+    169|       id: 'c-1',
+    170|       status: 'PENDING',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 passed (20)
+   Start at  20:59:34
+   Duration  1.01s (transform 204ms, setup 107ms, import 262ms, tests 145ms, environment 420ms)

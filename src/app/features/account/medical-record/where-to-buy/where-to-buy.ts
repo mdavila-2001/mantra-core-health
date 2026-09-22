@@ -15,12 +15,15 @@ import type {
   GeoPoint,
 } from '../../../../core/data-access/pharmacy/pharmacy.types';
 import { PharmacyCampaignsClient } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
+import { aCentavos } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.money';
 import type { CampanaDeFarmacia } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.types';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type {
   BorradorDePedido,
   LineaDePedido,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
+import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
+import { NO_SAVED_PLACES, savedPlacesOf, type SavedPlaces } from '../../../../core/data-access/profiles/saved-places';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
@@ -33,10 +36,15 @@ import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox'
 import { Link } from '../../../../shared/components/atoms/link/link';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { EmptyState } from '../../../../shared/components/molecules/empty-state/empty-state';
+import { SegmentedControl } from '../../../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { AppMap } from '../../../../shared/components/organisms/map/map';
-import type { PinMapa } from '../../../../shared/components/organisms/map/pin-mapa.types';
+import type {
+  EstadoDePin,
+  PinMapa,
+} from '../../../../shared/components/organisms/map/pin-mapa.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { MI_HISTORIA_ROUTE } from '../medical-record.routes';
@@ -72,13 +80,27 @@ const CANTIDAD_POR_RENGLON = 1;
 /**
  * Puntos de referencia para medir distancias sin entregar la ubicación: las
  * plazas centrales de las ciudades donde la red opera. Son datos públicos del
- * mapa, no datos de la persona. Domicilio y trabajo van a sumarse acá cuando
- * el backend exponga las direcciones del paciente — hoy no hay contrato.
+ * mapa, no datos de la persona — el domicilio y el trabajo declarados por el
+ * paciente son otro juego de puntos, `lugaresGuardados` más abajo, que se
+ * ofrecen primero porque ya sabemos que le quedan cerca.
  */
 const CIUDADES: readonly PuntoDeReferencia[] = [
   { etiqueta: 'Santa Cruz de la Sierra', lat: -17.7833, lng: -63.1821 },
   { etiqueta: 'La Paz', lat: -16.4957, lng: -68.1335 },
   { etiqueta: 'Cochabamba', lat: -17.3895, lng: -66.1568 },
+];
+
+/** Cómo se ordenan las sucursales en la lista (T-E2 · F2.1.4). */
+export type OrdenDeSedes = 'receta-completa' | 'mas-cerca' | 'mas-barato';
+
+/**
+ * Las tres maneras de mirar la misma lista. La primera es la del backend y es
+ * la que se abre: ordenar no vuelve a consultar, sólo reacomoda lo que llegó.
+ */
+export const OPCIONES_DE_ORDEN: readonly SegmentedOption<OrdenDeSedes>[] = [
+  { value: 'receta-completa', label: 'Receta completa primero' },
+  { value: 'mas-cerca', label: 'Más cerca' },
+  { value: 'mas-barato', label: 'Más barato' },
 ];
 
 /** Un lugar con nombre desde donde medir distancias. */
@@ -121,11 +143,15 @@ interface SedeVisible {
   readonly direccion: string | null;
   /** «1,2 km», o `null` sin origen o sin coordenadas de la sede. */
   readonly distancia: string | null;
+  /** La distancia del backend sin formatear: la clave de «Más cerca». */
+  readonly distanciaKm: number | null;
   readonly completa: boolean;
   /** Los medicamentos de la receta que esta sede NO puede confirmar. */
   readonly faltantes: readonly string[];
   /** «96.50 BOB», o `null` si falta un precio o las listas mezclan monedas. */
   readonly total: string | null;
+  /** El total en centavos, o `null` si no es un importe: la clave de «Más barato». */
+  readonly totalCentavos: number | null;
   readonly retiro: boolean | null;
   readonly delivery: boolean | null;
   /** Coordenadas reales de la sede; `null` si el directorio no las publica. */
@@ -140,6 +166,9 @@ interface ResultadoDeSedes {
   readonly sinProducto: readonly string[];
 }
 
+/** Sin sucursales que mostrar: la pantalla no llegó a consultar. */
+const SIN_SEDES: ResultadoDeSedes = { sedes: [], sinProducto: [] };
+
 /**
  * **Dónde comprar mi receta** (carril E3, sobre las lecturas E2 del backend).
  *
@@ -148,16 +177,30 @@ interface ResultadoDeSedes {
  * Qué sucursales pueden surtir los medicamentos recetados, cuáles los tienen
  * **todos** (completas, primero) y a cuáles les falta algo (parciales, con el
  * faltante dicho por su nombre), con dirección, distancia y total estimado.
- * El orden lo decide el backend: completas primero, después distancia, total
- * y nombre — la pantalla no lo reordena.
+ * El orden por defecto es el del backend: completas primero, después
+ * distancia, total y nombre — «Receta completa primero» lo respeta tal cual.
+ * «Más cerca» y «Más barato» (T-E2) reacomodan en la pantalla lo que ya llegó,
+ * sin volver a consultar; ver {@link ordenarSedes}.
  *
- * ## La ubicación se pide, no se toma
+ * ## Acá no se habla de cobertura del seguro
  *
- * Mismo patrón que «Cerca mío» (P4): la consulta sale **sin coordenadas** al
- * entrar —la disponibilidad no las necesita— y la API de geolocalización del
- * navegador no se toca hasta que alguien aprieta el botón. La alternativa sin
- * entregar la ubicación es medir desde una ciudad; domicilio y trabajo se
- * suman cuando exista el contrato de direcciones del paciente.
+ * La pantalla muestra **disponibilidad, existencias, sedes y precios de
+ * farmacia**, y nada más. «Aprobado / a tu cargo» **no** se dibuja: esos
+ * importes sólo existen después de la adjudicación real de la aseguradora
+ * —sobre un pedido ya creado, en `insuranceSettlement`— y esta pantalla es
+ * anterior al pedido (decisión de dominio PD-2 = B, 2026-09-17; cierra
+ * `B-REAL-3`). No se estiman ni se derivan: `patientAmount` es la tarifa que
+ * la farmacia publica, no una adjudicación, y se presenta como precio.
+ *
+ * ## La ubicación se pide, no se toma — salvo la que ya diste
+ *
+ * Mismo patrón que «Cerca mío» (P4): la API de geolocalización del navegador
+ * no se toca hasta que alguien aprieta «Compartir mi ubicación». Domicilio y
+ * trabajo (subtarea B.2) son la excepción, y no una contradicción: son datos
+ * que la persona **ya declaró** en su perfil, no algo que el navegador
+ * entregue sin que se sepa. Por eso la casa se preselecciona sin pedir
+ * permiso — la primera consulta de disponibilidad ya sale con ese origen —,
+ * y las ciudades siguen ahí para quien no declaró ninguno de los dos.
  *
  * ## El puente receta → producto
  *
@@ -186,6 +229,7 @@ interface ResultadoDeSedes {
     Link,
     PageHeader,
     RouterLink,
+    SegmentedControl,
     Tab,
     Tabs,
     ViewStateHost,
@@ -199,6 +243,7 @@ export class WhereToBuy {
   private readonly clinical = inject(ClinicalClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly pharmacy = inject(PharmacyClient);
+  private readonly profiles = inject(ProfilesClient);
   private readonly campaigns = inject(PharmacyCampaignsClient);
   private readonly ordersClient = inject(PharmacyOrdersClient);
   private readonly route = inject(ActivatedRoute);
@@ -221,6 +266,14 @@ export class WhereToBuy {
   protected readonly rutaDeLaboratorios = LABORATORIOS_ROUTE;
   protected readonly rutaDeClinicas = CLINICAS_ROUTE;
   protected readonly ciudades = CIUDADES;
+  protected readonly opcionesDeOrden = OPCIONES_DE_ORDEN;
+
+  /**
+   * El domicilio y el trabajo del paciente, como puntos de referencia
+   * (subtarea B.2). Vacío hasta que el perfil responde; si no declaró
+   * ninguno de los dos, se queda vacío y sólo quedan las ciudades.
+   */
+  protected readonly lugaresGuardados = signal<readonly PuntoDeReferencia[]>([]);
 
   /** La última respuesta cruda: el borrador necesita los precios por línea. */
   private ultimaConsulta: {
@@ -242,6 +295,15 @@ export class WhereToBuy {
 
   protected readonly items = computed(() => dataOf(this.lista())?.items ?? []);
   protected readonly resultado = computed(() => dataOf(this.resultados()));
+
+  /* ---- el orden (T-E2 · F2.1.4) ------------------------------------------- */
+
+  protected readonly orden = signal<OrdenDeSedes>('receta-completa');
+
+  /** La lista en el orden elegido. Una copia: la respuesta no se toca. */
+  protected readonly sedesOrdenadas = computed(() =>
+    ordenarSedes(this.resultado()?.sedes ?? [], this.orden()),
+  );
 
   /** Las sedes que el mapa puede ubicar: las que tienen coordenadas. */
   protected readonly sedesEnElMapa = computed(() =>
@@ -265,9 +327,7 @@ export class WhereToBuy {
       lng: sede.lng,
       titulo: `${sede.farmacia} · ${sede.sede}`,
       subtitulo: subtituloDePin(sede),
-      estado: sede.completa
-        ? { etiqueta: 'Tiene todo', tono: 'success' as const }
-        : { etiqueta: 'Le falta algo', tono: 'warning' as const },
+      estado: estadoDePin(sede),
       ctaEtiqueta: 'Ver en la lista',
     })),
   );
@@ -283,7 +343,7 @@ export class WhereToBuy {
       // No es un vacío de datos ni un error: la pantalla no le corresponde a
       // esta cuenta, y el aviso lo dice con su propia salida.
       this.lista.set(empty({ label: 'Ir a mi historia', route: MI_HISTORIA_ROUTE }));
-      this.resultados.set(ready({ sedes: [], sinProducto: [] }));
+      this.resultados.set(ready(SIN_SEDES));
       return;
     }
     this.cargar();
@@ -319,6 +379,14 @@ export class WhereToBuy {
               .readConceptLabels(filas.map((fila) => fila.medicationConceptId))
               .pipe(catchError(() => of<ConceptLabels>(new Map()))),
             productos: this.productosDe(filas.map((fila) => fila.medicationConceptId)),
+            // Domicilio y trabajo del paciente, para ofrecerlos como puntos
+            // de referencia sin pedirle el GPS (subtarea B.2). Un fallo acá
+            // no puede tumbar la consulta de disponibilidad: se degrada a
+            // «sin lugares guardados», que es exactamente lo que había antes.
+            places: this.profiles.getOwnPatientProfile().pipe(
+              map(savedPlacesOf),
+              catchError(() => of<SavedPlaces>(NO_SAVED_PLACES)),
+            ),
           });
         }),
       )
@@ -326,7 +394,7 @@ export class WhereToBuy {
         next: (carga) => {
           if (carga === null) {
             this.lista.set(notFound({ label: 'Volver a mi historia', route: MI_HISTORIA_ROUTE }));
-            this.resultados.set(ready({ sedes: [], sinProducto: [] }));
+            this.resultados.set(ready(SIN_SEDES));
             return;
           }
           const items = carga.filas.map((fila) => itemDe(fila, carga.etiquetas, carga.productos));
@@ -342,11 +410,12 @@ export class WhereToBuy {
             ),
           );
           this.lista.set(ready({ items }));
+          this.sembrarLugaresGuardados(carga.places);
           this.consultar();
         },
         error: (error: unknown) => {
           this.lista.set(errorToViewState<ListaDeCompra>(error));
-          this.resultados.set(ready({ sedes: [], sinProducto: [] }));
+          this.resultados.set(ready(SIN_SEDES));
         },
       });
   }
@@ -502,6 +571,31 @@ export class WhereToBuy {
 
   /* ---- la ubicación: se pide, no se toma ---------------------------------- */
 
+  /**
+   * Ofrece la casa y el trabajo del paciente como origen, y preselecciona la
+   * casa si existe.
+   *
+   * A diferencia de `compartirUbicacion`, esto **no pide nada al
+   * navegador**: la casa es un dato que la persona ya declaró en su perfil,
+   * así que usarla de entrada no es «tomar» su ubicación, es leer lo que ya
+   * dio. Si no hay casa pero sí trabajo, el trabajo queda ofrecido como
+   * botón — pero no se preselecciona: `casa` es la lectura por defecto más
+   * útil, no cualquiera de las dos.
+   */
+  private sembrarLugaresGuardados(places: SavedPlaces): void {
+    const referencias: PuntoDeReferencia[] = [];
+    if (places.home !== null) {
+      referencias.push({ etiqueta: 'tu casa', ...places.home });
+    }
+    if (places.work !== null) {
+      referencias.push({ etiqueta: 'tu trabajo', ...places.work });
+    }
+    this.lugaresGuardados.set(referencias);
+    if (places.home !== null) {
+      this.origen.set({ etiqueta: 'tu casa', ...places.home });
+    }
+  }
+
   /** Pide la ubicación al navegador. Sólo se llama desde el botón. */
   protected compartirUbicacion(): void {
     const geo = this.documento.defaultView?.navigator?.geolocation;
@@ -598,12 +692,56 @@ function subtituloDePin(sede: SedeVisible): string | undefined {
   return partes.length === 0 ? undefined : partes.join(' · ');
 }
 
+/** El estado del pin: el mismo criterio que el badge de la tarjeta. */
+function estadoDePin(sede: SedeVisible): EstadoDePin {
+  return sede.completa
+    ? { etiqueta: 'Tiene todo', tono: 'success' }
+    : { etiqueta: 'Le falta algo', tono: 'warning' };
+}
+
+/**
+ * Las sedes en el orden elegido (T-E2 · F2.1.4). **Pura y sin mutar**: devuelve
+ * la misma lista con «Receta completa primero» —el orden del backend, sin
+ * recalcular nada— y una copia reacomodada con las otras dos.
+ *
+ * - «Más cerca»: distancia ascendente.
+ * - «Más barato»: total ascendente, en centavos.
+ * - Un valor ausente o que no es un número finito no negativo va al final;
+ *   el `0` es un valor válido (una sede a 0 km, un total 0.00).
+ * - Los empates, entre sí y entre ausentes, conservan el orden del backend:
+ *   el índice original desempata, sin depender de la estabilidad del `sort`.
+ */
+export function ordenarSedes<
+  T extends { readonly distanciaKm: number | null; readonly totalCentavos: number | null },
+>(sedes: readonly T[], orden: OrdenDeSedes): readonly T[] {
+  if (orden === 'receta-completa') {
+    return sedes;
+  }
+  const claveDe = (sede: T) => (orden === 'mas-cerca' ? sede.distanciaKm : sede.totalCentavos);
+  return sedes
+    .map((sede, indice) => ({ sede, indice, clave: claveValida(claveDe(sede)) }))
+    .sort((a, b) => {
+      if (a.clave === null || b.clave === null) {
+        if (a.clave === b.clave) {
+          return a.indice - b.indice;
+        }
+        return a.clave === null ? 1 : -1;
+      }
+      return a.clave - b.clave || a.indice - b.indice;
+    })
+    .map(({ sede }) => sede);
+}
+
+/** Un número utilizable para ordenar, o `null`. `0` vale; `NaN` e infinitos no. */
+function claveValida(valor: number | null | undefined): number | null {
+  return typeof valor === 'number' && Number.isFinite(valor) && valor >= 0 ? valor : null;
+}
+
 /**
  * El borrador del pedido (FAR-I2): los renglones incluidos, evaluados contra
  * la sede elegida, con el precio que la sede publica.
  *
- * Exportada a propósito: es pura y el spec la ejercita directo — el clic que
- * la dispara sólo existe con la demostración encendida.
+ * Exportada a propósito: es pura y el spec la ejercita directo.
  */
 export function borradorDePedido(
   requestId: string,
@@ -698,12 +836,14 @@ function evaluar(
       direccion: sede.addressText,
       distancia:
         sede.distanceKm === null ? null : `${sede.distanceKm.toFixed(1).replace('.', ',')} km`,
+      distanciaKm: sede.distanceKm,
       completa: faltantes.length === 0,
       faltantes,
       total:
         sede.totalAmount === null
           ? null
           : `${sede.totalAmount} ${sede.currency?.code ?? ''}`.trim(),
+      totalCentavos: sede.totalAmount === null ? null : aCentavos(sede.totalAmount),
       retiro: sede.pickupAvailable,
       delivery: sede.homeDeliveryAvailable,
       lat: sede.latitude,

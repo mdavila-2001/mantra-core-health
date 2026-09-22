@@ -192,17 +192,22 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     icon: 'building',
     // El padrón de organizaciones y las que son de uno. Van juntas porque son
     // la misma entidad vista desde arriba y desde adentro.
-    paths: ['administration/organizations', 'administration/my-organization', 'my-organizations'],
+    paths: [
+      'administration/organizations',
+      'administration/my-organization',
+      'administration/my-practice',
+    ],
   },
   {
     label: 'Seguros',
     group: 'Administración',
     icon: 'umbrella',
-    // Quién paga, quién intermedia y qué se le presentó.
+    // Quién paga, quién intermedia, qué se le presentó y qué dice el agregado.
     paths: [
       'administration/insurance',
       'administration/brokers',
       'administration/insurance-claims',
+      'administration/insurance-analytics',
     ],
   },
   {
@@ -251,11 +256,29 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     ],
   },
   {
+    label: 'Plataforma',
+    group: 'Administración',
+    icon: 'monitor',
+    // El portal administrativo de la plataforma misma: qué datos guarda y por
+    // qué, cómo la usan, cómo se prueba y si está lista para producción.
+    paths: [
+      'administration/data-catalog',
+      'administration/web-analytics',
+      'administration/qa-lab',
+      'administration/operations',
+    ],
+  },
+  {
     label: 'Farmacia',
     group: 'Administración',
     icon: 'bag',
-    // El mostrador: lo que se despacha y lo que se promociona.
-    paths: ['administration/pharmacy-orders', 'administration/pharmacy-campaigns'],
+    // El mostrador: lo que se despacha, lo que se promociona y la empresa que
+    // está detrás.
+    paths: [
+      'administration/pharmacy-orders',
+      'administration/pharmacy-campaigns',
+      'administration/pharmacy-profile',
+    ],
   },
 
   /* -- Facturación -------------------------------------------------------- */
@@ -273,14 +296,19 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     group: 'Mi cuenta',
     icon: 'patients',
     // Quién soy para la plataforma, y cómo lo demuestro.
-    paths: ['my-account', 'my-account/identity/verify', 'my-account/identity/cases'],
+    paths: ['my-account', 'my-account/identity', 'my-account/dependents'],
   },
   {
     label: 'Mis gestiones',
     group: 'Mi cuenta',
     icon: 'calendar',
     // Lo que tengo en curso: un turno, un pedido, mis puntos.
-    paths: ['my-account/appointments', 'my-account/pharmacy-orders', 'my-account/loyalty'],
+    paths: [
+      'my-account/appointments',
+      'my-account/pharmacy-orders',
+      'my-account/loyalty',
+      'my-account/promotions',
+    ],
   },
   {
     label: 'Mi salud',
@@ -338,3 +366,42 @@ export const NAV_GROUP_ICONS: Record<NavGroup, NavIconName> = {
   // Una persona: mis propios datos, no los que administro.
   'Mi cuenta': 'patients',
 };
+
+/**
+ * Los dominios que **no** se dibujan como contenedor: sus destinos van sueltos.
+ *
+ * Un dominio aplanado sigue existiendo —el registro reparte sus secciones igual
+ * y el breadcrumb lo sigue nombrando—; lo único que pierde es el desplegable
+ * que lo envolvía en la barra. Y con él pierden el suyo sus bloques: aplanar a
+ * medias —sacar el dominio pero dejar «Mis gestiones» plegado— deja el mismo
+ * problema una pulgada más abajo.
+ *
+ * Por qué estos cuatro y no todos. «General» y «Mi cuenta» son los dominios de
+ * quien **usa** la plataforma para lo suyo: el paciente entraba a «Mi cuenta»,
+ * después a «Mis gestiones» y recién ahí veía «Mis citas» — tres clics para el
+ * destino más frecuente del producto, y dos de ellos sobre rótulos que no
+ * llevan a ninguna pantalla. Aplanados, su menú entero son catorce renglones a
+ * un clic, que entran en una barra sin desplazarla.
+ *
+ * «Atención» y «Facturación» se suman el 13/09/2026, y por el mismo motivo
+ * mirado desde la otra silla: son **los dos únicos dominios de trabajo que ve
+ * quien ejerce**, y eran lo único que su barra le hacía abrir. Abrir un
+ * desplegable para llegar a «Archivo clínico» o a «Consultas médicas» —las
+ * pantallas donde pasa el día— es el costo que la barra le cobraba a cada
+ * paciente que atiende. Aplanados, el médico ve nueve renglones de atención y
+ * los de facturación seguidos, todos a un clic, y no le queda ni un `<details>`
+ * en la barra.
+ *
+ * «Administración» sigue plegada: tiene veintidós secciones, aplanarla
+ * cambiaría un problema por otro, y no la ve quien ejerce.
+ *
+ * Pedido del propietario del producto: 12/09/2026 los dos primeros, 13/09/2026
+ * los dos de trabajo —mirando la barra del médico, que es la condición que este
+ * comentario dejaba puesta—.
+ */
+export const GRUPOS_APLANADOS: ReadonlySet<NavGroup> = new Set<NavGroup>([
+  'General',
+  'Atención',
+  'Facturación',
+  'Mi cuenta',
+]);

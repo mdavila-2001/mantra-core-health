@@ -1,9 +1,11 @@
+import { PatientInsuranceSettlement } from '../../../shared/components/molecules/patient-insurance-settlement/patient-insurance-settlement';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
+import type { PatientSettlementFields } from '../../../core/data-access/insurance/patient-insurance-settlement.types';
 import { AuthService } from '../../../core/auth/auth.service';
 import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnostics.client';
 import type { PatientOrder } from '../../../core/data-access/diagnostics/diagnostics.types';
@@ -25,7 +27,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 const TOPE_DE_ORDENES = 50;
 
 /** Una orden ya lista para mostrarse, sin un solo uuid. */
-interface OrdenVisible {
+interface OrdenVisible extends PatientSettlementFields {
   readonly id: string;
   /** La atención en que se pidió. Vacío = se pidió fuera de una consulta.
       Nunca llega a la pantalla: agrupa, y el encabezado es la fecha. */
@@ -88,7 +90,7 @@ interface GrupoDeOrdenes {
  */
 @Component({
   selector: 'app-diagnostic-orders',
-  imports: [Alert, AppButton, Badge, DatePipe, Link, PageHeader, RouterLink],
+  imports: [PatientInsuranceSettlement, Alert, AppButton, Badge, DatePipe, Link, PageHeader, RouterLink],
   templateUrl: './diagnostic-orders.html',
   styleUrl: './diagnostic-orders.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -220,6 +222,8 @@ export class DiagnosticOrders {
   private aVisible(item: PatientOrder): OrdenVisible {
     return {
       id: item.id,
+      insuranceSettlement: item.insuranceSettlement,
+      insuranceSettlementAvailability: item.insuranceSettlementAvailability,
       encounterId: item.encounterId ?? '',
       estudio: this.etiqueta(item.codeConceptId, 'Estudio'),
       categoria: this.etiqueta(item.categoryConceptId ?? '', 'Sin clasificar'),

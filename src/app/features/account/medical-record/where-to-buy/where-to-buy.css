@@ -33,13 +33,6 @@
   color: var(--text-secondary);
 }
 
-.compra__proximamente {
-  margin: 0;
-  font-size: var(--fs-caption);
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
 .compra__items,
 .compra__sedes {
   list-style: none;
@@ -173,4 +166,12 @@
 
 .compra__promo {
   font-size: var(--fs-caption);
+}
+
+/* El orden de las sucursales (T-E2 · F2.1.4): una barra que se apila en móvil. */
+.compra__controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
 }

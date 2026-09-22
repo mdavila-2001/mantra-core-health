@@ -1,0 +1,92 @@
+<app-page-header
+  title="Plan de ejecución"
+  subtitle="Lo que el servidor llama, con qué límites, quién lo aprobó y qué pasó."
+  [breadcrumbs]="breadcrumbs"
+/>
+
+<div class="plan">
+  @if (aviso(); as mensaje) {
+    <app-alert tone="success">{{ mensaje }}</app-alert>
+  }
+  @if (error(); as mensaje) {
+    <app-alert tone="error" data-testid="plan-error">{{ mensaje }}</app-alert>
+  }
+
+  <app-view-state-host [state]="plan()" (retry)="cargar()">
+    @if (datos(); as p) {
+      <div class="plan__estado">
+        <app-badge [variant]="planStatus(p.status).tone" data-testid="plan-status">{{ planStatus(p.status).label }}</app-badge>
+        @if (vivo()) {
+          <span class="plan__nota" role="status">Se actualiza solo mientras está vivo.</span>
+        }
+        <span class="plan__acciones">
+          @if (p.status === 'PENDING_APPROVAL') {
+            <button app-button variant="primary" size="sm" data-testid="plan-approve" (clicked)="decidir('APPROVED')">Aprobar</button>
+            <button app-button variant="outline" size="sm" (clicked)="decidir('REJECTED')">Rechazar</button>
+          }
+          @if (vivo()) {
+            <button app-button variant="danger" size="sm" data-testid="plan-cancel" (clicked)="cancelar()">Cancelar</button>
+          }
+        </span>
+      </div>
+
+      @if (p.error; as e) {
+        <app-alert tone="warning" [title]="e.code">{{ e.message }}</app-alert>
+      }
+
+      <app-card variant="outlined" padding="md">
+        <app-tabs [(selectedIndex)]="pestana">
+          <app-tab label="Resumen">
+            <dl class="plan__datos">
+              <div><dt>Pedido</dt><dd>{{ p.createdAt | date: 'medium' }}</dd></div>
+              <div><dt>Terminado</dt><dd>{{ (p.finishedAt | date: 'medium') ?? '—' }}</dd></div>
+              <div><dt>Peticiones enviadas</dt><dd>{{ p.counters.requestsSent }}</dd></div>
+              <div><dt>Casos</dt><dd>{{ p.counters.casesPassed }} pasaron · {{ p.counters.casesFailed }} fallaron · {{ p.counters.casesNotRun }} sin ejecutar</dd></div>
+              <div><dt>Límites</dt><dd>{{ p.limits.maxRequests }} peticiones · {{ p.limits.maxDurationSeconds }} s · timeout {{ p.limits.requestTimeoutMs }} ms</dd></div>
+              <div><dt>Hash del plan</dt><dd><code>{{ p.planHash }}</code></dd></div>
+              <div>
+                <dt>Aprobación</dt>
+                <dd>{{ p.requiresApproval ? 'Requerida: ' + p.approvalReasons.join(', ') : 'No requerida' }}</dd>
+              </div>
+            </dl>
+          </app-tab>
+          <app-tab label="Pasos">
+            <ol class="plan__lista" data-testid="plan-steps">
+              @for (s of p.steps; track s.caseId) {
+                <li>
+                  <app-badge [variant]="s.mutating ? 'warning' : 'secondary'">{{ s.method }}</app-badge>
+                  <strong>{{ s.code }}</strong> <code>{{ s.url }}</code>
+                </li>
+              }
+            </ol>
+          </app-tab>
+          <app-tab label="Bitácora">
+            <ol class="plan__lista" data-testid="plan-events">
+              @for (e of p.events; track e.seq) {
+                <li>
+                  <span class="plan__nota">{{ e.at | date: 'mediumTime' }}</span>
+                  {{ evento(e.kind) }}
+                  @if (e.detail) { <span class="plan__nota">{{ detalle(e.detail) }}</span> }
+                </li>
+              }
+            </ol>
+          </app-tab>
+          <app-tab label="Aprobaciones">
+            @if (p.approvals.length === 0) {
+              <p class="plan__nota">Sin decisiones registradas.</p>
+            } @else {
+              <ul class="plan__lista">
+                @for (a of p.approvals; track $index) {
+                  <li>
+                    {{ a.decision === 'APPROVED' ? 'Aprobado' : 'Rechazado' }} el {{ a.createdAt | date: 'short' }} — «{{ a.reason }}»
+                    <span class="plan__nota">vence {{ a.expiresAt | date: 'short' }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          </app-tab>
+        </app-tabs>
+      </app-card>
+    }
+  </app-view-state-host>
+</div>

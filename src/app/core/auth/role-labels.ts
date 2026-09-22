@@ -33,6 +33,17 @@ export const ROLE_LABELS: Readonly<Record<string, string>> = {
   BILLING_OPERATOR: 'Operación de facturación',
   FINANCE: 'Finanzas',
   CASHIER: 'Caja',
+  /** Rol de negocio de `authz.roles` (subtarea 3.1, v4.2.14): cara de la aseguradora. */
+  INSURANCE_OPERATOR: 'Operación de aseguradora',
+  /** Roles del portal administrativo (catálogo, analítica, QA, operación). */
+  GOVERNANCE_ADMIN: 'Gobierno de datos',
+  DATA_PLATFORM_ADMIN: 'Plataforma de datos',
+  DPO: 'Protección de datos',
+  MARKETING_MANAGER: 'Marketing',
+  QA_ADMIN: 'Administración de QA',
+  QA_ENGINEER: 'Ingeniería de QA',
+  RELEASE_MANAGER: 'Gestión de releases',
+  SRE: 'Confiabilidad (SRE)',
 };
 
 /**

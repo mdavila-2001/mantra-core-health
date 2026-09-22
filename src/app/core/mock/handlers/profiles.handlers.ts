@@ -1,4 +1,4 @@
-import { ESTABLECIMIENTO, ESTADO, TIPO_VINCULO, displayDe } from '../fixtures/conceptos';
+import { ESTABLECIMIENTO, ESTADO, PARENTESCO, TIPO_VINCULO, displayDe } from '../fixtures/conceptos';
 import {
   afiliaciones,
   CATEGORIA_MEDICO,
@@ -58,8 +58,8 @@ function fichaDe(p: PacienteSimulado) {
     masterPatientIndexCode: `MPI-${p.patientCode.slice(4)}`,
     displayName: p.displayName,
     birthDate: p.birthDate,
-    administrativeGenderConceptId: p.generoId,
-    sexAtBirthConceptId: p.sexoId,
+    ...(p.generoId === undefined ? {} : { administrativeGenderConceptId: p.generoId }),
+    ...(p.sexoId === undefined ? {} : { sexAtBirthConceptId: p.sexoId }),
     genderIdentityConceptId: null,
     nationalityConceptId: null,
     preferredLanguageConceptId: null,
@@ -77,7 +77,13 @@ function fichaDe(p: PacienteSimulado) {
   };
 }
 
-function perfilPropioDe(p: PacienteSimulado) {
+/**
+ * Exportada para la portabilidad de póliza (subtarea 3.3): su informe
+ * necesita exactamente los mismos datos del afiliado y las mismas 3
+ * coberturas que ya arma `GET /profiles/patients/me` — reusarla evita un
+ * segundo juego de coberturas de maqueta que se desalinee del primero.
+ */
+export function perfilPropioDe(p: PacienteSimulado) {
   return {
     personId: p.personId,
     patientProfileId: p.id,
@@ -87,7 +93,7 @@ function perfilPropioDe(p: PacienteSimulado) {
     motherLastName: p.motherLastName,
     displayName: p.displayName,
     birthDate: p.birthDate,
-    sexAtBirth: p.sexAtBirth,
+    ...(p.sexAtBirth === undefined ? {} : { sexAtBirth: p.sexAtBirth }),
     occupationConceptId: p.ocupacionId,
     phone: p.phone,
     residenceMunicipalityConceptId: p.municipioId,
@@ -99,12 +105,67 @@ function perfilPropioDe(p: PacienteSimulado) {
     taxHolderName: p.displayName,
     email: p.email,
     ...(p.photoFileId === undefined ? {} : { photoFileId: p.photoFileId }),
-    homeAddress: { lines: p.direccion, city: displayDe(p.municipioId), municipalityConceptId: p.municipioId, latitude: -17.78, longitude: -63.18 },
-    workAddress: { lines: 'Av. Cañoto esq. Landívar, piso 3', city: displayDe(p.municipioId), municipalityConceptId: p.municipioId },
+    // El punto guardado manda sobre el de ejemplo: si no, editar la ubicación
+    // «funcionaba» y al recargar volvía el de la plaza principal.
+    //
+    // `null` en los dos extremos es «lo quitaron» (subtarea B.2): a
+    // diferencia de `undefined` —«nunca se tocó», que en la casa cae al
+    // punto de ejemplo—, un punto quitado no vuelve a aparecer. Sin esta
+    // distinción, `PATCH` con `null`/`null` y el `mock-store.actualizar`
+    // (`{ ...actual, ...cambios }`) dejaban la columna en `undefined`, que es
+    // exactamente «nunca se tocó»: quitar el pin de la casa lo devolvía al
+    // punto de la plaza principal en el siguiente `GET`.
+    homeAddress: {
+      lines: p.direccion,
+      city: displayDe(p.municipioId),
+      municipalityConceptId: p.municipioId,
+      ...(p.homeLat === null && p.homeLng === null
+        ? {}
+        : p.homeLat === undefined || p.homeLng === undefined
+          ? { latitude: -17.78, longitude: -63.18 }
+          : { latitude: p.homeLat, longitude: p.homeLng }),
+    },
+    workAddress: {
+      lines: p.direccionTrabajo ?? 'Av. Cañoto esq. Landívar, piso 3',
+      city: displayDe(p.municipioId),
+      municipalityConceptId: p.municipioId,
+      ...(p.workLat === null || p.workLat === undefined || p.workLng === null || p.workLng === undefined
+        ? {}
+        : { latitude: p.workLat, longitude: p.workLng }),
+    },
     coverages:
       p.aseguradora === undefined
         ? []
-        : [{ carrierName: p.aseguradora, planName: p.plan, isPublic: false, memberIdentifier: `AF-${p.patientCode.slice(4)}`, verified: true }],
+        : [{ id: `coverage-${p.id}`,
+            carrierName: p.aseguradora,
+            planName: p.plan,
+            isPublic: false,
+            policyIdentifier: `POL-${p.patientCode.slice(4)}`,
+            memberIdentifier: `AF-${p.patientCode.slice(4)}`,
+            verified: true,
+            status: 'Cobertura activa',
+            statusCode: 'COVERAGE_ACTIVE',
+            validityStatus: 'CURRENT',
+            referenceDate: isoDia(0),
+            effectiveFrom: '2026-01-01',
+            effectiveTo: '2026-12-31',
+            currencyCode: 'BOB',
+            carrierWhatsappNumber: '+59170011223',
+            carrierCallCenterPhone: '800-10-6060',
+            benefits: [
+              { id: `benefit-general-${p.id}`, categoryName: 'Atención ambulatoria', coveragePercent: '80.50', copayAmount: '20.00', deductibleAmount: null, effectiveFrom: '2026-01-01', effectiveTo: '2026-12-31', validityStatus: 'CURRENT' },
+              { id: `benefit-service-${p.id}`, categoryName: 'Atención ambulatoria', serviceConceptId: uuid('benefit-consultation'), serviceName: 'Consulta de seguimiento', coveragePercent: '100', copayAmount: '0.00', deductibleAmount: '150.00', effectiveFrom: '2026-01-01', effectiveTo: '2026-12-31', validityStatus: 'CURRENT' },
+            ] },
+            { id: `coverage-expired-${p.id}`, carrierName: p.aseguradora, planName: 'Plan anterior', isPublic: false,
+              policyIdentifier: `POL-ANT-${p.patientCode.slice(4)}`, verified: true, status: 'Cobertura activa',
+              statusCode: 'COVERAGE_ACTIVE', validityStatus: 'EXPIRED', effectiveFrom: '2025-01-01', effectiveTo: '2025-12-31',
+              carrierWhatsappNumber: '+59170011223', benefits: [],
+            },
+            { id: `coverage-future-${p.id}`, carrierName: p.aseguradora, planName: 'Plan próxima renovación', isPublic: false,
+              memberIdentifier: `DECL-${p.patientCode.slice(4)}`, verified: false, status: 'Cobertura activa',
+              statusCode: 'COVERAGE_ACTIVE', validityStatus: 'UPCOMING', effectiveFrom: '2027-01-01', effectiveTo: '2027-12-31',
+              currencyCode: 'USD', carrierCallCenterPhone: '800-10-6060', benefits: [],
+            }],
     guardians: personasRelacionadasDe(p).map((r) => ({
       displayName: r.displayName,
       relationshipConceptId: r.relationshipConceptId,
@@ -170,11 +231,100 @@ function itemDeGuia(p: ProfesionalSimulado) {
   };
 }
 
+
+/* ---- dependientes (B.1) ---------------------------------------------------
+   El apoderamiento vive acá y no en los fixtures porque nace en la sesión: no
+   hay dependientes de ejemplo, los crea quien los registra. */
+
+/** Un apoderamiento vigente, tal como lo guarda la maqueta. */
+interface ApoderamientoSimulado {
+  readonly id: string;
+  readonly titularId: string;
+  readonly dependienteId: string;
+  readonly relationshipConceptId: string;
+}
+
+const apoderamientos: ApoderamientoSimulado[] = [];
+
+/** Los apoderamientos de un titular. */
+function dependientesDe(titularId: string): readonly ApoderamientoSimulado[] {
+  return apoderamientos.filter((a) => a.titularId === titularId);
+}
+
+/**
+ * Si esa sesión puede actuar por ese paciente.
+ *
+ * Lo exportan los otros manejadores —agenda, clínica— para no repetir el
+ * criterio: es la misma pregunta que la API resuelve contra
+ * `patient_portal_proxies`.
+ */
+export function representaA(titularId: string | undefined, pacienteId: string): boolean {
+  if (titularId === undefined) return false;
+  return apoderamientos.some(
+    (a) => a.titularId === titularId && a.dependienteId === pacienteId,
+  );
+}
+
+/**
+ * Qué es el dependiente para quien lo representa, ya dado vuelta.
+ *
+ * Espeja `describeDependentRelationship` de la API: la maqueta tiene que decir
+ * lo mismo que el servidor, o la pantalla se vería distinta según contra qué
+ * corra.
+ */
+function parentescoInvertido(conceptId: string): { code: string; display: string } {
+  const codigo = Object.entries(PARENTESCO).find(([, id]) => id === conceptId)?.[0];
+  if (codigo === 'RELATIONSHIP_MOTHER' || codigo === 'RELATIONSHIP_FATHER') {
+    return { code: 'CHILD', display: 'Hijo/a' };
+  }
+  if (codigo === 'RELATIONSHIP_CHILD') return { code: 'PARENT', display: 'Padre/Madre' };
+  if (codigo === 'RELATIONSHIP_SPOUSE') return { code: 'SPOUSE', display: 'Cónyuge' };
+  if (codigo === 'RELATIONSHIP_GUARDIAN') return { code: 'WARD', display: 'Tutelado/a' };
+  return { code: 'OTHER', display: 'Otro/a' };
+}
+
+/** El resumen que devuelve la API para cada dependiente. */
+function resumenDeDependiente(apoderamiento: ApoderamientoSimulado) {
+  const p = pacientePorId(apoderamiento.dependienteId);
+  const relacion = parentescoInvertido(apoderamiento.relationshipConceptId);
+  return {
+    id: apoderamiento.id,
+    patientProfileId: apoderamiento.dependienteId,
+    personId: p?.personId ?? apoderamiento.dependienteId,
+    fullName: p?.displayName ?? '',
+    ...(p?.name === undefined || p.name === '' ? {} : { name: p.name }),
+    ...(p?.lastName === undefined || p.lastName === '' ? {} : { lastName: p.lastName }),
+    ...(p?.birthDate === undefined || p.birthDate === ''
+      ? {}
+      : { birthDate: p.birthDate, ageYears: edadEnAnios(p.birthDate) }),
+    ...(p?.nationalId === undefined || p.nationalId === ''
+      ? {}
+      : { nationalId: p.nationalId }),
+    relationshipCode: relacion.code,
+    relationshipDisplay: relacion.display,
+    isLegalGuardian: true,
+  };
+}
+
+/** Edad cumplida, con la misma cuenta que hace el servidor. */
+function edadEnAnios(fecha: string): number {
+  const nacimiento = new Date(fecha);
+  const hoy = new Date();
+  let anios = hoy.getUTCFullYear() - nacimiento.getUTCFullYear();
+  const mes = hoy.getUTCMonth() - nacimiento.getUTCMonth();
+  if (mes < 0 || (mes === 0 && hoy.getUTCDate() < nacimiento.getUTCDate())) anios -= 1;
+  return Math.max(anios, 0);
+}
+
 export function registrarPerfiles(router: MockRouter): void {
   /* ---- pacientes ---------------------------------------------------------- */
 
   router.get('/profiles/patients', ({ query }) => {
-    const q = texto(query, 'query');
+    // `q`, no `query`: es como lo manda `ProfilesClient.searchPatients`. Leyendo
+    // la clave equivocada el filtro nunca se aplicaba —`contiene(x, null)` es
+    // `true`— y el buscador de pacientes devolvía la lista entera escribiera lo
+    // que escribiera quien buscaba.
+    const q = texto(query, 'q');
     const nationalId = texto(query, 'nationalId');
     const todos = pacientes
       .todos()
@@ -204,6 +354,36 @@ export function registrarPerfiles(router: MockRouter): void {
     return perfilPropioDe(p);
   });
 
+  /**
+   * Las coordenadas de una dirección, tal como llegan en el PATCH.
+   *
+   * Los dos extremos viajan juntos o no viajan: media coordenada no ubica nada,
+   * así que un cuerpo con sólo la latitud se ignora entero en vez de guardar un
+   * punto imposible. `null` en los dos **quita** el punto, que es distinto de no
+   * mandarlos —eso es «no lo toqué»— y por eso se distingue acá.
+   *
+   * **Devuelve `null`, no `undefined`, al quitar** (subtarea B.2). El
+   * docstring de arriba ya prometía la distinción y la implementación no la
+   * cumplía: `mock-store.actualizar` funde con `{ ...actual, ...cambios }`,
+   * y un `cambios.homeLat` en `undefined` pisa el valor guardado con
+   * `undefined` — que es EXACTAMENTE «no lo toqué» para quien lee
+   * `perfilPropioDe` después. El síntoma: quitar el pin de la casa y guardar
+   * hacía volver el punto de la plaza principal en el siguiente `GET`, en vez
+   * de dejar la dirección sin GPS.
+   */
+  function coordenadasDelCuerpo(
+    cambios: Record<string, unknown>,
+    cual: 'home' | 'work',
+  ): Record<string, number | null | undefined> {
+    const lat = cambios[`${cual}Latitude`];
+    const lng = cambios[`${cual}Longitude`];
+    if (lat === null && lng === null) {
+      return { [`${cual}Lat`]: null, [`${cual}Lng`]: null };
+    }
+    if (typeof lat !== 'number' || typeof lng !== 'number') return {};
+    return { [`${cual}Lat`]: lat, [`${cual}Lng`]: lng };
+  }
+
   router.patch('/profiles/patients/me', (request) => {
     const p = pacienteDeSesion(request);
     if (p === undefined) return notFound('No tenés perfil de paciente');
@@ -217,6 +397,14 @@ export function registrarPerfiles(router: MockRouter): void {
       ...(typeof cambios['residenceMunicipalityConceptId'] === 'string' ? { municipioId: cambios['residenceMunicipalityConceptId'] } : {}),
       ...(typeof cambios['occupationConceptId'] === 'string' ? { ocupacionId: cambios['occupationConceptId'] } : {}),
       ...(typeof cambios['homeAddressLines'] === 'string' ? { direccion: cambios['homeAddressLines'] } : {}),
+      // La dirección de trabajo no se guardaba: el contrato la declaraba, la
+      // pantalla la mandaba y la maqueta la tiraba, así que editarla parecía
+      // funcionar hasta recargar.
+      ...(typeof cambios['workAddressLines'] === 'string'
+        ? { direccionTrabajo: cambios['workAddressLines'] }
+        : {}),
+      ...coordenadasDelCuerpo(cambios, 'home'),
+      ...coordenadasDelCuerpo(cambios, 'work'),
     });
     const conNombre = actualizado!;
     pacientes.actualizar(p.id, { displayName: `${conNombre.name}${conNombre.middleName ? ` ${conNombre.middleName}` : ''} ${conNombre.lastName} ${conNombre.motherLastName}` });
@@ -291,17 +479,152 @@ export function registrarPerfiles(router: MockRouter): void {
     return p === undefined ? notFound('Paciente no encontrado') : fichaDe(p);
   });
 
+  /* ---- dependientes (B.1) ------------------------------------------------- */
+
+  /**
+   * A quiénes representa la sesión.
+   *
+   * Se declara **antes** que `/profiles/patients/:id` a propósito: el router
+   * elige por número de segmentos literales y gana el más específico, pero
+   * dejarlo escrito en orden evita que un cambio futuro lo invierta sin que se
+   * note.
+   */
+  router.get('/profiles/patients/me/dependents', (request) => {
+    const titular = pacienteDeSesion(request);
+    if (titular === undefined) return [];
+    return dependientesDe(titular.id).map((d) => resumenDeDependiente(d));
+  });
+
+  /**
+   * Alta de un dependiente.
+   *
+   * **La fila se guarda de verdad**, igual que el alta de mostrador: el
+   * dependiente entra en la colección de pacientes, así que el conmutador lo
+   * ofrece, las reservas lo encuentran y su historia se puede abrir. Devolver un
+   * id inventado dejaría una tarjeta que no lleva a ninguna parte.
+   */
+  router.post('/profiles/patients/me/dependents', (request) => {
+    const titular = pacienteDeSesion(request);
+    if (titular === undefined) {
+      return forbidden('Esta cuenta no tiene perfil de paciente');
+    }
+    const datos = cuerpo<{
+      name?: string;
+      middleName?: string;
+      lastName?: string;
+      motherLastName?: string;
+      birthDate?: string;
+      nationalId?: string;
+      issuerAdministrativeAreaConceptId?: string;
+      relationshipConceptId?: string;
+    }>(request);
+
+    const documento = datos.nationalId ?? '';
+    if (documento !== '' && pacientes.todos().some((p) => p.nationalId === documento)) {
+      return conflict('Ese documento ya está registrado en la plataforma', {
+        nationalId: documento,
+      });
+    }
+
+    const id = nuevoId('dependiente');
+    const nombre = datos.name ?? '';
+    const apellido = datos.lastName ?? '';
+    const materno = datos.motherLastName ?? '';
+    const nuevo: PacienteSimulado = {
+      id,
+      personId: uuid(`person-${id}`),
+      userId: uuid(`user-${id}`),
+      patientCode: `PAT-${Date.now() % 100000}`,
+      displayName: [nombre, datos.middleName ?? '', apellido, materno]
+        .filter((parte) => parte !== '')
+        .join(' '),
+      name: nombre,
+      ...(datos.middleName === undefined ? {} : { middleName: datos.middleName }),
+      lastName: apellido,
+      motherLastName: materno,
+      birthDate: datos.birthDate ?? '',
+      nationalId: documento,
+      email: '',
+      phone: '',
+      municipioId: '',
+      departamentoId: datos.issuerAdministrativeAreaConceptId ?? '',
+      ocupacionId: '',
+      direccion: '',
+      deceased: false,
+      identityVerified: false,
+    };
+    pacientes.agregar(nuevo);
+    apoderamientos.push({
+      id: nuevoId('proxy'),
+      titularId: titular.id,
+      dependienteId: id,
+      relationshipConceptId: datos.relationshipConceptId ?? '',
+    });
+
+    return { status: 201, body: resumenDeDependiente(apoderamientos.at(-1)!) };
+  });
+
   router.post('/profiles/patients/:id/related-persons', ({ params }) => ({
     status: 201,
     body: { id: nuevoId('related'), patientProfileId: params['id'], personId: nuevoId('person'), status: 'ACTIVE', createdAt: ahora() },
   }));
 
+  /**
+   * Alta de un paciente hecha por personal.
+   *
+   * **La fila se guarda de verdad.** Antes se devolvía un `profileId` inventado
+   * que no quedaba en ninguna parte: el `GET /profiles/patients/:id` siguiente
+   * respondía 404, el paciente recién creado no aparecía al buscarlo y una cita
+   * agendada con él salía sin nombre en la agenda. Ahora entra en la colección,
+   * que es lo que hace utilizable el alta desde el mostrador.
+   *
+   * Lo que el mostrador no pregunta —sexo, domicilio, correo— **no se
+   * inventa**: queda vacío, y la ficha ya sabe mostrarse sin eso.
+   */
   router.post('/profiles/patients', (request) => {
-    const datos = cuerpo<{ patientCode: string; displayName?: string }>(request);
+    const datos = cuerpo<{
+      patientCode?: string;
+      displayName?: string;
+      name?: string;
+      middleName?: string;
+      lastName?: string;
+      motherLastName?: string;
+      birthDate?: string;
+      nationalId?: string;
+      phone?: string;
+      occupationConceptId?: string;
+      issuerAdministrativeAreaConceptId?: string;
+    }>(request);
     const id = nuevoId('paciente');
+    const nombre = datos.name ?? '';
+    const apellido = datos.lastName ?? '';
+    const materno = datos.motherLastName ?? '';
+    const nuevo: PacienteSimulado = {
+      id,
+      personId: uuid(`person-${id}`),
+      userId: uuid(`user-${id}`),
+      patientCode: datos.patientCode ?? `PAC-${Date.now() % 100000}`,
+      displayName: datos.displayName ?? [nombre, apellido, materno].filter((p) => p !== '').join(' '),
+      name: nombre,
+      ...(datos.middleName === undefined ? {} : { middleName: datos.middleName }),
+      lastName: apellido,
+      motherLastName: materno,
+      birthDate: datos.birthDate ?? '',
+      nationalId: datos.nationalId ?? '',
+      email: '',
+      phone: datos.phone ?? '',
+      municipioId: '',
+      departamentoId: datos.issuerAdministrativeAreaConceptId ?? '',
+      ocupacionId: datos.occupationConceptId ?? '',
+      direccion: '',
+      deceased: false,
+      // Nace sin identidad probada: nadie verificó nada en el mostrador.
+      identityVerified: false,
+    };
+    pacientes.agregar(nuevo);
     return {
       status: 201,
-      body: { profileId: id, personId: uuid(`person-${id}`), patientCode: datos.patientCode ?? `PAC-${Date.now() % 100000}`, recordLinkageStatus: 'UNLINKED', createdAt: ahora() },
+      body: { profileId: nuevo.id, personId: nuevo.personId, patientCode: nuevo.patientCode, recordLinkageStatus: 'UNLINKED', createdAt: ahora() },
     };
   });
 

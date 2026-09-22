@@ -41,6 +41,12 @@
   letter-spacing: 0.14em;
 }
 
+/* Dónde se usa el código (F4.4): va antes de la ayuda para dictarlo. */
+.canje__caja {
+  margin: 0;
+  font-weight: 600;
+}
+
 .canje__ayuda {
   margin: 0;
   font-size: var(--fs-caption);

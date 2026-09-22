@@ -1,11 +1,20 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { PatientContextService } from '../../../core/patient-context/patient-context.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type {
   AgendaResource,
@@ -77,19 +86,6 @@ const TOPE_DE_TURNOS = 50;
 const CODIGOS_CANCELABLES: ReadonlySet<string> = new Set([
   'BOOKING_REQUESTED',
   'BOOKING_PENDING_CONFIRMATION',
-  'BOOKING_CONFIRMED',
-  'BOOKING_CHECKED_IN',
-]);
-
-/**
- * Los códigos de estado en los que el backend acepta **reprogramar** una
- * reserva. Es una lista propia y más corta que la de cancelar, y la
- * diferencia no es un descuido: el backend sólo reprograma una cita
- * *vigente* —confirmada o con llegada—, así que una solicitada o pendiente
- * de confirmación se puede cancelar pero **no** mover. Verificado contra el
- * código del endpoint y contra la API viva (2026-08-12).
- */
-const CODIGOS_REPROGRAMABLES: ReadonlySet<string> = new Set([
   'BOOKING_CONFIRMED',
   'BOOKING_CHECKED_IN',
 ]);
@@ -285,22 +281,37 @@ export class Appointments {
   private readonly scheduling = inject(SchedulingClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly auth = inject(AuthService);
+  private readonly contexto = inject(PatientContextService);
   private readonly dialogs = inject(DialogService);
   private readonly toast = inject(ToastService);
   private readonly fecha = inject(DatePipe);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  /** Quién es el titular. Sin esto no hay turnos propios que pedir ni mostrar. */
-  private readonly perfil = this.auth.patientProfileId();
+  /**
+   * De quién son los turnos que se muestran.
+   *
+   * **Computado y no una instantánea** (B.1): el titular puede pasar a operar
+   * por un dependiente sin recargar, y una constante leída al construir dejaría
+   * la pantalla mostrando los turnos de la persona anterior. Cae al propio
+   * perfil cuando no hay nadie elegido.
+   */
+  private readonly perfilActivo = this.contexto.activePatientProfileId;
 
   /**
    * La cuenta no es de un paciente.
    *
    * No es un error ni una falta de permisos: el personal de salud tiene sesión
-   * válida y ninguna razón para tener turnos propios acá.
+   * válida y ninguna razón para tener turnos propios acá. Se mira el perfil del
+   * token y no el activo: quien atiende no tiene ni uno ni otro.
    */
-  protected readonly sinPerfilDePaciente = this.perfil === null;
+  protected readonly sinPerfilDePaciente = this.auth.patientProfileId() === null;
+
+  /** De quién se están viendo los turnos, para el rótulo de la pantalla. */
+  protected readonly nombreDelPacienteActivo = this.contexto.activePatientName;
+
+  /** Si se está mirando la agenda de un dependiente y no la propia. */
+  protected readonly operandoPorDependiente = this.contexto.isActingForDependent;
 
   /**
    * La salida cuando la cuenta no es de un paciente: la agenda de la
@@ -506,22 +517,6 @@ export class Appointments {
   /** El turno que se está cancelando, para el `[isLoading]` del botón. `null` = ninguno. */
   protected readonly operando = signal<string | null>(null);
 
-  /**
-   * El turno que se está por mover, si hay uno. Mientras no sea `null`, la
-   * grilla de horarios deja de ofrecer «pedir un turno nuevo» y ofrece «mover
-   * acá»: el mismo clic no puede significar dos cosas a la vez.
-   */
-  protected readonly reprogramando = signal<string | null>(null);
-
-  /** El turno origen de la reprogramación, ya resuelto para nombrarlo. */
-  protected readonly turnoEnReprogramacion = computed<TurnoVisible | null>(() => {
-    const id = this.reprogramando();
-    if (id === null) {
-      return null;
-    }
-    return this.turnosListos().find((turno) => turno.id === id) ?? null;
-  });
-
   /* ---- lista de espera (P8) ----------------------------------------------- */
 
   /**
@@ -552,8 +547,8 @@ export class Appointments {
    *
    * Porque el motor es el mismo —recurso, cupos, retener, confirmar— y lo único
    * que cambia es qué recursos se ofrecen. Duplicar la pantalla duplicaría
-   * también la lista de espera, la reprogramación y la cancelación, que ya
-   * tienen sus reglas resueltas acá.
+   * también la lista de espera y la cancelación, que ya tienen sus reglas
+   * resueltas acá.
    *
    * ## Por qué hay que filtrar, y no es cosmético
    *
@@ -616,10 +611,12 @@ export class Appointments {
         previos.push(recurso);
       }
     }
-    return [...grupos].map(([clave, recursos]) => ({
-      clave,
-      etiqueta: etiquetaDeAgenda(recursos),
-      recursos,
+    const armadas = [...grupos].map(([clave, recursos]) => ({ clave, recursos }));
+    const etiquetas = etiquetasSinColision(armadas);
+    return armadas.map((agenda, indice) => ({
+      clave: agenda.clave,
+      etiqueta: etiquetas[indice],
+      recursos: agenda.recursos,
     }));
   });
 
@@ -644,15 +641,7 @@ export class Appointments {
   protected readonly opcionesDeSede = computed<readonly SelectOption<string>[]>(() => {
     const agenda = this.agendaActual();
     if (agenda === null || agenda.recursos.length < 2) return [];
-    const lugares = new Map<string, string>();
-    for (const recurso of agenda.recursos) {
-      lugares.set(claveDeSede(recurso), nombreDeSede(recurso));
-    }
-    if (lugares.size < 2) return [];
-    return [
-      { value: SEDE_CUALQUIERA, label: 'Cualquier lugar — ver todos los horarios' },
-      ...[...lugares].map(([value, label]) => ({ value, label })),
-    ];
+    return opcionesDeSedeDe(agenda.recursos);
   });
 
   /** Si hay que hacer la pregunta del lugar. */
@@ -858,10 +847,24 @@ export class Appointments {
   });
 
   constructor() {
-    if (this.perfil !== null) {
-      this.cargarTurnos();
+    // Se recarga con cada conmutación de paciente, no sólo al montar: los
+    // turnos de un hijo no son los de su madre, y dejar los anteriores en
+    // pantalla sería mostrar los datos de otra persona bajo su nombre.
+    effect(() => {
+      const perfil = this.perfilActivo();
+      if (perfil === null) return;
+      // `untracked`: lo único que tiene que disparar la recarga es el cambio de
+      // paciente. Las dos lecturas consultan por dentro otras señales —la
+      // organización, el día elegido— y sin esto cada una quedaría como
+      // dependencia del efecto: cualquier cambio suyo volvería a pedir los
+      // turnos, y una que la propia recarga escribe lo haría girar sin fin.
+      untracked(() => {
+        this.cargarTurnos();
+        this.cargarEsperas();
+      });
+    });
+    if (this.auth.patientProfileId() !== null) {
       this.cargarRecursos();
-      this.cargarEsperas();
     }
   }
 
@@ -869,7 +872,7 @@ export class Appointments {
 
   /** Los turnos del titular. El backend filtra por perfil, no por organización. */
   protected cargarTurnos(): void {
-    const perfil = this.perfil;
+    const perfil = this.perfilActivo();
     if (perfil === null) {
       return;
     }
@@ -1071,7 +1074,7 @@ export class Appointments {
    * queda sin bloque, que es exactamente lo que pasaba antes de que existiera.
    */
   protected cargarEsperas(): void {
-    const perfil = this.perfil;
+    const perfil = this.perfilActivo();
     if (perfil === null) {
       return;
     }
@@ -1093,7 +1096,7 @@ export class Appointments {
    * para que nadie se quede esperando una cita que no existe.
    */
   protected async anotarmeEnEspera(): Promise<void> {
-    const perfil = this.perfil;
+    const perfil = this.perfilActivo();
     const tenantId = this.organizacion();
     const resourceId = this.recursoParaEspera();
     if (perfil === null || tenantId === null || resourceId === null || this.anotandose()) {
@@ -1273,142 +1276,6 @@ export class Appointments {
   private recargar(): void {
     this.cargarTurnos();
     this.cargarHorarios();
-  }
-
-  /* ---- reprogramar -------------------------------------------------------- */
-
-  /**
-   * Si el turno admite moverse a otro horario.
-   *
-   * Allowlist **propia**, no la de cancelar: el backend sólo reprograma una
-   * cita vigente (confirmada o con llegada). Una solicitada o pendiente se
-   * puede cancelar pero no mover.
-   */
-  protected esReprogramable(turno: TurnoVisible): boolean {
-    return turno.codigo !== '' && CODIGOS_REPROGRAMABLES.has(sufijoDeCodigo(turno.codigo));
-  }
-
-  /**
-   * Entra al modo reprogramación: la grilla de horarios que ya existe pasa a
-   * ofrecer «mover acá» en vez de «pedir este horario».
-   *
-   * Se preselecciona la agenda del turno para que lo primero que se vea sean
-   * sus propios horarios; el selector sigue disponible para mirar otra.
-   */
-  protected iniciarReprogramacion(turno: TurnoVisible): void {
-    if (this.operando() !== null) {
-      return;
-    }
-
-    this.reprogramando.set(turno.id);
-    // El turno guarda el recurso; la pantalla ahora elige la agenda y el lugar.
-    // Se preselecciona su MISMO consultorio y no «cualquiera»: mover un turno
-    // es querer otro horario, no otro lugar.
-    const recurso = this.recursos().find((candidato) => candidato.id === turno.resourceId);
-    if (recurso !== undefined && this.recursoParaEspera() !== recurso.id) {
-      // Las dos señales se ponen juntas y se lee UNA vez: pasar por
-      // `elegirAgenda` y después por `elegirSede` pediría los cupos dos veces,
-      // y la primera tanda —la de todos los consultorios— se descartaría.
-      this.agendaElegida.set(claveDeAgenda(recurso));
-      this.sedeElegida.set(claveDeSede(recurso));
-      this.diaDeHorarios.set(null);
-      this.cargarHorarios();
-    }
-  }
-
-  /** Sale del modo reprogramación sin tocar nada. */
-  protected cancelarReprogramacion(): void {
-    this.reprogramando.set(null);
-  }
-
-  /**
-   * Mueve el turno en reprogramación al horario elegido, con confirmación que
-   * nombra origen y destino. Un solo POST: el backend libera el cupo viejo y
-   * ocupa el nuevo en la misma operación; el estado de la cita no cambia.
-   */
-  protected async reprogramarA(horario: HorarioVisible): Promise<void> {
-    const origenId = this.reprogramando();
-    if (origenId === null || this.operando() !== null) {
-      return;
-    }
-
-    const origen = this.turnoEnReprogramacion();
-    const motivo = await this.dialogs.confirmWithReason(
-      {
-        title: 'Mover el turno',
-        message: `Vas a mover ${origen === null ? 'este turno' : this.nombreDelTurno(origen)} al ${this.nombreDelHorario(horario)}. El horario anterior queda libre.`,
-        confirmLabel: 'Mover el turno',
-        cancelLabel: 'Volver',
-      },
-      {
-        label: 'Motivo del cambio',
-        placeholder: 'Contá brevemente por qué necesitás moverlo',
-        hint: 'El profesional lo va a ver junto con el horario nuevo.',
-      },
-    );
-    if (motivo === null) {
-      return;
-    }
-
-    this.operando.set(origenId);
-    this.scheduling
-      .rescheduleBooking(origenId, { toSlotId: horario.id, reasonText: motivo })
-      .subscribe({
-        next: () => {
-          this.operando.set(null);
-          this.reprogramando.set(null);
-          this.toast.success('Movimos tu turno al horario nuevo.', 'Turno reprogramado');
-          // El servidor es la verdad: la lista muestra la hora nueva y el cupo
-          // viejo vuelve a ofrecerse releyendo, no restando a mano.
-          this.recargar();
-        },
-        error: (error: unknown) => {
-          this.operando.set(null);
-          this.avisarFalloReprogramacion(error);
-        },
-      });
-  }
-
-  /** Cómo nombrar el horario destino en la confirmación. */
-  private nombreDelHorario(horario: HorarioVisible): string {
-    return (
-      this.fecha.transform(horario.desde, "EEEE d 'de' MMM 'a las' HH:mm") ?? 'horario elegido'
-    );
-  }
-
-  /**
-   * Traduce el fallo de reprogramar a un aviso, con el mismo criterio que la
-   * cancelación: lo esperado no es rojo.
-   *
-   * - **409 `CONFLICT`**: el cupo destino se ocupó mientras se decidía. Se
-   *   avisa y se relee —la grilla estaba vieja—, y el modo queda activo para
-   *   elegir otro horario.
-   * - **422 / precondición**: la cita dejó de estar vigente (p. ej. se canceló
-   *   desde otra sesión). Se avisa, se sale del modo y se relee.
-   * - Cualquier otro fallo sigue el patrón del repo, sin destruir la lista.
-   */
-  private avisarFalloReprogramacion(error: unknown): void {
-    const estado = errorToViewState<null>(error);
-    const codigos = estado.status === 'validation' ? estado.issues.map((issue) => issue.code) : [];
-
-    if (codigos.includes('CONFLICT')) {
-      this.toast.info('Ese horario se acaba de ocupar. Elegí otro de la lista.', 'Turno');
-      this.recargar();
-      return;
-    }
-    if (estado.status === 'validation') {
-      this.toast.info('Este turno ya no se puede reprogramar. Actualizamos tu lista.', 'Turno');
-      this.reprogramando.set(null);
-      this.recargar();
-      return;
-    }
-
-    const detalle =
-      estado.status === 'forbidden' || estado.status === 'error' ? (estado.message ?? '') : '';
-    this.toast.error(
-      detalle === '' ? 'No pudimos mover el turno. Reintentá en un momento.' : detalle,
-      'Turno',
-    );
   }
 
   /**
@@ -1755,6 +1622,140 @@ export function etiquetaDeAgenda(recursos: readonly AgendaResource[]): string {
   if (recursos.length === 1) return etiquetaDeRecurso(primero);
   const persona = primero.practitionerName ?? '';
   return persona === '' ? primero.name : persona;
+}
+
+/**
+ * Lo que diferencia a una agenda de otra del mismo nombre: primero el lugar,
+ * después el nombre interno del recurso.
+ *
+ * El lugar va primero porque es lo que le sirve a quien tiene que ir hasta
+ * ahí; «Consultorio Martes» le dice mucho menos que una dirección. Devuelve
+ * vacío cuando no hay ninguna de las dos cosas, que es el caso de las agendas
+ * sin sede cargada.
+ */
+function distintivoDeAgenda(recursos: readonly AgendaResource[]): string {
+  const sedes = [...new Set(recursos.filter((r) => r.site !== null).map(nombreDeSede))];
+  if (sedes.length > 0) return sedes.join(' · ');
+  return [...new Set(recursos.map((r) => r.name))].join(', ');
+}
+
+/**
+ * Los rótulos de la lista «¿con quién te querés atender?», garantizando que no
+ * haya dos iguales.
+ *
+ * ## Por qué hace falta
+ *
+ * Dos médicos pueden llamarse igual, y `claveDeAgenda` los separa bien —son
+ * personas distintas, cada una con su perfil—, pero {@link etiquetaDeAgenda}
+ * los rotula idéntico en cuanto tienen más de un consultorio. La lista quedaba
+ * con dos entradas del mismo texto: quien pedía turno elegía una, veía «no hay
+ * horarios libres» y no tenía forma de saber que la otra —la misma palabra en
+ * la pantalla— tenía los cupos. Observado en el recorrido con usuarios reales:
+ * dos agendas homónimas, una con 22 cupos libres y la otra con ninguno.
+ *
+ * **Fusionarlas sería peor.** Son dos profesionales distintos: reservar con el
+ * que no era es un daño mayor que una lista confusa.
+ *
+ * ## Cómo desempata
+ *
+ * En tres pasos, y sólo sobre las que chocan: el rótulo limpio se conserva
+ * para todas las demás, que es lo que F-23 vino a lograr.
+ *
+ * 1. El rótulo a secas.
+ * 2. Si se repite, se le agrega lo que las diferencia: la sede, o los nombres
+ *    internos de sus consultorios.
+ * 3. Si aun así son idénticas —mismo nombre, mismos consultorios y ninguna con
+ *    sede cargada, que es exactamente el caso que se encontró—, se numeran.
+ *    Numerar no ayuda a elegir, pero **deja ver que son dos**, y eso es lo que
+ *    permite probar la otra.
+ */
+export function etiquetasSinColision(
+  agendas: readonly { readonly recursos: readonly AgendaResource[] }[],
+): readonly string[] {
+  return desambiguar(
+    agendas.map((agenda) => etiquetaDeAgenda(agenda.recursos)),
+    (indice) => distintivoDeAgenda(agendas[indice].recursos),
+  );
+}
+
+/**
+ * Las opciones del desplegable «¿Dónde querés atenderte?».
+ *
+ * Vacío cuando hay un solo lugar: preguntar con una única respuesta posible es
+ * hacerle trabajo a la persona para nada.
+ *
+ * **Sin sede cargada todos los lugares se llaman igual** —«Sin consultorio
+ * registrado»—, y el desplegable quedaba con cuatro opciones idénticas: el
+ * mismo defecto que {@link etiquetasSinColision} arregla un campo más arriba,
+ * observado en la misma pantalla. Acá lo que las distingue es el nombre interno
+ * del recurso, que es lo único que queda cuando no hay sede.
+ */
+export function opcionesDeSedeDe(
+  recursos: readonly AgendaResource[],
+): readonly SelectOption<string>[] {
+  const lugares = new Map<string, { nombre: string; recursos: string[] }>();
+  for (const recurso of recursos) {
+    const clave = claveDeSede(recurso);
+    const previo = lugares.get(clave);
+    if (previo === undefined) {
+      lugares.set(clave, { nombre: nombreDeSede(recurso), recursos: [recurso.name] });
+    } else {
+      previo.recursos.push(recurso.name);
+    }
+  }
+  if (lugares.size < 2) return [];
+
+  const entradas = [...lugares];
+  const etiquetas = desambiguar(
+    entradas.map(([, lugar]) => lugar.nombre),
+    (indice) => [...new Set(entradas[indice][1].recursos)].join(', '),
+  );
+  return [
+    { value: SEDE_CUALQUIERA, label: 'Cualquier lugar — ver todos los horarios' },
+    ...entradas.map(([value], indice) => ({ value, label: etiquetas[indice] })),
+  ];
+}
+
+/**
+ * Hace únicos unos rótulos sin tocar los que ya lo eran.
+ *
+ * Lo usan los dos desplegables de «Agendar una cita» —con quién y dónde—,
+ * porque los dos pueden quedar con opciones que dicen exactamente lo mismo y
+ * en los dos eso significa lo mismo: quien elige no puede saber cuál es cuál,
+ * y elegir mal esconde horarios que sí existen.
+ *
+ * @param base - El rótulo de cada opción, en orden.
+ * @param distintivoDe - Qué agregarle a la de la posición `i` si choca con
+ *   otra. Devolver `''` significa «no tengo nada con qué distinguirla».
+ */
+function desambiguar(
+  base: readonly string[],
+  distintivoDe: (indice: number) => string,
+): readonly string[] {
+  const contar = (valores: readonly string[]): ReadonlyMap<string, number> => {
+    const cuenta = new Map<string, number>();
+    for (const valor of valores) cuenta.set(valor, (cuenta.get(valor) ?? 0) + 1);
+    return cuenta;
+  };
+
+  const repetidasBase = contar(base);
+  const conDistintivo = base.map((etiqueta, indice) => {
+    if ((repetidasBase.get(etiqueta) ?? 0) < 2) return etiqueta;
+    const distintivo = distintivoDe(indice);
+    return distintivo === '' ? etiqueta : `${etiqueta} — ${distintivo}`;
+  });
+
+  // Último recurso: cuando ni el distintivo las separa, numerarlas. No ayuda a
+  // elegir, pero deja ver que son varias, y eso es lo que permite probar otra.
+  const repetidasFinales = contar(conDistintivo);
+  const vistas = new Map<string, number>();
+  return conDistintivo.map((etiqueta) => {
+    const total = repetidasFinales.get(etiqueta) ?? 0;
+    if (total < 2) return etiqueta;
+    const orden = (vistas.get(etiqueta) ?? 0) + 1;
+    vistas.set(etiqueta, orden);
+    return `${etiqueta} (${orden} de ${total})`;
+  });
 }
 
 /**

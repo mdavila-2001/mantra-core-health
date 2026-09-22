@@ -1,0 +1,176 @@
+<app-card variant="outlined" padding="lg" class="plan">
+  <h2 class="plan__titulo">Plan de cuidados</h2>
+
+  @if (errorDelPlan(); as mensaje) {
+    <app-alert tone="error" data-testid="plan-error">{{ mensaje }}</app-alert>
+  }
+
+  <form class="plan__form app-form-grid" (submit)="$event.preventDefault(); registrar()">
+    <!-- La meta va primero y a lo ancho: es lo que el plan promete, y todo lo
+         de abajo existe para llegar ahí. -->
+    <app-form-field
+      class="app-form-grid__ancho"
+      icon="flag"
+      label="Meta del plan"
+      hint="Qué se busca lograr y para cuándo. «Presión por debajo de 130/80 en seis meses.»"
+      [required]="true"
+    >
+      <app-textarea
+        [rows]="3"
+        [(value)]="meta"
+        data-testid="plan-meta"
+        placeholder="El objetivo clínico, en una frase que se pueda evaluar"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Clase de plan"
+      hint="Opcional. Una propuesta se conversa; una indicación se cumple."
+    >
+      <app-concept-select
+        data-testid="plan-intencion"
+        [target]="targetIntencion"
+        [(value)]="intencion"
+        placeholder="Sin especificar"
+      />
+    </app-form-field>
+
+    @if (opcionesDeDiagnostico().length > 1) {
+      <app-form-field
+        icon="stethoscope"
+        label="¿De qué diagnóstico cuelga?"
+        hint="Opcional. El problema que el plan viene a tratar."
+      >
+        <app-select
+          data-testid="plan-diagnostico"
+          [value]="diagnosticoElegido()"
+          (valueChange)="diagnosticoElegido.set($event)"
+          [options]="opcionesDeDiagnostico()"
+        />
+      </app-form-field>
+    }
+
+    @if (opcionesDeCita().length > 1) {
+      <app-form-field
+        icon="calendar"
+        label="¿En qué cita se acordó?"
+        hint="Opcional. La consulta donde se decidió, incluidas las ya finalizadas."
+      >
+        <app-select
+          data-testid="plan-cita"
+          [value]="citaElegida()"
+          (valueChange)="citaElegida.set($event)"
+          [options]="opcionesDeCita()"
+        />
+      </app-form-field>
+    }
+
+    <app-form-field label="Desde" hint="Opcional. Cuándo empieza a correr.">
+      <app-date-picker [(value)]="desde" mode="date-only" />
+    </app-form-field>
+
+    <app-form-field
+      label="Hasta"
+      hint="Opcional. Cuándo se lo vuelve a evaluar."
+      [errorMessage]="vigenciaInvalida() ? 'El fin no puede caer antes del inicio.' : ''"
+    >
+      <app-date-picker
+        [(value)]="hasta"
+        mode="date-only"
+        [hasError]="vigenciaInvalida()"
+      />
+    </app-form-field>
+
+    <!-- Los pasos, cada uno en su caja: sin el marco, tres campos repetidos se
+         leen como un formulario que se repite por error. -->
+    <fieldset class="plan__actividades">
+      <legend class="plan__actividades-titulo">¿Qué hay que hacer?</legend>
+
+      @for (actividad of actividades(); track actividad.clave) {
+        <div class="plan__actividad" data-testid="plan-actividad">
+          <app-form-field label="Clase de paso">
+            <app-concept-select
+              [target]="targetActividad"
+              [value]="actividad.tipo"
+              (valueChange)="fijarTipo(actividad.clave, $event)"
+              placeholder="Sin especificar"
+            />
+          </app-form-field>
+
+          <app-form-field label="Cuándo">
+            <app-date-picker
+              [value]="actividad.cuando"
+              (valueChange)="fijarCuando(actividad.clave, $event)"
+              mode="date-time"
+            />
+          </app-form-field>
+
+          <app-form-field
+            label="Qué hay que hacer"
+            hint="Sin esto, el paso no se guarda: una fila vacía no es una actividad."
+          >
+            <app-textarea
+              [rows]="2"
+              [value]="actividad.detalle"
+              (valueChange)="fijarDetalle(actividad.clave, $event)"
+              placeholder="Caminata de 30 minutos, cinco veces por semana"
+            />
+          </app-form-field>
+
+          @if (actividades().length > 1) {
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              data-testid="plan-quitar-actividad"
+              (clicked)="quitarActividad(actividad.clave)"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M6 12h12" />
+              </svg>
+              Quitar este paso
+            </button>
+          }
+        </div>
+      }
+
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        type="button"
+        data-testid="plan-agregar-actividad"
+        (clicked)="agregarActividad()"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M12 6v12M6 12h12" />
+        </svg>
+        Agregar otro paso
+      </button>
+    </fieldset>
+
+    <app-form-actions
+      submitLabel="Abrir el plan"
+      [pending]="registrando()"
+      [disabled]="!puedeRegistrar()"
+      (submitted)="registrar()"
+    />
+  </form>
+</app-card>

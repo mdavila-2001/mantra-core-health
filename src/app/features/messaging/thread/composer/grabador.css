@@ -1,0 +1,88 @@
+/* El botón de nota de voz y, mientras graba, la barra con el cronómetro. */
+
+:host {
+  flex: none;
+  display: flex;
+  align-items: center;
+}
+
+.grabador__micro {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 40px;
+  block-size: 40px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--tinta-2);
+  cursor: pointer;
+  transition: background var(--mov-rapido) var(--curva);
+}
+
+.grabador__micro:hover,
+.grabador__micro:focus-visible {
+  background: var(--sup-inset);
+  color: var(--tinta-marca);
+}
+
+.grabador__micro svg {
+  inline-size: 22px;
+  block-size: 22px;
+}
+
+.grabador {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+}
+
+.grabador__cancelar,
+.grabador__enviar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 36px;
+  block-size: 36px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.grabador__enviar {
+  background: var(--petroleo);
+  color: #fff;
+}
+
+.grabador__cancelar svg,
+.grabador__enviar svg {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+/* El punto rojo: dice «está grabando» sin depender del texto del cronómetro. */
+.grabador__punto {
+  inline-size: 9px;
+  block-size: 9px;
+  border-radius: var(--r-pill);
+  background: var(--error-tinta);
+  animation: grabador-latido 1.2s ease-in-out infinite;
+}
+
+@keyframes grabador-latido {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grabador__punto { animation: none; }
+}
+
+.grabador__tiempo {
+  min-inline-size: 3.2ch;
+  color: var(--tinta);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+}

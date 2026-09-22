@@ -1,0 +1,151 @@
+<app-view-state-host [state]="state()" (retry)="retry.emit()">
+  <div vsh-skeleton><app-skeleton variant="text" [lines]="6" /></div>
+
+  @if (empresa(); as datos) {
+    <section class="empresa" aria-labelledby="ficha-empresa-titulo">
+      <div class="empresa__encabezado">
+        <h2 id="ficha-empresa-titulo" class="empresa__titulo">Datos de la empresa</h2>
+        <!-- Nada de esto sale de la API todavía: se dice, no se disimula. -->
+        <app-chip variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+
+        @if (!editando()) {
+          <button
+            app-button
+            variant="secondary"
+            size="sm"
+            type="button"
+            data-testid="ficha-editar-empresa"
+            (clicked)="editar()"
+          >
+            Editar
+          </button>
+        }
+      </div>
+
+      @if (borrador(); as edicion) {
+        <app-alert tone="info" title="Los cambios se ven en pantalla">
+          Todavía no hay dónde guardar esta ficha: lo que escribas queda a la vista y se pierde al
+          recargar.
+        </app-alert>
+
+        <div class="empresa__formulario">
+          <app-form-field icon="building" label="Razón social" [required]="true">
+            <app-input
+              testId="ficha-razon-social"
+              autocomplete="organization"
+              [value]="edicion.razonSocial"
+              (valueChange)="fijarRazonSocial($event)"
+            />
+          </app-form-field>
+
+          <app-form-field
+            icon="briefcase"
+            label="Tipo de sociedad"
+            [hint]="notaDelTipo"
+            [required]="true"
+          >
+            <app-select
+              placeholder="Elegí el tipo de sociedad"
+              [options]="opcionesDeSociedad"
+              [value]="edicion.tipoDeSociedad"
+              (valueChange)="fijarTipoDeSociedad($event)"
+            />
+          </app-form-field>
+
+          <app-form-field icon="labels" label="NIT" hint="Como figura en el certificado.">
+            <app-input
+              testId="ficha-nit"
+              inputMode="numeric"
+              autocomplete="off"
+              [value]="edicion.nit"
+              (valueChange)="fijarNit($event)"
+            />
+          </app-form-field>
+
+          <app-form-field icon="pin" label="Dirección legal de la central">
+            <app-input
+              testId="ficha-direccion"
+              autocomplete="street-address"
+              [value]="edicion.direccionLegal"
+              (valueChange)="fijarDireccion($event)"
+            />
+          </app-form-field>
+        </div>
+
+        <div class="empresa__acciones">
+          <button
+            app-button
+            variant="primary"
+            type="button"
+            data-testid="ficha-aplicar"
+            (clicked)="aplicar()"
+          >
+            Aplicar en la ficha
+          </button>
+          <button
+            app-button
+            variant="ghost"
+            type="button"
+            data-testid="ficha-descartar"
+            (clicked)="descartar()"
+          >
+            Descartar
+          </button>
+        </div>
+      } @else {
+        <dl class="empresa__campos" data-testid="ficha-empresa">
+          <div class="empresa__campo">
+            <dt class="empresa__etiqueta">Razón social</dt>
+            <dd class="empresa__valor">{{ datos.razonSocial }}</dd>
+          </div>
+
+          <div class="empresa__campo">
+            <dt class="empresa__etiqueta">Tipo de sociedad</dt>
+            <dd class="empresa__valor">{{ datos.tipoDeSociedad ?? 'Sin declarar' }}</dd>
+            <!-- El porqué de la lista cerrada, también para quien sólo lee. -->
+            <dd class="empresa__nota">{{ notaDelTipo }}</dd>
+          </div>
+
+          <div class="empresa__campo">
+            <dt class="empresa__etiqueta">NIT</dt>
+            <dd class="empresa__valor tabular-nums">{{ datos.nit }}</dd>
+          </div>
+
+          <div class="empresa__campo">
+            <dt class="empresa__etiqueta">Dirección legal de la central</dt>
+            <dd class="empresa__valor">{{ datos.direccionLegal }}</dd>
+          </div>
+        </dl>
+      }
+
+      <section class="empresa__mapa" aria-labelledby="ficha-mapa-titulo">
+        <h3 id="ficha-mapa-titulo" class="empresa__subtitulo">Punto de la central</h3>
+
+        <!-- El mismo dato que dibuja el mapa, en texto: el mapa no es la única
+             forma de saber dónde queda la central. -->
+        @if (punto(); as marcado) {
+          <p class="empresa__punto" data-testid="ficha-punto">
+            {{ datos.direccionLegal }} · {{ marcado.lat | number: '1.4-4' }},
+            {{ marcado.lng | number: '1.4-4' }}
+          </p>
+        } @else {
+          <p class="empresa__punto" data-testid="ficha-punto">
+            Todavía no está marcado el punto de la central.
+          </p>
+        }
+
+        @if (editando()) {
+          <p class="empresa__ayuda">Tocá el mapa para mover el punto de la central.</p>
+        }
+
+        <app-map
+          data-testid="ficha-mapa"
+          etiqueta="Mapa con el punto de la central, el mismo lugar que dice la dirección de arriba"
+          [pines]="pines()"
+          [centro]="punto()"
+          (pointPicked)="marcarPunto($event)"
+        />
+      </section>
+    </section>
+  }
+</app-view-state-host>

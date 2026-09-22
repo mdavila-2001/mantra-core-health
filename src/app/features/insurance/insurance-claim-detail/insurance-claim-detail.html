@@ -81,6 +81,16 @@
       </dl>
     </section>
 
+    <!-- ---- contacto directo con la aseguradora (subtarea 2.3) ------------ -->
+    <section class="claim__contact" aria-labelledby="claim-contact">
+      <h2 id="claim-contact" class="claim__section-title">Asistencia y soporte de la aseguradora</h2>
+      <p class="claim__note">
+        ¿Consultas sobre copagos, coberturas o requisitos adicionales de esta solicitud?
+        Contactá a {{ detail.header.carrierName }} por sus canales oficiales.
+      </p>
+      <app-insurance-contact-channels [header]="detail.header" />
+    </section>
+
     <!-- ---- el dictamen -------------------------------------------------- -->
     @if (detail.adjudication; as dictamen) {
       <section class="claim__adjudication" aria-labelledby="claim-adjudication">
@@ -127,7 +137,7 @@
         }
       </section>
     } @else {
-      <app-alert variant="info">
+      <app-alert tone="info">
         La aseguradora todavía no dictaminó esta solicitud.
       </app-alert>
     }
@@ -140,7 +150,7 @@
         <!-- Un descuadre entre lo declarado y la suma de los ítems es
              exactamente lo que alguien tiene que ver. No se redondea para que
              cierre. -->
-        <app-alert variant="warning" data-testid="claim-total-mismatch">
+        <app-alert tone="warning" data-testid="claim-total-mismatch">
           El monto declarado ({{ money(detail.header.billedTotal) }}) no coincide
           con la suma de los ítems ({{ money(detail.lineBilledTotal) }}).
         </app-alert>
@@ -152,7 +162,7 @@
            una vez y las cifras quedan limpias para compararse entre sí. -->
       @if (currency(detail.lineBilledTotal)) {
         <p class="claim__legend">
-          Importes en {{ detail.lineBilledTotal.currency?.display }}.
+          Importes en {{ moneda(detail.lineBilledTotal.currency?.display) }}.
         </p>
       }
 
@@ -179,26 +189,51 @@
                 <td>{{ line.lineSequence }}</td>
                 <td>{{ line.service?.display ?? 'Sin prestación registrada' }}</td>
                 <td>
-                  <!-- El id es un botón con globo de resumen. El globo se
-                       cuelga del `<body>` y se abre con el puntero **y** con el
-                       foco del teclado: la directiva ya resuelve las dos
-                       cosas, así que no queda recortado por el scroll de la
-                       tabla ni empuja las filas vecinas. -->
-                  @if (line.reference) {
-                    <button
-                      type="button"
-                      class="claim__reference"
-                      data-testid="claim-line-reference"
-                      [appTooltip]="referenceSummary(line)"
-                      [attr.aria-label]="'Resumen del documento de origen del ítem ' + line.lineSequence"
-                    >
-                      {{ referenceLabel(line) }}
-                    </button>
-                  } @else {
-                    <!-- Sin documento no hay resumen que abrir: un botón que no
-                         hace nada al tocarlo se lee como una aplicación rota. -->
-                    <span class="claim__absent">Sin documento</span>
-                  }
+                  <div class="claim__denial">
+                    <!-- El id es un botón con globo de resumen. El globo se
+                         cuelga del `<body>` y se abre con el puntero **y** con el
+                         foco del teclado: la directiva ya resuelve las dos
+                         cosas, así que no queda recortado por el scroll de la
+                         tabla ni empuja las filas vecinas. -->
+                    @if (line.reference) {
+                      <button
+                        type="button"
+                        class="claim__reference"
+                        data-testid="claim-line-reference"
+                        [appTooltip]="referenceSummary(line)"
+                        [attr.aria-label]="'Resumen del documento de origen del ítem ' + line.lineSequence"
+                      >
+                        {{ referenceLabel(line) }}
+                      </button>
+                    } @else {
+                      <!-- Sin documento no hay resumen que abrir: un botón que no
+                           hace nada al tocarlo se lee como una aplicación rota. -->
+                      <span class="claim__absent">Sin documento</span>
+                    }
+
+                    <!-- Antiduplicación de estudios (v4.2.17, T-26, subtarea
+                         3.2): metadatos y justificación, nunca el informe —
+                         eso lo lee sólo el profesional de la misma
+                         organización, no quien factura ni la aseguradora. -->
+                    @if (line.duplicateStudy; as duplicate) {
+                      <button
+                        type="button"
+                        class="claim__reference"
+                        data-testid="badge-duplicate-alert"
+                        [appTooltip]="duplicateSummary(duplicate)"
+                        [attr.aria-label]="
+                          'Posible estudio duplicado del ítem ' +
+                          line.lineSequence +
+                          ', estudio previo hace ' +
+                          duplicate.daysAgo +
+                          ' días'
+                        "
+                      >
+                        <app-badge variant="warning" size="sm">Posible duplicado</app-badge>
+                      </button>
+                      <span class="claim__absent">estudio previo hace {{ duplicate.daysAgo }} días</span>
+                    }
+                  </div>
                 </td>
                 <td class="claim__col-money claim__money">{{ amount(line.billedAmount) }}</td>
                 <td
@@ -229,9 +264,27 @@
                     <span class="claim__absent">Sin dictaminar</span>
                   }
                 </td>
-                <td>
-                  @if (line.denialReason) {
+                <td data-testid="claim-line-reason">
+                  @if (line.policyClauseReference || line.denialRationale) {
+                    <div class="claim__denial">
+                      @if (line.policyClauseReference) {
+                        <app-badge
+                          variant="error"
+                          size="sm"
+                          class="claim__clause"
+                          [label]="'Cláusula de exclusión: ' + line.policyClauseReference"
+                        >{{ line.policyClauseReference }}</app-badge>
+                      } @else if (line.denialReason) {
+                        <app-badge variant="warning" size="sm">{{ line.denialReason.display }}</app-badge>
+                      }
+                      @if (line.denialRationale) {
+                        <p class="claim__rationale">{{ line.denialRationale }}</p>
+                      }
+                    </div>
+                  } @else if (line.denialReason) {
                     {{ line.denialReason.display }}
+                  } @else if (line.decision && line.deniedAmount) {
+                    <span class="claim__absent">Sin motivo registrado</span>
                   } @else {
                     <span class="claim__absent">—</span>
                   }
@@ -255,9 +308,8 @@
       </div>
 
       <p class="claim__note">
-        La descripción en texto plano por ítem no está registrada en el modelo:
-        el único texto de la disposición es el del dictamen completo, y figura
-        arriba.
+        La disposición de arriba es del dictamen completo; la cláusula y la
+        justificación de la columna «Motivo» son del ítem puntual.
       </p>
     </section>
 

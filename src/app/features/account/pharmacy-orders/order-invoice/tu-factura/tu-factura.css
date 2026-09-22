@@ -1,0 +1,71 @@
+/* Mobile-first: los datos apilados; con ancho, en cuatro columnas para que el
+   resumen entre de un vistazo. Mismos rótulos que el resumen del mostrador. */
+
+.tu-factura {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.tu-factura__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.tu-factura__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+
+.tu-factura__datos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.tu-factura__dato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.tu-factura__etiqueta {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.tu-factura__valor {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.tu-factura__vacio {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.tu-factura__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+@media (min-width: 640px) {
+  .tu-factura__datos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .tu-factura__datos {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

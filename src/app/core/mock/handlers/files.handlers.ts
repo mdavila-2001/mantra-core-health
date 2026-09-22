@@ -57,7 +57,38 @@ const archivos = new Coleccion<ArchivoSimulado>([
   ]),
   { id: uuid('file-lunar'), currentVersionId: uuid('v-file-lunar'), originalName: 'lunar.jpg', category: 'IMAGE', sensitivity: 'PHI', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-12), dataUrl: imagenSvg('Foto del lunar', '#fdf2f8', '#9d174d') },
   { id: uuid('file-licencia'), currentVersionId: uuid('v-file-licencia'), originalName: 'licencia-funcionamiento.pdf', category: 'DOCUMENT', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-400), dataUrl: imagenSvg('Licencia de funcionamiento (PDF)') },
+  // Los adjuntos del chat de grupo de la médica.
+  { id: uuid('file-guia-anticoagulacion'), currentVersionId: uuid('v-file-guia-anticoagulacion'), originalName: 'guia-anticoagulacion-2026.pdf', category: 'DOCUMENT', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-2), dataUrl: imagenSvg('Guía de anticoagulación 2026 (PDF)') },
+  { id: uuid('file-holter'), currentVersionId: uuid('v-file-holter'), originalName: 'holter-24h.png', category: 'IMAGE', sensitivity: 'PHI', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(0), dataUrl: imagenSvg('Holter 24 h', '#f0fdf4', '#166534') },
 ]);
+
+/**
+ * Un PDF de una página con una línea de texto. Lo justo para que un visor lo
+ * abra. Exportada: la reutiliza `clinical.handlers.ts` para el PDF simulado
+ * de la receta (B.3), en vez de escribir un segundo generador mínimo.
+ */
+export function pdfMinimo(texto: string): string {
+  const limpio = texto.replace(/[^\x20-\x7e]/g, '?').replace(/[()\\]/g, '');
+  const contenido = `BT /F1 18 Tf 60 740 Td (${limpio}) Tj ET`;
+  const objetos = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+    `<< /Length ${contenido.length} >>\nstream\n${contenido}\nendstream`,
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+  ];
+  let salida = '%PDF-1.4\n';
+  const offsets: number[] = [];
+  objetos.forEach((objeto, i) => {
+    offsets.push(salida.length);
+    salida += `${i + 1} 0 obj\n${objeto}\nendobj\n`;
+  });
+  const xref = salida.length;
+  salida += `xref\n0 ${objetos.length + 1}\n0000000000 65535 f \n`;
+  for (const o of offsets) salida += `${String(o).padStart(10, '0')} 00000 n \n`;
+  salida += `trailer\n<< /Size ${objetos.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return salida;
+}
 
 function metadatos(a: ArchivoSimulado) {
   return {
@@ -68,6 +99,32 @@ function metadatos(a: ArchivoSimulado) {
     sensitivity: a.sensitivity,
     lifecycleStatusConceptId: a.lifecycleStatusConceptId,
     createdAt: a.createdAt,
+  };
+}
+
+/**
+ * Liga un archivo ya subido a un recurso, y **deja el vínculo guardado**.
+ *
+ * Vive acá y se exporta porque las rutas de adjuntos de `clinical` hacen lo
+ * mismo por su propio endpoint —el genérico de `common` no verifica que el
+ * dueño exista ni quién puede adjuntarle nada— y devolvían `{ ok: true }` sin
+ * guardar nada: `GET /common/files/links` no encontraba después lo adjuntado.
+ */
+export function enlazarArchivo(datos: {
+  readonly ownerType: string;
+  readonly ownerId: string;
+  readonly fileId: string;
+}): { id: string; fileId: string; ownerId: string; ownerType: string; createdAt: string } {
+  const archivo = archivos.get(datos.fileId);
+  if (archivo !== undefined) {
+    archivos.actualizar(archivo.id, { ownerType: datos.ownerType, ownerId: datos.ownerId });
+  }
+  return {
+    id: nuevoId('link'),
+    fileId: datos.fileId,
+    ownerId: datos.ownerId,
+    ownerType: datos.ownerType,
+    createdAt: ahora(),
   };
 }
 
@@ -112,9 +169,14 @@ export function registrarArchivos(router: MockRouter): void {
 
   router.post('/common/files/:id/links', (request) => {
     const datos = request.body as { ownerType?: string; ownerId?: string } | null;
-    const a = archivos.get(request.params['id']!);
-    if (a !== undefined) archivos.actualizar(a.id, { ownerType: datos?.ownerType, ownerId: datos?.ownerId });
-    return { status: 201, body: { id: nuevoId('link'), fileId: request.params['id'], ownerId: datos?.ownerId ?? '', ownerType: datos?.ownerType ?? 'USER', createdAt: ahora() } };
+    return {
+      status: 201,
+      body: enlazarArchivo({
+        ownerType: datos?.ownerType ?? 'USER',
+        ownerId: datos?.ownerId ?? '',
+        fileId: request.params['id']!,
+      }),
+    };
   });
 
   router.post('/common/files/:id/download-url', ({ params }) => {
@@ -124,7 +186,25 @@ export function registrarArchivos(router: MockRouter): void {
 
   router.get('/common/files/:id/content', ({ params }) => {
     const a = archivos.get(params['id']!);
-    return a?.dataUrl ?? avatarSvg('?', '#94a3b8');
+    if (a === undefined) return avatarSvg('?', '#94a3b8');
+    // Un documento se entrega como un **PDF de verdad** (mínimo, con el nombre
+    // del archivo como texto) y no como el dibujo SVG de las miniaturas: con el
+    // SVG, un PDF adjunto en el chat se pintaba como foto —el tipo decía
+    // `image/…`— y al abrirlo se veía un cartel, no un documento.
+    const body =
+      a.category === 'DOCUMENT' && typeof Blob !== 'undefined'
+        ? new Blob([pdfMinimo(a.originalName)], { type: 'application/pdf' })
+        : a.dataUrl;
+    // 5.2 · el nombre viaja donde lo pone la API real. Sin esta cabecera todo
+    // adjunto se guardaba con un nombre de reserva, y la paridad mock↔real se
+    // rompía justo en lo que 5.2 tiene que demostrar. Se codifica igual que el
+    // backend (`filename*=UTF-8''…`), acentos incluidos.
+    return {
+      body,
+      headers: {
+        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(a.originalName)}`,
+      },
+    };
   });
 
   router.delete('/common/files/:id', ({ params }) => {

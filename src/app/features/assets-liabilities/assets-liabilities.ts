@@ -15,16 +15,17 @@ import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../shared/a11y/announce-on-appear';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
-import { AppButton } from '../../shared/components/atoms/button/button';
-import { Input } from '../../shared/components/atoms/input/input';
 import { Select } from '../../shared/components/atoms/select/select';
 import { Switch } from '../../shared/components/atoms/switch/switch';
+import { AppButton } from '../../shared/components/atoms/button/button';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
+import { PaginatedForm } from '../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
+import { paginarCampos } from '../../shared/forms/paginated/paginar-campos';
 import { errorMessageOf } from '../../shared/forms/form-support';
 
 /**
@@ -57,8 +58,8 @@ import { errorMessageOf } from '../../shared/forms/form-support';
     AppButton,
     Card,
     FormField,
-    Input,
     PageHeader,
+    PaginatedForm,
     ReactiveFormsModule,
     Select,
     Switch,
@@ -151,6 +152,79 @@ export class AssetsLiabilities {
     usefulLifeMonths: new FormControl('', { nonNullable: true }),
     salvageValue: new FormControl('', { nonNullable: true }),
   });
+
+  /**
+   * El alta de un activo, de a una página.
+   *
+   * Ocho campos de una vez superan el tope de cuatro del sistema. El corte
+   * sigue al asiento que se va a escribir: primero qué se compró, después
+   * contra qué cuentas se registra, y al final por cuánto y cómo se deprecia.
+   * Las dos últimas sólo se entienden con las cuentas ya elegidas.
+   */
+  protected readonly paginasDeActivo = computed(() =>
+    paginarCampos([
+      {
+        titulo: 'Qué se compró',
+        campos: [
+          { key: 'code', label: 'Código', control: 'text' as const, required: true },
+          { key: 'name', label: 'Nombre', control: 'text' as const, required: true },
+        ],
+      },
+      {
+        titulo: 'Contra qué cuentas',
+        hint: 'El asiento de la compra: qué se debita y qué se acredita.',
+        campos: [
+          {
+            key: 'acquisitionAccountId',
+            label: 'Cuenta de adquisición (débito)',
+            control: 'select' as const,
+            required: true,
+            options: this.opcionesDeCuenta(),
+            placeholder: 'Elegí una cuenta',
+          },
+          {
+            key: 'offsetAccountId',
+            label: 'Cuenta banco/proveedor (crédito)',
+            control: 'select' as const,
+            required: true,
+            options: this.opcionesDeCuenta(),
+            placeholder: 'Elegí una cuenta',
+          },
+        ],
+      },
+      {
+        titulo: 'Por cuánto y hasta cuándo',
+        campos: [
+          {
+            key: 'acquisitionCost',
+            label: 'Costo de adquisición',
+            hint: 'Decimal, hasta dos posiciones.',
+            control: 'text' as const,
+            required: true,
+          },
+          {
+            key: 'acquisitionDate',
+            label: 'Fecha de adquisición',
+            hint: 'AAAA-MM-DD',
+            control: 'text' as const,
+            required: true,
+          },
+          {
+            key: 'usefulLifeMonths',
+            label: 'Vida útil, en meses',
+            hint: 'Opcional: sin ella no se puede depreciar.',
+            control: 'text' as const,
+          },
+          {
+            key: 'salvageValue',
+            label: 'Valor residual',
+            hint: 'Opcional, por omisión 0.',
+            control: 'text' as const,
+          },
+        ],
+      },
+    ]),
+  );
 
   protected readonly estadoDeAltaDeActivo = signal<ViewState<null>>(ready(null));
   protected readonly enviandoAltaDeActivo = computed(
@@ -274,6 +348,73 @@ export class AssetsLiabilities {
       validators: [Validators.required],
     }),
   });
+
+  /**
+   * El alta de un pasivo, con el mismo criterio que la del activo: quién y qué
+   * se debe, contra qué cuenta se registra, y recién después el dinero y el
+   * plan de cuotas.
+   */
+  protected readonly paginasDePasivo = computed(() =>
+    paginarCampos([
+      {
+        titulo: 'Qué se debe',
+        campos: [
+          { key: 'code', label: 'Código', control: 'text' as const, required: true },
+          { key: 'name', label: 'Nombre', control: 'text' as const, required: true },
+          {
+            key: 'creditorName',
+            label: 'Acreedor',
+            hint: 'Opcional.',
+            control: 'text' as const,
+          },
+        ],
+      },
+      {
+        titulo: 'Contra qué cuenta',
+        campos: [
+          {
+            key: 'accountId',
+            label: 'Cuenta contable del pasivo',
+            control: 'select' as const,
+            required: true,
+            options: this.opcionesDeCuenta(),
+            placeholder: 'Elegí una cuenta',
+          },
+        ],
+      },
+      {
+        titulo: 'Monto y cuotas',
+        campos: [
+          {
+            key: 'principalAmount',
+            label: 'Monto del préstamo',
+            hint: 'Decimal, hasta dos posiciones.',
+            control: 'text' as const,
+            required: true,
+          },
+          {
+            key: 'interestRate',
+            label: 'Tasa de interés anual (%)',
+            hint: 'Opcional, por omisión 0.',
+            control: 'text' as const,
+          },
+          {
+            key: 'installments',
+            label: 'Número de cuotas mensuales',
+            control: 'text' as const,
+            required: true,
+          },
+          {
+            key: 'startDate',
+            label: 'Fecha de alta',
+            hint: 'AAAA-MM-DD',
+            control: 'text' as const,
+            required: true,
+          },
+        ],
+      },
+    ]),
+  );
 
   protected readonly estadoDeAltaDePasivo = signal<ViewState<null>>(ready(null));
   protected readonly enviandoAltaDePasivo = computed(

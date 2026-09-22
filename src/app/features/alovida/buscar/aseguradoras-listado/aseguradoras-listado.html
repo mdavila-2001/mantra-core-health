@@ -6,6 +6,31 @@
       </div>
 
     </div>
+    <!-- 2.3 · El lugar en dos pasos: primero el departamento en el mapa y, con uno
+         elegido, sus municipios con algo publicado como chips. Mismo marcado y
+         mismas clases que hospitales; el corte vive en `FiltroTerritorial`. -->
+    @if (lugar.catalogoCaido()) {
+      <p class="mapa-directorio__caido" role="status">
+        No pudimos leer el catálogo de departamentos, así que el mapa no está. El resto del
+        directorio funciona igual.
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" (click)="lugar.reintentar()">
+          Reintentar
+        </button>
+      </p>
+    } @else if (lugar.departamentos().length > 0) {
+      <section class="mapa-directorio" aria-label="Filtrar por departamento">
+        <app-department-map
+          testId="aseguradoras-mapa"
+          [departamentos]="lugar.departamentos()"
+          [value]="lugar.departamentoElegido()"
+          (valueChange)="lugar.elegirDepartamento($event)"
+          etiqueta="Mapa de Bolivia: elegí el departamento donde buscás"
+        />
+        @if (busqueda.resumenDelLugar(); as resumen) {
+          <p class="mapa-directorio__resumen" data-testid="aseguradoras-mapa-resumen">{{ resumen }}</p>
+        }
+      </section>
+    }
     <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros de la búsqueda">
       <label class="app-search-field" app-search-field="">
         <span class="solo-lectores">Buscá por aseguradora, plan o prestador en convenio</span>
@@ -20,11 +45,42 @@
           (input)="alEscribir($any($event.target).value)"
         />
       </label>
+      <!-- Los municipios del departamento elegido. Sin departamento no se dibuja
+           ninguno: ofrecer las dos escalas a la vez es hacer dos preguntas para
+           una sola decisión. Con uno solo tampoco: no acotaría nada. -->
+      @if (busqueda.ciudadesDelLugar().length > 1) {
+        <div class="centros__chips" role="group" aria-label="Ciudad o municipio" data-testid="aseguradoras-chips-ciudad">
+          <button
+            type="button"
+            class="centros__chip"
+            [class.centros__chip--activo]="lugar.ciudad() === null"
+            [attr.aria-pressed]="lugar.ciudad() === null"
+            (click)="lugar.elegirCiudad(null)"
+          >
+            Todo el departamento
+          </button>
+          @for (nombre of busqueda.ciudadesDelLugar(); track nombre) {
+            <button
+              type="button"
+              class="centros__chip"
+              data-testid="aseguradoras-chip-ciudad"
+              [class.centros__chip--activo]="lugar.ciudad() === nombre"
+              [attr.aria-pressed]="lugar.ciudad() === nombre"
+              (click)="lugar.elegirCiudad(nombre)"
+            >
+              {{ nombre }}
+            </button>
+          }
+        </div>
+      }
     </section>
     <section class="app-view-state-host" app-view-state-host="">
       @switch (busqueda.estado()) {
         @case ('datos') {
       <div data-estado="datos">
+      @if (busqueda.avisoDelLugar(); as aviso) {
+        <p class="mapa-directorio__resumen" role="status" data-testid="aseguradoras-aviso-lugar">{{ aviso }}</p>
+      }
         <ul class="centros__grilla">
           @for (tarjeta of tarjetas(); track tarjeta.id) {
             <li app-centro-card [centro]="tarjeta.card">

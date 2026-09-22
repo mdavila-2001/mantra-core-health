@@ -1,11 +1,77 @@
-/* El formulario en una columna acotada: un campo de fecha estirado a 1400 px
-   se lee como un error de maquetado, y la lectura en zigzag de dos columnas
-   anchas es más lenta que la vertical. */
+/* El formulario ocupa el área de contenido y va centrado: regla de la casa
+   pedida por el cliente el 09/09/2026 (`docs/components/composition-rules.md`
+   §5), que vale para toda pantalla nueva o retocada desde esa fecha.
+
+   Antes tenía `max-inline-size: 40rem` con esta nota: «un campo de fecha
+   estirado a 1400 px se lee como un error de maquetado». El diagnóstico era
+   correcto y la solución, no: medido en 1440 px, el formulario ocupaba 600 px
+   de un área de 1176 y dejaba **536 px en blanco a la derecha**. Lo que evita
+   las casillas kilométricas no es acotar el bloque sino repartir los campos en
+   columnas —una en móvil, dos desde 780 px, tres desde 1120— y dejar que el
+   tope lo ponga `.app-main__inner`. */
 .cita {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-5);
+    inline-size: 100%;
+    margin-inline: auto;
+}
+
+/* Cada grupo es una decisión —con quién, cuándo, cómo— y apila sus campos por
+   dentro. Es lo que hace que el formulario use el ancho sin que ningún campo
+   se estire de lado a lado. */
+.cita__grupo {
     display: flex;
     flex-direction: column;
     gap: var(--sp-5);
-    max-inline-size: 40rem;
+    min-inline-size: 0;
+}
+
+/* Lo que habla del formulario entero cruza las columnas: el aviso de qué va a
+   pasar, el rechazo del servidor y los botones. */
+.cita__aviso,
+.cita__acciones,
+.cita > app-alert {
+    grid-column: 1 / -1;
+}
+
+@media (min-width: 780px) {
+    .cita {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* «Cómo lo atendés» y el motivo caben al lado de nada más: con dos
+       columnas quedan solos en su fila, así que la ocupan entera en vez de
+       dejar la mitad vacía —que es justo lo que la regla prohíbe—. */
+    .cita__grupo--como {
+        grid-column: 1 / -1;
+    }
+
+    /* Con el alta abierta manda ella: once campos de filiación no entran en
+       media pantalla, y las otras dos decisiones sí caben juntas debajo. */
+    .cita--alta .cita__grupo--quien {
+        grid-column: 1 / -1;
+    }
+
+    .cita--alta .cita__grupo--como {
+        grid-column: auto;
+    }
+}
+
+@media (min-width: 1120px) {
+    .cita {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .cita__grupo--como {
+        grid-column: auto;
+    }
+
+    /* Con el alta abierta quedan dos grupos para tres columnas: «cuándo» toma
+       dos y no queda ningún hueco. */
+    .cita--alta .cita__grupo--cuando {
+        grid-column: span 2;
+    }
 }
 
 /* Día y hora van juntos: son una sola decisión partida en dos campos. En
@@ -76,4 +142,65 @@
 
 .cita__cargando {
     color: var(--text-secondary);
+}
+
+/* El puente entre las dos formas de decir con quién es la cita. Se lee como una
+   nota al pie del buscador, no como un campo más: la acción rara no puede
+   competir con la corriente.
+
+   **Sin margen negativo**, aunque pegarla al campo se vea más prolijo: la lista
+   de resultados del combobox se despliega encima de lo que sigue, y tucada
+   contra el campo quedaba tapada justo cuando hace falta —cuando la búsqueda no
+   encontró a nadie—. */
+.cita__sin-registrar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
+
+/* El alta del paciente del mostrador. Misma caja que la modalidad —borde,
+   radio y leyenda— porque son lo mismo: un grupo de campos con nombre. */
+.cita__alta {
+    margin: 0;
+    padding: var(--sp-4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+}
+
+.cita__alta-titulo {
+    padding-inline: var(--sp-1);
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.cita__alta-nota {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
+
+/* Las casillas del nombre y las del documento se apilan solas en móvil por el
+   `minmax`, sin media query — igual que día y hora. */
+.cita__alta-grilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: var(--sp-4);
+}
+
+.cita__alta-catalogo-caido {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
 }

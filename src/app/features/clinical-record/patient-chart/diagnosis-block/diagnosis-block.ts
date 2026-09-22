@@ -18,18 +18,22 @@ import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
+import { Chip } from '../../../../shared/components/atoms/chip/chip';
+import { Select } from '../../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { AttachmentUploader } from '../../../../shared/components/organisms/attachment-uploader/attachment-uploader';
+import { AttachmentDialog } from '../../../../shared/components/organisms/attachment-dialog/attachment-dialog';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import type { DynamicEnumOption } from '../../../../core/data-access/system-context/system-context.types';
 import { environment } from '../../../../../environments/environment';
 import { CASOS_DIAGNOSTICO_DEMO, conceptIdPorCodigo } from '../demo-presets';
 import type { CasoDiagnosticoDemo } from '../demo-presets';
+import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
 
 /**
  * La columna que gobierna el diagnóstico.
@@ -94,6 +98,63 @@ const ETIQUETAS_DE_CURSO: Readonly<Record<string, string>> = {
   COND_COURSE_UNKNOWN: 'Sin determinar',
 };
 
+/**
+ * Una cita del paciente, como opción para «¿en qué cita se detectó?».
+ *
+ * La arma quien hospeda al bloque: la atención la saca del encuentro en curso y
+ * el expediente, de la historia entera. Acá sólo se elige.
+ */
+export interface CitaDelPaciente {
+  /** El `clinical.encounters.id`, que es lo que viaja como `encounterId`. */
+  readonly id: string;
+  /** La cita en palabras: «9 sept 2026, 08:00 · Chequeo anual». */
+  readonly etiqueta: string;
+  /** Si sigue abierta. La que está en curso se preselecciona. */
+  readonly enCurso: boolean;
+}
+
+/**
+ * El código del curso **crónico**, la salida del catálogo.
+ *
+ * Se busca por código y no por posición: es el que decide si la condición tiene
+ * fecha esperada de resolución o si es de seguimiento continuo, y el orden de
+ * la expansión no es contrato.
+ */
+const CODIGO_CURSO_CRONICO = 'COND_COURSE_CHRONIC';
+
+/** El curso que se aplica solo al elegir una duración con fecha. */
+const CODIGO_CURSO_AGUDO = 'COND_COURSE_ACUTE';
+
+/** El curso de las condiciones que duran más de un mes pero resuelven. */
+const CODIGO_CURSO_SUBAGUDO = 'COND_COURSE_SUBACUTE';
+
+/**
+ * Cuántos días separan lo agudo de lo subagudo.
+ *
+ * Es el corte clínico corriente y sirve para **sugerir** el curso, no para
+ * fijarlo: quien registra puede cambiarlo, y si lo cambia gana su elección.
+ */
+const DIAS_HASTA_SUBAGUDO = 30;
+
+/**
+ * Las duraciones que se ofrecen de un toque, y el «crónico» al final.
+ *
+ * El cliente lo pidió así: «debería poderse poner una duración promedio del
+ * diagnóstico, en caso de ser crónico debería aparecer la opción». Son los
+ * mismos chips que la receta usa para su pauta, por lo mismo: elegir «14 días»
+ * es una sola decisión y calcular la fecha a mano son tres.
+ */
+const DURACIONES_DEL_DIAGNOSTICO: readonly {
+  readonly dias: number | null;
+  readonly label: string;
+}[] = [
+  { dias: 7, label: '7 días' },
+  { dias: 14, label: '14 días' },
+  { dias: 30, label: '30 días' },
+  { dias: 90, label: '90 días' },
+  { dias: null, label: 'Crónico — seguimiento continuo' },
+];
+
 /** La fecha de hoy corrida `dias` hacia adelante. */
 function enDias(dias: number): Date {
   const fecha = new Date();
@@ -149,10 +210,12 @@ function enDias(dias: number): Date {
   imports: [
     Alert,
     AppButton,
-    AttachmentUploader,
+    AttachmentDialog,
     Badge,
     Card,
+    Chip,
     ConceptSelect,
+    Select,
     DatePicker,
     FormActions,
     FormField,
@@ -178,6 +241,28 @@ export class DiagnosisBlock {
    * el bloque no vuelve a preguntarlo para que no puedan discrepar.
    */
   readonly encounterId = input<string | null>(null);
+
+  /**
+   * Las citas del paciente, para elegir en cuál se detectó la condición.
+   *
+   * El cliente lo pidió por nombre: «un campo select para colocar la enfermedad
+   * detectada en base a una cita ya existente y/o finalizada». El contrato ya
+   * acepta `encounterId` desde siempre; lo que faltaba era ofrecerlo.
+   *
+   * Vacío es un estado legítimo —se entra al expediente sin pasar por la
+   * agenda— y entonces el campo no se dibuja: un desplegable de una sola opción
+   * vacía es una pregunta que no existe.
+   */
+  readonly citas = input<readonly CitaDelPaciente[]>([]);
+
+  /**
+   * Si el bloque exige un encuentro abierto para dejar registrar.
+   *
+   * `true` en «Atención», que es donde el encuentro es el contexto. En el
+   * expediente es `false`: ahí el diagnóstico se ata a una cita **elegida** —o
+   * a ninguna—, y el contrato declara `encounterId` opcional.
+   */
+  readonly exigeEncuentro = input(true);
 
   /** Algo se escribió y el expediente tiene que releerse. */
   readonly cambio = output<void>();
@@ -220,6 +305,89 @@ export class DiagnosisBlock {
    * es tan legítima como una aguda sin ella —quien registra decide.
    */
   protected readonly fechaEsperada = signal<Date | null>(null);
+
+  /* -- La duración estimada, y el crónico (pedido del cliente) -------------- */
+
+  protected readonly duraciones = DURACIONES_DEL_DIAGNOSTICO;
+
+  /** Los días elegidos de un toque, o `null` si nadie eligió o es crónico. */
+  protected readonly duracionDias = signal<number | null>(null);
+
+  /**
+   * Si se eligió «Crónico».
+   *
+   * Señal propia y no `duracionDias() === null`: sin ella el chip de crónico
+   * aparecía marcado con el formulario recién abierto, cuando nadie eligió
+   * nada. Es el mismo defecto que la receta ya había corregido.
+   */
+  protected readonly esCronico = signal(false);
+
+  /** Si el curso lo eligió una persona a mano; entonces la duración no lo pisa. */
+  private cursoElegidoAMano = false;
+
+  /** El concepto de un curso, por su código, cuando el catálogo llegó. */
+  private conceptoDelCurso(codigo: string): string | null {
+    return this.opcionesCurso().find((opcion) => opcion.code === codigo)?.conceptId ?? null;
+  }
+
+  /**
+   * Elige una duración estimada.
+   *
+   * Con días, deriva la fecha esperada desde el inicio —o desde hoy— y sugiere
+   * el curso: agudo hasta un mes, subagudo más allá. Con «crónico», el curso es
+   * crónico y **no hay fecha esperada**: una condición de seguimiento continuo
+   * no resuelve, y ofrecer el campo invita a inventar una fecha.
+   *
+   * @param dias - Los días previstos, o `null` para crónico.
+   */
+  protected fijarDuracion(dias: number | null): void {
+    this.duracionDias.set(dias);
+    if (dias === null) {
+      this.esCronico.set(true);
+      this.fechaEsperada.set(null);
+      if (!this.cursoElegidoAMano) {
+        this.cursoClinico.set(this.conceptoDelCurso(CODIGO_CURSO_CRONICO));
+      }
+      return;
+    }
+    this.esCronico.set(false);
+    const desde = this.inicio() ?? new Date();
+    const hasta = new Date(desde);
+    hasta.setDate(hasta.getDate() + dias);
+    this.fechaEsperada.set(hasta);
+    if (!this.cursoElegidoAMano) {
+      this.cursoClinico.set(
+        this.conceptoDelCurso(
+          dias > DIAS_HASTA_SUBAGUDO ? CODIGO_CURSO_SUBAGUDO : CODIGO_CURSO_AGUDO,
+        ),
+      );
+    }
+  }
+
+  /**
+   * Guarda el curso elegido a mano.
+   *
+   * A partir de acá la duración deja de sugerirlo: quien registra sabe más que
+   * la heurística, y pisarle la elección es peor que no sugerir nada.
+   */
+  protected elegirCurso(conceptId: string | null): void {
+    this.cursoElegidoAMano = true;
+    this.cursoClinico.set(conceptId);
+    this.esCronico.set(
+      conceptId !== null && conceptId === this.conceptoDelCurso(CODIGO_CURSO_CRONICO),
+    );
+    if (this.esCronico()) {
+      this.fechaEsperada.set(null);
+    }
+  }
+
+  /** Si el curso elegido es el crónico: con él no se pregunta la resolución. */
+  protected readonly cursoEsCronico = computed(
+    () =>
+      this.esCronico() ||
+      (this.cursoClinico() !== null &&
+        this.cursoClinico() === this.conceptoDelCurso(CODIGO_CURSO_CRONICO)),
+  );
 
   /** Hallazgos y justificación clínica. Viaja como `noteText` (Patch v4.1.3). */
   protected readonly notasClinicas = signal<string>('');
@@ -270,6 +438,32 @@ export class DiagnosisBlock {
   /** El resultado de la última escritura. */
   protected readonly registro = signal<ViewState<null>>(ready(null));
 
+  /** La cita elegida, o `null` por «sin cita asociada». */
+  protected readonly citaElegida = signal<string | null>(null);
+
+  /** Las opciones del selector de cita, con la vacía primero. */
+  protected readonly opcionesDeCita = computed<readonly SelectOption<string | null>[]>(() => [
+    { value: null, label: 'Sin cita asociada' },
+    ...this.citas().map((cita) => ({
+      value: cita.id,
+      label: cita.enCurso ? `${cita.etiqueta} · en curso` : cita.etiqueta,
+    })),
+  ]);
+
+  /**
+   * El encuentro que viaja en el alta.
+   *
+   * La cita elegida manda; si nadie eligió, el encuentro en curso que el
+   * anfitrión pasó por `encounterId`. Así «Atención» sigue comportándose igual
+   * sin que nadie elija nada.
+   */
+  protected readonly encuentroDelAlta = computed<string | null>(
+    () => this.citaElegida() ?? this.encounterId(),
+  );
+
+  /** Si el bloque puede registrar sin encuentro abierto. */
+  protected readonly sinExigirEncuentro = computed(() => !this.exigeEncuentro());
+
   protected readonly hayEncuentro = computed(() => {
     const id = this.encounterId();
     return id !== null && id !== '';
@@ -286,7 +480,7 @@ export class DiagnosisBlock {
    */
   protected readonly puedeRegistrar = computed(
     () =>
-      this.hayEncuentro() &&
+      (this.hayEncuentro() || this.sinExigirEncuentro()) &&
       !this.sinOrganizacion() &&
       this.diagnostico() !== null &&
       !this.registrando(),
@@ -327,19 +521,7 @@ export class DiagnosisBlock {
     if (state.status === 'validation') {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no permite registrar diagnósticos.';
-    }
-    if (state.status === 'not-found') {
-      return 'El expediente ya no existe. Recargá la pantalla.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
+    return mensajeDeFalloDeEscritura(state, { accion: 'registrar diagnósticos', sinPermiso: 'Tu rol no permite registrar diagnósticos.' });
   });
 
   constructor() {
@@ -431,14 +613,17 @@ export class DiagnosisBlock {
     const patientProfileId = this.patientProfileId();
     const custodianTenantId = this.organizacion();
     const codeConceptId = this.diagnostico();
-    const encounterId = this.encounterId();
+    // La cita elegida manda sobre el encuentro del anfitrión, y **puede no
+    // haber ninguna**: el contrato declara `encounterId` opcional, y un
+    // diagnóstico registrado desde el expediente no siempre nace de una
+    // consulta —una condición que la persona ya traía no tiene cita—.
+    const encounterId = this.encuentroDelAlta();
 
-    if (
-      custodianTenantId === null ||
-      codeConceptId === null ||
-      encounterId === null ||
-      this.registrando()
-    ) {
+    if (custodianTenantId === null || codeConceptId === null || this.registrando()) {
+      return;
+    }
+    // En «Atención» el encuentro sigue siendo obligatorio: ahí es el contexto.
+    if (this.exigeEncuentro() && encounterId === null) {
       return;
     }
 
@@ -458,7 +643,7 @@ export class DiagnosisBlock {
         custodianTenantId,
         patientProfileId,
         codeConceptId,
-        encounterId,
+        ...(encounterId === null ? {} : { encounterId }),
         // Los opcionales sin elegir se **omiten**: el backend valida con
         // `forbidNonWhitelisted`, y una clave en null no es «sin especificar».
         ...(categoria === null ? {} : { categoryConceptId: categoria }),
@@ -475,8 +660,15 @@ export class DiagnosisBlock {
           this.registro.set(ready(null));
           this.diagnosticoRecienRegistrado.set(registrado.id);
           this.limpiar();
+          // Se dice que el paciente ya tiene el aviso —y no que «se le acaba de
+          // enviar»— porque el aviso es uno por consulta: si el médico ya
+          // guardó antes la nota de evolución, salió entonces. Como estado es
+          // cierto en los dos casos; como evento, sería mentira en uno.
+          // El proceso 2.6 promete ese aviso, y quien lo dispara tiene que
+          // poder verlo: una promesa que no deja rastro se convierte en el
+          // médico avisando por WhatsApp «por las dudas».
           this.toasts.success(
-            'Quedó en la historia como condición activa.',
+            'Quedó en la historia como condición activa y el paciente ya tiene el aviso.',
             'Diagnóstico registrado',
           );
           this.cambio.emit();
@@ -498,5 +690,12 @@ export class DiagnosisBlock {
     this.inicio.set(null);
     this.fechaEsperada.set(null);
     this.notasClinicas.set('');
+    // Los chips y la cita también, o el formulario siguiente arranca diciendo
+    // «Crónico» con el curso ya vacío: dos afirmaciones sobre lo mismo que se
+    // contradicen. La rama de origen no los limpiaba.
+    this.duracionDias.set(null);
+    this.esCronico.set(false);
+    this.cursoElegidoAMano = false;
+    this.citaElegida.set(null);
   }
 }

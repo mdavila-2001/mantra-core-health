@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { nombreDeContentDisposition } from '../files/content-disposition';
 import type {
   Allergy,
   AllergyIntoleranceRegistration,
@@ -334,6 +335,43 @@ export class ClinicalClient {
       .pipe(map(toMedicationRequestRegistration));
   }
 
+  /**
+   * `GET /clinical/prescriptions/:id/pdf` — el PDF oficial de la receta
+   * (subtarea B.3).
+   *
+   * Único camino de descarga: ya no hay un generador local en el navegador
+   * para este documento (el paciente no puede leer el padrón de
+   * profesionales, así que un PDF armado del lado del cliente salía sin
+   * matrícula ni membrete). El backend lo arma con la misma identidad —
+   * emitida u oficial, o marcada como copia de trabajo si la receta sigue en
+   * borrador — sin importar quién lo pida.
+   *
+   * `responseType: 'blob', observe: 'response'` para leer el nombre sugerido
+   * de `Content-Disposition`, mismo patrón que `FilesClient.storedFileContent`.
+   *
+   * @param medicationRequestId - La receta a descargar.
+   * @returns Los bytes del PDF y, si el backend lo declaró, el nombre sugerido.
+   */
+  downloadPrescriptionPdf(
+    medicationRequestId: string,
+  ): Observable<{ readonly blob: Blob; readonly fileName?: string }> {
+    return this.http
+      .get(
+        this.url(
+          `/clinical/prescriptions/${encodeURIComponent(medicationRequestId)}/pdf`,
+        ),
+        { responseType: 'blob', observe: 'response' },
+      )
+      .pipe(
+        map((respuesta) => ({
+          blob: respuesta.body ?? new Blob([]),
+          fileName: nombreDeContentDisposition(
+            respuesta.headers.get('Content-Disposition'),
+          ),
+        })),
+      );
+  }
+
   /* -- Los tres registros de la ficha -------------------------------------- */
 
   /**
@@ -428,6 +466,34 @@ export class ClinicalClient {
   }
 
   /**
+   * `POST /clinical/medication-requests/:id/attachments` — liga un archivo ya
+   * subido a **esta receta**.
+   *
+   * Mismo criterio que el diagnóstico: el vínculo genérico de `common` no
+   * verifica que la receta exista ni quién puede adjuntarle nada, y esto sí es
+   * dato clínico.
+   *
+   * ⚠️ **La ruta todavía no existe en el backend** (P25). La maqueta la sirve.
+   */
+  attachFileToMedicationRequest(requestId: string, fileId: string): Observable<void> {
+    return this.http.post<void>(
+      this.url(`/clinical/medication-requests/${encodeURIComponent(requestId)}/attachments`),
+      { fileId },
+    );
+  }
+
+  /**
+   * `POST /clinical/allergy-intolerances/:id/attachments` — liga un archivo ya
+   * subido a **esta alergia**. Mismo caso que el anterior, y mismo P25.
+   */
+  attachFileToAllergy(allergyId: string, fileId: string): Observable<void> {
+    return this.http.post<void>(
+      this.url(`/clinical/allergy-intolerances/${encodeURIComponent(allergyId)}/attachments`),
+      { fileId },
+    );
+  }
+
+  /**
    * `POST /clinical/allergy-intolerances` — registra una alergia con sus
    * reacciones (UC-08-09).
    *
@@ -470,7 +536,7 @@ export class ClinicalClient {
           ...observacion,
           effectiveStartAt: instanteDe(observacion.effectiveStartAt),
           issuedAt: instanteDe(observacion.issuedAt),
-          performers: observacion.performers.map((ejecutante) => sinAusentes(ejecutante)),
+          performers: observacion.performers?.map((ejecutante) => sinAusentes(ejecutante)),
           components: observacion.components?.map((componente) => sinAusentes(componente)),
           referenceRanges: observacion.referenceRanges?.map((rango) => sinAusentes(rango)),
         }),

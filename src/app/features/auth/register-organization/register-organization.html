@@ -29,7 +29,8 @@
       <div class="registro__header">
         <h1 class="registro__title">Registrá tu aseguradora</h1>
         <p class="registro__subtitle">
-          Creá la cuenta de tu organización y su usuario administrador en un solo paso.
+          Creá la cuenta de tu organización, adjuntá sus documentos legales y dala de alta con su
+          usuario administrador en un solo paso.
         </p>
       </div>
 
@@ -39,16 +40,191 @@
         }}</app-alert>
       }
 
+      <ng-template #bloqueDocumento let-clave>
+        <app-dropzone-pdf
+          [uploader]="subirDocumento"
+          [label]="etiquetaDeDocumento(clave)"
+          [required]="true"
+          [hasError]="esDocumentoInvalido(clave)"
+          [testId]="'registro-organizacion-doc-' + clave"
+          [documentoInicial]="documentoInicialDe(clave)"
+          (fileIdChange)="registrarDocumento(clave, $event)"
+          (uploaded)="recordarDocumento(clave, $event)"
+        />
+      </ng-template>
+
       <div class="registro__body">
         <app-paginated-form
-          [paginas]="paginas"
+          [paginas]="paginas()"
           [form]="form"
           label="Crear cuenta de la aseguradora"
           submitLabel="Crear cuenta de la aseguradora"
           [pending]="isSubmitting()"
           (enviado)="submit()"
+          (rechazada)="alRechazarPagina($event)"
           data-testid="registro-organizacion-form"
-        />
+        >
+          <ng-template appCampoPersonalizado="gpsCasaMatriz">
+            <app-ubicacion-picker
+              pinId="casa-matriz"
+              etiquetaConfirmada="Casa matriz"
+              pregunta="¿Es acá donde está la casa matriz? Movete por el mapa para comprobarlo."
+              etiquetaQuitar="Quitar la ubicación de la casa matriz"
+              etiquetaMapa="La casa matriz en el mapa"
+              indicacionMarcar="Tocá el mapa en el lugar exacto de la casa matriz."
+              [ids]="idsUbicacionCasaMatriz"
+              [inicial]="gpsCasaMatriz()"
+              (confirmado)="gpsCasaMatriz.set($event)"
+            />
+          </ng-template>
+          <ng-template appCampoPersonalizado="constitutionFileId">
+            <ng-container
+              [ngTemplateOutlet]="bloqueDocumento"
+              [ngTemplateOutletContext]="{ $implicit: 'constitutionFileId' }"
+            />
+          </ng-template>
+          <ng-template appCampoPersonalizado="taxIdentifierFileId">
+            <ng-container
+              [ngTemplateOutlet]="bloqueDocumento"
+              [ngTemplateOutletContext]="{ $implicit: 'taxIdentifierFileId' }"
+            />
+          </ng-template>
+          <ng-template appCampoPersonalizado="commerceRegistryFileId">
+            <ng-container
+              [ngTemplateOutlet]="bloqueDocumento"
+              [ngTemplateOutletContext]="{ $implicit: 'commerceRegistryFileId' }"
+            />
+          </ng-template>
+          <ng-template appCampoPersonalizado="operatingLicenseFileId">
+            <ng-container
+              [ngTemplateOutlet]="bloqueDocumento"
+              [ngTemplateOutletContext]="{ $implicit: 'operatingLicenseFileId' }"
+            />
+          </ng-template>
+          <ng-template appCampoPersonalizado="healthAuthorityCertificateFileId">
+            <ng-container
+              [ngTemplateOutlet]="bloqueDocumento"
+              [ngTemplateOutletContext]="{ $implicit: 'healthAuthorityCertificateFileId' }"
+            />
+          </ng-template>
+          <ng-template appCampoPersonalizado="legalRepresentative">
+            <div class="register-org__nombres" data-testid="registro-organizacion-representante-nombres">
+              @for (campo of camposDeNombre; track campo.key) {
+                <app-form-field
+                  [label]="campo.label"
+                  [required]="campo.required ?? false"
+                  [errorMessage]="errorDelRepresentante(campo)"
+                  [class]="'register-org__nombre--' + campo.ancho"
+                >
+                  <app-input
+                    type="text"
+                    [formControl]="controlDelRepresentante(campo.key)"
+                    [hasError]="errorDelRepresentante(campo) !== ''"
+                    [autocomplete]="campo.autocomplete ?? null"
+                    [testId]="'registro-organizacion-representante-' + campo.testId"
+                  />
+                </app-form-field>
+              }
+            </div>
+          </ng-template>
+          <ng-template appCampoPersonalizado="ownerName">
+            <div class="register-org__nombres" data-testid="registro-organizacion-owner-nombres">
+              @for (campo of camposDeNombre; track campo.key) {
+                <app-form-field
+                  [label]="campo.label"
+                  [required]="campo.required ?? false"
+                  [errorMessage]="errorDelOwner(campo)"
+                  [class]="'register-org__nombre--' + campo.ancho"
+                >
+                  <app-input
+                    type="text"
+                    [formControl]="controlDelOwner(campo.key)"
+                    [hasError]="errorDelOwner(campo) !== ''"
+                    [autocomplete]="campo.autocomplete ?? null"
+                    [testId]="'registro-organizacion-owner-' + campo.testId"
+                  />
+                </app-form-field>
+              }
+            </div>
+          </ng-template>
+          <ng-template appCampoPersonalizado="powerOfAttorneyFileId">
+            <ng-container
+              [ngTemplateOutlet]="bloqueDocumento"
+              [ngTemplateOutletContext]="{ $implicit: 'powerOfAttorneyFileId' }"
+            />
+          </ng-template>
+          <ng-template appCampoPersonalizado="executives">
+            <app-accordion multi data-testid="registro-organizacion-executives">
+              @for (gerencia of gerencias; track gerencia.key) {
+                <app-accordion-panel
+                  [heading]="gerencia.heading"
+                  [(expanded)]="gerencia.expanded"
+                  [attr.data-testid]="'registro-organizacion-executives-' + gerencia.testId"
+                >
+                  <div class="register-org__nombres">
+                    @for (campo of camposDeNombre; track campo.key) {
+                      <app-form-field
+                        [label]="campo.label"
+                        [required]="campo.required ?? false"
+                        [errorMessage]="errorDeGerencia(gerencia.key, campo)"
+                        [class]="'register-org__nombre--' + campo.ancho"
+                      >
+                        <app-input
+                          type="text"
+                          [formControl]="controlDeGerencia(gerencia.key, campo.key)"
+                          [hasError]="errorDeGerencia(gerencia.key, campo) !== ''"
+                          [autocomplete]="campo.autocomplete ?? null"
+                          [testId]="
+                            'registro-organizacion-executives-' +
+                            gerencia.testId +
+                            '-' +
+                            campo.key
+                          "
+                        />
+                      </app-form-field>
+                    }
+                  </div>
+                  <div class="register-org__executive-grid">
+                    @for (campo of camposDeContactoDeGerencia; track campo.key) {
+                      <app-form-field
+                        [label]="campo.label"
+                        [hint]="campo.hint ?? ''"
+                        [required]="true"
+                        [errorMessage]="errorDeGerencia(gerencia.key, campo)"
+                      >
+                        @if (campo.control === 'tel') {
+                          <app-phone-input
+                            [formControl]="controlDeGerencia(gerencia.key, campo.key)"
+                            [hasError]="errorDeGerencia(gerencia.key, campo) !== ''"
+                            [testId]="
+                              'registro-organizacion-executives-' +
+                              gerencia.testId +
+                              '-' +
+                              campo.key
+                            "
+                          />
+                        } @else {
+                          <app-input
+                            [type]="campo.control"
+                            [formControl]="controlDeGerencia(gerencia.key, campo.key)"
+                            [hasError]="errorDeGerencia(gerencia.key, campo) !== ''"
+                            [autocomplete]="campo.autocomplete ?? null"
+                            [testId]="
+                              'registro-organizacion-executives-' +
+                              gerencia.testId +
+                              '-' +
+                              campo.key
+                            "
+                          />
+                        }
+                      </app-form-field>
+                    }
+                  </div>
+                </app-accordion-panel>
+              }
+            </app-accordion>
+          </ng-template>
+        </app-paginated-form>
       </div>
 
       <div class="registro__footer">

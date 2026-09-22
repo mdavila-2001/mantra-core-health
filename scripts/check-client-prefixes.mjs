@@ -36,12 +36,20 @@ import { join } from 'node:path';
 
 import { read, REPO_ROOT, scanEndpoints } from './lib/scan.mjs';
 
-/** Los prefijos del bloque de la API; `/otel` va al colector, no al backend. */
+/**
+ * Los prefijos del bloque de la API; `/otel` va al colector, no al backend.
+ *
+ * Se recorta la barra final porque `enruta` arma `${prefijo}/` para comparar por
+ * segmento: un prefijo que ya la trae —`/public/`, escrito así para no
+ * llevarse puesta la ruta `/publicaciones`— generaba `//` y dejaba sin rutear a
+ * sus propios endpoints.
+ */
 function prefijosDeLaApi() {
   const bloques = JSON.parse(read(join(REPO_ROOT, 'proxy.conf.json')));
   return bloques
     .filter((bloque) => !(bloque.context ?? []).includes('/otel'))
-    .flatMap((bloque) => bloque.context ?? []);
+    .flatMap((bloque) => bloque.context ?? [])
+    .map((prefijo) => (prefijo.endsWith('/') ? prefijo.slice(0, -1) : prefijo));
 }
 
 /** `true` si el prefijo enruta ese endpoint, con el mismo criterio que el proxy. */

@@ -1,0 +1,177 @@
+<app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()">
+  <!-- La lectura, a un clic. Lo que se separó fue el modo de trabajo, no la
+       persona: consultar un antecedente mientras se registra sigue estando
+       acá. -->
+  <a
+    app-button
+    page-actions
+    variant="outline"
+    [routerLink]="rutaDelExpediente()"
+    data-testid="atencion-ver-expediente"
+  >
+    Ver expediente
+  </a>
+</app-page-header>
+
+<app-view-state-host [state]="resumenClinico()" (retry)="recargar()">
+  <div class="atencion">
+    <!-- ─── El encuentro ───────────────────────────────────────────────────
+         Primero y a todo el ancho: abrirlo es lo que habilita todo lo demás
+         —la receta, la internación y el formulario cuelgan del encuentro en
+         curso—, así que es el primer paso de la pantalla y no una tarjeta al
+         costado. -->
+    <app-card
+      variant="outlined"
+      padding="lg"
+      class="atencion__encuentro"
+      appTutorialTarget="atencion-encuentro"
+    >
+      <h2 class="atencion__titulo">Encuentro</h2>
+
+      @if (errorDelRegistro(); as mensaje) {
+        <app-alert tone="error" data-testid="encuentro-error">{{ mensaje }}</app-alert>
+      }
+
+      <!-- Los encuentros abiertos primero: si ya hay uno en curso, abrir otro
+           casi nunca es lo que se quiso hacer, y verlo antes lo evita. -->
+      @if (encuentrosEnCurso().length > 0) {
+        <ul class="atencion__en-curso" data-testid="encuentros-en-curso">
+          @for (encuentro of encuentrosEnCurso(); track encuentro.id) {
+            <li class="atencion__en-curso-item">
+              <div class="atencion__en-curso-datos">
+                <!-- El encuentro abierto es un estado, y va con sus tres
+                     canales. Aquí la variante es fija y no sale del catálogo:
+                     «en curso» es un derivado del contrato —el encuentro no
+                     tiene `endAt`—, no un concepto que terminología resuelva. -->
+                <app-status-seal variant="in-review" label="En curso" />
+                <span class="atencion__principal">{{ encuentro.motivo }}</span>
+                <span class="atencion__secundario">
+                  {{ encuentro.clase }}
+                  @if (encuentro.desde) {
+                    · desde {{ encuentro.desde | date: 'd MMM, HH:mm' }}
+                  }
+                </span>
+              </div>
+              <button
+                app-button
+                variant="outline"
+                type="button"
+                [isLoading]="cerrando() === encuentro.id"
+                [disabled]="cerrando() !== null"
+                (clicked)="cerrarEncuentro(encuentro)"
+              >
+                Cerrar
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      <!-- Sin organización activa no se puede registrar: `tenantId` es el
+           custodio del encuentro y es obligatorio en el check-in. Decirlo así
+           —y no con un error tras el envío— es la diferencia entre «falta un
+           paso» y «esto falló». -->
+      @if (sinOrganizacion()) {
+        <app-alert tone="info" title="Elegí una organización">
+          Un encuentro queda bajo la custodia de una organización. Elegí una en el selector del
+          encabezado para poder registrarlo.
+        </app-alert>
+      } @else {
+        <form class="atencion__registro" (submit)="$event.preventDefault()">
+          <!-- Que el encuentro vaya a quedar atado a un turno no puede ser
+               invisible: es lo que distingue un registro trazable de una marca
+               de tiempo suelta, y quien firma tiene derecho a saber qué firma. -->
+          @if (citaDeOrigen()) {
+            <app-alert tone="info" title="Se registra sobre el turno de la agenda">
+              Este encuentro va a quedar vinculado a la cita desde la que llegaste.
+            </app-alert>
+          }
+
+          <app-form-field
+            label="Motivo de consulta"
+            hint="Opcional. Si llegaste desde la agenda, viene el motivo de la cita."
+          >
+            <app-textarea
+              [(value)]="motivo"
+              [rows]="3"
+              [maxLength]="topeDelMotivo"
+              [autoResize]="true"
+              placeholder="Por qué consulta la persona"
+            />
+          </app-form-field>
+
+          <app-form-actions
+            submitLabel="Registrar encuentro"
+            [pending]="registrando()"
+            [disabled]="!puedeRegistrar()"
+            (submitted)="registrarEncuentro()"
+          />
+        </form>
+      }
+    </app-card>
+
+    <!-- ─── Qué se va a registrar ──────────────────────────────────────────
+         Los bloques de escritura, uno a la vez y elegido acá arriba.
+
+         Antes se dibujaban apilados: quien atendía a un paciente de consulta
+         general scrolleaba igual por el odontograma y por la internación para
+         llegar a la receta, y el pedido del odontólogo fue exactamente ése —
+         «elijo el formulario que le voy a llenar, no los tengo todos encima».
+
+         Es el mismo componente de pestañas de la historia, y por lo mismo: no
+         dibuja el panel inactivo, así que sólo el bloque elegido consulta y se
+         monta. Las internaciones y las recetas llevan su cantidad en el
+         rótulo — una internación abierta no puede quedar escondida detrás de
+         una pestaña sin avisar. -->
+    <section
+      class="atencion__registro-clinico"
+      aria-label="Registrar en el encuentro"
+      appTutorialTarget="atencion-registro"
+    >
+      <h2 class="atencion__titulo">Qué vas a registrar</h2>
+
+      <app-tabs appearance="browser">
+        <!-- Todo lo que se completa sobre el encuentro entra por acá: el bloque
+             abre con un selector —diagnóstico, hoja en blanco, procedimiento,
+             laboratorio y las fichas de especialidad, odontología incluida— y
+             dibuja sólo lo elegido. Son cinco cosas que el backend guarda en
+             cinco lugares distintos, pero para quien atiende es una sola
+             pregunta: qué le voy a llenar a esta persona. -->
+        <app-tab label="Formulario clínico">
+          <app-specialty-form-block
+            [patientProfileId]="pacienteDeLaFicha()"
+            [encounterId]="encuentroParaRecetar()"
+            (cambio)="recargar()"
+          />
+        </app-tab>
+
+        <!-- La receta va aparte y no como una opción más del selector: no es
+             una ficha que se completa una vez por encuentro sino un documento
+             que se prescribe, se firma y se emite, y trae su propia lista de lo
+             ya recetado. -->
+        <app-tab [label]="'Receta (' + recetas().length + ')'">
+          <app-medication-block
+            [patientProfileId]="pacienteDeLaFicha()"
+            [encounterId]="encuentroParaRecetar()"
+            [recetas]="recetas()"
+            [medicacionActivaConceptIds]="medicacionActivaConceptIds()"
+            [diagnosticos]="diagnosticosParaReceta()"
+            (cambio)="recargar()"
+            (descargar)="descargarReceta($event)"
+          />
+        </app-tab>
+
+        <!-- Con su cantidad en el rótulo: una internación abierta no puede
+             quedar escondida detrás de una pestaña sin avisar. -->
+        <app-tab [label]="'Internación (' + internaciones().length + ')'">
+          <app-admission-block
+            [patientProfileId]="pacienteDeLaFicha()"
+            [encounterId]="encuentroParaRecetar()"
+            [internaciones]="internaciones()"
+            (cambio)="recargar()"
+          />
+        </app-tab>
+      </app-tabs>
+    </section>
+  </div>
+</app-view-state-host>

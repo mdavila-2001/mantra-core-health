@@ -1,0 +1,80 @@
+.trend-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.trend-chart__legend {
+  align-items: center;
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--fs-caption);
+  gap: var(--sp-1);
+}
+
+.trend-chart__swatch {
+  border-radius: var(--r-xs);
+  display: inline-block;
+  height: 0.75em;
+  margin-inline-start: var(--sp-2);
+  width: 0.75em;
+}
+
+.trend-chart__swatch--billed {
+  background: var(--c-petrol-500);
+}
+
+.trend-chart__swatch--approved {
+  background: var(--c-aqua-500);
+}
+
+/* Ancho fijo por mes (monthly-trend-chart.ts: MONTH_WIDTH) empuja el SVG más
+   allá del contenedor en periodos largos; el desborde se resuelve acá, no en
+   la página (regla de artefactos: sólo tablas/diagramas pueden scrollear). */
+.trend-chart__scroll {
+  overflow-x: auto;
+}
+
+.trend-chart__svg {
+  display: block;
+  height: 11rem;
+  min-width: 100%;
+}
+
+.trend-chart__axis {
+  stroke: var(--border-subtle);
+  stroke-width: 1;
+}
+
+.trend-chart__bar {
+  rx: 2;
+}
+
+/* Cada barra es una parada de teclado, así que necesita foco visible.
+
+   Se marca con `stroke`, no sólo con `outline`: el soporte de `outline` sobre
+   formas SVG es desparejo entre navegadores, y una barra de 14 px de ancho con
+   el anillo recortado no se distingue de la de al lado. El `stroke` lo dibuja
+   el propio motor SVG y siempre se ve. El `outline` va igual, de refuerzo,
+   para quien fuerza el modo de alto contraste. */
+.trend-chart__bar:focus-visible {
+  outline: 4px solid var(--focus-ring);
+  outline-offset: 2px;
+  stroke: var(--text-primary);
+  stroke-width: 2;
+}
+
+.trend-chart__bar--billed {
+  fill: var(--c-petrol-500);
+}
+
+.trend-chart__bar--approved {
+  fill: var(--c-aqua-500);
+}
+
+.trend-chart__label {
+  fill: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 8px;
+}

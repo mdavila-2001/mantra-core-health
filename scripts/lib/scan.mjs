@@ -202,6 +202,34 @@ export function scanEndpoints() {
       });
     }
 
+    // Un cliente puede envolver la llamada en un ayudante que recibe la ruta:
+    // `private getPage<T>(path: string, …) { return this.http.get(this.url(path)…`.
+    // Leído sólo el `this.http`, la ruta es la variable `path` y no hay
+    // endpoint que anotar, así que esas operaciones **desaparecían** del
+    // inventario y `check-api-contract-drift` las denunciaba al revés: como
+    // declaradas en la documentación y no llamadas por nadie. Se resuelve al
+    // derecho, mapeando el ayudante a su verbo y leyendo sus llamadas.
+    const ayudantes = new Map();
+    const ayudante =
+      /private\s+(\w+)\s*(?:<[^>]*>)?\s*\(\s*path:\s*string[\s\S]{0,400}?this\.http\s*\.?\s*(get|post|put|patch|delete)\s*(?:<[\s\S]*?>)?\(\s*this\.url\(\s*path\s*\)/g;
+    let ayudanteMatch;
+    while ((ayudanteMatch = ayudante.exec(source)) !== null) {
+      ayudantes.set(ayudanteMatch[1], ayudanteMatch[2].toUpperCase());
+    }
+
+    for (const [nombre, verbo] of ayudantes) {
+      const llamada = new RegExp(String.raw`this\.${nombre}\s*(?:<[\s\S]*?>)?\(\s*[\`']([^\`']+)[\`']`, 'g');
+      let llamadaMatch;
+      while ((llamadaMatch = llamada.exec(source)) !== null) {
+        operations.push({
+          client,
+          path,
+          method: verbo,
+          endpoint: normalizeEndpoint(expandLocalBase(llamadaMatch[1], llamadaMatch.index, bases)),
+        });
+      }
+    }
+
     let match;
     while ((match = call.exec(source)) !== null) {
       operations.push({

@@ -300,4 +300,130 @@ describe('IamClient', () => {
     // La pantalla tiene que poder decir cuándo vence sin volver a parsear.
     expect(resultado?.activationExpiresAt).toBeInstanceOf(Date);
   });
+
+  describe('registerOrganization', () => {
+    const RESPUESTA = {
+      tenantId: 't-1',
+      code: 'ANDINA-SALUD',
+      ownerUserId: 'u-1',
+      status: 'pending',
+      emailVerificationSent: true,
+    };
+
+    /** El bloque `payer` sin la casa matriz georreferenciada (subtarea 1.3). */
+    const PAYER_SIN_UBICACION = {
+      carrierCode: 'CARRIER-AS',
+      regulatorIdentifier: 'NIT-123456',
+      sigla: 'AS',
+      address: 'Av. Siempre Viva 123',
+    };
+
+    it('con la casa matriz confirmada, manda latitude y longitude dentro de payer', () => {
+      client
+        .registerOrganization({
+          code: 'ANDINA-SALUD',
+          legalName: 'Andina Salud S.A.',
+          legalEntityType: 'SRL',
+          payer: { ...PAYER_SIN_UBICACION, latitude: -17.7833, longitude: -63.1821 },
+          owner: { email: 'a@m.test', password: 'secreto12', name: 'Ana', lastName: 'Paz' },
+        })
+        .subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.payer).toEqual({
+        ...PAYER_SIN_UBICACION,
+        latitude: -17.7833,
+        longitude: -63.1821,
+      });
+
+      req.flush(RESPUESTA);
+    });
+
+    it('sin la casa matriz, payer no lleva latitude ni longitude', () => {
+      client
+        .registerOrganization({
+          code: 'ANDINA-SALUD',
+          legalName: 'Andina Salud S.A.',
+          legalEntityType: 'SRL',
+          payer: PAYER_SIN_UBICACION,
+          owner: { email: 'a@m.test', password: 'secreto12', name: 'Ana', lastName: 'Paz' },
+        })
+        .subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.payer).toEqual(PAYER_SIN_UBICACION);
+      expect('latitude' in req.request.body.organization.payer).toBe(false);
+      expect('longitude' in req.request.body.organization.payer).toBe(false);
+
+      req.flush(RESPUESTA);
+    });
+
+    /** El representante legal y las tres gerencias (subtarea 1.4). */
+    const LEGAL_REPRESENTATIVE = {
+      fullName: 'Mariana Siles Justiniano',
+      idNumber: '4872190 SC',
+      email: 'legal@aseguradora.com',
+      powerOfAttorneyFileId: 'file-poder',
+    };
+    const EXECUTIVES = {
+      generalManager: {
+        fullName: 'Carlos Mendoza',
+        phone: '+591 70000001',
+        email: 'gm@aseguradora.com',
+      },
+      commercialManager: {
+        fullName: 'Ana Paz',
+        phone: '+591 70000002',
+        email: 'cm@aseguradora.com',
+      },
+      marketingManager: {
+        fullName: 'Luis Rojas',
+        phone: '+591 70000003',
+        email: 'mm@aseguradora.com',
+      },
+    };
+
+    it('con representante y gerencias, viajan dentro de organization (subtarea 1.4)', () => {
+      client
+        .registerOrganization({
+          code: 'ANDINA-SALUD',
+          legalName: 'Andina Salud S.A.',
+          legalEntityType: 'SRL',
+          payer: PAYER_SIN_UBICACION,
+          owner: { email: 'a@m.test', password: 'secreto12', name: 'Ana', lastName: 'Paz' },
+          legalRepresentative: LEGAL_REPRESENTATIVE,
+          executives: EXECUTIVES,
+        })
+        .subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.legalRepresentative).toEqual(LEGAL_REPRESENTATIVE);
+      expect(req.request.body.organization.executives).toEqual(EXECUTIVES);
+      // Nunca dentro de payer: el registro de procesos repite el mismo
+      // bloque para farmacia/laboratorio/imagenología — no es dato de la
+      // aseguradora.
+      expect('legalRepresentative' in req.request.body.organization.payer).toBe(false);
+      expect('executives' in req.request.body.organization.payer).toBe(false);
+
+      req.flush({ ...RESPUESTA, representativesRegistered: 4 });
+    });
+
+    it('sin representante ni gerencias, organization no lleva esas claves', () => {
+      client
+        .registerOrganization({
+          code: 'ANDINA-SALUD',
+          legalName: 'Andina Salud S.A.',
+          legalEntityType: 'SRL',
+          payer: PAYER_SIN_UBICACION,
+          owner: { email: 'a@m.test', password: 'secreto12', name: 'Ana', lastName: 'Paz' },
+        })
+        .subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect('legalRepresentative' in req.request.body.organization).toBe(false);
+      expect('executives' in req.request.body.organization).toBe(false);
+
+      req.flush(RESPUESTA);
+    });
+  });
 });

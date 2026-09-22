@@ -31,8 +31,14 @@ const HOME_ROUTE = '/';
  *
  * Su estado vacío ya explica qué hacer —pedir el alta, esperar la invitación—,
  * que es más de lo que le dice un panel donde casi nada tiene datos.
+ *
+ * Desde el 2026-09-10 esa pantalla es **una pestaña** de «Organización médica»
+ * («Mis vinculaciones»), y el aterrizaje va directo a ella con `?tab=`. Sin el
+ * parámetro, quien entra sin organización caería en la primera pestaña —siete
+ * tablas vacías de una organización que no tiene— en vez de en la única que
+ * puede usar.
  */
-const MY_ORGANIZATIONS_ROUTE = '/my-organizations';
+const MY_ORGANIZATIONS_ROUTE = '/administration/medical-organization?tab=memberships';
 
 /**
  * Pantalla de inicio de sesión.

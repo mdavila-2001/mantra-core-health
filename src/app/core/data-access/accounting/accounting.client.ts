@@ -5,7 +5,17 @@ import { map, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
+  AccrualRegister,
   BalanceSheet,
+  ClearingResult,
+  ControllingObject,
+  DocumentFlowNode,
+  FiscalPeriod,
+  FiscalYear,
+  FixedAssetRegister,
+  OpenItemsPage,
+  RunResult,
+  WorkflowAction,
   ChartOfAccounts,
   FinancialStatementLine,
   FinancialStatementQuery,
@@ -259,6 +269,109 @@ export class AccountingClient {
       .pipe(map(aPosteo));
   }
 
+
+  /* ---- el plano SAP -------------------------------------------------------
+     Las cinco acciones del flujo y el cierre de período existen en la API real
+     (`POST journal-transactions/:id/{classify,submit-review,approve,post,reverse}`,
+     `POST fiscal-periods/:id/lock`, `POST clearing-documents`), y desde el
+     PR #403 también las LECTURAS de esta sección: `accounting-cockpit.controller.ts`
+     las publica con los mismos nombres de tabla del modelo; el interceptor
+     mock (`finance.handlers.ts`) las espeja para desarrollar sin la API arriba. */
+
+  /** `GET /accounting/fiscal-years` — el ejercicio con sus doce períodos. */
+  fiscalYear(practiceId: string): Observable<FiscalYear> {
+    return this.http.get<FiscalYear>(this.url('/accounting/fiscal-years'), {
+      params: new HttpParams().set('practiceId', practiceId),
+    });
+  }
+
+  /** `POST /accounting/fiscal-periods/:id/lock` — cerrar el mes. */
+  lockFiscalPeriod(periodId: string): Observable<FiscalPeriod> {
+    return this.http.post<FiscalPeriod>(
+      this.url(`/accounting/fiscal-periods/${periodId}/lock`),
+      {},
+    );
+  }
+
+  /** `GET /accounting/open-items` — lo pendiente de cobro y de pago, con antigüedad. */
+  openItems(practiceId: string): Observable<OpenItemsPage> {
+    return this.http.get<OpenItemsPage>(this.url('/accounting/open-items'), {
+      params: new HttpParams().set('practiceId', practiceId),
+    });
+  }
+
+  /** `POST /accounting/clearing-documents` — compensar partidas contra su cobro. */
+  clearOpenItems(openItemIds: readonly string[]): Observable<ClearingResult> {
+    return this.http.post<ClearingResult>(this.url('/accounting/clearing-documents'), {
+      openItemIds,
+    });
+  }
+
+  /** `GET /accounting/dimensions` — centros de coste y beneficio, y segmentos. */
+  controllingObjects(practiceId: string): Observable<readonly ControllingObject[]> {
+    return this.http
+      .get<{ items: readonly ControllingObject[] }>(this.url('/accounting/dimensions'), {
+        params: new HttpParams().set('practiceId', practiceId),
+      })
+      .pipe(map((r) => r.items));
+  }
+
+  /** `GET …/:id/document-flow` — el original, éste y sus reversiones. */
+  documentFlow(transactionId: string): Observable<readonly DocumentFlowNode[]> {
+    return this.http
+      .get<{ items: readonly DocumentFlowNode[] }>(
+        this.url(`/accounting/journal-transactions/${transactionId}/document-flow`),
+      )
+      .pipe(map((r) => r.items));
+  }
+
+  /**
+   * Mueve un documento por el flujo.
+   *
+   * Una acción por estado y ninguna más: el backend rechaza con 422 cualquier
+   * salto, así que la pantalla ofrece exactamente la que corresponde. Postear
+   * es lo único que toca el mayor; revertir no edita, crea el espejo.
+   */
+  advanceWorkflow(
+    transactionId: string,
+    action: WorkflowAction,
+  ): Observable<{ readonly id: string; readonly transactionNumber: string }> {
+    return this.http.post<{ id: string; transactionNumber: string }>(
+      this.url(`/accounting/journal-transactions/${transactionId}/${action}`),
+      {},
+    );
+  }
+
+
+  /** `GET /accounting/assets` — el registro de activos con su valor neto. */
+  fixedAssets(practiceId: string): Observable<FixedAssetRegister> {
+    return this.http.get<FixedAssetRegister>(this.url('/accounting/assets'), {
+      params: new HttpParams().set('practiceId', practiceId),
+    });
+  }
+
+  /**
+   * `POST /accounting/depreciation/run` — la corrida de amortización.
+   *
+   * No es un informe: crea el asiento del período y mueve los saldos. Por eso
+   * falla si el período está cerrado, igual que cualquier otro posteo.
+   */
+  runDepreciation(practiceId: string): Observable<RunResult> {
+    return this.http.post<RunResult>(this.url('/accounting/depreciation/run'), { practiceId });
+  }
+
+  /** `GET /accounting/accrual-objects` — devengos y cuánto queda por reconocer. */
+  accrualObjects(practiceId: string): Observable<AccrualRegister> {
+    return this.http.get<AccrualRegister>(this.url('/accounting/accrual-objects'), {
+      params: new HttpParams().set('practiceId', practiceId),
+    });
+  }
+
+  /** `POST /accounting/accruals/run` — reconoce el período de cada devengo. */
+  runAccruals(practiceId: string): Observable<RunResult> {
+    return this.http.post<RunResult>(this.url('/accounting/accruals/run'), { practiceId });
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
@@ -315,6 +428,8 @@ type WireFilaDeBalance = ConNulos<TrialBalanceRow>;
 
 interface WireAsiento {
   readonly id: string;
+  /** El estado del flujo. Lo sirve el simulador; la API todavía no. */
+  readonly flujo?: string | null;
   readonly transactionNumber: string | null;
   readonly transactionDate: string;
   readonly fiscalPeriodId: string | null;
@@ -369,9 +484,12 @@ function aFilaDeBalance(body: WireFilaDeBalance): TrialBalanceRow {
 }
 
 function aAsiento(body: WireAsiento): JournalTransaction {
-  const { transactionDate, postedAt, ...resto } = body;
+  const { transactionDate, postedAt, flujo, ...resto } = body;
   return {
     ...sinNulos(resto),
+    // Sin estado declarado, un asiento con fecha de posteo está posteado: es lo
+    // único que se puede afirmar del listado que publica la API hoy.
+    status: ((flujo ?? undefined) ?? (postedAt === null ? 'DRAFT' : 'POSTED')) as JournalTransaction['status'],
     // La fecha del asiento es un día, no un instante: anclada a medianoche UTC
     // y pintada en hora local retrocedería un día al oeste de Greenwich.
     transactionDate: maybeDateOnly(transactionDate) ?? new Date(transactionDate),

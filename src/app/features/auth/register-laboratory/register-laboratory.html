@@ -1,0 +1,219 @@
+<!-- Un selector compartido para cada documento; los archivos viven en el formulario. -->
+<ng-template #bloqueAdjunto let-clave>
+  <app-file-input
+    [files]="filesForAttachment(clave)"
+    [accessibleLabel]="attachmentLabel(clave)"
+    [required]="isAttachmentRequired(clave)"
+    [hasError]="isAttachmentInvalid(clave)"
+    [accept]="formatosDeRespaldo"
+    [maxSizeBytes]="maxAttachmentBytes"
+    [testId]="'registro-lab-adjunto-' + clave"
+    [removeTestId]="'registro-lab-quitar-' + clave"
+    (filesChange)="updateAttachment(clave, $event)"
+  />
+</ng-template>
+
+<app-auth-split
+  claim="Sumá tu laboratorio a la red"
+  tagline="Recibí las órdenes médicas de toda la red y facturalas desde un solo lugar."
+  contentWidth="full"
+>
+  <div class="registro-conjunto" [class.registro-conjunto--solo]="enviada()">
+    <div class="registro">
+      @if (enviada()) {
+        <div class="registro__header">
+          <h1
+            appAnuncio
+            [asertivo]="false"
+            class="registro__title"
+            data-testid="registro-lab-exito"
+          >
+            Recibimos la solicitud de tu laboratorio
+          </h1>
+          <p class="registro__subtitle">
+            Vamos a revisar los papeles que adjuntaste y te escribimos al correo del representante
+            legal. Hasta que la solicitud se apruebe, el laboratorio no aparece en las búsquedas de
+            pacientes.
+          </p>
+        </div>
+        <button
+          app-button
+          variant="primary"
+          size="lg"
+          class="registro__submit"
+          data-testid="registro-lab-ir-login"
+          (clicked)="goToLogin()"
+        >
+          Ir a iniciar sesión
+        </button>
+      } @else {
+        <div class="registro__header">
+          <h1 class="registro__title">Registrá tu laboratorio</h1>
+          <!-- Sin contar los pasos: el indicador de arriba ya dice «Paso 1 de
+               N» y lo calcula solo. Un número escrito acá se desincroniza el
+               día que una sección se parta en dos. -->
+          <p class="registro__subtitle">
+            Necesitamos los datos legales de la empresa. Podés volver atrás en cualquier paso.
+          </p>
+        </div>
+
+        <div class="registro__body">
+          <app-paginated-form
+            data-testid="registro-form-laboratorio"
+            [paginas]="paginas"
+            [form]="form"
+            label="Registrar laboratorio"
+            submitLabel="Enviar solicitud"
+            [iconOnlyNav]="true"
+            (pasoVisible)="recordarPaso($event)"
+            (enviado)="submit()"
+          >
+            <ng-template appCampoPersonalizado="seprecFile">
+              <ng-container
+                [ngTemplateOutlet]="bloqueAdjunto"
+                [ngTemplateOutletContext]="{ $implicit: 'seprecFile' }"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="licenciaFile">
+              <ng-container
+                [ngTemplateOutlet]="bloqueAdjunto"
+                [ngTemplateOutletContext]="{ $implicit: 'licenciaFile' }"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="sedesFile">
+              <ng-container
+                [ngTemplateOutlet]="bloqueAdjunto"
+                [ngTemplateOutletContext]="{ $implicit: 'sedesFile' }"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="nitFile">
+              <ng-container
+                [ngTemplateOutlet]="bloqueAdjunto"
+                [ngTemplateOutletContext]="{ $implicit: 'nitFile' }"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="constitucionFile">
+              <ng-container
+                [ngTemplateOutlet]="bloqueAdjunto"
+                [ngTemplateOutletContext]="{ $implicit: 'constitucionFile' }"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="poderFile">
+              <ng-container
+                [ngTemplateOutlet]="bloqueAdjunto"
+                [ngTemplateOutletContext]="{ $implicit: 'poderFile' }"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="gpsCentral">
+              <app-ubicacion-picker
+                pinId="laboratorio-central"
+                etiquetaConfirmada="Tu laboratorio"
+                pregunta="¿Es acá donde está la central? Movete por el mapa para comprobarlo."
+                etiquetaQuitar="Quitar la ubicación de la central"
+                etiquetaMapa="La ubicación de tu laboratorio en el mapa"
+                [ids]="idsUbicacionCentral"
+                (confirmado)="gpsCentral.set($event)"
+              />
+            </ng-template>
+
+            <!-- Las sucursales. Cada una trae su propio mapa, con su propio
+                 pin y su propia confirmación: confirmar una no confirma otra, y
+                 el mapa no se dibuja hasta que alguien pide la ubicación. -->
+            <ng-template appCampoPersonalizado="sucursales">
+              <div class="lab-sucursales">
+                @for (sucursal of sucursales(); track sucursal.id; let i = $index) {
+                  <section class="lab-sucursal">
+                    <header class="lab-sucursal__cabecera">
+                      <h3 class="lab-sucursal__titulo">Sucursal {{ i + 1 }}</h3>
+                      <button
+                        app-button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        [iconOnly]="true"
+                        [attr.aria-label]="'Quitar la sucursal ' + (i + 1)"
+                        [appTooltip]="'Quitar la sucursal ' + (i + 1)"
+                        [attr.data-testid]="'registro-lab-quitar-' + sucursal.id"
+                        (clicked)="quitarSucursal(sucursal.id)"
+                      >
+                        <app-nav-icon name="remove" />
+                      </button>
+                    </header>
+
+                    <app-form-field [label]="'Nombre de la sucursal ' + (i + 1)">
+                      <app-input
+                        [testId]="'registro-lab-' + sucursal.id + '-nombre'"
+                        placeholder="Sucursal Equipetrol"
+                        [value]="sucursal.nombre"
+                        (valueChange)="escribirNombreDeSucursal(sucursal.id, $event)"
+                      />
+                    </app-form-field>
+
+                    <app-form-field [label]="'Dirección de la sucursal ' + (i + 1)">
+                      <app-input
+                        [testId]="'registro-lab-' + sucursal.id + '-direccion'"
+                        placeholder="Av. San Martín 456"
+                        [value]="sucursal.direccion"
+                        (valueChange)="escribirDireccionDeSucursal(sucursal.id, $event)"
+                      />
+                    </app-form-field>
+
+                    <app-ubicacion-picker
+                      [pinId]="sucursal.id"
+                      etiquetaConfirmada="Esta sucursal"
+                      pregunta="¿Es acá donde está esta sucursal? Movete por el mapa para comprobarlo."
+                      etiquetaQuitar="Quitar la ubicación de esta sucursal"
+                      etiquetaMapa="La ubicación de esta sucursal en el mapa"
+                      [ids]="idsDeSucursal(sucursal.id)"
+                      (confirmado)="fijarGpsDeSucursal(sucursal.id, $event)"
+                    />
+                  </section>
+                } @empty {
+                  <p class="lab-sucursales__vacio">
+                    Todavía no agregaste ninguna. Si atendés en un solo local, no hace falta.
+                  </p>
+                }
+
+                <button
+                  app-button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  data-testid="registro-lab-agregar-sucursal"
+                  (clicked)="agregarSucursal()"
+                >
+                  + Agregar sucursal
+                </button>
+              </div>
+            </ng-template>
+          </app-paginated-form>
+
+          <!-- El rechazo de un archivo es del bloque entero, no de un campo: se
+               dice una vez debajo del formulario y no seis veces, una por
+               papel. -->
+          @if (errorAdjunto(); as error) {
+            <p class="lab-adjunto__error" role="alert" data-testid="registro-lab-error-adjunto">
+              {{ error }}
+            </p>
+          }
+        </div>
+
+        <div class="registro__footer">
+          <p class="registro__pie">
+            ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+          </p>
+        </div>
+      }
+    </div>
+
+    @if (!enviada()) {
+      <app-registro-ayuda class="registro-conjunto__ayuda" [tarjetas]="ayudaVisible()" />
+    }
+  </div>
+</app-auth-split>

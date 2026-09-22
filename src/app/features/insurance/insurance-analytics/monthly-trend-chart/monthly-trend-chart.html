@@ -1,0 +1,92 @@
+<div class="trend-chart" data-testid="chart-monthly-trend">
+  <div class="trend-chart__legend">
+    <span class="trend-chart__swatch trend-chart__swatch--billed"></span>
+    Facturado
+    <span class="trend-chart__swatch trend-chart__swatch--approved"></span>
+    Aprobado
+  </div>
+
+  <!-- Sin `tabindex` propio: las barras de adentro son focusables, así que la
+       región con scroll ya se alcanza y se recorre con el teclado (que es lo
+       que pide `scrollable-region-focusable`), y una parada más en el
+       contenedor sólo sumaría un tabulador mudo antes de cada gráfico. -->
+  <div class="trend-chart__scroll">
+    <!-- `role="group"`, no `role="img"`: una imagen es un nodo hoja y su
+         contenido NO se expone, así que las etiquetas de cada barra no se
+         anunciarían nunca. El grupo conserva el resumen y deja que el lector
+         entre a las barras. -->
+    <svg
+      class="trend-chart__svg"
+      [attr.viewBox]="'0 0 ' + viewBoxWidth() + ' ' + (chartHeight + labelHeight)"
+      role="group"
+      [attr.aria-label]="resumenAccesible()"
+      preserveAspectRatio="xMinYMax meet"
+    >
+      <line
+        class="trend-chart__axis"
+        x1="0"
+        [attr.y1]="chartHeight"
+        [attr.x2]="viewBoxWidth()"
+        [attr.y2]="chartHeight"
+      />
+      @for (barra of bars(); track barra.period) {
+        <g [attr.transform]="'translate(' + barra.x + ', 0)'">
+          <title>
+            {{ barra.monthLabel }} · Facturado {{ formatear(barra.billedAmount) }} · Aprobado
+            {{ formatear(barra.approvedAmount) }} · {{ barra.claimsCount }} reclamo(s)
+          </title>
+          <!-- Cada barra es su propia parada de teclado y dice su cifra al
+               pararse. Son dos por mes: en un rango de doce meses eso son
+               veinticuatro tabuladores, y por eso la tabla `.sr-only` de abajo
+               sigue estando — es el camino rápido para quien quiere el dato
+               sin recorrer el gráfico. -->
+          <rect
+            class="trend-chart__bar trend-chart__bar--billed"
+            tabindex="0"
+            role="img"
+            [attr.aria-label]="barra.billedAriaLabel"
+            x="10"
+            [attr.y]="chartHeight - barra.billedHeight"
+            width="14"
+            [attr.height]="barra.billedHeight"
+          />
+          <rect
+            class="trend-chart__bar trend-chart__bar--approved"
+            tabindex="0"
+            role="img"
+            [attr.aria-label]="barra.approvedAriaLabel"
+            x="28"
+            [attr.y]="chartHeight - barra.approvedHeight"
+            width="14"
+            [attr.height]="barra.approvedHeight"
+          />
+          <text class="trend-chart__label" x="28" [attr.y]="chartHeight + 16" text-anchor="middle">
+            {{ barra.monthLabel }}
+          </text>
+        </g>
+      }
+    </svg>
+  </div>
+
+  <table class="sr-only">
+    <caption>Tendencia mensual, facturado y aprobado</caption>
+    <thead>
+      <tr>
+        <th scope="col">Mes</th>
+        <th scope="col">Facturado</th>
+        <th scope="col">Aprobado</th>
+        <th scope="col">Reclamos</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (barra of bars(); track barra.period) {
+        <tr>
+          <td>{{ barra.monthLabel }}</td>
+          <td>{{ formatear(barra.billedAmount) }}</td>
+          <td>{{ formatear(barra.approvedAmount) }}</td>
+          <td>{{ barra.claimsCount }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { SessionStore } from '../../core/auth/session.store';
@@ -410,6 +410,52 @@ describe('Agenda', () => {
     expect(solapas.map((s) => s.textContent?.trim())).not.toContain('Mi agenda');
   });
 
+  /* -- Ingreso por mostrador (AC-C3-03) ------------------------------------ */
+
+  /** El botón que abre el modal, o `null` si no se ofrece. */
+  function botonDeMostrador(): HTMLElement | null {
+    return harness.fixture.nativeElement.querySelector('[data-testid="agenda-ingreso-mostrador"]');
+  }
+
+  it('ofrece el ingreso por mostrador a quien atiende, con recurso elegido', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responderRecursos();
+    responderResto();
+    harness.fixture.detectChanges();
+
+    expect(botonDeMostrador()?.textContent).toContain('Ingreso Mostrador');
+    // Cerrado hasta que alguien lo toque: el `<dialog>` atrapa el foco, y
+    // dejarlo montado metería sus campos en el orden de tabulación de atrás.
+    expect(harness.fixture.nativeElement.querySelector('app-walk-in-form')).toBeNull();
+  });
+
+  it('sin agenda elegida no ofrece el mostrador: el turno no tendría dónde ir', async () => {
+    // Mismo criterio que el aviso de demora. La autoridad sigue siendo la API
+    // —`walk-in` declara SCHEDULING_ADMIN, AGENT y PRACTITIONER—; esconder el
+    // botón sólo evita ofrecer un gesto que no se puede completar.
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responderRecursos([]);
+    harness.fixture.detectChanges();
+
+    expect(botonDeMostrador()).toBeNull();
+  });
+
+  it('el botón abre el modal sobre la agenda, sin navegar', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responderRecursos();
+    responderResto();
+    harness.fixture.detectChanges();
+
+    const antes = TestBed.inject(Router).url;
+    botonDeMostrador()?.click();
+    harness.fixture.detectChanges();
+
+    expect(harness.fixture.nativeElement.querySelector('app-walk-in-form')).not.toBeNull();
+    // Sigue en la misma pantalla: quien atiende el mostrador tiene a la
+    // siguiente persona esperando y no puede perder el día de vista.
+    expect(TestBed.inject(Router).url).toBe(antes);
+  });
+
   it('sin rol de padrón no ofrece el enlace a la ficha del paciente', async () => {
     await montar({ roles: ['SCHEDULING_AGENT'] });
     await responder();
@@ -604,7 +650,7 @@ describe('Agenda', () => {
 
     const fila = citas().data?.[0] as Record<string, unknown>;
     expect(fila['appointmentId']).toBe('ap-1');
-    expect(fila['paramsDelExpediente']).toEqual({ motivo: 'Control anual', cita: 'ap-1' });
+    expect(fila['paramsDeLaAtencion']).toEqual({ motivo: 'Control anual', cita: 'ap-1' });
   });
 
   /**
@@ -617,7 +663,7 @@ describe('Agenda', () => {
 
     const fila = citas().data?.[0] as Record<string, unknown>;
     expect(fila['appointmentId']).toBeNull();
-    expect(fila['paramsDelExpediente']).toEqual({ motivo: 'Control anual' });
+    expect(fila['paramsDeLaAtencion']).toEqual({ motivo: 'Control anual' });
   });
 
   it('una cita sin motivo no inventa uno para llevar', async () => {
@@ -1136,6 +1182,132 @@ describe('Agenda', () => {
     await pendiente;
   });
 
+  /* ---- mover la cita (UC-41-08) -------------------------------------------
+     **Es de quien atiende, no de quien pidió el turno** (propietario,
+     2026-09-13): reordenar el día reacomoda a los demás pacientes de esa
+     agenda. La vista del paciente ve y cancela, y su prueba de que no ofrece
+     «Reprogramar» vive en `account/appointments`. Acá se fija la mitad que
+     falta: que acá sí se ofrece, y que hace lo que dice. */
+
+  it('una cita vigente ofrece moverla a otro horario', async () => {
+    await montar();
+    await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+    await verSolapaDeCitas();
+
+    expect(boton('agenda-reprogramar')).not.toBeNull();
+  });
+
+  /**
+   * El backend sólo mueve una cita **vigente**; sobre una solicitud sin
+   * responder devuelve 422. Un botón que va a fallar es un error con forma de
+   * oferta, así que no se dibuja.
+   */
+  it('una solicitud sin responder no ofrece moverla', async () => {
+    await montar();
+    await responderConEstado('BOOKING_PENDING_CONFIRMATION', 'Por confirmar');
+    await verSolapaDeCitas();
+
+    expect(boton('agenda-reprogramar')).toBeNull();
+  });
+
+  it('moverla abre la solapa de cupos, y el cupo deja de ofrecer reservar', async () => {
+    await montar();
+    await responder();
+    await verSolapaDeCitas();
+
+    interno<(c: unknown) => void>('iniciarReprogramacion')(primeraCita());
+    // Dos vueltas: la primera resuelve la navegación que abre «Cupos» y la
+    // segunda pinta su panel, que hasta entonces no existía en el DOM.
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    expect(interno<() => boolean>('enReprogramacion')()).toBe(true);
+    // Sin el salto a «Cupos» el botón no haría nada visible: los destinos
+    // posibles están ahí. Sin «Mi agenda» —no es quien atiende— es la solapa 1.
+    expect(interno<() => number>('pestana')()).toBe(1);
+    expect(boton('agenda-reprogramando')).not.toBeNull();
+    expect(boton('agenda-mover-aca')).not.toBeNull();
+    // El mismo hueco no puede significar dos cosas a la vez.
+    expect(boton('agenda-reservar')).toBeNull();
+  });
+
+  it('sin motivo no se mueve nada', async () => {
+    await montar();
+    await responder();
+
+    vi.spyOn(TestBed.inject(DialogService), 'confirmWithReason').mockResolvedValue(null);
+    interno<(c: unknown) => void>('iniciarReprogramacion')(primeraCita());
+    await interno<(c: unknown) => Promise<void>>('reprogramarA')(cupos().data?.[0]);
+
+    // El `http.verify()` del afterEach falla si algo salió a la red.
+    expect(interno<() => boolean>('enReprogramacion')()).toBe(true);
+  });
+
+  it('con motivo manda el cupo destino, recarga y sale del modo', async () => {
+    await montar();
+    await responder();
+
+    vi.spyOn(TestBed.inject(DialogService), 'confirmWithReason').mockResolvedValue(
+      'La sala quedó ocupada por una urgencia',
+    );
+    interno<(c: unknown) => void>('iniciarReprogramacion')(primeraCita());
+    const pendiente = interno<(c: unknown) => Promise<void>>('reprogramarA')(cupos().data?.[0]);
+    await harness.fixture.whenStable();
+
+    const req = http.expectOne('/scheduling/bookings/b-1/reschedule');
+    expect(req.request.method).toBe('POST');
+    // El motivo es obligatorio (corrección #14): el paciente lo lee junto con
+    // el horario nuevo. Moverle el día sin decir por qué es medio aviso.
+    expect(req.request.body).toEqual({
+      toSlotId: 's-1',
+      reasonText: 'La sala quedó ocupada por una urgencia',
+    });
+    req.flush({ bookingId: 'b-1', fromSlotId: 's-0', toSlotId: 's-1' });
+    responderRecarga();
+    await pendiente;
+
+    expect(interno<() => boolean>('enReprogramacion')()).toBe(false);
+  });
+
+  /**
+   * Un fallo deja el modo puesto: el destino elegido puede haberse llenado
+   * entre que se miró y se tocó, y lo que corresponde es elegir otro — no
+   * volver a la lista y empezar de cero.
+   */
+  it('si el servidor rechaza el movimiento, el modo sigue puesto', async () => {
+    await montar();
+    await responder();
+
+    vi.spyOn(TestBed.inject(DialogService), 'confirmWithReason').mockResolvedValue('Sin lugar');
+    interno<(c: unknown) => void>('iniciarReprogramacion')(primeraCita());
+    const pendiente = interno<(c: unknown) => Promise<void>>('reprogramarA')(cupos().data?.[0]);
+    await harness.fixture.whenStable();
+
+    http
+      .expectOne('/scheduling/bookings/b-1/reschedule')
+      .flush({ message: 'El cupo ya no tiene lugar' }, { status: 422, statusText: 'Unprocessable' });
+    await pendiente;
+
+    expect(interno<() => boolean>('enReprogramacion')()).toBe(true);
+    expect(interno<() => string | null>('cupoDestino')()).toBeNull();
+  });
+
+  it('dejar la cita como está apaga el modo y vuelve a las consultas', async () => {
+    await montar();
+    await responder();
+
+    interno<(c: unknown) => void>('iniciarReprogramacion')(primeraCita());
+    await harness.fixture.whenStable();
+    interno<() => void>('cancelarReprogramacion')();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    expect(interno<() => boolean>('enReprogramacion')()).toBe(false);
+    expect(interno<() => number>('pestana')()).toBe(0);
+  });
+
   /**
    * Corrección #15: el botón existe sobre una cita confirmada **sin ninguna
    * comprobación de fecha**. La cita de estas pruebas es del 8 de agosto y la
@@ -1160,6 +1332,61 @@ describe('Agenda', () => {
       occurredAt: '2026-08-15T12:00:00.000Z',
     });
     responderResto();
+  });
+
+  /**
+   * Fase 1 del plan de atención: «Iniciar consulta» es el **único** origen de
+   * la atención, así que además de marcar la cita tiene que llevar allá. Antes
+   * sólo hacía `start` y recargaba la tabla: el botón prometía una consulta
+   * que no abría.
+   */
+  it('iniciar la consulta entra a atender, con el motivo y el turno en la URL', async () => {
+    // Atender exige poder abrir expedientes: es la misma compuerta.
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+    await verSolapaDeCitas();
+
+    const router = TestBed.inject(Router);
+    const navegar = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    interno<(c: unknown) => void>('iniciarAtencion')(citas().data?.[0]);
+    await harness.fixture.whenStable();
+
+    http.expectOne('/scheduling/bookings/b-1/start').flush({
+      bookingId: 'b-1',
+      statusConceptId: 'c-curso',
+      occurredAt: '2026-08-15T12:00:00.000Z',
+    });
+    await harness.fixture.whenStable();
+
+    expect(navegar).toHaveBeenCalledTimes(1);
+    const [ruta, extras] = navegar.mock.calls[0] as [string[], { queryParams: unknown }];
+    expect(ruta[0]).toMatch(/\/medical-records\/[^/]+\/encounter$/);
+    expect(extras.queryParams).toEqual(citas().data?.[0]?.['paramsDeLaAtencion']);
+    // Ya no recarga la tabla: se fue de la pantalla. Si recargara, el
+    // `http.verify()` del afterEach encontraría la petición huérfana.
+  });
+
+  /**
+   * `startBooking` sobre una cita ya iniciada es un 409: volver a entrar tiene
+   * que navegar y **no** repetir la transición.
+   */
+  it('continuar una consulta en curso navega sin volver a iniciarla', async () => {
+    // Atender exige poder abrir expedientes: es la misma compuerta.
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responderConEstado('BOOKING_IN_PROGRESS', 'En curso');
+    await verSolapaDeCitas();
+
+    expect(boton('agenda-continuar')).not.toBeNull();
+
+    const router = TestBed.inject(Router);
+    const navegar = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    interno<(c: unknown) => void>('continuarAtencion')(citas().data?.[0]);
+    await harness.fixture.whenStable();
+
+    expect(navegar).toHaveBeenCalledTimes(1);
+    // El `http.verify()` del afterEach falla si esto salió a la red.
   });
 
   it('una cita en curso ofrece completarla, y solo eso', async () => {

@@ -1,0 +1,49 @@
+<app-content-dialog
+  heading="Prima de lista mensual"
+  [description]="'Plan: ' + plan().name"
+  [dismissible]="!saving()"
+  (closed)="closed.emit()"
+>
+  @if (errorMessage(); as message) {
+    <app-alert appAnuncio tone="error">{{ message }}</app-alert>
+  }
+  <form class="insurance-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <app-form-field
+      label="Prima mensual"
+      hint="Prima de lista mensual, en la moneda del plan. Dejá el campo vacío para quitarla. Es el denominador del loss ratio del tablero de siniestralidad."
+      [errorMessage]="
+        form.controls.monthlyPremiumAmount.touched &&
+        form.controls.monthlyPremiumAmount.invalid
+          ? 'Ingresá un importe no negativo con hasta dos decimales.'
+          : ''
+      "
+    >
+      <app-input
+        formControlName="monthlyPremiumAmount"
+        inputMode="decimal"
+        testId="plan-premium-amount"
+      />
+    </app-form-field>
+  </form>
+
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    variant="ghost"
+    [disabled]="saving()"
+    (clicked)="dialog().close()"
+  >
+    Cancelar
+  </button>
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    [isLoading]="saving()"
+    [disabled]="saving()"
+    (clicked)="submit()"
+  >
+    Guardar prima
+  </button>
+</app-content-dialog>

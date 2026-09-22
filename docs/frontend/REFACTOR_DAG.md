@@ -191,3 +191,11 @@ Cada microtarea declara, antes de tocar código:
 | DS-002 | Moléculas y organismos con literales | DS-001 | `DISCOVERED` | - |
 | LAY-001 | Shells sin literales | DS-002 | `DISCOVERED` | - |
 | UI-001 | `public-profile/` sin literales | DS-002 | `DISCOVERED` | - |
+
+## FILE-UPLOAD — registro y adjuntos compartidos
+
+| ID | Superficie | Depende de | Estado | Evidencia |
+|---|---|---|---|---|
+| UPLOAD-0 | Baseline laboratorio, cinco tamaños | - | `VERIFIED` | `evidence/file-upload/baseline/` |
+| UPLOAD-1 | FileInput, FilePreview y arrastre compacto | UPLOAD-0 | `VERIFIED` | `FILE_UPLOAD_IMPROVEMENT.md` |
+| UPLOAD-2 | Registros y consumidores existentes | UPLOAD-1 | `VERIFIED` | `evidence/file-upload/` |

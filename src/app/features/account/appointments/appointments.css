@@ -185,14 +185,6 @@
   gap: var(--sp-2);
 }
 
-/* El aviso del modo reprogramación: qué turno se está moviendo y la salida. */
-.turnos__reprogramando {
-  display: grid;
-  gap: var(--sp-2);
-  justify-items: start;
-  margin-block-end: var(--sp-4);
-}
-
 .turnos__cuando {
   display: grid;
   gap: var(--sp-2);
