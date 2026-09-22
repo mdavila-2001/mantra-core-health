@@ -1,23 +1,6 @@
 import { FileDropTarget } from '../../../../../shared/forms/file-drop-target';
 import { DatePipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  PLATFORM_ID,
-  computed,
-  effect,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
-import { catchError, map, of, switchMap, type Observable } from 'rxjs';
-
-import { FilesClient } from '@core/data-access/files/files.client';
-import { ProfilesClient } from '@core/data-access/profiles/profiles.client';
-import { CommunityClient } from '@core/data-access/community/community.client';
-import { AuthService } from '@core/auth/auth.service';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { WorkHistory } from '../../work-history/work-history';
@@ -38,15 +21,12 @@ import { Chip } from '../../../../../shared/components/atoms/chip/chip';
 import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../../../../shared/components/atoms/tooltip/tooltip';
 import { Card } from '../../../../../shared/components/molecules/card/card';
-import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
 import { TabHelpBlock } from '../../../../../shared/components/molecules/tab-help-block/tab-help-block';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
-import { ToastService } from '../../../../../shared/components/molecules/toast/toast.service';
 import { SpecialtyBadge } from '../../../../../shared/components/organisms/specialty-badge/specialty-badge';
 import { SpecialtyBadgeGrid } from '../../../../../shared/components/organisms/specialty-badge-grid/specialty-badge-grid';
 import { StatusSeal } from '../../../../../shared/components/organisms/status-seal/status-seal';
-import { HelpBlockDismissalStore } from '../../../../../core/tutorials/help-block-dismissal.store';
 import { TutorialTarget } from '../../../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import type {
   FormacionVisible,
@@ -55,31 +35,6 @@ import type {
 
 /** Índice de cada pestaña superior — nombrado para no repetir números mágicos. */
 const TAB = { TRAYECTORIA: 0, CREDENCIALES: 1, PREVIEW: 2 } as const;
-
-/**
- * La clave con la que se recuerda que ya se explicó «Credenciales».
- *
- * Es la MISMA que usaba el `app-tab-help-block` que estaba ahí: a quien ya
- * había cerrado aquella caja no se le empieza a repetir el aviso ahora que es
- * un toast.
- */
-const AYUDA_DE_CREDENCIALES = 'perfil-credenciales-ayuda';
-
-/**
- * La etiqueta de «Credenciales», para reconocer la pestaña por su nombre.
- *
- * **No por su índice.** «Facturación» sólo se dibuja en la ficha propia con
- * datos de facturación, así que el índice de todo lo que va después se corre
- * en uno cuando falta: con el índice fijo, el aviso no salía nunca en una
- * ficha sin facturación y salía en «Actividad» en una con ella. Lo destapó el
- * spec al juntar las dos correcciones del 19/09/2026.
- */
-const ETIQUETA_DE_CREDENCIALES = PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.credenciales];
-
-/** Lo que dice ese aviso. Es el texto del bloque que reemplaza, sin el ejemplo. */
-const AVISO_DE_CREDENCIALES =
-  'Acá se separa lo que declaraste de lo que ya fue verificado contra una fuente ' +
-  '—el colegio médico, el registro de matrículas—. Declarar no exige verificación previa.';
 
 /* El hash que repartia un tono por especialidad se retiro con C-09. Dos
    motivos, y ninguno es estetico. Repartia `info` y `success`, que en este
@@ -182,79 +137,66 @@ export class PractitionerProfileView {
 
   /* --- La foto de perfil (P17) ------------------------------------------ */
 
-  private readonly archivos = inject(FilesClient);
-  private readonly profiles = inject(ProfilesClient);
-  private readonly community = inject(CommunityClient);
-  private readonly auth = inject(AuthService);
-  private readonly dialogs = inject(DialogService);
-  private readonly toasts = inject(ToastService);
-  private readonly ayudas = inject(HelpBlockDismissalStore);
-  private readonly enNavegador = isPlatformBrowser(inject(PLATFORM_ID));
+  /**
+   * Mientras la foto viaja. Bloquea el control para no subir dos veces.
+   *
+   * Lo declara quien ejecuta la subida: el estado de una operación pertenece a
+   * quien la hace, y desde este carril la hace el contenedor.
+   */
+  readonly fotoSubiendo = input(false);
 
-  constructor() {
-    // El aviso de «Credenciales», una sola vez por cuenta y **al abrir esa
-    // pestaña**, no al abrir la ficha.
-    //
-    // Vive acá y no en el panel porque el contenido proyectado de una pestaña
-    // se instancia aunque la pestaña esté cerrada —el `@if` de `app-tab`
-    // decide si se INSERTA en el DOM, no si se construye—, así que lanzado
-    // desde el panel saltaba estando en «Datos personales». Quien sabe qué
-    // pestaña se mira es esta ficha.
-    //
-    // Y sólo en el navegador: bajo SSR no hay `localStorage`, el servidor
-    // siempre creería que el aviso no se dio y lo pintaría en el HTML.
-    effect(() => {
-      if (!this.enNavegador || !this.esPropio() || this.previewMode()) {
-        return;
-      }
-      if (this.pestanaVisibleSeleccionada() !== ETIQUETA_DE_CREDENCIALES) {
-        return;
-      }
-      if (this.ayudas.isDismissed(AYUDA_DE_CREDENCIALES)) {
-        return;
-      }
-      this.ayudas.dismiss(AYUDA_DE_CREDENCIALES);
-      this.toasts.info(AVISO_DE_CREDENCIALES, 'Credenciales');
-    });
-  }
-
-  /** Mientras la foto viaja. Bloquea el control para no subir dos veces. */
-  protected readonly subiendoFoto = signal(false);
-
-  /** Qué salió mal, si salió mal. Vacío es que no pasó nada. */
-  protected readonly errorDeFoto = signal('');
+  /**
+   * Qué salió mal del otro lado, si salió mal. Vacío es que no pasó nada.
+   *
+   * Es `string` y no `boolean` porque los dos fallos posibles se explican
+   * distinto —una cuenta sin perfil profesional no es una subida fallida— y
+   * cuál de los dos ocurrió lo sabe quien llamó al servidor.
+   */
+  readonly errorDeFoto = input('');
 
   /**
    * La foto recién subida, servida por la API.
    *
-   * El perfil llega por `input()` desde quien lo leyó, así que este componente
-   * no puede refrescarlo por su cuenta y necesita recordar la foto nueva.
+   * El perfil llega por `input()`, así que esta vista no puede refrescarlo por
+   * su cuenta: necesita que le digan cuál es la foto nueva.
    *
-   * **Se guarda una `data:` URL, no un `blob:` ni la firma del backend.** Con
-   * `URL.createObjectURL(archivo)` la CSP la bloquea (`img-src` declara
+   * **Tiene que ser una `data:` URL, no un `blob:` ni la firma del backend.**
+   * Con `URL.createObjectURL(archivo)` la CSP la bloquea (`img-src` declara
    * `'self' data:`, y `blob:` no entra); con `downloadUrl()` es peor, porque
    * esa firma apunta a `file://local/<sha>` y tampoco carga — ése era el
-   * defecto que hacía que la foto se subiera bien y no se viera nunca. Bajar
-   * los bytes por `/content` y codificarlos prueba, además, que la foto quedó
-   * guardada del otro lado.
+   * defecto que hacía que la foto se subiera bien y no se viera nunca. El
+   * detalle viaja con el contrato, porque ahora el valor lo produce quien llama.
    */
-  protected readonly fotoRecien = signal<string | null>(null);
+  readonly fotoRecien = input<string | null>(null);
+
+  /** «Quiero esta foto». Subirla, fijarla y propagarla es de quien escucha. */
+  readonly fotoElegida = output<File>();
+
+  /**
+   * El archivo que el propio control rechazó antes de salir de acá.
+   *
+   * Es la única clase de error que se queda en la vista: no es un resultado
+   * remoto —todavía no se llamó a nadie—, es una entrada que no sirve, y el
+   * texto lo escribe el control que la rechazó.
+   */
+  private readonly rechazoDeArchivo = signal('');
+
+  /** Lo que se lee bajo el retrato: el rechazo local, o el fallo remoto. */
+  protected readonly errorVisible = computed(() => this.rechazoDeArchivo() || this.errorDeFoto());
 
   protected readonly fotoVisible = computed(() => this.fotoRecien() ?? this.perfil().fotoUrl);
 
+  /** El control de archivo rechazó lo que se le soltó encima. */
+  protected alRechazarArchivo(motivo: string): void {
+    this.rechazoDeArchivo.set(motivo);
+  }
+
   /**
-   * Sube la foto elegida y la fija como foto del perfil profesional.
+   * Avisa que la persona eligió una foto. **No la sube.**
    *
-   * **Son dos llamadas y no una, a propósito.** `POST /common/files/upload`
-   * recibe los bytes por `multipart`; `PUT /profiles/practitioners/:id/photo`
-   * es un JSON idempotente que recibe el **id** del archivo. Mezclarlos
-   * obligaría al perfil a hablar dos idiomas y a reenviar la foto entera cada
-   * vez que alguien corrige otro dato.
-   *
-   * **Una subida pinta ambas.** `health_practitioner_profiles.photo_file_id`
-   * (arriba) y `community.public_profiles.avatar_file_id` (la vitrina
-   * pública) son columnas independientes que nada sincroniza del lado del
-   * servidor. Ver {@link propagarAVitrina}.
+   * Las dos llamadas que hacen falta —subir los bytes y fijar el id en el
+   * perfil— y la propagación a la vitrina pública viven en quien escucha este
+   * evento: son escrituras, y esta vista no escribe.
    */
   protected alElegirFoto(evento: Event): void {
     const entrada = evento.target as HTMLInputElement;
@@ -262,88 +204,13 @@ export class PractitionerProfileView {
     // El input se limpia siempre: sin esto, elegir el mismo archivo dos veces
     // seguidas no dispara `change` y parece que el botón dejó de andar.
     entrada.value = '';
-    if (!archivo || this.subiendoFoto()) {
+    if (!archivo || this.fotoSubiendo() || !this.esPropio() || this.previewMode()) {
       return;
     }
-
-    const profileId = this.auth.practitionerProfileId();
-    if (profileId === null) {
-      // Antes se salía en silencio: se elegía una foto, no pasaba nada, y no
-      // había forma de saber que el problema no era la imagen. Pasa de verdad
-      // —una cuenta cuya persona no tiene perfil profesional no lleva el claim
-      // `hpid`—, así que se dice, y se dice lo que la persona puede hacer.
-      this.errorDeFoto.set(
-        'Tu cuenta todavía no está asociada a un perfil profesional, así que no hay ' +
-          'dónde guardar la foto. Escribinos para que la vinculemos.',
-      );
-      return;
-    }
-
-    this.subiendoFoto.set(true);
-    this.errorDeFoto.set('');
-
-    this.archivos
-      .upload(archivo, 'IMAGE', 'NORMAL')
-      .pipe(
-        switchMap((subido) => this.profiles.setPractitionerPhoto(profileId, subido.id)),
-        switchMap((guardado) =>
-          this.propagarAVitrina(guardado.photoFileId).pipe(map(() => guardado)),
-        ),
-        switchMap((guardado) => this.archivos.imageDataUrl(guardado.photoFileId ?? '')),
-      )
-      .subscribe({
-        next: (fotoUrl) => {
-          this.subiendoFoto.set(false);
-          this.fotoRecien.set(fotoUrl);
-        },
-        error: () => {
-          this.subiendoFoto.set(false);
-          this.errorDeFoto.set('No pudimos subir la foto. Probá con otra imagen.');
-        },
-      });
-  }
-
-  /**
-   * Repite la foto recién fijada en la vitrina pública, si el titular ya
-   * tiene una.
-   *
-   * **Sin vitrina no se crea una implícita.** El `PUT /community/profiles/me`
-   * exige `tenantId`, `slug` y `displayName`: adivinarlos acá sería
-   * inventarle a alguien una dirección pública que nunca pidió. Quien no
-   * tiene vitrina sigue viendo su foto en «Mi perfil» — sólo no se propaga a
-   * ningún lado más.
-   *
-   * **Se manda el objeto completo leído del servidor.** El `PUT` es completo
-   * (no un `PATCH`): mandar sólo `{ avatarFileId }` borraría `visibility` y
-   * cualquier otro campo que la persona haya declarado en otra pantalla.
-   *
-   * **Best-effort.** Un fallo acá no debe tumbar la foto profesional, que ya
-   * quedó guardada en el paso anterior — se traga el error y se sigue.
-   *
-   * @param fileId - El id del archivo recién fijado como foto profesional.
-   * @returns Un observable que siempre completa, nunca falla.
-   */
-  private propagarAVitrina(fileId: string | undefined): Observable<unknown> {
-    if (!fileId) {
-      return of(undefined);
-    }
-    return this.community.getOwnProfile().pipe(
-      switchMap((vitrina) => {
-        if (!vitrina) {
-          return of(undefined);
-        }
-        return this.community.upsertOwnProfile({
-          tenantId: vitrina.tenantId,
-          slug: vitrina.slug,
-          displayName: vitrina.displayName,
-          headline: vitrina.headline,
-          biography: vitrina.biography,
-          acceptsReviews: vitrina.acceptsReviews,
-          avatarFileId: fileId,
-        });
-      }),
-      catchError(() => of(undefined)),
-    );
+    // El rechazo anterior era de OTRO archivo: con uno nuevo en camino, dejar
+    // el texto viejo diría que éste también se rechazó.
+    this.rechazoDeArchivo.set('');
+    this.fotoElegida.emit(archivo);
   }
 
   /** Alguien agregó un vínculo laboral desde el formulario embebido: el contenedor debe releer el perfil. */
@@ -380,6 +247,35 @@ export class PractitionerProfileView {
   protected readonly pestanaVisibleSeleccionada = computed<string | undefined>(
     () => this.pestanasVisibles()[this.pestanaSeleccionada()],
   );
+
+  /** «Ahora se mira esta pestaña». Qué hacer con eso es de quien escucha. */
+  readonly pestanaVisible = output<string>();
+
+  /**
+   * Alguien cambió de pestaña.
+   *
+   * Se conecta a `(selectedIndexChange)` y no a `[(selectedIndex)]` a
+   * propósito: `app-tabs` sólo escribe ese modelo dentro de su `select()`, que
+   * es su manejador de clic (`tabs.ts:93`), así que este evento significa
+   * exactamente «lo cambió una persona» y **no se dispara en el primer
+   * dibujo**. Con un `effect` sobre la señal sí se dispararía, y avisar una
+   * pestaña que nadie abrió es lo que el contrato prohíbe.
+   *
+   * La etiqueta sale de {@link pestanasVisibles}, que es la lista de la ficha
+   * PROPIA. La ficha ajena tiene otras tres pestañas, rotuladas en la
+   * plantilla; desde ahí no se avisa nada, porque se avisaría un nombre que no
+   * está en pantalla. La condición es la misma que decide qué dibujo se pinta.
+   */
+  protected alCambiarPestana(indice: number): void {
+    this.pestanaSeleccionada.set(indice);
+    if (!this.esPropio() || this.previewMode()) {
+      return;
+    }
+    const etiqueta = this.pestanasVisibles()[indice];
+    if (etiqueta !== undefined) {
+      this.pestanaVisible.emit(etiqueta);
+    }
+  }
 
   /**
    * La pestaña con la que el lápiz abre el editor.
@@ -467,33 +363,24 @@ export class PractitionerProfileView {
     this.pestanaSeleccionada.set(TAB.PREVIEW);
   }
 
+  /** «Quiero retirar este título». Confirmarlo y retirarlo es de quien escucha. */
+  readonly credencialARetirar = output<FormacionVisible>();
+
   /**
-   * Retira un título propio cargado por error (ALV-009/formación).
+   * Pide retirar un título propio cargado por error (ALV-009/formación).
    *
-   * Con confirmación, mismo criterio que retirar una sede: no es un clic sin
-   * vuelta atrás. Sólo aparece mientras sigue PENDIENTE —`estudio.sello ===
-   * 'in-review'`, que ya distingue verificado/rechazado de pendiente—, así
-   * que el `422` del backend por un estado que cambió justo antes es el único
-   * camino de error real y se avisa igual.
+   * **Emite la intención, no el resultado.** La confirmación sube con la
+   * operación: un diálogo es una decisión del flujo, y repartirlo entre quien
+   * pregunta y quien persiste dejaría la política de descarte en dos sitios.
+   *
+   * El botón sólo aparece mientras el título sigue PENDIENTE —`sello ===
+   * 'in-review'`, en la plantilla—, así que lo único que puede fallar del otro
+   * lado es un estado que cambió justo antes; eso lo avisa quien escucha.
    */
-  protected async retirarCredencial(estudio: FormacionVisible): Promise<void> {
-    const confirmado = await this.dialogs.confirm({
-      title: 'Retirar este título',
-      message: `¿Retirar «${estudio.tipo}» de tu formación? Todavía está pendiente de verificación.`,
-      confirmLabel: 'Retirar',
-      cancelLabel: 'Cancelar',
-    });
-    if (!confirmado) {
+  protected alPedirRetiro(estudio: FormacionVisible): void {
+    if (!this.esPropio() || this.previewMode()) {
       return;
     }
-    this.profiles.removeOwnCredential(estudio.id).subscribe({
-      next: () => {
-        this.toasts.success('Se retiró el título.', 'Formación');
-        this.trayectoriaCambio.emit();
-      },
-      error: () => {
-        this.toasts.error('No se pudo retirar el título. Probá de nuevo.', 'Formación');
-      },
-    });
+    this.credencialARetirar.emit(estudio);
   }
 }
