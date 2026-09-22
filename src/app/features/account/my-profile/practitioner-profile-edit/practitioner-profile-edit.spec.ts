@@ -1512,6 +1512,46 @@ describe('PractitionerProfileEdit', () => {
 
       expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe('');
     });
+
+    /**
+     * Un intento que no llega al servidor no tiene quién confirme los rechazos
+     * del anterior. Hasta el 22/09/2026 se quedaban pintados: la persona
+     * devolvía el valor a lo guardado, apretaba Guardar, leía «No había ningún
+     * cambio para guardar» y el campo seguía en rojo por un valor que ya no
+     * estaba escrito.
+     */
+    it('volver a lo guardado y apretar Guardar no deja el mensaje de un valor que ya no está', () => {
+      rechazar({
+        code: 'VALIDATION_FAILED',
+        message: 'Validación fallida',
+        details: { violations: ['taxId no existe en el padrón.'] },
+        timestamp: '2026-09-21T00:00:00.000Z',
+        path: '/profiles/practitioners/me',
+      });
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toContain('padrón');
+
+      señal<string>('nit').set('');
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe('');
+    });
+
+    it('un intento frenado por un teléfono a medias tampoco deja rechazos viejos pintados', () => {
+      rechazar({
+        code: 'VALIDATION_FAILED',
+        message: 'Validación fallida',
+        details: { violations: ['taxId no existe en el padrón.'] },
+        timestamp: '2026-09-21T00:00:00.000Z',
+        path: '/profiles/practitioners/me',
+      });
+
+      interno<{ setValue(valor: string): void }>('celularTrabajo').setValue('+591 7001');
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe('');
+    });
   });
 
   /**

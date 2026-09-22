@@ -1013,6 +1013,13 @@ export class PractitionerProfileEdit {
       return;
     }
 
+    // Cada intento de guardar empieza limpio. Los rechazos del anterior hablan
+    // de valores que la persona pudo cambiar —o devolver a lo guardado—: si
+    // este intento no llega al servidor, nadie los confirma, y dejarlos
+    // pintados es señalar en rojo un campo que ya está bien. Si siguen
+    // valiendo, el próximo envío los trae de vuelta.
+    this.erroresDelServidor.set(new Map());
+
     // Un teléfono a medias no viaja: se marca, se lleva a la persona a
     // «Contacto» —puede estar mirando «Datos personales»— y se dice por qué.
     const telefonos = [this.celularPersonal, this.celularTrabajo, this.fijoTrabajo];
@@ -1129,7 +1136,6 @@ export class PractitionerProfileEdit {
     }
 
     this.guardandoPresentacion.set(true);
-    this.erroresDelServidor.set(new Map());
     this.profiles.updateOwnPractitionerProfile(cambios).subscribe({
       next: (perfil) => {
         this.guardandoPresentacion.set(false);
