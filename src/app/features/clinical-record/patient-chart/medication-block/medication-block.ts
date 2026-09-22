@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  forwardRef,
   inject,
   input,
   output,
@@ -40,6 +41,7 @@ import { Textarea } from '../../../../shared/components/atoms/textarea/textarea'
 import type { DynamicEnumOption } from '../../../../core/data-access/system-context/system-context.types';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
 import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
 
 /**
  * La columna que gobierna el medicamento.
@@ -210,11 +212,12 @@ export interface RecetaEnFicha {
     StatusSeal,
     Textarea,
   ],
+  providers: [{ provide: DRAFT_BLOCK, useExisting: forwardRef(() => MedicationBlock) }],
   templateUrl: './medication-block.html',
   styleUrl: './medication-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MedicationBlock {
+export class MedicationBlock implements DraftBlock {
   private readonly clinical = inject(ClinicalClient);
   private readonly systemContext = inject(SystemContextClient);
   private readonly terminology = inject(TerminologyClient);
@@ -512,6 +515,34 @@ export class MedicationBlock {
 
   /** La cita elegida, o `null` por «sin cita asociada». */
   protected readonly citaElegida = signal<string | null>(null);
+
+  /**
+   * Contrato de `DraftBlock`. Deliberadamente **sin `validFrom`**: el propio
+   * bloque lo completa solo (`limpiar()` lo siembra con la fecha de hoy y la
+   * elección rápida de duración también lo toca) — un formulario recién
+   * limpiado leería como "pendiente" por una columna que nadie tocó. Sin
+   * `medicamento`/`buscandoMedicamento`/catálogos/`registrando`/`registro`:
+   * son lo que el bloque cargó o está pidiendo, no lo que la persona escribió.
+   */
+  readonly tieneCambiosPendientes = computed(
+    () =>
+      this.medicamento() !== null ||
+      this.dosis().trim() !== '' ||
+      this.frecuencia().trim() !== '' ||
+      String(this.cantidad() ?? '').trim() !== '' ||
+      this.via() !== null ||
+      this.validTo() !== null ||
+      this.duracionDias() !== null ||
+      this.esCronico() ||
+      this.duracionRapidaElegida() !== null ||
+      this.indicacionesPaciente().trim() !== '' ||
+      this.indicacion() !== null ||
+      this.motivoLibre().trim() !== '' ||
+      this.medicamentoElegido() !== null ||
+      this.presentacion() !== null ||
+      this.concentracion() !== null ||
+      this.citaElegida() !== null,
+  );
 
   /** Las opciones del selector de cita, con la vacía primero. */
   protected readonly opcionesDeCita = computed<readonly SelectOption<string | null>[]>(() => [

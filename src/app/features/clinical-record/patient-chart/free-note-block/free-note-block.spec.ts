@@ -206,4 +206,70 @@ describe('FreeNoteBlock', () => {
     expect(interno<() => string>('contenido')()).toBe('<p>Media hora de consulta.</p>');
     expect(interno<() => string | null>('error')()).toContain('probá de nuevo');
   });
+
+  describe('tieneCambiosPendientes — contrato de DraftBlock', () => {
+    it('recién montado no tiene cambios pendientes', () => {
+      expect(fixture.componentInstance.tieneCambiosPendientes()).toBe(false);
+    });
+
+    it('escribiendo, tiene cambios pendientes', () => {
+      escribir('<p>Refiere cefalea.</p>');
+      expect(fixture.componentInstance.tieneCambiosPendientes()).toBe(true);
+    });
+
+    it('guardada la nota, lo escrito ya no cuenta como pendiente', () => {
+      escribir('<p>Refiere cefalea de tres días.</p>');
+      interno<() => void>('guardar').call(fixture.componentInstance);
+      peticionDePerfil().flush(PERFIL);
+      http.expectOne((r) => r.url.endsWith('/charts/notes')).flush({
+        noteId: 'nota-1',
+        versionId: 'v-1',
+        versionNumber: 1,
+        lifecycleStatusConceptId: 'c-1',
+        versionStatusConceptId: 'c-2',
+      });
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.tieneCambiosPendientes()).toBe(false);
+    });
+
+    it('seguir escribiendo después de guardar vuelve a ser pendiente', () => {
+      escribir('<p>Refiere cefalea de tres días.</p>');
+      interno<() => void>('guardar').call(fixture.componentInstance);
+      peticionDePerfil().flush(PERFIL);
+      http.expectOne((r) => r.url.endsWith('/charts/notes')).flush({
+        noteId: 'nota-1',
+        versionId: 'v-1',
+        versionNumber: 1,
+        lifecycleStatusConceptId: 'c-1',
+        versionStatusConceptId: 'c-2',
+      });
+      fixture.detectChanges();
+
+      escribir('<p>Refiere cefalea de tres días. Agrega náuseas.</p>');
+
+      expect(fixture.componentInstance.tieneCambiosPendientes()).toBe(true);
+    });
+
+    it('la cita elegida cuenta sólo antes del primer guardado', () => {
+      interno<{ set(v: string | null): void }>('citaElegida').set('enc-9');
+      expect(fixture.componentInstance.tieneCambiosPendientes()).toBe(true);
+
+      escribir('<p>Refiere cefalea.</p>');
+      interno<() => void>('guardar').call(fixture.componentInstance);
+      peticionDePerfil().flush(PERFIL);
+      http.expectOne((r) => r.url.endsWith('/charts/notes')).flush({
+        noteId: 'nota-1',
+        versionId: 'v-1',
+        versionNumber: 1,
+        lifecycleStatusConceptId: 'c-1',
+        versionStatusConceptId: 'c-2',
+      });
+      fixture.detectChanges();
+
+      // Después del primer guardado la nota ya está abierta: la cita viaja en
+      // el vínculo de esa nota, no en un alta pendiente de esta pantalla.
+      expect(fixture.componentInstance.tieneCambiosPendientes()).toBe(false);
+    });
+  });
 });

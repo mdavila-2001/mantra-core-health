@@ -917,4 +917,33 @@ describe('MedicationBlock', () => {
       expect(interno<() => string>('motivoLibre')()).toBe('');
     });
   });
+
+  describe('tieneCambiosPendientes — contrato de DraftBlock', () => {
+    it('recién montado no tiene cambios pendientes', () => {
+      responderCatalogo();
+      expect(componente.tieneCambiosPendientes()).toBe(false);
+    });
+
+    it('con la dosis escrita tiene cambios pendientes', () => {
+      responderCatalogo();
+      señal<string>('dosis').set('500mg');
+      expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+
+    it('la vigencia que el bloque completa solo no cuenta como pendiente', () => {
+      // `validFrom` es la única señal que el propio bloque rellena sin que
+      // nadie la haya tocado (limpiar() la siembra con la fecha de hoy). Se
+      // fija sola, sin pasar por `fijarDuracion`, para no confundirla con
+      // `validTo`/`duracionDias`, que sí son borrador.
+      responderCatalogo();
+      señal<Date | null>('validFrom').set(new Date('2026-09-21'));
+      expect(componente.tieneCambiosPendientes()).toBe(false);
+    });
+
+    it('elegir una duración rápida sí cuenta, aunque también fije validFrom', () => {
+      responderCatalogo();
+      interno<(v: number | 'continuo' | null) => void>('elegirDuracionRapida')(7);
+      expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+  });
 });

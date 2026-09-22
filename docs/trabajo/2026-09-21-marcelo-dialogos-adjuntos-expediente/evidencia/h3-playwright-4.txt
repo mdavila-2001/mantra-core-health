@@ -1,0 +1,131 @@
+
+Running 4 tests using 1 worker
+
+  x  1 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:56:7 › Expediente · política de descarte del alta › el alta de Documentos pregunta antes de descartar lo escrito, por los tres caminos (20.8s)
+  -  2 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:132:7 › Expediente · política de descarte del alta › el detalle de lectura nunca pregunta
+  x  3 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:152:7 › Expediente · política de descarte del alta › con movimiento reducido, el alta igual abre (19.6s)
+  x  4 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:163:7 › Expediente · política de descarte del alta › el alta se ve correctamente en móvil, claro y oscuro (20.8s)
+
+
+  1) [chromium] › playwright\expediente-dialogo-descarte.spec.ts:56:7 › Expediente · política de descarte del alta › el alta de Documentos pregunta antes de descartar lo escrito, por los tres caminos 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  getByTestId('expediente-alta')
+    Expected: visible
+    Received: hidden
+    Timeout:  15000ms
+
+    Call log:
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for getByTestId('expediente-alta')
+        33 × locator resolved to <app-content-dialog size="lg" closelabel="Cerrar" _nghost-ng-c1047260405="" _ngcontent-ng-c164921577="" data-testid="expediente-alta">…</app-content-dialog>
+           - unexpected value "hidden"
+
+
+      76 |
+      77 |     const modal = page.getByTestId('expediente-alta');
+    > 78 |     await expect(modal).toBeVisible();
+         |                         ^
+      79 |     await expect(modal).toHaveAttribute('data-testid', 'expediente-alta');
+      80 |     await expect(page.getByRole('dialog', { name: 'Registrar un documento' })).toBeVisible();
+      81 |
+        at D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\playwright\expediente-dialogo-descarte.spec.ts:78:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\expediente-dialogo-descart-e6445-scrito-por-los-tres-caminos-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\expediente-dialogo-descart-e6445-scrito-por-los-tres-caminos-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\expediente-dialogo-descart-e6445-scrito-por-los-tres-caminos-chromium\trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts\playwright\salida\expediente-dialogo-descart-e6445-scrito-por-los-tres-caminos-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › playwright\expediente-dialogo-descarte.spec.ts:152:7 › Expediente · política de descarte del alta › con movimiento reducido, el alta igual abre 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  getByTestId('expediente-alta')
+    Expected: visible
+    Received: hidden
+    Timeout:  15000ms
+
+    Call log:
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for getByTestId('expediente-alta')
+        33 × locator resolved to <app-content-dialog size="lg" closelabel="Cerrar" _nghost-ng-c1047260405="" _ngcontent-ng-c164921577="" data-testid="expediente-alta">…</app-content-dialog>
+           - unexpected value "hidden"
+
+
+      158 |     await estable(page);
+      159 |     await page.getByTestId('expediente-nuevo-documento').click();
+    > 160 |     await expect(page.getByTestId('expediente-alta')).toBeVisible();
+          |                                                       ^
+      161 |   });
+      162 |
+      163 |   test('el alta se ve correctamente en móvil, claro y oscuro', async ({ page }) => {
+        at D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\playwright\expediente-dialogo-descarte.spec.ts:160:55
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\expediente-dialogo-descart-66b13-reducido-el-alta-igual-abre-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\expediente-dialogo-descart-66b13-reducido-el-alta-igual-abre-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\expediente-dialogo-descart-66b13-reducido-el-alta-igual-abre-chromium\trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts\playwright\salida\expediente-dialogo-descart-66b13-reducido-el-alta-igual-abre-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › playwright\expediente-dialogo-descarte.spec.ts:163:7 › Expediente · política de descarte del alta › el alta se ve correctamente en móvil, claro y oscuro 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  getByTestId('expediente-alta')
+    Expected: visible
+    Received: hidden
+    Timeout:  15000ms
+
+    Call log:
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for getByTestId('expediente-alta')
+        33 × locator resolved to <app-content-dialog size="lg" closelabel="Cerrar" _nghost-ng-c1047260405="" _ngcontent-ng-c164921577="" data-testid="expediente-alta">…</app-content-dialog>
+           - unexpected value "hidden"
+
+
+      169 |     await estable(page);
+      170 |     await page.getByTestId('expediente-nuevo-documento').click();
+    > 171 |     await expect(page.getByTestId('expediente-alta')).toBeVisible();
+          |                                                       ^
+      172 |
+      173 |     await page.setViewportSize({ width: 390, height: 844 });
+      174 |     await estable(page);
+        at D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\playwright\expediente-dialogo-descarte.spec.ts:171:55
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\expediente-dialogo-descart-840c8-nte-en-móvil-claro-y-oscuro-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\expediente-dialogo-descart-840c8-nte-en-móvil-claro-y-oscuro-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\expediente-dialogo-descart-840c8-nte-en-móvil-claro-y-oscuro-chromium\trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts\playwright\salida\expediente-dialogo-descart-840c8-nte-en-móvil-claro-y-oscuro-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    [chromium] › playwright\expediente-dialogo-descarte.spec.ts:56:7 › Expediente · política de descarte del alta › el alta de Documentos pregunta antes de descartar lo escrito, por los tres caminos 
+    [chromium] › playwright\expediente-dialogo-descarte.spec.ts:152:7 › Expediente · política de descarte del alta › con movimiento reducido, el alta igual abre 
+    [chromium] › playwright\expediente-dialogo-descarte.spec.ts:163:7 › Expediente · política de descarte del alta › el alta se ve correctamente en móvil, claro y oscuro 
+  1 skipped
