@@ -36,11 +36,9 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { historialDeCursor } from '../../../shared/components/organisms/data-table/cursor-history';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
-import type {
-  ColumnDef,
-  CursorState,
-} from '../../../shared/components/organisms/data-table/data-table.types';
+import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
@@ -48,9 +46,6 @@ import { displayCurrency } from '../../../core/money/display-currency';
 
 /** Filas por página. El backend admite hasta 500 y aplica 50 por omisión. */
 const TAMANO_DE_PAGINA = 25;
-
-/** Centinela con el que la tabla pide la página anterior. */
-const VOLVER = 'anterior';
 
 /** Largos que declara `CreateServiceCatalogItemDto`. */
 const MAX_CODIGO = 60;
@@ -146,13 +141,9 @@ export class ServicesCatalog {
     { initialValue: '' },
   );
 
-  private readonly historia = signal<readonly (string | undefined)[]>([undefined]);
-  private readonly cursorSiguiente = signal<string | null>(null);
-
-  protected readonly cursor = computed<CursorState>(() => ({
-    prevCursor: this.historia().length > 1 ? VOLVER : null,
-    nextCursor: this.cursorSiguiente(),
-  }));
+  /** El paginado por cursor, con memoria (`historialDeCursor`). */
+  private readonly paginado = historialDeCursor();
+  protected readonly cursor = this.paginado.cursor;
 
   protected readonly columnas = computed<readonly ColumnDef<ServiceCatalogItem>[]>(() => [
     { key: 'code', header: 'Código', priority: 1 },
@@ -175,7 +166,7 @@ export class ServicesCatalog {
       this.practicaElegida();
       this.busqueda();
       untracked(() => {
-        this.historia.set([undefined]);
+        this.paginado.reiniciar();
         this.cargar();
       });
     });
@@ -190,11 +181,7 @@ export class ServicesCatalog {
   }
 
   protected mover(cursor: string): void {
-    if (cursor === VOLVER) {
-      this.historia.update((visitados) => visitados.slice(0, -1));
-    } else {
-      this.historia.update((visitados) => [...visitados, cursor]);
-    }
+    this.paginado.mover(cursor);
     this.cargar();
   }
 
@@ -205,7 +192,7 @@ export class ServicesCatalog {
   private cargar(): void {
     const practiceId = this.practicaElegida();
     if (practiceId === null) {
-      this.cursorSiguiente.set(null);
+      this.paginado.llego(null);
       this.resultados.set(
         empty({ label: 'Elegir una práctica' }, 'Elegí una práctica para ver su catálogo.'),
       );
@@ -214,7 +201,7 @@ export class ServicesCatalog {
 
     this.resultados.set(loading());
     const texto = this.busqueda();
-    const cursorActual = this.historia().at(-1);
+    const cursorActual = this.paginado.actual();
 
     this.catalog
       .search(practiceId, {
@@ -224,11 +211,11 @@ export class ServicesCatalog {
       })
       .subscribe({
         next: (pagina) => {
-          this.cursorSiguiente.set(pagina.nextCursor);
+          this.paginado.llego(pagina.nextCursor);
           this.resultados.set(this.estadoDe(pagina));
         },
         error: (error: unknown) => {
-          this.cursorSiguiente.set(null);
+          this.paginado.llego(null);
           this.resultados.set(errorToViewState<readonly ServiceCatalogItem[]>(error));
         },
       });

@@ -1,0 +1,287 @@
+{
+  "base": "http://localhost:4377",
+  "fecha": "2026-09-22T03:49:16.535Z",
+  "veredictos": [
+    {
+      "nombre": "pacientes: en la primera página «Anterior» está apagado",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "pacientes: en la segunda página «Anterior» se enciende",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "pacientes: la segunda página trae otras filas",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "pacientes: «Anterior» vuelve a las filas de la primera página",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "pacientes: de vuelta en la primera página «Anterior» se apaga",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "organizaciones: una sola página, sin paginación dibujada",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "catalogo-servicios: una sola página, sin paginación dibujada",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "solicitudes-seguro: una sola página, sin paginación dibujada",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "data-table · ready: el banco dice que montó por escenario",
+      "ok": true,
+      "detalle": "escenario · ready"
+    },
+    {
+      "nombre": "DataTable ready: seis filas montadas en el marco",
+      "ok": true,
+      "detalle": "6 filas"
+    },
+    {
+      "nombre": "DataTable ready: la pestaña Salidas registró sortChanged y cursorChanged",
+      "ok": true,
+      "detalle": "sortChanged apellido asccursorChanged pag-2"
+    },
+    {
+      "nombre": "data-table · error: el banco dice que montó por escenario",
+      "ok": true,
+      "detalle": "escenario · error"
+    },
+    {
+      "nombre": "DataTable error: S9 con el código de soporte visible",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "data-table · empty: el banco dice que montó por escenario",
+      "ok": true,
+      "detalle": "escenario · empty"
+    },
+    {
+      "nombre": "DataTable empty: S3 con la próxima acción",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "data-table · stale: el banco dice que montó por escenario",
+      "ok": true,
+      "detalle": "escenario · stale"
+    },
+    {
+      "nombre": "DataTable stale: S7 con la antigüedad visible",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "content-dialog · descartable: el banco dice que montó por escenario",
+      "ok": true,
+      "detalle": "escenario · descartable"
+    },
+    {
+      "nombre": "ContentDialog descartable: el <dialog> nativo está abierto en el marco",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ContentDialog descartable: «Guardar» proyectado en el pie",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "content-dialog · con-cambios: el banco dice que montó por escenario",
+      "ok": true,
+      "detalle": "escenario · con-cambios"
+    },
+    {
+      "nombre": "ContentDialog con-cambios: Escape NO cierra con cambios pendientes",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ContentDialog con-cambios: el anfitrión pregunta si se descarta",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ContentDialog con-cambios: Salidas registró opened y dismissAttempt",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "view-state-host · ready: el banco dice que montó por escenario",
+      "ok": true,
+      "detalle": "escenario · ready"
+    },
+    {
+      "nombre": "ViewStateHost ready: contenido proyectado visible",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ViewStateHost ready: nada salió a la red al montar",
+      "ok": true,
+      "detalle": "No pidió nada a la red al montarse."
+    },
+    {
+      "nombre": "view-state-host · stale: el banco dice que montó por escenario",
+      "ok": true,
+      "detalle": "escenario · stale"
+    },
+    {
+      "nombre": "ViewStateHost stale: contenido proyectado visible",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ViewStateHost stale: nada salió a la red al montar",
+      "ok": true,
+      "detalle": "No pidió nada a la red al montarse."
+    },
+    {
+      "nombre": "view-state-host · validation: el banco dice que montó por escenario",
+      "ok": true,
+      "detalle": "escenario · validation"
+    },
+    {
+      "nombre": "ViewStateHost validation: contenido proyectado ausente",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ViewStateHost validation: nada salió a la red al montar",
+      "ok": true,
+      "detalle": "No pidió nada a la red al montarse."
+    },
+    {
+      "nombre": "view-state-host · forbidden: el banco dice que montó por escenario",
+      "ok": true,
+      "detalle": "escenario · forbidden"
+    },
+    {
+      "nombre": "ViewStateHost forbidden: contenido proyectado ausente",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ViewStateHost forbidden: nada salió a la red al montar",
+      "ok": true,
+      "detalle": "No pidió nada a la red al montarse."
+    },
+    {
+      "nombre": "view-state-host · not-found: el banco dice que montó por escenario",
+      "ok": true,
+      "detalle": "escenario · not-found"
+    },
+    {
+      "nombre": "ViewStateHost not-found: contenido proyectado ausente",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ViewStateHost not-found: nada salió a la red al montar",
+      "ok": true,
+      "detalle": "No pidió nada a la red al montarse."
+    },
+    {
+      "nombre": "view-state-host · offline: el banco dice que montó por escenario",
+      "ok": true,
+      "detalle": "escenario · offline"
+    },
+    {
+      "nombre": "ViewStateHost offline: contenido proyectado ausente",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ViewStateHost offline: nada salió a la red al montar",
+      "ok": true,
+      "detalle": "No pidió nada a la red al montarse."
+    },
+    {
+      "nombre": "view-state-host · error: el banco dice que montó por escenario",
+      "ok": true,
+      "detalle": "escenario · error"
+    },
+    {
+      "nombre": "ViewStateHost error: contenido proyectado ausente",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ViewStateHost error: nada salió a la red al montar",
+      "ok": true,
+      "detalle": "No pidió nada a la red al montarse."
+    },
+    {
+      "nombre": "view-state-host · empty: el banco dice que montó por escenario",
+      "ok": true,
+      "detalle": "escenario · empty"
+    },
+    {
+      "nombre": "ViewStateHost empty: contenido proyectado ausente",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ViewStateHost empty: nada salió a la red al montar",
+      "ok": true,
+      "detalle": "No pidió nada a la red al montarse."
+    },
+    {
+      "nombre": "view-state-host · loading: el banco dice que montó por escenario",
+      "ok": true,
+      "detalle": "escenario · loading"
+    },
+    {
+      "nombre": "ViewStateHost loading: contenido proyectado ausente",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ViewStateHost loading: nada salió a la red al montar",
+      "ok": true,
+      "detalle": "No pidió nada a la red al montarse."
+    },
+    {
+      "nombre": "view-state-host · route-auth-pending: el banco dice que montó por escenario",
+      "ok": true,
+      "detalle": "escenario · route-auth-pending"
+    },
+    {
+      "nombre": "ViewStateHost route-auth-pending: contenido proyectado ausente",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ViewStateHost S1: sin esqueleto, con «Verificando permisos»",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ViewStateHost route-auth-pending: nada salió a la red al montar",
+      "ok": true,
+      "detalle": "No pidió nada a la red al montarse."
+    },
+    {
+      "nombre": "sin errores de página en toda la corrida",
+      "ok": true,
+      "detalle": ""
+    }
+  ],
+  "errores": []
+}

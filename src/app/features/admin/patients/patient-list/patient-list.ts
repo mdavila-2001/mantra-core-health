@@ -27,11 +27,9 @@ import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Link } from '../../../../shared/components/atoms/link/link';
 import { SearchField } from '../../../../shared/components/molecules/search-field/search-field';
+import { historialDeCursor } from '../../../../shared/components/organisms/data-table/cursor-history';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
-import type {
-  ColumnDef,
-  CursorState,
-} from '../../../../shared/components/organisms/data-table/data-table.types';
+import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import type { PageHeaderAction } from '../../../../shared/components/organisms/page-header/page-header';
 import {
@@ -43,15 +41,6 @@ import {
 
 /** Filas por página. El backend admite hasta 200 y aplica 50 por omisión. */
 const TAMANO_DE_PAGINA = 25;
-
-/**
- * Centinela con el que la tabla pide la página anterior.
- *
- * El contrato solo entrega `nextCursor`: un cursor hacia atrás no existe. El
- * organismo, en cambio, emite el valor de `prevCursor` tal cual, así que se le
- * da esta marca y el camino de vuelta lo recuerda la pantalla.
- */
-const VOLVER = 'anterior';
 
 /**
  * Listado de pacientes — vista **V05-01·L** de `SALUD/Vistas/V05 profiles`.
@@ -118,17 +107,12 @@ export class PatientList {
   );
 
   /**
-   * Los cursores ya visitados, en orden. Es lo que permite volver con una
-   * paginación que solo sabe avanzar.
+   * El paginado por cursor, con memoria: el contrato solo entrega `nextCursor`
+   * y el camino de vuelta lo recuerda `historialDeCursor`, que es el mismo que
+   * usan organizaciones, el catálogo de servicios y las solicitudes de seguro.
    */
-  private readonly historia = signal<readonly (string | undefined)[]>([undefined]);
-
-  private readonly cursorSiguiente = signal<string | null>(null);
-
-  protected readonly cursor = computed<CursorState>(() => ({
-    prevCursor: this.historia().length > 1 ? VOLVER : null,
-    nextCursor: this.cursorSiguiente(),
-  }));
+  private readonly paginado = historialDeCursor();
+  protected readonly cursor = this.paginado.cursor;
 
   /**
    * Las columnas, ya con sus plantillas resueltas.
@@ -175,7 +159,7 @@ export class PatientList {
     effect(() => {
       this.busqueda();
       untracked(() => {
-        this.historia.set([undefined]);
+        this.paginado.reiniciar();
         this.cargar();
       });
     });
@@ -192,11 +176,7 @@ export class PatientList {
   }
 
   protected mover(cursor: string): void {
-    if (cursor === VOLVER) {
-      this.historia.update((visitados) => visitados.slice(0, -1));
-    } else {
-      this.historia.update((visitados) => [...visitados, cursor]);
-    }
+    this.paginado.mover(cursor);
     this.cargar();
   }
 
@@ -209,7 +189,7 @@ export class PatientList {
     this.listado.set(loading());
 
     const texto = this.busqueda();
-    const cursorActual = this.historia().at(-1);
+    const cursorActual = this.paginado.actual();
 
     this.profiles
       .searchPatients({
@@ -219,11 +199,11 @@ export class PatientList {
       })
       .subscribe({
         next: (pagina) => {
-          this.cursorSiguiente.set(pagina.nextCursor);
+          this.paginado.llego(pagina.nextCursor);
           this.listado.set(this.estadoDe(pagina));
         },
         error: (error: unknown) => {
-          this.cursorSiguiente.set(null);
+          this.paginado.llego(null);
           this.listado.set(errorToViewState<readonly PatientListItem[]>(error));
         },
       });

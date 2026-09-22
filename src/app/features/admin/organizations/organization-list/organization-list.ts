@@ -32,22 +32,14 @@ import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../../shared/components/atoms/badge/badge.types';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { SearchField } from '../../../../shared/components/molecules/search-field/search-field';
+import { historialDeCursor } from '../../../../shared/components/organisms/data-table/cursor-history';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
-import type {
-  ColumnDef,
-  CursorState,
-} from '../../../../shared/components/organisms/data-table/data-table.types';
+import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ORGANIZATIONS_ROUTE, ORGANIZATION_NEW_ROUTE } from '../organizations.routes';
 
 /** Filas por página. El backend admite hasta 200 y aplica 50 por omisión. */
 const TAMANO_DE_PAGINA = 25;
-
-/**
- * Centinela con el que la tabla pide la página anterior. El contrato solo
- * entrega `nextCursor`; el camino de vuelta lo recuerda la pantalla.
- */
-const VOLVER = 'anterior';
 
 /**
  * Variante del badge por **código** de concepto, que es lo estable — la
@@ -123,15 +115,12 @@ export class OrganizationList {
     { initialValue: '' },
   );
 
-  /** Los cursores ya visitados, en orden: el camino de vuelta. */
-  private readonly historia = signal<readonly (string | undefined)[]>([undefined]);
-
-  private readonly cursorSiguiente = signal<string | null>(null);
-
-  protected readonly cursor = computed<CursorState>(() => ({
-    prevCursor: this.historia().length > 1 ? VOLVER : null,
-    nextCursor: this.cursorSiguiente(),
-  }));
+  /**
+   * El paginado por cursor, con memoria: el contrato solo entrega `nextCursor`
+   * y el camino de vuelta lo recuerda `historialDeCursor`.
+   */
+  private readonly paginado = historialDeCursor();
+  protected readonly cursor = this.paginado.cursor;
 
   /** `priority` 1 nunca se pliega; en móvil las 2 caen a la fila de detalle. */
   protected readonly columnas = computed<readonly ColumnDef<TenantListItem>[]>(() => [
@@ -161,7 +150,7 @@ export class OrganizationList {
     effect(() => {
       this.busqueda();
       untracked(() => {
-        this.historia.set([undefined]);
+        this.paginado.reiniciar();
         this.cargar();
       });
     });
@@ -177,11 +166,7 @@ export class OrganizationList {
   }
 
   protected mover(cursor: string): void {
-    if (cursor === VOLVER) {
-      this.historia.update((visitados) => visitados.slice(0, -1));
-    } else {
-      this.historia.update((visitados) => [...visitados, cursor]);
-    }
+    this.paginado.mover(cursor);
     this.cargar();
   }
 
@@ -204,7 +189,7 @@ export class OrganizationList {
     this.listado.set(loading());
 
     const texto = this.busqueda();
-    const cursorActual = this.historia().at(-1);
+    const cursorActual = this.paginado.actual();
 
     this.directory
       .searchTenants({
@@ -227,11 +212,11 @@ export class OrganizationList {
       .subscribe({
         next: ({ pagina, etiquetas }) => {
           this.etiquetas.set(etiquetas);
-          this.cursorSiguiente.set(pagina.nextCursor);
+          this.paginado.llego(pagina.nextCursor);
           this.listado.set(this.estadoDe(pagina));
         },
         error: (error: unknown) => {
-          this.cursorSiguiente.set(null);
+          this.paginado.llego(null);
           this.listado.set(errorToViewState<readonly TenantListItem[]>(error));
         },
       });
