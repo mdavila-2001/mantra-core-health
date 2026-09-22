@@ -194,7 +194,7 @@ export const ESCENARIOS_DE_CONTENT_DIALOG: readonly EscenarioDeComponente[] = [
     seVe: 'Abierto al montar: título, bajada, dos campos proyectados y «Guardar» en el pie. El foco cae en «Cerrar».',
     interacciones: [
       'Se abre → opened.',
-      '«Cerrar», Escape o clic en el fondo → closed, y el foco vuelve a «Abrir el modal».',
+      '«Cerrar», Escape o clic en el fondo → closed. Si se abrió con «Abrir el modal», el foco vuelve a ese botón; la primera apertura es automática al montar y no hay a dónde volver.',
       '«Guardar» → guardarSolicitado (es una intención: nada se persiste).',
     ],
     salidasEsperadas: ['opened', 'closed', 'guardarSolicitado'],
@@ -206,7 +206,7 @@ export const ESCENARIOS_DE_CONTENT_DIALOG: readonly EscenarioDeComponente[] = [
     clave: CLAVE,
     variante: 'con-cambios',
     titulo: 'Edición con cambios pendientes, ancho lg',
-    seVe: 'Abierto con el borrador ya escrito. Escape y el fondo NO cierran: preguntan.',
+    seVe: 'Abierto con el borrador ya escrito. Escape y el fondo NO cierran: preguntan. Quien pregunta es este anfitrión, no el organismo: con `dismissible` en false `ContentDialog` sólo emite `dismissAttempt` (content-dialog.ts:108-123) y el descarte lo decide el consumidor.',
     interacciones: [
       'Escape o clic en el fondo → dismissAttempt, y aparece «¿Descartarlos?».',
       '«Descartar» → closed tras descartar. «Seguir editando» deja el modal donde está.',

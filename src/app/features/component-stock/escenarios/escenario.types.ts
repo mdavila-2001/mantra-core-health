@@ -68,4 +68,17 @@ export interface EscenarioDeComponente {
   readonly host: Type<AnfitrionDeEscenario>;
   /** Dónde está escrito el anfitrión, para leer el contrato completo. */
   readonly fuente: string;
+  /**
+   * Las violaciones del contrato del componente con los datos de este escenario,
+   * comprobadas ANTES de montar. Vacío = contrato válido.
+   *
+   * Existe para los escenarios inválidos a propósito: el banco no los monta, dice
+   * qué violan y deja montado el último escenario válido. Montado a mano, el
+   * `DataTable` con identidades repetidas no lanza, dibuja todas las filas y no
+   * escribe nada en la consola (medido en `escenarios.spec.ts`): esperar a que
+   * «falle» sería aceptar una tabla que miente sobre qué fila es cuál.
+   */
+  readonly verificarContrato?: () => readonly string[];
+  /** Partición de equivalencia del escenario: correcto, límite o inválido. */
+  readonly nivelDePrueba?: 'correcto' | 'limite' | 'invalido';
 }

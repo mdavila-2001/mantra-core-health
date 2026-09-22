@@ -78,85 +78,166 @@ function esOpcion(tipo: string): boolean {
 }
 
 /**
- * Un valor para una entrada.
+ * De dónde salió un valor generado, que es lo que decide si acredita algo.
  *
- * Devuelve `undefined` cuando no sabe qué poner y la entrada no es obligatoria:
- * es mejor dejar que el componente use su valor por omisión —que es parte de lo
- * que se está revisando— que meterle un dato inventado que no sabe pintar.
+ *   - `del-tipo`: cumple el tipo declarado de la entrada (una rama de la unión,
+ *     un número, un texto para un `string`…). El nombre puede haber elegido
+ *     CUÁL texto, pero el tipo lo admite.
+ *   - `sin-verificar`: el generador no sabe producir un valor válido para ese
+ *     tipo y puso algo para que el componente monte (`[]`, `''`, un texto
+ *     adivinado por el nombre). Montar así NO acredita el contrato.
+ *   - `por-omision`: no se pasa nada; el componente usa su valor por omisión.
  */
-export function valorParaEntrada(entrada: EntradaAGenerar, semilla: string): unknown {
+export type ProcedenciaDelValor = 'del-tipo' | 'sin-verificar' | 'por-omision';
+
+export interface ValorGenerado {
+  readonly valor: unknown;
+  readonly procedencia: ProcedenciaDelValor;
+  /** Por qué no es `del-tipo`, en una línea legible. `null` si lo es. */
+  readonly motivo: string | null;
+}
+
+/** El tipo declarado admite un texto (`string`, `string | null`, uniones con `string`). */
+function admiteTexto(tipo: string): boolean {
+  return /(^|\|)\s*string\s*($|\|)/.test(tipo) || tipo === 'string';
+}
+
+function admiteFecha(tipo: string): boolean {
+  return /(^|\|)\s*Date\s*($|\|)/.test(tipo);
+}
+
+const delTipo = (valor: unknown): ValorGenerado => ({ valor, procedencia: 'del-tipo', motivo: null });
+
+/**
+ * Un valor elegido por el NOMBRE de la entrada. Si el tipo declarado no admite
+ * lo que se eligió, el valor no se presenta como válido: se marca sin verificar.
+ */
+function porNombre(valor: unknown, entrada: EntradaAGenerar): ValorGenerado {
+  const encaja =
+    (typeof valor === 'string' && admiteTexto(entrada.tipo)) ||
+    (valor instanceof Date && admiteFecha(entrada.tipo)) ||
+    (typeof valor === 'number' && entrada.tipo === 'number');
+  return encaja
+    ? delTipo(valor)
+    : {
+        valor,
+        procedencia: 'sin-verificar',
+        motivo: `el tipo «${entrada.tipo || 'sin declarar'}» no se resolvió: se le pasó un valor adivinado por el nombre «${entrada.nombre}»`,
+      };
+}
+
+/**
+ * Un valor para una entrada, con su procedencia.
+ *
+ * Cuando no sabe qué poner y la entrada no es obligatoria, no pasa nada: es
+ * mejor dejar que el componente use su valor por omisión —que es parte de lo
+ * que se está revisando— que meterle un dato inventado que no sabe pintar.
+ * Cuando es obligatoria, pone lo mínimo para que monte y LO DICE.
+ */
+export function generarEntrada(entrada: EntradaAGenerar, semilla: string): ValorGenerado {
   const f = conSemilla(`${semilla}-${entrada.nombre}`);
   const { nombre, tipo } = entrada;
   const bajo = nombre.toLowerCase();
 
   const ramas = ramasDeUnion(tipo);
-  if (ramas.length > 0) return f.helpers.arrayElement(ramas);
+  if (ramas.length > 0) return delTipo(f.helpers.arrayElement(ramas));
 
-  if (tipo.startsWith('boolean') || tipo === 'boolean') return f.datatype.boolean(0.5);
+  if (tipo.startsWith('boolean') || tipo === 'boolean') return delTipo(f.datatype.boolean(0.5));
   if (tipo === 'number') {
-    if (/count|total|max|items/.test(bajo)) return f.number.int({ min: 3, max: 240 });
-    if (/value|progress|percent/.test(bajo)) return f.number.int({ min: 10, max: 95 });
-    if (/rows|lines|overflow|debounce/.test(bajo)) return f.number.int({ min: 2, max: 5 });
-    return f.number.int({ min: 1, max: 12 });
+    if (/count|total|max|items/.test(bajo)) return delTipo(f.number.int({ min: 3, max: 240 }));
+    if (/value|progress|percent/.test(bajo)) return delTipo(f.number.int({ min: 10, max: 95 }));
+    if (/rows|lines|overflow|debounce/.test(bajo)) return delTipo(f.number.int({ min: 2, max: 5 }));
+    return delTipo(f.number.int({ min: 1, max: 12 }));
   }
 
-  // Por el nombre, antes que por el tipo.
-  if (/^src$|photo|image|avatarUrl/.test(nombre)) {
-    return avatarSvg(f.person.firstName(), '#1f6f8b');
-  }
-  if (/cover|banner|imagen/i.test(nombre)) return imagenSvg('Vista previa');
-  if (/^(label|submitLabel|cancelLabel|closeLabel|triggerLabel|searchLabel|etiqueta)/i.test(nombre)) {
-    return f.helpers.arrayElement(ETIQUETAS);
-  }
-  if (/^(title|heading|titulo|caption|legend|dialogTitle|confirmTitle)/i.test(nombre)) {
-    return f.helpers.arrayElement(TITULOS);
-  }
-  if (/^(subtitle|description|hint|subtitulo|descripcion|message|confirmMessage|emptyMessage|aviso)/i.test(nombre)) {
-    return f.helpers.arrayElement(DESCRIPCIONES);
-  }
-  if (/^(name|displayName|nombre)$/i.test(nombre)) {
-    return `${f.person.firstName()} ${f.person.lastName().split(' ')[0]}`;
-  }
-  if (/placeholder/i.test(nombre)) return 'Escribí para buscar…';
-  if (/errorMessage|error/i.test(nombre)) return 'Revisá este campo: falta completarlo.';
-  if (/phone|telefono/i.test(nombre)) return bo.celular(f);
-  if (/email|correo/i.test(nombre)) return `${f.internet.username().toLowerCase()}@alovida.mock`;
-  if (/direccion|address/i.test(nombre)) return bo.direccion(f, bo.lugar(f));
-  if (/(^|[^a-z])date|fecha/i.test(nombre)) return tipo === 'string' ? isoDia(-3) : new Date(iso(-3));
-  if (/amount|precio|importe|monto/i.test(nombre)) return bo.bolivianos(f, 80, 4800);
-  if (/^(url|href|route|link|postLink|profileLink|fallback)/i.test(nombre)) return '/dashboard';
-  if (/id$/i.test(nombre) && tipo === 'string') return f.string.uuid();
-
+  // Un arreglo declarado manda sobre el nombre: `coverages` casaba con /cover/
+  // y recibía la imagen SVG de una portada, y el componente se caía en su
+  // primer `.filter` (medido en el barrido de `evidencia/runtime-antes/`).
   const elemento = tipoDeElemento(tipo);
   if (elemento !== null) {
     if (esOpcion(elemento)) {
-      return [
+      return delTipo([
         { value: 'uno', label: 'Clínica Los Olivos' },
         { value: 'dos', label: 'Hospital San Lucas' },
         { value: 'tres', label: 'Consultorio propio' },
-      ];
+      ]);
     }
     if (elemento === 'string') {
-      return Array.from({ length: 3 }, () => f.helpers.arrayElement(ETIQUETAS));
+      return delTipo(Array.from({ length: 3 }, () => f.helpers.arrayElement(ETIQUETAS)));
     }
-    // Un arreglo de objetos que no se sabe cómo son: vacío, que es un estado
-    // legítimo y no rompe el `@for` de la plantilla.
-    return [];
+    // Un arreglo de objetos que no se sabe cómo son. `[]` monta —no rompe el
+    // `@for`— pero no prueba nada del contrato: se dice.
+    return {
+      valor: [],
+      procedencia: 'sin-verificar',
+      motivo: `arreglo de «${elemento}»: no sé construir un elemento válido, se pasó [] (vacío)`,
+    };
   }
 
-  if (tipo === 'string' || tipo.startsWith('string')) {
-    return f.helpers.arrayElement(TITULOS);
+  // Por el nombre, antes que por el tipo. El tipo decide si lo elegido vale.
+  if (/^src$|photo|image|avatarUrl/.test(nombre)) {
+    return porNombre(avatarSvg(f.person.firstName(), '#1f6f8b'), entrada);
+  }
+  if (/cover|banner|imagen/i.test(nombre)) return porNombre(imagenSvg('Vista previa'), entrada);
+  if (/^(label|submitLabel|cancelLabel|closeLabel|triggerLabel|searchLabel|etiqueta)/i.test(nombre)) {
+    return porNombre(f.helpers.arrayElement(ETIQUETAS), entrada);
+  }
+  if (/^(title|heading|titulo|caption|legend|dialogTitle|confirmTitle)/i.test(nombre)) {
+    return porNombre(f.helpers.arrayElement(TITULOS), entrada);
+  }
+  if (/^(subtitle|description|hint|subtitulo|descripcion|message|confirmMessage|emptyMessage|aviso)/i.test(nombre)) {
+    return porNombre(f.helpers.arrayElement(DESCRIPCIONES), entrada);
+  }
+  if (/^(name|displayName|nombre)$/i.test(nombre)) {
+    return porNombre(`${f.person.firstName()} ${f.person.lastName().split(' ')[0]}`, entrada);
+  }
+  if (/placeholder/i.test(nombre)) return porNombre('Escribí para buscar…', entrada);
+  if (/errorMessage|error/i.test(nombre)) return porNombre('Revisá este campo: falta completarlo.', entrada);
+  if (/phone|telefono/i.test(nombre)) return porNombre(bo.celular(f), entrada);
+  if (/email|correo/i.test(nombre)) return porNombre(`${f.internet.username().toLowerCase()}@alovida.mock`, entrada);
+  if (/direccion|address/i.test(nombre)) return porNombre(bo.direccion(f, bo.lugar(f)), entrada);
+  if (/(^|[^a-z])date|fecha/i.test(nombre)) {
+    return porNombre(admiteTexto(tipo) ? isoDia(-3) : new Date(iso(-3)), entrada);
+  }
+  if (/amount|precio|importe|monto/i.test(nombre)) return porNombre(bo.bolivianos(f, 80, 4800), entrada);
+  if (/^(url|href|route|link|postLink|profileLink|fallback)/i.test(nombre)) return porNombre('/dashboard', entrada);
+  if (/id$/i.test(nombre) && tipo === 'string') return delTipo(f.string.uuid());
+
+  // Una fecha declarada como tal, sin que el nombre lo diga (`dia`, `mes`).
+  if (admiteFecha(tipo)) return delTipo(new Date(iso(-3)));
+
+  if (admiteTexto(tipo) || tipo.startsWith('string')) {
+    return delTipo(f.helpers.arrayElement(TITULOS));
   }
 
   // Un alias que el generador no supo resolver (`BadgeValue`, `AvatarStatus`).
-  // Si el nombre pide algo que se lee, se le da texto; si no, se deja que el
-  // componente use su valor por omisión, que también es parte de lo que se
-  // está revisando.
+  // Si el nombre pide algo que se lee, se le da texto —sin verificar—; si no,
+  // se deja que el componente use su valor por omisión.
   if (/^[A-Z]\w*$/.test(tipo) && /value|estado|status|state|texto|contenido/i.test(nombre)) {
-    return f.helpers.arrayElement(ETIQUETAS);
+    return {
+      valor: f.helpers.arrayElement(ETIQUETAS),
+      procedencia: 'sin-verificar',
+      motivo: `tipo «${tipo}» sin resolver: se le pasó un texto adivinado por el nombre «${nombre}»`,
+    };
   }
 
-  return entrada.requerido ? '' : undefined;
+  if (entrada.requerido) {
+    return {
+      valor: '',
+      procedencia: 'sin-verificar',
+      motivo: `obligatoria de tipo «${tipo || 'sin declarar'}», que no sé producir: se pasó '' para que monte`,
+    };
+  }
+  return {
+    valor: undefined,
+    procedencia: 'por-omision',
+    motivo: `tipo «${tipo || 'sin declarar'}» sin generador: queda el valor por omisión del componente`,
+  };
+}
+
+/** Sólo el valor, para quien no necesita saber de dónde salió. */
+export function valorParaEntrada(entrada: EntradaAGenerar, semilla: string): unknown {
+  return generarEntrada(entrada, semilla).valor;
 }
 
 /** Todos los valores de un componente, de una vez. */
@@ -164,12 +245,32 @@ export function valoresParaEntradas(
   entradas: readonly EntradaAGenerar[],
   semilla: string,
 ): Record<string, unknown> {
+  return generarEntradas(entradas, semilla).valores;
+}
+
+export interface EntradasGeneradas {
+  /** Lo que se le pasa al componente: sin las que quedan por omisión. */
+  readonly valores: Record<string, unknown>;
+  /** La procedencia de cada entrada, incluidas las que no se pasaron. */
+  readonly procedencias: Readonly<Record<string, Omit<ValorGenerado, 'valor'>>>;
+  /** Las que se pasaron sin poder verificar el contrato, con su motivo. */
+  readonly sinVerificar: readonly { readonly nombre: string; readonly motivo: string }[];
+}
+
+/** Todos los valores de un componente, con la procedencia de cada uno. */
+export function generarEntradas(entradas: readonly EntradaAGenerar[], semilla: string): EntradasGeneradas {
   const valores: Record<string, unknown> = {};
+  const procedencias: Record<string, Omit<ValorGenerado, 'valor'>> = {};
+  const sinVerificar: { nombre: string; motivo: string }[] = [];
   for (const entrada of entradas) {
-    const valor = valorParaEntrada(entrada, semilla);
-    if (valor !== undefined) valores[entrada.nombre] = valor;
+    const generado = generarEntrada(entrada, semilla);
+    procedencias[entrada.nombre] = { procedencia: generado.procedencia, motivo: generado.motivo };
+    if (generado.valor !== undefined) valores[entrada.nombre] = generado.valor;
+    if (generado.procedencia === 'sin-verificar') {
+      sinVerificar.push({ nombre: entrada.nombre, motivo: generado.motivo ?? '' });
+    }
   }
-  return valores;
+  return { valores, procedencias, sinVerificar };
 }
 
 /** Datos sueltos para las fichas que los piden a mano. */

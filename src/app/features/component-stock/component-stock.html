@@ -151,7 +151,11 @@
             <h1>{{ ficha.clase }}</h1>
             <p class="lienzo__meta">
               <code>&lt;{{ ficha.selector }}&gt;</code>
-              <span>{{ etiquetaDeNivel[ficha.nivel] }}</span>
+              <!-- El nivel dice de dónde salió: la carpeta no es una prueba. -->
+              <span data-testid="stock-nivel">
+                {{ etiquetaDeNivel[ficha.nivel] }}
+                ({{ ficha.nivelOrigen === 'declarado' ? 'declarado en el componente' : 'por su carpeta' }})
+              </span>
               <span>{{ ficha.path }}</span>
             </p>
           </div>
@@ -198,6 +202,20 @@
           <p class="lienzo__resumen">{{ ficha.resumen }}</p>
         }
 
+        <!-- Seis dimensiones y no un tilde verde. Cada una dice su estado en
+             palabras y con marca: se lee igual en escala de grises. -->
+        <dl class="acreditacion" data-testid="stock-acreditacion" aria-label="Acreditación del componente">
+          @for (d of acreditacion(); track d.clave) {
+            <div class="acreditacion__fila" [attr.data-dimension]="d.clave" [attr.data-estado]="d.estado">
+              <dt>{{ d.nombre }}</dt>
+              <dd>
+                <span [class]="'acreditacion__marca acreditacion__marca--' + d.estado">{{ marca(d) }}</span>
+                <span class="acreditacion__detalle">{{ d.detalle }}</span>
+              </dd>
+            </div>
+          }
+        </dl>
+
         <div class="marco-zona">
           <div class="marco-zona__regla">
             {{ ancho() }} × {{ alto() }} px · {{ dispositivo().nombre }}
@@ -206,21 +224,62 @@
               <span class="marco-zona__estado marco-zona__estado--ok">montado en {{ milisegundos() }} ms</span>
               <!-- «Montado» solo no dice con qué: un contrato válido y un
                    valor adivinado se ven igual de verdes. -->
-              @if (escenario(); as e) {
+              <!-- Con un contrato rechazado, lo elegido NO es lo montado: se dice qué quedó. -->
+              @if (contratoRechazado(); as rechazo) {
+                <span class="marco-zona__estado marco-zona__estado--mal" data-testid="stock-montaje">
+                  rechazado · sigue: {{ rechazo.conservado ?? 'nada montado' }}
+                </span>
+              } @else if (escenario(); as e) {
                 <span class="marco-zona__estado" data-testid="stock-montaje">escenario · {{ e.variante }}</span>
               } @else if (entradasRechazadas().length > 0) {
                 <span class="marco-zona__estado marco-zona__estado--aviso" data-testid="stock-montaje">
                   {{ entradasRechazadas().length }} entrada(s) rechazada(s)
+                </span>
+              } @else if (entradasSinVerificar().length > 0) {
+                <span class="marco-zona__estado marco-zona__estado--aviso" data-testid="stock-montaje">
+                  valores generados · {{ entradasSinVerificar().length }} sin verificar
                 </span>
               } @else {
                 <span class="marco-zona__estado" data-testid="stock-montaje">valores generados</span>
               }
             }
             @if (estado() === 'falló') { <span class="marco-zona__estado marco-zona__estado--mal">no monta</span> }
+            <span class="marco-zona__estado" data-testid="stock-monturas" title="ComponentRef vivos en el banco">
+              monturas vivas: {{ monturasVivas() }}
+            </span>
           </div>
 
           @if (error() !== null) {
             <p class="marco-zona__error"><strong>No se pudo montar aislado.</strong> {{ error() }}</p>
+          }
+
+          <!-- Un escenario inválido a propósito: no se monta y lo anterior sigue. -->
+          @if (contratoRechazado(); as rechazo) {
+            <div class="marco-zona__error" role="alert" data-testid="stock-contrato-rechazado">
+              <p><strong>Contrato inválido: no se montó «{{ rechazo.escenario }}».</strong></p>
+              <ul>
+                @for (v of rechazo.violaciones; track v) { <li>{{ v }}</li> }
+              </ul>
+              <p data-testid="stock-contrato-conservado">
+                @if (rechazo.conservado !== null) {
+                  Sigue montado el último escenario válido: <strong>{{ rechazo.conservado }}</strong>.
+                } @else {
+                  No había un escenario válido montado antes: el marco queda como estaba.
+                }
+              </p>
+            </div>
+          }
+
+          <!-- Montar con valores adivinados no acredita el contrato: se dice cuál faltó. -->
+          @if (escenario() === null && estado() === 'montado' && entradasSinVerificar().length > 0) {
+            <div class="marco-zona__aviso" data-testid="stock-sin-verificar">
+              <p><strong>Montado sin verificar.</strong> El generador no sabe producir un valor válido para:</p>
+              <ul>
+                @for (s of entradasSinVerificar(); track s.nombre) {
+                  <li><code>{{ s.nombre }}</code> — {{ s.motivo }}</li>
+                }
+              </ul>
+            </div>
           }
 
           <div
@@ -339,6 +398,7 @@
                         <th scope="col">Entrada</th>
                         <th scope="col">Tipo</th>
                         <th scope="col">Valor (editable)</th>
+                        <th scope="col">Procedencia</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -356,6 +416,17 @@
                               [value]="valorDe()(e.nombre)"
                               (change)="editar(e.nombre, $any($event.target).value)"
                             />
+                          </td>
+                          <td>
+                            @if (procedencias()[e.nombre]; as p) {
+                              <span
+                                class="pastilla"
+                                [class.pastilla--aviso]="p.procedencia === 'sin-verificar'"
+                                [title]="p.motivo ?? ''"
+                              >
+                                {{ p.procedencia === 'del-tipo' ? 'del tipo' : p.procedencia === 'sin-verificar' ? 'sin verificar' : 'por omisión' }}
+                              </span>
+                            }
                           </td>
                         </tr>
                       }
@@ -393,7 +464,39 @@
                   </p>
                 }
                 @if (ficha.usa.atomos.length === 0 && ficha.usa.moleculas.length === 0 && ficha.usa.organismos.length === 0) {
-                  <p class="panel__vacio">No compone con nada del sistema de diseño.</p>
+                  <p class="panel__vacio">No instancia nada del sistema de diseño en su plantilla.</p>
+                }
+                <!-- Lo de arriba es lo que la PLANTILLA instancia. Lo que sigue son
+                     relaciones que no son composición visual, y lo que el
+                     análisis no pudo decidir: nada de esto infla «usa». -->
+                @if (ficha.relaciones.disponibleSinInstanciar.length > 0) {
+                  <p class="panel__linea" data-testid="stock-rel-disponible"><strong>Importado sin instanciar</strong>
+                    @for (x of ficha.relaciones.disponibleSinInstanciar; track x) {
+                      <span class="pastilla pastilla--aviso">{{ x }}</span>
+                    }
+                  </p>
+                }
+                @if (ficha.relaciones.soloTipo.length > 0) {
+                  <p class="panel__linea" data-testid="stock-rel-tipo"><strong>Sólo sus tipos</strong>
+                    @for (x of ficha.relaciones.soloTipo; track x) { <span class="pastilla">{{ x }}</span> }
+                  </p>
+                }
+                @if (ficha.relaciones.cargaDinamica.length > 0) {
+                  <p class="panel__linea"><strong>Carga dinámicamente</strong>
+                    @for (x of ficha.relaciones.cargaDinamica; track x) { <span class="pastilla">{{ x }}</span> }
+                  </p>
+                }
+                @if (ficha.cargadoDinamicamentePor.length > 0) {
+                  <p class="panel__linea"><strong>Lo cargan dinámicamente</strong>
+                    @for (x of ficha.cargadoDinamicamentePor; track x) { <code class="pastilla">{{ x }}</code> }
+                  </p>
+                }
+                @if (ficha.unresolvedEvidence.length > 0) {
+                  <ul class="problemas" data-testid="stock-rel-sin-resolver">
+                    @for (u of ficha.unresolvedEvidence; track u.detalle) {
+                      <li><span class="problemas__tipo">sin resolver · {{ u.causa }}</span> {{ u.detalle }}</li>
+                    }
+                  </ul>
                 }
                 @if (ficha.clientes.length > 0) {
                   <p class="panel__linea"><strong>Pide a la API</strong>
@@ -443,6 +546,12 @@
                     }
                     @for (r of entradasRechazadas(); track r) {
                       <li><span class="problemas__tipo problemas__tipo--mal">entrada rechazada</span> {{ r }}</li>
+                    }
+                    @if (contratoRechazado(); as rechazo) {
+                      <li><span class="problemas__tipo problemas__tipo--mal">contrato inválido</span> {{ rechazo.violaciones.join(' ') }}</li>
+                    }
+                    @for (s of entradasSinVerificar(); track s.nombre) {
+                      <li><span class="problemas__tipo">sin verificar</span> {{ s.nombre }}: {{ s.motivo }}</li>
                     }
                     @for (p of ficha.problemas; track p.detalle) {
                       <li><span class="problemas__tipo">{{ p.tipo }}</span> {{ p.detalle }}</li>
