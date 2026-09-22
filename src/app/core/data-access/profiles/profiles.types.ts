@@ -459,6 +459,21 @@ export interface PatientSearchQuery {
   readonly nationalId?: string;
   /** Departamento que lo expidió (`VS_BO_DEPARTMENT`). */
   readonly issuerAdministrativeAreaConceptId?: string;
+  /**
+   * Grupo sanguíneo, factor Rh e idioma clínico (`VS_BLOOD_GROUP`,
+   * `VS_RH_FACTOR`, `VS_LANGUAGE`). Filtran sobre el mismo dato que ya vive en
+   * `PatientDetail.aboGroupConceptId` / `rhFactorConceptId` /
+   * `clinicalLanguageConceptId`: la ficha lo tenía desde antes de que el
+   * listado existiera; esto sólo lo hace filtrable sin abrir cada ficha.
+   *
+   * **`insuranceStatusConceptId` no tiene filtro acá.** No existe un conjunto
+   * de valores real para «estado de seguro» (Asegurada/Particular/En trámite)
+   * en el catálogo — inventarlo sería un catálogo sin procedencia. Queda
+   * registrado como ambigüedad para producto, no simulado.
+   */
+  readonly aboGroupConceptId?: string;
+  readonly rhFactorConceptId?: string;
+  readonly clinicalLanguageConceptId?: string;
   /** Cursor opaco devuelto por la página anterior. */
   readonly cursor?: string;
   readonly limit?: number;
@@ -486,6 +501,16 @@ export interface PatientListItem {
   readonly phone?: string;
   readonly birthDate?: Date;
   readonly personStatusConceptId?: string;
+  /**
+   * Grupo sanguíneo, factor Rh e idioma clínico. Mismo caso que
+   * `nationalId`/`phone`: el dato ya vive en `PatientDetail`, y filtrar por
+   * él (`PatientSearchQuery`) exige poder mostrarlo también en la fila — un
+   * filtro cuya columna no se ve deja a la persona sin saber qué encontró.
+   * Opcionales: no todo paciente tiene el dato registrado.
+   */
+  readonly aboGroupConceptId?: string;
+  readonly rhFactorConceptId?: string;
+  readonly clinicalLanguageConceptId?: string;
   /**
    * Derivado del backend, y booleano a propósito: una lista de pacientes tiene
    * que poder marcar a quien falleció sin resolver terminología antes.

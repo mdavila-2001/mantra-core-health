@@ -203,6 +203,9 @@ function itemDeLista(p: PacienteSimulado) {
     birthDate: p.birthDate,
     nationalId: p.nationalId,
     phone: p.phone,
+    ...(p.aboGroupId === undefined ? {} : { aboGroupConceptId: p.aboGroupId }),
+    ...(p.rhFactorId === undefined ? {} : { rhFactorConceptId: p.rhFactorId }),
+    ...(p.idiomaClinicoId === undefined ? {} : { clinicalLanguageConceptId: p.idiomaClinicoId }),
     personStatusConceptId: p.deceased ? ESTADO['ST-INACTIVE']! : ESTADO['ST-ACTIVE']!,
     deceased: p.deceased,
   };
@@ -224,10 +227,10 @@ function fichaDe(p: PacienteSimulado) {
     personStatusConceptId: p.deceased ? ESTADO['ST-INACTIVE']! : ESTADO['ST-ACTIVE']!,
     vitalStatusConceptId: p.deceased ? ESTADO['ST-DECEASED']! : ESTADO['ST-ALIVE']!,
     deceasedAt: p.deceased ? iso(-40) : null,
-    aboGroupConceptId: null,
-    rhFactorConceptId: null,
+    aboGroupConceptId: p.aboGroupId ?? null,
+    rhFactorConceptId: p.rhFactorId ?? null,
     insuranceStatusConceptId: p.aseguradora === undefined ? null : ESTADO['ST-ACTIVE']!,
-    clinicalLanguageConceptId: null,
+    clinicalLanguageConceptId: p.idiomaClinicoId ?? null,
     recordLinkageStatusConceptId: ESTADO['ST-LINKED']!,
     relatedPersons: personasRelacionadasDe(p),
     createdAt: iso(-400),
@@ -571,10 +574,16 @@ export function registrarPerfiles(router: MockRouter): void {
     // que escribiera quien buscaba.
     const q = texto(query, 'q');
     const nationalId = texto(query, 'nationalId');
+    const aboGroup = texto(query, 'aboGroupConceptId');
+    const rhFactor = texto(query, 'rhFactorConceptId');
+    const idiomaClinico = texto(query, 'clinicalLanguageConceptId');
     const todos = pacientes
       .todos()
       .filter((p) => contiene(p.displayName, q) || contiene(p.patientCode, q) || contiene(p.nationalId, q))
       .filter((p) => nationalId === null || p.nationalId === nationalId)
+      .filter((p) => aboGroup === null || p.aboGroupId === aboGroup)
+      .filter((p) => rhFactor === null || p.rhFactorId === rhFactor)
+      .filter((p) => idiomaClinico === null || p.idiomaClinicoId === idiomaClinico)
       .map(itemDeLista);
     return paginar(todos, query, 25);
   });
