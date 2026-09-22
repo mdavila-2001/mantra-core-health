@@ -83,6 +83,23 @@
             </p>
           </app-card>
 
+          <!-- La prima es el DENOMINADOR del loss ratio de la primera tarjeta:
+               sin verla, un 120 % no se puede interpretar —no se sabe si sobró
+               siniestro o faltó prima—. Por eso lleva al pie cuántas coberturas
+               no aportan prima: es lo que vuelve estimada a la cifra. -->
+          <app-card variant="outlined" padding="md" class="tile" data-testid="kpi-earned-premium">
+            <p class="tile__rotulo">Prima neta devengada</p>
+            <p class="tile__cifra">{{ formatear(dashboard.kpis.estimatedPremiumsTotal) }}</p>
+            <p class="tile__pie">
+              @if (dashboard.kpis.coveragesWithoutPremiumCount > 0) {
+                Estimada · {{ dashboard.kpis.coveragesWithoutPremiumCount }} cobertura(s) sin prima
+                registrada
+              } @else {
+                Sobre {{ dashboard.kpis.activeAffiliatesCount }} afiliado(s) activo(s)
+              }
+            </p>
+          </app-card>
+
           <app-card variant="outlined" padding="md" class="tile" data-testid="kpi-per-capita">
             <p class="tile__rotulo">Gasto per cápita mensual</p>
             <p class="tile__cifra">

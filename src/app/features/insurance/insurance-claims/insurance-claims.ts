@@ -28,19 +28,14 @@ import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
+import { historialDeCursor } from '../../../shared/components/organisms/data-table/cursor-history';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
-import type {
-  ColumnDef,
-  CursorState,
-} from '../../../shared/components/organisms/data-table/data-table.types';
+import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { formatMoney } from '../money-format';
 
 /** Filas por página. El servidor admite hasta 100 y aplica 25 por omisión. */
 const PAGE_SIZE = 25;
-
-/** Centinela con el que la tabla pide la página anterior. */
-const BACK = 'anterior';
 
 /**
  * Solicitudes de seguro presentadas — `administration/insurance-claims`.
@@ -151,15 +146,9 @@ export class InsuranceClaims {
     loading(),
   );
 
-  private readonly history = signal<readonly (string | undefined)[]>([
-    undefined,
-  ]);
-  private readonly nextCursor = signal<string | null>(null);
-
-  protected readonly cursor = computed<CursorState>(() => ({
-    prevCursor: this.history().length > 1 ? BACK : null,
-    nextCursor: this.nextCursor(),
-  }));
+  /** El paginado por cursor, con memoria (`historialDeCursor`). */
+  private readonly paginado = historialDeCursor();
+  protected readonly cursor = this.paginado.cursor;
 
   /**
    * Las columnas, en el orden del pedido.
@@ -247,7 +236,7 @@ export class InsuranceClaims {
     effect(() => {
       this.carrierFilter();
       untracked(() => {
-        this.history.set([undefined]);
+        this.paginado.reiniciar();
         this.load();
       });
     });
@@ -272,11 +261,7 @@ export class InsuranceClaims {
    * @param cursor - Cursor opaco, o el centinela de «anterior».
    */
   protected move(cursor: string): void {
-    if (cursor === BACK) {
-      this.history.update((visited) => visited.slice(0, -1));
-    } else {
-      this.history.update((visited) => [...visited, cursor]);
-    }
+    this.paginado.mover(cursor);
     this.load();
   }
 
@@ -303,7 +288,7 @@ export class InsuranceClaims {
   private load(): void {
     this.results.set(loading());
     const carrier = this.carrierFilter();
-    const current = this.history().at(-1);
+    const current = this.paginado.actual();
 
     this.insurance
       .listClaims({
@@ -313,11 +298,11 @@ export class InsuranceClaims {
       })
       .subscribe({
         next: (page) => {
-          this.nextCursor.set(page.nextCursor);
+          this.paginado.llego(page.nextCursor);
           this.results.set(this.stateOf(page));
         },
         error: (error: unknown) => {
-          this.nextCursor.set(null);
+          this.paginado.llego(null);
           this.results.set(errorToViewState<readonly ClaimListItem[]>(error));
         },
       });

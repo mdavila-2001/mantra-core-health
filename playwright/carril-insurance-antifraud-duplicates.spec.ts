@@ -103,6 +103,22 @@ async function esperarDialogoDuplicado(page: Page) {
   return dialogo;
 }
 
+/**
+ * Abre el detalle de una solicitud desde el listado de administración.
+ *
+ * Se entra por la lista y no por la URL directa porque el id es un uuid
+ * derivado del identificador y no se conoce desde el test; el enlace del
+ * listado es además el camino que recorre el auditor.
+ */
+async function abrirSolicitud(page: Page, identificador: string): Promise<void> {
+  await irA(page, '/administration/insurance-claims');
+  await estable(page);
+
+  await page.getByTestId('claim-link').filter({ hasText: identificador }).click();
+  await page.waitForURL(/\/administration\/insurance-claims\/[^/]+$/, { timeout: 60_000 });
+  await estable(page);
+}
+
 test.describe('la alerta de estudio duplicado (maqueta)', () => {
   test('un estudio cruzado ofrece reutilizar y avisa que el informe es de otra organización', async ({
     browser,
@@ -247,5 +263,110 @@ test.describe('el badge de estudio duplicado en el detalle del reclamo (maqueta)
 
     await badge.focus();
     await expect(page.locator('[role="tooltip"]').first()).toBeVisible({ timeout: 5_000 });
+  });
+});
+
+/**
+ * Endurecimiento del carril: los tres criterios de aceptación que el bloque
+ * de arriba deja sin ejercitar.
+ *
+ * El test del badge comprueba el globo **por foco de teclado**; el criterio
+ * pide además el **hover del ratón**, que es un camino distinto en el átomo
+ * `Tooltip` (`mouseenter`, no `focus`). La cita de la cláusula y los canales
+ * de contacto directo no tenían ninguna cobertura E2E.
+ */
+test.describe('auditoría del reclamo: globo, cláusula y canales (maqueta)', () => {
+  test('el globo del duplicado también se abre con el ratón, no sólo con el teclado', async ({
+    page,
+  }) => {
+    await entrar(page, ADMIN_MOCK);
+    await abrirSolicitud(page, 'CLM-2026-0142');
+
+    const badge = page.getByTestId('badge-duplicate-alert');
+    await expect(badge).toBeVisible();
+
+    // Es un botón y no un `<span>` con `title`: por eso lo alcanza el
+    // tabulador y por eso el globo puede ser accesible en los dos caminos.
+    expect(await badge.evaluate((el) => el.tagName)).toBe('BUTTON');
+
+    await badge.hover();
+    const globo = page.locator('[role="tooltip"]').first();
+    await expect(globo).toBeVisible({ timeout: 5_000 });
+
+    // El resumen dice fecha, prestador previo y justificación clínica: es lo
+    // que el auditor necesita para decidir sin abrir el informe —que no le
+    // corresponde leer—.
+    await expect(globo).toContainText('Perfil lipídico');
+    await expect(globo).toContainText('Justificación médica');
+
+    // El globo se cuelga del `<body>`, así que el scroll horizontal de la
+    // tabla de prestaciones no lo recorta.
+    expect(await globo.evaluate((el) => el.parentElement?.tagName ?? '')).toBe('BODY');
+  });
+
+  test('una solicitud rechazada cita textualmente la cláusula de la póliza', async ({
+    page,
+  }) => {
+    await entrar(page, ADMIN_MOCK);
+    await abrirSolicitud(page, 'CLM-2026-0163');
+
+    // La cita va completa, no un código suelto: «Cláusula 4.1» a secas
+    // obligaría al auditor a ir a buscar el condicionado a otra parte.
+    const motivo = page.getByTestId('claim-line-reason').first();
+    await expect(motivo).toContainText(
+      'Cláusula 4.1: Preexistencia declarada al momento de la afiliación',
+    );
+    await expect(motivo).toContainText('período de carencia');
+  });
+
+  test('los canales de contacto apuntan a WhatsApp y al call center de la aseguradora', async ({
+    page,
+  }) => {
+    const errores: string[] = [];
+    page.on('console', (mensaje) => {
+      if (mensaje.type() === 'error') errores.push(mensaje.text());
+    });
+    page.on('pageerror', (error) => errores.push(error.message));
+
+    await entrar(page, ADMIN_MOCK);
+    await abrirSolicitud(page, 'CLM-2026-0142');
+
+    const referencia = new Set(errores);
+
+    const whatsapp = page.getByTestId('btn-whatsapp-claim');
+    await expect(whatsapp).toBeVisible();
+
+    /*
+      Se comprueba el `href`, no el clic.
+
+      `wa.me` y `tel:` salen de la aplicación: el primero a la red pública, el
+      segundo a un manejador de protocolo del sistema operativo. Pulsarlos en
+      Chromium no prueba nada del producto y mete una dependencia externa en
+      una suite de maqueta. Lo que sí es del producto —y lo que el criterio
+      pide— es que el destino sea el correcto y que el mensaje viaje cargado.
+    */
+    const url = await whatsapp.getAttribute('href');
+    expect(url).not.toBeNull();
+    expect(url!.startsWith('https://wa.me/59170000101?text=')).toBe(true);
+
+    const mensaje = decodeURIComponent(url!.split('?text=')[1]!);
+    expect(mensaje).toContain('CLM-2026-0142');
+    expect(mensaje).toContain('Seguros Andina');
+
+    // Abre en pestaña nueva, y con `rel` puesto: sin él la página de destino
+    // recibe un `window.opener` vivo sobre una pantalla con datos de salud.
+    expect(await whatsapp.getAttribute('target')).toBe('_blank');
+    expect(await whatsapp.getAttribute('rel')).toContain('noopener');
+
+    // El call center marca por `tel:` con el número ya limpio: los guiones de
+    // «800-10-0101» dejan muerto el enlace en un navegador que respeta el RFC.
+    const callCenter = page.getByTestId('btn-callcenter-claim');
+    await expect(callCenter).toBeVisible();
+    expect(await callCenter.getAttribute('href')).toBe('tel:800100101');
+    await expect(callCenter).toContainText('800-10-0101');
+
+    // Ninguno de los dos enlaces agrega un error sobre lo ya medido en esta
+    // misma pantalla (la CSP del servidor de desarrollo aporta los suyos).
+    expect([...new Set(errores)].filter((e) => !referencia.has(e))).toEqual([]);
   });
 });

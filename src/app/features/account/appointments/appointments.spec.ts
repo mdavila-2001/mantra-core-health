@@ -11,12 +11,17 @@ import { of, throwError } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { SessionStore } from '../../../core/auth/session.store';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
-import type { AgendaSlot } from '../../../core/data-access/scheduling/scheduling.types';
+import type { AgendaResource, AgendaSlot } from '../../../core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ValueSetOption } from '../../../core/data-access/terminology/terminology.types';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
-import { Appointments, etiquetaDeRecurso } from './appointments';
+import {
+  Appointments,
+  etiquetaDeRecurso,
+  etiquetasSinColision,
+  opcionesDeSedeDe,
+} from './appointments';
 import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
 
 /**
@@ -1587,5 +1592,178 @@ describe('etiquetaDeRecurso', () => {
     );
     // Los dobles de prueba y las respuestas viejas de la API no traen el campo.
     expect(etiquetaDeRecurso({ name: 'Consultorio 3' })).toBe('Consultorio 3');
+  });
+});
+
+describe('etiquetasSinColision · dos agendas nunca se llaman igual', () => {
+  let contador = 0;
+
+  function recurso(campos: Partial<AgendaResource> = {}): AgendaResource {
+    contador += 1;
+    return {
+      id: `rec-${contador}`,
+      name: 'Consultorio',
+      resourceTypeConceptId: 'tipo',
+      resourceRefType: 'health_practitioner_profiles',
+      resourceRefId: 'perfil',
+      practitionerName: null,
+      practiceId: null,
+      timeZone: null,
+      capacity: 1,
+      stateConceptId: 'activo',
+      site: null,
+      ...campos,
+    };
+  }
+
+  const sede = (id: string, name: string, addressText: string | null = null) => ({
+    id,
+    name,
+    code: id,
+    addressText,
+    timeZone: null,
+  });
+
+  it('deja el rótulo limpio cuando no hay dos iguales', () => {
+    const etiquetas = etiquetasSinColision([
+      { recursos: [recurso({ practitionerName: 'Elena Salas', name: 'Norte' }), recurso({ practitionerName: 'Elena Salas', name: 'Sur' })] },
+      { recursos: [recurso({ practitionerName: 'Oliver Urgel', name: 'Propio' }), recurso({ practitionerName: 'Oliver Urgel', name: 'Tarde' })] },
+    ]);
+
+    expect(etiquetas).toEqual(['Elena Salas', 'Oliver Urgel']);
+  });
+
+  it('separa por sede a dos profesionales del mismo nombre', () => {
+    const etiquetas = etiquetasSinColision([
+      {
+        recursos: [
+          recurso({ practitionerName: 'Elena Salas', name: 'Norte', site: sede('s1', 'Clínica Norte', 'Av. Siempre 123') }),
+          recurso({ practitionerName: 'Elena Salas', name: 'Sur', site: sede('s1', 'Clínica Norte', 'Av. Siempre 123') }),
+        ],
+      },
+      {
+        recursos: [
+          recurso({ practitionerName: 'Elena Salas', name: 'Norte', site: sede('s2', 'Centro Sur') }),
+          recurso({ practitionerName: 'Elena Salas', name: 'Tarde', site: sede('s2', 'Centro Sur') }),
+        ],
+      },
+    ]);
+
+    expect(etiquetas[0]).toBe('Elena Salas — Clínica Norte · Av. Siempre 123');
+    expect(etiquetas[1]).toBe('Elena Salas — Centro Sur');
+    expect(new Set(etiquetas).size).toBe(2);
+  });
+
+  it('cae a los nombres de los consultorios cuando ninguna tiene sede', () => {
+    const etiquetas = etiquetasSinColision([
+      { recursos: [recurso({ practitionerName: 'Elena Salas', name: 'Norte' }), recurso({ practitionerName: 'Elena Salas', name: 'Sur' })] },
+      { recursos: [recurso({ practitionerName: 'Elena Salas', name: 'Martes' }), recurso({ practitionerName: 'Elena Salas', name: 'Tarde' })] },
+    ]);
+
+    expect(etiquetas[0]).toBe('Elena Salas — Norte, Sur');
+    expect(etiquetas[1]).toBe('Elena Salas — Martes, Tarde');
+  });
+
+  it('numera cuando no queda nada que las distinga — el caso observado en Neon', () => {
+    // Dos personas homónimas, mismos nombres de consultorio, ninguna con sede:
+    // una tenía 22 cupos libres y la otra ninguno, y la lista las mostraba
+    // idénticas.
+    const mismos = () => [
+      recurso({ practitionerName: 'Elena Salas', name: 'Consultorio Norte' }),
+      recurso({ practitionerName: 'Elena Salas', name: 'Consultorio Sur' }),
+    ];
+    const etiquetas = etiquetasSinColision([{ recursos: mismos() }, { recursos: mismos() }]);
+
+    expect(etiquetas[0]).toBe('Elena Salas — Consultorio Norte, Consultorio Sur (1 de 2)');
+    expect(etiquetas[1]).toBe('Elena Salas — Consultorio Norte, Consultorio Sur (2 de 2)');
+    expect(new Set(etiquetas).size).toBe(2);
+  });
+
+  it('no toca a la agenda de un solo recurso, que ya trae su nombre interno', () => {
+    const etiquetas = etiquetasSinColision([
+      { recursos: [recurso({ practitionerName: 'Elena Salas', name: 'Consultorio FX-7' })] },
+      { recursos: [recurso({ practitionerName: 'Elena Salas', name: 'Norte' }), recurso({ practitionerName: 'Elena Salas', name: 'Sur' })] },
+    ]);
+
+    expect(etiquetas[0]).toBe('Elena Salas — Consultorio FX-7');
+    expect(etiquetas[1]).toBe('Elena Salas');
+  });
+
+  it('tolera una lista vacía', () => {
+    expect(etiquetasSinColision([])).toEqual([]);
+  });
+});
+
+describe('opcionesDeSedeDe · el desplegable de lugar tampoco repite', () => {
+  let n = 0;
+
+  function recurso(name: string, site: AgendaResource['site'] = null): AgendaResource {
+    n += 1;
+    return {
+      id: `rec-s-${n}`,
+      name,
+      resourceTypeConceptId: 'tipo',
+      resourceRefType: 'health_practitioner_profiles',
+      resourceRefId: 'perfil',
+      practitionerName: 'Elena Salas',
+      practiceId: null,
+      timeZone: null,
+      capacity: 1,
+      stateConceptId: 'activo',
+      site,
+    };
+  }
+
+  const sede = (id: string, name: string, addressText: string | null = null) => ({
+    id,
+    name,
+    code: id,
+    addressText,
+    timeZone: null,
+  });
+
+  it('no pregunta cuando hay un solo lugar', () => {
+    expect(opcionesDeSedeDe([recurso('Norte', sede('s1', 'Clínica Norte'))])).toEqual([]);
+  });
+
+  it('distingue los lugares sin sede por el nombre del recurso — lo visto en pantalla', () => {
+    // Cuatro consultorios de la misma persona, ninguno con sede cargada: el
+    // desplegable mostraba cuatro veces «Sin consultorio registrado».
+    const opciones = opcionesDeSedeDe([
+      recurso('Consultorio Martes'),
+      recurso('Consultorio Norte'),
+      recurso('Consultorio Sur'),
+      recurso('Consultorio Tarde'),
+    ]);
+
+    const rotulos = opciones.map((o) => o.label);
+    expect(rotulos[0]).toBe('Cualquier lugar — ver todos los horarios');
+    expect(new Set(rotulos).size).toBe(rotulos.length);
+    expect(rotulos).toContain('Sin consultorio registrado — Consultorio Norte');
+  });
+
+  it('deja el nombre de la sede limpio cuando ya son distintos', () => {
+    const opciones = opcionesDeSedeDe([
+      recurso('Mañana', sede('s1', 'Clínica Norte', 'Av. Siempre 123')),
+      recurso('Tarde', sede('s2', 'Centro Sur')),
+    ]);
+
+    expect(opciones.map((o) => o.label)).toEqual([
+      'Cualquier lugar — ver todos los horarios',
+      'Clínica Norte · Av. Siempre 123',
+      'Centro Sur',
+    ]);
+  });
+
+  it('junta en un solo lugar los recursos que comparten sede', () => {
+    const misma = sede('s1', 'Clínica Norte');
+    const opciones = opcionesDeSedeDe([
+      recurso('Mañana', misma),
+      recurso('Tarde', misma),
+      recurso('Nocturno', sede('s2', 'Centro Sur')),
+    ]);
+
+    expect(opciones).toHaveLength(3);
+    expect(opciones.map((o) => o.label)).toContain('Clínica Norte');
   });
 });

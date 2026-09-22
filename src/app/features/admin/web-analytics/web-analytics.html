@@ -1,0 +1,235 @@
+<app-page-header
+  title="Analítica web"
+  subtitle="Tráfico, embudos y rendimiento real, calculados en el servidor sobre una ventana acotada."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="analitica">
+  <section class="analitica__ventana" aria-label="Ventana de análisis">
+    <app-segmented-control ariaLabel="Ventana de tiempo" [options]="opcionesRango" [value]="rango()" (valueChange)="cambiarRango($event)" />
+    <app-select ariaLabel="Portal" [options]="opcionesPortal" [value]="portal()" (valueChange)="cambiarPortal($event)" />
+  </section>
+
+  <app-card variant="outlined" padding="md">
+    <app-tabs [(selectedIndex)]="pestana" data-testid="analytics-tabs">
+      <app-tab label="Resumen">
+        <app-view-state-host [state]="resumen()" (retry)="cargar()">
+          @if (resumen(); as estado) {
+            @if (estado.status === 'ready') {
+              <div class="analitica__totales" data-testid="analytics-totals">
+                <div class="analitica__total">
+                  <span class="analitica__valor">{{ entero(estado.data.totals.events) }}</span>
+                  <span class="analitica__rotulo">Eventos</span>
+                </div>
+                <div class="analitica__total">
+                  <span class="analitica__valor">{{ entero(estado.data.totals.sessions) }}</span>
+                  <span class="analitica__rotulo">Sesiones</span>
+                  <span class="analitica__ayuda">{{ estado.data.definitions['sessions'] }}</span>
+                </div>
+                <div class="analitica__total">
+                  <span class="analitica__valor">{{ entero(estado.data.totals.pseudonymousSubjects) }}</span>
+                  <span class="analitica__rotulo">Sujetos seudónimos</span>
+                  <span class="analitica__ayuda">{{ estado.data.definitions['pseudonymousSubjects'] }}</span>
+                </div>
+                <div class="analitica__total">
+                  <span class="analitica__valor">{{ entero(estado.data.totals.pageViews) }}</span>
+                  <span class="analitica__rotulo">Vistas de página</span>
+                </div>
+              </div>
+
+              @if (serie(); as s) {
+                @if (s.status === 'ready') {
+                  <figure class="analitica__serie" aria-label="Eventos por intervalo">
+                    <div class="analitica__barras">
+                      @for (p of s.data.points; track p.bucket) {
+                        <div class="analitica__barra" [title]="(p.bucket | date: 'short') + ' · ' + p.events + ' eventos'">
+                          <span class="analitica__barra-relleno" [style.block-size]="alto(p.events)"></span>
+                        </div>
+                      }
+                    </div>
+                    <figcaption class="analitica__ayuda">
+                      Eventos por {{ s.data.window.interval === 'hour' ? 'hora' : 'día' }} (UTC). {{ s.data.note }}
+                    </figcaption>
+                  </figure>
+                }
+              }
+
+              <div class="analitica__columnas">
+                <div class="analitica__scroll">
+                  <table class="analitica__tabla">
+                    <caption>Rutas con más actividad</caption>
+                    <thead><tr><th scope="col">Ruta</th><th scope="col">Eventos</th><th scope="col">Sesiones</th></tr></thead>
+                    <tbody>
+                      @for (r of estado.data.topRoutes; track r.route) {
+                        <tr><td><code>{{ r.route }}</code></td><td>{{ entero(r.events) }}</td><td>{{ entero(r.sessions) }}</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <div class="analitica__scroll">
+                  <table class="analitica__tabla">
+                    <caption>Eventos más frecuentes</caption>
+                    <thead><tr><th scope="col">Evento</th><th scope="col">Veces</th><th scope="col">Sesiones</th></tr></thead>
+                    <tbody>
+                      @for (e of estado.data.topEvents; track e.eventName) {
+                        <tr><td><code>{{ e.eventName }}</code></td><td>{{ entero(e.events) }}</td><td>{{ entero(e.sessions) }}</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            }
+          }
+        </app-view-state-host>
+      </app-tab>
+
+      <app-tab label="Rendimiento">
+        <app-view-state-host [state]="vitales()" (retry)="cargar()">
+          @if (vitales(); as estado) {
+            @if (estado.status === 'ready') {
+              <div class="analitica__scroll">
+                <table class="analitica__tabla" data-testid="analytics-vitals">
+                  <caption>Percentiles sobre todas las muestras de la ventana</caption>
+                  <thead>
+                    <tr><th scope="col">Métrica</th><th scope="col">Muestras</th><th scope="col">p50</th><th scope="col">p75</th><th scope="col">p95</th><th scope="col">Buenas / regulares / malas</th></tr>
+                  </thead>
+                  <tbody>
+                    @for (m of estado.data.metrics; track m.metric) {
+                      <tr>
+                        <td>
+                          {{ vital(m.metric) }}
+                          @if (m.deprecated) { <app-badge variant="secondary">{{ m.deprecated }}</app-badge> }
+                        </td>
+                        <td>{{ entero(m.samples) }}</td>
+                        <td>{{ m.p50 === null ? '—' : (m.p50 | number: '1.0-3') }} {{ m.unit === 'ms' ? 'ms' : '' }}</td>
+                        <td>{{ m.p75 === null ? '—' : (m.p75 | number: '1.0-3') }} {{ m.unit === 'ms' ? 'ms' : '' }}</td>
+                        <td>{{ m.p95 === null ? '—' : (m.p95 | number: '1.0-3') }} {{ m.unit === 'ms' ? 'ms' : '' }}</td>
+                        <td>{{ m.ratings['GOOD'] ?? 0 }} / {{ m.ratings['NEEDS_IMPROVEMENT'] ?? 0 }} / {{ m.ratings['POOR'] ?? 0 }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <p class="analitica__ayuda">Método: {{ estado.data.method }}.</p>
+            }
+          }
+        </app-view-state-host>
+      </app-tab>
+
+      <app-tab label="Embudos">
+        <div class="analitica__embudo-selector">
+          <app-select ariaLabel="Embudo" [options]="opcionesEmbudo()" [value]="embudoElegido()" (valueChange)="elegirEmbudo($event)" />
+        </div>
+        @if (informe(); as estado) {
+          <app-view-state-host [state]="estado" (retry)="cargarInforme()">
+            @if (estado.status === 'ready') {
+              <p class="analitica__ayuda" data-testid="analytics-funnel-summary">
+                Unidad: sesión · entraron {{ entero(estado.data.denominator) }} · completaron {{ entero(estado.data.completed) }}
+                · conversión {{ porcentaje(estado.data.overallConversion) }} · confirmadas por el servidor
+                {{ entero(estado.data.serverConfirmedConversions) }}
+              </p>
+              <ol class="analitica__pasos">
+                @for (paso of estado.data.steps; track paso.stepNumber) {
+                  <li class="analitica__paso">
+                    <span class="analitica__paso-nombre">{{ paso.stepNumber }}. <code>{{ paso.eventName }}</code></span>
+                    <span class="analitica__paso-barra">
+                      <span class="analitica__paso-relleno" [style.inline-size]="(paso.conversionFromStart ?? 0) * 100 + '%'"></span>
+                    </span>
+                    <span>{{ entero(paso.reached) }} · {{ porcentaje(paso.conversionFromStart) }}</span>
+                    @if (paso.droppedFromPrevious !== null) {
+                      <span class="analitica__ayuda">−{{ entero(paso.droppedFromPrevious) }} desde el paso anterior</span>
+                    }
+                  </li>
+                }
+              </ol>
+              <p class="analitica__ayuda">Orden {{ estado.data.rules['order'] }}; ventana de conversión: {{ estado.data.rules['conversionWindow'] }}.</p>
+            }
+          </app-view-state-host>
+        } @else {
+          <p class="analitica__ayuda">Elegí un embudo para ver su conversión en la ventana.</p>
+        }
+      </app-tab>
+
+      <app-tab label="Sesiones">
+        <app-view-state-host [state]="sesiones()" (retry)="cargar()">
+          @if (sesiones(); as estado) {
+            @if (estado.status === 'ready') {
+              <div class="analitica__scroll">
+                <table class="analitica__tabla" data-testid="analytics-sessions">
+                  <caption>Sesiones (sin identificadores de sesión ni de persona)</caption>
+                  <thead><tr><th scope="col">Inicio</th><th scope="col">Duración</th><th scope="col">Eventos</th><th scope="col">Portal</th><th scope="col"></th></tr></thead>
+                  <tbody>
+                    @for (s of estado.data; track s.id) {
+                      <tr>
+                        <td>{{ s.startedAt | date: 'short' }}</td>
+                        <td>{{ duracion(s.durationSeconds) }}</td>
+                        <td>{{ s.eventCount }}</td>
+                        <td>{{ s.portal }}</td>
+                        <td><button app-button variant="ghost" size="sm" (clicked)="abrirSesion(s.id)">Ver recorrido</button></td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          }
+        </app-view-state-host>
+      </app-tab>
+
+      <app-tab label="Pipeline">
+        <app-view-state-host [state]="salud()" (retry)="cargar()">
+          @if (salud(); as estado) {
+            @if (estado.status === 'ready') {
+              @let m = estado.data.measured;
+              <div class="analitica__totales" data-testid="analytics-pipeline">
+                <div class="analitica__total"><span class="analitica__valor">{{ entero(m.accepted) }}</span><span class="analitica__rotulo">Eventos aceptados</span></div>
+                <div class="analitica__total">
+                  <span class="analitica__valor">{{ m.freshnessSeconds === null ? '—' : entero(m.freshnessSeconds) + ' s' }}</span>
+                  <span class="analitica__rotulo">Frescura</span>
+                  <span class="analitica__ayuda">Último recibido {{ m.lastReceivedAt | date: 'short' }}</span>
+                </div>
+                <div class="analitica__total">
+                  <span class="analitica__valor">{{ m.ingestLagSeconds.p95 === null ? '—' : (m.ingestLagSeconds.p95 | number: '1.0-1') + ' s' }}</span>
+                  <span class="analitica__rotulo">Latencia de ingesta p95</span>
+                  <span class="analitica__ayuda">p50 {{ m.ingestLagSeconds.p50 ?? '—' }} s</span>
+                </div>
+                <div class="analitica__total"><span class="analitica__valor">{{ entero(m.clockSkewFuture) }}</span><span class="analitica__rotulo">Con reloj adelantado</span></div>
+                <div class="analitica__total"><span class="analitica__valor">{{ entero(m.lateOver24h) }}</span><span class="analitica__rotulo">Llegados con +24 h</span></div>
+                <div class="analitica__total"><span class="analitica__valor">{{ entero(m.bots) }}</span><span class="analitica__rotulo">Bots</span><span class="analitica__ayuda">{{ entero(m.botUnknown) }} sin determinar</span></div>
+              </div>
+              <app-alert tone="info" title="No medido (no es cero)">
+                <ul class="analitica__no-medido" data-testid="analytics-not-measured">
+                  @for (n of estado.data.notMeasured; track n.metric) {
+                    <li><strong>{{ noMedido(n.metric) }}:</strong> {{ n.reason }}</li>
+                  }
+                </ul>
+              </app-alert>
+            }
+          }
+        </app-view-state-host>
+      </app-tab>
+    </app-tabs>
+  </app-card>
+</div>
+
+@if (sesionAbierta(); as estado) {
+  <app-content-dialog heading="Recorrido de la sesión" description="Eventos y nombres de propiedad; nunca sus valores." (closed)="sesionAbierta.set(null)">
+    <app-view-state-host [state]="estado">
+      @if (estado.status === 'ready') {
+        <ol class="analitica__pasos" data-testid="analytics-session-timeline">
+          @for (e of estado.data.events; track e.id) {
+            <li>
+              <code>{{ e.eventName }}</code> · {{ e.routeTemplate ?? 'sin ruta' }} · {{ e.occurredAt | date: 'mediumTime' }}
+              @if (e.propertyNames.length) {
+                <div class="analitica__ayuda">Propiedades: {{ e.propertyNames.join(', ') }}</div>
+              }
+            </li>
+          }
+        </ol>
+        @if (estado.data.truncated) {
+          <app-alert tone="warning">El recorrido se cortó en 500 eventos.</app-alert>
+        }
+      }
+    </app-view-state-host>
+  </app-content-dialog>
+}
