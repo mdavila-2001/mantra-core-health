@@ -160,15 +160,35 @@
             <button type="button" [disabled]="pos?.anterior === null" (click)="irA(pos?.anterior ?? null)">←</button>
             <span class="lienzo__posicion">{{ pos?.indice }} / {{ pos?.total }}</span>
             <button type="button" [disabled]="pos?.siguiente === null" (click)="irA(pos?.siguiente ?? null)">→</button>
-            <button type="button" class="lienzo__principal" (click)="otrosDatos()">Otros datos</button>
-            @if (variantes() !== null) {
-              <button
-                type="button"
-                [class.lienzo__principal]="matriz()"
-                (click)="matriz.set(!matriz())"
-              >
-                Matriz de variantes
-              </button>
+            <!-- Con anfitrión escrito, el escenario manda: las entradas las fija
+                 él. «Valores generados» sigue disponible para comparar contra el
+                 montaje a ciegas, que es lo único que tiene el resto. -->
+            @if (escenarios().length > 0) {
+              <label class="lienzo__escenario">
+                Escenario
+                <select
+                  data-testid="stock-escenario"
+                  [value]="escenario()?.id ?? valoresGenerados"
+                  (change)="elegirEscenario($any($event.target).value)"
+                >
+                  @for (e of escenarios(); track e.id) {
+                    <option [value]="e.id">{{ e.titulo }}</option>
+                  }
+                  <option [value]="valoresGenerados">Valores generados (a ciegas)</option>
+                </select>
+              </label>
+            }
+            @if (escenario() === null) {
+              <button type="button" class="lienzo__principal" (click)="otrosDatos()">Otros datos</button>
+              @if (variantes() !== null) {
+                <button
+                  type="button"
+                  [class.lienzo__principal]="matriz()"
+                  (click)="matriz.set(!matriz())"
+                >
+                  Matriz de variantes
+                </button>
+              }
             }
             <button type="button" (click)="copiarInforme()">Copiar informe</button>
           </div>
@@ -184,6 +204,17 @@
             @if (estado() === 'montando') { <span class="marco-zona__estado">montando…</span> }
             @if (estado() === 'montado') {
               <span class="marco-zona__estado marco-zona__estado--ok">montado en {{ milisegundos() }} ms</span>
+              <!-- «Montado» solo no dice con qué: un contrato válido y un
+                   valor adivinado se ven igual de verdes. -->
+              @if (escenario(); as e) {
+                <span class="marco-zona__estado" data-testid="stock-montaje">escenario · {{ e.variante }}</span>
+              } @else if (entradasRechazadas().length > 0) {
+                <span class="marco-zona__estado marco-zona__estado--aviso" data-testid="stock-montaje">
+                  {{ entradasRechazadas().length }} entrada(s) rechazada(s)
+                </span>
+              } @else {
+                <span class="marco-zona__estado" data-testid="stock-montaje">valores generados</span>
+              }
             }
             @if (estado() === 'falló') { <span class="marco-zona__estado marco-zona__estado--mal">no monta</span> }
           </div>
@@ -206,6 +237,23 @@
               [style.transform]="'scale(' + zoom() + ')'"
             ></iframe>
           </div>
+
+          <!-- La ficha del escenario: qué tiene que verse y qué provocar. Es la
+               aserción manual que acompaña a la automática del spec. -->
+          @if (escenario(); as e) {
+            <div class="escenario" data-testid="stock-escenario-ficha">
+              <p class="panel__linea"><strong>Se ve</strong> {{ e.seVe }}</p>
+              <p class="panel__linea"><strong>Probar</strong></p>
+              <ul class="escenario__pasos">
+                @for (paso of e.interacciones; track paso) {
+                  <li>{{ paso }}</li>
+                }
+              </ul>
+              <p class="panel__linea">
+                <strong>Anfitrión</strong> <code>{{ e.fuente }}</code>
+              </p>
+            </div>
+          }
         </div>
 
         <!-- ─────────────────────────────────────────────── panel de inspección -->
@@ -228,6 +276,15 @@
               (click)="pestana.set('composicion')"
             >
               Composición
+            </button>
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="pestana() === 'salidas'"
+              [class.panel__activa]="pestana() === 'salidas'"
+              (click)="pestana.set('salidas')"
+            >
+              Salidas <span>{{ salidas().length }}</span>
             </button>
             <button
               type="button"
@@ -261,7 +318,19 @@
           <div class="panel__contenido">
             @switch (pestana()) {
               @case ('props') {
-                @if (ficha.entradas.length === 0) {
+                @if (escenario(); as e) {
+                  <p class="panel__linea">
+                    <strong>Contrato</strong> lo fija el anfitrión con
+                    <code>variante = {{ e.variante }}</code>: un <code>ViewState</code> válido, funciones
+                    y plantillas de verdad. Para editar entradas sueltas elegí «Valores generados».
+                  </p>
+                  <p class="panel__linea">
+                    <strong>Entradas</strong>
+                    @for (i of ficha.entradas; track i.nombre) {
+                      <span class="pastilla" [title]="i.tipo">{{ i.nombre }}{{ i.requerido ? ' *' : '' }}</span>
+                    }
+                  </p>
+                } @else if (ficha.entradas.length === 0) {
                   <p class="panel__vacio">No recibe nada: lo que pinta lo saca de dentro.</p>
                 } @else {
                   <table class="tabla">
@@ -340,6 +409,30 @@
                 }
               }
 
+              @case ('salidas') {
+                @if (escenario(); as e) {
+                  @if (salidas().length === 0) {
+                    <p class="panel__vacio">Todavía no emitió nada. Tocá el componente en el marco.</p>
+                  } @else {
+                    <ol class="salidas" data-testid="stock-salidas">
+                      @for (s of salidas(); track s.momento) {
+                        <li><span class="pastilla">{{ s.salida }}</span> {{ s.detalle }}</li>
+                      }
+                    </ol>
+                  }
+                  <p class="panel__linea">
+                    <strong>Esperadas en este escenario</strong>
+                    @for (s of e.salidasEsperadas; track s) { <span class="pastilla">{{ s }}</span> }
+                    @if (e.salidasEsperadas.length === 0) { ninguna }
+                  </p>
+                } @else {
+                  <p class="panel__vacio">
+                    Las salidas se registran cuando el componente se monta por un escenario: con
+                    valores generados nadie las escucha.
+                  </p>
+                }
+              }
+
               @case ('problemas') {
                 @if (totalDeProblemas() === 0) {
                   <p class="panel__ok">Nada que reprocharle: monta limpio y sin avisos.</p>
@@ -347,6 +440,9 @@
                   <ul class="problemas">
                     @if (estado() === 'falló') {
                       <li><span class="problemas__tipo problemas__tipo--mal">no monta</span> {{ error() }}</li>
+                    }
+                    @for (r of entradasRechazadas(); track r) {
+                      <li><span class="problemas__tipo problemas__tipo--mal">entrada rechazada</span> {{ r }}</li>
                     }
                     @for (p of ficha.problemas; track p.detalle) {
                       <li><span class="problemas__tipo">{{ p.tipo }}</span> {{ p.detalle }}</li>

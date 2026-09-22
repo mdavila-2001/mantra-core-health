@@ -258,8 +258,17 @@ function problemasEstaticos(componente, source, indice) {
 
 /* ---- el índice ------------------------------------------------------------ */
 
+/**
+ * La infraestructura del propio banco no es producto: ni el visor ni los
+ * anfitriones de `escenarios/` van al índice. Antes el stock se listaba a sí
+ * mismo como una «pantalla» más, y cada anfitrión nuevo habría sumado una
+ * ficha que nadie va a montar suelta.
+ */
+const INFRAESTRUCTURA_DEL_BANCO = 'src/app/features/component-stock/';
+
 const archivos = walk(SRC_ROOT, ['.ts'])
   .filter((file) => !file.endsWith('.spec.ts'))
+  .filter((file) => !repoPath(file).startsWith(INFRAESTRUCTURA_DEL_BANCO))
   .map((file) => ({ file, source: read(file) }))
   .filter(({ source }) => /@Component\(/.test(source));
 

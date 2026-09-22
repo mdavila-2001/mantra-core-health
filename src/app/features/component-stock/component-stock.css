@@ -571,3 +571,46 @@
 .peticiones code {
   font-size: 12px;
 }
+
+/* ---- escenarios ----------------------------------------------------------- */
+
+.lienzo__escenario {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tinta-suave);
+  white-space: nowrap;
+}
+
+.lienzo__escenario select {
+  max-inline-size: 240px;
+  padding: 4px 6px;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  font: inherit;
+  background: var(--panel);
+}
+
+.marco-zona__estado--aviso {
+  background: #fef3c7;
+  color: var(--aviso);
+}
+
+.escenario {
+  margin-block-start: 10px;
+  padding: 10px 12px;
+  border: 1px dashed var(--borde);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.escenario__pasos,
+.salidas {
+  margin: 0 0 8px;
+  padding-inline-start: 18px;
+}
+
+.escenario__pasos li,
+.salidas li {
+  margin-block-end: 3px;
+}

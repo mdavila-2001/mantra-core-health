@@ -8,21 +8,26 @@ import {
   createComponent,
   effect,
   inject,
+  linkedSignal,
   signal,
   viewChild,
   type ComponentRef,
   type ElementRef,
+  type OnDestroy,
+  type Type,
 } from '@angular/core';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 
-import { SessionStore } from '../../core/auth/session.store';
+import { SessionStore, type SessionTokens } from '../../core/auth/session.store';
 import { valoresParaEntradas } from '../../core/mock/faker';
 import { apiRealForzada } from '../../core/mock/modo-api';
 import { MOCK_USERS, emitirAccessToken, emitirRefreshToken } from '../../core/mock/mock-session';
 
 import { COMPONENTES } from './component-index.generated';
+import type { AnfitrionDeEscenario, EscenarioDeComponente } from './escenarios/escenario.types';
+import { escenariosDe } from './escenarios/escenarios';
 import {
   ETIQUETA_DE_NIVEL,
   type ComponenteDelStock,
@@ -76,7 +81,14 @@ const DISPOSITIVOS: readonly Dispositivo[] = [
   { clave: 'escritorio', nombre: 'Escritorio', ancho: 1600, alto: 900 },
 ];
 
-type Pestana = 'props' | 'composicion' | 'problemas' | 'red' | 'accesibilidad';
+type Pestana = 'props' | 'composicion' | 'salidas' | 'problemas' | 'red' | 'accesibilidad';
+
+/**
+ * La opción del selector de escenarios que monta «a ciegas», con los valores
+ * del generador. Sigue existiendo para comparar: es lo que se ve cuando nadie
+ * escribió un anfitrión.
+ */
+const VALORES_GENERADOS = 'valores-generados';
 
 interface FalloDeAccesibilidad {
   readonly impacto: string;
@@ -91,7 +103,7 @@ interface FalloDeAccesibilidad {
   styleUrl: './component-stock.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ComponentStock {
+export class ComponentStock implements OnDestroy {
   private readonly router = inject(Router);
   private readonly injector = inject(Injector);
   private readonly entorno = inject(EnvironmentInjector);
@@ -184,6 +196,46 @@ export class ComponentStock {
   protected readonly pestana = signal<Pestana>('props');
   protected readonly cuenta = signal<string | null>(null);
 
+  /* ---- escenarios --------------------------------------------------------- */
+
+  protected readonly valoresGenerados = VALORES_GENERADOS;
+
+  /** Los anfitriones escritos a mano para el componente elegido; vacío si no hay. */
+  protected readonly escenarios = computed<readonly EscenarioDeComponente[]>(() => {
+    const componente = this.elegido();
+    return componente === null ? [] : escenariosDe(componente.clave);
+  });
+
+  /**
+   * Qué escenario montar: un id del registro, o {@link VALORES_GENERADOS} para
+   * el montaje a ciegas. `null` es «el primero». Se olvida al cambiar de
+   * componente, que es lo que `linkedSignal` hace solo.
+   */
+  private readonly escenarioPedido = linkedSignal<ComponenteDelStock | null, string | null>({
+    source: this.elegido,
+    computation: () => null,
+  });
+
+  /** El escenario vigente, o `null` cuando se monta con valores generados. */
+  protected readonly escenario = computed<EscenarioDeComponente | null>(() => {
+    const lista = this.escenarios();
+    const pedido = this.escenarioPedido();
+    if (lista.length === 0 || pedido === VALORES_GENERADOS) return null;
+    return lista.find((candidato) => candidato.id === pedido) ?? lista[0] ?? null;
+  });
+
+  /** El anfitrión montado, para leerle lo que el componente emitió. */
+  private readonly anfitrion = signal<AnfitrionDeEscenario | null>(null);
+  protected readonly salidas = computed(() => this.anfitrion()?.salidas() ?? []);
+
+  /**
+   * Entradas cuyo valor generado el componente rechazó al montarse.
+   *
+   * Antes se tragaban en silencio y la ficha decía «montado»: un contrato que
+   * se probó con la mitad de sus entradas quedaba acreditado como entero.
+   */
+  protected readonly entradasRechazadas = signal<readonly string[]>([]);
+
   protected readonly ancho = computed(() =>
     this.apaisado() ? this.dispositivo().alto : this.dispositivo().ancho,
   );
@@ -223,6 +275,7 @@ export class ComponentStock {
     return (
       componente.problemas.length +
       this.consola().length +
+      this.entradasRechazadas().length +
       (this.estado() === 'falló' ? 1 : 0) +
       (this.accesibilidad()?.length ?? 0)
     );
@@ -245,9 +298,15 @@ export class ComponentStock {
       this.cuenta();
       this.apiReal();
       this.ancho();
+      this.escenario();
       if (componente === null || marco === undefined) return;
       void this.montar(componente, marco.nativeElement);
     });
+  }
+
+  ngOnDestroy(): void {
+    this.desmontar();
+    this.restaurarSesion();
   }
 
   /* ---- el montaje --------------------------------------------------------- */
@@ -269,56 +328,17 @@ export class ComponentStock {
 
     try {
       this.aplicarCuenta();
+      const escenario = this.escenario();
+      // El componente se carga aunque se monte por su anfitrión: es la prueba
+      // de que la ficha apunta al mismo archivo que el escenario importa.
       const clase = await componente.cargar();
 
       this.prepararDocumento(documento);
-      const cuerpo = documento.body;
 
-      const variantes = this.matriz() ? this.variantes() : null;
-      const instancias =
-        variantes === null
-          ? [{ extra: {} as Record<string, unknown>, rotulo: null as string | null }]
-          : variantes.ramas.map((rama) => ({
-              extra: { [variantes.entrada]: rama } as Record<string, unknown>,
-              rotulo: `${variantes.entrada} = ${rama}`,
-            }));
-
-      const generados = valoresParaEntradas(
-        componente.entradas.map((e) => ({ nombre: e.nombre, tipo: e.tipo, requerido: e.requerido })),
-        `${componente.clave}-${this.semilla()}`,
-      );
-      const valores = { ...generados, ...this.editados() };
-      this.valores.set(valores);
-
-      for (const instancia of instancias) {
-        if (instancia.rotulo !== null) {
-          const rotulo = documento.createElement('p');
-          rotulo.textContent = instancia.rotulo;
-          rotulo.setAttribute(
-            'style',
-            'margin:14px 0 4px;font:600 11px/1.4 system-ui,sans-serif;opacity:.5',
-          );
-          cuerpo.appendChild(rotulo);
-        }
-        const anfitrion = documento.createElement('div');
-        cuerpo.appendChild(anfitrion);
-
-        const referencia = createComponent(clase, {
-          environmentInjector: this.entorno,
-          elementInjector: this.injector,
-          hostElement: anfitrion,
-        });
-        for (const [nombre, valor] of Object.entries({ ...valores, ...instancia.extra })) {
-          try {
-            referencia.setInput(nombre, valor);
-          } catch {
-            // Una entrada que no acepta el valor generado no tumba la ficha: se
-            // monta con el resto y el valor se ve en la pestaña de entradas.
-          }
-        }
-        this.app.attachView(referencia.hostView);
-        referencia.changeDetectorRef.detectChanges();
-        this.montados.push(referencia);
+      if (escenario !== null) {
+        this.montarEscenario(escenario, documento);
+      } else {
+        this.montarConValoresGenerados(componente, clase, documento);
       }
 
       // Angular inyecta los estilos del componente en la cabecera del documento
@@ -339,12 +359,105 @@ export class ComponentStock {
     }
   }
 
+  /**
+   * Monta el componente a través de su anfitrión, con un contrato válido.
+   *
+   * El anfitrión es quien sabe qué `ViewState`, qué columnas o qué contenido
+   * proyectado necesita el organismo; el banco solo le fija la variante y le
+   * lee las salidas. No hay valores generados que editar: las entradas las
+   * decide el escenario, y eso es lo que lo hace reproducible.
+   */
+  private montarEscenario(escenario: EscenarioDeComponente, documento: Document): void {
+    const anfitrion = documento.createElement('div');
+    documento.body.appendChild(anfitrion);
+
+    const referencia = createComponent(escenario.host, {
+      environmentInjector: this.entorno,
+      elementInjector: this.injector,
+      hostElement: anfitrion,
+    });
+    referencia.setInput('variante', escenario.variante);
+    this.app.attachView(referencia.hostView);
+    referencia.changeDetectorRef.detectChanges();
+    this.montados.push(referencia);
+
+    this.anfitrion.set(referencia.instance);
+    this.valores.set({ variante: escenario.variante });
+    this.entradasRechazadas.set([]);
+  }
+
+  /**
+   * El montaje a ciegas: cada entrada recibe lo que el generador adivina por
+   * su nombre y su tipo. Alcanza para un botón; para un organismo, no —y por
+   * eso existen los escenarios—.
+   */
+  private montarConValoresGenerados(
+    componente: ComponenteDelStock,
+    clase: Type<unknown>,
+    documento: Document,
+  ): void {
+    const cuerpo = documento.body;
+
+    const variantes = this.matriz() ? this.variantes() : null;
+    const instancias =
+      variantes === null
+        ? [{ extra: {} as Record<string, unknown>, rotulo: null as string | null }]
+        : variantes.ramas.map((rama) => ({
+            extra: { [variantes.entrada]: rama } as Record<string, unknown>,
+            rotulo: `${variantes.entrada} = ${rama}`,
+          }));
+
+    const generados = valoresParaEntradas(
+      componente.entradas.map((e) => ({ nombre: e.nombre, tipo: e.tipo, requerido: e.requerido })),
+      `${componente.clave}-${this.semilla()}`,
+    );
+    const valores = { ...generados, ...this.editados() };
+    this.valores.set(valores);
+    this.anfitrion.set(null);
+
+    const rechazadas: string[] = [];
+    for (const instancia of instancias) {
+      if (instancia.rotulo !== null) {
+        const rotulo = documento.createElement('p');
+        rotulo.textContent = instancia.rotulo;
+        rotulo.setAttribute(
+          'style',
+          'margin:14px 0 4px;font:600 11px/1.4 system-ui,sans-serif;opacity:.5',
+        );
+        cuerpo.appendChild(rotulo);
+      }
+      const anfitrion = documento.createElement('div');
+      cuerpo.appendChild(anfitrion);
+
+      const referencia = createComponent(clase, {
+        environmentInjector: this.entorno,
+        elementInjector: this.injector,
+        hostElement: anfitrion,
+      });
+      for (const [nombre, valor] of Object.entries({ ...valores, ...instancia.extra })) {
+        try {
+          referencia.setInput(nombre, valor);
+        } catch (error) {
+          // Una entrada que no acepta el valor generado no tumba la ficha: se
+          // monta con el resto. Pero no se calla: figura entre los problemas,
+          // porque «montado» con una entrada descartada no acredita el contrato.
+          rechazadas.push(`${nombre}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+      this.app.attachView(referencia.hostView);
+      referencia.changeDetectorRef.detectChanges();
+      this.montados.push(referencia);
+    }
+    this.entradasRechazadas.set(rechazadas);
+  }
+
   private desmontar(): void {
     for (const referencia of this.montados) {
       this.app.detachView(referencia.hostView);
       referencia.destroy();
     }
     this.montados = [];
+    this.anfitrion.set(null);
   }
 
   /** Deja el iframe con los estilos de la aplicación y el cuerpo vacío. */
@@ -380,15 +493,56 @@ export class ComponentStock {
    */
   private aplicarCuenta(): void {
     const clave = this.cuenta();
-    if (clave === null) return;
+    if (clave === null) {
+      this.restaurarSesion();
+      return;
+    }
     const usuario = MOCK_USERS.find((u) => u.key === clave);
     if (usuario === undefined) return;
+
+    // Se guarda la sesión con la que se entró al banco —una sola vez, antes de
+    // pisarla— para poder devolverla al salir. Ver `restaurarSesion`.
+    if (this.sesionAnfitriona === null) {
+      const accessToken = this.session.accessToken();
+      const refreshToken = this.session.refreshToken();
+      this.sesionAnfitriona = {
+        tokens:
+          accessToken !== null && refreshToken !== null ? { accessToken, refreshToken } : null,
+        tenant: this.session.activeTenantId(),
+      };
+    }
+
     this.session.start({
       accessToken: emitirAccessToken(usuario),
       refreshToken: emitirRefreshToken(usuario),
     });
     const tenant = usuario.tenants[0];
     if (tenant !== undefined) this.session.selectTenant(tenant);
+  }
+
+  /** La sesión de la aplicación antes de entrar como una cuenta de prueba. */
+  private sesionAnfitriona: { tokens: SessionTokens | null; tenant: string | null } | null = null;
+
+  /**
+   * Devuelve la sesión que tenía la aplicación al entrar al banco.
+   *
+   * El iframe usa los inyectores del padre, así que `SessionStore` es **el
+   * mismo** que el de la aplicación anfitriona: «entrar como la médica» pisaba
+   * la sesión de quien estaba mirando, y al salir del banco seguía siendo la
+   * médica. Una cuenta sintética no tiene que cambiar la sesión anfitriona;
+   * mientras el banco no tenga un documento y un inyector propios, lo que se
+   * puede hacer es devolverla.
+   */
+  private restaurarSesion(): void {
+    const previa = this.sesionAnfitriona;
+    if (previa === null) return;
+    this.sesionAnfitriona = null;
+    if (previa.tokens === null) {
+      this.session.clear();
+      return;
+    }
+    this.session.start(previa.tokens);
+    if (previa.tenant !== null) this.session.selectTenant(previa.tenant);
   }
 
   private capturarConsola(destino: string[]): () => void {
@@ -415,6 +569,11 @@ export class ComponentStock {
    * **todas** las peticiones, salgan del `HttpClient` o no, y sin tocar la
    * cadena de interceptores de la aplicación, que es justo lo que se está
    * poniendo a prueba.
+   *
+   * Lo que **no** ve: las peticiones que el backend simulado responde en
+   * proceso. El interceptor las resuelve antes de que salgan, así que en la
+   * rama `mockup` esta pestaña vacía significa «nada salió a la red», no
+   * «el componente no pidió nada». Con «API real» encendida sí se ve todo.
    */
   private mirarLaRed(destino: string[]): () => void {
     if (typeof PerformanceObserver === 'undefined') return () => undefined;
@@ -423,6 +582,9 @@ export class ComponentStock {
         const url = entrada.name;
         if (/\.(js|css|woff2?|png|jpe?g|svg|webp|ico)(\?|$)/.test(url)) continue;
         if (url.startsWith('data:') || url.startsWith('blob:')) continue;
+        // Lo que pide el servidor de desarrollo por su cuenta —componentes
+        // por HMR, el cliente de Vite— no es del componente.
+        if (/\/@(ng|vite|fs|id)\//.test(url)) continue;
         destino.push(url.replace(location.origin, ''));
       }
     });
@@ -454,6 +616,10 @@ export class ComponentStock {
   protected elegirDispositivo(clave: string): void {
     const encontrado = DISPOSITIVOS.find((d) => d.clave === clave);
     if (encontrado !== undefined) this.dispositivo.set(encontrado);
+  }
+
+  protected elegirEscenario(id: string): void {
+    this.escenarioPedido.set(id);
   }
 
   protected irA(clave: string | null): void {
@@ -511,6 +677,9 @@ export class ComponentStock {
       `- Archivo: \`${c.path}\``,
       `- Nivel: ${ETIQUETA_DE_NIVEL[c.nivel]} · Prueba: ${c.tieneSpec ? 'sí' : 'no'}`,
       `- Montado en ${this.ancho()}×${this.alto()} px (${this.dispositivo().nombre}) en ${this.milisegundos()} ms`,
+      this.escenario() === null
+        ? '- Montaje: valores generados (a ciegas)'
+        : `- Escenario: ${this.escenario()?.id} · anfitrión \`${this.escenario()?.fuente}\``,
       this.cuenta() === null ? '' : `- Cuenta: ${this.cuenta()}`,
       this.apiReal() ? '- **Contra la API real**' : '',
       lista('Átomos', c.usa.atomos),
@@ -521,7 +690,11 @@ export class ComponentStock {
       `### Problemas (${this.totalDeProblemas()})`,
       ...c.problemas.map((p) => `- **${p.tipo}**: ${p.detalle}`),
       this.estado() === 'falló' ? `- **no monta**: ${this.error()}` : '',
+      ...this.entradasRechazadas().map((r) => `- **entrada rechazada**: ${r}`),
       ...this.consola().map((a) => `- **consola**: ${a}`),
+      this.salidas().length === 0
+        ? ''
+        : `\n### Salidas\n${this.salidas().map((s) => `- \`${s.salida}\` ${s.detalle}`).join('\n')}`,
       ...(this.accesibilidad() ?? []).map(
         (a) => `- **a11y (${a.impacto})**: ${a.descripcion} · ${a.nodos} nodo(s)`,
       ),
