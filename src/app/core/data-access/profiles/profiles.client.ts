@@ -139,6 +139,15 @@ export class ProfilesClient {
         query.issuerAdministrativeAreaConceptId,
       );
     }
+    if (query.aboGroupConceptId !== undefined) {
+      params = params.set('aboGroupConceptId', query.aboGroupConceptId);
+    }
+    if (query.rhFactorConceptId !== undefined) {
+      params = params.set('rhFactorConceptId', query.rhFactorConceptId);
+    }
+    if (query.clinicalLanguageConceptId !== undefined) {
+      params = params.set('clinicalLanguageConceptId', query.clinicalLanguageConceptId);
+    }
     if (query.cursor !== undefined) {
       params = params.set('cursor', query.cursor);
     }

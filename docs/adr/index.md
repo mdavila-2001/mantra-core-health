@@ -33,6 +33,7 @@ Registro de las decisiones que gobiernan el frontend.
 | [0011](ADR-0011-api-mismo-dominio.md) | **La API va detrás del mismo dominio** | Aceptado | Decisión del equipo, 2026-08-01 |
 | [0012](ADR-0012-botones-con-texto-y-acciones-de-fila.md) | **Todo botón lleva icono y texto; las acciones de fila van en un desplegable** | Aceptado — reemplaza la decisión del 2026-09-13 | Corrección C-06, 2026-09-20 |
 | [0013](ADR-0013-opciones-en-select.md) | **Elegir un valor de una lista se hace con un `select`**; alternar dos estados, con un toggle | Aceptado — con una lectura por confirmar | Correcciones C-21 y C-10, 2026-09-20 |
+| [0014](ADR-0014-pantallas-portadas-que-se-graduan.md) | **Las pantallas portadas de `features/alovida/**` NO se migran**: son referencia de diseño declarada y la fuente de rehidratación de las vistas reales. La adopción se mide sobre las pantallas reales, que ya montan `DataTable`. Se deja escrito el mecanismo de graduación por si alguna vez hace falta | Aceptado | `alovida-design-notice.ts:12-60`, `port-vistas-alovida.mjs:275-284`, `app.routes.ts:1232-1240`, 2026-09-21 |
 
 ## Plantilla
 

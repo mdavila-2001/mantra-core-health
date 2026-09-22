@@ -4,11 +4,13 @@ import {
   ESPECIALIDAD,
   ESTADO,
   GENERO,
+  GRUPO_ABO,
   IDIOMA,
   JURISDICCION,
   MUNICIPIO,
   OCUPACION,
   PARENTESCO,
+  RH,
   SEXO,
   TIPO_CREDENCIAL,
   TIPO_VINCULO,
@@ -110,6 +112,15 @@ export interface PacienteSimulado {
   readonly photoFileId?: string;
   readonly aseguradora?: string;
   readonly plan?: string;
+  /**
+   * Grupo sanguíneo y factor Rh, casi siempre juntos porque un laboratorio
+   * los tipifica en el mismo análisis. Opcionales: no todo paciente se hizo
+   * ese estudio.
+   */
+  readonly aboGroupId?: string;
+  readonly rhFactorId?: string;
+  /** Idioma en el que hay que atenderlo clínicamente. */
+  readonly idiomaClinicoId?: string;
   /**
    * El punto en el mapa de cada dirección, cuando el paciente lo declaró.
    *
@@ -384,6 +395,10 @@ function pacienteGenerado(indice: number): PacienteSimulado {
   const slug = fk.slugDeNombre(nombre, apellidos[0]);
   const clave = `gen-pac-${indice}`;
   const conSeguro = f.datatype.boolean(0.45);
+  // Un laboratorio tipifica los dos juntos: si hay uno, hay el otro. El 40%
+  // de la muestra basta para probar el filtro con resultados y sin ellos.
+  const conTipificacion = f.datatype.boolean(0.4);
+  const conIdiomaRegistrado = f.datatype.boolean(0.7);
 
   return {
     id: uuid(`pid-${clave}`),
@@ -416,6 +431,18 @@ function pacienteGenerado(indice: number): PacienteSimulado {
       ? {
           aseguradora: f.helpers.arrayElement(fk.ASEGURADORAS),
           plan: f.helpers.arrayElement(fk.PLANES),
+        }
+      : {}),
+    ...(conTipificacion
+      ? {
+          aboGroupId: GRUPO_ABO[f.helpers.arrayElement(['ABO-O', 'ABO-A', 'ABO-B', 'ABO-AB'])]!,
+          rhFactorId: RH[f.helpers.arrayElement(['RH-POS', 'RH-NEG'])]!,
+        }
+      : {}),
+    ...(conIdiomaRegistrado
+      ? {
+          idiomaClinicoId:
+            IDIOMA[f.helpers.arrayElement(['LANG-ES', 'LANG-QU', 'LANG-AY', 'LANG-EN'])]!,
         }
       : {}),
   };
