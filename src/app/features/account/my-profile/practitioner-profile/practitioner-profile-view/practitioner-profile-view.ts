@@ -33,8 +33,8 @@ import type {
   PerfilProfesionalVisible,
 } from './practitioner-profile-view.types';
 
-/** Índice de cada pestaña superior — nombrado para no repetir números mágicos. */
-const TAB = { TRAYECTORIA: 0, CREDENCIALES: 1, PREVIEW: 2 } as const;
+/** Con qué pestaña abre la ficha: la primera, sea cuál sea el dibujo. */
+const PRIMERA_PESTANA = 0;
 
 /* El hash que repartia un tono por especialidad se retiro con C-09. Dos
    motivos, y ninguno es estetico. Repartia `info` y `success`, que en este
@@ -64,28 +64,26 @@ interface FilaCredencial {
  * El perfil del doctor rebotó dos rondas seguidas («está pésimo»), y la guía de
  * profesionales (carril R2-1) necesita pintar el perfil de OTRO doctor. El dato
  * entra por `input()` ya resuelto (ver `practitioner-profile-view.types.ts`) y
- * esta vista no sabe de dónde salió: la usan el contenedor propio, el detalle
- * de la guía, y — carril 05 — ella misma en modo preview.
+ * esta vista no sabe de dónde salió: la usan el contenedor propio y el detalle
+ * de la guía.
  *
- * ## La estructura de 3 pestañas superiores (carril 05)
+ * ## Los dos dibujos
  *
- * 1. **Trayectoria**: formación, experiencia histórica y actividad actual, en
- *    timeline vertical por fases.
- * 2. **Credenciales y verificaciones**: especialidades y matrículas, más una
- *    agrupación explícita declarado/verificado.
- * 3. **Vista previa del perfil público**: sólo cuando `esPropio()` — se
- *    reinstancia a **sí misma** con `esPropio=false`, alimentada por el mismo
- *    `perfil()` ya cargado. No es un mock aparte: es el mismo dibujo, en modo
- *    ajeno, que ve un paciente en `practitioner-detail.ts` — la única forma de
- *    que la vista previa no pueda divergir de lo que un paciente ve de verdad.
- *    `previewMode` corta la recursión: la instancia anidada no vuelve a ofrecer
- *    una pestaña Preview de sí misma.
+ * 1. **La ficha propia** — una sola tarjeta con las mismas seis pestañas del
+ *    alta de médico, la misma que ve un paciente en la suya.
+ * 2. **La ficha de un colega** — la de la Guía, con sus tres pestañas
+ *    (Trayectoria, Credenciales y verificaciones, Dónde atiende).
  *
- * ## `esPropio`
+ * ## `esPropio` y `previewMode`
  *
- * Con `true` (Mi perfil) aparecen las acciones de dueño y el formulario de
- * alta de trayectoria. Con `false` (la guía, o el propio Preview) no hay
- * botones ni tuteo: es la ficha de un colega.
+ * Con `esPropio=true` (Mi perfil) aparecen las acciones de dueño y el
+ * formulario de alta de trayectoria. Con `false` (la guía) no hay botones ni
+ * tuteo: es la ficha de un colega.
+ *
+ * `previewMode` suprime toda acción de escritura **aunque `esPropio` llegue en
+ * `true` por error de quien llama**. Existió para una pestaña «Vista previa»
+ * que reinstanciaba este componente dentro de sí mismo; esa pestaña se retiró
+ * y hoy nadie pasa el input, así que es una red y no un modo en uso.
  */
 @Component({
   selector: 'app-practitioner-profile-view',
@@ -112,9 +110,6 @@ interface FilaCredencial {
     PractitionerActivity,
     PracticeSitesMap,
     CredentialsPanel,
-    // Auto-referencia deliberada (carril 05): la pestaña Preview se pinta
-    // reinstanciando este mismo componente en modo ajeno — ver `previewMode`.
-    PractitionerProfileView,
   ],
   templateUrl: './practitioner-profile-view.html',
   styleUrl: './practitioner-profile-view.css',
@@ -216,8 +211,7 @@ export class PractitionerProfileView {
   /** Alguien agregó un vínculo laboral desde el formulario embebido: el contenedor debe releer el perfil. */
   readonly trayectoriaCambio = output<void>();
 
-  protected readonly pestanaSeleccionada = signal<number>(TAB.TRAYECTORIA);
-  protected readonly TAB = TAB;
+  protected readonly pestanaSeleccionada = signal<number>(PRIMERA_PESTANA);
 
   /**
    * Las pestañas de la ficha PROPIA, las mismas seis del alta de médico.
@@ -358,10 +352,6 @@ export class PractitionerProfileView {
 
     return { declarados, verificados };
   });
-
-  protected verPreview(): void {
-    this.pestanaSeleccionada.set(TAB.PREVIEW);
-  }
 
   /** «Quiero retirar este título». Confirmarlo y retirarlo es de quien escucha. */
   readonly credencialARetirar = output<FormacionVisible>();

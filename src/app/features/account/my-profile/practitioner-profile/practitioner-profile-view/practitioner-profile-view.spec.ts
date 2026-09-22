@@ -208,6 +208,72 @@ describe('PractitionerProfileView', () => {
     http?.verify();
   });
 
+  /**
+   * Congela un objeto y todo lo que cuelga de él.
+   *
+   * Las fechas se dejan enteras: congelarlas no aporta —sus métodos de lectura
+   * no las tocan— y romper `Date` complicaría la comparación sin probar nada.
+   */
+  function congelar<T>(valor: T): T {
+    if (valor !== null && typeof valor === 'object' && !(valor instanceof Date)) {
+      for (const hijo of Object.values(valor)) {
+        congelar(hijo);
+      }
+      Object.freeze(valor);
+    }
+    return valor;
+  }
+
+  /**
+   * El perfil es de quien lo resolvió: acá sólo se lee.
+   *
+   * Se pasa congelado, así que cualquier escritura revienta en el acto —el
+   * módulo es estricto—, y además se compara el objeto antes y después por si
+   * alguien le colgara algo que `Object.freeze` no alcanza.
+   */
+  it('no muta el perfil que recibe: anda con el objeto congelado y lo deja igual', () => {
+    const perfil = congelar(structuredClone(PERFIL) as PerfilProfesionalVisible);
+    const antes = JSON.stringify(perfil);
+
+    const host = montar(perfil, true);
+    seleccionarPestana(host, 'Credenciales');
+    seleccionarPestana(host, 'Trayectoria');
+
+    expect(JSON.stringify(perfil)).toBe(antes);
+  });
+
+  /**
+   * Una salida es una intención de la persona, nunca un efecto de que llegaran
+   * datos.
+   *
+   * Se enganchan **las cuatro** antes del primer dibujo, y después se le pasa lo
+   * que el contenedor le iría pasando al resolver: otro perfil, la foto recién
+   * subida, el fin de la subida. Nada de eso lo pidió nadie, así que nada de eso
+   * puede salir por una salida.
+   */
+  it('no emite ninguna intención al dibujarse ni al llegarle datos nuevos', () => {
+    const emitidas: string[] = [];
+    const host = montar(PERFIL, true, false, (vista) => {
+      vista.trayectoriaCambio.subscribe(() => emitidas.push('trayectoriaCambio'));
+      vista.fotoElegida.subscribe(() => emitidas.push('fotoElegida'));
+      vista.credencialARetirar.subscribe(() => emitidas.push('credencialARetirar'));
+      vista.pestanaVisible.subscribe(() => emitidas.push('pestanaVisible'));
+    });
+
+    expect(emitidas).toEqual([]);
+
+    fixture.componentRef.setInput('fotoSubiendo', true);
+    fixture.detectChanges();
+    fixture.componentRef.setInput('fotoSubiendo', false);
+    fixture.componentRef.setInput('fotoRecien', 'data:image/png;base64,AAAA');
+    fixture.componentRef.setInput('errorDeFoto', 'No pudimos subir la foto.');
+    fixture.detectChanges();
+
+    expect(emitidas).toEqual([]);
+    // Y lo recibido sí se ve: la prueba no pasa por no haber dibujado nada.
+    expect(host.textContent).toContain('No pudimos subir la foto');
+  });
+
   it('pinta la identidad completa en la portada', () => {
     const host = montar();
 
