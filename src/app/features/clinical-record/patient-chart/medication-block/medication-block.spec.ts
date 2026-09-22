@@ -44,6 +44,7 @@ const FIRMADA: RecetaEnFicha = { ...BORRADOR, id: 'rx-2', estado: 'Firmada', fir
  * mostrar y el código ATC como segunda línea.
  */
 const VANCOMICINA = { value: 'med-vanco', label: 'Vancomycin', hint: 'J01XA01' };
+const AMOXICILINA = { value: 'med-amoxi', label: 'Amoxicilina', hint: 'J01CA04' };
 
 const CATALOGO = {
   code: 'medication',
@@ -676,12 +677,15 @@ describe('MedicationBlock', () => {
   /* ---- elegir del catálogo: buscar y componer la posología ---------------- */
 
   /** Responde la ficha del concepto con las propiedades que se le pasen. */
-  function responderFicha(properties: Record<string, unknown>): void {
-    const req = http.expectOne(`/terminology/concepts/${VANCOMICINA.value}`);
+  function responderFicha(
+    properties: Record<string, unknown>,
+    opcion: { value: string; label: string; hint: string } = VANCOMICINA,
+  ): void {
+    const req = http.expectOne(`/terminology/concepts/${opcion.value}`);
     req.flush({
-      conceptId: VANCOMICINA.value,
-      code: 'J01XA01',
-      display: 'Vancomycin',
+      conceptId: opcion.value,
+      code: opcion.hint,
+      display: opcion.label,
       codeSystemVersionId: 'csv-vademecum',
       properties,
     });
@@ -755,6 +759,77 @@ describe('MedicationBlock', () => {
       { value: '1 g', label: '1 g' },
     ]);
     expect(interno<() => boolean>('hayPosologia')()).toBe(true);
+  });
+
+  it('completa la frecuencia manual con el valor publicado por el medicamento', () => {
+    responderCatalogo();
+
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({ default_frequency: 'Cada 8 horas' });
+
+    expect(señal<string>('frecuencia')()).toBe('Cada 8 horas');
+  });
+
+  it('conserva la frecuencia escrita al elegir un medicamento con valor por defecto', () => {
+    responderCatalogo();
+    señal<string>('frecuencia').set('Sólo antes de dormir');
+
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({ default_frequency: 'Cada 8 horas' });
+
+    expect(señal<string>('frecuencia')()).toBe('Sólo antes de dormir');
+  });
+
+  it('deja la frecuencia manual vacía si el medicamento no publica una por defecto', () => {
+    responderCatalogo();
+
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({ strengths: ['500 mg'] });
+
+    expect(señal<string>('frecuencia')()).toBe('');
+  });
+
+  it('ignora una frecuencia por defecto malformada', () => {
+    responderCatalogo();
+
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({ default_frequency: 8 });
+
+    expect(señal<string>('frecuencia')()).toBe('');
+  });
+
+  it('reemplaza una sugerencia anterior al elegir otro medicamento', () => {
+    responderCatalogo();
+
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({ default_frequency: 'Cada 8 horas' });
+    interno<(o: unknown) => void>('onMedicamentoElegido')(AMOXICILINA);
+    responderFicha({ default_frequency: 'Cada 12 horas' }, AMOXICILINA);
+
+    expect(señal<string>('frecuencia')()).toBe('Cada 12 horas');
+  });
+
+  it('ignora la ficha que llega tarde para una selección anterior', () => {
+    responderCatalogo();
+
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    interno<(o: unknown) => void>('onMedicamentoElegido')(AMOXICILINA);
+    responderFicha({}, AMOXICILINA);
+    responderFicha({ default_frequency: 'Cada 8 horas' });
+
+    expect(señal<string>('frecuencia')()).toBe('');
+  });
+
+  it('conserva una edición manual posterior a una sugerencia al cambiar de medicamento', () => {
+    responderCatalogo();
+
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({ default_frequency: 'Cada 8 horas' });
+    interno<(valor: string) => void>('fijarFrecuenciaManual')('Sólo antes de dormir');
+    interno<(o: unknown) => void>('onMedicamentoElegido')(AMOXICILINA);
+    responderFicha({ default_frequency: 'Cada 12 horas' }, AMOXICILINA);
+
+    expect(señal<string>('frecuencia')()).toBe('Sólo antes de dormir');
   });
 
   it('los valores del catálogo completan la dosis, pero el texto libre manda', async () => {

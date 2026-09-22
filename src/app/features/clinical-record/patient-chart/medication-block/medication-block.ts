@@ -13,7 +13,10 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
 import { SystemContextClient } from '../../../../core/data-access/system-context/system-context.client';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
-import { listaDeTextos } from '../../../../core/data-access/terminology/terminology.types';
+import {
+  listaDeTextos,
+  valorDeTexto,
+} from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -94,6 +97,7 @@ const TOPE_DE_LA_BUSQUEDA = 20;
  */
 const PROPIEDAD_PRESENTACIONES = 'dose_forms';
 const PROPIEDAD_CONCENTRACIONES = 'strengths';
+const PROPIEDAD_FRECUENCIA_POR_DEFECTO = 'default_frequency';
 
 /**
  * Un diagnóstico de la persona, ya traducido, para elegirlo como indicación.
@@ -343,6 +347,8 @@ export class MedicationBlock {
   protected readonly medicamento = signal<string | null>(null);
   protected readonly dosis = signal('');
   protected readonly frecuencia = signal('');
+  /** El concepto cuya ficha escribió la sugerencia vigente, nunca texto manual. */
+  private readonly frecuenciaSugeridaPara = signal<string | null>(null);
   /** El control numérico devuelve texto: se convierte al enviar, no al teclear. */
   protected readonly cantidad = signal<string | number | null>('');
   protected readonly via = signal<string | null>(null);
@@ -685,18 +691,36 @@ export class MedicationBlock {
     this.medicamentoElegido.set(opcion);
     this.limpiarPosologia();
 
+    // Una sugerencia pertenece al medicamento que la publicó. Al cambiar de
+    // selección se descarta; el texto manual no marca este origen y se conserva.
+    if (this.frecuenciaSugeridaPara() !== null) {
+      this.frecuencia.set('');
+      this.frecuenciaSugeridaPara.set(null);
+    }
+
     if (opcion === null) {
       return;
     }
 
     this.terminology.readConceptDetail(opcion.value).subscribe({
       next: (ficha) => {
+        if (this.medicamentoElegido()?.value !== opcion.value) {
+          return;
+        }
         this.presentaciones.set(
           aOpciones(listaDeTextos(ficha.properties, PROPIEDAD_PRESENTACIONES)),
         );
         this.concentraciones.set(
           aOpciones(listaDeTextos(ficha.properties, PROPIEDAD_CONCENTRACIONES)),
         );
+        const frecuenciaPorDefecto = valorDeTexto(
+          ficha.properties,
+          PROPIEDAD_FRECUENCIA_POR_DEFECTO,
+        );
+        if (this.frecuencia().trim() === '' && frecuenciaPorDefecto !== undefined) {
+          this.frecuencia.set(frecuenciaPorDefecto);
+          this.frecuenciaSugeridaPara.set(opcion.value);
+        }
       },
       // Un medicamento sin ficha legible sigue siendo prescribible: se cae al
       // campo de dosis en texto, que es como funcionaba esta pantalla entera
@@ -766,8 +790,15 @@ export class MedicationBlock {
 
   /** Fija una pauta rápida de frecuencia y recalcula la cantidad sugerida. */
   protected fijarFrecuenciaRapida(pauta: string): void {
+    this.frecuenciaSugeridaPara.set(null);
     this.frecuencia.set(pauta);
     this.sugerirCantidad();
+  }
+
+  /** Una edición del médico reemplaza cualquier sugerencia del catálogo. */
+  protected fijarFrecuenciaManual(valor: string | number | null): void {
+    this.frecuenciaSugeridaPara.set(null);
+    this.frecuencia.set(valor === null ? '' : String(valor));
   }
 
   protected elegirDuracionRapida(valor: number | 'continuo' | null): void {
@@ -1051,6 +1082,7 @@ export class MedicationBlock {
     this.limpiarPosologia();
     this.dosis.set('');
     this.frecuencia.set('');
+    this.frecuenciaSugeridaPara.set(null);
     this.cantidad.set('');
     this.via.set(null);
     this.validFrom.set(new Date());
