@@ -209,7 +209,8 @@
         <app-input
           type="text"
           autocomplete="off"
-          [(value)]="frecuencia"
+          [value]="frecuencia()"
+          (valueChange)="fijarFrecuenciaManual($event)"
           placeholder="cada 8 horas"
           testId="receta-frecuencia"
         />

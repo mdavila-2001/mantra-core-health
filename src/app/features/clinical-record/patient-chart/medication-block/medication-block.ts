@@ -347,6 +347,8 @@ export class MedicationBlock {
   protected readonly medicamento = signal<string | null>(null);
   protected readonly dosis = signal('');
   protected readonly frecuencia = signal('');
+  /** El concepto cuya ficha escribió la sugerencia vigente, nunca texto manual. */
+  private readonly frecuenciaSugeridaPara = signal<string | null>(null);
   /** El control numérico devuelve texto: se convierte al enviar, no al teclear. */
   protected readonly cantidad = signal<string | number | null>('');
   protected readonly via = signal<string | null>(null);
@@ -689,12 +691,22 @@ export class MedicationBlock {
     this.medicamentoElegido.set(opcion);
     this.limpiarPosologia();
 
+    // Una sugerencia pertenece al medicamento que la publicó. Al cambiar de
+    // selección se descarta; el texto manual no marca este origen y se conserva.
+    if (this.frecuenciaSugeridaPara() !== null) {
+      this.frecuencia.set('');
+      this.frecuenciaSugeridaPara.set(null);
+    }
+
     if (opcion === null) {
       return;
     }
 
     this.terminology.readConceptDetail(opcion.value).subscribe({
       next: (ficha) => {
+        if (this.medicamentoElegido()?.value !== opcion.value) {
+          return;
+        }
         this.presentaciones.set(
           aOpciones(listaDeTextos(ficha.properties, PROPIEDAD_PRESENTACIONES)),
         );
@@ -707,6 +719,7 @@ export class MedicationBlock {
         );
         if (this.frecuencia().trim() === '' && frecuenciaPorDefecto !== undefined) {
           this.frecuencia.set(frecuenciaPorDefecto);
+          this.frecuenciaSugeridaPara.set(opcion.value);
         }
       },
       // Un medicamento sin ficha legible sigue siendo prescribible: se cae al
@@ -777,8 +790,15 @@ export class MedicationBlock {
 
   /** Fija una pauta rápida de frecuencia y recalcula la cantidad sugerida. */
   protected fijarFrecuenciaRapida(pauta: string): void {
+    this.frecuenciaSugeridaPara.set(null);
     this.frecuencia.set(pauta);
     this.sugerirCantidad();
+  }
+
+  /** Una edición del médico reemplaza cualquier sugerencia del catálogo. */
+  protected fijarFrecuenciaManual(valor: string | number | null): void {
+    this.frecuenciaSugeridaPara.set(null);
+    this.frecuencia.set(valor === null ? '' : String(valor));
   }
 
   protected elegirDuracionRapida(valor: number | 'continuo' | null): void {
@@ -1062,6 +1082,7 @@ export class MedicationBlock {
     this.limpiarPosologia();
     this.dosis.set('');
     this.frecuencia.set('');
+    this.frecuenciaSugeridaPara.set(null);
     this.cantidad.set('');
     this.via.set(null);
     this.validFrom.set(new Date());

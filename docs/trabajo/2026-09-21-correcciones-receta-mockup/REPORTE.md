@@ -9,7 +9,7 @@
 | ID | Qué se logró | Evidencia | Resultado |
 |---|---|---|---|
 | H1–H4, H6 | El PR #557 simplificó la receta, mantuvo sus contratos y retiró caminos no clínicos | merge `01e41bc5` | Integrado en `mockup` |
-| H5.S1.M2 | La frecuencia se completa sólo desde `default_frequency` de la ficha terminológica y no pisa texto manual | `corepack yarn test --include=src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts --watch=false` | 52/52 en verde |
+| H5.S1.M2 | La frecuencia se completa sólo desde `default_frequency` de la ficha terminológica, descarta respuestas tardías y no pisa texto manual | `corepack yarn test --include=src/app/features/clinical-record/patient-chart/medication-block/medication-block.spec.ts --watch=false` | 55/55 en verde |
 
 ## A medias
 
@@ -23,7 +23,7 @@ Ninguna dentro de este carril. La fuente de frecuencia conserva su procedencia s
 
 ```text
 MedicationBlock
-52 pruebas en verde
+55 pruebas en verde
 ```
 
 ## No cubierto
