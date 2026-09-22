@@ -179,6 +179,13 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/content-packs/content-packs').then((m) => m.ContentPacks),
   'administration/moderation': () =>
     import('./features/admin/moderation/moderation').then((m) => m.Moderation),
+  'administration/data-catalog': () =>
+    import('./features/admin/data-catalog/data-catalog').then((m) => m.DataCatalog),
+  'administration/web-analytics': () =>
+    import('./features/admin/web-analytics/web-analytics').then((m) => m.WebAnalytics),
+  'administration/qa-lab': () => import('./features/admin/qa-lab/qa-lab').then((m) => m.QaLab),
+  'administration/operations': () =>
+    import('./features/admin/operations/operations').then((m) => m.Operations),
   tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
   'my-account': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
   'my-account/dependents': () =>
@@ -765,6 +772,27 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/getting-started/getting-started')
         .then((m) => m.GettingStarted)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Detalle de un plan de QA. Hereda los roles de `administration/qa-lab`.
+    path: 'administration/qa-lab/plans/:planId',
+    title: `${APP_TITLE} - Plan de QA`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/qa-lab/plan-detail/qa-plan-detail')
+        .then((m) => m.QaPlanDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Ficha de un objeto del catálogo. Hereda los roles de la sección
+    // `administration/data-catalog` (prefijo más largo).
+    path: 'administration/data-catalog/:objectId',
+    title: `${APP_TITLE} - Ficha del catálogo`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/data-catalog/object-detail/catalog-object-detail')
+        .then((m) => m.CatalogObjectDetail)
         .catch(() => chunkFallido()),
   },
   {

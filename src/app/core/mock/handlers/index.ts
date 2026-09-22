@@ -22,6 +22,7 @@ import { registrarPortabilidadDeSeguros } from './insurance-portability.handlers
 import { registrarSeguros } from './insurance.handlers';
 import { registrarTerminologia } from './terminology.handlers';
 import { registrarVarios } from './misc.handlers';
+import { registrarPortalAdministrativo } from './admin-portal.handlers';
 
 /**
  * Arma la tabla de rutas del backend simulado. Cada dominio registra las
@@ -53,5 +54,6 @@ export function crearRouterSimulado(): MockRouter {
   registrarProcedimientos(router);
   registrarLaboratorioFarmaceutico(router);
   registrarVarios(router);
+  registrarPortalAdministrativo(router);
   return router;
 }
