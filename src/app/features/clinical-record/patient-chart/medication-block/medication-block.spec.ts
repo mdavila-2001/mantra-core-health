@@ -820,6 +820,22 @@ describe('MedicationBlock', () => {
     expect(señal<string>('frecuencia')()).toBe('');
   });
 
+  it('ignora el error tardío de una ficha anterior', () => {
+    responderCatalogo();
+
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    interno<(o: unknown) => void>('onMedicamentoElegido')(AMOXICILINA);
+    responderFicha({ strengths: ['500 mg'] }, AMOXICILINA);
+    http.expectOne(`/terminology/concepts/${VANCOMICINA.value}`).flush(
+      { code: 'NOT_FOUND', message: 'Concepto no encontrado', timestamp: '', path: '' },
+      { status: 404, statusText: 'Not Found' },
+    );
+
+    expect(interno<() => readonly { value: string }[]>('concentraciones')()).toEqual([
+      { value: '500 mg', label: '500 mg' },
+    ]);
+  });
+
   it('conserva una edición manual posterior a una sugerencia al cambiar de medicamento', () => {
     responderCatalogo();
 

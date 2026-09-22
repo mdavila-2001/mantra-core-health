@@ -725,7 +725,11 @@ export class MedicationBlock {
       // Un medicamento sin ficha legible sigue siendo prescribible: se cae al
       // campo de dosis en texto, que es como funcionaba esta pantalla entera
       // antes de que el catálogo publicara presentaciones.
-      error: () => this.limpiarPosologia(),
+      error: () => {
+        if (this.medicamentoElegido()?.value === opcion.value) {
+          this.limpiarPosologia();
+        }
+      },
     });
   }
 
