@@ -757,6 +757,43 @@ describe('MedicationBlock', () => {
     expect(interno<() => boolean>('hayPosologia')()).toBe(true);
   });
 
+  it('completa la frecuencia manual con el valor publicado por el medicamento', () => {
+    responderCatalogo();
+
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({ default_frequency: 'Cada 8 horas' });
+
+    expect(señal<string>('frecuencia')()).toBe('Cada 8 horas');
+  });
+
+  it('conserva la frecuencia escrita al elegir un medicamento con valor por defecto', () => {
+    responderCatalogo();
+    señal<string>('frecuencia').set('Sólo antes de dormir');
+
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({ default_frequency: 'Cada 8 horas' });
+
+    expect(señal<string>('frecuencia')()).toBe('Sólo antes de dormir');
+  });
+
+  it('deja la frecuencia manual vacía si el medicamento no publica una por defecto', () => {
+    responderCatalogo();
+
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({ strengths: ['500 mg'] });
+
+    expect(señal<string>('frecuencia')()).toBe('');
+  });
+
+  it('ignora una frecuencia por defecto malformada', () => {
+    responderCatalogo();
+
+    interno<(o: unknown) => void>('onMedicamentoElegido')(VANCOMICINA);
+    responderFicha({ default_frequency: 8 });
+
+    expect(señal<string>('frecuencia')()).toBe('');
+  });
+
   it('los valores del catálogo completan la dosis, pero el texto libre manda', async () => {
     responderCatalogo();
 

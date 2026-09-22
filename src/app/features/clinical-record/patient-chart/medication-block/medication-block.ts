@@ -13,7 +13,10 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
 import { SystemContextClient } from '../../../../core/data-access/system-context/system-context.client';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
-import { listaDeTextos } from '../../../../core/data-access/terminology/terminology.types';
+import {
+  listaDeTextos,
+  valorDeTexto,
+} from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -94,6 +97,7 @@ const TOPE_DE_LA_BUSQUEDA = 20;
  */
 const PROPIEDAD_PRESENTACIONES = 'dose_forms';
 const PROPIEDAD_CONCENTRACIONES = 'strengths';
+const PROPIEDAD_FRECUENCIA_POR_DEFECTO = 'default_frequency';
 
 /**
  * Un diagnóstico de la persona, ya traducido, para elegirlo como indicación.
@@ -697,6 +701,13 @@ export class MedicationBlock {
         this.concentraciones.set(
           aOpciones(listaDeTextos(ficha.properties, PROPIEDAD_CONCENTRACIONES)),
         );
+        const frecuenciaPorDefecto = valorDeTexto(
+          ficha.properties,
+          PROPIEDAD_FRECUENCIA_POR_DEFECTO,
+        );
+        if (this.frecuencia().trim() === '' && frecuenciaPorDefecto !== undefined) {
+          this.frecuencia.set(frecuenciaPorDefecto);
+        }
       },
       // Un medicamento sin ficha legible sigue siendo prescribible: se cae al
       // campo de dosis en texto, que es como funcionaba esta pantalla entera

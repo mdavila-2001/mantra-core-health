@@ -9,7 +9,7 @@
 
 - IN: `medication-block/**`, y retirar `prescription-favorites/**` sólo si el scan confirma cero consumidores de producción.
 - OUT: `consultation/**`, `core/mock/**`, `shared/**`, API y datos clínicos de frecuencia inventados.
-- Ambigüedades: C-20 depende de que Ender publique y documente una clave de propiedad. Se mantiene la frecuencia manual hasta entonces.
+- Ambigüedades: C-20 dependía de que Ender publique y documente una clave de propiedad. #559 publicó `default_frequency`; la receta la consume sin inventar valores y conserva el texto manual.
 
 ## H1 — Línea de base
 **CA:** Dado el worktree, cuando se inicia el lote, entonces existe un SHA, baseline y evidencia de la superficie previa.  
@@ -30,7 +30,7 @@
 **Estado:** HECHO
 
 ### H2.S1 — UI y dependencias
-**CA:** Los tres caminos desaparecen sin alterar firma ni emisión. **DoD:** test de DOM y red. **Estado:** TODO
+**CA:** Los tres caminos desaparecen sin alterar firma ni emisión. **DoD:** test de DOM y red. **Estado:** HECHO
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
@@ -44,7 +44,7 @@
 **Estado:** HECHO
 
 ### H3.S1 — Contrato de indicación
-**CA:** El cuerpo conserva diagnóstico o motivo cuando existen y omite ambos cuando no. **DoD:** spec dirigido. **Estado:** TODO
+**CA:** El cuerpo conserva diagnóstico o motivo cuando existen y omite ambos cuando no. **DoD:** spec dirigido. **Estado:** HECHO
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
@@ -57,7 +57,7 @@
 **Estado:** HECHO
 
 ### H4.S1 — Forma de la receta
-**CA:** `doseText` conserva literalmente el valor escrito. **DoD:** inspección de request. **Estado:** TODO
+**CA:** `doseText` conserva literalmente el valor escrito. **DoD:** inspección de request. **Estado:** HECHO
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
@@ -67,7 +67,7 @@
 ## H5 — Frecuencia de catálogo
 **CA:** Una propiedad publicada completa la frecuencia; sin contrato publicado la entrada manual sigue funcionando.  
 **DoD:** tres niveles (válido, ausente, malformado) o bloqueo con evidencia.  
-**Estado:** BLOQUEADO
+**Estado:** HECHO
 
 ### H5.S1 — Contrato externo
 **CA:** La clave proviene de Ender, no se infiere. **DoD:** búsqueda y registro. **Estado:** HECHO
@@ -75,7 +75,7 @@
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
 | H5.S1.M1 | Localizar clave publicada | Existe propiedad documentada o bloqueo exacto | `rg` en repos y prompt | HECHO |
-| H5.S1.M2 | Aplicar sólo contrato publicado | Sin clave no hay código especulativo | diff y reporte | BLOQUEADO |
+| H5.S1.M2 | Aplicar sólo contrato publicado | La frecuencia se completa desde `default_frequency` y respeta el texto manual | spec dirigido y reporte | HECHO |
 
 ## H6 — Selects, acciones y cierre
 **CA:** Las opciones finitas usan selects y el cambio termina con gates, navegador y reporte.  
@@ -83,7 +83,7 @@
 **Estado:** HECHO
 
 ### H6.S1 — Controles existentes
-**CA:** Frecuencia y duración eliminan chips de elección sin retirar texto manual. **DoD:** spec dirigido. **Estado:** TODO
+**CA:** Frecuencia y duración eliminan chips de elección sin retirar texto manual. **DoD:** spec dirigido. **Estado:** HECHO
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
@@ -105,4 +105,4 @@
 - `corepack yarn lint`, `corepack yarn typecheck` y `corepack yarn build`: en verde; el build conserva advertencias de presupuesto y componentes ajenos.
 - Chromium, mockup, cuenta Médica: `playwright/mockup-barrido.spec.ts --grep "Médica"` en verde (ficha clínica incluida, sin errores de consola ni peticiones fallidas). El servidor local se detuvo al finalizar.
 - Suite completa: 6.799/6.828 pruebas en verde; 29 fallos preexistentes y ajenos en registro profesional, contabilidad, resumen, perfil profesional y dashboard.
-- C-20 sigue **BLOQUEADO**: Ender no publicó una clave de frecuencia ni su formato en los repos consultados. La frecuencia permanece como texto manual y no se incorporó ninguna sugerencia o valor por medicamento.
+- C-20 quedó bloqueado en el corte original porque Ender todavía no había publicado una clave de frecuencia. `default_frequency` se publicó después en #559; la receta la consume desde la ficha de terminología sin inferir valores y conserva cualquier texto manual existente. La prueba dirigida actual da 49/49 en verde.
