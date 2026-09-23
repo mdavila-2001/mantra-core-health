@@ -1,6 +1,5 @@
 import { HttpRequest } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { writeFileSync } from 'node:fs';
 
 import { mockBackendInterceptor } from './mock-backend.interceptor';
 import { buscarUsuario, emitirAccessToken } from './mock-session';
@@ -41,11 +40,6 @@ describe('latencia observada — GET /scheduling/slots × 10', () => {
       `[H1.S2.M1] GET /scheduling/slots × 10 — min=${min.toFixed(1)}ms max=${max.toFixed(1)}ms ` +
       `avg=${avg.toFixed(1)}ms — valores=${tiempos.map((t) => t.toFixed(1)).join(',')}\n`;
     console.log(resumen);
-    try {
-      writeFileSync('docs/trabajo/2026-09-22-ender-simulador-cabecera/evidencia/antes/latencia-observada-raw.txt', resumen);
-    } catch {
-      /* si el cwd no es la raiz del repo, el resumen sigue en la consola */
-    }
 
     expect(tiempos).toHaveLength(10);
     expect(min).toBeGreaterThanOrEqual(0);

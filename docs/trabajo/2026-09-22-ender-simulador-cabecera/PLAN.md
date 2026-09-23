@@ -80,8 +80,8 @@ diff vacío y dos tablas medidas.
   nunca llama a `next(request)` para rutas simuladas, así que no hay `XMLHttpRequest`/`fetch` real que
   Chrome DevTools Protocol vea; se corrigió el método, no sólo se reintentó. H1.S2.M2 `HECHO` con
   medición real: 791 en el directorio, 14 con recurso, 14 con cupos ±14 días, 13 registrados con 0
-  agenda (12 con especialidad mapeada, 1 sin ninguna — `JOSE LUIS DAGA JORDAN`, fila 20 de
-  `USUARIO_MEDICOS_1.md`, ese es el caso límite real de H3.S1.M3). H1.S2.M4: 3 de 4 capturas — directorio
+  agenda (12 con especialidad mapeada, 1 sin ninguna — persona real proveniente de la planilla — REDACTADA;
+  ese es el caso límite real de H3.S1.M3). H1.S2.M4: 3 de 4 capturas — directorio
   del paciente (escritorio) y la ficha de un registrado sin agenda (escritorio y móvil, **miradas**:
   confirman el estado «Todavía no publicó horarios» y, de paso, que Tutoriales/Chats/Cotizaciones siguen
   en el menú lateral — evidencia «antes» real para H4).
