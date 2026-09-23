@@ -13,6 +13,12 @@
 - Se cerró también la tarjeta de especialidad: cuatro toques producen una sola
   lista, anuncian `Abriendo…`, exponen `aria-busy`/`aria-disabled` y preservan
   Ctrl/Cmd/Shift/Alt-clic como enlace nativo. Unit: 29/29. Playwright: PASS.
+- La tarjeta de profesional ahora pinta su acción existente `Revisar
+  disponibilidad`; la prueba roja fijó su ausencia y la verde comprueba que
+  dos toques hacen una sola navegación al ancla `#horarios`.
+- El recorrido autenticado Directorio → especialidad → profesional →
+  disponibilidad llegó a un cupo en **1.468 ms** locales. La captura y la
+  muestra de red están bajo `evidencia/`.
 - Gates focales: Cotizaciones 3/3, mock backend 21/21 y barrido serial de
   rutas 5/5. Typecheck terminó sin diagnósticos.
 - El inventario propio encuentra cero `iconOnly` y cero botones propios sin
@@ -21,7 +27,9 @@
 ## A medias
 
 - La comparación histórica completa hasta cupos no se declara terminada: hay
-  muestra local actual, pero no un baseline equivalente antes del cambio.
+  muestra local actual, pero no un baseline equivalente antes del cambio. La
+  maqueta intercepta las lecturas de negocio en memoria, por lo que la Red del
+  navegador sólo prueba módulos descargados, no una tabla HTTP por endpoint.
 - El lint global permanece en 243 errores de `OnPush` preexistentes. No se
   atribuye al carril ni se disimula como verde.
 - El barrido genérico de clics fue detenido: explora cuatro cuentas, todas las

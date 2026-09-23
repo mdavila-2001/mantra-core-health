@@ -24,8 +24,9 @@ convertir su resumen narrativo en IDs inventados.
 | H6.S1.M1 | HECHO | Capturas finales miradas, `evidencia/capturas.md`. |
 | H6.S1.M2 | HECHO | Playwright cubre Enter en Directorio, búsqueda, vertical y orden en Cotizaciones. |
 | H2.S1.M3 | HECHO | La portada bloquea activaciones repetidas; unit 29/29 y Playwright comprueban cuatro toques → `pushState: 1`, con captura. |
+| H2.S1.M2 | HECHO | `result-card` renderiza `Revisar disponibilidad` con el mismo candado de navegación única; prueba roja/verde y recorrido hasta `#horarios`, con captura. |
 
-Resultado recalculable actual: **20 legado + 8 no solapadas = 28/51 HECHO**.
+Resultado recalculable actual: **20 legado + 9 no solapadas = 29/51 HECHO**.
 
 ## Decisión de producto
 

@@ -1,4 +1,4 @@
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { expect, test } from '@playwright/test';
@@ -180,5 +180,36 @@ test.describe('Cierre local · reserva y Cotizaciones', () => {
     const directorioMs = await medir('/directory', 'Directorio de médicos');
     const cotizacionesMs = await medir('/my-account/cotizaciones', 'Cotizaciones');
     console.info(JSON.stringify({ directorioMs, cotizacionesMs }));
+  });
+
+  test('mide el recorrido del directorio hasta disponibilidad', async ({ page }) => {
+    test.setTimeout(180_000);
+    const recursos: string[] = [];
+    page.on('request', (solicitud) => recursos.push(new URL(solicitud.url()).pathname));
+
+    await entrar(page, PACIENTE);
+    await irA(page, '/directory');
+    await estable(page);
+    await page.locator('[data-testid="portada-especialidades"] .rejilla__tarjeta').first().click();
+    const disponibilidad = page.getByRole('link', { name: 'Revisar disponibilidad' }).first();
+    await expect(disponibilidad).toBeVisible();
+    mkdirSync(SALIDA, { recursive: true });
+    await page.screenshot({ path: join(SALIDA, 'directorio-accion-disponibilidad.png'), fullPage: true });
+
+    recursos.length = 0;
+    const inicio = performance.now();
+    await disponibilidad.click();
+    const horarios = page.locator('app-practitioner-availability');
+    await expect(horarios).toBeVisible();
+    await expect(horarios.getByRole('button').first()).toBeVisible();
+
+    const muestra = {
+      ruta: 'directorio-especialidad-profesional-disponibilidad',
+      ms: Math.round(performance.now() - inicio),
+      recursos: [...new Set(recursos)].sort(),
+    };
+    mkdirSync(SALIDA, { recursive: true });
+    writeFileSync(join(SALIDA, '..', 'medicion-flujo-reserva.json'), `${JSON.stringify(muestra, null, 2)}\n`);
+    console.info(JSON.stringify(muestra));
   });
 });

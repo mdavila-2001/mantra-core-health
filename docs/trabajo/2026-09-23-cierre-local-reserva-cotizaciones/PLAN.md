@@ -61,3 +61,19 @@ autenticación de la maqueta esté disponible.
 |---|---|---|---|
 | H4.S1.M1 | Fijar y corregir la navegación única de especialidades | `practitioners-directory.spec.ts` verde | HECHO |
 | H4.S1.M2 | Verificar cuatro toques en navegador autenticado | Playwright contra la maqueta | HECHO |
+
+## H5 — Medición reproducible hasta disponibilidad
+
+**CA:** el recorrido autenticado Directorio → especialidad → profesional →
+disponibilidad deja una duración y las rutas de red realmente vistas, sin
+deducirlas del código.
+**DoD:** Playwright local espera los horarios y escribe la muestra en la
+evidencia.
+**Estado:** HECHO
+
+| ID | Microtarea | DoD | Estado |
+|---|---|---|---|
+| H5.S1.M1 | Medir el recorrido hasta que aparecen cupos o el estado vacío | spec Playwright y `evidencia/medicion-flujo-reserva.md` | HECHO |
+
+> **AVANCE LOCAL: 11 / 11 — 100 %.**
+> **CARRIL ORIGINAL: 29 / 51 HECHO; 6 DESCARTADO por decisión de producto.**
