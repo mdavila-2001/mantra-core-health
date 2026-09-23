@@ -5,7 +5,6 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/auth/auth.service';
-import { NavigationService } from '../../../core/navigation/navigation.service';
 import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
 import type { ClinicalSummary } from '../../../core/data-access/clinical/clinical.types';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
@@ -15,35 +14,11 @@ import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
-import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
-import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { MIS_TURNOS_ROUTE } from '../../account/appointments/appointments.routes';
 import { MI_HISTORIA_ROUTE } from '../../account/medical-record/medical-record.routes';
 import { SymptomCheck } from '../../symptom-check/symptom-check';
-
-/** Un lugar al que el paciente puede ir desde su panel. */
-interface AccesoDelPaciente {
-  readonly ruta: string;
-  readonly etiqueta: string;
-  readonly icono: NavIconName;
-  /** Qué hace, para el globo y para el nombre accesible. */
-  readonly resumen: string;
-}
-
-/**
- * Las secciones del menú que además son del paciente.
- *
- * Allowlist y no denylist: una sección nueva del producto no aparece sola en el
- * panel de quien viene a atenderse —aparecería la de facturación el día que se
- * habilite—, y sumarla es una decisión, no un efecto.
- */
-const SECCIONES_DEL_PACIENTE: readonly string[] = [
-  'directory',
-  'laboratory-directory',
-  'messaging',
-];
 
 /** Cuántas filas se piden de la historia: acá sólo se muestra lo último. */
 const TOPE = 20;
@@ -104,19 +79,18 @@ const SIN_AGENDA: DondeYConQuien = { profesional: '', lugar: '' };
  * Los avisos (P1) y las órdenes de laboratorio (J1) tienen su lugar reservado y
  * dicho en pantalla. Se prefiere decir «acá va a aparecer» a no mostrar nada:
  * una tarjeta ausente no se distingue de una función que no existe.
+ *
+ * ## Lo que se quitó
+ *
+ * La grilla de accesos «Ir a lo tuyo» (F-21), a pedido del doctor (P-03,
+ * 22/09/2026: «sacar el panel de abajo»; Pablo confirmó que era esa grilla).
+ * Los destinos no se perdieron: turnos e historia se alcanzan desde las
+ * tarjetas del resumen, y el resto —guía, laboratorios, mensajes, datos—
+ * desde el menú, que es el mismo origen del que la grilla los copiaba.
  */
 @Component({
   selector: 'app-patient-home',
-  imports: [
-    AppButtonLink,
-    Card,
-    DatePipe,
-    NavIcon,
-    PageHeader,
-    RouterLink,
-    SymptomCheck,
-    Tooltip,
-  ],
+  imports: [AppButtonLink, Card, DatePipe, NavIcon, PageHeader, RouterLink, SymptomCheck],
   templateUrl: './patient-home.html',
   styleUrl: './patient-home.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -126,66 +100,8 @@ export class PatientHome {
   private readonly scheduling = inject(SchedulingClient);
   private readonly clinical = inject(ClinicalClient);
 
-  private readonly navigation = inject(NavigationService);
-
   protected readonly misTurnos = MIS_TURNOS_ROUTE;
   protected readonly miHistoria = MI_HISTORIA_ROUTE;
-
-  /**
-   * Los lugares a los que va un paciente, como grilla de tarjetas con ícono.
-   *
-   * **Por qué existe así (F-21).** El panel anterior tenía esta grilla y la
-   * gente ya la conocía; «Mi salud» los dejó como una fila de texto abajo y se
-   * sintió como una pérdida. No se vuelve al panel viejo: se recupera su forma
-   * —el mismo ícono, la misma tarjeta— para los destinos del paciente.
-   *
-   * Son de dos orígenes y por eso se arman acá:
-   *
-   * - **Lo suyo** (turnos, historia, datos) no son secciones del menú: son
-   *   pantallas de su cuenta, y ningún registro de navegación las declara.
-   * - **Las secciones** (guía, laboratorios, mensajes) sí, y se toman de
-   *   `NavigationService` —el mismo origen que el menú— en vez de copiarlas:
-   *   si mañana una deja de estar disponible para un paciente, desaparece de
-   *   los dos lados a la vez. Se filtran por ruta porque el panel del paciente
-   *   es una selección curada, no el menú entero.
-   */
-  protected readonly accesos = computed<readonly AccesoDelPaciente[]>(() => {
-    const propios: AccesoDelPaciente[] = [
-      {
-        ruta: MIS_TURNOS_ROUTE,
-        etiqueta: 'Mis citas',
-        icono: 'calendar',
-        resumen: 'Los turnos que pediste y los horarios que podés pedir.',
-      },
-      {
-        ruta: MI_HISTORIA_ROUTE,
-        etiqueta: 'Mi historia',
-        icono: 'results',
-        resumen: 'Tus atenciones y tus recetas, para ver y descargar.',
-      },
-    ];
-
-    const secciones = this.navigation
-      .visibleSections()
-      .filter((seccion) => SECCIONES_DEL_PACIENTE.includes(seccion.path))
-      .map((seccion) => ({
-        ruta: `/${seccion.path}`,
-        etiqueta: seccion.label,
-        icono: seccion.icon,
-        resumen: seccion.summary,
-      }));
-
-    return [
-      ...propios,
-      ...secciones,
-      {
-        ruta: '/my-account',
-        etiqueta: 'Mis datos',
-        icono: 'settings' as NavIconName,
-        resumen: 'Tu información personal y la de contacto.',
-      },
-    ];
-  });
 
   /** El nombre con el que saludar. Vacío si el token no lo trae. */
   protected readonly nombre = computed(() => this.auth.displayName() ?? '');

@@ -187,12 +187,14 @@ describe('security-headers', () => {
       expect(securityHeaders()['Referrer-Policy']).toBe('strict-origin-when-cross-origin');
     });
 
-    it('niega cámara y micrófono; la ubicación queda solo para el propio origen', () => {
+    it('niega la cámara; micrófono y ubicación quedan solo para el propio origen', () => {
       // «Dónde comprar mi receta» pide la posición con permiso del navegador
-      // para ordenar sucursales por cercanía; `geolocation=()` la apagaba para
-      // toda la aplicación. `(self)` nunca la concede a un iframe de terceros.
+      // para ordenar sucursales por cercanía, y el dictado del chequeo de
+      // síntomas y la nota de voz piden el micrófono igual; `()` los apagaba
+      // para toda la aplicación aunque la persona los concediera. `(self)`
+      // nunca los concede a un iframe de terceros.
       expect(securityHeaders()['Permissions-Policy']).toBe(
-        'camera=(), microphone=(), geolocation=(self)',
+        'camera=(), microphone=(self), geolocation=(self)',
       );
     });
   });

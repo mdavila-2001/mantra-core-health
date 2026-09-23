@@ -13,7 +13,7 @@ respuestas, y la política se arma en `src/server/security-headers.ts`.
 | `X-Content-Type-Options` | ✅ `nosniff` |
 | `Referrer-Policy` | ✅ `strict-origin-when-cross-origin` |
 | `X-Frame-Options` | ✅ `DENY`, más `frame-ancestors 'none'` en la CSP |
-| `Permissions-Policy` | ✅ `camera=(), microphone=(), geolocation=(self)` — «dónde comprar mi receta» pide la posición con permiso del navegador |
+| `Permissions-Policy` | ✅ `camera=(), microphone=(self), geolocation=(self)` — «dónde comprar mi receta» pide la posición, y el dictado de síntomas y la nota de voz piden el micrófono, siempre con permiso del navegador |
 | `Strict-Transport-Security` | ✅ `max-age=63072000; includeSubDomains` |
 
 ```bash
