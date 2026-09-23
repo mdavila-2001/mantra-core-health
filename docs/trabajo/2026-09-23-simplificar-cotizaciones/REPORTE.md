@@ -37,8 +37,8 @@ $ corepack yarn typecheck
 exit 0
 
 $ corepack yarn test --watch=false
-Test Files  2 failed | 573 passed (575)
-Tests  3 failed | 7170 passed (7173)
+Test Files  1 failed | 574 passed (575)
+Tests  1 failed | 7172 passed (7173)
 ```
 
 ## No cubierto
@@ -47,7 +47,8 @@ Tests  3 failed | 7170 passed (7173)
 
 ## Desvíos del plan
 
-- La suite completa tiene tres rojos fuera de los archivos del cambio: dos expectativas de `shell-layout.spec.ts` no incluyen la ruta de Cotizaciones ya existente y un timeout de accesibilidad en `insurance-analytics.spec.ts`.
+- La suite completa dejó un timeout de `register-practitioner.spec.ts` en un caso de backend simulado. Al ejecutarlo solo pasó 95/95; no se reprodujo aisladamente y queda pendiente de clasificación: esa evidencia no permite atribuirle una causa.
+- Los dos rojos anteriores de `shell-layout.spec.ts` se corrigieron actualizando su contrato para incluir la ruta ya existente de Cotizaciones en el bloque clínico. El spec pasó 54/54; `insurance-analytics.spec.ts` también pasó 10/10 aislado.
 
 ## Riesgos residuales
 
