@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, input, linkedSignal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationCancel, NavigationEnd, NavigationError, Router } from '@angular/router';
+import { filter } from 'rxjs';
 
 import type { SearchResultItem } from '../search-result/search-result.types';
 
@@ -35,15 +37,28 @@ import type { SearchResultItem } from '../search-result/search-result.types';
  */
 @Component({
   selector: 'li[app-result-card]',
-  imports: [RouterLink],
   templateUrl: './result-card.html',
   styleUrl: './result-card.css',
   host: { class: 'tarjeta-resultado' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ResultCard {
+  private readonly router = inject(Router);
+
   /** El resultado a pintar. Es el mismo tipo que consume la fila. */
   readonly resultado = input.required<SearchResultItem>();
+
+  /**
+   * Bloquea activaciones repetidas mientras el router resuelve el destino.
+   *
+   * Es opt-in porque esta molécula también pinta resultados que no representan
+   * una navegación costosa. El directorio de médicos la habilita; sus demás
+   * consumidores conservan exactamente su interacción anterior.
+   */
+  readonly preventDuplicateNavigation = input(false);
+
+  /** El enlace de esta tarjeta ya inició una navegación. */
+  protected readonly navegando = signal(false);
 
   /**
    * Cuántas líneas de contexto entran antes de recortar.
@@ -80,5 +95,35 @@ export class ResultCard {
 
   protected manejarErrorDeImagen(): void {
     this.imagenFallo.set(true);
+  }
+
+  constructor() {
+    this.router.events
+      .pipe(
+        filter(
+          (event): event is NavigationEnd | NavigationCancel | NavigationError =>
+            event instanceof NavigationEnd ||
+            event instanceof NavigationCancel ||
+            event instanceof NavigationError,
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.navegando.set(false));
+  }
+
+  /** Inicia una navegación una sola vez; clic y Enter llegan por este mismo evento. */
+  protected navegar(event: MouseEvent): void {
+    if (!this.preventDuplicateNavigation()) {
+      return;
+    }
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+      return;
+    }
+    event.preventDefault();
+    if (this.navegando()) {
+      return;
+    }
+    this.navegando.set(true);
+    void this.router.navigateByUrl(this.resultado().link);
   }
 }

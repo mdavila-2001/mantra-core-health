@@ -265,6 +265,36 @@ describe('PractitionerAvailability', () => {
     );
   });
 
+  it('mientras abre un cupo no permite iniciar otra reserva', async () => {
+    await montar();
+    let resolverNavegacion: ((value: boolean) => void) | undefined;
+    const navegar = vi.spyOn(router, 'navigate').mockReturnValue(
+      new Promise<boolean>((resolve) => {
+        resolverNavegacion = resolve;
+      }),
+    );
+    await responderRecursos([recurso()]);
+    await responderCupos([
+      cupo('slot-1', '2026-09-07T13:30:00.000Z'),
+      cupo('slot-2', '2026-09-07T14:00:00.000Z'),
+    ]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const botones = (fixture.nativeElement as HTMLElement).querySelectorAll(
+      '.disponibilidad__cupos button',
+    );
+    (botones[0] as HTMLButtonElement).click();
+    (botones[1] as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(navegar).toHaveBeenCalledTimes(1);
+    expect((botones[0] as HTMLButtonElement).getAttribute('aria-busy')).toBe('true');
+    expect((botones[1] as HTMLButtonElement).getAttribute('aria-disabled')).toBe('true');
+
+    resolverNavegacion?.(true);
+  });
+
   /** No se navega al pasado: esa semana siempre estaría vacía. */
   it('no deja retroceder antes de la semana actual', async () => {
     await montar();
