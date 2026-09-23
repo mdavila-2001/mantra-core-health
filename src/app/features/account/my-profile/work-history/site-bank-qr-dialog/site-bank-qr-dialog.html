@@ -52,19 +52,18 @@
       }
     } @else {
       <figure class="qr-sede__figura">
-        <!-- El lápiz va sobre la esquina de la imagen: es la acción de ESA
-             imagen, y en el pie se leería como una acción del modal. -->
+        <!-- El botón va sobre la esquina de la imagen: es la acción de ESA
+             imagen, y en el pie se leería como una acción del modal. Con texto
+             (ADR-0012 §1): «editar» no tiene un significado universal como
+             cerrar o quitar, así que no entra en la excepción del §3. -->
         <button
           app-button
           variant="neutral"
           size="sm"
           type="button"
-          iconOnly
           class="qr-sede__reemplazar"
           data-testid="sede-qr-reemplazar"
           [attr.aria-label]="'Cambiar el QR bancario de ' + site().name"
-          appTooltip="Cambiar el QR"
-          appTooltipPosition="left"
           (clicked)="reemplazar()"
         >
           <svg
@@ -80,6 +79,7 @@
             <path d="M4 20h4l10-10a2.83 2.83 0 0 0-4-4L4 16v4Z" />
             <path d="m13.5 6.5 4 4" />
           </svg>
+          Cambiar el QR
         </button>
 
         @if (bajandoImagen()) {

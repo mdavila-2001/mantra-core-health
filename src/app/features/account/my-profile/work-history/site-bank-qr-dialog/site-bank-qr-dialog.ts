@@ -16,7 +16,6 @@ import type { PracticeSite } from '../../../../../core/data-access/practice-site
 import { errorToViewState } from '../../../../../core/http/error-to-view-state';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { Spinner } from '../../../../../shared/components/atoms/spinner/spinner';
-import { Tooltip } from '../../../../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { FileInput, type RejectedFile } from '../../../../../shared/components/molecules/file-input/file-input';
 import { ToastService } from '../../../../../shared/components/molecules/toast/toast.service';
@@ -71,7 +70,7 @@ const RECHAZO = `La imagen tiene que ser JPG, PNG o WEBP y pesar menos de ${Math
  */
 @Component({
   selector: 'app-site-bank-qr-dialog',
-  imports: [Alert, AppButton, ContentDialog, FileInput, Spinner, Tooltip],
+  imports: [Alert, AppButton, ContentDialog, FileInput, Spinner],
   templateUrl: './site-bank-qr-dialog.html',
   styleUrl: './site-bank-qr-dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
