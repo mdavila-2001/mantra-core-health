@@ -195,62 +195,6 @@
   color: var(--text-secondary);
 }
 
-/* Los accesos, con la misma forma que tenían en el panel anterior: tarjeta
-   cuadrada con ícono arriba y rótulo abajo (F-21). Se copian los valores del
-   panel de la organización a propósito —es el mismo patrón visual, y dos
-   grillas de accesos que se ven distinto serían dos productos—. */
-.mi-salud__accesos {
-  margin-block-start: var(--sp-5);
-}
-
-.mi-salud__accesos-lista {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
-  gap: var(--sp-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.mi-salud__acceso {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: var(--sp-2);
-  height: 100%;
-  padding: var(--sp-4) var(--sp-3);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-sm);
-  text-align: center;
-  text-decoration: none;
-  color: inherit;
-}
-
-.mi-salud__acceso-icono {
-  display: inline-flex;
-  width: 2rem;
-  height: 2rem;
-  color: var(--text-secondary);
-}
-
-.mi-salud__acceso:hover .mi-salud__acceso-icono,
-.mi-salud__acceso:focus-visible .mi-salud__acceso-icono {
-  color: var(--text-primary);
-}
-
-/* El realce es un VELO (`--bg-hover`), no un color opaco: se compone con lo que
-   hay debajo y funciona igual en claro y en oscuro. */
-.mi-salud__acceso:hover,
-.mi-salud__acceso:focus-visible {
-  border-color: var(--border-strong);
-  background: var(--bg-hover);
-}
-
-.mi-salud__acceso:active {
-  background: var(--bg-active);
-}
-
 /* FT-03-R07 · con ancho, las dos referencias van lado a lado. Siguen sin
    competir con la banda de la cita: son la mitad de alto y no tienen titular. */
 @media (min-width: 48rem) {
