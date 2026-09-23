@@ -12,7 +12,7 @@
          nombre sigue siendo el texto del enlace: es lo que anuncia un lector
          de pantalla, y «tarjeta» no le dice a nadie a dónde va. -->
     <a
-      [routerLink]="r.link"
+      [attr.href]="r.link"
       [attr.aria-busy]="navegando() ? 'true' : null"
       [attr.aria-disabled]="navegando() ? 'true' : null"
       [style.pointer-events]="navegando() ? 'none' : null"

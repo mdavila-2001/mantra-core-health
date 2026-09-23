@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationCancel, NavigationEnd, NavigationError, Router, RouterLink } from '@angular/router';
+import { NavigationCancel, NavigationEnd, NavigationError, Router } from '@angular/router';
 import { filter } from 'rxjs';
 
 import type { SearchResultItem } from '../search-result/search-result.types';
@@ -37,7 +37,6 @@ import type { SearchResultItem } from '../search-result/search-result.types';
  */
 @Component({
   selector: 'li[app-result-card]',
-  imports: [RouterLink],
   templateUrl: './result-card.html',
   styleUrl: './result-card.css',
   host: { class: 'tarjeta-resultado' },
@@ -117,11 +116,14 @@ export class ResultCard {
     if (!this.preventDuplicateNavigation()) {
       return;
     }
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+      return;
+    }
+    event.preventDefault();
     if (this.navegando()) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
       return;
     }
     this.navegando.set(true);
+    void this.router.navigateByUrl(this.resultado().link);
   }
 }

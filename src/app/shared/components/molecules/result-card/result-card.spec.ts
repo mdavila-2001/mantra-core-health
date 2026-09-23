@@ -1,11 +1,12 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+import { vi } from 'vitest';
 
 import { ResultCard } from './result-card';
 import type { SearchResultItem } from '../search-result/search-result.types';
 
-@Component({ template: '' })
+@Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
 class RoutePlaceholder {}
 
 /**
@@ -28,6 +29,7 @@ class RoutePlaceholder {}
       ></li>
     </ul>
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 class Anfitrion {
   readonly dato = signal<SearchResultItem>({
@@ -42,6 +44,7 @@ class Anfitrion {
 describe('ResultCard', () => {
   let fixture: ComponentFixture<Anfitrion>;
   let anfitrion: Anfitrion;
+  let router: Router;
 
   const elemento = (selector: string): HTMLElement | null =>
     fixture.nativeElement.querySelector(selector);
@@ -54,6 +57,7 @@ describe('ResultCard', () => {
 
     fixture = TestBed.createComponent(Anfitrion);
     anfitrion = fixture.componentInstance;
+    router = TestBed.inject(Router);
     fixture.detectChanges();
   });
 
@@ -123,9 +127,10 @@ describe('ResultCard', () => {
     expect(img!.getAttribute('src')).toBe('/f/buena.jpg');
   });
 
-  it('cuando opta por navegación única anuncia carga e ignora una segunda activación', () => {
+  it('cuando opta por navegación única navega solo una vez ante dos activaciones', () => {
     anfitrion.impedirDuplicado.set(true);
     fixture.detectChanges();
+    const navigateByUrl = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
 
     const link = elemento('.tarjeta-resultado__titulo a') as HTMLAnchorElement;
     link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
@@ -134,9 +139,19 @@ describe('ResultCard', () => {
     expect(link.getAttribute('aria-busy')).toBe('true');
     expect(link.getAttribute('aria-disabled')).toBe('true');
 
-    const secondClick = new MouseEvent('click', { bubbles: true, cancelable: true });
-    link.dispatchEvent(secondClick);
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 
-    expect(secondClick.defaultPrevented).toBe(true);
+    expect(navigateByUrl).toHaveBeenCalledTimes(1);
+  });
+
+  it('cuando opta por navegación única no deja cargando un Ctrl-clic', () => {
+    anfitrion.impedirDuplicado.set(true);
+    fixture.detectChanges();
+
+    const link = elemento('.tarjeta-resultado__titulo a') as HTMLAnchorElement;
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, ctrlKey: true }));
+    fixture.detectChanges();
+
+    expect(link.getAttribute('aria-busy')).toBeNull();
   });
 });
