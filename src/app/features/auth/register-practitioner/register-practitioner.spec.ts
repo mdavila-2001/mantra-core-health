@@ -140,7 +140,6 @@ describe('RegisterPractitioner', () => {
         | 'professionalTitleUniversity'
         | 'professionalTitleCountry'
         | 'professionalTitleCity'
-        | 'specialtyPrimary'
         | 'profilePhotoBase64'
         | 'sexAtBirth',
         string | null
@@ -194,7 +193,6 @@ describe('RegisterPractitioner', () => {
           : (extra.sexAtBirth as BirthSexCode | null),
       licenseIssueDate: null,
       issuerAdministrativeAreaConceptId: 'dep-1',
-      specialtyPrimary: extra.specialtyPrimary ?? '',
       profilePhotoBase64: extra.profilePhotoBase64 ?? null,
     });
     // Las especialidades agregadas no son controles: viven en una señal, igual
@@ -333,7 +331,7 @@ describe('RegisterPractitioner', () => {
         'professionalTitleEducation',
         'professionalTitleFile',
       ]);
-      expect(camposDe('specialties')).toEqual(['specialtyPrimary', 'especialidadesExtra']);
+      expect(camposDe('specialties')).toEqual(['especialidadesExtra']);
       expect(camposDe('password')).toEqual(['password']);
       expect(camposDe('credential-files')).toEqual(['credentialAttachments']);
       expect(camposDe('academic-titles')).toEqual(['academicTitles']);
@@ -503,12 +501,19 @@ describe('RegisterPractitioner', () => {
       });
     }
 
+    /**
+     * Lo que se ofrece para elegir especialidad. Hasta el 23/09/2026 se leía
+     * del desplegable «Especialidad principal» de la página; ese desplegable
+     * se retiró (D-01) y ahora se elige sólo en las casillas, que llaman a
+     * este mismo método en la plantilla. Las pruebas de abajo siguen fijando
+     * el filtro por profesión y que no quede viejo si alguien lo memoriza.
+     */
     function opcionesDeLaPagina(): readonly { value: string; label: string }[] {
-      const pagina = component.paginasProfesional().find((p) => p.titulo === 'Tus especialidades');
-      return (pagina?.campos[0].options ?? []) as readonly {
-        value: string;
-        label: string;
-      }[];
+      return (
+        component as unknown as {
+          opcionesEspecialidadFiltradas: () => readonly { value: string; label: string }[];
+        }
+      ).opcionesEspecialidadFiltradas();
     }
 
     /**
@@ -654,24 +659,21 @@ describe('RegisterPractitioner', () => {
       expect(autoridad.value).toBe('Servicio Departamental de Salud (SEDES)');
     });
 
-    it('cambiar de profesión limpia una especialidad que ya no corresponde', () => {
-      // Un desplegable con un valor que no está entre sus opciones muestra un
-      // vacío que miente: parece que no elegiste y el cuerpo lo manda igual.
+    it('no pregunta cuál es la especialidad principal: todas son iguales (D-01)', () => {
       catalogoDeEspecialidades();
-      component.formProfesional.controls.professionalTitle.setValue('Odontólogo / Odontóloga');
-      component.formProfesional.controls.specialtyPrimary.setValue('e-endo');
 
-      component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
-
-      expect(component.formProfesional.controls.specialtyPrimary.value).toBe('');
+      expect(Object.keys(component.formProfesional.controls)).not.toContain('specialtyPrimary');
+      const rotulos = component
+        .paginasProfesional()
+        .flatMap((pagina) => [pagina.titulo, pagina.hint ?? '', ...pagina.campos.map((c) => c.label)]);
+      expect(rotulos.filter((rotulo) => /principal/i.test(rotulo))).toEqual([]);
     });
 
     it('las especialidades elegidas VIAJAN en el cuerpo, en orden', () => {
       catalogoDeEspecialidades();
       completarProfesional({
         professionalTitle: 'Médico / Médica',
-        specialtyPrimary: 'e-cardio',
-        especialidadesExtra: ['e-pedia'],
+        especialidadesExtra: ['e-cardio', 'e-pedia'],
       });
       component.submit();
 
@@ -694,8 +696,7 @@ describe('RegisterPractitioner', () => {
       catalogoDeEspecialidades();
       completarProfesional({
         professionalTitle: 'Médico / Médica',
-        specialtyPrimary: 'e-cardio',
-        especialidadesExtra: ['e-pedia', 'e-endo', 'e-orto'],
+        especialidadesExtra: ['e-cardio', 'e-pedia', 'e-endo', 'e-orto'],
       });
       component.submit();
 
@@ -728,8 +729,7 @@ describe('RegisterPractitioner', () => {
       catalogoDeEspecialidades();
       completarProfesional({
         professionalTitle: 'Médico / Médica',
-        specialtyPrimary: 'e-cardio',
-        especialidadesExtra: [''],
+        especialidadesExtra: ['e-cardio', ''],
       });
       component.submit();
 
@@ -738,7 +738,9 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
-    it('cambiar de profesión limpia también una especialidad agregada', () => {
+    it('cambiar de profesión limpia una especialidad que ya no corresponde', () => {
+      // Un desplegable con un valor que no está entre sus opciones muestra un
+      // vacío que miente: parece que no elegiste y el cuerpo lo manda igual.
       catalogoDeEspecialidades();
       completarProfesional({ especialidadesExtra: ['e-endo'] });
 
@@ -751,8 +753,7 @@ describe('RegisterPractitioner', () => {
       catalogoDeEspecialidades();
       completarProfesional({
         professionalTitle: 'Médico / Médica',
-        specialtyPrimary: 'e-cardio',
-        especialidadesExtra: ['e-cardio'],
+        especialidadesExtra: ['e-cardio', 'e-cardio'],
       });
       component.submit();
 

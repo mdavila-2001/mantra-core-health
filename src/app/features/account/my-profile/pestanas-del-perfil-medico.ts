@@ -180,10 +180,8 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
   mobilePhone: PESTANA_MEDICO.contacto,
   personalEmail: PESTANA_MEDICO.contacto,
 
-  /* 5 · El contacto de tu trabajo */
-  workMobilePhone: PESTANA_MEDICO.contacto,
-  workLandline: PESTANA_MEDICO.contacto,
-  email: PESTANA_MEDICO.contacto,
+  /* 5 · El contacto de tu trabajo.
+     Los tres pasaron a `CAMPOS_DEL_ALTA_SIN_PESTANA` el 23/09/2026 (D-03). */
 
   /* 6 · ¿Dónde vivís? */
   municipio: PESTANA_MEDICO.contacto,
@@ -223,7 +221,6 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
   academicTitles: PESTANA_MEDICO.trayectoria,
 
   /* 12 · Tus especialidades */
-  specialtyPrimary: PESTANA_MEDICO.credenciales,
   especialidadesExtra: PESTANA_MEDICO.credenciales,
 };
 
@@ -244,4 +241,16 @@ export const CAMPOS_DEL_ALTA_SIN_PESTANA: Readonly<Record<string, string>> = {
     'ofrecer. Estuvo declarado como si viviera en «Datos personales» hasta el 21/09/2026, ' +
     'y ahí no estaba. Que la persona no pueda ver ni corregir lo que declaró en el alta es ' +
     'un hueco del contrato, no una decisión de diseño: queda registrado como Q-I5.',
+  workMobilePhone:
+    'Celular del trabajo. El médico pidió el 23/09/2026 que «Contacto» no tuviera datos ' +
+    'del trabajo (D-03): la ficha no lo muestra y el editor no lo ofrece. El alta lo sigue ' +
+    'preguntando y el dato se guarda; guardar el perfil no lo borra.',
+  workLandline:
+    'Fijo del trabajo. Mismo pedido del médico del 23/09/2026 (D-03): fuera de «Contacto», ' +
+    'en la ficha y en el editor. El alta lo sigue preguntando y el dato se guarda; guardar ' +
+    'el perfil no lo borra.',
+  email:
+    'Correo de trabajo. Mismo pedido del médico del 23/09/2026 (D-03): fuera de «Contacto». ' +
+    'El correo de acceso no se va: se lee en «Datos personales», sólo lectura, con su ' +
+    'propio trámite para cambiarlo.',
 };

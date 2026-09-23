@@ -179,6 +179,23 @@
                   </dd>
                 </dl>
               </section>
+
+              <!-- Se muestra y no se edita, y esto sí es una decisión y no un
+                   hueco: es la identidad con la que se entra, y cambiarla desde
+                   un formulario de perfil dejaría a cualquiera que tome la
+                   sesión un minuto quedándose con la cuenta. El contrato lo
+                   excluye con esa misma razón escrita. Vivía en «Contacto» como
+                   «Tu correo de trabajo»; pasó acá el 23/09/2026 (D-03). -->
+              <section class="edicion__fijos" data-testid="edicion-correo-acceso">
+                <h3 class="edicion__subtitulo">Tu correo de acceso</h3>
+                <p class="edicion__nota">
+                  Es con el que entrás. Se cambia por su propio trámite, no desde acá.
+                </p>
+                <dl class="edicion__fijo">
+                  <dt>Correo de acceso</dt>
+                  <dd>{{ fijos.correoDeAcceso || 'Sin registrar' }}</dd>
+                </dl>
+              </section>
             }
           </app-tab>
 
@@ -275,51 +292,15 @@
                 <app-form-field
                   label="Correo personal"
                 [errorMessage]="errorDelServidor('personalEmail')"
-                  hint="Distinto del de trabajo. No se publica en tu ficha."
+                  hint="Distinto del correo de acceso. No se publica en tu ficha."
                 >
                   <app-input [(value)]="correoPersonal" placeholder="tu.correo@ejemplo.com" />
                 </app-form-field>
-                <app-form-field
-                  label="Celular del trabajo (opcional)"
-                  hint="Elegí el país si tu número no es de Bolivia."
-                  [errorMessage]="enRojo(celularTrabajo) ? mensajeTelefonoIncompleto : errorDelServidor('workMobilePhone')"
-                >
-                  <app-phone-input
-                    [formControl]="celularTrabajo"
-                    [hasError]="enRojo(celularTrabajo)"
-                    testId="edicion-celular-trabajo"
-                  />
-                </app-form-field>
-                <app-form-field
-                  label="Fijo del trabajo (opcional)"
-                  hint="El de la línea del consultorio."
-                  [errorMessage]="enRojo(fijoTrabajo) ? mensajeTelefonoIncompleto : errorDelServidor('workLandline')"
-                >
-                  <app-phone-input
-                    [formControl]="fijoTrabajo"
-                    [hasError]="enRojo(fijoTrabajo)"
-                    testId="edicion-fijo-trabajo"
-                  />
-                </app-form-field>
               </form>
-
-              <!-- El cuarto contacto del alta. Se muestra y no se edita, y esto
-                   sí es una decisión y no un hueco: es la identidad con la que
-                   se entra, y cambiarla desde un formulario de perfil dejaría
-                   a cualquiera que tome la sesión un minuto quedándose con la
-                   cuenta. El contrato lo excluye con esa misma razón escrita. -->
-              @if (soloLectura(); as fijos) {
-                <section class="edicion__fijos" data-testid="edicion-correo-trabajo">
-                  <h3 class="edicion__subtitulo">Tu correo de trabajo</h3>
-                  <p class="edicion__nota">
-                    Es con el que entrás. Se cambia por su propio trámite, no desde acá.
-                  </p>
-                  <dl class="edicion__fijo">
-                    <dt>Correo de trabajo</dt>
-                    <dd>{{ fijos.correoDeTrabajo || 'Sin registrar' }}</dd>
-                  </dl>
-                </section>
-              }
+              <!-- Sin celular, fijo ni correo del trabajo desde el 23/09/2026:
+                   el médico pidió que «Contacto» no tenga datos del trabajo
+                   (D-03). No se mandan en el PATCH, así que lo guardado no se
+                   borra. El correo de acceso pasó a «Datos personales». -->
             }
           </app-tab>
 
@@ -600,14 +581,9 @@
                 <!-- Sin los dos interruptores («Es mi especialidad principal» y
                      «Tengo certificación de junta»): el propietario pidió el
                      2026-09-10 que esta pantalla se adapte al formulario del alta de
-                     médico, y el alta no los tiene. Ahí la principal se elige en un
-                     select —«Especialidad principal (opcional)»— al registrarse, y la
-                     certificación de junta no se pregunta.
-
-                     Consecuencia declarada, no escondida: agregar una especialidad
-                     desde acá **nunca desplaza a la principal**. Cambiar cuál es la
-                     principal más adelante no tiene hoy dónde hacerse; está anotado
-                     en `docs/progress/BLOCKERS.md`. -->
+                     médico, y el alta no los tiene. Desde el 23/09/2026 ninguna
+                     pantalla distingue la especialidad principal (D-01): todas se
+                     ven iguales, y el dato queda sólo en el contrato. -->
                 <app-form-actions
                   class="edicion__campo-ancho"
                   [submitLabel]="
@@ -631,7 +607,7 @@
                   [state]="estadoEspecialidades()"
                   [columns]="columnasEspecialidades()"
                   [trackBy]="claveDeFila"
-                  caption="Especialidades cargadas, la principal primero"
+                  caption="Especialidades cargadas"
                 />
               }
             </section>
@@ -789,39 +765,6 @@
     </div>
   }
 </app-view-state-host>
-
-<!-- La columna «Tipo» de «Tus especialidades cargadas». Un ng-template no
-     renderiza nada por sí solo: la tabla lo instancia por fila.
-
-     Acá vive el «marcar como principal» que el bloqueo del 2026-09-10 dejó
-     pendiente. Es un gesto sobre una fila que ya existe —no una casilla en el
-     formulario de alta, que es lo que el propietario pidió sacar—, así que la
-     celda que dice «Adicional» es también la que ofrece dejar de serlo.
-
-     La principal no lleva botón: para cambiarla se marca otra, y un botón que
-     no hace nada es peor que ninguno. Una que ya no se ejerce tampoco, porque
-     el servidor la rechaza con 412 y ofrecerlo sería prometer lo que no se
-     puede cumplir. -->
-<ng-template #celdaRol let-fila>
-  @if (fila.esPrincipal) {
-    <app-badge variant="success" value="Principal" />
-  } @else if (fila.vigente) {
-    <button
-      app-button
-      type="button"
-      variant="ghost"
-      size="sm"
-      [isLoading]="marcandoPrincipal() === fila.id"
-      [disabled]="marcandoPrincipal() !== null"
-      [attr.data-testid]="'especialidad-principal-' + fila.id"
-      (clicked)="marcarComoPrincipal(fila)"
-    >
-      Marcar como principal
-    </button>
-  } @else {
-    {{ fila.rol }}
-  }
-</ng-template>
 
 <!-- ─── Las acciones de cada fila ───────────────────────────────────────────
      «En la tabla se pueda eliminar registros, editar registros o descargar
@@ -1017,10 +960,6 @@
         }
 
         @case ('especialidad') {
-          <!-- Cuál es la principal NO se toca acá: ya tiene su propio gesto en
-               la columna «Tipo», que es el único que sabe desmarcar a la
-               anterior. Dos caminos para el mismo hecho dejarían dos
-               principales. -->
           <app-form-field label="Especialidad" [required]="true">
             <app-select
               data-testid="edicion-especialidad"

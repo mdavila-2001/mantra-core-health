@@ -36,7 +36,6 @@ import { NavigationService } from '../../../../core/navigation/navigation.servic
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
-import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Select } from '../../../../shared/components/atoms/select/select';
@@ -116,13 +115,8 @@ interface FilaFormacion {
 interface FilaEspecialidad {
   readonly id: string;
   readonly especialidad: string;
-  readonly rol: string;
   readonly desde: string;
   readonly estado: string;
-  /** Con la que se presenta. Hay una sola. */
-  readonly esPrincipal: boolean;
-  /** Si todavía la ejerce. Una que dejó de ejercerse no puede ser la principal. */
-  readonly vigente: boolean;
 }
 
 /** Una fila de «Tus matrículas cargadas». */
@@ -219,7 +213,6 @@ function soloFecha(fecha: Date): string {
   selector: 'app-practitioner-profile-edit',
   imports: [
     AppButton,
-    Badge,
     Card,
     ConceptSelect,
     ContentDialog,
@@ -360,22 +353,14 @@ export class PractitionerProfileEdit {
   protected readonly nombresExtra = signal<readonly string[]>([]);
   protected readonly apellidoPaterno = signal('');
   protected readonly apellidoMaterno = signal('');
-  /* Los cuatro contactos que el alta pide por separado. El de trabajo y el
-     privado dejaron de ser el mismo dato, así que el perfil también los
-     distingue: cada uno se guarda en su propia fila de puntos de contacto. */
-  /* Los tres teléfonos son el campo del alta (`app-phone-input`): bandera y
-     prefijo del país, y el número nacional. Es un `ControlValueAccessor`, por
-     eso van en `FormControl` y no en señales; los controles viven en el
-     componente, así que cambiar de pestaña no los pierde. */
+  /* Los contactos personales que el alta pide. Los del trabajo (celular, fijo
+     y correo) salieron de esta pantalla el 23/09/2026 a pedido del médico
+     (D-03): no se editan ni viajan en el PATCH, así que lo guardado queda. */
+  /* El teléfono es el campo del alta (`app-phone-input`): bandera y prefijo
+     del país, y el número nacional. Es un `ControlValueAccessor`, por eso va
+     en `FormControl` y no en una señal; el control vive en el componente, así
+     que cambiar de pestaña no lo pierde. */
   protected readonly celularPersonal = new FormControl('', {
-    nonNullable: true,
-    validators: [telefonoOpcional],
-  });
-  protected readonly celularTrabajo = new FormControl('', {
-    nonNullable: true,
-    validators: [telefonoOpcional],
-  });
-  protected readonly fijoTrabajo = new FormControl('', {
     nonNullable: true,
     validators: [telefonoOpcional],
   });
@@ -567,14 +552,15 @@ export class PractitionerProfileEdit {
    * Los dos datos que el alta **no** pregunta.
    *
    * Eran dos interruptores en esta pantalla; el propietario pidió el 2026-09-10
-   * que el editor se adapte al formulario del alta de médico, y ahí la
-   * especialidad principal se elige en un select al registrarse y la
-   * certificación de junta no se pregunta.
+   * que el editor se adapte al formulario del alta de médico, y el alta no
+   * pregunta la certificación de junta ni —desde el 23/09/2026 (D-01)— cuál
+   * es la especialidad principal.
    *
    * Se siguen mandando —el contrato los declara— con el único valor que esta
-   * pantalla puede afirmar con honestidad: una especialidad agregada después
-   * del alta es **adicional**, no la principal, y nadie declaró una
-   * certificación de junta.
+   * pantalla puede afirmar con honestidad: agregar una especialidad no cambia
+   * cuál guarda el backend como principal, y nadie declaró una certificación
+   * de junta. Desde el 23/09/2026 ninguna pantalla distingue la principal
+   * (D-01): el dato queda sólo en el contrato.
    */
   private readonly ESPECIALIDAD_ADICIONAL = { isPrimary: false, boardCertified: false } as const;
 
@@ -676,7 +662,7 @@ export class PractitionerProfileEdit {
      elementos, esto debe aparecer como botones de acciones» (propietario,
      13/09/2026). Va en **prioridad 1** en las tres tablas: una acción que se
      pliega al detalle en el teléfono es una acción que la mitad de la gente no
-     encuentra — el mismo criterio con el que subió «Marcar como principal».
+     encuentra.
 
      Las columnas pasan de arreglo a `computed` porque la plantilla de celda
      llega por `viewChild`, que es una señal: leída en un campo inicializado una
@@ -700,21 +686,15 @@ export class PractitionerProfileEdit {
     },
   ]);
 
-  private readonly celdaRol =
-    viewChild.required<TemplateRef<{ $implicit: FilaEspecialidad }>>('celdaRol');
-
   /**
-   * La columna «Tipo» sube a prioridad 1 (13/09/2026).
-   *
-   * Deja de ser un rótulo y pasa a ser el lugar donde se **cambia** cuál es la
-   * principal, y una acción que se pliega al detalle en el teléfono es una
-   * acción que la mitad de la gente no encuentra. Las tres que quedan en el
-   * teléfono son las mismas que ya muestra la tabla de matrículas.
+   * Sin columna «Tipo» desde el 23/09/2026: decía «Principal» o «Adicional» y
+   * ofrecía «Marcar como principal», y el médico pidió que todas las
+   * especialidades se vieran iguales (D-01). Lo que queda en el teléfono son
+   * las mismas tres que muestra la tabla de matrículas.
    */
   protected readonly columnasEspecialidades = computed<readonly ColumnDef<FilaEspecialidad>[]>(
     () => [
       { key: 'especialidad', header: 'Especialidad', priority: 1 },
-      { key: 'rol', header: 'Tipo', priority: 1, cell: this.celdaRol() },
       { key: 'desde', header: 'Desde', priority: 2 },
       { key: 'estado', header: 'Estado', priority: 1 },
       {
@@ -730,9 +710,6 @@ export class PractitionerProfileEdit {
   private readonly celdaAccionesEspecialidad = viewChild.required<
     TemplateRef<{ $implicit: FilaEspecialidad }>
   >('celdaAccionesEspecialidad');
-
-  /** Cuál especialidad se está marcando como principal, mientras viaja. */
-  protected readonly marcandoPrincipal = signal<string | null>(null);
 
   private readonly celdaAccionesMatricula =
     viewChild.required<TemplateRef<{ $implicit: FilaMatricula }>>('celdaAccionesMatricula');
@@ -772,27 +749,25 @@ export class PractitionerProfileEdit {
       }));
   });
 
-  /** Las especialidades, la principal primero. */
+  /**
+   * Las especialidades, en el orden en que llegan: ninguna se adelanta por
+   * ser la principal (D-01, 23/09/2026).
+   */
   protected readonly filasEspecialidades = computed<readonly FilaEspecialidad[]>(() => {
     const perfil = this.datos();
     if (perfil === null) return [];
     const delCatalogo = new Map(this.especialidades().map((o) => [o.value, o.label]));
-    return [...perfil.specialties]
-      .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
-      .map((especialidad) => ({
-        id: especialidad.id,
-        especialidad: this.etiqueta(
-          especialidad.specialtyConceptId,
-          delCatalogo.get(especialidad.specialtyConceptId) ?? 'Especialidad',
-        ),
-        rol: especialidad.isPrimary ? 'Principal' : 'Adicional',
-        desde: fechaLegible(especialidad.validFrom),
-        estado: especialidad.verified
-          ? 'Verificada'
-          : this.etiqueta(especialidad.verificationStatusConceptId, PENDIENTE_DE_VERIFICACION),
-        esPrincipal: especialidad.isPrimary,
-        vigente: especialidad.validTo === undefined,
-      }));
+    return perfil.specialties.map((especialidad) => ({
+      id: especialidad.id,
+      especialidad: this.etiqueta(
+        especialidad.specialtyConceptId,
+        delCatalogo.get(especialidad.specialtyConceptId) ?? 'Especialidad',
+      ),
+      desde: fechaLegible(especialidad.validFrom),
+      estado: especialidad.verified
+        ? 'Verificada'
+        : this.etiqueta(especialidad.verificationStatusConceptId, PENDIENTE_DE_VERIFICACION),
+    }));
   });
 
   protected readonly filasMatriculas = computed<readonly FilaMatricula[]>(() => {
@@ -823,8 +798,8 @@ export class PractitionerProfileEdit {
    *
    * El doctor pidió que editar muestre todos los campos (C-05). Éstos no se
    * pueden escribir —el contrato de corrección del perfil no los acepta, y en
-   * el caso del correo de trabajo está excluido a propósito porque es la
-   * identidad de acceso—, pero eso no es razón para que no aparezcan: quien
+   * el caso del correo de acceso está excluido a propósito porque es la
+   * identidad con la que se entra—, pero eso no es razón para que no aparezcan: quien
    * entra a corregir su documento hoy no encuentra ni el dato ni el motivo.
    *
    * Se dibujan como renglones de ficha y **no como campos deshabilitados**: un
@@ -839,7 +814,7 @@ export class PractitionerProfileEdit {
     return {
       documento: perfil.nationalId ?? '',
       departamento: this.etiqueta(perfil.issuerAdministrativeAreaConceptId, ''),
-      correoDeTrabajo: perfil.email ?? '',
+      correoDeAcceso: perfil.email ?? '',
     };
   });
 
@@ -953,8 +928,6 @@ export class PractitionerProfileEdit {
     this.apellidoPaterno.set(perfil.lastName ?? '');
     this.apellidoMaterno.set(perfil.motherLastName ?? '');
     this.celularPersonal.reset(perfil.mobilePhone ?? '');
-    this.celularTrabajo.reset(perfil.workMobilePhone ?? '');
-    this.fijoTrabajo.reset(perfil.workLandline ?? '');
     this.correoPersonal.set(perfil.personalEmail ?? '');
     this.nit.set(perfil.taxId ?? '');
     this.razonSocial.set(perfil.taxHolderName ?? '');
@@ -1022,7 +995,7 @@ export class PractitionerProfileEdit {
 
     // Un teléfono a medias no viaja: se marca, se lleva a la persona a
     // «Contacto» —puede estar mirando «Datos personales»— y se dice por qué.
-    const telefonos = [this.celularPersonal, this.celularTrabajo, this.fijoTrabajo];
+    const telefonos = [this.celularPersonal];
     if (telefonos.some((telefono) => telefono.invalid)) {
       telefonos.forEach((telefono) => telefono.markAsTouched());
       this.pestana.set(PESTANA_EDITOR.contacto);
@@ -1040,8 +1013,6 @@ export class PractitionerProfileEdit {
       lastName: string;
       motherLastName: string;
       mobilePhone: string;
-      workMobilePhone: string;
-      workLandline: string;
       personalEmail: string;
       birthDate: string;
       residenceMunicipalityConceptId: string;
@@ -1110,12 +1081,6 @@ export class PractitionerProfileEdit {
     }
     if (this.celularPersonal.value !== (original.mobilePhone ?? '')) {
       cambios.mobilePhone = this.celularPersonal.value;
-    }
-    if (this.celularTrabajo.value !== (original.workMobilePhone ?? '')) {
-      cambios.workMobilePhone = this.celularTrabajo.value;
-    }
-    if (this.fijoTrabajo.value !== (original.workLandline ?? '')) {
-      cambios.workLandline = this.fijoTrabajo.value;
     }
     if (this.correoPersonal() !== (original.personalEmail ?? '')) {
       cambios.personalEmail = this.correoPersonal();
@@ -1210,47 +1175,6 @@ export class PractitionerProfileEdit {
    * sigue ahí para reintentar. La recarga corre igual, así que las que sí
    * entraron aparecen en el perfil y no se agregan dos veces.
    */
-  /**
-   * Marca una especialidad ya cargada como la principal (UC-05-06·P).
-   *
-   * Es la vuelta de una función que se perdió sin querer: al adaptar este
-   * editor al formulario del alta —pedido del propietario del 2026-09-10— se
-   * quitaron los interruptores sueltos de «Agregar una especialidad», y con
-   * ellos «Es mi especialidad principal». Desde entonces toda especialidad
-   * cargada después del registro entraba como adicional y no había dónde
-   * cambiarlo; quedó anotado en `docs/progress/BLOCKERS.md`.
-   *
-   * Vuelve **como gesto sobre una fila que ya existe**, no como casilla de un
-   * formulario de alta: es lo que el propietario pidió sacar y lo que esto no
-   * devuelve.
-   *
-   * @param fila - La especialidad que pasa a ser la principal.
-   */
-  protected marcarComoPrincipal(fila: FilaEspecialidad): void {
-    if (fila.esPrincipal || !fila.vigente || this.marcandoPrincipal() !== null) {
-      return;
-    }
-
-    this.marcandoPrincipal.set(fila.id);
-    this.profiles.setOwnPrimarySpecialty(fila.id).subscribe({
-      next: () => {
-        this.marcandoPrincipal.set(null);
-        this.toasts.success(
-          `${fila.especialidad} es ahora tu especialidad principal.`,
-          'Especialidades',
-        );
-        this.cargar();
-      },
-      error: () => {
-        this.marcandoPrincipal.set(null);
-        this.toasts.error(
-          'No se pudo cambiar la especialidad principal. Probá de nuevo.',
-          'Especialidades',
-        );
-      },
-    });
-  }
-
   protected agregarEspecialidad(): void {
     const profileId = this.profileId();
     const elegidas = this.especialidadesElegidas();

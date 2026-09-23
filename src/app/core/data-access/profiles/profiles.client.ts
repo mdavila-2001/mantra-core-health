@@ -712,6 +712,10 @@ export class ProfilesClient {
    *
    * Es idempotente: marcar la que ya lo es devuelve la misma especialidad.
    *
+   * Sin consumidor desde el 23/09/2026: el editor retiró «Marcar como
+   * principal» porque el médico pidió todas las especialidades iguales (D-01).
+   * Se conserva mientras la API lo exponga.
+   *
    * @param specialtyId - La especialidad que pasa a ser la principal.
    * @returns La especialidad, ya primaria.
    */

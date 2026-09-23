@@ -11,7 +11,6 @@ function especialidad(
   return {
     id,
     nombre,
-    principal: false,
     certificada: false,
     estado: '',
     sello: null,
@@ -66,34 +65,30 @@ describe('SpecialtyBadgeGrid', () => {
     expect(insignias()).toHaveLength(0);
   });
 
-  describe('el orden lo pone el componente', () => {
-    it('la principal va primera aunque llegue última', async () => {
-      await setInputs({
-        especialidades: [
-          especialidad('1', 'Cardiología'),
-          especialidad('2', 'Medicina interna'),
-          especialidad('3', 'Pediatría', { principal: true }),
-        ],
-      });
-      expect(nombres()[0]).toBe('Pediatría');
-    });
-
-    it('el resto conserva el orden en que llegó: alfabetizar sería inventar criterio', async () => {
+  describe('el orden es el de entrada: ninguna se adelanta (D-01)', () => {
+    it('conserva el orden en que llegaron: alfabetizar sería inventar criterio', async () => {
       await setInputs({
         especialidades: [
           especialidad('1', 'Traumatología'),
           especialidad('2', 'Cardiología'),
-          especialidad('3', 'Pediatría', { principal: true }),
+          especialidad('3', 'Pediatría'),
         ],
       });
-      expect(nombres()).toEqual(['Pediatría', 'Traumatología', 'Cardiología']);
+      expect(nombres()).toEqual(['Traumatología', 'Cardiología', 'Pediatría']);
+    });
+
+    it('aunque el dato venga marcado como principal desde el contrato, no se adelanta', async () => {
+      // El contrato todavía trae `isPrimary`: si alguien vuelve a pasarlo a la
+      // rejilla con cualquier nombre, no tiene que adelantarla.
+      const marcada = { ...especialidad('3', 'Pediatría'), principal: true } as SpecialtyBadgeItem;
+      await setInputs({
+        especialidades: [especialidad('1', 'Cardiología'), especialidad('2', 'Medicina interna'), marcada],
+      });
+      expect(nombres()).toEqual(['Cardiología', 'Medicina interna', 'Pediatría']);
     });
 
     it('NO muta el arreglo que recibe', async () => {
-      const entrada = [
-        especialidad('1', 'Cardiología'),
-        especialidad('2', 'Pediatría', { principal: true }),
-      ];
+      const entrada = [especialidad('1', 'Cardiología'), especialidad('2', 'Pediatría')];
       await setInputs({ especialidades: entrada });
       expect(entrada.map((e) => e.nombre)).toEqual(['Cardiología', 'Pediatría']);
     });
@@ -117,11 +112,10 @@ describe('SpecialtyBadgeGrid', () => {
     });
   });
 
-  it('pasa cada dato a su insignia: principal, certificada y estado', async () => {
+  it('pasa cada dato a su insignia: certificada y estado, en el tono de todas', async () => {
     await setInputs({
       especialidades: [
         especialidad('1', 'Cardiología', {
-          principal: true,
           certificada: true,
           estado: 'Vigente',
           sello: 'approved',
@@ -129,7 +123,7 @@ describe('SpecialtyBadgeGrid', () => {
       ],
     });
     const insignia = insignias()[0]!;
-    expect(insignia.classList).toContain('tone--primary');
+    expect(insignia.classList).toContain('tone--secondary');
     expect(insignia.querySelector('.specialty-badge__certificada')).not.toBeNull();
     expect(insignia.querySelector('app-status-seal')).not.toBeNull();
     expect((insignia.textContent ?? '').replace(/\s+/g, ' ')).toContain('Vigente');

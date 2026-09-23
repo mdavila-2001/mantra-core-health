@@ -861,10 +861,6 @@ export class RegisterPractitioner {
     issuerAdministrativeAreaConceptId: new FormControl<string | null>(null, {
       validators: [Validators.required],
     }),
-    // La principal es un control porque tiene semántica propia: es la que
-    // responde «¿de qué sos?» y la que el backend guarda como principal. Las
-    // demás no se distinguen entre sí, así que viven en `especialidadesExtra` y
-    // se agregan las que hagan falta: hay profesionales con más de tres.
     // La calle del domicilio. Opcional, como en el alta de paciente: la
     // localidad es la que ubica, y esto es lo que hace falta para llegar a la
     // puerta.
@@ -873,7 +869,6 @@ export class RegisterPractitioner {
     // «Tu consultorio propio» y el JSDoc de `datosProfesional`.
     officeName: new FormControl('', { nonNullable: true }),
     officeAddressLines: new FormControl('', { nonNullable: true }),
-    specialtyPrimary: new FormControl('', { nonNullable: true }),
     profilePhotoBase64: new FormControl<string | null>(null),
   });
 
@@ -1165,7 +1160,12 @@ export class RegisterPractitioner {
   readonly nombresExtra = signal<readonly string[]>([]);
 
   /**
-   * Especialidades agregadas además de la principal.
+   * Las especialidades del alta, todas iguales.
+   *
+   * Hasta el 23/09/2026 había además un desplegable «Especialidad principal»;
+   * el médico pidió que ninguna se distinguiera (D-01) y se retiró. Ahora son
+   * sólo estas casillas, y se agregan las que hagan falta: hay profesionales
+   * con más de tres.
    *
    * Mismo criterio que `nombresExtra`: casillas fijas que casi nadie llena son
    * ruido, y un techo arbitrario deja afuera al que sí las tiene. La cadena
@@ -1897,16 +1897,6 @@ export class RegisterPractitioner {
         icon: 'directory',
         hint: 'Las que hagan falta. Son lo que un paciente busca cuando necesita a alguien como vos.',
         campos: [
-          {
-            key: 'specialtyPrimary',
-            label: 'Especialidad principal (opcional)',
-            hint: 'La que responde «¿de qué sos?».',
-            control: 'select',
-            options: this.opcionesEspecialidadFiltradas(),
-            placeholder: 'Sin especialidad',
-            testId: 'registro-pro-especialidad-1',
-            icono: 'stethoscope',
-          },
           // Sin control propio: es una ranura que la plantilla llena con las
           // casillas agregadas y su botón. Mismo mecanismo que `municipio`.
           {
@@ -2086,25 +2076,15 @@ export class RegisterPractitioner {
       }
 
       // Cambiar de profesión cambia la lista que se ofrece, así que lo ya
-      // elegido que dejó de estar en ella se vacía. Alcanza también a las
-      // casillas agregadas: si no, quedarían mostrando una especialidad que el
-      // desplegable ya no ofrece.
+      // elegido que dejó de estar en ella se vacía: si no, las casillas
+      // quedarían mostrando una especialidad que el desplegable ya no ofrece.
       const validas = new Set(this.opcionesEspecialidadFiltradas().map((o) => o.value));
-      for (const control of this.controlesDeEspecialidad()) {
-        if (control.value !== '' && !validas.has(control.value)) {
-          control.setValue('');
-        }
-      }
       this.especialidadesExtra.update((actuales) =>
         actuales.map((especialidad) =>
           especialidad !== '' && !validas.has(especialidad) ? '' : especialidad,
         ),
       );
     });
-  }
-
-  private controlesDeEspecialidad() {
-    return [this.formProfesional.controls.specialtyPrimary] as const;
   }
 
   /**
@@ -2448,16 +2428,15 @@ export class RegisterPractitioner {
   }
 
   /**
-   * Las especialidades elegidas, en orden y sin repetidos: la primera del
-   * formulario es la principal, y elegir la misma dos veces declara una.
+   * Las especialidades elegidas, en orden y sin repetidos: elegir la misma
+   * dos veces declara una.
+   *
+   * El backend guarda la primera del arreglo como principal —el contrato no
+   * cambió (D-01, 23/09/2026)—, así que queda como principal la primera
+   * casilla con valor, sin que nadie la elija. Ninguna pantalla lo muestra.
    */
   private especialidadesElegidas(): readonly string[] {
-    // El orden importa: la primera del arreglo es la que el backend guarda
-    // como principal, así que la del control va siempre adelante.
-    const elegidas = [
-      ...this.controlesDeEspecialidad().map((control) => control.value),
-      ...this.especialidadesExtra(),
-    ].filter((valor) => valor !== '');
+    const elegidas = this.especialidadesExtra().filter((valor) => valor !== '');
     return [...new Set(elegidas)];
   }
 }

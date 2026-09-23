@@ -92,6 +92,12 @@ export interface NewPractitionerProfile {
 export interface NewSpecialty {
   readonly specialtyConceptId?: string;
   readonly supportingCredentialId?: string;
+  /**
+   * Desde el 23/09/2026 ninguna pantalla lo muestra ni ordena por él
+   * (D-01: el médico pidió todas las especialidades iguales). Sigue en el
+   * contrato porque la API lo guarda; queda como deuda decidir si se retira
+   * del cable.
+   */
   readonly isPrimary?: boolean;
   readonly boardCertified?: boolean;
 }
@@ -152,7 +158,13 @@ export interface PractitionerProfile {
 export interface PractitionerSpecialty {
   readonly id: string;
   readonly specialtyConceptId: string;
-  /** La especialidad con la que se presenta. Hay una sola vigente. */
+  /**
+   * La especialidad con la que se presenta. Hay una sola vigente.
+   *
+   * Desde el 23/09/2026 ninguna pantalla lo muestra ni ordena por él (D-01).
+   * Sigue en el contrato porque la API lo guarda; queda como deuda decidir si
+   * se retira del cable.
+   */
   readonly isPrimary: boolean;
   /** Certificación del colegio o consejo. */
   readonly boardCertified: boolean;
@@ -979,6 +991,7 @@ export interface OwnPatientProfileChanges {
 /** Una especialidad en la fila de la guía: lo justo para agrupar y rotular. */
 export interface PractitionerListSpecialty {
   readonly specialtyConceptId: string;
+  /** Sin uso en pantalla desde el 23/09/2026 (D-01); sigue en el contrato. */
   readonly isPrimary: boolean;
 }
 

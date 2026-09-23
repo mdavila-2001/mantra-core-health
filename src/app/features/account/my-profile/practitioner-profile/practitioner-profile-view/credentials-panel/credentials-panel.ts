@@ -80,7 +80,6 @@ export class CredentialsPanel {
       clase: 'specialty',
       titulo: especialidad.nombre,
       detalles: [
-        especialidad.principal ? 'Principal' : '',
         especialidad.certificada ? 'Certificada por el consejo' : '',
         periodo(especialidad.desde, especialidad.hasta),
       ].filter((linea) => linea !== ''),

@@ -52,18 +52,32 @@ describe('las pestañas de la ficha del médico', () => {
   });
 
   /**
-   * Eran una y son dos desde el 21/09/2026: se sumó `sexAtBirth`, que estaba
+   * Eran una y pasaron a dos el 21/09/2026: se sumó `sexAtBirth`, que estaba
    * declarado como si viviera en «Datos personales» y ahí no está —la lectura
    * del perfil médico no devuelve el dato, así que no hay nada que mostrar—.
+   * Son cinco desde el 23/09/2026: los tres contactos del trabajo, que el
+   * médico pidió sacar de «Contacto» (D-03).
    *
    * La lista se sigue fijando entera a propósito. Es el freno a que ausentarse
    * de la ficha sea la salida fácil: sumar un campo acá exige tocar esta
    * prueba y escribir el motivo, que es exactamente la fricción que se quiere.
    */
-  it('las dos ausencias son las declaradas, y las dos dicen por qué', () => {
-    expect(Object.keys(CAMPOS_DEL_ALTA_SIN_PESTANA).sort()).toEqual(['password', 'sexAtBirth']);
+  it('las cinco ausencias son las declaradas, y las cinco dicen por qué', () => {
+    expect(Object.keys(CAMPOS_DEL_ALTA_SIN_PESTANA).sort()).toEqual([
+      'email',
+      'password',
+      'sexAtBirth',
+      'workLandline',
+      'workMobilePhone',
+    ]);
     expect(CAMPOS_DEL_ALTA_SIN_PESTANA['password']).toContain('Cambiar contraseña');
     expect(CAMPOS_DEL_ALTA_SIN_PESTANA['sexAtBirth']).toContain('no lo devuelve');
+    for (const campo of ['workMobilePhone', 'workLandline', 'email']) {
+      expect(CAMPOS_DEL_ALTA_SIN_PESTANA[campo], campo).toContain('(D-03)');
+      expect(CAMPOS_DEL_ALTA_SIN_PESTANA[campo], campo).toContain('«Contacto»');
+    }
+    // El correo de trabajo se va de «Contacto», pero el de acceso no se pierde.
+    expect(CAMPOS_DEL_ALTA_SIN_PESTANA['email']).toContain('correo de acceso');
   });
 
   /** Un campo no puede estar en los dos mapas: sería mostrarse y no mostrarse. */

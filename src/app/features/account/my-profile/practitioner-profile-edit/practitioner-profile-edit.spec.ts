@@ -503,7 +503,7 @@ describe('PractitionerProfileEdit', () => {
   it('no guarda con un teléfono a medias y lleva a «Contacto»', () => {
     montarYCargar();
 
-    interno<{ setValue(valor: string): void }>('celularTrabajo').setValue('+591 7001');
+    interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 7001');
     interno<() => void>('guardarPresentacion')();
 
     http.expectNone('/profiles/practitioners/me');
@@ -513,11 +513,11 @@ describe('PractitionerProfileEdit', () => {
   it('un teléfono completo viaja con su prefijo', () => {
     montarYCargar();
 
-    interno<{ setValue(valor: string): void }>('celularTrabajo').setValue('+591 70012345');
+    interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 70012345');
     interno<() => void>('guardarPresentacion')();
 
     const req = http.expectOne('/profiles/practitioners/me');
-    expect(req.request.body).toEqual({ workMobilePhone: '+591 70012345' });
+    expect(req.request.body).toEqual({ mobilePhone: '+591 70012345' });
     req.flush(PERFIL_BASE);
   });
 
@@ -727,7 +727,6 @@ describe('PractitionerProfileEdit', () => {
     expect(interno<() => readonly object[]>('filasEspecialidades')()).toEqual([
       expect.objectContaining({
         especialidad: 'Cardiología',
-        rol: 'Principal',
         estado: 'Verificada',
       }),
     ]);
@@ -736,13 +735,23 @@ describe('PractitionerProfileEdit', () => {
     ]);
   });
 
-  /* -- Cuál es la principal (2026-09-13) -------------------------------------
-     El bloqueo del 2026-09-10: al adaptar el editor al formulario del alta
-     salieron los interruptores sueltos, y con ellos «Es mi especialidad
-     principal». Vuelve como gesto sobre una fila que ya existe. */
+  /* -- Todas por igual (D-01, 23/09/2026) -----------------------------------
+     El médico pidió que ninguna especialidad se distinga como principal. Hasta
+     entonces la tabla ponía la principal primero y la columna «Tipo» decía
+     «Principal»/«Adicional» y ofrecía «Marcar como principal». El dato
+     `isPrimary` sigue llegando del contrato: la pantalla no lo usa. */
 
-  const DOS_ESPECIALIDADES = {
+  /** La principal llega SEGUNDA a propósito: si algo la adelantara, se vería. */
+  const PRINCIPAL_AL_FINAL = {
     specialties: [
+      {
+        id: 'e-2',
+        specialtyConceptId: 'esp-pediatria',
+        isPrimary: false,
+        boardCertified: false,
+        verificationStatusConceptId: 'st-v',
+        verified: true,
+      },
       {
         id: 'e-1',
         specialtyConceptId: 'esp-cardio',
@@ -751,114 +760,40 @@ describe('PractitionerProfileEdit', () => {
         verificationStatusConceptId: 'st-v',
         verified: true,
       },
-      {
-        id: 'e-2',
-        specialtyConceptId: 'esp-pedia',
-        isPrimary: false,
-        boardCertified: false,
-        verificationStatusConceptId: 'st-v',
-        verified: true,
-      },
     ],
   };
 
-  it('cada fila dice si es la principal y si sigue vigente', () => {
-    montarYCargar({
-      specialties: [
-        ...DOS_ESPECIALIDADES.specialties,
-        {
-          id: 'e-3',
-          specialtyConceptId: 'esp-pedia',
-          isPrimary: false,
-          boardCertified: false,
-          verificationStatusConceptId: 'st-v',
-          verified: true,
-          validTo: '2025-12-31T00:00:00.000Z',
-        },
-      ],
-    });
+  it('las especialidades van en el orden en que llegan: la principal no se adelanta', () => {
+    montarYCargar(PRINCIPAL_AL_FINAL);
 
     const filas = interno<() => readonly Record<string, unknown>[]>('filasEspecialidades')();
-    expect(filas).toEqual([
-      expect.objectContaining({ id: 'e-1', esPrincipal: true, vigente: true }),
-      expect.objectContaining({ id: 'e-2', esPrincipal: false, vigente: true }),
-      expect.objectContaining({ id: 'e-3', esPrincipal: false, vigente: false }),
-    ]);
+    expect(filas.map((fila) => fila['id'])).toEqual(['e-2', 'e-1']);
   });
 
-  it('marcar como principal hace PATCH sin ningún profileId y recarga el perfil', () => {
-    montarYCargar(DOS_ESPECIALIDADES);
+  it('ninguna fila dice cuál es la principal, y no queda gesto para marcarla', () => {
+    montarYCargar(PRINCIPAL_AL_FINAL);
 
-    const fila = interno<() => readonly { id: string }[]>('filasEspecialidades')()[1]!;
-    interno<(f: unknown) => void>('marcarComoPrincipal')(fila);
-
-    // `me`, no el perfil de la petición: no hay especialidad ajena que marcar
-    // escribiendo una URL.
-    const req = http.expectOne('/profiles/practitioners/me/specialties/e-2/primary');
-    expect(req.request.method).toBe('PATCH');
-    req.flush({ id: 'e-2', isPrimary: true });
-
-    http.expectOne('/profiles/practitioners/me/summary').flush({
-      ...PERFIL_BASE,
-      specialties: [
-        { ...DOS_ESPECIALIDADES.specialties[0], isPrimary: false },
-        { ...DOS_ESPECIALIDADES.specialties[1], isPrimary: true },
-      ],
-    });
-    // Las lecturas de terminología que dispara la recarga las drena el
-    // `afterEach`: el catálogo ya está resuelto y esta prueba no lo mira.
-
-    expect(interno<() => string | null>('marcandoPrincipal')()).toBeNull();
-    expect(interno<() => readonly Record<string, unknown>[]>('filasEspecialidades')()).toEqual([
-      expect.objectContaining({ id: 'e-2', esPrincipal: true }),
-      expect.objectContaining({ id: 'e-1', esPrincipal: false }),
-    ]);
+    for (const fila of interno<() => readonly Record<string, unknown>[]>('filasEspecialidades')()) {
+      expect(fila).not.toHaveProperty('rol');
+      expect(fila).not.toHaveProperty('esPrincipal');
+    }
+    expect(
+      interno<() => readonly { header: string }[]>('columnasEspecialidades')().map((c) => c.header),
+    ).toEqual(['Especialidad', 'Desde', 'Estado', 'Acciones']);
+    expect(interno<unknown>('marcarComoPrincipal')).toBeUndefined();
+    expect(http.match((r) => r.url.endsWith('/primary'))).toHaveLength(0);
   });
 
-  it('la que ya es principal no se vuelve a marcar', () => {
-    montarYCargar(DOS_ESPECIALIDADES);
+  it('dibujada, la tabla de especialidades no dice «principal» en ninguna fila', () => {
+    const fixture = montarConVista(PRINCIPAL_AL_FINAL);
+    señal<number>('pestana').set(5);
+    fixture.detectChanges();
 
-    const principal = interno<() => readonly { id: string }[]>('filasEspecialidades')()[0]!;
-    interno<(f: unknown) => void>('marcarComoPrincipal')(principal);
-
-    expect(http.match((r) => r.url.includes('/specialties/'))).toHaveLength(0);
-  });
-
-  it('una que ya no se ejerce no se puede marcar', () => {
-    // El servidor la rechaza con 412; ofrecerlo sería prometer lo que no se
-    // puede cumplir, así que ni se pide.
-    montarYCargar({
-      specialties: [
-        {
-          id: 'e-9',
-          specialtyConceptId: 'esp-pedia',
-          isPrimary: false,
-          boardCertified: false,
-          verificationStatusConceptId: 'st-v',
-          verified: true,
-          validTo: '2025-12-31T00:00:00.000Z',
-        },
-      ],
-    });
-
-    const vieja = interno<() => readonly { id: string }[]>('filasEspecialidades')()[0]!;
-    interno<(f: unknown) => void>('marcarComoPrincipal')(vieja);
-
-    expect(http.match((r) => r.url.includes('/specialties/'))).toHaveLength(0);
-  });
-
-  it('si el cambio falla, el perfil no se recarga y el botón se destraba', () => {
-    montarYCargar(DOS_ESPECIALIDADES);
-
-    const fila = interno<() => readonly { id: string }[]>('filasEspecialidades')()[1]!;
-    interno<(f: unknown) => void>('marcarComoPrincipal')(fila);
-
-    http
-      .expectOne('/profiles/practitioners/me/specialties/e-2/primary')
-      .flush({ message: 'nope' }, { status: 500, statusText: 'Server Error' });
-
-    expect(http.match('/profiles/practitioners/me/summary')).toHaveLength(0);
-    expect(interno<() => string | null>('marcandoPrincipal')()).toBeNull();
+    const tabla = panelAbierto(fixture).querySelector('[data-testid="tabla-especialidades"]');
+    const texto = (tabla?.textContent ?? '').replace(/\s+/g, ' ');
+    expect(texto).toContain('Cardiología');
+    expect(texto).toContain('Pediatría');
+    expect(texto).not.toMatch(/principal/i);
   });
 
   /* -- Catálogo de especialidades (TJ-3 · F-19) ----------------------------- */
@@ -1355,16 +1290,43 @@ describe('PractitionerProfileEdit', () => {
       expect(bloque?.querySelectorAll('input, select, textarea')).toHaveLength(0);
     });
 
-    it('«Contacto» muestra el correo de trabajo, sin control para escribirlo', () => {
+    it('«Datos personales» muestra el correo de acceso, sin control para escribirlo (D-03)', () => {
+      const fixture = montarConVista(CON_IDENTIDAD);
+
+      const bloque = panelAbierto(fixture).querySelector('[data-testid="edicion-correo-acceso"]');
+      expect(bloque).not.toBeNull();
+      expect(bloque?.textContent).toContain('dra.salas@alovida.mock');
+      expect(bloque?.querySelectorAll('input, select, textarea')).toHaveLength(0);
+    });
+
+    it('«Contacto» no ofrece nada del trabajo: ni celular, ni fijo, ni correo (D-03)', () => {
       const fixture = montarConVista(CON_IDENTIDAD);
 
       señal<number>('pestana').set(1);
       fixture.detectChanges();
 
-      const bloque = panelAbierto(fixture).querySelector('[data-testid="edicion-correo-trabajo"]');
-      expect(bloque).not.toBeNull();
-      expect(bloque?.textContent).toContain('dra.salas@alovida.mock');
-      expect(bloque?.querySelectorAll('input, select, textarea')).toHaveLength(0);
+      const panel = panelAbierto(fixture);
+      for (const testId of ['edicion-celular-trabajo', 'edicion-fijo-trabajo', 'edicion-correo-trabajo']) {
+        expect(panel.querySelector(`[data-testid="${testId}"]`), testId).toBeNull();
+      }
+      expect((panel.textContent ?? '').replace(/\s+/g, ' ')).not.toMatch(/del trabajo|de trabajo/i);
+      expect(panel.textContent).not.toContain('dra.salas@alovida.mock');
+    });
+
+    it('guardar no manda los contactos del trabajo: lo guardado no se borra (D-03)', () => {
+      montarYCargar({
+        ...CON_IDENTIDAD,
+        workMobilePhone: '+591 70088888',
+        workLandline: '+591 33000000',
+        workEmail: 'consultorio@example.test',
+      });
+
+      interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 70012345');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ mobilePhone: '+591 70012345' });
+      req.flush(PERFIL_BASE);
     });
 
     it('guardar no manda ninguno de los tres', () => {
@@ -1546,7 +1508,7 @@ describe('PractitionerProfileEdit', () => {
         path: '/profiles/practitioners/me',
       });
 
-      interno<{ setValue(valor: string): void }>('celularTrabajo').setValue('+591 7001');
+      interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 7001');
       interno<() => void>('guardarPresentacion')();
 
       http.expectNone('/profiles/practitioners/me');
