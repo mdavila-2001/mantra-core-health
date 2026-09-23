@@ -186,45 +186,6 @@ async function collectAccesses(page: Page): Promise<PanelAccess[]> {
   return accesses;
 }
 
-/**
- * Los accesos propios del panel del paciente.
- *
- * Quien viene a atenderse no ve el árbol de zonas: ve su propio panel, con una
- * grilla de tarjetas hacia sus turnos, su historia y sus datos. Son accesos del
- * panel igual que los otros, y responden a la misma regla.
- */
-async function patientOwnAccesses(page: Page): Promise<PanelAccess[]> {
-  const links = await page.getByTestId('mi-salud-acceso').evaluateAll((nodes) =>
-    nodes.map((node) => ({
-      // La ruta se lee del atributo que la declara, igual que en el árbol. El
-      // `href` lo compone el router con la base del documento, así que sirve
-      // para saber que el enlace tiene destino, pero no como ruta.
-      route: (node as HTMLElement).dataset['ruta'] ?? '',
-      label: (node.textContent ?? '').trim(),
-      href: node.getAttribute('href') ?? '',
-      tag: node.tagName.toLowerCase(),
-    })),
-  );
-
-  const accesses: PanelAccess[] = [];
-
-  for (const link of links) {
-    expect(link.tag, `«Mi salud»: el acceso «${link.label}» no es un enlace`).toBe('a');
-    expect(
-      link.href,
-      `«Mi salud»: el acceso «${link.label}» no lleva a ninguna parte (href vacío)`,
-    ).not.toBe('');
-    expect(
-      link.route,
-      `«Mi salud»: el acceso «${link.label}» no declara la ruta a la que va`,
-    ).not.toBe('');
-
-    accesses.push({ route: link.route, label: link.label, zone: 'mi-salud' });
-  }
-
-  return accesses;
-}
-
 /** El nombre del archivo de evidencia de una ruta: `/a/b` → `a-b`. */
 function slugOf(route: string): string {
   const slug = route.replace(/^\//, '').replace(/\//g, '-');
@@ -358,7 +319,10 @@ test.describe('ALV-054 · every panel access opens a real screen', () => {
     await sweep(page, 'practitioner', accesses);
   });
 
-  test('patient: every access of the tree and of «Mi salud» opens a screen', async ({ page }) => {
+  // Hasta el 23/09/2026 el panel del paciente sumaba su propia grilla de
+  // accesos («Ir a lo tuyo»); se retiró a pedido del doctor (P-03), así que
+  // los accesos del paciente son sólo los del árbol, como en los otros roles.
+  test('patient: every access of the tree opens a screen', async ({ page }) => {
     test.setTimeout(SWEEP_TIMEOUT_MS);
 
     // El paciente se da de alta en la corrida: las cuentas de paciente de la
@@ -370,7 +334,7 @@ test.describe('ALV-054 · every panel access opens a real screen', () => {
 
     await openPanel(page, patient);
 
-    const accesses = [...(await collectAccesses(page)), ...(await patientOwnAccesses(page))];
+    const accesses = await collectAccesses(page);
     expect(accesses.length, 'el paciente no vio ni un acceso en el panel').toBeGreaterThan(0);
 
     await sweep(page, 'patient', accesses);

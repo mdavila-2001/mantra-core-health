@@ -21,6 +21,8 @@ import { Chip } from '@shared/components/atoms/chip/chip';
 import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
+import { FormField } from '@shared/components/molecules/form-field/form-field';
+import { BodyMap, type ZonaElegible } from '@shared/components/organisms/body-map/body-map';
 
 import {
   enumerar,
@@ -36,6 +38,7 @@ import {
   type Sintoma,
   TODOS_LOS_SINTOMAS,
 } from './sintomas';
+import { Dictado } from './dictado';
 import { ultimaFrase } from './texto';
 
 /** Tope por página del listado de profesionales. */
@@ -93,8 +96,10 @@ const VACIO: ReadonlyMap<string, string> = new Map();
  */
 @Component({
   selector: 'app-symptom-check',
-  imports: [Alert, AppButton, Card, Chip, RouterLink, Textarea],
+  imports: [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink, Textarea],
   templateUrl: './symptom-check.html',
+  // El dictado vive y muere con la pantalla: ver `Dictado`.
+  providers: [Dictado],
   styleUrl: './symptom-check.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -103,6 +108,7 @@ export class SymptomCheck {
   private readonly publico = inject(PublicDirectoryClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly router = inject(Router);
+  protected readonly dictado = inject(Dictado);
 
   constructor() {
     /* El índice del motor se arma la primera vez que se lo usa, y armarlo
@@ -284,6 +290,29 @@ export class SymptomCheck {
     this.zonaAbierta.update((previa) => (previa === zona.id ? null : zona.id));
   }
 
+  /**
+   * Las zonas tal como las entiende la silueta: `id` y nombre, nada más.
+   *
+   * La figura no conoce síntomas ni especialidades (ver `BodyMap`): se le da
+   * lo justo para dibujar y nombrar, y devuelve un `id`. Las que no tienen
+   * forma («piel», «ánimo», «general») viajan igual y la silueta las ignora:
+   * siguen en las pastillas.
+   */
+  protected readonly zonasParaLaSilueta = computed<readonly ZonaElegible[]>(() =>
+    this.zonas().map(({ id, nombre }) => ({ id, nombre })),
+  );
+
+  /**
+   * La silueta y las pastillas son dos puertas al **mismo** estado (P-01,
+   * doctor 22/09/2026): tocar el pecho en la figura abre lo mismo que tocar la
+   * pastilla «Pecho», y la figura resalta la zona que se abrió desde la
+   * pastilla. La silueta ya resuelve el alternar (volver a tocar suelta), así
+   * que acá sólo se copia lo que devuelve.
+   */
+  protected elegirZonaDesdeLaSilueta(id: string | null): void {
+    this.zonaAbierta.set(id);
+  }
+
   /** Si un síntoma ya está elegido, para pintarlo distinto. */
   protected estaElegido(sintoma: Sintoma): boolean {
     return this.sintomas().some((s) => s.id === sintoma.id);
@@ -303,6 +332,26 @@ export class SymptomCheck {
     if (valor.trim() !== '') {
       this.haceFalta.set(true);
     }
+  }
+
+  /**
+   * Dictar o dejar de dictar (P-02): un solo botón que alterna.
+   *
+   * Lo dictado **se agrega al final** de lo que ya había, con un espacio: la
+   * persona pudo haber empezado a escribir y seguir hablando, y pisarle el
+   * texto sería perderle lo que cargó (regla 95.3.3). Pasa por `escribir`
+   * como si lo hubiera tecleado: mismo reconocimiento, misma alarma, mismo
+   * pedido del catálogo.
+   */
+  protected alternarDictado(): void {
+    if (this.dictado.escuchando()) {
+      this.dictado.detener();
+      return;
+    }
+    this.dictado.empezar((final) => {
+      const previo = this.texto().trimEnd();
+      this.escribir(previo === '' ? final : `${previo} ${final}`);
+    });
   }
 
   /** Quita un chip. Un falso positivo no puede quedar atrapado. */

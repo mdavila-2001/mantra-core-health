@@ -3,6 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
+import { RECONOCEDOR_DE_VOZ } from './dictado';
+import type { EventoDeErrorDeVoz, EventoDeResultadoDeVoz, ReconocedorDeVoz } from './dictado.types';
 import { SymptomCheck } from './symptom-check';
 
 /**
@@ -120,5 +122,256 @@ describe('SymptomCheck · a dónde lleva «ver quién atiende»', () => {
     expect(navegar).toHaveBeenCalledWith(['/directory'], {
       queryParams: { q: 'Reumatología' },
     });
+  });
+});
+
+/**
+ * La silueta del cuerpo (P-01, doctor 22/09/2026) y las pastillas son dos
+ * puertas al mismo estado: lo que se abre desde la figura es lo mismo que se
+ * abre desde la pastilla, y la alarma sigue viva venga de donde venga.
+ *
+ * Nada de esto escribe en el área de texto, así que no se pide el catálogo:
+ * el `http.verify()` de abajo es la prueba de que la figura no dispara red.
+ */
+describe('SymptomCheck · la silueta', () => {
+  let fixture: ReturnType<typeof TestBed.createComponent<SymptomCheck>>;
+  let html: HTMLElement;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(SymptomCheck);
+    fixture.detectChanges();
+    html = fixture.nativeElement as HTMLElement;
+  });
+
+  afterEach(() => http.verify());
+
+  function tocar(testId: string): void {
+    const control = html.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
+    if (control === null) throw new Error(`no está ${testId}`);
+    control.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    fixture.detectChanges();
+  }
+
+  function presionada(testId: string): string | null {
+    return html.querySelector(`[data-testid="${testId}"]`)?.getAttribute('aria-pressed') ?? null;
+  }
+
+  it('tocar el pecho en la figura abre sus síntomas', () => {
+    tocar('body-map-pecho');
+
+    expect(html.querySelector('[data-testid="zona-abierta"]')?.textContent).toContain(
+      'dolor de pecho',
+    );
+  });
+
+  it('tocar una pastilla resalta esa zona en la figura', () => {
+    tocar('zona-panza');
+
+    expect(presionada('body-map-panza')).toBe('true');
+    expect(presionada('body-map-pecho')).toBe('false');
+  });
+
+  it('volver a tocar la zona en la figura la cierra', () => {
+    tocar('body-map-pecho');
+    tocar('body-map-pecho');
+
+    expect(html.querySelector('[data-testid="zona-abierta"]')).toBeNull();
+  });
+
+  /** La alarma es el único camino que no puede romperse: el aviso de urgencia sigue saliendo. */
+  it('un síntoma de alarma elegido desde la figura sigue disparando el aviso', () => {
+    tocar('body-map-pecho');
+    const opcion = Array.from(
+      html.querySelectorAll<HTMLButtonElement>('[data-testid="zona-abierta"] button'),
+    ).find((boton) => boton.textContent?.trim() === 'dolor de pecho');
+    if (opcion === undefined) throw new Error('no está «dolor de pecho»');
+
+    opcion.click();
+    fixture.detectChanges();
+
+    expect(html.querySelector('app-alert')?.textContent).toContain('guardia');
+  });
+
+  /** Las pastillas se conservan: son el camino de «piel», «ánimo» y «general», que no tienen forma. */
+  it('las pastillas siguen estando, incluidas las que no tienen forma', () => {
+    expect(html.querySelector('[data-testid="zona-piel"]')).not.toBeNull();
+    expect(html.querySelector('[data-testid="body-map-piel"]')).toBeNull();
+  });
+});
+
+/**
+ * El área de texto es un panel a la vista (P-02, doctor 22/09/2026): no hay
+ * nada que desplegar para escribir, y el rótulo está asociado al control.
+ */
+describe('SymptomCheck · el área de texto', () => {
+  let fixture: ReturnType<typeof TestBed.createComponent<SymptomCheck>>;
+  let html: HTMLElement;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(SymptomCheck);
+    fixture.detectChanges();
+    html = fixture.nativeElement as HTMLElement;
+  });
+
+  afterEach(() => http.verify());
+
+  function area(): HTMLTextAreaElement {
+    const control = html.querySelector<HTMLTextAreaElement>(
+      '[data-testid="sintomas-texto"] textarea',
+    );
+    if (control === null) throw new Error('no está el área de texto');
+    return control;
+  }
+
+  it('se ve sin desplegar nada, con su rótulo asociado al control', () => {
+    expect(html.querySelector('details')).toBeNull();
+
+    const rotulo = html.querySelector<HTMLLabelElement>(`label[for="${area().id}"]`);
+    expect(rotulo?.textContent).toContain('Contanos con tus palabras');
+  });
+
+  it('lo que se escribe llega a `texto()`', () => {
+    const control = area();
+    control.value = 'me duele la cabeza';
+    control.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+
+    expect((fixture.componentInstance as unknown as { texto(): string }).texto()).toBe(
+      'me duele la cabeza',
+    );
+    // Escribir pide el catálogo de especialidades —es lo previsto—; se lo da
+    // por atendido para que `verify()` no lo cuente como una petición olvidada.
+    http.match(() => true);
+  });
+});
+
+/**
+ * Dictar (P-02, Q-12), con un doble del reconocedor en los tres niveles de
+ * la regla 65: con soporte y una frase que llega al texto; sin soporte, sin
+ * botón; y el error de permiso con su frase accionable. La prueba contra el
+ * reconocedor real está en `evidencia/h3/dictado/`, no acá.
+ */
+describe('SymptomCheck · dictar', () => {
+  class ReconocedorDoble implements ReconocedorDeVoz {
+    static ultimo: ReconocedorDoble | null = null;
+    lang = '';
+    continuous = false;
+    interimResults = false;
+    onresult: ((evento: EventoDeResultadoDeVoz) => void) | null = null;
+    onerror: ((evento: EventoDeErrorDeVoz) => void) | null = null;
+    onend: (() => void) | null = null;
+    constructor() {
+      ReconocedorDoble.ultimo = this;
+    }
+    start(): void {
+      // el doble no escucha: los resultados se disparan a mano
+    }
+    stop(): void {
+      this.onend?.();
+    }
+    abort(): void {
+      this.onend?.();
+    }
+  }
+
+  let fixture: ReturnType<typeof TestBed.createComponent<SymptomCheck>>;
+  let html: HTMLElement;
+  let http: HttpTestingController;
+
+  function montar(constructor: (new () => ReconocedorDeVoz) | null): void {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: RECONOCEDOR_DE_VOZ, useValue: constructor },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(SymptomCheck);
+    fixture.detectChanges();
+    html = fixture.nativeElement as HTMLElement;
+  }
+
+  afterEach(() => http.verify());
+
+  function boton(): HTMLButtonElement {
+    const control = html.querySelector<HTMLButtonElement>('[data-testid="sintomas-dictar"]');
+    if (control === null) throw new Error('no está el botón de dictar');
+    return control;
+  }
+
+  function fraseFinal(texto: string): EventoDeResultadoDeVoz {
+    const results = [Object.assign([{ transcript: texto, confidence: 1 }], { isFinal: true })];
+    return { resultIndex: 0, results: results as unknown as SpeechRecognitionResultList };
+  }
+
+  it('sin reconocedor en el navegador no ofrece el botón, y el área de texto sigue', () => {
+    montar(null);
+
+    expect(html.querySelector('[data-testid="sintomas-dictado"]')).toBeNull();
+    expect(html.querySelector('[data-testid="sintomas-texto"] textarea')).not.toBeNull();
+  });
+
+  it('con reconocedor ofrece «Dictar» con ícono y texto, y el aviso antes', () => {
+    montar(ReconocedorDoble);
+
+    expect(boton().textContent).toContain('Dictar');
+    expect(boton().querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+    const aviso = html.querySelector('#sintomas-dictado-aviso');
+    expect(aviso?.textContent).toContain('lo transcribe tu navegador; no lo guardamos');
+    expect(boton().getAttribute('aria-describedby')).toBe('sintomas-dictado-aviso');
+    // El aviso está ANTES del botón en el DOM: el botón «sigue» al aviso.
+    const posicion = aviso?.compareDocumentPosition(boton()) ?? 0;
+    expect(posicion & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+  });
+
+  it('lo dictado se agrega al final de lo escrito, sin pisarlo', () => {
+    montar(ReconocedorDoble);
+    (fixture.componentInstance as unknown as { escribir(v: string): void }).escribir(
+      'me duele la cabeza',
+    );
+    fixture.detectChanges();
+
+    boton().click();
+    fixture.detectChanges();
+    expect(boton().textContent).toContain('Detener');
+    expect(html.querySelector('[data-testid="sintomas-dictado-estado"]')?.textContent).toContain(
+      'Escuchando',
+    );
+
+    ReconocedorDoble.ultimo?.onresult?.(fraseFinal('y tengo tos'));
+    fixture.detectChanges();
+
+    expect((fixture.componentInstance as unknown as { texto(): string }).texto()).toBe(
+      'me duele la cabeza y tengo tos',
+    );
+    // Escribir pide el catálogo, como al teclear: se lo da por atendido.
+    http.match(() => true);
+  });
+
+  it('sin permiso de micrófono dice qué hacer', () => {
+    montar(ReconocedorDoble);
+    boton().click();
+    fixture.detectChanges();
+
+    ReconocedorDoble.ultimo?.onerror?.({ error: 'not-allowed' });
+    ReconocedorDoble.ultimo?.onend?.();
+    fixture.detectChanges();
+
+    expect(html.querySelector('[data-testid="sintomas-dictado-estado"]')?.textContent).toContain(
+      'Activá el micrófono en el navegador o escribí',
+    );
+    expect(boton().textContent).toContain('Dictar');
   });
 });

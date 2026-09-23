@@ -188,8 +188,8 @@ describe('ShellLayout', () => {
       // Las órdenes propias, la otra mitad del mismo circuito. Tampoco exigen
       // rol: el filtro real es tener perfil de paciente.
       '/my-account/diagnostic-orders',
-      // Cotizaciones (N-02, Justin, 2026-09-22): comparar referencias de
-      // precio y cercanía, `roles: [ANY_ROLE]` — tampoco exige rol.
+      // Cotizaciones comparte el bloque de datos clínicos del paciente: se
+      // consulta después de ver las órdenes y antes de los cuestionarios.
       '/my-account/cotizaciones',
       // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
       // perfil de paciente, que es un dato de la cuenta y no un rol.
@@ -458,11 +458,6 @@ describe('ShellLayout', () => {
             '/my-account/medical-record',
             '/my-account/diagnostic-results',
             '/my-account/diagnostic-orders',
-            // Cotizaciones (N-02, Justin, 2026-09-22) se registró justo acá,
-            // entre las órdenes y los cuestionarios — no es clínica, pero
-            // «seguidas» sólo comprueba que nada se metió en el medio del
-            // registro; si se moviera la entrada de lugar, esta prueba tiene
-            // que volver a decirlo.
             '/my-account/cotizaciones',
             '/my-account/questionnaires',
           ]),
