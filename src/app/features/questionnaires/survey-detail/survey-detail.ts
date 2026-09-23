@@ -133,8 +133,47 @@ export class SurveyDetailScreen {
   /** Los datos cuando los hay. La unión de estados no se indexa desde la plantilla. */
   protected readonly encuesta = computed(() => dataOf(this.estado()));
 
-  protected readonly respuestas = signal<readonly SurveyResponse[]>([]);
-  protected readonly cargandoRespuestas = signal(false);
+  /**
+   * Lo recogido, **como estado de vista y no como una lista suelta**.
+   *
+   * Leer respuestas es un permiso aparte de componer la encuesta y de
+   * publicarla (`surveys-forms.handlers.ts`, las tres capacidades), así que
+   * `GET /surveys/templates/:id/responses` puede volver 403 sobre una encuesta
+   * que la sesión sí puede abrir y corregir. Antes ese 403 se tragaba en
+   * silencio y la lista quedaba vacía: la pantalla decía «todavía no respondió
+   * nadie» —que es una afirmación sobre los datos— cuando lo cierto era que no
+   * había permiso para saberlo. Son dos cosas distintas y ahora se distinguen
+   * por `status`, con la misma traducción que el resto de la aplicación
+   * (`errorToViewState`).
+   */
+  protected readonly estadoRespuestas = signal<ViewState<readonly SurveyResponse[]>>(ready([]));
+
+  /** Las respuestas cuando las hay. Vacío en todo estado que no las transporta. */
+  protected readonly respuestas = computed(() => dataOf(this.estadoRespuestas()) ?? []);
+
+  protected readonly cargandoRespuestas = computed(
+    () => this.estadoRespuestas().status === 'loading',
+  );
+
+  /** S5 sobre lo recogido: hay encuesta, pero este rol no puede leer respuestas. */
+  protected readonly respuestasProhibidas = computed(
+    () => this.estadoRespuestas().status === 'forbidden',
+  );
+
+  /**
+   * El motivo del 403, tal como lo dio el servidor, para pintarlo en el muro.
+   *
+   * El respaldo es el mismo texto que usa `app-view-state-host` para S5: un 403
+   * sin mensaje no puede quedar como un bloque en blanco, que se leería como
+   * «no hay nada» —justo la confusión que esta pantalla evita—.
+   */
+  protected readonly motivoRespuestasProhibidas = computed(() => {
+    const actual = this.estadoRespuestas();
+    return actual.status === 'forbidden'
+      ? (actual.message ??
+          'Tu rol o el propósito de uso declarado no alcanzan para ver este contenido.')
+      : '';
+  });
 
   /** Si ya hay respuestas suficientes para un agregado o un CSV sin poner en riesgo el anonimato (D-13). */
   protected readonly suficientesRespuestas = computed(
@@ -156,7 +195,7 @@ export class SurveyDetailScreen {
 
   /* -- el editor del cuestionario ------------------------------------------ */
 
-  /** La pregunta abierta para editar, o `null` si están todas plegadas. */
+  /** La pregunta cuyo modal de edición está abierto, o `null` si no hay ninguno. */
   protected readonly preguntaAbierta = signal<string | null>(null);
 
   /** El id de la pregunta con una petición en vuelo, para su botón. */
@@ -206,31 +245,38 @@ export class SurveyDetailScreen {
     this.surveys.getSurvey(this.surveyId).subscribe({
       next: (encuesta) => {
         this.estado.set(ready(encuesta));
+        // Sin publicar no hay nada recogido que pedir, y el estado vuelve a
+        // cero: un 403 de una lectura anterior no puede quedar pegado a una
+        // encuesta que ya no consulta respuestas.
         if (encuesta.published) this.cargarRespuestas();
+        else this.estadoRespuestas.set(ready([]));
       },
       error: (error: unknown) => this.estado.set(errorToViewState(error)),
     });
   }
 
-  /** Trae las respuestas recibidas. */
+  /**
+   * Trae las respuestas recibidas.
+   *
+   * El fallo se guarda **en su propio estado** y no en el de la ficha: el
+   * cuestionario sigue siendo legible y editable aunque lo recogido no haya
+   * llegado, y volcar un 403 de respuestas sobre `estado` convertiría la
+   * pantalla entera en un muro para quien sí puede corregirla. Lo que ya no
+   * pasa es que el fallo se pierda: un 403 queda como S5, un 404 como S6 y
+   * cualquier otro como S9, y ninguno de los tres se confunde con «no hay
+   * respuestas».
+   */
   protected cargarRespuestas(): void {
-    this.cargandoRespuestas.set(true);
+    this.estadoRespuestas.set(loading());
     this.surveys.listResponses(this.surveyId).subscribe({
-      next: (recibidas) => {
-        this.respuestas.set(recibidas);
-        this.cargandoRespuestas.set(false);
-      },
-      error: () => {
-        // Un fallo acá no debe tapar la ficha: el cuestionario sigue siendo
-        // legible y editable aunque las respuestas no hayan llegado.
-        this.cargandoRespuestas.set(false);
-      },
+      next: (recibidas) => this.estadoRespuestas.set(ready(recibidas)),
+      error: (error: unknown) => this.estadoRespuestas.set(errorToViewState(error)),
     });
   }
 
   /* -- el editor del cuestionario ------------------------------------------ */
 
-  /** Abre una pregunta para editarla. Sólo una a la vez. */
+  /** Abre el modal de edición de una pregunta. Sólo uno a la vez. */
   protected abrirPregunta(questionId: string): void {
     this.preguntaAbierta.set(questionId);
   }
@@ -239,18 +285,17 @@ export class SurveyDetailScreen {
     this.preguntaAbierta.set(null);
   }
 
-  /** Alterna entre el editor y la vista previa, plegando lo que estuviera abierto. */
+  /** Alterna entre el editor y la vista previa, cerrando el modal que estuviera abierto. */
   protected alternarPrevia(): void {
     this.preguntaAbierta.set(null);
     this.enPrevia.update((activa) => !activa);
   }
 
   /**
-   * Agrega una pregunta vacía **y la abre**.
+   * Agrega una pregunta vacía **y abre su modal**.
    *
-   * Vacía y no con un formulario aparte que la componga: es lo que hace un
-   * editor —aparece la fila y se escribe encima— y lo que deja insertarla sin
-   * decidir de antemano su tipo. El enunciado provisional lo pide el backend,
+   * Vacía y no con un formulario aparte que la componga: aparece la fila y su
+   * modal queda abierto para escribirla, sin decidir de antemano su tipo. El enunciado provisional lo pide el backend,
    * que no acepta texto vacío; se reemplaza en cuanto se escribe el de verdad.
    */
   protected agregarPregunta(): void {
@@ -334,7 +379,7 @@ export class SurveyDetailScreen {
     });
   }
 
-  /** Recarga la encuesta y deja abierta la pregunta indicada. */
+  /** Recarga la encuesta y deja abierto el modal de la pregunta indicada. */
   private recargarYAbrir(questionId: string): void {
     this.surveys.getSurvey(this.surveyId).subscribe({
       next: (encuesta) => {

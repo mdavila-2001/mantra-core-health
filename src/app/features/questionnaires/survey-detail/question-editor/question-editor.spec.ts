@@ -1,7 +1,55 @@
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import type { SurveyQuestion } from '@core/data-access/surveys/surveys.types';
+import type { SurveyQuestion, SurveyQuestionEdit } from '@core/data-access/surveys/surveys.types';
+import { DialogService } from '@shared/components/molecules/dialog/dialog-service';
+import type { DialogConfig } from '@shared/components/molecules/dialog/dialog.types';
 import { QuestionEditor } from './question-editor';
+
+/** Diálogo falso: el descarte se decide en la prueba, no en el navegador. */
+class DialogServiceFalso {
+  respuesta = true;
+  readonly pedidos: DialogConfig[] = [];
+
+  confirm(config: DialogConfig): Promise<boolean> {
+    this.pedidos.push(config);
+    return Promise.resolve(this.respuesta);
+  }
+}
+
+/**
+ * Una pantalla mínima que usa el editor como lo usa la ficha de la encuesta:
+ * el disparador abre, `cerrar` cierra y `guardar` se anota.
+ *
+ * Hace falta un anfitrión —y no el componente suelto— para dos cosas que sólo
+ * existen si el modal se abre **desde un botón real**: que el foco vuelva a
+ * quien lo abrió, y que cancelar no emita nada hacia arriba.
+ */
+@Component({
+  imports: [QuestionEditor],
+  template: `
+    <app-question-editor
+      [pregunta]="pregunta()"
+      [abierta]="abierta()"
+      (abrir)="abierta.set(true)"
+      (cerrar)="abierta.set(false)"
+      (guardar)="guardados.push($event)"
+    />
+  `,
+})
+class Anfitrion {
+  readonly pregunta = signal<SurveyQuestion>({
+    id: 'q-1',
+    position: 1,
+    questionText: '¿Cómo calificarías la atención?',
+    answerType: 'SCALE',
+    required: true,
+    scaleMin: 1,
+    scaleMax: 5,
+  });
+  readonly abierta = signal(false);
+  readonly guardados: SurveyQuestionEdit[] = [];
+}
 
 /**
  * El editor de una pregunta.
@@ -10,9 +58,25 @@ import { QuestionEditor } from './question-editor';
  * validación, y que el emitido lleve sólo las claves que el tipo admite. Lo
  * segundo es lo que el backend rechaza con 400 si se hace mal, y el fallo no se
  * ve hasta que alguien cambia el tipo de una pregunta ya escrita.
+ *
+ * Y se prueba **dónde** se edita: en un modal, nunca desplegado dentro de la
+ * fila. Es el requisito central de la pantalla, así que tiene sus propias
+ * pruebas —el formulario dentro de un `<dialog>`, cancelar sin emitir, el foco
+ * de vuelta en el disparador— y no queda librado a que alguien lo mire.
  */
 describe('QuestionEditor', () => {
   let fixture: ComponentFixture<QuestionEditor>;
+  let dialogs: DialogServiceFalso;
+
+  // El módulo se configura UNA vez, en el `beforeEach` más externo y antes de
+  // cualquier `inject` o `createComponent`: instanciarlo primero deja a Angular
+  // sin poder reconfigurarlo.
+  beforeEach(() => {
+    dialogs = new DialogServiceFalso();
+    TestBed.configureTestingModule({
+      providers: [{ provide: DialogService, useValue: dialogs }],
+    });
+  });
 
   const PREGUNTA: SurveyQuestion = {
     id: 'q-1',
@@ -206,5 +270,188 @@ describe('QuestionEditor', () => {
     interno<() => void>('confirmar')();
 
     expect(emitio).toBe(false);
+  });
+
+  /* -- dónde se edita: el modal --------------------------------------------- */
+
+  describe('la edición se abre en un modal', () => {
+    it('el formulario vive dentro de un <dialog>, no dentro de la fila', () => {
+      const host = montar(PREGUNTA, true);
+
+      const modal = host.querySelector('[data-testid="editor-pregunta-modal"]');
+      expect(modal, 'falta el modal de edición').not.toBeNull();
+      // Un `<dialog>` y no un bloque cualquiera: el fondo, la inertización de
+      // lo de atrás y la trampa de foco son del elemento nativo.
+      expect(modal!.querySelector('dialog')).not.toBeNull();
+      expect(modal!.querySelector('[data-testid="editor-texto"]')).not.toBeNull();
+
+      const fila = host.querySelector('.editor-pregunta__fila');
+      expect(fila!.querySelector('[data-testid="editor-texto"]')).toBeNull();
+      expect(fila!.querySelector('[data-testid="editor-guardar"]')).toBeNull();
+    });
+
+    it('cerrada, la fila trae el disparador y ningún campo del formulario', () => {
+      const host = montar(PREGUNTA, false);
+
+      expect(host.querySelector('[data-testid="editor-pregunta-abrir"]')).not.toBeNull();
+      expect(host.querySelector('[data-testid="editor-pregunta-modal"]')).toBeNull();
+      expect(host.querySelector('[data-testid="editor-texto"]')).toBeNull();
+    });
+
+    it('la fila se lee con aspecto de formulario, y ningún control se puede editar', () => {
+      const host = montar(
+        { ...PREGUNTA, answerType: 'SINGLE_CHOICE', options: ['Sí', 'No'] },
+        false,
+      );
+
+      const muestra = host.querySelectorAll<HTMLInputElement>('.editor-pregunta__vista input');
+      expect(muestra.length, 'la fila no muestra ningún control').toBeGreaterThan(0);
+      for (const control of muestra) {
+        expect(control.disabled, 'un control de la fila se puede editar').toBe(true);
+      }
+    });
+  });
+
+  describe('el modal, abierto desde su disparador', () => {
+    let anfitrion: ComponentFixture<Anfitrion>;
+
+    function raiz(): HTMLElement {
+      return anfitrion.nativeElement as HTMLElement;
+    }
+
+    function disparador(): HTMLButtonElement {
+      const boton = raiz().querySelector('[data-testid="editor-pregunta-abrir"]');
+      if (!(boton instanceof HTMLButtonElement)) {
+        throw new Error('falta el botón que abre el modal');
+      }
+      return boton;
+    }
+
+    function modal(): HTMLElement | null {
+      return raiz().querySelector('[data-testid="editor-pregunta-modal"]');
+    }
+
+    function botonDelModal(testid: string): HTMLButtonElement {
+      const boton = modal()?.querySelector(`[data-testid="${testid}"]`);
+      if (!(boton instanceof HTMLButtonElement)) {
+        throw new Error(`falta el botón ${testid}`);
+      }
+      return boton;
+    }
+
+    function botonPorTexto(texto: string): HTMLButtonElement {
+      const botones = Array.from(modal()?.querySelectorAll('button') ?? []);
+      const boton = botones.find((b) => b.textContent?.trim() === texto);
+      if (!(boton instanceof HTMLButtonElement)) {
+        throw new Error(`falta el botón «${texto}»`);
+      }
+      return boton;
+    }
+
+    /** Escribe en el campo del enunciado como escribe una persona. */
+    function escribir(valor: string): void {
+      const campo = modal()?.querySelector('[data-testid="editor-texto"] input');
+      if (!(campo instanceof HTMLInputElement)) {
+        throw new Error('falta el campo del enunciado');
+      }
+      campo.value = valor;
+      campo.dispatchEvent(new Event('input'));
+    }
+
+    async function abrir(): Promise<void> {
+      disparador().focus();
+      disparador().click();
+      await anfitrion.whenStable();
+    }
+
+    beforeEach(async () => {
+      anfitrion = TestBed.createComponent(Anfitrion);
+      await anfitrion.whenStable();
+    });
+
+    it('el disparador abre el modal', async () => {
+      expect(modal()).toBeNull();
+
+      await abrir();
+
+      expect(modal()).not.toBeNull();
+    });
+
+    it('escribir en el modal no toca la pregunta hasta guardar', async () => {
+      await abrir();
+      escribir('Otro enunciado');
+      await anfitrion.whenStable();
+
+      expect(anfitrion.componentInstance.guardados).toHaveLength(0);
+      expect(anfitrion.componentInstance.pregunta().questionText).toBe(
+        '¿Cómo calificarías la atención?',
+      );
+    });
+
+    it('cancelar no emite ningún guardado y descarta lo escrito', async () => {
+      await abrir();
+      escribir('Otro enunciado');
+      await anfitrion.whenStable();
+
+      botonPorTexto('Cancelar').click();
+      await anfitrion.whenStable();
+
+      // Con algo escrito, cerrar pregunta antes de tirarlo.
+      expect(dialogs.pedidos).toHaveLength(1);
+      expect(anfitrion.componentInstance.guardados).toHaveLength(0);
+      expect(modal()).toBeNull();
+
+      // Y al volver a abrir está lo guardado, no lo que se descartó.
+      await abrir();
+      const campo = modal()?.querySelector<HTMLInputElement>('[data-testid="editor-texto"] input');
+      expect(campo?.value).toBe('¿Cómo calificarías la atención?');
+    });
+
+    it('si el descarte se rechaza, el modal sigue abierto y no se emitió nada', async () => {
+      dialogs.respuesta = false;
+      await abrir();
+      escribir('Otro enunciado');
+      await anfitrion.whenStable();
+
+      botonPorTexto('Cancelar').click();
+      await anfitrion.whenStable();
+
+      expect(modal()).not.toBeNull();
+      expect(anfitrion.componentInstance.guardados).toHaveLength(0);
+    });
+
+    it('cancelar devuelve el foco a quien abrió el modal', async () => {
+      await abrir();
+
+      botonPorTexto('Cancelar').click();
+      await anfitrion.whenStable();
+
+      expect(document.activeElement).toBe(disparador());
+    });
+
+    it('guardar emite una sola vez, cierra el modal y devuelve el foco', async () => {
+      await abrir();
+      escribir('Otro enunciado');
+      await anfitrion.whenStable();
+
+      botonDelModal('editor-guardar').click();
+      await anfitrion.whenStable();
+
+      expect(anfitrion.componentInstance.guardados).toHaveLength(1);
+      expect(anfitrion.componentInstance.guardados[0]!.questionText).toBe('Otro enunciado');
+      expect(modal()).toBeNull();
+      expect(document.activeElement).toBe(disparador());
+    });
+
+    it('guardar no pregunta si quiero descartar lo que acabo de confirmar', async () => {
+      await abrir();
+      escribir('Otro enunciado');
+      await anfitrion.whenStable();
+
+      botonDelModal('editor-guardar').click();
+      await anfitrion.whenStable();
+
+      expect(dialogs.pedidos).toHaveLength(0);
+    });
   });
 });

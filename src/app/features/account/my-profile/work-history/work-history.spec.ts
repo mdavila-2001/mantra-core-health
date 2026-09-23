@@ -7,6 +7,7 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { maybeDateOnly } from '../../../../core/data-access/wire';
 import { BoMunicipalitiesCatalog } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
@@ -1918,6 +1919,218 @@ describe('WorkHistory — el historial como tabla, doble local (H4.S3, regla 65)
     );
     expect(filtrado).toHaveLength(1);
     expect(filtrado[0].organizationName).toBe('Clínica del Sur');
+    http.verify();
+  });
+});
+
+/**
+ * Una afiliación ya mapeada al dominio: es lo que el componente recibe de la
+ * lista, con las fechas como `Date`. `enCable` es la forma del transporte y no
+ * sirve para alimentar al formulario —el date-picker pide un `Date`—.
+ *
+ * @param over - Lo que cambia respecto del vínculo de ejemplo.
+ */
+const enDominio = (over: Record<string, unknown> = {}) => {
+  const { startDate, endDate, createdAt, ...resto } = enCable(over);
+  // El mismo `maybeDateOnly` que usa `toAffiliation`, y no `new Date(texto)`:
+  // el constructor lee «2020-03-01» como medianoche UTC y en Bolivia eso es el
+  // día anterior. La prueba tiene que recibir lo que recibe la pantalla.
+  return {
+    ...resto,
+    startDate: maybeDateOnly(String(startDate)) ?? new Date(NaN),
+    endDate: endDate === null ? null : (maybeDateOnly(String(endDate)) ?? null),
+    createdAt: new Date(String(createdAt)),
+  };
+};
+
+/**
+ * Monta el bloque con un vínculo ya en la lista y el diálogo bajo control.
+ *
+ * @param afiliacion - El vínculo que devuelve el `GET`, tal como llega por el cable.
+ * @param confirmar - Qué contesta el diálogo de confirmación.
+ */
+async function montarConVinculo(
+  afiliacion: Record<string, unknown>,
+  confirmar = true,
+  layout: 'flat' | 'timeline' = 'flat',
+) {
+  const dialogs = { confirm: vi.fn(async () => confirmar) };
+  await TestBed.configureTestingModule({
+    deferBlockBehavior: DeferBlockBehavior.Manual,
+    imports: [WorkHistory],
+    providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
+      provideRouter([]),
+      { provide: AuthService, useValue: { practitionerProfileId: signal('prac-1') } },
+      { provide: DialogService, useValue: dialogs },
+    ],
+  }).compileComponents();
+
+  const fixture: ComponentFixture<WorkHistory> = TestBed.createComponent(WorkHistory);
+  fixture.componentRef.setInput('layout', layout);
+  fixture.detectChanges();
+  const http = TestBed.inject(HttpTestingController);
+  http.expectOne(AFILIACIONES).flush({ items: [afiliacion], count: 1 });
+  http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
+  fixture.detectChanges();
+  return { fixture, http, dialogs };
+}
+
+describe('WorkHistory — corregir y retirar un vínculo laboral', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  /**
+   * Quién puede tocar qué. Es la regla que sostiene todo lo demás: un sello lo
+   * pone una organización, y que el profesional pueda reescribir por detrás lo
+   * que alguien ya confirmó convierte el sello en una mentira.
+   */
+  it('sólo deja corregir lo declarado, y retirar además lo que nadie contestó', async () => {
+    const { fixture, http } = await montarConVinculo(enCable({ statusKind: 'declarado' }));
+    const componente = api(fixture);
+
+    const puedeCorregirse = (kind: string) =>
+      componente['puedeCorregirse'](enDominio({ statusKind: kind }) as never) as boolean;
+    const puedeRetirarse = (kind: string) =>
+      componente['puedeRetirarse'](enDominio({ statusKind: kind }) as never) as boolean;
+
+    expect(puedeCorregirse('declarado')).toBe(true);
+    expect(puedeCorregirse('pendiente')).toBe(false);
+    expect(puedeCorregirse('aprobado')).toBe(false);
+    expect(puedeCorregirse('rechazado')).toBe(false);
+    expect(puedeCorregirse('revocado')).toBe(false);
+
+    // Retirar una solicitud que nadie contestó es arrepentirse a tiempo; lo ya
+    // decidido por una organización queda.
+    expect(puedeRetirarse('declarado')).toBe(true);
+    expect(puedeRetirarse('pendiente')).toBe(true);
+    expect(puedeRetirarse('aprobado')).toBe(false);
+    expect(puedeRetirarse('rechazado')).toBe(false);
+
+    http.verify();
+  });
+
+  it('el renglón de un vínculo aprobado no ofrece ni corregir ni retirar', async () => {
+    const { fixture, http } = await montarConVinculo(enCable({ statusKind: 'aprobado' }));
+
+    const raiz: HTMLElement = fixture.nativeElement;
+    expect(raiz.querySelector('[data-testid="vinculo-editar"]')).toBeNull();
+    expect(raiz.querySelector('[data-testid="vinculo-retirar"]')).toBeNull();
+
+    http.verify();
+  });
+
+  it('corrige con un PATCH y manda el fin vacío como null, para volver a ponerlo en curso', async () => {
+    const { fixture, http } = await montarConVinculo(
+      enCable({ statusKind: 'declarado', endDate: '2023-12-31', current: false }),
+    );
+    const componente = api(fixture);
+
+    componente['abrirEdicionDeVinculo'](
+      enDominio({ statusKind: 'declarado', endDate: '2023-12-31' }) as never,
+    );
+    fixture.detectChanges();
+
+    // El fin se vacía a mano: es el gesto de «seguís ejerciendo ahí».
+    componente['hasta'].set(null);
+    componente['cargo'].set('Jefa de guardia');
+    componente['guardarVinculo']();
+
+    const req = http.expectOne(
+      (r) => r.url === `${AFILIACIONES}/af-1` && r.method === 'PATCH',
+    );
+    expect(req.request.body).toEqual({
+      organizationName: 'Hospital Obrero N.º 1',
+      roleTitle: 'Jefa de guardia',
+      startDate: '2020-03-01',
+      // El null explícito es lo que el contrato lee como «volvió a estar
+      // vigente». Omitirlo dejaría el cierre puesto por error sin forma de
+      // deshacerse.
+      endDate: null,
+    });
+
+    req.flush(enCable({ endDate: null }));
+    http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+    http.verify();
+  });
+
+  it('corrigiendo no se ofrece la sede: el PATCH no la admite', async () => {
+    const { fixture, http } = await montarConVinculo(enCable({ statusKind: 'declarado' }));
+    const componente = api(fixture);
+
+    componente['abrirEdicionDeVinculo'](enDominio({ statusKind: 'declarado' }) as never);
+    fixture.detectChanges();
+
+    expect(componente['vinculoEnEdicion']()).not.toBeNull();
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).not.toContain('Consultorio de la plataforma');
+    // Y el formulario dice qué se está haciendo, no «Agregar un vínculo».
+    expect(texto).toContain('Corregir «Hospital Obrero N.º 1»');
+
+    http.verify();
+  });
+
+  it('retira con un DELETE, y sólo después de que la persona confirme', async () => {
+    const { fixture, http, dialogs } = await montarConVinculo(
+      enCable({ statusKind: 'declarado' }),
+    );
+    const componente = api(fixture);
+
+    await componente['retirarVinculo'](enDominio({ statusKind: 'declarado' }) as never);
+
+    expect(dialogs.confirm).toHaveBeenCalledOnce();
+    const req = http.expectOne(
+      (r) => r.url === `${AFILIACIONES}/af-1` && r.method === 'DELETE',
+    );
+    req.flush(null);
+    http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+    http.verify();
+  });
+
+  it('si la persona cancela el diálogo, no se borra nada', async () => {
+    const { fixture, http, dialogs } = await montarConVinculo(
+      enCable({ statusKind: 'declarado' }),
+      false,
+    );
+    const componente = api(fixture);
+
+    await componente['retirarVinculo'](enDominio({ statusKind: 'declarado' }) as never);
+
+    expect(dialogs.confirm).toHaveBeenCalledOnce();
+    http.expectNone((r) => r.method === 'DELETE');
+    http.verify();
+  });
+  /**
+   * La razón de ser del bloque: en «Trayectoria» —que es el único lugar donde
+   * el perfil monta este componente— la lista plana está suprimida a propósito,
+   * así que sin este bloque los botones no existirían para nadie.
+   */
+  it('en «Trayectoria» ofrece lo accionable, sin repetir la historia entera', async () => {
+    const { fixture, http } = await montarConVinculo(
+      enCable({ statusKind: 'declarado' }),
+      true,
+      'timeline',
+    );
+
+    const raiz: HTMLElement = fixture.nativeElement;
+    expect(raiz.querySelector('[data-testid="vinculos-editables"]')).not.toBeNull();
+    expect(raiz.querySelector('[data-testid="vinculo-editar"]')).not.toBeNull();
+    expect(raiz.querySelector('[data-testid="vinculo-retirar"]')).not.toBeNull();
+
+    http.verify();
+  });
+
+  it('sin nada que tocar, el bloque no se dibuja', async () => {
+    const { fixture, http } = await montarConVinculo(
+      enCable({ statusKind: 'aprobado' }),
+      true,
+      'timeline',
+    );
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="vinculos-editables"]'),
+    ).toBeNull();
+
     http.verify();
   });
 });
