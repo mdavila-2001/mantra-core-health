@@ -20,6 +20,14 @@ import {
   RegistroAyuda,
   type TarjetaDeAyuda,
 } from '../../../shared/components/organisms/registro-ayuda/registro-ayuda';
+import {
+  MAX_ATTACHMENT_BYTES,
+  SUPPORT_FILE_FORMATS,
+} from '../registro-compartido/credenciales-del-medico';
+import {
+  MENSAJE_CONTRASENA_CORTA,
+  validadoresDeContrasena,
+} from '../registro-compartido/politica-de-contrasena';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
@@ -101,13 +109,10 @@ export type ClaveDeAdjunto =
   | 'poderFile';
 
 /** Formatos que se aceptan. El proceso pide PDF; se acepta la foto del papel. */
-const FORMATOS_DE_RESPALDO = 'application/pdf,image/jpeg,image/png';
+const FORMATOS_DE_RESPALDO = SUPPORT_FILE_FORMATS;
 
-/** Cinco megas, el mismo tope que el alta de profesional. */
-const MAX_BYTES_ADJUNTO = 5 * 1024 * 1024;
-
-/** Mínimo de la contraseña, igual que en las otras altas. */
-const MIN_PASSWORD = 8;
+/** Cinco megas, el mismo tope que el alta de profesional: la misma constante. */
+const MAX_BYTES_ADJUNTO = MAX_ATTACHMENT_BYTES;
 
 const MAX_NOMBRE = 300;
 const MAX_DIRECCION = 300;
@@ -365,7 +370,7 @@ export class RegisterLaboratory {
     // --- la cuenta ---------------------------------------------------------
     password: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
+      validators: [...validadoresDeContrasena],
     }),
   });
 
@@ -652,7 +657,7 @@ export class RegisterLaboratory {
           icono: 'lock' as const,
           autocomplete: 'new-password',
           testId: 'registro-lab-password',
-          mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
+          mensajeDeError: MENSAJE_CONTRASENA_CORTA,
         },
       ],
     },
@@ -695,48 +700,6 @@ export class RegisterLaboratory {
   /** El adjunto guardado en un control, para que la plantilla lo muestre. */
   adjuntoDe(clave: ClaveDeAdjunto): AdjuntoDeclarado | null {
     return this.form.controls[clave].value;
-  }
-
-  /**
-   * Guarda el archivo elegido, si pasa formato y peso.
-   *
-   * Vacía el `<input>` siempre: sin eso, elegir dos veces seguidas el mismo
-   * archivo no dispara `change` la segunda, y quien corrigió un rechazo con el
-   * mismo papel no vería pasar nada.
-   */
-  adjuntar(clave: ClaveDeAdjunto, evento: Event): void {
-    const entrada = evento.target as HTMLInputElement;
-    const archivo = entrada.files?.[0];
-    this.errorAdjunto.set(null);
-    entrada.value = '';
-    if (!archivo) return;
-
-    if (!FORMATOS_DE_RESPALDO.split(',').includes(archivo.type)) {
-      this.errorAdjunto.set('El respaldo tiene que ser un PDF, un JPG o un PNG.');
-      return;
-    }
-    if (archivo.size > MAX_BYTES_ADJUNTO) {
-      this.errorAdjunto.set('El archivo supera el límite de 5 MB.');
-      return;
-    }
-
-    const control = this.form.controls[clave];
-    control.setValue({ archivo: archivo.name, pesoBytes: archivo.size });
-    // Un papel recién adjuntado no puede seguir mostrando «falta este papel».
-    control.markAsTouched();
-  }
-
-  /** Quita el adjunto de un control. */
-  quitarAdjunto(clave: ClaveDeAdjunto): void {
-    this.form.controls[clave].setValue(null);
-    this.errorAdjunto.set(null);
-  }
-
-  /** El peso de un adjunto, en la unidad que se lee de un vistazo. */
-  pesoLegible(bytes: number | null): string {
-    if (bytes === null) return '';
-    const enMegas = bytes / (1024 * 1024);
-    return enMegas >= 1 ? `${enMegas.toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} kB`;
   }
 
   /* --- la ubicación de la central ---------------------------------------- */

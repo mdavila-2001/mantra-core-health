@@ -24,12 +24,6 @@ function archivo(nombre: string, tipo: string, bytes: number): File {
   return { name: nombre, type: tipo, size: bytes } as unknown as File;
 }
 
-/** El evento de un `<input type="file">` al que se le eligió un archivo. */
-function eventoDeArchivo(elegido: File | null): { evento: Event; entrada: { value: string } } {
-  const entrada = { files: elegido === null ? [] : [elegido], value: 'C:\\fakepath\\algo.pdf' };
-  return { evento: { target: entrada } as unknown as Event, entrada };
-}
-
 const PDF = () => archivo('sedes.pdf', 'application/pdf', 120_000);
 
 describe('RegisterLaboratory', () => {
@@ -192,9 +186,7 @@ describe('RegisterLaboratory', () => {
   /* --- los adjuntos ------------------------------------------------------ */
 
   it('guarda el archivo elegido con su nombre y su peso', () => {
-    const { evento } = eventoDeArchivo(PDF());
-
-    component.adjuntar('sedesFile', evento);
+    component.updateAttachment('sedesFile', [PDF()]);
 
     expect(component.adjuntoDe('sedesFile')).toEqual({
       archivo: 'sedes.pdf',
@@ -203,49 +195,20 @@ describe('RegisterLaboratory', () => {
     expect(component.errorAdjunto()).toBeNull();
   });
 
-  it('rechaza lo que no es PDF, JPG o PNG', () => {
-    const { evento } = eventoDeArchivo(archivo('planilla.xlsx', 'application/vnd.ms-excel', 1000));
+  it('quitar un adjunto lo saca', () => {
+    component.updateAttachment('sedesFile', [PDF()]);
 
-    component.adjuntar('sedesFile', evento);
-
-    expect(component.adjuntoDe('sedesFile')).toBeNull();
-    expect(component.errorAdjunto()).toContain('PDF');
-  });
-
-  it('rechaza un archivo de más de 5 MB', () => {
-    const { evento } = eventoDeArchivo(archivo('sedes.pdf', 'application/pdf', 6 * 1024 * 1024));
-
-    component.adjuntar('sedesFile', evento);
-
-    expect(component.adjuntoDe('sedesFile')).toBeNull();
-    expect(component.errorAdjunto()).toContain('5 MB');
-  });
-
-  it('vacía el input después de elegir, para que el mismo archivo se pueda volver a elegir', () => {
-    // Sin esto, quien corrige un rechazo con el mismo papel no ve pasar nada:
-    // el `change` no se dispara dos veces con el mismo valor.
-    const { evento, entrada } = eventoDeArchivo(PDF());
-
-    component.adjuntar('sedesFile', evento);
-
-    expect(entrada.value).toBe('');
-  });
-
-  it('quitar un adjunto lo saca y borra el error anterior', () => {
-    component.adjuntar('sedesFile', eventoDeArchivo(archivo('x.txt', 'text/plain', 10)).evento);
-    component.adjuntar('sedesFile', eventoDeArchivo(PDF()).evento);
-
-    component.quitarAdjunto('sedesFile');
+    component.updateAttachment('sedesFile', []);
 
     expect(component.adjuntoDe('sedesFile')).toBeNull();
     expect(component.errorAdjunto()).toBeNull();
   });
 
-  it('dice el peso en la unidad que se lee de un vistazo', () => {
-    expect(component.pesoLegible(2 * 1024 * 1024)).toBe('2.0 MB');
-    expect(component.pesoLegible(120_000)).toBe('117 kB');
-    expect(component.pesoLegible(null)).toBe('');
-  });
+  // El rechazo por formato y por peso, el vaciado del `<input>` y el peso
+  // legible se probaban acá sobre métodos que ninguna plantilla llamaba desde
+  // que los adjuntos pasaron a `app-file-input`. Esas pruebas se retiraron con
+  // ese código: quien rechaza y quien formatea el peso es la molécula, y lo
+  // prueba su propio spec.
 
   /* --- sucursales -------------------------------------------------------- */
 

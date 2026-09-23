@@ -50,6 +50,10 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import {
+  MENSAJE_CONTRASENA_CORTA,
+  validadoresDeContrasena,
+} from '../registro-compartido/politica-de-contrasena';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import type {
   CampoDeFormulario,
@@ -79,7 +83,6 @@ function fechaIso(fecha: Date): string {
 }
 
 /** Mínimos que exigen los DTO del backend. */
-const MIN_PASSWORD = 8;
 const MIN_DOCUMENTO = 4;
 
 /** Sólo letras, dígitos, punto y guion — el mismo `@Matches` del backend. */
@@ -524,7 +527,7 @@ export class RegisterPatient {
       motherLastName: new FormControl('', { nonNullable: true }),
       password: new FormControl('', {
         nonNullable: true,
-        validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
+        validators: [...validadoresDeContrasena],
       }),
       // **Obligatorio desde la TAREA 03 (AC-03-3).** Invierte una decisión
       // escrita: el correo era opcional a propósito —«podés entrar sin él, con
@@ -1317,7 +1320,7 @@ export class RegisterPatient {
             placeholder: 'Tu contraseña',
             testId: 'registro-password',
             icono: 'lock',
-            mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
+            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
           },
         ],
       },

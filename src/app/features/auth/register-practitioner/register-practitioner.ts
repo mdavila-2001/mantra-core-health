@@ -61,6 +61,10 @@ import {
   MAX_ATTACHMENT_BYTES,
   SUPPORT_FILE_FORMATS,
 } from '../registro-compartido/credenciales-del-medico';
+import {
+  MENSAJE_CONTRASENA_CORTA,
+  validadoresDeContrasena,
+} from '../registro-compartido/politica-de-contrasena';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import type {
   CampoDeFormulario,
@@ -81,9 +85,6 @@ function fechaIso(fecha: Date): string {
   const dia = String(fecha.getDate()).padStart(2, '0');
   return `${anio}-${mes}-${dia}`;
 }
-
-/** Mínimo que exige el DTO del backend. */
-const MIN_PASSWORD = 8;
 
 /** Sólo letras, dígitos, punto y guion — el mismo `@Matches` del backend. */
 const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;
@@ -776,7 +777,7 @@ export class RegisterPractitioner {
     }),
     password: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
+      validators: [...validadoresDeContrasena],
     }),
     // Documento de identidad boliviano. Obligatorio en el alta de profesional:
     // la matrícula habilita a ejercer, pero es la cédula la que ata esa matrícula
@@ -1041,78 +1042,12 @@ export class RegisterPractitioner {
     this.errorAdjunto.set(null);
   }
 
-  /** Adjunta el archivo elegido a un título, o avisa por qué no se pudo. */
-  adjuntarArchivoATitulo(id: string, evento: Event): void {
-    const archivo = this.archivoValidado(evento);
-    if (archivo === null) return;
-    this.titulos.update((titulos) =>
-      titulos.map((titulo) =>
-        titulo.id === id
-          ? { ...titulo, archivo: archivo.archivo, pesoBytes: archivo.pesoBytes }
-          : titulo,
-      ),
-    );
-  }
-
-  /** Quita el adjunto de un título sin borrar la fila. */
-  quitarArchivoDeTitulo(id: string): void {
-    this.titulos.update((titulos) =>
-      titulos.map((titulo) =>
-        titulo.id === id ? { ...titulo, archivo: null, pesoBytes: null } : titulo,
-      ),
-    );
-  }
-
-  /** Adjunta el respaldo de la matrícula o el del SEDES. */
-  adjuntarRespaldo(cual: ClaveDeRespaldo, evento: Event): void {
-    const archivo = this.archivoValidado(evento);
-    if (archivo === null) return;
-    this.destinoDelRespaldo(cual).set(archivo);
-  }
-
-  /** Quita el respaldo de la matrícula o el del SEDES. */
-  quitarRespaldo(cual: ClaveDeRespaldo): void {
-    this.destinoDelRespaldo(cual).set(null);
-    this.errorAdjunto.set(null);
-  }
-
   /** El signal donde vive cada respaldo suelto. */
   private destinoDelRespaldo(cual: ClaveDeRespaldo) {
     if (cual === 'professional-title') return this.respaldoTituloProfesional;
     return cual === 'license' ? this.respaldoMatricula : this.respaldoSedes;
   }
 
-  /**
-   * Valida formato y peso del archivo elegido y devuelve con qué quedarse.
-   *
-   * Devuelve `null` cuando no hay archivo o cuando lo rechaza, y en ese caso
-   * deja el motivo en `errorAdjunto`. Vacía el `<input>` siempre: si no, elegir
-   * el mismo archivo dos veces seguidas no dispara `change` la segunda.
-   */
-  private archivoValidado(evento: Event): RespaldoDeclarado | null {
-    const entrada = evento.target as HTMLInputElement;
-    const archivo = entrada.files?.[0];
-    this.errorAdjunto.set(null);
-    entrada.value = '';
-    if (!archivo) return null;
-
-    if (!FORMATOS_DE_RESPALDO.split(',').includes(archivo.type)) {
-      this.errorAdjunto.set('El respaldo tiene que ser un PDF, un JPG o un PNG.');
-      return null;
-    }
-    if (archivo.size > MAX_BYTES_ADJUNTO) {
-      this.errorAdjunto.set('El archivo supera el límite de 5 MB.');
-      return null;
-    }
-    return { archivo: archivo.name, pesoBytes: archivo.size };
-  }
-
-  /** El peso de un adjunto, en la unidad que se lee de un vistazo. */
-  pesoLegible(bytes: number | null): string {
-    if (bytes === null) return '';
-    const enMegas = bytes / (1024 * 1024);
-    return enMegas >= 1 ? `${enMegas.toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} kB`;
-  }
 
   /**
    * Foto de perfil en base64 para previsualizar y enviar en el alta.
@@ -2004,7 +1939,7 @@ export class RegisterPractitioner {
             placeholder: 'Tu contraseña',
             testId: 'registro-pro-password',
             icono: 'lock',
-            mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
+            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
           },
         ],
       },

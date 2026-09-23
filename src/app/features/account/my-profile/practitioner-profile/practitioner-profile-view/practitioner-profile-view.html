@@ -29,9 +29,9 @@
              además de elegirla con el diálogo. -->
         <label
           [appFileDropTarget]="entradaDeFoto"
-          (fileDropRejected)="errorDeFoto.set($event)"
+          (fileDropRejected)="alRechazarArchivo($event)"
           class="mi-perfil__foto"
-          [class.is-subiendo]="subiendoFoto()"
+          [class.is-subiendo]="fotoSubiendo()"
         >
           <app-avatar
             size="lg"
@@ -40,7 +40,7 @@
             [alt]="'Foto de ' + perfil().nombre"
           />
           <span class="solo-lectores">
-            {{ subiendoFoto() ? 'Subiendo tu foto…' : 'Cambiar mi foto de perfil' }}
+            {{ fotoSubiendo() ? 'Subiendo tu foto…' : 'Cambiar mi foto de perfil' }}
           </span>
           <input
             #entradaDeFoto
@@ -48,7 +48,7 @@
             class="solo-lectores"
             accept="image/*"
             data-testid="perfil-foto"
-            [disabled]="subiendoFoto()"
+            [disabled]="fotoSubiendo()"
             (change)="alElegirFoto($event)"
           />
         </label>
@@ -76,7 +76,7 @@
               Atendés por telemedicina
             </app-chip>
           }
-          @if (errorDeFoto(); as fallo) {
+          @if (errorVisible(); as fallo) {
             <p class="mi-perfil__foto-error" role="alert">{{ fallo }}</p>
           }
         </div>
@@ -107,7 +107,15 @@
       </a>
     </div>
 
-    <app-tabs [(selectedIndex)]="pestanaSeleccionada" data-testid="mi-perfil-pestanas">
+    <!-- Se desarma el `[(…)]` a propósito: el organismo sólo escribe su modelo
+         cuando alguien hace clic, así que escuchar el evento —en vez de mirar
+         la señal— es lo que distingue «lo cambió una persona» del primer
+         dibujo. Ver `alCambiarPestana`. -->
+    <app-tabs
+      [selectedIndex]="pestanaSeleccionada()"
+      (selectedIndexChange)="alCambiarPestana($event)"
+      data-testid="mi-perfil-pestanas"
+    >
       <!-- ─── Datos personales ─────────────────────────────────────────────
            Pasos 1-3 y 8 del alta: cómo te llamás, tu documento, tu fecha de
            nacimiento y tu título profesional.
@@ -600,7 +608,7 @@
                     <!-- Sólo mientras sigue PENDIENTE: una vez verificado o
                          rechazado es un hecho de la autoridad, no algo que el
                          titular deshaga. -->
-                    @if (estudio.sello === 'in-review') {
+                    @if (sePuedeRetirar(estudio)) {
                       <p class="trayecto__acciones">
                         <button
                           app-button
@@ -608,7 +616,7 @@
                           variant="ghost"
                           size="sm"
                           [attr.data-testid]="'formacion-retirar-' + estudio.id"
-                          (clicked)="retirarCredencial(estudio)"
+                          (clicked)="alPedirRetiro(estudio)"
                         >
                           Retirar
                         </button>
@@ -707,9 +715,9 @@
         @if (esPropio()) {
           <label
             [appFileDropTarget]="dropInput1"
-            (fileDropRejected)="errorDeFoto.set($event)"
+            (fileDropRejected)="alRechazarArchivo($event)"
             class="profesional__foto"
-            [class.is-subiendo]="subiendoFoto()"
+            [class.is-subiendo]="fotoSubiendo()"
           >
             <app-avatar
               size="xl"
@@ -733,7 +741,7 @@
               </svg>
             </span>
             <span class="solo-lectores">
-              {{ subiendoFoto() ? 'Subiendo tu foto…' : 'Cambiar mi foto de perfil' }}
+              {{ fotoSubiendo() ? 'Subiendo tu foto…' : 'Cambiar mi foto de perfil' }}
             </span>
             <input
               #dropInput1
@@ -741,7 +749,7 @@
               class="solo-lectores"
               accept="image/*"
               data-testid="perfil-foto"
-              [disabled]="subiendoFoto()"
+              [disabled]="fotoSubiendo()"
               (change)="alElegirFoto($event)"
             />
           </label>
@@ -793,7 +801,7 @@
         }
       </div>
 
-      @if (errorDeFoto(); as fallo) {
+      @if (errorVisible(); as fallo) {
         <p class="profesional__foto-error" role="alert">{{ fallo }}</p>
       }
 
@@ -853,13 +861,7 @@
              «Sin registrar» no informa. La habilitación sí se dibuja siempre —su
              vacío le dice al médico que le falta registrar la matrícula, que es
              accionable. -->
-          @if (
-            datos.documento ||
-            datos.telefono ||
-            datos.correo ||
-            datos.domicilio ||
-            datos.edad !== null
-          ) {
+          @if (tieneDatosDeFiliacion()) {
             <section>
               <h2 class="profesional__bloque-titulo">Tus datos</h2>
               <dl class="profesional__datos">
@@ -1041,7 +1043,10 @@
 
     <!-- ─── Las 3 pestañas del carril 05 ──────────────────────────────────── -->
     <app-card class="profesional__bloque" variant="outlined" padding="lg">
-      <app-tabs [(selectedIndex)]="pestanaSeleccionada">
+      <app-tabs
+        [selectedIndex]="pestanaSeleccionada()"
+        (selectedIndexChange)="alCambiarPestana($event)"
+      >
         <!-- 1. Trayectoria / historial profesional ------------------------- -->
         <app-tab label="Trayectoria" appTutorialTarget="perfil-trayectoria">
           <!-- La ayuda le habla a quien arma su perfil, no a quien lo mira: en la
@@ -1159,14 +1164,14 @@
                       <!-- ALV-009/formación: sólo mientras sigue PENDIENTE —una
                          vez verificado o rechazado es un hecho de la
                          autoridad, no algo que el titular deshaga. -->
-                      @if (esPropio() && estudio.sello === 'in-review') {
+                      @if (sePuedeRetirar(estudio)) {
                         <button
                           app-button
                           type="button"
                           variant="ghost"
                           size="sm"
                           [attr.data-testid]="'formacion-retirar-' + estudio.id"
-                          (clicked)="retirarCredencial(estudio)"
+                          (clicked)="alPedirRetiro(estudio)"
                         >
                           Retirar
                         </button>
