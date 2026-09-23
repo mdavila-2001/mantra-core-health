@@ -12,7 +12,7 @@
 
 ## A medias
 
-- Medición de red/capturas/E2E: no ejecutadas. La tarea requería una ruta completa autenticada y la pantalla de Cotizaciones aún no tiene ruta ni entrada de menú publicadas.
+- Medición de red/capturas/E2E: la medición autenticada se intentó con un servidor local y Playwright, pero el submit no produjo una respuesta observable de `/iam/auth/login` en 30 s; no se declaran números ni capturas como evidencia. El detalle está en `evidencia/antes/red-flujo-reserva.md`.
 - Carga por sede y reducción a una lectura por profesional: las lecturas existentes ya se disparan en paralelo por sede; no existe filtro por profesional en el cliente/contrato disponible.
 - Pantalla de Cotizaciones: sólo se construyó su dominio puro. No se creó una pantalla desconectada de la navegación ni datos sintéticos que pudieran parecer precios reales.
 
@@ -21,6 +21,7 @@
 - Ender debe publicar la ruta lazy y renglón «Cotizaciones» en los archivos reservados `app.routes.ts` y navegación.
 - No hay precio publicado con procedencia para análisis, imagenología ni servicios médicos; UMA no tiene conversión a BOB declarada.
 - No se encontró contrato que permita inventar una orden de servicio médico del paciente.
+- Para completar H1.S2 hace falta un login local observable o una sesión autenticada reproducible; sin ella no se puede medir honestamente el directorio → ficha → cupos.
 - La suite completa tiene dos regresiones fuera de este alcance: `insurance-analytics.handlers.spec.ts` espera `coveragesWithoutPremiumCount = 0` y recibe `1`; `register-practitioner.spec.ts` excede 5 s al resolver credenciales canónicas contra el mock backend.
 
 ## Peldaño de evidencia
