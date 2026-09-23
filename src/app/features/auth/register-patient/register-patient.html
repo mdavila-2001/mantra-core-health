@@ -347,11 +347,11 @@
                       </p>
                     }
                   } @else if (direccionConfirmada()) {
-                    <p
-                      appAnuncio
-                      class="registro__ubicacion-estado"
-                      data-testid="registro-direccion-confirmada"
-                    >
+                    <!-- D-07 (pedido del cliente del 22/09/2026): «Listo, guardamos…» no se
+                         muestra: el pin ya se llama por su nombre y los botones cambian, así
+                         que el texto aclaraba lo obvio. Sigue en el DOM sólo para lectores de
+                         pantalla, con el mismo anuncio y el mismo identificador de prueba. -->
+                    <p appAnuncio class="solo-lectores" data-testid="registro-direccion-confirmada">
                       Listo, guardamos esta dirección.
                     </p>
                     <!-- AC-03-9: el punto se guarda, pero el nombre de la
@@ -623,11 +623,8 @@
                       </p>
                     }
                   } @else if (direccionTrabajoConfirmada()) {
-                    <p
-                      appAnuncio
-                      class="registro__ubicacion-estado"
-                      data-testid="registration-work-location-confirmed"
-                    >
+                    <!-- D-07: ver la copia del domicilio. -->
+                    <p appAnuncio class="solo-lectores" data-testid="registration-work-location-confirmed">
                       Listo, guardamos este punto.
                     </p>
                     <p

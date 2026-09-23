@@ -213,6 +213,22 @@ describe('UbicacionPicker', () => {
     expect(component.confirmada()).toBe(true);
   });
 
+  it('la confirmación no se ve, pero el lector de pantalla la recibe (D-07)', () => {
+    component.punto.set({ lat: -17.78, lng: -63.18 });
+    component.confirmarDireccionActual();
+    fixture.detectChanges();
+
+    const confirmacion = raiz().querySelector<HTMLElement>(`[data-testid="${IDS.confirmada}"]`);
+    expect(confirmacion).not.toBeNull();
+    expect(confirmacion?.textContent).toContain('Listo, guardamos esta dirección');
+    // Sólo para lectores: fuera de la vista, pero anunciada y en el DOM.
+    expect(confirmacion?.classList.contains('solo-lectores')).toBe(true);
+    expect(confirmacion?.getAttribute('aria-live')).toBe('assertive');
+    // Lo que sí se ve es el pin con su nombre y el aviso de la calle.
+    expect(component['pines']()[0].titulo).toBe('Tu dirección');
+    expect(raiz().querySelector(`[data-testid="${IDS.avisoGeocodificacion}"]`)).not.toBeNull();
+  });
+
   it('confirmar sin punto no emite nada: no hay qué confirmar', () => {
     const recibidos = emitidos();
 
