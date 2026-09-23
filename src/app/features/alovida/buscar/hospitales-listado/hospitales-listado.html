@@ -82,6 +82,37 @@
     />
   </label>
 
+  <!-- La categoría: qué clase de centro. Va antes que el lugar porque es la
+       pregunta más gruesa —una caja de salud no atiende a quien no es su
+       asegurado, y eso no lo arregla tenerla cerca—. Con una sola categoría
+       en pantalla no se dibuja: un chip que no acota nada es un botón que
+       miente. -->
+  @if (categorias().length > 1) {
+    <div class="centros__chips" role="group" aria-label="Categoría" data-testid="hospitales-chips-categoria">
+      <button
+        type="button"
+        class="centros__chip"
+        [class.centros__chip--activo]="categoriaElegida() === null"
+        [attr.aria-pressed]="categoriaElegida() === null"
+        (click)="alElegirCategoria(null)"
+      >
+        Todas las categorías
+      </button>
+      @for (categoria of categorias(); track categoria.code) {
+        <button
+          type="button"
+          class="centros__chip"
+          data-testid="hospitales-chip-categoria"
+          [class.centros__chip--activo]="categoriaElegida() === categoria.code"
+          [attr.aria-pressed]="categoriaElegida() === categoria.code"
+          (click)="alElegirCategoria(categoria.code)"
+        >
+          {{ categoria.label }}
+        </button>
+      }
+    </div>
+  }
+
   <!-- Los chips de ciudad, que son los del departamento elegido en el mapa.
        Sin departamento no se dibuja ninguno: ofrecer las dos escalas a la vez
        es hacer dos preguntas para una sola decisión. Ver el JSDoc de la clase. -->

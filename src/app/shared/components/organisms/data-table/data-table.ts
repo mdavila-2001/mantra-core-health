@@ -3,9 +3,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
+  type ElementRef,
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 
 import { NgTemplateOutlet } from '@angular/common';
@@ -59,9 +62,37 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'data-table',
+    '[class.data-table--constrained]': 'effectiveMaxHeight() !== null',
   },
 })
 export class DataTable<Row> {
+  /**
+   * Si la tabla es más ancha que su caja y se desplaza de costado.
+   *
+   * La columna fija (`sticky: 'end'`) sólo necesita fondo opaco y sombra
+   * **cuando algo pasa por debajo**. Pintarla siempre dejaba, en una tabla que
+   * entra entera, un rectángulo de otro tono al final de cada fila —en oscuro
+   * se leía como un panel vacío (propietario, 18/09)—.
+   */
+  protected readonly overflowing = signal(false);
+  private readonly scrollBox = viewChild<ElementRef<HTMLElement>>('scrollBox');
+
+  constructor() {
+    effect((onCleanup) => {
+      const caja = this.scrollBox()?.nativeElement;
+      // Bajo SSR no hay `ResizeObserver`: se dibuja sin desborde y el cliente
+      // lo corrige al hidratar.
+      if (caja === undefined || typeof ResizeObserver === 'undefined') return;
+      const medir = (): void => this.overflowing.set(caja.scrollWidth > caja.clientWidth + 1);
+      const observador = new ResizeObserver(medir);
+      observador.observe(caja);
+      const tabla = caja.firstElementChild;
+      if (tabla !== null) observador.observe(tabla);
+      medir();
+      onCleanup(() => observador.disconnect());
+    });
+  }
+
   readonly state = input.required<ViewState<readonly Row[]>>();
   readonly columns = input.required<readonly ColumnDef<Row>[]>();
 
@@ -70,6 +101,33 @@ export class DataTable<Row> {
 
   /** Rótulo de la tabla. Va en `<caption>`, aunque sea solo para lectores. */
   readonly caption = input<string>('');
+
+  /**
+   * Alto máximo de la caja de la tabla (p. ej. `'480px'`), con scroll
+   * **vertical** dentro de esa caja. Por omisión `null`: apagado, sin
+   * cambio para los consumidores actuales (regla 95.1).
+   *
+   * Cuando está activa, el scroll lateral se apaga (`overflow-x: hidden`) y
+   * las columnas secundarias se pliegan a la fila de detalle **también en
+   * escritorio** — el mismo mecanismo que ya usa el móvil
+   * (`MOBILE_DETAIL_PRIORITY`), extendido con la clase `.data-table--constrained`.
+   * Es lo que ADR-0015 (regla 6, ver `docs/adr/ADR-0015-tabla-con-acciones.md`)
+   * pide como reemplazo del scroll lateral con `sticky: 'end'`.
+   *
+   * Una cadena vacía no es un alto válido: se trata igual que `null` (por
+   * omisión, apagado), no como una caja de alto cero.
+   */
+  readonly maxHeight = input<string | null>(null);
+
+  /** El valor efectivo: una cadena vacía cae al por omisión, no a una caja de alto cero. */
+  protected readonly effectiveMaxHeight = computed(() => this.maxHeight() || null);
+  /**
+   * Cómo se nombra una fila para quien usa lector de pantalla: el «de quién»
+   * de «Ver el detalle de …» y «Seleccionar …». Sin él, la fila se nombra por
+   * su posición. Nunca por `trackBy`: es un id técnico —un uuid— y el lector
+   * lo deletreaba entero (refactor UX, fase 08).
+   */
+  readonly rowLabel = input<((row: Row) => string) | null>(null);
 
   readonly selectable = input(false, { transform: booleanAttribute });
   readonly sort = input<SortState | null>(null);
@@ -124,6 +182,13 @@ export class DataTable<Row> {
     this.columns().filter((column) => column.priority < MOBILE_DETAIL_PRIORITY),
   );
 
+  /** Clases de la celda: las secundarias se marcan para que el CSS las pliegue en móvil. */
+  protected cellClassFor(column: ColumnDef<Row>): string {
+    const secundaria = column.priority >= MOBILE_DETAIL_PRIORITY ? ' data-table__secondary' : '';
+    const fija = column.sticky === 'end' ? ' data-table__cell--sticky-end' : '';
+    return `data-table__cell${secundaria}${fija} data-table__cell--${column.align ?? 'start'}`;
+  }
+
   /** Las que en móvil se pliegan a la fila de detalle — nunca se ocultan. */
   protected readonly secondaryColumns = computed(() =>
     this.columns().filter((column) => column.priority >= MOBILE_DETAIL_PRIORITY),
@@ -150,6 +215,12 @@ export class DataTable<Row> {
 
   protected rowKey(row: Row): string {
     return this.trackBy()(row);
+  }
+
+  /** El nombre legible de la fila, o su posición si no hay uno. */
+  protected rowName(row: Row, index: number): string {
+    const nombre = this.rowLabel()?.(row).trim() ?? '';
+    return nombre === '' ? `la fila ${index + 1}` : nombre;
   }
 
   /**

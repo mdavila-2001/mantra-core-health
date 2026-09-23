@@ -32,6 +32,7 @@ import type { FilterDef } from '../../../../shared/components/organisms/filter-b
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { SpecialtyBrowser } from '../../../../shared/components/organisms/specialty-browser/specialty-browser';
 import type { SpecialtyGroup } from '../../../../shared/components/organisms/specialty-browser/specialty-browser.types';
+import { withDisplayCurrency } from '../../../../core/money/display-currency';
 
 /** Entradas por página. El arancel tiene 4408: no se traen todas. */
 const TAMANO_DE_PAGINA = 30;
@@ -67,8 +68,9 @@ const FILTRO_ESPECIALIDAD = 'specialty';
  * ## El precio no se convierte
  *
  * `UMA` es la unidad de cuenta del arancel, no una moneda, y su factor de
- * conversión no está declarado en ninguna parte del producto. Se muestra el
- * número **con su unidad**; mostrarlo solo sería mostrar un precio falso.
+ * conversión no está declarado en ninguna parte del producto. Desde el
+ * 19/09/2026 el número se muestra igual con «Bs», por pedido del propietario
+ * para la maqueta: ver `core/money/display-currency.ts`.
  */
 @Component({
   selector: 'app-procedure-import',
@@ -170,6 +172,11 @@ export class ProcedureImport {
     { initialValue: { especialidad: '', texto: '' } },
   );
 
+  /** Con un filtro puesto, lo que quedó se muestra abierto (grupos plegables). */
+  protected readonly hayFiltro = computed(
+    () => this.parametros().especialidad !== '' || this.parametros().texto !== '',
+  );
+
   /**
    * Los tramos que el organismo dibuja.
    *
@@ -257,18 +264,16 @@ export class ProcedureImport {
   /**
    * Cómo se muestra el precio de referencia.
    *
-   * Siempre con su unidad. `UMA` no es dinero y decir «20» a secas invita a
-   * cobrar veinte bolivianos por algo que el arancel valúa en veinte unidades
-   * de cuenta.
+   * Siempre con moneda, y la moneda es «Bs» (19/09/2026, pedido del
+   * propietario): el arancel trae `UMA` o `USD` en `priceUnit` y **no** se
+   * convierte —ver `display-currency.ts`—.
    *
    * @param item - La entrada del arancel.
    * @returns El texto del precio.
    */
   protected precio(item: ProcedureNomenclatureItem): string {
     if (item.referencePrice === null) return 'Sin precio en el arancel';
-    return item.priceUnit === null
-      ? item.referencePrice
-      : `${item.referencePrice} ${item.priceUnit}`;
+    return withDisplayCurrency(item.referencePrice, item.priceUnit);
   }
 
   /**

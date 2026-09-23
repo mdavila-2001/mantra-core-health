@@ -8,7 +8,7 @@
 .fusion__form,
 .fusion__resultado {
   margin-block-start: var(--sp-6);
-  max-inline-size: 40rem;
+  /* Sin tope propio (regla del cliente §5): con 40rem quedaba en la esquina. */
 }
 
 .fusion__alert {

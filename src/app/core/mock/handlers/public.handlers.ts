@@ -1,7 +1,8 @@
-import { comentarios, CONCEPTO, publicaciones, vitrinaPorSlug, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
+import { ETIQUETA_DE_PRECISION, FARMACIAS_DEL_CORPUS } from '../fixtures/bolivia-eje-central';
+import { comentarios, CONCEPTO, publicaciones, resenas, vitrinaPorSlug, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
 import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
 import { afiliaciones, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
-import { sedesDe } from './practice.handlers';
+import { sedesDe, serviciosPublicadosDe } from './practice.handlers';
 import { notFound, type MockRouter } from '../mock-router';
 import { ahora, contiene, iso, isoDia, paginar, texto, uuid } from '../mock-store';
 
@@ -28,6 +29,10 @@ function resultado(v: VitrinaSimulada) {
     location: { lat: v.lat, lng: v.lng },
     hasPublishedAgenda: v.hasPublishedAgenda,
     nextAvailableDate: v.hasPublishedAgenda ? isoDia(1 + (v.seguidores % 5)) : null,
+    /* La categoría con la que el directorio acota dentro del vertical. La
+       declara cada semilla; acá no se deduce de nada. Ver
+       `fixtures/categorias-publicas.ts`. */
+    category: v.categoria,
   };
 }
 
@@ -87,6 +92,191 @@ const MEDICAMENTOS_VITRINA = Object.entries(MEDICAMENTO).map(([code, conceptId],
   };
 });
 
+/* ---- el catálogo que publica una farmacia -------------------------------- */
+
+/** Un entero estable por slug: la misma góndola en cada recarga. */
+function semillaDeFarmacia(slug: string): number {
+  return parseInt(uuid(`gondola-${slug}`).slice(0, 8), 16);
+}
+
+/**
+ * Qué medicamentos tiene una farmacia, con su marca y su precio.
+ *
+ * Sale de la misma vitrina que ya alimenta «dónde comprar mi receta»
+ * (`MEDICAMENTOS_VITRINA`), acotada y ordenada por el slug: dos farmacias no
+ * tienen el mismo surtido ni el mismo precio, y una que las tuviera todas al
+ * mismo importe no se parece a ninguna farmacia.
+ *
+ * El precio se mueve dentro de la banda que el propio medicamento declara
+ * (`priceFrom`..`priceTo`) — no es un número suelto — y el agotado se rotula
+ * en vez de esconderse: quien busca un remedio necesita saber que ahí no está.
+ */
+function productosDeFarmacia(slug: string) {
+  const base = semillaDeFarmacia(slug);
+  const cuantos = 8 + (base % 6);
+  return Array.from({ length: cuantos }, (_, i) => {
+    const m = MEDICAMENTOS_VITRINA[(base + i * 7) % MEDICAMENTOS_VITRINA.length]!;
+    const desde = Number(m.priceFrom);
+    const hasta = Number(m.priceTo);
+    const paso = (base + i * 13) % 5;
+    return {
+      id: uuid(`public-product-${slug}-${m.code}`),
+      genericName: m.genericName,
+      brandName: m.brands[(base + i) % m.brands.length]!,
+      presentation: m.presentations[0] ?? null,
+      therapeuticGroup: m.therapeuticGroup,
+      price: (desde + ((hasta - desde) * paso) / 4).toFixed(2),
+      currency: m.currency,
+      inStock: (base + i) % 7 !== 0,
+      requiresPrescription: m.requiresPrescription,
+    };
+  });
+}
+
+/* ---- sucursales de una cadena de farmacias (P37) --------------------------
+   El corpus trae las sucursales con su cadena (`chainId`) y la vitrina trae la
+   ficha pública de cada una: se cruzan por slug, porque la ficha ES la
+   sucursal. */
+
+const SUCURSAL_POR_SLUG = new Map(FARMACIAS_DEL_CORPUS.map((f) => [f.slug, f]));
+
+interface SucursalPublica {
+  readonly slug: string;
+  readonly name: string;
+  readonly siteName: string;
+  readonly city: string | null;
+  readonly addressText: string | null;
+  readonly phone: string | null;
+  readonly openingHours: string | null;
+  readonly location: { lat: number; lng: number } | null;
+  /**
+   * Con cuánta precisión se conoce ese punto, en palabras.
+   *
+   * El corpus lo declara y hay que decirlo: diecisiete de las treinta y cinco
+   * sucursales de una cadena están geocodificadas **al centro de su ciudad**, y
+   * un «a 0,0 km» sin este rótulo haría pasar un centroide por una esquina.
+   */
+  readonly locationAccuracy: string | null;
+  readonly isCurrent: boolean;
+}
+
+/**
+ * Las sucursales de la cadena de esta farmacia, con la que se está mirando
+ * primero y el resto por ciudad y nombre.
+ *
+ * La farmacia que no está en el corpus no tiene cadena: devuelve una sola, la
+ * suya. Devolver vacío obligaría a la pantalla a distinguir «no tiene
+ * sucursales» de «la lectura falló», que no es lo mismo.
+ */
+function sucursalesDe(vitrina: VitrinaSimulada): readonly SucursalPublica[] {
+  const propia = SUCURSAL_POR_SLUG.get(vitrina.slug);
+  if (propia === undefined) {
+    return [
+      {
+        slug: vitrina.slug,
+        name: vitrina.displayName,
+        siteName: vitrina.displayName,
+        city: vitrina.city === '' ? null : vitrina.city,
+        addressText: vitrina.address === '' ? null : vitrina.address,
+        phone: null,
+        openingHours: null,
+        location: { lat: vitrina.lat, lng: vitrina.lng },
+        locationAccuracy: null,
+        isCurrent: true,
+      },
+    ];
+  }
+
+  return FARMACIAS_DEL_CORPUS.filter((f) => f.chainId === propia.chainId)
+    .map((f) => ({
+      slug: f.slug,
+      name: f.name,
+      siteName: f.siteName,
+      city: f.city,
+      addressText: f.addressText,
+      phone: f.phone,
+      openingHours: f.openingHours,
+      location: { lat: f.lat, lng: f.lng },
+      locationAccuracy: ETIQUETA_DE_PRECISION[f.locationPrecision],
+      isCurrent: f.slug === vitrina.slug,
+    }))
+    .sort(
+      (a, b) =>
+        Number(b.isCurrent) - Number(a.isCurrent) ||
+        a.city.localeCompare(b.city, 'es') ||
+        a.siteName.localeCompare(b.siteName, 'es'),
+    );
+}
+
+/** Baja a minúsculas y quita tildes: «Analgésicos» casa con «analgesicos». */
+function sinTildes(valor: string): string {
+  return valor
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/gu, '')
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * Qué tiene una sucursal de los renglones de una receta.
+ *
+ * Un renglón casa si el genérico, la marca o la presentación lo contienen, y
+ * **sólo cuenta si está en stock**: una receta no se surte con lo que la
+ * farmacia tiene agotado. El agotado no se esconde — cuenta como faltante, que
+ * es lo que le pasa a quien va con la receta en la mano.
+ */
+function disponibilidadDe(
+  sucursal: SucursalPublica,
+  renglones: readonly string[],
+  origen: { lat: number; lng: number } | null,
+) {
+  const catalogo = productosDeFarmacia(sucursal.slug);
+  const encontrados: {
+    term: string;
+    genericName: string;
+    brandName: string | null;
+    presentation: string | null;
+    price: string | null;
+    currency: string | null;
+  }[] = [];
+  const faltantes: string[] = [];
+
+  for (const renglon of renglones) {
+    const buscado = sinTildes(renglon);
+    const producto = catalogo.find(
+      (p) =>
+        p.inStock &&
+        sinTildes([p.genericName, p.brandName ?? '', p.presentation ?? ''].join(' ')).includes(buscado),
+    );
+    if (producto === undefined) {
+      faltantes.push(renglon);
+      continue;
+    }
+    encontrados.push({
+      term: renglon,
+      genericName: producto.genericName,
+      brandName: producto.brandName,
+      presentation: producto.presentation,
+      price: producto.price,
+      currency: producto.currency,
+    });
+  }
+
+  const total = encontrados.reduce((suma, linea) => suma + Number(linea.price ?? 0), 0);
+  return {
+    branch: sucursal,
+    matches: encontrados,
+    missing: faltantes,
+    complete: renglones.length > 0 && faltantes.length === 0,
+    totalAmount: encontrados.length === 0 ? null : total.toFixed(2),
+    currency: encontrados[0]?.currency ?? null,
+    distanceKm:
+      origen === null || sucursal.location === null
+        ? null
+        : distanciaKm(origen.lat, origen.lng, sucursal.location.lat, sucursal.location.lng),
+  };
+}
+
 export function registrarPublico(router: MockRouter): void {
   router.get('/public/posts', ({ query }) => {
     const items = publicaciones
@@ -134,6 +324,12 @@ export function registrarPublico(router: MockRouter): void {
       slug: m.code.toLowerCase(),
       displayName: `${m.genericName} · ${m.presentations[0]}`,
       headline: m.therapeuticGroup,
+      /* Un medicamento no necesita que le inventen una categoría: el grupo
+         terapéutico **es** su categoría, y ya viaja en el titular. */
+      category: {
+        code: m.therapeuticGroup.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-'),
+        label: m.therapeuticGroup,
+      },
       city: null,
       avatarUrl: null,
       verified: true,
@@ -199,7 +395,7 @@ export function registrarPublico(router: MockRouter): void {
                 sede.latitude === null || sede.longitude === null
                   ? null
                   : { lat: sede.latitude, lng: sede.longitude },
-              isOwn: sede.esPropio,
+              isOwn: sede.isOwnSite,
             })),
       ratingAverage: v.ratingAverage,
       ratingCount: v.ratingCount,
@@ -210,6 +406,96 @@ export function registrarPublico(router: MockRouter): void {
         .map(resumenDePost),
       updatedAt: iso(-1),
     };
+  });
+
+  /* ---- las opiniones de una ficha, con quién las dio ----------------------
+     Contrato del simulador: la API real todavía no lo publica (ver
+     «Opiniones públicas de una ficha» en PENDIENTES-BACKEND.md). Cuelga de
+     `/public/profiles/:prefijo/:slug/…` por lo mismo que los servicios. */
+
+  router.get('/public/profiles/:prefix/:slug/reviews', ({ params, query }) => {
+    const v = vitrinaPorSlug(params['slug']!);
+    if (v === undefined || v.kind === 'PATIENT') return notFound('Ficha no encontrada');
+    const items = resenas
+      .filtrar((r) => r.targetPublicProfileId === v.id)
+      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+      .map((r) => {
+        const anonima = r.reviewerDisplayModeConceptId === CONCEPTO.reviewDisplayAnon;
+        const conFicha = vitrinas.get(r.reviewerProfileId);
+        const publica = conFicha !== undefined && conFicha.kind !== 'PATIENT' && conFicha.visibility === 'PUBLIC';
+        const respuesta = r.responses[0];
+        return {
+          id: r.id,
+          rating: r.overallRating,
+          text: r.reviewText === '' ? null : r.reviewText,
+          publishedAt: r.publishedAt,
+          reviewer: anonima
+            ? { displayName: 'Paciente verificado', headline: 'Eligió no mostrar su nombre', avatarUrl: null, slug: null, kind: null }
+            : {
+                displayName: r.reviewerDisplayName ?? conFicha?.displayName ?? 'Paciente',
+                headline: publica ? conFicha.headline : 'Paciente',
+                avatarUrl: r.reviewerAvatarUrl ?? conFicha?.avatarUrl ?? null,
+                slug: publica ? conFicha.slug : null,
+                kind: publica ? (conFicha.kind as ClasePublica) : null,
+              },
+          response: respuesta === undefined ? null : { text: respuesta.responseText, publishedAt: respuesta.publishedAt },
+        };
+      });
+    return paginaPublica(items, query, 20);
+  });
+
+  /* ---- lo que cada ficha OFRECE (P30 y P31 de PENDIENTES-BACKEND.md) ------
+     Las dos cuelgan de `/public/profiles/:prefijo/:slug/…` y no de `/o/:slug/…`
+     por lo mismo que la ficha: `/o` es también una ruta del router, y el proxy
+     de desarrollo enruta comparando el comienzo de la ruta. */
+
+  router.get('/public/profiles/o/:slug/services', ({ params, query }) => {
+    const v = vitrinaPorSlug(params['slug']!);
+    if (v === undefined || v.kind !== 'ORGANIZATION') return notFound('Ficha no encontrada');
+    return paginaPublica(serviciosPublicadosDe(v.slug), query, 50);
+  });
+
+  router.get('/public/profiles/f/:slug/products', ({ params, query }) => {
+    const v = vitrinaPorSlug(params['slug']!);
+    if (v === undefined || v.kind !== 'PHARMACY') return notFound('Ficha no encontrada');
+    return paginaPublica(productosDeFarmacia(v.slug), query, 50);
+  });
+
+  /* ---- las sucursales de la cadena, y la receta entre ellas (P37) --------
+     La unidad que le sirve a una persona es la SUCURSAL: quien va a comprar
+     una receta va a un mostrador con una dirección, no a una marca. El corpus
+     de Bolivia ya trae las cadenas con sus sucursales; la farmacia que no está
+     en él es una sola y se devuelve sola. */
+
+  router.get('/public/profiles/f/:slug/branches', ({ params, query }) => {
+    const v = vitrinaPorSlug(params['slug']!);
+    if (v === undefined || v.kind !== 'PHARMACY') return notFound('Ficha no encontrada');
+    return paginaPublica(sucursalesDe(v), query, 50);
+  });
+
+  router.get('/public/profiles/f/:slug/branch-availability', ({ params, query }) => {
+    const v = vitrinaPorSlug(params['slug']!);
+    if (v === undefined || v.kind !== 'PHARMACY') return notFound('Ficha no encontrada');
+
+    const renglones = (texto(query, 'items') ?? '')
+      .split('|')
+      .map((renglon) => renglon.trim())
+      .filter((renglon) => renglon !== '');
+    const lat = query.get('lat');
+    const lng = query.get('lng');
+    const origen = lat === null || lng === null ? null : { lat: Number(lat), lng: Number(lng) };
+
+    const items = sucursalesDe(v)
+      .map((sucursal) => disponibilidadDe(sucursal, renglones, origen))
+      // Primero las que tienen todo; entre ésas, la más cercana. Es el mismo
+      // orden que `/pharmacy-inventory/availability` del módulo de farmacia.
+      .sort(
+        (a, b) =>
+          Number(b.complete) - Number(a.complete) ||
+          (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity) ||
+          b.matches.length - a.matches.length,
+      );
+    return { items, count: items.length, generatedAt: ahora() };
   });
 
   const reaccionesDe = ({ params, query }: { params: Readonly<Record<string, string>>; query: URLSearchParams }) => {

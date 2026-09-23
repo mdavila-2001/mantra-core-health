@@ -14,6 +14,7 @@ import { inicialesDe } from '@shared/text/iniciales';
 
 import type { CentroAtributo, CentroTarjeta } from '../centro-card/centro-card.types';
 import { addRow } from '../centro-card/directory-card.mapper';
+import { displayCurrency } from '../../../../core/money/display-currency';
 
 /** Un medicamento con su tarjeta y el resto de sus datos. */
 export interface MedicationCard {
@@ -33,8 +34,7 @@ export interface MedicationCard {
  * justamente el dato que la pantalla promete mostrar sin tocar.
  */
 export function formatMoney(value: string, currency: string): string {
-  const symbol = currency === 'BOB' ? 'Bs' : currency;
-  return `${symbol} ${value.replace('.', ',')}`;
+  return `${displayCurrency(currency)} ${value.replace('.', ',')}`;
 }
 
 /** «1,2 km», con coma decimal. `null` sin origen. */

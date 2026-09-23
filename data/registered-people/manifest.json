@@ -1,0 +1,36 @@
+{
+  "package": "registered-people",
+  "extractedOn": "2026-09-18",
+  "sources": [
+    {
+      "file": "USUARIO_MEDICOS_1.md",
+      "sha256": "092413d6b45c08183d1f23ab801670136247f90ed48dc79f32795fa5e18008cb",
+      "people": 13,
+      "withheldValues": {
+        "FECHA NACIMIENTO": 10,
+        "CEDULA IDENTIDAD": 7,
+        "EMITIDO": 12,
+        "NUMERO CELULAR": 12,
+        "CORREO ELECTRONICO": 4,
+        "DIRECCION": 4,
+        "MATRICULA (contiene la cédula)": 2
+      }
+    },
+    {
+      "file": "USUARIO_PACIENTES_1.md",
+      "sha256": "174f7cd9aa00edd52b23327b25405336e58721cca1e368aa57b93ae7ece34730",
+      "people": 92,
+      "withheldValues": {
+        "FECHA NACIMIENTO": 91,
+        "CEDULA IDENTIDAD": 85,
+        "EMITIDO": 92,
+        "NUMERO CELULAR": 92,
+        "CORREO ELECTRONICO": 70,
+        "DIRECCION": 91
+      }
+    }
+  ],
+  "warnings": [
+    "Repositorio público: cédula, emisión, fecha de nacimiento, celular, correo y domicilio NO se copian. withheldValues cuenta cuántos valores quedaron afuera por columna."
+  ]
+}

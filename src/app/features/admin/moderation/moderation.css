@@ -20,6 +20,13 @@
   color: var(--text-secondary);
 }
 
+/* La lista va a lo ancho (regla del cliente §5); lo que se lee —el motivo de
+   un reporte, texto corrido— conserva su medida de lectura dentro de cada
+   tarjeta. */
+.moderacion__lista p {
+  max-inline-size: 76ch;
+}
+
 .moderacion__lista {
   display: flex;
   flex-direction: column;
@@ -27,9 +34,6 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  /* Ancho de lectura: el motivo de un reporte es texto corrido y una línea que
-     cruza una pantalla ancha entera se lee peor. */
-  max-inline-size: 76ch;
 }
 
 .moderacion__mas {

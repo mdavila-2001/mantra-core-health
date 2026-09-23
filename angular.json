@@ -82,7 +82,7 @@
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "4kB",
-                  "maximumError": "9kB"
+                  "maximumError": "12kB"
                 }
               ],
               "outputHashing": "all",
@@ -133,7 +133,7 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "options": {
-            "proxyConfig": "proxy.conf.json",
+            "proxyConfig": "proxy.conf.mjs",
             "allowedHosts": [
               "localhost",
               "127.0.0.1",

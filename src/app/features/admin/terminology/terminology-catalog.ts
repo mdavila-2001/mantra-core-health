@@ -126,6 +126,8 @@ export class TerminologyCatalog {
   ]);
 
   protected readonly porConcepto = (row: ValueSetOption): string => row.conceptId;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDeConcepto = (row: ValueSetOption): string => row.display;
 
   protected readonly cargando = computed(() => this.resultados().status === 'loading');
 

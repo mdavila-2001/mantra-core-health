@@ -1,13 +1,31 @@
+<!-- C-11 (2026-09-20) · quien tiene calendario NO ve botones de acción acá.
+
+     Eran tres —«Ingreso Mostrador», «Avisar demora» y «Visitas de laboratorio»—
+     y para quien atiende con su agenda los tres se fueron del encabezado.
+     Dónde vive ahora cada uno:
+
+     - «Ingreso Mostrador» y «Avisar demora» bajaron al encabezado del DÍA
+       (`day-view`), que es donde se decide: la demora es de la jornada que se
+       está mirando y el ingreso por mostrador ocurre con alguien parado
+       enfrente, mirando ese día. Viajan por `[puedeIngresarPorMostrador]` /
+       `[puedeAvisarDemora]` y vuelven por `(mostradorPedido)` / `(demoraPedida)`.
+     - «Visitas de laboratorio» pasa a ser la tarjeta de visitador dentro de la
+       propia solapa de Consultas (C-13, H5.S2), que es lo que el doctor pidió:
+       verla en la misma pestaña. La bandeja `/lab-visits` no se borra y sigue
+       alcanzable desde esa tarjeta.
+
+     **Sin calendario los tres siguen acá, y no es una excepción de
+     conveniencia:** quien reparte turnos y quien todavía no publicó su agenda
+     no tienen día que mirar, así que no tienen dónde recibirlos. Quitárselos
+     también a ellos sería sacarles la función, no moverla — y el pedido del
+     doctor es sobre SU pantalla, la del calendario. -->
 <app-page-header
   title="Consultas"
   subtitle="Las consultas comprometidas y los cupos que quedan por ofrecer."
   [breadcrumbs]="breadcrumbs()"
 >
-  @if (puedeIngresarPorMostrador()) {
-    <!-- AC-C3-03 · el ingreso por mostrador. Va en las acciones de la página y
-         no dentro del día: quien lo usa está atendiendo el mostrador y llega a
-         esta pantalla con alguien parado enfrente, así que el gesto tiene que
-         estar donde se entra, no donde se navega. -->
+  @if (!tieneCalendario() && puedeIngresarPorMostrador()) {
+    <!-- AC-C3-03 · el ingreso por mostrador. -->
     <button
       app-button
       page-actions
@@ -18,10 +36,9 @@
       Ingreso Mostrador
     </button>
   }
-  @if (puedeAvisarDemora()) {
+  @if (!tieneCalendario() && puedeAvisarDemora()) {
     <!-- P8 · registro del cliente 4.2: «el médico informa a los pacientes que
-         se va a demorar». Va en las acciones de la página porque la demora es
-         de la jornada, no de un turno suelto. -->
+         se va a demorar». La demora es de la jornada, no de un turno suelto. -->
     <button
       app-button
       page-actions
@@ -32,20 +49,9 @@
       Avisar demora
     </button>
   }
-  <!-- Ni «Mi agenda» ni «Crear agenda» viven ya en el encabezado. El primero se
-       volvió solapa, al lado de Consultas y Cupos. El segundo repetía dos
-       puertas que ya existen: quien no publicó horario ve «Publicar mi agenda»
-       en el aviso de abajo, y quien sí lo publicó lo cambia desde el lápiz de
-       la solapa «Mi agenda». Un tercer botón para lo mismo era ruido. -->
-  @if (esQuienAtiende()) {
-    <!-- §4.H del plan de UX del 22/08/2026 · el camino de vuelta a las visitas.
-
-         «Visitas de laboratorio» salió del menú del médico —la lista cerrada
-         del cliente son ocho opciones y no está—, y la especificación (línea
-         5399) exige que una visita comercial **no se mezcle** con la agenda
-         clínica. Las dos cosas se cumplen: la bandeja sigue siendo una sección
-         aparte, con su ruta y sus datos, y lo único que perdió es el renglón
-         lateral. Este enlace es por dónde se llega ahora. -->
+  @if (!tieneCalendario() && esQuienAtiende()) {
+    <!-- §4.H del plan de UX del 22/08/2026 · el camino de vuelta a las visitas
+         para quien no tiene calendario donde verlas. -->
     <a app-button page-actions variant="ghost" routerLink="/lab-visits">
       Visitas de laboratorio
     </a>
@@ -198,24 +204,464 @@
       </section>
     }
 
-    <!-- ─── Filtros ─────────────────────────────────────────────────────── -->
+    <app-tabs
+      [selectedIndex]="pestana()"
+      (selectedIndexChange)="elegirPestana($event)"
+      appTutorialTarget="agenda-pestanas"
+    >
+      <!-- ─── Consultas (el calendario) ─────────────────────────────────────
+           C-08 · se llama «Consultas» y ES el calendario. El renombre y el
+           retiro de la tabla van en el MISMO cambio a propósito: en dos pasos
+           el intermedio tendría dos solapas llamadas «Consultas».
+
+           C-07 · la tabla de consultas y la grilla de cupos ya no están acá.
+           Lo que vivía sólo ahí se reubicó, no se perdió: reservar un cupo es
+           ahora tocar un rato libre del día, y mover una cita marca los ratos
+           libres del día como destino (ver `iniciarReprogramacion`). -->
+      @if (tieneCalendario()) {
+        <app-tab label="Consultas">
+          @if (enCalendario()) {
+            <app-my-agenda
+              mode="calendar"
+              [appointmentActions]="accionesDeLaCitaDelDia"
+              [reloadToken]="versionDeAcciones()"
+              [moviendoCita]="enReprogramacion()"
+              [ratoEnVuelo]="cupoDestino()"
+              [puedeIngresarPorMostrador]="puedeIngresarPorMostrador()"
+              [puedeAvisarDemora]="puedeAvisarDemora()"
+              (citaActivada)="atenderDesdeLaTarjeta($event)"
+              (ratoElegidoParaMover)="reprogramarA($event)"
+              (mostradorPedido)="abrirMostrador()"
+              (demoraPedida)="abrirDemoraDeAgenda()"
+            />
+          }
+        </app-tab>
+      }
+
+      <!-- ─── Consultas (la lista) ──────────────────────────────────────────
+           Sólo donde NO hay calendario: quien reparte turnos y quien todavía no
+           publicó su agenda no tienen día que mirar, y dejarlos con una sola
+           solapa de horario sería quitarles la pantalla, no limpiarla. Es
+           excluyente con la de arriba, así que nunca hay dos «Consultas». -->
+      @if (!tieneCalendario()) {
+        <app-tab [label]="rotuloDeConsultas()">
+          <ng-container [ngTemplateOutlet]="filtrosDeListas" />
+          @if (cuantasEsperanRespuesta() > 0) {
+            <p class="agenda__aviso" role="status">
+              Hay
+              <strong
+                >{{ cuantasEsperanRespuesta() }}
+                {{ cuantasEsperanRespuesta() === 1 ? 'consulta' : 'consultas' }}</strong
+              >
+              que esperan respuesta. Se reconocen por su estado y encabezan la lista.
+            </p>
+          }
+
+          @if (citasRecortadas()) {
+            <p class="agenda__aviso" role="status">
+              Se muestran las primeras {{ tope }} consultas de la ventana. Acote la ventana o
+              seleccione un recurso para verlas todas.
+            </p>
+          }
+
+          <app-data-table
+            class="agenda__tabla-consultas"
+            appTutorialTarget="agenda-tabla-citas"
+            [state]="consultas()"
+            [columns]="columnasDeConsultas()"
+            [trackBy]="porCita"
+            [rowLabel]="nombreDeCita"
+            caption="Consultas de la ventana consultada"
+            (retry)="recargar()"
+          />
+          <ng-container [ngTemplateOutlet]="navegacionVentana" />
+        </app-tab>
+      }
+
+      <!-- ─── Mis horarios ──────────────────────────────────────────────────
+           El horario publicado. Se llama «Mis horarios» y no «Mi agenda»
+           (propietario, 18/09): la agenda es todo esto; lo de acá son los
+           horarios en que se atiende.
+
+           **El `@if` va acá y no alcanza con el de `app-tab`.** El panel
+           inactivo no se dibuja, pero el contenido PROYECTADO lo instancia el
+           padre igual: sin esta condición, el horario se construía en cada
+           visita a la lista y disparaba su propia lectura de recursos aunque
+           nadie abriera la solapa. -->
+      @if (esQuienAtiende()) {
+        <app-tab label="Mis horarios">
+          @if (enHorario()) {
+            <app-my-agenda />
+          }
+        </app-tab>
+      }
+
+      <!-- ─── Cupos ─────────────────────────────────────────────────────────
+           Mismo criterio que la lista: sobrevive sólo donde no hay calendario,
+           porque es el único lugar en que esa persona ve los huecos y puede
+           reservarlos o elegirlos como destino de un movimiento. -->
+      @if (!tieneCalendario()) {
+        <app-tab [label]="rotuloDeCupos()">
+          <ng-container [ngTemplateOutlet]="filtrosDeListas" />
+          @if (cuposRecortados()) {
+            <p class="agenda__aviso" role="status">
+              Se muestran los primeros {{ tope }} cupos de la ventana. Una agenda a la que le faltan
+              huecos sin avisar se lee como una agenda llena.
+            </p>
+          }
+
+          <app-data-table
+            [state]="cupos()"
+            [columns]="columnasDeCupos()"
+            [trackBy]="porCupo"
+            caption="Cupos de la ventana consultada"
+            (retry)="recargar()"
+          />
+          <ng-container [ngTemplateOutlet]="navegacionVentana" />
+        </app-tab>
+      }
+    </app-tabs>
+  }
+</div>
+
+<!-- ─── Ingreso por mostrador (AC-C3-03) ──────────────────────────────────
+     Entra y sale del DOM en vez de esconderse: el modal monta un `<dialog>`
+     nativo con su trampa de foco, y dejarlo montado y cerrado deja sus campos
+     en el orden de tabulación de la página de atrás.
+
+     `recursoElegido()` no puede ser nulo acá: `puedeIngresarPorMostrador()` lo
+     exige antes de ofrecer el botón, y sin botón nadie abre el modal. -->
+@if (mostradorAbierto() && recursoElegido(); as recurso) {
+  <app-walk-in-form
+    [resourceId]="recurso"
+    (cerrado)="cerrarMostrador()"
+    (creado)="mostradorCreado($event)"
+  />
+}
+
+<!-- ─── Paginación de la ventana (ALV-024) ─────────────────────────────────
+     Al pie de la lista, como cualquier paginación. Un tramo es el tamaño de la
+     ventana elegida: con «Próximos 7 días», el siguiente salta 7 días. El rango
+     a la izquierda dice qué página se está mirando. -->
+<ng-template #navegacionVentana>
+  <nav class="agenda__paginacion" aria-label="Navegar la ventana">
+    <span class="agenda__paginacion-rango" data-testid="agenda-ventana-rango">{{
+      rangoDeVentana()
+    }}</span>
+    <div class="agenda__paginacion-controles">
+      @if (!enVentanaDeHoy()) {
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="agenda-ventana-hoy"
+          (clicked)="irAHoy()"
+        >
+          Volver a hoy
+        </button>
+      }
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        [iconOnly]="true"
+        type="button"
+        data-testid="agenda-ventana-anterior"
+        aria-label="Ventana anterior"
+        appTooltip="Ventana anterior"
+        (clicked)="moverVentana(-1)"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+      </button>
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        [iconOnly]="true"
+        type="button"
+        data-testid="agenda-ventana-siguiente"
+        aria-label="Ventana siguiente"
+        appTooltip="Ventana siguiente"
+        (clicked)="moverVentana(1)"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m9 18 6-6-6-6" />
+        </svg>
+      </button>
+    </div>
+  </nav>
+</ng-template>
+
+<!-- ─── Plantillas de celda ───────────────────────────────────────────────
+     El organismo las recibe por `ColumnDef.cell`. -->
+
+<ng-template #celdaCuando let-cita>
+  @if (cita.cuando) {
+    <!-- Dos formas de la misma fecha: en el teléfono el día va abreviado
+         («Mié 16 Sept»), porque «Miércoles» sólo ensanchaba la columna y
+         sacaba de la pantalla la de Estado. -->
+    <span class="agenda__cuando agenda__cuando--larga">{{ cita.cuando | date: 'EEEE d MMM, HH:mm' }}</span>
+    <span class="agenda__cuando agenda__cuando--corta">{{ cita.cuando | date: 'EEE d MMM, HH:mm' }}</span>
+    @if (cita.hasta) {
+      <span class="agenda__hasta">hasta {{ cita.hasta | date: 'HH:mm' }}</span>
+    }
+  } @else {
+    <!-- El contrato lo admite: una cita puede quedar sin cupo. Decirlo es más
+         útil que dejar la celda vacía, que se lee como un dato que no cargó. -->
+    <span class="agenda__hasta">Sin cupo asignado</span>
+  }
+</ng-template>
+
+<ng-template #celdaEstado let-cita>
+  <!-- Tres canales, no dos: tono, **forma** y palabra. La regla del sistema de
+       diseño es que la silueta del ícono cambie con el estado —«no el mismo
+       círculo teñido»—, porque quien no distingue los colores necesita algo más
+       que el color para separar una cita confirmada de una cancelada. -->
+  <app-status-seal class="agenda__sello" [variant]="cita.estado.variant" [label]="cita.estado.label" />
+</ng-template>
+
+<ng-template #celdaPaciente let-cita>
+  <!-- **A quién se atiende, primero.** La columna se llama «Paciente» y sólo
+       ofrecía enlaces —«Abrir expediente», «Ver ficha»—, así que quien miraba
+       su agenda no podía saber a quién iba a atender sin abrir el expediente de
+       cada fila. El nombre ya venía de la API (`patientName`) y ya estaba
+       mapeado en el componente; sólo lo usaba el detalle.
+
+       `cita.paciente` respeta la compuerta del backend: manda el nombre al
+       titular y al profesional de esa agenda, y a nadie más. Sin nombre dice
+       «Paciente asignado» —hay alguien, y no te corresponde saber quién— o «Sin
+       paciente», que es lo que ya decía esta celda cuando no había enlaces. -->
+  <!-- El nombre ES el acceso al expediente (propietario, 2026-09-13): antes
+       había un «Abrir expediente» debajo que repetía la fila. Al pasar el
+       puntero —o llegar con el teclado— el globo dice quién es, cuándo fue su
+       última consulta y por qué; el historial se pide recién ahí, una vez por
+       paciente. Sin permiso para el expediente, el nombre queda como texto. -->
+  @if (cita.rutaExpediente) {
+    <a
+      app-link
+      class="agenda__paciente-enlace"
+      data-testid="agenda-paciente"
+      [routerLink]="cita.rutaExpediente"
+      [appTooltip]="resumenDelPaciente(cita)"
+      (mouseenter)="precargarUltimaConsulta(cita)"
+      (focus)="precargarUltimaConsulta(cita)"
+      >{{ cita.paciente }}</a
+    >
+  } @else {
+    <span class="agenda__paciente">{{ cita.paciente }}</span>
+  }
+
+  <!-- La ficha es la filiación y la abre administración: otro destino, no otra
+       forma del expediente. -->
+  @if (cita.rutaPaciente) {
+    <span class="agenda__accesos">
+      <a app-link [routerLink]="cita.rutaPaciente">Ver ficha</a>
+    </span>
+  }
+</ng-template>
+
+<ng-template #celdaFranja let-cupo>
+  <span class="agenda__cuando">{{ cupo.desde | date: 'EEEE d MMM, HH:mm' }}</span>
+  <span class="agenda__hasta">hasta {{ cupo.hasta | date: 'HH:mm' }}</span>
+</ng-template>
+
+<ng-template #celdaDisponibilidad let-cupo>
+  @if (cupo.disponible) {
+    <!-- La concordancia se arma en el componente, no acá: «1 de 1 libres» se
+         lee mal y una expresión con ternario dentro de una interpolación se
+         lee peor. -->
+    <app-badge variant="success" [value]="cupo.disponibilidad" />
+  } @else {
+    <app-badge variant="warning" value="Completo" />
+  }
+</ng-template>
+
+<ng-template #celdaSeguro let-cita>
+  <!-- Con solicitud presentada, la aseguradora es el acceso a su estado
+       (propietario, 2026-09-13): el nombre abre el resumen y, debajo, el
+       estado se lee sin abrir nada. Sin solicitud queda como texto:
+       «Particular» o la aseguradora, que es lo que siempre dijo. -->
+  @if (cita.solicitudSeguro; as solicitud) {
+    <button
+      type="button"
+      class="agenda__seguro-enlace"
+      data-testid="agenda-seguro"
+      [attr.aria-label]="
+        cita.cobertura + ': ver la solicitud de seguro ' + solicitud.numero + ', ' + cita.paciente
+      "
+      appTooltip="Ver la solicitud de seguro"
+      (click)="verSolicitudDeSeguro(cita)"
+    >
+      {{ cita.cobertura }}
+    </button>
+    <app-badge size="sm" [variant]="tonoDeSolicitud(solicitud.codigo)">{{ solicitud.estado }}</app-badge>
+  } @else {
+    {{ cita.cobertura }}
+  }
+</ng-template>
+
+<ng-template #celdaPago let-cita>
+  <!-- Una sola línea: el estado y, pegado a él, el lápiz que lo cambia. Antes
+       eran un guión suelto y un «Cambiar» de texto en otro renglón, que en
+       cada fila se leía como dos datos distintos. -->
+  <div class="agenda__pago">
+    @if (cita.pago) {
+      <!-- La etiqueta viene del servidor: la pantalla no traduce estados. -->
+      <app-badge [variant]="cita.pago.state === 'PAID' ? 'success' : 'warning'">
+        {{ cita.pago.label }}
+      </app-badge>
+      @if (cita.pago.insuranceUsed) {
+        <span class="agenda__seguro">con seguro</span>
+      }
+    } @else if (cita.admitePago) {
+      <!-- «Sin registrar» y no «pendiente de pago»: pendiente es una afirmación
+           que alguien firmó, esto es que del pago todavía no se dijo nada. -->
+      <span class="agenda__sin-pago">Sin registrar</span>
+    } @else {
+      <!-- Cancelada o rechazada: no es que falte marcarlo, es que no aplica. -->
+      <span class="agenda__sin-pago">No aplica</span>
+    }
+
+    @if (puedeAtender() && cita.admitePago) {
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        data-testid="agenda-pago"
+        [attr.aria-label]="'Cambiar el estado del pago: ' + cita.paciente + ', ' + (cita.cuando | date: 'HH:mm')"
+        appTooltip="Cambiar el estado del pago"
+        [appMenuTrigger]="menuDePago"
+        [isLoading]="operando() === cita.id"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+        </svg>
+        Estado del pago
+      </button>
+      <app-menu #menuDePago>
+        @for (opcion of estadosDePago; track opcion.code) {
+          <app-menu-item
+            [disabled]="cita.pago?.state === opcion.code"
+            (selected)="marcarPago(cita, opcion.code)"
+          >
+            {{ opcion.label }}
+          </app-menu-item>
+        }
+        @if (cita.pago) {
+          <!-- El seguro es una marca SEPARADA del estado, por decisión del
+               propietario: se alterna sola y no cambia en qué estado está. -->
+          <app-menu-item (selected)="alternarSeguro(cita)">
+            {{ cita.pago.insuranceUsed ? 'Quitar «con seguro»' : 'Marcar «con seguro»' }}
+          </app-menu-item>
+        }
+      </app-menu>
+    }
+  </div>
+</ng-template>
+
+<ng-template #celdaAccionesCita let-cita>
+  <!-- C-06 (2026-09-20) · «botón = icono + texto; las acciones de una tabla, en
+       un desplegable».
+
+       Lo dibuja `app-row-actions`, el componente que el sistema de diseño
+       publicó para esto: con dos o menos las pone en la fila y con tres o más
+       las manda a un desplegable. **No se escribió un desplegable propio** —y la
+       primera versión de este turno sí lo había hecho, sobre `app-menu`, antes
+       de que el componente estuviera publicado: se migró en cuanto apareció,
+       porque una implementación paralela de algo que el sistema ya resuelve es
+       el defecto que la regla 95.1 nombra.
+
+       Las acciones viajan por DATOS (`accionesDe`): el mismo nodo no puede
+       vivir en la fila y dentro del menú, y los datos sí. -->
+  <app-row-actions
+    class="agenda__acciones"
+    [actions]="accionesDe(cita)"
+    [fila]="filaDe(cita)"
+    (actionSelected)="ejecutarAccionDeFila(cita, $event)"
+  />
+</ng-template>
+
+<!-- Las acciones de una cita del Calendario: la MISMA celda de la tabla de
+     Consultas, sobre la cita traducida igual que una fila. Así Ver detalle,
+     Aceptar, Iniciar, Llegó, Demora, Mover y Cancelar son idénticos en las dos
+     vistas y no hay una segunda copia que se desfase (propietario, 18/09). -->
+<ng-template #accionesDeLaCitaDelDia let-booking>
+  <ng-container
+    [ngTemplateOutlet]="celdaAccionesCita"
+    [ngTemplateOutletContext]="{ $implicit: citaDelDia(booking) }"
+  />
+</ng-template>
+
+<ng-template #celdaReservar let-cupo>
+  @if (cupo.disponible) {
+    @if (enReprogramacion()) {
+      <!-- El mismo hueco no puede significar dos cosas: mientras se mueve una
+           cita, el cupo es un destino y no una reserva nueva. Con texto y no
+           sólo ícono — es la acción que la pantalla está pidiendo, y un globo
+           que hay que descubrir no sirve para eso. -->
+      <button
+        app-button
+        variant="primary"
+        size="sm"
+        data-testid="agenda-mover-aca"
+        [isLoading]="cupoDestino() === cupo.id"
+        (clicked)="reprogramarA(cupo)"
+      >
+        Mover acá
+      </button>
+    } @else {
+    <!-- Ancla y no botón: reservar navega, así que conserva «abrir en pestaña
+         nueva» y el destino en la barra de estado. La franja viaja en la URL
+         porque la pantalla de reserva relee el cupo para revalidarlo. -->
+    <!-- Ícono con su globo, como las acciones de Consultas. Sin lugar no se
+         dibuja nada: «Completo» ya lo dice la columna de disponibilidad. -->
+    <a
+      app-button
+      variant="primary"
+      size="sm"
+      data-testid="agenda-reservar"
+      [attr.aria-label]="'Reservar este cupo: ' + (cupo.desde | date: 'EEEE d MMM, HH:mm')"
+      appTooltip="Reservar este cupo"
+      [routerLink]="rutaDeReserva(cupo)"
+      [queryParams]="paramsDeReserva(cupo)"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="17" rx="2" />
+        <path d="M3 9h18M8 2v4M16 2v4M12 12.5v6M9 15.5h6" />
+      </svg>
+      Reservar
+    </a>
+    }
+  }
+</ng-template>
+
+<!-- ─── Filtros de las listas ───────────────────────────────────────────────
+     La ventana, las canceladas y la sede son de Consultas y Cupos, y viven
+     DENTRO de esas dos solapas: arriba de la barra aparecían y desaparecían al
+     cambiar de solapa, y la barra saltaba bajo el puntero (propietario, 18/09).
+     El calendario y «Mis horarios» no se filtran por ventana. -->
+<ng-template #filtrosDeListas>
     <form class="agenda__filtros" (submit)="$event.preventDefault()">
       <!-- Ya no se elige el recurso acá. El lugar donde se publica la agenda
            se elige en el conmutador de organización de la barra superior, así
            que un segundo campo en este renglón era pedir dos veces lo mismo y
            se comía el ancho de los filtros que sí se usan.
 
-           ALV-017: de quién es la agenda se dice sólo cuando lo que se mira es
-           de OTRO. En la propia, «Agenda de [tu nombre]» le informa a alguien
-           de quién es la agenda que abrió a propósito — y el mismo nombre se
-           repite después en cada fila de la tabla. -->
-      @if (hayAgendaQueMirar() && !mirandoAgendaPropia()) {
-        <p class="agenda__ambito" appTutorialTarget="agenda-ambito">
-          <span class="agenda__ambito-rotulo">Agenda</span>
-          <span class="agenda__ambito-valor">{{ nombreDelRecurso() }}</span>
-        </p>
-      }
+           «Agenda de [nombre]» también se fue (propietario, 2026-09-13): de
+           quién es la agenda ya lo dicen el conmutador de la barra superior y
+           cada fila de la tabla.
 
+           Anterior/Siguiente tampoco viven acá: recorren la ventana como
+           páginas, así que van al pie de cada lista, donde se busca una
+           paginación (ver `#navegacionVentana`). -->
       <app-form-field label="Ventana" class="agenda__filtro" appTutorialTarget="agenda-ventana">
         <app-select
           [options]="opcionesDeVentana()"
@@ -223,48 +669,6 @@
           (valueChange)="elegirVentana($event)"
         />
       </app-form-field>
-
-      <!-- ALV-024: navegar la ventana, no sólo elegir su tamaño. Antes
-           «Próximos 7 días» era SIEMPRE desde hoy — no había forma de ver la
-           semana anterior ni adelantarse a la que viene sin cambiar la fecha
-           del sistema. Un tramo es el tamaño de la ventana elegida: con
-           «Próximos 7 días», Siguiente salta 7 días. -->
-      <div class="agenda__navegacion-temporal" role="group" aria-label="Navegar la ventana">
-        <button
-          app-button
-          variant="ghost"
-          size="sm"
-          type="button"
-          data-testid="agenda-ventana-anterior"
-          aria-label="Ventana anterior"
-          (clicked)="moverVentana(-1)"
-        >
-          ← Anterior
-        </button>
-        @if (!enVentanaDeHoy()) {
-          <button
-            app-button
-            variant="ghost"
-            size="sm"
-            type="button"
-            data-testid="agenda-ventana-hoy"
-            (clicked)="irAHoy()"
-          >
-            Hoy
-          </button>
-        }
-        <button
-          app-button
-          variant="ghost"
-          size="sm"
-          type="button"
-          data-testid="agenda-ventana-siguiente"
-          aria-label="Ventana siguiente"
-          (clicked)="moverVentana(1)"
-        >
-          Siguiente →
-        </button>
-      </div>
 
       <app-switch
         class="agenda__filtro agenda__filtro--interruptor"
@@ -289,436 +693,5 @@
         }
       </p>
     }
-
-    <app-tabs
-      [selectedIndex]="pestana()"
-      (selectedIndexChange)="elegirPestana($event)"
-      appTutorialTarget="agenda-pestanas"
-    >
-      <!-- ─── Consultas ─────────────────────────────────────────────────────
-           El ciclo completo en una sola lista (ALV-019): lo que espera
-           respuesta y lo que ya está agendado eran dos solapas de la MISMA
-           lectura, filtrada por estado. Mirar el día obligaba a mirar dos
-           veces, y una solicitud aceptada parecía perderse. Los cupos siguen
-           aparte: son disponibilidad, no consultas. -->
-      <app-tab [label]="rotuloDeConsultas()">
-        @if (cuantasEsperanRespuesta() > 0) {
-          <p class="agenda__aviso" role="status">
-            Hay
-            <strong
-              >{{ cuantasEsperanRespuesta() }}
-              {{ cuantasEsperanRespuesta() === 1 ? 'consulta' : 'consultas' }}</strong
-            >
-            que esperan respuesta. Se reconocen por su estado y encabezan la lista.
-          </p>
-        }
-
-        @if (citasRecortadas()) {
-          <p class="agenda__aviso" role="status">
-            Se muestran las primeras {{ tope }} consultas de la ventana. Acote la ventana o
-            seleccione un recurso para verlas todas.
-          </p>
-        }
-
-        <app-data-table
-          appTutorialTarget="agenda-tabla-citas"
-          [state]="consultas()"
-          [columns]="columnasDeConsultas()"
-          [trackBy]="porCita"
-          caption="Consultas de la ventana consultada"
-          (retry)="recargar()"
-        />
-      </app-tab>
-
-      <!-- ─── Mi agenda ─────────────────────────────────────────────────────
-           El horario publicado, acá adentro y no a un viaje de distancia. Era
-           un botón del encabezado que llevaba a otra pantalla: para ver «a qué
-           hora atiendo» había que salir de la lista y volver. Ahora conviven,
-           que es como se usan — se mira el día y se mira el horario en la misma
-           vuelta.
-
-           **El `@if` va acá y no alcanza con el de `app-tab`.** El panel
-           inactivo no se dibuja, pero el contenido PROYECTADO lo instancia el
-           padre igual: sin esta condición, «Mi agenda» se construía en cada
-           visita a la lista y disparaba su propia lectura de recursos aunque
-           nadie abriera la solapa. Con la condición en la plantilla del padre,
-           el componente no existe hasta que se lo pide. -->
-      @if (esQuienAtiende()) {
-        <app-tab label="Mi agenda">
-          @if (pestana() === 1) {
-            <app-my-agenda />
-          }
-        </app-tab>
-      }
-
-      <!-- ─── Cupos ─────────────────────────────────────────────────────── -->
-      <app-tab [label]="rotuloDeCupos()">
-        @if (cuposRecortados()) {
-          <p class="agenda__aviso" role="status">
-            Se muestran los primeros {{ tope }} cupos de la ventana. Una agenda a la que le faltan
-            huecos sin avisar se lee como una agenda llena.
-          </p>
-        }
-
-        <app-data-table
-          [state]="cupos()"
-          [columns]="columnasDeCupos()"
-          [trackBy]="porCupo"
-          caption="Cupos de la ventana consultada"
-          (retry)="recargar()"
-        />
-      </app-tab>
-    </app-tabs>
-  }
-</div>
-
-<!-- ─── Ingreso por mostrador (AC-C3-03) ──────────────────────────────────
-     Entra y sale del DOM en vez de esconderse: el modal monta un `<dialog>`
-     nativo con su trampa de foco, y dejarlo montado y cerrado deja sus campos
-     en el orden de tabulación de la página de atrás.
-
-     `recursoElegido()` no puede ser nulo acá: `puedeIngresarPorMostrador()` lo
-     exige antes de ofrecer el botón, y sin botón nadie abre el modal. -->
-@if (mostradorAbierto() && recursoElegido(); as recurso) {
-  <app-walk-in-form
-    [resourceId]="recurso"
-    (cerrado)="cerrarMostrador()"
-    (creado)="mostradorCreado($event)"
-  />
-}
-
-<!-- ─── Plantillas de celda ───────────────────────────────────────────────
-     El organismo las recibe por `ColumnDef.cell`. -->
-
-<ng-template #celdaCuando let-cita>
-  @if (cita.cuando) {
-    <span class="agenda__cuando">{{ cita.cuando | date: 'EEEE d MMM, HH:mm' }}</span>
-    @if (cita.hasta) {
-      <span class="agenda__hasta">hasta {{ cita.hasta | date: 'HH:mm' }}</span>
-    }
-  } @else {
-    <!-- El contrato lo admite: una cita puede quedar sin cupo. Decirlo es más
-         útil que dejar la celda vacía, que se lee como un dato que no cargó. -->
-    <span class="agenda__hasta">Sin cupo asignado</span>
-  }
 </ng-template>
 
-<ng-template #celdaEstado let-cita>
-  <!-- Tres canales, no dos: tono, **forma** y palabra. La regla del sistema de
-       diseño es que la silueta del ícono cambie con el estado —«no el mismo
-       círculo teñido»—, porque quien no distingue los colores necesita algo más
-       que el color para separar una cita confirmada de una cancelada. -->
-  <app-status-seal [variant]="cita.estado.variant" [label]="cita.estado.label" />
-</ng-template>
-
-<ng-template #celdaPaciente let-cita>
-  <!-- **A quién se atiende, primero.** La columna se llama «Paciente» y sólo
-       ofrecía enlaces —«Abrir expediente», «Ver ficha»—, así que quien miraba
-       su agenda no podía saber a quién iba a atender sin abrir el expediente de
-       cada fila. El nombre ya venía de la API (`patientName`) y ya estaba
-       mapeado en el componente; sólo lo usaba el detalle.
-
-       `cita.paciente` respeta la compuerta del backend: manda el nombre al
-       titular y al profesional de esa agenda, y a nadie más. Sin nombre dice
-       «Paciente asignado» —hay alguien, y no te corresponde saber quién— o «Sin
-       paciente», que es lo que ya decía esta celda cuando no había enlaces. -->
-  <span class="agenda__paciente">{{ cita.paciente }}</span>
-
-  <!-- Dos destinos distintos, no dos formas de lo mismo: el expediente es la
-       historia de quien llega y lo abre quien atiende; la ficha es la filiación
-       y la abre administración. Se ofrecen los que la sesión pueda abrir, y
-       ninguno cuando no puede abrir ninguno. -->
-  @if (cita.rutaExpediente || cita.rutaPaciente) {
-    <span class="agenda__accesos">
-      @if (cita.rutaExpediente) {
-        <!-- Lectura pura: el motivo y el turno viajan con «Iniciar consulta»,
-             que es quien los usa. El expediente no los mira desde que la
-             escritura se mudó a Atención. -->
-        <a app-link [routerLink]="cita.rutaExpediente">Abrir expediente</a>
-      }
-      @if (cita.rutaPaciente) {
-        <a app-link [routerLink]="cita.rutaPaciente">Ver ficha</a>
-      }
-    </span>
-  }
-</ng-template>
-
-<ng-template #celdaFranja let-cupo>
-  <span class="agenda__cuando">{{ cupo.desde | date: 'EEEE d MMM, HH:mm' }}</span>
-  <span class="agenda__hasta">hasta {{ cupo.hasta | date: 'HH:mm' }}</span>
-</ng-template>
-
-<ng-template #celdaDisponibilidad let-cupo>
-  @if (cupo.disponible) {
-    <!-- La concordancia se arma en el componente, no acá: «1 de 1 libres» se
-         lee mal y una expresión con ternario dentro de una interpolación se
-         lee peor. -->
-    <app-badge variant="success" [value]="cupo.disponibilidad" />
-  } @else {
-    <app-badge variant="warning" value="Completo" />
-  }
-</ng-template>
-
-<ng-template #celdaCupoId let-cupo>
-  <!-- `user-select: all` en el CSS: es el valor que hay que mandar a
-       `POST /scheduling/slots/{id}/holds`, y copiar un uuid a mano es
-       exactamente donde se cometen los errores. -->
-  <code class="agenda__id">{{ cupo.id }}</code>
-</ng-template>
-
-<ng-template #celdaSolicitada let-cita>
-  <span class="agenda__cuando">{{ cita.solicitada | date: 'd MMM, HH:mm' }}</span>
-</ng-template>
-
-<ng-template #celdaPago let-cita>
-  <div class="agenda__pago">
-    @if (cita.pago) {
-      <!-- La etiqueta viene del servidor: la pantalla no traduce estados. -->
-      <app-badge [variant]="cita.pago.state === 'PAID' ? 'success' : 'warning'">
-        {{ cita.pago.label }}
-      </app-badge>
-      @if (cita.pago.insuranceUsed) {
-        <span class="agenda__seguro">con seguro</span>
-      }
-    } @else if (cita.admitePago) {
-      <!-- Un guión y no «pendiente de pago»: pendiente es una afirmación que
-           alguien firmó, esto es que del pago todavía no se dijo nada. -->
-      <span class="agenda__sin-pago">—</span>
-    } @else {
-      <!-- Cancelada o rechazada: no es que falte marcarlo, es que no aplica. -->
-      <span class="agenda__sin-pago">No aplica</span>
-    }
-
-    @if (puedeAtender() && cita.admitePago) {
-      <button
-        app-button
-        variant="ghost"
-        size="sm"
-        data-testid="agenda-pago"
-        [appMenuTrigger]="menuDePago"
-        [isLoading]="operando() === cita.id"
-      >
-        Cambiar
-      </button>
-      <app-menu #menuDePago>
-        @for (opcion of estadosDePago; track opcion.code) {
-          <app-menu-item
-            [disabled]="cita.pago?.state === opcion.code"
-            (selected)="marcarPago(cita, opcion.code)"
-          >
-            {{ opcion.label }}
-          </app-menu-item>
-        }
-        @if (cita.pago) {
-          <!-- El seguro es una marca SEPARADA del estado, por decisión del
-               propietario: se alterna sola y no cambia en qué estado está. -->
-          <app-menu-item (selected)="alternarSeguro(cita)">
-            {{ cita.pago.insuranceUsed ? 'Quitar «con seguro»' : 'Marcar «con seguro»' }}
-          </app-menu-item>
-        }
-      </app-menu>
-    }
-  </div>
-</ng-template>
-
-<ng-template #celdaAccionesCita let-cita>
-  <div class="agenda__acciones">
-    <!-- Cada acción se ofrece SOLO en el estado en que el backend la acepta:
-         un botón que va a volver con 422 es un error con forma de oferta. Con
-         el estado sin resolver (código vacío) no se ofrece ninguna. -->
-    @if (porResponder(cita)) {
-      <!-- «Ver detalle» va PRIMERO: en una solicitud, lo primero que uno hace
-           no es responder sino mirar qué le están pidiendo. Sólo aparece acá
-           —una cita ya agendada no tiene nada oculto que valga un modal—. -->
-      <button
-        app-button
-        variant="ghost"
-        size="sm"
-        data-testid="agenda-detalle"
-        (clicked)="verDetalle(cita)"
-      >
-        Ver detalle
-      </button>
-      <!-- Punto 4 del pedido: el historial de esa persona, con las rechazadas y
-           canceladas incluidas. Sólo si sabemos de quién: sin paciente no hay
-           historial que mostrar. -->
-      @if (cita.patientProfileId) {
-        <button
-          app-button
-          variant="ghost"
-          size="sm"
-          data-testid="agenda-historial"
-          [isLoading]="operando() === cita.id"
-          (clicked)="verHistorialDelPaciente(cita)"
-        >
-          Ver historial
-        </button>
-      }
-      <!-- Corrección #11: la solicitud del paciente espera respuesta. -->
-      <button
-        app-button
-        variant="primary"
-        size="sm"
-        data-testid="agenda-aceptar"
-        [isLoading]="operando() === cita.id"
-        (clicked)="aceptarCita(cita)"
-      >
-        Aceptar
-      </button>
-      <button
-        app-button
-        variant="ghost"
-        size="sm"
-        data-testid="agenda-rechazar"
-        [isLoading]="operando() === cita.id"
-        (clicked)="rechazarCita(cita)"
-      >
-        Rechazar
-      </button>
-    }
-
-    @if (sePuedeIniciar(cita)) {
-      <!-- Corrección #15: disponible en cualquier momento, sin esperar el día
-           agendado ni exigir que se haya registrado la llegada. -->
-      <button
-        app-button
-        variant="primary"
-        size="sm"
-        data-testid="agenda-iniciar"
-        [isLoading]="operando() === cita.id"
-        (clicked)="iniciarAtencion(cita)"
-      >
-        Iniciar consulta
-      </button>
-    }
-
-    @if (sePuedeCompletar(cita)) {
-      <!-- Ya está en curso: se vuelve a entrar, no se reinicia. `startBooking`
-           sobre una cita iniciada es un 409. -->
-      <button
-        app-button
-        variant="outline"
-        size="sm"
-        data-testid="agenda-continuar"
-        (clicked)="continuarAtencion(cita)"
-      >
-        Continuar consulta
-      </button>
-
-      <button
-        app-button
-        variant="primary"
-        size="sm"
-        data-testid="agenda-completar"
-        [isLoading]="operando() === cita.id"
-        (clicked)="completarCita(cita)"
-      >
-        Completar cita
-      </button>
-    }
-
-    @if (puedeOperarCitas() && estaVigente(cita)) {
-      @if (!cita.llegadaRegistrada) {
-        <button
-          app-button
-          variant="outline"
-          size="sm"
-          [isLoading]="operando() === cita.id"
-          (clicked)="registrarLlegada(cita)"
-        >
-          Registrar llegada
-        </button>
-      } @else {
-        <span class="agenda__hasta">Llegó</span>
-      }
-    }
-
-    @if (puedeAtender() && estaVigente(cita)) {
-      <!-- P8: la demora de un turno concreto. Es la excepción de la demora de
-           agenda —«a este lo veo más tarde»— y no cambia el estado de la cita. -->
-      <button
-        app-button
-        variant="ghost"
-        size="sm"
-        data-testid="agenda-demorar"
-        (clicked)="abrirDemoraDeCita(cita)"
-      >
-        Avisar demora
-      </button>
-    }
-
-    @if (puedeAtender() && estaVigente(cita)) {
-      <!-- Mover la cita (UC-41-08). Del profesional y del mostrador: reordenar
-           el día reacomoda a los demás pacientes, y esa decisión no es de quien
-           pidió el turno. Sólo sobre una cita vigente — el backend responde 422
-           sobre cualquier otro estado. -->
-      <button
-        app-button
-        variant="ghost"
-        size="sm"
-        [iconOnly]="true"
-        data-testid="agenda-reprogramar"
-        aria-label="Mover la cita a otro horario"
-        appTooltip="Mover la cita a otro horario"
-        [isLoading]="operando() === cita.id"
-        (clicked)="iniciarReprogramacion(cita)"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="4" width="18" height="17" rx="2" />
-          <path d="M3 9h18M8 2v4M16 2v4M8 15h7M12.5 12l3 3-3 3" />
-        </svg>
-      </button>
-    }
-
-    @if (estaVigente(cita) || porResponder(cita)) {
-      <!-- Destructiva: lleva su etiqueta, pide confirmación y exige motivo. -->
-      <button
-        app-button
-        variant="ghost"
-        size="sm"
-        data-testid="agenda-cancelar"
-        [isLoading]="operando() === cita.id"
-        (clicked)="cancelarCita(cita)"
-      >
-        Cancelar
-      </button>
-    }
-  </div>
-</ng-template>
-
-<ng-template #celdaReservar let-cupo>
-  @if (cupo.disponible) {
-    @if (enReprogramacion()) {
-      <!-- El mismo hueco no puede significar dos cosas: mientras se mueve una
-           cita, el cupo es un destino y no una reserva nueva. Con texto y no
-           sólo ícono — es la acción que la pantalla está pidiendo, y un globo
-           que hay que descubrir no sirve para eso. -->
-      <button
-        app-button
-        variant="primary"
-        size="sm"
-        data-testid="agenda-mover-aca"
-        [isLoading]="cupoDestino() === cupo.id"
-        (clicked)="reprogramarA(cupo)"
-      >
-        Mover acá
-      </button>
-    } @else {
-      <!-- Ancla y no botón: reservar navega, así que conserva «abrir en pestaña
-           nueva» y el destino en la barra de estado. La franja viaja en la URL
-           porque la pantalla de reserva relee el cupo para revalidarlo. -->
-      <a
-        app-button
-        variant="primary"
-        size="sm"
-        [routerLink]="rutaDeReserva(cupo)"
-        [queryParams]="paramsDeReserva(cupo)"
-      >
-        Reservar
-      </a>
-    }
-  } @else {
-    <span class="agenda__hasta">Sin lugar</span>
-  }
-</ng-template>

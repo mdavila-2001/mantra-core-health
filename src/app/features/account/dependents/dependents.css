@@ -9,8 +9,8 @@
   display: grid;
   gap: var(--sp-5);
   width: 100%;
-  max-width: 64rem;
-  margin-inline: auto;
+  /* Sin tope propio (regla del cliente §5): con 64rem el bloque quedaba más
+     angosto que el encabezado y su botón, corrido del título. */
   padding-block: var(--sp-5);
 }
 

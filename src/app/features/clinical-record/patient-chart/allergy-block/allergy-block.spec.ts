@@ -232,4 +232,29 @@ describe('AllergyBlock', () => {
       'Tu rol no permite registrar alergias.',
     );
   });
+
+  describe('tieneCambiosPendientes — contrato de DraftBlock', () => {
+    it('recién montado no tiene cambios pendientes', () => {
+      dibujar();
+      expect(componente.tieneCambiosPendientes()).toBe(false);
+    });
+
+    it('con la sustancia elegida tiene cambios pendientes', () => {
+      dibujar();
+      señal<string | null>('sustancia').set('sus-1');
+      expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+
+    it('una fila de reacción vacía agregada no cuenta como pendiente', () => {
+      dibujar();
+      interno<() => void>('agregarReaccion')();
+      expect(componente.tieneCambiosPendientes()).toBe(false);
+    });
+
+    it('una fila de reacción con descripción sí cuenta', () => {
+      dibujar();
+      interno<(clave: number, valor: string) => void>('fijarDescripcion')(0, 'urticaria');
+      expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+  });
 });

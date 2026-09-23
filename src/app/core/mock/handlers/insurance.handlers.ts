@@ -578,6 +578,27 @@ const solicitudes = new Coleccion<SolicitudSimulada>(
   ),
 );
 
+/**
+ * La solicitud de seguro de una cita, como la publica `GET /scheduling/bookings`
+ * en `insuranceClaim`.
+ *
+ * La API la enlaza por la consulta atendida (cita → encuentro → reclamo). El
+ * simulador no tiene encuentros, así que usa la del propio paciente si tiene y,
+ * si no, reparte las sembradas de forma estable por el id de la cita: lo que se
+ * quiere probar es la pantalla, y así la agenda de la médica muestra estados
+ * distintos. Sólo las citas con aseguradora y ya confirmadas tienen solicitud.
+ */
+export function solicitudDeLaCita(cita: { id: string; patientProfileId: string; appointmentId: string | null; insuranceCarrierName: string | null }) {
+  if (cita.insuranceCarrierName === null || cita.appointmentId === null) return null;
+  const todas = solicitudes.todos();
+  const propia = todas.filter((s) => s.patientProfileId === cita.patientProfileId).sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))[0];
+  let semilla = 0;
+  for (const letra of cita.id) semilla = (semilla * 31 + letra.charCodeAt(0)) >>> 0;
+  const elegida = propia ?? todas[semilla % todas.length];
+  if (elegida === undefined) return null;
+  return { id: elegida.id, claimIdentifier: elegida.claimIdentifier, statusCode: elegida.status.code, statusDisplay: elegida.status.display, submittedAt: elegida.submittedAt };
+}
+
 function itemDeSolicitud(s: SolicitudSimulada) {
   const paciente = PACIENTES.find((p) => p.id === s.patientProfileId) ?? PACIENTE;
   const aseguradora = ASEGURADORAS[s.carrierIndex]!;
@@ -993,6 +1014,9 @@ export function registrarSeguros(router: MockRouter): void {
     };
   });
 }
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+solicitudes.persistirEn('mock.insurance.solicitudes');
 
 /**
  * Exportada para portabilidad de póliza (subtarea 3.3): sus reclamos reales,

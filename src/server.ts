@@ -146,6 +146,19 @@ if (telemetryHandle !== null) {
 /**
  * Serve static files from /browser
  */
+/**
+ * Las fotos de vitrina de la maqueta (`/public/media/<id>`).
+ *
+ * El simulador del navegador no puede contestar una `<img>`: la pide el
+ * navegador directo y no pasa por `HttpClient`. En `yarn start` lo resuelve el
+ * `bypass` de `proxy.conf.mjs`; acá, en el contenedor de la rama `mockup`, lo
+ * resuelve esta ruta con el mismo archivo. Sin ella la petición caía en el
+ * renderizador de Angular, que devolvía HTML con 200, y la imagen se rompía.
+ */
+app.get('/public/media/:id', (_request, response) => {
+  response.redirect(302, '/mock-media.svg');
+});
+
 app.use(
   express.static(browserDistFolder, {
     maxAge: '1y',

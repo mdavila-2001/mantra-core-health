@@ -18,7 +18,7 @@
     border-radius: var(--r-lg);
     background: var(--bg-surface);
     box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+    transition: box-shadow var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
 }
 
 /* ---- el agarre para arrastrar ------------------------------------------- */
@@ -396,4 +396,45 @@
     .editor-campo__quitar-opcion {
         visibility: visible;
     }
+}
+
+/* ─── Cuadrículas: filas, columnas y sus restricciones ──────────────────────
+   Dos listas seguidas necesitan rótulo o se leen como una sola partida al
+   medio. El de las filas y el de las columnas son `<legend>`: los dos grupos
+   son `fieldset`, así que el rótulo del grupo es lo que ya nombra a sus
+   campos. */
+.editor-campo__grupo-rotulo {
+    padding: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    font-weight: var(--fw-semibold, 600);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* La fila lleva su número en vez de una marca: lo que se responde en una
+   cuadrícula son las columnas, y una marca redonda al lado de la fila diría
+   que la fila es una opción. */
+.editor-campo__numero {
+    flex: none;
+    min-inline-size: 1.5rem;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.editor-campo__restricciones {
+    display: grid;
+    gap: var(--sp-2);
+    justify-items: start;
+    padding: var(--sp-3) var(--sp-4);
+    border-radius: var(--r-md);
+    background: var(--bg-surface-alt);
+}
+
+/* El aviso de la cuadrícula imposible de responder. Ámbar y no rojo: no
+   impide guardar —quizá falten columnas por escribir todavía—, avisa. */
+.editor-campo__aviso {
+    margin: 0;
+    color: var(--c-amber-700, var(--text-secondary));
+    font-size: var(--fs-caption);
 }

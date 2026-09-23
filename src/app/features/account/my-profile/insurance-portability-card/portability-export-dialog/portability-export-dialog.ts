@@ -14,8 +14,8 @@ import { AppButton } from '../../../../../shared/components/atoms/button/button'
 import { Link } from '../../../../../shared/components/atoms/link/link';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../../../shared/components/molecules/form-field/form-field';
-import { Radio } from '../../../../../shared/components/molecules/radio/radio';
-import { RadioGroup } from '../../../../../shared/components/molecules/radio-group/radio-group';
+import { Select } from '../../../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../../../shared/components/atoms/select/select.types';
 import { ToastService } from '../../../../../shared/components/molecules/toast/toast.service';
 import { ContentDialog } from '../../../../../shared/components/organisms/content-dialog/content-dialog';
 
@@ -35,7 +35,7 @@ type DialogState = 'idle' | 'loading' | 'ready' | 'error';
  */
 @Component({
   selector: 'app-portability-export-dialog',
-  imports: [AnnounceOnAppear, AppButton, Alert, FormField, Radio, RadioGroup, Link, ContentDialog],
+  imports: [AnnounceOnAppear, AppButton, Alert, FormField, Select, Link, ContentDialog],
   templateUrl: './portability-export-dialog.html',
   styleUrl: './portability-export-dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -53,6 +53,16 @@ export class PortabilityExportDialog {
 
   protected readonly state = signal<DialogState>('idle');
   protected readonly format = signal<PortabilityExportFormat>('PDF');
+
+  /**
+   * Los tres formatos, con las MISMAS palabras que tenían como radios: la
+   * corrección C-21 cambia el control, no lo que dice cada opción.
+   */
+  protected readonly formatos: readonly SelectOption<PortabilityExportFormat>[] = [
+    { value: 'PDF', label: 'PDF oficial certificado con código QR' },
+    { value: 'JSON', label: 'Archivo JSON interoperable' },
+    { value: 'BUNDLE', label: 'Paquete completo (PDF + JSON)' },
+  ];
   protected readonly result = signal<PortabilityExportResult | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly copied = signal(false);

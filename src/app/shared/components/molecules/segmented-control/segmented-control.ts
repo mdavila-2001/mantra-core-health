@@ -70,11 +70,31 @@ export class SegmentedControl<T extends string = string> {
 
   private readonly botones = viewChildren<ElementRef<HTMLButtonElement>>('opcion');
 
-  /** Índice de la opción activa; `0` si el valor no está entre las opciones. */
-  protected readonly activo = computed(() => {
-    const indice = this.options().findIndex((opcion) => opcion.value === this.value());
-    return indice < 0 ? 0 : indice;
-  });
+  /**
+   * Índice de la opción activa, o `-1` si **ninguna** lo está.
+   *
+   * Ninguna activa es un estado legítimo y no un error: una pregunta de sí/no
+   * todavía sin responder no tiene por qué mostrar «Sí» apretado. Antes esto
+   * devolvía `0` ante un valor desconocido, así que un control sin respuesta se
+   * dibujaba con la primera opción elegida —y decía, además, `aria-checked` en
+   * ella—: la persona veía contestado lo que no contestó.
+   *
+   * Los selectores de vista que ya usaban el control pasan siempre un valor de
+   * la lista, así que para ellos no cambia nada.
+   */
+  protected readonly activo = computed(() =>
+    this.options().findIndex((opcion) => opcion.value === this.value()),
+  );
+
+  /**
+   * Qué opción entra en el orden de tabulación.
+   *
+   * La activa, y la primera cuando no hay ninguna: un radiogroup sin nada
+   * marcado se tabula por su primer radio —lo dice la guía de ARIA— y dejar
+   * todos en `-1` sacaría el control del recorrido del teclado, que es peor que
+   * cualquier cosa que esto resuelva.
+   */
+  protected readonly enfocable = computed(() => Math.max(this.activo(), 0));
 
   protected elegir(opcion: SegmentedOption<T>): void {
     if (opcion.disabled === true || opcion.value === this.value()) {

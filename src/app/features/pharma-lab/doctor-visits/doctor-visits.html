@@ -10,6 +10,11 @@
     }
 
     <app-tabs>
+      <!-- ─── Solicitudes ───────────────────────────────────────────────────
+           Se lee como «Consultas» de la agenda de pacientes: la misma tabla,
+           la misma fecha, el mismo sello de estado y las mismas acciones con
+           ícono. Una visita ocupa lugar en el día igual que una consulta; que
+           la bandeja esté separada (spec 5399) no la vuelve otra especie. -->
       <app-tab label="Solicitudes">
         <section class="doctor-visits__section" aria-label="Solicitudes de visita recibidas">
           @if (panel.requests.length === 0) {
@@ -17,58 +22,30 @@
               No recibiste solicitudes de visita.
             </p>
           } @else {
-            <table class="doctor-visits__table" data-testid="requests-table">
-              <caption class="doctor-visits__caption">
-                Solicitudes de visitadores médicos
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Fecha solicitada</th>
-                  <th scope="col">Duración</th>
-                  <th scope="col">Modalidad</th>
-                  <th scope="col">Motivo</th>
-                  <th scope="col">Estado</th>
-                  <th scope="col">Decisión</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (request of panel.requests; track request.id) {
-                  <tr [attr.data-testid]="'request-row-' + request.id">
-                    <td>{{ request.requestedStartAt.toLocaleString('es-BO') }}</td>
-                    <td>{{ request.durationMinutes }} min</td>
-                    <td>{{ concepto(request.modalityConceptId) }}</td>
-                    <td>{{ request.reason }}</td>
-                    <td [attr.data-testid]="'request-status-' + request.id">
-                      {{ concepto(request.statusConceptId) }}
-                    </td>
-                    <td class="doctor-visits__actions">
-                      @if (esperaDecision(request)) {
-                        <button
-                          app-button
-                          variant="primary"
-                          size="sm"
-                          [attr.data-testid]="'accept-' + request.id"
-                          (click)="aceptar(request)"
-                        >
-                          Aceptar
-                        </button>
-                        <button
-                          app-button
-                          variant="neutral"
-                          size="sm"
-                          [attr.data-testid]="'reject-' + request.id"
-                          (click)="rechazar(request)"
-                        >
-                          Rechazar
-                        </button>
-                      } @else {
-                        <span class="doctor-visits__muted">Resuelta</span>
-                      }
-                    </td>
-                  </tr>
+            @if (porResponder() > 0) {
+              <!-- La concordancia completa, verbo incluido: «1 solicitud que
+                   esperan respuesta» es el detalle que hace sonar a máquina
+                   una pantalla por lo demás cuidada. -->
+              <p class="doctor-visits__aviso" role="status">
+                @if (porResponder() === 1) {
+                  Hay <strong>1 solicitud</strong> que espera respuesta. Se reconoce por su estado
+                  y encabeza la lista.
+                } @else {
+                  Hay <strong>{{ porResponder() }} solicitudes</strong> que esperan respuesta. Se
+                  reconocen por su estado y encabezan la lista.
                 }
-              </tbody>
-            </table>
+              </p>
+            }
+
+            <app-data-table
+              data-testid="requests-table"
+              [state]="solicitudes()"
+              [columns]="columnasDeSolicitudes()"
+              [trackBy]="porId"
+              [rowLabel]="nombreDeSolicitud"
+              caption="Solicitudes de visitadores médicos"
+              (retry)="retry()"
+            />
           }
         </section>
       </app-tab>
@@ -87,33 +64,15 @@
               antelación mínima {{ panel.agenda.minNoticeHours }} h · plazo de cancelación
               {{ panel.agenda.rescheduleCutoffHours }} h.
             </p>
-            <table class="doctor-visits__table" data-testid="agenda-table">
-              <caption class="doctor-visits__caption">
-                Franjas en las que recibís visitadores
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Día</th>
-                  <th scope="col">Desde</th>
-                  <th scope="col">Hasta</th>
-                  <th scope="col">Duración</th>
-                  <th scope="col">Modalidad</th>
-                  <th scope="col">Lugar</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (window of panel.agenda.windows; track $index) {
-                  <tr>
-                    <td>{{ dia(window.weekday) }}</td>
-                    <td class="doctor-visits__mono">{{ window.startTime }}</td>
-                    <td class="doctor-visits__mono">{{ window.endTime }}</td>
-                    <td>{{ window.slotDurationMinutes }} min</td>
-                    <td>{{ concepto(window.modalityConceptId) }}</td>
-                    <td>{{ window.location ?? '—' }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+            <app-data-table
+              data-testid="agenda-table"
+              [state]="franjas()"
+              [columns]="columnasDeFranjas()"
+              [trackBy]="porId"
+              [rowLabel]="nombreDeFranja"
+              caption="Franjas en las que recibís visitadores"
+              (retry)="retry()"
+            />
           }
         </section>
       </app-tab>
@@ -123,32 +82,114 @@
           @if (panel.records.length === 0) {
             <p class="doctor-visits__empty">Todavía no hay visitas registradas.</p>
           } @else {
-            <table class="doctor-visits__table" data-testid="records-table">
-              <caption class="doctor-visits__caption">
-                Visitas registradas por los visitadores
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Fecha</th>
-                  <th scope="col">Lugar</th>
-                  <th scope="col">Temas</th>
-                  <th scope="col">Confirmación</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (record of panel.records; track record.id) {
-                  <tr>
-                    <td>{{ record.occurredAt.toLocaleString('es-BO') }}</td>
-                    <td>{{ record.location ?? '—' }}</td>
-                    <td>{{ record.topicsDiscussed ?? '—' }}</td>
-                    <td>{{ concepto(record.confirmationConceptId) }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+            <app-data-table
+              data-testid="records-table"
+              [state]="registros()"
+              [columns]="columnasDeRegistros()"
+              [trackBy]="porId"
+              [rowLabel]="nombreDeRegistro"
+              caption="Visitas registradas por los visitadores"
+              (retry)="retry()"
+            />
           }
         </section>
       </app-tab>
     </app-tabs>
   }
 </app-view-state-host>
+
+<!-- ─── Plantillas de celda ───────────────────────────────────────────────
+     Las mismas que la agenda de pacientes, con los mismos formatos. -->
+
+<ng-template #celdaCuando let-fila>
+  <!-- Dos formas de la misma fecha: en el teléfono el día va abreviado, porque
+       «Miércoles» sólo ensancha la columna y saca de la pantalla la de Estado. -->
+  <span class="doctor-visits__cuando doctor-visits__cuando--larga">{{
+    fila.cuando | date: 'EEEE d MMM, HH:mm'
+  }}</span>
+  <span class="doctor-visits__cuando doctor-visits__cuando--corta">{{
+    fila.cuando | date: 'EEE d MMM, HH:mm'
+  }}</span>
+  <!-- Hasta cuándo y cuánto dura, juntos: era una columna entera para un dato
+       que sólo tiene sentido pegado a la hora de inicio. -->
+  <span class="doctor-visits__hasta"
+    >hasta {{ fila.hasta | date: 'HH:mm' }} · {{ fila.duracion }} min</span
+  >
+</ng-template>
+
+<ng-template #celdaEstado let-fila>
+  <!-- Tres canales, no dos: tono, forma y palabra. La regla del sistema de
+       diseño es que la silueta cambie con el estado, porque quien no distingue
+       los colores necesita algo más que el color. Mismo componente que usa la
+       agenda para el estado de una cita. -->
+  <app-status-seal
+    class="doctor-visits__sello"
+    [attr.data-testid]="'request-status-' + fila.id"
+    [variant]="fila.estado.variant"
+    [label]="fila.estado.label"
+  />
+</ng-template>
+
+<ng-template #celdaDecision let-fila>
+  <!-- Íconos con su globo, como las acciones de la agenda: con texto, dos
+       botones estiraban la fila a dos renglones. El nombre de cada acción sigue
+       en `aria-label` y en el globo. La que avanza el ciclo —Aceptar— es la
+       única rellena. -->
+  <div class="doctor-visits__actions">
+    @if (fila.porResponder) {
+      <button
+        app-button
+        variant="primary"
+        size="sm"
+        [iconOnly]="true"
+        [attr.data-testid]="'accept-' + fila.id"
+        aria-label="Aceptar la visita"
+        appTooltip="Aceptar la visita"
+        [isLoading]="operando() === fila.id"
+        (clicked)="aceptar(fila)"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+      </button>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        [iconOnly]="true"
+        [attr.data-testid]="'reject-' + fila.id"
+        aria-label="Rechazar la visita"
+        appTooltip="Rechazar la visita"
+        [isLoading]="operando() === fila.id"
+        (clicked)="rechazar(fila)"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
+    } @else {
+      <!-- Ya se decidió: decirlo es más honesto que una celda vacía, que se lee
+           como un dato que no cargó. -->
+      <span class="doctor-visits__muted">Resuelta</span>
+    }
+  </div>
+</ng-template>
+
+<ng-template #celdaFranja let-franja>
+  <!-- Sin la clase `--cuando`: su `capitalize` está para los días de la semana
+       que el pipe de fecha devuelve en minúscula, y sobre un horario convertía
+       «13:00 a 14:00» en «13:00 A 14:00». -->
+  <span class="doctor-visits__franja">{{ franja.desde }}</span>
+  <span class="doctor-visits__hasta">hasta {{ franja.hasta }}</span>
+</ng-template>
+
+<ng-template #celdaRegistro let-visita>
+  <span class="doctor-visits__cuando doctor-visits__cuando--larga">{{
+    visita.cuando | date: 'EEEE d MMM, HH:mm'
+  }}</span>
+  <span class="doctor-visits__cuando doctor-visits__cuando--corta">{{
+    visita.cuando | date: 'EEE d MMM, HH:mm'
+  }}</span>
+</ng-template>

@@ -54,6 +54,15 @@ export interface AccessTokenClaims {
    * `POST`, y no existe un `me` como el de paciente.
    */
   readonly hpid?: string;
+  /**
+   * La organización propia del titular —«Mi consultorio» de quien atiende—, si
+   * la tiene.
+   *
+   * Es la que se activa por defecto cuando el token trae varias: no es adivinar
+   * en nombre de la persona, es su propio consultorio. Una clínica ajena sigue
+   * exigiendo que la elija.
+   */
+  readonly ownTenantId?: string;
   /** Expiración en segundos desde epoch, si el token la declara. */
   readonly exp?: number;
 }
@@ -143,6 +152,7 @@ function toClaims(payload: unknown): AccessTokenClaims | null {
   const name = source['name'];
   const pid = source['pid'];
   const hpid = source['hpid'];
+  const ownTenantId = source['ownTenantId'];
   const exp = source['exp'];
 
   return {
@@ -153,6 +163,7 @@ function toClaims(payload: unknown): AccessTokenClaims | null {
     ...(typeof name === 'string' ? { name } : {}),
     ...(typeof pid === 'string' && pid !== '' ? { pid } : {}),
     ...(typeof hpid === 'string' && hpid !== '' ? { hpid } : {}),
+    ...(typeof ownTenantId === 'string' && ownTenantId !== '' ? { ownTenantId } : {}),
     ...(typeof exp === 'number' ? { exp } : {}),
     ...(toNameMap(source['tenantNames']) ?? {}),
   };

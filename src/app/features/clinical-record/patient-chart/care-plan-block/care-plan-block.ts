@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  forwardRef,
   inject,
   input,
   output,
@@ -26,6 +27,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
+import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
 import { mensajeDeEscritura } from '../../mensaje-de-escritura';
 
 /** Qué clase de plan es: propuesta, plan u orden. */
@@ -92,11 +94,12 @@ interface ActividadEnCurso {
     Select,
     Textarea,
   ],
+  providers: [{ provide: DRAFT_BLOCK, useExisting: forwardRef(() => CarePlanBlock) }],
   templateUrl: './care-plan-block.html',
   styleUrl: './care-plan-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CarePlanBlock {
+export class CarePlanBlock implements DraftBlock {
   private readonly carePlans = inject(ChartCarePlansClient);
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
@@ -141,6 +144,20 @@ export class CarePlanBlock {
   protected readonly actividades = signal<readonly ActividadEnCurso[]>([
     { clave: 0, tipo: null, detalle: '', cuando: null },
   ]);
+
+  /** Contrato de `DraftBlock`. La fila inicial vacía no cuenta sola. */
+  readonly tieneCambiosPendientes = computed(
+    () =>
+      this.meta().trim() !== '' ||
+      this.intencion() !== null ||
+      this.desde() !== null ||
+      this.hasta() !== null ||
+      this.citaElegida() !== null ||
+      this.diagnosticoElegido() !== null ||
+      this.actividades().some(
+        (a) => a.tipo !== null || a.detalle.trim() !== '' || a.cuando !== null,
+      ),
+  );
 
   private siguienteClave = 1;
 

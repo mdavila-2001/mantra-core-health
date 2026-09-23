@@ -36,7 +36,7 @@ describe('ResumenDeFactura', () => {
     expect(texto).toContain('Emitida el');
     // El día depende del huso de quien corre la prueba; el mes y el año no.
     expect(texto).toContain('/09/2026');
-    expect(texto).toContain('68.00 BOB');
+    expect(texto).toContain('68.00 Bs');
     expect(texto).toContain('Enviada al paciente');
   });
 

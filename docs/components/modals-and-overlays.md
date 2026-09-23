@@ -3,6 +3,13 @@
 Cuatro componentes se superponen al contenido, y cada uno resuelve el foco de una
 manera distinta según lo que sea.
 
+> [!note] `app-content-dialog`, el organismo de contenido modal
+> Esta página cubre `app-dialog` (confirmación/acción corta, molécula) y las otras tres capas.
+> El organismo `app-content-dialog` — el marco modal con título, cuerpo proyectado, pie de
+> acciones y la política de descarte (`dismissible`/`dismissAttempt`) — tiene su contrato
+> completo, con los 29 consumidores medidos y la receta de migración, en
+> [`docs/refactor-profesional/trabajo/contratos/content-dialog.md`](../refactor-profesional/trabajo/contratos/content-dialog.md).
+
 | Componente | Elemento base | Trampa de foco | Cierra con `Escape` |
 |---|---|---|---|
 | `app-dialog` | `<dialog>` nativo con `showModal()` | **Sí, del navegador** | Sí, del navegador |

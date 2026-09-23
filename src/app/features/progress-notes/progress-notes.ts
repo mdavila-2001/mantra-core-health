@@ -1,5 +1,13 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+  viewChild,
+  type TemplateRef,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '@core/auth/auth.service';
@@ -12,10 +20,10 @@ import { errorToViewState } from '@core/http/error-to-view-state';
 import { empty, loading, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
 import { AppButton } from '@shared/components/atoms/button/button';
-import { AppButtonLink } from '@shared/components/atoms/button/button-link';
 import { Link } from '@shared/components/atoms/link/link';
-import { Card } from '@shared/components/molecules/card/card';
 import { ContentDialog } from '@shared/components/organisms/content-dialog/content-dialog';
+import { DataTable } from '@shared/components/organisms/data-table/data-table';
+import type { ColumnDef } from '@shared/components/organisms/data-table/data-table.types';
 import type { FilterDef } from '@shared/components/organisms/filter-bar/filter-bar';
 import { FilterBar } from '@shared/components/organisms/filter-bar/filter-bar';
 import { PageHeader } from '@shared/components/organisms/page-header/page-header';
@@ -123,9 +131,8 @@ export interface NotaDeLaAtencion {
   selector: 'app-progress-notes',
   imports: [
     AppButton,
-    AppButtonLink,
-    Card,
     ContentDialog,
+    DataTable,
     DatePipe,
     FilterBar,
     Link,
@@ -176,6 +183,36 @@ export class ProgressNotes {
    * ni estado ni tipo ni texto: filtrar allá exigiría endpoints que no existen.
    * Con el tope de 200 del período, la página entera está en memoria.
    */
+  /* ---- la lista, en la tabla del sistema (refactor UX) -------------------
+     Eran 64 tarjetas grandes y casi vacías: la pantalla medía 12 000 px en
+     escritorio y 16 000 en el teléfono. Una tabla se escanea; la fila entera
+     abre la evolución, y el botón explícito se conserva. */
+
+  private readonly celdaCuando =
+    viewChild.required<TemplateRef<{ $implicit: AtencionRegistrada }>>('celdaCuando');
+  private readonly celdaEstado =
+    viewChild.required<TemplateRef<{ $implicit: AtencionRegistrada }>>('celdaEstado');
+  private readonly celdaAccion =
+    viewChild.required<TemplateRef<{ $implicit: AtencionRegistrada }>>('celdaAccion');
+
+  protected readonly filasDeTabla = computed<ViewState<readonly AtencionRegistrada[]>>(() =>
+    ready(this.visibles()),
+  );
+
+  protected readonly columnas = computed<readonly ColumnDef<AtencionRegistrada>[]>(() => [
+    { key: 'cuando', header: 'Fecha', priority: 1, cell: this.celdaCuando() },
+    { key: 'paciente', header: 'Paciente', priority: 1 },
+    { key: 'motivo', header: 'Motivo', priority: 2 },
+    { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
+    { key: 'tipo', header: 'Tipo de cita', priority: 3 },
+    { key: 'canal', header: 'Canal', priority: 3 },
+    { key: 'accion', header: 'Evolución', priority: 1, cell: this.celdaAccion() },
+  ]);
+
+  protected readonly porId = (fila: AtencionRegistrada): string => fila.id;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDeFila = (fila: AtencionRegistrada): string => fila.paciente;
+
   protected readonly visibles = computed<readonly AtencionRegistrada[]>(() => {
     const filtros = this.filtros();
     const busqueda = (filtros['q'] ?? '').trim().toLowerCase();

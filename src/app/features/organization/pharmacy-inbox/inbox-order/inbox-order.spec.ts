@@ -465,8 +465,8 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     expect(resumen).toContain('Cubre el seguro');
     expect(resumen).toContain('Paga la persona (coaseguro)');
     // 68,00 al 80 % son 54,40; la sertralina no aprobada la paga entera.
-    expect(resumen).toContain('54.40 BOB');
-    expect(resumen).toContain('109.10 BOB');
+    expect(resumen).toContain('54.40 Bs');
+    expect(resumen).toContain('109.10 Bs');
     // Y se dice que es maqueta, en la propia pantalla.
     expect(resumen).toContain('Datos de ejemplo');
   });
@@ -478,18 +478,18 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     const total = (): string => element('[data-testid="mostrador-total-vivo"]')?.textContent ?? '';
 
     expect(total()).toContain('163.50');
-    expect(reparto()).toContain('54.40 BOB');
-    expect(reparto()).toContain('109.10 BOB');
+    expect(reparto()).toContain('54.40 Bs');
+    expect(reparto()).toContain('109.10 Bs');
 
     // El mostrador no tiene el primer renglón: baja el total …
     chooseLineDecision('No disponible');
 
     expect(total()).toContain('95.50');
     // … y el reparto lo acompaña, en vez de seguir cobrando lo que no sale.
-    expect(reparto()).toContain('0.00 BOB');
-    expect(reparto()).toContain('95.50 BOB');
-    expect(reparto()).not.toContain('54.40 BOB');
-    expect(reparto()).not.toContain('109.10 BOB');
+    expect(reparto()).toContain('0.00 Bs');
+    expect(reparto()).toContain('95.50 Bs');
+    expect(reparto()).not.toContain('54.40 Bs');
+    expect(reparto()).not.toContain('109.10 Bs');
   });
 
   it('lo que sale por reparto no pide el código de retiro ni dice que alguien lo espera', async () => {
@@ -559,7 +559,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     const factura = element('[data-testid="mostrador-factura"]');
 
     expect(factura?.textContent).toContain('Enviada al paciente');
-    expect(factura?.textContent).toContain('68.00 BOB');
+    expect(factura?.textContent).toContain('68.00 Bs');
     // La emite la maqueta al mirarla, nunca el día en que se hizo el pedido:
     // una factura anterior a la entrega no existe.
     expect(factura?.textContent).toContain(comoLaPintaLaPantalla(new Date()));

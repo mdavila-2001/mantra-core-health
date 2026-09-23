@@ -1,0 +1,52 @@
+
+Running 4 tests using 1 worker
+
+  x  1 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:56:7 › Expediente · política de descarte del alta › el alta de Documentos pregunta antes de descartar lo escrito, por los tres caminos (21.2s)
+  -  2 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:136:7 › Expediente · política de descarte del alta › el detalle de lectura nunca pregunta
+  ok 3 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:156:7 › Expediente · política de descarte del alta › con movimiento reducido, el alta igual abre (4.3s)
+  ok 4 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:167:7 › Expediente · política de descarte del alta › el alta se ve correctamente en móvil, claro y oscuro (5.5s)
+
+
+  1) [chromium] › playwright\expediente-dialogo-descarte.spec.ts:56:7 › Expediente · política de descarte del alta › el alta de Documentos pregunta antes de descartar lo escrito, por los tres caminos 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  getByTestId('expediente-alta')
+    Expected: visible
+    Received: hidden
+    Timeout:  15000ms
+
+    Call log:
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for getByTestId('expediente-alta')
+        33 × locator resolved to <app-content-dialog size="lg" closelabel="Cerrar" _nghost-ng-c1047260405="" _ngcontent-ng-c164921577="" data-testid="expediente-alta">…</app-content-dialog>
+           - unexpected value "hidden"
+
+
+       98 |
+       99 |     await abrirDocumentos.click();
+    > 100 |     await expect(modal).toBeVisible();
+          |                         ^
+      101 |
+      102 |     const titulo = page.getByTestId('documento-titulo');
+      103 |     await titulo.fill('Laboratorio completo');
+        at D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\playwright\expediente-dialogo-descarte.spec.ts:100:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\expediente-dialogo-descart-e6445-scrito-por-los-tres-caminos-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\expediente-dialogo-descart-e6445-scrito-por-los-tres-caminos-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\expediente-dialogo-descart-e6445-scrito-por-los-tres-caminos-chromium\trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts\playwright\salida\expediente-dialogo-descart-e6445-scrito-por-los-tres-caminos-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › playwright\expediente-dialogo-descarte.spec.ts:56:7 › Expediente · política de descarte del alta › el alta de Documentos pregunta antes de descartar lo escrito, por los tres caminos 
+  1 skipped
+  2 passed (37.6s)

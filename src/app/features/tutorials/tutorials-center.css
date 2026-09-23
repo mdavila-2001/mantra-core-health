@@ -109,10 +109,11 @@
 /* Alto completo para que las tarjetas de una fila terminen parejas aunque sus
    descripciones tengan distinto largo. */
 .tutoriales__tarjeta {
-  display: grid;
-  gap: var(--sp-3);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-3);
   block-size: 100%;
-  align-content: start;
+  --card-body-align-content: start;
 }
 
 .tutoriales__tarjeta-encabezado {

@@ -10,10 +10,9 @@
       "componente": "Dashboard",
       "apis": [
         "ClinicalClient",
-        "IdentityClient",
         "ProfilesClient",
-        "PublicClient",
-        "SchedulingClient"
+        "SchedulingClient",
+        "TerminologyClient"
       ],
       "estado": "conectada con deuda",
       "parametrizada": false
@@ -49,8 +48,11 @@
       "roles": [],
       "rolesExclusivos": false,
       "componente": "DirectoriesOverview",
-      "apis": [],
-      "estado": "presentacional",
+      "apis": [
+        "DiagnosticUnitsClient",
+        "PublicDirectoryClient"
+      ],
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -80,6 +82,7 @@
       "componente": "NearbyPlaces",
       "apis": [
         "ClinicalClient",
+        "ProfilesClient",
         "PublicDirectoryClient",
         "TerminologyClient"
       ],
@@ -120,6 +123,7 @@
       "rolesExclusivos": false,
       "componente": "ClinicsDirectory",
       "apis": [
+        "PublicCatalogClient",
         "PublicDirectoryClient"
       ],
       "estado": "conectada",
@@ -133,6 +137,7 @@
       "rolesExclusivos": false,
       "componente": "PharmaciesDirectory",
       "apis": [
+        "PublicCatalogClient",
         "PublicDirectoryClient"
       ],
       "estado": "conectada",
@@ -150,7 +155,6 @@
       "rolesExclusivos": false,
       "componente": "Agenda",
       "apis": [
-        "MedicalOrganizationClient",
         "ProfilesClient",
         "SchedulingClient",
         "TerminologyClient"
@@ -169,6 +173,7 @@
       "rolesExclusivos": false,
       "componente": "ClinicalRecord",
       "apis": [
+        "AccountingClient",
         "AuthzClient",
         "ChartCarePlansClient",
         "ChartDocumentsClient",
@@ -181,6 +186,7 @@
         "PrescriptionFavoritesClient",
         "ProceduresClient",
         "ProfilesClient",
+        "QuotationsClient",
         "SystemContextClient",
         "TerminologyClient"
       ],
@@ -295,9 +301,10 @@
       "componente": "FormBuilder",
       "apis": [
         "ChartTemplatesClient",
-        "FormsClient"
+        "FormsClient",
+        "TerminologyClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -668,25 +675,22 @@
         "PRACTITIONER"
       ],
       "rolesExclusivos": false,
-      "componente": "Cockpit",
+      "componente": "Resumen",
       "apis": [
         "AccountingClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
-      "ruta": "/assets-liabilities",
-      "etiqueta": "Activos y pasivos",
-      "grupo": "Facturación",
-      "roles": [
-        "PRACTITIONER"
-      ],
+      "ruta": "/my-account/dependents",
+      "etiqueta": "Dependientes",
+      "grupo": "Mi cuenta",
+      "roles": [],
       "rolesExclusivos": false,
-      "componente": "AssetsLiabilities",
+      "componente": "Dependents",
       "apis": [
-        "AccountingClient",
-        "AssetsLiabilitiesClient"
+        "ProfilesClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -702,6 +706,7 @@
         "CommunityClient",
         "FilesClient",
         "IdentityClient",
+        "InsurancePortabilityClient",
         "PracticeSitesClient",
         "ProfilesClient",
         "TerminologyClient"
@@ -720,7 +725,7 @@
         "SchedulingClient",
         "TerminologyClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -737,6 +742,7 @@
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient",
         "PharmacyClient",
+        "ProfilesClient",
         "TerminologyClient"
       ],
       "estado": "conectada con deuda",
@@ -830,10 +836,11 @@
       "rolesExclusivos": false,
       "componente": "PharmacyOrders",
       "apis": [
+        "NotificationsClient",
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -852,8 +859,21 @@
       "parametrizada": false
     },
     {
+      "ruta": "/my-account/promotions",
+      "etiqueta": "Promociones",
+      "grupo": "Mi cuenta",
+      "roles": [
+        "PATIENT"
+      ],
+      "rolesExclusivos": false,
+      "componente": "Promotions",
+      "apis": [],
+      "estado": "presentacional",
+      "parametrizada": false
+    },
+    {
       "ruta": "/administration/my-practice",
-      "etiqueta": "Mi consultorio propio",
+      "etiqueta": "Mis organizaciones",
       "grupo": "Administración",
       "roles": [
         "PRACTITIONER"
@@ -922,6 +942,37 @@
   ],
   "hijas": [
     {
+      "ruta": "/administration/accounting/assets-liabilities",
+      "seccion": "Contabilidad",
+      "roles": [
+        "SECURITY_ADMIN",
+        "ACCOUNTING_APPROVER",
+        "PRACTITIONER"
+      ],
+      "componente": "AssetsLiabilities",
+      "apis": [
+        "AccountingClient",
+        "AssetsLiabilitiesClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/accounting/cockpit",
+      "seccion": "Contabilidad",
+      "roles": [
+        "SECURITY_ADMIN",
+        "ACCOUNTING_APPROVER",
+        "PRACTITIONER"
+      ],
+      "componente": "Cockpit",
+      "apis": [
+        "AccountingClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/administration/accounting/libros",
       "seccion": "Contabilidad",
       "roles": [
@@ -933,7 +984,7 @@
       "apis": [
         "AccountingClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -1994,6 +2045,17 @@
       "parametrizada": false
     },
     {
+      "ruta": "/clinics-directory/:slug",
+      "seccion": "Directorio de clínicas",
+      "roles": [],
+      "componente": "ClinicDetail",
+      "apis": [
+        "PublicCatalogClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
       "ruta": "/directory/:profileId",
       "seccion": "Directorio de médicos",
       "roles": [
@@ -2050,6 +2112,7 @@
       ],
       "componente": "PatientChart",
       "apis": [
+        "AccountingClient",
         "ChartCarePlansClient",
         "ChartDocumentsClient",
         "ChartNotesClient",
@@ -2068,16 +2131,17 @@
       "parametrizada": true
     },
     {
-      "ruta": "/medical-records/:profileId/encounter",
+      "ruta": "/medical-records/:profileId/consultation",
       "seccion": "Archivo clínico",
       "roles": [
         "CLINICIAN",
         "PRACTITIONER"
       ],
-      "componente": "EncounterWorkspace",
+      "componente": "Consultation",
       "apis": [
         "ClinicalClient",
         "ProfilesClient",
+        "QuotationsClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
@@ -2140,7 +2204,8 @@
       "componente": "PractitionerProfileEdit",
       "apis": [
         "FilesClient",
-        "ProfilesClient"
+        "ProfilesClient",
+        "TerminologyClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -2166,6 +2231,7 @@
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient",
         "PharmacyClient",
+        "ProfilesClient",
         "TerminologyClient"
       ],
       "estado": "conectada con deuda",
@@ -2179,9 +2245,23 @@
       ],
       "componente": "OrderDetail",
       "apis": [
+        "NotificationsClient",
         "PharmacyOrdersClient"
       ],
       "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/my-account/pharmacy-orders/:orderId/invoice",
+      "seccion": "Mis pedidos",
+      "roles": [
+        "PATIENT"
+      ],
+      "componente": "OrderInvoice",
+      "apis": [
+        "PharmacyOrdersClient"
+      ],
+      "estado": "conectada con deuda",
       "parametrizada": true
     },
     {
@@ -2198,6 +2278,20 @@
       "parametrizada": true
     },
     {
+      "ruta": "/my-account/pharmacy-orders/checkout",
+      "seccion": "Mis pedidos",
+      "roles": [
+        "PATIENT"
+      ],
+      "componente": "Checkout",
+      "apis": [
+        "PharmacyCampaignsClient",
+        "PharmacyOrdersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/my-account/pharmacy-orders/new",
       "seccion": "Mis pedidos",
       "roles": [
@@ -2208,7 +2302,7 @@
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -2257,6 +2351,17 @@
       ],
       "estado": "conectada",
       "parametrizada": false
+    },
+    {
+      "ruta": "/pharmacies-directory/:slug",
+      "seccion": "Directorio de farmacias",
+      "roles": [],
+      "componente": "PharmacyDetail",
+      "apis": [
+        "PublicCatalogClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
     },
     {
       "ruta": "/questionnaires/:surveyId",
@@ -2329,7 +2434,6 @@
       ],
       "componente": "AgendaCreate",
       "apis": [
-        "MedicalOrganizationClient",
         "SchedulingClient"
       ],
       "estado": "conectada",
@@ -2345,7 +2449,6 @@
       ],
       "componente": "AgendaCreate",
       "apis": [
-        "MedicalOrganizationClient",
         "SchedulingClient"
       ],
       "estado": "conectada",

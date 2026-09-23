@@ -1,6 +1,6 @@
-import { ESPECIALIDAD, ESTADO } from '../fixtures/conceptos';
+import { conceptos, ESPECIALIDAD, ESTADO } from '../fixtures/conceptos';
 import { MEDICA, PROFESIONALES } from '../fixtures/personas';
-import { notFound, type MockRequest, type MockRouter } from '../mock-router';
+import { notFound, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { IDS, TENANT_FARMACIA } from '../mock-session';
 import { ahora, Coleccion, cuerpo, iso, isoDia, nuevoId, uuid } from '../mock-store';
 
@@ -80,12 +80,54 @@ function registroDe(s: SolicitudDeVisita) {
   return { id: uuid(`visit-record-${s.id}`), visitRequestId: s.id, doctorUserId: s.doctorUserId, medicalVisitorId: s.medicalVisitorId, pharmaLabId: s.pharmaLabId, occurredAt: s.requestedStartAt, location: s.location, topicsDiscussed: s.reason, nextAction: 'Enviar bibliografía por correo', visitorAttendanceConceptId: uuid('concept-attendance-present'), doctorAttendanceConceptId: uuid('concept-attendance-present'), confirmationConceptId: uuid('concept-record-confirmed-by-both') };
 }
 
+/**
+ * El diccionario `*_concept_id` → rótulo que pide `PharmaLabConcepts`.
+ *
+ * Sin él la respuesta genérica devolvía `{ items: [] }` donde el cliente
+ * espera un arreglo, `concepts.map` reventaba y las pantallas de visitas
+ * mostraban los estados como UUID crudos. Los códigos y rótulos son los del
+ * `pharma-lab-reference.controller` de la API; los identificadores, las
+ * mismas semillas que usan las filas de este archivo.
+ */
+const CONCEPTOS_PHL: readonly { key: string; id: string; code: string; display: string }[] = [
+  ['PHL_VISIT_REQUESTED', 'concept-visit-requested', 'Solicitada'],
+  ['PHL_VISIT_CONFIRMED', 'concept-visit-confirmed', 'Confirmada'],
+  ['PHL_VISIT_RESCHEDULED', 'concept-visit-reschedule-proposed', 'Reprogramada'],
+  ['PHL_VISIT_REJECTED', 'concept-visit-rejected', 'Rechazada'],
+  ['PHL_VISIT_CANCELLED_BY_VISITOR', 'concept-visit-cancelled', 'Cancelada por el visitador'],
+  ['PHL_VISIT_COMPLETED', 'concept-visit-completed', 'Completada'],
+  ['PHL_MODALITY_IN_PERSON', 'concept-visit-modality-onsite', 'Presencial'],
+  ['PHL_MODALITY_VIRTUAL', 'concept-visit-modality-virtual', 'Virtual'],
+  ['LAB_TYPE_DRUG_MANUFACTURER', 'concept-lab-type-manufacturer', 'Fabricante de medicamentos'],
+  ['PHL_STAFF_MEDICAL', 'concept-staff-manager', 'Personal médico'],
+  ['PHL_STAFF_REGULATORY', 'concept-staff-regulatory', 'Personal regulatorio'],
+  ['PHL_STAFF_MEDICAL_VISITOR', 'concept-staff-visitor', 'Visitador médico'],
+  ['PHL_DISCLOSURE_PUBLIC', 'concept-disclosure-public', 'Pública'],
+  ['PHL_MATERIAL_KIND_DATA_SHEET', 'concept-material-monograph', 'Ficha técnica'],
+  ['PHL_MATERIAL_KIND_STUDY', 'concept-material-study', 'Estudio'],
+  ['PHL_MATERIAL_KIND_SCIENTIFIC_DOC', 'concept-material-guide', 'Documento científico'],
+  ['PHL_ATTENDANCE_ATTENDED', 'concept-attendance-present', 'Asistió'],
+  ['PHL_RECORD_CONFIRMED', 'concept-record-confirmed-by-both', 'Visita confirmada por el doctor'],
+  ['PHL_ADVERSE_EVENT_COUGH', 'concept-adverse-event-cough', 'Tos seca'],
+  ['PHL_ADVERSE_EVENT_RASH', 'concept-adverse-event-rash', 'Exantema cutáneo'],
+  ['PHL_SEVERITY_MILD', 'concept-severity-mild', 'Leve'],
+  ['PHL_DOC_GMP', 'concept-doc-gmp', 'Certificado de buenas prácticas'],
+  ['PHL_DOC_LICENSE', 'concept-doc-license', 'Licencia de funcionamiento'],
+  ['PHL_DOC_REGISTRY', 'concept-doc-registry', 'Registro sanitario'],
+].map(([key, semilla, display]) => ({ key: key!, id: uuid(semilla!), code: key!, display: display! }));
+
+function diccionarioDeConceptos() {
+  const generales = conceptos().map((c) => ({ key: c.code, id: c.id, code: c.code, display: c.display }));
+  return [...CONCEPTOS_PHL, ...generales];
+}
+
 function esVisitador(request: MockRequest): boolean {
   return request.user?.roles.includes('MEDICAL_VISITOR') ?? false;
 }
 
 export function registrarLaboratorioFarmaceutico(router: MockRouter): void {
   router.get('/pharma-labs', () => LABS);
+  router.get('/pharma-labs/reference/concepts', () => diccionarioDeConceptos());
   router.get('/pharma-labs/:id', ({ params }) => LABS.find((l) => l.id === params['id']) ?? notFound('Laboratorio no encontrado'));
 
   router.get('/pharma-labs/:id/staff', ({ params }) => [
@@ -143,6 +185,28 @@ export function registrarLaboratorioFarmaceutico(router: MockRouter): void {
   router.post('/visit-requests', (request) => {
     const datos = cuerpo<{ doctorUserId: string; doctorTenantId?: string; reason: string; requestedStartAt: string; durationMinutes: number; modalityConceptId: string; location?: string; observations?: string }>(request);
     const agenda = agendaDe(datos.doctorUserId ?? MEDICA.userId);
+    // 15 minutos por omisión (C-13): "cuando el profesional no definió nada,
+    // dura 15; cuando definió otra cosa, dura eso" — el "otra cosa" es
+    // `maxDurationMinutes` de SU política, no un número fijo del cliente.
+    const duracion = datos.durationMinutes ?? 15;
+    // Mismo contrato que el `ValidationPipe` real: `visits.dto.ts` declara
+    // `durationMinutes` con `@IsInt() @Min(5) @Max(240)`. Sin este rechazo el
+    // doble es más permisivo que la API real.
+    if (!Number.isInteger(duracion) || duracion < 5 || duracion > 240) {
+      return reply(400, {
+        statusCode: 400,
+        code: 'VALIDATION_FAILED',
+        message: 'Validation failed',
+        error: 'Bad Request',
+        details: { messages: ['durationMinutes must be an integer number not less than 5 and not greater than 240'] },
+      });
+    }
+    // Precondición de negocio (no de forma): `visit-agenda.service.ts` la
+    // valida contra la política del doctor con `PreconditionFailedException`,
+    // que en este proyecto es 422 (no 412 — ver `domain.exception.ts`).
+    if (duracion > agenda.maxDurationMinutes) {
+      return validation(`La duración máxima admitida es de ${agenda.maxDurationMinutes} minutos`);
+    }
     const nueva = solicitudes.agregar({
       id: nuevoId('visit-request'),
       medicalVisitorId: VISITADOR_ID,
@@ -151,7 +215,7 @@ export function registrarLaboratorioFarmaceutico(router: MockRouter): void {
       doctorTenantId: datos.doctorTenantId ?? '',
       reason: datos.reason ?? '',
       requestedStartAt: datos.requestedStartAt ?? ahora(),
-      durationMinutes: datos.durationMinutes ?? 15,
+      durationMinutes: duracion,
       timeZone: agenda.timeZone,
       modalityConceptId: datos.modalityConceptId ?? MODALIDAD.PRESENCIAL,
       location: datos.location ?? '',
@@ -189,3 +253,6 @@ export function registrarLaboratorioFarmaceutico(router: MockRouter): void {
   router.get('/visit-records/labs/:id', ({ params }) => solicitudes.filtrar((s) => s.pharmaLabId === params['id'] && s.statusConceptId === ESTADO_VISITA.REALIZADA).map(registroDe));
   router.get('/visit-records/labs/:id/rating-summary', () => ({ sampleSize: 14, punctuality: 4.6, informationQuality: 4.4, clarity: 4.7, relevance: 4.2, professionalConduct: 4.9, materialUsefulness: 4.1, overallSatisfaction: 4.5 }));
 }
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+solicitudes.persistirEn('mock.pharma-lab.solicitudes');

@@ -98,6 +98,20 @@ export class Input implements ControlValueAccessor {
    */
   readonly comboboxAria = input<InputComboboxAria | null>(null);
 
+  /**
+   * Nombre accesible cuando el control va **suelto**, sin `app-form-field`
+   * —una celda de tabla cuya columna ya dice qué es—. Mismo contrato que el
+   * `ariaLabel` de `app-select`: dentro de un campo se ignora, porque ahí el
+   * `<label>` visible es el que nombra.
+   */
+  readonly ariaLabel = input<string>('');
+
+  /**
+   * Granularidad de `type="time"` en segundos (`300` = de a 5 minutos). Sin
+   * valor no se emite: el navegador usa la suya.
+   */
+  readonly step = input<number | null>(null);
+
   readonly focused = output<FocusEvent>();
   readonly blurred = output<FocusEvent>();
 
@@ -118,6 +132,9 @@ export class Input implements ControlValueAccessor {
   protected readonly controlId = computed(() => this.field?.controlId() ?? this.ownId);
   protected readonly describedBy = computed(() => this.field?.describedBy() ?? null);
   protected readonly required = computed(() => this.field?.required() === true);
+  protected readonly accessibleLabel = computed(() =>
+    this.field !== null ? null : this.ariaLabel() || null,
+  );
 
   /** El error puede venir del propio control o del campo que lo envuelve. */
   protected readonly invalid = computed(

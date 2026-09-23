@@ -44,7 +44,7 @@
               <span class="comprobante__secundario">x{{ linea.cantidad }}</span>
             </span>
             @if (linea.importe !== null) {
-              <span class="cifras-tabulares">{{ linea.importe }} {{ papel.moneda }}</span>
+              <span class="cifras-tabulares">{{ linea.importe }} {{ moneda(papel.moneda) }}</span>
             } @else {
               <span class="comprobante__secundario">Precio no publicado</span>
             }
@@ -55,7 +55,7 @@
       <p class="comprobante__total" data-testid="comprobante-total">
         @if (papel.total !== null) {
           Total:
-          <strong class="cifras-tabulares">{{ papel.total }} {{ papel.moneda }}</strong>
+          <strong class="cifras-tabulares">{{ papel.total }} {{ moneda(papel.moneda) }}</strong>
         } @else {
           Total no disponible: falta algún precio publicado.
         }

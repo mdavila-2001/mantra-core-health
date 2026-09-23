@@ -42,7 +42,7 @@
   background: transparent;
   color: inherit;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--dur-fast) var(--ease-standard);
 }
 
 .campana__boton:hover,

@@ -65,7 +65,7 @@
                   }
                   <span class="mostrador__secundario">Cantidad: {{ linea.cantidad }}</span>
                   @if (linea.precio !== null) {
-                    <span class="cifras-tabulares">{{ linea.precio }} {{ linea.moneda }}</span>
+                    <span class="cifras-tabulares">{{ linea.precio }} {{ moneda(linea.moneda) }}</span>
                   } @else {
                     <span class="mostrador__secundario">Sin precio publicado</span>
                   }
@@ -145,7 +145,7 @@
           <p class="mostrador__total" data-testid="mostrador-total-vivo">
             @if (totalEnVivo(); as total) {
               Total:
-              <strong class="cifras-tabulares">{{ total }} {{ abierto.moneda }}</strong>
+              <strong class="cifras-tabulares">{{ total }} {{ moneda(abierto.moneda) }}</strong>
             } @else {
               Total no disponible: falta algún precio.
             }
@@ -199,7 +199,7 @@
                 </div>
                 <div class="mostrador__linea-precio">
                   @if (linea.precio !== null) {
-                    <span class="cifras-tabulares">{{ linea.precio }} {{ linea.moneda }}</span>
+                    <span class="cifras-tabulares">{{ linea.precio }} {{ moneda(linea.moneda) }}</span>
                   }
                   @if (!linea.disponible) {
                     <app-badge variant="warning">No disponible</app-badge>
@@ -212,7 +212,7 @@
             <p class="mostrador__total">
               Total:
               <strong class="cifras-tabulares">
-                {{ abierto.totalEstimado }} {{ abierto.moneda }}
+                {{ abierto.totalEstimado }} {{ moneda(abierto.moneda) }}
               </strong>
             </p>
           }
@@ -238,13 +238,13 @@
             <div class="mostrador__reparto-dato">
               <dt class="mostrador__secundario">Cubre el seguro</dt>
               <dd class="mostrador__valor cifras-tabulares">
-                {{ seguro.totalCubierto }} {{ seguro.moneda }}
+                {{ seguro.totalCubierto }} {{ moneda(seguro.moneda) }}
               </dd>
             </div>
             <div class="mostrador__reparto-dato">
               <dt class="mostrador__secundario">Paga la persona (coaseguro)</dt>
               <dd class="mostrador__valor cifras-tabulares">
-                {{ seguro.totalCoaseguro }} {{ seguro.moneda }}
+                {{ seguro.totalCoaseguro }} {{ moneda(seguro.moneda) }}
               </dd>
             </div>
           </dl>
@@ -340,7 +340,7 @@
         />
       }
 
-      <a app-button variant="ghost" [routerLink]="bandejaRoute">Volver a la bandeja</a>
+      <a app-button variant="ghost" class="volver-al-origen" [routerLink]="bandejaRoute">Volver a la bandeja</a>
     </div>
   }
 </app-view-state-host>

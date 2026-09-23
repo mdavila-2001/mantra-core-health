@@ -27,6 +27,20 @@ export interface ColumnDef<Row> {
   readonly priority: number;
   readonly align?: ColumnAlignment;
   readonly sortable?: boolean;
+  /**
+   * `'end'` fija la columna al borde final de la caja con scroll lateral. Es
+   * para las acciones: una tabla más ancha que la pantalla las escondía detrás
+   * de un desplazamiento que nadie descubre (propietario, 18/09/2026).
+   *
+   * **2026-09-22 (ADR-0015, regla 6):** el doctor pidió que no haya scroll
+   * lateral. La razón de arriba sigue siendo válida — con scroll lateral,
+   * fijar las acciones seguía haciendo falta —, pero con `maxHeight` activo
+   * (`.data-table--constrained`) no hay scroll lateral que esconda nada, así
+   * que `sticky: 'end'` queda sin efecto práctico en ese modo. No se retira:
+   * un consumidor que no adopte `maxHeight` lo sigue necesitando igual que
+   * hoy. Ver `docs/adr/ADR-0015-tabla-con-acciones.md`.
+   */
+  readonly sticky?: 'end';
   /** Plantilla de celda; sin ella se muestra el valor crudo de `key`. */
   readonly cell?: TemplateRef<{ $implicit: Row }>;
 }

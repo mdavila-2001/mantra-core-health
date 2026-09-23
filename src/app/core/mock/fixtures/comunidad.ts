@@ -1,3 +1,6 @@
+import { imagenesDeVitrina, SEMILLAS_DE_VITRINA } from './bolivia-eje-central';
+import { SEMILLAS_DE_INSTITUCIONES } from './instituciones';
+import { CATEGORIA, categoriaDeCadena, type CategoriaSimulada } from './categorias-publicas';
 import { ESPECIALIDAD, ESTADO } from './conceptos';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from './personas';
 import { TENANT_CLINICA, TENANT_FARMACIA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_PLATAFORMA } from '../mock-session';
@@ -35,6 +38,14 @@ export interface VitrinaSimulada {
   readonly ratingCount: number;
   readonly hasPublishedAgenda: boolean;
   readonly seguidores: number;
+  /**
+   * Con qué chip se acota dentro del vertical, o `null` si no lleva ninguno.
+   *
+   * `null` en los profesionales —su categoría es la especialidad, y ya tienen
+   * su propio filtro— y en los pacientes, que no salen en ningún directorio.
+   * Ver `categorias-publicas.ts`.
+   */
+  readonly categoria: CategoriaSimulada | null;
 }
 
 export const TIPO_VITRINA = {
@@ -144,12 +155,17 @@ function vitrinaDeProfesional(p: ProfesionalSimulado): VitrinaSimulada {
     specialties: p.especialidades,
     ratingAverage: p.ratingCount === 0 ? null : p.ratingAverage,
     ratingCount: p.ratingCount,
-    hasPublishedAgenda: p.especialidades.length > 0,
-    seguidores: 40 + PROFESIONALES.indexOf(p) * 37,
+    hasPublishedAgenda: p.especialidades.length > 0 && p.origen === undefined,
+    // Un médico real de la red no tiene seguidores en una red que no usa.
+    seguidores: p.origen === undefined ? 40 + PROFESIONALES.indexOf(p) * 37 : 0,
+    // La categoría de un profesional es su especialidad, y el directorio de
+    // médicos ya la ofrece con su propia portada. Un segundo chip que dijera
+    // lo mismo con otras palabras sería una pregunta repetida.
+    categoria: null,
   };
 }
 
-function organizacion(clave: string, datos: { kind: Exclude<ClaseDeVitrina, 'PRACTITIONER' | 'PATIENT'>; tenantId: string; name: string; headline: string; bio: string; city: string; address: string; lat: number; lng: number; rating?: number; color: string; agenda?: boolean }): VitrinaSimulada {
+function organizacion(clave: string, datos: { kind: Exclude<ClaseDeVitrina, 'PRACTITIONER' | 'PATIENT'>; tenantId: string; name: string; headline: string; bio: string; city: string; address: string; lat: number; lng: number; rating?: number; color: string; agenda?: boolean; categoria: CategoriaSimulada }): VitrinaSimulada {
   return {
     id: uuid(`public-profile-${clave}`),
     tenantId: datos.tenantId,
@@ -175,44 +191,45 @@ function organizacion(clave: string, datos: { kind: Exclude<ClaseDeVitrina, 'PRA
     ratingCount: 60,
     hasPublishedAgenda: datos.agenda ?? false,
     seguidores: 300,
+    categoria: datos.categoria,
   };
 }
 
 export const VITRINAS: readonly VitrinaSimulada[] = [
   ...PROFESIONALES.map(vitrinaDeProfesional),
-  organizacion('clinica-los-olivos', { kind: 'ORGANIZATION', tenantId: TENANT_CLINICA, name: 'Clínica Los Olivos', headline: 'Clínica privada · 24 horas', bio: 'Clínica de segundo nivel con urgencias 24 horas, internación, quirófanos y consultorios de 18 especialidades. Convenios con las principales aseguradoras.', city: 'Santa Cruz de la Sierra', address: 'Av. Banzer, 3.º anillo', lat: -17.7712, lng: -63.1955, rating: 4.6, color: '#0f766e', agenda: true }),
-  organizacion('hospital-san-lucas', { kind: 'ORGANIZATION', tenantId: TENANT_HOSPITAL, name: 'Hospital San Lucas', headline: 'Hospital de tercer nivel', bio: 'Hospital universitario con maternidad, unidad de terapia intensiva y cirugía cardiovascular.', city: 'Santa Cruz de la Sierra', address: 'Av. San Martín N.º 1400', lat: -17.7620, lng: -63.1900, rating: 4.3, color: '#7c3aed', agenda: true }),
-  organizacion('clinica-foianini', { kind: 'ORGANIZATION', tenantId: uuid('tenant-foianini'), name: 'Clínica Foianini', headline: 'Clínica privada', bio: 'Atención ambulatoria e internación con más de 40 años de trayectoria.', city: 'Santa Cruz de la Sierra', address: 'Av. Irala N.º 468', lat: -17.7900, lng: -63.1780, rating: 4.5, color: '#b45309' }),
-  organizacion('hospital-japones', { kind: 'ORGANIZATION', tenantId: uuid('tenant-japones'), name: 'Hospital Japonés', headline: 'Hospital público de tercer nivel', bio: 'Hospital de referencia departamental.', city: 'Santa Cruz de la Sierra', address: 'Av. Japón, 3.º anillo', lat: -17.7550, lng: -63.1600, rating: 3.9, color: '#be123c' }),
-  organizacion('farmacia-vida', { kind: 'PHARMACY', tenantId: TENANT_FARMACIA, name: 'Farmacia Vida', headline: 'Farmacia · entrega a domicilio', bio: 'Medicamentos genéricos y de marca, entrega en menos de una hora en toda la ciudad.', city: 'Santa Cruz de la Sierra', address: 'Av. Alemana N.º 2100', lat: -17.7690, lng: -63.1650, rating: 4.7, color: '#16a34a' }),
-  organizacion('farmacia-chavez', { kind: 'PHARMACY', tenantId: uuid('tenant-farmacia-chavez'), name: 'Farmacias Chávez · Sucursal Cañoto', headline: 'Farmacia · cadena, 24 horas', bio: 'Cadena de farmacias con atención 24 horas.', city: 'Santa Cruz de la Sierra', address: 'Av. Cañoto esq. Landívar', lat: -17.7830, lng: -63.1870, rating: 4.2, color: '#0891b2' }),
-  organizacion('farmacia-central-lp', { kind: 'PHARMACY', tenantId: uuid('tenant-farmacia-lp'), name: 'Farmacia Central', headline: 'Farmacia · de turno permanente', bio: 'Farmacia de turno permanente en el centro paceño.', city: 'La Paz', address: 'Av. 16 de Julio N.º 1600', lat: -16.4990, lng: -68.1330, rating: 4.1, color: '#0891b2' }),
+  organizacion('clinica-los-olivos', { kind: 'ORGANIZATION', tenantId: TENANT_CLINICA, name: 'Clínica Los Olivos', headline: 'Clínica privada · 24 horas', bio: 'Clínica de segundo nivel con urgencias 24 horas, internación, quirófanos y consultorios de 18 especialidades. Convenios con las principales aseguradoras.', city: 'Santa Cruz de la Sierra', address: 'Av. Banzer, 3.º anillo', lat: -17.7712, lng: -63.1955, rating: 4.6, color: '#0f766e', agenda: true, categoria: CATEGORIA.CLINICA_PRIVADA }),
+  organizacion('hospital-san-lucas', { kind: 'ORGANIZATION', tenantId: TENANT_HOSPITAL, name: 'Hospital San Lucas', headline: 'Hospital de tercer nivel', bio: 'Hospital universitario con maternidad, unidad de terapia intensiva y cirugía cardiovascular.', city: 'Santa Cruz de la Sierra', address: 'Av. San Martín N.º 1400', lat: -17.7620, lng: -63.1900, rating: 4.3, color: '#7c3aed', agenda: true, categoria: CATEGORIA.HOSPITAL_PUBLICO }),
+  organizacion('clinica-foianini', { kind: 'ORGANIZATION', tenantId: uuid('tenant-foianini'), name: 'Clínica Foianini', headline: 'Clínica privada', bio: 'Atención ambulatoria e internación con más de 40 años de trayectoria.', city: 'Santa Cruz de la Sierra', address: 'Av. Irala N.º 468', lat: -17.7900, lng: -63.1780, rating: 4.5, color: '#b45309', categoria: CATEGORIA.CLINICA_PRIVADA }),
+  organizacion('hospital-japones', { kind: 'ORGANIZATION', tenantId: uuid('tenant-japones'), name: 'Hospital Japonés', headline: 'Hospital público de tercer nivel', bio: 'Hospital de referencia departamental.', city: 'Santa Cruz de la Sierra', address: 'Av. Japón, 3.º anillo', lat: -17.7550, lng: -63.1600, rating: 3.9, color: '#be123c', categoria: CATEGORIA.HOSPITAL_PUBLICO }),
+  organizacion('farmacia-vida', { kind: 'PHARMACY', tenantId: TENANT_FARMACIA, name: 'Farmacia Vida', headline: 'Farmacia · entrega a domicilio', bio: 'Medicamentos genéricos y de marca, entrega en menos de una hora en toda la ciudad.', city: 'Santa Cruz de la Sierra', address: 'Av. Alemana N.º 2100', lat: -17.7690, lng: -63.1650, rating: 4.7, color: '#16a34a', categoria: CATEGORIA.FARMACIA_INDEPENDIENTE }),
+  organizacion('farmacia-chavez', { kind: 'PHARMACY', tenantId: uuid('tenant-farmacia-chavez'), name: 'Farmacias Chávez · Sucursal Cañoto', headline: 'Farmacia · cadena, 24 horas', bio: 'Cadena de farmacias con atención 24 horas.', city: 'Santa Cruz de la Sierra', address: 'Av. Cañoto esq. Landívar', lat: -17.7830, lng: -63.1870, rating: 4.2, color: '#0891b2', categoria: categoriaDeCadena('Farmacias Chávez') }),
+  organizacion('farmacia-central-lp', { kind: 'PHARMACY', tenantId: uuid('tenant-farmacia-lp'), name: 'Farmacia Central', headline: 'Farmacia · de turno permanente', bio: 'Farmacia de turno permanente en el centro paceño.', city: 'La Paz', address: 'Av. 16 de Julio N.º 1600', lat: -16.4990, lng: -68.1330, rating: 4.1, color: '#0891b2', categoria: CATEGORIA.FARMACIA_INDEPENDIENTE }),
   /* Clínicas y farmacias del resto del país. No son relleno: el directorio de
      clínicas y el de farmacias ofrecen el mapa de Bolivia como filtro, y con
      todo publicado en Santa Cruz ese mapa tendría ocho departamentos que no
      llevan a ninguna parte — un control que se ve entero y sirve para un
      noveno. Son las ciudades capitales que el catálogo de municipios ya trae,
      con coordenadas reales. */
-  organizacion('clinica-belga-cbba', { kind: 'ORGANIZATION', tenantId: uuid('tenant-belga'), name: 'Clínica Belga', headline: 'Clínica privada · 24 horas', bio: 'Internación, quirófanos y consulta externa en el centro cochabambino.', city: 'Cochabamba', address: 'Antezana N.º 455', lat: -17.3935, lng: -66.1570, rating: 4.4, color: '#0f766e', agenda: true }),
-  organizacion('hospital-viedma-cbba', { kind: 'ORGANIZATION', tenantId: uuid('tenant-viedma'), name: 'Hospital Viedma', headline: 'Hospital público de tercer nivel', bio: 'Hospital de referencia departamental de Cochabamba.', city: 'Cochabamba', address: 'Av. Aniceto Arce s/n', lat: -17.3990, lng: -66.1480, rating: 3.8, color: '#be123c' }),
-  organizacion('hospital-obrero-lp', { kind: 'ORGANIZATION', tenantId: uuid('tenant-obrero-lp'), name: 'Hospital Obrero N.º 1', headline: 'Hospital de la Caja Nacional de Salud', bio: 'Atención de segundo y tercer nivel para asegurados de la Caja Nacional.', city: 'La Paz', address: 'Av. Brasil s/n, Miraflores', lat: -16.4980, lng: -68.1230, rating: 3.9, color: '#7c3aed' }),
-  organizacion('clinica-del-sur-lp', { kind: 'ORGANIZATION', tenantId: uuid('tenant-del-sur'), name: 'Clínica del Sur', headline: 'Clínica privada', bio: 'Consulta externa, internación y diagnóstico por imágenes en la zona sur.', city: 'La Paz', address: 'Av. Hernando Siles N.º 3539', lat: -16.5320, lng: -68.0850, rating: 4.5, color: '#0f766e', agenda: true }),
-  organizacion('hospital-elalto-norte', { kind: 'ORGANIZATION', tenantId: uuid('tenant-elalto-norte'), name: 'Hospital Municipal El Alto Norte', headline: 'Hospital público de segundo nivel', bio: 'Urgencias, maternidad y consulta externa.', city: 'El Alto', address: 'Av. Juan Pablo II, Villa Adela', lat: -16.5080, lng: -68.1900, rating: 3.7, color: '#be123c' }),
-  organizacion('hospital-santa-barbara-sre', { kind: 'ORGANIZATION', tenantId: uuid('tenant-santa-barbara'), name: 'Hospital Santa Bárbara', headline: 'Hospital público de tercer nivel', bio: 'Hospital de referencia de Chuquisaca, con maternidad y terapia intensiva.', city: 'Sucre', address: 'Calle Ayacucho s/n', lat: -19.0430, lng: -65.2590, rating: 4.0, color: '#7c3aed' }),
-  organizacion('clinica-los-alamos-tja', { kind: 'ORGANIZATION', tenantId: uuid('tenant-los-alamos'), name: 'Clínica Los Álamos', headline: 'Clínica privada', bio: 'Consulta externa e internación en el centro de Tarija.', city: 'Tarija', address: 'Av. Las Américas N.º 120', lat: -21.5350, lng: -64.7290, rating: 4.3, color: '#0f766e' }),
-  organizacion('hospital-general-oru', { kind: 'ORGANIZATION', tenantId: uuid('tenant-general-oru'), name: 'Hospital General de Oruro', headline: 'Hospital público de segundo nivel', bio: 'Urgencias y consulta externa para el departamento de Oruro.', city: 'Oruro', address: 'Calle San Felipe s/n', lat: -17.9700, lng: -67.1120, rating: 3.6, color: '#be123c' }),
-  organizacion('hospital-daniel-bracamonte-pts', { kind: 'ORGANIZATION', tenantId: uuid('tenant-bracamonte'), name: 'Hospital Daniel Bracamonte', headline: 'Hospital público de tercer nivel', bio: 'Hospital de referencia departamental de Potosí.', city: 'Potosí', address: 'Av. Cívica s/n', lat: -19.5750, lng: -65.7550, rating: 3.7, color: '#7c3aed' }),
-  organizacion('hospital-german-busch-tri', { kind: 'ORGANIZATION', tenantId: uuid('tenant-german-busch'), name: 'Hospital Germán Busch', headline: 'Hospital público de segundo nivel', bio: 'Hospital de referencia del Beni, en Trinidad.', city: 'Trinidad', address: 'Av. 6 de Agosto s/n', lat: -14.8350, lng: -64.9010, rating: 3.5, color: '#be123c' }),
-  organizacion('hospital-roberto-galindo-cob', { kind: 'ORGANIZATION', tenantId: uuid('tenant-roberto-galindo'), name: 'Hospital Roberto Galindo Terán', headline: 'Hospital público de segundo nivel', bio: 'Hospital de referencia de Pando, en Cobija.', city: 'Cobija', address: 'Av. 9 de Febrero s/n', lat: -11.0270, lng: -68.7690, rating: 3.6, color: '#7c3aed' }),
-  organizacion('farmacia-bolivia-cbba', { kind: 'PHARMACY', tenantId: uuid('tenant-farmacia-cbba'), name: 'Farmacia Bolivia', headline: 'Farmacia · entrega a domicilio', bio: 'Medicamentos de marca y genéricos con reparto en la ciudad.', city: 'Cochabamba', address: 'Av. Heroínas N.º 380', lat: -17.3900, lng: -66.1560, rating: 4.3, color: '#16a34a' }),
-  organizacion('farmacia-san-roque-sre', { kind: 'PHARMACY', tenantId: uuid('tenant-farmacia-sre'), name: 'Farmacia San Roque', headline: 'Farmacia de barrio · atención de turno', bio: 'Farmacia de barrio con atención de turno.', city: 'Sucre', address: 'Calle Junín N.º 415', lat: -19.0480, lng: -65.2600, rating: 4.0, color: '#0891b2' }),
-  organizacion('farmacia-del-valle-tja', { kind: 'PHARMACY', tenantId: uuid('tenant-farmacia-tja'), name: 'Farmacia del Valle', headline: 'Farmacia · entrega a domicilio', bio: 'Reparto en Tarija y alrededores.', city: 'Tarija', address: 'Calle Colón N.º 640', lat: -21.5320, lng: -64.7320, rating: 4.2, color: '#16a34a' }),
-  organizacion('farmacia-el-alto-sur', { kind: 'PHARMACY', tenantId: uuid('tenant-farmacia-ea'), name: 'Farmacia El Alto Sur', headline: 'Farmacia · 24 horas', bio: 'Atención permanente sobre la avenida principal.', city: 'El Alto', address: 'Av. 6 de Marzo N.º 220', lat: -16.5150, lng: -68.1720, rating: 3.9, color: '#0891b2' }),
-  organizacion('farmacia-potosi-centro', { kind: 'PHARMACY', tenantId: uuid('tenant-farmacia-pts'), name: 'Farmacia Potosí Centro', headline: 'Farmacia · centro histórico', bio: 'Farmacia del centro histórico, frente a la plaza.', city: 'Potosí', address: 'Calle Bolívar N.º 812', lat: -19.5830, lng: -65.7530, rating: 3.8, color: '#0891b2' }),
-  organizacion('laboratorio-central', { kind: 'DIAGNOSTIC_UNIT', tenantId: TENANT_LABORATORIO, name: 'Laboratorio Central', headline: 'Laboratorio clínico · resultados en línea', bio: 'Análisis clínicos con resultados el mismo día y toma de muestras a domicilio.', city: 'Santa Cruz de la Sierra', address: 'Calle Sucre N.º 210', lat: -17.7840, lng: -63.1815, rating: 4.8, color: '#4f46e5' }),
-  organizacion('centro-imagen-sur', { kind: 'DIAGNOSTIC_UNIT', tenantId: uuid('tenant-imagen-sur'), name: 'Centro de Imagen Sur', headline: 'Resonancia, tomografía y ecografía', bio: 'Centro de diagnóstico por imágenes con equipos de última generación.', city: 'Santa Cruz de la Sierra', address: 'Av. Cristo Redentor, km 4', lat: -17.7400, lng: -63.1750, rating: 4.4, color: '#4f46e5' }),
-  organizacion('seguros-andina', { kind: 'INSURER', tenantId: uuid('tenant-seguros-andina'), name: 'Seguros Andina', headline: 'Seguro de salud familiar', bio: 'Planes de salud individuales y familiares con red de más de 200 prestadores.', city: 'La Paz', address: 'Av. Arce N.º 2500', lat: -16.5060, lng: -68.1280, rating: 4.0, color: '#ca8a04' }),
-  organizacion('la-vitalicia', { kind: 'INSURER', tenantId: uuid('tenant-vitalicia'), name: 'La Vitalicia', headline: 'Seguros de salud y vida', bio: 'Cobertura nacional e internacional.', city: 'Santa Cruz de la Sierra', address: 'Av. San Martín, Equipetrol', lat: -17.7590, lng: -63.1960, rating: 4.2, color: '#ca8a04' }),
+  organizacion('clinica-belga-cbba', { kind: 'ORGANIZATION', tenantId: uuid('tenant-belga'), name: 'Clínica Belga', headline: 'Clínica privada · 24 horas', bio: 'Internación, quirófanos y consulta externa en el centro cochabambino.', city: 'Cochabamba', address: 'Antezana N.º 455', lat: -17.3935, lng: -66.1570, rating: 4.4, color: '#0f766e', agenda: true, categoria: CATEGORIA.CLINICA_PRIVADA }),
+  organizacion('hospital-viedma-cbba', { kind: 'ORGANIZATION', tenantId: uuid('tenant-viedma'), name: 'Hospital Viedma', headline: 'Hospital público de tercer nivel', bio: 'Hospital de referencia departamental de Cochabamba.', city: 'Cochabamba', address: 'Av. Aniceto Arce s/n', lat: -17.3990, lng: -66.1480, rating: 3.8, color: '#be123c', categoria: CATEGORIA.HOSPITAL_PUBLICO }),
+  organizacion('hospital-obrero-lp', { kind: 'ORGANIZATION', tenantId: uuid('tenant-obrero-lp'), name: 'Hospital Obrero N.º 1', headline: 'Hospital de la Caja Nacional de Salud', bio: 'Atención de segundo y tercer nivel para asegurados de la Caja Nacional.', city: 'La Paz', address: 'Av. Brasil s/n, Miraflores', lat: -16.4980, lng: -68.1230, rating: 3.9, color: '#7c3aed', categoria: CATEGORIA.CAJA_DE_SALUD }),
+  organizacion('clinica-del-sur-lp', { kind: 'ORGANIZATION', tenantId: uuid('tenant-del-sur'), name: 'Clínica del Sur', headline: 'Clínica privada', bio: 'Consulta externa, internación y diagnóstico por imágenes en la zona sur.', city: 'La Paz', address: 'Av. Hernando Siles N.º 3539', lat: -16.5320, lng: -68.0850, rating: 4.5, color: '#0f766e', agenda: true, categoria: CATEGORIA.CLINICA_PRIVADA }),
+  organizacion('hospital-elalto-norte', { kind: 'ORGANIZATION', tenantId: uuid('tenant-elalto-norte'), name: 'Hospital Municipal El Alto Norte', headline: 'Hospital público de segundo nivel', bio: 'Urgencias, maternidad y consulta externa.', city: 'El Alto', address: 'Av. Juan Pablo II, Villa Adela', lat: -16.5080, lng: -68.1900, rating: 3.7, color: '#be123c', categoria: CATEGORIA.HOSPITAL_PUBLICO }),
+  organizacion('hospital-santa-barbara-sre', { kind: 'ORGANIZATION', tenantId: uuid('tenant-santa-barbara'), name: 'Hospital Santa Bárbara', headline: 'Hospital público de tercer nivel', bio: 'Hospital de referencia de Chuquisaca, con maternidad y terapia intensiva.', city: 'Sucre', address: 'Calle Ayacucho s/n', lat: -19.0430, lng: -65.2590, rating: 4.0, color: '#7c3aed', categoria: CATEGORIA.HOSPITAL_PUBLICO }),
+  organizacion('clinica-los-alamos-tja', { kind: 'ORGANIZATION', tenantId: uuid('tenant-los-alamos'), name: 'Clínica Los Álamos', headline: 'Clínica privada', bio: 'Consulta externa e internación en el centro de Tarija.', city: 'Tarija', address: 'Av. Las Américas N.º 120', lat: -21.5350, lng: -64.7290, rating: 4.3, color: '#0f766e', categoria: CATEGORIA.CLINICA_PRIVADA }),
+  organizacion('hospital-general-oru', { kind: 'ORGANIZATION', tenantId: uuid('tenant-general-oru'), name: 'Hospital General de Oruro', headline: 'Hospital público de segundo nivel', bio: 'Urgencias y consulta externa para el departamento de Oruro.', city: 'Oruro', address: 'Calle San Felipe s/n', lat: -17.9700, lng: -67.1120, rating: 3.6, color: '#be123c', categoria: CATEGORIA.HOSPITAL_PUBLICO }),
+  organizacion('hospital-daniel-bracamonte-pts', { kind: 'ORGANIZATION', tenantId: uuid('tenant-bracamonte'), name: 'Hospital Daniel Bracamonte', headline: 'Hospital público de tercer nivel', bio: 'Hospital de referencia departamental de Potosí.', city: 'Potosí', address: 'Av. Cívica s/n', lat: -19.5750, lng: -65.7550, rating: 3.7, color: '#7c3aed', categoria: CATEGORIA.HOSPITAL_PUBLICO }),
+  organizacion('hospital-german-busch-tri', { kind: 'ORGANIZATION', tenantId: uuid('tenant-german-busch'), name: 'Hospital Germán Busch', headline: 'Hospital público de segundo nivel', bio: 'Hospital de referencia del Beni, en Trinidad.', city: 'Trinidad', address: 'Av. 6 de Agosto s/n', lat: -14.8350, lng: -64.9010, rating: 3.5, color: '#be123c', categoria: CATEGORIA.HOSPITAL_PUBLICO }),
+  organizacion('hospital-roberto-galindo-cob', { kind: 'ORGANIZATION', tenantId: uuid('tenant-roberto-galindo'), name: 'Hospital Roberto Galindo Terán', headline: 'Hospital público de segundo nivel', bio: 'Hospital de referencia de Pando, en Cobija.', city: 'Cobija', address: 'Av. 9 de Febrero s/n', lat: -11.0270, lng: -68.7690, rating: 3.6, color: '#7c3aed', categoria: CATEGORIA.HOSPITAL_PUBLICO }),
+  organizacion('farmacia-bolivia-cbba', { kind: 'PHARMACY', tenantId: uuid('tenant-farmacia-cbba'), name: 'Farmacia Bolivia', headline: 'Farmacia · entrega a domicilio', bio: 'Medicamentos de marca y genéricos con reparto en la ciudad.', city: 'Cochabamba', address: 'Av. Heroínas N.º 380', lat: -17.3900, lng: -66.1560, rating: 4.3, color: '#16a34a', categoria: categoriaDeCadena('Farmacias Bolivia') }),
+  organizacion('farmacia-san-roque-sre', { kind: 'PHARMACY', tenantId: uuid('tenant-farmacia-sre'), name: 'Farmacia San Roque', headline: 'Farmacia de barrio · atención de turno', bio: 'Farmacia de barrio con atención de turno.', city: 'Sucre', address: 'Calle Junín N.º 415', lat: -19.0480, lng: -65.2600, rating: 4.0, color: '#0891b2', categoria: CATEGORIA.FARMACIA_INDEPENDIENTE }),
+  organizacion('farmacia-del-valle-tja', { kind: 'PHARMACY', tenantId: uuid('tenant-farmacia-tja'), name: 'Farmacia del Valle', headline: 'Farmacia · entrega a domicilio', bio: 'Reparto en Tarija y alrededores.', city: 'Tarija', address: 'Calle Colón N.º 640', lat: -21.5320, lng: -64.7320, rating: 4.2, color: '#16a34a', categoria: CATEGORIA.FARMACIA_INDEPENDIENTE }),
+  organizacion('farmacia-el-alto-sur', { kind: 'PHARMACY', tenantId: uuid('tenant-farmacia-ea'), name: 'Farmacia El Alto Sur', headline: 'Farmacia · 24 horas', bio: 'Atención permanente sobre la avenida principal.', city: 'El Alto', address: 'Av. 6 de Marzo N.º 220', lat: -16.5150, lng: -68.1720, rating: 3.9, color: '#0891b2', categoria: CATEGORIA.FARMACIA_INDEPENDIENTE }),
+  organizacion('farmacia-potosi-centro', { kind: 'PHARMACY', tenantId: uuid('tenant-farmacia-pts'), name: 'Farmacia Potosí Centro', headline: 'Farmacia · centro histórico', bio: 'Farmacia del centro histórico, frente a la plaza.', city: 'Potosí', address: 'Calle Bolívar N.º 812', lat: -19.5830, lng: -65.7530, rating: 3.8, color: '#0891b2', categoria: CATEGORIA.FARMACIA_INDEPENDIENTE }),
+  organizacion('laboratorio-central', { kind: 'DIAGNOSTIC_UNIT', tenantId: TENANT_LABORATORIO, name: 'Laboratorio Central', headline: 'Laboratorio clínico · resultados en línea', bio: 'Análisis clínicos con resultados el mismo día y toma de muestras a domicilio.', city: 'Santa Cruz de la Sierra', address: 'Calle Sucre N.º 210', lat: -17.7840, lng: -63.1815, rating: 4.8, color: '#4f46e5', categoria: CATEGORIA.LABORATORIO_CLINICO }),
+  organizacion('centro-imagen-sur', { kind: 'DIAGNOSTIC_UNIT', tenantId: uuid('tenant-imagen-sur'), name: 'Centro de Imagen Sur', headline: 'Resonancia, tomografía y ecografía', bio: 'Centro de diagnóstico por imágenes con equipos de última generación.', city: 'Santa Cruz de la Sierra', address: 'Av. Cristo Redentor, km 4', lat: -17.7400, lng: -63.1750, rating: 4.4, color: '#4f46e5', categoria: CATEGORIA.IMAGENOLOGIA }),
+  organizacion('seguros-andina', { kind: 'INSURER', tenantId: uuid('tenant-seguros-andina'), name: 'Seguros Andina', headline: 'Seguro de salud familiar', bio: 'Planes de salud individuales y familiares con red de más de 200 prestadores.', city: 'La Paz', address: 'Av. Arce N.º 2500', lat: -16.5060, lng: -68.1280, rating: 4.0, color: '#ca8a04', categoria: CATEGORIA.SEGURO_DE_SALUD }),
+  organizacion('la-vitalicia', { kind: 'INSURER', tenantId: uuid('tenant-vitalicia'), name: 'La Vitalicia', headline: 'Seguros de salud y vida', bio: 'Cobertura nacional e internacional.', city: 'Santa Cruz de la Sierra', address: 'Av. San Martín, Equipetrol', lat: -17.7590, lng: -63.1960, rating: 4.2, color: '#ca8a04', categoria: CATEGORIA.SEGURO_DE_SALUD }),
   {
     id: uuid(`public-profile-${PACIENTE.id}`),
     tenantId: TENANT_PLATAFORMA,
@@ -237,6 +254,8 @@ export const VITRINAS: readonly VitrinaSimulada[] = [
     ratingAverage: null,
     ratingCount: 0,
     hasPublishedAgenda: false,
+    // Un paciente no sale en ningún directorio: no hay chip que acotar.
+    categoria: null,
     seguidores: 3,
   },
   ...PACIENTES.slice(1, 5).map((p, i) => ({
@@ -263,6 +282,45 @@ export const VITRINAS: readonly VitrinaSimulada[] = [
     ratingAverage: null,
     ratingCount: 0,
     hasPublishedAgenda: false,
+    categoria: null,
+    seguidores: 0,
+  })),
+
+  /* Los 10 laboratorios y las 50 sucursales de farmacia del corpus «Bolivia
+     Salud · Eje Central» (ver `bolivia-eje-central.ts`). Existen, tienen
+     dirección y horario publicados, y su ficha cita la fuente.
+
+     Van **sin opiniones ni puntuación**: son negocios reales con nombre y
+     apellido, y fabricarles una nota media sería una afirmación sobre alguien
+     que existe. `ratingAverage: null` es lo que las pantallas ya saben dibujar
+     como «todavía sin opiniones».
+
+     `acceptsReviews` sí queda abierto: que nadie haya opinado no significa que
+     no se pueda. */
+  ...[...SEMILLAS_DE_VITRINA, ...SEMILLAS_DE_INSTITUCIONES].map((semilla) => ({
+    id: uuid(`public-profile-${semilla.clave}`),
+    tenantId: semilla.tenantId,
+    targetId: semilla.targetId,
+    kind: semilla.kind,
+    slug: semilla.slug,
+    displayName: semilla.displayName,
+    headline: semilla.headline,
+    biography: semilla.biography,
+    ...imagenesDeVitrina(semilla),
+    avatarFileId: uuid(`avatar-${semilla.clave}`),
+    coverFileId: uuid(`cover-${semilla.clave}`),
+    verified: semilla.verified,
+    acceptsReviews: true,
+    visibility: 'PUBLIC' as const,
+    city: semilla.city,
+    address: semilla.address,
+    lat: semilla.lat,
+    lng: semilla.lng,
+    specialties: [],
+    ratingAverage: null,
+    ratingCount: 0,
+    hasPublishedAgenda: false,
+    categoria: semilla.categoria,
     seguidores: 0,
   })),
 ];
@@ -381,6 +439,9 @@ export interface ResenaSimulada {
   readonly id: string;
   readonly targetPublicProfileId: string;
   readonly reviewerProfileId: string;
+  /** El nombre con el que se muestra quien opinó, cuando no tiene ficha propia. */
+  readonly reviewerDisplayName?: string;
+  readonly reviewerAvatarUrl?: string;
   readonly overallRating: number;
   readonly reviewText: string;
   readonly reviewerDisplayModeConceptId: string;
@@ -399,19 +460,49 @@ const RESENAS_TEXTO = [
   [4, 'Buen trato y buena explicación del tratamiento.'],
 ] as const;
 
+/**
+ * Quiénes opinan en las fichas: pacientes sin ficha pública propia. Se arman de
+ * dos listas para que haya muchas personas distintas y ninguna ficha repita
+ * nombre entre sus opiniones.
+ */
+const NOMBRES_QUE_OPINAN = ['Carla', 'Diego', 'Mariela', 'Rodrigo', 'Lucía', 'Fernando', 'Gabriela', 'Óscar', 'Paola', 'Javier', 'Daniela', 'Marco', 'Verónica', 'Luis', 'Silvia', 'Andrés', 'Natalia', 'Hugo', 'Camila', 'Ramiro'];
+const APELLIDOS_QUE_OPINAN = ['Justiniano', 'Vargas', 'Suárez', 'Quiroga', 'Mamani', 'Céspedes', 'Arteaga', 'Gutiérrez', 'Rivero', 'Chávez', 'Paz', 'Moreno', 'Añez', 'Flores', 'Saucedo', 'Terrazas', 'Roca', 'Aguilera', 'Montaño', 'Salvatierra', 'Heredia'];
+const COLORES_QUE_OPINAN = ['#1f6f8b', '#0f766e', '#7c3aed', '#b45309', '#be123c', '#4f46e5', '#0891b2'];
+
+/** Los desvíos que reparten las estrellas alrededor del promedio de la ficha. */
+const DESVIOS = [0.3, -0.7, 0.1, -0.3, 0.4, -1.2, 0.2, 0, -0.4, 0.5];
+
+/**
+ * Una opinión por cada calificación que declara la ficha (`ratingCount`): el
+ * «(8)» de la cabecera y la lista del modal tienen que decir lo mismo. Un tercio
+ * son sólo estrellas, sin texto — también es alguien que calificó.
+ *
+ * Todas con el nombre visible: el cliente pidió que en la ficha pública se vea
+ * **quién** opinó. El modo anónimo sigue existiendo en el contrato para quien lo
+ * elija al publicar (ver `POST /community/profiles/:id/reviews`).
+ */
 export const resenas = new Coleccion<ResenaSimulada>(
   VITRINAS.filter((v) => v.kind !== 'PATIENT' && v.ratingCount > 0).flatMap((v, i) =>
-    Array.from({ length: 2 + (i % 3) }, (_, k) => {
-      const [rating, texto] = RESENAS_TEXTO[(i + k) % RESENAS_TEXTO.length]!;
+    Array.from({ length: v.ratingCount }, (_, k) => {
+      const promedio = v.ratingAverage ?? 4.5;
+      const rating = Math.min(5, Math.max(1, Math.round(promedio + DESVIOS[(i + k) % DESVIOS.length]!)));
+      const texto = RESENAS_TEXTO.find(([estrellas]) => estrellas === rating)?.[1] ?? RESENAS_TEXTO[(i + k) % RESENAS_TEXTO.length]![1];
+      const nombre =
+        k === 0
+          ? VITRINA_PACIENTE.displayName
+          : `${NOMBRES_QUE_OPINAN[(k * 7 + i) % NOMBRES_QUE_OPINAN.length]} ${APELLIDOS_QUE_OPINAN[(k * 3 + i * 5) % APELLIDOS_QUE_OPINAN.length]}`;
+      const id = `review-${v.id}-${k}`;
       return {
-        id: uuid(`review-${v.id}-${k}`),
+        id: k < 4 ? uuid(id) : id,
         targetPublicProfileId: v.id,
-        reviewerProfileId: k === 0 ? VITRINA_PACIENTE.id : VITRINAS.at(-(k + 1))!.id,
+        reviewerProfileId: k === 0 ? VITRINA_PACIENTE.id : `reviewer-${i}-${k}`,
+        reviewerDisplayName: nombre,
+        reviewerAvatarUrl: k === 0 ? VITRINA_PACIENTE.avatarUrl : avatarSvg(nombre, COLORES_QUE_OPINAN[k % COLORES_QUE_OPINAN.length]!),
         overallRating: rating,
-        reviewText: texto,
-        reviewerDisplayModeConceptId: k % 2 === 0 ? CONCEPTO.reviewDisplayReal : CONCEPTO.reviewDisplayAnon,
+        reviewText: k % 3 === 2 ? '' : texto,
+        reviewerDisplayModeConceptId: CONCEPTO.reviewDisplayReal,
         verificationStatusConceptId: ESTADO['ST-VERIFIED']!,
-        publishedAt: iso(-k * 20 - 3, 18),
+        publishedAt: iso(-k * 6 - 3, 8 + (k % 10)),
         dimensionScores: [
           { dimensionConceptId: CONCEPTO.reviewDim.COMMUNICATION, score: rating },
           { dimensionConceptId: CONCEPTO.reviewDim.PUNCTUALITY, score: Math.max(1, rating - 1) },
@@ -580,3 +671,14 @@ export const encuestaDePublicacion = {
   ],
   totalVotes: 100,
 };
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+vitrinas.persistirEn('mock.comunidad.vitrinas');
+publicaciones.persistirEn('mock.comunidad.publicaciones');
+comentarios.persistirEn('mock.comunidad.comentarios');
+resenas.persistirEn('mock.comunidad.resenas');
+grupos.persistirEn('mock.comunidad.grupos');
+miembrosDeGrupo.persistirEn('mock.comunidad.miembrosDeGrupo');
+muroDeGrupo.persistirEn('mock.comunidad.muroDeGrupo');
+conversaciones.persistirEn('mock.comunidad.conversaciones');
+mensajes.persistirEn('mock.comunidad.mensajes');

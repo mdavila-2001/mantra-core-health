@@ -1,37 +1,72 @@
 <section class="resumen" aria-labelledby="resumen-titulo" data-testid="resumen">
   <h2 id="resumen-titulo" class="resumen__titulo">Resumen</h2>
 
-  <ul class="resumen__renglones" data-testid="resumen-renglones">
-    @for (renglon of resumen().renglones; track renglon.indice) {
-      <li class="resumen__renglon" data-testid="resumen-renglon">
-        <span class="resumen__renglon-datos">
-          <span class="resumen__principal">{{ renglon.cantidad }} × {{ renglon.medicamento }}</span>
-          @if (renglon.presentacion !== null) {
-            <span class="resumen__secundario">{{ renglon.presentacion }}</span>
-          }
-          @if (renglon.disponible && renglon.precioUnitario !== null && renglon.cantidad > 1) {
-            <span class="resumen__secundario">{{ importe(renglon.precioUnitario) }} cada uno</span>
-          }
-        </span>
-        <span class="cifras-tabulares">
-          @if (!renglon.disponible) {
-            <app-badge variant="warning">La farmacia no la tiene</app-badge>
-          } @else if (importe(renglon.subtotal); as subtotal) {
-            {{ subtotal }}
-          } @else {
-            <span class="resumen__secundario">Sin precio publicado</span>
-          }
-        </span>
-      </li>
-    }
-  </ul>
+  @if (resumen().conSeguro) {
+    <!-- F2.2.5: con seguro, los dos bloques se ven separados y el total es uno. -->
+    <div class="resumen__bloque" data-testid="resumen-bloque-aprobados">
+      <h3 class="resumen__subtitulo">
+        <app-badge variant="success">Aprobado por el seguro</app-badge>
+      </h3>
+      @if (resumen().aprobados.length === 0) {
+        <p class="resumen__secundario">Ningún medicamento de este pedido.</p>
+      } @else {
+        <ng-container *ngTemplateOutlet="renglones; context: { $implicit: resumen().aprobados }" />
+      }
+    </div>
+    <div class="resumen__bloque" data-testid="resumen-bloque-no-aprobados">
+      <h3 class="resumen__subtitulo">
+        <app-badge variant="warning">No aprobado</app-badge>
+      </h3>
+      @if (resumen().noAprobados.length === 0) {
+        <p class="resumen__secundario">Ningún medicamento de este pedido.</p>
+      } @else {
+        <ng-container
+          *ngTemplateOutlet="renglones; context: { $implicit: resumen().noAprobados }"
+        />
+      }
+    </div>
+  } @else {
+    <div class="resumen__bloque" data-testid="resumen-bloque-pedido">
+      <ng-container *ngTemplateOutlet="renglones; context: { $implicit: resumen().noAprobados }" />
+    </div>
+  }
 
   <dl class="resumen__cuentas">
-    <div class="resumen__cuenta resumen__cuenta--total" data-testid="resumen-total">
-      <dt>Total estimado</dt>
+    <div class="resumen__cuenta" data-testid="resumen-subtotal">
+      <dt>{{ rotulos.subtotal }}</dt>
+      <dd class="cifras-tabulares">{{ importe(resumen().subtotal) }}</dd>
+    </div>
+    <div class="resumen__cuenta" data-testid="resumen-descuento">
+      <dt>{{ rotulos.descuentoDeRed }}</dt>
       <dd class="cifras-tabulares">
-        @if (importe(resumen().total); as total) {
-          {{ total }}
+        @if (resumen().descuentoDeRed; as descuento) {
+          −{{ descuento }} {{ moneda(resumen().moneda) }}
+        } @else {
+          No disponible
+        }
+      </dd>
+    </div>
+    @if (resumen().conSeguro && resumen().aprobados.length > 0) {
+      <div class="resumen__cuenta" data-testid="resumen-coaseguro">
+        <dt>{{ rotulos.coaseguro }}</dt>
+        <dd class="cifras-tabulares">{{ importe(resumen().coaseguro) }}</dd>
+      </div>
+      <div class="resumen__cuenta resumen__cuenta--nota" data-testid="resumen-cubre-el-seguro">
+        <dt>Lo cubre tu aseguradora</dt>
+        <dd class="cifras-tabulares">{{ importe(resumen().cubreElSeguro) }}</dd>
+      </div>
+    }
+    @if (resumen().envio !== null) {
+      <div class="resumen__cuenta" data-testid="resumen-envio">
+        <dt>Envío</dt>
+        <dd class="cifras-tabulares">{{ importe(resumen().envio) }}</dd>
+      </div>
+    }
+    <div class="resumen__cuenta resumen__cuenta--total" data-testid="resumen-total">
+      <dt>Total a pagar</dt>
+      <dd class="cifras-tabulares">
+        @if (resumen().total !== null) {
+          {{ importe(resumen().total) }}
         } @else {
           No disponible: falta algún precio publicado
         }
@@ -39,10 +74,37 @@
     </div>
   </dl>
 
-  <!-- Lo que el contrato no produce todavía no se pinta con un número
-       inventado: se dice en palabras y sin cifra. -->
-  <p class="resumen__secundario" data-testid="resumen-nota">
-    Es el precio que publica la farmacia; el total final lo confirma al revisar tu pedido. Si tu
-    seguro cubre parte, la liquidación llega después, sobre el pedido ya creado.
-  </p>
+  @if (resumen().puntos !== null) {
+    <p class="resumen__puntos" data-testid="resumen-puntos">
+      Puntos AloVida que ganás: <strong class="cifras-tabulares">{{ resumen().puntos }}</strong>
+      <span class="resumen__secundario"> (valor de ejemplo)</span>
+    </p>
+  }
 </section>
+
+<ng-template #renglones let-lista>
+  <ul class="resumen__renglones">
+    @for (renglon of lista; track renglon.indice) {
+      <li class="resumen__renglon" data-testid="resumen-renglon">
+        <span class="resumen__renglon-datos">
+          <span class="resumen__principal">{{ renglon.cantidad }} × {{ renglon.medicamento }}</span>
+          @if (renglon.presentacion !== null) {
+            <span class="resumen__secundario">{{ renglon.presentacion }}</span>
+          }
+          @if (renglon.esAlternativa) {
+            <span class="resumen__secundario">Alternativa de demostración</span>
+          }
+        </span>
+        <span class="cifras-tabulares">
+          @if (!renglon.disponible) {
+            <app-badge variant="warning">La farmacia no la tiene</app-badge>
+          } @else if (renglon.subtotal !== null) {
+            {{ renglon.subtotal }} {{ moneda(resumen().moneda) }}
+          } @else {
+            <span class="resumen__secundario">Sin precio publicado</span>
+          }
+        </span>
+      </li>
+    }
+  </ul>
+</ng-template>

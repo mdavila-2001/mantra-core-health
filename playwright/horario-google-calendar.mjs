@@ -49,7 +49,7 @@ async function main() {
   }
 
   await pagina.goto(`${BASE}/schedule`);
-  await pagina.getByRole('tab', { name: 'Mi agenda' }).waitFor({ timeout: 30_000 });
+  await pagina.getByRole('tab', { name: 'Mis horarios' }).waitFor({ timeout: 30_000 });
 
   // 1 · el encabezado, sin «Crear agenda».
   const crear = await pagina.getByRole('link', { name: 'Crear agenda' }).count();
@@ -57,7 +57,7 @@ async function main() {
   await capturar('01-consultas-sin-crear-agenda');
 
   // 2 · la solapa Mi agenda con la grilla.
-  await pagina.getByRole('tab', { name: 'Mi agenda' }).click();
+  await pagina.getByRole('tab', { name: 'Mis horarios' }).click();
   await pagina.locator('[data-testid="horario-bloque"]').first().waitFor({ timeout: 30_000 });
   const bloques = await pagina.locator('[data-testid="horario-bloque"]').count();
   const semana = await pagina.locator('.grilla__semana').textContent();

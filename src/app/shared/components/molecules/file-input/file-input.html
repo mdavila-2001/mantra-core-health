@@ -50,17 +50,7 @@
         <span class="upload-button">{{ textoDelBoton() }}</span>
       </span>
       <span class="dropzone-subtext">
-        {{
-          accept()
-            ? accept()
-                .replaceAll('application/', '')
-                .replaceAll('image/', '')
-                .replaceAll(',', ' · ')
-                .toUpperCase()
-            : multiple()
-              ? 'Varios archivos'
-              : 'Un archivo'
-        }}
+        {{ tiposAceptados() || (multiple() ? 'Varios archivos' : 'Un archivo') }}
         @if (maxSizeBytes(); as limit) {
           · Máximo {{ formatFileSize(limit) }}{{ multiple() ? ' por archivo' : '' }}
         }

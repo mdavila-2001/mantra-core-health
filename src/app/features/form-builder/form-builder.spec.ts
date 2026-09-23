@@ -10,6 +10,10 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { FormBuilder } from './form-builder';
 import type { ChartTemplate } from '../../core/data-access/chart-templates/chart-templates.types';
 import { MAX_CAMPOS_POR_PAGINA } from '../../shared/forms/paginated/paginated-form.types';
+import {
+  FORM_TEMPLATE_PDF_DOWNLOADER,
+  type FormularioParaPdf,
+} from '../../shared/utils/form-template-pdf/form-template-pdf';
 
 const RUTA = '/form-builder';
 
@@ -51,13 +55,24 @@ describe('FormBuilder', () => {
   let harness: RouterTestingHarness;
   let componente: FormBuilder;
   let http: HttpTestingController;
+  /** Lo último que se mandó a descargar, o `null` si nadie bajó nada. */
+  let bajado: FormularioParaPdf | null;
 
   beforeEach(async () => {
+    bajado = null;
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([{ path: 'form-builder', component: FormBuilder }]),
+        // La descarga se sustituye: comprobar qué exporta la pantalla no
+        // debería abrir un PDF real ni arrastrar `jspdf` a este archivo.
+        {
+          provide: FORM_TEMPLATE_PDF_DOWNLOADER,
+          useValue: (datos: FormularioParaPdf) => {
+            bajado = datos;
+          },
+        },
       ],
     });
 
@@ -66,7 +81,19 @@ describe('FormBuilder', () => {
     componente = await harness.navigateByUrl(RUTA, FormBuilder);
   });
 
-  afterEach(() => http.verify());
+  /**
+   * El listado resuelve el rótulo de cada especialidad en una lectura aparte
+   * (`GET /terminology/concepts?ids=`), que ninguna de estas pruebas mira: se
+   * responde vacía acá para que `verify()` siga denunciando lo que sí importa.
+   * Sin rótulos, la pantalla muestra las tarjetas igual y el filtro de
+   * especialidad queda deshabilitado con su motivo.
+   */
+  afterEach(() => {
+    for (const pendiente of http.match((r) => r.url === '/terminology/concepts')) {
+      pendiente.flush({ items: [], count: 0, limit: 0, nextCursor: null });
+    }
+    http.verify();
+  });
 
   function interno<T>(nombre: string): T {
     const valor = (componente as unknown as Record<string, unknown>)[nombre];
@@ -472,6 +499,96 @@ describe('FormBuilder', () => {
     expect(campo['otro']).toBe(true);
   });
 
+  it('una cuadrícula se sirve como cuadrícula, con sus filas y sus columnas', () => {
+    // Tener filas es lo único que la separa de un campo de elección. Si la
+    // previa la degradara a `radio`, serviría la escala una sola vez y
+    // perdería las filas enteras — y el doctor lo descubriría al verla servida.
+    abrirPlantilla({
+      ...PLANTILLA,
+      fields: [{ ...ELECCION, rows: ['Tos', 'Fiebre'], options: ['Nunca', 'Siempre'] }],
+    });
+
+    const campo = camposDeLaPrevia()[0]!;
+    expect(campo['control']).toBe('grid-radio');
+    expect(campo['rows']).toEqual([
+      { value: 'Tos', label: 'Tos' },
+      { value: 'Fiebre', label: 'Fiebre' },
+    ]);
+    // Las columnas son las opciones de siempre: es lo que hace que el PDF y la
+    // validación las encuentren donde ya las buscan.
+    expect(campo['options']).toEqual([
+      { value: 'Nunca', label: 'Nunca' },
+      { value: 'Siempre', label: 'Siempre' },
+    ]);
+  });
+
+  it('la cuadrícula de casillas admite varias por fila', () => {
+    abrirPlantilla({
+      ...PLANTILLA,
+      fields: [{ ...ELECCION, multiple: true, rows: ['Tos'], options: ['Nunca', 'Siempre'] }],
+    });
+
+    expect(camposDeLaPrevia()[0]!['control']).toBe('grid-checkboxes');
+  });
+
+  it('el control de una cuadrícula nace como objeto y no en cadena', () => {
+    // Guarda una entrada por fila respondida: con `''` la validación leería
+    // propiedades de una cadena y no fallaría nunca.
+    abrirPlantilla({ ...PLANTILLA, fields: [{ ...ELECCION, rows: ['Tos'] }] });
+
+    const grupo = interno<() => { get(k: string): { value: unknown } | null }>(
+      'formularioDeMuestra',
+    )();
+    expect(grupo.get('f-9')?.value).toEqual({});
+  });
+
+  it('las dos restricciones de la cuadrícula validan en la vista previa', () => {
+    // Mismo criterio que los topes de las casillas: la previa tiene que
+    // **responder** igual que el formulario servido, no resumirlo.
+    abrirPlantilla({
+      ...PLANTILLA,
+      fields: [
+        {
+          ...ELECCION,
+          rows: ['Tos', 'Fiebre'],
+          options: ['Nunca', 'Siempre'],
+          requireEachRow: true,
+          oneResponsePerColumn: true,
+        },
+      ],
+    });
+
+    const grupo = interno<
+      () => { get(k: string): { setValue(v: unknown): void; errors: unknown } | null }
+    >('formularioDeMuestra')();
+    const control = grupo.get('f-9')!;
+
+    control.setValue({ Tos: 'Nunca' });
+    expect(control.errors).toEqual({ gridRowMissing: { missing: 1, total: 2 } });
+
+    control.setValue({ Tos: 'Nunca', Fiebre: 'Nunca' });
+    expect(control.errors).toEqual({ gridColumnRepeated: { column: 'Nunca' } });
+
+    control.setValue({ Tos: 'Nunca', Fiebre: 'Siempre' });
+    expect(control.errors).toBeNull();
+  });
+
+  it('un sí/no se sirve con los dos botones y arranca sin responder', () => {
+    // `false` de arranque diría «No» contestado por nadie, y además pasaría un
+    // obligatorio sin respuesta: `Validators.required` sólo rechaza lo vacío.
+    abrirPlantilla({
+      ...PLANTILLA,
+      fields: [{ ...ELECCION, dataType: 'boolean', options: undefined, multiple: undefined }],
+    });
+
+    expect(camposDeLaPrevia()[0]!['control']).toBe('yes-no');
+
+    const grupo = interno<() => { get(k: string): { value: unknown } | null }>(
+      'formularioDeMuestra',
+    )();
+    expect(grupo.get('f-9')?.value).toBeNull();
+  });
+
   it('los topes de un campo de varias validan en la vista previa', () => {
     // Marcar tres donde se pedían dos tiene que decirlo acá, no cuando el
     // paciente lo vea.
@@ -591,5 +708,163 @@ describe('FormBuilder', () => {
     expect(interno<() => string | null>('agarrado')()).toBe('p1');
     interno<(c: unknown, apretado: boolean) => void>('agarrar')(uno, false);
     expect(interno<() => string | null>('agarrado')()).toBeNull();
+  });
+  /* ---- buscador y filtros del catálogo ------------------------------------ */
+
+  describe('buscador y filtros del catálogo', () => {
+    const OTRA: ChartTemplate = {
+      ...PLANTILLA,
+      id: 'tpl-2',
+      specialtyConceptId: 'sp-2',
+      code: 'CARDIO_FICHA_BASE',
+      name: 'Ficha cardiológica',
+      fields: [estandar(4)],
+    };
+
+    /** Navega publicando los filtros en la URL, que es como los publica la barra. */
+    async function irA(filtros: Record<string, string>): Promise<void> {
+      const query = new URLSearchParams(filtros).toString();
+      componente = await harness.navigateByUrl(
+        query === '' ? RUTA : `${RUTA}?${query}`,
+        FormBuilder,
+      );
+      await harness.fixture.whenStable();
+    }
+
+    function listarDos(): void {
+      http
+        .expectOne((r) => r.url === '/charts/templates' && r.method === 'GET')
+        .flush([PLANTILLA, OTRA]);
+      harness.detectChanges();
+    }
+
+    /** Los rótulos de especialidad llegan en una lectura aparte. */
+    function responderEspecialidades(): void {
+      http.expectOne((r) => r.url === '/terminology/concepts').flush({
+        items: [
+          { conceptId: 'sp-1', code: 'GEN', display: 'Medicina general', codeSystemVersionId: 'v1' },
+          { conceptId: 'sp-2', code: 'CARD', display: 'Cardiología', codeSystemVersionId: 'v1' },
+        ],
+        count: 2,
+        limit: 200,
+        nextCursor: null,
+      });
+      harness.detectChanges();
+    }
+
+    function filtrados(): readonly ChartTemplate[] | null {
+      return interno<() => readonly ChartTemplate[] | null>('filtrados')();
+    }
+
+    it('el catálogo se resuelve sin pedir nada más al escribir: filtra lo ya leído', async () => {
+      listarDos();
+      responderEspecialidades();
+
+      await irA({ q: 'cardio' });
+
+      expect(filtrados()?.map((p) => p.code)).toEqual(['CARDIO_FICHA_BASE']);
+      // `http.verify()` del afterEach falla si escribir hubiera pedido una
+      // lista nueva: `GET /charts/templates` no pagina y ya vino entera.
+    });
+
+    it('la búsqueda ignora tildes y encuentra por especialidad y por organismo', async () => {
+      listarDos();
+      responderEspecialidades();
+
+      await irA({ q: 'cardiologia' });
+
+      expect(filtrados()?.map((p) => p.id)).toEqual(['tpl-2']);
+    });
+
+    it('el filtro de especialidad sólo ofrece las que tienen formulario', async () => {
+      listarDos();
+      responderEspecialidades();
+
+      const filtros = interno<() => readonly { key: string; options: readonly unknown[] }[]>(
+        'filtros',
+      )();
+      const especialidad = filtros.find((f) => f.key === 'especialidad');
+      expect(especialidad?.options).toEqual([
+        { value: 'sp-2', label: 'Cardiología' },
+        { value: 'sp-1', label: 'Medicina general' },
+      ]);
+    });
+
+    it('sin rótulos de especialidad el listado sigue en pie, con el filtro sin opciones', () => {
+      listarDos();
+      http
+        .expectOne((r) => r.url === '/terminology/concepts')
+        .error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
+      harness.detectChanges();
+
+      // Lo que importa: las tarjetas siguen ahí. Perder el rótulo no puede
+      // dejar a nadie sin catálogo.
+      expect(filtrados()?.length).toBe(2);
+      const filtros = interno<() => readonly { key: string; options: readonly unknown[] }[]>(
+        'filtros',
+      )();
+      expect(filtros.find((f) => f.key === 'especialidad')?.options).toEqual([]);
+    });
+
+    it('lo vacío del filtro no es lo vacío del catálogo', async () => {
+      listarDos();
+      responderEspecialidades();
+
+      await irA({ q: 'no-existe-nada-asi' });
+
+      expect(filtrados()).toEqual([]);
+      expect(interno<() => boolean>('hayCriterios')()).toBe(true);
+      const html = harness.routeNativeElement?.textContent ?? '';
+      expect(html).toContain('Ningún formulario coincide');
+      expect(html).not.toContain('Todavía no hay formularios');
+    });
+  });
+  /* ---- bajarse el formulario en papel ------------------------------------- */
+
+  describe('descargar el formulario en PDF', () => {
+    /**
+     * El pedido del propietario: que el doctor se baje el formulario que armó
+     * o editó. Lo que se comprueba es **qué se manda a imprimir**, no cómo se
+     * dibuja: la maquetación tiene sus pruebas en `pdf-export.spec.ts` y el
+     * contenido del papel en `form-template-pdf.spec.ts`.
+     */
+    it('manda a imprimir el formulario abierto, con sus páginas y su conteo de campos', () => {
+      const propio = {
+        ...estandar(4),
+        assignmentId: 'as-4',
+        fieldId: 'f-4',
+        name: 'Fuma',
+        own: true,
+      };
+      abrirPlantilla({ ...PLANTILLA, fields: [...PLANTILLA.fields, propio] });
+
+      interno<() => void>('descargar')();
+
+      expect(bajado).not.toBeNull();
+      expect(bajado?.nombre).toBe('Anamnesis general');
+      expect(bajado?.codigo).toBe('ANAMNESIS');
+      expect(bajado?.camposEstandar).toBe(3);
+      expect(bajado?.camposPropios).toBe(1);
+      // Las páginas son las del motor, no una lista plana: cuatro campos
+      // entran en una sola página.
+      expect(bajado?.paginas.length).toBe(1);
+      expect(bajado?.paginas[0]?.campos.map((campo) => campo.label)).toEqual([
+        'Campo 1',
+        'Campo 2',
+        'Campo 3',
+        'Fuma',
+      ]);
+    });
+
+    it('sin formulario abierto no baja nada', () => {
+      http
+        .expectOne((r) => r.url === '/charts/templates' && r.method === 'GET')
+        .flush([PLANTILLA]);
+      harness.detectChanges();
+
+      interno<() => void>('descargar')();
+
+      expect(bajado).toBeNull();
+    });
   });
 });

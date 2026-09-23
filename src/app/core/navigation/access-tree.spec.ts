@@ -2,6 +2,7 @@ import {
   ACCESS_AREAS,
   ACCESS_AREA_TONES,
   buildAccessTree,
+  GRUPOS_FUERA_DEL_ARBOL,
   gruposSinZona,
   MAXIMO_DE_ZONAS,
   SECCIONES_FUERA_DEL_ARBOL,
@@ -76,6 +77,7 @@ describe('buildAccessTree', () => {
     'no pierde ninguna sección de %s por el camino',
     (rol) => {
       const esperadas = seccionesDe([rol])
+        .filter((seccion) => !GRUPOS_FUERA_DEL_ARBOL.includes(seccion.group))
         .map((seccion) => seccion.path)
         .filter((ruta) => !SECCIONES_FUERA_DEL_ARBOL.includes(ruta));
 
@@ -88,8 +90,37 @@ describe('buildAccessTree', () => {
     expect(new Set(rutas).size).toBe(rutas.length);
   });
 
+  /**
+   * Corrección del 19/09/2026 · la zona «Mi cuenta». Lo propio lo abre el
+   * perfil; el panel de trabajo no lo repite ni como zona ni suelto en otra.
+   */
+  it('no ofrece «Mi cuenta»: ni la zona ni sus secciones en otra', () => {
+    const arbol = buildAccessTree(seccionesDe(['PRACTITIONER']));
+
+    expect(arbol.map((zona) => zona.area.label)).not.toContain('Mi cuenta');
+    expect(arbol.flatMap((zona) => zona.sections).filter((s) => s.group === 'Mi cuenta')).toEqual(
+      [],
+    );
+    expect(rutasRepartidas(['PRACTITIONER'])).not.toContain('tutorials');
+  });
+
   it('no ofrece el panel dentro del panel', () => {
     expect(rutasRepartidas(['PRACTITIONER'])).not.toContain('dashboard');
+  });
+
+  /**
+   * Pedido del 19/09/2026 · la zona «Administración» del médico. Salen del
+   * árbol, no del registro: la ruta sigue abriendo —«Mis organizaciones» se
+   * llega desde «Mi perfil»—.
+   */
+  it.each([
+    ['administration/my-practice'],
+    ['administration/pharmacy-orders'],
+    ['administration/pharmacy-campaigns'],
+    ['administration/pharmacy-profile'],
+  ])('no ofrece %s en «Tus accesos» aunque la sesión lo alcance', (ruta) => {
+    expect(seccionesDe(['PRACTITIONER']).map((s) => s.path)).toContain(ruta);
+    expect(rutasRepartidas(['PRACTITIONER'])).not.toContain(ruta);
   });
 
   /**
@@ -172,14 +203,68 @@ describe('buildAccessTree', () => {
   });
 
   it('el cajón recoge lo que ninguna zona nombró', () => {
-    // «Glosario» no está declarada en ningún `paths`: llega a «Mi consulta»
+    // «Intervenciones» no está declarada en ningún `paths`: llega a «Consultas»
     // por ser del grupo `Atención`, y eso es lo que hace que una sección nueva
     // aparezca sin tocar el registro de zonas.
+    //
+    // El ejemplo era «Glosario» hasta el 19/09/2026, cuando las siete tarjetas
+    // que sobraban en la zona del médico salieron del árbol. El cajón sigue
+    // siendo la red de seguridad: se mira desde una silla que no es la suya.
+    const consulta = buildAccessTree(seccionesDe(['SURGEON'])).find(
+      (zona) => zona.area.id === 'consulta',
+    );
+
+    expect(consulta?.sections.map((s) => s.path)).toContain('interventions');
+  });
+
+  /**
+   * El pedido del 19/09/2026: la zona del médico abre tres tarjetas, no diez.
+   *
+   * La aserción nombra las tres **y** las siete que salieron: sin la segunda
+   * mitad, agregar una sección de `Atención` al registro la devolvería a la
+   * zona por el cajón sin que nada se queje, que es exactamente lo que este
+   * archivo existe para impedir.
+   */
+  it('la zona de Consultas le abre tres tarjetas al médico', () => {
     const consulta = buildAccessTree(seccionesDe(['PRACTITIONER'])).find(
       (zona) => zona.area.id === 'consulta',
     );
 
-    expect(consulta?.sections.map((s) => s.path)).toContain('glossary');
+    expect(consulta?.sections.map((s) => s.path)).toEqual([
+      'schedule',
+      'progress-notes',
+      'medical-records',
+    ]);
+  });
+
+  /**
+   * La otra mitad del mismo pedido: sacarlas del panel no las saca del producto.
+   *
+   * Cuatro conservan su renglón en el menú lateral y las otras tres se llegan
+   * desde la pantalla que las usa; lo que ninguna puede es desaparecer del
+   * registro, que sería quitar la función en vez de ordenar el panel.
+   */
+  it('las siete que salieron de la zona siguen en el registro', () => {
+    const fuera = [
+      'diagnostics',
+      'lab-visits',
+      'questionnaires',
+      'form-builder',
+      'glossary',
+      'my-services',
+      'my-quotations',
+    ];
+
+    for (const ruta of fuera) {
+      expect(APP_SECTIONS.find((seccion) => seccion.path === ruta)).toBeDefined();
+    }
+
+    // Las cuatro que el médico abre por el menú lateral no pueden quedar sin
+    // puerta: si alguien les pusiera `fueraDelMenuPara`, se volverían huérfanas.
+    for (const ruta of ['form-builder', 'glossary', 'my-services', 'my-quotations']) {
+      const seccion = APP_SECTIONS.find((s) => s.path === ruta)!;
+      expect(seccion.fueraDelMenuPara ?? []).not.toContain('PRACTITIONER');
+    }
   });
 
   it('una zona sin nada adentro no se dibuja', () => {

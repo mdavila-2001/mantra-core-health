@@ -36,10 +36,13 @@ import { Textarea } from '../../atoms/textarea/textarea';
 import { CheckboxGroup } from '../../molecules/checkbox-group/checkbox-group';
 import { DialogService } from '../../molecules/dialog/dialog-service';
 import { FormField } from '../../molecules/form-field/form-field';
+import { GridGroup } from '../../molecules/grid-group/grid-group';
 import { PhoneInput } from '../../molecules/phone-input/phone-input';
 import { Radio } from '../../molecules/radio/radio';
 import { RadioGroup } from '../../molecules/radio-group/radio-group';
 import { RadioOtro } from '../../molecules/radio-otro/radio-otro';
+import { SegmentedControl } from '../../molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../molecules/segmented-control/segmented-control.types';
 import { Stepper } from '../../molecules/stepper/stepper';
 import type { StepperStep } from '../../molecules/stepper/stepper.types';
 import { DatePicker } from '../date-picker/date-picker';
@@ -56,6 +59,28 @@ import { CampoPersonalizado } from './campo-personalizado';
  * {@link PaginatedForm.compactSteps} la pantalla que lo verificó.
  */
 const MAX_PASOS_EN_EL_INDICADOR = 5;
+
+/**
+ * Las dos respuestas de una pregunta de sí/no, como botones.
+ *
+ * Mismo par que el del alta de agenda, y por la misma razón: el propietario
+ * pidió botones en vez de casillas porque una casilla sola no dice qué pasa si
+ * no la marcás. Se declaran acá y no en cada pantalla para que sean las mismas
+ * dos palabras en todo el producto.
+ */
+const SI_NO: readonly SegmentedOption<RespuestaSiNo>[] = [
+  { value: 'si', label: 'Sí' },
+  { value: 'no', label: 'No' },
+];
+
+/**
+ * Lo que el control segmentado entiende de un sí/no.
+ *
+ * El `''` es «todavía sin responder»: no es una opción de la lista —no hay un
+ * tercer botón— pero sí un valor que el control recibe, y que hace que ninguno
+ * de los dos se vea apretado.
+ */
+type RespuestaSiNo = 'si' | 'no' | '';
 
 /**
  * **Formulario por partes** — un formulario servido de a una página, con un tope
@@ -144,6 +169,7 @@ const MAX_PASOS_EN_EL_INDICADOR = 5;
     CheckboxGroup,
     DatePicker,
     FormField,
+    GridGroup,
     Input,
     NavIcon,
     PhoneInput,
@@ -151,6 +177,7 @@ const MAX_PASOS_EN_EL_INDICADOR = 5;
     Radio,
     RadioGroup,
     RadioOtro,
+    SegmentedControl,
     Select,
     Stepper,
     Switch,
@@ -455,6 +482,9 @@ export class PaginatedForm {
     return campo.control as InputType;
   }
 
+  /** Las dos respuestas de un campo de sí/no. */
+  protected readonly siNo = SI_NO;
+
   /** Los valores de la lista de un campo de elección, para que «Otro» sepa cuál no es. */
   protected valoresDe(campo: CampoDeFormulario): readonly string[] {
     return (campo.options ?? []).map((opcion) => opcion.value);
@@ -485,6 +515,33 @@ export class PaginatedForm {
   protected escribirFecha(campo: CampoDeFormulario, valor: Date | null): void {
     const control = this.controlDe(campo);
     control?.setValue(valor);
+    control?.markAsTouched();
+  }
+
+  /**
+   * El valor de un campo `yes-no`, como lo entiende el control segmentado.
+   *
+   * Se puentea a mano —igual que la fecha, y por el mismo motivo—:
+   * `app-segmented-control` es un selector, no un `ControlValueAccessor`. Lo
+   * que vive en el formulario es un booleano o `null`; lo que el control
+   * entiende son dos cadenas.
+   *
+   * `''` cuando no hay respuesta, que es lo que hace que **ninguno** de los dos
+   * botones se vea apretado: «no contestó» no es «contestó que no».
+   */
+  protected siNoDe(campo: CampoDeFormulario): RespuestaSiNo {
+    const valor: unknown = this.controlDe(campo)?.value;
+    if (valor === true) return 'si';
+    if (valor === false) return 'no';
+    return '';
+  }
+
+  protected escribirSiNo(campo: CampoDeFormulario, valor: RespuestaSiNo): void {
+    // El `''` no llega nunca —no hay un botón que lo emita— pero el tipo del
+    // control lo admite, y tratarlo como «no» sería contestar por la persona.
+    if (valor === '') return;
+    const control = this.controlDe(campo);
+    control?.setValue(valor === 'si');
     control?.markAsTouched();
   }
 

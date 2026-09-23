@@ -15,7 +15,10 @@ import type {
   GeoPoint,
 } from '../../../../core/data-access/pharmacy/pharmacy.types';
 import { PharmacyCampaignsClient } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
-import { aCentavos } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.money';
+import {
+  aCentavos,
+  aTexto,
+} from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.money';
 import type { CampanaDeFarmacia } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.types';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type {
@@ -34,6 +37,7 @@ import { AppButtonLink } from '../../../../shared/components/atoms/button/button
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
 import { Link } from '../../../../shared/components/atoms/link/link';
+import { Switch } from '../../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { EmptyState } from '../../../../shared/components/molecules/empty-state/empty-state';
 import { SegmentedControl } from '../../../../shared/components/molecules/segmented-control/segmented-control';
@@ -48,6 +52,8 @@ import type {
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { MI_HISTORIA_ROUTE } from '../medical-record.routes';
+import { aprobadosPorElSeguroDeEjemplo, NOTA_DE_DEMOSTRACION } from './where-to-buy.fixtures';
+import { withDisplayCurrency } from '../../../../core/money/display-currency';
 
 /** Los estudios que le pidieron a esta persona. Ya existe y ya se lee. */
 const MIS_ESTUDIOS_ROUTE = '/my-account/diagnostic-orders';
@@ -157,6 +163,28 @@ interface SedeVisible {
   /** Coordenadas reales de la sede; `null` si el directorio no las publica. */
   readonly lat: number | null;
   readonly lng: number | null;
+  /** La misma sede evaluada sólo sobre lo aprobado por el seguro (demostración). */
+  readonly conSeguro: CoberturaConSeguro;
+}
+
+/**
+ * Una sede mirada con seguro (T-E2 · F2.2.2): la cobertura cuenta sólo los
+ * renglones aprobados, y el precio se parte en lo aprobado y lo que paga la
+ * persona. Se calcula junto con la vista normal para que el conmutador no
+ * vuelva a consultar nada.
+ */
+export interface CoberturaConSeguro {
+  /** Cuántos renglones incluidos aprueba el seguro: el «M» de «N de M». */
+  readonly aprobados: number;
+  /** Cuántos de esos puede confirmar esta sede: el «N». */
+  readonly cubiertos: number;
+  readonly completa: boolean;
+  /** Los aprobados que esta sede NO puede confirmar. */
+  readonly faltantes: readonly string[];
+  /** «68.00 BOB» por lo aprobado disponible, o `null` si falta un precio. */
+  readonly aprobado: string | null;
+  /** «28.50 BOB» por lo no aprobado disponible, o `null` si falta un precio. */
+  readonly aCargo: string | null;
 }
 
 /** El resultado de la consulta, listo para pintarse. */
@@ -164,10 +192,12 @@ interface ResultadoDeSedes {
   readonly sedes: readonly SedeVisible[];
   /** Medicamentos incluidos sin producto publicado: nadie puede confirmarlos. */
   readonly sinProducto: readonly string[];
+  /** Renglones incluidos que aprueba el seguro; `0` vacía la variante con seguro. */
+  readonly aprobadosIncluidos: number;
 }
 
 /** Sin sucursales que mostrar: la pantalla no llegó a consultar. */
-const SIN_SEDES: ResultadoDeSedes = { sedes: [], sinProducto: [] };
+const SIN_SEDES: ResultadoDeSedes = { sedes: [], sinProducto: [], aprobadosIncluidos: 0 };
 
 /**
  * **Dónde comprar mi receta** (carril E3, sobre las lecturas E2 del backend).
@@ -182,15 +212,13 @@ const SIN_SEDES: ResultadoDeSedes = { sedes: [], sinProducto: [] };
  * «Más cerca» y «Más barato» (T-E2) reacomodan en la pantalla lo que ya llegó,
  * sin volver a consultar; ver {@link ordenarSedes}.
  *
- * ## Acá no se habla de cobertura del seguro
+ * ## La variante con seguro es una demostración
  *
- * La pantalla muestra **disponibilidad, existencias, sedes y precios de
- * farmacia**, y nada más. «Aprobado / a tu cargo» **no** se dibuja: esos
- * importes sólo existen después de la adjudicación real de la aseguradora
- * —sobre un pedido ya creado, en `insuranceSettlement`— y esta pantalla es
- * anterior al pedido (decisión de dominio PD-2 = B, 2026-09-17; cierra
- * `B-REAL-3`). No se estiman ni se derivan: `patientAmount` es la tarifa que
- * la farmacia publica, no una adjudicación, y se presenta como precio.
+ * El conmutador (T-E2 · F2.2.2) evalúa lista y mapa sólo sobre los renglones
+ * que el seguro aprueba y parte el precio en «aprobado / a tu cargo». Qué se
+ * aprueba sale de `where-to-buy.fixtures.ts`, no de un contrato; las sedes,
+ * existencias y precios siguen siendo los de la disponibilidad. El borrador
+ * del pedido no se entera: el CTA arma el mismo borrador con o sin seguro.
  *
  * ## La ubicación se pide, no se toma — salvo la que ya diste
  *
@@ -230,6 +258,7 @@ const SIN_SEDES: ResultadoDeSedes = { sedes: [], sinProducto: [] };
     PageHeader,
     RouterLink,
     SegmentedControl,
+    Switch,
     Tab,
     Tabs,
     ViewStateHost,
@@ -267,6 +296,7 @@ export class WhereToBuy {
   protected readonly rutaDeClinicas = CLINICAS_ROUTE;
   protected readonly ciudades = CIUDADES;
   protected readonly opcionesDeOrden = OPCIONES_DE_ORDEN;
+  protected readonly notaDeDemostracion = NOTA_DE_DEMOSTRACION;
 
   /**
    * El domicilio y el trabajo del paciente, como puntos de referencia
@@ -296,14 +326,45 @@ export class WhereToBuy {
   protected readonly items = computed(() => dataOf(this.lista())?.items ?? []);
   protected readonly resultado = computed(() => dataOf(this.resultados()));
 
-  /* ---- el orden (T-E2 · F2.1.4) ------------------------------------------- */
+  /* ---- el orden y la variante con seguro (T-E2) --------------------------- */
 
   protected readonly orden = signal<OrdenDeSedes>('receta-completa');
+
+  /** El conmutador de demostración de la variante con seguro. */
+  protected readonly conSeguro = signal(false);
+
+  /** Qué renglones aprueba el seguro, de ejemplo, sobre la receta entera. */
+  private readonly aprobadosPorElSeguro = computed(() =>
+    aprobadosPorElSeguroDeEjemplo(this.items().map((item) => item.conceptId)),
+  );
 
   /** La lista en el orden elegido. Una copia: la respuesta no se toca. */
   protected readonly sedesOrdenadas = computed(() =>
     ordenarSedes(this.resultado()?.sedes ?? [], this.orden()),
   );
+
+  /**
+   * El estado de las sucursales tal como se pinta. Es el mismo de la consulta
+   * —cargando, vacío y error pasan intactos—, salvo un caso propio de la
+   * variante: con seguro y ningún renglón incluido aprobado no hay nada que
+   * evaluar, y eso se dice con su salida en vez de mostrar «0 de 0».
+   */
+  protected readonly estadoDeSedes = computed<ViewState<ResultadoDeSedes>>(() => {
+    const estado = this.resultados();
+    const datos = dataOf(estado);
+    if (
+      this.conSeguro() &&
+      datos !== null &&
+      datos.sedes.length > 0 &&
+      datos.aprobadosIncluidos === 0
+    ) {
+      return empty(
+        { label: 'Volver a mi historia', route: MI_HISTORIA_ROUTE },
+        'Con el seguro, ninguno de los medicamentos que elegiste está aprobado. Apagá la variante con seguro para ver la receta completa.',
+      );
+    }
+    return estado;
+  });
 
   /** Las sedes que el mapa puede ubicar: las que tienen coordenadas. */
   protected readonly sedesEnElMapa = computed(() =>
@@ -326,8 +387,8 @@ export class WhereToBuy {
       lat: sede.lat,
       lng: sede.lng,
       titulo: `${sede.farmacia} · ${sede.sede}`,
-      subtitulo: subtituloDePin(sede),
-      estado: estadoDePin(sede),
+      subtitulo: subtituloDePin(sede, this.conSeguro()),
+      estado: estadoDePin(sede, this.conSeguro()),
       ctaEtiqueta: 'Ver en la lista',
     })),
   );
@@ -437,6 +498,13 @@ export class WhereToBuy {
     return this.incluidos().has(item.conceptId);
   }
 
+  /** Si el seguro aprueba el renglón, de ejemplo (T-E2). */
+  protected estaAprobado(item: ItemDeReceta): boolean {
+    return this.aprobadosPorElSeguro().has(item.conceptId);
+  }
+
+  protected readonly coberturaDeLoAprobado = coberturaDeLoAprobado;
+
   protected alternar(item: ItemDeReceta, incluir: boolean): void {
     const proximos = new Set(this.incluidos());
     if (incluir) {
@@ -480,6 +548,11 @@ export class WhereToBuy {
       return;
     }
 
+    // Con seguro se evalúa sobre lo aprobado: lo que no tiene producto también
+    // cuenta, porque ninguna sede puede confirmarlo.
+    const aprobados = this.aprobadosPorElSeguro();
+    const sinProductoPorConcepto = incluidos.filter((item) => item.productId === null);
+
     this.resultados.set(loading());
     const origen = this.origen();
     this.pharmacy
@@ -501,7 +574,9 @@ export class WhereToBuy {
           }
           this.ultimaConsulta = { respuesta, consultables, sinProducto };
           this.sembrarPromociones(respuesta);
-          this.resultados.set(ready(evaluar(respuesta, consultables, sinProducto)));
+          this.resultados.set(
+            ready(evaluar(respuesta, consultables, sinProducto, sinProductoPorConcepto, aprobados)),
+          );
         },
         error: (error: unknown) => this.resultados.set(errorToViewState<ResultadoDeSedes>(error)),
       });
@@ -683,9 +758,13 @@ function geoPuntoDe(punto: PuntoDeReferencia): GeoPoint {
   return { lat: punto.lat, lng: punto.lng };
 }
 
-/** El renglón secundario del pin: distancia rotulada y dirección, lo que haya. */
-function subtituloDePin(sede: SedeVisible): string | undefined {
+/**
+ * El renglón secundario del pin: distancia rotulada y dirección, lo que haya;
+ * con seguro, primero la cobertura de lo aprobado — lo mismo que dice la tarjeta.
+ */
+function subtituloDePin(sede: SedeVisible, conSeguro: boolean): string | undefined {
   const partes = [
+    conSeguro ? coberturaDeLoAprobado(sede.conSeguro) : null,
     sede.distancia === null ? null : `${sede.distancia} en línea recta`,
     sede.direccion,
   ].filter((parte): parte is string => parte !== null);
@@ -693,10 +772,20 @@ function subtituloDePin(sede: SedeVisible): string | undefined {
 }
 
 /** El estado del pin: el mismo criterio que el badge de la tarjeta. */
-function estadoDePin(sede: SedeVisible): EstadoDePin {
+function estadoDePin(sede: SedeVisible, conSeguro: boolean): EstadoDePin {
+  if (conSeguro) {
+    return sede.conSeguro.completa
+      ? { etiqueta: 'Tiene todo lo aprobado', tono: 'success' }
+      : { etiqueta: 'Le falta algo aprobado', tono: 'warning' };
+  }
   return sede.completa
     ? { etiqueta: 'Tiene todo', tono: 'success' }
     : { etiqueta: 'Le falta algo', tono: 'warning' };
+}
+
+/** «Cobertura de lo aprobado: 3 de 3». */
+export function coberturaDeLoAprobado(cobertura: CoberturaConSeguro): string {
+  return `Cobertura de lo aprobado: ${cobertura.cubiertos} de ${cobertura.aprobados}`;
 }
 
 /**
@@ -741,7 +830,8 @@ function claveValida(valor: number | null | undefined): number | null {
  * El borrador del pedido (FAR-I2): los renglones incluidos, evaluados contra
  * la sede elegida, con el precio que la sede publica.
  *
- * Exportada a propósito: es pura y el spec la ejercita directo.
+ * Exportada a propósito: es pura y el spec la ejercita directo — el clic que
+ * la dispara sólo existe con la demostración encendida.
  */
 export function borradorDePedido(
   requestId: string,
@@ -817,6 +907,8 @@ function evaluar(
   respuesta: AvailabilityResult,
   consultables: readonly (ItemDeReceta & { productId: string })[],
   sinProducto: readonly string[],
+  sinProductoPorConcepto: readonly ItemDeReceta[],
+  aprobados: ReadonlySet<string>,
 ): ResultadoDeSedes {
   const nombrePorProducto = new Map(consultables.map((item) => [item.productId, item.medicamento]));
 
@@ -842,14 +934,99 @@ function evaluar(
       total:
         sede.totalAmount === null
           ? null
-          : `${sede.totalAmount} ${sede.currency?.code ?? ''}`.trim(),
+          : withDisplayCurrency(sede.totalAmount, sede.currency?.code),
       totalCentavos: sede.totalAmount === null ? null : aCentavos(sede.totalAmount),
       retiro: sede.pickupAvailable,
       delivery: sede.homeDeliveryAvailable,
       lat: sede.latitude,
       lng: sede.longitude,
+      conSeguro: coberturaConSeguro(sede, consultables, sinProductoPorConcepto, aprobados),
     };
   });
 
-  return { sedes, sinProducto };
+  const aprobadosIncluidos =
+    consultables.filter((item) => aprobados.has(item.conceptId)).length +
+    sinProductoPorConcepto.filter((item) => aprobados.has(item.conceptId)).length;
+
+  return { sedes, sinProducto, aprobadosIncluidos };
+}
+
+/**
+ * Una sede evaluada sólo sobre los renglones aprobados (T-E2 · F2.2.2).
+ *
+ * - **Cobertura:** de los aprobados incluidos, cuántos confirma la sede. Un
+ *   aprobado sin producto publicado cuenta y falta, como en la vista normal.
+ * - **Aprobado / a tu cargo:** lo que la sede cobra por lo disponible, partido
+ *   por la aprobación. Lo que la sede no tiene no suma en ninguno de los dos.
+ * - **Aritmética en centavos** (`pharmacy-campaigns.money`): un precio que
+ *   falta, que no es un importe o que viene en otra moneda deja esa parte en
+ *   `null` — se dice, no se estima.
+ *
+ * Exportada a propósito: es pura y el spec la ejercita directo.
+ */
+export function coberturaConSeguro(
+  sede: AvailabilitySite,
+  consultables: readonly (ItemDeReceta & { productId: string })[],
+  sinProductoPorConcepto: readonly ItemDeReceta[],
+  aprobados: ReadonlySet<string>,
+): CoberturaConSeguro {
+  const porProducto = new Map(sede.products.map((producto) => [producto.productId, producto]));
+  const disponible = (item: ItemDeReceta & { productId: string }) =>
+    porProducto.has(item.productId) && !sede.missingProductIds.includes(item.productId);
+
+  const aprobadosConProducto = consultables.filter((item) => aprobados.has(item.conceptId));
+  const aprobadosSinProducto = sinProductoPorConcepto.filter((item) =>
+    aprobados.has(item.conceptId),
+  );
+  const faltantes = [
+    ...aprobadosConProducto.filter((item) => !disponible(item)).map((item) => item.medicamento),
+    ...aprobadosSinProducto.map((item) => item.medicamento),
+  ];
+  const cantidadAprobada = aprobadosConProducto.length + aprobadosSinProducto.length;
+
+  const importeDe = (items: readonly (ItemDeReceta & { productId: string })[]) =>
+    importeDeProductos(
+      items.filter(disponible).map((item) => porProducto.get(item.productId)),
+      sede.currency?.code ?? null,
+    );
+
+  return {
+    aprobados: cantidadAprobada,
+    cubiertos: cantidadAprobada - faltantes.length,
+    completa: cantidadAprobada > 0 && faltantes.length === 0,
+    faltantes,
+    aprobado: importeDe(aprobadosConProducto),
+    aCargo: importeDe(consultables.filter((item) => !aprobados.has(item.conceptId))),
+  };
+}
+
+/**
+ * Lo que paga el paciente por esos productos, un envase por renglón, sumado en
+ * centavos: «96.50 BOB». `null` si alguno no tiene precio, no es un importe o
+ * viene en otra moneda que el resto. Sin productos, «0.00»: no pagar nada es
+ * un dato, no una ausencia.
+ */
+function importeDeProductos(
+  productos: readonly (AvailabilityProduct | undefined)[],
+  monedaDeLaSede: string | null,
+): string | null {
+  let centavos = 0;
+  let moneda = monedaDeLaSede;
+  for (const producto of productos) {
+    const precio = producto?.price ?? null;
+    const importe = precio?.patientAmount ?? precio?.unitAmount ?? null;
+    const enCentavos = importe === null ? null : aCentavos(importe);
+    if (precio === null || enCentavos === null) {
+      return null;
+    }
+    const suMoneda = precio.currency?.code ?? moneda;
+    if (moneda !== null && suMoneda !== null && suMoneda !== moneda) {
+      return null;
+    }
+    moneda = suMoneda;
+    centavos += enCentavos * CANTIDAD_POR_RENGLON;
+  }
+  // Sin moneda en el dato no se agrega ninguna: el contrato E2 deja esa parte
+  // en el número pelado y su prueba lo fija.
+  return moneda === null ? aTexto(centavos) : withDisplayCurrency(aTexto(centavos), moneda);
 }

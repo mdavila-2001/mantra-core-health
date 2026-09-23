@@ -93,6 +93,58 @@ export interface ActividadVisible {
   readonly clave: string;
   readonly rotulo: string;
   readonly valor: number;
+  /**
+   * Qué cuenta la cifra, en una línea.
+   *
+   * «275» no dice nada; «275 · una por encuentro cerrado» sí. Opcional para no
+   * romper a quien ya arma la lista sin él.
+   */
+  readonly pie?: string;
+}
+
+/** Un mes de la serie de consultas, ya con sus etiquetas resueltas. */
+export interface PuntoDeSerie {
+  /** Clave estable del punto (ISO `yyyy-MM`): sirve de `track`. */
+  readonly clave: string;
+  /** Lo que se dibuja bajo la barra: «sep». */
+  readonly etiqueta: string;
+  /** Lo que se dice en palabras: «septiembre de 2026». */
+  readonly etiquetaLarga: string;
+  readonly valor: number;
+}
+
+/**
+ * Un indicador de calidad, ya resuelto.
+ *
+ * `proporcion` es `null` cuando el indicador **no es una proporción** —la
+ * valoración media, la duración de la consulta—: esos se muestran con su
+ * cifra y sin barra, porque una barra sin denominador miente sobre qué
+ * fracción de qué representa.
+ */
+export interface IndicadorDeCalidad {
+  readonly clave: string;
+  readonly rotulo: string;
+  /** La cifra grande: «91 %», «4,7 / 5», «27 min». */
+  readonly valor: string;
+  /** De dónde sale: «312 de 341 citas». */
+  readonly detalle: string;
+  /** Entre 0 y 1 para dibujar la barra, o `null` si no es una proporción. */
+  readonly proporcion: number | null;
+}
+
+/**
+ * A nombre de quién factura el profesional.
+ *
+ * Los dos campos van juntos porque son **un solo hecho**: un NIT sin razón
+ * social no dice a nombre de quién sale el comprobante, y una razón social sin
+ * NIT no sirve para emitirlo. Vacío es «no lo declaró», y la ficha lo dice con
+ * palabras en vez de dejar el hueco.
+ */
+export interface FacturacionVisible {
+  /** El NIT, tal como lo declaró. Vacío si no lo cargó. */
+  readonly nit: string;
+  /** A nombre de quién sale el comprobante. Vacío si no lo cargó. */
+  readonly razonSocial: string;
 }
 
 /** El estado de habilitación, con su sello ya decidido. */
@@ -121,6 +173,13 @@ export interface PerfilProfesionalVisible {
   readonly telemedicina: boolean;
   readonly bio: string;
   readonly actividad: readonly ActividadVisible[];
+  /**
+   * Las consultas mes a mes, de la más vieja a la más nueva. Vacío o ausente
+   * cuando no hay serie que mostrar, y entonces la ficha no dibuja el gráfico.
+   */
+  readonly actividadMensual?: readonly PuntoDeSerie[];
+  /** Los indicadores de calidad, ya resueltos. Ausentes si no se calculan. */
+  readonly calidad?: readonly IndicadorDeCalidad[];
   readonly especialidades: readonly EspecialidadVisible[];
   readonly formacion: readonly FormacionVisible[];
   readonly matriculas: readonly MatriculaVisible[];
@@ -143,6 +202,14 @@ export interface PerfilProfesionalVisible {
    * mostrando lo que siempre mostró.
    */
   readonly datosPersonales: DatosPersonalesVisibles | null;
+  /**
+   * Sus datos de facturación, **sólo en la ficha propia**.
+   *
+   * `null` cuando se mira la ficha de otro profesional, por la misma razón que
+   * {@link datosPersonales}: el NIT de alguien no es de quien lo mira. La ficha
+   * de la guía nunca lo mostró y no empieza a mostrarlo ahora.
+   */
+  readonly facturacion: FacturacionVisible | null;
   readonly desde: Date | null;
 }
 

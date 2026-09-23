@@ -46,6 +46,9 @@ export class PharmaciesDirectory extends PublicDirectoryListing {
   protected readonly sustantivo = SUSTANTIVO;
   protected readonly queSonEnSingular = 'una farmacia';
 
+  /** La ficha de un resultado, dentro del panel. Ver `rutaDeLaFicha`. */
+  protected readonly rutaDeLaFicha = '/pharmacies-directory';
+
   protected buscar(
     filtros: PublicSearchQuery,
   ): Observable<PublicPage<PublicSearchResult>> {

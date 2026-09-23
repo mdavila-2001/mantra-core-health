@@ -13,25 +13,13 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-6);
-  max-width: 46rem;
+  /* Sin tope propio (regla del cliente §5): con 46rem el formulario quedaba en
+     la mitad izquierda del área, con la otra mitad en blanco. */
 }
 
 .agenda-create__titular {
   margin: 0;
   color: var(--text-secondary);
-}
-
-/* El aviso de alcance (AC-10-2): siempre visible, con borde propio para que
-   se note como regla y no como texto secundario cualquiera. */
-.agenda-create__alcance {
-  margin: 0 0 var(--sp-4);
-  padding: var(--sp-3) var(--sp-4);
-  border-left: 4px solid var(--st-warning-bd);
-  background: var(--bg-surface-alt);
-  border-radius: var(--r-sm);
-  color: var(--text-primary);
-  font-size: var(--fs-body);
-  max-width: 46rem;
 }
 
 /* Nota de ayuda simple (p.ej. «se crea una agenda aparte»): el mismo tono
@@ -170,28 +158,86 @@
 
 /* ---- opciones y avanzadas -------------------------------------------------- */
 
-.agenda-create__opciones {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-
-.agenda-create__opcion {
+/* La vigencia como interruptor: el texto a la izquierda dice qué significa
+   la posición actual, el interruptor a la derecha. Encendido, la tarjeta toma
+   el borde de marca, igual que una opción elegida. */
+.agenda-create__interruptor {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  cursor: pointer;
+  justify-content: space-between;
+  gap: var(--sp-3) var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.agenda-create__interruptor:has(input:checked) {
+  border-color: var(--brand-primary);
+  box-shadow: inset 0 0 0 1px var(--brand-primary);
+}
+
+.agenda-create__interruptor > app-switch {
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agenda-create__interruptor {
+    transition: none;
+  }
 }
 
 .agenda-create__avanzadas,
-.agenda-create__politica,
 .agenda-create__tecnico {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
 }
 
-.agenda-create__politica,
+/* Las cuatro reglas de reserva: una columna en el teléfono, dos en cuanto
+   entran. Cada regla es una tarjeta, y el campo mide lo que mide un número
+   —no el ancho entero de la pantalla—. */
+.agenda-create__politica {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 40rem) {
+  .agenda-create__politica {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.agenda-create__regla {
+  display: block;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+/* El número y su unidad en una fila: «60 min», «30 días». */
+.agenda-create__con-unidad {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  max-width: 14rem;
+}
+
+.agenda-create__con-unidad > app-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.agenda-create__unidad {
+  flex: none;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
 .agenda-create__tecnico {
   padding: var(--sp-3);
   border-left: 2px solid var(--border-subtle);
@@ -221,40 +267,96 @@
 /* ---- la vista previa -------------------------------------------------------- */
 
 .agenda-create__previa {
-  padding: var(--sp-3);
-  border: 1px dashed var(--border-default);
-  border-radius: var(--r-md);
+  margin-block-start: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg, var(--r-md));
   background: var(--bg-surface);
 }
 
 .agenda-create__previa-titulo {
-  margin: 0 0 var(--sp-2);
-  font-size: var(--fs-caption);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-body, 1rem);
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
+.agenda-create__previa-titulo svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+  color: var(--brand-primary);
+}
+
+.agenda-create__previa-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Tres columnas alineadas de un día al otro: el día, el rango y la cuenta.
+   En teléfono la cuenta baja debajo del rango. */
 .agenda-create__previa-dia {
-  margin: 0 0 var(--sp-1);
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  align-items: baseline;
+  column-gap: var(--sp-3);
+  row-gap: var(--sp-1);
+  padding-block: var(--sp-2);
+}
+
+.agenda-create__previa-dia + .agenda-create__previa-dia {
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+@media (min-width: 640px) {
+  .agenda-create__previa-dia {
+    grid-template-columns: 7rem 9rem 1fr;
+  }
 }
 
 .agenda-create__previa-cuenta {
-  margin-right: var(--sp-2);
+  font-weight: 600;
 }
 
 .agenda-create__previa-horas {
-  color: var(--text-secondary);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+.agenda-create__previa-horas--vacia {
+  font-weight: 400;
+  color: var(--text-secondary);
 }
 
 /* La cuenta y la duración, en segundo plano: lo que se lee de un vistazo es el
    rango, y esto lo confirma. */
 .agenda-create__previa-detalle {
+  grid-column: 2;
+  justify-self: start;
   font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+@media (min-width: 640px) {
+  .agenda-create__previa-detalle {
+    grid-column: 3;
+  }
+}
+
+/* El pie del modal de la previa: el total y la vigencia, bajo la grilla. Mismo
+   reparto que el resumen del histórico en «Mi agenda». */
+.agenda-create__previa-total {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-secondary);
 }
 
 .agenda-create__previa-resto {
-  margin: 0 0 var(--sp-2);
+  grid-column: 1 / -1;
+  margin: 0;
   color: var(--text-secondary);
   font-size: var(--fs-caption);
 }
@@ -339,4 +441,75 @@
 .agenda-create__fila-turnos {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* En escritorio los botones secundarios de las secciones miden su texto: se
+   estiraban a los 1 064 px de la sección (refactor UX). En el teléfono siguen a
+   lo ancho, que es el blanco cómodo para el pulgar. */
+@media (min-width: 40rem) {
+  .agenda-create__bloque > :is(button, a)[app-button],
+  [data-testid='agenda-create-nueva'],
+  [data-testid='agenda-create-masivo'] {
+    align-self: flex-start;
+    justify-self: start;
+  }
+}
+
+/* ---- preguntas de «Sí / No» (propietario, 18/09) ------------------------- */
+
+/* La pregunta a la izquierda y los dos botones a la derecha, en una fila; en
+   el teléfono los botones bajan debajo del texto en vez de apretarlo. */
+.agenda-create__pregunta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.agenda-create__pregunta-texto {
+  display: grid;
+  gap: 2px;
+  flex: 1 1 16rem;
+}
+
+.agenda-create__pregunta-titulo {
+  font-weight: 600;
+}
+
+.agenda-create__pregunta-ayuda {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* Desde y hasta del almuerzo lado a lado, como en la tabla. */
+.agenda-create__almuerzo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 14rem));
+  gap: var(--sp-3);
+}
+
+/* En la fila del día, el nombre y su «Sí / No» se reparten el ancho: el
+   nombre a la izquierda, los botones alineados en columna de una fila a otra. */
+.agenda-create__fila-check {
+  justify-content: space-between;
+  cursor: default;
+}
+
+/* En el teléfono el «Sí / No» baja y ocupa la fila entera: el control se
+   estira a lo ancho por debajo de 30 rem, y como ítem flex sin base quedaba en
+   su ancho mínimo, con el «No» cortado en «N.». Desde 30 rem vuelve a medir su
+   contenido, al lado de la pregunta. */
+.agenda-create__pregunta > app-segmented-control {
+  flex: 1 0 100%;
+}
+
+@media (min-width: 30rem) {
+  .agenda-create__pregunta > app-segmented-control {
+    flex: none;
+  }
 }

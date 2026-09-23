@@ -157,6 +157,15 @@ export interface CreateFieldDefinitionInput {
   readonly description?: string;
   /** Si ofrece «Otro» con texto libre. Ver {@link ChartTemplateField.allowOther}. */
   readonly allowOther?: boolean;
+  /**
+   * Las **filas** de una cuadrícula. Ver {@link ChartTemplateField.rows}: con
+   * ellas, `options` pasa a ser las columnas.
+   */
+  readonly rows?: readonly string[];
+  /** Cuadrículas: si hay que responder todas las filas. */
+  readonly requireEachRow?: boolean;
+  /** Cuadrículas: si una columna sólo se puede usar en una fila. */
+  readonly oneResponsePerColumn?: boolean;
 }
 
 /** Cuerpo de `POST /forms/assignments` (UC-09-06). */
@@ -215,6 +224,15 @@ export interface UpdateFieldDefinitionInput {
    */
   readonly cardinalityMin?: number | null;
   readonly cardinalityMax?: number | null;
+  /**
+   * Las filas de una cuadrícula, **enteras**, con la misma regla que
+   * `options`. Una lista vacía la deja de ser cuadrícula.
+   */
+  readonly rows?: readonly string[];
+  /** Cuadrículas: si hay que responder todas las filas. */
+  readonly requireEachRow?: boolean;
+  /** Cuadrículas: si una columna sólo se puede usar en una fila. */
+  readonly oneResponsePerColumn?: boolean;
 }
 
 /**

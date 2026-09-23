@@ -105,7 +105,7 @@
     color: inherit;
     cursor: pointer;
     opacity: 0.7;
-    transition: opacity 0.15s ease, background-color 0.15s ease;
+    transition: opacity var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard);
 }
 
 .toast__close:hover {

@@ -77,24 +77,29 @@
                       class="ordenes__resultado"
                       [routerLink]="['/my-account/diagnostic-results']"
                       [fragment]="orden.reportId"
+                      [attr.aria-label]="'Ver resultado: ' + orden.estudio"
                     >
                       Ver resultado
                     </a>
                   }
 
-                  <!-- Reservar hora en un laboratorio es el carril J2. Se
-                       muestra deshabilitado en vez de ocultarlo porque la orden
-                       dice «andá a hacerte esto» y esconder el camino haría
-                       creer que no existe.
-
-                       `[disabled]` y no el atributo suelto: AppButton apaga con
-                       `aria-disabled` e intercepta el click, para que el botón
-                       siga siendo enfocable y un lector de pantalla lo anuncie
-                       en vez de saltearlo. -->
-                  <button app-button variant="secondary" size="sm" [disabled]="true">
-                    Reservar hora
-                  </button>
-                  <span class="ordenes__proximamente">Próximamente</span>
+                  <!-- Reservar hora en un laboratorio (J2) ya existe en «Mis citas»:
+                       este botón estaba deshabilitado con «Próximamente» y mandaba
+                       a la persona a buscar el camino sola. Ahora lleva allí con
+                       «En un laboratorio» elegido (`?resource=lab`, refactor UX).
+                       El nombre accesible dice de qué estudio es: el botón se
+                       repite en cada orden. -->
+                  <a
+                    app-button
+                    variant="secondary"
+                    size="sm"
+                    data-testid="orden-reservar"
+                    [routerLink]="['/my-account/appointments']"
+                    [queryParams]="{ resource: 'lab' }"
+                    [attr.aria-label]="'Reservar hora en un laboratorio: ' + orden.estudio"
+                  >
+                    Reservar hora en un laboratorio
+                  </a>
                 </footer>
               </li>
             }

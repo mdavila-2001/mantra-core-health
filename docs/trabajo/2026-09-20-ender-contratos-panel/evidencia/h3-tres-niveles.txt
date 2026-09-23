@@ -1,0 +1,49 @@
+H3 — duración de visita configurable (C-13) y límite de acceso del visitador
+
+Contrato real citado (mantra-core-health-api, origin/dev c2c071a4):
+- src/modules/pharma_lab/dto/visits.dto.ts:78 — durationMinutes: @IsInt() @Min(5) @Max(240),
+  campo requerido (no opcional) en el DTO real.
+- src/modules/pharma_lab/entities/doctor_visit_policies.entity.ts:102 y
+  doctor_visit_windows.entity.ts:47 — maxDurationMinutes (política) y slotDurationMinutes
+  (ventana) SÍ existen en el contrato real.
+- src/modules/pharma_lab/services/visit-agenda.service.ts:337-341 — supera maxDurationMinutes
+  → PreconditionFailedException, que en este proyecto es HTTP 422
+  (src/common/errors/domain.exception.ts:106-118 — UNPROCESSABLE_ENTITY, no 412).
+
+Corrección de una ambigüedad de la ficha (Q-E3): la ficha asumía "C-13 pide una configuración de
+duración que no existe en ningún contrato". Verificado contra la API real: SÍ existe
+(maxDurationMinutes/slotDurationMinutes). Lo que faltaba en el simulador no era el contrato sino
+su cumplimiento: el default de 15 min ya estaba (`pharma-lab.handlers.ts:196`, preexistente), pero
+(a) ignoraba la política propia del doctor (`agenda.maxDurationMinutes`) y (b) no rechazaba un
+valor fuera de [5,240] ni uno que superase el tope de la política. Los tres se corrigieron.
+
+$ yarn test --include=.../pharma-lab.handlers.spec.ts
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+
+Casos (regla 65, tres niveles):
+- Correcto: sin durationMinutes → 15 min. Con 20 min (dentro del tope de MEDICA) → 201.
+- Límite: 5 minutos (mínimo del contrato real) → 201.
+- Inválido: 0 minutos → 400 (mismo contrato que el ValidationPipe real: @Min(5)).
+- Inválido: -10 minutos → 400.
+- Inválido: 200 minutos (supera maxDurationMinutes de la política) → 422 (PreconditionFailedException real).
+
+Límite de acceso del visitador (H3.S3), matriz negativa real contra `puedeLeer()`
+(clinical.handlers.ts:43-51, preexistente — YA bloqueaba correctamente antes de esta noche):
+- visitador@alovida.mock → GET /clinical/patients/:id/summary → 403.
+- visitador@alovida.mock → GET /charts/patients/:id/chart → 403.
+- medica@alovida.mock (practitioner) → mismo endpoint → 200 (la restricción es de rol, no global).
+- GET /visit-requests/mine (lo único que el visitador sí puede leer) → sin patientProfileId,
+  patientName, diagnosis, condition ni medication en ningún campo.
+
+Sin PRODUCT_BUG de fuga clínica: `puedeLeer()` ya defendía correctamente. Hallazgo aparte (NO
+corregido esta noche, fuera del límite estricto de "clínico" que pide H3.S3, registrado para quien
+audite scheduling): `reservaVisible()` en scheduling.handlers.ts tiene un fallback permisivo
+(`return true`) para cualquier usuario sin patientProfileId NI practitionerProfileId — eso incluye
+tanto a admin/superadmin (diseño deliberado: el staff ve toda la agenda) como, en teoría, a
+cualquier rol futuro con esa misma forma. Con los roles actuales (visitador, aseguradora) esto no
+se ejercita porque ninguna pantalla de esos roles llama a `/scheduling/bookings`, pero queda como
+deuda de autorización explícita para no confundir "sin perfil" con "personal administrativo".
+
+$ yarn typecheck
+(sin salida — exit 0)

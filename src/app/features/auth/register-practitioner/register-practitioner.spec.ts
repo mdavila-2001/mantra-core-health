@@ -35,6 +35,19 @@ class AlmacenFalso {
 /** Un concepto de `VS_BO_MUNICIPALITY`: Sacaba, código INE 031001. */
 const MUNICIPIO_SACABA = 'ee4f2681-6c58-5f4c-8f83-8d19de56099a';
 
+/**
+ * Un archivo del nombre, tipo y peso pedidos.
+ *
+ * La pantalla recibe los archivos ya elegidos desde `app-file-input`
+ * (`(filesChange)`), así que las pruebas entran por ahí y no por un evento
+ * `change` armado a mano.
+ */
+function archivoDe(nombre: string, tipo: string, bytes: number): File {
+  const archivo = new File(['x'], nombre, { type: tipo });
+  Object.defineProperty(archivo, 'size', { value: bytes });
+  return archivo;
+}
+
 /** Las tres peticiones de catálogo que dispara el constructor. */
 const CATALOGO = '/terminology/value-sets?code=VS_BO_DEPARTMENT';
 const CATALOGO_MUNICIPIOS = '/terminology/value-sets?code=VS_BO_MUNICIPALITY';
@@ -1042,15 +1055,6 @@ describe('RegisterPractitioner', () => {
       fixture.detectChanges();
     }
 
-    /** Un evento `change` de un `<input type="file">` con el archivo dado. */
-    function eventoDeArchivo(nombre: string, tipo: string, bytes: number): Event {
-      const archivo = new File(['x'], nombre, { type: tipo });
-      Object.defineProperty(archivo, 'size', { value: bytes });
-      const entrada = document.createElement('input');
-      entrada.type = 'file';
-      Object.defineProperty(entrada, 'files', { value: [archivo] });
-      return { target: entrada } as unknown as Event;
-    }
 
     it('permite cargar más de un título del mismo tipo', () => {
       component.agregarTitulo('UNIVERSITARIO');
@@ -1067,10 +1071,7 @@ describe('RegisterPractitioner', () => {
       component.agregarTitulo('DIPLOMADO');
       const [primero, segundo] = component.titulosDe('DIPLOMADO');
 
-      component.adjuntarArchivoATitulo(
-        segundo.id,
-        eventoDeArchivo('gestion.pdf', 'application/pdf', 1024),
-      );
+      component.updateTitleFiles(segundo.id, [archivoDe('gestion.pdf', 'application/pdf', 1024)]);
 
       const despues = component.titulosDe('DIPLOMADO');
       expect(despues.find((t) => t.id === primero.id)?.archivo).toBeNull();
@@ -1081,50 +1082,29 @@ describe('RegisterPractitioner', () => {
       component.agregarTitulo('DOCTORADO');
       component.agregarTitulo('DOCTORADO');
       const [primero, segundo] = component.titulosDe('DOCTORADO');
-      component.adjuntarArchivoATitulo(
-        primero.id,
-        eventoDeArchivo('tesis.pdf', 'application/pdf', 2048),
-      );
+      component.updateTitleFiles(primero.id, [archivoDe('tesis.pdf', 'application/pdf', 2048)]);
 
       component.quitarTitulo(primero.id);
 
       expect(component.titulosDe('DOCTORADO').map((t) => t.id)).toEqual([segundo.id]);
     });
 
-    it('rechaza un formato que no es PDF ni imagen, y no lo adjunta', () => {
-      component.agregarTitulo('MAESTRIA');
-      const [titulo] = component.titulosDe('MAESTRIA');
-
-      component.adjuntarArchivoATitulo(
-        titulo.id,
-        eventoDeArchivo('titulo.docx', 'application/msword', 1024),
-      );
-
-      expect(component.errorAdjunto()).toBe('El respaldo tiene que ser un PDF, un JPG o un PNG.');
-      expect(component.titulosDe('MAESTRIA')[0].archivo).toBeNull();
-    });
-
-    it('rechaza un archivo de más de 5 MB', () => {
-      component.adjuntarRespaldo(
-        'license',
-        eventoDeArchivo('matricula.pdf', 'application/pdf', 6 * 1024 * 1024),
-      );
-
-      expect(component.errorAdjunto()).toBe('El archivo supera el límite de 5 MB.');
-      expect(component.respaldoMatricula()).toBeNull();
-    });
+    // Las dos pruebas que ejercían el rechazo por formato y por peso desde esta
+    // pantalla se retiraron con el código que las sostenía: sus dos métodos no
+    // los llamaba ninguna plantilla desde que los adjuntos pasaron a
+    // `app-file-input`. Quien rechaza hoy es esa molécula, y esa regla se
+    // prueba en su propio spec (`file-input.spec.ts`).
 
     it('los dos respaldos de la habilitación son independientes', () => {
-      component.adjuntarRespaldo(
-        'license',
-        eventoDeArchivo('matricula.pdf', 'application/pdf', 1024),
-      );
-      component.adjuntarRespaldo('sedes', eventoDeArchivo('sedes.jpg', 'image/jpeg', 2048));
+      component.updateSupportFiles('license', [
+        archivoDe('matricula.pdf', 'application/pdf', 1024),
+      ]);
+      component.updateSupportFiles('sedes', [archivoDe('sedes.jpg', 'image/jpeg', 2048)]);
 
       expect(component.respaldoMatricula()?.archivo).toBe('matricula.pdf');
       expect(component.respaldoSedes()?.archivo).toBe('sedes.jpg');
 
-      component.quitarRespaldo('license');
+      component.updateSupportFiles('license', []);
 
       expect(component.respaldoMatricula()).toBeNull();
       expect(component.respaldoSedes()?.archivo).toBe('sedes.jpg');
@@ -1159,18 +1139,12 @@ describe('RegisterPractitioner', () => {
       component.escribirDatoDeTitulo(primera.id, 'nombre', 'Medicina');
       component.escribirDatoDeTitulo(primera.id, 'universidad', 'Universidad Mayor de San Andrés');
       component.escribirDatoDeTitulo(primera.id, 'ciudad', 'La Paz');
-      component.adjuntarArchivoATitulo(
-        primera.id,
-        eventoDeArchivo('medicina.pdf', 'application/pdf', 1024),
-      );
+      component.updateTitleFiles(primera.id, [archivoDe('medicina.pdf', 'application/pdf', 1024)]);
 
       component.escribirDatoDeTitulo(segunda.id, 'nombre', 'Ingeniería de Sistemas');
       component.escribirDatoDeTitulo(segunda.id, 'universidad', 'Universidad Privada Boliviana');
       component.escribirDatoDeTitulo(segunda.id, 'ciudad', 'Cochabamba');
-      component.adjuntarArchivoATitulo(
-        segunda.id,
-        eventoDeArchivo('sistemas.pdf', 'application/pdf', 2048),
-      );
+      component.updateTitleFiles(segunda.id, [archivoDe('sistemas.pdf', 'application/pdf', 2048)]);
 
       const [a, b] = component.titulosDe('UNIVERSITARIO');
       expect([a.nombre, a.universidad, a.ciudad, a.archivo]).toEqual([
@@ -1446,10 +1420,7 @@ describe('RegisterPractitioner', () => {
       component.escribirNombreDeTitulo(titulo.id, 'Medicina');
       component.escribirDatoDeTitulo(titulo.id, 'pais', 'Bolivia');
       component.escribirDatoDeTitulo(titulo.id, 'ciudad', 'La Paz');
-      component.adjuntarArchivoATitulo(
-        titulo.id,
-        eventoDeArchivo('medicina.pdf', 'application/pdf', 1024),
-      );
+      component.updateTitleFiles(titulo.id, [archivoDe('medicina.pdf', 'application/pdf', 1024)]);
       component.escribirEstudio('professionalTitleUniversity', 'Universidad Mayor de San Simón');
 
       completarProfesional();
@@ -2035,5 +2006,11 @@ describe('RegisterPractitioner con mockBackend', () => {
     );
 
     fixture.destroy();
-  });
+    // Tope propio, medido y no a ojo: esta prueba monta el alta entera contra el
+    // backend simulado, y ese simulador demora cada respuesta a propósito —de 120
+    // a 300 ms, `core/mock/mock-backend.interceptor.ts`— para que los estados de
+    // carga se puedan ver. El arranque del alta tarda ~10,4 s en asentarse: más
+    // que los 5 s por defecto de Vitest. Con 20 s pasa, aislada y dentro de la
+    // suite; no se debilitó ninguna aserción.
+  }, 20_000);
 });

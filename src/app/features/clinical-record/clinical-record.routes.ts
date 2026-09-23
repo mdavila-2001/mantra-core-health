@@ -29,8 +29,8 @@ export function patientChartRoute(profileId: string): string {
  * alguien, y la persona ya está elegida cuando se llega —desde la agenda, desde
  * «Consultas médicas» o desde el propio expediente—.
  */
-export function encounterWorkspaceRoute(profileId: string): string {
-  return `${CLINICAL_RECORD_ROUTE}/${profileId}/encounter`;
+export function consultationRoute(profileId: string): string {
+  return `${CLINICAL_RECORD_ROUTE}/${profileId}/consultation`;
 }
 
 /** Pedir el vínculo con esta persona, sin turno confirmado (FT-07-R05). */

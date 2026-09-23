@@ -1,6 +1,5 @@
-/* Archivo clínico — la pantalla que elige a quién se mira. Una columna: el
-   buscador manda, la tabla lo sigue y el acceso directo cierra. Sólo
-   distribución. */
+/* Archivo clínico — la pantalla que elige a quién se mira. Arriba el bloque
+   que pregunta a quién buscás, abajo la tabla que contesta. Sólo distribución. */
 
 :host {
   display: block;
@@ -8,96 +7,66 @@
 
 .archivo {
   display: grid;
-  gap: var(--sp-4);
+  gap: var(--sp-5);
   margin-block-start: var(--sp-6);
 }
 
-.archivo__buscador {
-  display: block;
-  /* Un campo de texto de mil píxeles no ayuda a escribir un apellido. */
-  max-inline-size: 32rem;
+/* ── El bloque de búsqueda ─────────────────────────────────────────────────
+   Una superficie propia, en el flujo principal (nunca a un costado): agrupa lo
+   que es una sola pregunta y la separa de la respuesta, que es la tabla.
+
+   El reparto en columnas lo pone `app-form-grid` —`auto-fit` sobre la caja, no
+   sobre la ventana—, así que acá no hay ni una medida de columna: los tres
+   campos se reparten el ancho y colapsan a uno solo cuando el contenedor se
+   estrecha, sin media query que mienta. */
+
+.archivo__filtros {
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
 }
 
-/* ── Buscar por documento ──────────────────────────────────────────────────
-   El número, el departamento y el botón son UNA pregunta, no tres. Apilados a
-   lo ancho de la pantalla se leían como tres pasos de un formulario largo,
-   cuando en realidad se completan de corrido y el departamento casi siempre se
-   deja como está.
-
-   En el teléfono siguen apilados: tres controles repartidos en 360 px dejan al
-   número de carnet demasiado angosto para leer lo que se está tecleando. */
-
-.archivo__documento {
+/* El botón, en su propio renglón y contra el final. Antes era una cuarta
+   columna de la fila y había que empujarle un margen superior calculado a
+   mano para que su borde cuadrara con el de los controles; cualquier cambio
+   de tipografía lo descuadraba. */
+.archivo__acciones {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  justify-content: flex-end;
   gap: var(--sp-3);
-  /* Ni el número ni el departamento se leen mejor por medir mil píxeles. */
-  max-inline-size: 60rem;
 }
 
-.archivo__documento-campo {
-  flex: 1 1 100%;
-}
-
-@media (min-width: 780px) {
-  .archivo__documento-campo {
-    flex: 1 1 14rem;
-  }
-
-  /* El botón se alinea con los CONTROLES y no con el borde inferior de la
-     fila: la explicación del departamento cuelga por debajo del suyo, y
-     alinear al final lo habría dejado un renglón más abajo que los dos campos.
-     La medida es exactamente lo que ocupa una etiqueta — su interlínea más el
-     hueco que `form-field-container` deja entre etiqueta y control—, así que
-     sigue cuadrando si la tipografía del sistema cambia. */
-  .archivo__documento > [app-button] {
-    margin-block-start: calc(var(--lh-body) + var(--sp-1));
-  }
-}
+/* ── Celdas de la tabla ────────────────────────────────────────────────── */
 
 .archivo__nombre {
   display: block;
   font-weight: 500;
 }
 
-/* El identificador acompaña al nombre en la misma celda: es el mismo dato visto
-   por la máquina, no una columna aparte. */
-.archivo__id {
+/* El documento y el teléfono: cifras, así que van con `tabular-nums` para que
+   se puedan comparar de una fila a la otra. */
+.archivo__dato {
+  display: block;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.archivo__sin-dato {
   display: block;
   color: var(--text-muted);
   font-size: var(--fs-caption);
-  font-variant-numeric: tabular-nums;
-  user-select: all;
-  overflow-wrap: anywhere;
 }
 
-/* ── Acceso directo ────────────────────────────────────────────────────────*/
-
-.archivo__directo {
-  display: block;
-  max-inline-size: 68ch;
-}
-
-.archivo__directo-titulo {
-  margin: 0 0 var(--sp-3);
-  font-size: var(--fs-h3);
-  line-height: var(--lh-h3);
-  font-weight: 600;
-}
-
-.archivo__directo-texto {
-  margin: 0 0 var(--sp-4);
-  color: var(--text-secondary);
-}
-
-.archivo__directo-form {
+/* Las dos acciones, separadas y contra el final de su celda: la columna está
+   alineada a `end` y los botones la siguen. `flex-end` y no `center` para que
+   con una sola acción visible la fila no baile de izquierda a derecha. */
+.archivo__fila-acciones {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--sp-3);
-}
-
-.archivo__directo-campo {
-  flex: 1 1 22rem;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2);
 }

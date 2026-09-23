@@ -1,0 +1,55 @@
+---
+id: PLATE_167
+lamina: 167
+pagina_fisica_pdf: 189
+region_id: R02
+subregion_id: R02S03
+confianza_titulo: gold_ocr_title
+---
+# Lámina 167: Sistema nervioso simpático: esquema
+
+## Definición anatómica ampliada
+
+La **lámina 167**, titulada **«Sistema nervioso simpático: esquema»**, pertenece a **Dorso y médula espinal > Médula espinal**. Dentro del Atlas, debe entenderse como una unidad visual de anatomía macroscópica: su significado principal no está en una definición textual aislada sino en las relaciones espaciales que la ilustración permite observar.
+
+región posterior del tronco que incluye la columna vertebral, musculatura dorsal, meninges espinales, médula espinal, raíces y nervios espinales. El estudio combina el armazón osteoligamentario con los compartimentos musculares y los corredores por los que discurren estructuras nerviosas y vasculares. En concreto, el bloque **Médula espinal** corresponde a médula espinal, meninges, raíces, tractos y vascularización dentro del canal vertebral.
+
+La lámina se centra en organización nerviosa. Para interpretarla conviene separar nervio o plexo, raíces y ramas, trayecto regional y relaciones con estructuras vecinas. Si la imagen usa códigos de fibras sensitivas, motoras o autónomas, esos significados deben recuperarse de la lámina concreta y no extrapolarse automáticamente a todas las entradas asociadas.
+
+Para entrenamiento de IA, la descripción de esta lámina se divide en tres niveles: **(1) evidencia fuente**, que incluye número de lámina, título y bloque editorial; **(2) términos recuperados del índice**, que sirven para localizar estructuras representadas; y **(3) inferencias permitidas**, limitadas a clasificación y contexto. No debe concluirse una relación clínica, fisiológica o terapéutica solo porque dos términos aparezcan asociados a la misma lámina.
+
+## Entradas indexadas de mayor confianza asociadas
+
+- **Bronquio** — `estructura_anatomica_no_tipificada` — `consensus_high`
+- **Conducción antidrómica** — `estructura_anatomica_no_tipificada` — `consensus_high`
+- **Conducto — colédoco** — `conducto` — `consensus_high`
+- **Estómago** — `organo_viscera` — `consensus_high`
+- **Ganglio — celíaco** — `ganglio` — `consensus_high`
+- **Ganglio — cervical — superior** — `ganglio` — `consensus_high`
+- **Intestino** — `organo_viscera` — `consensus_high`
+- **Laringe** — `estructura_anatomica_no_tipificada` — `consensus_high`
+- **Músculo(s) — folículo piloso** — `musculo` — `consensus_high`
+- **Nervio(s) — mayor** — `nervio` — `consensus_high`
+- **Nervio(s) — menor** — `nervio` — `consensus_high`
+- **Páncreas** — `organo_viscera` — `consensus_high`
+- **Plexo — externo** — `plexo` — `consensus_high`
+- **Próstata** — `organo_viscera` — `consensus_high`
+- **Pulmones** — `organo_viscera` — `consensus_high`
+- **Vejiga urinaria** — `organo_viscera` — `consensus_high`
+
+## Evidencia OCR del encabezado
+
+```text
+2 Sistema nervioso simpático: esquema
+teas propangonares —— had
+Lamina 167 o Médula espinal
+```
+
+## Relaciones seguras
+
+- `PLATE_167 -> PERTENECE_A_SUBREGION -> R02S03`
+- `PLATE_167 -> PERTENECE_A_REGION -> R02`
+
+## Qué NO inferir
+
+No inferir origen/inserción muscular, modalidad nerviosa, territorio vascular, diagnóstico ni tratamiento salvo que exista una fuente explícita adicional. La presencia visual o editorial es una relación de **representación**, no de causalidad.

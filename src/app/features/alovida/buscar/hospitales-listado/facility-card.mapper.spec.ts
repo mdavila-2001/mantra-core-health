@@ -18,6 +18,7 @@ function organizacion(extra: Partial<PublicSearchResult> = {}): PublicSearchResu
     location: null,
     hasPublishedAgenda: false,
     nextAvailableDate: null,
+    category: null,
     ...extra,
   };
 }

@@ -3,6 +3,8 @@
     class="filter-bar__search"
     [value]="searchTerm()"
     [label]="searchLabel()"
+    [placeholder]="searchPlaceholder()"
+    [loading]="searchLoading()"
     (searched)="onSearch($event)"
   />
 
@@ -32,6 +34,14 @@
       }
     </div>
   }
+
+  <!-- Hueco para la acción de alta de la tabla (ADR-0015, regla 5): a la
+       derecha del todo en escritorio, debajo del resto en móvil — sigue el
+       mismo `.filter-bar__controls` que ya se apila/pasa a fila. Vacío no
+       ocupa nada. -->
+  <div class="filter-bar__action">
+    <ng-content select="[filter-bar-action]" />
+  </div>
 </div>
 
 <!-- Los filtros de chips van en su propia fila, DEBAJO de los controles y

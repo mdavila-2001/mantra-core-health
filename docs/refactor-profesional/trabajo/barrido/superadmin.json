@@ -1,0 +1,1990 @@
+[
+ {
+  "ruta": "/interventions",
+  "abierta": "/interventions",
+  "componente": "Interventions",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/interventions",
+  "abierta": "/interventions",
+  "componente": "Interventions",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/interventions",
+  "abierta": "/interventions",
+  "componente": "Interventions",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-visits",
+  "abierta": "/my-visits",
+  "componente": "VisitorVisits",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-visits",
+  "abierta": "/my-visits",
+  "componente": "VisitorVisits",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-visits",
+  "abierta": "/my-visits",
+  "componente": "VisitorVisits",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/patients",
+  "abierta": "/administration/patients",
+  "componente": "PatientList",
+  "ancho": 1440,
+  "problemas": {
+   "composicion": [
+    "app-search-field.search-field.pacientes__buscador 38% izq 0 der 676"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/patients",
+  "abierta": "/administration/patients",
+  "componente": "PatientList",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/patients",
+  "abierta": "/administration/patients",
+  "componente": "PatientList",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/users",
+  "abierta": "/administration/users",
+  "componente": "UserRegistration",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/users",
+  "abierta": "/administration/users",
+  "componente": "UserRegistration",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/users",
+  "abierta": "/administration/users",
+  "componente": "UserRegistration",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/organizations",
+  "abierta": "/administration/organizations",
+  "componente": "OrganizationList",
+  "ancho": 1440,
+  "problemas": {
+   "composicion": [
+    "app-search-field.search-field.organizaciones__buscador 38% izq 0 der 676"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/organizations",
+  "abierta": "/administration/organizations",
+  "componente": "OrganizationList",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/organizations",
+  "abierta": "/administration/organizations",
+  "componente": "OrganizationList",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/brokers",
+  "abierta": "/administration/brokers",
+  "componente": "BrokerDirectory",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/brokers",
+  "abierta": "/administration/brokers",
+  "componente": "BrokerDirectory",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/brokers",
+  "abierta": "/administration/brokers",
+  "componente": "BrokerDirectory",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/insurance-claims",
+  "abierta": "/administration/insurance-claims",
+  "componente": "InsuranceClaims",
+  "ancho": 1440,
+  "problemas": {
+   "composicion": [
+    "form.claims__filters 30% izq 0 der 766"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/insurance-claims",
+  "abierta": "/administration/insurance-claims",
+  "componente": "InsuranceClaims",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/insurance-claims",
+  "abierta": "/administration/insurance-claims",
+  "componente": "InsuranceClaims",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access",
+  "abierta": "/administration/delegated-access",
+  "componente": "DelegatedAccessHome",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access",
+  "abierta": "/administration/delegated-access",
+  "componente": "DelegatedAccessHome",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access",
+  "abierta": "/administration/delegated-access",
+  "componente": "DelegatedAccessHome",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers",
+  "abierta": "/administration/identity-providers",
+  "componente": "AuthProvidersHome",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers",
+  "abierta": "/administration/identity-providers",
+  "componente": "AuthProvidersHome",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers",
+  "abierta": "/administration/identity-providers",
+  "componente": "AuthProvidersHome",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance",
+  "abierta": "/administration/identity-assurance",
+  "componente": "IdentityAdminHome",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance",
+  "abierta": "/administration/identity-assurance",
+  "componente": "IdentityAdminHome",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance",
+  "abierta": "/administration/identity-assurance",
+  "componente": "IdentityAdminHome",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/terminology",
+  "abierta": "/administration/terminology",
+  "componente": "TerminologyCatalog",
+  "ancho": 1440,
+  "problemas": {
+   "uuid-visible": [
+    "7c3850dc-4584-4874-a056-43181a045090"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/terminology",
+  "abierta": "/administration/terminology",
+  "componente": "TerminologyCatalog",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/terminology",
+  "abierta": "/administration/terminology",
+  "componente": "TerminologyCatalog",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/content-packs",
+  "abierta": "/administration/content-packs",
+  "componente": "ContentPacks",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/content-packs",
+  "abierta": "/administration/content-packs",
+  "componente": "ContentPacks",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/content-packs",
+  "abierta": "/administration/content-packs",
+  "componente": "ContentPacks",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/moderation",
+  "abierta": "/administration/moderation",
+  "componente": "Moderation",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/moderation",
+  "abierta": "/administration/moderation",
+  "componente": "Moderation",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/moderation",
+  "abierta": "/administration/moderation",
+  "componente": "Moderation",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context",
+  "abierta": "/administration/health-context",
+  "componente": "HealthContextHome",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context",
+  "abierta": "/administration/health-context",
+  "componente": "HealthContextHome",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context",
+  "abierta": "/administration/health-context",
+  "componente": "HealthContextHome",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation",
+  "abierta": "/administration/geolocation",
+  "componente": "GeoHome",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation",
+  "abierta": "/administration/geolocation",
+  "componente": "GeoHome",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation",
+  "abierta": "/administration/geolocation",
+  "componente": "GeoHome",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/services-catalog",
+  "abierta": "/administration/services-catalog",
+  "componente": "ServicesCatalog",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/services-catalog",
+  "abierta": "/administration/services-catalog",
+  "componente": "ServicesCatalog",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/services-catalog",
+  "abierta": "/administration/services-catalog",
+  "componente": "ServicesCatalog",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/medical-laboratory",
+  "abierta": "/administration/medical-laboratory",
+  "componente": "MedicalLaboratory",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/medical-laboratory",
+  "abierta": "/administration/medical-laboratory",
+  "componente": "MedicalLaboratory",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/medical-laboratory",
+  "abierta": "/administration/medical-laboratory",
+  "componente": "MedicalLaboratory",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/clinical-forms",
+  "abierta": "/administration/clinical-forms",
+  "componente": "ClinicalForms",
+  "ancho": 1440,
+  "problemas": {
+   "nombre-repetido": [
+    "ministerio de salud del perú (minsa) (se abre en una pestaña nueva) ×36",
+    "organización mundial de la salud (oms) (se abre en una pestaña nueva) ×3"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/clinical-forms",
+  "abierta": "/administration/clinical-forms",
+  "componente": "ClinicalForms",
+  "ancho": 768,
+  "problemas": {
+   "nombre-repetido": [
+    "ministerio de salud del perú (minsa) (se abre en una pestaña nueva) ×36",
+    "organización mundial de la salud (oms) (se abre en una pestaña nueva) ×3"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/clinical-forms",
+  "abierta": "/administration/clinical-forms",
+  "componente": "ClinicalForms",
+  "ancho": 390,
+  "problemas": {
+   "nombre-repetido": [
+    "ministerio de salud del perú (minsa) (se abre en una pestaña nueva) ×36",
+    "organización mundial de la salud (oms) (se abre en una pestaña nueva) ×3"
+   ]
+  }
+ },
+ {
+  "ruta": "/billing",
+  "abierta": "/billing",
+  "componente": "SectionPlaceholder",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/billing",
+  "abierta": "/billing",
+  "componente": "SectionPlaceholder",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/billing",
+  "abierta": "/billing",
+  "componente": "SectionPlaceholder",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharma-lab",
+  "abierta": "/administration/pharma-lab",
+  "componente": "PharmaLabHome",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharma-lab",
+  "abierta": "/administration/pharma-lab",
+  "componente": "PharmaLabHome",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharma-lab",
+  "abierta": "/administration/pharma-lab",
+  "componente": "PharmaLabHome",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/assignments/edit",
+  "abierta": "/administration/delegated-access/assignments/edit",
+  "componente": "OrgAssignmentUpdate",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/assignments/edit",
+  "abierta": "/administration/delegated-access/assignments/edit",
+  "componente": "OrgAssignmentUpdate",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/assignments/edit",
+  "abierta": "/administration/delegated-access/assignments/edit",
+  "componente": "OrgAssignmentUpdate",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/assignments/new",
+  "abierta": "/administration/delegated-access/assignments/new",
+  "componente": "OrgAssignmentForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/assignments/new",
+  "abierta": "/administration/delegated-access/assignments/new",
+  "componente": "OrgAssignmentForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/assignments/new",
+  "abierta": "/administration/delegated-access/assignments/new",
+  "componente": "OrgAssignmentForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/delegations/grants/new",
+  "abierta": "/administration/delegated-access/delegations/grants/new",
+  "componente": "GrantForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/delegations/grants/new",
+  "abierta": "/administration/delegated-access/delegations/grants/new",
+  "componente": "GrantForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/delegations/grants/new",
+  "abierta": "/administration/delegated-access/delegations/grants/new",
+  "componente": "GrantForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/delegations/new",
+  "abierta": "/administration/delegated-access/delegations/new",
+  "componente": "PractitionerDelegateForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/delegations/new",
+  "abierta": "/administration/delegated-access/delegations/new",
+  "componente": "PractitionerDelegateForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/delegations/new",
+  "abierta": "/administration/delegated-access/delegations/new",
+  "componente": "PractitionerDelegateForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/delegations/requests/new",
+  "abierta": "/administration/delegated-access/delegations/requests/new",
+  "componente": "AccessRequestForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/delegations/requests/new",
+  "abierta": "/administration/delegated-access/delegations/requests/new",
+  "componente": "AccessRequestForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/delegations/requests/new",
+  "abierta": "/administration/delegated-access/delegations/requests/new",
+  "componente": "AccessRequestForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/delegations/revoke",
+  "abierta": "/administration/delegated-access/delegations/revoke",
+  "componente": "DelegationRevocation",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/delegations/revoke",
+  "abierta": "/administration/delegated-access/delegations/revoke",
+  "componente": "DelegationRevocation",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/delegations/revoke",
+  "abierta": "/administration/delegated-access/delegations/revoke",
+  "componente": "DelegationRevocation",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/operations/evaluate-actor",
+  "abierta": "/administration/delegated-access/operations/evaluate-actor",
+  "componente": "ActorEvaluation",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/operations/evaluate-actor",
+  "abierta": "/administration/delegated-access/operations/evaluate-actor",
+  "componente": "ActorEvaluation",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/operations/evaluate-actor",
+  "abierta": "/administration/delegated-access/operations/evaluate-actor",
+  "componente": "ActorEvaluation",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/operations/expiry-sweep",
+  "abierta": "/administration/delegated-access/operations/expiry-sweep",
+  "componente": "ExpirySweep",
+  "ancho": 1440,
+  "problemas": {
+   "composicion": [
+    "button.btn.btn--md 14% izq 0 der 939"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/delegated-access/operations/expiry-sweep",
+  "abierta": "/administration/delegated-access/operations/expiry-sweep",
+  "componente": "ExpirySweep",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/operations/expiry-sweep",
+  "abierta": "/administration/delegated-access/operations/expiry-sweep",
+  "componente": "ExpirySweep",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/permission-sets/new",
+  "abierta": "/administration/delegated-access/permission-sets/new",
+  "componente": "PermissionSetForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/permission-sets/new",
+  "abierta": "/administration/delegated-access/permission-sets/new",
+  "componente": "PermissionSetForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/permission-sets/new",
+  "abierta": "/administration/delegated-access/permission-sets/new",
+  "componente": "PermissionSetForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/permission-sets/new-version",
+  "abierta": "/administration/delegated-access/permission-sets/new-version",
+  "componente": "SetVersionForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/permission-sets/new-version",
+  "abierta": "/administration/delegated-access/permission-sets/new-version",
+  "componente": "SetVersionForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/permission-sets/new-version",
+  "abierta": "/administration/delegated-access/permission-sets/new-version",
+  "componente": "SetVersionForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/requests/resolve",
+  "abierta": "/administration/delegated-access/requests/resolve",
+  "componente": "AccessRequestResolution",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/requests/resolve",
+  "abierta": "/administration/delegated-access/requests/resolve",
+  "componente": "AccessRequestResolution",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/delegated-access/requests/resolve",
+  "abierta": "/administration/delegated-access/requests/resolve",
+  "componente": "AccessRequestResolution",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/geofence-events/new",
+  "abierta": "/administration/geolocation/geofence-events/new",
+  "componente": "GeofenceEventForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/geofence-events/new",
+  "abierta": "/administration/geolocation/geofence-events/new",
+  "componente": "GeofenceEventForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/geofence-events/new",
+  "abierta": "/administration/geolocation/geofence-events/new",
+  "componente": "GeofenceEventForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/geofences/new",
+  "abierta": "/administration/geolocation/geofences/new",
+  "componente": "GeofenceForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/geofences/new",
+  "abierta": "/administration/geolocation/geofences/new",
+  "componente": "GeofenceForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/geofences/new",
+  "abierta": "/administration/geolocation/geofences/new",
+  "componente": "GeofenceForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/sessions/close",
+  "abierta": "/administration/geolocation/sessions/close",
+  "componente": "TrackingSessionClose",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/sessions/close",
+  "abierta": "/administration/geolocation/sessions/close",
+  "componente": "TrackingSessionClose",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/sessions/close",
+  "abierta": "/administration/geolocation/sessions/close",
+  "componente": "TrackingSessionClose",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/sessions/new",
+  "abierta": "/administration/geolocation/sessions/new",
+  "componente": "TrackingSessionForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/sessions/new",
+  "abierta": "/administration/geolocation/sessions/new",
+  "componente": "TrackingSessionForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/sessions/new",
+  "abierta": "/administration/geolocation/sessions/new",
+  "componente": "TrackingSessionForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/subjects/last-position",
+  "abierta": "/administration/geolocation/subjects/last-position",
+  "componente": "LastPosition",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/subjects/last-position",
+  "abierta": "/administration/geolocation/subjects/last-position",
+  "componente": "LastPosition",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/subjects/last-position",
+  "abierta": "/administration/geolocation/subjects/last-position",
+  "componente": "LastPosition",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/subjects/new",
+  "abierta": "/administration/geolocation/subjects/new",
+  "componente": "TrackedSubjectForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/subjects/new",
+  "abierta": "/administration/geolocation/subjects/new",
+  "componente": "TrackedSubjectForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/subjects/new",
+  "abierta": "/administration/geolocation/subjects/new",
+  "componente": "TrackedSubjectForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/subjects/pings",
+  "abierta": "/administration/geolocation/subjects/pings",
+  "componente": "PingIngest",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/subjects/pings",
+  "abierta": "/administration/geolocation/subjects/pings",
+  "componente": "PingIngest",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/subjects/pings",
+  "abierta": "/administration/geolocation/subjects/pings",
+  "componente": "PingIngest",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/subjects/revoke-consent",
+  "abierta": "/administration/geolocation/subjects/revoke-consent",
+  "componente": "ConsentRevocation",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/subjects/revoke-consent",
+  "abierta": "/administration/geolocation/subjects/revoke-consent",
+  "componente": "ConsentRevocation",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/subjects/revoke-consent",
+  "abierta": "/administration/geolocation/subjects/revoke-consent",
+  "componente": "ConsentRevocation",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/trips/close",
+  "abierta": "/administration/geolocation/trips/close",
+  "componente": "TripClose",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/trips/close",
+  "abierta": "/administration/geolocation/trips/close",
+  "componente": "TripClose",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/trips/close",
+  "abierta": "/administration/geolocation/trips/close",
+  "componente": "TripClose",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/trips/new",
+  "abierta": "/administration/geolocation/trips/new",
+  "componente": "TripForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/trips/new",
+  "abierta": "/administration/geolocation/trips/new",
+  "componente": "TripForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/trips/new",
+  "abierta": "/administration/geolocation/trips/new",
+  "componente": "TripForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/agents/new",
+  "abierta": "/administration/health-context/agents/new",
+  "componente": "AgentForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/agents/new",
+  "abierta": "/administration/health-context/agents/new",
+  "componente": "AgentForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/agents/new",
+  "abierta": "/administration/health-context/agents/new",
+  "componente": "AgentForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/collection-runs/finish",
+  "abierta": "/administration/health-context/collection-runs/finish",
+  "componente": "CollectionRunFinish",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/collection-runs/finish",
+  "abierta": "/administration/health-context/collection-runs/finish",
+  "componente": "CollectionRunFinish",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/collection-runs/finish",
+  "abierta": "/administration/health-context/collection-runs/finish",
+  "componente": "CollectionRunFinish",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/collection-runs/new",
+  "abierta": "/administration/health-context/collection-runs/new",
+  "componente": "CollectionRunForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/collection-runs/new",
+  "abierta": "/administration/health-context/collection-runs/new",
+  "componente": "CollectionRunForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/collection-runs/new",
+  "abierta": "/administration/health-context/collection-runs/new",
+  "componente": "CollectionRunForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/contexts/new",
+  "abierta": "/administration/health-context/contexts/new",
+  "componente": "ContextForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/contexts/new",
+  "abierta": "/administration/health-context/contexts/new",
+  "componente": "ContextForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/contexts/new",
+  "abierta": "/administration/health-context/contexts/new",
+  "componente": "ContextForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/contexts/resolve",
+  "abierta": "/administration/health-context/contexts/resolve",
+  "componente": "ContextResolve",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/contexts/resolve",
+  "abierta": "/administration/health-context/contexts/resolve",
+  "componente": "ContextResolve",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/contexts/resolve",
+  "abierta": "/administration/health-context/contexts/resolve",
+  "componente": "ContextResolve",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/observations/new",
+  "abierta": "/administration/health-context/observations/new",
+  "componente": "ObservationForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/observations/new",
+  "abierta": "/administration/health-context/observations/new",
+  "componente": "ObservationForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/observations/new",
+  "abierta": "/administration/health-context/observations/new",
+  "componente": "ObservationForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/quality-reviews/new",
+  "abierta": "/administration/health-context/quality-reviews/new",
+  "componente": "QualityReviewForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/quality-reviews/new",
+  "abierta": "/administration/health-context/quality-reviews/new",
+  "componente": "QualityReviewForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/quality-reviews/new",
+  "abierta": "/administration/health-context/quality-reviews/new",
+  "componente": "QualityReviewForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/schedules/new",
+  "abierta": "/administration/health-context/schedules/new",
+  "componente": "ScheduleForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/schedules/new",
+  "abierta": "/administration/health-context/schedules/new",
+  "componente": "ScheduleForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/schedules/new",
+  "abierta": "/administration/health-context/schedules/new",
+  "componente": "ScheduleForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/sources/new",
+  "abierta": "/administration/health-context/sources/new",
+  "componente": "SourceForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/sources/new",
+  "abierta": "/administration/health-context/sources/new",
+  "componente": "SourceForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/sources/new",
+  "abierta": "/administration/health-context/sources/new",
+  "componente": "SourceForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/versions/new",
+  "abierta": "/administration/health-context/versions/new",
+  "componente": "VersionForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/versions/new",
+  "abierta": "/administration/health-context/versions/new",
+  "componente": "VersionForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/versions/new",
+  "abierta": "/administration/health-context/versions/new",
+  "componente": "VersionForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/versions/publish",
+  "abierta": "/administration/health-context/versions/publish",
+  "componente": "VersionPublish",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/versions/publish",
+  "abierta": "/administration/health-context/versions/publish",
+  "componente": "VersionPublish",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/versions/publish",
+  "abierta": "/administration/health-context/versions/publish",
+  "componente": "VersionPublish",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/versions/supersede",
+  "abierta": "/administration/health-context/versions/supersede",
+  "componente": "VersionSupersede",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/versions/supersede",
+  "abierta": "/administration/health-context/versions/supersede",
+  "componente": "VersionSupersede",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/health-context/versions/supersede",
+  "abierta": "/administration/health-context/versions/supersede",
+  "componente": "VersionSupersede",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/assertions/issue",
+  "abierta": "/administration/identity-assurance/assertions/issue",
+  "componente": "AssertionIssueForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/assertions/issue",
+  "abierta": "/administration/identity-assurance/assertions/issue",
+  "componente": "AssertionIssueForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/assertions/issue",
+  "abierta": "/administration/identity-assurance/assertions/issue",
+  "componente": "AssertionIssueForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/assertions/revoke",
+  "abierta": "/administration/identity-assurance/assertions/revoke",
+  "componente": "AssertionRevokeForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/assertions/revoke",
+  "abierta": "/administration/identity-assurance/assertions/revoke",
+  "componente": "AssertionRevokeForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/assertions/revoke",
+  "abierta": "/administration/identity-assurance/assertions/revoke",
+  "componente": "AssertionRevokeForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/authorities/endpoint",
+  "abierta": "/administration/identity-assurance/authorities/endpoint",
+  "componente": "AuthorityEndpointForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/authorities/endpoint",
+  "abierta": "/administration/identity-assurance/authorities/endpoint",
+  "componente": "AuthorityEndpointForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/authorities/endpoint",
+  "abierta": "/administration/identity-assurance/authorities/endpoint",
+  "componente": "AuthorityEndpointForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/authorities/new",
+  "abierta": "/administration/identity-assurance/authorities/new",
+  "componente": "AuthorityForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/authorities/new",
+  "abierta": "/administration/identity-assurance/authorities/new",
+  "componente": "AuthorityForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/authorities/new",
+  "abierta": "/administration/identity-assurance/authorities/new",
+  "componente": "AuthorityForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/cases/checks",
+  "abierta": "/administration/identity-assurance/cases/checks",
+  "componente": "CheckPlanForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/cases/checks",
+  "abierta": "/administration/identity-assurance/cases/checks",
+  "componente": "CheckPlanForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/cases/checks",
+  "abierta": "/administration/identity-assurance/cases/checks",
+  "componente": "CheckPlanForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/cases/evidence",
+  "abierta": "/administration/identity-assurance/cases/evidence",
+  "componente": "CaseEvidenceForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/cases/evidence",
+  "abierta": "/administration/identity-assurance/cases/evidence",
+  "componente": "CaseEvidenceForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/cases/evidence",
+  "abierta": "/administration/identity-assurance/cases/evidence",
+  "componente": "CaseEvidenceForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/cases/expire-sweep",
+  "abierta": "/administration/identity-assurance/cases/expire-sweep",
+  "componente": "CaseExpireSweep",
+  "ancho": 1440,
+  "problemas": {
+   "composicion": [
+    "button.btn.btn--md 14% izq 0 der 939"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/identity-assurance/cases/expire-sweep",
+  "abierta": "/administration/identity-assurance/cases/expire-sweep",
+  "componente": "CaseExpireSweep",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/cases/expire-sweep",
+  "abierta": "/administration/identity-assurance/cases/expire-sweep",
+  "componente": "CaseExpireSweep",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/cases/new",
+  "abierta": "/administration/identity-assurance/cases/new",
+  "componente": "CaseOpenForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/cases/new",
+  "abierta": "/administration/identity-assurance/cases/new",
+  "componente": "CaseOpenForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/cases/new",
+  "abierta": "/administration/identity-assurance/cases/new",
+  "componente": "CaseOpenForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/checks/attempt",
+  "abierta": "/administration/identity-assurance/checks/attempt",
+  "componente": "CheckAttemptForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/checks/attempt",
+  "abierta": "/administration/identity-assurance/checks/attempt",
+  "componente": "CheckAttemptForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/checks/attempt",
+  "abierta": "/administration/identity-assurance/checks/attempt",
+  "componente": "CheckAttemptForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/checks/fraud-signal",
+  "abierta": "/administration/identity-assurance/checks/fraud-signal",
+  "componente": "FraudSignalForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/checks/fraud-signal",
+  "abierta": "/administration/identity-assurance/checks/fraud-signal",
+  "componente": "FraudSignalForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/checks/fraud-signal",
+  "abierta": "/administration/identity-assurance/checks/fraud-signal",
+  "componente": "FraudSignalForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/checks/result",
+  "abierta": "/administration/identity-assurance/checks/result",
+  "componente": "CheckResultForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/checks/result",
+  "abierta": "/administration/identity-assurance/checks/result",
+  "componente": "CheckResultForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/checks/result",
+  "abierta": "/administration/identity-assurance/checks/result",
+  "componente": "CheckResultForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/policies/new",
+  "abierta": "/administration/identity-assurance/policies/new",
+  "componente": "VerificationPolicyForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/policies/new",
+  "abierta": "/administration/identity-assurance/policies/new",
+  "componente": "VerificationPolicyForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/policies/new",
+  "abierta": "/administration/identity-assurance/policies/new",
+  "componente": "VerificationPolicyForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/queue",
+  "abierta": "/administration/identity-assurance/queue",
+  "componente": "CaseQueue",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/queue",
+  "abierta": "/administration/identity-assurance/queue",
+  "componente": "CaseQueue",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/queue",
+  "abierta": "/administration/identity-assurance/queue",
+  "componente": "CaseQueue",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/review/decision",
+  "abierta": "/administration/identity-assurance/review/decision",
+  "componente": "ReviewDecisionForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/review/decision",
+  "abierta": "/administration/identity-assurance/review/decision",
+  "componente": "ReviewDecisionForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/review/decision",
+  "abierta": "/administration/identity-assurance/review/decision",
+  "componente": "ReviewDecisionForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/review/escalate",
+  "abierta": "/administration/identity-assurance/review/escalate",
+  "componente": "ManualReviewForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/review/escalate",
+  "abierta": "/administration/identity-assurance/review/escalate",
+  "componente": "ManualReviewForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-assurance/review/escalate",
+  "abierta": "/administration/identity-assurance/review/escalate",
+  "componente": "ManualReviewForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/accounts/complete",
+  "abierta": "/administration/identity-providers/accounts/complete",
+  "componente": "AccountLinkCompleteForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/accounts/complete",
+  "abierta": "/administration/identity-providers/accounts/complete",
+  "componente": "AccountLinkCompleteForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/accounts/complete",
+  "abierta": "/administration/identity-providers/accounts/complete",
+  "componente": "AccountLinkCompleteForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/accounts/link",
+  "abierta": "/administration/identity-providers/accounts/link",
+  "componente": "AccountLinkRequestForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/accounts/link",
+  "abierta": "/administration/identity-providers/accounts/link",
+  "componente": "AccountLinkRequestForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/accounts/link",
+  "abierta": "/administration/identity-providers/accounts/link",
+  "componente": "AccountLinkRequestForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/accounts/unlink",
+  "abierta": "/administration/identity-providers/accounts/unlink",
+  "componente": "IdentityUnlinkForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/accounts/unlink",
+  "abierta": "/administration/identity-providers/accounts/unlink",
+  "componente": "IdentityUnlinkForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/accounts/unlink",
+  "abierta": "/administration/identity-providers/accounts/unlink",
+  "componente": "IdentityUnlinkForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/keys/new",
+  "abierta": "/administration/identity-providers/keys/new",
+  "componente": "SigningKeyForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/keys/new",
+  "abierta": "/administration/identity-providers/keys/new",
+  "componente": "SigningKeyForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/keys/new",
+  "abierta": "/administration/identity-providers/keys/new",
+  "componente": "SigningKeyForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/keys/rotate",
+  "abierta": "/administration/identity-providers/keys/rotate",
+  "componente": "KeyRotationForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/keys/rotate",
+  "abierta": "/administration/identity-providers/keys/rotate",
+  "componente": "KeyRotationForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/keys/rotate",
+  "abierta": "/administration/identity-providers/keys/rotate",
+  "componente": "KeyRotationForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/login/callback",
+  "abierta": "/administration/identity-providers/login/callback",
+  "componente": "LoginCallbackForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/login/callback",
+  "abierta": "/administration/identity-providers/login/callback",
+  "componente": "LoginCallbackForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/login/callback",
+  "abierta": "/administration/identity-providers/login/callback",
+  "componente": "LoginCallbackForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/login/start",
+  "abierta": "/administration/identity-providers/login/start",
+  "componente": "LoginStartForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/login/start",
+  "abierta": "/administration/identity-providers/login/start",
+  "componente": "LoginStartForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/login/start",
+  "abierta": "/administration/identity-providers/login/start",
+  "componente": "LoginStartForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/organizations/link",
+  "abierta": "/administration/identity-providers/organizations/link",
+  "componente": "TenantBindingForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/organizations/link",
+  "abierta": "/administration/identity-providers/organizations/link",
+  "componente": "TenantBindingForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/organizations/link",
+  "abierta": "/administration/identity-providers/organizations/link",
+  "componente": "TenantBindingForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/providers/attribute-mappings",
+  "abierta": "/administration/identity-providers/providers/attribute-mappings",
+  "componente": "AttributeMappingsForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/providers/attribute-mappings",
+  "abierta": "/administration/identity-providers/providers/attribute-mappings",
+  "componente": "AttributeMappingsForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/providers/attribute-mappings",
+  "abierta": "/administration/identity-providers/providers/attribute-mappings",
+  "componente": "AttributeMappingsForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/providers/new",
+  "abierta": "/administration/identity-providers/providers/new",
+  "componente": "ProviderForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/providers/new",
+  "abierta": "/administration/identity-providers/providers/new",
+  "componente": "ProviderForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/providers/new",
+  "abierta": "/administration/identity-providers/providers/new",
+  "componente": "ProviderForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/providers/protocol",
+  "abierta": "/administration/identity-providers/providers/protocol",
+  "componente": "ProtocolConfigForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/providers/protocol",
+  "abierta": "/administration/identity-providers/providers/protocol",
+  "componente": "ProtocolConfigForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/providers/protocol",
+  "abierta": "/administration/identity-providers/providers/protocol",
+  "componente": "ProtocolConfigForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/providers/provisioning-rule",
+  "abierta": "/administration/identity-providers/providers/provisioning-rule",
+  "componente": "ProvisioningRuleForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/providers/provisioning-rule",
+  "abierta": "/administration/identity-providers/providers/provisioning-rule",
+  "componente": "ProvisioningRuleForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/identity-providers/providers/provisioning-rule",
+  "abierta": "/administration/identity-providers/providers/provisioning-rule",
+  "componente": "ProvisioningRuleForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/organizations/new",
+  "abierta": "/administration/organizations/new",
+  "componente": "OrganizationNew",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/organizations/new",
+  "abierta": "/administration/organizations/new",
+  "componente": "OrganizationNew",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/organizations/new",
+  "abierta": "/administration/organizations/new",
+  "componente": "OrganizationNew",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/patients/assisted-registration",
+  "abierta": "/administration/patients/assisted-registration",
+  "componente": "AssistedRegistration",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/patients/assisted-registration",
+  "abierta": "/administration/patients/assisted-registration",
+  "componente": "AssistedRegistration",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/patients/assisted-registration",
+  "abierta": "/administration/patients/assisted-registration",
+  "componente": "AssistedRegistration",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/patients/merge",
+  "abierta": "/administration/patients/merge",
+  "componente": "PatientMerge",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/patients/merge",
+  "abierta": "/administration/patients/merge",
+  "componente": "PatientMerge",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/patients/merge",
+  "abierta": "/administration/patients/merge",
+  "componente": "PatientMerge",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/patients/new",
+  "abierta": "/administration/patients/new",
+  "componente": "PatientNew",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/patients/new",
+  "abierta": "/administration/patients/new",
+  "componente": "PatientNew",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/patients/new",
+  "abierta": "/administration/patients/new",
+  "componente": "PatientNew",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/services-catalog/import",
+  "abierta": "/administration/services-catalog/import",
+  "componente": "ProcedureImport",
+  "ancho": 1440,
+  "problemas": {
+   "composicion": [
+    "form.importar__practica 33% izq 0 der 736"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/services-catalog/import",
+  "abierta": "/administration/services-catalog/import",
+  "componente": "ProcedureImport",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/services-catalog/import",
+  "abierta": "/administration/services-catalog/import",
+  "componente": "ProcedureImport",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/terminology/import",
+  "abierta": "/administration/terminology/import",
+  "componente": "VersionImport",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/terminology/import",
+  "abierta": "/administration/terminology/import",
+  "componente": "VersionImport",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/terminology/import",
+  "abierta": "/administration/terminology/import",
+  "componente": "VersionImport",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/brokers/:brokerId",
+  "abierta": "/administration/brokers/1d82e45e-dbd0-4a24-aeaa-6186b65f40c2",
+  "componente": "BrokerDetail",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/brokers/:brokerId",
+  "abierta": "/administration/brokers/1d82e45e-dbd0-4a24-aeaa-6186b65f40c2",
+  "componente": "BrokerDetail",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/brokers/:brokerId",
+  "abierta": "/administration/brokers/1d82e45e-dbd0-4a24-aeaa-6186b65f40c2",
+  "componente": "BrokerDetail",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/geolocation/subjects/last-position/:trackedSubjectId",
+  "abierta": "",
+  "componente": "LastPosition",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/insurance-claims/:claimId",
+  "abierta": "/administration/insurance-claims/5973f7fb-8c0a-4649-a115-9daea627f2d4",
+  "componente": "InsuranceClaimDetail",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/insurance-claims/:claimId",
+  "abierta": "/administration/insurance-claims/5973f7fb-8c0a-4649-a115-9daea627f2d4",
+  "componente": "InsuranceClaimDetail",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/insurance-claims/:claimId",
+  "abierta": "/administration/insurance-claims/5973f7fb-8c0a-4649-a115-9daea627f2d4",
+  "componente": "InsuranceClaimDetail",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/organizations/:tenantId",
+  "abierta": "/administration/organizations/new",
+  "componente": "OrganizationDetail",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/organizations/:tenantId",
+  "abierta": "/administration/organizations/new",
+  "componente": "OrganizationDetail",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/organizations/:tenantId",
+  "abierta": "/administration/organizations/new",
+  "componente": "OrganizationDetail",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/organizations/:tenantId/branches/new",
+  "abierta": "",
+  "componente": "BranchNew",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/organizations/:tenantId/child-organizations/new",
+  "abierta": "",
+  "componente": "ChildOrganizationNew",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/organizations/:tenantId/memberships/new",
+  "abierta": "",
+  "componente": "MembershipNew",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/organizations/:tenantId/verify",
+  "abierta": "",
+  "componente": "OrganizationVerify",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/patients/:profileId",
+  "abierta": "/administration/patients/new",
+  "componente": "PatientDetail",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/patients/:profileId",
+  "abierta": "/administration/patients/new",
+  "componente": "PatientDetail",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/patients/:profileId",
+  "abierta": "/administration/patients/new",
+  "componente": "PatientDetail",
+  "ancho": 390,
+  "problemas": {}
+ }
+]

@@ -18,6 +18,7 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -90,7 +91,7 @@ interface GrupoDeOrdenes {
  */
 @Component({
   selector: 'app-diagnostic-orders',
-  imports: [PatientInsuranceSettlement, Alert, AppButton, Badge, DatePipe, Link, PageHeader, RouterLink],
+  imports: [PatientInsuranceSettlement, Alert, AppButton, AppButtonLink, Badge, DatePipe, Link, PageHeader, RouterLink],
   templateUrl: './diagnostic-orders.html',
   styleUrl: './diagnostic-orders.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

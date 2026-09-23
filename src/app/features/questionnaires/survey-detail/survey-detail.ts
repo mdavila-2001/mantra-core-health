@@ -211,6 +211,11 @@ export class SurveyDetailScreen {
   protected readonly asignando = signal(false);
   protected readonly creandoVersion = signal(false);
 
+  /** El texto de cada pregunta por id, para rotular las respuestas recibidas. */
+  protected readonly textoDePregunta = computed(
+    () => new Map((this.encuesta()?.questions ?? []).map((p) => [p.id, p.questionText])),
+  );
+
   /** Si la versión vigente todavía admite preguntas. */
   protected readonly editable = computed(() => {
     const actual = this.estado();

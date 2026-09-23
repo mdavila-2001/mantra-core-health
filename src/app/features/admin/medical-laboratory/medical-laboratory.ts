@@ -14,7 +14,6 @@ import { DiagnosticUnitsAdminClient } from '../../../core/data-access/diagnostic
 import type {
   CreatePriceScheduleInput,
   CreateStudyOfferingInput,
-  CreateStudyPriceInput,
   DiagnosticUnitAdminAccreditation,
   DiagnosticUnitAdminDetail,
   DiagnosticUnitAdminEquipment,
@@ -30,7 +29,7 @@ import type { DynamicEnumOption } from '../../../core/data-access/system-context
 import { readApiError } from '../../../core/http/api-error';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { empty, hasData, loading, ready, stale } from '../../../core/view-state/view-state';
+import { dataOf, empty, hasData, loading, ready, stale } from '../../../core/view-state/view-state';
 import type {
   ViewState,
   ViewStateNextAction,
@@ -41,11 +40,17 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Checkbox } from '../../../shared/components/atoms/checkbox/checkbox';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
+import { ServiceIcon } from '../../../shared/components/atoms/service-icon/service-icon';
+import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
+import { Accordion } from '../../../shared/components/molecules/accordion/accordion';
+import { AccordionPanel } from '../../../shared/components/molecules/accordion/accordion-panel/accordion-panel';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { Card } from '../../../shared/components/molecules/card/card';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { SectionHeading } from '../../../shared/components/molecules/section-heading/section-heading';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -54,8 +59,10 @@ import type { ColumnDef } from '../../../shared/components/organisms/data-table/
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import type { TarifarioDeLaUnidad } from './medical-laboratory.types';
 import { TarifariosRecordados } from './tarifarios-recordados';
+import { withDisplayCurrency } from '../../../core/money/display-currency';
 
 /**
  * El mismo concepto, dicho de las dos maneras en que puede llegar.
@@ -126,16 +133,14 @@ const TARGET_ESTUDIO = 'clinical.service_requests.code_concept_id';
 
 /** Código estable de la oferta ya retirada: no se retira dos veces. */
 const CODIGO_OFERTA_RETIRADA = 'DU_OFFER_RETIRED';
+const CODIGO_OFERTA_BORRADOR = 'DU_OFFER_DRAFT';
+
+/** Tarjetas que simula el esqueleto: una pantalla, no el catálogo entero. */
+const TARJETAS_DEL_ESQUELETO = 6;
 
 /** Largos que la API valida. Se copian para poder avisar antes de mandar. */
 const LARGO_MAXIMO_DE_CODIGO = 60;
 const LARGO_MAXIMO_DE_NOMBRE = 200;
-
-/** Decimales con los que viaja un importe. */
-const DECIMALES_DE_IMPORTE = 2;
-
-/** Dónde está la pestaña de tarifarios, para poder llevar hasta ella. */
-const PESTANA_TARIFARIOS = 3;
 
 /**
  * Consola del **administrador de organización de laboratorio médico** —
@@ -176,9 +181,12 @@ const PESTANA_TARIFARIOS = 3;
 @Component({
   selector: 'app-medical-laboratory',
   imports: [
+    Accordion,
+    AccordionPanel,
     Alert,
     AppButton,
     Badge,
+    Card,
     Checkbox,
     DataTable,
     DatePicker,
@@ -186,13 +194,25 @@ const PESTANA_TARIFARIOS = 3;
     FormField,
     Input,
     PageHeader,
+    SectionHeading,
     Select,
+    ServiceIcon,
+    Skeleton,
     Tab,
     Tabs,
     Textarea,
+    ViewStateHost,
   ],
   templateUrl: './medical-laboratory.html',
-  styleUrl: './medical-laboratory.css',
+  // Las dos hojas compartidas van **primero** y la propia al final: Angular
+  // concatena en este orden, y al revés `.rejilla` le ganaría por posición a
+  // `.laboratorio__rejilla` —misma especificidad— y el ancho de columna de
+  // esta pantalla no se aplicaría.
+  styleUrls: [
+    '../../../shared/styles/rejilla-de-tarjetas.css',
+    '../../../shared/styles/tarjeta-de-servicio.css',
+    './medical-laboratory.css',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MedicalLaboratory {
@@ -231,21 +251,6 @@ export class MedicalLaboratory {
       TemplateRef<{ $implicit: DiagnosticUnitAdminEquipment }>
     >('celdaEstadoEquipo');
 
-  private readonly celdaEstudio =
-    viewChild.required<TemplateRef<{ $implicit: DiagnosticUnitAdminStudy }>>('celdaEstudio');
-  private readonly celdaPreparacion =
-    viewChild.required<TemplateRef<{ $implicit: DiagnosticUnitAdminStudy }>>('celdaPreparacion');
-  private readonly celdaPrecios =
-    viewChild.required<TemplateRef<{ $implicit: DiagnosticUnitAdminStudy }>>('celdaPrecios');
-  private readonly celdaEstadoEstudio =
-    viewChild.required<
-      TemplateRef<{ $implicit: DiagnosticUnitAdminStudy }>
-    >('celdaEstadoEstudio');
-  private readonly celdaAccionesDelEstudio =
-    viewChild.required<
-      TemplateRef<{ $implicit: DiagnosticUnitAdminStudy }>
-    >('celdaAccionesDelEstudio');
-
   private readonly celdaTarifario =
     viewChild.required<TemplateRef<{ $implicit: TarifarioDeLaUnidad }>>('celdaTarifario');
   private readonly celdaPreciosDelTarifario =
@@ -281,6 +286,20 @@ export class MedicalLaboratory {
 
   /** Las unidades del tenant, publicadas o no. */
   protected readonly unidades = signal<ViewState<readonly DiagnosticUnitAdminItem[]>>(loading());
+
+  /**
+   * Las unidades, como las pide `app-select`.
+   *
+   * El nombre lleva el código entre paréntesis porque dos sedes de un mismo
+   * laboratorio se llaman casi igual —«Central» y «Central Norte»— y el código
+   * es lo único que las separa sin ambigüedad.
+   */
+  protected readonly opcionesDeUnidad = computed<readonly SelectOption<string>[]>(() =>
+    (dataOf(this.unidades()) ?? []).map((unidad) => ({
+      value: unidad.id,
+      label: `${unidad.name} (${unidad.code})`,
+    })),
+  );
 
   /** La unidad elegida. Vacío mientras el listado no resolvió. */
   protected readonly unidadElegida = signal('');
@@ -323,6 +342,22 @@ export class MedicalLaboratory {
       { label: 'Publicar un estudio' },
       'El catálogo de análisis con su preparación, su tiempo de entrega y sus precios. Mientras esté vacío, no hay nada que un paciente pueda reservar.',
     ),
+  );
+
+  /**
+   * Los estudios ya desenvueltos de su estado, para recorrerlos en la rejilla.
+   *
+   * `app-view-state-host` decide qué rama pintar; la lista es lo que va dentro
+   * de la rama con datos, y en `stale` sigue habiendo qué mostrar.
+   */
+  protected readonly listaDeEstudios = computed<readonly DiagnosticUnitAdminStudy[]>(
+    () => dataOf(this.estudios()) ?? [],
+  );
+
+  /** Huecos del esqueleto. Se calcula una vez: no depende de ningún dato. */
+  protected readonly huecosDelEsqueleto = Array.from(
+    { length: TARJETAS_DEL_ESQUELETO },
+    (_, indice) => indice,
   );
 
   protected readonly personal = computed(() =>
@@ -387,16 +422,6 @@ export class MedicalLaboratory {
     { key: 'siteId', header: 'Sucursal', priority: 2, cell: this.celdaSedeDelEquipo() },
     { key: 'daysToCalibration', header: 'Calibración', priority: 1, cell: this.celdaCalibracion() },
     { key: 'operationalStatus', header: 'Estado', priority: 1, cell: this.celdaEstadoEquipo() },
-  ]);
-
-  protected readonly columnasDeEstudio = computed<
-    readonly ColumnDef<DiagnosticUnitAdminStudy>[]
-  >(() => [
-    { key: 'name', header: 'Estudio', priority: 1, cell: this.celdaEstudio() },
-    { key: 'preparationInstructions', header: 'Preparación', priority: 2, cell: this.celdaPreparacion() },
-    { key: 'prices', header: 'Precios', priority: 2, cell: this.celdaPrecios() },
-    { key: 'status', header: 'Estado', priority: 1, cell: this.celdaEstadoEstudio() },
-    { key: 'acciones', header: 'Acciones', priority: 1, cell: this.celdaAccionesDelEstudio() },
   ]);
 
   protected readonly columnasDeTarifario = computed<
@@ -585,40 +610,21 @@ export class MedicalLaboratory {
     },
   );
 
-  /* -- Precio de un estudio -------------------------------------------------- */
-
-  /** La oferta que se está tarificando, o `null` si el formulario está cerrado. */
-  protected readonly ofertaParaPrecio = signal<DiagnosticUnitAdminStudy | null>(null);
-  protected readonly tarifarioDelPrecio = signal<string | null>(null);
-  protected readonly importeBase = signal<string | number | null>(null);
-  protected readonly importeAlPaciente = signal<string | number | null>(null);
-  protected readonly importeALaAseguradora = signal<string | number | null>(null);
-  protected readonly factorDeDescuento = signal<string | number | null>(null);
-  protected readonly vigenteDesdePrecio = signal<Date | null>(null);
-  protected readonly guardandoPrecio = signal(false);
-  protected readonly errorDelPrecio = signal('');
-
   protected readonly hayTarifarios = computed(() => this.tarifarios().length > 0);
-
-  protected readonly precioEsValido = computed(
-    () =>
-      this.tarifarioDelPrecio() !== null &&
-      aImporte(this.importeBase()) !== null &&
-      opcionalValido(this.importeAlPaciente(), aImporte) &&
-      opcionalValido(this.importeALaAseguradora(), aImporte) &&
-      opcionalValido(this.factorDeDescuento(), aFactor),
-  );
-
-  /** Cuál se está cerrando, para deshabilitar sólo su botón. */
-  protected readonly cerrandoPrecio = signal<string | null>(null);
 
   constructor() {
     this.cargarUnidades();
     this.cargarCatalogoDeEstudios();
   }
 
-  protected elegirUnidad(unitId: string): void {
-    if (unitId === '' || unitId === this.unidadElegida()) return;
+  /**
+   * `null` además de `''` porque el que emite es `app-select`, y un select se
+   * puede vaciar: es la misma firma que `cambiarPractica()` en «Mis servicios».
+   * Vaciarlo no cambia de unidad —no existe «ninguna unidad» que administrar—,
+   * así que se ignora y la ficha en pantalla se queda donde estaba.
+   */
+  protected elegirUnidad(unitId: string | null): void {
+    if (unitId === null || unitId === '' || unitId === this.unidadElegida()) return;
     this.unidadElegida.set(unitId);
     // Los tarifarios recordados y los formularios abiertos son de la unidad que
     // se deja atrás: arrastrarlos ofrecería cargar un precio en el tarifario de
@@ -638,6 +644,25 @@ export class MedicalLaboratory {
 
   protected etiquetaDe(concepto: DiagnosticConcept | null | undefined): string {
     return concepto?.display ?? '—';
+  }
+
+  /**
+   * El importe de un precio, escrito como lo escribe «Mis servicios»:
+   * `250.00 BOB`.
+   *
+   * La moneda va por su **código** y no por su `display`. El concepto trae las
+   * dos grafías —`BOB` y «Boliviano»— y la tarjeta usaba la larga, así que la
+   * misma cifra se leía «40.00 Boliviano» acá y «40.00 BOB» en la pantalla del
+   * médico. El código es además lo que cabe al lado de un número sin robarle el
+   * renglón.
+   *
+   * Se muestra `patientAmount` cuando lo hay: es lo que paga quien viene sin
+   * convenio, que es la pregunta que se hace mirando el catálogo. `baseAmount`
+   * es el respaldo cuando el tarifario no distingue.
+   */
+  protected importeDe(precio: DiagnosticUnitAdminPrice): string {
+    const monto = precio.patientAmount ?? precio.baseAmount;
+    return withDisplayCurrency(monto, precio.currency?.code);
   }
 
   protected varianteDe(concepto: DiagnosticConcept | null | undefined): BadgeVariant {
@@ -772,6 +797,25 @@ export class MedicalLaboratory {
   }
 
   /** Si la oferta todavía se puede retirar. La API rechaza retirar dos veces. */
+  /**
+   * Si el estudio se está ofreciendo hoy.
+   *
+   * Sólo lo que **no** está activo lleva distintivo en la tarjeta: un «Activo»
+   * repetido en cada una compite con el precio y no informa nada.
+   *
+   * Se pregunta por lo excepcional —borrador y retirada— y no por
+   * `DU_OFFER_ACTIVE`, que es la misma comparación que hace
+   * {@link sePuedeQuitar}. El motivo es que el código del concepto **no es
+   * estable**: llega con la clave del modelo, con la de la API o con la de la
+   * maqueta (ver {@link ALIAS_DEL_PAQUETE}), y afirmando en positivo una
+   * grafía que no esté en la tabla deja a TODAS las tarjetas con distintivo.
+   * Preguntando en negativo, una grafía desconocida no inventa un aviso.
+   */
+  protected estaActivo(estudio: DiagnosticUnitAdminStudy): boolean {
+    const codigo = codigoEstable(estudio.status);
+    return codigo !== CODIGO_OFERTA_RETIRADA && codigo !== CODIGO_OFERTA_BORRADOR;
+  }
+
   protected sePuedeQuitar(estudio: DiagnosticUnitAdminStudy): boolean {
     return codigoEstable(estudio.status) !== CODIGO_OFERTA_RETIRADA;
   }
@@ -811,11 +855,6 @@ export class MedicalLaboratory {
     if (abriendo) {
       this.limpiarFormularioDeTarifario();
     }
-  }
-
-  protected irATarifarios(): void {
-    this.pestanaActiva.set(PESTANA_TARIFARIOS);
-    this.formularioDeTarifarioAbierto.set(true);
   }
 
   protected crearTarifario(): void {
@@ -866,99 +905,6 @@ export class MedicalLaboratory {
     });
   }
 
-  /* -- Precios --------------------------------------------------------------- */
-
-  protected abrirFormularioDePrecio(estudio: DiagnosticUnitAdminStudy): void {
-    this.limpiarFormularioDePrecio();
-    this.ofertaParaPrecio.set(estudio);
-  }
-
-  protected cerrarFormularioDePrecio(): void {
-    this.ofertaParaPrecio.set(null);
-    this.limpiarFormularioDePrecio();
-  }
-
-  protected crearPrecio(): void {
-    const detalle = this.laboratorio();
-    const oferta = this.ofertaParaPrecio();
-    const tarifario = this.tarifarioDelPrecio();
-    if (detalle === null || oferta === null || this.guardandoPrecio()) return;
-    if (tarifario === null || !this.precioEsValido()) {
-      this.errorDelPrecio.set('Elegí un tarifario y revisá los importes.');
-      return;
-    }
-
-    const base = aImporte(this.importeBase());
-    if (base === null) return;
-    const paciente = aImporte(this.importeAlPaciente());
-    const aseguradora = aImporte(this.importeALaAseguradora());
-    const descuento = aFactor(this.factorDeDescuento());
-    const desde = this.vigenteDesdePrecio();
-    const cuerpo: CreateStudyPriceInput = {
-      diagnosticStudyOfferingId: oferta.id,
-      baseAmount: base,
-      ...(paciente === null ? {} : { patientAmount: paciente }),
-      ...(aseguradora === null ? {} : { insurerAmount: aseguradora }),
-      ...(descuento === null ? {} : { discountFactor: descuento }),
-      ...(desde === null ? {} : { effectiveFrom: desde.toISOString() }),
-    };
-
-    this.guardandoPrecio.set(true);
-    this.errorDelPrecio.set('');
-    this.client.createStudyPrice(tarifario, cuerpo).subscribe({
-      next: () => {
-        this.guardandoPrecio.set(false);
-        this.cerrarFormularioDePrecio();
-        this.toasts.success('El precio ya rige.');
-        this.cargarFicha(detalle.id);
-      },
-      error: (error: unknown) => {
-        this.guardandoPrecio.set(false);
-        this.errorDelPrecio.set(mensajeDeError(error, 'No pudimos guardar el precio.'));
-      },
-    });
-  }
-
-  /**
-   * Si esa versión de precio todavía se puede cerrar.
-   *
-   * **Sin fecha de fin equivale a vigente y abierta.** El servidor escribe
-   * `effectiveTo` en las dos únicas maneras de dejar de regir: al cerrar la
-   * versión y al superarla con una nueva. Así que la fecha sola dice lo mismo
-   * que la fecha y el estado juntos, y lo dice sin mirar el código del
-   * concepto, que no es estable entre quienes sembraron la base.
-   */
-  protected sePuedeCerrar(precio: DiagnosticUnitAdminPrice): boolean {
-    return precio.effectiveTo === null;
-  }
-
-  protected async cerrarPrecio(precio: DiagnosticUnitAdminPrice): Promise<void> {
-    const detalle = this.laboratorio();
-    if (detalle === null || this.cerrandoPrecio() !== null) return;
-
-    const confirmado = await this.dialogs.confirm({
-      title: `Cerrar el precio de ${precio.scheduleCode}`,
-      message:
-        'Esa versión deja de regir. El precio no se edita: para cambiarlo se carga uno nuevo, y el anterior queda como historial.',
-      confirmLabel: 'Cerrar',
-      destructive: true,
-    });
-    if (!confirmado) return;
-
-    this.cerrandoPrecio.set(precio.id);
-    this.client.closeStudyPrice(precio.id).subscribe({
-      next: () => {
-        this.cerrandoPrecio.set(null);
-        this.toasts.success('El precio dejó de regir.');
-        this.cargarFicha(detalle.id);
-      },
-      error: (error: unknown) => {
-        this.cerrandoPrecio.set(null);
-        this.toasts.error(mensajeDeError(error, 'No pudimos cerrar el precio.'));
-      },
-    });
-  }
-
   /* -- Apoyos privados ------------------------------------------------------- */
 
   private cargarCatalogoDeEstudios(): void {
@@ -988,7 +934,6 @@ export class MedicalLaboratory {
     this.errorAlPublicar.set('');
     this.limpiarFormularioDeOferta();
     this.limpiarFormularioDeTarifario();
-    this.cerrarFormularioDePrecio();
   }
 
   private limpiarFormularioDeOferta(): void {
@@ -1009,16 +954,6 @@ export class MedicalLaboratory {
     this.vigenteHastaTarifario.set(null);
     this.visibleAlPublico.set(false);
     this.errorDelTarifario.set('');
-  }
-
-  private limpiarFormularioDePrecio(): void {
-    this.tarifarioDelPrecio.set(null);
-    this.importeBase.set(null);
-    this.importeAlPaciente.set(null);
-    this.importeALaAseguradora.set(null);
-    this.factorDeDescuento.set(null);
-    this.vigenteDesdePrecio.set(null);
-    this.errorDelPrecio.set('');
   }
 
   private cargarUnidades(): void {
@@ -1117,43 +1052,6 @@ function textoDe(valor: string | number | null): string {
 function textoValido(valor: string | number | null, largoMaximo: number): boolean {
   const texto = textoDe(valor);
   return texto !== '' && texto.length <= largoMaximo;
-}
-
-/** Un campo opcional vacío es ausencia; con contenido, tiene que convertirse. */
-function opcionalValido(
-  valor: string | number | null,
-  convertir: (valor: string | number | null) => string | null,
-): boolean {
-  return textoDe(valor) === '' || convertir(valor) !== null;
-}
-
-/**
- * Un importe, tal como la API lo valida: **cadena numérica**.
- *
- * Con dos decimales fijos para que «120» y «120.00» sean el mismo precio en la
- * base, que es donde después se comparan. `null` cuando no hay nada que mandar
- * o cuando lo escrito no es un importe.
- */
-function aImporte(valor: string | number | null): string | null {
-  const texto = textoDe(valor);
-  if (texto === '') return null;
-  const numero = Number(texto);
-  if (!Number.isFinite(numero) || numero < 0) return null;
-  return numero.toFixed(DECIMALES_DE_IMPORTE);
-}
-
-/**
- * Un factor de descuento entre 0 y 1, como cadena.
- *
- * No se le fijan decimales: «0.1» y «0.10» son el mismo factor, y redondearlo a
- * dos posiciones convertiría un 0,125 legítimo en otro número.
- */
-function aFactor(valor: string | number | null): string | null {
-  const texto = textoDe(valor);
-  if (texto === '') return null;
-  const numero = Number(texto);
-  if (!Number.isFinite(numero) || numero < 0 || numero > 1) return null;
-  return String(numero);
 }
 
 /**

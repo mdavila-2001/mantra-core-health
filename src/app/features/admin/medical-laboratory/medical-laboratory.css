@@ -13,28 +13,6 @@
   gap: var(--sp-8);
 }
 
-.laboratorio__selector {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-}
-
-.laboratorio__selector label {
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.laboratorio__selector select {
-  padding: var(--sp-2) var(--sp-3);
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-sm);
-  font: inherit;
-}
-
 .laboratorio__ambito {
   padding: var(--sp-6);
   background: var(--bg-inset);
@@ -119,21 +97,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* El chrome de la cobertura —fondo, borde, título— lo pone ahora el propio
+   `app-accordion`. Acá queda sólo el peso del texto: es una nota al pie de la
+   pantalla, no contenido de la misma jerarquía que el catálogo. */
 .laboratorio__cobertura {
-  padding: var(--sp-6);
-  background: var(--bg-inset);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
-}
-
-.laboratorio__cobertura h2 {
-  margin: 0 0 var(--sp-4);
-  font-size: var(--fs-h3);
-  line-height: var(--lh-h3);
-  color: var(--text-primary);
 }
 
 .laboratorio__cobertura dl {
@@ -238,4 +208,12 @@
     flex-direction: row;
     align-items: center;
   }
+}
+
+/* La rejilla del catálogo de estudios. 18rem y no las 14 de la portada de un
+   directorio, igual que «Mis servicios»: la tarjeta no es un rótulo con su
+   cuenta sino un estudio con su preparación, sus importes y un botón. El resto
+   de la disciplina sale de las hojas compartidas. */
+.laboratorio__rejilla {
+  --rejilla-min: 18rem;
 }

@@ -38,6 +38,10 @@ import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-
 import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import { mensajeDeError } from '../../../shared/forms/paginated/mensaje-de-error';
+import {
+  MENSAJE_CONTRASENA_CORTA,
+  validadoresDeContrasena,
+} from '../registro-compartido/politica-de-contrasena';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
@@ -59,9 +63,6 @@ import {
   obtenerZonasHorariasDePais,
 } from '../../../core/i18n/timezone-by-country';
 import { codigoDesdeSigla, MAX_SIGLA, MIN_SIGLA, siglaDerivaCodigo } from './codigo-desde-sigla';
-
-/** Mínimos que exigen los DTO del backend. */
-const MIN_PASSWORD = 8;
 
 /** Largos que declara el bloque `organization` de `RegisterOrganizationDto`. */
 const MAX_NOMBRE = 300;
@@ -421,7 +422,7 @@ export class RegisterOrganization {
     }),
     password: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
+      validators: [...validadoresDeContrasena],
     }),
   });
 
@@ -709,7 +710,7 @@ export class RegisterOrganization {
             required: true,
             autocomplete: 'new-password',
             testId: 'registro-organizacion-owner-password',
-            mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
+            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
           },
         ],
     },

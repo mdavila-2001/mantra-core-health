@@ -50,12 +50,15 @@ describe('Settings', () => {
     camara: 'denegado',
   });
   const requested: PermisoDelNavegador[] = [];
+  /** Lo que tiene el cartel del navegador abierto ahora mismo. */
+  const inFlight = signal<PermisoDelNavegador[]>([]);
   const fakePermissions = {
     estado: () => states(),
-    enCurso: () => false,
+    enCurso: (permission: PermisoDelNavegador) => inFlight().includes(permission),
     sePuedePedir: (permission: PermisoDelNavegador) => states()[permission] === 'sin-decidir',
     pedir: (permission: PermisoDelNavegador) => {
       requested.push(permission);
+      inFlight.update((lista) => [...lista, permission]);
       return Promise.resolve();
     },
     refrescar: () => Promise.resolve(),
@@ -99,6 +102,7 @@ describe('Settings', () => {
 
   beforeEach(() => {
     requested.length = 0;
+    inFlight.set([]);
     states.set({ avisos: 'sin-decidir', ubicacion: 'concedido', camara: 'denegado' });
     TestBed.configureTestingModule({
       providers: [
@@ -123,9 +127,19 @@ describe('Settings', () => {
 
   it('monta el panel de avisos: dejó de ser una pantalla y no dejó de existir', () => {
     mount();
-    // El panel pide sus preferencias al montarse; hasta que contestan dice
-    // «cargando», que es lo correcto y no lo que esta prueba mira.
-    http.expectOne(() => true).flush({ categories: [], quietHours: null });
+    // Dos paneles piden datos al montarse: el de avisos sus preferencias, y el
+    // de chats el perfil público —del que cuelga la respuesta automática—. Se
+    // contesta lo que pida cada uno; lo que esta prueba mira es que el panel de
+    // avisos esté, no cuántas lecturas hace la pantalla.
+    http
+      .match(() => true)
+      .forEach((pedido) =>
+        pedido.flush(
+          pedido.request.url.includes('preferences')
+            ? { categories: [], quietHours: null }
+            : null,
+        ),
+      );
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-notification-preferences')).not.toBeNull();
@@ -141,49 +155,71 @@ describe('Settings', () => {
     expect(headings[0].textContent).toContain('Ajustes');
   });
 
-  it('ofrece los tres temas, con el elegido marcado', () => {
+  it('ofrece el tema como un interruptor que refleja lo que se ve', () => {
     mount();
     goTo('Apariencia');
     theme.setTheme('dark');
     fixture.detectChanges();
 
-    expect((query('theme-dark') as HTMLInputElement).checked).toBe(true);
-    expect((query('theme-light') as HTMLInputElement).checked).toBe(false);
+    const toggle = query('theme-switch');
+    expect(toggle?.getAttribute('role')).toBe('switch');
+    expect(toggle?.getAttribute('aria-checked')).toBe('true');
+
+    theme.setTheme('light');
+    fixture.detectChanges();
+    expect(toggle?.getAttribute('aria-checked')).toBe('false');
   });
 
-  it('conserva un icono en cada opción de apariencia', () => {
+  it('apretar el interruptor aplica el tema de verdad, no sólo mueve la perilla', () => {
     mount();
     goTo('Apariencia');
-
-    expect(iconsPerRow()).toEqual([1, 1, 1]);
-  });
-
-  it('elegir un tema lo aplica de verdad, no sólo marca el control', () => {
-    mount();
-    goTo('Apariencia');
-
-    (query('theme-light') as HTMLInputElement).dispatchEvent(new Event('change'));
+    theme.setTheme('light');
     fixture.detectChanges();
 
-    expect(theme.currentTheme()).toBe('light');
+    query('theme-switch')?.click();
+    fixture.detectChanges();
+
+    expect(theme.currentTheme()).toBe('dark');
   });
 
-  it('con «el de mi dispositivo» dice cuál rige: elegido y pintado no son lo mismo', () => {
+  it('siguiendo al dispositivo dice cuál rige y no ofrece volver a él', () => {
     mount();
     goTo('Apariencia');
     theme.useSystemTheme();
     fixture.detectChanges();
 
-    expect(query('theme-resolved')?.textContent).toContain('modo');
+    expect(text()).toContain('Sigue a tu dispositivo');
+    expect(query('theme-use-system')).toBeNull();
   });
 
-  it('cuenta el estado de cada permiso del navegador en palabras', () => {
+  it('elegido a mano, se puede volver a seguir al dispositivo', () => {
+    mount();
+    goTo('Apariencia');
+    theme.setTheme('dark');
+    fixture.detectChanges();
+
+    query('theme-use-system')?.click();
+    fixture.detectChanges();
+
+    expect(theme.currentTheme()).toBe('system');
+  });
+
+  /** El interruptor nativo que hay dentro del `app-switch` de ese permiso. */
+  const toggle = (permission: PermisoDelNavegador): HTMLInputElement => {
+    const control = query(`permission-${permission}`)?.querySelector('input[role="switch"]');
+    if (control === null || control === undefined) {
+      throw new Error(`«${permission}» no ofrece interruptor`);
+    }
+    return control as HTMLInputElement;
+  };
+
+  it('cada permiso del navegador es un interruptor, encendido sólo si está concedido', () => {
     mount();
     goTo('Permisos');
 
-    expect(query('permission-avisos')?.textContent).toContain('Sin decidir');
-    expect(query('permission-ubicacion')?.textContent).toContain('Permitido');
-    expect(query('permission-camara')?.textContent).toContain('Bloqueado');
+    expect(toggle('avisos').checked).toBe(false);
+    expect(toggle('ubicacion').checked).toBe(true);
+    expect(toggle('camara').checked).toBe(false);
   });
 
   it('muestra exactamente un icono en cada permiso del navegador', () => {
@@ -193,31 +229,55 @@ describe('Settings', () => {
     expect(iconsPerRow()).toEqual([1, 1, 1]);
   });
 
-  it('sólo ofrece «Permitir» donde el cartel todavía puede aparecer', () => {
+  it('sólo se puede accionar el interruptor donde el cartel todavía puede aparecer', () => {
     mount();
     goTo('Permisos');
 
     // Concedido y denegado no se vuelven a pedir: el navegador ignora la
-    // petición en silencio, así que el botón prometería algo que no pasa.
-    expect(query('request-avisos')).not.toBeNull();
-    expect(query('request-ubicacion')).toBeNull();
-    expect(query('request-camara')).toBeNull();
+    // petición en silencio, así que un interruptor vivo ahí prometería algo
+    // que no pasa. Y ninguna página puede quitarse un permiso a sí misma.
+    expect(toggle('avisos').disabled).toBe(false);
+    expect(toggle('ubicacion').disabled).toBe(true);
+    expect(toggle('camara').disabled).toBe(true);
   });
 
-  it('un permiso bloqueado explica que se recupera desde el navegador', () => {
+  it('dice, una sola vez, que los permisos se quitan desde el navegador', () => {
     mount();
     goTo('Permisos');
 
     expect(text()).toContain('configuración de este sitio en tu navegador');
   });
 
-  it('pedir un permiso se lo pide al navegador, no lo da por concedido', () => {
+  it('encender un permiso se lo pide al navegador, no lo da por concedido', () => {
     mount();
     goTo('Permisos');
 
-    (query('request-avisos') as HTMLButtonElement).click();
+    toggle('avisos').click();
 
     expect(requested).toEqual(['avisos']);
+  });
+
+  it('si la persona dice que no al cartel, el interruptor vuelve a apagarse', () => {
+    mount();
+    goTo('Permisos');
+
+    toggle('avisos').click();
+    fixture.detectChanges();
+    // Con el cartel en pantalla el interruptor se ve encendido...
+    expect(toggle('avisos').checked).toBe(true);
+
+    // ...y al cerrarse sin conceder nada, el estado manda: apagado.
+    inFlight.set([]);
+    fixture.detectChanges();
+
+    expect(toggle('avisos').checked).toBe(false);
+  });
+
+  it('el interruptor nombra su permiso: sin rótulo visible propio, queda mudo', () => {
+    mount();
+    goTo('Permisos');
+
+    expect(toggle('ubicacion').getAttribute('aria-label')).toBe('Ubicación');
   });
 
   it('nombra los roles de la sesión en palabras, no con el código del token', () => {

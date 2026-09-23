@@ -1,0 +1,20 @@
+{
+  "package": "markdown-institutions",
+  "extractedOn": "2026-09-18",
+  "sources": [
+    {
+      "file": "LISTA_DE_FARMACIAS__LABORATORIOS_Y_ANALISIS_MEDICOS.md",
+      "sha256": "e3358a6f4310c63c00707671cf890948191411dfbad25d4983d29e3f50961dfd",
+      "rows": 20
+    },
+    {
+      "file": "LISTA_DE_HOSPITAL_DE_PRIMER_NIVEL_SANTA_CRUZ_1.md",
+      "sha256": "3a451f6abea0230d40de630d863ef3e22f6e9f54c9d1a852c72a2541de5764d1",
+      "rows": 464
+    }
+  ],
+  "warnings": [
+    "Sin coordenadas en la fuente. Farmacias y laboratorios: Nominatim sobre la dirección (precision=direccion) o el centro de la ciudad (precision=ciudad).",
+    "Primer nivel: el centro del municipio (precision=municipio); las direcciones rurales no se resuelven."
+  ]
+}

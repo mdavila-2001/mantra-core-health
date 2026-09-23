@@ -2,13 +2,34 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
+
+import {
+  BoMunicipalitiesCatalog,
+  type RamaDepartamento,
+} from '../../core/data-access/terminology/bo-municipalities.service';
 
 import {
   aConsulta,
   LaboratoryDirectory,
   type LaboratoryCategoryGroup,
 } from './laboratory-directory';
+
+/** Dos departamentos alcanzan para probar el corte del mapa. */
+const RAMAS: readonly RamaDepartamento[] = [
+  {
+    conceptId: 'geo:bo:department:LP',
+    sigla: 'LP',
+    nombre: 'La Paz',
+    municipios: [{ conceptId: 'm-lp-1', nombre: 'La Paz', ine: '020101' }],
+  },
+  {
+    conceptId: 'geo:bo:department:SC',
+    sigla: 'SC',
+    nombre: 'Santa Cruz',
+    municipios: [{ conceptId: 'm-sc-1', nombre: 'Santa Cruz de la Sierra', ine: '070101' }],
+  },
+];
 
 const LAB_ID = '11111111-1111-4111-8111-111111111111';
 const IMAGE_ID = '22222222-2222-4222-8222-222222222222';
@@ -68,6 +89,10 @@ describe('LaboratoryDirectory', () => {
         provideHttpClientTesting(),
         provideRouter([]),
         { provide: ActivatedRoute, useValue: { queryParams: parametros } },
+        {
+          provide: BoMunicipalitiesCatalog,
+          useValue: { listar: () => of(RAMAS), olvidar: () => undefined },
+        },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -117,6 +142,95 @@ describe('LaboratoryDirectory', () => {
       .expectOne((request) => request.url === BUSQUEDA)
       .flush({ items, total, limit: 20, offset: 0 });
   }
+
+  describe('the search bar on every level (19/09/2026)', () => {
+    it('shows the same search bar on the category cover, above the categories', () => {
+      mount();
+      responder([LAB, IMAGING]);
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('app-filter-bar app-search-field')).not.toBeNull();
+      expect(raiz.querySelector('[data-testid="portada-categorias"]')).not.toBeNull();
+      expect(raiz.querySelectorAll('li[app-result-card]').length).toBe(0);
+    });
+
+    it('a term typed on the cover searches every category and lists the centres grouped', () => {
+      parametros.next({ q: 'central' });
+      mount();
+      const pedido = http.expectOne((request) => request.url === BUSQUEDA);
+      expect(pedido.request.params.get('q')).toBe('central');
+      expect(pedido.request.params.has('kind')).toBe(false);
+      pedido.flush({ items: [LAB, IMAGING], total: 2, limit: 20, offset: 0 });
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="portada-categorias"]')).toBeNull();
+      expect(raiz.querySelectorAll('li[app-result-card]').length).toBe(2);
+      expect(
+        [...raiz.querySelectorAll('.directorio__rotulo')].map((rotulo) =>
+          rotulo.textContent?.replace(/\d+/g, '').trim(),
+        ),
+      ).toEqual(['Imagenología diagnóstica', 'Laboratorio clínico']);
+    });
+  });
+
+  describe('the Bolivia map as a filter, like clinics and pharmacies', () => {
+    const EN_LA_PAZ = { ...LAB, cities: ['La Paz'] };
+    const EN_SANTA_CRUZ = { ...IMAGING, cities: ['Santa Cruz de la Sierra'] };
+
+    function mapa(): HTMLElement | null {
+      return (fixture.nativeElement as HTMLElement).querySelector('app-department-map');
+    }
+
+    it('draws the map when the centres carry their cities', () => {
+      mount();
+      responder([EN_LA_PAZ, EN_SANTA_CRUZ]);
+      fixture.detectChanges();
+
+      expect(mapa()).not.toBeNull();
+    });
+
+    it('does not draw a map that could not filter anything', () => {
+      // La búsqueda de la API todavía no manda `cities`.
+      mount();
+      responder([LAB, IMAGING]);
+      fixture.detectChanges();
+
+      expect(mapa()).toBeNull();
+    });
+
+    it('keeps only the centres with a site in the chosen department', () => {
+      parametros.next({ departamento: 'geo:bo:department:SC' });
+      mount();
+      const pedido = http.expectOne((request) => request.url === BUSQUEDA);
+      // El departamento corta en memoria: no viaja al servidor, que lo rechazaría.
+      expect(pedido.request.params.has('departamento')).toBe(false);
+      pedido.flush({ items: [EN_LA_PAZ, EN_SANTA_CRUZ], total: 2, limit: 20, offset: 0 });
+      fixture.detectChanges();
+
+      expect(groups().flatMap((grupo) => grupo.resultados.map((r) => r.title))).toEqual([
+        'Imagen Diagnóstica',
+      ]);
+      expect(
+        (fixture.nativeElement as HTMLElement)
+          .querySelector('[data-testid="laboratorios-mapa-resumen"]')
+          ?.textContent?.trim(),
+      ).toBe('1 en Santa Cruz. Tocá otra vez el departamento para ver todo el país.');
+    });
+
+    it('says so when the chosen department has no centres', () => {
+      parametros.next({ kind: 'LABORATORY', departamento: 'geo:bo:department:SC' });
+      mount();
+      responder([EN_LA_PAZ]);
+      fixture.detectChanges();
+
+      expect(groups()).toEqual([]);
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('.directorio__vacio')?.textContent,
+      ).toContain('No hay centros publicados en ese departamento');
+    });
+  });
 
   it('starts in loading state while the server is authoritative', () => {
     mount();

@@ -6,12 +6,13 @@
   display: grid;
   gap: var(--sp-4);
   margin-block-start: var(--sp-6);
-  max-inline-size: 48rem;
+  /* Sin tope propio (regla del cliente §5): con 48rem quedaba a la izquierda. */
 }
 
 .solicitud {
-  display: grid;
-  gap: var(--sp-3);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-3);
 }
 
 .solicitud__quien {
@@ -22,9 +23,12 @@
   color: var(--text-secondary);
 }
 
+/* Son decenas de especialidades: en una columna la lista medía 3 500 px.
+   En columnas se recorre de un vistazo, y en el teléfono vuelve a ser una. */
 .solicitud__especialidades {
   display: grid;
-  gap: var(--sp-2);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: var(--sp-2) var(--sp-4);
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
   padding: var(--sp-4);

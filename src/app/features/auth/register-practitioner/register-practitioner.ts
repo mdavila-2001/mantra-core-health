@@ -49,12 +49,22 @@ import {
   type IdsDePrueba,
 } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
 import { unirNombres } from '../../../core/profesion/nombres-adicionales';
+import {
+  COLEGIO_DE_LA_PROFESION,
+  colegioDelTitulo,
+  esColegio,
+  opcionesAutoridadReguladora,
+} from '../../../core/profesion/autoridades-reguladoras';
 import { OPCIONES_TITULO_PROFESIONAL } from '../../../core/profesion/titulos-profesionales';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
 import {
   MAX_ATTACHMENT_BYTES,
   SUPPORT_FILE_FORMATS,
 } from '../registro-compartido/credenciales-del-medico';
+import {
+  MENSAJE_CONTRASENA_CORTA,
+  validadoresDeContrasena,
+} from '../registro-compartido/politica-de-contrasena';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import type {
   CampoDeFormulario,
@@ -75,9 +85,6 @@ function fechaIso(fecha: Date): string {
   const dia = String(fecha.getDate()).padStart(2, '0');
   return `${anio}-${mes}-${dia}`;
 }
-
-/** Mínimo que exige el DTO del backend. */
-const MIN_PASSWORD = 8;
 
 /** Sólo letras, dígitos, punto y guion — el mismo `@Matches` del backend. */
 const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;
@@ -126,8 +133,6 @@ export const ESPECIALIDADES_ODONTOLOGICAS: ReadonlySet<string> = new Set([
 const NOMBRE_CONSULTORIO_POR_OMISION = 'Mi consultorio';
 
 const TITULO_ODONTOLOGO = 'Odontólogo / Odontóloga';
-const COLEGIO_MEDICO = 'Colegio Médico de Bolivia';
-const COLEGIO_ODONTOLOGOS = 'Colegio de Odontólogos de Bolivia';
 /** Títulos cuya autoridad natural es el Colegio Médico. */
 const TITULOS_MEDICOS: ReadonlySet<string> = new Set([
   'Médico / Médica',
@@ -180,33 +185,9 @@ const TITULOS_MEDICOS: ReadonlySet<string> = new Set([
  * catálogo no está disponible»—. Es el mismo que ya usa el alta de profesional
  * para `specialtyConceptIds`, y es copiable tal cual.
  */
-const OPCIONES_AUTORIDAD_REGULADORA: readonly SelectOption<string>[] = [
-  { value: 'Ministerio de Salud y Deportes', label: 'Ministerio de Salud y Deportes' },
-  { value: 'Colegio Médico de Bolivia', label: 'Colegio Médico de Bolivia' },
-  { value: 'Colegio de Odontólogos de Bolivia', label: 'Colegio de Odontólogos de Bolivia' },
-  { value: 'Colegio de Enfermeras de Bolivia', label: 'Colegio de Enfermeras de Bolivia' },
-  {
-    value: 'Colegio de Bioquímica y Farmacia de Bolivia',
-    label: 'Colegio de Bioquímica y Farmacia de Bolivia',
-  },
-  {
-    value: 'Colegio de Nutricionistas y Dietistas de Bolivia',
-    label: 'Colegio de Nutricionistas y Dietistas de Bolivia',
-  },
-  { value: 'Colegio de Psicólogos de Bolivia', label: 'Colegio de Psicólogos de Bolivia' },
-  {
-    value: 'Colegio de Fisioterapia y Kinesiología de Bolivia',
-    label: 'Colegio de Fisioterapia y Kinesiología de Bolivia',
-  },
-  {
-    value: 'Colegio de Trabajadores Sociales de Bolivia',
-    label: 'Colegio de Trabajadores Sociales de Bolivia',
-  },
-  {
-    value: 'Servicio Departamental de Salud (SEDES)',
-    label: 'Servicio Departamental de Salud (SEDES)',
-  },
-];
+// La lista vive en `core/profesion/autoridades-reguladoras.ts` desde el 13/09/2026:
+// son tres —Ministerio de Salud, SEDES y el colegio de la profesión— y el editor
+// del perfil ofrece las mismas. Lo de arriba sigue valiendo para ella.
 
 /**
  * El título profesional, como lista cerrada.
@@ -796,7 +777,7 @@ export class RegisterPractitioner {
     }),
     password: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
+      validators: [...validadoresDeContrasena],
     }),
     // Documento de identidad boliviano. Obligatorio en el alta de profesional:
     // la matrícula habilita a ejercer, pero es la cédula la que ata esa matrícula
@@ -1061,78 +1042,12 @@ export class RegisterPractitioner {
     this.errorAdjunto.set(null);
   }
 
-  /** Adjunta el archivo elegido a un título, o avisa por qué no se pudo. */
-  adjuntarArchivoATitulo(id: string, evento: Event): void {
-    const archivo = this.archivoValidado(evento);
-    if (archivo === null) return;
-    this.titulos.update((titulos) =>
-      titulos.map((titulo) =>
-        titulo.id === id
-          ? { ...titulo, archivo: archivo.archivo, pesoBytes: archivo.pesoBytes }
-          : titulo,
-      ),
-    );
-  }
-
-  /** Quita el adjunto de un título sin borrar la fila. */
-  quitarArchivoDeTitulo(id: string): void {
-    this.titulos.update((titulos) =>
-      titulos.map((titulo) =>
-        titulo.id === id ? { ...titulo, archivo: null, pesoBytes: null } : titulo,
-      ),
-    );
-  }
-
-  /** Adjunta el respaldo de la matrícula o el del SEDES. */
-  adjuntarRespaldo(cual: ClaveDeRespaldo, evento: Event): void {
-    const archivo = this.archivoValidado(evento);
-    if (archivo === null) return;
-    this.destinoDelRespaldo(cual).set(archivo);
-  }
-
-  /** Quita el respaldo de la matrícula o el del SEDES. */
-  quitarRespaldo(cual: ClaveDeRespaldo): void {
-    this.destinoDelRespaldo(cual).set(null);
-    this.errorAdjunto.set(null);
-  }
-
   /** El signal donde vive cada respaldo suelto. */
   private destinoDelRespaldo(cual: ClaveDeRespaldo) {
     if (cual === 'professional-title') return this.respaldoTituloProfesional;
     return cual === 'license' ? this.respaldoMatricula : this.respaldoSedes;
   }
 
-  /**
-   * Valida formato y peso del archivo elegido y devuelve con qué quedarse.
-   *
-   * Devuelve `null` cuando no hay archivo o cuando lo rechaza, y en ese caso
-   * deja el motivo en `errorAdjunto`. Vacía el `<input>` siempre: si no, elegir
-   * el mismo archivo dos veces seguidas no dispara `change` la segunda.
-   */
-  private archivoValidado(evento: Event): RespaldoDeclarado | null {
-    const entrada = evento.target as HTMLInputElement;
-    const archivo = entrada.files?.[0];
-    this.errorAdjunto.set(null);
-    entrada.value = '';
-    if (!archivo) return null;
-
-    if (!FORMATOS_DE_RESPALDO.split(',').includes(archivo.type)) {
-      this.errorAdjunto.set('El respaldo tiene que ser un PDF, un JPG o un PNG.');
-      return null;
-    }
-    if (archivo.size > MAX_BYTES_ADJUNTO) {
-      this.errorAdjunto.set('El archivo supera el límite de 5 MB.');
-      return null;
-    }
-    return { archivo: archivo.name, pesoBytes: archivo.size };
-  }
-
-  /** El peso de un adjunto, en la unidad que se lee de un vistazo. */
-  pesoLegible(bytes: number | null): string {
-    if (bytes === null) return '';
-    const enMegas = bytes / (1024 * 1024);
-    return enMegas >= 1 ? `${enMegas.toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} kB`;
-  }
 
   /**
    * Foto de perfil en base64 para previsualizar y enviar en el alta.
@@ -1931,9 +1846,9 @@ export class RegisterPractitioner {
           {
             key: 'regulatoryAuthority',
             label: 'Autoridad que la emitió (opcional)',
-            hint: 'Quién emitió tu matrícula.',
+            hint: 'El Ministerio de Salud, el SEDES de tu gobernación o el colegio de tu profesión.',
             control: 'select',
-            options: OPCIONES_AUTORIDAD_REGULADORA,
+            options: opcionesAutoridadReguladora(titulo),
             placeholder: 'Sin especificar',
             testId: 'registro-pro-autoridad',
             icono: 'building',
@@ -2024,7 +1939,7 @@ export class RegisterPractitioner {
             placeholder: 'Tu contraseña',
             testId: 'registro-pro-password',
             icono: 'lock',
-            mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
+            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
           },
         ],
       },
@@ -2158,14 +2073,16 @@ export class RegisterPractitioner {
       // limpieza de más abajo.
       this.tituloProfesionalElegido.set(valor);
 
-      const esOdontologo = valor === TITULO_ODONTOLOGO;
-      if (esOdontologo && (autoridad.value === '' || autoridad.value === COLEGIO_MEDICO)) {
-        autoridad.setValue(COLEGIO_ODONTOLOGOS);
-      } else if (
-        TITULOS_MEDICOS.has(valor) &&
-        (autoridad.value === '' || autoridad.value === COLEGIO_ODONTOLOGOS)
-      ) {
-        autoridad.setValue(COLEGIO_MEDICO);
+      // El colegio sigue a la profesión: la opción «Colegio de la profesión»
+      // lleva el nombre del colegio de ese título. Vacía, se llena sólo si el
+      // título tiene colegio conocido; un colegio ya elegido se cambia por el
+      // del título nuevo. Ministerio o SEDES, elegidos a mano, no se tocan.
+      const colegio = colegioDelTitulo(valor);
+      const actual = autoridad.value;
+      const cambiar =
+        actual === '' ? colegio !== COLEGIO_DE_LA_PROFESION : esColegio(actual) && actual !== colegio;
+      if (cambiar) {
+        autoridad.setValue(colegio);
       }
 
       // Cambiar de profesión cambia la lista que se ofrece, así que lo ya

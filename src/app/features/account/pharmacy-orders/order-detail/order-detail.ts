@@ -45,6 +45,8 @@ import {
   pasosDeLaLineaDeTiempo,
   presentacionDePedido,
 } from '../pedido-status';
+import { displayCurrency } from '../../../../core/money/display-currency';
+import { withDisplayCurrency } from '../../../../core/money/display-currency';
 
 /** A dónde vuelve quien llegó a un pedido que no existe. */
 const LISTA_ROUTE = '/my-account/pharmacy-orders';
@@ -132,6 +134,14 @@ interface AvisoDelPedido {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrderDetail {
+
+  /**
+   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
+   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
+   */
+  protected moneda(code?: string | null): string {
+    return displayCurrency(code);
+  }
   private readonly ordersClient = inject(PharmacyOrdersClient);
   private readonly notificationsClient = inject(NotificationsClient);
   private readonly route = inject(ActivatedRoute);
@@ -215,7 +225,7 @@ export class OrderDetail {
     if (diferencia <= 0) {
       return null;
     }
-    return `${diferencia.toFixed(2)} ${propuesta?.moneda ?? ''}`.trim();
+    return withDisplayCurrency(diferencia.toFixed(2), propuesta?.moneda);
   });
 
   /**

@@ -1,0 +1,160 @@
+/* «Doctores en tendencia esta semana»: una lista corta con retrato, nombre y
+   reseñas, dentro de la misma tarjeta que el resto de la red social. */
+
+:host {
+  display: block;
+}
+
+.tendencias {
+  border: 1px solid var(--filete-2);
+  border-radius: var(--r-card);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-1);
+  padding: var(--e4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.tendencias__titulo {
+  margin: 0;
+  font-family: var(--f-titulo);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--tinta);
+  line-height: 1.3;
+}
+
+.tendencias__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.doctor {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e3);
+}
+
+.doctor__retrato {
+  flex: none;
+  line-height: 0;
+}
+
+.doctor__avatar {
+  display: grid;
+  place-items: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: var(--r-pill);
+  object-fit: cover;
+  background: var(--menta);
+}
+
+.doctor__avatar--iniciales {
+  color: var(--tinta-marca);
+  font-family: var(--f-titulo);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.doctor__texto {
+  min-inline-size: 0;
+  flex: 1;
+}
+
+.doctor__nombre {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--tinta);
+  line-height: 1.25;
+}
+
+.doctor__enlace {
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doctor__enlace:hover {
+  text-decoration: underline;
+}
+
+.doctor__sello {
+  flex: none;
+  inline-size: 14px;
+  block-size: 14px;
+  color: var(--petroleo);
+}
+
+.doctor__titular,
+.doctor__resenas {
+  margin: 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--tinta-2);
+}
+
+.doctor__titular {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doctor__resenas {
+  color: var(--tinta-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.doctor__estrella {
+  color: var(--ambar, var(--petroleo));
+}
+
+.tendencias__pie {
+  align-self: flex-start;
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tendencias__pie:hover {
+  text-decoration: underline;
+}
+
+.tendencias__pie--boton {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tendencias__vacio {
+  margin: 0;
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.tendencias__esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.tendencias__esqueleto .app-skeleton {
+  block-size: 40px;
+}

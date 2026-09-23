@@ -45,6 +45,9 @@ const PARAM_VERIFICADO = 'verificado';
 /** Clave del departamento elegido en el mapa, en la URL. */
 const PARAM_DEPARTAMENTO = 'departamento';
 
+/** Clave de la categoría elegida por chip, en la URL. */
+const PARAM_CATEGORIA = 'categoria';
+
 /**
  * Lo común a los dos directorios públicos nuevos: clínicas y farmacias
  * (A5 y A6 del plan de UX del 22/08/2026).
@@ -93,6 +96,30 @@ export abstract class PublicDirectoryListing {
 
   /** Cómo se llama en singular lo que este directorio lista, para el vacío. */
   protected abstract readonly queSonEnSingular: string;
+
+  /**
+   * De dónde cuelga la ficha de un resultado, **dentro del panel**.
+   *
+   * Los dos directorios llevaban a `/o/:slug` y `/f/:slug`, que es la ficha
+   * anónima bajo el marco de la red social: quien entraba desde su menú se
+   * encontraba, sin pedirlo, fuera de la aplicación y en el buscador público.
+   * El cliente lo pidió expresamente y no admite excepciones, así que la ruta
+   * de la ficha la declara cada directorio y **no** sale del vertical.
+   *
+   * Es el mismo camino que ya hacía el directorio de laboratorios, que abre
+   * `/laboratory-directory/:unitId` sin salir nunca del armazón.
+   */
+  protected abstract readonly rutaDeLaFicha: string;
+
+  /**
+   * Cómo se dibuja cada tarjeta: sin la insignia del vertical —este directorio
+   * es de una sola clase— y con el destino de arriba.
+   */
+  private readonly opcionesDeTarjeta = {
+    mostrarTipo: false,
+    ruta: (fila: PublicSearchResult) =>
+      `${this.rutaDeLaFicha}/${encodeURIComponent(fila.slug)}`,
+  } as const;
 
   protected readonly estado = signal<ViewState<readonly PublicSearchResult[]>>(loading());
 
@@ -165,6 +192,16 @@ export abstract class PublicDirectoryListing {
   protected readonly ciudad = computed(() => this.parametro(PARAM_CIUDAD));
 
   protected readonly soloVerificados = computed(() => this.parametro(PARAM_VERIFICADO) === 'true');
+
+  /**
+   * La categoría elegida por chip: el código, nunca la etiqueta.
+   *
+   * Es el corte de **qué clase de sitio** es, que va antes que el de dónde
+   * queda: entre una clínica privada y una caja de salud no decide la
+   * distancia, decide si a uno lo atienden. Ver
+   * `PublicSearchResult.category`.
+   */
+  protected readonly categoria = computed(() => this.parametro(PARAM_CATEGORIA));
 
   /**
    * Cuántos resultados tiene cada departamento, con los **otros** filtros
@@ -272,7 +309,12 @@ export abstract class PublicDirectoryListing {
    */
   private readonly paraElMapa = computed(() => {
     const soloVerificados = this.soloVerificados();
-    return (dataOf(this.estado()) ?? []).filter((fila) => !soloVerificados || fila.verified);
+    const categoria = this.categoria();
+    return (dataOf(this.estado()) ?? []).filter(
+      (fila) =>
+        (!soloVerificados || fila.verified) &&
+        (categoria === null || fila.category?.code === categoria),
+    );
   });
 
   /**
@@ -299,9 +341,12 @@ export abstract class PublicDirectoryListing {
   private readonly filtradas = computed(() => {
     const ciudad = this.ciudad();
     const soloVerificados = this.soloVerificados();
+    const categoria = this.categoria();
     return this.delDepartamento().filter(
       (fila) =>
-        (ciudad === null || fila.city === ciudad) && (!soloVerificados || fila.verified),
+        (ciudad === null || fila.city === ciudad) &&
+        (!soloVerificados || fila.verified) &&
+        (categoria === null || fila.category?.code === categoria),
     );
   });
 
@@ -333,7 +378,7 @@ export abstract class PublicDirectoryListing {
         // repetirla en cada tarjeta le roba el renglón al subtítulo. Ver
         // `OpcionesDeTarjeta`.
         resultados: filas
-          .map((fila) => aTarjeta(fila, { mostrarTipo: false }))
+          .map((fila) => aTarjeta(fila, this.opcionesDeTarjeta))
           .sort((a, b) => a.title.localeCompare(b.title, 'es')),
       }))
       .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
@@ -343,11 +388,57 @@ export abstract class PublicDirectoryListing {
         id: 'sin-ciudad',
         nombre: 'Sin ciudad declarada',
         resultados: sinCiudad
-          .map((fila) => aTarjeta(fila, { mostrarTipo: false }))
+          .map((fila) => aTarjeta(fila, this.opcionesDeTarjeta))
           .sort((a, b) => a.title.localeCompare(b.title, 'es')),
       });
     }
     return tramos;
+  });
+
+  /**
+   * Las filas con **todos los cortes menos el de categoría**.
+   *
+   * Es la base con la que se arman los chips de categoría, y por eso no puede
+   * llevar el corte que esos chips aplican: calculada sobre lo ya filtrado,
+   * tocar «Clínica privada» dejaría un solo chip en la barra y no habría cómo
+   * pasar a «Hospital público» sin quitar el filtro primero. Es la misma razón
+   * por la que `delDepartamento` no lleva el corte de ciudad.
+   */
+  private readonly paraLasCategorias = computed<readonly PublicSearchResult[]>(() => {
+    const ciudad = this.ciudad();
+    const soloVerificados = this.soloVerificados();
+    return this.delDepartamento().filter(
+      (fila) => (ciudad === null || fila.city === ciudad) && (!soloVerificados || fila.verified),
+    );
+  });
+
+  /**
+   * Las categorías que de verdad hay delante, de la que más tiene a la que
+   * menos y a igualdad por nombre — el mismo orden que los chips de ciudad.
+   *
+   * Salen de los resultados y **no** de un catálogo, por el motivo de siempre:
+   * un chip que devuelve cero es peor que no tenerlo. Y una fila sin categoría
+   * no inventa una «Otras»: el contrato público todavía no sirve el campo
+   * (ver `PublicSearchResult.category`), así que contra la API viva vuelven
+   * todas en `null`, no hay dos categorías y la fila de chips no se dibuja
+   * —que es exactamente lo que tiene que pasar—.
+   */
+  protected readonly categoriasDisponibles = computed<
+    readonly { readonly code: string; readonly label: string }[]
+  >(() => {
+    const cuenta = new Map<string, { label: string; total: number }>();
+    for (const fila of this.paraLasCategorias()) {
+      const categoria = fila.category;
+      if (categoria === null) continue;
+      const anterior = cuenta.get(categoria.code);
+      cuenta.set(categoria.code, {
+        label: categoria.label,
+        total: (anterior?.total ?? 0) + 1,
+      });
+    }
+    return [...cuenta.entries()]
+      .sort(([, a], [, b]) => b.total - a.total || a.label.localeCompare(b.label, 'es'))
+      .map(([code, { label }]) => ({ code, label }));
   });
 
   /**
@@ -381,6 +472,22 @@ export abstract class PublicDirectoryListing {
         options: [{ value: 'true', label: 'Sólo verificadas' }],
       },
     ];
+
+    /* ---- la categoría, que es el corte de arriba de todos --------------- */
+    const categorias = this.categoriasDisponibles();
+    if (categorias.length > 1) {
+      // Va **primera** en la barra: es la pregunta más gruesa —qué clase de
+      // sitio— y las de abajo acotan dentro de la respuesta. Con una sola
+      // categoría no se dibuja, por lo mismo que no se dibuja el chip de una
+      // única ciudad: un botón que no acota nada.
+      filtros.unshift({
+        key: PARAM_CATEGORIA,
+        label: 'Categoría',
+        asChips: true,
+        options: categorias.map(({ code, label }) => ({ value: code, label })),
+      });
+    }
+
     if (this.departamentoElegido() === null) {
       return filtros;
     }

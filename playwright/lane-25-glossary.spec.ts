@@ -29,6 +29,20 @@ import { entrar, estable } from './support/sesion';
  * (`mantra-core-health#284`): reactivados acá una vez verificado contra la
  * API de esa rama.
  *
+ * ## ⚠️ Puesto al día con la cuarta ronda, y NO ejecutado (2026-09-12)
+ *
+ * El glosario se reescribió como enciclopedia —fila de categorías, cuerpo con
+ * las definiciones agrupadas por inicial, sin tabla— y este archivo seguía
+ * apuntando al diseño anterior: `.glosario__categoria`, `getByTestId('tabla')`,
+ * `.glosario__grilla-seccion` y `.glosario__termino-enlace` **ya no existen en
+ * el DOM**. Los selectores se actualizaron a los que la plantilla usa hoy.
+ *
+ * **No se pudo correr.** Toda esta suite exige la API viva (`apiViva`, abajo) y
+ * el stack Docker está apagado por pedido del propietario, así que los seis
+ * casos se saltean. Lo que se afirma acá es que el archivo dejó de apuntar a un
+ * DOM que no existe — **no** que pase. El primero que levante el stack tiene
+ * que correrlo antes de confiar en él.
+ *
  * ## La aserción más importante del archivo
  *
  * Desde FND-25-02, los 6 términos de `pharmacology` traen `drugFacts` reales
@@ -56,7 +70,7 @@ async function buscarEnElGlosario(page: Page, texto: string): Promise<void> {
   );
   await page.goto(`/glossary?q=${texto}`);
   await respuesta;
-  await expect(page.getByTestId('tabla')).toBeVisible({ timeout: 60_000 });
+  await expect(page.locator('.glosario__entrada').first()).toBeVisible({ timeout: 60_000 });
 }
 
 test.describe('Carril 25 · glosario', () => {
@@ -65,12 +79,12 @@ test.describe('Carril 25 · glosario', () => {
     test.skip(!(await apiViva(api)), 'La API no responde: sin backend no hay nada que probar.');
   });
 
-  test('la landing muestra el grid de categorías, todas navegables', async ({ page }) => {
+  test('la landing muestra la fila de categorías, todas navegables', async ({ page }) => {
     await entrar(page, administrador());
     await page.goto('/glossary');
     await estable(page);
 
-    const tarjetas = page.locator('.glosario__categoria');
+    const tarjetas = page.locator('.glosario__tarjeta');
     await expect(tarjetas.first()).toBeVisible({ timeout: 60_000 });
     const cantidad = await tarjetas.count();
     // Hoy son 12 (AC-25-1): cada categoría con contenido queda alcanzable,
@@ -87,7 +101,7 @@ test.describe('Carril 25 · glosario', () => {
     }
   });
 
-  test('buscar por nombre lleva a la tabla, y ?q= restaura la misma vista', async ({
+  test('buscar por nombre filtra el cuerpo, y ?q= restaura la misma vista', async ({
     page,
   }) => {
     await entrar(page, administrador());
@@ -97,12 +111,17 @@ test.describe('Carril 25 · glosario', () => {
     await page.getByLabel('Buscar un término').fill('paracetamol');
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/[?&]q=paracetamol/, { timeout: 60_000 });
-    await expect(page.getByTestId('tabla')).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator('.glosario__entrada').first()).toBeVisible({ timeout: 60_000 });
 
     // Recargar con la URL sola —sin volver a teclear— tiene que dar la misma
     // vista: es lo que hace compartible un glosario filtrado (AC-25-2).
     await buscarEnElGlosario(page, 'paracetamol');
-    await expect(page.locator('.glosario__grilla-seccion')).toHaveCount(0);
+
+    // Con filtro puesto, el cuerpo deja de ser el índice completo y aparece la
+    // salida. La fila de categorías NO se esconde: es el mapa de la
+    // enciclopedia, y esconderla obligaría a volver atrás para cambiar de tema.
+    await expect(page.getByRole('button', { name: 'Ver todo el glosario' })).toBeVisible();
+    await expect(page.locator('.glosario__tarjeta').first()).toBeVisible();
   });
 
   /**
@@ -119,7 +138,7 @@ test.describe('Carril 25 · glosario', () => {
     await entrar(page, administrador());
     await buscarEnElGlosario(page, 'paracetamol');
 
-    const enlace = page.locator('.glosario__termino-enlace').first();
+    const enlace = page.locator('.glosario__entrada-titulo a').first();
     await expect(enlace).toBeVisible();
     await enlace.click();
     await expect(page.locator('.termino')).toBeVisible({ timeout: 60_000 });
@@ -148,12 +167,12 @@ test.describe('Carril 25 · glosario', () => {
     await buscarEnElGlosario(page, 'paracetamol');
 
     // Sin conocer de antemano cuál de los resultados está sin traducir, se
-    // recorre la tabla: si ninguno lo está, la prueba no afirma nada falso —
-    // el aviso, cuando existe, nunca puede decir que SÍ está traducido.
-    const filas = page.getByTestId('tabla-fila');
-    const total = await filas.count();
+    // recorren las entradas: si ninguna lo está, la prueba no afirma nada falso
+    // — el aviso, cuando existe, nunca puede decir que SÍ está traducido.
+    const entradas = page.locator('.glosario__entrada');
+    const total = await entradas.count();
     for (let i = 0; i < total; i += 1) {
-      const texto = (await filas.nth(i).textContent()) ?? '';
+      const texto = (await entradas.nth(i).textContent()) ?? '';
       expect(texto).not.toContain('traducido automáticamente');
     }
   });
@@ -193,7 +212,7 @@ test.describe('Carril 25 · glosario', () => {
 
     await entrar(page, administrador());
     await buscarEnElGlosario(page, 'paracetamol');
-    const enlace = page.locator('.glosario__termino-enlace').first();
+    const enlace = page.locator('.glosario__entrada-titulo a').first();
     await enlace.click();
     await expect(page.locator('.termino')).toBeVisible({ timeout: 60_000 });
 

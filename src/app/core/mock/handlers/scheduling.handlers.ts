@@ -13,9 +13,10 @@ import {
 } from '../fixtures/agenda';
 import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from '../fixtures/conceptos';
 import { emitirNotificacion } from './notifications.handlers';
+import { solicitudDeLaCita } from './insurance.handlers';
 import { pacientePorId } from '../fixtures/personas';
 import { representaA } from './profiles.handlers';
-import { conflict, noContent, notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, noContent, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -24,12 +25,24 @@ import { ahora, cuerpo, masMinutos, nuevoId, texto, uuid } from '../mock-store';
     (reservar → aceptar → llegada → atender → cobrar) se puede recorrer.
     ========================================================================== */
 
+/**
+ * `requiresText` sólo es `true` en `OTHER`.
+ *
+ * Antes lo llevaban también `ABSENCE`, `CONFERENCE` y `ERRAND` — divergía del
+ * contrato real, que declara un único motivo que exige explicación:
+ * `MOTIVO_QUE_EXIGE_TEXTO: ExceptionType = 'OTHER'`
+ * (`scheduling-catalog.service.ts:163`, con `requiresText: type ===
+ * MOTIVO_QUE_EXIGE_TEXTO` en la 1245). Con el doble como estaba, un
+ * formulario que sólo manda `reason` cuando el usuario escribió algo podía
+ * dar 201 contra la API real y un rechazo (por falta de texto en pantalla)
+ * contra la maqueta — el error simétrico de "más permisivo que la API".
+ */
 const TIPOS_DE_BLOQUEO = [
-  { type: 'ABSENCE', conceptId: TIPO_BLOQUEO['EXC-PERSONAL']!, label: 'Ausencia', requiresText: true, blocks: true },
+  { type: 'ABSENCE', conceptId: TIPO_BLOQUEO['EXC-PERSONAL']!, label: 'Ausencia', requiresText: false, blocks: true },
   { type: 'HOLIDAY', conceptId: TIPO_BLOQUEO['EXC-FERIADO']!, label: 'Feriado', requiresText: false, blocks: true },
   { type: 'VACATION', conceptId: TIPO_BLOQUEO['EXC-VACACIONES']!, label: 'Vacaciones', requiresText: false, blocks: true },
-  { type: 'CONFERENCE', conceptId: TIPO_BLOQUEO['EXC-CONGRESO']!, label: 'Congreso', requiresText: true, blocks: true },
-  { type: 'ERRAND', conceptId: TIPO_BLOQUEO['EXC-PERSONAL']!, label: 'Trámite personal', requiresText: true, blocks: true },
+  { type: 'CONFERENCE', conceptId: TIPO_BLOQUEO['EXC-CONGRESO']!, label: 'Congreso', requiresText: false, blocks: true },
+  { type: 'ERRAND', conceptId: TIPO_BLOQUEO['EXC-PERSONAL']!, label: 'Trámite personal', requiresText: false, blocks: true },
   { type: 'EXTRA', conceptId: TIPO_BLOQUEO['EXC-CIRUGIA']!, label: 'Horario extra', requiresText: false, blocks: false },
   { type: 'OTHER', conceptId: TIPO_BLOQUEO['EXC-PERSONAL']!, label: 'Otro', requiresText: true, blocks: true },
 ] as const;
@@ -126,7 +139,7 @@ export function registrarAgenda(router: MockRouter): void {
       id: nuevoId('resource'),
       name: datos.name ?? 'Recurso nuevo',
       resourceTypeConceptId: uuid('concept-resource-practitioner'),
-      resourceRefType: datos.resourceRefType ?? 'PRACTITIONER',
+      resourceRefType: datos.resourceRefType ?? 'health_practitioner_profiles',
       resourceRefId: datos.resourceRefId ?? '',
       practitionerName: datos.name ?? null,
       practiceId: datos.practiceId ?? null,
@@ -224,12 +237,18 @@ export function registrarAgenda(router: MockRouter): void {
       .filter((r) => dentro(r.startAt, from, to))
       .filter((r) => includeCancelled || !estadoEs(r, 'BK-CANCELLED', 'BK-REJECTED'))
       .sort((a, b) => a.startAt.localeCompare(b.startAt));
-    return { items: todos.slice(0, limit), count: Math.min(todos.length, limit), limit, truncated: todos.length > limit };
+    // `insuranceClaim` se resuelve al leer, como en la API: la solicitud cambia de
+    // estado sin que la cita se entere.
+    const items = todos.slice(0, limit).map((r) => ({ ...r, insuranceClaim: solicitudDeLaCita(r) }));
+    return { items, count: Math.min(todos.length, limit), limit, truncated: todos.length > limit };
   });
 
   router.get('/scheduling/bookings/:id', ({ params }) => reservas.get(params['id']!) ?? notFound('Reserva no encontrada'));
 
-  router.post('/scheduling/bookings/:id/payment-state', (request) => {
+  /* El cliente hace `PUT` (es idempotente) y devuelve `PaymentStateInfo`, no
+     la reserva: la agenda lee `estado.label` para el aviso. Con `POST` y la
+     reserva entera el eco genérico decía «undefined.» y nada cambiaba. */
+  const marcarPago = (request: MockRequest) => {
     const r = reservas.get(request.params['id']!);
     if (r === undefined) return notFound();
     const datos = cuerpo<{ state: 'PENDING' | 'PARTIALLY_PAID' | 'PAID'; insuranceUsed?: boolean }>(request);
@@ -244,8 +263,10 @@ export function registrarAgenda(router: MockRouter): void {
         markedAt: ahora(),
       },
     });
-    return actualizada;
-  });
+    return actualizada?.paymentState ?? notFound();
+  };
+  router.put('/scheduling/bookings/:id/payment-state', marcarPago);
+  router.post('/scheduling/bookings/:id/payment-state', marcarPago);
 
   router.post('/scheduling/bookings/:id/cancel', (request) => {
     const r = reservas.get(request.params['id']!);
@@ -387,7 +408,7 @@ export function registrarAgenda(router: MockRouter): void {
   });
 
   router.post('/scheduling/resources/:id/templates', (request) => {
-    const datos = cuerpo<{ name: string; rules: PlantillaSimulada['rules']; slotMinutes?: number; bookingPolicyId?: string; validFrom?: string; validTo?: string }>(request);
+    const datos = cuerpo<{ name: string; rules: PlantillaSimulada['rules']; slotMinutes?: number; bookingPolicyId?: string; validFrom?: string; validTo?: string; flexibleHours?: boolean }>(request);
     const nueva = plantillas.agregar({
       id: nuevoId('template'),
       resourceId: request.params['id']!,
@@ -397,6 +418,7 @@ export function registrarAgenda(router: MockRouter): void {
       slotMinutes: datos.slotMinutes ?? 30,
       validFrom: datos.validFrom ?? ahora().slice(0, 10),
       ...(datos.validTo === undefined ? {} : { validTo: datos.validTo }),
+      ...(datos.flexibleHours === true ? { flexibleHours: true } : {}),
       bookingPolicyId: datos.bookingPolicyId ?? POLITICA_ESTANDAR,
       statusConceptId: ESTADO['ST-PUBLISHED']!,
     });
@@ -458,31 +480,44 @@ export function registrarAgenda(router: MockRouter): void {
     let created = 0;
     let skipped = 0;
     for (let d = new Date(desde); d <= hasta; d.setDate(d.getDate() + 1)) {
-      const regla = t.rules.find((r) => r.dayOfWeek === d.getDay());
-      if (regla === undefined) continue;
-      const [hi, mi] = regla.startTime.split(':').map(Number) as [number, number];
-      const [hf, mf] = regla.endTime.split(':').map(Number) as [number, number];
-      const dur = regla.slotMinutes ?? t.slotMinutes;
-      for (let m = hi * 60 + mi; m + dur <= hf * 60 + mf; m += dur + (regla.gapMinutes ?? 0)) {
-        const inicio = new Date(d);
-        inicio.setHours(Math.floor(m / 60), m % 60, 0, 0);
-        const id = uuid(`slot-${t.id}-${inicio.toISOString()}`);
-        if (cupos.has(id) || cupos.filtrar((c) => c.resourceId === t.resourceId && c.startAt === inicio.toISOString()).length > 0) {
-          skipped++;
-          continue;
+      // TODAS las franjas del día, no la primera: con hora de almuerzo un día
+      // son dos franjas (mañana y tarde), igual que en el generador real, que
+      // recorre cada regla. Con `find` la tarde desaparecía en silencio.
+      for (const regla of t.rules.filter((r) => r.dayOfWeek === d.getDay())) {
+        const [hi, mi] = regla.startTime.split(':').map(Number) as [number, number];
+        const [hf, mf] = regla.endTime.split(':').map(Number) as [number, number];
+        const apertura = hi * 60 + mi;
+        const cierre = hf * 60 + mf;
+        // Horario flexible (P36): la franja entera es UN bloque abierto y el
+        // paciente pide dentro de ella la hora que quiera. La capacidad es una
+        // suposición de la maqueta —una consulta cada 15 min como techo— hasta
+        // que el backend defina el modo; está anotado en P36.
+        const flexible = t.flexibleHours === true;
+        const dur = flexible ? cierre - apertura : (regla.slotMinutes ?? t.slotMinutes);
+        const paso = flexible ? dur : dur + (regla.gapMinutes ?? 0);
+        const capacidad = flexible ? Math.max(1, Math.floor(dur / 15)) : (regla.capacityPerSlot ?? 1);
+        if (dur <= 0) continue;
+        for (let m = apertura; m + dur <= cierre; m += paso) {
+          const inicio = new Date(d);
+          inicio.setHours(Math.floor(m / 60), m % 60, 0, 0);
+          const id = uuid(`slot-${t.id}-${inicio.toISOString()}`);
+          if (cupos.has(id) || cupos.filtrar((c) => c.resourceId === t.resourceId && c.startAt === inicio.toISOString()).length > 0) {
+            skipped++;
+            continue;
+          }
+          cupos.agregar({
+            id,
+            resourceId: t.resourceId,
+            scheduleTemplateId: t.id,
+            startAt: inicio.toISOString(),
+            endAt: new Date(inicio.getTime() + dur * 60_000).toISOString(),
+            capacity: capacidad,
+            remainingCapacity: capacidad,
+            statusConceptId: ESTADO['ST-ACTIVE']!,
+            serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
+          });
+          created++;
         }
-        cupos.agregar({
-          id,
-          resourceId: t.resourceId,
-          scheduleTemplateId: t.id,
-          startAt: inicio.toISOString(),
-          endAt: new Date(inicio.getTime() + dur * 60_000).toISOString(),
-          capacity: regla.capacityPerSlot ?? 1,
-          remainingCapacity: regla.capacityPerSlot ?? 1,
-          statusConceptId: ESTADO['ST-ACTIVE']!,
-          serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
-        });
-        created++;
       }
     }
     return { templateId: t.id, created, skipped };
@@ -548,14 +583,43 @@ export function registrarAgenda(router: MockRouter): void {
   router.post('/scheduling/resources/:id/exceptions', (request) => {
     const datos = cuerpo<{ exceptionType: string; startAt: string; endAt: string; reason?: string; isAvailable?: boolean }>(request);
     const tipo = TIPOS_DE_BLOQUEO.find((t) => t.type === datos.exceptionType);
+    // El doble no puede ser más permisivo que el contrato real. `exceptionType`
+    // se valida a nivel de DTO con `@IsIn(EXCEPTION_TYPES)`
+    // (scheduling-catalog.dto.ts:754): sin `exceptionFactory` propio, el
+    // `ValidationPipe` global de la API devuelve 400 ante esto (main.ts:158-165),
+    // no 422 — mismo contrato que el `ValidationPipe` real, igual que el resto
+    // de las validaciones de forma del proyecto (ver auth.handlers.ts).
+    if (tipo === undefined) {
+      return reply(400, {
+        statusCode: 400,
+        code: 'VALIDATION_FAILED',
+        message: 'Validation failed',
+        error: 'Bad Request',
+        details: { messages: [`exceptionType must be one of the following values: ${TIPOS_DE_BLOQUEO.map((t) => t.type).join(', ')}`] },
+      });
+    }
+    // «Otro» sin explicación no dice nada: regla del catálogo, no de la
+    // pantalla. En la API es una precondición de negocio —
+    // `PreconditionFailedException` en `createException`
+    // (scheduling-catalog.service.ts:1262), que en este proyecto es 422, no
+    // 412 (domain.exception.ts:106-118)— y no una validación de forma: por
+    // eso va después del `@IsIn` (400) y no junto a él.
+    if (tipo.requiresText && (datos.reason === undefined || datos.reason.trim() === '')) {
+      return validation('Elegiste «Otro» como motivo: escribí cuál es.');
+    }
+    const inicio = datos.startAt ?? ahora();
+    const fin = datos.endAt ?? masMinutos(inicio, 60);
+    if (fin <= inicio) {
+      return validation('La excepción debe empezar antes de terminar.');
+    }
     const nuevo: BloqueoSimulado = {
       id: nuevoId('exception'),
       resourceId: request.params['id']!,
       exceptionTypeConceptId: tipo?.conceptId ?? TIPO_BLOQUEO['EXC-PERSONAL']!,
-      exceptionType: datos.exceptionType ?? 'OTHER',
-      startAt: datos.startAt ?? ahora(),
-      endAt: datos.endAt ?? masMinutos(ahora(), 60),
-      reasonLabel: tipo?.label ?? 'Otro',
+      exceptionType: tipo.type,
+      startAt: inicio,
+      endAt: fin,
+      reasonLabel: tipo.label,
       reason: datos.reason ?? '',
       isAvailable: datos.isAvailable ?? false,
     };
@@ -570,6 +634,16 @@ export function registrarAgenda(router: MockRouter): void {
     if (b === undefined) return notFound();
     const datos = cuerpo<{ exceptionType?: string; reason?: string; startAt?: string; endAt?: string }>(request);
     const tipo = datos.exceptionType === undefined ? undefined : TIPOS_DE_BLOQUEO.find((t) => t.type === datos.exceptionType);
+    if (datos.exceptionType !== undefined && tipo === undefined) {
+      // Mismo contrato que el POST: `@IsIn` a nivel de DTO es 400, no 422.
+      return reply(400, {
+        statusCode: 400,
+        code: 'VALIDATION_FAILED',
+        message: 'Validation failed',
+        error: 'Bad Request',
+        details: { messages: [`exceptionType must be one of the following values: ${TIPOS_DE_BLOQUEO.map((t) => t.type).join(', ')}`] },
+      });
+    }
     const actualizado = bloqueos.actualizar(b.id, {
       ...(datos.reason === undefined ? {} : { reason: datos.reason }),
       ...(datos.startAt === undefined ? {} : { startAt: datos.startAt }),

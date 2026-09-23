@@ -142,6 +142,7 @@ interface FilaDeExportacion {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InsuranceAnalytics {
+
   private readonly analytics = inject(InsuranceAnalyticsClient);
   private readonly insurance = inject(InsuranceClient);
   private readonly csv = inject(CsvExportService);
@@ -263,9 +264,15 @@ export class InsuranceAnalytics {
 
   protected medicationTrackBy = (row: TopMedication): string =>
     row.medicationCode ?? row.medicationName;
+  /** Row name for screen readers (`rowLabel` of the table). */
+  protected medicationLabel = (row: TopMedication): string => row.medicationName;
   protected specialtyTrackBy = (row: SpecialtyDistribution): string =>
     row.specialtyCode ?? row.specialtyName;
+  /** Row name for screen readers (`rowLabel` of the table). */
+  protected specialtyLabel = (row: SpecialtyDistribution): string => row.specialtyName;
   protected pathologyTrackBy = (row: PrevalentPathology): string => row.code;
+  /** Row name for screen readers (`rowLabel` of the table). */
+  protected pathologyLabel = (row: PrevalentPathology): string => row.description;
 
   protected readonly medicationColumns: readonly ColumnDef<TopMedication>[] = [
     { key: 'medicationName', header: 'Medicamento', priority: 1 },

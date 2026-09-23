@@ -15,6 +15,30 @@
      REGLA DE LA CASA, ver `docs/components/composition-rules.md` §5. -->
 <div class="mi-perfil" [class.mi-perfil--sin-lateral]="!hayLateral()">
   <div class="mi-perfil__principal">
+    <!-- ─── Acá vivía el enlace suelto a «Mis organizaciones» ────────────────
+       Se retiró el 20/09/2026 por C-02: «deben eliminarse los botones @Mi
+       consultorio propio @Mi organización médica. Solo en caso de mi
+       consultorio se ve como pestaña para personalizarle el QR y todo lo que
+       ofrece esa view».
+
+       El argumento que lo sostenía hasta hoy era bueno y NO se ignoró: era el
+       único acceso a esa pantalla desde que salió del menú del médico
+       (§4.H del plan de UX del 22/08/2026), así que borrarlo a secas convertía
+       una limpieza visual en una pérdida de acceso. Por eso no se borró a
+       secas: lo que esa pantalla ofrece —el consultorio propio, su corrección,
+       su retiro, el padrón y el QR bancario— ahora se monta dentro del perfil,
+       en la pestaña «Dónde atiendo»
+       (`practitioner-profile-view.html`, sección `perfil-consultorio`). El
+       acceso no se perdió: dejó de ser un salto a otra pantalla.
+
+       `/administration/my-practice` sigue existiendo y sigue estando en el
+       menú: esa pantalla y su entrada no son de este alcance y se deciden
+       aparte (Q-I2).
+
+       Del otro botón que nombra C-02 —«Mi organización médica»— no queda nada
+       en este corte: no hay ningún enlace del perfil a
+       `administration/medical-organization`. No se inventa que se lo quitó. -->
+
     <!-- ─── El perfil, según quién entró ──────────────────────────────────────
        Con perfil profesional se muestra la trayectoria; si no, el resumen de
        paciente. No es una preferencia de presentación: son dos endpoints
@@ -516,61 +540,7 @@
       </app-card>
     }
 
-    <!-- ─── Acceso ────────────────────────────────────────────────────────────
-         Organización y roles. Son la respuesta a «¿por qué no veo tal cosa?»,
-         una pregunta que se hace quien trabaja acá. **A un paciente no se le
-         muestra** (F-22): no tiene secciones que le falten, y «Organización» y
-         «Roles» son vocabulario de sistema en su vista. Los roles van en
-         palabras: el código (`PATIENT`) sólo viaja en `data-role`. -->
-    @if (muestraElAcceso()) {
-      <app-card
-        class="mi-perfil__bloque"
-        variant="outlined"
-        padding="lg"
-        data-testid="mi-perfil-acceso"
-      >
-        <h2 class="mi-perfil__titulo">Tu acceso</h2>
-
-        <dl class="mi-perfil__datos mi-perfil__datos--una">
-          <div class="mi-perfil__dato">
-            <dt>Organización</dt>
-            <dd>{{ tenantName() ?? 'Sin organización activa' }}</dd>
-          </div>
-
-          <div class="mi-perfil__dato">
-            <dt>Roles</dt>
-            <dd class="mi-perfil__roles">
-              @for (rol of rolesLegibles(); track rol.codigo) {
-                <app-badge variant="info" [value]="rol.etiqueta" [attr.data-role]="rol.codigo" />
-              } @empty {
-                <span class="mi-perfil__vacio">Sin roles declarados.</span>
-              }
-            </dd>
-          </div>
-        </dl>
-
-        <p class="mi-perfil__nota">
-          Tu acceso decide qué secciones ves. Para cambiarlo, pedíselo a quien administra la
-          organización.
-        </p>
-
-        <!-- §4.H del plan de UX del 22/08/2026 · el camino de vuelta.
-
-           El menú del médico quedó en las ocho opciones que pidió el cliente, y
-           estas tres salieron de ahí. **No se les cerró la puerta**: son
-           trámites, no trabajo diario, y su casa natural es «Mi perfil», que es
-           donde alguien va a buscar «¿dónde trabajo?». Esconderlas sin dejar
-           camino habría convertido una limpieza de menú en una pérdida de
-           acceso, que es lo único que no puede pasar. -->
-        @if (esProfesional()) {
-          <nav class="mi-perfil__enlaces" aria-label="Dónde ejercés">
-            <a app-link routerLink="/administration/my-practice">Mi consultorio propio</a>
-            <a app-link routerLink="/administration/medical-organization">Organización médica</a>
-          </nav>
-        }
-      </app-card>
-    }
-  </aside>
+      </aside>
   }
 
   <!-- El historial laboral (punto 9 del reclamo) ya no va acá: vive dentro de

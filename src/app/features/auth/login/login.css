@@ -24,23 +24,27 @@
     deja por encima de 12:1, muy lejos del 7:1 de AAA. Bajarlo a 80 % ya sería
     apostar el contraste a lo que haya debajo, y debajo hay algo que se mueve.
 
-    `backdrop-filter` es el efecto de vidrio real; donde no exista, la tarjeta
-    queda igual pero con el fondo nítido detrás, que también se lee.
+    Sin `backdrop-filter`: el desenfoque se recalculaba en cada cuadro, porque
+    detrás de la tarjeta pasa el cometa del latido. Al 92 % de opacidad el
+    vidrio apenas se notaba, y su costo sí, en los equipos sin GPU.
     ========================================================================== */
 .login {
   position: relative;
   display: flex;
   flex-direction: column;
   background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
-  backdrop-filter: blur(22px) saturate(1.35);
-  -webkit-backdrop-filter: blur(22px) saturate(1.35);
   border: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
   border-radius: var(--r-2xl);
   padding: var(--sp-6);
   /* La sombra del sistema, más un filo de luz interior arriba: es lo que hace
      leer el borde como canto de vidrio y no como línea dibujada. */
+  /* Sobre el escenario oscuro del latido la sombra del sistema no alcanza a
+     despegar la tarjeta: se suma una caída larga y un canto de luz aqua, el
+     mismo color del trazo que pasa por detrás. */
   box-shadow:
     var(--shadow-lg),
+    0 48px 120px -24px rgb(0 0 0 / 0.55),
+    0 0 0 1px color-mix(in srgb, var(--c-aqua-300) 22%, transparent),
     inset 0 1px 0 color-mix(in srgb, #ffffff 55%, transparent);
   /* Se inclina hacia el puntero. 1,1° es deliberadamente poco: lo suficiente
      para que la tarjeta responda a la mano, no tanto como para que el texto de

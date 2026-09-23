@@ -1,11 +1,14 @@
+import { DatePipe, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   DestroyRef,
   inject,
+  PLATFORM_ID,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 
 import { PharmacyCampaignsClient } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
@@ -20,13 +23,15 @@ import {
   type LineaDePedido,
   type ModalidadDeEntrega,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
+import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
-import { empty, notFound, ready } from '../../../../core/view-state/view-state';
+import { empty, loading, notFound, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Skeleton } from '../../../../shared/components/atoms/skeleton/skeleton';
+import { Switch } from '../../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { RadioGroup } from '../../../../shared/components/molecules/radio-group/radio-group';
@@ -35,10 +40,27 @@ import { PageHeader } from '../../../../shared/components/organisms/page-header/
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { MI_HISTORIA_ROUTE } from '../../medical-record/medical-record.routes';
 import {
+  DATOS_DE_EJEMPLO_DE_LA_RECETA,
+  NOTA_DE_DATOS_DE_EJEMPLO,
+  type AlternativaDeEjemplo,
+  type DatosDeEjemploDeLaReceta,
+} from './new-order.fixtures';
+import {
   CLAVE_DEL_TRASPASO,
   RUTA_DEL_CHECKOUT,
   type TraspasoDeLaReceta,
 } from './new-order.handoff';
+import { OrderAlternatives } from './order-alternatives/order-alternatives';
+import { displayCurrency } from '../../../../core/money/display-currency';
+
+/** Menos de una unidad no es un renglón: para no pedirlo está «Volver». */
+const CANTIDAD_MINIMA = 1;
+
+/** Lo que la persona decidió sobre un renglón. */
+interface EleccionDeRenglon {
+  readonly cantidad: number;
+  readonly alternativaId: string | null;
+}
 
 /** Un renglón listo para pintar: el del borrador más lo que se eligió. */
 interface RenglonVisible {
@@ -47,18 +69,19 @@ interface RenglonVisible {
   readonly linea: LineaDePedido;
   readonly medicamento: string;
   readonly presentacion: string | null;
-  /**
-   * La cantidad que se pide: la del borrador, sin editar.
-   *
-   * El contrato de lectura de recetas no publica la cantidad recetada, así que
-   * no hay techo demostrable y no se inventa uno (D-R1-1 = A).
-   */
   readonly cantidad: number;
-  /** El precio unitario de la sede, sin campaña. */
+  readonly cantidadRecetada: number;
+  /** El precio unitario sin campaña: el de la alternativa o el de la sede. */
   readonly precioDeLista: string | null;
-  /** El precio de campaña (FAR-I7). */
+  /** El precio de campaña (FAR-I7), sólo sobre la recetada. */
   readonly precioPromocional: string | null;
   readonly subtotal: string | null;
+  readonly alternativa: AlternativaDeEjemplo | null;
+  readonly alternativas: readonly AlternativaDeEjemplo[];
+  readonly aprobadoPorSeguro: boolean;
+  /** Variante con seguro y renglón aprobado: no suma ni ofrece alternativas. */
+  readonly cubierto: boolean;
+  readonly ofreceAlternativas: boolean;
 }
 
 /**
@@ -81,24 +104,11 @@ interface RenglonVisible {
  * El borrador se **copia al construir**. Quien recarga o entra por URL directa
  * no tiene borrador y ve la salida honesta hacia su historia.
  *
- * ## Sólo se dibuja lo que el contrato demuestra (FAR-REAL-T-E1, D-R1-1 = A)
- *
- * La pantalla muestra los renglones del borrador y nada más. Lo que no tiene
- * contrato **no se dibuja**: no hay cabecera de receta —el borrador no trae
- * quién la emitió ni cuándo—, no hay alternativas por renglón —la búsqueda
- * real contra la farmacia no existe— y no hay variante con seguro —la
- * cobertura por ítem sólo se conoce tras la adjudicación, sobre un pedido ya
- * creado—.
- *
- * **La cantidad no se edita.** El borrador trae un envase por renglón y así se
- * pide. Ese 1 es un **fallback conservador del front**, no una cantidad
- * clínica demostrada: `GET /clinical/patients/:id/summary` no publica la
- * cantidad recetada. Antes se ofrecía subirla hasta un techo inventado de 3,
- * y esa cifra viajaba como `quantity` al pedido real.
- *
- * **Residual de API que esto no arregla:** `SERVER_QUANTITY_VALIDATION =
- * MISSING` — `POST /pharmacy/orders` acepta cualquier `quantity > 0` sin
- * contrastarla con la prescripción.
+ * Sobre el borrador, T-E1 dibuja lo que todavía no tiene contrato —cabecera
+ * de la receta, cantidad dentro de lo recetado, alternativas por renglón y la
+ * variante con seguro— con los datos de ejemplo de `new-order.fixtures.ts`,
+ * rotulados como tales. **Nada de eso toca el borrador**: vive en señales de
+ * esta pantalla.
  *
  * ## Desde acá no se crea ningún pedido (D-FARMOCK-T-E1-01)
  *
@@ -122,12 +132,15 @@ interface RenglonVisible {
     AppButton,
     AppButtonLink,
     Badge,
+    DatePipe,
     FormField,
+    OrderAlternatives,
     PageHeader,
     Radio,
     RadioGroup,
     RouterLink,
     Skeleton,
+    Switch,
     ViewStateHost,
   ],
   templateUrl: './new-order.html',
@@ -135,12 +148,24 @@ interface RenglonVisible {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NewOrder {
+
+  /**
+   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
+   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
+   */
+  protected moneda(code?: string | null): string {
+    return displayCurrency(code);
+  }
   private readonly ordersClient = inject(PharmacyOrdersClient);
   private readonly router = inject(Router);
   private readonly navigation = inject(NavigationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly documento = inject(DOCUMENT);
+  private readonly esBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly fuenteDeEjemplo = inject(DATOS_DE_EJEMPLO_DE_LA_RECETA);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+  protected readonly notaDeEjemplo = NOTA_DE_DATOS_DE_EJEMPLO;
 
   /** La copia del borrador (ver el JSDoc de la clase). */
   protected readonly borrador = this.ordersClient.borradorPreparado();
@@ -159,9 +184,15 @@ export class NewOrder {
       ? MI_HISTORIA_ROUTE
       : `/my-account/medical-record/where-to-buy/${this.borrador.requestId}`;
 
+  /* ---- los datos de ejemplo (T-E1) ----------------------------------------- */
+
+  protected readonly datos = signal<DatosDeEjemploDeLaReceta | null>(null);
+  private readonly falloDeLosDatos = signal<ViewState<BorradorDePedido> | null>(null);
+
   /**
    * Sin borrador, la salida honesta hacia la historia; con un borrador vacío,
-   * la vuelta a las sucursales.
+   * la vuelta a las sucursales; y mientras los datos de ejemplo no llegan, el
+   * esqueleto.
    */
   protected readonly estado = computed<ViewState<BorradorDePedido>>(() => {
     const borrador = this.borrador;
@@ -174,7 +205,11 @@ export class NewOrder {
         'Este pedido no tiene medicamentos para confirmar.',
       );
     }
-    return ready(borrador);
+    const fallo = this.falloDeLosDatos();
+    if (fallo !== null) {
+      return fallo;
+    }
+    return this.datos() === null ? loading() : ready(borrador);
   });
 
   /* ---- las promociones del pedido (FAR-I7) --------------------------------- */
@@ -263,36 +298,97 @@ export class NewOrder {
   /** `true` si hay al menos un renglón en promoción: gobierna el banner. */
   protected readonly hayPromocion = this.renglonesEnPromocion.size > 0;
 
-  /* ---- la receta como pedido (FAR-REAL-T-E1) ------------------------------- */
+  /* ---- la receta como pedido (T-E1) ---------------------------------------- */
 
-  /**
-   * Los renglones tal como los dejó la sucursal: sin cantidad editable, sin
-   * alternativas y sin variante con seguro (D-R1-1 = A).
-   */
+  protected readonly elecciones = signal<readonly EleccionDeRenglon[]>(
+    this.borrador?.lineas.map((linea) => ({ cantidad: linea.cantidad, alternativaId: null })) ??
+      [],
+  );
+
+  /** El conmutador de demostración de la variante con seguro. */
+  protected readonly conSeguro = signal(false);
+
+  /** El renglón cuyo panel de alternativas está abierto, o `null`. */
+  protected readonly panelAbierto = signal<number | null>(null);
+
   protected readonly renglones = computed<readonly RenglonVisible[]>(() => {
     const borrador = this.borrador;
-    if (borrador === null) {
+    const datos = this.datos();
+    if (borrador === null || datos === null) {
       return [];
     }
+    const conSeguro = this.conSeguro();
+    const elecciones = this.elecciones();
     return borrador.lineas.map((linea, indice): RenglonVisible => {
-      const precioDeLista = this.precioNormalizado(linea.precio);
-      const precioPromocional = this.precioPromocionalDe(linea.productId);
+      const deEjemplo = datos.renglones[indice];
+      const eleccion = elecciones[indice] ?? { cantidad: linea.cantidad, alternativaId: null };
+      const aprobadoPorSeguro = deEjemplo?.aprobadoPorSeguro ?? false;
+      // Lo que la sede no tiene no se reparte con nadie: sigue diciendo que falta.
+      const cubierto = conSeguro && aprobadoPorSeguro && linea.disponible;
+      const alternativas = deEjemplo?.alternativas ?? [];
+      // Con seguro, un aprobado muestra la recetada: la elección se conserva
+      // y vuelve si se apaga el conmutador.
+      const alternativa = cubierto
+        ? null
+        : (alternativas.find((opcion) => opcion.id === eleccion.alternativaId) ?? null);
+      const precioDeLista = alternativa?.precio ?? this.precioNormalizado(linea.precio);
+      const precioPromocional =
+        alternativa === null ? this.precioPromocionalDe(linea.productId) : null;
       const precioUnitario = precioPromocional ?? precioDeLista;
       return {
         indice,
         linea,
-        medicamento: linea.medicamento,
-        presentacion: linea.presentacion,
-        cantidad: linea.cantidad,
+        medicamento: alternativa?.nombre ?? linea.medicamento,
+        presentacion: alternativa?.presentacion ?? linea.presentacion,
+        cantidad: eleccion.cantidad,
+        cantidadRecetada: deEjemplo?.cantidadRecetada ?? linea.cantidad,
         precioDeLista,
         precioPromocional,
         subtotal:
           linea.disponible && precioUnitario !== null
-            ? totalDeRenglones([{ precio: precioUnitario, cantidad: linea.cantidad }])
+            ? totalDeRenglones([{ precio: precioUnitario, cantidad: eleccion.cantidad }])
             : null,
+        alternativa,
+        alternativas,
+        aprobadoPorSeguro,
+        cubierto,
+        ofreceAlternativas: linea.disponible && alternativas.length > 0 && !cubierto,
       };
     });
   });
+
+  /** Algo en pantalla ya no es el borrador tal como lo armó la sucursal. */
+  protected readonly hayCambiosDeDemostracion = computed(() => {
+    const borrador = this.borrador;
+    if (borrador === null) {
+      return false;
+    }
+    return (
+      this.conSeguro() ||
+      this.elecciones().some(
+        (eleccion, indice) =>
+          eleccion.alternativaId !== null || eleccion.cantidad !== borrador.lineas[indice]?.cantidad,
+      )
+    );
+  });
+
+  /**
+   * El total recalculado con las elecciones: renglones disponibles y, con
+   * seguro, sólo los no aprobados. `null` si falta algún precio.
+   */
+  protected readonly totalConCambios = computed(() => {
+    const suman = this.renglones().filter((renglon) => renglon.linea.disponible && !renglon.cubierto);
+    if (suman.some((renglon) => renglon.subtotal === null)) {
+      return null;
+    }
+    return totalDeRenglones(
+      suman.map((renglon) => ({ precio: renglon.subtotal ?? '', cantidad: 1 })),
+    );
+  });
+
+  protected readonly renglonesCubiertos = computed(
+    () => this.renglones().filter((renglon) => renglon.cubierto).length,
+  );
 
   /* ---- el paso siguiente (D-FARMOCK-T-E1-01) ------------------------------- */
 
@@ -300,7 +396,7 @@ export class NewOrder {
   protected readonly rutaDelCheckout = inject(RUTA_DEL_CHECKOUT);
 
   protected readonly puedeContinuar = computed(
-    () => this.rutaDelCheckout !== null && !this.hasUnresolvedProducts,
+    () => this.rutaDelCheckout !== null && !this.hasUnresolvedProducts && this.datos() !== null,
   );
 
   /** `true` desde que «Continuar» navega: el borrador ya no se descarta. */
@@ -315,6 +411,57 @@ export class NewOrder {
         this.ordersClient.descartarBorrador();
       }
     });
+    this.cargarDatosDeEjemplo();
+  }
+
+  protected cargarDatosDeEjemplo(): void {
+    const borrador = this.borrador;
+    if (borrador === null || borrador.lineas.length === 0) {
+      return;
+    }
+    this.falloDeLosDatos.set(null);
+    this.datos.set(null);
+    this.fuenteDeEjemplo(borrador)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (datos) => this.datos.set(datos),
+        error: (error: unknown) =>
+          this.falloDeLosDatos.set(errorToViewState<BorradorDePedido>(error)),
+      });
+  }
+
+  protected cambiarCantidad(indice: number, paso: 1 | -1): void {
+    const renglon = this.renglones()[indice];
+    if (renglon === undefined) {
+      return;
+    }
+    const siguiente = renglon.cantidad + paso;
+    if (siguiente < CANTIDAD_MINIMA || siguiente > renglon.cantidadRecetada) {
+      return;
+    }
+    this.actualizarEleccion(indice, { cantidad: siguiente });
+  }
+
+  protected alternarAlternativas(indice: number): void {
+    this.panelAbierto.update((abierto) => (abierto === indice ? null : indice));
+  }
+
+  protected elegirAlternativa(indice: number, alternativa: AlternativaDeEjemplo): void {
+    this.actualizarEleccion(indice, { alternativaId: alternativa.id });
+    this.cerrarPanel(indice);
+  }
+
+  protected restaurarRecetada(indice: number): void {
+    this.actualizarEleccion(indice, { alternativaId: null });
+    this.cerrarPanel(indice);
+  }
+
+  protected alElegirSeguro(activo: boolean): void {
+    this.conSeguro.set(activo);
+    const abierto = this.panelAbierto();
+    if (abierto !== null && !(this.renglones()[abierto]?.ofreceAlternativas ?? false)) {
+      this.panelAbierto.set(null);
+    }
   }
 
   /**
@@ -326,15 +473,13 @@ export class NewOrder {
     if (ruta === null || !this.puedeContinuar()) {
       return;
     }
-    // Sin alternativas ni cobertura demostrables, el traspaso lleva la cantidad
-    // del borrador y nada más: los dos campos de demostración viajan vacíos.
     const traspaso: TraspasoDeLaReceta = {
-      conSeguro: false,
+      conSeguro: this.conSeguro(),
       renglones: this.renglones().map((renglon) => ({
         indice: renglon.indice,
         cantidad: renglon.cantidad,
-        alternativa: null,
-        aprobadoPorSeguro: false,
+        alternativa: renglon.alternativa,
+        aprobadoPorSeguro: renglon.aprobadoPorSeguro,
       })),
     };
     this.continuando = true;
@@ -359,6 +504,25 @@ export class NewOrder {
     }
   }
 
+  private actualizarEleccion(indice: number, cambio: Partial<EleccionDeRenglon>): void {
+    this.elecciones.update((actuales) =>
+      actuales.map((eleccion, i) => (i === indice ? { ...eleccion, ...cambio } : eleccion)),
+    );
+  }
+
+  /**
+   * Elegir o restaurar desmonta el botón que tenía el foco: sin esto cae al
+   * `body`. Vuelve al botón que abrió el panel, que sigue en el renglón.
+   */
+  private cerrarPanel(indice: number): void {
+    this.panelAbierto.set(null);
+    if (!this.esBrowser) {
+      return;
+    }
+    queueMicrotask(() =>
+      this.documento.getElementById(`pedido-ver-alternativas-${indice}`)?.focus(),
+    );
+  }
 }
 
 function esModalidad(valor: unknown): valor is ModalidadDeEntrega {

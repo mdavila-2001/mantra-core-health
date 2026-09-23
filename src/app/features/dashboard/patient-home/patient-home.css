@@ -63,8 +63,12 @@
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
   color: var(--text-primary);
-  /* El día llega en minúscula del locale y acá encabeza. */
-  text-transform: capitalize;
+}
+
+/* El día llega en minúscula del locale y acá encabeza. Sólo la inicial:
+   `capitalize` dejaba «Viernes 18 De Septiembre». */
+.proxima-cita__dia::first-letter {
+  text-transform: uppercase;
 }
 
 .proxima-cita__cuando {

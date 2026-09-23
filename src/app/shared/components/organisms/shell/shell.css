@@ -26,7 +26,7 @@
     text-decoration: none;
     /* fuera de la pantalla hasta que alguien lo enfoque */
     transform: translateY(-200%);
-    transition: transform 0.15s ease;
+    transition: transform var(--dur-fast) var(--ease-standard);
 }
 
 .shell__skip-link:focus {

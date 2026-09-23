@@ -9,14 +9,30 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
+import { map } from 'rxjs';
 
 import { ServicesCatalogClient } from '../../core/data-access/services-catalog/services-catalog.client';
+import { SchedulingClient } from '../../core/data-access/scheduling/scheduling.client';
+import type {
+  AgendaResource,
+  PublishedRule,
+} from '../../core/data-access/scheduling/scheduling.types';
+import { AuthService } from '../../core/auth/auth.service';
+import { ScheduleGrid } from '../agenda/my-agenda/schedule-grid/schedule-grid';
+import type { BloqueoDelMes } from '../agenda/my-agenda/month-view/month-view';
+import { ContentDialog } from '../../shared/components/organisms/content-dialog/content-dialog';
+import { SegmentedControl } from '../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../shared/components/molecules/segmented-control/segmented-control.types';
 import type {
   Practice,
   ServiceCatalogItem,
   ServiceCatalogPage,
+  ServiceCatalogQuery,
 } from '../../core/data-access/services-catalog/services-catalog.types';
 import { Input } from '../../shared/components/atoms/input/input';
+import { Alert } from '../../shared/components/molecules/alert/alert';
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
 import { readApiError } from '../../core/http/api-error';
 import { errorToViewState } from '../../core/http/error-to-view-state';
@@ -33,8 +49,13 @@ import type { SelectOption } from '../../shared/components/atoms/select/select.t
 import { ServiceIcon } from '../../shared/components/atoms/service-icon/service-icon';
 import { Skeleton } from '../../shared/components/atoms/skeleton/skeleton';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
+import {
+  FilterBar,
+  type FilterDef,
+} from '../../shared/components/organisms/filter-bar/filter-bar';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
+import { withDisplayCurrency } from '../../core/money/display-currency';
 
 /**
  * Servicios por página. La grilla se arma en una, dos o tres columnas según el
@@ -115,11 +136,44 @@ const SIN_PRACTICA_ELEGIDA = empty(
  * la API —opaco— se reenvía tal cual. Cambiar de práctica descarta lo
  * acumulado, porque ese cursor sólo sabe seguir la lista de la que salió.
  */
+/**
+ * El texto con que se etiqueta el bloqueo que deja un servicio propio — C-12.
+ *
+ * ## Por qué `OTHER` y no un tipo propio
+ *
+ * «OTROS SERVICIOS» **no existe** en la lista cerrada de motivos de
+ * `GET /scheduling/exception-types`: son siete —`ABSENCE`, `HOLIDAY`,
+ * `VACATION`, `CONFERENCE`, `ERRAND`, `EXTRA`, `OTHER`— y ninguno es éste.
+ * Ampliar el enum es una decisión de negocio (ambigüedad `Q-D6` del reparto),
+ * no una decisión de esta pantalla, así que se usa la salida que el propio
+ * contrato documenta: `OTHER` es el único que **exige texto**
+ * (`requiresText: true`), y el texto es exactamente para esto.
+ *
+ * El día que negocio decida el tipo propio, lo que cambia es una constante.
+ */
+const MOTIVO_DE_OTROS_SERVICIOS = 'Otros servicios';
+
+/** Los siete días, como los numera `PublishedRule.dayOfWeek` (0 = domingo). */
+const DIAS_DE_LA_SEMANA: readonly SegmentedOption<string>[] = [
+  { value: '1', label: 'Lun' },
+  { value: '2', label: 'Mar' },
+  { value: '3', label: 'Mié' },
+  { value: '4', label: 'Jue' },
+  { value: '5', label: 'Vie' },
+  { value: '6', label: 'Sáb' },
+  { value: '0', label: 'Dom' },
+];
+
 @Component({
   selector: 'app-my-services',
   imports: [
     AppButton,
     Badge,
+    Alert,
+    ContentDialog,
+    ScheduleGrid,
+    SegmentedControl,
+    FilterBar,
     FormField,
     Input,
     PageHeader,
@@ -129,16 +183,198 @@ const SIN_PRACTICA_ELEGIDA = empty(
     ViewStateHost,
   ],
   templateUrl: './my-services.html',
-  // La hoja compartida va **primera**: Angular concatena los estilos en este
-  // orden, y lo de abajo son los ajustes de esta pantalla sobre esa base.
+  // Las hojas compartidas van **primero**: Angular concatena los estilos en
+  // este orden, y lo de abajo son los ajustes de esta pantalla sobre esa base.
   // Al revés, `.rejilla` pisaría a `.mis-servicios__rejilla` —misma
   // especificidad, gana la última— y el ancho de columna de acá no se aplicaría.
-  styleUrls: ['../../shared/styles/rejilla-de-tarjetas.css', './my-services.css'],
+  styleUrls: [
+    '../../shared/styles/rejilla-de-tarjetas.css',
+    '../../shared/styles/tarjeta-de-servicio.css',
+    './my-services.css',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyServices {
+  /* -- Programar el horario de un servicio propio (C-12) -------------------- */
+
+  /** El servicio cuyo horario se está programando, o `null`. */
+  protected readonly programando = signal<ServiceCatalogItem | null>(null);
+
+  /** La agenda del profesional: es sobre ella que se bloquea el rato. */
+  private readonly recursoPropio = signal<AgendaResource | null>(null);
+
+  /** El horario publicado, para dibujar la MISMA grilla que «Mis horarios». */
+  protected readonly reglasDelHorario = signal<readonly PublishedRule[]>([]);
+
+  /** Lo ya bloqueado de la semana, para que la grilla lo pinte igual que allá. */
+  protected readonly bloqueosDeLaSemana = signal<readonly BloqueoDelMes[]>([]);
+
+  protected readonly diasDeLaSemana = DIAS_DE_LA_SEMANA;
+  protected readonly diaElegido = signal('1');
+  protected readonly desdeElegido = signal('14:00');
+  protected readonly hastaElegido = signal('16:00');
+  protected readonly guardandoHorario = signal(false);
+  protected readonly errorDelHorario = signal<string | null>(null);
+
+  /** Sin agenda propia no hay dónde bloquear: se dice, no se ofrece a medias. */
+  protected readonly sinAgendaPropia = computed(() => this.recursoPropio() === null);
+
+  /**
+   * Abre la programación del horario de un servicio.
+   *
+   * **Recicla las vistas del horario, no crea unas nuevas** (C-12 lo pide con
+   * esas palabras): el modal monta `app-schedule-grid` —el mismo organismo que
+   * dibuja «Mis horarios de atención»— con las reglas publicadas y los bloqueos
+   * ya creados, para que el rato del servicio se elija mirando el horario real
+   * y no una grilla inventada al lado.
+   */
+  protected programarHorario(servicio: ServiceCatalogItem): void {
+    this.errorDelHorario.set(null);
+    this.programando.set(servicio);
+    this.leerAgendaDelProfesional();
+  }
+
+  /**
+   * Las horas del rango, desde el campo de texto.
+   *
+   * `app-input` emite `string | number | null` —sirve también para campos
+   * numéricos—, y acá siempre es texto: se normaliza en un solo lugar en vez de
+   * castear en la plantilla, donde el error no se ve.
+   */
+  protected fijarDesde(valor: string | number | null): void {
+    this.desdeElegido.set(valor === null ? '' : String(valor));
+  }
+
+  protected fijarHasta(valor: string | number | null): void {
+    this.hastaElegido.set(valor === null ? '' : String(valor));
+  }
+
+  protected cerrarProgramacion(): void {
+    this.programando.set(null);
+  }
+
+  /**
+   * Guarda el rato del servicio como una **excepción de disponibilidad** sobre
+   * la agenda del profesional.
+   *
+   * Es lo que produce el bloqueo que el pedido exige: el mismo mecanismo con
+   * que se bloquea un día, aplicado a un rato. No es una agenda propia del
+   * servicio —eso sería un segundo calendario que nadie cruza con el clínico—,
+   * y el supuesto está declarado como `Q-P5`.
+   */
+  protected guardarHorarioDelServicio(): void {
+    const servicio = this.programando();
+    const recurso = this.recursoPropio();
+    if (servicio === null || recurso === null || this.guardandoHorario()) return;
+
+    const rango = this.rangoElegido();
+    if (rango === null) {
+      this.errorDelHorario.set('El horario tiene que empezar antes de terminar.');
+      return;
+    }
+
+    this.guardandoHorario.set(true);
+    this.errorDelHorario.set(null);
+    this.scheduling
+      .createException(recurso.id, {
+        exceptionType: 'OTHER',
+        startAt: rango.desde.toISOString(),
+        endAt: rango.hasta.toISOString(),
+        reason: `${MOTIVO_DE_OTROS_SERVICIOS} · ${servicio.name}`,
+      })
+      .subscribe({
+        next: (creada) => {
+          this.guardandoHorario.set(false);
+          this.programando.set(null);
+          this.toasts.success(
+            creada.blockedSlots === 0
+              ? `Ese rato queda bloqueado en tu agenda como «${MOTIVO_DE_OTROS_SERVICIOS}».`
+              : `Ese rato queda bloqueado como «${MOTIVO_DE_OTROS_SERVICIOS}» y dejaron de ofrecerse ${creada.blockedSlots} turnos.`,
+            servicio.name,
+          );
+        },
+        error: (error: unknown) => {
+          this.guardandoHorario.set(false);
+          this.errorDelHorario.set(
+            (error instanceof HttpErrorResponse ? readApiError(error)?.message : null) ??
+              'No se pudo bloquear ese rato. Probá de nuevo.',
+          );
+        },
+      });
+  }
+
+  /** El rato elegido, sobre la próxima fecha de ese día de la semana. */
+  private rangoElegido(): { desde: Date; hasta: Date } | null {
+    const dia = Number(this.diaElegido());
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    // El próximo día de la semana elegido, hoy incluido: programar «los martes»
+    // desde un martes tiene que empezar hoy, no dentro de siete días.
+    base.setDate(base.getDate() + ((dia - base.getDay() + 7) % 7));
+
+    const desde = this.conHora(base, this.desdeElegido());
+    const hasta = this.conHora(base, this.hastaElegido());
+    if (desde === null || hasta === null || desde.getTime() >= hasta.getTime()) return null;
+    return { desde, hasta };
+  }
+
+  private conHora(dia: Date, hhmm: string): Date | null {
+    const match = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(hhmm.trim());
+    if (match === null) return null;
+    const fecha = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate());
+    fecha.setHours(Number(match[1]), Number(match[2]), 0, 0);
+    return fecha;
+  }
+
+  /** La agenda del profesional y su horario, para la grilla reciclada. */
+  private leerAgendaDelProfesional(): void {
+    const tenantId = this.auth.activeTenantId();
+    const perfil = this.auth.practitionerProfileId();
+    if (tenantId === null || perfil === null) {
+      this.recursoPropio.set(null);
+      return;
+    }
+    this.scheduling.listResources({ tenantId }).subscribe({
+      next: (pagina) => {
+        const propio = pagina.items.find((r) => r.resourceRefId === perfil) ?? null;
+        this.recursoPropio.set(propio);
+        if (propio === null) return;
+        this.scheduling.listTemplates(propio.id).subscribe({
+          next: (plantillas) =>
+            this.reglasDelHorario.set(
+              plantillas.items.find((t) => !t.retired)?.rules ?? [],
+            ),
+          error: () => this.reglasDelHorario.set([]),
+        });
+        const lunes = new Date();
+        lunes.setHours(0, 0, 0, 0);
+        lunes.setDate(lunes.getDate() - ((lunes.getDay() + 6) % 7));
+        const siguiente = new Date(lunes);
+        siguiente.setDate(siguiente.getDate() + 7);
+        this.scheduling.listExceptions(propio.id, { from: lunes, to: siguiente }).subscribe({
+          next: (pagina2) =>
+            this.bloqueosDeLaSemana.set(
+              pagina2.items
+                .filter((e) => e.isAvailable !== true)
+                .map((e) => ({
+                  id: e.id,
+                  desde: new Date(e.startAt),
+                  hasta: new Date(e.endAt),
+                  motivo: e.reason ?? null,
+                })),
+            ),
+          error: () => this.bloqueosDeLaSemana.set([]),
+        });
+      },
+      error: () => this.recursoPropio.set(null),
+    });
+  }
+
   private readonly catalog = inject(ServicesCatalogClient);
+  private readonly scheduling = inject(SchedulingClient);
+  private readonly auth = inject(AuthService);
   private readonly navigation = inject(NavigationService);
+  private readonly route = inject(ActivatedRoute);
   private readonly toasts = inject(ToastService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
@@ -177,10 +413,68 @@ export class MyServices {
   /** Con una sola práctica no hay nada que elegir, y el selector sobra. */
   protected readonly hayQueElegirPractica = computed(() => this.opcionesDePractica().length > 1);
 
+  /* ---- buscador y filtros --------------------------------------------------
+
+     El catálogo de una práctica grande son cientos de servicios apilados de a
+     veinticuatro: sin buscador, encontrar «Holter» es apretar «Cargar más»
+     hasta que aparezca. Los dos criterios los resuelve **el servidor** —`q` e
+     `isActive` ya existen en `GET /billing/service-catalog`—, así que filtrar
+     no es esconder tarjetas ya traídas: es pedir otra lista, y el conteo y el
+     «Cargar más» siguen diciendo la verdad.
+
+     El estado vive en la URL, que es la disciplina de `app-filter-bar` en
+     todos los listados: recargar o compartir el enlace reproduce lo mismo. Se
+     lee de `queryParams` y no del `filtersChanged` de la barra porque ésta
+     sólo avisa cuando ella misma cambia algo, y así un enlace que ya trae
+     `?q=` entra filtrado. */
+
+  private readonly criterios = toSignal(
+    this.route.queryParams.pipe(map((params) => params as Record<string, string>)),
+    { initialValue: {} as Record<string, string> },
+  );
+
+  protected readonly filtros: readonly FilterDef[] = [
+    {
+      key: 'estado',
+      label: 'Estado',
+      options: [
+        { value: 'activos', label: 'Activos' },
+        { value: 'inactivos', label: 'Inactivos' },
+      ],
+    },
+  ];
+
+  /** El texto buscado. Vacío es «sin filtro», no «buscar nada». */
+  private readonly texto = computed(() => this.criterios()['q'] ?? '');
+
+  /** `undefined` = los dos estados, que es lo que pide la pantalla sin filtro. */
+  private readonly soloActivos = computed<boolean | undefined>(() => {
+    const estado = this.criterios()['estado'] ?? '';
+    if (estado === 'activos') return true;
+    if (estado === 'inactivos') return false;
+    return undefined;
+  });
+
+  /** Si hay algo puesto: lo vacío del filtro no es lo vacío del catálogo. */
+  protected readonly hayCriterios = computed(
+    () => this.texto() !== '' || this.soloActivos() !== undefined,
+  );
+
   /* ---- catálogo ------------------------------------------------------------*/
 
   private readonly catalogo = signal<ViewState<readonly ServiceCatalogItem[]>>(loading());
   private readonly cursorSiguiente = signal<string | null>(null);
+
+  /**
+   * Qué lectura es la que vale. No es reactivo: es un sello.
+   *
+   * Con el buscador, dos lecturas de la **misma** práctica pueden estar en
+   * vuelo a la vez —«hol» y «holter»— y terminan en el orden que quiera la
+   * red. Comparar sólo la práctica ya no alcanza: sin este sello, la respuesta
+   * de «hol» pisa a la de «holter» y la pantalla muestra resultados que no
+   * corresponden a lo que quedó escrito.
+   */
+  private lectura = 0;
 
   protected readonly cargandoMas = signal(false);
 
@@ -235,11 +529,9 @@ export class MyServices {
     return Number(servicio.defaultPrice) === 0;
   }
 
-  /** El importe con su unidad, cuando la API pudo resolverla. */
+  /** El importe con la moneda visible («Bs»): ver `display-currency.ts`. */
   protected precio(servicio: ServiceCatalogItem): string {
-    return servicio.currencyCode === undefined
-      ? servicio.defaultPrice
-      : `${servicio.defaultPrice} ${servicio.currencyCode}`;
+    return withDisplayCurrency(servicio.defaultPrice, servicio.currencyCode);
   }
 
   protected editar(servicio: ServiceCatalogItem): void {
@@ -311,10 +603,13 @@ export class MyServices {
   constructor() {
     this.cargarPracticas();
 
-    // Elegir otra práctica es otro catálogo: lo acumulado era de la anterior y
-    // el cursor sólo sabe seguir aquella lista.
+    // Elegir otra práctica, escribir en el buscador o tocar el filtro son, los
+    // tres, otra lista: se vuelve a la primera página y lo acumulado se
+    // descarta, porque el cursor sólo sabe seguir la lista de la que salió.
     effect(() => {
       this.practicaElegida();
+      this.texto();
+      this.soloActivos();
       untracked(() => this.cargarPrimeraPagina());
     });
   }
@@ -339,17 +634,18 @@ export class MyServices {
       return;
     }
 
+    const lectura = this.lectura;
     this.cargandoMas.set(true);
-    this.catalog.search(practiceId, { limit: SERVICIOS_POR_PAGINA, cursor }).subscribe({
+    this.catalog.search(practiceId, { ...this.consulta(), cursor }).subscribe({
       next: (pagina) => {
-        if (this.llegoTarde(practiceId)) {
+        if (this.llegoTarde(practiceId, lectura)) {
           return;
         }
         this.cargandoMas.set(false);
         this.apilar(pagina);
       },
       error: (error: unknown) => {
-        if (this.llegoTarde(practiceId)) {
+        if (this.llegoTarde(practiceId, lectura)) {
           return;
         }
         this.cargandoMas.set(false);
@@ -371,6 +667,7 @@ export class MyServices {
   }
 
   private cargarPrimeraPagina(): void {
+    const lectura = ++this.lectura;
     this.cursorSiguiente.set(null);
     // Una página en vuelo de la práctica anterior ya no cuenta: su respuesta se
     // descarta, y el botón no puede quedarse cargando por ella.
@@ -387,26 +684,53 @@ export class MyServices {
 
     this.catalogo.set(loading());
 
-    this.catalog.search(practiceId, { limit: SERVICIOS_POR_PAGINA }).subscribe({
+    this.catalog.search(practiceId, this.consulta()).subscribe({
       next: (pagina) => {
-        if (this.llegoTarde(practiceId)) {
+        if (this.llegoTarde(practiceId, lectura)) {
           return;
         }
         this.cursorSiguiente.set(pagina.nextCursor);
         this.catalogo.set(
           pagina.items.length > 0
             ? ready(pagina.items)
-            : empty(SIN_SERVICIOS, 'Esta práctica todavía no tiene servicios en su catálogo.'),
+            : this.vacio(),
         );
       },
       error: (error: unknown) => {
-        if (this.llegoTarde(practiceId)) {
+        if (this.llegoTarde(practiceId, lectura)) {
           return;
         }
         this.cursorSiguiente.set(null);
         this.catalogo.set(errorToViewState<readonly ServiceCatalogItem[]>(error));
       },
     });
+  }
+
+  /** Los parámetros de la lectura: el tope de página más lo que se filtró. */
+  private consulta(): ServiceCatalogQuery {
+    const texto = this.texto();
+    const activos = this.soloActivos();
+    return {
+      limit: SERVICIOS_POR_PAGINA,
+      ...(texto === '' ? {} : { query: texto }),
+      ...(activos === undefined ? {} : { isActive: activos }),
+    };
+  }
+
+  /**
+   * Qué decir cuando no vino nada.
+   *
+   * Con un filtro puesto, «esta práctica todavía no tiene servicios» es falso
+   * —los tiene, ninguno coincide— y manda a pedirle un alta a una cuenta
+   * administradora que no hace falta.
+   */
+  private vacio(): ViewState<readonly ServiceCatalogItem[]> {
+    return this.hayCriterios()
+      ? empty(
+          { label: 'Probá con otra palabra o quitá el filtro.' },
+          'Ningún servicio de esta práctica coincide con lo que buscaste.',
+        )
+      : empty(SIN_SERVICIOS, 'Esta práctica todavía no tiene servicios en su catálogo.');
   }
 
   /**
@@ -416,8 +740,8 @@ export class MyServices {
    * página lenta de la práctica anterior pisa a la que ya se está mirando y la
    * pantalla muestra servicios de otra práctica bajo su nombre.
    */
-  private llegoTarde(practiceId: string): boolean {
-    return this.practicaElegida() !== practiceId;
+  private llegoTarde(practiceId: string, lectura: number): boolean {
+    return this.practicaElegida() !== practiceId || this.lectura !== lectura;
   }
 
   private apilar(pagina: ServiceCatalogPage): void {

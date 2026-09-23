@@ -132,7 +132,7 @@ describe('security-headers', () => {
       expect(contentSecurityPolicy()).not.toContain('fonts.googleapis.com');
     });
 
-    it('abre imágenes SOLO a los tiles de OpenStreetMap, y nada más sale a terceros', () => {
+    it('abre imágenes SOLO a los tiles del proveedor del mapa, y nada más sale a terceros', () => {
       const csp = contentSecurityPolicy();
 
       // El mapa (Leaflet sin clave de API) pide sus tiles directo del
@@ -141,6 +141,8 @@ describe('security-headers', () => {
       // El permiso es de imágenes: scripts y conexiones no se abren con él.
       expect(csp).not.toContain('script-src \'self\' https://tile.openstreetmap.org');
       expect(csp).not.toContain('connect-src \'self\' https://tile.openstreetmap.org');
+      // CARTO quedó cerrado: sus mosaicos llegan con marca de agua.
+      expect(csp).not.toContain('cartocdn');
     });
 
     it('con la API en el mismo origen, `connect-src` se queda en `self`', () => {

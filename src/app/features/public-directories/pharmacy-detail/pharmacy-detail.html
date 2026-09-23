@@ -1,0 +1,457 @@
+<app-page-header [title]="titulo()" [subtitle]="bajada()" [breadcrumbs]="breadcrumbs()" />
+
+<div class="ficha-publica">
+  <app-view-state-host [state]="estadoDeLaFicha()" (retry)="cargar()">
+    @if (ficha(); as perfil) {
+      <app-card variant="outlined" padding="lg">
+        <app-section-heading card-header icono="pill" titulo="La farmacia" />
+        <app-fact-list disposicion="columnas" [hechos]="identificacion(perfil)" />
+
+        @if (perfil.biography) {
+          <p class="ficha-publica__bio">{{ perfil.biography }}</p>
+        }
+
+        <!-- El mapa va DENTRO de la card del resumen y no en una segunda:
+             es el mismo dato que la fila «Dirección», dibujado en vez de
+             escrito, y dos cards apiladas para decir lo mismo dos veces son
+             justo lo que prohíbe la regla §5 de `composition-rules.md`.
+
+             Sin coordenadas no se dibuja nada: un mapa centrado en la ciudad
+             no ubica una farmacia, y un hueco gris se lee como algo que no
+             cargó. La dirección de arriba sigue siendo la respuesta. -->
+        @if (pines().length > 0) {
+          <div class="ficha-publica__mapa">
+            <app-map [pines]="pines()" [etiqueta]="etiquetaDelMapa()" />
+          </div>
+        }
+      </app-card>
+    }
+  </app-view-state-host>
+
+  <!-- ==========================================================================
+       Sucursales, ubicación y receta (P37).
+
+       Las tres contestan una sola pregunta —«¿a cuál voy con esto?»— y por eso
+       van juntas: la lista dice cuáles hay, la ubicación ordena por cercanía y
+       la receta dice cuál las tiene. Va antes del catálogo porque quien llega
+       con una receta primero elige mostrador.
+       ========================================================================== -->
+  <section aria-label="Sucursales y tu receta">
+    <div class="ficha-publica__encabezado">
+      <app-section-heading
+        class="ficha-publica__titulo"
+        icono="building"
+        titulo="Sucursales"
+        [cuantos]="sucursales().length"
+      />
+
+      <!-- El botón dice lo que hace y lo que se gana. «Permitir ubicación» a
+           secas no explica por qué alguien entregaría dónde está. -->
+      @if (!pidiendoUbicacion() && ubicacion() === null) {
+        <button app-button variant="secondary" size="sm" (clicked)="usarMiUbicacion()">
+          Usar mi ubicación para ver la más cercana
+        </button>
+      } @else if (pidiendoUbicacion()) {
+        <p class="ficha-publica__cuenta" role="status">Esperando tu ubicación…</p>
+      } @else {
+        <p class="ficha-publica__cuenta" role="status">
+          Distancias desde donde estás, en línea recta.
+        </p>
+      }
+    </div>
+
+    @if (ubicacionRechazada()) {
+      <p class="ficha-publica__nota" role="status">
+        No pudimos leer tu ubicación. Las sucursales se listan igual, con su
+        dirección; podés habilitarla desde la configuración del navegador.
+      </p>
+    }
+
+    <app-view-state-host [state]="estadoDeSucursales()" (retry)="cargarSucursales()">
+      <div vsh-skeleton class="rejilla ficha-publica__rejilla">
+        @for (hueco of huecosDelEsqueleto; track hueco) {
+          <app-skeleton variant="rect" height="9rem" />
+        }
+      </div>
+
+      <ul class="rejilla ficha-publica__rejilla" data-testid="pharmacy-branches">
+        @for (sucursal of sucursalesOrdenadas(); track sucursal.slug) {
+          <li>
+            <!-- La que se está mirando NO es un enlace: llevaría a la misma
+                 página. Las otras sí, y la tarjeta entera es el control. -->
+            @if (sucursal.isCurrent) {
+              <article class="rejilla__tarjeta" data-testid="pharmacy-branch">
+                <app-nav-icon class="rejilla__icono" name="pill" />
+
+                <div class="ficha-publica__titular">
+                  <h3 class="rejilla__nombre">{{ sucursal.siteName }}</h3>
+                  <app-chip class="ficha-publica__grupo-chip" size="sm" variant="info" label="Estás viendo ésta">
+                    Estás viendo ésta
+                  </app-chip>
+                </div>
+
+                <p class="rejilla__dato">{{ dondeQueda(sucursal) }}</p>
+                @if (sucursal.openingHours) {
+                  <p class="rejilla__resumen">{{ sucursal.openingHours }}</p>
+                }
+                @if (sucursal.phone) {
+                  <p class="rejilla__resumen">{{ sucursal.phone }}</p>
+                }
+                @if (puntoAproximado(sucursal); as aviso) {
+                  <p class="rejilla__resumen">{{ aviso }}</p>
+                }
+                @if (distanciaDe(sucursal); as lejos) {
+                  <p class="ficha-publica__sellos ficha-publica__sellos--pie">
+                    <app-badge variant="info" [value]="'A ' + lejos + ' en línea recta'" />
+                    @if (sucursal.slug === slugMasCercano()) {
+                      <app-badge variant="success" value="La más cercana" />
+                    }
+                  </p>
+                }
+              </article>
+            } @else {
+              <a class="rejilla__tarjeta" [routerLink]="fichaDe(sucursal)" data-testid="pharmacy-branch">
+                <app-nav-icon class="rejilla__icono" name="pill" />
+
+                <div class="ficha-publica__titular">
+                  <h3 class="rejilla__nombre">{{ sucursal.siteName }}</h3>
+                </div>
+
+                <p class="rejilla__dato">{{ dondeQueda(sucursal) }}</p>
+                @if (sucursal.openingHours) {
+                  <p class="rejilla__resumen">{{ sucursal.openingHours }}</p>
+                }
+                @if (sucursal.phone) {
+                  <p class="rejilla__resumen">{{ sucursal.phone }}</p>
+                }
+                @if (puntoAproximado(sucursal); as aviso) {
+                  <p class="rejilla__resumen">{{ aviso }}</p>
+                }
+                @if (distanciaDe(sucursal); as lejos) {
+                  <p class="ficha-publica__sellos ficha-publica__sellos--pie">
+                    <app-badge variant="info" [value]="'A ' + lejos + ' en línea recta'" />
+                    @if (sucursal.slug === slugMasCercano()) {
+                      <app-badge variant="success" value="La más cercana" />
+                    }
+                  </p>
+                }
+              </a>
+            }
+          </li>
+        }
+      </ul>
+    </app-view-state-host>
+
+    <!-- ---- la receta ---------------------------------------------------- -->
+
+    <h3 class="ficha-publica__subtitulo">¿Cuál tiene lo de tu receta?</h3>
+    <p class="ficha-publica__nota">
+      Escribí los medicamentos de tu receta, uno por línea. Buscamos en el
+      catálogo publicado de cada sucursal y te decimos cuál los tiene; con tu
+      ubicación, además, cuál te queda más cerca.
+    </p>
+
+    <div class="ficha-publica__receta">
+      <app-form-field
+        class="ficha-publica__receta-campo"
+        label="Medicamentos de tu receta"
+        hint="Uno por línea. También sirven separados por coma."
+      >
+        <app-textarea
+          [(value)]="receta"
+          [rows]="4"
+          placeholder="Paracetamol 500 mg&#10;Amoxicilina 500 mg"
+        />
+      </app-form-field>
+
+      <div class="ficha-publica__receta-acciones">
+        <button
+          app-button
+          variant="primary"
+          [disabled]="renglonesDeLaReceta().length === 0"
+          [isLoading]="buscando()"
+          (clicked)="buscarLaReceta()"
+        >
+          Buscar en las sucursales
+        </button>
+        @if (receta().trim() !== '') {
+          <button app-button variant="ghost" (clicked)="limpiarLaReceta()">Limpiar</button>
+        }
+      </div>
+    </div>
+
+    @if (falloLaBusqueda()) {
+      <p class="ficha-publica__vacio" role="status">
+        No pudimos consultar las sucursales. Probá de nuevo en un momento.
+      </p>
+    }
+
+    @if (resultados(); as encontrado) {
+      @if (recomendada(); as elegida) {
+        <!-- La recomendación va primero y con su motivo: una sugerencia sin
+             por qué obliga a creerle o a ignorarla, y las dos son malas. -->
+        <div class="ficha-publica__recomendacion" role="status" data-testid="pharmacy-recommended">
+          <p class="ficha-publica__recomendacion-rotulo">Te recomendamos</p>
+          <p class="ficha-publica__recomendacion-nombre">{{ elegida.branch.siteName }}</p>
+          <p class="ficha-publica__recomendacion-motivo">
+            {{ dondeQueda(elegida.branch) }} — {{ motivoDeLaRecomendacion() }}
+          </p>
+        </div>
+      }
+
+      <!-- Ocho y no las treinta y cinco: la lista completa de sucursales ya
+           está arriba, y repetirla entera con un renglón de precios cada una
+           entierra la recomendación bajo tres pantallas de scroll. Cuántas se
+           muestran y de cuántas se dice con todas las letras — esconder sin
+           avisar es lo que no se puede hacer. -->
+      @if (encontrado.length > resultadosVisibles().length) {
+        <p class="ficha-publica__cuenta" role="status">
+          Las {{ resultadosVisibles().length }} mejores de {{ encontrado.length }} sucursales.
+          @if (ubicacion() === null) {
+            Compartí tu ubicación para ordenarlas por cercanía.
+          }
+        </p>
+      }
+
+      <ul class="rejilla ficha-publica__rejilla" data-testid="pharmacy-availability">
+        @for (fila of resultadosVisibles(); track fila.branch.slug) {
+          <li>
+            <article class="rejilla__tarjeta" data-testid="pharmacy-availability-row">
+              <div class="ficha-publica__titular">
+                <h4 class="rejilla__nombre">{{ fila.branch.siteName }}</h4>
+                @if (fila.complete) {
+                  <app-badge variant="success" value="Tiene todo" />
+                } @else if (fila.matches.length > 0) {
+                  <app-badge
+                    variant="warning"
+                    [value]="'Le faltan ' + fila.missing.length"
+                  />
+                } @else {
+                  <app-badge variant="secondary" value="No tiene nada" />
+                }
+              </div>
+
+              <p class="rejilla__dato">{{ dondeQueda(fila.branch) }}</p>
+
+              @if (fila.distanceKm !== null) {
+                <p class="rejilla__resumen">
+                  A {{ distancia(fila.distanceKm) }} en línea recta, no de recorrido.
+                </p>
+              }
+              @if (puntoAproximado(fila.branch); as aviso) {
+                <p class="rejilla__resumen">{{ aviso }}</p>
+              }
+
+              @if (fila.matches.length > 0) {
+                <ul class="ficha-publica__lineas">
+                  @for (linea of fila.matches; track linea.term) {
+                    <li>
+                      {{ linea.genericName }}
+                      @if (linea.brandName) {
+                        · {{ linea.brandName }}
+                      }
+                      <span class="tabular-nums">
+                        {{ importe(linea.price, linea.currency) ?? 'Sin precio publicado' }}
+                      </span>
+                    </li>
+                  }
+                </ul>
+              }
+
+              @if (fila.missing.length > 0) {
+                <p class="rejilla__resumen">
+                  No tiene: {{ fila.missing.join(', ') }}
+                </p>
+              }
+
+              @if (importe(fila.totalAmount, fila.currency); as total) {
+                <dl class="ficha-publica__precio">
+                  <dt class="ficha-publica__rotulo">
+                    {{ fila.complete ? 'Total de la receta' : 'Total de lo que tiene' }}
+                  </dt>
+                  <dd class="ficha-publica__monto tabular-nums">{{ total }}</dd>
+                </dl>
+              }
+            </article>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <!-- `aria-label` y no `aria-labelledby`: `app-section-heading` dibuja el
+       `<h2>` adentro y no expone su id, así que no hay a quién apuntar. -->
+  <section aria-label="Medicamentos y precios">
+    <!-- El buscador va en el encabezado de la sección y no encima de la
+         rejilla: ahí se leería como un filtro de la ficha entera. Desde siete
+         medicamentos, el mismo umbral que la ficha de un laboratorio. -->
+    <div class="ficha-publica__encabezado">
+      <app-section-heading
+        class="ficha-publica__titulo"
+        icono="pill"
+        titulo="Medicamentos y precios"
+        [cuantos]="items().length"
+      />
+
+      @if (items().length >= MINIMO_PARA_BUSCAR) {
+        <app-search-field
+          class="ficha-publica__buscador"
+          [(value)]="termino"
+          label="Buscar en medicamentos y precios"
+          placeholder="Buscar por nombre, marca o grupo"
+        />
+      }
+    </div>
+
+    <p class="ficha-publica__nota">
+      Precios publicados por la farmacia. Los medicamentos con receta se
+      entregan sólo contra la receta del profesional.
+    </p>
+
+    <app-view-state-host [state]="estadoDelCatalogo()" (retry)="recargarCatalogo()">
+      <div vsh-skeleton class="rejilla ficha-publica__rejilla">
+        @for (hueco of huecosDelEsqueleto; track hueco) {
+          <app-skeleton variant="rect" height="11rem" />
+        }
+      </div>
+
+      @if (items().length === 0) {
+        <p class="ficha-publica__vacio" role="status">
+          Esta farmacia todavía no publicó su catálogo de medicamentos.
+        </p>
+      } @else {
+        <!-- Los chips son el corte por grupo terapéutico que antes partía el
+             catálogo en tramos con un `<h3>` encima. Como filtro sirve para lo
+             mismo —encontrar sin buscar— y además se combina con el texto y
+             con el stock, que un encabezado no podía. Cada renglón es un
+             `role="group"` con su rótulo, para que un lector de pantalla diga
+             «Grupo terapéutico, grupo» antes de leer los chips.
+
+             Con un solo grupo no hay nada que acotar: el chip filtraría el
+             catálogo entero hacia sí mismo. -->
+        @if (grupos().length > 1) {
+          <div class="ficha-publica__filtros" role="group" aria-label="Grupo terapéutico">
+            <span class="ficha-publica__filtros-rotulo">Grupo terapéutico</span>
+            @for (grupo of grupos(); track grupo) {
+              <app-chip
+                size="sm"
+                variant="info"
+                [selectable]="true"
+                [label]="grupo"
+                [selected]="grupoElegido(grupo)"
+                (selectedChange)="alternarGrupo(grupo)"
+              >
+                {{ grupo }}
+              </app-chip>
+            }
+          </div>
+        }
+
+        <!-- Lo excepcional de una góndola: lo que está y lo que se lleva sin
+             receta. Son los dos motivos por los que alguien se va con las
+             manos vacías, así que son los dos que se pueden acotar. -->
+        <div class="ficha-publica__filtros" role="group" aria-label="Disponibilidad">
+          <span class="ficha-publica__filtros-rotulo">Disponibilidad</span>
+          <app-chip
+            size="sm"
+            variant="success"
+            [selectable]="true"
+            [(selected)]="soloConStock"
+            label="Con stock"
+          >
+            Con stock
+          </app-chip>
+          <app-chip
+            size="sm"
+            variant="neutral"
+            [selectable]="true"
+            [(selected)]="soloSinReceta"
+            label="Sin receta"
+          >
+            Sin receta
+          </app-chip>
+        </div>
+
+        <!-- La cuenta se anuncia sola: quien filtra con el teclado o con un
+             lector de pantalla no ve encogerse la rejilla, y sin esto tocar un
+             chip no tendría ninguna respuesta audible. -->
+        @if (hayFiltros()) {
+          <div class="ficha-publica__resultado">
+            <p class="ficha-publica__cuenta" role="status" aria-live="polite">
+              {{ visibles().length }} de {{ items().length }} medicamentos
+            </p>
+            <button app-button variant="ghost" size="sm" (clicked)="limpiarFiltros()">
+              Limpiar filtros
+            </button>
+          </div>
+        }
+
+        @if (visibles().length === 0) {
+          <p class="ficha-publica__vacio" role="status">{{ mensajeSinCoincidencias() }}</p>
+        } @else {
+          <!-- Lista y no una hilera de `div`: un lector de pantalla anuncia
+               cuántos medicamentos hay antes de leer el primero. -->
+          <ul class="rejilla ficha-publica__rejilla" data-testid="pharmacy-products">
+            @for (producto of visibles(); track producto.id) {
+              <li>
+                <article class="rejilla__tarjeta" data-testid="pharmacy-product">
+                  <app-service-icon class="rejilla__icono" [servicio]="producto.genericName" />
+
+                  <div class="ficha-publica__titular">
+                    <h3 class="rejilla__nombre">{{ producto.genericName }}</h3>
+
+                    <!-- El grupo terapéutico, adentro de la tarjeta que
+                         describe: es un dato del medicamento, no un título de
+                         la lista. Estático —no se toca—: el que filtra es el
+                         chip de arriba, y dos chips iguales que hacen cosas
+                         distintas es peor que uno solo. -->
+                    @if (producto.therapeuticGroup) {
+                      <app-chip
+                        class="ficha-publica__grupo-chip"
+                        size="sm"
+                        variant="neutral"
+                        [label]="producto.therapeuticGroup"
+                      >
+                        {{ producto.therapeuticGroup }}
+                      </app-chip>
+                    }
+                  </div>
+
+                  @if (marcaYPresentacion(producto); as detalle) {
+                    <p class="rejilla__dato">{{ detalle }}</p>
+                  }
+
+                  <dl class="ficha-publica__precio">
+                    <dt class="ficha-publica__rotulo">Precio</dt>
+                    <dd
+                      class="ficha-publica__monto tabular-nums"
+                      data-testid="pharmacy-product-price"
+                    >
+                      @if (importe(producto.price, producto.currency); as monto) {
+                        {{ monto }}
+                      } @else {
+                        <span class="ficha-publica__sin-precio">Sin precio publicado</span>
+                      }
+                    </dd>
+                  </dl>
+
+                  <!-- Los dos distintivos son lo excepcional: lo que hay en
+                       stock y lo que se vende libre no se rotulan, porque
+                       rotularlo todo deja la rejilla sin nada que mirar. -->
+                  <p class="ficha-publica__sellos">
+                    @if (!producto.inStock) {
+                      <app-badge variant="warning" value="Sin stock" />
+                    }
+                    @if (producto.requiresPrescription) {
+                      <app-badge variant="secondary" value="Con receta" />
+                    }
+                  </p>
+                </article>
+              </li>
+            }
+          </ul>
+        }
+      }
+    </app-view-state-host>
+  </section>
+</div>

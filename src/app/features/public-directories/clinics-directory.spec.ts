@@ -73,6 +73,7 @@ function ficha(nombre: string, city: string | null, verified = false): PublicSea
     location: null,
     hasPublishedAgenda: false,
     nextAvailableDate: null,
+    category: null,
   };
 }
 
@@ -229,6 +230,32 @@ describe('ClinicsDirectory · los chips de ciudad cuelgan del departamento', () 
         queryParamsHandling: 'merge',
       }),
     );
+  });
+
+  it('ninguna tarjeta lleva a la red social: la ficha vive dentro del panel', () => {
+    montar();
+
+    const destinos = tramos().flatMap((tramo) => tramo.resultados.map((tarjeta) => tarjeta.link));
+    expect(destinos.length).toBeGreaterThan(0);
+    // El pedido del cliente, literal: «no debería bajo ningún concepto» abrir
+    // la red social. `/o/:slug` es la ficha anónima bajo el marco del buscador
+    // público, y era a donde llevaba cada tarjeta de este directorio.
+    expect(destinos.some((destino) => destino.startsWith('/o/'))).toBe(false);
+    for (const destino of destinos) {
+      expect(destino.startsWith('/clinics-directory/')).toBe(true);
+    }
+  });
+
+  it('los enlaces dibujados apuntan al mismo lugar que el modelo', () => {
+    montar();
+
+    const pantalla = fixture.nativeElement as HTMLElement;
+    const enlaces = [...pantalla.querySelectorAll<HTMLAnchorElement>('[app-result-card] a')];
+    expect(enlaces.length).toBeGreaterThan(0);
+    for (const enlace of enlaces) {
+      // El atributo y no la propiedad: `href` resuelto traería el origen.
+      expect(enlace.getAttribute('href')).toMatch(/^\/clinics-directory\//u);
+    }
   });
 
   it('el mapa sigue contando lo que hay en cada departamento, esté o no elegido', () => {

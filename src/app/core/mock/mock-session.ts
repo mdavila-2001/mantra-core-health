@@ -18,6 +18,8 @@ export interface MockUser {
   readonly roles: readonly string[];
   readonly tenants: readonly string[];
   readonly tenantNames: Readonly<Record<string, string>>;
+  /** Su organización propia, la que se activa por defecto («Mi consultorio»). */
+  readonly ownTenantId?: string;
   readonly patientProfileId?: string;
   readonly practitionerProfileId?: string;
   readonly personId: string;
@@ -29,8 +31,11 @@ export const TENANT_PLATAFORMA = uuid('tenant-plataforma-alovida');
 export const TENANT_FARMACIA = uuid('tenant-farmacia-vida');
 export const TENANT_LABORATORIO = uuid('tenant-laboratorio-central');
 export const TENANT_ASEGURADORA = uuid('tenant-seguros-andina');
+/** El consultorio propio de la médica: su organización por defecto. */
+export const TENANT_CONSULTORIO = uuid('tenant-consultorio-rojas');
 
 export const TENANT_NAMES: Readonly<Record<string, string>> = {
+  [TENANT_CONSULTORIO]: 'Consultorio Dra. Rojas',
   [TENANT_CLINICA]: 'Clínica Los Olivos',
   [TENANT_HOSPITAL]: 'Hospital San Lucas',
   [TENANT_PLATAFORMA]: 'AloVida Plataforma',
@@ -82,8 +87,11 @@ export const MOCK_USERS: readonly MockUser[] = [
     nationalId: '4567890',
     displayName: 'Dra. Valeria Rojas Mendoza',
     roles: ['PRACTITIONER', 'CLINICIAN', 'SCHEDULING_ADMIN'],
-    tenants: [TENANT_CLINICA, TENANT_HOSPITAL],
-    tenantNames: TENANT_NAMES,
+    // «Mi consultorio» primero y como organización propia: entra ahí sin pasar
+    // por el selector, y las clínicas quedan a un cambio de distancia.
+    tenants: [TENANT_CONSULTORIO, TENANT_CLINICA, TENANT_HOSPITAL],
+    tenantNames: { ...TENANT_NAMES, [TENANT_CONSULTORIO]: 'Mi consultorio' },
+    ownTenantId: TENANT_CONSULTORIO,
     practitionerProfileId: IDS.medica.practitionerProfileId,
     personId: IDS.medica.personId,
   },
@@ -200,6 +208,7 @@ export function emitirAccessToken(user: MockUser, ahora = Date.now()): string {
       roles: user.roles,
       tenants: user.tenants,
       tenantNames: user.tenantNames,
+      ...(user.ownTenantId === undefined ? {} : { ownTenantId: user.ownTenantId }),
       ...(user.patientProfileId === undefined ? {} : { pid: user.patientProfileId }),
       ...(user.practitionerProfileId === undefined ? {} : { hpid: user.practitionerProfileId }),
       iat: Math.floor(ahora / 1000),

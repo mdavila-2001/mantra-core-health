@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  forwardRef,
   inject,
   input,
   output,
@@ -27,6 +28,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
+import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
 import { mensajeDeEscritura } from '../../mensaje-de-escritura';
 
 /** Qué se midió. Es lo único obligatorio del formulario, y lo dice el DTO. */
@@ -101,11 +103,12 @@ const CODIGO_EJECUTANTE_PROFESIONAL = 'OBSP-PRACTITIONER';
     Select,
     Textarea,
   ],
+  providers: [{ provide: DRAFT_BLOCK, useExisting: forwardRef(() => ObservationBlock) }],
   templateUrl: './observation-block.html',
   styleUrl: './observation-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ObservationBlock {
+export class ObservationBlock implements DraftBlock {
   private readonly clinical = inject(ClinicalClient);
   private readonly systemContext = inject(SystemContextClient);
   private readonly auth = inject(AuthService);
@@ -147,6 +150,19 @@ export class ObservationBlock {
   protected readonly valorEnPalabras = signal('');
   protected readonly tomadaEl = signal<Date | null>(null);
   protected readonly citaElegida = signal<string | null>(null);
+
+  /** Contrato de `DraftBlock` — si hay algo escrito que se perdería sin registrar. */
+  readonly tieneCambiosPendientes = computed(
+    () =>
+      this.medicion() !== null ||
+      this.categoria() !== null ||
+      this.interpretacion() !== null ||
+      this.unidad() !== null ||
+      String(this.valorNumerico() ?? '').trim() !== '' ||
+      this.valorEnPalabras().trim() !== '' ||
+      this.tomadaEl() !== null ||
+      this.citaElegida() !== null,
+  );
 
   protected readonly registrando = signal(false);
   protected readonly registro = signal<ViewState<null>>(ready(null));

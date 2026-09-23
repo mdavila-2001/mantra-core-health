@@ -1,6 +1,7 @@
 import { ROLE_ASSIGNMENT_STATUS } from '../../data-access/practice-sites/role-assignment-concepts';
 import { PRACTICE_CONSULTORIO, PRACTICE_OLIVOS, PRACTICE_SANLUCAS, SITIO_CONSULTORIO, SITIO_OLIVOS, SITIO_SANLUCAS } from '../fixtures/agenda';
 import { CARGO, ESPECIALIDAD, ESTABLECIMIENTO, ESTADO, PROCEDIMIENTO, displayDe } from '../fixtures/conceptos';
+import { DENTAL_FEE_SCHEDULE, MEDICAL_FEE_SCHEDULE } from '../fixtures/fee-schedules.generated';
 import { MEDICA, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
 import { noContent, notFound, type MockRouter } from '../mock-router';
 import { ahora, avatarSvg, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
@@ -62,37 +63,100 @@ export const servicios = new Coleccion<ServicioSimulado>([
   ...(i % 3 === 0 ? { imageFileId: uuid(`service-image-${code}`) } : {}),
 })));
 
-const NOMENCLADOR = [
-  ['Cardiología', 'CAR-001', 'Consulta cardiológica', '220.00'],
-  ['Cardiología', 'CAR-002', 'Electrocardiograma de 12 derivaciones', '110.00'],
-  ['Cardiología', 'CAR-003', 'Ecocardiograma bidimensional con Doppler', '450.00'],
-  ['Cardiología', 'CAR-004', 'Prueba de esfuerzo', '500.00'],
-  ['Cardiología', 'CAR-005', 'Holter 24 h', '330.00'],
-  ['Pediatría', 'PED-001', 'Consulta pediátrica', '180.00'],
-  ['Pediatría', 'PED-002', 'Control de niño sano', '150.00'],
-  ['Ginecología', 'GIN-001', 'Consulta ginecológica', '200.00'],
-  ['Ginecología', 'GIN-002', 'Papanicolaou', '120.00'],
-  ['Ginecología', 'GIN-003', 'Ecografía obstétrica', '280.00'],
-  ['Traumatología', 'TRA-001', 'Consulta traumatológica', '200.00'],
-  ['Traumatología', 'TRA-002', 'Infiltración articular', '350.00'],
-  ['Traumatología', 'TRA-003', 'Artroscopia de rodilla', '6500.00'],
-  ['Dermatología', 'DER-001', 'Consulta dermatológica', '190.00'],
-  ['Dermatología', 'DER-002', 'Crioterapia de lesiones', '260.00'],
-  ['Laboratorio', 'LAB-001', 'Hemograma completo', '60.00'],
-  ['Laboratorio', 'LAB-002', 'Perfil lipídico', '90.00'],
-  ['Laboratorio', 'LAB-003', 'Glucemia en ayunas', '35.00'],
-  ['Imagenología', 'IMG-001', 'Radiografía de tórax', '120.00'],
-  ['Imagenología', 'IMG-002', 'Tomografía de cráneo sin contraste', '850.00'],
-].map(([specialty, code, display, referencePrice], i) => ({
-  conceptId: uuid(`nomenclador-${code}`),
-  code: code!,
-  display: display!,
-  specialty: specialty!,
-  group: specialty!,
-  referencePrice: referencePrice!,
-  priceUnit: 'BOB',
-  ocrSuspect: i % 9 === 8,
+/* El nomenclador son los dos aranceles reales que entregó el propietario: el
+   de honorarios médicos del Colegio Médico de Santa Cruz (en UMA) y el
+   odontológico 2026 (en dólares). Antes eran veinte prestaciones inventadas en
+   bolivianos, con un `ocrSuspect` repartido cada nueve filas. Ver
+   `fee-schedules.generated.ts`. */
+const NOMENCLADOR = [...MEDICAL_FEE_SCHEDULE, ...DENTAL_FEE_SCHEDULE].map((item) => ({
+  conceptId: uuid(`nomenclador-${item.code}`),
+  code: item.code,
+  display: item.display,
+  specialty: item.specialty,
+  group: item.specialty,
+  referencePrice: item.referencePrice,
+  priceUnit: item.priceUnit,
+  ocrSuspect: item.ocrSuspect,
 }));
+
+/* ---- el catálogo que una organización publica en su ficha ---------------- */
+
+/**
+ * Un servicio tal como lo lee alguien de afuera: sin práctica, sin cuenta de
+ * ingresos y sin código impositivo. Es el espejo de `PublicOfferedService`.
+ */
+export interface ServicioPublicado {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly description: string | null;
+  readonly price: string | null;
+  readonly currency: string | null;
+  readonly isActive: boolean;
+}
+
+/**
+ * Qué práctica está detrás de la ficha pública de una organización.
+ *
+ * Sólo las dos que el simulador modela de verdad. Con esto, la ficha de
+ * «Clínica Los Olivos» muestra **el mismo catálogo** que la Dra. Rojas edita en
+ * «Mis servicios»: un demo donde la clínica publica una lista y su médica ve
+ * otra se lee como dos productos distintos.
+ */
+const PRACTICA_POR_SLUG: Readonly<Record<string, string>> = {
+  'clinica-los-olivos': PRACTICE_OLIVOS,
+  'hospital-san-lucas': PRACTICE_SANLUCAS,
+};
+
+/** Un entero estable por slug: el mismo catálogo en cada recarga y en cada máquina. */
+function semilla(slug: string): number {
+  return parseInt(uuid(`catalogo-${slug}`).slice(0, 8), 16);
+}
+
+/**
+ * El catálogo que publica una organización.
+ *
+ * Las que tienen práctica modelada publican **sus** servicios. Las demás —los
+ * hospitales y clínicas del resto del país— publican un tramo del nomenclador,
+ * elegido por el slug y por eso siempre el mismo: son procedimientos reales del
+ * catálogo del simulador con su precio de referencia, no importes inventados
+ * tarjeta por tarjeta.
+ */
+export function serviciosPublicadosDe(slug: string): readonly ServicioPublicado[] {
+  const practiceId = PRACTICA_POR_SLUG[slug];
+  const propios =
+    practiceId === undefined
+      ? []
+      : servicios.filtrar((s) => s.practiceId === practiceId).map((s) => ({
+          id: s.id,
+          code: s.code,
+          name: s.name,
+          description: s.descriptionText ?? null,
+          // Un cero es «nadie declaró el arancel», no «es gratis»: viaja como
+          // `null` y la ficha lo dice con palabras.
+          price: Number(s.defaultPrice) === 0 ? null : s.defaultPrice,
+          currency: Number(s.defaultPrice) === 0 ? null : s.currencyCode,
+          isActive: s.isActive,
+        }));
+  if (propios.length > 0) {
+    return propios;
+  }
+
+  const base = semilla(slug);
+  const cuantos = 6 + (base % 7);
+  return Array.from({ length: cuantos }, (_, i) => {
+    const n = NOMENCLADOR[(base + i * 3) % NOMENCLADOR.length]!;
+    return {
+      id: uuid(`public-service-${slug}-${n.code}`),
+      code: n.code,
+      name: n.display,
+      description: `${n.specialty} · prestación del nomenclador.`,
+      price: n.referencePrice,
+      currency: n.priceUnit,
+      isActive: true,
+    };
+  });
+}
 
 interface VinculacionSimulada {
   readonly id: string;
@@ -144,9 +208,16 @@ const vinculaciones = new Coleccion<VinculacionSimulada>([
   { id: uuid('ra-foianini'), practiceId: uuid('practice-foianini'), practiceName: 'Clínica Foianini', practiceType: 'Clínica', practiceSiteId: null, roleConceptId: CARGO['ROLE-MEDICO']!, specialtyConceptId: ESPECIALIDAD['MEDICINA_INTERNA']!, status: 'REJECTED', isPrimary: false, validFrom: null, validTo: null, createdAt: iso(-40), avatarUrl: avatarSvg('Clínica Foianini', '#b45309'), practitionerProfileId: MEDICA.id },
 ]);
 
-const sitiosPropios = new Coleccion<{ id: string; practiceId: string; code: string; name: string; timeZone: string | null; addressText: string | null; latitude: number | null; longitude: number | null; status: string; practitionerProfileId: string }>([
-  { ...SITIO_CONSULTORIO, practiceId: PRACTICE_CONSULTORIO, latitude: -17.7863, longitude: -63.1812, status: 'ACTIVE', practitionerProfileId: MEDICA.id },
-  { ...SITIO_OLIVOS, practiceId: PRACTICE_OLIVOS, latitude: -17.7712, longitude: -63.1955, status: 'ACTIVE', practitionerProfileId: MEDICA.id },
+const sitiosPropios = new Coleccion<{ id: string; practiceId: string; code: string; name: string; timeZone: string | null; addressText: string | null; latitude: number | null; longitude: number | null; status: string; practitionerProfileId: string; bankQrFileId: string | null }>([
+  // Sólo el consultorio propio arranca con QR bancario cargado: las otras tres
+  // sedes quedan sin él para que el aviso en ámbar —«todavía no configuraste
+  // ninguno»— se vea en la misma lista que el estado ya resuelto.
+  { ...SITIO_CONSULTORIO, practiceId: PRACTICE_CONSULTORIO, latitude: -17.7863, longitude: -63.1812, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: uuid('file-qr-consultorio') },
+  { ...SITIO_OLIVOS, practiceId: PRACTICE_OLIVOS, latitude: -17.7712, longitude: -63.1955, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: null },
+  // Dos sedes más para la médica: con cuatro, «Dónde atiende» de su ficha
+  // pública pasa de una página y se puede ver el paginado funcionando.
+  { ...SITIO_SANLUCAS, practiceId: PRACTICE_SANLUCAS, latitude: -17.762, longitude: -63.19, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: null },
+  { id: uuid('site-equipetrol-rojas'), name: 'Centro Médico Equipetrol', code: 'EQUIPETROL', addressText: 'Calle Las Palmas N.º 55, Equipetrol, Santa Cruz de la Sierra', timeZone: 'America/La_Paz', practiceId: PRACTICE_OLIVOS, latitude: -17.7648, longitude: -63.1978, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: null },
 ]);
 
 /**
@@ -166,10 +237,10 @@ export function sedesDe(practitionerProfileId: string): readonly SedeDeProfesion
     .filtrar((s) => s.practitionerProfileId === practitionerProfileId)
     .map(({ practitionerProfileId: _p, ...s }) => ({
       ...s,
-      esPropio: s.practiceId === PRACTICE_CONSULTORIO,
+      isOwnSite: s.practiceId === PRACTICE_CONSULTORIO,
     }));
   if (propias.length > 0) {
-    return [...propias].sort((a, b) => Number(b.esPropio) - Number(a.esPropio));
+    return [...propias].sort((a, b) => Number(b.isOwnSite) - Number(a.isOwnSite));
   }
 
   // Quien no cargó ninguna atiende donde su organización: es lo que el padrón
@@ -184,7 +255,10 @@ export function sedesDe(practitionerProfileId: string): readonly SedeDeProfesion
       latitude: p.lat,
       longitude: p.lng,
       status: 'ACTIVE',
-      esPropio: false,
+      isOwnSite: false,
+      // Una sede deducida de la organización no es una fila de nadie, así que
+      // no hay dónde guardarle un QR: se responde «sin configurar».
+      bankQrFileId: null,
     },
   ];
 }
@@ -201,7 +275,9 @@ export interface SedeDeProfesional {
   readonly longitude: number | null;
   readonly status: string;
   /** Si es el consultorio propio y no una sede de una organización. */
-  readonly esPropio: boolean;
+  readonly isOwnSite: boolean;
+  /** El QR bancario con el que el profesional cobra acá, o `null`. */
+  readonly bankQrFileId: string | null;
 }
 
 function concepto(code: string, display: string) {
@@ -249,7 +325,13 @@ export function registrarPracticas(router: MockRouter): void {
   router.get('/billing/service-catalog/procedure-specialties', () => {
     const conteo = new Map<string, number>();
     for (const n of NOMENCLADOR) conteo.set(n.specialty, (conteo.get(n.specialty) ?? 0) + 1);
-    return [...conteo.entries()].map(([specialty, count]) => ({ specialty, count }));
+    // Envuelto en `items`, como lo lee `listProcedureSpecialties()`: con el
+    // arreglo pelado el importador leía `body.items` → `undefined.map` y la
+    // pantalla del arancel se caía entera. Ordenado en español, como el servidor.
+    const items = [...conteo.entries()]
+      .map(([specialty, count]) => ({ specialty, count }))
+      .sort((a, b) => a.specialty.localeCompare(b.specialty, 'es'));
+    return { items };
   });
 
   router.get('/billing/service-catalog/procedures', ({ query }) => {
@@ -295,13 +377,18 @@ export function registrarPracticas(router: MockRouter): void {
   });
 
   router.get('/practitioners/me/sites', (request) => {
-    const items = sitiosPropios.filtrar((s) => s.practitionerProfileId === request.user?.practitionerProfileId).map(({ practitionerProfileId: _p, ...s }) => s);
+    const items = sedesDe(request.user?.practitionerProfileId ?? MEDICA.id);
     return { items, count: items.length };
   });
 
+  /* `isOwnSite` viaja: es lo que separa «mi consultorio» de «un hospital donde
+     me aceptaron», y sin él las dos cosas se dibujaban idénticas, con el mismo
+     botón «Retirar» al lado — cuando retirar lo propio y desvincularse de un
+     hospital no son el mismo acto. La maqueta ya lo calculaba y lo tiraba justo
+     antes de responder. Ver P32 de `PENDIENTES-BACKEND.md`. */
   router.get('/practitioners/:id/sites', ({ params }) => {
     // La misma regla que usa la ficha pública: una sola, y acá con sesión.
-    const items = sedesDe(params['id']!).map(({ esPropio: _e, ...s }) => s);
+    const items = sedesDe(params['id']!);
     return { items, count: items.length };
   });
 
@@ -318,9 +405,53 @@ export function registrarPracticas(router: MockRouter): void {
       longitude: datos.address?.longitude ?? null,
       status: 'ACTIVE',
       practitionerProfileId: request.user?.practitionerProfileId ?? MEDICA.id,
+      // Un consultorio recién creado no tiene con qué cobrar todavía: el QR se
+      // carga después, desde su propia fila.
+      bankQrFileId: null,
     });
     const { practitionerProfileId: _p, ...resto } = nuevo;
-    return { status: 201, body: resto };
+    return { status: 201, body: { ...resto, isOwnSite: resto.practiceId === PRACTICE_CONSULTORIO } };
+  });
+
+  /* Corregir el consultorio propio. La API todavía no lo tiene —es la mitad
+     del P28 de `PENDIENTES-BACKEND.md`— y sin esto un error de tipeo en el
+     nombre o una mudanza obligaban a retirarlo y volver a crearlo, lo que
+     cambia el id que la agenda referencia. */
+  router.patch('/practitioners/me/sites/:id', (request) => {
+    const sitio = sitiosPropios.get(request.params['id']!);
+    if (sitio === undefined) return notFound('Consultorio no encontrado');
+    const datos = cuerpo<{ name?: string; timeZone?: string; address?: { lines: string[]; city?: string; latitude?: number; longitude?: number } }>(request);
+    const direccion =
+      datos.address === undefined
+        ? {}
+        : {
+            addressText: [...datos.address.lines, datos.address.city ?? ''].filter((l) => l !== '').join(', '),
+            latitude: datos.address.latitude ?? null,
+            longitude: datos.address.longitude ?? null,
+          };
+    const actualizado = sitiosPropios.actualizar(sitio.id, {
+      ...(datos.name === undefined ? {} : { name: datos.name }),
+      ...(datos.timeZone === undefined ? {} : { timeZone: datos.timeZone }),
+      ...direccion,
+    });
+    if (actualizado === undefined) return notFound('Consultorio no encontrado');
+    const { practitionerProfileId: _p, ...resto } = actualizado;
+    return { ...resto, isOwnSite: resto.practiceId === PRACTICE_CONSULTORIO };
+  });
+
+  /* El QR bancario de una sede. Ruta propia y no parte del `PATCH` de arriba:
+     aquél corrige el consultorio **propio** y esto se configura también en la
+     clínica donde el profesional atiende sin ser dueño de la sede — lo que se
+     guarda no es la sede, es con qué cobra él en ella. Ver P33 de
+     `PENDIENTES-BACKEND.md`. */
+  router.put('/practitioners/me/sites/:id/bank-qr', (request) => {
+    const sitio = sitiosPropios.get(request.params['id']!);
+    if (sitio === undefined) return notFound('Consultorio no encontrado');
+    const { fileId } = cuerpo<{ fileId: string | null }>(request);
+    const actualizado = sitiosPropios.actualizar(sitio.id, { bankQrFileId: fileId ?? null });
+    if (actualizado === undefined) return notFound('Consultorio no encontrado');
+    const { practitionerProfileId: _p, ...resto } = actualizado;
+    return { ...resto, isOwnSite: resto.practiceId === PRACTICE_CONSULTORIO };
   });
 
   router.delete('/practitioners/me/sites/:id', ({ params }) => {
@@ -415,3 +546,8 @@ export function registrarPracticas(router: MockRouter): void {
   // Establecimientos vinculables usan el padrón: mismo catálogo que `linkable-organizations`.
   void ESTABLECIMIENTO;
 }
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+servicios.persistirEn('mock.practice.servicios');
+vinculaciones.persistirEn('mock.practice.vinculaciones');
+sitiosPropios.persistirEn('mock.practice.sitiosPropios');

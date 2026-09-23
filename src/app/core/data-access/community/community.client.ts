@@ -20,6 +20,7 @@ import type {
   ConversationPeer,
   ConversationRead,
   ConversationsQuery,
+  ChatAutoReplySettings,
   DirectMessage,
   DirectMessagePage,
   EditDirectMessage,
@@ -57,6 +58,7 @@ import type {
   NewComment,
   NewConversation,
   NewDirectMessage,
+  UpsertChatAutoReply,
   NewFollow,
   NewModerationDecision,
   NewReport,
@@ -162,6 +164,47 @@ export class CommunityClient {
     return this.http
       .put<WireOwnProfile>(this.url('/community/profiles/me'), datos)
       .pipe(map((body) => sinNulos(body)));
+  }
+
+  /**
+   * `GET /community/profiles/:profileId/auto-reply` — la respuesta automática.
+   *
+   * `null` cuando nunca se configuró, que no es lo mismo que estar apagada: la
+   * pantalla dibuja distinto «todavía no la tocaste» y «la apagaste».
+   *
+   * @param profileId - El perfil público propio.
+   */
+  readAutoReply(profileId: string): Observable<ChatAutoReplySettings | null> {
+    return this.http
+      .get<ConNulos<ChatAutoReplySettings> | null>(
+        this.url(
+          `/community/profiles/${encodeURIComponent(profileId)}/auto-reply`,
+        ),
+      )
+      .pipe(map((body) => (body === null ? null : toAutoReply(body))));
+  }
+
+  /**
+   * `PUT /community/profiles/:profileId/auto-reply` — la configura.
+   *
+   * `PUT` y no `PATCH`: hay una sola fila por perfil y se manda entera, así que
+   * quien configura no tiene que saber si ya existía.
+   *
+   * @param profileId - El perfil público propio.
+   * @param datos - La configuración completa.
+   */
+  upsertAutoReply(
+    profileId: string,
+    datos: UpsertChatAutoReply,
+  ): Observable<ChatAutoReplySettings> {
+    return this.http
+      .put<ConNulos<ChatAutoReplySettings>>(
+        this.url(
+          `/community/profiles/${encodeURIComponent(profileId)}/auto-reply`,
+        ),
+        datos,
+      )
+      .pipe(map(toAutoReply));
   }
 
   // ─── Perfil público ────────────────────────────────────────────────────────
@@ -1437,6 +1480,16 @@ type WirePoll = Omit<ConNulos<PollDetail>, 'closesAt' | 'options'> & {
   readonly closesAt: string | null;
   readonly options: PollDetail['options'];
 };
+
+function toAutoReply(
+  body: ConNulos<ChatAutoReplySettings>,
+): ChatAutoReplySettings {
+  const { updatedAt, ...resto } = body;
+  return {
+    ...sinNulos(resto),
+    ...fecha('updatedAt', updatedAt as string | null),
+  } as ChatAutoReplySettings;
+}
 
 function toProfile({ badges, prestige, ...resto }: WireProfile): PublicProfileDetail {
   return {

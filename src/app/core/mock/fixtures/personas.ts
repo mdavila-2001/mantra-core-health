@@ -4,11 +4,13 @@ import {
   ESPECIALIDAD,
   ESTADO,
   GENERO,
+  GRUPO_ABO,
   IDIOMA,
   JURISDICCION,
   MUNICIPIO,
   OCUPACION,
   PARENTESCO,
+  RH,
   SEXO,
   TIPO_CREDENCIAL,
   TIPO_VINCULO,
@@ -16,6 +18,8 @@ import {
 import * as fk from '../faker';
 import { IDS, TENANT_CLINICA, TENANT_HOSPITAL } from '../mock-session';
 import { Coleccion, iso, isoDia, uuid } from '../mock-store';
+import { profesionalesDeLaRed } from './insurer-network';
+import { pacientesRegistrados, profesionalesRegistrados } from './registered-people';
 
 /* ============================================================================
     Las personas del backend simulado: profesionales y pacientes.
@@ -57,6 +61,23 @@ export interface ProfesionalSimulado {
   readonly lat: number;
   readonly lng: number;
   readonly direccion: string;
+  /**
+   * `RED_ASEGURADORA`: un médico real del listado de una aseguradora, no una
+   * cuenta de la maqueta. No tiene agenda, puntuación ni verificación, porque
+   * inventárselas sería afirmar algo sobre alguien que existe.
+   */
+  readonly origen?: 'RED_ASEGURADORA' | 'USUARIO_PROPIETARIO';
+  /**
+   * Los registros que declara la planilla de usuarios médicos, tal cual.
+   * Sólo `USUARIO_PROPIETARIO`.
+   */
+  readonly registros?: {
+    readonly matriculaMinisterio: string | null;
+    readonly fechaMatriculaMinisterio: string | null;
+    readonly registroColegioOdontologos: string | null;
+    readonly registroSedes: string | null;
+    readonly fechaRegistroSedes: string | null;
+  };
 }
 
 export interface PacienteSimulado {
@@ -92,6 +113,15 @@ export interface PacienteSimulado {
   readonly aseguradora?: string;
   readonly plan?: string;
   /**
+   * Grupo sanguíneo y factor Rh, casi siempre juntos porque un laboratorio
+   * los tipifica en el mismo análisis. Opcionales: no todo paciente se hizo
+   * ese estudio.
+   */
+  readonly aboGroupId?: string;
+  readonly rhFactorId?: string;
+  /** Idioma en el que hay que atenderlo clínicamente. */
+  readonly idiomaClinicoId?: string;
+  /**
    * El punto en el mapa de cada dirección, cuando el paciente lo declaró.
    *
    * Opcionales porque los datos de ejemplo no los traen: se llenan cuando
@@ -108,6 +138,10 @@ export interface PacienteSimulado {
   readonly workLng?: number | null;
   /** La dirección de trabajo, que antes no se guardaba en ningún lado. */
   readonly direccionTrabajo?: string;
+  /** `USUARIO_PROPIETARIO`: una persona de `USUARIO_PACIENTES_1.md`. */
+  readonly origen?: 'USUARIO_PROPIETARIO';
+  /** La ocupación tal como la escribe la planilla, cuando es «Otra». */
+  readonly ocupacionTexto?: string;
 }
 
 const CIUDADES = [
@@ -217,112 +251,19 @@ const PROFESIONALES_ESCRITOS: readonly ProfesionalSimulado[] = [
   profesional('sinespecialidad', { nombre: 'Ramiro', apellidos: ['Céspedes', 'Villca'], titulo: 'Médico', especialidades: [], bio: 'Médico recién titulado, en proceso de registro de especialidad.', rating: 0, verified: false, nuevos: false }, 14),
 ];
 
-/* ---- y los generados ------------------------------------------------------
-   El resto del padrón. Sin ellos la guía de profesionales tenía quince fichas
-   —menos que una página— y ni la paginación, ni el buscador, ni los filtros
-   por especialidad o por ciudad se podían probar con nada: todo entraba en la
-   primera pantalla. Cada uno se siembra con su propio índice (ver
-   `faker/semilla.ts`), así que el profesional 37 es el mismo en cada recarga y
-   su ficha pública se puede enlazar. */
-
-/**
- * Cómo se llama cada especialidad, en femenino y en masculino.
- *
- * Es un subconjunto del catálogo, no su copia: de las 63 de
- * `VS_MEDICAL_SPECIALTY` acá están las que el padrón generado reparte entre
- * sus profesionales. Una especialidad que no figure acá sigue existiendo y se
- * sigue pudiendo elegir en el alta — lo único que no tiene es gente sembrada
- * que la ejerza, y la portada del directorio se arma con quien la ejerce.
- *
- * Las cuatro odontológicas del final están por eso mismo: sin ellas, el
- * catálogo tenía las once y el directorio no mostraba ni una, que para quien
- * recorre la maqueta es lo mismo que no tenerlas.
- */
-const TITULOS: Readonly<Record<string, readonly [string, string]>> = {
-  'CARDIOLOGIA': ['Cardióloga', 'Cardiólogo'],
-  'PEDIATRIA': ['Pediatra', 'Pediatra'],
-  'GINECOLOGIA_OBSTETRICIA': ['Ginecóloga obstetra', 'Ginecólogo obstetra'],
-  'DERMATOLOGIA': ['Dermatóloga', 'Dermatólogo'],
-  'TRAUMATOLOGIA': ['Traumatóloga', 'Traumatólogo'],
-  'MEDICINA_INTERNA': ['Internista', 'Internista'],
-  'NEUROLOGIA': ['Neuróloga', 'Neurólogo'],
-  'PSIQUIATRIA': ['Psiquiatra', 'Psiquiatra'],
-  'OFTALMOLOGIA': ['Oftalmóloga', 'Oftalmólogo'],
-  'ODONTOLOGIA': ['Odontóloga', 'Odontólogo'],
-  'ENDOCRINOLOGIA': ['Endocrinóloga', 'Endocrinólogo'],
-  'GASTROENTEROLOGIA': ['Gastroenteróloga', 'Gastroenterólogo'],
-  'NEUMOLOGIA': ['Neumóloga', 'Neumólogo'],
-  'UROLOGIA': ['Uróloga', 'Urólogo'],
-  'MEDICINA_GENERAL': ['Médica general', 'Médico general'],
-  'NUTRICION': ['Nutricionista', 'Nutricionista'],
-  'FISIOTERAPIA': ['Fisioterapeuta', 'Fisioterapeuta'],
-  'ANESTESIOLOGIA': ['Anestesióloga', 'Anestesiólogo'],
-  'ORTODONCIA': ['Ortodoncista', 'Ortodoncista'],
-  'ENDODONCIA': ['Endodoncista', 'Endodoncista'],
-  'ODONTOPEDIATRIA': ['Odontopediatra', 'Odontopediatra'],
-  'PERIODONCIA': ['Periodoncista', 'Periodoncista'],
-};
-
-const CODIGOS_ESPECIALIDAD = Object.keys(TITULOS);
-
-function profesionalGenerado(indice: number): ProfesionalSimulado {
-  const f = fk.conSemilla(`profesional-${indice}`);
-  const mujer = f.datatype.boolean(0.55);
-  const nombre = f.person.firstName(mujer ? 'female' : 'male');
-  const apellidos: [string, string] = [fk.apellido(f), fk.apellido(f)];
-  const codigo = f.helpers.arrayElement(CODIGOS_ESPECIALIDAD);
-  const segunda = f.datatype.boolean(0.35) ? f.helpers.arrayElement(CODIGOS_ESPECIALIDAD) : null;
-  const titulo = TITULOS[codigo]![mujer ? 0 : 1];
-  const lugarDeTrabajo = fk.lugar(f);
-  const punto = fk.coordenada(f, lugarDeTrabajo);
-  const anios = f.number.int({ min: 3, max: 32 });
-  const slug = fk.slugDeNombre(nombre, apellidos[0]);
-  const clave = `gen-med-${indice}`;
-  const hospital = f.datatype.boolean(0.4);
-
-  return {
-    id: uuid(`hpid-${clave}`),
-    personId: uuid(`person-${clave}`),
-    userId: uuid(`user-${clave}`),
-    practitionerCode: `MED-${1000 + indice}`,
-    displayName: `${nombre} ${apellidos[0]} ${apellidos[1]}`,
-    name: nombre,
-    lastName: apellidos[0],
-    motherLastName: apellidos[1],
-    professionalTitle: titulo,
-    professionalBio: fk.biografia(f, titulo, anios),
-    // El índice desempata: dos «Ana Rojas» generadas tendrían el mismo slug y
-    // la segunda ficha pública taparía a la primera.
-    slug: `${slug}-${indice}`,
-    email: `${slug}${indice}@alovida.mock`,
-    phone: fk.celular(f),
-    especialidades: [
-      ESPECIALIDAD[codigo]!,
-      ...(segunda === null || segunda === codigo ? [] : [ESPECIALIDAD[segunda]!]),
-    ],
-    ciudad: lugarDeTrabajo.ciudad,
-    municipioId: lugarDeTrabajo.municipioId,
-    departamentoId: lugarDeTrabajo.departamentoId,
-    tenantId: hospital ? TENANT_HOSPITAL : TENANT_CLINICA,
-    organizacion: hospital ? 'Hospital San Lucas' : 'Clínica Los Olivos',
-    verified: f.datatype.boolean(0.85),
-    acceptsNewPatients: f.datatype.boolean(0.75),
-    telehealthAvailable: f.datatype.boolean(0.5),
-    ratingAverage: f.number.float({ min: 3.6, max: 5, fractionDigits: 1 }),
-    ratingCount: f.number.int({ min: 3, max: 240 }),
-    photoFileId: uuid(`photo-${clave}`),
-    matricula: fk.matricula(f),
-    birthDate: f.date.birthdate({ min: 28 + anios - 3, max: 30 + anios + 8, mode: 'age' }).toISOString().slice(0, 10),
-    nationalId: fk.cedulaSimple(f),
-    lat: punto.lat,
-    lng: punto.lng,
-    direccion: fk.direccion(f, lugarDeTrabajo),
-  };
-}
+/* ---- y los de la red de las aseguradoras ----------------------------------
+   El resto del padrón son los médicos reales que Alianza Seguros y Nacional
+   Seguros publican como habilitados en Santa Cruz (`insurer-network.ts`).
+   Reemplazan a los 45 que generaba faker: nombres inventados en un directorio
+   que se le enseña a médicos bolivianos de verdad. Van **detrás** de los
+   escritos, así que `PROFESIONALES[6]` y `.slice(1, 5)` siguen siendo la misma
+   gente en `agenda.ts` y en `clinica.ts`. */
 
 export const PROFESIONALES: readonly ProfesionalSimulado[] = [
   ...PROFESIONALES_ESCRITOS,
-  ...Array.from({ length: 45 }, (_, i) => profesionalGenerado(PROFESIONALES_ESCRITOS.length + i)),
+  ...profesionalesDeLaRed(PROFESIONALES_ESCRITOS.length),
+  // Y las 13 personas de `USUARIO_MEDICOS_1.md` (ver `registered-people.ts`).
+  ...profesionalesRegistrados(),
 ];
 
 export const MEDICA = PROFESIONALES[0]!;
@@ -454,6 +395,10 @@ function pacienteGenerado(indice: number): PacienteSimulado {
   const slug = fk.slugDeNombre(nombre, apellidos[0]);
   const clave = `gen-pac-${indice}`;
   const conSeguro = f.datatype.boolean(0.45);
+  // Un laboratorio tipifica los dos juntos: si hay uno, hay el otro. El 40%
+  // de la muestra basta para probar el filtro con resultados y sin ellos.
+  const conTipificacion = f.datatype.boolean(0.4);
+  const conIdiomaRegistrado = f.datatype.boolean(0.7);
 
   return {
     id: uuid(`pid-${clave}`),
@@ -488,12 +433,27 @@ function pacienteGenerado(indice: number): PacienteSimulado {
           plan: f.helpers.arrayElement(fk.PLANES),
         }
       : {}),
+    ...(conTipificacion
+      ? {
+          aboGroupId: GRUPO_ABO[f.helpers.arrayElement(['ABO-O', 'ABO-A', 'ABO-B', 'ABO-AB'])]!,
+          rhFactorId: RH[f.helpers.arrayElement(['RH-POS', 'RH-NEG'])]!,
+        }
+      : {}),
+    ...(conIdiomaRegistrado
+      ? {
+          idiomaClinicoId:
+            IDIOMA[f.helpers.arrayElement(['LANG-ES', 'LANG-QU', 'LANG-AY', 'LANG-EN'])]!,
+        }
+      : {}),
   };
 }
 
 export const PACIENTES: readonly PacienteSimulado[] = [
   ...PACIENTES_ESCRITOS,
   ...Array.from({ length: 107 }, (_, i) => pacienteGenerado(PACIENTES_ESCRITOS.length + i)),
+  // Las 92 personas de `USUARIO_PACIENTES_1.md`, al final para no mover los
+  // índices que usan `agenda.ts` y `clinica.ts` (ver `registered-people.ts`).
+  ...pacientesRegistrados(),
 ];
 
 export const PACIENTE = PACIENTES[0]!;
@@ -511,7 +471,7 @@ export function especialidadesDe(p: ProfesionalSimulado) {
     id: uuid(`spec-${p.id}-${i}`),
     specialtyConceptId,
     isPrimary: i === 0,
-    boardCertified: i === 0,
+    boardCertified: i === 0 && p.origen === undefined,
     practiceScopeText: i === 0 ? 'Consulta y procedimientos ambulatorios' : 'Consulta',
     verificationStatusConceptId: p.verified ? ESTADO['ST-VERIFIED']! : ESTADO['ST-PENDING']!,
     verified: p.verified,
@@ -519,7 +479,17 @@ export function especialidadesDe(p: ProfesionalSimulado) {
   }));
 }
 
+/**
+ * Un médico real de la red de una aseguradora no tiene títulos, matrículas,
+ * idiomas ni trayectoria en la maqueta: la fuente no los publica, y un diploma
+ * de la UMSA inventado para alguien que existe es una afirmación falsa.
+ */
+function esDeLaRed(p: ProfesionalSimulado): boolean {
+  return p.origen !== undefined;
+}
+
 export function credencialesDe(p: ProfesionalSimulado) {
+  if (esDeLaRed(p)) return [];
   return [
     {
       id: uuid(`cred-titulo-${p.id}`),
@@ -530,6 +500,9 @@ export function credencialesDe(p: ProfesionalSimulado) {
       stateConceptId: ESTADO['ST-VERIFIED']!,
       verifiedAt: iso(-200),
       verificationSourceUri: 'https://sedes.gob.bo/verificacion',
+      // El diploma escaneado. Lo registra `files.handlers.ts` con este mismo
+      // id: sin un archivo detrás, «Descargar» sería un botón que falla.
+      fileId: uuid(`file-diploma-${p.id}`),
     },
     ...(p.especialidades.length === 0
       ? []
@@ -548,6 +521,8 @@ export function credencialesDe(p: ProfesionalSimulado) {
 }
 
 export function licenciasDe(p: ProfesionalSimulado) {
+  if (p.origen === 'USUARIO_PROPIETARIO') return licenciasDeLaPlanilla(p);
+  if (esDeLaRed(p)) return [];
   return [
     {
       id: uuid(`lic-${p.id}`),
@@ -556,6 +531,8 @@ export function licenciasDe(p: ProfesionalSimulado) {
       regulatoryAuthority: 'Ministerio de Salud y Deportes',
       stateConceptId: ESTADO['ST-ACTIVE']!,
       validFrom: isoDia(-365 * 10),
+      /** El carnet del colegio. Mismo criterio que el diploma de arriba. */
+      fileId: uuid(`file-matricula-${p.id}`),
     },
     {
       // SEDES es una habilitación departamental, no formación académica.
@@ -570,7 +547,45 @@ export function licenciasDe(p: ProfesionalSimulado) {
   ];
 }
 
+/** Las matrículas que declara la planilla de usuarios médicos, y ninguna más. */
+function licenciasDeLaPlanilla(p: ProfesionalSimulado) {
+  const r = p.registros;
+  if (r === undefined) return [];
+  return [
+    ...(r.matriculaMinisterio === null
+      ? []
+      : [{
+          id: uuid(`lic-${p.id}`),
+          jurisdictionConceptId: JURISDICCION['JUR-BO']!,
+          licenseNumber: r.matriculaMinisterio,
+          regulatoryAuthority: 'Ministerio de Salud y Deportes',
+          stateConceptId: ESTADO['ST-ACTIVE']!,
+          ...(r.fechaMatriculaMinisterio === null ? {} : { validFrom: r.fechaMatriculaMinisterio }),
+        }]),
+    ...(r.registroSedes === null
+      ? []
+      : [{
+          id: uuid(`lic-sedes-${p.id}`),
+          jurisdictionConceptId: JURISDICCION['JUR-SC']!,
+          licenseNumber: r.registroSedes,
+          regulatoryAuthority: 'SEDES Santa Cruz',
+          stateConceptId: ESTADO['ST-ACTIVE']!,
+          ...(r.fechaRegistroSedes === null ? {} : { validFrom: r.fechaRegistroSedes }),
+        }]),
+    ...(r.registroColegioOdontologos === null
+      ? []
+      : [{
+          id: uuid(`lic-colegio-${p.id}`),
+          jurisdictionConceptId: JURISDICCION['JUR-SC']!,
+          licenseNumber: r.registroColegioOdontologos,
+          regulatoryAuthority: 'Colegio de Odontólogos',
+          stateConceptId: ESTADO['ST-ACTIVE']!,
+        }]),
+  ];
+}
+
 export function idiomasDe(p: ProfesionalSimulado) {
+  if (esDeLaRed(p)) return [];
   return [
     { languageConceptId: IDIOMA['LANG-ES']!, proficiencyConceptId: undefined, clinicalInterpretationAllowed: true },
     ...(p.telehealthAvailable
@@ -596,7 +611,7 @@ export interface AfiliacionSimulada {
 }
 
 export function afiliacionesIniciales(): AfiliacionSimulada[] {
-  return PROFESIONALES.flatMap((p, i) => [
+  return PROFESIONALES.filter((p) => !esDeLaRed(p)).flatMap((p, i) => [
     {
       id: uuid(`aff-actual-${p.id}`),
       practitionerProfileId: p.id,
@@ -657,3 +672,7 @@ export function personasRelacionadasDe(p: PacienteSimulado) {
 }
 
 export const CATEGORIA_MEDICO = CATEGORIA_PROFESIONAL['PC-MEDICO']!;
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+pacientes.persistirEn('mock.personas.pacientes');
+afiliaciones.persistirEn('mock.personas.afiliaciones');

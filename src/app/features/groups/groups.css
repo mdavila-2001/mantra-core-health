@@ -85,3 +85,12 @@
   color: var(--text-secondary);
   font-size: var(--fs-caption);
 }
+
+/* La creación de la vitrina, cuando falta: ocupa el ancho del formulario que la
+   recibe y se separa de lo de arriba como un bloque propio, no como el pie de
+   un aviso. */
+.grupos__vitrina {
+  display: block;
+  margin-block-start: var(--sp-4);
+  width: 100%;
+}

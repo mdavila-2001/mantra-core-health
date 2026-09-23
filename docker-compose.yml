@@ -44,13 +44,21 @@
 #
 #   Nuevo recurso → Docker Compose → este repositorio, rama `mockup`
 #   Compose file: se deja el de por defecto (`/docker-compose.yml`)
-#   Dominio: asignarlo al servicio `web`, puerto 4000
-#   Variable: APP_DOMAIN = el dominio asignado, SIN `https://`
+#   Dominio: asignarlo al servicio `web` como `http://<ip-del-vps>:<puerto>`
+#     (NO un nombre de dominio). Dejar el campo vacío hace que Coolify invente
+#     uno propio (`*.sslip.io`); eso es justamente lo que se quiere evitar acá
+#     — el enrutado sigue pasando por el Traefik de Coolify, sólo que matchea
+#     por IP:puerto en vez de por nombre. Al ser IP y no dominio, Coolify no
+#     puede emitir certificado (Let's Encrypt exige un FQDN), así que este
+#     camino queda en HTTP plano, no HTTPS.
+#   Variable: APP_DOMAIN = la MISMA IP del campo Dominio, SIN esquema ni puerto
 #
 #   APP_DOMAIN no es opcional. `AngularNodeAppEngine` responde 400 a cualquier
 #   `Host` que no conozca, y la lista horneada en el artefacto sólo trae
 #   `localhost`, `127.0.0.1` y `frontend`: sin esa variable el despliegue queda
-#   verde y el dominio devuelve 400.
+#   verde y el dominio devuelve 400. Con IP en vez de dominio, el `Host` que
+#   Traefik reenvía es la IP misma (sin puerto), así que APP_DOMAIN tiene que
+#   ser exactamente esa IP.
 #
 # ─── Qué levanta ──────────────────────────────────────────────────────────
 #
@@ -96,8 +104,11 @@ services:
       # abierto a internet, sin TLS y saltándose el proxy, creyendo que está
       # cerrado.
       #
-      # Traefik corre en esta misma máquina y alcanza el bucle local igual de
-      # bien, así que no se pierde nada.
+      #
+      # Si Coolify tiene activado el despliegue sin cortes —levanta el
+      # contenedor nuevo antes de bajar el viejo—, este bloque sobra entero:
+      # quitarlo y dejar sólo `expose`, como hace
+      # `deploy/docker-compose.coolify.yml`.
       - '127.0.0.1:${HTTP_PORT:-8080}:4000'
     expose:
       - '4000'

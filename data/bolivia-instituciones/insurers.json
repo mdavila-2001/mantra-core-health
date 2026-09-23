@@ -1,0 +1,192 @@
+[
+ {
+  "id": "ase-personas-alianza-vida-seguros-y-reaseguros-s-a",
+  "name": "Alianza Vida Seguros y Reaseguros S.A.",
+  "shortName": "Alianza Vida S.A.",
+  "taxId": "1015327022",
+  "address": "Mario Gutiérrez Nº 3325, esq. Av. Roca y Coronado, Edificio Alianza, Zona Villa Mercedes, Santa Cruz de la Sierra, Bolivia.",
+  "branch": "personas",
+  "coversHealth": true,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-personas-bisa-seguros-y-reaseguros-s-a",
+  "name": "BISA Seguros y Reaseguros S.A.",
+  "shortName": "BISA Seguros y Reaseguros S.A.",
+  "taxId": "1020655027",
+  "address": "Av. Arce N° 2631, Edificio Multicine, Piso N° 14, zona de San Jorge, La Paz, Bolivia",
+  "branch": "personas",
+  "coversHealth": true,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-personas-compania-de-seguros-y-reaseguros-fortaleza-s-a",
+  "name": "Compañía de Seguros y Reaseguros Fortaleza S.A.",
+  "shortName": "Fortaleza Seguros y Reaseguros S.A.",
+  "taxId": "1028175023",
+  "address": "Av. Virgen de Cotoca N° 2080, Zona Lazareto, Santa Cruz de la Sierra, Bolivia",
+  "branch": "personas",
+  "coversHealth": true,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-personas-crediseguro-s-a-seguros-personales",
+  "name": "Crediseguro S.A. Seguros Personales",
+  "shortName": "Crediseguro S.A. Seguros Personales",
+  "taxId": "191310020",
+  "address": "Av. Hernando Siles esq. calle 10 de Obrajes, Torre Empresarial ESIMSA, Piso 9, La Paz, Bolivia.",
+  "branch": "personas",
+  "coversHealth": true,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-personas-la-boliviana-ciacruz-seguros-personales-s-a",
+  "name": "LA BOLIVIANA CIACRUZ SEGUROS PERSONALES S.A.",
+  "shortName": "LA BOLIVIANA CIACRUZ SEGUROS PERSONALES S.A.",
+  "taxId": "1006989027",
+  "address": "Calle Colón N° 288, Piso 2°, en la ciudad de La Paz, Bolivia.",
+  "branch": "personas",
+  "coversHealth": true,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-personas-la-vitalicia-seguros-y-reaseguros-de-vida-s-a",
+  "name": "LA VITALICIA SEGUROS Y REASEGUROS DE VIDA S.A.",
+  "shortName": "LA VITALICIA SEGUROS Y REASEGUROS DE VIDA S.A.",
+  "taxId": "1020687029",
+  "address": "Av. 6 de Agosto Nº 2860, Zona San Jorge, La Paz, Bolivia",
+  "branch": "personas",
+  "coversHealth": true,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-personas-nacional-seguros-vida-y-salud-s-a",
+  "name": "Nacional Seguros Vida y Salud S.A.",
+  "shortName": "Nacional Seguros Vida y Salud S.A.",
+  "taxId": "1028483024",
+  "address": "Avenida Cristóbal de Mendoza esquina Avenida Alemana N° 333 (Segundo Anillo), Santa Cruz, Bolivia",
+  "branch": "personas",
+  "coversHealth": true,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-personas-empresa-de-seguros-y-reaseguros-personales-univida-s-a",
+  "name": "Empresa de Seguros y Reaseguros Personales UNIVIDA S.A.",
+  "shortName": "UNIVIDA S.A.",
+  "taxId": "301204024",
+  "address": "Av. Camacho N° 1485, Edificio La Urbana, Piso 3, La Paz, Bolivia",
+  "branch": "personas",
+  "coversHealth": true,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-personas-santa-cruz-vida-y-salud-seguros-y-reaseguros-personales-s-a",
+  "name": "Santa Cruz Vida y Salud Seguros y Reaseguros Personales S.A.",
+  "shortName": "Santa Cruz Vida y Salud S.A.",
+  "taxId": "370008027",
+  "address": "Avenida San Martín, Edificio Manzana 40, Torre 2, Piso 13, Zona Equipetrol, Santa Cruz de la Sierra, Bolivia.",
+  "branch": "personas",
+  "coversHealth": true,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-generales_y_fianzas-alianza-compania-de-seguros-y-reaseguros-s-a",
+  "name": "Alianza Compañía de Seguros y Reaseguros S.A.",
+  "shortName": "Alianza Seguros S.A.",
+  "taxId": "1020351029",
+  "address": "Av. Roca y Coronado Nº 1380, Santa Cruz de la Sierra, Bolivia",
+  "branch": "generales_y_fianzas",
+  "coversHealth": false,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-generales_y_fianzas-bisa-seguros-y-reaseguros-s-a",
+  "name": "BISA Seguros y Reaseguros S.A.",
+  "shortName": "BISA Seguros y Reaseguros S.A.",
+  "taxId": "1020655027",
+  "address": "Av. Arce N° 2631, Edificio Multicine, Piso N° 14, zona de San Jorge, La Paz, Bolivia",
+  "branch": "generales_y_fianzas",
+  "coversHealth": false,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-generales_y_fianzas-compania-de-seguros-y-reaseguros-fortaleza-s-a",
+  "name": "Compañía de Seguros y Reaseguros Fortaleza S.A.",
+  "shortName": "Fortaleza Seguros y Reaseguros S.A.",
+  "taxId": "1028175023",
+  "address": "Av. Virgen de Cotoca N° 2080, Zona Lazareto, Santa Cruz de la Sierra, Bolivia",
+  "branch": "generales_y_fianzas",
+  "coversHealth": false,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-generales_y_fianzas-crediseguro-s-a-seguros-generales",
+  "name": "Crediseguro S.A. Seguros Generales",
+  "shortName": "Crediseguro S.A. Seguros Generales",
+  "taxId": "343764028",
+  "address": "Avenida Hernando Siles esquina Calle 10 de Obrajes, Torre Empresarial ESIMSA, Piso 9, La Paz, Bolivia",
+  "branch": "generales_y_fianzas",
+  "coversHealth": false,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-generales_y_fianzas-la-boliviana-ciacruz-de-seguros-y-reaseguros-s-a",
+  "name": "La Boliviana Ciacruz de Seguros y Reaseguros S.A.",
+  "shortName": "La Boliviana Ciacruz de Seguros y Reaseguros S.A.",
+  "taxId": "1007017028",
+  "address": "Calle Colón N° 288, Edificio La Boliviana Ciacruz (Zona Central), La Paz, Bolivia",
+  "branch": "generales_y_fianzas",
+  "coversHealth": false,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-generales_y_fianzas-mercantil-santa-cruz-seguros-y-reaseguros-generales-s-a",
+  "name": "Mercantil Santa Cruz Seguros y Reaseguros Generales S.A.",
+  "shortName": "Mercantil Santa Cruz Seguros y Reaseguros Generales S.A.",
+  "taxId": "399309026",
+  "address": "Av. Camacho N° 1448, Edif. Banco Mercantil Santa Cruz, Piso 11, La Paz, Bolivia",
+  "branch": "generales_y_fianzas",
+  "coversHealth": false,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-generales_y_fianzas-nacional-seguros-patrimoniales-y-fianzas-s-a",
+  "name": "Nacional Seguros Patrimoniales y Fianzas S.A.",
+  "shortName": "Nacional Seguros Patrimoniales y Fianzas S.A.",
+  "taxId": "145776027",
+  "address": "Avenida Cristóbal de Mendoza esquina Avenida Alemana Nº 333 (Segundo Anillo), Santa Cruz, Bolivia",
+  "branch": "generales_y_fianzas",
+  "coversHealth": false,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-generales_y_fianzas-seguros-y-reaseguros-credinform-international-s-a",
+  "name": "Seguros y Reaseguros Credinform International S.A.",
+  "shortName": "Seguros y Reaseguros Credinform International S.A.",
+  "taxId": "1006765027",
+  "address": "Calle Julio Patiño N° 550, esquina calle 12, Calacoto, La Paz, Bolivia",
+  "branch": "generales_y_fianzas",
+  "coversHealth": false,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-generales_y_fianzas-seguros-illimani-s-a",
+  "name": "Seguros Illimani S.A.",
+  "shortName": "Seguros Illimani S.A.",
+  "taxId": "1007165029",
+  "address": "Calle Loayza N° 233, Edificio Mariscal de Ayacucho, Piso 10, Oficinas 1004-1013, La Paz, Bolivia",
+  "branch": "generales_y_fianzas",
+  "coversHealth": false,
+  "kind": "aseguradora"
+ },
+ {
+  "id": "ase-generales_y_fianzas-unibienes-seguros-y-reaseguros-patrimoniales-s-a",
+  "name": "UNIBIENES Seguros y Reaseguros Patrimoniales S.A.",
+  "shortName": "Unibienes S.A.",
+  "taxId": "338090023",
+  "address": "Calle 10 de Calacoto, Edificio Emporium N° 7812, Piso 5, Zona Sur, La Paz, Bolivia",
+  "branch": "generales_y_fianzas",
+  "coversHealth": false,
+  "kind": "aseguradora"
+ }
+]

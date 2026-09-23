@@ -48,9 +48,42 @@ describe('PatientList', () => {
     http = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
     componente = await harness.navigateByUrl(RUTA, PatientList);
+    flushCatalogos();
   });
 
   afterEach(() => http.verify());
+
+  /**
+   * Los tres catálogos de filtro se piden una sola vez, al montar. Sin
+   * responderlos acá, cualquier test que no los necesite explícitamente
+   * dejaría peticiones abiertas y `http.verify()` fallaría.
+   */
+  function flushCatalogos(): void {
+    const enumeracion = (target: string, opciones: readonly [string, string][]) => ({
+      code: target,
+      name: target,
+      definitionId: `def-${target}`,
+      valueSetId: `vs-${target}`,
+      cacheToken: 'v1',
+      options: opciones.map(([conceptId, display]) => ({ conceptId, code: conceptId, display })),
+    });
+
+    http
+      .expectOne((r) => r.url === '/system-context/dynamic-enums' && r.params.get('target') === 'profiles.patient_profiles.abo_group_concept_id')
+      .flush(
+        enumeracion('abo', [
+          ['abo-o', 'O'],
+          ['abo-a', 'A'],
+        ]),
+      );
+    http
+      .expectOne((r) => r.url === '/system-context/dynamic-enums' && r.params.get('target') === 'profiles.patient_profiles.rh_factor_concept_id')
+      .flush(enumeracion('rh', [['rh-pos', 'Rh positivo']]));
+    http
+      .expectOne((r) => r.url === '/system-context/dynamic-enums' && r.params.get('target') === 'profiles.patient_profiles.clinical_language_concept_id')
+      .flush(enumeracion('idioma', [['lang-ay', 'Aymara']]));
+    harness.detectChanges();
+  }
 
   function interno<T>(nombre: string): T {
     const valor = (componente as unknown as Record<string, unknown>)[nombre];
@@ -71,6 +104,10 @@ describe('PatientList', () => {
     return interno<() => { status: string }>('listado')();
   }
 
+  function texto(): string {
+    return harness.routeNativeElement?.textContent ?? '';
+  }
+
   it('pide la primera página al entrar, con el tope de la pantalla', () => {
     const req = peticion();
 
@@ -84,6 +121,33 @@ describe('PatientList', () => {
     responder([FILA]);
 
     expect(estado().status).toBe('ready');
+  });
+
+  /**
+   * Documento y teléfono los pidió el propietario el 19/09/2026 y el contrato
+   * ya los declara en `PatientListItem`; el corte estaba sólo en que la tabla
+   * no los mostraba. Los tres niveles del contrato: con dato, sin dato, y dato
+   * vacío tratado como ausente.
+   */
+  it('con documento y teléfono en la fila, la tabla los muestra', () => {
+    responder([{ ...FILA, nationalId: '1234567 LP', phone: '+591 70011223' }]);
+
+    expect(texto()).toContain('1234567 LP');
+    expect(texto()).toContain('+591 70011223');
+  });
+
+  it('sin documento ni teléfono en la fila, la celda lo declara en vez de dejar el hueco', () => {
+    responder([FILA]);
+
+    expect(harness.routeNativeElement?.querySelector('[aria-label="Sin documento en el listado"]')).toBeTruthy();
+    expect(harness.routeNativeElement?.querySelector('[aria-label="Sin teléfono en el listado"]')).toBeTruthy();
+  });
+
+  it('documento vacío se trata como ausente, no como una celda en blanco', () => {
+    responder([{ ...FILA, nationalId: '', phone: '' }]);
+
+    expect(harness.routeNativeElement?.querySelector('[aria-label="Sin documento en el listado"]')).toBeTruthy();
+    expect(harness.routeNativeElement?.querySelector('[aria-label="Sin teléfono en el listado"]')).toBeTruthy();
   });
 
   /**
@@ -113,16 +177,61 @@ describe('PatientList', () => {
     expect(vacio.message).toContain('salas');
   });
 
-  it('buscar publica el texto en la URL y vuelve a pedir la primera página', async () => {
+  /**
+   * La búsqueda la publica `app-filter-bar` en la URL — el componente no tiene
+   * un método propio para eso desde que dejó de tener su propio campo. Se
+   * prueba navegando, igual que el test de «sin resultados… con filtro».
+   */
+  it('un cambio de `q` en la URL vuelve a pedir la primera página', async () => {
     responder([FILA]);
 
-    interno<(t: string) => void>('buscar')('salas');
-    await harness.fixture.whenStable();
-    harness.detectChanges();
+    await harness.navigateByUrl(`${RUTA}?q=salas`);
 
     const req = peticion();
     expect(req.request.params.get('q')).toBe('salas');
     expect(req.request.params.has('cursor')).toBe(false);
+
+    req.flush(pagina([FILA], null));
+  });
+
+  /**
+   * Grupo ABO, factor Rh e idioma clínico: mismo mecanismo que documento y
+   * teléfono, y misma pregunta — con dato se muestra, sin dato la celda lo
+   * declara. Se prueban juntos porque son el mismo camino de código repetido
+   * tres veces (`aOpciones` + `etiquetaXxx` + `celdaXxx`).
+   */
+  it('con los tres conceptos en la fila, las columnas muestran la etiqueta del catálogo, no el uuid', () => {
+    responder([{ ...FILA, aboGroupConceptId: 'abo-o', rhFactorConceptId: 'rh-pos', clinicalLanguageConceptId: 'lang-ay' }]);
+
+    expect(texto()).toContain('O');
+    expect(texto()).toContain('Rh positivo');
+    expect(texto()).toContain('Aymara');
+    // Nunca el conceptId crudo en pantalla.
+    expect(texto()).not.toContain('abo-o');
+  });
+
+  it('sin los tres conceptos en la fila, cada celda lo declara en vez de dejar el hueco', () => {
+    responder([FILA]);
+
+    expect(harness.routeNativeElement?.querySelector('[aria-label="Sin grupo sanguíneo registrado"]')).toBeTruthy();
+    expect(harness.routeNativeElement?.querySelector('[aria-label="Sin factor Rh registrado"]')).toBeTruthy();
+    expect(harness.routeNativeElement?.querySelector('[aria-label="Sin idioma clínico registrado"]')).toBeTruthy();
+  });
+
+  /**
+   * Los tres filtros viajan a la consulta con la misma clave que
+   * `PatientSearchQuery` declara — es lo que permite compartir el enlace ya
+   * filtrado (§10.2 del contrato del organismo: la URL es la fuente).
+   */
+  it('elegir un filtro de catálogo viaja a la consulta con su clave real', async () => {
+    responder([FILA]);
+
+    await harness.navigateByUrl(`${RUTA}?aboGroupConceptId=abo-o&rhFactorConceptId=rh-pos&clinicalLanguageConceptId=lang-ay`);
+
+    const req = peticion();
+    expect(req.request.params.get('aboGroupConceptId')).toBe('abo-o');
+    expect(req.request.params.get('rhFactorConceptId')).toBe('rh-pos');
+    expect(req.request.params.get('clinicalLanguageConceptId')).toBe('lang-ay');
 
     req.flush(pagina([FILA], null));
   });

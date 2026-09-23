@@ -6,6 +6,7 @@ import {
   type PdfBlock,
 } from '../../../../shared/utils/pdf-export/pdf-export';
 import { ROTULOS_DE_FACTURA, type DocumentoDeFactura } from './order-invoice.types';
+import { withDisplayCurrency } from '../../../../core/money/display-currency';
 
 /**
  * La factura de ejemplo en PDF (T-E4). Usa el mismo maquetador que el
@@ -59,7 +60,7 @@ export function bloquesDeFactura(factura: DocumentoDeFactura): readonly PdfBlock
     cabecera(['Concepto', 'Cantidad', 'Importe']),
   ];
   for (const linea of factura.lineas) {
-    const importe = linea.importe === null ? 'Precio no publicado' : `${linea.importe} ${moneda}`;
+    const importe = linea.importe === null ? 'Precio no publicado' : withDisplayCurrency(linea.importe, moneda);
     bloques.push({
       kind: 'row',
       text: `${linea.descripcion}\tx${linea.cantidad}\t${importe}`,
@@ -70,14 +71,14 @@ export function bloquesDeFactura(factura: DocumentoDeFactura): readonly PdfBlock
   if (factura.descuentoDeRed !== null) {
     // Guion ASCII: la fuente del PDF no garantiza el signo menos tipográfico.
     bloques.push(
-      campoDeBloque(ROTULOS_DE_FACTURA.descuentoDeRed, `-${factura.descuentoDeRed} ${moneda}`),
+      campoDeBloque(ROTULOS_DE_FACTURA.descuentoDeRed, `-${withDisplayCurrency(factura.descuentoDeRed, moneda)}`),
     );
   }
   if (factura.coaseguro !== null) {
     bloques.push(
       campoDeBloque(
         `${ROTULOS_DE_FACTURA.coaseguro} (${factura.coaseguro.aseguradora})`,
-        `${factura.coaseguro.importe} ${factura.coaseguro.moneda}`,
+        withDisplayCurrency(factura.coaseguro.importe, factura.coaseguro.moneda),
       ),
     );
   }
@@ -95,7 +96,7 @@ export function bloquesDeFactura(factura: DocumentoDeFactura): readonly PdfBlock
 function importeDicho(importe: string | null, moneda: string): string {
   return importe === null
     ? 'No disponible: falta algún precio publicado.'
-    : `${importe} ${moneda}`.trim();
+    : withDisplayCurrency(importe, moneda);
 }
 
 function cabecera(celdas: readonly string[]): PdfBlock {

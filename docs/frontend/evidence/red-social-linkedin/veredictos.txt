@@ -1,0 +1,34 @@
+✔ sin sesión · no está el título «Lo último de los profesionales»
+✔ sin sesión · no está el ícono del encabezado
+✔ sin sesión · tendencias visibles
+✔ sin sesión · hay doctores en tendencia
+✔ sin sesión · banner con rótulo «Espacio pagado»
+✔ sin sesión · no hay perfil mini
+✔ sin sesión · no hay barra de crear
+✔ sin sesión · el feed ocupa más del 60 % de la red — 850 / 1140 px
+✔ sin sesión · «Recomendar» manda a entrar con retorno
+✔ sin sesión · 390px sin scroll horizontal
+✔ sin sesión · 768px sin scroll horizontal
+✔ sin sesión · 1024px sin scroll horizontal
+✔ sin sesión · 1440px sin scroll horizontal
+✔ sin sesión · 1920px sin scroll horizontal
+✔ con sesión · perfil mini visible
+✔ con sesión · el perfil mini dice el nombre de la médica — Valeria Rojas Mendoza
+✔ con sesión · barra «Crear publicación»
+✔ con sesión · tres columnas: izquierda < centro < derecha
+✔ con sesión · sin sesión el feed es más ancho — 850 > 560
+✔ con sesión · «Recomendar» suma uno — 19 → 20
+✔ con sesión · el botón queda presionado
+✔ con sesión · el comentario aparece en el hilo tras releer
+✔ con sesión · el contador de comentarios acompaña
+✔ con sesión · el hilo usa el ancho entero de la tarjeta — 558 vs 560
+✔ con sesión · el hilo ya no tiene tope de alto — none
+✔ con sesión · «Crear publicación» abre el compositor
+✔ con sesión · 390px sin scroll horizontal
+✔ con sesión · 768px sin scroll horizontal
+✔ con sesión · 1024px sin scroll horizontal
+✔ con sesión · 1440px sin scroll horizontal
+✔ con sesión · 1920px sin scroll horizontal
+✔ sin errores de página
+
+32/32 verificaciones en verde

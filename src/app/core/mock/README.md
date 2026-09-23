@@ -66,6 +66,19 @@ Lo que ninguna ruta cubre cae en una respuesta genérica y queda anotado en la
 consola como `[mock] sin manejador para …`: ese es el inventario de lo que
 falta.
 
+## Qué sobrevive a F5
+
+Las tablas de negocio —citas, bloqueos, historia clínica, publicaciones,
+mensajes, pedidos, cotizaciones, asientos, solicitudes…— se guardan en
+`sessionStorage` (`Coleccion.persistirEn`, al pie de cada fixture o
+manejador) y se recuperan al recargar. Lo guardado gana sobre el fixture:
+recargar no pisa lo que la persona acaba de escribir. Cerrar la pestaña deja
+la maqueta limpia otra vez.
+
+Sólo se escribe la tabla que se tocó, así que el almacenamiento no se llena
+con catálogos. Si cambiás un fixture y la pantalla sigue mostrando lo viejo,
+es esto: vaciá `sessionStorage` (o cerrá la pestaña).
+
 ## Cómo se verifica
 
 ```bash
@@ -74,9 +87,24 @@ npx ng test --include=src/app/core/mock/mock-backend.spec.ts --watch=false
 
 # cada pantalla de la aplicación, con cada cuenta, en Chromium
 yarn start &
-E2E_BASE_URL=http://localhost:4200 npx playwright test playwright/mockup-barrido.spec.ts
+E2E_BASE_URL=http://localhost:4200 npx playwright test playwright/mockup-barrido.spec.ts --workers=1
 # → artifacts/playwright/mockup/MOCKUP_MATRIX.md
+
+# cada botón de cada pantalla, con cada cuenta: se pulsa, se cierra lo que
+# abre, y se anota excepción, error de consola, 5xx o petición sin manejador
+E2E_BASE_URL=http://localhost:4200 npx playwright test playwright/mockup-click-sweep.spec.ts --workers=1
+# → artifacts/playwright/mockup/MOCKUP_CLICKS.md
 ```
+
+## Lo que el simulador no puede cubrir
+
+Una `<img src="/public/media/<id>">` la pide el navegador directo: no pasa
+por `HttpClient` ni por el interceptor. Por eso `/public/media/*` se sirve
+fuera del simulador, con `public/mock-media.svg`: en `yarn start` lo hace el
+`bypass` de `proxy.conf.mjs` (que reexporta `proxy.conf.json` y le antepone
+esa entrada) y en el contenedor, una ruta de `src/server.ts`. Las vitrinas
+llevan además `avatarUrl`/`coverUrl` como `data:`, que es lo que pintan las
+pantallas públicas.
 
 ## En un VPS (Docker)
 

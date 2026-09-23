@@ -801,6 +801,41 @@ export interface NewDirectMessage {
 }
 
 /**
+ * La respuesta automática por inactividad de un perfil (F4.7).
+ *
+ * Vive en el servidor desde el patch v4.2.9 (`community.chat_auto_replies`).
+ * Es lo que permite que conteste **con la aplicación cerrada**, que es la
+ * diferencia entre un contestador y un recordatorio.
+ */
+export interface ChatAutoReplySettings {
+  readonly id: string;
+  readonly publicProfileId: string;
+  readonly isActive: boolean;
+  /** Minutos sin actividad del titular antes de contestar solo. */
+  readonly inactivityMinutes: number;
+  readonly bodyText: string;
+  /** Horas de descanso antes de repetirle a la misma conversación. */
+  readonly cooldownHours: number;
+  readonly onlyOutsideBusinessHours: boolean;
+  /** `HH:MM`, o ausente si no declaró franja. */
+  readonly businessHoursFrom?: string;
+  /**
+   * `HH:MM`, o ausente.
+   *
+   * Puede ser **menor** que el inicio: es una franja que cruza la medianoche
+   * —el turno noche—, y es válida.
+   */
+  readonly businessHoursTo?: string;
+  readonly updatedAt?: Date;
+}
+
+/** Lo que se manda a `PUT /community/profiles/:id/auto-reply`. */
+export type UpsertChatAutoReply = Omit<
+  ChatAutoReplySettings,
+  'id' | 'publicProfileId' | 'updatedAt'
+>;
+
+/**
  * El texto nuevo de un mensaje propio (F4.5).
  *
  * `senderProfileId` viaja aunque el backend ya sepa quién es el actor: sólo el

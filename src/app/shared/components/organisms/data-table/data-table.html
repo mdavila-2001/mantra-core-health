@@ -1,6 +1,13 @@
 <!-- Los 9 estados los dibuja el view-state-host: acá no se reimplementa ninguno. -->
 <app-view-state-host [state]="state()" (retry)="retry.emit()" (refresh)="refresh.emit()">
-  <div class="data-table__scroll">
+  <div
+    #scrollBox
+    class="data-table__scroll"
+    [class.data-table__scroll--overflowing]="overflowing()"
+    [style.max-height]="effectiveMaxHeight()"
+    [style.overflow-y]="effectiveMaxHeight() ? 'auto' : null"
+    [style.overflow-x]="effectiveMaxHeight() ? 'hidden' : null"
+  >
     <table class="data-table__table" data-testid="tabla">
       @if (caption()) {
         <caption class="sr-only">{{ caption() }}</caption>
@@ -20,10 +27,15 @@
             </th>
           }
 
-          @for (column of primaryColumns(); track column.key) {
+          <!-- En el orden en que el consumidor las declara. Las secundarias
+               llevan su clase: en escritorio son columnas normales y en móvil
+               el CSS las pliega al detalle. Antes iban todas al final, y una
+               tabla no podía poner una columna de detalle entre dos
+               imprescindibles. -->
+          @for (column of columns(); track column.key) {
             <th
               scope="col"
-              [class]="'data-table__cell data-table__cell--' + (column.align ?? 'start')"
+              [class]="cellClassFor(column)"
               [attr.aria-sort]="ariaSortFor(column)"
             >
               @if (column.sortable) {
@@ -45,24 +57,6 @@
             </th>
           }
 
-          <!-- Las secundarias tienen su encabezado propio: en escritorio son
-               columnas normales; en móvil el CSS las pliega al detalle. -->
-          @for (column of secondaryColumns(); track column.key) {
-            <th
-              scope="col"
-              [class]="'data-table__cell data-table__secondary data-table__cell--' + (column.align ?? 'start')"
-              [attr.aria-sort]="ariaSortFor(column)"
-            >
-              @if (column.sortable) {
-                <button type="button" class="data-table__sort" (click)="toggleSort(column)">
-                  {{ column.header }}
-                </button>
-              } @else {
-                {{ column.header }}
-              }
-            </th>
-          }
-
           @if (secondaryColumns().length > 0) {
             <th scope="col" class="data-table__detail-toggle-cell">
               <span class="sr-only">Ver el detalle de la fila</span>
@@ -72,7 +66,7 @@
       </thead>
 
       <tbody>
-        @for (row of rows(); track rowKey(row)) {
+        @for (row of rows(); track rowKey(row); let indice = $index) {
           <tr
             class="data-table__row"
             [class.data-table__row--navigable]="rowNavigable()"
@@ -83,25 +77,15 @@
               <td class="data-table__select-cell">
                 <app-checkbox
                   [checked]="isSelected(row)"
-                  [label]="'Seleccionar la fila ' + rowKey(row)"
+                  [label]="'Seleccionar ' + rowName(row, indice)"
                   [hideLabel]="true"
                   (checkedChange)="toggleRow(row)"
                 />
               </td>
             }
 
-            @for (column of primaryColumns(); track column.key) {
-              <td [class]="'data-table__cell data-table__cell--' + (column.align ?? 'start')">
-                @if (column.cell) {
-                  <ng-container [ngTemplateOutlet]="column.cell" [ngTemplateOutletContext]="{ $implicit: row }" />
-                } @else {
-                  {{ cellValue(row, column) }}
-                }
-              </td>
-            }
-
-            @for (column of secondaryColumns(); track column.key) {
-              <td [class]="'data-table__cell data-table__secondary data-table__cell--' + (column.align ?? 'start')">
+            @for (column of columns(); track column.key) {
+              <td [class]="cellClassFor(column)">
                 @if (column.cell) {
                   <ng-container [ngTemplateOutlet]="column.cell" [ngTemplateOutletContext]="{ $implicit: row }" />
                 } @else {
@@ -116,7 +100,7 @@
                   type="button"
                   class="data-table__detail-toggle"
                   [attr.aria-expanded]="isExpanded(row)"
-                  [attr.aria-label]="'Ver el detalle de ' + rowKey(row)"
+                  [attr.aria-label]="'Ver el detalle de ' + rowName(row, indice)"
                   (click)="toggleDetail(row)"
                 >
                   <span aria-hidden="true">{{ isExpanded(row) ? '▲' : '▼' }}</span>

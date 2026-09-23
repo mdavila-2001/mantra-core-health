@@ -53,6 +53,13 @@ export class Switch implements ControlValueAccessor {
   readonly label = input<string>('');
 
   /**
+   * Nombre accesible cuando el interruptor va sin rótulo visible propio —el
+   * renglón que lo contiene ya lo nombra—. Sin esto, ese caso deja al input
+   * sin nombre, que es un interruptor mudo para quien usa lector.
+   */
+  readonly ariaLabel = input<string>('');
+
+  /**
    * Deshabilitado por la plantilla **o** por el formulario: `disabled` es un
    * `input()` de solo lectura y `setDisabledState` no puede escribirlo.
    */

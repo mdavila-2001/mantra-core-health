@@ -1,0 +1,214 @@
+/* ============================================================================
+    Consulta. Sólo distribución — ni un color ni una tipografía que el sistema
+    no tenga ya.
+
+    Dos bandas y una sola columna: arriba el encuentro, a lo ancho, porque es
+    lo que ata todo lo demás; debajo la rejilla con todo lo que se puede
+    registrar. Ninguna tarjeta al costado: la pantalla anterior partía el ancho
+    en un formulario de una pregunta y tres pestañas, y lo que se podía hacer
+    no se veía hasta abrirlas.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.consulta {
+  display: grid;
+  gap: var(--sp-5);
+  margin-block-start: var(--sp-6);
+}
+
+.consulta__titulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+/* ── El encuentro ──────────────────────────────────────────────────────── */
+
+.consulta__encuentro {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  min-inline-size: 0;
+}
+
+.consulta__en-curso {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Datos y acción en fila cuando entran, apilados cuando no. */
+.consulta__en-curso-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.consulta__en-curso-datos {
+  display: grid;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+  flex: 1 1 20ch;
+}
+
+/* El sello es un rótulo, no una barra: en una celda de rejilla se estira a
+   todo el ancho si no se lo ancla al inicio. */
+.consulta__en-curso-datos app-status-seal {
+  justify-self: start;
+}
+
+/* El motivo y el botón en la misma línea: el campo toma el ancho que sobra y
+   el botón se alinea con su base. En angosto se apilan. */
+/* El motivo a todo el ancho y el botón debajo, a la derecha: al lado del
+   textarea el botón quedaba flotando a la altura del contador, sin alinearse
+   con nada, y el campo no llegaba al borde. */
+.consulta__apertura {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.consulta__apertura-campo {
+  min-inline-size: 0;
+}
+
+.consulta__apertura > [app-button] {
+  align-self: flex-end;
+}
+
+.consulta__principal {
+  display: block;
+  font-weight: 500;
+}
+
+.consulta__secundario {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+/* ── La rejilla ─────────────────────────────────────────────────────────────
+   Columnas declaradas por punto de quiebre y no `auto-fill`: son nueve
+   casillas y en cada ancho llenan las filas sin dejar un hueco suelto
+   (1·9, 2·5, 3·3). */
+
+.consulta__registro {
+  min-inline-size: 0;
+}
+
+.consulta__rejilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 40rem) {
+  .consulta__rejilla {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .consulta__rejilla {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-4);
+  }
+}
+
+/* La casilla entera es el botón: icono a la izquierda, texto en el medio y la
+   cantidad a la derecha. Hereda la tipografía del cuerpo porque un `<button>`
+   no lo hace solo. */
+.consulta__casilla {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-3);
+  inline-size: 100%;
+  min-block-size: 5.5rem;
+  padding: var(--sp-4);
+  font: inherit;
+  color: var(--text-primary);
+  text-align: start;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+}
+
+.consulta__casilla:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+/* el anillo de foco lo pone la regla global de :focus-visible */
+
+.consulta__casilla-icono {
+  display: grid;
+  place-items: center;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  color: var(--brand-primary);
+  background: var(--bg-inset);
+  border-radius: var(--r-md);
+}
+
+.consulta__casilla-icono svg {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+}
+
+.consulta__casilla-texto {
+  display: grid;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.consulta__casilla-titulo {
+  font-weight: 600;
+}
+
+.consulta__casilla-descripcion {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* Tabular: nueve cifras en una rejilla se comparan de un vistazo sólo si los
+   dígitos ocupan lo mismo. */
+.consulta__casilla-cantidad {
+  display: grid;
+  justify-items: end;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.consulta__casilla-cantidad-rotulo {
+  font-family: var(--font-body);
+  font-size: var(--fs-overline);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}

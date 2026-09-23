@@ -1,0 +1,140 @@
+/* La barra de «Crear publicación»: retrato + píldora, y debajo los atajos. La
+   misma piel que las publicaciones para que lea como la primera tarjeta del
+   feed y no como un formulario pegado encima. */
+
+:host {
+  display: block;
+}
+
+.crear {
+  border: 1px solid var(--filete-2);
+  border-radius: var(--r-card);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-1);
+  padding: var(--e3) var(--e4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.crear__barra {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+}
+
+.crear__avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: 3rem;
+  block-size: 3rem;
+  border-radius: var(--r-pill);
+  object-fit: cover;
+  background: var(--menta);
+}
+
+.crear__avatar--iniciales {
+  color: var(--tinta-marca);
+  font-family: var(--f-titulo);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.crear__avatar--esqueleto {
+  background: var(--filete);
+  opacity: 0.5;
+}
+
+/* La píldora: se ve como un campo, se comporta como un botón. Lo que hace al
+   tocarla —abrir el compositor— está escrito adentro. */
+.crear__pill {
+  flex: 1;
+  min-inline-size: 0;
+  min-block-size: 48px;
+  padding: 0 var(--e4);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+  color: var(--tinta-2);
+  font: inherit;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.crear__pill:hover {
+  background: var(--sup-inset);
+}
+
+.crear__pill--enlace {
+  color: var(--petroleo);
+}
+
+.crear__pill-esqueleto {
+  flex: 1;
+  block-size: 48px;
+  border-radius: var(--r-pill);
+}
+
+.crear__atajos {
+  display: flex;
+  justify-content: space-around;
+  gap: var(--e2);
+}
+
+.crear__atajo {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  min-block-size: 44px;
+  padding: 0 var(--e3);
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--tinta-2);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.crear__atajo:hover {
+  background: var(--sup-inset);
+}
+
+.crear__icono {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+.crear__icono--foto {
+  color: var(--petroleo);
+}
+
+.crear__icono--articulo {
+  color: var(--aguamarina);
+}
+
+.crear__cerrar {
+  align-self: flex-end;
+  padding: 0 var(--e2);
+  min-block-size: 40px;
+  border: 0;
+  background: none;
+  color: var(--tinta-2);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.crear__cerrar:hover {
+  text-decoration: underline;
+}

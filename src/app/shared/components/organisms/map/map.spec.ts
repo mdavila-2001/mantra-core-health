@@ -57,6 +57,7 @@ class RegistroLeaflet {
   readonly vistas: unknown[] = [];
   readonly encuadres: unknown[] = [];
   readonly marcadores: MarcadorFalso[] = [];
+  readonly tiles: string[] = [];
   gruposQuitados = 0;
   mapasQuitados = 0;
 }
@@ -70,7 +71,10 @@ function leafletFalso(registro: RegistroLeaflet): unknown {
         registro.mapasQuitados += 1;
       },
     }),
-    tileLayer: () => ({ addTo: () => undefined }),
+    tileLayer: (url: string) => {
+      registro.tiles.push(url);
+      return { addTo: () => undefined };
+    },
     layerGroup: () => ({
       addTo: () => undefined,
       remove: () => {
@@ -184,6 +188,15 @@ describe('AppMap', () => {
     expect(segundo.opciones.icon.html.className).toContain('mapa__pin--warning');
     // El camino por teclado es la lista: el pin no entra al orden de tabulación.
     expect(primero.opciones.keyboard).toBe(false);
+  });
+
+  it('pide los mosaicos a OpenStreetMap, sin clave y sin marca de agua', async () => {
+    const { registro } = await crearMontado();
+
+    expect(registro.tiles).toEqual(['https://tile.openstreetmap.org/{z}/{x}/{y}.png']);
+    // CARTO estampa «API KEY REQUIRED» sobre cada mosaico desde el 19/09/2026:
+    // llegan con 200 y el mapa se ve roto sin que la consola diga nada.
+    expect(registro.tiles.join(' ')).not.toContain('cartocdn');
   });
 
   it('con varios pines encuadra con fitBounds sobre todas las coordenadas', async () => {

@@ -1,6 +1,14 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-09-10 (noche) — **P27 se cerró y su nota estaba equivocada** (ver su
+**Actualizado:** 2026-09-16 — **P32 y P33 están CERRADOS**: el backend publicó el consultorio
+propio y el QR bancario por sede, y **el campo viaja en inglés (`isOwnSite`), no como `esPropio`**
+— que es lo que sirve el simulador de esta rama. Ver las dos fichas de abajo. Antes,
+2026-09-13 — **P33 era nuevo**: el QR bancario con el que el profesional cobra
+**en cada sede** no existe en ninguna capa, y el pedido del cliente ya está construido contra la
+maqueta. Antes, 2026-09-12 — **P30 y P31 son nuevos**: la ficha de una clínica y la de una
+farmacia ya viven dentro del panel, y las dos lecturas que las llenan —qué servicios ofrece una
+organización y qué medicamentos tiene una farmacia— no existen en la API. Antes,
+2026-09-10 (noche): **P27 se cerró y su nota estaba equivocada** (ver su
 sección: lo que faltaba no era aceptar coordenadas sino poder QUITAR el punto; resuelto en el
 PR #378 de la API) y **P29 es nuevo** —la matrícula sin `file_id`, que empieza en el repo del
 modelo—. Antes, esa misma tarde: **P27 y P28 nacieron**: el paciente ya puede mover el
@@ -21,13 +29,102 @@ backend.
 | ~~**P27**~~ | ~~Coordenadas en el `PATCH` del perfil~~ — **la nota estaba MAL y ya está resuelto.** Ver abajo |
 | **P28** | Lo que el registro del médico pregunta y su perfil no puede editar: **sexo al nacer**, **documento y departamento emisor**, **correo de trabajo** y el **consultorio propio** |
 | **P29** | `file_id` en `profiles.jurisdiction_authorizations` — la matrícula no puede llevar adjunto, y **esto empieza en el repo del modelo, no en la API** |
-| ~~**P32**~~ | ~~`esPropio` por sede y `PATCH /practitioners/me/sites/:id`~~ — **CERRADO**, viaja como `isOwnSite`. Ver abajo |
-| ~~**P33**~~ | ~~QR bancario por sede~~ — **CERRADO**: `bankQrFileId` + `PUT /practitioners/me/sites/:id/bank-qr`. Ver abajo |
+| **P30** | `GET /public/profiles/o/:slug/services` — qué ofrece una organización, con precio de referencia. La ficha ya está construida y espera |
+| **P31** | `GET /public/profiles/f/:slug/products` — qué medicamentos tiene una farmacia, con marca, precio y si hay stock |
+| ~~**P32**~~ | ~~Dos cosas del consultorio propio: `esPropio` en las sedes y `PATCH /practitioners/me/sites/:id`~~ — **CERRADO**, pero el campo se llama **`isOwnSite`**. Ver abajo |
+| ~~**P33**~~ | ~~El **QR bancario por sede**: `bankQrFileId` y `PUT /practitioners/me/sites/:id/bank-qr`~~ — **CERRADO**. Ver abajo |
 | **P34** | Ninguna capa sabe qué farmacia abre 24 h ni cuál está de turno — **empieza en el repo del modelo**, y la guardia rotativa tiene tres preguntas de producto sin responder |
-| **P35** | No hay tendencias del muro: `PostListItem` no trae `hashtags` y no existe un recuento por período |
+| **P35** | `POST /quotations` sin interés: fuera `interestRatePercent` y `/simulate`, entran `downPaymentAmount`, `paymentFrequency` e `installments` a medida |
+| **P36** | `schedule_templates` no sabe declarar horario **sin turnos fijos** — empieza en el `.puml`, y falta decidir cómo reserva el paciente en ese modo |
+| **P37** | Las **sucursales** de una cadena de farmacias y su disponibilidad pública dada una receta escrita a mano |
+| **P38** | No hay tendencias del muro: `PostListItem` no trae `hashtags` y no existe un recuento por período |
 
 ---
 
+## P30 y P31 · las fichas de clínica y farmacia no tienen qué ofrecer
+
+Las dos nacen del mismo pedido y del mismo día, así que van juntas: el cliente pidió que el
+clic sobre una clínica o una farmacia **no saque a nadie del panel**. Hasta el 11/09/2026 ese
+clic abría `/o/:slug` y `/f/:slug`, que son las fichas anónimas bajo el marco de la red social:
+quien entraba por su propio menú terminaba en el buscador público.
+
+Ahora el destino es `clinics-directory/:slug` y `pharmacies-directory/:slug`, dentro del panel.
+Y una ficha que no dice **qué ofrece** el lugar no justifica el clic: es la misma tarjeta del
+listado, más grande.
+
+### Lo que ya existe, y por qué no alcanza
+
+`GET /public/profiles/:prefix/:slug` sirve la identidad de la ficha —nombre, titular, ciudad,
+dirección— y nada de su oferta. Del otro lado sí existe el dato, pero **detrás de sesión y del
+tenant dueño**:
+
+- Los servicios de una organización se leen y se editan en «Mis servicios», que es la superficie
+  de **su dueño**: trae la práctica, la cuenta de ingresos y el código impositivo, que son cosas
+  de quien factura y no de quien se atiende.
+- El catálogo de una farmacia vive en `pharmacy_inventory`, cuyas lecturas exigen el tenant.
+
+`GET /pharmacy-inventory/availability` tampoco sirve acá: contesta «dónde comprar **esta**
+receta», partiendo de una lista de productos. La pregunta de la ficha es la inversa —«qué tiene
+**esta** farmacia»— y no hay receta de la que partir.
+
+### P30 · `GET /public/profiles/o/:slug/services`
+
+Anónima, paginada por cursor, con la misma envoltura que el resto de `/public/…`
+(`items`, `nextCursor`, `totalHint`, `generatedAt`). Un elemento:
+
+```
+id: string
+code: string            // el código del catálogo: así lo nombra una orden o un presupuesto
+name: string
+description: string | null   // qué incluye, cuando la organización lo escribió
+price: string | null         // TEXTO, no number — ver abajo
+currency: string | null      // 'BOB'; null cuando no hay precio
+isActive: boolean            // un servicio dado de baja se lista rotulado, no se esconde
+```
+
+### P31 · `GET /public/profiles/f/:slug/products`
+
+Igual de anónima y con la misma envoltura. Un elemento:
+
+```
+id: string
+genericName: string          // el genérico: es por lo que busca quien lleva una receta
+brandName: string | null     // null si vende el genérico
+presentation: string | null  // «500 mg comprimidos», «jarabe 120 ml»
+therapeuticGroup: string | null
+price: string | null
+currency: string | null
+inStock: boolean             // el agotado se rotula; esconderlo hace perder el viaje
+requiresPrescription: boolean
+```
+
+### Dos cosas que no son detalle de formato
+
+**Los importes viajan como texto**, igual que en `pharmacy.types.ts` y en el detalle de
+laboratorio: el `numeric` de la base no entra sin pérdida en un `number` de JavaScript, y un
+redondeo en un precio de salud no es un detalle de presentación.
+
+**`price: null` no es `'0.00'`.** Un cero se lee como «no se cobra», que es justo lo que «Mis
+servicios» ya evita con su «Definí el precio». Sin precio publicado va `null`, y la ficha lo
+dice con palabras.
+
+### Por qué cuelgan de `/public/profiles/…` y no de `/o/:slug/services`
+
+Por lo mismo que la ficha: `/o` es **también** una ruta del router del frontend, y
+`proxy.conf.json` enruta comparando el **comienzo** de la ruta. Un prefijo `/o` en el proxy se
+comería la ruta de aplicación. Ya mordió una vez con `/admin` y `/administracion/pacientes`, y
+`scripts/check-route-prefixes.mjs` lo verifica en CI.
+
+### Estado del frontend: las dos pantallas están hechas y esperan
+
+`ClinicDetail` y `PharmacyDetail` están construidas, ruteadas y probadas, y consumen
+`PublicCatalogClient`, que vive **aparte** de `PublicDirectoryClient` justamente porque aquél es
+la transcripción literal de `CONTRATO-PUBLICO.md` y esto todavía no está en ese contrato.
+
+Sobre la rama `mockup` las responde el simulador. **Contra la API real las dos se quedan en su
+estado de error hasta que el backend las publique: ninguna inventa datos ni esconde el hueco.**
+O sea que esto se puede mergear a `dev` antes que el backend y no rompe nada — pero las dos
+fichas se ven vacías hasta que exista.
 ## ~~P32 y P33~~ · el consultorio propio y su QR bancario — **CERRADOS**
 
 **Nacieron el 2026-09-13 en la rama `mockup`** (de ahí que esta copia de `dev` no los
@@ -1257,7 +1354,293 @@ mira pueda hacer. Ofrecérselo sería un callejón con cartel de salida.
 
 ---
 
-## Abierto · P35 · El muro no puede decir de qué se está hablando
+## Opiniones públicas de una ficha — 13/09/2026
+
+El cliente pidió que en la ficha pública se vean **las opiniones y quiénes las dieron**, y **quiénes dieron estrellas**, al tocar «8 opiniones» o la estrella de la cabecera. La maqueta lo resuelve con un contrato que la API real **no publica todavía**:
+
+`GET /public/profiles/:prefijo/:slug/reviews?cursor&limit` → página pública (`items`, `nextCursor`, `totalHint`, `generatedAt`) de:
+
+| Campo | Tipo | Nota |
+| --- | --- | --- |
+| `id` | uuid | |
+| `rating` | 1..5 | `overall_rating` |
+| `text` | string | null | `null` si sólo calificó |
+| `publishedAt` | ISO | |
+| `reviewer` | `{ displayName, headline, avatarUrl, slug, kind }` | `slug`/`kind` en `null` si quien opinó no tiene ficha pública; con modo anónimo, `displayName: "Paciente verificado"` |
+| `response` | `{ text, publishedAt }` | null | la primera respuesta de la ficha |
+
+Sin sesión, como el resto de `/public`. Nunca `reviewerProfileId`, `userId` ni uuids de conceptos. Simulador: `core/mock/handlers/public.handlers.ts`; cliente: `PublicDirectoryClient.profileReviews`.
+
+
+---
+
+## ~~P32~~ · El consultorio propio: cuál es, y cómo se corrige — **CERRADO**
+
+> [!success] Cerrado el 2026-09-16, con la subtarea C.1.
+> El backend publicó las dos mitades: el campo en `GET /practitioners/:profileId/sites` y
+> `PATCH /practitioners/me/sites/:siteId` para corregir el consultorio propio.
+>
+> **Se llama `isOwnSite`, no `esPropio`.** Esta maqueta lo sirvió en castellano y la regla de
+> gobernanza pide los contratos en inglés técnico, así que el contrato real viaja en inglés.
+> **El simulador de esta rama sigue devolviendo `esPropio`**, que es lo que consume la pantalla
+> de acá: quien lleve estas pantallas a `dev` tiene que renombrarlo, y quien toque el simulador
+> conviene que sepa que ese nombre no es el del servidor.
+>
+> Dos cosas más que el contrato no dice solo:
+> **`isOwnSite` no es «la práctica es de tipo consultorio»** — sale de comparar la práctica de
+> la sede con la **práctica personal** del profesional. Un consultorio particular **ajeno** es
+> tan ajeno como un hospital, y darlo por propio ofrecería un «Editar» que el `PATCH` rechaza.
+> Y **lo que NO entró**: el teléfono de la sede (`common.contact_points` no declara ningún
+> miembro de `owner_type_concept_id` para una sede) ni el horario de atención (no hay tabla de
+> horarios en `practice`; lo único que la sede declara es su huso).
+
+Lo que sigue es la nota original, tal como se escribió:
+
+**Nace el 2026-09-13.** Son dos huecos de la misma pregunta, y los dos los destapó
+el mismo pedido del cliente: separar «crear mi consultorio» de «atiendo en un
+hospital que ya existe».
+
+### a) `esPropio` en las sedes
+
+`GET /practitioners/:profileId/sites` devuelve las sedes «de sus asignaciones de
+rol vigentes», y ahí conviven dos cosas distintas:
+
+- **su** consultorio, creado con `POST /practitioners/me/sites`, que según el
+  propio contrato «crea —o reutiliza— la **práctica personal** del profesional»;
+- las sedes de **otras** organizaciones, donde lo que tiene es una vinculación
+  que ellas aceptaron.
+
+La respuesta no dice cuál es cuál. `practiceId` viaja, pero nada declara cuál de
+esas prácticas es la personal, así que el frontend no puede deducirlo sin
+adivinar. El efecto en pantalla era que «Consultorio Dra. Rojas» y «Hospital San
+Lucas» se dibujaban **idénticos**, con el mismo botón «Retirar» al lado —cuando
+retirar lo propio y desvincularse de un hospital no son el mismo acto—.
+
+**Qué falta:** un booleano por sede. La maqueta ya lo sirve como `esPropio` y el
+tipo `PracticeSite` lo declara **opcional**: ausente se lee como «no sé» y la
+pantalla lo trata como ajeno, que es la lectura prudente. El día que la API lo
+mande, la interfaz ya lo usa.
+
+### b) `PATCH /practitioners/me/sites/:siteId`
+
+Hoy el consultorio propio se puede **crear** y **retirar**, no corregir. Un
+nombre mal tipeado o una mudanza obligan a retirarlo y crear otro — y eso cambia
+el `id`, que es el que la agenda referencia en cada turno.
+
+Es la mitad del **P28**, que ya declara el consultorio propio entre «lo que el
+registro del médico pregunta y su perfil no puede editar». Con el bloque ahora
+en «Editar tu info → Dónde atiendo», el botón «Editar» existe y la maqueta lo
+atiende; contra la API real la petición no tiene ruta.
+
+**Cuerpo esperado**, el mismo del alta con todo opcional:
+
+```jsonc
+{ "name": "…", "timeZone": "America/La_Paz", "address": { "lines": ["…"], "city": "…", "municipalityConceptId": "…", "latitude": 0, "longitude": 0 } }
+```
+
+**Sólo el propio.** Una sede de otra organización no se corrige desde acá: es de
+ella, y lo que uno tiene con ella es una vinculación, no la sede.
+
+---
+
+## ~~P33~~ · El QR bancario con el que se cobra en cada sede — **CERRADO**
+
+> [!success] Cerrado el 2026-09-16, con la subtarea C.1.
+> `bankQrFileId` viaja en la lectura de sedes y se guarda con
+> `PUT /practitioners/me/sites/:siteId/bank-qr`.
+>
+> **El QR autoriza distinto que el `PATCH` del consultorio.** Aquél exige ser dueño; el QR sólo
+> exige **vinculación vigente con la sede**, porque también se cobra en la clínica donde el
+> profesional atiende sin ser dueño del lugar. Lo que se guarda ahí no es la sede: es con qué
+> cobra él en ella.
+>
+> **No acepta PDF**: se sube con categoría `IMAGE` (JPG, PNG, WEBP). Un QR dentro de un PDF no
+> se puede mostrar en el modal ni escanear desde la pantalla, que es lo único que esto hace.
+
+Lo que sigue es la nota original, tal como se escribió:
+
+**Nace el 2026-09-13**, del pedido del cliente sobre «Dónde atiendo»: cada sede
+tiene que poder mostrar el QR bancario que el profesional quiere usar **ahí**.
+
+### Por qué es por sede y no del profesional
+
+Porque no se cobra igual en todos lados. Una médica que atiende en su
+consultorio y además en la Clínica Los Olivos no recauda por la misma cuenta en
+los dos: en el consultorio cobra ella, y en la clínica puede cobrar la clínica.
+Un QR único de perfil la obligaría a corregirlo cada vez que cambia de
+establecimiento — que es la clase de error que se descubre tarde y con la plata
+en la cuenta equivocada.
+
+### Lo que falta, en las cuatro capas
+
+Esto **no empieza en la API**: la columna no existe. La dirección del cambio la
+fija el ADR-0021 (`.puml` → `gen_ddl.py` → `SQL/` → base → entidades), así que
+el trabajo arranca en `mantra-core-health-model/`.
+
+1. **Modelo** — `practice.practice_sites` gana una FK opcional al archivo:
+
+   ```text
+   bank_qr_file_id  uuid  NULL  → common.files(id)
+   ```
+
+   Opcional de verdad: una sede sin QR es un estado normal y corriente, no un
+   dato faltante. Va en la sede y no en `role_assignments` porque lo que
+   identifica es **dónde** se cobra, no bajo qué vínculo — y el vínculo se
+   renueva, se suspende y se vuelve a crear.
+
+2. **Lectura** — `GET /practitioners/:profileId/sites` devuelve `bankQrFileId`
+   (`string | null`). El tipo `PracticeSite` del frontend ya lo declara
+   **opcional**, con el mismo criterio que `esPropio` (P32): ausente se lee como
+   «no hay ninguno configurado», que es lo que la pantalla avisa en ámbar — y
+   así nunca esconde el camino para cargarlo.
+
+3. **Escritura** — `PUT /practitioners/me/sites/:siteId/bank-qr`:
+
+   ```jsonc
+   { "fileId": "uuid del archivo ya subido, o null para dejarla sin QR" }
+   ```
+
+   Devuelve la sede con el QR aplicado, en el mismo formato que la lista.
+
+**Ruta propia y no parte del `PATCH` del consultorio (P32-b)**, por dos motivos:
+
+- **Alcance.** Aquel `PATCH` corrige el consultorio **propio**, y el QR se
+  configura también en la clínica donde el profesional atiende sin ser dueño de
+  la sede. Lo que se guarda ahí no es la sede: es con qué cobra **él** en ella.
+  El backend tiene que autorizarlo por «tengo una asignación de rol vigente en
+  esta sede», no por «soy el dueño de la práctica».
+- **Contrato.** El archivo ya entró por `POST /common/files/upload`, así que lo
+  único que viaja es su id. Mezclarlo con nombre y dirección obligaría a mandar
+  el consultorio entero para cambiar una imagen.
+
+### Lo que el frontend ya hace
+
+El archivo se sube con `FilesClient.upload(file, 'IMAGE', 'NORMAL')` — un QR no
+es dato clínico— y la imagen se muestra bajando el contenido autenticado
+(`GET /common/files/:id/content`), porque un `<img src>` no manda cabeceras y la
+URL firmada del backend no es una URL de navegador.
+
+Simulador: `core/mock/handlers/practice.handlers.ts`; cliente:
+`PracticeSitesClient.setSiteBankQr`; pantalla:
+`features/account/my-profile/work-history/site-bank-qr-dialog`.
+
+## P35 · Cotizaciones: plan de pagos flexible, sin interés — 18/09/2026
+
+El propietario pidió **quitar por completo la tasa de interés y la simulación de
+crédito** de las cotizaciones: un consultorio no financia, reparte el precio de un
+tratamiento en cuotas a medida de la persona. El frontend (`mockup`) ya lo hace;
+la API real (`dev`) todavía expone el contrato viejo.
+
+### Qué cambia en el contrato de `POST /quotations`
+
+- **Fuera:** `interestRatePercent`, `interestCalculationMethod`
+  (`create-quotation.dto.ts`) y el endpoint `POST /quotations/simulate`.
+- **Nuevo:** `downPaymentAmount` (número, ≥ 0), `paymentFrequency`
+  (`WEEKLY` · `BIWEEKLY` · `MONTHLY`, sólo punto de partida) e `installments`:
+  `[{ installmentNumber, dueDate: 'YYYY-MM-DD', amount }]`, **el cronograma
+  tal como lo dejó quien atiende** — montos y fechas pueden no ser parejos.
+- **Regla de servidor:** anticipo + Σ `amount` = `offeredPrice`, al centavo.
+  Si no, 422 `VALIDATION_FAILED` (el simulador ya responde así).
+- `GET /quotations/:id` devuelve lo mismo: `installments` sin
+  `principalAmount`/`interestAmount`/`totalAmount`, sólo `amount`.
+
+### Dónde guardarlo sin tocar el modelo
+
+`payments.installment_plans` + `payments.installment_schedules` ya declaran
+exactamente esto: `number_of_installments`, `total_amount`, y por cuota
+`sequence_no`, `due_date`, `amount`. `interest_rate` es **nullable**: queda
+en `NULL`. Falta decidir cómo se ata el plan a la cotización (hoy el plan
+cuelga de `payment_intent_id`) — decisión del modelo, no del front.
+
+### Lo que el frontend ya hace
+
+- Alta: `features/quotations/quotation-form` + `flexible-payment-plan.ts`.
+- Consulta: `features/clinical-record/consultation/payment-plan-panel`, lee
+  `GET /quotations?patientProfileId=` y el detalle de los `ACCEPTED`, `SENT`
+  y `DRAFT` vigentes.
+- Simulador: `core/mock/handlers/finance.handlers.ts`.
+
+## P36 · Horario flexible, sin turnos fijos — 18/09/2026
+
+**Pedido del propietario:** poder publicar un horario **sin turnos**: el médico
+declara cuándo atiende y el paciente pide la hora que quiera dentro de la franja.
+
+**Qué hace hoy el front (`mockup`):** «Publicá tu agenda» tiene la pregunta
+«Horario flexible, sin turnos fijos · Sí / No». Con «Sí», la plantilla viaja con
+`flexibleHours: true` y sus reglas **sin** `slotMinutes` ni `gapMinutes`
+(`POST /scheduling/resources/:id/templates`). El simulador genera **un bloque
+abierto por franja**, con capacidad = 1 consulta cada 15 min como techo —una
+suposición de la maqueta, no una regla—.
+
+**Qué falta en la API real:**
+
+- Columna en el modelo (`schedule_templates`, módulo 41) que diga el modo; hoy
+  no existe y el DTO descartaría `flexibleHours`. Empieza en el `.puml`.
+- Decidir cómo reserva el paciente en ese modo: bloque con capacidad (orden de
+  llegada) o pedido de una hora libre que el médico confirma.
+- Mientras tanto, contra la API real el horario se publicaría **con turnos** de
+  la duración por omisión: no llevar esta pantalla a `dev` sin cerrar P36.
+
+**La hora de almuerzo no necesita backend:** un día con almuerzo se publica como
+dos franjas (mañana y tarde), y el generador real ya recorre todas las reglas de
+cada día (`scheduling-catalog.service.ts`).
+
+## P37 · Las sucursales de una farmacia y la receta entre ellas — 19/09/2026
+
+**Pedido del propietario:** en la ficha de una farmacia, «debe mostrar todas sus
+sucursales y pedirle ubicación para la más cercana recomendar dada una receta
+médica».
+
+**Qué hace hoy el front (`mockup`):** la ficha (`/pharmacies-directory/:slug`)
+lista las sucursales de la cadena, dibuja una por pin en el mapa, ofrece «Usar
+mi ubicación» —`navigator.geolocation`, nunca obligatorio— y, con los renglones
+de la receta escritos a mano, ordena las sucursales por «tiene todo» y cercanía
+y recomienda la primera. Las dos lecturas las responde el simulador
+(`core/mock/handlers/public.handlers.ts`); contra la API real la sección se
+queda en su estado de error y **no inventa sucursales ni existencias**.
+
+`GET /public/profiles/f/:slug/branches` → página pública de:
+
+| Campo | Tipo | Nota |
+| --- | --- | --- |
+| `slug` | string | la ficha pública de **esa** sucursal |
+| `name` | string | «Farmacorp · San Miguel» |
+| `siteName` | string | sólo la sucursal, para no repetir la cadena |
+| `city` / `addressText` / `phone` / `openingHours` | string \| null | |
+| `location` | `{ lat, lng }` \| null | sin punto no hay pin ni distancia |
+| `locationAccuracy` | string \| null | ya en palabras: «Ubicación aproximada · centro de la ciudad» |
+| `isCurrent` | boolean | si es la sucursal que se está mirando |
+
+La farmacia sin cadena devuelve **una**: ella. Vacío obligaría a la pantalla a
+distinguir «no tiene sucursales» de «la lectura falló».
+
+`GET /public/profiles/f/:slug/branch-availability?items=a|b|c&lat&lng` →
+`{ items, count, generatedAt }`, con un renglón por sucursal:
+`branch`, `matches[{ term, genericName, brandName, presentation, price, currency }]`,
+`missing[]`, `complete`, `totalAmount`, `currency`, `distanceKm`.
+
+Tres decisiones que el backend tiene que conservar:
+
+- **Los renglones viajan como texto**, separados por `|`: una receta en papel no
+  trae ids de producto, y la coma es parte de lo que la gente escribe.
+- **Sólo cuenta lo que está en stock.** Un agotado se cuenta como faltante — es
+  lo que le pasa a quien llega con la receta —, no se esconde.
+- **El orden lo decide el servidor** (primero las completas, después la más
+  cercana) y la pantalla no reordena: recomendar una y listar otras en otro
+  orden es contradecirse en la misma pantalla.
+
+`lat`/`lng` son opcionales: sin ellas la búsqueda sirve igual, sólo que sin
+distancias. La distancia es **en línea recta** (PAC-MED-005) y el rótulo de la
+pantalla dice lo mismo que el campo.
+
+**Lo que falta del lado del modelo:** hoy la cadena de una farmacia sale del
+corpus de Bolivia (`fixtures/bolivia-eje-central.ts`), no de la base.
+`directory` no declara el vínculo cadena → sucursal para farmacias, y
+`pharmacy_inventory` ya tiene el inventario por sede
+(`GET /pharmacy-inventory/availability`, que es el hermano **con sesión** de la
+segunda lectura de acá). El camino corto es exponer esa disponibilidad también
+en la superficie pública, acotada a las sedes de una cadena.
+## Abierto · P38 · El muro no puede decir de qué se está hablando
 
 **Levantado el 2026-09-17**, construyendo la tercera columna de `/posts` (subtarea E.1,
 AC-E1-03: «tendencias clínicas»).

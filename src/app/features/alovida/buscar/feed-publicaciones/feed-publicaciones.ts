@@ -1,12 +1,22 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
+import { SessionStore } from '@core/auth/session.store';
+import { CommunityClient } from '@core/data-access/community/community.client';
+import type { OwnPublicProfile } from '@core/data-access/community/community.types';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
-import type { PublicFeedPost } from '@core/data-access/public-directory/public-directory.types';
+import type {
+  PublicFeedPost,
+  PublicProfileDetail,
+} from '@core/data-access/public-directory/public-directory.types';
 import { ToastService } from '@shared/components/molecules/toast/toast.service';
 import { inicialesDe } from '@shared/text/iniciales';
 import { ReportPost } from '../../../feed/report-post/report-post';
 import { PublicPostCard } from '../../../public-profile/public-post-card/public-post-card';
+import { FeedBanner } from './feed-banner/feed-banner';
+import { FeedCrearPublicacion } from './feed-crear-publicacion/feed-crear-publicacion';
+import { FeedPerfilMini } from './feed-perfil-mini/feed-perfil-mini';
+import { FeedTendencias } from './feed-tendencias/feed-tendencias';
 
 /** En qué estado está la pantalla, para el `@switch` de la plantilla. */
 type EstadoFeed = 'carga' | 'datos' | 'vacio' | 'error';
@@ -28,10 +38,18 @@ type EstadoFeed = 'carga' | 'datos' | 'vacio' | 'error';
  * publicaciones» concatena la página siguiente al final en vez de reemplazar
  * la lista, así que volver a lo ya leído es subir, no pedir la página anterior.
  * El cursor viene del servidor y es opaco; cuando llega `null`, no hay más.
+ *
+ * ## Tres columnas, como una red profesional (pedido del 13/09/2026)
+ *
+ * Sin título de página: la red social abre directo en el contenido.
+ * Izquierda, «Doctores en tendencia esta semana» y los banners; al centro, la
+ * barra de «Crear publicación» y el feed; a la derecha, el perfil propio en
+ * miniatura. **Sin sesión no hay columna derecha** —no hay perfil que
+ * mostrar— y el feed se queda con ese ancho en vez de dejar un hueco.
  */
 @Component({
   selector: 'app-feed-publicaciones',
-  imports: [ReportPost, RouterLink, PublicPostCard],
+  imports: [FeedBanner, FeedCrearPublicacion, FeedPerfilMini, FeedTendencias, PublicPostCard, ReportPost, RouterLink],
   templateUrl: './feed-publicaciones.html',
   styleUrl: './feed-publicaciones.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,6 +58,65 @@ export class FeedPublicaciones {
   private readonly directorio = inject(PublicDirectoryClient);
   private readonly avisos = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly sesion = inject(SessionStore);
+  private readonly community = inject(CommunityClient);
+
+  /* ---- quien mira ------------------------------------------------------- */
+
+  protected readonly conSesion = this.sesion.isAuthenticated;
+
+  /** La vitrina propia, o `null` si todavía no la creó (o no hay sesión). */
+  protected readonly perfil = signal<OwnPublicProfile | null>(null);
+  protected readonly perfilResuelto = signal(false);
+  /** La ficha pública propia: la única que trae foto y portada como URL. */
+  protected readonly detalle = signal<PublicProfileDetail | null>(null);
+
+  protected readonly actor = computed(() => this.perfil()?.id ?? null);
+
+  /**
+   * La vitrina se pide cuando hay sesión, y **cuando la sesión llega**.
+   *
+   * Al entrar por URL directa la sesión se restaura después de construir la
+   * pantalla (el refresh token va y vuelve); leer `isAuthenticated` una sola
+   * vez en el constructor dejaba la columna derecha vacía justo en ese caso.
+   */
+  private readonly alCambiarSesion = effect(() => {
+    const hay = this.conSesion();
+    untracked(() => (hay ? this.leerPerfil() : this.olvidarPerfil()));
+  });
+
+  private leerPerfil(): void {
+    this.perfilResuelto.set(false);
+    this.community.getOwnProfile().subscribe({
+      next: (propio) => {
+        this.perfil.set(propio);
+        this.perfilResuelto.set(true);
+        // Sólo los profesionales tienen ficha pública bajo `/p`; pedirla para
+        // un paciente sería un 404 garantizado.
+        if (propio !== null && this.sesion.practitionerProfileId() !== null) {
+          this.directorio.getProfile('PRACTITIONER', propio.slug).subscribe({
+            next: (d) => this.detalle.set(d),
+            error: () => this.detalle.set(null),
+          });
+        }
+      },
+      error: () => {
+        this.perfil.set(null);
+        this.perfilResuelto.set(true);
+      },
+    });
+  }
+
+  private olvidarPerfil(): void {
+    this.perfil.set(null);
+    this.detalle.set(null);
+    this.perfilResuelto.set(false);
+  }
+
+  /** Se publicó desde la barra: se relee el feed desde el principio. */
+  protected alPublicar(): void {
+    this.cargar();
+  }
 
   /* ---- las tres acciones de dominio del menú (AC-01-15) ------------------ */
 

@@ -27,7 +27,7 @@ const FILAS: readonly Paciente[] = [
 const COLUMNAS: readonly ColumnDef<Paciente>[] = [
   { key: 'apellido', header: 'Apellido', priority: 1, sortable: true },
   { key: 'documento', header: 'Documento', priority: 1, align: 'end' },
-  { key: 'obraSocial', header: 'Obra social', priority: 2 },
+  { key: 'obraSocial', header: 'Obra social', priority: 2, sticky: 'end' },
 ];
 
 @Component({
@@ -37,10 +37,12 @@ const COLUMNAS: readonly ColumnDef<Paciente>[] = [
       [state]="state()"
       [columns]="columnas"
       [trackBy]="porId"
+      [rowLabel]="rotulo()"
       [caption]="caption()"
       [selectable]="selectable()"
       [sort]="sort()"
       [cursor]="cursor()"
+      [maxHeight]="maxHeight()"
       (sortChanged)="ordenes.push($event)"
       (cursorChanged)="cursores.push($event)"
       (selectionChanged)="selecciones.push($event)"
@@ -53,10 +55,12 @@ class HostComponent {
   readonly state = signal<ViewState<readonly Paciente[]>>(ready(FILAS));
   readonly columnas = COLUMNAS;
   readonly porId = (row: Paciente): string => row.id;
+  readonly rotulo = signal<((row: Paciente) => string) | null>(null);
   readonly caption = signal('Pacientes del servicio');
   readonly selectable = signal(false);
   readonly sort = signal<SortState | null>(null);
   readonly cursor = signal<CursorState>({});
+  readonly maxHeight = signal<string | null>(null);
   readonly ordenes: SortState[] = [];
   readonly cursores: string[] = [];
   readonly selecciones: (readonly Paciente[])[] = [];
@@ -90,6 +94,55 @@ describe('DataTable', () => {
     fixture = TestBed.createComponent(HostComponent);
     host = fixture.componentInstance;
     await fixture.whenStable();
+  });
+
+  it('fija al borde final sólo la columna marcada, en encabezado y celdas', () => {
+    const fijas = (selector: string) =>
+      [...root().querySelectorAll(selector)].map((celda) =>
+        celda.classList.contains('data-table__cell--sticky-end'),
+      );
+    expect(fijas('thead th.data-table__cell')).toEqual([false, false, true]);
+    expect(fijas('tbody tr.data-table__row:first-child td.data-table__cell')).toEqual([
+      false,
+      false,
+      true,
+    ]);
+  });
+
+  describe('nombre accesible de cada fila', () => {
+    function nombresDelDetalle(): (string | null)[] {
+      return [...root().querySelectorAll('.data-table__detail-toggle')].map((boton) =>
+        boton.getAttribute('aria-label'),
+      );
+    }
+
+    it('sin rowLabel nombra por posición, nunca por el id técnico', () => {
+      expect(nombresDelDetalle()).toEqual([
+        'Ver el detalle de la fila 1',
+        'Ver el detalle de la fila 2',
+      ]);
+      expect(nombresDelDetalle().join(' ')).not.toContain('p-1');
+    });
+
+    it('con rowLabel usa el nombre legible en el detalle y en la selección', async () => {
+      host.rotulo.set((row) => row.apellido);
+      host.selectable.set(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(nombresDelDetalle()).toEqual(['Ver el detalle de Peña', 'Ver el detalle de Salas']);
+      const seleccion = root().querySelector('tbody .data-table__select-cell')?.textContent ?? '';
+      expect(seleccion).toContain('Seleccionar Peña');
+      expect(seleccion).not.toContain('p-1');
+    });
+
+    it('un rowLabel vacío cae a la posición', async () => {
+      host.rotulo.set(() => '   ');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(nombresDelDetalle()[0]).toBe('Ver el detalle de la fila 1');
+    });
   });
 
   describe('semántica de tabla', () => {
@@ -323,6 +376,66 @@ describe('DataTable', () => {
       expect(css).toContain('@media (min-width: 780px)');
       // la fila de detalle existe justamente para no perder esas columnas
       expect(css).toContain('.data-table__detail-row');
+    });
+  });
+
+  describe('alto máximo, opt-in (H3.S2, ADR-0015 regla 6)', () => {
+    function cajaDeScroll(): HTMLElement {
+      const caja = root().querySelector<HTMLElement>('.data-table__scroll');
+      if (caja === null) {
+        throw new Error('no está la caja de scroll');
+      }
+      return caja;
+    }
+
+    it('correcto: por omisión (null) no cambia nada para los consumidores actuales', () => {
+      expect(root().querySelector('app-data-table')?.classList).not.toContain(
+        'data-table--constrained',
+      );
+      expect(cajaDeScroll().style.maxHeight).toBe('');
+      expect(cajaDeScroll().style.overflowY).toBe('');
+      expect(cajaDeScroll().style.overflowX).toBe('');
+    });
+
+    it('correcto: activo, aplica alto máximo y apaga el scroll lateral', async () => {
+      host.maxHeight.set('480px');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(root().querySelector('app-data-table')?.classList).toContain(
+        'data-table--constrained',
+      );
+      expect(cajaDeScroll().style.maxHeight).toBe('480px');
+      expect(cajaDeScroll().style.overflowY).toBe('auto');
+      expect(cajaDeScroll().style.overflowX).toBe('hidden');
+    });
+
+    it('límite: con la opción activa, la lista vacía sigue sin scroll lateral', async () => {
+      host.state.set(ready([]));
+      host.maxHeight.set('320px');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(cajaDeScroll().style.overflowX).toBe('hidden');
+      expect(root().querySelectorAll('tbody tr').length).toBe(0);
+    });
+
+    it('inválido: una cadena vacía no es un alto — cae al por omisión, no a una caja de alto cero', async () => {
+      host.maxHeight.set('');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(root().querySelector('app-data-table')?.classList).not.toContain(
+        'data-table--constrained',
+      );
+      expect(cajaDeScroll().style.maxHeight).toBe('');
+    });
+
+    it('con la opción activa, las columnas secundarias siguen plegadas al detalle aunque el viewport sea de escritorio', () => {
+      const css = readFileSync(DATA_TABLE_CSS, 'utf8');
+
+      expect(css).toContain('.data-table--constrained .data-table__secondary');
+      expect(css).toContain('.data-table--constrained .data-table__detail-row');
     });
   });
 });

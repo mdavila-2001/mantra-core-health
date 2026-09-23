@@ -109,6 +109,17 @@ describe('DayView', () => {
     expect(Number.parseInt(aire.style.minHeight, 10)).toBeLessThan(10);
   });
 
+  it('el aire largo se comprime y dice cuánto dura', () => {
+    // 9:00–9:30 cita · 9:30–16:00 aire (6 h 30 min) · 16:00 cita.
+    montar([cupo(9, 0, 'a', 30), cupo(16, 0, 'b', 30)], [cita('a'), cita('b')]);
+
+    const aire = bloques()[1];
+    expect(aire.getAttribute('data-tipo')).toBe('aire');
+    // No los 624 px de seis horas y media: la altura de una hora.
+    expect(Number.parseInt(aire.style.minHeight, 10)).toBeLessThanOrEqual(96);
+    expect(aire.textContent).toContain('6 h 30 min sin turnos');
+  });
+
   it('las citas van en orden de reloj, aunque los cupos no vengan ordenados', () => {
     montar([cupo(14), cupo(9), cupo(12)]);
 
@@ -154,7 +165,7 @@ describe('DayView', () => {
 
     expect(tipos()).toEqual(['ocupado']);
     expect(fixture.nativeElement.textContent).toContain('trámite personal');
-    expect(fixture.nativeElement.textContent).not.toContain('disponible');
+    expect(fixture.nativeElement.textContent).not.toContain('Disponible');
   });
 
   it('una cita dentro de un bloqueo sigue mostrándose: no se la traga', () => {

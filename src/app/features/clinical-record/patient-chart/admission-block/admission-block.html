@@ -21,6 +21,10 @@
     <ul class="internacion__lista" data-testid="internacion-lista">
       @for (internacion of internaciones(); track internacion.id) {
         <li class="internacion__item">
+          <!-- «En curso» y no el rótulo del catálogo, que dice «Activo».
+               Se probó al revés y se volvió: el catálogo describe conceptos y
+               la interfaz habla con personas. Una estancia no está «activa»,
+               está en curso. -->
           <span class="internacion__estado">
             {{ internacion.abierta ? 'En curso' : 'Cerrada' }}
           </span>
@@ -34,6 +38,32 @@
               · hasta el {{ internacion.hasta | date: 'dd/MM/yyyy HH:mm' }}
             }
           </span>
+
+          <!-- ─── Lo que el servidor ya mandaba y la ficha tiraba ──────────
+               Tipo, responsable y fecha de registro vienen en la misma lectura
+               desde siempre. -->
+          <span class="internacion__detalle">
+            @if (internacion.tipo) {
+              <span class="internacion__dato">{{ internacion.tipo }}</span>
+            }
+            @if (internacion.conResponsable) {
+              <span class="internacion__dato">
+                {{ internacion.aMiCargo ? 'A tu cargo' : 'A cargo de otro profesional' }}
+              </span>
+            } @else {
+              <span class="internacion__dato internacion__dato--falta">Sin responsable asignado</span>
+            }
+          </span>
+
+          <!-- El registro tardío se declara, no se esconde: una estancia que
+               empezó el martes y se escribió el jueves es legítima; hacerla
+               pasar por contemporánea, no. -->
+          @if (registroTardio(internacion)) {
+            <span class="internacion__tardio" data-testid="internacion-registro-tardio">
+              Registrada el {{ internacion.registradaEl | date: 'dd/MM/yyyy HH:mm' }}, después de
+              que empezó.
+            </span>
+          }
         </li>
       }
     </ul>
@@ -61,9 +91,23 @@
     <form class="internacion__formulario" (submit)="$event.preventDefault()">
       <app-form-field icon="calendar"
         label="Inicio de la internación"
-        hint="Opcional. Si no lo cargás, queda con la hora de este momento."
+        hint="Opcional. Si no lo cargás, queda con la hora de este momento. Puede ser pasada: se registra cuándo empezó y cuándo se escribió."
+        [errorMessage]="
+          inicioEnElFuturo()
+            ? 'Una internación no puede empezar más adelante. Si todavía no empezó, no hay nada que dar de alta.'
+            : ''
+        "
       >
-        <app-date-picker [(value)]="inicio" mode="date-time" />
+        <!-- Sin `maxDate`, y no por olvido: `app-date-picker` trata «cerrado al
+             pasado» como «es una fecha de nacimiento» y abre el calendario en
+             **enero de 2000**. Con `maxDate` puesto, elegir el inicio de una
+             internación costaba paginar veintiséis años. El freno vive en el
+             formulario, que es donde tiene que estar de todos modos. -->
+        <app-date-picker
+          [(value)]="inicio"
+          mode="date-time"
+          [hasError]="inicioEnElFuturo()"
+        />
       </app-form-field>
 
       <app-form-actions

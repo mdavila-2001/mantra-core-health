@@ -5,6 +5,8 @@ import { PACIENTE, PACIENTES, PROFESIONALES } from './fixtures/personas';
 import { reservas } from './fixtures/agenda';
 import { publicaciones, vitrinas } from './fixtures/comunidad';
 import { crearRouterSimulado } from './handlers';
+import { perfilProfesionalDe } from './handlers/profiles.handlers';
+import { esTelefonoCompleto } from '../../shared/components/molecules/phone-input/phone-input.paises';
 import { isMockReply, type MockMethod, type MockRequest } from './mock-router';
 import { buscarUsuario, emitirAccessToken, MOCK_USERS, type MockUser } from './mock-session';
 
@@ -97,12 +99,16 @@ describe('backend simulado', () => {
         isDefault: boolean;
       }[];
     };
+    // Los cinco códigos, en su orden y con el primero por defecto, son los del
+    // API. El rótulo es la designación en castellano que el API sirve
+    // (`terminology-designations.es.ts`): la maqueta ya no repite el nombre en
+    // inglés del sistema de codificación.
     const opcionesCanonicas = [
-      ['CREDENTIAL_TYPE_DEGREE', 'Academic degree credential'],
-      ['CREDENTIAL_TYPE_DIPLOMA', 'Diploma course credential'],
-      ['CREDENTIAL_TYPE_MASTER', "Master's degree credential"],
-      ['CREDENTIAL_TYPE_DOCTORATE', 'Doctorate degree credential'],
-      ['CREDENTIAL_TYPE_SPECIALTY', 'Specialty degree credential'],
+      ['CREDENTIAL_TYPE_DEGREE', 'Título universitario'],
+      ['CREDENTIAL_TYPE_DIPLOMA', 'Diplomado'],
+      ['CREDENTIAL_TYPE_MASTER', 'Maestría'],
+      ['CREDENTIAL_TYPE_DOCTORATE', 'Doctorado'],
+      ['CREDENTIAL_TYPE_SPECIALTY', 'Título de especialidad'],
     ] as const;
 
     expect(respuesta.options).toEqual(
@@ -147,4 +153,31 @@ describe('backend simulado', () => {
       expect(fallos).toEqual([]);
     });
   }
+});
+
+/**
+ * Los teléfonos que sirve el perfil profesional.
+ *
+ * `esTelefonoCompleto` pide «+591 » y OCHO dígitos SEGUIDOS. La maqueta servía
+ * el fijo del trabajo como `'+591 3 3456789'` —con un espacio adentro— y eso
+ * tenía una consecuencia que no se veía mirando el fixture: el editor del
+ * médico nacía con ese control inválido y **se negaba a guardar cualquier
+ * cosa**, aunque nadie hubiera tocado ese campo. Se descubrió el 19/09/2026
+ * intentando cargar un NIT.
+ */
+describe('el perfil profesional de la maqueta sirve teléfonos que el editor acepta', () => {
+  it('los tres teléfonos pasan `esTelefonoCompleto`', () => {
+    const perfil = perfilProfesionalDe(PROFESIONALES[0]!) as unknown as Record<string, string>;
+
+    for (const campo of ['phone', 'mobilePhone', 'workMobilePhone', 'workLandline']) {
+      expect(esTelefonoCompleto(perfil[campo] ?? ''), `${campo}: «${perfil[campo]}»`).toBe(true);
+    }
+  });
+
+  it('el NIT y la razón social viajan en el perfil, como en el del paciente', () => {
+    const perfil = perfilProfesionalDe(PROFESIONALES[0]!) as unknown as Record<string, string>;
+
+    expect(perfil['taxId']).toBe(`${PROFESIONALES[0]!.nationalId}011`);
+    expect(perfil['taxHolderName']).toBe(PROFESIONALES[0]!.displayName);
+  });
 });

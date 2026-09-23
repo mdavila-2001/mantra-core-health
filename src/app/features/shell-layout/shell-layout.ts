@@ -27,10 +27,12 @@ import { TutorialTarget } from '../../shared/components/organisms/tutorial-overl
 // declara hotspot— y se monta acá porque el armazón es lo único que existe
 // exactamente una vez por sesión con interfaz.
 import { NotificationBell } from '../../shared/components/organisms/notification-bell/notification-bell';
+import { BackLink } from '../../shared/components/atoms/back-link/back-link';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
 import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
 import { TUTORIALS } from '../../core/tutorials/definitions';
+import { AlovidaThemeToggleDirective } from '../../core/alovida/alovida-theme-toggle.directive';
 
 /**
  * Si un destino de la barra queda debajo de la URL actual.
@@ -42,6 +44,9 @@ import { TUTORIALS } from '../../core/tutorials/definitions';
 function contiene(ruta: string, url: string): boolean {
   return url === ruta || url.startsWith(`${ruta}/`);
 }
+
+/** El panel. Constante y no literal suelto: lo miran dos cosas distintas acá. */
+const PANEL = '/dashboard';
 
 /**
  * Armazón de todas las pantallas con sesión.
@@ -66,11 +71,13 @@ function contiene(ruta: string, url: string): boolean {
     // Un solo marcado para el destino de la barra, esté suelto o dentro de un
     // bloque: ver la nota de la plantilla `#destino`.
     NgTemplateOutlet,
+    AlovidaThemeToggleDirective,
     RouterLink,
     RouterOutlet,
     TutorialOverlay,
     TutorialTarget,
     NotificationBell,
+    BackLink,
     NavIcon,
     Tooltip,
   ],
@@ -326,6 +333,19 @@ export class ShellLayout {
   protected alternarNav(): void {
     this.shell.toggleCollapsed();
   }
+
+  /**
+   * Si estamos parados en el panel, que es donde «volver» no tiene a dónde ir.
+   *
+   * El panel es el principio del camino: quien entra, aterriza acá. No hay paso
+   * propio que deshacer, así que `app-back-link` cae a su respaldo… que es el
+   * panel. Pulsarlo desde el panel no hace nada, o —si el historial del
+   * navegador todavía trae la pantalla de ingreso— devuelve a ella, que se lee
+   * como haber cerrado la sesión. El cliente lo reportó así el 13/09/2026.
+   *
+   * En todas las demás pantallas la flecha se queda: ahí sí deshace un paso.
+   */
+  protected readonly enElPanel = computed(() => this.urlActual() === PANEL);
 
   /**
    * Clic sobre el rótulo de un dominio.

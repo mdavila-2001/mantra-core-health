@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  forwardRef,
   inject,
   input,
   output,
@@ -39,6 +40,7 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
+import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
 import { mensajeDeEscritura } from '../../mensaje-de-escritura';
 
 /** Qué clase de papel es: informe, laboratorio, consentimiento, certificado. */
@@ -95,11 +97,12 @@ export const TARGET_CATEGORIA_DOCUMENTAL = 'chart.document_records.category_conc
     Select,
     Switch,
   ],
+  providers: [{ provide: DRAFT_BLOCK, useExisting: forwardRef(() => DocumentBlock) }],
   templateUrl: './document-block.html',
   styleUrl: './document-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DocumentBlock {
+export class DocumentBlock implements DraftBlock {
   private readonly documents = inject(ChartDocumentsClient);
   private readonly files = inject(FilesClient);
   private readonly auth = inject(AuthService);
@@ -135,6 +138,20 @@ export class DocumentBlock {
   protected readonly esExterno = signal(false);
   protected readonly citaElegida = signal<string | null>(null);
   protected readonly archivos = signal<readonly File[]>([]);
+
+  /**
+   * Si hay algo escrito que se perdería al cerrar sin registrar. Contrato de
+   * `DraftBlock` — lo consulta el modal del expediente, nunca este bloque.
+   */
+  readonly tieneCambiosPendientes = computed(
+    () =>
+      String(this.titulo() ?? '').trim() !== '' ||
+      this.categoria() !== null ||
+      String(this.autor() ?? '').trim() !== '' ||
+      this.esExterno() ||
+      this.citaElegida() !== null ||
+      this.archivos().length > 0,
+  );
 
   protected readonly registrando = signal(false);
   protected readonly registro = signal<ViewState<null>>(ready(null));

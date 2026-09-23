@@ -1,63 +1,131 @@
 <div class="dia">
   <header class="dia__barra">
-    <button app-button variant="ghost" size="sm" type="button" (clicked)="volver.emit()">
-      ← Volver al mes
-    </button>
     <div class="dia__cabecera">
-      <h3 class="dia__titulo">{{ titulo() }}</h3>
+      <h3 class="dia__titulo">
+        {{ titulo() }}
+        @if (esHoy()) {
+          <span class="dia__hoy">Hoy</span>
+        }
+      </h3>
       <p class="dia__resumen" role="status">{{ resumen() }}</p>
+    </div>
 
+    <div class="dia__herramientas">
       <!-- «Un botón de ver mañana, y así sucesivamente» del pedido original.
-           Recorrer día por día es lo que uno hace mirando la agenda: volver al
-           mes para tocar el siguiente son dos gestos donde alcanzaba uno. -->
-      <div class="dia__paginacion">
+           Recorrer día por día es lo que uno hace mirando la agenda; «Hoy»
+           trae de vuelta sin contar los días que se avanzó. -->
+      <div class="dia__paginacion" role="group" aria-label="Cambiar de día">
         <button
-          app-button
-          variant="ghost"
-          size="sm"
           type="button"
+          class="dia__paso"
           data-testid="dia-anterior"
           aria-label="Ver el día anterior"
-          (clicked)="diaCambiado.emit(-1)"
+          (click)="diaCambiado.emit(-1)"
         >
-          ← Ayer
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+          <span>Ayer</span>
         </button>
+        <button
+          type="button"
+          class="dia__paso dia__paso--hoy"
+          data-testid="dia-hoy"
+          [disabled]="esHoy()"
+          (click)="irAHoy()"
+        >
+          Hoy
+        </button>
+        <button
+          type="button"
+          class="dia__paso"
+          data-testid="dia-siguiente"
+          aria-label="Ver el día siguiente"
+          (click)="diaCambiado.emit(1)"
+        >
+          <span>Mañana</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+        </button>
+      </div>
+
+      <div class="dia__acciones-barra">
+        <!-- C-11 (2026-09-20) · los dos que bajaron del encabezado de la página.
+
+             «Avisar demora» es de la jornada que se está mirando, y el ingreso
+             por mostrador ocurre con alguien parado enfrente mirando este día:
+             los dos pertenecen acá y no a un encabezado que no sabe qué día es.
+             Llevan texto y no sólo ícono desde el primer día (C-06). -->
+        @if (puedeAvisarDemora()) {
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            type="button"
+            data-testid="dia-avisar-demora"
+            (clicked)="demoraPedida.emit()"
+          >
+            Avisar demora
+          </button>
+        }
+        @if (puedeIngresarPorMostrador()) {
+          <button
+            app-button
+            variant="secondary"
+            size="sm"
+            type="button"
+            data-testid="dia-ingreso-mostrador"
+            (clicked)="mostradorPedido.emit()"
+          >
+            Ingreso Mostrador
+          </button>
+        }
+        <!-- «Mover horario» del pedido. Va en la barra del día y no dentro de
+             una tarjeta: lo que se corre es la agenda, no una cita suelta. -->
         <button
           app-button
           variant="ghost"
           size="sm"
           type="button"
-          data-testid="dia-siguiente"
-          aria-label="Ver el día siguiente"
-          (clicked)="diaCambiado.emit(1)"
+          data-testid="dia-mover"
+          aria-label="Mover horario"
+          appTooltip="Mover el horario del día"
+          (clicked)="abrirMover(null)"
         >
-          Mañana →
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" />
+          </svg>
+          Mover horario
+        </button>
+        <button
+          app-button
+          variant="secondary"
+          size="sm"
+          type="button"
+          data-testid="dia-agregar"
+          aria-label="Agregar algo a este día"
+          appTooltip="Agregar una cita o un rato ocupado"
+          (clicked)="crear()"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Agregar
         </button>
       </div>
-    </div>
-    <div class="dia__acciones-barra">
-      <!-- «Mover horario» del pedido. Va en la barra del día y no dentro de una
-           tarjeta: lo que se corre es la agenda, no una cita suelta. -->
-      <button
-        app-button
-        variant="ghost"
-        size="sm"
-        type="button"
-        data-testid="dia-mover"
-        (clicked)="abrirMover(null)"
-      >
-        Mover horario
-      </button>
-      <button
-        app-button
-        variant="secondary"
-        size="sm"
-        type="button"
-        aria-label="Agregar algo a este día"
-        (clicked)="crear()"
-      >
-        +
-      </button>
     </div>
   </header>
 
@@ -130,11 +198,15 @@
              los clics. -->
         <li
           class="dia__bloque"
+          [class.dia__bloque--con-acciones]="appointmentActions() !== null"
           [class.dia__bloque--cliqueable]="bloque.tipo === 'cita' || bloque.tipo === 'ocupado'"
           [attr.data-tipo]="bloque.tipo"
+          [attr.data-sello]="bloque.tipo === 'cita' ? bloque.statusVariant : null"
           [style.min-height.px]="bloque.alturaPx"
         >
-          @if (bloque.tipo === 'cita' || bloque.tipo === 'ocupado') {
+          @if (
+            bloque.tipo === 'ocupado' || (bloque.tipo === 'cita' && appointmentActions() === null)
+          ) {
             <button
               type="button"
               class="dia__detalle"
@@ -142,11 +214,44 @@
               [attr.aria-label]="'Ver el detalle de ' + (bloque.paciente || bloque.motivo || 'este rato')"
               (click)="detallePedido.emit(bloque)"
             >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
               <span aria-hidden="true">Ver detalle</span>
             </button>
           }
           @switch (bloque.tipo) {
             @case ('cita') {
+              <!-- C-04 (2026-09-20) · «las tarjetas de /schedule tienen que
+                   llevar a iniciar el encuentro».
+
+                   Es un botón que cubre la tarjeta y queda DETRAS del
+                   contenido, no un `(click)` en el `<li>`: asi el destino
+                   aparece en el arbol de accesibilidad con su nombre, se llega
+                   con `Tab` y se activa con `Enter` o `Espacio` sin escribir un
+                   `keydown` a mano. Y los botones de adentro —«Ver detalle»,
+                   las acciones de la fila— siguen siendo botones hermanos, no
+                   anidados: un `<button>` dentro de otro es HTML invalido y
+                   dispara los dos. Por eso la capa va por debajo (`z-index`) y
+                   lo de arriba no necesita detener la propagacion. -->
+              @if (bloque.cita; as cita) {
+                <button
+                  type="button"
+                  class="dia__ir-a-atender"
+                  data-testid="dia-ir-a-atender"
+                  [attr.aria-label]="'Atender a ' + bloque.paciente + ', ' + (bloque.desde | date: 'HH:mm')"
+                  (click)="citaActivada.emit(cita)"
+                ></button>
+              }
               <span class="dia__hora">
                 {{ bloque.desde | date: 'HH:mm' }}–{{ bloque.hasta | date: 'HH:mm' }}
               </span>
@@ -172,7 +277,7 @@
                      visual del carril 12, con «Ver detalle» encimado sobre el
                      estado en 768 y 1440 px. -->
                 <p class="dia__estado">
-                  <app-badge variant="primary">{{ bloque.estado }}</app-badge>
+                  <app-status-seal [variant]="bloque.statusVariant" [label]="bloque.estado" />
                 </p>
                 <!-- El motivo se muestra acá y NO en la agenda de la
                      organización: para quien va a recibir a esa persona en diez
@@ -180,6 +285,16 @@
                 @if (bloque.cita?.reasonText; as motivo) {
                   <p class="dia__motivo">{{ motivo }}</p>
                 }
+                @if (appointmentActions(); as acciones) {
+                  @if (bloque.cita; as cita) {
+                    <div class="dia__acciones dia__acciones--externas" data-testid="dia-acciones">
+                      <ng-container
+                        [ngTemplateOutlet]="acciones"
+                        [ngTemplateOutletContext]="{ $implicit: cita }"
+                      />
+                    </div>
+                  }
+                } @else {
                 <div class="dia__acciones">
                   @if (puedeLlegar(bloque)) {
                     <button
@@ -213,6 +328,7 @@
                     </button>
                   }
                 </div>
+                }
               </div>
             }
 
@@ -238,27 +354,118 @@
               </div>
             }
 
+            @case ('visita') {
+              <!-- C-13 (2026-09-20) · la visita de laboratorio, en la MISMA
+                   pestaña de consultas y como tarjeta de VISITADOR.
+
+                   Tiene su propio tono —`data-tipo="visita"` en el CSS— y lleva
+                   la palabra «Visitador» escrita: en escala de grises el tono
+                   solo no la distingue de una consulta, y la regla 95.4.6
+                   prohíbe que la información dependa del color.
+
+                   **No lleva ni un dato clínico.** No hay paciente, ni motivo
+                   de consulta, ni expediente: lo que se muestra es con quién es
+                   la visita comercial y por qué, que es lo que el visitador
+                   declaró. El límite está citado en `pharma-lab.types.ts:9-11`
+                   y no se toca desde acá. -->
+              <span class="dia__hora">
+                {{ bloque.desde | date: 'HH:mm' }}–{{ bloque.hasta | date: 'HH:mm' }}
+              </span>
+              <div class="dia__cuerpo">
+                <p class="dia__paciente">
+                  {{ bloque.paciente }}
+                  <app-badge variant="secondary" data-testid="dia-visitador">Visitador</app-badge>
+                </p>
+                <p class="dia__estado">
+                  <app-status-seal [variant]="bloque.statusVariant" [label]="bloque.estado" />
+                </p>
+                @if (bloque.motivo; as motivo) {
+                  <p class="dia__motivo">{{ motivo }}</p>
+                }
+                <!-- La bandeja sigue siendo una sección aparte y sigue siendo
+                     alcanzable: acá está su puerta, que es lo que reemplaza al
+                     botón que C-11 quitó del encabezado. -->
+                <p class="dia__visita-bandeja">
+                  <a routerLink="/lab-visits" data-testid="dia-ir-a-lab-visits"
+                    >Ver la bandeja de visitas</a
+                  >
+                </p>
+              </div>
+            }
+
+            @case ('no-disponible') {
+              <!-- C-10 · el cupo que EXISTE y no se puede tomar: cerrado o sin
+                   lugar. Se ve, porque el día tiene que leerse completo, pero
+                   no invita y no es tocable. Y lo dice con la palabra: en
+                   escala de grises «no disponible» y «disponible» tienen que
+                   seguir distinguiéndose (regla 95.4.6). -->
+              <span class="dia__hora">
+                {{ bloque.desde | date: 'HH:mm' }}–{{ bloque.hasta | date: 'HH:mm' }}
+              </span>
+              <div class="dia__cuerpo">
+                <p class="dia__no-disponible" data-testid="dia-no-disponible">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="m6 6 12 12" />
+                  </svg>
+                  No disponible<span class="dia__no-disponible-motivo">
+                    · {{ bloque.motivo ?? 'sin lugar' }}</span
+                  >
+                </p>
+              </div>
+            }
+
             @case ('libre') {
               <span class="dia__hora">
                 {{ bloque.desde | date: 'HH:mm' }}–{{ bloque.hasta | date: 'HH:mm' }}
               </span>
-              <!-- El hueco invita: tocarlo abre la tarjeta con el rango puesto. -->
-              <button class="dia__libre" type="button" (click)="tocar(bloque)">
-                — disponible —
-              </button>
+              <!-- El hueco invita: tocarlo abre la tarjeta con el rango puesto.
+                   Moviendo una cita significa otra cosa —es el destino— y lo
+                   dice con todas las letras, como decía la grilla de cupos que
+                   reemplaza. Con texto y no sólo ícono: es la acción que la
+                   pantalla está pidiendo en ese momento. -->
+              @if (moviendoCita()) {
+                <button
+                  app-button
+                  variant="primary"
+                  size="sm"
+                  type="button"
+                  data-testid="dia-mover-aca"
+                  [isLoading]="ratoEnVuelo() === bloque.clave"
+                  (clicked)="tocar(bloque)"
+                >
+                  Mover acá
+                </button>
+              } @else {
+                <button class="dia__libre" type="button" (click)="tocar(bloque)">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                  Disponible
+                </button>
+              }
               <!-- «Cerrar» un rato libre: lo bloquea Y deja la excepción, para
                    que volver a publicar el horario no lo devuelva. Sin esa
-                   segunda parte, cerrar dura hasta la próxima generación. -->
-              <button
-                app-button
-                variant="ghost"
-                size="sm"
-                type="button"
-                data-testid="dia-cerrar-rato"
-                (clicked)="cierrePedido.emit(bloque)"
-              >
-                Cerrar este rato
-              </button>
+                   segunda parte, cerrar dura hasta la próxima generación.
+                   Mientras se elige destino no se ofrece: cerrar el hueco al
+                   que se está por mover una cita es la acción contraria. -->
+              @if (!moviendoCita()) {
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="dia-cerrar-rato"
+                  (clicked)="cierrePedido.emit(bloque)"
+                >
+                  Cerrar este rato
+                </button>
+              }
             }
 
             @default {
@@ -270,7 +477,11 @@
                 type="button"
                 aria-label="Agregar algo en este hueco"
                 (click)="tocar(bloque)"
-              ></button>
+              >
+                @if (rotuloDelHueco(bloque); as rotulo) {
+                  <span class="dia__hueco" aria-hidden="true">{{ rotulo }}</span>
+                }
+              </button>
             }
           }
         </li>

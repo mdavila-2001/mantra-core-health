@@ -1,0 +1,58 @@
+[
+ {
+  "id": "R01",
+  "name": "Cabeza y cuello",
+  "plateFrom": 1,
+  "plateTo": 151,
+  "definition": "**Cabeza y cuello** es una unidad regional de esta taxonomía basada en la organización editorial del Atlas. región que integra el cráneo, la cara, las cavidades nasal y oral, faringe y laringe, órganos de los sentidos, encéfalo, nervios craneales y grandes vasos cervicales. Su organización es tridimensionalmente densa: estructuras óseas, musculares, viscerales, neurovasculares y glandulares se relacionan en espacios pequeños y clínicamente relevantes.\n\nEn un modelo de IA, una región anatómica no debe tratarse como un órgano ni como una función: es un **marco espacial** que contiene múltiples sistemas. Su utilidad es restringir la búsqueda, resolver homónimos y establecer relaciones de pertenencia topográfica. Las estructuras pueden atravesar más de una región; por ello `PERTENECE_A_REGION` en este corpus significa «aparece principalmente dentro del bloque editorial de la región», no exclusividad biológica."
+ },
+ {
+  "id": "R02",
+  "name": "Dorso y médula espinal",
+  "plateFrom": 152,
+  "plateTo": 180,
+  "definition": "**Dorso y médula espinal** es una unidad regional de esta taxonomía basada en la organización editorial del Atlas. región posterior del tronco que incluye la columna vertebral, musculatura dorsal, meninges espinales, médula espinal, raíces y nervios espinales. El estudio combina el armazón osteoligamentario con los compartimentos musculares y los corredores por los que discurren estructuras nerviosas y vasculares.\n\nEn un modelo de IA, una región anatómica no debe tratarse como un órgano ni como una función: es un **marco espacial** que contiene múltiples sistemas. Su utilidad es restringir la búsqueda, resolver homónimos y establecer relaciones de pertenencia topográfica. Las estructuras pueden atravesar más de una región; por ello `PERTENECE_A_REGION` en este corpus significa «aparece principalmente dentro del bloque editorial de la región», no exclusividad biológica."
+ },
+ {
+  "id": "R03",
+  "name": "Tórax",
+  "plateFrom": 181,
+  "plateTo": 246,
+  "definition": "**Tórax** es una unidad regional de esta taxonomía basada en la organización editorial del Atlas. región delimitada por la pared torácica y el diafragma que contiene pulmones, pleuras, corazón, pericardio, mediastino y grandes vasos. La anatomía regional enfatiza la relación entre pared, cavidades pleurales, mediastino y estructuras neurovasculares.\n\nEn un modelo de IA, una región anatómica no debe tratarse como un órgano ni como una función: es un **marco espacial** que contiene múltiples sistemas. Su utilidad es restringir la búsqueda, resolver homónimos y establecer relaciones de pertenencia topográfica. Las estructuras pueden atravesar más de una región; por ello `PERTENECE_A_REGION` en este corpus significa «aparece principalmente dentro del bloque editorial de la región», no exclusividad biológica."
+ },
+ {
+  "id": "R04",
+  "name": "Abdomen",
+  "plateFrom": 247,
+  "plateTo": 350,
+  "definition": "**Abdomen** es una unidad regional de esta taxonomía basada en la organización editorial del Atlas. región del tronco situada entre tórax y pelvis, con pared musculofascial, cavidad peritoneal, tubo digestivo y órganos accesorios, grandes vasos, plexos autónomos, riñones y glándulas suprarrenales. Las relaciones peritoneales y retroperitoneales son esenciales para entender su organización.\n\nEn un modelo de IA, una región anatómica no debe tratarse como un órgano ni como una función: es un **marco espacial** que contiene múltiples sistemas. Su utilidad es restringir la búsqueda, resolver homónimos y establecer relaciones de pertenencia topográfica. Las estructuras pueden atravesar más de una región; por ello `PERTENECE_A_REGION` en este corpus significa «aparece principalmente dentro del bloque editorial de la región», no exclusividad biológica."
+ },
+ {
+  "id": "R05",
+  "name": "Pelvis y periné",
+  "plateFrom": 351,
+  "plateTo": 417,
+  "definition": "**Pelvis y periné** es una unidad regional de esta taxonomía basada en la organización editorial del Atlas. región inferior del tronco formada por pelvis ósea, suelo pélvico, vísceras urinarias y reproductoras, recto, vasos, nervios y periné. La descripción anatómica exige distinguir compartimentos, fascias, soportes viscerales y diferencias sexuales sin confundir estructuras homólogas.\n\nEn un modelo de IA, una región anatómica no debe tratarse como un órgano ni como una función: es un **marco espacial** que contiene múltiples sistemas. Su utilidad es restringir la búsqueda, resolver homónimos y establecer relaciones de pertenencia topográfica. Las estructuras pueden atravesar más de una región; por ello `PERTENECE_A_REGION` en este corpus significa «aparece principalmente dentro del bloque editorial de la región», no exclusividad biológica."
+ },
+ {
+  "id": "R06",
+  "name": "Miembro superior",
+  "plateFrom": 418,
+  "plateTo": 484,
+  "definition": "**Miembro superior** es una unidad regional de esta taxonomía basada en la organización editorial del Atlas. extremidad especializada en posicionamiento y manipulación. Comprende cintura escapular, hombro, brazo, codo, antebrazo, carpo y mano, junto con compartimentos musculares, articulaciones, plexo braquial, nervios periféricos y redes vasculares.\n\nEn un modelo de IA, una región anatómica no debe tratarse como un órgano ni como una función: es un **marco espacial** que contiene múltiples sistemas. Su utilidad es restringir la búsqueda, resolver homónimos y establecer relaciones de pertenencia topográfica. Las estructuras pueden atravesar más de una región; por ello `PERTENECE_A_REGION` en este corpus significa «aparece principalmente dentro del bloque editorial de la región», no exclusividad biológica."
+ },
+ {
+  "id": "R07",
+  "name": "Miembro inferior",
+  "plateFrom": 485,
+  "plateTo": 547,
+  "definition": "**Miembro inferior** es una unidad regional de esta taxonomía basada en la organización editorial del Atlas. extremidad adaptada a soporte, equilibrio y locomoción. Incluye cadera, muslo, rodilla, pierna, tobillo y pie, organizados por huesos, articulaciones, compartimentos fasciales, músculos, nervios y vasos.\n\nEn un modelo de IA, una región anatómica no debe tratarse como un órgano ni como una función: es un **marco espacial** que contiene múltiples sistemas. Su utilidad es restringir la búsqueda, resolver homónimos y establecer relaciones de pertenencia topográfica. Las estructuras pueden atravesar más de una región; por ello `PERTENECE_A_REGION` en este corpus significa «aparece principalmente dentro del bloque editorial de la región», no exclusividad biológica."
+ },
+ {
+  "id": "R08",
+  "name": "Anatomía seccional",
+  "plateFrom": 548,
+  "plateTo": 548,
+  "definition": "**Anatomía seccional** es una unidad regional de esta taxonomía basada en la organización editorial del Atlas. representación del cuerpo mediante cortes transversales que permite correlacionar estructuras tridimensionales con TC, RM y otras modalidades de imagen. Su valor reside en reconocer relaciones espaciales, no solo nombres aislados.\n\nEn un modelo de IA, una región anatómica no debe tratarse como un órgano ni como una función: es un **marco espacial** que contiene múltiples sistemas. Su utilidad es restringir la búsqueda, resolver homónimos y establecer relaciones de pertenencia topográfica. Las estructuras pueden atravesar más de una región; por ello `PERTENECE_A_REGION` en este corpus significa «aparece principalmente dentro del bloque editorial de la región», no exclusividad biológica."
+ }
+]

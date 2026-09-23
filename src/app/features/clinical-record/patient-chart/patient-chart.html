@@ -215,6 +215,7 @@
     size="sm"
     type="button"
     data-testid="expediente-acciones"
+    [attr.aria-label]="'Acciones: ' + fila.principal"
     [appMenuTrigger]="menuDeAcciones"
     [isLoading]="cambiandoEstado() === fila.id"
   >
@@ -232,8 +233,11 @@
      sigue validando la transición: esto sólo deja de deformar la tabla. -->
 @if (cambiandoEstadoDe(); as fila) {
   <app-content-dialog
+    #dialogoDeEstado
     heading="Cambiar el estado clínico"
     [description]="fila.principal"
+    [dismissible]="estadoSinCambios()"
+    (dismissAttempt)="pedirDescarteDelEstado()"
     (closed)="cerrarCambioDeEstado()"
   >
     <div class="expediente__accion-estado">
@@ -392,16 +396,19 @@
      Un solo `app-content-dialog` para las siete, con el bloque elegido adentro:
      siete modales copiados eran siete encabezados, siete cierres y siete sitios
      donde el próximo arreglo se aplicaba en seis. -->
-@if (altaAbierta(); as bloqueDelAlta) {
+@if (altaAbierta(); as claveDelAlta) {
   <app-content-dialog
+    #dialogoDelAlta
     [heading]="tituloDelAlta()"
     [description]="descripcionDelAlta()"
     size="lg"
     closeLabel="Cerrar"
     data-testid="expediente-alta"
+    [dismissible]="altaSinCambios()"
+    (dismissAttempt)="pedirDescarteDelAlta()"
     (closed)="cerrarAlta()"
   >
-    @switch (bloqueDelAlta) {
+    @switch (claveDelAlta) {
       @case ('diagnosticos') {
         <app-diagnosis-block
           [patientProfileId]="pacienteDeLaFicha()"

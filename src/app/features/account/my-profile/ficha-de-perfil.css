@@ -1,22 +1,5 @@
-/* ============================================================================
-    La FICHA de «Mi perfil», en una hoja compartida.
-
-    ## Por qué está acá y no en `my-profile.css`
-
-    El cliente pidió el 2026-09-10 que «la información del perfil del médico se
-    muestre de la misma manera que la del paciente». No parecida: la misma
-    tarjeta —retrato, título, lápiz, pestañas y renglones `dt`/`dd`— con los
-    datos que a un médico le corresponden.
-
-    Estas reglas nacieron dentro de `my-profile.css`, que es el componente del
-    paciente. El del médico es OTRO componente, y el CSS de Angular está
-    encapsulado: copiarlas allá habría dado dos tarjetas que se ven iguales el
-    primer día y se separan en el primer retoque que se haga en una sola. Esta
-    hoja es la única definición; los dos componentes la importan.
-
-    Acá vive sólo la TARJETA. La distribución de la página —la rejilla de
-    perfil + lateral— se queda en `my-profile.css`, que es su dueño.
-    ========================================================================== */
+/* La FICHA de «Mi perfil», en una hoja compartida entre paciente y médico.
+   Define sólo la TARJETA común. La distribución vive en my-profile.css. */
 
 .mi-perfil__bloque {
   display: block;
@@ -100,6 +83,58 @@
   flex-wrap: wrap;
   gap: var(--sp-3);
   margin-block: var(--sp-4) 0;
+}
+
+/* --- El recuadro de facturación --------------------------------------------
+   Los datos de factura no son dos renglones más de la ficha: son lo que hay que
+   copiar en un comprobante, y se consultan juntos. Por eso salen de la lista
+   `dt`/`dd` y viven en su propia caja, con filete y fondo sutil, como pide el
+   propietario (19/09/2026).
+
+   El NIT va en grande y con cifras tabulares: es el dato que se busca y el que
+   se transcribe, y una cifra de ancho variable se copia peor. La razón social
+   va debajo, al tamaño del cuerpo — lo completa, no compite con él. */
+.mi-perfil__factura {
+  display: grid;
+  gap: var(--sp-1);
+  margin-block-start: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-subtle, var(--surface-2, transparent));
+}
+
+.mi-perfil__factura-rotulo {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+/* El segundo rótulo separa los dos hechos dentro de la misma caja: sin este
+   aire, «A nombre de» se lee como el pie del NIT. */
+.mi-perfil__factura-rotulo + * + .mi-perfil__factura-rotulo {
+  margin-block-start: var(--sp-3);
+}
+
+.mi-perfil__factura-nit {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.mi-perfil__factura-titular {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+/* Sin dato, la caja no grita: «Sin registrar» se lee al tamaño del cuerpo y en
+   la tinta terciaria de `.mi-perfil__ausente`, no en el cuerpo de un titular. */
+.mi-perfil__factura-nit .mi-perfil__ausente {
+  font-size: var(--fs-body);
+  font-weight: 400;
 }
 
 /* --- Listas de la ficha ----------------------------------------------------
@@ -246,3 +281,19 @@ app-tab > .mi-perfil__seccion:first-child > .mi-perfil__subtitulo:first-child {
 .mi-perfil__dato--ancho {
   grid-column: 1 / -1;
 }
+
+/* Los chips de un renglón —hoy las especialidades del médico—. Envuelven en
+   vez de recortarse: quien tiene cuatro especialidades las tiene que ver todas,
+   y un `overflow` escondido las convertiría en una lista incompleta sin decirlo. */
+.mi-perfil__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* Acá vivían `.mi-perfil__bloque-interno` y `.mi-perfil__subtitulo--primero`.
+   Existían para una sola caja, «Cómo atendés», que se retiró el 20/09/2026
+   (C-01). Se van con ella y no se dejan «por si acaso»: ningún otro
+   `.html` del repo las nombraba —comprobado antes de borrarlas—, así que
+   sacarlas no le cambia el dibujo a nadie, tampoco a la ficha del paciente,
+   que comparte este archivo. */

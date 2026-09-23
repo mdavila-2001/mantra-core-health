@@ -85,12 +85,22 @@ export class SessionStore {
   }
 
   /**
+   * La organización propia del titular («Mi consultorio»), si el token la
+   * declara **y** está entre sus tenants. Un claim que apunte afuera se ignora.
+   */
+  readonly ownTenantId = computed<string | null>(() => {
+    const own = this.claims()?.ownTenantId;
+    return own !== undefined && this.tenants().includes(own) ? own : null;
+  });
+
+  /**
    * Tenant que viaja en `X-Tenant-Id`.
    *
-   * Con uno solo se resuelve solo; con varios manda la elección de la persona y
-   * **no se adivina**: hasta que elija, el encabezado no se manda y la API
-   * responde lo que corresponda. Elegir por ella podría mostrarle datos de la
-   * organización equivocada.
+   * Con uno solo se resuelve solo. Con varios manda la elección de la persona;
+   * si todavía no eligió, se usa **su propia** organización —«Mi consultorio»
+   * de quien atiende—, que no es adivinar: es la suya. Sin organización propia
+   * **no se adivina**: hasta que elija, el encabezado no se manda. Elegir una
+   * clínica por ella podría mostrarle datos de la organización equivocada.
    */
   readonly activeTenantId = computed<string | null>(() => {
     const chosen = this.selectedTenantId();
@@ -98,12 +108,13 @@ export class SessionStore {
       return chosen;
     }
     const tenants = this.tenants();
-    return tenants.length === 1 ? (tenants[0] ?? null) : null;
+    return tenants.length === 1 ? (tenants[0] ?? null) : this.ownTenantId();
   });
 
   /** Si hay que pedirle a la persona que elija organización. */
   readonly needsTenantSelection = computed(
-    () => this.tenants().length > 1 && this.selectedTenantId() === null,
+    () =>
+      this.tenants().length > 1 && this.selectedTenantId() === null && this.ownTenantId() === null,
   );
 
   /** Abre la sesión. Descarta la elección de tenant anterior, si la había. */

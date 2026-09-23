@@ -304,7 +304,7 @@ describe('AlovidaRuntimeService', () => {
     });
   });
 
-  describe('marco móvil', () => {
+  describe('navegación lateral adaptable', () => {
     function montarMarco() {
       document.body.innerHTML = `
         <nav class="app-side-nav"><a class="app-side-nav__item" href="#x">Inicio</a></nav>
@@ -336,6 +336,7 @@ describe('AlovidaRuntimeService', () => {
 
     it('el botón del cajón lo abre y lo cierra', () => {
       montarMarco();
+      declararMatchMedia(true);
       servicio.refrescar();
       const boton = document.querySelector<HTMLElement>('.app-nav-toggle') as HTMLElement;
 
@@ -347,8 +348,38 @@ describe('AlovidaRuntimeService', () => {
       expect(document.documentElement.classList.contains('nav-abierto')).toBe(false);
     });
 
+    /**
+     * Lo contrario de lo que esta prueba pedía hasta el 13/09/2026.
+     *
+     * Antes el botón, en escritorio, le ponía `nav-collapsed` a la raíz — y esa
+     * clase sacaba la barra de la ventana con un `translateX(-101%)`—. Quedaban
+     * dos controles pegados que parecían el mismo y no lo eran: el `»` de la
+     * barra la recoge a un carril de íconos, con el menú todavía ahí, y éste la
+     * hacía desaparecer entera. El cliente lo pidió fuera, con su función:
+     * «queremos que siga estando nuestro menú».
+     *
+     * En escritorio el botón ya ni se dibuja (`alovida.css`, §21.3). Se prueba
+     * igual que **no hace nada** si alguien lo alcanza —un estilo perdido, un
+     * clic por script, la vitrina— porque lo que no puede volver es el efecto.
+     */
+    it('en escritorio el botón de navegación ya no esconde la barra', () => {
+      montarMarco();
+      servicio.refrescar();
+      const boton = document.querySelector<HTMLElement>('.app-nav-toggle') as HTMLElement;
+
+      boton.click();
+      boton.click();
+
+      expect(document.documentElement.classList.contains('nav-collapsed')).toBe(false);
+      /* Y la barra sigue siendo navegable: `inert` la dejaba fuera del alcance
+         del teclado aunque estuviera a la vista. */
+      expect(document.querySelector('.app-side-nav')?.hasAttribute('inert')).toBe(false);
+      expect(boton.getAttribute('aria-expanded')).toBe('true');
+    });
+
     it('elegir un ítem cierra el cajón: no puede quedar tapando lo que se eligió', () => {
       montarMarco();
+      declararMatchMedia(true);
       servicio.refrescar();
       document.querySelector<HTMLElement>('.app-nav-toggle')?.click();
 
@@ -359,6 +390,7 @@ describe('AlovidaRuntimeService', () => {
 
     it('el velo cierra el cajón al tocarlo', () => {
       montarMarco();
+      declararMatchMedia(true);
       servicio.refrescar();
       document.querySelector<HTMLElement>('.app-nav-toggle')?.click();
 
@@ -407,6 +439,69 @@ describe('AlovidaRuntimeService', () => {
       // que cambia de sitio, donde sí entra.
       expect(document.querySelector('.app-side-nav .app-tenant-switcher')).not.toBeNull();
       expect(document.querySelector('.app-header .app-tenant-switcher')).toBeNull();
+    });
+
+    it('baja al cajón también con la marca dentro de la cabecera del menú', () => {
+      // La estructura real: la marca no es hija directa del `nav` sino de su
+      // cabecera, y tiene al lado el botón de recoger. Con `nav.insertBefore`
+      // sobre `marca.nextSibling` esto lanzaba `NotFoundError` en cada ruta.
+      declararMatchMedia(true);
+      document.body.innerHTML = `
+        <nav class="app-side-nav">
+          <div class="app-side-nav__cabecera">
+            <p class="app-side-nav__marca">AloVida</p>
+            <button class="app-side-nav__recoger">«</button>
+          </div>
+          <ul class="app-side-nav__lista"></ul>
+        </nav>
+        <header class="app-header">
+          <label class="app-header__buscador"><input type="search" /></label>
+          <div class="app-header__derecha">
+            <button class="app-tenant-switcher">Clínica Norte</button>
+          </div>
+        </header>
+      `;
+
+      expect(() => servicio.refrescar()).not.toThrow();
+
+      const selector = document.querySelector('.app-side-nav .app-tenant-switcher');
+      expect(selector).not.toBeNull();
+      // Queda debajo de la cabecera, no metido dentro de ella.
+      expect(selector?.parentElement?.classList.contains('app-side-nav')).toBe(true);
+      expect(selector?.previousElementSibling?.classList.contains('app-side-nav__cabecera')).toBe(
+        true,
+      );
+    });
+
+    it('vuelve al header al ensanchar aunque su vecino original ya no esté', () => {
+      const oyentes: ((e: { matches: boolean }) => void)[] = [];
+      Object.defineProperty(window, 'matchMedia', {
+        configurable: true,
+        writable: true,
+        value: (query: string) => ({
+          matches: true,
+          media: query,
+          addEventListener: (_tipo: string, oyente: (e: { matches: boolean }) => void) =>
+            oyentes.push(oyente),
+          removeEventListener: () => undefined,
+        }),
+      });
+      document.body.innerHTML = `
+        <nav class="app-side-nav"><p class="app-side-nav__marca">AloVida</p></nav>
+        <header class="app-header">
+          <label class="app-header__buscador"><input type="search" /></label>
+          <div class="app-header__derecha">
+            <button class="app-tenant-switcher">Clínica Norte</button>
+            <span class="vecino">avatar</span>
+          </div>
+        </header>
+      `;
+      servicio.refrescar();
+      // Angular re-renderiza el header y el vecino de antes desaparece.
+      document.querySelector('.vecino')?.remove();
+
+      expect(() => oyentes.forEach((oyente) => oyente({ matches: false }))).not.toThrow();
+      expect(document.querySelector('.app-header .app-tenant-switcher')).not.toBeNull();
     });
   });
 

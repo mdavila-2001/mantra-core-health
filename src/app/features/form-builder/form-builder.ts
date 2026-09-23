@@ -5,8 +5,12 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators, type ValidatorFn } from '@angular/forms';
-import { concatMap, of } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+import { concatMap, map, of } from 'rxjs';
+
+import { AuthService } from '@core/auth/auth.service';
 
 import { ChartTemplatesClient } from '../../core/data-access/chart-templates/chart-templates.client';
 import type {
@@ -15,6 +19,7 @@ import type {
   ChartTemplateProvenance,
 } from '../../core/data-access/chart-templates/chart-templates.types';
 import { FormsClient } from '../../core/data-access/forms/forms.client';
+import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type {
   ExtensionBudget,
   TechnicalDataType,
@@ -28,6 +33,7 @@ import { AppButton } from '../../shared/components/atoms/button/button';
 import { familiaDe } from '../../shared/components/atoms/data-type-icon/data-type-icon';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Progress } from '../../shared/components/atoms/progress/progress';
+import { SpecialtyIcon } from '../../shared/components/atoms/specialty-icon/specialty-icon';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
@@ -38,6 +44,10 @@ import {
   type CambiosDelCampo,
   type TipoDeCampo,
 } from './field-editor/field-editor';
+import {
+  FilterBar,
+  type FilterDef,
+} from '../../shared/components/organisms/filter-bar/filter-bar';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../shared/components/organisms/paginated-form/paginated-form';
 import { paginarCampos } from '../../shared/forms/paginated/paginar-campos';
@@ -46,7 +56,11 @@ import type {
   PaginaDeFormulario,
   TipoDeControl,
 } from '../../shared/forms/paginated/paginated-form.types';
-import { validadorDeSeleccion } from '../../shared/forms/paginated/validadores-de-seleccion';
+import {
+  validadorDeCuadricula,
+  validadorDeSeleccion,
+} from '../../shared/forms/paginated/validadores-de-seleccion';
+import { FORM_TEMPLATE_PDF_DOWNLOADER } from '../../shared/utils/form-template-pdf/form-template-pdf';
 
 /**
  * Cómo se dibuja cada tipo de dato cuando el formulario se sirve.
@@ -61,12 +75,16 @@ const CONTROL_POR_TIPO: Readonly<Record<TipoDeCampo, TipoDeControl>> = {
   text: 'textarea',
   integer: 'number',
   decimal: 'number',
-  boolean: 'checkbox',
+  // Dos botones y no una casilla: ver `TipoDeControl.'yes-no'`. Lo pidió el
+  // propietario, y es la misma corrección que ya se hizo en el alta de agenda.
+  boolean: 'yes-no',
   date: 'date',
   // Los de elección no llegan acá: `aCampoDelMotor` los resuelve antes, porque
   // su control depende de cuántas opciones tienen y de si admiten varias.
   choice: 'radio',
   checkboxes: 'checkboxes',
+  choiceGrid: 'grid-radio',
+  checkboxGrid: 'grid-checkboxes',
 };
 
 /**
@@ -136,20 +154,30 @@ const OPCIONES_QUE_ENTRAN_A_LA_VISTA = 4;
     Card,
     EmptyState,
     FieldEditor,
+    FilterBar,
     NavIcon,
     PageHeader,
     PaginatedForm,
     Progress,
+    SpecialtyIcon,
   ],
   templateUrl: './form-builder.html',
-  styleUrl: './form-builder.css',
+  // La hoja compartida va **primera**: Angular concatena en este orden y lo de
+  // `form-builder.css` son los ajustes de esta pantalla sobre esa base. Al
+  // revés, `.rejilla` le ganaría por posición a `.catalogo__rejilla` —misma
+  // especificidad— y el ancho de columna de acá no se aplicaría.
+  styleUrls: ['../../shared/styles/rejilla-de-tarjetas.css', './form-builder.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormBuilder {
   private readonly chartTemplates = inject(ChartTemplatesClient);
   private readonly forms = inject(FormsClient);
   private readonly navigation = inject(NavigationService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly terminology = inject(TerminologyClient);
   private readonly toasts = inject(ToastService);
+  private readonly auth = inject(AuthService);
+  private readonly descargarPdf = inject(FORM_TEMPLATE_PDF_DOWNLOADER);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -185,6 +213,133 @@ export class FormBuilder {
     () => this.plantillas().status === 'loading',
   );
 
+  /* -- Buscador y filtros del catálogo --------------------------------------
+
+     El catálogo pasó de un puñado de formularios a más de cuarenta: una
+     rejilla de cuarenta y tantas tarjetas sin buscador obliga a leerlas todas
+     para encontrar la de uno. La lectura ya trae la lista entera —`GET
+     /charts/templates` no pagina—, así que acotar es filtrar lo que ya está en
+     memoria: ni una petición más por tecla.
+
+     El estado vive en la URL y no en una señal propia, que es la disciplina de
+     `app-filter-bar`: recargar o compartir el enlace reproduce el filtrado
+     exacto. Se lee de `queryParams` en vez de escuchar `filtersChanged` porque
+     la barra sólo avisa cuando **ella** cambia algo, y con eso un enlace con
+     `?q=` entraría sin filtrar. */
+
+  /** El rótulo de cada `specialtyConceptId` presente en el listado. */
+  private readonly especialidades = signal<ReadonlyMap<string, string>>(new Map());
+
+  private readonly criterios = toSignal(
+    this.route.queryParams.pipe(map((params) => params as Record<string, string>)),
+    { initialValue: {} as Record<string, string> },
+  );
+
+  protected readonly filtros = computed<readonly FilterDef[]>(() => {
+    const rotulos = this.especialidades();
+
+    // Sólo las especialidades que de verdad tienen un formulario: ofrecer una
+    // opción que no deja nada es prometer un filtro vacío.
+    const presentes = new Map<string, string>();
+    for (const plantilla of this.listado() ?? []) {
+      const rotulo = rotulos.get(plantilla.specialtyConceptId);
+      if (rotulo !== undefined) presentes.set(plantilla.specialtyConceptId, rotulo);
+    }
+
+    return [
+      {
+        key: 'especialidad',
+        label: 'Especialidad',
+        options: [...presentes]
+          .map(([value, label]) => ({ value, label }))
+          .sort((a, b) => a.label.localeCompare(b.label, 'es')),
+        unavailableReason: 'No pudimos leer el catálogo de especialidades.',
+      },
+      {
+        key: 'extension',
+        label: 'Mis campos',
+        asChips: true,
+        chipsGroup: 'Mis campos',
+        options: [
+          { value: 'con', label: 'Ya le agregué campos' },
+          { value: 'sin', label: 'Todavía sin campos míos' },
+        ],
+      },
+    ];
+  });
+
+  /** Los formularios que pasan el buscador y los filtros, o `null` sin lista. */
+  protected readonly filtrados = computed<readonly ChartTemplate[] | null>(() => {
+    const lista = this.listado();
+    if (lista === null) return null;
+
+    const criterios = this.criterios();
+    const texto = normalizar(criterios['q'] ?? '');
+    const especialidad = criterios['especialidad'] ?? '';
+    const extension = criterios['extension'] ?? '';
+    const rotulos = this.especialidades();
+    const palabras = texto === '' ? [] : texto.split(/\s+/);
+
+    return lista.filter((plantilla) => {
+      if (especialidad !== '' && plantilla.specialtyConceptId !== especialidad) return false;
+
+      const propios = this.cuantosPropios(plantilla);
+      if (extension === 'con' && propios === 0) return false;
+      if (extension === 'sin' && propios > 0) return false;
+
+      if (palabras.length === 0) return true;
+      // Nombre, código, especialidad y organismo de origen: son los cuatro
+      // datos que la tarjeta muestra, así que buscar por cualquiera de ellos
+      // encuentra lo que se está mirando.
+      const pajar = normalizar(
+        [
+          plantilla.name,
+          plantilla.code,
+          rotulos.get(plantilla.specialtyConceptId) ?? '',
+          plantilla.provenance?.organization ?? '',
+        ].join(' '),
+      );
+      return palabras.every((palabra) => pajar.includes(palabra));
+    });
+  });
+
+  /** Si hay algún criterio puesto: lo vacío del filtro no es lo vacío del catálogo. */
+  protected readonly hayCriterios = computed(() => {
+    const criterios = this.criterios();
+    return (
+      (criterios['q'] ?? '') !== '' ||
+      (criterios['especialidad'] ?? '') !== '' ||
+      (criterios['extension'] ?? '') !== ''
+    );
+  });
+
+  /** El rótulo de la especialidad de una plantilla, o `null` si no se resolvió. */
+  protected especialidadDe(plantilla: ChartTemplate): string | null {
+    return this.especialidades().get(plantilla.specialtyConceptId) ?? null;
+  }
+
+  /**
+   * Con qué nombre se busca el ícono de la tarjeta.
+   *
+   * Cae al nombre del formulario cuando la especialidad no se resolvió:
+   * `iconoDeEspecialidad` acierta por palabra —«Evaluación endocrinológica»
+   * trae `endocrin`—, así que degradar al nombre da un dibujo útil mucho más
+   * seguido que el genérico.
+   */
+  protected iconoDe(plantilla: ChartTemplate): string {
+    return this.especialidadDe(plantilla) ?? plantilla.name;
+  }
+
+  /** Cuántos campos trae el formulario, contando los propios de la organización. */
+  protected cantidadDeCampos(plantilla: ChartTemplate): number {
+    return plantilla.fields.length;
+  }
+
+  /** Cuántos de esos campos los agregó esta organización. */
+  protected cuantosPropios(plantilla: ChartTemplate): number {
+    return plantilla.fields.filter((campo) => campo.own).length;
+  }
+
   protected recargar(): void {
     this.cargarPlantillas();
   }
@@ -192,9 +347,41 @@ export class FormBuilder {
   private cargarPlantillas(): void {
     this.plantillas.set(loading());
     this.chartTemplates.listTemplates().subscribe({
-      next: (lista) => this.plantillas.set(ready(lista)),
+      next: (lista) => {
+        this.plantillas.set(ready(lista));
+        this.cargarEspecialidades(lista);
+      },
       error: (error: unknown) =>
         this.plantillas.set(errorToViewState<readonly ChartTemplate[]>(error)),
+    });
+  }
+
+  /**
+   * Los nombres de las especialidades a las que cuelgan las plantillas.
+   *
+   * La plantilla trae el `specialtyConceptId` y nada más: un uuid no se puede
+   * mostrar en una tarjeta ni ofrecer como filtro. Se resuelven **en una sola
+   * lectura** con los ids que de verdad aparecen en el listado, y no pidiendo
+   * el catálogo entero de especialidades, porque así también quedan cubiertos
+   * los formularios transversales —anamnesis, examen físico, epicrisis—, cuyo
+   * concepto existe pero no es miembro de `VS_MEDICAL_SPECIALTY`.
+   *
+   * Un fallo acá **no rompe la pantalla**: las tarjetas pierden el rótulo de
+   * especialidad y el filtro se ofrece deshabilitado con su motivo, que es lo
+   * que el listado de formularios necesita para seguir sirviendo.
+   */
+  private cargarEspecialidades(lista: readonly ChartTemplate[]): void {
+    const ids = lista.map((plantilla) => plantilla.specialtyConceptId).filter((id) => !!id);
+    if (ids.length === 0) {
+      this.especialidades.set(new Map());
+      return;
+    }
+    this.terminology.readConceptLabels(ids).subscribe({
+      next: (etiquetas) =>
+        this.especialidades.set(
+          new Map([...etiquetas].map(([id, opcion]) => [id, opcion.display])),
+        ),
+      error: () => this.especialidades.set(new Map()),
     });
   }
 
@@ -409,6 +596,15 @@ export class FormBuilder {
               allowOther: campo.allowOther ?? false,
               ...(campo.cardinalityMin === undefined ? {} : { cardinalityMin: campo.cardinalityMin }),
               ...(campo.cardinalityMax === undefined ? {} : { cardinalityMax: campo.cardinalityMax }),
+            }
+          : {}),
+        // Una cuadrícula duplicada trae sus filas y sus dos restricciones: sin
+        // ellas la copia sería otra pregunta, no la misma.
+        ...(esCuadriculaDeCampo(campo)
+          ? {
+              rows: campo.rows ?? [],
+              requireEachRow: campo.requireEachRow ?? false,
+              oneResponsePerColumn: campo.oneResponsePerColumn ?? false,
             }
           : {}),
       },
@@ -736,6 +932,50 @@ export class FormBuilder {
     });
   }
 
+  /* -- Bajarse el formulario en papel --------------------------------------- */
+
+  /**
+   * Baja el formulario abierto en PDF, **en blanco y para completar a mano**.
+   *
+   * Lo pidió el propietario: que el doctor pueda descargar el formulario que
+   * armó o editó, «en el formato en que se bajan nuestros PDF». Sale por el
+   * mismo maquetador que la receta y la historia clínica —membrete, filigrana
+   * y numeración de páginas—, así que la hoja se reconoce como de AloVida sin
+   * leerla.
+   *
+   * Se baja lo que hay **en la pantalla**, no lo que haya en el servidor: si
+   * se agregó una pregunta hace diez segundos, el papel la trae. Las páginas
+   * que imprime son las de `paginas()`, las mismas que sirve el motor, para
+   * que el papel y lo que ve el paciente no discrepen en cuántas hojas tiene
+   * el formulario.
+   */
+  protected descargar(): void {
+    const plantilla = this.abierta();
+    if (plantilla === null) {
+      return;
+    }
+
+    const procedencia = plantilla.provenance;
+    this.descargarPdf({
+      nombre: plantilla.name,
+      codigo: plantilla.code,
+      version: plantilla.version,
+      especialidad: this.especialidadDe(plantilla),
+      paginas: this.paginas(),
+      camposEstandar: this.camposEstandar().length,
+      camposPropios: this.camposPropios().length,
+      procedencia:
+        procedencia === undefined
+          ? null
+          : {
+              titulo: procedencia.sourceTitle,
+              organizacion: procedencia.organization,
+              licencia: procedencia.license,
+            },
+      profesional: this.auth.displayName() ?? '',
+    });
+  }
+
   /* -- La vista previa, con el motor de verdad ------------------------------ */
 
   /**
@@ -770,7 +1010,13 @@ export class FormBuilder {
     const topes = new Map(
       (plantilla?.fields ?? []).map((campo) => [
         campo.fieldId,
-        { min: campo.cardinalityMin, max: campo.cardinalityMax, multiple: campo.multiple ?? false },
+        {
+          min: campo.cardinalityMin,
+          max: campo.cardinalityMax,
+          multiple: campo.multiple ?? false,
+          requerirCadaFila: campo.requireEachRow ?? false,
+          unaPorColumna: campo.oneResponsePerColumn ?? false,
+        },
       ]),
     );
 
@@ -786,6 +1032,18 @@ export class FormBuilder {
           (tope.min !== undefined || tope.max !== undefined)
         ) {
           validadores.push(validadorDeSeleccion(tope.min, tope.max));
+        }
+        // Las dos restricciones de una cuadrícula. Van en la previa por lo
+        // mismo que los topes: es lo que la hace **responder** igual que el
+        // formulario servido, y no ser un resumen de cómo quedaría.
+        const cuadricula = campo.control === 'grid-radio' || campo.control === 'grid-checkboxes';
+        if (cuadricula && tope !== undefined && (tope.requerirCadaFila || tope.unaPorColumna)) {
+          validadores.push(
+            validadorDeCuadricula((campo.rows ?? []).map((fila) => fila.value), {
+              requerirCadaFila: tope.requerirCadaFila,
+              unaPorColumna: tope.unaPorColumna,
+            }),
+          );
         }
         grupo.addControl(
           campo.key,
@@ -836,13 +1094,32 @@ function aCampoDelMotor(campo: ChartTemplateField): CampoDeFormulario {
   if (esEleccion && opciones.length > 0) {
     const multiple = campo.multiple ?? false;
     const otro = campo.allowOther ?? false;
+    const columnas = opciones.map((opcion) => ({ value: opcion, label: opcion }));
+
+    // La cuadrícula se resuelve primero: sus opciones son las **columnas**, y
+    // dejarla caer en el `radio` de abajo serviría la escala una sola vez y
+    // perdería las filas enteras, que es lo único que la hace una cuadrícula.
+    const filas = campo.rows ?? [];
+    if (filas.length > 0) {
+      return {
+        key: campo.fieldId,
+        label: campo.name,
+        control: multiple ? 'grid-checkboxes' : 'grid-radio',
+        required: campo.required,
+        options: columnas,
+        rows: filas.map((fila) => ({ value: fila, label: fila })),
+        ...(campo.oneResponsePerColumn === true ? { oneResponsePerColumn: true } : {}),
+        ...ayuda,
+      };
+    }
+
     const comoLista = multiple || otro || opciones.length <= OPCIONES_QUE_ENTRAN_A_LA_VISTA;
     return {
       key: campo.fieldId,
       label: campo.name,
       control: multiple ? 'checkboxes' : comoLista ? 'radio' : 'select',
       required: campo.required,
-      options: opciones.map((opcion) => ({ value: opcion, label: opcion })),
+      options: columnas,
       ...(otro ? { otro: true } : {}),
       ...ayuda,
     };
@@ -867,24 +1144,48 @@ function aCampoDelMotor(campo: ChartTemplateField): CampoDeFormulario {
 function valorInicial(control: TipoDeControl): unknown {
   if (control === 'checkbox') return false;
   if (control === 'checkboxes') return [];
+  // `null` y no `false`: en un sí/no de dos botones «sin responder» es un
+  // estado, y arrancarlo en `false` mostraría «No» contestado por nadie —y
+  // dejaría pasar un obligatorio sin respuesta—.
+  if (control === 'yes-no') return null;
+  // Una cuadrícula guarda una entrada por fila respondida: arrancar en `''`
+  // dejaría a la validación leyendo propiedades de una cadena.
+  if (control === 'grid-radio' || control === 'grid-checkboxes') return {};
   return '';
 }
 
-/** `'eleccion'`, `'casillas'` o `null` si el campo no es de elección. */
-function familiaDeCampo(campo: ChartTemplateField): 'eleccion' | 'casillas' | null {
-  const familia = familiaDe(campo.dataType, campo.multiple ?? false);
-  return familia === 'eleccion' || familia === 'casillas' ? familia : null;
+/** La familia de elección del campo, o `null` si no es de elección. */
+function familiaDeCampo(
+  campo: ChartTemplateField,
+): 'eleccion' | 'casillas' | 'cuadricula' | 'cuadricula-casillas' | null {
+  const familia = familiaDe(
+    campo.dataType,
+    campo.multiple ?? false,
+    (campo.rows ?? []).length > 0,
+  );
+  return familia === 'eleccion' ||
+    familia === 'casillas' ||
+    familia === 'cuadricula' ||
+    familia === 'cuadricula-casillas'
+    ? familia
+    : null;
+}
+
+/** Si el campo se sirve como cuadrícula: lo que lo dice es tener filas. */
+function esCuadriculaDeCampo(campo: ChartTemplateField): boolean {
+  const familia = familiaDeCampo(campo);
+  return familia === 'cuadricula' || familia === 'cuadricula-casillas';
 }
 
 /** Si algo de la **definición** —lo global— cambió respecto del campo. */
 function definicionCambio(campo: ChartTemplateField, cambios: CambiosDelCampo): boolean {
-  const opcionesGuardadas = campo.options ?? [];
-  const opcionesNuevas = cambios.options ?? [];
-  const cambiaronOpciones =
-    opcionesNuevas.length !== opcionesGuardadas.length ||
-    opcionesNuevas.some((opcion, i) => opcion !== opcionesGuardadas[i]);
+  const cambiaronOpciones = listaCambio(campo.options, cambios.options);
+  const cambiaronFilas = listaCambio(campo.rows, cambios.rows);
 
   return (
+    cambiaronFilas ||
+    (cambios.requireEachRow ?? false) !== (campo.requireEachRow ?? false) ||
+    (cambios.oneResponsePerColumn ?? false) !== (campo.oneResponsePerColumn ?? false) ||
     cambios.name !== campo.name ||
     cambios.dataType !== campo.dataType.toLowerCase() ||
     (cambios.description ?? null) !== (campo.description ?? null) ||
@@ -894,6 +1195,16 @@ function definicionCambio(campo: ChartTemplateField, cambios: CambiosDelCampo): 
     (cambios.cardinalityMax ?? null) !== (campo.cardinalityMax ?? null) ||
     cambiaronOpciones
   );
+}
+
+/** Si una lista de textos —opciones o filas— cambió, contando el orden. */
+function listaCambio(
+  guardada: readonly string[] | undefined,
+  nueva: readonly string[] | undefined,
+): boolean {
+  const antes = guardada ?? [];
+  const ahora = nueva ?? [];
+  return antes.length !== ahora.length || ahora.some((texto, i) => texto !== antes[i]);
 }
 
 /** Lo que viaja en el `PATCH` de la definición. */
@@ -912,6 +1223,13 @@ function aCuerpoDeDefinicion(cambios: CambiosDelCampo): UpdateFieldDefinitionInp
           allowOther: cambios.allowOther ?? false,
           cardinalityMin: cambios.cardinalityMin ?? null,
           cardinalityMax: cambios.cardinalityMax ?? null,
+          // Las filas viajan **enteras** y con lista vacía incluida: es lo que
+          // deja de ser cuadrícula al volver a «Opción múltiple». Si no se
+          // mandaran, las filas quedarían colgadas de un campo que ya no las
+          // dibuja y volverían a aparecer al recargar.
+          rows: cambios.rows ?? [],
+          requireEachRow: cambios.requireEachRow ?? false,
+          oneResponsePerColumn: cambios.oneResponsePerColumn ?? false,
         }),
   };
 }
@@ -925,6 +1243,9 @@ function conCambios(campo: ChartTemplateField, cambios: CambiosDelCampo): ChartT
     allowOther: _a,
     cardinalityMin: _min,
     cardinalityMax: _max,
+    rows: _r,
+    requireEachRow: _ref,
+    oneResponsePerColumn: _orc,
     ...base
   } = campo;
   return {
@@ -941,6 +1262,13 @@ function conCambios(campo: ChartTemplateField, cambios: CambiosDelCampo): ChartT
           allowOther: cambios.allowOther ?? false,
           ...(cambios.cardinalityMin == null ? {} : { cardinalityMin: cambios.cardinalityMin }),
           ...(cambios.cardinalityMax == null ? {} : { cardinalityMax: cambios.cardinalityMax }),
+        }),
+    ...((cambios.rows ?? []).length === 0
+      ? {}
+      : {
+          rows: cambios.rows,
+          requireEachRow: cambios.requireEachRow ?? false,
+          oneResponsePerColumn: cambios.oneResponsePerColumn ?? false,
         }),
   };
 }
@@ -964,4 +1292,20 @@ function codigoDeCampo(codigoDePlantilla: string, nombre: string): string {
     .replace(/^_+|_+$/g, '')
     .slice(0, 40);
   return `${codigoDePlantilla}.${raiz || 'CAMPO'}_${Date.now().toString(36).toUpperCase()}`;
+}
+
+/**
+ * Baja a minúsculas y quita las tildes, para que «cardiología» encuentre
+ * «Cardiología» y «anestesica» encuentre «anestésica».
+ *
+ * Sin esto el buscador del catálogo fallaría justo en los nombres clínicos, que
+ * son casi todos acentuados, y el fallo sería mudo: cero resultados sobre una
+ * lista que sí los tiene.
+ */
+function normalizar(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim();
 }

@@ -11,7 +11,15 @@
     <!-- El enlace cubre la tarjeta entera con el ::after de abajo, pero el
          nombre sigue siendo el texto del enlace: es lo que anuncia un lector
          de pantalla, y «tarjeta» no le dice a nadie a dónde va. -->
-    <a [routerLink]="r.link">{{ r.title }}</a>
+    <a
+      [attr.href]="r.link"
+      [attr.aria-busy]="navegando() ? 'true' : null"
+      [attr.aria-disabled]="navegando() ? 'true' : null"
+      [style.pointer-events]="navegando() ? 'none' : null"
+      (click)="navegar($event)"
+    >
+      {{ navegando() ? 'Abriendo…' : r.title }}
+    </a>
   </p>
 
   <!-- El subtítulo va pegado al título y en el tamaño del cuerpo: es qué es

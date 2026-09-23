@@ -12,17 +12,15 @@ import {
   type TemplateRef,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, of } from 'rxjs';
 
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import type { PatientListItem } from '../../../core/data-access/profiles/profiles.types';
 import { QuotationsClient } from '../../../core/data-access/quotations/quotations.client';
 import type {
-  Installment,
-  InterestCalculationMethod,
   NewQuotation,
-  SimulatePaymentPlanResponse,
+  PaymentFrequency,
 } from '../../../core/data-access/quotations/quotations.types';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type { Booking } from '../../../core/data-access/scheduling/scheduling.types';
@@ -34,12 +32,14 @@ import type {
 import { readApiError } from '../../../core/http/api-error';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
+import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
+import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
@@ -49,7 +49,19 @@ import type { ColumnDef } from '../../../shared/components/organisms/data-table/
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { QUOTATION_PDF_DOWNLOADER } from '../../../shared/utils/quotation-pdf/quotation-pdf';
-import { QUOTATIONS_ROUTE } from '../quotations.routes';
+import {
+  addPeriods,
+  buildSchedule,
+  fromCents,
+  MAX_INSTALLMENTS,
+  rebalance,
+  remainingCents,
+  renumber,
+  toCents,
+  toInstallments,
+  type PlanRow,
+} from '../flexible-payment-plan';
+import { QUOTATION_PATIENT_QUERY_PARAM, QUOTATIONS_ROUTE } from '../quotations.routes';
 
 /** Tope del buscador de pacientes. La API pagina por cursor; acá alcanza una página. */
 const TOPE_PACIENTES = 25;
@@ -60,22 +72,27 @@ const TOPE_SERVICIOS = 25;
 /** Cuántas reservas recientes del paciente se ofrecen como cita asociada. */
 const TOPE_CITAS = 20;
 
-/**
- * Espera antes de simular. Mismo orden de magnitud que
- * `SEARCH_DEBOUNCE_MS` de `app-search-field`: alcanza para no disparar una
- * petición por cada tecla y sigue sintiéndose «en vivo».
- */
-const DEBOUNCE_SIMULACION_MS = 350;
-
 const FORMATO_FECHA_HORA = new Intl.DateTimeFormat('es-BO', {
   dateStyle: 'short',
   timeStyle: 'short',
 });
 
-const METODOS: readonly SelectOption<InterestCalculationMethod>[] = [
-  { value: 'FLAT', label: 'Cuota fija (FLAT)' },
-  { value: 'FRENCH', label: 'Francés (amortización)' },
+const FRECUENCIAS: readonly SegmentedOption<PaymentFrequency>[] = [
+  { value: 'WEEKLY', label: 'Semanal' },
+  { value: 'BIWEEKLY', label: 'Quincenal' },
+  { value: 'MONTHLY', label: 'Mensual' },
 ];
+
+const FORMATO_MONTO = new Intl.NumberFormat('es-BO', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/** `YYYY-MM-DD` → `Date` local, sin el corrimiento de huso de `new Date(iso)`. */
+function fechaDeIso(iso: string): Date {
+  const [anio, mes, dia] = iso.split('-').map(Number) as [number, number, number];
+  return new Date(anio, mes - 1, dia);
+}
 
 /** `Date` local → `YYYY-MM-DD`. Mismo criterio que `fechaIso` de `profiles.client.ts`. */
 function fechaIso(fecha: Date): string {
@@ -87,7 +104,7 @@ function fechaIso(fecha: Date): string {
 
 /**
  * **Nueva cotización** (FT-24) — un paciente, un servicio del catálogo (FT-22)
- * y un plan de pagos simulado en vivo.
+ * y un plan de pagos flexible, sin interés.
  *
  * ## Los organismos que reusa, y por qué
  *
@@ -119,13 +136,14 @@ function fechaIso(fecha: Date): string {
  * siempre ofrece "Sin cita asociada" y guardar sin elegir ninguna es un caso
  * válido.
  *
- * ## El simulador llama al backend en vivo, con espera
+ * ## Plan de pagos flexible, no simulador de crédito
  *
- * Cada cambio de precio, plazo, tasa, método o fecha de atención dispara
- * `QuotationsClient.simulatePaymentPlan` tras `DEBOUNCE_SIMULACION_MS`, con
- * el mismo patrón de «última respuesta gana» que `my-services.ts` usa para su
- * paginación (`llegoTarde`): una respuesta que llega tarde de un juego de
- * parámetros ya reemplazado se descarta.
+ * Un consultorio no presta plata: reparte el precio de un tratamiento en
+ * cuotas. No hay tasa ni método de amortización. El cronograma se arma en
+ * pantalla con `flexible-payment-plan.ts` —anticipo, cantidad de cuotas,
+ * frecuencia y primer vencimiento— y después se edita cuota por cuota. Viaja
+ * entero en el `POST /quotations`; no hay ida y vuelta al servidor para
+ * «simular».
  */
 @Component({
   selector: 'app-quotation-form',
@@ -138,6 +156,7 @@ function fechaIso(fecha: Date): string {
     Input,
     PageHeader,
     SearchField,
+    SegmentedControl,
     Select,
   ],
   templateUrl: './quotation-form.html',
@@ -153,9 +172,11 @@ export class QuotationForm {
   private readonly toasts = inject(ToastService);
   private readonly descargarPdf = inject(QUOTATION_PDF_DOWNLOADER);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
-  protected readonly opcionesDeMetodo = METODOS;
+  protected readonly opcionesDeFrecuencia = FRECUENCIAS;
+  protected readonly topeDeCuotas = MAX_INSTALLMENTS;
 
   private readonly celdaAccionPaciente =
     viewChild.required<TemplateRef<{ $implicit: PatientListItem }>>('celdaAccionPaciente');
@@ -201,6 +222,8 @@ export class QuotationForm {
   ]);
 
   protected readonly porPaciente = (fila: PatientListItem): string => fila.profileId;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDePaciente = (fila: PatientListItem): string => fila.displayName ?? '';
 
   protected buscarPaciente(texto: string): void {
     this.busquedaDePaciente.set(texto);
@@ -284,6 +307,8 @@ export class QuotationForm {
   );
 
   protected readonly porServicio = (fila: ServiceCatalogItem): string => fila.id;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDeServicio = (fila: ServiceCatalogItem): string => fila.name;
 
   protected buscarServicio(texto: string): void {
     this.busquedaDeServicio.set(texto);
@@ -337,43 +362,192 @@ export class QuotationForm {
     this.precioOfrecido.set(valor === null ? '' : String(valor));
   }
 
-  /* ---- simulador interactivo -------------------------------------------------------- */
+  /* ---- plan de pagos flexible ------------------------------------------------------
+     Ver el comentario de la clase y `flexible-payment-plan.ts`. */
 
-  protected readonly tasaDeInteres = signal<number | null>(0);
-  protected readonly plazoEnCuotas = signal<number | null>(1);
-  protected readonly metodo = signal<InterestCalculationMethod>('FLAT');
+  protected readonly anticipo = signal<number | null>(0);
+  protected readonly plazoEnCuotas = signal<number | null>(3);
+  protected readonly frecuencia = signal<PaymentFrequency>('MONTHLY');
+  /** Si queda vacío, la primera cuota vence un período después de la atención. */
+  protected readonly primerVencimiento = signal<Date | null>(null);
 
-  protected fijarTasa(valor: string | number | null): void {
-    this.tasaDeInteres.set(valor === null || valor === '' ? null : Number(valor));
+  /** El cronograma en edición. Se rearma solo al cambiar los parámetros de arriba. */
+  protected readonly filas = signal<readonly PlanRow[]>([]);
+
+  protected fijarAnticipo(valor: string | number | null): void {
+    this.anticipo.set(valor === null || valor === '' ? null : Number(valor));
   }
 
   protected fijarPlazo(valor: string | number | null): void {
     this.plazoEnCuotas.set(valor === null || valor === '' ? null : Number(valor));
   }
 
-  protected readonly simulacion = signal<ViewState<SimulatePaymentPlanResponse>>(
-    empty(
-      { label: 'Completá los datos' },
-      'Elegí un servicio, una fecha de atención y un plazo válido para simular el plan de pagos.',
+  private readonly precio = computed(() => {
+    const texto = this.precioOfrecido();
+    const valor = Number(texto);
+    return texto.trim() === '' || Number.isNaN(valor) ? null : valor;
+  });
+
+  /** La fecha desde la que se cuentan los vencimientos, o `null` si falta. */
+  private readonly vencimientoInicial = computed<string | null>(() => {
+    const elegido = this.primerVencimiento();
+    if (elegido !== null) {
+      return fechaIso(elegido);
+    }
+    const atencion = this.fechaDeAtencion();
+    return atencion === null ? null : addPeriods(fechaIso(atencion), this.frecuencia(), 1);
+  });
+
+  /** Por qué todavía no hay cronograma, o `null` si lo hay. */
+  protected readonly faltaParaElPlan = computed<string | null>(() => {
+    const precio = this.precio();
+    const anticipo = this.anticipo() ?? 0;
+    const cuotas = this.plazoEnCuotas();
+    if (precio === null || precio <= 0) {
+      return 'Elegí un servicio o escribí el precio para armar el plan.';
+    }
+    if (this.vencimientoInicial() === null) {
+      return 'Elegí la fecha de atención o la del primer vencimiento.';
+    }
+    if (anticipo < 0 || anticipo > precio) {
+      return 'El anticipo no puede ser negativo ni pasar el precio.';
+    }
+    if (anticipo < precio && (cuotas === null || cuotas < 1 || cuotas > MAX_INSTALLMENTS)) {
+      return `La cantidad de cuotas va de 1 a ${MAX_INSTALLMENTS}.`;
+    }
+    return null;
+  });
+
+  /** Lo que le falta (positivo) o le sobra (negativo) al plan, en centavos. */
+  private readonly diferencia = computed(() =>
+    remainingCents(this.filas(), this.precio() ?? 0, this.anticipo() ?? 0),
+  );
+
+  protected readonly totalDelPlan = computed(() =>
+    FORMATO_MONTO.format(
+      fromCents(
+        toCents(this.anticipo() ?? 0) +
+          this.filas().reduce((suma, fila) => suma + toCents(fila.amount), 0),
+      ),
     ),
   );
 
-  protected readonly cuotas = computed<readonly Installment[]>(
-    () => dataOf(this.simulacion())?.installments ?? [],
-  );
-
-  /* Accesores angostados por estado, mismo criterio que `ViewStateHost`: la
-     plantilla no puede angostar una unión invocando el signal dos veces, así
-     que el angostado se hace acá una sola vez. */
-  protected readonly simulando = computed(() => this.simulacion().status === 'loading');
-  protected readonly simulacionConError = computed(() => this.simulacion().status === 'error');
-  protected readonly simulacionVacia = computed(() => {
-    const estado = this.simulacion();
-    return estado.status === 'empty' ? estado : null;
+  /** El aviso de un plan que no cierra con el precio, o `null` si cierra. */
+  protected readonly descuadre = computed<string | null>(() => {
+    const centavos = this.diferencia();
+    if (this.faltaParaElPlan() !== null || centavos === 0) {
+      return null;
+    }
+    const monto = FORMATO_MONTO.format(fromCents(Math.abs(centavos)));
+    return centavos > 0
+      ? `Faltan ${monto} para cubrir el precio. Repartilo en otra cuota o soltá un monto fijado.`
+      : `Las cuotas pasan el precio por ${monto}. Bajá algún monto fijado.`;
   });
 
-  /** Descarta una respuesta de simulación que llegó tarde (ver el comentario de la clase). */
-  private tokenDeSimulacion = 0;
+  protected readonly planCierra = computed(
+    () =>
+      this.faltaParaElPlan() === null &&
+      this.diferencia() === 0 &&
+      this.filas().every((fila) => fila.amount > 0 && fila.dueDate !== ''),
+  );
+
+  protected readonly hayMontosFijados = computed(() => this.filas().some((fila) => fila.pinned));
+
+  /** Cambiar el monto de una cuota la fija, y las libres se reparten el resto. */
+  protected fijarMonto(indice: number, valor: string | number | null): void {
+    const monto = valor === null || valor === '' ? 0 : Math.max(0, Number(valor));
+    if (Number.isNaN(monto)) {
+      return;
+    }
+    const filas = this.filas().map((fila, i) =>
+      i === indice ? { ...fila, amount: fromCents(toCents(monto)), pinned: true } : fila,
+    );
+    this.filas.set(rebalance(filas, this.precio() ?? 0, this.anticipo() ?? 0));
+  }
+
+  /** Las fechas de las cuotas como `Date`, para el `app-date-picker` de cada fila. */
+  protected readonly vencimientos = computed<readonly (Date | null)[]>(() =>
+    this.filas().map((fila) => (fila.dueDate === '' ? null : fechaDeIso(fila.dueDate))),
+  );
+
+  protected fijarVencimiento(indice: number, fecha: Date | null): void {
+    const iso = fecha === null ? '' : fechaIso(fecha);
+    this.filas.update((filas) =>
+      filas.map((fila, i) => (i === indice ? { ...fila, dueDate: iso } : fila)),
+    );
+  }
+
+  protected soltarMonto(indice: number): void {
+    const filas = this.filas().map((fila, i) => (i === indice ? { ...fila, pinned: false } : fila));
+    this.filas.set(rebalance(filas, this.precio() ?? 0, this.anticipo() ?? 0));
+  }
+
+  /** Una cuota más, un período después de la última. Se reparte con las libres. */
+  protected agregarCuota(): void {
+    const filas = this.filas();
+    if (filas.length >= MAX_INSTALLMENTS) {
+      return;
+    }
+    const ultima = filas.at(-1)?.dueDate ?? this.vencimientoInicial();
+    if (ultima === null || ultima === undefined) {
+      return;
+    }
+    const nueva: PlanRow = {
+      installmentNumber: filas.length + 1,
+      dueDate: filas.length === 0 ? ultima : addPeriods(ultima, this.frecuencia(), 1),
+      amount: 0,
+      pinned: false,
+    };
+    this.filas.set(rebalance([...filas, nueva], this.precio() ?? 0, this.anticipo() ?? 0));
+    this.plazoSinRearmar(this.filas().length);
+  }
+
+  protected quitarCuota(indice: number): void {
+    const filas = renumber(this.filas().filter((_, i) => i !== indice));
+    this.filas.set(rebalance(filas, this.precio() ?? 0, this.anticipo() ?? 0));
+    this.plazoSinRearmar(filas.length);
+  }
+
+  /** Vuelve al reparto en partes iguales, con las fechas de la frecuencia elegida. */
+  protected repartirEnPartesIguales(): void {
+    this.rearmarPlan();
+  }
+
+  /**
+   * Agregar o quitar una cuota cambia la cantidad, pero no debe rearmar el
+   * cronograma y perder las fechas y montos que se escribieron a mano.
+   */
+  private rearmeSuspendido = false;
+
+  private plazoSinRearmar(cantidad: number): void {
+    // Sólo si cambia: con el mismo valor el efecto no corre y la marca
+    // quedaría puesta, tragándose el próximo cambio de verdad.
+    if (this.plazoEnCuotas() === cantidad) {
+      return;
+    }
+    this.rearmeSuspendido = true;
+    this.plazoEnCuotas.set(cantidad);
+  }
+
+  private rearmarPlan(): void {
+    const precio = this.precio();
+    const inicio = this.vencimientoInicial();
+    if (this.faltaParaElPlan() !== null || precio === null || inicio === null) {
+      this.filas.set([]);
+      return;
+    }
+    const anticipo = this.anticipo() ?? 0;
+    this.filas.set(
+      buildSchedule({
+        total: precio,
+        downPayment: anticipo,
+        // Pagado todo de anticipo, no quedan cuotas.
+        installmentCount: anticipo >= precio ? 0 : (this.plazoEnCuotas() ?? 0),
+        frequency: this.frecuencia(),
+        firstDueDate: inicio,
+      }),
+    );
+  }
 
   constructor() {
     // Cambiar de práctica, o el filtro del buscador, es un catálogo nuevo: el
@@ -383,82 +557,45 @@ export class QuotationForm {
       untracked(() => this.cargarServicios());
     });
 
-    // El simulador: cada cambio de precio, plazo, tasa, método o fecha
-    // dispara la llamada tras `DEBOUNCE_SIMULACION_MS`. `effect` con
-    // `setTimeout` + `onCleanup`, el mismo patrón que usa `app-search-field`
-    // para su propia espera.
-    effect((onCleanup) => {
-      const precioTexto = this.precioOfrecido();
-      const cuotas = this.plazoEnCuotas();
-      const tasa = this.tasaDeInteres();
-      const metodo = this.metodo();
-      const fecha = this.fechaDeAtencion();
-
-      const precio = Number(precioTexto);
-      const parametrosValidos =
-        precioTexto.trim() !== '' &&
-        !Number.isNaN(precio) &&
-        cuotas !== null &&
-        cuotas >= 1 &&
-        tasa !== null &&
-        tasa >= 0 &&
-        fecha !== null;
-
-      if (!parametrosValidos) {
-        untracked(() => {
-          this.tokenDeSimulacion += 1;
-          this.simulacion.set(
-            empty(
-              { label: 'Completá los datos' },
-              'Elegí un servicio, una fecha de atención y un plazo válido para simular el plan de pagos.',
-            ),
-          );
-        });
-        return;
-      }
-
-      const temporizador = setTimeout(() => {
-        untracked(() =>
-          // `fecha`, `cuotas` y `tasa` ya se comprobaron no nulos arriba.
-          this.simular(precio, cuotas, tasa, metodo, fecha as Date),
-        );
-      }, DEBOUNCE_SIMULACION_MS);
-      onCleanup(() => clearTimeout(temporizador));
+    // Los parámetros del plan rearman el cronograma. Es local y es barato: no
+    // hace falta espera ni ir al servidor.
+    effect(() => {
+      this.precio();
+      this.anticipo();
+      this.plazoEnCuotas();
+      this.frecuencia();
+      this.vencimientoInicial();
+      untracked(() => {
+        if (this.rearmeSuspendido) {
+          this.rearmeSuspendido = false;
+          return;
+        }
+        this.rearmarPlan();
+      });
     });
+
+    // Desde la consulta se llega con el paciente ya elegido.
+    const pacienteDeLaConsulta = this.route.snapshot.queryParamMap.get(
+      QUOTATION_PATIENT_QUERY_PARAM,
+    );
+    if (pacienteDeLaConsulta !== null && pacienteDeLaConsulta !== '') {
+      this.precargarPaciente(pacienteDeLaConsulta);
+    }
   }
 
-  private simular(
-    offeredPrice: number,
-    installmentCount: number,
-    interestRatePercent: number,
-    interestCalculationMethod: InterestCalculationMethod,
-    attentionDate: Date,
-  ): void {
-    const token = ++this.tokenDeSimulacion;
-    this.simulacion.set(loading());
-
-    this.quotations
-      .simulatePaymentPlan({
-        offeredPrice,
-        installmentCount,
-        interestRatePercent,
-        interestCalculationMethod,
-        attentionDate: fechaIso(attentionDate),
-      })
-      .subscribe({
-        next: (respuesta) => {
-          if (token !== this.tokenDeSimulacion) {
-            return;
-          }
-          this.simulacion.set(ready(respuesta));
-        },
-        error: (error: unknown) => {
-          if (token !== this.tokenDeSimulacion) {
-            return;
-          }
-          this.simulacion.set(errorToViewState<SimulatePaymentPlanResponse>(error));
-        },
-      });
+  private precargarPaciente(profileId: string): void {
+    this.profiles.getPatient(profileId).subscribe({
+      next: (paciente) =>
+        this.elegirPaciente({
+          profileId: paciente.profileId,
+          personId: paciente.personId,
+          patientCode: paciente.patientCode,
+          ...(paciente.displayName === undefined ? {} : { displayName: paciente.displayName }),
+          deceased: paciente.deceasedAt !== undefined,
+        }),
+      // Si no se puede leer, se busca a mano como siempre.
+      error: () => undefined,
+    });
   }
 
   /* ---- validez de la oferta ---------------------------------------------------------- */
@@ -482,12 +619,11 @@ export class QuotationForm {
       patientName: paciente.displayName ?? paciente.patientCode,
       serviceName: servicio.name,
       offeredPrice: Number(this.precioOfrecido()) || 0,
-      interestRatePercent: this.tasaDeInteres() ?? 0,
-      interestCalculationMethod: this.metodo(),
-      installmentCount: this.plazoEnCuotas() ?? 0,
+      downPaymentAmount: this.anticipo() ?? 0,
+      paymentFrequency: this.frecuencia(),
       attentionDate: fecha === null ? '' : fechaIso(fecha),
       validUntil: validez === null ? '' : fechaIso(validez),
-      installments: this.cuotas(),
+      installments: toInstallments(this.filas()),
     });
   }
 
@@ -503,12 +639,7 @@ export class QuotationForm {
       this.practicaElegida() !== null &&
       this.fechaDeAtencion() !== null &&
       this.validaHasta() !== null &&
-      this.plazoEnCuotas() !== null &&
-      this.plazoEnCuotas()! >= 1 &&
-      this.tasaDeInteres() !== null &&
-      this.tasaDeInteres()! >= 0 &&
-      this.precioOfrecido().trim() !== '' &&
-      !Number.isNaN(Number(this.precioOfrecido())) &&
+      this.planCierra() &&
       !this.guardando(),
   );
 
@@ -518,8 +649,6 @@ export class QuotationForm {
     const practiceId = this.practicaElegida();
     const fecha = this.fechaDeAtencion();
     const validez = this.validaHasta();
-    const cuotas = this.plazoEnCuotas();
-    const tasa = this.tasaDeInteres();
     const precio = Number(this.precioOfrecido());
 
     if (
@@ -528,12 +657,17 @@ export class QuotationForm {
       practiceId === null ||
       fecha === null ||
       validez === null ||
-      cuotas === null ||
-      tasa === null ||
       Number.isNaN(precio)
     ) {
       this.errorAlGuardar.set(
-        'Completá paciente, servicio, fecha de atención, plazo, tasa y validez de la oferta.',
+        'Completá paciente, servicio, fecha de atención y validez de la oferta.',
+      );
+      return;
+    }
+
+    if (!this.planCierra()) {
+      this.errorAlGuardar.set(
+        this.descuadre() ?? this.faltaParaElPlan() ?? 'Revisá las fechas y montos de las cuotas.',
       );
       return;
     }
@@ -557,9 +691,10 @@ export class QuotationForm {
       ...(servicio.currencyConceptId === undefined
         ? {}
         : { currencyConceptId: servicio.currencyConceptId }),
-      paymentPlanInstallmentCount: cuotas,
-      interestRatePercent: tasa,
-      interestCalculationMethod: this.metodo(),
+      paymentPlanInstallmentCount: this.filas().length,
+      downPaymentAmount: this.anticipo() ?? 0,
+      paymentFrequency: this.frecuencia(),
+      installments: toInstallments(this.filas()),
       validUntil: fechaIso(validez),
     };
 
@@ -577,7 +712,7 @@ export class QuotationForm {
   }
 }
 
-/** Qué decir cuando el guardado o la simulación fallan. */
+/** Qué decir cuando el guardado falla. */
 function mensajeDelServidor(error: unknown): string {
   if (error instanceof HttpErrorResponse) {
     const cuerpo = readApiError(error);

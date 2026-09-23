@@ -1,0 +1,540 @@
+/* Contabilidad en cristiano — sólo distribución y jerarquía. Ni un color ni
+   una tipografía propios: todo sale de los tokens del sistema.
+
+   Centrado y a lo ancho del área de contenido, sin topes propios: el tope lo
+   pone `.app-main__inner` y nadie más (`composition-rules.md` §5). */
+
+:host {
+  display: block;
+  inline-size: 100%;
+}
+
+/* ---- estructura común de cada bloque -------------------------------------- */
+
+.bloque {
+  display: block;
+  inline-size: 100%;
+  margin-block-start: var(--sp-6);
+}
+
+.bloque__bajada {
+  margin: var(--sp-2) 0 var(--sp-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  max-inline-size: 62ch; /* medida de lectura: sólo para prosa, nunca para el bloque */
+}
+
+.eleccion {
+  margin-block-start: var(--sp-5);
+  max-inline-size: 28rem;
+}
+
+.nota {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+/* ---- 1 · ¿Cuánto hiciste? -------------------------------------------------
+   Tres tramos en fila. En teléfono se apilan; nunca se recortan ni se
+   convierten en carrusel: los tres números se comparan de un vistazo o no
+   sirven de nada. */
+
+.tramos {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 48rem) {
+  .tramos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.tramo {
+  display: block;
+}
+
+/* «Este mes» es el que más se mira: se levanta con relieve y una barra de
+   marca arriba, no con otro color de fondo —el fondo blanco es regla—. */
+.tramo--destacado {
+  position: relative;
+  overflow: hidden;
+}
+
+.tramo--destacado::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 3px;
+  background: var(--brand-primary);
+}
+
+.tramo__rotulo {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tramo__aclaracion {
+  color: var(--text-tertiary);
+  font-size: var(--fs-caption);
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.tramo__cifra {
+  margin: var(--sp-3) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  line-height: 1.1;
+  font-weight: 600;
+  /* Cifras tabulares: tres importes en tres tarjetas se comparan por la
+     vertical, y con dígitos de ancho variable no caen alineados. */
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.tramo__pie {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+}
+
+/* La variación contra el período anterior. El signo va en el texto además del
+   color y de la flecha: quien no distingue verde de rojo lo lee igual. */
+.comparacion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-sm);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.comparacion--sube {
+  background: var(--st-success-bg);
+  color: var(--st-success-fg);
+}
+
+.comparacion--baja {
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+}
+
+.comparacion__flecha {
+  font-size: 0.75em;
+}
+
+.tramo__cuentas {
+  margin: var(--sp-4) 0 0;
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.tramo__cuenta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-2);
+}
+
+.tramo__cuenta dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+}
+
+.tramo__cuenta dd {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.tramo__cuenta--total dt {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.tramo__cuenta--total dd {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tramo__negativo {
+  color: var(--text-danger);
+}
+
+.tramo__alerta {
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-inline-start: 3px solid var(--st-warning-bd);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  border-radius: var(--r-xs);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* ---- rejilla de dos paneles ----------------------------------------------- */
+
+.dos-columnas {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+@media (min-width: 60rem) {
+  .dos-columnas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.panel {
+  display: block;
+}
+
+.panel__cabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.panel__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.panel__total {
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel__lectura {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.panel__lectura strong {
+  color: var(--text-primary);
+}
+
+/* ---- barras de gasto e ingreso --------------------------------------------
+   La barra es el único gráfico de la pantalla, y es a propósito: una torta de
+   seis porciones obliga a comparar áreas, que es justo lo que el ojo hace mal.
+   Una barra horizontal se compara por la punta. */
+
+.barras {
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+}
+
+.barra + .barra {
+  margin-block-start: var(--sp-4);
+}
+
+.barra__fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.barra__nombre {
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.barra__importe {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.barra__porcentaje {
+  color: var(--text-tertiary);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  min-inline-size: 3ch;
+  text-align: end;
+}
+
+.barra__pista {
+  block-size: 8px;
+  margin-block-start: var(--sp-2);
+  border-radius: var(--r-xs);
+  background: var(--bg-inset);
+  overflow: hidden;
+}
+
+.barra__relleno {
+  block-size: 100%;
+  border-radius: var(--r-xs);
+  background: var(--brand-secondary);
+  /* Una barra de 0 % igual se ve: si no, una línea de gasto chiquita parece
+     que no existe. */
+  min-inline-size: 2px;
+}
+
+.barra__relleno--ingreso {
+  background: var(--brand-primary);
+}
+
+.barra__aclaracion {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-tertiary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* ---- partidas pendientes --------------------------------------------------- */
+
+.pendientes {
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+}
+
+.pendiente {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-2);
+  padding-block: var(--sp-3);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.pendiente:first-child {
+  border-block-start: 0;
+  padding-block-start: 0;
+}
+
+@media (min-width: 30rem) {
+  .pendiente {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: var(--sp-3);
+  }
+
+  .pendiente__accion {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+}
+
+.pendiente__quien {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.pendiente__nombre {
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.pendiente__doc {
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+}
+
+.pendiente__estado {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.pendiente__importe {
+  font-size: var(--fs-body-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- 4 · lo que tenés y lo que debés --------------------------------------- */
+
+.patrimonio {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: 1fr;
+  margin-block-end: var(--sp-4);
+}
+
+@media (min-width: 48rem) {
+  .patrimonio {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.patrimonio__tile {
+  display: block;
+}
+
+.patrimonio__tile--neto {
+  position: relative;
+  overflow: hidden;
+}
+
+.patrimonio__tile--neto::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 3px;
+  background: var(--brand-primary);
+}
+
+.patrimonio__rotulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.patrimonio__cifra {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.patrimonio__cifra--negativa {
+  color: var(--text-danger);
+}
+
+.patrimonio__pie {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.equipos {
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+}
+
+.equipo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-3);
+  padding-block: var(--sp-2);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.equipo:first-child {
+  border-block-start: 0;
+}
+
+.equipo__nombre {
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  overflow-wrap: anywhere;
+}
+
+.equipo__valor {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.equipo__origen {
+  grid-column: 1;
+  color: var(--text-tertiary);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.patrimonio__acceso {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0 0;
+}
+
+.patrimonio__nota {
+  flex: 1 1 18rem;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* ---- pie para quien lleva los libros ---------------------------------------
+   Separado con una línea y con la tinta bajada: está ahí para quien lo busca,
+   no para competir por la atención de quien no lo necesita. */
+
+.bloque--pie {
+  margin-block-start: var(--sp-8);
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.pie__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.pie__bajada {
+  margin: var(--sp-2) 0 var(--sp-3);
+  color: var(--text-tertiary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  max-inline-size: 62ch;
+}
+
+.pie__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin: 0;
+}

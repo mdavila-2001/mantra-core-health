@@ -22,35 +22,48 @@
 />
 
 <app-view-state-host [state]="estado()" (retry)="reintentar.emit()">
-  @if (aviso(); as texto) {
-    <p class="directorio__aviso">{{ texto }}</p>
-  }
-
-  @if (sinCoincidencias()) {
-    <!-- Hay directorio, pero el filtro no dejó a nadie. Ver el JSDoc de
-         `textoSinCoincidencias`. -->
-    <p class="directorio__vacio" role="status">{{ textoSinCoincidencias() }}</p>
+  @if (portada()) {
+    <!-- El nivel de arriba de un directorio con varios escalones —la portada
+         de categorías de laboratorios, la de los directorios—: se ve lo que
+         el vertical proyecta, con la **misma** barra encima. Que la barra no
+         esté dentro de la ranura es lo que deja escribir sin perder el foco
+         cuando el primer término cambia la portada por la lista. -->
+    <ng-content select="[slot=portada]" />
   } @else {
-    <p class="directorio__cuenta" role="status">{{ contador() }}</p>
+    @if (aviso(); as texto) {
+      <p class="directorio__aviso">{{ texto }}</p>
+    }
 
-    @for (grupo of grupos(); track grupo.id) {
-      <section class="directorio__grupo" [attr.aria-labelledby]="'grupo-' + grupo.id">
-        @if (grupo.nombre) {
-          <h2 class="directorio__rotulo" [id]="'grupo-' + grupo.id">
-            {{ grupo.nombre }}
-            <span class="directorio__cantidad">{{ grupo.resultados.length }}</span>
-          </h2>
-        }
+    @if (sinCoincidencias()) {
+      <!-- Hay directorio, pero el filtro no dejó a nadie. Ver el JSDoc de
+         `textoSinCoincidencias`. -->
+      <p class="directorio__vacio" role="status">{{ textoSinCoincidencias() }}</p>
+    } @else {
+      <p class="directorio__cuenta" role="status">{{ contador() }}</p>
 
-        <!-- `app-result-card` es un selector de atributo sobre el `<li>`: la
+      @for (grupo of grupos(); track grupo.id) {
+        <section class="directorio__grupo" [attr.aria-labelledby]="'grupo-' + grupo.id">
+          @if (grupo.nombre) {
+            <h2 class="directorio__rotulo" [id]="'grupo-' + grupo.id">
+              {{ grupo.nombre }}
+              <span class="directorio__cantidad">{{ grupo.resultados.length }}</span>
+            </h2>
+          }
+
+          <!-- `app-result-card` es un selector de atributo sobre el `<li>`: la
              tarjeta ES el ítem de la lista, así que un lector de pantalla
              anuncia cuántos hay antes de leer el primero. -->
-        <ul class="directorio__grilla">
-          @for (resultado of grupo.resultados; track resultado.id) {
-            <li app-result-card [resultado]="resultado"></li>
-          }
-        </ul>
-      </section>
+          <ul class="directorio__grilla">
+            @for (resultado of grupo.resultados; track resultado.id) {
+              <li
+                app-result-card
+                [resultado]="resultado"
+                [preventDuplicateNavigation]="preventDuplicateNavigation()"
+              ></li>
+            }
+          </ul>
+        </section>
+      }
     }
   }
 </app-view-state-host>

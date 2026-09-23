@@ -6,6 +6,18 @@
      los comportamientos portados de la maqueta a las pantallas de la bóveda. -->
 <div class="app-public-shell" data-alovida-maqueta>
   <header class="app-public-header">
+    <!-- La misma vuelta atrás que el marco con sesión, y por el mismo motivo:
+         está en las catorce pantallas públicas, así que va en el marco y no en
+         cada una. El respaldo es el de la marca —panel con sesión, buscador sin
+         ella—: mandar a `/search` a quien llegó desde su panel lo sacaría de la
+         aplicación, que es justo lo que un «Volver» no puede hacer. -->
+    <app-back-link
+      class="app-public-header__volver"
+      [fallback]="rutaDeLaMarca()"
+      label="Volver"
+      iconOnly
+    />
+
     <a class="app-public-header__marca" [routerLink]="rutaDeLaMarca()">
       <img src="/alovida/imagenes/alovida-logo.svg" alt="" width="34" height="25" />
       <span>AloVida</span>

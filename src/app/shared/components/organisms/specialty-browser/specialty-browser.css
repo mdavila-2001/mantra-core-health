@@ -78,3 +78,41 @@
   justify-content: center;
   margin-block-start: var(--sp-6);
 }
+
+/* ─── Grupos plegables (refactor UX) ─────────────────────────────────────
+   El resumen es el mismo título pegajoso de siempre, con un chevron que dice
+   que se abre. El triángulo nativo se reemplaza para que el control se vea
+   igual en todos los navegadores. */
+.specialty-browser__summary {
+  cursor: pointer;
+  list-style: none;
+  border-radius: var(--r-sm);
+}
+
+.specialty-browser__summary::-webkit-details-marker {
+  display: none;
+}
+
+.specialty-browser__summary .specialty-browser__group-title::after {
+  content: '';
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  margin-inline-start: auto;
+  border-inline-end: 2px solid currentColor;
+  border-block-end: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform var(--dur-fast) var(--ease-standard);
+  align-self: center;
+}
+
+.specialty-browser__group--plegable[open] .specialty-browser__group-title::after {
+  transform: rotate(45deg);
+}
+
+.specialty-browser__group--plegable + .specialty-browser__group--plegable {
+  margin-block-start: var(--sp-3);
+}
+
+.specialty-browser__group--plegable[open] > .specialty-browser__grid {
+  margin-block-start: var(--sp-3);
+}

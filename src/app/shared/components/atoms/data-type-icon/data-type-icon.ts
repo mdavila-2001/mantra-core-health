@@ -103,6 +103,28 @@ import {
           <path d="m4.2 6.4 1 1 1.4-1.6M4.2 17.6l1 1 1.4-1.6" />
           <path d="M10.6 6.4h9.6M10.6 12h9.6M10.6 17.6h9.6" />
         }
+        @case ('cuadricula') {
+          <!-- Una tabla de tres por tres con círculos: la misma pregunta
+               repetida por filas, con una respuesta en cada una. La primera
+               columna es el rótulo de la fila, que es lo que la separa de la
+               lista de opciones de arriba. -->
+          <path d="M3.4 8.4h17.2M3.4 15.6h17.2" />
+          <path d="M9.2 4.4v15.2" />
+          <rect x="3.4" y="4.4" width="17.2" height="15.2" rx="2.2" />
+          <circle cx="13.4" cy="6.4" r="1.2" />
+          <circle cx="13.4" cy="12" r="1.2" fill="currentColor" stroke="none" />
+          <circle cx="17.6" cy="17.6" r="1.2" fill="currentColor" stroke="none" />
+        }
+        @case ('cuadricula-casillas') {
+          <!-- La misma tabla con cuadrados y dos marcados en una fila: cada
+               fila admite varias. -->
+          <path d="M3.4 8.4h17.2M3.4 15.6h17.2" />
+          <path d="M9.2 4.4v15.2" />
+          <rect x="3.4" y="4.4" width="17.2" height="15.2" rx="2.2" />
+          <rect x="12.2" y="10.8" width="2.4" height="2.4" rx=".6" fill="currentColor" stroke="none" />
+          <rect x="16.4" y="10.8" width="2.4" height="2.4" rx=".6" fill="currentColor" stroke="none" />
+          <rect x="16.4" y="16.4" width="2.4" height="2.4" rx=".6" fill="currentColor" stroke="none" />
+        }
         @default {
           <!-- Una línea de escritura sobre su renglón: un texto corto. Es el
                tipo por omisión de todo campo, así que es también el genérico. -->
@@ -129,7 +151,18 @@ export class DataTypeIcon {
    */
   readonly multiple = input(false, { transform: booleanAttribute });
 
-  protected readonly familia = computed(() => familiaDe(this.tipo(), this.multiple()));
+  /**
+   * Sólo para `code`: si la pregunta se repite sobre varias filas.
+   *
+   * Va aparte por lo mismo que `multiple`: el tipo técnico es el mismo y lo que
+   * cambia es la forma de la pregunta. Con las dos puestas es la cuadrícula de
+   * casillas; con ésta sola, la de opción única.
+   */
+  readonly cuadricula = input(false, { transform: booleanAttribute });
+
+  protected readonly familia = computed(() =>
+    familiaDe(this.tipo(), this.multiple(), this.cuadricula()),
+  );
 }
 
 /** Las familias que el set dibuja. El resto cae en texto corto. */
@@ -140,7 +173,11 @@ export type FamiliaDeDato =
   | 'booleano'
   | 'fecha'
   | 'eleccion'
-  | 'casillas';
+  | 'casillas'
+  /** Cuadrícula de opción única: filas por columnas, una respuesta por fila. */
+  | 'cuadricula'
+  /** Cuadrícula de casillas: lo mismo, con varias respuestas por fila. */
+  | 'cuadricula-casillas';
 
 /**
  * De un tipo técnico a su familia visual.
@@ -150,7 +187,7 @@ export type FamiliaDeDato =
  * Son el mismo dato escrito distinto, y un ícono que dependiera de la caja
  * dejaría sin dibujo a la mitad de los campos.
  */
-export function familiaDe(tipo: string, multiple = false): FamiliaDeDato {
+export function familiaDe(tipo: string, multiple = false, cuadricula = false): FamiliaDeDato {
   const t = tipo.toLowerCase();
   if (t === 'text' || t === 'textarea') return 'parrafo';
   if (t === 'integer' || t === 'decimal' || t === 'number' || t === 'numeric') return 'numero';
@@ -160,6 +197,11 @@ export function familiaDe(tipo: string, multiple = false): FamiliaDeDato {
   // de los códigos ofrecidos. Cuántos se pueden elegir no está en el tipo —es
   // la cardinalidad— y por eso viaja aparte.
   if (t === 'code' || t === 'select' || t === 'radio') {
+    // Una cuadrícula es el mismo campo codificado repetido sobre varias filas:
+    // mismo tipo técnico, mismas opciones —que ahí son las columnas—, y lo que
+    // la distingue es tener filas. Por eso viaja como un tercer eje y no como
+    // otro `dataType`, igual que la cardinalidad.
+    if (cuadricula) return multiple ? 'cuadricula-casillas' : 'cuadricula';
     return multiple ? 'casillas' : 'eleccion';
   }
   return 'texto';

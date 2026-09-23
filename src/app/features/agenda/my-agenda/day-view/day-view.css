@@ -13,25 +13,32 @@
 .dia {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--sp-4);
 }
+
+/* -- La barra: qué día es, cómo moverse y qué hacer ------------------------ */
 
 .dia__barra {
   display: flex;
-  gap: var(--sp-2);
-  align-items: flex-start;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--border-subtle);
 }
 
 .dia__cabecera {
-  flex: 1;
   min-width: 0;
 }
 
 .dia__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
   margin: 0;
   font-size: var(--fs-h3);
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 /* Sólo la inicial. `text-transform: capitalize` pone mayúscula en CADA palabra
@@ -40,22 +47,106 @@
   text-transform: uppercase;
 }
 
+.dia__hoy {
+  padding: 2px var(--sp-2);
+  border: 1px solid var(--st-primary-bd);
+  border-radius: var(--r-full);
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
 .dia__resumen {
-  margin: 0;
+  margin: var(--sp-1) 0 0;
   color: var(--text-secondary);
+}
+
+.dia__herramientas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+/* Ayer · Hoy · Mañana: un solo control partido en tres, no tres botones
+   sueltos — se leen como la misma pregunta («¿qué día?»). */
+.dia__paginacion {
+  display: inline-flex;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.dia__paso {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-block-size: 2.25rem;
+  padding: 0 var(--sp-3);
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-standard);
+}
+
+.dia__paso + .dia__paso {
+  border-inline-start: 1px solid var(--border-subtle);
+}
+
+.dia__paso svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dia__paso:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.dia__paso:focus-visible {
+  outline: 2px solid var(--st-primary-bd);
+  outline-offset: -2px;
+}
+
+.dia__paso:disabled {
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.dia__acciones-barra {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
 }
 
 .dia__vacio {
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  align-items: flex-start;
+  align-items: center;
+  padding: var(--sp-8) var(--sp-4);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-lg);
   color: var(--text-secondary);
+  text-align: center;
 }
 
 .dia__vacio p {
   margin: 0;
 }
+
+/* -- La línea de horas ----------------------------------------------------- */
 
 .dia__linea {
   margin: 0;
@@ -63,6 +154,7 @@
   list-style: none;
   display: flex;
   flex-direction: column;
+  gap: var(--sp-2);
 }
 
 /* Cada bloque: la hora en su carril, el cuerpo al lado. La altura viene por
@@ -74,11 +166,17 @@
   box-sizing: border-box;
 }
 
+/* El aire no suma el hueco entre tarjetas: ya es un hueco. */
+.dia__bloque[data-tipo='aire'] {
+  margin-block: calc(var(--sp-2) * -1);
+}
+
 .dia__hora {
   flex: 0 0 6.5rem;
-  padding-top: var(--sp-2);
+  padding-top: 2px;
   font-variant-numeric: tabular-nums;
   font-size: var(--fs-caption);
+  font-weight: 600;
   color: var(--text-secondary);
 }
 
@@ -90,23 +188,61 @@
   gap: var(--sp-1);
 }
 
-/* -- La cita: el bloque protagonista ------------------------------------- */
+/* -- La cita: el bloque protagonista ---------------------------------------
+   Superficie y tinta SEMÁNTICAS. La tarjeta usaba `--c-petrol-50`, un valor
+   de rampa que no cambia con el tema: en oscuro quedaba un rectángulo claro
+   con el texto claro del modo oscuro encima, ilegible. El borde izquierdo
+   lleva el tono del estado, el mismo que el sello de la tabla. */
 
 .dia__bloque[data-tipo='cita'] {
-  border-left: 3px solid var(--c-petrol-600, var(--c-petrol-500));
-  background: var(--c-petrol-50, var(--c-mint-50));
+  --dia-acento: var(--st-primary-bd);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-inline-start: 4px solid var(--dia-acento);
   border-radius: var(--r-md);
-  padding: var(--sp-2) var(--sp-3);
-  margin-bottom: 2px;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
+  transition:
+    box-shadow var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard);
+}
+
+.dia__bloque[data-tipo='cita']:hover {
+  border-color: var(--border-default);
+  border-inline-start-color: var(--dia-acento);
+  box-shadow: var(--shadow-md);
+}
+
+.dia__bloque[data-sello='approved'] {
+  --dia-acento: var(--st-success-bd);
+}
+
+.dia__bloque[data-sello='in-review'] {
+  --dia-acento: var(--st-warning-bd);
+}
+
+.dia__bloque[data-sello='rejected'] {
+  --dia-acento: var(--st-error-bd);
+}
+
+.dia__bloque[data-sello='expired'] {
+  --dia-acento: var(--st-info-bd);
 }
 
 .dia__paciente {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
   margin: 0;
   /* Reserva el ancho de «Ver detalle» (esquina superior derecha, en
      `position: absolute`): un nombre largo no debe meterse debajo del botón,
      ilegible y sin poder tocarlo. */
-  padding-inline-end: 6.5rem;
+  padding-inline-end: 7.5rem;
+  font-size: var(--fs-body-lg);
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .dia__estado {
@@ -127,49 +263,72 @@
 }
 
 /* -- El tiempo bloqueado: en rojo, punto 3 del carril 12 -------------------
-   El pedido lo dice así, textual: "los bloqueos en rojo". Antes usaba el gris
-   de "apagado", que confundía un bloqueo (una decisión: acá no atiendo) con un
-   simple hueco sin agenda. El motivo sigue escrito al lado — el color no
-   reemplaza la palabra, la refuerza. */
+   El pedido lo dice así, textual: "los bloqueos en rojo". El motivo sigue
+   escrito al lado — el color no reemplaza la palabra, la refuerza. */
 
 .dia__bloque[data-tipo='ocupado'] {
-  border-left: 3px solid var(--st-error-bd);
-  background: var(--st-error-bg);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--st-error-bd);
+  border-inline-start-width: 4px;
   border-radius: var(--r-md);
-  padding: var(--sp-2) var(--sp-3);
-  margin-bottom: 2px;
+  background: var(--st-error-bg);
   color: var(--st-error-fg);
 }
 
 .dia__ocupado-rotulo {
   margin: 0;
   /* Mismo motivo que `.dia__paciente`: no meterse debajo de «Ver detalle». */
-  padding-inline-end: 6.5rem;
-  font-weight: 500;
+  padding-inline-end: 7.5rem;
+  font-weight: 600;
 }
 
 /* -- El hueco disponible: invita ------------------------------------------ */
 
 .dia__bloque[data-tipo='libre'] {
-  margin-bottom: 2px;
+  align-items: center;
 }
 
 .dia__libre {
   flex: 1;
-  border: 1px dashed var(--c-neutral-300, var(--c-sage-500));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  align-self: stretch;
+  min-block-size: 2.75rem;
+  border: 1px dashed var(--border-default);
   border-radius: var(--r-md);
   background: transparent;
   color: var(--text-secondary);
   font: inherit;
   font-size: var(--fs-caption);
+  font-weight: 600;
   cursor: pointer;
-  text-align: center;
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+
+.dia__libre svg {
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
 }
 
 .dia__libre:hover,
 .dia__libre:focus-visible {
-  border-color: var(--c-petrol-400, var(--c-petrol-300));
-  color: var(--c-petrol-700, var(--c-petrol-600));
+  border-color: var(--st-primary-bd);
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+}
+
+.dia__libre:focus-visible {
+  outline: 2px solid var(--st-primary-bd);
+  outline-offset: 2px;
 }
 
 /* -- El aire: el respiro no invita ---------------------------------------- */
@@ -185,44 +344,24 @@
   padding: 0;
 }
 
-/* En pantallas chicas la hora pierde su carril y va arriba del cuerpo. */
-@media (max-width: 480px) {
-  .dia__bloque {
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .dia__bloque[data-tipo='aire'],
-  .dia__bloque[data-tipo='libre'] {
-    flex-direction: row;
-  }
-
-  .dia__hora {
-    flex: none;
-    padding-top: 0;
-  }
-
-  /* «Volver al mes», el título y «Mover horario» + «+» compartían una sola
-     fila: el título quedaba en una columna angosta y el texto se partía a la
-     mitad de la palabra («septiem-bre»). Se ve en la evidencia visual del
-     carril 12 en 390px. Apilados, cada uno tiene el ancho completo. */
-  .dia__barra {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .dia__acciones-barra {
-    justify-content: flex-end;
-  }
-}
-
-/* -- Paginación por días y detalle de la tarjeta --------------------------- */
-
-.dia__paginacion {
+/* El hueco largo, comprimido: una línea punteada con su duración al medio. */
+.dia__hueco {
   display: flex;
-  gap: var(--sp-2);
-  margin-block-start: var(--sp-2);
+  align-items: center;
+  gap: var(--sp-3);
+  block-size: 100%;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
 }
+
+.dia__hueco::before,
+.dia__hueco::after {
+  content: '';
+  flex: 1;
+  border-block-start: 1px dashed var(--border-default);
+}
+
+/* -- «Ver detalle» ----------------------------------------------------------- */
 
 /* La tarjeta con detalle se ve tocable: lo que se puede abrir tiene que
    parecerlo, o nadie lo intenta. */
@@ -234,33 +373,47 @@
   position: absolute;
   inset-block-start: var(--sp-2);
   inset-inline-end: var(--sp-2);
-  background: none;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-sm, 6px);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-block-size: 1.75rem;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
   color: var(--text-secondary);
+  font: inherit;
   font-size: var(--fs-caption);
-  padding: 2px var(--sp-2);
+  font-weight: 600;
   cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+
+.dia__detalle svg {
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
 }
 
 .dia__detalle:hover,
 .dia__detalle:focus-visible {
-  color: inherit;
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.dia__detalle:focus-visible {
+  outline: 2px solid var(--st-primary-bd);
+  outline-offset: 2px;
 }
 
 /* -- Mover el horario ------------------------------------------------------ */
 
-.dia__acciones-barra {
-  display: flex;
-  gap: var(--sp-2);
-  align-items: center;
-}
-
 .dia__mover {
   border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md, 8px);
-  padding: var(--sp-3);
-  margin-block-end: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  padding: var(--sp-4);
   display: grid;
   gap: var(--sp-2);
 }
@@ -280,4 +433,176 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
+}
+
+/* En pantallas chicas la hora pierde su carril y va arriba del cuerpo. */
+@media (max-width: 480px) {
+  .dia__bloque {
+    flex-direction: column;
+    gap: var(--sp-1);
+  }
+
+  .dia__bloque[data-tipo='aire'],
+  .dia__bloque[data-tipo='libre'] {
+    flex-direction: row;
+  }
+
+  .dia__hora {
+    flex: none;
+    padding-top: 0;
+  }
+
+  .dia__bloque[data-tipo='libre'] .dia__hora {
+    flex: 0 0 5.5rem;
+  }
+
+  /* La hora ocupa la primera línea y «Ver detalle» se sienta a su lado: el
+     nombre ya no necesita reservarle el ancho. */
+  .dia__paciente,
+  .dia__ocupado-rotulo {
+    padding-inline-end: 0;
+  }
+
+  .dia__bloque--cliqueable .dia__hora {
+    min-block-size: 1.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dia__paso,
+  .dia__libre,
+  .dia__detalle,
+  .dia__bloque[data-tipo='cita'] {
+    transition: none;
+  }
+}
+
+/* Con las acciones de la tabla la tarjeta no lleva «Ver detalle» en la
+   esquina: el nombre recupera ese ancho. */
+.dia__bloque--con-acciones .dia__paciente {
+  padding-inline-end: 0;
+}
+
+.dia__acciones--externas {
+  margin-block-start: var(--sp-1);
+}
+
+/* Desde tablet, las acciones van arriba a la derecha —donde estaba «Ver
+   detalle»— y la tarjeta no crece un renglón por ellas. El nombre reserva
+   ese ancho para no meterse debajo de los botones. */
+@media (min-width: 768px) {
+  .dia__bloque--con-acciones .dia__acciones--externas {
+    position: absolute;
+    inset-block-start: var(--sp-2);
+    inset-inline-end: var(--sp-3);
+    margin: 0;
+  }
+
+  .dia__bloque--con-acciones .dia__paciente,
+  .dia__bloque--con-acciones .dia__motivo {
+    padding-inline-end: 16rem;
+  }
+}
+
+/* C-10 (2026-09-20) · el rato que existe y no se puede tomar.
+
+   Se lee, pero no invita: sin borde punteado de «tocame», sin cursor de mano y
+   en tono apagado. La palabra va SIEMPRE —«No disponible», y el motivo al
+   lado—: en escala de grises un hueco apagado y uno disponible se parecen
+   demasiado, y la regla 95.4.6 prohíbe que el estado dependa sólo del color. */
+.dia__no-disponible {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.dia__no-disponible svg {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+}
+
+.dia__no-disponible-motivo {
+  color: var(--text-tertiary, var(--text-secondary));
+}
+
+
+/* C-04 (2026-09-20) · la tarjeta entera lleva a atender.
+
+   Una capa transparente que cubre el bloque y queda DEBAJO del contenido: los
+   botones de adentro —«Ver detalle», las acciones de la fila— la tapan en su
+   propia superficie, asi que tocarlos hace lo del boton y no lo de la tarjeta,
+   sin tener que detener la propagacion en cada uno.
+
+   `position: absolute` sobre el `<li>`, que ya es `relative`. */
+.dia__ir-a-atender {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  cursor: pointer;
+}
+
+.dia__ir-a-atender:hover {
+  background: var(--bg-surface-alt);
+}
+
+.dia__ir-a-atender:focus-visible {
+  outline: 2px solid var(--c-aqua-500);
+  outline-offset: -2px;
+}
+
+/* Lo de la tarjeta se dibuja por encima de la capa, para que siga siendo
+   seleccionable y para que los botones reciban sus propios clics. */
+.dia__bloque[data-tipo='cita'] > .dia__hora,
+.dia__bloque[data-tipo='cita'] > .dia__cuerpo,
+.dia__bloque[data-tipo='cita'] > .dia__detalle {
+  position: relative;
+  z-index: 1;
+}
+
+/* El cuerpo no captura el puntero: si lo hiciera, la mitad de la tarjeta
+   dejaria de llevar a atender. Lo que SI lo captura es la caja de acciones, y
+   de ahi hacia adentro se hereda.
+
+   **Tiene que ser una clase de ESTA vista, no un selector de descendientes.**
+   Las acciones de la fila son contenido PROYECTADO desde `/schedule`: con
+   encapsulacion emulada, los nodos proyectados llevan el atributo del
+   componente que los escribio, no el de este, asi que un
+   `.dia__cuerpo :is(button, a)` de esta hoja nunca los alcanza. Escrito asi,
+   el desplegable de acciones quedaba debajo de la capa de «atender» y no se
+   podia abrir — en todos los viewports, no solo en el telefono. Lo encontro la
+   prueba visual de H6, no el tipo ni los tests. */
+.dia__bloque[data-tipo='cita'] > .dia__cuerpo {
+  pointer-events: none;
+}
+
+/* `.dia__acciones` SI es de esta vista —el `<div>` que recibe la proyeccion—,
+   asi que la clase casa y `pointer-events` se hereda a lo que venga adentro. */
+.dia__bloque[data-tipo='cita'] .dia__acciones {
+  pointer-events: auto;
+}
+
+
+/* C-13 (2026-09-20) · la tarjeta del visitador.
+
+   Tono propio, distinto del de una consulta, para que el doctor vea de un
+   vistazo que ese rato no es un paciente. El tono NO es la informacion: al lado
+   del nombre va la palabra «Visitador», y en escala de grises eso es lo unico
+   que queda. */
+.dia__bloque[data-tipo='visita'] {
+  --dia-tono: var(--c-plum-500, var(--c-petrol-500));
+  border-inline-start-color: var(--dia-tono);
+  background: var(--bg-surface-alt);
+}
+
+.dia__visita-bandeja {
+  margin: 0;
+  font-size: var(--fs-caption);
 }

@@ -188,3 +188,7 @@ export function registrarProcedimientos(router: MockRouter): void {
     return { status: 201, body: { id: nuevo.id, patientProfileId: nuevo.patientProfileId, statusConceptId: nuevo.statusConceptId, createdAt: nuevo.createdAt } };
   });
 }
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+casos.persistirEn('mock.procedures.casos');
+dentales.persistirEn('mock.procedures.dentales');

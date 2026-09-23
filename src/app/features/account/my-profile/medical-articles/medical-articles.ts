@@ -26,6 +26,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
+import { VitrinaMinima } from '../../../communities/vitrina-minima/vitrina-minima';
 
 /** Largo máximo de un artículo. El backend no lo acota más de lo que la prosa pide. */
 const CUERPO_MAXIMO = 20000;
@@ -84,6 +85,7 @@ export interface ArticuloVisible {
     RouterLink,
     Textarea,
     ViewStateHost,
+    VitrinaMinima,
   ],
   templateUrl: './medical-articles.html',
   styleUrl: './medical-articles.css',
@@ -161,6 +163,18 @@ export class MedicalArticles {
   }
 
   protected readonly sinVitrinaTodavia = this.sinVitrina.asReadonly();
+
+  /**
+   * Recién creada la vitrina, la pantalla pasa a ser la de siempre.
+   *
+   * Se recarga en vez de sembrar los signals con lo que devolvió el `PUT`:
+   * publicar necesita `profileId` y la lista de artículos, y el camino que ya
+   * existe los trae juntos. Una vitrina recién creada no tiene artículos, así
+   * que la relectura es barata.
+   */
+  protected alCrearLaVitrina(): void {
+    this.cargar();
+  }
 
   private cargar(): void {
     this.articulos.set(loading());

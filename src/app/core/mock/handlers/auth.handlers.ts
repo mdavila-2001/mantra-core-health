@@ -6,7 +6,6 @@ import {
   emitirRefreshToken,
   expiracion,
   MOCK_USERS,
-  TENANT_CLINICA,
   usuarioDeRefreshToken,
 } from '../mock-session';
 import { ahora, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
@@ -410,20 +409,11 @@ export function registrarAuth(router: MockRouter): void {
 
   /* ---- tenants que administra IAM ---------------------------------------- */
 
-  router.get('/admin/tenants', ({ query }) =>
-    paginar(
-      [
-        { id: TENANT_CLINICA, code: 'OLIVOS', name: 'Clínica Los Olivos', status: 'ACTIVE', verificationStatus: 'VERIFIED', createdAt: iso(-400) },
-        { id: uuid('tenant-hospital-san-lucas'), code: 'SANLUCAS', name: 'Hospital San Lucas', status: 'ACTIVE', verificationStatus: 'VERIFIED', createdAt: iso(-380) },
-        { id: uuid('tenant-farmacia-vida'), code: 'FARVIDA', name: 'Farmacia Vida', status: 'ACTIVE', verificationStatus: 'VERIFIED', createdAt: iso(-200) },
-        { id: uuid('tenant-laboratorio-central'), code: 'LABCEN', name: 'Laboratorio Central', status: 'ACTIVE', verificationStatus: 'VERIFIED', createdAt: iso(-150) },
-        { id: uuid('tenant-seguros-andina'), code: 'ANDINA', name: 'Seguros Andina', status: 'ACTIVE', verificationStatus: 'VERIFIED', createdAt: iso(-120) },
-        { id: uuid('tenant-clinica-nueva'), code: 'CLINUEVA', name: 'Clínica Nueva Esperanza', status: 'PENDING', verificationStatus: 'PENDING', createdAt: iso(-3) },
-      ],
-      query,
-      25,
-    ),
-  );
+  // `GET /admin/tenants` vive en `directory.handlers.ts`, sobre la colección
+  // persistida: el duplicado que había acá —seis filas fijas con `name` y
+  // `status` en texto— ganaba por orden de registro y dejaba la lista de
+  // organizaciones sin nombre, con «—» en tipo y estado, sin búsqueda y sin
+  // la organización recién creada.
 
   router.post('/admin/tenants/:id/verification', ({ params, body }) => {
     const datos = cuerpo<{ decision?: string }>({ body });

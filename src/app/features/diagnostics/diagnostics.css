@@ -14,8 +14,9 @@
 }
 
 .laboratorio__nota {
-  display: grid;
-  gap: var(--sp-3);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-3);
 }
 
 /* **El tope va en el texto, no en la tarjeta** (propietario, 2026-09-10).

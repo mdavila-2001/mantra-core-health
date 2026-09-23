@@ -21,7 +21,9 @@ import {
   type PublicacionSimulada,
   type VitrinaSimulada,
 } from '../fixtures/comunidad';
+import { encuentros } from '../fixtures/clinica';
 import { ESTADO } from '../fixtures/conceptos';
+import { PERFIL_PUBLICO_REQUERIDO } from '../../data-access/community/community.types';
 import { conflict, forbidden, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
 // La ventana de edición es una sola regla: la maqueta la aplica con la misma
 // constante que la pantalla, para que no puedan separarse.
@@ -73,6 +75,14 @@ function respuestaAutomaticaEncendida(): boolean {
     return false;
   }
 }
+
+/**
+ * Las respuestas automáticas configuradas, por perfil (F4.7).
+ *
+ * Un `Map` y no una `Coleccion`: se busca siempre por perfil, nunca por id, y
+ * hay a lo sumo una por perfil.
+ */
+const respuestasAutomaticas = new Map<string, Record<string, unknown>>();
 
 function vitrinaDeSesion(request: MockRequest): VitrinaSimulada | undefined {
   const user = request.user;
@@ -234,6 +244,9 @@ export function registrarComunidad(router: MockRouter): void {
       ratingAverage: null,
       ratingCount: 0,
       hasPublishedAgenda: false,
+      // Una vitrina recién creada desde «mi perfil» es de un profesional o de
+      // un paciente: ninguno de los dos lleva chip de categoría.
+      categoria: null,
       seguidores: 0,
     };
     const actualizada: VitrinaSimulada = {
@@ -262,6 +275,49 @@ export function registrarComunidad(router: MockRouter): void {
   });
 
   /* ---- publicaciones -------------------------------------------------------- */
+
+  /**
+   * La respuesta automática del perfil (F4.7).
+   *
+   * En memoria, como el resto de la maqueta. Va **antes** que
+   * `/community/profiles/:id`: el enrutador prueba por cantidad de segmentos
+   * literales, pero dejar la específica después de la genérica es la forma de
+   * que un cambio futuro la apague sin que nadie se entere.
+   */
+  router.get('/community/profiles/:id/auto-reply', ({ params }) => {
+    return respuestasAutomaticas.get(params['id']!) ?? null;
+  });
+
+  router.put('/community/profiles/:id/auto-reply', (request) => {
+    const perfil = request.params['id']!;
+    const datos = cuerpo<{
+      isActive: boolean;
+      inactivityMinutes: number;
+      bodyText: string;
+      cooldownHours: number;
+      onlyOutsideBusinessHours: boolean;
+      businessHoursFrom?: string;
+      businessHoursTo?: string;
+    }>(request);
+    const guardada = {
+      id: uuid(`auto-reply-${perfil}`),
+      publicProfileId: perfil,
+      isActive: datos.isActive ?? false,
+      inactivityMinutes: datos.inactivityMinutes ?? 30,
+      bodyText: datos.bodyText ?? '',
+      cooldownHours: datos.cooldownHours ?? 4,
+      onlyOutsideBusinessHours: datos.onlyOutsideBusinessHours ?? false,
+      businessHoursFrom: datos.onlyOutsideBusinessHours
+        ? (datos.businessHoursFrom ?? null)
+        : null,
+      businessHoursTo: datos.onlyOutsideBusinessHours
+        ? (datos.businessHoursTo ?? null)
+        : null,
+      updatedAt: ahora(),
+    };
+    respuestasAutomaticas.set(perfil, guardada);
+    return guardada;
+  });
 
   router.get('/community/profiles/:id/posts', ({ params, query }) => {
     const actor = texto(query, 'actorProfileId');
@@ -304,7 +360,9 @@ export function registrarComunidad(router: MockRouter): void {
     return p === undefined ? notFound() : resumenDeReacciones(p, texto(query, 'actorProfileId'));
   });
 
-  router.post('/community/reactions', (request) => {
+  // `CommunityClient.react` manda `PUT` (es un upsert sobre `(actor, objeto)`);
+  // el muro con sesión y la red social pública comparten este mismo handler.
+  const reaccionar = (request: MockRequest) => {
     const datos = cuerpo<{ actorProfileId: string; reactableType: string; reactableRefId: string; reactionType: Reaccion }>(request);
     const p = publicaciones.get(datos.reactableRefId ?? '');
     if (p !== undefined && datos.actorProfileId !== undefined && datos.reactionType !== undefined) {
@@ -321,7 +379,9 @@ export function registrarComunidad(router: MockRouter): void {
       publicaciones.actualizar(p.id, { reacciones, reaccionDelActor });
     }
     return { status: 201, body: { id: nuevoId('reaction') } };
-  });
+  };
+  router.post('/community/reactions', reaccionar);
+  router.put('/community/reactions', reaccionar);
 
   router.post('/community/comments', (request) => {
     const datos = cuerpo<{ authorProfileId: string; commentableRefId: string; bodyText: string; parentCommentId?: string; media?: { fileId: string }[] }>(request);
@@ -456,6 +516,49 @@ export function registrarComunidad(router: MockRouter): void {
     return { status: 201, body: { id: nueva.id, overallRating: nueva.overallRating, verified: true, dimensionCount: nueva.dimensionScores.length } };
   });
 
+  /**
+   * `POST /patients/me/reviews` — el paciente califica la atención que recibió.
+   *
+   * Es la misma reseña que la de arriba, pero **sin nombrar la vitrina**: la
+   * ficha pública se abre por slug y no publica su id, así que acá el
+   * destinatario se deriva del encuentro declarado —igual que en el servidor
+   * real—, por su `primaryPractitionerId`.
+   */
+  router.post('/patients/me/reviews', (request) => {
+    const datos = cuerpo<{ verifiedEncounterId: string; overallRating: number; reviewText?: string; displayMode?: string }>(request);
+    // `cuerpo` devuelve un Partial: la atención es obligatoria y sin ella no
+    // hay a quién calificar, así que se rechaza acá y no se adivina una.
+    const atencionId = datos.verifiedEncounterId;
+    if (atencionId === undefined || atencionId === '') {
+      return validation('Falta la atención que respalda la calificación');
+    }
+    const atencion = encuentros.get(atencionId);
+    if (atencion === undefined) return notFound('Esa atención no existe');
+    const destino = vitrinaDe(atencion.primaryPractitionerId);
+    if (destino === undefined) return notFound('Quien te atendió no tiene ficha pública');
+    const actor = vitrinaDeSesion(request);
+    if (actor !== undefined && actor.id !== atencion.patientProfileId && vitrinaDe(atencion.patientProfileId)?.id !== actor.id) {
+      return forbidden('Esa atención no es tuya');
+    }
+    const yaCalificada = resenas.filtrar(
+      (r) => r.targetPublicProfileId === destino.id && r.reviewerProfileId === (actor?.id ?? ''),
+    );
+    if (yaCalificada.length > 0) return conflict('Ya calificaste esta atención');
+    const nueva = resenas.agregar({
+      id: nuevoId('review'),
+      targetPublicProfileId: destino.id,
+      reviewerProfileId: actor?.id ?? '',
+      overallRating: datos.overallRating ?? 5,
+      reviewText: datos.reviewText ?? '',
+      reviewerDisplayModeConceptId: datos.displayMode === 'ANONYMOUS' ? CONCEPTO.reviewDisplayAnon : CONCEPTO.reviewDisplayReal,
+      verificationStatusConceptId: ESTADO['ST-VERIFIED']!,
+      publishedAt: ahora(),
+      dimensionScores: [],
+      responses: [],
+    });
+    return { status: 201, body: { id: nueva.id, overallRating: nueva.overallRating, verified: true, dimensionCount: 0 } };
+  });
+
   router.post('/community/profiles/:id/reviews/:reviewId/responses', (request) => {
     const r = resenas.get(request.params['reviewId']!);
     if (r === undefined) return notFound('Reseña no encontrada');
@@ -482,7 +585,33 @@ export function registrarComunidad(router: MockRouter): void {
 
   router.post('/community/groups', (request) => {
     const datos = cuerpo<{ slug: string; name: string; description?: string; visibility?: string; groupType?: string; topicId?: string; ownerProfileId?: string }>(request);
-    const owner = datos.ownerProfileId ?? vitrinaDeSesion(request)?.id ?? VITRINA_MEDICA.id;
+
+    // Un grupo público exige vitrina completa —nombre visible, foto y
+    // visibilidad pública—, y el servidor lo rechaza con su propio código para
+    // que la pantalla pueda ofrecer una salida en vez de repetir «reintentá».
+    // El simulador no lo emitía: la rama que lo atiende en `groups.ts` estaba
+    // muerta en la maqueta y no había forma de revisarla. Desde el 13/09/2026
+    // sí, que es cuando esa rama pasó a ofrecer crear la vitrina ahí mismo.
+    const esPublico = datos.visibility !== 'PRIVATE' && datos.visibility !== 'SECRET';
+    const propia = vitrinaDeSesion(request);
+    const vitrinaCompleta =
+      propia !== undefined &&
+      propia.displayName.trim() !== '' &&
+      propia.avatarFileId !== '' &&
+      propia.visibility === 'PUBLIC';
+    if (esPublico && !vitrinaCompleta) {
+      return {
+        status: 422,
+        body: {
+          statusCode: 422,
+          code: PERFIL_PUBLICO_REQUERIDO,
+          message: 'Necesitás tu perfil público completo para crear un grupo público',
+          error: 'Unprocessable Entity',
+        },
+      };
+    }
+
+    const owner = datos.ownerProfileId ?? propia?.id ?? VITRINA_MEDICA.id;
     const nuevo = grupos.agregar({
       id: nuevoId('group'),
       tenantId: request.user?.tenants[0] ?? '',

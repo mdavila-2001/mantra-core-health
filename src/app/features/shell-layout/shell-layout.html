@@ -114,8 +114,9 @@
          seguidas. Por `items` el orden es el del registro, y ahí se mezclan.
 
          Y hay dominios que directamente no se dibujan: los que `aplanado`
-         marca sueltan sus destinos acá arriba, sin rótulo y sin plegable
-         ninguno. Quiénes son lo dice `GRUPOS_APLANADOS`, no esta plantilla. -->
+         marca —«General» y «Mi cuenta»— sueltan sus destinos acá arriba, sin
+         rótulo y sin plegable ninguno. Quiénes son lo dice `GRUPOS_APLANADOS`,
+         no esta plantilla. -->
     <!-- Arriba de los dominios, y sueltos: «Mi perfil» y «Notificaciones». No
          cuelgan de un desplegable porque nadie se pregunta a qué dominio
          pertenecen, y para el médico eran un plegable de dos renglones que
@@ -223,6 +224,31 @@
 
   <div class="app-main">
     <header class="app-header" app-header>
+      <!-- La vuelta atrás del marco: arriba a la izquierda, pegada al menú.
+
+           El botón del menú lo inyecta `AlovidaRuntimeService` con un
+           `insertBefore(…, header.firstChild)`, así que en teléfono queda a la
+           izquierda de esta flecha: las dos salidas del marco —abrir el menú y
+           deshacer el último paso— terminan juntas, que es donde se las busca.
+
+           Vive en el armazón y no en cada pantalla porque «volver» es la misma
+           promesa en todas: deshacer el paso que se dio. Las pocas pantallas
+           que ya traen su propio «Volver a X» en el encabezado no se tocan —
+           aquél nombra el destino, éste deshace el paso; no compiten.
+
+           Cuando no hay paso propio que deshacer —enlace de un correo, recarga,
+           primera pantalla de la sesión— `app-back-link` cae a su respaldo, y
+           el respaldo del armazón es el panel.
+
+           **Menos en el panel**, donde no se dibuja. Ahí el respaldo ES la
+           pantalla en la que uno está, así que la flecha o no hace nada o, si
+           el historial todavía trae el ingreso, devuelve a él —y volver al
+           ingreso se lee como haber cerrado la sesión—. Pedido del cliente del
+           13/09/2026. -->
+      @if (!enElPanel()) {
+        <app-back-link class="app-header__volver" fallback="/dashboard" label="Volver" iconOnly />
+      }
+
       <!-- Acá había un buscador «en toda la organización» **sin un solo
            manejador**: ni `(input)`, ni `(keydown.enter)`, ni formulario. Se
            escribía, se apretaba Enter, y no pasaba nada. Y el tutorial del
@@ -329,11 +355,21 @@
           </div>
         }
 
-        <!-- Ajustes. Ocupa el lugar que tenía el conmutador de tema, y no por
-             ahorro de espacio: el tema es una preferencia entre varias —avisos,
-             permisos del navegador— y tenerlo suelto acá lo hacía parecer la
-             única. Ahora las tres viven juntas y el encabezado ofrece una sola
-             puerta a todas.
+        <!-- Interruptor de tema. Volvió al encabezado a pedido del cliente
+             (2026-09-18): claro/oscuro se cambia seguido y no debe exigir ir a
+             Ajustes. Es el mismo `switch` sol/luna del marco público y de
+             Ajustes › Apariencia; el dueño del estado es ThemeService. -->
+        <button class="app-theme-toggle" app-theme-toggle data-testid="header-theme-toggle">
+          <span class="app-theme-toggle__pista">
+            <svg class="icono icono--sm app-theme-toggle__sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></svg>
+            <svg class="icono icono--sm app-theme-toggle__luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 14.8A8.5 8.5 0 0 1 9.2 3.5a8.5 8.5 0 1 0 11.3 11.3z"></path></svg>
+            <span class="app-theme-toggle__perilla" aria-hidden="true"></span>
+          </span>
+        </button>
+
+        <!-- Ajustes. El tema es una preferencia entre varias —avisos, permisos
+             del navegador— y las tres viven juntas en Ajustes; el interruptor
+             de arriba es sólo el atajo para la que más se toca.
 
              Es un enlace y no un botón porque lleva a una pantalla: se puede
              abrir en otra pestaña y se puede copiar la dirección, que es lo que

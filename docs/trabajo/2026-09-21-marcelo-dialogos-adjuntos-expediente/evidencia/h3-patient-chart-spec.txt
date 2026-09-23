@@ -1,0 +1,171 @@
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+Using Vitest configuration file: D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\vitest.config.ts
+[33m❯[39m Building...
+[32m✔[39m Building...
+[1mInitial chunk files[22m                                                                                                               [2m | [22m[1mNames[22m                                                                                                                          [2m | [22m [1mRaw size[22m
+[32mspec-app-features-clinical-record-patient-chart-diagnosis-block-enums-del-diagnostico.js[39m                                          [2m | [22m[2mspec-app-features-clinical-record-patient-chart-diagnosis-block-enums-del-diagnostico[22m                                          [2m | [22m[36m710.84 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-patient-chart.js[39m                                                                  [2m | [22m[2mspec-app-features-clinical-record-patient-chart-patient-chart[22m                                                                  [2m | [22m[36m421.73 kB[39m[2m | [22m
+[32mstyles.css[39m                                                                                                                        [2m | [22m[2mstyles[22m                                                                                                                         [2m | [22m[36m166.11 kB[39m[2m | [22m
+[32mchunk-GSFQ5EGN.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m[36m152.46 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-specialty-form-block-specialty-form-block.js[39m                                      [2m | [22m[2mspec-app-features-clinical-record-patient-chart-specialty-form-block-specialty-form-block[22m                                      [2m | [22m[36m137.32 kB[39m[2m | [22m
+[32mchunk-A6S7ZHPP.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m[36m108.65 kB[39m[2m | [22m
+[32mchunk-ISJQFL72.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m[36m103.12 kB[39m[2m | [22m
+[32mchunk-YR7TLGKF.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m97.42 kB[39m[2m | [22m
+[32mchunk-QUUHUPL5.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m79.09 kB[39m[2m | [22m
+[32mchunk-GABIZDRR.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m78.87 kB[39m[2m | [22m
+[32mchunk-QUF5AYFJ.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m73.26 kB[39m[2m | [22m
+[32mchunk-EQXHIAPO.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m66.67 kB[39m[2m | [22m
+[32mchunk-TZSJUMPW.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m62.32 kB[39m[2m | [22m
+[32mchunk-4FANMM2C.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m47.86 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-payments-block-payments-block.js[39m                                                  [2m | [22m[2mspec-app-features-clinical-record-patient-chart-payments-block-payments-block[22m                                                  [2m | [22m [36m39.90 kB[39m[2m | [22m
+[32mchunk-LYY6IIUK.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m38.97 kB[39m[2m | [22m
+[32mchunk-GOJYYU27.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m38.16 kB[39m[2m | [22m
+[32mchunk-2ZKE4QCO.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m36.03 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-admission-block-admission-block.js[39m                                                [2m | [22m[2mspec-app-features-clinical-record-patient-chart-admission-block-admission-block[22m                                                [2m | [22m [36m35.83 kB[39m[2m | [22m
+[32mchunk-SDBNYRHA.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m33.64 kB[39m[2m | [22m
+[32mchunk-44YRPULH.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m33.47 kB[39m[2m | [22m
+[32mchunk-2QFB3WF7.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m32.09 kB[39m[2m | [22m
+[32mchunk-SVK5GHXM.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m30.61 kB[39m[2m | [22m
+[32mchunk-JKCY3ZVI.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m29.01 kB[39m[2m | [22m
+[32mchunk-4TRXXEXI.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m28.07 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-medication-block-medication-block.js[39m                                              [2m | [22m[2mspec-app-features-clinical-record-patient-chart-medication-block-medication-block[22m                                              [2m | [22m [36m27.56 kB[39m[2m | [22m
+[32mchunk-SMW6XS6E.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m25.35 kB[39m[2m | [22m
+[32mchunk-IHTIZYMS.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m24.42 kB[39m[2m | [22m
+[32mchunk-APHJHUSQ.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m24.32 kB[39m[2m | [22m
+[32mchunk-6WN5AFPU.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m19.84 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-diagnosis-block-diagnosis-block.js[39m                                                [2m | [22m[2mspec-app-features-clinical-record-patient-chart-diagnosis-block-diagnosis-block[22m                                                [2m | [22m [36m18.35 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-procedures-block-procedures-block.js[39m                                              [2m | [22m[2mspec-app-features-clinical-record-patient-chart-procedures-block-procedures-block[22m                                              [2m | [22m [36m14.89 kB[39m[2m | [22m
+[32mchunk-MEEIXY4Z.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m14.68 kB[39m[2m | [22m
+[32mchunk-GGWKJMOB.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m14.43 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-diagnostics-block-diagnostics-block.js[39m                                            [2m | [22m[2mspec-app-features-clinical-record-patient-chart-diagnostics-block-diagnostics-block[22m                                            [2m | [22m [36m13.13 kB[39m[2m | [22m
+[32mchunk-R6EKCDK5.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m11.95 kB[39m[2m | [22m
+[32mchunk-DUBDJ2RM.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m11.85 kB[39m[2m | [22m
+[32mchunk-3TRTP3SE.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m10.48 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-free-note-block-note-grid-note-grid.js[39m                                            [2m | [22m[2mspec-app-features-clinical-record-patient-chart-free-note-block-note-grid-note-grid[22m                                            [2m | [22m [36m10.15 kB[39m[2m | [22m
+[32mchunk-5AJP73XO.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m10.04 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-free-note-block-free-note-block.js[39m                                                [2m | [22m[2mspec-app-features-clinical-record-patient-chart-free-note-block-free-note-block[22m                                                [2m | [22m  [36m8.59 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-observation-block-observation-block.js[39m                                            [2m | [22m[2mspec-app-features-clinical-record-patient-chart-observation-block-observation-block[22m                                            [2m | [22m  [36m8.35 kB[39m[2m | [22m
+[32mchunk-B75CPB74.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m  [36m7.73 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-allergy-block-allergy-block.js[39m                                                    [2m | [22m[2mspec-app-features-clinical-record-patient-chart-allergy-block-allergy-block[22m                                                    [2m | [22m  [36m7.38 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-document-block-document-block.js[39m                                                  [2m | [22m[2mspec-app-features-clinical-record-patient-chart-document-block-document-block[22m                                                  [2m | [22m  [36m7.33 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-care-plan-block-care-plan-block.js[39m                                                [2m | [22m[2mspec-app-features-clinical-record-patient-chart-care-plan-block-care-plan-block[22m                                                [2m | [22m  [36m6.82 kB[39m[2m | [22m
+[32mchunk-JBWBLPNK.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m  [36m5.19 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-odontogram-odontogram.js[39m                                                          [2m | [22m[2mspec-app-features-clinical-record-patient-chart-odontogram-odontogram[22m                                                          [2m | [22m  [36m4.67 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-diagnostics-block-duplicate-study-warning-dialog-duplicate-study-warning-dialog.js[39m[2m | [22m[2mspec-app-features-clinical-record-patient-chart-diagnostics-block-duplicate-study-warning-dialog-duplicate-study-warning-dialog[22m[2m | [22m  [36m4.55 kB[39m[2m | [22m
+[32minit-testbed.js[39m                                                                                                                   [2m | [22m[2minit-testbed[22m                                                                                                                   [2m | [22m  [36m1.21 kB[39m[2m | [22m
+[32mchunk-ZUB2YDBL.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m[36m995 bytes[39m[2m | [22m
+[32mvitest-mock-patch.js[39m                                                                                                              [2m | [22m[2mvitest-mock-patch[22m                                                                                                              [2m | [22m[36m974 bytes[39m[2m | [22m
+[32msetup-test-setup.js[39m                                                                                                               [2m | [22m[2msetup-test-setup[22m                                                                                                               [2m | [22m[36m911 bytes[39m[2m | [22m
+[32mchunk-4SD4475N.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m[36m742 bytes[39m[2m | [22m
+[32mchunk-RZMBRUBG.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m[36m369 bytes[39m[2m | [22m
+[32mchunk-UXAZ27N5.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m[36m235 bytes[39m[2m | [22m
+
+[1m [22m                                                                                                                                 [2m | [22m[1mInitial total[22m                                                                                                                  [2m | [22m  [1m3.00 MB[22m
+
+[1mLazy chunk files[22m                                                                                                                  [2m | [22m[1mNames[22m                                                                                                                          [2m | [22m [1mRaw size[22m
+[32mchunk-DI2GXNT5.js[39m                                                                                                                 [2m | [22m[2mpdf-export[22m                                                                                                                     [2m | [22m[36m276 bytes[39m[2m | [22m
+
+Application bundle generation complete. [63.769 seconds] - 2026-09-22T20:23:11.372Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+[37m      75 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+[37m      85 │     [32mRouterLink[37m,
+         ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: PractitionerProfileView is not used within the template of PractitionerProfileView[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.ts:162:4:
+[37m      162 │     [32mPractitionerProfileView[37m,
+          ╵     [32m~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButton is not used within the template of NearbyPlaces[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/nearby-places/nearby-places.ts:103:4:
+[37m      103 │     [32mAppButton[37m,
+          ╵     [32m~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:72:4:
+[37m      72 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:96:30:
+[37m      96 │   imports: [Alert, AppButton, [32mCard[37m, Chip, RouterLink, Textarea],
+         ╵                               [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:96:42:
+[37m      96 │   imports: [Alert, AppButton, Card, Chip, [32mRouterLink[37m, Textarea],
+         ╵                                           [32m~~~~~~~~~~[0m
+
+[39m[22m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mD:/Trabajos Secundarios/Mantra Core Technologies/mantra-core-health[39m
+
+(node:20872) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33716) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29784) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13564) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28080) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33580) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20432) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:32292) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33336) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:32648) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25688) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17528) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:4752) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25652) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24244) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[2m Test Files [22m [1m[32m17 passed[39m[22m[90m (17)[39m
+[2m      Tests [22m [1m[32m325 passed[39m[22m[90m (325)[39m
+[2m   Start at [22m 16:23:11
+[2m   Duration [22m 15.52s[2m (transform 27.26s, setup 23.91s, import 47.55s, tests 44.69s, environment 58.60s)[22m
+

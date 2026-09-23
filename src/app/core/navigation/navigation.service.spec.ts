@@ -170,6 +170,7 @@ describe('NavigationService', () => {
         // dos mitades del mismo circuito y ninguna exige rol — el filtro real
         // es tener perfil de paciente, que la pantalla resuelve.
         '/my-account/diagnostic-orders',
+        '/my-account/cotizaciones',
         // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
         // perfil de paciente, que es un dato de la cuenta y no un rol.
         '/my-account/questionnaires',
@@ -260,6 +261,19 @@ describe('NavigationService', () => {
       // NO entra: cumplía `requiresTenant` porque el médico pertenece a su
       // clínica, no porque atienda un mostrador. Sale por `fueraDelMenuPara`,
       // y se sigue llegando por la ruta —lo fija la prueba de abajo—.
+      //
+      // **«Activos y pasivos» SALIÓ el 19/09/2026, y la lista baja a diez.**
+      // Lo pidió el propietario con esas palabras: «esto debe estar integrado
+      // en contabilidad (lo de activos y pasivos)». Es la dirección que §4.H
+      // persigue —el panel no crece—, y además arregla un defecto propio de
+      // esta lista: «Contabilidad» y «Activos y pasivos» eran dos renglones
+      // seguidos, con el mismo ícono, que sólo se distinguen si uno ya sabe
+      // que «activo» no es «gasto». Ahora es un bloque del resumen de
+      // Contabilidad, y la pantalla de alta vive en
+      // `administration/accounting/assets-liabilities` con los mismos roles.
+      //
+      // Bajar un renglón no afloja la regla: quien quiera agregar la
+      // undécima la sigue teniendo que discutir.
       abrirSesion(['PRACTITIONER']);
 
       const fueraDeMiCuenta = service
@@ -278,7 +292,6 @@ describe('NavigationService', () => {
         'Mis servicios',
         'Cotizaciones',
         'Contabilidad',
-        'Activos y pasivos',
       ]);
     });
 
@@ -412,11 +425,11 @@ describe('NavigationService', () => {
 
     it('sólo «Administración» sigue plegada; los otros cuatro dominios vienen aplanados', () => {
       // Lo que la barra necesita para no dibujar un contenedor (AC-E1-02). El
-      // paciente llegaba a «Mis citas» abriendo dos desplegables que no llevan a
-      // ninguna pantalla; aplanado, el dominio suelta sus destinos en la barra y
-      // sigue ofreciendo exactamente los mismos. Vale lo mismo para quien
-      // ejerce: «Atención» y «Facturación» son los dos únicos dominios de
-      // trabajo que ve, y eran lo único que le hacían abrir.
+      // paciente llegaba a «Mis citas» abriendo dos desplegables que no llevan
+      // a ninguna pantalla; aplanado, el dominio suelta sus destinos en la
+      // barra y sigue ofreciendo exactamente los mismos. Desde el 13/09/2026
+      // vale lo mismo para quien ejerce: «Atención» y «Facturación» son los dos
+      // únicos dominios de trabajo que ve, y eran lo único que le hacían abrir.
       abrirSesion(['SECURITY_ADMIN', 'CLINICIAN', 'BILLING']);
 
       const aplanados = service
@@ -433,9 +446,9 @@ describe('NavigationService', () => {
     });
 
     it('quien ejerce no abre ningún dominio: su menú entero viene aplanado', () => {
-      // El caso que motivó el pedido. El médico veía «Atención» y «Facturación»
-      // plegadas y no veía «Administración», así que los dos desplegables eran
-      // todo lo que su barra le ofrecía abrir.
+      // El caso que motivó el pedido. El médico veía «Atención» y
+      // «Facturación» plegadas y no veía «Administración», así que los dos
+      // desplegables eran todo lo que su barra le ofrecía abrir.
       abrirSesion(['PRACTITIONER']);
 
       for (const grupo of service.menu()) {

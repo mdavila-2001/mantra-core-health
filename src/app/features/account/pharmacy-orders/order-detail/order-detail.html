@@ -50,7 +50,7 @@
               <span class="pedido__secundario">Te proponen</span>
               <span class="pedido__principal">{{ propuesta.propuesta.nombre }}</span>
               @if (propuesta.propuesta.precio !== null) {
-                <span class="cifras-tabulares">{{ propuesta.propuesta.precio }} {{ propuesta.moneda }}</span>
+                <span class="cifras-tabulares">{{ propuesta.propuesta.precio }} {{ moneda(propuesta.moneda) }}</span>
               } @else {
                 <span class="pedido__secundario">Sin precio publicado</span>
               }
@@ -59,7 +59,7 @@
               <span class="pedido__secundario">En lugar de</span>
               <span class="pedido__principal">{{ propuesta.original.nombre }}</span>
               @if (propuesta.original.precio !== null) {
-                <span class="cifras-tabulares">{{ propuesta.original.precio }} {{ propuesta.moneda }}</span>
+                <span class="cifras-tabulares">{{ propuesta.original.precio }} {{ moneda(propuesta.moneda) }}</span>
               } @else {
                 <span class="pedido__secundario">Sin precio publicado</span>
               }
@@ -171,7 +171,7 @@
               </div>
               <div class="pedido__linea-precio">
                 @if (linea.precio !== null) {
-                  <span class="cifras-tabulares">{{ linea.precio }} {{ linea.moneda }}</span>
+                  <span class="cifras-tabulares">{{ linea.precio }} {{ moneda(linea.moneda) }}</span>
                 } @else {
                   <span class="pedido__secundario">Sin precio publicado</span>
                 }
@@ -185,7 +185,7 @@
         <p class="pedido__total">
           @if (abierto.totalEstimado !== null) {
             Total estimado:
-            <strong class="cifras-tabulares">{{ abierto.totalEstimado }} {{ abierto.moneda }}</strong>
+            <strong class="cifras-tabulares">{{ abierto.totalEstimado }} {{ moneda(abierto.moneda) }}</strong>
           } @else {
             Total no disponible: falta algún precio publicado.
           }
@@ -235,7 +235,7 @@
         </div>
       }
 
-      <a app-button variant="ghost" [routerLink]="listaRoute">Volver a mis pedidos</a>
+      <a app-button variant="ghost" class="volver-al-origen" [routerLink]="listaRoute">Volver a mis pedidos</a>
     </div>
   }
 </app-view-state-host>

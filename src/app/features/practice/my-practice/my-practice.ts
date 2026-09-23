@@ -5,14 +5,19 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { WorkHistory } from '../../account/my-profile/work-history/work-history';
 
 /**
- * **Mi consultorio propio** — dónde atiende el profesional por su cuenta.
+ * **Mis organizaciones** — dónde atiende el profesional: su consultorio propio
+ * y las organizaciones donde trabaja.
+ *
+ * Se llamó «Mi consultorio propio» hasta que el propietario la renombró el
+ * 19/09/2026: lista los dos, no sólo el propio.
  *
  * ## Por qué existe
  *
  * Ocupa el lugar que tenía «Tu organización» en Administración (pedido del
  * propietario, 2026-09-10). Aquella pantalla mostraba la organización del
  * *tenant activo* —la clínica donde el médico está afiliado—, que no es suya:
- * junto a «Mis organizaciones» y «Organización médica» eran tres tarjetas
+ * junto a la vieja «Mis organizaciones» y a «Organización médica» eran tres
+ * tarjetas
  * parecidas y ninguna contestaba «¿dónde atiendo yo?».
  *
  * `organization-panel` **no se borró**: la sigue viendo quien administra un
@@ -23,7 +28,7 @@ import { WorkHistory } from '../../account/my-profile/work-history/work-history'
  * Crear un consultorio, ubicarlo en el mapa, elegir su municipio y retirarlo ya
  * vive en `WorkHistory`, con su catálogo, su confirmación y sus 31 pruebas.
  * Copiarlo acá habría garantizado que el arreglo de uno no llegara al otro
- * —regla 50-frontend §3—. Se monta con `soloConsultorios`, que suprime el
+ * —regla 50-frontend §3—. Se monta con `secciones="consultorios"`, que suprime el
  * historial laboral: acá la pregunta es dónde atiende hoy, no dónde ejerció.
  *
  * Es también la respuesta al «igualmente desde el perfil se puede hacer lo

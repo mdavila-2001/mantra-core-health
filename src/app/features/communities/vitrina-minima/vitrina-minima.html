@@ -1,0 +1,89 @@
+<!-- Lo mínimo que el servidor exige para aceptar un grupo público o un
+     artículo: nombre visible, enlace y la vitrina en público. Nada más. Todo
+     lo demás —titular, biografía, portada, reseñas— se sacó el 2026-09-10 a
+     pedido del propietario y no vuelve por acá. -->
+<section class="vitrina" aria-labelledby="vitrina-titulo">
+  <h3 class="vitrina__titulo" id="vitrina-titulo">Creá tu vitrina pública</h3>
+  <p class="vitrina__ayuda">
+    @if (motivo() === 'grupos') {
+      Un grupo público lo puede encontrar cualquiera, así que tiene que saber quién lo abrió.
+    } @else {
+      Los artículos se publican con tu firma, así que hace falta saber quién los firma.
+    }
+  </p>
+
+  @if (sinOrganizacion()) {
+    <app-alert tone="warning" title="Elegí una organización primero">
+      Tu vitrina cuelga de la organización con la que estés trabajando. Elegí una desde el
+      encabezado y volvé acá.
+    </app-alert>
+  } @else {
+    @if (error(); as mensaje) {
+      <app-alert tone="error" class="vitrina__error">{{ mensaje }}</app-alert>
+    }
+
+    <form class="vitrina__form" (submit)="$event.preventDefault()">
+      <app-form-field label="Nombre visible" hint="Con el que firmás. Podés cambiarlo después.">
+        <app-input
+          [value]="displayName()"
+          (valueChange)="alEscribirNombre($any($event) ?? '')"
+          placeholder="Dra. Valeria Fuentes"
+          data-testid="vitrina-nombre"
+        />
+      </app-form-field>
+
+      <!-- El enlace se propone a partir del nombre, pero se muestra y se puede
+           corregir: quien sólo quería publicar un artículo no tiene por qué
+           inventar una URL, y quien la quiere distinta no tiene por qué
+           aguantarse la propuesta. -->
+      <app-form-field
+        label="Tu enlace"
+        hint="Minúsculas, números y guiones."
+        [errorMessage]="slugValido() ? '' : 'Sólo minúsculas, números y guiones.'"
+      >
+        <app-input [(value)]="slug" placeholder="tu-enlace" data-testid="vitrina-enlace" />
+      </app-form-field>
+
+      <p class="vitrina__enlace">
+        Va a quedar en <code>{{ enlace() }}</code>
+      </p>
+
+      <!-- Obligatoria sólo para grupos públicos, porque el servidor la exige
+           ahí y crearla sin foto dejaría a la persona con el mismo rechazo que
+           la trajo hasta acá. -->
+      <app-form-field
+        class="vitrina__ancho"
+        [label]="fotoObligatoria() ? 'Tu foto' : 'Tu foto (opcional)'"
+        [hint]="
+          fotoObligatoria()
+            ? 'JPG, PNG o WEBP. Hasta 5 MB. Un grupo público la exige: es la cara de quien lo abrió.'
+            : 'JPG, PNG o WEBP. Hasta 5 MB. Es la que aparece junto a tu firma.'
+        "
+      >
+        <app-file-input
+          testId="vitrina-foto"
+          removeTestId="vitrina-foto-quitar"
+          [(files)]="foto"
+          [accept]="formatosDeFoto"
+          [maxSizeBytes]="maxBytesDeFoto"
+          [maxFiles]="1"
+          accessibleLabel="Tu foto de vitrina"
+        />
+      </app-form-field>
+
+      <div class="vitrina__acciones">
+        <button
+          app-button
+          type="button"
+          variant="primary"
+          [isLoading]="guardando()"
+          [disabled]="!puedeCrear()"
+          data-testid="vitrina-crear"
+          (clicked)="crear()"
+        >
+          Crear mi vitrina
+        </button>
+      </div>
+    </form>
+  }
+</section>

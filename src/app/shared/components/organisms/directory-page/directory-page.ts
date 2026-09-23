@@ -85,6 +85,19 @@ export class DirectoryPage {
    */
   readonly textoSinCoincidencias = input<string | null>(null);
 
+  /**
+   * Si se muestra la portada del vertical en vez de la lista.
+   *
+   * Para los directorios con más de un escalón: la barra de búsqueda está en
+   * todos los niveles (pedido del cliente, 19/09/2026), y la portada es lo que
+   * se ve mientras no haya nada escrito ni elegido. El vertical proyecta su
+   * portada en `[slot=portada]` y decide cuándo toca con esta entrada.
+   */
+  readonly portada = input(false);
+
+  /** Activa el bloqueo opt-in de navegaciones repetidas en sus tarjetas. */
+  readonly preventDuplicateNavigation = input(false);
+
   readonly filtrosCambiaron = output<Readonly<Record<string, string>>>();
   readonly reintentar = output<void>();
 

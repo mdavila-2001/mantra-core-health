@@ -45,7 +45,8 @@
       <app-data-type-icon
         class="editor-campo__icono"
         [tipo]="tipoTecnico()"
-        [multiple]="tipo() === 'checkboxes'"
+        [multiple]="tipo() === 'checkboxes' || tipo() === 'checkboxGrid'"
+        [cuadricula]="pideFilas()"
       />
       <app-select
         [options]="tipos"
@@ -70,6 +71,7 @@
         class="editor-campo__icono"
         [tipo]="campo().dataType"
         [multiple]="campo().multiple ?? false"
+        [cuadricula]="filasDelEstandar().length > 0"
       />
       <span class="editor-campo__tipo-nombre">{{ etiquetaDelTipo() }}</span>
     </span>
@@ -109,19 +111,78 @@
   <p class="editor-campo__descripcion-fija">{{ campo().description }}</p>
 }
 
+@if (editable() && pideFilas()) {
+  <!-- ─── Las filas de la cuadrícula ───────────────────────────────────────
+       Lo que se pregunta en cada renglón. Van primero porque son el sujeto de
+       la pregunta —«Tos», «Fiebre»— y las columnas de abajo son la escala con
+       la que se responden. -->
+  <fieldset class="editor-campo__opciones editor-campo__filas">
+    <legend class="editor-campo__grupo-rotulo">Filas</legend>
+
+    @for (fila of filas(); track $index) {
+      <div class="editor-campo__opcion">
+        <span class="editor-campo__numero" aria-hidden="true">{{ $index + 1 }}.</span>
+
+        <app-input
+          class="editor-campo__opcion-texto"
+          [value]="fila"
+          (valueChange)="cambiarFila($index, $event)"
+          (blurred)="guardarAhora()"
+          [placeholder]="'Fila ' + ($index + 1)"
+          [attr.aria-label]="'Fila ' + ($index + 1)"
+          [attr.data-testid]="'editor-campo-fila-' + $index"
+        />
+
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          class="editor-campo__quitar-opcion"
+          [disabled]="!puedeQuitarFila()"
+          [attr.aria-label]="'Quitar la fila ' + ($index + 1)"
+          [appTooltip]="'Quitar'"
+          (clicked)="quitarFila($index)"
+        >
+          ✕
+        </button>
+      </div>
+    }
+
+    <div class="editor-campo__agregar-opcion">
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        (clicked)="agregarFila()"
+        data-testid="editor-campo-agregar-fila"
+      >
+        Agregar fila
+      </button>
+    </div>
+  </fieldset>
+}
+
 @if (editable() && pideOpciones()) {
   <!-- ─── Las respuestas ofrecidas ─────────────────────────────────────────
        Una fila por opción con su marca y su botón de quitar, no un `textarea`
        de «una por línea»: así se ve cuántas son, se corrige la del medio y se
        quita la que sobra. Es la lista que se va a ver al responder. -->
   <fieldset class="editor-campo__opciones">
-    <legend class="sr-only">Respuestas de {{ campo().name || 'el campo' }}</legend>
+    @if (pideFilas()) {
+      <!-- En una cuadrícula las respuestas ofrecidas son las columnas, y hay
+           que verlo: sin rótulo, dos listas seguidas son dos listas iguales. -->
+      <legend class="editor-campo__grupo-rotulo">{{ rotuloDeOpciones() }}</legend>
+    } @else {
+      <legend class="sr-only">Respuestas de {{ campo().name || 'el campo' }}</legend>
+    }
 
     @for (opcion of opciones(); track $index) {
       <div class="editor-campo__opcion">
         <span
           class="editor-campo__marca"
-          [class.editor-campo__marca--casilla]="tipo() === 'checkboxes'"
+          [class.editor-campo__marca--casilla]="tipo() === 'checkboxes' || tipo() === 'checkboxGrid'"
           aria-hidden="true"
         ></span>
 
@@ -188,9 +249,11 @@
         (clicked)="agregarOpcion()"
         data-testid="editor-campo-agregar-opcion"
       >
-        Agregar opción
+        {{ pideFilas() ? 'Agregar columna' : 'Agregar opción' }}
       </button>
-      @if (!conOtro()) {
+      @if (!conOtro() && !pideFilas()) {
+        <!-- «Otro» no existe en una cuadrícula: no hay dónde escribirlo, y
+             ningún editor de formularios lo ofrece ahí. -->
         <span class="editor-campo__o">o</span>
         <button
           app-button
@@ -239,6 +302,32 @@
       }
     </div>
   }
+
+  <!-- ─── Las restricciones de una cuadrícula ──────────────────────────────
+       Las dos de cualquier editor de formularios, con la misma redacción.
+       «Obligatorio» del pie sólo exige que la pregunta tenga alguna respuesta;
+       «una respuesta en cada fila» exige las ocho, que no es lo mismo. -->
+  @if (pideFilas()) {
+    <div class="editor-campo__restricciones" data-testid="editor-campo-restricciones">
+      <app-switch
+        [checked]="requerirCadaFila()"
+        (checkedChange)="cambiarRequerirCadaFila($event)"
+        label="Requerir una respuesta en cada fila"
+        data-testid="editor-campo-requerir-fila"
+      />
+      <app-switch
+        [checked]="unaPorColumna()"
+        (checkedChange)="cambiarUnaPorColumna($event)"
+        label="Limitar a una respuesta por columna"
+        data-testid="editor-campo-una-por-columna"
+      />
+      @if (avisoDeCuadricula(); as aviso) {
+        <p class="editor-campo__aviso" role="status" data-testid="editor-campo-aviso-cuadricula">
+          {{ aviso }}
+        </p>
+      }
+    </div>
+  }
 } @else {
   <!-- El control con el que se responde. Deshabilitado a propósito: es una
        muestra de cómo se va a ver, no un lugar donde escribir. -->
@@ -251,7 +340,17 @@
         <app-input type="number" [value]="''" [disabled]="true" placeholder="0" />
       }
       @case ('booleano') {
-        <app-checkbox [checked]="false" [disabled]="true" label="Sí" />
+        <!-- Dos botones, no una casilla: una casilla marcada dice «sí» y
+             desmarcada no dice nada, así que «contestó que no» y «no contestó»
+             se ven igual. Lo pidió el propietario, y es la misma corrección que
+             ya se hizo en el alta de agenda. -->
+        <app-segmented-control
+          [options]="siNo"
+          value=""
+          ariaLabel="Sí o no"
+          size="md"
+          data-testid="editor-campo-muestra-si-no"
+        />
       }
       @case ('fecha') {
         <!-- Texto con el formato dentro y no `type="date"`: el input del sistema
@@ -286,6 +385,27 @@
             </li>
           }
         </ul>
+      }
+      @case ('cuadricula') {
+        <!-- La cuadrícula del estándar, tal como se va a ver. Apagada: es una
+             muestra, no un lugar donde contestar. -->
+        <app-grid-group
+          [rows]="filasDeMuestra()"
+          [columns]="columnasDeMuestra()"
+          [oneResponsePerColumn]="campo().oneResponsePerColumn ?? false"
+          disabled
+          ariaLabel="Cuadrícula de {{ campo().name }}"
+        />
+      }
+      @case ('cuadricula-casillas') {
+        <app-grid-group
+          multiple
+          [rows]="filasDeMuestra()"
+          [columns]="columnasDeMuestra()"
+          [oneResponsePerColumn]="campo().oneResponsePerColumn ?? false"
+          disabled
+          ariaLabel="Cuadrícula de {{ campo().name }}"
+        />
       }
       @default {
         <app-input [value]="''" [disabled]="true" placeholder="Texto de respuesta corta" />

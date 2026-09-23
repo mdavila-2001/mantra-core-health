@@ -1,4 +1,11 @@
-import { ESTABLECIMIENTO, ESTADO, PARENTESCO, TIPO_VINCULO, displayDe } from '../fixtures/conceptos';
+import {
+  ESTABLECIMIENTO,
+  ESTADO,
+  JURISDICCION,
+  PARENTESCO,
+  TIPO_VINCULO,
+  displayDe,
+} from '../fixtures/conceptos';
 import {
   afiliaciones,
   CATEGORIA_MEDICO,
@@ -19,7 +26,7 @@ import {
   type ProfesionalSimulado,
 } from '../fixtures/personas';
 import { conflict, forbidden, noContent, notFound, type MockRequest, type MockRouter } from '../mock-router';
-import { ahora, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
+import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
 
 /* ============================================================================
     Perfiles: pacientes, profesionales, guía y afiliaciones.
@@ -31,6 +38,155 @@ function pacienteDeSesion(request: MockRequest): PacienteSimulado | undefined {
   // Un profesional también puede tener su propio perfil de paciente.
   if (request.user?.key === 'medica') return PACIENTE;
   return undefined;
+}
+
+/* ---- lo que el médico agrega desde «Configurar tu perfil» ------------------
+   Estos tres POST contestaban 201 y no guardaban nada, así que la tabla de lo
+   cargado que muestra el editor (13/09/2026) nunca veía la fila nueva. Se
+   guardan con clave de sessionStorage para poder comprobar «agregar → recargar
+   → sigue ahí». Nacen pendientes de verificación, como en la API. */
+
+interface EspecialidadAgregada {
+  readonly id: string;
+  readonly profileId: string;
+  readonly specialtyConceptId: string;
+  readonly isPrimary: boolean;
+  readonly boardCertified: boolean;
+  readonly verificationStatusConceptId: string;
+  readonly verified: boolean;
+  readonly validFrom: string;
+}
+
+interface CredencialAgregada {
+  readonly id: string;
+  readonly profileId: string;
+  readonly credentialTypeConceptId: string;
+  readonly number: string;
+  readonly issuingInstitutionText?: string;
+  readonly issueDate?: string;
+  readonly stateConceptId: string;
+  /** El diploma, para que la tabla pueda ofrecerlo. */
+  readonly fileId?: string;
+}
+
+interface MatriculaAgregada {
+  readonly id: string;
+  readonly profileId: string;
+  readonly jurisdictionConceptId: string;
+  readonly licenseNumber: string;
+  readonly regulatoryAuthority?: string;
+  readonly stateConceptId: string;
+  readonly validFrom?: string;
+  /** El carnet del colegio. Mismo criterio que el diploma del título. */
+  readonly fileId?: string;
+}
+
+/**
+ * Cuál especialidad eligió el profesional como principal (UC-05-06·P).
+ *
+ * Una tabla aparte y no un campo en `especialidadesAgregadas` porque la
+ * principal puede ser una del fixture, que es de sólo lectura: acá se guarda
+ * **la elección**, y el perfil la aplica al armar la respuesta. Una fila por
+ * profesional; su `id` es el del perfil.
+ */
+interface PrincipalElegida {
+  readonly id: string;
+  readonly specialtyId: string;
+}
+
+const principalElegida = new Coleccion<PrincipalElegida>([], 'mock.perfil-medico.principal');
+
+const especialidadesAgregadas = new Coleccion<EspecialidadAgregada>([], 'mock.perfil-medico.especialidades');
+const credencialesAgregadas = new Coleccion<CredencialAgregada>([], 'mock.perfil-medico.credenciales');
+const matriculasAgregadas = new Coleccion<MatriculaAgregada>([], 'mock.perfil-medico.matriculas');
+
+/* ---- corregir y retirar lo ya cargado -------------------------------------
+   Las acciones de las tres tablas de «Configurar tu perfil» (propietario,
+   13/09/2026). Dos tablas laterales y no un campo en cada colección, por la
+   misma razón que `principalElegida`: la mitad de las filas que se ven salen de
+   los fixtures, que son de sólo lectura. Acá se guarda **lo que la persona
+   hizo**, y el perfil lo aplica al armar la respuesta — así una fila sembrada y
+   una agregada se editan y se retiran igual.
+
+   Los ids son uuid y no se repiten entre títulos, especialidades y matrículas,
+   así que una sola tabla de cada cosa alcanza para las tres. */
+
+/** Los ids que dejaron de verse. */
+const retiradasDelPerfil = new Coleccion<{ readonly id: string }>([], 'mock.perfil-medico.retiradas');
+
+/** Un parche sobre una fila: lo que la persona corrigió, encima de lo que había. */
+interface CorreccionDePerfil {
+  readonly id: string;
+  readonly cambios: Record<string, unknown>;
+}
+
+const correccionesDelPerfil = new Coleccion<CorreccionDePerfil>([], 'mock.perfil-medico.correcciones');
+
+/**
+ * Lo que se ve de una colección del perfil: sin lo retirado y con lo corregido
+ * encima. Los parches se acumulan al guardarlos, así que corregir dos veces el
+ * mismo título no pierde la primera corrección.
+ */
+function visiblesDelPerfil<T extends { readonly id: string }>(filas: readonly T[]): T[] {
+  return filas
+    .filter((fila) => !retiradasDelPerfil.has(fila.id))
+    .map((fila) => {
+      const parche = correccionesDelPerfil.get(fila.id);
+      return parche === undefined ? fila : ({ ...fila, ...parche.cambios } as T);
+    });
+}
+
+/** Anota un parche sobre una fila, acumulándolo con lo que ya se le había hecho. */
+function corregirDelPerfil(id: string, cambios: Record<string, unknown>): void {
+  const anterior = correccionesDelPerfil.get(id);
+  correccionesDelPerfil.agregar({ id, cambios: { ...anterior?.cambios, ...cambios } });
+}
+
+/**
+ * Si una fila del perfil propio existe hoy: la sembrada y la agregada valen, la
+ * retirada ya no. Es lo que distingue un `404` de un cambio aplicado.
+ */
+function existeEnElPerfil(filas: readonly { readonly id: string }[], id: string): boolean {
+  return !retiradasDelPerfil.has(id) && filas.some((fila) => fila.id === id);
+}
+
+/** La fila tal como la devuelve el perfil: sin el dueño, que es de la maqueta. */
+function sinDueno<T extends { readonly profileId: string }>(fila: T): Omit<T, 'profileId'> {
+  const { profileId: _dueno, ...resto } = fila;
+  return resto;
+}
+
+/**
+ * Aplica la principal elegida, si la hay.
+ *
+ * Sin elección se devuelve la lista tal cual: la principal es la del fixture.
+ * Con elección manda ella y las demás quedan adicionales — hay una sola
+ * vigente, igual que en el servidor.
+ */
+function conElegidaAlFrente<T extends { readonly id: string; readonly isPrimary?: boolean }>(
+  profileId: string,
+  especialidades: readonly T[],
+): T[] {
+  const elegida = principalElegida.get(profileId);
+  if (elegida === undefined) return [...especialidades];
+  return especialidades.map((e) => ({ ...e, isPrimary: e.id === elegida.specialtyId }));
+}
+
+/* Lo sembrado más lo agregado, sin filtrar: la base sobre la que
+   `visiblesDelPerfil` aplica retiros y correcciones. Tres funciones y no tres
+   expresiones repetidas, porque las usan la lectura del perfil y las rutas que
+   escriben, y separarse sería servir una lista y escribir sobre otra. */
+
+function especialidadesPropiasDe(p: ProfesionalSimulado) {
+  return [...especialidadesDe(p), ...especialidadesAgregadas.filtrar((e) => e.profileId === p.id).map(sinDueno)];
+}
+
+function credencialesPropiasDe(p: ProfesionalSimulado) {
+  return [...credencialesDe(p), ...credencialesAgregadas.filtrar((c) => c.profileId === p.id).map(sinDueno)];
+}
+
+function matriculasPropiasDe(p: ProfesionalSimulado) {
+  return [...licenciasDe(p), ...matriculasAgregadas.filtrar((m) => m.profileId === p.id).map(sinDueno)];
 }
 
 function profesionalDeSesion(request: MockRequest): ProfesionalSimulado | undefined {
@@ -45,6 +201,11 @@ function itemDeLista(p: PacienteSimulado) {
     patientCode: p.patientCode,
     displayName: p.displayName,
     birthDate: p.birthDate,
+    nationalId: p.nationalId,
+    phone: p.phone,
+    ...(p.aboGroupId === undefined ? {} : { aboGroupConceptId: p.aboGroupId }),
+    ...(p.rhFactorId === undefined ? {} : { rhFactorConceptId: p.rhFactorId }),
+    ...(p.idiomaClinicoId === undefined ? {} : { clinicalLanguageConceptId: p.idiomaClinicoId }),
     personStatusConceptId: p.deceased ? ESTADO['ST-INACTIVE']! : ESTADO['ST-ACTIVE']!,
     deceased: p.deceased,
   };
@@ -66,10 +227,10 @@ function fichaDe(p: PacienteSimulado) {
     personStatusConceptId: p.deceased ? ESTADO['ST-INACTIVE']! : ESTADO['ST-ACTIVE']!,
     vitalStatusConceptId: p.deceased ? ESTADO['ST-DECEASED']! : ESTADO['ST-ALIVE']!,
     deceasedAt: p.deceased ? iso(-40) : null,
-    aboGroupConceptId: null,
-    rhFactorConceptId: null,
+    aboGroupConceptId: p.aboGroupId ?? null,
+    rhFactorConceptId: p.rhFactorId ?? null,
     insuranceStatusConceptId: p.aseguradora === undefined ? null : ESTADO['ST-ACTIVE']!,
-    clinicalLanguageConceptId: null,
+    clinicalLanguageConceptId: p.idiomaClinicoId ?? null,
     recordLinkageStatusConceptId: ESTADO['ST-LINKED']!,
     relatedPersons: personasRelacionadasDe(p),
     createdAt: iso(-400),
@@ -101,7 +262,8 @@ export function perfilPropioDe(p: PacienteSimulado) {
     patientCode: p.patientCode,
     nationalId: p.nationalId,
     issuerAdministrativeAreaConceptId: p.departamentoId,
-    taxId: `${p.nationalId}011`,
+    // Sin cédula no hay NIT que derivar: `011` solo no es un NIT.
+    taxId: p.nationalId === '' ? '' : `${p.nationalId}011`,
     taxHolderName: p.displayName,
     email: p.email,
     ...(p.photoFileId === undefined ? {} : { photoFileId: p.photoFileId }),
@@ -176,7 +338,68 @@ export function perfilPropioDe(p: PacienteSimulado) {
   };
 }
 
+/**
+ * Las doce cifras mensuales de la maqueta. Suman 312, que es el total de
+ * `encounters`: dos cifras que hablan de lo mismo y no coinciden se leen como
+ * un error del producto, no de los datos de ejemplo.
+ */
+const ENCUENTROS_POR_MES = [18, 21, 24, 19, 26, 28, 23, 27, 31, 29, 30, 36] as const;
+
+/** La serie, anclada al mes en curso: el último punto es siempre «hoy». */
+function serieMensualDemo(): readonly { month: string; count: number }[] {
+  const hoy = new Date();
+  return ENCUENTROS_POR_MES.map((count, indice) => {
+    const mes = new Date(hoy.getFullYear(), hoy.getMonth() - (ENCUENTROS_POR_MES.length - 1 - indice), 1);
+    return { month: `${mes.getFullYear()}-${String(mes.getMonth() + 1).padStart(2, '0')}`, count };
+  });
+}
+
+/**
+ * Los indicadores de calidad de la maqueta.
+ *
+ * Coherentes entre sí a propósito: las 312 citas atendidas son los 312
+ * encuentros, y las 275 notas dentro de 24 h son las 275 notas clínicas. Un
+ * juego de cifras que no cierra convierte la pantalla en un rompecabezas.
+ */
+const CALIDAD_DEMO = {
+  uniquePatients: 187,
+  returningPatients: 96,
+  scheduledAppointments: 341,
+  attendedAppointments: 312,
+  onTimeAppointments: 268,
+  closedEncounters: 312,
+  notesWithin24h: 275,
+  averageDurationMinutes: 27,
+  ratingAverage: 4.7,
+  ratingCount: 128,
+} as const;
+
+/** Una corrección guardada del perfil profesional: su id y lo que se cambió. */
+type EdicionDeProfesional = { readonly id: string } & Record<string, string | boolean>;
+
+/**
+ * Lo que se editó del perfil profesional, por perfil.
+ *
+ * `PROFESIONALES` es un arreglo de fixture, no una `Coleccion`: no tiene dónde
+ * guardar una corrección. Hasta el 19/09/2026 el `PATCH` devolvía el cuerpo
+ * mezclado y no lo anotaba en ningún lado, así que editar el título —o el NIT—
+ * «funcionaba» hasta la siguiente lectura, que es el defecto que este archivo
+ * ya documenta para la dirección de trabajo del paciente.
+ *
+ * Con clave, como las otras dos tablas de este módulo: así sobrevive a la
+ * recarga, que es donde el defecto se notaba.
+ */
+const edicionesDeProfesional = new Coleccion<EdicionDeProfesional>(
+  [],
+  'mock.perfil-medico.ediciones',
+);
+
 export function perfilProfesionalDe(p: ProfesionalSimulado) {
+  const { id: _id, ...editado } = edicionesDeProfesional.get(p.id) ?? { id: p.id };
+  return { ...perfilProfesionalBase(p), ...editado };
+}
+
+function perfilProfesionalBase(p: ProfesionalSimulado) {
   return {
     profileId: p.id,
     personId: p.personId,
@@ -191,7 +414,12 @@ export function perfilProfesionalDe(p: ProfesionalSimulado) {
     personalEmail: `${p.slug}@gmail.mock`,
     mobilePhone: p.phone,
     workMobilePhone: p.phone.replace(/\d$/, '9'),
-    workLandline: '+591 3 3456789',
+    // Sin el espacio interno: `esTelefonoCompleto` pide «+591 » + OCHO dígitos
+    // seguidos. Con `'+591 3 3456789'` el editor del médico nacía con el fijo
+    // del trabajo en rojo y **se negaba a guardar cualquier cosa** —«Hay un
+    // teléfono incompleto. Revisalo en Contacto»—, aunque nadie hubiera tocado
+    // ese campo. Medido el 19/09/2026 al intentar cargar un NIT.
+    workLandline: '+591 33456789',
     name: p.name,
     lastName: p.lastName,
     motherLastName: p.motherLastName,
@@ -199,18 +427,36 @@ export function perfilProfesionalDe(p: ProfesionalSimulado) {
     nationalId: p.nationalId,
     issuerAdministrativeAreaConceptId: p.departamentoId,
     residenceMunicipalityConceptId: p.municipioId,
+    // Facturación, igual que el paciente: sin cédula no hay NIT que derivar,
+    // porque `011` solo no es un NIT.
+    taxId: p.nationalId === '' ? '' : `${p.nationalId}011`,
+    taxHolderName: p.displayName,
     homeAddress: { lines: p.direccion, city: p.ciudad, municipalityConceptId: p.municipioId, latitude: p.lat, longitude: p.lng },
     practitionerCategoryConceptId: CATEGORIA_MEDICO,
     verificationStatusConceptId: p.verified ? ESTADO['ST-VERIFIED']! : ESTADO['ST-PENDING']!,
     practiceStatusConceptId: ESTADO['ST-ACTIVE']!,
     acceptsNewPatients: p.acceptsNewPatients,
     telehealthAvailable: p.telehealthAvailable,
-    specialties: especialidadesDe(p),
-    credentials: credencialesDe(p),
-    licenses: licenciasDe(p),
+    specialties: conElegidaAlFrente(p.id, visiblesDelPerfil(especialidadesPropiasDe(p))),
+    credentials: visiblesDelPerfil(credencialesPropiasDe(p)),
+    licenses: visiblesDelPerfil(matriculasPropiasDe(p)),
     languages: idiomasDe(p),
     affiliations: afiliaciones.filtrar((a) => a.practitionerProfileId === p.id),
-    activity: { encounters: 312, medicationRequests: 208, clinicalNotes: 275, documents: 41 },
+    // Un médico real de la red de una aseguradora no atendió a nadie en
+    // AloVida: su actividad en la plataforma es cero, no una cifra de ejemplo.
+    // Y sin actividad tampoco hay serie ni indicadores: un gráfico de doce
+    // meses en cero dice menos que no dibujarlo.
+    activity:
+      p.origen !== undefined
+        ? { encounters: 0, medicationRequests: 0, clinicalNotes: 0, documents: 0 }
+        : {
+            encounters: 312,
+            medicationRequests: 208,
+            clinicalNotes: 275,
+            documents: 41,
+            monthlyEncounters: serieMensualDemo(),
+            quality: CALIDAD_DEMO,
+          },
     createdAt: iso(-500),
   };
 }
@@ -227,7 +473,9 @@ function itemDeGuia(p: ProfesionalSimulado) {
     acceptsNewPatients: p.acceptsNewPatients,
     telehealthAvailable: p.telehealthAvailable,
     specialties: p.especialidades.map((specialtyConceptId, i) => ({ specialtyConceptId, isPrimary: i === 0 })),
-    workplaces: [p.organizacion, `Consultorio ${p.lastName}`],
+    // Para los de la red, el consultorio es la dirección que publica la
+    // aseguradora: «Consultorio Al» (de «Al Hamss») no existe en ningún lado.
+    workplaces: p.origen !== undefined ? [p.organizacion, p.direccion].filter((x) => x !== '') : [p.organizacion, `Consultorio ${p.lastName}`],
   };
 }
 
@@ -326,10 +574,16 @@ export function registrarPerfiles(router: MockRouter): void {
     // que escribiera quien buscaba.
     const q = texto(query, 'q');
     const nationalId = texto(query, 'nationalId');
+    const aboGroup = texto(query, 'aboGroupConceptId');
+    const rhFactor = texto(query, 'rhFactorConceptId');
+    const idiomaClinico = texto(query, 'clinicalLanguageConceptId');
     const todos = pacientes
       .todos()
       .filter((p) => contiene(p.displayName, q) || contiene(p.patientCode, q) || contiene(p.nationalId, q))
       .filter((p) => nationalId === null || p.nationalId === nationalId)
+      .filter((p) => aboGroup === null || p.aboGroupId === aboGroup)
+      .filter((p) => rhFactor === null || p.rhFactorId === rhFactor)
+      .filter((p) => idiomaClinico === null || p.idiomaClinicoId === idiomaClinico)
       .map(itemDeLista);
     return paginar(todos, query, 25);
   });
@@ -390,6 +644,11 @@ export function registrarPerfiles(router: MockRouter): void {
     const cambios = cuerpo<Record<string, unknown>>(request);
     const actualizado = pacientes.actualizar(p.id, {
       ...(typeof cambios['name'] === 'string' ? { name: cambios['name'] } : {}),
+      // El segundo nombre viaja como `middleName` y con `''` se borra: sin
+      // esta línea la pantalla decía «actualizado» y al releer volvía el viejo.
+      ...(typeof cambios['middleName'] === 'string'
+        ? { middleName: cambios['middleName'] === '' ? undefined : cambios['middleName'] }
+        : {}),
       ...(typeof cambios['lastName'] === 'string' ? { lastName: cambios['lastName'] } : {}),
       ...(typeof cambios['motherLastName'] === 'string' ? { motherLastName: cambios['motherLastName'] } : {}),
       ...(typeof cambios['phone'] === 'string' ? { phone: cambios['phone'] } : {}),
@@ -656,7 +915,13 @@ export function registrarPerfiles(router: MockRouter): void {
     const p = profesionalDeSesion(request);
     if (p === undefined) return notFound();
     const cambios = cuerpo<Record<string, unknown>>(request);
-    return { ...perfilProfesionalDe(p), ...soloTextos(cambios) };
+    const anotados = soloTextos(cambios);
+    if (edicionesDeProfesional.has(p.id)) {
+      edicionesDeProfesional.actualizar(p.id, anotados);
+    } else {
+      edicionesDeProfesional.agregar({ id: p.id, ...anotados });
+    }
+    return perfilProfesionalDe(p);
   });
 
   router.get('/profiles/practitioners/specialty-counts', () => {
@@ -728,8 +993,97 @@ export function registrarPerfiles(router: MockRouter): void {
     return noContent();
   });
 
-  router.post('/profiles/practitioners/me/credentials', () => ({ status: 201, body: { id: nuevoId('cred') } }));
-  router.delete('/profiles/practitioners/me/credentials/:id', () => noContent());
+  router.post('/profiles/practitioners/me/credentials', (request) => {
+    const p = profesionalDeSesion(request);
+    if (p === undefined) return notFound();
+    const datos = cuerpo<{ credentialTypeConceptId: string; number: string; issuingInstitutionText?: string; issueDate?: string; fileId?: string }>(request);
+    const nueva = credencialesAgregadas.agregar({
+      id: nuevoId('cred'),
+      profileId: p.id,
+      credentialTypeConceptId: datos.credentialTypeConceptId ?? '',
+      number: datos.number ?? '',
+      ...(datos.issuingInstitutionText === undefined ? {} : { issuingInstitutionText: datos.issuingInstitutionText }),
+      ...(datos.issueDate === undefined ? {} : { issueDate: datos.issueDate }),
+      // El diploma se devuelve en la lectura: sin esto, el título recién
+      // cargado se quedaba sin nada que descargar aunque se hubiera adjuntado.
+      ...(datos.fileId === undefined ? {} : { fileId: datos.fileId }),
+      stateConceptId: ESTADO['ST-PENDING']!,
+    });
+    return { status: 201, body: { id: nueva.id } };
+  });
+  /* ---- corregir y retirar lo cargado (propietario, 13/09/2026) ------------
+     De las seis rutas de acá abajo, **sólo el `DELETE` del título existe en la
+     API**. Las otras las sirve este simulador con la forma REST que le toca a
+     cada recurso, para que publicarlas del lado del servidor no obligue a tocar
+     la pantalla. El detalle de lo que falta está en
+     `docs/pendientes-backend-perfil-profesional.md`.
+
+     Todas responden `404` a la fila que no existe o no es propia —el mismo par
+     indistinguible que usa el resto del módulo— y `204` cuando aplicaron. */
+
+  router.patch('/profiles/practitioners/me/credentials/:id', (request) => {
+    const p = profesionalDeSesion(request);
+    if (p === undefined) return notFound();
+    const id = request.params['id']!;
+    if (!existeEnElPerfil(credencialesPropiasDe(p), id)) return notFound();
+    corregirDelPerfil(id, cuerpo<Record<string, unknown>>(request));
+    return noContent();
+  });
+
+  router.delete('/profiles/practitioners/me/credentials/:id', (request) => {
+    const p = profesionalDeSesion(request);
+    if (p === undefined) return notFound();
+    const id = request.params['id']!;
+    if (!existeEnElPerfil(credencialesPropiasDe(p), id)) return notFound();
+    // Se borra la agregada y se anota el retiro: la sembrada no se puede borrar
+    // —el fixture es de sólo lectura— pero sí dejar de mostrarse.
+    credencialesAgregadas.borrar(id);
+    retiradasDelPerfil.agregar({ id });
+    return noContent();
+  });
+
+  router.patch('/profiles/practitioners/me/specialties/:id', (request) => {
+    const p = profesionalDeSesion(request);
+    if (p === undefined) return notFound();
+    const id = request.params['id']!;
+    if (!existeEnElPerfil(especialidadesPropiasDe(p), id)) return notFound();
+    corregirDelPerfil(id, cuerpo<Record<string, unknown>>(request));
+    return noContent();
+  });
+
+  router.delete('/profiles/practitioners/me/specialties/:id', (request) => {
+    const p = profesionalDeSesion(request);
+    if (p === undefined) return notFound();
+    const id = request.params['id']!;
+    if (!existeEnElPerfil(especialidadesPropiasDe(p), id)) return notFound();
+    especialidadesAgregadas.borrar(id);
+    retiradasDelPerfil.agregar({ id });
+    // Si la que se va era la principal, la elección deja de tener sujeto: se
+    // borra para que el perfil no marque como principal una fila que ya no está.
+    if (principalElegida.get(p.id)?.specialtyId === id) {
+      principalElegida.borrar(p.id);
+    }
+    return noContent();
+  });
+
+  router.patch('/profiles/practitioners/me/jurisdiction-authorizations/:id', (request) => {
+    const p = profesionalDeSesion(request);
+    if (p === undefined) return notFound();
+    const id = request.params['id']!;
+    if (!existeEnElPerfil(matriculasPropiasDe(p), id)) return notFound();
+    corregirDelPerfil(id, cuerpo<Record<string, unknown>>(request));
+    return noContent();
+  });
+
+  router.delete('/profiles/practitioners/me/jurisdiction-authorizations/:id', (request) => {
+    const p = profesionalDeSesion(request);
+    if (p === undefined) return notFound();
+    const id = request.params['id']!;
+    if (!existeEnElPerfil(matriculasPropiasDe(p), id)) return notFound();
+    matriculasAgregadas.borrar(id);
+    retiradasDelPerfil.agregar({ id });
+    return noContent();
+  });
 
   router.get('/profiles/practitioners/me/linkable-organizations', ({ query }) => {
     const q = texto(query, 'query') ?? texto(query, 'q');
@@ -756,8 +1110,46 @@ export function registrarPerfiles(router: MockRouter): void {
     return p === undefined ? notFound() : perfilProfesionalDe(p);
   });
 
-  router.post('/profiles/practitioners/:id/specialties', () => ({ status: 201, body: { id: nuevoId('spec') } }));
-  router.post('/profiles/practitioners/:id/jurisdiction-authorizations', () => ({ status: 201, body: { id: nuevoId('jur') } }));
+  router.post('/profiles/practitioners/:id/specialties', (request) => {
+    const datos = cuerpo<{ specialtyConceptId: string; isPrimary?: boolean; boardCertified?: boolean }>(request);
+    const nueva = especialidadesAgregadas.agregar({
+      id: nuevoId('spec'),
+      profileId: request.params['id']!,
+      specialtyConceptId: datos.specialtyConceptId ?? '',
+      isPrimary: datos.isPrimary ?? false,
+      boardCertified: datos.boardCertified ?? false,
+      verificationStatusConceptId: ESTADO['ST-PENDING']!,
+      verified: false,
+      validFrom: isoDia(0),
+    });
+    return { status: 201, body: { id: nueva.id } };
+  });
+  router.patch('/profiles/practitioners/me/specialties/:id/primary', (request) => {
+    const p = profesionalDeSesion(request);
+    if (p === undefined) return notFound();
+    const specialtyId = request.params['id']!;
+    // La ajena y la inexistente responden lo mismo, igual que el servidor.
+    const propias = conElegidaAlFrente(p.id, visiblesDelPerfil(especialidadesPropiasDe(p)));
+    const especialidad = propias.find((e) => e.id === specialtyId);
+    if (especialidad === undefined) return notFound();
+    principalElegida.agregar({ id: p.id, specialtyId });
+    return { status: 200, body: { id: specialtyId, isPrimary: true } };
+  });
+
+  router.post('/profiles/practitioners/:id/jurisdiction-authorizations', (request) => {
+    const datos = cuerpo<{ licenseNumber: string; jurisdictionConceptId?: string; regulatoryAuthority?: string; validFrom?: string; fileId?: string }>(request);
+    const nueva = matriculasAgregadas.agregar({
+      id: nuevoId('jur'),
+      profileId: request.params['id']!,
+      jurisdictionConceptId: datos.jurisdictionConceptId ?? JURISDICCION['JUR-BO']!,
+      licenseNumber: datos.licenseNumber ?? '',
+      ...(datos.regulatoryAuthority === undefined ? {} : { regulatoryAuthority: datos.regulatoryAuthority }),
+      stateConceptId: ESTADO['ST-PENDING']!,
+      ...(datos.validFrom === undefined ? {} : { validFrom: datos.validFrom }),
+      ...(datos.fileId === undefined ? {} : { fileId: datos.fileId }),
+    });
+    return { status: 201, body: { id: nueva.id } };
+  });
 
   router.post('/profiles/practitioners', (request) => {
     const datos = cuerpo<{ practitionerCode: string }>(request);

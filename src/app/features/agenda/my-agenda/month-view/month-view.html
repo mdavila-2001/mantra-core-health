@@ -31,30 +31,41 @@
               [class.mes__celda--pasado]="celda.pasado"
               [attr.data-estado]="celda.estado"
             >
-              <!-- El día es un botón sólo cuando hay algo que mirar o que
-                   bloquear: una celda de relleno del mes vecino no lo es. -->
+              <!-- Pasar el puntero —o llegar con Tab— abre el globo del día con
+                   su detalle (ver `DayDetail`). Tocarlo abre el día sólo con
+                   `selectable`; en la solapa de horarios es un vistazo. -->
               @if (celda.delMes) {
-                <button
-                  type="button"
-                  class="mes__dia"
-                  [attr.aria-label]="celda.etiqueta"
-                  (click)="elegir(celda)"
-                >
-                  <span class="mes__numero" aria-hidden="true">{{ celda.numero }}</span>
-
-                  <!-- El número SIEMPRE visible: el color solo no alcanza. -->
-                  @if (celda.estado === 'con-reservas' || celda.estado === 'lleno') {
-                    <span class="mes__cuenta" aria-hidden="true"
-                      >{{ celda.reservados }}/{{ celda.total }}</span
-                    >
-                  } @else if (celda.estado === 'libre') {
-                    <span class="mes__cuenta" aria-hidden="true">0/{{ celda.total }}</span>
-                  } @else if (celda.estado === 'bloqueado') {
-                    <span class="mes__motivo" aria-hidden="true">{{
-                      celda.motivo ?? 'Bloqueado'
-                    }}</span>
-                  }
-                </button>
+                @if (selectable()) {
+                  <button
+                    type="button"
+                    class="mes__dia mes__dia--boton"
+                    data-testid="mes-dia"
+                    [attr.aria-label]="celda.etiqueta + '. Ver el día'"
+                    (mouseenter)="scheduleOpen(celda, $event)"
+                    (mouseleave)="scheduleClose()"
+                    (focus)="openNow(celda, $event)"
+                    (blur)="scheduleClose()"
+                    (keydown.escape)="close()"
+                    (click)="close(); dayPicked.emit(celda.fecha)"
+                  >
+                    <ng-container [ngTemplateOutlet]="contenido" [ngTemplateOutletContext]="{ $implicit: celda }" />
+                  </button>
+                } @else {
+                  <div
+                    class="mes__dia"
+                    role="note"
+                    tabindex="0"
+                    data-testid="mes-dia"
+                    [attr.aria-label]="celda.etiqueta"
+                    (mouseenter)="scheduleOpen(celda, $event)"
+                    (mouseleave)="scheduleClose()"
+                    (focus)="openNow(celda, $event)"
+                    (blur)="scheduleClose()"
+                    (keydown.escape)="close()"
+                  >
+                    <ng-container [ngTemplateOutlet]="contenido" [ngTemplateOutletContext]="{ $implicit: celda }" />
+                  </div>
+                }
               } @else {
                 <span class="mes__numero mes__numero--fuera" aria-hidden="true">{{
                   celda.numero
@@ -66,4 +77,122 @@
       }
     </tbody>
   </table>
+
+  <!-- El globo del día. Uno solo para todo el mes, en la capa superior. Se
+       queda abierto mientras el puntero esté encima: la lista se lee con
+       scroll. -->
+  @if (openDay(); as dia) {
+    @if (popoverPlacement(); as lugar) {
+      <div
+        #dayPopover
+        popover="manual"
+        class="mes__globo"
+        role="region"
+        data-testid="mes-globo"
+        [id]="popoverId"
+        [attr.aria-label]="'Detalle del ' + dia.resumen.title"
+        [style.top.px]="lugar.top"
+        [style.bottom.px]="lugar.bottom"
+        [style.left.px]="lugar.left"
+        [style.width.px]="lugar.width"
+        [style.max-height.px]="lugar.maxHeight"
+        (mouseenter)="cancelClose()"
+        (mouseleave)="scheduleClose()"
+      >
+        <div class="mes__globo-cabecera">
+          <p class="mes__globo-titulo">{{ dia.resumen.title }}</p>
+          <p class="mes__globo-linea">{{ dia.resumen.hours }}</p>
+          <!-- Lo mismo que dice la celda, en palabras: el globo no puede
+               contradecir al «4/8» que tiene al lado. -->
+          @if (dia.total > 0) {
+            <p class="mes__globo-linea" data-testid="mes-globo-ocupacion">
+              {{ dia.reservados }} de {{ dia.total }} {{ dia.total === 1 ? 'turno reservado' : 'turnos reservados' }}.
+            </p>
+          }
+          @for (bloqueo of dia.resumen.blocks; track $index) {
+            <p class="mes__globo-linea mes__globo-linea--bloqueo">{{ bloqueo }}</p>
+          }
+        </div>
+
+        @if (dayDetail() === 'bookings') {
+          <p class="mes__globo-subtitulo">
+            @switch (openDayRows().length) {
+              @case (0) {
+                {{ bookingsFailed() ? 'No se pudieron traer las citas de este día.' : 'Sin citas este día.' }}
+              }
+              @case (1) {
+                1 cita
+              }
+              @default {
+                {{ openDayRows().length }} citas
+              }
+            }
+          </p>
+        } @else {
+          <p class="mes__globo-subtitulo">
+            @switch (openDayRows().length) {
+              @case (0) {
+                <!-- Un día pasado no «se quedó sin turnos»: ya fue. -->
+                @if (dia.pasado && dia.total > 0) {
+                  Día pasado: ya no se ofrecen turnos.
+                } @else if (dia.estado === 'lleno') {
+                  Sin turnos libres: están todos reservados.
+                } @else {
+                  Sin turnos disponibles.
+                }
+              }
+              @case (1) {
+                1 turno disponible
+              }
+              @default {
+                {{ openDayRows().length }} turnos disponibles
+              }
+            }
+          </p>
+        }
+
+        @if (openDayRows().length > 0) {
+          <ul class="mes__globo-lista" data-testid="mes-globo-lista">
+            @for (fila of openDayRows(); track fila.id) {
+              <li class="mes__globo-fila">
+                <span class="mes__globo-hora">{{ fila.time }}</span>
+                <span class="mes__globo-texto">
+                  <span class="mes__globo-primario">{{ fila.primary }}</span>
+                  @if (fila.secondary) {
+                    <span class="mes__globo-secundario">{{ fila.secondary }}</span>
+                  }
+                </span>
+                <!-- C-08 · el chip dice si está atendida o no, con color, con
+                     silueta Y con la palabra. `app-status-seal` da las tres:
+                     en escala de grises «Atendida» y «No asistió» se siguen
+                     distinguiendo, que es lo que la regla 95.4.6 exige. -->
+                @if (fila.estado; as estado) {
+                  <app-status-seal
+                    class="mes__globo-chip"
+                    data-testid="mes-globo-chip"
+                    [variant]="estado.variant"
+                    [label]="estado.label"
+                  />
+                }
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+  }
 </div>
+
+<!-- Lo de adentro de un día, igual se abra o no: el número y su ocupación. -->
+<ng-template #contenido let-celda>
+  <span class="mes__numero" aria-hidden="true">{{ celda.numero }}</span>
+
+  <!-- El número SIEMPRE visible: el color solo no alcanza. -->
+  @if (celda.estado === 'con-reservas' || celda.estado === 'lleno') {
+    <span class="mes__cuenta" aria-hidden="true">{{ celda.reservados }}/{{ celda.total }}</span>
+  } @else if (celda.estado === 'libre') {
+    <span class="mes__cuenta" aria-hidden="true">0/{{ celda.total }}</span>
+  } @else if (celda.estado === 'bloqueado') {
+    <span class="mes__motivo" aria-hidden="true">{{ celda.motivo ?? 'Bloqueado' }}</span>
+  }
+</ng-template>

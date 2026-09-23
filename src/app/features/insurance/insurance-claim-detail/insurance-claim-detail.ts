@@ -93,6 +93,7 @@ import { InsuranceContactChannels } from './insurance-contact-channels/insurance
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InsuranceClaimDetail {
+
   private readonly insurance = inject(InsuranceClient);
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);

@@ -23,7 +23,7 @@
     /* una lista larga se desplaza en vez de salirse de la pantalla */
     max-height: 60vh;
     overflow-y: auto;
-    animation: menu-in 0.15s ease;
+    animation: menu-in var(--dur-fast) var(--ease-standard);
 }
 
 @keyframes menu-in {

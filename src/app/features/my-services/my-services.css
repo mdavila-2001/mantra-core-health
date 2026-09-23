@@ -7,9 +7,13 @@
     su propio nombre y su propio pie de tarjeta —parecidos pero no iguales— y
     por eso se veía como otra aplicación al lado del directorio.
 
-    Lo que queda acá es lo único que esta pantalla tiene y las portadas no: el
-    bloque del precio y su edición en el sitio. Sólo distribución: la tarjeta,
-    el distintivo y el botón ya traen su pinta del sistema.
+    El pie de la tarjeta —el precio, su edición y los botones— tampoco: salió a
+    `shared/styles/tarjeta-de-servicio.css` el 11/09/2026, cuando el catálogo
+    de estudios del laboratorio y del centro de imagenología pasó a mostrarse
+    con esta misma tarjeta. Era la misma pinta escrita dos veces.
+
+    Lo que queda acá es lo único que esta pantalla no comparte con nadie: el
+    ancho de la columna y el respiro de la cabecera.
     ========================================================================== */
 
 :host {
@@ -30,70 +34,39 @@
   --rejilla-min: 18rem;
 }
 
-/* El nombre y el distintivo comparten renglón; el distintivo no lo estira. */
-.mis-servicios__ficha {
+
+/* C-12 (2026-09-20) · el modal que programa el horario de un servicio. */
+.programar-servicio {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.programar-servicio__campos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.programar-servicio__dia {
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-2);
 }
 
-/* Empuja el precio y los botones al pie: las tarjetas de una fila terminan a
-   la misma altura, y con esto sus importes quedan alineados aunque los nombres
-   ocupen una o tres líneas. */
-.mis-servicios__precio,
-.mis-servicios__edicion {
-  margin-block-start: auto;
-  padding-block-start: var(--sp-3);
-}
-
-.mis-servicios__precio {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-2);
-  margin-block-end: 0;
-  margin-inline: 0;
-}
-
-.mis-servicios__rotulo {
-  margin: 0;
-  color: var(--text-secondary);
+.programar-servicio__rotulo {
   font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-}
-
-.mis-servicios__monto {
-  margin: 0;
-  font-size: var(--fs-body-lg);
-  line-height: var(--lh-body-lg);
   font-weight: 600;
 }
 
-/* «Definí el precio» ocupa el renglón del importe, con el peso de un dato que
-   falta y no el de una cifra: si se viera igual que un monto, se leería como
-   uno. */
-.mis-servicios__pendiente {
-  color: var(--text-secondary);
-  font-size: var(--fs-body);
-  line-height: var(--lh-body);
-  font-weight: 500;
-}
-
-.mis-servicios__edicion {
+.programar-servicio__rango {
   display: grid;
-  gap: var(--sp-2);
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
 }
 
-.mis-servicios__acciones {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin-block-start: var(--sp-3);
-}
-
-.mis-servicios__mas {
-  display: flex;
-  justify-content: center;
-  margin-block-start: var(--sp-6);
+.programar-servicio__motivo {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
 }

@@ -60,8 +60,12 @@ describe('faker del backend simulado', () => {
     it('cada ocupación y cada municipio de cada paciente existen', () => {
       const ocupaciones = new Set(Object.values(OCUPACION));
       const municipios = new Set(Object.values(MUNICIPIO));
+      // Vacío es «la planilla no lo declara» (personas de USUARIO_PACIENTES):
+      // no es un código inventado. Lo que sí viaja tiene que existir.
       const malos = PACIENTES.filter(
-        (p) => !ocupaciones.has(p.ocupacionId) || !municipios.has(p.municipioId),
+        (p) =>
+          (p.ocupacionId !== '' && !ocupaciones.has(p.ocupacionId)) ||
+          (p.municipioId !== '' && !municipios.has(p.municipioId)),
       ).map((p) => p.displayName);
       expect(malos).toEqual([]);
     });
@@ -100,8 +104,12 @@ describe('faker del backend simulado', () => {
 
   describe('el padrón generado', () => {
     it('tiene volumen suficiente para que haya que paginar', () => {
-      expect(PROFESIONALES.length).toBe(60);
-      expect(PACIENTES.length).toBe(120);
+      // Los quince escritos a mano, los 763 médicos reales de la red de
+      // Alianza Seguros y Nacional Seguros (`insurer-network.ts`) y los 13 de
+      // USUARIO_MEDICOS; 120 pacientes de la maqueta más los 92 de
+      // USUARIO_PACIENTES (`registered-people.ts`).
+      expect(PROFESIONALES.length).toBe(15 + 763 + 13);
+      expect(PACIENTES.length).toBe(120 + 92);
     });
 
     it('no repite identificadores ni slugs', () => {
@@ -113,7 +121,8 @@ describe('faker del backend simulado', () => {
     });
 
     it('reparte edades, ciudades y coberturas en vez de clonar una sola persona', () => {
-      const edades = PACIENTES.map((p) => fk.edadDe(p.birthDate));
+      // Sólo los generados: los reales viajan sin fecha de nacimiento.
+      const edades = PACIENTES.filter((p) => p.origen === undefined).map((p) => fk.edadDe(p.birthDate));
       expect(Math.min(...edades)).toBeLessThan(12);
       expect(Math.max(...edades)).toBeGreaterThan(70);
 
@@ -123,7 +132,9 @@ describe('faker del backend simulado', () => {
     });
 
     it('los teléfonos y las cédulas tienen forma boliviana', () => {
-      const malos = PACIENTES.filter(
+      // Los generados. Los de USUARIO_PACIENTES no traen celular ni cédula:
+      // son personas reales y el repositorio es público.
+      const malos = PACIENTES.filter((p) => p.origen === undefined).filter(
         (p) => !/^\+591 [67]\d{7}$/.test(p.phone) || !/^\d{7}$/.test(p.nationalId),
       ).map((p) => `${p.displayName}: ${p.phone} · ${p.nationalId}`);
       expect(malos).toEqual([]);

@@ -43,48 +43,19 @@
     </p>
   }
 
-  <ul class="evoluciones__lista">
-    @for (atencion of visibles(); track atencion.id) {
-      <li>
-        <app-card variant="outlined" padding="lg">
-          <div class="evoluciones__fila">
-            <div class="evoluciones__datos">
-              <p class="evoluciones__cuando">
-                <time [attr.datetime]="atencion.cuando.toISOString()">
-                  {{ atencion.cuando | date: "d 'de' MMMM, HH:mm" }}
-                </time>
-              </p>
-              <p class="evoluciones__nombre">{{ atencion.paciente }}</p>
-              @if (atencion.motivo) {
-                <p class="evoluciones__motivo">{{ atencion.motivo }}</p>
-              }
-              <p class="evoluciones__marcas">
-                <span class="app-badge" [attr.data-tono]="atencion.estado">
-                  {{ atencion.estadoLabel }}
-                </span>
-                @if (atencion.tipo) {
-                  <span class="evoluciones__marca">{{ atencion.tipo }}</span>
-                }
-                @if (atencion.canal) {
-                  <span class="evoluciones__marca">{{ atencion.canal }}</span>
-                }
-              </p>
-            </div>
-
-            <button
-              app-button
-              variant="secondary"
-              class="evoluciones__accion"
-              [attr.data-testid]="'evoluciones-ver-' + atencion.id"
-              (clicked)="verEvolucion(atencion)"
-            >
-              Ver evolución
-            </button>
-          </div>
-        </app-card>
-      </li>
-    }
-  </ul>
+  @if (visibles().length > 0) {
+    <app-data-table
+      data-testid="evoluciones-tabla"
+      [state]="filasDeTabla()"
+      [columns]="columnas()"
+      [trackBy]="porId"
+      [rowLabel]="nombreDeFila"
+      [rowNavigable]="true"
+      caption="Atenciones del período con su evolución"
+      (rowActivated)="verEvolucion($event)"
+      (retry)="cargar()"
+    />
+  }
 </app-view-state-host>
 
 <!-- Lo que se escribió en esa atención. Se pide al abrir y no al cargar la
@@ -138,3 +109,32 @@
     }
   </app-content-dialog>
 }
+
+<!-- Plantillas de celda de la tabla de evoluciones. -->
+<ng-template #celdaCuando let-atencion>
+  <time [attr.datetime]="atencion.cuando.toISOString()">
+    {{ atencion.cuando | date: "d 'de' MMMM, HH:mm" }}
+  </time>
+</ng-template>
+
+<ng-template #celdaEstado let-atencion>
+  <span class="app-badge" [attr.data-tono]="atencion.estado">{{ atencion.estadoLabel }}</span>
+</ng-template>
+
+<ng-template #celdaAccion let-atencion>
+  <button
+    app-button
+    variant="secondary"
+    size="sm"
+    [attr.data-testid]="'evoluciones-ver-' + atencion.id"
+    [attr.aria-label]="
+      'Ver evolución: ' +
+      atencion.paciente +
+      ', ' +
+      (atencion.cuando | date: &quot;d 'de' MMMM, HH:mm&quot;)
+    "
+    (clicked)="verEvolucion(atencion)"
+  >
+    Ver evolución
+  </button>
+</ng-template>

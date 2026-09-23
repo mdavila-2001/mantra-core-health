@@ -12,10 +12,13 @@ import type {
   NewPractitionerProfile,
   NewRelatedPerson,
   NewSpecialty,
+  OwnCredentialChanges,
+  OwnLicenseChanges,
   OwnPatientProfile,
   OwnPatientProfileChanges,
   OwnPatientSummary,
   OwnPractitionerProfile,
+  OwnSpecialtyChanges,
   PatientDetail,
   PatientMergeEvent,
   PatientMergeEventPage,
@@ -136,6 +139,15 @@ export class ProfilesClient {
         'issuerAdministrativeAreaConceptId',
         query.issuerAdministrativeAreaConceptId,
       );
+    }
+    if (query.aboGroupConceptId !== undefined) {
+      params = params.set('aboGroupConceptId', query.aboGroupConceptId);
+    }
+    if (query.rhFactorConceptId !== undefined) {
+      params = params.set('rhFactorConceptId', query.rhFactorConceptId);
+    }
+    if (query.clinicalLanguageConceptId !== undefined) {
+      params = params.set('clinicalLanguageConceptId', query.clinicalLanguageConceptId);
     }
     if (query.cursor !== undefined) {
       params = params.set('cursor', query.cursor);
@@ -477,6 +489,10 @@ export class ProfilesClient {
       readonly workLandline: string;
       readonly personalEmail: string;
       readonly residenceMunicipalityConceptId: string;
+      /* Facturación. Como en el paciente, `''` BORRA el dato: es la única
+         forma de sacar un NIT que se cargó mal. */
+      readonly taxId: string;
+      readonly taxHolderName: string;
       /* El domicilio (ALV-009): mismo contrato que
          `OwnPatientProfileChanges.homeAddressLines`. Sólo el texto y, si se
          marcó un punto, las dos coordenadas juntas — el municipio ya viaja
@@ -720,6 +736,27 @@ export class ProfilesClient {
    * agregar una nueva — vigente y sin tocar las anteriores, que siguen contando
    * como trayectoria.
    */
+  /**
+   * `PATCH /profiles/practitioners/me/specialties/:id/primary` (UC-05-06·P) —
+   * cuál de las especialidades propias es la principal.
+   *
+   * Sin `profileId`: el sujeto sale de la sesión, como el resto del
+   * autoservicio. Hasta el 13/09/2026 `isPrimary` sólo podía fijarse al
+   * agregar, así que una especialidad cargada después del alta quedaba
+   * adicional para siempre; ver `docs/progress/BLOCKERS.md`.
+   *
+   * Es idempotente: marcar la que ya lo es devuelve la misma especialidad.
+   *
+   * @param specialtyId - La especialidad que pasa a ser la principal.
+   * @returns La especialidad, ya primaria.
+   */
+  setOwnPrimarySpecialty(specialtyId: string): Observable<{ readonly id: string }> {
+    return this.http.patch<{ readonly id: string }>(
+      this.url(`/profiles/practitioners/me/specialties/${specialtyId}/primary`),
+      {},
+    );
+  }
+
   addSpecialty(profileId: string, especialidad: NewSpecialty): Observable<{ readonly id: string }> {
     return this.http.post<{ readonly id: string }>(
       this.url(`/profiles/practitioners/${profileId}/specialties`),
@@ -751,9 +788,7 @@ export class ProfilesClient {
    * llamada: el registro de procesos pide poder cargar varios de cada clase.
    * Nace siempre PENDIENTE de verificación.
    */
-  addOwnCredential(
-    credencial: NewOwnCredential,
-  ): Observable<{ readonly id: string }> {
+  addOwnCredential(credencial: NewOwnCredential): Observable<{ readonly id: string }> {
     return this.http.post<{ readonly id: string }>(
       this.url('/profiles/practitioners/me/credentials'),
       stripUndefined(credencial),
@@ -768,6 +803,83 @@ export class ProfilesClient {
   removeOwnCredential(credentialId: string): Observable<void> {
     return this.http.delete<void>(
       this.url(`/profiles/practitioners/me/credentials/${encodeURIComponent(credentialId)}`),
+    );
+  }
+
+  /* ---- Corregir y retirar lo ya cargado ---------------------------------
+     Las acciones de las tres tablas de «Configurar tu perfil», pedidas por el
+     propietario el 13/09/2026: «que en la tabla se pueda eliminar registros,
+     editar registros o descargar elementos».
+
+     **De los cinco, sólo `removeOwnCredential` existe hoy en la API.** Los
+     otros cuatro los atiende el simulador de la rama `mockup` —que es el
+     backend de esta rama, `mockBackend: true` fijo— y están escritos con la
+     forma REST que le toca a cada recurso, para que publicarlos del lado del
+     servidor no obligue a tocar la pantalla. El hueco queda anotado en
+     `docs/progress/BLOCKERS.md`, no escondido acá. */
+
+  /**
+   * `PATCH /profiles/practitioners/me/credentials/:id` — corrige un título
+   * propio.
+   *
+   * Parcial: lo que no viaja no se toca. Mismo límite que el retiro —sólo
+   * mientras sigue PENDIENTE—, porque un título ya verificado es un hecho de
+   * quien lo comprobó y corregirlo por detrás invalidaría la comprobación.
+   */
+  updateOwnCredential(credentialId: string, cambios: OwnCredentialChanges): Observable<void> {
+    return this.http.patch<void>(
+      this.url(`/profiles/practitioners/me/credentials/${encodeURIComponent(credentialId)}`),
+      stripUndefined(cambios),
+    );
+  }
+
+  /**
+   * `PATCH /profiles/practitioners/me/specialties/:id` — corrige una
+   * especialidad propia.
+   *
+   * `isPrimary` **no viaja acá**: cuál es la principal ya tiene su propia
+   * operación (`setOwnPrimarySpecialty`), que es la que sabe desmarcar a la
+   * anterior. Dos caminos para el mismo hecho dejarían dos principales.
+   */
+  updateOwnSpecialty(specialtyId: string, cambios: OwnSpecialtyChanges): Observable<void> {
+    return this.http.patch<void>(
+      this.url(`/profiles/practitioners/me/specialties/${encodeURIComponent(specialtyId)}`),
+      stripUndefined(cambios),
+    );
+  }
+
+  /**
+   * `DELETE /profiles/practitioners/me/specialties/:id` — retira una
+   * especialidad cargada por error.
+   */
+  removeOwnSpecialty(specialtyId: string): Observable<void> {
+    return this.http.delete<void>(
+      this.url(`/profiles/practitioners/me/specialties/${encodeURIComponent(specialtyId)}`),
+    );
+  }
+
+  /**
+   * `PATCH /profiles/practitioners/me/jurisdiction-authorizations/:id` —
+   * corrige una matrícula propia.
+   */
+  updateOwnLicense(licenseId: string, cambios: OwnLicenseChanges): Observable<void> {
+    return this.http.patch<void>(
+      this.url(
+        `/profiles/practitioners/me/jurisdiction-authorizations/${encodeURIComponent(licenseId)}`,
+      ),
+      stripUndefined(cambios),
+    );
+  }
+
+  /**
+   * `DELETE /profiles/practitioners/me/jurisdiction-authorizations/:id` —
+   * retira una matrícula cargada por error.
+   */
+  removeOwnLicense(licenseId: string): Observable<void> {
+    return this.http.delete<void>(
+      this.url(
+        `/profiles/practitioners/me/jurisdiction-authorizations/${encodeURIComponent(licenseId)}`,
+      ),
     );
   }
 

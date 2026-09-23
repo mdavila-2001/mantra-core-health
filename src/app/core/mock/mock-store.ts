@@ -1,3 +1,5 @@
+import { buildInfo } from '../../../environments/env.generated';
+
 /* ============================================================================
     Ayudantes del backend simulado: identificadores estables, fechas relativas
     a «hoy», paginación por cursor y colecciones en memoria.
@@ -121,7 +123,7 @@ export class Coleccion<T extends { readonly id: string }> {
   private readonly filas = new Map<string, T>();
 
   /** Dónde se guarda, o `null` si esta tabla no sobrevive a la recarga. */
-  private readonly clave: string | null;
+  private clave: string | null;
 
   constructor(iniciales: readonly T[] = [], clave?: string) {
     this.clave = clave ?? null;
@@ -134,12 +136,30 @@ export class Coleccion<T extends { readonly id: string }> {
   }
 
   /**
-   * Lo que quedó de una visita anterior, o `null` si no hay o no se puede leer.
+   * Lo que quedó de una visita anterior, o `null` si no sirve.
    *
-   * Tolerante a propósito: el almacenamiento puede estar bloqueado —modo
-   * privado, política del navegador— o traer basura de una versión anterior de
-   * la maqueta. En cualquiera de los dos casos se arranca de los fixtures, que
-   * es peor que persistir pero mucho mejor que una pantalla rota.
+   * ## Por qué lleva el sello del build, y qué defecto evita
+   *
+   * Lo guardado gana sobre el fixture —esa es toda la gracia de persistir—,
+   * pero eso convierte cada despliegue en una trampa: quien tenga la pestaña
+   * abierta de antes **sigue viendo los datos viejos para siempre**, porque su
+   * `sessionStorage` pisa el fixture nuevo en cada recarga. No hay error, no
+   * hay aviso; la pantalla se ve perfecta y muestra lo que ya no existe.
+   *
+   * Ocurrió de verdad: al traer los laboratorios y las farmacias reales del
+   * corpus boliviano, quien ya tenía la maqueta abierta seguía viendo los ocho
+   * inventados, y desde el navegador no había forma de distinguirlo de un
+   * despliegue que no había llegado.
+   *
+   * El sello es `buildInfo.commit`, que cambia en cada build. Si no coincide,
+   * lo guardado es de otra versión de la maqueta y se descarta: se pierde lo
+   * que esa pestaña hubiera escrito —que es de mentira— y se gana que el
+   * despliegue se vea sin cerrar la pestaña ni vaciar nada a mano.
+   *
+   * Sigue siendo tolerante con todo lo demás: el almacenamiento puede estar
+   * bloqueado (modo privado, política del navegador) o traer basura. En
+   * cualquier caso se arranca de los fixtures, que es mucho mejor que una
+   * pantalla rota.
    */
   private leerGuardadas(): readonly T[] | null {
     if (this.clave === null || typeof sessionStorage === 'undefined') {
@@ -148,20 +168,34 @@ export class Coleccion<T extends { readonly id: string }> {
     try {
       const crudo = sessionStorage.getItem(this.clave);
       if (crudo === null) return null;
-      const filas: unknown = JSON.parse(crudo);
-      return Array.isArray(filas) ? (filas as T[]) : null;
+      const guardado: unknown = JSON.parse(crudo);
+      if (
+        guardado === null ||
+        typeof guardado !== 'object' ||
+        !('build' in guardado) ||
+        !('filas' in guardado)
+      ) {
+        // Formato de antes del sello: es de otra versión por definición.
+        return null;
+      }
+      const { build, filas } = guardado as { build: unknown; filas: unknown };
+      if (build !== buildInfo.commit || !Array.isArray(filas)) return null;
+      return filas as T[];
     } catch {
       return null;
     }
   }
 
-  /** Vuelca la tabla. Silencioso ante fallo: el simulador nunca rompe la app. */
+  /** Vuelca la tabla con su sello. Silencioso ante fallo: nunca rompe la app. */
   private guardar(): void {
     if (this.clave === null || typeof sessionStorage === 'undefined') {
       return;
     }
     try {
-      sessionStorage.setItem(this.clave, JSON.stringify(this.todos()));
+      sessionStorage.setItem(
+        this.clave,
+        JSON.stringify({ build: buildInfo.commit, filas: this.todos() }),
+      );
     } catch {
       // Cuota llena o almacenamiento bloqueado: se sigue en memoria.
     }
@@ -200,6 +234,32 @@ export class Coleccion<T extends { readonly id: string }> {
       this.guardar();
     }
     return borrada;
+  }
+
+  /**
+   * Hace que esta tabla sobreviva a la recarga (F5) dentro de la misma pestaña.
+   *
+   * Es la misma persistencia que la `clave` del constructor, pero aplicable a
+   * una tabla ya construida: los fixtures declaran la colección con sus filas
+   * iniciales en una expresión larga, y agregarle un segundo argumento a cada
+   * constructor multilínea era más ruido que esta línea al pie del archivo.
+   *
+   * Lo guardado gana sobre las filas iniciales, por el mismo motivo que en el
+   * constructor: si no, recargar pisaría con el fixture lo que la persona
+   * acaba de escribir. Nació para la demostración: un registro creado en
+   * pantalla que desaparece con F5 se ve exactamente igual que un guardado que
+   * falló, y no hay forma de explicarle a quien prueba que «era la memoria».
+   */
+  persistirEn(clave: string): this {
+    this.clave = clave;
+    const guardadas = this.leerGuardadas();
+    if (guardadas !== null) {
+      this.filas.clear();
+      for (const fila of guardadas) {
+        this.filas.set(fila.id, fila);
+      }
+    }
+    return this;
   }
 
   filtrar(predicado: (fila: T) => boolean): T[] {
@@ -287,6 +347,70 @@ export function portadaSvg(color = '#0B557E'): string {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg).replace(/\(/g, '%28').replace(/\)/g, '%29')}`;
 }
 /** Una imagen de portada/publicación como SVG con un rótulo. */
+/**
+ * Un **QR de maqueta**: la trama de un código, sin código adentro.
+ *
+ * No codifica nada y no se puede escanear — a propósito. Lo que esta pantalla
+ * tiene que poder mostrar es «acá va la imagen que el profesional subió», y el
+ * rótulo centrado de {@link imagenSvg} no sirve: un rectángulo con texto no se
+ * lee como un QR, así que no deja ver si el modal lo encuadra, lo recorta o lo
+ * estira. La trama sí.
+ *
+ * Determinista por `semilla`: la misma sede dibuja siempre el mismo patrón, y
+ * dos sedes distintas dibujan patrones distintos. Sin eso, cambiar de
+ * consultorio no se notaría en pantalla.
+ *
+ * @param semilla - Texto del que sale el patrón, normalmente el id de la sede.
+ * @param rotulo - Qué cuenta/banco representa, bajo la trama.
+ */
+export function qrSvg(semilla: string, rotulo = 'QR bancario'): string {
+  const MODULOS = 25;
+  const LADO = 12;
+  const MARGEN = 24;
+  const medida = MODULOS * LADO + MARGEN * 2;
+
+  // Congruencia lineal: barata, determinista y suficiente para una trama.
+  let estado = 2166136261;
+  for (const caracter of semilla) {
+    estado = Math.imul(estado ^ caracter.charCodeAt(0), 16777619) >>> 0;
+  }
+  const siguiente = (): number => {
+    estado = (Math.imul(estado, 1664525) + 1013904223) >>> 0;
+    return estado / 4294967296;
+  };
+
+  /** Las tres esquinas de posición: sin ellas la trama no se lee como un QR. */
+  const esEsquina = (fila: number, columna: number): boolean =>
+    (fila < 7 && columna < 7) ||
+    (fila < 7 && columna >= MODULOS - 7) ||
+    (fila >= MODULOS - 7 && columna < 7);
+
+  let trama = '';
+  for (let fila = 0; fila < MODULOS; fila += 1) {
+    for (let columna = 0; columna < MODULOS; columna += 1) {
+      if (esEsquina(fila, columna) || siguiente() <= 0.55) continue;
+      trama += `<rect x="${MARGEN + columna * LADO}" y="${MARGEN + fila * LADO}" width="${LADO}" height="${LADO}"/>`;
+    }
+  }
+
+  const ojo = (fila: number, columna: number): string => {
+    const x = MARGEN + columna * LADO;
+    const y = MARGEN + fila * LADO;
+    return (
+      `<rect x="${x}" y="${y}" width="${LADO * 7}" height="${LADO * 7}" fill="none" stroke="#0f172a" stroke-width="${LADO}"/>` +
+      `<rect x="${x + LADO * 2}" y="${y + LADO * 2}" width="${LADO * 3}" height="${LADO * 3}"/>`
+    );
+  };
+
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${medida}" height="${medida + 56}" viewBox="0 0 ${medida} ${medida + 56}">` +
+    `<rect width="${medida}" height="${medida + 56}" fill="#ffffff"/>` +
+    `<g fill="#0f172a">${trama}${ojo(0, 0)}${ojo(0, MODULOS - 7)}${ojo(MODULOS - 7, 0)}</g>` +
+    `<text x="${medida / 2}" y="${medida + 34}" font-family="Inter, Arial, sans-serif" font-size="22" fill="#334155" text-anchor="middle">${rotulo}</text>` +
+    `</svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 export function imagenSvg(rotulo: string, fondo = '#e8f1f5', tinta = '#1f6f8b'): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540"><rect width="960" height="540" fill="${fondo}"/><circle cx="820" cy="120" r="70" fill="${tinta}" opacity="0.15"/><circle cx="140" cy="440" r="110" fill="${tinta}" opacity="0.12"/><text x="480" y="285" font-family="Inter, Arial, sans-serif" font-size="40" font-weight="600" fill="${tinta}" text-anchor="middle">${rotulo}</text></svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;

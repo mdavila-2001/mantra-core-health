@@ -160,18 +160,17 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/insurance/insurance-analytics/insurance-analytics').then(
       (m) => m.InsuranceAnalytics,
     ),
-  // Contabilidad abre en el **cockpit**: el estado del ejercicio, los documentos
-  // frenados y la cartera. Los libros —balance, diario y el registro de
-  // movimientos— viven en `administration/accounting/libros`, a un clic. El
-  // orden es el que pidió el propietario el 2026-09-12: primero cómo va el
-  // ejercicio, después el renglón por renglón.
+  // Contabilidad abre en el **resumen llano**: cuánto entró hoy, esta semana y
+  // este mes; en qué se va la plata; quién te debe y a quién le debés. Es lo
+  // que el propietario pidió el 2026-09-19 —«se supone que es contabilidad
+  // para no contadores»— después de que la ruta abriera nueve meses en el
+  // cockpit, que es la vista del contador.
+  //
+  // Nada se borró, sólo cambió el orden: el cockpit está en
+  // `administration/accounting/cockpit` y los libros en `.../libros`, los dos
+  // enlazados al pie del resumen.
   'administration/accounting': () =>
-    import('./features/accounting/cockpit/cockpit').then((m) => m.Cockpit),
-  // FT-26 · activos y pasivos, en auto-servicio del doctor.
-  'assets-liabilities': () =>
-    import('./features/assets-liabilities/assets-liabilities').then(
-      (m) => m.AssetsLiabilities,
-    ),
+    import('./features/accounting/resumen/resumen').then((m) => m.Resumen),
   'my-organizations': () =>
     import('./features/organizations/my-organizations').then((m) => m.MyOrganizations),
   'administration/terminology': () =>
@@ -203,6 +202,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/diagnostic-orders/diagnostic-orders').then(
       (m) => m.DiagnosticOrders,
     ),
+  'my-account/cotizaciones': () =>
+    import('./features/account/cotizaciones/cotizaciones').then((m) => m.Cotizaciones),
   'my-account/pharmacy-orders': () =>
     import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
   'my-account/loyalty': () =>
@@ -325,6 +326,42 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  * el guard nunca niega lo que la API permite. `app.routes.spec.ts` fija la regla.
  */
 const PANTALLAS_HIJAS: Routes = [
+  {
+    // El **cockpit contable**: estado del ejercicio, bandeja de documentos por
+    // estado del flujo, cartera por antigüedad y cierre del período. Abría en
+    // `administration/accounting` hasta el 2026-09-19; desde esa fecha esa
+    // dirección es el resumen llano y el cockpit queda un clic más adentro,
+    // enlazado desde su pie. No entra al menú, por lo mismo que los libros.
+    path: 'administration/accounting/cockpit',
+    title: `${APP_TITLE} - Vista contable`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/accounting/cockpit/cockpit')
+        .then((m) => m.Cockpit)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // FT-26 · activos y pasivos, en auto-servicio del doctor. Era la entrada
+    // suelta `assets-liabilities` del menú hasta el 2026-09-19, cuando el
+    // propietario pidió que estuviera «integrado en contabilidad»: son los
+    // mismos libros de la misma práctica, y tenerlos como sección aparte
+    // obligaba a saber de antemano que «activo» y «gasto» no son lo mismo.
+    // Se llega desde el bloque «Lo que tenés y lo que debés» del resumen.
+    //
+    // Declara sus roles en `data` en vez de heredar los de Contabilidad: la
+    // sección padre abre también para `SECURITY_ADMIN` y `ACCOUNTING_APPROVER`,
+    // pero los endpoints de FT-26 son de `PRACTITIONER` puro y un admin
+    // llegaría a una pantalla que sólo sabe devolverle 403. Se conserva
+    // exactamente la autorización que tenía como sección propia.
+    path: 'administration/accounting/assets-liabilities',
+    title: `${APP_TITLE} - Activos y pasivos`,
+    canActivate: [seccionRolesGuard],
+    data: { [ROLES_ROUTE_DATA]: ['PRACTITIONER'] },
+    loadComponent: () =>
+      import('./features/assets-liabilities/assets-liabilities')
+        .then((m) => m.AssetsLiabilities)
+        .catch(() => chunkFallido()),
+  },
   {
     // Los libros: balance de sumas y saldos, diario y el registro de ingresos y
     // gastos. Era la pantalla de Contabilidad hasta el 2026-09-12; ahora esa
@@ -473,17 +510,16 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // La atención: todo lo que se ESCRIBE durante una consulta. Cuelga del
-    // expediente y comparte su compuerta de roles porque es la misma persona y
-    // el mismo permiso; lo que cambia es el modo de trabajo. Vivía dentro del
-    // expediente y se separó: leer una historia y registrar una consulta son
-    // dos cosas distintas, y compartiendo pantalla se estorbaban.
-    path: 'medical-records/:profileId/encounter',
-    title: `${APP_TITLE} - Atención clínica`,
+    // La consulta: lo que se registra mientras se atiende. Nace sólo de
+    // «Iniciar consulta» en la agenda y comparte la compuerta del expediente
+    // porque es la misma persona y el mismo permiso. Es una rejilla con todo lo
+    // que se puede registrar; cada casilla abre su formulario en modal.
+    path: 'medical-records/:profileId/consultation',
+    title: `${APP_TITLE} - Consulta`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
-      import('./features/clinical-record/encounter-workspace/encounter-workspace')
-        .then((m) => m.EncounterWorkspace)
+      import('./features/clinical-record/consultation/consultation')
+        .then((m) => m.Consultation)
         .catch(() => chunkFallido()),
   },
   {
@@ -597,6 +633,39 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/laboratory-directory/laboratory-detail/laboratory-detail')
         .then((m) => m.LaboratoryDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La ficha de una clínica y la de una farmacia: el destino del clic en sus
+    // directorios, **dentro del panel**.
+    //
+    // Hasta el 11/09/2026 ese clic abría `/o/:slug` y `/f/:slug`, que son las
+    // fichas anónimas bajo el marco de la red social: quien entraba por su
+    // propio menú terminaba afuera de la aplicación, en el buscador público. El
+    // cliente lo pidió sacar sin excepciones.
+    //
+    // Cuelgan del directorio y no de un segmento propio porque son su detalle,
+    // igual que `laboratory-directory/:unitId` — y por `:slug` y no por id
+    // porque el slug es la identidad con la que el directorio público las
+    // lista; no sirve ningún otro identificador.
+    //
+    // Sin guard, igual que la ficha de laboratorio: las dos secciones de las
+    // que cuelgan declaran `roles: [ANY_ROLE]`, así que un guard de sección no
+    // acotaría nada y sólo agregaría una barrera que después nadie sabe por qué
+    // está.
+    path: 'clinics-directory/:slug',
+    title: `${APP_TITLE} - Perfil de clínica`,
+    loadComponent: () =>
+      import('./features/public-directories/clinic-detail/clinic-detail')
+        .then((m) => m.ClinicDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'pharmacies-directory/:slug',
+    title: `${APP_TITLE} - Perfil de farmacia`,
+    loadComponent: () =>
+      import('./features/public-directories/pharmacy-detail/pharmacy-detail')
+        .then((m) => m.PharmacyDetail)
         .catch(() => chunkFallido()),
   },
   {
@@ -1045,6 +1114,10 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   clinico: '/medical-records',
   facturacion: '/billing',
   contabilidad: '/administration/accounting',
+  // Activos y pasivos dejó de ser sección propia el 2026-09-19 y pasó a
+  // colgar de Contabilidad. La dirección vieja está en historiales y en
+  // favoritos, así que redirige en vez de dar 404.
+  'assets-liabilities': '/administration/accounting/assets-liabilities',
   'mi-cuenta': '/my-account',
   'mi-cuenta/turnos': '/my-account/appointments',
   'identidad/verificar': '/my-account/identity',

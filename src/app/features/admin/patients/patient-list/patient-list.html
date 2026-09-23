@@ -20,21 +20,23 @@
   </a>
 </app-page-header>
 
-<!-- El campo se nombra solo (publica su propio contexto de control): no va
-     dentro de un app-form-field, o quedarían dos nombres accesibles. -->
-<app-search-field
+<!-- La URL es la fuente de verdad: `app-filter-bar` la lee y la escribe, así
+     que compartir el enlace o volver con el navegador reproduce el filtrado
+     exacto. Documento y teléfono no tienen filtro propio porque ya se buscan
+     por texto libre (`nationalId` viaja dentro de `q`, ver `ProfilesClient`). -->
+<app-filter-bar
   class="pacientes__buscador"
-  label="Buscar pacientes"
-  placeholder="Código de paciente o nombre"
-  [value]="busqueda()"
-  [loading]="cargando()"
-  (searched)="buscar($event)"
+  searchLabel="Buscar pacientes"
+  searchPlaceholder="Código de paciente o nombre"
+  [searchLoading]="cargando()"
+  [filters]="filtros()"
 />
 
 <app-data-table
   [state]="listado()"
   [columns]="columnas()"
   [trackBy]="porPerfil"
+  [rowLabel]="nombreDePaciente"
   caption="Pacientes registrados en la organización"
   [cursor]="cursor()"
   (cursorChanged)="mover($event)"
@@ -59,6 +61,49 @@
     <span class="pacientes__cifra">{{ paciente.birthDate | date: 'dd/MM/yyyy' }}</span>
   } @else {
     <span class="pacientes__vacio" aria-label="Sin fecha de nacimiento registrada">—</span>
+  }
+</ng-template>
+
+<ng-template #celdaDocumento let-paciente>
+  @if (paciente.nationalId) {
+    <span class="pacientes__cifra">{{ paciente.nationalId }}</span>
+  } @else {
+    <!-- El listado de la API todavía no devuelve el documento: hoy sólo lo sirve
+         la maqueta de `mockup` (ver `PatientListItem`). Mientras falte, la celda
+         lo dice en vez de dejar el hueco, que es lo que ese contrato pide. -->
+    <span class="pacientes__vacio" aria-label="Sin documento en el listado">—</span>
+  }
+</ng-template>
+
+<ng-template #celdaTelefono let-paciente>
+  @if (paciente.phone) {
+    <span class="pacientes__cifra">{{ paciente.phone }}</span>
+  } @else {
+    <span class="pacientes__vacio" aria-label="Sin teléfono en el listado">—</span>
+  }
+</ng-template>
+
+<ng-template #celdaAbo let-paciente>
+  @if (etiquetaAbo(paciente.aboGroupConceptId); as etiqueta) {
+    <span class="pacientes__cifra">{{ etiqueta }}</span>
+  } @else {
+    <span class="pacientes__vacio" aria-label="Sin grupo sanguíneo registrado">—</span>
+  }
+</ng-template>
+
+<ng-template #celdaRh let-paciente>
+  @if (etiquetaRh(paciente.rhFactorConceptId); as etiqueta) {
+    <span class="pacientes__cifra">{{ etiqueta }}</span>
+  } @else {
+    <span class="pacientes__vacio" aria-label="Sin factor Rh registrado">—</span>
+  }
+</ng-template>
+
+<ng-template #celdaIdioma let-paciente>
+  @if (etiquetaIdioma(paciente.clinicalLanguageConceptId); as etiqueta) {
+    <span class="pacientes__cifra">{{ etiqueta }}</span>
+  } @else {
+    <span class="pacientes__vacio" aria-label="Sin idioma clínico registrado">—</span>
   }
 </ng-template>
 

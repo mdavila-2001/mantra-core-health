@@ -91,12 +91,6 @@
   }
 }
 
-.mi-perfil__roles {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-
 .mi-perfil__sello {
   margin-block-end: var(--sp-4);
 }
@@ -122,15 +116,10 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* §4.H del plan de UX · los enlaces a lo que salió del menú del médico. En
-   fila y con separación clara: son tres destinos hermanos, no una lista. */
-.mi-perfil__enlaces {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-4);
-  margin-block-start: var(--sp-4);
-  padding-block-start: var(--sp-3);
-  border-block-start: 1px solid var(--border-default);
-}
+/* Acá vivía `.mi-perfil__enlaces`, la tira de enlaces a lo que había salido
+   del menú del médico (§4.H del plan de UX). Se retiró con su único enlace el
+   20/09/2026 (C-02): el consultorio se administra ahora dentro del perfil y
+   ya no hay a qué saltar. Una regla sin quién la use es una pista falsa para
+   el próximo que lea este archivo. */
 
 .mi-perfil__coverages { gap: var(--sp-4); }

@@ -261,7 +261,12 @@
   opacity: 0.72;
 }
 
-.profesional__item-encabezado {
+/* El encabezado de un hito de la línea de tiempo (`.trayecto__encabezado`) es
+   esta misma regla, letra por letra. Se declara una sola vez: dos copias se
+   ven iguales el primer día y se separan en el primer retoque a una de ellas.
+   Además, juntas pasaban el presupuesto de 12 kB del build por 29 bytes. */
+.profesional__item-encabezado,
+.trayecto__encabezado {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -277,7 +282,9 @@
   color: var(--text-secondary);
 }
 
-.profesional__item-fechas {
+/* Ídem: las fechas de un hito de la línea de tiempo son estas mismas. */
+.profesional__item-fechas,
+.trayecto__fechas {
   margin: 0;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
@@ -505,4 +512,188 @@
     grid-template-columns: 1fr 1fr;
     gap: var(--sp-6);
   }
+}
+
+/* ── La trayectoria de la ficha PROPIA, como nodos ──────────────────────────
+   Las tres fases —lo que sigue en curso, lo que terminó y la formación— eran
+   tres listas de la misma tarjeta marfil: doce cajas iguales sin orden ni
+   jerarquía visible. El propietario las rechazó el 13/09/2026 y pidió nodos.
+
+   Lo que hace el dibujo:
+
+   - **Un hilo, no doce cajas.** El fondo vuelve a ser blanco y lo único que
+     queda dibujado es el hilo con su nodo. Sobre marfil, doce rectángulos
+     compiten entre sí; sobre blanco, lo que se ve es la secuencia.
+   - **El color lo pone la fase, en el nodo.** Aguamarina lo vigente, gris lo
+     terminado, y en formación el color del sello del trámite. Es el único
+     lugar donde entra color, así que el color *significa* algo.
+   - **Anillo y no punto.** El punto de 10 px de la ficha ajena se pierde al
+     lado de un badge; el anillo relleno tiene peso suficiente para presidir
+     la fila sin convertirse en una viñeta decorativa.
+
+   Ni un color ni un espacio fuera de los tokens: las tres fases se distinguen
+   por qué token toma `--trayecto-color`, que es lo único que cambia entre
+   ellas. */
+
+.trayecto {
+  margin-block-start: var(--sp-6);
+}
+
+.trayecto:first-of-type {
+  margin-block-start: var(--sp-4);
+}
+
+/* El color de la fase. Lo heredan el anillo y el hilo; nada más lo usa. */
+.trayecto--curso {
+  --trayecto-color: var(--brand-secondary);
+}
+
+.trayecto--pasado {
+  --trayecto-color: var(--border-strong);
+}
+
+.trayecto--formacion {
+  --trayecto-color: var(--brand-primary);
+}
+
+/* El rótulo de la fase. Se aparta del `mi-perfil__subtitulo` —versalitas
+   grises de pie de página— porque acá encabeza un tramo de la historia y tiene
+   que pesar como un encabezado, no como una etiqueta. */
+.trayecto__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* La barrita de color delante del rótulo: dice de qué fase es lo que sigue
+   sin gastar una palabra en decirlo. */
+.trayecto__titulo::before {
+  content: '';
+  inline-size: 3px;
+  block-size: 1.1em;
+  border-radius: var(--r-full);
+  background: var(--trayecto-color);
+}
+
+.trayecto__linea {
+  display: grid;
+  gap: var(--sp-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trayecto__nodo {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-3);
+  align-items: start;
+}
+
+/* El anillo. `margin-block-start` lo alinea con la primera línea del nombre,
+   que es lo que lo hace leer como el nodo DE esa fila y no como una viñeta
+   suelta flotando arriba. */
+.trayecto__marca {
+  inline-size: 14px;
+  block-size: 14px;
+  margin-block-start: 5px;
+  border: 3px solid var(--trayecto-color);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+}
+
+/* El hilo, de un anillo al siguiente. Va sobre el `li` y no sobre el anillo:
+   colgado del anillo sólo podía medirse contra los 14 px del anillo, y el hilo
+   quedaba corto —terminaba en el aire, a media altura del hueco—. Desde el
+   `li` mide contra el alto real del nodo, que es lo que hay que cruzar.
+
+   Al último no le cuelga nada: `:not(:last-child)`. */
+.trayecto__nodo:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  /* El centro del anillo: 14 px de caja (con `box-sizing: border-box`). */
+  inset-inline-start: 7px;
+  /* Justo debajo del anillo, que arranca 5 px más abajo y mide 14. */
+  inset-block-start: calc(19px + var(--sp-1));
+  /* Y baja hasta el anillo siguiente: lo que queda de este nodo, el hueco de
+     la rejilla y los 5 px que el anillo baja para alinearse con el nombre. */
+  inset-block-end: calc((var(--sp-5) + 5px - var(--sp-1)) * -1);
+  inline-size: 2px;
+  transform: translateX(-50%);
+  border-radius: var(--r-full);
+  background: var(--border-default);
+}
+
+.trayecto__cuerpo {
+  display: grid;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+  /* El nodo mide 14 px y el texto arranca más abajo: este relleno le devuelve
+     el aire que la caja marfil daba, sin volver a dibujar la caja. */
+  padding-block-end: var(--sp-1);
+}
+
+.trayecto__nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* El cargo y la institución: el mismo renglón que el nombre, en segundo plano.
+   Es un dato del hito, no otro hito. */
+.trayecto__cargo {
+  color: var(--text-secondary);
+}
+
+/* «Retirar» va debajo y a la izquierda del cuerpo, no al lado del sello:
+   pegada al sello parecía una acción SOBRE el veredicto. */
+.trayecto__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: var(--sp-1) 0 0;
+  /* El botón fantasma trae su propio relleno; esto lo devuelve al filo de la
+     columna para que se alinee con el nombre de arriba. */
+  margin-inline-start: calc(var(--sp-3) * -1);
+}
+
+/* El nodo de un título toma el color de su sello. Mismo mapa variante → tono
+   que usa `app-status-seal`, para que el anillo y el sello no digan cosas
+   distintas de un mismo trámite. */
+.trayecto__nodo--pending,
+.trayecto__nodo--in-review {
+  --trayecto-color: var(--st-warning-fg);
+}
+
+.trayecto__nodo--approved {
+  --trayecto-color: var(--st-success-fg);
+}
+
+.trayecto__nodo--rejected {
+  --trayecto-color: var(--st-error-fg);
+}
+
+.trayecto__nodo--expired {
+  --trayecto-color: var(--st-info-fg);
+}
+
+.trayecto__nodo--unknown {
+  --trayecto-color: var(--border-strong);
+}
+
+/* ─── El chip de telemedicina en la cabecera de la ficha propia ────────────
+   Vive acá y no en `ficha-de-perfil.css` a propósito: ese archivo lo comparte
+   literalmente la ficha del paciente —el cliente pidió que las dos se vean
+   igual—, y un paciente no atiende por telemedicina.
+
+   `justify-self: start` porque `.mi-perfil__rotulo` es una rejilla: sin esto
+   el chip se estira al ancho de la columna y deja de leerse como una
+   etiqueta. */
+.mi-perfil__modalidad {
+  justify-self: start;
 }

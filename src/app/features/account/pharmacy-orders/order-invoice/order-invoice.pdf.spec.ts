@@ -19,9 +19,9 @@ describe('order-invoice pdf', () => {
     expect(todo).toContain('Número: 04213377');
     expect(todo).toContain('Emitida el:');
     expect(todo).toContain('Estado: Enviada al paciente');
-    expect(todo).toContain('Amoxicilina · 500 mg\tx1\t68.00 BOB');
-    expect(todo).toContain('Descuento red AloVida: -6.80 BOB');
-    expect(todo).toContain('Total facturado: 61.20 BOB');
+    expect(todo).toContain('Amoxicilina · 500 mg\tx1\t68.00 Bs');
+    expect(todo).toContain('Descuento red AloVida: -6.80 Bs');
+    expect(todo).toContain('Total facturado: 61.20 Bs');
   });
 
   it('el coaseguro sólo aparece si aplica', () => {
@@ -29,7 +29,7 @@ describe('order-invoice pdf', () => {
     const conSeguro = facturaDePrueba({
       coaseguro: { aseguradora: 'Seguros Bolívar', importe: '13.60', moneda: 'BOB' },
     });
-    expect(textos(conSeguro).join('\n')).toContain('Coaseguro (Seguros Bolívar): 13.60 BOB');
+    expect(textos(conSeguro).join('\n')).toContain('Coaseguro (Seguros Bolívar): 13.60 Bs');
   });
 
   it('sin total dice el vacío honesto y no imprime el identificador técnico', () => {

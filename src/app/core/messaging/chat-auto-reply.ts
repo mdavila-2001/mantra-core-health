@@ -1,6 +1,8 @@
 import { DOCUMENT, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
+import { CommunityClient } from '../data-access/community/community.client';
+
 /** Dónde se guarda la configuración, en este navegador. */
 const CLAVE = 'alovida.chat-respuesta-automatica';
 
@@ -77,20 +79,24 @@ export const CONFIGURACION_POR_DEFECTO: RespuestaAutomatica = {
  * Las tres cosas son configurables, más el texto y una franja horaria
  * opcional: es lo que pidió el propietario —«todo configurable»—.
  *
- * ## Por qué en el navegador, y qué falta para que no lo esté
+ * ## El servidor manda; el navegador es la copia local
  *
- * Porque **no hay dónde guardarlo**: `community.conversation_participants`
- * sólo tiene `muted_until`, y no existe ninguna tabla de preferencias de chat
- * por perfil. Igual que las plantillas y los favoritos, esto vive en
- * `localStorage` hasta que el modelo declare su tabla —ver `[[S6]]` del plan:
- * `community.chat_auto_replies` (perfil, activa, minutos, texto, descanso,
- * franja)—. El día que exista, esta clase cambia de origen y ninguna pantalla
- * se entera: por eso expone señales y no acceso al almacenamiento.
+ * Desde el patch v4.2.9 la configuración vive en `community.chat_auto_replies`
+ * y **la evalúa el servidor ante cada mensaje entrante**, así que contesta
+ * aunque no haya ninguna pestaña abierta — que es lo que separa un contestador
+ * de un recordatorio.
  *
- * Mientras viva acá tiene un límite que conviene decir en voz alta: **sólo
- * contesta con la aplicación abierta**. Una respuesta automática de verdad la
- * manda el servidor aunque tengas el navegador cerrado, y eso es exactamente
- * lo que el carril de backend viene a resolver.
+ * Esta clase sigue guardando una copia en `localStorage` por dos razones
+ * concretas, no por inercia:
+ *
+ * 1. **La pantalla abre con lo último que se vio**, sin esperar la lectura.
+ * 2. **Sin perfil público no hay dónde guardar en el servidor** —la tabla
+ *    cuelga de `public_profiles`—, y quien todavía no lo creó igual puede
+ *    configurarla; se sube sola en cuanto el perfil exista.
+ *
+ * `corresponde()` se conserva para el mismo caso: mientras no haya perfil, el
+ * navegador es el único que puede contestar, y sólo con la aplicación abierta.
+ * Con perfil, la decisión ya la tomó el servidor y esta ruta no se usa.
  *
  * ## SSR
  *
@@ -103,13 +109,106 @@ export class ChatAutoReply {
   private readonly document = inject(DOCUMENT);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
+  private readonly community = inject(CommunityClient);
+
   readonly configuracion = signal<RespuestaAutomatica>(this.leer());
 
-  /** Guarda la configuración, con sus valores acotados a lo que se admite. */
-  guardar(cambios: Partial<RespuestaAutomatica>): void {
+  /** `true` mientras se sube o se baja del servidor. */
+  readonly sincronizando = signal(false);
+
+  /**
+   * `true` si lo que se ve salió del servidor.
+   *
+   * `false` significa que sólo vive en este navegador —no hay perfil público
+   * todavía, o la lectura falló—, y la pantalla lo dice: es la diferencia entre
+   * «contesta siempre» y «contesta mientras tengas esto abierto».
+   */
+  readonly enElServidor = signal(false);
+
+  /**
+   * Trae la configuración del servidor y la adopta.
+   *
+   * Lo que hay en el servidor **gana** sobre la copia local: es lo que se está
+   * aplicando de verdad, aunque se haya configurado desde otro dispositivo.
+   *
+   * @param profileId - El perfil público propio, o `null` si no tiene.
+   */
+  cargar(profileId: string | null): void {
+    if (profileId === null) {
+      this.enElServidor.set(false);
+      return;
+    }
+    this.sincronizando.set(true);
+    this.community.readAutoReply(profileId).subscribe({
+      next: (remota) => {
+        this.sincronizando.set(false);
+        this.enElServidor.set(true);
+        if (remota === null) {
+          // Nunca se configuró en el servidor. Si hay algo local —de antes de
+          // que existiera la tabla— se sube, en vez de perderlo en silencio.
+          if (this.configuracion().activa) {
+            this.subir(profileId);
+          }
+          return;
+        }
+        this.configuracion.set(sanear(desdeElServidor(remota)));
+        this.escribir(CLAVE, JSON.stringify(this.configuracion()));
+      },
+      error: () => {
+        this.sincronizando.set(false);
+        this.enElServidor.set(false);
+      },
+    });
+  }
+
+  /**
+   * Guarda la configuración, con sus valores acotados a lo que se admite.
+   *
+   * Se aplica en el acto y se sube después: la pantalla no tiene por qué
+   * esperar a la red para acusar un interruptor.
+   *
+   * @param cambios - Lo que cambió.
+   * @param profileId - El perfil propio, para subirlo. Sin él queda local.
+   */
+  guardar(cambios: Partial<RespuestaAutomatica>, profileId: string | null = null): void {
     const siguiente = sanear({ ...this.configuracion(), ...cambios });
     this.configuracion.set(siguiente);
     this.escribir(CLAVE, JSON.stringify(siguiente));
+    if (profileId !== null) {
+      this.subir(profileId);
+    }
+  }
+
+  /** Sube lo que hay ahora mismo. */
+  private subir(profileId: string): void {
+    const config = this.configuracion();
+    this.sincronizando.set(true);
+    this.community
+      .upsertAutoReply(profileId, {
+        isActive: config.activa,
+        inactivityMinutes: config.minutosDeInactividad,
+        bodyText: config.texto,
+        cooldownHours: config.horasEntreAvisos,
+        onlyOutsideBusinessHours: config.soloFueraDeHorario,
+        ...(config.soloFueraDeHorario
+          ? {
+              businessHoursFrom: config.horarioDesde,
+              businessHoursTo: config.horarioHasta,
+            }
+          : {}),
+      })
+      .subscribe({
+        next: () => {
+          this.sincronizando.set(false);
+          this.enElServidor.set(true);
+        },
+        error: () => {
+          // Lo elegido sigue valiendo en este navegador; lo que no se puede
+          // prometer es que conteste con la aplicación cerrada.
+          this.sincronizando.set(false);
+          this.enElServidor.set(false);
+        },
+      });
   }
 
   /** Vuelve a lo de fábrica. */
@@ -242,6 +341,30 @@ function sanear(config: RespuestaAutomatica): RespuestaAutomatica {
     soloFueraDeHorario: config.soloFueraDeHorario === true,
     horarioDesde: hora(config.horarioDesde, CONFIGURACION_POR_DEFECTO.horarioDesde),
     horarioHasta: hora(config.horarioHasta, CONFIGURACION_POR_DEFECTO.horarioHasta),
+  };
+}
+
+/** La configuración del servidor, con los nombres que usa la pantalla. */
+function desdeElServidor(remota: {
+  readonly isActive: boolean;
+  readonly inactivityMinutes: number;
+  readonly bodyText: string;
+  readonly cooldownHours: number;
+  readonly onlyOutsideBusinessHours: boolean;
+  readonly businessHoursFrom?: string;
+  readonly businessHoursTo?: string;
+}): RespuestaAutomatica {
+  return {
+    activa: remota.isActive,
+    minutosDeInactividad: remota.inactivityMinutes,
+    texto: remota.bodyText,
+    horasEntreAvisos: remota.cooldownHours,
+    soloFueraDeHorario: remota.onlyOutsideBusinessHours,
+    // Postgres devuelve `time` con segundos; la pantalla usa `HH:MM`.
+    horarioDesde:
+      remota.businessHoursFrom?.slice(0, 5) ?? CONFIGURACION_POR_DEFECTO.horarioDesde,
+    horarioHasta:
+      remota.businessHoursTo?.slice(0, 5) ?? CONFIGURACION_POR_DEFECTO.horarioHasta,
   };
 }
 

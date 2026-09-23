@@ -17,7 +17,7 @@
     cursor: pointer;
     /* el foco lo mueve el menú: no hay salto de scroll dentro del panel */
     scroll-margin: var(--sp-1);
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
 }
 
 :host(:hover),

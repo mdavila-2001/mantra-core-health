@@ -1,0 +1,46 @@
+{
+  "establecimiento": {
+    "id": "string",
+    "nombre": "string",
+    "tipo": "enum/string",
+    "descripcion": "string",
+    "ciudades": "string[]",
+    "servicios": "string[]",
+    "fuentes": "source_id[]"
+  },
+  "sucursal": {
+    "id": "string",
+    "parent_id": "string",
+    "nombre": "string",
+    "direccion": "string|null",
+    "zona": "string|null",
+    "ciudad": "string",
+    "departamento": "string",
+    "telefono": "string|null",
+    "horario": "string|null",
+    "estado_verificacion": "string",
+    "fuentes": "source_id[]"
+  },
+  "prueba": {
+    "id": "string",
+    "nombre_normalizado": "string",
+    "sinonimos_abreviaturas": "string[]",
+    "tipo_entidad": "prueba_individual|panel_perfil",
+    "categoria": "string",
+    "subcategoria": "string|null",
+    "analito_microorganismo_gen_diana": "string|null",
+    "muestras_habituales": "string[]",
+    "metodologias_habituales": "string[]",
+    "tipo_resultado": "string",
+    "unidades_tipicas": "string|null",
+    "uso_indicacion_clinica": "string",
+    "preparacion_paciente": "string|null",
+    "requisitos_preanaliticos_conservacion": "string|null",
+    "tat_orientativo": "string|null",
+    "codigos": "object",
+    "disponibilidad_bolivia_verificada": "boolean|null",
+    "evidencia_disponibilidad_bolivia": "source_id[]",
+    "alcance": "string",
+    "fecha_revision": "date"
+  }
+}

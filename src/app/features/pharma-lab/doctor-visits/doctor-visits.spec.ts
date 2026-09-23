@@ -40,15 +40,29 @@ const AGENDA = {
   ],
 };
 
+/*  Los `code` son los del catálogo real (`pharma_lab.concepts.ts`), no
+    marcadores: la pantalla decide el sello y la oferta de acciones **por
+    código**, así que un `'X'` acá probaría un camino que no existe en
+    producción. */
 const CONCEPTOS = [
   {
     key: 'VISIT_PENDING_CONFIRMATION',
     id: 'c-pendiente',
-    code: 'X',
+    code: 'PHL_VISIT_PENDING_CONFIRMATION',
     display: 'Pendiente de confirmación',
   },
-  { key: 'VISIT_CONFIRMED', id: 'c-confirmada', code: 'X', display: 'Confirmada' },
-  { key: 'MODALITY_IN_PERSON', id: 'c-presencial', code: 'X', display: 'Presencial' },
+  {
+    key: 'VISIT_CONFIRMED',
+    id: 'c-confirmada',
+    code: 'PHL_VISIT_CONFIRMED',
+    display: 'Confirmada',
+  },
+  {
+    key: 'MODALITY_IN_PERSON',
+    id: 'c-presencial',
+    code: 'PHL_MODALITY_IN_PERSON',
+    display: 'Presencial',
+  },
 ];
 
 describe('DoctorVisits', () => {
@@ -101,7 +115,20 @@ describe('DoctorVisits', () => {
 
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(texto).toContain('Presentación de Andexal');
-    expect(texto).toContain('Pendiente de confirmación');
+    // «Por confirmar» y no el rótulo largo del catálogo: en una columna de
+    // tabla, «Pendiente de confirmación» empuja el resto de la fila fuera de
+    // la pantalla. Es la misma palabra que usa la agenda de pacientes.
+    expect(texto).toContain('Por confirmar');
+  });
+
+  it('el estado va con sello —tono, forma y palabra—, como en la agenda', () => {
+    cargar();
+
+    const sello = (fixture.nativeElement as HTMLElement).querySelector(
+      `[data-testid="request-status-${REQUEST_ID}"]`,
+    );
+    expect(sello?.classList.contains('status-seal')).toBe(true);
+    expect(sello?.textContent).toContain('Por confirmar');
   });
 
   it('acepta una solicitud pendiente', () => {

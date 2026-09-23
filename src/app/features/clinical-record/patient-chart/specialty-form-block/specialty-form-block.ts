@@ -33,6 +33,8 @@ import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
+import { SegmentedControl } from '../../../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
@@ -98,6 +100,18 @@ const ENTRADAS_FIJAS: readonly { readonly value: string; readonly label: string 
   { value: BLOQUE_CIRUGIA, label: 'Cirugía' },
   { value: BLOQUE_ODONTOLOGIA, label: 'Odontología' },
   { value: BLOQUE_LABORATORIO, label: 'Laboratorio e imagenología' },
+];
+
+/**
+ * Las dos respuestas de un campo de sí/no, como botones.
+ *
+ * Mismo par que el del motor de formularios y el del alta de agenda: son las
+ * mismas dos palabras en todo el producto, y con ninguna elegida cuando la
+ * pregunta todavía no se contestó.
+ */
+const SI_NO: readonly SegmentedOption<'si' | 'no' | ''>[] = [
+  { value: 'si', label: 'Sí' },
+  { value: 'no', label: 'No' },
 ];
 
 /** Los tipos de dato que este bloque sabe dibujar como campo de captura. */
@@ -211,6 +225,7 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
     Input,
     Odontogram,
     ProceduresBlock,
+    SegmentedControl,
     Select,
   ],
   templateUrl: './specialty-form-block.html',
@@ -218,6 +233,8 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SpecialtyFormBlock {
+  protected readonly siNo = SI_NO;
+
   private readonly chartTemplates = inject(ChartTemplatesClient);
   private readonly forms = inject(FormsClient);
   private readonly profiles = inject(ProfilesClient);
@@ -779,8 +796,25 @@ export class SpecialtyFormBlock {
     return typeof valor === 'number' ? valor : null;
   }
 
-  protected valorBooleano(fieldId: string): boolean {
-    return this.valores()[fieldId] === true;
+  /**
+   * El sí/no de un campo, como lo entiende el control de dos botones.
+   *
+   * `''` es «todavía sin responder», y es por lo que el control existe: una
+   * casilla marcada dice «sí» y desmarcada no dice nada, así que en una ficha
+   * clínica «contestó que no» y «no se preguntó» se guardaban igual. Lo pidió
+   * el propietario para los formularios, y es la misma corrección que ya se
+   * hizo en el alta de agenda.
+   */
+  protected valorSiNo(fieldId: string): 'si' | 'no' | '' {
+    const valor = this.valores()[fieldId];
+    if (valor === true) return 'si';
+    if (valor === false) return 'no';
+    return '';
+  }
+
+  protected responderSiNo(fieldId: string, valor: 'si' | 'no' | ''): void {
+    if (valor === '') return;
+    this.actualizarValor(fieldId, valor === 'si');
   }
 
   protected valorFecha(fieldId: string): Date | null {

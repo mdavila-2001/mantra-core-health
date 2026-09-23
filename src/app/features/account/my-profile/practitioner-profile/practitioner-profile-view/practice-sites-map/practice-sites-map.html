@@ -1,0 +1,56 @@
+<!-- El mapa manda y la lista lo indexa. En teléfono la rejilla colapsa a una
+     columna y el mapa queda arriba: la pregunta de esta pestaña es «dónde». -->
+<div class="sedes">
+  @if (pines().length > 0) {
+    <div class="sedes__mapa">
+      <app-map [pines]="pines()" [etiqueta]="etiquetaDelMapa()" [(seleccionado)]="seleccionada" />
+    </div>
+  }
+
+  <ul class="sedes__lista" data-testid="perfil-sedes-lista">
+    @for (sede of renglones(); track sede.id) {
+      <li
+        class="sedes__item"
+        [class.is-elegida]="seleccionada() === sede.id"
+        data-testid="perfil-sede"
+      >
+        <!-- El renglón entero resalta el pin: los pines no son enfocables, así
+             que éste es el camino por teclado. `aria-pressed` dice si está
+             resaltado, porque el borde de color no se oye. -->
+        <button
+          type="button"
+          class="sedes__boton"
+          [attr.aria-pressed]="seleccionada() === sede.id"
+          (click)="alternar(sede.id)"
+        >
+          <span class="sedes__orden" [class.is-sin-punto]="!sede.ubicada" aria-hidden="true">
+            {{ sede.ubicada ? sede.orden : '—' }}
+          </span>
+          <span class="sedes__texto">
+            <span class="sedes__nombre">{{ sede.nombre }}</span>
+            @if (sede.direccion) {
+              <span class="sedes__direccion">{{ sede.direccion }}</span>
+            }
+            @if (!sede.ubicada) {
+              <span class="sedes__aviso">Sin ubicación cargada: no aparece en el mapa.</span>
+            }
+          </span>
+        </button>
+
+        @if (sede.comoLlegar; as ruta) {
+          <a class="sedes__ruta" [href]="ruta" target="_blank" rel="noopener noreferrer">
+            Cómo llegar
+            <span class="solo-lectores">a {{ sede.nombre }} (se abre en otra pestaña)</span>
+          </a>
+        }
+      </li>
+    }
+  </ul>
+
+  @if (sinUbicar() > 0 && pines().length > 0) {
+    <p class="sedes__pie">
+      {{ sinUbicar() }} de tus {{ renglones().length }} sedes todavía no tienen ubicación cargada.
+      Se agrega desde «Editar tu info», en «Dónde atiendo».
+    </p>
+  }
+</div>

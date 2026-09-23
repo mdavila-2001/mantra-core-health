@@ -1,14 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { CommunityClient } from '../../../../core/data-access/community/community.client';
 import { FilesClient } from '../../../../core/data-access/files/files.client';
 import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
 import type { PracticeSite } from '../../../../core/data-access/practice-sites/practice-sites.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import type {
+  MonthlyCount,
   OwnAddress,
   OwnPractitionerProfile,
+  PractitionerQualityMetrics,
   PractitionerAffiliation,
   PractitionerCredential,
   PractitionerLanguage,
@@ -18,18 +21,25 @@ import type {
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
+import { HelpBlockDismissalStore } from '../../../../core/tutorials/help-block-dismissal.store';
 import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
+import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
+import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import type { StatusSealVariant } from '../../../../shared/components/organisms/status-seal/status-seal.types';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
+import { CONTADORES_DE_ACTIVIDAD } from '../contadores-de-actividad';
+import { PESTANAS_DEL_PERFIL_MEDICO, PESTANA_MEDICO } from '../pestanas-del-perfil-medico';
 import { PractitionerProfileView } from './practitioner-profile-view/practitioner-profile-view';
 import type {
   AfiliacionVisible,
   EspecialidadVisible,
   FormacionVisible,
   IdiomaVisible,
+  IndicadorDeCalidad,
   MatriculaVisible,
   PerfilProfesionalVisible,
+  PuntoDeSerie,
   SedeVisible,
 } from './practitioner-profile-view/practitioner-profile-view.types';
 
@@ -48,6 +58,36 @@ const CODIGOS_EN_ORDEN = ['VERIFIED', 'ACTIVE', 'CRED_VERIFIED', 'AUTH_ACTIVE', 
 
 /** Códigos que significan «todavía no». */
 const CODIGOS_PENDIENTES = ['PENDING', 'ONBOARDING', 'CRED_PENDING', 'AUTH_PENDING', 'IN_REVIEW'];
+
+/**
+ * La clave con la que se recuerda que ya se explicó «Credenciales».
+ *
+ * Es la MISMA que usaba el `app-tab-help-block` que estaba ahí: a quien ya
+ * había cerrado aquella caja no se le empieza a repetir el aviso ahora que es
+ * un toast.
+ */
+const AYUDA_DE_CREDENCIALES = 'perfil-credenciales-ayuda';
+
+/**
+ * La etiqueta de «Credenciales», para reconocer la pestaña por su nombre.
+ *
+ * **No por su índice.** «Facturación» sólo se dibuja en la ficha propia con
+ * datos de facturación, así que el índice de todo lo que va después se corre
+ * en uno cuando falta: con el índice fijo, el aviso no salía nunca en una
+ * ficha sin facturación y salía en «Actividad» en una con ella. Lo destapó el
+ * spec al juntar las dos correcciones del 19/09/2026.
+ */
+const ETIQUETA_DE_CREDENCIALES = PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.credenciales];
+
+/** Lo que dice ese aviso. Es el texto del bloque que reemplaza, sin el ejemplo. */
+const AVISO_DE_CREDENCIALES =
+  'Acá se separa lo que declaraste de lo que ya fue verificado contra una fuente ' +
+  '—el colegio médico, el registro de matrículas—. Declarar no exige verificación previa.';
+
+/** Lo que se dice cuando la cuenta no tiene dónde guardar la foto. */
+const SIN_PERFIL_PARA_LA_FOTO =
+  'Tu cuenta todavía no está asociada a un perfil profesional, así que no hay ' +
+  'dónde guardar la foto. Escribinos para que la vinculemos.';
 
 /** El perfil crudo junto a lo que se resolvió aparte para pintarlo. */
 interface PerfilResuelto {
@@ -115,6 +155,10 @@ export class PractitionerProfile {
   private readonly files = inject(FilesClient);
   private readonly sites = inject(PracticeSitesClient);
   private readonly auth = inject(AuthService);
+  private readonly community = inject(CommunityClient);
+  private readonly dialogs = inject(DialogService);
+  private readonly toasts = inject(ToastService);
+  private readonly ayudas = inject(HelpBlockDismissalStore);
 
   protected readonly perfil = signal<ViewState<PerfilResuelto>>(loading());
 
@@ -130,6 +174,177 @@ export class PractitionerProfile {
 
   protected recargar(): void {
     this.cargar();
+  }
+
+  /* -- La foto de perfil (P17) -------------------------------------------- */
+
+  /** Mientras la foto viaja. La vista lo usa para bloquear el control. */
+  protected readonly fotoSubiendo = signal(false);
+
+  /** Qué salió mal del otro lado. Vacío es que no pasó nada. */
+  protected readonly errorDeFoto = signal('');
+
+  /**
+   * La foto recién subida, ya en `data:`.
+   *
+   * La vista recibe el perfil por `input()` y no puede releerlo sola, así que
+   * se le dice cuál es la foto nueva. Es una `data:` URL y no un `blob:` ni la
+   * firma de descarga: la CSP declara `img-src 'self' data:`, y la firma apunta
+   * a `file://local/<sha>`, que ningún `<img>` carga.
+   */
+  protected readonly fotoRecien = signal<string | null>(null);
+
+  /**
+   * Sube la foto que eligió la persona y la fija como foto del perfil.
+   *
+   * **Son dos llamadas y no una, a propósito.** `POST /common/files/upload`
+   * recibe los bytes por `multipart`; `PUT /profiles/practitioners/:id/photo`
+   * es un JSON idempotente que recibe el **id** del archivo. Mezclarlos
+   * obligaría al perfil a hablar dos idiomas y a reenviar la foto entera cada
+   * vez que alguien corrige otro dato.
+   *
+   * **Una subida pinta ambas.** `health_practitioner_profiles.photo_file_id`
+   * (arriba) y `community.public_profiles.avatar_file_id` (la vitrina pública)
+   * son columnas independientes que nada sincroniza del lado del servidor. Ver
+   * {@link propagarAVitrina}.
+   */
+  protected subirFoto(archivo: File): void {
+    if (this.fotoSubiendo()) {
+      return;
+    }
+
+    const profileId = this.auth.practitionerProfileId();
+    if (profileId === null) {
+      // Antes se salía en silencio: se elegía una foto, no pasaba nada, y no
+      // había forma de saber que el problema no era la imagen. Pasa de verdad
+      // —una cuenta cuya persona no tiene perfil profesional no lleva el claim
+      // `hpid`—, así que se dice, y se dice lo que la persona puede hacer.
+      this.errorDeFoto.set(SIN_PERFIL_PARA_LA_FOTO);
+      return;
+    }
+
+    this.fotoSubiendo.set(true);
+    this.errorDeFoto.set('');
+
+    this.files
+      .upload(archivo, 'IMAGE', 'NORMAL')
+      .pipe(
+        switchMap((subido) => this.profiles.setPractitionerPhoto(profileId, subido.id)),
+        switchMap((guardado) =>
+          this.propagarAVitrina(guardado.photoFileId).pipe(map(() => guardado)),
+        ),
+        switchMap((guardado) => this.files.imageDataUrl(guardado.photoFileId ?? '')),
+      )
+      .subscribe({
+        next: (fotoUrl) => {
+          this.fotoSubiendo.set(false);
+          this.fotoRecien.set(fotoUrl);
+        },
+        error: () => {
+          this.fotoSubiendo.set(false);
+          this.errorDeFoto.set('No pudimos subir la foto. Probá con otra imagen.');
+        },
+      });
+  }
+
+  /**
+   * Repite la foto recién fijada en la vitrina pública, si el titular ya tiene
+   * una.
+   *
+   * **Sin vitrina no se crea una implícita.** El `PUT /community/profiles/me`
+   * exige `tenantId`, `slug` y `displayName`: adivinarlos acá sería inventarle
+   * a alguien una dirección pública que nunca pidió. Quien no tiene vitrina
+   * sigue viendo su foto en «Mi perfil» — sólo no se propaga a ningún lado más.
+   *
+   * **Se manda el objeto completo leído del servidor.** El `PUT` es completo
+   * (no un `PATCH`): mandar sólo `{ avatarFileId }` borraría `visibility` y
+   * cualquier otro campo que la persona haya declarado en otra pantalla.
+   *
+   * **Best-effort.** Un fallo acá no debe tumbar la foto profesional, que ya
+   * quedó guardada en el paso anterior — se traga el error y se sigue.
+   *
+   * @param fileId - El id del archivo recién fijado como foto profesional.
+   * @returns Un observable que siempre completa, nunca falla.
+   */
+  private propagarAVitrina(fileId: string | undefined): Observable<unknown> {
+    if (!fileId) {
+      return of(undefined);
+    }
+    return this.community.getOwnProfile().pipe(
+      switchMap((vitrina) => {
+        if (!vitrina) {
+          return of(undefined);
+        }
+        return this.community.upsertOwnProfile({
+          tenantId: vitrina.tenantId,
+          slug: vitrina.slug,
+          displayName: vitrina.displayName,
+          headline: vitrina.headline,
+          biography: vitrina.biography,
+          acceptsReviews: vitrina.acceptsReviews,
+          avatarFileId: fileId,
+        });
+      }),
+      catchError(() => of(undefined)),
+    );
+  }
+
+  /* -- Retirar un título y el aviso de «Credenciales» --------------------- */
+
+  /**
+   * Retira un título propio cargado por error (ALV-009/formación).
+   *
+   * Con confirmación, mismo criterio que retirar una sede: no es un clic sin
+   * vuelta atrás. La vista sólo ofrece el botón mientras el título sigue
+   * PENDIENTE, así que el `422` por un estado que cambió justo antes es el
+   * único camino de error real, y se avisa igual.
+   */
+  protected async retirarCredencial(estudio: FormacionVisible): Promise<void> {
+    const confirmado = await this.dialogs.confirm({
+      title: 'Retirar este título',
+      message: `¿Retirar «${estudio.tipo}» de tu formación? Todavía está pendiente de verificación.`,
+      confirmLabel: 'Retirar',
+      cancelLabel: 'Cancelar',
+    });
+    if (!confirmado) {
+      return;
+    }
+    this.profiles.removeOwnCredential(estudio.id).subscribe({
+      next: () => {
+        this.toasts.success('Se retiró el título.', 'Formación');
+        this.recargar();
+      },
+      error: () => {
+        this.toasts.error('No se pudo retirar el título. Probá de nuevo.', 'Formación');
+      },
+    });
+  }
+
+  /**
+   * El aviso de «Credenciales», una sola vez por cuenta y **al abrir esa
+   * pestaña**, no al abrir la ficha.
+   *
+   * Se decide acá y no en el panel porque el contenido proyectado de una
+   * pestaña se instancia aunque la pestaña esté cerrada —el `@if` de `app-tab`
+   * decide si se INSERTA en el DOM, no si se construye—, así que lanzado desde
+   * el panel saltaba estando en «Datos personales».
+   *
+   * Era un `effect` dentro de la vista y ya no hace falta que lo sea: la vista
+   * avisa qué pestaña abrió una persona, y este método sólo corre por esa
+   * acción. Con eso se va también la guarda de plataforma que tenía: se leía
+   * `localStorage` en cada dibujo, incluido el del servidor, donde no existe y
+   * el aviso se habría pintado en el HTML. Sin dibujo que lo dispare, no hay
+   * nada que evitar.
+   */
+  protected alVerPestana(etiqueta: string): void {
+    if (etiqueta !== ETIQUETA_DE_CREDENCIALES) {
+      return;
+    }
+    if (this.ayudas.isDismissed(AYUDA_DE_CREDENCIALES)) {
+      return;
+    }
+    this.ayudas.dismiss(AYUDA_DE_CREDENCIALES);
+    this.toasts.info(AVISO_DE_CREDENCIALES, 'Credenciales');
   }
 
   private cargar(): void {
@@ -206,16 +421,20 @@ export class PractitionerProfile {
       aceptaPacientesNuevos: perfil.acceptsNewPatients,
       telemedicina: perfil.telehealthAvailable,
       bio: perfil.professionalBio ?? '',
-      actividad: [
-        { clave: 'encuentros', rotulo: 'Encuentros atendidos', valor: perfil.activity.encounters },
-        {
-          clave: 'recetas',
-          rotulo: 'Recetas emitidas',
-          valor: perfil.activity.medicationRequests,
-        },
-        { clave: 'notas', rotulo: 'Notas clínicas', valor: perfil.activity.clinicalNotes },
-        { clave: 'documentos', rotulo: 'Documentos publicados', valor: perfil.activity.documents },
-      ],
+      /* Los rótulos y los pies salen de `CONTADORES_DE_ACTIVIDAD`, que es la
+         misma lista que enumera la pestaña «Actividad» del editor para decir
+         que ninguno se edita. Estaban escritos acá a mano y eran el único
+         lugar que los mostraba; con dos superficies, una lista sola se despega
+         en el primer retoque. Acá se le agrega el valor; el editor no lo
+         necesita. */
+      actividad: CONTADORES_DE_ACTIVIDAD.map(({ clave, rotulo, pie, campo }) => ({
+        clave,
+        rotulo,
+        pie,
+        valor: perfil.activity[campo],
+      })),
+      actividadMensual: serieMensual(perfil.activity.monthlyEncounters),
+      calidad: indicadoresDeCalidad(perfil.activity.quality),
       especialidades,
       formacion: this.formacion(perfil, etiquetas),
       matriculas: this.matriculas(perfil, etiquetas),
@@ -243,6 +462,13 @@ export class PractitionerProfile {
         correoPersonal: perfil.personalEmail ?? '',
         direccion: perfil.homeAddress?.lines ?? '',
         mapaDomicilio: enlaceAlMapa(perfil.homeAddress),
+      },
+      // A nombre de quién factura. Va sólo en la ficha propia: el contenedor
+      // de la guía lo deja en `null` porque el NIT de un colega no es de quien
+      // lo mira.
+      facturacion: {
+        nit: perfil.taxId ?? '',
+        razonSocial: perfil.taxHolderName ?? '',
       },
       actividadActual: afiliaciones.actual,
       experienciaHistorica: afiliaciones.historica,
@@ -442,6 +668,126 @@ function enlaceAlMapa(direccion: OwnAddress | undefined): string | null {
   if (latitude == null || longitude == null) return null;
   if (latitude === 0 && longitude === 0) return null;
   return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+}
+
+/* ============================================================================
+    La pestaña «Actividad»
+
+    Cuatro contadores sueltos no contestan nada: no dicen si la práctica crece
+    ni cómo se atiende. Estas dos funciones convierten lo que el backend
+    manda —una serie mensual y pares «cuántas de cuántas»— en lo que la ficha
+    dibuja. Los cocientes se calculan acá, UNA vez, y no en la plantilla.
+    ========================================================================== */
+
+/** Cómo se rotula un mes: «sep» bajo la barra, «septiembre de 2026» al oírla. */
+const MES_CORTO = new Intl.DateTimeFormat('es-BO', { month: 'short' });
+const MES_LARGO = new Intl.DateTimeFormat('es-BO', { month: 'long', year: 'numeric' });
+
+/**
+ * La serie mensual, con sus etiquetas resueltas.
+ *
+ * El mes se arma con `new Date(año, mes - 1, 1)` y no parseando `'2026-09'`
+ * como fecha ISO: eso último se interpreta en UTC y en Bolivia (UTC-4)
+ * retrocede al mes anterior — septiembre se rotularía «ago».
+ */
+function serieMensual(serie: readonly MonthlyCount[] | undefined): readonly PuntoDeSerie[] {
+  if (serie === undefined) {
+    return [];
+  }
+  return serie.map(({ month, count }) => {
+    const [anio, mes] = month.split('-').map(Number);
+    const fecha = new Date(anio ?? 1970, (mes ?? 1) - 1, 1);
+    return {
+      clave: month,
+      etiqueta: MES_CORTO.format(fecha).replace('.', ''),
+      etiquetaLarga: MES_LARGO.format(fecha),
+      valor: count,
+    };
+  });
+}
+
+/** Un porcentaje entero, en palabras. */
+function porcentaje(parte: number, total: number): string {
+  return `${Math.round((parte / total) * 100)} %`;
+}
+
+/**
+ * Los indicadores de calidad, ya resueltos.
+ *
+ * **Un indicador sin denominador no se muestra.** «91 % de asistencia» sobre
+ * cero citas no es un 91 %: es una división por cero disfrazada de logro. Cada
+ * bloque comprueba su total antes de agregarse.
+ */
+function indicadoresDeCalidad(
+  calidad: PractitionerQualityMetrics | undefined,
+): readonly IndicadorDeCalidad[] {
+  if (calidad === undefined) {
+    return [];
+  }
+  const indicadores: IndicadorDeCalidad[] = [];
+
+  if (calidad.scheduledAppointments > 0) {
+    indicadores.push({
+      clave: 'asistencia',
+      rotulo: 'Asistencia de pacientes',
+      valor: porcentaje(calidad.attendedAppointments, calidad.scheduledAppointments),
+      detalle: `${calidad.attendedAppointments} de ${calidad.scheduledAppointments} citas agendadas`,
+      proporcion: calidad.attendedAppointments / calidad.scheduledAppointments,
+    });
+  }
+
+  if (calidad.attendedAppointments > 0) {
+    indicadores.push({
+      clave: 'puntualidad',
+      rotulo: 'Consultas iniciadas a horario',
+      valor: porcentaje(calidad.onTimeAppointments, calidad.attendedAppointments),
+      detalle: `${calidad.onTimeAppointments} de ${calidad.attendedAppointments}, dentro de los 10 minutos acordados`,
+      proporcion: calidad.onTimeAppointments / calidad.attendedAppointments,
+    });
+  }
+
+  if (calidad.closedEncounters > 0) {
+    indicadores.push({
+      clave: 'documentacion',
+      rotulo: 'Notas clínicas dentro de 24 h',
+      valor: porcentaje(calidad.notesWithin24h, calidad.closedEncounters),
+      detalle: `${calidad.notesWithin24h} de ${calidad.closedEncounters} encuentros cerrados`,
+      proporcion: calidad.notesWithin24h / calidad.closedEncounters,
+    });
+  }
+
+  if (calidad.uniquePatients > 0) {
+    indicadores.push({
+      clave: 'retencion',
+      rotulo: 'Pacientes que vuelven',
+      valor: porcentaje(calidad.returningPatients, calidad.uniquePatients),
+      detalle: `${calidad.returningPatients} de ${calidad.uniquePatients} personas atendidas volvieron`,
+      proporcion: calidad.returningPatients / calidad.uniquePatients,
+    });
+  }
+
+  // Los dos últimos NO son proporciones: van con su cifra y sin barra.
+  if (calidad.ratingAverage !== null && calidad.ratingCount > 0) {
+    indicadores.push({
+      clave: 'valoracion',
+      rotulo: 'Valoración de pacientes',
+      valor: `${calidad.ratingAverage.toLocaleString('es-BO', { minimumFractionDigits: 1 })} / 5`,
+      detalle: `${calidad.ratingCount} valoraciones`,
+      proporcion: null,
+    });
+  }
+
+  if (calidad.averageDurationMinutes !== null) {
+    indicadores.push({
+      clave: 'duracion',
+      rotulo: 'Duración media de la consulta',
+      valor: `${calidad.averageDurationMinutes} min`,
+      detalle: 'Desde que empieza hasta que la cerrás',
+      proporcion: null,
+    });
+  }
+
+  return indicadores;
 }
 
 /**

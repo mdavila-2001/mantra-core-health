@@ -29,8 +29,20 @@ describe('ChatPreferences', () => {
 
   afterEach(() => localStorage.clear());
 
+  /**
+   * El interruptor nativo que `app-switch` pone adentro: el `data-testid` va en
+   * el host del átomo, y lo que se acciona es su `input[role="switch"]`.
+   */
+  const interruptor = (testid: string): HTMLInputElement => {
+    const control = consultar(testid)?.querySelector('input[role="switch"]');
+    if (control === null || control === undefined) {
+      throw new Error(`«${testid}» no ofrece interruptor`);
+    }
+    return control as HTMLInputElement;
+  };
+
   const encender = (): void => {
-    (consultar('chat-prefs-activa') as HTMLInputElement).click();
+    interruptor('chat-prefs-activa').click();
     fixture.detectChanges();
   };
 
@@ -39,6 +51,14 @@ describe('ChatPreferences', () => {
 
     expect(aviso).toContain('abierto');
     expect(aviso).toContain('otro dispositivo');
+  });
+
+  it('el encendido es un interruptor y se anuncia por su nombre', () => {
+    const control = interruptor('chat-prefs-activa');
+
+    expect(control.getAttribute('role')).toBe('switch');
+    expect(control.getAttribute('aria-checked')).toBe('false');
+    expect(control.getAttribute('aria-label')).toBe('Contestar sola cuando no estoy');
   });
 
   it('apagada no ofrece configurar lo que no tiene efecto', () => {
@@ -86,7 +106,7 @@ describe('ChatPreferences', () => {
     encender();
     expect(consultar('chat-prefs-desde')).toBeNull();
 
-    (consultar('chat-prefs-horario') as HTMLInputElement).click();
+    interruptor('chat-prefs-horario').click();
     fixture.detectChanges();
 
     expect(consultar('chat-prefs-desde')).not.toBeNull();

@@ -1,9 +1,9 @@
 # Runbooks
 
-Doce procedimientos, uno por síntoma. Cada uno con la misma estructura: síntoma,
+Trece procedimientos, uno por síntoma. Cada uno con la misma estructura: síntoma,
 impacto, diagnóstico seguro, evidencia, mitigación, reversión y escalamiento.
 
-> **Advertencia que aplica a los doce.** No hay telemetría ni monitoreo, así que
+> **Advertencia que aplica a los trece.** No hay telemetría ni monitoreo, así que
 > **la detección depende de que alguien reporte**. Y no hay despliegue de
 > producción, así que varios pasos describen un entorno que todavía no existe.
 > Ver [respuesta a incidentes](../../security/incident-response.md).
@@ -26,6 +26,7 @@ impacto, diagnóstico seguro, evidencia, mitigación, reversión y escalamiento.
 | 10 | [Aumento de errores del navegador](aumento-errores.md) | Regresión, o la API degradada |
 | 11 | [Degradación de Core Web Vitals](degradacion-web-vitals.md) | Crecimiento del paquete |
 | 12 | [Reversión de una entrega](rollback-de-release.md) | Cualquiera de los anteriores |
+| 13 | [El mockup no publica lo que ya está en la rama](mockup-no-publica.md) | El build muere por memoria y el temporizador no reintenta |
 
 ## Lo primero, siempre
 

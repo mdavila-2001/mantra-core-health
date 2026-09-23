@@ -5,11 +5,15 @@
       variant="ghost"
       size="sm"
       type="button"
+      [iconOnly]="true"
       data-testid="semana-anterior"
       aria-label="Semana anterior"
       (clicked)="anterior()"
     >
-      ←
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m15 18-6-6 6-6" />
+      </svg>
     </button>
 
     <div class="semana__cabecera">
@@ -22,6 +26,11 @@
         } @else {
           {{ totalLibres() }} {{ totalLibres() === 1 ? 'turno libre' : 'turnos libres' }}.
         }
+        @if (totalTomados() > 0) {
+          <span class="semana__resumen-extra">
+            · {{ totalTomados() }} con paciente
+          </span>
+        }
       </p>
     </div>
 
@@ -30,46 +39,66 @@
       variant="ghost"
       size="sm"
       type="button"
+      [iconOnly]="true"
       data-testid="semana-siguiente"
       aria-label="Semana siguiente"
       (clicked)="siguiente()"
     >
-      →
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m9 18 6-6-6-6" />
+      </svg>
     </button>
   </header>
 
   <ol class="semana__dias">
     @for (dia of dias(); track dia.fecha.getTime()) {
-      <li class="semana__dia" [attr.data-estado]="dia.estado">
+      <li
+        class="semana__dia"
+        [attr.data-estado]="dia.estado"
+        [class.semana__dia--hoy]="dia.fecha.getTime() === hoy()"
+      >
         <button
           type="button"
           class="semana__boton"
           [attr.data-testid]="'semana-dia'"
+          [attr.aria-current]="dia.fecha.getTime() === hoy() ? 'date' : null"
           (click)="diaElegido.emit(dia.fecha)"
         >
-          <span class="semana__nombre">{{ dia.fecha | date: 'EEE' }}</span>
-          <span class="semana__numero">{{ dia.fecha | date: 'd' }}</span>
+          <span class="semana__fecha">
+            <span class="semana__nombre">{{ dia.fecha | date: 'EEE' }}</span>
+            <span class="semana__numero">{{ dia.fecha | date: 'd' }}</span>
+          </span>
 
           <!-- El estado se dice con PALABRAS además de con color: quien no
                distingue tonos tiene que poder leer si el día está cerrado. -->
-          @switch (dia.estado) {
-            @case ('bloqueado') {
-              <span class="semana__estado">{{ dia.motivo ?? 'Cerrado' }}</span>
-            }
-            @case ('sin-agenda') {
-              <span class="semana__estado">No atendés</span>
-            }
-            @case ('lleno') {
-              <span class="semana__estado">Lleno · {{ dia.tomados }}</span>
-            }
-            @default {
-              <span class="semana__estado">
+          <span class="semana__estado">
+            <span class="semana__punto" aria-hidden="true"></span>
+            @switch (dia.estado) {
+              @case ('bloqueado') {
+                {{ dia.motivo ?? 'Cerrado' }}
+              }
+              @case ('sin-agenda') {
+                No atendés
+              }
+              @case ('lleno') {
+                Lleno · {{ dia.tomados }}
+              }
+              @default {
                 {{ dia.libres }} {{ dia.libres === 1 ? 'libre' : 'libres' }}
                 @if (dia.tomados > 0) {
                   · {{ dia.tomados }} con paciente
                 }
-              </span>
+              }
             }
+          </span>
+
+          <!-- Cuánto del día está tomado, de un vistazo. Decorativa: el número
+               ya está dicho en palabras justo arriba. -->
+          @if (ocupacion(dia) !== null) {
+            <span class="semana__barra-ocupacion" aria-hidden="true">
+              <span class="semana__barra-relleno" [style.width.%]="ocupacion(dia)"></span>
+            </span>
           }
         </button>
 
@@ -82,9 +111,38 @@
         @if (dia.citas.length > 0) {
           <ul class="semana__citas" data-testid="semana-citas">
             @for (cita of dia.citas; track cita.id) {
+              <!-- C-08 (2026-09-20) · cada cita se DESPLIEGA con el mismo globo
+                   que el día muestra en su detalle.
+
+                   Hasta acá eran texto suelto, con este motivo escrito al lado:
+                   «un `<ul>` dentro de un `<button>` es HTML inválido». Sigue
+                   siendo cierto, y por eso la lista sigue FUERA del botón del
+                   día; lo que cambia es que ahora cada renglón es su propio
+                   botón, que es HTML válido y además le da a cada cita su
+                   propia parada de teclado.
+
+                   El globo aparece con el puntero Y con el foco: un `hover` que
+                   sólo responde al ratón deja afuera a quien navega con
+                   teclado, que es exactamente el kill-test de este hito. -->
               <li class="semana__cita">
-                <span class="semana__hora">{{ cita.desde | date: 'HH:mm' }}</span>
-                <span class="semana__paciente">{{ cita.paciente }}</span>
+                <button
+                  type="button"
+                  class="semana__cita-boton"
+                  data-testid="semana-cita"
+                  [attr.aria-describedby]="'globo-' + cita.id"
+                  (click)="citaElegida.emit(cita.reserva)"
+                >
+                  <span class="semana__hora">{{ cita.desde | date: 'HH:mm' }}</span>
+                  <span class="semana__paciente">{{ cita.paciente }}</span>
+                </button>
+                <span class="semana__globo" role="tooltip" [id]="'globo-' + cita.id">
+                  @for (par of cita.detalle; track par.label) {
+                    <span class="semana__globo-par">
+                      <span class="semana__globo-rotulo">{{ par.label }}</span>
+                      <span class="semana__globo-valor">{{ par.value }}</span>
+                    </span>
+                  }
+                </span>
               </li>
             }
             @if (dia.masCitas > 0) {

@@ -136,3 +136,102 @@
   display: block;
   margin-block-start: var(--sp-5);
 }
+
+/* Las tablas de lo ya cargado van debajo de su «Agregar», dentro de la misma
+   sección: son la respuesta a «¿dónde quedó lo que acabo de cargar?». */
+.edicion__subtitulo {
+  margin: var(--sp-6) 0 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.edicion__tabla {
+  display: block;
+  margin-block-start: var(--sp-3);
+}
+
+.edicion__vacio {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+/* ── La columna de acciones de las tres tablas ──────────────────────────────
+   Los botones en una fila, alineados al final de la celda: es la columna más a
+   la derecha y es donde la vista los busca. `flex-wrap` porque en el teléfono
+   tres botones no entran en el ancho de una celda, y prefiero que bajen a que
+   la tabla scrollee de lado para alcanzar «Retirar». */
+.edicion__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-1);
+}
+
+/* Lo que ya no se puede corregir dice por qué, en vez de dejar la celda vacía:
+   una celda en blanco se lee como una pantalla a medio cargar. */
+.edicion__acciones-nota {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+}
+
+/* ── Los cuatro contadores de «Actividad», que no se editan ─────────────────
+   Se dibujan como la lista de una ficha y no como campos deshabilitados: un
+   control apagado invita a buscar cómo encenderlo, y acá no hay forma —el
+   número lo lleva la plataforma—. Cada renglón dice qué cuenta y qué hay que
+   hacer para moverlo, que es la pregunta real de quien entró a corregirlo. */
+.edicion__contadores {
+  display: grid;
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.edicion__contador {
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+}
+
+.edicion__contador-rotulo {
+  margin: 0;
+  font-weight: 600;
+}
+
+.edicion__contador-pie {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* ── Lo del alta que se muestra y no se corrige acá ─────────────────────────
+   Documento, departamento emisor y correo de trabajo. Mismo dibujo que un
+   renglón de la ficha —rótulo chico arriba, dato al tamaño del cuerpo— porque
+   eso es lo que son: se leen, no se escriben. */
+.edicion__fijos {
+  margin-block-start: var(--sp-6);
+}
+
+.edicion__fijo {
+  margin: var(--sp-3) 0 0;
+}
+
+.edicion__fijo dt {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.edicion__fijo dd {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+/* El departamento, al lado del número y en segundo plano: es un sufijo del
+   documento, no un dato aparte. */
+.edicion__fijo-sufijo {
+  margin-left: var(--sp-2);
+  color: var(--text-muted);
+}

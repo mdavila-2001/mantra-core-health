@@ -40,6 +40,7 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 
+import { Tooltip } from '../../atoms/tooltip/tooltip';
 import { Menu } from '../menu/menu';
 import { MenuItem } from '../menu/menu-item/menu-item';
 import { MenuTrigger } from '../menu/menu-trigger/menu-trigger';
@@ -53,7 +54,7 @@ import {
 
 @Component({
   selector: 'app-post-preferences-menu',
-  imports: [Menu, MenuItem, MenuTrigger],
+  imports: [Menu, MenuItem, MenuTrigger, Tooltip],
   templateUrl: './post-preferences-menu.html',
   styleUrl: './post-preferences-menu.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -101,6 +102,18 @@ export class PostPreferencesMenu {
       return ruta;
     }
     return new URL(ruta, this.document.location.origin).toString();
+  }
+
+  /**
+   * Compartir desde afuera del menú.
+   *
+   * La fila de acciones de la tarjeta (Recomendar · Comentar · Compartir ·
+   * Enviar) ofrece «Compartir» como botón visible, y compartir es lo mismo se
+   * toque donde se toque: `navigator.share` si existe, copiar el enlace si no.
+   * Se expone el gesto en vez de duplicar la lógica en la tarjeta.
+   */
+  compartir(): void {
+    this.run('share');
   }
 
   protected activate(entry: PostPreferenceEntry): void {

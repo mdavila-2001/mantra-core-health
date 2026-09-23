@@ -70,11 +70,6 @@
 }
 
 .constructor__codigo,
-.constructor__campo-meta {
-  color: var(--text-muted);
-  font-size: var(--fs-caption);
-}
-
 .constructor__codigo {
   margin: 0;
 }
@@ -87,9 +82,10 @@
 }
 
 .constructor__presupuesto {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: flex;
+  --card-body-direction: column;
+  --card-body-gap: var(--sp-3);
 }
 
 .constructor__presupuesto-texto {
@@ -104,42 +100,128 @@
   background: var(--bg-surface);
 }
 
-.constructor__plantillas {
-  list-style: none;
+/* ---- el catálogo de formularios -----------------------------------------
+
+   La rejilla, la tarjeta, el ícono, el nombre y el renglón de dato los pone
+   `rejilla-de-tarjetas.css`, que es la MISMA disciplina de «Mis servicios» y
+   de las portadas de los directorios. Acá abajo va sólo lo que esta pantalla
+   suma: el rótulo de especialidad, el pie con el conteo y la flecha, y el
+   organismo de origen. Nada de colores ni radios propios — la tarjeta de este
+   listado traía los suyos y por eso se veía como otra aplicación. */
+
+.constructor__conteo {
   margin: 0;
-  padding: 0;
-  display: grid;
-  gap: var(--sp-3);
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-variant-numeric: tabular-nums;
 }
 
-.constructor__plantilla {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-  align-items: flex-start;
-  text-align: start;
-  padding: var(--sp-4);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-lg);
-  background: var(--bg-surface);
-  cursor: pointer;
-  color: inherit;
-  font: inherit;
+/* Las tarjetas llevan un pie, así que necesitan más aire vertical y una pista
+   más ancha que los 14rem de la hoja: los nombres del catálogo clínico son
+   largos («Evaluación del riesgo cardiovascular (OMS/OPS)») y en 14rem parten
+   en cuatro renglones. */
+.constructor__rejilla {
+  --rejilla-min: 17rem;
+  gap: var(--sp-4);
 }
 
-.constructor__plantilla:hover:not(:disabled) {
-  border-color: var(--brand-primary);
+.constructor__ficha {
+  gap: var(--sp-2);
+  /* La tarjeta entera es el control y su pie va abajo del todo: sin esto, dos
+     tarjetas de la misma fila terminan el conteo a alturas distintas y la fila
+     se lee torcida. Es el defecto que tenía el listado. */
+  min-block-size: 100%;
 }
 
-.constructor__plantilla:disabled {
+.constructor__ficha:disabled {
   cursor: progress;
   opacity: 0.6;
 }
 
-.constructor__plantilla-nombre {
-  font-weight: 600;
+/* El rótulo de la especialidad, arriba del nombre: es lo que agrupa la rejilla
+   de un vistazo. En versalitas y no como chip para que no compita con el
+   nombre, que es lo que se lee primero. */
+.constructor__especialidad {
+  color: var(--brand-primary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* El código es una clave técnica, no el título: mono, chico y apagado. Antes
+   iba con el cuerpo del texto y a dos renglones, y en la rejilla pesaba más
+   que el nombre del formulario.
+
+   En un renglón y con puntos suspensivos —el valor entero queda en el
+   `title`—: son cadenas sin espacios («ANEST_VALORACION_PREANESTESICA») y al
+   dejarlas envolver se parten a mitad de palabra, que es peor que recortarlas.
+   Buscar por el código sigue funcionando: lo hace el buscador de arriba. */
+.constructor__codigo-ficha {
+  /* `.rejilla__dato` nace para un `<p>`; acá es un `<span>` dentro del botón. */
+  display: block;
+  overflow: hidden;
+  font-family: var(--f-mono, monospace);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.constructor__pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  /* Empuja el pie al fondo de la tarjeta, cualquiera sea el alto del nombre. */
+  margin-block-start: auto;
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.constructor__cifra {
+  font-variant-numeric: tabular-nums;
+}
+
+/* La flecha dice «esto se abre». Se despierta con el puntero y con el foco:
+   quieta y apagada no promete nada, encendida en todas las tarjetas a la vez
+   sería ruido. */
+.constructor__flecha {
+  display: inline-flex;
+  inline-size: 1rem;
+  block-size: 1rem;
+  color: var(--brand-primary);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard);
+}
+
+.constructor__ficha:hover:not(:disabled) .constructor__flecha,
+.constructor__ficha:focus-visible .constructor__flecha {
+  opacity: 1;
+  transform: none;
+}
+
+/* Quién publica el estándar. Va en un renglón y se corta con puntos
+   suspensivos —el título completo queda en el `title`—: «Ministerio de Salud
+   del Perú (MINSA)» en tres renglones desbalancea la fila entera. */
+.constructor__origen {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .constructor__flecha {
+    transition: none;
+  }
 }
 
 /* ---- una cosa a la vez: editor o previa ---------------------------------- */

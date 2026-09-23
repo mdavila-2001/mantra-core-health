@@ -20,8 +20,8 @@ describe('HojaDeFactura', () => {
     }
     expect(texto).toContain('04213377');
     expect(texto).toContain('04/09/2026');
-    expect(texto).toContain('61.20 BOB');
-    expect(texto).toContain('−6.80 BOB');
+    expect(texto).toContain('61.20 Bs');
+    expect(texto).toContain('−6.80 Bs');
   });
 
   it('sirve igual con otro emisor: el supermercado (AC-T-E4-03)', () => {
@@ -50,8 +50,8 @@ describe('HojaDeFactura', () => {
     const hoja = render(
       facturaDePrueba({ coaseguro: { aseguradora: 'Seguros Bolívar', importe: '13.60', moneda: 'BOB' } }),
     );
-    expect(hoja.querySelector('[data-testid="factura-coaseguro"]')?.textContent).toContain('13.60 BOB');
-    expect(hoja.querySelector('[data-testid="factura-total"]')?.textContent).toContain('61.20 BOB');
+    expect(hoja.querySelector('[data-testid="factura-coaseguro"]')?.textContent).toContain('13.60 Bs');
+    expect(hoja.querySelector('[data-testid="factura-total"]')?.textContent).toContain('61.20 Bs');
   });
 
   it('rotula los datos de ejemplo sólo cuando se lo piden', () => {

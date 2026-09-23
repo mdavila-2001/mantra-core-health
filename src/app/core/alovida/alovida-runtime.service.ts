@@ -1126,10 +1126,32 @@ export class AlovidaRuntimeService {
 
     const raiz = this.document.documentElement;
 
+    const esCajon = () => this.consultaDeMedios(ANCHO_CAJON)?.matches ?? false;
+
+    /* El botón habla SÓLO del cajón.
+
+       Antes decía además si la barra de escritorio estaba escondida, y de paso
+       le ponía `inert` — con lo cual, recogida, la barra dejaba de ser
+       navegable con el teclado aunque siguiera a la vista. En escritorio ya no
+       hay nada que anunciar: la barra está siempre, recogida o no, y el control
+       que la recoge es el `»` que vive dentro de ella. */
+    const actualizarBoton = () => {
+      const expandido = !esCajon() || raiz.classList.contains('nav-abierto');
+      if (expandido) {
+        nav.removeAttribute('inert');
+      } else {
+        nav.setAttribute('inert', '');
+      }
+      boton.setAttribute('aria-expanded', String(expandido));
+      boton.setAttribute(
+        'aria-label',
+        expandido ? 'Ocultar el menú de navegación' : 'Abrir el menú de navegación',
+      );
+    };
+
     const abrir = () => {
       raiz.classList.add('nav-abierto');
-      boton.setAttribute('aria-expanded', 'true');
-      boton.setAttribute('aria-label', 'Cerrar el menú de navegación');
+      actualizarBoton();
       nav.querySelector<HTMLElement>(FOCALIZABLES)?.focus();
     };
 
@@ -1138,28 +1160,42 @@ export class AlovidaRuntimeService {
         return;
       }
       raiz.classList.remove('nav-abierto');
-      boton.setAttribute('aria-expanded', 'false');
-      boton.setAttribute('aria-label', 'Abrir el menú de navegación');
+      actualizarBoton();
       if (devolverFoco) {
         boton.focus();
       }
     };
 
-    boton.addEventListener('click', () =>
-      raiz.classList.contains('nav-abierto') ? cerrar(true) : abrir(),
-    );
+    boton.addEventListener('click', () => {
+      /* Sólo el cajón. Acá había una segunda rama para escritorio que hacía
+         `raiz.classList.toggle('nav-collapsed')`, y esa clase sacaba la barra
+         de la ventana con un `translateX(-101%)`. Dos controles pegados que
+         parecían lo mismo y no lo eran: el `»` de la barra la recoge a un
+         carril de íconos —el menú sigue ahí— y éste la hacía desaparecer.
+         Retirado a pedido del cliente el 13/09/2026, con su función: «queremos
+         que siga estando nuestro menú». En escritorio el botón ni se dibuja
+         (`alovida.css`, §21.3). */
+      if (!esCajon()) {
+        return;
+      }
+      if (raiz.classList.contains('nav-abierto')) {
+        cerrar(true);
+      } else {
+        abrir();
+      }
+    });
     velo.addEventListener('click', () => cerrar(true));
 
     /* Elegir un ítem cierra el cajón: si el enlace navega, igual; si es la
        pantalla actual, el cajón no puede quedarse tapando lo que se eligió. */
     nav.addEventListener('click', (evento) => {
-      if ((evento.target as HTMLElement | null)?.closest('.app-side-nav__item')) {
+      if (esCajon() && (evento.target as HTMLElement | null)?.closest('.app-side-nav__item')) {
         cerrar(false);
       }
     });
 
     this.document.addEventListener('keydown', (evento) => {
-      if (evento.key === 'Escape') {
+      if (evento.key === 'Escape' && esCajon()) {
         cerrar(true);
       }
       if (evento.key !== 'Tab' || !raiz.classList.contains('nav-abierto')) {
@@ -1170,14 +1206,14 @@ export class AlovidaRuntimeService {
       this.atraparFoco(evento, nav);
     });
 
-    /* Al ensanchar la ventana el nav vuelve a ser columna: el estado abierto
-       dejaría el <body> sin scroll y el velo encendido sobre nada. */
-    this.consultaDeMedios(ANCHO_CAJON)?.addEventListener('change', (e) => {
-      if (!e.matches) {
-        cerrar(false);
-      }
+    /* Al cruzar el punto de quiebre se restablece el estado inicial del modo
+       nuevo: evita dejar el velo móvil o el sidebar de escritorio oculto. */
+    this.consultaDeMedios(ANCHO_CAJON)?.addEventListener('change', () => {
+      raiz.classList.remove('nav-abierto');
+      actualizarBoton();
     });
 
+    actualizarBoton();
     this.mudarSelectorDeOrganizacion(nav);
   }
 
@@ -1199,23 +1235,27 @@ export class AlovidaRuntimeService {
     const casa = selector.parentElement;
     const vecino = selector.nextElementSibling;
     const marca = nav.querySelector('.app-side-nav__marca');
+    /* El hijo DIRECTO del `nav` que contiene la marca: hoy es su cabecera, no
+       la marca misma. `insertBefore` exige un nodo hijo del contenedor, y el
+       hermano de la marca vive un nivel más abajo — pasarlo lanzaba
+       `NotFoundError` en cada ruta y el selector nunca bajaba al cajón. */
+    const cabecera =
+      marca === null ? null : (Array.from(nav.children).find((hijo) => hijo.contains(marca)) ?? null);
 
     const ubicar = (angosto: boolean) => {
       if (angosto) {
         if (selector.parentElement === nav) {
           return;
         }
-        if (marca?.nextSibling) {
-          nav.insertBefore(selector, marca.nextSibling);
-        } else {
-          nav.appendChild(selector);
-        }
+        nav.insertBefore(selector, cabecera?.nextSibling ?? null);
         return;
       }
-      if (selector.parentElement === casa) {
+      if (casa === null || selector.parentElement === casa) {
         return;
       }
-      casa?.insertBefore(selector, vecino);
+      /* El vecino se anotó al montar; si el header se volvió a pintar ya no es
+         hijo de `casa`, y entonces el selector va al final de su sitio. */
+      casa.insertBefore(selector, vecino?.parentElement === casa ? vecino : null);
     };
 
     const consulta = this.consultaDeMedios(ANCHO_ORG);

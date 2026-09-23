@@ -37,6 +37,8 @@
   [groups]="grupos()"
   [filters]="filtros()"
   [hasMore]="hayMas()"
+  [collapsible]="true"
+  [expandAll]="hayFiltro()"
   searchLabel="Buscar un procedimiento por nombre"
   noMatchesText="Ningún procedimiento del arancel coincide. Probá con otra palabra o quitá la especialidad."
   (filtersChanged)="filtrar($event)"
@@ -59,8 +61,9 @@
         >{{ procedimiento.group }}</p>
       }
 
-      <!-- El precio SIEMPRE con su unidad: «20» a secas invita a cobrar
-           veinte bolivianos por algo que el arancel valúa en veinte UMA. -->
+      <!-- El precio siempre con moneda, y la moneda es «Bs» por ahora:
+           ver `core/money/display-currency.ts`, que explica por qué no se
+           convierte la UMA. -->
       <p class="procedimiento__precio">{{ precio(procedimiento) }}</p>
 
       @if (procedimiento.ocrSuspect) {
@@ -85,6 +88,7 @@
             size="sm"
             type="button"
             data-testid="procedimiento-importar"
+            [attr.aria-label]="'Importar: ' + procedimiento.display"
             [disabled]="practicaElegida() === null || importando() !== null"
             (clicked)="importar(procedimiento)"
           >

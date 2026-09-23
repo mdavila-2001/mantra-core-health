@@ -52,7 +52,7 @@ import { MOCK_USERS } from './mock-session';
        el menú no está fijo, vuelve al borde. */
     .mock {
       position: fixed;
-      inset-inline-start: calc(var(--w-nav, 264px) + 12px);
+      inset-inline-start: calc(var(--w-nav, 240px) + 12px);
       inset-block-end: 12px;
       z-index: 9999;
       max-inline-size: 22rem;
@@ -71,9 +71,14 @@ import { MOCK_USERS } from './mock-session';
     @media (max-width: 60rem) {
       /* Plegado: una sola pastilla dentro de la barra de arriba, a la derecha
          de la hamburguesa, que es el único hueco que ninguna pantalla usa.
-         Bajo el header tapaba el nombre de la conversación. */
+         Bajo el header tapaba el nombre de la conversación.
+
+         Los 112 px son la cuenta de lo que hay antes: 12 de margen + 40 de
+         hamburguesa + 8 de aire + 44 de la flecha de «Volver» del marco + 8.
+         Eran 60 —justo el borde de la flecha— y el cartel la tapaba entera en
+         un teléfono, que es donde la flecha más se usa. */
       .mock {
-        inset-inline-start: 60px;
+        inset-inline-start: 112px;
         inset-inline-end: auto;
         inset-block-start: 14px;
         inset-block-end: auto;
@@ -83,7 +88,7 @@ import { MOCK_USERS } from './mock-session';
       .mock:not(.mock--plegado) {
         inset-inline-start: 8px;
         inset-inline-end: 8px;
-        inset-block-start: calc(var(--h-header, 64px) + 8px);
+        inset-block-start: calc(var(--h-header, 56px) + 8px);
       }
       .mock__boton {
         padding: 5px 10px;

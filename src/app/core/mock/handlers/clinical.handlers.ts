@@ -626,7 +626,9 @@ export function registrarClinica(router: MockRouter): void {
     return { status: 201, body: { noteId, versionId: nueva.currentVersionId, versionNumber: 1, lifecycleStatusConceptId: nueva.lifecycleStatusConceptId, versionStatusConceptId: ESTADO['ST-DRAFT']! } };
   });
 
-  router.post('/charts/notes/:id/versions', (request) => {
+  // `ChartNotesClient.appendVersion` hace `PUT` (UC-15-02); se acepta también
+  // `POST` por si alguna pantalla vieja lo usa.
+  const agregarVersion = (request: MockRequest) => {
     const n = notas.get(request.params['id']!);
     if (n === undefined) return notFound('Nota no encontrada');
     const datos = cuerpo<Partial<NotaSimulada>>(request);
@@ -637,7 +639,9 @@ export function registrarClinica(router: MockRouter): void {
       versionNumber: n.versionNumber + 1,
     });
     return { status: 201, body: { noteId: n.noteId, versionId, versionNumber: n.versionNumber + 1, lifecycleStatusConceptId: n.lifecycleStatusConceptId, versionStatusConceptId: ESTADO['ST-DRAFT']! } };
-  });
+  };
+  router.put('/charts/notes/:id/versions', agregarVersion);
+  router.post('/charts/notes/:id/versions', agregarVersion);
 
   /* ---- planes de cuidados y documentos -------------------------------------
      Las dos rutas existían en el backend desde UC-15-09/10 y la maqueta no las
@@ -843,3 +847,6 @@ export function plantilla(
     ...(provenance === undefined ? {} : { provenance }),
   };
 }
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+aspectos.persistirEn('mock.clinical.aspectos');

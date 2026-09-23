@@ -164,6 +164,8 @@ src/app/features/component-stock/component-index.generated.ts
 # o el mock, pero no forman parte del build de Angular ni del bundle de producción.
 # Las evidencias e informes finales viven en las carpetas de auditoría del workspace.
 /*.mjs
+# El proxy de `yarn start` sí se versiona: angular.json lo exige.
+!/proxy.conf.mjs
 /scripts/run_audit*.mjs
 /scripts/run_medica_audit*.mjs
 /scripts/visual_qa_audit*.mjs

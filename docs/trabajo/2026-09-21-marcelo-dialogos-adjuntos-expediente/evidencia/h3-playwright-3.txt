@@ -1,0 +1,115 @@
+
+Running 4 tests using 1 worker
+
+  x  1 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:56:7 › Expediente · política de descarte del alta › el alta de Documentos pregunta antes de descartar lo escrito, por los tres caminos (23.9s)
+  -  2 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:127:7 › Expediente · política de descarte del alta › el detalle de lectura nunca pregunta
+  x  3 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:147:7 › Expediente · política de descarte del alta › con movimiento reducido, el alta igual abre (5.0m)
+  x  4 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:156:7 › Expediente · política de descarte del alta › el alta se ve correctamente en móvil, claro y oscuro (5.1m)
+
+
+  1) [chromium] › playwright\expediente-dialogo-descarte.spec.ts:56:7 › Expediente · política de descarte del alta › el alta de Documentos pregunta antes de descartar lo escrito, por los tres caminos 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByTestId('expediente-nuevo-documento')
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for getByTestId('expediente-nuevo-documento')
+
+
+      63 |
+      64 |     const abrirDocumentos = page.getByTestId('expediente-nuevo-documento');
+    > 65 |     await expect(abrirDocumentos).toBeVisible();
+         |                                   ^
+      66 |
+      67 |     /* ---- 1 y 2. rol, nombre accesible y foco inicial ---------------------- */
+      68 |
+        at D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\playwright\expediente-dialogo-descarte.spec.ts:65:35
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\expediente-dialogo-descart-e6445-scrito-por-los-tres-caminos-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\expediente-dialogo-descart-e6445-scrito-por-los-tres-caminos-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\expediente-dialogo-descart-e6445-scrito-por-los-tres-caminos-chromium\trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts\playwright\salida\expediente-dialogo-descart-e6445-scrito-por-los-tres-caminos-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › playwright\expediente-dialogo-descarte.spec.ts:147:7 › Expediente · política de descarte del alta › con movimiento reducido, el alta igual abre 
+
+    Test timeout of 300000ms exceeded.
+
+    Error: locator.click: Test timeout of 300000ms exceeded.
+    Call log:
+      - waiting for getByTestId('expediente-nuevo-documento')
+
+
+      150 |     await abrirExpedienteDeAna(page);
+      151 |
+    > 152 |     await page.getByTestId('expediente-nuevo-documento').click();
+          |                                                          ^
+      153 |     await expect(page.getByTestId('expediente-alta')).toBeVisible();
+      154 |   });
+      155 |
+        at D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\playwright\expediente-dialogo-descarte.spec.ts:152:58
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\expediente-dialogo-descart-66b13-reducido-el-alta-igual-abre-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\expediente-dialogo-descart-66b13-reducido-el-alta-igual-abre-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\expediente-dialogo-descart-66b13-reducido-el-alta-igual-abre-chromium\trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts\playwright\salida\expediente-dialogo-descart-66b13-reducido-el-alta-igual-abre-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › playwright\expediente-dialogo-descarte.spec.ts:156:7 › Expediente · política de descarte del alta › el alta se ve correctamente en móvil, claro y oscuro 
+
+    Test timeout of 300000ms exceeded.
+
+    Error: locator.click: Test timeout of 300000ms exceeded.
+    Call log:
+      - waiting for getByTestId('expediente-nuevo-documento')
+
+
+      159 |
+      160 |     await abrirExpedienteDeAna(page);
+    > 161 |     await page.getByTestId('expediente-nuevo-documento').click();
+          |                                                          ^
+      162 |     await expect(page.getByTestId('expediente-alta')).toBeVisible();
+      163 |
+      164 |     await page.setViewportSize({ width: 390, height: 844 });
+        at D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\playwright\expediente-dialogo-descarte.spec.ts:161:58
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\expediente-dialogo-descart-840c8-nte-en-móvil-claro-y-oscuro-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\expediente-dialogo-descart-840c8-nte-en-móvil-claro-y-oscuro-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\expediente-dialogo-descart-840c8-nte-en-móvil-claro-y-oscuro-chromium\trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts\playwright\salida\expediente-dialogo-descart-840c8-nte-en-móvil-claro-y-oscuro-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    [chromium] › playwright\expediente-dialogo-descarte.spec.ts:56:7 › Expediente · política de descarte del alta › el alta de Documentos pregunta antes de descartar lo escrito, por los tres caminos 
+    [chromium] › playwright\expediente-dialogo-descarte.spec.ts:147:7 › Expediente · política de descarte del alta › con movimiento reducido, el alta igual abre 
+    [chromium] › playwright\expediente-dialogo-descarte.spec.ts:156:7 › Expediente · política de descarte del alta › el alta se ve correctamente en móvil, claro y oscuro 
+  1 skipped

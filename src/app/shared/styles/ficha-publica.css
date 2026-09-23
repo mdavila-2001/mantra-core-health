@@ -1,0 +1,312 @@
+/* ============================================================================
+    La ficha de un establecimiento dentro del panel: una clínica, una farmacia
+    y un centro de diagnóstico o de imagenología.
+
+    Vive en `shared/styles/` y no junto a una de las tres porque la tercera la
+    estrenó desde otra carpeta —`features/laboratory-directory/`—: dejarla en
+    `features/public-directories/` habría obligado a cruzar de feature para
+    leer un CSS, que es el primer paso para copiarlo.
+
+    La rejilla y la tarjeta **no se pintan acá**: salen de
+    `shared/styles/rejilla-de-tarjetas.css`, la misma hoja que pinta «Mis
+    servicios» y las portadas de los directorios. Es justamente lo que el
+    cliente pidió — que se vea «tal como se ven mis servicios»—, así que
+    copiarla habría sido el primer paso para que dejaran de parecerse.
+
+    Lo que queda acá es lo único propio: el resumen del establecimiento, sus
+    modalidades de atención y el pie de cada tarjeta con su precio. Sólo
+    distribución.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.ficha-publica {
+  display: grid;
+  gap: var(--sp-5);
+  margin-block-start: var(--sp-4);
+}
+
+.ficha-publica__bio {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-secondary);
+  text-wrap: pretty;
+}
+
+/* ---- el encabezado de una sección del catálogo --------------------------- */
+
+/* El rótulo de la sección a la izquierda y sus controles a la derecha, en el
+   mismo renglón mientras haya sitio. Los controles son **de la sección**, así
+   que viven en su encabezado y no encima de la rejilla — ahí se leerían como
+   un filtro de la ficha entera. Es la misma disposición que traía
+   `app-fact-section`, que es de donde salió esta pantalla. */
+.ficha-publica__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+/* El título empuja al resto a la derecha sin necesitar un `margin-left: auto`
+   en cada control. */
+.ficha-publica__titulo {
+  margin-inline-end: auto;
+}
+
+/* Ancho cómodo en escritorio; en un teléfono el `flex-wrap` lo baja de
+   renglón y ahí ocupa todo el ancho, que es lo que hace usable teclear. */
+.ficha-publica__buscador {
+  flex: 1 1 16rem;
+  max-inline-size: 22rem;
+}
+
+/* La nota que explica de quién es el precio. Va bajo el encabezado de la
+   sección y no en una alerta: no es un aviso, es la letra chica de la lista —y
+   una alerta por sección le daría a cada pantalla un tono de advertencia que
+   no le corresponde. */
+.ficha-publica__nota {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  text-wrap: pretty;
+}
+
+/* 18rem y no las 14 de la portada de un directorio, por lo mismo que «Mis
+   servicios»: acá la tarjeta no es un rótulo con su cuenta sino una prestación
+   con su importe y sus distintivos. */
+.ficha-publica__rejilla {
+  --rejilla-min: 18rem;
+}
+
+/* El nombre y el distintivo comparten renglón; el distintivo no lo estira. */
+.ficha-publica__titular {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+/* Empuja el precio al pie: las tarjetas de una fila terminan a la misma
+   altura, y así sus importes quedan alineados aunque los nombres ocupen una o
+   tres líneas. */
+.ficha-publica__precio {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  margin: auto 0 0;
+  padding-block-start: var(--sp-3);
+}
+
+.ficha-publica__rotulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.ficha-publica__monto {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+}
+
+/* «Sin precio publicado» ocupa el renglón del importe con el peso de un dato
+   que falta y no el de una cifra: si se viera igual que un monto, se leería
+   como uno. Es la misma decisión que el «Definí el precio» de «Mis servicios». */
+.ficha-publica__sin-precio {
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 500;
+}
+
+/* ---- las modalidades del resumen ---------------------------------------- */
+
+/* «Atención sin cita», «Toma de muestras a domicilio»: cosas que el
+   establecimiento **hace o no hace**, no campos con valor. Por eso son
+   etiquetas al pie del resumen y no filas de `app-fact-list` — una fila
+   «Atención sin cita → Sí» obligaría a dibujar también los «No», y una ficha
+   llena de noes dice de un lugar lo que no ofrece antes que lo que sí. */
+.ficha-publica__modalidades {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ficha-publica__modalidades li {
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-subtle, var(--border-default));
+  border-radius: var(--r-full);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* Los distintivos del pie de la tarjeta: receta, agotado. Envuelven en vez de
+   desbordar — en 18rem entran dos, y en un teléfono uno. */
+.ficha-publica__sellos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin: var(--sp-2) 0 0;
+}
+
+/* Cuando la tarjeta NO lleva precio —una sede, por ejemplo— los distintivos
+   son su pie, así que les toca el empujón que en las otras da `__precio`: las
+   tarjetas de una fila terminan a la misma altura y sus sellos quedan
+   alineados aunque los nombres ocupen una o tres líneas. */
+.ficha-publica__sellos--pie {
+  margin-block-start: auto;
+  padding-block-start: var(--sp-3);
+}
+
+/* Hay catálogo pero vino vacío. No es el estado S3 del host —la pantalla SÍ
+   tiene contenido: la ficha del establecimiento— así que se dice acá, en el
+   lugar donde la lista habría estado. */
+.ficha-publica__vacio {
+  margin: var(--sp-4) 0 0;
+  color: var(--text-secondary);
+  text-wrap: pretty;
+}
+
+/* ---- el mapa del resumen ------------------------------------------------ */
+
+/* El mapa cuelga del resumen, dentro de su misma card: es la fila «Dirección»
+   dibujada. Sólo el aire que lo separa del texto — el alto, el borde y el
+   aviso de espera los trae el organismo. */
+.ficha-publica__mapa {
+  margin-block-start: var(--sp-4);
+}
+
+/* ---- los filtros de una sección del catálogo ---------------------------- */
+
+/* Un renglón por pregunta —«¿de qué grupo?», «¿qué hay?»— con su rótulo
+   adelante y los chips detrás. Envuelven en vez de deslizarse: un carrusel
+   horizontal esconde opciones detrás de un gesto que nadie ve que hay que
+   hacer. Es la misma decisión que los chips de ciudad del directorio. */
+.ficha-publica__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-4);
+}
+
+.ficha-publica__filtros-rotulo {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+}
+
+/* La cuenta de lo que quedó y la salida de los filtros, en el mismo renglón:
+   quien lee «3 de 13» es quien quiere volver a los 13. */
+.ficha-publica__resultado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  margin-block-start: var(--sp-3);
+}
+
+.ficha-publica__cuenta {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* El grupo terapéutico dentro de la tarjeta. No se encoge: con un nombre
+   largo al lado, «Sistema nervioso» partido en tres renglones de una palabra
+   es ilegible — antes se parte el nombre, que tiene más sitio. */
+.ficha-publica__grupo-chip {
+  flex: none;
+}
+
+/* ---- sucursales, ubicación y receta (P37) ------------------------------- */
+
+/* El rótulo de una pregunta dentro de la sección («¿Cuál tiene lo de tu
+   receta?»). Más chico que el título de la sección y con su aire arriba:
+   separa sin competir con él. */
+.ficha-publica__subtitulo {
+  margin: var(--sp-5) 0 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+/* El campo de la receta y sus botones: en columna en el teléfono y en dos
+   bloques en escritorio, con los botones abajo a la izquierda del campo —no a
+   su derecha—: un botón al lado de un área de texto de cuatro renglones queda
+   flotando a media altura. */
+.ficha-publica__receta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-3);
+}
+
+.ficha-publica__receta-campo {
+  flex: 1 1 22rem;
+  max-inline-size: 34rem;
+}
+
+.ficha-publica__receta-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* La recomendación. Lleva el tono de marca porque es una respuesta, no un
+   estado: pintarla de verde la leería como «todo bien» y de ámbar como un
+   aviso, y no es ninguna de las dos. */
+.ficha-publica__recomendacion {
+  margin-block-start: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--brand-primary);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.ficha-publica__recomendacion-rotulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ficha-publica__recomendacion-nombre {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+}
+
+.ficha-publica__recomendacion-motivo {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+  text-wrap: pretty;
+}
+
+/* Los renglones de la receta que una sucursal sí tiene. Lista y no párrafos:
+   son los ítems de la receta, uno por uno, y un lector de pantalla anuncia
+   cuántos son antes de leer el primero. */
+.ficha-publica__lineas {
+  margin: var(--sp-2) 0 0;
+  padding-inline-start: var(--sp-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}

@@ -1,4 +1,12 @@
+import {
+  ETIQUETA_DE_PRECISION,
+  ETIQUETA_DE_VIGENCIA,
+  LABORATORIOS_DEL_CORPUS,
+  NOMBRE_DE_CATEGORIA,
+  pruebaDelCorpus,
+} from '../fixtures/bolivia-eje-central';
 import { patientSettlementFixture } from '../fixtures/patient-settlements';
+import { PHARMACIES_AND_LABS } from '../fixtures/markdown-institutions.generated';
 import { ordenes } from '../fixtures/clinica';
 import { vitrinas } from '../fixtures/comunidad';
 import { ESTADO, ESTUDIO, PRIORIDAD, displayDe } from '../fixtures/conceptos';
@@ -101,16 +109,39 @@ interface UnidadSimulada {
   readonly kind: 'LABORATORY' | 'IMAGING';
   readonly rating: number;
   readonly ratingCount: number;
-  readonly walkIn: boolean;
+  /**
+   * `null` = el corpus no lo declara, y «no lo sabemos» no es «no». El sello
+   * sólo se dibuja con `true`; los centros reales lo traen en `null` salvo la
+   * toma a domicilio, que sí está declarada.
+   */
+  readonly walkIn: boolean | null;
   readonly home: boolean;
-  readonly external: boolean;
+  readonly external: boolean | null;
   readonly publiclyListed: boolean;
   readonly verified: boolean;
   readonly lat: number;
   readonly lng: number;
+  /** El id en `data/bolivia-salud-eje-central/`. Sólo los centros reales. */
+  readonly corpusId?: string;
+  /** La sede que publica la planilla del propietario, con su dirección y teléfono. */
+  readonly sedePublicada?: {
+    readonly addressText: string | null;
+    readonly phone: string | null;
+    readonly locationAccuracy: string;
+  };
 }
 
-const UNIDADES: readonly UnidadSimulada[] = [
+/**
+ * Los cinco centros de siempre: dos laboratorios y dos centros de imagen de la
+ * clínica de la maqueta, más uno en habilitación.
+ *
+ * Siguen acá por dos razones concretas. La consola de administración
+ * (`/diagnostic-units/administration`) muestra los de la clínica con la que se
+ * inicia sesión, y los diez del corpus son de otros dueños: sin estos, esa
+ * pantalla queda vacía. Y el corpus **no investigó centros de imagen**, así
+ * que los de imagenología sólo pueden salir de acá.
+ */
+const UNIDADES_DE_MAQUETA: readonly UnidadSimulada[] = [
   { id: uuid('unit-lab-central'), tenantId: TENANT_LABORATORIO, code: 'LABCEN', name: 'Laboratorio Central', kind: 'LABORATORY', rating: 4.8, ratingCount: 210, walkIn: true, home: true, external: true, publiclyListed: true, verified: true, lat: -17.784, lng: -63.1815 },
   { id: uuid('unit-lab-olivos'), tenantId: TENANT_CLINICA, code: 'LAB-OLIVOS', name: 'Laboratorio Clínica Los Olivos', kind: 'LABORATORY', rating: 4.5, ratingCount: 88, walkIn: true, home: false, external: false, publiclyListed: true, verified: true, lat: -17.7712, lng: -63.1955 },
   { id: uuid('unit-imagen-sur'), tenantId: uuid('tenant-imagen-sur'), code: 'IMG-SUR', name: 'Centro de Imagen Sur', kind: 'IMAGING', rating: 4.4, ratingCount: 64, walkIn: false, home: false, external: true, publiclyListed: true, verified: true, lat: -17.74, lng: -63.175 },
@@ -118,16 +149,228 @@ const UNIDADES: readonly UnidadSimulada[] = [
   { id: uuid('unit-lab-nuevo'), tenantId: TENANT_CLINICA, code: 'LAB-NORTE', name: 'Laboratorio Norte (en habilitación)', kind: 'LABORATORY', rating: 0, ratingCount: 0, walkIn: true, home: false, external: false, publiclyListed: false, verified: false, lat: -17.75, lng: -63.2 },
 ];
 
+/**
+ * Los diez laboratorios y centros del corpus «Bolivia Salud · Eje Central».
+ *
+ * Existen: Plexus, Zuna, SELADIS, INLASA, CENETROP, Magnus, Universo, Praxis,
+ * LabClinics y el del Hospital San Juan de Dios, con sus 21 sedes en La Paz, El
+ * Alto, Cochabamba y Santa Cruz. Cada uno cita la fuente de la que salió.
+ *
+ * Van **sin puntuación** (`rating: 0`, `ratingCount: 0`, que el directorio
+ * publica como `rating: null`): inventarle una nota media a un laboratorio que
+ * existe es una afirmación sobre un negocio real, y no se hace.
+ */
+const UNIDADES_DEL_CORPUS: readonly UnidadSimulada[] = LABORATORIOS_DEL_CORPUS.map(
+  (laboratorio) => ({
+    id: laboratorio.id,
+    tenantId: laboratorio.tenantId,
+    code: laboratorio.code,
+    name: laboratorio.name,
+    kind: laboratorio.kind,
+    rating: 0,
+    ratingCount: 0,
+    walkIn: null,
+    home: laboratorio.homeCollection,
+    external: null,
+    publiclyListed: true,
+    verified: laboratorio.verified,
+    lat: laboratorio.lat,
+    lng: laboratorio.lng,
+    corpusId: laboratorio.corpusId,
+  }),
+);
+
+/**
+ * Los laboratorios y centros de análisis de la planilla del propietario
+ * (`markdown_convertidos/LISTA_DE_FARMACIAS__LABORATORIOS_Y_ANALISIS_MEDICOS.md`).
+ *
+ * Plexus y Zuna ya vienen en el corpus, con sus sedes: no se repiten. Van sin
+ * puntuación ni sellos, por lo mismo que los del corpus. Los tres «centros de
+ * análisis» son de diagnóstico por imagen y cardiológico, así que entran como
+ * `IMAGING`, el único tipo de centro no laboratorio que tiene la maqueta.
+ */
+const YA_EN_EL_CORPUS = /plexus|zuna/i;
+const UNIDADES_DE_LA_PLANILLA: readonly UnidadSimulada[] = PHARMACIES_AND_LABS.filter(
+  (u) => u.kind !== 'PHARMACY' && !YA_EN_EL_CORPUS.test(u.name),
+).map((u) => ({
+  id: uuid(`unit-${u.id}`),
+  tenantId: uuid(`tenant-${u.id}`),
+  code: u.id.replace(/^(laboratory|diagnostic_center)-/, '').toUpperCase().slice(0, 24),
+  name: u.name,
+  kind: u.kind === 'LABORATORY' ? ('LABORATORY' as const) : ('IMAGING' as const),
+  rating: 0,
+  ratingCount: 0,
+  walkIn: null,
+  home: false,
+  external: null,
+  publiclyListed: true,
+  verified: false,
+  lat: u.lat,
+  lng: u.lng,
+  sedePublicada: {
+    addressText: u.address,
+    phone: u.phone,
+    locationAccuracy: u.precision === 'direccion' ? 'Ubicación exacta' : 'Ubicación aproximada · centro de la ciudad',
+  },
+}));
+
+const UNIDADES: readonly UnidadSimulada[] = [...UNIDADES_DEL_CORPUS, ...UNIDADES_DE_LA_PLANILLA, ...UNIDADES_DE_MAQUETA];
+
+/** El laboratorio del corpus detrás de una unidad, si lo hay. */
+function corpusDe(u: UnidadSimulada) {
+  return u.corpusId === undefined
+    ? undefined
+    : LABORATORIOS_DEL_CORPUS.find((laboratorio) => laboratorio.corpusId === u.corpusId);
+}
+
 const ESTUDIOS_POR_TIPO: Readonly<Record<'LABORATORY' | 'IMAGING', readonly (keyof typeof ESTUDIO)[]>> = {
   LABORATORY: ['STUDY-HEMOGRAMA', 'STUDY-GLUCOSA', 'STUDY-PERFIL-LIPIDICO', 'STUDY-TSH', 'STUDY-ORINA', 'STUDY-CREATININA', 'STUDY-UREA', 'STUDY-HBA1C', 'STUDY-COAGULACION', 'STUDY-HEPATICO', 'STUDY-COPROLOGICO', 'STUDY-CULTIVO', 'STUDY-VITAMINA-D'],
   IMAGING: ['STUDY-RX-TORAX', 'STUDY-ECO-ABD', 'STUDY-ECG', 'STUDY-RMN-RODILLA', 'STUDY-TAC-CRANEO', 'STUDY-MAMOGRAFIA', 'STUDY-ECO-OBSTETRICA', 'STUDY-RX-COLUMNA', 'STUDY-TAC-ABDOMEN', 'STUDY-RMN-CEREBRO', 'STUDY-DENSITOMETRIA'],
 };
 
-function sitioDe(u: UnidadSimulada) {
-  return { id: uuid(`unit-site-${u.id}`), code: `${u.code}-1`, name: `${u.name} · Sede principal`, role: c('MAIN', 'Sede principal'), sampleCollectionAvailable: u.kind === 'LABORATORY', imagingAvailable: u.kind === 'IMAGING' };
+/**
+ * Las sedes de un centro.
+ *
+ * Los del corpus tienen las suyas —hasta ocho, con dirección, teléfono y
+ * horario publicados—, y cada una dice en el nombre de su rol con qué
+ * precisión se resolvió su punto en el mapa y si el registro está verificado en
+ * 2026 o es línea base histórica. Un centro de la maqueta tiene una sola,
+ * sintética, como siempre.
+ */
+const SEDES_EN_MEMORIA = new Map<string, ReturnType<typeof construirSedes>>();
+
+function sedesDe(u: UnidadSimulada) {
+  const memorizado = SEDES_EN_MEMORIA.get(u.id);
+  if (memorizado !== undefined) return memorizado;
+  const calculado = construirSedes(u);
+  SEDES_EN_MEMORIA.set(u.id, calculado);
+  return calculado;
 }
 
+function construirSedes(u: UnidadSimulada) {
+  const laboratorio = corpusDe(u);
+  if (laboratorio !== undefined) {
+    return laboratorio.sites.map((sede, i) => ({
+      id: sede.id,
+      code: sede.code,
+      name: sede.name,
+      role: c(i === 0 ? 'MAIN' : 'BRANCH', ETIQUETA_DE_VIGENCIA[sede.vigencia]),
+      sampleCollectionAvailable: true,
+      imagingAvailable: false,
+      addressText: sede.addressText,
+      city: sede.city,
+      phone: sede.phone,
+      openingHours: sede.openingHours,
+      latitude: sede.lat,
+      longitude: sede.lng,
+      locationAccuracy: ETIQUETA_DE_PRECISION[sede.locationPrecision],
+    }));
+  }
+  return [
+    {
+      id: uuid(`unit-site-${u.id}`),
+      code: `${u.code}-1`,
+      name: `${u.name} · Sede principal`,
+      role: c('MAIN', 'Sede principal'),
+      sampleCollectionAvailable: u.kind === 'LABORATORY',
+      imagingAvailable: u.kind === 'IMAGING',
+      ...(u.sedePublicada === undefined
+        ? {}
+        : {
+            addressText: u.sedePublicada.addressText,
+            city: 'Santa Cruz de la Sierra',
+            phone: u.sedePublicada.phone,
+            latitude: u.lat,
+            longitude: u.lng,
+            locationAccuracy: u.sedePublicada.locationAccuracy,
+          }),
+    },
+  ];
+}
+
+/**
+ * Las ciudades donde el centro tiene sede, sin repetir. Un centro de la maqueta
+ * sin sede publicada no tiene ninguna: no se le inventa una.
+ */
+function ciudadesDe(u: UnidadSimulada): readonly string[] {
+  const ciudades = sedesDe(u)
+    .map((sede) => ('city' in sede ? sede.city : undefined))
+    .filter((ciudad): ciudad is string => typeof ciudad === 'string' && ciudad !== '');
+  return [...new Set(ciudades)];
+}
+
+/** La sede principal: la que ancla precios, equipos y acreditaciones. */
+function sitioDe(u: UnidadSimulada) {
+  return sedesDe(u)[0]!;
+}
+
+/**
+ * Lo que un centro ofrece.
+ *
+ * Para los diez del corpus son las pruebas de `data/bolivia-salud-eje-central/`
+ * —el catálogo que Plexus publicó, o la derivación de los servicios que el
+ * propio centro declara— con su categoría, sus muestras y sus metodologías.
+ *
+ * **Los precios no salen del corpus, que no publica ninguno.** Los calcula
+ * esta función a partir de la categoría, son maqueta declarada, y por eso la
+ * tarifa se llama `MAQUETA` en vez de `PUBLICO`: quien lea la respuesta tiene
+ * que poder distinguir un precio real de uno de demostración.
+ */
+function estudiosDelCorpus(u: UnidadSimulada) {
+  const laboratorio = corpusDe(u)!;
+  const sitio = sitioDe(u);
+  return laboratorio.testIds.flatMap((testId, i) => {
+    const prueba = pruebaDelCorpus(testId);
+    if (prueba === undefined) return [];
+    const precio = 45 + (i % 12) * 30;
+    return [
+      {
+        id: uuid(`offering-${u.id}-${testId}`),
+        code: testId.replace('test_', 'T'),
+        name: prueba.name,
+        description:
+          prueba.synonyms.length === 0
+            ? NOMBRE_DE_CATEGORIA.get(prueba.categoryId) ?? null
+            : `${NOMBRE_DE_CATEGORIA.get(prueba.categoryId) ?? ''} · también ${prueba.synonyms.join(', ')}`,
+        siteId: sitio.id,
+        modality: null,
+        preparationInstructions: prueba.patientPreparation,
+        expectedDurationMinutes: 10,
+        expectedTurnaroundMinutes: 240,
+        // El corpus no declara qué exige orden médica. `null` lo dice; `false`
+        // sería afirmar que cualquiera se la puede hacer sin receta.
+        requiresMedicalOrder: null,
+        prices: [{ amount: precio.toFixed(2), currency: c('BOB', 'Boliviano'), scheduleCode: 'MAQUETA', siteId: sitio.id }],
+        conceptId: uuid(`corpus-test-${testId}`),
+        specimens: prueba.specimens,
+        methods: prueba.methods,
+        categoryName: NOMBRE_DE_CATEGORIA.get(prueba.categoryId) ?? prueba.categoryId,
+        isPanel: prueba.kind === 'PANEL',
+      },
+    ];
+  });
+}
+
+/**
+ * La oferta de un centro, calculada una sola vez.
+ *
+ * No es optimización prematura: el buscador llama a esto **por unidad y por
+ * filtro** —para contar estudios, para resolver `studyCode`, para el precio
+ * mínimo—, y un laboratorio del corpus tiene hasta 252 pruebas. Sin la memoria
+ * intermedia, una búsqueda reconstruye miles de objetos que ya existían.
+ */
+const ESTUDIOS_EN_MEMORIA = new Map<string, ReturnType<typeof construirEstudios>>();
+
 function estudiosDe(u: UnidadSimulada) {
+  const memorizado = ESTUDIOS_EN_MEMORIA.get(u.id);
+  if (memorizado !== undefined) return memorizado;
+  const calculado = construirEstudios(u);
+  ESTUDIOS_EN_MEMORIA.set(u.id, calculado);
+  return calculado;
+}
+
+function construirEstudios(u: UnidadSimulada) {
+  if (u.corpusId !== undefined) return estudiosDelCorpus(u);
   return ESTUDIOS_POR_TIPO[u.kind].map((code, i) => {
     const conceptId = ESTUDIO[code]!;
     const precio = u.kind === 'LABORATORY' ? 40 + i * 25 : 120 + i * 180;
@@ -162,16 +405,25 @@ function itemDeDirectorio(u: UnidadSimulada) {
       u.kind === 'LABORATORY' ? 'DU_TYPE_LAB' : 'DU_TYPE_IMAGING',
       u.kind === 'LABORATORY' ? 'Laboratorio clínico' : 'Centro de imagenología',
     ),
-    siteCount: 1,
-    equipmentCount: u.kind === 'IMAGING' ? 8 : 9,
-    studyCount: ESTUDIOS_POR_TIPO[u.kind].length,
+    siteCount: sedesDe(u).length,
+    equipmentCount: equipoDe(u).length,
+    studyCount: estudiosDe(u).length,
     acceptsExternalOrders: u.external,
     walkInAvailable: u.walkIn,
     homeCollectionAvailable: u.home,
   };
 }
 
+/**
+ * El parque de equipos de un centro.
+ *
+ * **Vacío para los del corpus**, por lo mismo que las acreditaciones: decir que
+ * el laboratorio del Hospital San Juan de Dios tiene un Sysmex XN-550 con
+ * número de serie y fecha de calibración es inventar el inventario de una
+ * institución real. El corpus no lo declara y la ficha no lo dibuja.
+ */
 function equipoDe(u: UnidadSimulada) {
+  if (u.corpusId !== undefined) return [];
   // Nueve y ocho, no cuatro: con cuatro equipos la sección nunca cruzaba el
   // umbral del buscador ni el de la paginación, así que esos controles no se
   // podían ver funcionando. Un laboratorio de segundo nivel tiene esta cantidad.
@@ -199,7 +451,18 @@ function equipoDe(u: UnidadSimulada) {
   }));
 }
 
+/**
+ * Las acreditaciones de un centro.
+ *
+ * **Los del corpus no tienen ninguna, y eso es deliberado.** Esta función
+ * fabrica un número de habilitación SEDES y una ISO 15189 a partir del código
+ * del centro, y para los inventados de la maqueta eso es relleno inofensivo.
+ * Para SELADIS o Plexus sería otra cosa: un número de registro sanitario que
+ * nadie emitió, atribuido a una institución que existe. El corpus no declara
+ * acreditaciones, así que la ficha no muestra ninguna.
+ */
 function acreditacionesDe(u: UnidadSimulada) {
+  if (u.corpusId !== undefined) return [];
   return [
     { id: uuid(`accr-1-${u.id}`), siteId: sitioDe(u).id, type: c('SEDES', 'Habilitación SEDES'), number: `HAB-${u.code}-2024`, evidenceFileId: uuid(`file-accr-${u.id}`), validFrom: isoDia(-400), validTo: isoDia(330), daysToExpiry: 330, verificationStatus: c('VERIFIED', 'Verificada') },
     { id: uuid(`accr-2-${u.id}`), siteId: null, type: c('ISO15189', 'ISO 15189'), number: `ISO-${u.code}`, evidenceFileId: null, validFrom: isoDia(-700), validTo: isoDia(u.verified ? 20 : -10), daysToExpiry: u.verified ? 20 : -10, verificationStatus: c(u.verified ? 'VERIFIED' : 'PENDING', u.verified ? 'Verificada' : 'Pendiente') },
@@ -440,7 +703,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       .filter((u) => studyCode === null || estudiosDe(u).some((e) => e.code === studyCode || contiene(e.name, studyCode)))
       .filter((u) => (!home || u.home) && (!walkIn || u.walkIn) && (!external || u.external))
       .filter((u) => u.rating >= minRating)
-      .map((u) => ({ ...itemDeDirectorio(u), tenantId: u.tenantId, rating: u.ratingCount === 0 ? null : u.rating, ratingCount: u.ratingCount, minAmount: Math.min(...estudiosDe(u).map((e) => Number(e.prices[0]!.amount))) }))
+      .map((u) => ({ ...itemDeDirectorio(u), tenantId: u.tenantId, rating: u.ratingCount === 0 ? null : u.rating, ratingCount: u.ratingCount, minAmount: Math.min(...estudiosDe(u).map((e) => Number(e.prices[0]!.amount))), cities: ciudadesDe(u) }))
       .filter((u) => u.minAmount === null || u.minAmount <= maxAmount);
     return { items: todos.slice(offset, offset + limit), total: todos.length, limit, offset };
   });
@@ -464,7 +727,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       status: c(u.verified ? 'ACTIVE' : 'PENDING', u.verified ? 'Activa' : 'En habilitación'),
       verificationStatus: c(u.verified ? 'VERIFIED' : 'PENDING', u.verified ? 'Verificada' : 'Pendiente'),
       publiclyListed: u.publiclyListed,
-      sites: [{ ...sitio, practiceSiteId: uuid(`practice-site-${u.id}`), accessionPrefix: u.code.slice(0, 3), status: c('ACTIVE', 'Activa') }],
+      sites: sedesDe(u).map((sede) => ({ ...sede, practiceSiteId: uuid(`practice-site-${sede.id}`), accessionPrefix: u.code.slice(0, 3), status: c('ACTIVE', 'Activa') })),
       equipment: equipoDe(u),
       studies: estudiosDe(u).map(({ conceptId: _c, prices, ...e }, i) => ({
         ...e,
@@ -482,7 +745,7 @@ export function registrarDiagnostico(router: MockRouter): void {
   router.get('/diagnostic-units/:id', ({ params }) => {
     const u = UNIDADES.find((x) => x.id === params['id']);
     if (u === undefined) return notFound('Centro no encontrado');
-    return { ...itemDeDirectorio(u), sites: [sitioDe(u)], equipment: equipoDe(u).map(({ serialNumber: _s, daysToCalibration: _d, ...e }) => e), studies: estudiosDe(u).map(({ conceptId: _c, ...e }) => e), accreditations: acreditacionesDe(u).map(({ evidenceFileId: _f, daysToExpiry: _d, verificationStatus: _v, ...a }) => a) };
+    return { ...itemDeDirectorio(u), sites: sedesDe(u), equipment: equipoDe(u).map(({ serialNumber: _s, daysToCalibration: _d, ...e }) => e), studies: estudiosDe(u).map(({ conceptId: _c, ...e }) => e), accreditations: acreditacionesDe(u).map(({ evidenceFileId: _f, daysToExpiry: _d, verificationStatus: _v, ...a }) => a) };
   });
 
   router.post('/diagnostic-units/:id/verify-and-publish', ({ params }) => {
@@ -508,3 +771,8 @@ export function registrarDiagnostico(router: MockRouter): void {
   void PRIORIDAD;
   void PACIENTES;
 }
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+informes.persistirEn('mock.diagnostics.informes');
+compartidos.persistirEn('mock.diagnostics.compartidos');
+ordenesDeTrabajo.persistirEn('mock.diagnostics.ordenesDeTrabajo');

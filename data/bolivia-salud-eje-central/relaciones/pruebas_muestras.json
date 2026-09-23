@@ -1,0 +1,6214 @@
+{
+  "relaciones": [
+    {
+      "prueba_id": "test_000001",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000002",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000003",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000004",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000005",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000006",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000007",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000008",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000009",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000010",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000011",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000012",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000013",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000014",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000015",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000016",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000017",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000018",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000019",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000020",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000021",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000022",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000023",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000024",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000025",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000026",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000027",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000028",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000029",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000030",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000031",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000032",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000033",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000034",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000035",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000036",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000037",
+      "muestras": [
+        "sangre total EDTA"
+      ]
+    },
+    {
+      "prueba_id": "test_000038",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000039",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000040",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000041",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000042",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000043",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000044",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000045",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000046",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000047",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000048",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000049",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000050",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000051",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000052",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000053",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000054",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000055",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000056",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000057",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000058",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000059",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000060",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000061",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000062",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000063",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000064",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000065",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000066",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000067",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000068",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000069",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000070",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000071",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000072",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000073",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000074",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000075",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000076",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000077",
+      "muestras": [
+        "plasma citratado"
+      ]
+    },
+    {
+      "prueba_id": "test_000078",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000079",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000080",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000081",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000082",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000083",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000084",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000085",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000086",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000087",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000088",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000089",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000090",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000091",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000092",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000093",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000094",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000095",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000096",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000097",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000098",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000099",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000100",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000101",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000102",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000103",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000104",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000105",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000106",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000107",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000108",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000109",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000110",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000111",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000112",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000113",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000114",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000115",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000116",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000117",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000118",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000119",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000120",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000121",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000122",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000123",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000124",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000125",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000126",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000127",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000128",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000129",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000130",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000131",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000132",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000133",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000134",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000135",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000136",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000137",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000138",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000139",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000140",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000141",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000142",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000143",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000144",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000145",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000146",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000147",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000148",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000149",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000150",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000151",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000152",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000153",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000154",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000155",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000156",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000157",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000158",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000159",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000160",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000161",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000162",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000163",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000164",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000165",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000166",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000167",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000168",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000169",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000170",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000171",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000172",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000173",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000174",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000175",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000176",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000177",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000178",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000179",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000180",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000181",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000182",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000183",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000184",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000185",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000186",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000187",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000188",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000189",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000190",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000191",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000192",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000193",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000194",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000195",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000196",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000197",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000198",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000199",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000200",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000201",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000202",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000203",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000204",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000205",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000206",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000207",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000208",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000209",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000210",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000211",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000212",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000213",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000214",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000215",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000216",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000217",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000218",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000219",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000220",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000221",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000222",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000223",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000224",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000225",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000226",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000227",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000228",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000229",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000230",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000231",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000232",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000233",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000234",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000235",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000236",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000237",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000238",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000239",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000240",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000241",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000242",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000243",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000244",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000245",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000246",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000247",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000248",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000249",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000250",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000251",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000252",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000253",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000254",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000255",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000256",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000257",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000258",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000259",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000260",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000261",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000262",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000263",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000264",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000265",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000266",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000267",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000268",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000269",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000270",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000271",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000272",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000273",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000274",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000275",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000276",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000277",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000278",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000279",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000280",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000281",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000282",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000283",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000284",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000285",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000286",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000287",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000288",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000289",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000290",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000291",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000292",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000293",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000294",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000295",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000296",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000297",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000298",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000299",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000300",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000301",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000302",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000303",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000304",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000305",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000306",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000307",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000308",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000309",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000310",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000311",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000312",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000313",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000314",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000315",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000316",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000317",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000318",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000319",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000320",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000321",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000322",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000323",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000324",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000325",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000326",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000327",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000328",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000329",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000330",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000331",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000332",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000333",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000334",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000335",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000336",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000337",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000338",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000339",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000340",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000341",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000342",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000343",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000344",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000345",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000346",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000347",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000348",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000349",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000350",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000351",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000352",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000353",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000354",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000355",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000356",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000357",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000358",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000359",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000360",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000361",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000362",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000363",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000364",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000365",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000366",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000367",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000368",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000369",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000370",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000371",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000372",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000373",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000374",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000375",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000376",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000377",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000378",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000379",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000380",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000381",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000382",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000383",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000384",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000385",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000386",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000387",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000388",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000389",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000390",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000391",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000392",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000393",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000394",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000395",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000396",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000397",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000398",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000399",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000400",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000401",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000402",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000403",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000404",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000405",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000406",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000407",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000408",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000409",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000410",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000411",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000412",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000413",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000414",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000415",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000416",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000417",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000418",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000419",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000420",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000421",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000422",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000423",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000424",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000425",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000426",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000427",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000428",
+      "muestras": [
+        "suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000429",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000430",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000431",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000432",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000433",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000434",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000435",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000436",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000437",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000438",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000439",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000440",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000441",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000442",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000443",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000444",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000445",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000446",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000447",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000448",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000449",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000450",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000451",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000452",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000453",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000454",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000455",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000456",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000457",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000458",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000459",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000460",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000461",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000462",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000463",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000464",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000465",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000466",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000467",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000468",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000469",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000470",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000471",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000472",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000473",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000474",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000475",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000476",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000477",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000478",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000479",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000480",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000481",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000482",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000483",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000484",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000485",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000486",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000487",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000488",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000489",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000490",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000491",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000492",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000493",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000494",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000495",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000496",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000497",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000498",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000499",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000500",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000501",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000502",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000503",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000504",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000505",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000506",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000507",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000508",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000509",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000510",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000511",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000512",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000513",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000514",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000515",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000516",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000517",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000518",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000519",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000520",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000521",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000522",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000523",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000524",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000525",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000526",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000527",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000528",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000529",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000530",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000531",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000532",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000533",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000534",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000535",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000536",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000537",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000538",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000539",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000540",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000541",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000542",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000543",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000544",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000545",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000546",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000547",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000548",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000549",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000550",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000551",
+      "muestras": [
+        "muestra clínica según foco"
+      ]
+    },
+    {
+      "prueba_id": "test_000552",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000553",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000554",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000555",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000556",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000557",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000558",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000559",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000560",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000561",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000562",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000563",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000564",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000565",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000566",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000567",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000568",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000569",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000570",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000571",
+      "muestras": [
+        "heces, sangre u otra según parásito"
+      ]
+    },
+    {
+      "prueba_id": "test_000572",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000573",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000574",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000575",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000576",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000577",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000578",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000579",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000580",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000581",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000582",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000583",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000584",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000585",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000586",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000587",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000588",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000589",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000590",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000591",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000592",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000593",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000594",
+      "muestras": [
+        "plasma, suero o hisopado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000595",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000596",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000597",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000598",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000599",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000600",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000601",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000602",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000603",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000604",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000605",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000606",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000607",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000608",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000609",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000610",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000611",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000612",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000613",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000614",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000615",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000616",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000617",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000618",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000619",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000620",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000621",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000622",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000623",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000624",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000625",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000626",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000627",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000628",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000629",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000630",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000631",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000632",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000633",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000634",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000635",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000636",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000637",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000638",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000639",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000640",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000641",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000642",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000643",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000644",
+      "muestras": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000645",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000646",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000647",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000648",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000649",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000650",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000651",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000652",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000653",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000654",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000655",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000656",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000657",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000658",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000659",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000660",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000661",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000662",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000663",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000664",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000665",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000666",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000667",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000668",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000669",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000670",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000671",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000672",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000673",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000674",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000675",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000676",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000677",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000678",
+      "muestras": [
+        "sangre EDTA u otra muestra genética según indicación"
+      ]
+    },
+    {
+      "prueba_id": "test_000679",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000680",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000681",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000682",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000683",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000684",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000685",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000686",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000687",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000688",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000689",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000690",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000691",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000692",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000693",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000694",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000695",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000696",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000697",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000698",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000699",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000700",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000701",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000702",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000703",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000704",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000705",
+      "muestras": [
+        "suero o plasma"
+      ]
+    },
+    {
+      "prueba_id": "test_000706",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000707",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000708",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000709",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000710",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000711",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000712",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000713",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000714",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000715",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000716",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000717",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000718",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000719",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000720",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000721",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000722",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000723",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000724",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000725",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000726",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000727",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000728",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000729",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000730",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000731",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000732",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000733",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000734",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000735",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000736",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000737",
+      "muestras": [
+        "sangre u orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000738",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000739",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000740",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000741",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000742",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000743",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000744",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000745",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000746",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000747",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000748",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000749",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000750",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000751",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000752",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000753",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000754",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000755",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000756",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000757",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000758",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000759",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000760",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000761",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000762",
+      "muestras": [
+        "suero, plasma o sangre total según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000763",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000764",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000765",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000766",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000767",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000768",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000769",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000770",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000771",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000772",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000773",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000774",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000775",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000776",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000777",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000778",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000779",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000780",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000781",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000782",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000783",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000784",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000785",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000786",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000787",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000788",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000789",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000790",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000791",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000792",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000793",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000794",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000795",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000796",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000797",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000798",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000799",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000800",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000801",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000802",
+      "muestras": [
+        "orina"
+      ]
+    },
+    {
+      "prueba_id": "test_000803",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000804",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000805",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000806",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000807",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000808",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000809",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000810",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000811",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000812",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000813",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000814",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000815",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000816",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000817",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000818",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000819",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000820",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000821",
+      "muestras": [
+        "heces"
+      ]
+    },
+    {
+      "prueba_id": "test_000822",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000823",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000824",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000825",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000826",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000827",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000828",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000829",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000830",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000831",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000832",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000833",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000834",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000835",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000836",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000837",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000838",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000839",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000840",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000841",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000842",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000843",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000844",
+      "muestras": [
+        "líquido biológico especificado"
+      ]
+    },
+    {
+      "prueba_id": "test_000845",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000846",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000847",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000848",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000849",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000850",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000851",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000852",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000853",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000854",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000855",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000856",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000857",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000858",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000859",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000860",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000861",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000862",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000863",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000864",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000865",
+      "muestras": [
+        "semen o suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000866",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000867",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000868",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000869",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000870",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000871",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000872",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000873",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000874",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000875",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000876",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000877",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000878",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000879",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000880",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000881",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000882",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000883",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000884",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000885",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000886",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000887",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000888",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000889",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000890",
+      "muestras": [
+        "suero materno, orina o muestra prenatal según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000891",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000892",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000893",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000894",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000895",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000896",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000897",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000898",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000899",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000900",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000901",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000902",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000903",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000904",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000905",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000906",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000907",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000908",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000909",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000910",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000911",
+      "muestras": [
+        "sangre total EDTA/suero según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000912",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000913",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000914",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000915",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000916",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000917",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000918",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000919",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000920",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000921",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000922",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000923",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000924",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000925",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000926",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000927",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000928",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000929",
+      "muestras": [
+        "sangre EDTA y/o suero"
+      ]
+    },
+    {
+      "prueba_id": "test_000930",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000931",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000932",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000933",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000934",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000935",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000936",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000937",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000938",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000939",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000940",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000941",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000942",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000943",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000944",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000945",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000946",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000947",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000948",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000949",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000950",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000951",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000952",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000953",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000954",
+      "muestras": [
+        "tejido, citología o líquido según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000955",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000956",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000957",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000958",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000959",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000960",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000961",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000962",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000963",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000964",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000965",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000966",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000967",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000968",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000969",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000970",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000971",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000972",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000973",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000974",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000975",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000976",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000977",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000978",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000979",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000980",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000981",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000982",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000983",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000984",
+      "muestras": [
+        "sangre seca en papel filtro o muestra específica"
+      ]
+    },
+    {
+      "prueba_id": "test_000985",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000986",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000987",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000988",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000989",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000990",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000991",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000992",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000993",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000994",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000995",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000996",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000997",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000998",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000999",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001000",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001001",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001002",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001003",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001004",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001005",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001006",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001007",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001008",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001009",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001010",
+      "muestras": [
+        "suero/plasma/sangre/orina según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001011",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001012",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001013",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001014",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001015",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001016",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001017",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001018",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001019",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001020",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001021",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001022",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001023",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001024",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001025",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001026",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001027",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001028",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001029",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001030",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001031",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001032",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001033",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001034",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001035",
+      "muestras": [
+        "muestra según prueba"
+      ]
+    }
+  ]
+}

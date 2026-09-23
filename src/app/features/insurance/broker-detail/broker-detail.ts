@@ -29,6 +29,15 @@ import type { StatusSealVariant } from '../../../shared/components/organisms/sta
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 
 /** Lo que la pantalla necesita: el perfil y la cartera, que son dos lecturas. */
+interface FilaDeCliente {
+  readonly id: string;
+  readonly tipo: string;
+  readonly colectivo: string;
+  readonly desde: string;
+  readonly hasta: string;
+  readonly estado: string;
+}
+
 export interface BrokerDossier {
   readonly profile: BrokerProfile;
   readonly clients: readonly BrokerClient[];
@@ -76,8 +85,8 @@ export class BrokerDetail {
   protected readonly title = computed(() => this.dossier()?.profile.legalName ?? 'Corredor');
 
   /**
-   * La cartera en la tabla del sistema: era una `<table>` a mano que a 390 px
-   * estiraba su tarjeta más allá del borde de la pantalla.
+   * La cartera en la tabla del sistema (refactor UX). Era una `<table>` a mano
+   * que a 390 px estiraba su tarjeta más allá del borde de la pantalla.
    */
   protected readonly cartera = computed<ViewState<readonly FilaDeCliente[]>>(() => {
     const dossier = this.dossier();
@@ -103,6 +112,9 @@ export class BrokerDetail {
   ];
 
   protected readonly porId = (fila: FilaDeCliente): string => fila.id;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDeCliente = (fila: FilaDeCliente): string =>
+    `${fila.tipo} desde ${fila.desde}`;
 
   private fechaLarga(fecha: Date): string {
     return formatDate(fecha, 'longDate', this.locale);

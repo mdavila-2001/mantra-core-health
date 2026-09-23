@@ -22,9 +22,11 @@ import { NavigationService } from '../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Input } from '../../shared/components/atoms/input/input';
-import { Link } from '../../shared/components/atoms/link/link';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Select } from '../../shared/components/atoms/select/select';
+import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../shared/components/molecules/search-field/search-field';
@@ -81,14 +83,16 @@ const TOPE = 25;
   selector: 'app-clinical-record',
   imports: [
     AppButton,
+    AppButtonLink,
     DataTable,
     FormField,
     Input,
-    Link,
+    NavIcon,
     PageHeader,
     RouterLink,
     SearchField,
     Select,
+    Tooltip,
   ],
   templateUrl: './clinical-record.html',
   styleUrl: './clinical-record.css',
@@ -106,6 +110,10 @@ export class ClinicalRecord {
     viewChild.required<TemplateRef<{ $implicit: PatientListItem }>>('celdaPaciente');
   private readonly celdaAccion =
     viewChild.required<TemplateRef<{ $implicit: PatientListItem }>>('celdaAccion');
+  private readonly celdaDocumento =
+    viewChild.required<TemplateRef<{ $implicit: PatientListItem }>>('celdaDocumento');
+  private readonly celdaTelefono =
+    viewChild.required<TemplateRef<{ $implicit: PatientListItem }>>('celdaTelefono');
 
   protected readonly resultados = signal<ViewState<readonly PatientListItem[]>>(loading());
 
@@ -149,11 +157,41 @@ export class ClinicalRecord {
 
   protected readonly columnas = computed<readonly ColumnDef<PatientListItem>[]>(() => [
     { key: 'displayName', header: 'Paciente', priority: 1, cell: this.celdaPaciente() },
-    { key: 'patientCode', header: 'Código', priority: 2 },
-    { key: 'accion', header: 'Expediente', priority: 1, cell: this.celdaAccion() },
+    // Documento y teléfono en lugar del código interno y del identificador del
+    // perfil (propietario, 19/09/2026): un uuid no le dice nada a quien
+    // atiende, y el carnet y el celular son con lo que reconoce y llama a la
+    // persona.
+    { key: 'nationalId', header: 'Documento', priority: 1, cell: this.celdaDocumento() },
+    { key: 'phone', header: 'Teléfono', priority: 2, cell: this.celdaTelefono() },
+    // Contra el final de la fila: son las acciones, y una columna de acciones
+    // alineada al principio deja un canalón vacío entre el dato y el botón.
+    {
+      key: 'accion',
+      header: 'Expediente',
+      priority: 1,
+      align: 'end',
+      cell: this.celdaAccion(),
+    },
   ]);
 
   protected readonly porPaciente = (fila: PatientListItem): string => fila.profileId;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDePaciente = (fila: PatientListItem): string => fila.displayName ?? '';
+
+  /**
+   * Cómo nombrar a la persona en el nombre accesible de una acción.
+   *
+   * Los botones de la fila son íconos: sin esto, un lector de pantalla leería
+   * «Ver expediente» veinticinco veces seguidas sin decir de quién.
+   *
+   * Se apoya en `nombreDePaciente` para no tener dos ideas de cómo se llama la
+   * misma fila, pero **no** puede quedarse con su vacío: «Ver el expediente
+   * de » no nombra a nadie. Cuando no hay nombre cae al código y, si tampoco,
+   * al identificador — feo, pero distingue una fila de la siguiente.
+   */
+  protected nombreDe(paciente: PatientListItem): string {
+    return this.nombreDePaciente(paciente) || (paciente.patientCode ?? paciente.profileId);
+  }
 
   constructor() {
     effect(() => {
@@ -171,11 +209,31 @@ export class ClinicalRecord {
     });
   }
 
-  /** La búsqueda por nombre se publica en la URL; el efecto hace el resto. */
+  /**
+   * La búsqueda por nombre se publica en la URL; el efecto hace el resto.
+   *
+   * ## Por qué fusiona en vez de reemplazar el mapa entero
+   *
+   * Porque si no, **la búsqueda por documento se deshacía sola** cuando antes
+   * se había buscado por nombre. La cadena era: el botón publica el documento
+   * y limpia `q` → el campo de nombre está atado a `q`, así que se vacía de
+   * rebote → al vaciarse avisa con texto vacío → y ese aviso llegaba acá y
+   * escribía el mapa de parámetros entero, borrando el `nationalId` recién
+   * puesto. Se veía como que el botón no hacía nada: la URL quedaba pelada y
+   * la tabla volvía al vacío inicial.
+   *
+   * Con `merge`, el eco sólo borra `q`, que ya estaba vacío, y el documento
+   * sobrevive. Buscar por nombre con texto sí limpia el documento: son dos
+   * formas de encontrar a la misma persona, no dos filtros que se suman.
+   */
   protected buscar(texto: string): void {
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: texto === '' ? {} : { q: texto },
+      queryParams:
+        texto === ''
+          ? { q: null }
+          : { q: texto, nationalId: null, issuerAdministrativeAreaConceptId: null },
+      queryParamsHandling: 'merge',
       // Reemplaza en vez de apilar: cada tecleo no es un paso del historial.
       replaceUrl: true,
     });

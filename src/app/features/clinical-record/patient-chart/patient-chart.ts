@@ -62,13 +62,14 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
-import { CLINICAL_RECORD_ROUTE, encounterWorkspaceRoute } from '../clinical-record.routes';
+import { CLINICAL_RECORD_ROUTE, consultationRoute } from '../clinical-record.routes';
 import { AllergyBlock } from './allergy-block/allergy-block';
 import { CarePlanBlock } from './care-plan-block/care-plan-block';
 import type { DiagnosticoDelPlan } from './care-plan-block/care-plan-block';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
 import type { CitaDelPaciente } from './diagnosis-block/diagnosis-block';
 import { DocumentBlock } from './document-block/document-block';
+import { DRAFT_BLOCK } from './draft-block';
 import { FreeNoteBlock } from './free-note-block/free-note-block';
 import { MedicationBlock } from './medication-block/medication-block';
 import type {
@@ -438,7 +439,7 @@ export class PatientChart {
   );
 
   /** A dónde vuelve «Volver a la consulta». */
-  protected readonly rutaDeLaAtencion = computed(() => encounterWorkspaceRoute(this.profileId()));
+  protected readonly rutaDeLaAtencion = computed(() => consultationRoute(this.profileId()));
 
   /**
    * La ruta de navegación, con el paciente como último escalón.
@@ -696,6 +697,45 @@ export class PatientChart {
    * booleanas admitirían estados que la pantalla no puede mostrar.
    */
   protected readonly altaAbierta = signal<string | null>(null);
+
+  /**
+   * El bloque de alta montado ahora mismo, sea cual sea. Sin `.required`: la
+   * plantilla lo consulta en el mismo pase en el que `@switch` lo crea, igual
+   * que `attachment-dialog.ts` hace con su `uploader` — un `viewChild.required`
+   * ahí revienta antes de que el bloque exista.
+   */
+  private readonly bloqueDelAlta = viewChild(DRAFT_BLOCK);
+
+  /** El `<dialog>` del alta, para cerrarlo tras confirmar el descarte. */
+  private readonly dialogoDelAlta = viewChild<ContentDialog>('dialogoDelAlta');
+
+  /**
+   * Si el alta se puede cerrar sola: no hay bloque montado (recién se abrió) o
+   * el montado no tiene nada escrito.
+   */
+  protected readonly altaSinCambios = computed(
+    () => !(this.bloqueDelAlta()?.tieneCambiosPendientes() ?? false),
+  );
+
+  /**
+   * Intento de cerrar el alta con algo sin registrar.
+   *
+   * Mismo patrón que `attachment-dialog.alIntentarCerrar()`: se pregunta, y si
+   * se confirma se cierra por `close()` — nunca `altaAbierta.set(null)` a
+   * secas, que saltearía la restauración de foco del organismo.
+   */
+  protected async pedirDescarteDelAlta(): Promise<void> {
+    const descartar = await this.dialogs.confirm({
+      title: '¿Descartar lo escrito?',
+      message: 'Todavía no se registró. Si cerrás, lo que cargaste en este formulario se pierde.',
+      confirmLabel: 'Descartar',
+      cancelLabel: 'Seguir escribiendo',
+      destructive: true,
+    });
+    if (descartar) {
+      this.dialogoDelAlta()?.close();
+    }
+  }
 
   /** El alta de un bloque, o `null` si ese bloque no tiene una. */
   protected altaDe(clave: string): AltaDelExpediente | undefined {
@@ -1032,6 +1072,29 @@ export class PatientChart {
    * pida datos va en modal; la fila sólo tiene su menú.
    */
   protected readonly cambiandoEstadoDe = signal<FilaClinica | null>(null);
+
+  /** El `<dialog>` del cambio de estado, para cerrarlo tras confirmar el descarte. */
+  private readonly dialogoDeEstado = viewChild<ContentDialog>('dialogoDeEstado');
+
+  /** Si el modal puede cerrarse solo: no hay destino elegido sin aplicar. */
+  protected readonly estadoSinCambios = computed(() => {
+    const fila = this.cambiandoEstadoDe();
+    return fila === null || this.destinoEstadoDe(fila.id) === null;
+  });
+
+  /** Intento de cerrar con un destino elegido y no aplicado. */
+  protected async pedirDescarteDelEstado(): Promise<void> {
+    const descartar = await this.dialogs.confirm({
+      title: '¿Descartar el cambio de estado?',
+      message: 'Elegiste un estado y no lo aplicaste. Si cerrás, el diagnóstico queda como está.',
+      confirmLabel: 'Descartar',
+      cancelLabel: 'Seguir editando',
+      destructive: true,
+    });
+    if (descartar) {
+      this.dialogoDeEstado()?.close();
+    }
+  }
 
   protected abrirCambioDeEstado(fila: FilaClinica): void {
     this.cambiandoEstadoDe.set(fila);

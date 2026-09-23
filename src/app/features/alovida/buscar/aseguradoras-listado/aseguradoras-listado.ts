@@ -61,7 +61,11 @@ export class BuscarAseguradorasListado {
   protected readonly busqueda = new BusquedaPublica(
     (filtros) => this.directorio.searchInsurers(filtros),
     [],
-    { territorio: this.lugar },
+    // Con categorías: el ramo separa a las que **cubren salud** de las de
+    // generales y fianzas, que estaban en la misma lista sin nada que las
+    // distinguiera salvo leer el titular una por una. Es la primera pregunta
+    // de quien busca un seguro médico, y la respondía la lista entera.
+    { territorio: this.lugar, categorias: true },
   );
 
   protected readonly tarjetas = computed<readonly InsurerCard[]>(() =>

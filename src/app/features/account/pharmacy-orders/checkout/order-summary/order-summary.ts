@@ -1,35 +1,48 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
+import { ROTULOS_DE_FACTURA } from '../../order-invoice/order-invoice.types';
 import type { ResumenDelPedido } from './order-summary.types';
+import { displayCurrency } from '../../../../../core/money/display-currency';
+import { withDisplayCurrency } from '../../../../../core/money/display-currency';
 
 /**
- * **El resumen del pedido** del checkout.
+ * **El resumen del pedido** del checkout (T-E3 · F2.1.8, F2.2.3, F2.2.5, F4.2).
  *
  * Presentacional: recibe el resumen ya calculado y lo pinta. Sin cliente, sin
- * pedido y sin identificadores.
+ * pedido y sin identificadores, para que el supermercado (T-E5) lo monte con
+ * sus renglones.
  *
- * **Sólo renglones y total** (R-T-E3): el backend no publica descuento de red,
- * coaseguro, envío ni puntos antes de crear el pedido, así que acá no se pinta
- * ninguna de esas líneas. El coaseguro llega con la liquidación del seguro,
- * después de la adjudicación, y lo muestra el detalle del pedido.
+ * Los rótulos «Descuento red AloVida» y «Coaseguro» son los de la factura
+ * (T-E4): el mismo concepto se nombra igual antes y después de pagar.
  */
 @Component({
   selector: 'app-order-summary',
-  imports: [Badge],
+  imports: [Badge, NgTemplateOutlet],
   templateUrl: './order-summary.html',
   styleUrl: './order-summary.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrderSummary {
+
+  /**
+   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
+   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
+   */
+  protected moneda(code?: string | null): string {
+    return displayCurrency(code);
+  }
   readonly resumen = input.required<ResumenDelPedido>();
 
-  /** El importe con su moneda, o `null` cuando la cifra no se puede afirmar. */
-  protected importe(valor: string | null): string | null {
+  protected readonly rotulos = ROTULOS_DE_FACTURA;
+
+  /** «108.00 BOB», o «No disponible» cuando la cifra no se puede afirmar. */
+  protected importe(valor: string | null): string {
     if (valor === null) {
-      return null;
+      return 'No disponible';
     }
     const moneda = this.resumen().moneda;
-    return moneda === null ? valor : `${valor} ${moneda}`;
+    return withDisplayCurrency(valor, moneda);
   }
 }

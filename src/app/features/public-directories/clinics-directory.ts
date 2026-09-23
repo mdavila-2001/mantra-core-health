@@ -50,6 +50,9 @@ export class ClinicsDirectory extends PublicDirectoryListing {
   protected readonly sustantivo = SUSTANTIVO;
   protected readonly queSonEnSingular = 'una clínica';
 
+  /** La ficha de un resultado, dentro del panel. Ver `rutaDeLaFicha`. */
+  protected readonly rutaDeLaFicha = '/clinics-directory';
+
   protected buscar(
     filtros: PublicSearchQuery,
   ): Observable<PublicPage<PublicSearchResult>> {

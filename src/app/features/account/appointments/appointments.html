@@ -1,7 +1,19 @@
-<app-page-header
-  title="Mis citas"
-  subtitle="Las citas que pediste y los horarios que podés pedir."
-/>
+<app-page-header title="Mis citas" subtitle="Las citas que pediste y los horarios que podés pedir.">
+  <!-- R-01 del refactor UX · la acción principal de la vista, arriba y en todos
+       los anchos. La sección «Agendar una cita» no se mueve: este botón lleva a
+       ella y le deja el foco. Antes había que bajar ~2 900 px de historial. -->
+  @if (!sinPerfilDePaciente) {
+    <button
+      app-button
+      page-actions
+      variant="primary"
+      data-testid="turnos-pedir"
+      (clicked)="irAPedirTurno()"
+    >
+      Pedir una cita
+    </button>
+  }
+</app-page-header>
 
 @if (sinPerfilDePaciente) {
   <!-- Sesión válida de una cuenta que no es de un paciente. No es un 403: es
@@ -40,7 +52,11 @@
          dos por igual: es la misma colección, y un filtro que sólo valiera en
          una haría que cambiar de vista pareciera perder citas. -->
     @if (hayTurnosParaFiltrar()) {
-      <div class="turnos__filtros" data-testid="turnos-filtros">
+      <div
+        class="turnos__filtros"
+        data-testid="turnos-filtros"
+        [class.turnos__filtros--abiertos]="filtrosAbiertos()"
+      >
         <app-search-field
           class="turnos__buscador"
           data-testid="turnos-buscar"
@@ -50,30 +66,51 @@
           (searched)="cambiarBusqueda($event)"
         />
 
-        <app-form-field label="Estado" class="turnos__filtro-campo">
-          <app-select
-            data-testid="turnos-filtro-estado"
-            [options]="opcionesDeEstado()"
-            [value]="filtroDeEstado()"
-            (valueChange)="cambiarEstado($event)"
-          />
-        </app-form-field>
+        <!-- R-03 · en móvil los tres secundarios se pliegan detrás de este botón
+             (apilados ocupaban la primera pantalla entera). En escritorio el CSS
+             no lo dibuja y los campos quedan siempre a la vista. -->
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          class="turnos__mas-filtros"
+          data-testid="turnos-mas-filtros"
+          aria-controls="turnos-filtros-plegables"
+          [attr.aria-expanded]="filtrosAbiertos()"
+          (clicked)="alternarFiltros()"
+        >
+          Más filtros
+          @if (filtrosPlegadosActivos() > 0) {
+            <span class="turnos__mas-filtros-cuenta">({{ filtrosPlegadosActivos() }} activos)</span>
+          }
+        </button>
 
-        <app-form-field label="Desde" class="turnos__filtro-campo">
-          <app-date-picker
-            data-testid="turnos-filtro-desde"
-            [value]="filtroDesde()"
-            (valueChange)="cambiarDesde($event)"
-          />
-        </app-form-field>
+        <div id="turnos-filtros-plegables" class="turnos__filtros-plegables">
+          <app-form-field label="Estado" class="turnos__filtro-campo">
+            <app-select
+              data-testid="turnos-filtro-estado"
+              [options]="opcionesDeEstado()"
+              [value]="filtroDeEstado()"
+              (valueChange)="cambiarEstado($event)"
+            />
+          </app-form-field>
 
-        <app-form-field label="Hasta" class="turnos__filtro-campo">
-          <app-date-picker
-            data-testid="turnos-filtro-hasta"
-            [value]="filtroHasta()"
-            (valueChange)="cambiarHasta($event)"
-          />
-        </app-form-field>
+          <app-form-field label="Desde" class="turnos__filtro-campo">
+            <app-date-picker
+              data-testid="turnos-filtro-desde"
+              [value]="filtroDesde()"
+              (valueChange)="cambiarDesde($event)"
+            />
+          </app-form-field>
+
+          <app-form-field label="Hasta" class="turnos__filtro-campo">
+            <app-date-picker
+              data-testid="turnos-filtro-hasta"
+              [value]="filtroHasta()"
+              (valueChange)="cambiarHasta($event)"
+            />
+          </app-form-field>
+        </div>
 
         <!-- FT-05-R06 · sólo aparece cuando hay algo que limpiar: un botón que
              no hace nada enseña a ignorarlo. -->
@@ -131,9 +168,10 @@
                        lista de abajo ya la mostraba y el detalle no, así que la
                        misma cita se leía con dos duraciones distintas según
                        dónde se la mirara. -->
-                  {{ turno.cuando | date: "EEEE d 'de' MMM 'a las' HH:mm" }}@if (
-                    turno.hasta !== null
-                  ) {<span>–{{ turno.hasta | date: 'HH:mm' }}</span>}
+                  {{ turno.cuando | date: "EEEE d 'de' MMM 'a las' HH:mm" }}
+                  @if (turno.hasta !== null) {
+                    <span>–{{ turno.hasta | date: 'HH:mm' }}</span>
+                  }
                 } @else {
                   Turno sin horario asignado
                 }
@@ -176,6 +214,7 @@
                     variant="ghost"
                     size="sm"
                     [isLoading]="operando() === turno.id"
+                    [attr.aria-label]="'Cancelar: ' + (turno.agenda || 'la cita') + (turno.cuando ? ', ' + (turno.cuando | date: &quot;d 'de' MMMM, HH:mm&quot;) : '')"
                     (clicked)="cancelarTurno(turno)"
                   >
                     Cancelar
@@ -185,87 +224,105 @@
             </article>
           }
         } @else {
-          <ul class="turnos__lista">
-            @for (turno of turnosListos(); track turno.id) {
-              <li class="turnos__item">
-                <div class="turnos__cuando">
-                  @if (turno.cuando !== null) {
-                    <span class="turnos__fecha">{{ turno.cuando | date: 'EEEE d MMM' }}</span>
-                    <span class="turnos__hora">
-                      {{ turno.cuando | date: 'HH:mm' }}
-                      @if (turno.hasta !== null) {
-                        – {{ turno.hasta | date: 'HH:mm' }}
-                      }
-                    </span>
-                  } @else {
-                    <!-- La cita existe pero perdió su cupo: el contrato declara
+          <!-- R-02 · primero lo que viene, después el historial (el más reciente
+               arriba). Antes seguía el orden del servidor y las citas atendidas
+               enterraban la próxima. Mismo marcado de fila para los dos grupos. -->
+          @for (grupo of gruposDeLista(); track grupo.clave) {
+            @if (grupo.turnos.length > 0) {
+              <section class="turnos__grupo" [attr.aria-labelledby]="'turnos-grupo-' + grupo.clave">
+                <h3 class="turnos__grupo-titulo" [id]="'turnos-grupo-' + grupo.clave">
+                  {{ grupo.titulo }}
+                  <span class="turnos__grupo-cuenta">{{ grupo.turnos.length }}</span>
+                </h3>
+                <ul class="turnos__lista" [attr.data-testid]="'turnos-lista-' + grupo.clave">
+                  @for (turno of grupo.turnos; track turno.id) {
+                    <li class="turnos__item">
+                      <div class="turnos__cuando">
+                        @if (turno.cuando !== null) {
+                          <span class="turnos__fecha">{{ turno.cuando | date: 'EEEE d MMM' }}</span>
+                          <span class="turnos__hora">
+                            {{ turno.cuando | date: 'HH:mm' }}
+                            @if (turno.hasta !== null) {
+                              – {{ turno.hasta | date: 'HH:mm' }}
+                            }
+                          </span>
+                        } @else {
+                          <!-- La cita existe pero perdió su cupo: el contrato declara
                        `startAt` opcional justamente por esto. -->
-                    <span class="turnos__fecha">Sin horario asignado</span>
-                  }
-                  @if (turno.agenda !== '') {
-                    <!-- Con quién es el turno. Va acá dentro y no como hermano
+                          <span class="turnos__fecha">Sin horario asignado</span>
+                        }
+                        @if (turno.agenda !== '') {
+                          <!-- Con quién es el turno. Va acá dentro y no como hermano
                        del badge: el item es una grilla de dos columnas, y un
                        tercer hermano correría el badge a la fila siguiente.
                        Se omite mientras no se sepa, en vez de dejar un hueco o
                        mostrar el identificador del recurso. -->
-                    <span class="turnos__agenda">{{ turno.agenda }}</span>
-                  }
-                  <!-- TJ-2 · quien ve su turno en un horario que no pidió
+                          <span class="turnos__agenda">{{ turno.agenda }}</span>
+                        }
+                        <!-- TJ-2 · quien ve su turno en un horario que no pidió
                        necesita saber que ES el suyo, movido, y no uno nuevo que
                        no reconoce. Sin esto, una reprogramación se lee como un
                        turno ajeno. -->
-                  @if (turno.reprogramadoDesde; as desde) {
-                    <span class="turnos__reprogramado" data-testid="turnos-reprogramado">
-                      Reprogramado desde el {{ desde | date: "d 'de' MMMM 'a las' HH:mm" }}
-                    </span>
-                  }
-                </div>
-                <div class="turnos__acciones">
-                  <app-badge [variant]="turno.tono">{{ turno.estado }}</app-badge>
-                  @if (esCancelable(turno)) {
-                    <button
-                      app-button
-                      variant="ghost"
-                      size="sm"
-                      class="turnos__cancelar"
-                      [isLoading]="operando() === turno.id"
-                      (clicked)="cancelarTurno(turno)"
-                    >
-                      Cancelar
-                    </button>
-                  }
-                </div>
-                @if (turno.motivo !== '') {
-                  <p class="turnos__motivo">{{ turno.motivo }}</p>
-                }
-                @if (turno.avisoDelCambio !== '') {
-                  <!-- El motivo del último cambio (corrección #14): antes la cita
+                        @if (turno.reprogramadoDesde; as desde) {
+                          <span class="turnos__reprogramado" data-testid="turnos-reprogramado">
+                            Reprogramado desde el {{ desde | date: "d 'de' MMMM 'a las' HH:mm" }}
+                          </span>
+                        }
+                      </div>
+                      <div class="turnos__acciones">
+                        <app-badge [variant]="turno.tono">{{ turno.estado }}</app-badge>
+                        @if (esCancelable(turno)) {
+                          <button
+                            app-button
+                            variant="ghost"
+                            size="sm"
+                            class="turnos__cancelar"
+                            [isLoading]="operando() === turno.id"
+                            [attr.aria-label]="
+                              'Cancelar: ' +
+                              (turno.agenda || 'la cita') +
+                              (turno.cuando ? ', ' + (turno.cuando | date: &quot;d 'de' MMMM, HH:mm&quot;) : '')
+                            "
+                            (clicked)="cancelarTurno(turno)"
+                          >
+                            Cancelar
+                          </button>
+                        }
+                      </div>
+                      @if (turno.motivo !== '') {
+                        <p class="turnos__motivo">{{ turno.motivo }}</p>
+                      }
+                      @if (turno.avisoDelCambio !== '') {
+                        <!-- El motivo del último cambio (corrección #14): antes la cita
                      decía «cancelada» y no decía por qué, así que el cambio
                      llegaba sin explicación. -->
-                  <p class="turnos__aviso-cambio" data-testid="turnos-motivo-cambio">
-                    {{ turno.avisoDelCambio }}
-                    @if (turno.cambioCuando !== null) {
-                      <span class="turnos__aviso-fecha">
-                        ({{ turno.cambioCuando | date: "d 'de' MMM, HH:mm" }})
-                      </span>
-                    }
-                  </p>
-                }
-                @if (turno.avisoDeDemora !== '') {
-                  <!-- P8 · «si el médico se demora, notificación con la
+                        <p class="turnos__aviso-cambio" data-testid="turnos-motivo-cambio">
+                          {{ turno.avisoDelCambio }}
+                          @if (turno.cambioCuando !== null) {
+                            <span class="turnos__aviso-fecha">
+                              ({{ turno.cambioCuando | date: "d 'de' MMM, HH:mm" }})
+                            </span>
+                          }
+                        </p>
+                      }
+                      @if (turno.avisoDeDemora !== '') {
+                        <!-- P8 · «si el médico se demora, notificación con la
                      información de la demora» (registro 3.5). -->
-                  <p class="turnos__aviso-demora" data-testid="turnos-motivo-demora">
-                    {{ turno.avisoDeDemora }}
-                    @if (turno.demoraCuando !== null) {
-                      <span class="turnos__aviso-fecha">
-                        (avisada {{ turno.demoraCuando | date: "d 'de' MMM, HH:mm" }})
-                      </span>
-                    }
-                  </p>
-                }
-              </li>
+                        <p class="turnos__aviso-demora" data-testid="turnos-motivo-demora">
+                          {{ turno.avisoDeDemora }}
+                          @if (turno.demoraCuando !== null) {
+                            <span class="turnos__aviso-fecha">
+                              (avisada {{ turno.demoraCuando | date: "d 'de' MMM, HH:mm" }})
+                            </span>
+                          }
+                        </p>
+                      }
+                    </li>
+                  }
+                </ul>
+              </section>
             }
-          </ul>
+          }
         }
       }
       @case ('empty') {
@@ -313,7 +370,9 @@
   }
 
   <section class="turnos__bloque" aria-labelledby="pedir-turno">
-    <h2 id="pedir-turno" class="turnos__titulo">Agendar una cita</h2>
+    <!-- tabindex -1: destino del «Pedir una cita» del encabezado; recibe el
+         foco por programa sin entrar al orden de tabulación. -->
+    <h2 id="pedir-turno" class="turnos__titulo" tabindex="-1">Agendar una cita</h2>
 
     @if (organizacion() === null) {
       <app-alert tone="warning" title="Elegí una organización">

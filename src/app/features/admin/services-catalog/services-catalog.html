@@ -117,6 +117,7 @@
     [state]="resultados()"
     [columns]="columnas()"
     [trackBy]="porId"
+    [rowLabel]="nombreDeServicio"
     caption="Servicios del catálogo maestro"
     [cursor]="cursor()"
     (cursorChanged)="mover($event)"
@@ -126,7 +127,7 @@
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 <ng-template #celdaPrecio let-servicio>
-  <span class="catalogo__precio">{{ servicio.defaultPrice }}</span>
+  <span class="catalogo__precio">{{ servicio.defaultPrice }} {{ moneda }}</span>
 </ng-template>
 
 <ng-template #celdaEstado let-servicio>

@@ -33,6 +33,84 @@
     position: relative;
 }
 
+/* ─── Indicio de columnas ocultas (refactor UX, H-09) ─────────────────────
+      Una tabla más ancha que su contenedor escondía columnas enteras detrás de un
+      scroll lateral sin ninguna pista: en «Consultas» era la columna de acciones.
+      Una sombra en el borde por el que queda contenido lo dice.
+
+      Se calcula con una animación ligada al scroll del propio contenedor, no con
+      la técnica de «tapas» de color fijo: el fondo real es el del `body` —blanco
+      en claro, degradado en oscuro— y una tapa de otro color se vería como una
+      franja. Sin desbordamiento la línea de tiempo está inactiva y las sombras
+      valen 0; sin soporte del navegador, no hay sombras (mejora progresiva). */
+@property --data-table-sombra-inicio {
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 0;
+}
+
+@property --data-table-sombra-fin {
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 0;
+}
+
+@keyframes data-table-sombras {
+    from {
+        --data-table-sombra-inicio: 0;
+        --data-table-sombra-fin: 1;
+    }
+    4% {
+        --data-table-sombra-inicio: 1;
+    }
+    96% {
+        --data-table-sombra-fin: 1;
+    }
+    to {
+        --data-table-sombra-inicio: 1;
+        --data-table-sombra-fin: 0;
+    }
+}
+
+@supports (animation-timeline: scroll()) {
+    .data-table__scroll {
+        --data-table-sombra-tinta: var(--text-secondary);
+        background:
+            radial-gradient(
+                    farthest-side at 0 50%,
+                    color-mix(
+                        in srgb,
+                        var(--data-table-sombra-tinta) calc(var(--data-table-sombra-inicio) * 40%),
+                        transparent
+                    ),
+                    transparent
+                )
+                left / 18px 100% no-repeat,
+            radial-gradient(
+                    farthest-side at 100% 50%,
+                    color-mix(
+                        in srgb,
+                        var(--data-table-sombra-tinta) calc(var(--data-table-sombra-fin) * 40%),
+                        transparent
+                    ),
+                    transparent
+                )
+                right / 18px 100% no-repeat;
+        animation: data-table-sombras linear both;
+        animation-timeline: scroll(self inline);
+    }
+
+    /* No es movimiento: la sombra sigue la posición del scroll, no el tiempo.
+              El bloque global de movimiento reducido fija 0,01 ms a toda animación, y
+              en una línea de tiempo de scroll eso la dejaría clavada en su estado
+              final (sombra del inicio encendida, la del final apagada). */
+    @media (prefers-reduced-motion: reduce) {
+        .data-table__scroll {
+            animation-duration: auto !important;
+        }
+    }
+}
+
 .data-table__table {
     inline-size: 100%;
     border-collapse: collapse;
@@ -41,7 +119,9 @@
 }
 
 .data-table__cell {
-    padding: var(--sp-3);
+    /* Base móvil más apretada: con 12 px por lado, tres columnas ya no entran
+       en 400 px y la tabla se va de la pantalla. Desde tablet vuelve a 12. */
+    padding: var(--sp-2);
     text-align: start;
     border-block-end: 1px solid var(--border-default);
     vertical-align: top;
@@ -63,7 +143,28 @@ thead .data-table__cell {
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    white-space: nowrap;
+}
+
+/* ─── Columna fija al borde final (`sticky: 'end'`) ─────────────────────────
+      Queda a la vista mientras el resto se desplaza. Necesita fondo opaco —si no,
+      las celdas que pasan por debajo se leen a través— y una sombra que diga que
+      hay contenido corrido detrás. Hereda el hover de la fila. */
+.data-table__cell--sticky-end {
+    position: sticky;
+    inset-inline-end: 0;
+    z-index: 1;
+}
+
+/* Fondo y sombra sólo cuando la tabla se desplaza de verdad: sin desborde no
+   pasa nada por debajo, y un fondo propio se veía como un bloque de otro tono
+   al final de cada fila. `overflowing` lo mide la tabla con un ResizeObserver. */
+.data-table__scroll--overflowing .data-table__cell--sticky-end {
+    background: var(--bg-surface);
+    box-shadow: -8px 0 8px -8px color-mix(in srgb, var(--text-secondary) 45%, transparent);
+}
+
+.data-table__scroll--overflowing .data-table__row:hover .data-table__cell--sticky-end {
+    background: var(--bg-inset);
 }
 
 .data-table__row:hover {
@@ -98,7 +199,7 @@ thead .data-table__cell {
 .data-table__select-cell,
 .data-table__detail-toggle-cell {
     inline-size: var(--sp-12);
-    padding: var(--sp-2) var(--sp-3);
+    padding: var(--sp-2) var(--sp-1);
     border-block-end: 1px solid var(--border-default);
 }
 
@@ -157,6 +258,16 @@ thead .data-table__cell {
 
 /* ≥ tablet: entran como columnas y el botón de detalle deja de hacer falta. */
 @media (min-width: 780px) {
+    .data-table__cell {
+        padding: var(--sp-3);
+    }
+
+    /* En el teléfono el encabezado parte en dos líneas: sin eso, «FECHA Y
+       HORA» fijaba el ancho de la columna y la tabla se salía de la pantalla. */
+    thead .data-table__cell {
+        white-space: nowrap;
+    }
+
     .data-table__secondary {
         display: table-cell;
     }
@@ -172,4 +283,21 @@ thead .data-table__cell {
     .data-table__detail {
         grid-template-columns: repeat(2, 1fr);
     }
+}
+
+/* Alto máximo, opt-in (H3.S2, ADR-0015 regla 6): con `.data-table--constrained`
+   las columnas secundarias siguen plegadas al detalle aunque el viewport ya
+   sea de escritorio — es eso, y no un `overflow-x` distinto, lo que evita el
+   scroll lateral. Dos clases > una: gana por especificidad, sin `!important`,
+   sin depender del orden respecto del media query de arriba. */
+.data-table--constrained .data-table__secondary {
+    display: none;
+}
+
+.data-table--constrained .data-table__detail-toggle-cell {
+    display: table-cell;
+}
+
+.data-table--constrained .data-table__detail-row {
+    display: table-row;
 }

@@ -34,6 +34,8 @@ export interface PlantillaSimulada {
   readonly validTo?: string;
   readonly bookingPolicyId: string;
   readonly statusConceptId: string;
+  /** Sin turnos fijos: un bloque abierto por franja (P36). */
+  readonly flexibleHours?: boolean;
 }
 
 export interface CupoSimulado {
@@ -99,12 +101,19 @@ export function recursoDe(p: ProfesionalSimulado): string {
 }
 
 export const recursos = new Coleccion<RecursoSimulado>(
-  PROFESIONALES.filter((p) => p.especialidades.length > 0).flatMap((p, i) => {
+  // Los médicos de la red de las aseguradoras no tienen agenda: nadie publicó
+  // sus horarios, y fabricárselos sería ofrecer turnos que no existen.
+  PROFESIONALES.filter((p) => p.especialidades.length > 0 && p.origen === undefined).flatMap((p, i) => {
     const principal: RecursoSimulado = {
       id: recursoDe(p),
       name: `Agenda de ${p.displayName}`,
       resourceTypeConceptId: uuid('concept-resource-practitioner'),
-      resourceRefType: 'PRACTITIONER',
+      // El nombre de la TABLA, como lo emite la API real
+      // (`scheduling-agenda.service.ts`): la ficha pública y la agenda filtran
+      // «los recursos de este profesional» con esa lista, y con `'PRACTITIONER'`
+      // ningún recurso era suyo — la ficha decía «Todavía no publicó horarios»
+      // con 41 cupos cargados.
+      resourceRefType: 'health_practitioner_profiles',
       resourceRefId: p.id,
       practitionerName: p.displayName,
       practiceId: p.organizacion === 'Hospital San Lucas' ? PRACTICE_SANLUCAS : PRACTICE_OLIVOS,
@@ -138,7 +147,13 @@ export const plantillas = new Coleccion<PlantillaSimulada>([
     resourceId: RECURSO_MEDICA,
     retired: false,
     name: 'Mañanas en la clínica',
-    rules: [1, 2, 3, 4, 5].map((dayOfWeek) => ({ dayOfWeek, startTime: '08:00', endTime: '12:00', slotMinutes: 30, capacityPerSlot: 1 })),
+    // Lunes a SÁBADO. El sábado entró el 19/09/2026 y no es cosmético: con la
+    // semana de lunes a viernes, la maqueta abierta un fin de semana mostraba
+    // un día sin una sola consulta —y el panel abre con la jornada—. Una
+    // maqueta que se ve vacía dos días de cada siete no sirve para mostrar
+    // nada. Además es lo que hace media Santa Cruz: consultorio el sábado por
+    // la mañana.
+    rules: [1, 2, 3, 4, 5, 6].map((dayOfWeek) => ({ dayOfWeek, startTime: '08:00', endTime: '12:00', slotMinutes: 30, capacityPerSlot: 1 })),
     slotMinutes: 30,
     validFrom: isoDia(-60),
     bookingPolicyId: POLITICA_ESTANDAR,
@@ -149,7 +164,14 @@ export const plantillas = new Coleccion<PlantillaSimulada>([
     resourceId: RECURSO_CONSULTORIO_MEDICA,
     retired: false,
     name: 'Tardes en el consultorio',
-    rules: [1, 3, 5].map((dayOfWeek) => ({ dayOfWeek, startTime: '15:00', endTime: '19:00', slotMinutes: 20, capacityPerSlot: 1, gapMinutes: 10 })),
+    // Lunes, miércoles y viernes por la tarde; el DOMINGO, guardia corta. La
+    // guardia existe por el mismo motivo que el sábado de arriba —que la
+    // maqueta tenga jornada los siete días— y se parece a lo que pasa de
+    // verdad: tres horas de guardia, no una tarde entera de consultorio.
+    rules: [
+      ...[1, 3, 5].map((dayOfWeek) => ({ dayOfWeek, startTime: '15:00', endTime: '19:00', slotMinutes: 20, capacityPerSlot: 1, gapMinutes: 10 })),
+      { dayOfWeek: 0, startTime: '10:00', endTime: '13:00', slotMinutes: 20, capacityPerSlot: 1, gapMinutes: 10 },
+    ],
     slotMinutes: 20,
     validFrom: isoDia(-30),
     bookingPolicyId: POLITICA_ESTANDAR,
@@ -233,9 +255,27 @@ const MOTIVOS = [
   'Segunda opinión',
 ];
 
+/**
+ * La tipología de actividad de una reserva generada, determinista (C-24 /
+ * hallazgo D5 post-#559): antes las tres asignaciones de `serviceConceptId`
+ * de este archivo eran `ACT-CONSULTA` fijo, así que "otras atenciones" del
+ * panel (`consultas-resumen.ts`) nunca tenía nada que clasificar — la lógica
+ * era correcta, faltaba el dato. La teleconsulta se deduce del canal, que ya
+ * la distingue; procedimientos y exámenes salen con una cadencia fija sobre
+ * el índice, para que la cifra del panel se pueda contar a mano dos veces y
+ * dé lo mismo.
+ */
+function servicioDe(indice: number, canal: string): string {
+  if (canal === CANAL['CH-TELECONSULTA']) return ACTIVIDAD['ACT-TELECONSULTA']!;
+  if (indice % 11 === 5) return ACTIVIDAD['ACT-PROCEDIMIENTO']!;
+  if (indice % 13 === 7) return ACTIVIDAD['ACT-EXAMEN']!;
+  return ACTIVIDAD['ACT-CONSULTA']!;
+}
+
 function reserva(indice: number, cupo: CupoSimulado, estado: keyof typeof ESTADO_RESERVA, extra: Partial<ReservaSimulada> = {}): ReservaSimulada {
   const paciente = PACIENTES[indice % PACIENTES.length]!;
   const confirmada = ['BK-CONFIRMED', 'BK-CHECKED-IN', 'BK-IN-PROGRESS', 'BK-COMPLETED'].includes(estado);
+  const canal = indice % 3 === 0 ? CANAL['CH-TELECONSULTA']! : CANAL['CH-PRESENCIAL']!;
   return {
     id: uuid(`booking-${cupo.id}`),
     patientProfileId: paciente.id,
@@ -246,8 +286,8 @@ function reserva(indice: number, cupo: CupoSimulado, estado: keyof typeof ESTADO
     startAt: cupo.startAt,
     endAt: cupo.endAt,
     statusConceptId: ESTADO_RESERVA[estado]!,
-    serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
-    bookingChannelConceptId: indice % 3 === 0 ? CANAL['CH-TELECONSULTA']! : CANAL['CH-PRESENCIAL']!,
+    serviceConceptId: servicioDe(indice, canal),
+    bookingChannelConceptId: canal,
     confirmedAt: confirmada ? masMinutos(cupo.startAt, -60 * 24 * 2) : null,
     checkedInAt: ['BK-CHECKED-IN', 'BK-IN-PROGRESS', 'BK-COMPLETED'].includes(estado) ? masMinutos(cupo.startAt, -10) : null,
     reasonText: MOTIVOS[indice % MOTIVOS.length]!,
@@ -457,3 +497,10 @@ export const listaDeEspera = new Coleccion<{
 ]);
 
 export const TENANT_AGENDA = TENANT_CLINICA;
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+recursos.persistirEn('mock.agenda.recursos');
+plantillas.persistirEn('mock.agenda.plantillas');
+reservas.persistirEn('mock.agenda.reservas');
+bloqueos.persistirEn('mock.agenda.bloqueos');
+listaDeEspera.persistirEn('mock.agenda.listaDeEspera');

@@ -17,6 +17,14 @@ export interface ConceptoSimulado {
   readonly valueSets: readonly string[];
   readonly selectable: boolean;
   readonly ordinal: number;
+  /**
+   * Lo que el sistema de codificación declara del concepto, por código
+   * (`concept_properties.property_code` en el modelo real). Ausente en la
+   * mayoría de los conceptos: sólo lo llevan quienes lo declaran con
+   * {@link declararPropiedades}. Espeja `ConceptDetail.properties` de
+   * `core/data-access/terminology/terminology.types.ts`.
+   */
+  readonly properties?: Readonly<Record<string, unknown>>;
 }
 
 export interface ConjuntoSimulado {
@@ -73,6 +81,21 @@ function definir(
   return ids;
 }
 
+/**
+ * Agrega propiedades (`concept_properties`) a un concepto ya definido.
+ *
+ * Sólo se usa para lo que el `GET /terminology/concepts/:id` real declara
+ * como `properties: Record<string, unknown>` — un mapa `código -> value_json`
+ * que el modelo NO acota (`terminology.constants.ts` de la API: "tantas como
+ * haga falta, una por código"). No lanza si el código no existe: mejor una
+ * propiedad que no aparece que romper el arranque del catálogo.
+ */
+function declararPropiedades(code: string, propiedades: Readonly<Record<string, unknown>>): void {
+  const existente = registro.get(code);
+  if (existente === undefined) return;
+  registro.set(code, { ...existente, properties: { ...existente.properties, ...propiedades } });
+}
+
 /* ---- Bolivia: departamentos, municipios, ocupaciones, empleadores --------- */
 
 /* Los codigos no son decorativos: `BoMunicipalitiesService` saca la sigla del
@@ -102,6 +125,10 @@ export const MUNICIPIO = definir('VS_BO_MUNICIPALITY', [
   ['SC-WAR', 'Warnes'],
   ['SC-COT', 'Cotoca'],
   ['SC-LGD', 'La Guardia'],
+  // Con el código del catálogo real (`03_terminology.seeds.json`): los traen
+  // los consultorios de la red de Nacional Seguros en la frontera con Brasil.
+  ['SC-PUERTO_SUAREZ', 'Puerto Suárez'],
+  ['SC-PUERTO_QUIJARRO', 'Puerto Quijarro'],
   ['LP-LPZ', 'La Paz'],
   ['LP-ELA', 'El Alto'],
   ['LP-VIA', 'Viacha'],
@@ -437,12 +464,22 @@ export const CATEGORIA_PROFESIONAL = definir('VS_PRACTITIONER_CATEGORY', [
 ]);
 
 conjunto('VS_CREDENTIAL_TYPE', 'Tipos de credencial', 'Títulos y certificaciones.');
+/*
+ * Los rótulos son los que la API sirve en castellano, copiados de
+ * `src/common/seed/terminology-designations.es.ts` del backend. Hasta el
+ * 20/09/2026 la maqueta repetía el rótulo del **sistema de codificación**
+ * —«Academic degree credential», «Specialty degree credential»—, que está en
+ * inglés a propósito porque es el catálogo, no la interfaz: el perfil del
+ * profesional los mostraba así, en inglés, contra la regla 29. La designación
+ * en castellano existía en el catálogo desde siempre y es la que el cliente de
+ * terminología pide con `lang`.
+ */
 export const TIPO_CREDENCIAL = definir('VS_CREDENTIAL_TYPE', [
-  ['CREDENTIAL_TYPE_DEGREE', 'Academic degree credential'],
-  ['CREDENTIAL_TYPE_DIPLOMA', 'Diploma course credential'],
-  ['CREDENTIAL_TYPE_MASTER', "Master's degree credential"],
-  ['CREDENTIAL_TYPE_DOCTORATE', 'Doctorate degree credential'],
-  ['CREDENTIAL_TYPE_SPECIALTY', 'Specialty degree credential'],
+  ['CREDENTIAL_TYPE_DEGREE', 'Título universitario'],
+  ['CREDENTIAL_TYPE_DIPLOMA', 'Diplomado'],
+  ['CREDENTIAL_TYPE_MASTER', 'Maestría'],
+  ['CREDENTIAL_TYPE_DOCTORATE', 'Doctorado'],
+  ['CREDENTIAL_TYPE_SPECIALTY', 'Título de especialidad'],
 ], 0);
 
 conjunto('VS_JURISDICTION', 'Jurisdicciones', 'Ámbito de la matrícula.');
@@ -896,6 +933,48 @@ export const MEDICAMENTO = definir('VS_MEDICATION', [
   ['MED-INSULINA-NPH', 'Insulina NPH 100 UI/ml', 'Insulina de acción intermedia.'],
 ]);
 
+/**
+ * Frecuencia por defecto del medicamento (C-20 / H4, reparto de Ender 2026-09-20).
+ *
+ * `property_code: 'default_frequency'` es una **extensión declarada del
+ * simulador** (regla 65): el vademécum real
+ * (`mantra-core-health-api/src/common/seed/data/vademecum/vademecum.dataset.json`)
+ * sólo publica `dose_forms`, `strengths`, `routes`, `therapeutic_class` y
+ * `atc_route_variants` — cero apariciones de `frequency`, verificado con
+ * `git grep -n "dose_forms\|strengths\|therapeutic_class" origin/dev` sobre
+ * `mantra-core-health-api` el 2026-09-20/21. La clave se acordó con Justin
+ * (que la consume en `patient-chart/medication-block/**`) para su H4.
+ *
+ * Mismo camino que B-13 (`mantra-core-health-api/REGISTRO-DEFECTOS.md:101`):
+ * **dato de desarrollo sin fuente autoritativa, no apto para uso clínico ni
+ * producción.** Quién debe proveer la posología real —negocio + un
+ * profesional prescriptor, nunca quien escribe el simulador— queda registrado
+ * como Q-D6 en `docs/trabajo/2026-09-20-ender-contratos-panel/PLAN.md`.
+ *
+ * Deliberadamente en ALGUNOS medicamentos y no en todos (H4.S3.M1): la ficha
+ * de un medicamento sin esta propiedad tiene que seguir andando en la receta.
+ * `MED-INSULINA-NPH` la lleva con un `value_json` del tipo equivocado (un
+ * número en vez de texto) a propósito, para ejercitar el caso inválido de
+ * H4.S3.M2 sin inventar un medicamento que no exista en el catálogo.
+ */
+declararPropiedades('MED-PARACETAMOL', {
+  default_frequency: 'Cada 8 horas — dato sintético de desarrollo, no apto para uso clínico',
+});
+declararPropiedades('MED-IBUPROFENO', {
+  default_frequency: 'Cada 8 horas — dato sintético de desarrollo, no apto para uso clínico',
+});
+declararPropiedades('MED-OMEPRAZOL', {
+  default_frequency: 'Una vez al día — dato sintético de desarrollo, no apto para uso clínico',
+});
+declararPropiedades('MED-AMOXICILINA', {
+  default_frequency: 'Cada 8 horas — dato sintético de desarrollo, no apto para uso clínico',
+});
+declararPropiedades('MED-METFORMINA', {
+  default_frequency: 'Cada 12 horas — dato sintético de desarrollo, no apto para uso clínico',
+});
+// `value_json` mal formado a propósito (número, no texto): ver el comentario de arriba.
+declararPropiedades('MED-INSULINA-NPH', { default_frequency: 42 });
+
 /* ---- organizaciones ------------------------------------------------------ */
 
 conjunto('VS_ORGANIZATION_TYPE', 'Tipos de organización', 'Clínica, hospital, laboratorio…');
@@ -973,69 +1052,13 @@ export const ESTADO_SOLICITUD = definir('VS_CLAIM_STATUS', [
   ['CLM-PAID', 'Pagada'],
 ]);
 
-/* ---- glosario: categorías --------------------------------------------- */
-
-conjunto(
-  'glossary-all-terms',
-  'Glosario de terminología médica',
-  'Todos los términos del glosario.',
-);
-conjunto('glossary-diseases', 'Enfermedades', 'Diagnósticos y enfermedades.');
-conjunto('glossary-symptoms', 'Síntomas', 'Síntomas y signos.');
-conjunto('glossary-procedures', 'Procedimientos', 'Procedimientos y cirugías.');
-conjunto('glossary-medications', 'Medicamentos', 'Fármacos del vademécum.');
-conjunto('glossary-anatomy', 'Anatomía', 'Partes del cuerpo.');
-conjunto('glossary-tests', 'Estudios diagnósticos', 'Laboratorio e imagen.');
-conjunto('glossary-other', 'Otros términos', 'Términos que no caen en otra categoría.');
-
-export const SINTOMA = definir('glossary-symptoms', [
-  ['SX-FIEBRE', 'Fiebre', 'Elevación de la temperatura corporal por encima de 38 °C.'],
-  ['SX-CEFALEA', 'Cefalea', 'Dolor de cabeza.'],
-  ['SX-DISNEA', 'Disnea', 'Sensación de falta de aire.'],
-  ['SX-TOS', 'Tos', 'Expulsión brusca de aire de los pulmones.'],
-  ['SX-NAUSEA', 'Náusea', 'Sensación de malestar con ganas de vomitar.'],
-  ['SX-MAREO', 'Mareo', 'Sensación de inestabilidad o vértigo.'],
-  ['SX-DOLOR-TORACICO', 'Dolor torácico', 'Dolor en el pecho.'],
-  ['SX-FATIGA', 'Fatiga', 'Cansancio persistente.'],
-]);
-
-export const ANATOMIA = definir('glossary-anatomy', [
-  ['AN-CORAZON', 'Corazón', 'Órgano muscular que bombea la sangre.'],
-  ['AN-HIGADO', 'Hígado', 'Órgano que metaboliza nutrientes y depura toxinas.'],
-  ['AN-RINON', 'Riñón', 'Órgano que filtra la sangre y produce la orina.'],
-  ['AN-TIROIDES', 'Tiroides', 'Glándula que regula el metabolismo.'],
-  ['AN-RODILLA', 'Rodilla', 'Articulación entre el fémur y la tibia.'],
-]);
-
-export const OTRO_TERMINO = definir('glossary-other', [
-  ['OT-TRIAJE', 'Triaje', 'Clasificación de pacientes según la urgencia de su atención.'],
-  ['OT-INTERCONSULTA', 'Interconsulta', 'Consulta a otro especialista sobre un paciente.'],
-  ['OT-ALTA', 'Alta médica', 'Fin de la atención por recuperación o derivación.'],
-  [
-    'OT-CONSENTIMIENTO',
-    'Consentimiento informado',
-    'Autorización del paciente tras conocer riesgos y beneficios.',
-  ],
-]);
-
-// Los diagnósticos, medicamentos, procedimientos y estudios también son
-// términos del glosario, bajo su categoría.
-for (const [code, vs] of [
-  ...Object.keys(DIAGNOSTICO).map((c) => [c, 'glossary-diseases'] as const),
-  ...Object.keys(MEDICAMENTO).map((c) => [c, 'glossary-medications'] as const),
-  ...Object.keys(PROCEDIMIENTO).map((c) => [c, 'glossary-procedures'] as const),
-  ...Object.keys(ESTUDIO).map((c) => [c, 'glossary-tests'] as const),
-]) {
-  const existente = registro.get(code);
-  if (existente !== undefined) {
-    registro.set(code, { ...existente, valueSets: [...existente.valueSets, vs] });
-  }
-}
-for (const [code, c] of registro) {
-  if (c.valueSets.some((vs) => vs.startsWith('glossary-'))) {
-    registro.set(code, { ...c, valueSets: [...c.valueSets, 'glossary-all-terms'] });
-  }
-}
+/* ---- glosario ------------------------------------------------------------
+   El glosario médico ya no vive acá. Hasta el 2026-09-11 este archivo
+   inventaba siete categorías (`glossary-diseases`, `glossary-symptoms`…) con
+   códigos que el backend no tiene: la pantalla filtra por el prefijo canónico
+   `glossary-category-*` y las descartaba todas, así que la maqueta nunca
+   mostró una definición. Ahora lo sirve `fixtures/glosario.ts`, que indexa el
+   catálogo curado del backend — 12 categorías, 15 etiquetas y 69 términos. */
 
 /* ---- Estados de un caso de verificación de identidad ---------------------- *
    Los nueve que `identity_assurance` emite, con el código **tal como llega al

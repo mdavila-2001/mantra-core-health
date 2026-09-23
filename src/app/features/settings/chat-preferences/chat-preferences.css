@@ -1,7 +1,41 @@
-/* Las preferencias del chat. Reusa las clases `ajustes__*` de la pantalla que
-   la contiene —es un panel suyo, no una pantalla aparte— y agrega sólo lo que
-   no existía ahí: el interruptor con texto al lado, las pastillas de tiempo y
-   la lista de frases guardadas. */
+/* Las preferencias del chat. Usa las clases `ajustes__*` de la pantalla que la
+   contiene —es un panel suyo, no una pantalla aparte— y agrega lo que no
+   existía ahí: el interruptor con texto al lado, las pastillas de tiempo y la
+   lista de frases guardadas. */
+
+/* Esas clases se escriben acá también, y no sólo en `settings.css`: el estilo
+   del padre no cruza a la plantilla del hijo (encapsulación de Angular), así
+   que hasta ahora este panel se veía sin negrita en los nombres, sin el gris
+   de los detalles y sin aire entre bloques — el resto de Ajustes sí los tenía.
+   Los valores son los de allá, salvo el `max-inline-size: 68ch` del bloque:
+   acá no se copia, porque la regla del producto es que la vista ocupe el ancho
+   de la pantalla y no el de un contenedor angosto. */
+.ajustes__bloque {
+  margin-bottom: var(--e5);
+}
+
+.ajustes__bloque:last-child {
+  margin-bottom: 0;
+}
+
+.ajustes__titulo {
+  margin: 0 0 var(--e3);
+  font-size: 1.05rem;
+}
+
+.ajustes__nombre {
+  font-weight: 600;
+}
+
+.ajustes__detalle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.ajustes__nota {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
 
 .chat-prefs__aviso {
   margin: 0 0 var(--e4);
@@ -13,18 +47,40 @@
   color: var(--tinta-2);
 }
 
+/* Guardada en el servidor el aviso deja de ser una advertencia: es una
+   confirmación, y el color lo dice antes que el texto. */
+.chat-prefs__aviso.is-ok {
+  border-inline-start-color: var(--menta);
+}
+
+/* El renglón del interruptor: el texto a la izquierda y el control a la
+   derecha, encuadrado como la fila de un ajuste. Es el mismo reparto que usan
+   los avisos y los permisos en esta pantalla; sin el encuadre, el interruptor
+   quedaba flotando contra el párrafo de arriba. */
 .chat-prefs__interruptor {
   display: flex;
   align-items: flex-start;
+  justify-content: space-between;
   gap: var(--e3);
-  padding-block: var(--e3);
-  cursor: pointer;
+  padding: var(--e3);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-ctrl);
+  background: var(--sup-tarjeta);
+}
+
+/* El interruptor no se encoge ni baja de renglón: en un teléfono de 375 px,
+   dejarlo envolver lo mandaba debajo del texto y pegado a la izquierda, donde
+   ya no se lee como el control de esa frase. Lo que cede ancho es el texto,
+   que sabe envolver. */
+.chat-prefs__switch {
+  flex: none;
 }
 
 .chat-prefs__interruptor-texto {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-inline-size: 0;
 }
 
 .chat-prefs__campos {

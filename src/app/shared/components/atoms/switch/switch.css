@@ -37,7 +37,7 @@
   padding: 3px;
   display: flex;
   align-items: center;
-  transition: background-color 0.2s ease, box-shadow 0.15s ease;
+  transition: background-color var(--dur-base) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
   flex-shrink: 0;
   position: relative;
 }
@@ -51,7 +51,7 @@
      blanca en ambos temas */
   background-color: #ffffff;
   box-shadow: var(--shadow-sm);
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--dur-base) var(--ease-standard);
   transform: translateX(0);
 }
 
@@ -102,6 +102,16 @@
 .switch-container.is-disabled .switch-track {
   background-color: var(--bg-inset);
   border: 1px solid var(--border-default);
+}
+
+/* Inerte no es lo mismo que apagado. Un interruptor encendido que ya no se
+   puede accionar —un permiso que sólo el navegador quita— tiene que seguir
+   leyéndose encendido: misma tinta de marca, rebajada. Sin esto, «concedido»
+   y «sin decidir» se pintan igual y la única diferencia es dónde quedó la
+   perilla. */
+.switch-container.is-disabled.is-checked .switch-track {
+  background-color: color-mix(in srgb, var(--brand-primary) 45%, var(--bg-inset));
+  border-color: transparent;
 }
 
 .switch-container.is-disabled .switch-thumb {

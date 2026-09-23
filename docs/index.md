@@ -130,7 +130,7 @@ acuse**. → [reglas de negocio](business/business-rules.md#reglas-de-privacidad
 |---|---|
 | [Entornos](operations/environments.md) · [Build](operations/build.md) · [Despliegue](operations/deployment.md) | |
 | [Configuración](operations/configuration.md) · [Caché y CDN](operations/cache-and-cdn.md) · [Reversión](operations/rollback.md) | |
-| [**Runbooks**](operations/runbooks/index.md) | **Doce, uno por síntoma** |
+| [**Runbooks**](operations/runbooks/index.md) | **Trece, uno por síntoma** |
 
 ## Gobierno
 

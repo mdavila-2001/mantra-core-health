@@ -186,6 +186,7 @@
                       variant="secondary"
                       [routerLink]="encuesta.ruta"
                       [attr.data-testid]="'abrir-' + encuesta.id"
+                      [attr.aria-label]="'Abrir: ' + encuesta.title"
                     >
                       Abrir
                     </a>

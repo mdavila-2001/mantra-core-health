@@ -17,6 +17,8 @@
 <app-specialty-browser
   [state]="catalogo()"
   [groups]="grupos()"
+  [collapsible]="true"
+  [expandAll]="hayBusqueda()"
   searchLabel="Buscar un formulario por nombre, código o especialidad"
   noMatchesText="Ningún formulario coincide con lo que buscaste. Probá con otra palabra."
   (retry)="recargar()"
@@ -76,6 +78,7 @@
           variant="primary"
           size="sm"
           [disabled]="asignando() === formulario.id"
+          [attr.aria-label]="'Usar esta plantilla: ' + formulario.name"
           (clicked)="usar(formulario)"
         >
           Usar esta plantilla
@@ -85,6 +88,7 @@
           type="button"
           variant="secondary"
           size="sm"
+          [attr.aria-label]="'Duplicar para adaptar: ' + formulario.name"
           (clicked)="adaptar(formulario)"
         >
           Duplicar para adaptar

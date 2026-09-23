@@ -8,7 +8,7 @@
 
 @if (perfil(); as p) {
   <article class="perfil" [class.perfil--lugar]="esLugar()">
-    <header class="perfil__encabezado" id="resumen" #ancla>
+    <header class="perfil__encabezado" id="resumen">
       <!-- La portada. Con imagen si la hay; si no, un degradado del tema con la
            misma trama fina que el nav: es un fondo, no un hueco — una franja
            lisa se lee como una imagen que no cargó. -->
@@ -92,7 +92,13 @@
             }
             @if (puntuacion(); as media) {
               <span class="perfil__punto" aria-hidden="true">·</span>
-              <span class="perfil__estrella">
+              <button
+                type="button"
+                class="perfil__estrella perfil__calificacion-boton"
+                data-testid="perfil-estrellas"
+                title="Ver quiénes dieron estrellas"
+                (click)="abrirOpiniones()"
+              >
                 <svg
                   viewBox="0 0 24 24"
                   fill="currentColor"
@@ -105,8 +111,16 @@
                   />
                 </svg>
                 {{ media }}
-              </span>
-              <span class="perfil__opiniones">({{ p.ratingCount }})</span>
+                <span class="solo-lectores">de 5: ver quiénes dieron estrellas</span>
+              </button>
+              <button
+                type="button"
+                class="perfil__opiniones perfil__calificacion-boton perfil__opiniones-boton"
+                data-testid="perfil-opiniones"
+                (click)="abrirOpiniones()"
+              >
+                {{ p.ratingCount }} {{ p.ratingCount === 1 ? 'opinión' : 'opiniones' }}
+              </button>
             } @else {
               <span class="perfil__punto" aria-hidden="true">·</span>
               <span class="perfil__opiniones">Sin calificar</span>
@@ -164,6 +178,35 @@
                 </a>
               }
 
+              <!-- Calificar va acá y no en el modal de opiniones: abrir un
+                   <dialog> encima de otro deja dos trampas de foco anidadas, y
+                   Escape cerraría el de arriba dejando el de abajo abierto.
+                   Quien ya se atendió entra por la ficha, no por la lista. -->
+              @if (puedeCalificar()) {
+                <button
+                  class="perfil__accion-secundaria"
+                  type="button"
+                  data-testid="perfil-calificar"
+                  (click)="abrirCalificacion()"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path
+                      d="m12 3.4 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.4 6.6 20.2l1-6.1-4.4-4.3 6.1-.9z"
+                    />
+                  </svg>
+                  Calificar mi atención
+                </button>
+              }
+
               <!-- Compartir es lo que se hace con la ficha de una organización:
                    se le pasa a alguien. El enlace se arma del slug y no de la
                    barra de direcciones — ver `urlPublica`. -->
@@ -209,21 +252,29 @@
         </div>
       </div>
 
-      <!-- La tira de pestañas: qué más hay en esta ficha, sin tener que bajar
-           hasta el final para descubrirlo. Son anclas a esta misma página —la
-           ficha se sirve entera en el HTML del servidor, y partirla en cinco
-           rutas rompería justo eso—. -->
+      <!-- La tira de pestañas. Eran anclas `href="#…"` y con `<base href="/">`
+           sacaban de la ficha; ahora son pestañas que muestran su panel. Las
+           secciones ocultas siguen en el HTML (con `hidden`), así que el HTML
+           del servidor sigue trayendo la ficha entera. -->
       @if (secciones().length > 0) {
-        <nav class="perfil__tabs" aria-label="Secciones de la ficha">
-          @for (seccion of secciones(); track seccion.id) {
-            <a
+        <div class="perfil__tabs" role="tablist" aria-label="Secciones de la ficha">
+          @for (seccion of secciones(); track seccion.id; let i = $index) {
+            <button
+              type="button"
+              role="tab"
               class="perfil__tab"
-              [href]="'#' + seccion.id"
-              [attr.aria-current]="seccionActiva() === seccion.id ? 'true' : null"
-              >{{ seccion.rotulo }}</a
+              [id]="'pestana-' + seccion.id"
+              [attr.data-testid]="'perfil-tab-' + seccion.id"
+              [attr.aria-selected]="pestanaActiva() === seccion.id"
+              [attr.aria-current]="pestanaActiva() === seccion.id ? 'true' : null"
+              [attr.tabindex]="pestanaActiva() === seccion.id ? 0 : -1"
+              (click)="seleccionar(seccion.id)"
+              (keydown)="moverConTeclado($event, i)"
             >
+              {{ seccion.rotulo }}
+            </button>
           }
-        </nav>
+        </div>
       }
     </header>
 
@@ -231,7 +282,7 @@
       <div class="perfil__columna">
         <!-- Acerca de -->
         @if (p.biography || preview()) {
-          <section class="app-card perfil__seccion" id="acerca-de" #ancla>
+          <section class="app-card perfil__seccion" id="acerca-de" [hidden]="!mostrar('acerca-de')">
             <div class="app-card__cabecera"><h2>Acerca de</h2></div>
             @if (p.biography) {
               <p class="perfil__parrafo">{{ p.biography }}</p>
@@ -247,7 +298,7 @@
         }
 
         @if (p.specialties.length > 0) {
-          <section class="app-card perfil__seccion" id="especialidades" #ancla>
+          <section class="app-card perfil__seccion" id="especialidades" [hidden]="!mostrar('especialidades')">
             <div class="app-card__cabecera"><h2>Especialidades</h2></div>
             <ul class="perfil__aptitudes">
               @for (especialidad of p.specialties; track especialidad) {
@@ -258,7 +309,7 @@
         }
 
         @if (p.trajectory.length > 0) {
-          <section class="app-card perfil__seccion" id="trayectoria" #ancla>
+          <section class="app-card perfil__seccion" id="trayectoria" [hidden]="!mostrar('trayectoria')">
             <div class="app-card__cabecera"><h2>Trayectoria</h2></div>
             <ol class="perfil__linea-tiempo">
               @for (vinculo of p.trajectory; track vinculo.organizationName + vinculo.startDate) {
@@ -286,7 +337,7 @@
         }
 
         @if (donde() || sedes().length > 0 || preview()) {
-          <section class="app-card perfil__seccion" id="donde-queda" #ancla>
+          <section class="app-card perfil__seccion" id="donde-queda" [hidden]="!mostrar('donde-queda')">
             <div class="app-card__cabecera">
               <h2>{{ esLugar() ? 'Dónde queda' : 'Dónde atiende' }}</h2>
             </div>
@@ -296,7 +347,7 @@
                  quien elige: ahí atiende él, sin una organización de por medio. -->
             @if (sedes().length > 0) {
               <ul class="perfil__sedes" data-testid="perfil-sedes">
-                @for (sede of sedes(); track sede.id) {
+                @for (sede of sedesVisibles(); track sede.id) {
                   <li class="perfil__sede">
                     <svg
                       viewBox="0 0 24 24"
@@ -325,6 +376,14 @@
                   </li>
                 }
               </ul>
+              <app-public-profile-pager
+                [total]="sedes().length"
+                [pageSize]="sedesPorPagina"
+                [page]="paginaSedes()"
+                (pageChange)="cambiarPagina('donde-queda', $event)"
+                label="sedes"
+                testId="perfil-sedes-pager"
+              />
               @if (pines().length > 0) {
                 <div class="perfil__mapa">
                   <app-map [pines]="pines()" [etiqueta]="etiquetaDelMapa()" />
@@ -365,7 +424,7 @@
          se lee como una cuenta abandonada—, y a quien configura su vitrina sí,
          porque es el hueco que está dejando. -->
         @if (p.posts.length > 0 || preview()) {
-          <section class="perfil__seccion perfil__feed" id="publicaciones" #ancla>
+          <section class="perfil__seccion perfil__feed" id="publicaciones" [hidden]="!mostrar('publicaciones')">
             <div class="perfil__feed-cabecera">
               <h2>Publicaciones</h2>
               <p class="caption">
@@ -380,8 +439,8 @@
                 actividad.
               </p>
             } @else {
-              <ul class="perfil__publicaciones">
-                @for (post of p.posts; track post.id) {
+              <ul class="perfil__publicaciones" data-testid="perfil-publicaciones">
+                @for (post of publicacionesVisibles(); track post.id) {
                   <li>
                     <app-public-post-card
                       [post]="post"
@@ -394,6 +453,14 @@
                   </li>
                 }
               </ul>
+              <app-public-profile-pager
+                [total]="p.posts.length"
+                [pageSize]="publicacionesPorPagina"
+                [page]="paginaPublicaciones()"
+                (pageChange)="cambiarPagina('publicaciones', $event)"
+                label="publicaciones"
+                testId="perfil-publicaciones-pager"
+              />
             }
           </section>
         }
@@ -433,5 +500,26 @@
         </section>
       </aside>
     </div>
+
+    <!-- Las opiniones. Se montan sólo al desplegarlas: la lectura sale a la
+         API recién cuando alguien la pide. Misma forma que en
+         `public-profile.html`, que es donde este componente ya vivía. -->
+    @if (opinionesAbiertas()) {
+      <app-public-profile-reviews
+        [kind]="p.kind"
+        [slug]="p.slug"
+        [professionalName]="p.displayName"
+      />
+    }
+
+    <!-- Calificar la atención recibida. Hermano del modal de opiniones y no
+         hijo: dos <dialog> modales anidados se pisan el foco. -->
+    @if (calificando()) {
+      <app-rate-encounter-dialog
+        [professionalName]="p.displayName"
+        (saved)="calificacionPublicada()"
+        (closed)="cerrarCalificacion()"
+      />
+    }
   </article>
 }

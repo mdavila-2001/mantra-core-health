@@ -1,0 +1,71 @@
+.calidad {
+  margin-block-start: var(--sp-5);
+}
+
+.calidad__titulo {
+  margin: 0 0 var(--sp-3);
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+/* Dos columnas desde tablet: seis indicadores en una sola columna obligan a
+   recorrer media pantalla para compararlos, que es justo para lo que están. */
+.calidad__lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.calidad__item {
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--surface-raised);
+}
+
+.calidad__rotulo {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.calidad__valor {
+  margin: var(--sp-1) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.calidad__valor.is-logrado {
+  color: var(--st-success-fg);
+}
+
+.calidad__pista {
+  block-size: 6px;
+  margin-block-start: var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+  overflow: hidden;
+}
+
+.calidad__barra {
+  block-size: 100%;
+  border-radius: var(--r-full);
+  background: var(--brand-primary);
+}
+
+.calidad__barra.is-logrado {
+  background: var(--st-success-fg);
+}
+
+.calidad__detalle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}

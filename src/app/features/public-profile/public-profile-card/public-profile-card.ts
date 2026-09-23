@@ -3,13 +3,10 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
-  type ElementRef,
   inject,
   input,
   output,
   signal,
-  viewChildren,
 } from '@angular/core';
 
 import { AppButton } from '@shared/components/atoms/button/button';
@@ -17,12 +14,24 @@ import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppMap } from '@shared/components/organisms/map/map';
 import type { PinMapa } from '@shared/components/organisms/map/pin-mapa.types';
 import { PublicPostCard } from '../public-post-card/public-post-card';
+import { PublicProfilePager } from '../public-profile-pager/public-profile-pager';
+import {
+  PublicProfileReviews,
+} from '../public-profile-reviews/public-profile-reviews';
 
 import {
   PUBLIC_PROFILE_PREFIX,
   type PublicProfileDetail,
 } from '@core/data-access/public-directory/public-directory.types';
+import { AuthService } from '@core/auth/auth.service';
+import { RateEncounterDialog } from '../rate-encounter-dialog/rate-encounter-dialog';
 import { inicialesDe } from '@shared/text/iniciales';
+
+/** Cuántas publicaciones se ven por página en la ficha. */
+export const PUBLICACIONES_POR_PAGINA = 3;
+
+/** Cuántas sedes se ven por página en «Dónde atiende». */
+export const SEDES_POR_PAGINA = 2;
 
 /** Cómo se rotula cada clase de sujeto en la insignia junto al nombre. */
 const ROTULO_POR_TIPO: Readonly<Record<PublicProfileDetail['kind'], string>> = {
@@ -80,7 +89,16 @@ const ROTULO_POR_TIPO: Readonly<Record<PublicProfileDetail['kind'], string>> = {
  */
 @Component({
   selector: 'app-public-profile-card',
-  imports: [AppButton, Badge, DatePipe, AppMap, PublicPostCard],
+  imports: [
+    AppButton,
+    Badge,
+    DatePipe,
+    AppMap,
+    PublicPostCard,
+    PublicProfilePager,
+    PublicProfileReviews,
+    RateEncounterDialog,
+  ],
   templateUrl: './public-profile-card.html',
   styleUrl: './public-profile-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -228,13 +246,14 @@ export class PublicProfileCard {
   /* ==========================================================================
       La tira de pestañas.
 
-      Es lo que hace que una ficha se lea como una PÁGINA de una organización y
-      no como una nota larga: de un vistazo se sabe qué hay más abajo sin tener
-      que desplazar hasta el final para descubrirlo.
+      Antes eran anclas `href="#seccion"`, y con `<base href="/">` el navegador
+      resolvía `#acerca-de` contra la raíz del sitio: tocar «Acerca de» sacaba
+      de la ficha en vez de llevar a la sección. Ahora son pestañas de verdad
+      (`role="tab"`) que muestran su panel.
 
-      Las pestañas navegan DENTRO de la misma página —son anclas, no rutas—.
-      Partir la ficha en cinco pantallas rompería el SEO que este carril existe
-      para servir: el HTML del servidor tiene que traer la ficha entera.
+      Las secciones **siguen todas en el HTML** —las ocultas van con `hidden`—,
+      así que el HTML del servidor sigue trayendo la ficha entera para los
+      buscadores. «Inicio» muestra todas; cada otra pestaña, sólo la suya.
       ====================================================================== */
 
   /** Las secciones que de verdad se van a pintar, en el orden en que caen. */
@@ -242,14 +261,16 @@ export class PublicProfileCard {
     const p = this.perfil();
     const previa = this.preview();
 
-    // «Inicio» es el encabezado: existe siempre, así que la tira nunca queda
-    // con una sola pestaña muerta.
+    // «Inicio» es el encabezado con todo: existe siempre, así que la tira nunca
+    // queda con una sola pestaña muerta.
     const tira = [{ id: 'resumen', rotulo: 'Inicio' }];
 
     if (p.biography || previa) tira.push({ id: 'acerca-de', rotulo: 'Acerca de' });
     if (p.specialties.length > 0) tira.push({ id: 'especialidades', rotulo: 'Especialidades' });
     if (p.trajectory.length > 0) tira.push({ id: 'trayectoria', rotulo: 'Trayectoria' });
-    if (this.donde() || previa) {
+    // Las mismas condiciones que la sección: con sedes y sin dirección la
+    // sección se pintaba y la pestaña no aparecía.
+    if (this.donde() || this.sedes().length > 0 || previa) {
       tira.push({ id: 'donde-queda', rotulo: this.esLugar() ? 'Dónde queda' : 'Dónde atiende' });
     }
     if (p.posts.length > 0 || previa) tira.push({ id: 'publicaciones', rotulo: 'Publicaciones' });
@@ -259,10 +280,129 @@ export class PublicProfileCard {
     return tira.length > 1 ? tira : [];
   });
 
-  private readonly anclas = viewChildren<ElementRef<HTMLElement>>('ancla');
+  /** La pestaña elegida. */
+  protected readonly pestanaActiva = signal('resumen');
 
-  /** Qué pestaña está marcada. La decide dónde está la lectura, no el clic. */
-  protected readonly seccionActiva = signal('resumen');
+  protected seleccionar(id: string): void {
+    this.pestanaActiva.set(id);
+  }
+
+  /** Si la sección se ve con la pestaña actual. «Inicio» las muestra todas. */
+  protected mostrar(id: string): boolean {
+    const activa = this.pestanaActiva();
+    // Si la pestaña elegida dejó de existir (otro perfil), se cae a «Inicio».
+    const existe = this.secciones().some((seccion) => seccion.id === activa);
+    return !existe || activa === 'resumen' || activa === id;
+  }
+
+  /** Flechas izquierda/derecha entre pestañas, como pide el patrón ARIA de tabs. */
+  protected moverConTeclado(evento: KeyboardEvent, indice: number): void {
+    const tira = this.secciones();
+    if (evento.key !== 'ArrowRight' && evento.key !== 'ArrowLeft') return;
+    evento.preventDefault();
+    const paso = evento.key === 'ArrowRight' ? 1 : -1;
+    const destino = tira[(indice + paso + tira.length) % tira.length]!;
+    this.seleccionar(destino.id);
+    this.documento.getElementById(`pestana-${destino.id}`)?.focus();
+  }
+
+  /* ==========================================================================
+      Paginado de publicaciones y sedes.
+
+      Con la misma lógica de botones que el carrusel de una publicación:
+      anterior / siguiente y «n de N» (ver `public-profile-pager`).
+      ====================================================================== */
+
+  protected readonly publicacionesPorPagina = PUBLICACIONES_POR_PAGINA;
+  protected readonly sedesPorPagina = SEDES_POR_PAGINA;
+  protected readonly paginaPublicaciones = signal(0);
+  protected readonly paginaSedes = signal(0);
+
+  protected readonly publicacionesVisibles = computed(() =>
+    recortar(this.perfil().posts, this.paginaPublicaciones(), PUBLICACIONES_POR_PAGINA),
+  );
+
+  protected readonly sedesVisibles = computed(() =>
+    recortar(this.sedes(), this.paginaSedes(), SEDES_POR_PAGINA),
+  );
+
+  /**
+   * Cambia de página y, si el comienzo de la sección quedó arriba de la
+   * pantalla, la trae a la vista: sin eso, «siguiente» al pie de una lista
+   * larga deja a quien lee mirando el final de la página nueva.
+   */
+  protected cambiarPagina(seccion: 'publicaciones' | 'donde-queda', pagina: number): void {
+    (seccion === 'publicaciones' ? this.paginaPublicaciones : this.paginaSedes).set(pagina);
+    const elemento = this.documento.getElementById(seccion);
+    if (elemento && elemento.getBoundingClientRect().top < 0) {
+      elemento.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+  }
+
+  /* ==========================================================================
+      Las opiniones.
+
+      Hasta el merge de `dev` esto abría un modal con dos pestañas —«8
+      opiniones» abría una, la estrella la otra—. Ese modal ya no existe: el
+      merge dejó la versión de `PublicProfileReviews` que se monta **en línea**,
+      sin pestañas y sin salida `cerrado`, y esta tarjeta seguía hablándole al
+      componente anterior. La rama no compilaba.
+
+      Se reconcilia con el componente que quedó, que es el que trae el contrato
+      nuevo —con anonimato de quien opina— y sus pruebas. Los dos botones ahora
+      despliegan la misma sección. Recuperar las pestañas es una función, no un
+      arreglo de compilación: va aparte y con su decisión.
+      ====================================================================== */
+
+  /** Si la sección de opiniones está desplegada. */
+  protected readonly opinionesAbiertas = signal(false);
+
+  protected abrirOpiniones(): void {
+    this.opinionesAbiertas.set(true);
+  }
+
+  protected cerrarOpiniones(): void {
+    this.opinionesAbiertas.set(false);
+  }
+
+  /* ==========================================================================
+      Calificar la atención recibida.
+      ====================================================================== */
+
+  private readonly auth = inject(AuthService);
+
+  /**
+   * Si quien mira puede calificar: una sesión con perfil de paciente.
+   *
+   * No comprueba que se haya atendido con ESTE profesional —eso lo sabe el
+   * servidor, y averiguarlo acá exigiría cruzar sus atenciones con una ficha
+   * pública que a propósito no publica a quién representa—. Ofrecerlo y que
+   * el servidor explique por qué no, cuando no corresponde, es mejor que
+   * esconder el camino a quien sí puede.
+   */
+  protected readonly puedeCalificar = computed(() => this.auth.patientProfileId() !== null);
+
+  /** Si el diálogo de calificar está abierto. */
+  protected readonly calificando = signal(false);
+
+  protected abrirCalificacion(): void {
+    this.calificando.set(true);
+  }
+
+  protected cerrarCalificacion(): void {
+    this.calificando.set(false);
+  }
+
+  /**
+   * Publicada la opinión, se abre la lista para que la vea.
+   *
+   * La sección de opiniones relee al montarse, así que desplegarla acá es lo
+   * que hace que la recién publicada aparezca sin recargar la página.
+   */
+  protected calificacionPublicada(): void {
+    this.calificando.set(false);
+    this.opinionesAbiertas.set(true);
+  }
 
   /* ==========================================================================
       Compartir la ficha.
@@ -298,45 +438,11 @@ export class PublicProfileCard {
       // siendo la barra de direcciones. Un error acá sería ruido.
     }
   }
+}
 
-  constructor() {
-    /* El marcador de la pestaña.
-
-       `IntersectionObserver` y no un escucha de `scroll`: el escucha corre en
-       cada píxel del hilo principal y esto es una página que se desplaza
-       largo. El margen inferior del `rootMargin` recorta la zona útil al
-       tercio superior de la ventana, que es donde uno mira mientras baja; sin
-       él, la última sección quedaría marcada desde que asoma.
-
-       El efecto se rearma solo cuando cambian las anclas —o sea, cuando el
-       perfil cambia y aparecen o desaparecen secciones—. */
-    effect((alLimpiar) => {
-      const elementos = this.anclas().map((ref) => ref.nativeElement);
-      const ventana = this.documento.defaultView;
-
-      // En el servidor no hay observador, y sin secciones no hay nada que
-      // observar. La pestaña se queda en «Inicio», que es lo correcto.
-      if (!ventana || typeof ventana.IntersectionObserver === 'undefined') return;
-      if (elementos.length === 0) return;
-
-      const visibles = new Set<string>();
-      const observador = new ventana.IntersectionObserver(
-        (entradas) => {
-          for (const entrada of entradas) {
-            if (entrada.isIntersecting) visibles.add(entrada.target.id);
-            else visibles.delete(entrada.target.id);
-          }
-          // La primera del orden del documento que esté a la vista, no la
-          // última que disparó: si no, dos secciones cortas juntas hacen
-          // parpadear la marca.
-          const orden = this.secciones().map((seccion) => seccion.id);
-          this.seccionActiva.set(orden.find((id) => visibles.has(id)) ?? orden[0] ?? 'resumen');
-        },
-        { rootMargin: '-88px 0px -62% 0px', threshold: 0 },
-      );
-
-      for (const elemento of elementos) observador.observe(elemento);
-      alLimpiar(() => observador.disconnect());
-    });
-  }
+/** La página `pagina` (desde 0) de una lista, acotada al rango real. */
+function recortar<T>(lista: readonly T[], pagina: number, porPagina: number): readonly T[] {
+  const ultima = Math.max(0, Math.ceil(lista.length / porPagina) - 1);
+  const desde = Math.min(Math.max(0, pagina), ultima) * porPagina;
+  return lista.slice(desde, desde + porPagina);
 }

@@ -1,0 +1,91 @@
+<app-page-header [title]="titulo()" [subtitle]="bajada()" [breadcrumbs]="breadcrumbs()" />
+
+<div class="ficha-publica">
+  <app-view-state-host [state]="estadoDeLaFicha()" (retry)="cargar()">
+    @if (ficha(); as perfil) {
+      <app-card variant="outlined" padding="lg">
+        <app-section-heading card-header icono="hospital" titulo="El establecimiento" />
+        <app-fact-list disposicion="columnas" [hechos]="identificacion(perfil)" />
+
+        @if (perfil.biography) {
+          <p class="ficha-publica__bio">{{ perfil.biography }}</p>
+        }
+      </app-card>
+    }
+  </app-view-state-host>
+
+  <!-- `aria-label` y no `aria-labelledby`: `app-section-heading` dibuja el
+       `<h2>` adentro y no expone su id, así que no hay a quién apuntar. El
+       rótulo repite el del encabezado a propósito — es el mismo. -->
+  <section aria-label="Servicios y precios">
+    <app-section-heading
+      icono="billing"
+      titulo="Servicios y precios"
+      [cuantos]="items().length"
+    />
+    <p class="ficha-publica__nota">
+      Precios de referencia publicados por la clínica. El importe final puede
+      cambiar según lo que incluya cada atención.
+    </p>
+
+    <app-view-state-host [state]="estadoDelCatalogo()" (retry)="recargarCatalogo()">
+      <!-- S2 con la forma de lo que viene: bloques de tarjeta, no renglones de
+           texto. Un esqueleto que no se parece al contenido desorienta. -->
+      <div vsh-skeleton class="rejilla ficha-publica__rejilla">
+        @for (hueco of huecosDelEsqueleto; track hueco) {
+          <app-skeleton variant="rect" height="11rem" />
+        }
+      </div>
+
+      @if (items().length === 0) {
+        <p class="ficha-publica__vacio" role="status">
+          Esta clínica todavía no publicó su lista de servicios.
+        </p>
+      } @else {
+        <!-- Lista y no una hilera de `div`: un lector de pantalla anuncia
+             cuántos servicios hay antes de leer el primero. -->
+        <ul class="rejilla ficha-publica__rejilla" data-testid="clinic-services">
+          @for (servicio of items(); track servicio.id) {
+            <li>
+              <article class="rejilla__tarjeta" data-testid="clinic-service">
+                <app-service-icon class="rejilla__icono" [servicio]="servicio.name" />
+
+                <div class="ficha-publica__titular">
+                  <h3 class="rejilla__nombre">{{ servicio.name }}</h3>
+
+                  <!-- Sólo lo que está de baja lleva distintivo: un «Activo»
+                       repetido en cada tarjeta compite con el precio y no
+                       informa nada. Lo excepcional es lo que hay que ver. -->
+                  @if (!servicio.isActive) {
+                    <app-badge variant="secondary" value="No disponible" />
+                  }
+                </div>
+
+                <!-- Sin el código del nomenclador (19/09/2026): «SCZ25-C-0070»
+                     no le dice nada a quien busca dónde atenderse. Sigue en el
+                     dato —lo usan la orden y el presupuesto—, sólo no se pinta. -->
+
+                @if (servicio.description) {
+                  <p class="rejilla__resumen">{{ servicio.description }}</p>
+                }
+
+                <dl class="ficha-publica__precio">
+                  <dt class="ficha-publica__rotulo">Precio de referencia</dt>
+                  <dd class="ficha-publica__monto tabular-nums" data-testid="clinic-service-price">
+                    @if (importe(servicio.price, servicio.currency); as monto) {
+                      {{ monto }}
+                    } @else {
+                      <!-- Un «0,00» se lee como que no se cobra. Lo que pasa de
+                           verdad es que la clínica no publicó el arancel. -->
+                      <span class="ficha-publica__sin-precio">Sin precio publicado</span>
+                    }
+                  </dd>
+                </dl>
+              </article>
+            </li>
+          }
+        </ul>
+      }
+    </app-view-state-host>
+  </section>
+</div>

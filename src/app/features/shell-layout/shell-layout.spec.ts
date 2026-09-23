@@ -64,6 +64,8 @@ describe('ShellLayout', () => {
           { path: 'laboratory-directory', children: [] },
           { path: 'laboratory-directory/:id', children: [] },
           { path: 'clinics-directory', children: [] },
+          // El panel: es donde la flecha de volver NO se dibuja.
+          { path: 'dashboard', children: [] },
         ]),
       ],
     }).compileComponents();
@@ -396,11 +398,14 @@ describe('ShellLayout', () => {
           a.getAttribute('data-route'),
         );
         expect(enlaces).toContain('/my-account/appointments');
+        expect(enlaces).toContain('/my-account/pharmacy-orders');
+        expect(enlaces).toContain('/my-account/loyalty');
         expect(enlaces).toContain('/my-account/dependents');
         expect(enlaces).toContain('/my-account/medical-record');
         expect(enlaces).toContain('/my-account/questionnaires');
         expect(enlaces).toContain('/messaging');
         expect(enlaces).toContain('/directories');
+        expect(enlaces).toContain('/nearby-places');
         // Los fijos de arriba no se movieron: siguen siendo los primeros.
         expect(enlaces.slice(0, 2)).toEqual(['/my-account', '/notification-center']);
       });
@@ -419,14 +424,23 @@ describe('ShellLayout', () => {
       }
 
       it('sin rótulo que las agrupe, las cosas parecidas siguen saliendo seguidas', () => {
-        // Sin el rótulo, el orden es lo único que queda diciendo que las cuatro
-        // pantallas clínicas son la misma clase de cosa. Por eso la barra
-        // recorre los bloques y no la lista plana del grupo: por `items` el
-        // orden es el del registro, y ahí se mezclan con las gestiones.
+        // Sin el rótulo, el orden es lo único que queda diciendo que «Mis
+        // citas», «Mis pedidos» y «Mis puntos» son la misma clase de cosa. Por
+        // eso la barra recorre los bloques y no la lista plana del grupo: por
+        // `items` el orden es el del registro, y ahí las cuatro pantallas
+        // clínicas se meten entre las gestiones.
         conSesion(['PATIENT']);
 
+        const enlaces = rutasDibujadas();
         expect(
-          seguidas(rutasDibujadas(), [
+          seguidas(enlaces, [
+            '/my-account/appointments',
+            '/my-account/pharmacy-orders',
+            '/my-account/loyalty',
+          ]),
+        ).toBe(true);
+        expect(
+          seguidas(enlaces, [
             '/my-account/medical-record',
             '/my-account/diagnostic-results',
             '/my-account/diagnostic-orders',
@@ -652,6 +666,131 @@ describe('ShellLayout', () => {
       });
     });
 
+    /**
+     * Recoger la barra.
+     *
+     * Es un cambio de ancho, no de contenido: recogida sigue teniendo los
+     * mismos destinos, con el mismo nombre, en el mismo orden. Lo que estas
+     * pruebas cuidan es justamente eso —que al encogerse no se pierda ni un
+     * nombre accesible— más el gesto que la devuelve, que es lo único que no
+     * puede hacer la hoja de estilos sola.
+     */
+    describe('la barra recogida', () => {
+      beforeEach(() => {
+        // `ShellService` persiste la preferencia en `localStorage` y la lee
+        // tras el primer render. Sin limpiarla, el estado de una prueba se
+        // filtra a la siguiente y el orden de ejecución pasa a importar.
+        try {
+          localStorage.removeItem(NAV_STORAGE_KEY);
+        } catch {
+          // Sin storage no hay nada que limpiar, que es el mismo caso que el
+          // servicio ya tolera.
+        }
+        abrirSesion({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: [] });
+        fixture.detectChanges();
+      });
+
+      function boton(): HTMLButtonElement {
+        const control = raiz().querySelector<HTMLButtonElement>('[data-testid="nav-recoger"]');
+        expect(control, 'la barra no dibujó el botón de recoger').not.toBeNull();
+        return control as HTMLButtonElement;
+      }
+
+      function marco(): HTMLElement {
+        return raiz().querySelector('.app-shell') as HTMLElement;
+      }
+
+      it('arranca desplegada y el botón lo dice', () => {
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(boton().getAttribute('aria-expanded')).toBe('true');
+        // Apunta a la barra que encoge, y ese id existe en el marcado: no lo
+        // inventa nadie al hidratar.
+        expect(boton().getAttribute('aria-controls')).toBe('app-side-nav');
+        expect(raiz().querySelector('#app-side-nav')?.classList.contains('app-side-nav')).toBe(
+          true,
+        );
+      });
+
+      it('un clic la recoge y otro la devuelve', () => {
+        boton().click();
+        fixture.detectChanges();
+
+        expect(marco().classList.contains('is-nav-recogido')).toBe(true);
+        expect(boton().getAttribute('aria-expanded')).toBe('false');
+        expect(boton().getAttribute('aria-label')).toBe('Desplegar el menú');
+
+        boton().click();
+        fixture.detectChanges();
+
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(boton().getAttribute('aria-label')).toBe('Recoger el menú');
+      });
+
+      it('recogida no pierde ni un destino, ni el nombre de ninguno', () => {
+        const antes = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+          a.getAttribute('data-route'),
+        );
+
+        boton().click();
+        fixture.detectChanges();
+
+        const despues = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')];
+        expect(despues.map((a) => a.getAttribute('data-route'))).toEqual(antes);
+
+        // El rótulo no se borra: se esconde de la vista. Un ícono sin nombre es
+        // un destino mudo para quien usa lector de pantalla, y `display: none`
+        // lo saca del árbol de accesibilidad además de la pantalla.
+        for (const enlace of despues) {
+          const rotulo = enlace.querySelector('.side-nav__label');
+          expect(rotulo?.textContent?.trim(), enlace.getAttribute('data-route') ?? '').toBeTruthy();
+          expect(rotulo?.classList.contains('solo-lectores')).toBe(true);
+        }
+      });
+
+      it('recogida, el rótulo de un dominio la despliega y deja ese dominio abierto', () => {
+        // Recogida, el cuerpo del dominio no se dibuja: abrir el `<details>`
+        // ahí no mostraría nada. El gesto que sí sirve es desplegar la barra
+        // con ese dominio abierto, y es el que el rótulo tiene que hacer.
+        const { grupo } = primerGrupoDibujado();
+        interno<(clave: string, abierto: boolean) => void>('alPlegar')(grupo, false);
+        boton().click();
+        fixture.detectChanges();
+
+        const summary = raiz().querySelector<HTMLElement>(`[data-grupo="${grupo}"] > summary`);
+        summary?.click();
+        fixture.detectChanges();
+
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(raiz().querySelector<HTMLDetailsElement>(`[data-grupo="${grupo}"]`)?.open).toBe(true);
+      });
+
+      it('desplegada, el rótulo sigue plegando y nada más', () => {
+        const { grupo } = primerGrupoDibujado();
+        const antes = raiz().querySelector<HTMLDetailsElement>(`[data-grupo="${grupo}"]`)?.open;
+
+        interno<(evento: Event, grupo: string) => void>('alTocarElDominio')(
+          new Event('click', { cancelable: true }),
+          grupo,
+        );
+        fixture.detectChanges();
+
+        // No tocó el ancho ni forzó el estado del dominio: con la barra
+        // desplegada el `<details>` se gobierna solo, que es por lo que es un
+        // `<details>`.
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(raiz().querySelector<HTMLDetailsElement>(`[data-grupo="${grupo}"]`)?.open).toBe(
+          antes,
+        );
+      });
+
+      /** El mismo ayudante de `los desplegables`, que este bloque también usa. */
+      function primerGrupoDibujado(): { grupo: string } {
+        const grupo = raiz().querySelector('[data-testid="nav-grupo"]');
+        expect(grupo, 'la sesión de prueba no dibujó ningún dominio plegable').not.toBeNull();
+        return { grupo: grupo?.getAttribute('data-grupo') ?? '' };
+      }
+    });
+
     it('el nav pinta un grupo por sección del registro, con sus destinos', () => {
       const grupos = raiz().querySelectorAll('.app-side-nav__group');
       const secciones = interno<() => readonly { label: string; aplanado?: boolean }[]>(
@@ -671,6 +810,48 @@ describe('ShellLayout', () => {
       );
       expect(destinos).toContain('/dashboard');
       expect(destinos).toContain('/design-system');
+    });
+
+    /**
+     * La flecha de volver, y el único lugar donde no va.
+     *
+     * El panel es el principio del camino: quien entra, aterriza ahí. No hay
+     * paso propio que deshacer, así que `app-back-link` cae a su respaldo… que
+     * es el panel. Pulsarla desde el panel no hacía nada o —si el historial del
+     * navegador todavía traía el ingreso— devolvía a él, que se lee como haber
+     * cerrado la sesión. El cliente lo reportó así el 13/09/2026.
+     */
+    describe('la flecha de volver', () => {
+      async function ir(url: string) {
+        await router.navigateByUrl(url);
+        fixture.detectChanges();
+      }
+
+      function flecha(): Element | null {
+        return raiz().querySelector('app-back-link');
+      }
+
+      it('no se dibuja en el panel', async () => {
+        await ir('/dashboard');
+        expect(flecha()).toBeNull();
+      });
+
+      it('sí se dibuja en cualquier otra pantalla', async () => {
+        await ir('/my-account');
+        expect(flecha()).not.toBeNull();
+      });
+
+      /** Ir y volver: la flecha reaparece al salir del panel y se va al entrar. */
+      it('aparece y desaparece al cruzar el panel', async () => {
+        await ir('/dashboard');
+        expect(flecha()).toBeNull();
+
+        await ir('/settings');
+        expect(flecha()).not.toBeNull();
+
+        await ir('/dashboard');
+        expect(flecha()).toBeNull();
+      });
     });
 
     /**
@@ -756,10 +937,14 @@ describe('ShellLayout', () => {
       expect(ajustes?.getAttribute('aria-label')).toBe('Ajustes');
     });
 
-    it('el conmutador de tema ya no vive suelto en el encabezado', () => {
-      // Se mudó a Ajustes. Suelto acá, el tema parecía la única preferencia
-      // que el producto tiene; ahora es una de tres y viven juntas.
-      expect(raiz().querySelector('[app-theme-toggle]')).toBeNull();
+    it('el encabezado ofrece el interruptor de tema junto a Ajustes', () => {
+      // Volvió a pedido del cliente (2026-09-18): claro/oscuro es un atajo;
+      // Ajustes sigue siendo la puerta a todas las preferencias.
+      const toggle = raiz().querySelector<HTMLButtonElement>('[data-testid="header-theme-toggle"]');
+
+      expect(toggle?.getAttribute('role')).toBe('switch');
+      expect(toggle?.getAttribute('aria-label')).toMatch(/^Cambiar a modo (claro|oscuro)$/);
+      expect(raiz().querySelector('[data-testid="header-ajustes"]')).not.toBeNull();
     });
 
     it('el enlace de salto apunta al contenido, que es enfocable por script', () => {
