@@ -1,9 +1,9 @@
 # Reporte — Continuación de reserva y cotizaciones del paciente
 
-> **AVANCE: 3 / 5 — 60 %.**
+> **AVANCE: 4 / 5 — 80 %.**
 
 - Fecha: 2026-09-23 · Rama: `justin/continuar-reserva-cotizaciones-2026-09-23`.
-- Peldaño: `TESTED` para la generación reproducible, la pantalla de Cotizaciones y la navegación.
+- Peldaño: `TESTED` para la generación reproducible, la pantalla de Cotizaciones, la navegación y la lectura de órdenes diagnósticas propias.
 
 ## Completado
 
@@ -12,13 +12,14 @@
 | H1.S1.M1 | La continuación parte de `origin/mockup` tras el merge de la reserva previa. | Base `5f3a7da0` |
 | H1.S1.M2 | `test` y `typecheck` regeneran el índice de componentes antes de consumirlo. | `scripts/lib/relaciones-de-uso.test.mjs` → 26/26 |
 | H2.S1.M1, M3 | Pantalla de Cotizaciones con filtro y orden; ruta lazy y menú de paciente. | Cotizaciones 5/5; navegación 30/30 |
+| H2.S1.M2 (parcial) | Órdenes diagnósticas propias se cargan desde `/diagnostic-results/me/orders`; sus conceptos se traducen antes de pintarse. | Cotizaciones 3/3; no se imprimen IDs de orden ni de concepto |
 
 ## A medias
 
 ### H2.S1.M2 — Fuentes y documentos reales
-- Qué anda: se muestran referencias de maqueta con procedencia y precios no publicados sin valor de reemplazo.
-- Qué no anda: todavía no compone recetas ni órdenes diagnósticas reales.
-- Qué falta exactamente: adaptar sólo los ítems que entregan los clientes existentes y cubrirlos con tests.
+- Qué anda: se muestran referencias de maqueta con procedencia y precios no publicados sin valor de reemplazo; las órdenes diagnósticas del titular se consultan en el endpoint propio y aparecen con etiqueta de terminología.
+- Qué no anda: las recetas y servicios médicos no se componen todavía en esta pantalla.
+- Qué falta exactamente: reutilizar un adaptador de recetas que no repita la lógica de «Dónde comprar mi receta» y definir un contrato de disponibilidad/precios para servicios médicos.
 - Dónde quedó: `src/app/features/account/cotizaciones/`.
 
 ### H3.S1.M1–M2 — Medición y gates completos
@@ -31,17 +32,19 @@
 
 | ID | Estado | Qué lo destraba |
 |---|---|---|
-| H2.S1.M2 | A MEDIAS | Adaptador de fuentes documentales existentes |
+| H2.S1.M2 | A MEDIAS | Adaptador reutilizable de recetas y contrato para servicios médicos |
 | H3.S1.M1 | TODO | Recorrido autenticado y capturas |
 | H3.S1.M2 | TODO | Gates completos y revisión final |
 
 ## Evidencia
 
 - `node --test scripts/lib/relaciones-de-uso.test.mjs` → 26/26 PASS después de regenerar.
-- `yarn test --watch=false --include=...cotizaciones...` → 5/5 PASS.
+- `yarn test --watch=false --include=...cotizaciones...` → 5/5 PASS antes de incorporar documentos; `...cotizaciones.spec.ts` → 3/3 PASS después de incorporar órdenes propias.
 - `yarn test --watch=false --include=...navigation.service...` → 30/30 PASS.
+- `yarn typecheck` → sin diagnósticos tras regenerar el índice.
+- Compilación de `yarn start:dev --port 4202` → bundle de Angular generado; el proceso de verificación se cerró y el puerto 4202 no quedó escuchando.
 
 ## No cubierto
 
-- No se declara verificación visual: el servidor local se cerró antes de completar su compilación por cambio de prioridad del usuario.
-- No se declara lint, typecheck ni suite completa en verde; se interrumpieron para abrir el PR solicitado.
+- No se declara verificación visual de la versión final: la segunda instancia local no terminó de enlazar antes de cerrarse; la ruta se cubre por pruebas de componente y navegación, pero sigue faltando Playwright contra esta rama.
+- No se declara lint ni suite completa en verde. `yarn lint` falla en la base con 243 errores de `prefer-on-push-component-change-detection`, ajenos a estos archivos.
