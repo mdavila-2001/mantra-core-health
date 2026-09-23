@@ -5,6 +5,9 @@ import { provideRouter } from '@angular/router';
 import { ResultCard } from './result-card';
 import type { SearchResultItem } from '../search-result/search-result.types';
 
+@Component({ template: '' })
+class RoutePlaceholder {}
+
 /**
  * `ResultCard` es el hermano de grilla de `SearchResult` (mismo
  * `SearchResultItem`, ver el JSDoc del componente). Estas pruebas cubren lo que
@@ -18,7 +21,11 @@ import type { SearchResultItem } from '../search-result/search-result.types';
   imports: [ResultCard],
   template: `
     <ul>
-      <li app-result-card [resultado]="dato()"></li>
+      <li
+        app-result-card
+        [resultado]="dato()"
+        [preventDuplicateNavigation]="impedirDuplicado()"
+      ></li>
     </ul>
   `,
 })
@@ -28,6 +35,8 @@ class Anfitrion {
     title: 'Dra. Marisol Quispe Ticona',
     link: '/buscar/perfil-profesional-detalle',
   });
+
+  readonly impedirDuplicado = signal(false);
 }
 
 describe('ResultCard', () => {
@@ -40,7 +49,7 @@ describe('ResultCard', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Anfitrion],
-      providers: [provideRouter([])],
+      providers: [provideRouter([{ path: '**', component: RoutePlaceholder }])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Anfitrion);
@@ -112,5 +121,22 @@ describe('ResultCard', () => {
     const img = elemento('.tarjeta-resultado__figura img');
     expect(img).not.toBeNull();
     expect(img!.getAttribute('src')).toBe('/f/buena.jpg');
+  });
+
+  it('cuando opta por navegación única anuncia carga e ignora una segunda activación', () => {
+    anfitrion.impedirDuplicado.set(true);
+    fixture.detectChanges();
+
+    const link = elemento('.tarjeta-resultado__titulo a') as HTMLAnchorElement;
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+
+    expect(link.getAttribute('aria-busy')).toBe('true');
+    expect(link.getAttribute('aria-disabled')).toBe('true');
+
+    const secondClick = new MouseEvent('click', { bubbles: true, cancelable: true });
+    link.dispatchEvent(secondClick);
+
+    expect(secondClick.defaultPrevented).toBe(true);
   });
 });
