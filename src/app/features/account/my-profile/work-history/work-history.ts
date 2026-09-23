@@ -1,9 +1,12 @@
 import { DatePipe, DecimalPipe, NgTemplateOutlet, UpperCasePipe } from '@angular/common';
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
+  ElementRef,
   inject,
+  Injector,
   input,
   type OnInit,
   output,
@@ -154,6 +157,8 @@ export class WorkHistory implements OnInit {
   private readonly toasts = inject(ToastService);
   private readonly dialogs = inject(DialogService);
   private readonly files = inject(FilesClient);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
 
   /**
    * `'flat'` (por defecto): la lista propia, tal como vive hoy al pie de «Mi
@@ -996,9 +1001,37 @@ export class WorkHistory implements OnInit {
   }
 
   protected cerrarAltaDeSede(): void {
+    const editada = this.sedeEnEdicion();
     this.altaDeSedeAbierta.set(false);
     this.sedeEnEdicion.set(null);
     this.limpiarSede();
+    if (editada !== null) {
+      this.devolverFocoALaFila(editada.id);
+    }
+  }
+
+  /**
+   * Al cerrar el modal de una edición, el foco vuelve al «Acciones» de esa fila.
+   *
+   * `app-content-dialog` restaura el foco al elemento que lo abrió, pero lo
+   * abrió el ítem «Editar» del menú, que ya no existe cuando el menú se cierra:
+   * sin esto el foco caía al `<body>` (medido en `evidencia/h4/teclado.md`).
+   */
+  private devolverFocoALaFila(sedeId: string): void {
+    afterNextRender(
+      () => {
+        const sede = this.sedes().find((s) => s.id === sedeId);
+        if (sede === undefined) {
+          return;
+        }
+        const etiqueta = `Acciones de ${sede.name}`;
+        const boton = Array.from(this.host.nativeElement.querySelectorAll('button')).find(
+          (b) => b.getAttribute('aria-label') === etiqueta,
+        );
+        boton?.focus();
+      },
+      { injector: this.injector },
+    );
   }
 
   /**
