@@ -11,7 +11,7 @@ import {
   titleOf,
 } from './core/navigation/navigation.types';
 import { SectionPlaceholder } from './features/section-placeholder/section-placeholder';
-import { routes } from './app.routes';
+import { routes, SECCIONES_REDIRIGIDAS } from './app.routes';
 
 /**
  * La promesa del armazón: **el menú nunca ofrece un destino que el router no
@@ -261,13 +261,23 @@ describe('rutas del armazón', () => {
    * error opuesto y el que de verdad rompería los favoritos.
    */
   it('las direcciones viejas se declaran después de toda pantalla y antes del comodín', () => {
+    // Una sección de `SECCIONES_REDIRIGIDAS` (N-03/Q-17, 2026-09-22:
+    // «my-account/loyalty» retiró su pantalla) no es una dirección vieja en
+    // castellano: sigue en su lugar natural del registro, con su rol y su
+    // título, y sólo cambia lo que pinta. Esta prueba es sobre las alias
+    // heredadas del final de la lista; esas quedan afuera del conteo.
     for (const lista of [hijas, routes]) {
       const pantallas = lista
         .map((r, indice) => ({ r, indice }))
         .filter(({ r }) => typeof r.redirectTo !== 'string' && r.path !== '**');
       const viejas = lista
         .map((r, indice) => ({ r, indice }))
-        .filter(({ r }) => typeof r.redirectTo === 'string' && (r.path ?? '') !== '');
+        .filter(
+          ({ r }) =>
+            typeof r.redirectTo === 'string' &&
+            (r.path ?? '') !== '' &&
+            SECCIONES_REDIRIGIDAS[r.path ?? ''] === undefined,
+        );
 
       if (pantallas.length === 0 || viejas.length === 0) {
         continue;
@@ -321,6 +331,14 @@ describe('rutas del armazón', () => {
 
   it('cada sección tiene con qué pintarse, directa o diferida', () => {
     for (const section of APP_SECTIONS) {
+      // Una sección de `SECCIONES_REDIRIGIDAS` no pinta nada a propósito: su
+      // ruta es `redirectTo`, no `component`/`loadComponent` — Angular
+      // rechaza (`NG04014`) combinar un redirect con el guard que esta misma
+      // función le pone a toda sección, así que ni siquiera podría tener
+      // las dos cosas.
+      if (SECCIONES_REDIRIGIDAS[section.path] !== undefined) {
+        continue;
+      }
       const ruta = hijas.find((route) => route.path === section.path);
 
       expect(ruta?.component ?? ruta?.loadComponent, section.path).toBeDefined();
@@ -342,7 +360,9 @@ describe('rutas del armazón', () => {
    * ningún defecto: no hay aserción que dependa de cuánto tarde.
    */
   it('una sección disponible NO cae en el placeholder', async () => {
-    for (const section of APP_SECTIONS.filter((s) => s.availability === 'disponible')) {
+    for (const section of APP_SECTIONS.filter(
+      (s) => s.availability === 'disponible' && SECCIONES_REDIRIGIDAS[s.path] === undefined,
+    )) {
       const ruta = hijas.find((route) => route.path === section.path);
       const componente = ruta?.component ?? (await ruta?.loadComponent?.());
 

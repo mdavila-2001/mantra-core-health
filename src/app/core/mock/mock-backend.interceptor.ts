@@ -247,15 +247,46 @@ function usuarioDe(request: HttpRequest<unknown>) {
   return token === null ? null : (usuarioDeAccessToken(token) ?? null);
 }
 
-/** Un poco de espera, para que los estados de carga existan. */
+/**
+ * Una tabla por prefijo, no un azar (H2.S1.M1, 2026-09-22 — R-02).
+ *
+ * El generador aleatorio anterior (120 a 299 ms según la tirada) hacía que
+ * la misma petición tardara distinto en cada corrida: ninguna medición era
+ * repetible, y un E2E veía tiempos distintos cada vez que se ejecutaba. Los
+ * estados de carga
+ * siguen existiendo —el comentario original tenía razón en eso—, pero ahora
+ * con un valor fijo y justificado por prefijo, no con una tirada de dados.
+ *
+ * **Mínimo elegido (Q-E1): 40 ms.** Es el valor que ya usaba `/terminology`
+ * y que la maqueta viene mostrando como espera visible desde antes de esta
+ * corrección; bajar de ahí no deja ver nada, así que ningún prefijo queda
+ * por debajo. `/scheduling/slots` es la ruta caliente de «elegir médico»
+ * (`practitioner-availability.ts`, hasta 2 llamadas por sede): se la deja en
+ * el mínimo para no multiplicar la espera por la cantidad de sedes. El resto
+ * de las lecturas va un escalón arriba porque trae más forma (perfiles,
+ * catálogos), y la escritura genérica un escalón más porque simula ida y
+ * vuelta con persistencia.
+ */
+const LATENCIA_POR_PREFIJO: readonly (readonly [string, number])[] = [
+  ['/terminology', 40],
+  ['/scheduling/slots', 40],
+  ['/profiles', 90],
+];
+
+/** La subida de documentos legales necesita quedarse el tiempo suficiente en
+ * «subiendo» para que el estado se vea: el simulador no emite
+ * `UploadProgress`, sólo la respuesta final, así que sin esto la barra
+ * pasaría de vacía a lista sin que nadie llegara a verla. */
+const LATENCIA_SUBIDA_DOCUMENTO = 600;
+
+/** El resto: ni tan rápido que no se note, ni tan lento como el azar viejo
+ * llegaba a ser (hasta 299 ms). */
+const LATENCIA_POR_OMISION = 120;
+
 function latencia(path: string): number {
-  if (path.startsWith('/terminology')) return 40;
-  // La pre-carga de documentos legales (subtarea 1.2) necesita quedarse el
-  // tiempo suficiente en «subiendo» para que el estado se vea: el simulador
-  // no emite `UploadProgress`, sólo la respuesta final, así que sin esto la
-  // barra pasaría de vacía a lista sin que nadie llegara a verla.
-  if (path === '/iam/auth/upload-registration-document') return 600;
-  return 120 + Math.floor(Math.random() * 180);
+  if (path === '/iam/auth/upload-registration-document') return LATENCIA_SUBIDA_DOCUMENTO;
+  const prefijo = LATENCIA_POR_PREFIJO.find(([p]) => path.startsWith(p));
+  return prefijo === undefined ? LATENCIA_POR_OMISION : prefijo[1];
 }
 
 /**

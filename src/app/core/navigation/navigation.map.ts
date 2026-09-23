@@ -107,11 +107,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // aprender, y el catálogo ya se filtra por rol tutorial por tutorial. Poner
     // roles acá escondería el centro entero a quien tiene pocos.
     path: 'tutorials',
-    // §4.H · fuera del menú del médico. Los recorridos guiados se disparan
-    // **desde la pantalla que explican**, que es donde sirven; un renglón fijo
-    // en el menú para «aprender a usar esto» era además la confesión del
-    // síntoma 1 del plan.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    // N-01 (2026-09-22): pasa de `['PRACTITIONER']` a `[ANY_ROLE]` — ahora es
+    // un ícono con globo en la cabecera (`shell-layout.html`), calcado de
+    // «Ajustes», para los dos roles. La ruta sigue existiendo y funcionando
+    // igual; lo único que cambia es que ya no ocupa un renglón para nadie.
+    // §4.H (el motivo original, para el médico) sigue valiendo: acá se
+    // generaliza al paciente.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Tutoriales',
     group: 'General',
     icon: 'teach',
@@ -133,6 +135,10 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // turnos» tampoco los declara—. La pantalla lo dice cuando falta, en vez
     // de esconderse del menú.
     path: 'messaging',
+    // N-01 (2026-09-22): ícono con globo y contador de no leídos en la
+    // cabecera, calcado de «Ajustes» — la ruta sigue existiendo y
+    // funcionando; sólo deja de ocupar un renglón de primer nivel.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Chats',
     group: 'General',
     icon: 'chat',
@@ -1348,6 +1354,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // así que va `billing`, el de valor acumulado. Un icono propio es del
     // dueño del sistema de iconos, no de este carril.
     path: 'my-account/loyalty',
+    // N-03/Q-17 (2026-09-22, Itzan): «Mis puntos» pasa a ser una pestaña del
+    // perfil del paciente y retira su renglón de primer nivel. La pestaña en
+    // sí no llegó esta noche (regla 65: contrato simulado — la ruta vieja
+    // redirige a `/my-account` en `app.routes.ts`, declarado en el daily de
+    // los dos). La sección se conserva registrada (roles, disponibilidad)
+    // para no perder ese contrato si alguien más la referencia.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Mis puntos',
     group: 'Mi cuenta',
     icon: 'star',

@@ -128,12 +128,11 @@ describe('NavigationService', () => {
         '/my-account',
         '/notification-center',
         '/dashboard',
-        // Los tutoriales tampoco exigen rol: son la guía de cómo usar lo que
-        // cada cuenta ya puede ver.
-        '/tutorials',
-        // Carril P2: la mensajería tampoco exige rol. El filtro real es tener
-        // perfil público de `community`, que es un dato de la cuenta.
-        '/messaging',
+        // Tutoriales y Chats YA NO entran acá (N-01, 2026-09-22): los dos
+        // pasan a `fueraDelMenuPara: [ANY_ROLE]` — son un ícono con globo en
+        // la cabecera para cualquier sesión, calcado de «Ajustes». Siguen sin
+        // exigir rol y se siguen alcanzando por su ruta; lo que dejan de
+        // hacer es ocupar un renglón de primer nivel, para cualquier cuenta.
         // Grupos y foros ya NO entra: desde el 18/08/2026 (recorrida de QA,
         // F-20) declara los roles de quien ejerce o administra — son foros
         // profesionales, y una sesión sin roles no es de nadie que ejerza.
@@ -262,7 +261,9 @@ describe('NavigationService', () => {
       // clínica, no porque atienda un mostrador. Sale por `fueraDelMenuPara`,
       // y se sigue llegando por la ruta —lo fija la prueba de abajo—.
       //
-      // **«Activos y pasivos» SALIÓ el 19/09/2026, y la lista baja a diez.**
+      // **«Activos y pasivos» SALIÓ el 19/09/2026, y la lista bajó a diez —
+      // y a nueve el 22/09/2026, cuando «Chats» pasó a la cabecera (N-01,
+      // ver la nota de más abajo).**
       // Lo pidió el propietario con esas palabras: «esto debe estar integrado
       // en contabilidad (lo de activos y pasivos)». Es la dirección que §4.H
       // persigue —el panel no crece—, y además arregla un defecto propio de
@@ -282,7 +283,9 @@ describe('NavigationService', () => {
         .flatMap((grupo) => grupo.items.map((item) => item.label));
 
       expect(fueraDeMiCuenta).toEqual([
-        'Chats',
+        // «Chats» YA NO entra acá (N-01, 2026-09-22): pasa a un ícono con
+        // globo en la cabecera, `fueraDelMenuPara: [ANY_ROLE]` — sigue
+        // alcanzándose por `/messaging`, sólo que ya no ocupa un renglón.
         'Directorios',
         'Consultas médicas',
         'Archivo clínico',
@@ -530,12 +533,18 @@ describe('NavigationService', () => {
 
     it('el bloque se dibuja donde está su primera sección visible, no donde se declaró', () => {
       // Quien ejerce no ve ni el panel ni los tutoriales, así que «Inicio» no
-      // existe para él y «Comunidad» pasa a ser el primer bloque de General. El
-      // orden no se recalcula ni se reordena: sale del registro, filtrado.
+      // existe para él. Hasta el 21/09/2026 «Comunidad» pasaba a ser el primer
+      // bloque de General (le quedaba «Chats»). Desde N-01 (22/09/2026) «Chats»
+      // pasa a la cabecera para cualquier sesión (`fueraDelMenuPara:
+      // [ANY_ROLE]`), y «Grupos y foros» ya excluía a `PRACTITIONER` — así que
+      // «Comunidad» se queda sin ningún renglón visible para este rol y no se
+      // dibuja. El primer bloque que le queda a General es «Directorios». El
+      // orden sigue sin recalcularse ni reordenarse: sale del registro,
+      // filtrado.
       abrirSesion(['PRACTITIONER']);
 
       const general = service.menu().find((grupo) => grupo.label === 'General');
-      expect(general?.blocks[0]?.label).toBe('Comunidad');
+      expect(general?.blocks[0]?.label).toBe('Directorios');
     });
 
     it('un bloque sólo trae lo que la sesión puede ver', () => {
@@ -560,16 +569,25 @@ describe('NavigationService', () => {
 
     it('un bloque de un solo renglón sigue existiendo, y el armazón lo dibuja suelto', () => {
       // Es la otra mitad de lo de arriba, que se demostraba con los directorios
-      // cuando al médico le quedaba uno solo. «Comunidad» ocupó ese lugar: de
-      // sus dos destinos, quien ejerce ve Chats —«Grupos y foros» declara los
-      // roles de quien ejerce o administra desde F-20, pero no entra en la
-      // lista cerrada del panel—.
-      abrirSesion(['PRACTITIONER']);
+      // cuando al médico le quedaba uno solo. «Comunidad» ocupaba ese lugar
+      // con PRACTITIONER hasta el 21/09/2026: de sus dos destinos, quien
+      // ejerce veía Chats —«Grupos y foros» declara los roles de quien ejerce
+      // o administra desde F-20, pero no entraba en la lista cerrada del
+      // panel del médico—.
+      //
+      // Desde N-01 (22/09/2026) «Chats» pasa a la cabecera para **cualquier**
+      // sesión (`fueraDelMenuPara: [ANY_ROLE]`), así que con PRACTITIONER
+      // «Comunidad» ya no tiene ningún renglón (el caso de arriba). El bloque
+      // de un solo renglón sigue existiendo igual, sólo que ahora hace falta
+      // un rol que vea «Grupos y foros» sin ver «Chats» en el menú —CLINICIAN
+      // está en `ROLES_QUE_EJERCEN_O_ADMINISTRAN` y no en el
+      // `fueraDelMenuPara` de `groups`, que sólo excluye a PRACTITIONER.
+      abrirSesion(['CLINICIAN']);
 
       const general = service.menu().find((grupo) => grupo.label === 'General');
       const comunidad = general?.blocks.find((bloque) => bloque.label === 'Comunidad');
 
-      expect(comunidad?.items.map((item) => item.route)).toEqual(['/messaging']);
+      expect(comunidad?.items.map((item) => item.route)).toEqual(['/groups']);
     });
   });
 

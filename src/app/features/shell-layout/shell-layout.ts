@@ -28,11 +28,13 @@ import { TutorialTarget } from '../../shared/components/organisms/tutorial-overl
 // exactamente una vez por sesión con interfaz.
 import { NotificationBell } from '../../shared/components/organisms/notification-bell/notification-bell';
 import { BackLink } from '../../shared/components/atoms/back-link/back-link';
+import { Badge } from '../../shared/components/atoms/badge/badge';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
 import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
 import { TUTORIALS } from '../../core/tutorials/definitions';
 import { AlovidaThemeToggleDirective } from '../../core/alovida/alovida-theme-toggle.directive';
+import { ChatStore } from '../../core/messaging/chat.store';
 
 /**
  * Si un destino de la barra queda debajo de la URL actual.
@@ -78,6 +80,7 @@ const PANEL = '/dashboard';
     TutorialTarget,
     NotificationBell,
     BackLink,
+    Badge,
     NavIcon,
     Tooltip,
   ],
@@ -130,6 +133,23 @@ export class ShellLayout {
   private readonly urlActual = signal('');
 
   private readonly tutorials = inject(TutorialRegistry);
+
+  /**
+   * No leídos de Chats para el ícono de la cabecera (N-01, H4.S1.M2,
+   * 2026-09-22 — Q-E4). `ChatStore` ya es `providedIn: 'root'`
+   * (`core/messaging/chat.store.ts`) y `Messaging` es quien lo enciende con
+   * `iniciar()` al entrar a `/messaging`; acá **no** se vuelve a encender ni
+   * se cuenta aparte, sólo se lee el mismo `sinLeer()` que ya expone. Es una
+   * decisión deliberada, no un descuido: encenderlo desde el armazón
+   * contradiría el motivo por el que `ChatStore` no sondea desde el arranque
+   * (`chat.store.ts:138-142`, «quien está en la agenda no tiene por qué
+   * estar pidiendo conversaciones cada minuto»). El badge muestra lo último
+   * que se supo — 0 hasta que la sesión entró una vez a Chats o llegó un
+   * mensaje por el socket ya conectado — en vez de forzar un sondeo global
+   * nuevo para que el número esté siempre «fresco» en toda la aplicación.
+   */
+  private readonly chats = inject(ChatStore);
+  protected readonly chatsSinLeer = this.chats.sinLeer;
 
   constructor() {
     // El catálogo de tutoriales se registra acá y no en un proveedor de arranque

@@ -66,6 +66,42 @@ Lo que ninguna ruta cubre cae en una respuesta genérica y queda anotado en la
 consola como `[mock] sin manejador para …`: ese es el inventario de lo que
 falta.
 
+## Escenarios de flujo completo
+
+Dos recorridos de punta a punta, para verificar de una sola vez que reservar y
+atender siguen funcionando después de un cambio en el simulador o en la
+agenda. Los dos parten de una cuenta limpia (sin turnos previos: si ya
+reservaste con esa cuenta en esta pestaña, vaciá `sessionStorage` primero).
+
+### Escenario A — `paciente@` reserva con la médica un cupo de mañana
+
+1. Entrá como `paciente@alovida.mock` → `/directory` → especialidad
+   Cardiología → **Valeria Rojas Mendoza** (la médica de prueba, con agenda
+   propia y consultorio: dos sedes).
+2. «Sedes y horarios» → elegí un cupo de la franja de mañana (08:00–12:00,
+   plantilla `template-medica-manana`, L-V y sábado) → reservar.
+3. La reserva queda en `sessionStorage` (`reservas`, `Coleccion.persistirEn`)
+   con estado `SOLICITADA` o `CONFIRMADA` según la política de la plantilla.
+4. Entrá como `medica@alovida.mock` → `Panel` → «Consultas» (o `/agenda`): el
+   turno recién creado aparece con el paciente `Ana Lucía Pérez Quiroga`.
+5. Verifica: `mock-backend.spec.ts` en verde con ambas cuentas.
+
+### Escenario B — `paciente@` reserva con un registrado (R-03)
+
+1. Entrá como `paciente@alovida.mock` → `/directory` → cualquier especialidad
+   con un profesional marcado «Usuario de AloVida» (los 13 de
+   `USUARIO_MEDICOS_1.md`; ver `fixtures/registered-people.ts`) — por ejemplo
+   Odontología, **Romel Rivero Saavedra**.
+2. «Revisar disponibilidad»: antes de R-03 decía «Todavía no publicó
+   horarios» para los 13; ahora los 12 con especialidad mapeada tienen cupos
+   ±21 días (el 13.º, sin especialidad declarada en la planilla, sigue sin
+   agenda — es el caso límite documentado, no un olvido).
+3. Elegí un cupo y reservá. El estado queda igual que el escenario A: según
+   la política de la plantilla del recurso (`POLITICA_ESTANDAR`,
+   `agenda.ts`), no hay una política distinta para los registrados.
+4. Verifica: `agenda-casos-limite.spec.ts` (los 12 con recurso, el 13.º sin
+   él) y `agendas-cobertura.spec.ts` (el conteo directorio/con-recurso/con-cupos).
+
 ## Qué sobrevive a F5
 
 Las tablas de negocio —citas, bloqueos, historia clínica, publicaciones,
