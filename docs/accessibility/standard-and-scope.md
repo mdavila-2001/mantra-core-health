@@ -91,7 +91,7 @@ Los hallazgos están en [el informe de auditoría](audit-report.md).
 | 1.3.1 Información y relaciones | `FORM_CONTROL_CONTEXT`, `<dl>` del panel, `<th scope>` de la tabla |
 | 1.4.3 Contraste (mínimo) | Tokens semánticos, con E1–E3 declaradas |
 | 1.4.11 Contraste de elementos no textuales | `--border-strong`, con E3 declarada |
-| 1.4.12 Espaciado de texto | Interlineados de la escala REDSAT |
+| 1.4.12 Espaciado de texto | Interlineados de la escala ALOVIDA |
 | 2.1.1 Teclado | Controles nativos (`<button>`, `<a>`, `<dialog>`) |
 | 2.1.2 Sin trampa de teclado | `app-menu` no atrapa; `app-dialog` sí, y es correcto |
 | 2.4.1 Evitar bloques | Enlace de salto de `app-shell` |

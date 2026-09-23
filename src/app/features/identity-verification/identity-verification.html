@@ -1,7 +1,9 @@
-<app-page-header
-  title="Verificar identidad"
-  subtitle="Subí la documentación y la revisamos. Verificás tu identidad, tu matrícula o una organización a tu cargo."
-/>
+@if (!embedded()) {
+  <app-page-header
+    title="Verificar identidad"
+    subtitle="Subí la documentación y la revisamos. Verificás tu identidad, tu matrícula o una organización a tu cargo."
+  />
+}
 
 <div class="verificar">
   @if (caso(); as abierto) {

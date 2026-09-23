@@ -182,7 +182,7 @@ export function credenciales(): Record<string, string> {
     // cuenta que siembra `BOOTSTRAP_ADMIN_*` al arrancar la API.
     E2E_API_URL: texto('E2E_API_URL', 'http://localhost:3000'),
     // Buzón real por defecto: el mismo con el que siembra la API
-    // (`tools/redesa/correos-reales.mjs`). Con `@redesa.test` el correo de
+    // (`tools/alovida/correos-reales.mjs`). Con `@redesa.test` el correo de
     // verificación no llegaba a ninguna parte y no había forma de comprobar
     // que el envío funciona ni cómo se lee la plantilla.
     E2E_ADMIN_EMAIL: texto(

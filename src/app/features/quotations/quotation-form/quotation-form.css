@@ -1,0 +1,117 @@
+/* ============================================================================
+    Nueva cotización. Sólo distribución: los átomos y organismos ya traen su
+    pinta del sistema.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.cotizacion {
+  display: grid;
+  gap: var(--sp-6);
+  margin-block-start: var(--sp-6);
+}
+
+.cotizacion__bloque {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+/* Las tareas vacías de `auto-fit` colapsan, así que dos campos se reparten el
+   ancho a medias y tres en tercios (composition-rules §5). El título va fuera
+   de la grilla: si la atravesara ocuparía todas las pistas y ninguna colapsaría. */
+.cotizacion__grilla {
+  display: grid;
+  gap: var(--sp-3) var(--sp-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  align-items: start;
+}
+
+.cotizacion__elegido {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.cotizacion__encabezado-plan {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.cotizacion__bajada {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.cotizacion__frecuencia {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.cotizacion__rotulo {
+  font-weight: 600;
+}
+
+.cotizacion__cuotas {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Mobile-first: una columna; en ancho, fecha y monto lado a lado. */
+.cotizacion__cuota {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+}
+
+.cotizacion__cuota-numero {
+  font-weight: 600;
+}
+
+.cotizacion__cuota-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  justify-content: flex-end;
+}
+
+@media (min-width: 48rem) {
+  .cotizacion__cuota {
+    /* Acciones de ancho fijo: si fuera `auto`, la fila con «Repartir de
+       nuevo» tendría otras columnas que las demás y no alinearían. */
+    grid-template-columns: 6rem 1fr 1fr 13rem;
+    align-items: end;
+  }
+
+  .cotizacion__cuota-numero {
+    align-self: center;
+  }
+}
+
+.cotizacion__plan-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.cotizacion__total {
+  margin: 0 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.cotizacion__acciones {
+  display: flex;
+  gap: var(--sp-3);
+  justify-content: flex-end;
+}

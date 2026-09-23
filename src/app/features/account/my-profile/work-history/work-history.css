@@ -7,8 +7,9 @@
 }
 
 .historial {
-  display: grid;
-  gap: var(--sp-4);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-4);
 }
 
 .historial__titulo {
@@ -28,9 +29,9 @@
 .historial__intro,
 .historial__vacio {
   margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--fs-small);
-  line-height: var(--lh-small);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 .historial__lista {
@@ -48,7 +49,7 @@
   align-items: baseline;
   justify-content: space-between;
   padding-block-end: var(--sp-3);
-  border-block-end: 1px solid var(--color-border-subtle);
+  border-block-end: 1px solid var(--border-subtle);
 }
 
 .historial__item:last-child {
@@ -67,9 +68,9 @@
 .historial__cargo,
 .historial__area,
 .historial__sede {
-  color: var(--color-text-muted);
-  font-size: var(--fs-small);
-  line-height: var(--lh-small);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 .historial__periodo {
@@ -84,16 +85,16 @@
 }
 
 .historial__estado {
-  color: var(--color-text-muted);
-  font-size: var(--fs-small);
-  line-height: var(--lh-small);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 .historial__reintento {
   padding: 0;
   border: none;
   background: none;
-  color: var(--color-primary);
+  color: var(--brand-primary);
   font: inherit;
   text-decoration: underline;
   cursor: pointer;
@@ -115,7 +116,7 @@
   align-items: center;
   gap: var(--sp-2);
   margin: calc(var(--sp-2) * -1) 0 var(--sp-4);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
   color: var(--c-neutral-600);
 }
 
@@ -123,7 +124,7 @@
    ocupar su propia línea sin competir con el resto de la ficha. */
 .historial__vinculo {
   margin: var(--sp-2) 0 0;
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
   line-height: 1.4;
 }
 
@@ -143,4 +144,135 @@
 
 .historial__vinculo--revocado {
   color: var(--st-error-ink, var(--c-error-700));
+}
+
+/* ─── Dónde atiendo (ALV-005/006) ─────────────────────────────────────────
+   Un bloque propio dentro de la misma tarjeta, separado del historial por un
+   filete: es «hoy» contra «antes», y el reparto visual lo tiene que decir. */
+.historial__sedes {
+  display: grid;
+  gap: var(--sp-3);
+  padding-block-end: var(--sp-4);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.historial__mapa-bloque {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+/* Alto fijo: sin él Leaflet no tiene lienzo y el mapa nace de 0 px. Mismo
+   criterio que el mapa del alta de paciente. */
+.historial__mapa {
+  display: block;
+  block-size: 18rem;
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.historial__punto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+/* El nombre y su insignia, en una línea: «Consultorio Dra. Rojas · Tu
+   consultorio». Debajo, la insignia se leería como otro renglón de dato. */
+.historial__linea {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Las acciones de una sede son tres —su QR bancario, corregirla y retirarla— y
+   van juntas al final de la fila, no apiladas. En ícono: con los tres rótulos
+   completos la fila se partía en dos renglones apenas el nombre del hospital
+   pasaba de corto. */
+/* Sólo dónde se para dentro de la fila. Cómo se acomodan las acciones entre
+   sí —dirección, envoltura, separación— es del propio `app-row-actions` desde
+   ADR-0012; repetirlo acá sería competirle al componente por su propio layout. */
+.historial__acciones {
+  /* Las acciones no siguen la línea de base del nombre: el `baseline` de la
+     fila las subiría. */
+  align-self: center;
+}
+
+/* El aviso en palabras de que a esa sede le falta el QR. Nació sin regla
+   propia —quedó huérfano en la reconciliación del 19/09/2026— y se pintaba con
+   el cuerpo de texto de la tarjeta, así que «Sin QR de cobro configurado» se
+   leía con el mismo peso que la dirección. Va como las otras líneas menores de
+   la fila (`.historial__sede`) pero en el ámbar del botón al que acompaña: son
+   una sola advertencia dicha dos veces, para quien mira y para quien lee. */
+.historial__aviso-qr {
+  /* La tinta semántica de aviso, no un escalón suelto de la rampa. Con
+     `--c-warning-600` este texto daba 3,09:1 sobre la superficie de la
+     tarjeta en tema claro, y texto chico necesita 4,5:1 (WCAG 1.4.3).
+     `--st-warning-fg` además cambia sola entre claro y oscuro. */
+  color: var(--st-warning-fg);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* El QR sin configurar, en ámbar: es lo único de esta fila que está a medias, y
+   el médico tiene que poder verlo de un vistazo entre cuatro sedes. El color no
+   lo dice solo —el globo y el nombre accesible dicen «Configurar el QR bancario
+   de …» contra «Ver el QR bancario de …»—, que es lo que pide WCAG 1.4.1.
+
+   ## Por qué `--c-warning-600` y no los otros tres ámbares
+
+   Medido, no elegido a ojo. La rampa de REDSAT es un ámbar de arena, no un
+   amarillo de semáforo, así que el escalón decide entre «se ve» y «se lee como
+   marrón»:
+
+   | Token | Sobre la tarjeta clara | Cómo se lee |
+   |---|---|---|
+   | `--c-amber-500` (el acento) | **2,06:1** | ámbar, pero no llega a 3:1 |
+   | `--c-amber-600` | **3,09:1** | ámbar, y pasa |
+   | `--c-amber-700` | 4,94:1 | ya tira a marrón |
+   | `--c-amber-800` | 8,29:1 | marrón: no dice «ámbar» |
+
+   3:1 es el mínimo de WCAG 1.4.11 para un objeto gráfico, y el 600 es el único
+   escalón que lo cumple sin dejar de parecer ámbar. Sirve en los dos temas —
+   sobre la superficie oscura queda por encima de 4:1—, así que es un solo token
+   y no un par con media query: en este proyecto el tema lo resuelven las
+   variables de `styles.css`, y ningún componente escribe `prefers-color-scheme`.
+
+   El trazo sube a 2 px: a 3:1 justo, una línea de 1,6 px se desdibuja. */
+/* Acá vivían dos reglas de los botones sólo-ícono que ADR-0012 retiró:
+   el QR en ámbar cuando faltaba configurarlo, y la tinta de peligro de
+   «Retirar» al apuntarlo. Las dos decían con color algo que ahora dice el
+   texto: la acción se llama «Configurar QR bancario» cuando falta —y el aviso
+   en palabras sigue en la fila, en `.historial__aviso-qr`—, y la de retirar va
+   marcada como destructiva, que es lo que `app-row-actions` sabe pintar.
+   El ámbar no se fue de la fila: `.historial__aviso-qr` usa el mismo token y
+   sigue a la vista sin abrir nada. Lo que se fue es la SEGUNDA copia del
+   mismo aviso, la que vivía en el glifo. */
+
+/* La segunda puerta: buscar un establecimiento que ya existe. Va separada del
+   alta del consultorio propio por una línea, porque son dos operaciones
+   distintas y pegadas se leen como pasos de la misma. */
+.historial__padron {
+  margin-block-start: var(--sp-5);
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+/* El aviso de que el consultorio propio es uno solo. Sin aire se lee como el
+   pie de la última sede de la lista, que es otra cosa: habla de TODAS. */
+.historial__nota-propia {
+  margin-block-start: var(--sp-4);
+}
+
+/* El botón que abre el alta de un vínculo. Va suelto bajo la línea de tiempo
+   —no dentro de una tarjeta— porque es la acción de la sección entera, no de
+   ninguno de sus renglones. */
+.historial__alta {
+  margin: var(--sp-4) 0 0;
 }

@@ -2,7 +2,7 @@
    La estructura partida (2 columnas) y el selector de tema son del organismo
    `app-auth-split`. Acá va la jerarquía tipo "documento" (familia expediente) del
    formulario, en línea con login: membrete y pie con reglas.
-   Solo tokens REDSAT.
+   Solo tokens ALOVIDA.
 
    Vive en su propia carpeta y no en una de las dos pantallas porque las dos lo
    consumen (`styleUrls`): mientras el alta de profesional era una rama del `@if`
@@ -33,6 +33,17 @@
     entera un tope sólo lograba dos barras de scroll en la misma pantalla. */
 .registro {
   position: relative;
+  /* `backdrop-filter` crea contexto de apilado, así que todo lo que flota
+     dentro de la tarjeta —el desplegable de la lupa de ocupaciones, y
+     cualquier otro panel— queda encerrado acá: su `z-index` es local y no
+     puede ganarle a la columna de ayuda, que es hermana posterior en el DOM y
+     por eso se pinta encima. Con esto la tarjeta entera se eleva por sobre esa
+     columna y el desplegable vuelve a verse completo.
+
+     No es recorte, es orden de pintado: por eso alcanza una capa y no hace
+     falta colgar el panel del `<body>` como hacen el globo de ayuda y el menú,
+     que sí pelean contra un `overflow`. */
+  z-index: 1;
   display: flex;
   flex-direction: column;
   background: color-mix(in srgb, var(--bg-surface) 92%, transparent);

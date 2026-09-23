@@ -64,6 +64,26 @@ describe('SessionStore', () => {
       expect(store.needsTenantSelection()).toBe(false);
     });
 
+    it('con varios y organización propia, arranca en la propia («Mi consultorio»)', () => {
+      const conPropia = makeToken({ sub: 'u-1', tenants: ['t-1', 't-propio'], ownTenantId: 't-propio' });
+      store.start({ accessToken: conPropia, refreshToken: 'r-1' });
+
+      expect(store.activeTenantId()).toBe('t-propio');
+      expect(store.needsTenantSelection()).toBe(false);
+
+      // Y elegir otra sigue mandando.
+      store.selectTenant('t-1');
+      expect(store.activeTenantId()).toBe('t-1');
+    });
+
+    it('una organización propia que no está en el token no se usa', () => {
+      const ajena = makeToken({ sub: 'u-1', tenants: ['t-1', 't-2'], ownTenantId: 't-ajeno' });
+      store.start({ accessToken: ajena, refreshToken: 'r-1' });
+
+      expect(store.activeTenantId()).toBeNull();
+      expect(store.needsTenantSelection()).toBe(true);
+    });
+
     it('ignora un tenant que el token no incluye', () => {
       store.start({ accessToken: VARIOS, refreshToken: 'r-1' });
       store.selectTenant('t-ajeno');

@@ -12,7 +12,11 @@ import {
 import { of, switchMap } from 'rxjs';
 
 import { ChartTemplatesClient } from '../../../../core/data-access/chart-templates/chart-templates.client';
+import { DiagnosisBlock } from '../diagnosis-block/diagnosis-block';
+import { AllergyBlock } from '../allergy-block/allergy-block';
+import { DiagnosticsBlock } from '../diagnostics-block/diagnostics-block';
 import { FreeNoteBlock } from '../free-note-block/free-note-block';
+import { ProceduresBlock } from '../procedures-block/procedures-block';
 import type {
   ChartTemplate,
   ChartTemplateField,
@@ -29,6 +33,8 @@ import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
+import { SegmentedControl } from '../../../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
@@ -56,6 +62,57 @@ import type { MapaDental } from '../odontogram/odontogram.types';
  * nada»—. El prefijo lo hace imposible de confundir con un uuid.
  */
 export const PLANTILLA_HOJA_LIBRE = 'hoja-libre';
+
+/**
+ * Las tres entradas del selector que **no** son plantillas de `forms`.
+ *
+ * Diagnosticar, registrar un procedimiento y pedir un estudio son, para quien
+ * atiende, lo mismo que completar una ficha: «qué le voy a llenar a esta
+ * persona». Que cada una escriba en otra tabla —`clinical.conditions`, el
+ * histórico de procedimientos, las órdenes del circuito diagnóstico— es una
+ * separación del backend, y no tiene por qué asomar como cuatro secciones
+ * hermanas en la pantalla. Viven en esta lista por el mismo motivo por el que
+ * ya vivía {@link PLANTILLA_HOJA_LIBRE}: se elige una vez, y una de las
+ * respuestas posibles es «ninguna plantilla».
+ *
+ * El prefijo las hace imposibles de confundir con el uuid de una plantilla.
+ */
+export const BLOQUE_DIAGNOSTICO = 'bloque-diagnostico';
+/** La alergia: mismo criterio que el diagnóstico, otra entidad clínica. */
+export const BLOQUE_ALERGIA = 'bloque-alergia';
+export const BLOQUE_CIRUGIA = 'bloque-cirugia';
+export const BLOQUE_ODONTOLOGIA = 'bloque-odontologia';
+export const BLOQUE_LABORATORIO = 'bloque-laboratorio';
+
+/**
+ * Las cinco entradas fijas, en el orden en que se ofrecen.
+ *
+ * Cirugía y odontología van separadas —antes eran una sola opción,
+ * «Procedimiento»— porque no comparten ni permiso de servidor ni datos:
+ * elegir odontología igual disparaba la lectura quirúrgica, y quien no tenía
+ * rol de cirugía se topaba con un aviso de permiso denegado en medio de un
+ * formulario que no le pedía nada de eso.
+ */
+const ENTRADAS_FIJAS: readonly { readonly value: string; readonly label: string }[] = [
+  { value: BLOQUE_DIAGNOSTICO, label: 'Diagnóstico — del catálogo CIE-10' },
+  { value: PLANTILLA_HOJA_LIBRE, label: 'Hoja en blanco — escribir sin campos' },
+  { value: BLOQUE_ALERGIA, label: 'Alergia o intolerancia' },
+  { value: BLOQUE_CIRUGIA, label: 'Cirugía' },
+  { value: BLOQUE_ODONTOLOGIA, label: 'Odontología' },
+  { value: BLOQUE_LABORATORIO, label: 'Laboratorio e imagenología' },
+];
+
+/**
+ * Las dos respuestas de un campo de sí/no, como botones.
+ *
+ * Mismo par que el del motor de formularios y el del alta de agenda: son las
+ * mismas dos palabras en todo el producto, y con ninguna elegida cuando la
+ * pregunta todavía no se contestó.
+ */
+const SI_NO: readonly SegmentedOption<'si' | 'no' | ''>[] = [
+  { value: 'si', label: 'Sí' },
+  { value: 'no', label: 'No' },
+];
 
 /** Los tipos de dato que este bloque sabe dibujar como campo de captura. */
 type TipoDibujable = 'boolean' | 'integer' | 'decimal' | 'date' | 'text' | 'string';
@@ -157,6 +214,9 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
     Alert,
     AppButton,
     Card,
+    DiagnosisBlock,
+    AllergyBlock,
+    DiagnosticsBlock,
     FreeNoteBlock,
     Checkbox,
     DatePicker,
@@ -164,6 +224,8 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
     FormField,
     Input,
     Odontogram,
+    ProceduresBlock,
+    SegmentedControl,
     Select,
   ],
   templateUrl: './specialty-form-block.html',
@@ -171,6 +233,8 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SpecialtyFormBlock {
+  protected readonly siNo = SI_NO;
+
   private readonly chartTemplates = inject(ChartTemplatesClient);
   private readonly forms = inject(FormsClient);
   private readonly profiles = inject(ProfilesClient);
@@ -291,8 +355,16 @@ export class SpecialtyFormBlock {
     () => this.catalogo().length > this.plantillasSugeridas().length,
   );
 
-  /** El interruptor «Ver todas las especialidades». Apagado, manda el filtro. */
-  protected readonly verTodas = signal(false);
+  /**
+   * El interruptor «Ver todas las especialidades». Apagado, manda el filtro.
+   *
+   * Arranca PRENDIDO a pedido explícito: el filtro por especialidad hacía que
+   * la misma cuenta viera listas de tamaño distinto según qué perfil
+   * profesional resolviera el backend, y eso se leía como un bug («en la Mac
+   * salen más formularios»). Mientras no haya una forma de fijar esto como
+   * preferencia real, mostrar todo por defecto es lo predecible.
+   */
+  protected readonly verTodas = signal(true);
 
   protected alternarVerTodas(activado: boolean): void {
     this.verTodas.set(activado);
@@ -312,10 +384,16 @@ export class SpecialtyFormBlock {
     return visibles;
   });
 
+  /**
+   * Todo lo que se puede completar en el encuentro, en una sola lista.
+   *
+   * Las fijas primero —diagnóstico, hoja en blanco, procedimiento y
+   * laboratorio— porque son las que sirven en cualquier consulta y enterrarlas
+   * al final de cuarenta y cuatro fichas equivale a no tenerlas. Detrás, las
+   * plantillas: la de la especialidad de quien atiende y las transversales.
+   */
   protected readonly opcionesDePlantilla = computed<readonly SelectOption<string>[]>(() => [
-    // Primera de la lista: es la salida para quien no quiere completar nada, y
-    // enterrarla al final de cuarenta y cuatro fichas equivale a no tenerla.
-    { value: PLANTILLA_HOJA_LIBRE, label: 'Hoja en blanco — escribir sin campos' },
+    ...ENTRADAS_FIJAS,
     ...this.plantillasVisibles().map((plantilla) => ({
       value: plantilla.id,
       label: plantilla.name,
@@ -323,8 +401,35 @@ export class SpecialtyFormBlock {
   ]);
 
   /** Está elegida la hoja en blanco, así que no se dibuja ninguna ficha. */
-  protected readonly hojaLibre = computed(
-    () => this.plantillaId() === PLANTILLA_HOJA_LIBRE,
+  protected readonly hojaLibre = computed(() => this.plantillaId() === PLANTILLA_HOJA_LIBRE);
+
+  protected readonly esDiagnostico = computed(() => this.plantillaId() === BLOQUE_DIAGNOSTICO);
+
+  protected readonly esAlergia = computed(() => this.plantillaId() === BLOQUE_ALERGIA);
+
+  protected readonly esCirugia = computed(() => this.plantillaId() === BLOQUE_CIRUGIA);
+
+  protected readonly esOdontologia = computed(
+    () => this.plantillaId() === BLOQUE_ODONTOLOGIA,
+  );
+
+  protected readonly esLaboratorio = computed(() => this.plantillaId() === BLOQUE_LABORATORIO);
+
+  /**
+   * Lo elegido es uno de los tres bloques que escriben por su cuenta.
+   *
+   * Se dibujan **antes** de la cadena de estados del motor de `forms` y no
+   * dentro: diagnosticar no depende de que el catálogo de plantillas haya
+   * cargado, ni de que este encuentro ya tenga una ficha respondida. Meterlos
+   * bajo esa cadena habría dejado el diagnóstico inalcanzable justo después de
+   * completar una ficha, que es cuando el modo lectura tapa el selector.
+   */
+  protected readonly bloquePropio = computed(
+    () =>
+      this.esDiagnostico() ||
+      this.esCirugia() ||
+      this.esOdontologia() ||
+      this.esLaboratorio(),
   );
 
   /**
@@ -336,9 +441,7 @@ export class SpecialtyFormBlock {
   );
 
   /** El catálogo todavía viaja. Ni hay qué ofrecer ni hay nada que explicar. */
-  protected readonly buscandoPlantillas = computed(
-    () => this.plantillas().status === 'loading',
-  );
+  protected readonly buscandoPlantillas = computed(() => this.plantillas().status === 'loading');
 
   /**
    * Por qué no se pudo traer el catálogo.
@@ -693,8 +796,25 @@ export class SpecialtyFormBlock {
     return typeof valor === 'number' ? valor : null;
   }
 
-  protected valorBooleano(fieldId: string): boolean {
-    return this.valores()[fieldId] === true;
+  /**
+   * El sí/no de un campo, como lo entiende el control de dos botones.
+   *
+   * `''` es «todavía sin responder», y es por lo que el control existe: una
+   * casilla marcada dice «sí» y desmarcada no dice nada, así que en una ficha
+   * clínica «contestó que no» y «no se preguntó» se guardaban igual. Lo pidió
+   * el propietario para los formularios, y es la misma corrección que ya se
+   * hizo en el alta de agenda.
+   */
+  protected valorSiNo(fieldId: string): 'si' | 'no' | '' {
+    const valor = this.valores()[fieldId];
+    if (valor === true) return 'si';
+    if (valor === false) return 'no';
+    return '';
+  }
+
+  protected responderSiNo(fieldId: string, valor: 'si' | 'no' | ''): void {
+    if (valor === '') return;
+    this.actualizarValor(fieldId, valor === 'si');
   }
 
   protected valorFecha(fieldId: string): Date | null {
@@ -704,7 +824,12 @@ export class SpecialtyFormBlock {
 
   /** Cómo dibujar un campo, a partir de su `dataType`. Lo no reconocido cae a texto. */
   protected tipoDibujable(dataType: string): TipoDibujable {
-    if (dataType === 'boolean' || dataType === 'integer' || dataType === 'decimal' || dataType === 'date') {
+    if (
+      dataType === 'boolean' ||
+      dataType === 'integer' ||
+      dataType === 'decimal' ||
+      dataType === 'date'
+    ) {
       return dataType;
     }
     return 'string';
@@ -799,9 +924,7 @@ export class SpecialtyFormBlock {
     const plantilla = this.plantillaElegida();
     if (!plantilla) return false;
     const valores = this.valores();
-    return plantilla.fields
-      .filter((f) => f.required)
-      .every((f) => !esVacio(valores[f.fieldId]));
+    return plantilla.fields.filter((f) => f.required).every((f) => !esVacio(valores[f.fieldId]));
   });
 
   protected readonly puedeCompletar = computed(
@@ -827,10 +950,7 @@ export class SpecialtyFormBlock {
    */
   protected readonly avisoDeDuplicado = computed<string | null>(() => {
     const state = this.resultado();
-    if (
-      state.status === 'validation' &&
-      state.issues.some((issue) => issue.code === 'CONFLICT')
-    ) {
+    if (state.status === 'validation' && state.issues.some((issue) => issue.code === 'CONFLICT')) {
       return 'Esta plantilla ya se completó para este encuentro.';
     }
     return null;
@@ -884,7 +1004,10 @@ export class SpecialtyFormBlock {
           this.enviando.set(false);
           this.resultado.set(ready(null));
           this.valores.set({});
-          this.toasts.success(`«${plantilla.name}» quedó guardada en la ficha.`, 'Formulario completado');
+          this.toasts.success(
+            `«${plantilla.name}» quedó guardada en la ficha.`,
+            'Formulario completado',
+          );
           this.cambio.emit();
           // Lo recién guardado se relee del backend y el bloque pasa a lectura.
           this.consultarRespuesta(encounterId);
@@ -945,9 +1068,7 @@ function esMapa(valor: unknown): valor is Record<string, unknown> {
  * cuándo vale—, y lo dejaría completando la anamnesis general. Vencida sí se
  * descarta: no debería decidir qué ficha se le ofrece hoy.
  */
-function especialidadVigente(
-  especialidades: readonly PractitionerSpecialty[],
-): string | null {
+function especialidadVigente(especialidades: readonly PractitionerSpecialty[]): string | null {
   const ahora = Date.now();
   const vigentes = especialidades.filter((especialidad) =>
     dentroDeLaVentana(especialidad.validFrom, especialidad.validTo, ahora),

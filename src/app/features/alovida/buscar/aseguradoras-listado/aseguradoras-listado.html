@@ -1,0 +1,197 @@
+<div class="app-page-header" app-page-header="">
+      <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="M9 12l2 2 4-4"></path></svg></span>
+      <div class="app-page-header__texto">
+        <div class="app-page-header__titulo"><h1>Aseguradoras y convenios</h1></div>
+        <p class="caption">Qué cubre cada seguro y en qué clínicas te lo aceptan. La red de prestadores es el dato que más se consulta y el que más cambia: cada ficha dice cuándo la actualizó la aseguradora.</p>
+      </div>
+
+    </div>
+    <!-- 2.3 · El lugar en dos pasos: primero el departamento en el mapa y, con uno
+         elegido, sus municipios con algo publicado como chips. Mismo marcado y
+         mismas clases que hospitales; el corte vive en `FiltroTerritorial`. -->
+    @if (lugar.catalogoCaido()) {
+      <p class="mapa-directorio__caido" role="status">
+        No pudimos leer el catálogo de departamentos, así que el mapa no está. El resto del
+        directorio funciona igual.
+        <button app-button="" data-variante="secundario" data-tam="sm" type="button" (click)="lugar.reintentar()">
+          Reintentar
+        </button>
+      </p>
+    } @else if (lugar.departamentos().length > 0) {
+      <section class="mapa-directorio" aria-label="Filtrar por departamento">
+        <app-department-map
+          testId="aseguradoras-mapa"
+          [departamentos]="lugar.departamentos()"
+          [value]="lugar.departamentoElegido()"
+          (valueChange)="lugar.elegirDepartamento($event)"
+          etiqueta="Mapa de Bolivia: elegí el departamento donde buscás"
+        />
+        @if (busqueda.resumenDelLugar(); as resumen) {
+          <p class="mapa-directorio__resumen" data-testid="aseguradoras-mapa-resumen">{{ resumen }}</p>
+        }
+      </section>
+    }
+    <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros de la búsqueda">
+      <label class="app-search-field" app-search-field="">
+        <span class="solo-lectores">Buscá por aseguradora, plan o prestador en convenio</span>
+        <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input
+          class="app-input"
+          app-input=""
+          type="search"
+          name="q"
+          placeholder="Buscá por aseguradora, plan o prestador en convenio"
+          [value]="busqueda.texto()"
+          (input)="alEscribir($any($event.target).value)"
+        />
+      </label>
+      <!-- La categoría: el ramo. Va antes que el lugar porque una aseguradora
+           de generales y fianzas no cubre salud, y eso no lo arregla tenerla
+           cerca. Con una sola categoría en pantalla no se dibuja: un chip que
+           no acota nada es un botón que miente. -->
+      @if (busqueda.categoriasDisponibles().length > 1) {
+        <div class="centros__chips" role="group" aria-label="Categoría" data-testid="aseguradoras-chips-categoria">
+          <button
+            type="button"
+            class="centros__chip"
+            [class.centros__chip--activo]="busqueda.categoria() === null"
+            [attr.aria-pressed]="busqueda.categoria() === null"
+            (click)="busqueda.elegirCategoria(null)"
+          >
+            Todas las categorías
+          </button>
+          @for (categoria of busqueda.categoriasDisponibles(); track categoria.code) {
+            <button
+              type="button"
+              class="centros__chip"
+              data-testid="aseguradoras-chip-categoria"
+              [class.centros__chip--activo]="busqueda.categoria() === categoria.code"
+              [attr.aria-pressed]="busqueda.categoria() === categoria.code"
+              (click)="busqueda.elegirCategoria(categoria.code)"
+            >
+              {{ categoria.label }}
+            </button>
+          }
+        </div>
+      }
+      <!-- Los municipios del departamento elegido. Sin departamento no se dibuja
+           ninguno: ofrecer las dos escalas a la vez es hacer dos preguntas para
+           una sola decisión. Con uno solo tampoco: no acotaría nada. -->
+      @if (busqueda.ciudadesDelLugar().length > 1) {
+        <div class="centros__chips" role="group" aria-label="Ciudad o municipio" data-testid="aseguradoras-chips-ciudad">
+          <button
+            type="button"
+            class="centros__chip"
+            [class.centros__chip--activo]="lugar.ciudad() === null"
+            [attr.aria-pressed]="lugar.ciudad() === null"
+            (click)="lugar.elegirCiudad(null)"
+          >
+            Todo el departamento
+          </button>
+          @for (nombre of busqueda.ciudadesDelLugar(); track nombre) {
+            <button
+              type="button"
+              class="centros__chip"
+              data-testid="aseguradoras-chip-ciudad"
+              [class.centros__chip--activo]="lugar.ciudad() === nombre"
+              [attr.aria-pressed]="lugar.ciudad() === nombre"
+              (click)="lugar.elegirCiudad(nombre)"
+            >
+              {{ nombre }}
+            </button>
+          }
+        </div>
+      }
+    </section>
+    <section class="app-view-state-host" app-view-state-host="">
+      @switch (busqueda.estado()) {
+        @case ('datos') {
+      <div data-estado="datos">
+      @if (busqueda.avisoDelLugar(); as aviso) {
+        <p class="mapa-directorio__resumen" role="status" data-testid="aseguradoras-aviso-lugar">{{ aviso }}</p>
+      }
+        <ul class="centros__grilla">
+          @for (tarjeta of tarjetas(); track tarjeta.id) {
+            <li app-centro-card [centro]="tarjeta.card">
+              <a
+                app-button
+                data-variante="primario"
+                data-tam="sm"
+                data-testid="insurer-profile"
+                [routerLink]="tarjeta.profileLink"
+                >Ver ficha</a
+              >
+              <app-card-detail-panel [heading]="tarjeta.name" [rows]="tarjeta.details" />
+            </li>
+          }
+        </ul>
+        <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
+          <p class="app-pagination__nota">{{ busqueda.rotuloDePagina() }}</p>
+          <button
+            app-button=""
+            data-variante="secundario"
+            data-tam="sm"
+            type="button"
+            [disabled]="!busqueda.hayAnteriores()"
+            (click)="busqueda.anterior()"
+          >
+            Anteriores
+          </button>
+          <button
+            app-button=""
+            data-variante="secundario"
+            data-tam="sm"
+            type="button"
+            [disabled]="!busqueda.haySiguientes()"
+            (click)="busqueda.siguiente()"
+          >
+            Siguientes
+          </button>
+        </nav>
+      </div>
+        }
+        @case ('vacio') {
+<div data-estado="vacio">
+      <div class="app-empty-state" app-empty-state="">
+        <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path><path d="M9 12l2 2 4-4"></path></svg></span>
+        <h2>Ninguna aseguradora coincide con esos filtros</h2>
+        <p>El filtro de prestador es el más estricto: la red la carga cada aseguradora y no todas la tienen al día. Si buscás por una clínica concreta y no aparece nada, mirá la ficha de esa clínica —ahí figuran los convenios que la propia clínica declara, que a veces están más actualizados.</p>
+        <a app-button="" data-variante="secundario" routerLink="/search"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Probá con otra búsqueda</a>
+      </div>
+      </div>
+        }
+        @case ('carga') {
+<div data-estado="carga">
+      <!-- Los esqueletos tienen la forma de la tarjeta, no la de una fila: uno
+           que no se parece a lo que va a llegar hace que la página salte
+           cuando llegan los datos, y ese salto se nota más que la espera. -->
+      <ul class="centros__grilla" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Buscando…</span>
+        @for (hueco of huecos; track hueco) {
+          <li class="centros__esqueleto">
+            <span class="centros__esqueleto-portada app-skeleton"></span>
+            <span class="centros__esqueleto-linea app-skeleton"></span>
+            <span class="centros__esqueleto-linea centros__esqueleto-linea--corta app-skeleton"></span>
+          </li>
+        }
+      </ul>
+      </div>
+        }
+        @case ('error') {
+<div data-estado="error">
+      <div style="padding:var(--e6)">
+        <div class="app-alert" app-alert="" data-tono="error" role="alert">
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
+          <div class="app-alert__cuerpo">
+            <strong>No pudimos completar la búsqueda de aseguradoras.</strong>
+            <p>El directorio no respondió a tiempo. Volvé a intentarlo en un momento; tu búsqueda se mantiene escrita.</p>
+          </div>
+        </div>
+        <div style="margin-top:var(--e5)">
+          <button app-button="" data-variante="secundario" type="button" (click)="busqueda.reintentar()"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Reintentar</button>
+        </div>
+      </div>
+      </div>
+        }
+      }
+    </section>

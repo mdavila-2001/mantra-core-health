@@ -42,3 +42,29 @@ export interface AuthzScopeQuery {
   readonly tenantId: string;
   readonly patientProfileId: string;
 }
+
+/* ---- FT-07-R05/R06/R07 · el vínculo por consentimiento ------------------- */
+
+/**
+ * Lo que manda el profesional al pedir el vínculo
+ * (`POST /authz/care-relationships/request`).
+ *
+ * No lleva especialidades: las elige el **paciente** al aceptar (FT-07-R06),
+ * no quien pide. El tipo de relación queda en el default del backend
+ * (`TREATING`) porque la pantalla no ofrece otro.
+ */
+export interface CareRelationshipRequestInput {
+  readonly tenantId: string;
+  readonly patientProfileId: string;
+  readonly reasonText?: string;
+}
+
+/** Las dos respuestas posibles del paciente, con los nombres del contrato. */
+export type CareRelationshipDecision = 'ACCEPT' | 'REJECT';
+
+/** Lo que manda el paciente al decidir (`POST /authz/care-relationships/:id/respond`). */
+export interface CareRelationshipRespondInput {
+  readonly decision: CareRelationshipDecision;
+  /** Sólo con `ACCEPT`: qué áreas autoriza. Aceptar no es todo o nada. */
+  readonly authorizedSpecialtyConceptIds?: readonly string[];
+}

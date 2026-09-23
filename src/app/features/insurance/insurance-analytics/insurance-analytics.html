@@ -1,0 +1,263 @@
+<div class="analytics" data-testid="insurance-analytics-container">
+  <app-page-header
+    title="Siniestralidad y analítica"
+    subtitle="Tablero actuarial de siniestralidad, gasto per cápita y morbilidad de tu aseguradora."
+  >
+    <button
+      page-actions
+      app-button
+      type="button"
+      variant="outline"
+      data-testid="btn-export-analytics"
+      [disabled]="!canExport()"
+      (clicked)="exportCsv()"
+    >
+      Exportar reporte CSV
+    </button>
+  </app-page-header>
+
+  <form class="analytics__filters" (submit)="$event.preventDefault()">
+    <div class="analytics__filter-range">
+      <app-segmented-control
+        [options]="rangeOptions"
+        [value]="range()"
+        ariaLabel="Período del tablero"
+        data-testid="filter-date-range"
+        (valueChange)="changeRange($event)"
+      />
+    </div>
+    <app-form-field label="Plan" controlId="analytics-plan">
+      <app-select
+        id="analytics-plan"
+        data-testid="filter-plan"
+        [options]="planOptions()"
+        [value]="planId()"
+        (valueChange)="changePlan($event)"
+      />
+    </app-form-field>
+  </form>
+
+  <app-view-state-host [state]="data()" (retry)="retry()">
+    @if (data(); as estado) {
+      @if (estado.status === 'ready') {
+        @let dashboard = estado.data;
+        <p class="analytics__period">
+          Período: {{ dashboard.startDate }} a {{ dashboard.endDate }}
+          @if (dashboard.currency) {
+            · Moneda de reporte: {{ moneda(dashboard.currency.display) }}
+          } @else {
+            · Sin reclamos en el período: no hay moneda de reporte.
+          }
+        </p>
+
+        <section class="analytics__tiles" aria-label="Indicadores actuariales">
+          <app-card variant="outlined" padding="md" class="tile" data-testid="kpi-loss-ratio">
+            <p class="tile__rotulo">Siniestralidad (loss ratio)</p>
+            <p class="tile__cifra">
+              {{ dashboard.kpis.lossRatioPercent ? dashboard.kpis.lossRatioPercent + ' %' : '—' }}
+            </p>
+            <p class="tile__pie">
+              <app-badge [variant]="lossRatioTone(dashboard.kpis.lossRatioPercent)">
+                {{
+                  dashboard.kpis.lossRatioPercent === null
+                    ? 'Sin prima registrada'
+                    : lossRatioTone(dashboard.kpis.lossRatioPercent) === 'success'
+                      ? 'Saludable'
+                      : lossRatioTone(dashboard.kpis.lossRatioPercent) === 'warning'
+                        ? 'Atención'
+                        : 'Crítica'
+                }}
+              </app-badge>
+              @if (dashboard.kpis.coveragesWithoutPremiumCount > 0) {
+                · {{ dashboard.kpis.coveragesWithoutPremiumCount }} cobertura(s) sin prima
+              }
+            </p>
+          </app-card>
+
+          <app-card variant="outlined" padding="md" class="tile" data-testid="kpi-total-approved">
+            <p class="tile__rotulo">Total indemnizado</p>
+            <p class="tile__cifra">{{ formatear(dashboard.kpis.totalApprovedAmount) }}</p>
+            <p class="tile__pie">
+              Facturado {{ formatear(dashboard.kpis.totalBilledAmount) }} · Denegado
+              {{ formatear(dashboard.kpis.totalDeniedAmount) }}
+            </p>
+          </app-card>
+
+          <!-- La prima es el DENOMINADOR del loss ratio de la primera tarjeta:
+               sin verla, un 120 % no se puede interpretar —no se sabe si sobró
+               siniestro o faltó prima—. Por eso lleva al pie cuántas coberturas
+               no aportan prima: es lo que vuelve estimada a la cifra. -->
+          <app-card variant="outlined" padding="md" class="tile" data-testid="kpi-earned-premium">
+            <p class="tile__rotulo">Prima neta devengada</p>
+            <p class="tile__cifra">{{ formatear(dashboard.kpis.estimatedPremiumsTotal) }}</p>
+            <p class="tile__pie">
+              @if (dashboard.kpis.coveragesWithoutPremiumCount > 0) {
+                Estimada · {{ dashboard.kpis.coveragesWithoutPremiumCount }} cobertura(s) sin prima
+                registrada
+              } @else {
+                Sobre {{ dashboard.kpis.activeAffiliatesCount }} afiliado(s) activo(s)
+              }
+            </p>
+          </app-card>
+
+          <app-card variant="outlined" padding="md" class="tile" data-testid="kpi-per-capita">
+            <p class="tile__rotulo">Gasto per cápita mensual</p>
+            <p class="tile__cifra">
+              {{
+                dashboard.kpis.averageMonthlyPerCapitaExpense
+                  ? formatear(dashboard.kpis.averageMonthlyPerCapitaExpense)
+                  : 'Sin datos'
+              }}
+            </p>
+            <p class="tile__pie">
+              Anual:
+              {{
+                dashboard.kpis.averageAnnualPerCapitaExpense
+                  ? formatear(dashboard.kpis.averageAnnualPerCapitaExpense)
+                  : 'Sin datos'
+              }}
+            </p>
+          </app-card>
+
+          <app-card variant="outlined" padding="md" class="tile" data-testid="kpi-claims">
+            <p class="tile__rotulo">Reclamos y aprobación</p>
+            <p class="tile__cifra">{{ dashboard.kpis.totalClaimsCount }}</p>
+            <p class="tile__pie">
+              {{
+                dashboard.kpis.approvalRatePercent
+                  ? dashboard.kpis.approvalRatePercent + ' % aprobado'
+                  : 'Sin dictámenes'
+              }}
+              · {{ dashboard.kpis.pendingClaimsCount }} pendiente(s)
+            </p>
+          </app-card>
+
+          <app-card variant="outlined" padding="md" class="tile" data-testid="kpi-affiliates">
+            <p class="tile__rotulo">Afiliados protegidos</p>
+            <p class="tile__cifra">{{ dashboard.kpis.activeAffiliatesCount }}</p>
+            <p class="tile__pie">{{ dashboard.kpis.periodMonths }} meses del período</p>
+          </app-card>
+        </section>
+
+        <section class="analytics__section" aria-labelledby="analytics-trend-title">
+          <h2 id="analytics-trend-title" class="analytics__section-title">Tendencia mensual</h2>
+          <app-monthly-trend-chart
+            [trends]="dashboard.monthlyTrends"
+            [currency]="dashboard.currency"
+          />
+        </section>
+
+        <section class="analytics__section" aria-labelledby="analytics-meds-title">
+          <h2 id="analytics-meds-title" class="analytics__section-title">Top 10 medicamentos</h2>
+          @if (dashboard.topMedications.length === 0) {
+            <app-empty-state
+              title="Sin líneas de farmacia en el período"
+              description="Ningún reclamo del período enlaza a una dispensación de farmacia."
+            />
+          } @else {
+            <div data-testid="table-top-medications">
+              <app-data-table
+                [state]="readyRows(dashboard.topMedications)"
+                [columns]="medicationColumns"
+                [trackBy]="medicationTrackBy"
+                [rowLabel]="medicationLabel"
+                caption="Top 10 medicamentos por gasto facturado"
+              />
+            </div>
+          }
+        </section>
+
+        <section class="analytics__section" aria-labelledby="analytics-specialty-title">
+          <h2 id="analytics-specialty-title" class="analytics__section-title">
+            Consultas por especialidad
+          </h2>
+          <p class="analytics__note">
+            De la población afiliada en el período, no del reclamo: el reclamo no enlaza al
+            encuentro clínico, así que el gasto por especialidad no está disponible.
+          </p>
+          @if (dashboard.specialties.length === 0) {
+            <app-empty-state
+              title="Sin encuentros en el período"
+              description="Los afiliados de esta aseguradora no tienen consultas registradas en el período."
+            />
+          } @else {
+            <div data-testid="table-specialties">
+              <app-data-table
+                [state]="readyRows(dashboard.specialties)"
+                [columns]="specialtyColumns"
+                [trackBy]="specialtyTrackBy"
+                [rowLabel]="specialtyLabel"
+                caption="Consultas por especialidad"
+              />
+            </div>
+          }
+        </section>
+
+        <section class="analytics__section" aria-labelledby="analytics-pathologies-title">
+          <h2 id="analytics-pathologies-title" class="analytics__section-title">
+            Patologías registradas (CIE-10)
+          </h2>
+          <p class="analytics__note">
+            Morbilidad de la población afiliada en el período, no morbilidad reclamada.
+          </p>
+          @if (dashboard.prevalentPathologies.length === 0) {
+            <app-empty-state
+              title="Sin patologías CIE-10 en el período"
+              description="No hay diagnósticos con código CIE-10 registrados para los afiliados en el período."
+            />
+          } @else {
+            <div data-testid="table-pathologies">
+              <app-data-table
+                [state]="readyRows(dashboard.prevalentPathologies)"
+                [columns]="pathologyColumns"
+                [trackBy]="pathologyTrackBy"
+                [rowLabel]="pathologyLabel"
+                caption="Patologías prevalentes (CIE-10)"
+              />
+            </div>
+          }
+        </section>
+
+        <section
+          class="analytics__section"
+          aria-labelledby="analytics-immunization-title"
+          data-testid="section-immunization"
+        >
+          <h2 id="analytics-immunization-title" class="analytics__section-title">
+            Cobertura de inmunización
+          </h2>
+          <p class="analytics__note">
+            Piso, no tasa real: sólo cuenta lo registrado en esta base, no lo aplicado en otra
+            institución.
+          </p>
+          <app-progress
+            [value]="
+              dashboard.immunization.vaccinationRatePercent
+                ? +dashboard.immunization.vaccinationRatePercent
+                : null
+            "
+            [label]="'Cobertura de inmunización'"
+          />
+          <p class="analytics__immunization-figures">
+            {{ dashboard.immunization.vaccinatedCount }} vacunados ·
+            {{ dashboard.immunization.unvaccinatedCount }} sin vacunar
+            @if (dashboard.immunization.vaccinationRatePercent) {
+              <app-badge
+                [variant]="
+                  +dashboard.immunization.vaccinationRatePercent < 50 ? 'warning' : 'success'
+                "
+              >
+                {{ dashboard.immunization.vaccinationRatePercent }} %
+                {{
+                  +dashboard.immunization.vaccinationRatePercent < 50
+                    ? '· Cobertura preventiva baja'
+                    : ''
+                }}
+              </app-badge>
+            }
+          </p>
+        </section>
+      }
+    }
+  </app-view-state-host>
+</div>

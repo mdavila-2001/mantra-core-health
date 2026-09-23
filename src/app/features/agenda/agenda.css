@@ -22,7 +22,7 @@
 
 .agenda__filtro {
   flex: 1 1 14rem;
-  /* Un selector de recursos de mil píxeles no ayuda a elegir uno. */
+  /* Un desplegable de mil píxeles no ayuda a elegir en una lista corta. */
   max-inline-size: 22rem;
 }
 
@@ -31,28 +31,6 @@
 .agenda__filtro--interruptor {
   flex: 0 0 auto;
   padding-block-end: var(--sp-2);
-}
-
-/* De quién es la agenda, cuando no hay selector que lo diga. Se lee como un
-   dato con su rótulo —no como un campo— porque no hay nada que elegir acá. */
-.agenda__ambito {
-  flex: 1 1 14rem;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-  padding-block-end: var(--sp-2);
-}
-
-.agenda__ambito-rotulo {
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--text-secondary);
-}
-
-.agenda__ambito-valor {
-  font-weight: 600;
-  color: var(--text-primary);
 }
 
 .agenda__aviso {
@@ -72,7 +50,7 @@
 
 .agenda__ubicacion-rotulo {
   font-weight: 600;
-  color: var(--text-default);
+  color: var(--text-primary);
 }
 
 /* Momento arriba y duración debajo, dentro de la misma celda: la hora de fin es
@@ -90,6 +68,21 @@
   font-size: var(--fs-caption);
 }
 
+/* El nombre de quien se atiende: es el dato de la columna, así que va con el
+   peso del cuerpo y no en el gris de los apoyos. Los enlaces quedan debajo,
+   subordinados a él. */
+.agenda__paciente {
+  display: block;
+  color: var(--text-primary);
+}
+
+/* El nombre como enlace: en bloque para que un nombre largo parta en líneas,
+   pero del ancho del texto para que el globo no se abra desde el vacío. */
+.agenda__paciente-enlace {
+  display: block;
+  width: fit-content;
+}
+
 /* Los dos accesos de una cita —expediente y ficha— apilados, no en fila: en la
    columna angosta del móvil, dos enlaces uno al lado del otro se tocan con el
    pulgar a la vez. */
@@ -100,24 +93,78 @@
   align-items: flex-start;
 }
 
-/* El identificador del cupo es el que se manda para reservar. `all` lo
-   selecciona entero de un clic: copiar un uuid a mano es donde se cometen los
-   errores. */
-.agenda__id {
-  font-variant-numeric: tabular-nums;
-  font-size: var(--fs-caption);
-  user-select: all;
-  /* Un uuid no tiene puntos de corte naturales; sin esto desborda la celda. */
-  overflow-wrap: anywhere;
-}
-
-/* Las acciones de una fila van juntas y sin envolver: dos botones que se
-   separan en dos renglones se leen como dos filas. */
+/*
+ * Las acciones de una fila, agrupadas.
+ *
+ * Antes: `white-space: nowrap` a secas, con el argumento de que «dos botones
+ * que se separan en dos renglones se leen como dos filas». Eso valía cuando
+ * una fila ofrecía a lo sumo dos acciones. Una solicitud por responder ofrece
+ * hasta CINCO a la vez —Ver detalle, Ver historial, Aceptar, Rechazar,
+ * Cancelar (`porResponder(cita)` suma «Cancelar» a las cuatro propias del
+ * detalle, corrección #11 + `estaVigente() || porResponder()`)— y esas cinco
+ * en una sola línea sin envolver empujan la página entera a lo ancho: medido
+ * con Playwright, `document.documentElement.scrollWidth` pasaba el
+ * `clientWidth` en los TRES anchos (390, 768 y 1440), no sólo en móvil.
+ *
+ * `flex-wrap: wrap` deja que se acomoden en dos o tres líneas cuando no
+ * entran, en vez de estirar la tabla —y con ella la página— para que quepan
+ * todas en una. Con dos acciones nomás (el caso que describía el comentario
+ * original) el resultado sigue siendo una sola línea: el wrap no hace nada
+ * cuando ya entran.
+ *
+ * El 13/09 (a18d8e97, «acciones como íconos») volvió a `nowrap`. Con cinco
+ * íconos la columna exigía 256 px en una línea: a 1440 px la tabla medía
+ * 1 146 dentro de 1 081 y el último ícono de la fila —la acción que se viene a
+ * tocar— quedaba detrás de un scroll lateral, mientras «Paciente» se partía en
+ * tres renglones (hallazgo H-09 del refactor UX). Vuelve `wrap`: los íconos
+ * sólo bajan de línea en las filas que tienen más de los que entran.
+ */
 .agenda__acciones {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-2);
-  white-space: nowrap;
+}
+
+/* En el día, desde tablet, las acciones van en una fila. */
+@media (min-width: 780px) {
+  .agenda__acciones {
+    flex-wrap: nowrap;
+  }
+}
+
+/* En la tabla de Consultas, la tabla entra entera en su caja — sin columna fija
+   que se pinte encima de Pago (propietario, 18/09) ni scroll lateral que
+   esconda la acción.
+
+   Con seis íconos en fila, Acciones pedía 256 px y a 1280 la tabla medía 1 053
+   en 976: o se escondía detrás del scroll, o —fija al borde— tapaba Pago. De a
+   tres por renglón la columna mide lo de tres, y una fila con seis ocupa dos
+   renglones parejos, nunca tres. Cuando la caja da para todos en uno (desde
+   1 100 px de tabla), van en uno. */
+.agenda__tabla-consultas {
+  container-type: inline-size;
+}
+
+.agenda__tabla-consultas .agenda__acciones {
+  display: grid;
+  grid-template-columns: repeat(3, max-content);
+  justify-content: start;
+  gap: var(--sp-1);
+}
+
+@container (min-width: 1100px) {
+  .agenda__tabla-consultas .agenda__acciones {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+  }
+}
+
+/* El nombre en dos renglones como mucho, no en cuatro: la columna no se deja
+   apretar por debajo de lo que ocupa un nombre y un apellido. */
+.agenda__tabla-consultas .agenda__paciente-enlace,
+.agenda__tabla-consultas .agenda__paciente {
+  min-inline-size: 8.5rem;
 }
 
 /* ---- avisar demora (P8) --------------------------------------------------
@@ -134,6 +181,39 @@
   gap: var(--sp-3);
   margin-block-end: var(--sp-4);
   padding: var(--sp-4);
+}
+
+/* Moviendo una cita (UC-41-08). Mismo cuerpo que el panel de demora —es la
+   misma clase de aviso, uno que acompaña a la lista— con el filo en el tono de
+   marca y no en el de advertencia: mover no es un problema, es una tarea en
+   curso. */
+.agenda__reprogramando {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-inline-start: 3px solid var(--st-primary-bd);
+  border-radius: var(--r-md);
+  display: grid;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+  padding: var(--sp-4);
+}
+
+.agenda__reprogramando-titulo {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  margin: 0;
+}
+
+.agenda__reprogramando-ayuda {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  margin: 0;
+}
+
+.agenda__reprogramando-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
 }
 
 .agenda__demora-titulo {
@@ -166,13 +246,36 @@
   }
 }
 
+/* -- Seguro con solicitud ---------------------------------------------------
+   La aseguradora como enlace y el estado de la solicitud debajo. Botón y no
+   ancla: abre un resumen en la misma pantalla, no navega. Se ve como los demás
+   enlaces de la fila —el nombre del paciente— para que se lea igual de tocable. */
+.agenda__seguro-enlace {
+  display: block;
+  inline-size: fit-content;
+  margin: 0 0 var(--sp-1);
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: start;
+  color: var(--brand-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.agenda__seguro-enlace:hover {
+  color: var(--brand-primary-hover);
+}
+
 /* -- El estado de pago en la fila (TAREA-13 punto 5) ----------------------- */
 
 .agenda__pago {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  flex-wrap: wrap;
+  gap: var(--sp-1);
+  white-space: nowrap;
 }
 
 /* «con seguro» acompaña al estado: es un dato secundario y se lee como tal, no
@@ -184,4 +287,74 @@
 
 .agenda__sin-pago {
   color: var(--text-secondary);
+}
+
+/* ---- paginación de la ventana (ALV-024) ----------------------------------
+   Al pie de la lista, como el cursor de la tabla: el rango a la izquierda dice
+   qué página se mira y las flechas a la derecha la mueven. */
+.agenda__paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-4);
+}
+
+.agenda__paginacion-rango {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  /* Con «Hoy», el día de la semana llega en minúscula del formato de fecha. */
+  text-transform: capitalize;
+}
+
+.agenda__paginacion-controles {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* «Llegó»: el ícono de registrar llegada, sin botón, en el tono de lo hecho.
+   Mide lo mismo que un botón chico para que la fila no salte al registrarla. */
+.agenda__llego {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 32px;
+  block-size: 32px;
+  color: var(--st-success-fg, var(--text-secondary));
+}
+
+.agenda__llego svg {
+  inline-size: 1.2em;
+  block-size: 1.2em;
+}
+
+/* Cancelar es la única destructiva de la fila: el rojo aparece recién al
+   apuntarla, para que no compita en reposo con la acción principal. */
+.agenda__accion-destructiva:hover {
+  --_btn-fg-hover: var(--c-error-600);
+}
+
+/* ---- la tabla en el teléfono ----------------------------------------------
+   Fecha, Paciente y Estado tienen que entrar en 400 px sin scroll lateral: el
+   día va abreviado y el sello se aprieta. Desde tablet, todo como siempre. */
+.agenda__cuando--corta {
+  display: none;
+}
+
+@media (max-width: 779px) {
+  .agenda__cuando--larga {
+    display: none;
+  }
+
+  .agenda__cuando--corta {
+    display: block;
+  }
+
+  .agenda__sello {
+    padding: var(--sp-1) var(--sp-2);
+    column-gap: var(--sp-1);
+  }
 }

@@ -1,0 +1,208 @@
+/* Las secciones se separan por aire, no por cajas: la pantalla es un documento
+   que se lee de arriba abajo, y encerrar cada bloque en su borde compite con
+   la tabla de ítems, que sí necesita el suyo. */
+.claim__header,
+.claim__contact,
+.claim__adjudication,
+.claim__lines,
+.claim__actions,
+.claim__history {
+    margin-block-end: var(--sp-8);
+}
+
+.claim__section-title {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin-block: 0 var(--sp-4);
+    font-size: var(--fs-h3);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Aire de formulario sin ser un formulario: dos columnas de etiqueta+valor que
+   se acomodan solas. `minmax(14rem, 1fr)` es lo que hace que en 390 px quede
+   una sola columna sin una media query propia. */
+.claim__facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: var(--sp-4) var(--sp-6);
+    margin: 0;
+    padding: var(--sp-5);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    background: var(--bg-surface);
+}
+
+.claim__facts dt {
+    margin-block-end: var(--sp-1);
+    font-size: var(--fs-overline);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.claim__facts dd {
+    margin: 0;
+    color: var(--text-primary);
+    /* Un número de póliza largo no puede ensanchar la grilla: rompe adentro de
+       su celda. */
+    overflow-wrap: anywhere;
+}
+
+.claim__disposition {
+    margin-block: var(--sp-4) 0;
+    padding: var(--sp-4);
+    border-inline-start: 3px solid var(--border-strong);
+    background: var(--bg-inset);
+    color: var(--text-primary);
+}
+
+.claim__disposition strong {
+    display: block;
+    margin-block-end: var(--sp-1);
+    font-size: var(--fs-overline);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+}
+
+/* La tabla desplaza **dentro de su contenedor**. Sin esto, ocho columnas en
+   390 px le ponen barra horizontal al `<body>` y toda la página se corre. */
+.claim__table-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+}
+
+.claim__table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    /* Con ocho columnas, `auto` las comprime hasta partir las palabras. El
+       mínimo obliga a desplazar en vez de deformar. */
+    min-inline-size: 52rem;
+}
+
+.claim__table th,
+.claim__table td {
+    padding: var(--sp-3) var(--sp-4);
+    text-align: start;
+    border-block-end: 1px solid var(--border-subtle);
+}
+
+.claim__table thead th {
+    font-size: var(--fs-overline);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    background: var(--bg-inset);
+}
+
+.claim__table tbody tr:last-child td {
+    border-block-end: none;
+}
+
+/* El total se separa del cuerpo con una línea más marcada: es la fila que
+   alguien busca, no una fila más. */
+.claim__table tfoot th,
+.claim__table tfoot td {
+    border-block-start: 2px solid var(--border-strong);
+    border-block-end: none;
+    font-weight: 600;
+    background: var(--bg-inset);
+}
+
+.claim__col-money {
+    text-align: end;
+}
+
+.claim__money {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.claim__money--absent,
+.claim__absent {
+    color: var(--text-secondary);
+    font-style: italic;
+    font-variant-numeric: normal;
+}
+
+/* La cita de la cláusula y la justificación viven en la misma celda que el
+   motivo (subtarea 2.2): apiladas, no en línea, porque una cláusula real es
+   larga y competir por el ancho con el resto de la fila la corta a la mitad. */
+.claim__denial {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    max-inline-size: 22rem;
+}
+
+/* El badge de cláusula anula el `nowrap` del badge base: una cita de una
+   sola línea sin cortar desbordaría la celda y, con ella, la tabla entera. */
+.claim__clause {
+    white-space: normal;
+    text-align: start;
+    line-height: 1.25;
+}
+
+.claim__rationale {
+    margin: 0;
+    font-size: var(--fs-caption);
+    color: var(--text-secondary);
+    line-height: 1.35;
+}
+
+/* El id del documento de origen es un botón que se lee como un dato tocable,
+   no como una acción principal. */
+.claim__reference {
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    color: var(--text-link);
+    text-align: start;
+    cursor: help;
+    border-radius: var(--r-sm);
+}
+
+.claim__reference:hover {
+    text-decoration: underline;
+}
+
+.claim__reference:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.claim__legend {
+    margin-block: 0 var(--sp-2);
+    font-size: var(--fs-caption);
+    color: var(--text-secondary);
+}
+
+.claim__note {
+    margin-block: var(--sp-3) 0;
+    font-size: var(--fs-caption);
+    color: var(--text-secondary);
+}
+
+.claim__disputes {
+    margin: 0 0 var(--sp-4);
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+}
+
+.claim__disputes li {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    color: var(--text-primary);
+}

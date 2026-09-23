@@ -10,11 +10,17 @@
 <!-- El servidor manda su código justamente para que acá haya una salida y no
      otro «reintentá»: lo que resuelve este caso es ir a completar el perfil. -->
 @if (perfilIncompleto()) {
-  <app-alert tone="warning" class="grupos__alerta" title="Te falta el perfil público">
-    Para crear un grupo público necesitás tu perfil público completo: nombre visible, foto y el
-    perfil en público.
-    <a app-link [routerLink]="['/my-account/preview']"> Configurar mi perfil público </a>
-  </app-alert>
+  <!-- El servidor rechazó por vitrina incompleta y acá está la salida, desde el
+       13/09/2026. Antes el aviso derivaba a «quien administra tu organización»,
+       que no tenía dónde hacerlo: el contrato sólo sabe de la vitrina propia
+       (`PUT /community/profiles/me`). Se crea acá, con lo mínimo, y sin
+       devolver la configuración al perfil — de donde el propietario la mandó
+       sacar el 2026-09-10. Ver `docs/progress/BLOCKERS.md`. -->
+  <app-vitrina-minima
+    class="grupos__vitrina"
+    motivo="grupos"
+    (creada)="alCrearLaVitrina($event)"
+  />
 }
 
 @if (tenantId() === null) {
@@ -83,12 +89,20 @@
         label="Grupo privado (hay que aprobar cada ingreso)"
       />
 
+      <!-- El mismo callejón sin salida que el aviso de arriba, y con el mismo
+           arreglo (13/09/2026): decía «pedíselo a quien administra tu
+           organización» y nadie podía. Ahora dice qué falta y ofrece
+           resolverlo acá, sin salir del formulario que se estaba llenando. -->
       @if (!perfilListoParaPublico()) {
         <p class="grupos__aviso-perfil">
           Para crear un grupo <strong>público</strong> necesitás tu perfil público completo: nombre
           visible, foto y el perfil en público.
-          <a app-link [routerLink]="['/my-account/preview']"> Configurar mi perfil público </a>
         </p>
+        <app-vitrina-minima
+          class="grupos__vitrina"
+          motivo="grupos"
+          (creada)="alCrearLaVitrina($event)"
+        />
       }
 
       <div class="grupos__alta-acciones">

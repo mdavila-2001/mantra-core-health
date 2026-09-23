@@ -1,5 +1,6 @@
 .saldo,
 .canjear,
+.promocion,
 .movimientos {
   display: flex;
   flex-direction: column;
@@ -10,16 +11,36 @@
   border-radius: var(--r-lg);
 }
 
+.promocion,
 .movimientos {
   margin-top: var(--sp-4);
 }
 
+/* En escritorio los botones miden lo que su texto, no los 1 000 px de la
+   tarjeta (refactor UX). En el teléfono siguen a lo ancho: es el blanco más
+   cómodo para el pulgar. */
+@media (min-width: 40rem) {
+  :is(.saldo, .canjear, .promocion, .movimientos) > :is(button, a)[app-button] {
+    align-self: flex-start;
+  }
+}
+
 .saldo__programa,
 .canjear__titulo,
+.promocion__titulo,
 .movimientos__titulo {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--fs-h3);
+}
+
+/* El nombre del programa y su marca provisional van juntos: la marca habla
+   del nombre, no de la pantalla. */
+.saldo__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
 }
 
 /* El saldo es lo primero que se busca al abrir: que se lea de un vistazo. */
@@ -77,6 +98,17 @@
   gap: var(--sp-2);
 }
 
+.promocion__marcas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.promocion__detalle {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
 .movimientos__lista {
   display: flex;
   flex-direction: column;
@@ -114,6 +146,15 @@
 .movimientos__secundario {
   font-size: var(--fs-caption);
   color: var(--text-secondary);
+}
+
+/* El motivo y, cuando lo hay, el multiplicador: una sola celda de la grilla,
+   para que la fila no cambie de columnas según el movimiento. */
+.movimientos__etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-1);
 }
 
 /* La cifra ocupa toda la segunda fila en pantalla chica: alineada a la

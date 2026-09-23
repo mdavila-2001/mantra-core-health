@@ -5,17 +5,16 @@ import { ShellLayout } from './features/shell-layout/shell-layout';
 import { Login } from './features/auth/login/login';
 import { TenantSelection } from './features/auth/tenant-selection/tenant-selection';
 import { RegisterAccountType } from './features/auth/register-account-type/register-account-type';
-import { RegisterOrganization } from './features/auth/register-organization/register-organization';
 import { VerifyEmail } from './features/auth/verify-email/verify-email';
 import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
 import { ResetPassword } from './features/auth/reset-password/reset-password';
 import { ActivateAccount } from './features/auth/activate-account/activate-account';
 import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
-import { IdentityVerification } from './features/identity-verification/identity-verification';
 import { NotFound } from './features/not-found/not-found';
-import { REDSAT_ROUTES } from './features/redsat/redsat.routes';
+import { ALOVIDA_ROUTES } from './features/alovida/alovida.routes';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
+import { environment } from '../environments/environment';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
 import {
   APP_SECTIONS,
@@ -57,7 +56,6 @@ function soloDeQuienAtiende(): Pick<Routes[number], 'canActivate' | 'data'> {
  */
 const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
   dashboard: Dashboard,
-  'my-account/identity/verify': IdentityVerification,
 };
 
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
@@ -83,12 +81,20 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // Carril P9 · las preferencias de aviso. Diferida: se abre una vez y se
   // olvida, que es exactamente lo que una pantalla de preferencias debería
   // conseguir.
-  ajustes: () => import('./features/settings/settings').then((m) => m.Settings),
+  settings: () => import('./features/settings/settings').then((m) => m.Settings),
+  // FT-18-R01/R02 · la portada de los cuatro directorios.
+  directories: () =>
+    import('./features/directories-overview/directories-overview').then(
+      (m) => m.DirectoriesOverview,
+    ),
   // La guía que ocupó su lugar en el menú.
   directory: () =>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
       (m) => m.PractitionersDirectory,
     ),
+  // FT-19 · farmacias, imagenología y centros médicos cerca del paciente.
+  'nearby-places': () =>
+    import('./features/nearby-places/nearby-places').then((m) => m.NearbyPlaces),
   'laboratory-directory': () =>
     import('./features/laboratory-directory/laboratory-directory').then(
       (m) => m.LaboratoryDirectory,
@@ -105,7 +111,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // Diferidas como el resto: sólo las alcanza quien atiende, y el presupuesto
   // del bundle inicial está al límite —cargarlas de entrada lo pasaba por 4 kB
   // y le costaba la descarga a todo el mundo, paciente incluido—.
-  consultation: () => import('./features/consultation/consultation').then((m) => m.Consultation),
   'progress-notes': () =>
     import('./features/progress-notes/progress-notes').then((m) => m.ProgressNotes),
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
@@ -147,8 +152,25 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     ),
   'administration/brokers': () =>
     import('./features/insurance/broker-directory/broker-directory').then((m) => m.BrokerDirectory),
+  'administration/insurance-claims': () =>
+    import('./features/insurance/insurance-claims/insurance-claims').then(
+      (m) => m.InsuranceClaims,
+    ),
+  'administration/insurance-analytics': () =>
+    import('./features/insurance/insurance-analytics/insurance-analytics').then(
+      (m) => m.InsuranceAnalytics,
+    ),
+  // Contabilidad abre en el **resumen llano**: cuánto entró hoy, esta semana y
+  // este mes; en qué se va la plata; quién te debe y a quién le debés. Es lo
+  // que el propietario pidió el 2026-09-19 —«se supone que es contabilidad
+  // para no contadores»— después de que la ruta abriera nueve meses en el
+  // cockpit, que es la vista del contador.
+  //
+  // Nada se borró, sólo cambió el orden: el cockpit está en
+  // `administration/accounting/cockpit` y los libros en `.../libros`, los dos
+  // enlazados al pie del resumen.
   'administration/accounting': () =>
-    import('./features/accounting/accounting').then((m) => m.Accounting),
+    import('./features/accounting/resumen/resumen').then((m) => m.Resumen),
   'my-organizations': () =>
     import('./features/organizations/my-organizations').then((m) => m.MyOrganizations),
   'administration/terminology': () =>
@@ -157,8 +179,17 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/content-packs/content-packs').then((m) => m.ContentPacks),
   'administration/moderation': () =>
     import('./features/admin/moderation/moderation').then((m) => m.Moderation),
+  'administration/data-catalog': () =>
+    import('./features/admin/data-catalog/data-catalog').then((m) => m.DataCatalog),
+  'administration/web-analytics': () =>
+    import('./features/admin/web-analytics/web-analytics').then((m) => m.WebAnalytics),
+  'administration/qa-lab': () => import('./features/admin/qa-lab/qa-lab').then((m) => m.QaLab),
+  'administration/operations': () =>
+    import('./features/admin/operations/operations').then((m) => m.Operations),
   tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
   'my-account': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
+  'my-account/dependents': () =>
+    import('./features/account/dependents/dependents').then((m) => m.Dependents),
   'my-account/appointments': () =>
     import('./features/account/appointments/appointments').then((m) => m.Appointments),
   'my-account/medical-record': () =>
@@ -171,10 +202,14 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/diagnostic-orders/diagnostic-orders').then(
       (m) => m.DiagnosticOrders,
     ),
+  'my-account/cotizaciones': () =>
+    import('./features/account/cotizaciones/cotizaciones').then((m) => m.Cotizaciones),
   'my-account/pharmacy-orders': () =>
     import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
   'my-account/loyalty': () =>
     import('./features/account/loyalty/loyalty').then((m) => m.Loyalty),
+  'my-account/promotions': () =>
+    import('./features/account/promotions/promotions').then((m) => m.Promotions),
   'administration/pharmacy-orders': () =>
     import('./features/organization/pharmacy-inbox/pharmacy-inbox').then(
       (m) => m.PharmacyInbox,
@@ -182,9 +217,33 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // FAR-I7: las campañas de la farmacia. Ruta hermana de la bandeja y no una
   // sección dentro del panel de organización, por el mismo motivo que aquélla:
   // el panel es de TP-1 y así no se le toca una línea.
+  // **La verificación de identidad dejó de ir directa** (2026-09-10). Iba, y el
+  // motivo era bueno mientras la ruta apuntaba a una pantalla sola: es la salida
+  // del 403 `IDENTITY_VERIFICATION_REQUIRED`, y diferirla agrega una descarga
+  // donde alguien ya está esperando.
+  //
+  // Al unificarla con «Mis trámites» dejó de ser una pantalla y pasó a ser un
+  // centro con pestañas, y con él entraron al paquete inicial las pestañas y la
+  // tarjeta. El bundle quedó **9 kB por encima del techo de `angular.json`** y el
+  // build pasó a fallar. El reparto correcto cambió con el tamaño: la descarga
+  // la paga una vez quien cae en un 403 —un camino de error, ya interrumpido— en
+  // vez de pagarla **toda** primera visita a la aplicación.
+  'my-account/identity': () =>
+    import('./features/identity-verification/identity-hub/identity-hub').then(
+      (m) => m.IdentityHub,
+    ),
+  'administration/my-practice': () =>
+    import('./features/practice/my-practice/my-practice').then((m) => m.MyPractice),
   'administration/pharmacy-campaigns': () =>
     import('./features/organization/pharmacy-campaigns/pharmacy-campaigns').then(
       (m) => m.PharmacyCampaigns,
+    ),
+  // La ficha legal de la farmacia. Ruta hermana de las dos de arriba y no una
+  // sección del panel de organización, por el mismo motivo: el panel es de
+  // TP-1 y así no se le toca una línea. Diferida: arrastra el mapa.
+  'administration/pharmacy-profile': () =>
+    import('./features/organization/pharmacy-profile/pharmacy-profile').then(
+      (m) => m.PharmacyProfile,
     ),
   'my-account/identity/cases': () =>
     import('./features/identity-assurance/verification-cases/verification-cases').then(
@@ -213,6 +272,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // La lectura del mismo catálogo, para quien atiende. Diferida: se consulta
   // antes de cotizar, no al entrar, así que no es la primera pantalla de nadie.
   'my-services': () => import('./features/my-services/my-services').then((m) => m.MyServices),
+  // FT-24. El listado de cotizaciones armadas sobre ese mismo catálogo.
+  // Diferida como el resto: no es la primera pantalla de nadie.
+  'my-quotations': () =>
+    import('./features/quotations/quotation-list/quotation-list').then((m) => m.QuotationList),
   'administration/clinical-forms': () =>
     import('./features/admin/clinical-forms/clinical-forms').then((m) => m.ClinicalForms),
   questionnaires: () =>
@@ -264,18 +327,53 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  */
 const PANTALLAS_HIJAS: Routes = [
   {
-    // Carril P2 · el hilo de una conversación. Cuelga de `messaging` y se llega
-    // desde la bandeja o desde una notificación de la campana, no desde el
-    // menú: es la ficha de una conversación concreta.
-    //
-    // Sin `seccionRolesGuard` explícito porque su sección no declara roles; el
-    // backend comprueba que quien lee participe del hilo, que es la única
-    // barrera que importa acá.
-    path: 'messaging/:conversationId',
-    title: `${APP_TITLE} - Conversación`,
+    // El **cockpit contable**: estado del ejercicio, bandeja de documentos por
+    // estado del flujo, cartera por antigüedad y cierre del período. Abría en
+    // `administration/accounting` hasta el 2026-09-19; desde esa fecha esa
+    // dirección es el resumen llano y el cockpit queda un clic más adentro,
+    // enlazado desde su pie. No entra al menú, por lo mismo que los libros.
+    path: 'administration/accounting/cockpit',
+    title: `${APP_TITLE} - Vista contable`,
+    canActivate: [seccionRolesGuard],
     loadComponent: () =>
-      import('./features/messaging/thread/thread')
-        .then((m) => m.Thread)
+      import('./features/accounting/cockpit/cockpit')
+        .then((m) => m.Cockpit)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // FT-26 · activos y pasivos, en auto-servicio del doctor. Era la entrada
+    // suelta `assets-liabilities` del menú hasta el 2026-09-19, cuando el
+    // propietario pidió que estuviera «integrado en contabilidad»: son los
+    // mismos libros de la misma práctica, y tenerlos como sección aparte
+    // obligaba a saber de antemano que «activo» y «gasto» no son lo mismo.
+    // Se llega desde el bloque «Lo que tenés y lo que debés» del resumen.
+    //
+    // Declara sus roles en `data` en vez de heredar los de Contabilidad: la
+    // sección padre abre también para `SECURITY_ADMIN` y `ACCOUNTING_APPROVER`,
+    // pero los endpoints de FT-26 son de `PRACTITIONER` puro y un admin
+    // llegaría a una pantalla que sólo sabe devolverle 403. Se conserva
+    // exactamente la autorización que tenía como sección propia.
+    path: 'administration/accounting/assets-liabilities',
+    title: `${APP_TITLE} - Activos y pasivos`,
+    canActivate: [seccionRolesGuard],
+    data: { [ROLES_ROUTE_DATA]: ['PRACTITIONER'] },
+    loadComponent: () =>
+      import('./features/assets-liabilities/assets-liabilities')
+        .then((m) => m.AssetsLiabilities)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Los libros: balance de sumas y saldos, diario y el registro de ingresos y
+    // gastos. Era la pantalla de Contabilidad hasta el 2026-09-12; ahora esa
+    // dirección abre el cockpit y esto queda un clic más adentro. **No** entra
+    // al menú: la lista de secciones del médico es cerrada y hay un spec que
+    // falla si alguien le agrega una (carril 9).
+    path: 'administration/accounting/libros',
+    title: `${APP_TITLE} - Libros contables`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/accounting/accounting')
+        .then((m) => m.Accounting)
         .catch(() => chunkFallido()),
   },
   {
@@ -340,6 +438,18 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // El checkout del pedido (T-E3 · pantalla G): entrega, dirección, medio de
+    // pago y resumen. Sin `:orderId`: el pedido se crea recién en su
+    // confirmación final (D-FARMOCK-T-E1-01). Antes de `:orderId`, como `new`.
+    path: 'my-account/pharmacy-orders/checkout',
+    title: `${APP_TITLE} - Confirmá tu pedido`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy-orders/checkout/checkout')
+        .then((m) => m.Checkout)
+        .catch(() => chunkFallido()),
+  },
+  {
     // La ficha de un pedido concreto: línea de tiempo, decisión de sustitución
     // y código de retiro. `new` va declarada antes: el router prueba en orden
     // y el parámetro se la tragaría.
@@ -361,6 +471,18 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/pharmacy-orders/order-receipt/order-receipt')
         .then((m) => m.OrderReceipt)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La factura del pedido (T-E4 · F2.1.12, F3.3). Hermana del comprobante
+    // interno y distinta de él: el comprobante dice que no es una factura.
+    // Sin contrato de facturación, un pedido sin factura dice su vacío honesto.
+    path: 'my-account/pharmacy-orders/:orderId/invoice',
+    title: `${APP_TITLE} - Factura`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy-orders/order-invoice/order-invoice')
+        .then((m) => m.OrderInvoice)
         .catch(() => chunkFallido()),
   },
   {
@@ -388,12 +510,61 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // La consulta: lo que se registra mientras se atiende. Nace sólo de
+    // «Iniciar consulta» en la agenda y comparte la compuerta del expediente
+    // porque es la misma persona y el mismo permiso. Es una rejilla con todo lo
+    // que se puede registrar; cada casilla abre su formulario en modal.
+    path: 'medical-records/:profileId/consultation',
+    title: `${APP_TITLE} - Consulta`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/clinical-record/consultation/consultation')
+        .then((m) => m.Consultation)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // FT-07-R05: pedir el vínculo, previo a poder leer el expediente sin un
+    // turno confirmado el mismo día. Cuelga de la misma sección que el
+    // expediente — no es una pantalla nueva del menú, es un paso de este flujo.
+    path: 'medical-records/:profileId/request-access',
+    title: `${APP_TITLE} - Solicitar vinculación`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/clinical-record/request-access/request-access')
+        .then((m) => m.RequestAccess)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // FT-07-R06: a dónde lleva el aviso "un médico pidió acceder a tu
+    // historia clínica". Sin entrada de menú, como `my-account/identity/cases`
+    // — se llega por el enlace de la notificación.
+    path: 'my-account/access-requests',
+    title: `${APP_TITLE} - Solicitudes de vínculo`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/access-requests/access-requests')
+        .then((m) => m.AccessRequests)
+        .catch(() => chunkFallido()),
+  },
+  {
     path: 'administration/patients/new',
     title: `${APP_TITLE} - Nuevo paciente`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/admin/patients/patient-new/patient-new')
         .then((m) => m.PatientNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // FT-24. El alta de una cotización. Cuelga de «Cotizaciones», que es el
+    // listado que la sección declara; con `seccionRolesGuard` explícito como
+    // el resto de las hijas de una sección que declara roles.
+    path: 'my-quotations/new',
+    title: `${APP_TITLE} - Nueva cotización`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/quotations/quotation-form/quotation-form')
+        .then((m) => m.QuotationForm)
         .catch(() => chunkFallido()),
   },
   {
@@ -465,6 +636,59 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // La ficha de una clínica y la de una farmacia: el destino del clic en sus
+    // directorios, **dentro del panel**.
+    //
+    // Hasta el 11/09/2026 ese clic abría `/o/:slug` y `/f/:slug`, que son las
+    // fichas anónimas bajo el marco de la red social: quien entraba por su
+    // propio menú terminaba afuera de la aplicación, en el buscador público. El
+    // cliente lo pidió sacar sin excepciones.
+    //
+    // Cuelgan del directorio y no de un segmento propio porque son su detalle,
+    // igual que `laboratory-directory/:unitId` — y por `:slug` y no por id
+    // porque el slug es la identidad con la que el directorio público las
+    // lista; no sirve ningún otro identificador.
+    //
+    // Sin guard, igual que la ficha de laboratorio: las dos secciones de las
+    // que cuelgan declaran `roles: [ANY_ROLE]`, así que un guard de sección no
+    // acotaría nada y sólo agregaría una barrera que después nadie sabe por qué
+    // está.
+    path: 'clinics-directory/:slug',
+    title: `${APP_TITLE} - Perfil de clínica`,
+    loadComponent: () =>
+      import('./features/public-directories/clinic-detail/clinic-detail')
+        .then((m) => m.ClinicDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'pharmacies-directory/:slug',
+    title: `${APP_TITLE} - Perfil de farmacia`,
+    loadComponent: () =>
+      import('./features/public-directories/pharmacy-detail/pharmacy-detail')
+        .then((m) => m.PharmacyDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El detalle de una solicitud de seguro (TAREA-16): se llega desde el
+    // listado, nunca desde el menú.
+    //
+    // **Con el guard de sección, igual que su listado.** La sección declara
+    // `SECURITY_ADMIN` porque es el único rol que la plataforma sabe emitir
+    // para esto —los `BILLING`/`FINANCE` que nombran las escrituras del ciclo
+    // del reclamo no existen en el `RoleCode` cerrado de la API—, y dejar el
+    // detalle destapado mientras el listado se pide con rol es una
+    // inconsistencia: la dirección se escribe a mano. La barrera de verdad
+    // sigue siendo el alcance por tenant del servidor, que responde el mismo
+    // 404 para una solicitud ajena que para un uuid inexistente.
+    path: 'administration/insurance-claims/:claimId',
+    title: `${APP_TITLE} - Solicitud de seguro`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/insurance/insurance-claim-detail/insurance-claim-detail')
+        .then((m) => m.InsuranceClaimDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
     // La ficha de un corredor (C14): se llega desde el listado de brokers,
     // nunca desde el menú, así que no es una sección del registro.
     //
@@ -517,16 +741,6 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // La vitrina pública: se configura y se ve en la misma pantalla.
-    path: 'my-account/preview',
-    title: `${APP_TITLE} - Tu perfil público`,
-    ...soloDeQuienAtiende(),
-    loadComponent: () =>
-      import('./features/account/my-profile/public-profile-preview/public-profile-preview')
-        .then((m) => m.PublicProfilePreview)
-        .catch(() => chunkFallido()),
-  },
-  {
     // Publicar, revisar lo publicado y sus comentarios. Cuelga de la vitrina:
     // sin vitrina, no hay dónde publicar un artículo.
     path: 'my-account/articles',
@@ -560,6 +774,27 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/getting-started/getting-started')
         .then((m) => m.GettingStarted)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Detalle de un plan de QA. Hereda los roles de `administration/qa-lab`.
+    path: 'administration/qa-lab/plans/:planId',
+    title: `${APP_TITLE} - Plan de QA`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/qa-lab/plan-detail/qa-plan-detail')
+        .then((m) => m.QaPlanDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Ficha de un objeto del catálogo. Hereda los roles de la sección
+    // `administration/data-catalog` (prefijo más largo).
+    path: 'administration/data-catalog/:objectId',
+    title: `${APP_TITLE} - Ficha del catálogo`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/data-catalog/object-detail/catalog-object-detail')
+        .then((m) => m.CatalogObjectDetail)
         .catch(() => chunkFallido()),
   },
   {
@@ -753,10 +988,56 @@ function pantallaDeGeolocalizacion(
  * nadie declaró. Menú y rutas salen del mismo array, así que o existen las dos
  * cosas o no existe ninguna.
  */
+/**
+ * Las secciones que además son un marco: la pantalla queda montada y lo que
+ * cambia es lo que se pinta en su `router-outlet`.
+ *
+ * Hoy es una sola, la mensajería. El hilo de una conversación **no** es otra
+ * pantalla: es el panel derecho del chat, y declararlo como hermana hacía que
+ * abrir una conversación destruyera la bandeja y la volviera a pedir —la lista
+ * parpadeaba, el scroll se perdía y durante un instante no había nada—. Es lo
+ * primero que separa esto de cualquier chat que la gente ya usa.
+ *
+ * La sección sigue siendo una sola entrada del registro, así que el menú, el
+ * título y `seccionRolesGuard` no cambian: el guard del padre cubre a las
+ * hijas, que es justo lo que se quiere.
+ */
+const RUTAS_ANIDADAS: Readonly<Record<string, Routes>> = {
+  messaging: [
+    {
+      // Sin hilo abierto. No pinta nada a propósito: el hueco de la derecha
+      // —«elegí una conversación»— lo dibuja el propio marco, y un componente
+      // aparte para eso sería un fragmento más que descargar para no mostrar
+      // nada. Tiene que existir igual: una ruta con hijas sólo casa si alguna
+      // consume lo que queda de la dirección, y sin ésta `/messaging` a secas
+      // caía en el comodín de «no encontrada».
+      //
+      // `children: []` y no una ruta pelada: el router exige que toda ruta
+      // declare con qué se resuelve (NG04014), y una lista de hijas vacía es
+      // la forma de decir «con nada».
+      path: '',
+      children: [],
+    },
+    {
+      // Carril P2 · el hilo de una conversación, dentro del marco del chat. Se
+      // llega desde la bandeja o desde una notificación de la campana.
+      path: ':conversationId',
+      title: `${APP_TITLE} - Conversación`,
+      loadComponent: () =>
+        import('./features/messaging/thread/thread')
+          .then((m) => m.Thread)
+          .catch(() => chunkFallido()),
+    },
+  ],
+};
+
 function rutasDeSecciones(): Routes {
   return APP_SECTIONS.map((section) => ({
     path: section.path,
     title: titleOf(section),
+    ...(RUTAS_ANIDADAS[section.path] === undefined
+      ? {}
+      : { children: RUTAS_ANIDADAS[section.path] }),
     // Los roles que el registro declara se hacen cumplir **también por ruta**
     // (carril 02). Filtrar el menú es cortesía; quien escribe la dirección a
     // mano llega igual, y la corrección #2 pide que la Guía de profesionales no
@@ -821,16 +1102,33 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   // «Preferencias de avisos» dejó de ser una sección y pasó a ser un panel de
   // Ajustes. Estuvo en el menú, así que la dirección está en favoritos y en el
   // historial de quien ya la usó: se redirige en vez de devolver un 404.
-  'my-account/notification-preferences': '/ajustes',
+  // Apunta directo a la dirección vigente, no a `/ajustes`: encadenar dos
+  // redirecciones es una navegación más por nada.
+  'my-account/notification-preferences': '/settings',
+  // TAREA-29, por arrastre de TAREA-17: Ajustes pasó a `/settings`. La
+  // dirección en castellano se alcanzaba por el ícono del encabezado desde el
+  // 28/08, así que está en historiales y favoritos.
+  ajustes: '/settings',
   panel: '/dashboard',
   agenda: '/schedule',
   clinico: '/medical-records',
   facturacion: '/billing',
   contabilidad: '/administration/accounting',
+  // Activos y pasivos dejó de ser sección propia el 2026-09-19 y pasó a
+  // colgar de Contabilidad. La dirección vieja está en historiales y en
+  // favoritos, así que redirige en vez de dar 404.
+  'assets-liabilities': '/administration/accounting/assets-liabilities',
   'mi-cuenta': '/my-account',
   'mi-cuenta/turnos': '/my-account/appointments',
-  'identidad/verificar': '/my-account/identity/verify',
-  'identidad/casos': '/my-account/identity/cases',
+  'identidad/verificar': '/my-account/identity',
+  'identidad/casos': '/my-account/identity',
+  // Las dos rutas propias de antes de unificar (2026-09-10). Están en
+  // historiales, en favoritos y en los correos que la plataforma ya mandó.
+  'my-account/identity/verify': '/my-account/identity',
+  'my-account/identity/cases': '/my-account/identity',
+  // «Mis organizaciones» pasó a ser una pestaña de «Organización médica»
+  // (2026-09-10). Está en historiales y en el lateral de «Mi perfil».
+  'my-organizations': '/administration/medical-organization',
   'administracion/pacientes': '/administration/patients',
   'administracion/usuarios': '/administration/users',
   'administracion/organizaciones': '/administration/organizations',
@@ -855,7 +1153,7 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
  * Un `{ path: 'buscar', redirectTo: 'search' }` con coincidencia por prefijo
  * habría cubierto las siete de una línea — y se habría llevado puestas las
  * **doce** pantallas portadas que el archivo GENERADO
- * `features/redsat/redsat.routes.ts` declara bajo el mismo `buscar`
+ * `features/alovida/alovida.routes.ts` declara bajo el mismo `buscar`
  * (`buscador-listado`, `seguidos-y-guardados-listado`,
  * `calificar-la-atencion-formulario`, las cinco fichas `perfil-*-detalle`…).
  * Ésas no son de esta tarea y la regla de arrastre dice que no se tocan, así
@@ -920,7 +1218,7 @@ function rutasDeFichasPublicas(): Routes {
   return TIPOS.map(([prefijo, kind]) => ({
     path: prefijo,
     loadComponent: () =>
-      import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+      import('./features/alovida/shell/alovida-public-shell').then((m) => m.AlovidaPublicShell),
     children: [
       // La vista de una publicación suelta cuelga sólo de `p/` —quien publica
       // es un profesional—, y va antes que `:slug` porque tiene más segmentos.
@@ -953,7 +1251,7 @@ function rutasDeFichasPublicas(): Routes {
  *
  * ## Por qué existen además de las que genera el portador de vistas
  *
- * `scripts/port-vistas-redsat.mjs` deriva el segmento del **nombre del archivo
+ * `scripts/port-vistas-alovida.mjs` deriva el segmento del **nombre del archivo
  * de la maqueta**, así que la portada quedó en `/buscar/buscador-listado` y los
  * verticales en `/buscar/…-listado`. Sirve para recorrer la bóveda; no sirve
  * como superficie pública. Estas URL son las que la ficha declara —`/search`,
@@ -961,9 +1259,9 @@ function rutasDeFichasPublicas(): Routes {
  * las que un buscador indexa, y son cortas y estables porque un directorio
  * público las cambia una sola vez.
  *
- * ## Por qué van antes de `REDSAT_ROUTES` y no dentro
+ * ## Por qué van antes de `ALOVIDA_ROUTES` y no dentro
  *
- * Porque `redsat.routes.ts` es un **archivo generado**: escribirlas ahí las
+ * Porque `alovida.routes.ts` es un **archivo generado**: escribirlas ahí las
  * borra la próxima vez que alguien porte una vista. Declaradas acá conviven
  * con el bloque generado —el router prueba estas primero y retrocede al
  * siguiente `buscar` cuando el segmento no coincide—, así que los enlaces de
@@ -980,7 +1278,7 @@ function rutasDeBusquedaPublica(): Routes {
       // alguien concreto.
       path: 'posts',
       loadComponent: () =>
-        import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+        import('./features/alovida/shell/alovida-public-shell').then((m) => m.AlovidaPublicShell),
       children: [
         {
           path: '',
@@ -988,7 +1286,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: 'Lo último de los profesionales — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/feed-publicaciones/feed-publicaciones').then(
+            import('./features/alovida/buscar/feed-publicaciones/feed-publicaciones').then(
               (m) => m.FeedPublicaciones,
             ),
         },
@@ -997,7 +1295,7 @@ function rutasDeBusquedaPublica(): Routes {
     {
       /* TAREA-29 · `/buscar` a secas tiene que seguir abriendo el buscador.
          No alcanza con un `redirectTo` en la tabla del final: el archivo
-         GENERADO `features/redsat/redsat.routes.ts` declara su propio `buscar`
+         GENERADO `features/alovida/alovida.routes.ts` declara su propio `buscar`
          —con `{ path: '', redirectTo: 'buscador-listado' }` adentro— y lo
          captura antes de que el router llegue ahí. Se declara acá, en el
          bloque que va primero, y con el redirect en el hijo vacío para que
@@ -1009,7 +1307,7 @@ function rutasDeBusquedaPublica(): Routes {
     {
       path: 'search',
       loadComponent: () =>
-        import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+        import('./features/alovida/shell/alovida-public-shell').then((m) => m.AlovidaPublicShell),
       children: [
         {
           path: '',
@@ -1017,7 +1315,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: 'Buscar en AloVida — profesionales, medicamentos y centros de salud',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/buscador-listado/buscador-listado').then(
+            import('./features/alovida/buscar/buscador-listado/buscador-listado').then(
               (m) => m.BuscarBuscadorListado,
             ),
         },
@@ -1030,7 +1328,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: '¿A qué especialista consultar? — AloVida',
           data: { arquetipo: 'formulario', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/sintomas-publico/sintomas-publico').then(
+            import('./features/alovida/buscar/sintomas-publico/sintomas-publico').then(
               (m) => m.SintomasPublico,
             ),
         },
@@ -1039,7 +1337,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: 'Profesionales de salud — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/profesionales-listado/profesionales-listado').then(
+            import('./features/alovida/buscar/profesionales-listado/profesionales-listado').then(
               (m) => m.BuscarProfesionalesListado,
             ),
         },
@@ -1048,7 +1346,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: 'Medicamentos y farmacias — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/medicamentos-listado/medicamentos-listado').then(
+            import('./features/alovida/buscar/medicamentos-listado/medicamentos-listado').then(
               (m) => m.BuscarMedicamentosListado,
             ),
         },
@@ -1057,7 +1355,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: 'Hospitales y clínicas — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/hospitales-listado/hospitales-listado').then(
+            import('./features/alovida/buscar/hospitales-listado/hospitales-listado').then(
               (m) => m.BuscarHospitalesListado,
             ),
         },
@@ -1066,7 +1364,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: 'Laboratorios e imagen — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/laboratorios-listado/laboratorios-listado').then(
+            import('./features/alovida/buscar/laboratorios-listado/laboratorios-listado').then(
               (m) => m.BuscarLaboratoriosListado,
             ),
         },
@@ -1075,7 +1373,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: 'Aseguradoras y convenios — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/aseguradoras-listado/aseguradoras-listado').then(
+            import('./features/alovida/buscar/aseguradoras-listado/aseguradoras-listado').then(
               (m) => m.BuscarAseguradorasListado,
             ),
         },
@@ -1086,7 +1384,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: 'Cerca mío — AloVida',
           data: { arquetipo: 'detalle', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/cercania-detalle/cercania-detalle').then(
+            import('./features/alovida/buscar/cercania-detalle/cercania-detalle').then(
               (m) => m.BuscarCercaniaDetalle,
             ),
         },
@@ -1101,7 +1399,7 @@ function rutasDeBusquedaPublica(): Routes {
       // `/promotions/:id`: una promoción no es un resultado de búsqueda.
       path: 'promotions/:campaignId',
       loadComponent: () =>
-        import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+        import('./features/alovida/shell/alovida-public-shell').then((m) => m.AlovidaPublicShell),
       children: [
         {
           path: '',
@@ -1122,11 +1420,11 @@ export const routes: Routes = [
   // La superficie pública del buscador con sus URL limpias. Va **antes** del
   // bloque generado: las dos declaran `buscar`, y la primera que coincide gana.
   ...rutasDeBusquedaPublica(),
-  // Las pantallas portadas desde la bóveda, con su propio marco REDSAT. Van
+  // Las pantallas portadas desde la bóveda, con su propio marco ALOVIDA. Van
   // primero y con segmento propio: no compiten con el armazón de abajo, que
   // vive en `path: ''`, así que ninguna de las dos depende de que el router
   // retroceda para encontrar a la otra.
-  ...REDSAT_ROUTES,
+  ...ALOVIDA_ROUTES,
   // Las fichas públicas por slug. Van con el marco público y **sin guard**:
   // son la superficie anónima, y el enlace que alguien pega en un mensaje.
   //
@@ -1198,11 +1496,26 @@ export const routes: Routes = [
       pantallaDeOperacion('schedule', 'blocks', 'Bloqueos de agenda', () =>
         import('./features/agenda/blocks/blocks').then((m) => m.Blocks),
       ),
-      // «Mi agenda» (MAC-4): el horario publicado, en palabras. Es la primera
-      // pantalla donde un médico ve lo que publicó — hasta que existió el GET
-      // de plantillas, no había forma de volver a leerlo.
-      pantallaDeOperacion('schedule', 'mine', 'Mi agenda', () =>
-        import('./features/agenda/my-agenda/my-agenda').then((m) => m.MyAgenda),
+      // El alta de cita del profesional (TAREA-14). Dirección propia porque el
+      // pedido es justamente poder agendar **sin pasar por el calendario**:
+      // hasta acá la única forma era tocar un rato del día y abrir la tarjeta,
+      // que exige llegar primero al día correcto.
+      // El importador del arancel (TAREA-22 · S2). Cuelga del catálogo de
+      // servicios: se llega desde ahí, que es donde uno mira su lista y se da
+      // cuenta de que le falta un procedimiento.
+      pantallaDeOperacion(
+        'administration/services-catalog',
+        'import',
+        'Importar del arancel',
+        () =>
+          import(
+            './features/admin/services-catalog/procedure-import/procedure-import'
+          ).then((m) => m.ProcedureImport),
+      ),
+      pantallaDeOperacion('schedule', 'appointment/new', 'Agendar una cita', () =>
+        import('./features/agenda/appointment-new/appointment-new').then(
+          (m) => m.AppointmentNew,
+        ),
       ),
       pantallaDeAccesoDelegado('delegations/new', 'Nueva delegación', () =>
         import('./features/delegated-access/practitioner-delegate-form/practitioner-delegate-form').then(
@@ -1526,6 +1839,53 @@ export const routes: Routes = [
     title: 'AloVida - Vitrina de Diseño',
   },
   {
+    /* El stock de componentes: la lista de todo lo que existe, sacada del
+       código, con cada pieza montada con datos de prueba.
+
+       `canMatch` y no `canActivate`: con `canMatch` la ruta **no existe** allí
+       donde no hay backend simulado —o sea, en cualquier rama que no sea
+       `mockup`—, así que cae en el comodín y da 404 como cualquier dirección
+       inventada. Con `canActivate` existiría y sólo estaría prohibida, que es
+       otra cosa: anuncia que hay algo detrás.
+
+       Va fuera del armazón, como la vitrina: no pide sesión, porque montar un
+       componente suelto no la necesita y pedirla obligaría a entrar sólo para
+       mirar un botón. */
+    path: 'design-system/stock',
+    canMatch: [() => environment.mockBackend],
+    loadComponent: () =>
+      import('./features/component-stock/component-stock')
+        .then((m) => m.ComponentStock)
+        .catch(() => chunkFallido()),
+    title: 'AloVida - Stock de componentes',
+  },
+  {
+    /* Comodín y no `:clave`: la clave de un componente es su ruta de archivo
+       —`shared/components/atoms/badge/badge`— y lleva barras, que un parámetro
+       de un solo segmento no captura. Con `**` la URL sigue siendo legible y
+       se puede copiar y pegar. */
+    path: 'design-system/stock/**',
+    canMatch: [() => environment.mockBackend],
+    loadComponent: () =>
+      import('./features/component-stock/component-stock')
+        .then((m) => m.ComponentStock)
+        .catch(() => chunkFallido()),
+    title: 'AloVida - Stock de componentes',
+  },
+  {
+    // Verificación pública del certificado de portabilidad de póliza y
+    // siniestralidad (subtarea 3.3): a donde apunta el código QR del PDF.
+    // Va fuera del armazón, igual que la vitrina — quien escanea el QR (una
+    // aseguradora, un auditor) no tiene ni necesita sesión en AloVida — y sin
+    // entrada de menú: se llega por el QR, nunca por navegación.
+    path: 'verify/portability/:manifestHash',
+    loadComponent: () =>
+      import('./features/insurance/portability-verify/portability-verify').then(
+        (m) => m.PortabilityVerify,
+      ),
+    title: 'AloVida - Verificar certificado',
+  },
+  {
     path: 'auth',
     component: Login,
     pathMatch: 'full',
@@ -1573,9 +1933,47 @@ export const routes: Routes = [
   {
     // Signup público de una organización aseguradora: crea el tenant `PAYER`
     // y su usuario owner en la misma operación.
+    // Diferida desde la subtarea 1.2: la documentación legal en PDF arrastra
+    // `app-file-input` (y con él `FilePreview`/`pdfjs-dist`, diferido a su vez).
     path: 'auth/register/organization',
-    component: RegisterOrganization,
+    loadComponent: () =>
+      import('./features/auth/register-organization/register-organization').then(
+        (m) => m.RegisterOrganization,
+      ),
     title: 'AloVida - Registrar aseguradora',
+  },
+  {
+    // El alta del laboratorio de sangre: los dieciocho puntos de datos legales
+    // del proceso 4.1 del stakeholder. Todavía sin endpoint —cierra con una
+    // solicitud, no con una cuenta—; ver el JSDoc de `RegisterLaboratory`.
+    path: 'auth/register/laboratory',
+    // Diferida por lo mismo que las otras dos altas largas: arrastra el mapa,
+    // que no tiene por qué viajar en el paquete inicial de toda visita.
+    loadComponent: () =>
+      import('./features/auth/register-laboratory/register-laboratory').then(
+        (m) => m.RegisterLaboratory,
+      ),
+    title: 'AloVida - Registrar laboratorio',
+  },
+  {
+    // El alta del centro de imagenología: el módulo «ANÁLISIS MÉDICOS (RAYOS X,
+    // RESONANCIA, ETC.)» del registro del stakeholder. Los dieciocho puntos de
+    // datos legales son los mismos que los del laboratorio de sangre —la fuente
+    // los repite enteros—, y lo que cambia es qué estudios hace el centro; ver
+    // el JSDoc de `RegisterImagingCenter`. Tampoco tiene endpoint todavía:
+    // cierra con una solicitud, no con una cuenta.
+    //
+    // La ruta dice `imaging-center` y no `imaging` a secas para no chocar con
+    // `?kind=IMAGING`, que es la **categoría** del directorio de laboratorios:
+    // aquélla filtra una vitrina, ésta da de alta una empresa.
+    path: 'auth/register/imaging-center',
+    // Diferida por lo mismo que las otras altas largas: arrastra el mapa, que
+    // no tiene por qué viajar en el paquete inicial de toda visita.
+    loadComponent: () =>
+      import('./features/auth/register-imaging-center/register-imaging-center').then(
+        (m) => m.RegisterImagingCenter,
+      ),
+    title: 'AloVida - Registrar centro de imagenología',
   },
   {
     // El enlace del correo trae el token por query string: /auth/verificar?token=…
@@ -1622,7 +2020,7 @@ export const routes: Routes = [
   // que el router llegue a `auth/verify-email`, que es la que pinta algo.
   ...rutasHeredadas(RUTAS_HEREDADAS_PUBLICAS),
   // TAREA-29 · Las del buscador, por el mismo motivo y con el mismo orden.
-  // Además tienen que ir después del bloque generado de REDSAT: `buscar` a
+  // Además tienen que ir después del bloque generado de ALOVIDA: `buscar` a
   // secas existe en las dos partes, y acá gana la que redirige sólo cuando
   // ninguna pantalla real coincidió.
   ...rutasHeredadas(RUTAS_HEREDADAS_DEL_BUSCADOR),

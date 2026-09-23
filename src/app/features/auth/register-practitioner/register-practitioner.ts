@@ -1,3 +1,5 @@
+import { FileDropTarget } from '../../../shared/forms/file-drop-target';
+import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
@@ -12,13 +14,20 @@ import { MedicalSpecialtiesCatalog } from '../../../core/data-access/terminology
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type {
   BirthSexCode,
+  NewRegistrationCredential,
   PractitionerRegistration,
 } from '../../../core/data-access/iam/iam.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { loading, ready } from '../../../core/view-state/view-state';
+import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
+import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
+import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
+import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { Input as AppInput } from '../../../shared/components/atoms/input/input';
+import { Select } from '../../../shared/components/atoms/select/select';
 import { Link } from '../../../shared/components/atoms/link/link';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -30,7 +39,32 @@ import {
   RegistroAyuda,
   type TarjetaDeAyuda,
 } from '../../../shared/components/organisms/registro-ayuda/registro-ayuda';
+import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
+import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { LocationPicker } from '../registro-compartido/location-picker/location-picker';
+import type { NewOwnSite } from '../../../core/data-access/practice-sites/practice-sites.types';
+import {
+  UbicacionPicker,
+  type Coordenadas,
+  type IdsDePrueba,
+} from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+import { unirNombres } from '../../../core/profesion/nombres-adicionales';
+import {
+  COLEGIO_DE_LA_PROFESION,
+  colegioDelTitulo,
+  esColegio,
+  opcionesAutoridadReguladora,
+} from '../../../core/profesion/autoridades-reguladoras';
+import { OPCIONES_TITULO_PROFESIONAL } from '../../../core/profesion/titulos-profesionales';
+import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
+import {
+  MAX_ATTACHMENT_BYTES,
+  SUPPORT_FILE_FORMATS,
+} from '../registro-compartido/credenciales-del-medico';
+import {
+  MENSAJE_CONTRASENA_CORTA,
+  validadoresDeContrasena,
+} from '../registro-compartido/politica-de-contrasena';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import type {
   CampoDeFormulario,
@@ -52,9 +86,6 @@ function fechaIso(fecha: Date): string {
   return `${anio}-${mes}-${dia}`;
 }
 
-/** Mínimo que exige el DTO del backend. */
-const MIN_PASSWORD = 8;
-
 /** Sólo letras, dígitos, punto y guion — el mismo `@Matches` del backend. */
 const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;
 
@@ -70,8 +101,15 @@ const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;
  * `CIRUGIA_BUCOMAXILOFACIAL` está acá aunque venga del listado del SNRM: es la
  * única especialidad de residencia médica cuyo requisito es Odontología (así lo
  * exige el SNRM y así quedó en la nota del value set).
+ *
+ * **Se exporta para que una prueba pueda comprobar que estos códigos existen**
+ * en el catálogo que la aplicación va a recibir. No es un detalle académico:
+ * el backend simulado los tenía inventados (`SP-ODONTO` y compañía), así que
+ * este conjunto no acertaba ninguno y la rama odontológica del alta ofrecía
+ * una lista vacía. Un conjunto que filtra por código sólo sirve si los dos
+ * lados dicen el mismo código, y eso hay que poder comprobarlo.
  */
-const ESPECIALIDADES_ODONTOLOGICAS: ReadonlySet<string> = new Set([
+export const ESPECIALIDADES_ODONTOLOGICAS: ReadonlySet<string> = new Set([
   'ODONTOLOGIA',
   'ENDODONCIA',
   'ORTODONCIA',
@@ -85,9 +123,16 @@ const ESPECIALIDADES_ODONTOLOGICAS: ReadonlySet<string> = new Set([
   'ARMONIZACION_OROFACIAL',
 ]);
 
+/**
+ * Cómo se llama un consultorio al que nadie le puso nombre.
+ *
+ * `NewOwnSite.name` es obligatorio del lado del backend, y el alta no lo exige:
+ * quien deja el rótulo vacío igual tiene un consultorio. Se renombra desde el
+ * perfil cuando quiera.
+ */
+const NOMBRE_CONSULTORIO_POR_OMISION = 'Mi consultorio';
+
 const TITULO_ODONTOLOGO = 'Odontólogo / Odontóloga';
-const COLEGIO_MEDICO = 'Colegio Médico de Bolivia';
-const COLEGIO_ODONTOLOGOS = 'Colegio de Odontólogos de Bolivia';
 /** Títulos cuya autoridad natural es el Colegio Médico. */
 const TITULOS_MEDICOS: ReadonlySet<string> = new Set([
   'Médico / Médica',
@@ -109,7 +154,7 @@ const TITULOS_MEDICOS: ReadonlySet<string> = new Set([
  * conjunto de valores para acabar mandando su etiqueta agregaría una petición y
  * un estado de fallo a una pantalla pública sin cambiar el dato que se
  * persiste. El día que la columna pase a `*_concept_id`, esto se cambia por una
- * lectura como la de la ocupación.
+ * lectura de catálogo como las demás.
  *
  * ## Por qué sigue acá, aunque AC-05-3 pida que desaparezca
  *
@@ -140,33 +185,9 @@ const TITULOS_MEDICOS: ReadonlySet<string> = new Set([
  * catálogo no está disponible»—. Es el mismo que ya usa el alta de profesional
  * para `specialtyConceptIds`, y es copiable tal cual.
  */
-const OPCIONES_AUTORIDAD_REGULADORA: readonly SelectOption<string>[] = [
-  { value: 'Ministerio de Salud y Deportes', label: 'Ministerio de Salud y Deportes' },
-  { value: 'Colegio Médico de Bolivia', label: 'Colegio Médico de Bolivia' },
-  { value: 'Colegio de Odontólogos de Bolivia', label: 'Colegio de Odontólogos de Bolivia' },
-  { value: 'Colegio de Enfermeras de Bolivia', label: 'Colegio de Enfermeras de Bolivia' },
-  {
-    value: 'Colegio de Bioquímica y Farmacia de Bolivia',
-    label: 'Colegio de Bioquímica y Farmacia de Bolivia',
-  },
-  {
-    value: 'Colegio de Nutricionistas y Dietistas de Bolivia',
-    label: 'Colegio de Nutricionistas y Dietistas de Bolivia',
-  },
-  { value: 'Colegio de Psicólogos de Bolivia', label: 'Colegio de Psicólogos de Bolivia' },
-  {
-    value: 'Colegio de Fisioterapia y Kinesiología de Bolivia',
-    label: 'Colegio de Fisioterapia y Kinesiología de Bolivia',
-  },
-  {
-    value: 'Colegio de Trabajadores Sociales de Bolivia',
-    label: 'Colegio de Trabajadores Sociales de Bolivia',
-  },
-  {
-    value: 'Servicio Departamental de Salud (SEDES)',
-    label: 'Servicio Departamental de Salud (SEDES)',
-  },
-];
+// La lista vive en `core/profesion/autoridades-reguladoras.ts` desde el 13/09/2026:
+// son tres —Ministerio de Salud, SEDES y el colegio de la profesión— y el editor
+// del perfil ofrece las mismas. Lo de arriba sigue valiendo para ella.
 
 /**
  * El título profesional, como lista cerrada.
@@ -192,41 +213,6 @@ const OPCIONES_AUTORIDAD_REGULADORA: readonly SelectOption<string>[] = [
  * profesionales en `src/common/seed/` ni en `dynamic-enum-catalog.ts`. Ver ahí
  * el detalle y el patrón de validación que corresponde el día que existan.
  */
-const OPCIONES_TITULO_PROFESIONAL: readonly SelectOption<string>[] = [
-  { value: 'Médico / Médica', label: 'Médico / Médica' },
-  {
-    value: 'Médico especialista / Médica especialista',
-    label: 'Médico especialista / Médica especialista',
-  },
-  { value: 'Odontólogo / Odontóloga', label: 'Odontólogo / Odontóloga' },
-  {
-    value: 'Licenciado / Licenciada en Enfermería',
-    label: 'Licenciado / Licenciada en Enfermería',
-  },
-  {
-    value: 'Licenciado / Licenciada en Bioquímica y Farmacia',
-    label: 'Licenciado / Licenciada en Bioquímica y Farmacia',
-  },
-  { value: 'Licenciado / Licenciada en Nutrición', label: 'Licenciado / Licenciada en Nutrición' },
-  {
-    value: 'Licenciado / Licenciada en Psicología',
-    label: 'Licenciado / Licenciada en Psicología',
-  },
-  {
-    value: 'Licenciado / Licenciada en Fisioterapia y Kinesiología',
-    label: 'Licenciado / Licenciada en Fisioterapia y Kinesiología',
-  },
-  {
-    value: 'Licenciado / Licenciada en Fonoaudiología',
-    label: 'Licenciado / Licenciada en Fonoaudiología',
-  },
-  {
-    value: 'Licenciado / Licenciada en Trabajo Social',
-    label: 'Licenciado / Licenciada en Trabajo Social',
-  },
-  { value: 'Técnico / Técnica en Radiología', label: 'Técnico / Técnica en Radiología' },
-  { value: 'Auxiliar de Enfermería', label: 'Auxiliar de Enfermería' },
-];
 
 /**
  * Sexo, con sus dos categorías (AC-05-7).
@@ -248,6 +234,136 @@ const OPCIONES_TITULO_PROFESIONAL: readonly SelectOption<string>[] = [
  * necesite otra lista —que es exactamente lo que pasó con el resto de esta
  * pantalla cuando vivía dentro de la otra—.
  */
+/**
+ * Los cuatro tipos de título que el registro de procesos pide para el médico
+ * (MODULO MEDICO, ítems 15, 17, 18 y 19), cada uno con «espacio para poder
+ * subir varios».
+ *
+ * El código es el que va a viajar al backend el día que esto se conecte; la
+ * etiqueta y el singular son lo que ve el profesional —el singular porque
+ * «Quitar Otra profesión» y «+ Agregar otra profesión» no se escriben igual, y
+ * derivarlos de la etiqueta con `toLowerCase()` daba lo primero—.
+ *
+ * `UNIVERSITARIO` dejó de rotularse «Título profesional universitario»: es el
+ * lugar de la **segunda profesión**. El propietario lo pidió con todas las
+ * letras —«hay doctores que aparte de ser doctores han estudiado otra
+ * profesión»—, y llamarlo por su tipo de diploma escondía para qué está: la
+ * profesión con la que ejerce ya se eligió, obligatoria, en el paso del título.
+ */
+const TIPOS_DE_TITULO = [
+  {
+    codigo: 'UNIVERSITARIO',
+    etiqueta: 'Otra profesión',
+    singular: 'otra profesión',
+    ayuda:
+      'Si además de tu profesión de salud estudiaste otra carrera, cargala acá. Podés cargar las que tengas, y ninguna es obligatoria.',
+    placeholderNombre: 'Qué carrera: Derecho, Ingeniería de Sistemas…',
+  },
+  {
+    codigo: 'DIPLOMADO',
+    etiqueta: 'Diplomado',
+    singular: 'diplomado',
+    ayuda: 'Cuantos tengas.',
+    placeholderNombre: 'Cómo se llama el diplomado',
+  },
+  {
+    codigo: 'MAESTRIA',
+    etiqueta: 'Maestría',
+    singular: 'maestría',
+    ayuda: 'Cuantas tengas.',
+    placeholderNombre: 'Cómo se llama la maestría',
+  },
+  {
+    codigo: 'DOCTORADO',
+    etiqueta: 'Doctorado',
+    singular: 'doctorado',
+    ayuda: 'Cuantos tengas.',
+    placeholderNombre: 'Cómo se llama el doctorado',
+  },
+] as const;
+
+/** El código de uno de los cuatro tipos de título. */
+type CodigoDeTitulo = (typeof TIPOS_DE_TITULO)[number]['codigo'];
+
+/**
+ * Un título declarado en el alta, con su respaldo adjunto.
+ *
+ * **Sólo vive en el navegador.** Esta rama es el mockup: el archivo no se sube
+ * a ningún lado y el título no se persiste. Lo que se guarda acá es lo mínimo
+ * para dibujar la lista —qué título es, cómo se llama y qué archivo eligió la
+ * persona—, no el contenido del archivo. Ver `docs/handoff/` para lo que falta
+ * del lado de `dev`.
+ */
+interface TituloDeclarado {
+  /** Identificador local, sólo para el `track` de la lista. */
+  readonly id: string;
+  readonly tipo: CodigoDeTitulo;
+  /** Cómo se llama el título: «Medicina», «Salud Pública»… */
+  readonly nombre: string;
+  /**
+   * El número del diploma. **Es el único dato obligatorio de la fila**: la
+   * columna que lo recibe (`professional_credentials.number`) es NOT NULL, así
+   * que una fila sin número no se puede guardar y el alta no la manda.
+   */
+  readonly numero: string;
+  /** Dónde lo cursó: «Universidad Mayor de San Andrés». */
+  readonly universidad: string;
+  /** El país donde lo cursó. Ver {@link CampoDeEstudio} por qué es texto. */
+  readonly pais: string;
+  /** La ciudad donde lo cursó. */
+  readonly ciudad: string;
+  /** El nombre del archivo elegido, o `null` si todavía no adjuntó ninguno. */
+  readonly archivo: string | null;
+  readonly pesoBytes: number | null;
+}
+
+/**
+ * Los tres datos de dónde se estudió un título, y por qué los tres son texto
+ * libre y no listas cerradas.
+ *
+ * Es la pregunta que más veces vuelve, así que va escrita una sola vez acá:
+ *
+ * - **Universidad.** El modelo ya la guarda como texto a propósito: el JSDoc de
+ *   `AddOwnCredentialDto.issuingInstitutionText` lo dice —«las universidades del
+ *   exterior no están en ningún catálogo nuestro, y exigir que lo estén dejaría
+ *   fuera a cualquiera que se formó afuera»—. No hay padrón de universidades en
+ *   ninguna de las cuatro capas, y la regla de datos del proyecto pide
+ *   justamente **no** hardcodear uno sin dataset ni estrategia de importación.
+ * - **País.** La columna del modelo (`issuing_country_concept_id`) sí es un
+ *   concepto, pero hoy existen **dos** en toda la aplicación —`COUNTRY_BO` y
+ *   `COUNTRY_PE`— y `VS_COUNTRY` no tiene miembros sembrados. Un desplegable
+ *   cerrado ofrecería dos opciones y dejaría afuera a quien estudió en Cuba,
+ *   Argentina o España, que es exactamente el caso que este campo abre.
+ * - **Ciudad.** `profiles.professional_credentials` **no tiene columna de
+ *   ciudad**. Se pregunta igual porque el propietario la pidió, y el hueco
+ *   queda declarado en `docs/handoff/` en vez de inventado acá: abrir una
+ *   columna es cambio de modelo (`.puml` → `gen_ddl.py` → `SQL/` → base → ORM),
+ *   y esta pantalla no es el lugar donde eso se decide.
+ *
+ * Cuando el país tenga value set y la universidad tenga padrón, esto pasa a ser
+ * dos comboboxes sin tocar nada más: lo que cambia es de dónde salen las
+ * opciones, no dónde se guarda la respuesta.
+ */
+type CampoDeEstudio = 'universidad' | 'pais' | 'ciudad';
+
+/** Uno de los campos de una fila de título que se escriben a mano. */
+type CampoEditableDeTitulo = 'nombre' | 'numero' | CampoDeEstudio;
+
+/** Un respaldo suelto: el de la matrícula y el del registro del SEDES. */
+interface RespaldoDeclarado {
+  readonly archivo: string;
+  readonly pesoBytes: number;
+}
+
+/** Cuál respaldo suelto se está tocando: el del título, la matrícula o el SEDES. */
+type ClaveDeRespaldo = 'professional-title' | 'license' | 'sedes';
+
+/** Tope de peso por adjunto. El mismo que la foto de perfil. */
+const MAX_BYTES_ADJUNTO = MAX_ATTACHMENT_BYTES;
+
+/** Formatos que se aceptan como respaldo de un título o de una matrícula. */
+const FORMATOS_DE_RESPALDO = SUPPORT_FILE_FORMATS;
+
 const OPCIONES_SEXO: readonly SelectOption<BirthSexCode>[] = [
   { value: 'MALE', label: 'Masculino' },
   { value: 'FEMALE', label: 'Femenino' },
@@ -323,15 +439,15 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'directory',
       titulo: 'Y decide qué sigue',
       texto:
-        'De él dependen las especialidades que se te ofrecen en el paso siguiente: un odontólogo no elige entre las 36 del catálogo, elige entre las suyas.',
+        'De él dependen el colegio que se te ofrece en la habilitación y las especialidades que vas a poder elegir: un odontólogo no elige entre las 36 del catálogo, elige entre las suyas. Por eso se pregunta antes que las dos cosas.',
     },
   ],
   profile: [
     {
       icono: 'stethoscope',
-      titulo: 'Todo esto es opcional',
+      titulo: 'Por qué te pedimos los dos',
       texto:
-        'El sexo y la fecha de nacimiento se guardan en tu perfil profesional. Lo único que no podés dejar en blanco es tu habilitación.',
+        'Sexo y fecha de nacimiento son dato clínico: mandan en dosis, valores de referencia y tamizajes. Los dos se guardan en tu perfil. Qué clase de profesional sos se pregunta más adelante, con tu título.',
     },
   ],
   residence: [
@@ -350,12 +466,39 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
         'Un paciente busca por especialidad. Las que elijas son las búsquedas en las que vas a aparecer.',
     },
   ],
-  access: [
+  'personal-contact': [
     {
       icono: 'mail',
-      titulo: 'Con tu correo vas a entrar',
-      texto: 'Usá uno al que tengas acceso: es por donde se recupera la cuenta si perdés la clave.',
+      titulo: 'Con tu correo personal vas a entrar',
+      texto:
+        'Usá uno que sigas teniendo si cambiás de trabajo: es tu identidad de acceso y por donde se recupera la cuenta si perdés la clave.',
     },
+  ],
+  access: [
+    {
+      icono: 'phone',
+      titulo: 'Todo esto es del consultorio',
+      texto:
+        'Son los datos por los que te ubican en el trabajo, no los de tu acceso. Podés dejarlos vacíos y cargarlos después desde tu perfil.',
+    },
+  ],
+  'credential-files': [
+    {
+      icono: 'folder',
+      titulo: 'Los verifica una persona, no un robot',
+      texto:
+        'Podés registrarte sin subirlos y cargarlos después desde tu perfil. Mientras no estén, tu matrícula figura como declarada y no como verificada.',
+    },
+  ],
+  'academic-titles': [
+    {
+      icono: 'teach',
+      titulo: 'Cuantos tengas, no sólo uno',
+      texto:
+        'Hay médicos con dos carreras, y con varios diplomados o maestrías. Cada título lleva su propio archivo, así se verifica de a uno.',
+    },
+  ],
+  password: [
     {
       icono: 'lock',
       titulo: 'Tu contraseña, sólo tuya',
@@ -397,16 +540,26 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
 @Component({
   selector: 'app-register-practitioner',
   imports: [
+    FileDropTarget,
+    FileInput,
     RouterLink,
     AppButton,
+    NavIcon,
+    Tooltip,
     LocationPicker,
+    UbicacionPicker,
     Link,
     Alert,
     AuthSplit,
     AnnounceOnAppear,
     PaginatedForm,
     CampoPersonalizado,
+    ReferenceCombobox,
     RegistroAyuda,
+    FormField,
+    AppInput,
+    Select,
+    Avatar,
   ],
   templateUrl: './register-practitioner.html',
   styleUrls: ['../registro-compartido/registro.css', './register-practitioner.css'],
@@ -415,37 +568,249 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
 export class RegisterPractitioner {
   private readonly iam = inject(IamClient);
   private readonly router = inject(Router);
+  private readonly systemContext = inject(SystemContextClient);
+
+  /**
+   * De qué campo cuelga el catálogo de tipos de título.
+   *
+   * Se pide por **campo destino** y no por código de conjunto porque esta
+   * columna sí declara su amarre (`professional-credential-type`), a diferencia
+   * de la de especialidades. La ruta es pública, que es lo que la habilita en un
+   * alta sin sesión.
+   */
+  private readonly campoDeTipoDeTitulo =
+    'profiles.professional_credentials.credential_type_concept_id';
+
+  /**
+   * Qué concepto del catálogo corresponde a cada tipo de la pantalla.
+   *
+   * El mapeo es **por código**, nunca por rótulo: el código es la identidad
+   * estable del concepto y el rótulo del catálogo viene en inglés técnico.
+   */
+  private readonly codigoDeConceptoPorTipo: Readonly<Record<CodigoDeTitulo, string>> = {
+    UNIVERSITARIO: 'CREDENTIAL_TYPE_DEGREE',
+    DIPLOMADO: 'CREDENTIAL_TYPE_DIPLOMA',
+    MAESTRIA: 'CREDENTIAL_TYPE_MASTER',
+    DOCTORADO: 'CREDENTIAL_TYPE_DOCTORATE',
+  };
+
+  /** Código de concepto → uuid, tal como lo devolvió el catálogo. */
+  private readonly conceptoPorCodigo = signal<ReadonlyMap<string, string>>(new Map());
+
+  /** Si hay una lectura del catálogo de tipos en vuelo. */
+  private readonly pidiendoTiposDeTitulo = signal(false);
+
+  /**
+   * Si el catálogo de tipos no sirve y ya no se está pidiendo: lo que enciende
+   * el aviso con su botón «Reintentar» en el paso.
+   *
+   * Se deriva del MISMO mapa que frena el envío (`hayTitulosSinTipo`), y no de
+   * una bandera aparte encendida en el `error` del observable. Con la bandera,
+   * un 200 que no trajera los tipos —o un `next` que reventara al mapearlos—
+   * dejaba el mapa vacío y la bandera apagada: el alert decía «pulsá
+   * Reintentar» y el botón no existía. Así, si hay una fila que no puede
+   * resolver su tipo, el botón está, porque los dos leen lo mismo.
+   */
+  readonly catalogoTiposDeTituloCaido = computed(() => {
+    if (this.pidiendoTiposDeTitulo()) {
+      return false;
+    }
+    const conceptos = this.conceptoPorCodigo();
+    return Object.values(this.codigoDeConceptoPorTipo).some((codigo) => !conceptos.has(codigo));
+  });
+
+  /**
+   * El aviso de que el catálogo no cargó, en un solo sitio.
+   *
+   * Está acá y no escrito dos veces porque el éxito del reintento tiene que
+   * poder reconocer ESTE aviso para retirarlo: el otro aviso del paso —el del
+   * número que falta— viaja por el mismo canal y no debe borrarse de rebote.
+   */
+  private readonly avisoCatalogoDeTipos =
+    'No pudimos cargar los tipos de título. En el paso «Tus títulos», el botón «Reintentar» vuelve a pedirlos.';
+
+  /**
+   * Una fila que todavía no dice nada: se agregó y quedó en blanco.
+   *
+   * No frena el envío ni viaja, igual que una casilla de especialidad agregada
+   * y vacía. Lo que sí frena es una fila **con datos** y sin número.
+   */
+  private filaVacia(titulo: TituloDeclarado): boolean {
+    return (
+      titulo.numero.trim() === '' &&
+      titulo.nombre.trim() === '' &&
+      titulo.universidad.trim() === '' &&
+      titulo.pais.trim() === '' &&
+      titulo.ciudad.trim() === '' &&
+      titulo.archivo === null
+    );
+  }
+
+  /**
+   * Si esta fila declara algo pero le falta el número que la hace guardable.
+   *
+   * Público porque lo usan la plantilla —para marcar el campo— y las pruebas,
+   * que comprueban que la fila señalada es la que está mal.
+   */
+  tituloSinNumero(titulo: TituloDeclarado): boolean {
+    return !this.filaVacia(titulo) && titulo.numero.trim() === '';
+  }
+
+  /** Si alguna fila declara algo sin número. Ver `tituloSinNumero`. */
+  protected hayTitulosSinNumero(): boolean {
+    return this.titulos().some((titulo) => this.tituloSinNumero(titulo));
+  }
+
+  /**
+   * Si hay filas listas para mandar cuyo tipo el catálogo no resolvió.
+   *
+   * Pasa si la lectura del catálogo falló. Mandar la fila sin tipo no es
+   * opción —el contrato lo exige— y descartarla en silencio es justamente lo
+   * que esta subtarea vino a corregir, así que el envío se frena y lo dice.
+   */
+  protected hayTitulosSinTipo(): boolean {
+    return this.titulos().some(
+      (titulo) =>
+        titulo.numero.trim() !== '' &&
+        this.conceptoPorCodigo().get(this.codigoDeConceptoPorTipo[titulo.tipo]) === undefined,
+    );
+  }
+
+  /**
+   * Los títulos que viajan en el alta.
+   *
+   * Sólo van los tres datos que hoy tienen dónde guardarse: el tipo, el número
+   * y la institución. El nombre, el país, la ciudad y el archivo se preguntan
+   * en pantalla y **no** viajan: ninguno tiene columna sin cambiar el modelo, y
+   * esta pantalla no es donde eso se decide.
+   */
+  private credencialesDeclaradas(): readonly NewRegistrationCredential[] {
+    const conceptos = this.conceptoPorCodigo();
+    return this.titulos().flatMap((titulo) => {
+      const numero = titulo.numero.trim();
+      const conceptId = conceptos.get(this.codigoDeConceptoPorTipo[titulo.tipo]);
+      if (numero === '' || conceptId === undefined) {
+        return [];
+      }
+      const universidad = titulo.universidad.trim();
+      return [
+        {
+          credentialTypeConceptId: conceptId,
+          number: numero,
+          ...(universidad === '' ? {} : { issuingInstitutionText: universidad }),
+        },
+      ];
+    });
+  }
+
+  /**
+   * Los tipos de título del catálogo. Un fallo no bloquea el alta: lo que
+   * bloquea es intentar mandar una fila cuyo tipo no se pudo resolver.
+   */
+  protected cargarTiposDeCredencial(): void {
+    this.pidiendoTiposDeTitulo.set(true);
+    this.systemContext.dynamicEnum(this.campoDeTipoDeTitulo).subscribe({
+      next: (enumeracion) => {
+        // Primero se apaga «pidiendo», y recién después se toca el mapa: si
+        // mapear la respuesta reventara, el mapa quedaría vacío con el aviso
+        // encendido, que es lo correcto, y no vacío con el aviso apagado.
+        this.pidiendoTiposDeTitulo.set(false);
+        this.conceptoPorCodigo.set(
+          new Map(enumeracion.options.map((opcion) => [opcion.code, opcion.conceptId])),
+        );
+        // Si el envío se había frenado por esto, el aviso se retira solo: el
+        // catálogo ya está y volver a pulsar «Crear cuenta» va a funcionar.
+        this.retirarAvisoDeCatalogo();
+      },
+      error: () => {
+        this.pidiendoTiposDeTitulo.set(false);
+        this.conceptoPorCodigo.set(new Map());
+      },
+    });
+  }
+
+  /**
+   * Vuelve a pedir el catálogo de tipos de título.
+   *
+   * Público porque lo usan la plantilla —el botón «Reintentar» del paso— y las
+   * pruebas. Olvida lo memoizado antes de pedir, igual que
+   * `reintentarDepartamentos`: el cliente ya descarta la entrada al fallar,
+   * pero pedirlo explícitamente es lo que hace que este método signifique
+   * «volvé a la red» y no «devolveme lo que tengas guardado».
+   *
+   * Lo escrito en las filas no se toca: vive en `titulos`, que esto no mira.
+   */
+  reintentarTiposDeCredencial(): void {
+    this.systemContext.forget(this.campoDeTipoDeTitulo);
+    this.cargarTiposDeCredencial();
+  }
+
+  /**
+   * Retira el aviso del catálogo, y sólo ése.
+   *
+   * Se compara el mensaje porque las dos advertencias del paso —catálogo caído
+   * y número que falta— son `validation` sobre el mismo campo: borrar la otra
+   * de rebote dejaría el envío frenado sin nada en pantalla, que es el defecto
+   * que esta subtarea ya corrigió una vez.
+   */
+  private retirarAvisoDeCatalogo(): void {
+    const state = this.state();
+    if (state.status === 'validation' && state.issues[0]?.message === this.avisoCatalogoDeTipos) {
+      this.state.set(ready(null));
+    }
+  }
 
   readonly formProfesional = new FormGroup({
     // Mismas cuatro partes que el paciente: la persona se registra igual sea
     // cual sea el perfil, y el backend compone con ellas el nombre que muestra.
     name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     middleName: new FormControl('', { nonNullable: true }),
+    thirdName: new FormControl('', { nonNullable: true }),
     lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     motherLastName: new FormControl('', { nonNullable: true }),
+    // El correo de TRABAJO. Dejó de ser la identidad de acceso —eso ahora es
+    // `personalEmail`— y con eso dejó de ser obligatorio: un médico puede no
+    // tener correo institucional, y el del consultorio lo pone la organización.
     email: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.email],
+      validators: [Validators.email],
     }),
     password: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
+      validators: [...validadoresDeContrasena],
     }),
-    // Documento de identidad: opcional para el profesional (se guarda como
-    // identificador oficial, no como login — eso lo sigue siendo el correo).
+    // Documento de identidad boliviano. Obligatorio en el alta de profesional:
+    // la matrícula habilita a ejercer, pero es la cédula la que ata esa matrícula
+    // a una persona verificable. Además del formato válido, ahora tiene que estar.
     nationalId: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.pattern(DOCUMENTO_VALIDO)],
+      validators: [Validators.required, Validators.pattern(DOCUMENTO_VALIDO)],
     }),
     licenseNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    credentialNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    sedesLicenseNumber: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
     // Quién emitió la matrícula y con qué título ejerce: los dos salen de una
     // lista cerrada — ver `OPCIONES_AUTORIDAD_REGULADORA` y
     // `OPCIONES_TITULO_PROFESIONAL`. Siguen siendo controles de texto porque lo
     // que el desplegable escribe es la etiqueta, que es lo que el backend
     // guarda.
     regulatoryAuthority: new FormControl('', { nonNullable: true }),
-    professionalTitle: new FormControl('', { nonNullable: true }),
+    // Obligatorio: es la profesión con la que ejerce, y de ella dependen la
+    // lista de especialidades y el colegio que se ofrece en la habilitación.
+    // Preguntarla como opcional dejaba las dos cosas eligiéndose a ciegas.
+    professionalTitle: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    // Dónde estudió la profesión con la que ejerce. Los tres son opcionales:
+    // el alta se completa sin ninguno, y quien no se acuerde del año o del
+    // nombre exacto de su casa de estudios los carga después desde el perfil.
+    // Por qué son texto y no listas cerradas: ver `CampoDeEstudio`.
+    professionalTitleUniversity: new FormControl('', { nonNullable: true }),
+    professionalTitleCountry: new FormControl('', { nonNullable: true }),
+    professionalTitleCity: new FormControl('', { nonNullable: true }),
     // El control guarda lo que `app-phone-input` compone —el prefijo del país
     // elegido y su número—, así que el validador comprueba justamente eso, y
     // viene del propio campo: es él quien sabe qué largo tiene cada país.
@@ -453,20 +818,292 @@ export class RegisterPractitioner {
       nonNullable: true,
       validators: [telefonoCompleto],
     }),
-    birthDate: new FormControl<Date | null>(null),
+    // Los cuatro contactos que el registro pide separados del de acceso. Cada
+    // uno viaja a su propia fila de puntos de contacto, distinguida por el par
+    // sistema × uso; mezclarlos en un solo campo era lo que hacía que el número
+    // privado y el del consultorio fueran el mismo dato.
+    mobilePhone: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, telefonoCompleto],
+    }),
+    workMobilePhone: new FormControl('', {
+      nonNullable: true,
+      validators: [telefonoCompleto],
+    }),
+    workLandline: new FormControl('', {
+      nonNullable: true,
+      validators: [telefonoCompleto],
+    }),
+    // El correo PERSONAL, y desde ahora la identidad de acceso: es el que el
+    // profesional conserva aunque cambie de hospital, así que es el único que
+    // sirve para entrar y para recuperar la cuenta. Viaja en el `email` del
+    // DTO, que es el campo de login de la API (ver `cuerpoDelRegistro`).
+    personalEmail: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email],
+    }),
+    // Obligatoria por la misma razón que `sexAtBirth`, y con más motivo: la
+    // edad manda en dosis, valores de referencia y tamizajes. Un profesional
+    // sin fecha de nacimiento es una ficha que después hay que perseguir.
+    birthDate: new FormControl<Date | null>(null, {
+      validators: [Validators.required],
+    }),
     // AC-05-7: el DTO lo aceptaba desde siempre; lo que faltaba era
-    // preguntarlo. Opcional, como el resto de los datos personales de esta
-    // alta: lo que acá no se puede dejar en blanco es la habilitación.
-    sexAtBirth: new FormControl<BirthSexCode | null>(null),
+    // preguntarlo. Igual que en el alta de paciente, es dato clínico —dosis,
+    // valores de referencia, tamizajes— y no una cortesía: obligatorio, aunque
+    // el resto de esta sección sí sea opcional.
+    sexAtBirth: new FormControl<BirthSexCode | null>(null, {
+      validators: [Validators.required],
+    }),
     licenseIssueDate: new FormControl<Date | null>(null),
-    issuerAdministrativeAreaConceptId: new FormControl<string | null>(null),
-    // Las «3 espacios adicionales a la profesión» del registro del cliente
-    // (módulo Médico §1.4.2), literales: tres desplegables, no un multiselect.
-    // La primera es la principal; las otras dos, opcionales.
+    // El departamento de expedición es parte del mismo carnet que el número:
+    // si uno es obligatorio, el otro también, o el documento queda a medias.
+    issuerAdministrativeAreaConceptId: new FormControl<string | null>(null, {
+      validators: [Validators.required],
+    }),
+    // La principal es un control porque tiene semántica propia: es la que
+    // responde «¿de qué sos?» y la que el backend guarda como principal. Las
+    // demás no se distinguen entre sí, así que viven en `especialidadesExtra` y
+    // se agregan las que hagan falta: hay profesionales con más de tres.
+    // La calle del domicilio. Opcional, como en el alta de paciente: la
+    // localidad es la que ubica, y esto es lo que hace falta para llegar a la
+    // puerta.
+    homeAddressLines: new FormControl('', { nonNullable: true }),
+    // El consultorio propio: su nombre y su calle. Ver la página
+    // «Tu consultorio propio» y el JSDoc de `datosProfesional`.
+    officeName: new FormControl('', { nonNullable: true }),
+    officeAddressLines: new FormControl('', { nonNullable: true }),
     specialtyPrimary: new FormControl('', { nonNullable: true }),
-    specialtySecond: new FormControl('', { nonNullable: true }),
-    specialtyThird: new FormControl('', { nonNullable: true }),
+    profilePhotoBase64: new FormControl<string | null>(null),
   });
+
+  /** Los cuatro tipos de título, para que la plantilla los recorra. */
+  protected readonly tiposDeTitulo = TIPOS_DE_TITULO;
+
+  /**
+   * Las tres casillas de «dónde lo estudiaste» de cada fila de título.
+   *
+   * Misma lista que la del título principal, con la diferencia de que acá la
+   * clave es la del objeto de la fila y no la de un `FormControl`: las filas no
+   * viven en el formulario, viven en un signal.
+   */
+  protected readonly camposDeEstudioDeFila = [
+    // La universidad viaja como `issuingInstitutionText`, que el contrato acota
+    // a 200: se acota acá igual, para que el exceso no llegue a ser un 400 en
+    // inglés técnico. País y ciudad no viajan todavía, así que no tienen tope.
+    { campo: 'universidad', label: 'Universidad', placeholder: 'Universidad', maxlength: 200 },
+    { campo: 'pais', label: 'País', placeholder: 'País', maxlength: null },
+    { campo: 'ciudad', label: 'Ciudad', placeholder: 'Ciudad', maxlength: null },
+  ] as const satisfies readonly {
+    campo: CampoDeEstudio;
+    label: string;
+    placeholder: string;
+    maxlength: number | null;
+  }[];
+
+  protected readonly formatosDeRespaldo = FORMATOS_DE_RESPALDO;
+
+  /**
+   * Los títulos que la persona fue agregando, de los cuatro tipos.
+   *
+   * Una sola lista y no cuatro: el tipo va adentro de cada fila. Así agregar un
+   * quinto tipo el día de mañana es una entrada más en `TIPOS_DE_TITULO`, y no
+   * un signal nuevo con su método nuevo.
+   */
+  readonly titulos = signal<readonly TituloDeclarado[]>([]);
+
+  /** Los títulos de un tipo, en el orden en que se agregaron. */
+  titulosDe(tipo: CodigoDeTitulo): readonly TituloDeclarado[] {
+    return this.titulos().filter((titulo) => titulo.tipo === tipo);
+  }
+
+  /**
+   * Los respaldos sueltos: el del título profesional, el de la matrícula y el
+   * del registro del SEDES.
+   *
+   * El del título va en el paso del título y no con los otros dos a propósito:
+   * el título profesional es obligatorio y su archivo no, así que la pantalla
+   * tiene que dejar clarísimo cuál de las dos cosas frena el avance.
+   */
+  readonly respaldoTituloProfesional = signal<RespaldoDeclarado | null>(null);
+  readonly respaldoMatricula = signal<RespaldoDeclarado | null>(null);
+  readonly respaldoSedes = signal<RespaldoDeclarado | null>(null);
+
+  /** El error del último adjunto rechazado, si hubo. */
+  readonly errorAdjunto = signal<string | null>(null);
+
+  /**
+   * Los dos respaldos de la habilitación, con el número que respalda cada uno.
+   *
+   * Trae el valor del formulario para que la pantalla muestre «MP-12345» al
+   * lado de su archivo: un adjunto sin el número al lado obliga a abrirlo para
+   * saber de cuál es.
+   */
+  readonly respaldosDeHabilitacion = computed(() => {
+    const raw = this.formProfesional.getRawValue();
+    return [
+      {
+        clave: 'license' as ClaveDeRespaldo,
+        etiqueta: 'Matrícula profesional',
+        valor: raw.licenseNumber.trim(),
+        adjunto: this.respaldoMatricula,
+      },
+      {
+        clave: 'sedes' as ClaveDeRespaldo,
+        etiqueta: 'Registro del SEDES',
+        valor: raw.sedesLicenseNumber.trim(),
+        adjunto: this.respaldoSedes,
+      },
+    ];
+  });
+
+  /** Agrega una fila vacía del tipo pedido, lista para escribir y adjuntar. */
+  agregarTitulo(tipo: CodigoDeTitulo): void {
+    this.titulos.update((titulos) => [
+      ...titulos,
+      {
+        // `crypto.randomUUID` existe en el navegador y en el Node del SSR.
+        id: crypto.randomUUID(),
+        tipo,
+        nombre: '',
+        numero: '',
+        universidad: '',
+        pais: '',
+        ciudad: '',
+        archivo: null,
+        pesoBytes: null,
+      },
+    ]);
+  }
+
+  /** Quita una fila entera, con su adjunto. */
+  quitarTitulo(id: string): void {
+    this.attachmentFiles.update(files => Object.fromEntries(Object.entries(files).filter(([key]) => key !== id)));
+    this.titulos.update((titulos) => titulos.filter((titulo) => titulo.id !== id));
+    this.limpiarAvisoDeTitulos();
+  }
+
+  /**
+   * Borra el aviso en cuanto se corrige lo que lo provocó.
+   *
+   * Hace falta aparte de `limpiarElErrorAlCorregir()` porque las filas de
+   * títulos no viven en el `FormGroup` —viven en un signal—, así que escribir
+   * el número no dispara `valueChanges` y el aviso se quedaría contradiciendo
+   * a la pantalla.
+   */
+  private limpiarAvisoDeTitulos(): void {
+    if (this.state().status === 'validation') {
+      this.state.set(ready(null));
+    }
+  }
+
+  /**
+   * Escribe uno de los cuatro datos escritos a mano de un título.
+   *
+   * Uno solo y no cuatro métodos casi iguales: la única diferencia entre
+   * escribir el nombre y escribir la ciudad es en qué clave cae el valor, y
+   * `CampoEditableDeTitulo` la acota a las cuatro que existen —una clave
+   * inventada no compila—. Sigue sin ser una bandera que cambia el
+   * comportamiento: el comportamiento es el mismo para las cuatro.
+   */
+  escribirDatoDeTitulo(id: string, campo: CampoEditableDeTitulo, valor: string): void {
+    this.titulos.update((titulos) =>
+      titulos.map((titulo) => (titulo.id === id ? { ...titulo, [campo]: valor } : titulo)),
+    );
+    this.limpiarAvisoDeTitulos();
+  }
+
+  /**
+   * Escribe el nombre de un título.
+   *
+   * Se conserva porque es el que llaman las pruebas y el que existía antes de
+   * que la fila tuviera cuatro campos; delega para que haya una sola forma de
+   * escribir en la lista.
+   */
+  escribirNombreDeTitulo(id: string, nombre: string): void {
+    this.escribirDatoDeTitulo(id, 'nombre', nombre);
+  }
+
+  readonly attachmentFiles = signal<Partial<Record<string, readonly File[]>>>({});
+  protected readonly maxAttachmentBytes = MAX_BYTES_ADJUNTO;
+
+  updateSupportFiles(key: ClaveDeRespaldo, files: readonly File[]): void {
+    this.attachmentFiles.update(current => ({ ...current, [key]: files }));
+    const file = files[0];
+    this.destinoDelRespaldo(key).set(file ? { archivo: file.name, pesoBytes: file.size } : null);
+    this.errorAdjunto.set(null);
+  }
+
+  updateTitleFiles(id: string, files: readonly File[]): void {
+    this.attachmentFiles.update(current => ({ ...current, [id]: files }));
+    const file = files[0];
+    this.titulos.update(titles => titles.map(title => title.id === id
+      ? { ...title, archivo: file?.name ?? null, pesoBytes: file?.size ?? null } : title));
+    this.errorAdjunto.set(null);
+  }
+
+  /** El signal donde vive cada respaldo suelto. */
+  private destinoDelRespaldo(cual: ClaveDeRespaldo) {
+    if (cual === 'professional-title') return this.respaldoTituloProfesional;
+    return cual === 'license' ? this.respaldoMatricula : this.respaldoSedes;
+  }
+
+
+  /**
+   * Foto de perfil en base64 para previsualizar y enviar en el alta.
+   */
+  readonly fotoBase64 = signal<string | null>(null);
+  readonly errorFoto = signal<string | null>(null);
+  readonly nombreCompleto = computed(() => {
+    const raw = this.formProfesional.getRawValue();
+    return [raw.name, raw.lastName].filter((p) => p.trim() !== '').join(' ') || 'Profesional';
+  });
+
+  /**
+   * Procesa la foto elegida por el usuario, valida tamaño y formato, y la convierte a Data URL.
+   */
+  alSeleccionarFoto(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    this.errorFoto.set(null);
+    if (!archivo) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(archivo.type)) {
+      this.errorFoto.set('El formato de la imagen debe ser JPG, PNG o WebP.');
+      entrada.value = '';
+      return;
+    }
+
+    const maxBytes = 5 * 1024 * 1024;
+    if (archivo.size > maxBytes) {
+      this.errorFoto.set('La imagen supera el límite de 5 MB.');
+      entrada.value = '';
+      return;
+    }
+
+    const lector = new FileReader();
+    lector.onload = () => {
+      const resultado = lector.result as string;
+      this.fotoBase64.set(resultado);
+      this.formProfesional.controls.profilePhotoBase64.setValue(resultado);
+      entrada.value = '';
+    };
+    lector.onerror = () => {
+      this.errorFoto.set('No se pudo leer la imagen seleccionada.');
+      entrada.value = '';
+    };
+    lector.readAsDataURL(archivo);
+  }
+
+  /** Quita la foto seleccionada y restablece el control. */
+  quitarFoto(inputElement?: HTMLInputElement): void {
+    this.fotoBase64.set(null);
+    this.formProfesional.controls.profilePhotoBase64.setValue(null);
+    this.errorFoto.set(null);
+    if (inputElement) {
+      inputElement.value = '';
+    }
+  }
 
   /**
    * El municipio de residencia.
@@ -476,6 +1113,199 @@ export class RegisterPractitioner {
    * conoce.
    */
   readonly municipioProfesional = signal<string | null>(null);
+
+  /**
+   * El punto del domicilio, ya confirmado sobre el mapa.
+   *
+   * Lo emite `app-ubicacion-picker` y llega **sólo confirmado**: el componente
+   * se guarda para sí el estado intermedio —capturado y sin confirmar— y avisa
+   * en pantalla que ese no se guarda. Acá no hace falta volver a preguntarlo.
+   */
+  readonly gpsDomicilio = signal<Coordenadas | null>(null);
+
+  /**
+   * La localidad del consultorio propio.
+   *
+   * Separada de la del domicilio a propósito: son dos lugares distintos, y hay
+   * quien vive en una ciudad y atiende en otra. Es el mismo par de señales que
+   * el alta de paciente tiene para su casa y su trabajo.
+   */
+  readonly municipioConsultorio = signal<string | null>(null);
+
+  /** El punto del consultorio, ya confirmado sobre el mapa. */
+  readonly gpsConsultorio = signal<Coordenadas | null>(null);
+
+  /** Los identificadores de prueba del bloque de ubicación del consultorio. */
+  protected readonly idsUbicacionConsultorio: IdsDePrueba = {
+    mapa: 'registration-practitioner-office-map',
+    confirmada: 'registration-practitioner-office-location-confirmed',
+    avisoGeocodificacion: 'registration-practitioner-office-geocoding-notice',
+    quitar: 'registration-practitioner-office-location-remove',
+    sinConfirmar: 'registration-practitioner-office-location-unconfirmed',
+    confirmar: 'registration-practitioner-office-location-confirm',
+    usarUbicacion: 'registration-practitioner-office-location-use',
+    marcarEnMapa: 'registration-practitioner-office-location-pick',
+  };
+
+  /** Los identificadores de prueba del bloque de ubicación del domicilio. */
+  protected readonly idsUbicacionDomicilio: IdsDePrueba = {
+    mapa: 'registration-practitioner-home-map',
+    confirmada: 'registration-practitioner-home-location-confirmed',
+    avisoGeocodificacion: 'registration-practitioner-home-geocoding-notice',
+    quitar: 'registration-practitioner-home-location-remove',
+    sinConfirmar: 'registration-practitioner-home-location-unconfirmed',
+    confirmar: 'registration-practitioner-home-location-confirm',
+    usarUbicacion: 'registration-practitioner-home-location-use',
+    marcarEnMapa: 'registration-practitioner-home-location-pick',
+  };
+
+  /**
+   * Casillas de nombres adicionales (cuarto, quinto, …) agregadas por el usuario.
+   */
+  readonly nombresExtra = signal<readonly string[]>([]);
+
+  /**
+   * Especialidades agregadas además de la principal.
+   *
+   * Mismo criterio que `nombresExtra`: casillas fijas que casi nadie llena son
+   * ruido, y un techo arbitrario deja afuera al que sí las tiene. La cadena
+   * vacía es «esta casilla todavía no eligió nada».
+   */
+  readonly especialidadesExtra = signal<readonly string[]>([]);
+
+  /** Suma una casilla vacía de especialidad. */
+  agregarEspecialidad(): void {
+    this.especialidadesExtra.update((actuales) => [...actuales, '']);
+  }
+
+  /**
+   * Quita una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   */
+  quitarEspecialidad(indice: number): void {
+    this.especialidadesExtra.update((actuales) => actuales.filter((_, i) => i !== indice));
+  }
+
+  /**
+   * Elige la especialidad de una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   * @param valor - El uuid elegido, o `null` si se volvió al vacío.
+   */
+  elegirEspecialidadExtra(indice: number, valor: string | null): void {
+    const elegida = valor ?? '';
+    this.especialidadesExtra.update((actuales) =>
+      actuales.map((especialidad, i) => (i === indice ? elegida : especialidad)),
+    );
+  }
+
+  /** Suma una casilla vacía de nombre. */
+  agregarNombre(): void {
+    this.nombresExtra.update((actuales) => [...actuales, '']);
+  }
+
+  /**
+   * Quita una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   */
+  quitarNombre(indice: number): void {
+    this.nombresExtra.update((actuales) => actuales.filter((_, i) => i !== indice));
+  }
+
+  /**
+   * Escribe en una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   * @param valor - Lo que se escribió.
+   */
+  escribirNombreExtra(indice: number, valor: string | number | null): void {
+    const texto = valor === null ? '' : String(valor);
+    this.nombresExtra.update((actuales) =>
+      actuales.map((nombre, i) => (i === indice ? texto : nombre)),
+    );
+  }
+
+  /**
+   * El valor de un control de nombre, para el campo proyectado.
+   *
+   * @param key - Cuál de los tres controles de nombre.
+   */
+  valorDeNombre(key: 'name' | 'middleName' | 'thirdName'): string {
+    return this.formProfesional.controls[key].value;
+  }
+
+  /**
+   * Escribe en un control de nombre desde el campo proyectado.
+   *
+   * @param key - Cuál de los tres controles de nombre.
+   * @param valor - Lo que se escribió.
+   */
+  escribirNombre(key: 'name' | 'middleName' | 'thirdName', valor: string | number | null): void {
+    this.formProfesional.controls[key].setValue(valor === null ? '' : String(valor));
+  }
+
+  /**
+   * Los tres controles de dónde se estudió el título con el que ejerce.
+   *
+   * Se listan acá y no en la plantilla para que agregar el cuarto —el año, si
+   * alguna vez se pide— sea una entrada más y no una casilla suelta que alguien
+   * se olvida de limpiar al reiniciar el formulario.
+   */
+  protected readonly camposDeEstudioDelTitulo = [
+    {
+      key: 'professionalTitleUniversity',
+      label: 'Universidad',
+      placeholder: 'Universidad Mayor de San Andrés',
+      testId: 'registro-pro-titulo-universidad',
+    },
+    {
+      key: 'professionalTitleCountry',
+      label: 'País de estudio',
+      placeholder: 'Bolivia',
+      testId: 'registro-pro-titulo-pais',
+    },
+    {
+      key: 'professionalTitleCity',
+      label: 'Ciudad de estudio',
+      placeholder: 'La Paz',
+      testId: 'registro-pro-titulo-ciudad',
+    },
+  ] as const;
+
+  /** Lo escrito en uno de los tres campos de estudio del título principal. */
+  valorDeEstudio(key: (typeof this.camposDeEstudioDelTitulo)[number]['key']): string {
+    return this.formProfesional.controls[key].value;
+  }
+
+  /** Escribe uno de los tres campos de estudio del título principal. */
+  escribirEstudio(
+    key: (typeof this.camposDeEstudioDelTitulo)[number]['key'],
+    valor: string | number | null,
+  ): void {
+    this.formProfesional.controls[key].setValue(valor === null ? '' : String(valor));
+  }
+
+  /** Si hay que pintar en rojo el primer nombre. */
+  readonly primerNombreEnRojo = computed(() => {
+    const control = this.formProfesional.controls.name;
+    return control.touched && control.invalid;
+  });
+
+  /**
+   * Los nombres que no son el primero, en una sola cadena.
+   *
+   * La codificación —todo lo que no es el primer nombre va junto en
+   * `middle_name`, separado por espacios— salió a `nombres-adicionales` cuando
+   * el editor del perfil tuvo que ofrecer las mismas casillas: el alta las
+   * escribía y el editor las leía con otro criterio, así que corregir el
+   * apellido desde el perfil borraba el tercer nombre declarado acá.
+   */
+  private nombresAdicionales(): string {
+    const raw = this.formProfesional.getRawValue();
+    return unirNombres([raw.middleName, raw.thirdName, ...this.nombresExtra()]);
+  }
 
   /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
   private readonly departamentos = inject(BoDepartmentsCatalog);
@@ -529,6 +1359,43 @@ export class RegisterPractitioner {
   private readonly tituloProfesionalElegido = signal('');
 
   /**
+   * Lo escrito en la lupa del título. **Nunca reemplaza al valor del control**:
+   * el `FormControl` sigue siendo el que manda, y de él cuelgan el colegio
+   * automático y el filtro de especialidades.
+   */
+  readonly busquedaTituloProfesional = signal('');
+
+  /** Las doce opciones locales, acotadas por lo que se escribió. */
+  readonly titulosProfesionalesFiltrados = computed<readonly ReferenceOption[]>(() => {
+    const busqueda = this.busquedaTituloProfesional().trim().toLowerCase();
+    // Sin peticiones: la lista es cerrada y ya está en memoria. Una lupa que
+    // consulta al servidor para filtrar doce opciones agrega latencia y un
+    // estado de error donde no hacía falta ninguno.
+    return busqueda === ''
+      ? OPCIONES_TITULO_PROFESIONAL
+      : OPCIONES_TITULO_PROFESIONAL.filter((opcion) =>
+          opcion.label.toLowerCase().includes(busqueda),
+        );
+  });
+
+  /** La opción elegida, para que el rótulo vuelva al regresar a este paso. */
+  readonly tituloProfesionalSeleccionado = computed<ReferenceOption | null>(() => {
+    const valor = this.tituloProfesionalElegido();
+    return OPCIONES_TITULO_PROFESIONAL.find((opcion) => opcion.value === valor) ?? null;
+  });
+
+  /**
+   * Escribe la elección en el mismo control de siempre.
+   *
+   * Es la línea que conserva la cadena entera: `professionalTitle` →
+   * `regulatoryAuthority` → especialidades válidas. Escribir el título en un
+   * estado propio de la lupa la habría cortado en silencio.
+   */
+  elegirTituloProfesional(opcion: ReferenceOption | null): void {
+    this.formProfesional.controls.professionalTitle.setValue(opcion?.value ?? '');
+  }
+
+  /**
    * Las páginas del alta, en el orden que pide AC-05-1.
    *
    * ## El orden
@@ -553,13 +1420,16 @@ export class RegisterPractitioner {
    * (ADR-0021) y el repositorio del modelo no está en este workspace, así que
    * ninguna de estas columnas se puede promover desde este carril.
    *
-   * - **Segundo celular y segundo correo** (AC-05-6). `RegisterPractitionerDto`
-   *   declara **un** `phone` y **un** `email`; no hay segundo campo ni tabla de
-   *   puntos de contacto que los reciba.
-   * - **Zona, línea de dirección y GPS** de residencia (AC-05-8). El DTO del
-   *   profesional acepta `residenceMunicipalityConceptId` y nada más: no tiene
-   *   `homeAddressLines` ni el par de coordenadas que sí tiene el de paciente. Y
-   *   `common.addresses` no tiene columna de zona para ninguno de los dos.
+   * (**AC-05-6 ya no está en esta lista**: el celular y el correo personales,
+   * el celular y el fijo del trabajo y el correo de acceso son cinco campos
+   * distintos desde que la API los recibe por separado y los guarda como cinco
+   * filas de puntos de contacto, cada una con su par sistema × uso.)
+   * - **La zona** de residencia (AC-05-8). `common.addresses` no tiene columna
+   *   de zona para ninguno de los dos registros, así que sigue sin preguntarse.
+   *   La **línea de dirección y el GPS** salieron de esta lista el 08/09/2026:
+   *   la pantalla ya los pregunta, con el mismo bloque que el alta de paciente.
+   *   Lo que falta para que lleguen a destino es del lado de la API — ver el
+   *   aviso de `datosProfesional`.
    * - **La organización y su ubicación** (AC-05-9, -10, -11). El padrón existe
    *   (`VS_BO_HEALTH_FACILITY`, 642 establecimientos de Santa Cruz) y el vínculo
    *   también (`profiles.practitioner_affiliations`, con su estado
@@ -570,12 +1440,20 @@ export class RegisterPractitioner {
    *   set devuelve nombre y código —no la dirección ni el municipio del
    *   establecimiento—, así que el autocompletado de AC-05-9 no es alcanzable
    *   desde una pantalla sin sesión aunque el campo existiera.
-   * - **Las tres matrículas por separado** (AC-05-5). Hay **dos** números
-   *   (`licenseNumber`, `credentialNumber`) y **una** autoridad. Tres números en
-   *   paralelo son un modelo distinto —o tres filas de `common.identifiers`— y
-   *   eso es esquema.
-   * - **Universidad y otros títulos** (AC-05-13). Viven en `credentials`, detrás
-   *   de la sesión, con su propio endpoint. El alta pública no los recibe.
+   * - **Las tres matrículas por separado** (AC-05-5). Siguen siendo **dos**
+   *   números —`licenseNumber` (Ministerio, jurisdicción nacional) y
+   *   `sedesLicenseNumber` (SEDES, jurisdicción departamental)— y **una**
+   *   autoridad. El tercero, el registro del colegio profesional, todavía no
+   *   tiene dónde ir: sería una tercera fila de `common.identifiers`, y eso es
+   *   esquema. Lo que sí se corrigió es que el segundo dejara de archivarse
+   *   como título de grado: es una habilitación y vive con la matrícula.
+   * - **Universidad, lugar de estudio y otros títulos** (AC-05-13). La pantalla
+   *   los pregunta desde el 09/09 —para el título con el que ejerce y para cada
+   *   otra profesión, diplomado, maestría y doctorado que cargue— pero **no
+   *   viajan**: viven en `credentials`, detrás de la sesión, con su propio
+   *   endpoint, y el alta pública no los recibe. Dos de los tres tienen columna
+   *   (`issuing_institution_text`, `issuing_country_concept_id`); la **ciudad no
+   *   tiene ninguna**. Ver `docs/handoff/alta-profesional-titulos-y-adjuntos.md`.
    *
    * ## El tope de cuatro campos por página no se relaja (AC-05-2)
    *
@@ -583,36 +1461,46 @@ export class RegisterPractitioner {
    * `paginarCampos`: es la función la que hace cumplir el tope, y declararlo a
    * mano sería confiar en que quien agregue el campo trece se acuerde de contar.
    */
-  readonly paginasProfesional = computed<readonly PaginaDeFormulario[]>(() =>
-    paginarCampos([
+  readonly paginasProfesional = computed<readonly PaginaDeFormulario[]>(() => {
+    const titulo = this.tituloProfesionalElegido();
+    const esOdontologo = titulo === TITULO_ODONTOLOGO;
+    const esMedico = TITULOS_MEDICOS.has(titulo);
+
+    const rotuloMatricula = esOdontologo
+      ? 'Matrícula de Odontólogo'
+      : esMedico
+        ? 'Matrícula Profesional (Médico)'
+        : 'Matrícula profesional';
+
+    const hintMatricula = esOdontologo
+      ? 'La de tu habilitación profesional como odontólogo.'
+      : 'La que te habilita a ejercer, la del registro del Ministerio.';
+
+    const placeholderMatricula = esOdontologo ? 'ODO-12345' : 'MP-12345';
+
+    // El segundo número es el registro del SEDES, y no cambia con el título:
+    // el Servicio Departamental de Salud habilita a ejercer en su departamento
+    // sea odontólogo o médico. Antes acá se pedía «Registro del Colegio», pero
+    // lo que el padrón real trae en esa casilla —y lo que la gente cargaba— es
+    // el número del SEDES, que además es una habilitación y no un título.
+
+    return paginarCampos([
       {
         titulo: '¿Cómo te llamás?',
         clave: 'name',
         icon: 'people',
         hint: 'Como figura en tu documento. Si no tenés alguno, dejalo vacío.',
-        // De a dos por renglón, igual que en el alta de paciente: son las
-        // cuatro partes de un mismo nombre y ninguna necesita la fila entera.
+        // Nombres y apellidos van juntos en una página, como pide el registro
+        // del cliente. Los tres nombres entran en UN campo proyectado —bajo la
+        // `key` de `name`, para que el motor siga validando el obligatorio y
+        // sepa a qué página volver al enviar— porque son cuatro casillas y el
+        // tope del motor es de cuatro campos por página.
         campos: [
           {
             key: 'name',
-            label: 'Nombre',
-            control: 'text',
-            required: true,
-            autocomplete: 'given-name',
-            placeholder: 'Ana',
-            testId: 'registro-pro-nombre',
-            ancho: 'mitad',
+            label: '',
+            control: 'custom',
             mensajeDeError: 'Ingresá tu nombre.',
-          },
-          {
-            key: 'middleName',
-            label: 'Segundo nombre',
-            hint: 'Si no tenés, dejalo vacío.',
-            control: 'text',
-            autocomplete: 'additional-name',
-            placeholder: 'Lucía',
-            testId: 'registro-pro-segundo-nombre',
-            ancho: 'mitad',
           },
           {
             key: 'lastName',
@@ -641,11 +1529,12 @@ export class RegisterPractitioner {
         titulo: 'Tu documento de identidad',
         clave: 'document',
         icon: 'patients',
-        hint: 'Opcional. No es con lo que entrás: identifica a la persona detrás de la matrícula.',
+        hint: 'Los dos hacen falta. Identifican a la persona detrás de la matrícula.',
         campos: [
           {
             key: 'nationalId',
-            label: 'Cédula de identidad (opcional)',
+            label: 'Cédula de identidad',
+            required: true,
             hint: 'Se guarda como tu documento oficial.',
             description:
               'No es con lo que iniciás sesión —eso es tu correo—, pero es lo que ata tu matrícula a una persona.',
@@ -658,7 +1547,7 @@ export class RegisterPractitioner {
             // pareja que en el alta de paciente, y por lo mismo — el número y
             // su expedición son un solo documento.
             ancho: 'mitad',
-            mensajeDeError: 'Letras, números, punto y guion.',
+            mensajeDeError: 'Ingresá un documento válido: letras, números, punto y guion.',
           },
           this.campoDepartamentoEmisor('registro-pro-departamento-ci'),
         ],
@@ -667,76 +1556,111 @@ export class RegisterPractitioner {
         titulo: 'Contanos un poco sobre vos',
         clave: 'profile',
         icon: 'stethoscope',
-        hint: 'Opcional. Se guarda en tu perfil profesional.',
+        hint: 'Los dos hacen falta. Se guardan en tu perfil profesional.',
         campos: [
           {
             key: 'sexAtBirth',
-            label: 'Sexo (opcional)',
+            label: 'Sexo',
             hint: 'Es el que registra tu documento de identidad.',
             control: 'select',
+            required: true,
             options: OPCIONES_SEXO,
-            placeholder: 'Sin especificar',
+            placeholder: 'Elegí una opción',
             testId: 'registration-practitioner-sex',
             icono: 'heart',
+            mensajeDeError: 'Elegí una opción.',
           },
           {
             key: 'birthDate',
-            label: 'Fecha de nacimiento (opcional)',
+            label: 'Fecha de nacimiento',
             control: 'date',
+            required: true,
             maxDate: 'today',
             minDate: new Date(1900, 0, 1),
+            mensajeDeError: 'Indicá tu fecha de nacimiento.',
           },
         ],
       },
       {
-        titulo: 'Tu acceso y tu contacto',
-        clave: 'access',
-        icon: 'mail',
-        hint: 'Con este correo y esta contraseña vas a iniciar sesión.',
+        titulo: 'Cómo te contactamos en privado',
+        clave: 'personal-contact',
+        icon: 'phone',
+        hint: 'Los dos hacen falta, y con el correo entrás. Nada de esto se publica en tu ficha.',
         campos: [
           {
-            key: 'phone',
-            label: 'Tu celular (opcional)',
+            key: 'mobilePhone',
+            label: 'Tu celular personal',
+            required: true,
             hint: 'Elegí el país si tu número no es de Bolivia.',
             description:
-              'Es el número por el que te contactamos a vos, no el que ve un paciente en tu ficha.',
+              'Es el número por el que te contactamos a vos. El que ve un paciente es el de tu consultorio, que se pide en la página siguiente.',
             control: 'tel',
             autocomplete: 'tel',
-            testId: 'registro-pro-telefono',
+            testId: 'registro-pro-celular-personal',
             icono: 'phone',
             mensajeDeError: 'El número está incompleto para el país elegido.',
           },
-          // El segundo celular y el segundo correo que pide AC-05-6 no están:
-          // el DTO declara uno de cada. Ver el JSDoc de arriba.
           {
-            key: 'email',
-            label: 'Correo profesional',
-            hint: 'Con este correo vas a iniciar sesión.',
+            key: 'personalEmail',
+            label: 'Tu correo personal — con éste entrás',
+            hint: 'Es tu identidad de acceso, no sólo un dato de contacto.',
             description:
-              'Usá uno al que tengas acceso: es por donde se recupera la cuenta si perdés la clave.',
+              'Usá uno que sigas teniendo si cambiás de trabajo: es por donde se recupera la cuenta si perdés la clave.',
             control: 'email',
             required: true,
             // `username`: acá el correo SÍ es el identificador de acceso. Sin
-            // esto el navegador guardaba el número de credencial como usuario.
+            // esto el navegador guarda otra cosa como usuario.
             autocomplete: 'username',
+            placeholder: 'ana.rojas@gmail.com',
+            testId: 'registro-pro-correo-personal',
+            icono: 'mail',
+            mensajeDeError: 'Ingresá un correo válido.',
+          },
+        ],
+      },
+      {
+        titulo: 'El contacto de tu trabajo',
+        clave: 'access',
+        icon: 'phone',
+        hint: 'Los datos del consultorio. Todo opcional: tu acceso ya quedó definido.',
+        campos: [
+          {
+            key: 'workMobilePhone',
+            label: 'Celular del trabajo (opcional)',
+            hint: 'Elegí el país si tu número no es de Bolivia.',
+            control: 'tel',
+            autocomplete: 'tel',
+            testId: 'registro-pro-celular-trabajo',
+            icono: 'phone',
+            ancho: 'mitad',
+            mensajeDeError: 'El número está incompleto para el país elegido.',
+          },
+          {
+            key: 'workLandline',
+            label: 'Fijo del trabajo (opcional)',
+            hint: 'El de la línea del consultorio.',
+            control: 'tel',
+            autocomplete: 'tel',
+            testId: 'registro-pro-fijo-trabajo',
+            icono: 'phone',
+            ancho: 'mitad',
+            mensajeDeError: 'El número está incompleto para el país elegido.',
+          },
+          {
+            key: 'email',
+            label: 'Correo de trabajo (opcional)',
+            hint: 'El institucional, si tenés. No es con el que entrás.',
+            description:
+              'Es un dato de contacto del consultorio: lo ve quien necesita escribirte por trabajo.',
+            control: 'email',
+            // `email` y no `username`: el identificador de acceso es el correo
+            // personal del paso anterior. Marcar los dos como `username` haría
+            // que el navegador guardara el equivocado.
+            autocomplete: 'email',
             placeholder: 'matricula@hospital.bo',
             testId: 'registro-pro-correo',
             icono: 'mail',
             mensajeDeError: 'Ingresá un correo válido.',
-          },
-          {
-            key: 'password',
-            label: 'Contraseña',
-            hint: 'Al menos 8 caracteres.',
-            description:
-              'Se guarda cifrada: ni el equipo de AloVida puede verla, y nunca te la vamos a pedir por teléfono ni por correo.',
-            control: 'password',
-            required: true,
-            autocomplete: 'new-password',
-            placeholder: 'Tu contraseña',
-            testId: 'registro-pro-password',
-            icono: 'lock',
-            mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
           },
         ],
       },
@@ -744,14 +1668,141 @@ export class RegisterPractitioner {
         titulo: '¿Dónde vivís?',
         clave: 'residence',
         icon: 'home',
-        // Una sola pregunta: la localidad. La zona, la línea de dirección y el
-        // GPS que el orden también pide no tienen campo en el DTO del
-        // profesional — ver el JSDoc de arriba.
-        hint: 'Opcional. Nos deja mostrarte lo que tenés cerca.',
+        // Las mismas tres piezas que el alta de paciente: la localidad, la
+        // calle y el punto del mapa. Eran una sola —la localidad— mientras el
+        // DTO del profesional no tuvo dónde poner las otras dos; ver el aviso
+        // de `datosProfesional` sobre lo que la API tiene que aceptar antes de
+        // que esto llegue a `dev`.
+        //
+        // La **zona** sigue sin preguntarse, y eso no cambió: `common.addresses`
+        // no tiene columna de zona para ninguno de los dos registros.
+        hint: 'Tu localidad hace falta; la calle y el punto del mapa son opcionales.',
         campos: [
           {
             key: 'municipio',
             label: '',
+            control: 'custom',
+          },
+          {
+            key: 'homeAddressLines',
+            label: 'Línea de dirección 1 (opcional)',
+            hint: 'Como se lo dirías a quien te trae algo a casa.',
+            description:
+              'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
+            control: 'text',
+            autocomplete: 'street-address',
+            placeholder: 'Av. Banzer, 3er anillo #42',
+            testId: 'registration-practitioner-home-address',
+            icono: 'route',
+          },
+          {
+            key: 'gpsDomicilio',
+            label: 'Ubicación GPS (opcional)',
+            hint: 'Si la compartís, quien te busca llega sin llamarte.',
+            description: 'Marcá el punto exacto de tu casa y confirmalo para que quede guardado.',
+            control: 'custom',
+          },
+        ],
+      },
+      {
+        titulo: 'Tu consultorio propio',
+        clave: 'own-office',
+        icon: 'building',
+        // **Opcional, y aun así el que más importa** (punto 12/13/22 del módulo
+        // médico del registro de procesos). Quien ejerce puede atender en
+        // varios lugares, pero los demás son de otro: para figurar en una
+        // clínica hace falta que esa clínica acepte la vinculación, y hasta que
+        // eso pase su agenda no tiene dónde publicarse. El consultorio propio
+        // es el único lugar que no depende de que nadie confirme nada.
+        //
+        // Por eso se pregunta acá y no sólo en el perfil: quien se registra
+        // para empezar a atender lo necesita el primer día.
+        hint: 'Opcional. Es el lugar que no depende de que otro te acepte, y desde donde vas a poder publicar tu agenda.',
+        campos: [
+          {
+            key: 'officeName',
+            label: 'Cómo se llama (opcional)',
+            hint: 'El nombre con el que tus pacientes lo van a ver.',
+            description:
+              'Si no le ponés uno, no pasa nada: se puede completar después desde tu perfil.',
+            control: 'text',
+            placeholder: 'Consultorio Dr. Suárez',
+            testId: 'registration-practitioner-office-name',
+            icono: 'building',
+          },
+          {
+            key: 'municipioConsultorio',
+            label: '',
+            control: 'custom',
+          },
+          {
+            key: 'officeAddressLines',
+            label: 'Línea de dirección 1 (opcional)',
+            hint: 'Calle y número del consultorio.',
+            description:
+              'Es la dirección que ve un paciente antes de ir. El punto del mapa no la escribe solo.',
+            control: 'text',
+            placeholder: 'Calle Libertad #120, piso 2',
+            testId: 'registration-practitioner-office-address',
+            icono: 'route',
+          },
+          {
+            key: 'gpsConsultorio',
+            label: 'Ubicación GPS (opcional)',
+            hint: 'Con el punto, un paciente llega sin preguntar.',
+            description:
+              'Marcá el punto exacto del consultorio y confirmalo. Se confirma aparte del de tu casa.',
+            control: 'custom',
+          },
+        ],
+      },
+      {
+        titulo: 'Tu título profesional y foto',
+        clave: 'practice',
+        icon: 'teach',
+        // Página propia y no pegada a las especialidades: es la que DECIDE qué
+        // especialidades se ofrecen, y verlas cambiar en la misma pantalla en
+        // la que se elige el título hace pensar que algo se perdió.
+        //
+        // La universidad y el lugar de estudio SÍ se preguntan acá desde el
+        // 09/09: el propietario los pidió en el alta, no en el perfil. Siguen
+        // sin viajar —viven en `credentials`, detrás de la sesión— y el mapeo
+        // campo por campo está en `docs/handoff/`.
+        hint: 'Lo que van a ver tus pacientes. Podés cambiarlo cuando quieras.',
+        campos: [
+          {
+            key: 'profilePhotoBase64',
+            label: '',
+            control: 'custom',
+          },
+          {
+            key: 'professionalTitle',
+            label: 'Título profesional',
+            required: true,
+            mensajeDeError: 'Elegí tu título profesional en la lista.',
+            hint: 'Al elegirlo, la lista de especialidades y el colegio se acomodan solos.',
+            description:
+              'Es como aparecés en tu ficha pública. Sale de una lista cerrada para que la misma profesión no figure escrita de cuatro maneras distintas.',
+            // `custom` y no `select`: la pantalla proyecta acá una lupa. La
+            // lista sigue siendo cerrada —son doce— pero se busca escribiendo.
+            control: 'custom',
+            icono: 'teach',
+          },
+          {
+            // Universidad, país y ciudad en UN campo proyectado, como los
+            // nombres: son tres casillas y la página ya llegó al tope de
+            // cuatro con la foto, el título y su diploma. Van pegadas al
+            // título y no en una página propia porque las cuatro contestan la
+            // misma pregunta —qué estudiaste y dónde—, y partirlas obligaría a
+            // volver atrás para recordar de qué título se está hablando.
+            key: 'professionalTitleEducation',
+            label: 'Dónde lo estudiaste',
+            control: 'custom',
+          },
+          {
+            key: 'professionalTitleFile',
+            label: 'Diploma del título (opcional)',
+            hint: 'Podés adjuntarlo ahora o cargarlo después desde tu perfil.',
             control: 'custom',
           },
         ],
@@ -764,14 +1815,14 @@ export class RegisterPractitioner {
         campos: [
           {
             key: 'licenseNumber',
-            label: 'Matrícula profesional',
-            hint: 'La que te habilita a ejercer, la del registro del Ministerio.',
+            label: rotuloMatricula,
+            hint: hintMatricula,
             description:
               'Es la que comprobamos antes de que aparezcas en el directorio: es lo que le da certeza a quien te elige sin conocerte.',
             control: 'text',
             required: true,
             autocomplete: 'off',
-            placeholder: 'MP-12345',
+            placeholder: placeholderMatricula,
             testId: 'registro-pro-matricula',
             icono: 'shield',
             // Los dos números de la habilitación, en el mismo renglón: se
@@ -780,24 +1831,24 @@ export class RegisterPractitioner {
             mensajeDeError: 'Ingresá tu matrícula profesional.',
           },
           {
-            key: 'credentialNumber',
-            label: 'Número de colegio',
-            hint: 'El de tu colegio profesional.',
+            key: 'sedesLicenseNumber',
+            label: 'Registro del SEDES',
+            hint: 'El de tu habilitación departamental, como figura en tu título del SEDES.',
             control: 'text',
             required: true,
             autocomplete: 'off',
-            placeholder: 'TIT-6789',
+            placeholder: 'T.I. 538/14',
             testId: 'registro-pro-credencial',
             icono: 'briefcase',
             ancho: 'mitad',
-            mensajeDeError: 'Ingresá el número de tu colegio.',
+            mensajeDeError: 'Ingresá tu número de registro del SEDES.',
           },
           {
             key: 'regulatoryAuthority',
             label: 'Autoridad que la emitió (opcional)',
-            hint: 'Quién emitió tu matrícula.',
+            hint: 'El Ministerio de Salud, el SEDES de tu gobernación o el colegio de tu profesión.',
             control: 'select',
-            options: OPCIONES_AUTORIDAD_REGULADORA,
+            options: opcionesAutoridadReguladora(titulo),
             placeholder: 'Sin especificar',
             testId: 'registro-pro-autoridad',
             icono: 'building',
@@ -810,29 +1861,33 @@ export class RegisterPractitioner {
           },
         ],
       },
+      // Página propia y no dos campos más en la anterior: `MAX_CAMPOS_POR_PAGINA`
+      // ya está lleno ahí (cuatro), y un adjunto ocupa mucho más alto que un
+      // input. Va inmediatamente después para que cada archivo se vea al lado
+      // del número que respalda.
       {
-        titulo: 'Tu título profesional',
-        clave: 'practice',
-        icon: 'teach',
-        // Página propia y no pegada a las especialidades: es la que DECIDE qué
-        // especialidades se ofrecen, y verlas cambiar en la misma pantalla en
-        // la que se elige el título hace pensar que algo se perdió.
-        //
-        // La universidad y los otros títulos que el orden pide junto a esto
-        // (AC-05-13) no están: viven en `credentials`, detrás de la sesión.
-        hint: 'Lo que van a ver tus pacientes. Podés cambiarlo cuando quieras.',
+        titulo: 'Los respaldos de tu habilitación',
+        clave: 'credential-files',
+        icon: 'folder',
+        hint: 'Opcional al registrarte. Un administrativo los verifica después.',
         campos: [
           {
-            key: 'professionalTitle',
-            label: 'Título profesional (opcional)',
-            hint: 'Al elegirlo, la lista de especialidades y el colegio se acomodan solos.',
-            description:
-              'Es como aparecés en tu ficha pública. Sale de una lista cerrada para que la misma profesión no figure escrita de cuatro maneras distintas.',
-            control: 'select',
-            options: OPCIONES_TITULO_PROFESIONAL,
-            placeholder: 'Sin especificar',
-            testId: 'registro-pro-titulo',
-            icono: 'teach',
+            key: 'credentialAttachments',
+            label: 'Respaldos',
+            control: 'custom',
+          },
+        ],
+      },
+      {
+        titulo: 'Tus títulos',
+        clave: 'academic-titles',
+        icon: 'teach',
+        hint: 'Todos opcionales, y podés cargar más de uno de cada tipo.',
+        campos: [
+          {
+            key: 'academicTitles',
+            label: 'Títulos',
+            control: 'custom',
           },
         ],
       },
@@ -840,7 +1895,7 @@ export class RegisterPractitioner {
         titulo: 'Tus especialidades',
         clave: 'specialties',
         icon: 'directory',
-        hint: 'Hasta tres. Son lo que un paciente busca cuando necesita a alguien como vos.',
+        hint: 'Las que hagan falta. Son lo que un paciente busca cuando necesita a alguien como vos.',
         campos: [
           {
             key: 'specialtyPrimary',
@@ -852,26 +1907,44 @@ export class RegisterPractitioner {
             testId: 'registro-pro-especialidad-1',
             icono: 'stethoscope',
           },
+          // Sin control propio: es una ranura que la plantilla llena con las
+          // casillas agregadas y su botón. Mismo mecanismo que `municipio`.
           {
-            key: 'specialtySecond',
-            label: 'Segunda especialidad (opcional)',
-            control: 'select',
-            options: this.opcionesEspecialidadFiltradas(),
-            placeholder: 'Sin especificar',
-            testId: 'registro-pro-especialidad-2',
-          },
-          {
-            key: 'specialtyThird',
-            label: 'Tercera especialidad (opcional)',
-            control: 'select',
-            options: this.opcionesEspecialidadFiltradas(),
-            placeholder: 'Sin especificar',
-            testId: 'registro-pro-especialidad-3',
+            key: 'especialidadesExtra',
+            label: '',
+            control: 'custom',
           },
         ],
       },
-    ]),
-  );
+      // La contraseña cierra el alta, sola. Estaba en el paso del correo de
+      // trabajo, mezclada con los teléfonos del consultorio: el mismo paso
+      // pedía datos de contacto —que son del trabajo y opcionales— y la clave
+      // de la cuenta, que no es ninguna de las dos cosas. Separarla también
+      // deja el gesto de «elegir contraseña» pegado al de terminar.
+      {
+        titulo: 'Tu contraseña',
+        clave: 'password',
+        icon: 'lock',
+        hint: 'Lo último. Con ella y tu correo personal vas a iniciar sesión.',
+        campos: [
+          {
+            key: 'password',
+            label: 'Contraseña',
+            hint: 'Al menos 8 caracteres.',
+            description:
+              'Se guarda cifrada: ni el equipo de AloVida puede verla, y nunca te la vamos a pedir por teléfono ni por correo.',
+            control: 'password',
+            required: true,
+            autocomplete: 'new-password',
+            placeholder: 'Tu contraseña',
+            testId: 'registro-pro-password',
+            icono: 'lock',
+            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
+          },
+        ],
+      },
+    ]);
+  });
 
   /**
    * El campo del departamento que emitió el documento.
@@ -888,8 +1961,10 @@ export class RegisterPractitioner {
   private campoDepartamentoEmisor(testId: string): CampoDeFormulario {
     const base = {
       key: 'issuerAdministrativeAreaConceptId',
-      label: 'Departamento de emisión (opcional)',
+      label: 'Departamento de emisión',
+      required: true,
       hint: 'El «SC», «LP»... de tu cédula.',
+      mensajeDeError: 'Elegí el departamento que expidió tu cédula.',
     } as const;
 
     return this.catalogoDepartamentosCaido()
@@ -902,7 +1977,7 @@ export class RegisterPractitioner {
           ...base,
           control: 'select',
           options: this.opcionesDepartamento(),
-          placeholder: 'Sin especificar',
+          placeholder: 'Elegí el departamento',
           testId,
           // La otra mitad del renglón del documento. Ver la página que lo usa.
           ancho: 'mitad',
@@ -964,6 +2039,7 @@ export class RegisterPractitioner {
     this.cargarDepartamentos();
     this.cargarMunicipios();
     this.cargarEspecialidades();
+    this.cargarTiposDeCredencial();
     this.acomodarColegioYEspecialidades();
 
     // El aviso de un envío fallido se va en cuanto se corrige algo.
@@ -997,28 +2073,38 @@ export class RegisterPractitioner {
       // limpieza de más abajo.
       this.tituloProfesionalElegido.set(valor);
 
-      const esOdontologo = valor === TITULO_ODONTOLOGO;
-      if (esOdontologo && (autoridad.value === '' || autoridad.value === COLEGIO_MEDICO)) {
-        autoridad.setValue(COLEGIO_ODONTOLOGOS);
-      } else if (
-        TITULOS_MEDICOS.has(valor) &&
-        (autoridad.value === '' || autoridad.value === COLEGIO_ODONTOLOGOS)
-      ) {
-        autoridad.setValue(COLEGIO_MEDICO);
+      // El colegio sigue a la profesión: la opción «Colegio de la profesión»
+      // lleva el nombre del colegio de ese título. Vacía, se llena sólo si el
+      // título tiene colegio conocido; un colegio ya elegido se cambia por el
+      // del título nuevo. Ministerio o SEDES, elegidos a mano, no se tocan.
+      const colegio = colegioDelTitulo(valor);
+      const actual = autoridad.value;
+      const cambiar =
+        actual === '' ? colegio !== COLEGIO_DE_LA_PROFESION : esColegio(actual) && actual !== colegio;
+      if (cambiar) {
+        autoridad.setValue(colegio);
       }
 
+      // Cambiar de profesión cambia la lista que se ofrece, así que lo ya
+      // elegido que dejó de estar en ella se vacía. Alcanza también a las
+      // casillas agregadas: si no, quedarían mostrando una especialidad que el
+      // desplegable ya no ofrece.
       const validas = new Set(this.opcionesEspecialidadFiltradas().map((o) => o.value));
       for (const control of this.controlesDeEspecialidad()) {
         if (control.value !== '' && !validas.has(control.value)) {
           control.setValue('');
         }
       }
+      this.especialidadesExtra.update((actuales) =>
+        actuales.map((especialidad) =>
+          especialidad !== '' && !validas.has(especialidad) ? '' : especialidad,
+        ),
+      );
     });
   }
 
   private controlesDeEspecialidad() {
-    const c = this.formProfesional.controls;
-    return [c.specialtyPrimary, c.specialtySecond, c.specialtyThird] as const;
+    return [this.formProfesional.controls.specialtyPrimary] as const;
   }
 
   /**
@@ -1036,6 +2122,60 @@ export class RegisterPractitioner {
           ? todas.filter((o) => ESPECIALIDADES_ODONTOLOGICAS.has(o.code))
           : todas.filter((o) => !ESPECIALIDADES_ODONTOLOGICAS.has(o.code));
     return filtradas.map(({ value, label }) => ({ value, label }));
+  }
+
+  /**
+   * El consultorio propio tal como viaja en el alta, o `null` si no declaró
+   * ninguno.
+   *
+   * ## Qué cuenta como «declaró uno»
+   *
+   * **Cualquiera de las cuatro piezas.** La página entera es opcional, así que
+   * lo que decide no es un campo obligatorio sino que haya algo que guardar: un
+   * nombre, una localidad, una calle o un punto. Exigir el nombre habría hecho
+   * que quien completa la dirección y se olvida del rótulo pierda lo escrito
+   * sin que nadie se lo diga, que es la clase de silencio que este alta ya
+   * corrigió en otros dos sitios.
+   *
+   * Sin nombre se manda el genérico: el backend lo exige (`NewOwnSite.name`) y
+   * un consultorio sin rótulo se sigue pudiendo renombrar desde el perfil.
+   *
+   * ## La forma es la de `NewOwnSite`, no una nueva
+   *
+   * Es exactamente el cuerpo que ya recibe `POST /practitioners/me/sites`
+   * (ALV-005/006) y que arma «Mi perfil → dónde trabajo». No se inventa un
+   * contrato: el alta pública no puede llamar a esa ruta —no hay sesión
+   * todavía, el registro termina en el login— así que el dato viaja adentro del
+   * alta y el backend reutiliza el mismo servicio.
+   */
+  private consultorioPropio(): NewOwnSite | null {
+    const raw = this.formProfesional.getRawValue();
+    const nombre = raw.officeName.trim();
+    const calle = raw.officeAddressLines.trim();
+    const municipio = this.municipioConsultorio();
+    const punto = this.gpsConsultorio();
+
+    if (nombre === '' && calle === '' && municipio === null && punto === null) {
+      return null;
+    }
+
+    // La dirección sólo viaja si tiene algo adentro: una dirección vacía no es
+    // «sin dirección», es una fila vacía en `common.addresses`. Es la misma
+    // regla que ya aplica `work-history.ts` al registrar una sede.
+    const conDireccion = calle !== '' || municipio !== null || punto !== null;
+
+    return {
+      name: nombre === '' ? NOMBRE_CONSULTORIO_POR_OMISION : nombre,
+      ...(conDireccion
+        ? {
+            address: {
+              lines: calle === '' ? [] : [calle],
+              ...(municipio === null ? {} : { municipalityConceptId: municipio }),
+              ...(punto === null ? {} : { latitude: punto.lat, longitude: punto.lng }),
+            },
+          }
+        : {}),
+    };
   }
 
   /** Ver el constructor. Se llama desde ahí: `takeUntilDestroyed` pide contexto de inyección. */
@@ -1134,6 +2274,8 @@ export class RegisterPractitioner {
     this.cargarDepartamentos();
   }
 
+
+
   /* ---- Envío ------------------------------------------------------------- */
 
   /**
@@ -1150,6 +2292,43 @@ export class RegisterPractitioner {
 
     if (this.formProfesional.invalid) {
       this.formProfesional.markAllAsTouched();
+      return;
+    }
+
+    // Una fila de título sin número no se puede guardar —la columna es NOT
+    // NULL—, así que el alta se frena acá y lo dice, en vez de mandarla y que
+    // la API la rechace entera. Quitar la fila es la otra salida.
+    //
+    // El aviso va por el MISMO canal que el error de envío (`state` →
+    // `errorMessage()` → `app-alert` con `appAnuncio`), que ya se anuncia a
+    // lectores de pantalla y vive fuera del motor, así que se ve desde
+    // cualquier paso. Nombra el paso al que hay que volver porque el índice de
+    // pasos es navegable (`interactiveSteps`): el motor **no** expone una vía
+    // para saltar de página desde afuera, y abrirla sería tocar un organismo
+    // que usan las otras altas.
+    if (this.hayTitulosSinNumero()) {
+      this.state.set(
+        validation([
+          {
+            field: 'academicTitles',
+            message:
+              'Volvé al paso «Tus títulos»: cada título necesita su número de diploma. Completalo o quitá la fila.',
+          },
+        ]),
+      );
+      return;
+    }
+    // Y tampoco se manda si el catálogo de tipos no cargó: la fila viajaría sin
+    // tipo, que el contrato exige, o se perdería en silencio.
+    //
+    // El aviso nombra el botón que de verdad reintenta. Antes decía «volvé al
+    // paso y reintentá en unos segundos», y volver de paso no pedía nada: el
+    // catálogo se leía una sola vez en el constructor, así que quien caía acá
+    // no tenía salida sin recargar la página.
+    if (this.hayTitulosSinTipo()) {
+      this.state.set(
+        validation([{ field: 'academicTitles', message: this.avisoCatalogoDeTipos }]),
+      );
       return;
     }
 
@@ -1178,8 +2357,12 @@ export class RegisterPractitioner {
   private datosProfesional(): PractitionerRegistration {
     const raw = this.formProfesional.getRawValue();
     const titulo = raw.professionalTitle.trim();
-    const telefono = raw.phone.trim();
-    const segundoNombre = raw.middleName.trim();
+    const celularPersonal = raw.mobilePhone.trim();
+    const celularTrabajo = raw.workMobilePhone.trim();
+    const fijoTrabajo = raw.workLandline.trim();
+    const correoPersonal = raw.personalEmail.trim();
+    const correoTrabajo = raw.email.trim();
+    const segundoNombre = this.nombresAdicionales();
     const apellidoMaterno = raw.motherLastName.trim();
     const documento = raw.nationalId.trim();
     const autoridad = raw.regulatoryAuthority.trim();
@@ -1187,10 +2370,24 @@ export class RegisterPractitioner {
     const fechaInscripcion = raw.licenseIssueDate;
     const departamento = raw.issuerAdministrativeAreaConceptId;
     const municipio = this.municipioProfesional();
+    const calleDomicilio = raw.homeAddressLines.trim();
+    const gpsDomicilio = this.gpsDomicilio();
+    const consultorio = this.consultorioPropio();
     const sexoAlNacer = raw.sexAtBirth;
+    const foto = raw.profilePhotoBase64;
 
     return {
-      email: raw.email.trim(),
+      // `email` del DTO es el campo de LOGIN de la API, y desde este cambio el
+      // login es el correo personal: es el que el profesional conserva aunque
+      // cambie de hospital. El institucional viaja aparte, en `workEmail`.
+      //
+      // OJO AL PASE A `dev`: hoy el DTO de la API documenta lo contrario
+      // —«Correo de trabajo; es la identidad de login del profesional»— y NO
+      // declara `workEmail`, así que con `forbidNonWhitelisted` rechazaría el
+      // alta entera. La API tiene que aceptar `workEmail` (opcional, se guarda
+      // como contacto de uso `CONTACT_USE_WORK`, que ya existe) ANTES de que
+      // esta rama llegue a `dev`.
+      email: correoPersonal,
       password: raw.password,
       name: raw.name.trim(),
       lastName: raw.lastName.trim(),
@@ -1198,22 +2395,55 @@ export class RegisterPractitioner {
       ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
       ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
       ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
+      ...(foto ? { profilePhotoBase64: foto } : {}),
       ...(documento === '' ? {} : { nationalId: documento }),
       // Sólo tiene sentido con documento: sin CI no hay identificador al que
       // atarle un departamento de emisión.
-      ...(documento === '' || departamento === null
-        ? {}
-        : { issuerAdministrativeAreaConceptId: departamento }),
+      ...(documento !== '' && departamento !== null
+        ? { issuerAdministrativeAreaConceptId: departamento }
+        : {}),
       ...(municipio === null ? {} : { residenceMunicipalityConceptId: municipio }),
+      // La calle y el punto del domicilio (AC-05-8).
+      //
+      // OJO AL PASE A `dev`, igual que `workEmail`: `RegisterPractitionerDto`
+      // hoy acepta `residenceMunicipalityConceptId` y nada más, y con
+      // `forbidNonWhitelisted: true` (ver `main.ts`) tres claves que no
+      // declara **rechazan el alta entera con 400**. No es que el dato se
+      // pierda: no se registra nadie. La API tiene que aceptar
+      // `homeAddressLines`, `homeLatitude` y `homeLongitude` —los tres ya
+      // existen en `RegisterPatientDto`, son copiables tal cual— ANTES de que
+      // esta rama llegue a `dev`. Está anotado en `PENDIENTES-BACKEND.md`.
+      //
+      // El punto viaja sólo si se confirmó sobre el mapa: `gpsDomicilio` es lo
+      // que emite `app-ubicacion-picker`, y ese sólo emite lo confirmado.
+      ...(calleDomicilio === '' ? {} : { homeAddressLines: calleDomicilio }),
+      ...(gpsDomicilio === null
+        ? {}
+        : { homeLatitude: gpsDomicilio.lat, homeLongitude: gpsDomicilio.lng }),
+      // El consultorio propio, si declaró alguno. Ver `consultorioPropio()`.
+      ...(consultorio === null ? {} : { ownSite: consultorio }),
       licenseNumber: raw.licenseNumber.trim(),
-      credentialNumber: raw.credentialNumber.trim(),
+      sedesLicenseNumber: raw.sedesLicenseNumber.trim(),
       ...(autoridad === '' ? {} : { regulatoryAuthority: autoridad }),
       ...(fechaInscripcion === null ? {} : { licenseIssueDate: fechaIso(fechaInscripcion) }),
       ...(titulo === '' ? {} : { professionalTitle: titulo }),
-      ...(telefono === '' ? {} : { phone: telefono }),
+      // Los cuatro contactos por separado. `phone` ya no viaja: era el campo
+      // único que mezclaba el número privado con el del consultorio, y la API
+      // lo mantiene sólo por compatibilidad con clientes anteriores.
+      ...(celularPersonal === '' ? {} : { mobilePhone: celularPersonal }),
+      ...(celularTrabajo === '' ? {} : { workMobilePhone: celularTrabajo }),
+      ...(fijoTrabajo === '' ? {} : { workLandline: fijoTrabajo }),
+      ...(correoTrabajo === '' ? {} : { workEmail: correoTrabajo }),
       ...(this.especialidadesElegidas().length === 0
         ? {}
         : { specialtyConceptIds: this.especialidadesElegidas() }),
+      // Los títulos declarados (subtarea 1.6). Sólo viaja lo que hoy tiene
+      // dónde guardarse: tipo, número e institución. El nombre del título, el
+      // país, la ciudad y el diploma se siguen preguntando y **no** viajan:
+      // ninguno tiene columna sin cambiar el modelo.
+      ...(this.credencialesDeclaradas().length === 0
+        ? {}
+        : { credentials: this.credencialesDeclaradas() }),
     };
   }
 
@@ -1222,9 +2452,12 @@ export class RegisterPractitioner {
    * formulario es la principal, y elegir la misma dos veces declara una.
    */
   private especialidadesElegidas(): readonly string[] {
-    const elegidas = this.controlesDeEspecialidad()
-      .map((control) => control.value)
-      .filter((valor) => valor !== '');
+    // El orden importa: la primera del arreglo es la que el backend guarda
+    // como principal, así que la del control va siempre adelante.
+    const elegidas = [
+      ...this.controlesDeEspecialidad().map((control) => control.value),
+      ...this.especialidadesExtra(),
+    ].filter((valor) => valor !== '');
     return [...new Set(elegidas)];
   }
 }

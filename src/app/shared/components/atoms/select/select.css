@@ -1,5 +1,5 @@
 /* ============================================================================
-    Select — Vanilla CSS con tokens REDSAT
+    Select — Vanilla CSS con tokens ALOVIDA
     ========================================================================== */
 
 :host {
@@ -17,7 +17,7 @@
   border: 1.5px solid var(--border-strong);
   border-radius: var(--r-sm);
   padding: 0 var(--sp-4);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  transition: border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard);
   box-sizing: border-box;
 }
 
@@ -79,7 +79,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   :host ::ng-deep [slot='icon-start'] {
-    transition: color 0.15s ease;
+    transition: color var(--dur-fast) var(--ease-standard);
   }
 }
 
@@ -97,7 +97,7 @@
 .select-arrow svg {
   width: 18px;
   height: 18px;
-  transition: transform 0.15s ease;
+  transition: transform var(--dur-fast) var(--ease-standard);
 }
 
 /* ESTADOS */

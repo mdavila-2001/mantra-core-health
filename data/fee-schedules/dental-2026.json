@@ -1,0 +1,1127 @@
+[
+  {
+    "code": "ODO26-D-0001",
+    "display": "Consulta inicial: Examen clínico y plan de tratamiento",
+    "specialty": "Odontología · Diagnóstico",
+    "group": "Examen clínico",
+    "referencePrice": "10.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-D-0002",
+    "display": "Urgencias nocturnas: Sábados, Domingos y Feriados",
+    "specialty": "Odontología · Diagnóstico",
+    "group": "Examen clínico",
+    "referencePrice": "30.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-D-0003",
+    "display": "Falta a la consulta",
+    "specialty": "Odontología · Diagnóstico",
+    "group": "Examen clínico",
+    "referencePrice": "20.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-D-0004",
+    "display": "Modelos de estudio (par)",
+    "specialty": "Odontología · Diagnóstico",
+    "group": "Examen clínico",
+    "referencePrice": "40.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-R-0001",
+    "display": "Periapical",
+    "specialty": "Odontología · Radiología",
+    "group": null,
+    "referencePrice": "10.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-R-0002",
+    "display": "Interproximal (bite-wing)",
+    "specialty": "Odontología · Radiología",
+    "group": null,
+    "referencePrice": "10.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-R-0003",
+    "display": "Oclusal",
+    "specialty": "Odontología · Radiología",
+    "group": null,
+    "referencePrice": "15.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-R-0004",
+    "display": "Slides (unidades)",
+    "specialty": "Odontología · Radiología",
+    "group": null,
+    "referencePrice": "5.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-R-0005",
+    "display": "Fotografía (unidad)",
+    "specialty": "Odontología · Radiología",
+    "group": null,
+    "referencePrice": "5.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0001",
+    "display": "Profilaxis: Tartrectomía y pulimiento coronario (4 hemiarcadas)",
+    "specialty": "Odontología · Prevención",
+    "group": null,
+    "referencePrice": "40.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0002",
+    "display": "Orientación de higiene bucal",
+    "specialty": "Odontología · Prevención",
+    "group": null,
+    "referencePrice": "20.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0003",
+    "display": "Aplicación tópica de flúor",
+    "specialty": "Odontología · Prevención",
+    "group": null,
+    "referencePrice": "20.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0004",
+    "display": "Control de placa bacteriana (por sesión)",
+    "specialty": "Odontología · Prevención",
+    "group": null,
+    "referencePrice": "20.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-O-0001",
+    "display": "Aplicación de flúor (4 hemiarcadas)",
+    "specialty": "Odontología · Odontopediatría",
+    "group": null,
+    "referencePrice": "40.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-O-0002",
+    "display": "Aplicación de sellante (por elemento)",
+    "specialty": "Odontología · Odontopediatría",
+    "group": null,
+    "referencePrice": "20.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-O-0003",
+    "display": "Aplicación de sellante técnica invasiva por elemento",
+    "specialty": "Odontología · Odontopediatría",
+    "group": null,
+    "referencePrice": "25.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-O-0004",
+    "display": "Aplicación de cariostático, 1 sesión, 4 hemiarcadas",
+    "specialty": "Odontología · Odontopediatría",
+    "group": null,
+    "referencePrice": "20.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-O-0005",
+    "display": "Remineralización-fluorterapia (4 sesiones)",
+    "specialty": "Odontología · Odontopediatría",
+    "group": null,
+    "referencePrice": "80.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-O-0006",
+    "display": "Restauración de ionómero de vidrio",
+    "specialty": "Odontología · Odontopediatría",
+    "group": null,
+    "referencePrice": "30.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-O-0007",
+    "display": "Restauración preventiva (ionómero + sellante)",
+    "specialty": "Odontología · Odontopediatría",
+    "group": null,
+    "referencePrice": "30.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-O-0008",
+    "display": "Corona de acero",
+    "specialty": "Odontología · Odontopediatría",
+    "group": null,
+    "referencePrice": "60.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-O-0009",
+    "display": "Pulpotomia",
+    "specialty": "Odontología · Odontopediatría",
+    "group": null,
+    "referencePrice": "50.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-O-0010",
+    "display": "Tratamiento endodóncico de dientes deciduos",
+    "specialty": "Odontología · Odontopediatría",
+    "group": null,
+    "referencePrice": "60.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-O-0011",
+    "display": "Exodoncia de dientes deciduos",
+    "specialty": "Odontología · Odontopediatría",
+    "group": null,
+    "referencePrice": "25.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-O-0012",
+    "display": "Mantenedor de espacio",
+    "specialty": "Odontología · Odontopediatría",
+    "group": null,
+    "referencePrice": "120.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-O-0013",
+    "display": "Acondicionamiento en odontopediatría (por sesión, máximo dos)",
+    "specialty": "Odontología · Odontopediatría",
+    "group": null,
+    "referencePrice": "30.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-O-0014",
+    "display": "Ulectomia",
+    "specialty": "Odontología · Odontopediatría",
+    "group": null,
+    "referencePrice": "40.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-DO-0001",
+    "display": "Restauración simple de amalgama",
+    "specialty": "Odontología · Dentística operatoria",
+    "group": null,
+    "referencePrice": "30.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-DO-0002",
+    "display": "Restauración compuesta de amalgama",
+    "specialty": "Odontología · Dentística operatoria",
+    "group": null,
+    "referencePrice": "35.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-DO-0003",
+    "display": "Restauración de resina fotopolimerizable en una superficie",
+    "specialty": "Odontología · Dentística operatoria",
+    "group": null,
+    "referencePrice": "35.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-DO-0004",
+    "display": "Restauración de resina fotopolimerizable en dos superficies",
+    "specialty": "Odontología · Dentística operatoria",
+    "group": null,
+    "referencePrice": "40.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-DO-0005",
+    "display": "Restauración de resina fotopolimerizable en tres superficies",
+    "specialty": "Odontología · Dentística operatoria",
+    "group": null,
+    "referencePrice": "50.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-DO-0006",
+    "display": "Carilla en resina compuesta",
+    "specialty": "Odontología · Dentística operatoria",
+    "group": null,
+    "referencePrice": "60.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-DO-0007",
+    "display": "Núcleo con relleno en ionómero en vidrio, en resina fotopolimerizable o en amalgama.",
+    "specialty": "Odontología · Dentística operatoria",
+    "group": null,
+    "referencePrice": "50.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-DO-0008",
+    "display": "Ajuste oclusal (por sesión)",
+    "specialty": "Odontología · Dentística operatoria",
+    "group": null,
+    "referencePrice": "30.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-DO-0009",
+    "display": "Pino de retención intra-radicular",
+    "specialty": "Odontología · Dentística operatoria",
+    "group": null,
+    "referencePrice": "50.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-E-0001",
+    "display": "Tratamiento endodóncico de incisivo o canino",
+    "specialty": "Odontología · Endodoncia",
+    "group": null,
+    "referencePrice": "80.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-E-0002",
+    "display": "Tratamiento endodóncico de premolar",
+    "specialty": "Odontología · Endodoncia",
+    "group": null,
+    "referencePrice": "90.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-E-0003",
+    "display": "Tratamiento endodóncico de molar",
+    "specialty": "Odontología · Endodoncia",
+    "group": null,
+    "referencePrice": "100.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-E-0004",
+    "display": "Retratamiento endodóncico de incisivo o canino",
+    "specialty": "Odontología · Endodoncia",
+    "group": null,
+    "referencePrice": "90.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-E-0005",
+    "display": "Retratamiento endodóncico de premolar",
+    "specialty": "Odontología · Endodoncia",
+    "group": null,
+    "referencePrice": "100.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-E-0006",
+    "display": "Retratamiento endodóncico de molar",
+    "specialty": "Odontología · Endodoncia",
+    "group": null,
+    "referencePrice": "110.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-E-0007",
+    "display": "Tratamiento de perforación",
+    "specialty": "Odontología · Endodoncia",
+    "group": null,
+    "referencePrice": "50.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-E-0008",
+    "display": "Remoción de perno intraradicular (por elemento)",
+    "specialty": "Odontología · Endodoncia",
+    "group": null,
+    "referencePrice": "30.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-E-0009",
+    "display": "Protección pulpar (excluida la restauración final)",
+    "specialty": "Odontología · Endodoncia",
+    "group": null,
+    "referencePrice": "20.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-E-0010",
+    "display": "Pulpotomia",
+    "specialty": "Odontología · Endodoncia",
+    "group": null,
+    "referencePrice": "50.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-E-0011",
+    "display": "Clareamiento (por elemento)",
+    "specialty": "Odontología · Endodoncia",
+    "group": null,
+    "referencePrice": "70.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-E-0012",
+    "display": "Preparación para perno intraradicular",
+    "specialty": "Odontología · Endodoncia",
+    "group": null,
+    "referencePrice": "30.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-E-0013",
+    "display": "Tratamiento de dientes con rizogénesis incompleta (por sesión)",
+    "specialty": "Odontología · Endodoncia",
+    "group": null,
+    "referencePrice": "30.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-E-0014",
+    "display": "Urgencia endodóncica (pulpectomia) (independiente de la secuencia del tratamiento.",
+    "specialty": "Odontología · Endodoncia",
+    "group": null,
+    "referencePrice": "50.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0005",
+    "display": "Tratamiento no quirúrgico de periodontitis leve (por sextante)",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "40.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0006",
+    "display": "Tratamiento de proceso agudo (por sesión)",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "45.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0007",
+    "display": "Drenaje de absceso periodontal",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "40.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0008",
+    "display": "Control de placa bacteriana (por sesión)",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "20.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0009",
+    "display": "Desensibilización dentinaria (por sextante)",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "30.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0010",
+    "display": "Inmovilización dentaria con resina fotopoliremizable (3 dientes)",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "50.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0011",
+    "display": "Ajuste oclusal (por sesión)",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "50.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0012",
+    "display": "Remoción de factores de retención",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "40.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0013",
+    "display": "Placa de mordida miorelajante",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "100.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0014",
+    "display": "Gingivectomia (por sextante)",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "80.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0015",
+    "display": "Cirugía a colgajo (por sextante)",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "90.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0016",
+    "display": "Sepultamiento radicular (por raíz)",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "90.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0017",
+    "display": "Cuña distal o inter-proximal",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "70.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0018",
+    "display": "Extensión de vestíbulo (por segmento)",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "40.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0019",
+    "display": "Frenectomia o bridectomia",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "70.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0020",
+    "display": "Odonto-sección (por elemento)",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "80.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0021",
+    "display": "Amputación radicular sin retro-obturación, por raíz (apicectomía)",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "110.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0022",
+    "display": "Amputación radicular con retro-obturación por raíz (apicectomía)",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": "120.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-P-0023",
+    "display": "Gingivoplastia",
+    "specialty": "Odontología · Periodoncia",
+    "group": null,
+    "referencePrice": null,
+    "priceUnit": null,
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0001",
+    "display": "Planeamiento en prótesis (modelos de estudio y montaje en articulador semiajustable)",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "100.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0002",
+    "display": "Enceramiento de diagnóstico (por arcada)",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "50.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0003",
+    "display": "Ajuste oclusal (por sesión)",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "50.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0004",
+    "display": "Incrustación metálica fundida",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "120.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0005",
+    "display": "Restauración inlay y onlay de porcelana",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "250.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0006",
+    "display": "Restauración inlay y onlay de resina",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "150.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0007",
+    "display": "Remoción de restauraciones metálicas o coronas",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "20.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0008",
+    "display": "Recementación de restauración metálica fundida o coronas",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "20.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0009",
+    "display": "Perno muñón fundido uniradicular",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "60.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0010",
+    "display": "Perno muñón fundido multiradicular",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "80.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0011",
+    "display": "Corona provisional",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "40.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0012",
+    "display": "Rebasado provisional",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "20.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0013",
+    "display": "Corona Jacket de acrílico",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "100.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0014",
+    "display": "Corona Jacket de cerámica pura",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "250.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0015",
+    "display": "Corona metalo cerámica",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "180.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0016",
+    "display": "Corona de Veneer",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "120.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0017",
+    "display": "Corona total metálica",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "100.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0018",
+    "display": "Corona ¾ o 4/5",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "120.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0019",
+    "display": "Facetas laminadas de porcelana (carillas)",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "250.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0020",
+    "display": "Puente fijo métalo cerámico (por elemento)",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "180.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0021",
+    "display": "Puente fijo métalo plástico (por elemento)",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "120.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0022",
+    "display": "Puente fijo adhesivo directo",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "200.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0023",
+    "display": "Prótesis parcial removible provisional en acrílico",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "100.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0024",
+    "display": "Prótesis parcial removible en Cr. Cb.",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "250.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0025",
+    "display": "Rebasado de prótesis total o parcial",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "80.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0026",
+    "display": "Prótesis total por maxilar",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "250.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0027",
+    "display": "Prótesis total caracterizada",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "300.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0028",
+    "display": "Prótesis total inmediata por maxilar",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "120.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0029",
+    "display": "Placa de mordida miorelajante",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "100.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0030",
+    "display": "Jig o front-plato",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "30.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0031",
+    "display": "Reparación en prótesis total o parcial",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": "60.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0032",
+    "display": "Carilla de Porcelana",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": null,
+    "priceUnit": null,
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-PRO-0033",
+    "display": "Corona de Zirconio",
+    "specialty": "Odontología · Prótesis y rehabilitación oral",
+    "group": null,
+    "referencePrice": null,
+    "priceUnit": null,
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-C-0001",
+    "display": "Exodoncia (por elemento)",
+    "specialty": "Odontología · Cirugía",
+    "group": null,
+    "referencePrice": "20.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-C-0002",
+    "display": "Exodoncia a colgajo",
+    "specialty": "Odontología · Cirugía",
+    "group": null,
+    "referencePrice": "40.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-C-0003",
+    "display": "Exodoncia (raíz residual)",
+    "specialty": "Odontología · Cirugía",
+    "group": null,
+    "referencePrice": "40.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-C-0004",
+    "display": "Alveoloplastia (por sextante)",
+    "specialty": "Odontología · Cirugía",
+    "group": null,
+    "referencePrice": "50.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-C-0005",
+    "display": "Biopsia",
+    "specialty": "Odontología · Cirugía",
+    "group": null,
+    "referencePrice": "50.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-C-0006",
+    "display": "Apicectomía en caninos o incisivos",
+    "specialty": "Odontología · Cirugía",
+    "group": null,
+    "referencePrice": "100.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-C-0007",
+    "display": "Apicectomía en caninos o incisivos con retro obturación",
+    "specialty": "Odontología · Cirugía",
+    "group": null,
+    "referencePrice": "120.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-C-0008",
+    "display": "Apicectomía en premolares",
+    "specialty": "Odontología · Cirugía",
+    "group": null,
+    "referencePrice": "130.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-C-0009",
+    "display": "Apicectomía en premolares con retro obturación",
+    "specialty": "Odontología · Cirugía",
+    "group": null,
+    "referencePrice": "140.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-C-0010",
+    "display": "Apicectomía en molares",
+    "specialty": "Odontología · Cirugía",
+    "group": null,
+    "referencePrice": "150.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-C-0011",
+    "display": "Frenectomía o bridectomia",
+    "specialty": "Odontología · Cirugía",
+    "group": null,
+    "referencePrice": "70.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-C-0012",
+    "display": "Remoción de dientes incluidos o impactados",
+    "specialty": "Odontología · Cirugía",
+    "group": null,
+    "referencePrice": "120.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-C-0013",
+    "display": "Drenaje de absceso",
+    "specialty": "Odontología · Cirugía",
+    "group": null,
+    "referencePrice": "30.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-C-0014",
+    "display": "Ulectomia",
+    "specialty": "Odontología · Cirugía",
+    "group": null,
+    "referencePrice": "40.00",
+    "priceUnit": "USD",
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-C-0015",
+    "display": "Injerto de hueso",
+    "specialty": "Odontología · Cirugía",
+    "group": null,
+    "referencePrice": null,
+    "priceUnit": null,
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-C-0016",
+    "display": "Implantes",
+    "specialty": "Odontología · Cirugía",
+    "group": null,
+    "referencePrice": null,
+    "priceUnit": null,
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-AO-0001",
+    "display": "Aplicación de Botox",
+    "specialty": "Odontología · Armonización orofacial",
+    "group": null,
+    "referencePrice": null,
+    "priceUnit": null,
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-AO-0002",
+    "display": "Aplicación de Acido Hialuronico",
+    "specialty": "Odontología · Armonización orofacial",
+    "group": null,
+    "referencePrice": null,
+    "priceUnit": null,
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-AO-0003",
+    "display": "Bioestimuladores de Colagenos",
+    "specialty": "Odontología · Armonización orofacial",
+    "group": null,
+    "referencePrice": null,
+    "priceUnit": null,
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-AO-0004",
+    "display": "Exosomas",
+    "specialty": "Odontología · Armonización orofacial",
+    "group": null,
+    "referencePrice": null,
+    "priceUnit": null,
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-AO-0005",
+    "display": "PDRN",
+    "specialty": "Odontología · Armonización orofacial",
+    "group": null,
+    "referencePrice": null,
+    "priceUnit": null,
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-AO-0006",
+    "display": "Plasma rico en plaquetas",
+    "specialty": "Odontología · Armonización orofacial",
+    "group": null,
+    "referencePrice": null,
+    "priceUnit": null,
+    "ocrSuspect": false
+  },
+  {
+    "code": "ODO26-AO-0007",
+    "display": "Mesoterapia",
+    "specialty": "Odontología · Armonización orofacial",
+    "group": null,
+    "referencePrice": null,
+    "priceUnit": null,
+    "ocrSuspect": false
+  }
+]

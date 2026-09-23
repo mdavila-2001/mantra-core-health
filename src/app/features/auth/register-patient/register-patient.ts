@@ -32,6 +32,7 @@ import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
 } from '../../../core/data-access/terminology/bo-municipalities.service';
+import { RelatedPersonRelationshipsCatalog } from '../../../core/data-access/system-context/related-person-relationships.service';
 import type {
   BirthSexCode,
   PatientRegistration,
@@ -49,6 +50,10 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import {
+  MENSAJE_CONTRASENA_CORTA,
+  validadoresDeContrasena,
+} from '../registro-compartido/politica-de-contrasena';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import type {
   CampoDeFormulario,
@@ -78,7 +83,6 @@ function fechaIso(fecha: Date): string {
 }
 
 /** Mínimos que exigen los DTO del backend. */
-const MIN_PASSWORD = 8;
 const MIN_DOCUMENTO = 4;
 
 /** Sólo letras, dígitos, punto y guion — el mismo `@Matches` del backend. */
@@ -106,7 +110,21 @@ interface DestinoDeUbicacion {
   readonly pidiendo: WritableSignal<boolean>;
   readonly confirmada: WritableSignal<boolean>;
   readonly rechazado: WritableSignal<boolean>;
+  /** Si se pidió el mapa vacío para poner el pin a mano. */
+  readonly marcando: WritableSignal<boolean>;
+  /** Si el punto actual lo dio el navegador y no un toque sobre el plano. */
+  readonly delNavegador: WritableSignal<boolean>;
 }
+
+/**
+ * Lo que se le dice a quien ya tiene un pin y quiere correrlo.
+ *
+ * Es la otra mitad del selector: el GPS acierta la manzana, no la puerta, y
+ * hasta ahora la única salida era «Volver a ubicarme», que devolvía la misma
+ * manzana. Tocar el plano corre el pin al punto exacto.
+ */
+const AVISO_MOVER_PIN =
+  'Si el pin no cayó justo, tocá el mapa en el lugar correcto y lo movemos.';
 
 /**
  * El identificador del pin del domicilio en el mapa.
@@ -140,6 +158,23 @@ const PIN_TRABAJO = 'trabajo';
  */
 const AVISO_SIN_GEOCODIFICACION =
   'El punto del mapa se guarda tal cual, pero no podemos convertirlo en el nombre de la calle: escribila vos arriba.';
+
+/**
+ * Lo que se le dice a quien capturó un punto y no lo confirmó.
+ *
+ * **El dato se perdía en silencio.** Sólo viaja al alta lo confirmado sobre el
+ * mapa (`datosPaciente`), y eso está bien —el GPS acierta la manzana, no la
+ * puerta, y entre «esto es lo que encontramos» y «esta es mi dirección» tiene
+ * que haber alguien mirando el plano—; lo que estaba mal es que quien se
+ * quedaba a medias avanzaba de página creyendo que su ubicación ya estaba
+ * guardada, y nadie se lo decía.
+ *
+ * El aviso **no bloquea ni confirma por su cuenta**: la confirmación sigue
+ * siendo un acto de la persona. Sólo deja de ser silenciosa la consecuencia de
+ * no hacerla.
+ */
+const AVISO_UBICACION_SIN_CONFIRMAR =
+  'Todavía no confirmaste este punto, así que no se va a guardar. Pulsá el botón de confirmar si es el lugar correcto.';
 
 /**
  * Cuánto se espera al navegador antes de dar la ubicación por perdida.
@@ -206,7 +241,7 @@ function tutorConNombre(grupo: AbstractControl): null {
  */
 
 /**
- * Género, con sus dos categorías.
+ * Sexo, con sus dos categorías.
  *
  * Va como lista fija y no como lectura de terminología —a diferencia de los
  * departamentos o de la ocupación— porque la API lo recibe **por código
@@ -219,21 +254,17 @@ function tutorConNombre(grupo: AbstractControl): null {
  *
  * El campo ofrecía además «Intersexual» y «Prefiero no decirlo», y el equipo
  * pidió dejar sólo masculino y femenino: es lo que el documento de identidad
- * boliviano registra y lo que la ficha del paciente contrasta contra él. Sigue
- * siendo opcional —«Sin especificar» es el marcador del desplegable y deja el
- * control vacío—, así que quien no quiera contestar no tiene que elegir una
- * casilla que no lo describe: simplemente no elige.
+ * boliviano registra y lo que la ficha del paciente contrasta contra él.
  *
- * ## Por qué el rótulo dice «Género» y el dato viaja como `sexAtBirth`
+ * ## Por qué es «Sexo» y no «Género», y por qué es obligatorio
  *
- * Porque son las dos mitades de la misma decisión. El rótulo es el que el
- * equipo pidió y el que la gente reconoce; el campo que se manda es el que
- * tiene consecuencia clínica —dosis, valores de referencia, tamizajes— y el
- * único que el backend traduce a concepto en el alta. El `gender`
+ * Es dato clínico —dosis, valores de referencia, tamizajes—, no una cortesía
+ * demográfica: llamarlo «Género» sugería lo segundo, y dejarlo opcional
+ * dejaba fichas sin el dato que las decisiones clínicas necesitan. El `gender`
  * administrativo del DTO sigue existiendo para otros clientes; este formulario
- * no lo manda, y ausente no es lo mismo que vacío.
+ * no lo manda.
  */
-const OPCIONES_GENERO: readonly SelectOption<BirthSexCode>[] = [
+const OPCIONES_SEXO: readonly SelectOption<BirthSexCode>[] = [
   { value: 'MALE', label: 'Masculino' },
   { value: 'FEMALE', label: 'Femenino' },
 ];
@@ -468,14 +499,35 @@ export class RegisterPatient {
       // el documento de identidad y como se comparan dos personas al buscar
       // duplicados. Partir después una cadena es una conjetura que falla con los
       // nombres compuestos y con los apellidos de más de una palabra.
+      //
+      // **`name` y `lastName` son obligatorios pese a que la lista de la TAREA
+      // 03 §1.2 no los nombra** (sólo lista documento, correo, sexo, teléfono,
+      // fecha de nacimiento y localidad). Es una restricción YA EXISTENTE
+      // —anterior a esta tarea (`9dd07ca`, «el nombre se pide en sus cuatro
+      // partes»)— y AC-03-4 la contempla explícitamente: «más lo que el
+      // servidor exija por contrato» (ver P-03-2). El contrato es real, no una
+      // costumbre de este formulario: `RegisterPatientDto.name`/`lastName`
+      // (wt-pablo-api) sólo se vuelven opcionales si se manda `displayName` —el
+      // formulario nunca lo hace—, y `composeAccountDisplayName()` escribe
+      // `iam.users.display_name`, una columna `NOT NULL` que es lo que muestran
+      // el saludo, el directorio y la búsqueda de toda la plataforma: un alta
+      // sin nombre no crea una cuenta usable, crea una fila con el nombre en
+      // blanco en todas partes. Por eso se mantiene como una restricción ya
+      // existente y justificada bajo FT-03-R04, no como un vacío de esta
+      // corrección. Ver `register-patient.spec.ts` →
+      // `describe('obligatoriedad (AC-03-3, AC-03-4)')`, que fija por prueba el
+      // conjunto exacto de obligatorios y falla si alguien agrega un décimo sin
+      // el mismo tipo de justificación (AG49-FT03-R04-001).
       name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
       middleName: new FormControl('', { nonNullable: true }),
       thirdName: new FormControl('', { nonNullable: true }),
+      // Mismo criterio y misma justificación que `name`. Ver el comentario de
+      // arriba.
       lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
       motherLastName: new FormControl('', { nonNullable: true }),
       password: new FormControl('', {
         nonNullable: true,
-        validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
+        validators: [...validadoresDeContrasena],
       }),
       // **Obligatorio desde la TAREA 03 (AC-03-3).** Invierte una decisión
       // escrita: el correo era opcional a propósito —«podés entrar sin él, con
@@ -511,7 +563,14 @@ export class RegisterPatient {
       }),
       // El departamento emisor es un `select` del motor cuando su catálogo llegó,
       // así que su valor vive donde viven los demás: en el formulario.
-      issuerAdministrativeAreaConceptId: new FormControl<string | null>(null),
+      //
+      // Obligatorio, igual que en el alta de profesional: el número y su
+      // expedición son UN documento escrito en dos casillas, y con el número
+      // obligatorio y la expedición no, la cédula queda a medias. Además es lo
+      // que distingue dos documentos con el mismo número.
+      issuerAdministrativeAreaConceptId: new FormControl<string | null>(null, {
+        validators: [Validators.required],
+      }),
       // Calle y número del domicilio. Las coordenadas van aparte: no se
       // escriben, se confirman sobre el mapa.
       homeAddressLines: new FormControl('', { nonNullable: true }),
@@ -544,12 +603,21 @@ export class RegisterPatient {
         nonNullable: true,
         validators: [telefonoCompleto],
       }),
+      // Qué es esa persona del paciente, como concepto de
+      // `related-person-relationship` (AC-03-11). Opcional, y sin validador
+      // propio: exigirlo convertiría en obligatorio un contacto que no lo es.
+      // Sin parentesco declarado la API escribe «tutor o representante legal»,
+      // que es lo que escribía siempre.
+      guardianRelationshipConceptId: new FormControl<string | null>(null),
       // Los seguros declarados: el valor es el **plan**, no la compañía.
       privateInsurancePlanId: new FormControl<string | null>(null),
       publicInsurancePlanId: new FormControl<string | null>(null),
       billingTaxId: new FormControl('', {
         nonNullable: true,
         validators: [nitValido],
+      }),
+      billingLegalName: new FormControl('', {
+        nonNullable: true,
       }),
     },
     {
@@ -589,12 +657,143 @@ export class RegisterPatient {
     this.formPaciente.controls.residenceMunicipalityConceptId.setValue(conceptId);
     this.formPaciente.controls.residenceMunicipalityConceptId.markAsTouched();
     this.municipioPaciente.set(conceptId);
+    this.sembrarDireccion(this.formPaciente.controls.homeAddressLines, conceptId);
   }
 
   /** Lo mismo, para el lugar de trabajo. Opcional: no se marca como tocado. */
   elegirMunicipioDeTrabajo(conceptId: string | null): void {
     this.formPaciente.controls.workMunicipalityConceptId.setValue(conceptId);
     this.municipioTrabajo.set(conceptId);
+    this.sembrarDireccion(this.formPaciente.controls.workAddressLines, conceptId);
+  }
+
+  /**
+   * Lo último que el formulario sembró en cada «dirección 1».
+   *
+   * Es lo que permite distinguir **lo que puso el formulario de lo que escribió
+   * la persona**, que es la única pregunta que importa para saber si un
+   * prellenado puede reescribirse. El valor del control no alcanza: «Sacaba»
+   * puede haberlo puesto la elección de la localidad o haberlo tecleado alguien,
+   * y las dos cosas se tratan al revés.
+   *
+   * Se indexa por control y no por página porque son dos campos independientes
+   * —domicilio y trabajo— con su propia historia. Vacío significa «acá el
+   * formulario no escribió nada».
+   */
+  private readonly direccionSembrada = new WeakMap<FormControl<string>, string>();
+
+  /**
+   * Copia el nombre de la localidad elegida a su «dirección 1».
+   *
+   * ## Qué problema resuelve, y cuál NO
+   *
+   * El pedido es «copiar el nombre del lugar que se elige en el mapa a la
+   * dirección» (AC-03-8). La lectura literal —convertir el pin del GPS en «Av.
+   * Banzer 3er anillo»— exige un geocodificador externo y la política de
+   * seguridad del servidor no lo permite (ver {@link AVISO_SIN_GEOCODIFICACION});
+   * abrirla es una decisión de arquitectura que no se toma desde este carril.
+   *
+   * Lo que sí sabe el sistema, sin salir a la red, es **cómo se llama la
+   * localidad que la persona acaba de elegir**. Eso es lo que se copia: un
+   * arranque cierto de la dirección, sobre el que se sigue escribiendo la calle
+   * y el número.
+   *
+   * ## La regla: el formulario sólo reescribe lo que él mismo puso
+   *
+   * «Sólo si está vacío» no alcanza en cuanto se puede **corregir** la
+   * localidad, que es lo normal —se elige el departamento equivocado, se busca
+   * la ciudad y se cambia—. Con esa guarda sola, elegir Sacaba y corregir a
+   * Quillacollo dejaba el municipio nuevo con la dirección vieja: viajaba
+   * «Quillacollo» con «Sacaba» escrito al lado. Un domicilio que no existe es
+   * peor que un campo vacío, porque nadie lo vuelve a mirar.
+   *
+   * Por eso se recuerda lo sembrado ({@link direccionSembrada}) y se decide así:
+   *
+   * - **Vacío, o exactamente lo que sembró el formulario** → se re-siembra con
+   *   el nombre nuevo. Es un valor del que nadie es dueño.
+   * - **Distinto de lo sembrado** → lo escribió la persona y no se toca, ni para
+   *   corregir la localidad ni para nada.
+   * - **Al soltar la localidad** → el texto se conserva. Una navegación no
+   *   puede costar datos: el mapa de departamentos es un grupo de dos estados,
+   *   así que volver a pulsar el que ya estaba elegido lo suelta, y ese gesto
+   *   —el natural para «ahora elijo la ciudad»— borraría lo que la persona
+   *   tiene delante. Dejarlo no descuadra nada: elegir otra localidad lo
+   *   reescribe igual, la de residencia hace falta para enviar, y lo que queda
+   *   entretanto es un texto que se corrige tecleando.
+   *
+   * ## Dos cuidados que no cambian
+   *
+   * - **No se marca `touched` ni `dirty`**, tampoco al re-sembrar: no lo
+   *   escribió la persona, y marcarlo dispararía la validación y los mensajes
+   *   de un campo que nadie tocó.
+   * - **Sin nombre, no se escribe nada.** Si el catálogo no cargó todavía, el
+   *   municipio no se encuentra en el árbol y el campo queda como estaba. Nunca
+   *   se rellena con un identificador ni con un texto inventado.
+   *
+   * @param control - El control de «dirección 1» que corresponde.
+   * @param conceptId - La localidad elegida, o `null` si se soltó.
+   */
+  private sembrarDireccion(
+    control: FormControl<string>,
+    conceptId: string | null,
+  ): void {
+    // Soltar la localidad no borra: ver el porqué en la nota de arriba.
+    if (conceptId === null) {
+      return;
+    }
+
+    const actual = control.value.trim();
+    const sembrado = this.direccionSembrada.get(control);
+    // De lo que hay ahí no es dueño nadie: o está vacío, o es exactamente lo
+    // que puso el formulario la vez anterior.
+    const esNuestro = actual === '' || actual === sembrado;
+    if (!esNuestro) {
+      return;
+    }
+
+    const nombre = this.nombreDeMunicipio(conceptId);
+    if (nombre === null) {
+      return;
+    }
+
+    this.escribirDireccionSembrada(control, nombre);
+  }
+
+  /**
+   * Escribe en una «dirección 1» **en nombre del formulario**, y lo anota.
+   *
+   * Anotarlo es la mitad que hace que la regla funcione la vez siguiente: sin
+   * dejar registro de lo que se acaba de poner, el próximo cambio de localidad
+   * no sabría si ese texto es suyo o de la persona.
+   *
+   * @param control - El control de «dirección 1» que corresponde.
+   * @param valor - El nombre de la localidad, o `''` para limpiar.
+   */
+  private escribirDireccionSembrada(
+    control: FormControl<string>,
+    valor: string,
+  ): void {
+    // `emitEvent: false` no: el cambio tiene que llegar al `valueChanges` que
+    // limpia el error del envío anterior, igual que si se hubiera tecleado.
+    // Y sin `markAsTouched`/`markAsDirty`: no lo escribió la persona.
+    control.setValue(valor);
+    this.direccionSembrada.set(control, valor);
+  }
+
+  /**
+   * Cómo se llama el municipio de un concepto, según el árbol ya cargado.
+   *
+   * @param conceptId - El municipio buscado.
+   * @returns Su nombre, o `null` si el árbol todavía no lo tiene.
+   */
+  private nombreDeMunicipio(conceptId: string): string | null {
+    for (const rama of this.ramasMunicipios()) {
+      const municipio = rama.municipios.find((m) => m.conceptId === conceptId);
+      if (municipio !== undefined) {
+        return municipio.nombre;
+      }
+    }
+    return null;
   }
 
   /**
@@ -662,13 +861,35 @@ export class RegisterPatient {
         id: PIN_DOMICILIO,
         lat: punto.lat,
         lng: punto.lng,
-        titulo: this.direccionConfirmada() ? 'Tu dirección' : 'Acá te encontramos',
+        titulo: this.direccionConfirmada()
+          ? 'Tu dirección'
+          : this.gpsDomicilioDelNavegador()
+            ? 'Acá te encontramos'
+            : 'El punto que marcaste',
       },
     ];
   });
 
   /** Si el navegador negó la ubicación, para poder decirlo sin frenar el alta. */
   readonly gpsRechazado = signal(false);
+
+  /**
+   * Si la persona pidió el mapa vacío para poner el pin del domicilio a mano.
+   *
+   * Es la segunda puerta del selector —la primera es el navegador— y existe
+   * porque la casa casi nunca se declara desde la casa. Sólo importa mientras
+   * no hay punto: con un pin puesto el mapa está abierto igual y tocarlo lo
+   * corre.
+   */
+  readonly marcandoDomicilio = signal(false);
+
+  /** Si el punto del domicilio lo dio el navegador; sólo cambia cómo se llama el pin. */
+  readonly gpsDomicilioDelNavegador = signal(false);
+
+  /** Si el mapa del domicilio tiene que estar en pantalla: hay pin, o se está por poner. */
+  readonly mapaDomicilioAbierto = computed(
+    () => this.gpsDomicilio() !== null || this.marcandoDomicilio(),
+  );
 
   /* ---- La misma ubicación, para el lugar de trabajo ------------------------
      Cuatro señales gemelas de las de arriba, no una estructura compartida: el
@@ -682,6 +903,11 @@ export class RegisterPatient {
   readonly pidiendoGpsTrabajo = signal(false);
   readonly direccionTrabajoConfirmada = signal(false);
   readonly gpsTrabajoRechazado = signal(false);
+  readonly marcandoTrabajo = signal(false);
+  readonly gpsTrabajoDelNavegador = signal(false);
+  readonly mapaTrabajoAbierto = computed(
+    () => this.gpsTrabajo() !== null || this.marcandoTrabajo(),
+  );
 
   readonly pinesTrabajo = computed<readonly PinMapa[]>(() => {
     const punto = this.gpsTrabajo();
@@ -693,16 +919,24 @@ export class RegisterPatient {
         lng: punto.lng,
         titulo: this.direccionTrabajoConfirmada()
           ? 'Tu lugar de trabajo'
-          : 'Acá te encontramos',
+          : this.gpsTrabajoDelNavegador()
+            ? 'Acá te encontramos'
+            : 'El punto que marcaste',
       },
     ];
   });
 
   /** Las listas fijas, expuestas a la plantilla. */
-  protected readonly opcionesGenero = OPCIONES_GENERO;
+  protected readonly opcionesSexo = OPCIONES_SEXO;
 
   /** El aviso de AC-03-9, expuesto a la plantilla. Ver la constante. */
   protected readonly avisoSinGeocodificacion = AVISO_SIN_GEOCODIFICACION;
+
+  /** El aviso del punto capturado sin confirmar. Ver la constante. */
+  protected readonly avisoUbicacionSinConfirmar = AVISO_UBICACION_SIN_CONFIRMAR;
+
+  /** La pista de que tocar el mapa corre el pin. Ver la constante. */
+  protected readonly avisoMoverPin = AVISO_MOVER_PIN;
 
   /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
   private readonly departamentos = inject(BoDepartmentsCatalog);
@@ -741,6 +975,17 @@ export class RegisterPatient {
   readonly catalogoMunicipiosCaido = signal(false);
 
   /**
+   * El parentesco del contacto de emergencia, y su catálogo (AC-03-11).
+   *
+   * Es el único catálogo de esta pantalla que se lee por **campo destino** y no
+   * por código de conjunto de valores: su columna declara enumeración dinámica.
+   * Ver {@link RelatedPersonRelationshipsCatalog}.
+   */
+  private readonly parentescos = inject(RelatedPersonRelationshipsCatalog);
+  readonly opcionesParentesco = signal<readonly SelectOption<string>[]>([]);
+  readonly catalogoParentescosCaido = signal(false);
+
+  /**
    * Las páginas del alta de paciente, en el orden que pide AC-03-1.
    *
    * ## El orden, y de dónde sale
@@ -776,13 +1021,27 @@ export class RegisterPatient {
    *
    * - **Zona / barrio**, en residencia y en trabajo (AC-03-10). `common.addresses`
    *   no tiene columna de zona y el DTO no tiene el campo. Acá no hay
-   *   migraciones (ADR-0021): el cambio va por el pipeline del modelo, que no
-   *   está disponible en este workspace.
-   * - **Relación del contacto de emergencia** (AC-03-11). Es un value set que no
-   *   existe en ninguna capa —ni catálogo, ni columna—, y la regla del proyecto
-   *   prohíbe resolverlo con un `enum` de TypeScript.
-   * - **Razón social** de facturación (AC-03-12). Tampoco existe: lo dice el
-   *   propio contrato del front, en el JSDoc de `billingTaxId`.
+   *   migraciones (ADR-0021): el cambio va por el pipeline del modelo
+   *   (`.puml` → generadores), que vive en el repo `mantra-core-health-model`
+   *   — **ese repo no está clonado en este checkout** (verificado: `find`
+   *   por `*.puml` y `gen_ddl.py` desde la raíz del workspace no encuentra
+   *   ninguno de los dos), así que el pipeline no es utilizable desde acá
+   *   aunque exista en algún otro lado. Es el único pendiente del alta con
+   *   dependencia de un tercero (quien lleve `mantra-core-health-model`), y
+   *   por eso va como entrega aparte y no atado a ésta.
+   *
+   * ## Lo que sí pregunta desde esta entrega
+   *
+   * - **Relación del contacto de emergencia** (AC-03-11). Ya no falta nada:
+   *   la columna `profiles.related_persons.relationship_concept_id` existía, el
+   *   conjunto `related-person-relationship` también —con sus 9 miembros reales
+   *   (guardián, madre, padre, cónyuge, hijo/a, hermano/a, otro familiar,
+   *   amistad, otro; ver `dynamic-enum-catalog.ts`)—, y lo que faltaba eran el
+   *   campo del alta y el desplegable. Se lee por campo destino (`?target=`) y
+   *   **no** con un `enum` de TypeScript, que es lo que la regla del proyecto
+   *   prohíbe. Ver {@link campoRelacionDelContacto}.
+   * - **Razón social** de facturación: Se captura mediante `billingLegalName`
+   *   y viaja asociada al NIT para la emisión de facturas.
    *
    * Pasa por `paginarCampos` aunque ninguna sección llegue a cinco campos: es
    * la función la que hace cumplir el tope, y declararlo a mano sería confiar en
@@ -810,11 +1069,13 @@ export class RegisterPatient {
           {
             key: 'lastName',
             label: 'Apellido paterno',
+            description: 'El apellido de tu papá, como figura en tu documento.',
             control: 'text',
             required: true,
             autocomplete: 'family-name',
             placeholder: 'Mamani',
             testId: 'registro-apellido-paterno',
+            icono: 'people',
             ancho: 'mitad',
             mensajeDeError: 'Ingresá tu apellido paterno.',
           },
@@ -822,10 +1083,12 @@ export class RegisterPatient {
             key: 'motherLastName',
             label: 'Apellido materno',
             hint: 'Si no llevás, dejalo vacío.',
+            description: 'El apellido de tu mamá, tal como aparece en tu documento.',
             control: 'text',
             autocomplete: 'family-name',
             placeholder: 'Quispe',
             testId: 'registro-apellido-materno',
+            icono: 'people',
             ancho: 'mitad',
           },
         ],
@@ -892,7 +1155,7 @@ export class RegisterPatient {
               'Es el sexo que registra tu documento de identidad. Lo usamos como dato clínico, no para dirigirnos a vos.',
             control: 'select',
             required: true,
-            options: OPCIONES_GENERO,
+            options: OPCIONES_SEXO,
             placeholder: 'Elegí una opción',
             testId: 'registro-genero',
             icono: 'heart',
@@ -919,13 +1182,13 @@ export class RegisterPatient {
             required: true,
             autocomplete: 'tel',
             testId: 'registro-telefono',
-            icono: 'phone',
             mensajeDeError: 'Ingresá un número completo para el país elegido.',
           },
           {
             key: 'guardianName',
             label: 'Contacto de emergencia (opcional)',
             hint: 'A quién llamamos si pasa algo, o quién te acompaña si sos menor.',
+            description: 'A quién llamamos si te pasa algo y no podés responder vos.',
             control: 'text',
             placeholder: 'Rosa Quispe',
             testId: 'registro-tutor-nombre',
@@ -936,15 +1199,17 @@ export class RegisterPatient {
             key: 'guardianPhone',
             label: 'Su teléfono (opcional)',
             hint: 'Elegí el país si el número no es de Bolivia.',
+            description: 'El número al que llamamos a esa persona. Sin su nombre no se guarda.',
             control: 'tel',
             testId: 'registro-tutor-telefono',
-            icono: 'phone',
             ancho: 'mitad',
             mensajeDeError: 'Para guardar el teléfono, contanos también su nombre.',
           },
           // La «Relación» que el orden pide junto al contacto de emergencia
-          // (AC-03-11) no está: es un value set que no existe y una columna que
-          // tampoco. Ver el JSDoc de arriba.
+          // (AC-03-11). Va la cuarta y última de la página: el tope del motor
+          // son cuatro campos, así que agregar un quinto acá partiría la
+          // pregunta del contacto en dos páginas.
+          this.campoRelacionDelContacto(),
         ],
       },
       {
@@ -980,6 +1245,7 @@ export class RegisterPatient {
             key: 'gpsDomicilio',
             label: 'Ubicación GPS (opcional)',
             hint: 'Si la compartís, el delivery llega sin llamarte.',
+            description: 'Marcá el punto exacto de tu casa y confirmalo para que quede guardado.',
             control: 'custom',
           },
         ],
@@ -1006,6 +1272,7 @@ export class RegisterPatient {
             key: 'workAddressLines',
             label: 'Línea de dirección 1 (opcional)',
             hint: 'Calle y número de tu trabajo.',
+            description: 'Sirve para ubicar tu lugar de trabajo cuando la empresa tiene varias sedes.',
             control: 'text',
             placeholder: 'Calle Libertad #120',
             testId: 'registration-work-address',
@@ -1015,6 +1282,7 @@ export class RegisterPatient {
             key: 'gpsTrabajo',
             label: 'Ubicación GPS (opcional)',
             hint: 'El punto exacto de tu lugar de trabajo.',
+            description: 'El punto exacto de tu trabajo en el mapa. Se confirma aparte del de tu casa.',
             control: 'custom',
           },
         ],
@@ -1052,7 +1320,7 @@ export class RegisterPatient {
             placeholder: 'Tu contraseña',
             testId: 'registro-password',
             icono: 'lock',
-            mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
+            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
           },
         ],
       },
@@ -1067,11 +1335,6 @@ export class RegisterPatient {
         titulo: 'Datos de facturación',
         clave: 'billing',
         icon: 'billing',
-        // Una sola pregunta en la última página, y no pegada al seguro: el
-        // pedido las nombra como dos bloques distintos y son dos cosas
-        // distintas —qué te cubre y a nombre de quién se factura—. La «Razón
-        // Social» que el bloque también pide no está: no existe en ninguna capa
-        // (AC-03-12). Ver el JSDoc de arriba.
         hint: 'Opcional. Sólo para las facturas que recibís.',
         campos: [
           {
@@ -1085,6 +1348,17 @@ export class RegisterPatient {
             testId: 'registro-nit',
             icono: 'billing',
             mensajeDeError: 'El NIT es sólo números.',
+          },
+          {
+            key: 'billingLegalName',
+            label: 'Nombre o Razón Social (opcional)',
+            hint: 'A nombre de quién se emite la factura.',
+            description:
+              'Si declarás NIT, ingresá el nombre o razón social correspondiente.',
+            control: 'text',
+            placeholder: 'Carlos Roca Aguilera',
+            testId: 'registro-razon-social',
+            icono: 'billing',
           },
         ],
       },
@@ -1106,8 +1380,12 @@ export class RegisterPatient {
   private campoDepartamentoEmisor(testId: string): CampoDeFormulario {
     const base = {
       key: 'issuerAdministrativeAreaConceptId',
-      label: 'Departamento de emisión (opcional)',
+      label: 'Departamento de emisión',
+      required: true,
       hint: 'El «SC», «LP»... de tu cédula.',
+      description:
+        'El departamento que emitió tu cédula: distingue dos documentos con el mismo número.',
+      mensajeDeError: 'Elegí el departamento que expidió tu cédula.',
     } as const;
 
     return this.catalogoDepartamentosCaido()
@@ -1120,10 +1398,57 @@ export class RegisterPatient {
           ...base,
           control: 'select',
           options: this.opcionesDepartamento(),
-          placeholder: 'Sin especificar',
+          placeholder: 'Elegí el departamento',
           testId,
+          icono: 'pin',
           // La otra mitad del renglón del documento. Ver la página que lo usa.
           ancho: 'mitad',
+        };
+  }
+
+  /**
+   * El campo de «Relación» del contacto de emergencia (AC-03-11).
+   *
+   * ## Por qué es opcional
+   *
+   * Porque el contacto entero lo es: pedir el parentesco de una persona que
+   * quizá no se declaró no tiene sentido, y volverlo obligatorio en cuanto hay
+   * nombre convertiría en una traba lo que hoy se contesta en un segundo. La
+   * bitácora lo pide junto al contacto, no como requisito.
+   *
+   * ## Por qué el valor es un uuid y no una palabra
+   *
+   * Porque `profiles.related_persons.relationship_concept_id` es una columna de
+   * concepto, y el conjunto que la gobierna se publica como enumeración
+   * dinámica. Lo que se manda es el `conceptId` que el propio catálogo devolvió;
+   * lo que se ve es la palabra en castellano de {@link ETIQUETAS_PARENTESCO}.
+   * Un `enum` de TypeScript acá sería inventar una taxonomía paralela a la del
+   * modelo, que es exactamente lo que la regla del proyecto prohíbe.
+   *
+   * ## Y por qué desaparece si el catálogo no cargó
+   *
+   * Misma mecánica que el departamento emisor y los seguros: sin opciones, un
+   * `select` es un desplegable vacío indistinguible de un catálogo que de verdad
+   * no tiene ninguna. El campo pasa a `custom` y la pantalla proyecta ahí el
+   * aviso con su «Reintentar». El alta sigue en pie: es opcional.
+   */
+  private campoRelacionDelContacto(): CampoDeFormulario {
+    const base = {
+      key: 'guardianRelationshipConceptId',
+      label: 'Su relación con vos (opcional)',
+      hint: 'Qué es tuyo el contacto de emergencia: madre, pareja, una amistad…',
+      description: 'Sirve para saber cómo presentarnos cuando llamemos a esa persona.',
+    } as const;
+
+    return this.catalogoParentescosCaido()
+      ? { ...base, control: 'custom' }
+      : {
+          ...base,
+          control: 'select',
+          options: this.opcionesParentesco(),
+          placeholder: 'Sin especificar',
+          testId: 'registro-tutor-relacion',
+          icono: 'people',
         };
   }
 
@@ -1144,6 +1469,7 @@ export class RegisterPatient {
       key: 'occupationConceptId',
       label: 'Ocupación (opcional)',
       hint: 'En qué trabajás. Ayuda a tu médico con los riesgos propios de cada oficio.',
+      description: 'Tu oficio le dice a tu médico qué riesgos son propios de tu trabajo.',
     } as const;
 
     // Siempre `custom`: son cientos de ocupaciones y el registro del cliente
@@ -1183,9 +1509,11 @@ export class RegisterPatient {
         key: 'occupationFreeText',
         label: '¿Cuál?',
         hint: 'Escribí tu oficio como lo dirías vos.',
+        description: 'El oficio que no encontraste en la lista: se guarda tal cual lo escribas.',
         control: 'text',
         placeholder: 'Apicultor',
         testId: 'registro-ocupacion-otra',
+        icono: 'briefcase',
       },
     ];
   }
@@ -1195,6 +1523,7 @@ export class RegisterPatient {
       key: 'workEmployerConceptId',
       label: 'Empresa donde trabajás (opcional)',
       hint: 'Buscá el nombre. Si no está, elegí «Otra empresa» y la escribís.',
+      description: 'Sirve para los convenios con empresas y los controles de salud laboral.',
       control: 'custom',
     };
   }
@@ -1213,9 +1542,11 @@ export class RegisterPatient {
         key: 'workEmployerFreeText',
         label: '¿En cuál?',
         hint: 'Escribí el nombre como lo conocés.',
+        description: 'El nombre de la empresa que no está en la lista, como figura en su cartel.',
         control: 'text',
         placeholder: 'Ferretería San Martín',
         testId: 'registro-empresa-otra',
+        icono: 'building',
       },
     ];
   }
@@ -1237,11 +1568,14 @@ export class RegisterPatient {
           key: 'privateInsurancePlanId',
           label: 'Seguro privado (opcional)',
           hint: 'La compañía con la que tenés tu póliza de salud.',
+          description: 'Con tu póliza declarada, la cobertura se aplica cuando reservás o comprás.',
         }
       : {
           key: 'publicInsurancePlanId',
           label: 'Seguro público (opcional)',
           hint: 'La caja o el seguro estatal al que estás afiliado.',
+          description:
+            'La caja o el seguro del Estado al que aportás por tu trabajo o el de tu familia.',
         };
 
     return this.catalogoAseguradorasCaido()
@@ -1252,6 +1586,10 @@ export class RegisterPatient {
           options: esPrivado ? this.opcionesSeguroPrivado() : this.opcionesSeguroPublico(),
           placeholder: 'No tengo',
           testId: esPrivado ? 'registro-seguro-privado' : 'registro-seguro-publico',
+          // Dos glifos y no uno: el paraguas es la cobertura que se contrata y
+          // el hospital la del Estado. Con el mismo dibujo, las dos preguntas
+          // de esta página se leerían como la misma repetida.
+          icono: esPrivado ? 'umbrella' : 'hospital',
         };
   }
 
@@ -1563,22 +1901,83 @@ export class RegisterPatient {
    * no un requisito.
    */
   usarMiUbicacion(): void {
-    this.pedirUbicacion({
-      punto: this.gpsDomicilio,
-      pidiendo: this.pidiendoGps,
-      confirmada: this.direccionConfirmada,
-      rechazado: this.gpsRechazado,
-    });
+    this.pedirUbicacion(this.destinoDomicilio);
   }
 
   /** Lo mismo, para el lugar de trabajo. Ver {@link usarMiUbicacion}. */
   usarMiUbicacionDeTrabajo(): void {
-    this.pedirUbicacion({
+    this.pedirUbicacion(this.destinoTrabajo);
+  }
+
+  /**
+   * Abre el mapa vacío para poner el pin del domicilio a mano.
+   *
+   * No pide nada al navegador ni toca lo que hubiera: es la puerta para quien
+   * no quiere —o no puede— compartir dónde está ahora, que casi nunca es donde
+   * vive.
+   */
+  marcarDomicilioEnMapa(): void {
+    this.abrirMapa(this.destinoDomicilio);
+  }
+
+  /** Lo mismo, para el trabajo. */
+  marcarTrabajoEnMapa(): void {
+    this.abrirMapa(this.destinoTrabajo);
+  }
+
+  /**
+   * Un toque sobre el mapa del domicilio: el pin va ahí.
+   *
+   * Sirve para poner el primer pin sobre el mapa vacío y para correr uno que
+   * ya estaba, viniera del GPS o de otro toque. En los dos casos el punto queda
+   * **sin confirmar**: quien lo movió es quien tiene que mirarlo y decir que sí.
+   */
+  fijarPuntoDomicilio(punto: Coordenadas): void {
+    this.fijarPunto(this.destinoDomicilio, punto);
+  }
+
+  /** Lo mismo, para el trabajo. */
+  fijarPuntoDeTrabajo(punto: Coordenadas): void {
+    this.fijarPunto(this.destinoTrabajo, punto);
+  }
+
+  /** Las seis señales del domicilio, con el nombre que espera {@link pedirUbicacion}. */
+  private get destinoDomicilio(): DestinoDeUbicacion {
+    return {
+      punto: this.gpsDomicilio,
+      pidiendo: this.pidiendoGps,
+      confirmada: this.direccionConfirmada,
+      rechazado: this.gpsRechazado,
+      marcando: this.marcandoDomicilio,
+      delNavegador: this.gpsDomicilioDelNavegador,
+    };
+  }
+
+  /** Las seis señales del trabajo. Ver {@link destinoDomicilio}. */
+  private get destinoTrabajo(): DestinoDeUbicacion {
+    return {
       punto: this.gpsTrabajo,
       pidiendo: this.pidiendoGpsTrabajo,
       confirmada: this.direccionTrabajoConfirmada,
       rechazado: this.gpsTrabajoRechazado,
-    });
+      marcando: this.marcandoTrabajo,
+      delNavegador: this.gpsTrabajoDelNavegador,
+    };
+  }
+
+  private abrirMapa(destino: DestinoDeUbicacion): void {
+    destino.marcando.set(true);
+    destino.rechazado.set(false);
+  }
+
+  private fijarPunto(destino: DestinoDeUbicacion, punto: Coordenadas): void {
+    // Mover el pin es empezar de nuevo la confirmación: lo confirmado valía
+    // para el punto anterior.
+    destino.confirmada.set(false);
+    destino.punto.set({ lat: punto.lat, lng: punto.lng });
+    destino.delNavegador.set(false);
+    destino.marcando.set(false);
+    destino.rechazado.set(false);
   }
 
   /**
@@ -1608,6 +2007,8 @@ export class RegisterPatient {
           lat: posicion.coords.latitude,
           lng: posicion.coords.longitude,
         });
+        destino.delNavegador.set(true);
+        destino.marcando.set(false);
         destino.rechazado.set(false);
         destino.pidiendo.set(false);
       },
@@ -1643,16 +2044,18 @@ export class RegisterPatient {
     this.direccionTrabajoConfirmada.set(true);
   }
 
-  /** Olvida la ubicación capturada, y con ella su confirmación. */
+  /** Olvida la ubicación capturada, y con ella su confirmación; cierra el mapa. */
   quitarUbicacion(): void {
     this.gpsDomicilio.set(null);
     this.direccionConfirmada.set(false);
+    this.marcandoDomicilio.set(false);
   }
 
   /** Lo mismo, para el trabajo. */
   quitarUbicacionDeTrabajo(): void {
     this.gpsTrabajo.set(null);
     this.direccionTrabajoConfirmada.set(false);
+    this.marcandoTrabajo.set(false);
   }
 
   readonly state = signal<ViewState<null>>(ready(null));
@@ -1711,6 +2114,7 @@ export class RegisterPatient {
     this.cargarOcupaciones();
     this.cargarEmpresas();
     this.cargarAseguradoras();
+    this.cargarParentescos();
 
     // El aviso de un envío fallido se va en cuanto se corrige algo.
     //
@@ -1892,6 +2296,41 @@ export class RegisterPatient {
     this.cargarEmpresas();
   }
 
+  /**
+   * Trae los parentescos publicados, para «¿qué es tuyo el contacto?».
+   *
+   * Mismo criterio que los demás ante un fallo: el campo es opcional, así que
+   * sin catálogo la persona se registra igual y su contacto queda con el valor
+   * por defecto que escribe la API.
+   *
+   * Las etiquetas se traducen acá, por código: el catálogo devuelve su `display`
+   * en inglés técnico —«Mother relationship»— porque es terminología, no copy de
+   * producto.
+   */
+  protected cargarParentescos(): void {
+    this.parentescos.listar().subscribe({
+      next: (opciones) => {
+        this.catalogoParentescosCaido.set(false);
+        this.opcionesParentesco.set(
+          opciones.map((opcion) => ({
+            value: opcion.conceptId,
+            label: this.parentescos.etiquetaDe(opcion),
+          })),
+        );
+      },
+      error: () => {
+        this.opcionesParentesco.set([]);
+        this.catalogoParentescosCaido.set(true);
+      },
+    });
+  }
+
+  /** Reintenta la lectura del catálogo de parentescos. Ver `reintentarDepartamentos`. */
+  protected reintentarParentescos(): void {
+    this.parentescos.olvidar();
+    this.cargarParentescos();
+  }
+
   /** Reintenta la lectura del árbol de municipios. Ver `reintentarDepartamentos`. */
   protected reintentarMunicipios(): void {
     this.municipios.olvidar();
@@ -1964,9 +2403,11 @@ export class RegisterPatient {
     const gpsTrabajo = this.direccionTrabajoConfirmada() ? this.gpsTrabajo() : null;
     const nombreTutor = raw.guardianName.trim();
     const telefonoTutor = raw.guardianPhone.trim();
+    const relacionTutor = raw.guardianRelationshipConceptId;
     const seguroPrivado = raw.privateInsurancePlanId;
     const seguroPublico = raw.publicInsurancePlanId;
     const nit = raw.billingTaxId.trim();
+    const razonSocial = raw.billingLegalName.trim();
     const otraOcupacion = this.ocupacionEsOtra() ? raw.occupationFreeText.trim() : '';
 
     return {
@@ -1986,7 +2427,14 @@ export class RegisterPatient {
       ...(departamento === null ? {} : { issuerAdministrativeAreaConceptId: departamento }),
       // Sólo el municipio: el departamento de residencia lo deriva el backend
       // del código del INE, para que el par no pueda llegar incoherente.
-      ...(municipio === null ? {} : { residenceMunicipalityConceptId: municipio }),
+      //
+      // Va siempre, sin condicional: el contrato lo declara obligatorio —igual
+      // que el DTO del servidor— y el control lo valida, así que `submit()` no
+      // llega hasta acá sin él. La cadena vacía es la red por si alguien
+      // llamara a este método sin pasar por esa comprobación: hace que la API
+      // conteste 400 nombrando el campo, en vez de un cuerpo al que le falta
+      // una propiedad obligatoria.
+      residenceMunicipalityConceptId: municipio ?? '',
       ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
       ...(telefono === '' ? {} : { phone: telefono }),
       ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
@@ -2020,9 +2468,17 @@ export class RegisterPatient {
       // contacto sin dueño, y el formulario ya lo impide antes de llegar acá.
       ...(nombreTutor === '' ? {} : { guardianName: nombreTutor }),
       ...(nombreTutor === '' || telefonoTutor === '' ? {} : { guardianPhone: telefonoTutor }),
+      // El parentesco sólo viaja si hay contacto **y** si se eligió uno: sin
+      // contacto no describe a nadie, y sin elección la API escribe su valor
+      // por defecto —«tutor o representante legal»—, que es lo que escribía
+      // antes de que este campo existiera.
+      ...(nombreTutor === '' || relacionTutor === null
+        ? {}
+        : { guardianRelationshipConceptId: relacionTutor }),
       ...(seguroPrivado === null ? {} : { privateInsurancePlanId: seguroPrivado }),
       ...(seguroPublico === null ? {} : { publicInsurancePlanId: seguroPublico }),
       ...(nit === '' ? {} : { billingTaxId: nit }),
+      ...(razonSocial === '' ? {} : { billingLegalName: razonSocial }),
     };
   }
 }

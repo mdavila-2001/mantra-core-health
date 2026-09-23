@@ -48,6 +48,41 @@
   gap: var(--sp-3);
 }
 
+.mostrador__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* El distintivo del seguro es inline-flex: sin envoltorio, la columna de
+   datos del renglón lo estiraría de lado a lado. */
+.mostrador__cobertura {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.mostrador__reparto {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.mostrador__reparto-dato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.mostrador__valor {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
 .mostrador__lineas {
   display: flex;
   flex-direction: column;
@@ -127,6 +162,10 @@
 }
 
 @media (min-width: 640px) {
+  .mostrador__reparto {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .mostrador__linea {
     flex-direction: row;
     justify-content: space-between;
@@ -148,4 +187,11 @@
   .mostrador__generico > * {
     flex: 1;
   }
+}
+
+/* «Volver a…» mide su texto: como hijo de la rejilla se estiraba a los 1 100 px
+   del área (refactor UX). */
+.volver-al-origen {
+  justify-self: start;
+  align-self: flex-start;
 }

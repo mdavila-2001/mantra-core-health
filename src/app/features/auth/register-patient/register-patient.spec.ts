@@ -4,6 +4,9 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { RegisterPatient } from './register-patient';
+import { CODIGO_OCUPACION_OTRA } from '../../../core/data-access/terminology/bo-occupations.service';
+import { CODIGO_EMPRESA_OTRA } from '../../../core/data-access/terminology/bo-employers.service';
+import { EMPLEADOR, OCUPACION } from '../../../core/mock/fixtures/conceptos';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
 
 const RESPUESTA = {
@@ -33,6 +36,9 @@ const DEPARTAMENTO_SANTA_CRUZ = '51fcbf8e-b4ea-5ba9-8aec-0df7be617c69';
 /** Un concepto de `VS_BO_MUNICIPALITY`: Sacaba, código INE 031001. */
 const MUNICIPIO_SACABA = 'ee4f2681-6c58-5f4c-8f83-8d19de56099a';
 
+/** Otro del mismo departamento, para poder corregir la localidad elegida. */
+const MUNICIPIO_QUILLACOLLO = '3b90e5c7-1a44-5f2d-8c76-9e0b4d17af52';
+
 /** La petición del catálogo de departamentos que dispara el constructor. */
 const CATALOGO = '/terminology/value-sets?code=VS_BO_DEPARTMENT';
 
@@ -51,6 +57,19 @@ const EMPRESA_OTRA = 'c47d8f5b-3e66-5fa2-9b5d-2d8f3cae4f18';
 
 /** Un concepto de `VS_BO_OCCUPATION`, el que la ocupación manda como uuid. */
 const OCUPACION_DOCENTE = 'a2f0b6d1-0f7d-5a2e-9d3b-6f1f0a9c1e42';
+
+/**
+ * La lectura del catálogo de parentescos, que dispara el mismo constructor.
+ *
+ * Es la única de esta pantalla que va por **campo destino** y no por código de
+ * conjunto de valores: `profiles.related_persons.relationship_concept_id`
+ * declara enumeración dinámica, así que la API la sirve desde `system_context`.
+ */
+const CATALOGO_PARENTESCOS =
+  '/system-context/dynamic-enums?target=profiles.related_persons.relationship_concept_id';
+
+/** Un concepto de `related-person-relationship`: madre. */
+const PARENTESCO_MADRE = 'd7c1a94e-5b32-5d68-9f11-3ac52e8b6d40';
 
 describe('RegisterPatient', () => {
   let fixture: ComponentFixture<RegisterPatient>;
@@ -110,12 +129,16 @@ describe('RegisterPatient', () => {
         r.url.startsWith('/terminology/') ||
         // El catálogo de aseguradoras lo pide el mismo constructor, para los
         // dos campos de seguro declarado.
-        r.url.startsWith('/insurance-carrier-catalog'),
+        r.url.startsWith('/insurance-carrier-catalog') ||
+        // Y el de parentescos del contacto de emergencia, que es el único que
+        // se lee por campo destino en vez de por código de conjunto: su columna
+        // declara enumeración dinámica.
+        r.url.startsWith('/system-context/dynamic-enums'),
     )) {
       if (pendiente.cancelled) continue;
-      // Cada catálogo tiene su forma; el cuerpo lleva las dos claves para que
-      // ninguno de los dos lectores encuentre `undefined`.
-      pendiente.flush({ items: [], carriers: [] });
+      // Cada catálogo tiene su forma; el cuerpo lleva las tres claves para que
+      // ninguno de los lectores encuentre `undefined`.
+      pendiente.flush({ items: [], carriers: [], options: [] });
     }
     http.verify();
   });
@@ -301,11 +324,23 @@ describe('RegisterPatient', () => {
         | 'workEmployerFreeText'
         | 'guardianName'
         | 'guardianPhone'
-        | 'billingTaxId',
+        | 'billingTaxId'
+        | 'billingLegalName',
         string
       >
     > = {},
   ): void {
+    completarDatosPersonales(extra);
+    // La localidad de residencia pasa por su método: escribe el control **y**
+    // el signal que lo espeja, y es el único que escribe los dos.
+    component.elegirMunicipio(MUNICIPIO_SACABA);
+  }
+
+  /**
+   * Todo lo de {@link completar} **menos la localidad**, para las pruebas que
+   * la eligen en pantalla —mapa y select— y no por el método.
+   */
+  function completarDatosPersonales(extra: Parameters<typeof completar>[0] = {}): void {
     component.formPaciente.patchValue({
       nationalId: '1234567',
       name: 'Ana',
@@ -322,16 +357,43 @@ describe('RegisterPatient', () => {
       phone: extra.phone ?? '+591 70012345',
       birthDate: new Date(1990, 4, 17),
       sexAtBirth: 'FEMALE',
+      // El departamento que expidió la cédula es la otra mitad del documento
+      // y también es obligatorio: sin él el formulario no pasa de su página.
+      issuerAdministrativeAreaConceptId: DEPARTAMENTO_SANTA_CRUZ,
       homeAddressLines: extra.homeAddressLines ?? '',
       workAddressLines: extra.workAddressLines ?? '',
       workEmployerFreeText: extra.workEmployerFreeText ?? '',
       guardianName: extra.guardianName ?? '',
       guardianPhone: extra.guardianPhone ?? '',
       billingTaxId: extra.billingTaxId ?? '',
+      billingLegalName: extra.billingLegalName ?? '',
     });
-    // La localidad de residencia pasa por su método: escribe el control **y**
-    // el signal que lo espeja, y es el único que escribe los dos.
-    component.elegirMunicipio(MUNICIPIO_SACABA);
+  }
+
+  /**
+   * Lleva el formulario hasta la página que se le pida, pulsando «Siguiente».
+   *
+   * Se navega **por el motor** y no fijando un índice a mano: es él quien decide
+   * qué página se dibuja, y sólo deja avanzar con la actual válida. Por eso hace
+   * falta {@link completar} antes: sin los obligatorios, el primer «Siguiente»
+   * no mueve nada y la prueba miraría una página que no es.
+   *
+   * @param clave - La `clave` de la página buscada, no su título.
+   */
+  function avanzarHasta(clave: string): void {
+    const destino = component.paginasPaciente().findIndex((p) => p.clave === clave);
+    expect(destino, `no existe la página «${clave}»`).toBeGreaterThan(-1);
+
+    fixture.detectChanges();
+    for (let paso = 0; paso < destino; paso += 1) {
+      const siguiente = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+        '[data-testid="paginated-form-continuar"]',
+      );
+      siguiente?.click();
+      fixture.detectChanges();
+    }
+
+    expect(component.claveVisible(), 'el motor no llegó a la página pedida').toBe(clave);
   }
 
   /**
@@ -352,6 +414,9 @@ describe('RegisterPatient', () => {
     // cualquier huso al oeste de Greenwich, que es donde está Bolivia.
     birthDate: '1990-05-17',
     sexAtBirth: 'FEMALE',
+    // La otra mitad del documento, obligatoria desde que la cédula y su
+    // expedición dejaron de poder llegar separadas.
+    issuerAdministrativeAreaConceptId: DEPARTAMENTO_SANTA_CRUZ,
     residenceMunicipalityConceptId: MUNICIPIO_SACABA,
   };
 
@@ -382,6 +447,20 @@ describe('RegisterPatient', () => {
           `«${pagina.titulo}» pide ${pagina.campos.length}`,
         ).toBeLessThanOrEqual(4);
       }
+    });
+
+    /**
+     * Diez páginas pasan el tope de rótulos del indicador, así que hasta ahora
+     * el alta se recorría con un «Paso 1 de 10» y nada más. Con el recorrido
+     * compacto vuelven los diez marcadores: dónde está la persona, cuánto lleva
+     * hecho y a qué paso puede volver, que un contador no dice.
+     */
+    it('el recorrido se ve entero, en su forma compacta', () => {
+      const html = fixture.nativeElement as HTMLElement;
+
+      expect(html.querySelector('app-stepper .stepper--compact')).not.toBeNull();
+      expect(html.querySelectorAll('[data-testid^="stepper-paso-"]')).toHaveLength(10);
+      expect(html.querySelector('.paginated-form__contador')).toBeNull();
     });
 
     /**
@@ -425,32 +504,41 @@ describe('RegisterPatient', () => {
         'sexAtBirth',
         'occupationConceptId',
       ]);
-      expect(porClave('contact')).toEqual(['phone', 'guardianName', 'guardianPhone']);
+      // La relación va la última del contacto y completa el tope de cuatro:
+      // primero a quién llamamos, después qué es tuyo.
+      expect(porClave('contact')).toEqual([
+        'phone',
+        'guardianName',
+        'guardianPhone',
+        'guardianRelationshipConceptId',
+      ]);
       expect(porClave('residence')).toEqual([
         'residenceMunicipalityConceptId',
         'homeAddressLines',
         'gpsDomicilio',
       ]);
       expect(porClave('access')).toEqual(['email', 'password']);
-      expect(porClave('billing')).toEqual(['billingTaxId']);
+      expect(porClave('billing')).toEqual(['billingTaxId', 'billingLegalName']);
     });
 
     /**
-     * Los tres bloques que el pedido incluye y esta pantalla NO pregunta,
-     * porque no tienen dónde guardarse: zona (AC-03-10), relación del contacto
-     * de emergencia (AC-03-11) y razón social (AC-03-12). La prueba está para
-     * que aparezcan **con su columna**, no de contrabando: el día que alguien
-     * agregue el campo sin el destino, esto se pone rojo.
+     * Lo que el pedido incluye y esta pantalla NO pregunta, porque no tiene
+     * dónde guardarse: la zona en residencia y en trabajo (AC-03-10). La prueba
+     * está para que aparezca **con su columna**, no de contrabando: el día que
+     * alguien agregue el campo sin el destino, esto se pone rojo.
+     *
+     * La relación del contacto (AC-03-11) **salió** de esta lista: su columna
+     * `profiles.related_persons.relationship_concept_id` existe, su conjunto de
+     * valores también, y desde esta entrega se pregunta. Su prueba es la de más
+     * abajo.
      */
-    it('no pregunta lo que no tiene dónde guardarse', () => {
+    it('no pregunta la zona, que no tiene dónde guardarse', () => {
       const claves = component
         .paginasPaciente()
         .flatMap((pagina) => pagina.campos.map((campo) => campo.key));
 
       expect(claves).not.toContain('homeZone');
       expect(claves).not.toContain('workZone');
-      expect(claves).not.toContain('guardianRelationship');
-      expect(claves).not.toContain('billingLegalName');
     });
 
     it('empieza por el nombre y termina por la facturación', () => {
@@ -458,7 +546,10 @@ describe('RegisterPatient', () => {
       expect(primera.campos[0].key).toBe('name');
 
       const ultima = component.paginasPaciente().at(-1);
-      expect(ultima?.campos.map((campo) => campo.key)).toEqual(['billingTaxId']);
+      expect(ultima?.campos.map((campo) => campo.key)).toEqual([
+        'billingTaxId',
+        'billingLegalName',
+      ]);
     });
 
     /** Cada página lleva su glifo del set cerrado del nav (AC-04-3). */
@@ -567,6 +658,171 @@ describe('RegisterPatient', () => {
     });
   });
 
+  /**
+   * El glifo dentro del campo y la explicación al apuntarlo: las dos cosas que
+   * dejan recorrer una página de cuatro preguntas sin leerla entera.
+   */
+  describe('el glifo y la explicación de cada campo', () => {
+    /**
+     * Las ramas del motor que dibujan el glifo declarado, y las que no.
+     *
+     * Las que no, no es por olvido: en `tel` el hueco lo ocupa la bandera del
+     * país —que además se puede cambiar—, en `date` y `datetime` el almanaque
+     * que abre el calendario, y en `custom` lo que proyecte la pantalla. Ver
+     * `icono` en el contrato del motor.
+     */
+    const CON_GLIFO = ['text', 'email', 'password', 'number', 'select'];
+    const SIN_GLIFO = ['tel', 'date', 'datetime', 'textarea', 'radio', 'switch', 'checkbox'];
+
+    /**
+     * Los campos de todas las páginas, con los dos que sólo existen al elegir
+     * «Otra…» ya presentes: si no, ninguna prueba los miraría nunca.
+     */
+    function todosLosCampos() {
+      component.opcionesOcupacion.set([
+        { value: 'o-otra', label: 'Otra ocupación', code: 'occupation:bo:OTRA' },
+      ]);
+      component.elegirOcupacion({ value: 'o-otra', label: 'Otra ocupación' });
+      responderEmpresas();
+      component.elegirEmpresa({ value: EMPRESA_OTRA, label: 'Otra empresa (la escribo)' });
+      fixture.detectChanges();
+
+      const campos = component.paginasPaciente().flatMap((pagina) => pagina.campos);
+      expect(campos.map((campo) => campo.key)).toContain('occupationFreeText');
+      expect(campos.map((campo) => campo.key)).toContain('workEmployerFreeText');
+      return campos;
+    }
+
+    it('todo campo que pueda dibujar su glifo lo declara', () => {
+      const sinGlifo = todosLosCampos()
+        .filter((campo) => CON_GLIFO.includes(campo.control) && campo.icono === undefined)
+        .map((campo) => campo.key);
+
+      expect(sinGlifo).toEqual([]);
+    });
+
+    it('ninguno lo declara en una rama que no lo dibuja', () => {
+      // Un `icono` ahí no se ve en ningún lado: es contrato muerto que hace
+      // creer que el campo tiene glifo.
+      const glifoMuerto = todosLosCampos()
+        .filter((campo) => SIN_GLIFO.includes(campo.control) && campo.icono !== undefined)
+        .map((campo) => `${campo.key} (${campo.control})`);
+
+      expect(glifoMuerto).toEqual([]);
+    });
+
+    it('todo campo del motor explica qué se le pide', () => {
+      // Los `custom` no: su explicación la pone la pantalla en el campo que
+      // proyecta, y se comprueba abajo, en el DOM.
+      const sinExplicacion = todosLosCampos()
+        .filter(
+          (campo) =>
+            campo.control !== 'custom' &&
+            (campo.description === undefined || campo.description.trim() === ''),
+        )
+        .map((campo) => campo.key);
+
+      expect(sinExplicacion).toEqual([]);
+    });
+
+    it('las tres casillas de nombre y las agregadas traen su glifo y su explicación', () => {
+      component.agregarNombre();
+      fixture.detectChanges();
+      const html = fixture.nativeElement as HTMLElement;
+
+      for (const testId of [
+        'registro-nombre',
+        'registro-segundo-nombre',
+        'registro-tercer-nombre',
+        'registro-nombre-extra-0',
+      ]) {
+        const campo = html.querySelector(`[data-testid="${testId}"]`);
+        expect(campo, `falta el campo ${testId}`).not.toBeNull();
+        expect(
+          campo?.parentElement?.querySelector('app-nav-icon'),
+          `el campo ${testId} no tiene glifo`,
+        ).not.toBeNull();
+      }
+
+      // Y la explicación, que en un campo proyectado la pone la pantalla.
+      const explicaciones = [...html.querySelectorAll('.registro__nombre .form-field-description')]
+        .map((el) => el.textContent!.trim())
+        .filter((texto) => texto !== '');
+      expect(explicaciones).toHaveLength(4);
+    });
+
+    it('la lupa de ocupación trae su glifo', () => {
+      completar();
+      avanzarHasta('profile');
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector(
+          '[data-testid="registro-ocupacion"] app-nav-icon',
+        ),
+      ).not.toBeNull();
+    });
+
+    it('la lupa de empresa trae el suyo', () => {
+      completar();
+      avanzarHasta('work');
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector(
+          '[data-testid="registro-empresa"] app-nav-icon',
+        ),
+      ).not.toBeNull();
+    });
+
+    /**
+     * El árbol de municipios, sin el cual el select de ciudad no llega a
+     * dibujarse: mientras no hay departamento resuelto, el control dice qué
+     * falta y no ofrece nada.
+     */
+    function cargarMunicipios(): void {
+      http.expectOne(CATALOGO).flush({
+        items: [{ id: 'vs-dep', internalCode: 'VS_BO_DEPARTMENT', name: 'Departamentos' }],
+      });
+      http.expectOne(CATALOGO_MUNICIPIOS).flush({
+        items: [{ id: 'vs-mun', internalCode: 'VS_BO_MUNICIPALITY', name: 'Municipios' }],
+      });
+      http.expectOne('/terminology/value-sets/vs-dep/$expand?limit=200').flush({
+        items: [{ conceptId: 'd-cb', code: 'geo:bo:department:CB', display: 'Cochabamba' }],
+        count: 1,
+        limit: 200,
+        nextCursor: null,
+      });
+      http.expectOne('/terminology/value-sets/vs-mun/$expand?limit=200').flush({
+        items: [
+          { conceptId: MUNICIPIO_SACABA, code: 'geo:bo:municipality:031001', display: 'Sacaba' },
+        ],
+        count: 1,
+        limit: 200,
+        nextCursor: null,
+      });
+    }
+
+    it('el mapa de residencia trae su glifo y su explicación', () => {
+      cargarMunicipios();
+      completar();
+      avanzarHasta('residence');
+
+      const picker = (fixture.nativeElement as HTMLElement).querySelector('app-location-picker');
+      expect(picker?.querySelector('app-nav-icon')).not.toBeNull();
+      expect(picker?.querySelector('.form-field-description')?.textContent?.trim()).toBeTruthy();
+    });
+
+    it('el mapa del lugar de trabajo, también', () => {
+      cargarMunicipios();
+      completar();
+      component.elegirMunicipioDeTrabajo(MUNICIPIO_SACABA);
+      avanzarHasta('work-location');
+
+      const picker = (fixture.nativeElement as HTMLElement).querySelector('app-location-picker');
+      expect(picker?.querySelector('app-nav-icon')).not.toBeNull();
+      expect(picker?.querySelector('.form-field-description')?.textContent?.trim()).toBeTruthy();
+    });
+  });
+
   it('manda sólo los obligatorios cuando lo opcional quedó vacío', () => {
     completar();
     component.submit();
@@ -669,6 +925,32 @@ describe('RegisterPatient', () => {
       expect(component.formPaciente.controls.email.hasError('required')).toBe(true);
       component.submit();
       http.expectNone('/iam/auth/register-patient');
+    });
+
+    /**
+     * AG49-FT03-R04-001: el `BLOCKER` no era que `name`/`lastName` sean
+     * obligatorios —eso ya lo fija la prueba de arriba, a propósito—, sino que
+     * ningún artefacto decía POR QUÉ, dejando la lista de la fuente literal
+     * (seis campos) contradicha en silencio. Esta prueba fija el excedente
+     * exacto y documentado: si mañana alguien agrega un décimo obligatorio sin
+     * la misma justificación explícita (ver el comentario en
+     * `register-patient.ts` junto a `name`/`lastName`), esta prueba falla acá,
+     * antes de que vuelva a ser un finding.
+     */
+    it('el excedente sobre los seis obligatorios de la fuente literal (TAREA 03 §1.2) es exactamente name/lastName/password, documentado por contrato (AC-03-4/P-03-2)', () => {
+      const SEIS_DE_LA_FUENTE_LITERAL = [
+        'nationalId',
+        'email',
+        'sexAtBirth',
+        'phone',
+        'birthDate',
+        'residenceMunicipalityConceptId',
+      ] as const;
+      const EXCEDENTE_JUSTIFICADO_POR_CONTRATO = ['name', 'lastName', 'password'] as const;
+
+      expect(new Set(OBLIGATORIOS)).toEqual(
+        new Set([...SEIS_DE_LA_FUENTE_LITERAL, ...EXCEDENTE_JUSTIFICADO_POR_CONTRATO]),
+      );
     });
   });
 
@@ -887,7 +1169,6 @@ describe('RegisterPatient', () => {
 
     const req = http.expectOne('/iam/auth/register-patient');
     const enviado = Object.keys(req.request.body as Record<string, unknown>);
-    expect(enviado).not.toContain('issuerAdministrativeAreaConceptId');
     expect(enviado).not.toContain('gender');
     expect(enviado).not.toContain('occupationConceptId');
     expect(enviado).not.toContain('occupationFreeText');
@@ -904,18 +1185,24 @@ describe('RegisterPatient', () => {
     expect(enviado).not.toContain('privateInsurancePlanId');
     expect(enviado).not.toContain('publicInsurancePlanId');
     expect(enviado).not.toContain('billingTaxId');
+    expect(enviado).not.toContain('billingLegalName');
 
     req.flush(RESPUESTA);
   });
 
   it('manda la calle y el NIT cuando se completaron', () => {
-    completar({ homeAddressLines: '  Av. Banzer #42  ', billingTaxId: ' 1023456789 ' });
+    completar({
+      homeAddressLines: '  Av. Banzer #42  ',
+      billingTaxId: ' 1023456789 ',
+      billingLegalName: '  Empresa SRL  ',
+    });
     component.submit();
 
     const req = http.expectOne('/iam/auth/register-patient');
     // Recortados: un espacio de más no es parte de la dirección ni del NIT.
     expect(req.request.body.homeAddressLines).toBe('Av. Banzer #42');
     expect(req.request.body.billingTaxId).toBe('1023456789');
+    expect(req.request.body.billingLegalName).toBe('Empresa SRL');
 
     req.flush(RESPUESTA);
   });
@@ -964,6 +1251,74 @@ describe('RegisterPatient', () => {
   });
 
   /**
+   * El punto sin confirmar se perdía **en silencio**.
+   *
+   * Que no viaje está bien y tiene su prueba arriba. Lo que faltaba es decirlo:
+   * quien capturaba su ubicación y pasaba de página creía que ya estaba
+   * guardada, y nadie le avisaba de lo contrario. El aviso no confirma nada por
+   * su cuenta ni frena el envío — sólo deja de ser silenciosa la consecuencia.
+   */
+  describe('aviso del punto capturado sin confirmar (P5)', () => {
+    /** El aviso de una de las dos ubicaciones, si está en el DOM. */
+    function aviso(cual: 'home' | 'work'): HTMLElement | null {
+      fixture.detectChanges();
+      return (fixture.nativeElement as HTMLElement).querySelector(
+        `[data-testid="registration-${cual}-location-unconfirmed"]`,
+      );
+    }
+
+    it('no dice nada mientras no haya punto capturado', () => {
+      completar();
+      avanzarHasta('residence');
+
+      expect(aviso('home')).toBeNull();
+    });
+
+    it('avisa en el domicilio cuando el punto está capturado y sin confirmar', () => {
+      completar();
+      avanzarHasta('residence');
+      component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+
+      expect(aviso('home')?.textContent).toContain('no se va a guardar');
+    });
+
+    it('el aviso del domicilio se va al confirmar', () => {
+      completar();
+      avanzarHasta('residence');
+      component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+      component.confirmarDireccionActual();
+
+      expect(aviso('home')).toBeNull();
+    });
+
+    /**
+     * El trabajo tiene el mismo problema y la misma solución: son dos puntos
+     * distintos con su propio estado, y confirmar uno no confirma el otro.
+     */
+    it('avisa igual en el lugar de trabajo, y se va al confirmar', () => {
+      completar();
+      avanzarHasta('work-location');
+      component.gpsTrabajo.set({ lat: -16.5, lng: -68.15 });
+      expect(aviso('work')?.textContent).toContain('no se va a guardar');
+
+      component.confirmarDireccionDeTrabajo();
+      expect(aviso('work')).toBeNull();
+    });
+
+    it('no bloquea el envío: el alta sale con el punto sin confirmar', () => {
+      completar();
+      component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-patient');
+      expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain(
+        'homeLatitude',
+      );
+      req.flush(RESPUESTA);
+    });
+  });
+
+  /**
    * Volver a ubicarse invalida lo confirmado: lo que se dio por bueno era el
    * punto anterior, y el que está por llegar todavía no lo miró nadie.
    */
@@ -993,6 +1348,88 @@ describe('RegisterPatient', () => {
     expect(pines).toHaveLength(1);
     expect(pines[0].lat).toBe(-17.7833);
     expect(pines[0].lng).toBe(-63.1821);
+  });
+
+  /* ---- El pin también se pone a mano sobre el mapa ---------------------------
+     La casa casi nunca se declara desde la casa, y quien negó el permiso del
+     navegador también tiene que poder poner su pin. Así que el mapa se abre
+     vacío y se toca; y con un pin puesto, tocarlo lo corre. */
+
+  it('«Marcar en el mapa» abre el mapa vacío sin pedir nada al navegador', () => {
+    expect(component.mapaDomicilioAbierto()).toBe(false);
+
+    component.marcarDomicilioEnMapa();
+
+    expect(component.marcandoDomicilio()).toBe(true);
+    expect(component.mapaDomicilioAbierto()).toBe(true);
+    expect(component.gpsDomicilio()).toBeNull();
+    expect(component.pinesDomicilio()).toEqual([]);
+  });
+
+  it('tocar el mapa pone el pin del domicilio sin confirmarlo, y no viaja hasta que se confirme', () => {
+    completar();
+    component.marcarDomicilioEnMapa();
+
+    component.fijarPuntoDomicilio({ lat: -16.5, lng: -68.15 });
+
+    expect(component.gpsDomicilio()).toEqual({ lat: -16.5, lng: -68.15 });
+    expect(component.marcandoDomicilio()).toBe(false);
+    expect(component.direccionConfirmada()).toBe(false);
+    // El pin puesto a mano no se llama «Acá te encontramos»: eso sería mentir.
+    expect(component.pinesDomicilio()[0].titulo).toBe('El punto que marcaste');
+
+    component.submit();
+    const sinConfirmar = http.expectOne('/iam/auth/register-patient');
+    expect(Object.keys(sinConfirmar.request.body as Record<string, unknown>)).not.toContain(
+      'homeLatitude',
+    );
+    sinConfirmar.flush(RESPUESTA);
+  });
+
+  it('el punto marcado a mano viaja igual que el del navegador una vez confirmado', () => {
+    completar();
+    component.fijarPuntoDomicilio({ lat: -16.5, lng: -68.15 });
+    component.confirmarDireccionActual();
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body.homeLatitude).toBe(-16.5);
+    expect(req.request.body.homeLongitude).toBe(-68.15);
+    req.flush(RESPUESTA);
+  });
+
+  it('tocar el mapa con un punto ya confirmado lo corre y suelta la confirmación', () => {
+    component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+    component.confirmarDireccionActual();
+    expect(component.direccionConfirmada()).toBe(true);
+
+    component.fijarPuntoDomicilio({ lat: -17.79, lng: -63.19 });
+
+    expect(component.gpsDomicilio()).toEqual({ lat: -17.79, lng: -63.19 });
+    expect(component.direccionConfirmada()).toBe(false);
+  });
+
+  it('quitar la ubicación con el mapa vacío abierto lo cierra', () => {
+    component.marcarDomicilioEnMapa();
+    component.quitarUbicacion();
+
+    expect(component.marcandoDomicilio()).toBe(false);
+    expect(component.mapaDomicilioAbierto()).toBe(false);
+  });
+
+  it('el trabajo tiene su propio mapa a mano, independiente del domicilio', () => {
+    component.marcarTrabajoEnMapa();
+    expect(component.mapaTrabajoAbierto()).toBe(true);
+    expect(component.mapaDomicilioAbierto()).toBe(false);
+
+    component.fijarPuntoDeTrabajo({ lat: -17.4, lng: -66.1 });
+    expect(component.gpsTrabajo()).toEqual({ lat: -17.4, lng: -66.1 });
+    expect(component.direccionTrabajoConfirmada()).toBe(false);
+    expect(component.pinesTrabajo()[0].titulo).toBe('El punto que marcaste');
+    expect(component.gpsDomicilio()).toBeNull();
+
+    component.quitarUbicacionDeTrabajo();
+    expect(component.mapaTrabajoAbierto()).toBe(false);
   });
 
   /* ---- La empresa, que reemplazó a la ubicación del trabajo ---- */
@@ -1154,6 +1591,24 @@ describe('RegisterPatient', () => {
     completar();
     component.submit();
     http.expectOne('/iam/auth/register-patient').flush(RESPUESTA);
+  });
+
+  /**
+   * El número de la cédula y el departamento que la expidió son UN documento
+   * escrito en dos casillas. Con el número obligatorio y la expedición no, la
+   * cédula quedaba a medias — y es lo único que distingue dos documentos con
+   * el mismo número. Mismo criterio que el alta de profesional.
+   */
+  it('sin departamento de emisión el formulario no se puede enviar', () => {
+    completar();
+    component.formPaciente.controls.issuerAdministrativeAreaConceptId.setValue(null);
+
+    expect(component.formPaciente.controls.issuerAdministrativeAreaConceptId.invalid).toBe(
+      true,
+    );
+
+    component.submit();
+    http.expectNone('/iam/auth/register-patient');
   });
 
   it('no deja enviar un teléfono de tutor sin su nombre', () => {
@@ -1320,6 +1775,618 @@ describe('RegisterPatient', () => {
         .error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
 
       expect(component.errorMessage()).toContain('conexión');
+    });
+  });
+
+  /**
+   * La relación del contacto de emergencia (AC-03-11).
+   *
+   * Es el único catálogo de esta pantalla que se lee **por campo destino** y no
+   * por código de conjunto de valores: su columna declara enumeración dinámica,
+   * así que la API la sirve en `/system-context/dynamic-enums?target=…`.
+   */
+  describe('relación del contacto de emergencia (P1)', () => {
+    /** Lo que devuelve el catálogo, con los códigos que siembra la API. */
+    function responderCatalogo(): void {
+      http.expectOne(CATALOGO_PARENTESCOS).flush({
+        code: 'related-person-relationship',
+        name: 'Parentesco de la persona relacionada',
+        definitionId: 'def-1',
+        valueSetId: 'vs-1',
+        allowCustomValue: false,
+        options: [
+          {
+            conceptId: PARENTESCO_MADRE,
+            code: 'RELATIONSHIP_MOTHER',
+            display: 'Mother relationship',
+            ordinal: 1,
+            isDefault: false,
+          },
+          {
+            conceptId: 'c-otra',
+            // Un código sin palabra propia: tiene que caer al `display` del
+            // catálogo, nunca quedarse en blanco ni mostrar el uuid.
+            code: 'RELATIONSHIP_NEW_ONE',
+            display: 'Brand new relationship',
+            ordinal: 2,
+            isDefault: false,
+          },
+        ],
+      });
+    }
+
+    it('ofrece el campo como `select` opcional con las palabras en castellano', () => {
+      responderCatalogo();
+
+      const campo = component
+        .paginasPaciente()
+        .find((pagina) => pagina.clave === 'contact')
+        ?.campos.find((c) => c.key === 'guardianRelationshipConceptId');
+
+      expect(campo?.control).toBe('select');
+      // Opcional: el contacto entero lo es.
+      expect(campo?.required).toBeUndefined();
+      expect(campo?.options).toEqual([
+        { value: PARENTESCO_MADRE, label: 'Madre' },
+        // Sin entrada propia se muestra el rótulo del catálogo: feo, pero dice
+        // algo — a diferencia de una opción vacía.
+        { value: 'c-otra', label: 'Brand new relationship' },
+      ]);
+      expect(component.formPaciente.controls.guardianRelationshipConceptId.invalid).toBe(
+        false,
+      );
+    });
+
+    it('se dibuja en la página del contacto', () => {
+      responderCatalogo();
+      completar();
+      avanzarHasta('contact');
+
+      const html = fixture.nativeElement as HTMLElement;
+      expect(html.querySelector('[data-testid="registro-tutor-relacion"]')).not.toBeNull();
+    });
+
+    /**
+     * Sin catálogo el campo pasa a proyectado, para que la pantalla pueda poner
+     * ahí el aviso con su «Reintentar»: un desplegable vacío no tiene dónde
+     * decir que no cargó. El alta sigue en pie — el campo es opcional.
+     */
+    it('cambia de `select` a proyectado si su catálogo se cae', () => {
+      http
+        .expectOne(CATALOGO_PARENTESCOS)
+        .flush(null, { status: 500, statusText: 'Server Error' });
+
+      const campo = component
+        .paginasPaciente()
+        .find((pagina) => pagina.clave === 'contact')
+        ?.campos.find((c) => c.key === 'guardianRelationshipConceptId');
+
+      expect(component.catalogoParentescosCaido()).toBe(true);
+      expect(campo?.control).toBe('custom');
+    });
+
+    it('«Reintentar» vuelve a la red: el fallo cacheado no dura toda la sesión', () => {
+      http
+        .expectOne(CATALOGO_PARENTESCOS)
+        .flush(null, { status: 500, statusText: 'Server Error' });
+
+      component['reintentarParentescos']();
+
+      // Sin `olvidar()`, el `shareReplay` del cliente replicaría el error sin
+      // pedir nada y esta expectativa no encontraría petición alguna.
+      responderCatalogo();
+      expect(component.catalogoParentescosCaido()).toBe(false);
+    });
+
+    it('manda el parentesco elegido junto al contacto', () => {
+      responderCatalogo();
+      completar({ guardianName: 'Rosa Quispe' });
+      component.formPaciente.controls.guardianRelationshipConceptId.setValue(
+        PARENTESCO_MADRE,
+      );
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-patient');
+      expect(req.request.body.guardianRelationshipConceptId).toBe(PARENTESCO_MADRE);
+      req.flush(RESPUESTA);
+    });
+
+    /**
+     * Sin elección no viaja el campo: la API escribe su valor por defecto
+     * —«tutor o representante legal»—, que es lo que escribía antes de que este
+     * campo existiera. Mandar una cadena vacía sería un 400.
+     */
+    it('no manda el parentesco si no se eligió ninguno', () => {
+      responderCatalogo();
+      completar({ guardianName: 'Rosa Quispe' });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-patient');
+      expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain(
+        'guardianRelationshipConceptId',
+      );
+      req.flush(RESPUESTA);
+    });
+
+    /**
+     * Un parentesco sin contacto no describe a nadie, así que no viaja: es la
+     * misma regla que ya cumple el teléfono del tutor.
+     */
+    it('no manda el parentesco si no hay contacto de emergencia', () => {
+      responderCatalogo();
+      completar();
+      component.formPaciente.controls.guardianRelationshipConceptId.setValue(
+        PARENTESCO_MADRE,
+      );
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-patient');
+      const enviado = Object.keys(req.request.body as Record<string, unknown>);
+      expect(enviado).not.toContain('guardianRelationshipConceptId');
+      expect(enviado).not.toContain('guardianName');
+      req.flush(RESPUESTA);
+    });
+  });
+
+  /**
+   * Copiar el nombre de la localidad a «dirección 1» (P4 / AC-03-8).
+   *
+   * No es geocodificación —convertir el pin en «Av. Banzer 3er anillo» exige un
+   * proveedor externo que la política de seguridad no permite—: es copiar lo
+   * único que el sistema sí sabe del lugar elegido, que es cómo se llama.
+   */
+  describe('prellenado de la dirección con la localidad (P4)', () => {
+    /** Responde el árbol de municipios, que es de donde sale el nombre. */
+    function cargarArbol(): void {
+      http.expectOne(CATALOGO).flush({
+        items: [{ id: 'vs-dep', internalCode: 'VS_BO_DEPARTMENT', name: 'Departamentos' }],
+      });
+      http.expectOne(CATALOGO_MUNICIPIOS).flush({
+        items: [{ id: 'vs-mun', internalCode: 'VS_BO_MUNICIPALITY', name: 'Municipios' }],
+      });
+      http.expectOne('/terminology/value-sets/vs-dep/$expand?limit=200').flush({
+        items: [{ conceptId: 'd-cb', code: 'geo:bo:department:CB', display: 'Cochabamba' }],
+        count: 1,
+        limit: 200,
+        nextCursor: null,
+      });
+      http.expectOne('/terminology/value-sets/vs-mun/$expand?limit=200').flush({
+        items: [
+          {
+            conceptId: MUNICIPIO_SACABA,
+            code: 'geo:bo:municipality:031001',
+            display: 'Sacaba',
+          },
+          // El segundo municipio existe para poder corregir la elección, que es
+          // el caso donde el prellenado se vuelve peligroso: ver más abajo.
+          {
+            conceptId: MUNICIPIO_QUILLACOLLO,
+            code: 'geo:bo:municipality:030301',
+            display: 'Quillacollo',
+          },
+        ],
+        count: 2,
+        limit: 200,
+        nextCursor: null,
+      });
+    }
+
+    it('copia el nombre de la localidad de residencia si la dirección está vacía', () => {
+      cargarArbol();
+      component.elegirMunicipio(MUNICIPIO_SACABA);
+
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe('Sacaba');
+    });
+
+    /**
+     * Pisar lo que alguien escribió es el defecto clásico de los prellenados, y
+     * acá borraría una dirección real por elegir la ciudad después.
+     */
+    it('no pisa la dirección que la persona ya escribió', () => {
+      cargarArbol();
+      component.formPaciente.controls.homeAddressLines.setValue('Av. Banzer #42');
+      component.elegirMunicipio(MUNICIPIO_SACABA);
+
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe(
+        'Av. Banzer #42',
+      );
+    });
+
+    /** Una dirección de puros espacios está vacía a todos los efectos. */
+    it('trata los espacios en blanco como campo vacío', () => {
+      cargarArbol();
+      component.formPaciente.controls.homeAddressLines.setValue('   ');
+      component.elegirMunicipio(MUNICIPIO_SACABA);
+
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe('Sacaba');
+    });
+
+    it('hace lo mismo con la localidad del trabajo', () => {
+      cargarArbol();
+      component.elegirMunicipioDeTrabajo(MUNICIPIO_SACABA);
+
+      expect(component.formPaciente.controls.workAddressLines.value).toBe('Sacaba');
+    });
+
+    /**
+     * El campo queda editable y **sin marcar**: no lo escribió la persona, así
+     * que marcarlo dispararía la validación y los mensajes de un campo que nadie
+     * tocó.
+     */
+    it('deja el campo editable y sin marcar como tocado', () => {
+      cargarArbol();
+      component.elegirMunicipio(MUNICIPIO_SACABA);
+      const control = component.formPaciente.controls.homeAddressLines;
+
+      expect(control.touched).toBe(false);
+      expect(control.disabled).toBe(false);
+
+      control.setValue('Sacaba, calle Junín #12');
+      expect(control.value).toBe('Sacaba, calle Junín #12');
+    });
+
+    /**
+     * Sin árbol cargado no hay nombre que copiar, y **nunca** se escribe un
+     * identificador ni un texto inventado: el campo queda como estaba.
+     */
+    it('no escribe nada si el catálogo todavía no trajo el nombre', () => {
+      component.elegirMunicipio(MUNICIPIO_SACABA);
+
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe('');
+    });
+
+    it('soltar la localidad no toca la dirección', () => {
+      cargarArbol();
+      component.elegirMunicipio(null);
+
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe('');
+    });
+
+    /* ---- Corregir la localidad después de haberla elegido -----------------
+       Es donde un prellenado se vuelve peligroso: «solo si está vacío» ya no
+       alcanza, porque el campo lo llenó el propio formulario. Sin distinguir lo
+       sembrado de lo escrito, corregir la ciudad dejaba viajar el municipio
+       nuevo con el nombre del anterior — un domicilio que no existe. */
+
+    it('re-siembra al corregir la localidad: no deja el nombre del anterior', () => {
+      cargarArbol();
+      component.elegirMunicipio(MUNICIPIO_SACABA);
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe('Sacaba');
+
+      component.elegirMunicipio(MUNICIPIO_QUILLACOLLO);
+
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe('Quillacollo');
+    });
+
+    it('lo mismo al corregir la localidad del trabajo', () => {
+      cargarArbol();
+      component.elegirMunicipioDeTrabajo(MUNICIPIO_SACABA);
+      component.elegirMunicipioDeTrabajo(MUNICIPIO_QUILLACOLLO);
+
+      expect(component.formPaciente.controls.workAddressLines.value).toBe('Quillacollo');
+    });
+
+    /**
+     * Lo que la persona escribió sobre lo sembrado es suyo, y manda: corregir
+     * la ciudad no puede borrar una dirección que alguien completó a mano.
+     */
+    it('no pisa lo que la persona escribió sobre lo sembrado', () => {
+      cargarArbol();
+      component.elegirMunicipio(MUNICIPIO_SACABA);
+      component.formPaciente.controls.homeAddressLines.setValue('Sacaba, calle Junín #12');
+
+      component.elegirMunicipio(MUNICIPIO_QUILLACOLLO);
+
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe(
+        'Sacaba, calle Junín #12',
+      );
+    });
+
+    /**
+     * Soltar la localidad se lleva lo que el formulario había sembrado: el
+     * nombre de una localidad que ya no está elegida no describe a nadie.
+     */
+    /* El mapa de departamentos es un grupo de dos estados: volver a pulsar el
+       que ya estaba elegido lo suelta, y ése es justo el gesto de quien va a
+       cambiar de ciudad. Si soltar limpiara, ese gesto borraría la dirección
+       que la persona tiene delante. */
+    it('soltar la localidad conserva lo que se había sembrado', () => {
+      cargarArbol();
+      component.elegirMunicipio(MUNICIPIO_SACABA);
+
+      component.elegirMunicipio(null);
+
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe('Sacaba');
+    });
+
+    it('tras soltar, elegir otra localidad reescribe el nombre igual', () => {
+      cargarArbol();
+      component.elegirMunicipio(MUNICIPIO_SACABA);
+      component.elegirMunicipio(null);
+
+      component.elegirMunicipio(MUNICIPIO_QUILLACOLLO);
+
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe(
+        'Quillacollo',
+      );
+    });
+
+    it('soltar la localidad NO borra lo que la persona escribió', () => {
+      cargarArbol();
+      component.elegirMunicipio(MUNICIPIO_SACABA);
+      component.formPaciente.controls.homeAddressLines.setValue('Av. Banzer #42');
+
+      component.elegirMunicipio(null);
+
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe(
+        'Av. Banzer #42',
+      );
+    });
+
+    /** Re-sembrar tampoco marca el campo: sigue sin escribirlo la persona. */
+    it('re-sembrar deja el campo sin marcar como tocado', () => {
+      cargarArbol();
+      component.elegirMunicipio(MUNICIPIO_SACABA);
+      component.elegirMunicipio(MUNICIPIO_QUILLACOLLO);
+
+      expect(component.formPaciente.controls.homeAddressLines.touched).toBe(false);
+    });
+  });
+
+  /**
+   * La localidad elegida **en pantalla**: mapa + select, no el método a mano.
+   *
+   * Las pruebas de arriba llaman a `elegirMunicipio()` directo y no ven el
+   * camino que recorre la persona: pulsar el departamento en
+   * `app-department-map`, que `app-location-picker` traduce, y elegir la ciudad
+   * en su `app-select`, que vuelve a traducir. Cada tramo emite, y un `null` de
+   * más en cualquiera alcanza para borrar lo recién sembrado. Es lo que se vio
+   * en pantalla: «al elegir Warnes, en vez de sembrar la dirección la borra».
+   */
+  describe('la localidad elegida en pantalla: mapa + select (P4)', () => {
+    /** Un municipio de Santa Cruz, código INE 070105. */
+    const MUNICIPIO_EL_TORNO = '7d3f5a1c-2b6e-5c4d-9a8f-1e2d3c4b5a60';
+
+    /** Otro de Santa Cruz, para corregir dentro del mismo departamento. */
+    const MUNICIPIO_WARNES = '8e4a6b2d-3c7f-5d5e-8b9a-2f3e4d5c6b71';
+
+    /** El árbol con dos departamentos: se corrige DENTRO de uno y ENTRE dos. */
+    function cargarArbolDeDosDepartamentos(): void {
+      http.expectOne(CATALOGO).flush({
+        items: [{ id: 'vs-dep', internalCode: 'VS_BO_DEPARTMENT', name: 'Departamentos' }],
+      });
+      http.expectOne(CATALOGO_MUNICIPIOS).flush({
+        items: [{ id: 'vs-mun', internalCode: 'VS_BO_MUNICIPALITY', name: 'Municipios' }],
+      });
+      http.expectOne('/terminology/value-sets/vs-dep/$expand?limit=200').flush({
+        items: [
+          { conceptId: 'd-cb', code: 'geo:bo:department:CB', display: 'Cochabamba' },
+          { conceptId: 'd-sc', code: 'geo:bo:department:SC', display: 'Santa Cruz' },
+        ],
+        count: 2,
+        limit: 200,
+        nextCursor: null,
+      });
+      http.expectOne('/terminology/value-sets/vs-mun/$expand?limit=200').flush({
+        items: [
+          { conceptId: MUNICIPIO_SACABA, code: 'geo:bo:municipality:031001', display: 'Sacaba' },
+          {
+            conceptId: MUNICIPIO_QUILLACOLLO,
+            code: 'geo:bo:municipality:030301',
+            display: 'Quillacollo',
+          },
+          {
+            conceptId: MUNICIPIO_EL_TORNO,
+            code: 'geo:bo:municipality:070105',
+            display: 'El Torno',
+          },
+          { conceptId: MUNICIPIO_WARNES, code: 'geo:bo:municipality:070201', display: 'Warnes' },
+        ],
+        count: 4,
+        limit: 200,
+        nextCursor: null,
+      });
+    }
+
+    function pantalla(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    /** Pulsa un departamento en el mapa de residencia, como con el ratón. */
+    function pulsarDepartamento(sigla: string): void {
+      const forma = pantalla().querySelector(
+        `[data-testid="registration-residence-mapa-${sigla}"]`,
+      );
+      expect(forma, `no está dibujado el departamento «${sigla}»`).not.toBeNull();
+      forma?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      fixture.detectChanges();
+    }
+
+    /** Elige una ciudad en el select de residencia, como lo haría la persona. */
+    function elegirCiudad(nombre: string): void {
+      const select = pantalla().querySelector<HTMLSelectElement>(
+        '[data-testid="registration-residence-municipio"] select',
+      );
+      expect(select, 'el select de ciudad no está en pantalla').not.toBeNull();
+      const opcion = [...(select?.options ?? [])].find(
+        (candidata) => candidata.textContent?.trim() === nombre,
+      );
+      expect(opcion, `«${nombre}» no está entre las ciudades ofrecidas`).toBeDefined();
+      if (select === null || opcion === undefined) return;
+      select.value = opcion.value;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      fixture.detectChanges();
+    }
+
+    function direccion(): string {
+      return component.formPaciente.controls.homeAddressLines.value;
+    }
+
+    beforeEach(() => {
+      cargarArbolDeDosDepartamentos();
+      completarDatosPersonales();
+      avanzarHasta('residence');
+    });
+
+    it('(A) departamento en el mapa y ciudad en el select siembran el nombre', () => {
+      pulsarDepartamento('SC');
+      elegirCiudad('El Torno');
+
+      expect(component.formPaciente.controls.residenceMunicipalityConceptId.value).toBe(
+        MUNICIPIO_EL_TORNO,
+      );
+      expect(direccion()).toBe('El Torno');
+    });
+
+    it('(B) corregir a otra ciudad del MISMO departamento deja el nombre nuevo', () => {
+      pulsarDepartamento('SC');
+      elegirCiudad('El Torno');
+
+      elegirCiudad('Warnes');
+
+      expect(component.formPaciente.controls.residenceMunicipalityConceptId.value).toBe(
+        MUNICIPIO_WARNES,
+      );
+      expect(direccion()).toBe('Warnes');
+    });
+
+    it('(C) cambiar de departamento en el mapa y elegir una ciudad deja el nombre nuevo', () => {
+      pulsarDepartamento('SC');
+      elegirCiudad('El Torno');
+
+      pulsarDepartamento('CB');
+      elegirCiudad('Sacaba');
+
+      expect(component.formPaciente.controls.residenceMunicipalityConceptId.value).toBe(
+        MUNICIPIO_SACABA,
+      );
+      expect(direccion()).toBe('Sacaba');
+    });
+
+    /**
+     * (D) Lo que llega desde el selector, en orden y con la dirección tal como
+     * quedó tras cada llegada. Un `null` DESPUÉS de la ciudad elegida sería una
+     * emisión espuria —del select al redibujar sus opciones, o del mapa— y
+     * borraría lo recién sembrado.
+     */
+    it('(D) ninguna emisión del selector llega después de la ciudad elegida', () => {
+      const llegadas: { conceptId: string | null; direccion: string }[] = [];
+      const original = component.elegirMunicipio.bind(component);
+      vi.spyOn(component, 'elegirMunicipio').mockImplementation((conceptId) => {
+        original(conceptId);
+        llegadas.push({ conceptId, direccion: direccion() });
+      });
+
+      pulsarDepartamento('SC');
+      elegirCiudad('El Torno');
+      elegirCiudad('Warnes');
+      pulsarDepartamento('CB');
+      elegirCiudad('Sacaba');
+
+      expect(llegadas).toEqual([
+        { conceptId: MUNICIPIO_EL_TORNO, direccion: 'El Torno' },
+        { conceptId: MUNICIPIO_WARNES, direccion: 'Warnes' },
+        // Cambiar de departamento suelta Warnes: ese `null` es a propósito.
+        // La dirección se conserva hasta que haya una localidad nueva.
+        { conceptId: null, direccion: 'Warnes' },
+        { conceptId: MUNICIPIO_SACABA, direccion: 'Sacaba' },
+      ]);
+    });
+
+    /**
+     * (E) Volver a pulsar el departamento ya elegido lo DES-elige (el mapa es
+     * de dos estados) y suelta la ciudad, pero la dirección **se conserva**:
+     * es el gesto de quien va a cambiar de ciudad, y una navegación no puede
+     * costar lo que la persona tiene delante. Elegir la ciudad nueva tiene que
+     * terminar con su nombre.
+     */
+    it('(E) des-elegir y re-elegir el departamento en el mapa y luego la ciudad', () => {
+      pulsarDepartamento('SC');
+      elegirCiudad('El Torno');
+
+      pulsarDepartamento('SC');
+      expect(direccion(), 'soltar el departamento no borra lo sembrado').toBe(
+        'El Torno',
+      );
+      pulsarDepartamento('SC');
+      elegirCiudad('Warnes');
+
+      expect(direccion()).toBe('Warnes');
+    });
+
+    /**
+     * (F) Ir a la página siguiente y volver destruye y recrea el selector y el
+     * campo de dirección: lo elegido y lo sembrado tienen que sobrevivir, y
+     * corregir la ciudad después tiene que seguir re-sembrando.
+     */
+    it('(F) corregir la ciudad después de avanzar y volver re-siembra', () => {
+      pulsarDepartamento('SC');
+      elegirCiudad('El Torno');
+
+      pantalla().querySelector<HTMLElement>('[data-testid="paginated-form-continuar"]')?.click();
+      fixture.detectChanges();
+      expect(component.claveVisible()).toBe('work');
+      pantalla().querySelector<HTMLElement>('[data-testid="paginated-form-atras"]')?.click();
+      fixture.detectChanges();
+      expect(component.claveVisible()).toBe('residence');
+      expect(direccion(), 'lo sembrado sobrevive a ir y volver').toBe('El Torno');
+
+      elegirCiudad('Warnes');
+
+      expect(direccion()).toBe('Warnes');
+    });
+
+    /** (G) Igual que (F), pero cambiando de departamento al volver. */
+    it('(G) cambiar de departamento después de avanzar y volver re-siembra', () => {
+      pulsarDepartamento('SC');
+      elegirCiudad('El Torno');
+
+      pantalla().querySelector<HTMLElement>('[data-testid="paginated-form-continuar"]')?.click();
+      fixture.detectChanges();
+      pantalla().querySelector<HTMLElement>('[data-testid="paginated-form-atras"]')?.click();
+      fixture.detectChanges();
+
+      pulsarDepartamento('CB');
+      elegirCiudad('Quillacollo');
+
+      expect(direccion()).toBe('Quillacollo');
+    });
+  });
+
+  /* ==========================================================================
+     Las dos salidas escritas a mano.
+
+     «Otra ocupación» y «Otra empresa» destraban un campo de texto libre, y quién
+     decide que la opción elegida es «otra» **compara por código**. Un filtro por
+     código es mudo cuando los dos lados hablan vocabularios distintos: no falla,
+     no avisa, sencillamente nunca da verdadero — y el campo escrito a mano deja
+     de aparecer, con la función construida y entera del otro lado.
+
+     Pasó en la rama `mockup` hasta el 09/09/2026: el simulador nombraba sus
+     ocupaciones `OCC-OTRA` y sus empleadores `EMP-INDEP`, y estas dos constantes
+     valen `occupation:bo:OTRA` y `employer:bo:OTRA`. Es la tercera vez que este
+     defecto muerde en el mismo fixture —antes fueron los departamentos
+     (`BO-SC`, que dejaba el mapa vacío) y las especialidades odontológicas—, así
+     que acá queda atado.
+
+     Se comprueba contra el catálogo del simulador porque es el único de los dos
+     que este repositorio puede leer, y es el que sirve la maqueta donde el
+     hueco apareció.
+     ========================================================================== */
+  describe('las salidas escritas a mano existen en el catálogo', () => {
+    it('«Otra ocupación» tiene el código que la pantalla busca', () => {
+      expect(OCUPACION[CODIGO_OCUPACION_OTRA], CODIGO_OCUPACION_OTRA).toBeDefined();
+    });
+
+    it('«Otra empresa» también', () => {
+      expect(EMPLEADOR[CODIGO_EMPRESA_OTRA], CODIGO_EMPRESA_OTRA).toBeDefined();
+    });
+
+    it('y no son las únicas: quedan opciones de verdad antes de la salida', () => {
+      // Si el catálogo fuera sólo «Otra», la lista no ofrecería nada y todo el
+      // mundo terminaría escribiendo a mano lo que el catálogo ya tiene.
+      expect(Object.keys(OCUPACION).length).toBeGreaterThan(10);
+      expect(Object.keys(EMPLEADOR).length).toBeGreaterThan(3);
     });
   });
 });

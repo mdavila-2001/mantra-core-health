@@ -1,0 +1,217 @@
+<app-page-header
+  title="Activos y pasivos"
+  subtitle="Tus activos fijos y tus deudas, con su avance y su automatización."
+/>
+
+<app-form-field icon="building" label="Práctica" hint="Los activos y pasivos que se muestran son los de esta práctica">
+  <app-select
+    [options]="opcionesDePractica()"
+    [(value)]="practicaElegida"
+    placeholder="Elegí una práctica"
+  />
+</app-form-field>
+
+@if (practicaElegida()) {
+  <app-tabs [(selectedIndex)]="pestanaActiva">
+    <app-tab label="Activos">
+      @if (pestanaActiva() === 0) {
+        <h2 class="titulo-de-seccion">Dar de alta un activo</h2>
+        <app-card>
+          @if (errorDeAltaDeActivo(); as mensaje) {
+            <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
+          }
+          @if (activoDadoDeAlta()) {
+            <app-alert appAnuncio [asertivo]="false" tone="success" class="alerta-de-formulario">
+              Activo dado de alta.
+            </app-alert>
+          }
+                    <app-paginated-form
+            [paginas]="paginasDeActivo()"
+            [form]="formularioDeActivo"
+            label="Alta de activo"
+            submitLabel="Dar de alta"
+            [pending]="enviandoAltaDeActivo()"
+            (enviado)="darDeAltaActivo()"
+          />
+        </app-card>
+
+        <h2 class="titulo-de-seccion">Cuentas para registrar avance</h2>
+        <app-card>
+          <!-- El flex va en un contenedor propio: app-card proyecta su contenido en
+               un envoltorio interno, y con la clase en la tarjeta los campos nunca
+               eran ítems del flex — quedaban apilados a 528 px (refactor UX). -->
+          <div class="cuentas-de-avance">
+            <app-form-field icon="billing" label="Cuenta de gasto por depreciación">
+              <app-select
+                [options]="opcionesDeCuenta()"
+                [(value)]="cuentaDeGastoDepreciacion"
+                placeholder="Elegí una cuenta"
+              />
+            </app-form-field>
+            <app-form-field icon="billing" label="Cuenta de depreciación acumulada">
+              <app-select
+                [options]="opcionesDeCuenta()"
+                [(value)]="cuentaDeDepreciacionAcumulada"
+                placeholder="Elegí una cuenta"
+              />
+            </app-form-field>
+            <p class="nota">
+              Se usan para cualquier activo en el que toques "Registrar avance" — elegilas una vez.
+            </p>
+          </div>
+        </app-card>
+        @if (errorDeAvanceDeActivo(); as mensaje) {
+          <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
+        }
+
+        <h2 class="titulo-de-seccion">Mis activos</h2>
+        @if (assets(); as estado) {
+          @switch (estado.status) {
+            @case ('loading') {
+              <p class="nota" role="status">Cargando…</p>
+            }
+            @case ('empty') {
+              <p class="nota">{{ estado.message }}</p>
+            }
+            @case ('error') {
+              <app-alert tone="error">No pudimos cargar tus activos.</app-alert>
+            }
+            @case ('ready') {
+              <ul class="lista-de-items">
+                @for (activo of estado.data; track activo.id) {
+                  <li class="item">
+                    <div class="item__texto">
+                      <span class="item__titulo">{{ activo.code }} — {{ activo.name }}</span>
+                      <span class="item__detalle">
+                        Valor en libros: {{ activo.bookValue ?? activo.acquisitionCost }}
+                      </span>
+                    </div>
+                    <span class="item__automatizacion">
+                      <app-switch
+                        label="Automatizado"
+                        [checked]="activo.automated"
+                        (checkedChange)="alternarAutomatizacionDeActivo(activo, $event)"
+                      />
+                    </span>
+                    <button
+                      app-button
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      [disabled]="avanceDeActivoEnCurso() === activo.id"
+                      [attr.aria-label]="
+                        (avanceDeActivoEnCurso() === activo.id ? 'Registrando…' : 'Registrar avance') +
+                        ': ' +
+                        activo.name
+                      "
+                      (clicked)="registrarAvanceDeActivo(activo)"
+                    >
+                      {{ avanceDeActivoEnCurso() === activo.id ? 'Registrando…' : 'Registrar avance' }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          }
+        }
+      }
+    </app-tab>
+
+    <app-tab label="Pasivos">
+      @if (pestanaActiva() === 1) {
+        <h2 class="titulo-de-seccion">Dar de alta un pasivo</h2>
+        <app-card>
+          @if (errorDeAltaDePasivo(); as mensaje) {
+            <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
+          }
+          @if (pasivoDadoDeAlta()) {
+            <app-alert appAnuncio [asertivo]="false" tone="success" class="alerta-de-formulario">
+              Pasivo dado de alta, con su cronograma de cuotas.
+            </app-alert>
+          }
+                    <app-paginated-form
+            [paginas]="paginasDePasivo()"
+            [form]="formularioDePasivo"
+            label="Alta de pasivo"
+            submitLabel="Dar de alta"
+            [pending]="enviandoAltaDePasivo()"
+            (enviado)="darDeAltaPasivo()"
+          />
+        </app-card>
+
+        <h2 class="titulo-de-seccion">Cuentas para registrar avance</h2>
+        <app-card class="cuentas-de-avance">
+          <app-form-field icon="billing" label="Cuenta banco/tesorería">
+            <app-select
+              [options]="opcionesDeCuenta()"
+              [(value)]="cuentaDeBanco"
+              placeholder="Elegí una cuenta"
+            />
+          </app-form-field>
+          <app-form-field icon="billing" label="Cuenta de gasto por interés">
+            <app-select
+              [options]="opcionesDeCuenta()"
+              [(value)]="cuentaDeGastoPorInteres"
+              placeholder="Elegí una cuenta"
+            />
+          </app-form-field>
+          <p class="nota">
+            Se usan para cualquier pasivo en el que toques "Registrar avance" — elegilas una vez.
+          </p>
+        </app-card>
+        @if (errorDeAvanceDePasivo(); as mensaje) {
+          <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
+        }
+
+        <h2 class="titulo-de-seccion">Mis pasivos</h2>
+        @if (liabilities(); as estado) {
+          @switch (estado.status) {
+            @case ('loading') {
+              <p class="nota" role="status">Cargando…</p>
+            }
+            @case ('empty') {
+              <p class="nota">{{ estado.message }}</p>
+            }
+            @case ('error') {
+              <app-alert tone="error">No pudimos cargar tus pasivos.</app-alert>
+            }
+            @case ('ready') {
+              <ul class="lista-de-items">
+                @for (pasivo of estado.data; track pasivo.id) {
+                  <li class="item">
+                    <div class="item__texto">
+                      <span class="item__titulo">{{ pasivo.code }} — {{ pasivo.name }}</span>
+                      <span class="item__detalle">Saldo pendiente: {{ pasivo.outstandingAmount }}</span>
+                    </div>
+                    <span class="item__automatizacion">
+                      <app-switch
+                        label="Automatizado"
+                        [checked]="pasivo.automated"
+                        (checkedChange)="alternarAutomatizacionDePasivo(pasivo, $event)"
+                      />
+                    </span>
+                    <button
+                      app-button
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      [disabled]="avanceDePasivoEnCurso() === pasivo.id"
+                      [attr.aria-label]="
+                        (avanceDePasivoEnCurso() === pasivo.id ? 'Registrando…' : 'Registrar avance') +
+                        ': ' +
+                        pasivo.name
+                      "
+                      (clicked)="registrarAvanceDePasivo(pasivo)"
+                    >
+                      {{ avanceDePasivoEnCurso() === pasivo.id ? 'Registrando…' : 'Registrar avance' }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          }
+        }
+      }
+    </app-tab>
+  </app-tabs>
+}

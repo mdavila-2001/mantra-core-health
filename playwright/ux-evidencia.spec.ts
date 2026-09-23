@@ -89,7 +89,9 @@ test.describe('el panel del médico', () => {
       timeout: 20_000,
     });
     await expect(page.getByRole('button', { name: 'Guardar mi horario' })).toBeVisible();
-    await expect(page.getByText('Los turnos ya abiertos no se cierran solos')).toBeVisible();
+    // El aviso de «los turnos ya abiertos no se cierran solos» se retiró a
+    // pedido del propietario (19/09/2026), junto con el de alcance.
+    await expect(page.getByText('Los turnos ya abiertos no se cierran solos')).toHaveCount(0);
     await capturar(page, '06-cambiar-mi-horario-precargado');
 
     await page.goto(`${BASE}/schedule/mine`);
@@ -104,7 +106,7 @@ test.describe('el panel del médico', () => {
     await expect(page.getByRole('heading', { name: 'Bloquear días u horarios' })).toBeVisible();
     await capturar(page, '09-bloqueo-por-rango-y-franja');
 
-    await page.goto(`${BASE}/administration/accounting`);
+    await page.goto(`${BASE}/administration/accounting/libros`);
     await capturar(page, '20-mi-facturacion');
 
     await page.goto(`${BASE}/laboratory-directory`);

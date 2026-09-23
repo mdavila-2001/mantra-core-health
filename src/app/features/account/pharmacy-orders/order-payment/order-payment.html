@@ -16,7 +16,7 @@
       @if (pedido().totalEstimado !== null) {
         A pagar:
         <strong class="cifras-tabulares">
-          {{ pedido().totalEstimado }} {{ pedido().moneda }}
+          {{ pedido().totalEstimado }} {{ moneda(pedido().moneda) }}
         </strong>
       } @else {
         Total no disponible: falta algún precio publicado.

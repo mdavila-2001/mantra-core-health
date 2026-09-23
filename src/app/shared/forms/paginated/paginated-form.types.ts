@@ -50,6 +50,51 @@ export type TipoDeControl =
   | 'radio'
   | 'switch'
   | 'checkbox'
+  /**
+   * Sí o no, como **dos botones** y no como una casilla.
+   *
+   * Lo pidió el propietario, y es la misma corrección que ya se hizo en el alta
+   * de agenda (18/09): una casilla sola dice «sí» cuando está marcada y no dice
+   * nada cuando no lo está — no se distingue «contestó que no» de «no
+   * contestó». Dos botones dicen las dos cosas, y dejan además el tercer
+   * estado que un formulario necesita: todavía sin responder.
+   *
+   * El control guarda `true`, `false` o `null`; `null` es «sin responder», y es
+   * lo que hace que `Validators.required` funcione en una pregunta de sí/no
+   * —con una casilla, `false` pasa el obligatorio sin que nadie haya
+   * contestado—.
+   */
+  | 'yes-no'
+  /**
+   * Varias respuestas de una lista. El control guarda un **array** de los
+   * valores marcados, no un booleano: `checkbox` es «sí o no» sobre una sola
+   * cosa, y esto es «cuáles de éstas», que es otra pregunta.
+   */
+  | 'checkboxes'
+  /**
+   * Cuadrícula de opción única: una tabla de filas por columnas donde cada
+   * **fila** se responde eligiendo **una** columna.
+   *
+   * Es la misma pregunta repetida sobre varios sujetos —«¿con qué frecuencia?»
+   * sobre ocho síntomas— y por eso no son ocho preguntas sueltas: la escala se
+   * escribe una vez y se lee de corrido, que es de lo que vive una escala
+   * clínica.
+   *
+   * El control guarda un objeto `{ [fila]: columna }`. Las filas van en
+   * {@link CampoDeFormulario.rows} y las columnas en
+   * {@link CampoDeFormulario.options}, que es lo que hace que el resto del
+   * motor —el PDF, sin ir más lejos— las encuentre donde ya las busca.
+   */
+  | 'grid-radio'
+  /**
+   * Cuadrícula de casillas: igual que {@link TipoDeControl}`.'grid-radio'`,
+   * pero cada fila admite **varias** columnas.
+   *
+   * Guarda `{ [fila]: columna[] }`. Es a `grid-radio` lo que `checkboxes` es a
+   * `radio`, y por eso son dos controles y no uno con un interruptor: lo que
+   * cambia es qué se puede contestar, no cómo se ve.
+   */
+  | 'grid-checkboxes'
   | 'textarea'
   | 'custom';
 
@@ -74,14 +119,60 @@ export interface CampoDeFormulario {
   readonly control: TipoDeControl;
 
   /**
-   * Sólo para `select` y `radio`.
+   * Las respuestas ofrecidas: `select`, `radio`, `checkboxes` y, en una
+   * cuadrícula, **sus columnas**.
    *
-   * Son el mismo dato con dos formas de mostrarlo: la lista desplegable ahorra
-   * espacio y el grupo de opciones las deja todas a la vista. La regla que
-   * siguen las pantallas migradas es la de siempre — hasta cuatro opciones se
-   * ven, más de cuatro se despliegan— y por eso ambos leen de acá.
+   * `select` y `radio` son el mismo dato con dos formas de mostrarlo: la lista
+   * desplegable ahorra espacio y el grupo de opciones las deja todas a la
+   * vista. La regla que siguen las pantallas migradas es la de siempre —hasta
+   * cuatro opciones se ven, más de cuatro se despliegan— y por eso ambos leen
+   * de acá.
+   *
+   * En una cuadrícula son las columnas, y las filas van en {@link rows}.
    */
   readonly options?: readonly SelectOption<string>[];
+
+  /**
+   * Sólo para las cuadrículas: **las filas**, en el orden en que se preguntan.
+   *
+   * Las columnas de una cuadrícula son {@link options} —las mismas que un
+   * `radio` ofrece— y las filas son esto. Se separan así, y no en una
+   * estructura propia, para que todo lo que ya recorre `options` —el PDF, la
+   * validación, el editor— siga encontrándolas donde las busca.
+   *
+   * Una cuadrícula sin filas no es una cuadrícula: el motor la dibuja vacía y
+   * el editor no deja guardarla.
+   */
+  readonly rows?: readonly SelectOption<string>[];
+
+  /**
+   * Sólo para las cuadrículas: **limitar a una respuesta por columna**.
+   *
+   * Es la restricción de Google Forms, con la misma redacción. Sirve para
+   * ordenar sin empates —«poné estas cinco cosas de la más a la menos
+   * importante»—: una columna ya usada en una fila deja de ofrecerse en las
+   * demás.
+   *
+   * Con esto puesto, una cuadrícula con más filas que columnas **no se puede
+   * terminar de responder** si además se exige respuesta en cada fila; el
+   * editor lo avisa antes de guardar.
+   */
+  readonly oneResponsePerColumn?: boolean;
+
+  /**
+   * Sólo para `radio` y `checkboxes`: ofrece además «Otro», con un texto libre.
+   *
+   * Es la salida para la respuesta que la lista no previó, la misma que ofrece
+   * cualquier formulario de encuesta. Lo que queda en el control es **el texto
+   * escrito** —en `radio` como valor, en `checkboxes` como un elemento más del
+   * array—, no un código «otro»: es lo que después se lee en la ficha, y un
+   * código habría que traducirlo en cada pantalla que lo muestre.
+   *
+   * Cómo se distingue de una opción de la lista: no está en `options`. Es la
+   * única regla, y vale en los dos sentidos —al escribir y al releer un valor
+   * guardado—.
+   */
+  readonly otro?: boolean;
 
   /** Sólo para `text` y familia: el `autocomplete` del navegador. */
   readonly autocomplete?: string;
@@ -126,6 +217,21 @@ export interface CampoDeFormulario {
    * con el propietario): este contrato sólo garantiza que se **pueda** y que
    * cueste declararlo, no que esté puesto.
    *
+   * ## Qué ramas lo dibujan
+   *
+   * Lo toman el `select` y los campos de **texto, correo, contraseña y
+   * número**: son los que tienen el hueco libre dentro del marco. En las demás
+   * declararlo no pinta nada, y no por olvido —ese hueco ya está ocupado por
+   * algo que dice más—:
+   *
+   * - **`tel`**: ahí va la bandera del país, que es el glifo de ese campo y
+   *   además se puede cambiar, cosa que un dibujo fijo no hace.
+   * - **`date` y `datetime`**: el almanaque del `app-date-picker`, que encima
+   *   abre el calendario.
+   * - **`custom`**: lo que proyecte la pantalla, que es la dueña del campo.
+   * - **`textarea`, `radio`, `switch` y `checkbox`**: no tienen dónde meterlo
+   *   sin desalinear el control.
+   *
    * El glifo es siempre `aria-hidden` —lo pone `app-nav-icon`—, así que quitarlo
    * no cambia una palabra de lo que anuncia un lector de pantalla.
    */
@@ -146,12 +252,20 @@ export interface CampoDeFormulario {
    * `aria-describedby` —contrato del ADR-0008— y sin ayuda alguna en un
    * teléfono.
    *
+   * El globo lo dibuja `app-form-field`, que envuelve **todas** las ramas: un
+   * campo `custom` la muestra igual que un `text`.
+   *
    * Cuando el campo no declara `placeholder`, esta descripción también se usa
    * de placeholder: el pedido era que el mismo texto estuviera en los dos
    * sitios. Si el campo **sí** declara `placeholder`, gana el declarado: un
    * ejemplo concreto («1234567») enseña más sobre qué escribir que una
    * explicación, y además desaparece al primer tecleo. Ver P-04-3 de la ficha:
    * sigue sin confirmarse con el propietario.
+   *
+   * Ese reemplazo es sólo de los controles que caen en el `@default`, el
+   * `textarea` y el `select`. En `tel`, `date` y `datetime` el placeholder es
+   * **el formato del dato** —«7001 2345», «DD/MM/AAAA»— y se conserva: es lo
+   * que dice cómo escribirlo, que no es lo mismo que explicar para qué se pide.
    */
   readonly description?: string;
 

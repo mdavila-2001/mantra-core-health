@@ -22,6 +22,23 @@ import { isPlatformBrowser } from '@angular/common';
 export const NAV_DRAWER_MAX_WIDTH = 780;
 
 /**
+ * Ancho a partir del cual la barra puede **recogerse** a su carril de íconos.
+ *
+ * Espeja el `@media (min-width: 901px)` con que `alovida.css` gobierna el
+ * carril, y la duplicación es del mismo tipo que la de arriba: la hoja decide
+ * cómo se ve la barra recogida, y esto decide si el armazón la trata como
+ * recogida para lo que el CSS no alcanza —el globo de ayuda que devuelve el
+ * nombre del destino cuando el rótulo no se ve—.
+ *
+ * **No es el umbral del cajón, y no debería serlo.** Por debajo de 901 px la
+ * barra de ALOVIDA es un cajón sobre el contenido, y recoger un cajón no
+ * significa nada: sus renglones necesitan su texto. Sin esta pregunta, una
+ * preferencia tomada en el escritorio dejaba el cajón del teléfono con ocho
+ * íconos sin nombre.
+ */
+export const NAV_RAIL_MIN_WIDTH = 901;
+
+/**
  * Si la ventana está por debajo del umbral del cajón.
  *
  * ## Por qué existe, si el CSS ya sabe el ancho
@@ -50,8 +67,17 @@ export class Breakpoints {
 
   private readonly narrow = signal(false);
 
+  /**
+   * Arranca en `true` por la misma razón que `narrow` arranca en `false`: sin
+   * ventana que medir se asume escritorio, que es donde el carril existe.
+   */
+  private readonly railAvailable = signal(true);
+
   /** `true` cuando el nav debe comportarse como cajón sobre el contenido. */
   readonly isNavDrawer = this.narrow.asReadonly();
+
+  /** `true` cuando la barra puede recogerse a su carril de íconos. */
+  readonly canCollapseNav = this.railAvailable.asReadonly();
 
   constructor() {
     afterNextRender(() => this.observe(), { injector: this.injector });
@@ -69,10 +95,16 @@ export class Breakpoints {
       return;
     }
 
-    const query = view.matchMedia(`(max-width: ${NAV_DRAWER_MAX_WIDTH - 1}px)`);
-    this.narrow.set(query.matches);
+    this.watch(view, `(max-width: ${NAV_DRAWER_MAX_WIDTH - 1}px)`, this.narrow);
+    this.watch(view, `(min-width: ${NAV_RAIL_MIN_WIDTH}px)`, this.railAvailable);
+  }
 
-    const onChange = (event: MediaQueryListEvent): void => this.narrow.set(event.matches);
+  /** Sigue una consulta de medios y publica su resultado en un signal. */
+  private watch(view: Window, consulta: string, destino: { set(valor: boolean): void }): void {
+    const query = view.matchMedia(consulta);
+    destino.set(query.matches);
+
+    const onChange = (event: MediaQueryListEvent): void => destino.set(event.matches);
     query.addEventListener('change', onChange);
     this.destroyRef.onDestroy(() => query.removeEventListener('change', onChange));
   }

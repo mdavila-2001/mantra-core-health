@@ -49,11 +49,24 @@ export interface EspecialidadVisible {
 export interface AfiliacionVisible {
   readonly id: string;
   readonly organizacion: string;
+  /** Vacío cuando el vínculo no declara cargo (ALV-007). */
   readonly cargo: string;
-  readonly area: string;
   readonly desde: Date;
   readonly hasta: Date | null;
   readonly actual: boolean;
+}
+
+/**
+ * Una sede donde atiende hoy (ALV-005) — la mitad que a la ficha le faltaba:
+ * la trayectoria decía dónde trabajó, no dónde encontrarlo.
+ */
+export interface SedeVisible {
+  readonly id: string;
+  readonly nombre: string;
+  /** Dirección en una línea, ya normalizada para mostrar (ALV-010). Vacía si no tiene. */
+  readonly direccion: string;
+  /** Punto en el mapa, si la dirección lo trae (ALV-006). */
+  readonly punto: { readonly lat: number; readonly lng: number } | null;
 }
 
 /** Una matrícula, ya traducida. */
@@ -80,6 +93,58 @@ export interface ActividadVisible {
   readonly clave: string;
   readonly rotulo: string;
   readonly valor: number;
+  /**
+   * Qué cuenta la cifra, en una línea.
+   *
+   * «275» no dice nada; «275 · una por encuentro cerrado» sí. Opcional para no
+   * romper a quien ya arma la lista sin él.
+   */
+  readonly pie?: string;
+}
+
+/** Un mes de la serie de consultas, ya con sus etiquetas resueltas. */
+export interface PuntoDeSerie {
+  /** Clave estable del punto (ISO `yyyy-MM`): sirve de `track`. */
+  readonly clave: string;
+  /** Lo que se dibuja bajo la barra: «sep». */
+  readonly etiqueta: string;
+  /** Lo que se dice en palabras: «septiembre de 2026». */
+  readonly etiquetaLarga: string;
+  readonly valor: number;
+}
+
+/**
+ * Un indicador de calidad, ya resuelto.
+ *
+ * `proporcion` es `null` cuando el indicador **no es una proporción** —la
+ * valoración media, la duración de la consulta—: esos se muestran con su
+ * cifra y sin barra, porque una barra sin denominador miente sobre qué
+ * fracción de qué representa.
+ */
+export interface IndicadorDeCalidad {
+  readonly clave: string;
+  readonly rotulo: string;
+  /** La cifra grande: «91 %», «4,7 / 5», «27 min». */
+  readonly valor: string;
+  /** De dónde sale: «312 de 341 citas». */
+  readonly detalle: string;
+  /** Entre 0 y 1 para dibujar la barra, o `null` si no es una proporción. */
+  readonly proporcion: number | null;
+}
+
+/**
+ * A nombre de quién factura el profesional.
+ *
+ * Los dos campos van juntos porque son **un solo hecho**: un NIT sin razón
+ * social no dice a nombre de quién sale el comprobante, y una razón social sin
+ * NIT no sirve para emitirlo. Vacío es «no lo declaró», y la ficha lo dice con
+ * palabras en vez de dejar el hueco.
+ */
+export interface FacturacionVisible {
+  /** El NIT, tal como lo declaró. Vacío si no lo cargó. */
+  readonly nit: string;
+  /** A nombre de quién sale el comprobante. Vacío si no lo cargó. */
+  readonly razonSocial: string;
 }
 
 /** El estado de habilitación, con su sello ya decidido. */
@@ -108,6 +173,13 @@ export interface PerfilProfesionalVisible {
   readonly telemedicina: boolean;
   readonly bio: string;
   readonly actividad: readonly ActividadVisible[];
+  /**
+   * Las consultas mes a mes, de la más vieja a la más nueva. Vacío o ausente
+   * cuando no hay serie que mostrar, y entonces la ficha no dibuja el gráfico.
+   */
+  readonly actividadMensual?: readonly PuntoDeSerie[];
+  /** Los indicadores de calidad, ya resueltos. Ausentes si no se calculan. */
+  readonly calidad?: readonly IndicadorDeCalidad[];
   readonly especialidades: readonly EspecialidadVisible[];
   readonly formacion: readonly FormacionVisible[];
   readonly matriculas: readonly MatriculaVisible[];
@@ -117,6 +189,12 @@ export interface PerfilProfesionalVisible {
   /** Hospitales/centros anteriores (UC-05-16, `endDate` presente). */
   readonly experienciaHistorica: readonly AfiliacionVisible[];
   /**
+   * Dónde atiende hoy (ALV-005). Opcional: la ficha del directorio y los
+   * fixtures viejos no lo traen, y ausente se lee como «sin sedes», no como
+   * dato roto.
+   */
+  readonly sedes?: readonly SedeVisible[];
+  /**
    * Los datos personales, **sólo en la ficha propia**.
    *
    * `null` cuando se mira la ficha de otro profesional: su documento y su
@@ -124,6 +202,14 @@ export interface PerfilProfesionalVisible {
    * mostrando lo que siempre mostró.
    */
   readonly datosPersonales: DatosPersonalesVisibles | null;
+  /**
+   * Sus datos de facturación, **sólo en la ficha propia**.
+   *
+   * `null` cuando se mira la ficha de otro profesional, por la misma razón que
+   * {@link datosPersonales}: el NIT de alguien no es de quien lo mira. La ficha
+   * de la guía nunca lo mostró y no empieza a mostrarlo ahora.
+   */
+  readonly facturacion: FacturacionVisible | null;
   readonly desde: Date | null;
 }
 
@@ -139,4 +225,30 @@ export interface DatosPersonalesVisibles {
   readonly correo: string;
   /** Municipio de residencia, en palabras. */
   readonly domicilio: string;
+  /**
+   * Los cuatro contactos que el registro pregunta por separado, y la calle.
+   *
+   * La ficha mostraba **un** teléfono y **un** correo, cuando el alta declara
+   * cinco datos de contacto distintos —celular personal, celular del trabajo,
+   * fijo del trabajo, correo personal y correo de trabajo— y la API los
+   * devuelve todos. El pedido es que la ficha muestre los mismos campos del
+   * registro, y estos faltaban aunque el dato estuviera.
+   *
+   * Vacío es «no lo declaró»: la ficha no dibuja el renglón.
+   */
+  readonly celularPersonal: string;
+  readonly celularTrabajo: string;
+  readonly fijoTrabajo: string;
+  readonly correoPersonal: string;
+  /** La calle del domicilio. El municipio sigue en `domicilio`. */
+  readonly direccion: string;
+  /**
+   * El enlace al mapa del domicilio, o `null` si no declaró coordenadas.
+   *
+   * Se arma en el contenedor y no en la vista para que ésta siga sin saber de
+   * dónde salió el dato: acá llega un enlace listo o nada. Mismo criterio que
+   * la ficha del paciente, que ya lo hacía — el alta de médico pregunta la
+   * «Ubicación GPS» del domicilio y la ficha no la mostraba.
+   */
+  readonly mapaDomicilio: string | null;
 }

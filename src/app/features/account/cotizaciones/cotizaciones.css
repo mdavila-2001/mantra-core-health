@@ -1,0 +1,6 @@
+.cotizaciones { display: grid; gap: var(--sp-4); max-width: 72rem; margin: 0 auto; padding: var(--sp-6); }
+.cotizaciones label { display: grid; gap: var(--sp-2); font-weight: 600; }
+.cotizaciones input, .cotizaciones select { min-height: 2.75rem; border: 1px solid var(--c-border); border-radius: var(--r-md); padding: 0 var(--sp-3); }
+.cotizaciones ul { display: grid; gap: var(--sp-3); list-style: none; margin: 0; padding: 0; }
+.cotizaciones li { border: 1px solid var(--c-border); border-radius: var(--r-md); padding: var(--sp-4); }
+.cotizaciones h2, .cotizaciones p { margin: 0 0 var(--sp-2); }

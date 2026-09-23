@@ -1,5 +1,6 @@
 import type { Contadores } from '../../harness/api-simulada';
 import { Header } from '../../support/components/header.component';
+import { SideNav } from '../../support/components/side-nav.component';
 import { iniciarSesion } from '../../support/helpers/auth';
 import { DashboardPage } from '../../support/pages/dashboard.page';
 import { LoginPage } from '../../support/pages/login.page';
@@ -81,13 +82,17 @@ describe('Autenticación · sesión', () => {
     Header.nombreDeUsuario().should('equal', 'Ana Salas');
   });
 
-  it('el panel lee los roles del propio token, sin pedirlos a la API', () => {
-    // Con sesión de trabajo: las insignias de rol viven en el panel de la
-    // organización, y desde «Mi salud» a un paciente no se le muestran —no son
-    // suyas, es vocabulario de sistema (F-22)—.
+  it('los roles del token deciden qué se ve, sin pedírselos a la API', () => {
+    // Esto lo comprobaban las insignias de «Tu cuenta», que el propietario
+    // mandó sacar del panel el 19/09/2026 —eran vocabulario de sistema en el
+    // primer renglón de la pantalla—. La garantía no se fue con la tarjeta: lo
+    // que el token habilita se sigue viendo, y ahora donde se usa.
     iniciarSesion({ escenario: 'sesion-profesional' });
 
-    // El código viaja en `data-role`; lo visible es la etiqueta en palabras.
-    DashboardPage.rolesVisibles().should('include', 'PRACTITIONER');
+    // «Consultas médicas» sólo la alcanzan los roles de agenda; una sesión sin
+    // `PRACTITIONER` no la tendría en el menú. Y el menú se arma con los claims
+    // del token: ninguna lectura de roles sale a la API.
+    SideNav.rutas().should('include', '/schedule');
+    DashboardPage.esperarCargada();
   });
 });

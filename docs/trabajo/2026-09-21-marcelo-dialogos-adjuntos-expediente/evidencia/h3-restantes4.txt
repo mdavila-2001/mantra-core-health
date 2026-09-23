@@ -1,0 +1,3 @@
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+Using Vitest configuration file: D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\vitest.config.ts
+[33m❯[39m Building...

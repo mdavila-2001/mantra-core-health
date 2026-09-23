@@ -17,16 +17,28 @@
     [ngModel]="alarma.sonidoActivo()"
     (ngModelChange)="alarma.alternarSonido()"
   />
-  @if (demoActiva) {
-    <p class="bandeja__demo" data-testid="bandeja-demo">
-      <app-badge variant="info">Demo</app-badge>
-      <span>
-        Bandeja de demostración: los pedidos llegan del recorrido del paciente,
-        sin conexión con un mostrador real todavía.
-      </span>
-    </p>
-  }
+  <!-- El interruptor ya dice su estado a quien lo escucha; esto lo dice a
+       quien lo mira de reojo desde el otro lado del mostrador. -->
+  <p class="bandeja__estado-sonido" data-testid="bandeja-estado-sonido">
+    {{ estadoDelSonido() }}
+  </p>
 </div>
+
+<!-- El cartel de arriba: NO se auto-oculta. Se va al descartarlo o al abrir
+     un pedido. Su región viva nace junto con su contenido, así que no compite
+     con el aviso de arriba: quien anuncia es aquel, éste se ve. -->
+@if (nuevosSinVer() > 0) {
+  <app-alert
+    tone="info"
+    dismissible
+    data-testid="bandeja-cartel-nuevos"
+    [title]="tituloDeNuevos()"
+    (dismissed)="descartarAviso()"
+  >
+    Están arriba de todo, en «Nuevos». Abrir el pedido es lo que le muestra al paciente que la
+    farmacia ya lo está mirando.
+  </app-alert>
+}
 
 <app-view-state-host [state]="state()" (retry)="cargar()">
   <div class="bandeja" data-testid="bandeja">
@@ -34,9 +46,23 @@
     <div class="bandeja__colas">
       @for (cola of colas(); track cola.grupo) {
         <section class="bandeja__cola" [attr.aria-label]="cola.etiqueta">
+          <!-- La última palabra de la etiqueta y la cifra son UNA unidad que
+               no se parte: si no, con la etiqueta entrando justo en la columna
+               el contador se va solo a la línea de abajo. El espacio que las
+               separa de lo anterior lo trae `antes`, no la plantilla.
+               La cifra, además, se dice una sola vez: el distintivo es la
+               versión visual y sale del árbol accesible porque `app-badge` es
+               `role="status"` y cuatro contadores serían cuatro regiones
+               vivas compitiendo con el aviso de la bandeja. -->
           <h2 class="bandeja__titulo">
-            {{ cola.etiqueta }}
-            <span class="bandeja__conteo" aria-hidden="true">{{ cola.pedidos.length }}</span>
+            {{ cola.encabezado.antes }}<span class="bandeja__cifra"
+              >{{ cola.encabezado.ultima }}
+              <span class="sr-only">{{ conteoAccesible(cola) }}</span>
+              <app-badge
+                aria-hidden="true"
+                [variant]="varianteDeConteo(cola)"
+                [value]="cola.pedidos.length"
+            /></span>
           </h2>
           @if (cola.pedidos.length === 0) {
             <p class="bandeja__vacio">Nada por acá.</p>
@@ -49,6 +75,7 @@
                   [class.bandeja__tarjeta--nueva]="esNuevo(pedido)"
                   [routerLink]="[detalleRoute, pedido.id]"
                   data-testid="bandeja-pedido"
+                  (click)="descartarAviso()"
                 >
                   <span class="bandeja__fila">
                     <span class="bandeja__paciente">{{ nombreDe(pedido) }}</span>
@@ -57,6 +84,17 @@
                     </app-badge>
                   </span>
                   <span class="bandeja__renglones">{{ resumenDe(pedido) }}</span>
+                  @if (entregaDe(pedido); as entrega) {
+                    <span class="bandeja__entrega">
+                      <app-chip size="sm" [variant]="entrega.presentacion.tone">
+                        {{ entrega.presentacion.label }}
+                      </app-chip>
+                      <!-- El medio lo puso la maqueta: se dice, no se disimula. -->
+                      @if (entrega.esEjemplo) {
+                        <app-chip size="sm" variant="neutral">{{ notaDeEjemplo }}</app-chip>
+                      }
+                    </span>
+                  }
                   <span class="bandeja__fila bandeja__pie">
                     <span class="cifras-tabulares">{{ totalDe(pedido) }}</span>
                     @if (llegadaDe(pedido); as hace) {
@@ -90,6 +128,7 @@
                   class="bandeja__tarjeta"
                   [routerLink]="[detalleRoute, pedido.id]"
                   data-testid="bandeja-pedido"
+                  (click)="descartarAviso()"
                 >
                   <span class="bandeja__fila">
                     <span class="bandeja__paciente">{{ nombreDe(pedido) }}</span>
@@ -98,6 +137,17 @@
                     </app-badge>
                   </span>
                   <span class="bandeja__renglones">{{ resumenDe(pedido) }}</span>
+                  @if (entregaDe(pedido); as entrega) {
+                    <span class="bandeja__entrega">
+                      <app-chip size="sm" [variant]="entrega.presentacion.tone">
+                        {{ entrega.presentacion.label }}
+                      </app-chip>
+                      <!-- El medio lo puso la maqueta: se dice, no se disimula. -->
+                      @if (entrega.esEjemplo) {
+                        <app-chip size="sm" variant="neutral">{{ notaDeEjemplo }}</app-chip>
+                      }
+                    </span>
+                  }
                   <span class="bandeja__fila bandeja__pie">
                     <span class="cifras-tabulares">{{ totalDe(pedido) }}</span>
                     <span>{{ pedido.creadoEl | date: 'dd/MM HH:mm' }}</span>

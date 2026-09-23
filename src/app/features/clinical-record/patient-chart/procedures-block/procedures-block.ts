@@ -13,6 +13,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
 import { ProceduresClient } from '../../../../core/data-access/procedures/procedures.client';
 import type {
   DentalCatalog,
@@ -35,8 +36,10 @@ import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { AttachmentDialog } from '../../../../shared/components/organisms/attachment-dialog/attachment-dialog';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { Odontogram } from '../odontogram/odontogram';
+import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
 
 /**
  * Cuántos casos quirúrgicos se traen, y de cuántos se pide el detalle.
@@ -135,6 +138,7 @@ export interface TratamientoEnPantalla {
     Alert,
     AppButton,
     AppInput,
+    AttachmentDialog,
     Badge,
     Card,
     DatePipe,
@@ -150,6 +154,7 @@ export interface TratamientoEnPantalla {
 })
 export class ProceduresBlock {
   private readonly procedures = inject(ProceduresClient);
+  private readonly clinical = inject(ClinicalClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
@@ -167,6 +172,15 @@ export class ProceduresBlock {
    * el encuentro ya no hay forma de saber en cuál se hizo.
    */
   readonly encounterId = input<string | null>(null);
+
+  /**
+   * Qué mitad mostrar. Cirugía y odontología tienen permisos de servidor
+   * independientes y ningún dato en común; agruparlas bajo «Procedimiento»
+   * hacía que elegir odontología igual disparara —y a veces bloqueara— la
+   * lectura quirúrgica de alguien sin ese rol. `'ambos'` es el default y
+   * sigue existiendo por si algún consumidor futuro quiere las dos juntas.
+   */
+  readonly modo = input<'ambos' | 'cirugia' | 'odontologia'>('ambos');
 
   /* -- Lo quirúrgico ------------------------------------------------------- */
 
@@ -264,6 +278,30 @@ export class ProceduresBlock {
       ? this.totalOdontologico() - TOPE_ODONTOLOGICO
       : 0,
   );
+
+  /* -- ALV-033: adjuntar un archivo a un tratamiento odontológico ---------
+     Mismo criterio que el diagnóstico: el tratamiento ya es un
+     `clinical.procedures` (`PeriopDentalService`), así que el vínculo pasa
+     por `ClinicalClient.attachFileToProcedure`, no por el genérico de
+     `common`. A diferencia del diagnóstico, este histórico ya se relee
+     completo en cada carga, así que la acción se ofrece por fila y no sólo
+     tras el alta: cualquier tratamiento —viejo o recién registrado— puede
+     recibir un adjunto. */
+
+  /** El tratamiento al que se le está ofreciendo adjuntar un archivo, o `null`. */
+  protected readonly adjuntandoArchivoA = signal<string | null>(null);
+
+  /** El vínculo pasa por `clinical`, no por el genérico de `common`. */
+  protected readonly enlazarAdjuntoAlTratamiento = (fileId: string, procedureId: string) =>
+    this.clinical.attachFileToProcedure(procedureId, fileId);
+
+  protected abrirAdjuntos(procedureId: string): void {
+    this.adjuntandoArchivoA.set(procedureId);
+  }
+
+  protected cerrarAdjuntos(): void {
+    this.adjuntandoArchivoA.set(null);
+  }
 
   /* -- El odontograma ------------------------------------------------------ */
 
@@ -401,16 +439,10 @@ export class ProceduresBlock {
     if (state.status === 'validation') {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no permite registrar tratamientos odontológicos.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
+    return mensajeDeFalloDeEscritura(state, {
+      accion: 'registrar tratamientos odontológicos',
+      sinPermiso: 'Tu rol no permite registrar tratamientos odontológicos.',
+    });
   });
 
   constructor() {
@@ -486,9 +518,13 @@ export class ProceduresBlock {
   /* -- Lectura ------------------------------------------------------------- */
 
   private cargar(): void {
-    this.cargarQuirurgico();
-    this.cargarOdontologico();
-    this.cargarCatalogo();
+    if (this.modo() !== 'odontologia') {
+      this.cargarQuirurgico();
+    }
+    if (this.modo() !== 'cirugia') {
+      this.cargarOdontologico();
+      this.cargarCatalogo();
+    }
   }
 
   /**

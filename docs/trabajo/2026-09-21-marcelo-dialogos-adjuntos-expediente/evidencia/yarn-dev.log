@@ -1,0 +1,5 @@
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+✓ src/app/features/component-stock/component-index.generated.ts
+  545 componentes · 3 otros · 303 pantallas · 138 maquetas · 23 atomos · 45 moleculas · 33 organismos
+  192 con algo que mirar
+[33m❯[39m Building...

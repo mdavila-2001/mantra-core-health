@@ -1,0 +1,50 @@
+<figure class="grafico">
+  <figcaption class="grafico__titulo">
+    Consultas mes a mes
+    <span class="grafico__resumen">
+      {{ total() }} en {{ puntos().length }} meses · {{ promedio() }} por mes en promedio
+      @if (mejorMes(); as mejor) {
+        · mejor mes {{ mejor.etiquetaLarga }}
+      }
+    </span>
+  </figcaption>
+
+  <!-- Las barras son decoración del dato: lo que se lee está en la tabla. -->
+  <div class="grafico__barras" aria-hidden="true">
+    @for (barra of barras(); track barra.clave) {
+      <div class="grafico__columna">
+        <div class="grafico__pista">
+          @if (barra.destacado) {
+            <span class="grafico__cifra">{{ barra.valor }}</span>
+          }
+          <div
+            class="grafico__barra"
+            [class.is-alta]="barra.destacado"
+            [style.height.%]="barra.alto"
+          ></div>
+        </div>
+        <span class="grafico__mes">{{ barra.etiqueta }}</span>
+      </div>
+    }
+  </div>
+
+  <table class="solo-lectores">
+    <caption>
+      Consultas atendidas por mes
+    </caption>
+    <thead>
+      <tr>
+        <th scope="col">Mes</th>
+        <th scope="col">Consultas</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (punto of puntos(); track punto.clave) {
+        <tr>
+          <th scope="row">{{ punto.etiquetaLarga }}</th>
+          <td>{{ punto.valor }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</figure>

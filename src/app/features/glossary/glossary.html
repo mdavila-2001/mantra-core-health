@@ -1,162 +1,261 @@
 <app-page-header
-  title="Glosario"
-  subtitle="Diccionario médico por categorías. Buscá un término para ver los resultados en una tabla."
+  title="Glosario médico"
+  subtitle="Enciclopedia de términos clínicos: qué significan, explicados también en palabras simples."
   [breadcrumbs]="breadcrumbs()"
 />
 
 <div class="glosario">
-  <!-- El campo se nombra solo (publica su propio contexto de control): no va
-       dentro de un app-form-field, o quedarían dos nombres accesibles. -->
-  <app-search-field
+  <!-- Buscador y filtros en el MISMO renglón, que es la disciplina compartida
+       de los listados: el texto a la izquierda y, al lado, «Categoría» y
+       «Etiqueta». La rejilla de abajo sigue siendo el mapa de la enciclopedia
+       —se entra a una categoría tocando su tarjeta—, pero eso no es un filtro
+       a la vista: quien llega buscando «lo de cardiología entre las
+       enfermedades» no tenía dónde decirlo. El estado vive en la URL, así que
+       el desplegable y la tarjeta son dos caminos al mismo `?category=`. -->
+  <app-filter-bar
     class="glosario__buscador"
-    label="Buscar un término"
-    placeholder="Por ejemplo «hipertensión» o «alergia»"
-    [value]="busqueda()"
-    [loading]="cargando()"
-    (searched)="buscar($event)"
+    [filters]="filtros()"
+    searchLabel="Buscar un término"
+    searchPlaceholder="Por ejemplo «hipertensión», «disnea» o «paracetamol»"
+    [searchLoading]="cargando()"
+    data-testid="glosario-filtros"
   />
 
-  @if (!mostrarTabla()) {
-    <!-- ── Landing: diccionario por categorías, en grilla ─────────────────── -->
-    <section class="glosario__grilla-seccion" aria-labelledby="glosario-categorias-titulo">
-      <h2 class="glosario__titulo" id="glosario-categorias-titulo">Categorías</h2>
+  <!-- ── Rejilla de categorías ────────────────────────────────────────────
+       Arriba de todo y siempre visible, también con un filtro puesto: es el
+       mapa de la enciclopedia, y esconderlo al entrar a una categoría obliga a
+       volver atrás para cambiar de tema. -->
+  <section class="glosario__categorias" aria-labelledby="glosario-categorias-titulo">
+    <h2 class="glosario__titulo" id="glosario-categorias-titulo">Categorías</h2>
 
-      <app-view-state-host [state]="categorias()" (retry)="recargarCategorias()">
-        @if (categoriasConTerminos().length === 0) {
-          <p class="glosario__aviso" role="status">
-            El glosario todavía no tiene términos cargados en esta organización.
-          </p>
-        } @else {
-          <ul class="glosario__grilla">
-            @for (categoria of categoriasConTerminos(); track categoria.id) {
-              <li>
-                <a
-                  class="glosario__categoria"
-                  [routerLink]="['/glossary']"
-                  [queryParams]="{ category: categoria.internalCode }"
-                  [attr.title]="categoria.description ?? null"
-                >
-                  <app-glossary-category-icon
-                    class="glosario__categoria-icono"
-                    [category]="categoria.internalCode"
-                  />
-                  <span class="glosario__categoria-nombre">{{ categoria.name }}</span>
-                  <span class="glosario__categoria-conteo">
-                    {{ categoria.memberCount }}
-                    {{ categoria.memberCount === 1 ? 'término' : 'términos' }}
+    <app-view-state-host [state]="categorias()" (retry)="recargarCategorias()">
+      @if (tarjetas().length === 0) {
+        <p class="glosario__aviso" role="status">
+          El glosario todavía no tiene categorías con términos cargados.
+        </p>
+      } @else {
+        <ul class="glosario__rejilla">
+          @for (tarjeta of tarjetas(); track tarjeta.id) {
+            <li class="glosario__celda">
+              <a
+                class="glosario__tarjeta"
+                [class.glosario__tarjeta--activa]="tarjeta.internalCode === categoriaCodigo()"
+                [attr.aria-current]="
+                  tarjeta.internalCode === categoriaCodigo() ? 'true' : null
+                "
+                [routerLink]="['/glossary']"
+                [queryParams]="{ category: tarjeta.internalCode }"
+                [attr.title]="tarjeta.description ?? null"
+              >
+                <span class="glosario__tarjeta-cabeza">
+                  <span class="glosario__insignia">
+                    <app-glossary-category-icon
+                      class="glosario__icono"
+                      [category]="tarjeta.internalCode"
+                    />
                   </span>
-                </a>
-              </li>
-            }
-          </ul>
-        }
-      </app-view-state-host>
-    </section>
-  } @else {
-    <!-- ── Resultados: tabla, por categoría o por texto ───────────────────── -->
-    <section class="glosario__tabla-seccion" aria-labelledby="glosario-resultados-titulo">
-      <p class="glosario__volver">
-        <button type="button" class="glosario__quitar" (click)="volverALaGrilla()">
-          ← Volver a las categorías
-        </button>
-      </p>
+                  <span class="glosario__tarjeta-texto">
+                    <span class="glosario__nombre">{{ tarjeta.name }}</span>
+                    <span class="glosario__dato">
+                      {{ tarjeta.cantidad }}
+                      {{ tarjeta.cantidad === 1 ? 'término' : 'términos' }}
+                    </span>
+                  </span>
+                </span>
 
-      <h2 class="glosario__titulo" id="glosario-resultados-titulo">
+                <!-- Los chips no son decoración: son las etiquetas clínicas
+                     que de verdad llevan los términos de esta categoría,
+                     derivadas del corpus. Dicen de qué habla la categoría
+                     antes de entrar. -->
+                @if (tarjeta.etiquetas.length > 0) {
+                  <span class="glosario__chips">
+                    @for (etiqueta of tarjeta.etiquetas; track etiqueta) {
+                      <app-chip size="sm" [label]="etiqueta">{{ etiqueta }}</app-chip>
+                    }
+                  </span>
+                }
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </app-view-state-host>
+  </section>
+
+  <!-- ── Cuerpo: las definiciones ─────────────────────────────────────────── -->
+  <section class="glosario__cuerpo" aria-labelledby="glosario-cuerpo-titulo">
+    <div class="glosario__encabezado">
+      <h2 class="glosario__titulo-cuerpo" id="glosario-cuerpo-titulo">
         @if (categoriaActiva(); as activa) {
           {{ activa.name }}
+        } @else if (busqueda() !== '') {
+          Resultados de «{{ busqueda() }}»
         } @else {
-          Resultados
+          Todos los términos
         }
       </h2>
 
-      @if (categoriaActiva(); as activa) {
-        <p class="glosario__filtro" role="status">
-          @if (activa.description) {
-            {{ activa.description }}
+      @if (hayAlgoPuesto()) {
+        <button type="button" class="glosario__quitar" (click)="verTodo()">
+          Ver todo el glosario
+        </button>
+      }
+    </div>
+
+    @if (categoriaActiva()?.description; as descripcion) {
+      <p class="glosario__filtro">{{ descripcion }}</p>
+    }
+
+    @if (cantidadVisible() > 0) {
+      <p class="glosario__aviso" role="status">
+        {{ cantidadVisible() }}
+        {{ cantidadVisible() === 1 ? 'definición' : 'definiciones' }}
+      </p>
+    }
+
+    <!-- Un recorte silencioso haría creer que la categoría o la búsqueda tiene
+         exactamente estos términos. La lectura no publica cursor, así que lo
+         único honesto es decirlo y sugerir acotar el texto. -->
+    @if (recortado()) {
+      <p class="glosario__aviso" role="status">
+        Se muestran los primeros {{ tope }} términos. Afiná el texto para ver el resto.
+      </p>
+    }
+
+    @if (sinTraduccion() > 0) {
+      <p class="glosario__aviso" role="status">
+        {{ sinTraduccion() }}
+        {{ sinTraduccion() === 1 ? 'término todavía no tiene' : 'términos todavía no tienen' }}
+        traducción al castellano cargada. Se
+        {{ sinTraduccion() === 1 ? 'muestra' : 'muestran' }} con su nombre original, marcado.
+      </p>
+    }
+
+    <app-view-state-host [state]="cuerpo()" (retry)="recargar()">
+      <!-- Índice alfabético: lo que hace hojeable una lista larga. Con pocos
+           términos no aporta nada y no se dibuja. Son botones y no anclas: el
+           tramo puede estar en otra página, y hay que ir a ella antes de
+           desplazarse. -->
+      @if (iniciales().length > 1) {
+        <nav class="glosario__abecedario" aria-label="Índice alfabético">
+          @for (letra of iniciales(); track letra) {
+            <button
+              type="button"
+              class="glosario__letra-enlace"
+              [class.glosario__letra-enlace--en-pagina]="inicialesEnPagina().has(letra)"
+              [attr.aria-label]="'Ir a la letra ' + letra"
+              (click)="irALetra(letra)"
+            >
+              {{ letra }}
+            </button>
           }
+        </nav>
+      }
+
+      @if (sinCoincidencias()) {
+        <p class="glosario__aviso" role="status" data-testid="glosario-sin-coincidencias">
+          Ningún término de lo que estás mirando lleva la etiqueta «{{ etiquetaElegida() }}».
+          Probá con otra o quitá el filtro.
         </p>
       }
 
-      <!-- Un recorte silencioso haría creer que la categoría o la búsqueda
-           tiene exactamente estos términos. La lectura no publica cursor, así
-           que lo único honesto es decirlo y sugerir acotar el texto. -->
-      @if (recortado()) {
-        <p class="glosario__aviso" role="status">
-          Se muestran los primeros {{ tope }} términos. Afiná el texto para ver el resto.
-        </p>
+      @for (grupo of grupos(); track grupo.letra) {
+        <section class="glosario__tramo" [attr.aria-labelledby]="'glosario-letra-' + grupo.letra">
+          <h3 class="glosario__letra" [id]="'glosario-letra-' + grupo.letra">{{ grupo.letra }}</h3>
+
+          <ul class="glosario__entradas">
+            @for (termino of grupo.terminos; track termino.conceptId) {
+              <li class="glosario__entrada-celda">
+                <!-- Toda la tarjeta abre la ficha, pero el control sigue siendo
+                     el enlace del título (se estira con ::after): así el lector
+                     de pantalla oye un enlace con nombre y no un «botón» mudo. -->
+                <app-card class="glosario__entrada">
+                  <div card-header class="glosario__entrada-cabeza">
+                    @if (termino.category; as categoria) {
+                      <p class="glosario__entrada-categoria">
+                        <span class="glosario__insignia glosario__insignia--chica">
+                          <app-glossary-category-icon
+                            class="glosario__icono"
+                            [category]="categoria.internalCode"
+                          />
+                        </span>
+                        {{ categoria.name }}
+                      </p>
+                    }
+
+                    <h4 class="glosario__entrada-titulo">
+                      <a
+                        class="glosario__entrada-enlace"
+                        [routerLink]="['/glossary', termino.conceptId]"
+                        >{{ termino.display }}</a
+                      >
+                    </h4>
+
+                    @if (termino.translated === false) {
+                      <app-chip size="sm" variant="warning" label="Sin traducción al castellano">
+                        Nombre original
+                      </app-chip>
+                    }
+                  </div>
+
+                  @if (termino.shortDefinition) {
+                    <p class="glosario__entrada-definicion">{{ termino.shortDefinition }}</p>
+                  } @else {
+                    <p class="glosario__sin-datos">Sin definición breve cargada.</p>
+                  }
+
+                  <div card-footer class="glosario__entrada-pie">
+                    @if (etiquetasDe(termino).length > 0) {
+                      <p class="glosario__entrada-clasificacion">
+                        @for (etiqueta of etiquetasDe(termino); track etiqueta) {
+                          <app-chip size="sm" [label]="etiqueta">{{ etiqueta }}</app-chip>
+                        }
+                      </p>
+                    }
+
+                    <p class="glosario__entrada-meta">
+                      <span class="glosario__entrada-relaciones">
+                        @if (termino.relationsCount > 0) {
+                          {{ termino.relationsCount }}
+                          {{
+                            termino.relationsCount === 1
+                              ? 'término relacionado'
+                              : 'términos relacionados'
+                          }}
+                        }
+                      </span>
+                      <span class="glosario__entrada-leer" aria-hidden="true">
+                        Ver ficha
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      </span>
+                    </p>
+                  </div>
+                </app-card>
+              </li>
+            }
+          </ul>
+        </section>
       }
 
-      @if (sinTraduccion() > 0) {
-        <p class="glosario__aviso" role="status">
-          {{ sinTraduccion() }}
-          {{ sinTraduccion() === 1 ? 'término todavía no tiene' : 'términos todavía no tienen' }}
-          traducción al castellano cargada. Se
-          {{ sinTraduccion() === 1 ? 'muestra' : 'muestran' }} con su nombre original, marcado.
-        </p>
+      @if (cantidadVisible() > 0) {
+        <app-pagination
+          class="glosario__paginacion"
+          [totalItems]="cantidadVisible()"
+          [page]="paginaActual()"
+          (pageChange)="irAPagina($event)"
+          [(pageSize)]="porPagina"
+          [pageSizeOptions]="tamanosDePagina"
+        />
       }
-
-      <app-data-table
-        [state]="terminos()"
-        [columns]="columnas()"
-        [trackBy]="porConcepto"
-        caption="Términos del glosario médico"
-        (retry)="recargar()"
-      />
-    </section>
-  }
+    </app-view-state-host>
+  </section>
 </div>
-
-<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
-<ng-template #celdaTermino let-termino>
-  <a class="glosario__termino-enlace" [routerLink]="['/glossary', termino.conceptId]">{{
-    termino.display
-  }}</a>
-  @if (termino.translated === false) {
-    <span class="glosario__marca-sin-traducir">Nombre original, sin traducir</span>
-  }
-</ng-template>
-
-<ng-template #celdaCategoria let-termino>
-  @if (termino.category; as categoria) {
-    {{ categoria.name }}
-  } @else {
-    <span class="glosario__sin-datos">Sin categoría</span>
-  }
-</ng-template>
-
-<ng-template #celdaDefinicion let-termino>
-  @if (termino.shortDefinition) {
-    <span class="glosario__definicion-breve">{{ termino.shortDefinition }}</span>
-  } @else {
-    <span class="glosario__sin-datos">Sin definición breve cargada.</span>
-  }
-</ng-template>
-
-<ng-template #celdaEtiquetas let-termino>
-  @if ((termino.tags ?? []).length > 0) {
-    <ul class="glosario__chips glosario__chips--fila">
-      @for (etiqueta of termino.tags; track etiqueta) {
-        <li><app-chip size="sm" [label]="etiqueta">{{ etiqueta }}</app-chip></li>
-      }
-    </ul>
-  } @else {
-    <span class="glosario__sin-datos">Sin etiquetas</span>
-  }
-</ng-template>
-
-<ng-template #celdaRelaciones let-termino>
-  @if ((termino.relationsCount ?? 0) > 0) {
-    {{ termino.relationsCount }} {{ termino.relationsCount === 1 ? 'relación' : 'relaciones' }}
-  } @else {
-    <span class="glosario__sin-datos">Sin relaciones registradas</span>
-  }
-</ng-template>
-
-<ng-template #celdaEstado let-termino>
-  <app-chip size="sm" variant="success" label="Término activo">Activo</app-chip>
-  @if (termino.translated === false) {
-    <app-chip size="sm" variant="warning" label="Sin traducción al castellano cargada">
-      Original
-    </app-chip>
-  }
-</ng-template>

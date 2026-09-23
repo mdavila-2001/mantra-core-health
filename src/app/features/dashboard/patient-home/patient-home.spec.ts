@@ -86,14 +86,29 @@ describe('PatientHome', () => {
     fixture.detectChanges();
   }
 
-  /** Responde las dos lecturas del panel. */
-  function responder(citas: unknown[], historia: Record<string, unknown> | null): void {
+  /**
+   * Responde las lecturas del panel.
+   *
+   * Las dos primeras son fijas. La tercera —el catálogo de recursos, que FT-03
+   * usa para decir con quién y dónde es la próxima cita— sólo se pide cuando
+   * hay una cita por delante, así que se drena con `match` en vez de
+   * `expectOne`: exigirla siempre rompería los casos sin citas.
+   */
+  function responder(
+    citas: unknown[],
+    historia: Record<string, unknown> | null,
+    recursos: unknown[] = [],
+  ): void {
     http
       .expectOne((r) => r.url === '/scheduling/bookings')
       .flush({ items: citas, count: citas.length, limit: 20, truncated: false });
     http
       .expectOne((r) => r.url === `/clinical/patients/${PERFIL}/summary`)
       .flush(historia ?? historiaVacia());
+    fixture.detectChanges();
+    for (const pedido of http.match((r) => r.url === '/scheduling/resources')) {
+      pedido.flush({ items: recursos, count: recursos.length });
+    }
     fixture.detectChanges();
   }
 
@@ -130,9 +145,7 @@ describe('PatientHome', () => {
     ]) {
       expect(t).not.toContain(palabra);
     }
-    expect(texto()).not.toMatch(
-      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
-    );
+    expect(texto()).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
   });
 
   it('muestra el próximo turno, no el más viejo ni uno que ya pasó', async () => {
@@ -148,9 +161,85 @@ describe('PatientHome', () => {
 
     // Se comprueba cuál es, no cómo se formatea la fecha.
     const tarjeta = (fixture.nativeElement as HTMLElement).querySelector(
-      '[data-testid="mi-salud-proximo-turno"]',
+      '[data-testid="mi-salud-proxima-cita"]',
     );
     expect(tarjeta?.getAttribute('data-turno')).toBe('proximo');
+  });
+
+  /* ---- FT-03 · el bloque de la próxima cita ------------------------------ */
+
+  /**
+   * FT-03-R01. El texto es el pedido literal del cliente: «Tu próximo turno»
+   * no puede quedar en ninguna parte de la pantalla.
+   */
+  it('llama al bloque «Tu próxima cita» y no «Tu próximo turno»', async () => {
+    await montar();
+    responder([{ id: 'b-1', statusConceptId: 'c-1', startAt: '2099-01-01T13:00:00.000Z' }], null);
+
+    expect(texto()).toContain('Tu próxima cita');
+    expect(texto()).not.toContain('Tu próximo turno');
+  });
+
+  /**
+   * FT-03-R03. La cita dice con quién y dónde, no sólo cuándo. Sin esto el
+   * bloque tenía un único dato y por eso no había jerarquía que mostrar.
+   */
+  it('dice con quién y en qué consultorio es la próxima cita', async () => {
+    await montar();
+    responder(
+      [
+        {
+          id: 'b-1',
+          statusConceptId: 'c-1',
+          resourceId: 'rec-1',
+          startAt: '2099-01-01T13:00:00.000Z',
+        },
+      ],
+      null,
+      [
+        {
+          id: 'rec-1',
+          name: 'Agenda cardiología',
+          resourceTypeConceptId: 'c-t',
+          resourceRefType: 'health_practitioner_profiles',
+          resourceRefId: 'pr-1',
+          practitionerName: 'Dra. Valeria Rojas',
+          practiceId: null,
+          timeZone: null,
+          capacity: 1,
+          stateConceptId: 'c-s',
+          site: { id: 's-1', name: 'Consultorio 3', code: 'C3', addressText: null, timeZone: null },
+        },
+      ],
+    );
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelector('[data-testid="mi-salud-cita-profesional"]')?.textContent).toContain(
+      'Dra. Valeria Rojas',
+    );
+    expect(raiz.querySelector('[data-testid="mi-salud-cita-lugar"]')?.textContent).toContain(
+      'Consultorio 3',
+    );
+  });
+
+  /**
+   * FT-03-R06. Sin citas por delante el bloque dice que no hay y ofrece la
+   * salida, en vez de quedar en blanco —que se lee como «no cargó».
+   */
+  it('sin citas por delante, el bloque lo dice y ofrece pedir una', async () => {
+    await montar();
+    // Una cita que ya pasó: hay historia, así que no es la pantalla de bienvenida.
+    responder([{ id: 'viejo', statusConceptId: 'c-1', startAt: '2020-01-01T13:00:00.000Z' }], {
+      ...historiaVacia(),
+      encounters: [{ id: 'e-1', startAt: '2020-01-01T13:00:00.000Z' }],
+    });
+
+    const bloque = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="mi-salud-proxima-cita"]',
+    );
+    expect(bloque?.getAttribute('data-estado')).toBe('empty');
+    expect(bloque?.textContent).toContain('No tenés citas pedidas');
+    expect(bloque?.textContent).toContain('Pedir una cita');
   });
 
   it('quien recién llega recibe una invitación, no tres tarjetas vacías', async () => {
@@ -180,20 +269,24 @@ describe('PatientHome', () => {
     expect(receta?.textContent).toContain('2026');
   });
 
-  /** La Guía es de los pacientes: es donde buscan con quién atenderse. */
-  it('ofrece los accesos del paciente, la Guía incluida', async () => {
+  /**
+   * La grilla «Ir a lo tuyo» se retiró a pedido del doctor (P-03, 22/09/2026):
+   * turnos e historia siguen a mano desde las tarjetas del resumen, y la Guía,
+   * desde el menú. Lo que se comprueba es que no volvió, y que el camino a los
+   * turnos no se fue con ella.
+   */
+  it('ya no ofrece la grilla de accesos; los turnos siguen a mano desde el resumen', async () => {
     await montar();
     responder([], null);
 
-    const rutas = [
-      ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>(
-        '[data-testid="mi-salud-acceso"]',
-      ),
-    ].map((enlace) => enlace.getAttribute('href'));
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('[data-testid="mi-salud-acceso"]')).toBeNull();
+    expect(html.querySelector('nav.mi-salud__accesos')).toBeNull();
 
-    expect(rutas).toContain('/directory');
+    const rutas = [...html.querySelectorAll<HTMLAnchorElement>('a[href]')].map((enlace) =>
+      enlace.getAttribute('href'),
+    );
     expect(rutas).toContain('/my-account/appointments');
-    expect(rutas).toContain('/my-account/medical-record');
   });
 
   /** Media pantalla útil es mejor que un error que tapa lo que sí se pudo leer. */
@@ -202,12 +295,14 @@ describe('PatientHome', () => {
     http
       .expectOne((r) => r.url === '/scheduling/bookings')
       .flush('nope', { status: 500, statusText: 'Server Error' });
-    http.expectOne((r) => r.url === `/clinical/patients/${PERFIL}/summary`).flush({
-      ...historiaVacia(),
-      medicationRequests: [
-        { id: 'r-1', medicationConceptId: 'm-1', issuedAt: '2026-08-10T10:00:00.000Z' },
-      ],
-    });
+    http
+      .expectOne((r) => r.url === `/clinical/patients/${PERFIL}/summary`)
+      .flush({
+        ...historiaVacia(),
+        medicationRequests: [
+          { id: 'r-1', medicationConceptId: 'm-1', issuedAt: '2026-08-10T10:00:00.000Z' },
+        ],
+      });
     fixture.detectChanges();
 
     expect(texto()).toContain('Ver y descargar');

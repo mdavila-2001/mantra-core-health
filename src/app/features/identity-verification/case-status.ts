@@ -59,6 +59,10 @@ const PREFIJO_DE_CODIGO = 'identity_assurance:CASE_';
 const PRESENTACION_POR_CODIGO: Readonly<Record<string, CaseStatusPresentation>> =
   Object.freeze({
     CASE_OPEN: { variant: 'pending', label: 'Pendiente' },
+    // Es el estado con el que la API abre el caso (`status: 'CHECKS_PENDING'`
+    // en la respuesta del alta): sin esta entrada el trámite recién enviado
+    // aparecía como «Desconocido» al lado del anterior, que decía «Aprobado».
+    CASE_CHECKS_PENDING: { variant: 'pending', label: 'Pendiente' },
     CASE_IN_VERIFICATION: { variant: 'in-review', label: 'En revisión' },
     // A la persona verificada no se le revela la marca de riesgo: para ella el
     // caso sigue «en revisión».

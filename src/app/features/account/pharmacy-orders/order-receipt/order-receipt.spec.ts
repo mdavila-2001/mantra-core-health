@@ -1,51 +1,18 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { firstValueFrom } from 'rxjs';
 
-import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
-import type {
-  BorradorDePedido,
-  PedidoFarmacia,
-  SimulacionDeFarmacia,
-} from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
+import {
+  PHARMACY_ORDER_TEST_IDS,
+  pharmacyOrderDtoFixture,
+} from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
 import { OrderReceipt } from './order-receipt';
 
-/**
- * El comprobante interno (FAR-I5). Lo que se fija: el papel refleja EXACTO lo
- * que el puerto registró (medio, líneas, total), un pedido sin pago no tiene
- * comprobante (vacío honesto con salida), y cero uuid a la vista.
- */
-
-const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
-
-const BORRADOR: BorradorDePedido = {
-  requestId: 'rx-1',
-  siteId: 'f0e1d2c3-0000-4000-8000-000000000001',
-  pharmacyId: 'a1b2c3d4-0000-4000-8000-000000000001',
-  farmacia: 'Farmacia Andina',
-  sede: 'Sucursal Centro',
-  direccion: 'Calle Libertad 245',
-  lineas: [
-    {
-      productId: 'f0e1d2c3-0000-4000-8000-000000000002',
-      medicamento: 'Amoxicilina',
-      presentacion: '500 mg · Caja x 21 cápsulas',
-      cantidad: 2,
-      precio: '60.00',
-      moneda: 'BOB',
-      disponible: true,
-    },
-  ],
-  totalEstimado: '120.00',
-  moneda: 'BOB',
-};
-
-describe('OrderReceipt', () => {
+describe('OrderReceipt with an orders API that has no payment contract', () => {
   let harness: RouterTestingHarness;
-  let client: PharmacyOrdersClient;
+  let http: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -57,75 +24,40 @@ describe('OrderReceipt', () => {
         ]),
       ],
     });
-    client = TestBed.inject(PharmacyOrdersClient);
+    http = TestBed.inject(HttpTestingController);
   });
 
-  async function pedidoEn(pasos: readonly SimulacionDeFarmacia[]): Promise<PedidoFarmacia> {
-    const pedido = await firstValueFrom(
-      client.enviar({ borrador: BORRADOR, modalidad: 'RETIRO', direccionDeEntrega: null }),
-    );
-    for (const paso of pasos) {
-      await firstValueFrom(client.simular(pedido.id, paso));
-    }
-    return (await firstValueFrom(client.pedido(pedido.id))) ?? pedido;
-  }
+  afterEach(() => http.verify());
 
-  async function montar(orderId: string): Promise<void> {
+  async function navigate(): Promise<void> {
     harness = await RouterTestingHarness.create();
-    await harness.navigateByUrl(`/my-account/pharmacy-orders/${orderId}/receipt`, OrderReceipt);
-    harness.detectChanges();
+    await harness.navigateByUrl(
+      `/my-account/pharmacy-orders/${PHARMACY_ORDER_TEST_IDS.order}/receipt`,
+      OrderReceipt,
+    );
   }
 
-  function texto(): string {
+  function text(): string {
     return harness.routeNativeElement?.textContent ?? '';
   }
 
-  it('el pago del mostrador produce su papel: medio, líneas, total y descarga', async () => {
-    // El cierre de la dispensa ES el cobro — el mismo camino de la demo.
-    const pedido = await pedidoEn(['REVISAR', 'CONFIRMAR', 'MARCAR_LISTO', 'DISPENSAR']);
-    await montar(pedido.id);
-
-    expect(texto()).toContain('Comprobante interno. No es una factura.');
-    expect(texto()).toContain('Farmacia Andina — Sucursal Centro');
-    expect(texto()).toContain('Pagado en mostrador');
-    expect(texto()).toContain('Amoxicilina · 500 mg · Caja x 21 cápsulas');
-    // 60.00 × 2, leído del RENGLÓN: el total imprime el mismo texto en otra
-    // parte de la página y taparía un importe unitario mal calculado.
-    const renglon = harness.routeNativeElement?.querySelector(
-      '[data-testid="comprobante-lineas"] li',
+  it('does not fabricate a receipt from a pharmacy order', async () => {
+    await navigate();
+    http.expectOne(`/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}`).flush(
+      pharmacyOrderDtoFixture(),
     );
-    expect(renglon?.textContent).toContain('120.00 BOB');
-    expect(renglon?.textContent).not.toContain('60.00');
-    expect(
-      harness.routeNativeElement?.querySelector('[data-testid="comprobante-descargar"]'),
-    ).not.toBeNull();
-  });
-
-  it('el pago del QR de la demo se dice sin vueltas en el papel', async () => {
-    const pedido = await pedidoEn(['REVISAR', 'CONFIRMAR']);
-    await firstValueFrom(client.confirmarPagoDemo(pedido.id));
-    await montar(pedido.id);
-
-    expect(texto()).toContain('Pago demo — sin valor real');
-  });
-
-  it('sin pago registrado no hay comprobante: el vacío honesto con su salida', async () => {
-    const pedido = await pedidoEn([]);
-    await montar(pedido.id);
-
-    expect(texto()).toContain('Este pedido todavía no tiene un pago registrado.');
-    expect(texto()).toContain('Ver el pedido');
+    harness.detectChanges();
+    expect(text()).toContain('Este pedido todavía no tiene un pago registrado.');
     expect(harness.routeNativeElement?.querySelector('[data-testid="comprobante"]')).toBeNull();
   });
 
-  it('un pedido que no existe ofrece volver a la lista', async () => {
-    await montar('no-existe');
-    expect(texto()).toContain('Volver a mis pedidos');
-  });
-
-  it('ningún uuid se pinta en el comprobante', async () => {
-    const pedido = await pedidoEn(['REVISAR', 'CONFIRMAR', 'MARCAR_LISTO', 'DISPENSAR']);
-    await montar(pedido.id);
-    expect(texto()).not.toMatch(UUID);
+  it('renders the real API 404 instead of treating it as null', async () => {
+    await navigate();
+    http.expectOne(`/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}`).flush(
+      { code: 'NOT_FOUND', message: 'Order not found' },
+      { status: 404, statusText: 'Not Found' },
+    );
+    harness.detectChanges();
+    expect(text()).toContain('No encontramos lo que buscás');
   });
 });

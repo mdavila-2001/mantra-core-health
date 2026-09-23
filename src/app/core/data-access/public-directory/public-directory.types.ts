@@ -104,6 +104,42 @@ export interface PublicSearchResult {
    * que no promete nada.
    */
   readonly nextAvailableDate: string | null;
+  /**
+   * Qué **clase** de cosa es este resultado dentro de su vertical.
+   *
+   * El vertical ya lo dice `kind`: esto es el escalón de abajo, el que separa
+   * una clínica privada de una caja de salud, una sucursal de Farmacorp de la
+   * farmacia de la esquina, o un seguro de salud de uno de fianzas. Es la
+   * pregunta que alguien se hace **antes** que la ciudad, y hasta ahora los
+   * directorios no la podían ofrecer porque la fila no la traía: los 65
+   * resultados de farmacias se hojeaban de corrido.
+   *
+   * ## Por qué es `| null` y por qué no pasa nada si siempre lo es
+   *
+   * Porque la API viva todavía **no** la sirve —el simulador sí— y el contrato
+   * público no promete el campo. Un directorio cuyos resultados vuelven todos
+   * con `null` no dibuja la fila de chips, igual que no dibuja los chips de
+   * ciudad cuando el departamento elegido tiene una sola: un filtro que no
+   * acota nada es un botón que miente.
+   *
+   * `code` es la identidad estable —viaja a la URL— y `label` es presentación:
+   * cambia con el idioma y con el catálogo, y por eso no se guarda en el
+   * enlace que alguien pega en un mensaje.
+   */
+  readonly category: PublicCategory | null;
+}
+
+/**
+ * La categoría de un resultado dentro de su vertical: su código estable y cómo
+ * se escribe en pantalla.
+ *
+ * No es un `*ConceptId`: esta superficie es anónima y no reparte identificadores
+ * internos. El código es el del catálogo público —`clinica-privada`,
+ * `caja-de-salud`— y es lo único que viaja a `?categoria=`.
+ */
+export interface PublicCategory {
+  readonly code: string;
+  readonly label: string;
 }
 
 /** Una publicación en la ficha pública. */
@@ -163,6 +199,24 @@ export interface PublicPostReaction extends PublicSocialActor {
   readonly reactionType: PublicReactionCode | null;
 }
 
+/**
+ * Una opinión de la ficha pública: quién la dio, con cuántas estrellas y qué
+ * escribió.
+ *
+ * `text` es `null` cuando la persona sólo calificó: también cuenta, porque es
+ * alguien que dio estrellas y la ficha las suma en su promedio.
+ *
+ * `reviewer.slug` y `reviewer.kind` son `null` cuando quien opinó no tiene
+ * ficha pública propia —un paciente—: se muestra su nombre, pero no hay a dónde
+ * enlazar.
+ */
+/* La declaración de `PublicProfileReview` que había acá quedó duplicada tras el
+   merge de `dev`: convivían la forma vieja (`rating`, `text`, `reviewer`) y la
+   nueva (`overallRating`, `reviewText`, `reviewerDisplayName`, `responses[]`),
+   y TypeScript las fusionaba en una interfaz imposible. Se conserva la nueva,
+   más abajo: es la que habla el cliente y la única que soporta el anonimato de
+   quien opina. Nadie consumía la vieja. */
+
 /** Un comentario del hilo público, con su autor adentro. */
 export interface PublicComment {
   readonly id: string;
@@ -171,6 +225,18 @@ export interface PublicComment {
   /** Cuántas respuestas cuelgan de él. 0, nunca `null`. */
   readonly replyCount: number;
   readonly author: PublicSocialActor;
+  /** Imágenes, stickers y GIFs adjuntos (REQ-01-011). */
+  readonly media: readonly PublicCommentMedia[];
+}
+
+/**
+ * Un adjunto de comentario público. Ya viene resuelto a URL servida por la
+ * API — nunca el `fileId` interno (ver `PublicCommentMediaDto` del backend).
+ */
+export interface PublicCommentMedia {
+  readonly url: string;
+  readonly kind: 'IMAGE' | 'STICKER' | 'GIF';
+  readonly altText: string | null;
 }
 
 /** Un punto geográfico del directorio. */
@@ -213,6 +279,21 @@ export interface PublicProfileDetail {
   readonly specialties: readonly string[];
   /** Trayectoria laboral, de la más reciente a la más antigua. Vacía fuera de un profesional. */
   readonly trajectory: readonly PublicAffiliation[];
+
+  /**
+   * Los lugares donde atiende, con el propio primero.
+   *
+   * Es lo que pedía P16 de `PENDIENTES-BACKEND.md`, con las palabras del
+   * cliente: «en el perfil público del profesional falta los lugares donde
+   * atiende». `city` y `address` son **una** dirección y siguen sirviendo de
+   * respaldo; esto son las sedes, que es lo que hay que poder mirar antes de
+   * elegir a quién consultar.
+   *
+   * Vacía fuera de un profesional y en las fichas que todavía no cargaron
+   * ninguna — la pantalla cae al respaldo, que es el comportamiento que ya
+   * tenía.
+   */
+  readonly practiceSites: readonly PublicPracticeSite[];
   readonly ratingAverage: number | null;
   readonly ratingCount: number;
   readonly acceptsReviews: boolean;
@@ -220,6 +301,35 @@ export interface PublicProfileDetail {
   readonly posts: readonly PublicPostSummary[];
   /** Alimenta el `<lastmod>` del sitemap y el `og:updated_time`. */
   readonly updatedAt: Date;
+}
+
+/**
+ * Un lugar donde alguien atiende, tal como lo muestra su ficha pública.
+ *
+ * Más angosto que el `PracticeSite` de `practice-sites.types.ts` a propósito:
+ * aquél es la sede con la que trabaja quien la administra —código, zona
+ * horaria, estado— y esto es lo que un paciente necesita para decidir si le
+ * queda cerca. La ficha es anónima; no se publica de una sede más de lo que
+ * hace falta para ir.
+ */
+export interface PublicPracticeSite {
+  readonly id: string;
+  readonly name: string;
+  /** Dirección en una línea, o `null` si la sede no cargó ninguna. */
+  readonly addressText: string | null;
+  /** Punto en el mapa, si la sede lo tiene. Sin él no hay pin que dibujar. */
+  readonly location: PublicLocation | null;
+  /**
+   * Si es el consultorio propio del profesional, y no una sede de una
+   * organización a la que está vinculado.
+   *
+   * La ficha lo distingue porque no es lo mismo para quien elige: en el propio
+   * atiende él y punto; en el de una clínica hay una organización de por medio
+   * —con su recepción, su cobro y sus horarios—. Es también el único que puede
+   * existir sin que nadie lo haya aceptado, que es lo que lo hace el primero
+   * que un profesional recién registrado tiene para ofrecer.
+   */
+  readonly isOwn: boolean;
 }
 
 /** Un resultado de «lo más cercano», con su distancia. */
@@ -278,3 +388,64 @@ export const PUBLIC_PROFILE_PREFIX: Readonly<
   DIAGNOSTIC_UNIT: 'l',
   INSURER: 's',
 };
+
+/* ============================================================================
+    P31 · las opiniones de una ficha pública.
+
+    La cabecera de la ficha ya decía «4,6 de 5 · 12 opiniones» —ese promedio se
+    calculaba desde antes— y no había forma de leer ninguna de las doce. Estos
+    tipos son la lista que faltaba.
+    ========================================================================== */
+
+/** Una opinión publicada sobre una ficha pública. */
+export interface PublicProfileReview {
+  readonly id: string;
+  /** Estrellas, de 1 a 5. */
+  readonly overallRating: number;
+  /** Lo que escribió, o `null` si sólo puso estrellas. */
+  readonly reviewText: string | null;
+  /**
+   * Con qué nombre firma, o `null` si la publicó como anónima.
+   *
+   * `null` **no** es «no se pudo resolver el nombre»: es la decisión del autor,
+   * y la pantalla la dice con palabras («Paciente verificado»), nunca con un
+   * hueco. El backend ni siquiera pide el nombre de quien eligió el anonimato.
+   */
+  readonly reviewerDisplayName: string | null;
+  /** Cuándo se publicó, o `null` si la fila no lo declara. */
+  readonly publishedAt: Date | null;
+  /** Si fue editada después, cuándo. */
+  readonly editedAt: Date | null;
+  /** Respuestas del calificado. Normalmente ninguna o una. */
+  readonly responses: readonly PublicProfileReviewResponse[];
+}
+
+/** La respuesta del profesional u organización a una opinión. */
+export interface PublicProfileReviewResponse {
+  readonly id: string;
+  readonly responseText: string;
+  readonly publishedAt: Date | null;
+}
+
+/**
+ * Una página de opiniones, con el promedio del **perfil**.
+ *
+ * `ratingAverage` no es el promedio de `items`: es el de todas las opiniones
+ * publicadas del perfil, el mismo número que muestra la cabecera y el
+ * directorio. Promediar la página daría uno que cambia al pasar a la segunda.
+ */
+export interface PublicProfileReviewsPage {
+  readonly items: readonly PublicProfileReview[];
+  /** `null` = no hay más. Opaco: se guarda, no se construye ni se parsea. */
+  readonly nextCursor: string | null;
+  /**
+   * Promedio de estrellas del perfil, con una decimal.
+   *
+   * `null` es «todavía nadie calificó», que no es lo mismo que `0` —cero
+   * estrellas sería una calificación pésima—. Quien lo reciba dice «sin
+   * calificaciones», nunca «0».
+   */
+  readonly ratingAverage: number | null;
+  /** Cuántas opiniones publicadas tiene el perfil en total. */
+  readonly ratingCount: number;
+}

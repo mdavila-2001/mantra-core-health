@@ -19,10 +19,44 @@ export interface VerificationRequestResult {
   readonly status: string;
 }
 
+/**
+ * Un check del caso, tal como corrió: qué se revisó y con qué resultado.
+ * Es el trace visual de FT-32-R05, no el registro append-only completo.
+ */
+export interface CaseCheck {
+  readonly checkTypeConceptId: string;
+  readonly status: string;
+  readonly resultConceptId?: string;
+  readonly checkedAt?: Date;
+}
+
 /** Estado del caso propio, mientras se espera el veredicto de la autoridad. */
 export interface VerificationCase {
   readonly id: string;
   readonly status: string;
+  /**
+   * Código del tipo de solicitud: `PRACTITIONER_IDENTITY`,
+   * `PRACTITIONER_LICENSE`, `PATIENT_IDENTITY`, `TENANT_VERIFICATION` o
+   * `UNKNOWN`. El backend lo deriva del sujeto del caso.
+   */
+  readonly type: string;
+  /** Archivo de evidencia aportado (`common.files`), si el backend lo resolvió. */
+  readonly evidenceFileId?: string;
+  /**
+   * Motivo registrado por quien decidió el caso en revisión manual. Un caso
+   * resuelto sin escalar no tiene motivo de texto — sólo el trace de `checks`.
+   */
+  readonly reasonText?: string;
+  /** Sólo viene poblado en el detalle (`getVerificationCase`), no en la lista. */
+  readonly checks?: readonly CaseCheck[];
   readonly openedAt?: Date;
   readonly completedAt?: Date;
+}
+
+/** Un tipo de solicitud de verificación disponible para "nueva solicitud". */
+export interface VerificationType {
+  readonly code: string;
+  readonly label: string;
+  readonly jurisdictionAuthorizationId?: string;
+  readonly hasPendingRequest: boolean;
 }

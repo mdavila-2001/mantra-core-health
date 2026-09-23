@@ -1,0 +1,41 @@
+<div class="radio-otro">
+  <label
+    class="radio-container"
+    [class.is-checked]="checked()"
+    [class.is-disabled]="isDisabled()"
+    [attr.for]="inputId"
+  >
+    <input
+      type="radio"
+      class="native-radio"
+      [id]="inputId"
+      [name]="name()"
+      [checked]="checked()"
+      [disabled]="isDisabled()"
+      (change)="select()"
+      data-testid="radio-otro"
+    />
+    <span class="radio-circle" aria-hidden="true">
+      @if (checked()) {
+        <span class="radio-dot"></span>
+      }
+    </span>
+    <span class="radio-label">{{ label() }}</span>
+  </label>
+
+  <!-- El renglón va habilitado siempre, no sólo con la opción marcada: escribir
+       ya es elegir «Otro», y un renglón apagado obliga a dos gestos —marcar y
+       después escribir— donde alcanza con uno. -->
+  <input
+    class="radio-otro__texto"
+    type="text"
+    [id]="textoId"
+    [value]="texto()"
+    [disabled]="isDisabled()"
+    [placeholder]="placeholder()"
+    [attr.aria-label]="label() + ' escribí tu respuesta'"
+    autocomplete="off"
+    (input)="escribir($event)"
+    data-testid="radio-otro-texto"
+  />
+</div>

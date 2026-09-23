@@ -1,0 +1,42 @@
+/* ============================================================================
+    Grid de insignias de especialidad.
+
+    Mobile-first, como el resto de los organismos del repositorio: la regla
+    base es la de pantalla angosta y las anchas se agregan con `min-width`.
+    ========================================================================== */
+
+:host {
+    display: block;
+}
+
+.specialty-badge-grid__lista {
+    display: grid;
+    /* `minmax(0, 1fr)`, no `auto`: sin el 0 una insignia con nombre largo se
+       niega a encogerse y empuja la fila fuera de la pantalla. Ese desborde
+       no se ve en escritorio y aparece recién a 375 px. */
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* A partir de tablet entran de a dos, y en escritorio se acomodan solas sin
+   fijar un número de columnas: lo que manda es que ninguna baje de 14rem, que
+   es donde «Ginecología y obstetricia» deja de entrar en dos renglones. */
+@media (min-width: 40rem) {
+    .specialty-badge-grid__lista {
+        grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+    }
+}
+
+.specialty-badge-grid__item {
+    min-inline-size: 0;
+    display: flex;
+}
+
+/* La insignia ocupa su celda: si no, dos insignias de la misma fila quedan de
+   alto distinto y la grilla se lee como un serrucho. */
+.specialty-badge-grid__item app-specialty-badge {
+    inline-size: 100%;
+}

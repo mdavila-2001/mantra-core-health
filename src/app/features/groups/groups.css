@@ -25,14 +25,14 @@
 
 .grupos__alta-titulo {
   margin: 0 0 var(--e3);
-  font-size: var(--fs-lg);
+  font-size: var(--fs-body-lg);
   color: var(--text-primary);
 }
 
 .grupos__slug {
   margin: var(--e2) 0;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .grupos__alta-acciones {
@@ -56,7 +56,7 @@
 
 .grupos__nombre {
   margin: 0;
-  font-size: var(--fs-md);
+  font-size: var(--fs-body);
   color: var(--text-primary);
 }
 
@@ -68,7 +68,7 @@
 .grupos__meta {
   margin: var(--e2) 0 0;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .grupos__mas {
@@ -82,6 +82,15 @@
    no un fallo de la operación. */
 .grupos__aviso-perfil {
   margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+/* La creación de la vitrina, cuando falta: ocupa el ancho del formulario que la
+   recibe y se separa de lo de arriba como un bloque propio, no como el pie de
+   un aviso. */
+.grupos__vitrina {
+  display: block;
+  margin-block-start: var(--sp-4);
+  width: 100%;
 }

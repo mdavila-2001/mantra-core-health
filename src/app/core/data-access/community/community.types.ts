@@ -54,12 +54,37 @@ export interface PrestigeScore {
   readonly calculatedAt?: Date;
 }
 
+/**
+ * A qué vertical pertenece una ficha pública.
+ *
+ * Las cinco primeras tienen URL pública propia (`/p`, `/o`, `/f`, `/l`, `/s`);
+ * `PATIENT` **no la tiene** y no es un olvido: la ficha de un paciente no se
+ * publica. Por eso quien la consume tiene que poder distinguirla en vez de
+ * suponer que toda ficha lleva a algún lado.
+ */
+export type PublicProfileKind =
+  | 'PRACTITIONER'
+  | 'ORGANIZATION'
+  | 'PHARMACY'
+  | 'DIAGNOSTIC_UNIT'
+  | 'INSURER'
+  | 'PATIENT';
+
 /** La ficha pública de una persona u organización. */
 export interface PublicProfileDetail {
   readonly id: string;
   readonly tenantId: string;
   /** A qué apunta el perfil: profesional, organización, farmacia… */
   readonly targetTypeConceptId: string;
+  /**
+   * La vertical en claro, cuando el servidor la dice.
+   *
+   * `targetTypeConceptId` es un uuid de terminología y el cliente **no tiene
+   * su tabla**: derivarlo acá sería adivinar. Mientras la API no publique este
+   * campo llega `undefined`, y quien lo consume degrada — no enlaza a una
+   * ficha pública que no sabe construir. La maqueta sí lo manda.
+   */
+  readonly kind?: PublicProfileKind;
   /** Identificador legible de la URL pública, p. ej. `marisol-quispe-ticona`. */
   readonly slug: string;
   readonly displayName: string;
@@ -274,6 +299,24 @@ export interface CommentThreadItem {
   readonly replyCount?: number;
   readonly createdAt: Date;
   readonly replies: readonly CommentThreadItem[];
+  /** Imágenes, stickers y GIFs adjuntos (REQ-01-011). */
+  readonly media: readonly CommentMediaItem[];
+}
+
+/** Un adjunto de comentario, tal como lo sirve `GET .../comments`. */
+export interface CommentMediaItem {
+  readonly id: string;
+  readonly fileId: string;
+  readonly mediaRoleConceptId: string;
+  readonly altText?: string;
+  readonly ordinal?: number;
+}
+
+/** Un adjunto a subir con un comentario nuevo (`POST /community/comments`). */
+export interface NewCommentMedia {
+  readonly fileId: string;
+  readonly mediaRole: 'IMAGE' | 'STICKER' | 'GIF';
+  readonly altText?: string;
 }
 
 /** Una página de hilos de comentarios. */
@@ -293,6 +336,8 @@ export interface NewComment {
   readonly commentableRefId: string;
   readonly bodyText: string;
   readonly parentCommentId?: string;
+  /** Imágenes, stickers y GIFs a adjuntar (REQ-01-011). Tope de 4, del servidor. */
+  readonly media?: readonly NewCommentMedia[];
 }
 
 // ─── Reacciones ──────────────────────────────────────────────────────────────
@@ -643,6 +688,14 @@ export interface ConversationPreviewMessage {
   readonly id: string;
   readonly senderProfileId: string;
   readonly bodyText?: string;
+  /**
+   * El adjunto, si el último mensaje era uno.
+   *
+   * La API lo manda desde F4.3 (`ConversationPreviewMessageDto`) y este tipo no
+   * lo declaraba, así que la fila de la bandeja sólo podía decir «Archivo
+   * adjunto» para todo. Con esto distingue un sticker de una foto.
+   */
+  readonly attachmentFileId?: string;
   readonly sentAt?: Date;
 }
 
@@ -745,6 +798,53 @@ export interface NewDirectMessage {
   readonly senderProfileId: string;
   readonly bodyText: string;
   readonly replyToMessageId?: string;
+}
+
+/**
+ * La respuesta automática por inactividad de un perfil (F4.7).
+ *
+ * Vive en el servidor desde el patch v4.2.9 (`community.chat_auto_replies`).
+ * Es lo que permite que conteste **con la aplicación cerrada**, que es la
+ * diferencia entre un contestador y un recordatorio.
+ */
+export interface ChatAutoReplySettings {
+  readonly id: string;
+  readonly publicProfileId: string;
+  readonly isActive: boolean;
+  /** Minutos sin actividad del titular antes de contestar solo. */
+  readonly inactivityMinutes: number;
+  readonly bodyText: string;
+  /** Horas de descanso antes de repetirle a la misma conversación. */
+  readonly cooldownHours: number;
+  readonly onlyOutsideBusinessHours: boolean;
+  /** `HH:MM`, o ausente si no declaró franja. */
+  readonly businessHoursFrom?: string;
+  /**
+   * `HH:MM`, o ausente.
+   *
+   * Puede ser **menor** que el inicio: es una franja que cruza la medianoche
+   * —el turno noche—, y es válida.
+   */
+  readonly businessHoursTo?: string;
+  readonly updatedAt?: Date;
+}
+
+/** Lo que se manda a `PUT /community/profiles/:id/auto-reply`. */
+export type UpsertChatAutoReply = Omit<
+  ChatAutoReplySettings,
+  'id' | 'publicProfileId' | 'updatedAt'
+>;
+
+/**
+ * El texto nuevo de un mensaje propio (F4.5).
+ *
+ * `senderProfileId` viaja aunque el backend ya sepa quién es el actor: sólo el
+ * autor edita, y el servidor compara ese perfil contra el del mensaje. No es
+ * redundante, es la comprobación.
+ */
+export interface EditDirectMessage {
+  readonly senderProfileId: string;
+  readonly bodyText: string;
 }
 
 /** El acuse de un mensaje enviado. */

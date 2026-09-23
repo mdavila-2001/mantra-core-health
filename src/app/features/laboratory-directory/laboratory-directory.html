@@ -1,15 +1,90 @@
-<!-- Toda la anatomía —encabezado, chips, contador y grilla— la pone
-     `app-directory-page`, que es el patrón común de los cuatro directorios
-     (A7 del plan de UX). Acá sólo queda lo que de verdad es propio de los
-     laboratorios: sus filtros y su mapeo. -->
+<!-- Dentro de una categoría o con algo buscado, la vuelta a la portada limpia
+     los parámetros de la URL, que es exactamente lo que significa «ver
+     todas». Va afuera de `app-directory-page` para que aparecer y desaparecer
+     no rehaga la barra: quien está escribiendo no pierde el foco. -->
+@if (!enPortada()) {
+  <a app-button variant="ghost" class="rejilla__volver" [routerLink]="[]" [queryParams]="{}">
+    ← Todas las categorías
+  </a>
+}
+
+<!-- Un solo `app-directory-page` para los dos escalones: la barra de búsqueda
+     está en la portada **y** dentro de cada categoría (pedido del cliente,
+     19/09/2026). Escribir en la portada busca en todas las categorías a la
+     vez y muestra los centros agrupados por la suya. -->
 <app-directory-page
+  [embebido]="embebido()"
   titulo="Directorio de laboratorios"
-  subtitulo="Centros verificados de laboratorio clínico e imagenología, de toda la red. Tocá un chip para acotar."
+  [subtitulo]="subtitulo()"
   etiquetaBusqueda="Buscar por nombre o código del centro"
-  [filtros]="filtros"
+  [filtros]="enPortada() ? [] : filtros"
   [estado]="state()"
   [grupos]="groups()"
   [sustantivo]="sustantivo"
-  (filtrosCambiaron)="filtrar($event)"
+  [portada]="enPortada()"
+  [textoSinCoincidencias]="sinCoincidencias()"
   (reintentar)="retry()"
-/>
+>
+  <!-- ─── El mapa de Bolivia como filtro ─────────────────────────────────────
+       El mismo que clínicas y farmacias. Sólo se dibuja si los centros traen
+       sus ciudades: sin ellas el mapa no acotaría nada. -->
+  <div slot="antes-de-filtros">
+  @if (catalogoGeoCaido()) {
+    <p class="mapa-directorio__caido" role="status">
+      No pudimos leer el catálogo de departamentos, así que el mapa no está.
+      El resto del directorio funciona igual.
+      <button app-button variant="ghost" size="sm" type="button" (click)="reintentarGeo()">
+        Reintentar
+      </button>
+    </p>
+  } @else if (departamentos().length > 0 && hayCiudades()) {
+    <section class="mapa-directorio" aria-label="Filtrar por departamento">
+      <app-department-map
+        testId="laboratorios-mapa"
+        [departamentos]="departamentos()"
+        [value]="departamentoElegido()"
+        (valueChange)="elegirDepartamento($event)"
+        etiqueta="Mapa de Bolivia: elegí el departamento donde buscás"
+      />
+      @if (resumenDelMapa(); as resumen) {
+        <p class="mapa-directorio__resumen" data-testid="laboratorios-mapa-resumen">{{ resumen }}</p>
+      }
+    </section>
+  }
+  </div>
+
+  <!-- ─── La portada: elegir categoría antes que centro ──────────────────────
+       El mismo patrón que la portada de especialidades del directorio de
+       médicos, y por el mismo motivo: nadie busca «un centro», se busca dónde
+       hacerse un análisis o dónde hacerse una placa. Son dos recorridos que no
+       se mezclan, y elegir primero evita leer una lista donde la mitad de las
+       filas no responde la pregunta que se traía.
+
+       Las categorías salen de los centros ya cargados, con su cuenta: una que
+       no tenga ninguno no se dibuja. -->
+  <ul slot="portada" class="rejilla" data-testid="portada-categorias">
+    @for (tarjeta of categorias(); track tarjeta.codigo) {
+      <li>
+        <!-- La categoría viaja en la URL, como la especialidad en el
+             directorio de médicos: hace compartible «los laboratorios
+             clínicos» y deja que el «atrás» del navegador vuelva acá. -->
+        <a
+          class="rejilla__tarjeta"
+          [routerLink]="[]"
+          [queryParams]="{ kind: filtroDe(tarjeta.codigo) }"
+          queryParamsHandling="merge"
+          [attr.data-testid]="'portada-categoria-' + tarjeta.codigo"
+        >
+          <!-- `aria-hidden` lo pone el propio átomo: la tarjeta ya se llama
+               por su categoría, y anunciarlo lo diría dos veces. -->
+          <app-nav-icon class="rejilla__icono" [name]="tarjeta.icono" />
+          <span class="rejilla__nombre">{{ tarjeta.nombre }}</span>
+          <span class="rejilla__dato">
+            {{ tarjeta.cantidad }}
+            {{ tarjeta.cantidad === 1 ? 'centro' : 'centros' }}
+          </span>
+        </a>
+      </li>
+    }
+  </ul>
+</app-directory-page>

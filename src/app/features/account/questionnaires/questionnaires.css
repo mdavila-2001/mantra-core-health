@@ -60,3 +60,11 @@
   align-items: center;
   gap: var(--sp-3);
 }
+
+/* FT-22 · las dos pestañas ocupan el ancho de la pantalla: el contenido de
+   «Aspectos médicos» es un formulario, y un formulario encajonado en la mitad
+   del ancho es el defecto que este mismo pedido señala en el perfil. */
+.cuestionarios__tabs {
+  display: block;
+  inline-size: 100%;
+}

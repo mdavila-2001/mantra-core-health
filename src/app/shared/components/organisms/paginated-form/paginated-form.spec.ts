@@ -46,6 +46,7 @@ const PAGINAS: readonly PaginaDeFormulario[] = [
       label="Crear cuenta"
       submitLabel="Crear cuenta"
       (enviado)="enviados = enviados + 1"
+      (rechazada)="rechazadas.push($event)"
     >
       <ng-template appCampoPersonalizado="odontograma">
         <p data-testid="widget-propio">un mapa dental</p>
@@ -69,6 +70,7 @@ class Host {
     odontograma: new FormControl<string | null>(null),
   });
   enviados = 0;
+  readonly rechazadas: PaginaDeFormulario[] = [];
 }
 
 /** Una página con las piezas nuevas: glifo, descripción y un desplegable. */
@@ -134,12 +136,54 @@ class HostConfigurable {
   });
 }
 
+/**
+ * Diez páginas: las del alta de paciente, que es el recorrido que pasó el tope
+ * de cinco del indicador. Una cosa por página, para que avanzar no dependa de
+ * llenar nada.
+ */
+const PAGINAS_LARGAS: readonly PaginaDeFormulario[] = Array.from(
+  { length: 10 },
+  (_, i): PaginaDeFormulario => ({
+    titulo: `Sección ${i + 1}`,
+    clave: `seccion-${i + 1}`,
+    campos: [{ key: `campo${i + 1}`, label: `Campo ${i + 1}`, control: 'text' }],
+  }),
+);
+
+/** Los diez controles de {@link PAGINAS_LARGAS}, uno por página. */
+function controlesLargos(): Record<string, FormControl<string>> {
+  const controles: Record<string, FormControl<string>> = {};
+  for (const pagina of PAGINAS_LARGAS) {
+    controles[pagina.campos[0].key] = new FormControl('', { nonNullable: true });
+  }
+  return controles;
+}
+
+/** El motor con más páginas de las que el indicador muestra con rótulos. */
+@Component({
+  imports: [PaginatedForm],
+  template: `
+    <app-paginated-form
+      [paginas]="paginas()"
+      [form]="form"
+      label="Crear cuenta"
+      submitLabel="Crear cuenta"
+      [compactSteps]="compactSteps()"
+    />
+  `,
+})
+class HostLargo {
+  readonly paginas = signal<readonly PaginaDeFormulario[]>(PAGINAS_LARGAS);
+  readonly compactSteps = signal(false);
+  readonly form = new FormGroup(controlesLargos());
+}
+
 describe('PaginatedForm', () => {
   let fixture: ComponentFixture<Host>;
   let host: Host;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ imports: [Host, HostConfigurable] });
+    TestBed.configureTestingModule({ imports: [Host, HostConfigurable, HostLargo] });
     fixture = TestBed.createComponent(Host);
     host = fixture.componentInstance;
     fixture.detectChanges();
@@ -231,6 +275,29 @@ describe('PaginatedForm', () => {
       fixture.detectChanges();
 
       expect(titulo()).toBe('Identidad');
+    });
+
+    /**
+     * Sin esta salida, un campo `custom` respaldado por un `FormGroup` anidado
+     * (el acordeón de gerencias del alta de aseguradora) no tiene forma de
+     * saber que el motor acaba de bloquear «Siguiente»: `markAsTouched` sobre
+     * el grupo no marca a los hijos.
+     */
+    it('emite `rechazada` con la página al bloquear «Siguiente»', () => {
+      botonContinuar().click();
+      fixture.detectChanges();
+
+      expect(host.rechazadas).toHaveLength(1);
+      expect(host.rechazadas[0].titulo).toBe('Identidad');
+    });
+
+    it('no emite `rechazada` cuando la página es válida', () => {
+      host.form.controls.documento.setValue('1234567');
+
+      botonContinuar().click();
+      fixture.detectChanges();
+
+      expect(host.rechazadas).toHaveLength(0);
     });
   });
 
@@ -420,6 +487,86 @@ describe('PaginatedForm', () => {
     });
   });
 
+  describe('el indicador con más páginas de las que entran', () => {
+    let fixtureL: ComponentFixture<HostLargo>;
+
+    beforeEach(() => {
+      fixtureL = TestBed.createComponent(HostLargo);
+      fixtureL.detectChanges();
+    });
+
+    function pasosL(): HTMLButtonElement[] {
+      return fixtureL.debugElement
+        .queryAll(By.css('[data-testid^="stepper-paso-"]'))
+        .map((el) => el.nativeElement as HTMLButtonElement);
+    }
+
+    function tituloL(): string {
+      return (
+        fixtureL.debugElement.query(By.css('.paginated-form__titulo')).nativeElement as HTMLElement
+      ).textContent!.trim();
+    }
+
+    function continuarL(): HTMLButtonElement {
+      return fixtureL.debugElement.query(By.css('[data-testid="paginated-form-continuar"]'))
+        .nativeElement as HTMLButtonElement;
+    }
+
+    it('sin `compactSteps`, diez páginas siguen siendo el contador de siempre', () => {
+      // Es lo que hoy ven las pantallas largas, y no cambia solo: el tope de
+      // cinco las sigue protegiendo mientras nadie pida lo contrario.
+      expect(fixtureL.debugElement.query(By.css('app-stepper'))).toBeNull();
+      expect(
+        (
+          fixtureL.debugElement.query(By.css('.paginated-form__contador'))
+            .nativeElement as HTMLElement
+        ).textContent!.trim(),
+      ).toBe('Paso 1 de 10');
+    });
+
+    it('con `compactSteps` el recorrido vuelve, y vuelve compacto', () => {
+      fixtureL.componentInstance.compactSteps.set(true);
+      fixtureL.detectChanges();
+
+      expect(fixtureL.debugElement.query(By.css('app-stepper .stepper--compact'))).not.toBeNull();
+      expect(pasosL()).toHaveLength(10);
+      expect(fixtureL.debugElement.query(By.css('.paginated-form__contador'))).toBeNull();
+    });
+
+    it('con cinco páginas o menos los rótulos se ven, se pida compacto o no', () => {
+      fixtureL.componentInstance.paginas.set(PAGINAS_LARGAS.slice(0, 4));
+
+      for (const compacto of [false, true]) {
+        fixtureL.componentInstance.compactSteps.set(compacto);
+        fixtureL.detectChanges();
+
+        expect(fixtureL.debugElement.query(By.css('.stepper--compact'))).toBeNull();
+        const rotulos = fixtureL.debugElement
+          .queryAll(By.css('.stepper__label'))
+          .map((el) => el.nativeElement as HTMLElement);
+        expect(rotulos).toHaveLength(4);
+        expect(rotulos.some((el) => el.classList.contains('sr-only'))).toBe(false);
+      }
+    });
+
+    it('compacto no relaja el candado: al paso no visitado no se va, al visitado sí', () => {
+      fixtureL.componentInstance.compactSteps.set(true);
+      fixtureL.detectChanges();
+
+      pasosL()[3].click();
+      fixtureL.detectChanges();
+      expect(tituloL()).toBe('Sección 1');
+
+      continuarL().click();
+      fixtureL.detectChanges();
+      expect(tituloL()).toBe('Sección 2');
+
+      pasosL()[0].click();
+      fixtureL.detectChanges();
+      expect(tituloL()).toBe('Sección 1');
+    });
+  });
+
   describe('los botones de avance', () => {
     let fixtureC: ComponentFixture<HostConfigurable>;
     let hostC: HostConfigurable;
@@ -534,6 +681,230 @@ describe('PaginatedForm', () => {
       expect(barra.querySelector('.progress__marker')).not.toBeNull();
       // Y sigue anunciando exactamente lo mismo que antes.
       expect(barra.getAttribute('aria-valuenow')).toBe('0');
+    });
+  });
+});
+
+/* ═══ `checkboxes`: varias respuestas sobre un solo control ═══════════════════
+   Es el control que sirve un campo de elección múltiple del generador de
+   formularios. Guarda un **array**, no un booleano: `checkbox` es «sí o no»
+   sobre una cosa y esto es «cuáles de éstas». */
+
+const PAGINA_DE_CASILLAS: readonly PaginaDeFormulario[] = [
+  {
+    titulo: 'Antecedentes',
+    campos: [
+      {
+        key: 'factores',
+        label: 'Factores de riesgo',
+        control: 'checkboxes',
+        options: [
+          { value: 'Tabaquismo', label: 'Tabaquismo' },
+          { value: 'Hipertensión', label: 'Hipertensión' },
+          { value: 'Diabetes', label: 'Diabetes' },
+        ],
+      },
+    ],
+  },
+];
+
+@Component({
+  imports: [PaginatedForm],
+  template: `
+    <app-paginated-form [paginas]="paginas" [form]="form" label="Antecedentes" />
+  `,
+})
+class HostDeCasillas {
+  readonly paginas = PAGINA_DE_CASILLAS;
+  // Vacío y no `''`: con una cadena el motor evaluaría `''.includes(opcion)` y
+  // marcaría opciones que nadie marcó.
+  readonly form = new FormGroup({
+    factores: new FormControl<readonly string[]>([], { nonNullable: true }),
+  });
+}
+
+describe('PaginatedForm · casillas de varias respuestas', () => {
+  let fixture: ComponentFixture<HostDeCasillas>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [HostDeCasillas] }).compileComponents();
+    fixture = TestBed.createComponent(HostDeCasillas);
+    fixture.detectChanges();
+  });
+
+  /** Las casillas del grupo, en el orden en que se dibujan. */
+  function casillas(): HTMLInputElement[] {
+    return Array.from(
+      fixture.nativeElement.querySelectorAll('app-checkbox-group input[type="checkbox"]'),
+    );
+  }
+
+  /** Pulsa una casilla como lo haría una persona. */
+  function pulsar(indice: number): void {
+    const input = casillas()[indice]!;
+    input.checked = !input.checked;
+    input.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+  }
+
+  function guardado(): readonly string[] {
+    return fixture.componentInstance.form.controls.factores.value;
+  }
+
+  it('dibuja una casilla por opción y ninguna marcada', () => {
+    expect(casillas()).toHaveLength(3);
+    expect(casillas().every((c) => !c.checked)).toBe(true);
+    expect(guardado()).toEqual([]);
+  });
+
+  it('marcar varias las conserva todas', () => {
+    // La regresión que esto ataja: al marcar la segunda, la primera se
+    // desmarcaba y el control quedaba vacío. Un campo de varias respuestas que
+    // sólo admite una no es un campo de varias respuestas.
+    pulsar(0);
+    expect(guardado()).toEqual(['Tabaquismo']);
+
+    pulsar(2);
+    expect(guardado()).toEqual(['Tabaquismo', 'Diabetes']);
+    expect(casillas()[0]!.checked).toBe(true);
+    expect(casillas()[2]!.checked).toBe(true);
+  });
+
+  it('guarda en el orden de la lista y no en el de los clics', () => {
+    // La respuesta se lee después en una ficha clínica: tiene que leerse en el
+    // mismo orden en que se ofreció, no en el que se fue marcando.
+    pulsar(2);
+    pulsar(0);
+    expect(guardado()).toEqual(['Tabaquismo', 'Diabetes']);
+  });
+
+  it('desmarcar quita sólo esa y deja las demás', () => {
+    pulsar(0);
+    pulsar(1);
+    pulsar(0);
+    expect(guardado()).toEqual(['Hipertensión']);
+    expect(casillas()[0]!.checked).toBe(false);
+    expect(casillas()[1]!.checked).toBe(true);
+  });
+
+  it('tolera que el control traiga algo que no sea un array', () => {
+    // `''` es lo que deja un `FormControl` recién creado sin valor inicial: el
+    // motor tiene que pintar «nada marcado», no reventar.
+    fixture.componentInstance.form.controls.factores.setValue('' as unknown as string[]);
+    fixture.detectChanges();
+
+    expect(casillas().every((c) => !c.checked)).toBe(true);
+
+    pulsar(1);
+    expect(guardado()).toEqual(['Hipertensión']);
+  });
+});
+
+/* ─── Sí / No en botones, y las dos cuadrículas ────────────────────────────
+   Las tres piezas que el propietario pidió para los formularios: que un sí/no
+   se conteste con dos botones —una casilla desmarcada no distingue «contestó
+   que no» de «no contestó»— y que la misma pregunta se pueda hacer sobre
+   varias filas. */
+
+const PAGINAS_DE_SI_NO: readonly PaginaDeFormulario[] = [
+  {
+    titulo: 'Antecedentes',
+    campos: [
+      { key: 'fuma', label: '¿Fumás?', control: 'yes-no', required: true },
+      {
+        key: 'frecuencia',
+        label: '¿Con qué frecuencia?',
+        control: 'grid-radio',
+        rows: [
+          { value: 'Tos', label: 'Tos' },
+          { value: 'Fiebre', label: 'Fiebre' },
+        ],
+        options: [
+          { value: 'Nunca', label: 'Nunca' },
+          { value: 'A veces', label: 'A veces' },
+        ],
+      },
+    ],
+  },
+];
+
+@Component({
+  imports: [PaginatedForm],
+  template: `
+    <app-paginated-form [paginas]="paginas" [form]="form" label="Antecedentes" />
+  `,
+})
+class HostDeSiNo {
+  readonly paginas = PAGINAS_DE_SI_NO;
+  readonly form = new FormGroup({
+    fuma: new FormControl<boolean | null>(null, { validators: [Validators.required] }),
+    frecuencia: new FormControl<Record<string, unknown>>({}),
+  });
+}
+
+describe('PaginatedForm · sí/no en botones y cuadrículas', () => {
+  let fixture: ComponentFixture<HostDeSiNo>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [HostDeSiNo] }).compileComponents();
+    fixture = TestBed.createComponent(HostDeSiNo);
+    fixture.detectChanges();
+  });
+
+  function botones(): HTMLButtonElement[] {
+    return Array.from(
+      fixture.nativeElement.querySelectorAll('app-segmented-control [role="radio"]'),
+    );
+  }
+
+  it('el sí/no se dibuja como dos botones y no como una casilla', () => {
+    const rotulos = botones().map((b) => b.textContent?.trim());
+    expect(rotulos).toEqual(['Sí', 'No']);
+    expect(fixture.nativeElement.querySelector('app-checkbox')).toBeNull();
+  });
+
+  it('sin responder, ninguno de los dos aparece apretado', () => {
+    // Es lo que separa «contestó que no» de «no contestó», y lo único que hace
+    // que un sí/no obligatorio pueda exigir respuesta: con una casilla,
+    // `false` pasa el `required` sin que nadie haya contestado.
+    expect(botones().every((b) => b.getAttribute('aria-checked') === 'false')).toBe(true);
+    expect(fixture.componentInstance.form.controls.fuma.value).toBeNull();
+    expect(fixture.componentInstance.form.controls.fuma.valid).toBe(false);
+  });
+
+  it('«No» guarda `false`, que es una respuesta y no la falta de una', () => {
+    botones()[1]!.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.form.controls.fuma.value).toBe(false);
+    expect(fixture.componentInstance.form.controls.fuma.valid).toBe(true);
+    expect(botones()[1]!.getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('«Sí» guarda `true` y marca el control como tocado', () => {
+    botones()[0]!.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.form.controls.fuma.value).toBe(true);
+    expect(fixture.componentInstance.form.controls.fuma.touched).toBe(true);
+  });
+
+  it('la cuadrícula sale como tabla, con las columnas de cabecera', () => {
+    const cabeceras = Array.from(
+      fixture.nativeElement.querySelectorAll('app-grid-group th[scope="col"]'),
+    ).map((th) => (th as HTMLElement).textContent?.trim());
+    expect(cabeceras).toEqual(['Nunca', 'A veces']);
+  });
+
+  it('contestar una fila escribe en el control de la pantalla', () => {
+    const celda: HTMLInputElement = fixture.nativeElement.querySelector(
+      '[data-testid="cuadricula-Tos-A veces"]',
+    );
+    celda.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.form.controls.frecuencia.value).toEqual({
+      Tos: 'A veces',
     });
   });
 });

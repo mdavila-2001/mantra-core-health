@@ -1,0 +1,14 @@
+.documento {
+  display: block;
+}
+
+.documento__titulo {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: 600;
+}
+
+.documento__form {
+  margin-block-start: var(--sp-4);
+}

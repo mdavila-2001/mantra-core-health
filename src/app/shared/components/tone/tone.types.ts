@@ -1,7 +1,7 @@
 /* ============================================================================
     Tonos compartidos por las piezas de etiquetado (Badge, Chip).
 
-    La receta la fija el spec REDSAT: **fondo claro + texto oscuro del mismo
+    La receta la fija el spec ALOVIDA: **fondo claro + texto oscuro del mismo
     tono**, nunca color sólido con texto blanco. Los VALORES viven en los tríos
     `--st-*` de src/styles.css; el mapeo tono → trío vive UNA sola vez, en
     `tone.css`, que ambos componentes importan.

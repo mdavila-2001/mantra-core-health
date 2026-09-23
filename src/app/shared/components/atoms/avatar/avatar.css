@@ -1,5 +1,5 @@
 /* ============================================================================
-    Avatar — traducción BEM del bloque `Avatars` del spec REDSAT
+    Avatar — traducción BEM del bloque `Avatars` del spec ALOVIDA
     (líneas 409–415, y 704–705 para el ajuste móvil).
 
     Divergencia deliberada con el spec: el diseñador fija `color: #fff` para
@@ -106,7 +106,7 @@
     background-color: var(--c-success-500);
 }
 
-/* neutral-300 y no el 200: el 200 (#A2A4A4) da 2,5:1 sobre blanco y no llega
+/* neutral-300 y no el 200: el 200 (var(--c-neutral-200)) da 2,5:1 sobre blanco y no llega
    al 3:1 que WCAG 1.4.11 pide para un gráfico informativo. */
 .avatar__status--offline {
     background-color: var(--c-neutral-300);

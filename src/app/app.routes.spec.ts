@@ -194,7 +194,7 @@ describe('rutas del armazón', () => {
      * (feedback de la analista, barrido del 18/08/2026).
      */
     it('las hijas de «Mi perfil» que son de quien atiende lo declaran y llevan el guard', () => {
-      const DE_QUIEN_ATIENDE = ['my-account/edit', 'my-account/preview', 'my-account/articles'];
+      const DE_QUIEN_ATIENDE = ['my-account/edit', 'my-account/articles'];
 
       for (const path of DE_QUIEN_ATIENDE) {
         const ruta = hijas.find((r) => r.path === path);
@@ -376,7 +376,7 @@ describe('rutas del armazón', () => {
  * Lo que esta prueba fija.
  *
  * La superficie pública del buscador declara `buscar` en `app.routes.ts` y el
- * archivo **generado** `redsat.routes.ts` declara otro `buscar` con los
+ * archivo **generado** `alovida.routes.ts` declara otro `buscar` con los
  * segmentos derivados del nombre de archivo de cada maqueta. Los dos conviven
  * porque el router prueba el primero y **retrocede** al siguiente cuando ningún
  * hijo coincide.
@@ -488,6 +488,20 @@ describe('rutas públicas del buscador', () => {
 });
 
 /**
+ * Vacía los guards en TODO el árbol (una ruta puede vivir como hija del shell y
+ * llevar el suyo propio), sólo donde había: una ruta `redirectTo` no admite
+ * `canActivate` ni vacío (NG04014). Lo comparten los bloques que prueban el
+ * matching y los redirects, no la sesión.
+ */
+function withoutGuards(tree: typeof routes): typeof routes {
+  return tree.map((route) => ({
+    ...route,
+    ...(route.canActivate === undefined ? {} : { canActivate: [] }),
+    ...(route.children === undefined ? {} : { children: withoutGuards(route.children) }),
+  }));
+}
+
+/**
  * El comprobante (FAR-I5) vive en `…/:orderId/receipt`, declarado DESPUÉS del
  * paramétrico `…/:orderId`: que resuelva depende del retroceso del router —
  * el mismo supuesto que el bloque del buscador fija arriba. Los guards se
@@ -498,21 +512,8 @@ describe('la ruta del comprobante de farmacia (FAR-I5)', () => {
   let router: Router;
   let location: Location;
 
-  /**
-   * Vacía los guards en TODO el árbol (la ruta vive como hija del shell y
-   * lleva el suyo propio), sólo donde había: una ruta `redirectTo` no admite
-   * `canActivate` ni vacío (NG04014).
-   */
-  function sinGuards(arbol: typeof routes): typeof routes {
-    return arbol.map((ruta) => ({
-      ...ruta,
-      ...(ruta.canActivate === undefined ? {} : { canActivate: [] }),
-      ...(ruta.children === undefined ? {} : { children: sinGuards(ruta.children) }),
-    }));
-  }
-
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideRouter(sinGuards(routes))] });
+    TestBed.configureTestingModule({ providers: [provideRouter(withoutGuards(routes))] });
     router = TestBed.inject(Router);
     location = TestBed.inject(Location);
   });
@@ -521,6 +522,42 @@ describe('la ruta del comprobante de farmacia (FAR-I5)', () => {
     const ok = await router.navigateByUrl('/my-account/pharmacy-orders/abc/receipt');
     expect(ok).not.toBe(false);
     expect(location.path()).toBe('/my-account/pharmacy-orders/abc/receipt');
+  });
+});
+
+/**
+ * Ajustes pasó a `/settings` (TAREA-29, por arrastre de TAREA-17).
+ *
+ * La dirección en castellano se alcanzaba por el ícono del encabezado desde el
+ * 28/08 y la de «Preferencias de avisos» estuvo en el menú: las dos están en
+ * historiales y favoritos, y las dos tienen que seguir abriendo la misma
+ * pantalla (AC-29-3). La heredada apunta directo a la vigente, sin encadenar
+ * dos redirecciones. Sin guards, por lo mismo que el bloque de arriba: acá se
+ * prueba el redirect, no la sesión.
+ */
+describe('la ruta de Ajustes (TAREA-17 · TAREA-29)', () => {
+  let router: Router;
+  let location: Location;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(withoutGuards(routes))] });
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+  });
+
+  it('`/settings` resuelve', async () => {
+    const ok = await router.navigateByUrl('/settings');
+    expect(ok).not.toBe(false);
+    expect(location.path()).toBe('/settings');
+  });
+
+  it.each([
+    ['/ajustes', '/settings'],
+    ['/my-account/notification-preferences', '/settings'],
+  ])('%s redirige a %s', async (oldUrl, newUrl) => {
+    await router.navigateByUrl(oldUrl);
+
+    expect(location.path()).toBe(newUrl);
   });
 });
 

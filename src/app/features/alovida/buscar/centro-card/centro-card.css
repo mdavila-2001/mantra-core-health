@@ -1,0 +1,257 @@
+/* ============================================================================
+    Tarjeta de un centro de salud — la pieza que hace que el directorio se
+    recorra mirando.
+
+    Estilos **encapsulados**, igual que `result-card` y por la misma razón:
+    `alovida.css` es una copia de la bóveda y se vuelve a copiar entera, así que
+    lo que nace de este lado tiene que vivir de este lado o desaparece en la
+    próxima recopia. Lo único que se toma prestado es `.app-badge`, para que la
+    insignia se vea igual acá que en el resto del buscador.
+    ========================================================================== */
+
+:host {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-lg);
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-sm);
+    transition:
+        box-shadow var(--dur-base) var(--ease-standard),
+        border-color var(--dur-base) var(--ease-standard),
+        transform var(--dur-base) var(--ease-standard);
+}
+
+:host(:hover) {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+/* El anillo va en el host y no en el enlace: el enlace se estira sobre toda la
+   tarjeta con el `::after` de más abajo, así que su propio anillo dibujaría un
+   rectángulo invisible de 0 px. */
+:host(:focus-within) {
+    border-color: var(--brand-secondary);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :host,
+    :host(:hover) {
+        transition: none;
+        transform: none;
+    }
+}
+
+/* ---- portada ------------------------------------------------------------ */
+
+.centro__portada {
+    position: relative;
+    display: block;
+    /* 16:9 fijo. Con alturas libres, una fila de tarjetas queda con las fotos
+       a distinta altura y la grilla se lee como un error de maquetado. */
+    aspect-ratio: 16 / 9;
+    background: var(--bg-inset);
+    /* Sin `overflow: hidden` **a propósito**: el logo se monta sobre el borde
+       inferior de la portada y un recorte acá se lo comía por la mitad. El
+       redondeo de las esquinas superiores lo hace igual el `overflow` del host,
+       que es donde está el radio de la tarjeta. */
+}
+
+/* Sin foto, un degradado del tema. Es un fondo, no un hueco: una franja gris
+   se lee como una imagen que no cargó. */
+.centro__portada--lisa {
+    background:
+        radial-gradient(120% 120% at 20% 0%, var(--c-aqua-100) 0%, transparent 60%),
+        linear-gradient(140deg, var(--c-petrol-100), var(--c-mint-200));
+}
+
+.centro__foto {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* El velo de abajo: sostiene el logo y despega la tarjeta de fotos claras sin
+   oscurecer la imagen entera. */
+.centro__portada::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    block-size: 45%;
+    background: linear-gradient(to top, rgba(10, 28, 39, 0.55), transparent);
+    pointer-events: none;
+}
+
+.centro__sellos {
+    position: absolute;
+    inset-block-start: var(--sp-2);
+    inset-inline-start: var(--sp-2);
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-1);
+}
+
+/* Sobre una foto cualquiera, una insignia del tema puede quedar sin contraste:
+   se le pone base opaca propia en vez de confiar en lo que haya detrás. */
+.centro__sellos .app-badge {
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.centro__logo {
+    position: absolute;
+    inset-block-end: calc(var(--sp-4) * -1);
+    inset-inline-start: var(--sp-4);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 52px;
+    block-size: 52px;
+    border-radius: var(--r-md);
+    border: 2px solid var(--bg-surface);
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-size: var(--fs-body);
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.centro__logo img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+}
+
+/* ---- cuerpo ------------------------------------------------------------- */
+
+.centro__cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    /* El primer bloque arranca debajo del logo montado. */
+    padding: calc(var(--sp-4) + var(--sp-3)) var(--sp-4) var(--sp-4);
+    flex: 1;
+}
+
+.centro__nombre {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-body-lg);
+    line-height: var(--lh-body-lg);
+    font-weight: 600;
+}
+
+.centro__nombre a {
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+/* El objetivo táctil es la tarjeta entera y no las tres palabras del nombre:
+   en una grilla en el teléfono, apuntarle al texto es la diferencia entre
+   entrar y volver a intentarlo. El `::after` queda DEBAJO del pie para que el
+   botón proyectado siga siendo pulsable. */
+.centro__nombre a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+}
+
+.centro__nombre a:focus-visible {
+    outline: none;
+}
+
+.centro__titular {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    /* Dos líneas parejas en todas: una que se desborda estira su fila entera
+       de la grilla y deja huecos en las vecinas. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.centro__donde {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-1);
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+.centro__icono {
+    flex: none;
+    inline-size: 15px;
+    block-size: 15px;
+    margin-block-start: 1px;
+}
+
+/* La estrella de la calificación va en el acento de la marca. Se elige por el
+   dato y no por una clase aparte: el ícono lo decide `ICONO_DE_ATRIBUTO`, y una
+   clase de color en la plantilla sería una segunda fuente de verdad. */
+.centro__atributo[data-clave='puntuacion'] .centro__icono {
+    color: var(--brand-accent);
+}
+
+/* ---- atributos ---------------------------------------------------------- */
+
+.centro__atributos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-1) var(--sp-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.centro__atributo {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-1);
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    font-weight: 500;
+}
+
+/* La calificación es lo que más se compara entre dos tarjetas: va con la tinta
+   del texto principal para que gane la mirada frente al resto de la fila. */
+.centro__atributo[data-clave='puntuacion'] {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* ---- pie ---------------------------------------------------------------- */
+
+.centro__pie {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    /* Empuja el pie al fondo: las tarjetas de una fila comparten alto y los
+       botones tienen que quedar alineados entre sí, no cada uno donde termine
+       su texto. */
+    margin-block-start: auto;
+    padding-block-start: var(--sp-2);
+}
+
+.centro__pie:empty {
+    display: none;
+}

@@ -3,6 +3,7 @@
      sobre una lectura que ocupa la pantalla entera, y esto es un bloque de la
      ficha. Un `403` acá no puede vaciar el expediente, así que cada mitad dice
      lo suyo en su tarjeta y la otra sigue en pie. -->
+@if (modo() !== 'odontologia') {
 <app-card variant="outlined" padding="lg" class="procedimientos">
   <h2 class="procedimientos__titulo">Cirugías</h2>
 
@@ -106,8 +107,10 @@
     }
   }
 </app-card>
+}
 
 <!-- ─── Odontología ─────────────────────────────────────────────────────── -->
+@if (modo() !== 'cirugia') {
 <app-card variant="outlined" padding="lg" class="procedimientos">
   <h2 class="procedimientos__titulo">Odontología</h2>
 
@@ -180,6 +183,18 @@
               @if (tratamiento.nota) {
                 <p class="procedimientos__nota">{{ tratamiento.nota }}</p>
               }
+              <div class="procedimientos__acciones">
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="odontologia-adjuntar-archivo"
+                  (clicked)="abrirAdjuntos(tratamiento.id)"
+                >
+                  Adjuntar archivo…
+                </button>
+              </div>
             </li>
           }
         </ol>
@@ -268,3 +283,16 @@
     }
   </div>
 </app-card>
+}
+
+<!-- El subidor se desplegaba DENTRO del renglón del tratamiento y la lista
+     crecía de golpe. Adjuntar pide datos: va en modal. -->
+@if (adjuntandoArchivoA(); as procedureId) {
+  <app-attachment-dialog
+    ownerType="PROCEDURE"
+    [ownerId]="procedureId"
+    [linkVia]="enlazarAdjuntoAlTratamiento"
+    heading="Adjuntar un archivo al tratamiento"
+    (closed)="cerrarAdjuntos()"
+  />
+}

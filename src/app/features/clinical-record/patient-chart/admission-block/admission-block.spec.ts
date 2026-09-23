@@ -161,4 +161,74 @@ describe('AdmissionBlock', () => {
     expect(api(fixture)['errorDelRegistro']()).toBeNull();
     http.verify();
   });
+
+  /* -- C-23: la hoja de internación --------------------------------------- */
+
+  /**
+   * Una estancia que empieza mañana no es una internación: es un plan. El
+   * calendario ya no la ofrece (`maxDate`), pero el campo admite teclado, así
+   * que la regla tiene que vivir también en el formulario.
+   */
+  it('una fecha de inicio futura no se puede dar de alta', async () => {
+    const { fixture } = await montar();
+
+    const manana = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    (api(fixture)['inicio'] as unknown as { set(v: Date): void }).set(manana);
+    fixture.detectChanges();
+
+    expect(api(fixture)['inicioEnElFuturo']()).toBe(true);
+    expect(api(fixture)['puedeRegistrar']()).toBe(false);
+  });
+
+  it('una fecha de inicio pasada sí: registrar tarde es legítimo', async () => {
+    const { fixture } = await montar();
+
+    const ayer = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    (api(fixture)['inicio'] as unknown as { set(v: Date): void }).set(ayer);
+    fixture.detectChanges();
+
+    expect(api(fixture)['inicioEnElFuturo']()).toBe(false);
+    expect(api(fixture)['puedeRegistrar']()).toBe(true);
+  });
+
+  /**
+   * Registrar tarde es legítimo; **ocultarlo** no. Si la estancia empezó el
+   * martes y el registro se escribió el jueves, la ficha lo dice.
+   */
+  it('declara el registro tardío cuando se escribió después de que empezó', async () => {
+    const { fixture } = await montar({
+      internaciones: [
+        {
+          id: 'ce-9',
+          abierta: true,
+          desde: new Date('2026-09-15T08:00:00.000Z'),
+          hasta: null,
+          registradaEl: new Date('2026-09-17T19:30:00.000Z'),
+        },
+      ],
+    });
+
+    const tardio = api(fixture)['registroTardio'] as unknown as (i: unknown) => boolean;
+    expect(tardio(fixture.componentInstance.internaciones()[0])).toBe(true);
+  });
+
+  it('no lo declara cuando se registró en el momento', async () => {
+    const enElMomento = new Date('2026-09-15T08:00:00.000Z');
+    const { fixture } = await montar({
+      internaciones: [
+        {
+          id: 'ce-10',
+          abierta: true,
+          desde: enElMomento,
+          // Los milisegundos entre armar la petición y escribirla no son un
+          // registro tardío.
+          registradaEl: new Date(enElMomento.getTime() + 900),
+          hasta: null,
+        },
+      ],
+    });
+
+    const tardio = api(fixture)['registroTardio'] as unknown as (i: unknown) => boolean;
+    expect(tardio(fixture.componentInstance.internaciones()[0])).toBe(false);
+  });
 });

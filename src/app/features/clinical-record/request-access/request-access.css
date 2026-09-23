@@ -1,0 +1,13 @@
+/* Solicitar vinculación — un formulario corto: aviso y motivo. */
+
+:host {
+  display: block;
+}
+
+.solicitar-acceso {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+  max-inline-size: 48rem;
+}
+

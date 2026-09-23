@@ -143,6 +143,29 @@ export interface CreateFieldDefinitionInput {
   readonly cardinalityMin?: number;
   readonly cardinalityMax?: number;
   readonly regex?: string;
+  /**
+   * Las respuestas ofrecidas, para un campo `code`.
+   *
+   * Texto libre y no un `valueSetId`: ver {@link ChartTemplateField.options}.
+   * **El backend real todavía no acepta esta clave** — ver
+   * `docs/pendientes-backend-formularios.md`.
+   */
+  readonly options?: readonly string[];
+  /** Si el campo de elección admite varias respuestas. */
+  readonly multiple?: boolean;
+  /** La ayuda bajo la pregunta. Ver {@link ChartTemplateField.description}. */
+  readonly description?: string;
+  /** Si ofrece «Otro» con texto libre. Ver {@link ChartTemplateField.allowOther}. */
+  readonly allowOther?: boolean;
+  /**
+   * Las **filas** de una cuadrícula. Ver {@link ChartTemplateField.rows}: con
+   * ellas, `options` pasa a ser las columnas.
+   */
+  readonly rows?: readonly string[];
+  /** Cuadrículas: si hay que responder todas las filas. */
+  readonly requireEachRow?: boolean;
+  /** Cuadrículas: si una columna sólo se puede usar en una fila. */
+  readonly oneResponsePerColumn?: boolean;
 }
 
 /** Cuerpo de `POST /forms/assignments` (UC-09-06). */
@@ -170,4 +193,54 @@ export interface ExtensionBudget {
   readonly maximumFields?: number;
   readonly used: number;
   readonly remaining?: number;
+}
+
+/**
+ * Cambios sobre la definición de un campo propio.
+ *
+ * Todo opcional: se manda sólo lo que cambió. La definición es global, así que
+ * esto afecta al campo en todos los formularios donde esté colgado.
+ */
+export interface UpdateFieldDefinitionInput {
+  readonly name?: string;
+  readonly dataType?: TechnicalDataType;
+  /**
+   * Las opciones, **enteras**.
+   *
+   * No hay edición parcial de una opción suelta, por lo mismo que en
+   * `surveys`: el orden importa y un parche por índice se rompe en cuanto
+   * alguien inserta una en el medio.
+   */
+  readonly options?: readonly string[];
+  /** Si el campo de elección admite varias respuestas. */
+  readonly multiple?: boolean;
+  /** La ayuda bajo la pregunta; `null` la quita. */
+  readonly description?: string | null;
+  /** Si ofrece «Otro» con texto libre. */
+  readonly allowOther?: boolean;
+  /**
+   * Cuántas respuestas hay que marcar como mínimo / máximo, en un campo de
+   * varias. `null` quita el tope. Ver {@link ChartTemplateField.cardinalityMin}.
+   */
+  readonly cardinalityMin?: number | null;
+  readonly cardinalityMax?: number | null;
+  /**
+   * Las filas de una cuadrícula, **enteras**, con la misma regla que
+   * `options`. Una lista vacía la deja de ser cuadrícula.
+   */
+  readonly rows?: readonly string[];
+  /** Cuadrículas: si hay que responder todas las filas. */
+  readonly requireEachRow?: boolean;
+  /** Cuadrículas: si una columna sólo se puede usar en una fila. */
+  readonly oneResponsePerColumn?: boolean;
+}
+
+/**
+ * Cambios sobre la asignación de un campo a un formulario.
+ *
+ * Lo obligatorio vive acá y no en la definición: el mismo campo puede ser
+ * obligatorio en un formulario y opcional en otro.
+ */
+export interface UpdateAssignmentInput {
+  readonly required?: boolean;
 }

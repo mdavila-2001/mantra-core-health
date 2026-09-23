@@ -118,7 +118,7 @@ pero **nadie puede iniciar sesión como ellas**.
 | --- | --- | --- |
 | Seed de arranque de la API | `BOOTSTRAP_ADMIN_EMAIL` / `_PASSWORD` | ninguno (no siembra) |
 | `yarn postman:bootstrap` | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | `admin@redesa.test` / `S3cret-passw0rd` |
-| `tools/redesa/exercise-front-flows.mjs` | `BOOTSTRAP_ADMIN_*` | los mismos |
+| `tools/alovida/exercise-front-flows.mjs` | `BOOTSTRAP_ADMIN_*` | los mismos |
 | `yarn recorrido:real` (Cypress) | `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` | los mismos |
 
 Los cuatro coinciden a propósito. Si cambiás la contraseña del admin, cambiala en

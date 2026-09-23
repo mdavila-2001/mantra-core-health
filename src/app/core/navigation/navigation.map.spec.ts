@@ -122,6 +122,7 @@ describe('APP_SECTIONS', () => {
       'administration/my-organization',
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
+      'administration/pharmacy-profile',
     ];
 
     for (const ruta of paraElMostrador) {
@@ -144,7 +145,7 @@ describe('APP_SECTIONS', () => {
   });
 
   it('la verificación de identidad conserva la ruta que publica la puerta del 403', () => {
-    const verificar = APP_SECTIONS.find((s) => s.label === 'Verificar identidad');
+    const verificar = APP_SECTIONS.find((s) => s.label === 'Mi identidad');
 
     // `errorToViewState` traduce `IDENTITY_VERIFICATION_REQUIRED` en una salida
     // hacia esta ruta. Renombrarla acá rompería esa puerta sin que nada más

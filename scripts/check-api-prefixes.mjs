@@ -27,10 +27,23 @@ import { join } from 'node:path';
 
 import { exists, read, REPO_ROOT } from './lib/scan.mjs';
 
-/** Los prefijos de un `proxy.conf*.json` de Angular. */
+/**
+ * Los prefijos de un `proxy.conf*.json` de Angular.
+ *
+ * La barra final se recorta **también acá**, y no sólo del lado de nginx: el
+ * proxy de desarrollo la usa cuando el prefijo a secas sería ambiguo frente a
+ * una ruta del router —`/public/` para no llevarse puesta `/publicaciones`—, y
+ * nginx ya la lleva siempre. Recortar de un solo lado hacía que precisar el
+ * prefijo en desarrollo se denunciara como una diferencia entre las tres
+ * declaraciones, que es justo lo contrario de lo que pasaba.
+ */
 function desdeProxyJson(archivo) {
   const contexto = JSON.parse(read(join(REPO_ROOT, archivo)));
-  return new Set(contexto.flatMap((entrada) => entrada.context ?? []));
+  return new Set(
+    contexto
+      .flatMap((entrada) => entrada.context ?? [])
+      .map((prefijo) => (prefijo.endsWith('/') ? prefijo.slice(0, -1) : prefijo)),
+  );
 }
 
 /**

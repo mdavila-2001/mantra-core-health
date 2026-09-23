@@ -1,7 +1,7 @@
 /* ============================================================================
     Auth layout — pantallas públicas. MOBILE-FIRST (§0.1): la base es el
     teléfono (tarjeta a todo el ancho, sin sombra ni radio) y los `min-width`
-    van sumando. Breakpoints REDSAT: tablet ≥ 780 px · escritorio ≥ 1024 px.
+    van sumando. Breakpoints ALOVIDA: tablet ≥ 780 px · escritorio ≥ 1024 px.
     ========================================================================== */
 
 :host {

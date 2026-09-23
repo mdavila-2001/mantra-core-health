@@ -16,35 +16,37 @@
         }
       </div>
 
-      <app-form-field
-        label="Permiso referenciado (authz)"
-        [required]="true"
-        [hint]="uuidHint"
-        [errorMessage]="
-          fila.controls.permissionId.touched && fila.controls.permissionId.invalid
-            ? uuidError
-            : ''
-        "
-      >
-        <app-input formControlName="permissionId" type="text" />
-      </app-form-field>
+      <div class="m29__item-campos">
+        <app-form-field
+          label="Permiso referenciado (authz)"
+          [required]="true"
+          [hint]="uuidHint"
+          [errorMessage]="
+            fila.controls.permissionId.touched && fila.controls.permissionId.invalid
+              ? uuidError
+              : ''
+          "
+        >
+          <app-input formControlName="permissionId" type="text" />
+        </app-form-field>
 
-      <app-form-field
-        label="Restricción declarativa (JSON)"
-        hint="Opcional: un objeto JSON. Vacía, no viaja."
-        [errorMessage]="
-          fila.controls.constraintJson.touched && fila.controls.constraintJson.invalid
-            ? 'Tiene que ser un objeto JSON válido, como {&quot;campo&quot;: &quot;valor&quot;}.'
-            : ''
-        "
-      >
-        <app-textarea
-          formControlName="constraintJson"
-          [rows]="2"
-          [autoResize]="true"
-          [maxLength]="maxConstraint"
-        />
-      </app-form-field>
+        <app-form-field
+          label="Restricción declarativa (JSON)"
+          hint="Opcional: un objeto JSON. Vacía, no viaja."
+          [errorMessage]="
+            fila.controls.constraintJson.touched && fila.controls.constraintJson.invalid
+              ? 'Tiene que ser un objeto JSON válido, como {&quot;campo&quot;: &quot;valor&quot;}.'
+              : ''
+          "
+        >
+          <app-textarea
+            formControlName="constraintJson"
+            [rows]="2"
+            [autoResize]="true"
+            [maxLength]="maxConstraint"
+          />
+        </app-form-field>
+      </div>
 
       <div class="m29__switches">
         <app-switch

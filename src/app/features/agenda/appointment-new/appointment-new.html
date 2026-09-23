@@ -1,0 +1,355 @@
+<app-page-header
+  title="Agendar una cita"
+  subtitle="Elegís el rato, no un turno publicado."
+>
+  <a app-button page-actions variant="ghost" [routerLink]="[rutaDeMiAgenda]">Volver a mi agenda</a>
+</app-page-header>
+
+@if (cargandoAgendas()) {
+  <p class="cita__cargando">Buscando tus agendas…</p>
+} @else if (agendas().length === 0) {
+  <!-- Sin agenda no hay dónde poner la cita, y decirlo así evita que alguien
+       complete el formulario para descubrirlo al guardar. -->
+  <!-- `tone`, no `variant`: es el nombre real del input de `app-alert`.
+       `variant` no existe en el componente y quedaba como atributo suelto sin
+       efecto — el aviso caía siempre en el tono `info` por omisión, que acá
+       coincidía por casualidad con lo que se quería mostrar. -->
+  <app-alert tone="info" data-testid="cita-sin-agenda">
+    Todavía no tenés una agenda publicada. Creala desde
+    <a [routerLink]="[rutaDeMiAgenda]">Mi agenda</a> y volvé.
+  </app-alert>
+} @else {
+  <form
+    class="cita"
+    [class.cita--alta]="modo() === 'nuevo'"
+    (submit)="$event.preventDefault(); guardar()"
+  >
+    <!-- Tres grupos, uno por decisión: con quién, cuándo y cómo. Son las
+         columnas del formulario a partir de 780 px: la regla de la casa pide
+         repartir los campos a lo ancho del área en vez de acotar el bloque a
+         una «medida de formulario» (composition-rules §5). Cada grupo apila
+         sus campos por dentro, que es lo que evita las casillas kilométricas.
+
+         Con el alta de un paciente nuevo abierta, «con quién» pasa a ocupar
+         las columnas enteras: sus once campos no entran en un tercio. -->
+    <div class="cita__grupo cita__grupo--quien">
+        <!-- La agenda sólo se pregunta si hay más de una. Elegirla ES elegir la
+           sede: son el mismo dato, y preguntar las dos por separado invita a que
+           no coincidan.
+
+           **No hay campo de profesional, y no falta.** La cita nace en la agenda
+           de quien tiene la sesión; el servidor impone lo mismo, así que forzar
+           otra responde 403. -->
+      @if (hayQueElegirAgenda()) {
+        <app-form-field
+          label="¿En qué consultorio?"
+          hint="Elegir la agenda es elegir la sede."
+          [required]="true"
+        >
+          <app-select
+            data-testid="cita-agenda"
+            [options]="opcionesDeAgenda()"
+            [value]="agendaElegida()"
+            (valueChange)="agendaElegida.set($event)"
+          />
+        </app-form-field>
+      }
+
+      <!-- «¿Con quién?» tiene dos formas: el de siempre, que está en la lista, y
+           el que acaba de llegar al mostrador y no está en el sistema. El bloque
+           del alta entra y sale del DOM en vez de esconderse con CSS: un campo
+           escondido igual se tabula, y once de ellos vacíos debajo del buscador
+           convertirían el alta de cita en un alta de persona. -->
+      @if (modo() === 'registrado') {
+        <app-form-field
+          label="¿Con quién?"
+          hint="Buscá por nombre, código o cédula."
+          [required]="true"
+        >
+          <app-reference-combobox
+            data-testid="cita-paciente"
+            [selected]="paciente()"
+            [options]="candidatos()"
+            [loading]="buscando()"
+            placeholder="Nombre, cédula o código del paciente"
+            emptyMessage="Ningún paciente coincide. Podés darlo de alta abajo."
+            (searched)="buscarPaciente($event)"
+            (selectionChange)="paciente.set($event)"
+          />
+        </app-form-field>
+
+        <p class="cita__sin-registrar">
+          ¿No aparece?
+          <button
+            app-button
+            type="button"
+            variant="ghost"
+            size="sm"
+            data-testid="cita-paciente-nuevo"
+            (clicked)="registrarPacienteNuevo()"
+          >
+            Es un paciente nuevo
+          </button>
+        </p>
+      } @else {
+        <fieldset class="cita__alta" data-testid="cita-alta-paciente">
+          <legend class="cita__alta-titulo">Paciente nuevo</legend>
+          <p class="cita__alta-nota">
+            Lo damos de alta con lo que sepas ahora. El resto de su ficha se completa después.
+          </p>
+
+          <div class="cita__alta-grilla">
+            <app-form-field label="Nombre" [required]="true">
+              <app-input data-testid="cita-alta-nombre" [(value)]="nuevoNombre" />
+            </app-form-field>
+            <app-form-field label="Segundo nombre" hint="Si no tiene, dejalo vacío.">
+              <app-input data-testid="cita-alta-segundo-nombre" [(value)]="nuevoSegundoNombre" />
+            </app-form-field>
+            <app-form-field label="Tercer nombre" hint="Si no tiene, dejalo vacío.">
+              <app-input data-testid="cita-alta-tercer-nombre" [(value)]="nuevoTercerNombre" />
+            </app-form-field>
+            <app-form-field label="Apellido paterno" [required]="true">
+              <app-input data-testid="cita-alta-apellido-paterno" [(value)]="nuevoApellidoPaterno" />
+            </app-form-field>
+            <app-form-field label="Apellido materno" hint="Si no lleva, dejalo vacío.">
+              <app-input data-testid="cita-alta-apellido-materno" [(value)]="nuevoApellidoMaterno" />
+            </app-form-field>
+          </div>
+
+          <div class="cita__alta-grilla">
+            <!-- La cédula y el departamento que la expidió van juntos: el número
+                 solo se repite entre departamentos, y es lo que el cliente pide
+                 para no duplicar personas. -->
+            <app-form-field label="Cédula de identidad" [required]="true">
+              <app-input
+                data-testid="cita-alta-ci"
+                inputMode="numeric"
+                placeholder="1234567"
+                [(value)]="nuevoDocumento"
+              />
+            </app-form-field>
+            <app-form-field label="Expedida en">
+              <app-select
+                data-testid="cita-alta-ci-departamento"
+                placeholder="Departamento"
+                [options]="opcionesDeDepartamento()"
+                [value]="nuevoDepartamentoDelDocumento()"
+                (valueChange)="nuevoDepartamentoDelDocumento.set($event)"
+              />
+            </app-form-field>
+            <!-- La edad no se pregunta: sale de la fecha. Preguntar las dos cosas
+                 es invitar a que no coincidan. -->
+            <app-form-field label="Fecha de nacimiento" [hint]="pieDeNacimiento()">
+              <app-date-picker
+                data-testid="cita-alta-nacimiento"
+                [maxDate]="hoy"
+                [value]="nuevoNacimiento()"
+                (valueChange)="nuevoNacimiento.set($event)"
+              />
+            </app-form-field>
+            <app-form-field label="Celular" [required]="true">
+              <app-input
+                data-testid="cita-alta-celular"
+                inputMode="tel"
+                placeholder="+591 7XXXXXXX"
+                [(value)]="nuevoCelular"
+              />
+            </app-form-field>
+          </div>
+
+          <!-- La lupa que pide el registro del cliente: son cientos de oficios y
+               un desplegable sin filtro no se recorre. -->
+          @if (catalogoDeOcupacionesCaido()) {
+            <p class="cita__alta-catalogo-caido">
+              No pudimos traer el catálogo de ocupaciones.
+              <button
+                app-button
+                type="button"
+                variant="ghost"
+                size="sm"
+                (clicked)="reintentarOcupaciones()"
+              >
+                Reintentar
+              </button>
+            </p>
+          } @else {
+            <app-form-field label="Ocupación" hint="Ayuda a ver los riesgos propios de cada oficio.">
+              <app-reference-combobox
+                data-testid="cita-alta-ocupacion"
+                placeholder="Buscá su profesión u oficio…"
+                emptyMessage="Ninguna ocupación coincide. Podés dejarlo vacío."
+                [options]="ocupacionesFiltradas()"
+                [selected]="ocupacionElegida()"
+                [minQueryLength]="0"
+                (searched)="busquedaDeOcupacion.set($event)"
+                (selectionChange)="elegirOcupacion($event)"
+              />
+            </app-form-field>
+          }
+
+          @if (ocupacionEsOtra()) {
+            <app-form-field label="¿Cuál?" hint="El oficio que no estaba en la lista.">
+              <app-input
+                data-testid="cita-alta-ocupacion-otra"
+                placeholder="Apicultor"
+                [(value)]="otraOcupacion"
+              />
+            </app-form-field>
+          }
+
+          <div class="cita__alta-grilla">
+            <app-form-field label="Tutor o persona autorizada" hint="Si no responde por sí mismo.">
+              <app-input data-testid="cita-alta-tutor" [(value)]="nuevoTutorNombre" />
+            </app-form-field>
+            <app-form-field label="Celular del tutor">
+              <app-input
+                data-testid="cita-alta-tutor-celular"
+                inputMode="tel"
+                placeholder="+591 7XXXXXXX"
+                [(value)]="nuevoTutorCelular"
+              />
+            </app-form-field>
+          </div>
+
+          <p class="cita__sin-registrar">
+            ¿Era uno que ya estaba?
+            <button
+              app-button
+              type="button"
+              variant="ghost"
+              size="sm"
+              data-testid="cita-paciente-buscar"
+              (clicked)="buscarRegistrado()"
+            >
+              Buscarlo en la lista
+            </button>
+          </p>
+        </fieldset>
+      }
+    </div>
+
+    <div class="cita__grupo cita__grupo--cuando">
+      <div class="cita__cuando">
+        <!-- El día va con el organismo del sistema y no con un `<input
+             type="date">`: el nativo se dibuja distinto en cada navegador, y el
+             del sistema ya resuelve el teclado, el foco y el formato de acá. -->
+        <app-form-field label="Día" [required]="true">
+          <app-date-picker
+            data-testid="cita-fecha"
+            [minDate]="hoy"
+            [value]="dia()"
+            (valueChange)="dia.set($event)"
+          />
+        </app-form-field>
+        <!-- La hora es un campo de texto, igual que en la tarjeta del día: el
+             producto no tiene todavía un selector de hora propio, y el nativo
+             traería el mismo problema que el de fecha. -->
+        <app-form-field label="Hora de inicio" hint="En 24 horas: 09:30" [required]="true">
+          <app-input data-testid="cita-hora" [(value)]="hora" placeholder="09:30" />
+        </app-form-field>
+    </div>
+
+      <!-- La duración es libre: la cirugía de tres horas y la consulta de
+           cuarenta y cinco conviven, y acotarla a la del turno publicado
+           convertiría esto en el formulario del paciente. El select ofrece los
+           atajos; el campo acepta cualquier número de minutos.
+
+           Los dos escriben el MISMO dato (`duracion`), y el hint de cada uno lo
+           dice en palabras: sin eso, elegir un atajo y después escribir un
+           número en el otro campo se lee como dos requisitos en vez de uno —y
+           el select, al no encontrar el número escrito entre sus atajos, vuelve
+           a mostrar el placeholder, que parece un campo obligatorio vacío. -->
+      <div class="cita__duracion">
+        <app-form-field
+          label="Duración"
+          hint="Un atajo. Para otro valor, escribilo en «Minutos exactos»."
+          [required]="true"
+        >
+          <app-select
+            data-testid="cita-duracion"
+            [options]="opcionesDeDuracion"
+            [value]="duracion()"
+            (valueChange)="duracion.set($event ?? '')"
+          />
+        </app-form-field>
+        <app-form-field
+          label="Minutos exactos"
+          hint="Reemplaza el atajo de arriba: para una cirugía o un control largo."
+        >
+          <!-- No `[(value)]="duracion"`: `app-input[type=number]` emite un
+               **número** (`target.valueAsNumber`), y `duracion` guarda texto
+               —lo mismo que compara `app-select` contra el `value` de cada
+               `<option>` con `===`—. Escribir un atajo acá (30, 60…) dejaba a
+               «Duración» mostrando el placeholder «Seleccionar opción» en vez
+               del atajo que en realidad quedó elegido, porque `30 === '30'`
+               es `false`. Se fuerza a texto en la salida para que las dos
+               mitades del mismo dato nunca dejen de coincidir. -->
+          <app-input
+            type="number"
+            data-testid="cita-duracion-libre"
+            [value]="duracion()"
+            (valueChange)="actualizarDuracionLibre($event)"
+          />
+        </app-form-field>
+      </div>
+    </div>
+
+    <div class="cita__grupo cita__grupo--como">
+      <fieldset class="cita__modalidad">
+        <legend class="cita__modalidad-titulo">¿Cómo lo atendés?</legend>
+        <div class="cita__modalidad-opciones">
+          @for (opcion of modalidades; track opcion.valor) {
+            <label class="cita__modalidad-opcion">
+              <input
+                type="radio"
+                name="modalidad"
+                [value]="opcion.valor"
+                [checked]="modalidad() === opcion.valor"
+                (change)="modalidad.set(opcion.valor)"
+              />
+              <span>{{ opcion.nombre }}</span>
+            </label>
+          }
+        </div>
+      </fieldset>
+
+      <app-form-field label="Motivo" hint="Lo ve el paciente en su aviso.">
+        <app-input
+          data-testid="cita-motivo"
+          [(value)]="motivo"
+          placeholder="Control de presión"
+        />
+      </app-form-field>
+    </div>
+
+    @if (queVaAPasar(); as aviso) {
+      <p class="cita__aviso" data-testid="cita-que-pasa">{{ aviso }}</p>
+    }
+
+    <!-- El 422 del servidor, tal cual. La regla madre cruza todas las sedes y
+         su mensaje ya dice qué, cuándo y dónde: reescribirlo acá sólo podría
+         empeorarlo. -->
+    @if (error(); as fallo) {
+      <!-- Mismo defecto que arriba, acá con más consecuencia: con `variant`
+           en vez de `tone` este aviso caía en el `info` por omisión —azul,
+           `role="status"`, `aria-live="polite"`— en vez del `error` que pide
+           AC-14-7: rojo, ícono de error, `role="alert"`, `aria-live="assertive"`.
+           El 422 con qué/cuándo/dónde se leía como una nota neutra, no como
+           el rechazo que es. -->
+      <app-alert tone="error" data-testid="cita-error">{{ fallo }}</app-alert>
+    }
+
+    <div class="cita__acciones">
+      <a app-button variant="ghost" [routerLink]="[rutaDeMiAgenda]">Cancelar</a>
+      <button
+        app-button
+        variant="primary"
+        type="submit"
+        data-testid="cita-guardar"
+        [disabled]="!puedeGuardar()"
+      >
+        {{ guardando() ? 'Agendando…' : 'Agendar la cita' }}
+      </button>
+    </div>
+  </form>
+}

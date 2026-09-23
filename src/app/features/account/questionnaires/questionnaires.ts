@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { SurveysClient } from '../../../core/data-access/surveys/surveys.client';
 import type {
@@ -16,10 +17,28 @@ import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
 import { Card } from '../../../shared/components/molecules/card/card';
+import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { MIS_TURNOS_ROUTE } from '../appointments/appointments.routes';
+import { MedicalAspects } from './medical-aspects/medical-aspects';
 import { responderCuestionarioRoute } from './questionnaires.routes';
+
+/* ---- FT-22 · las dos pestañas -------------------------------------------- */
+
+/** El parámetro que dice qué pestaña se está mirando. */
+const PARAM_DE_SECCION = 'seccion';
+
+/**
+ * Las pestañas, en el orden en que se dibujan.
+ *
+ * Aspectos médicos primero: es lo que la persona puede completar cuando quiera,
+ * mientras que las encuestas aparecen sólo cuando alguien se las manda. Entrar a
+ * la pestaña de las encuestas y encontrarla vacía se lee como «esta pantalla no
+ * sirve».
+ */
+const SECCIONES = ['aspectos', 'encuestas'] as const;
 
 /** Cómo se pinta cada estado del cuestionario. */
 const PRESENTACION: Readonly<
@@ -70,9 +89,12 @@ interface CuestionarioVisible {
     Badge,
     Card,
     DatePipe,
+    MedicalAspects,
     PageHeader,
     RouterLink,
     Skeleton,
+    Tab,
+    Tabs,
     ViewStateHost,
   ],
   templateUrl: './questionnaires.html',
@@ -82,8 +104,36 @@ interface CuestionarioVisible {
 export class Questionnaires {
   private readonly surveys = inject(SurveysClient);
   private readonly navigation = inject(NavigationService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+
+  /* ---- FT-22 · qué pestaña se está mirando ------------------------------- */
+
+  private readonly params = toSignal(this.route.queryParamMap, { initialValue: null });
+
+  /**
+   * La pestaña abierta, como índice.
+   *
+   * En la URL y por nombre, igual que en la historia clínica: el enlace apunta a
+   * lo que se estaba mirando y «atrás» deshace el cambio de pestaña.
+   */
+  protected readonly seccion = computed(() => {
+    const nombre = this.params()?.get(PARAM_DE_SECCION) ?? '';
+    const indice = (SECCIONES as readonly string[]).indexOf(nombre);
+    return indice < 0 ? 0 : indice;
+  });
+
+  protected elegirSeccion(indice: number): void {
+    const nombre = SECCIONES[indice] ?? SECCIONES[0];
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { [PARAM_DE_SECCION]: indice === 0 ? null : nombre },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
 
   /** A dónde manda el estado vacío: a los turnos, que es de donde salen. */
   protected readonly rutaDeTurnos = MIS_TURNOS_ROUTE;

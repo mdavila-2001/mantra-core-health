@@ -1,8 +1,9 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 
 import { SessionStore } from '@core/auth/session.store';
+import { CommunityClient } from '@core/data-access/community/community.client';
 import type { PublicPostSummary } from '@core/data-access/public-directory/public-directory.types';
 import { PostPreferencesMenu } from '@shared/components/molecules/post-preferences-menu/post-preferences-menu';
 import { PublicPostComments } from '../public-post-comments/public-post-comments';
@@ -51,6 +52,25 @@ export class PublicPostCard {
    */
   readonly autorEnlazado = input(false);
 
+  /**
+   * La vitrina de quien mira, cuando la tiene.
+   *
+   * Es lo que habilita **escribir** desde la tarjeta: recomendar y comentar
+   * exigen `actorProfileId` en el contrato, que no se deduce de la sesión. Sin
+   * ella la fila de acciones se ve igual y cada acción manda a entrar (o a
+   * crear la vitrina) con retorno: esconderla dejaría a quien lee sin saber
+   * que puede participar.
+   */
+  readonly actorProfileId = input<string | null>(null);
+
+  /**
+   * Si se dibuja la fila de acciones (Recomendar · Comentar · Compartir).
+   *
+   * Encendida en el feed de la red social; la ficha de un profesional y la
+   * vista suelta todavía no la piden y quedan como estaban.
+   */
+  readonly conAcciones = input(false);
+
   /* ---- menú de preferencias (AC-01-15 a AC-01-18) ------------------------ */
 
   /**
@@ -67,6 +87,86 @@ export class PublicPostCard {
   readonly pedidoDeContacto = output<string>();
 
   private readonly sesion = inject(SessionStore);
+  private readonly community = inject(CommunityClient);
+  private readonly router = inject(Router);
+
+  private readonly menu = viewChild(PostPreferencesMenu);
+
+  /* ---- la fila de acciones del feed ------------------------------------- */
+
+  /** Si quien mira ya recomendó esta publicación en esta visita. */
+  protected readonly recomendada = signal(false);
+  private readonly recomendando = signal(false);
+  /** Lo que la recomendación propia sumó al recuento del servidor. */
+  private readonly deltaReacciones = signal(0);
+  /** Comentarios escritos desde esta tarjeta, hasta la próxima carga. */
+  private readonly deltaComentarios = signal(0);
+
+  protected readonly totalReacciones = computed(
+    () => this.post().reactionCount + this.deltaReacciones(),
+  );
+  protected readonly totalComentarios = computed(
+    () => this.post().commentCount + this.deltaComentarios(),
+  );
+
+  /**
+   * «Recomendar» — la reacción `LIKE`, optimista.
+   *
+   * El servidor hace upsert sobre `(actor, objeto)` y volver a mandar el mismo
+   * tipo la retira, así que el mismo botón pone y saca. Si falla, el contador
+   * vuelve a donde estaba: un número que miente es peor que un gesto lento.
+   */
+  protected recomendar(): void {
+    const actor = this.actorProfileId();
+    if (actor === null) {
+      this.pedirCuenta();
+      return;
+    }
+    if (this.recomendando()) return;
+
+    const antes = this.recomendada();
+    this.recomendando.set(true);
+    this.recomendada.set(!antes);
+    this.deltaReacciones.update((d) => d + (antes ? -1 : 1));
+
+    this.community
+      .react({ actorProfileId: actor, reactableType: 'POST', reactableRefId: this.post().id, reactionType: 'LIKE' })
+      .subscribe({
+        next: () => this.recomendando.set(false),
+        error: () => {
+          this.recomendada.set(antes);
+          this.deltaReacciones.update((d) => d + (antes ? 1 : -1));
+          this.recomendando.set(false);
+        },
+      });
+  }
+
+  /** «Comentar» abre el hilo, que es donde está el redactor. */
+  protected comentar(): void {
+    this.comentariosAbiertos.set(true);
+  }
+
+  /** El hilo avisa que se publicó un comentario: el contador acompaña. */
+  protected alComentar(): void {
+    this.deltaComentarios.update((d) => d + 1);
+  }
+
+  /** «Compartir» hace lo mismo que la entrada del menú: una sola lógica. */
+  protected compartir(): void {
+    this.menu()?.compartir();
+  }
+
+  /**
+   * Sin sesión, a entrar con retorno; con sesión y sin vitrina, a crearla.
+   * Es lo que AC-01-17 pide para toda acción que exige cuenta.
+   */
+  private pedirCuenta(): void {
+    if (this.sesion.isAuthenticated()) {
+      void this.router.navigate(['/my-account/profile/edit']);
+      return;
+    }
+    void this.router.navigate(['/auth'], { queryParams: { returnUrl: this.router.url } });
+  }
 
   /** Si hay sesión: decide si el menú actúa o manda a entrar (AC-01-17). */
   protected readonly haySesion = this.sesion.isAuthenticated;

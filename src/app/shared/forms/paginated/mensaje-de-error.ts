@@ -62,6 +62,32 @@ export function mensajeDeError(
   if ('pattern' in errores) {
     return 'Revisá el formato.';
   }
+  // Los topes de un campo de varias respuestas: ver `validadoresDeSeleccion`.
+  // «Exactamente» va primero porque es el caso en que los otros dos coinciden.
+  if ('exactSelections' in errores) {
+    const { required } = errores['exactSelections'] as { required: number };
+    return `Marcá exactamente ${required} ${required === 1 ? 'opción' : 'opciones'}.`;
+  }
+  if ('minSelections' in errores) {
+    const { min } = errores['minSelections'] as { min: number };
+    return `Marcá al menos ${min} ${min === 1 ? 'opción' : 'opciones'}.`;
+  }
+  if ('maxSelections' in errores) {
+    const { max } = errores['maxSelections'] as { max: number };
+    return `Marcá como máximo ${max} ${max === 1 ? 'opción' : 'opciones'}.`;
+  }
+
+  // Las dos restricciones de una cuadrícula: ver `validadorDeCuadricula`.
+  if ('gridColumnRepeated' in errores) {
+    const { column } = errores['gridColumnRepeated'] as { column: string };
+    return `«${column}» ya está elegida en otra fila: sólo se puede una vez por columna.`;
+  }
+  if ('gridRowMissing' in errores) {
+    const { missing } = errores['gridRowMissing'] as { missing: number };
+    return missing === 1
+      ? 'Falta responder una fila.'
+      : `Faltan responder ${missing} filas.`;
+  }
 
   // Un validador propio sin mensaje declarado. No se calla: un campo en rojo sin
   // explicación deja a la persona probando a ciegas.

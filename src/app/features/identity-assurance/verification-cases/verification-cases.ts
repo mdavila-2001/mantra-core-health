@@ -1,15 +1,20 @@
 import { DatePipe } from '@angular/common';
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
   inject,
+  input,
   signal,
   viewChild,
   type TemplateRef,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { blobToDataUrl } from '../../../core/data-access/files/blob-to-data-url';
+import { FileDownloader } from '../../../core/data-access/files/file-downloader';
+import { FilesClient } from '../../../core/data-access/files/files.client';
 import { IdentityClient } from '../../../core/data-access/identity/identity.client';
 import type { VerificationCase } from '../../../core/data-access/identity/identity.types';
 import {
@@ -21,7 +26,10 @@ import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
+import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Link } from '../../../shared/components/atoms/link/link';
+import { StoredFilePreview } from '../../../shared/components/molecules/stored-file-preview/stored-file-preview';
+import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
@@ -32,11 +40,52 @@ import {
   toCaseStatusPresentation,
 } from '../../identity-verification/case-status';
 
+/**
+ * Etiqueta legible por código de tipo de solicitud (FT-32-R03). Espeja el
+ * catálogo que expone `GET /identity/me/verification-types`: un código sin
+ * entrada acá (uno nuevo, o `UNKNOWN`) se muestra tal cual en vez de romper.
+ */
+const TYPE_LABELS: Readonly<Record<string, string>> = {
+  PRACTITIONER_IDENTITY: 'Identidad profesional',
+  PRACTITIONER_LICENSE: 'Matrícula profesional',
+  PATIENT_IDENTITY: 'Identidad (paciente)',
+  // **El mismo tipo, con los dos códigos que circulan.** Acá decía sólo
+  // `TENANT_VERIFICATION`, pero el catálogo que publica
+  // `GET /identity/verification-types` lo llama `TENANT` — y como un código sin
+  // entrada se muestra tal cual, la tabla mostraba «TENANT» crudo al lado de
+  // «Identidad profesional» y «Matrícula profesional» (2026-09-10).
+  //
+  // Se aceptan los dos porque **no se pudo comprobar cuál emite el backend
+  // real**: se trabajó contra el simulador. El día que se confirme, sobra uno y
+  // esta entrada queda en una línea. Mismo patrón que `ALIAS_DEL_PAQUETE` en
+  // `admin/medical-laboratory`.
+  TENANT: 'Organización',
+  TENANT_VERIFICATION: 'Organización',
+};
+
+function typeLabel(type: string): string {
+  return TYPE_LABELS[type] ?? type;
+}
+
+/**
+ * Estados que todavía no tienen un veredicto que mostrar (FT-32-R06/R07).
+ *
+ * El detalle resolutivo no se abre en ninguno de estos: no hay nada resuelto
+ * que enseñar, y abrir una pantalla vacía se lee como que el trámite falló.
+ * En su lugar se abre un aviso que dice en qué punto está.
+ */
+const SIN_VEREDICTO: ReadonlySet<StatusSealVariant> = new Set(['pending', 'in-review']);
+
 /** Fila de la tabla: presentación ya resuelta, no el DTO del backend. */
 interface CaseRow {
   readonly id: string;
+  readonly sealVariant: StatusSealVariant;
   readonly statusVariant: BadgeVariant;
   readonly statusLabel: string;
+  readonly typeLabel: string;
+  readonly evidenceFileId: string | null;
+  /** FT-32-R06/R07: `true` mientras no haya veredicto que abrir. */
+  readonly sinVeredicto: boolean;
   readonly openedAt: Date | null;
   readonly completedAt: Date | null;
 }
@@ -59,8 +108,12 @@ function toCaseRow(verificationCase: VerificationCase): CaseRow {
   const status = toCaseStatusPresentation(verificationCase.status);
   return {
     id: verificationCase.id,
+    sealVariant: status.variant,
     statusVariant: BADGE_BY_SEAL_VARIANT[status.variant],
     statusLabel: status.label,
+    typeLabel: typeLabel(verificationCase.type),
+    evidenceFileId: verificationCase.evidenceFileId ?? null,
+    sinVeredicto: SIN_VEREDICTO.has(status.variant),
     openedAt: verificationCase.openedAt ?? null,
     completedAt: verificationCase.completedAt ?? null,
   };
@@ -83,13 +136,36 @@ type CaseCell = TemplateRef<{ $implicit: CaseRow }>;
  */
 @Component({
   selector: 'app-verification-cases',
-  imports: [Badge, DataTable, DatePipe, Link, PageHeader, RouterLink, ViewStateHost],
+  imports: [
+    AppButton,
+    Badge,
+    ContentDialog,
+    DataTable,
+    DatePipe,
+    Link,
+    PageHeader,
+    RouterLink,
+    StoredFilePreview,
+    ViewStateHost,
+  ],
   templateUrl: './verification-cases.html',
   styleUrl: './verification-cases.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VerificationCases {
+  /**
+   * `true` cuando esta pantalla vive **dentro** del centro de verificación,
+   * como una de sus pestañas.
+   *
+   * Lo único que cambia es el membrete: adentro lo pone el contenedor, y dos
+   * títulos apilados serían dos pantallas dibujadas una encima de la otra. La
+   * ruta propia sigue existiendo y ahí el membrete se dibuja como siempre.
+   */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
   private readonly identity = inject(IdentityClient);
+  private readonly archivos = inject(FilesClient);
+  private readonly descargas = inject(FileDownloader);
   private readonly navigation = inject(NavigationService);
   // `toCaseRow` resuelve el estado con `toCaseStatusPresentation`, que lee el
   // catálogo de terminología: inyectarlo acá es lo que lo llena.
@@ -115,19 +191,104 @@ export class VerificationCases {
   });
 
   private readonly idCell = viewChild<CaseCell>('idCell');
+  private readonly typeCell = viewChild<CaseCell>('typeCell');
   private readonly statusCell = viewChild<CaseCell>('statusCell');
+  private readonly evidenceCell = viewChild<CaseCell>('evidenceCell');
   private readonly openedCell = viewChild<CaseCell>('openedCell');
   private readonly completedCell = viewChild<CaseCell>('completedCell');
 
   /** `key` es el código estable de la columna; la etiqueta es presentación. */
   protected readonly columns = computed<readonly ColumnDef<CaseRow>[]>(() => [
     { key: 'id', header: 'Identificador', priority: 1, cell: this.idCell() },
+    { key: 'type', header: 'Tipo', priority: 2, cell: this.typeCell() },
     { key: 'status', header: 'Estado', priority: 1, cell: this.statusCell() },
     { key: 'openedAt', header: 'Apertura', priority: 2, cell: this.openedCell() },
     { key: 'completedAt', header: 'Finalización', priority: 2, cell: this.completedCell() },
+    { key: 'evidence', header: 'Evidencia', priority: 3, cell: this.evidenceCell() },
   ]);
 
   protected readonly byId = (row: CaseRow): string => row.id;
+
+  /** El caso cuyo aviso «todavía no hay veredicto» está abierto (R06/R07). */
+  protected readonly avisoDe = signal<CaseRow | null>(null);
+
+  /** El caso cuya evidencia se está trayendo, para no ofrecerla dos veces. */
+  protected readonly descargando = signal<string | null>(null);
+
+  /** Lo que falló al traer la evidencia; se muestra bajo la tabla. */
+  protected readonly errorDeDescarga = signal<string | null>(null);
+
+  /** El caso cuya vista previa está desplegada, si alguno (5.2). */
+  protected readonly previsualizando = signal<string | null>(null);
+
+  protected abrirAviso(caso: CaseRow): void {
+    this.avisoDe.set(caso);
+  }
+
+  protected cerrarAviso(): void {
+    this.avisoDe.set(null);
+  }
+
+  /**
+   * Trae el archivo de evidencia y lo ofrece para guardar (FT-32-R02).
+   *
+   * Va por el `GET` autenticado y no por una URL del navegador: la CSP del
+   * servidor deja `connect-src` en `'self'`, así que el contenido viaja por ahí
+   * y se entrega como `data:` URL. El backend ya exige ser quien lo subió o
+   * tener rol revisor: no hace falta comprobarlo acá.
+   *
+   * ## Por qué `storedFileContent` y no `contentDataUrl` (5.2)
+   *
+   * Por el **nombre con el que se guarda**. Hasta ahora se ofrecía como
+   * `evidencia-<idDelCaso>`, sin extensión: el sistema operativo lo recibía
+   * como un tipo desconocido y quien lo bajaba tenía que adivinar con qué
+   * abrirlo. El nombre real ya viajaba en `Content-Disposition` de esa misma
+   * respuesta; sólo hacía falta leerlo. Si no viene —`original_name` es
+   * nullable y el backend simulado no emite la cabecera— se conserva el nombre
+   * de antes: es reserva, no invención.
+   */
+  protected descargarEvidencia(caso: CaseRow): void {
+    const fileId = caso.evidenceFileId;
+    if (fileId === null || this.descargando() !== null) {
+      return;
+    }
+    this.descargando.set(caso.id);
+    this.errorDeDescarga.set(null);
+    this.archivos.storedFileContent(fileId).subscribe({
+      next: (contenido) => {
+        blobToDataUrl(contenido.blob).subscribe({
+          next: (dataUrl) => {
+            this.descargas.trigger(
+              dataUrl,
+              contenido.originalName ?? `evidencia-${caso.id}`,
+            );
+            this.descargando.set(null);
+          },
+          error: () => this.fallaDeDescarga(),
+        });
+      },
+      error: () => this.fallaDeDescarga(),
+    });
+  }
+
+  /** Un solo sitio para el fallo: el motivo no se distingue, a propósito. */
+  private fallaDeDescarga(): void {
+    this.descargando.set(null);
+    this.errorDeDescarga.set(
+      'No pudimos traer la evidencia de ese caso. Probá de nuevo en un momento.',
+    );
+  }
+
+  /**
+   * Abre o cierra la vista previa de la evidencia de una fila (5.2).
+   *
+   * Desplegable por fila y no diálogo: quien revisa sus solicitudes quiere ver
+   * qué mandó sin perder de vista el estado de las demás. Una sola abierta a la
+   * vez — dos PDF rasterizando en paralelo es trabajo que nadie pidió.
+   */
+  protected alternarVistaPrevia(caso: CaseRow): void {
+    this.previsualizando.update((actual) => (actual === caso.id ? null : caso.id));
+  }
 
   constructor() {
     this.cargar();

@@ -1,0 +1,126 @@
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+Using Vitest configuration file: /private/tmp/mch-upload-push-baseline/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                              | Names                                                         |  Raw size
+spec-app-features-shell-layout-shell-layout.js                   | spec-app-features-shell-layout-shell-layout                   | 398.12 kB |
+spec-app-features-identity-verification-identity-verification.js | spec-app-features-identity-verification-identity-verification | 249.49 kB |
+styles.css                                                       | styles                                                        | 161.21 kB |
+chunk-7KOM2OK3.js                                                | -                                                             | 103.54 kB |
+chunk-HZXEPMDQ.js                                                | -                                                             |   5.27 kB |
+init-testbed.js                                                  | init-testbed                                                  |   1.21 kB |
+vitest-mock-patch.js                                             | vitest-mock-patch                                             | 974 bytes |
+setup-test-setup.js                                              | setup-test-setup                                              | 250 bytes |
+
+                                                                 | Initial total                                                 | 920.06 kB
+
+Application bundle generation complete. [18.081 seconds] - 2026-09-10T01:58:12.003Z
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of MyProfile [plugin angular-compiler]
+
+    src/app/features/account/my-profile/my-profile.ts:126:4:
+      126 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: PractitionerProfileView is not used within the template of PractitionerProfileView [plugin angular-compiler]
+
+    src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.ts:97:4:
+      97 │     PractitionerProfileView,
+         ╵     ~~~~~~~~~~~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:72:4:
+      72 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:96:30:
+      96 │   imports: [Alert, AppButton, Card, Chip, RouterLink, Textarea],
+         ╵                               ~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:96:42:
+      96 │   imports: [Alert, AppButton, Card, Chip, RouterLink, Textarea],
+         ╵                                           ~~~~~~~~~~
+
+
+
+ RUN  v4.1.10 /private/tmp/mch-upload-push-baseline
+
+ ❯ |mantra-core-health| src/app/features/identity-verification/identity-verification.spec.ts (20 tests | 1 failed) 146ms
+     × encadena la apertura del caso con el identificador de la subida 9ms
+ ❯ |mantra-core-health| src/app/features/shell-layout/shell-layout.spec.ts (36 tests | 1 failed) 389ms
+     × los nombres de ícono del registro y los del nav no se separaron 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |mantra-core-health| src/app/features/identity-verification/identity-verification.spec.ts > IdentityVerification > encadena la apertura del caso con el identificador de la subida
+AssertionError: expected { id: 'c-1', status: 'PENDING', …(1) } to deeply equal { id: 'c-1', status: 'PENDING' }
+
+- Expected
++ Received
+
+  {
+    "id": "c-1",
+    "status": "PENDING",
++   "type": "PATIENT_IDENTITY",
+  }
+
+ ❯ src/app/features/identity-verification/identity-verification.spec.ts:168:76
+    166|     responderHistorial();
+    167|
+    168|     expect(interno<() => { id: string; status: string } | null>('caso'…
+       |                                                                            ^
+    169|       id: 'c-1',
+    170|       status: 'PENDING',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |mantra-core-health| src/app/features/shell-layout/shell-layout.spec.ts > ShellLayout > los nombres de ícono del registro y los del nav no se separaron
+AssertionError: expected [ 'home', 'patients', …(52) ] to deeply equal [ 'home', 'patients', …(53) ]
+
+- Expected
++ Received
+
+@@ -47,11 +47,10 @@
+    "history",
+    "teach",
+    "arrow-left",
+    "arrow-right",
+    "remove",
+-   "edit",
+    "monitor",
+    "sun",
+    "moon",
+    "camera",
+  ]
+
+ ❯ src/app/features/shell-layout/shell-layout.spec.ts:240:33
+    238|    */
+    239|   it('los nombres de ícono del registro y los del nav no se separaron'…
+    240|     expect([...NAV_ICON_NAMES]).toEqual([...NAV_ICON_NAMES_DEL_NAV]);
+       |                                 ^
+    241|   });
+    242|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 54 passed (56)
+   Start at  21:58:12
+   Duration  1.18s (transform 468ms, setup 190ms, import 587ms, tests 535ms, environment 664ms)

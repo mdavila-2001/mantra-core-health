@@ -96,17 +96,54 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // Buscar a quién o a dónde ir. Ya venía agrupado a mano en el armazón: era
     // el primer bloque del producto, y este archivo lo generaliza en vez de
     // dejarlo como caso especial.
-    paths: ['directory', 'laboratory-directory', 'clinics-directory', 'pharmacies-directory'],
+    //
+    // `directories` (FT-18) va primero: es la portada del bloque, y el orden
+    // de dibujo lo decide `navigation.map.ts`, no este array — acá sólo se
+    // declara que las cinco rutas son del mismo bloque.
+    //
+    // **Desde el 08/09/2026 este bloque ya no se dibuja como desplegable**, y
+    // el reparto sigue igual de necesario. Los cuatro directorios salieron del
+    // menú (`fueraDelMenuPara: [ANY_ROLE]` en su fila del registro) para que se
+    // entre por la portada, así que en la barra el bloque queda con una sola
+    // sección y el armazón la dibuja suelta. Pero la lista de las cinco no era
+    // sólo para agrupar renglones: es lo que lee `DirectoriesOverview` para
+    // saber cuáles son los directorios que tiene que ofrecer. Vaciar el bloque
+    // «porque ya no hay desplegable» dejaría esa pantalla sin nodos, que es
+    // justo la que ahora hace todo el trabajo.
+    //
+    // `nearby-places` (FT-19) NO entra acá aunque sea "a dónde ir": esta
+    // lista la lee tal cual `DirectoriesOverview` para dibujar los nodos de
+    // «los cuatro directorios» (ver el comentario de esa pantalla), y
+    // `nearby-places` no es un directorio —sale de tu receta y tu ubicación,
+    // no de un catálogo—. Metida acá rompía esa pantalla: mostraba 5 nodos
+    // en vez de 4 (`directories-overview.spec.ts`). Tiene su propio bloque,
+    // más abajo.
+    paths: [
+      'directories',
+      'directory',
+      'laboratory-directory',
+      'clinics-directory',
+      'pharmacies-directory',
+    ],
+  },
+  {
+    label: 'Lugares cercanos',
+    group: 'General',
+    icon: 'pin',
+    // Un solo destino: el armazón lo dibuja suelto (ver la nota de arriba,
+    // «un bloque de uno no es un desplegable»). Va en su propio bloque y no
+    // en «Directorios» para no ensuciar la lista que lee `DirectoriesOverview`.
+    paths: ['nearby-places'],
   },
 
-  /* -- Atención ----------------------------------------------------------- */
-  {
-    label: 'Consultorio',
-    group: 'Atención',
-    icon: 'stethoscope',
-    // A quién atiendo y cuándo: la agenda y la consulta en curso.
-    paths: ['consultation', 'schedule'],
-  },
+  /* -- Atención -----------------------------------------------------------
+     «Consultorio» ya no existe (pedido del propietario, 04/09/2026). Agrupaba
+     `consultation` y `schedule`; la primera salió del menú y la segunda es
+     **Consultas médicas**, así que el subgrupo quedaba con un solo hijo: un
+     escalón que había que abrir para encontrar una única cosa.
+
+     Ahora «Consultas médicas» cuelga directo de Atención. Un subgrupo se
+     justifica cuando ordena varias secciones, no cuando envuelve una. */
   {
     label: 'Historia clínica',
     group: 'Atención',
@@ -135,8 +172,10 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     icon: 'clipboard',
     // Las herramientas de quien atiende que no son un paciente: lo que se
     // consulta —el vocabulario y el catálogo de servicios de la práctica—, lo
-    // que se diseña y lo que se manda a responder.
-    paths: ['glossary', 'form-builder', 'my-services', 'questionnaires'],
+    // que se diseña, lo que se manda a responder y lo que se cotiza sobre ese
+    // mismo catálogo (FT-24, junto a «Mis servicios» por ser la misma tabla
+    // vista desde el paso siguiente).
+    paths: ['glossary', 'form-builder', 'my-services', 'my-quotations', 'questionnaires'],
   },
 
   /* -- Administración ----------------------------------------------------- */
@@ -153,14 +192,23 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     icon: 'building',
     // El padrón de organizaciones y las que son de uno. Van juntas porque son
     // la misma entidad vista desde arriba y desde adentro.
-    paths: ['administration/organizations', 'administration/my-organization', 'my-organizations'],
+    paths: [
+      'administration/organizations',
+      'administration/my-organization',
+      'administration/my-practice',
+    ],
   },
   {
     label: 'Seguros',
     group: 'Administración',
     icon: 'umbrella',
-    // Quién paga y quién intermedia.
-    paths: ['administration/insurance', 'administration/brokers'],
+    // Quién paga, quién intermedia, qué se le presentó y qué dice el agregado.
+    paths: [
+      'administration/insurance',
+      'administration/brokers',
+      'administration/insurance-claims',
+      'administration/insurance-analytics',
+    ],
   },
   {
     label: 'Identidad y accesos',
@@ -208,11 +256,29 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     ],
   },
   {
+    label: 'Plataforma',
+    group: 'Administración',
+    icon: 'monitor',
+    // El portal administrativo de la plataforma misma: qué datos guarda y por
+    // qué, cómo la usan, cómo se prueba y si está lista para producción.
+    paths: [
+      'administration/data-catalog',
+      'administration/web-analytics',
+      'administration/qa-lab',
+      'administration/operations',
+    ],
+  },
+  {
     label: 'Farmacia',
     group: 'Administración',
     icon: 'bag',
-    // El mostrador: lo que se despacha y lo que se promociona.
-    paths: ['administration/pharmacy-orders', 'administration/pharmacy-campaigns'],
+    // El mostrador: lo que se despacha, lo que se promociona y la empresa que
+    // está detrás.
+    paths: [
+      'administration/pharmacy-orders',
+      'administration/pharmacy-campaigns',
+      'administration/pharmacy-profile',
+    ],
   },
 
   /* -- Facturación -------------------------------------------------------- */
@@ -221,6 +287,8 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     group: 'Facturación',
     icon: 'billing',
     // Lo que se cobra y cómo se asienta.
+    // «Activos y pasivos» salió de acá el 2026-09-19: dejó de ser sección y
+    // pasó a ser un bloque dentro de Contabilidad (ver `navigation.map.ts`).
     paths: ['billing', 'administration/accounting'],
   },
 
@@ -230,14 +298,19 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     group: 'Mi cuenta',
     icon: 'patients',
     // Quién soy para la plataforma, y cómo lo demuestro.
-    paths: ['my-account', 'my-account/identity/verify', 'my-account/identity/cases'],
+    paths: ['my-account', 'my-account/identity', 'my-account/dependents'],
   },
   {
     label: 'Mis gestiones',
     group: 'Mi cuenta',
     icon: 'calendar',
     // Lo que tengo en curso: un turno, un pedido, mis puntos.
-    paths: ['my-account/appointments', 'my-account/pharmacy-orders', 'my-account/loyalty'],
+    paths: [
+      'my-account/appointments',
+      'my-account/pharmacy-orders',
+      'my-account/loyalty',
+      'my-account/promotions',
+    ],
   },
   {
     label: 'Mi salud',
@@ -250,6 +323,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'my-account/medical-record',
       'my-account/diagnostic-results',
       'my-account/diagnostic-orders',
+      'my-account/cotizaciones',
       'my-account/questionnaires',
     ],
   },
@@ -262,7 +336,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // por la barra—: el reparto cubre el registro entero, y una sección que
     // mañana vuelva al menú tiene que aparecer en el bloque que le corresponde
     // y no suelta al final.
-    paths: ['notification-center', 'ajustes'],
+    paths: ['notification-center', 'settings'],
   },
 ];
 
@@ -295,3 +369,42 @@ export const NAV_GROUP_ICONS: Record<NavGroup, NavIconName> = {
   // Una persona: mis propios datos, no los que administro.
   'Mi cuenta': 'patients',
 };
+
+/**
+ * Los dominios que **no** se dibujan como contenedor: sus destinos van sueltos.
+ *
+ * Un dominio aplanado sigue existiendo —el registro reparte sus secciones igual
+ * y el breadcrumb lo sigue nombrando—; lo único que pierde es el desplegable
+ * que lo envolvía en la barra. Y con él pierden el suyo sus bloques: aplanar a
+ * medias —sacar el dominio pero dejar «Mis gestiones» plegado— deja el mismo
+ * problema una pulgada más abajo.
+ *
+ * Por qué estos cuatro y no todos. «General» y «Mi cuenta» son los dominios de
+ * quien **usa** la plataforma para lo suyo: el paciente entraba a «Mi cuenta»,
+ * después a «Mis gestiones» y recién ahí veía «Mis citas» — tres clics para el
+ * destino más frecuente del producto, y dos de ellos sobre rótulos que no
+ * llevan a ninguna pantalla. Aplanados, su menú entero son catorce renglones a
+ * un clic, que entran en una barra sin desplazarla.
+ *
+ * «Atención» y «Facturación» se suman el 13/09/2026, y por el mismo motivo
+ * mirado desde la otra silla: son **los dos únicos dominios de trabajo que ve
+ * quien ejerce**, y eran lo único que su barra le hacía abrir. Abrir un
+ * desplegable para llegar a «Archivo clínico» o a «Consultas médicas» —las
+ * pantallas donde pasa el día— es el costo que la barra le cobraba a cada
+ * paciente que atiende. Aplanados, el médico ve nueve renglones de atención y
+ * los de facturación seguidos, todos a un clic, y no le queda ni un `<details>`
+ * en la barra.
+ *
+ * «Administración» sigue plegada: tiene veintidós secciones, aplanarla
+ * cambiaría un problema por otro, y no la ve quien ejerce.
+ *
+ * Pedido del propietario del producto: 12/09/2026 los dos primeros, 13/09/2026
+ * los dos de trabajo —mirando la barra del médico, que es la condición que este
+ * comentario dejaba puesta—.
+ */
+export const GRUPOS_APLANADOS: ReadonlySet<NavGroup> = new Set<NavGroup>([
+  'General',
+  'Atención',
+  'Facturación',
+  'Mi cuenta',
+]);

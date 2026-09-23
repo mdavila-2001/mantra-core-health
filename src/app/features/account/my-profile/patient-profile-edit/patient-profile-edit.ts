@@ -1,4 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  booleanAttribute,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  model,
+  output,
+  signal,
+} from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -19,13 +30,24 @@ import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
+import { BackLink } from '../../../../shared/components/atoms/back-link/back-link';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input } from '../../../../shared/components/atoms/input/input';
+import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
+import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Card } from '../../../../shared/components/molecules/card/card';
+import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
+import {
+  UbicacionPicker,
+  type Coordenadas,
+  type IdsDePrueba,
+} from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
+import { PESTANA, PESTANAS_DEL_PERFIL } from '../pestanas-del-perfil';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import {
   PhoneInput,
@@ -113,16 +135,23 @@ function mismoDia(una: Date, otra: Date): boolean {
   selector: 'app-patient-profile-edit',
   imports: [
     ReferenceCombobox,
+    UbicacionPicker,
     AppButton,
+    BackLink,
     Card,
     DatePicker,
     FormActions,
     FormField,
     Input,
+    NavIcon,
+    NgTemplateOutlet,
     PageHeader,
     PhoneInput,
     ReactiveFormsModule,
     Select,
+    Tab,
+    Tabs,
+    Tooltip,
     TreeSelect,
     ViewStateHost,
   ],
@@ -139,10 +168,53 @@ export class PatientProfileEdit {
   private readonly router = inject(Router);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+  /** El mismo destino que al cancelar: se vuelve al perfil del que se vino. */
+  protected readonly rutaDeMiPerfil = MI_PERFIL;
+
+  /* ---- FT-11 · el mismo editor, dentro del perfil ------------------------- */
+
+  /**
+   * El editor vive **dentro** de «Mi perfil» en vez de en su propia pantalla.
+   *
+   * ## Por qué existe este interruptor
+   *
+   * El pedido del cliente es que el perfil entre en sólo lectura y que «Editar»
+   * habilite los campos ahí mismo, sin cambiar de pantalla. Eso podría haberse
+   * resuelto copiando el formulario dentro del perfil, y sería el mismo
+   * formulario en dos lugares: dos validaciones que se separan en el primer
+   * retoque que sólo se haga en uno.
+   *
+   * Así que el formulario sigue siendo **uno solo** y lo que cambia es su marco.
+   * Embebido no dibuja su propio encabezado de página —ya hay uno arriba— y no
+   * navega al terminar: avisa a quien lo contiene, que vuelve a sólo lectura.
+   *
+   * La ruta `/my-account/profile/edit` sigue existiendo y funcionando: es un
+   * enlace que puede estar en un correo o en un favorito, y romperlo para
+   * estrenar el modo embebido sería cambiar un problema por otro.
+   */
+  readonly embebido = input(false, { transform: booleanAttribute });
+
+  /**
+   * El editor terminó: se guardó o se canceló.
+   *
+   * Sólo tiene sentido embebido; en su propia pantalla el componente navega.
+   */
+  readonly cerrado = output<void>();
+
+  /**
+   * Las pestañas del formulario y cuál está abierta.
+   *
+   * Son las de la ficha de lectura, en el mismo orden (`PESTANAS_DEL_PERFIL`).
+   * Es un `model` y no una señal propia para que «Mi perfil» la comparta:
+   * el lápiz abre el formulario en la pestaña que se estaba mirando, y al
+   * guardar o cancelar la ficha vuelve a esa misma.
+   */
+  readonly pestana = model<number>(PESTANA.personales);
+  protected readonly pestanas = PESTANAS_DEL_PERFIL;
 
   protected readonly perfil = signal<ViewState<OwnPatientProfile>>(loading());
 
-  private readonly datos = computed(() => {
+  protected readonly datos = computed(() => {
     const estado = this.perfil();
     return estado.status === 'ready' ? estado.data : null;
   });
@@ -151,6 +223,17 @@ export class PatientProfileEdit {
 
   protected readonly nombre = signal('');
   protected readonly segundoNombre = signal('');
+  protected readonly tercerNombre = signal('');
+  /**
+   * Los nombres que se agregaron después del tercero.
+   *
+   * Mismo criterio que el alta: hay gente con cuatro y cinco nombres, y una
+   * casilla fija por cada uno sería un formulario largo para todos por lo que
+   * necesitan pocos. Existen **sólo en la pantalla**; al guardar, éstos y el
+   * segundo y el tercero vuelven a una sola cadena, que es lo único que la base
+   * tiene para los nombres que no son el primero — ver {@link nombresAdicionales}.
+   */
+  protected readonly nombresExtra = signal<readonly string[]>([]);
   protected readonly apellidoPaterno = signal('');
   protected readonly apellidoMaterno = signal('');
   protected readonly fechaNacimiento = signal<Date | null>(null);
@@ -189,6 +272,57 @@ export class PatientProfileEdit {
   protected readonly correo = signal('');
   protected readonly domicilio = signal('');
   protected readonly direccionTrabajo = signal('');
+
+  /**
+   * El punto en el mapa de cada dirección — lo que el alta ya preguntaba y el
+   * perfil no dejaba tocar.
+   *
+   * Es el patrón de una app de pedidos, y a propósito: se pide la ubicación al
+   * navegador o se marca el pin a mano sobre el mapa, y se confirma mirándolo.
+   * El mismo bloque que usa el registro (`app-ubicacion-picker`), no una copia:
+   * la dirección se escribe igual en los dos lados y ninguno adivina la calle a
+   * partir del punto —eso necesita un geocodificador que la política de
+   * seguridad del servidor no permite—.
+   *
+   * `undefined` es «no lo toqué» y `null` es «lo quité»: son dos cosas
+   * distintas al armar el cuerpo del PATCH, y confundirlas borraría la
+   * ubicación de quien sólo vino a cambiar el teléfono.
+   */
+  protected readonly gpsDomicilio = signal<Coordenadas | null | undefined>(undefined);
+  protected readonly gpsTrabajo = signal<Coordenadas | null | undefined>(undefined);
+
+  /** El punto guardado que el selector muestra al abrir. */
+  protected readonly gpsDomicilioGuardado = signal<Coordenadas | null>(null);
+  protected readonly gpsTrabajoGuardado = signal<Coordenadas | null>(null);
+
+  /**
+   * Los identificadores de prueba de cada mapa.
+   *
+   * Se pasan explícitos, como en el alta: el componente no los deriva de un
+   * prefijo porque los que ya existen no son uniformes, y renombrarlos rompería
+   * recorridos que hoy funcionan.
+   */
+  protected readonly idsGpsDomicilio: IdsDePrueba = {
+    mapa: 'perfil-domicilio-mapa',
+    confirmada: 'perfil-domicilio-confirmada',
+    avisoGeocodificacion: 'perfil-domicilio-aviso-geo',
+    quitar: 'perfil-domicilio-quitar-gps',
+    sinConfirmar: 'perfil-domicilio-sin-confirmar',
+    confirmar: 'perfil-domicilio-confirmar',
+    usarUbicacion: 'perfil-domicilio-usar-ubicacion',
+    marcarEnMapa: 'perfil-domicilio-marcar',
+  };
+
+  protected readonly idsGpsTrabajo: IdsDePrueba = {
+    mapa: 'perfil-trabajo-mapa',
+    confirmada: 'perfil-trabajo-confirmada',
+    avisoGeocodificacion: 'perfil-trabajo-aviso-geo',
+    quitar: 'perfil-trabajo-quitar-gps',
+    sinConfirmar: 'perfil-trabajo-sin-confirmar',
+    confirmar: 'perfil-trabajo-confirmar',
+    usarUbicacion: 'perfil-trabajo-usar-ubicacion',
+    marcarEnMapa: 'perfil-trabajo-marcar',
+  };
 
   /**
    * El teléfono va en un control reactivo y no en una señal como el resto.
@@ -302,8 +436,21 @@ export class PatientProfileEdit {
    */
   protected readonly telefonoMalEscrito = signal(false);
 
+  /**
+   * El sexo pasó a obligatorio (antes «Género (opcional)»): es un dato
+   * clínico —dosis, valores de referencia, tamizajes—, no una cortesía.
+   * Un valor heredado fuera de la lista vigente (`Intersexual`, `Prefiero no
+   * decirlo`) también cuenta como vacío: hay que elegir una de las dos
+   * opciones actuales para poder guardar.
+   */
+  protected readonly sexoVacio = computed(() => this.sexoAlNacer() === null);
+
   protected readonly puedeGuardar = computed(
-    () => !this.nombreVacio() && !this.apellidoVacio() && !this.telefonoMalEscrito(),
+    () =>
+      !this.nombreVacio() &&
+      !this.apellidoVacio() &&
+      !this.telefonoMalEscrito() &&
+      !this.sexoVacio(),
   );
 
   /* -- Constantes de la plantilla ------------------------------------------ */
@@ -354,7 +501,7 @@ export class PatientProfileEdit {
    */
   private sembrarFormulario(perfil: OwnPatientProfile): void {
     this.nombre.set(perfil.name ?? '');
-    this.segundoNombre.set(perfil.middleName ?? '');
+    this.repartirNombresAdicionales(perfil.middleName ?? '');
     this.apellidoPaterno.set(perfil.lastName ?? '');
     this.apellidoMaterno.set(perfil.motherLastName ?? '');
     this.fechaNacimiento.set(perfil.birthDate ?? null);
@@ -366,6 +513,12 @@ export class PatientProfileEdit {
     this.correo.set(perfil.email ?? '');
     this.domicilio.set(perfil.homeAddress?.lines ?? '');
     this.direccionTrabajo.set(perfil.workAddress?.lines ?? '');
+    this.gpsDomicilioGuardado.set(puntoDe(perfil.homeAddress));
+    this.gpsTrabajoGuardado.set(puntoDe(perfil.workAddress));
+    // Se reinician las intenciones: lo que la persona tocó en una visita
+    // anterior no puede seguir contando como cambio pendiente al releer.
+    this.gpsDomicilio.set(undefined);
+    this.gpsTrabajo.set(undefined);
 
     // Sin `emitEvent`: sembrar no es teclear, y el control ya queda validado.
     // El espejo se actualiza a mano, que es lo que ese evento haría. Se siembra
@@ -475,6 +628,12 @@ export class PatientProfileEdit {
         this.sembrarFormulario(perfil);
         this.perfil.set(ready(perfil));
         this.toasts.success('Tus datos quedaron actualizados.', AMBITO);
+        // FT-11-R05 · embebido, guardar devuelve el perfil a sólo lectura: es
+        // la señal de que terminó. En su propia pantalla se queda, que es lo
+        // que hacía y lo que espera quien llegó por la ruta directa.
+        if (this.embebido()) {
+          this.cerrado.emit();
+        }
       },
       error: () => {
         this.guardando.set(false);
@@ -483,7 +642,19 @@ export class PatientProfileEdit {
     });
   }
 
+  /**
+   * FT-11-R06 · Cancelar **restaura**: nada de lo tipeado se manda.
+   *
+   * Embebido no navega —no hay a dónde ir, el perfil está debajo— y el
+   * formulario se destruye con sus signals, así que la próxima vez que se
+   * abra vuelve a sembrarse desde el servidor. Eso es lo que hace que cancelar
+   * restaure de verdad y no sólo esconda lo escrito.
+   */
   protected cancelar(): void {
+    if (this.embebido()) {
+      this.cerrado.emit();
+      return;
+    }
     void this.router.navigate([MI_PERFIL]);
   }
 
@@ -502,6 +673,90 @@ export class PatientProfileEdit {
    * otro, no quitar. Mientras siga así, dejarlos en blanco no manda nada en vez
    * de provocar un `400` que la persona leería como un fallo del producto.
    */
+  /**
+   * Qué pestaña tiene un campo que impide guardar, cuando no es la abierta.
+   *
+   * Con el formulario repartido en pestañas, «Guardar» apagado por un nombre
+   * vacío en «Datos personales» mientras se mira «Contacto» es un botón que
+   * parece roto. La nota dice adónde ir. Es `null` cuando lo que falta está a
+   * la vista: ahí el campo ya lo dice con su propio error.
+   */
+  protected readonly pendienteEnOtraPestana = computed<string | null>(() => {
+    const abierta = this.pestana();
+    if (
+      abierta !== PESTANA.personales &&
+      (this.nombreVacio() || this.apellidoVacio() || this.sexoVacio())
+    ) {
+      return `Falta completar «${PESTANAS_DEL_PERFIL[PESTANA.personales]}».`;
+    }
+    if (abierta !== PESTANA.contacto && this.telefonoMalEscrito()) {
+      return `Revisá el teléfono en «${PESTANAS_DEL_PERFIL[PESTANA.contacto]}».`;
+    }
+    return null;
+  });
+
+  /* -- Los nombres que no son el primero ----------------------------------
+     Se guardan en UNA columna, separados por espacio (así los escribe el alta).
+     Acá se reparten en casillas para poder corregir uno sin reescribir todos, y
+     se vuelven a unir al guardar. */
+
+  /**
+   * Reparte en casillas lo que hay guardado como un solo texto.
+   *
+   * Es la inversa exacta de {@link nombresAdicionales}: la primera palabra al
+   * segundo nombre, la siguiente al tercero, y las que sobren a una casilla
+   * cada una. Sin esto, alguien con cuatro nombres abría el editor y veía los
+   * tres apretados dentro de «Segundo nombre», que es lo que pasaba hasta hoy.
+   *
+   * @param guardado - El valor de `middleName` tal como vino del backend.
+   */
+  private repartirNombresAdicionales(guardado: string): void {
+    const partes = guardado.split(/\s+/).filter((parte) => parte !== '');
+    this.segundoNombre.set(partes[0] ?? '');
+    this.tercerNombre.set(partes[1] ?? '');
+    this.nombresExtra.set(partes.slice(2));
+  }
+
+  /**
+   * Las casillas de nombre en una sola cadena, como las guarda la base.
+   *
+   * Mismo criterio que el alta: separadas por espacio y sin las vacías, así
+   * quitar una casilla del medio no deja un espacio doble.
+   */
+  private nombresAdicionales(): string {
+    return [this.segundoNombre(), this.tercerNombre(), ...this.nombresExtra()]
+      .map((nombre) => nombre.trim())
+      .filter((nombre) => nombre !== '')
+      .join(' ');
+  }
+
+  /** Suma una casilla vacía de nombre. */
+  protected agregarNombre(): void {
+    this.nombresExtra.update((actuales) => [...actuales, '']);
+  }
+
+  /**
+   * Quita una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   */
+  protected quitarNombre(indice: number): void {
+    this.nombresExtra.update((actuales) => actuales.filter((_, i) => i !== indice));
+  }
+
+  /**
+   * Escribe en una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   * @param valor - Lo que se escribió.
+   */
+  protected escribirNombreExtra(indice: number, valor: string | number | null): void {
+    const texto = valor === null ? '' : String(valor);
+    this.nombresExtra.update((actuales) =>
+      actuales.map((nombre, i) => (i === indice ? texto : nombre)),
+    );
+  }
+
   private cambiosContra(original: OwnPatientProfile): OwnPatientProfileChanges {
     const cambios: CambiosEnCurso = {};
 
@@ -509,9 +764,13 @@ export class PatientProfileEdit {
     if (nombre !== undefined) {
       cambios.name = nombre;
     }
-    const segundoNombre = textoCambiado(this.segundoNombre(), original.middleName);
-    if (segundoNombre !== undefined) {
-      cambios.middleName = segundoNombre;
+    // Las casillas de nombre vuelven a ser una sola cadena antes de compararse:
+    // la base tiene una columna, no una por nombre. Quitar la última casilla es
+    // un cambio como cualquier otro, y por eso se compara el resultado y no las
+    // casillas una por una.
+    const nombresAdicionales = textoCambiado(this.nombresAdicionales(), original.middleName);
+    if (nombresAdicionales !== undefined) {
+      cambios.middleName = nombresAdicionales;
     }
     const apellidoPaterno = textoCambiado(this.apellidoPaterno(), original.lastName);
     if (apellidoPaterno !== undefined) {
@@ -564,6 +823,12 @@ export class PatientProfileEdit {
     if (trabajo !== undefined) {
       cambios.workAddressLines = trabajo;
     }
+
+    // El punto de cada dirección, con la misma regla de tres estados que el
+    // texto: sin tocar no viaja, quitado viaja como `null` en los dos extremos,
+    // y movido viaja como par. Nunca media coordenada.
+    Object.assign(cambios, coordenadasCambiadas('home', this.gpsDomicilio()));
+    Object.assign(cambios, coordenadasCambiadas('work', this.gpsTrabajo()));
 
     // La ocupación **sí se puede borrar**: es el único concepto de esta pantalla
     // cuyo validador admite la cadena vacía, así que volver a «Sin especificar»
@@ -630,4 +895,37 @@ function telefonoCanonico(guardado: string | undefined): string {
 function textoCambiado(actual: string, guardado: string | undefined): string | undefined {
   const limpio = actual.trim();
   return limpio === (guardado ?? '') ? undefined : limpio;
+}
+
+/**
+ * El punto de una dirección, tal como sale del perfil leído.
+ *
+ * Las dos mitades tienen que estar: una dirección con latitud y sin longitud no
+ * ubica nada, y sembrar el mapa con eso pondría el pin en el meridiano cero.
+ */
+function puntoDe(
+  direccion: { latitude?: number; longitude?: number } | undefined,
+): Coordenadas | null {
+  if (direccion?.latitude === undefined || direccion.longitude === undefined) {
+    return null;
+  }
+  return { lat: direccion.latitude, lng: direccion.longitude };
+}
+
+/**
+ * Traduce la intención sobre el mapa a las claves del cuerpo del PATCH.
+ *
+ * `undefined` —no se tocó— no produce ninguna clave: mandar el punto actual
+ * «por las dudas» convertiría cualquier guardado en una reescritura de la
+ * ubicación, y bastaría un error de redondeo del servidor para moverla sola.
+ */
+function coordenadasCambiadas(
+  cual: 'home' | 'work',
+  intencion: Coordenadas | null | undefined,
+): Record<string, number | null> {
+  if (intencion === undefined) return {};
+  if (intencion === null) {
+    return { [`${cual}Latitude`]: null, [`${cual}Longitude`]: null };
+  }
+  return { [`${cual}Latitude`]: intencion.lat, [`${cual}Longitude`]: intencion.lng };
 }

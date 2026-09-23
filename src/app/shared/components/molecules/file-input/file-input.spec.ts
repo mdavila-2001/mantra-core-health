@@ -125,6 +125,26 @@ describe('FileInput', () => {
     });
   });
 
+  it('conserva el documento anterior y explica el rechazo de su reemplazo', async () => {
+    await setInputs({ accept: 'application/pdf', maxSizeBytes: 2048 });
+    const original = archivo('vigente.pdf', 'application/pdf');
+    await soltar([original]);
+    await soltar([archivo('invalido.exe', 'application/octet-stream')]);
+    expect(fixture.componentInstance.files()).toEqual([original]);
+    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('Formato no permitido');
+    await soltar([archivo('grande.pdf', 'application/pdf', 3000)]);
+    expect(fixture.componentInstance.files()).toEqual([original]);
+    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('Supera el límite');
+  });
+
+  it('dice los tipos aceptados con palabras, también los comodines', async () => {
+    // «image/*» se mostraba como un «*» suelto (barrido del refactor UX).
+    await setInputs({ accept: 'image/*,application/pdf,.docx' });
+    const texto = fixture.nativeElement.querySelector('.dropzone-subtext').textContent;
+    expect(texto).toContain('Imagen · PDF · DOCX');
+    expect(texto).not.toContain('*');
+  });
+
   it('deshabilitado ignora lo que se suelte', async () => {
     await setInputs({ disabled: true });
     await soltar([archivo('a.pdf', 'application/pdf')]);

@@ -9,10 +9,10 @@ import {
   signal,
 } from '@angular/core';
 
-import {
-  FORM_CONTROL_CONTEXT,
-  nextControlId,
-} from '@shared/forms/form-control.context';
+import { FORM_CONTROL_CONTEXT, nextControlId } from '@shared/forms/form-control.context';
+
+import { matchesFileAccept } from '../../../forms/file-accept';
+import { FilePreview } from '../file-preview/file-preview';
 
 const BYTES_PER_UNIT = 1024;
 const SIZE_UNITS = ['bytes', 'KB', 'MB', 'GB', 'TB'] as const;
@@ -31,6 +31,7 @@ export interface RejectedFile {
 @Component({
   selector: 'app-file-input',
   standalone: true,
+  imports: [FilePreview],
   templateUrl: './file-input.html',
   styleUrl: './file-input.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,6 +44,13 @@ export class FileInput {
   private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
 
   readonly files = model<readonly File[]>([]);
+  readonly testId = input<string | null>(null);
+  readonly removeTestId = input<string | null>(null);
+  readonly label = input('Adjuntar archivo');
+  readonly accessibleLabel = input('');
+  readonly hasError = input(false);
+  readonly required = input(false);
+  readonly feedback = signal<readonly string[]>([]);
   readonly multiple = input<boolean>(false);
   readonly disabled = input<boolean>(false);
   /** Lista al estilo del atributo nativo: `image/*,.pdf`. */
@@ -50,14 +58,91 @@ export class FileInput {
   readonly maxSizeBytes = input<number | null>(null);
   readonly maxFiles = input<number | null>(null);
 
+  /**
+   * Si dibuja la lista de lo seleccionado.
+   *
+   * `false` cuando quien lo usa lleva su propia cola —con estado por archivo,
+   * como el adjunto clínico—: dos listas de lo mismo, una con estado y otra
+   * sin, se leen como dos selecciones distintas.
+   */
+  readonly showList = input(true);
+
+  /**
+   * Si dibuja su propio mensaje de rechazo bajo la zona de soltar.
+   *
+   * `false` cuando quien lo usa lleva su propio estado de error —como
+   * `app-dropzone-pdf`, que ya muestra «Solo se admiten documentos PDF de
+   * hasta 10 MB.» en su propio `role="alert"`—: sin apagarlo, un mismo
+   * rechazo mostraría dos mensajes casi idénticos, uno de cada componente.
+   */
+  readonly showFeedback = input(true);
+
   /** Lo descartado en el último intento, para poder explicarlo. */
   readonly rejected = output<readonly RejectedFile[]>();
 
   protected readonly isDragging = signal(false);
 
+  /* -- Los textos, en plural cuando corresponde (§9.9 de la corrección) ----- */
+
+  /**
+   * `accept` dicho para una persona: «image/*,application/pdf» → «Imagen · PDF».
+   * Quitarle el prefijo a un comodín dejaba un «*» suelto en pantalla.
+   */
+  protected readonly tiposAceptados = computed(() =>
+    this.accept()
+      .split(',')
+      .map((tipo) => tipo.trim())
+      .filter((tipo) => tipo.length > 0)
+      .map(nombreDeTipo)
+      .join(' · '),
+  );
+
+  protected readonly textoDeArrastre = computed(() => {
+    if (this.isDragging()) {
+      return this.multiple() ? 'Soltá los archivos acá' : 'Soltá el archivo acá';
+    }
+    return this.multiple() ? 'Arrastrá uno o varios archivos acá' : 'Arrastrá tu archivo acá';
+  });
+
+  protected readonly textoSecundario = computed(() =>
+    this.multiple()
+      ? 'o seleccioná archivos desde tu dispositivo'
+      : 'o seleccioná desde tu dispositivo',
+  );
+
+  /**
+   * El rótulo del control nativo.
+   *
+   * Con varios ya elegidos dice «Añadir más archivos», que es lo que hace: la
+   * selección se acumula y no reemplaza. Con uno solo sigue diciendo
+   * «Reemplazar archivo», que es lo que hace en ese modo.
+   */
+  protected readonly textoDelBoton = computed(() => {
+    if (!this.multiple()) {
+      return this.files().length > 0 ? 'Reemplazar archivo' : this.label();
+    }
+    return this.files().length > 0 ? 'Añadir más archivos' : this.label();
+  });
+
   private readonly ownId = nextControlId('file');
   protected readonly controlId = computed(() => this.field?.controlId() ?? this.ownId);
-  protected readonly describedBy = computed(() => this.field?.describedBy() ?? null);
+  protected readonly labelId = computed(() => this.field?.labelId() ?? null);
+  protected readonly invalid = computed(
+    () => this.hasError() || this.field?.invalid() || this.feedback().length > 0,
+  );
+  protected readonly isRequired = computed(
+    () => this.required() || (this.field?.required() ?? false),
+  );
+  protected readonly feedbackId = computed(() => `${this.controlId()}-feedback`);
+  protected readonly describedBy = computed(
+    () =>
+      [
+        this.field?.describedBy(),
+        this.showFeedback() && this.feedback().length ? this.feedbackId() : null,
+      ]
+        .filter(Boolean)
+        .join(' ') || null,
+  );
 
   protected handleFileSelect(event: Event): void {
     const target = event.target as HTMLInputElement;
@@ -88,6 +173,7 @@ export class FileInput {
     if (this.disabled()) {
       return;
     }
+    this.feedback.set([]);
     this.files.set(this.files().filter((_, position) => position !== index));
   }
 
@@ -123,14 +209,26 @@ export class FileInput {
       }
     }
 
-    this.files.set(kept);
+    // Una sustitución rechazada no debe borrar el documento válido anterior.
+    if (kept.length > 0 || this.multiple()) this.files.set(kept);
+    this.feedback.set(
+      rejected.map(({ file, reason }) => {
+        const messages = {
+          tipo: 'Formato no permitido.',
+          tamaño: `Supera el límite de ${this.formatFileSize(this.maxSizeBytes() ?? 0)}.`,
+          duplicado: 'Este archivo ya está adjunto.',
+          cupo: 'Alcanzaste el máximo de archivos.',
+        };
+        return `${file.name}: ${messages[reason]}`;
+      }),
+    );
     if (rejected.length > 0) {
       this.rejected.emit(rejected);
     }
   }
 
   private rejectionReason(file: File, kept: readonly File[]): RejectedFile['reason'] | null {
-    if (!this.matchesAccept(file)) {
+    if (!matchesFileAccept(file, this.accept())) {
       return 'tipo';
     }
     const maxSize = this.maxSizeBytes();
@@ -147,33 +245,20 @@ export class FileInput {
     return null;
   }
 
-  /** Misma semántica que el atributo nativo: `.pdf`, `image/*` o un MIME exacto. */
-  private matchesAccept(file: File): boolean {
-    const patterns = this.accept()
-      .split(',')
-      .map((pattern) => pattern.trim().toLowerCase())
-      .filter(Boolean);
-
-    if (patterns.length === 0) {
-      return true;
-    }
-
-    const mime = file.type.toLowerCase();
-    const name = file.name.toLowerCase();
-
-    return patterns.some((pattern) => {
-      if (pattern.startsWith('.')) {
-        return name.endsWith(pattern);
-      }
-      if (pattern.endsWith('/*')) {
-        return mime.startsWith(pattern.slice(0, -1));
-      }
-      return mime === pattern;
-    });
-  }
-
   /** El navegador no da un id de archivo: se compara la terna que sí expone. */
   private isSameFile(a: File, b: File): boolean {
     return a.name === b.name && a.size === b.size && a.lastModified === b.lastModified;
   }
+}
+
+const NOMBRE_DE_COMODIN: Readonly<Record<string, string>> = {
+  'image/*': 'Imagen',
+  'audio/*': 'Audio',
+  'video/*': 'Video',
+};
+
+function nombreDeTipo(tipo: string): string {
+  const comodin = NOMBRE_DE_COMODIN[tipo.toLowerCase()];
+  if (comodin) return comodin;
+  return tipo.replace(/^(application|image|audio|video|text)\//i, '').replace(/^\./, '').toUpperCase();
 }

@@ -1,0 +1,25 @@
+<!-- El cargo es el encabezado: es lo que se busca al recorrer la lista, no el
+     nombre de la persona, que cambia mucho más seguido que el puesto. -->
+<h3 class="contacto__cargo">{{ contacto().cargo }}</h3>
+<p class="contacto__nombre">{{ contacto().nombre }}</p>
+
+<dl class="contacto__datos">
+  @if (contacto().celular; as celular) {
+    <div class="contacto__dato">
+      <dt class="contacto__etiqueta">Celular</dt>
+      <dd class="contacto__valor">
+        <a app-link [href]="'tel:' + marcable(celular)">{{ celular }}</a>
+      </dd>
+    </div>
+  }
+
+  <div class="contacto__dato">
+    <dt class="contacto__etiqueta">Correo</dt>
+    <dd class="contacto__valor">
+      <a app-link [href]="'mailto:' + contacto().correo">{{ contacto().correo }}</a>
+    </dd>
+  </div>
+</dl>
+
+<!-- Lo que cada cargo agregue: el enlace al poder del representante vive acá. -->
+<ng-content />

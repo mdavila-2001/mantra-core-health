@@ -1,0 +1,101 @@
+<article class="factura" aria-labelledby="factura-titulo" data-testid="factura-documento">
+  <header class="factura__cabecera">
+    <div class="factura__encabezado">
+      <h2 id="factura-titulo" class="factura__titulo">Factura</h2>
+      @if (nota(); as aviso) {
+        <!-- Lo que no sale de un sistema de facturación se dice, no se disimula. -->
+        <app-chip variant="neutral" size="sm">{{ aviso }}</app-chip>
+      }
+    </div>
+    <dl class="factura__datos">
+      <div class="factura__dato">
+        <dt class="factura__etiqueta">{{ rotulos.numero }}</dt>
+        <dd class="factura__valor cifras-tabulares" data-testid="factura-numero">
+          {{ documento().numero }}
+        </dd>
+      </div>
+      <div class="factura__dato">
+        <dt class="factura__etiqueta">{{ rotulos.emitidaEl }}</dt>
+        <dd class="factura__valor">{{ documento().emitidaEl | date: 'dd/MM/yyyy' }}</dd>
+      </div>
+      <div class="factura__dato">
+        <dt class="factura__etiqueta">{{ rotulos.estado }}</dt>
+        <dd class="factura__valor">
+          <app-badge variant="success">{{ documento().estado }}</app-badge>
+        </dd>
+      </div>
+    </dl>
+  </header>
+
+  <div class="factura__partes">
+    <section class="factura__parte" aria-labelledby="factura-emisor">
+      <h3 id="factura-emisor" class="factura__subtitulo">Emisor</h3>
+      <dl class="factura__campos" data-testid="factura-emisor">
+        <dt>Razón social</dt>
+        <dd>{{ documento().emisor.razonSocial }}</dd>
+        <dt>NIT</dt>
+        <dd class="cifras-tabulares">{{ documento().emisor.nit }}</dd>
+        <dt>Comercio</dt>
+        <dd>
+          {{ documento().emisor.nombre }}
+          @if (documento().emisor.detalle; as detalle) {
+            — {{ detalle }}
+          }
+        </dd>
+      </dl>
+    </section>
+    <section class="factura__parte" aria-labelledby="factura-comprador">
+      <h3 id="factura-comprador" class="factura__subtitulo">Comprador</h3>
+      <dl class="factura__campos" data-testid="factura-comprador">
+        <dt>Nombre</dt>
+        <dd>{{ documento().comprador.nombre }}</dd>
+        <dt>Documento</dt>
+        <dd class="cifras-tabulares">{{ documento().comprador.documento }}</dd>
+      </dl>
+    </section>
+  </div>
+
+  <section class="factura__detalle" aria-labelledby="factura-detalle">
+    <h3 id="factura-detalle" class="factura__subtitulo">Detalle</h3>
+    <ul class="factura__lineas" data-testid="factura-lineas">
+      @for (linea of documento().lineas; track $index) {
+        <li class="factura__linea">
+          <span class="factura__descripcion">
+            {{ linea.descripcion }}
+            <span class="factura__secundario">x{{ linea.cantidad }}</span>
+          </span>
+          <span class="cifras-tabulares">{{ importe(linea.importe) }}</span>
+        </li>
+      }
+    </ul>
+
+    <dl class="factura__cuentas cifras-tabulares">
+      <div class="factura__cuenta">
+        <dt>{{ rotulos.subtotal }}</dt>
+        <dd>{{ importe(documento().subtotal) }}</dd>
+      </div>
+      @if (documento().descuentoDeRed; as descuento) {
+        <div class="factura__cuenta" data-testid="factura-descuento">
+          <dt>{{ rotulos.descuentoDeRed }}</dt>
+          <dd>−{{ descuento }} {{ moneda(documento().moneda) }}</dd>
+        </div>
+      }
+      @if (documento().coaseguro; as coaseguro) {
+        <div class="factura__cuenta" data-testid="factura-coaseguro">
+          <dt>{{ rotulos.coaseguro }} · {{ coaseguro.aseguradora }}</dt>
+          <dd>{{ coaseguro.importe }} {{ moneda(coaseguro.moneda) }}</dd>
+        </div>
+      }
+      <div class="factura__cuenta factura__cuenta--total" data-testid="factura-total">
+        <dt>{{ rotulos.total }}</dt>
+        <dd>{{ importe(documento().total) }}</dd>
+      </div>
+    </dl>
+    @if (documento().coaseguro) {
+      <p class="factura__pie">
+        El coaseguro es lo que tu seguro dejó a tu cargo según su liquidación publicada. Se informa
+        acá y no se resta del total facturado.
+      </p>
+    }
+  </section>
+</article>

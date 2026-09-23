@@ -6,8 +6,11 @@
           Tu cuenta quedó activa
         </h1>
         <p class="activar__text">
-          Ya podés entrar con tu correo y la contraseña que acabás de elegir. El código que usaste
+          Ya podés entrar con tu correo o documento y la contraseña que acabás de elegir. El código que usaste
           no vuelve a servir.
+        </p>
+        <p class="activar__text">
+          Al ingresar te guiaremos para completar tus datos de contacto, ocupación y domicilio.
         </p>
       </div>
       <button
@@ -18,7 +21,7 @@
         data-testid="activar-ir-login"
         (clicked)="goToLogin()"
       >
-        Ir a iniciar sesión
+        Iniciar sesión y completar mi perfil
       </button>
     } @else {
       <div class="activar__header">

@@ -1,0 +1,292 @@
+{
+ "ase-generales_y_fianzas-alianza-compania-de-seguros-y-reaseguros-s-a": {
+  "lat": -17.7848559,
+  "lng": -63.1962108,
+  "precision": "via"
+ },
+ "ase-generales_y_fianzas-bisa-seguros-y-reaseguros-s-a": {
+  "lat": -17.7531652,
+  "lng": -63.1644984,
+  "precision": "via"
+ },
+ "ase-generales_y_fianzas-compania-de-seguros-y-reaseguros-fortaleza-s-a": {
+  "lat": -17.7799409,
+  "lng": -63.1484197,
+  "precision": "via"
+ },
+ "ase-generales_y_fianzas-crediseguro-s-a-seguros-generales": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "ase-generales_y_fianzas-la-boliviana-ciacruz-de-seguros-y-reaseguros-s-a": {
+  "lat": -17.7856764,
+  "lng": -63.1845842,
+  "precision": "via"
+ },
+ "ase-generales_y_fianzas-mercantil-santa-cruz-seguros-y-reaseguros-generales-s-a": {
+  "lat": -17.7498538,
+  "lng": -63.165577,
+  "precision": "via"
+ },
+ "ase-generales_y_fianzas-nacional-seguros-patrimoniales-y-fianzas-s-a": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "ase-generales_y_fianzas-seguros-illimani-s-a": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "ase-generales_y_fianzas-seguros-y-reaseguros-credinform-international-s-a": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "ase-generales_y_fianzas-unibienes-seguros-y-reaseguros-patrimoniales-s-a": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "ase-personas-alianza-vida-seguros-y-reaseguros-s-a": {
+  "lat": -17.7873075,
+  "lng": -63.2066206,
+  "precision": "via"
+ },
+ "ase-personas-bisa-seguros-y-reaseguros-s-a": {
+  "lat": -17.7531652,
+  "lng": -63.1644984,
+  "precision": "via"
+ },
+ "ase-personas-compania-de-seguros-y-reaseguros-fortaleza-s-a": {
+  "lat": -17.7799409,
+  "lng": -63.1484197,
+  "precision": "via"
+ },
+ "ase-personas-crediseguro-s-a-seguros-personales": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "ase-personas-empresa-de-seguros-y-reaseguros-personales-univida-s-a": {
+  "lat": -17.7498538,
+  "lng": -63.165577,
+  "precision": "via"
+ },
+ "ase-personas-la-boliviana-ciacruz-seguros-personales-s-a": {
+  "lat": -17.7856764,
+  "lng": -63.1845842,
+  "precision": "via"
+ },
+ "ase-personas-la-vitalicia-seguros-y-reaseguros-de-vida-s-a": {
+  "lat": -17.8231198,
+  "lng": -63.1201558,
+  "precision": "via"
+ },
+ "ase-personas-nacional-seguros-vida-y-salud-s-a": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "ase-personas-santa-cruz-vida-y-salud-seguros-y-reaseguros-personales-s-a": {
+  "lat": -17.7714522,
+  "lng": -63.1912143,
+  "precision": "via"
+ },
+ "cli-clinica-cosalud": {
+  "lat": -17.8275514,
+  "lng": -63.102714,
+  "precision": "direccion"
+ },
+ "cli-clinica-cristo-rey": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "cli-clinica-de-ojos-santa-cruz": {
+  "lat": -17.7785965,
+  "lng": -63.1984117,
+  "precision": "via"
+ },
+ "cli-clinica-el-trompillo": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "cli-clinica-foianini": {
+  "lat": -17.7931433,
+  "lng": -63.1863254,
+  "precision": "via"
+ },
+ "cli-clinica-grumedso": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "cli-clinica-incor": {
+  "lat": -17.7849072,
+  "lng": -63.1949106,
+  "precision": "via"
+ },
+ "cli-clinica-italia": {
+  "lat": -17.7856764,
+  "lng": -63.1845842,
+  "precision": "via"
+ },
+ "cli-clinica-kamiya": {
+  "lat": -17.7742738,
+  "lng": -63.1823242,
+  "precision": "direccion"
+ },
+ "cli-clinica-las-americas": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "cli-clinica-lourdes": {
+  "lat": -17.7880063,
+  "lng": -63.1810673,
+  "precision": "direccion"
+ },
+ "cli-clinica-melendres": {
+  "lat": -17.7951834,
+  "lng": -63.1894921,
+  "precision": "via"
+ },
+ "cli-clinica-montalvo": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "cli-clinica-nino-jesus": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "cli-clinica-nino-jesus-ii": {
+  "lat": -17.7842207,
+  "lng": -63.1740413,
+  "precision": "direccion"
+ },
+ "cli-clinica-san-jose": {
+  "lat": -17.7856797,
+  "lng": -63.1909858,
+  "precision": "direccion"
+ },
+ "cli-clinica-san-pedro": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "cli-clinica-santa-maria": {
+  "lat": -17.7887332,
+  "lng": -63.1712458,
+  "precision": "direccion"
+ },
+ "cli-clinica-sirani": {
+  "lat": -17.7880063,
+  "lng": -63.1810673,
+  "precision": "direccion"
+ },
+ "cli-clinica-universitaria-ucebol": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "cli-clinica-universitario-martin-dockweiler": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "cli-clinica-urbari": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "hos-caja-de-salud-cordes": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "hos-caja-de-salud-de-caminos": {
+  "lat": -17.7766167,
+  "lng": -63.1547963,
+  "precision": "via"
+ },
+ "hos-caja-de-salud-de-la-banca-privada": {
+  "lat": -17.7815911,
+  "lng": -63.1850165,
+  "precision": "via"
+ },
+ "hos-caja-nacional-de-salud": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "hos-caja-petrolera-santa-cruz": {
+  "lat": -17.7780374,
+  "lng": -63.1862777,
+  "precision": "via"
+ },
+ "hos-corporacion-del-seguro-social-militar": {
+  "lat": -17.7853981,
+  "lng": -63.1882976,
+  "precision": "direccion"
+ },
+ "hos-hospital-de-ninos-dr-mario-ortiz-suarez": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "hos-hospital-municipal-bajio-del-oriente": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "hos-hospital-municipal-frances": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "hos-hospital-municipal-pampa-de-la-isla": {
+  "lat": -17.7540514,
+  "lng": -63.0992748,
+  "precision": "via"
+ },
+ "hos-hospital-municipal-plan-3000": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "hos-hospital-municipal-villa-1ro-de-mayo": {
+  "lat": -17.7347318,
+  "lng": -63.1439004,
+  "precision": "via"
+ },
+ "hos-hospital-san-juan-de-dios": {
+  "lat": -17.7789963,
+  "lng": -63.1841539,
+  "precision": "via"
+ },
+ "hos-hospital-universitario-japones": {
+  "lat": -17.783327,
+  "lng": -63.18214,
+  "precision": "ciudad"
+ },
+ "hos-instituto-oncologico-del-oriente-boliviano": {
+  "lat": -17.7704769,
+  "lng": -63.20204,
+  "precision": "via"
+ },
+ "hos-maternidad-percy-boland": {
+  "lat": -17.7780374,
+  "lng": -63.1862777,
+  "precision": "via"
+ },
+ "hos-seguro-social-universitario": {
+  "lat": -17.7889639,
+  "lng": -63.1841244,
+  "precision": "direccion"
+ }
+}

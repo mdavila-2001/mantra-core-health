@@ -1,0 +1,108 @@
+/* Pagos de la persona. Un resumen arriba y la lista de comprobantes debajo.
+   Sólo distribución: los colores salen de los tokens de estado. */
+
+:host {
+  display: block;
+}
+
+.pagos {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+/* ── El resumen ────────────────────────────────────────────────────────────
+   La cifra manda: es lo que se mira con el paciente enfrente. */
+
+.pagos__resumen {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.pagos__total-rotulo {
+  margin: 0;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pagos__total {
+  margin: 0;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: 700;
+  /* Dinero en columna: las cifras tienen que alinearse dígito con dígito. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── La lista ──────────────────────────────────────────────────────────────
+   Tres datos por renglón —comprobante, fecha e importe— en una fila cuando
+   entran y apilados cuando no. El importe se va al final de la línea, que es
+   donde el ojo lo busca. */
+
+.pagos__lista {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pagos__pago {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.pagos__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  min-inline-size: 0;
+}
+
+.pagos__comprobante {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.pagos__fecha {
+  grid-column: 1;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  /* Los meses abreviados llegan en minúscula del pipe de fecha. */
+  text-transform: capitalize;
+}
+
+.pagos__importe {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  justify-self: end;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pagos__secundario {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.pagos__vacio {
+  margin: 0;
+  color: var(--text-muted);
+  /* Es texto corrido: la medida de lectura manda sobre el ancho del modal. */
+  max-inline-size: 68ch;
+}

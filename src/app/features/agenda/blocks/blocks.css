@@ -13,12 +13,16 @@
   margin-block-end: var(--sp-3);
 }
 
+/* Tarjetas una al lado de la otra, no filas a todo el ancho: en pantalla
+   ancha una fila estiraba los íconos lejos del bloqueo que tocan. En celular
+   baja a una columna sola. */
 .bloqueos__lista {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: var(--sp-2);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  gap: var(--sp-3);
 }
 
 .bloqueos__item {
@@ -26,9 +30,21 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--sp-3);
-  padding: var(--sp-3);
+  padding: var(--sp-4);
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-md, 8px);
+  background: var(--bg-surface, transparent);
+}
+
+.bloqueos__datos {
+  min-width: 0;
+}
+
+/* Editar y quitar juntos, arriba a la derecha de cada tarjeta. */
+.bloqueos__acciones {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--sp-1);
 }
 
 /* Lo que ya pasó se lee más callado, pero se lee: sigue explicando por qué ese

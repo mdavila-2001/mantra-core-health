@@ -2,6 +2,7 @@
    sube a dos columnas donde entra, nunca al revés. */
 
 .campanas__demo {
+  display: block;
   margin-block: var(--sp-3) var(--sp-4);
 }
 
@@ -72,7 +73,7 @@
 }
 
 .campanas__secundario {
-  font-size: var(--fs-small);
+  font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
 

@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, linkedSignal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+
+import { AppButtonLink } from '../../atoms/button/button-link';
 
 import type { SearchResultItem } from './search-result.types';
 
@@ -13,9 +15,9 @@ import type { SearchResultItem } from './search-result.types';
  * ## De dónde sale el diseño
  *
  * De la maqueta: `SALUD/Vistas/HTML/V65-buscador/publico/` y
- * `_assets/redsat.css` §25. El marcado y las clases son **los de la maqueta**,
+ * `_assets/alovida.css` §25. El marcado y las clases son **los de la maqueta**,
  * no una reinterpretación — por eso el componente no trae CSS propio: lo estila
- * `src/styles/redsat.css`, que ya está en `angular.json` y es el mismo archivo
+ * `src/styles/alovida.css`, que ya está en `angular.json` y es el mismo archivo
  * que usan las 141 pantallas portadas.
  *
  * Escribirle estilos acá lo separaría de la maqueta en la primera corrección
@@ -50,7 +52,7 @@ import type { SearchResultItem } from './search-result.types';
  */
 @Component({
   selector: 'li[app-search-result]',
-  imports: [RouterLink],
+  imports: [AppButtonLink, RouterLink],
   templateUrl: './search-result.html',
   styleUrl: './search-result.css',
   host: { class: 'app-resultado' },
@@ -60,4 +62,24 @@ export class SearchResult {
   /** El resultado a pintar. */
   readonly resultado = input.required<SearchResultItem>();
 
+  /**
+   * Igual que `ResultCard.imagenFallo` — el hermano vertical de esta tarjeta—:
+   * `linkedSignal` sobre la fuente, no `signal` + `set`, así una fila que el
+   * `@for` reutiliza al pasar de página con una foto nueva tiene su propia
+   * oportunidad. Sin esto, una `figureImageUrl` cuya versión no pasó el escaneo
+   * de malware (422 real, reproducido contra el directorio) dejaba un ícono de
+   * imagen rota en vez de caer a `figureText`.
+   */
+  protected readonly imagenFallo = linkedSignal({
+    source: this.resultado,
+    computation: () => false,
+  });
+
+  protected readonly mostrarImagen = computed(
+    () => Boolean(this.resultado().figureImageUrl) && !this.imagenFallo(),
+  );
+
+  protected manejarErrorDeImagen(): void {
+    this.imagenFallo.set(true);
+  }
 }

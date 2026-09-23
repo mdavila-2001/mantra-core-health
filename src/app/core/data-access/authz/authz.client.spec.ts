@@ -88,4 +88,63 @@ describe('AuthzClient', () => {
 
     req.flush([]);
   });
+  /* ---- FT-07 · el vínculo por consentimiento ---------------------------- */
+
+  it('requestCareRelationship publica el pedido sin especialidades: las elige el paciente', () => {
+    client
+      .requestCareRelationship({ tenantId: 't-1', patientProfileId: 'p-1', reasonText: 'Seguimiento' })
+      .subscribe();
+
+    const req = http.expectOne('/authz/care-relationships/request');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      tenantId: 't-1',
+      patientProfileId: 'p-1',
+      reasonText: 'Seguimiento',
+    });
+
+    req.flush({ id: 'cr-1' });
+  });
+
+  it('listMyPendingCareRelationshipRequests no manda parámetros: el sujeto es la sesión', () => {
+    let pendientes: readonly CareRelationship[] = [];
+    client.listMyPendingCareRelationshipRequests().subscribe((r) => (pendientes = r));
+
+    const req = http.expectOne('/authz/care-relationships/requests/mine');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.keys()).toEqual([]);
+    req.flush([
+      {
+        id: 'cr-2',
+        patientProfileId: 'p-1',
+        practitionerProfileId: 'pro-1',
+        relationshipTypeConceptId: 'tipo-1',
+        statusConceptId: 'estado-pendiente',
+        validFrom: '2026-09-05T12:00:00.000Z',
+        validTo: null,
+      },
+    ]);
+
+    expect(pendientes.length).toBe(1);
+    expect(pendientes[0].validFrom).toBeInstanceOf(Date);
+    expect('validTo' in pendientes[0]).toBe(false);
+  });
+
+  it('respondToCareRelationshipRequest lleva la decisión y las áreas al id de la solicitud', () => {
+    client
+      .respondToCareRelationshipRequest('cr/2', {
+        decision: 'ACCEPT',
+        authorizedSpecialtyConceptIds: ['esp-1'],
+      })
+      .subscribe();
+
+    const req = http.expectOne('/authz/care-relationships/cr%2F2/respond');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      decision: 'ACCEPT',
+      authorizedSpecialtyConceptIds: ['esp-1'],
+    });
+
+    req.flush({ ok: true, affected: 1 });
+  });
 });

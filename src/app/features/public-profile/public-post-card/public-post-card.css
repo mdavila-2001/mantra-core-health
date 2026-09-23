@@ -28,8 +28,8 @@
 
 .publicacion__avatar {
   flex: none;
-  inline-size: 2.5rem;
-  block-size: 2.5rem;
+  inline-size: 3rem;
+  block-size: 3rem;
   border-radius: var(--r-pill);
   object-fit: cover;
   background: var(--menta);
@@ -40,7 +40,7 @@
   place-items: center;
   color: var(--tinta-marca);
   font-family: var(--f-titulo);
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 700;
 }
 
@@ -50,7 +50,7 @@
 
 .publicacion__autor {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 700;
   color: var(--tinta);
   line-height: 1.25;
@@ -114,7 +114,7 @@
   margin: 0;
   color: var(--tinta);
   white-space: pre-line;
-  font-size: 15px;
+  font-size: var(--fs-body);
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
@@ -143,7 +143,7 @@
   background: none;
   color: var(--tinta-2);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 600;
   cursor: pointer;
 }
@@ -165,7 +165,9 @@
 .publicacion__imagen {
   display: block;
   inline-size: 100%;
-  max-block-size: 18rem;
+  /* A lo ancho de la columna del feed la imagen es protagonista: con 18rem
+     quedaba una franja que obligaba a abrir la publicación para verla. */
+  max-block-size: 30rem;
   aspect-ratio: 4 / 3;
   object-fit: cover;
 }
@@ -186,7 +188,7 @@
   border-block-start: 1px solid var(--filete-2);
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: var(--tinta-2);
 }
 
@@ -237,7 +239,7 @@
   justify-content: center;
   padding: 0;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-full);
   background: rgb(0 0 0 / 0.55);
   color: #fff;
   cursor: pointer;
@@ -263,11 +265,61 @@
 .publicacion__contador {
   margin: 0;
   padding: 2px var(--e2);
-  border-radius: 999px;
+  border-radius: var(--r-full);
   background: rgb(0 0 0 / 0.55);
   color: #fff;
   font-size: 12px;
-  line-height: 18px;
+  line-height: var(--lh-caption);
   font-variant-numeric: tabular-nums;
   pointer-events: none;
+}
+
+/* ---- la fila de acciones del feed (red social) --------------------------- */
+
+/* Cuatro verbos repartidos a lo ancho, con ícono y rótulo, como en cualquier
+   red profesional. El filete de arriba la separa del resumen de contadores. */
+.publicacion__acciones {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--e1);
+  padding: var(--e1) var(--e2);
+  border-block-start: 1px solid var(--filete-2);
+}
+
+.publicacion__accion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  min-block-size: 48px;
+  padding: 0 var(--e2);
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--tinta-2);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.publicacion__accion svg {
+  flex: none;
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+.publicacion__accion:hover {
+  background: var(--sup-inset);
+  color: var(--tinta);
+}
+
+.publicacion__accion--activa,
+.publicacion__accion--activa:hover {
+  color: var(--petroleo);
+}
+
+.publicacion__accion--activa svg {
+  fill: currentColor;
+  fill-opacity: 0.18;
 }

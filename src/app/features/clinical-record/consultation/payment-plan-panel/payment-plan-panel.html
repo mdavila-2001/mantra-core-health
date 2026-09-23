@@ -1,0 +1,58 @@
+<!-- Sin plan, o mientras lee, no dibuja nada: ver el comentario de la clase. -->
+@if (planes().length > 0) {
+  <section class="plan" aria-labelledby="plan-de-pago-titulo" data-testid="consulta-plan-de-pago">
+    <div class="plan__encabezado">
+      <h2 id="plan-de-pago-titulo" class="plan__titulo">Plan de pago</h2>
+      <a app-button variant="ghost" size="sm" [routerLink]="rutaDeCotizaciones">Ver cotizaciones</a>
+    </div>
+
+    <ul class="plan__lista">
+      @for (plan of planes(); track plan.id) {
+        <li>
+          <app-card padding="md">
+            <div class="plan__cabeza">
+              <span class="plan__tratamiento">{{ plan.tratamiento }}</span>
+              <app-badge [variant]="plan.enCurso ? 'success' : 'info'" [value]="plan.estado" />
+            </div>
+
+            <p class="plan__resumen">
+              Total <strong>{{ plan.total }}</strong> · {{ plan.resumen }}
+              @if (plan.anticipo) {
+                · anticipo {{ plan.anticipo }}
+              }
+            </p>
+
+            @if (plan.proxima; as proxima) {
+              <p class="plan__proxima" data-testid="consulta-plan-proxima-cuota">
+                Próxima cuota: <strong>{{ proxima.monto }}</strong> el {{ proxima.vence }}
+              </p>
+            }
+
+            @if (plan.cuotas.length > 0) {
+              <ol class="plan__cuotas" [attr.aria-label]="'Cuotas de ' + plan.tratamiento">
+                @for (cuota of plan.cuotas; track cuota.numero) {
+                  <li
+                    class="plan__cuota"
+                    [class.plan__cuota--vencida]="cuota.vencida"
+                    [class.plan__cuota--proxima]="cuota.numero === plan.proxima?.numero"
+                  >
+                    <span>Cuota {{ cuota.numero }}</span>
+                    <span>{{ cuota.vence }}</span>
+                    <span class="plan__monto">{{ cuota.monto }}</span>
+                  </li>
+                }
+              </ol>
+            }
+          </app-card>
+        </li>
+      }
+    </ul>
+  </section>
+} @else if (fallo()) {
+  <p class="plan__fallo" role="status">
+    No pudimos revisar si esta persona tiene un plan de pago.
+    <button app-button type="button" variant="ghost" size="sm" (clicked)="reintentar()">
+      Reintentar
+    </button>
+  </p>
+}

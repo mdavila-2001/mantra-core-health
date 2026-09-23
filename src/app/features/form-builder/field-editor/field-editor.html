@@ -1,0 +1,522 @@
+<!-- ─── La tarjeta de un campo ───────────────────────────────────────────────
+     Siempre abierta, como en Google Forms: arriba qué se pregunta y de qué
+     tipo, debajo la descripción si la hay y el control con el que se va a
+     responder, y al pie lo que se le puede hacer. No hay estado plegado —
+     plegarla escondía justo lo que hay que ver para decidir si el campo está
+     bien. -->
+@if (editable()) {
+  <!-- El agarre: seis puntos arriba del todo, centrados, que es donde los pone
+       cualquier editor de bloques. `draggable` lo pone la lista —ver el output
+       `agarrar`—, así que apretar acá es lo único que empieza un arrastre;
+       seleccionar el texto del nombre sigue seleccionando. -->
+  <span
+    class="editor-campo__agarre"
+    aria-hidden="true"
+    data-testid="editor-campo-agarre"
+    (mousedown)="agarrar.emit(true)"
+    (mouseup)="agarrar.emit(false)"
+    (touchstart)="agarrar.emit(true)"
+    (touchend)="agarrar.emit(false)"
+  >
+    <svg viewBox="0 0 24 24" fill="currentColor" focusable="false">
+      <circle cx="9" cy="6" r="1.4" />
+      <circle cx="15" cy="6" r="1.4" />
+      <circle cx="9" cy="12" r="1.4" />
+      <circle cx="15" cy="12" r="1.4" />
+      <circle cx="9" cy="18" r="1.4" />
+      <circle cx="15" cy="18" r="1.4" />
+    </svg>
+  </span>
+}
+
+<div class="editor-campo__cabecera">
+  @if (editable()) {
+    <app-input
+      class="editor-campo__nombre-campo"
+      [value]="nombre()"
+      (valueChange)="cambiarNombre($event)"
+      (blurred)="guardarAhora()"
+      placeholder="Pregunta"
+      [attr.aria-label]="'Nombre del campo ' + (campo().name || '')"
+      data-testid="editor-campo-nombre"
+    />
+
+    <span class="editor-campo__tipo">
+      <app-data-type-icon
+        class="editor-campo__icono"
+        [tipo]="tipoTecnico()"
+        [multiple]="tipo() === 'checkboxes' || tipo() === 'checkboxGrid'"
+        [cuadricula]="pideFilas()"
+      />
+      <app-select
+        [options]="tipos"
+        [value]="tipo()"
+        (valueChange)="cambiarTipo($event)"
+        [attr.aria-label]="'Tipo de dato de ' + (campo().name || 'el campo')"
+        data-testid="editor-campo-tipo"
+      />
+    </span>
+  } @else {
+    <!-- Del estándar: se lee, no se edita. Son la parte que hace comparable una
+         ficha entre consultorios, y el backend los rechaza igual. -->
+    <span class="editor-campo__nombre-fijo">
+      {{ campo().name }}
+      @if (campo().required) {
+        <span class="editor-campo__obligatorio" aria-label="obligatorio">*</span>
+      }
+    </span>
+
+    <span class="editor-campo__tipo editor-campo__tipo--fijo">
+      <app-data-type-icon
+        class="editor-campo__icono"
+        [tipo]="campo().dataType"
+        [multiple]="campo().multiple ?? false"
+        [cuadricula]="filasDelEstandar().length > 0"
+      />
+      <span class="editor-campo__tipo-nombre">{{ etiquetaDelTipo() }}</span>
+    </span>
+  }
+</div>
+
+<!-- ─── La descripción ─────────────────────────────────────────────────────
+     La ayuda que se lee bajo la pregunta. Aparece sólo cuando se la pide o
+     cuando ya la hay: una caja vacía bajo cada pregunta sería una pregunta
+     más que no se hizo. -->
+@if (editable()) {
+  @if (editandoDescripcion()) {
+    <div class="editor-campo__descripcion">
+      <app-textarea
+        [value]="descripcion()"
+        (valueChange)="cambiarDescripcion($event)"
+        (blurred)="guardarAhora()"
+        [rows]="2"
+        [autoResize]="true"
+        placeholder="Descripción: la ayuda que se lee debajo de la pregunta"
+        data-testid="editor-campo-descripcion"
+      />
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        class="editor-campo__quitar-descripcion"
+        (clicked)="quitarDescripcion()"
+        data-testid="editor-campo-quitar-descripcion"
+      >
+        Quitar descripción
+      </button>
+    </div>
+  }
+} @else if (campo().description) {
+  <p class="editor-campo__descripcion-fija">{{ campo().description }}</p>
+}
+
+@if (editable() && pideFilas()) {
+  <!-- ─── Las filas de la cuadrícula ───────────────────────────────────────
+       Lo que se pregunta en cada renglón. Van primero porque son el sujeto de
+       la pregunta —«Tos», «Fiebre»— y las columnas de abajo son la escala con
+       la que se responden. -->
+  <fieldset class="editor-campo__opciones editor-campo__filas">
+    <legend class="editor-campo__grupo-rotulo">Filas</legend>
+
+    @for (fila of filas(); track $index) {
+      <div class="editor-campo__opcion">
+        <span class="editor-campo__numero" aria-hidden="true">{{ $index + 1 }}.</span>
+
+        <app-input
+          class="editor-campo__opcion-texto"
+          [value]="fila"
+          (valueChange)="cambiarFila($index, $event)"
+          (blurred)="guardarAhora()"
+          [placeholder]="'Fila ' + ($index + 1)"
+          [attr.aria-label]="'Fila ' + ($index + 1)"
+          [attr.data-testid]="'editor-campo-fila-' + $index"
+        />
+
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          class="editor-campo__quitar-opcion"
+          [disabled]="!puedeQuitarFila()"
+          [attr.aria-label]="'Quitar la fila ' + ($index + 1)"
+          [appTooltip]="'Quitar'"
+          (clicked)="quitarFila($index)"
+        >
+          ✕
+        </button>
+      </div>
+    }
+
+    <div class="editor-campo__agregar-opcion">
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        (clicked)="agregarFila()"
+        data-testid="editor-campo-agregar-fila"
+      >
+        Agregar fila
+      </button>
+    </div>
+  </fieldset>
+}
+
+@if (editable() && pideOpciones()) {
+  <!-- ─── Las respuestas ofrecidas ─────────────────────────────────────────
+       Una fila por opción con su marca y su botón de quitar, no un `textarea`
+       de «una por línea»: así se ve cuántas son, se corrige la del medio y se
+       quita la que sobra. Es la lista que se va a ver al responder. -->
+  <fieldset class="editor-campo__opciones">
+    @if (pideFilas()) {
+      <!-- En una cuadrícula las respuestas ofrecidas son las columnas, y hay
+           que verlo: sin rótulo, dos listas seguidas son dos listas iguales. -->
+      <legend class="editor-campo__grupo-rotulo">{{ rotuloDeOpciones() }}</legend>
+    } @else {
+      <legend class="sr-only">Respuestas de {{ campo().name || 'el campo' }}</legend>
+    }
+
+    @for (opcion of opciones(); track $index) {
+      <div class="editor-campo__opcion">
+        <span
+          class="editor-campo__marca"
+          [class.editor-campo__marca--casilla]="tipo() === 'checkboxes' || tipo() === 'checkboxGrid'"
+          aria-hidden="true"
+        ></span>
+
+        <app-input
+          class="editor-campo__opcion-texto"
+          [value]="opcion"
+          (valueChange)="cambiarOpcion($index, $event)"
+          (blurred)="guardarAhora()"
+          [placeholder]="'Opción ' + ($index + 1)"
+          [attr.aria-label]="'Opción ' + ($index + 1)"
+          [attr.data-testid]="'editor-campo-opcion-' + $index"
+        />
+
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          class="editor-campo__quitar-opcion"
+          [disabled]="!puedeQuitarOpcion()"
+          [attr.aria-label]="'Quitar la opción ' + ($index + 1)"
+          [appTooltip]="'Quitar'"
+          (clicked)="quitarOpcion($index)"
+        >
+          ✕
+        </button>
+      </div>
+    }
+
+    <!-- «Otro»: la salida para la respuesta que la lista no previó. Se ve
+         como una opción más, con su renglón apagado, que es como se va a ver
+         al responder. -->
+    @if (conOtro()) {
+      <div class="editor-campo__opcion editor-campo__opcion--otro" data-testid="editor-campo-otro">
+        <span
+          class="editor-campo__marca"
+          [class.editor-campo__marca--casilla]="tipo() === 'checkboxes'"
+          aria-hidden="true"
+        ></span>
+        <span class="editor-campo__otro-rotulo">Otro:</span>
+        <span class="editor-campo__otro-renglon" aria-hidden="true"></span>
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          class="editor-campo__quitar-opcion"
+          aria-label="Quitar la opción «Otro»"
+          [appTooltip]="'Quitar'"
+          (clicked)="alternarOtro(false)"
+          data-testid="editor-campo-quitar-otro"
+        >
+          ✕
+        </button>
+      </div>
+    }
+
+    <div class="editor-campo__agregar-opcion">
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        (clicked)="agregarOpcion()"
+        data-testid="editor-campo-agregar-opcion"
+      >
+        {{ pideFilas() ? 'Agregar columna' : 'Agregar opción' }}
+      </button>
+      @if (!conOtro() && !pideFilas()) {
+        <!-- «Otro» no existe en una cuadrícula: no hay dónde escribirlo, y
+             ningún editor de formularios lo ofrece ahí. -->
+        <span class="editor-campo__o">o</span>
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          class="editor-campo__agregar-otro"
+          (clicked)="alternarOtro(true)"
+          data-testid="editor-campo-agregar-otro"
+        >
+          agregar «Otro»
+        </button>
+      }
+    </div>
+  </fieldset>
+
+  <!-- ─── La validación de respuesta ───────────────────────────────────────
+       Sólo en las casillas: en «una sola» el tope es siempre uno. Es lo que
+       separa «marcá tus síntomas» de «marcá los dos principales». -->
+  @if (pideValidacion()) {
+    <div class="editor-campo__validacion" data-testid="editor-campo-validacion">
+      <span class="editor-campo__validacion-rotulo">Validación de respuesta</span>
+      <app-select
+        class="editor-campo__regla"
+        [options]="reglas"
+        [value]="regla()"
+        (valueChange)="cambiarRegla($event)"
+        ariaLabel="Regla de cantidad de respuestas"
+        data-testid="editor-campo-regla"
+      />
+      @if (regla() !== 'ninguna') {
+        <app-input
+          class="editor-campo__cantidad"
+          type="number"
+          inputMode="numeric"
+          [value]="cantidad()"
+          (valueChange)="cambiarCantidad($event)"
+          (blurred)="guardarAhora()"
+          placeholder="Número"
+          [attr.aria-label]="'Cantidad de respuestas'"
+          testId="editor-campo-cantidad"
+        />
+      }
+      @if (reglaEnPalabras(); as texto) {
+        <span class="editor-campo__validacion-texto">{{ texto }}</span>
+      }
+    </div>
+  }
+
+  <!-- ─── Las restricciones de una cuadrícula ──────────────────────────────
+       Las dos de cualquier editor de formularios, con la misma redacción.
+       «Obligatorio» del pie sólo exige que la pregunta tenga alguna respuesta;
+       «una respuesta en cada fila» exige las ocho, que no es lo mismo. -->
+  @if (pideFilas()) {
+    <div class="editor-campo__restricciones" data-testid="editor-campo-restricciones">
+      <app-switch
+        [checked]="requerirCadaFila()"
+        (checkedChange)="cambiarRequerirCadaFila($event)"
+        label="Requerir una respuesta en cada fila"
+        data-testid="editor-campo-requerir-fila"
+      />
+      <app-switch
+        [checked]="unaPorColumna()"
+        (checkedChange)="cambiarUnaPorColumna($event)"
+        label="Limitar a una respuesta por columna"
+        data-testid="editor-campo-una-por-columna"
+      />
+      @if (avisoDeCuadricula(); as aviso) {
+        <p class="editor-campo__aviso" role="status" data-testid="editor-campo-aviso-cuadricula">
+          {{ aviso }}
+        </p>
+      }
+    </div>
+  }
+} @else {
+  <!-- El control con el que se responde. Deshabilitado a propósito: es una
+       muestra de cómo se va a ver, no un lugar donde escribir. -->
+  <div class="editor-campo__muestra" aria-hidden="true">
+    @switch (familia()) {
+      @case ('parrafo') {
+        <app-textarea [value]="''" [disabled]="true" [rows]="2" placeholder="Texto de respuesta larga" />
+      }
+      @case ('numero') {
+        <app-input type="number" [value]="''" [disabled]="true" placeholder="0" />
+      }
+      @case ('booleano') {
+        <!-- Dos botones, no una casilla: una casilla marcada dice «sí» y
+             desmarcada no dice nada, así que «contestó que no» y «no contestó»
+             se ven igual. Lo pidió el propietario, y es la misma corrección que
+             ya se hizo en el alta de agenda. -->
+        <app-segmented-control
+          [options]="siNo"
+          value=""
+          ariaLabel="Sí o no"
+          size="md"
+          data-testid="editor-campo-muestra-si-no"
+        />
+      }
+      @case ('fecha') {
+        <!-- Texto con el formato dentro y no `type="date"`: el input del sistema
+             no acepta ese tipo —las fechas de verdad las pide `app-date-picker`—
+             y acá alcanza con mostrar la forma del dato. -->
+        <app-input [value]="''" [disabled]="true" placeholder="dd/mm/aaaa" />
+      }
+      @case ('eleccion') {
+        <!-- Las opciones del estándar, tal como se van a ver. Un campo de
+             elección cuya muestra fuera una caja de texto mentiría sobre lo
+             que se responde. -->
+        <ul class="editor-campo__muestra-opciones">
+          @for (opcion of opcionesDelEstandar(); track $index) {
+            <li><span class="editor-campo__marca"></span>{{ opcion }}</li>
+          }
+          @if (campo().allowOther) {
+            <li><span class="editor-campo__marca"></span>Otro: <span class="editor-campo__otro-renglon"></span></li>
+          }
+        </ul>
+      }
+      @case ('casillas') {
+        <ul class="editor-campo__muestra-opciones">
+          @for (opcion of opcionesDelEstandar(); track $index) {
+            <li>
+              <span class="editor-campo__marca editor-campo__marca--casilla"></span>{{ opcion }}
+            </li>
+          }
+          @if (campo().allowOther) {
+            <li>
+              <span class="editor-campo__marca editor-campo__marca--casilla"></span>Otro:
+              <span class="editor-campo__otro-renglon"></span>
+            </li>
+          }
+        </ul>
+      }
+      @case ('cuadricula') {
+        <!-- La cuadrícula del estándar, tal como se va a ver. Apagada: es una
+             muestra, no un lugar donde contestar. -->
+        <app-grid-group
+          [rows]="filasDeMuestra()"
+          [columns]="columnasDeMuestra()"
+          [oneResponsePerColumn]="campo().oneResponsePerColumn ?? false"
+          disabled
+          ariaLabel="Cuadrícula de {{ campo().name }}"
+        />
+      }
+      @case ('cuadricula-casillas') {
+        <app-grid-group
+          multiple
+          [rows]="filasDeMuestra()"
+          [columns]="columnasDeMuestra()"
+          [oneResponsePerColumn]="campo().oneResponsePerColumn ?? false"
+          disabled
+          ariaLabel="Cuadrícula de {{ campo().name }}"
+        />
+      }
+      @default {
+        <app-input [value]="''" [disabled]="true" placeholder="Texto de respuesta corta" />
+      }
+    }
+  </div>
+}
+
+@if (editable()) {
+  <!-- El pie, como el de Google Forms: a la izquierda mover, duplicar y
+       quitar; a la derecha el acuse de guardado y el interruptor de
+       obligatorio. Sólo en los campos propios — sobre uno del estándar serían
+       controles que el servidor va a negar.
+
+       Las flechas se quedan aunque ahora se pueda arrastrar: un arrastre no se
+       hace con el teclado, y sin ellas mover un campo dejaría de ser posible
+       para quien no usa ratón. -->
+  <div class="editor-campo__pie">
+    <span class="editor-campo__controles">
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        iconOnly
+        [disabled]="esPrimero()"
+        aria-label="Subir el campo"
+        [appTooltip]="'Subir'"
+        (clicked)="mover.emit(-1)"
+      >↑</button>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        iconOnly
+        [disabled]="esUltimo()"
+        aria-label="Bajar el campo"
+        [appTooltip]="'Bajar'"
+        (clicked)="mover.emit(1)"
+      >↓</button>
+
+      <span class="editor-campo__separador" aria-hidden="true"></span>
+
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        iconOnly
+        [attr.aria-label]="'Duplicar ' + (campo().name || 'el campo')"
+        [appTooltip]="'Duplicar'"
+        (clicked)="duplicar.emit()"
+        data-testid="editor-campo-duplicar"
+      >
+        <svg class="editor-campo__glifo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <rect x="9" y="9" width="11" height="11" rx="2" />
+          <path d="M5 15V6a2 2 0 0 1 2-2h9" />
+        </svg>
+      </button>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        iconOnly
+        class="editor-campo__borrar"
+        [attr.aria-label]="'Quitar ' + (campo().name || 'el campo') + ' del formulario'"
+        [appTooltip]="'Quitar'"
+        (clicked)="borrar.emit()"
+        data-testid="editor-campo-borrar"
+      >
+        <svg class="editor-campo__glifo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+        </svg>
+      </button>
+    </span>
+
+    <span class="editor-campo__pie-derecha">
+      @if (guardando()) {
+        <span class="editor-campo__estado" role="status">Guardando…</span>
+      } @else if (guardado()) {
+        <span class="editor-campo__estado" role="status">Guardado</span>
+      }
+      <app-switch
+        [checked]="obligatorio()"
+        (checkedChange)="cambiarObligatorio($event)"
+        label="Obligatorio"
+        data-testid="editor-campo-obligatorio"
+      />
+    </span>
+  </div>
+
+  @if (!editandoDescripcion()) {
+    <!-- Afuera del pie y como texto y no como ícono: es lo único del menú «⋮»
+         de Google Forms que este editor ofrece, y un menú de una entrada es
+         un rodeo. -->
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      type="button"
+      class="editor-campo__agregar-descripcion"
+      (clicked)="mostrarDescripcion()"
+      data-testid="editor-campo-agregar-descripcion"
+    >
+      Agregar descripción
+    </button>
+  }
+} @else {
+  <div class="editor-campo__pie">
+    <span class="editor-campo__estado">Del estándar · no se edita</span>
+  </div>
+}

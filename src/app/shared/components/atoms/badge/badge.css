@@ -1,6 +1,6 @@
 /* ============================================================================
     Badge — traducción BEM del bloque `Badges / status` de
-    REDSAT_Sistema_de_Diseno.html (líneas 359–364).
+    ALOVIDA_Sistema_de_Diseno.html (líneas 359–364).
 
     Cero valores propios de color: cada variante es un trío `--st-<tono>-*` de
     styles.css, así el modo oscuro lo resuelve el tema y no este archivo. El
@@ -43,11 +43,11 @@
 
 :host(.badge--md) {
     font-size: 11.5px;
-    padding: var(--sp-1) 10px;
+    padding: var(--sp-1) var(--sp-3);
 }
 
 :host(.badge--lg) {
-    font-size: 13px;
+    font-size: var(--fs-caption);
     padding: 6px var(--sp-3);
 }
 

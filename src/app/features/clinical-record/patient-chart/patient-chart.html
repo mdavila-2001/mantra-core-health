@@ -5,6 +5,8 @@
     page-actions
     [filename]="'expediente-' + (pacienteDeLaFicha() || 'paciente')"
     [title]="titulo()"
+    [subtitle]="subtitulo()"
+    kind="Expediente clínico"
     [target]="raizExportable()"
   />
 </app-page-header>
@@ -13,9 +15,19 @@
      mientras el expediente no esté, no hay pestañas que dibujar. -->
 <app-view-state-host [state]="expediente()" (retry)="recargar()">
   <div class="expediente" data-pdf-root #raizPdf>
+    <!-- Continuación, no un origen: atender nace sólo de «Mis citas». Esto
+         aparece únicamente si ya hay un encuentro abierto con esta persona. -->
+    @if (atencionEnCurso()) {
+      <app-alert tone="info" title="Tenés una consulta en curso con esta persona">
+        <a app-link [routerLink]="rutaDeLaAtencion()" data-testid="expediente-volver-atencion">
+          Volver a la consulta
+        </a>
+      </app-alert>
+    }
+
     <!-- Un recorte silencioso en clínica se lee como «no hay antecedentes». -->
     @if (recorte()) {
-      <app-alert tone="warning" title="Expediente recortado" class="expediente__ancho">
+      <app-alert tone="warning" title="Expediente recortado">
         Se muestran los primeros {{ tope }} registros de cada bloque. Quedaron recortados:
         {{ recorte() }}.
       </app-alert>
@@ -62,17 +74,66 @@
       </ul>
     </div>
 
-    <!-- ─── La historia, en su columna ────────────────────────────────────
-         Es lo que se lee, y por eso se lleva el ancho: en pantallas grandes la
-         tabla ocupaba media pantalla y la otra media quedaba en blanco. -->
+    <!-- ─── La historia ───────────────────────────────────────────────────
+         Se lleva el ancho entero: es lo único que hace esta pantalla. Antes
+         cedía una columna de 24rem a la tarjeta del encuentro, y una tabla de
+         cuatro columnas en el resto quedaba apretada contra media pantalla en
+         blanco. Lo que se escribe se mudó a «Atención», que se abre desde el
+         botón de la cabecera.
+
+         Las pestañas van con el marco de ventana (`appearance="browser"`):
+         son ocho, no entran de una en la línea, y sueltas sobre el fondo de la
+         página se leían como una fila de rótulos cortados en vez de como las
+         secciones de un mismo documento. -->
     <section
       class="expediente__historia"
       aria-label="Historia clínica"
       appTutorialTarget="expediente-pestanas"
     >
-      <app-tabs>
+      <app-tabs appearance="browser">
         @for (bloque of bloques(); track bloque.clave) {
           <app-tab [label]="bloque.titulo + ' (' + bloque.filas.length + ')'">
+            <!-- El alta del bloque, arriba de su tabla. El expediente sigue
+                 siendo lectura: registrar acá no es atender —no abre encuentro,
+                 no cierra nada— y el cliente lo pidió textual, «primero debería
+                 poder crear un diagnóstico nuevo sobre el expediente del
+                 paciente». Va en modal, que es lo que la regla de la casa pide
+                 para toda edición que pida datos.
+
+                 Un solo botón para las siete pestañas que admiten alta, con su
+                 rótulo sacado del catálogo: siete bloques copiados eran siete
+                 sitios donde el próximo cambio se aplicaba en seis. -->
+            @if (ofreceAlta(bloque.clave)) {
+              @if (altaDe(bloque.clave); as alta) {
+                <div class="expediente__acciones-bloque">
+                  <button
+                    app-button
+                    variant="primary"
+                    size="sm"
+                    type="button"
+                    [attr.data-testid]="alta.testId"
+                    (clicked)="abrirAlta(bloque.clave)"
+                  >
+                    <!-- El «más» es el glifo universal de «agregá uno»: dice lo
+                         que el botón hace antes de leer su rótulo, que es lo
+                         que se busca cuando se recorren ocho pestañas. -->
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <path d="M12 5.5v13M5.5 12h13" />
+                    </svg>
+                    {{ alta.rotulo }}
+                  </button>
+                </div>
+              }
+            }
+
             <app-data-table
               [state]="estadoDe(bloque.filas, bloque.titulo)"
               [columns]="bloque.columnas"
@@ -85,233 +146,6 @@
       </app-tabs>
     </section>
 
-    <!-- ─── El encuentro ─────────────────────────────────────────────────
-         La única escritura de la pantalla. Va en la columna de al lado y no
-         debajo de las tablas: quien atiende escribe MIENTRAS lee la historia, y
-         mandarlo a hacer scroll hasta el fondo para dejar constancia era pedirle
-         que perdiera de vista lo que acaba de consultar. Queda pegada al hacer
-         scroll, así que la historia se recorre entera sin perderla. -->
-    <app-card
-      variant="outlined"
-      padding="lg"
-      class="expediente__encuentro"
-      appTutorialTarget="expediente-encuentro"
-    >
-      <h2 class="expediente__nota-titulo">Encuentro</h2>
-
-      @if (errorDelRegistro(); as mensaje) {
-        <app-alert tone="error" data-testid="encuentro-error">{{ mensaje }}</app-alert>
-      }
-
-      <!-- Los encuentros abiertos primero: si ya hay uno en curso, abrir otro
-           casi nunca es lo que se quiso hacer, y verlo antes lo evita. -->
-      @if (encuentrosEnCurso().length > 0) {
-        <ul class="expediente__en-curso" data-testid="encuentros-en-curso">
-          @for (encuentro of encuentrosEnCurso(); track encuentro.id) {
-            <li class="expediente__en-curso-item">
-              <div class="expediente__en-curso-datos">
-                <!-- El encuentro abierto es un estado, y va con sus tres
-                     canales. Aquí la variante es fija y no sale del catálogo:
-                     «en curso» es un derivado del contrato —el encuentro no
-                     tiene `endAt`—, no un concepto que terminología resuelva. -->
-                <app-status-seal variant="in-review" label="En curso" />
-                <span class="expediente__principal">{{ encuentro.motivo }}</span>
-                <span class="expediente__secundario">
-                  {{ encuentro.clase }}
-                  @if (encuentro.desde) {
-                    · desde {{ encuentro.desde | date: 'd MMM, HH:mm' }}
-                  }
-                </span>
-              </div>
-              <button
-                app-button
-                variant="outline"
-                type="button"
-                [isLoading]="cerrando() === encuentro.id"
-                [disabled]="cerrando() !== null"
-                (clicked)="cerrarEncuentro(encuentro)"
-              >
-                Cerrar
-              </button>
-            </li>
-          }
-        </ul>
-      }
-
-      <!-- Sin organización activa no se puede registrar: `tenantId` es el
-           custodio del encuentro y es obligatorio en el check-in. Decirlo así
-           —y no con un error tras el envío— es la diferencia entre «falta un
-           paso» y «esto falló». -->
-      @if (sinOrganizacion()) {
-        <app-alert tone="info" title="Elegí una organización">
-          Un encuentro queda bajo la custodia de una organización. Elegí una en el selector del
-          encabezado para poder registrarlo.
-        </app-alert>
-      } @else {
-        <form class="expediente__registro" (submit)="$event.preventDefault()">
-          <!-- Que el encuentro vaya a quedar atado a un turno no puede ser
-               invisible: es lo que distingue un registro trazable de una marca
-               de tiempo suelta, y quien firma tiene derecho a saber qué firma. -->
-          @if (citaDeOrigen()) {
-            <app-alert tone="info" title="Se registra sobre el turno de la agenda">
-              Este encuentro va a quedar vinculado a la cita desde la que llegaste.
-            </app-alert>
-          }
-
-          <app-form-field
-            label="Motivo de consulta"
-            hint="Opcional. Si llegaste desde la agenda, viene el motivo de la cita."
-          >
-            <app-textarea
-              [(value)]="motivo"
-              [rows]="3"
-              [maxLength]="topeDelMotivo"
-              [autoResize]="true"
-              placeholder="Por qué consulta la persona"
-            />
-          </app-form-field>
-
-          <app-form-actions
-            submitLabel="Registrar encuentro"
-            [pending]="registrando()"
-            [disabled]="!puedeRegistrar()"
-            (submitted)="registrarEncuentro()"
-          />
-        </form>
-      }
-    </app-card>
-
-    <!-- ─── Escenarios de demostración ───────────────────────────────────
-         Un clic llena el diagnóstico Y su receta coherente. Existe sólo donde
-         `PUBLIC_DEMO_PRESETS` lo pidió; los bloques de abajo tienen además su
-         barra individual, con el mismo gate. -->
-    @if (demoActiva) {
-      <div
-        class="expediente__demo expediente__ancho"
-        data-testid="expediente-escenarios-demo"
-      >
-        <span class="expediente__demo-titulo">Escenarios de demostración</span>
-        <app-badge variant="info">Demo</app-badge>
-        @for (escenario of escenariosDemo; track escenario.label) {
-          <button
-            app-button
-            variant="ghost"
-            size="sm"
-            type="button"
-            (clicked)="aplicarEscenarioDemo(escenario)"
-          >
-            {{ escenario.label }}
-          </button>
-        }
-      </div>
-    }
-
-    <!-- ─── La receta ────────────────────────────────────────────────────
-         Pegada al encuentro y no dentro de las pestañas: el recorrido es
-         check-in → ficha → recetar ahí mismo, y la pestaña de medicación es
-         lectura. Lo que necesita para escribir baja hecho —la persona, el
-         encuentro abierto y las recetas ya traducidas—; el bloque no vuelve a
-         derivarlo para que no puedan discrepar.
-
-         Va a todo el ancho y debajo de las dos columnas: trae su propia tabla y
-         su propio formulario, y metido en la columna angosta del encuentro se
-         partía en un acordeón de campos de dos palabras. -->
-    <app-medication-block
-      class="expediente__ancho"
-      appTutorialTarget="expediente-receta"
-      [patientProfileId]="pacienteDeLaFicha()"
-      [encounterId]="encuentroParaRecetar()"
-      [recetas]="recetas()"
-      [medicacionActivaConceptIds]="medicacionActivaConceptIds()"
-      [diagnosticos]="diagnosticosParaReceta()"
-      (cambio)="recargar()"
-      (descargar)="descargarReceta($event)"
-    />
-
-    <!-- ─── El diagnóstico ───────────────────────────────────────────────
-         Mismo criterio y mismo lugar que la receta: se registra desde el
-         encuentro abierto, y la pestaña de diagnósticos es lectura. Sin lista
-         propia — una condición no tiene acciones que ofrecer por fila. -->
-    <app-diagnosis-block
-      class="expediente__ancho"
-      [patientProfileId]="pacienteDeLaFicha()"
-      [encounterId]="encuentroParaRecetar()"
-      (cambio)="recargar()"
-    />
-
-    <!-- ─── Los adjuntos ─────────────────────────────────────────────────
-         Cuelgan del PACIENTE y no del encuentro: `file_links.owner_type`
-         admite USER/PATIENT/TENANT y no tiene ENCOUNTER. Es el modelo, no
-         una decisión de esta pantalla. -->
-    <app-attachments-block [patientProfileId]="pacienteDeLaFicha()" />
-
-    <!-- ─── Laboratorio e imagenología ───────────────────────────────────
-         Mismo lugar y mismo criterio que los dos de arriba: se pide desde el
-         encuentro abierto. Sin `(cambio)`, y no por olvido: el circuito
-         diagnóstico no sale de `GET /clinical/patients/:id/summary`, así que el
-         bloque lee lo suyo y se relee solo. Avisar acá haría que el expediente
-         recargara cinco bloques que no cambiaron. -->
-    <app-diagnostics-block
-      [patientProfileId]="pacienteDeLaFicha()"
-      [encounterId]="encuentroParaRecetar()"
-    />
-
-    <!-- ─── El histórico de procedimientos ───────────────────────────────
-         Cirugías y odontología (punto 7). Sigue SIN `(cambio)`, a diferencia
-         de los tres de arriba: lo que se escribe acá no aparece en
-         `GET /clinical/patients/:id/summary`, el bloque relee lo suyo, y
-         avisar recargaría cinco bloques que no cambiaron.
-
-         `[encounterId]` sí baja, y no contradice lo anterior: el histórico se
-         LEE sin encuentro —es de la persona, no de la consulta de hoy—, pero
-         un tratamiento que se registra durante una consulta pertenece a esa
-         consulta. Si no hay ninguna abierta viaja en `null` y la clave se
-         omite, que es como funcionaba hasta ahora. -->
-    <app-procedures-block
-      [patientProfileId]="pacienteDeLaFicha()"
-      [encounterId]="encuentroParaRecetar()"
-    />
-
-    <!-- ─── La internación ───────────────────────────────────────────────
-         Punto 8 del reclamo. Va al final de los bloques de escritura y con la
-         lista dentro —no en una pestaña— porque hasta ahora una internación
-         abierta no se veía en ningún lado: quien reabría la ficha no se
-         enteraba de que la persona estaba internada. -->
-    <app-admission-block
-      [patientProfileId]="pacienteDeLaFicha()"
-      [encounterId]="encuentroParaRecetar()"
-      [internaciones]="internaciones()"
-      (cambio)="recargar()"
-    />
-
-    <!-- ─── El formulario clínico de la especialidad ─────────────
-         Carril 2 · punto 1. Mismo criterio que el diagnóstico y la receta:
-         se completa desde el encuentro abierto, y usa el motor de `forms` en
-         vez de una tabla propia — es lo que le da su esquema de campos. -->
-    <app-specialty-form-block
-      class="expediente__ancho"
-      [patientProfileId]="pacienteDeLaFicha()"
-      [encounterId]="encuentroParaRecetar()"
-      (cambio)="recargar()"
-    />
-
-    <!-- ─── De dónde sale esto ───────────────────────────────────────────
-         No es relleno: un expediente que no dice de dónde viene cada bloque
-         invita a suponer que lo trae todo, y no lo trae. -->
-    <app-card variant="outlined" padding="lg" class="expediente__nota expediente__ancho">
-      <h2 class="expediente__nota-titulo">Qué se está mirando</h2>
-      <p class="expediente__nota-texto">
-        Los cinco primeros bloques salen del registro clínico estructurado; las notas, los planes y
-        los documentos, del expediente narrativo. Son dos lecturas del backend y una sola historia:
-        la separación es de quién la escribe, no de quién la lee.
-      </p>
-      <p class="expediente__nota-texto">
-        De todo lo que se puede escribir en una historia clínica, acá se registran el
-        <strong>encuentro</strong> —abrirlo y cerrarlo— y la <strong>receta</strong> —prescribirla,
-        firmarla y emitirla—, porque son lo único cuyo resultado esta misma pantalla vuelve a
-        mostrar. Diagnosticar o firmar una nota tienen su flujo propio y no cuelgan de acá.
-      </p>
-    </app-card>
   </div>
 </app-view-state-host>
 
@@ -348,6 +182,21 @@
     data-testid="expediente-descargar-atencion"
     (clicked)="descargarAtencion(fila)"
   >
+    <!-- Flecha hacia una bandeja: bajar el papel. Va con su texto, así que es
+         decorativa y no se anuncia dos veces. -->
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M12 4v10m0 0 3.5-3.5M12 14l-3.5-3.5" />
+      <path d="M5 16v2.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V16" />
+    </svg>
     Descargar PDF
   </button>
 </ng-template>
@@ -357,26 +206,278 @@
      decide si la transición pedida es válida desde el estado actual —no se
      replica esa máquina acá, para no tener dos versiones de la misma regla. -->
 <ng-template #celdaAcciones let-fila>
-  <div class="expediente__accion-estado">
-    <app-concept-select
-      [target]="targetEstadoClinico"
-      [value]="destinoEstadoDe(fila.id)"
-      (valueChange)="elegirDestinoEstado(fila.id, $event)"
-      [labels]="etiquetasDeEstadoClinico"
-      placeholder="Cambiar a…"
-    />
-    @if (destinoEstadoDe(fila.id) !== null) {
+  <!-- Un solo botón y un menú: el selector de estado y el subidor de archivos
+       se desplegaban DENTRO de la celda, y la tabla crecía de golpe. Los dos
+       piden datos, así que los dos van a un modal. La celda conserva su alto. -->
+  <button
+    app-button
+    variant="ghost"
+    size="sm"
+    type="button"
+    data-testid="expediente-acciones"
+    [attr.aria-label]="'Acciones: ' + fila.principal"
+    [appMenuTrigger]="menuDeAcciones"
+    [isLoading]="cambiandoEstado() === fila.id"
+  >
+    Acciones
+  </button>
+  <app-menu #menuDeAcciones>
+    <app-menu-item (selected)="abrirCambioDeEstado(fila)">Cambiar estado clínico…</app-menu-item>
+    <app-menu-item (selected)="abrirAdjuntos(fila, 'diagnosticos')">
+      Adjuntar archivos…
+    </app-menu-item>
+  </app-menu>
+</ng-template>
+
+<!-- Cambiar el estado clínico de un diagnóstico ya registrado. El backend
+     sigue validando la transición: esto sólo deja de deformar la tabla. -->
+@if (cambiandoEstadoDe(); as fila) {
+  <app-content-dialog
+    #dialogoDeEstado
+    heading="Cambiar el estado clínico"
+    [description]="fila.principal"
+    [dismissible]="estadoSinCambios()"
+    (dismissAttempt)="pedirDescarteDelEstado()"
+    (closed)="cerrarCambioDeEstado()"
+  >
+    <div class="expediente__accion-estado">
+      <app-concept-select
+        [target]="targetEstadoClinico"
+        [value]="destinoEstadoDe(fila.id)"
+        (valueChange)="elegirDestinoEstado(fila.id, $event)"
+        [labels]="etiquetasDeEstadoClinico"
+        placeholder="Cambiar a…"
+      />
       <button
         app-button
-        variant="outline"
+        variant="primary"
         size="sm"
         type="button"
         data-testid="expediente-cambiar-estado"
-        [disabled]="cambiandoEstado() !== null"
+        [disabled]="destinoEstadoDe(fila.id) === null || cambiandoEstado() !== null"
         (clicked)="cambiarEstadoClinico(fila)"
       >
         Aplicar
       </button>
-    }
-  </div>
+    </div>
+  </app-content-dialog>
+}
+
+<!-- La acción de apertura del detalle. Una sola plantilla para las ocho
+     tablas: el bloque se deduce de la fila. -->
+<ng-template #celdaVer let-fila>
+  <button
+    app-button
+    variant="outline"
+    size="sm"
+    type="button"
+    data-testid="expediente-ver-detalle"
+    [attr.aria-label]="'Ver detalle de ' + fila.principal"
+    (clicked)="verDetalle(fila)"
+  >
+    <!-- El ojo: mirar sin tocar. Es exactamente lo que hace el detalle, que es
+         de lectura. Decorativo, porque el botón ya tiene nombre accesible. -->
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
+      <circle cx="12" cy="12" r="2.75" />
+    </svg>
+    Ver
+  </button>
 </ng-template>
+
+<!-- El detalle de una fila, en modal. Al final de la plantilla y fuera de
+     `app-view-state-host`: vive sobre la pantalla, no dentro de la tabla. El
+     `<dialog>` nativo lo sube al top layer igual, pero declararlo acá deja
+     constancia de que no cuelga de ninguna fila. -->
+@if (filaEnDetalle(); as abierta) {
+  <app-content-dialog
+    [heading]="tituloDelDetalle()"
+    [description]="contextoDelPaciente()"
+    size="md"
+    (closed)="cerrarDetalle()"
+  >
+    <!-- Mismos rótulos que la tabla, más los vínculos que en la tabla no
+         entran. De lectura: esta pantalla no escribe, y lo que se escribe vive
+         en «Atención». -->
+    <dl class="expediente__detalle" data-testid="expediente-detalle">
+      <div class="expediente__detalle-fila">
+        <dt>Registro</dt>
+        <dd>
+          {{ abierta.fila.principal }}
+          @if (abierta.fila.secundario) {
+            <span class="expediente__secundario">{{ abierta.fila.secundario }}</span>
+          }
+        </dd>
+      </div>
+      <div class="expediente__detalle-fila">
+        <dt>Estado</dt>
+        <dd><app-badge variant="info" [value]="abierta.fila.estado" /></dd>
+      </div>
+      <div class="expediente__detalle-fila">
+        <dt>Fecha</dt>
+        <dd>
+          {{ abierta.fila.cuando ? (abierta.fila.cuando | date: 'd MMM y') : 'Sin fecha' }}
+        </dd>
+      </div>
+      @if (abierta.fila.detalle) {
+        <div class="expediente__detalle-fila">
+          <dt>Detalle</dt>
+          <dd>{{ abierta.fila.detalle }}</dd>
+        </div>
+      }
+      @for (vinculo of abierta.fila.vinculos; track vinculo.rotulo) {
+        <div class="expediente__detalle-fila">
+          <dt>{{ vinculo.rotulo }}</dt>
+          <dd>{{ vinculo.valor }}</dd>
+        </div>
+      }
+    </dl>
+  </app-content-dialog>
+}
+
+<!-- Adjuntar, para cualquier bloque que lo admita. Abre el modal en vez de
+     desplegarse dentro de la fila: el desplegable inline hacía crecer la celda
+     y deformaba la tabla. -->
+<ng-template #celdaAdjuntos let-fila>
+  <button
+    app-button
+    variant="ghost"
+    size="sm"
+    type="button"
+    data-testid="expediente-adjuntar-archivo"
+    [attr.aria-label]="'Adjuntar archivos a ' + fila.principal"
+    (clicked)="abrirAdjuntos(fila, bloqueDeLaFila(fila))"
+  >
+    <!-- El clip: el gesto de prender un papel a otro. Decorativo, porque el
+         botón ya dice a qué registro se adjunta en su `aria-label`. -->
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M16.5 8.5 9.7 15.3a2.1 2.1 0 0 0 3 3l6.8-6.8a4.2 4.2 0 0 0-5.9-6L6.8 12.3a6.2 6.2 0 0 0 8.8 8.8l5.4-5.4" />
+    </svg>
+    Adjuntar
+  </button>
+</ng-template>
+
+@if (adjuntandoA(); as destino) {
+  <app-attachment-dialog
+    [ownerType]="duenoDelAdjunto()"
+    [ownerId]="destino.id"
+    [contexto]="contextoDeLosAdjuntos()"
+    [linkVia]="enlaceDelAdjunto()"
+    [heading]="tituloDeLosAdjuntos()"
+    (attached)="recargar()"
+    (closed)="cerrarAdjuntos()"
+  />
+}
+
+<!-- ─── Las altas del expediente ──────────────────────────────────────────
+     Las siete en modal y ninguna dentro de la tabla: es la regla de la casa
+     para toda edición que pida datos. Cada bloque es EL MISMO que usa
+     «Atención» —no una copia— con el encuentro relajado: acá la cita se elige
+     de las que la persona ya tiene, y puede no haber ninguna.
+
+     Un solo `app-content-dialog` para las siete, con el bloque elegido adentro:
+     siete modales copiados eran siete encabezados, siete cierres y siete sitios
+     donde el próximo arreglo se aplicaba en seis. -->
+@if (altaAbierta(); as claveDelAlta) {
+  <app-content-dialog
+    #dialogoDelAlta
+    [heading]="tituloDelAlta()"
+    [description]="descripcionDelAlta()"
+    size="lg"
+    closeLabel="Cerrar"
+    data-testid="expediente-alta"
+    [dismissible]="altaSinCambios()"
+    (dismissAttempt)="pedirDescarteDelAlta()"
+    (closed)="cerrarAlta()"
+  >
+    @switch (claveDelAlta) {
+      @case ('diagnosticos') {
+        <app-diagnosis-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="null"
+          [exigeEncuentro]="false"
+          [citas]="citasParaElDiagnostico()"
+          (cambio)="altaRegistrada()"
+        />
+      }
+      @case ('alergias') {
+        <app-allergy-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="null"
+          [citas]="citasParaElDiagnostico()"
+          (cambio)="altaRegistrada()"
+        />
+      }
+      @case ('medicacion') {
+        <!-- La receta trae su lista: firmar y emitir son pasos de la misma
+             prescripción y dejarlos fuera obligaría a irse a «Atención» para
+             terminar lo que se acaba de escribir. -->
+        <app-medication-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="null"
+          [exigeEncuentro]="false"
+          [citas]="citasParaElDiagnostico()"
+          [recetas]="recetasEnFicha()"
+          [medicacionActivaConceptIds]="medicacionActivaConceptIds()"
+          [diagnosticos]="diagnosticosParaReceta()"
+          (cambio)="recargar()"
+          (descargar)="descargarReceta($event)"
+        />
+      }
+      @case ('observaciones') {
+        <app-observation-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="null"
+          [citas]="citasParaElDiagnostico()"
+          (cambio)="altaRegistrada()"
+        />
+      }
+      @case ('notas') {
+        <!-- La hoja en blanco no cierra el modal al guardar: cada guardado crea
+             una versión y quien escribe suele seguir escribiendo. La historia se
+             relee igual, así que la pestaña ya tiene la nota cuando se cierra. -->
+        <app-free-note-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="null"
+          [citas]="citasParaElDiagnostico()"
+          (guardada)="recargar()"
+        />
+      }
+      @case ('planes') {
+        <app-care-plan-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="null"
+          [citas]="citasParaElDiagnostico()"
+          [diagnosticos]="diagnosticosParaElPlan()"
+          (cambio)="altaRegistrada()"
+        />
+      }
+      @case ('documentos') {
+        <app-document-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="null"
+          [citas]="citasParaElDiagnostico()"
+          (cambio)="altaRegistrada()"
+        />
+      }
+    }
+  </app-content-dialog>
+}

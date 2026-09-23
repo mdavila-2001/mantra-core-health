@@ -426,6 +426,43 @@ describe('ClinicalClient', () => {
     http.expectOne('/clinical/medication-requests/rx%2F1/issue').flush(RECETA_BORRADOR);
   });
 
+  /* ---- el PDF oficial (B.3) ------------------------------------------------ */
+
+  it('downloadPrescriptionPdf pide bytes y lee el nombre de Content-Disposition', async () => {
+    const recibido = new Promise<{ blob: Blob; fileName?: string }>((resolve) => {
+      client.downloadPrescriptionPdf('rx-1').subscribe(resolve);
+    });
+
+    const req = http.expectOne((r) => r.url === '/clinical/prescriptions/rx-1/pdf');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+
+    req.flush(new Blob([new Uint8Array([0x25, 0x50, 0x44, 0x46])], { type: 'application/pdf' }), {
+      headers: { 'Content-Disposition': "attachment; filename*=UTF-8''receta-rx-1.pdf" },
+    });
+
+    await expect(recibido).resolves.toMatchObject({ fileName: 'receta-rx-1.pdf' });
+  });
+
+  it('downloadPrescriptionPdf escapa el identificador de la receta', () => {
+    client.downloadPrescriptionPdf('rx/1').subscribe();
+
+    http.expectOne('/clinical/prescriptions/rx%2F1/pdf').flush(new Blob([]));
+  });
+
+  it('downloadPrescriptionPdf sin Content-Disposition deja el nombre ausente', async () => {
+    const recibido = new Promise<{ blob: Blob; fileName?: string }>((resolve) => {
+      client.downloadPrescriptionPdf('rx-2').subscribe(resolve);
+    });
+
+    http
+      .expectOne((r) => r.url === '/clinical/prescriptions/rx-2/pdf')
+      .flush(new Blob([new Uint8Array([1])]));
+
+    const contenido = await recibido;
+    expect(contenido.fileName).toBeUndefined();
+  });
+
   /* ---- los tres registros de la ficha ------------------------------------- */
 
   it('createCondition serializa el inicio y omite lo que no vino', () => {
@@ -469,6 +506,32 @@ describe('ClinicalClient', () => {
     req.flush({ ...CONDICION_REGISTRADA, clinicalStatus: 'st-inactiva' });
 
     expect(condicion?.clinicalStatus).toBe('st-inactiva');
+  });
+
+  it('attachFileToCondition pega contra el segmento `attachments` de la condición', () => {
+    let listo = false;
+    client.attachFileToCondition('c-1', 'file-1').subscribe(() => (listo = true));
+
+    const req = http.expectOne('/clinical/conditions/c-1/attachments');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ fileId: 'file-1' });
+
+    req.flush({});
+
+    expect(listo).toBe(true);
+  });
+
+  it('attachFileToProcedure pega contra el segmento `attachments` del procedimiento (ALV-033, odontología)', () => {
+    let listo = false;
+    client.attachFileToProcedure('proc-1', 'file-1').subscribe(() => (listo = true));
+
+    const req = http.expectOne('/clinical/procedures/proc-1/attachments');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ fileId: 'file-1' });
+
+    req.flush({});
+
+    expect(listo).toBe(true);
   });
 
   /**

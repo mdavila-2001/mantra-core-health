@@ -1,0 +1,36 @@
+{
+ "package": "bolivia-instituciones-de-salud",
+ "schemaVersion": "1.0.0",
+ "extractedOn": "2026-09-17",
+ "sources": [
+  {
+   "file": "LISTA DE CLINICAS PRIVADAS.xlsx",
+   "sha256": "68e6b65d71043ed4d10029a8ab8118dad2f65cc1b2eff3487d6312b58db7c08b"
+  },
+  {
+   "file": "LISTA DE HOSPITAL DE TERCER, SEGUNDO NIVEL Y CAJAS.xlsx",
+   "sha256": "b68856f4a45491a6d9bcef332a75ae710b12dbbe800f54a8359ebc94b7db6b96"
+  },
+  {
+   "file": "LISTA DE HOSPITAL DE PRIMER NIVEL SANTA CRUZ.xlsx",
+   "sha256": "cfa02bd1e31b085bfd127d2c20dba4803a554785f3741c97caaf0d858e2d5780"
+  },
+  {
+   "file": "LISTADO DE ASEGURADORAS.xlsx",
+   "sha256": "79684a42f1d8bd57e87820bc151cec91b2d97d18a92fbe42670c78bdf3e000e7"
+  }
+ ],
+ "counts": {
+  "clinics": 22,
+  "hospitals": 17,
+  "primaryCare": 464,
+  "insurers": 19
+ },
+ "scope": "Clínicas privadas, hospitales públicos y cajas: Santa Cruz de la Sierra. Centros de primer nivel: departamento de Santa Cruz, no el padrón nacional. Aseguradoras: de alcance nacional, con domicilio legal declarado.",
+ "warnings": [
+  "Sin coordenadas: las planillas traen dirección, no geolocalización.",
+  "Cuatro clínicas no declaran razón social ni NIT; viajan en null.",
+  "Los centros de primer nivel no traen teléfono.",
+  "No es un padrón oficial completo ni un registro de habilitación vigente."
+ ]
+}

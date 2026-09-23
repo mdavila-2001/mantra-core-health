@@ -1,0 +1,36 @@
+:host {
+  display: contents;
+}
+
+.portability-dialog__estado {
+  margin: 0 0 var(--sp-3);
+}
+
+.portability-dialog__rotulo {
+  margin: 0 0 var(--sp-1);
+  font-weight: 600;
+}
+
+.portability-dialog__hash {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  word-break: break-all;
+  user-select: all;
+  padding: var(--sp-2);
+  margin-bottom: var(--sp-2);
+  background: var(--bg-inset);
+  border-radius: var(--r-sm);
+}
+
+.portability-dialog__copiado {
+  margin-left: var(--sp-2);
+  color: var(--st-success-fg);
+}
+
+.portability-dialog__descargas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}

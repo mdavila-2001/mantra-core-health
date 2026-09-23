@@ -22,6 +22,8 @@ import { Spinner } from '../../../../shared/components/atoms/spinner/spinner';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { dibujarQr } from '../../../../shared/utils/qr/dibujar-qr';
+import { displayCurrency } from '../../../../core/money/display-currency';
+import { withDisplayCurrency } from '../../../../core/money/display-currency';
 
 /** Lado del QR de pago: el mismo tamaño legible que el QR de retiro. */
 const LADO_DEL_QR = 176;
@@ -51,6 +53,14 @@ const LADO_DEL_QR = 176;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrderPayment {
+
+  /**
+   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
+   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
+   */
+  protected moneda(code?: string | null): string {
+    return displayCurrency(code);
+  }
   private readonly esBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   readonly pedido = input.required<PedidoFarmacia>();
@@ -104,6 +114,6 @@ function contenidoDelQr(pedido: PedidoFarmacia): string {
   const monto =
     pedido.totalEstimado === null
       ? 'sin-total'
-      : `${pedido.totalEstimado} ${pedido.moneda ?? ''}`.trim();
+      : withDisplayCurrency(pedido.totalEstimado, pedido.moneda);
   return `ALOVIDA-PAGO-DEMO|${pedido.id}|${monto}`;
 }

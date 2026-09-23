@@ -33,6 +33,24 @@
   gap: var(--sp-4);
 }
 
+/* La marca de la fila: el ícono sobre un cuadrado tenue del color de marca,
+   el mismo tratamiento que el encabezado de sección de las fichas. */
+.encuestas__marca {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+  color: var(--brand-primary);
+}
+
+.encuestas__marca app-nav-icon {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+}
+
 .encuestas__datos {
   flex: 1 1 18rem;
   min-width: 0;

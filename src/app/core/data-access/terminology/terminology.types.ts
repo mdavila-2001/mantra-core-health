@@ -132,6 +132,30 @@ export function listaDeTextos(
   return [...new Set(textos)];
 }
 
+/**
+ * Lee una propiedad de concepto como texto escalar.
+ *
+ * Mismo criterio defensivo que {@link listaDeTextos}: `properties` es
+ * `value_json` libre, así que un valor con la forma inesperada (por ejemplo
+ * un número donde se esperaba texto) es un dato del catálogo que este
+ * consumidor no sabe mostrar — no una falla de la pantalla. `undefined`
+ * significa «no hay nada que ofrecer», que es lo que necesita saber quien
+ * arma un campo opcional como la frecuencia por defecto de un medicamento
+ * (TAREA C-20): la ficha sin la propiedad, o con la propiedad mal formada,
+ * tiene que dejar la receta funcionando igual que si no existiera.
+ */
+export function valorDeTexto(
+  propiedades: Readonly<Record<string, unknown>> | undefined,
+  codigo: string,
+): string | undefined {
+  const valor = propiedades?.[codigo];
+  if (typeof valor !== 'string') {
+    return undefined;
+  }
+  const limpio = valor.trim();
+  return limpio === '' ? undefined : limpio;
+}
+
 /** Parámetros de la búsqueda de conceptos (UC-03-13). */
 export interface ConceptSearchQuery {
   /** Texto a buscar en el código o la denominación. */

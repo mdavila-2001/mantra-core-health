@@ -7,8 +7,9 @@
 }
 
 .receta {
-  display: grid;
-  gap: var(--sp-4);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-4);
   /* Cuatro campos cortos: a lo ancho de la tabla, la línea de la dosis quedaría
      del largo de la pantalla y sería ilegible. */
   max-inline-size: 68ch;
@@ -72,47 +73,26 @@
   gap: var(--sp-4);
 }
 
-/* Borde discontinuo a propósito: la barra es utilería de demostración, no un
-   control clínico, y tiene que leerse distinta del formulario de al lado. */
-.receta__presets {
-  display: grid;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
-  background-color: var(--bg-surface-alt);
-  border: 1px dashed var(--border-default);
-  border-radius: var(--r-md);
-}
-
-.receta__presets-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
-}
-
-.receta__presets-titulo {
-  font-size: var(--fs-caption);
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.receta__presets-items {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-
-/* Los chips en sí son el átomo `app-chip`; acá sólo se reparte la fila. */
-.receta__chips-pauta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin-top: var(--sp-1);
-}
-
 .receta__fechas-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--sp-3);
 }
 
+
+/* El panel de adjuntos de la receta recién prescrita. Mismo tratamiento que el
+   del diagnóstico: son la misma cosa en dos bloques. */
+.receta__adjuntos-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-3);
+}
+
+.receta__adjuntos-titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 500;
+}

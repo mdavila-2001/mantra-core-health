@@ -177,18 +177,21 @@ describe('PractitionerDetail', () => {
     expect(visible().fotoUrl).toBeNull();
   });
 
-  it('con foto registrada resuelve su URL', () => {
+  it('con foto registrada baja la imagen y la pinta como data: URL', async () => {
     montar();
     http
       .expectOne((r) => r.url === '/profiles/practitioners/per-9/summary')
       .flush({ ...PERFIL, photoFileId: 'foto-9' });
     http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
-    http
-      .expectOne((r) => r.url === '/common/files/foto-9/download-url')
-      .flush({ url: 'https://cdn.example/foto-9.jpg', expiresAt: '2030-01-01T00:00:00.000Z' });
+    // Por `/content`: la URL firmada apunta a `file://local/<sha>` y no carga
+    // en ningún navegador. Ojo, el backend entrega el contenido sólo a quien
+    // subió el archivo o a un rol de revisión, así que en la guía pública esto
+    // suele responder 403 y queda el avatar de iniciales.
+    http.expectOne((r) => r.url === '/common/files/foto-9/content').flush(pngFalso());
+    await esperarLaFoto(() => visible().fotoUrl !== null);
     http.verify();
 
-    expect(visible().fotoUrl).toBe('https://cdn.example/foto-9.jpg');
+    expect(visible().fotoUrl).toMatch(/^data:image\/png;base64,/);
   });
 
   /**
@@ -248,3 +251,35 @@ describe('PractitionerDetail', () => {
     expect(interno<() => { status: string }>('estado')().status).toBe('not-found');
   });
 });
+
+/**
+ * Un PNG mínimo, como Blob.
+ *
+ * La foto se resuelve bajando los bytes por `/content` y codificándolos a
+ * `data:`: lo que importa no es el contenido sino que el Blob traiga tipo.
+ */
+function pngFalso(): Blob {
+  return new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' });
+}
+
+/**
+ * Espera a que `FileReader` termine de codificar.
+ *
+ * Es asíncrono y **no** pasa por los temporizadores de `fakeAsync`, así que se
+ * sondea en vez de ceder un turno fijo, que resultaba intermitente.
+ */
+async function esperarLaFoto(hayFoto: () => boolean): Promise<void> {
+  // El predicado puede reventar mientras la pantalla todavía no está lista
+  // —la foto forma parte del `forkJoin` de la carga—, y eso es justo lo que se
+  // está esperando, no un fallo.
+  const listo = (): boolean => {
+    try {
+      return hayFoto();
+    } catch {
+      return false;
+    }
+  };
+  for (let intento = 0; intento < 50 && !listo(); intento++) {
+    await new Promise((sigue) => setTimeout(sigue, 0));
+  }
+}

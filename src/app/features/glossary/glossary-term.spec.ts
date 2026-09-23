@@ -21,8 +21,9 @@ const FICHA = {
   slug: 'hipertension-esencial',
   translated: true,
   codeSystemVersionId: 'csv-1',
-  // Ninguno de estos 64 términos curados tiene properties del catálogo NDC
-  // (TAREA-25): la ficha vacía es el caso real, no un atajo del fixture.
+  // Este término (una enfermedad, no un medicamento) no tiene properties del
+  // catálogo NDC: la ficha vacía es el caso real para él. Desde FND-25-02 los
+  // 6 términos de `pharmacology` sí las traen — ver el segundo test de abajo.
   properties: {},
   valueSets: [{ id: 'vs-1', internalCode: 'glossary-category-disease', name: 'Enfermedades' }],
   synonyms: [{ value: 'Hypertensive disorder', language: 'EN', preferred: true }],

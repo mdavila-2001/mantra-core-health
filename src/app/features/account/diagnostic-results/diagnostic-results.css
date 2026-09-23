@@ -21,9 +21,9 @@
 }
 
 .resultados__item {
-  background: var(--surface-1);
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--r-md);
   display: grid;
   gap: var(--sp-3);
   padding: var(--sp-4);
@@ -38,14 +38,61 @@
 }
 
 .resultados__titulo {
-  font-size: var(--fs-h4);
-  line-height: var(--lh-h4);
+  font-size: var(--fs-h4, var(--fs-h3));
+  line-height: var(--lh-h4, var(--lh-h3));
   margin: 0;
 }
 
 .resultados__fecha {
   color: var(--text-muted);
   margin-block: var(--sp-1) 0;
+}
+
+/* ─── FT-21 · los metadatos del resultado ───────────────────────────────────
+   Una tira separada por puntos y no una lista apilada: son cuatro datos cortos
+   que se leen de corrido, y cuatro renglones los harían pesar más que el
+   nombre del estudio, que es lo que identifica la fila. */
+.resultados__identidad {
+  min-inline-size: 0;
+  flex: 1 1 18rem;
+}
+
+.resultados__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  margin: var(--sp-1) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+/* El separador es decorativo y va en `::before`: un «·» en el marcado se leería
+   en voz alta entre cada dato. */
+.resultados__meta-dato + .resultados__meta-dato::before {
+  content: '·';
+  margin-inline-end: var(--sp-3);
+}
+
+.resultados__sellos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  flex: none;
+}
+
+/* FT-21-R01 · la descarga se ve como la acción principal de la fila. */
+.resultados__descargar-icono {
+  display: inline-flex;
+  inline-size: 1rem;
+  block-size: 1rem;
+  margin-inline-end: var(--sp-2);
+  vertical-align: -2px;
+}
+
+.resultados__formato {
+  color: var(--text-muted);
 }
 
 /* La conclusión es el texto clínico firmado: se lee, no se escanea. Un ancho
@@ -84,7 +131,7 @@
 
 .resultados__subtitulo {
   font-size: var(--fs-body);
-  font-weight: var(--fw-semibold);
+  font-weight: 600;
   margin: 0;
 }
 

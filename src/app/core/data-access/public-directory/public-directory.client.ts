@@ -5,6 +5,7 @@ import { map, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import { PUBLIC_PROFILE_PREFIX } from './public-directory.types';
 import type {
+  PublicCategory,
   PublicComment,
   PublicFeedPost,
   PublicNearbyQuery,
@@ -13,7 +14,9 @@ import type {
   PublicPostReaction,
   PublicPostSummary,
   PublicPractitionerQuery,
+  PublicPracticeSite,
   PublicProfileDetail,
+  PublicProfileReviewsPage,
   PublicSearchQuery,
   PublicSearchResult,
 } from './public-directory.types';
@@ -29,9 +32,22 @@ interface WirePage<T> {
   readonly generatedAt: string;
 }
 
-type WireSearchResult = PublicSearchResult;
+/**
+ * Una fila del buscador, tal como viaja.
+ *
+ * `category` es **opcional en el cable y obligatoria en la vista**: la API viva
+ * todavía no la manda y el simulador sí, igual que `practiceSites` en la ficha.
+ * Que el tipo de la pantalla prometa siempre la clave —con `null` cuando no
+ * hay— es lo que evita que cada consumidor tenga que acordarse de que puede
+ * faltar; {@link normalizarCategoria} lo garantiza.
+ */
+type WireSearchResult = Omit<PublicSearchResult, 'category'> & {
+  readonly category?: PublicCategory | null;
+};
 
-type WireNearbyResult = PublicNearbyResult;
+type WireNearbyResult = Omit<PublicNearbyResult, 'category'> & {
+  readonly category?: PublicCategory | null;
+};
 
 type WirePost = Omit<PublicPostSummary, 'publishedAt'> & {
   readonly publishedAt: string;
@@ -45,9 +61,16 @@ type WireFeedPost = Omit<PublicFeedPost, 'publishedAt'> & {
   readonly publishedAt: string;
 };
 
-type WireProfile = Omit<PublicProfileDetail, 'posts' | 'updatedAt'> & {
+type WireProfile = Omit<PublicProfileDetail, 'posts' | 'updatedAt' | 'practiceSites'> & {
   readonly posts: readonly WirePost[];
   readonly updatedAt: string;
+  /**
+   * **Opcional en el cable y obligatorio en la vista.** La API todavía no lo
+   * manda (P16 de `PENDIENTES-BACKEND.md`); el simulador sí. Que el contrato de
+   * la pantalla prometa siempre un arreglo es lo que evita que cada consumidor
+   * tenga que acordarse de que puede faltar — {@link toProfile} lo garantiza.
+   */
+  readonly practiceSites?: readonly PublicPracticeSite[];
 };
 
 /**
@@ -119,7 +142,7 @@ export class PublicDirectoryClient {
 
   /** `GET /public/search` — la búsqueda unificada sobre los seis verticales. */
   search(filtros: PublicSearchQuery = {}): Observable<PublicPage<PublicSearchResult>> {
-    return this.getPage<WireSearchResult>('/public/search', this.searchParams(filtros));
+    return this.getSearchPage('/public/search', this.searchParams(filtros));
   }
 
   /**
@@ -140,14 +163,14 @@ export class PublicDirectoryClient {
     if (filtros.verified !== undefined) {
       params = params.set('verified', String(filtros.verified));
     }
-    return this.getPage<WireSearchResult>('/public/search/practitioners', params);
+    return this.getSearchPage('/public/search/practitioners', params);
   }
 
   /** `GET /public/search/organizations` — hospitales, clínicas y centros. */
   searchOrganizations(
     filtros: PublicSearchQuery = {},
   ): Observable<PublicPage<PublicSearchResult>> {
-    return this.getPage<WireSearchResult>(
+    return this.getSearchPage(
       '/public/search/organizations',
       this.searchParams(filtros),
     );
@@ -157,7 +180,7 @@ export class PublicDirectoryClient {
   searchDiagnosticUnits(
     filtros: PublicSearchQuery = {},
   ): Observable<PublicPage<PublicSearchResult>> {
-    return this.getPage<WireSearchResult>(
+    return this.getSearchPage(
       '/public/search/diagnostic-units',
       this.searchParams(filtros),
     );
@@ -165,17 +188,17 @@ export class PublicDirectoryClient {
 
   /** `GET /public/search/insurers`. */
   searchInsurers(filtros: PublicSearchQuery = {}): Observable<PublicPage<PublicSearchResult>> {
-    return this.getPage<WireSearchResult>('/public/search/insurers', this.searchParams(filtros));
+    return this.getSearchPage('/public/search/insurers', this.searchParams(filtros));
   }
 
   /** `GET /public/search/pharmacies`. */
   searchPharmacies(filtros: PublicSearchQuery = {}): Observable<PublicPage<PublicSearchResult>> {
-    return this.getPage<WireSearchResult>('/public/search/pharmacies', this.searchParams(filtros));
+    return this.getSearchPage('/public/search/pharmacies', this.searchParams(filtros));
   }
 
   /** `GET /public/search/medications` — medicamentos ofertados. */
   searchMedications(filtros: PublicSearchQuery = {}): Observable<PublicPage<PublicSearchResult>> {
-    return this.getPage<WireSearchResult>(
+    return this.getSearchPage(
       '/public/search/medications',
       this.searchParams(filtros),
     );
@@ -202,7 +225,7 @@ export class PublicDirectoryClient {
     if (consulta.limit !== undefined) {
       params = params.set('limit', String(consulta.limit));
     }
-    return this.getPage<WireNearbyResult>('/public/nearby', params);
+    return this.getNearbyPage(params);
   }
 
   /**
@@ -237,6 +260,40 @@ export class PublicDirectoryClient {
         this.url(`/public/profiles/${prefijo}/${encodeURIComponent(slug)}`),
       )
       .pipe(map(toProfile));
+  }
+
+  /**
+   * `GET /public/profiles/:prefijo/:slug/reviews` — las opiniones de la ficha
+   * y el promedio del perfil (P31).
+   *
+   * Cuelga del mismo `/public/profiles/...` que {@link getProfile} y por el
+   * mismo motivo: `/p/:slug` es también la URL de esta pantalla, y mandarla a
+   * la API se comería la ruta del router.
+   *
+   * El promedio viaja con la lista y no se pide aparte porque la cabecera de
+   * opiniones y la lista se dibujan juntas: en dos peticiones, la pantalla
+   * queda con «4,6 de 5» arriba y un hueco abajo.
+   *
+   * @param kind - Qué clase de sujeto se espera. Fija el prefijo; un slug de
+   *   otra clase da 404 en vez de redirigir.
+   * @param slug - El slug tal como aparece en la URL.
+   * @param opciones - Cursor de continuación y tope de filas.
+   * @returns La página de opiniones y las dos cifras de la cabecera.
+   */
+  profileReviews(
+    kind: PublicProfileDetail['kind'],
+    slug: string,
+    opciones: { cursor?: string; limit?: number } = {},
+  ): Observable<PublicProfileReviewsPage> {
+    const prefijo = PUBLIC_PROFILE_PREFIX[kind];
+    return this.http
+      .get<WireReviewsPage>(
+        this.url(
+          `/public/profiles/${prefijo}/${encodeURIComponent(slug)}/reviews`,
+        ),
+        { params: this.paginaParams(opciones) },
+      )
+      .pipe(map(toReviewsPage));
   }
 
   /* ---- las tres lecturas sociales públicas (TAREA 01 §5.1) --------------- */
@@ -299,6 +356,9 @@ export class PublicDirectoryClient {
           items: body.items.map((comentario) => ({
             ...comentario,
             createdAt: new Date(comentario.createdAt),
+            // REQ-01-011: mismo motivo que `community.client.ts#toComment` —
+            // un servidor todavía sin desplegar el campo no lo manda.
+            media: comentario.media ?? [],
           })),
         })),
       );
@@ -336,6 +396,28 @@ export class PublicDirectoryClient {
     return params;
   }
 
+  /**
+   * Una página del buscador, con la categoría ya normalizada.
+   *
+   * La usan las siete búsquedas. Nada más que eso: el resto de la superficie
+   * pública no tiene categorías que normalizar.
+   */
+  private getSearchPage(
+    path: string,
+    params: HttpParams,
+  ): Observable<PublicPage<PublicSearchResult>> {
+    return this.getPage<WireSearchResult>(path, params).pipe(
+      map((pagina) => ({ ...pagina, items: pagina.items.map(normalizarCategoria) })),
+    );
+  }
+
+  /** Lo mismo para `nearby`, que devuelve la misma fila con su distancia. */
+  private getNearbyPage(params: HttpParams): Observable<PublicPage<PublicNearbyResult>> {
+    return this.getPage<WireNearbyResult>('/public/nearby', params).pipe(
+      map((pagina) => ({ ...pagina, items: pagina.items.map(normalizarCategoria) })),
+    );
+  }
+
   private getPage<T>(path: string, params: HttpParams): Observable<PublicPage<T>> {
     return this.http
       .get<WirePage<T>>(this.url(path), { params })
@@ -345,6 +427,19 @@ export class PublicDirectoryClient {
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+/**
+ * `category` ausente ⇒ `null`.
+ *
+ * No es un adorno defensivo: sin esto, una fila de la API viva llegaría con la
+ * clave **sin declarar**, y `'category' in fila` sería falso mientras el tipo
+ * promete que está. Ver `PublicSearchResult.category`.
+ */
+function normalizarCategoria<T extends { readonly category?: PublicCategory | null }>(
+  fila: T,
+): T & { readonly category: PublicCategory | null } {
+  return { ...fila, category: fila.category ?? null };
 }
 
 /** La envoltura de página, con su instante convertido. */
@@ -361,10 +456,66 @@ function toPage<T>(body: WirePage<T>): PublicPage<T> {
 function toProfile(body: WireProfile): PublicProfileDetail {
   return {
     ...body,
+    // Sin sedes en la respuesta, la ficha cae a `city`/`address`, que es el
+    // comportamiento que ya tenía. Ver la nota de `WireProfile`.
+    practiceSites: body.practiceSites ?? [],
     posts: body.posts.map((post) => ({
       ...post,
       publishedAt: new Date(post.publishedAt),
     })),
     updatedAt: new Date(body.updatedAt),
+  };
+}
+
+/** La página de opiniones tal como llega por el cable. */
+interface WireReviewsPage {
+  readonly items: readonly WireReview[];
+  readonly nextCursor: string | null;
+  readonly ratingAverage: number | null;
+  readonly ratingCount: number;
+}
+
+/** Una opinión tal como llega por el cable, con las fechas en texto. */
+interface WireReview {
+  readonly id: string;
+  readonly overallRating: number;
+  readonly reviewText: string | null;
+  readonly reviewerDisplayName?: string | null;
+  readonly publishedAt: string | null;
+  readonly editedAt: string | null;
+  readonly responses: readonly {
+    readonly id: string;
+    readonly responseText: string;
+    readonly publishedAt: string | null;
+  }[];
+}
+
+/**
+ * Las opiniones, con las fechas convertidas.
+ *
+ * `reviewerDisplayName` se normaliza a `null` cuando no viene: el campo es
+ * opcional en el contrato, y `undefined` en la vista obligaría a cada plantilla
+ * a distinguir dos ausencias que significan lo mismo — «esta opinión no lleva
+ * nombre» —.
+ */
+function toReviewsPage(body: WireReviewsPage): PublicProfileReviewsPage {
+  return {
+    items: body.items.map((review) => ({
+      id: review.id,
+      overallRating: review.overallRating,
+      reviewText: review.reviewText,
+      reviewerDisplayName: review.reviewerDisplayName ?? null,
+      publishedAt: review.publishedAt === null ? null : new Date(review.publishedAt),
+      editedAt: review.editedAt === null ? null : new Date(review.editedAt),
+      responses: review.responses.map((response) => ({
+        id: response.id,
+        responseText: response.responseText,
+        publishedAt:
+          response.publishedAt === null ? null : new Date(response.publishedAt),
+      })),
+    })),
+    nextCursor: body.nextCursor,
+    ratingAverage: body.ratingAverage,
+    ratingCount: body.ratingCount,
   };
 }

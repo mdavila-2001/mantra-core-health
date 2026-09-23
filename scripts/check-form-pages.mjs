@@ -67,6 +67,10 @@ const EXCEPCIONES = new Map([
     'app/features/agenda/agenda-create/agenda-create.html',
     'es un constructor de agenda semanal, no un cuestionario: la rejilla de días, el horario de cada uno y la vista previa de los turnos que van a salir se leen juntos, y partirlos en páginas de cuatro escondería justamente lo que hay que comparar',
   ],
+  [
+    'app/features/insurance/insurance-catalog/approval-rules-dialog.html',
+    'son tres preguntas, no seis campos: si la cobertura requiere autorización previa, qué documentos hay que adjuntar y la cláusula de exclusión. Los documentos son UNA lista de opciones múltiples, que se dibuja con cuatro casillas porque no existe el átomo de grupo que sí tiene el radio — el verificador cuenta controles y acá cuatro controles son una sola respuesta',
+  ],
 ]);
 
 /**
@@ -81,7 +85,12 @@ const EXCEPCIONES = new Map([
  * ignorar, y entonces deja de proteger también a lo nuevo — que es lo que este
  * verificador existe para proteger.
  */
-const PENDIENTES = new Map([]);
+const PENDIENTES = new Map([
+  [
+    'app/features/insurance/insurance-catalog/benefit-form-dialog.html',
+    '2026-09-12 · la consola de planes y coberturas lo trajo sin pasar por el motor: categoría, vigencia desde y hasta, porcentaje de cobertura, copago, deducible y tope anual son siete cosas que alguien contesta de corrido, así que es un formulario lineal y le toca el motor. Migrarlo cambia cómo se ve un diálogo modal —dos páginas y barra de avance dentro de la ventana— y eso es decisión de producto con prueba visual, no un arreglo al paso',
+  ],
+]);
 
 /** Los controles que cuentan como «un campo que hay que contestar». */
 const CONTROL =

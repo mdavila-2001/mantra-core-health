@@ -4,7 +4,7 @@ import type { RamaDepartamento } from '../../../../core/data-access/terminology/
 import { Select as AppSelect } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
-import { DepartmentMap, type DepartamentoElegible } from '../department-map/department-map';
+import { DepartmentMap, type DepartamentoElegible } from '@shared/components/organisms/department-map/department-map';
 
 /**
  * «¿En qué localidad?»: el mapa de departamentos y el select de municipio.
@@ -63,6 +63,17 @@ export class LocationPicker {
   readonly municipalityLabel = input('Ciudad o municipio');
 
   readonly municipalityHint = input('');
+
+  /**
+   * La explicación del municipio, la que el campo muestra al apuntarlo o al
+   * enfocarlo. Vacía —lo normal— no dibuja nada.
+   *
+   * Va aparte del `hint` por la misma razón que en el motor de formularios: el
+   * `hint` se lee sin hacer nada y existe en el teléfono, donde no hay puntero;
+   * la explicación es la que no cabe siempre a la vista. Ver `description` en
+   * `app-form-field`.
+   */
+  readonly municipalityDescription = input('');
 
   /** Si el municipio lleva asterisco. La validación vive en el `FormControl`. */
   readonly required = input(false);

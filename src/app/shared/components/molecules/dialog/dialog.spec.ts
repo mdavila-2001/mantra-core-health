@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { DialogService } from './dialog-service';
 import type { DialogConfig } from './dialog.types';
+import { CONFIRMAR_CAMBIOS, CONFIRMAR_DESCARTE } from './dialog.types';
 
 const CONFIRMACION: DialogConfig = {
   title: 'Anular la orden',
@@ -278,6 +279,130 @@ describe('DialogService', () => {
 
       expect(document.activeElement).toBe(disparador);
       disparador.remove();
+    });
+  });
+
+  /**
+   * D-08 (doctor, 22/09/2026) y ADR-0015: guardar una edición pregunta
+   * «¿Confirmás estos cambios?», y cancelar con cambios pregunta si se descartan.
+   *
+   * Las dos son azúcar sobre `confirm()`: lo que se prueba acá es que los
+   * textos por omisión son los pedidos, que se pueden sobreescribir, que el
+   * descarte es destructivo (foco inicial en «Seguir editando») y que el foco
+   * vuelve al botón que las abrió —que es lo que hace que, llamadas desde un
+   * «Guardar» dentro de otro modal, la persona no quede parada en el `<body>`.
+   */
+  describe('confirmar cambios y descarte (D-08)', () => {
+    it('«¿Confirmás estos cambios?» trae los textos por omisión y Confirmar resuelve true', async () => {
+      const respuesta = service.confirmarCambios();
+      await esperarRender();
+
+      expect(dialogo().querySelector('.dialog__title')?.textContent?.trim()).toBe(
+        CONFIRMAR_CAMBIOS.title,
+      );
+      expect(dialogo().querySelector('.dialog__message')?.textContent?.trim()).toBe(
+        CONFIRMAR_CAMBIOS.message,
+      );
+      // Cancelar no dice «Cancelar»: en un guardado, cancelar es volver al formulario.
+      expect(() => boton('Seguir editando')).not.toThrow();
+
+      boton('Confirmar').click();
+
+      await expect(respuesta).resolves.toBe(true);
+    });
+
+    it('«Seguir editando» resuelve false y el foco vuelve al botón que la abrió', async () => {
+      const guardar = document.createElement('button');
+      guardar.textContent = 'Guardar cambios';
+      document.body.appendChild(guardar);
+      guardar.focus();
+
+      const respuesta = service.confirmarCambios();
+      await esperarRender();
+      boton('Seguir editando').click();
+
+      await expect(respuesta).resolves.toBe(false);
+      expect(document.activeElement).toBe(guardar);
+      guardar.remove();
+    });
+
+    it('Escape sobre la confirmación de cambios resuelve false: nunca guarda por accidente', async () => {
+      const respuesta = service.confirmarCambios();
+      await esperarRender();
+
+      dialogo().dispatchEvent(new Event('cancel', { cancelable: true }));
+
+      await expect(respuesta).resolves.toBe(false);
+    });
+
+    it('lo que se pasa encima gana: el título se puede precisar sin perder el resto', async () => {
+      const respuesta = service.confirmarCambios({ title: 'Guardar el consultorio' });
+      await esperarRender();
+
+      expect(dialogo().querySelector('.dialog__title')?.textContent?.trim()).toBe(
+        'Guardar el consultorio',
+      );
+      // El mensaje y los botones siguen siendo los por omisión.
+      expect(dialogo().querySelector('.dialog__message')?.textContent?.trim()).toBe(
+        CONFIRMAR_CAMBIOS.message,
+      );
+      expect(() => boton('Seguir editando')).not.toThrow();
+
+      boton('Seguir editando').click();
+      await respuesta;
+    });
+
+    it('no es destructiva: Confirmar toma el foco inicial, como en cualquier acción normal', async () => {
+      const respuesta = service.confirmarCambios();
+      await esperarRender();
+
+      expect(boton('Confirmar').hasAttribute('autofocus')).toBe(true);
+      expect(boton('Confirmar').classList.contains('btn--danger')).toBe(false);
+
+      boton('Seguir editando').click();
+      await respuesta;
+    });
+
+    it('«¿Descartás lo que escribiste?» es destructiva: Descartar en tono de peligro y sin autofoco', async () => {
+      const respuesta = service.confirmarDescarte();
+      await esperarRender();
+
+      expect(dialogo().querySelector('.dialog__title')?.textContent?.trim()).toBe(
+        CONFIRMAR_DESCARTE.title,
+      );
+      expect(boton('Descartar').classList.contains('btn--danger')).toBe(true);
+      // Nadie descarta lo escrito apretando Enter por inercia.
+      expect(boton('Descartar').hasAttribute('autofocus')).toBe(false);
+
+      boton('Descartar').click();
+
+      await expect(respuesta).resolves.toBe(true);
+    });
+
+    it('«Seguir editando» en el descarte resuelve false y conserva el foco de origen', async () => {
+      const cancelar = document.createElement('button');
+      document.body.appendChild(cancelar);
+      cancelar.focus();
+
+      const respuesta = service.confirmarDescarte();
+      await esperarRender();
+      boton('Seguir editando').click();
+
+      await expect(respuesta).resolves.toBe(false);
+      expect(document.activeElement).toBe(cancelar);
+      cancelar.remove();
+    });
+
+    it('confirm() no cambió para nadie: sigue con «Confirmar» y «Cancelar»', async () => {
+      const respuesta = service.confirm(CONFIRMACION);
+      await esperarRender();
+
+      expect(() => boton('Confirmar')).not.toThrow();
+      expect(() => boton('Cancelar')).not.toThrow();
+      expect(() => boton('Seguir editando')).toThrow();
+
+      boton('Cancelar').click();
+      await respuesta;
     });
   });
 

@@ -1,0 +1,88 @@
+<!-- El velo. Cierra al tocarlo y con Escape, como el resto de las capas del
+     hilo; el `tabindex` es lo que hace que Escape llegue sin haber tabulado. -->
+<div
+  #hoja
+  class="contacto"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Información del contacto"
+  tabindex="-1"
+  data-testid="hilo-contacto"
+  (click)="closeIfBackdrop($event)"
+  (keydown.escape)="close()"
+>
+  <section class="contacto__hoja" role="document">
+    <header class="contacto__cabecera">
+      <h2 class="contacto__titulo">Información del contacto</h2>
+      <button
+        class="contacto__cerrar"
+        type="button"
+        data-testid="hilo-contacto-cerrar"
+        aria-label="Cerrar la información del contacto"
+        (click)="close()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
+      </button>
+    </header>
+
+    <div class="contacto__cuerpo">
+      <app-avatar
+        class="contacto__avatar"
+        [src]="avatarUrl()"
+        [name]="name()"
+        size="xl"
+      />
+
+      <p class="contacto__nombre" data-testid="hilo-contacto-nombre">
+        {{ name() }}
+        @if (verified()) {
+          <span class="contacto__sello" data-testid="hilo-contacto-verificado" title="Perfil verificado">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="m12 2.6 2.4 1.8 3-.2 1 2.8 2.4 1.7-1 2.8 1 2.8-2.4 1.7-1 2.8-3-.2L12 21.4 9.6 19.6l-3 .2-1-2.8-2.4-1.7 1-2.8-1-2.8L5.6 7l1-2.8 3 .2z" /><path d="m8.6 12.2 2.3 2.3 4.5-4.7" fill="none" stroke="var(--sup-tarjeta)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            <span class="solo-lectores">Perfil verificado</span>
+          </span>
+        }
+      </p>
+
+      @if (profile()?.headline; as titular) {
+        <p class="contacto__titular">{{ titular }}</p>
+      }
+
+      @if (loading()) {
+        <p class="contacto__estado" role="status">Cargando el perfil…</p>
+      }
+
+      @if (failed()) {
+        <p class="contacto__estado" role="status" data-testid="hilo-contacto-error">
+          No pudimos cargar el resto del perfil.
+        </p>
+      }
+
+      @if (profile()?.biography; as biografia) {
+        <div class="contacto__bloque">
+          <h3 class="contacto__rotulo">Acerca de</h3>
+          <p class="contacto__texto">{{ biografia }}</p>
+        </div>
+      }
+
+      @if (publicLink(); as destino) {
+        <a
+          class="contacto__accion"
+          data-testid="hilo-contacto-ficha"
+          [routerLink]="destino"
+        >
+          <span class="contacto__accion-icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M14 4h6v6M20 4l-8.5 8.5" /><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" /></svg>
+          </span>
+          Ver ficha pública
+        </a>
+      } @else if (!loading()) {
+        <!-- Decirlo es parte de la respuesta: un panel que calla deja pensando
+             que falta un botón. Un paciente no tiene ficha pública, y eso no es
+             una carencia del chat. -->
+        <p class="contacto__nota" data-testid="hilo-contacto-sin-ficha">
+          Este perfil no tiene ficha pública.
+        </p>
+      }
+    </div>
+  </section>
+</div>

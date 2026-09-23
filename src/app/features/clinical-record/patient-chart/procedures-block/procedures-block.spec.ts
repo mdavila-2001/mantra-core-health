@@ -290,6 +290,44 @@ describe('ProceduresBlock', () => {
     });
   });
 
+  /**
+   * Cirugía y odontología ya no viven pegadas bajo «Procedimiento»: cada una
+   * es su propia opción del selector, con su propio permiso de servidor. Sin
+   * `modo`, alguien eligiendo odontología igual disparaba —y a veces
+   * bloqueaba— la lectura quirúrgica, con el aviso de permiso denegado en
+   * medio de un formulario que no pedía nada de eso.
+   */
+  describe('el modo acota qué mitad se pide y se dibuja', () => {
+    it('con modo="odontologia" no pide ni dibuja lo quirúrgico', () => {
+      fixture.componentRef.setInput('modo', 'odontologia');
+      fixture.detectChanges();
+
+      http.expectNone((r) => r.url === '/procedure-cases');
+      expect(texto()).not.toContain('Cirugías');
+      expect(texto()).not.toContain('No podés ver el histórico quirúrgico');
+
+      http.expectOne((r) => r.url === '/dental-procedures').flush({ items: [], total: 0 });
+      http.expectOne((r) => r.url === '/dental-procedures/catalog').flush(CATALOGO);
+      fixture.detectChanges();
+
+      expect(texto()).toContain('Odontología');
+    });
+
+    it('con modo="cirugia" no pide ni dibuja lo odontológico', () => {
+      fixture.componentRef.setInput('modo', 'cirugia');
+      fixture.detectChanges();
+
+      http.expectNone((r) => r.url === '/dental-procedures');
+      http.expectNone((r) => r.url === '/dental-procedures/catalog');
+      expect(texto()).not.toContain('Odontología');
+
+      http.expectOne((r) => r.url === '/procedure-cases').flush({ items: [], total: 0 });
+      fixture.detectChanges();
+
+      expect(texto()).toContain('Cirugías');
+    });
+  });
+
   describe('el alta odontológica', () => {
     /**
      * Sin catálogo los selectores estarían vacíos y el formulario mandaría un
@@ -440,6 +478,61 @@ describe('ProceduresBlock', () => {
 
       expect(componente['caraDemasiadoLarga']()).toBe(true);
       expect(componente['puedeRegistrar']()).toBe(false);
+    });
+  });
+
+  describe('adjuntar un archivo a un tratamiento (ALV-033, odontología)', () => {
+    /**
+     * A diferencia del diagnóstico, este histórico ya llega completo en cada
+     * carga: la acción se ofrece por fila y no sólo tras el alta, así que un
+     * tratamiento viejo —no sólo el recién registrado— puede recibir un adjunto.
+     */
+    it('«Adjuntar archivo» abre el modal de ESE tratamiento y no de otro', () => {
+      arrancar({
+        dental: {
+          items: [TRATAMIENTO, { ...TRATAMIENTO, id: 'd-2' }],
+          total: 2,
+        },
+      });
+
+      componente['abrirAdjuntos']('d-1');
+      fixture.detectChanges();
+
+      const html = fixture.nativeElement as HTMLElement;
+      const modales = html.querySelectorAll('app-attachment-dialog');
+      expect(modales).toHaveLength(1);
+      expect(componente['adjuntandoArchivoA']()).toBe('d-1');
+    });
+
+    /**
+     * El subidor se desplegaba **dentro del renglón** y la lista crecía de
+     * golpe. Ahora está en un modal: el renglón conserva su alto.
+     */
+    it('el subidor ya no se despliega dentro de la lista', () => {
+      arrancar({ dental: { items: [TRATAMIENTO], total: 1 } });
+
+      componente['abrirAdjuntos']('d-1');
+      fixture.detectChanges();
+      const html = fixture.nativeElement as HTMLElement;
+      expect(html.querySelector('ol app-attachment-uploader')).toBeNull();
+
+      componente['cerrarAdjuntos']();
+      fixture.detectChanges();
+      expect(html.querySelector('app-attachment-dialog')).toBeNull();
+    });
+
+    it('el vínculo del adjunto pasa por `clinical`, no por el genérico de `common`', () => {
+      arrancar({ dental: { items: [TRATAMIENTO], total: 1 } });
+
+      const enlazar = componente['enlazarAdjuntoAlTratamiento'] as (
+        fileId: string,
+        procedureId: string,
+      ) => { subscribe: (o: unknown) => void };
+      enlazar('file-1', 'd-1').subscribe({ next: () => undefined });
+
+      http
+        .expectOne('/clinical/procedures/d-1/attachments')
+        .flush({ id: 'link-1', fileId: 'file-1', ownerId: 'd-1', createdAt: '2026-01-01' });
     });
   });
 });

@@ -59,6 +59,373 @@
             (pasoVisible)="recordarPaso($event)"
             (enviado)="submit()"
           >
+            <!-- Los tres nombres entran como campo custom bajo `name` porque
+                 el motor no admite más de cuatro campos por página: con dos
+                 apellidos y tres nombres serían cinco. El motor valida el
+                 obligatorio porque el control sigue existiendo; lo que cambia
+                 es quién lo dibuja. -->
+            <ng-template appCampoPersonalizado="name">
+              <div class="registro__nombres">
+                <app-form-field class="registro__nombre" label="Primer nombre" [required]="true">
+                  <app-input
+                    testId="registro-pro-nombre"
+                    autocomplete="given-name"
+                    placeholder="Ana"
+                    [value]="valorDeNombre('name')"
+                    [hasError]="primerNombreEnRojo()"
+                    (valueChange)="escribirNombre('name', $event)"
+                  />
+                </app-form-field>
+
+                <app-form-field
+                  class="registro__nombre"
+                  label="Segundo nombre"
+                  hint="Si no tenés, dejalo vacío."
+                >
+                  <app-input
+                    testId="registro-pro-segundo-nombre"
+                    autocomplete="additional-name"
+                    placeholder="Lucía"
+                    [value]="valorDeNombre('middleName')"
+                    (valueChange)="escribirNombre('middleName', $event)"
+                  />
+                </app-form-field>
+
+                <app-form-field class="registro__nombre" label="Tercer nombre">
+                  <app-input
+                    testId="registro-pro-tercer-nombre"
+                    placeholder="María"
+                    [value]="valorDeNombre('thirdName')"
+                    (valueChange)="escribirNombre('thirdName', $event)"
+                  />
+                </app-form-field>
+
+                <!-- Hay gente con cuatro y cinco nombres. En vez de casillas
+                     fijas que casi nadie usa, se agregan las que hagan falta. -->
+                @for (extra of nombresExtra(); track $index) {
+                  <app-form-field class="registro__nombre" [label]="'Nombre ' + ($index + 4)">
+                    <div class="registro__nombre-extra">
+                      <app-input
+                        [testId]="'registro-pro-nombre-extra-' + $index"
+                        placeholder="Otro nombre"
+                        [value]="extra"
+                        (valueChange)="escribirNombreExtra($index, $event)"
+                      />
+                      <button
+                        app-button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        [iconOnly]="true"
+                        [attr.aria-label]="'Quitar el nombre ' + ($index + 4)"
+                        [appTooltip]="'Quitar el nombre ' + ($index + 4)"
+                        [attr.data-testid]="'registro-pro-quitar-nombre-' + $index"
+                        (clicked)="quitarNombre($index)"
+                      >
+                        <app-nav-icon name="remove" />
+                      </button>
+                    </div>
+                  </app-form-field>
+                }
+
+                <button
+                  app-button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  data-testid="registro-pro-agregar-nombre"
+                  (clicked)="agregarNombre()"
+                >
+                  + Agregar otro nombre
+                </button>
+              </div>
+            </ng-template>
+
+            <!-- El título profesional se busca escribiendo: la lista es
+                 cerrada —son doce— pero el filtro es local, sin una sola
+                 petición más. Escribe en el mismo
+                 `FormControl`, que es de donde cuelgan el colegio automático y
+                 la limpieza de especialidades. -->
+            <ng-template appCampoPersonalizado="professionalTitle">
+              <app-reference-combobox
+                data-testid="registro-pro-titulo"
+                label="Título profesional"
+                placeholder="Buscá tu título profesional…"
+                emptyMessage="Ningún título profesional coincide."
+                [options]="titulosProfesionalesFiltrados()"
+                [selected]="tituloProfesionalSeleccionado()"
+                [minQueryLength]="0"
+                (searched)="busquedaTituloProfesional.set($event)"
+                (selectionChange)="elegirTituloProfesional($event)"
+              />
+            </ng-template>
+
+            <!-- Dónde estudiaste la profesión con la que ejercés. Los tres
+                 son opcionales y de texto libre: no hay padrón de universidades
+                 en ninguna capa y sólo existen dos conceptos de país en toda la
+                 aplicación (ver `CampoDeEstudio`). -->
+            <ng-template appCampoPersonalizado="professionalTitleEducation">
+              <div class="registro__estudio">
+                @for (campo of camposDeEstudioDelTitulo; track campo.key) {
+                  <app-form-field
+                    class="registro__estudio-campo"
+                    [label]="campo.label"
+                    hint="Opcional."
+                  >
+                    <app-input
+                      [testId]="campo.testId"
+                      [placeholder]="campo.placeholder"
+                      [value]="valorDeEstudio(campo.key)"
+                      (valueChange)="escribirEstudio(campo.key, $event)"
+                    />
+                  </app-form-field>
+                }
+              </div>
+            </ng-template>
+
+            <!-- El diploma del título profesional. Va acá, con su título, y no
+                 con los respaldos de la matrícula: el título es obligatorio y
+                 su archivo no, y mezclarlos haría dudar de cuál frena el paso. -->
+            <ng-template appCampoPersonalizado="professionalTitleFile">
+              <div class="registro-respaldo">
+                <app-file-input [files]="attachmentFiles()['professional-title'] ?? []"
+                  [accept]="formatosDeRespaldo" [maxSizeBytes]="maxAttachmentBytes"
+                  accessibleLabel="Título profesional" testId="registro-pro-respaldo-titulo" removeTestId="registro-pro-respaldo-quitar-titulo"
+                  (filesChange)="updateSupportFiles('professional-title', $event)" />
+                <p class="registro-respaldos__ayuda">PDF, JPG o PNG. Máximo 5 MB.</p>
+                @if (errorAdjunto(); as error) {
+                  <p class="registro-respaldos__error" role="alert">{{ error }}</p>
+                }
+              </div>
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="profilePhotoBase64">
+              <div class="registro-foto">
+                <div class="registro-foto__avatar">
+                  <app-avatar
+                    [src]="fotoBase64()"
+                    [name]="nombreCompleto()"
+                    size="xl"
+                    alt="Foto de perfil"
+                  />
+                </div>
+                <div class="registro-foto__acciones">
+                  <label [appFileDropTarget]="inputFoto" (fileDropRejected)="errorFoto.set($event)" class="registro-foto__boton-subir">
+                    <input
+                      #inputFoto
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      class="sr-only"
+                      data-testid="registro-pro-foto-input"
+                      (change)="alSeleccionarFoto($event)"
+                    />
+                    <span class="registro-foto__label-btn">
+                      {{ fotoBase64() ? 'Cambiar foto' : 'Subir foto de perfil' }}
+                    </span>
+                  </label>
+                  @if (fotoBase64()) {
+                    <button
+                      type="button"
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      data-testid="registro-pro-foto-quitar"
+                      (clicked)="quitarFoto(inputFoto)"
+                    >
+                      Quitar foto
+                    </button>
+                  }
+                  <p class="registro-foto__ayuda">Formatos JPG, PNG o WebP. Máximo 5 MB.</p>
+                  @if (errorFoto(); as error) {
+                    <p class="registro-foto__error" role="alert">{{ error }}</p>
+                  }
+                </div>
+              </div>
+            </ng-template>
+
+            <!--
+              Respaldos de la habilitación. Cada archivo va pegado al número
+              que respalda, no en una bolsa común de adjuntos: quien verifica
+              tiene que saber cuál corresponde a cuál sin abrirlos.
+            -->
+            <ng-template appCampoPersonalizado="credentialAttachments">
+              <div class="registro-respaldos">
+                @for (respaldo of respaldosDeHabilitacion(); track respaldo.clave) {
+                  <div class="registro-respaldo">
+                    <p class="registro-respaldo__titulo">{{ respaldo.etiqueta }}</p>
+                    <p class="registro-respaldo__dato">{{ respaldo.valor || 'Sin cargar' }}</p>
+                    <app-file-input [files]="attachmentFiles()[respaldo.clave] ?? []"
+                      [accept]="formatosDeRespaldo" [maxSizeBytes]="maxAttachmentBytes"
+                      [accessibleLabel]="respaldo.etiqueta" [testId]="'registro-pro-respaldo-' + respaldo.clave"
+                      [removeTestId]="'registro-pro-respaldo-quitar-' + respaldo.clave"
+                      (filesChange)="updateSupportFiles(respaldo.clave, $event)" />
+                  </div>
+                }
+                <p class="registro-respaldos__ayuda">PDF, JPG o PNG. Máximo 5 MB por archivo.</p>
+                @if (errorAdjunto(); as error) {
+                  <p class="registro-respaldos__error" role="alert">{{ error }}</p>
+                }
+              </div>
+            </ng-template>
+
+            <!--
+              Los cuatro tipos de título, cada uno con su lista propia. La fila
+              lleva nombre, universidad, país, ciudad y archivo: un adjunto
+              suelto no dice de qué título es, y quien verifica necesita saber
+              además dónde se cursó. El primer tipo es «Otra profesión», que es
+              donde entra la segunda carrera del que estudió dos.
+            -->
+            <ng-template appCampoPersonalizado="academicTitles">
+              <div class="registro-titulos">
+                <!-- Qué se guarda hoy y qué no, dicho antes de que lo escriban.
+                     Las casillas de nombre, país, ciudad y diploma se siguen
+                     preguntando (no se ocultan en esta pasada) pero no viajan:
+                     sin esta línea la pantalla prometía guardar lo que descarta. -->
+                <p class="registro-titulos__ayuda" data-testid="registro-pro-titulos-alcance">
+                  En esta alta se guardan el tipo, el número y la universidad de cada título. El
+                  nombre, el país, la ciudad y el archivo que completes aquí todavía no se
+                  guardan.
+                </p>
+                <!-- Sin catálogo de tipos, una fila con número no se puede
+                     mandar: el contrato exige el concepto. Se avisa acá, donde
+                     se escriben, y con el botón que vuelve a pedirlo —mismo
+                     patrón que el catálogo de departamentos—. Lo ya escrito no
+                     se pierde: las filas viven en su propio signal. -->
+                @if (catalogoTiposDeTituloCaido()) {
+                  <p class="registro__catalogo-caido" data-testid="registro-pro-titulos-catalogo-caido">
+                    No pudimos traer los tipos de título.
+                    <button
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      data-testid="registro-pro-titulos-reintentar"
+                      (clicked)="reintentarTiposDeCredencial()"
+                    >
+                      Reintentar
+                    </button>
+                  </p>
+                }
+                @for (tipo of tiposDeTitulo; track tipo.codigo) {
+                  <section class="registro-titulo-tipo">
+                    <h3 class="registro-titulo-tipo__nombre">{{ tipo.etiqueta }}</h3>
+                    <p class="registro-titulo-tipo__ayuda">{{ tipo.ayuda }}</p>
+
+                    @for (titulo of titulosDe(tipo.codigo); track titulo.id) {
+                      <!-- La fila lleva marca propia además de las de sus
+                           campos: el id de una fila es un uuid del navegador,
+                           así que una prueba no puede nombrarlo. Con esto se
+                           las cuenta y se las recorre por tipo y por orden. -->
+                      <div class="registro-titulo" [attr.data-testid]="'registro-pro-fila-' + tipo.codigo">
+                        <label class="registro-titulo__campo">
+                          <span class="sr-only">Nombre de {{ tipo.singular }}</span>
+                          <input
+                            type="text"
+                            class="registro-titulo__nombre"
+                            [placeholder]="tipo.placeholderNombre"
+                            [value]="titulo.nombre"
+                            [attr.data-testid]="'registro-pro-titulo-nombre-' + titulo.id"
+                            (input)="escribirDatoDeTitulo(titulo.id, 'nombre', $any($event.target).value)"
+                          />
+                        </label>
+
+                        <!-- El número del diploma. Es el único obligatorio de la
+                             fila: la columna que lo recibe es NOT NULL, así que
+                             sin él la fila no se puede guardar. -->
+                        <label class="registro-titulo__campo">
+                          <span class="sr-only">Número de {{ tipo.singular }}</span>
+                          <input
+                            type="text"
+                            class="registro-titulo__dato"
+                            placeholder="Número del diploma"
+                            maxlength="100"
+                            [value]="titulo.numero"
+                            [attr.aria-invalid]="tituloSinNumero(titulo) ? 'true' : null"
+                            [attr.aria-describedby]="
+                              tituloSinNumero(titulo) ? 'registro-pro-titulo-numero-error-' + titulo.id : null
+                            "
+                            [class.registro-titulo__dato--invalido]="tituloSinNumero(titulo)"
+                            [attr.data-testid]="'registro-pro-titulo-numero-' + titulo.id"
+                            (input)="escribirDatoDeTitulo(titulo.id, 'numero', $any($event.target).value)"
+                          />
+                          <!-- El aviso vive en la fila, al lado del campo que
+                               hay que corregir: el resumen de arriba dice QUÉ
+                               pasa y esto dice DÓNDE. -->
+                          @if (tituloSinNumero(titulo)) {
+                            <span
+                              class="registro-titulo__error"
+                              [id]="'registro-pro-titulo-numero-error-' + titulo.id"
+                              [attr.data-testid]="'registro-pro-titulo-numero-error-' + titulo.id"
+                            >
+                              Falta el número de este {{ tipo.singular }}.
+                            </span>
+                          }
+                        </label>
+
+                        <!-- Dónde se cursó. Los tres son opcionales y de texto
+                             libre, por lo mismo que en el título principal. -->
+                        <div class="registro-titulo__estudio">
+                          @for (campo of camposDeEstudioDeFila; track campo.campo) {
+                            <label class="registro-titulo__campo">
+                              <span class="sr-only">
+                                {{ campo.label }} de {{ tipo.singular }}
+                              </span>
+                              <input
+                                type="text"
+                                class="registro-titulo__dato"
+                                [placeholder]="campo.placeholder"
+                                [attr.maxlength]="campo.maxlength"
+                                [value]="titulo[campo.campo]"
+                                [attr.data-testid]="
+                                  'registro-pro-titulo-' + campo.campo + '-' + titulo.id
+                                "
+                                (input)="
+                                  escribirDatoDeTitulo(
+                                    titulo.id,
+                                    campo.campo,
+                                    $any($event.target).value
+                                  )
+                                "
+                              />
+                            </label>
+                          }
+                        </div>
+                        <app-file-input [files]="attachmentFiles()[titulo.id] ?? []"
+                          [accept]="formatosDeRespaldo" [maxSizeBytes]="maxAttachmentBytes"
+                          [accessibleLabel]="tipo.singular" [testId]="'registro-pro-titulo-archivo-' + titulo.id"
+                          (filesChange)="updateTitleFiles(titulo.id, $event)" />
+                        <button
+                          type="button"
+                          app-button
+                          variant="ghost"
+                          size="sm"
+                          [attr.aria-label]="'Quitar ' + tipo.singular"
+                          [attr.data-testid]="'registro-pro-titulo-quitar-' + titulo.id"
+                          (clicked)="quitarTitulo(titulo.id)"
+                        >
+                          Quitar
+                        </button>
+                      </div>
+                    }
+
+                    <button
+                      type="button"
+                      app-button
+                      variant="secondary"
+                      size="sm"
+                      [attr.data-testid]="'registro-pro-agregar-' + tipo.codigo"
+                      (clicked)="agregarTitulo(tipo.codigo)"
+                    >
+                      + Agregar {{ tipo.singular }}
+                    </button>
+                  </section>
+                }
+                <p class="registro-titulos__ayuda">PDF, JPG o PNG. Máximo 5 MB por archivo.</p>
+                @if (errorAdjunto(); as error) {
+                  <p class="registro-titulos__error" role="alert">{{ error }}</p>
+                }
+              </div>
+            </ng-template>
+
             <ng-template appCampoPersonalizado="issuerAdministrativeAreaConceptId">
               <p class="registro__catalogo-caido">
                 No pudimos traer el catálogo de departamentos.
@@ -72,6 +439,49 @@
                  el mismo select acotado que el alta de paciente
                  (`app-location-picker`). Acá es opcional, así que un catálogo
                  caído no frena el alta: se avisa y se sigue (AC-05-15). -->
+            <!-- Las especialidades que se agregan además de la principal. Antes
+                 eran dos casillas fijas que casi nadie llenaba, y un techo de
+                 tres que dejaba afuera a quien tiene más. -->
+            <ng-template appCampoPersonalizado="especialidadesExtra">
+              @for (extra of especialidadesExtra(); track $index) {
+                <app-form-field [label]="'Especialidad ' + ($index + 2)">
+                  <div class="registro__especialidad-extra">
+                    <app-select
+                      [attr.data-testid]="'registro-pro-especialidad-extra-' + $index"
+                      [options]="opcionesEspecialidadFiltradas()"
+                      placeholder="Sin especificar"
+                      [value]="extra === '' ? null : extra"
+                      (valueChange)="elegirEspecialidadExtra($index, $event)"
+                    />
+                    <button
+                      app-button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      [iconOnly]="true"
+                      [attr.aria-label]="'Quitar la especialidad ' + ($index + 2)"
+                      [appTooltip]="'Quitar la especialidad ' + ($index + 2)"
+                      [attr.data-testid]="'registro-pro-quitar-especialidad-' + $index"
+                      (clicked)="quitarEspecialidad($index)"
+                    >
+                      <app-nav-icon name="remove" />
+                    </button>
+                  </div>
+                </app-form-field>
+              }
+
+              <button
+                app-button
+                type="button"
+                variant="ghost"
+                size="sm"
+                data-testid="registro-pro-agregar-especialidad"
+                (clicked)="agregarEspecialidad()"
+              >
+                + Agregar otra especialidad
+              </button>
+            </ng-template>
+
             <ng-template appCampoPersonalizado="municipio">
               @if (catalogoMunicipiosCaido()) {
                 <p class="registro__catalogo-caido">
@@ -91,6 +501,60 @@
                   municipalityHint="Sólo se ofrecen las del departamento que elegiste."
                 />
               }
+            </ng-template>
+
+            <!-- El punto del domicilio sobre el mapa. Es el MISMO componente
+                 que usa el alta de paciente para su casa y su trabajo: pedir
+                 permiso al navegador, dibujar el pin, dejar que alguien mire el
+                 plano y diga que sí, y avisar en voz alta si no lo dice. -->
+            <!-- La localidad del consultorio: el mismo control que el
+                 domicilio, con su propio estado. Son dos lugares distintos y
+                 hay quien vive en una ciudad y atiende en otra. -->
+            <ng-template appCampoPersonalizado="municipioConsultorio">
+              @if (catalogoMunicipiosCaido()) {
+                <p class="registro__catalogo-caido">
+                  No pudimos traer el catálogo de ciudades. Podés seguir sin esto.
+                  <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
+                    Reintentar
+                  </button>
+                </p>
+              } @else {
+                <app-location-picker
+                  testId="registration-practitioner-office"
+                  [ramas]="ramasMunicipios()"
+                  [value]="municipioConsultorio()"
+                  (valueChange)="municipioConsultorio.set($event)"
+                  mapLabel="Mapa de Bolivia: elegí el departamento donde está tu consultorio"
+                  municipalityLabel="Localidad del consultorio (opcional)"
+                  municipalityHint="Sólo se ofrecen las del departamento que elegiste."
+                />
+              }
+            </ng-template>
+
+            <!-- El punto del consultorio. Mismo componente que el domicilio, y
+                 con su propia confirmación: confirmar uno no confirma el otro. -->
+            <ng-template appCampoPersonalizado="gpsConsultorio">
+              <app-ubicacion-picker
+                pinId="consultorio"
+                etiquetaConfirmada="Tu consultorio"
+                pregunta="¿Es acá donde atendés? Movete por el mapa para comprobarlo."
+                etiquetaQuitar="Quitar la ubicación de tu consultorio"
+                etiquetaMapa="La ubicación de tu consultorio en el mapa"
+                [ids]="idsUbicacionConsultorio"
+                (confirmado)="gpsConsultorio.set($event)"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="gpsDomicilio">
+              <app-ubicacion-picker
+                pinId="domicilio"
+                etiquetaConfirmada="Tu dirección"
+                pregunta="¿Es acá donde vivís? Movete por el mapa para comprobarlo."
+                etiquetaQuitar="Quitar la ubicación de tu domicilio"
+                etiquetaMapa="Tu ubicación actual en el mapa"
+                [ids]="idsUbicacionDomicilio"
+                (confirmado)="gpsDomicilio.set($event)"
+              />
             </ng-template>
           </app-paginated-form>
         </div>

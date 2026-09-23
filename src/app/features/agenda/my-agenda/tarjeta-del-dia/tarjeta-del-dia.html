@@ -1,27 +1,44 @@
-<div class="tarjeta" role="dialog" aria-label="Agregar algo al día">
-  <header class="tarjeta__barra">
-    <h3 class="tarjeta__titulo">{{ titulo() }}</h3>
-    <button
-      app-button
-      variant="ghost"
-      size="sm"
-      type="button"
-      aria-label="Cerrar sin guardar"
-      (clicked)="cerrada.emit()"
-    >
-      ✕
-    </button>
-  </header>
+<!-- C-10 (2026-09-20) · La tarjeta es un MODAL, no un formulario al pie.
 
+     Antes se dibujaba debajo del día: había que bajar para encontrarla, y el
+     día seguía siendo tocable detrás. `app-content-dialog` monta el `<dialog>`
+     nativo y con él trae lo difícil —fondo, inertización de lo que queda
+     detrás, trampa de foco, `Escape` y devolución del foco al disparador— sin
+     que haya que escribirlo acá. Se reusa y no se crea uno propio: además,
+     `shared/**` no es de este carril.
+
+     `dismissible` en `false`: es una edición. `Escape` y el fondo dejan de
+     cerrar solos y pasan por `(dismissAttempt)`, que pregunta si se descarta lo
+     escrito **sólo si hay algo escrito**. Sin eso, un `Escape` de reflejo pierde
+     el paciente y el motivo ya cargados. -->
+<app-content-dialog
+  [heading]="titulo()"
+  description="Agregá una cita o un rato ocupado a este día."
+  size="md"
+  [dismissible]="!hayAlgoEscrito()"
+  (dismissAttempt)="pedirDescarte()"
+  (closed)="cerrada.emit()"
+>
   <form class="tarjeta__cuerpo" (submit)="$event.preventDefault(); guardar()">
-    <div class="tarjeta__rango">
-      <app-form-field label="Desde" [required]="true">
-        <app-input [(value)]="desde" placeholder="10:00" />
-      </app-form-field>
-      <app-form-field label="Hasta" [required]="true">
-        <app-input [(value)]="hasta" placeholder="10:45" />
-      </app-form-field>
-    </div>
+    <!-- C-10 · sobre un cupo ya programado la franja NO se pregunta: es dato.
+         Sobre aire —un hueco sin cupo detrás— los campos siguen, porque ahí la
+         franja no existe hasta que alguien la escriba. -->
+    @if (desdeUnCupo()) {
+      <p class="tarjeta__franja" data-testid="tarjeta-franja-del-cupo">
+        <span class="tarjeta__franja-rotulo">Franja</span>
+        <strong class="tarjeta__franja-valor">{{ franjaDelCupo() }}</strong>
+        <span class="tarjeta__franja-nota">La pone el cupo del horario publicado.</span>
+      </p>
+    } @else {
+      <div class="tarjeta__rango">
+        <app-form-field label="Desde" [required]="true">
+          <app-input [(value)]="desde" placeholder="10:00" />
+        </app-form-field>
+        <app-form-field label="Hasta" [required]="true">
+          <app-input [(value)]="hasta" placeholder="10:45" />
+        </app-form-field>
+      </div>
+    }
 
     <app-form-field
       label="¿Con quién?"
@@ -40,25 +57,23 @@
 
     <!-- La modalidad sólo existe si hay paciente: un rato ocupado del doctor no
          se atiende «por videollamada», y ofrecerlo sería un control que no
-         significa nada. Aparece con el paciente, como la pregunta que sigue. -->
+         significa nada. Aparece con el paciente, como la pregunta que sigue.
+
+         C-21 · alternancia y no radios: tres opciones excluyentes, que es para
+         lo que existe `segmented-control`. Se elige con flechas y un solo
+         tabulador, y anuncia su estado como `radiogroup`. -->
     @if (paciente() !== null) {
-      <fieldset class="tarjeta__modalidad">
-        <legend class="tarjeta__modalidad-titulo">¿Cómo lo atendés?</legend>
-        <div class="tarjeta__modalidad-opciones">
-          @for (opcion of modalidades; track opcion.valor) {
-            <label class="tarjeta__modalidad-opcion">
-              <input
-                type="radio"
-                name="modalidad"
-                [value]="opcion.valor"
-                [checked]="modalidad() === opcion.valor"
-                (change)="modalidad.set(opcion.valor)"
-              />
-              <span>{{ opcion.nombre }}</span>
-            </label>
-          }
-        </div>
-      </fieldset>
+      <div class="tarjeta__modalidad">
+        <span class="tarjeta__modalidad-titulo" id="tarjeta-modalidad">¿Cómo lo atendés?</span>
+        <app-segmented-control
+          data-testid="tarjeta-modalidad"
+          ariaLabel="¿Cómo lo atendés?"
+          size="md"
+          [options]="opcionesDeModalidad"
+          [value]="modalidad()"
+          (valueChange)="modalidad.set($event)"
+        />
+      </div>
     }
 
     <app-form-field
@@ -87,19 +102,23 @@
       </app-alert>
     }
 
-    <footer class="tarjeta__pie">
-      <!-- El horario fijo semanal no vive acá: la tarjeta cubre lo puntual de
-           UN día. El enlace es para quien cayó buscando eso. -->
-      <a class="tarjeta__publicar" routerLink="/agenda">¿Horario fijo semanal? → Publicar agenda</a>
-      <button
-        app-button
-        variant="primary"
-        type="submit"
-        [disabled]="!puedeGuardar()"
-        [isLoading]="guardando()"
-      >
-        Guardar
-      </button>
-    </footer>
+    <!-- El horario fijo semanal no vive acá: la tarjeta cubre lo puntual de UN
+         día. El enlace es para quien cayó buscando eso. -->
+    <a class="tarjeta__publicar" routerLink="/agenda">¿Horario fijo semanal? → Publicar agenda</a>
   </form>
-</div>
+
+  <!-- El pie se proyecta fuera del cuerpo con scroll: en un formulario largo el
+       botón que guarda tiene que seguir alcanzable sin llegar al final. -->
+  <button
+    dialog-actions
+    app-button
+    variant="primary"
+    type="button"
+    data-testid="tarjeta-guardar"
+    [disabled]="!puedeGuardar()"
+    [isLoading]="guardando()"
+    (clicked)="guardar()"
+  >
+    Guardar
+  </button>
+</app-content-dialog>

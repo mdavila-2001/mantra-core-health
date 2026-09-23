@@ -1,25 +1,61 @@
-<div
-  class="tabs__list"
-  role="tablist"
-  [attr.aria-orientation]="orientation()"
->
-  @for (tab of tabs(); track tab.panelId; let i = $index) {
+<!-- La tira y sus flechas. El marco de ventana lo dibuja `.tabs__bar` cuando la
+     apariencia es `browser`; con la de siempre es una fila transparente y no
+     cambia nada de lo que ya había. -->
+<div class="tabs__bar">
+  @if (desborda()) {
+    <!-- Atajo de puntero: fuera del recorrido de teclado a propósito — las
+         flechas del teclado ya recorren las pestañas y traen la enfocada a la
+         vista, así que estos botones no llevan a ningún lado nuevo. -->
     <button
-      #tabButton
       type="button"
-      class="tabs__tab"
-      [id]="tab.tabId"
-      role="tab"
-      [class.is-selected]="i === activeIndex()"
-      [attr.aria-selected]="i === activeIndex()"
-      [attr.aria-controls]="tab.panelId"
-      [attr.aria-disabled]="tab.disabled() ? true : null"
-      [disabled]="tab.disabled()"
-      [attr.tabindex]="i === activeIndex() ? 0 : -1"
-      (click)="select(i)"
-      (keydown)="handleTablistKeydown($event, i)"
+      class="tabs__desplazar"
+      aria-hidden="true"
+      tabindex="-1"
+      [disabled]="!puedeRetroceder()"
+      (click)="desplazar(-1)"
     >
-      {{ tab.label() }}
+      ‹
+    </button>
+  }
+
+  <div
+    #tablist
+    class="tabs__list"
+    role="tablist"
+    [attr.aria-orientation]="orientation()"
+    (scroll)="medirDesborde()"
+  >
+    @for (tab of tabs(); track tab.panelId; let i = $index) {
+      <button
+        #tabButton
+        type="button"
+        class="tabs__tab"
+        [id]="tab.tabId"
+        role="tab"
+        [class.is-selected]="i === activeIndex()"
+        [attr.aria-selected]="i === activeIndex()"
+        [attr.aria-controls]="tab.panelId"
+        [attr.aria-disabled]="tab.disabled() ? true : null"
+        [disabled]="tab.disabled()"
+        [attr.tabindex]="i === activeIndex() ? 0 : -1"
+        (click)="select(i)"
+        (keydown)="handleTablistKeydown($event, i)"
+      >
+        <span class="tabs__rotulo">{{ tab.label() }}</span>
+      </button>
+    }
+  </div>
+
+  @if (desborda()) {
+    <button
+      type="button"
+      class="tabs__desplazar"
+      aria-hidden="true"
+      tabindex="-1"
+      [disabled]="!puedeAvanzar()"
+      (click)="desplazar(1)"
+    >
+      ›
     </button>
   }
 </div>

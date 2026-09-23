@@ -35,7 +35,16 @@
               {{ vacio.nextAction.label }}
             </a>
           } @else {
+            <!-- La próxima acción SIN ruta no es un enlace: es una indicación
+                 («escribí para buscar»). Salía como texto pelado debajo del
+                 párrafo —indistinguible de la bajada, sin peso y sin forma— y
+                 el propietario lo bajó el 19/09/2026. Ahora va en cápsula
+                 punteada: se lee como instrucción y no como algo pulsable. -->
             <span empty-actions class="view-state-host__next-action">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="4" y1="12" x2="19" y2="12" />
+                <polyline points="13 6 19 12 13 18" />
+              </svg>
               {{ vacio.nextAction.label }}
             </span>
           }

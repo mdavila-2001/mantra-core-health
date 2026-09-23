@@ -38,6 +38,11 @@ import { resolve } from 'node:path';
 const RAIZ = resolve(import.meta.dirname, '..');
 const CARPETA = 'real';
 const EVIDENCIAS = resolve(RAIZ, 'artifacts', CARPETA);
+// El proxy de Angular apunta al puerto host 3000, que es donde el stack de
+// docker-compose publica la API (`mantra-redesa-api-1`). Antes eran 3125 acá y
+// en `proxy.conf.json`, heredado de un execution set que publicaba el mapping
+// 3125:3000; con el stack de este repo no había nadie escuchando ahí y toda
+// petición moría en el proxy con ECONNREFUSED.
 const API = process.env.E2E_API_URL ?? 'http://localhost:3000';
 const PUERTO_SERVE = process.env.E2E_SERVE_PORT ?? '4200';
 const BASE_URL = `http://localhost:${PUERTO_SERVE}`;
@@ -103,7 +108,7 @@ mkdirSync(EVIDENCIAS, { recursive: true });
 console.log(`[recorrido-real] Levantando ng serve en ${BASE_URL}…`);
 const servidor = spawn(
   'yarn',
-  ['ng', 'serve', '--port', PUERTO_SERVE, '--configuration', 'development'],
+  ['ng', 'serve', '--port', PUERTO_SERVE, '--configuration', 'e2e-real'],
   {
     cwd: RAIZ,
     stdio: 'ignore',
@@ -141,6 +146,9 @@ const entorno = {
   // `E2E_SUITE` levanta la exclusión que deja estas specs fuera de la corrida
   // por defecto; sin ella, el `--spec` de abajo no encontraría ningún archivo.
   E2E_SUITE: 'real',
+  // Los actores creados con `cy.request` tienen que usar la misma API que
+  // comprobó el runner antes de compilar la aplicación.
+  E2E_API_URL: API,
   // Con `E2E_BASE_URL` puesta, el arnés NO se levanta: no hay API simulada de
   // por medio y las peticiones llegan al backend por el proxy de `ng serve`.
   E2E_BASE_URL: BASE_URL,

@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos del Progress — sistema REDSAT v1.0.
+    Contratos del Progress — sistema ALOVIDA v1.0.
 
     El spec no declara barra de progreso: extensión propia con la tinta de
     marca y los tríos de estado. Pendiente de validación del diseñador.

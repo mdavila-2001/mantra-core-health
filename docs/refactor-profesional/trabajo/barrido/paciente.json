@@ -1,0 +1,1182 @@
+[
+ {
+  "ruta": "/dashboard",
+  "abierta": "/dashboard",
+  "componente": "Dashboard",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/dashboard",
+  "abierta": "/dashboard",
+  "componente": "Dashboard",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/dashboard",
+  "abierta": "/dashboard",
+  "componente": "Dashboard",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/tutorials",
+  "abierta": "/tutorials",
+  "componente": "TutorialsCenter",
+  "ancho": 1440,
+  "problemas": {
+   "nombre-repetido": [
+    "empezar: primeros pasos en alovida ×2",
+    "empezar: usar el centro de tutoriales ×2",
+    "empezar: tus notificaciones ×2"
+   ]
+  }
+ },
+ {
+  "ruta": "/tutorials",
+  "abierta": "/tutorials",
+  "componente": "TutorialsCenter",
+  "ancho": 768,
+  "problemas": {
+   "nombre-repetido": [
+    "empezar: primeros pasos en alovida ×2",
+    "empezar: usar el centro de tutoriales ×2",
+    "empezar: tus notificaciones ×2"
+   ]
+  }
+ },
+ {
+  "ruta": "/tutorials",
+  "abierta": "/tutorials",
+  "componente": "TutorialsCenter",
+  "ancho": 390,
+  "problemas": {
+   "nombre-repetido": [
+    "empezar: primeros pasos en alovida ×2",
+    "empezar: usar el centro de tutoriales ×2",
+    "empezar: tus notificaciones ×2"
+   ]
+  }
+ },
+ {
+  "ruta": "/messaging",
+  "abierta": "/messaging",
+  "componente": "Messaging",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/messaging",
+  "abierta": "/messaging",
+  "componente": "Messaging",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/messaging",
+  "abierta": "/messaging",
+  "componente": "Messaging",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/directories",
+  "abierta": "/directories",
+  "componente": "DirectoriesOverview",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/directories",
+  "abierta": "/directories",
+  "componente": "DirectoriesOverview",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/directories",
+  "abierta": "/directories",
+  "componente": "DirectoriesOverview",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/directory",
+  "abierta": "/directory",
+  "componente": "PractitionersDirectory",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/directory",
+  "abierta": "/directory",
+  "componente": "PractitionersDirectory",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/directory",
+  "abierta": "/directory",
+  "componente": "PractitionersDirectory",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/nearby-places",
+  "abierta": "/nearby-places",
+  "componente": "NearbyPlaces",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/nearby-places",
+  "abierta": "/nearby-places",
+  "componente": "NearbyPlaces",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/nearby-places",
+  "abierta": "/nearby-places",
+  "componente": "NearbyPlaces",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/groups",
+  "abierta": "/dashboard",
+  "componente": "Groups",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/groups",
+  "abierta": "/dashboard",
+  "componente": "Groups",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/groups",
+  "abierta": "/dashboard",
+  "componente": "Groups",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/laboratory-directory",
+  "abierta": "/laboratory-directory",
+  "componente": "LaboratoryDirectory",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/laboratory-directory",
+  "abierta": "/laboratory-directory",
+  "componente": "LaboratoryDirectory",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/laboratory-directory",
+  "abierta": "/laboratory-directory",
+  "componente": "LaboratoryDirectory",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/clinics-directory",
+  "abierta": "/clinics-directory",
+  "componente": "ClinicsDirectory",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/clinics-directory",
+  "abierta": "/clinics-directory",
+  "componente": "ClinicsDirectory",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/clinics-directory",
+  "abierta": "/clinics-directory",
+  "componente": "ClinicsDirectory",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/pharmacies-directory",
+  "abierta": "/pharmacies-directory",
+  "componente": "PharmaciesDirectory",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/pharmacies-directory",
+  "abierta": "/pharmacies-directory",
+  "componente": "PharmaciesDirectory",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/pharmacies-directory",
+  "abierta": "/pharmacies-directory",
+  "componente": "PharmaciesDirectory",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/glossary",
+  "abierta": "/dashboard",
+  "componente": "Glossary",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/glossary",
+  "abierta": "/dashboard",
+  "componente": "Glossary",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/glossary",
+  "abierta": "/dashboard",
+  "componente": "Glossary",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/form-builder",
+  "abierta": "/dashboard",
+  "componente": "FormBuilder",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/form-builder",
+  "abierta": "/dashboard",
+  "componente": "FormBuilder",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/form-builder",
+  "abierta": "/dashboard",
+  "componente": "FormBuilder",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-services",
+  "abierta": "/dashboard",
+  "componente": "MyServices",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/my-services",
+  "abierta": "/dashboard",
+  "componente": "MyServices",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-services",
+  "abierta": "/dashboard",
+  "componente": "MyServices",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-quotations",
+  "abierta": "/dashboard",
+  "componente": "QuotationList",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/my-quotations",
+  "abierta": "/dashboard",
+  "componente": "QuotationList",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-quotations",
+  "abierta": "/dashboard",
+  "componente": "QuotationList",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/insurance",
+  "abierta": "/dashboard",
+  "componente": "InsuranceCatalog",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/insurance",
+  "abierta": "/dashboard",
+  "componente": "InsuranceCatalog",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/insurance",
+  "abierta": "/dashboard",
+  "componente": "InsuranceCatalog",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/insurance-analytics",
+  "abierta": "/dashboard",
+  "componente": "InsuranceAnalytics",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/insurance-analytics",
+  "abierta": "/dashboard",
+  "componente": "InsuranceAnalytics",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/insurance-analytics",
+  "abierta": "/dashboard",
+  "componente": "InsuranceAnalytics",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/dependents",
+  "abierta": "/my-account/dependents",
+  "componente": "Dependents",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/dependents",
+  "abierta": "/my-account/dependents",
+  "componente": "Dependents",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/dependents",
+  "abierta": "/my-account/dependents",
+  "componente": "Dependents",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account",
+  "abierta": "/my-account",
+  "componente": "MyProfile",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account",
+  "abierta": "/my-account",
+  "componente": "MyProfile",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account",
+  "abierta": "/my-account",
+  "componente": "MyProfile",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/appointments",
+  "abierta": "/my-account/appointments",
+  "componente": "Appointments",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/appointments",
+  "abierta": "/my-account/appointments",
+  "componente": "Appointments",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/appointments",
+  "abierta": "/my-account/appointments",
+  "componente": "Appointments",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/medical-record",
+  "abierta": "/my-account/medical-record",
+  "componente": "MedicalRecord",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/medical-record",
+  "abierta": "/my-account/medical-record",
+  "componente": "MedicalRecord",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/medical-record",
+  "abierta": "/my-account/medical-record",
+  "componente": "MedicalRecord",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/diagnostic-results",
+  "abierta": "/my-account/diagnostic-results",
+  "componente": "DiagnosticResults",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/diagnostic-results",
+  "abierta": "/my-account/diagnostic-results",
+  "componente": "DiagnosticResults",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/diagnostic-results",
+  "abierta": "/my-account/diagnostic-results",
+  "componente": "DiagnosticResults",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/diagnostic-orders",
+  "abierta": "/my-account/diagnostic-orders",
+  "componente": "DiagnosticOrders",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/diagnostic-orders",
+  "abierta": "/my-account/diagnostic-orders",
+  "componente": "DiagnosticOrders",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/diagnostic-orders",
+  "abierta": "/my-account/diagnostic-orders",
+  "componente": "DiagnosticOrders",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/questionnaires",
+  "abierta": "/my-account/questionnaires",
+  "componente": "Questionnaires",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/questionnaires",
+  "abierta": "/my-account/questionnaires",
+  "componente": "Questionnaires",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/questionnaires",
+  "abierta": "/my-account/questionnaires",
+  "componente": "Questionnaires",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/settings",
+  "abierta": "/settings",
+  "componente": "Settings",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/settings",
+  "abierta": "/settings",
+  "componente": "Settings",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/settings",
+  "abierta": "/settings",
+  "componente": "Settings",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/notification-center",
+  "abierta": "/notification-center",
+  "componente": "NotificationCenter",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/notification-center",
+  "abierta": "/notification-center",
+  "componente": "NotificationCenter",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/notification-center",
+  "abierta": "/notification-center",
+  "componente": "NotificationCenter",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/identity",
+  "abierta": "/my-account/identity",
+  "componente": "IdentityHub",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/identity",
+  "abierta": "/my-account/identity",
+  "componente": "IdentityHub",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/identity",
+  "abierta": "/my-account/identity",
+  "componente": "IdentityHub",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/pharmacy-orders",
+  "abierta": "/my-account/pharmacy-orders",
+  "componente": "PharmacyOrders",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/pharmacy-orders",
+  "abierta": "/my-account/pharmacy-orders",
+  "componente": "PharmacyOrders",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/pharmacy-orders",
+  "abierta": "/my-account/pharmacy-orders",
+  "componente": "PharmacyOrders",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/loyalty",
+  "abierta": "/my-account/loyalty",
+  "componente": "Loyalty",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/loyalty",
+  "abierta": "/my-account/loyalty",
+  "componente": "Loyalty",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/loyalty",
+  "abierta": "/my-account/loyalty",
+  "componente": "Loyalty",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/promotions",
+  "abierta": "/my-account/promotions",
+  "componente": "Promotions",
+  "ancho": 1440,
+  "problemas": {
+   "nombre-repetido": [
+    "ver promoción: cuidado diario con 20 % menos ×2"
+   ]
+  }
+ },
+ {
+  "ruta": "/my-account/promotions",
+  "abierta": "/my-account/promotions",
+  "componente": "Promotions",
+  "ancho": 768,
+  "problemas": {
+   "nombre-repetido": [
+    "ver promoción: cuidado diario con 20 % menos ×2"
+   ]
+  }
+ },
+ {
+  "ruta": "/my-account/promotions",
+  "abierta": "/my-account/promotions",
+  "componente": "Promotions",
+  "ancho": 390,
+  "problemas": {
+   "nombre-repetido": [
+    "ver promoción: cuidado diario con 20 % menos ×2"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/my-organization",
+  "abierta": "/dashboard",
+  "componente": "OrganizationPanel",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/my-organization",
+  "abierta": "/dashboard",
+  "componente": "OrganizationPanel",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/my-organization",
+  "abierta": "/dashboard",
+  "componente": "OrganizationPanel",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-orders",
+  "abierta": "/dashboard",
+  "componente": "PharmacyInbox",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/pharmacy-orders",
+  "abierta": "/dashboard",
+  "componente": "PharmacyInbox",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-orders",
+  "abierta": "/dashboard",
+  "componente": "PharmacyInbox",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-campaigns",
+  "abierta": "/dashboard",
+  "componente": "PharmacyCampaigns",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/pharmacy-campaigns",
+  "abierta": "/dashboard",
+  "componente": "PharmacyCampaigns",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-campaigns",
+  "abierta": "/dashboard",
+  "componente": "PharmacyCampaigns",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-profile",
+  "abierta": "/dashboard",
+  "componente": "PharmacyProfile",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/pharmacy-profile",
+  "abierta": "/dashboard",
+  "componente": "PharmacyProfile",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-profile",
+  "abierta": "/dashboard",
+  "componente": "PharmacyProfile",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/getting-started",
+  "abierta": "/dashboard",
+  "componente": "GettingStarted",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/getting-started",
+  "abierta": "/dashboard",
+  "componente": "GettingStarted",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/getting-started",
+  "abierta": "/dashboard",
+  "componente": "GettingStarted",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/access-requests",
+  "abierta": "/my-account/access-requests",
+  "componente": "AccessRequests",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/access-requests",
+  "abierta": "/my-account/access-requests",
+  "componente": "AccessRequests",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/access-requests",
+  "abierta": "/my-account/access-requests",
+  "componente": "AccessRequests",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/articles",
+  "abierta": "/dashboard",
+  "componente": "MedicalArticles",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/my-account/articles",
+  "abierta": "/dashboard",
+  "componente": "MedicalArticles",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/articles",
+  "abierta": "/dashboard",
+  "componente": "MedicalArticles",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/edit",
+  "abierta": "/dashboard",
+  "componente": "PractitionerProfileEdit",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/my-account/edit",
+  "abierta": "/dashboard",
+  "componente": "PractitionerProfileEdit",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/edit",
+  "abierta": "/dashboard",
+  "componente": "PractitionerProfileEdit",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/pharmacy-orders/checkout",
+  "abierta": "/my-account/pharmacy-orders/checkout",
+  "componente": "Checkout",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/pharmacy-orders/checkout",
+  "abierta": "/my-account/pharmacy-orders/checkout",
+  "componente": "Checkout",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/pharmacy-orders/checkout",
+  "abierta": "/my-account/pharmacy-orders/checkout",
+  "componente": "Checkout",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/pharmacy-orders/new",
+  "abierta": "/my-account/pharmacy-orders/new",
+  "componente": "NewOrder",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/pharmacy-orders/new",
+  "abierta": "/my-account/pharmacy-orders/new",
+  "componente": "NewOrder",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/pharmacy-orders/new",
+  "abierta": "/my-account/pharmacy-orders/new",
+  "componente": "NewOrder",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/profile/edit",
+  "abierta": "/my-account/profile/edit",
+  "componente": "PatientProfileEdit",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/profile/edit",
+  "abierta": "/my-account/profile/edit",
+  "componente": "PatientProfileEdit",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/profile/edit",
+  "abierta": "/my-account/profile/edit",
+  "componente": "PatientProfileEdit",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-quotations/new",
+  "abierta": "/dashboard",
+  "componente": "QuotationForm",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/my-quotations/new",
+  "abierta": "/dashboard",
+  "componente": "QuotationForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-quotations/new",
+  "abierta": "/dashboard",
+  "componente": "QuotationForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/onboarding",
+  "abierta": "/dashboard",
+  "componente": "OnboardingPractitioner",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/onboarding",
+  "abierta": "/dashboard",
+  "componente": "OnboardingPractitioner",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/onboarding",
+  "abierta": "/dashboard",
+  "componente": "OnboardingPractitioner",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-orders/:orderId",
+  "abierta": "",
+  "componente": "InboxOrder",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ },
+ {
+  "ruta": "/clinics-directory/:slug",
+  "abierta": "/clinics-directory/hospital-roberto-galindo-cob",
+  "componente": "ClinicDetail",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/clinics-directory/:slug",
+  "abierta": "/clinics-directory/hospital-roberto-galindo-cob",
+  "componente": "ClinicDetail",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/clinics-directory/:slug",
+  "abierta": "/clinics-directory/hospital-roberto-galindo-cob",
+  "componente": "ClinicDetail",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/directory/:profileId",
+  "abierta": "",
+  "componente": "PractitionerDetail",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ },
+ {
+  "ruta": "/glossary/:conceptId",
+  "abierta": "",
+  "componente": "GlossaryTerm",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ },
+ {
+  "ruta": "/groups/:groupId",
+  "abierta": "",
+  "componente": "GroupDetail",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ },
+ {
+  "ruta": "/laboratory-directory/:unitId",
+  "abierta": "",
+  "componente": "LaboratoryDetail",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ },
+ {
+  "ruta": "/my-account/appointments/book/:slotId",
+  "abierta": "",
+  "componente": "BookingNew",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ },
+ {
+  "ruta": "/my-account/identity/cases/:caseId",
+  "abierta": "",
+  "componente": "VerificationCaseDetail",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ },
+ {
+  "ruta": "/my-account/medical-record/where-to-buy/:requestId",
+  "abierta": "/my-account/medical-record/where-to-buy/c278147b-dd30-46a3-a9ba-d18872add54e",
+  "componente": "WhereToBuy",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/medical-record/where-to-buy/:requestId",
+  "abierta": "/my-account/medical-record/where-to-buy/c278147b-dd30-46a3-a9ba-d18872add54e",
+  "componente": "WhereToBuy",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/medical-record/where-to-buy/:requestId",
+  "abierta": "/my-account/medical-record/where-to-buy/c278147b-dd30-46a3-a9ba-d18872add54e",
+  "componente": "WhereToBuy",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/pharmacy-orders/:orderId",
+  "abierta": "/my-account/pharmacy-orders/23becbfe-b5ae-42ce-a9c9-069034524bac",
+  "componente": "OrderDetail",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/pharmacy-orders/:orderId",
+  "abierta": "/my-account/pharmacy-orders/23becbfe-b5ae-42ce-a9c9-069034524bac",
+  "componente": "OrderDetail",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/pharmacy-orders/:orderId",
+  "abierta": "/my-account/pharmacy-orders/23becbfe-b5ae-42ce-a9c9-069034524bac",
+  "componente": "OrderDetail",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/pharmacy-orders/:orderId/invoice",
+  "abierta": "",
+  "componente": "OrderInvoice",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ },
+ {
+  "ruta": "/my-account/pharmacy-orders/:orderId/receipt",
+  "abierta": "/my-account/pharmacy-orders/23becbfe-b5ae-42ce-a9c9-069034524bac/receipt",
+  "componente": "OrderReceipt",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/pharmacy-orders/:orderId/receipt",
+  "abierta": "/my-account/pharmacy-orders/23becbfe-b5ae-42ce-a9c9-069034524bac/receipt",
+  "componente": "OrderReceipt",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/pharmacy-orders/:orderId/receipt",
+  "abierta": "/my-account/pharmacy-orders/23becbfe-b5ae-42ce-a9c9-069034524bac/receipt",
+  "componente": "OrderReceipt",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-account/questionnaires/:invitationId",
+  "abierta": "",
+  "componente": "QuestionnaireAnswer",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ },
+ {
+  "ruta": "/pharmacies-directory/:slug",
+  "abierta": "/pharmacies-directory/farmacia-bolivia-cbba",
+  "componente": "PharmacyDetail",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/pharmacies-directory/:slug",
+  "abierta": "/pharmacies-directory/farmacia-bolivia-cbba",
+  "componente": "PharmacyDetail",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/pharmacies-directory/:slug",
+  "abierta": "/pharmacies-directory/farmacia-bolivia-cbba",
+  "componente": "PharmacyDetail",
+  "ancho": 390,
+  "problemas": {}
+ }
+]

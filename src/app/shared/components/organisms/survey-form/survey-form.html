@@ -1,0 +1,102 @@
+@for (pregunta of preguntas(); track pregunta.id) {
+  <app-card variant="outlined" padding="lg" class="cuestionario__pregunta">
+    <app-form-field
+      [label]="pregunta.position + '. ' + pregunta.questionText"
+      [required]="!soloLectura() && pregunta.required"
+      [errorMessage]="falta(pregunta.id) ? 'Esta pregunta es obligatoria.' : ''"
+    >
+      @switch (pregunta.answerType) {
+        @case ('TEXT') {
+          <app-textarea
+            [value]="textoDe(pregunta.id)"
+            (valueChange)="responder(pregunta.id, $event)"
+            [hasError]="falta(pregunta.id)"
+            autoResize
+            [attr.data-testid]="testIdPrefijo() + '-' + pregunta.id"
+          />
+        }
+
+        @case ('SCALE') {
+          <!-- Sigue dibujada entera, y es el caso 3 de ADR-0013: una escala no
+               es una lista de opciones — el orden y la distancia entre los
+               puntos SON el dato. Colapsada en un desplegable deja de ser una
+               escala y pasa a ser cinco palabras sueltas. -->
+          <app-radio-group
+            [value]="seleccionDe(pregunta.id)"
+            (valueChange)="responder(pregunta.id, $event)"
+            [hasError]="falta(pregunta.id)"
+            [attr.data-testid]="testIdPrefijo() + '-' + pregunta.id"
+          >
+            @for (punto of escalaDe(pregunta); track punto) {
+              <app-radio [value]="punto" [label]="'' + punto" />
+            }
+          </app-radio-group>
+          @if (escalaRecortada(pregunta)) {
+            <!-- La previa tiene que avisar de esto: una escala así no se puede
+                 responder con el dedo, y quien la armó no lo ve hasta mirarla. -->
+            <p class="cuestionario__aviso">
+              La escala va de {{ pregunta.scaleMin }} a {{ pregunta.scaleMax }}: son demasiados
+              puntos para elegir uno. Se muestran sólo los extremos.
+            </p>
+          }
+        }
+
+        @case ('BOOLEAN') {
+          <!-- Sigue con las dos opciones a la vista, y es el caso 2 de
+               ADR-0013: son el sí y el no de una misma afirmación, no dos
+               valores de una lista. Un desplegable de dos esconde la mitad de
+               la respuesta detrás de un clic. Es lo mismo que pide C-10 para
+               el modal de cupos. -->
+          <app-radio-group
+            [value]="seleccionDe(pregunta.id)"
+            (valueChange)="responder(pregunta.id, $event)"
+            [hasError]="falta(pregunta.id)"
+            [attr.data-testid]="testIdPrefijo() + '-' + pregunta.id"
+          >
+            <app-radio [value]="true" label="Sí" />
+            <app-radio [value]="false" label="No" />
+          </app-radio-group>
+        }
+
+        @case ('SINGLE_CHOICE') {
+          <!-- Desplegable y no radios: es el caso 1 de ADR-0013 (C-21). Las
+               opciones son valores distintos del mismo campo, las escribe quien
+               arma el cuestionario y pueden ser tres o quince — no hay entre
+               ellas ni orden ni distancia que el control tenga que enseñar.
+               Las otras dos preguntas de opción de este archivo SÍ siguen
+               dibujadas enteras, y cada una dice por qué.
+
+               Sin `[disabled]="soloLectura()"` a propósito: este componente
+               declara que «`soloLectura` no es deshabilitado», y ninguno de
+               sus otros controles lo apaga. Agregárselo sólo a éste habría
+               cambiado el contrato del organismo de paso. -->
+          <app-select
+            [options]="opcionesDe(pregunta)"
+            [value]="opcionElegidaDe(pregunta.id)"
+            (valueChange)="responder(pregunta.id, $event)"
+            [hasError]="falta(pregunta.id)"
+            [attr.data-testid]="testIdPrefijo() + '-' + pregunta.id"
+          />
+        }
+
+        @case ('MULTIPLE_CHOICE') {
+          <!-- Las casillas se apilan: en fila, con opciones de largo desigual,
+               las etiquetas dejan de alinearse con su control y se vuelve
+               ambiguo cuál pertenece a cuál. -->
+          <div
+            class="cuestionario__opciones"
+            [attr.data-testid]="testIdPrefijo() + '-' + pregunta.id"
+          >
+            @for (opcion of pregunta.options ?? []; track opcion) {
+              <app-checkbox
+                [checked]="marcada(pregunta.id, opcion)"
+                (checkedChange)="alternar(pregunta.id, opcion, $event)"
+                [label]="opcion"
+              />
+            }
+          </div>
+        }
+      }
+    </app-form-field>
+  </app-card>
+}

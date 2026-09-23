@@ -20,10 +20,15 @@ import {
 import { AuthService } from '../../core/auth/auth.service';
 import { AccountingClient } from '../../core/data-access/accounting/accounting.client';
 import type {
+  BalanceSheet,
   ChartOfAccounts,
+  FinancialStatementLine,
+  GeneralLedgerEntry,
+  IncomeStatement,
   JournalTransaction,
   LedgerAccount,
   PaidConsultation,
+  PostJournalInput,
   Practice,
   TrialBalance,
   TrialBalanceRow,
@@ -33,17 +38,25 @@ import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../shared/a11y/announce-on-appear';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
+import { RouterLink } from '@angular/router';
+
 import { AppButton } from '../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
+import { Badge } from '../../shared/components/atoms/badge/badge';
 import { Input } from '../../shared/components/atoms/input/input';
 import { Select } from '../../shared/components/atoms/select/select';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
+import { PdfExportButton } from '../../shared/components/molecules/pdf-export-button/pdf-export-button';
+import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
 import { errorMessageOf } from '../../shared/forms/form-support';
+import { CsvExportService, type CsvColumn } from '../../shared/utils/csv-export/csv-export';
 
 /**
  * Agrupa las consultas cobradas por mes de emisión, la más reciente arriba.
@@ -83,6 +96,39 @@ export function agruparPorMes(
       cuantas: mes.cuantas,
       promedio: (mes.total / mes.cuantas).toFixed(2),
     }));
+}
+
+/**
+ * Formatea una fecha para una celda de tabla: corta, sin día de semana ni
+ * huso horario.
+ *
+ * `app-data-table` no formatea: una columna sin `cell` pinta
+ * `String(valor)` (`data-table.ts: cellValue`), y `String(unaFecha)` es
+ * `Date.prototype.toString()` — `"Thu Mar 12 2026 00:00:00 GMT-0400 (hora de
+ * Bolivia)"`. A 390 px ese texto no entra en la celda y se parte en varias
+ * líneas, y ni ahí es legible como fecha contable. Se formatea acá, antes de
+ * llegar a la tabla, a `dd/mm/aaaa`.
+ */
+function formatearFechaDeTabla(fecha: Date): string {
+  return fecha.toLocaleDateString('es-BO', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
+/**
+ * Un asiento del diario, ya listo para la tabla: fechas como texto corto en
+ * vez de `Date` cruda (ver `formatearFechaDeTabla`).
+ */
+export interface FilaDelDiario extends Omit<JournalTransaction, 'transactionDate' | 'postedAt'> {
+  readonly transactionDate: string;
+  readonly postedAt?: string;
+}
+
+/** Un movimiento del libro mayor, ya listo para la tabla: misma razón que `FilaDelDiario`. */
+export interface FilaDelMayor extends Omit<GeneralLedgerEntry, 'transactionDate'> {
+  readonly transactionDate: string;
 }
 
 /** Un mes de facturación, ya resuelto para pintar. */
@@ -129,14 +175,20 @@ export interface MesFacturado {
     AnnounceOnAppear,
     Alert,
     AppButton,
+    AppButtonLink,
+    Badge,
     Card,
     DataTable,
     FormField,
     Input,
     PageHeader,
+    PdfExportButton,
     ReactiveFormsModule,
+    RouterLink,
     Select,
     StatusSeal,
+    Tab,
+    Tabs,
   ],
   templateUrl: './accounting.html',
   styleUrl: './accounting.css',
@@ -144,6 +196,7 @@ export interface MesFacturado {
 export class Accounting {
   private readonly libros = inject(AccountingClient);
   private readonly auth = inject(AuthService);
+  private readonly csv = inject(CsvExportService);
 
   /* ---- Quién está mirando (H4 del plan de UX del 22/08/2026) --------------- */
 
@@ -267,6 +320,27 @@ export class Accounting {
     },
   );
 
+  /**
+   * Las filas del diario, con las fechas ya formateadas para la tabla (ver
+   * `formatearFechaDeTabla`). `postedAt` es opcional: un asiento sin postear
+   * no tiene fecha de posteo, y forzar `Date` ahí rompería el `?` del tipo.
+   */
+  protected readonly filasDelDiario = computed<ViewState<readonly FilaDelDiario[]>>(() => {
+    const estado = this.diario();
+    return estado.status === 'ready'
+      ? ready(
+          estado.data.map((t): FilaDelDiario => {
+            const { postedAt, ...resto } = t;
+            return {
+              ...resto,
+              transactionDate: formatearFechaDeTabla(t.transactionDate),
+              ...(postedAt === undefined ? {} : { postedAt: formatearFechaDeTabla(postedAt) }),
+            };
+          }),
+        )
+      : (estado as ViewState<readonly FilaDelDiario[]>);
+  });
+
   /** El sello del cuadre: color, forma y texto, no sólo color. */
   protected readonly selloDelCuadre = computed(() => {
     const estado = this.balance();
@@ -289,7 +363,7 @@ export class Accounting {
     { key: 'balance', header: 'Saldo', priority: 1, align: 'end' },
   ];
 
-  protected readonly columnasDelDiario: readonly ColumnDef<JournalTransaction>[] = [
+  protected readonly columnasDelDiario: readonly ColumnDef<FilaDelDiario>[] = [
     { key: 'transactionNumber', header: 'Número', priority: 1 },
     { key: 'transactionDate', header: 'Fecha', priority: 1 },
     { key: 'totalAmount', header: 'Importe', priority: 1, align: 'end' },
@@ -297,10 +371,36 @@ export class Accounting {
   ];
 
   protected readonly claveDeFila = (fila: TrialBalanceRow): string => fila.accountId;
-  protected readonly claveDeAsiento = (fila: JournalTransaction): string => fila.id;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDeCuenta = (fila: TrialBalanceRow): string =>
+    [fila.code, fila.name].filter(Boolean).join(' ');
+  protected readonly claveDeAsiento = (fila: FilaDelDiario): string => fila.id;
 
   protected reintentar(): void {
     this.intento.update((n) => n + 1);
+  }
+
+  /** Columnas del CSV del libro diario: mismos campos que la tabla en pantalla. */
+  private readonly columnasCsvDelDiario: readonly CsvColumn<FilaDelDiario>[] = [
+    { header: 'Número', value: (f) => f.transactionNumber ?? '' },
+    { header: 'Fecha', value: (f) => f.transactionDate },
+    { header: 'Importe', value: (f) => f.totalAmount ?? '' },
+    { header: 'Posteado', value: (f) => f.postedAt ?? '' },
+  ];
+
+  /**
+   * Descarga el libro diario en CSV (punto 4 de FT-20: "en el caso del libro
+   * diario existirá adicionalmente una opción adicional de descargar csv").
+   *
+   * Sólo el diario lo pide el ticket textualmente; el resto de los informes
+   * ya tiene su botón de PDF (`app-pdf-export-button`), que es el formato que
+   * el ticket pide "para descargar los informes financieros, libros y
+   * dashboards" en general.
+   */
+  protected exportarDiarioCsv(): void {
+    const estado = this.filasDelDiario();
+    if (estado.status !== 'ready') return;
+    this.csv.download(estado.data, this.columnasCsvDelDiario, 'libro-diario');
   }
 
   /* ============================================================================
@@ -493,5 +593,482 @@ export class Accounting {
         },
         error: (error: unknown) => this.estadoDeGasto.set(errorToViewState<null>(error)),
       });
+  }
+
+  /* ============================================================================
+      TAREA-20 S3 — libro mayor, estado de resultados y balance general.
+
+      Tres pestañas nuevas. El panel inactivo no pide nada: cada lectura
+      cuelga de `pestanaActiva`, y sólo la pestaña que se está mirando dispara
+      su `switchMap` — evitar pedir los tres informes de golpe es justamente
+      lo que el plan pide (§5.7 de la ficha).
+      ========================================================================== */
+
+  /** Índice de la pestaña activa entre los tres informes nuevos. */
+  protected readonly pestanaActiva = signal(0);
+
+  protected readonly opcionesDeCuentaParaMayor = this.opcionesDeCuenta;
+
+  /** La cuenta elegida para el libro mayor. Sin ella no hay qué pedir. */
+  protected readonly cuentaDelMayor = linkedSignal<
+    readonly SelectOption<string>[],
+    string | null
+  >({
+    source: this.opcionesDeCuentaParaMayor,
+    computation: (opciones, previo) =>
+      opciones.some((o) => o.value === previo?.value)
+        ? (previo?.value ?? null)
+        : (opciones[0]?.value ?? null),
+  });
+
+  private readonly parametrosDelMayor = computed(() => ({
+    practiceId: this.practicaElegida(),
+    accountId: this.cuentaDelMayor(),
+    pestana: this.pestanaActiva(),
+    intento: this.intento(),
+  }));
+
+  protected readonly libroMayor = toSignal(
+    toObservable(this.parametrosDelMayor).pipe(
+      switchMap(
+        ({ practiceId, accountId, pestana }): Observable<ViewState<GeneralLedgerEntry[]>> => {
+          // Sólo se pide cuando la pestaña del libro mayor está activa.
+          if (pestana !== 0 || practiceId === null || accountId === null) {
+            return of(empty({ label: 'Elegir una cuenta' }));
+          }
+          return this.libros.generalLedger(practiceId, { accountId }).pipe(
+            map((pagina): ViewState<GeneralLedgerEntry[]> =>
+              pagina.items.length === 0
+                ? empty({ label: 'Sin movimientos' }, 'Esta cuenta no tiene movimientos posteados.')
+                : ready([...pagina.items]),
+            ),
+            startWith(loading()),
+            catchError((error: unknown) => of(errorToViewState<GeneralLedgerEntry[]>(error))),
+          );
+        },
+      ),
+    ),
+    { initialValue: loading() as ViewState<GeneralLedgerEntry[]> },
+  );
+
+  /** El libro mayor, con la fecha ya formateada para la tabla (ver `formatearFechaDeTabla`). */
+  protected readonly filasDelMayor = computed<ViewState<readonly FilaDelMayor[]>>(() => {
+    const estado = this.libroMayor();
+    return estado.status === 'ready'
+      ? ready(
+          estado.data.map(
+            (m): FilaDelMayor => ({ ...m, transactionDate: formatearFechaDeTabla(m.transactionDate) }),
+          ),
+        )
+      : (estado as ViewState<readonly FilaDelMayor[]>);
+  });
+
+  protected readonly columnasDelMayor: readonly ColumnDef<FilaDelMayor>[] = [
+    { key: 'transactionDate', header: 'Fecha', priority: 1 },
+    { key: 'transactionNumber', header: 'Asiento', priority: 2 },
+    { key: 'debit', header: 'Debe', priority: 1, align: 'end' },
+    { key: 'credit', header: 'Haber', priority: 1, align: 'end' },
+    { key: 'runningBalance', header: 'Saldo', priority: 1, align: 'end' },
+  ];
+
+  protected readonly claveDeMovimiento = (fila: FilaDelMayor): string => fila.id;
+
+  private readonly practicaEIntentoYPestana = computed(() => ({
+    practiceId: this.practicaElegida(),
+    pestana: this.pestanaActiva(),
+    intento: this.intento(),
+  }));
+
+  protected readonly estadoDeResultados = toSignal(
+    toObservable(this.practicaEIntentoYPestana).pipe(
+      switchMap(({ practiceId, pestana }): Observable<ViewState<IncomeStatement>> => {
+        // También se pide para el Cuadro de mando (pestaña 3): el resultado
+        // neto del período es uno de sus indicadores.
+        if ((pestana !== 1 && pestana !== 3) || practiceId === null) {
+          return of(empty({ label: 'Elegir una práctica' }));
+        }
+        return this.libros.incomeStatement(practiceId).pipe(
+          map((datos): ViewState<IncomeStatement> => ready(datos)),
+          startWith(loading()),
+          catchError((error: unknown) => of(errorToViewState<IncomeStatement>(error))),
+        );
+      }),
+    ),
+    { initialValue: loading() as ViewState<IncomeStatement> },
+  );
+
+  protected readonly filasDelEstadoDeResultados = computed<ViewState<readonly FinancialStatementLine[]>>(
+    () => {
+      const estado = this.estadoDeResultados();
+      return estado.status === 'ready'
+        ? ready([...estado.data.revenueItems, ...estado.data.expenseItems])
+        : (estado as ViewState<readonly FinancialStatementLine[]>);
+    },
+  );
+
+  protected readonly columnasDelEstadoFinanciero: readonly ColumnDef<FinancialStatementLine>[] = [
+    { key: 'code', header: 'Código', priority: 1 },
+    { key: 'name', header: 'Cuenta', priority: 1 },
+    { key: 'amount', header: 'Importe', priority: 1, align: 'end' },
+  ];
+
+  protected readonly claveDeLineaFinanciera = (fila: FinancialStatementLine): string => fila.accountId;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDeLineaFinanciera = (fila: FinancialStatementLine): string =>
+    [fila.code, fila.name].filter(Boolean).join(' ');
+
+  protected readonly balanceGeneral = toSignal(
+    toObservable(this.practicaEIntentoYPestana).pipe(
+      switchMap(({ practiceId, pestana }): Observable<ViewState<BalanceSheet>> => {
+        // También se pide para el Cuadro de mando (pestaña 3): activos y
+        // pasivos totales son otro de sus indicadores.
+        if ((pestana !== 2 && pestana !== 3) || practiceId === null) {
+          return of(empty({ label: 'Elegir una práctica' }));
+        }
+        return this.libros.balanceSheet(practiceId).pipe(
+          map((datos): ViewState<BalanceSheet> => ready(datos)),
+          startWith(loading()),
+          catchError((error: unknown) => of(errorToViewState<BalanceSheet>(error))),
+        );
+      }),
+    ),
+    { initialValue: loading() as ViewState<BalanceSheet> },
+  );
+
+  protected readonly filasDelBalanceGeneral = computed<ViewState<readonly FinancialStatementLine[]>>(
+    () => {
+      const estado = this.balanceGeneral();
+      return estado.status === 'ready'
+        ? ready([...estado.data.assetItems, ...estado.data.liabilityItems, ...estado.data.equityItems])
+        : (estado as ViewState<readonly FinancialStatementLine[]>);
+    },
+  );
+
+  /** El sello del balance general: activo == pasivo + patrimonio, o no. */
+  protected readonly selloDelBalanceGeneral = computed(() => {
+    const estado = this.balanceGeneral();
+    if (estado.status !== 'ready') return null;
+    return estado.data.balanced
+      ? { variant: 'approved' as const, label: 'Activo = Pasivo + Patrimonio' }
+      : { variant: 'rejected' as const, label: 'El balance general NO cuadra' };
+  });
+
+  /* ============================================================================
+      FT-20 · Cuadro de mando integral (pestaña 3).
+
+      No es una quinta lectura: junta lo que las otras tres ya trajeron —el
+      cuadre del balance de sumas y saldos (siempre pedido, fuera de las
+      pestañas), el resultado del estado de resultados y los totales del
+      balance general (los dos, pedidos también en esta pestaña, ver arriba)—.
+      Ningún número se inventa acá; los cuatro salen tal cual los calculó el
+      servidor.
+      ========================================================================== */
+
+  /**
+   * Los cuatro indicadores del cuadro de mando, o `null` mientras falte
+   * alguno. Parcial no se muestra: un cuadro de mando con un hueco en medio
+   * es más confuso que esperar a que cierren las tres lecturas.
+   */
+  protected readonly indicadores = computed(() => {
+    const balance = this.resumen();
+    const resultados = this.estadoDeResultados();
+    const general = this.balanceGeneral();
+    if (balance === null || resultados.status !== 'ready' || general.status !== 'ready') {
+      return null;
+    }
+    return {
+      cuadre: balance.balanced,
+      netIncome: resultados.data.netIncome,
+      totalAssets: general.data.totalAssets,
+      totalLiabilities: general.data.totalLiabilities,
+      totalEquity: general.data.totalEquity,
+      balanceado: general.data.balanced,
+    };
+  });
+
+  /* ============================================================================
+      FT-20 · Flujo de caja (pestaña 4).
+
+      "Flujo de caja" en el pedido del cliente no es el estado de flujos de
+      efectivo NIIF (directo/indirecto, por actividad operativa/inversión/
+      financiamiento) — nada en el backend clasifica una cuenta como "de
+      efectivo" ni un movimiento por actividad, y no hay dato para eso. Lo que
+      SÍ hay es el libro mayor de una cuenta puntual, que es lo que el propio
+      usuario elige que sea su caja o su banco — el mismo gesto que ya hace la
+      pestaña de Libro mayor, y el mismo que ya le pide "elegí la cuenta a
+      debitar (caja/banco)" a los formularios de arriba.
+      ========================================================================== */
+
+  protected readonly cuentaDeCaja = linkedSignal<
+    readonly SelectOption<string>[],
+    string | null
+  >({
+    source: this.opcionesDeCuenta,
+    computation: (opciones, previo) =>
+      opciones.some((o) => o.value === previo?.value)
+        ? (previo?.value ?? null)
+        : (opciones[0]?.value ?? null),
+  });
+
+  private readonly parametrosDeCaja = computed(() => ({
+    practiceId: this.practicaElegida(),
+    accountId: this.cuentaDeCaja(),
+    pestana: this.pestanaActiva(),
+    intento: this.intento(),
+  }));
+
+  protected readonly flujoDeCaja = toSignal(
+    toObservable(this.parametrosDeCaja).pipe(
+      switchMap(
+        ({ practiceId, accountId, pestana }): Observable<ViewState<GeneralLedgerEntry[]>> => {
+          if (pestana !== 4 || practiceId === null || accountId === null) {
+            return of(empty({ label: 'Elegir una cuenta' }));
+          }
+          return this.libros.generalLedger(practiceId, { accountId }).pipe(
+            map((pagina): ViewState<GeneralLedgerEntry[]> =>
+              pagina.items.length === 0
+                ? empty({ label: 'Sin movimientos' }, 'Esta cuenta no tiene movimientos posteados.')
+                : ready([...pagina.items]),
+            ),
+            startWith(loading()),
+            catchError((error: unknown) => of(errorToViewState<GeneralLedgerEntry[]>(error))),
+          );
+        },
+      ),
+    ),
+    { initialValue: loading() as ViewState<GeneralLedgerEntry[]> },
+  );
+
+  protected readonly filasDelFlujoDeCaja = computed<ViewState<readonly FilaDelMayor[]>>(() => {
+    const estado = this.flujoDeCaja();
+    return estado.status === 'ready'
+      ? ready(
+          estado.data.map(
+            (m): FilaDelMayor => ({ ...m, transactionDate: formatearFechaDeTabla(m.transactionDate) }),
+          ),
+        )
+      : (estado as ViewState<readonly FilaDelMayor[]>);
+  });
+
+  /**
+   * Entradas, salidas y neto del período mostrado.
+   *
+   * Suma en el navegador con `Number()`, igual que `totalPendiente` más
+   * arriba: es un total **para leer**, no un importe que se vaya a mandar de
+   * vuelta al servidor — la cabecera de `accounting.types.ts` prohíbe lo
+   * segundo, no lo primero.
+   */
+  protected readonly resumenDeCaja = computed(() => {
+    const estado = this.flujoDeCaja();
+    if (estado.status !== 'ready') return null;
+    const entradas = estado.data.reduce((suma, fila) => suma + Number(fila.debit), 0);
+    const salidas = estado.data.reduce((suma, fila) => suma + Number(fila.credit), 0);
+    return {
+      entradas: entradas.toFixed(2),
+      salidas: salidas.toFixed(2),
+      neto: (entradas - salidas).toFixed(2),
+    };
+  });
+
+  protected readonly columnasDeCaja: readonly ColumnDef<FilaDelMayor>[] = [
+    { key: 'transactionDate', header: 'Fecha', priority: 1 },
+    { key: 'transactionNumber', header: 'Asiento', priority: 2 },
+    { key: 'debit', header: 'Entrada', priority: 1, align: 'end' },
+    { key: 'credit', header: 'Salida', priority: 1, align: 'end' },
+    { key: 'runningBalance', header: 'Saldo', priority: 1, align: 'end' },
+  ];
+
+  /* ============================================================================
+      TAREA-20 S2 — MODO CONTADOR: asiento de N filas.
+
+      «Ocultas» (punto 4 del pedido) es densidad visual, no autorización: el
+      plegable sólo evita mostrar el formulario por omisión. El límite real lo
+      pone el servidor — `POST .../drafts` sólo acepta SECURITY_ADMIN y
+      PRACTITIONER, y `POST /journal-transactions` (postear directo) sólo
+      SECURITY_ADMIN — así que un PRACTITIONER que abra el plegable igual no
+      puede postear directo: el botón se deshabilita para ese rol, y si de
+      todos modos se fuerza la llamada, el 403 del servidor es quien manda.
+      ========================================================================== */
+
+  protected readonly puedeUsarModoContador = computed(() => {
+    const roles = this.auth.roles();
+    return roles.includes('SECURITY_ADMIN') || roles.includes('PRACTITIONER');
+  });
+
+  protected readonly puedePostearDirecto = computed(() => this.auth.roles().includes('SECURITY_ADMIN'));
+
+  protected readonly modoContadorAbierto = signal(false);
+
+  protected alternarModoContador(): void {
+    this.modoContadorAbierto.update((abierto) => !abierto);
+  }
+
+  protected readonly cabeceraDelAsiento = new FormGroup({
+    transactionDate: new FormControl(new Date().toISOString().slice(0, 10), {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    description: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(500)] }),
+  });
+
+  /** La fila que se está agregando o modificando; no forma parte todavía del asiento. */
+  protected readonly filaEnCurso = new FormGroup({
+    accountId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    direction: new FormControl<'DEBIT' | 'CREDIT'>('DEBIT', { nonNullable: true }),
+    amount: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(/^\d+(\.\d{1,2})?$/)],
+    }),
+    memo: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(500)] }),
+  });
+
+  protected readonly opcionesDeDireccion: readonly SelectOption<'DEBIT' | 'CREDIT'>[] = [
+    { value: 'DEBIT', label: 'Debe' },
+    { value: 'CREDIT', label: 'Haber' },
+  ];
+
+  /** Índice de la fila del asiento que `filaEnCurso` está modificando; `null` si es alta nueva. */
+  protected readonly filaEnEdicion = signal<number | null>(null);
+
+  /** Las filas ya agregadas al asiento en curso. */
+  protected readonly filasDelAsiento = signal<
+    readonly {
+      readonly accountId: string;
+      readonly accountLabel: string;
+      readonly direction: 'DEBIT' | 'CREDIT';
+      readonly amount: string;
+      readonly memo: string;
+    }[]
+  >([]);
+
+  /**
+   * El descuadre en vivo, calculado en el cliente **sólo para mostrar**: el
+   * rechazo autoritativo sigue siendo el `422` del servidor (AC-20-8). Suma
+   * en `number` a propósito, igual que `agruparPorMes` — es un resumen que se
+   * lee, no el importe que viaja al servidor (que sigue siendo el texto de
+   * cada fila, sin tocar).
+   */
+  protected readonly descuadreEnVivo = computed(() => {
+    const filas = this.filasDelAsiento();
+    const debe = filas.filter((f) => f.direction === 'DEBIT').reduce((s, f) => s + Number(f.amount), 0);
+    const haber = filas.filter((f) => f.direction === 'CREDIT').reduce((s, f) => s + Number(f.amount), 0);
+    return { debe: debe.toFixed(2), haber: haber.toFixed(2), diferencia: (debe - haber).toFixed(2) };
+  });
+
+  protected readonly asientoBalanceado = computed(() => this.descuadreEnVivo().diferencia === '0.00');
+
+  protected agregarOModificarFila(): void {
+    if (this.filaEnCurso.invalid) {
+      this.filaEnCurso.markAllAsTouched();
+      return;
+    }
+    const { accountId, direction, amount, memo } = this.filaEnCurso.getRawValue();
+    const opcion = this.opcionesDeCuenta().find((o) => o.value === accountId);
+    const fila = { accountId, accountLabel: opcion?.label ?? accountId, direction, amount, memo };
+
+    const indice = this.filaEnEdicion();
+    this.filasDelAsiento.update((filas) =>
+      indice === null ? [...filas, fila] : filas.map((f, i) => (i === indice ? fila : f)),
+    );
+    this.filaEnEdicion.set(null);
+    this.filaEnCurso.reset({ accountId: '', direction: 'DEBIT', amount: '', memo: '' });
+  }
+
+  /** Trae los valores de una fila ya agregada de vuelta al formulario, para modificarla. */
+  protected editarFila(indice: number): void {
+    const fila = this.filasDelAsiento()[indice];
+    if (fila === undefined) return;
+    this.filaEnEdicion.set(indice);
+    this.filaEnCurso.setValue({
+      accountId: fila.accountId,
+      direction: fila.direction,
+      amount: fila.amount,
+      memo: fila.memo,
+    });
+  }
+
+  protected cancelarEdicionDeFila(): void {
+    this.filaEnEdicion.set(null);
+    this.filaEnCurso.reset({ accountId: '', direction: 'DEBIT', amount: '', memo: '' });
+  }
+
+  protected eliminarFila(indice: number): void {
+    this.filasDelAsiento.update((filas) => filas.filter((_, i) => i !== indice));
+    if (this.filaEnEdicion() === indice) {
+      this.cancelarEdicionDeFila();
+    }
+  }
+
+  protected readonly estadoDelAsiento = signal<ViewState<null>>(ready(null));
+  protected readonly enviandoAsiento = computed(() => this.estadoDelAsiento().status === 'loading');
+  protected readonly errorDelAsiento = computed(() =>
+    errorMessageOf(this.estadoDelAsiento(), 'No se pudo guardar el asiento.'),
+  );
+  protected readonly asientoGuardado = signal<'draft' | 'posted' | null>(null);
+
+  private cuerpoDelAsiento(): PostJournalInput | null {
+    const practiceId = this.practicaElegida();
+    const filas = this.filasDelAsiento();
+    if (practiceId === null || filas.length < 2) return null;
+    const { transactionDate, description } = this.cabeceraDelAsiento.getRawValue();
+    return {
+      practiceId,
+      transactionDate,
+      ...(description ? { description } : {}),
+      lines: filas.map((f) => ({
+        accountId: f.accountId,
+        direction: f.direction,
+        amount: f.amount,
+        ...(f.memo ? { memo: f.memo } : {}),
+      })),
+    };
+  }
+
+  /** Guarda en DRAFT (sin postear). Disponible para SECURITY_ADMIN y PRACTITIONER. */
+  protected guardarBorrador(): void {
+    if (this.enviandoAsiento()) return;
+    const cuerpo = this.cuerpoDelAsiento();
+    if (cuerpo === null) return;
+
+    this.estadoDelAsiento.set(loading());
+    this.asientoGuardado.set(null);
+    this.libros.createJournalDraft(cuerpo).subscribe({
+      next: () => {
+        this.estadoDelAsiento.set(ready(null));
+        this.asientoGuardado.set('draft');
+        this.reiniciarFormularioDelAsiento();
+        this.reintentar();
+      },
+      error: (error: unknown) => this.estadoDelAsiento.set(errorToViewState<null>(error)),
+    });
+  }
+
+  /** Registra y postea en un solo paso. Sólo SECURITY_ADMIN (el botón se deshabilita para el resto). */
+  protected postearDirecto(): void {
+    if (this.enviandoAsiento() || !this.puedePostearDirecto()) return;
+    const cuerpo = this.cuerpoDelAsiento();
+    if (cuerpo === null) return;
+
+    this.estadoDelAsiento.set(loading());
+    this.asientoGuardado.set(null);
+    this.libros.postJournal(cuerpo).subscribe({
+      next: () => {
+        this.estadoDelAsiento.set(ready(null));
+        this.asientoGuardado.set('posted');
+        this.reiniciarFormularioDelAsiento();
+        this.reintentar();
+      },
+      error: (error: unknown) => this.estadoDelAsiento.set(errorToViewState<null>(error)),
+    });
+  }
+
+  private reiniciarFormularioDelAsiento(): void {
+    this.filasDelAsiento.set([]);
+    this.filaEnEdicion.set(null);
+    this.filaEnCurso.reset({ accountId: '', direction: 'DEBIT', amount: '', memo: '' });
+    this.cabeceraDelAsiento.reset({
+      transactionDate: new Date().toISOString().slice(0, 10),
+      description: '',
+    });
   }
 }

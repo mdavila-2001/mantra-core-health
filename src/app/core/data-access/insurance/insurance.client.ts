@@ -1,11 +1,19 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
-import { maybeDateOnly } from '../wire';
+import { maybeDate, maybeDateOnly } from '../wire';
 import type {
   BrokerAgreement,
+  ClaimAdjudication,
+  ClaimDetail,
+  ClaimDispute,
+  ClaimLine,
+  ClaimLineDuplicateStudy,
+  ClaimListItem,
+  ClaimPage,
+  ClaimQuery,
   CarrierCatalogEntry,
   BrokerClient,
   BrokerDirectory,
@@ -19,6 +27,11 @@ import type {
   PlanBenefit,
   Product,
   ProviderNetwork,
+  CreateInsurancePlanInput,
+  CreatePlanBenefitInput,
+  UpdatePlanBenefitInput,
+  UpdatePlanBenefitRulesInput,
+  UpdatePlanPremiumInput,
 } from './insurance.types';
 
 /* ---- formas de transporte -------------------------------------------------
@@ -75,6 +88,41 @@ type WireBrokerClient = Omit<BrokerClient, 'effectiveFrom' | 'effectiveTo'> & {
   readonly effectiveTo: string | null;
 };
 
+type WireClaimListItem = Omit<ClaimListItem, 'submittedAt'> & {
+  readonly submittedAt: string | null;
+};
+
+type WireClaimAdjudication = Omit<ClaimAdjudication, 'adjudicatedAt'> & {
+  readonly adjudicatedAt: string;
+};
+
+type WireClaimDispute = Omit<ClaimDispute, 'submittedAt' | 'filingDeadline'> & {
+  readonly submittedAt: string | null;
+  readonly filingDeadline: string | null;
+};
+
+// Antiduplicación de estudios (subtarea 3.2): `duplicateStudy.performedAt`
+// llega como texto ISO, no como `Date` — el resto de la línea ya venía sin
+// mapear (`toClaimDetail` esparcía `lines` tal cual); se corrige acá.
+type WireClaimLineDuplicateStudy = Omit<ClaimLineDuplicateStudy, 'performedAt'> & {
+  readonly performedAt: string;
+};
+
+type WireClaimLine = Omit<ClaimLine, 'duplicateStudy'> & {
+  readonly duplicateStudy: WireClaimLineDuplicateStudy | null;
+};
+
+type WireClaimDetail = Omit<
+  ClaimDetail,
+  'header' | 'lines' | 'adjudication' | 'adjudicationHistory' | 'disputes'
+> & {
+  readonly header: WireClaimListItem;
+  readonly lines: readonly WireClaimLine[];
+  readonly adjudication: WireClaimAdjudication | null;
+  readonly adjudicationHistory: readonly WireClaimAdjudication[];
+  readonly disputes: readonly WireClaimDispute[];
+};
+
 /**
  * Cliente de `insurance` (módulo 26): el catálogo de la aseguradora y sus
  * brokers.
@@ -129,10 +177,69 @@ export class InsuranceClient {
   /** `GET /insurance-carriers/:id` — catálogo comercial y red. */
   getCarrier(id: string): Observable<CarrierDetail> {
     return this.http
-      .get<WireCarrierDetail>(
-        this.url(`/insurance-carriers/${encodeURIComponent(id)}`),
-      )
+      .get<WireCarrierDetail>(this.url(`/insurance-carriers/${encodeURIComponent(id)}`))
       .pipe(map(toCarrierDetail));
+  }
+
+  /** Crea un plan dentro de un producto del carrier del tenant activo. */
+  createPlan(
+    productId: string,
+    body: CreateInsurancePlanInput,
+  ): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url(`/insurance-products/${encodeURIComponent(productId)}/plans`),
+      body,
+    );
+  }
+
+  /** Crea una cobertura dentro de un plan del carrier del tenant activo. */
+  createBenefit(planId: string, body: CreatePlanBenefitInput): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url(`/insurance-plans/${encodeURIComponent(planId)}/benefits`),
+      body,
+    );
+  }
+
+  /** Reemplaza el subconjunto económico de una cobertura. */
+  updateBenefit(
+    planId: string,
+    benefitId: string,
+    body: UpdatePlanBenefitInput,
+  ): Observable<{ readonly ok: true }> {
+    return this.http.put<{ readonly ok: true }>(
+      this.url(
+        `/insurance-plans/${encodeURIComponent(planId)}/benefits/${encodeURIComponent(benefitId)}`,
+      ),
+      body,
+    );
+  }
+
+  /** Reemplaza autorización previa, documentos y exclusión. */
+  updateBenefitRules(
+    planId: string,
+    benefitId: string,
+    body: UpdatePlanBenefitRulesInput,
+  ): Observable<{ readonly ok: true }> {
+    return this.http.put<{ readonly ok: true }>(
+      this.url(
+        `/insurance-plans/${encodeURIComponent(planId)}/benefits/${encodeURIComponent(benefitId)}/rules`,
+      ),
+      body,
+    );
+  }
+
+  /**
+   * Declara (o quita, con `null`) la prima de lista mensual de un plan del
+   * carrier del tenant activo (v4.2.14, subtarea 3.1).
+   */
+  updatePlanPremium(
+    planId: string,
+    body: UpdatePlanPremiumInput,
+  ): Observable<{ readonly id: string; readonly monthlyPremiumAmount: string | null }> {
+    return this.http.put<{
+      readonly id: string;
+      readonly monthlyPremiumAmount: string | null;
+    }>(this.url(`/insurance-plans/${encodeURIComponent(planId)}/premium`), body);
   }
 
   /** `GET /insurance-brokers` — brokers del tenant activo. */
@@ -153,9 +260,7 @@ export class InsuranceClient {
   /** `GET /insurance-brokers/:id` — perfil e historial de vinculaciones. */
   getBroker(id: string): Observable<BrokerProfile> {
     return this.http
-      .get<WireBrokerProfile>(
-        this.url(`/insurance-brokers/${encodeURIComponent(id)}`),
-      )
+      .get<WireBrokerProfile>(this.url(`/insurance-brokers/${encodeURIComponent(id)}`))
       .pipe(map(toBrokerProfile));
   }
 
@@ -179,9 +284,113 @@ export class InsuranceClient {
       );
   }
 
+  /**
+   * `GET /insurance-claims` — solicitudes presentadas, por cursor.
+   *
+   * Los parámetros vacíos **no se envían**: un `?statusConceptId=` sin valor
+   * llegaría al servidor como cadena vacía y reventaría su `@IsUUID()` con un
+   * 400 que la pantalla no provocó a propósito.
+   *
+   * @param query - Filtros y cursor de continuación.
+   * @returns La página, con el cursor de la siguiente.
+   */
+  listClaims(query: ClaimQuery = {}): Observable<ClaimPage> {
+    let params = new HttpParams();
+    for (const [clave, valor] of Object.entries(query)) {
+      if (valor === undefined || valor === null || valor === '') continue;
+      params = params.set(clave, String(valor));
+    }
+    return this.http
+      .get<{
+        readonly items: readonly WireClaimListItem[];
+        readonly nextCursor: string | null;
+      }>(this.url('/insurance-claims'), { params })
+      .pipe(
+        map((body) => ({
+          items: body.items.map(toClaimListItem),
+          nextCursor: body.nextCursor,
+        })),
+      );
+  }
+
+  /**
+   * `GET /insurance-claims/:id` — cabecera, ítems, dictámenes y disputas.
+   *
+   * @param id - Solicitud consultada.
+   * @returns El detalle completo.
+   */
+  getClaim(id: string): Observable<ClaimDetail> {
+    return this.http
+      .get<WireClaimDetail>(this.url(`/insurance-claims/${encodeURIComponent(id)}`))
+      .pipe(map(toClaimDetail));
+  }
+
+  /**
+   * `POST /insurance-claims/:id/disputes` — reclamar un dictamen.
+   *
+   * Reabre el caso **sin borrar ni editar** el dictamen anterior: las
+   * adjudicaciones son inmutables y la disputa es una fila nueva que las
+   * referencia. Reclamar dos veces sobre la misma versión devuelve la misma
+   * disputa: el servidor lo resuelve buscando la abierta antes de crear.
+   *
+   * @param claimId - Solicitud que se reclama.
+   * @param body - Versión disputada y parte que inicia.
+   * @returns El identificador de la disputa.
+   */
+  openClaimDispute(
+    claimId: string,
+    body: {
+      readonly claimAdjudicationVersionId?: string;
+      readonly initiatedBy: 'PROVIDER' | 'PATIENT';
+    },
+  ): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url(`/insurance-claims/${encodeURIComponent(claimId)}/disputes`),
+      body,
+    );
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+function toClaimListItem(body: WireClaimListItem): ClaimListItem {
+  return { ...body, submittedAt: maybeDate(body.submittedAt) ?? null };
+}
+
+function toClaimAdjudication(body: WireClaimAdjudication): ClaimAdjudication {
+  return { ...body, adjudicatedAt: new Date(body.adjudicatedAt) };
+}
+
+function toClaimDispute(body: WireClaimDispute): ClaimDispute {
+  return {
+    ...body,
+    submittedAt: maybeDate(body.submittedAt) ?? null,
+    // `filingDeadline` es `format: 'date'`: pasarlo por `new Date()` lo ancla a
+    // medianoche UTC y **retrocede un día** en Bolivia, que es UTC-4.
+    filingDeadline: maybeDateOnly(body.filingDeadline) ?? null,
+  };
+}
+
+function toClaimDetail(body: WireClaimDetail): ClaimDetail {
+  return {
+    ...body,
+    header: toClaimListItem(body.header),
+    lines: body.lines.map(toClaimLine),
+    adjudication: body.adjudication ? toClaimAdjudication(body.adjudication) : null,
+    adjudicationHistory: body.adjudicationHistory.map(toClaimAdjudication),
+    disputes: body.disputes.map(toClaimDispute),
+  };
+}
+
+function toClaimLine(body: WireClaimLine): ClaimLine {
+  return {
+    ...body,
+    duplicateStudy: body.duplicateStudy
+      ? { ...body.duplicateStudy, performedAt: new Date(body.duplicateStudy.performedAt) }
+      : null,
+  };
 }
 
 function toCarrierSummary(body: WireCarrierSummary): CarrierSummary {

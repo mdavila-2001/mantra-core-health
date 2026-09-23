@@ -7,5 +7,5 @@
 .pdf-export__error {
   margin: 0;
   color: var(--st-error-fg);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }

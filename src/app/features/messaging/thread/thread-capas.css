@@ -1,0 +1,241 @@
+/* Lo que se monta *encima* del hilo: el reenvío, el menú de un mensaje, el
+   botón de bajar del todo y el visor de imágenes.
+
+   Vive aparte de `thread.css` por el presupuesto de estilos por componente
+   (`anyComponentStyle`, 9 kB de tope en `angular.json`): el hilo entero en una
+   sola hoja lo pasaba y tiraba el build. Son dos hojas del mismo componente,
+   así que la encapsulación es la misma y los selectores se siguen viendo entre
+   archivos —la media query «Angosto» de `thread.css` alcanza a `.hilo__bajar`
+   de acá sin nada especial—. */
+
+/* --- Reenviar ------------------------------------------------------------ */
+
+.hilo__aviso {
+  position: absolute;
+  inset-block-end: 5.5rem;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  margin: 0;
+  padding: var(--e2) var(--e4);
+  border-radius: var(--r-pill);
+  background: var(--tinta);
+  color: var(--sup-tarjeta);
+  font-size: var(--fs-caption);
+  box-shadow: var(--sombra-2);
+}
+
+.hilo__reenvio {
+  cursor: default;
+}
+
+.hilo__reenvio-caja {
+  inline-size: min(24rem, 100%);
+  max-block-size: 80vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-menu);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra);
+  overflow: hidden;
+}
+
+.hilo__reenvio-titulo {
+  margin: 0;
+  padding: var(--e4) var(--e4) var(--e2);
+  font-family: var(--f-titulo);
+  font-size: var(--fs-body-lg);
+  font-weight: 700;
+  color: var(--tinta-marca);
+}
+
+.hilo__reenvio-lista {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0 var(--e2);
+  list-style: none;
+}
+
+.hilo__reenvio-lista button {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  inline-size: 100%;
+  padding: var(--e2) var(--e3);
+  border: 0;
+  border-radius: var(--r-ctrl);
+  background: none;
+  color: var(--tinta);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.hilo__reenvio-lista button:hover,
+.hilo__reenvio-lista button:focus-visible {
+  background: var(--sup-inset);
+}
+
+.hilo__reenvio-cancelar {
+  margin: var(--e2) var(--e4) var(--e4);
+  align-self: flex-end;
+  padding: var(--e2) var(--e4);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--tinta-2);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+/* --- El menú del mensaje ------------------------------------------------- */
+
+.hilo__mas-mensaje {
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-end: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 20px;
+  block-size: 20px;
+  border: 0;
+  border-radius: 4px;
+  background: linear-gradient(to left, var(--chat-ajena) 60%, transparent);
+  color: var(--tinta-3);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--mov-rapido) var(--curva);
+}
+
+.hilo__burbuja.is-propio .hilo__mas-mensaje {
+  background: linear-gradient(to left, var(--chat-propia) 60%, transparent);
+}
+
+.hilo__burbuja:hover .hilo__mas-mensaje,
+.hilo__burbuja:focus-within .hilo__mas-mensaje,
+.hilo__mas-mensaje[aria-expanded='true'] {
+  opacity: 1;
+}
+
+.hilo__mas-mensaje svg {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+.hilo__menu {
+  position: absolute;
+  inset-block-start: 20px;
+  inset-inline-end: 0;
+  z-index: 3;
+  margin: 0;
+  padding: var(--e1);
+  min-inline-size: 9rem;
+  list-style: none;
+  border: 1px solid var(--filete);
+  border-radius: var(--r-menu);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra);
+}
+
+.hilo__menu button {
+  inline-size: 100%;
+  padding: var(--e2) var(--e3);
+  border: 0;
+  border-radius: var(--r-ctrl);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--fs-caption);
+  text-align: start;
+  cursor: pointer;
+}
+
+.hilo__menu button:hover,
+.hilo__menu button:focus-visible {
+  background: var(--sup-inset);
+}
+
+@media (hover: none) {
+  .hilo__mas-mensaje {
+    opacity: 1;
+  }
+}
+
+/* --- Bajar del todo ------------------------------------------------------ */
+
+.hilo__bajar {
+  position: absolute;
+  inset-block-end: 5.5rem;
+  inset-inline-end: var(--e6);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: var(--e2) var(--e3);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-2);
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.hilo__bajar svg {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.hilo__bajar-cuenta {
+  min-inline-size: 18px;
+  padding-inline: 5px;
+  border-radius: var(--r-pill);
+  background: var(--chat-no-leido);
+  color: #fff;
+  font-size: var(--fs-overline);
+  font-weight: 700;
+}
+
+/* --- El visor de imágenes ------------------------------------------------ */
+
+.hilo__visor {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--e6);
+  background: var(--velo);
+  cursor: zoom-out;
+}
+
+.hilo__visor img {
+  max-inline-size: 100%;
+  max-block-size: 100%;
+  border-radius: var(--r-menu);
+  box-shadow: var(--sombra);
+}
+
+.hilo__visor-cerrar {
+  position: absolute;
+  inset-block-start: var(--e4);
+  inset-inline-end: var(--e4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 40px;
+  block-size: 40px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, .16);
+  color: #fff;
+  cursor: pointer;
+}
+
+.hilo__visor-cerrar svg {
+  inline-size: 20px;
+  block-size: 20px;
+}

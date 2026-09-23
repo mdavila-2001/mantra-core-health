@@ -1,0 +1,126 @@
+<app-card variant="outlined" padding="lg" class="observacion">
+  <h2 class="observacion__titulo">Observación</h2>
+
+  @if (errorDeLaObservacion(); as mensaje) {
+    <app-alert tone="error" data-testid="observacion-error">{{ mensaje }}</app-alert>
+  }
+
+  @if (sinOrganizacion()) {
+    <app-alert tone="info" title="Elegí una organización">
+      La medición queda bajo la custodia de una organización. Elegí una en el encabezado para poder
+      registrarla.
+    </app-alert>
+  } @else {
+    <form
+      class="observacion__form app-form-grid"
+      (submit)="$event.preventDefault(); registrar()"
+    >
+      <app-form-field
+        icon="results"
+        label="Qué se midió"
+        hint="Signo vital, medida antropométrica o resultado. Es lo único obligatorio."
+        [required]="true"
+      >
+        <app-concept-select
+          data-testid="observacion-medicion"
+          [target]="targetMedicion"
+          [(value)]="medicion"
+          placeholder="Elegí una medición"
+        />
+      </app-form-field>
+
+      @if (opcionesDeCita().length > 1) {
+        <app-form-field
+          icon="calendar"
+          label="¿En qué cita se tomó?"
+          hint="Opcional. La consulta donde se midió, incluidas las ya finalizadas."
+        >
+          <app-select
+            data-testid="observacion-cita"
+            [value]="citaElegida()"
+            (valueChange)="citaElegida.set($event)"
+            [options]="opcionesDeCita()"
+          />
+        </app-form-field>
+      }
+
+      <!-- Las seis familias de valor del contrato son excluyentes. El
+           formulario ofrece dos y manda una: con número gana el número, y el
+           texto queda para la medición cualitativa. Decirlo acá evita la duda
+           de si llenar las dos suma información. -->
+      <app-form-field
+        label="Valor"
+        hint="El número medido. Si la observación no tiene número, dejalo vacío y escribila abajo."
+        [errorMessage]="numeroInvalido() ? 'Escribí sólo el número; la unidad se elige al lado.' : ''"
+      >
+        <app-input
+          type="text"
+          inputmode="decimal"
+          testId="observacion-valor"
+          [(value)]="valorNumerico"
+          [hasError]="numeroInvalido()"
+          placeholder="128"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Unidad"
+        hint="La del valor de al lado. Sin número, no corresponde ninguna."
+      >
+        <app-concept-select
+          data-testid="observacion-unidad"
+          [target]="targetUnidad"
+          [(value)]="unidad"
+          [disabled]="numero() === null"
+          placeholder="Sin unidad"
+        />
+      </app-form-field>
+
+      <app-form-field
+        class="app-form-grid__ancho"
+        label="La medición en palabras"
+        hint="Para lo que no tiene número: «ruidos cardíacos rítmicos, sin soplos»."
+      >
+        <app-textarea
+          [rows]="2"
+          [(value)]="valorEnPalabras"
+          data-testid="observacion-texto"
+          placeholder="Lo observado, con tus palabras"
+        />
+      </app-form-field>
+
+      <app-form-field label="Categoría" hint="Opcional. De dónde sale la medición.">
+        <app-concept-select
+          [target]="targetCategoria"
+          [(value)]="categoria"
+          placeholder="Sin especificar"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Interpretación"
+        hint="Opcional. Es lo que convierte un número en un hallazgo."
+      >
+        <app-concept-select
+          [target]="targetInterpretacion"
+          [(value)]="interpretacion"
+          placeholder="Sin especificar"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="¿Cuándo se tomó?"
+        hint="Opcional. Sin fecha, queda con la del registro."
+      >
+        <app-date-picker [(value)]="tomadaEl" mode="date-time" />
+      </app-form-field>
+
+      <app-form-actions
+        submitLabel="Registrar observación"
+        [pending]="registrando()"
+        [disabled]="!puedeRegistrar()"
+        (submitted)="registrar()"
+      />
+    </form>
+  }
+</app-card>

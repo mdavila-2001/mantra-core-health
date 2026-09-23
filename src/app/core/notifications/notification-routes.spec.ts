@@ -25,6 +25,12 @@ describe('rutaDeNotificacion', () => {
     );
   });
 
+  it('lleva el pedido de vínculo de un profesional a la bandeja del paciente (FT-07)', () => {
+    expect(rutaDeNotificacion({ type: 'CARE_RELATIONSHIP_REQUEST', id: 'cr-1' })).toBe(
+      '/my-account/access-requests',
+    );
+  });
+
   it('lleva el pedido de farmacia a su detalle, donde vive la decisión', () => {
     // FAR-I2: «te proponen un genérico» se responde en la ficha del pedido.
     expect(rutaDeNotificacion({ type: 'PHARMACY_ORDER', id: 'ped-1' })).toBe(

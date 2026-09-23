@@ -37,23 +37,55 @@
 }
 
 .prefs__fila {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--e3);
+  padding: var(--e3);
   border: 1px solid var(--border-default);
   border-radius: var(--radio-md, 0.75rem);
   background: var(--bg-surface);
-}
-
-.prefs__control {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--e2);
-  padding: var(--e3);
-  cursor: pointer;
+  flex-wrap: wrap;
 }
 
 .prefs__texto {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+}
+
+/* El switch y el ícono decorativo van juntos, a la derecha del renglón — es
+   lo que pide el propietario en TAREA-17 §1: «su ícono en la parte derecha y
+   un [interruptor] de encendido y apagado». */
+.prefs__derecha {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  flex-shrink: 0;
+}
+
+.prefs__icono {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--text-secondary);
+}
+
+/*
+ * `app-switch` ya trae su propio nombre accesible (`label`) para que
+ * `role="switch"` se anuncie como «Recetas y consultas, activado» y no como
+ * «activado» a secas (AC-17-3). Ese texto ya se ve en `.prefs__nombre`, a la
+ * izquierda del renglón: repetirlo visualmente adentro del switch sería la
+ * misma frase dos veces en la misma fila. Se oculta sólo por CSS — sigue en
+ * el DOM y sigue siendo lo que un lector de pantalla anuncia — nunca con
+ * `[label]=""`, que dejaría el control sin nombre accesible.
+ */
+:host ::ng-deep .prefs__switch .switch-label {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .prefs__nombre {
@@ -67,6 +99,10 @@
 
 .prefs__horas {
   display: flex;
+  /* Las dos horas se van a dos renglones cuando no entran. Sin esto, en un
+     teléfono de 375 el campo «Hasta» terminaba en 428 px y la **página entera**
+     se scrolleaba de lado — no sólo esta fila. Medido el 2026-09-10. */
+  flex-wrap: wrap;
   gap: var(--e3);
   margin-top: var(--e3);
   padding-inline-start: var(--e3);
@@ -76,7 +112,15 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  /* Puede encogerse y, si hay lugar, repartirse el ancho con su hermana. */
+  flex: 1 1 8rem;
+  min-inline-size: 0;
   font-size: 0.9rem;
+}
+
+.prefs__hora input {
+  inline-size: 100%;
+  min-inline-size: 0;
 }
 
 .prefs__hora input {

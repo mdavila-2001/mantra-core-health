@@ -1,6 +1,19 @@
 /* ============================================================================
-    Mis servicios. Sólo distribución: la tarjeta, el distintivo y el botón ya
-    traen su pinta del sistema — ni un color ni una tipografía propios.
+    Mis servicios.
+
+    La rejilla y la tarjeta **no se pintan acá**: salen de
+    `shared/styles/rejilla-de-tarjetas.css`, la misma hoja que pinta las
+    portadas de los directorios. Antes esta pantalla tenía su propia rejilla,
+    su propio nombre y su propio pie de tarjeta —parecidos pero no iguales— y
+    por eso se veía como otra aplicación al lado del directorio.
+
+    El pie de la tarjeta —el precio, su edición y los botones— tampoco: salió a
+    `shared/styles/tarjeta-de-servicio.css` el 11/09/2026, cuando el catálogo
+    de estudios del laboratorio y del centro de imagenología pasó a mostrarse
+    con esta misma tarjeta. Era la misma pinta escrita dos veces.
+
+    Lo que queda acá es lo único que esta pantalla no comparte con nadie: el
+    ancho de la columna y el respiro de la cabecera.
     ========================================================================== */
 
 :host {
@@ -13,78 +26,47 @@
   margin-block-start: var(--sp-6);
 }
 
-.mis-servicios__esqueleto,
-.mis-servicios__grilla {
-  display: grid;
-  /* `auto-fill` con `minmax` y no un número fijo de columnas: la pantalla se
-     abre en un teléfono, en una tablet y en un monitor, y fijar tres columnas
-     obliga a tres reglas de medios que se olvidan de la cuarta pantalla.
-
-     El `min(100%, …)` es lo que impide el desborde lateral: en un contenedor
-     más angosto que la pista mínima, `minmax(18rem, 1fr)` la respeta igual y
-     aparece scroll horizontal. */
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
-  gap: var(--sp-4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+/* 18rem y no las 14 de la portada de un directorio: acá la tarjeta no es un
+   rótulo con su cuenta sino un servicio con su importe y dos botones, y en
+   14rem «Editar precio» y «Cancelar» se parten en dos renglones. El resto de
+   la disciplina —borde, radio, superficie, ícono, nombre— no se toca. */
+.mis-servicios__rejilla {
+  --rejilla-min: 18rem;
 }
 
-.mis-servicios__item {
-  display: block;
-  /* Las tarjetas de una fila terminan a la misma altura aunque digan distinto. */
-  block-size: 100%;
-}
 
-.mis-servicios__ficha {
+/* C-12 (2026-09-20) · el modal que programa el horario de un servicio. */
+.programar-servicio {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.programar-servicio__campos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.programar-servicio__dia {
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-2);
 }
 
-.mis-servicios__nombre {
-  margin: 0;
-  font-size: var(--fs-body-lg);
-  line-height: var(--lh-body-lg);
-  font-weight: 600;
-  /* Un nombre largo parte en varias líneas en vez de estirar la tarjeta y
-     empujar la grilla a lo ancho. */
-  overflow-wrap: anywhere;
-}
-
-.mis-servicios__codigo {
-  margin: var(--sp-1) 0 0;
-  color: var(--text-muted);
+.programar-servicio__rotulo {
   font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  font-variant-numeric: tabular-nums;
+  font-weight: 600;
 }
 
-.mis-servicios__precio {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-2);
-  margin: var(--sp-3) 0 0;
+.programar-servicio__rango {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
 }
 
-.mis-servicios__rotulo {
+.programar-servicio__motivo {
   margin: 0;
+  font-size: var(--fs-caption);
   color: var(--text-secondary);
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-}
-
-.mis-servicios__monto {
-  margin: 0;
-  font-size: var(--fs-body-lg);
-  line-height: var(--lh-body-lg);
-  font-weight: 600;
-}
-
-.mis-servicios__mas {
-  display: flex;
-  justify-content: center;
-  margin-block-start: var(--sp-6);
 }

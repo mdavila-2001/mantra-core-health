@@ -17,14 +17,20 @@
 
 .mes__barra {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--sp-2);
+  gap: var(--sp-1) var(--sp-2);
 }
 
 .mes__titulo {
   margin: 0;
-  font-size: var(--fs-md);
+  /* «Mes anterior» / «Mes siguiente →» son botones de texto, no íconos: a
+     `--fs-h3` (21px) la fila entera no entraba en 390px y producía scroll
+     horizontal — se vio en la evidencia visual del carril 12. `--fs-body-lg`
+     dejó lugar a los tres en una fila; `flex-wrap` arriba es la red por si un
+     mes con nombre más largo (otro idioma, otra config regional) no entra. */
+  font-size: var(--fs-body-lg);
   font-weight: 600;
 }
 
@@ -41,15 +47,15 @@
 
 .mes__leyenda {
   margin-bottom: var(--sp-2);
-  color: var(--fg-muted);
-  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
   text-align: start;
 }
 
 .mes__grilla th {
   padding-bottom: var(--sp-1);
-  color: var(--fg-muted);
-  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
   font-weight: 600;
 }
 
@@ -70,15 +76,40 @@
   inline-size: 100%;
   min-block-size: 3.25rem;
   padding: var(--sp-1);
-  border: var(--stroke-1) solid var(--border-subtle);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--r-sm);
   background: var(--bg-surface);
-  color: var(--fg-default);
+  color: var(--text-primary);
+  /* se lee, no se toca: el globo es todo lo que hay detrás */
+  cursor: default;
+}
+
+/* Abrible: se ve y se siente tocable. */
+.mes__dia--boton {
+  font: inherit;
   cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+}
+
+.mes__dia--boton:hover {
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mes__dia--boton {
+    transition: none;
+  }
+
+  .mes__dia--boton:hover {
+    transform: none;
+  }
 }
 
 .mes__dia:focus-visible {
-  outline: var(--stroke-2) solid var(--st-primary-border);
+  outline: 2px solid var(--st-primary-bd);
   outline-offset: 1px;
 }
 
@@ -90,17 +121,17 @@
 .mes__numero--fuera {
   display: block;
   padding: var(--sp-1);
-  color: var(--fg-subtle);
+  color: var(--text-muted);
   text-align: center;
 }
 
 .mes__cuenta {
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
   font-variant-numeric: tabular-nums;
 }
 
 .mes__motivo {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-caption);
   line-height: 1.1;
   text-align: center;
   overflow: hidden;
@@ -114,37 +145,39 @@
 /* Sin agenda: apagado y sin número de turnos. El patrón laboral emerge solo. */
 [data-estado='sin-agenda'] .mes__dia {
   background: var(--bg-surface-alt);
-  color: var(--fg-muted);
+  color: var(--text-secondary);
 }
 
 [data-estado='libre'] .mes__dia {
   background: var(--st-success-bg);
-  border-color: var(--st-success-border);
+  border-color: var(--st-success-bd);
   color: var(--st-success-fg);
 }
 
 [data-estado='con-reservas'] .mes__dia {
   background: var(--st-primary-bg);
-  border-color: var(--st-primary-border);
+  border-color: var(--st-primary-bd);
   color: var(--st-primary-fg);
 }
 
 [data-estado='lleno'] .mes__dia {
   background: var(--st-info-bg);
-  border-color: var(--st-info-border);
+  border-color: var(--st-info-bd);
   color: var(--st-info-fg);
 }
 
-/* Bloqueado: gris CON su motivo, que es lo que lo distingue de «sin agenda». */
+/* Bloqueado: en rojo, punto 3 del carril 12 ("los bloqueos en rojo", textual).
+   El punteado se conserva — sigue distinguiendo "bloqueado" de "sin agenda" por
+   forma, no sólo por color — pero el tono ya no es el gris de "apagado". */
 [data-estado='bloqueado'] .mes__dia {
-  background: var(--bg-surface-alt);
+  background: var(--st-error-bg);
   border-style: dashed;
-  border-color: var(--border-strong);
-  color: var(--fg-muted);
+  border-color: var(--st-error-bd);
+  color: var(--st-error-fg);
 }
 
 .mes__celda--hoy .mes__dia {
-  outline: var(--stroke-2) solid var(--st-primary-border);
+  outline: 2px solid var(--st-primary-bd);
   outline-offset: -2px;
 }
 
@@ -157,4 +190,114 @@
     min-block-size: 4.5rem;
     padding: var(--sp-2);
   }
+}
+
+/* ---- el globo del día ------------------------------------------------------- */
+
+/* Capa superior (Popover API). El UA centra los popovers con `inset: 0` y
+   `margin: auto`: se anulan, las coordenadas las pone el componente. */
+.mes__globo {
+  position: fixed;
+  inset: auto;
+  z-index: var(--z-tooltip);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--fs-body);
+}
+
+.mes__globo-cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.mes__globo-titulo {
+  margin: 0;
+  font-weight: 600;
+}
+
+.mes__globo-titulo::first-letter {
+  text-transform: uppercase;
+}
+
+.mes__globo-linea {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.mes__globo-linea--bloqueo {
+  color: var(--st-error-fg);
+}
+
+.mes__globo-subtitulo {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3) var(--sp-1);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+/* La lista es lo que scrollea; la cabecera queda fija arriba. */
+.mes__globo-lista {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  margin: 0;
+  padding: 0 var(--sp-2) var(--sp-2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+.mes__globo-fila {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: var(--r-sm);
+}
+
+.mes__globo-fila + .mes__globo-fila {
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* C-08 · el chip de estado cierra la fila, alineado al final. `flex: none` para
+   que no lo apriete un nombre largo: «No asistió» cortado a «No asis…» pierde
+   exactamente la información que el chip existe para dar. */
+.mes__globo-chip {
+  flex: none;
+  margin-inline-start: auto;
+}
+
+.mes__globo-hora {
+  flex: none;
+  min-inline-size: 6.5em;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.mes__globo-texto {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.mes__globo-primario {
+  overflow-wrap: anywhere;
+}
+
+.mes__globo-secundario {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
 }

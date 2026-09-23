@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { io, type Socket } from 'socket.io-client';
 import { Subject } from 'rxjs';
 
+import { environment } from '../../../environments/environment';
 import { API_BASE_URL } from '../data-access/api';
 import { SessionStore } from '../auth/session.store';
 import type { DirectMessage } from '../data-access/community/community.types';
@@ -79,20 +80,41 @@ export class ChatSocketService {
   private readonly messages$ = new Subject<ChatMessageEvent>();
   private readonly reads$ = new Subject<ChatReadEvent>();
   private readonly newConversations$ = new Subject<ChatNewConversationEvent>();
+  private readonly updated$ = new Subject<ChatMessageEvent>();
 
   /** `conversation:message`, sin filtrar — cada pantalla filtra lo suyo. */
   readonly onMessage = this.messages$.asObservable();
+  /**
+   * `conversation:message:updated` — alguien editó un mensaje suyo (F4.5).
+   *
+   * Trae el mensaje entero, con el mismo cuerpo que `conversation:message`, así
+   * que se convierte con la misma función: sin eso la fecha llegaría como texto
+   * con tipo de `Date`, que es el defecto que ya costó una vez el hilo entero.
+   */
+  readonly onMessageUpdated = this.updated$.asObservable();
   /** `conversation:read`. */
   readonly onRead = this.reads$.asObservable();
   /** `conversation:new`. */
   readonly onNewConversation = this.newConversations$.asObservable();
 
   /**
-   * Conecta si hace falta y devuelve el socket. Bajo SSR no hace nada — un
-   * socket abierto en el servidor no tiene a quién avisarle nada.
+   * Conecta si hace falta y devuelve el socket.
+   *
+   * Dos situaciones en las que **no** se marca, por el mismo motivo: no hay a
+   * quién llamar.
+   *
+   * - **Bajo SSR**, porque un socket abierto en el servidor no tiene a quién
+   *   avisarle nada.
+   * - **Sobre la maqueta** (`mockBackend`), porque ahí no hay ninguna API: un
+   *   interceptor contesta las peticiones HTTP dentro de Angular, y no hay
+   *   pasarela de tiempo real que pueda contestar un handshake. Intentarlo
+   *   dejaba un `WebSocket connection … failed` en la consola de toda pantalla
+   *   que abre el chat o el centro de avisos —lo destapó el barrido de rutas,
+   *   que trata un error de consola como un defecto de la pantalla, y con
+   *   razón: es lo que ve cualquiera que abra las herramientas del navegador.
    */
   private ensureConnected(): Socket | null {
-    if (!this.isBrowser) {
+    if (!this.isBrowser || environment.mockBackend) {
       return null;
     }
     const token = this.session.accessToken();
@@ -115,6 +137,9 @@ export class ChatSocketService {
     socket.on('disconnect', () => this.connected.set(false));
     socket.on('conversation:message', (payload: MensajeDelCable) =>
       this.messages$.next(aMensaje(payload)),
+    );
+    socket.on('conversation:message:updated', (payload: MensajeDelCable) =>
+      this.updated$.next(aMensaje(payload)),
     );
     socket.on('conversation:read', (payload: ChatReadEvent) =>
       this.reads$.next(payload),

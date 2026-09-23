@@ -100,6 +100,79 @@ describe('DiagnosticResults', () => {
     expect(texto).toContain('cuando el profesional lo valida');
   });
 
+  /* ---- FT-21 · detalle y descarga ---------------------------------------- */
+
+  /**
+   * FT-21-R03/R04. El resultado decía el nombre y la fecha y nada más: dos
+   * versiones del mismo estudio se leían igual, y no se sabía cuántos archivos
+   * traía sin abrirlo.
+   */
+  it('muestra los metadatos del resultado: versión, firma y cuántos archivos trae', () => {
+    configurar(PROFILE_ID);
+    mount();
+    responderResultados([{ ...RESULTADO, issuedAt: '2026-08-08T09:00:00.000Z' }]);
+    fixture.detectChanges();
+
+    const meta = fixture.nativeElement.querySelector('[data-testid="resultado-meta"]');
+    expect(meta?.textContent).toContain('Liberado el');
+    expect(meta?.textContent).toContain('Firmado el');
+    expect(meta?.textContent).toContain('Versión 2');
+    expect(meta?.textContent).toContain('1 archivo');
+  });
+
+  /** FT-21-R01. Descargar es la acción por la que se entra: se ve como tal. */
+  it('cada archivo ofrece su botón de descarga con ícono', () => {
+    configurar(PROFILE_ID);
+    mount();
+    responderResultados([RESULTADO]);
+    fixture.detectChanges();
+
+    const boton = fixture.nativeElement.querySelector(
+      '[data-testid="resultado-descargar-link-1"]',
+    ) as HTMLElement | null;
+    expect(boton).not.toBeNull();
+    expect(boton?.querySelector('app-nav-icon')).not.toBeNull();
+  });
+
+  /**
+   * FT-21-R06. Un informe sin adjunto no es una descarga rota: se dice qué hay
+   * y qué hacer si se esperaba un archivo.
+   */
+  it('un resultado sin archivos lo explica en vez de dejar el hueco', () => {
+    configurar(PROFILE_ID);
+    mount();
+    responderResultados([{ ...RESULTADO, files: [] }]);
+    fixture.detectChanges();
+
+    const aviso = fixture.nativeElement.querySelector('[data-testid="resultado-sin-archivos"]');
+    expect(aviso?.textContent).toContain('no tiene archivos para descargar');
+    expect(aviso?.textContent).toContain('consultá con el centro que lo emitió');
+  });
+
+  it('refactor UX: descargar y compartir nombran el estudio para el lector de pantalla', () => {
+    // Con varios resultados, «Descargar Archivo 1» se repetía idéntico en cada
+    // tarjeta: navegando por botones no se sabía de qué estudio era cada uno.
+    configurar(PROFILE_ID);
+    mount();
+    responderResultados([RESULTADO]);
+    fixture.detectChanges();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    const titulo = raiz.querySelector('.resultados__titulo')?.textContent?.trim() ?? '';
+    const descargar = raiz.querySelector('.resultados__descargar') as HTMLElement;
+    const visible = (descargar.textContent ?? '').replace(/\s+/g, ' ').trim();
+    const nombre = descargar.getAttribute('aria-label') ?? '';
+
+    expect(titulo).not.toBe('');
+    // WCAG 2.5.3: el nombre contiene el texto visible, y agrega el estudio.
+    expect(nombre.startsWith(visible)).toBe(true);
+    expect(nombre.endsWith(` de ${titulo}`)).toBe(true);
+    const compartir = [...raiz.querySelectorAll('button')].find((boton) =>
+      boton.textContent?.includes('Compartir con un profesional'),
+    );
+    expect(compartir?.getAttribute('aria-label')).toBe(`Compartir con un profesional: ${titulo}`);
+  });
+
   it('shows the signed conclusion and offers its file', () => {
     configurar(PROFILE_ID);
     mount();

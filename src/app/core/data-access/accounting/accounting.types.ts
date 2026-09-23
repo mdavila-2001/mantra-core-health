@@ -49,6 +49,15 @@ export interface JournalTransaction {
   /** Decimal como texto. No convertir a número: ver la cabecera del archivo. */
   readonly totalAmount?: string;
   readonly postedAt?: Date;
+  /**
+   * Dónde está el documento en el flujo de seis pasos.
+   *
+   * Es distinto de `statusConceptId`, que es el concepto de terminología: éste
+   * es el **código** del estado, que es lo que la pantalla necesita para saber
+   * qué acción ofrecer. Opcional porque la API todavía no lo publica en el
+   * listado; cuando falta, un asiento con `postedAt` se lee como posteado.
+   */
+  readonly status?: WorkflowStatus;
 }
 
 /** Una línea del asiento: contra qué cuenta y de qué lado. */
@@ -185,4 +194,292 @@ export interface PractitionerEntryResult {
   readonly totalAmount: string;
   readonly invoiceId?: string;
   readonly notificationRequestId?: string;
+}
+
+/* ============================================================================
+    TAREA-20 S2 — MODO CONTADOR: asiento de N filas.
+    ========================================================================== */
+
+/** Una fila del formulario de N filas, antes de enviarla. */
+export interface JournalLineInput {
+  readonly accountId: string;
+  readonly direction: 'DEBIT' | 'CREDIT';
+  /** Decimal como texto, positivo. */
+  readonly amount: string;
+  readonly memo?: string;
+}
+
+/** Cuerpo de `POST /accounting/journal-transactions` y `.../drafts`. */
+export interface PostJournalInput {
+  readonly practiceId: string;
+  readonly transactionDate: string;
+  readonly description?: string;
+  readonly lines: readonly JournalLineInput[];
+}
+
+/** Respuesta al crear o postear un asiento. */
+export interface PostedJournalResult {
+  readonly id: string;
+  readonly transactionNumber: string;
+  readonly status: string;
+  readonly totalAmount: string;
+  readonly lineCount: number;
+  readonly postedAt?: Date;
+}
+
+/* ============================================================================
+    TAREA-20 S3 — libro mayor, estado de resultados, balance general.
+    ========================================================================== */
+
+/** Un movimiento del libro mayor de una cuenta, con saldo corrido. */
+export interface GeneralLedgerEntry {
+  readonly id: string;
+  readonly transactionId: string;
+  readonly transactionNumber?: string;
+  readonly transactionDate: Date;
+  readonly directionConceptId: string;
+  /** Decimal como texto. */
+  readonly debit: string;
+  /** Decimal como texto. */
+  readonly credit: string;
+  /** Saldo acumulado, con signo por naturaleza, decimal como texto. */
+  readonly runningBalance: string;
+  readonly memo?: string;
+}
+
+/** El libro mayor de una cuenta: una página de movimientos con saldo corrido. */
+export interface GeneralLedgerPage {
+  readonly accountId: string;
+  readonly code?: string;
+  readonly name?: string;
+  readonly normalBalanceConceptId?: string;
+  readonly currencyConceptId?: string;
+  /** Saldo antes de la primera fila de esta página, decimal como texto. */
+  readonly openingBalance: string;
+  readonly items: readonly GeneralLedgerEntry[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
+/** Filtros del libro mayor. */
+export interface GeneralLedgerQuery {
+  readonly accountId: string;
+  readonly from?: string;
+  readonly to?: string;
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+/** Una cuenta agregada en un estado financiero. */
+export interface FinancialStatementLine {
+  readonly accountId: string;
+  readonly code?: string;
+  readonly name?: string;
+  readonly accountTypeConceptId: string;
+  /** Decimal como texto, con signo por naturaleza. */
+  readonly amount: string;
+}
+
+/** Filtros compartidos por estado de resultados y balance general. */
+export interface FinancialStatementQuery {
+  readonly fiscalPeriodId?: string;
+  readonly from?: string;
+  readonly to?: string;
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+/** El estado de resultados de una ventana. */
+export interface IncomeStatement {
+  readonly revenueItems: readonly FinancialStatementLine[];
+  readonly expenseItems: readonly FinancialStatementLine[];
+  readonly totalRevenue: string;
+  readonly totalExpense: string;
+  readonly netIncome: string;
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+  readonly truncated: boolean;
+}
+
+/** El balance general a una fecha de corte. */
+export interface BalanceSheet {
+  readonly assetItems: readonly FinancialStatementLine[];
+  readonly liabilityItems: readonly FinancialStatementLine[];
+  readonly equityItems: readonly FinancialStatementLine[];
+  readonly netIncomeOfPeriod: string;
+  readonly totalAssets: string;
+  readonly totalLiabilities: string;
+  readonly totalEquity: string;
+  readonly totalLiabilitiesAndEquity: string;
+  readonly balanced: boolean;
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+  readonly truncated: boolean;
+}
+
+/* ============================================================================
+    El plano SAP: ejercicio y períodos, flujo del documento, partidas abiertas
+    y objetos de controlling.
+
+    Los nombres son los de las tablas del módulo 16 del modelo canónico
+    —`fiscal_periods`, `open_items`, `clearing_documents`, `cost_centers`,
+    `profit_centers`, `segments`— y los estados, los que la API declara en
+    `accounting.concepts.ts`. No se inventó vocabulario: el día que la API
+    publique estas lecturas, la pantalla no cambia de idioma.
+    ========================================================================== */
+
+/** Los seis estados por los que pasa un asiento antes de existir en el mayor. */
+export type WorkflowStatus =
+  | 'DRAFT'
+  | 'AUTO_CLASSIFIED'
+  | 'PENDING_REVIEW'
+  | 'APPROVED'
+  | 'POSTED'
+  | 'REVERSED';
+
+/** Las cinco acciones que mueven ese estado. Son las de la API, no más. */
+export type WorkflowAction = 'classify' | 'submit-review' | 'approve' | 'post' | 'reverse';
+
+/** Un período contable. Cerrado no admite asientos: eso es cerrar el mes. */
+export interface FiscalPeriod {
+  readonly id: string;
+  readonly periodNumber: number;
+  readonly name: string;
+  readonly startsOn: string;
+  readonly endsOn: string;
+  readonly status: 'CLOSED' | 'OPEN' | 'PLANNED';
+  readonly closedAt?: string;
+}
+
+export interface FiscalYear {
+  readonly fiscalYearId: string;
+  readonly name: string;
+  readonly startsOn: string;
+  readonly endsOn: string;
+  readonly currentPeriodId: string;
+  readonly periods: readonly FiscalPeriod[];
+}
+
+/** Una factura pendiente de cobro o de pago, con su antigüedad. */
+export interface OpenItem {
+  readonly id: string;
+  readonly documentNumber: string;
+  readonly accountCode: string;
+  readonly accountName: string;
+  readonly partnerName: string;
+  readonly side: 'RECEIVABLE' | 'PAYABLE';
+  readonly documentDate: string;
+  readonly dueDate: string;
+  readonly amount: string;
+  readonly clearedAmount: string;
+  readonly openAmount: string;
+  readonly overdueDays: number;
+  readonly agingBucket: string;
+}
+
+/** Un tramo de antigüedad de la cartera. */
+export interface AgingBucket {
+  readonly bucket: string;
+  readonly label: string;
+  readonly receivable: string;
+  readonly payable: string;
+  readonly count: number;
+}
+
+export interface OpenItemsPage {
+  readonly items: readonly OpenItem[];
+  readonly aging: readonly AgingBucket[];
+  readonly totalReceivable: string;
+  readonly totalPayable: string;
+}
+
+/** Un centro de coste, de beneficio o un segmento, con su resultado. */
+export interface ControllingObject {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly kind: 'COST_CENTER' | 'PROFIT_CENTER' | 'SEGMENT';
+  readonly debit: string;
+  readonly credit: string;
+  readonly result: string;
+}
+
+/** Un documento del flujo: el original, éste, y sus reversiones. */
+export interface DocumentFlowNode {
+  readonly id: string;
+  readonly role: string;
+  readonly transactionNumber: string;
+  readonly transactionDate: string;
+  readonly totalAmount: string;
+  readonly status: WorkflowStatus;
+}
+
+/** Lo que devuelve compensar un grupo de partidas. */
+export interface ClearingResult {
+  readonly clearingDocumentId: string;
+  readonly clearedItems: number;
+  readonly clearedAmount: string;
+}
+
+/** Un activo fijo con su clase, su amortización acumulada y su valor neto. */
+export interface FixedAsset {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly className: string;
+  readonly classCode: string;
+  readonly usefulLifeMonths: number;
+  readonly acquisitionCost: string;
+  readonly accumulatedDepreciation: string;
+  readonly netBookValue: string;
+  readonly monthlyDepreciation: string;
+  /** Si entra en la próxima corrida. Un activo en cero o de baja, no. */
+  readonly depreciable: boolean;
+  readonly status: 'ACTIVE' | 'RETIRED';
+}
+
+export interface FixedAssetRegister {
+  readonly items: readonly FixedAsset[];
+  readonly totalAcquisition: string;
+  readonly totalAccumulated: string;
+  readonly totalNetBookValue: string;
+  /** Lo que costará la próxima corrida de amortización. */
+  readonly monthlyCharge: string;
+}
+
+/** Un gasto o un ingreso cobrado por adelantado, repartido en períodos. */
+export interface AccrualObject {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly kind: 'EXPENSE' | 'REVENUE';
+  readonly totalAmount: string;
+  readonly periods: number;
+  readonly postedPeriods: number;
+  readonly remainingPeriods: number;
+  readonly periodAmount: string;
+  readonly recognizedAmount: string;
+  readonly pendingAmount: string;
+  readonly startsOn: string;
+  readonly completed: boolean;
+}
+
+export interface AccrualRegister {
+  readonly items: readonly AccrualObject[];
+  readonly pendingTotal: string;
+  /** Lo que reconocerá la próxima corrida de devengo. */
+  readonly periodCharge: string;
+}
+
+/** Lo que devuelve una corrida: su documento y cuánto movió. */
+export interface RunResult {
+  readonly amount: string;
+  readonly periodName: string;
+  readonly transactionNumber?: string;
+  readonly transactionNumbers?: readonly string[];
+  readonly assets?: number;
+  readonly objects?: number;
 }

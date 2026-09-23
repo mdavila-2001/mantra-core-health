@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
@@ -54,7 +56,9 @@ describe('AccessTree', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AccessTree],
-      providers: [provideRouter([])],
+      // El modal de Comunidades lee temas y grupos: el cliente HTTP hace falta
+      // aunque estas pruebas no comprueben esas lecturas.
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
   });
 
@@ -95,10 +99,50 @@ describe('AccessTree', () => {
     for (const zona of zonas().map((z) => z.dataset['zona'] ?? '')) {
       abrir(zona);
       for (const acceso of accesos()) {
-        expect(acceso.getAttribute('href')).toBe(acceso.dataset['ruta']);
+        // Desde el 10/09/2026 hay dos clases de acceso, y las dos son honestas:
+        // el que navega es un `<a>` cuyo `href` es su ruta, y el que abre un
+        // modal es un `<button>` sin `href` —un enlace sin destino que abre una
+        // ventana rompe «abrir en otra pestaña» y engaña al lector de pantalla—.
+        if (acceso.dataset['modal'] === undefined) {
+          expect(acceso.getAttribute('href')).toBe(acceso.dataset['ruta']);
+        } else {
+          expect(acceso.tagName).toBe('BUTTON');
+          expect(acceso.getAttribute('aria-haspopup')).toBe('dialog');
+          // Sigue declarando su ruta: es la misma sección, y la pantalla
+          // completa se sigue alcanzando por el menú lateral.
+          expect(acceso.dataset['ruta']).toBeTruthy();
+        }
       }
       volver();
     }
+  });
+
+  /**
+   * Corrección del 10/09/2026 · «Grupos y foros» abre Comunidades en un modal.
+   *
+   * La aserción importante es la segunda: el contenido **no** aparece dentro de
+   * la lista de accesos. Un panel que se expandiera debajo de la tarjeta es
+   * exactamente lo que el pedido prohíbe.
+   */
+  it('«Grupos y foros» abre un modal y no un panel debajo de la tarjeta', () => {
+    crear();
+    abrir('gente');
+
+    const grupos = accesos().find((acceso) => acceso.dataset['ruta'] === '/groups');
+    expect(grupos).toBeDefined();
+    expect(grupos!.dataset['modal']).toBe('comunidades');
+
+    const accesosAntes = accesos().length;
+    grupos!.click();
+    fixture.detectChanges();
+
+    // El modal se monta sobre el `<dialog>` nativo, que vive en el documento.
+    expect(document.querySelector('[data-testid="content-dialog"]')).not.toBeNull();
+    expect(
+      document.querySelector('[data-testid="content-dialog-title"]')?.textContent?.trim(),
+    ).toBe('Comunidades');
+    // La lista de accesos quedó igual: nada se desplegó adentro de ella.
+    expect(accesos().length).toBe(accesosAntes);
   });
 
   function volver(): void {
@@ -130,26 +174,26 @@ describe('AccessTree', () => {
     crear();
     abrir('consulta');
 
-    const salto = raiz().querySelector<HTMLButtonElement>('[data-zona-salto="cuenta"]');
+    const salto = raiz().querySelector<HTMLButtonElement>('[data-zona-salto="organizacion"]');
     expect(salto).not.toBeNull();
     salto?.click();
     fixture.detectChanges();
 
-    expect(raiz().querySelector('[data-zona-abierta="cuenta"]')).not.toBeNull();
+    expect(raiz().querySelector('[data-zona-abierta="organizacion"]')).not.toBeNull();
     // Y la zona en la que estabas ya no se ofrece como salto: sería un enlace
     // a donde ya estás.
-    expect(raiz().querySelector('[data-zona-salto="cuenta"]')).toBeNull();
+    expect(raiz().querySelector('[data-zona-salto="organizacion"]')).toBeNull();
   });
 
   it('el resumen de cada sección viaja en el nombre accesible, no sólo en el globo', () => {
     crear();
-    abrir('cuenta');
+    abrir('consulta');
 
     // Dos caminos a propósito: el globo aparece con el puntero **y con el
     // foco**, y el `aria-label` cubre a quien nunca llega a enfocar el enlace.
-    const tutoriales = accesos().find((a) => a.dataset['ruta'] === '/tutorials');
-    expect(tutoriales?.getAttribute('aria-label')).toBe(
-      'Tutoriales. Aprendé a usar cada sección con recorridos guiados sobre la aplicación real.',
+    const agenda = accesos().find((a) => a.dataset['ruta'] === '/schedule');
+    expect(agenda?.getAttribute('aria-label')).toBe(
+      'Consultas médicas. Gestioná disponibilidad, reservas y confirmaciones de turno.',
     );
   });
 
@@ -159,7 +203,8 @@ describe('AccessTree', () => {
 
     const rotulos = accesos().map((a) => a.querySelector('.arbol__acceso-nombre')?.textContent);
     expect(rotulos).toContain('Evoluciones');
-    expect(rotulos).toContain('Turnos');
+    // «Consultas médicas» desde ALV-016; era «Turnos».
+    expect(rotulos).toContain('Consultas médicas');
   });
 
   it('cada acceso lleva su ícono: la zona se recorre con la vista, no leyendo', () => {

@@ -1,0 +1,615 @@
+@let ficha = elegido();
+@let numeros = recuento();
+@let pos = posicion();
+
+<div class="banco" (keydown)="teclado($event)" tabindex="-1">
+  <!-- ─────────────────────────────────────────────────── barra superior -->
+  <header class="barra">
+    <a class="barra__marca" routerLink="/design-system/stock">
+      <span class="barra__punto"></span>
+      Stock de componentes
+    </a>
+
+    <span class="barra__cifra">
+      {{ numeros.total }} componentes · <strong>{{ numeros.conProblemas }}</strong> con algo que mirar
+    </span>
+
+    @if (ficha !== null) {
+      <div class="barra__grupo" role="group" aria-label="Tamaño de pantalla">
+        @for (d of dispositivos; track d.clave) {
+          <button
+            type="button"
+            class="barra__opcion"
+            [class.barra__opcion--activa]="dispositivo().clave === d.clave"
+            [title]="d.ancho + '×' + d.alto"
+            (click)="elegirDispositivo(d.clave)"
+          >
+            {{ d.nombre }}
+          </button>
+        }
+        <button
+          type="button"
+          class="barra__opcion"
+          [class.barra__opcion--activa]="apaisado()"
+          title="Girar"
+          (click)="apaisado.set(!apaisado())"
+        >
+          ⟳
+        </button>
+      </div>
+
+      <label class="barra__zoom">
+        Zoom
+        <input
+          type="range"
+          min="0.4"
+          max="1"
+          step="0.1"
+          [value]="zoom()"
+          (input)="zoom.set(+$any($event.target).value)"
+        />
+        <span>{{ (zoom() * 100).toFixed(0) }}%</span>
+      </label>
+
+      <label class="barra__interruptor" title="Entrar como una de las cuentas de prueba">
+        Cuenta
+        <select [value]="cuenta() ?? ''" (change)="cuenta.set($any($event.target).value || null)">
+          <option value="">Sin sesión</option>
+          @for (u of cuentas; track u.key) {
+            <option [value]="u.key">{{ u.key }}</option>
+          }
+        </select>
+      </label>
+
+      <label
+        class="barra__interruptor barra__interruptor--peligro"
+        title="Deja pasar las peticiones a la API de verdad en vez del backend simulado"
+      >
+        <input type="checkbox" [checked]="apiReal()" (change)="apiReal.set($any($event.target).checked)" />
+        API real
+      </label>
+    }
+  </header>
+
+  <div class="banco__cuerpo">
+    <!-- ───────────────────────────────────────────────────────── barra lateral -->
+    <aside class="lista" aria-label="Componentes">
+      <div class="lista__filtros">
+        <input
+          type="search"
+          class="lista__buscar"
+          placeholder="Buscar componente…"
+          [value]="texto()"
+          (input)="texto.set($any($event.target).value)"
+        />
+        <select
+          class="lista__nivel"
+          [value]="nivel()"
+          (change)="nivel.set($any($event.target).value)"
+        >
+          <option value="todos">Todos los niveles</option>
+          @for (n of niveles; track n) {
+            <option [value]="n">{{ etiquetaDeNivel[n] }}</option>
+          }
+        </select>
+        <label class="lista__casilla">
+          <input
+            type="checkbox"
+            [checked]="soloConProblemas()"
+            (change)="soloConProblemas.set($any($event.target).checked)"
+          />
+          Sólo con problemas
+        </label>
+        <p class="lista__conteo">{{ numeros.filtrados }} de {{ numeros.total }}</p>
+      </div>
+
+      <nav class="lista__arbol">
+        @for (grupo of grupos(); track grupo.nivel) {
+          <details open>
+            <summary>{{ grupo.etiqueta }} <span>{{ grupo.componentes.length }}</span></summary>
+            <ul>
+              @for (c of grupo.componentes; track c.clave) {
+                <li>
+                  <a
+                    [routerLink]="['/design-system/stock', c.clave]"
+                    [class.lista__activo]="ficha?.clave === c.clave"
+                  >
+                    <span class="lista__clase">{{ c.clase }}</span>
+                    @if (c.problemas.length > 0) {
+                      <span class="lista__marca">{{ c.problemas.length }}</span>
+                    }
+                  </a>
+                </li>
+              }
+            </ul>
+          </details>
+        } @empty {
+          <p class="lista__vacio">Nada coincide con el filtro.</p>
+        }
+      </nav>
+    </aside>
+
+    <!-- ────────────────────────────────────────────────────────── el banco -->
+    <main class="lienzo">
+      @if (ficha === null) {
+        <section class="bienvenida">
+          <h1>Banco de pruebas de componentes</h1>
+          <p>
+            Elegí un componente en la lista de la izquierda. Se monta de verdad dentro de un marco
+            del tamaño que elijas —móvil, tableta o escritorio— con datos generados, y podés verlo
+            como cualquiera de las cuentas de prueba.
+          </p>
+          <ul>
+            <li><strong>{{ numeros.total }}</strong> componentes, sacados del código</li>
+            <li><strong>{{ numeros.conProblemas }}</strong> con algo que mirar antes de tocarlos</li>
+            <li>Las flechas ← → recorren la lista filtrada, uno por uno</li>
+          </ul>
+        </section>
+      } @else {
+        <header class="lienzo__cabecera">
+          <div>
+            <h1>{{ ficha.clase }}</h1>
+            <p class="lienzo__meta">
+              <code>&lt;{{ ficha.selector }}&gt;</code>
+              <!-- El nivel dice de dónde salió: la carpeta no es una prueba. -->
+              <span data-testid="stock-nivel">
+                {{ etiquetaDeNivel[ficha.nivel] }}
+                ({{ ficha.nivelOrigen === 'declarado' ? 'declarado en el componente' : 'por su carpeta' }})
+              </span>
+              <span>{{ ficha.path }}</span>
+            </p>
+          </div>
+
+          <div class="lienzo__acciones">
+            <button type="button" [disabled]="pos?.anterior === null" (click)="irA(pos?.anterior ?? null)">←</button>
+            <span class="lienzo__posicion">{{ pos?.indice }} / {{ pos?.total }}</span>
+            <button type="button" [disabled]="pos?.siguiente === null" (click)="irA(pos?.siguiente ?? null)">→</button>
+            <!-- Con anfitrión escrito, el escenario manda: las entradas las fija
+                 él. «Valores generados» sigue disponible para comparar contra el
+                 montaje a ciegas, que es lo único que tiene el resto. -->
+            @if (escenarios().length > 0) {
+              <label class="lienzo__escenario">
+                Escenario
+                <select
+                  data-testid="stock-escenario"
+                  [value]="escenario()?.id ?? valoresGenerados"
+                  (change)="elegirEscenario($any($event.target).value)"
+                >
+                  @for (e of escenarios(); track e.id) {
+                    <option [value]="e.id">{{ e.titulo }}</option>
+                  }
+                  <option [value]="valoresGenerados">Valores generados (a ciegas)</option>
+                </select>
+              </label>
+            }
+            @if (escenario() === null) {
+              <button type="button" class="lienzo__principal" (click)="otrosDatos()">Otros datos</button>
+              @if (variantes() !== null) {
+                <button
+                  type="button"
+                  [class.lienzo__principal]="matriz()"
+                  (click)="matriz.set(!matriz())"
+                >
+                  Matriz de variantes
+                </button>
+              }
+            }
+            <button type="button" (click)="copiarInforme()">Copiar informe</button>
+          </div>
+        </header>
+
+        @if (ficha.resumen !== '') {
+          <p class="lienzo__resumen">{{ ficha.resumen }}</p>
+        }
+
+        <!-- Seis dimensiones y no un tilde verde. Cada una dice su estado en
+             palabras y con marca: se lee igual en escala de grises. -->
+        <dl class="acreditacion" data-testid="stock-acreditacion" aria-label="Acreditación del componente">
+          @for (d of acreditacion(); track d.clave) {
+            <div class="acreditacion__fila" [attr.data-dimension]="d.clave" [attr.data-estado]="d.estado">
+              <dt>{{ d.nombre }}</dt>
+              <dd>
+                <span [class]="'acreditacion__marca acreditacion__marca--' + d.estado">{{ marca(d) }}</span>
+                <span class="acreditacion__detalle">{{ d.detalle }}</span>
+              </dd>
+            </div>
+          }
+        </dl>
+
+        <div class="marco-zona">
+          <div class="marco-zona__regla">
+            {{ ancho() }} × {{ alto() }} px · {{ dispositivo().nombre }}
+            @if (estado() === 'montando') { <span class="marco-zona__estado">montando…</span> }
+            @if (estado() === 'montado') {
+              <span class="marco-zona__estado marco-zona__estado--ok">montado en {{ milisegundos() }} ms</span>
+              <!-- «Montado» solo no dice con qué: un contrato válido y un
+                   valor adivinado se ven igual de verdes. -->
+              <!-- Con un contrato rechazado, lo elegido NO es lo montado: se dice qué quedó. -->
+              @if (contratoRechazado(); as rechazo) {
+                <span class="marco-zona__estado marco-zona__estado--mal" data-testid="stock-montaje">
+                  rechazado · sigue: {{ rechazo.conservado ?? 'nada montado' }}
+                </span>
+              } @else if (escenario(); as e) {
+                <span class="marco-zona__estado" data-testid="stock-montaje">escenario · {{ e.variante }}</span>
+              } @else if (entradasRechazadas().length > 0) {
+                <span class="marco-zona__estado marco-zona__estado--aviso" data-testid="stock-montaje">
+                  {{ entradasRechazadas().length }} entrada(s) rechazada(s)
+                </span>
+              } @else if (entradasSinVerificar().length > 0) {
+                <span class="marco-zona__estado marco-zona__estado--aviso" data-testid="stock-montaje">
+                  valores generados · {{ entradasSinVerificar().length }} sin verificar
+                </span>
+              } @else {
+                <span class="marco-zona__estado" data-testid="stock-montaje">valores generados</span>
+              }
+            }
+            @if (estado() === 'falló') { <span class="marco-zona__estado marco-zona__estado--mal">no monta</span> }
+            <span class="marco-zona__estado" data-testid="stock-monturas" title="ComponentRef vivos en el banco">
+              monturas vivas: {{ monturasVivas() }}
+            </span>
+          </div>
+
+          @if (error() !== null) {
+            <p class="marco-zona__error"><strong>No se pudo montar aislado.</strong> {{ error() }}</p>
+          }
+
+          <!-- Un escenario inválido a propósito: no se monta y lo anterior sigue. -->
+          @if (contratoRechazado(); as rechazo) {
+            <div class="marco-zona__error" role="alert" data-testid="stock-contrato-rechazado">
+              <p><strong>Contrato inválido: no se montó «{{ rechazo.escenario }}».</strong></p>
+              <ul>
+                @for (v of rechazo.violaciones; track v) { <li>{{ v }}</li> }
+              </ul>
+              <p data-testid="stock-contrato-conservado">
+                @if (rechazo.conservado !== null) {
+                  Sigue montado el último escenario válido: <strong>{{ rechazo.conservado }}</strong>.
+                } @else {
+                  No había un escenario válido montado antes: el marco queda como estaba.
+                }
+              </p>
+            </div>
+          }
+
+          <!-- Montar con valores adivinados no acredita el contrato: se dice cuál faltó. -->
+          @if (escenario() === null && estado() === 'montado' && entradasSinVerificar().length > 0) {
+            <div class="marco-zona__aviso" data-testid="stock-sin-verificar">
+              <p><strong>Montado sin verificar.</strong> El generador no sabe producir un valor válido para:</p>
+              <ul>
+                @for (s of entradasSinVerificar(); track s.nombre) {
+                  <li><code>{{ s.nombre }}</code> — {{ s.motivo }}</li>
+                }
+              </ul>
+            </div>
+          }
+
+          <div
+            class="marco-zona__caja"
+            [style.width.px]="ancho() * zoom()"
+            [style.height.px]="alto() * zoom()"
+          >
+            <iframe
+              #marco
+              title="Vista del componente"
+              class="marco-zona__marco"
+              [style.width.px]="ancho()"
+              [style.height.px]="alto()"
+              [style.transform]="'scale(' + zoom() + ')'"
+            ></iframe>
+          </div>
+
+          <!-- La ficha del escenario: qué tiene que verse y qué provocar. Es la
+               aserción manual que acompaña a la automática del spec. -->
+          @if (escenario(); as e) {
+            <div class="escenario" data-testid="stock-escenario-ficha">
+              <p class="panel__linea"><strong>Se ve</strong> {{ e.seVe }}</p>
+              <p class="panel__linea"><strong>Probar</strong></p>
+              <ul class="escenario__pasos">
+                @for (paso of e.interacciones; track paso) {
+                  <li>{{ paso }}</li>
+                }
+              </ul>
+              <p class="panel__linea">
+                <strong>Anfitrión</strong> <code>{{ e.fuente }}</code>
+              </p>
+            </div>
+          }
+        </div>
+
+        <!-- ─────────────────────────────────────────────── panel de inspección -->
+        <section class="panel">
+          <nav class="panel__pestanas" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="pestana() === 'props'"
+              [class.panel__activa]="pestana() === 'props'"
+              (click)="pestana.set('props')"
+            >
+              Entradas <span>{{ ficha.entradas.length }}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="pestana() === 'composicion'"
+              [class.panel__activa]="pestana() === 'composicion'"
+              (click)="pestana.set('composicion')"
+            >
+              Composición
+            </button>
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="pestana() === 'salidas'"
+              [class.panel__activa]="pestana() === 'salidas'"
+              (click)="pestana.set('salidas')"
+            >
+              Salidas <span>{{ salidas().length }}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="pestana() === 'problemas'"
+              [class.panel__activa]="pestana() === 'problemas'"
+              (click)="pestana.set('problemas')"
+            >
+              Problemas <span class="panel__marca">{{ totalDeProblemas() }}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="pestana() === 'red'"
+              [class.panel__activa]="pestana() === 'red'"
+              (click)="pestana.set('red')"
+            >
+              Red <span>{{ peticiones().length }}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="pestana() === 'accesibilidad'"
+              [class.panel__activa]="pestana() === 'accesibilidad'"
+              (click)="pestana.set('accesibilidad')"
+            >
+              Accesibilidad
+            </button>
+          </nav>
+
+          <div class="panel__contenido">
+            @switch (pestana()) {
+              @case ('props') {
+                @if (escenario(); as e) {
+                  <p class="panel__linea">
+                    <strong>Contrato</strong> lo fija el anfitrión con
+                    <code>variante = {{ e.variante }}</code>: un <code>ViewState</code> válido, funciones
+                    y plantillas de verdad. Para editar entradas sueltas elegí «Valores generados».
+                  </p>
+                  <p class="panel__linea">
+                    <strong>Entradas</strong>
+                    @for (i of ficha.entradas; track i.nombre) {
+                      <span class="pastilla" [title]="i.tipo">{{ i.nombre }}{{ i.requerido ? ' *' : '' }}</span>
+                    }
+                  </p>
+                } @else if (ficha.entradas.length === 0) {
+                  <p class="panel__vacio">No recibe nada: lo que pinta lo saca de dentro.</p>
+                } @else {
+                  <table class="tabla">
+                    <thead>
+                      <tr>
+                        <th scope="col">Entrada</th>
+                        <th scope="col">Tipo</th>
+                        <th scope="col">Valor (editable)</th>
+                        <th scope="col">Procedencia</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (e of ficha.entradas; track e.nombre) {
+                        <tr>
+                          <th scope="row">
+                            {{ e.nombre }}
+                            @if (e.requerido) { <abbr title="Obligatoria">*</abbr> }
+                          </th>
+                          <td><code>{{ e.tipo }}</code></td>
+                          <td>
+                            <input
+                              type="text"
+                              class="tabla__editor"
+                              [value]="valorDe()(e.nombre)"
+                              (change)="editar(e.nombre, $any($event.target).value)"
+                            />
+                          </td>
+                          <td>
+                            @if (procedencias()[e.nombre]; as p) {
+                              <span
+                                class="pastilla"
+                                [class.pastilla--aviso]="p.procedencia === 'sin-verificar'"
+                                [title]="p.motivo ?? ''"
+                              >
+                                {{ p.procedencia === 'del-tipo' ? 'del tipo' : p.procedencia === 'sin-verificar' ? 'sin verificar' : 'por omisión' }}
+                              </span>
+                            }
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                }
+                @if (ficha.salidas.length > 0) {
+                  <p class="panel__linea">
+                    <strong>Salidas</strong>
+                    @for (s of ficha.salidas; track s) { <span class="pastilla">{{ s }}</span> }
+                  </p>
+                }
+              }
+
+              @case ('composicion') {
+                @if (ficha.usa.organismos.length > 0) {
+                  <p class="panel__linea"><strong>Organismos</strong>
+                    @for (x of ficha.usa.organismos; track x) {
+                      <button type="button" class="pastilla pastilla--enlace" (click)="irAClase(x)">{{ x }}</button>
+                    }
+                  </p>
+                }
+                @if (ficha.usa.moleculas.length > 0) {
+                  <p class="panel__linea"><strong>Moléculas</strong>
+                    @for (x of ficha.usa.moleculas; track x) {
+                      <button type="button" class="pastilla pastilla--enlace" (click)="irAClase(x)">{{ x }}</button>
+                    }
+                  </p>
+                }
+                @if (ficha.usa.atomos.length > 0) {
+                  <p class="panel__linea"><strong>Átomos</strong>
+                    @for (x of ficha.usa.atomos; track x) {
+                      <button type="button" class="pastilla pastilla--enlace" (click)="irAClase(x)">{{ x }}</button>
+                    }
+                  </p>
+                }
+                @if (ficha.usa.atomos.length === 0 && ficha.usa.moleculas.length === 0 && ficha.usa.organismos.length === 0) {
+                  <p class="panel__vacio">No instancia nada del sistema de diseño en su plantilla.</p>
+                }
+                <!-- Lo de arriba es lo que la PLANTILLA instancia. Lo que sigue son
+                     relaciones que no son composición visual, y lo que el
+                     análisis no pudo decidir: nada de esto infla «usa». -->
+                @if (ficha.relaciones.disponibleSinInstanciar.length > 0) {
+                  <p class="panel__linea" data-testid="stock-rel-disponible"><strong>Importado sin instanciar</strong>
+                    @for (x of ficha.relaciones.disponibleSinInstanciar; track x) {
+                      <span class="pastilla pastilla--aviso">{{ x }}</span>
+                    }
+                  </p>
+                }
+                @if (ficha.relaciones.soloTipo.length > 0) {
+                  <p class="panel__linea" data-testid="stock-rel-tipo"><strong>Sólo sus tipos</strong>
+                    @for (x of ficha.relaciones.soloTipo; track x) { <span class="pastilla">{{ x }}</span> }
+                  </p>
+                }
+                @if (ficha.relaciones.cargaDinamica.length > 0) {
+                  <p class="panel__linea"><strong>Carga dinámicamente</strong>
+                    @for (x of ficha.relaciones.cargaDinamica; track x) { <span class="pastilla">{{ x }}</span> }
+                  </p>
+                }
+                @if (ficha.cargadoDinamicamentePor.length > 0) {
+                  <p class="panel__linea"><strong>Lo cargan dinámicamente</strong>
+                    @for (x of ficha.cargadoDinamicamentePor; track x) { <code class="pastilla">{{ x }}</code> }
+                  </p>
+                }
+                @if (ficha.unresolvedEvidence.length > 0) {
+                  <ul class="problemas" data-testid="stock-rel-sin-resolver">
+                    @for (u of ficha.unresolvedEvidence; track u.detalle) {
+                      <li><span class="problemas__tipo">sin resolver · {{ u.causa }}</span> {{ u.detalle }}</li>
+                    }
+                  </ul>
+                }
+                @if (ficha.clientes.length > 0) {
+                  <p class="panel__linea"><strong>Pide a la API</strong>
+                    @for (x of ficha.clientes; track x) { <span class="pastilla">{{ x }}</span> }
+                  </p>
+                }
+                @if (ficha.usadoPor.length > 0) {
+                  <p class="panel__linea"><strong>Lo usan ({{ ficha.usadoPor.length }})</strong>
+                    @for (x of ficha.usadoPor; track x) {
+                      <button type="button" class="pastilla pastilla--enlace" (click)="irAClase(x)">{{ x }}</button>
+                    }
+                  </p>
+                }
+              }
+
+              @case ('salidas') {
+                @if (escenario(); as e) {
+                  @if (salidas().length === 0) {
+                    <p class="panel__vacio">Todavía no emitió nada. Tocá el componente en el marco.</p>
+                  } @else {
+                    <ol class="salidas" data-testid="stock-salidas">
+                      @for (s of salidas(); track s.momento) {
+                        <li><span class="pastilla">{{ s.salida }}</span> {{ s.detalle }}</li>
+                      }
+                    </ol>
+                  }
+                  <p class="panel__linea">
+                    <strong>Esperadas en este escenario</strong>
+                    @for (s of e.salidasEsperadas; track s) { <span class="pastilla">{{ s }}</span> }
+                    @if (e.salidasEsperadas.length === 0) { ninguna }
+                  </p>
+                } @else {
+                  <p class="panel__vacio">
+                    Las salidas se registran cuando el componente se monta por un escenario: con
+                    valores generados nadie las escucha.
+                  </p>
+                }
+              }
+
+              @case ('problemas') {
+                @if (totalDeProblemas() === 0) {
+                  <p class="panel__ok">Nada que reprocharle: monta limpio y sin avisos.</p>
+                } @else {
+                  <ul class="problemas">
+                    @if (estado() === 'falló') {
+                      <li><span class="problemas__tipo problemas__tipo--mal">no monta</span> {{ error() }}</li>
+                    }
+                    @for (r of entradasRechazadas(); track r) {
+                      <li><span class="problemas__tipo problemas__tipo--mal">entrada rechazada</span> {{ r }}</li>
+                    }
+                    @if (contratoRechazado(); as rechazo) {
+                      <li><span class="problemas__tipo problemas__tipo--mal">contrato inválido</span> {{ rechazo.violaciones.join(' ') }}</li>
+                    }
+                    @for (s of entradasSinVerificar(); track s.nombre) {
+                      <li><span class="problemas__tipo">sin verificar</span> {{ s.nombre }}: {{ s.motivo }}</li>
+                    }
+                    @for (p of ficha.problemas; track p.detalle) {
+                      <li><span class="problemas__tipo">{{ p.tipo }}</span> {{ p.detalle }}</li>
+                    }
+                    @for (a of consola(); track a) {
+                      <li><span class="problemas__tipo">consola</span> {{ a }}</li>
+                    }
+                    @for (a of accesibilidad() ?? []; track a.descripcion) {
+                      <li><span class="problemas__tipo">a11y · {{ a.impacto }}</span> {{ a.descripcion }}</li>
+                    }
+                  </ul>
+                }
+              }
+
+              @case ('red') {
+                @if (peticiones().length === 0) {
+                  <p class="panel__vacio">
+                    No pidió nada a la red al montarse.
+                    @if (ficha.clientes.length > 0) {
+                      Inyecta {{ ficha.clientes.join(', ') }}, así que probablemente pida al interactuar.
+                    }
+                  </p>
+                } @else {
+                  <ul class="peticiones">
+                    @for (p of peticiones(); track p) { <li><code>{{ p }}</code></li> }
+                  </ul>
+                }
+                @if (apiReal()) {
+                  <p class="panel__aviso">
+                    <strong>API real encendida.</strong> Estas peticiones salieron a la red de verdad,
+                    no al backend simulado.
+                  </p>
+                }
+              }
+
+              @case ('accesibilidad') {
+                <button type="button" class="lienzo__principal" [disabled]="auditando()" (click)="auditar()">
+                  {{ auditando() ? 'Auditando…' : 'Auditar con axe' }}
+                </button>
+                @if (accesibilidad() === null) {
+                  <p class="panel__vacio">Sin auditar todavía.</p>
+                } @else if (accesibilidad()!.length === 0) {
+                  <p class="panel__ok">Sin fallos de accesibilidad detectados por axe.</p>
+                } @else {
+                  <ul class="problemas">
+                    @for (a of accesibilidad()!; track a.descripcion) {
+                      <li>
+                        <span class="problemas__tipo problemas__tipo--mal">{{ a.impacto }}</span>
+                        {{ a.descripcion }} · {{ a.nodos }} nodo(s)
+                      </li>
+                    }
+                  </ul>
+                }
+              }
+            }
+          </div>
+        </section>
+      }
+    </main>
+  </div>
+</div>

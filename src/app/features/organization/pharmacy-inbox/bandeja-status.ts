@@ -1,5 +1,8 @@
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
-import type { EstadoDePedido } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
+import type {
+  EstadoDePedido,
+  ModalidadDeEntrega,
+} from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 
 /**
  * La presentación de los estados DEL LADO DEL MOSTRADOR (FAR-I3).
@@ -70,9 +73,48 @@ const PRESENTACION_POR_ESTADO: Readonly<Record<EstadoDePedido, BandejaStatusPres
     },
   });
 
-/** Cómo mostrar un estado. Jamás lanza: la tabla cubre el contrato entero. */
-export function toBandejaStatusPresentation(estado: EstadoDePedido): BandejaStatusPresentation {
-  return PRESENTACION_POR_ESTADO[estado];
+/**
+ * Lo que cambia cuando el pedido **no** se retira en el mostrador.
+ *
+ * La tabla de arriba se escribió cuando todos los pedidos eran de retiro, y
+ * un par de frases dan por sentado ese final. «Cuando esté armado, marcalo
+ * como listo» es la que miente: el detalle no le ofrece ese botón a un pedido
+ * que sale por reparto —marcar listo es preparar un retiro— así que el texto
+ * estaría pidiendo algo que la pantalla no deja hacer.
+ *
+ * Se aparta **sólo lo que cambia**: el resto del mapa vale igual para las dos
+ * entregas, y el texto de retiro no se toca ni una coma.
+ */
+const DESCRIPCION_SI_SALE_POR_REPARTO: Readonly<Partial<Record<EstadoDePedido, string>>> =
+  Object.freeze({
+    // Los dos estados que `puedePrepararse` habilita, y en los que el detalle
+    // ofrece «Marcar listo para retirar» sólo si el pedido se retira.
+    CONFIRMADO: 'Confirmado. Este pedido sale por reparto, no se retira en el mostrador.',
+    ACEPTADO:
+      'Aceptó la alternativa. Seguí preparándolo: sale por reparto, no se retira en el mostrador.',
+    // Y el estado en el que el detalle pide el código de retiro, que un
+    // pedido de reparto no tiene a quién pedírselo.
+    LISTO_PARA_RETIRO: 'El pedido está armado y sale por reparto; nadie lo retira del mostrador.',
+  });
+
+/**
+ * Cómo mostrar un estado. Jamás lanza: la tabla cubre el contrato entero.
+ *
+ * La modalidad es opcional y por omisión no cambia nada: quien sólo necesita
+ * el tono y la palabra —la tarjeta de la bandeja— la omite y recibe lo mismo
+ * de siempre. El detalle, que sí muestra la frase y las acciones, la pasa
+ * para que las dos digan lo mismo.
+ */
+export function toBandejaStatusPresentation(
+  estado: EstadoDePedido,
+  modalidad: ModalidadDeEntrega | null = null,
+): BandejaStatusPresentation {
+  const presentacion = PRESENTACION_POR_ESTADO[estado];
+  if (modalidad === null || modalidad === 'RETIRO') {
+    return presentacion;
+  }
+  const descripcion = DESCRIPCION_SI_SALE_POR_REPARTO[estado];
+  return descripcion === undefined ? presentacion : { ...presentacion, descripcion };
 }
 
 /**

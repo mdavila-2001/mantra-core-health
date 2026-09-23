@@ -1,6 +1,6 @@
 <app-page-header
-  title="Dónde comprar mi receta"
-  subtitle="Las sucursales que pueden surtirla: primero las que tienen todo, con lo que falta dicho por su nombre."
+  title="Dónde conseguir lo de mi receta"
+  subtitle="Lo que te recetaron y lo que te pidieron, cerca tuyo: primero los lugares que tienen todo, con lo que falta dicho por su nombre."
 />
 
 @if (sinPerfilDePaciente) {
@@ -10,220 +10,324 @@
     Tu cuenta no tiene un perfil de paciente, así que no hay una receta propia que comprar.
   </app-alert>
 } @else {
-  <app-view-state-host [state]="lista()" (retry)="cargar()">
-    <div class="compra">
-      <!-- ─── Los renglones de la receta ─────────────────────────────────── -->
-      <section class="compra__bloque" aria-labelledby="compra-receta">
-        <h2 id="compra-receta" class="compra__titulo">Qué vas a comprar</h2>
-        <p class="compra__nota">Destildá lo que no vayas a comprar ahora.</p>
-        <ul class="compra__items" data-testid="compra-items">
-          @for (item of items(); track item.conceptId) {
-            <li class="compra__item">
-              <app-checkbox
-                [checked]="estaIncluido(item)"
-                (checkedChange)="alternar(item, $event)"
-                [label]="item.medicamento"
-              />
-              <div class="compra__item-detalle">
-                @if (item.indicacion !== '') {
-                  <span class="compra__secundario">{{ item.indicacion }}</span>
-                }
-                @if (!item.emitida) {
-                  <app-badge variant="warning">Aún no emitida</app-badge>
-                }
-                @if (item.productId === null) {
-                  <app-badge variant="warning">Sin producto publicado</app-badge>
-                }
-              </div>
-            </li>
-          }
-        </ul>
-      </section>
-
-      <!-- ─── El origen de las distancias: se pide, no se toma ───────────── -->
-      <section class="compra__bloque" aria-labelledby="compra-ubicacion">
-        <h2 id="compra-ubicacion" class="compra__titulo">Desde dónde medir las distancias</h2>
-        @if (origen(); as punto) {
-          <p class="compra__origen" data-testid="compra-origen">
-            Distancias medidas desde {{ punto.etiqueta }}.
-            <button app-button variant="ghost" size="sm" type="button" (clicked)="quitarOrigen()">
-              Dejar de usar este punto
-            </button>
-          </p>
-        } @else {
-          <p class="compra__nota">
-            Las sucursales ya vienen ordenadas: primero las que tienen todo. Si además querés verlas
-            por cercanía, compartí tu ubicación — se usa una sola vez para calcular distancias y no
-            se guarda —, o medí desde una ciudad sin dar tu ubicación.
-          </p>
-          <div class="compra__ubicacion-acciones">
-            <button
-              app-button
-              variant="primary"
-              size="sm"
-              type="button"
-              data-testid="compra-compartir-ubicacion"
-              [isLoading]="pidiendoUbicacion()"
-              (clicked)="compartirUbicacion()"
-            >
-              Compartir mi ubicación
-            </button>
-            @for (ciudad of ciudades; track ciudad.etiqueta) {
-              <button
-                app-button
-                variant="outline"
-                size="sm"
-                type="button"
-                (clicked)="medirDesde(ciudad)"
-              >
-                {{ ciudad.etiqueta }}
-              </button>
-            }
-          </div>
-          @if (ubicacionDenegada()) {
-            <p class="compra__nota" role="status">
-              No pudimos leer tu ubicación. Podés medir desde una ciudad, o seguir sin distancias:
-              el orden por cobertura no cambia.
-            </p>
-          }
-          <p class="compra__proximamente">
-            Próximamente: tu domicilio y tu trabajo como puntos de partida.
-          </p>
-        }
-      </section>
-
-      <!-- ─── Las sucursales ─────────────────────────────────────────────── -->
-      <section class="compra__bloque" aria-labelledby="compra-sedes">
-        <h2 id="compra-sedes" class="compra__titulo">Sucursales</h2>
-        @if (pedidoDisponible) {
-          <!-- FAR-I2 corre contra un mock hasta que exista el backend de
-               pedidos: donde la demo está pedida, se dice. -->
-          <p class="compra__nota" data-testid="compra-demo-aviso">
-            <app-badge variant="info">Demo</app-badge>
-            Enviar un pedido es por ahora una demostración: la farmacia del otro lado se simula.
-          </p>
-        }
-        <app-view-state-host [state]="resultados()" (retry)="consultar()">
-          @if (resultado(); as datos) {
-            @if (datos.sinProducto.length > 0) {
-              <app-alert tone="warning" title="No todo se pudo consultar">
-                Sin producto publicado en el directorio: {{ datos.sinProducto.join(', ') }}. Ninguna
-                sucursal puede confirmar esos medicamentos, así que ninguna figura con todo.
-              </app-alert>
-            }
-
-            @if (sedesEnElMapa().length > 0) {
-              <figure class="compra__mapa">
-                <!-- El organismo de mapa (FAR-I1): pines reales sobre OSM. El
-                     dato completo sigue en las tarjetas — el mapa es progresivo. -->
-                <app-map
-                  [pines]="pinesDeSedes()"
-                  [etiqueta]="etiquetaDelMapa()"
-                  [(seleccionado)]="sedeElegida"
-                  (pinElegido)="enfocarSede($event)"
-                />
-                <figcaption class="compra__nota">
-                  Las distancias son en línea recta, no de recorrido: el tiempo real de viaje depende
-                  del tráfico.
-                </figcaption>
-              </figure>
-            }
-
-            <ul class="compra__sedes" data-testid="compra-sedes">
-              @for (sede of datos.sedes; track sede.codigo) {
-                <li
-                  class="compra__sede"
-                  [id]="'compra-sede-' + sede.codigo"
-                  [class.compra__sede--elegida]="sedeElegida() === sede.codigo"
-                  (mouseenter)="sedeElegida.set(sede.codigo)"
-                >
-                  <span class="compra__codigo" aria-hidden="true">{{ sede.codigo }}</span>
-                  <div class="compra__sede-datos">
-                    <span class="compra__principal">{{ sede.farmacia }} · {{ sede.sede }}</span>
-                    @if (sede.direccion !== null) {
-                      <span class="compra__secundario">{{ sede.direccion }}</span>
+  <!-- ─── Las tres pestañas ──────────────────────────────────────────────────
+       Farmacias primero y por defecto: es el único vertical que hoy puede
+       responder «acá está todo lo tuyo», y es lo que la persona vino a buscar.
+       Las otras dos existen porque son parte de la misma pregunta —dónde
+       resuelvo lo que me indicaron— y esconderlas haría creer que la receta se
+       agota en los medicamentos. Ninguna de las dos promete lo que no puede
+       dar: dicen qué les falta y ofrecen el camino que sí existe hoy. -->
+  <app-tabs>
+    <app-tab label="Farmacias">
+      <app-view-state-host [state]="lista()" (retry)="cargar()">
+        <div class="compra">
+          <!-- ─── Los renglones de la receta ─────────────────────────────────── -->
+          <section class="compra__bloque" aria-labelledby="compra-receta">
+            <h2 id="compra-receta" class="compra__titulo">Qué vas a comprar</h2>
+            <p class="compra__nota">Destildá lo que no vayas a comprar ahora.</p>
+            <ul class="compra__items" data-testid="compra-items">
+              @for (item of items(); track item.conceptId) {
+                <li class="compra__item">
+                  <app-checkbox
+                    [checked]="estaIncluido(item)"
+                    (checkedChange)="alternar(item, $event)"
+                    [label]="item.medicamento"
+                  />
+                  <div class="compra__item-detalle">
+                    @if (item.indicacion !== '') {
+                      <span class="compra__secundario">{{ item.indicacion }}</span>
                     }
-                    @if (sedesEnElMapa().length > 0 && (sede.lat === null || sede.lng === null)) {
-                      <span class="compra__secundario">Ubicación no disponible en el mapa</span>
+                    @if (!item.emitida) {
+                      <app-badge variant="warning">Aún no emitida</app-badge>
                     }
-                    <span class="compra__secundario">
-                      @if (sede.distancia !== null) {
-                        {{ sede.distancia }} en línea recta ·
-                      }
-                      @if (sede.total !== null) {
-                        Total estimado: {{ sede.total }}
-                      } @else {
-                        Total no disponible: falta algún precio publicado
-                      }
-                    </span>
-                    @if (!sede.completa) {
-                      <p class="compra__faltantes" data-testid="compra-faltantes">
-                        Le falta: {{ sede.faltantes.join(', ') }}
-                      </p>
+                    @if (item.productId === null) {
+                      <app-badge variant="warning">Sin producto publicado</app-badge>
                     }
-                    <!-- FAR-I7: sin campañas vigentes no se pinta nada. La
-                         sección no existe en vez de existir vacía. -->
-                    @if (promocionesDe(sede); as promociones) {
-                      @if (promociones.length > 0) {
-                        <ul class="compra__promos" data-testid="compra-promos">
-                          @for (promo of promociones; track promo.id) {
-                            <li>
-                              <a
-                                app-link
-                                [routerLink]="['/promotions', promo.id]"
-                                class="compra__promo"
-                              >
-                                {{ promo.titulo }}
-                              </a>
-                            </li>
-                          }
-                        </ul>
-                      }
-                    }
-                  </div>
-                  <div class="compra__acciones">
-                    <app-badge [variant]="sede.completa ? 'success' : 'warning'">
-                      {{ sede.completa ? 'Tiene todo' : 'Le falta algo' }}
-                    </app-badge>
-                    <!-- FAR-I2: un solo camino — enviar el pedido y decidir
-                         retiro o envío en la confirmación. Sin la demo (y
-                         hasta FAR-E1) queda a la vista y cerrado. -->
-                    @if (pedidoDisponible) {
-                      <button
-                        app-button
-                        variant="primary"
-                        size="sm"
-                        type="button"
-                        data-testid="compra-cta-pedido"
-                        (clicked)="enviarPedido(sede)"
-                      >
-                        Enviar pedido
-                      </button>
-                    } @else {
-                      <!-- `[disabled]` y no el atributo nativo: AppButton
-                           deshabilita con `aria-disabled` y el botón sigue
-                           siendo enfocable y anunciado. -->
-                      <button
-                        app-button
-                        variant="primary"
-                        size="sm"
-                        type="button"
-                        [disabled]="true"
-                        data-testid="compra-cta-pedido"
-                      >
-                        Enviar pedido
-                      </button>
-                      <span class="compra__proximamente">Próximamente</span>
+                    @if (conSeguro()) {
+                      <!-- T-E2: con seguro, cada renglón dice si entra en lo aprobado. -->
+                      <span data-testid="compra-item-seguro">
+                        @if (estaAprobado(item)) {
+                          <app-badge variant="success">Aprobado por el seguro</app-badge>
+                        } @else {
+                          <app-badge variant="secondary">A tu cargo</app-badge>
+                        }
+                      </span>
                     }
                   </div>
                 </li>
               }
             </ul>
-          }
-        </app-view-state-host>
-      </section>
+          </section>
 
-      <a app-button variant="ghost" [routerLink]="rutaDeHistoria">Volver a mi historia</a>
-    </div>
-  </app-view-state-host>
+          <!-- ─── El origen de las distancias: se pide, no se toma ───────────── -->
+          <section class="compra__bloque" aria-labelledby="compra-ubicacion">
+            <h2 id="compra-ubicacion" class="compra__titulo">Desde dónde medir las distancias</h2>
+            @if (origen(); as punto) {
+              <p class="compra__origen" data-testid="compra-origen">
+                Distancias medidas desde {{ punto.etiqueta }}.
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  (clicked)="quitarOrigen()"
+                >
+                  Dejar de usar este punto
+                </button>
+              </p>
+            } @else {
+              <p class="compra__nota">
+                Las sucursales ya vienen ordenadas: primero las que tienen todo. Si además querés
+                verlas por cercanía, compartí tu ubicación — se usa una sola vez para calcular
+                distancias y no se guarda —, o medí desde una ciudad sin dar tu ubicación.
+              </p>
+              <div class="compra__ubicacion-acciones">
+                @for (lugar of lugaresGuardados(); track lugar.etiqueta) {
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    [attr.data-testid]="
+                      lugar.etiqueta === 'tu casa' ? 'where-to-buy-origin-home' : 'where-to-buy-origin-work'
+                    "
+                    (clicked)="medirDesde(lugar)"
+                  >
+                    {{ lugar.etiqueta === 'tu casa' ? 'Tu casa' : 'Tu trabajo' }}
+                  </button>
+                }
+                <button
+                  app-button
+                  variant="primary"
+                  size="sm"
+                  type="button"
+                  data-testid="compra-compartir-ubicacion"
+                  [isLoading]="pidiendoUbicacion()"
+                  (clicked)="compartirUbicacion()"
+                >
+                  Compartir mi ubicación
+                </button>
+                @for (ciudad of ciudades; track ciudad.etiqueta) {
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    (clicked)="medirDesde(ciudad)"
+                  >
+                    {{ ciudad.etiqueta }}
+                  </button>
+                }
+              </div>
+              @if (ubicacionDenegada()) {
+                <p class="compra__nota" role="status">
+                  No pudimos leer tu ubicación. Podés medir desde una ciudad, o seguir sin
+                  distancias: el orden por cobertura no cambia.
+                </p>
+              }
+            }
+          </section>
+
+          <!-- ─── Las sucursales ─────────────────────────────────────────────── -->
+          <section class="compra__bloque" aria-labelledby="compra-sedes">
+            <h2 id="compra-sedes" class="compra__titulo">Sucursales</h2>
+
+            <!-- T-E2 · F2.1.4, F2.2.2: el orden y la variante con seguro viven
+                 fuera del estado de las sucursales, para que un vacío propio de
+                 la variante siempre ofrezca cómo apagarla. -->
+            <div class="compra__controles" data-testid="compra-controles">
+              <app-segmented-control
+                data-testid="compra-orden"
+                [options]="opcionesDeOrden"
+                [value]="orden()"
+                ariaLabel="Cómo ordenar las sucursales"
+                (valueChange)="orden.set($event)"
+              />
+              <div class="compra__seguro" data-testid="compra-variante-seguro">
+                <app-switch
+                  label="Ver la variante con seguro"
+                  data-testid="compra-seguro"
+                  [checked]="conSeguro()"
+                  (checkedChange)="conSeguro.set($event)"
+                />
+                <app-badge variant="info">{{ notaDeDemostracion }}</app-badge>
+                <span class="compra__secundario">
+                  Qué aprueba el seguro es un dato de ejemplo, no la respuesta de tu aseguradora.
+                  Las sucursales, existencias y precios son los de la consulta.
+                </span>
+              </div>
+            </div>
+
+            <app-view-state-host [state]="estadoDeSedes()" (retry)="consultar()">
+              @if (resultado(); as datos) {
+                @if (datos.sinProducto.length > 0) {
+                  <app-alert tone="warning" title="No todo se pudo consultar">
+                    Sin producto publicado en el directorio: {{ datos.sinProducto.join(', ') }}.
+                    Ninguna sucursal puede confirmar esos medicamentos. El pedido completo no se
+                    enviará y no se omitirá ningún medicamento.
+                  </app-alert>
+                }
+
+                @if (sedesEnElMapa().length > 0) {
+                  <figure class="compra__mapa">
+                    <!-- El organismo de mapa (FAR-I1): pines reales sobre OSM. El
+                     dato completo sigue en las tarjetas — el mapa es progresivo. -->
+                    <app-map
+                      [pines]="pinesDeSedes()"
+                      [etiqueta]="etiquetaDelMapa()"
+                      [(seleccionado)]="sedeElegida"
+                      (pinElegido)="enfocarSede($event)"
+                    />
+                    <figcaption class="compra__nota">
+                      Las distancias son en línea recta, no de recorrido: el tiempo real de viaje
+                      depende del tráfico.
+                    </figcaption>
+                  </figure>
+                }
+
+                <ul class="compra__sedes" data-testid="compra-sedes">
+                  @for (sede of sedesOrdenadas(); track sede.codigo) {
+                    <li
+                      class="compra__sede"
+                      [id]="'compra-sede-' + sede.codigo"
+                      [class.compra__sede--elegida]="sedeElegida() === sede.codigo"
+                      (mouseenter)="sedeElegida.set(sede.codigo)"
+                    >
+                      <span class="compra__codigo" aria-hidden="true">{{ sede.codigo }}</span>
+                      <div class="compra__sede-datos">
+                        <span class="compra__principal">{{ sede.farmacia }} · {{ sede.sede }}</span>
+                        @if (sede.direccion !== null) {
+                          <span class="compra__secundario">{{ sede.direccion }}</span>
+                        }
+                        @if (
+                          sedesEnElMapa().length > 0 && (sede.lat === null || sede.lng === null)
+                        ) {
+                          <span class="compra__secundario">Ubicación no disponible en el mapa</span>
+                        }
+                        <span class="compra__secundario">
+                          @if (sede.distancia !== null) {
+                            {{ sede.distancia }} en línea recta ·
+                          }
+                          @if (sede.total !== null) {
+                            Total estimado: {{ sede.total }}
+                          } @else {
+                            Total no disponible: falta algún precio publicado
+                          }
+                        </span>
+                        @if (conSeguro()) {
+                          <!-- T-E2 · F2.2.2: evaluada sólo sobre lo aprobado. -->
+                          <p class="compra__cobertura" data-testid="compra-cobertura-seguro">
+                            {{ coberturaDeLoAprobado(sede.conSeguro) }}
+                          </p>
+                          @if (!sede.conSeguro.completa && sede.conSeguro.faltantes.length > 0) {
+                            <p class="compra__faltantes" data-testid="compra-faltantes">
+                              Le falta de lo aprobado: {{ sede.conSeguro.faltantes.join(', ') }}
+                            </p>
+                          }
+                          <p class="compra__desglose" data-testid="compra-desglose-seguro">
+                            <span>
+                              Aprobado:
+                              {{ sede.conSeguro.aprobado ?? 'no disponible, falta algún precio' }}
+                            </span>
+                            <span>
+                              A tu cargo:
+                              {{ sede.conSeguro.aCargo ?? 'no disponible, falta algún precio' }}
+                            </span>
+                          </p>
+                        } @else if (!sede.completa) {
+                          <p class="compra__faltantes" data-testid="compra-faltantes">
+                            Le falta: {{ sede.faltantes.join(', ') }}
+                          </p>
+                        }
+                        <!-- FAR-I7: sin campañas vigentes no se pinta nada. La
+                         sección no existe en vez de existir vacía. -->
+                        @if (promocionesDe(sede); as promociones) {
+                          @if (promociones.length > 0) {
+                            <ul class="compra__promos" data-testid="compra-promos">
+                              @for (promo of promociones; track promo.id) {
+                                <li>
+                                  <a
+                                    app-link
+                                    [routerLink]="['/promotions', promo.id]"
+                                    class="compra__promo"
+                                  >
+                                    {{ promo.titulo }}
+                                  </a>
+                                </li>
+                              }
+                            </ul>
+                          }
+                        }
+                      </div>
+                      <div class="compra__acciones">
+                        @if (conSeguro()) {
+                          <app-badge [variant]="sede.conSeguro.completa ? 'success' : 'warning'">
+                            {{
+                              sede.conSeguro.completa
+                                ? 'Tiene todo lo aprobado'
+                                : 'Le falta algo aprobado'
+                            }}
+                          </app-badge>
+                        } @else {
+                          <app-badge [variant]="sede.completa ? 'success' : 'warning'">
+                            {{ sede.completa ? 'Tiene todo' : 'Le falta algo' }}
+                          </app-badge>
+                        }
+                        <button
+                          app-button
+                          variant="primary"
+                          size="sm"
+                          type="button"
+                          data-testid="compra-cta-pedido"
+                          [attr.aria-label]="'Enviar pedido: ' + sede.farmacia + ' · ' + sede.sede"
+                          (clicked)="enviarPedido(sede)"
+                        >
+                          Enviar pedido
+                        </button>
+                      </div>
+                    </li>
+                  }
+                </ul>
+              }
+            </app-view-state-host>
+          </section>
+
+          <a app-button variant="ghost" class="volver-al-origen" [routerLink]="rutaDeHistoria">Volver a mi historia</a>
+        </div>
+      </app-view-state-host>
+    </app-tab>
+
+    <!-- ─── Imagenología ────────────────────────────────────────────────────
+         Lo que falta acá NO son los estudios: `GET /diagnostic-results/me/orders`
+         ya devuelve los del paciente y «Mis estudios» los muestra. Lo que no
+         existe es con qué ordenar los centros por cercanía — el módulo
+         `diagnostic_units` no guarda dirección ni coordenadas (0 ocurrencias) y
+         su buscador acepta un solo `studyCode` (`catalog.dto.ts:68`), así que
+         «los más cercanos que tienen TODOS mis estudios» no se puede calcular
+         con ningún endpoint de hoy. Se dice, y se ofrece lo que sí hay. -->
+    <app-tab label="Centros de imagenología">
+      <app-empty-state
+        title="Todavía no podemos decirte cuál te queda más cerca"
+        description="Los centros de diagnóstico aún no publican su dirección, así que no hay forma de ordenarlos por cercanía ni de saber cuál tiene todos tus estudios juntos. Mientras tanto podés ver qué te pidieron y buscar un laboratorio a mano."
+      >
+        <a app-button variant="secondary" [routerLink]="rutaDeEstudios">Ver mis estudios pedidos</a>
+        <a app-button variant="ghost" [routerLink]="rutaDeLaboratorios">Buscar un laboratorio</a>
+      </app-empty-state>
+    </app-tab>
+
+    <!-- ─── Centros médicos ─────────────────────────────────────────────────
+         La pestaña más lejana de las tres, y no por trabajo de front: no hay de
+         dónde sacar «qué operaciones necesita esta persona» —la receta no las
+         declara— ni endpoint que busque organizaciones por prestación. El
+         modelo declara el gancho (`practice.healthcare_services`) pero los
+         seeds no lo pueblan. Hasta que eso se defina, lo honesto es decirlo. -->
+    <app-tab label="Centros médicos">
+      <app-empty-state
+        title="Esta parte todavía no está"
+        description="Acá van a aparecer los centros donde te pueden hacer los procedimientos que te indicaron. Todavía no está definido de dónde salen esos procedimientos ni qué centros los declaran, así que preferimos no mostrarte una lista que no sea la tuya."
+      >
+        <a app-button variant="ghost" [routerLink]="rutaDeClinicas">Ver clínicas y hospitales</a>
+      </app-empty-state>
+    </app-tab>
+  </app-tabs>
 }

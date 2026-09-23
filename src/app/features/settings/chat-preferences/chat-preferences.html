@@ -1,0 +1,228 @@
+<section class="ajustes__bloque">
+  <h2 class="ajustes__titulo">Respuesta automática</h2>
+  <p class="ajustes__detalle">
+    Si alguien te escribe y hace un rato que no entrás a los chats, se le contesta sola con tu
+    texto. Es para avisar que no estás mirando, no para responder por vos.
+  </p>
+
+  <!-- Lo que se promete cambia según dónde esté guardada, y se dice en la
+       pantalla y no sólo en el código. Guardada en el servidor contesta siempre;
+       guardada acá, sólo con la aplicación abierta. Prometer lo segundo como si
+       fuera lo primero sería mentir. -->
+  @if (enElServidor()) {
+    <p class="chat-prefs__aviso is-ok" data-testid="chat-prefs-limite">
+      Guardada en tu cuenta: contesta aunque tengas AloVida cerrado, y vale en todos tus
+      dispositivos.
+    </p>
+  } @else {
+    <p class="chat-prefs__aviso" data-testid="chat-prefs-limite">
+      Guardada sólo en este navegador: funciona mientras tengas AloVida abierto, y en otro
+      dispositivo vas a tener que configurarla de nuevo. Creá tu perfil público desde los chats
+      para que conteste siempre.
+    </p>
+  }
+
+  <!-- Interruptor y no casilla: esto no es un dato que se declara al enviar un
+       formulario, es algo que queda encendido o apagado en el momento y se
+       guarda solo. `app-switch` es el mismo control que usan los permisos y
+       los avisos, en la misma pantalla de Ajustes. -->
+  <div class="chat-prefs__interruptor">
+    <span class="chat-prefs__interruptor-texto">
+      <span class="ajustes__nombre">Contestar sola cuando no estoy</span>
+      <span class="ajustes__detalle">
+        {{ config().activa ? 'Encendida.' : 'Apagada: nadie recibe respuestas automáticas.' }}
+      </span>
+    </span>
+    <app-switch
+      class="chat-prefs__switch"
+      data-testid="chat-prefs-activa"
+      ariaLabel="Contestar sola cuando no estoy"
+      [checked]="config().activa"
+      (checkedChange)="alternarActiva($event)"
+    />
+  </div>
+
+  <!-- Lo de abajo sólo existe encendida: configurar una respuesta que no se
+       manda es pedirle a alguien que decida algo que no tiene efecto. -->
+  @if (config().activa) {
+    <div class="chat-prefs__campos">
+      <fieldset class="chat-prefs__grupo">
+        <legend class="ajustes__nombre">Después de cuánto tiempo sin entrar</legend>
+        <div class="chat-prefs__pastillas" role="group">
+          @for (espera of esperas; track espera) {
+            <button
+              class="chat-prefs__pastilla"
+              type="button"
+              [attr.data-testid]="'chat-prefs-espera-' + espera"
+              [class.is-activa]="config().minutosDeInactividad === espera"
+              [attr.aria-pressed]="config().minutosDeInactividad === espera"
+              (click)="elegirEspera(espera)"
+            >
+              {{ espera < 60 ? espera + ' min' : (espera / 60) + ' h' }}
+            </button>
+          }
+        </div>
+        <label class="chat-prefs__campo">
+          <span class="ajustes__detalle">O el tiempo que quieras, en minutos</span>
+          <input
+            type="number"
+            data-testid="chat-prefs-minutos"
+            [min]="minutosMinimo"
+            [max]="minutosMaximo"
+            [value]="config().minutosDeInactividad"
+            (change)="cambiarEspera($any($event.target).value)"
+          />
+        </label>
+      </fieldset>
+
+      <label class="chat-prefs__campo">
+        <span class="ajustes__nombre">Qué contesta</span>
+        <textarea
+          rows="4"
+          data-testid="chat-prefs-texto"
+          [maxlength]="largoMaximo"
+          [ngModel]="texto()"
+          (ngModelChange)="texto.set($event)"
+          name="textoAutomatico"
+        ></textarea>
+        <span class="ajustes__detalle">Te quedan {{ restantes() }} caracteres.</span>
+      </label>
+
+      @if (plantillasDeFabrica.length > 0) {
+        <div class="chat-prefs__sugerencias">
+          <p class="ajustes__detalle">O usá una de tus frases guardadas:</p>
+          <ul class="chat-prefs__pastillas">
+            @for (plantilla of plantillasDeFabrica; track plantilla) {
+              <li>
+                <button
+                  class="chat-prefs__pastilla"
+                  type="button"
+                  data-testid="chat-prefs-sugerencia"
+                  (click)="usarPlantilla(plantilla)"
+                >
+                  {{ plantilla }}
+                </button>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <div class="chat-prefs__campo">
+        <label class="chat-prefs__frase">
+          <span class="ajustes__nombre">Sin repetirle a la misma persona antes de</span>
+          <input
+            type="number"
+            data-testid="chat-prefs-descanso"
+            [min]="horasMinimo"
+            [max]="horasMaximo"
+            [value]="config().horasEntreAvisos"
+            (change)="cambiarDescanso($any($event.target).value)"
+          />
+          <span class="ajustes__nombre">horas</span>
+        </label>
+        <span class="ajustes__detalle">
+          Cinco mensajes seguidos de la misma persona reciben un solo aviso.
+        </span>
+      </div>
+
+      <div class="chat-prefs__interruptor">
+        <span class="chat-prefs__interruptor-texto">
+          <span class="ajustes__nombre">Sólo fuera de mi horario de atención</span>
+          <span class="ajustes__detalle">
+            Dentro del horario no contesta sola, aunque no estés mirando.
+          </span>
+        </span>
+        <app-switch
+          class="chat-prefs__switch"
+          data-testid="chat-prefs-horario"
+          ariaLabel="Sólo fuera de mi horario de atención"
+          [checked]="config().soloFueraDeHorario"
+          (checkedChange)="alternarHorario($event)"
+        />
+      </div>
+
+      @if (config().soloFueraDeHorario) {
+        <div class="chat-prefs__franja">
+          <label class="chat-prefs__campo">
+            <span class="ajustes__detalle">Desde</span>
+            <input
+              type="time"
+              data-testid="chat-prefs-desde"
+              [value]="config().horarioDesde"
+              (change)="cambiarDesde($any($event.target).value)"
+            />
+          </label>
+          <label class="chat-prefs__campo">
+            <span class="ajustes__detalle">Hasta</span>
+            <input
+              type="time"
+              data-testid="chat-prefs-hasta"
+              [value]="config().horarioHasta"
+              (change)="cambiarHasta($any($event.target).value)"
+            />
+          </label>
+        </div>
+      }
+
+      <div class="chat-prefs__acciones">
+        <button app-button variant="primary" data-testid="chat-prefs-guardar" (clicked)="guardarTexto()">
+          Guardar el texto
+        </button>
+        <button app-button variant="ghost" data-testid="chat-prefs-restablecer" (clicked)="restablecer()">
+          Volver a lo de fábrica
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (guardado()) {
+    <p class="chat-prefs__guardado" role="status" data-testid="chat-prefs-guardado">
+      Guardado.
+    </p>
+  }
+</section>
+
+<section class="ajustes__bloque">
+  <h2 class="ajustes__titulo">Frases guardadas</h2>
+  <p class="ajustes__detalle">
+    Las que aparecen en el chat con el botón de plantillas. Las del producto no se pueden borrar;
+    las tuyas, sí.
+  </p>
+
+  <ul class="chat-prefs__plantillas">
+    @for (plantilla of plantillasPropias(); track plantilla) {
+      <li class="chat-prefs__plantilla">
+        <span>{{ plantilla }}</span>
+        <button
+          type="button"
+          class="chat-prefs__quitar"
+          data-testid="chat-prefs-quitar-plantilla"
+          [attr.aria-label]="'Quitar la frase: ' + plantilla"
+          (click)="quitarPlantilla(plantilla)"
+        >
+          Quitar
+        </button>
+      </li>
+    } @empty {
+      <li class="ajustes__nota">Todavía no guardaste ninguna frase propia.</li>
+    }
+  </ul>
+
+  <div class="chat-prefs__nueva">
+    <label class="chat-prefs__campo">
+      <span class="solo-lectores">Nueva frase</span>
+      <input
+        type="text"
+        data-testid="chat-prefs-plantilla-nueva"
+        placeholder="Una frase que uses seguido"
+        [ngModel]="plantillaNueva()"
+        (ngModelChange)="plantillaNueva.set($event)"
+        name="plantillaNueva"
+      />
+    </label>
+    <button app-button variant="secondary" data-testid="chat-prefs-plantilla-guardar" (clicked)="agregarPlantilla()">
+      Guardar frase
+    </button>
+  </div>
+</section>

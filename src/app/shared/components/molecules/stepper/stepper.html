@@ -1,10 +1,21 @@
-<ol class="stepper" [attr.aria-label]="summary() || null">
+<ol
+  class="stepper"
+  [class.stepper--compact]="compact()"
+  [attr.aria-label]="summary() || null"
+>
   @for (step of steps(); track step.label; let i = $index; let last = $last) {
+    <!-- El globo del rótulo, cuando el paso no es un control: en compacto el
+         rótulo deja de verse y ésta es la forma de recuperarlo con el puntero.
+         Con `compact` apagado el texto es vacío, y con texto vacío la directiva
+         no dibuja globo ni escribe nada en el host: por eso puede quedar
+         declarada siempre, en vez de duplicar el cuerpo del paso en dos ramas
+         que después se separan. -->
     <li
       class="stepper__step stepper__step--{{ step.status }}"
       [class.stepper__step--interactivo]="interactive()"
       [class.stepper__step--cerrado]="interactive() && step.disabled === true"
       [attr.aria-current]="!interactive() && step.status === 'current' ? 'step' : null"
+      [appTooltip]="compact() && !interactive() ? step.label : ''"
     >
       @if (interactive()) {
         <!-- Un `<button>` de verdad y no un `<li>` con `(click)`: el teclado, el
@@ -22,6 +33,7 @@
           [attr.aria-disabled]="step.disabled === true ? 'true' : null"
           [attr.aria-label]="nombreDelPaso(step, i)"
           [attr.data-testid]="'stepper-paso-' + i"
+          [appTooltip]="compact() ? step.label : ''"
           (click)="pedirPaso(step, i)"
         >
           <ng-container
@@ -63,7 +75,10 @@
   </span>
 
   <span class="stepper__body">
-    <span class="stepper__label">{{ step.label }}</span>
+    <!-- En compacto el rótulo sale de la vista y no del recorrido: `sr-only` lo
+         deja donde el lector de pantalla lo sigue encontrando, y el globo lo
+         devuelve a la vista al apuntar o al enfocar el paso. -->
+    <span class="stepper__label" [class.sr-only]="compact()">{{ step.label }}</span>
     <span class="sr-only">— {{ estadoTexto(step) }}</span>
   </span>
 </ng-template>

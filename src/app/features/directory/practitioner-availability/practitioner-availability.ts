@@ -24,7 +24,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { bookingNewRoute } from '../../agenda/agenda.routes';
+import { reservaDelPortalRoute } from '../../account/appointments/appointments.routes';
 
 /** Milisegundos de un día. */
 const UN_DIA_MS = 24 * 60 * 60 * 1000;
@@ -114,6 +114,9 @@ export class PractitionerAvailability {
   /** Cuántas semanas hacia adelante respecto de la actual. */
   protected readonly semana = signal(0);
 
+  /** El cupo cuya navegación a reserva sigue en curso, si hay uno. */
+  protected readonly reservaPendienteId = signal<string | null>(null);
+
   protected readonly haySesion = computed(() => this.auth.isAuthenticated());
 
   protected readonly sedes = computed<readonly SedeConCupos[]>(() => {
@@ -176,18 +179,31 @@ export class PractitionerAvailability {
   /**
    * Abre la reserva con la sede y el cupo ya elegidos.
    *
+   * Ruta del **portal** (`reservaDelPortalRoute`) y no la del mostrador
+   * (`bookingNewRoute`): quien mira esta ficha es siempre un paciente —la
+   * sección hereda esa restricción de la Guía—, y `/schedule/book/:slotId`
+   * está reservada a `SCHEDULING_ADMIN/AGENT/PRACTITIONER`. Usar la del
+   * mostrador acá hacía que `seccionRolesGuard` rechazara al paciente y lo
+   * mandara a `/dashboard` en cuanto tocaba un cupo.
+   *
    * Los tres datos que la reserva necesita para reencontrar el cupo al
-   * recargar viajan por query string, que es el contrato que `agenda.routes`
-   * documenta: no existe `GET /scheduling/slots/:id`.
+   * recargar viajan por query string, que es el contrato que
+   * `appointments.routes` documenta: no existe `GET /scheduling/slots/:id`.
    */
   protected reservar(sede: SedeConCupos, cupo: AgendaSlot): void {
-    void this.router.navigate([bookingNewRoute(cupo.id)], {
-      queryParams: {
-        recurso: sede.recurso.id,
-        desde: cupo.startAt.toISOString(),
-        hasta: cupo.endAt.toISOString(),
-      },
-    });
+    if (this.reservaPendienteId() !== null) {
+      return;
+    }
+    this.reservaPendienteId.set(cupo.id);
+    void this.router
+      .navigate([reservaDelPortalRoute(cupo.id)], {
+        queryParams: {
+          recurso: sede.recurso.id,
+          desde: cupo.startAt.toISOString(),
+          hasta: cupo.endAt.toISOString(),
+        },
+      })
+      .finally(() => this.reservaPendienteId.set(null));
   }
 
   private async cargar(profileId: string, tenantId: string): Promise<void> {

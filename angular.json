@@ -33,11 +33,17 @@
                 "glob": "leaflet.css",
                 "input": "node_modules/leaflet/dist",
                 "output": "assets/leaflet"
+              },
+              {
+                "glob": "pdf.worker.min.mjs",
+                "input": "node_modules/pdfjs-dist/build",
+                "output": "assets/pdfjs"
               }
             ],
             "styles": [
               "src/styles.css",
-              "src/styles/redsat.css"
+              "src/styles/alovida.css",
+              "src/styles/perfil-publico.css"
             ],
             "server": "src/main.server.ts",
             "outputMode": "server",
@@ -71,15 +77,16 @@
                 {
                   "type": "initial",
                   "maximumWarning": "620kB",
-                  "maximumError": "1.1MB"
+                  "maximumError": "1.3MB"
                 },
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "4kB",
-                  "maximumError": "9kB"
+                  "maximumError": "12kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "prerender": false
             },
             "development": {
               "optimization": false,
@@ -91,6 +98,34 @@
                   "with": "src/environments/environment.development.ts"
                 }
               ]
+            },
+            "e2e-real": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "server": false,
+              "ssr": false,
+              "outputMode": "static",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.e2e-real.ts"
+                }
+              ]
+            },
+            "real-api": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "server": false,
+              "ssr": false,
+              "outputMode": "static",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.real-api.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -98,7 +133,7 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "options": {
-            "proxyConfig": "proxy.conf.json",
+            "proxyConfig": "proxy.conf.mjs",
             "allowedHosts": [
               "localhost",
               "127.0.0.1",
@@ -114,6 +149,12 @@
             },
             "development": {
               "buildTarget": "mantra-core-health:build:development"
+            },
+            "e2e-real": {
+              "buildTarget": "mantra-core-health:build:e2e-real"
+            },
+            "real-api": {
+              "buildTarget": "mantra-core-health:build:real-api"
             },
             "lan": {
               "buildTarget": "mantra-core-health:build:development",

@@ -40,15 +40,7 @@
     revisa una tabla, no un algoritmo.
     ========================================================================== */
 
-import {
-  clave,
-  distancia,
-  lema,
-  normalizar,
-  tokenizar,
-  tramosNegados,
-  type Token,
-} from './texto';
+import { clave, distancia, lema, normalizar, tokenizar, tramosNegados, type Token } from './texto';
 import type { Sintoma } from './sintomas.datos';
 
 /**
@@ -120,8 +112,19 @@ const UMBRAL_ALARMA = 0.8;
  * gente.
  */
 const COMPARTIDAS: ReadonlySet<string> = new Set([
-  'ardor', 'bulto', 'control', 'dolor', 'hinchazon', 'mal', 'molestia', 'mover',
-  'no', 'poder', 'problema', 'receta', 'sangre',
+  'ardor',
+  'bulto',
+  'control',
+  'dolor',
+  'hinchazon',
+  'mal',
+  'molestia',
+  'mover',
+  'no',
+  'poder',
+  'problema',
+  'receta',
+  'sangre',
 ]);
 
 /**

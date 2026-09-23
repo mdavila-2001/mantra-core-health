@@ -9,7 +9,11 @@ import { join } from 'node:path';
 
 import { allowedHostsFromEnv } from './server/allowed-hosts';
 import { artefactosInexistentesDan404 } from './server/build-assets';
-import { collectInlineScriptHashes, securityHeaders } from './server/security-headers';
+import {
+  collectInlineScriptHashes,
+  securityHeaders,
+  sourceIndexScriptHashes,
+} from './server/security-headers';
 import { OTEL_TRACES_PATH, otelGateway } from './server/telemetry/otel-gateway';
 import { serverTelemetryConfig } from './server/telemetry/server-telemetry.config';
 import { serverTracingMiddleware } from './server/telemetry/server-tracing.middleware';
@@ -61,10 +65,24 @@ const telemetryHandle = startServerTelemetry(telemetry);
  * recomendado— deja `connect-src 'self'`; con un dominio distinto lo agrega.
  * Es la misma variable que compila el paquete, así que las dos mitades no se
  * pueden separar.
+ *
+ * `sourceIndexScriptHashes` se suma al recorrido del artefacto, no lo
+ * reemplaza (AG49-FT01-003): bajo `ng serve --ssr` no hay ningún
+ * `browserDistFolder` real que `collectInlineScriptHashes` pueda recorrer —el
+ * bundle de desarrollo no escribe nada a disco— y el script anti-parpadeo del
+ * tema quedaba bloqueado por la CSP en cualquier ruta sin prerenderizar. En un
+ * build de producción es una entrada redundante (mismo hash que ya aporta el
+ * recorrido del artefacto); en `ng serve` es la única fuente que existe. Ver
+ * el porqué completo en `sourceIndexScriptHashes`.
  */
 const cabecerasComunes = {
   apiBaseUrl: process.env['PUBLIC_API_BASE_URL'] ?? '',
-  inlineScriptHashes: collectInlineScriptHashes(browserDistFolder),
+  inlineScriptHashes: [
+    ...new Set([
+      ...collectInlineScriptHashes(browserDistFolder),
+      ...sourceIndexScriptHashes(process.cwd()),
+    ]),
+  ],
 };
 
 /**
@@ -128,6 +146,19 @@ if (telemetryHandle !== null) {
 /**
  * Serve static files from /browser
  */
+/**
+ * Las fotos de vitrina de la maqueta (`/public/media/<id>`).
+ *
+ * El simulador del navegador no puede contestar una `<img>`: la pide el
+ * navegador directo y no pasa por `HttpClient`. En `yarn start` lo resuelve el
+ * `bypass` de `proxy.conf.mjs`; acá, en el contenedor de la rama `mockup`, lo
+ * resuelve esta ruta con el mismo archivo. Sin ella la petición caía en el
+ * renderizador de Angular, que devolvía HTML con 200, y la imagen se rompía.
+ */
+app.get('/public/media/:id', (_request, response) => {
+  response.redirect(302, '/mock-media.svg');
+});
+
 app.use(
   express.static(browserDistFolder, {
     maxAge: '1y',

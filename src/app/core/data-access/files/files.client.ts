@@ -1,11 +1,13 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, type Observable } from 'rxjs';
+import { map, Observable, switchMap } from 'rxjs';
 
 import { fileAttributes } from '../../observability/business/file-tracing';
 import { TracingService } from '../../observability/tracing/tracing.service';
 import { API_BASE_URL, apiUrl } from '../api';
 import { sinNulos } from '../wire';
+import { blobToDataUrl } from './blob-to-data-url';
+import { nombreDeContentDisposition } from './content-disposition';
 import type {
   DownloadUrl,
   FileLink,
@@ -13,6 +15,7 @@ import type {
   LinkedFilePage,
   LinkedFilesQuery,
   NewFileLink,
+  StoredFileContent,
 } from './files.types';
 
 /** Los dos únicos valores que admite el backend. */
@@ -144,6 +147,122 @@ export class FilesClient {
   }
 
   /**
+   * La imagen de un archivo, lista para un `src`.
+   *
+   * ## Por qué no sirve `downloadUrl()` para pintar una foto
+   *
+   * Porque lo que devuelve **no es una URL de navegador**. El backend arma
+   * `${storageUri}?fileId=…&signature=…` (`files.service.ts`), y en esta
+   * instalación `storage_uri` vale `file://local/<sha256>`: verificado en la
+   * base, las 5 subidas reales lo tienen así. Un `<img src="file://local/…">`
+   * no carga en ningún navegador, y encima la CSP del proyecto declara
+   * `img-src 'self' data:`. De ahí el síntoma que reportó el equipo: la subida
+   * respondía bien, el perfil quedaba guardado —el alta marcaba «Listo»— y la
+   * foto no aparecía nunca. La firma sigue sirviendo para lo suyo, que es
+   * entregarle un puntero con vencimiento a otro sistema.
+   *
+   * ## Por qué `data:` y no `blob:`
+   *
+   * Un `blob:` sería más barato —no hay base64 de por medio— y la misma CSP lo
+   * bloquea: `img-src` no lo declara. Se probó antes con la foto de perfil y
+   * la imagen quedaba invisible con una violación en consola, que es peor que
+   * no intentarlo.
+   *
+   * ## Por qué pasa por `HttpClient` y no por el atributo
+   *
+   * `GET /common/files/:id/content` exige `Authorization`, y un `<img>` no
+   * manda cabeceras. Bajar los bytes acá deja que el interceptor de sesión
+   * haga su trabajo.
+   *
+   * **Ojo con quién puede.** El backend sólo entrega el contenido a quien
+   * subió el archivo o a un rol de revisión, así que esto resuelve la foto
+   * *propia*. Para la foto de otra persona en un directorio público responde
+   * 403 y hay que degradar a iniciales — y para el adjunto de un comentario
+   * ajeno cuyo post sí se puede ver, la vía correcta es
+   * `CommunityClient.commentMediaDataUrl()` (FND-01), no ésta: acá «quién
+   * puede» es siempre «quien lo subió».
+   *
+   * @param fileId - El archivo a leer.
+   * @returns La imagen como `data:` URL.
+   */
+  imageDataUrl(fileId: string): Observable<string> {
+    return this.contentDataUrl(fileId);
+  }
+
+  /**
+   * El contenido de un archivo propio, como `data:` URL — para ofrecerlo con
+   * `<a download>` sin depender de una URL de navegador que la CSP bloquee
+   * (mismo motivo que documenta `imageDataUrl`, que delega acá: es
+   * exactamente el mismo `GET` autenticado, la única diferencia es la
+   * intención de quien llama —pintar una miniatura o descargar un documento—).
+   *
+   * Sirve para "el archivo descargable" de una fila (FT-32-R02): el backend
+   * ya exige ser quien lo subió o tener un rol revisor, así que no hace falta
+   * un endpoint de descarga propio del dominio que lo referencia.
+   *
+   * @param fileId - El archivo a descargar.
+   * @returns El contenido como `data:` URL, con su tipo MIME real.
+   */
+  contentDataUrl(fileId: string): Observable<string> {
+    return this.http
+      .get(apiUrl(this.baseUrl, `/common/files/${encodeURIComponent(fileId)}/content`), {
+        responseType: 'blob',
+      })
+      .pipe(switchMap((bytes) => blobToDataUrl(bytes)));
+  }
+
+  /**
+   * El contenido de un archivo propio **con la metadata que lo acompaña**.
+   *
+   * ## Por qué no hay un endpoint de metadata
+   *
+   * Porque no hace falta: el tipo, el tamaño y el nombre **ya vienen** en la
+   * respuesta que hay que pedir de todos modos para mostrar el archivo. El
+   * `Blob` trae el `Content-Type` en su `type` y los bytes en su `size`, y
+   * `Content-Disposition` trae el nombre. Un `GET /common/files/:id` sería una
+   * petición extra para volver a preguntar lo que ya está en la mano.
+   *
+   * ## Qué cambia respecto de `contentDataUrl`
+   *
+   * Sólo `observe: 'response'`. Aquél descarta la respuesta y se queda con los
+   * bytes; éste la conserva para poder leer una cabecera. Misma ruta, mismo
+   * método, misma autorización: **no abre ningún camino nuevo al binario**.
+   *
+   * ## Qué pasa si el nombre no viene
+   *
+   * `originalName` queda ausente y quien llama pone su propio texto. Pasa de
+   * verdad y no es un caso raro: `common.files.original_name` es nullable, y el
+   * backend simulado sirve los bytes sin emitir la cabecera. Inventar un nombre
+   * ahí sería mostrar un dato falso en una pantalla clínica.
+   *
+   * **Quién puede.** Lo mismo que `contentDataUrl`: quien subió el archivo o un
+   * rol de revisión. Para un adjunto ajeno responde 403, y quien llama degrada.
+   *
+   * @param fileId - El archivo a leer.
+   * @returns Los bytes con su tipo, su tamaño y —si se pudo leer— su nombre.
+   */
+  storedFileContent(fileId: string): Observable<StoredFileContent> {
+    return this.http
+      .get(apiUrl(this.baseUrl, `/common/files/${encodeURIComponent(fileId)}/content`), {
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(
+        map((respuesta) => {
+          const blob = respuesta.body ?? new Blob([]);
+          return sinNulos({
+            blob,
+            mimeType: blob.type,
+            sizeBytes: blob.size,
+            originalName: nombreDeContentDisposition(
+              respuesta.headers.get('Content-Disposition'),
+            ),
+          }) as StoredFileContent;
+        }),
+      );
+  }
+
+  /**
    * `DELETE /common/files/:id` — borrado **lógico** del archivo.
    *
    * Ojo con la semántica: borra el archivo, no el vínculo. Un archivo borrado
@@ -202,3 +321,4 @@ function toLinkedFilePage(body: WireLinkedFilePage): LinkedFilePage {
     })),
   };
 }
+

@@ -1,0 +1,21 @@
+/* Los tres canales envuelven en fila y se apilan en pantallas chicas: nunca
+   se comprime un botón hasta partir su texto. */
+.contact-channels {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* El ícono hereda el color del texto del botón (currentColor): sigue la
+   variante, el hover y el estado deshabilitado sin una regla adicional. */
+.contact-channels__icon {
+  flex: none;
+}
+
+.contact-channels__absent {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-style: italic;
+}

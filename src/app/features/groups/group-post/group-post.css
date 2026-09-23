@@ -1,6 +1,6 @@
 .publicacion {
   padding: var(--e3);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md, 8px);
   background: var(--surface, transparent);
 }
@@ -21,7 +21,7 @@
 .publicacion__fecha {
   margin: 0;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .publicacion__cuerpo {
@@ -40,7 +40,7 @@
 
 .publicacion__conteo {
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 /* El hilo se marca con una línea y no sólo con margen: en un teléfono el
@@ -51,7 +51,7 @@
   gap: var(--e2);
   margin-top: var(--e3);
   padding-inline-start: var(--e3);
-  border-inline-start: 2px solid var(--border);
+  border-inline-start: 2px solid var(--border-default);
 }
 
 /* A partir del cuarto nivel se deja de sangrar: si no, una discusión larga

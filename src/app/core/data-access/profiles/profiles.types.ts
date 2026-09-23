@@ -2,9 +2,29 @@
 
 import type { BirthSexCode } from '../iam/iam.types';
 
-/** Alta de un perfil de paciente hecha por personal (no auto-registro). */
+/**
+ * Alta de un perfil de paciente hecha por personal (no auto-registro).
+ *
+ * ## El código de paciente es opcional acá, y no en el DTO
+ *
+ * Porque en el mostrador nadie lo sabe. `patient_code` es único en toda la
+ * instalación y el servidor ya lo acuña él mismo en el alta que la persona hace
+ * de sí misma (`PAT-<uuid>`); pedirle uno al navegador es pedirle que garantice
+ * una unicidad que no puede ver. La pantalla de administración —que lo tiene
+ * porque viene de una historia clínica en papel— lo sigue mandando.
+ *
+ * ## El bloque de filiación
+ *
+ * Los campos desde `name` para abajo son los que el registro de procesos del
+ * cliente exige en la recepción del paciente (módulo Paciente §1.1) y que hoy
+ * **sólo acepta el alta que la propia persona hace de sí misma**
+ * (`RegisterPatientDto`). Están declarados acá porque son los que la pantalla
+ * necesita; contra la API de hoy los rechaza `forbidNonWhitelisted` con un 400.
+ * Ver `PENDIENTES-BACKEND.md` (P22): el destino no es este endpoint sino el
+ * registro asistido, extendido con este mismo bloque.
+ */
 export interface NewPatientProfile {
-  readonly patientCode: string;
+  readonly patientCode?: string;
   readonly displayName?: string;
   /** ISO `YYYY-MM-DD`. */
   readonly birthDate?: string;
@@ -16,6 +36,27 @@ export interface NewPatientProfile {
   readonly sexAtBirthConceptId?: string;
   /** Código del índice maestro de pacientes. Único en toda la instalación. */
   readonly masterPatientIndexCode?: string;
+
+  /* -- filiación de mostrador (§1.1) — pendiente en el backend, P22 --------- */
+
+  /** Nombre de pila. */
+  readonly name?: string;
+  /** Los nombres que no son el primero, ya unidos en uno solo. */
+  readonly middleName?: string;
+  readonly lastName?: string;
+  readonly motherLastName?: string;
+  /** Cédula de identidad. Va a `common.identifiers` como identificador oficial. */
+  readonly nationalId?: string;
+  /** Departamento que expidió la cédula (`VS_BO_DEPARTMENT`). */
+  readonly issuerAdministrativeAreaConceptId?: string;
+  readonly phone?: string;
+  /** Ocupación del catálogo `VS_BO_OCCUPATION`. */
+  readonly occupationConceptId?: string;
+  /** El oficio escrito a mano, sólo cuando se eligió «Otra ocupación». */
+  readonly occupationFreeText?: string;
+  /** Tutor o persona autorizada, para quien no puede responder por sí mismo. */
+  readonly guardianName?: string;
+  readonly guardianPhone?: string;
 }
 
 export interface PatientProfile {
@@ -69,6 +110,15 @@ export interface NewJurisdictionAuthorization {
   /** ISO `YYYY-MM-DD`. */
   readonly validFrom?: string;
   readonly validTo?: string;
+  /**
+   * El respaldo de la matrícula —el carnet del colegio—, ya subido con
+   * `FilesClient.upload`.
+   *
+   * Existe desde el 13/09/2026 (modelo v4.2.11 + API). Hasta entonces el
+   * contrato no tenía dónde llevarlo y el selector del formulario tiraba el
+   * archivo en silencio; ver `docs/progress/BLOCKERS.md`.
+   */
+  readonly fileId?: string;
 }
 
 export interface PractitionerProfile {
@@ -108,6 +158,15 @@ export interface PractitionerSpecialty {
   readonly boardCertified: boolean;
   readonly practiceScopeText?: string;
   readonly verificationStatusConceptId: string;
+  /**
+   * Si la plataforma verificó su matrícula.
+   *
+   * Lo resuelve el servidor: comparar el concepto acá exigiría llevar su uuid
+   * escrito en el cliente. La guía lista el padrón entero —quien se registra
+   * declara una matrícula, no la prueba— y esto es lo que distingue a quien
+   * además la probó.
+   */
+  readonly verified: boolean;
   readonly validFrom?: Date;
   /** Presente sólo si dejó de ejercerla. */
   readonly validTo?: Date;
@@ -127,6 +186,35 @@ export interface PractitionerCredential {
   readonly verifiedAt?: Date;
   /** Contra qué se comprobó. Ausente antes de verificar. */
   readonly verificationSourceUri?: string;
+  /**
+   * El diploma adjuntado al cargar el título, para poder descargarlo.
+   *
+   * El alta lo acepta desde siempre (`NewOwnCredential.fileId`) pero la
+   * **lectura** no lo devolvía: el archivo entraba y no había forma de volver
+   * a verlo, ni siquiera para quien lo subió. Lo pidió el propietario el
+   * 13/09/2026 («descargar elementos»).
+   *
+   * Hoy lo sirve el simulador de la rama `mockup`; el `PractitionerCredentialDto`
+   * de la API todavía no lo declara. Ver `docs/progress/BLOCKERS.md`.
+   */
+  readonly fileId?: string;
+}
+
+/**
+ * Un título nuevo (`POST /profiles/practitioners/me/credentials`).
+ *
+ * Nace **pendiente de verificación**, siempre: no hay forma de declararlo ya
+ * verificado desde acá — eso lo hace `SECURITY_ADMIN` sobre uno existente.
+ */
+export interface NewOwnCredential {
+  /** Uno de los cinco `CREDENTIAL_TYPE_*` del catálogo. */
+  readonly credentialTypeConceptId: string;
+  readonly number: string;
+  readonly issuingInstitutionText?: string;
+  /** ISO `YYYY-MM-DD`, mismo criterio que {@link NewJurisdictionAuthorization.validFrom}. */
+  readonly issueDate?: string;
+  /** El diploma, ya subido con `FilesClient.upload`. */
+  readonly fileId?: string;
 }
 
 /** Una matrícula: dónde está habilitado a ejercer y con qué número. */
@@ -138,6 +226,54 @@ export interface PractitionerLicense {
   readonly stateConceptId: string;
   readonly validFrom?: Date;
   readonly validTo?: Date;
+  /**
+   * El carnet del colegio adjuntado al cargarla. Mismo hueco y misma fecha que
+   * {@link PractitionerCredential.fileId}: el alta lo acepta, la lectura
+   * todavía no lo devuelve fuera del simulador.
+   */
+  readonly fileId?: string;
+}
+
+/* ---- Corregir lo ya cargado ------------------------------------------------
+   Los tres `PATCH` que la tabla de «Configurar tu perfil» necesita para que
+   «Editar» no sea borrar y volver a cargar.
+
+   **Ninguno existe todavía en la API.** Están escritos con la forma REST que le
+   corresponde a cada recurso —y el simulador de la rama `mockup` los atiende—
+   para que el día que el backend los publique no haya que rehacer la pantalla:
+   lo que cambia es quién responde, no qué se pide. Ver
+   `docs/progress/BLOCKERS.md`.
+
+   Los tres son PARCIALES: lo que no viaja no se toca. Un `undefined` no borra
+   —`stripUndefined` lo quita del cuerpo—, así que corregir el número de un
+   título no puede llevarse por delante su fecha de emisión. */
+
+/** Lo corregible de un título propio (`PATCH …/me/credentials/:id`). */
+export interface OwnCredentialChanges {
+  readonly credentialTypeConceptId?: string;
+  readonly number?: string;
+  readonly issuingInstitutionText?: string;
+  /** ISO `YYYY-MM-DD`, mismo criterio que en el alta. */
+  readonly issueDate?: string;
+  readonly fileId?: string;
+}
+
+/** Lo corregible de una especialidad propia (`PATCH …/me/specialties/:id`). */
+export interface OwnSpecialtyChanges {
+  readonly specialtyConceptId?: string;
+  readonly boardCertified?: boolean;
+}
+
+/**
+ * Lo corregible de una matrícula propia
+ * (`PATCH …/me/jurisdiction-authorizations/:id`).
+ */
+export interface OwnLicenseChanges {
+  readonly licenseNumber?: string;
+  readonly regulatoryAuthority?: string;
+  /** ISO `YYYY-MM-DD`. */
+  readonly validFrom?: string;
+  readonly fileId?: string;
 }
 
 /**
@@ -162,6 +298,54 @@ export interface PractitionerActivity {
   readonly medicationRequests: number;
   readonly clinicalNotes: number;
   readonly documents: number;
+  /**
+   * Consultas atendidas mes a mes, de la más vieja a la más nueva.
+   *
+   * Opcional: cuatro totales sin serie no dicen si la práctica crece, se
+   * mantiene o se apagó, que es lo que un profesional mira de su propia
+   * actividad. Ausente se lee como «esta instalación todavía no lo calcula» y
+   * la ficha sencillamente no dibuja el gráfico.
+   */
+  readonly monthlyEncounters?: readonly MonthlyCount[];
+  /** Indicadores de calidad de la atención. Opcional, por el mismo motivo. */
+  readonly quality?: PractitionerQualityMetrics;
+}
+
+/** Cuántas veces pasó algo en un mes. `month` va en ISO `yyyy-MM`. */
+export interface MonthlyCount {
+  readonly month: string;
+  readonly count: number;
+}
+
+/**
+ * Los indicadores de calidad de la atención.
+ *
+ * **Son pares, no porcentajes.** Cada indicador viaja como «cuántas de
+ * cuántas» y el cociente lo saca la vista: un 88 % sin su denominador no
+ * distingue 7 de 8 de 880 de 1 000, y la ficha tiene que poder mostrar los dos
+ * números. La única excepción es la valoración, que ya es una media.
+ */
+export interface PractitionerQualityMetrics {
+  /** Personas distintas atendidas. */
+  readonly uniquePatients: number;
+  /** Cuántas de ellas volvieron al menos una vez. */
+  readonly returningPatients: number;
+  /** Citas agendadas en el período. */
+  readonly scheduledAppointments: number;
+  /** De ésas, a cuántas se presentó el paciente. */
+  readonly attendedAppointments: number;
+  /** De las atendidas, cuántas empezaron dentro de los 10 minutos acordados. */
+  readonly onTimeAppointments: number;
+  /** Encuentros cerrados en el período. */
+  readonly closedEncounters: number;
+  /** De ésos, cuántos quedaron con su nota clínica dentro de las 24 horas. */
+  readonly notesWithin24h: number;
+  /** Minutos que dura una consulta, en promedio. `null` si no hay con qué. */
+  readonly averageDurationMinutes: number | null;
+  /** Media de las valoraciones de pacientes (1 a 5), o `null` si no hay ninguna. */
+  readonly ratingAverage: number | null;
+  /** Cuántas valoraciones sostienen esa media. */
+  readonly ratingCount: number;
 }
 
 /** El perfil profesional que la persona ve de sí misma. */
@@ -176,7 +360,28 @@ export interface OwnPractitionerProfile {
   readonly professionalBio?: string;
   readonly photoFileId?: string;
   readonly email?: string;
+  /**
+   * Forma anterior de leer el teléfono: el primero que haya, sin mirar su uso.
+   *
+   * @deprecated Preferí {@link workLandline} o {@link workMobilePhone}, que
+   * dicen cuál es cuál.
+   */
   readonly phone?: string;
+
+  /* --- los cinco contactos, cada uno con su nombre -----------------------
+     Vienen separados desde que el alta los pide así. `email` es el de trabajo
+     y a la vez el de acceso; el personal viaja aparte. */
+
+  /** Correo de trabajo, el mismo con el que se entra. */
+  readonly workEmail?: string;
+  /** Correo personal, el que no sirve para entrar. */
+  readonly personalEmail?: string;
+  /** Celular personal o privado. */
+  readonly mobilePhone?: string;
+  /** Celular del lugar de trabajo. */
+  readonly workMobilePhone?: string;
+  /** Fijo del lugar de trabajo. */
+  readonly workLandline?: string;
 
   /* --- los datos personales, sólo en la lectura propia -------------------- */
 
@@ -190,6 +395,21 @@ export interface OwnPractitionerProfile {
   readonly nationalId?: string;
   readonly issuerAdministrativeAreaConceptId?: string;
   readonly residenceMunicipalityConceptId?: string;
+
+  /* --- facturación -------------------------------------------------------
+     Mismo par que el paciente ya tenía (`OwnPatientProfile`): el médico
+     también emite comprobantes, y el perfil no se lo preguntaba. Pedido del
+     propietario del 19/09/2026. */
+
+  /** NIT para facturación. */
+  readonly taxId?: string;
+  /** A nombre de quién sale el comprobante — la razón social del NIT. */
+  readonly taxHolderName?: string;
+  /**
+   * Su domicilio, si lo declaró (ALV-009). Ausente y no un objeto vacío
+   * cuando no hay fila vigente — mismo contrato que {@link OwnPatientProfile}.
+   */
+  readonly homeAddress?: OwnAddress;
 
   readonly practitionerCategoryConceptId: string;
   readonly verificationStatusConceptId: string;
@@ -239,6 +459,21 @@ export interface PatientSearchQuery {
   readonly nationalId?: string;
   /** Departamento que lo expidió (`VS_BO_DEPARTMENT`). */
   readonly issuerAdministrativeAreaConceptId?: string;
+  /**
+   * Grupo sanguíneo, factor Rh e idioma clínico (`VS_BLOOD_GROUP`,
+   * `VS_RH_FACTOR`, `VS_LANGUAGE`). Filtran sobre el mismo dato que ya vive en
+   * `PatientDetail.aboGroupConceptId` / `rhFactorConceptId` /
+   * `clinicalLanguageConceptId`: la ficha lo tenía desde antes de que el
+   * listado existiera; esto sólo lo hace filtrable sin abrir cada ficha.
+   *
+   * **`insuranceStatusConceptId` no tiene filtro acá.** No existe un conjunto
+   * de valores real para «estado de seguro» (Asegurada/Particular/En trámite)
+   * en el catálogo — inventarlo sería un catálogo sin procedencia. Queda
+   * registrado como ambigüedad para producto, no simulado.
+   */
+  readonly aboGroupConceptId?: string;
+  readonly rhFactorConceptId?: string;
+  readonly clinicalLanguageConceptId?: string;
   /** Cursor opaco devuelto por la página anterior. */
   readonly cursor?: string;
   readonly limit?: number;
@@ -253,8 +488,29 @@ export interface PatientListItem {
   readonly personId: string;
   readonly patientCode: string;
   readonly displayName?: string;
+  /**
+   * El documento de identidad y el teléfono, que es lo que el médico usa para
+   * reconocer y llamar a la persona (propietario, 19/09/2026).
+   *
+   * **Opcionales porque hoy sólo los sirve la maqueta de `mockup`.** El
+   * listado de la API todavía no los devuelve (TODO: exponerlos en
+   * `profiles/dto` a partir de `person_identifiers` y del contacto). Donde
+   * falten, la celda lo dice con palabras en vez de dejar el hueco.
+   */
+  readonly nationalId?: string;
+  readonly phone?: string;
   readonly birthDate?: Date;
   readonly personStatusConceptId?: string;
+  /**
+   * Grupo sanguíneo, factor Rh e idioma clínico. Mismo caso que
+   * `nationalId`/`phone`: el dato ya vive en `PatientDetail`, y filtrar por
+   * él (`PatientSearchQuery`) exige poder mostrarlo también en la fila — un
+   * filtro cuya columna no se ve deja a la persona sin saber qué encontró.
+   * Opcionales: no todo paciente tiene el dato registrado.
+   */
+  readonly aboGroupConceptId?: string;
+  readonly rhFactorConceptId?: string;
+  readonly clinicalLanguageConceptId?: string;
   /**
    * Derivado del backend, y booleano a propósito: una lista de pacientes tiene
    * que poder marcar a quien falleció sin resolver terminología antes.
@@ -344,8 +600,8 @@ export interface PractitionerAffiliation {
   readonly practitionerProfileId: string;
   /** Hospital o entidad médica, tal como la declaró el profesional. */
   readonly organizationName: string;
-  readonly roleTitle: string;
-  readonly departmentText: string | null;
+  /** Cargo, o `null` si el vínculo no lo declara (ALV-007: opcional). */
+  readonly roleTitle: string | null;
   /** Sede de la plataforma, cuando la institución está dentro. */
   readonly practiceSiteId: string | null;
   /** Tipo de vínculo; se resuelve contra `terminology`. */
@@ -393,8 +649,8 @@ export interface PractitionerAffiliationPage {
  */
 export interface NewPractitionerAffiliation {
   readonly organizationName: string;
-  readonly roleTitle: string;
-  readonly departmentText?: string;
+  /** Opcional desde ALV-007: un consultorio propio no tiene cargo. */
+  readonly roleTitle?: string;
   readonly practiceSiteId?: string;
   readonly affiliationTypeConceptId?: string;
   /** ISO `YYYY-MM-DD`. */
@@ -536,20 +792,45 @@ export interface OwnAddress {
   readonly longitude?: number;
 }
 
-/**
- * Un seguro declarado.
- *
- * La aseguradora y el plan llegan **en palabras** y no como uuid: el backend
- * los resuelve para que la pantalla no tenga que pedir dos catálogos más sólo
- * para pintar una línea de texto.
- */
+export type CoverageValidity = 'CURRENT' | 'UPCOMING' | 'EXPIRED' | 'INACTIVE' | 'UNKNOWN';
+
+/** Una regla del plan de seguro, sin convertir ausencias en ceros. */
+export interface CoverageBenefitSummary {
+  readonly id: string;
+  readonly categoryCode?: string;
+  readonly categoryName?: string;
+  readonly serviceConceptId?: string;
+  readonly serviceName?: string;
+  readonly coveragePercent?: string;
+  readonly copayAmount?: string;
+  readonly deductibleAmount?: string;
+  readonly effectiveFrom?: string;
+  readonly effectiveTo?: string;
+  readonly validityStatus?: CoverageValidity;
+  readonly statusCode?: string;
+}
+
+/** Un seguro declarado por el paciente. */
 export interface OwnCoverage {
+  readonly id: string;
+  readonly planId?: string;
+  readonly coverageOrder?: number;
   readonly carrierName: string;
   readonly planName?: string;
   readonly isPublic: boolean;
+  readonly policyIdentifier?: string;
   readonly memberIdentifier?: string;
-  /** Lo declarado al registrarse nace SIN verificar. */
   readonly verified: boolean;
+  readonly status?: string;
+  readonly statusCode?: string;
+  readonly validityStatus?: CoverageValidity;
+  readonly referenceDate?: string;
+  readonly effectiveFrom?: string;
+  readonly effectiveTo?: string;
+  readonly currencyCode?: string;
+  readonly carrierWhatsappNumber?: string;
+  readonly carrierCallCenterPhone?: string;
+  readonly benefits: readonly CoverageBenefitSummary[];
 }
 
 /** Un tutor o persona autorizada, con su teléfono. */
@@ -668,12 +949,27 @@ export interface OwnPatientProfileChanges {
   /**
    * El texto del domicilio (§1.8) y el de la dirección de trabajo (§1.10).
    *
-   * Sólo el texto: el municipio viaja por `residenceMunicipalityConceptId`,
-   * porque sale de un catálogo, y las coordenadas las conserva el backend de la
-   * dirección anterior. `''` quita la dirección.
+   * El municipio viaja aparte, por `residenceMunicipalityConceptId`, porque
+   * sale de un catálogo. `''` quita la dirección.
    */
   readonly homeAddressLines?: string;
   readonly workAddressLines?: string;
+  /**
+   * El punto en el mapa de cada dirección.
+   *
+   * Antes no existían y el comentario de este bloque decía que «las coordenadas
+   * las conserva el backend de la dirección anterior» — que es otra forma de
+   * decir que **el paciente no tenía cómo cambiarlas**: el alta las manda una
+   * vez y después quedaban congeladas para siempre, aunque se mudara.
+   *
+   * Van de a pares y nunca sueltas: media coordenada no ubica nada. Para
+   * **quitar** el punto se mandan los dos en `null`, que es una afirmación
+   * distinta de no mandarlos —eso es «no lo toqué»—.
+   */
+  readonly homeLatitude?: number | null;
+  readonly homeLongitude?: number | null;
+  readonly workLatitude?: number | null;
+  readonly workLongitude?: number | null;
 }
 
 /* ============================================================================
@@ -702,10 +998,26 @@ export interface PractitionerListItem {
   readonly professionalTitle?: string;
   readonly photoFileId?: string;
   readonly verificationStatusConceptId: string;
+  /**
+   * Si la plataforma verificó su matrícula.
+   *
+   * Lo resuelve el servidor: comparar el concepto acá exigiría llevar su uuid
+   * escrito en el cliente. La guía lista el padrón entero —quien se registra
+   * declara una matrícula, no la prueba— y esto distingue a quien la probó.
+   */
+  readonly verified: boolean;
   readonly acceptsNewPatients: boolean;
   readonly telehealthAvailable: boolean;
   /** Sólo las vigentes, la principal primero. */
   readonly specialties: readonly PractitionerListSpecialty[];
+  /**
+   * Dónde atiende, en palabras.
+   *
+   * Texto plano porque es lo que el modelo guarda: la afiliación tiene el
+   * nombre de la organización —con la dirección pegada, tal como vino del
+   * padrón— y casi ninguna apunta a una sede registrada. Sólo las publicables.
+   */
+  readonly workplaces: readonly string[];
 }
 
 /**
@@ -714,6 +1026,37 @@ export interface PractitionerListItem {
  * Cursor sin total, como todos los listados del sistema: `nextCursor` en
  * `null` significa que no hay más — la ausencia acá SÍ es información.
  */
+/**
+ * Cuántos profesionales visibles ejerce una especialidad.
+ *
+ * Sale de `GET /profiles/practitioners/specialty-counts`, que aplica los mismos
+ * filtros que el listado: el número de una tarjeta es el largo de la lista que
+ * abre.
+ */
+export interface SpecialtyPractitionerCount {
+  readonly specialtyConceptId: string;
+  readonly practitionerCount: number;
+}
+
+/** El recuento de la guía por especialidad, con el total sin repetir. */
+export interface SpecialtyCounts {
+  readonly items: readonly SpecialtyPractitionerCount[];
+  /**
+   * Profesionales visibles sin repetir. **No es la suma de `items`**: quien
+   * ejerce tres especialidades cuenta una vez acá y tres entre las tarjetas.
+   */
+  readonly practitionerTotal: number;
+  /**
+   * Cuántos no declaran ninguna especialidad vigente.
+   *
+   * La portada les da su propia tarjeta: quien recorre la guía por especialidad
+   * no llega nunca a quien no tiene ninguna, y así nace **todo el que se
+   * registra solo** — los médicos con cuenta, que son justamente los que
+   * atienden por la app.
+   */
+  readonly withoutSpecialtyCount: number;
+}
+
 export interface PractitionerDirectoryPage {
   readonly items: readonly PractitionerListItem[];
   readonly count: number;
@@ -776,4 +1119,73 @@ export interface LinkableOrganizationPage {
   readonly items: readonly LinkableOrganization[];
   readonly count: number;
   readonly limit: number;
+}
+
+
+/**
+ * Qué es el dependiente para quien lo representa, ya dado vuelta por el
+ * servidor.
+ *
+ * La columna del modelo describe a la persona **relacionada** —«soy su
+ * madre»—, y la tarjeta necesita decir lo contrario —«Hijo/a»—. La inversión la
+ * hace la API para que ningún cliente tenga que conocer los conceptos del
+ * catálogo para nombrar a un hijo.
+ */
+export type DependentRelationshipCode = 'CHILD' | 'PARENT' | 'SPOUSE' | 'WARD' | 'OTHER';
+
+/**
+ * Una persona a cargo: un menor sin teléfono propio, una madre tutelada.
+ *
+ * `patientProfileId` es lo que viaja en las reservas y en la lectura de su
+ * historia; `id` es el apoderamiento que sostiene la representación, y hará
+ * falta el día que se pueda revocar.
+ */
+export interface Dependent {
+  /** El apoderamiento que habilita a actuar por esta persona. */
+  readonly id: string;
+  /** Su perfil de paciente: el sujeto de sus turnos y de su historia. */
+  readonly patientProfileId: string;
+  readonly personId: string;
+  /** Nombre visible, ya compuesto por el servidor. */
+  readonly fullName: string;
+  readonly name?: string;
+  readonly lastName?: string;
+  readonly birthDate?: Date;
+  /**
+   * Edad cumplida, calculada por el servidor.
+   *
+   * No se deriva acá a propósito: hacerlo en el navegador daría edades
+   * distintas según la hora del aparato.
+   */
+  readonly ageYears?: number;
+  readonly nationalId?: string;
+  readonly relationshipCode: DependentRelationshipCode;
+  /** Cómo se dice ese parentesco en pantalla («Hijo/a»). */
+  readonly relationshipDisplay: string;
+  /** Si el vínculo afirma la tutela legal. */
+  readonly isLegalGuardian: boolean;
+}
+
+/**
+ * Lo que el formulario manda para registrar a un dependiente.
+ *
+ * `relationshipConceptId` es qué es **el titular** para él —«soy su madre»—, no
+ * al revés: es el sentido que esa columna tiene en todas las filas que ya
+ * existen.
+ *
+ * Sin correo ni contraseña: el dependiente no inicia sesión, que es justamente
+ * el caso.
+ */
+export interface NewDependent {
+  readonly name: string;
+  readonly middleName?: string;
+  readonly lastName: string;
+  readonly motherLastName?: string;
+  /** `YYYY-MM-DD`. Obligatoria: la edad distingue a un menor de un tutelado. */
+  readonly birthDate: string;
+  readonly sexAtBirth?: 'MALE' | 'FEMALE' | 'INTERSEX' | 'UNKNOWN';
+  /** Opcional: un recién nacido todavía no tiene cédula. */
+  readonly nationalId?: string;
+  readonly issuerAdministrativeAreaConceptId?: string;
+  readonly relationshipConceptId: string;
 }

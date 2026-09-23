@@ -70,7 +70,7 @@ describe('misRecursosDeAgenda', () => {
 
 describe('miRecursoDeAgenda', () => {
   it('sigue devolviendo la primera: las otras pantallas no cambian', async () => {
-    // «Consulta médica» y «Evoluciones» siguen usando ésta. También tendrían
+    // «Consultas médicas» y «Evoluciones» siguen usando ésta. También tendrían
     // que preguntar cuál, pero eso es tocar tres pantallas en un arreglo que se
     // pidió para una — queda dicho, no hecho.
     const cliente = clienteCon([recurso('r-1', 'Primera'), recurso('r-2', 'Segunda')]);

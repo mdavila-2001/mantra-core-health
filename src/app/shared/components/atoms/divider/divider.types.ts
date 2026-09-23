@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos del Divider — sistema REDSAT v1.0.
+    Contratos del Divider — sistema ALOVIDA v1.0.
 
     El spec no lo declara: es extensión propia con el token de borde decorativo
     (`--border-default`), que es exactamente para lo que existe — separar, no

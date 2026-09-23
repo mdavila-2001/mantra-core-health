@@ -1,77 +1,80 @@
-/* ============================================================================
-    Mis organizaciones. Sólo la disposición: los colores, tipos y espacios
-    salen de los tokens de REDSAT, nunca de valores literales acá.
-    ========================================================================== */
-
-.explicacion {
-  margin-bottom: var(--e5);
-}
-
-.explicacion p {
-  margin: 0 0 var(--e2);
-}
-
-.explicacion p:last-child {
-  margin-bottom: 0;
-}
+/* La lista de tarjetas se reemplazó por `app-data-table` el 2026-09-10 (pedido
+   del propietario: «que sea como están los organismos de tabla»). Lo que queda
+   acá es lo de las **celdas**: el organismo pinta la tabla, la presentación de
+   cada celda es de esta pantalla. */
 
 .titulo-de-seccion {
-  margin: var(--e6) 0 var(--e3);
-  font-size: 21px;
-  font-weight: 600;
+  font-size: var(--fs-h3, 1.1rem);
+  margin: var(--e5) 0 var(--e3);
 }
 
+.explicacion,
 .alerta-de-formulario {
-  margin-bottom: var(--e3);
   display: block;
+  margin-bottom: var(--e4);
 }
 
 .formulario-de-solicitud {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: end;
   gap: var(--e3);
 }
 
-.lista-de-vinculaciones {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--e3);
+.formulario-de-solicitud app-select {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
 }
 
-.vinculacion {
-  border: 1px solid var(--filete-2);
-  border-radius: var(--r-card);
-  padding: var(--e3) var(--e4);
+.nota-de-acceso {
+  margin: var(--e3) 0 0;
+  font-size: var(--fs-caption, 0.8rem);
+  color: var(--text-muted, var(--tinta-3));
 }
 
-.vinculacion.es-final {
-  opacity: 0.7;
-}
+/* ------------------------------------------------------------------ celdas */
 
-.vinculacion__cabecera {
-  display: flex;
+.vinculacion__org {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--e3);
+  gap: var(--e2);
+  min-inline-size: 0;
 }
 
 .vinculacion__nombre {
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  overflow-wrap: anywhere;
 }
 
-.vinculacion__estado {
-  color: var(--tinta-3);
-  font-size: 13px;
+/* El sello va con su tamaño en `em`: acompaña al nombre si la tabla cambia de
+   escala, en vez de quedarse en un tamaño fijo que en móvil se ve enorme. */
+.vinculacion__sello {
+  display: inline-flex;
+  inline-size: 1em;
+  block-size: 1em;
+  flex-shrink: 0;
+  color: var(--exito, var(--brand-primary));
 }
 
 .vinculacion__principal {
-  display: inline-block;
-  margin-top: var(--e1);
-  color: var(--tinta-3);
-  font-size: 12px;
-  font-style: italic;
+  font-weight: 600;
+}
+
+.vinculacion__sin-dato {
+  color: var(--text-muted, var(--tinta-3));
+}
+
+/* Oculto a la vista, presente para el lector de pantalla. */
+.solo-lectores {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }

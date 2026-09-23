@@ -7,8 +7,9 @@
 }
 
 .procedimientos {
-  display: grid;
-  gap: var(--sp-4);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-4);
 }
 
 .procedimientos__titulo {
@@ -81,6 +82,11 @@
   color: var(--text-secondary);
   /* Es texto corrido: la medida de lectura manda sobre el ancho de la tarjeta. */
   max-inline-size: 68ch;
+}
+
+.procedimientos__acciones {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .procedimientos__fecha {

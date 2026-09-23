@@ -3,9 +3,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
+  type ElementRef,
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 
 import { NgTemplateOutlet } from '@angular/common';
@@ -62,6 +65,33 @@ import {
   },
 })
 export class DataTable<Row> {
+  /**
+   * Si la tabla es más ancha que su caja y se desplaza de costado.
+   *
+   * La columna fija (`sticky: 'end'`) sólo necesita fondo opaco y sombra
+   * **cuando algo pasa por debajo**. Pintarla siempre dejaba, en una tabla que
+   * entra entera, un rectángulo de otro tono al final de cada fila —en oscuro
+   * se leía como un panel vacío (propietario, 18/09)—.
+   */
+  protected readonly overflowing = signal(false);
+  private readonly scrollBox = viewChild<ElementRef<HTMLElement>>('scrollBox');
+
+  constructor() {
+    effect((onCleanup) => {
+      const caja = this.scrollBox()?.nativeElement;
+      // Bajo SSR no hay `ResizeObserver`: se dibuja sin desborde y el cliente
+      // lo corrige al hidratar.
+      if (caja === undefined || typeof ResizeObserver === 'undefined') return;
+      const medir = (): void => this.overflowing.set(caja.scrollWidth > caja.clientWidth + 1);
+      const observador = new ResizeObserver(medir);
+      observador.observe(caja);
+      const tabla = caja.firstElementChild;
+      if (tabla !== null) observador.observe(tabla);
+      medir();
+      onCleanup(() => observador.disconnect());
+    });
+  }
+
   readonly state = input.required<ViewState<readonly Row[]>>();
   readonly columns = input.required<readonly ColumnDef<Row>[]>();
 
@@ -70,6 +100,13 @@ export class DataTable<Row> {
 
   /** Rótulo de la tabla. Va en `<caption>`, aunque sea solo para lectores. */
   readonly caption = input<string>('');
+  /**
+   * Cómo se nombra una fila para quien usa lector de pantalla: el «de quién»
+   * de «Ver el detalle de …» y «Seleccionar …». Sin él, la fila se nombra por
+   * su posición. Nunca por `trackBy`: es un id técnico —un uuid— y el lector
+   * lo deletreaba entero (refactor UX, fase 08).
+   */
+  readonly rowLabel = input<((row: Row) => string) | null>(null);
 
   readonly selectable = input(false, { transform: booleanAttribute });
   readonly sort = input<SortState | null>(null);
@@ -78,6 +115,26 @@ export class DataTable<Row> {
   readonly sortChanged = output<SortState>();
   readonly cursorChanged = output<string>();
   readonly selectionChanged = output<readonly Row[]>();
+
+  /**
+   * Si la fila entera responde al clic.
+   *
+   * Apagado por defecto: una fila que navega sin anunciarlo es una trampa para
+   * quien sólo quería seleccionar un texto.
+   *
+   * **No reemplaza a un enlace, lo acompaña.** Un `<tr>` con `(click)` no está
+   * en el orden de tabulación, no anuncia adónde lleva y no se abre en otra
+   * pestaña: es una comodidad de puntero. Quien lo enciende **tiene que**
+   * poner además un `<a>` real en alguna celda —el identificador de la fila es
+   * el lugar natural— para que el teclado y el lector de pantalla tengan el
+   * mismo destino. La tabla no puede verificarlo, así que queda dicho acá.
+   */
+  readonly rowNavigable = input(false, { transform: booleanAttribute });
+
+  /**
+   * Fila activada con el puntero. Sólo se emite con {@link rowNavigable}.
+   */
+  readonly rowActivated = output<Row>();
 
   /**
    * S8 y S9: la persona pide reintentar. **Se reemiten desde el host de
@@ -103,6 +160,13 @@ export class DataTable<Row> {
   protected readonly primaryColumns = computed(() =>
     this.columns().filter((column) => column.priority < MOBILE_DETAIL_PRIORITY),
   );
+
+  /** Clases de la celda: las secundarias se marcan para que el CSS las pliegue en móvil. */
+  protected cellClassFor(column: ColumnDef<Row>): string {
+    const secundaria = column.priority >= MOBILE_DETAIL_PRIORITY ? ' data-table__secondary' : '';
+    const fija = column.sticky === 'end' ? ' data-table__cell--sticky-end' : '';
+    return `data-table__cell${secundaria}${fija} data-table__cell--${column.align ?? 'start'}`;
+  }
 
   /** Las que en móvil se pliegan a la fila de detalle — nunca se ocultan. */
   protected readonly secondaryColumns = computed(() =>
@@ -130,6 +194,39 @@ export class DataTable<Row> {
 
   protected rowKey(row: Row): string {
     return this.trackBy()(row);
+  }
+
+  /** El nombre legible de la fila, o su posición si no hay uno. */
+  protected rowName(row: Row, index: number): string {
+    const nombre = this.rowLabel()?.(row).trim() ?? '';
+    return nombre === '' ? `la fila ${index + 1}` : nombre;
+  }
+
+  /**
+   * Activa la fila, salvo que el clic haya nacido en algo que ya hace lo suyo.
+   *
+   * Sin este filtro, tocar el botón del nombre del paciente abriría su ficha
+   * **y** navegaría al detalle, y seleccionar un texto dentro de la fila
+   * navegaría al soltar. Se ignoran los controles y los enlaces —que tienen su
+   * propia acción—, y también el arrastre con selección de texto.
+   *
+   * @param row - La fila tocada.
+   * @param event - El clic original.
+   */
+  protected activateRow(row: Row, event: MouseEvent): void {
+    if (!this.rowNavigable()) return;
+
+    const origen = event.target;
+    if (
+      origen instanceof Element &&
+      origen.closest('a, button, input, select, textarea, label, [role="button"]')
+    ) {
+      return;
+    }
+    // Un arrastre que terminó seleccionando texto no es un clic en la fila.
+    if ((globalThis.getSelection?.()?.toString() ?? '') !== '') return;
+
+    this.rowActivated.emit(row);
   }
 
   protected isSelected(row: Row): boolean {

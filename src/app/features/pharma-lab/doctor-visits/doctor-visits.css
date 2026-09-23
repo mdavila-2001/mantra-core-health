@@ -14,38 +14,44 @@
   padding-block: var(--sp-4);
 }
 
-.doctor-visits__table {
-  inline-size: 100%;
-  border-collapse: collapse;
+/* El mismo aviso —y el mismo tono de apoyo— que encabeza la lista de consultas
+   de la agenda: «hay N que esperan respuesta». */
+.doctor-visits__aviso {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-muted);
   font-size: var(--fs-caption);
-}
-
-.doctor-visits__caption {
-  margin-block-end: var(--sp-2);
-  color: var(--text-secondary);
-  text-align: start;
-}
-
-.doctor-visits__table th,
-.doctor-visits__table td {
-  padding: var(--sp-2);
-  border-block-end: 1px solid var(--border-default);
-  text-align: start;
-  vertical-align: top;
-}
-
-.doctor-visits__table th {
-  color: var(--text-secondary);
-  font-weight: 600;
 }
 
 .doctor-visits__actions {
   display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: var(--sp-2);
 }
 
-.doctor-visits__mono {
-  font-family: var(--font-mono);
+/* ---- celdas ---------------------------------------------------------------
+   Los mismos valores que las celdas de la agenda de pacientes, a propósito: la
+   misma información —cuándo empieza, hasta cuándo, en qué estado— se lee igual
+   en las dos bandejas. Se duplican y no se importan porque en este proyecto
+   cada pantalla es dueña de su CSS y el contrato son los tokens. */
+.doctor-visits__cuando {
+  display: block;
+  font-weight: 500;
+  /* Los días de la semana llegan en minúscula del pipe de fecha. */
+  text-transform: capitalize;
+}
+
+.doctor-visits__franja {
+  display: block;
+  font-weight: 500;
+  /* Cifras de ancho fijo: las horas de una columna se comparan de un vistazo. */
+  font-variant-numeric: tabular-nums;
+}
+
+.doctor-visits__hasta {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
 }
 
 .doctor-visits__muted,
@@ -58,4 +64,23 @@
 .doctor-visits__note {
   margin: 0 0 var(--sp-3);
   font-size: var(--fs-caption);
+}
+
+.doctor-visits__cuando--corta {
+  display: none;
+}
+
+@media (max-width: 779px) {
+  .doctor-visits__cuando--larga {
+    display: none;
+  }
+
+  .doctor-visits__cuando--corta {
+    display: block;
+  }
+
+  .doctor-visits__sello {
+    padding: var(--sp-1) var(--sp-2);
+    column-gap: var(--sp-1);
+  }
 }

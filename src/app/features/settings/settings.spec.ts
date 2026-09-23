@@ -44,26 +44,33 @@ describe('Settings', () => {
   let theme: ThemeService;
 
   /** Doble del servicio de permisos: en jsdom no hay cartel que aceptar. */
-  const estados = signal<Record<PermisoDelNavegador, EstadoPermiso>>({
+  const states = signal<Record<PermisoDelNavegador, EstadoPermiso>>({
     avisos: 'sin-decidir',
     ubicacion: 'concedido',
     camara: 'denegado',
   });
-  const pedidos: PermisoDelNavegador[] = [];
-  const permisosFalsos = {
-    estado: () => estados(),
-    enCurso: () => false,
-    sePuedePedir: (permiso: PermisoDelNavegador) => estados()[permiso] === 'sin-decidir',
-    pedir: (permiso: PermisoDelNavegador) => {
-      pedidos.push(permiso);
+  const requested: PermisoDelNavegador[] = [];
+  /** Lo que tiene el cartel del navegador abierto ahora mismo. */
+  const inFlight = signal<PermisoDelNavegador[]>([]);
+  const fakePermissions = {
+    estado: () => states(),
+    enCurso: (permission: PermisoDelNavegador) => inFlight().includes(permission),
+    sePuedePedir: (permission: PermisoDelNavegador) => states()[permission] === 'sin-decidir',
+    pedir: (permission: PermisoDelNavegador) => {
+      requested.push(permission);
+      inFlight.update((lista) => [...lista, permission]);
       return Promise.resolve();
     },
     refrescar: () => Promise.resolve(),
   };
 
-  const texto = (): string => fixture.nativeElement.textContent as string;
-  const consultar = (testid: string): HTMLElement | null =>
+  const text = (): string => fixture.nativeElement.textContent as string;
+  const query = (testid: string): HTMLElement | null =>
     fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
+  const iconsPerRow = (): number[] =>
+    [...fixture.nativeElement.querySelectorAll('.ajustes__fila')].map(
+      (row) => row.querySelectorAll('app-nav-icon').length,
+    );
 
   /**
    * Cambia de sección haciendo lo que haría una persona: apretar la pestaña.
@@ -72,18 +79,18 @@ describe('Settings', () => {
    * **no existe en el DOM** —lo decide `app-tab`—, así que una prueba que
    * mirara el panel sin abrirlo estaría comprobando algo que nadie ve.
    */
-  function irA(seccion: string): void {
-    const pestana = [...fixture.nativeElement.querySelectorAll('[role="tab"]')].find(
-      (boton) => (boton as HTMLElement).textContent?.trim() === seccion,
+  function goTo(section: string): void {
+    const tab = [...fixture.nativeElement.querySelectorAll('[role="tab"]')].find(
+      (button) => (button as HTMLElement).textContent?.trim() === section,
     ) as HTMLButtonElement | undefined;
-    if (pestana === undefined) {
-      throw new Error(`Ajustes no ofrece la sección «${seccion}»`);
+    if (tab === undefined) {
+      throw new Error(`Ajustes no ofrece la sección «${section}»`);
     }
-    pestana.click();
+    tab.click();
     fixture.detectChanges();
   }
 
-  function montar(roles: readonly string[] = []): void {
+  function mount(roles: readonly string[] = []): void {
     fixture = TestBed.createComponent(Settings);
     session = TestBed.inject(SessionStore);
     theme = TestBed.inject(ThemeService);
@@ -94,15 +101,16 @@ describe('Settings', () => {
   }
 
   beforeEach(() => {
-    pedidos.length = 0;
-    estados.set({ avisos: 'sin-decidir', ubicacion: 'concedido', camara: 'denegado' });
+    requested.length = 0;
+    inFlight.set([]);
+    states.set({ avisos: 'sin-decidir', ubicacion: 'concedido', camara: 'denegado' });
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
         { provide: AuthService, useValue: { isAuthenticated: signal(false) } },
-        { provide: BrowserPermissionsService, useValue: permisosFalsos },
+        { provide: BrowserPermissionsService, useValue: fakePermissions },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -113,116 +121,186 @@ describe('Settings', () => {
     // verifica que nadie más haya llamado a la red.
     http
       .match(() => true)
-      .forEach((pedido) => pedido.flush({ categories: [], quietHours: null }));
+      .forEach((request) => request.flush({ categories: [], quietHours: null }));
     http.verify();
   });
 
   it('monta el panel de avisos: dejó de ser una pantalla y no dejó de existir', () => {
-    montar();
-    // El panel pide sus preferencias al montarse; hasta que contestan dice
-    // «cargando», que es lo correcto y no lo que esta prueba mira.
-    http.expectOne(() => true).flush({ categories: [], quietHours: null });
+    mount();
+    // Dos paneles piden datos al montarse: el de avisos sus preferencias, y el
+    // de chats el perfil público —del que cuelga la respuesta automática—. Se
+    // contesta lo que pida cada uno; lo que esta prueba mira es que el panel de
+    // avisos esté, no cuántas lecturas hace la pantalla.
+    http
+      .match(() => true)
+      .forEach((pedido) =>
+        pedido.flush(
+          pedido.request.url.includes('preferences')
+            ? { categories: [], quietHours: null }
+            : null,
+        ),
+      );
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-notification-preferences')).not.toBeNull();
-    expect(texto()).toContain('Qué avisos recibís');
+    expect(text()).toContain('Qué avisos recibís');
   });
 
   it('el único h1 es el de Ajustes: el panel de avisos bajó a h2', () => {
-    montar();
+    mount();
 
-    const encabezados = [...fixture.nativeElement.querySelectorAll('h1')] as HTMLElement[];
+    const headings = [...fixture.nativeElement.querySelectorAll('h1')] as HTMLElement[];
 
-    expect(encabezados).toHaveLength(1);
-    expect(encabezados[0].textContent).toContain('Ajustes');
+    expect(headings).toHaveLength(1);
+    expect(headings[0].textContent).toContain('Ajustes');
   });
 
-  it('ofrece los tres temas, con el elegido marcado', () => {
-    montar();
-    irA('Apariencia');
+  it('ofrece el tema como un interruptor que refleja lo que se ve', () => {
+    mount();
+    goTo('Apariencia');
     theme.setTheme('dark');
     fixture.detectChanges();
 
-    expect((consultar('tema-dark') as HTMLInputElement).checked).toBe(true);
-    expect((consultar('tema-light') as HTMLInputElement).checked).toBe(false);
+    const toggle = query('theme-switch');
+    expect(toggle?.getAttribute('role')).toBe('switch');
+    expect(toggle?.getAttribute('aria-checked')).toBe('true');
+
+    theme.setTheme('light');
+    fixture.detectChanges();
+    expect(toggle?.getAttribute('aria-checked')).toBe('false');
   });
 
-  it('elegir un tema lo aplica de verdad, no sólo marca el control', () => {
-    montar();
-    irA('Apariencia');
-
-    (consultar('tema-light') as HTMLInputElement).dispatchEvent(new Event('change'));
+  it('apretar el interruptor aplica el tema de verdad, no sólo mueve la perilla', () => {
+    mount();
+    goTo('Apariencia');
+    theme.setTheme('light');
     fixture.detectChanges();
 
-    expect(theme.currentTheme()).toBe('light');
+    query('theme-switch')?.click();
+    fixture.detectChanges();
+
+    expect(theme.currentTheme()).toBe('dark');
   });
 
-  it('con «el de mi dispositivo» dice cuál rige: elegido y pintado no son lo mismo', () => {
-    montar();
-    irA('Apariencia');
+  it('siguiendo al dispositivo dice cuál rige y no ofrece volver a él', () => {
+    mount();
+    goTo('Apariencia');
     theme.useSystemTheme();
     fixture.detectChanges();
 
-    expect(consultar('tema-resuelto')?.textContent).toContain('modo');
+    expect(text()).toContain('Sigue a tu dispositivo');
+    expect(query('theme-use-system')).toBeNull();
   });
 
-  it('cuenta el estado de cada permiso del navegador en palabras', () => {
-    montar();
-    irA('Permisos');
+  it('elegido a mano, se puede volver a seguir al dispositivo', () => {
+    mount();
+    goTo('Apariencia');
+    theme.setTheme('dark');
+    fixture.detectChanges();
 
-    expect(consultar('permiso-avisos')?.textContent).toContain('Sin decidir');
-    expect(consultar('permiso-ubicacion')?.textContent).toContain('Permitido');
-    expect(consultar('permiso-camara')?.textContent).toContain('Bloqueado');
+    query('theme-use-system')?.click();
+    fixture.detectChanges();
+
+    expect(theme.currentTheme()).toBe('system');
   });
 
-  it('sólo ofrece «Permitir» donde el cartel todavía puede aparecer', () => {
-    montar();
-    irA('Permisos');
+  /** El interruptor nativo que hay dentro del `app-switch` de ese permiso. */
+  const toggle = (permission: PermisoDelNavegador): HTMLInputElement => {
+    const control = query(`permission-${permission}`)?.querySelector('input[role="switch"]');
+    if (control === null || control === undefined) {
+      throw new Error(`«${permission}» no ofrece interruptor`);
+    }
+    return control as HTMLInputElement;
+  };
+
+  it('cada permiso del navegador es un interruptor, encendido sólo si está concedido', () => {
+    mount();
+    goTo('Permisos');
+
+    expect(toggle('avisos').checked).toBe(false);
+    expect(toggle('ubicacion').checked).toBe(true);
+    expect(toggle('camara').checked).toBe(false);
+  });
+
+  it('muestra exactamente un icono en cada permiso del navegador', () => {
+    mount();
+    goTo('Permisos');
+
+    expect(iconsPerRow()).toEqual([1, 1, 1]);
+  });
+
+  it('sólo se puede accionar el interruptor donde el cartel todavía puede aparecer', () => {
+    mount();
+    goTo('Permisos');
 
     // Concedido y denegado no se vuelven a pedir: el navegador ignora la
-    // petición en silencio, así que el botón prometería algo que no pasa.
-    expect(consultar('pedir-avisos')).not.toBeNull();
-    expect(consultar('pedir-ubicacion')).toBeNull();
-    expect(consultar('pedir-camara')).toBeNull();
+    // petición en silencio, así que un interruptor vivo ahí prometería algo
+    // que no pasa. Y ninguna página puede quitarse un permiso a sí misma.
+    expect(toggle('avisos').disabled).toBe(false);
+    expect(toggle('ubicacion').disabled).toBe(true);
+    expect(toggle('camara').disabled).toBe(true);
   });
 
-  it('un permiso bloqueado explica que se recupera desde el navegador', () => {
-    montar();
-    irA('Permisos');
+  it('dice, una sola vez, que los permisos se quitan desde el navegador', () => {
+    mount();
+    goTo('Permisos');
 
-    expect(texto()).toContain('configuración de este sitio en tu navegador');
+    expect(text()).toContain('configuración de este sitio en tu navegador');
   });
 
-  it('pedir un permiso se lo pide al navegador, no lo da por concedido', () => {
-    montar();
-    irA('Permisos');
+  it('encender un permiso se lo pide al navegador, no lo da por concedido', () => {
+    mount();
+    goTo('Permisos');
 
-    (consultar('pedir-avisos') as HTMLButtonElement).click();
+    toggle('avisos').click();
 
-    expect(pedidos).toEqual(['avisos']);
+    expect(requested).toEqual(['avisos']);
+  });
+
+  it('si la persona dice que no al cartel, el interruptor vuelve a apagarse', () => {
+    mount();
+    goTo('Permisos');
+
+    toggle('avisos').click();
+    fixture.detectChanges();
+    // Con el cartel en pantalla el interruptor se ve encendido...
+    expect(toggle('avisos').checked).toBe(true);
+
+    // ...y al cerrarse sin conceder nada, el estado manda: apagado.
+    inFlight.set([]);
+    fixture.detectChanges();
+
+    expect(toggle('avisos').checked).toBe(false);
+  });
+
+  it('el interruptor nombra su permiso: sin rótulo visible propio, queda mudo', () => {
+    mount();
+    goTo('Permisos');
+
+    expect(toggle('ubicacion').getAttribute('aria-label')).toBe('Ubicación');
   });
 
   it('nombra los roles de la sesión en palabras, no con el código del token', () => {
-    montar(['CLINICIAN']);
-    irA('Permisos');
+    mount(['CLINICIAN']);
+    goTo('Permisos');
 
-    expect(consultar('ajustes-roles')?.textContent).not.toContain('CLINICIAN');
-    expect(consultar('ajustes-roles')?.textContent?.trim()).not.toBe('');
+    expect(query('settings-roles')?.textContent).not.toContain('CLINICIAN');
+    expect(query('settings-roles')?.textContent?.trim()).not.toBe('');
   });
 
   it('no promete una lista de quién ve tus datos: la API no se la responde a la persona', () => {
-    montar(['PATIENT']);
-    irA('Permisos');
+    mount(['PATIENT']);
+    goTo('Permisos');
 
     // Lo que hay es la explicación, no una lista vacía —que se leería como
     // «nadie tiene acceso»— ni un enlace a una pantalla que le daría 403.
-    expect(consultar('ajustes-accesos-nota')).not.toBeNull();
+    expect(query('settings-access-note')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('a[href="/administration/delegated-access"]')).toBeNull();
   });
 
   it('a quien administra la seguridad sí le ofrece dónde hacerlo', () => {
-    montar(['SECURITY_ADMIN']);
-    irA('Permisos');
+    mount(['SECURITY_ADMIN']);
+    goTo('Permisos');
 
     expect(
       fixture.nativeElement.querySelector('a[href="/administration/delegated-access"]'),
@@ -230,8 +308,8 @@ describe('Settings', () => {
   });
 
   it('el comodín vale acá lo mismo que en el menú y en el guard', () => {
-    montar(['SUPERADMIN']);
-    irA('Permisos');
+    mount(['SUPERADMIN']);
+    goTo('Permisos');
 
     expect(
       fixture.nativeElement.querySelector('a[href="/administration/delegated-access"]'),

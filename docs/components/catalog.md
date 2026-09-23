@@ -163,7 +163,7 @@ puede unificar sin empeorar a alguno.
 Las tarjetas son `app-result-card`, que es el hermano vertical de
 `app-search-result`: **mismo tipo de dato, distinta forma**. Es un componente
 aparte y no una variante porque `search-result` no tiene CSS propio a propósito
-—su diseño vive en `redsat.css`, que se recopia entero desde la bóveda— y una
+—su diseño vive en `alovida.css`, que se recopia entero desde la bóveda— y una
 variante escrita ahí desaparecería en la primera recopia.
 
 ## Componentes sin prueba propia

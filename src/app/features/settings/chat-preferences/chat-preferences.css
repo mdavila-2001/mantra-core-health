@@ -1,0 +1,262 @@
+/* Las preferencias del chat. Usa las clases `ajustes__*` de la pantalla que la
+   contiene —es un panel suyo, no una pantalla aparte— y agrega lo que no
+   existía ahí: el interruptor con texto al lado, las pastillas de tiempo y la
+   lista de frases guardadas. */
+
+/* Esas clases se escriben acá también, y no sólo en `settings.css`: el estilo
+   del padre no cruza a la plantilla del hijo (encapsulación de Angular), así
+   que hasta ahora este panel se veía sin negrita en los nombres, sin el gris
+   de los detalles y sin aire entre bloques — el resto de Ajustes sí los tenía.
+   Los valores son los de allá, salvo el `max-inline-size: 68ch` del bloque:
+   acá no se copia, porque la regla del producto es que la vista ocupe el ancho
+   de la pantalla y no el de un contenedor angosto. */
+.ajustes__bloque {
+  margin-bottom: var(--e5);
+}
+
+.ajustes__bloque:last-child {
+  margin-bottom: 0;
+}
+
+.ajustes__titulo {
+  margin: 0 0 var(--e3);
+  font-size: 1.05rem;
+}
+
+.ajustes__nombre {
+  font-weight: 600;
+}
+
+.ajustes__detalle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.ajustes__nota {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.chat-prefs__aviso {
+  margin: 0 0 var(--e4);
+  padding: var(--e3);
+  border-inline-start: 3px solid var(--ambar);
+  border-radius: 0 var(--r-ctrl) var(--r-ctrl) 0;
+  background: var(--sup-inset);
+  font-size: var(--fs-caption);
+  color: var(--tinta-2);
+}
+
+/* Guardada en el servidor el aviso deja de ser una advertencia: es una
+   confirmación, y el color lo dice antes que el texto. */
+.chat-prefs__aviso.is-ok {
+  border-inline-start-color: var(--menta);
+}
+
+/* El renglón del interruptor: el texto a la izquierda y el control a la
+   derecha, encuadrado como la fila de un ajuste. Es el mismo reparto que usan
+   los avisos y los permisos en esta pantalla; sin el encuadre, el interruptor
+   quedaba flotando contra el párrafo de arriba. */
+.chat-prefs__interruptor {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--e3);
+  padding: var(--e3);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-ctrl);
+  background: var(--sup-tarjeta);
+}
+
+/* El interruptor no se encoge ni baja de renglón: en un teléfono de 375 px,
+   dejarlo envolver lo mandaba debajo del texto y pegado a la izquierda, donde
+   ya no se lee como el control de esa frase. Lo que cede ancho es el texto,
+   que sabe envolver. */
+.chat-prefs__switch {
+  flex: none;
+}
+
+.chat-prefs__interruptor-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.chat-prefs__campos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  margin-block-start: var(--e3);
+  padding-block-start: var(--e4);
+  border-block-start: 1px solid var(--filete);
+}
+
+.chat-prefs__grupo {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.chat-prefs__grupo legend {
+  padding: 0;
+  margin-block-end: var(--e2);
+}
+
+.chat-prefs__campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+}
+
+.chat-prefs__campo input,
+.chat-prefs__campo textarea {
+  inline-size: 100%;
+  padding: var(--e2) var(--e3);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-ctrl);
+  background: var(--sup-tarjeta);
+  color: var(--tinta);
+  font: inherit;
+  font-size: var(--fs-body);
+}
+
+.chat-prefs__campo input[type='number'],
+.chat-prefs__campo input[type='time'] {
+  /* Un número de dos cifras no necesita el ancho de un párrafo. */
+  inline-size: 9rem;
+}
+
+.chat-prefs__campo input:focus-visible,
+.chat-prefs__campo textarea:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 1px;
+}
+
+.chat-prefs__pastillas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+  margin: 0 0 var(--e3);
+  padding: 0;
+  list-style: none;
+}
+
+.chat-prefs__pastilla {
+  /* 44 px de alto: es un destino táctil, no una etiqueta. */
+  min-block-size: 44px;
+  padding: var(--e2) var(--e4);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+  color: var(--tinta-2);
+  font: inherit;
+  font-size: var(--fs-caption);
+  cursor: pointer;
+  text-align: start;
+}
+
+.chat-prefs__pastilla:hover {
+  background: var(--sup-inset);
+}
+
+.chat-prefs__pastilla.is-activa {
+  border-color: var(--petroleo);
+  background: var(--info-bg);
+  color: var(--tinta-marca);
+  font-weight: 600;
+}
+
+.chat-prefs__pastilla:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
+}
+
+/* «Sin repetirle … antes de [4] horas» se lee como una frase, no como tres
+   renglones: el campo va en línea con su texto y envuelve si no entra. */
+.chat-prefs__frase {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+}
+
+.chat-prefs__frase input[type='number'] {
+  inline-size: 5rem;
+}
+
+.chat-prefs__guardado {
+  margin: var(--e4) 0 0;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--exito-tinta, var(--tinta-marca));
+}
+
+.chat-prefs__franja {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e4);
+}
+
+.chat-prefs__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e3);
+}
+
+/* --- Frases guardadas ----------------------------------------------------- */
+
+.chat-prefs__plantillas {
+  margin: 0 0 var(--e4);
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.chat-prefs__plantilla {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  padding: var(--e2) var(--e3);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-ctrl);
+  font-size: var(--fs-body);
+  color: var(--tinta-2);
+}
+
+.chat-prefs__quitar {
+  flex: none;
+  min-block-size: 44px;
+  padding-inline: var(--e3);
+  border: 0;
+  border-radius: var(--r-ctrl);
+  background: none;
+  color: var(--tinta-marca);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chat-prefs__quitar:hover {
+  background: var(--sup-inset);
+}
+
+.chat-prefs__quitar:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: -2px;
+}
+
+.chat-prefs__nueva {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--e3);
+}
+
+.chat-prefs__nueva .chat-prefs__campo {
+  flex: 1 1 16rem;
+}

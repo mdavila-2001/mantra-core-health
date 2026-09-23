@@ -6,6 +6,9 @@ import { API_BASE_URL, apiUrl } from '../api';
 import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
   MyRoleAssignment,
+  NewOwnSite,
+  OwnSitePatch,
+  PracticeSite,
   PracticeSitePage,
   RoleAssignmentResult,
   SelfRequestAffiliationInput,
@@ -91,6 +94,76 @@ export class PracticeSitesClient {
       .pipe(map(aResultadoDeVinculacion));
   }
 
+  /**
+   * `POST /practitioners/me/sites` — ALV-005/006: registro un consultorio
+   * propio. El backend crea (o reutiliza) mi práctica personal, la dirección
+   * si la mando y la vinculación que conecta la sede con mi agenda.
+   *
+   * @param input - Nombre, huso horario y dirección opcional.
+   * @returns La sede recién creada, en el mismo formato que la lista.
+   */
+  createOwnSite(input: NewOwnSite): Observable<PracticeSite> {
+    return this.http.post<PracticeSite>(this.url('/practitioners/me/sites'), input);
+  }
+
+  /**
+   * `PATCH /practitioners/me/sites/:siteId` — corrijo mi consultorio propio.
+   *
+   * **Sólo el propio.** Una sede de otra organización no se corrige desde acá:
+   * es de ella, y lo que uno tiene con ella es una vinculación, no la sede.
+   *
+   * Expuesta por la API desde el cierre del P32-b. Devuelve la sede con los
+   * cambios aplicados, en el mismo formato que la lista.
+   *
+   * @param siteId - El consultorio a corregir.
+   * @param input - Sólo los campos que cambian.
+   * @returns La sede con los cambios aplicados.
+   */
+  updateOwnSite(siteId: string, input: OwnSitePatch): Observable<PracticeSite> {
+    return this.http.patch<PracticeSite>(
+      this.url(`/practitioners/me/sites/${encodeURIComponent(siteId)}`),
+      input,
+    );
+  }
+
+  /**
+   * `PUT /practitioners/me/sites/:siteId/bank-qr` — el QR bancario con el que
+   * cobro **en esta sede**.
+   *
+   * Va por su propia ruta y no dentro del `PATCH` del consultorio por dos
+   * razones. La primera es de alcance: el `PATCH` sólo corrige el consultorio
+   * **propio**, y el QR se configura también en la clínica u hospital donde el
+   * profesional atiende sin ser dueño de la sede — lo que se guarda ahí no es
+   * la sede, es con qué cobra él en ella. La segunda es de contrato: el
+   * archivo ya está subido (`FilesClient.upload`) y lo único que viaja es su
+   * id, así que mezclarlo con nombre y dirección obligaría a mandar el resto
+   * del consultorio para cambiar una imagen.
+   *
+   * Expuesta por la API desde el cierre del P33. Autoriza por vinculación
+   * vigente con la sede, no por ser dueño de la práctica: por eso también
+   * funciona en la clínica donde el profesional atiende sin ser dueño.
+   *
+   * @param siteId - La sede donde se cobra con ese QR.
+   * @param fileId - El archivo ya subido, o `null` para dejarla sin QR.
+   * @returns La sede con el QR aplicado.
+   */
+  setSiteBankQr(siteId: string, fileId: string | null): Observable<PracticeSite> {
+    return this.http.put<PracticeSite>(
+      this.url(`/practitioners/me/sites/${encodeURIComponent(siteId)}/bank-qr`),
+      { fileId },
+    );
+  }
+
+  /**
+   * `DELETE /practitioners/me/sites/:siteId` — ALV-005: dejo de atender en
+   * esa sede. No se borra: se cierra mi vinculación vigente con ella.
+   */
+  removeOwnSite(siteId: string): Observable<void> {
+    return this.http.delete<void>(
+      this.url(`/practitioners/me/sites/${encodeURIComponent(siteId)}`),
+    );
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
@@ -111,6 +184,7 @@ interface WireRoleAssignment {
   readonly validFrom: string | null;
   readonly validTo: string | null;
   readonly createdAt: string;
+  readonly avatarUrl: string | null;
 }
 
 interface WireRoleAssignmentResult {
@@ -122,12 +196,16 @@ interface WireRoleAssignmentResult {
 }
 
 function aVinculacion(body: ConNulos<WireRoleAssignment>): MyRoleAssignment {
-  const { validFrom, validTo, createdAt, ...resto } = body;
+  const { validFrom, validTo, createdAt, avatarUrl, ...resto } = body;
   return {
     ...sinNulos(resto),
     ...(maybeDateOnly(validFrom) === undefined ? {} : { validFrom: maybeDateOnly(validFrom) }),
     ...(maybeDateOnly(validTo) === undefined ? {} : { validTo: maybeDateOnly(validTo) }),
     createdAt: maybeDate(createdAt) ?? new Date(createdAt as string),
+    // A diferencia del resto: `avatarUrl` es `string | null` en la vista, no
+    // opcional, así que un `null` del servidor se conserva en vez de
+    // eliminarse la clave (lo que hace `sinNulos` con cualquier otro campo).
+    avatarUrl,
   };
 }
 

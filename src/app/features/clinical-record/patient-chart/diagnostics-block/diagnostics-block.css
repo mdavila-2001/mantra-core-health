@@ -8,8 +8,9 @@
 }
 
 .estudios {
-  display: grid;
-  gap: var(--sp-4);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-4);
   /* Tres campos cortos y una lista de líneas breves: a lo ancho de la tabla, la
      línea del selector quedaría del largo de la pantalla y sería ilegible.
      Mismo tope que el bloque de diagnóstico, porque son la misma clase de
@@ -48,6 +49,15 @@
 .estudios__vacio {
   margin: 0;
   color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* Antiduplicación de estudios (v4.2.17, T-26): el aviso entre elegir el
+   estudio y que aparezca el diálogo o se mande el pedido. */
+.estudios__revisando {
+  margin: 0;
+  color: var(--text-secondary);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
 }

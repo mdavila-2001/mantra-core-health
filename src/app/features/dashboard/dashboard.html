@@ -1,8 +1,8 @@
 <!-- Quien viene a atenderse ve SU panel, no el de quien administra.
-     El de abajo habla de organizaciones, secciones y estado del sistema: es el
-     tablero de quien trabaja acá, y a un paciente le decía cosas que no son
-     suyas (F-16 y F-17 de la analista). No se rediseña ninguno de los dos: se
-     separan. -->
+     El de abajo habla de la jornada, los accesos y los pacientes de la
+     organización: es el tablero de quien trabaja acá, y a un paciente le decía
+     cosas que no son suyas (F-16 y F-17 de la analista). No se rediseña
+     ninguno de los dos: se separan. -->
 @if (esPaciente()) {
   <app-patient-home />
 } @else {
@@ -44,68 +44,29 @@
      acá, y repetirlo hace que un lector de pantalla lo lea dos veces en la misma pantalla. -->
   <app-page-header
     title="Panel"
-    subtitle="Tu organización, tus accesos y el estado del sistema."
+    [subtitle]="subtituloDelPanel()"
     appTutorialTarget="panel-titulo"
   />
 
-  <!-- ─── Cifras ──────────────────────────────────────────────────────────────
-     Cuatro tarjetas angostas en una fila propia. Van arriba porque son la
-     respuesta más corta a «¿cómo está esto hoy?», y separadas del resto porque
-     mezclarlas con las tarjetas de contenido las volvería una más. -->
-  <section class="panel__cifras" aria-label="Resumen" appStaggerList>
-    @if (puedeVerPacientes()) {
-      <app-card variant="outlined" padding="md" data-testid="panel-cifra-pacientes">
-        <p class="panel__cifra-rotulo">Pacientes registrados</p>
-        <p class="panel__cifra-valor">
-          @if (totalPacientes(); as total) {
-            {{ total }}
-          } @else {
-            <span class="panel__cifra-esperando">—</span>
-          }
-        </p>
-        <p class="panel__cifra-pie">En {{ tenantName() ?? 'esta organización' }}</p>
-      </app-card>
+  <!-- ─── Lo que toca hoy ─────────────────────────────────────────────────
+       La primera franja de quien atiende, y lo primero que se ve al entrar.
+
+       Acá arriba había cuatro bloques —los roles del token, el conteo del
+       directorio público, cuántas secciones habilita la cuenta y cuántas
+       organizaciones alcanza—. Los cuatro hablaban de la aplicación y ninguno
+       contestaba la pregunta con la que un médico abre el navegador a las
+       siete de la mañana. El propietario los mandó sacar el 19/09/2026 y pidió
+       en su lugar «qué toca hoy», con salida a la agenda completa.
+
+       Sólo para quien atiende: una cuenta sin perfil profesional no tiene
+       jornada propia, y dibujarle una franja vacía sería inventarle un hueco.
+       Va diferida por el mismo motivo que el aviso de puesta en marcha — este
+       panel viaja en el paquete inicial. -->
+  @if (atiendePacientes()) {
+    @defer (on immediate) {
+      <app-agenda-de-hoy class="panel__hoy" />
     }
-
-    <app-card variant="outlined" padding="md" data-testid="panel-cifra-secciones">
-      <p class="panel__cifra-rotulo">Secciones disponibles</p>
-      <p class="panel__cifra-valor">{{ seccionesDisponibles().length }}</p>
-      <p class="panel__cifra-pie">{{ seccionesPlanificadas().length }} más en construcción</p>
-    </app-card>
-
-    <app-card variant="outlined" padding="md" data-testid="panel-cifra-organizaciones">
-      <p class="panel__cifra-rotulo">Organizaciones</p>
-      <p class="panel__cifra-valor">{{ tenantCount() }}</p>
-      <p class="panel__cifra-pie">
-        @if (tenantCount() > 1) {
-          Podés cambiar desde el encabezado
-        } @else {
-          Tu única organización
-        }
-      </p>
-    </app-card>
-
-    <!-- La tarjeta saludaba con un sello «Sin verificar», que es pedir la
-         verificación desde el primer renglón del panel. Apagada de momento:
-         ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`. -->
-    @if (verificacionOfrecida) {
-      <app-card variant="outlined" padding="md" data-testid="panel-cifra-identidad">
-        <p class="panel__cifra-rotulo">Tu identidad</p>
-        <!-- El sello y no una cifra: el estado de un trámite no es un número, y
-             forzarlo a serlo obligaría a inventar una escala que no existe. -->
-        <div class="panel__cifra-sello">
-          @if (selloDeIdentidad(); as sello) {
-            <app-status-seal [variant]="sello.variant" [label]="sello.label" />
-          } @else {
-            <app-status-seal variant="pending" label="Sin verificar" />
-          }
-        </div>
-        <p class="panel__cifra-pie">
-          <a routerLink="/my-account/identity/verify">Ver el trámite</a>
-        </p>
-      </app-card>
-    }
-  </section>
+  }
 
   <div class="panel__grid" appStaggerList>
     <!-- ─── Accesos ───────────────────────────────────────────────────────────
@@ -125,6 +86,12 @@
         Abrí una zona para ver sus secciones.
       </p>
 
+      <!-- ALV-018 ponía acá un atajo «Ver mi agenda de hoy». Se retira con el
+           carril del 19/09/2026: la franja de arriba ES la agenda de hoy, con
+           su propio botón a la agenda completa, y dos puertas a lo mismo en la
+           misma pantalla se leen como dos destinos distintos. Quien no atiende
+           —que es quien no ve la franja— tampoco veía el atajo. -->
+
       <!-- Antes acá había una rejilla plana con TODAS las secciones. Con ocho
          se leía; con las treinta y dos de quien atiende era un cajón donde
          encontrar «Evoluciones» costaba más que buscarlo en el menú lateral.
@@ -134,12 +101,39 @@
       <app-access-tree [sections]="seccionesVisibles()" appTutorialTarget="panel-accesos" />
     </app-card>
 
+    <!-- ─── Tus consultas (C-24) ────────────────────────────────────────────
+         Reporte semanal/mensual, mapa de calor y otras atenciones. Sólo para
+         quien atiende: sin perfil profesional no hay ninguna cifra propia
+         que reportar (mismo criterio que la franja de arriba). -->
+    @if (atiendePacientes()) {
+      @defer (on immediate) {
+        <app-consultas-resumen class="panel__bloque--ancho" />
+      }
+    }
+
     <!-- ─── Últimos pacientes ─────────────────────────────────────────────────
        Sólo para quien administra: al resto la API le responde 403, así que
-       pedirlo sería provocar un error para después esconderlo. -->
+       pedirlo sería provocar un error para después esconderlo.
+
+       El total va en el propio encabezado y ya no en una tarjeta de cifra
+       aparte: era la única cifra que sobrevivió al recorte del 19/09/2026, y
+       sola en su fila ocupaba un renglón entero para decir un número que acá
+       está al lado de las filas que lo componen. -->
     @if (puedeVerPacientes()) {
-      <app-card variant="outlined" padding="lg" data-testid="panel-ultimos-pacientes">
-        <h2 class="panel__card-title">Últimos pacientes</h2>
+      <app-card
+        variant="outlined"
+        padding="lg"
+        class="panel__bloque--ancho"
+        data-testid="panel-ultimos-pacientes"
+      >
+        <h2 class="panel__card-title">
+          Últimos pacientes
+          @if (totalPacientes(); as total) {
+            <span class="panel__card-cifra" data-testid="panel-total-pacientes">
+              {{ total }} en {{ tenantName() ?? 'esta organización' }}
+            </span>
+          }
+        </h2>
 
         <app-view-state-host [state]="pacientes()" (retry)="loadPacientes()">
           <div vsh-skeleton>
@@ -163,59 +157,5 @@
         </app-view-state-host>
       </app-card>
     }
-
-    <!-- ─── Cuenta ────────────────────────────────────────────────────────────
-       Todo sale del access token: ninguna petición de por medio, porque la API
-       no expone `/me` y el token ya trae `sub`, `roles` y `tenants`. Se muestra
-       sólo lo que le dice algo a la persona: ni identificadores internos ni el
-       código de los roles —el paciente no tiene por qué leer `PATIENT`—. El
-       código viaja en `data-role`, para quien lo necesite leer por máquina. -->
-    <app-card variant="outlined" padding="lg" data-testid="panel-sesion">
-      <h2 class="panel__card-title">Tu cuenta</h2>
-
-      <dl class="panel__datos">
-        <dt>Roles</dt>
-        <dd class="panel__roles" data-testid="panel-roles">
-          @for (rol of rolesLegibles(); track rol.codigo) {
-            <app-badge variant="info" [value]="rol.etiqueta" [attr.data-role]="rol.codigo" />
-          } @empty {
-            <span class="panel__vacio">Tu cuenta no tiene ningún rol asignado.</span>
-          }
-        </dd>
-
-        <dt>Organización</dt>
-        <dd>
-          @if (tenantName(); as nombre) {
-            {{ nombre }}
-          } @else {
-            <span class="panel__vacio">Sin organización activa.</span>
-          }
-        </dd>
-      </dl>
-    </app-card>
-
-    <!-- ─── Directorio ────────────────────────────────────────────────────────
-       Era la mitad del panel y ahora es una tarjeta más: sigue siendo la
-       comprobación de punta a punta de que hay API del otro lado, pero eso le
-       importa a quien desarrolla, no a quien entra a trabajar. -->
-    <app-card variant="outlined" padding="lg" data-testid="panel-directorio">
-      <h2 class="panel__card-title">Directorio público</h2>
-
-      <app-view-state-host
-        [state]="directory()"
-        (retry)="loadDirectory()"
-        (refresh)="loadDirectory()"
-      >
-        <div vsh-skeleton>
-          <app-skeleton variant="text" [lines]="3" />
-        </div>
-
-        @if (recordCount(); as total) {
-          <p class="panel__conteo" data-testid="panel-directorio-conteo">
-            {{ total }} registro(s) publicados.
-          </p>
-        }
-      </app-view-state-host>
-    </app-card>
   </div>
 }

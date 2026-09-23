@@ -1,0 +1,77 @@
+.grafico {
+  margin: var(--sp-5) 0 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--surface-raised);
+}
+
+.grafico__titulo {
+  display: grid;
+  gap: var(--sp-1);
+  margin-block-end: var(--sp-4);
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.grafico__resumen {
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+/* Doce columnas repartidas por igual. En teléfono se angostan en vez de
+   recortarse: la serie entera tiene que entrar, o deja de ser una serie. */
+.grafico__barras {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: var(--sp-1);
+  align-items: end;
+  block-size: 9rem;
+}
+
+.grafico__columna {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: var(--sp-1);
+  block-size: 100%;
+  min-inline-size: 0;
+}
+
+/* La pista es la caja de alto completo contra la que se mide la barra: sin
+   ella el porcentaje se calcularía contra el contenido y no contra el eje. */
+.grafico__pista {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: stretch;
+  block-size: 100%;
+}
+
+.grafico__barra {
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  background: var(--st-primary-bd);
+  min-block-size: 2px;
+}
+
+/* El mes más alto, con el color de acción: es el único que lleva su cifra. */
+.grafico__barra.is-alta {
+  background: var(--brand-primary);
+}
+
+.grafico__cifra {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.grafico__mes {
+  font-size: var(--fs-overline);
+  text-align: center;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}

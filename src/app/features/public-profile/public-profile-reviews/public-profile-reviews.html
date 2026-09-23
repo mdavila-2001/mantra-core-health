@@ -1,0 +1,130 @@
+<!-- Las opiniones de la ficha (P31). La cabecera dice el promedio del PERFIL,
+     no el de lo que se está mirando: si no, el número cambiaría al pulsar
+     «Ver más» y el visitante leería dos valores para la misma pregunta. -->
+<section class="opiniones" data-testid="opiniones">
+  <header class="opiniones__cabecera">
+    <h2 class="opiniones__titulo">Opiniones</h2>
+    @if (promedioTexto(); as media) {
+      <p class="opiniones__resumen" data-testid="opiniones-resumen">
+        <span class="opiniones__media" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" focusable="false">
+            <path d="m12 3.4 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.4 6.6 20.2l1-6.1-4.4-4.3 6.1-.9z" />
+          </svg>
+          {{ media }}
+        </span>
+        <span class="sr-only">Promedio {{ media }} de 5 estrellas.</span>
+        <span class="opiniones__total">
+          {{ total() }} {{ total() === 1 ? 'opinión' : 'opiniones' }}
+        </span>
+      </p>
+    } @else {
+      <!-- «Sin calificaciones» y no «0»: cero estrellas sería una calificación
+           pésima, y que nadie haya opinado todavía no lo es. -->
+      <p class="opiniones__resumen" data-testid="opiniones-sin-calificar">Sin calificaciones</p>
+    }
+  </header>
+
+    @if (puedeCalificar()) {
+      <p class="opiniones__calificar">
+        <button
+          app-button
+          variant="secondary"
+          size="sm"
+          type="button"
+          data-testid="opiniones-calificar"
+          (clicked)="abrirCalificacion()"
+        >
+          Calificar mi atención
+        </button>
+      </p>
+    }
+
+  @if (error(); as mensaje) {
+    <app-alert tone="error" data-testid="opiniones-error">
+      {{ mensaje }}
+      <button app-button variant="ghost" size="sm" type="button" (clicked)="cargar()">
+        Reintentar
+      </button>
+    </app-alert>
+  }
+
+  @if (opiniones().length > 0) {
+    <ul class="opiniones__lista">
+      @for (opinion of opiniones(); track opinion.id) {
+        <li class="opiniones__item" data-testid="opinion">
+          <p class="opiniones__autor">
+            <strong>{{ autor(opinion) }}</strong>
+            @if (opinion.publishedAt; as fecha) {
+              <span class="opiniones__fecha">{{ fecha | date: 'longDate' }}</span>
+            }
+            @if (opinion.editedAt) {
+              <span class="opiniones__fecha">(editada)</span>
+            }
+          </p>
+
+          <p class="opiniones__estrellas">
+            <!-- Las cinco casillas van siempre, llenas o vacías: así «3 de 5»
+                 se lee de un vistazo sin contar. El texto de al lado es el que
+                 escucha quien no las ve. -->
+            <span aria-hidden="true">
+              @for (llena of estrellas(opinion.overallRating); track $index) {
+                <svg
+                  class="opiniones__estrella"
+                  [class.opiniones__estrella--vacia]="!llena"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  stroke="none"
+                  focusable="false"
+                >
+                  <path d="m12 3.4 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.4 6.6 20.2l1-6.1-4.4-4.3 6.1-.9z" />
+                </svg>
+              }
+            </span>
+            <span class="sr-only">{{ puntajeAccesible(opinion.overallRating) }}</span>
+          </p>
+
+          @if (opinion.reviewText) {
+            <p class="opiniones__texto">{{ opinion.reviewText }}</p>
+          }
+
+          <!-- La respuesta del calificado va debajo y sangrada: es de él, no de
+               quien opinó, y confundirlas le pondría sus palabras en la boca al
+               paciente. -->
+          @for (respuesta of opinion.responses; track respuesta.id) {
+            <div class="opiniones__respuesta" data-testid="opinion-respuesta">
+              <p class="opiniones__respuesta-autor">Respuesta del profesional</p>
+              <p>{{ respuesta.responseText }}</p>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+
+    @if (hayMas()) {
+      <p class="opiniones__mas">
+        <button
+          app-button
+          variant="secondary"
+          size="sm"
+          type="button"
+          data-testid="opiniones-mas"
+          [isLoading]="cargando()"
+          (clicked)="cargar()"
+        >
+          Ver más opiniones
+        </button>
+      </p>
+    }
+  } @else if (!cargando() && !error()) {
+    <p class="opiniones__vacio" data-testid="opiniones-vacio">
+      Todavía nadie dejó una opinión. Sólo puede hacerlo quien ya tuvo una consulta.
+    </p>
+  }
+  @if (calificando()) {
+    <app-rate-encounter-dialog
+      [professionalName]="professionalName()"
+      (saved)="calificacionPublicada()"
+      (closed)="cerrarCalificacion()"
+    />
+  }
+</section>

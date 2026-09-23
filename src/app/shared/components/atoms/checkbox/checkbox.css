@@ -1,5 +1,5 @@
 /* ============================================================================
-    Checkbox — Vanilla CSS con tokens REDSAT
+    Checkbox — Vanilla CSS con tokens ALOVIDA
     ========================================================================== */
 
 :host {
@@ -38,7 +38,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: background-color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
   flex-shrink: 0;
 }
 

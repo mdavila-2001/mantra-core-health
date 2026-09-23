@@ -15,8 +15,9 @@
 /* -- El equipo del caso abierto ------------------------------------------- */
 
 .intervenciones__equipo {
-  display: grid;
-  gap: var(--sp-4);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-4);
 }
 
 .intervenciones__equipo-encabezado {
@@ -103,8 +104,8 @@
   gap: var(--sp-3);
   padding: var(--sp-4);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
   /* Formulario corto: a lo ancho de la tarjeta el textarea se vuelve un muro. */
   max-inline-size: 56ch;
 }
@@ -119,8 +120,9 @@
 /* -- La nota del pie ------------------------------------------------------ */
 
 .intervenciones__nota {
-  display: grid;
-  gap: var(--sp-3);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-3);
   /* Texto corrido: a lo ancho de la tabla la línea se vuelve ilegible. */
   max-inline-size: 68ch;
 }

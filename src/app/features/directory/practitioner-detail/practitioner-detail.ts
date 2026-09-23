@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { FilesClient } from '../../../core/data-access/files/files.client';
@@ -150,10 +150,15 @@ export class PractitionerDetail {
             fotoUrl:
               perfil.photoFileId === undefined
                 ? of<string | null>(null)
-                : this.files.downloadUrl(perfil.photoFileId).pipe(
-                    map((descarga) => descarga.url),
-                    catchError(() => of<string | null>(null)),
-                  ),
+                : // Sólo se ve si quien mira subió esa foto: `/content` la
+                  // entrega a su autor o a un rol de revisión, y a nadie más.
+                  // Para el resto responde 403 y queda el avatar de iniciales,
+                  // que es lo que ya se veía. Sigue siendo mejor que
+                  // `downloadUrl`, cuya URL (`file://local/<sha>`) no cargaba
+                  // NUNCA, ni para el propio dueño.
+                  this.files
+                    .imageDataUrl(perfil.photoFileId)
+                    .pipe(catchError(() => of<string | null>(null))),
           }),
         ),
       )
@@ -200,6 +205,9 @@ function convertir(resuelto: PerfilResuelto): PerfilProfesionalVisible {
     // La ficha de otro profesional no muestra sus datos personales: el
     // documento y la fecha de nacimiento de un colega no son de quien mira.
     datosPersonales: null,
+    // Por lo mismo que `datosPersonales`: el NIT de un colega no es de quien
+    // mira su ficha en la guía.
+    facturacion: null,
     actividadActual: afiliaciones.actual,
     experienciaHistorica: afiliaciones.historica,
     desde: perfil.createdAt ?? null,
@@ -332,8 +340,8 @@ function afiliacionesDe(perfil: OwnPractitionerProfile): {
     .map((afiliacion: PractitionerAffiliation) => ({
       id: afiliacion.id,
       organizacion: afiliacion.organizationName,
-      cargo: afiliacion.roleTitle,
-      area: afiliacion.departmentText ?? '',
+      // ALV-007: el cargo es opcional; vacío no dibuja «· undefined».
+      cargo: afiliacion.roleTitle ?? '',
       desde: afiliacion.startDate,
       hasta: afiliacion.endDate,
       actual: afiliacion.current,

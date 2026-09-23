@@ -73,6 +73,9 @@
                         type="button"
                         size="sm"
                         variant="secondary"
+                        [isLoading]="reservaPendienteId() === cupo.id"
+                        [disabled]="reservaPendienteId() !== null"
+                        [attr.aria-busy]="reservaPendienteId() === cupo.id ? 'true' : null"
                         [attr.aria-label]="
                           'Pedir turno el ' +
                           (cupo.startAt | date: 'EEEE d \'de\' MMMM') +
@@ -85,8 +88,9 @@
                         "
                         (clicked)="reservar(sede, cupo)"
                       >
-                        {{ cupo.startAt | date: 'EEE d' }} ·
-                        {{ cupo.startAt | date: 'HH:mm' }}–{{ cupo.endAt | date: 'HH:mm' }}
+                        {{ cupo.startAt | date: 'EEE d' }} · {{ cupo.startAt | date: 'HH:mm' }}–{{
+                          cupo.endAt | date: 'HH:mm'
+                        }}
                       </button>
                     </li>
                   }
@@ -99,6 +103,9 @@
                     type="button"
                     size="sm"
                     variant="primary"
+                    [isLoading]="reservaPendienteId() === proximo.id"
+                    [disabled]="reservaPendienteId() !== null"
+                    [attr.aria-busy]="reservaPendienteId() === proximo.id ? 'true' : null"
                     (clicked)="reservar(sede, proximo)"
                   >
                     {{ proximo.startAt | date: 'EEE d MMM' }} ·

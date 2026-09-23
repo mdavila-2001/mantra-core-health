@@ -1,0 +1,42 @@
+@switch (estado()) {
+  @case ('listo') {
+    <div class="stored-file">
+      <dl class="stored-file__meta">
+        <div class="stored-file__dato">
+          <dt>Archivo</dt>
+          <dd [class.stored-file__dd--reserva]="nombreEsDeReserva()">
+            {{ nombre() }}
+            @if (nombreEsDeReserva()) {
+              <span class="stored-file__aviso">(nombre no disponible)</span>
+            }
+          </dd>
+        </div>
+        <div class="stored-file__dato">
+          <dt>Tipo</dt>
+          <dd>{{ tipo() }}</dd>
+        </div>
+        <div class="stored-file__dato">
+          <dt>Tamaño</dt>
+          <dd>{{ tamano() }}</dd>
+        </div>
+      </dl>
+
+      <!-- El motor de vista previa ya existe y trae su propio fallback para lo
+           que el navegador no sabe mostrar: acá sólo se le pasa el archivo. -->
+      @if (archivo(); as file) {
+        <app-file-preview [file]="file" />
+      }
+    </div>
+  }
+  @case ('carga') {
+    <p class="stored-file__estado" role="status">Preparando el archivo…</p>
+  }
+  @case ('error') {
+    <!-- Un 403 por adjunto ajeno y un archivo borrado llegan igual: no se
+         distingue en pantalla lo que el backend decidió no distinguir. -->
+    <p class="stored-file__estado stored-file__estado--error" role="status">
+      No pudimos abrir este archivo. Puede que ya no esté disponible o que no
+      tengas permiso para verlo.
+    </p>
+  }
+}

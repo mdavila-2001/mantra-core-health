@@ -1,0 +1,119 @@
+/* El filtro va arriba de la tabla, alineado a la izquierda y acotado: un
+   `<select>` estirado a todo el ancho de la pantalla parece un campo de
+   formulario largo y no un filtro. */
+.claims__filters {
+    margin-block-end: var(--sp-4);
+    max-inline-size: 22rem;
+}
+
+.claims__link {
+    color: var(--text-link);
+    font-weight: 600;
+    text-decoration: none;
+    /* Un identificador no se parte. `CLM-m6guv-004` cortado en tres renglones
+       deja de leerse como un código y estira la fila a tres líneas de alto,
+       que descuadra toda la tabla. */
+    white-space: nowrap;
+}
+
+.claims__link:hover,
+.claims__link:focus-visible {
+    text-decoration: underline;
+}
+
+/* En pantalla ancha, el identificador y la marca de reclamada van en la misma
+   línea: son una sola cosa que se lee de corrido. */
+.claims__link + app-badge {
+    margin-inline-start: var(--sp-2);
+}
+
+/* En móvil la marca baja a su propio renglón.
+   No es estética: en línea, la columna necesita el ancho del código MÁS el de
+   la marca, y con eso el botón que despliega la fila de detalle queda fuera de
+   la vista —medido a 390 px: contenido 399, visible 366—. Es decir, las
+   columnas plegadas dejaban de ser alcanzables sin descubrir antes que había
+   scroll horizontal. Bajando la marca, la columna mide lo que mide el código y
+   el botón entra. */
+@media (max-width: 899px) {
+    .claims__link + app-badge {
+        display: block;
+        margin-inline-start: 0;
+        margin-block-start: var(--sp-1);
+    }
+}
+
+/* El nombre del paciente es un botón, y tiene que leerse como un dato que se
+   puede tocar — no como el botón primario de la pantalla. Hereda la tipografía
+   de la celda y sólo se subraya al pasar por encima. */
+.claims__patient {
+    /* Mínimo táctil WCAG 2.5.8: con el alto de la línea medía 23 px. */
+    min-block-size: 24px;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    color: var(--text-primary);
+    text-align: start;
+    cursor: pointer;
+    border-radius: var(--r-sm);
+}
+
+.claims__patient:hover {
+    text-decoration: underline;
+}
+
+.claims__patient:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+}
+
+/* Las cifras en tabular: así las unidades quedan una debajo de otra y dos
+   importes se comparan de un vistazo en vez de leyéndolos. */
+.claims__money {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* La fecha tampoco: «3/9/2026» partido por la mitad no es una fecha. */
+.claims__date {
+    white-space: nowrap;
+}
+
+/* La ausencia se ve como ausencia: secundaria y en cursiva. Con el mismo peso
+   que una cifra, «Sin dictaminar» se lee como un valor más de la columna. */
+.claims__money--absent,
+.claims__absent {
+    color: var(--text-secondary);
+    font-style: italic;
+    font-variant-numeric: normal;
+}
+
+.claims__patient-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: var(--sp-4);
+    margin: 0;
+}
+
+.claims__patient-facts dt {
+    margin-block-end: var(--sp-1);
+    font-size: var(--fs-overline);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.claims__patient-facts dd {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.claims__patient-note {
+    margin-block-start: var(--sp-5);
+    margin-block-end: 0;
+    padding-block-start: var(--sp-4);
+    border-block-start: 1px solid var(--border-subtle);
+    font-size: var(--fs-caption);
+    color: var(--text-secondary);
+}

@@ -9,19 +9,48 @@
      Así que la misma pantalla ordena distinto según quién mira: al médico,
      su facturación primero y los libros a un clic; a quien administra la
      contabilidad, los libros de entrada. Nada se borra. -->
-<!-- El **título no cambia**: «Contabilidad» es uno de los ocho nombres exactos
-     de la lista del cliente, y una sección que en el menú se llama de una
-     forma y en su pantalla de otra le agrega una duda a quien acaba de tocar
-     el renglón. Lo que cambia es el subtítulo —que es donde una sección se
-     explica— y qué se muestra primero. -->
+<!-- El título lleva sufijo desde el 2026-09-19, por lo mismo que el del
+     cockpit: `administration/accounting` es ahora el resumen llano, y tres
+     pantallas del módulo con el `h1` «Contabilidad» a secas no se distinguen
+     en una pestaña del navegador, en el historial ni para un lector de
+     pantalla que navega por encabezados. El nombre de la sección sigue siendo
+     el de la lista del cliente; lo que se le agrega es de qué pantalla se
+     trata. -->
 <app-page-header
-  title="Contabilidad"
+  title="Contabilidad · libros"
   [subtitle]="
     esMedico()
       ? 'Lo que cobraste y todavía no pasaste a los libros, mes por mes.'
       : 'Balance de sumas y saldos y libro diario de la práctica'
   "
 />
+
+<!-- La vuelta. Desde el 2026-09-19 `administration/accounting` es el resumen
+     llano —cuánto entró, en qué se va, quién debe— y el cockpit pasó a
+     `.../cockpit`: los dos se ofrecen acá, porque desde los libros se vuelve a
+     cualquiera de los dos según por dónde se haya entrado. -->
+<p class="acceso-al-cockpit">
+  <a
+    app-button
+    variant="outline"
+    routerLink="/administration/accounting"
+    data-testid="volver-al-resumen"
+  >
+    Volver a Contabilidad
+  </a>
+  <a
+    app-button
+    variant="outline"
+    routerLink="/administration/accounting/cockpit"
+    data-testid="volver-al-cockpit"
+  >
+    Vista contable
+  </a>
+  <span class="acceso-al-cockpit__nota">
+    El resumen contesta cuánto entró y qué está pendiente; la vista contable, el
+    estado del ejercicio, los documentos frenados en el flujo y el cierre del período.
+  </span>
+</p>
 
 @if (esMedico()) {
   <app-alert tone="info" class="explicacion">
@@ -55,7 +84,7 @@
 }
 
 <!-- La práctica manda: ninguna lectura del mayor responde sin ella. -->
-<app-form-field label="Práctica" hint="Los libros que se muestran son los de esta práctica">
+<app-form-field icon="building" label="Práctica" hint="Los libros que se muestran son los de esta práctica">
   <app-select
     [options]="opcionesDePractica()"
     [(value)]="practicaElegida"
@@ -168,17 +197,39 @@
 }
 
 @if (muestraLibros()) {
-  <h2 class="titulo-de-seccion">Balance de sumas y saldos</h2>
+  <div #trialBalancePdf class="informe-encabezado">
+    <h2 class="titulo-de-seccion">Balance de sumas y saldos</h2>
+    <app-pdf-export-button
+      [target]="trialBalancePdf"
+      filename="balance-de-sumas-y-saldos"
+      title="Balance de sumas y saldos"
+      kind="Reporte contable"
+    />
+  </div>
   <app-data-table
     [state]="filasDelBalance()"
     [columns]="columnasDelBalance"
     [trackBy]="claveDeFila"
+    [rowLabel]="nombreDeCuenta"
     caption="Saldos por cuenta del plan contable"
   />
 
-  <h2 class="titulo-de-seccion">Libro diario</h2>
+  <div #journalPdf class="informe-encabezado">
+    <h2 class="titulo-de-seccion">Libro diario</h2>
+    <div class="informe-encabezado__acciones">
+      <app-pdf-export-button
+        [target]="journalPdf"
+        filename="libro-diario"
+        title="Libro diario"
+        kind="Reporte contable"
+      />
+      <button app-button variant="outline" type="button" (clicked)="exportarDiarioCsv()">
+        Exportar a CSV
+      </button>
+    </div>
+  </div>
   <app-data-table
-    [state]="diario()"
+    [state]="filasDelDiario()"
     [columns]="columnasDelDiario"
     [trackBy]="claveDeAsiento"
     caption="Asientos de la práctica, del más reciente al más antiguo"
@@ -205,22 +256,22 @@
           Ingreso registrado en borrador y anclado a la factura.
         </app-alert>
       }
-      <form [formGroup]="formularioDeIngreso" (ngSubmit)="registrarIngreso()" novalidate>
-        <app-form-field label="Factura pagada" [required]="true">
+      <form [formGroup]="formularioDeIngreso" (ngSubmit)="registrarIngreso()" novalidate class="app-form-grid">
+        <app-form-field icon="billing" label="Factura pagada" [required]="true">
           <app-select
             formControlName="invoiceId"
             [options]="opcionesDeConsulta()"
             placeholder="Elegí una factura"
           />
         </app-form-field>
-        <app-form-field label="Cuenta a debitar (caja/banco)" [required]="true">
+        <app-form-field icon="billing" label="Cuenta a debitar (caja/banco)" [required]="true">
           <app-select
             formControlName="debitAccountId"
             [options]="opcionesDeCuenta()"
             placeholder="Elegí una cuenta"
           />
         </app-form-field>
-        <app-form-field label="Cuenta a acreditar (ingresos por consultas)" [required]="true">
+        <app-form-field icon="billing" label="Cuenta a acreditar (ingresos por consultas)" [required]="true">
           <app-select
             formControlName="creditAccountId"
             [options]="opcionesDeCuenta()"
@@ -246,25 +297,25 @@
         Gasto registrado en borrador.
       </app-alert>
     }
-    <form [formGroup]="formularioDeGasto" (ngSubmit)="registrarGasto()" novalidate>
-      <app-form-field label="Cuenta a debitar (gasto)" [required]="true">
+    <form [formGroup]="formularioDeGasto" (ngSubmit)="registrarGasto()" novalidate class="app-form-grid">
+      <app-form-field icon="billing" label="Cuenta a debitar (gasto)" [required]="true">
         <app-select
           formControlName="debitAccountId"
           [options]="opcionesDeCuenta()"
           placeholder="Elegí una cuenta"
         />
       </app-form-field>
-      <app-form-field label="Cuenta a acreditar (caja/banco)" [required]="true">
+      <app-form-field icon="billing" label="Cuenta a acreditar (caja/banco)" [required]="true">
         <app-select
           formControlName="creditAccountId"
           [options]="opcionesDeCuenta()"
           placeholder="Elegí una cuenta"
         />
       </app-form-field>
-      <app-form-field label="Importe" [required]="true" hint="Decimal, hasta dos posiciones.">
+      <app-form-field icon="chart" label="Importe" [required]="true" hint="Decimal, hasta dos posiciones.">
         <app-input formControlName="amount" type="text" inputmode="decimal" />
       </app-form-field>
-      <app-form-field label="Descripción" [required]="true">
+      <app-form-field icon="note" label="Descripción" [required]="true">
         <app-input formControlName="description" type="text" />
       </app-form-field>
       <button app-button variant="primary" type="submit" [disabled]="enviandoGasto()">
@@ -272,4 +323,368 @@
       </button>
     </form>
   </app-card>
+}
+
+<!-- ─── TAREA-20 S3 + FT-20: cuadro de mando, libro mayor, estado de
+     resultados, balance general, flujo de caja ───────────────────────────
+     El panel inactivo no pide nada: el `@if (pestanaActiva() === N)` de
+     adentro de cada `app-tab` es lo que evita instanciar sus lecturas de
+     golpe — `app-tab` sólo oculta con `[hidden]`, no desmonta su contenido
+     proyectado, así que sin este guard las pestañas pedirían sus datos
+     aunque estén tapadas. -->
+@if (practicaElegida()) {
+  <h2 class="titulo-de-seccion">Informes</h2>
+  <app-tabs [(selectedIndex)]="pestanaActiva">
+    <app-tab label="Cuadro de mando integral">
+      @if (pestanaActiva() === 3) {
+        <!-- Junta lo que las otras tres lecturas ya calcularon; no agrega
+             ningún número propio (ver el JSDoc de `indicadores`). -->
+        @if (indicadores(); as datos) {
+          <div #cuadroDeMandoPdf class="informe-encabezado">
+            <span></span>
+            <app-pdf-export-button
+              [target]="cuadroDeMandoPdf"
+              filename="cuadro-de-mando"
+              title="Cuadro de mando integral"
+            />
+          </div>
+          <app-card>
+            <div class="cuadre" appAnuncio [asertivo]="false" [enfocar]="false">
+              <app-status-seal
+                [variant]="datos.cuadre ? 'approved' : 'rejected'"
+                [label]="datos.cuadre ? 'El balance cuadra' : 'El balance NO cuadra'"
+              />
+              <dl class="totales">
+                <div>
+                  <dt>Resultado del período</dt>
+                  <dd>{{ datos.netIncome }}</dd>
+                </div>
+                <div>
+                  <dt>Total activo</dt>
+                  <dd>{{ datos.totalAssets }}</dd>
+                </div>
+                <div>
+                  <dt>Total pasivo</dt>
+                  <dd>{{ datos.totalLiabilities }}</dd>
+                </div>
+                <div>
+                  <dt>Total patrimonio</dt>
+                  <dd>{{ datos.totalEquity }}</dd>
+                </div>
+              </dl>
+            </div>
+            @if (!datos.balanceado) {
+              <app-alert tone="warning">
+                El balance general no cuadra: revisalo en su propia pestaña antes de confiar en
+                estos totales.
+              </app-alert>
+            }
+          </app-card>
+        } @else {
+          <p class="nota">Cargando los tres informes que arman el cuadro de mando…</p>
+        }
+      }
+    </app-tab>
+
+    <app-tab label="Libro mayor">
+      @if (pestanaActiva() === 0) {
+        <div #ledgerPdf class="informe-encabezado">
+          <app-form-field icon="billing" label="Cuenta" hint="El libro mayor es por cuenta: elegí cuál mirar">
+            <app-select
+              [options]="opcionesDeCuentaParaMayor()"
+              [(value)]="cuentaDelMayor"
+              placeholder="Elegí una cuenta"
+            />
+          </app-form-field>
+          <app-pdf-export-button [target]="ledgerPdf" filename="libro-mayor" title="Libro mayor" />
+        </div>
+        <app-data-table
+          [state]="filasDelMayor()"
+          [columns]="columnasDelMayor"
+          [trackBy]="claveDeMovimiento"
+          caption="Movimientos posteados de la cuenta elegida, con saldo corrido"
+        />
+      }
+    </app-tab>
+
+    <app-tab label="Estado de resultados">
+      @if (pestanaActiva() === 1) {
+        <!-- Misma tarjeta que el balance de sumas y saldos: los totales van
+             separados del cuerpo de la tabla, no sueltos sobre el fondo de la
+             página — si no, «Resultado del período» se lee como una fila más
+             de la tabla de abajo en vez del cierre del informe. -->
+        <div #incomeStatementPdf class="informe-encabezado">
+          <span></span>
+          <app-pdf-export-button
+            [target]="incomeStatementPdf"
+            filename="estado-de-resultados"
+            title="Estado de resultados"
+          />
+        </div>
+        @if (estadoDeResultados(); as estado) {
+          @if (estado.status === 'ready') {
+            <app-card>
+              <div class="cuadre" appAnuncio [asertivo]="false" [enfocar]="false">
+                <dl class="totales">
+                  <div>
+                    <dt>Total ingresos</dt>
+                    <dd>{{ estado.data.totalRevenue }}</dd>
+                  </div>
+                  <div>
+                    <dt>Total gastos</dt>
+                    <dd>{{ estado.data.totalExpense }}</dd>
+                  </div>
+                  <div>
+                    <dt>Resultado del período</dt>
+                    <dd>{{ estado.data.netIncome }}</dd>
+                  </div>
+                </dl>
+              </div>
+              @if (estado.data.truncated) {
+                <app-alert tone="warning">
+                  El informe alcanzó su tope de filas y está <strong>incompleto</strong>.
+                </app-alert>
+              }
+            </app-card>
+          }
+        }
+        <app-data-table
+          [state]="filasDelEstadoDeResultados()"
+          [columns]="columnasDelEstadoFinanciero"
+          [trackBy]="claveDeLineaFinanciera"
+          [rowLabel]="nombreDeLineaFinanciera"
+          caption="Cuentas de ingreso y gasto posteadas de la práctica"
+        />
+      }
+    </app-tab>
+
+    <app-tab label="Balance general">
+      @if (pestanaActiva() === 2) {
+        <div #balanceSheetPdf class="informe-encabezado">
+          <span></span>
+          <app-pdf-export-button
+            [target]="balanceSheetPdf"
+            filename="balance-general"
+            title="Balance general"
+          />
+        </div>
+        <!-- Misma tarjeta que el balance de sumas y saldos: ver el comentario
+             de la pestaña «Estado de resultados». -->
+        <app-card>
+          <div class="cuadre" appAnuncio [asertivo]="false" [enfocar]="false">
+            @if (selloDelBalanceGeneral(); as sello) {
+              <app-status-seal [variant]="sello.variant" [label]="sello.label" />
+            }
+            @if (balanceGeneral(); as estado) {
+              @if (estado.status === 'ready') {
+                <dl class="totales">
+                  <div>
+                    <dt>Total activo</dt>
+                    <dd>{{ estado.data.totalAssets }}</dd>
+                  </div>
+                  <div>
+                    <dt>Total pasivo</dt>
+                    <dd>{{ estado.data.totalLiabilities }}</dd>
+                  </div>
+                  <div>
+                    <dt>Total patrimonio</dt>
+                    <dd>{{ estado.data.totalEquity }}</dd>
+                  </div>
+                </dl>
+                @if (estado.data.truncated) {
+                  <app-alert tone="warning">
+                    El informe alcanzó su tope de filas y está <strong>incompleto</strong>.
+                  </app-alert>
+                }
+              }
+            }
+          </div>
+          <p class="nota">
+            El patrimonio incluye el resultado del período: sin cerrarlo, activo no cuadraría
+            contra pasivo + patrimonio pese a que la partida doble esté intacta.
+          </p>
+        </app-card>
+        <app-data-table
+          [state]="filasDelBalanceGeneral()"
+          [columns]="columnasDelEstadoFinanciero"
+          [trackBy]="claveDeLineaFinanciera"
+          [rowLabel]="nombreDeLineaFinanciera"
+          caption="Cuentas de activo, pasivo y patrimonio a la fecha de corte"
+        />
+      }
+    </app-tab>
+
+    <app-tab label="Flujo de caja">
+      @if (pestanaActiva() === 4) {
+        <!-- No es el estado de flujos de efectivo NIIF: ver el JSDoc de
+             `flujoDeCaja` sobre por qué es el libro mayor de la cuenta que la
+             propia persona elige como su caja o su banco. -->
+        <div #cashFlowPdf class="informe-encabezado">
+          <app-form-field icon="billing" label="Cuenta" hint="Elegí la cuenta que usás como caja o banco">
+            <app-select
+              [options]="opcionesDeCuentaParaMayor()"
+              [(value)]="cuentaDeCaja"
+              placeholder="Elegí una cuenta"
+            />
+          </app-form-field>
+          <app-pdf-export-button [target]="cashFlowPdf" filename="flujo-de-caja" title="Flujo de caja" />
+        </div>
+        @if (resumenDeCaja(); as resumen) {
+          <app-card>
+            <dl class="totales">
+              <div>
+                <dt>Entradas</dt>
+                <dd>{{ resumen.entradas }}</dd>
+              </div>
+              <div>
+                <dt>Salidas</dt>
+                <dd>{{ resumen.salidas }}</dd>
+              </div>
+              <div>
+                <dt>Flujo neto</dt>
+                <dd>{{ resumen.neto }}</dd>
+              </div>
+            </dl>
+          </app-card>
+        }
+        <app-data-table
+          [state]="filasDelFlujoDeCaja()"
+          [columns]="columnasDeCaja"
+          [trackBy]="claveDeMovimiento"
+          caption="Movimientos posteados de la cuenta elegida como caja/banco"
+        />
+      }
+    </app-tab>
+  </app-tabs>
+}
+
+<!-- ─── TAREA-20 S2: MODO CONTADOR ────────────────────────────────────────
+     «Ocultas»: plegado por omisión, no autorización — la autorización real
+     es del servidor (`POST .../drafts` y `POST /journal-transactions`). -->
+@if (practicaElegida() && puedeUsarModoContador()) {
+  <button
+    app-button
+    variant="ghost"
+    type="button"
+    class="libros-abrir"
+    (clicked)="alternarModoContador()"
+  >
+    {{ modoContadorAbierto() ? 'Ocultar MODO CONTADOR' : 'MODO CONTADOR' }}
+  </button>
+
+  @if (modoContadorAbierto()) {
+    <h2 class="titulo-de-seccion">MODO CONTADOR — asiento de N filas</h2>
+    <app-card>
+      @if (errorDelAsiento(); as mensaje) {
+        <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
+      }
+      @if (asientoGuardado(); as resultado) {
+        <app-alert appAnuncio [asertivo]="false" tone="success" class="alerta-de-formulario">
+          {{ resultado === 'draft' ? 'Asiento guardado en borrador.' : 'Asiento registrado y posteado.' }}
+        </app-alert>
+      }
+
+      <form [formGroup]="cabeceraDelAsiento" novalidate class="app-form-grid">
+        <app-form-field icon="calendar" label="Fecha" [required]="true" hint="AAAA-MM-DD">
+          <app-input formControlName="transactionDate" type="text" inputmode="numeric" />
+        </app-form-field>
+        <app-form-field icon="note" label="Glosa" hint="Descripción del asiento, opcional">
+          <app-input formControlName="description" type="text" />
+        </app-form-field>
+      </form>
+
+      <h3>Filas del asiento</h3>
+      @if (filasDelAsiento().length === 0) {
+        <p class="nota">Todavía no agregaste ninguna fila.</p>
+      } @else {
+        <ul class="filas-del-asiento">
+          @for (fila of filasDelAsiento(); track $index) {
+            <li class="fila-del-asiento">
+              <span class="fila-del-asiento__cuenta">{{ fila.accountLabel }}</span>
+              <!-- Badge de ALOVIDA: fondo claro + texto oscuro del mismo tono, así
+                   que debe/haber no dependen sólo del color — el texto "Debe"/
+                   "Haber" ya los distingue, el tono es un refuerzo visual. -->
+              <app-badge
+                class="fila-del-asiento__direccion"
+                [variant]="fila.direction === 'DEBIT' ? 'info' : 'warning'"
+              >
+                {{ fila.direction === 'DEBIT' ? 'Debe' : 'Haber' }}
+              </app-badge>
+              <span class="fila-del-asiento__importe">{{ fila.amount }}</span>
+              <span class="fila-del-asiento__acciones">
+                <button app-button variant="ghost" size="sm" type="button" (clicked)="editarFila($index)">
+                  Modificar
+                </button>
+                <button app-button variant="ghost" size="sm" type="button" (clicked)="eliminarFila($index)">
+                  Eliminar
+                </button>
+              </span>
+            </li>
+          }
+        </ul>
+
+        <div class="cuadre" appAnuncio [asertivo]="false" [enfocar]="false">
+          <app-status-seal
+            [variant]="asientoBalanceado() ? 'approved' : 'rejected'"
+            [label]="asientoBalanceado() ? 'Cuadra' : 'Descuadrado: ' + descuadreEnVivo().diferencia"
+          />
+          <p class="nota">
+            Debe {{ descuadreEnVivo().debe }} — Haber {{ descuadreEnVivo().haber }}. Este cálculo es
+            sólo una guía: el servidor rechaza cualquier asiento que no balancee, aunque acá se vea
+            cuadrado.
+          </p>
+        </div>
+      }
+
+      <form [formGroup]="filaEnCurso" (ngSubmit)="agregarOModificarFila()" novalidate class="app-form-grid">
+        <app-form-field icon="billing" label="Cuenta" [required]="true">
+          <app-select
+            formControlName="accountId"
+            [options]="opcionesDeCuenta()"
+            placeholder="Elegí una cuenta"
+          />
+        </app-form-field>
+        <app-form-field icon="pin" label="Dirección" [required]="true">
+          <app-select formControlName="direction" [options]="opcionesDeDireccion" />
+        </app-form-field>
+        <app-form-field icon="chart" label="Importe" [required]="true" hint="Decimal, hasta dos posiciones.">
+          <app-input formControlName="amount" type="text" inputmode="decimal" />
+        </app-form-field>
+        <app-form-field icon="note" label="Memo" hint="Opcional">
+          <app-input formControlName="memo" type="text" />
+        </app-form-field>
+        <button app-button variant="secondary" type="submit">
+          {{ filaEnEdicion() === null ? 'Agregar fila' : 'Guardar cambios en la fila' }}
+        </button>
+        @if (filaEnEdicion() !== null) {
+          <button app-button variant="ghost" type="button" (clicked)="cancelarEdicionDeFila()">
+            Cancelar edición
+          </button>
+        }
+      </form>
+
+      <div class="acciones-del-asiento">
+        <button
+          app-button
+          variant="secondary"
+          type="button"
+          [disabled]="enviandoAsiento() || filasDelAsiento().length < 2"
+          (clicked)="guardarBorrador()"
+        >
+          {{ enviandoAsiento() ? 'Guardando…' : 'Guardar en borrador' }}
+        </button>
+        @if (puedePostearDirecto()) {
+          <button
+            app-button
+            variant="primary"
+            type="button"
+            [disabled]="enviandoAsiento() || filasDelAsiento().length < 2"
+            (clicked)="postearDirecto()"
+          >
+            {{ enviandoAsiento() ? 'Posteando…' : 'Registrar y postear' }}
+          </button>
+        }
+      </div>
+    </app-card>
+  }
 }

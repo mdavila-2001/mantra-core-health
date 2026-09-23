@@ -1,0 +1,73 @@
+---
+id: PLATE_323
+lamina: 323
+pagina_fisica_pdf: 350
+region_id: R04
+subregion_id: R04S07
+confianza_titulo: gold_manual
+---
+# Lámina 323: Nervios del intestino grueso
+
+## Definición anatómica ampliada
+
+La **lámina 323**, titulada **«Nervios del intestino grueso»**, pertenece a **Abdomen > Inervación**. Dentro del Atlas, debe entenderse como una unidad visual de anatomía macroscópica: su significado principal no está en una definición textual aislada sino en las relaciones espaciales que la ilustración permite observar.
+
+región del tronco situada entre tórax y pelvis, con pared musculofascial, cavidad peritoneal, tubo digestivo y órganos accesorios, grandes vasos, plexos autónomos, riñones y glándulas suprarrenales. Las relaciones peritoneales y retroperitoneales son esenciales para entender su organización. En concreto, el bloque **Inervación** corresponde a vías autonómicas y somáticas relevantes para la región, incluidos plexos, ganglios y nervios periféricos.
+
+La lámina se centra en organización nerviosa. Para interpretarla conviene separar nervio o plexo, raíces y ramas, trayecto regional y relaciones con estructuras vecinas. Si la imagen usa códigos de fibras sensitivas, motoras o autónomas, esos significados deben recuperarse de la lámina concreta y no extrapolarse automáticamente a todas las entradas asociadas.
+
+Para entrenamiento de IA, la descripción de esta lámina se divide en tres niveles: **(1) evidencia fuente**, que incluye número de lámina, título y bloque editorial; **(2) términos recuperados del índice**, que sirven para localizar estructuras representadas; y **(3) inferencias permitidas**, limitadas a clasificación y contexto. No debe concluirse una relación clínica, fisiológica o terapéutica solo porque dos términos aparezcan asociados a la misma lámina.
+
+## Entradas indexadas de mayor confianza asociadas
+
+- **Arteria(s) — apendicular** — `arteria` — `consensus_high`
+- **Arteria(s) — cecal** — `arteria` — `consensus_high`
+- **Arteria(s) — izquierda** — `arteria` — `consensus_high`
+- **Arteria(s) — marginal** — `arteria` — `consensus_high`
+- **Arteria(s) — mesentérica — inferior** — `arteria` — `consensus_high`
+- **Arteria(s) — rectal — media** — `arteria` — `consensus_high`
+- **Arteria(s) — rectal — superior** — `arteria` — `consensus_high`
+- **Arteria(s) — rectosigmoidea** — `arteria` — `consensus_high`
+- **Arteria(s) — sigmoidea** — `arteria` — `consensus_high`
+- **Esófago** — `organo_viscera` — `consensus_high`
+- **Ganglio — derecho** — `ganglio` — `consensus_high`
+- **Ganglio — izquierdo** — `ganglio` — `consensus_high`
+- **Ganglio — celíaco** — `ganglio` — `consensus_high`
+- **Yeyuno — nervios** — `nervio` — `consensus_high`
+- **Nervio(s) — izquierdo** — `nervio` — `consensus_high`
+- **Nervio(s) — derecho** — `nervio` — `consensus_high`
+- **Plexo — apendicular** — `plexo` — `consensus_high`
+- **Plexo — cecal** — `plexo` — `consensus_high`
+- **Plexo — cólico — derecho** — `plexo` — `consensus_high`
+- **Plexo — cólico — izquierdo** — `plexo` — `consensus_high`
+- **Plexo — cólico — medio** — `plexo` — `consensus_high`
+- **Plexo — derecho** — `plexo` — `consensus_high`
+- **Plexo — superior** — `plexo` — `consensus_high`
+- **Plexo — ileocólico** — `plexo` — `consensus_high`
+- **Plexo — iliaco — derecho** — `plexo` — `consensus_high`
+- **Plexo — intermesentérico** — `plexo` — `consensus_high`
+- **Plexo — marginal** — `plexo` — `consensus_high`
+- **Plexo — mesentérico — inferior** — `plexo` — `consensus_high`
+- **Plexo — pancreatoduodenal inferior** — `plexo` — `consensus_high`
+- **Plexo — rectal** — `plexo` — `consensus_high`
+- **Plexo — medio** — `plexo` — `consensus_high`
+- **Plexo — rectosigmoideo** — `plexo` — `consensus_high`
+- **Plexo — izquierdo** — `plexo` — `consensus_high`
+- **Plexo — sigmoideo** — `plexo` — `consensus_high`
+- **Plexo — suprarrenal — izquierdo** — `plexo` — `consensus_high`
+
+## Evidencia OCR del encabezado
+
+```text
+Nervios del intestino grueso E
+inervación SSS 38
+```
+
+## Relaciones seguras
+
+- `PLATE_323 -> PERTENECE_A_SUBREGION -> R04S07`
+- `PLATE_323 -> PERTENECE_A_REGION -> R04`
+
+## Qué NO inferir
+
+No inferir origen/inserción muscular, modalidad nerviosa, territorio vascular, diagnóstico ni tratamiento salvo que exista una fuente explícita adicional. La presencia visual o editorial es una relación de **representación**, no de causalidad.

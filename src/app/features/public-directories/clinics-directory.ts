@@ -7,6 +7,8 @@ import type {
   PublicSearchQuery,
   PublicSearchResult,
 } from '@core/data-access/public-directory/public-directory.types';
+import { AppButton } from '@shared/components/atoms/button/button';
+import { DepartmentMap } from '@shared/components/organisms/department-map/department-map';
 import { DirectoryPage } from '@shared/components/organisms/directory-page/directory-page';
 import type { SustantivoDelDirectorio } from '@shared/components/organisms/directory-page/directory-page.types';
 
@@ -37,8 +39,9 @@ const SUSTANTIVO: SustantivoDelDirectorio = {
  */
 @Component({
   selector: 'app-clinics-directory',
-  imports: [DirectoryPage],
+  imports: [AppButton, DepartmentMap, DirectoryPage],
   templateUrl: './clinics-directory.html',
+  styleUrl: './mapa-directorio.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ClinicsDirectory extends PublicDirectoryListing {
@@ -46,6 +49,9 @@ export class ClinicsDirectory extends PublicDirectoryListing {
 
   protected readonly sustantivo = SUSTANTIVO;
   protected readonly queSonEnSingular = 'una clínica';
+
+  /** La ficha de un resultado, dentro del panel. Ver `rutaDeLaFicha`. */
+  protected readonly rutaDeLaFicha = '/clinics-directory';
 
   protected buscar(
     filtros: PublicSearchQuery,

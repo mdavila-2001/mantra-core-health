@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { nombreDeContentDisposition } from '../files/content-disposition';
 import type {
   Allergy,
   AllergyIntoleranceRegistration,
@@ -32,6 +33,8 @@ import type {
   NewObservation,
   Observation,
   ObservationRegistration,
+  OwnMedicalAspects,
+  OwnMedicalAspectsChanges,
   PatientChart,
 } from './clinical.types';
 
@@ -122,6 +125,39 @@ export class ClinicalClient {
           careEpisodes: (body.careEpisodes ?? []).map(toCareEpisode),
         })),
       );
+  }
+
+  /* ---- FT-22 · aspectos médicos declarados por el titular ----------------- */
+
+  /**
+   * `GET /clinical/me/medical-aspects` — lo que la persona declara de su salud.
+   *
+   * **Sin identificador de paciente**, como el resto de las lecturas del
+   * portal: el servidor resuelve al titular por el vínculo de la cuenta, así
+   * que no hay forma de pedir los de otra persona desde acá.
+   *
+   * Un titular que nunca declaró nada responde el objeto vacío, no un 404:
+   * «todavía no llenaste esto» es un estado corriente del formulario, no un
+   * error que haya que manejar.
+   */
+  getOwnMedicalAspects(): Observable<OwnMedicalAspects> {
+    return this.http
+      .get<WireMedicalAspects>(this.url('/clinical/me/medical-aspects'))
+      .pipe(map(toMedicalAspects));
+  }
+
+  /**
+   * `PUT /clinical/me/medical-aspects` — guarda lo declarado.
+   *
+   * Los campos ausentes no se tocan y un `''` borra: es lo que permite guardar
+   * una sección sin pisar las demás. `PUT` y no `PATCH` porque el recurso es
+   * uno solo por titular y el servidor devuelve el estado completo resultante,
+   * que es lo que la pantalla vuelve a pintar tras guardar.
+   */
+  saveOwnMedicalAspects(cambios: OwnMedicalAspectsChanges): Observable<OwnMedicalAspects> {
+    return this.http
+      .put<WireMedicalAspects>(this.url('/clinical/me/medical-aspects'), cambios)
+      .pipe(map(toMedicalAspects));
   }
 
   /**
@@ -299,6 +335,43 @@ export class ClinicalClient {
       .pipe(map(toMedicationRequestRegistration));
   }
 
+  /**
+   * `GET /clinical/prescriptions/:id/pdf` — el PDF oficial de la receta
+   * (subtarea B.3).
+   *
+   * Único camino de descarga: ya no hay un generador local en el navegador
+   * para este documento (el paciente no puede leer el padrón de
+   * profesionales, así que un PDF armado del lado del cliente salía sin
+   * matrícula ni membrete). El backend lo arma con la misma identidad —
+   * emitida u oficial, o marcada como copia de trabajo si la receta sigue en
+   * borrador — sin importar quién lo pida.
+   *
+   * `responseType: 'blob', observe: 'response'` para leer el nombre sugerido
+   * de `Content-Disposition`, mismo patrón que `FilesClient.storedFileContent`.
+   *
+   * @param medicationRequestId - La receta a descargar.
+   * @returns Los bytes del PDF y, si el backend lo declaró, el nombre sugerido.
+   */
+  downloadPrescriptionPdf(
+    medicationRequestId: string,
+  ): Observable<{ readonly blob: Blob; readonly fileName?: string }> {
+    return this.http
+      .get(
+        this.url(
+          `/clinical/prescriptions/${encodeURIComponent(medicationRequestId)}/pdf`,
+        ),
+        { responseType: 'blob', observe: 'response' },
+      )
+      .pipe(
+        map((respuesta) => ({
+          blob: respuesta.body ?? new Blob([]),
+          fileName: nombreDeContentDisposition(
+            respuesta.headers.get('Content-Disposition'),
+          ),
+        })),
+      );
+  }
+
   /* -- Los tres registros de la ficha -------------------------------------- */
 
   /**
@@ -350,6 +423,77 @@ export class ClinicalClient {
   }
 
   /**
+   * `POST /clinical/conditions/:id/attachments` — liga un archivo ya subido
+   * a ESTE diagnóstico puntual (ALV-033, reemplazo del «Adjuntos» genérico
+   * eliminado en ALV-032).
+   *
+   * A propósito no pasa por `POST /common/files/:id/links` directo: ese
+   * endpoint es genérico y no exige rol clínico ni que la condición exista.
+   * Esta ruta sí —hereda el guard de `ClinicalRecordsController`— y es la
+   * única forma correcta de adjuntar algo a un diagnóstico desde la pantalla.
+   *
+   * @param conditionId - La condición a la que se liga el archivo.
+   * @param fileId - El archivo, ya subido con `FilesClient.upload`.
+   */
+  attachFileToCondition(conditionId: string, fileId: string): Observable<void> {
+    return this.http
+      .post<unknown>(
+        this.url(`/clinical/conditions/${encodeURIComponent(conditionId)}/attachments`),
+        { fileId },
+      )
+      .pipe(map(() => undefined));
+  }
+
+  /**
+   * `POST /clinical/procedures/:id/attachments` — liga un archivo ya subido
+   * a ESTE procedimiento puntual (ALV-033, odontología).
+   *
+   * Un tratamiento odontológico registrado con `ProceduresClient.recordDentalProcedure`
+   * es, del lado del servidor, un `clinical.procedures` con categoría dental —
+   * por eso el adjunto pasa por acá y no por `procedures_perioperative`, mismo
+   * criterio que `attachFileToCondition`.
+   *
+   * @param procedureId - El procedimiento al que se liga el archivo.
+   * @param fileId - El archivo, ya subido con `FilesClient.upload`.
+   */
+  attachFileToProcedure(procedureId: string, fileId: string): Observable<void> {
+    return this.http
+      .post<unknown>(
+        this.url(`/clinical/procedures/${encodeURIComponent(procedureId)}/attachments`),
+        { fileId },
+      )
+      .pipe(map(() => undefined));
+  }
+
+  /**
+   * `POST /clinical/medication-requests/:id/attachments` — liga un archivo ya
+   * subido a **esta receta**.
+   *
+   * Mismo criterio que el diagnóstico: el vínculo genérico de `common` no
+   * verifica que la receta exista ni quién puede adjuntarle nada, y esto sí es
+   * dato clínico.
+   *
+   * ⚠️ **La ruta todavía no existe en el backend** (P25). La maqueta la sirve.
+   */
+  attachFileToMedicationRequest(requestId: string, fileId: string): Observable<void> {
+    return this.http.post<void>(
+      this.url(`/clinical/medication-requests/${encodeURIComponent(requestId)}/attachments`),
+      { fileId },
+    );
+  }
+
+  /**
+   * `POST /clinical/allergy-intolerances/:id/attachments` — liga un archivo ya
+   * subido a **esta alergia**. Mismo caso que el anterior, y mismo P25.
+   */
+  attachFileToAllergy(allergyId: string, fileId: string): Observable<void> {
+    return this.http.post<void>(
+      this.url(`/clinical/allergy-intolerances/${encodeURIComponent(allergyId)}/attachments`),
+      { fileId },
+    );
+  }
+
+  /**
    * `POST /clinical/allergy-intolerances` — registra una alergia con sus
    * reacciones (UC-08-09).
    *
@@ -392,7 +536,7 @@ export class ClinicalClient {
           ...observacion,
           effectiveStartAt: instanteDe(observacion.effectiveStartAt),
           issuedAt: instanteDe(observacion.issuedAt),
-          performers: observacion.performers.map((ejecutante) => sinAusentes(ejecutante)),
+          performers: observacion.performers?.map((ejecutante) => sinAusentes(ejecutante)),
           components: observacion.components?.map((componente) => sinAusentes(componente)),
           referenceRanges: observacion.referenceRanges?.map((rango) => sinAusentes(rango)),
         }),
@@ -803,4 +947,15 @@ function fecha<K extends string>(
   return value === null || value === undefined
     ? {}
     : ({ [key]: new Date(value) } as Record<K, Date>);
+}
+
+/* ---- FT-22 · aspectos médicos --------------------------------------------- */
+
+/** Lo que viaja por el cable: la fecha llega como texto ISO. */
+type WireMedicalAspects = Omit<OwnMedicalAspects, 'updatedAt'> & {
+  readonly updatedAt?: string | null;
+};
+
+function toMedicalAspects({ updatedAt, ...resto }: WireMedicalAspects): OwnMedicalAspects {
+  return { ...resto, ...fecha('updatedAt', updatedAt) };
 }

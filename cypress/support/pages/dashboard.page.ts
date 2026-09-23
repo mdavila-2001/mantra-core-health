@@ -3,10 +3,23 @@ import { ESCENARIO_POR_DEFECTO, type NombreEscenario } from '../fixtures/escenar
 /**
  * Panel (`/dashboard`), la primera pantalla con sesión.
  *
- * Tiene dos mitades que se prueban por separado: los datos que salen del propio
- * token —sin ninguna petición detrás— y la lectura real del directorio público,
- * que cruza el interceptor y la traducción de errores y se pinta con los
- * estados de vista.
+ * ## Qué cambió el 19/09/2026
+ *
+ * El panel abría con cuatro bloques de sistema —«Tu cuenta» con los roles del
+ * token, el conteo del directorio público, y las cifras de secciones y de
+ * organizaciones— y el propietario los mandó sacar: ninguno contestaba la
+ * pregunta con la que se abre un panel a las siete de la mañana. En su lugar
+ * está «Lo que toca hoy», la jornada de quien atiende.
+ *
+ * Esto se llevó puestos los ayudantes del directorio y de las insignias de rol,
+ * y con ellos la regresión `panel-directorio.cy.ts`: una prueba de una tarjeta
+ * que ya no existe no es cobertura, es ruido. Los nueve estados que aquella
+ * comprobaba viven ahora en las pruebas de `agenda-de-hoy` y en las del propio
+ * `view-state-host`.
+ *
+ * El ancla de «el panel de trabajo cargó» pasó a ser «Tus accesos», que es el
+ * único bloque que ven TODOS los roles de trabajo: la jornada sólo la ve quien
+ * tiene perfil profesional, y el listado de pacientes, quien administra.
  */
 /** Fuera del objeto para que el valor por defecto de `abrir` no se autorreferencie. */
 const RUTA = '/dashboard';
@@ -27,7 +40,7 @@ export const DashboardPage = {
    * tiene que ser de trabajo — si no, lo que se dibuja es el otro.
    */
   esperarCargada(): void {
-    cy.porTestId('panel-sesion').should('be.visible');
+    cy.porTestId('panel-accesos').should('be.visible');
   },
 
   /** El panel del PACIENTE cargó — «Mi salud». */
@@ -43,24 +56,7 @@ export const DashboardPage = {
    * blanco.
    */
   esperarAlgunPanel(): void {
-    cy.get('[data-testid="panel-sesion"], [data-testid="mi-salud"]').should('be.visible');
-  },
-
-  /**
-   * Los códigos de rol de las insignias.
-   *
-   * Salen de `data-role`, no del texto: lo visible es la etiqueta en palabras
-   * («Paciente»), y el código del token sólo viaja en el atributo.
-   */
-  rolesVisibles(): Cypress.Chainable<string[]> {
-    return cy
-      .get('[data-testid="panel-roles"] app-badge')
-      .then(($insignias) =>
-        $insignias
-          .toArray()
-          .map((nodo) => nodo.getAttribute('data-role') ?? '')
-          .filter((codigo) => codigo !== ''),
-      );
+    cy.get('[data-testid="panel-accesos"], [data-testid="mi-salud"]').should('be.visible');
   },
 
   /** Afirma el encabezado de la pantalla. */
@@ -68,59 +64,24 @@ export const DashboardPage = {
     cy.get('h1').should('have.text', titulo);
   },
 
-  esperarDirectorio(): void {
-    cy.porTestId('panel-directorio').should('be.visible');
+  /** La franja «Lo que toca hoy» está a la vista. Sólo la ve quien atiende. */
+  esperarJornada(): void {
+    cy.porTestId('panel-hoy').should('be.visible');
+  },
+
+  /** A esta sesión no le corresponde jornada: no se le dibuja una franja vacía. */
+  sinJornada(): void {
+    cy.porTestId('panel-hoy').should('not.exist');
   },
 
   /**
-   * Afirma cuántos registros dice el panel que hay.
-   *
-   * El conteo es la señal de que la lectura terminó bien.
-   */
-  esperarConteoDelDirectorio(cuantos: number): void {
-    cy.porTestId('panel-directorio-conteo')
-      .invoke('text')
-      .should('match', new RegExp(`\\b${cuantos}\\b\\s*registro`));
-  },
-
-  /** Afirma que el panel **no** muestra ningún conteo. */
-  sinConteoDelDirectorio(): void {
-    cy.porTestId('panel-directorio-conteo').should('not.exist');
-  },
-
-  /**
-   * El estado de error del directorio.
-   *
-   * Es una región con `role="alert"` dentro de la tarjeta: se localiza por rol y
-   * no por su texto, que puede cambiar de redacción sin que el comportamiento
-   * cambie.
-   */
-  esperarErrorDelDirectorio(): Cypress.Chainable<string> {
-    return cy
-      .get('[data-testid="panel-directorio"] [role="alert"]')
-      .invoke('text')
-      .should('match', /\S/);
-  },
-
-  /**
-   * El botón de reintentar del estado de error.
-   *
-   * La tarjeta ofrece dos botones —copiar el código de soporte y reintentar— y
-   * se elige por su texto porque es lo único que los distingue; el orden dentro
-   * del bloque de acciones no es un contrato.
-   */
-  reintentarDirectorio(): void {
-    cy.get('[data-testid="panel-directorio"] button').contains(/^\s*Reintentar\s*$/).click();
-  },
-
-  /**
-   * Espera a que el esqueleto de carga se vaya.
+   * Espera a que el esqueleto de la jornada se vaya.
    *
    * Es la afirmación que importa: un estado de carga que **no se resuelve** es
    * el defecto de verdad. Preguntarlo sin esperar mide el instante equivocado
    * —a veces antes de que la petición salga siquiera— y falla o pasa por azar.
    */
   esperarSinEsqueleto(): void {
-    cy.get('[data-testid="panel-directorio"] app-skeleton').should('not.exist');
+    cy.get('[data-testid="panel-hoy"] .hoy__esqueleto').should('not.exist');
   },
 };

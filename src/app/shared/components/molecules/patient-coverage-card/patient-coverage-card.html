@@ -1,0 +1,101 @@
+<article class="coverage" data-testid="patient-coverage-card">
+  <header>
+    <h3>{{ coverage().carrierName }}</h3>
+    <div class="coverage__badges">
+      <app-badge [variant]="coverage().isPublic ? 'info' : 'secondary'">{{
+        coverage().isPublic ? 'Público' : 'Privado'
+      }}</app-badge>
+      <app-badge [variant]="coverage().verified ? 'success' : 'secondary'">{{
+        coverage().verified ? 'Verificada' : 'Sin verificar'
+      }}</app-badge>
+      <app-badge [variant]="coverage().validityStatus === 'CURRENT' ? 'success' : 'secondary'">{{
+        validityText(coverage().validityStatus)
+      }}</app-badge>
+    </div>
+  </header>
+  <dl class="coverage__data">
+    <div>
+      <dt>Plan</dt>
+      <dd>{{ coverage().planName ?? 'No registrado' }}</dd>
+    </div>
+    <div>
+      <dt>Póliza</dt>
+      <dd>{{ coverage().policyIdentifier ?? 'No registrado' }}</dd>
+    </div>
+    <div>
+      <dt>{{ coverage().verified ? 'Afiliado' : 'Identificador declarado' }}</dt>
+      <dd>{{ coverage().memberIdentifier ?? 'No registrado' }}</dd>
+    </div>
+    <div>
+      <dt>Estado</dt>
+      <dd>{{ statusText() }}</dd>
+    </div>
+    <div>
+      <dt>Desde</dt>
+      <dd>{{ date(coverage().effectiveFrom) }}</dd>
+    </div>
+    <div>
+      <dt>Hasta</dt>
+      <dd>{{ date(coverage().effectiveTo) }}</dd>
+    </div>
+  </dl>
+  @if (!coverage().verified) {
+    <p class="coverage__note">
+      El identificador declarado es provisional: todavía no es un carnet validado por la
+      aseguradora.
+    </p>
+  }
+  <h4>Beneficios</h4>
+  @if (benefits().length > 0) {
+    <ul class="coverage__benefits">
+      @for (benefit of benefits(); track benefit.id) {
+        <li>
+          <strong>{{ benefit.categoryName ?? 'Categoría no informada' }}</strong>
+          <span>{{
+            benefit.serviceName ??
+              (benefit.serviceConceptId ? 'Servicio no informado' : 'Beneficio general')
+          }}</span>
+          <span
+            >{{ validityText(benefit.validityStatus) }} · Desde {{ date(benefit.effectiveFrom) }} ·
+            Hasta {{ date(benefit.effectiveTo) }}</span
+          >
+          <dl class="coverage__data cifras-tabulares">
+            <div>
+              <dt>Cobertura</dt>
+              <dd>
+                {{
+                  benefit.coveragePercent === undefined || benefit.coveragePercent === null
+                    ? 'No informado'
+                    : benefit.coveragePercent + '%'
+                }}
+              </dd>
+            </div>
+            <div>
+              <dt>Copago</dt>
+              <dd>{{ amount(benefit.copayAmount) }}</dd>
+            </div>
+            <div>
+              <dt>Deducible</dt>
+              <dd>{{ amount(benefit.deductibleAmount) }}</dd>
+            </div>
+          </dl>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="coverage__note">No hay beneficios informados para esta póliza.</p>
+  }
+  <h4>Contacto de la aseguradora</h4>
+  <div class="coverage__contacts">
+    @if (whatsapp(); as url) {
+      <a app-link [href]="url" [external]="true">WhatsApp</a>
+    } @else {
+      <span>WhatsApp: No informado</span>
+    }
+    @if (telephone(); as phone) {
+      <a app-link [href]="phone">Call center: {{ coverage().carrierCallCenterPhone }}</a>
+    } @else {
+      <span>Call center: No informado</span>
+    }
+  </div>
+</article>

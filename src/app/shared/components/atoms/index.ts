@@ -8,6 +8,10 @@ export { Avatar } from './avatar/avatar';
 export { AVATAR_SIZES, AVATAR_STATUSES, AVATAR_TONES } from './avatar/avatar.types';
 export type { AvatarSize, AvatarStatus, AvatarTone } from './avatar/avatar.types';
 
+/* La salida de una pantalla profunda: deshace el paso si lo hubo y, si no,
+   lleva al destino de reserva. */
+export { BackLink } from './back-link/back-link';
+
 export { Badge } from './badge/badge';
 export { BADGE_SIZES, BADGE_VARIANTS } from './badge/badge.types';
 export type { BadgeSize, BadgeValue, BadgeVariant } from './badge/badge.types';
@@ -41,6 +45,8 @@ export type { LinkVariant } from './link/link.types';
 export { NavIcon } from './nav-icon/nav-icon';
 export { NAV_ICON_NAMES } from './nav-icon/nav-icon.types';
 export type { NavIconName } from './nav-icon/nav-icon.types';
+
+export { QuestionTypeIcon } from './question-type-icon/question-type-icon';
 
 export { Progress } from './progress/progress';
 export {

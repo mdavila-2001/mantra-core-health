@@ -1,7 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
+import { BehaviorSubject } from 'rxjs';
 
 import { PractitionersDirectory, type GrupoDeEspecialidad } from './practitioners-directory';
 
@@ -24,9 +25,11 @@ const FILA = {
   displayName: 'Dra. Lucía Salas',
   professionalTitle: 'Cardióloga',
   verificationStatusConceptId: 'st-ok',
+  verified: true,
   acceptsNewPatients: true,
   telehealthAvailable: false,
   specialties: [{ specialtyConceptId: 'esp-cardio', isPrimary: true }],
+  workplaces: ['Clínica Foianini', 'Hospital San Juan de Dios'],
 };
 
 const OTRA = {
@@ -61,10 +64,25 @@ const CONCEPTOS = {
 describe('PractitionersDirectory', () => {
   let componente: PractitionersDirectory;
   let http: HttpTestingController;
+  /**
+   * Los parámetros de la URL, empujables desde la prueba.
+   *
+   * La pantalla decide portada o lista mirando `?especialidad=`, así que el
+   * parámetro es una entrada del componente tanto como sus inputs: se declara
+   * al configurar el módulo —después ya no se puede— y cada prueba empuja el
+   * suyo antes de montar.
+   */
+  let parametros: BehaviorSubject<Record<string, string>>;
 
   beforeEach(() => {
+    parametros = new BehaviorSubject<Record<string, string>>({});
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { queryParams: parametros } },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
   });
@@ -72,7 +90,34 @@ describe('PractitionersDirectory', () => {
   afterEach(() => http.verify());
 
   function montar(): void {
-    componente = TestBed.createComponent(PractitionersDirectory).componentInstance;
+    // `detectChanges` y no sólo `createComponent`: la lectura la dispara un
+    // `effect` sobre el parámetro de la URL —para que cambiar de especialidad
+    // recargue sin recrear la pantalla—, y los efectos no corren hasta la
+    // primera detección.
+    const fixture = TestBed.createComponent(PractitionersDirectory);
+    componente = fixture.componentInstance;
+    fixture.detectChanges();
+  }
+
+  /**
+   * Monta la pantalla **dentro de una especialidad**, que es donde vive la
+   * lista. Sin `?especialidad=` la pantalla es la portada y no pide la guía:
+   * ésa es justamente la diferencia que introdujo el grid.
+   */
+  function montarEnEspecialidad(id = 'esp-cardio'): void {
+    parametros.next({ especialidad: id });
+    montar();
+  }
+
+  /** Responde el recuento que dibuja la portada. */
+  function responderRecuento(
+    items: { specialtyConceptId: string; practitionerCount: number }[],
+    practitionerTotal = items.reduce((s, i) => s + i.practitionerCount, 0),
+    withoutSpecialtyCount = 0,
+  ): void {
+    http
+      .expectOne((r) => r.url === '/profiles/practitioners/specialty-counts')
+      .flush({ items, practitionerTotal, withoutSpecialtyCount });
   }
 
   function interno<T>(nombre: string): T {
@@ -116,10 +161,185 @@ describe('PractitionersDirectory', () => {
     http.expectOne((r) => r.url === '/terminology/concepts').flush(conceptos);
   }
 
+  /* -- 0 · La portada de especialidades ------------------------------------ */
+
+  /**
+   * El pedido de la bitácora: «un grid de especialidades que al darle click
+   * despliega la lista de doctores». Lo que estas pruebas fijan es el ahorro
+   * que lo justifica —la portada NO trae la guía— y que las tarjetas no
+   * prometan lo que no hay.
+   */
+  describe('portada de especialidades', () => {
+    it('sin especialidad elegida dibuja las tarjetas y NO pide la guía', () => {
+      montar();
+
+      responderRecuento([
+        { specialtyConceptId: 'esp-cardio', practitionerCount: 12 },
+        { specialtyConceptId: 'esp-pediatria', practitionerCount: 1 },
+      ]);
+      responderConceptos();
+
+      // Lo que esta pantalla vino a evitar: paginar la guía entera para contar.
+      http.expectNone((r) => r.url === '/profiles/practitioners');
+
+      const tarjetas = interno<() => readonly { nombre: string; cantidad: number }[]>('tarjetas')();
+      expect(tarjetas).toEqual([
+        { conceptId: 'esp-cardio', nombre: 'Cardiología', cantidad: 12 },
+        { conceptId: 'esp-pediatria', nombre: 'Pediatría', cantidad: 1 },
+      ]);
+    });
+
+    it('el total no es la suma de las tarjetas: quien ejerce dos cuenta una vez', () => {
+      montar();
+
+      // 12 + 1 = 13 tarjetas, pero hay 10 personas: tres ejercen las dos.
+      responderRecuento(
+        [
+          { specialtyConceptId: 'esp-cardio', practitionerCount: 12 },
+          { specialtyConceptId: 'esp-pediatria', practitionerCount: 1 },
+        ],
+        10,
+      );
+      responderConceptos();
+
+      expect(interno<() => number>('totalDeProfesionales')()).toBe(10);
+    });
+
+    /**
+     * El defecto que introdujo la portada: la guía se recorre por especialidad,
+     * y quien se registra solo nace SIN ninguna. Sin esta tarjeta, los médicos
+     * con cuenta —los que atienden por la app— quedaban inalcanzables.
+     */
+    it('ofrece una tarjeta para los que no declaran especialidad', () => {
+      montar();
+      responderRecuento([{ specialtyConceptId: 'esp-cardio', practitionerCount: 12 }], 20, 8);
+      responderConceptos();
+
+      const tarjetas =
+        interno<() => readonly { conceptId: string; cantidad: number }[]>('tarjetas')();
+      const sinEspecialidad = tarjetas.at(-1);
+      expect(sinEspecialidad).toEqual({
+        conceptId: 'sin-especialidad',
+        nombre: 'Sin especialidad declarada',
+        cantidad: 8,
+      });
+    });
+
+    it('sin nadie sin especialidad, esa tarjeta no aparece', () => {
+      montar();
+      responderRecuento([{ specialtyConceptId: 'esp-cardio', practitionerCount: 12 }], 12, 0);
+      responderConceptos();
+
+      const tarjetas = interno<() => readonly { conceptId: string }[]>('tarjetas')();
+      expect(tarjetas.map((t) => t.conceptId)).toEqual(['esp-cardio']);
+    });
+
+    it('esa tarjeta pide el complemento al servidor, no una especialidad', () => {
+      montarEnEspecialidad('sin-especialidad');
+
+      const peticion = http.expectOne((r) => r.url === '/profiles/practitioners');
+      expect(peticion.request.params.get('withoutSpecialty')).toBe('true');
+      expect(peticion.request.params.has('specialtyConceptId')).toBe(false);
+      peticion.flush({ items: [FILA], count: 1, limit: 50, nextCursor: null });
+      responderConceptos();
+    });
+
+    it('con especialidad en la URL no dibuja la portada: va derecho a la lista', () => {
+      montarEnEspecialidad('esp-cardio');
+
+      // Ni una lectura del recuento: la portada no se muestra.
+      http.expectNone((r) => r.url === '/profiles/practitioners/specialty-counts');
+      responder([FILA]);
+      responderConceptos();
+
+      expect(interno<() => boolean>('enPortada')()).toBe(false);
+    });
+
+    /**
+     * La mitad del ahorro: dentro de una especialidad se piden SUS
+     * profesionales, no los de toda la red para después filtrar en memoria.
+     */
+    it('la lista de una especialidad la acota el servidor', () => {
+      montarEnEspecialidad('esp-cardio');
+
+      const peticion = http.expectOne((r) => r.url === '/profiles/practitioners');
+      expect(peticion.request.params.get('specialtyConceptId')).toBe('esp-cardio');
+      peticion.flush({ items: [FILA], count: 1, limit: 50, nextCursor: null });
+      responderConceptos();
+    });
+  });
+
+  /**
+   * Fila 30 de la bitácora: «cada uno con los botones de REVISAR
+   * DISPONIBILIDAD». El título ya lleva a la ficha; esto tiene que llevar a los
+   * horarios, que es donde se compara a dos profesionales.
+   */
+  it('cada tarjeta ofrece revisar la disponibilidad, anclada en los horarios', () => {
+    montarEnEspecialidad();
+    responder([FILA]);
+    responderConceptos();
+
+    const tarjeta = grupos()[0].profesionales[0];
+    expect(tarjeta.action).toEqual({
+      label: 'Revisar disponibilidad',
+      link: '/directory/per-1',
+      fragment: 'horarios',
+    });
+    // Mismo destino que el título, distinta altura: sin el ancla serían dos
+    // enlaces al mismo lugar.
+    expect(tarjeta.action?.link).toBe(tarjeta.link);
+  });
+
+  /**
+   * La guía lista el padrón entero —un perfil nace pendiente por diseño, y
+   * verificarlo exige que una autoridad valide la matrícula—, así que el sello
+   * es lo único que distingue a quien probó lo que declara.
+   */
+  it('marca al verificado y no estampa nada al que todavía no lo está', () => {
+    montarEnEspecialidad();
+    responder([FILA, { ...OTRA, verified: false }]);
+    responderConceptos();
+
+    const todos = grupos().flatMap((g) => g.profesionales);
+    const conSello = todos.find((p) => p.id === 'per-1');
+    const sinSello = todos.find((p) => p.id === 'per-2');
+
+    expect(conSello?.seals?.map((s) => s.label)).toContain('Matrícula verificada');
+    // Al pendiente no se le estampa «sin verificar»: eso diría de él algo que
+    // no es suyo, y el padrón lo publica igual.
+    expect(sinSello?.seals?.map((s) => s.label) ?? []).not.toContain('Matrícula verificada');
+    expect(sinSello?.seals?.map((s) => s.label).join(' ') ?? '').not.toContain('verificar');
+  });
+
+  it('la tarjeta dice dónde atiende, y resume cuando son muchas', () => {
+    montarEnEspecialidad();
+    responder([
+      FILA,
+      {
+        ...OTRA,
+        workplaces: ['Clínica A', 'Clínica B', 'Clínica C', 'Hospital D'],
+      },
+    ]);
+    responderConceptos();
+
+    const todos = grupos().flatMap((g) => g.profesionales);
+    const conDos = todos.find((p) => p.id === 'per-1');
+    const conCuatro = todos.find((p) => p.id === 'per-2');
+
+    expect(conDos?.meta?.map((m) => m.text).join(' | ')).toContain(
+      'Clínica Foianini · Hospital San Juan de Dios',
+    );
+    // Con más de dos, la tarjeta nombra dos y CUENTA el resto: si las listara
+    // todas dejaría de poder compararse de un vistazo.
+    const texto = conCuatro?.meta?.map((m) => m.text).join(' | ') ?? '';
+    expect(texto).toContain('Clínica A · Clínica B · y 2 sedes más');
+    expect(texto).not.toContain('Hospital D');
+  });
+
   /* -- 1 · Están todos, sin escribir nada ---------------------------------- */
 
   it('carga la guía al abrir, sin que nadie escriba nada', () => {
-    montar();
+    montarEnEspecialidad();
     responder([FILA, OTRA]);
     responderConceptos();
 
@@ -132,7 +352,7 @@ describe('PractitionersDirectory', () => {
    * guía mostraría los primeros cincuenta y nada más.
    */
   it('agota el cursor: sigue pidiendo mientras haya páginas', () => {
-    montar();
+    montarEnEspecialidad();
     responder([FILA], 'cursor-2');
     responder([OTRA], null);
     responderConceptos();
@@ -140,10 +360,21 @@ describe('PractitionersDirectory', () => {
     expect(total()).toBe(2);
   });
 
+  // ALV-013: una misma persona, una sola tarjeta — aunque el servidor la
+  // devuelva en dos páginas (cursor reutilizado, fila que cambió de orden).
+  it('si la misma persona viene en dos páginas, la pinta una sola vez', () => {
+    montarEnEspecialidad();
+    responder([FILA], 'cursor-2');
+    responder([FILA], null);
+    responderConceptos();
+
+    expect(total()).toBe(1);
+  });
+
   /* -- 2 · La especialidad es el encabezado -------------------------------- */
 
   it('agrupa por especialidad con su nombre traducido', () => {
-    montar();
+    montarEnEspecialidad();
     responder([FILA, OTRA]);
     responderConceptos();
 
@@ -158,9 +389,13 @@ describe('PractitionersDirectory', () => {
    * este es el guardia de la vista, que no depende de eso.
    */
   it('una tarjeta nunca muestra el nombre de otro como subtítulo (F-25)', () => {
-    montar();
+    montarEnEspecialidad();
     responder([
-      { ...FILA, displayName: 'Ana Lucía Flores', professionalTitle: 'Dr. Andrés Peña — Pediatría' },
+      {
+        ...FILA,
+        displayName: 'Ana Lucía Flores',
+        professionalTitle: 'Dr. Andrés Peña — Pediatría',
+      },
       OTRA,
     ]);
     responderConceptos();
@@ -169,16 +404,25 @@ describe('PractitionersDirectory', () => {
     const cruzada = tarjetas.find((t) => t.title === 'Ana Lucía Flores');
 
     expect(cruzada, 'la tarjeta cruzada debería estar en la guía').toBeDefined();
-    // Sin subtítulo: más pobre, pero no miente sobre quién es quién.
-    expect(cruzada?.meta ?? []).toEqual([]);
-    // Y el resto conserva el suyo, que es legítimo.
+    // Sin subtítulo: más pobre, pero no miente sobre quién es quién. Se
+    // comprueba que NO esté el nombre ajeno en ninguna parte visible de la
+    // tarjeta —ni en el subtítulo ni en las líneas de contexto—, y no que la
+    // tarjeta se quede vacía: desde que dice dónde atiende, «sin meta» y «sin
+    // subtítulo» dejaron de ser lo mismo.
+    const visible = [cruzada?.subtitle ?? '', ...(cruzada?.meta ?? []).map((m) => m.text)].join(
+      ' | ',
+    );
+    expect(visible).not.toContain('Andrés Peña');
+    // Y el resto conserva el suyo, que es legítimo. Va en `subtitle` y ya no en
+    // la primera línea de `meta`: es qué es esta persona, no un dato de
+    // contexto, y la tarjeta lo pinta pegado al nombre.
     const sana = tarjetas.find((t) => t.title === 'Dr. Andrés Peña');
-    expect(sana?.meta?.[0]?.text).toBe('Pediatra');
+    expect(sana?.subtitle).toBe('Pediatra');
   });
 
   /** Quien ejerce dos especialidades figura bajo las dos. */
   it('un profesional con dos especialidades aparece en las dos', () => {
-    montar();
+    montarEnEspecialidad();
     responder([
       {
         ...FILA,
@@ -198,7 +442,7 @@ describe('PractitionersDirectory', () => {
 
   /** Sin especialidad declarada existe igual: va a un grupo propio, al final. */
   it('quien no declara especialidad va a un grupo propio al final', () => {
-    montar();
+    montarEnEspecialidad();
     responder([FILA, { ...OTRA, specialties: [] }]);
     responderConceptos();
 
@@ -209,7 +453,7 @@ describe('PractitionersDirectory', () => {
 
   /** El catálogo caído deja los encabezados sin nombre, no la guía sin gente. */
   it('un fallo del catálogo no deja a nadie fuera de la guía', () => {
-    montar();
+    montarEnEspecialidad();
     responder([FILA]);
     http
       .expectOne((r) => r.url === '/terminology/concepts')
@@ -222,7 +466,7 @@ describe('PractitionersDirectory', () => {
   /* -- 3 · El buscador filtra encima --------------------------------------- */
 
   it('el buscador filtra la guía ya cargada, por nombre', () => {
-    montar();
+    montarEnEspecialidad();
     responder([FILA, OTRA]);
     responderConceptos();
 
@@ -237,7 +481,7 @@ describe('PractitionersDirectory', () => {
    * que traer a quienes la ejercen aunque su nombre no la mencione.
    */
   it('el buscador también encuentra por especialidad, con el grupo entero', () => {
-    montar();
+    montarEnEspecialidad();
     responder([FILA, OTRA]);
     responderConceptos();
 
@@ -250,7 +494,7 @@ describe('PractitionersDirectory', () => {
   });
 
   it('el buscador también encuentra por el título profesional', () => {
-    montar();
+    montarEnEspecialidad();
     responder([FILA, OTRA]);
     responderConceptos();
 
@@ -260,7 +504,7 @@ describe('PractitionersDirectory', () => {
   });
 
   it('el buscador encuentra por ESPECIALIDAD, que es el encabezado y no un dato de la tarjeta', () => {
-    montar();
+    montarEnEspecialidad();
     responder([FILA, OTRA]);
     responderConceptos();
 
@@ -275,7 +519,7 @@ describe('PractitionersDirectory', () => {
   });
 
   it('el buscador ignora las tildes: nadie las escribe', () => {
-    montar();
+    montarEnEspecialidad();
     responder([FILA, OTRA]);
     responderConceptos();
 
@@ -286,7 +530,7 @@ describe('PractitionersDirectory', () => {
   });
 
   it('el grupo que casa entra ENTERO, aunque nadie coincida por nombre', () => {
-    montar();
+    montarEnEspecialidad();
     // Dos cardiólogos con nombres que no tienen nada que ver con «cardio».
     responder([FILA, { ...FILA, profileId: 'per-3', displayName: 'Dr. Juan Vera' }]);
     responderConceptos();
@@ -300,7 +544,7 @@ describe('PractitionersDirectory', () => {
     // Feedback de la analista (F-01, 18/08/2026): las tarjetas decían
     // «Código MED-…». Es un identificador de sistema; la Guía es sólo del
     // paciente y no hay a quién mostrárselo por rol. El DTO lo sigue trayendo.
-    montar();
+    montarEnEspecialidad();
     responder([FILA, OTRA]);
     responderConceptos();
 
@@ -316,7 +560,7 @@ describe('PractitionersDirectory', () => {
    * poder decir cuál de los dos es.
    */
   it('distingue «el filtro no encontró» de «no hay guía»', () => {
-    montar();
+    montarEnEspecialidad();
     responder([FILA]);
     responderConceptos();
 
@@ -327,15 +571,13 @@ describe('PractitionersDirectory', () => {
 
     senal<string>('filtro').set('nadie con este nombre');
 
-    expect(interno<() => string | null>('sinCoincidencias')()).toContain(
-      'nadie con este nombre',
-    );
+    expect(interno<() => string | null>('sinCoincidencias')()).toContain('nadie con este nombre');
   });
 
   /* -- La traducción a la tarjeta ------------------------------------------ */
 
-  it('la disponibilidad se dice con palabras, no sólo con color', () => {
-    montar();
+  it('la tarjeta no estampa la disponibilidad para pacientes nuevos', () => {
+    montarEnEspecialidad();
     responder([FILA, OTRA]);
     responderConceptos();
 
@@ -345,12 +587,16 @@ describe('PractitionersDirectory', () => {
         .flatMap((p) => p.seals ?? [])
         .some((s) => s.label === etiqueta);
 
-    expect(sellos('Acepta pacientes nuevos')).toBe(true);
-    expect(sellos('No toma pacientes nuevos')).toBe(true);
+    // El sello salía en TODA tarjeta, y en la de quien nunca tocó el ajuste
+    // anunciaba «No toma pacientes nuevos» de gente que sí los toma.
+    expect(sellos('Acepta pacientes nuevos')).toBe(false);
+    expect(sellos('No toma pacientes nuevos')).toBe(false);
+    // Los sellos que sí distinguen siguen en pie.
+    expect(sellos('Matrícula verificada')).toBe(true);
   });
 
   it('el clic lleva a la ficha del profesional', () => {
-    montar();
+    montarEnEspecialidad();
     responder([FILA]);
     responderConceptos();
 

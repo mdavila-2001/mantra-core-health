@@ -1,37 +1,77 @@
+/* ============================================================================
+    Formularios — el generador.
+
+    ---- el ancho, y por qué está acá arriba ---------------------------------
+
+    La pantalla entera —encabezado de página, cabecera del formulario,
+    presupuesto, campos y vista previa— va en **una sola columna, centrada, de
+    76rem como mucho**. Antes el encabezado de página ocupaba todo el ancho y
+    el resto se cortaba a 62rem: dos ejes distintos, el título pegado al borde
+    izquierdo y las tarjetas flotando a un costado con media pantalla vacía.
+    Se pidió que «Formularios» se vea al centro y ocupe un poco más: es esto.
+
+    76rem y no el ancho entero: un campo de texto de mil quinientos píxeles
+    para escribir «¿Fuma?» no es más cómodo, es más difícil de recorrer. Es el
+    ancho de un editor de formularios, un poco más generoso que el de Google
+    Forms porque acá cada tarjeta lleva además el tipo a la derecha.
+    ========================================================================== */
+
+:host {
+  display: block;
+  inline-size: 100%;
+  max-inline-size: 76rem;
+  margin-inline: auto;
+}
+
 .constructor {
   display: flex;
   flex-direction: column;
   gap: var(--sp-6);
 }
 
+/* ---- la cabecera del formulario abierto ---------------------------------
+
+   Como la tarjeta de título de Google Forms: una tarjeta con una banda de
+   color arriba y el nombre grande. Es lo primero que se ve y lo que dice en
+   qué formulario se está —antes era un `h2` suelto que se confundía con el
+   título de la página—. */
 .constructor__encabezado {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--sp-4);
   flex-wrap: wrap;
+  padding: var(--sp-5) var(--sp-6);
+  border: 1px solid var(--border-subtle, var(--border-default));
+  border-block-start: 8px solid var(--brand-primary);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.constructor__encabezado-texto {
+  display: grid;
+  gap: var(--sp-1);
+  min-inline-size: 0;
 }
 
 .constructor__titulo {
   margin: 0;
-  font-size: var(--fs-h2);
+  font-size: var(--fs-h1);
   font-weight: 600;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .constructor__subtitulo {
-  margin: 0 0 var(--sp-3);
+  margin: var(--sp-2) 0 var(--sp-3);
   font-size: var(--fs-h3);
   font-weight: 600;
 }
 
 .constructor__codigo,
-.constructor__campo-meta {
-  color: var(--text-muted);
-  font-size: var(--fs-caption);
-}
-
 .constructor__codigo {
-  margin: var(--sp-1) 0 0;
+  margin: 0;
 }
 
 .constructor__nota,
@@ -42,9 +82,10 @@
 }
 
 .constructor__presupuesto {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: flex;
+  --card-body-direction: column;
+  --card-body-gap: var(--sp-3);
 }
 
 .constructor__presupuesto-texto {
@@ -52,101 +93,241 @@
   font-weight: 500;
 }
 
-/* Dos columnas: qué tiene el formulario, y cómo se ve servido. En pantalla
-   angosta la vista previa cae debajo — apilarla al lado la dejaría ilegible,
-   y es justamente lo que hay que poder leer. */
-.constructor__columnas {
-  display: grid;
-  gap: var(--sp-6);
-  grid-template-columns: minmax(0, 1fr);
-}
-
-@media (min-width: 60rem) {
-  .constructor__columnas {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: start;
-  }
-}
-
-.constructor__campos,
-.constructor__previa {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-}
-
-.constructor__lista {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-
-.constructor__campo {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
-}
-
-.constructor__campo-nombre {
-  font-weight: 500;
-}
-
-.constructor__alta,
-.constructor__formulario {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-}
-
 .constructor__previa-marco {
   border: 1px dashed var(--border-default);
   border-radius: var(--r-lg);
-  padding: var(--sp-4);
+  padding: var(--sp-6);
   background: var(--bg-surface);
 }
 
-.constructor__plantillas {
-  list-style: none;
+/* ---- el catálogo de formularios -----------------------------------------
+
+   La rejilla, la tarjeta, el ícono, el nombre y el renglón de dato los pone
+   `rejilla-de-tarjetas.css`, que es la MISMA disciplina de «Mis servicios» y
+   de las portadas de los directorios. Acá abajo va sólo lo que esta pantalla
+   suma: el rótulo de especialidad, el pie con el conteo y la flecha, y el
+   organismo de origen. Nada de colores ni radios propios — la tarjeta de este
+   listado traía los suyos y por eso se veía como otra aplicación. */
+
+.constructor__conteo {
   margin: 0;
-  padding: 0;
-  display: grid;
-  gap: var(--sp-3);
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-variant-numeric: tabular-nums;
 }
 
-.constructor__plantilla {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-  align-items: flex-start;
-  text-align: start;
-  padding: var(--sp-4);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-lg);
-  background: var(--bg-surface);
-  cursor: pointer;
-  color: inherit;
-  font: inherit;
+/* Las tarjetas llevan un pie, así que necesitan más aire vertical y una pista
+   más ancha que los 14rem de la hoja: los nombres del catálogo clínico son
+   largos («Evaluación del riesgo cardiovascular (OMS/OPS)») y en 14rem parten
+   en cuatro renglones. */
+.constructor__rejilla {
+  --rejilla-min: 17rem;
+  gap: var(--sp-4);
 }
 
-.constructor__plantilla:hover:not(:disabled) {
-  border-color: var(--brand-primary);
+.constructor__ficha {
+  gap: var(--sp-2);
+  /* La tarjeta entera es el control y su pie va abajo del todo: sin esto, dos
+     tarjetas de la misma fila terminan el conteo a alturas distintas y la fila
+     se lee torcida. Es el defecto que tenía el listado. */
+  min-block-size: 100%;
 }
 
-.constructor__plantilla:disabled {
+.constructor__ficha:disabled {
   cursor: progress;
   opacity: 0.6;
 }
 
-.constructor__plantilla-nombre {
-  font-weight: 600;
+/* El rótulo de la especialidad, arriba del nombre: es lo que agrupa la rejilla
+   de un vistazo. En versalitas y no como chip para que no compita con el
+   nombre, que es lo que se lee primero. */
+.constructor__especialidad {
+  color: var(--brand-primary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* El código es una clave técnica, no el título: mono, chico y apagado. Antes
+   iba con el cuerpo del texto y a dos renglones, y en la rejilla pesaba más
+   que el nombre del formulario.
+
+   En un renglón y con puntos suspensivos —el valor entero queda en el
+   `title`—: son cadenas sin espacios («ANEST_VALORACION_PREANESTESICA») y al
+   dejarlas envolver se parten a mitad de palabra, que es peor que recortarlas.
+   Buscar por el código sigue funcionando: lo hace el buscador de arriba. */
+.constructor__codigo-ficha {
+  /* `.rejilla__dato` nace para un `<p>`; acá es un `<span>` dentro del botón. */
+  display: block;
+  overflow: hidden;
+  font-family: var(--f-mono, monospace);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.constructor__pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  /* Empuja el pie al fondo de la tarjeta, cualquiera sea el alto del nombre. */
+  margin-block-start: auto;
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.constructor__cifra {
+  font-variant-numeric: tabular-nums;
+}
+
+/* La flecha dice «esto se abre». Se despierta con el puntero y con el foco:
+   quieta y apagada no promete nada, encendida en todas las tarjetas a la vez
+   sería ruido. */
+.constructor__flecha {
+  display: inline-flex;
+  inline-size: 1rem;
+  block-size: 1rem;
+  color: var(--brand-primary);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard);
+}
+
+.constructor__ficha:hover:not(:disabled) .constructor__flecha,
+.constructor__ficha:focus-visible .constructor__flecha {
+  opacity: 1;
+  transform: none;
+}
+
+/* Quién publica el estándar. Va en un renglón y se corta con puntos
+   suspensivos —el título completo queda en el `title`—: «Ministerio de Salud
+   del Perú (MINSA)» en tres renglones desbalancea la fila entera. */
+.constructor__origen {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .constructor__flecha {
+    transition: none;
+  }
+}
+
+/* ---- una cosa a la vez: editor o previa ---------------------------------- */
+
+.constructor__encabezado-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.constructor__campos {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+/* Las tarjetas van más separadas que antes: cada una es una pregunta entera,
+   con su pie, y pegadas se leían como un solo bloque. */
+.constructor__lista {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.constructor__agregar {
+  margin-block-start: var(--sp-2);
+}
+
+.constructor__previa {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+/* La nota dice que lo que se toca no se guarda: es lo que evita que alguien
+   crea que está completando el formulario de verdad. */
+.constructor__previa-nota {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface-alt);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* ---- por qué el estándar no se toca ------------------------------------- */
+
+/* Una banda arriba del bloque y no un cartel de alerta: no pasó nada malo, es
+   cómo es. El tono es el informativo del sistema, que ya está medido contra
+   WCAG y tiene su versión de tema oscuro. */
+.constructor__bloqueado {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+    border: 1px solid var(--st-info-bd);
+    border-radius: var(--r-md);
+    background: var(--st-info-bg);
+    color: var(--st-info-fg);
+}
+
+/* El candado es lo que se lee antes que el texto: en una pantalla con dos
+   listas de tarjetas casi iguales, es lo que dice de un vistazo cuál de las dos
+   se puede tocar. */
+.constructor__bloqueado-icono {
+    display: inline-flex;
+    flex: none;
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+}
+
+.constructor__bloqueado-icono app-nav-icon {
+    inline-size: 100%;
+    block-size: 100%;
+}
+
+.constructor__bloqueado-texto {
+    display: grid;
+    gap: var(--sp-1);
+    min-inline-size: 0;
+}
+
+.constructor__bloqueado-titulo {
+    margin: 0;
+    font-weight: 600;
+}
+
+.constructor__bloqueado-fuente {
+    margin: 0;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    opacity: 0.85;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 40rem) {
+  .constructor__encabezado {
+    padding: var(--sp-4);
+  }
+
+  .constructor__titulo {
+    font-size: var(--fs-h2);
+  }
+
+  .constructor__previa-marco {
+    padding: var(--sp-4);
+  }
 }

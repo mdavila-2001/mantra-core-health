@@ -1,4 +1,4 @@
-<!-- La ficha pública. Las clases son las de `redsat.css` §25 y las de la
+<!-- La ficha pública. Las clases son las de `alovida.css` §25 y las de la
      maqueta V65-07: el marcado se reusa, los datos son los de la API. Lo que la
      maqueta dibuja y la API todavía no sirve no se pinta con valores de
      relleno — ver la nota de la clase. -->
@@ -24,6 +24,17 @@
        plan de UX del 22/08/2026). Que las dos pantallas se vean igual dejó de
        ser una promesa y pasó a ser algo que no se puede romper. -->
   <app-public-profile-card [perfil]="p" (escribir)="escribirle(p.slug)" />
+
+  <!-- Las opiniones van en su propio componente y en su propia llamada: se
+       paginan, y la tarjeta de arriba la comparte la vista previa de «Tu
+       perfil público», que no tiene por qué hacer ese viaje. -->
+  <section class="app-card">
+    <app-public-profile-reviews
+      [kind]="p.kind"
+      [slug]="p.slug"
+      [professionalName]="p.displayName"
+    />
+  </section>
 } @else {
   <!-- Un slug inexistente y uno despublicado caen los dos acá, con el mismo
        texto. Distinguirlos —«este perfil es privado»— confirmaría que existe, y

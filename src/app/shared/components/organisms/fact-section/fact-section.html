@@ -1,0 +1,81 @@
+<app-card variant="outlined" padding="lg">
+  <!-- El encabezado: la etiqueta de la sección a la izquierda y sus controles a
+       la derecha, en el mismo renglón mientras haya sitio. Los controles son de
+       la sección, así que viven en su encabezado y no encima de la rejilla —ahí
+       se leerían como un filtro de la ficha entera. -->
+  <div card-header class="seccion-ficha__encabezado">
+    <app-section-heading
+      class="seccion-ficha__titulo"
+      [icono]="icono()"
+      [titulo]="titulo()"
+      [cuantos]="null"
+    />
+    <span class="seccion-ficha__leyenda">{{ leyenda() }}</span>
+
+    @if (muestraBuscador()) {
+      <app-search-field
+        class="seccion-ficha__buscador"
+        [(value)]="termino"
+        [label]="'Buscar en ' + titulo()"
+        [placeholder]="'Buscar en ' + titulo().toLowerCase()"
+      />
+    }
+  </div>
+
+  @if (chips().length > 0) {
+    <!-- Los chips salen del contenido —de las etiquetas que los bloques traen—
+         y por eso ninguno puede devolver cero. Ver `chips` en el componente. -->
+    <div class="seccion-ficha__chips" role="group" [attr.aria-label]="'Filtrar ' + titulo()">
+      @for (chip of chips(); track chip.etiqueta) {
+        <!-- El texto va **proyectado**: `label` es sólo el nombre accesible del
+             chip, no lo que dibuja. Pasarlo por ahí dejaba los chips en blanco. -->
+        <app-chip
+          size="sm"
+          [selectable]="true"
+          [selected]="etiquetaElegida() === chip.etiqueta"
+          [label]="chip.etiqueta"
+          (selectedChange)="alternarEtiqueta(chip.etiqueta)"
+        >{{ chip.etiqueta }} · {{ chip.cuantos }}</app-chip>
+      }
+    </div>
+  }
+
+  @if (sinCoincidencias()) {
+    <p class="seccion-ficha__vacio" role="status">
+      Nada coincide con lo que buscaste.
+      <button type="button" class="seccion-ficha__limpiar" (click)="limpiar()">
+        Quitar los filtros
+      </button>
+    </p>
+  } @else {
+    <ul
+      class="seccion-ficha__rejilla"
+      [class.seccion-ficha__rejilla--dos]="columnas() === 2"
+      [attr.aria-label]="titulo()"
+    >
+      @for (bloque of visibles(); track bloque.id) {
+        <li class="seccion-ficha__bloque">
+          <h3 class="seccion-ficha__bloque-titulo">{{ bloque.titulo }}</h3>
+          @if (bloque.nota) {
+            <p class="seccion-ficha__bloque-nota">{{ bloque.nota }}</p>
+          }
+          <app-fact-list [hechos]="bloque.hechos" [etiqueta]="bloque.titulo" />
+        </li>
+      }
+    </ul>
+  }
+
+  @if (hayPaginador()) {
+    <!-- Sin selector de «por página»: es un paginador dentro de una card de una
+         ficha, no el de una tabla de administración, y un desplegable ahí pesa
+         más que las páginas que ordena. -->
+    <div card-footer class="seccion-ficha__paginador">
+      <app-pagination
+        [totalItems]="filtrados().length"
+        [(page)]="pagina"
+        [pageSize]="porPagina()"
+        [showPageSize]="false"
+      />
+    </div>
+  }
+</app-card>

@@ -1,0 +1,9 @@
+<app-page-header
+  title="Mis organizaciones"
+  subtitle="Dónde atendés: tu consultorio y las organizaciones donde trabajás, con su dirección, su punto en el mapa y su horario."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<!-- El mismo componente que «Mi perfil» monta al pie, sin el historial laboral.
+     Ver el JSDoc de `MyPractice`. -->
+<app-work-history class="consultorio__bloque" secciones="consultorios" />

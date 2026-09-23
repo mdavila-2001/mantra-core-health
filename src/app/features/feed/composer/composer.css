@@ -11,7 +11,7 @@
 .composer__contador {
   margin: 0;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
   /* A la derecha para que no compita con la etiqueta del campo. */
   text-align: end;
 }
@@ -27,7 +27,7 @@
   gap: var(--e2);
   margin: 0;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .composer__etiqueta {
@@ -45,7 +45,7 @@
   flex: 1 1 auto;
   margin: 0;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .composer__error {

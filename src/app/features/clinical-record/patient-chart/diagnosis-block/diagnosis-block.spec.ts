@@ -48,6 +48,22 @@ const CATALOGO_OPCIONAL = {
   options: [{ conceptId: 'sev-leve', code: 'COND_SEV_MILD', display: 'Mild', ordinal: 1 }],
 };
 
+/**
+ * El catálogo del **curso clínico**, con los códigos del backend.
+ *
+ * Los códigos importan: la pantalla busca el crónico por `COND_COURSE_CHRONIC`
+ * —no por posición— porque el orden de una expansión no es contrato.
+ */
+const CATALOGO_DE_CURSO = {
+  ...CATALOGO,
+  code: 'condition-clinical-course',
+  options: [
+    { conceptId: 'curso-agudo', code: 'COND_COURSE_ACUTE', display: 'Acute', ordinal: 1 },
+    { conceptId: 'curso-cronico', code: 'COND_COURSE_CHRONIC', display: 'Chronic', ordinal: 2 },
+    { conceptId: 'curso-subagudo', code: 'COND_COURSE_SUBACUTE', display: 'Subacute', ordinal: 3 },
+  ],
+};
+
 /** Una condición tal como vuelve del alta. */
 const RESPUESTA = {
   id: 'c-1',
@@ -100,7 +116,11 @@ describe('DiagnosisBlock', () => {
    */
   afterEach(() => {
     for (const opcional of http.match((r) => r.url === '/system-context/dynamic-enums')) {
-      opcional.flush(CATALOGO_OPCIONAL);
+      opcional.flush(
+        opcional.request.params.get('target')?.includes('clinical_course') === true
+          ? CATALOGO_DE_CURSO
+          : CATALOGO_OPCIONAL,
+      );
     }
     http.verify();
   });
@@ -133,7 +153,11 @@ describe('DiagnosisBlock', () => {
       req.flush(CATALOGO);
       fixture.detectChanges();
       for (const opcional of http.match((r) => r.url === '/system-context/dynamic-enums')) {
-        opcional.flush(CATALOGO_OPCIONAL);
+        opcional.flush(
+          opcional.request.params.get('target')?.includes('clinical_course') === true
+            ? CATALOGO_DE_CURSO
+            : CATALOGO_OPCIONAL,
+        );
       }
       return;
     }
@@ -271,6 +295,61 @@ describe('DiagnosisBlock', () => {
     expect(interno<() => string>('notasClinicas')()).toBe('');
   });
 
+  /* ---- adjuntar un archivo (ALV-033) --------------------------------------- */
+
+  describe('el panel de adjuntos tras registrar', () => {
+    it('aparece con el id de la condición recién creada', () => {
+      responderCatalogo();
+      señal<string>('diagnostico').set('dx-hta');
+      interno<() => void>('registrar')();
+      http.expectOne('/clinical/conditions').flush(RESPUESTA);
+      fixture.detectChanges();
+
+      expect(interno<() => string | null>('diagnosticoRecienRegistrado')()).toBe('c-1');
+      const html = fixture.nativeElement as HTMLElement;
+      // El subidor pasó a vivir dentro de `app-attachment-dialog`, así que lo
+      // que se comprueba es que el modal esté montado con esa condición: el
+      // `ownerType` viaja como entrada de señal y no como atributo del DOM.
+      const modal = html.querySelector('app-attachment-dialog');
+      expect(modal).not.toBeNull();
+      expect(modal?.querySelector('app-attachment-uploader')).not.toBeNull();
+    });
+
+    it('«Listo, sin adjuntar» lo cierra sin subir nada', () => {
+      responderCatalogo();
+      señal<string>('diagnostico').set('dx-hta');
+      interno<() => void>('registrar')();
+      http.expectOne('/clinical/conditions').flush(RESPUESTA);
+      fixture.detectChanges();
+
+      interno<() => void>('cerrarAdjuntos')();
+      fixture.detectChanges();
+
+      expect(interno<() => string | null>('diagnosticoRecienRegistrado')()).toBeNull();
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('app-attachment-uploader'),
+      ).toBeNull();
+    });
+
+    it('el vínculo del adjunto pasa por `clinical`, no por el genérico de `common`', () => {
+      responderCatalogo();
+      señal<string>('diagnostico').set('dx-hta');
+      interno<() => void>('registrar')();
+      http.expectOne('/clinical/conditions').flush(RESPUESTA);
+      fixture.detectChanges();
+
+      const enlazar =
+        interno<(fileId: string, conditionId: string) => { subscribe: (o: unknown) => void }>(
+          'enlazarAdjuntoAlDiagnostico',
+        );
+      enlazar('file-1', 'c-1').subscribe({ next: () => undefined });
+
+      http
+        .expectOne('/clinical/conditions/c-1/attachments')
+        .flush({ id: 'link-1', fileId: 'file-1', ownerId: 'c-1', createdAt: '2026-01-01' });
+    });
+  });
+
   it('las notas clínicas viajan como noteText, recortadas', () => {
     responderCatalogo();
 
@@ -329,7 +408,11 @@ describe('DiagnosisBlock', () => {
 
     expect(interno<() => string | null>('diagnostico')()).toBeNull();
     expect(interno<() => string | null>('severidad')()).toBeNull();
-    expect(interno<() => string | null>('cursoClinico')()).toBeNull();
+    // El curso sí resuelve, y no es una excepción a la regla: el catálogo de
+    // curso de esta prueba **tiene** `COND_COURSE_CHRONIC`. Lo que la regla
+    // prohíbe es caer en la primera opción cuando el valor no está, y eso
+    // siguen midiéndolo el diagnóstico y la severidad, que no están.
+    expect(interno<() => string | null>('cursoClinico')()).toBe('curso-cronico');
   });
 
   /* ---- el 409 del duplicado ------------------------------------------------ */
@@ -384,5 +467,188 @@ describe('DiagnosisBlock', () => {
     expect(interno<() => string | null>('errorDelDiagnostico')()).toContain(
       'Error interno del servidor',
     );
+  });
+  /* -- La duración estimada y el crónico (pedido del cliente) -------------- */
+
+  describe('la duración estimada', () => {
+    /**
+     * «Debería poderse poner una duración promedio del diagnóstico, y en caso
+     * de ser crónico debería aparecer la opción.» Elegir días deriva la fecha y
+     * sugiere el curso; nadie calcula a mano.
+     */
+    it('elegir días fija la fecha esperada y sugiere curso agudo', () => {
+      responderCatalogo();
+
+      señal<Date | null>('inicio').set(new Date(2026, 8, 1));
+      interno<(dias: number | null) => void>('fijarDuracion')(14);
+
+      const esperada = señal<Date | null>('fechaEsperada')();
+      expect(esperada?.getDate()).toBe(15);
+      expect(esperada?.getMonth()).toBe(8);
+      expect(señal<string | null>('cursoClinico')()).toBe('curso-agudo');
+      expect(interno<() => boolean>('cursoEsCronico')()).toBe(false);
+    });
+
+    /** Más de un mes deja de ser agudo: el corte clínico corriente. */
+    it('más de 30 días sugiere subagudo, no agudo', () => {
+      responderCatalogo();
+
+      interno<(dias: number | null) => void>('fijarDuracion')(90);
+
+      expect(señal<string | null>('cursoClinico')()).toBe('curso-subagudo');
+    });
+
+    /**
+     * Una condición de seguimiento continuo **no resuelve**: dejar el campo de
+     * fecha esperada invita a inventar una.
+     */
+    it('elegir crónico pone el curso crónico y borra la fecha esperada', () => {
+      responderCatalogo();
+
+      interno<(dias: number | null) => void>('fijarDuracion')(14);
+      expect(señal<Date | null>('fechaEsperada')()).not.toBeNull();
+
+      interno<(dias: number | null) => void>('fijarDuracion')(null);
+
+      expect(señal<string | null>('cursoClinico')()).toBe('curso-cronico');
+      expect(señal<Date | null>('fechaEsperada')()).toBeNull();
+      expect(interno<() => boolean>('cursoEsCronico')()).toBe(true);
+    });
+
+    /**
+     * Quien registra sabe más que la heurística. Elegido el curso a mano, la
+     * duración deja de pisarlo.
+     */
+    it('el curso elegido a mano gana sobre la sugerencia de la duración', () => {
+      responderCatalogo();
+
+      interno<(id: string | null) => void>('elegirCurso')('curso-cronico');
+      interno<(dias: number | null) => void>('fijarDuracion')(7);
+
+      expect(señal<string | null>('cursoClinico')()).toBe('curso-cronico');
+    });
+
+    /**
+     * El chip de crónico no puede aparecer marcado con el formulario recién
+     * abierto: es el defecto que la receta ya había corregido comparando
+     * `null === null`.
+     */
+    it('con el formulario recién abierto no hay ninguna duración elegida', () => {
+      responderCatalogo();
+
+      expect(interno<() => boolean>('esCronico')()).toBe(false);
+      expect(señal<number | null>('duracionDias')()).toBeNull();
+    });
+
+    /** Lo elegido viaja: el contrato declara los dos campos desde v4.0.8. */
+    it('el curso y la fecha esperada viajan en el alta', () => {
+      responderCatalogo();
+      señal<string | null>('diagnostico').set('dx-1');
+      señal<Date | null>('inicio').set(new Date(2026, 8, 1));
+      interno<(dias: number | null) => void>('fijarDuracion')(7);
+
+      interno<() => void>('registrar')();
+
+      const req = http.expectOne('/clinical/conditions');
+      expect(req.request.body.clinicalCourseConceptId).toBe('curso-agudo');
+      expect(req.request.body.expectedResolutionAt).toContain('2026-09-08');
+      req.flush(RESPUESTA);
+    });
+  });
+  /* -- La cita en la que se detectó (pedido del cliente) ------------------- */
+
+  describe('el selector de cita', () => {
+    /** «Un campo select para colocar la enfermedad detectada en base a una cita
+     * ya existente y/o finalizada» — textual del cliente. */
+    it('sin citas que ofrecer, el campo no se dibuja', () => {
+      responderCatalogo();
+
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="diagnostico-cita"]'),
+      ).toBeNull();
+    });
+
+    it('con citas, las ofrece y marca cuál sigue en curso', () => {
+      fixture.componentRef.setInput('citas', [
+        { id: 'enc-9', etiqueta: '7 sept 2026, 09:00 · Control', enCurso: false },
+        { id: 'enc-1', etiqueta: '10 sept 2026, 08:00 · Chequeo', enCurso: true },
+      ]);
+      responderCatalogo();
+
+      const opciones = interno<() => readonly { value: string | null; label: string }[]>(
+        'opcionesDeCita',
+      )();
+      expect(opciones[0]).toEqual({ value: null, label: 'Sin cita asociada' });
+      expect(opciones[1]?.label).toBe('7 sept 2026, 09:00 · Control');
+      expect(opciones[2]?.label).toContain('en curso');
+    });
+
+    /** La cita elegida gana sobre el encuentro que pasó el anfitrión. */
+    it('la cita elegida es la que viaja, no el encuentro en curso', () => {
+      fixture.componentRef.setInput('citas', [
+        { id: 'enc-9', etiqueta: '7 sept 2026, 09:00 · Control', enCurso: false },
+      ]);
+      responderCatalogo();
+      señal<string | null>('diagnostico').set('dx-1');
+      señal<string | null>('citaElegida').set('enc-9');
+
+      interno<() => void>('registrar')();
+
+      const req = http.expectOne('/clinical/conditions');
+      expect(req.request.body.encounterId).toBe('enc-9');
+      req.flush(RESPUESTA);
+    });
+  });
+
+  /* -- El bloque fuera de «Atención» --------------------------------------- */
+
+  describe('sin exigir encuentro (expediente)', () => {
+    /**
+     * En el expediente el diagnóstico se ata a una cita **elegida**, o a
+     * ninguna: el contrato declara `encounterId` opcional, y una condición que
+     * la persona ya traía no nace de ninguna consulta.
+     */
+    it('deja registrar sin encuentro, y la clave no viaja', () => {
+      fixture.componentRef.setInput('encounterId', null);
+      fixture.componentRef.setInput('exigeEncuentro', false);
+      responderCatalogo();
+      señal<string | null>('diagnostico').set('dx-1');
+
+      expect(interno<() => boolean>('puedeRegistrar')()).toBe(true);
+
+      interno<() => void>('registrar')();
+
+      const req = http.expectOne('/clinical/conditions');
+      expect('encounterId' in req.request.body).toBe(false);
+      req.flush(RESPUESTA);
+    });
+
+    /** En «Atención» el encuentro sigue siendo el contexto y sigue exigiéndose. */
+    it('con `exigeEncuentro`, sin encuentro no deja registrar', () => {
+      fixture.componentRef.setInput('encounterId', null);
+      responderCatalogo();
+      señal<string | null>('diagnostico').set('dx-1');
+
+      expect(interno<() => boolean>('puedeRegistrar')()).toBe(false);
+    });
+  });
+
+  describe('tieneCambiosPendientes — contrato de DraftBlock', () => {
+    it('recién montado no tiene cambios pendientes', () => {
+      responderCatalogo();
+      expect(componente.tieneCambiosPendientes()).toBe(false);
+    });
+
+    it('con el diagnóstico elegido tiene cambios pendientes', () => {
+      responderCatalogo();
+      señal<string | null>('diagnostico').set('dx-1');
+      expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+
+    it('con sólo notas clínicas escritas también cuenta', () => {
+      responderCatalogo();
+      señal<string>('notasClinicas').set('Paciente refiere mejoría parcial.');
+      expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
   });
 });

@@ -20,7 +20,7 @@
 
 .formulario-especialidad__estado {
   margin: 0;
-  color: var(--color-text-muted, #6b7280);
+  color: var(--color-text-muted, var(--c-neutral-300));
 }
 
 /* El aviso de «tu especialidad no tiene ficha propia»: es una situación
@@ -66,7 +66,7 @@
 
 .formulario-especialidad__enmascarado {
   font-style: italic;
-  color: var(--color-text-muted, #6b7280);
+  color: var(--color-text-muted, var(--c-neutral-300));
 }
 
 .formulario-especialidad__pdf {

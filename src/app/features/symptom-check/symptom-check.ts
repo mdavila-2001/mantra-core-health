@@ -21,6 +21,8 @@ import { Chip } from '@shared/components/atoms/chip/chip';
 import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
+import { FormField } from '@shared/components/molecules/form-field/form-field';
+import { BodyMap, type ZonaElegible } from '@shared/components/organisms/body-map/body-map';
 
 import {
   enumerar,
@@ -36,10 +38,20 @@ import {
   type Sintoma,
   TODOS_LOS_SINTOMAS,
 } from './sintomas';
+import { Dictado } from './dictado';
 import { ultimaFrase } from './texto';
 
 /** Tope por página del listado de profesionales. */
 const POR_PAGINA = 50;
+
+/**
+ * Sin especialidades conocidas.
+ *
+ * Una sola instancia: el mapa vacío es el estado inicial y el de todos los
+ * fallos, y crear uno nuevo en cada rama haría que la señal se considere
+ * cambiada cada vez que algo falla.
+ */
+const VACIO: ReadonlyMap<string, string> = new Map();
 
 /**
  * **¿Qué te pasa?** — el punto de entrada del paciente (Frente C del plan de UX
@@ -84,8 +96,10 @@ const POR_PAGINA = 50;
  */
 @Component({
   selector: 'app-symptom-check',
-  imports: [Alert, AppButton, Card, Chip, RouterLink, Textarea],
+  imports: [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink, Textarea],
   templateUrl: './symptom-check.html',
+  // El dictado vive y muere con la pantalla: ver `Dictado`.
+  providers: [Dictado],
   styleUrl: './symptom-check.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -94,6 +108,7 @@ export class SymptomCheck {
   private readonly publico = inject(PublicDirectoryClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly router = inject(Router);
+  protected readonly dictado = inject(Dictado);
 
   constructor() {
     /* El índice del motor se arma la primera vez que se lo usa, y armarlo
@@ -159,10 +174,10 @@ export class SymptomCheck {
    */
   private readonly especialidadesDisponibles = toSignal(
     toObservable(this.haceFalta).pipe(
-      switchMap((hace) => (hace ? this.leerEspecialidades() : of(new Set<string>()))),
-      catchError(() => of(new Set<string>())),
+      switchMap((hace) => (hace ? this.leerEspecialidades() : of(VACIO))),
+      catchError(() => of(VACIO)),
     ),
-    { initialValue: new Set<string>() as ReadonlySet<string> },
+    { initialValue: VACIO },
   );
 
   /**
@@ -202,7 +217,9 @@ export class SymptomCheck {
     // Con una alarma en el texto no se recomienda nada: la pantalla entera pasa
     // a decir «andá a urgencias», y una lista de especialidades debajo
     // competiría con ese mensaje.
-    this.alarmas().length > 0 ? [] : recomendar(this.sintomas(), this.especialidadesDisponibles()),
+    this.alarmas().length > 0
+      ? []
+      : recomendar(this.sintomas(), new Set(this.especialidadesDisponibles().keys())),
   );
 
   /**
@@ -273,6 +290,29 @@ export class SymptomCheck {
     this.zonaAbierta.update((previa) => (previa === zona.id ? null : zona.id));
   }
 
+  /**
+   * Las zonas tal como las entiende la silueta: `id` y nombre, nada más.
+   *
+   * La figura no conoce síntomas ni especialidades (ver `BodyMap`): se le da
+   * lo justo para dibujar y nombrar, y devuelve un `id`. Las que no tienen
+   * forma («piel», «ánimo», «general») viajan igual y la silueta las ignora:
+   * siguen en las pastillas.
+   */
+  protected readonly zonasParaLaSilueta = computed<readonly ZonaElegible[]>(() =>
+    this.zonas().map(({ id, nombre }) => ({ id, nombre })),
+  );
+
+  /**
+   * La silueta y las pastillas son dos puertas al **mismo** estado (P-01,
+   * doctor 22/09/2026): tocar el pecho en la figura abre lo mismo que tocar la
+   * pastilla «Pecho», y la figura resalta la zona que se abrió desde la
+   * pastilla. La silueta ya resuelve el alternar (volver a tocar suelta), así
+   * que acá sólo se copia lo que devuelve.
+   */
+  protected elegirZonaDesdeLaSilueta(id: string | null): void {
+    this.zonaAbierta.set(id);
+  }
+
   /** Si un síntoma ya está elegido, para pintarlo distinto. */
   protected estaElegido(sintoma: Sintoma): boolean {
     return this.sintomas().some((s) => s.id === sintoma.id);
@@ -292,6 +332,26 @@ export class SymptomCheck {
     if (valor.trim() !== '') {
       this.haceFalta.set(true);
     }
+  }
+
+  /**
+   * Dictar o dejar de dictar (P-02): un solo botón que alterna.
+   *
+   * Lo dictado **se agrega al final** de lo que ya había, con un espacio: la
+   * persona pudo haber empezado a escribir y seguir hablando, y pisarle el
+   * texto sería perderle lo que cargó (regla 95.3.3). Pasa por `escribir`
+   * como si lo hubiera tecleado: mismo reconocimiento, misma alarma, mismo
+   * pedido del catálogo.
+   */
+  protected alternarDictado(): void {
+    if (this.dictado.escuchando()) {
+      this.dictado.detener();
+      return;
+    }
+    this.dictado.empezar((final) => {
+      const previo = this.texto().trimEnd();
+      this.escribir(previo === '' ? final : `${previo} ${final}`);
+    });
   }
 
   /** Quita un chip. Un falso positivo no puede quedar atrapado. */
@@ -321,14 +381,26 @@ export class SymptomCheck {
   /**
    * Salta al directorio de médicos con esa especialidad puesta.
    *
-   * Va por el **nombre** y no por el `conceptId` porque la tabla de síntomas se
-   * escribe con nombres —ver `sintomas.datos.ts`— y el directorio ya sabe
-   * filtrar en memoria por su chip. El identificador lo resuelve el propio
-   * directorio, que es quien tiene los grupos cargados.
+   * Va por `conceptId` cuando se lo sabe. Antes iba por nombre, y el comentario
+   * de entonces daba la razón correcta para entonces: el directorio filtraba en
+   * memoria por su chip, así que el texto alcanzaba. **Eso cambió**: ahora el
+   * directorio acota por `?especialidad=<conceptId>` contra el servidor, y una
+   * búsqueda de texto sólo funciona de rebote, porque el buscador matchea el
+   * encabezado del grupo.
+   *
+   * El identificador no cuesta una consulta: la lista de especialidades con
+   * gente ya se lee para no recomendar una vacía, y lo único que faltaba era no
+   * tirar el concepto al quedarse con el nombre.
+   *
+   * Sin identificador —sesión pública, o un nombre de la tabla de síntomas que
+   * el catálogo no tiene— se cae al texto, que es como funcionaba hasta ahora:
+   * peor destino, nunca una pantalla rota.
    */
   protected verProfesionales(nombre: string): void {
+    const conceptId = this.especialidadesDisponibles().get(normalizar(nombre));
     void this.router.navigate([this.rutaDeResultados()], {
-      queryParams: { q: nombre },
+      queryParams:
+        conceptId === undefined || conceptId === '' ? { q: nombre } : { especialidad: conceptId },
     });
   }
 
@@ -339,7 +411,7 @@ export class SymptomCheck {
    * plataforma, que es lo único que hace falta acá. Recorrer el cursor entero
    * sería traerse el directorio para leer una lista de nombres.
    */
-  private leerEspecialidades(): Observable<ReadonlySet<string>> {
+  private leerEspecialidades(): Observable<ReadonlyMap<string, string>> {
     if (this.sinSesion()) {
       return this.leerEspecialidadesPublicas();
     }
@@ -351,16 +423,21 @@ export class SymptomCheck {
           ),
         ];
         if (ids.length === 0) {
-          return of(new Set<string>());
+          return of(VACIO);
         }
         // El catálogo traduce los conceptos a nombres; sin él no hay con qué
         // cruzar la tabla, y se devuelve vacío, que desactiva el filtro.
         return this.terminology.readConceptLabels(ids).pipe(
           map(
             (etiquetas: ConceptLabels) =>
-              new Set([...etiquetas.values()].map((opcion) => normalizar(opcion.display))),
+              new Map(
+                [...etiquetas.entries()].map(([conceptId, opcion]) => [
+                  normalizar(opcion.display),
+                  conceptId,
+                ]),
+              ) as ReadonlyMap<string, string>,
           ),
-          catchError(() => of(new Set<string>())),
+          catchError(() => of(VACIO)),
         );
       }),
     );
@@ -376,18 +453,22 @@ export class SymptomCheck {
    * alcanza para lo único que hace falta acá, que es no recomendar una
    * especialidad sin nadie detrás.
    */
-  private leerEspecialidadesPublicas(): Observable<ReadonlySet<string>> {
+  private leerEspecialidadesPublicas(): Observable<ReadonlyMap<string, string>> {
     return this.publico.searchPractitioners({ limit: POR_PAGINA }).pipe(
       map(
         (pagina) =>
-          new Set(
+          // Sin concepto: el buscador público no expone identificadores
+          // internos. El valor vacío es lo que hace caer la navegación al
+          // texto, que sin sesión es el único destino posible.
+          new Map(
             pagina.items
               .flatMap((fila) => (fila.headline ?? '').split(/[·,|]/))
               .map((parte) => normalizar(parte))
-              .filter((parte) => parte !== ''),
-          ) as ReadonlySet<string>,
+              .filter((parte) => parte !== '')
+              .map((nombre) => [nombre, '']),
+          ) as ReadonlyMap<string, string>,
       ),
-      catchError(() => of(new Set<string>())),
+      catchError(() => of(VACIO)),
     );
   }
 }

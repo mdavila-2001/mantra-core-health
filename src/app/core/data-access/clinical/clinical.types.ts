@@ -55,6 +55,22 @@ export interface MedicationRequest {
   readonly id: string;
   readonly medicationConceptId: string;
   readonly statusConceptId: string;
+  /**
+   * La consulta en la que se prescribió, si nació de una.
+   *
+   * El backend lo devuelve y este tipo no lo declaraba, así que el dato llegaba
+   * y nadie podía leerlo con tipos: la ficha no tenía cómo agrupar las líneas
+   * de una misma receta.
+   */
+  readonly encounterId?: string;
+  /**
+   * El motivo escrito a mano, cuando no hay condición registrada detrás.
+   *
+   * Es lo que el cliente pidió para los casos psiquiátricos y para quien «sólo
+   * fue a que le receten». **Todavía no existe en el backend**: ver P24 en
+   * `PENDIENTES-BACKEND.md`.
+   */
+  readonly indicationText?: string;
   readonly prescriberProfileId?: string;
   readonly doseText?: string;
   readonly frequencyText?: string;
@@ -62,6 +78,27 @@ export interface MedicationRequest {
   readonly validTo?: Date;
   /** Indicaciones al paciente impresas en la receta (Patch v4.1.3). */
   readonly patientInstructionsText?: string;
+  /**
+   * El diagnóstico que motiva la receta — «para qué es» (Patch v4.1.6).
+   *
+   * ## Se escribía y no se leía
+   *
+   * El alta lo manda desde v4.1.6 (`NewMedicationRequest.indicationConditionId`)
+   * y `GET /clinical/patients/:id/summary` lo devuelve —está en
+   * `MedicationRequestSummaryDto` y en `clinical-read.service.ts`—, pero este
+   * tipo no lo declaraba: el vínculo quedaba guardado en la base y desaparecía
+   * de la pantalla en cuanto se recargaba. Es exactamente el síntoma de
+   * «relación sólo visual» que la corrección del 10/09/2026 manda cerrar, y se
+   * cierra declarándolo: los mapeadores del cliente propagan por `...resto`.
+   *
+   * Es un `clinical.conditions.id`, no un concepto de terminología: se resuelve
+   * contra la lista de diagnósticos del propio expediente y no con
+   * `TerminologyClient`.
+   *
+   * Ausente cuando la receta no tiene diagnóstico detrás, que es un caso
+   * legítimo del contrato: una prescripción sintomática o profiláctica.
+   */
+  readonly indicationConditionId?: string;
   readonly signedAt?: Date;
   readonly issuedAt?: Date;
   readonly createdAt: Date;
@@ -383,6 +420,22 @@ export interface NewMedicationRequest {
    * termina impreso en el papel.
    */
   readonly indicationConditionId?: string;
+  /**
+   * El motivo de la receta escrito a mano, para cuando no hay un diagnóstico
+   * registrado detrás.
+   *
+   * El cliente lo pidió por su caso: «puede existir el caso que sólo se fue a
+   * hacer recetar y no necesitaría diagnóstico existente previo, sobre todo
+   * casos psiquiátricos».
+   *
+   * **Excluyente con `indicationConditionId`**, y el concepto gana si llegaran
+   * los dos — el mismo criterio que `occupation_free_text` frente a
+   * `occupation_concept_id` en `persons`.
+   *
+   * ⚠️ **Contra la API de hoy da 400**: `CreateMedicationRequestDto` no declara
+   * la clave y el backend valida con `forbidNonWhitelisted`. Ver P24.
+   */
+  readonly indicationText?: string;
 }
 
 /**
@@ -541,19 +594,29 @@ export interface NewObservationReferenceRange {
 /**
  * Lo que hace falta para registrar una observación (UC-08-03).
  *
- * ## `performers` es obligatorio acá y opcional en el DTO
+ * ## `performers` se manda siempre que se pueda nombrar, y no siempre se puede
  *
- * Es una restricción **de este lado**, deliberada: el contrato admite una
- * observación sin ejecutante, pero una medición sin autor no es un registro
- * clínico —no se puede repreguntar, ni auditar, ni desestimar—. La pantalla
- * siempre sabe quién la está tomando, así que no hay caso legítimo en el que
- * omitirlo, y dejarlo opcional invitaba a olvidarlo.
+ * Una medición sin autor no es un registro clínico —no se puede repreguntar, ni
+ * auditar, ni desestimar—, y por eso este tipo lo declaró obligatorio durante
+ * un tiempo aunque el DTO lo tuviera opcional. La restricción se levantó al
+ * escribir la primera pantalla que registra observaciones, y no por comodidad:
+ * un ejecutante son **dos** datos —quién y de qué clase—, y el segundo es un
+ * `*_concept_id` que sale de `clinical.observation_performers.performer_type_concept_id`.
+ * Esa columna puede no tener conjunto de valores publicado en una instalación,
+ * y entonces el único ejecutante que la pantalla podría armar llevaría un uuid
+ * inventado. Entre registrar la medición sin autor y registrarla con un autor
+ * falso, lo primero es lo honesto; lo segundo es lo que la auditoría no puede
+ * distinguir de un dato real.
+ *
+ * Quien escribe una observación **debe** mandarlo cuando el catálogo lo permita:
+ * ver `ObservationBlock`, que lo resuelve del binding y lo omite sólo cuando el
+ * catálogo no publica la columna.
  */
 export interface NewObservation extends ObservationValue {
   readonly custodianTenantId: string;
   readonly patientProfileId: string;
   readonly codeConceptId: string;
-  readonly performers: readonly NewObservationPerformer[];
+  readonly performers?: readonly NewObservationPerformer[];
   readonly encounterId?: string;
   readonly basedOnServiceRequestId?: string;
   readonly categoryConceptId?: string;
@@ -661,3 +724,47 @@ export interface InteractionCheckResult {
   readonly alerts: readonly InteractionAlert[];
   readonly count: number;
 }
+
+/* ---- FT-22 · Aspectos médicos del titular --------------------------------- */
+
+/**
+ * Lo que el propio paciente declara sobre su salud.
+ *
+ * ## Por qué es un contrato aparte del resumen clínico
+ *
+ * `ClinicalSummary` es lo que **un profesional registró**: condiciones,
+ * alergias y observaciones firmadas, que el paciente no puede ni debe editar.
+ * Esto es lo otro: lo que la persona dice de sí misma antes de que nadie la
+ * examine —qué toma, a qué es alérgica según ella, qué le operaron—. Mezclarlos
+ * en una sola lectura haría que un dato declarado se leyera como un diagnóstico.
+ *
+ * Todo texto libre y opcional a propósito: es una declaración, no un formulario
+ * clínico codificado. Obligar a elegir de un catálogo dejaría fuera justo lo que
+ * la persona quiere aclarar.
+ */
+export interface OwnMedicalAspects {
+  /** Grupo y factor, tal como la persona lo declara («O+»). */
+  readonly bloodType?: string;
+  /** A qué dice ser alérgica. No reemplaza a las alergias registradas. */
+  readonly allergiesText?: string;
+  /** Enfermedades crónicas o condiciones que declara. */
+  readonly chronicConditionsText?: string;
+  /** Qué está tomando ahora, incluidos los de venta libre. */
+  readonly currentMedicationsText?: string;
+  /** Cirugías y hospitalizaciones anteriores. */
+  readonly surgeriesText?: string;
+  /** Antecedentes familiares relevantes. */
+  readonly familyHistoryText?: string;
+  /** Hábitos: tabaco, alcohol, actividad física, alimentación. */
+  readonly habitsText?: string;
+  /** Cuándo se guardó por última vez. Sólo lectura: lo pone el servidor. */
+  readonly updatedAt?: Date;
+}
+
+/**
+ * Los cambios que el titular manda.
+ *
+ * Cada campo ausente **no se toca**; un campo en `''` lo borra. Es la
+ * distinción que permite guardar una sección sin pisar las otras.
+ */
+export type OwnMedicalAspectsChanges = Omit<OwnMedicalAspects, 'updatedAt'>;

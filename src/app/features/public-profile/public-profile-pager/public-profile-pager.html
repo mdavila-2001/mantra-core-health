@@ -1,0 +1,30 @@
+@if (totalPages() > 1) {
+  <nav class="pasos" [attr.aria-label]="'Páginas de ' + label()">
+    <button
+      type="button"
+      class="pasos__boton"
+      [attr.data-testid]="testId() + '-previous'"
+      [attr.aria-label]="'Página anterior de ' + label()"
+      [disabled]="!hayAnterior()"
+      (click)="verAnterior()"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6" /></svg>
+    </button>
+
+    <!-- «n de N» en texto, como el carrusel: se anuncia sin mover el foco. -->
+    <p class="pasos__contador" aria-live="polite" [attr.data-testid]="testId() + '-counter'">
+      {{ currentPage() + 1 }} de {{ totalPages() }}
+    </p>
+
+    <button
+      type="button"
+      class="pasos__boton"
+      [attr.data-testid]="testId() + '-next'"
+      [attr.aria-label]="'Página siguiente de ' + label()"
+      [disabled]="!haySiguiente()"
+      (click)="verSiguiente()"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6" /></svg>
+    </button>
+  </nav>
+}

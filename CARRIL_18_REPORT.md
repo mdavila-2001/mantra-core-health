@@ -56,7 +56,7 @@ Se preparó toda la infraestructura de verificación:
 ### Nav y rutas
 - `navigation.map.ts`: `my-organizations` (`roles: ['PRACTITIONER']`), `my-notifications` (sin roles).
 - `app.routes.ts`: entradas de carga diferida para ambas.
-- `node scripts/check-route-prefixes.mjs` → 132 rutas, 0 colisiones (28 prefijos). `node scripts/check-architecture.mjs` → sin ciclos, capas en una dirección. `node scripts/check-tokens.mjs` → 205 tokens, sin literales inventados (se verificaron los tokens CSS usados —`--e1..e10`, `--tinta-3`, `--filete`, `--filete-2`, `--r-card`— contra `src/styles/redsat.css` antes de usarlos).
+- `node scripts/check-route-prefixes.mjs` → 132 rutas, 0 colisiones (28 prefijos). `node scripts/check-architecture.mjs` → sin ciclos, capas en una dirección. `node scripts/check-tokens.mjs` → 205 tokens, sin literales inventados (se verificaron los tokens CSS usados —`--e1..e10`, `--tinta-3`, `--filete`, `--filete-2`, `--r-card`— contra `src/styles/alovida.css` antes de usarlos).
 
 ## Deuda y bloqueadores documentados
 

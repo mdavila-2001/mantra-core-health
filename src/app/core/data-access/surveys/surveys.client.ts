@@ -15,7 +15,9 @@ import type {
   SurveyAnswerInput,
   SurveyCreated,
   SurveyDetail,
+  SurveyEdit,
   SurveyQuestion,
+  SurveyQuestionEdit,
   SurveyResponse,
   SurveySummary,
 } from './surveys.types';
@@ -94,6 +96,24 @@ export class SurveysClient {
   }
 
   /**
+   * `POST /surveys/templates/:id/versions` — abre una versión nueva en
+   * borrador para corregir una plantilla ya publicada (FT-31).
+   *
+   * La versión vieja no se toca ni se desasocia: sigue siendo la que
+   * interpretan sus respuestas ya guardadas, y la que reciben los pacientes
+   * hasta que ésta se publique y alguien la vuelva a asociar.
+   *
+   * @param surveyId - Identificador de la encuesta.
+   * @returns La versión nueva, en borrador.
+   */
+  createNextVersion(surveyId: string): Observable<SurveyCreated> {
+    return this.http.post<SurveyCreated>(
+      this.url(`/surveys/templates/${surveyId}/versions`),
+      {},
+    );
+  }
+
+  /**
    * `POST /surveys/templates/:id/questions` — agrega una pregunta.
    *
    * Solo funciona mientras la versión sigue en borrador: publicar congela el
@@ -110,6 +130,83 @@ export class SurveysClient {
     return this.http.post<SurveyQuestion>(
       this.url(`/surveys/templates/${surveyId}/questions`),
       question,
+    );
+  }
+
+  /**
+   * `PATCH /surveys/templates/:id` — corrige título, consigna o plazo.
+   *
+   * Sólo sobre la versión en borrador: el backend devuelve 422 si ya está
+   * publicada, por lo mismo que no acepta preguntas nuevas.
+   *
+   * @param surveyId - Identificador de la encuesta.
+   * @param cambios - Sólo lo que cambió.
+   * @returns Confirmación de la operación.
+   */
+  updateSurvey(surveyId: string, cambios: SurveyEdit): Observable<{ readonly ok: boolean }> {
+    return this.http.patch<{ ok: boolean }>(
+      this.url(`/surveys/templates/${surveyId}`),
+      cambios,
+    );
+  }
+
+  /**
+   * `PATCH /surveys/templates/:id/questions/:questionId` — corrige una pregunta.
+   *
+   * @param surveyId - Identificador de la encuesta.
+   * @param questionId - La pregunta a corregir.
+   * @param cambios - Sólo lo que cambió; opciones y escala se reemplazan enteras.
+   * @returns Confirmación de la operación.
+   */
+  updateQuestion(
+    surveyId: string,
+    questionId: string,
+    cambios: SurveyQuestionEdit,
+  ): Observable<{ readonly ok: boolean }> {
+    return this.http.patch<{ ok: boolean }>(
+      this.url(`/surveys/templates/${surveyId}/questions/${questionId}`),
+      cambios,
+    );
+  }
+
+  /**
+   * `DELETE /surveys/templates/:id/questions/:questionId` — quita una pregunta.
+   *
+   * El servidor renumera las que quedan: `position` es lo que la pantalla
+   * dibuja delante de cada pregunta, y borrar la 2 de 4 no debe dejar un
+   * cuestionario que va 1, 3, 4.
+   *
+   * @param surveyId - Identificador de la encuesta.
+   * @param questionId - La pregunta a quitar.
+   * @returns Confirmación de la operación.
+   */
+  deleteQuestion(
+    surveyId: string,
+    questionId: string,
+  ): Observable<{ readonly ok: boolean }> {
+    return this.http.delete<{ ok: boolean }>(
+      this.url(`/surveys/templates/${surveyId}/questions/${questionId}`),
+    );
+  }
+
+  /**
+   * `PUT /surveys/templates/:id/questions/order` — reordena el cuestionario.
+   *
+   * Se manda **la lista entera** de identificadores en el orden querido, y no
+   * «subí ésta un lugar»: dos reordenamientos seguidos sobre una posición
+   * relativa se pisan, y el resultado depende de cuál llegó antes.
+   *
+   * @param surveyId - Identificador de la encuesta.
+   * @param questionIds - Los identificadores, en el orden final.
+   * @returns Confirmación de la operación.
+   */
+  reorderQuestions(
+    surveyId: string,
+    questionIds: readonly string[],
+  ): Observable<{ readonly ok: boolean }> {
+    return this.http.put<{ ok: boolean }>(
+      this.url(`/surveys/templates/${surveyId}/questions/order`),
+      { questionIds },
     );
   }
 

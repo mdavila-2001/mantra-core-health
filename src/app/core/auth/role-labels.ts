@@ -30,8 +30,20 @@ export const ROLE_LABELS: Readonly<Record<string, string>> = {
   PHARMA_LAB_ADMIN: 'Administración de farmacia y laboratorio',
   ACCOUNTING_APPROVER: 'Aprobación contable',
   BILLING: 'Facturación',
+  BILLING_OPERATOR: 'Operación de facturación',
   FINANCE: 'Finanzas',
   CASHIER: 'Caja',
+  /** Rol de negocio de `authz.roles` (subtarea 3.1, v4.2.14): cara de la aseguradora. */
+  INSURANCE_OPERATOR: 'Operación de aseguradora',
+  /** Roles del portal administrativo (catálogo, analítica, QA, operación). */
+  GOVERNANCE_ADMIN: 'Gobierno de datos',
+  DATA_PLATFORM_ADMIN: 'Plataforma de datos',
+  DPO: 'Protección de datos',
+  MARKETING_MANAGER: 'Marketing',
+  QA_ADMIN: 'Administración de QA',
+  QA_ENGINEER: 'Ingeniería de QA',
+  RELEASE_MANAGER: 'Gestión de releases',
+  SRE: 'Confiabilidad (SRE)',
 };
 
 /**
@@ -101,10 +113,14 @@ const ROLES_DE_TRABAJO: readonly string[] = [
 /**
  * Si quien entra viene a atenderse y no a trabajar acá.
  *
- * Es la pregunta que decide qué NO se le muestra: el panel de la organización,
- * la tarjeta «Tu acceso» con organización y roles (F-22), y en general todo lo
- * que sea vocabulario de gestión. La regla de I-A se había filtrado cuatro
- * veces por escribirla de nuevo en cada pantalla; ahora se pregunta acá.
+ * Es la pregunta que decide qué NO se le muestra: el panel de la organización
+ * y, en general, todo lo que sea vocabulario de gestión. La regla de I-A se
+ * había filtrado cuatro veces por escribirla de nuevo en cada pantalla; ahora
+ * se pregunta acá.
+ *
+ * La tarjeta «Tu acceso» de «Mi perfil» era el otro caso, y fue el que le dio
+ * nombre a F-22. Ya no se le muestra a nadie —el cliente la pidió fuera el
+ * 13/09/2026— así que dejó de ser una pregunta de roles.
  */
 export function vieneAAtenderse(codigos: readonly string[]): boolean {
   if (!codigos.includes('PATIENT')) return false;

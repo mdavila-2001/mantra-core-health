@@ -32,3 +32,18 @@
   color: var(--text-muted);
   font-size: var(--fs-caption);
 }
+
+/* ─── Las dos vistas (C-14) ──────────────────────────────────────────────── */
+
+.hoja-libre__vistas {
+  display: block;
+}
+
+/* El panel hereda el mismo apilado que tenía la sección entera antes de que
+   fueran dos vistas. */
+.hoja-libre__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block-start: var(--sp-4);
+}

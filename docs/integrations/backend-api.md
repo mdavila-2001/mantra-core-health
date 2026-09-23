@@ -34,7 +34,7 @@ inyección»*.
 
 ## Catálogo de operaciones
 
-### `IamClient` — 12 operaciones
+### `IamClient` — 14 operaciones
 
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
@@ -51,6 +51,7 @@ inyección»*.
 | `GET` | `/iam/users` | `OrganizationNew` (buscador de owner, V04-01·F) | No |
 | `POST` | `/iam/users` | `UserRegistration` | No |
 | `POST` | `/iam/users/assisted-registration` | `AssistedRegistration` | No |
+| `POST` | `/iam/auth/register-organization` | `ActivateAccount` y 13 pantallas más | Sí |
 
 #### Las tres altas no son la misma operación con distintos campos
 
@@ -88,7 +89,7 @@ Admite dos filtros opcionales de query string, `city` y `specialty`, que **se
 omiten si no vienen**: mandarlos vacíos filtraría por la cadena vacía en vez de
 no filtrar. `Dashboard` llama sin ninguno.
 
-### `IdentityClient` — 6 operaciones
+### `IdentityClient` — 7 operaciones
 
 | Método | Ruta |
 |---|---|
@@ -98,6 +99,7 @@ no filtrar. `Dashboard` llama sin ninguno.
 | `POST` | `/identity/me/tenants/:tenantId/verification` |
 | `GET` | `/identity/me/verification-cases` |
 | `GET` | `/identity/me/verification-cases/:caseId` |
+| `GET` | `/identity/me/verification-types` | `Dashboard` y 4 pantallas más | No |
 
 Todo `identity/me` resuelve el sujeto de la sesión: ninguna ruta recibe a quién
 se verifica, y por eso la pantalla de verificación no tiene selector de persona.
@@ -140,7 +142,7 @@ publique los `GET` que faltan.
 **`checks:plan` lleva los dos puntos en la URL de verdad**: el backend declara
 el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 
-### `ProfilesClient` — 20 operaciones
+### `ProfilesClient` — 31 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -165,6 +167,16 @@ el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 | `GET` | `/practitioners/:practitionerProfileId/sites` | `PracticeSitesClient` (carril 5) |
 | `POST` | `/clinical/care-episodes` | `admission-block` (carril 5) |
 | `POST` | `/cds/check-interactions` | receta y medicación (Pablo) |
+| `GET` | `/profiles/patients/me` | `AccessRequests` y 27 pantallas más | No |
+| `PATCH` | `/profiles/patients/me` | `AccessRequests` y 27 pantallas más | No |
+| `DELETE` | `/profiles/patients/me/photo` | `AccessRequests` y 27 pantallas más | No |
+| `PUT` | `/profiles/patients/me/photo` | `AccessRequests` y 27 pantallas más | No |
+| `PUT` | `/profiles/practitioners/:profileId/photo` | `AccessRequests` y 27 pantallas más | No |
+| `POST` | `/profiles/practitioners/me/credentials` | `AccessRequests` y 27 pantallas más | No |
+| `DELETE` | `/profiles/practitioners/me/credentials/:credentialId` | `AccessRequests` y 27 pantallas más | No |
+| `GET` | `/profiles/practitioners/me/linkable-organizations` | `AccessRequests` y 27 pantallas más | No |
+| `GET` | `/profiles/practitioners/me/onboarding` | `AccessRequests` y 27 pantallas más | No |
+| `GET` | `/profiles/practitioners/specialty-counts` | `AccessRequests` y 27 pantallas más | No |
 
 > **Las cinco últimas no son de `ProfilesClient` y están declaradas acá al resolver el
 > carril R2-1, no por sus autores.** Vienen de los carriles 3, 4 y 5 y de la medicación, que
@@ -208,7 +220,7 @@ con `IDENTITY_VERIFICATION_REQUIRED`, que es el único 403 del contrato que lleg
 a la interfaz **con una salida** en vez de un muro.
 
 
-### `DirectoryClient` — 7 operaciones
+### `DirectoryClient` — 18 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -219,6 +231,17 @@ a la interfaz **con una salida** en vez de un muro.
 | `GET` | `/tenants/:tenantId/memberships` | `OrganizationDetail` (V04-04·L) |
 | `GET` | `/tenants/:tenantId/memberships/:membershipId/branch-assignments` | `OrganizationDetail` (V04-03·L) |
 | `GET` | `/tenants/:tenantId/child-tenants` | `OrganizationDetail` (V04-07·L) |
+| `POST` | `/admin/tenants/:tenantId/verification` | `BranchNew` y 9 pantallas más | No |
+| `PATCH` | `/tenants/:tenantId` | `BranchNew` y 9 pantallas más | No |
+| `GET` | `/tenants/:tenantId/agenda` | `BranchNew` y 9 pantallas más | No |
+| `POST` | `/tenants/:tenantId/branches` | `BranchNew` y 9 pantallas más | No |
+| `POST` | `/tenants/:tenantId/child-tenants` | `BranchNew` y 9 pantallas más | No |
+| `POST` | `/tenants/:tenantId/memberships` | `BranchNew` y 9 pantallas más | No |
+| `POST` | `/tenants/:tenantId/memberships/:membershipId/branch-assignments` | `BranchNew` y 9 pantallas más | No |
+| `GET` | `/tenants/:tenantId/practitioner-requests` | `BranchNew` y 9 pantallas más | No |
+| `POST` | `/tenants/:tenantId/practitioner-requests/:affiliationId/approve` | `BranchNew` y 9 pantallas más | No |
+| `POST` | `/tenants/:tenantId/practitioner-requests/:affiliationId/reject` | `BranchNew` y 9 pantallas más | No |
+| `GET` | `/tenants/me` | `BranchNew` y 9 pantallas más | No |
 
 **`/admin/tenants` es la cara de plataforma del directorio**: opera fuera del
 contexto RLS de tenant. El listado admite `SECURITY_ADMIN` y `SUPERADMIN`; el
@@ -249,7 +272,7 @@ costaron un 403 y un falso verde:
 `listBranches` y `listBranchAssignments` **no paginan**: devuelven todo con su
 `count`, así que la pantalla no puede prometer «Siguientes» sobre eso.
 
-### `AccountingClient` — 5 operaciones
+### `AccountingClient` — 13 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -258,6 +281,14 @@ costaron un 403 y un falso verde:
 | `GET` | `/accounting/trial-balance` | `Accounting` (sumas y saldos, UC-16-06) |
 | `GET` | `/accounting/journal-transactions` | `Accounting` (libro diario, UC-16-01·L) |
 | `GET` | `/accounting/journal-transactions/:transactionId` | `Accounting` (el asiento con sus líneas, UC-16-01·D) |
+| `GET` | `/accounting/balance-sheet` | `Accounting` y 2 pantallas más | No |
+| `GET` | `/accounting/general-ledger` | `Accounting` y 2 pantallas más | No |
+| `GET` | `/accounting/income-statement` | `Accounting` y 2 pantallas más | No |
+| `POST` | `/accounting/journal-transactions` | `Accounting` y 2 pantallas más | No |
+| `POST` | `/accounting/journal-transactions/drafts` | `Accounting` y 2 pantallas más | No |
+| `POST` | `/accounting/practitioner/consultation-income` | `Accounting` y 2 pantallas más | No |
+| `POST` | `/accounting/practitioner/entries` | `Accounting` y 2 pantallas más | No |
+| `GET` | `/accounting/practitioner/paid-consultations` | `Accounting` y 2 pantallas más | No |
 
 **Todo cuelga de un `practiceId`** y no existe «la práctica del usuario»: una
 organización puede tener varias. Por eso `/practices` va primero; sin esa lista
@@ -278,17 +309,20 @@ silencio es un balance que miente.
 otra organización. Es lo que hace seguro que las pueda pedir un `PRACTITIONER`
 y no sólo un `SECURITY_ADMIN`.
 
-### `ServicesCatalogClient` — 2 operaciones
+### `ServicesCatalogClient` — 5 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/billing/service-catalog` | `ServicesCatalog` (carril 1) |
 | `POST` | `/billing/service-catalog` | `ServicesCatalog` (alta de un servicio) |
+| `PATCH` | `/billing/service-catalog/:id` | `MyServices` y 3 pantallas más | No |
+| `GET` | `/billing/service-catalog/procedure-specialties` | `MyServices` y 3 pantallas más | No |
+| `GET` | `/billing/service-catalog/procedures` | `MyServices` y 3 pantallas más | No |
 
 Reusa `GET /practices` de `AccountingClient` para elegir de qué práctica es el
 catálogo — mismo motivo: no existe «la práctica del usuario».
 
-### `SchedulingClient` — 17 operaciones
+### `SchedulingClient` — 33 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -309,6 +343,22 @@ catálogo — mismo motivo: no existe «la práctica del usuario».
 | `POST` | `/scheduling/holds/:holdToken/request` | `BookingNew` (el paciente solicita, no confirma) |
 | `POST` | `/scheduling/bookings/:bookingId/reject` | `Agenda` (el doctor rechaza una solicitud) |
 | `POST` | `/scheduling/bookings/:bookingId/:accion` | `Agenda` (acepta/atiende: la acción va en la ruta) |
+| `GET` | `/scheduling/activity-types` | `Agenda` y 11 pantallas más | No |
+| `POST` | `/scheduling/appointments/direct` | `Agenda` y 11 pantallas más | No |
+| `POST` | `/scheduling/bookings/:bookingId/delay` | `Agenda` y 11 pantallas más | No |
+| `PUT` | `/scheduling/bookings/:bookingId/payment-state` | `Agenda` y 11 pantallas más | No |
+| `GET` | `/scheduling/exception-types` | `Agenda` y 11 pantallas más | No |
+| `DELETE` | `/scheduling/exceptions/:exceptionId` | `Agenda` y 11 pantallas más | No |
+| `PATCH` | `/scheduling/exceptions/:exceptionId` | `Agenda` y 11 pantallas más | No |
+| `POST` | `/scheduling/resources/:resourceId/close-slots` | `Agenda` y 11 pantallas más | No |
+| `POST` | `/scheduling/resources/:resourceId/delay` | `Agenda` y 11 pantallas más | No |
+| `GET` | `/scheduling/resources/:resourceId/exceptions` | `Agenda` y 11 pantallas más | No |
+| `POST` | `/scheduling/resources/:resourceId/shift-slots` | `Agenda` y 11 pantallas más | No |
+| `GET` | `/scheduling/resources/:resourceId/templates` | `Agenda` y 11 pantallas más | No |
+| `DELETE` | `/scheduling/templates/:templateId` | `Agenda` y 11 pantallas más | No |
+| `POST` | `/scheduling/templates/:templateId/reactivate` | `Agenda` y 11 pantallas más | No |
+| `GET` | `/scheduling/waitlist` | `Agenda` y 11 pantallas más | No |
+| `POST` | `/scheduling/waitlist` | `Agenda` y 11 pantallas más | No |
 
 > **Las tres últimas se declaran acá al resolver el conflicto del carril 13/16,
 > no por sus autores.** Entraron a `dev` con los carriles 06 y 07 sin pasar por
@@ -347,7 +397,7 @@ botón que devuelve un error, y elige el primer recurso cuando la URL no trae un
 pide nada: un `400` ahí se leería como «la agenda falló» y lo que falta es un
 paso previo.
 
-### `ClinicalClient` — 10 operaciones
+### `ClinicalClient` — 19 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -363,6 +413,13 @@ paso previo.
 | `POST` | `/clinical/medication-requests/:medicationRequestId/issue` | `PatientChart` — emisión |
 | `POST` | `/clinical/diagnostic-reports` | `ClinicalClient` — informe diagnóstico (UC-08-06) |
 | `POST` | `/clinical/diagnostic-reports/:diagnosticReportId/release` | `ClinicalClient` — liberación (UC-08-07) |
+| `POST` | `/clinical/allergy-intolerances/:allergyId/attachments` | `AdmissionBlock` y 12 pantallas más | No |
+| `POST` | `/clinical/conditions/:conditionId/attachments` | `AdmissionBlock` y 12 pantallas más | No |
+| `POST` | `/clinical/conditions/:conditionId/change-status` | `AdmissionBlock` y 12 pantallas más | No |
+| `GET` | `/clinical/me/medical-aspects` | `AdmissionBlock` y 12 pantallas más | No |
+| `PUT` | `/clinical/me/medical-aspects` | `AdmissionBlock` y 12 pantallas más | No |
+| `POST` | `/clinical/medication-requests/:requestId/attachments` | `AdmissionBlock` y 12 pantallas más | No |
+| `POST` | `/clinical/procedures/:procedureId/attachments` | `AdmissionBlock` y 12 pantallas más | No |
 
 Las seis escrituras clínicas **no estaban declaradas**: entraron con el registro
 del expediente y el contrato quedó atrás, así que la comprobación de deriva
@@ -416,7 +473,7 @@ lee como «no hay antecedentes».
 Completa el CRUD que antes sólo tenía `assignTemplate` — crear, listar y leer
 el esquema de una plantilla por especialidad, no sólo asignarla.
 
-### `FormsClient` — 6 operaciones
+### `FormsClient` — 14 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -426,6 +483,14 @@ el esquema de una plantilla por especialidad, no sólo asignarla.
 | `POST` | `/forms/field-definitions` | `FormBuilder` (declara el campo, UC-09-02) |
 | `POST` | `/forms/assignments` | `FormBuilder` (lo cuelga del formulario, UC-09-06) |
 | `GET` | `/forms/assignments/budget` | `FormBuilder` (cuánto queda por extender) |
+| `DELETE` | `/forms/assignments/:assignmentId` | `FormBuilder` y 2 pantallas más | No |
+| `PATCH` | `/forms/assignments/:assignmentId` | `FormBuilder` y 2 pantallas más | No |
+| `PUT` | `/forms/assignments/order` | `FormBuilder` y 2 pantallas más | No |
+| `PATCH` | `/forms/field-definitions/:fieldId` | `FormBuilder` y 2 pantallas más | No |
+| `GET` | `/forms/instances` | `FormBuilder` y 2 pantallas más | No |
+| `GET` | `/forms/instances/:instanceId` | `FormBuilder` y 2 pantallas más | No |
+| `GET` | `/forms/me/instances` | `FormBuilder` y 2 pantallas más | No |
+| `GET` | `/forms/me/instances/:instanceId` | `FormBuilder` y 2 pantallas más | No |
 
 Las tres primeras son el ciclo de vida que `specialty-form-block` necesita
 —abrir, capturar, cerrar—. El motor de `forms` tiene mucho más (sets versionados,
@@ -442,12 +507,15 @@ extensibilidad (`extension_target_policies.maximumFields`) dice cuántos campos
 propios admite ese target, y la pantalla lo consulta para no ofrecer un alta que
 el backend va a rechazar.
 
-### `AuthzClient` — 2 operaciones · sólo lectura
+### `AuthzClient` — 5 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/authz/care-relationships` | `PatientDetail` (V06-01) |
 | `GET` | `/authz/legal-representations` | — |
+| `POST` | `/authz/care-relationships/:id/respond` | `AccessRequests` y 2 pantallas más | No |
+| `POST` | `/authz/care-relationships/request` | `AccessRequests` y 2 pantallas más | No |
+| `GET` | `/authz/care-relationships/requests/mine` | `AccessRequests` y 2 pantallas más | No |
 
 No son permisos: son el **motivo** por el que alguien puede mirar la historia de
 otra persona. El PDP los consume; la interfaz sólo los muestra.
@@ -507,7 +575,7 @@ Los doce comandos tienen pantalla. Las doce operan con identificadores pegados
 —o con el código del proveedor, en el flujo por `by-code`—; cuando lleguen los
 endpoints de consulta, los listados reemplazan ese gesto.
 
-### `TerminologyClient` — 4 operaciones
+### `TerminologyClient` — 8 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -515,6 +583,10 @@ endpoints de consulta, los listados reemplazan ese gesto.
 | `GET` | `/terminology/concepts` | `PatientDetail`, `MyProfile` |
 | `GET` | `/terminology/concepts/:conceptId` | `Glossary` (entrada del glosario, carril R2-6) |
 | `GET` | `/terminology/value-sets` | `Glossary` (las etiquetas por las que se hojea, R2-6) |
+| `GET` | `/terminology/code-systems` | `Agenda` y 34 pantallas más | No |
+| `GET` | `/terminology/code-systems/:codeSystemId/versions` | `Agenda` y 34 pantallas más | No |
+| `POST` | `/terminology/versions/:versionId/import-file` | `Agenda` y 34 pantallas más | No |
+| `POST` | `/terminology/versions/:versionId/publish` | `Agenda` y 34 pantallas más | No |
 
 La segunda se llama con `?ids=` —los identificadores separados por coma— o con
 `?q=` para buscar por texto, que es lo que usa el catálogo de terminología.
@@ -651,7 +723,7 @@ de `/diagnostics`: lista laboratorios e imagenología y abre su perfil público.
 | `GET` | `/diagnostic-units` | `LaboratoryDirectory` |
 | `GET` | `/diagnostic-units/:id` | `LaboratoryDetail` |
 
-### `DiagnosticUnitsAdminClient` — 2 operaciones · carril 16
+### `DiagnosticUnitsAdminClient` — 8 operaciones
 
 La **consola de administración** del laboratorio (M23), no su vitrina.
 
@@ -671,6 +743,12 @@ responde el mismo `404` que una inexistente.
 |---|---|---|
 | `GET` | `/diagnostic-units/administration` | `MedicalLaboratory` |
 | `GET` | `/diagnostic-units/:id/administration` | `MedicalLaboratory` |
+| `DELETE` | `/diagnostic-study-offerings/:offeringId` | `MedicalLaboratory` | No |
+| `POST` | `/diagnostic-units/:unitId/price-schedules` | `MedicalLaboratory` | No |
+| `POST` | `/diagnostic-units/:unitId/study-offerings` | `MedicalLaboratory` | No |
+| `POST` | `/diagnostic-units/:unitId/verify-and-publish` | `MedicalLaboratory` | No |
+| `POST` | `/price-schedules/:scheduleId/study-prices` | `MedicalLaboratory` | No |
+| `POST` | `/study-prices/:priceId/close` | `MedicalLaboratory` | No |
 
 ### `MedicalOrganizationClient` — 2 operaciones · carril 13
 
@@ -695,7 +773,7 @@ acreditaciones e inventario, y ninguna operación los volvía a mencionar.
 > `GET /practices` ya lo consumía `AccountingClient` para elegir de qué práctica
 > son los libros. Se reusa el mismo endpoint: no se forkea el contrato.
 
-### `DiagnosticsClient` — 4 operaciones · carril 4
+### `DiagnosticsClient` — 6 operaciones
 
 Laboratorios e imagenología (M52).
 
@@ -704,7 +782,9 @@ Laboratorios e imagenología (M52).
 | `GET` | `/diagnostics/patients/:patientProfileId/orders` | `DiagnosticsBlock` · `Diagnostics` |
 | `GET` | `/diagnostics/patients/:patientProfileId/imaging-studies` | `DiagnosticsBlock` · `Diagnostics` |
 | `GET` | `/diagnostics/work-orders` | `Diagnostics` |
+| `POST` | `/clinical/service-requests/duplicate-check` | `DiagnosticsBlock` (antiduplicación de estudios · T-26, subtarea 3.2) |
 | `POST` | `/clinical/service-requests` | `Diagnostics` (pedir un estudio) |
+| `GET` | `/diagnostic-results/me/orders` | `DiagnosticOrders` y 4 pantallas más | No |
 
 > **Declaradas acá al resolver el conflicto del carril 15, no por sus autores.**
 > Los carriles 3 y 4 entraron a `dev` sin pasar por esta página, y eso dejó el
@@ -712,7 +792,7 @@ Laboratorios e imagenología (M52).
 > distingue «lo agregó otro» de «lo agregué yo». Si algún consumidor de arriba
 > quedó mal atribuido, corregilo — se dedujo de quién importa cada cliente.
 
-### `FilesClient` — 5 operaciones
+### `FilesClient` — 6 operaciones
 
 | Método | Ruta | Consumidor |
 |---|---|---|
@@ -721,6 +801,7 @@ Laboratorios e imagenología (M52).
 | `POST` | `/common/files/:fileId/links` | `AttachmentUploader` |
 | `POST` | `/common/files/:fileId/download-url` | `AttachmentsBlock` |
 | `DELETE` | `/common/files/:fileId` | — (borrado lógico, sin pantalla todavía) |
+| `GET` | `/common/files/:fileId/content` | `AttachmentUploader` y 10 pantallas más | No |
 
 #### Adjuntar son dos operaciones, no una
 
@@ -742,7 +823,7 @@ tiene que promoverlo al `.puml` primero.
 Es firmada y vence. Emitir una por adjunto al pintar la lista dejaría veinte
 enlaces vivos a datos clínicos de los que diecinueve nadie abrió.
 
-### `PublicDirectoryClient` — 9 lecturas anónimas
+### `PublicDirectoryClient` — 13 operaciones
 
 El directorio público del buscador V65 (carril P4). Es **otra superficie**, no
 otras rutas de `CommunityClient`: aquélla habla con la red social **con
@@ -764,6 +845,10 @@ ataría una respuesta cacheada `public, max-age=60` a una sesión.
 | `GET` | `/public/search/pharmacies` | — (sin pantalla propia todavía) |
 | `GET` | `/public/nearby` | `BuscarCercaniaDetalle` (`/buscar/mapa`) |
 | `GET` | `/public/profiles/:prefijo/:slug` | `perfilPublicoResolver` (`/p/:slug`…) |
+| `GET` | `/public/comments/:commentId/replies` | `BuscarAseguradorasListado` y 12 pantallas más | Sí |
+| `GET` | `/public/posts` | `BuscarAseguradorasListado` y 12 pantallas más | Sí |
+| `GET` | `/public/posts/:postId/comments` | `BuscarAseguradorasListado` y 12 pantallas más | Sí |
+| `GET` | `/public/posts/:postId/reactions` | `BuscarAseguradorasListado` y 12 pantallas más | Sí |
 
 **La ficha se pide por `/public/profiles/…` y no por `/p/:slug`**, aunque la
 API sirva las dos. `/p/:slug` es también **la URL de la pantalla**, y las dos
@@ -824,7 +909,7 @@ ciudad como alternativa que no entrega nada.
 y cada número lo dice: la ruta real depende de un servicio de mapas que este
 sistema no tiene.
 
-### `CommunityClient` — 20 operaciones
+### `CommunityClient` — 49 operaciones
 
 La red social médica (M19). Las 16 lecturas entraron primero, antes que
 cualquier pantalla — ver la nota de abajo. Las 4 escrituras que siguen
@@ -854,6 +939,34 @@ que son sus primeros consumidores.
 | `POST` | `/community/profiles/:profileId/posts` | `MedicalArticles` |
 | `POST` | `/community/comments` | `MedicalArticles` |
 | `PUT` | `/community/reactions` | `PostCard` (muro) |
+| `DELETE` | `/community/blocks` | `ChatStore` y 12 pantallas más | No |
+| `POST` | `/community/blocks` | `ChatStore` y 12 pantallas más | No |
+| `DELETE` | `/community/bookmarks` | `ChatStore` y 12 pantallas más | No |
+| `POST` | `/community/bookmarks` | `ChatStore` y 12 pantallas más | No |
+| `GET` | `/community/comments/media/:fileId/content` | `ChatStore` y 12 pantallas más | No |
+| `POST` | `/community/conversations` | `ChatStore` y 12 pantallas más | No |
+| `POST` | `/community/conversations/:conversationId/messages` | `ChatStore` y 12 pantallas más | No |
+| `POST` | `/community/conversations/:conversationId/read` | `ChatStore` y 12 pantallas más | No |
+| `DELETE` | `/community/follows` | `ChatStore` y 12 pantallas más | No |
+| `POST` | `/community/follows` | `ChatStore` y 12 pantallas más | No |
+| `POST` | `/community/groups` | `ChatStore` y 12 pantallas más | No |
+| `GET` | `/community/groups/:groupId` | `ChatStore` y 12 pantallas más | No |
+| `POST` | `/community/groups/:groupId/members` | `ChatStore` y 12 pantallas más | No |
+| `PATCH` | `/community/groups/:groupId/members/:memberId` | `ChatStore` y 12 pantallas más | No |
+| `DELETE` | `/community/groups/:groupId/members/:memberProfileId` | `ChatStore` y 12 pantallas más | No |
+| `GET` | `/community/groups/:groupId/posts` | `ChatStore` y 12 pantallas más | No |
+| `POST` | `/community/groups/:groupId/posts` | `ChatStore` y 12 pantallas más | No |
+| `GET` | `/community/moderation/appeals` | `ChatStore` y 12 pantallas más | No |
+| `POST` | `/community/moderation/appeals/:appealId/resolve` | `ChatStore` y 12 pantallas más | No |
+| `GET` | `/community/moderation/decisions` | `ChatStore` y 12 pantallas más | No |
+| `POST` | `/community/moderation/decisions/:decisionId/appeal` | `ChatStore` y 12 pantallas más | No |
+| `GET` | `/community/moderation/queue` | `ChatStore` y 12 pantallas más | No |
+| `POST` | `/community/moderation/queue/:queueId/decision` | `ChatStore` y 12 pantallas más | No |
+| `POST` | `/community/profiles/:profileId/reviews` | `ChatStore` y 12 pantallas más | No |
+| `POST` | `/community/profiles/:profileId/reviews/:reviewId/responses` | `ChatStore` y 12 pantallas más | No |
+| `GET` | `/community/profiles/by-slug/:slug` | `ChatStore` y 12 pantallas más | No |
+| `POST` | `/community/reports` | `ChatStore` y 12 pantallas más | No |
+| `GET` | `/community/topics` | `ChatStore` y 12 pantallas más | No |
 
 #### Reaccionar es `PUT` y es *upsert*
 
@@ -928,7 +1041,7 @@ quién lo compartió. No es la cola clínica, que sigue en `/diagnostics`.
 | `POST` | `/diagnostic-results/me/:reportId/shares/:shareId/revoke` | `DiagnosticResults` |
 | `GET` | `/diagnostic-units/search` | `LaboratoryDirectory` |
 
-### `InsuranceClient` — 5 operaciones · carril 14
+### `InsuranceClient` — 14 operaciones
 
 La superficie de lectura de aseguradoras y corredores (M26). Solo la relación
 comercial: ni el corredor ni la aseguradora ven historial médico.
@@ -940,6 +1053,55 @@ comercial: ni el corredor ni la aseguradora ven historial médico.
 | `GET` | `/insurance-brokers` | `BrokerDirectory` |
 | `GET` | `/insurance-brokers/:id` | `BrokerDetail` |
 | `GET` | `/insurance-brokers/:id/clients` | `BrokerDetail` |
+| `GET` | `/insurance-carrier-catalog` | `BrokerDetail` y 5 pantallas más | No |
+| `GET` | `/insurance-claims` | `BrokerDetail` y 5 pantallas más | No |
+| `POST` | `/insurance-claims/:claimId/disputes` | `BrokerDetail` y 5 pantallas más | No |
+| `GET` | `/insurance-claims/:id` | `BrokerDetail` y 5 pantallas más | No |
+| `POST` | `/insurance-products/:productId/plans` | `InsuranceCatalog` |
+| `POST` | `/insurance-plans/:planId/benefits` | `InsuranceCatalog` |
+| `PUT` | `/insurance-plans/:planId/benefits/:benefitId` | `InsuranceCatalog` |
+| `PUT` | `/insurance-plans/:planId/benefits/:benefitId/rules` | `InsuranceCatalog` |
+| `PUT` | `/insurance-plans/:planId/premium` | `InsuranceCatalog` |
+
+> **`GET /insurance-claims/:id` gana `lines[].duplicateStudy` (subtarea 3.2, v4.2.17).**
+> Cuando el ítem factura una orden de laboratorio/imagenología con un informe
+> previo del mismo estudio dentro de la ventana de antiduplicación, la línea
+> trae `duplicateStudy: { previousDiagnosticReportId, studyName, performedAt,
+> daysAgo, providerName, justification, reused } | null` — sin el informe en
+> sí (FT-32-R02); lo consume `InsuranceClaimDetail` (badge «Posible
+> duplicado» · `BILLING_OPERATOR`/`SECURITY_ADMIN`).
+
+### `InsuranceAnalyticsClient` — 1 operación · subtarea 3.1, v4.2.14
+
+El tablero de siniestralidad, gasto per cápita y morbilidad de la
+aseguradora del tenant activo (M26). Todo agregado; ningún identificador de
+paciente cruza esta ruta.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/insurance/analytics/loss-ratio` | `InsuranceAnalytics` |
+
+### `InsurancePortabilityClient` — 4 operaciones · subtarea 3.3, v4.2.19
+
+Portabilidad de póliza e historial de siniestralidad a 1 clic: el titular
+exporta su propio historial (pólizas, siniestros, adjudicaciones,
+diagnósticos), sellado en SHA-256 sobre módulo 52 (`health_export_jobs` +
+`health_export_manifests`), y cualquiera puede verificar el certificado por su
+hash sin sesión.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/insurance/portability/export` | `PortabilityExportDialog` |
+| `GET` | `/insurance/portability/certificates/:certificateId/pdf` | `PortabilityExportDialog` |
+| `GET` | `/insurance/portability/certificates/:certificateId/json` | `PortabilityExportDialog` |
+| `GET` | `/public/portability/verify/:manifestHash` | `PortabilityVerify` |
+
+**La última es pública** (sin sesión, `Cache-Control: no-store`): a ella apunta
+el QR impreso en el certificado PDF, y la atiende
+`/verify/portability/:manifestHash` en el front — ver
+[su ficha](../routes/verify-portability.md). Las otras tres autorizan por
+titularidad del perfil de paciente (`ProfileOwnershipService`); un
+`patientProfileId` ajeno responde `403` y queda auditado.
 
 ### `PharmaLabClient` — 21 operaciones · carril 17
 
@@ -1155,3 +1317,111 @@ Compara los endpoints del código con los de esta página. **Detecta que alguien
 agregue una llamada sin documentarla; no detecta que el backend cambie el
 contrato.** Esa segunda mitad exige acceso al OpenAPI del backend, que no es
 alcanzable desde este repositorio.
+
+### `AddressesClient` — 1 operacion
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/common/addresses` | — | No |
+
+### `AssetsLiabilitiesClient` — 8 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/accounting/practitioner/assets` | `AssetsLiabilities` | No |
+| `POST` | `/accounting/practitioner/assets` | `AssetsLiabilities` | No |
+| `PATCH` | `/accounting/practitioner/assets/:assetId/automation` | `AssetsLiabilities` | No |
+| `POST` | `/accounting/practitioner/assets/:assetId/progress` | `AssetsLiabilities` | No |
+| `GET` | `/accounting/practitioner/liabilities` | `AssetsLiabilities` | No |
+| `POST` | `/accounting/practitioner/liabilities` | `AssetsLiabilities` | No |
+| `PATCH` | `/accounting/practitioner/liabilities/:liabilityId/automation` | `AssetsLiabilities` | No |
+| `POST` | `/accounting/practitioner/liabilities/:liabilityId/progress` | `AssetsLiabilities` | No |
+
+### `ChartNotesClient` — 2 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/charts/notes` | `FreeNoteBlock` | No |
+| `PUT` | `/charts/notes/:noteId/versions` | `FreeNoteBlock` | No |
+
+### `ContentPacksClient` — 2 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/admin/content-packs` | `ContentPacks` | No |
+| `POST` | `/admin/content-packs/:code/apply` | `ContentPacks` | No |
+
+### `NotificationsClient` — 5 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/notifications/in-app/:id/read` | `AvisoDeHuecoLibre` y 3 pantallas más | No |
+| `POST` | `/notifications/in-app/read-all` | `AvisoDeHuecoLibre` y 3 pantallas más | No |
+| `GET` | `/notifications/me` | `AvisoDeHuecoLibre` y 3 pantallas más | No |
+| `GET` | `/notifications/preferences/me` | `AvisoDeHuecoLibre` y 3 pantallas más | No |
+| `PUT` | `/notifications/preferences/me` | `AvisoDeHuecoLibre` y 3 pantallas más | No |
+
+### `PharmacyClient` — 3 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/pharmacy-inventory/availability` | `InboxOrder` y 2 pantallas más | No |
+| `GET` | `/pharmacy/pharmacies` | `InboxOrder` y 2 pantallas más | No |
+| `GET` | `/pharmacy/products` | `InboxOrder` y 2 pantallas más | No |
+
+### `PharmacyOrdersClient` — 4 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/pharmacy/orders` | `InboxOrder` y 6 pantallas más | No |
+| `GET` | `/pharmacy/orders` | `InboxOrder` y 6 pantallas más | No |
+| `POST` | `/pharmacy/orders` | `InboxOrder` y 6 pantallas más | No |
+| `GET` | `/pharmacy/orders/me` | `InboxOrder` y 6 pantallas más | No |
+
+### `PracticeSitesClient` — 4 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/practices/:practiceId/role-assignments/self-request` | `MyOrganizations` y 2 pantallas más | No |
+| `GET` | `/practitioners/me/role-assignments` | `MyOrganizations` y 2 pantallas más | No |
+| `POST` | `/practitioners/me/sites` | `MyOrganizations` y 2 pantallas más | No |
+| `DELETE` | `/practitioners/me/sites/:siteId` | `MyOrganizations` y 2 pantallas más | No |
+
+### `PrescriptionFavoritesClient` — 3 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/prescription-favorites` | `MedicationBlock` | No |
+| `POST` | `/prescription-favorites` | `MedicationBlock` | No |
+| `DELETE` | `/prescription-favorites/:id` | `MedicationBlock` | No |
+
+### `QuotationsClient` — 4 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/quotations` | `QuotationForm` + `QuotationList` | No |
+| `POST` | `/quotations` | `QuotationForm` + `QuotationList` | No |
+| `GET` | `/quotations/:id` | `QuotationForm` + `QuotationList` | No |
+| `POST` | `/quotations/simulate` | `QuotationForm` + `QuotationList` | No |
+
+### `SurveysClient` — 17 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/surveys/assignments` | `QuestionnaireAnswer` y 3 pantallas más | No |
+| `POST` | `/surveys/invitations` | `QuestionnaireAnswer` y 3 pantallas más | No |
+| `GET` | `/surveys/me/invitations` | `QuestionnaireAnswer` y 3 pantallas más | No |
+| `GET` | `/surveys/me/invitations/:invitationId` | `QuestionnaireAnswer` y 3 pantallas más | No |
+| `POST` | `/surveys/me/invitations/:invitationId/responses` | `QuestionnaireAnswer` y 3 pantallas más | No |
+| `GET` | `/surveys/templates` | `QuestionnaireAnswer` y 3 pantallas más | No |
+| `POST` | `/surveys/templates` | `QuestionnaireAnswer` y 3 pantallas más | No |
+| `GET` | `/surveys/templates/:surveyId` | `QuestionnaireAnswer` y 3 pantallas más | No |
+| `PATCH` | `/surveys/templates/:surveyId` | `QuestionnaireAnswer` y 3 pantallas más | No |
+| `POST` | `/surveys/templates/:surveyId/deactivate` | `QuestionnaireAnswer` y 3 pantallas más | No |
+| `POST` | `/surveys/templates/:surveyId/questions` | `QuestionnaireAnswer` y 3 pantallas más | No |
+| `DELETE` | `/surveys/templates/:surveyId/questions/:questionId` | `QuestionnaireAnswer` y 3 pantallas más | No |
+| `PATCH` | `/surveys/templates/:surveyId/questions/:questionId` | `QuestionnaireAnswer` y 3 pantallas más | No |
+| `PUT` | `/surveys/templates/:surveyId/questions/order` | `QuestionnaireAnswer` y 3 pantallas más | No |
+| `GET` | `/surveys/templates/:surveyId/responses` | `QuestionnaireAnswer` y 3 pantallas más | No |
+| `POST` | `/surveys/templates/:surveyId/versions` | `QuestionnaireAnswer` y 3 pantallas más | No |
+| `POST` | `/surveys/templates/:surveyId/versions/:versionNumber/publish` | `QuestionnaireAnswer` y 3 pantallas más | No |

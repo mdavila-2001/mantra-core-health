@@ -13,6 +13,7 @@
         [steps]="pasos()"
         [label]="label()"
         [interactive]="interactiveSteps()"
+        [compact]="pasosCompactos()"
         (stepSelected)="goToStep($event)"
       />
     } @else {
@@ -101,6 +102,10 @@
                     @for (opcion of campo.options ?? []; track opcion.value) {
                       <app-radio [value]="opcion.value" [label]="opcion.label" />
                     }
+                    <!-- «Otro», con su renglón: ver `otro` en el contrato. -->
+                    @if (campo.otro) {
+                      <app-radio-otro [valores]="valoresDe(campo)" />
+                    }
                   </app-radio-group>
                 }
                 @case ('switch') {
@@ -114,6 +119,54 @@
                   <app-checkbox
                     [attr.data-testid]="campo.testId ?? null"
                     [formControlName]="campo.key"
+                  />
+                }
+                @case ('yes-no') {
+                  <!-- Dos botones y no una casilla: una casilla marcada dice
+                       «sí» y desmarcada no dice nada, así que «contestó que no»
+                       y «no contestó» se ven igual. Sin respuesta, ninguno de
+                       los dos aparece apretado. -->
+                  <app-segmented-control
+                    [options]="siNo"
+                    [value]="siNoDe(campo)"
+                    [ariaLabel]="campo.label"
+                    size="md"
+                    (valueChange)="escribirSiNo(campo, $event)"
+                  />
+                }
+                @case ('grid-radio') {
+                  <!-- La misma pregunta sobre varias filas, con una respuesta
+                       por fila. Las columnas son `options`; las filas, `rows`. -->
+                  <app-grid-group
+                    [attr.data-testid]="campo.testId ?? null"
+                    [formControlName]="campo.key"
+                    [rows]="campo.rows ?? []"
+                    [columns]="campo.options ?? []"
+                    [oneResponsePerColumn]="campo.oneResponsePerColumn ?? false"
+                    [hasError]="errorDe(campo) !== ''"
+                  />
+                }
+                @case ('grid-checkboxes') {
+                  <app-grid-group
+                    [attr.data-testid]="campo.testId ?? null"
+                    [formControlName]="campo.key"
+                    multiple
+                    [rows]="campo.rows ?? []"
+                    [columns]="campo.options ?? []"
+                    [oneResponsePerColumn]="campo.oneResponsePerColumn ?? false"
+                    [hasError]="errorDe(campo) !== ''"
+                  />
+                }
+                @case ('checkboxes') {
+                  <!-- Varias respuestas de una lista. El grupo es el control
+                       —igual que `app-radio-group`—: el formulario ve uno solo
+                       con una respuesta, que es lo que la persona percibe. -->
+                  <app-checkbox-group
+                    [attr.data-testid]="campo.testId ?? null"
+                    [formControlName]="campo.key"
+                    [options]="campo.options ?? []"
+                    [allowOther]="campo.otro ?? false"
+                    [hasError]="errorDe(campo) !== ''"
                   />
                 }
                 @case ('textarea') {
@@ -199,10 +252,15 @@
          puntero y con el foco del teclado. El `data-testid` es el mismo en los
          dos modos: lo que cambia es cómo se ve, no qué botón es. -->
     @if (!esPrimera()) {
+      <!-- En modo ícono los dos botones se ven igual: dos flechas del mismo par
+           con tratamientos distintos —una pelada y la otra en círculo lleno— se
+           leen como dos cosas de distinta jerarquía cuando son la ida y la
+           vuelta del mismo paso. Con texto se mantiene la diferencia: ahí
+           «Siguiente» sí es la acción primaria y «Atrás» la de escape. -->
       <button
         app-button
-        variant="ghost"
         type="button"
+        [variant]="iconOnlyNav() ? 'primary' : 'ghost'"
         [iconOnly]="iconOnlyNav()"
         [attr.aria-label]="iconOnlyNav() ? 'Atrás' : null"
         [appTooltip]="iconOnlyNav() ? 'Atrás' : ''"

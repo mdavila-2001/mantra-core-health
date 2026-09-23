@@ -70,7 +70,14 @@ function declaradosEnTypeScript() {
     for (const paso of pasos) tokens.add(`--c-${familia}-${paso}`);
   }
 
-  for (const objeto of ['SURFACE', 'TEXT', 'BRAND', 'BORDER', 'EFFECT', 'FONT_FAMILY']) {
+  // `COMPAT_ALIASES` entra acá aunque sea deuda declarada y no vocabulario.
+  // Faltaba, y por eso este control llevaba fallando desde el PR #232: ese PR
+  // declaró los siete alias en `styles.css` y los registró en el catálogo
+  // tipado —las dos mitades correctas— pero no los agregó a esta lista, que es
+  // por donde el script mira el catálogo. El resultado fue el peor de los dos
+  // mundos: un guardarraíl en rojo permanente, que es un guardarraíl que nadie
+  // lee. `DESIGN_TOKENS` sí los incluye, al final y aparte.
+  for (const objeto of ['SURFACE', 'TEXT', 'BRAND', 'BORDER', 'EFFECT', 'FONT_FAMILY', 'COMPAT_ALIASES']) {
     for (const token of objetoDe(objeto)) tokens.add(token);
   }
 

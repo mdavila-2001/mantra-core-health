@@ -91,7 +91,11 @@ __screenshots__/
 
 # Worktrees de Git creados por herramientas de asistencia. Son copias completas
 # del repositorio: versionarlas metería el árbol dentro de sí mismo.
-.claude/
+# Excepción: settings.json, skills/ y agents/ si se versionan (protocolo FABLE).
+.claude/*
+!.claude/settings.json
+!.claude/skills/
+!.claude/agents/
 
 # El PDF que la suite unitaria deja en la raíz al correr.
 #
@@ -149,3 +153,25 @@ salud-db/
 /SQL/
 /NoSQL/
 Mantra Core Health Context/
+
+# Índice del stock de componentes: lo regenera `scripts/generate-component-index.mjs`
+# en cada `yarn start` y `yarn build`, igual que `env.generated.ts`. Versionarlo
+# sería versionar una foto del código que se queda vieja al primer commit.
+src/app/features/component-stock/component-index.generated.ts
+
+# Scripts de auditoría puntual, inspección visual y exploración E2E (QA ad-hoc).
+# Herramientas efímeras de diagnóstico que se corren localmente contra el servidor
+# o el mock, pero no forman parte del build de Angular ni del bundle de producción.
+# Las evidencias e informes finales viven en las carpetas de auditoría del workspace.
+/*.mjs
+# El proxy de `yarn start` sí se versiona: angular.json lo exige.
+!/proxy.conf.mjs
+/scripts/run_audit*.mjs
+/scripts/run_medica_audit*.mjs
+/scripts/visual_qa_audit*.mjs
+/scripts/analyze_views*.mjs
+/scripts/capture_medica*.mjs
+
+# Las fuentes de Unicode/CLDR que baja `yarn emoji:catalog`. El catálogo
+# generado SÍ se versiona; estas son el insumo, pesan y se vuelven a bajar.
+/.cache/

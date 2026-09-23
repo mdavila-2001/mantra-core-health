@@ -1,125 +1,195 @@
 /* ============================================================================
-    «¿Qué te pasa?» — el punto de entrada del paciente (Frente C del plan de UX).
+    «¿Cómo te sentís?» — el punto de entrada del paciente (Frente C del plan de UX).
 
-    Una sola columna angosta a propósito: es una conversación, no un tablero.
-    Lo que se lee de corrido no compite con nada al costado.
+    FT-02 · El módulo ocupa el ancho útil real del contenedor principal.
+
+    Antes el bloque entero se cortaba en 46rem, así que en un escritorio de
+    1440 px la grilla de zonas terminaba a un tercio de la pantalla y el resto
+    quedaba en blanco: la queja era exactamente ésa. El ancho ya lo acota el
+    contenedor de la página (`.app-main__inner`, 1440 px); volver a acotarlo acá
+    es acotarlo dos veces.
+
+    Lo que SÍ sigue acotado es la MEDIDA DE LECTURA de los párrafos (60ch/68ch).
+    Eso no es una restricción de layout, es tipografía: una línea de 200
+    caracteres no se lee. La grilla, los chips y los controles usan todo el ancho.
     ========================================================================== */
 
 :host {
-    display: block;
+  display: block;
+  /* El componente se estira con su contenedor en vez de encogerse a su
+     contenido: sin esto, un `:host` en un flex/grid padre toma el ancho
+     intrínseco y la regla de abajo no tiene sobre qué aplicarse. */
+  inline-size: 100%;
 }
 
 .sintomas {
-    max-inline-size: 46rem;
+  /* FT-02-R01/R02 · 100% del ancho útil, sin tope propio. */
+  inline-size: 100%;
+  /* FT-02-R03 · un hijo con contenido largo no puede empujar el ancho del
+     bloque y sacar la barra horizontal. */
+  min-inline-size: 0;
 }
 
 .sintomas__titulo {
-    margin: 0 0 var(--sp-2);
-    font-family: var(--font-display);
-    font-size: var(--fs-h2);
-    line-height: var(--lh-h2);
+  margin: 0 0 var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
 }
 
 .sintomas__texto {
-    margin: 0 0 var(--sp-4);
-    max-inline-size: 60ch;
-    color: var(--text-secondary);
-}
-
-.sintomas__campo {
-    display: block;
-    margin-block-end: var(--sp-4);
+  margin: 0 0 var(--sp-4);
+  max-inline-size: 60ch;
+  color: var(--text-secondary);
 }
 
 .sintomas__chips,
 .sintomas__sugerencias {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: var(--sp-2);
-    margin-block-end: var(--sp-4);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-4);
 }
 
 .sintomas__chips-rotulo {
-    color: var(--text-secondary);
-    font-size: var(--fs-overline);
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 /* ---- la recomendación --------------------------------------------------- */
 
 .sintomas__subtitulo {
-    margin: var(--sp-5) 0 var(--sp-3);
-    font-size: var(--fs-h3);
-    line-height: var(--lh-h3);
+  margin: var(--sp-5) 0 var(--sp-3);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
 }
 
 .sintomas__lista {
-    display: grid;
-    gap: var(--sp-3);
-    margin: 0;
-    padding: 0;
-    list-style: none;
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .sintomas__opcion {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--sp-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
 }
 
 .sintomas__opcion-texto {
-    flex: 1 1 16rem;
-    min-inline-size: 0;
+  flex: 1 1 16rem;
+  min-inline-size: 0;
 }
 
 .sintomas__especialidad {
-    margin: 0;
-    font-size: var(--fs-body);
-    line-height: var(--lh-body);
-    font-weight: 600;
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
 }
 
 .sintomas__porque {
-    margin: var(--sp-1) 0 0;
-    color: var(--text-secondary);
-    font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 .sintomas__sin-coincidencias {
-    margin: var(--sp-4) 0 0;
-    max-inline-size: 60ch;
-    color: var(--text-secondary);
+  margin: var(--sp-4) 0 0;
+  max-inline-size: 60ch;
+  color: var(--text-secondary);
 }
 
 /* El descargo no se esconde ni se achica hasta lo ilegible: en una aplicación
    de salud, «esto no es un diagnóstico» tiene que poder leerse. */
 .sintomas__descargo {
-    margin: var(--sp-5) 0 0;
-    padding-block-start: var(--sp-3);
-    border-block-start: 1px solid var(--border-default);
-    max-inline-size: 68ch;
-    color: var(--text-secondary);
-    font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
+  margin: var(--sp-5) 0 0;
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-default);
+  max-inline-size: 68ch;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 /* ─── Elegir sin escribir ─────────────────────────────────────────────────
    La grilla de zonas es la primera decisión de la pantalla: señalar dónde,
    que es lo que hace cualquiera cuando le duele algo. */
 
+/* FT-02-R04 · Columnas declaradas por punto de quiebre, no `auto-fill`.
+
+   Con `auto-fill` + `minmax(8.5rem, 1fr)` y el bloque ya sin tope, un monitor
+   de 1440 px pedía trece columnas para once zonas: dos huecos vacíos al final y
+   pastillas tan angostas que el rótulo se partía en tres renglones. El número
+   de columnas ahora es una decisión por ancho, y en cada uno las once zonas
+   llenan las filas sin dejar un hueco suelto (2·6, 3·4, 4·3, 6·2). */
 .sintomas__zonas {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--e2);
   margin: var(--e4) 0 0;
   padding: 0;
   list-style: none;
+}
+
+/* 480 px — teléfono apaisado. */
+@media (min-width: 30rem) {
+  .sintomas__zonas {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* 768 px — tablet. */
+@media (min-width: 48rem) {
+  .sintomas__zonas {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* 1024 px — escritorio: acá es donde se veía el hueco que motivó FT-02. */
+@media (min-width: 64rem) {
+  .sintomas__zonas {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+/* ─── La silueta (P-01) ─────────────────────────────────────────────────────
+   La figura y las pastillas son dos puertas al mismo estado. Hasta tablet van
+   una sobre otra, la figura primero: es lo que el doctor pidió ver. Desde
+   escritorio, la figura a la izquierda —14rem: una figura humana es vertical, y
+   más ancha se come el alto de la pantalla— y las pastillas a la derecha, para
+   no apilar dos bloques altos. */
+.sintomas__elegir {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--e2);
+  margin-block-start: var(--e4);
+}
+
+/* El espacio lo pone el `gap` del contenedor, no el margen de la grilla. */
+.sintomas__elegir > .sintomas__zonas {
+  margin-block-start: 0;
+}
+
+.sintomas__silueta {
+  display: block;
+}
+
+@media (min-width: 64rem) {
+  .sintomas__elegir {
+    grid-template-columns: 14rem minmax(0, 1fr);
+    gap: var(--e4);
+    align-items: start;
+  }
 }
 
 .sintomas__zona {
@@ -134,7 +204,7 @@
   background: var(--sup-tarjeta);
   color: var(--tinta);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   text-align: center;
   cursor: pointer;
   transition:
@@ -166,8 +236,14 @@
   block-size: 30px;
 }
 
+/* FT-02-R03/R05 · el rótulo más largo («Piel y uñas», «Boca y dientes») no
+   puede ensanchar su columna: con `minmax(0, 1fr)` arriba y el corte de palabra
+   acá, la pastilla se queda dentro de su celda en 320 px en vez de desbordar. */
 .sintomas__zona-nombre {
   line-height: 1.25;
+  min-inline-size: 0;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 /* Las opciones de la zona abierta. Entran con una transición corta: el
@@ -191,7 +267,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .sintomas__zona,
-  .sintomas__opciones {
+  .sintomas__opciones,
+  .sintomas__dictado-punto {
     transition: none;
     animation: none;
   }
@@ -204,7 +281,7 @@
   background: var(--sup-tarjeta);
   color: var(--tinta);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-body);
   cursor: pointer;
   transition:
     border-color var(--mov-rapido) var(--curva),
@@ -225,18 +302,57 @@
   font-weight: 600;
 }
 
+/* El área de texto, a la vista (P-02): un panel más de la tarjeta, con el
+   mismo aire que el bloque de la figura. El rótulo, la ayuda y el ícono son de
+   `app-form-field`; acá sólo se lo ubica. */
 .sintomas__escribir {
   margin: var(--e4) 0 0;
 }
 
-.sintomas__escribir summary {
-  color: var(--tinta-2);
-  cursor: pointer;
-  font-size: 14px;
+/* Dictar (P-02): una fila bajo el área de texto. El aviso ocupa la fila
+   entera y va primero; el botón y su estado, después, en línea. */
+.sintomas__dictado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  margin-block-start: var(--e2);
 }
 
-.sintomas__escribir .sintomas__campo {
-  margin-block-start: var(--e2);
+.sintomas__dictado-aviso,
+.sintomas__dictado-estado {
+  margin: 0;
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.sintomas__dictado-aviso {
+  flex-basis: 100%;
+}
+
+.sintomas__dictado-icono {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+/* El punto que late mientras escucha: una señal más, no la única (el texto
+   «Escuchando…» y el botón en «Detener» dicen lo mismo). */
+.sintomas__dictado-punto {
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  margin-inline-end: 0.35em;
+  border-radius: 50%;
+  background: var(--brand-primary);
+  vertical-align: middle;
+  animation: sintomas-latido 1.2s ease-in-out infinite;
+}
+
+@keyframes sintomas-latido {
+  50% {
+    opacity: 0.25;
+  }
 }
 
 /* La recomendación, ya sin la tarjeta de dentro: una fila con lo que hay que

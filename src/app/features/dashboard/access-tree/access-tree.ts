@@ -11,11 +11,20 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { buildAccessTree, type AccessAreaView } from '../../../core/navigation/access-tree';
+import {
+  ACCESO_EN_MODAL,
+  buildAccessTree,
+  type AccessAreaView,
+} from '../../../core/navigation/access-tree';
 import type { AppSection } from '../../../core/navigation/navigation.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
+import { CommunitiesDialog } from '../../communities/communities-dialog';
+import { ClinicsDirectory } from '../../public-directories/clinics-directory';
+import { PharmaciesDirectory } from '../../public-directories/pharmacies-directory';
+import { LaboratoryDirectory } from '../../laboratory-directory/laboratory-directory';
+import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 
 /**
  * «Tus accesos», en dos escalones: primero las zonas, después las secciones.
@@ -49,7 +58,17 @@ import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
  */
 @Component({
   selector: 'app-access-tree',
-  imports: [Badge, NavIcon, RouterLink, Tooltip],
+  imports: [
+    Badge,
+    ClinicsDirectory,
+    CommunitiesDialog,
+    ContentDialog,
+    LaboratoryDirectory,
+    NavIcon,
+    PharmaciesDirectory,
+    RouterLink,
+    Tooltip,
+  ],
   templateUrl: './access-tree.html',
   styleUrl: './access-tree.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -102,6 +121,16 @@ export class AccessTree {
   }
 
   protected cerrar(): void {
+    // Con un modal abierto, `Escape` es del modal y no de la zona.
+    //
+    // El `<dialog>` se declara dentro de esta plantilla, así que su `keydown`
+    // burbujea hasta el host y llegaba acá: cerrar el modal con `Escape`
+    // cerraba **además** la zona de atrás, y al volver la persona se
+    // encontraba en «Todas las zonas» sin haber pedido salir. Lo detectó el
+    // recorrido de navegador, no las pruebas unitarias: el `<dialog>` real
+    // hace falta para verlo.
+    if (this.modalAbierto() !== null) return;
+
     const veniaDe = this.zonaId();
     // Escape en la primera pantalla no hace nada: no hay de dónde salir, y
     // mover el foco «de vuelta» a la nada sería peor que no reaccionar.
@@ -134,5 +163,41 @@ export class AccessTree {
   /** La ruta absoluta de una sección, que es como la consume el router. */
   protected rutaDe(section: AppSection): string {
     return `/${section.path}`;
+  }
+
+  /* -- Los accesos que abren en modal (corrección del 10/09/2026) -----------
+     «Grupos y foros» abre Comunidades, y los tres directorios concretos se
+     consultan sin salir del panel. Qué abre en modal lo declara
+     `core/navigation/access-tree.ts`: acá no hay ni una ruta escrita a mano,
+     que es la regla de este componente desde que existe. */
+
+  /** El contenido del modal abierto, o `null`. Es la clave, no un componente. */
+  protected readonly modalAbierto = signal<string | null>(null);
+
+  /** La clave de modal de una sección, o `null` si esa sección navega. */
+  protected modalDe(section: AppSection): string | null {
+    return ACCESO_EN_MODAL[section.path] ?? null;
+  }
+
+  protected abrirModal(section: AppSection): void {
+    const clave = this.modalDe(section);
+    if (clave !== null) {
+      this.modalAbierto.set(clave);
+    }
+  }
+
+  /**
+   * Cierra el modal y devuelve el foco al acceso que lo abrió.
+   *
+   * El `app-content-dialog` ya devuelve el foco a quien lo abrió, pero sólo si
+   * ese elemento sigue vivo. Acá lo está —la zona no se desmonta—, así que esto
+   * es la red por si el modal se cerró por una vía que perdió el origen.
+   */
+  protected cerrarModal(): void {
+    const clave = this.modalAbierto();
+    this.modalAbierto.set(null);
+    if (clave !== null) {
+      this.enfocar(`[data-modal="${clave}"]`);
+    }
   }
 }

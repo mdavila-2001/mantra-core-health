@@ -47,6 +47,7 @@
 #   tools/redeploy/redeploy.sh once      # despliega el último commit de dev y sale
 #   tools/redeploy/redeploy.sh una-vez   # una pasada del ciclo (lo que llama systemd)
 #   tools/redeploy/redeploy.sh systemd   # instala el temporizador: sobrevive a los reinicios
+#   tools/redeploy/redeploy.sh webhook   # despliegue inmediato por webhook de GitHub (además del temporizador)
 #   tools/redeploy/redeploy.sh start     # deja el vigilante en segundo plano (sin systemd)
 #   tools/redeploy/redeploy.sh status    # qué hay vivo y en qué commit
 #   tools/redeploy/redeploy.sh url       # el enlace
@@ -69,6 +70,20 @@ RAMA="${REDEPLOY_RAMA:-dev}"
 
 # El worktree desprendido desde el que se construye. Se crea y se borra en cada despliegue.
 TRABAJO="$ESTADO/arbol"
+
+# Cómo se llega al despliegue desde fuera de la máquina.
+#
+#   tailscale  · `tailscale funnel`: el nombre de la máquina en la tailnet
+#                (`<host>.<tailnet>.ts.net`) servido por HTTPS, con certificado
+#                automático y sin sesión que caduque. Es el que se usa.
+#   devtunnel  · el dev tunnel de Microsoft. Se conserva porque el enlace que
+#                circula por ahí es suyo, pero pide `devtunnel user login` cada
+#                vez que la sesión vence, y eso ya dejó el enlace muerto.
+#   ninguna    · sólo local, sin exponer nada.
+#
+# Con `tailscale`, el nombre no se elige ni se sortea: es el de la máquina, y
+# sobrevive a reinicios, a cambios de IP y a que el proceso se caiga.
+EXPOSICION="${REDEPLOY_EXPOSICION:-tailscale}"
 
 # El túnel ya existe y es de la organización. Su puerto publicado es el 4200, y
 # el número del puerto forma parte de la URL: cambiarlo acá cambiaría el enlace,
@@ -106,14 +121,44 @@ MEM_PROXY="${REDEPLOY_MEM_PROXY:-48m}"
 # Docker le dé al contenedor y sobrevive a los cambios sin recargar nada.
 PUERTO_WEB="${REDEPLOY_PUERTO_WEB:-4000}"
 
-WEB=alovida-web
-PROXY=alovida-proxy
+# `WEB` y `PROXY` son el nombre EN USO y pueden pasar a `…-rescate` (ver
+# `nombre_libre`); `*_BASE` es el nombre de siempre, que es contra el que se
+# busca. Separarlos evita que un rescate se convierta en `…-rescate-rescate`.
+WEB_BASE=alovida-web
+PROXY_BASE=alovida-proxy
+WEB="$WEB_BASE"
+PROXY="$PROXY_BASE"
 IMAGEN=alovida-front
+# El binario del túnel. El instalador oficial lo deja en `~/bin/devtunnel` tanto
+# en Linux como en macOS, y si está en el PATH se usa el del PATH.
 DEVTUNNEL="${DEVTUNNEL_BIN:-$HOME/bin/devtunnel}"
+[ -x "$DEVTUNNEL" ] || DEVTUNNEL="$(command -v devtunnel 2>/dev/null || printf '%s' "$DEVTUNNEL")"
 
 # La ruta resuelta del propio script: hace falta para relanzarse a sí mismo (ver
 # `recargarse_si_cambio`), y `$0` puede ser relativa a donde lo invocaron.
 RUTA="$RAIZ/tools/redeploy/redeploy.sh"
+
+# Cómo alcanza un contenedor al host, que **no es lo mismo en Linux que en macOS**.
+#
+# En la máquina Linux original se usa `--network host`: ahí el contenedor comparte
+# la pila de red del host, así que `127.0.0.1` es el host de verdad y se esquiva
+# el firewall que filtra el tráfico de los puentes de Docker (la nota de
+# API_PUERTO).
+#
+# En macOS eso **no existe**. Docker Desktop corre los contenedores dentro de una
+# VM Linux, y `--network host` los mete en la red de LA VM, no en la del Mac. Se
+# comprobó y es exactamente lo que pasaba: nginx respondía 200 desde dentro del
+# contenedor mientras `lsof -iTCP:4200` en el Mac no encontraba a nadie
+# escuchando — el túnel, que corre en macOS, no tenía a quién hablarle y el
+# enlace daba 000. Ahí la forma correcta es la contraria: publicar el puerto y
+# llamar al host por `host.docker.internal`.
+if [ "$(uname -s)" = "Darwin" ]; then
+  HOST_DESDE_CONTENEDOR=host.docker.internal
+  RED_DEL_HOST=no
+else
+  HOST_DESDE_CONTENEDOR=127.0.0.1
+  RED_DEL_HOST=si
+fi
 
 LOG="$ESTADO/redeploy.log"
 URL_FILE="$ESTADO/URL"
@@ -122,7 +167,102 @@ TUNEL_PID="$ESTADO/devtunnel.pid"
 VIGILANTE_PID="$ESTADO/vigilante.pid"
 NGINX_GEN="$ESTADO/nginx.generado.conf"
 
-log() { printf '%s | %s\n' "$(date -Is)" "$*" >> "$LOG"; printf '%s\n' "$*"; }
+# `date -Is` es de GNU: el `date` de BSD —el de macOS, donde también se corre
+# esto— responde `invalid argument 's' for -I` y deja cada línea del diario sin
+# marca de tiempo. El formato explícito da la misma cadena ISO 8601 en los dos.
+ahora() { date +%Y-%m-%dT%H:%M:%S%z; }
+
+# `setsid` es de util-linux y **no existe en macOS**, donde también se corre
+# esto. Sin él, las dos líneas que dejaban algo en segundo plano morían con un
+# `command not found` y el proceso no llegaba a arrancar: el vigilante figuraba
+# «parado» un segundo después de decir que estaba arriba, y el enlace se quedaba
+# sin nadie que lo reconstruyera.
+#
+# Lo que `setsid` aporta es desligar al hijo del grupo de procesos de la
+# terminal, para que un cierre de sesión no se lo lleve; `nohup` ya lo protege
+# de SIGHUP, que es el 95 % del caso. Donde `setsid` está se usa —no se pierde
+# nada—, y donde no, el `nohup` suelto hace el trabajo.
+en_segundo_plano() {
+  if command -v setsid >/dev/null 2>&1; then
+    setsid nohup "$@" &
+  else
+    nohup "$@" &
+  fi
+}
+
+log() { printf '%s | %s\n' "$(ahora)" "$*" >> "$LOG"; printf '%s\n' "$*"; }
+
+# `flock` es de util-linux y tampoco existe en macOS. Ahí el `command not found`
+# hacía que la condición se leyera al revés —127 es «falló», y la guarda es un
+# `if ! flock`—: cada pasada del temporizador creía que ya había otra en curso y
+# se retiraba sin desplegar nada. `mkdir` es atómico en cualquier sistema de
+# archivos y no necesita nada instalado.
+CERROJO="$ESTADO/una-vez.lock.d"
+
+tomar_cerrojo() {
+  if ! mkdir "$CERROJO" 2>/dev/null; then
+    local dueno
+    dueno="$(cat "$CERROJO/pid" 2>/dev/null)"
+    # El precio de un cerrojo que no es del núcleo: si la pasada dueña muere sin
+    # soltarlo, nadie lo suelta por ella y el despliegue queda parado para
+    # siempre. Por eso se comprueba de quién es antes de creerle.
+    if [ -n "$dueno" ] && kill -0 "$dueno" 2>/dev/null; then return 1; fi
+    [ -e "$CERROJO" ] && log "PASADA: cerrojo huérfano de la pasada ${dueno:-?}; se recoge"
+    rm -rf "$CERROJO"
+    mkdir "$CERROJO" 2>/dev/null || return 1
+  fi
+  echo $$ > "$CERROJO/pid"
+  trap 'rm -rf "$CERROJO"' EXIT
+  return 0
+}
+
+# ─── Tailscale ───────────────────────────────────────────────────────────────
+
+# El nombre público de esta máquina en la tailnet, con el punto final quitado.
+#
+# `--peers=false` no es cosmético: sin él el JSON trae un `DNSName` por cada
+# máquina de la tailnet y quedarse con el primero es apostar a que el nuestro
+# venga antes que los demás.
+nombre_tailscale() {
+  tailscale status --peers=false --json 2>/dev/null \
+    | sed -n 's/.*"DNSName"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+    | head -1 | sed 's/\.$//'
+}
+
+# Funnel expone a INTERNET, así que sólo se toca si se pidió `tailscale`.
+# Requisitos que no se pueden resolver desde acá y por eso se explican:
+#   · Funnel habilitado en la tailnet (lo aprueba el dueño en la consola);
+#   · el usuario, operador de tailscale, o hará falta sudo en cada pasada.
+asegurar_funnel() {
+  local nombre salida
+  if ! command -v tailscale >/dev/null 2>&1; then
+    log "TAILSCALE: ✗ no está instalado en esta máquina"
+    return 1
+  fi
+  nombre="$(nombre_tailscale)"
+  if [ -z "$nombre" ]; then
+    log "TAILSCALE: ✗ no hay sesión ('tailscale up'), o MagicDNS está apagado"
+    return 1
+  fi
+  printf 'https://%s/\n' "$nombre" > "$URL_FILE"
+
+  # Ya servido y apuntando a donde toca: no se toca nada. `funnel` es
+  # idempotente, pero rehacerlo en cada pasada ensucia el diario.
+  if tailscale funnel status 2>/dev/null | grep -q "127.0.0.1:${PUERTO}"; then
+    log "TAILSCALE: funnel sirviendo https://$nombre → 127.0.0.1:$PUERTO"
+    return 0
+  fi
+
+  salida="$(tailscale funnel --bg "$PUERTO" 2>&1 </dev/null)"
+  if [ $? -ne 0 ] || printf '%s' "$salida" | grep -qi 'not enabled\|denied\|access'; then
+    log "TAILSCALE: ✗ no pude activar el funnel:"
+    printf '%s\n' "$salida" | head -6 | while IFS= read -r linea; do log "TAILSCALE:   $linea"; done
+    log "TAILSCALE:   si pide habilitarlo, abrí ese enlace: lo aprueba el dueño de la tailnet."
+    log "TAILSCALE:   si pide permisos, corré una vez: sudo tailscale set --operator=\$USER"
+    return 1
+  fi
+  log "TAILSCALE: funnel sirviendo https://$nombre → 127.0.0.1:$PUERTO"
+}
 
 # ─── El túnel ────────────────────────────────────────────────────────────────
 
@@ -168,17 +308,55 @@ tunel_responde() {
   esac
 }
 
+# Sin binario no hay enlace, y callarlo es lo peor que puede hacer este script:
+# el diario decía «hospedando … → » y «✓ sirviendo en » con la URL vacía, así que
+# el despliegue **parecía correcto** mientras nadie podía entrar. Lo que fallaba
+# —`nohup: …/devtunnel: No such file or directory`— quedaba enterrado en
+# `devtunnel.log`, que nadie mira cuando el resumen dice ✓.
+hay_devtunnel() {
+  [ -x "$DEVTUNNEL" ] && return 0
+  log "TÚNEL: ✗ no hay binario en '$DEVTUNNEL'. El despliegue local sigue, pero NO habrá enlace."
+  log "TÚNEL:   instálalo con  curl -sL https://aka.ms/DevTunnelCliInstall | bash"
+  log "TÚNEL:   o apunta al tuyo con  DEVTUNNEL_BIN=/ruta/a/devtunnel"
+  return 1
+}
+
 arrancar_tunel() {
+  hay_devtunnel || return 1
   # `--host-header` se deja en su valor por defecto (reescribe a `localhost`):
   # así el `server_name localhost` de la configuración de nginx sirve tal cual.
-  setsid nohup "$DEVTUNNEL" host "$TUNEL" >>"$TUNEL_LOG" 2>&1 < /dev/null &
-  echo $! > "$TUNEL_PID"
+  en_segundo_plano "$DEVTUNNEL" host "$TUNEL" >>"$TUNEL_LOG" 2>&1 < /dev/null
+  local pid=$!
+  echo "$pid" > "$TUNEL_PID"
   sleep 5
+  # La URL se escribe siempre que se pueda: `show` la sirve aunque no hospede
+  # nadie, y tenerla es lo que permite generar el `server_name` de nginx.
   url_del_tunel > "$URL_FILE"
+
+  # **Que haya URL no significa que estemos hospedando.** `devtunnel show` contesta
+  # sin sesión iniciada, así que el paso anterior llenaba el archivo y el diario
+  # decía «hospedando» mientras el proceso había muerto un segundo antes con
+  # `Tunnel service response status code: Unauthorized`. Se pregunta por el proceso,
+  # que es lo que de verdad sostiene el enlace.
+  if ! kill -0 "$pid" 2>/dev/null; then
+    log "TÚNEL: ✗ el proceso murió al arrancar. Últimas líneas de su diario:"
+    tail -n 5 "$TUNEL_LOG" 2>/dev/null | while IFS= read -r linea; do log "TÚNEL:   $linea"; done
+    log "TÚNEL:   si dice 'Unauthorized', falta sesión: corré '$DEVTUNNEL user login'"
+    rm -f "$TUNEL_PID"
+    return 1
+  fi
+  if [ ! -s "$URL_FILE" ]; then
+    log "TÚNEL: ⚠ hospedando $TUNEL pero no pude leer su URL ('$DEVTUNNEL show $TUNEL')"
+    return 1
+  fi
   log "TÚNEL: hospedando $TUNEL → $(cat "$URL_FILE") (local :$PUERTO)"
 }
 
 asegurar_tunel() {
+  case "$EXPOSICION" in
+    tailscale) asegurar_funnel; return $? ;;
+    ninguna)   : > "$URL_FILE"; return 0 ;;
+  esac
   if ! tunel_proceso_vivo; then
     log "TÚNEL: no hay proceso; arrancando"
     arrancar_tunel
@@ -207,9 +385,11 @@ generar_nginx() {
   # El túnel publica el enlace de dos formas —`<id>-<puerto>.<dominio>` y
   # `<id>.<dominio>:<puerto>`— y las dos tienen que pasar el `server_name`, o el
   # `default_server` que devuelve 421 se come una de ellas.
-  dominio="${host_tunel#*.}"
-  id="${host_tunel%%-*}"
-  [ -n "$host_tunel" ] && host_tunel_alterno="${id}.${dominio}"
+  if [ -n "$host_tunel" ] && [ "$EXPOSICION" = devtunnel ]; then
+    dominio="${host_tunel#*.}"
+    id="${host_tunel%%-*}"
+    host_tunel_alterno="${id}.${dominio}"
+  fi
 
   # Cuatro sustituciones sobre la configuración de producción, y ninguna más:
   #   · los dos `upstream` apuntan a puertos de loopback del host en vez de a
@@ -219,10 +399,18 @@ generar_nginx() {
   #   · el `server_name` acepta además el hostname del túnel y `127.0.0.1`, para
   #     que una comprobación por IP no choque con el `default_server` que
   #     devuelve 421.
-  sed -e "s#^\( *\)server api:3000;#\1server 127.0.0.1:${API_PUERTO};#" \
-      -e "s#^\( *\)server web:4000;#\1server 127.0.0.1:${PUERTO_WEB};#" \
-      -e "s#^\( *\)listen 80 default_server;#\1listen 127.0.0.1:${PUERTO} default_server;#" \
-      -e "s#^\( *\)listen 80;#\1listen 127.0.0.1:${PUERTO};#" \
+  # Con `--network host` el contenedor ES el host: escuchar en `127.0.0.1:$PUERTO`
+  # deja el puerto donde el túnel lo espera y sin exponerlo a la red local. Con el
+  # puerto publicado (macOS) hay que escuchar en todas las interfaces DE DENTRO del
+  # contenedor —el tráfico publicado no entra por su loopback—, y quien acota a
+  # loopback es el `-p 127.0.0.1:…` de `docker run`.
+  local escucha
+  if [ "$RED_DEL_HOST" = si ]; then escucha="127.0.0.1:${PUERTO}"; else escucha="${PUERTO}"; fi
+
+  sed -e "s#^\( *\)server api:3000;#\1server ${HOST_DESDE_CONTENEDOR}:${API_PUERTO};#" \
+      -e "s#^\( *\)server web:4000;#\1server ${HOST_DESDE_CONTENEDOR}:${PUERTO_WEB};#" \
+      -e "s#^\( *\)listen 80 default_server;#\1listen ${escucha} default_server;#" \
+      -e "s#^\( *\)listen 80;#\1listen ${escucha};#" \
       -e "s#^\( *\)server_name localhost mantra-core-health.local;#\1server_name localhost 127.0.0.1 mantra-core-health.local ${host_tunel:-localhost} ${host_tunel_alterno:-localhost};#" \
       "$RAIZ/deploy/nginx.conf" > "$NGINX_GEN"
 }
@@ -238,19 +426,52 @@ apagar_dev_server() {
   fi
 }
 
+# Los `include` que arrastra la configuración de producción, montados uno a uno.
+#
+# Antes había un único `-v` con `api-proxy.conf` escrito a mano, y el día que
+# `nginx.conf` se partió en dos —`api-locations.conf`, con los 60 prefijos de la
+# API— el proxy entró en bucle de reinicio: `open() "/etc/nginx/api-locations.conf"
+# failed (2: No such file or directory)`. La lista se saca ahora de los propios
+# `include`, así que el siguiente archivo que se añada se monta solo.
+montajes_incluidos() {
+  local vistos=" " archivo ruta
+  # Dos niveles: `nginx.conf` incluye `api-locations.conf`, y ese incluye
+  # `api-proxy.conf` en cada `location`.
+  for archivo in $(grep -hoE 'include +/etc/nginx/[A-Za-z0-9_.-]+\.conf' \
+                     "$RAIZ/deploy/nginx.conf" "$RAIZ/deploy/api-locations.conf" 2>/dev/null \
+                   | sed 's#.*/##' | sort -u); do
+    case "$vistos" in *" $archivo "*) continue ;; esac
+    ruta="$RAIZ/deploy/$archivo"
+    if [ -f "$ruta" ]; then
+      vistos="$vistos$archivo "
+      printf -- '-v %s:/etc/nginx/%s:ro ' "$ruta" "$archivo"
+    else
+      log "PROXY: ⚠ '$archivo' se incluye en la configuración pero no está en deploy/" >&2
+    fi
+  done
+}
+
 lanzar_proxy() {
   generar_nginx
-  docker rm -f "$PROXY" >/dev/null 2>&1
+  PROXY="$(nombre_libre "$PROXY_BASE")"
   # Red del host: es lo que le permite hablar con la API por loopback (ver la
   # nota de API_PUERTO). La configuración generada escucha en
   # `127.0.0.1:$PUERTO`, así que sigue sin quedar expuesto a la red local — el
   # único que tiene que alcanzarlo es el proceso del túnel, que corre acá mismo.
-  docker run -d --name "$PROXY" --network host --restart unless-stopped \
+  local red
+  if [ "$RED_DEL_HOST" = si ]; then
+    red="--network host"
+  else
+    # Sólo en loopback del Mac, como en Linux: el único que tiene que alcanzarlo
+    # es el proceso del túnel, que corre acá mismo.
+    red="-p 127.0.0.1:${PUERTO}:${PUERTO} --add-host=host.docker.internal:host-gateway"
+  fi
+  docker run -d --name "$PROXY" $red --restart unless-stopped \
     --memory "$MEM_PROXY" --memory-swap "$MEM_PROXY" \
     -v "$NGINX_GEN:/etc/nginx/conf.d/default.conf:ro" \
-    -v "$RAIZ/deploy/api-proxy.conf:/etc/nginx/api-proxy.conf:ro" \
+    $(montajes_incluidos) \
     nginx:1.27-alpine >/dev/null || return 1
-  log "PROXY: nginx en 127.0.0.1:$PUERTO (API → 127.0.0.1:$API_PUERTO · SSR → 127.0.0.1:$PUERTO_WEB)"
+  log "PROXY: nginx en 127.0.0.1:$PUERTO (API → $HOST_DESDE_CONTENEDOR:$API_PUERTO · SSR → $HOST_DESDE_CONTENEDOR:$PUERTO_WEB)"
 }
 
 recargar_proxy() {
@@ -262,7 +483,19 @@ recargar_proxy() {
   docker exec "$PROXY" nginx -s reload >/dev/null 2>&1
 }
 
-proxy_vivo() { [ -n "$(docker ps -q --filter "name=^${PROXY}$")" ]; }
+# Vivo con CUALQUIERA de los dos nombres —el de siempre o el de rescate—, y el
+# que se encuentre pasa a ser el nombre en uso. Sin esto, un despliegue que tuvo
+# que caer al nombre alterno se vería «caído» en cada pasada y el ciclo lo
+# reconstruiría cada dos minutos para siempre.
+vivo_con_nombre() {
+  local var="$1" base="$2" hallado
+  hallado="$(docker ps --format '{{.Names}}' | grep -xE "${base}(-rescate)?" | head -1)"
+  [ -n "$hallado" ] || return 1
+  eval "$var=\$hallado"
+  return 0
+}
+
+proxy_vivo() { vivo_con_nombre PROXY "$PROXY_BASE"; }
 
 # Los hosts que el servidor de renderizado acepta atender.
 #
@@ -281,11 +514,19 @@ hosts_ssr() {
   local h dominio id
   h="$(sed -E 's#https?://##; s#/$##' "$URL_FILE" 2>/dev/null)"
   [ -n "$h" ] || { echo "localhost,127.0.0.1"; return; }
-  dominio="${h#*.}"          # brs.devtunnels.ms
-  id="${h%%-*}"              # 2ptbhqtv
   # Con puerto y sin él: el `Host` que manda el navegador lo lleva cuando la URL
   # lo lleva, y la comparación del SSR es literal.
-  echo "${h},${h}:${PUERTO},${id}.${dominio},${id}.${dominio}:${PUERTO},localhost,127.0.0.1"
+  if [ "$EXPOSICION" = devtunnel ]; then
+    # El dev tunnel publica el enlace de DOS formas —`<id>-<puerto>.<dominio>` y
+    # `<id>.<dominio>:<puerto>`— y las dos tienen que estar. Con Tailscale hay un
+    # solo nombre, y partirlo por el guión daría un host que no existe
+    # (`pablo-h310…` → `pablo…`).
+    dominio="${h#*.}"          # brs.devtunnels.ms
+    id="${h%%-*}"              # 2ptbhqtv
+    echo "${h},${h}:${PUERTO},${id}.${dominio},${id}.${dominio}:${PUERTO},localhost,127.0.0.1"
+  else
+    echo "${h},${h}:${PUERTO},localhost,127.0.0.1"
+  fi
 }
 
 # Qué hay del otro lado de los prefijos de la API. No corrige nada —no es su
@@ -302,7 +543,7 @@ comprobar_api() {
     log "API: 127.0.0.1:$API_PUERTO responde $codigo"
   fi
 }
-web_vivo()   { [ -n "$(docker ps -q --filter "name=^${WEB}$")" ]; }
+web_vivo()   { vivo_con_nombre WEB "$WEB_BASE"; }
 
 # ─── El despliegue ───────────────────────────────────────────────────────────
 
@@ -332,9 +573,43 @@ esperar_sano() {
   return 1
 }
 
+# Docker puede dejar un contenedor en estado `Dead`: ni corre ni se puede
+# quitar, y el `docker run` siguiente choca con «name already in use». Pasó con
+# los dos contenedores de este despliegue y el sitio se quedó caído, porque el
+# ciclo reintentaba lo mismo cada dos minutos sin decir nunca por qué fallaba.
+#
+# Lo que enruta acá es el PUERTO del host, no el nombre del contenedor, así que
+# un nombre alterno sirve igual de bien y devuelve el servicio en el acto.
+# `docker rm -f` se intenta primero: si funciona —que es lo normal— no se cambia
+# nada y el nombre de siempre se conserva.
+# Lo que esta función IMPRIME es el nombre a usar: se consume con `$(...)`. Por
+# eso cada `log` va a stderr — `log` escribe también en stdout, y sin redirigir
+# el aviso se cuela dentro del nombre y `docker run` responde «Invalid container
+# name». (Mismo motivo que en `montajes_incluidos`.)
+nombre_libre() {
+  local base="$1"
+  docker rm -f "$base" >/dev/null 2>&1
+  if docker ps -a --format '{{.Names}}' | grep -qx "$base"; then
+    log "DOCKER: ⚠ '$base' quedó en estado 'Dead' y no se deja quitar; se usa '${base}-rescate'" >&2
+    log "DOCKER:   se limpia solo con 'docker container prune -f', o reiniciando el demonio" >&2
+    docker rm -f "${base}-rescate" >/dev/null 2>&1
+    printf '%s\n' "${base}-rescate"
+  else
+    # El nombre de siempre está libre otra vez —Docker soltó el cadáver, o
+    # alguien lo limpió—. Hay que retirar el rescate ANTES de crear el nuevo: si
+    # no, los dos quedan vivos peleándose por el mismo puerto del host y el que
+    # llega segundo entra en bucle de reinicio. Pasó, y estuvo dos horas así.
+    if docker ps -a --format '{{.Names}}' | grep -qx "${base}-rescate"; then
+      log "DOCKER: '$base' vuelve a estar libre; se retira '${base}-rescate'" >&2
+      docker rm -f "${base}-rescate" >/dev/null 2>&1
+    fi
+    printf '%s\n' "$base"
+  fi
+}
+
 lanzar_web() {
   local etiqueta="$1"
-  docker rm -f "$WEB" >/dev/null 2>&1
+  WEB="$(nombre_libre "$WEB_BASE")"
   docker run -d --name "$WEB" --restart unless-stopped \
     --memory "$MEM_WEB" --memory-swap "$MEM_WEB" \
     -p "127.0.0.1:${PUERTO_WEB}:4000" \
@@ -360,7 +635,12 @@ podar_imagenes() {
 comprobar_enlace() {
   local host_tunel codigo
   host_tunel="$(sed -E 's#https?://##; s#/$##' "$URL_FILE" 2>/dev/null)"
-  [ -n "$host_tunel" ] || return 0
+  # Sin URL no hay nada que comprobar, y decir que sí es peor que no decir nada:
+  # `status` llegó a imprimir «enlace sirve: sí» con el enlace vacío.
+  if [ -z "$host_tunel" ]; then
+    [ "${1:-}" = "silencioso" ] || log "ENLACE: ⚠ no hay URL de túnel; no hay enlace que comprobar"
+    return 1
+  fi
   codigo="$(curl -s -o /dev/null -w '%{http_code}' -m 15 \
     -H "Host: $host_tunel" -H "x-forwarded-host: $host_tunel" \
     "http://127.0.0.1:${PUERTO}/" 2>/dev/null)"
@@ -430,17 +710,74 @@ desplegar() {
   comprobar_api
   echo "$commit" > "$ESTADO/COMMIT_DESPLEGADO"
   podar_imagenes
-  log "DESPLIEGUE: ✓ $commit sirviendo en $(cat "$URL_FILE" 2>/dev/null)"
+  # El commit puede estar servido de verdad y el enlace no existir: son dos
+  # cosas distintas y el resumen las separa, porque «✓ sirviendo en » con la URL
+  # en blanco se lee como éxito y no lo es.
+  local url; url="$(cat "$URL_FILE" 2>/dev/null)"
+  if [ -n "$url" ]; then
+    log "DESPLIEGUE: ✓ $commit sirviendo en $url"
+  else
+    log "DESPLIEGUE: ✓ $commit sirviendo en 127.0.0.1:$PUERTO — ⚠ SIN enlace público (ver TÚNEL arriba)"
+  fi
 }
 
 # ─── El disparador: un commit nuevo en dev ───────────────────────────────────
 
+# Un `fetch` falla por dos motivos que piden respuestas opuestas: se cayó la red —se cura sola y
+# no hay nada que hacer— o la credencial dejó de valer —no se cura nunca y hace falta una persona—.
+# Meter las dos en el mismo saco («sin red o sin remoto») dejó el front congelado 32 h el
+# 04/09/2026: el token de `gh` se invalidó, 1043 ciclos anotaron la misma línea tranquila, y el
+# enlace siguió sirviendo el build de anteayer con un 200 impecable.
+fallo_de_fetch() {
+  local motivo="$1" detalle="$2" n
+  n=$(( $(cat "$ESTADO/FALLOS_FETCH" 2>/dev/null || echo 0) + 1 ))
+  echo "$n" > "$ESTADO/FALLOS_FETCH"
+
+  # Ruidoso el primer ciclo y luego uno por hora: es la única señal de que el redespliegue está
+  # parado, porque el nginx y el contenedor viejos siguen en pie devolviendo 200.
+  local grita=0
+  { [ "$n" -eq 1 ] || [ $((n % 30)) -eq 0 ]; } && grita=1
+
+  if [ "$motivo" = credencial ]; then
+    if [ "$grita" = 1 ]; then
+      log "FETCH: ✗✗ CREDENCIAL INVÁLIDA — EL REDESPLIEGUE ESTÁ PARADO Y NO SE CURA SOLO (ciclo $n)"
+      log "FETCH:    sigue sirviendo $(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null || echo '—')"
+      log "FETCH:    se arregla con: gh auth login -h github.com"
+    else
+      log "FETCH: ✗ credencial inválida; el redespliegue sigue parado (ciclo $n)"
+    fi
+  elif [ "$grita" = 1 ]; then
+    log "FETCH: ✗ sin acceso a origin/$RAMA desde hace ~$((n * 2)) min: ${detalle%%$'\n'*}"
+  fi
+}
+
+# El token de `gh` se comprueba aparte y con límite porque quien se cuelga cuando no vale es el
+# propio helper (`gh auth git-credential`), no git: `GIT_TERMINAL_PROMPT=0` sólo apaga el prompt
+# de git y no llega a tiempo. Sólo aplica cuando la credencial ES la de `gh` sobre HTTPS.
+credencial_rota() {
+  command -v gh >/dev/null 2>&1 || return 1
+  git -C "$RAIZ" remote get-url origin 2>/dev/null | grep -q '^https://github.com/' || return 1
+  ! timeout 20 gh auth status -h github.com >/dev/null 2>&1
+}
+
 revisar_repo() {
-  local remoto corto fallido
-  git -C "$RAIZ" fetch --quiet origin "$RAMA" 2>/dev/null || {
-    log "FETCH: sin red o sin remoto; se reintenta en el próximo ciclo"
+  local remoto corto fallido salida_fetch
+
+  if credencial_rota; then
+    fallo_de_fetch credencial ""
     return 0
-  }
+  fi
+
+  if ! salida_fetch="$(GIT_TERMINAL_PROMPT=0 timeout 120 git -C "$RAIZ" fetch --quiet origin "$RAMA" 2>&1)"; then
+    case "$salida_fetch" in
+      *"could not read Username"*|*"Authentication failed"*|*"terminal prompts disabled"*)
+        fallo_de_fetch credencial "$salida_fetch" ;;
+      *)
+        fallo_de_fetch red "$salida_fetch" ;;
+    esac
+    return 0
+  fi
+  rm -f "$ESTADO/FALLOS_FETCH"
   remoto="$(git -C "$RAIZ" rev-parse "origin/$RAMA" 2>/dev/null)" || return 0
   corto="$(git -C "$RAIZ" rev-parse --short "$remoto")"
   [ "$corto" = "$(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null)" ] && return 0
@@ -517,7 +854,7 @@ case "${1:-once}" in
     if [ -f "$VIGILANTE_PID" ] && kill -0 "$(cat "$VIGILANTE_PID")" 2>/dev/null; then
       log "El vigilante ya corre (pid $(cat "$VIGILANTE_PID"))"; exit 0
     fi
-    setsid nohup "$RUTA" watch >>"$ESTADO/vigilante.out" 2>&1 < /dev/null &
+    en_segundo_plano "$RUTA" watch >>"$ESTADO/vigilante.out" 2>&1 < /dev/null
     echo $! > "$VIGILANTE_PID"
     log "Vigilante en segundo plano (pid $(cat "$VIGILANTE_PID"))"
     ;;
@@ -530,14 +867,68 @@ case "${1:-once}" in
     # que nada parezca roto—. Un `oneshot` que el temporizador relanza cada minuto no
     # tiene ese estado que perder.
     #
-    # `flock` sin espera porque una construcción pasa de los dos minutos del ciclo: si
-    # la anterior sigue viva, esta se retira en silencio en vez de solaparse.
-    exec 9>"$ESTADO/una-vez.lock"
-    if ! flock -n 9; then
+    # El cerrojo no espera, porque una construcción pasa de los dos minutos del
+    # ciclo: si la anterior sigue viva, esta se retira en silencio en vez de
+    # solaparse.
+    if ! tomar_cerrojo; then
       log "PASADA: ya hay una en curso; esta se retira"
       exit 0
     fi
     ciclo
+    ;;
+
+  webhook)
+    # Deja el receptor del webhook escuchando y publica su ruta por el Funnel.
+    #
+    # NO retira el temporizador: el webhook adelanta el despliegue, y el
+    # temporizador sigue siendo quien garantiza que ocurra si el aviso no llega.
+    if ! command -v systemctl >/dev/null 2>&1; then
+      log "WEBHOOK: ✗ esta máquina no tiene systemd; el receptor se corre a mano con tools/redeploy/webhook.py"
+      exit 1
+    fi
+    UNIDADES="$HOME/.config/systemd/user"
+    SECRETO_ENV="$HOME/.config/alovida-redeploy-webhook.env"
+    PUERTO_HOOK="${REDEPLOY_WEBHOOK_PUERTO:-9099}"
+    RUTA_HOOK="${REDEPLOY_WEBHOOK_RUTA:-/webhook/front}"
+    mkdir -p "$UNIDADES" "$HOME/.config"
+
+    # El secreto se genera una vez y no se vuelve a tocar: regenerarlo en cada
+    # pasada dejaría el webhook de GitHub firmando con uno viejo.
+    if [ ! -s "$SECRETO_ENV" ]; then
+      umask 077
+      printf 'REDEPLOY_WEBHOOK_SECRET=%s\n' "$(openssl rand -hex 32)" > "$SECRETO_ENV"
+      chmod 600 "$SECRETO_ENV"
+      log "WEBHOOK: secreto nuevo en $SECRETO_ENV"
+    fi
+
+    ln -sf "$RAIZ/tools/redeploy/systemd/alovida-redeploy-webhook.service" "$UNIDADES/"
+    systemctl --user daemon-reload
+    systemctl --user enable --now alovida-redeploy-webhook.service >/dev/null 2>&1
+    sleep 1
+    if ! systemctl --user is-active --quiet alovida-redeploy-webhook.service; then
+      log "WEBHOOK: ✗ el receptor no arrancó. Mirá: journalctl --user -u alovida-redeploy-webhook -n 20"
+      exit 1
+    fi
+
+    # Se publica sólo esa ruta, no el puerto entero: el resto del Funnel sigue
+    # sirviendo la aplicación en `/`.
+    if [ "$EXPOSICION" = tailscale ]; then
+      nombre="$(nombre_tailscale)"
+      if tailscale funnel --bg --set-path "$RUTA_HOOK" "$PUERTO_HOOK" </dev/null >/dev/null 2>&1; then
+        log "WEBHOOK: escuchando en https://${nombre}${RUTA_HOOK}"
+      else
+        log "WEBHOOK: ⚠ el receptor corre, pero no pude publicar la ruta por el funnel"
+      fi
+    fi
+
+    echo
+    echo "En GitHub → Settings → Webhooks → Add webhook:"
+    echo "  Payload URL   : https://$(nombre_tailscale)${RUTA_HOOK}"
+    echo "  Content type  : application/json"
+    echo "  Secret        : $(sed -n 's/^REDEPLOY_WEBHOOK_SECRET=//p' "$SECRETO_ENV")"
+    echo "  Eventos       : sólo 'push'"
+    echo
+    echo "El temporizador sigue puesto como respaldo; los dos disparan la misma unidad."
     ;;
 
   systemd)
@@ -547,6 +938,14 @@ case "${1:-once}" in
     # `enable-linger` es la pieza que la gente olvida: sin él, las unidades de usuario sólo
     # viven mientras haya sesión iniciada, así que un reinicio sin login deja el enlace
     # servido por contenedores viejos y a nadie vigilando.
+    # En macOS no hay systemd. Antes esto dejaba un `~/.config/systemd/user` con
+    # dos enlaces simbólicos que no manda nadie, y tres `command not found`
+    # sueltos entre medias: quien lo corría se quedaba creyendo que había
+    # instalado un temporizador. Ahí el equivalente es `start` (o launchd).
+    if ! command -v systemctl >/dev/null 2>&1; then
+      log "SYSTEMD: ✗ esta máquina no tiene systemd (macOS). Usá 'start' para dejar el vigilante corriendo."
+      exit 1
+    fi
     UNIDADES="$HOME/.config/systemd/user"
     mkdir -p "$UNIDADES"
     if [ -f "$VIGILANTE_PID" ] && kill -0 "$(cat "$VIGILANTE_PID")" 2>/dev/null; then
@@ -568,17 +967,30 @@ case "${1:-once}" in
   stop)
     [ -f "$VIGILANTE_PID" ] && kill -TERM "$(cat "$VIGILANTE_PID")" 2>/dev/null
     rm -f "$VIGILANTE_PID"
-    [ -f "$TUNEL_PID" ] && kill -TERM "$(cat "$TUNEL_PID")" 2>/dev/null
-    rm -f "$TUNEL_PID"
-    docker rm -f "$PROXY" "$WEB" >/dev/null 2>&1
+    if [ "$EXPOSICION" = tailscale ]; then
+      # Se retira el funnel: bajar los contenedores y dejar el nombre público
+      # abierto a internet apuntando a un puerto muerto es peor que cerrarlo.
+      tailscale funnel --https=443 off >/dev/null 2>&1 \
+        && log "TAILSCALE: funnel retirado; vuelve con 'start'"
+    else
+      [ -f "$TUNEL_PID" ] && kill -TERM "$(cat "$TUNEL_PID")" 2>/dev/null
+      rm -f "$TUNEL_PID"
+    fi
+    # También por el nombre de rescate: si no, un `stop` dejaría el sitio
+    # sirviendo desde un contenedor que se creía bajado.
+    docker rm -f "$PROXY_BASE" "$WEB_BASE" "${PROXY_BASE}-rescate" "${WEB_BASE}-rescate" >/dev/null 2>&1
     log "Todo abajo. El enlace $(cat "$URL_FILE" 2>/dev/null) vuelve intacto con 'start'."
     ;;
 
   status)
     echo "rama        : origin/$RAMA @ $(git -C "$RAIZ" rev-parse --short "origin/$RAMA" 2>/dev/null) (tu copia local no interviene)"
     echo "desplegado  : $(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null || echo '—')"
-    echo "enlace      : $(cat "$URL_FILE" 2>/dev/null || url_del_tunel)"
-    echo "túnel       : $(tunel_proceso_vivo && echo 'hospedado' || echo 'sin hospedar')"
+    echo "enlace      : $( [ -s "$URL_FILE" ] && cat "$URL_FILE" || url_del_tunel )"
+    if [ "$EXPOSICION" = tailscale ]; then
+      echo "exposición  : tailscale funnel $(tailscale funnel status 2>/dev/null | grep -q "127.0.0.1:${PUERTO}" && echo "→ 127.0.0.1:$PUERTO" || echo '⚠ SIN servir')"
+    else
+      echo "exposición  : $EXPOSICION · $(tunel_proceso_vivo && echo 'hospedado' || echo 'sin hospedar')"
+    fi
     # Lo que de verdad se pregunta cuando se pregunta por el estado: si la
     # petición COMO LLEGA POR EL ENLACE funciona. En el ciclo esto es silencioso
     # mientras va bien, así que acá se dice siempre.
@@ -588,9 +1000,11 @@ case "${1:-once}" in
     # avería: el bucle en segundo plano sobra, y decirlo aquí ahorra el susto de leerlo.
     echo "temporizador: $(systemctl --user is-active alovida-redeploy.timer 2>/dev/null || echo 'sin instalar') $([ "$(systemctl --user is-active alovida-redeploy.timer 2>/dev/null)" = active ] && echo '(manda systemd; el vigilante suelto sobra)')"
     echo "vigilante   : $( { [ -f "$VIGILANTE_PID" ] && kill -0 "$(cat "$VIGILANTE_PID")" 2>/dev/null && echo "pid $(cat "$VIGILANTE_PID")"; } || echo 'parado')"
-    docker ps --filter "name=^${WEB}$" --filter "name=^${PROXY}$" \
+    docker ps --filter "name=^${WEB_BASE}(-rescate)?$" --filter "name=^${PROXY_BASE}(-rescate)?$" \
       --format 'contenedor  : {{.Names}} · {{.Image}} · {{.Status}}'
+    web_vivo; proxy_vivo
     docker stats --no-stream --format 'memoria     : {{.Name}} · {{.MemUsage}}' "$WEB" "$PROXY" 2>/dev/null
+    exit 0
     ;;
 
   proxy)
@@ -609,7 +1023,9 @@ case "${1:-once}" in
     proxy_vivo && recargar_proxy
     ;;
 
-  url)  cat "$URL_FILE" 2>/dev/null || url_del_tunel ;;
+  # `[ -s ]` y no `cat … || …`: `cat` de un archivo vacío sale con 0, así que el
+  # respaldo estaba escrito pero era inalcanzable justo cuando hacía falta.
+  url)  if [ -s "$URL_FILE" ]; then cat "$URL_FILE"; else url_del_tunel; fi ;;
   logs) tail -n "${2:-40}" "$LOG" ;;
 
   *) sed -n '2,60p' "$0"; exit 1 ;;

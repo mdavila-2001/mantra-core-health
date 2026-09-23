@@ -21,12 +21,35 @@ import type * as Leaflet from 'leaflet';
 
 import type { PinMapa, PuntoGeo } from './pin-mapa.types';
 
-/** Tiles públicos de OpenStreetMap: sin API key. Cambiar de proveedor es cambiar esta URL. */
-const TILES_OSM = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+/**
+ * Mosaicos del servidor comunitario de OpenStreetMap, sin clave de API.
+ *
+ * **Por qué ya no son los de CARTO** (19/09/2026): CARTO dejó de servir sus
+ * basemaps de forma anónima y ahora estampa «API KEY REQUIRED ·
+ * carto.com/basemaps/apikey» **en diagonal sobre cada mosaico**. No es un
+ * fallo de carga que se vea en la consola: el mosaico llega con 200 y con la
+ * marca de agua pintada encima, así que TODOS los mapas del producto —el de
+ * los directorios, «Dónde comprar», las sedes del perfil— se veían rotos y
+ * nada lo delataba salvo mirarlos. Medido pidiendo el mismo mosaico de Santa
+ * Cruz a los dos proveedores: CARTO 26 441 B con la marca, OSM 34 984 B
+ * limpio.
+ *
+ * El comentario que estaba acá decía que OSM «bloquea las solicitudes de esta
+ * aplicación por su política de uso». No se sostiene: el mismo mosaico, con el
+ * agente y el referente del navegador, responde 200 y se lee. La política de
+ * OSM pide atribución visible y uso moderado —las dos se cumplen—, y es
+ * además la decisión ya escrita del proyecto: Leaflet + OpenStreetMap sin
+ * clave, que es lo que la CSP del servidor permitía antes de que alguien la
+ * abriera a CARTO.
+ *
+ * Un solo host: el servidor de OSM ya no reparte por subdominios `a`/`b`/`c`,
+ * así que la plantilla no lleva `{s}` ni la capa `subdomains`.
+ */
+const DEMO_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
-/** La atribución es condición de uso de OSM, no un adorno. */
-const ATRIBUCION_OSM =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+/** La atribución de OSM es condición de uso, no un adorno. */
+const DEMO_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 const ZOOM_MAXIMO = 19;
 
@@ -164,6 +187,17 @@ export class AppMap implements OnDestroy {
    */
   readonly pointPicked = output<PuntoGeo>();
 
+  /**
+   * Si el mapa está esperando que alguien **toque un punto**.
+   *
+   * No cambia lo que se emite —`pointPicked` sale siempre—; cambia lo que se
+   * ve: el cursor pasa de la mano de arrastrar a la cruz de apuntar, que es la
+   * única pista visual de que acá un clic hace algo. Sin ella, quien llegó a
+   * «marcá en el mapa dónde vivís» arrastra el plano y no entiende por qué el
+   * pin no aparece.
+   */
+  readonly seleccionable = input(false);
+
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly documento = inject(DOCUMENT);
   private readonly injector = inject(Injector);
@@ -178,6 +212,9 @@ export class AppMap implements OnDestroy {
   private readonly marcadores = new Map<string, Leaflet.Marker>();
   private pinesDibujados: readonly PinMapa[] | null = null;
   private destruido = false;
+  private observadorDeTamano: ResizeObserver | null = null;
+  /** Si el lienzo llegó a medir algo alguna vez. Ver {@link vigilarElTamano}. */
+  private tuvoTamano = false;
 
   constructor() {
     if (!this.isBrowser) {
@@ -201,6 +238,8 @@ export class AppMap implements OnDestroy {
 
   ngOnDestroy(): void {
     this.destruido = true;
+    this.observadorDeTamano?.disconnect();
+    this.observadorDeTamano = null;
     this.mapa?.remove();
     this.mapa = null;
     this.leaflet = null;
@@ -217,9 +256,24 @@ export class AppMap implements OnDestroy {
     const L = modulo.default ?? modulo;
     this.leaflet = L;
 
-    const mapa = L.map(this.lienzo().nativeElement, { maxZoom: ZOOM_MAXIMO });
+    const lienzo = this.lienzo().nativeElement;
+    // Leaflet mide el contenedor al montarse y, si lo encuentra `static`, le
+    // escribe `position: relative` EN LÍNEA — y una regla en línea le gana a
+    // `map.css`, así que `inset: 0` deja de aplicar, el lienzo queda de alto 0
+    // y el mapa se dibuja al zoom máximo sobre un punto, en blanco.
+    //
+    // Pasa cuando el mapa se monta en el mismo ciclo en que se insertan sus
+    // estilos —un mapa dentro de una pestaña que recién se abre—. La geometría
+    // se fija acá, antes de que Leaflet la mire: es la misma que declara
+    // `map.css`, escrita donde el orden de carga no la puede perder.
+    lienzo.style.position = 'absolute';
+    lienzo.style.inset = '0';
+    const mapa = L.map(lienzo, { maxZoom: ZOOM_MAXIMO });
     mapa.setView(CENTRO_POR_DEFECTO, ZOOM_POR_DEFECTO);
-    L.tileLayer(TILES_OSM, { attribution: ATRIBUCION_OSM, maxZoom: ZOOM_MAXIMO }).addTo(mapa);
+    L.tileLayer(DEMO_TILES, {
+      attribution: DEMO_ATTRIBUTION,
+      maxZoom: ZOOM_MAXIMO,
+    }).addTo(mapa);
     this.mapa = mapa;
     // El bus de eventos de Leaflet no existe en el doble de `map.spec.ts` ni
     // en jsdom: el mismo resguardo que usa `dialog.ts` con `showModal()`.
@@ -232,6 +286,41 @@ export class AppMap implements OnDestroy {
 
     this.dibujar(this.pines());
     this.resaltar(this.seleccionado());
+    this.vigilarElTamano(lienzo);
+  }
+
+  /**
+   * Corrige el encuadre cuando el lienzo cambia de tamaño.
+   *
+   * Leaflet mide UNA vez, al montarse, y no vuelve a mirar: un mapa que nació
+   * en una caja de alto 0 —dentro de una pestaña que todavía no se abrió, de
+   * un modal que no se mostró, de un acordeón plegado— se queda encuadrado al
+   * zoom máximo sobre un punto y se ve gris para siempre.
+   *
+   * La primera vez que el lienzo mide algo se reencuadra: ése es el momento en
+   * que el mapa recién puede saber qué entra en pantalla. De ahí en más sólo
+   * se le avisa del cambio de tamaño (`invalidateSize`), sin tocar el encuadre
+   * —quien arrastró el mapa no quiere que una rotación de pantalla se lo
+   * devuelva al principio—.
+   */
+  private vigilarElTamano(lienzo: HTMLElement): void {
+    if (typeof ResizeObserver !== 'function') {
+      return;
+    }
+    this.tuvoTamano = lienzo.clientHeight > 0 && lienzo.clientWidth > 0;
+    this.observadorDeTamano = new ResizeObserver(() => {
+      const L = this.leaflet;
+      const mapa = this.mapa;
+      if (L === null || mapa === null || typeof mapa.invalidateSize !== 'function') {
+        return;
+      }
+      mapa.invalidateSize();
+      if (!this.tuvoTamano && lienzo.clientHeight > 0 && lienzo.clientWidth > 0) {
+        this.tuvoTamano = true;
+        this.encuadrar(L, mapa, this.pines());
+      }
+    });
+    this.observadorDeTamano.observe(lienzo);
   }
 
   /** Engancha el CSS de Leaflet una sola vez por documento. */

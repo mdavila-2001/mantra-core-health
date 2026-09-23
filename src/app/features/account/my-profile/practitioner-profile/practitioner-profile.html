@@ -4,10 +4,20 @@
      vista que usa la guía de profesionales para el perfil de otro doctor. -->
 <app-view-state-host [state]="perfil()" (retry)="recargar()">
   @if (visible(); as perfil) {
+    <!-- Las tres entradas de abajo son el estado de operaciones que ocurren
+         ACÁ —subir la foto, y por eso su curso y su fallo—; las tres salidas
+         son intenciones, no resultados: la vista pide, este contenedor decide
+         y persiste. -->
     <app-practitioner-profile-view
       [perfil]="perfil"
       [esPropio]="true"
+      [fotoSubiendo]="fotoSubiendo()"
+      [errorDeFoto]="errorDeFoto()"
+      [fotoRecien]="fotoRecien()"
       (trayectoriaCambio)="recargar()"
+      (fotoElegida)="subirFoto($event)"
+      (credencialARetirar)="retirarCredencial($event)"
+      (pestanaVisible)="alVerPestana($event)"
     />
   }
 </app-view-state-host>

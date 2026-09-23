@@ -1,0 +1,181 @@
+/* El perfil mini de la columna derecha: portada, retrato montado, identidad,
+   dos datos y los accesos. La ficha pública en miniatura. */
+
+:host {
+  display: block;
+}
+
+.mini {
+  border: 1px solid var(--filete-2);
+  border-radius: var(--r-card);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.mini__portada {
+  block-size: 4.5rem;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  box-shadow: inset 0 -1px 0 rgb(0 0 0 / 12%);
+}
+
+/* Sin portada, el degradado de marca con la trama de la ficha pública. */
+.mini__portada--lisa {
+  background-image:
+    repeating-linear-gradient(118deg, rgb(255 255 255 / 5.5%) 0 1px, transparent 1px 15px),
+    radial-gradient(70% 120% at 15% 0%, var(--nav-halo-a) 0%, var(--nav-halo-0) 70%),
+    linear-gradient(115deg, var(--petroleo-x) 0%, var(--petroleo) 55%, var(--aguamarina) 130%);
+}
+
+.mini__identidad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 var(--e4) var(--e3);
+}
+
+.mini__avatar {
+  display: grid;
+  place-items: center;
+  inline-size: 4.5rem;
+  block-size: 4.5rem;
+  margin-block-start: -2.25rem;
+  border-radius: var(--r-pill);
+  border: 3px solid var(--sup-tarjeta);
+  object-fit: cover;
+  background: var(--menta);
+  box-shadow: var(--sombra-1);
+}
+
+.mini__avatar--iniciales {
+  color: var(--tinta-marca);
+  font-family: var(--f-titulo);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.mini__nombre {
+  margin: var(--e2) 0 0;
+  font-family: var(--f-titulo);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--tinta);
+  line-height: 1.25;
+  text-decoration: none;
+}
+
+a.mini__nombre:hover {
+  text-decoration: underline;
+}
+
+.mini__titular,
+.mini__ciudad {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--tinta-2);
+}
+
+.mini__ciudad {
+  color: var(--tinta-3);
+}
+
+/* Los dos datos, como las «visualizaciones» de una red profesional: etiqueta
+   a la izquierda, valor a la derecha, en una fila con filete arriba. */
+.mini__datos {
+  margin: 0;
+  padding: var(--e2) var(--e4);
+  border-block-start: 1px solid var(--filete-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+}
+
+.mini__dato {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--e2);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.mini__dato dt {
+  color: var(--tinta-2);
+}
+
+.mini__dato dd {
+  margin: 0;
+  color: var(--tinta);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.mini__estrella {
+  color: var(--ambar, var(--petroleo));
+}
+
+.mini__accesos {
+  padding: var(--e2) var(--e2);
+  border-block-start: 1px solid var(--filete-2);
+  display: flex;
+  flex-direction: column;
+}
+
+.mini__acceso {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  min-block-size: 40px;
+  padding: 0 var(--e2);
+  border-radius: 10px;
+  color: var(--tinta);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mini__acceso svg {
+  inline-size: 18px;
+  block-size: 18px;
+  color: var(--tinta-2);
+}
+
+.mini__acceso:hover {
+  background: var(--sup-inset);
+}
+
+.mini__invitacion {
+  margin: 0;
+  padding: 0 var(--e4);
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  text-align: center;
+}
+
+.mini__crear {
+  align-self: center;
+  margin: var(--e3) var(--e4) var(--e4);
+}
+
+.mini__esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  padding-block-end: var(--e4);
+}
+
+.mini__esqueleto .app-skeleton {
+  margin-inline: var(--e4);
+}
+
+.mini__esqueleto-portada {
+  margin-inline: 0 !important;
+  block-size: 4.5rem;
+  border-radius: 0;
+}

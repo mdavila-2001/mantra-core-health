@@ -33,23 +33,54 @@ import { Tooltip } from '../../atoms/tooltip/tooltip';
 import { Switch } from '../../atoms/switch/switch';
 import { Select } from '../../atoms/select/select';
 import { Textarea } from '../../atoms/textarea/textarea';
+import { CheckboxGroup } from '../../molecules/checkbox-group/checkbox-group';
 import { DialogService } from '../../molecules/dialog/dialog-service';
 import { FormField } from '../../molecules/form-field/form-field';
+import { GridGroup } from '../../molecules/grid-group/grid-group';
 import { PhoneInput } from '../../molecules/phone-input/phone-input';
 import { Radio } from '../../molecules/radio/radio';
 import { RadioGroup } from '../../molecules/radio-group/radio-group';
+import { RadioOtro } from '../../molecules/radio-otro/radio-otro';
+import { SegmentedControl } from '../../molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../molecules/segmented-control/segmented-control.types';
 import { Stepper } from '../../molecules/stepper/stepper';
 import type { StepperStep } from '../../molecules/stepper/stepper.types';
 import { DatePicker } from '../date-picker/date-picker';
 import { CampoPersonalizado } from './campo-personalizado';
 
 /**
- * Cuántas páginas admite el stepper antes de estorbar.
+ * Cuántas páginas admite el stepper **con rótulos** antes de estorbar.
  *
  * Con más, sus rótulos no caben en un teléfono y se convierten en una fila
  * ilegible. La barra de avance, que siempre está, no tiene ese problema.
+ *
+ * Pasado el tope hay dos salidas: el contador «Paso 2 de 10», que es la de
+ * siempre, o el recorrido **compacto** —marcadores sin rótulo— que enciende
+ * {@link PaginatedForm.compactSteps} la pantalla que lo verificó.
  */
 const MAX_PASOS_EN_EL_INDICADOR = 5;
+
+/**
+ * Las dos respuestas de una pregunta de sí/no, como botones.
+ *
+ * Mismo par que el del alta de agenda, y por la misma razón: el propietario
+ * pidió botones en vez de casillas porque una casilla sola no dice qué pasa si
+ * no la marcás. Se declaran acá y no en cada pantalla para que sean las mismas
+ * dos palabras en todo el producto.
+ */
+const SI_NO: readonly SegmentedOption<RespuestaSiNo>[] = [
+  { value: 'si', label: 'Sí' },
+  { value: 'no', label: 'No' },
+];
+
+/**
+ * Lo que el control segmentado entiende de un sí/no.
+ *
+ * El `''` es «todavía sin responder»: no es una opción de la lista —no hay un
+ * tercer botón— pero sí un valor que el control recibe, y que hace que ninguno
+ * de los dos se vea apretado.
+ */
+type RespuestaSiNo = 'si' | 'no' | '';
 
 /**
  * **Formulario por partes** — un formulario servido de a una página, con un tope
@@ -135,14 +166,18 @@ const MAX_PASOS_EN_EL_INDICADOR = 5;
     ReactiveFormsModule,
     AppButton,
     Checkbox,
+    CheckboxGroup,
     DatePicker,
     FormField,
+    GridGroup,
     Input,
     NavIcon,
     PhoneInput,
     Progress,
     Radio,
     RadioGroup,
+    RadioOtro,
+    SegmentedControl,
     Select,
     Stepper,
     Switch,
@@ -219,6 +254,23 @@ export class PaginatedForm {
    */
   readonly iconOnlyNav = input(false, { transform: booleanAttribute });
 
+  /**
+   * El recorrido se dibuja también con más de {@link MAX_PASOS_EN_EL_INDICADOR}
+   * páginas, en su forma compacta: marcadores sin rótulo a la vista.
+   *
+   * Entra apagado, y no es lo mismo que subir el tope. El tope existe porque
+   * este motor lo montan decenas de pantallas y ninguna se enteraría de que su
+   * indicador dejó de caber: mientras esté, una pantalla larga sigue mostrando
+   * su contador «Paso 2 de 10», que es lo que hoy ve. La opción la enciende
+   * quien **recorrió su formulario en compacto** y comprobó que los pasos
+   * entran —diez marcadores caben en dos filas de cinco en un teléfono; veinte
+   * no— y que sus títulos se reconocen sin el rótulo.
+   *
+   * El rótulo no se pierde: sigue en el nombre accesible de cada paso y vuelve
+   * como globo al apuntar o al enfocar. Ver `compact` en `app-stepper`.
+   */
+  readonly compactSteps = input(false, { transform: booleanAttribute });
+
   /** Se emite en la última página, y sólo si todo el formulario es válido. */
   readonly enviado = output<void>();
 
@@ -238,6 +290,24 @@ export class PaginatedForm {
    * contarlas cada vez que se agregue una en el medio.
    */
   readonly pasoVisible = output<PaginaDeFormulario>();
+
+  /**
+   * La página que el motor acaba de rechazar al intentar pasar de ella (o la
+   * primera inválida al enviar).
+   *
+   * Existe para los campos `custom` respaldados por un `FormGroup`: el motor
+   * marca el grupo entero (`markAsTouched`, no a sus hijos) y bloquea
+   * «Siguiente», pero quien dibuja adentro —un acordeón, por ejemplo— necesita
+   * saber que ese intento ocurrió para marcar y desplegar lo suyo. Escuchar
+   * `TouchedChangeEvent` del grupo no sirve: el `blur` del primer campo hijo
+   * ya sube `touched` al grupo, así que cuando el motor lo marca de nuevo no
+   * cambia nada y no se emite.
+   *
+   * Sale la página entera, igual que {@link pasoVisible}, y se emite en cada
+   * intento fallido: al bloquear «Siguiente» y al saltar a la primera página
+   * inválida desde «Enviar».
+   */
+  readonly rechazada = output<PaginaDeFormulario>();
 
   /** Las plantillas de los campos `custom`, por `key`. */
   private readonly personalizados = contentChildren(CampoPersonalizado);
@@ -292,8 +362,19 @@ export class PaginatedForm {
   });
 
   readonly mostrarPasos = computed(
-    () => this.total() > 1 && this.total() <= MAX_PASOS_EN_EL_INDICADOR,
+    () =>
+      this.total() > 1 &&
+      (this.total() <= MAX_PASOS_EN_EL_INDICADOR || this.compactSteps()),
   );
+
+  /**
+   * El recorrido va compacto sólo cuando no entra de otra forma.
+   *
+   * Con cinco páginas o menos los rótulos caben, y esconderlos ahí sería
+   * cambiar palabras por dibujos sin necesidad: `compactSteps` dice que el
+   * indicador se dibuje igual, no que se dibuje chico.
+   */
+  readonly pasosCompactos = computed(() => this.total() > MAX_PASOS_EN_EL_INDICADOR);
 
   readonly pasos = computed<readonly StepperStep[]>(() =>
     this.paginas().map((pagina, posicion) => ({
@@ -401,6 +482,14 @@ export class PaginatedForm {
     return campo.control as InputType;
   }
 
+  /** Las dos respuestas de un campo de sí/no. */
+  protected readonly siNo = SI_NO;
+
+  /** Los valores de la lista de un campo de elección, para que «Otro» sepa cuál no es. */
+  protected valoresDe(campo: CampoDeFormulario): readonly string[] {
+    return (campo.options ?? []).map((opcion) => opcion.value);
+  }
+
   protected errorDe(campo: CampoDeFormulario): string {
     return mensajeDeError(this.controlDe(campo), campo);
   }
@@ -426,6 +515,33 @@ export class PaginatedForm {
   protected escribirFecha(campo: CampoDeFormulario, valor: Date | null): void {
     const control = this.controlDe(campo);
     control?.setValue(valor);
+    control?.markAsTouched();
+  }
+
+  /**
+   * El valor de un campo `yes-no`, como lo entiende el control segmentado.
+   *
+   * Se puentea a mano —igual que la fecha, y por el mismo motivo—:
+   * `app-segmented-control` es un selector, no un `ControlValueAccessor`. Lo
+   * que vive en el formulario es un booleano o `null`; lo que el control
+   * entiende son dos cadenas.
+   *
+   * `''` cuando no hay respuesta, que es lo que hace que **ninguno** de los dos
+   * botones se vea apretado: «no contestó» no es «contestó que no».
+   */
+  protected siNoDe(campo: CampoDeFormulario): RespuestaSiNo {
+    const valor: unknown = this.controlDe(campo)?.value;
+    if (valor === true) return 'si';
+    if (valor === false) return 'no';
+    return '';
+  }
+
+  protected escribirSiNo(campo: CampoDeFormulario, valor: RespuestaSiNo): void {
+    // El `''` no llega nunca —no hay un botón que lo emita— pero el tipo del
+    // control lo admite, y tratarlo como «no» sería contestar por la persona.
+    if (valor === '') return;
+    const control = this.controlDe(campo);
+    control?.setValue(valor === 'si');
     control?.markAsTouched();
   }
 
@@ -489,7 +605,10 @@ export class PaginatedForm {
       const fallo = this.paginas().findIndex((pagina) =>
         pagina.campos.some((campo) => this.form().get(campo.key)?.invalid === true),
       );
-      if (fallo !== -1) this.indice.set(fallo);
+      if (fallo !== -1) {
+        this.indice.set(fallo);
+        this.rechazada.emit(this.paginas()[fallo]);
+      }
       return;
     }
 
@@ -529,6 +648,7 @@ export class PaginatedForm {
       control.markAsTouched();
       if (control.invalid) valida = false;
     }
+    if (!valida) this.rechazada.emit(pagina);
     return valida;
   }
 }

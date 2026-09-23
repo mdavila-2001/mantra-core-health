@@ -20,6 +20,13 @@
   color: var(--text-secondary);
 }
 
+/* La lista va a lo ancho (regla del cliente §5); lo que se lee —el motivo de
+   un reporte, texto corrido— conserva su medida de lectura dentro de cada
+   tarjeta. */
+.moderacion__lista p {
+  max-inline-size: 76ch;
+}
+
 .moderacion__lista {
   display: flex;
   flex-direction: column;
@@ -27,9 +34,6 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  /* Ancho de lectura: el motivo de un reporte es texto corrido y una línea que
-     cruza una pantalla ancha entera se lee peor. */
-  max-inline-size: 76ch;
 }
 
 .moderacion__mas {
@@ -54,7 +58,7 @@
 .entrada__fecha {
   margin: 0;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .entrada__motivo {
@@ -65,7 +69,7 @@
 .entrada__motivo--sin,
 .entrada__decision {
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .entrada__decision {
@@ -90,7 +94,7 @@
 .decision__nota {
   margin: 0;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .decision__acciones {

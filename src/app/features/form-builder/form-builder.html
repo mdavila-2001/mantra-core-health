@@ -8,16 +8,46 @@
   <!-- ─── Un formulario abierto ─────────────────────────────────────────────
        Tres cosas a la vez y en este orden: qué trae el estándar (no se toca),
        qué agregó esta organización, y cómo se va a ver servido. -->
-  <div class="constructor">
-    <div class="constructor__encabezado">
-      <div>
+  <div class="constructor constructor--abierto">
+    <!-- La cabecera del formulario, como la tarjeta de título de Google
+         Forms: una banda de color arriba, el nombre grande, y las acciones a
+         la derecha. Es lo primero que se ve y lo que dice en qué formulario
+         se está. -->
+    <header class="constructor__encabezado">
+      <div class="constructor__encabezado-texto">
         <h2 class="constructor__titulo">{{ plantilla.name }}</h2>
         <p class="constructor__codigo">{{ plantilla.code }} · versión {{ plantilla.version }}</p>
       </div>
-      <button app-button type="button" variant="ghost" (clicked)="cerrar()">
-        Volver a la lista
-      </button>
-    </div>
+      <div class="constructor__encabezado-acciones">
+        <!-- El formulario en papel, en blanco y listo para completar a mano.
+             Sale por el mismo maquetador que la receta y la historia clínica,
+             así que la hoja se reconoce como de AloVida. Está en el
+             encabezado y no dentro de la vista previa a propósito: se baja
+             igual mientras se edita, que es cuando hace falta imprimir lo que
+             se acaba de armar. -->
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          (clicked)="descargar()"
+          data-testid="descargar-pdf"
+        >
+          Descargar PDF
+        </button>
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          (clicked)="alternarPrevia()"
+          data-testid="ver-previa"
+        >
+          {{ enPrevia() ? 'Volver a editar' : 'Vista previa' }}
+        </button>
+        <button app-button type="button" variant="ghost" (clicked)="cerrar()">
+          Volver a la lista
+        </button>
+      </div>
+    </header>
 
     @if (presupuestoEnPalabras(); as texto) {
       <app-card variant="outlined" padding="md" class="constructor__presupuesto">
@@ -41,106 +71,17 @@
       </app-card>
     }
 
-    <div class="constructor__columnas">
-      <section class="constructor__campos">
-        <h3 class="constructor__subtitulo">Campos del formulario estándar</h3>
-        @if (camposEstandar().length === 0) {
-          <p class="constructor__vacio">Este formulario todavía no tiene campos estándar.</p>
-        } @else {
-          <ul class="constructor__lista">
-            @for (campo of camposEstandar(); track porCampo(campo)) {
-              <li class="constructor__campo" data-testid="campo-estandar">
-                <span class="constructor__campo-nombre">{{ campo.name }}</span>
-                <span class="constructor__campo-meta">{{ codigoVisible(campo, plantilla) }}</span>
-                @if (campo.required) {
-                  <app-badge variant="secondary">Obligatorio</app-badge>
-                }
-              </li>
-            }
-          </ul>
-        }
-
-        <h3 class="constructor__subtitulo">Campos de tu organización</h3>
-        @if (camposPropios().length === 0) {
-          <p class="constructor__vacio" data-testid="sin-campos-propios">
-            Todavía no agregaste ninguno. Los que agregues acá los ve tu organización y nadie más.
-          </p>
-        } @else {
-          <ul class="constructor__lista">
-            @for (campo of camposPropios(); track porCampo(campo)) {
-              <li class="constructor__campo" data-testid="campo-propio">
-                <span class="constructor__campo-nombre">{{ campo.name }}</span>
-                <span class="constructor__campo-meta">{{ codigoVisible(campo, plantilla) }}</span>
-                <app-badge variant="success">Tuyo</app-badge>
-                @if (campo.required) {
-                  <app-badge variant="secondary">Obligatorio</app-badge>
-                }
-              </li>
-            }
-          </ul>
-        }
-
-        <!-- ─── Alta de un campo propio ───────────────────────────────────── -->
-        <app-card variant="outlined" padding="lg" class="constructor__alta">
-          <h3 class="constructor__subtitulo">Agregar un campo</h3>
-
-          @if (errorDelAlta(); as mensaje) {
-            <app-alert tone="error" data-testid="alta-error">{{ mensaje }}</app-alert>
-          }
-
-          <form class="constructor__formulario" (submit)="$event.preventDefault()">
-            <app-form-field
-              label="Nombre del campo"
-              hint="Como lo va a leer quien complete el formulario."
-              [required]="true"
-            >
-              <app-input
-                [value]="nombreDelCampo()"
-                (valueChange)="nombreDelCampo.set(comoTexto($event))"
-                placeholder="¿Fuma?"
-                data-testid="campo-nombre"
-              />
-            </app-form-field>
-
-            <app-form-field label="Tipo de dato">
-              <app-select
-                [options]="tiposDeDato"
-                [value]="tipoDelCampo()"
-                (valueChange)="tipoDelCampo.set($event ?? 'string')"
-                data-testid="campo-tipo"
-              />
-            </app-form-field>
-
-            <app-checkbox
-              [checked]="obligatorio()"
-              (checkedChange)="obligatorio.set($event)"
-              label="Obligatorio"
-            />
-
-            <button
-              app-button
-              type="button"
-              variant="primary"
-              [disabled]="!puedeCrear()"
-              [isLoading]="creando()"
-              (clicked)="agregarCampo()"
-              data-testid="agregar-campo"
-            >
-              Agregar al formulario
-            </button>
-          </form>
-        </app-card>
-      </section>
-
+    @if (enPrevia()) {
       <!-- ─── Vista previa ────────────────────────────────────────────────────
-           El mismo motor que sirve el formulario de verdad, con los campos
-           reales: el número de páginas que muestra es el que se va a ver. -->
+           Sólo cuando se pide. Es el mismo motor que sirve el formulario de
+           verdad, con los campos reales: el número de páginas que muestra es el
+           que se va a ver. Tenerla siempre al lado partía la pantalla en dos y
+           dejaba el editor en media columna. -->
       <section class="constructor__previa">
-        <h3 class="constructor__subtitulo">Así se va a ver</h3>
-        <p class="constructor__nota">
-          De a una página, con un tope de cuatro campos y una barra que dice cuánto falta. Si
-          agregás un campo que no entra, se abre una página nueva y lo vas a ver acá antes de
-          guardarlo.
+        <p class="constructor__previa-nota">
+          Así lo va a ver quien complete el formulario: de a una página, con un tope de cuatro
+          campos y una barra que dice cuánto falta. Podés tocar los controles: nada de lo que
+          escribas acá se guarda.
         </p>
         @if (paginas().length === 0) {
           <app-empty-state
@@ -158,7 +99,116 @@
           </div>
         }
       </section>
-    </div>
+    } @else {
+    <section class="constructor__campos">
+      <h3 class="constructor__subtitulo">Campos del formulario estándar</h3>
+
+      <!-- ─── Por qué estos no se tocan ───────────────────────────────────
+           Arriba de los campos y no dentro de cada tarjeta: es una sola razón
+           para todo el bloque, y repetirla veinte veces la vuelve ruido. Los
+           campos **se siguen mostrando enteros** —con su tipo y sus opciones—
+           porque esconderlos dejaría al doctor sin saber qué pregunta ya está
+           cubierta antes de agregar la suya. -->
+      <div class="constructor__bloqueado" data-testid="aviso-estandar">
+        <span class="constructor__bloqueado-icono" aria-hidden="true">
+          <app-nav-icon name="lock" />
+        </span>
+        <div class="constructor__bloqueado-texto">
+          <p class="constructor__bloqueado-titulo">
+            No podés modificar esto: es un formulario estándar internacional.
+          </p>
+          @if (procedencia(); as origen) {
+            <!-- La procedencia no es un adorno legal: muchos de estos
+                 formularios tienen derechos de autor, y de quién es y bajo qué
+                 licencia se usa tiene que estar en pantalla, no en un chat. -->
+            <p class="constructor__bloqueado-fuente">
+              {{ origen.sourceTitle }} · {{ origen.organization }} · {{ origen.license }}
+            </p>
+          }
+          <p class="constructor__bloqueado-fuente">
+            Sus campos son la parte que hace comparable una ficha entre
+            consultorios. Lo tuyo se agrega más abajo.
+          </p>
+        </div>
+      </div>
+
+      @if (camposEstandar().length === 0) {
+        <p class="constructor__vacio">Este formulario todavía no tiene campos estándar.</p>
+      } @else {
+        <ul class="constructor__lista">
+          @for (campo of camposEstandar(); track porCampo(campo)) {
+            <li data-testid="campo-estandar">
+              <!-- `editable` en falso: se ven y no se tocan. Son la parte que
+                   hace comparable una ficha entre consultorios, y el backend
+                   los rechaza igual. -->
+              <app-field-editor [campo]="campo" [editable]="false" />
+            </li>
+          }
+        </ul>
+      }
+
+      <h3 class="constructor__subtitulo">Campos de tu organización</h3>
+      @if (camposPropios().length === 0) {
+        <p class="constructor__vacio" data-testid="sin-campos-propios">
+          Todavía no agregaste ninguno. Los que agregues acá los ve tu organización y nadie más.
+        </p>
+      } @else {
+        <!-- Arrastrable sólo mientras el agarre está apretado: ver `agarrado`.
+             El `dragover` de cada renglón es lo que declara dónde se puede
+             soltar, y sin su `preventDefault` el navegador cancela el gesto. -->
+        <ul class="constructor__lista">
+          @for (campo of camposPropios(); track porCampo(campo); let i = $index) {
+            <li
+              data-testid="campo-propio"
+              [draggable]="agarrado() === campo.assignmentId"
+              (dragstart)="empezarArrastre(campo, $event)"
+              (dragover)="arrastrarSobre(campo, $event)"
+              (drop)="soltar(campo, $event)"
+              (dragend)="terminarArrastre()"
+            >
+              <app-field-editor
+                [campo]="campo"
+                [esPrimero]="i === 0"
+                [esUltimo]="i === camposPropios().length - 1"
+                [guardando]="estaGuardando(campo)"
+                [class.editor-campo--arrastrando]="arrastrando() === campo.assignmentId"
+                [class.editor-campo--destino]="
+                  destino() === campo.assignmentId && arrastrando() !== campo.assignmentId
+                "
+                (agarrar)="agarrar(campo, $event)"
+                (guardar)="guardarCampo(campo, $event)"
+                (duplicar)="duplicarCampo(campo)"
+                (borrar)="quitarCampo(campo)"
+                (mover)="moverCampo(i, $event)"
+              />
+            </li>
+          }
+        </ul>
+      }
+
+      @if (errorDelAlta(); as mensaje) {
+        <app-alert tone="error" data-testid="alta-error">{{ mensaje }}</app-alert>
+      }
+
+      <!-- ─── Agregar ─────────────────────────────────────────────────────
+           Un botón y no un formulario al pie: el campo nace vacío, se abre en
+           edición y se escribe encima. Es lo que hace un editor. -->
+      <div class="constructor__agregar">
+        <button
+          app-button
+          type="button"
+          variant="secondary"
+          [disabled]="!puedeCrear()"
+          [isLoading]="creando()"
+          (clicked)="agregarCampo()"
+          data-testid="agregar-campo"
+        >
+          + Agregar pregunta
+        </button>
+      </div>
+    </section>
+    }
+
   </div>
 } @else {
   <!-- ─── La lista de formularios estándar ─────────────────────────────────── -->
@@ -168,27 +218,100 @@
       se tocan: son la parte que hace comparable una ficha entre consultorios.
     </p>
 
+    <!-- Buscador y filtros en el MISMO renglón, que es la disciplina de
+         `app-filter-bar` en todos los listados: el texto a la izquierda, el
+         desplegable de especialidad al lado, y debajo los chips. Con más de
+         cuarenta formularios en la rejilla, encontrar el propio sin buscador
+         es leerlos todos. -->
+    <app-filter-bar
+      [filters]="filtros()"
+      searchLabel="Buscar un formulario por nombre, código o especialidad"
+      data-testid="filtros-formularios"
+    />
+
     @if (cargandoListado()) {
       <p class="constructor__vacio">Cargando formularios…</p>
-    } @else if (listado(); as lista) {
+    } @else if (filtrados(); as lista) {
       @if (lista.length === 0) {
-        <app-empty-state
-          title="Todavía no hay formularios estándar"
-          description="Cuando tu organización tenga plantillas por especialidad, aparecen acá."
-        />
+        @if (hayCriterios()) {
+          <!-- Lo vacío del filtro NO es lo vacío del catálogo: decir «todavía
+               no hay formularios» cuando el catálogo está lleno y lo que no
+               coincide es el filtro manda a pedirle a la organización algo que
+               ya tiene. -->
+          <p class="constructor__vacio" role="status" data-testid="sin-coincidencias">
+            Ningún formulario coincide con lo que buscaste. Probá con otra palabra o quitá
+            algún filtro.
+          </p>
+        } @else {
+          <app-empty-state
+            title="Todavía no hay formularios estándar"
+            description="Cuando tu organización tenga plantillas por especialidad, aparecen acá."
+          />
+        }
       } @else {
-        <ul class="constructor__plantillas">
+        <p class="constructor__conteo" role="status" data-testid="conteo-formularios">
+          {{ lista.length }}
+          {{ lista.length === 1 ? 'formulario' : 'formularios' }}
+        </p>
+
+        <!-- La rejilla y la tarjeta salen de `rejilla-de-tarjetas.css`, la
+             misma hoja que pinta «Mis servicios» y las portadas de los
+             directorios: ícono que encabeza, nombre, y debajo el dato que
+             distingue una tarjeta de la de al lado. Antes esta pantalla tenía
+             su propia tarjeta —sin ícono, con el código en grande y sin altura
+             pareja— y se veía como otra aplicación. -->
+        <ul class="rejilla constructor__rejilla" data-testid="plantillas">
           @for (plantilla of lista; track porPlantilla(plantilla)) {
             <li>
               <button
                 type="button"
-                class="constructor__plantilla"
+                class="rejilla__tarjeta constructor__ficha"
                 data-testid="plantilla"
                 [disabled]="cargandoPlantilla()"
                 (click)="abrir(plantilla)"
               >
-                <span class="constructor__plantilla-nombre">{{ plantilla.name }}</span>
-                <span class="constructor__campo-meta">{{ plantilla.code }}</span>
+                <app-specialty-icon
+                  class="rejilla__icono"
+                  [especialidad]="iconoDe(plantilla)"
+                />
+
+                @if (especialidadDe(plantilla); as especialidad) {
+                  <span class="constructor__especialidad">{{ especialidad }}</span>
+                }
+
+                <span class="rejilla__nombre">{{ plantilla.name }}</span>
+
+                <!-- `span` y no `p`: el contenido de un `button` es contenido
+                     de frase, y un párrafo adentro es HTML inválido —el
+                     navegador lo saca del botón y la tarjeta se parte—. -->
+                <span
+                  class="rejilla__dato constructor__codigo-ficha"
+                  [attr.title]="plantilla.code"
+                >
+                  {{ plantilla.code }}
+                </span>
+
+                <!-- El pie queda abajo del todo aunque el nombre ocupe una
+                     línea o tres: es lo que hace que la fila se lea como una
+                     fila y no como tarjetas de alturas distintas. -->
+                <span class="constructor__pie">
+                  <span class="constructor__cifra">
+                    {{ cantidadDeCampos(plantilla) }}
+                    {{ cantidadDeCampos(plantilla) === 1 ? 'campo' : 'campos' }}
+                    @if (cuantosPropios(plantilla) > 0) {
+                      · {{ cuantosPropios(plantilla) }} {{ cuantosPropios(plantilla) === 1 ? 'mío' : 'míos' }}
+                    }
+                  </span>
+                  <span class="constructor__flecha" aria-hidden="true">
+                    <app-nav-icon name="arrow-right" />
+                  </span>
+                </span>
+
+                @if (plantilla.provenance; as origen) {
+                  <span class="constructor__origen" [attr.title]="origen.organization">
+                    {{ origen.organization }}
+                  </span>
+                }
               </button>
             </li>
           }

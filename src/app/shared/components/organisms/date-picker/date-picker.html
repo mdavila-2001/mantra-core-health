@@ -13,6 +13,8 @@
         [placeholder]="placeholder()"
         [value]="inputText()"
         (focus)="handleFocus()"
+        (click)="handleInputClick($event)"
+        (mouseup)="handleInputMouseUp($event)"
         (input)="handleTextInput($event)"
         (blur)="handleTextBlur()"
         (keydown)="handleInputKeydown($event)"
@@ -26,8 +28,12 @@
         aria-haspopup="dialog"
         [attr.aria-expanded]="isOpen()"
         aria-label="Abrir calendario"
+        [attr.aria-labelledby]="triggerLabelledBy()"
         (click)="open()"
       >
+        <!-- «Abrir calendario» + el rótulo del campo: con dos fechas en la misma
+             pantalla (Desde / Hasta) el lector anunciaba dos botones iguales. -->
+        <span class="sr-only" [id]="triggerTextId">Abrir calendario</span>
         <span class="trigger-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -271,7 +277,18 @@
 
       <div class="dialog-actions">
         <button app-button variant="ghost" size="sm" (clicked)="close()">Cancelar</button>
-        <button app-button variant="primary" size="sm" (clicked)="confirm()">Confirmar</button>
+        <!-- Deshabilitado hasta que haya día, mes y año elegidos. Antes aceptaba
+             el 1 de enero con el que el calendario se posiciona al abrir. -->
+        <button
+          app-button
+          variant="primary"
+          size="sm"
+          [disabled]="!canConfirm()"
+          data-testid="date-picker-confirm"
+          (clicked)="confirm()"
+        >
+          Confirmar
+        </button>
       </div>
     </div>
   </dialog>

@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { AuthSplit } from './auth-split';
+import { AuthSplit, type AuthSplitScene } from './auth-split';
 import { ThemeService } from '../../../../core/tokens/theme.service';
 import type { ThemeMode } from '../../../../core/tokens/design-tokens.types';
 
@@ -17,7 +17,7 @@ class ThemeServiceFalso {
 @Component({
   imports: [AuthSplit],
   template: `
-    <app-auth-split [claim]="claim()" [tagline]="tagline()">
+    <app-auth-split [claim]="claim()" [tagline]="tagline()" [scene]="scene()">
       <p class="proyectado">formulario</p>
     </app-auth-split>
   `,
@@ -25,6 +25,7 @@ class ThemeServiceFalso {
 class Host {
   readonly claim = signal('Tu salud, conectada');
   readonly tagline = signal('La red más grande');
+  readonly scene = signal<AuthSplitScene>('split');
 }
 
 describe('AuthSplit', () => {
@@ -130,6 +131,29 @@ describe('AuthSplit', () => {
 
       expect(grupo?.getAttribute('role')).toBe('group');
       expect(grupo?.getAttribute('aria-label')).toBe('Tema de la interfaz');
+    });
+  });
+
+  describe('puesta en escena', () => {
+    const escenario = (): Element | null => el().querySelector('app-auth-stage');
+
+    it('por defecto es la estructura partida: sin escenario y con las auroras de cada columna', () => {
+      expect(escenario()).toBeNull();
+      expect(el().querySelector('.auth-split--stage')).toBeNull();
+      expect(el().querySelectorAll('.auth-split__aurora')).toHaveLength(2);
+    });
+
+    it('con `stage` monta el escenario del latido y retira las auroras de la partida', async () => {
+      host.scene.set('stage');
+      await fixture.whenStable();
+
+      expect(el().querySelector('.auth-split--stage')).not.toBeNull();
+      expect(escenario()).not.toBeNull();
+      expect(el().querySelectorAll('.auth-split__aurora')).toHaveLength(0);
+      // El titular sigue: el escenario cambia el fondo, no el mensaje.
+      expect(el().querySelector('.auth-split__claim')?.textContent).toContain(
+        'Tu salud, conectada',
+      );
     });
   });
 });

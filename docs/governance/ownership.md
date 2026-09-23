@@ -85,7 +85,7 @@ primero.
 | Códigos de error | Ídem | Copiados a mano, con la referencia anotada |
 | **Dominio de los enlaces del correo** | Ídem | **Sin documentar en ningún repositorio** |
 | Primer administrador sembrado | Ídem | Documentado en `ESTADO-FRONTEND.md` |
-| `identidad-visual.md` (REDSAT) | Diseño | Fuente normativa del sistema |
+| `identidad-visual.md` (ALOVIDA) | Diseño | Fuente normativa del sistema |
 | Modelo M34 | Arquitectura | Fuente normativa de los 9 estados |
 
 **La tercera es la que rompe dos journeys completos si nadie la cuida.** Ver

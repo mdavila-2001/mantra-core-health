@@ -65,17 +65,17 @@ Los comentarios, leídos con la sesión de la vecina que los escribió
 
 En `mantra-core-health-api`:
 
-- `tools/redesa/datos/elenco-medico.mjs` **(nuevo)** — 15 profesionales con su
+- `tools/alovida/datos/elenco-medico.mjs` **(nuevo)** — 15 profesionales con su
   trayectoria completa: pregrado, internado rotatorio, SSSRO, residencia,
   posgrado, ejercicio actual y docencia. Universidades reales del sistema
   boliviano (UMSA, UMSS, UAGRM, USFX, UAJMS, UCB San Pablo, UNIVALLE, UDABOL,
   UPEA…) y hospitales reales.
-- `tools/redesa/datos/publicaciones.mjs` **(nuevo)** — 60 publicaciones de
+- `tools/alovida/datos/publicaciones.mjs` **(nuevo)** — 60 publicaciones de
   divulgación, cuatro por especialidad, de dos a cuatro párrafos.
-- `tools/redesa/datos/comunidad.mjs` **(nuevo)** — 16 vecinos con documento y
+- `tools/alovida/datos/comunidad.mjs` **(nuevo)** — 16 vecinos con documento y
   contraseña, 120 comentarios escritos contra su publicación y un pool general
   para sanear lo viejo.
-- `tools/redesa/seed-vitrina-publica.mjs` — pasada de interacción, reintento
+- `tools/alovida/seed-vitrina-publica.mjs` — pasada de interacción, reintento
   ante `429`, y `--solo-interaccion` para completar lo ya sembrado sin duplicar.
 - `src/common/seed/clinical-forms-seed.service.ts` — publica
   `VS_MEDICAL_SPECIALTY` **sólo cuando el paquete del modelo no lo trajo**. Sin

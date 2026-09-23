@@ -3,7 +3,7 @@
     que consume el Badge: una sola copia del mapeo tono → trío `--st-*`.
 
     Geometría propia: el chip es más grande que un badge porque se toca y se
-    quita con el dedo, no solo se lee. Extensión propia sobre el spec REDSAT
+    quita con el dedo, no solo se lee. Extensión propia sobre el spec ALOVIDA
     — pendiente de validación del diseñador.
     ========================================================================== */
 
@@ -22,9 +22,9 @@
     background: var(--tone-bg, transparent);
     color: var(--tone-fg, currentColor);
     transition:
-        background 0.15s ease,
-        border-color 0.15s ease,
-        box-shadow 0.15s ease;
+        background var(--dur-fast) var(--ease-standard),
+        border-color var(--dur-fast) var(--ease-standard),
+        box-shadow var(--dur-fast) var(--ease-standard);
 }
 
 /* ---- tamaños: `md` es la escala del badge subida a área táctil ----------- */

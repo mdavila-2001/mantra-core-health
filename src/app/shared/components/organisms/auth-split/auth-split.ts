@@ -4,9 +4,13 @@ import type { ThemeMode } from '../../../../core/tokens/design-tokens.types';
 import { ThemeService } from '../../../../core/tokens/theme.service';
 import { PointerScene } from '../../../motion/pointer-scene.directive';
 import { AppButton } from '../../atoms/button/button';
+import { AuthStage } from '../auth-stage/auth-stage';
 
 /** Las tres medidas del hueco del formulario. Ver `AuthSplit.contentWidth`. */
 export type AuthSplitWidth = 'form' | 'wide' | 'full';
+
+/** Las dos puestas en escena. Ver `AuthSplit.scene`. */
+export type AuthSplitScene = 'split' | 'stage';
 
 /**
  * Estructura partida de las pantallas de acceso: columna de marca a la
@@ -39,7 +43,7 @@ export type AuthSplitWidth = 'form' | 'wide' | 'full';
  */
 @Component({
   selector: 'app-auth-split',
-  imports: [AppButton, PointerScene],
+  imports: [AppButton, AuthStage, PointerScene],
   templateUrl: './auth-split.html',
   styleUrl: './auth-split.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -77,6 +81,23 @@ export class AuthSplit {
    * adentro no puede fijarse el ancho a sí misma.
    */
   readonly contentWidth = input<AuthSplitWidth>('form');
+
+  /**
+   * Cómo se pone en escena la pantalla.
+   *
+   * `split` es la estructura partida de siempre: columna de marca a la
+   * izquierda, formulario sobre la superficie del tema a la derecha. La usan
+   * las altas, que proyectan formularios SIN tarjeta propia y necesitan esa
+   * superficie clara debajo para leerse.
+   *
+   * `stage` convierte la ventana entera en el escenario del latido: el trazo
+   * de ECG cruza de punta a punta —por detrás de la tarjeta—, con auroras,
+   * cuadrícula de monitor y motas detrás. Solo sirve para contenido que trae
+   * su propia tarjeta opaca (el acceso): el escenario es oscuro en los dos
+   * temas, como lo era la columna de marca, y un texto suelto encima no se
+   * leería en claro.
+   */
+  readonly scene = input<AuthSplitScene>('split');
 
   /**
    * El titular y la bajada, envueltos en una lista de un solo elemento para

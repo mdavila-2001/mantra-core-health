@@ -1,4 +1,7 @@
-import { ESTADOS_DE_PEDIDO } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
+import {
+  ESTADOS_DE_PEDIDO,
+  MODALIDADES_DE_ENTREGA,
+} from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import {
   GRUPOS_A_LA_VISTA,
   GRUPOS_DE_BANDEJA,
@@ -39,6 +42,39 @@ describe('bandeja-status', () => {
     expect(grupoDeBandeja('CONFIRMADO')).toBe('EN_PREPARACION');
     expect(grupoDeBandeja('ACEPTADO')).toBe('EN_PREPARACION');
     expect(grupoDeBandeja('VENCIDO')).toBe('CERRADOS');
+  });
+
+  it('la modalidad no cambia el tono ni la palabra: sólo puede cambiar la frase', () => {
+    for (const estado of ESTADOS_DE_PEDIDO) {
+      const retiro = toBandejaStatusPresentation(estado, 'RETIRO');
+      for (const modalidad of MODALIDADES_DE_ENTREGA) {
+        const presentacion = toBandejaStatusPresentation(estado, modalidad);
+        expect(presentacion.tone, `${estado}/${modalidad}`).toBe(retiro.tone);
+        expect(presentacion.label, `${estado}/${modalidad}`).toBe(retiro.label);
+        expect(presentacion.descripcion.length, `${estado}/${modalidad}`).toBeGreaterThan(10);
+        expect(presentacion.descripcion, `${estado}/${modalidad}`).not.toContain('_');
+      }
+    }
+  });
+
+  it('el texto de los pedidos de retiro no cambia, con modalidad o sin ella', () => {
+    for (const estado of ESTADOS_DE_PEDIDO) {
+      const deSiempre = toBandejaStatusPresentation(estado);
+      expect(toBandejaStatusPresentation(estado, null), estado).toEqual(deSiempre);
+      expect(toBandejaStatusPresentation(estado, 'RETIRO'), estado).toEqual(deSiempre);
+    }
+    // La frase que la pantalla venía mostrando, literal.
+    expect(toBandejaStatusPresentation('CONFIRMADO').descripcion).toBe(
+      'Confirmado. Cuando esté armado, marcalo como listo.',
+    );
+  });
+
+  it('lo que sale por reparto no pide marcarlo listo, porque nadie lo va a retirar', () => {
+    for (const modalidad of ['DOMICILIO', 'TRABAJO'] as const) {
+      const confirmado = toBandejaStatusPresentation('CONFIRMADO', modalidad);
+      expect(confirmado.descripcion, modalidad).not.toContain('marcalo como listo');
+      expect(confirmado.descripcion, modalidad).toContain('reparto');
+    }
   });
 
   it('las colas con reloj van a la vista; la preparación y lo cerrado, al pliegue', () => {

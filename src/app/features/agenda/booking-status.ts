@@ -77,6 +77,42 @@ const VARIANTE_POR_CODIGO: Readonly<Record<string, StatusSealVariant>> = Object.
     se ve cada estado lo decide el sistema de diseño en un solo sitio, que es lo
     que impide que dos pantallas pinten «cancelada» de dos colores distintos. */
 
+/**
+ * La palabra de cada estado, en castellano y por código de catálogo.
+ *
+ * ## Por qué no sale del catálogo
+ *
+ * `GET /terminology/concepts` devuelve el `display` en inglés —«Booking in
+ * progress», «Booking no-show»— porque es terminología técnica, no copy de
+ * producto. Esta pantalla lo mostraba tal cual, así que la agenda del médico
+ * anunciaba «Booking in progress» sobre una cita en curso. Es la misma decisión
+ * que ya había tomado la pantalla de turnos del paciente
+ * (`features/account/appointments/booking-status.ts`) y por la misma regla de
+ * las convenciones de UI: *«Never display a UUID, a raw column name or an
+ * English API label: show the human Spanish label»*. Faltaba de este lado.
+ *
+ * ## Por qué no son las mismas palabras que las del paciente
+ *
+ * Porque no hablan de lo mismo. Al titular se le dice «Ya llegaste» y «No
+ * asististe» —es su turno—; a quien atiende se le habla de la cita, en tercera
+ * persona y en femenino: «Ya llegó», «No asistió». Compartir el mapa habría
+ * puesto a la agenda del consultorio a tutear al médico sobre el paciente.
+ */
+const ETIQUETA_POR_CODIGO: Readonly<Record<string, string>> = Object.freeze({
+  BOOKING_REQUESTED: 'Solicitada',
+  BOOKING_PENDING_CONFIRMATION: 'Por confirmar',
+  BOOKING_CONFIRMED: 'Confirmada',
+  BOOKING_IN_PROGRESS: 'En curso',
+  BOOKING_CHECKED_IN: 'Ya llegó',
+  // «Atendida» tiene dos códigos en el catálogo vivo: el estado de la cita y el
+  // evento con que el flujo la dio por hecha. En la agenda son lo mismo.
+  BOOKING_COMPLETED: 'Atendida',
+  EV_BOOKING_DONE: 'Atendida',
+  BOOKING_NO_SHOW: 'No asistió',
+  BOOKING_CANCELLED: 'Cancelada',
+  BOOKING_RESCHEDULED: 'Reprogramada',
+});
+
 /** Cómo se muestra un estado: la variante del sello y la palabra. */
 export interface BookingStatusPresentation {
   readonly variant: StatusSealVariant;
@@ -97,6 +133,16 @@ export interface BookingStatusPresentation {
 /** El código sin el prefijo de módulo (`scheduling:X` → `X`). */
 export function sufijoDeCodigo(code: string): string {
   return code.includes(':') ? code.slice(code.lastIndexOf(':') + 1) : code;
+}
+
+/**
+ * El sello de un estado a partir de su código, con o sin prefijo de módulo.
+ *
+ * Lo usa la agenda del día, que ya tiene el código resuelto y sólo necesita
+ * el tono: una cita atendida se pinta igual en la lista y en el día.
+ */
+export function statusVariantOf(code: string): StatusSealVariant {
+  return VARIANTE_POR_CODIGO[sufijoDeCodigo(code)] ?? UNKNOWN_STATUS_VARIANT;
 }
 
 /**
@@ -121,10 +167,12 @@ export function toBookingStatusPresentation(
   const sufijo = sufijoDeCodigo(concepto.code);
 
   return {
-    variant: VARIANTE_POR_CODIGO[sufijo] ?? UNKNOWN_STATUS_VARIANT,
-    // La palabra sale del catálogo, no de acá: es el dato, y la interfaz sólo
-    // decide con qué forma y tono acompañarlo.
-    label: concepto.display || textoDeReserva,
+    variant: statusVariantOf(sufijo),
+    // La palabra la decide la interfaz; el `code` es la identidad semántica que
+    // la ancla. Un estado que esta versión no sepa nombrar cae al texto de
+    // reserva —en castellano— y nunca al `display` inglés del catálogo: cambiar
+    // un hueco por una etiqueta de API es peor que el hueco.
+    label: ETIQUETA_POR_CODIGO[sufijo] ?? textoDeReserva,
     code: sufijo,
   };
 }

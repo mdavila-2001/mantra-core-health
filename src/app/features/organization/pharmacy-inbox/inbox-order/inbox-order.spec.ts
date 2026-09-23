@@ -1,304 +1,611 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { firstValueFrom } from 'rxjs';
 
 import { SessionStore } from '../../../../core/auth/session.store';
-import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
-import type {
-  BorradorDePedido,
-  PedidoFarmacia,
-} from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
+import {
+  PHARMACY_ORDER_TEST_IDS,
+  pharmacyOrderDtoFixture,
+} from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
+import type { PharmacyOrderDto } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.dto';
+import {
+  ID_PEDIDO_CON_DELIVERY,
+  ID_PEDIDO_CON_SEGURO,
+} from '../../../../core/mock/fixtures/pedidos-de-farmacia';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
-import { aPrecio, InboxOrder } from './inbox-order';
+import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { InboxOrder } from './inbox-order';
 
-/**
- * El pedido del lado del mostrador (FAR-I3). Lo que se fija: abrirlo ES
- * recepcionarlo, la confirmación con ajustes por línea y su total en vivo,
- * el rechazo que pregunta con motivo, el retiro parcial con historia, el
- * código que no coincide dicho en palabras, y el delivery artesanal.
- */
-
-const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
-
-const BORRADOR: BorradorDePedido = {
-  requestId: 'rx-1',
-  siteId: 'f0e1d2c3-0000-4000-8000-000000000001',
-  pharmacyId: 'a1b2c3d4-0000-4000-8000-000000000001',
-  farmacia: 'Farmacia Andina',
-  sede: 'Sucursal Centro',
-  direccion: 'Calle Libertad 245',
-  lineas: [
-    {
-      productId: 'f0e1d2c3-0000-4000-8000-000000000002',
-      medicamento: 'Amoxicilina',
-      presentacion: '500 mg · Caja x 21 cápsulas',
-      cantidad: 1,
-      precio: '60.00',
-      moneda: 'BOB',
-      disponible: true,
-    },
-    {
-      productId: null,
-      medicamento: 'Ibuprofeno',
-      presentacion: null,
-      cantidad: 2,
-      precio: '25.50',
-      moneda: 'BOB',
-      disponible: true,
-    },
-  ],
-  totalEstimado: '111.00',
-  moneda: 'BOB',
-};
-
-describe('InboxOrder', () => {
+describe('InboxOrder with the real pharmacy-orders contract', () => {
   let harness: RouterTestingHarness;
-  let client: PharmacyOrdersClient;
-  let confirmar: ReturnType<typeof vi.fn>;
-  let confirmarConMotivo: ReturnType<typeof vi.fn>;
+  let http: HttpTestingController;
+  let confirmWithReason: ReturnType<typeof vi.fn>;
+  let toastInfo: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    confirmar = vi.fn().mockResolvedValue(true);
-    confirmarConMotivo = vi.fn().mockResolvedValue('No trabajamos con esa presentación.');
+    confirmWithReason = vi.fn().mockResolvedValue('No trabajamos con esa presentación.');
+    toastInfo = vi.fn();
     TestBed.configureTestingModule({
       providers: [
-        provideRouter([
-          { path: 'administration/pharmacy-orders/:orderId', component: InboxOrder },
-        ]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([{ path: 'administration/pharmacy-orders/:orderId', component: InboxOrder }]),
         { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez' } },
-        // El diálogo real vive en el `<body>`: acá se fija que se PREGUNTA.
         {
           provide: DialogService,
-          useValue: { confirm: confirmar, confirmWithReason: confirmarConMotivo },
+          useValue: { confirm: vi.fn().mockResolvedValue(true), confirmWithReason },
         },
+        { provide: ToastService, useValue: { info: toastInfo } },
       ],
     });
-    client = TestBed.inject(PharmacyOrdersClient);
+    http = TestBed.inject(HttpTestingController);
   });
 
-  async function enviado(modalidad: 'RETIRO' | 'DOMICILIO' = 'RETIRO'): Promise<PedidoFarmacia> {
-    return firstValueFrom(
-      client.enviar({
-        borrador: BORRADOR,
-        modalidad,
-        direccionDeEntrega: modalidad === 'RETIRO' ? null : 'Av. Ejemplo 123',
-      }),
-    );
-  }
+  afterEach(() => http.verify());
 
-  async function montar(orderId: string): Promise<void> {
+  async function mount(response: PharmacyOrderDto): Promise<void> {
     harness = await RouterTestingHarness.create();
-    await harness.navigateByUrl(`/administration/pharmacy-orders/${orderId}`, InboxOrder);
+    const navigation = harness.navigateByUrl(
+      `/administration/pharmacy-orders/${PHARMACY_ORDER_TEST_IDS.order}`,
+      InboxOrder,
+    );
+    await navigation;
+    http.expectOne(`/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}`).flush(response);
+    if (response.status.code === 'PINV_ORDER_ENVIADO') {
+      const review = http.expectOne({
+        method: 'POST',
+        url: `/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}/review`,
+      });
+      expect(review.request.body).toEqual({});
+      review.flush(
+        pharmacyOrderDtoFixture({
+          status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+          pickupCode: 'MUST-NOT-RENDER',
+        }),
+      );
+    }
     harness.detectChanges();
   }
 
-  function texto(): string {
+  function text(): string {
     return harness.routeNativeElement?.textContent ?? '';
   }
 
-  function elemento<T extends HTMLElement>(selector: string): T | null {
+  function element<T extends HTMLElement>(selector: string): T | null {
     return harness.routeNativeElement?.querySelector<T>(selector) ?? null;
   }
 
-  function click(testid: string): void {
-    elemento<HTMLButtonElement>(`[data-testid="${testid}"]`)?.click();
+  function click(testId: string): void {
+    element<HTMLButtonElement>(`[data-testid="${testId}"]`)?.click();
     harness.detectChanges();
   }
 
-  async function asentar(): Promise<void> {
-    await harness.fixture.whenStable();
-    harness.detectChanges();
-  }
-
-  function escribir(selector: string, valor: string): void {
-    const campo = elemento<HTMLInputElement>(selector);
-    if (campo === null) {
-      throw new Error(`no está el campo ${selector}`);
-    }
-    campo.value = valor;
-    campo.dispatchEvent(new Event('input'));
-    harness.detectChanges();
-  }
-
-  it('un pedido que no está ofrece volver a la bandeja', async () => {
-    await montar('no-existe');
-    expect(texto()).toContain('No encontramos lo que buscás');
-    expect(texto()).toContain('Volver a la bandeja');
-  });
-
-  it('abrirlo ES recepcionarlo: el pedido queda en revisión, con sus ajustes', async () => {
-    const pedido = await enviado();
-    await montar(pedido.id);
-
-    expect((await firstValueFrom(client.pedido(pedido.id)))?.estado).toBe('EN_REVISION');
-    expect(texto()).toContain('Ana Pérez');
-    expect(texto()).toContain('En revisión');
-    expect(texto()).toContain('Receta electrónica');
-    expect(elemento('[data-testid="mostrador-decision-0"]')).not.toBeNull();
-    expect(texto()).toContain('Total:');
-    expect(texto()).toContain('111.00');
-    expect(texto()).not.toMatch(UUID);
-  });
-
-  it('confirmar tal cual deja el pedido en preparación', async () => {
-    const pedido = await enviado();
-    await montar(pedido.id);
-
-    click('mostrador-confirmar');
-    await asentar();
-
-    expect(texto()).toContain('En preparación');
-    expect(elemento('[data-testid="mostrador-listo"]')).not.toBeNull();
-  });
-
-  it('proponer un genérico recalcula el total en vivo y deja decidir al paciente', async () => {
-    const pedido = await enviado();
-    await montar(pedido.id);
-
-    const radios = harness.routeNativeElement?.querySelectorAll<HTMLInputElement>(
-      '[data-testid="mostrador-decision-0"] input[type="radio"]',
+  function chooseLineDecision(label: string): void {
+    const radio = [...(harness.routeNativeElement?.querySelectorAll('app-radio') ?? [])].find(
+      (item) => item.textContent?.includes(label),
     );
-    radios?.[1]?.click();
+    expect(radio).toBeDefined();
+    radio?.querySelector<HTMLInputElement>('input')?.click();
+    harness.detectChanges();
+  }
+
+  function type(selector: string, value: string): void {
+    const input = element<HTMLInputElement>(selector);
+    expect(input).not.toBeNull();
+    if (input === null) return;
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+    harness.detectChanges();
+  }
+
+  function flushReload(response: PharmacyOrderDto): void {
+    http.expectOne(`/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}`).flush(response);
+    harness.detectChanges();
+  }
+
+  it('renders an API 404 as not found', async () => {
+    harness = await RouterTestingHarness.create();
+    const navigation = harness.navigateByUrl(
+      `/administration/pharmacy-orders/${PHARMACY_ORDER_TEST_IDS.order}`,
+      InboxOrder,
+    );
+    await navigation;
+    http
+      .expectOne(`/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}`)
+      .flush(
+        { code: 'NOT_FOUND', message: 'Order not found' },
+        { status: 404, statusText: 'Not Found' },
+      );
+    harness.detectChanges();
+    expect(text()).toContain('No encontramos lo que buscás');
+    expect(text()).toContain('Verificá la dirección o volvé al listado');
+  });
+
+  it('opens a submitted order via review and never renders pickupCode to staff', async () => {
+    await mount(pharmacyOrderDtoFixture({ pickupCode: 'MUST-NOT-RENDER' }));
+    expect(text()).toContain('Ana Paciente');
+    expect(text()).toContain('En revisión');
+    expect(text()).not.toContain('MUST-NOT-RENDER');
+    expect(element('[data-testid="mostrador-decision-0"]')).not.toBeNull();
+  });
+
+  it('confirms unchanged lines and reloads the canonical API representation', async () => {
+    const review = pharmacyOrderDtoFixture({
+      status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+    });
+    await mount(review);
+    click('mostrador-confirmar');
+    const request = http.expectOne({
+      method: 'POST',
+      url: `/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}/confirm`,
+    });
+    expect(request.request.body).toEqual({});
+    request.flush(
+      pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' } }),
+    );
+    flushReload(
+      pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' } }),
+    );
+    expect(text()).toContain('En preparación');
+    expect(element('[data-testid="mostrador-listo"]')).not.toBeNull();
+  });
+
+  it('proposes a real published product from the same medication concept', async () => {
+    const conceptId = '00000000-0000-4000-8000-000000000007';
+    const proposedProductId = '00000000-0000-4000-8000-000000000008';
+    await mount(
+      pharmacyOrderDtoFixture({
+        status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+        lines: [
+          {
+            ...pharmacyOrderDtoFixture().lines[0],
+            medicationConceptId: conceptId,
+          },
+        ],
+      }),
+    );
+
+    chooseLineDecision('Proponer sustituto');
+    const products = http.expectOne(
+      (request) =>
+        request.url === '/pharmacy/products' && request.params.get('conceptId') === conceptId,
+    );
+    expect(products.request.method).toBe('GET');
+    products.flush({
+      items: [
+        {
+          id: PHARMACY_ORDER_TEST_IDS.product,
+          pharmacyId: PHARMACY_ORDER_TEST_IDS.pharmacy,
+          pharmacyName: 'Farmacia Andina',
+          productCode: 'AMOX-500',
+          brandName: 'Amoxicilina original',
+          genericName: null,
+          strengthText: '500 mg',
+          packageSizeText: 'Caja x 21',
+          dosageForm: null,
+          medication: { code: 'J01CA04', display: 'Amoxicilina' },
+          requiresPrescription: true,
+        },
+        {
+          id: proposedProductId,
+          pharmacyId: PHARMACY_ORDER_TEST_IDS.pharmacy,
+          pharmacyName: 'Farmacia Andina',
+          productCode: 'AMOX-GEN',
+          brandName: null,
+          genericName: 'Amoxicilina genérica',
+          strengthText: '500 mg',
+          packageSizeText: 'Caja x 21',
+          dosageForm: null,
+          medication: { code: 'J01CA04', display: 'Amoxicilina' },
+          requiresPrescription: true,
+        },
+      ],
+      limit: 20,
+      truncated: false,
+    });
     harness.detectChanges();
 
-    // El nombre viene prefijado; el precio lo tipea el mostrador.
-    escribir('[data-testid="mostrador-generico-precio-0"]', '24');
-    expect(texto()).toContain('Total si acepta las propuestas:');
-    expect(texto()).toContain('75.00');
-
+    const select = element<HTMLSelectElement>('[data-testid="mostrador-sustituto-0"] select');
+    expect(select).not.toBeNull();
+    expect(select?.options).toHaveLength(2);
+    expect(text()).not.toContain('Amoxicilina original');
+    if (select !== null) {
+      select.value = '0';
+      select.dispatchEvent(new Event('change'));
+    }
+    harness.detectChanges();
     click('mostrador-confirmar');
-    await asentar();
 
-    expect(texto()).toContain('Esperando al paciente');
-    expect(texto()).toContain('La decisión es del paciente');
-    const abierto = await firstValueFrom(client.pedido(pedido.id));
-    expect(abierto?.sustituciones[0]?.propuesta).toEqual({
-      nombre: 'Genérico equivalente de Amoxicilina',
-      precio: '24.00',
+    const confirm = http.expectOne({
+      method: 'POST',
+      url: `/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}/confirm`,
+    });
+    expect(confirm.request.body).toEqual({
+      adjustments: [
+        {
+          productId: PHARMACY_ORDER_TEST_IDS.product,
+          decision: 'PROPONER_GENERICO',
+          proposedProductId,
+        },
+      ],
     });
   });
 
-  it('rechazar pregunta con motivo obligatorio, y el motivo queda a la vista', async () => {
-    const pedido = await enviado();
-    await montar(pedido.id);
+  it('isolates substitution when the order line has no medication concept', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+        lines: [
+          {
+            ...pharmacyOrderDtoFixture().lines[0],
+            medicationConceptId: null,
+          },
+        ],
+      }),
+    );
 
-    click('mostrador-rechazar');
-    await asentar();
+    chooseLineDecision('Proponer sustituto');
 
-    expect(confirmarConMotivo).toHaveBeenCalledTimes(1);
-    expect(texto()).toContain('Rechazado');
-    expect(texto()).toContain('No trabajamos con esa presentación.');
+    http.expectNone('/pharmacy/products');
+    expect(text()).toContain('Este producto no tiene un concepto de medicamento publicado');
+    expect(
+      element<HTMLButtonElement>('[data-testid="mostrador-confirmar"]')?.getAttribute(
+        'aria-disabled',
+      ),
+    ).toBe('true');
   });
 
-  it('el retiro parcial deja historia y el completo cierra; el código manda', async () => {
-    const pedido = await enviado();
-    await montar(pedido.id);
-    click('mostrador-confirmar');
-    await asentar();
-    click('mostrador-listo');
-    await asentar();
-
-    const codigo = (await firstValueFrom(client.pedido(pedido.id)))?.codigoDeRetiro ?? '';
-    expect(texto()).toContain('Registrar retiro');
-
-    // Primero con un código que no coincide: se dice, no se entrega.
-    escribir('[data-testid="mostrador-codigo"]', 'NOPE99');
-    click('mostrador-retirar');
-    await asentar();
-    expect(texto()).toContain('El código no coincide');
-
-    // Ahora el bueno, pero se lleva un solo renglón. El click va al input
-    // real: el testid vive en el host de `app-checkbox`.
-    escribir('[data-testid="mostrador-codigo"]', codigo);
-    elemento<HTMLInputElement>(
-      '[data-testid="mostrador-renglon-1"] input[type="checkbox"]',
-    )?.click();
+  it('keeps a catalogue HTTP failure distinct and offers a retry', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      }),
+    );
+    chooseLineDecision('Proponer sustituto');
+    http
+      .expectOne((request) => request.url === '/pharmacy/products')
+      .flush({ message: 'Catalogue unavailable' }, { status: 503, statusText: 'Unavailable' });
     harness.detectChanges();
-    click('mostrador-retirar');
-    await asentar();
 
-    expect(texto()).toContain('Esperando el retiro');
-    expect(texto()).toContain('Entregas registradas');
-    expect(texto()).toContain('Amoxicilina');
-
-    // Vuelve por el resto: cerrado.
-    escribir('[data-testid="mostrador-codigo"]', codigo);
-    click('mostrador-retirar');
-    await asentar();
-    expect(texto()).toContain('Entregado');
-    expect((await firstValueFrom(client.pedido(pedido.id)))?.estado).toBe('RETIRADO');
+    expect(text()).toContain('No se pudo consultar el catálogo');
+    click('mostrador-reintentar-sustitutos-0');
+    http
+      .expectOne((request) => request.url === '/pharmacy/products')
+      .flush({
+        items: [],
+        limit: 20,
+        truncated: false,
+      });
+    harness.detectChanges();
+    expect(text()).toContain('Sin alternativas publicadas');
   });
 
-  it('el delivery artesanal: en camino, y la entrega se confirma antes de cerrar', async () => {
-    const pedido = await enviado('DOMICILIO');
-    await montar(pedido.id);
-    click('mostrador-confirmar');
-    await asentar();
-
-    // Con envío no hay mostrador: no existe «marcar listo».
-    expect(elemento('[data-testid="mostrador-listo"]')).toBeNull();
-    expect(texto()).toContain('Av. Ejemplo 123');
-
-    click('mostrador-encamino');
-    await asentar();
-    expect(texto()).toContain('En camino');
-
-    click('mostrador-entregar');
-    await asentar();
-    expect(confirmar).toHaveBeenCalledTimes(1);
-    expect(texto()).toContain('Entregado');
+  it('rejects with the required reason through the API', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      }),
+    );
+    click('mostrador-rechazar');
+    await harness.fixture.whenStable();
+    const request = http.expectOne({
+      method: 'POST',
+      url: `/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}/reject`,
+    });
+    expect(request.request.body).toEqual({ reason: 'No trabajamos con esa presentación.' });
+    const rejected = pharmacyOrderDtoFixture({
+      status: { code: 'PINV_ORDER_RECHAZADO', display: 'Rechazado' },
+      rejectionReasonText: 'No trabajamos con esa presentación.',
+    });
+    request.flush(rejected);
+    flushReload(rejected);
+    expect(confirmWithReason).toHaveBeenCalledOnce();
+    expect(text()).toContain('No trabajamos con esa presentación.');
   });
 
-  it('un pedido cancelado en el camino no ofrece registrar la entrega', async () => {
-    const pedido = await enviado('DOMICILIO');
-    await montar(pedido.id);
-    click('mostrador-confirmar');
-    await asentar();
-    click('mostrador-encamino');
-    await asentar();
-
-    // El paciente cancela desde su pantalla; la ficha se refleja en vivo.
-    await firstValueFrom(client.cancelar(pedido.id));
-    await asentar();
-
-    expect(texto()).toContain('Cancelado');
-    // Ni el botón de entrega ni el bloque de envío: el pedido terminó.
-    expect(elemento('[data-testid="mostrador-entregar"]')).toBeNull();
-    expect(texto()).not.toContain('Entrega a domicilio');
-  });
-
-  it('el pago del QR de la demo se dice donde se cobra: «no cobrar» (FAR-I5)', async () => {
-    const pedido = await enviado();
-    await montar(pedido.id);
-    click('mostrador-confirmar');
-    await asentar();
-
-    // Listo sin pagar: el mostrador sabe que tiene que cobrar.
+  it('marks ready and dispenses selected line indices as productIds', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' } }),
+    );
     click('mostrador-listo');
-    await asentar();
-    expect(texto()).toContain('Pago pendiente — cobrar en mostrador');
+    const readyRequest = http.expectOne({
+      method: 'POST',
+      url: `/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}/ready`,
+    });
+    readyRequest.flush(
+      pharmacyOrderDtoFixture({
+        status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
+        pickupCode: null,
+      }),
+    );
+    flushReload(
+      pharmacyOrderDtoFixture({
+        status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
+        pickupCode: null,
+      }),
+    );
 
-    // El paciente paga por QR en su pantalla; la ficha se refleja en vivo.
-    await firstValueFrom(client.confirmarPagoDemo(pedido.id));
-    await asentar();
-    expect(texto()).toContain('Pagado por QR (demo) — no cobrar');
+    type('[data-testid="mostrador-codigo"]', 'ABC234');
+    click('mostrador-retirar');
+    const dispense = http.expectOne({
+      method: 'POST',
+      url: `/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}/dispense`,
+    });
+    expect(dispense.request.body.pickupCode).toBe('ABC234');
+    expect(dispense.request.body.productIds).toEqual([PHARMACY_ORDER_TEST_IDS.product]);
+    expect(dispense.request.body.idempotencyKey).toEqual(expect.any(String));
+    dispense.flush(
+      pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' } }),
+    );
+    harness.detectChanges();
+    expect(text()).toContain('Entregado');
   });
-});
 
-/**
- * El lector del precio tipeado: lo que se muestra en el total en vivo y lo
- * que viaja en la propuesta salen del mismo lugar, así que basta fijarlo acá.
- */
-describe('aPrecio', () => {
-  it('acepta la coma decimal: «24,50» es un precio, no basura', () => {
-    expect(aPrecio('24,50')).toBe('24.50');
-    expect(aPrecio(' 24.5 ')).toBe('24.50');
+  it('renders the explicit 422 PICKUP_CODE_MISMATCH without closing the order', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
+        pickupCode: null,
+      }),
+    );
+    type('[data-testid="mostrador-codigo"]', 'WRONG1');
+    click('mostrador-retirar');
+    http
+      .expectOne({
+        method: 'POST',
+        url: `/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}/dispense`,
+      })
+      .flush(
+        {
+          code: 'PRECONDITION_FAILED',
+          message: 'Pickup code mismatch',
+          details: { reason: 'PICKUP_CODE_MISMATCH' },
+        },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+    harness.detectChanges();
+    expect(text()).toContain('El código no coincide');
+    expect(text()).toContain('Registrar retiro');
   });
 
-  it('vacío, ilegible o negativo = sin precio, nunca un descarte mudo', () => {
-    expect(aPrecio('')).toBeNull();
-    expect(aPrecio('gratis')).toBeNull();
-    expect(aPrecio('-3')).toBeNull();
+  /* ─── Lo que T-I3 suma: entrega, seguro y factura ──────────────────────── */
+
+  it('dice por qué medio se entrega el pedido', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      }),
+    );
+    const chip = element('[data-testid="mostrador-entrega"]');
+    expect(chip?.textContent?.trim()).toBe('Recojo en mostrador');
+    // El ámbar es el punto de acción único del sistema: una logística no lo usa.
+    expect(chip?.classList.contains('tone--warning')).toBe(false);
+    expect(text()).not.toContain('Datos de ejemplo');
   });
+
+  it('el pedido de ejemplo se ve como delivery y muestra la dirección de entrega', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        id: ID_PEDIDO_CON_DELIVERY,
+        status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      }),
+    );
+
+    expect(element('[data-testid="mostrador-entrega"]')?.textContent?.trim()).toBe('Delivery');
+    const detalle = element('[data-testid="mostrador-entrega-detalle"]')?.textContent ?? '';
+    expect(detalle).toContain('Sale a la dirección de domicilio');
+    expect(detalle).toContain('Cristo Redentor');
+    // Y se declara maqueta, porque el medio lo puso la pantalla.
+    expect(text()).toContain('Datos de ejemplo');
+  });
+
+  it('lo que sale a domicilio no ofrece prepararlo para retiro en mostrador', async () => {
+    // La etiqueta dice delivery, así que la acción no puede contradecirla:
+    // las dos salen de la misma respuesta.
+    await mount(
+      pharmacyOrderDtoFixture({
+        id: ID_PEDIDO_CON_DELIVERY,
+        status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' },
+      }),
+    );
+
+    expect(element('[data-testid="mostrador-entrega"]')?.textContent?.trim()).toBe('Delivery');
+    expect(element('[data-testid="mostrador-listo"]')).toBeNull();
+    expect(text()).not.toContain('Marcar listo para retirar');
+    // Y el texto tampoco se lo pide: no hay botón que respalde esa frase.
+    expect(text()).not.toContain('marcalo como listo');
+    expect(text()).toContain('sale por reparto, no se retira en el mostrador');
+  });
+
+  it('un pedido de retiro del contrato sigue ofreciendo la acción de siempre', async () => {
+    // La otra mitad: los pedidos reales no cambian de comportamiento.
+    await mount(
+      pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' } }),
+    );
+
+    expect(element('[data-testid="mostrador-entrega"]')?.textContent?.trim()).toBe(
+      'Recojo en mostrador',
+    );
+    expect(element('[data-testid="mostrador-listo"]')).not.toBeNull();
+    expect(text()).toContain('Marcar listo para retirar');
+    // Y sigue leyendo la frase de siempre, palabra por palabra.
+    expect(text()).toContain('Confirmado. Cuando esté armado, marcalo como listo.');
+  });
+
+  it('un pedido sin cobertura no inventa un seguro', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      }),
+    );
+    expect(element('[data-testid="mostrador-seguro"]')).toBeNull();
+    expect(text()).not.toContain('Aprobado por el seguro');
+  });
+
+  it('con seguro dice, renglón por renglón, lo aprobado y lo NO aprobado', async () => {
+    await mount(pedidoConSeguro());
+
+    const renglones = [
+      ...(harness.routeNativeElement?.querySelectorAll('.mostrador__cobertura app-badge') ?? []),
+    ];
+    expect(renglones.map((nodo) => nodo.textContent?.trim())).toEqual([
+      'Aprobado por el seguro',
+      'No aprobado',
+    ]);
+    expect(renglones[0]?.classList.contains('badge--success')).toBe(true);
+    expect(renglones[1]?.classList.contains('badge--error')).toBe(true);
+  });
+
+  it('el resumen separa lo que pone el seguro de lo que paga la persona', async () => {
+    await mount(pedidoConSeguro());
+    const resumen = element('[data-testid="mostrador-seguro"]')?.textContent ?? '';
+
+    expect(resumen).toContain('Cubre el seguro');
+    expect(resumen).toContain('Paga la persona (coaseguro)');
+    // 68,00 al 80 % son 54,40; la sertralina no aprobada la paga entera.
+    expect(resumen).toContain('54.40 Bs');
+    expect(resumen).toContain('109.10 Bs');
+    // Y se dice que es maqueta, en la propia pantalla.
+    expect(resumen).toContain('Datos de ejemplo');
+  });
+
+  it('descartar un renglón mueve el reparto del seguro, no sólo el total', async () => {
+    await mount(pedidoConSeguro());
+    const reparto = (): string =>
+      element('[data-testid="mostrador-seguro"]')?.textContent ?? '';
+    const total = (): string => element('[data-testid="mostrador-total-vivo"]')?.textContent ?? '';
+
+    expect(total()).toContain('163.50');
+    expect(reparto()).toContain('54.40 Bs');
+    expect(reparto()).toContain('109.10 Bs');
+
+    // El mostrador no tiene el primer renglón: baja el total …
+    chooseLineDecision('No disponible');
+
+    expect(total()).toContain('95.50');
+    // … y el reparto lo acompaña, en vez de seguir cobrando lo que no sale.
+    expect(reparto()).toContain('0.00 Bs');
+    expect(reparto()).toContain('95.50 Bs');
+    expect(reparto()).not.toContain('54.40 Bs');
+    expect(reparto()).not.toContain('109.10 Bs');
+  });
+
+  it('lo que sale por reparto no pide el código de retiro ni dice que alguien lo espera', async () => {
+    // No se alcanza con la semilla de hoy —el pedido de ejemplo no llega a
+    // este estado— pero el acoplamiento entrega↔retiro tiene que estar
+    // cerrado de los dos lados, no de uno.
+    await mount(
+      pharmacyOrderDtoFixture({
+        id: ID_PEDIDO_CON_DELIVERY,
+        status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
+        pickupCode: null,
+      }),
+    );
+
+    expect(element('[data-testid="mostrador-codigo"]')).toBeNull();
+    expect(element('[data-testid="mostrador-retirar"]')).toBeNull();
+    expect(text()).not.toContain('Registrar retiro');
+    expect(text()).not.toContain('espera en el mostrador con su código de retiro');
+    expect(text()).toContain('sale por reparto');
+  });
+
+  it('sin modalidad declarada, el código de retiro sigue estando: no saber no quita nada', async () => {
+    // `deliveryMode` es anulable en el contrato y el adaptador lo deja en
+    // `null`. Antes de este carril el formulario no miraba la modalidad, así
+    // que estos pedidos lo tenían: sacárselo sería cambiar comportamiento.
+    await mount(
+      pharmacyOrderDtoFixture({
+        status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
+        deliveryMode: null,
+        pickupCode: null,
+      }),
+    );
+
+    expect(element('[data-testid="mostrador-entrega"]')).toBeNull();
+    expect(element('[data-testid="mostrador-codigo"]')).not.toBeNull();
+    expect(element('[data-testid="mostrador-retirar"]')).not.toBeNull();
+    expect(text()).toContain('Registrar retiro');
+  });
+
+  it('un pedido de retiro listo sigue pidiendo el código, como siempre', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
+        pickupCode: null,
+      }),
+    );
+
+    expect(element('[data-testid="mostrador-codigo"]')).not.toBeNull();
+    expect(text()).toContain('Registrar retiro');
+    expect(text()).toContain('El pedido espera en el mostrador con su código de retiro.');
+  });
+
+  it('la factura aparece recién cuando el pedido salió', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
+        pickupCode: null,
+      }),
+    );
+    expect(element('[data-testid="mostrador-factura"]')).toBeNull();
+  });
+
+  it('el pedido entregado cierra con su factura y con la salida a la bandeja', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' } }),
+    );
+    const factura = element('[data-testid="mostrador-factura"]');
+
+    expect(factura?.textContent).toContain('Enviada al paciente');
+    expect(factura?.textContent).toContain('68.00 Bs');
+    // La emite la maqueta al mirarla, nunca el día en que se hizo el pedido:
+    // una factura anterior a la entrega no existe.
+    expect(factura?.textContent).toContain(comoLaPintaLaPantalla(new Date()));
+    expect(factura?.textContent).not.toContain(
+      comoLaPintaLaPantalla(new Date('2026-09-03T14:00:00.000Z')),
+    );
+    // Va justo antes de la salida: el pie de la pantalla sigue siendo la bandeja.
+    expect(
+      factura?.closest('app-resumen-de-factura')?.nextElementSibling?.textContent?.trim(),
+    ).toBe('Volver a la bandeja');
+  });
+
+  it('la descarga del comprobante dice lo que es, en vez de bajar un archivo vacío', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' } }),
+    );
+    click('mostrador-descargar-factura');
+
+    expect(toastInfo).toHaveBeenCalledOnce();
+    expect(toastInfo.mock.calls[0]?.[0]).toContain('módulo de facturación');
+  });
+
+  /** `dd/MM/yyyy`, el formato con el que el comprobante pinta las fechas. */
+  function comoLaPintaLaPantalla(fecha: Date): string {
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    return `${dia}/${mes}/${fecha.getFullYear()}`;
+  }
+
+  /** El pedido de ejemplo con cobertura, con un renglón que el seguro rebota. */
+  function pedidoConSeguro(): PharmacyOrderDto {
+    const base = pharmacyOrderDtoFixture();
+    return pharmacyOrderDtoFixture({
+      // Lo que lo identifica como el pedido con seguro es su id, no el nombre.
+      id: ID_PEDIDO_CON_SEGURO,
+      status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      patientName: 'Rosa Elena Quispe Vargas',
+      lines: [
+        base.lines[0],
+        {
+          ...base.lines[0],
+          productId: '00000000-0000-4000-8000-00000000000a',
+          brandName: 'Sertralina',
+          unitPriceAmount: '95.50',
+        },
+      ],
+    });
+  }
 });

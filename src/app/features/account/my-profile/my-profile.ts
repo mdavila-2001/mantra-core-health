@@ -1,10 +1,12 @@
+import { InsurancePortabilityCard } from './insurance-portability-card/insurance-portability-card';
+import { PatientCoverageCard } from '../../../shared/components/molecules/patient-coverage-card/patient-coverage-card';
+import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
-import { rolesConEtiqueta } from '../../../core/auth/role-labels';
 import { FilesClient } from '../../../core/data-access/files/files.client';
 import { IdentityClient } from '../../../core/data-access/identity/identity.client';
 import type { VerificationCase } from '../../../core/data-access/identity/identity.types';
@@ -25,10 +27,16 @@ import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
+import { AppButton } from '../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../shared/components/atoms/link/link';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
+import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
+import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
@@ -36,6 +44,8 @@ import {
   CaseStatusCatalog,
   toCaseStatusPresentation,
 } from '../../identity-verification/case-status';
+import { PatientProfileEdit } from './patient-profile-edit/patient-profile-edit';
+import { PESTANAS_DEL_PERFIL } from './pestanas-del-perfil';
 import { PractitionerProfile } from './practitioner-profile/practitioner-profile';
 
 /**
@@ -94,35 +104,29 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
  * Los dos últimos bloques —verificación de identidad y acceso— son de la
  * **cuenta**, no del perfil, así que se muestran en los dos casos.
  */
-/**
- * Los roles con los que se viene a trabajar, no a atenderse.
- *
- * Mismo criterio que el panel: quien tiene alguno de estos ve «Tu acceso»
- * aunque además sea paciente, porque para él la pregunta que responde esa
- * tarjeta sí existe.
- */
-const ROLES_DE_TRABAJO: readonly string[] = [
-  'SUPERADMIN',
-  'SECURITY_ADMIN',
-  'SCHEDULING_ADMIN',
-  'SCHEDULING_AGENT',
-  'PRACTITIONER',
-  'CLINICIAN',
-];
-
 @Component({
   selector: 'app-my-profile',
   imports: [
+    PatientCoverageCard,
+    FileDropTarget,
     Alert,
+    AppButton,
+    AppButtonLink,
     Avatar,
     Badge,
     Card,
     DatePipe,
+    InsurancePortabilityCard,
     Link,
+    NavIcon,
     PageHeader,
+    PatientProfileEdit,
     PractitionerProfile,
     RouterLink,
     StatusSeal,
+    Tab,
+    Tabs,
+    Tooltip,
     ViewStateHost,
   ],
   templateUrl: './my-profile.html',
@@ -177,9 +181,10 @@ export class MyProfile {
 
   /* -- La foto de perfil ---------------------------------------------------
      Mismo patrón que `practitioner-profile-view` y `public-profile-preview`:
-     el id viaja en `perfil().photoFileId`, y pintarlo exige resolverlo con
-     `FilesClient.downloadUrl` — no es una URL servida por la API, como sí lo
-     es el avatar de la vitrina pública. */
+     el id viaja en `perfil().photoFileId`, y pintarlo exige bajar los bytes
+     con `FilesClient.imageDataUrl` — la URL firmada de `downloadUrl` apunta a
+     `file://local/<sha>` y ningún `<img>` la carga —, a diferencia del avatar
+     de la vitrina pública, que sí llega servido por la API. */
 
   /** Mientras la foto viaja. Bloquea el control para no subir dos veces. */
   protected readonly subiendoFoto = signal(false);
@@ -195,6 +200,55 @@ export class MyProfile {
   protected readonly fotoUrl = signal<string | null>(null);
 
   protected readonly datos = computed(() => dataOf(this.resumen()));
+
+  /* ---- FT-11 · sólo lectura, y edición bajo demanda ----------------------- */
+
+  /**
+   * El perfil está en modo edición.
+   *
+   * Empieza en `false` siempre: el pedido del cliente es que el perfil «entre
+   * como formulario ya llenado en sólo lectura». Un signal y no la URL porque
+   * editar no es un lugar al que se llega —la ruta propia del editor sigue
+   * existiendo para eso—, es un estado momentáneo de esta pantalla.
+   */
+  protected readonly editando = signal(false);
+
+  /**
+   * Las pestañas de la tarjeta y cuál está abierta.
+   *
+   * Una sola tarjeta con pestañas, en lectura y en edición (pedido del cliente
+   * del 09/09/2026). El índice se comparte con el editor embebido: pulsar el
+   * lápiz estando en «Contacto» abre el formulario en «Contacto», y al volver
+   * a sólo lectura se sigue en la misma.
+   */
+  protected readonly pestanas = PESTANAS_DEL_PERFIL;
+  protected readonly pestana = signal(0);
+
+  /**
+   * Adónde va «Cambiar contraseña» (FT-11-R08).
+   *
+   * Al flujo de recuperación por correo, que es el único que hoy existe y el
+   * único que puede verificar que quien cambia la clave es la persona: un campo
+   * «contraseña nueva» dentro del perfil dejaría la cuenta a merced de
+   * cualquiera que encuentre la sesión abierta.
+   */
+  protected readonly rutaDeCambioDeContrasena = '/auth/forgot-password';
+
+  protected editar(): void {
+    this.editando.set(true);
+  }
+
+  /**
+   * El editor terminó —guardó o canceló—: se vuelve a sólo lectura.
+   *
+   * Se recarga el resumen porque el editor escribe contra otro endpoint que el
+   * que esta pantalla lee: sin esto, guardar el nombre dejaría la ficha de
+   * arriba mostrando el anterior hasta la próxima visita.
+   */
+  protected terminarEdicion(): void {
+    this.editando.set(false);
+    this.recargar();
+  }
 
   /**
    * Si «Tus datos» está cerrado **sólo** porque falta verificar la identidad.
@@ -216,52 +270,42 @@ export class MyProfile {
   protected readonly rutaDeVerificacion = IDENTITY_VERIFICATION_ROUTE;
 
   /**
-   * Si la ficha «Verificación de identidad» se dibuja.
+   * Si la ficha «Verificación de identidad» —y con ella la columna lateral— se
+   * dibuja.
+   *
+   * Desde el 13/09/2026 es la única ficha del lateral: «Tu acceso» salió a
+   * pedido del cliente —sus dos renglones eran vocabulario de sistema— y sus
+   * dos enlaces se mudaron al pie del perfil. Con el interruptor apagado el
+   * `<aside>` no se dibuja y la rejilla no le reserva la columna: el perfil
+   * ocupa el ancho entero en vez de quedar pegado a la izquierda con un hueco
+   * al lado.
    *
    * Campo y no import suelto porque la plantilla sólo lee miembros de la clase.
    * Ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
    */
   protected readonly verificacionOfrecida = VERIFICACION_DE_IDENTIDAD_OFRECIDA;
 
+  /**
+   * Si el lateral tiene algo que dibujar.
+   *
+   * Hoy su único habitante es la verificación de identidad: «Tu acceso» salió
+   * de esta pantalla por pedido del cliente del 13/09/2026 —«Organización» y
+   * «Roles» son vocabulario de sistema— y su prueba lo fija. Sin nada que
+   * poner, la rejilla no reserva la columna y la ficha ocupa el ancho entero.
+   *
+   * Es un método y no un `computed`: `verificacionOfrecida` es una constante
+   * de módulo copiada en un campo, no una señal, y
+   * `my-profile.verificacion-ofrecida.spec.ts` la enciende escribiendo el campo
+   * después de construir. Un `computed` no se enteraría.
+   */
+  protected hayLateral(): boolean {
+    return this.verificacionOfrecida;
+  }
+
   /** El mensaje de un 403 que no es el de identidad: se muestra como lo haría el host. */
   protected readonly motivoDelMuro = computed(() => {
     const estado = this.resumen();
     return estado.status === 'forbidden' ? (estado.message ?? null) : null;
-  });
-
-  /**
-   * Los roles con etiqueta, para las insignias de «Tu acceso».
-   *
-   * El código crudo no se pinta —es vocabulario de sistema— pero sigue viajando
-   * en `data-role` para quien lo lea por máquina; el rol sin etiqueta se omite.
-   */
-  protected readonly rolesLegibles = computed(() => rolesConEtiqueta(this.auth.roles()));
-
-  /**
-   * Si se muestra la tarjeta «Tu acceso» (F-22).
-   *
-   * A quien viene a atenderse no le dice nada: «Organización: Care Default
-   * Tenant» y «Roles: Paciente» son la respuesta a «¿por qué no veo tal cosa?»,
-   * una pregunta que se hace quien trabaja acá y tiene secciones que le faltan.
-   * Un paciente no tiene secciones que le falten: tiene lo suyo. Es la cuarta
-   * fuga de la misma regla —cero organización, roles ni jerga en su vista— y
-   * los barridos anteriores no alcanzaron esta pantalla.
-   *
-   * Se oculta en vez de reemplazarse: lo que iría en su lugar —su código de
-   * paciente— todavía no tiene formato decidido (H-04).
-   *
-   * Se pregunta por los roles de trabajo, igual que el panel: quien atiende y
-   * además es paciente entra a trabajar, y la tarjeta le sirve.
-   */
-  protected readonly muestraElAcceso = computed(() => {
-    const roles = this.auth.roles();
-    if (!roles.includes('PATIENT')) return true;
-    return ROLES_DE_TRABAJO.some((rol) => roles.includes(rol));
-  });
-
-  protected readonly tenantName = computed(() => {
-    const id = this.auth.activeTenantId();
-    return id === null ? null : this.auth.tenantName(id);
   });
 
   /**
@@ -312,7 +356,6 @@ export class MyProfile {
     this.cargarCasos();
     this.cargarPerfil();
   }
-
 
   /**
    * La etiqueta de un concepto, o nada.
@@ -425,11 +468,8 @@ export class MyProfile {
         this.perfil.set(p);
         if (p.photoFileId !== undefined) {
           this.files
-            .downloadUrl(p.photoFileId)
-            .pipe(
-              map((descarga) => descarga.url),
-              catchError(() => of<string | null>(null)),
-            )
+            .imageDataUrl(p.photoFileId)
+            .pipe(catchError(() => of<string | null>(null)))
             .subscribe((url) => this.fotoUrl.set(url));
         }
         const uuids = [
@@ -523,7 +563,18 @@ export class MyProfile {
       )
       .subscribe({
         next: ({ resumen, etiquetas }) => {
-          this.etiquetas.set(etiquetas);
+          // Se FUSIONA, no se reemplaza: el perfil completo pide sus propias
+          // etiquetas —ocupación, municipio, departamento— en paralelo, y si
+          // llegaban antes que esta, un `set` las pisaba con la sola etiqueta
+          // del estado. Se veía como «Ocupación» en blanco y el municipio «Sin
+          // registrar» teniendo los dos datos cargados.
+          this.etiquetas.update((prev) => {
+            const map = new Map(prev);
+            for (const [k, v] of etiquetas.entries()) {
+              map.set(k, v);
+            }
+            return map;
+          });
           this.resumen.set(ready(resumen));
         },
         error: (error: unknown) => this.resumen.set(errorToViewState<OwnPatientSummary>(error)),
@@ -559,7 +610,7 @@ export class MyProfile {
         switchMap((guardado) =>
           guardado.photoFileId === undefined
             ? of(null)
-            : this.files.downloadUrl(guardado.photoFileId).pipe(map((descarga) => descarga.url)),
+            : this.files.imageDataUrl(guardado.photoFileId),
         ),
       )
       .subscribe({

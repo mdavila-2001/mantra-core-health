@@ -1,6 +1,126 @@
+/* ============================================================================
+    El muro profesional, en tres columnas (AC-E1-03).
+
+    El orden del DOM es el de lectura en teléfono —muro, perfil, tendencias— y
+    en escritorio las laterales se corren a los costados con `grid-column`. Es
+    al revés de lo habitual a propósito: si el perfil fuera primero en el DOM,
+    apilarse lo pondría encima del muro, y lo que se viene a hacer acá es leer
+    y publicar.
+    ========================================================================== */
+
+.muro {
+  display: grid;
+  gap: var(--e5);
+}
+
+/* Una columna hasta que el muro y UNA lateral entren cómodos. */
+@media (min-width: 900px) {
+  .muro {
+    /* Perfil · muro. El muro manda: la lateral es del ancho que sobra, con un
+       piso que evita que un nombre largo la parta en dos renglones por letra. */
+    grid-template-columns: minmax(15rem, 18rem) minmax(0, 1fr);
+  }
+  .muro__perfil { grid-column: 1; grid-row: 1; }
+  .muro__centro { grid-column: 2; grid-row: 1; }
+  .muro__tendencias { grid-column: 1; grid-row: 2; }
+}
+
+/* Las tres, recién cuando la del medio no queda apretada entre las otras. */
+@media (min-width: 1200px) {
+  .muro {
+    grid-template-columns: minmax(15rem, 18rem) minmax(0, 1fr) minmax(15rem, 18rem);
+  }
+  .muro__tendencias { grid-column: 3; grid-row: 1; }
+}
+
+/* Las laterales acompañan la lectura: se quedan a la vista mientras el muro
+   corre. `align-self: start` es lo que hace que `sticky` tenga contra qué
+   pegarse dentro de una celda de grilla. */
+@media (min-width: 900px) {
+  .muro__perfil,
+  .muro__tendencias {
+    position: sticky;
+    top: var(--e5);
+    align-self: start;
+  }
+}
+
+.muro__perfil,
+.muro__tendencias {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+}
+
+.muro__tarjeta {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  padding: var(--e4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.muro__perfil-nombre {
+  margin: 0;
+  font-size: var(--fs-h4, var(--fs-body-lg));
+  font-weight: 600;
+}
+
+.muro__perfil-titular,
+.muro__nota {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.muro__titulo-lateral {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.muro__perfil-enlace { align-self: flex-start; }
+
+.muro__accesos,
+.muro__tendencias-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+/* El nombre arriba y el recuento debajo: en una columna de 18rem, «Cardiología
+   intervencionista» y «124 integrantes» en la misma línea se parten mal. */
+.muro__tendencia {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.muro__tendencia-nombre { font-weight: 500; }
+
+.muro__tendencia-cuenta {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- La columna del medio -------------------------------------------------- */
+
+.muro__centro {
+  display: block;
+  min-width: 0;
+}
+
 .muro__composer {
   display: block;
   margin-bottom: var(--e4);
+  /* Ancho de lectura: una publicación que cruza una pantalla ancha entera
+     obliga a barrer con la vista y se lee peor. */
   max-inline-size: 68ch;
 }
 
@@ -17,8 +137,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--e4);
-  /* Ancho de lectura: una publicación que cruza una pantalla ancha entera
-     obliga a barrer con la vista y se lee peor. */
   max-inline-size: 68ch;
 }
 
@@ -26,4 +144,5 @@
   display: flex;
   justify-content: center;
   margin-top: var(--e5);
+  max-inline-size: 68ch;
 }

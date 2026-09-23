@@ -7,6 +7,8 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { Messaging } from './messaging';
+import { ChatStore } from '../../core/messaging/chat.store';
+import { ChatPreferencias } from '../../core/messaging/chat-preferencias';
 
 /**
  * Lo que estas pruebas fijan.
@@ -14,8 +16,13 @@ import { Messaging } from './messaging';
  * Que **el perfil público no es el de la sesión** —hay que preguntárselo al
  * backend, y no tenerlo es un estado legítimo con salida—, que la bandeja dice
  * **con quién** es cada conversación (y que sin nombre no muestra un uuid), y
- * que abrir un hilo con alguien del directorio son **dos llamadas**: el
- * buscador público devuelve `slug`, no `profileId`.
+ * que el buscador de arriba hace las dos cosas que hace el de WhatsApp: filtra
+ * los chats que ya tenés y ofrece gente a la que todavía no le escribiste.
+ *
+ * Los filtros y el archivado también se fijan acá: son estado de vista que hoy
+ * vive en el navegador, y lo único que impide que se rompan al migrarlos a la
+ * API el día que el backend tenga las columnas es una prueba que diga qué
+ * tienen que hacer.
  */
 describe('Messaging', () => {
   let fixture: ComponentFixture<Messaging>;
@@ -71,13 +78,38 @@ describe('Messaging', () => {
   const texto = (): string => fixture.nativeElement.textContent as string;
   const consultar = (testid: string): HTMLElement | null =>
     fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
+  const todas = (testid: string): HTMLElement[] =>
+    Array.from(fixture.nativeElement.querySelectorAll(`[data-testid="${testid}"]`));
 
   const montar = (): void => {
     fixture = TestBed.createComponent(Messaging);
     fixture.detectChanges();
   };
 
+  /** Monta, resuelve el perfil y deja la bandeja con lo que se le pase. */
+  const conBandeja = (items: unknown[]): void => {
+    montar();
+    http.expectOne('/community/profiles/me').flush(perfilPropio);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url === '/community/conversations').flush({
+      items,
+      count: items.length,
+      limit: 50,
+      nextCursor: null,
+    });
+    fixture.detectChanges();
+  };
+
   beforeEach(() => {
+    // El buscador espera 300 ms antes de preguntarle al directorio, y el store
+    // reencola su sondeo con `setTimeout`. Con relojes falsos las dos cosas
+    // pasan cuando la prueba lo dice, no cuando quiera la máquina.
+    vi.useFakeTimers();
+
+    // El favorito y el archivado viven en `localStorage`: sin limpiarlo, lo que
+    // marca una prueba se lo encuentra la siguiente.
+    localStorage.removeItem('alovida.chat-preferencias');
+
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -89,6 +121,8 @@ describe('Messaging', () => {
   });
 
   afterEach(() => {
+    TestBed.inject(ChatStore).detener();
+    vi.useRealTimers();
     http.match(() => true).forEach((pedido) => pedido.flush(null));
     http.verify();
   });
@@ -107,23 +141,9 @@ describe('Messaging', () => {
   });
 
   it('pinta con quién es cada conversación y sus no leídos', () => {
-    montar();
-    http.expectOne('/community/profiles/me').flush(perfilPropio);
-    fixture.detectChanges();
-
-    const pedido = http.expectOne((r) => r.url === '/community/conversations');
-    expect(pedido.request.params.get('profileId')).toBe('pp-1');
-    pedido.flush({
-      items: [
-        conversacion('c-1', [
-          { profileId: 'pp-2', displayName: 'Dra. Marisol Quispe' },
-        ], 2),
-      ],
-      count: 1,
-      limit: 50,
-      nextCursor: null,
-    });
-    fixture.detectChanges();
+    conBandeja([
+      conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Marisol Quispe' }], 2),
+    ]);
 
     expect(texto()).toContain('Dra. Marisol Quispe');
     expect(texto()).toContain('Hola, ¿cómo seguís?');
@@ -131,37 +151,38 @@ describe('Messaging', () => {
   });
 
   it('sin nombre resuelto dice «Conversación» y nunca un uuid', () => {
-    montar();
-    http.expectOne('/community/profiles/me').flush(perfilPropio);
-    fixture.detectChanges();
-    http.expectOne((r) => r.url === '/community/conversations').flush({
-      items: [conversacion('c-1', [{ profileId: 'pp-9', displayName: null }])],
-      count: 1,
-      limit: 50,
-      nextCursor: null,
-    });
-    fixture.detectChanges();
+    conBandeja([conversacion('c-1', [{ profileId: 'pp-9', displayName: null }])]);
 
     expect(texto()).toContain('Conversación');
     expect(texto()).not.toContain('pp-9');
   });
 
-  it('escribirle a alguien resuelve el slug y después abre el hilo', () => {
-    montar();
-    http.expectOne('/community/profiles/me').flush(perfilPropio);
-    fixture.detectChanges();
-    http.expectOne((r) => r.url === '/community/conversations').flush({
-      items: [],
-      count: 0,
-      limit: 50,
-      nextCursor: null,
-    });
-    fixture.detectChanges();
+  it('el buscador filtra los chats que ya tenés, sin pedirle nada al servidor', () => {
+    conBandeja([
+      conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Marisol Quispe' }]),
+      conversacion('c-2', [{ profileId: 'pp-3', displayName: 'Lic. Ana Rojas' }]),
+    ]);
 
-    consultar('mensajeria-nueva')?.click();
-    fixture.detectChanges();
-    consultar('mensajeria-buscar')?.click();
+    escribir('rojas');
+    // Filtrar lo propio es local: pedirle al servidor que filtre una lista que
+    // ya está en memoria haría parpadear la bandeja en cada tecla.
+    expect(todas('conversacion').length).toBe(1);
+    expect(texto()).toContain('Lic. Ana Rojas');
+    expect(texto()).not.toContain('Marisol');
 
+    // Y al directorio todavía no le preguntó nada: la consulta espera a que
+    // la persona deje de escribir.
+    http.expectNone((r) => r.url === '/public/search/practitioners');
+
+    vi.advanceTimersByTime(300);
+    http.expectOne((r) => r.url === '/public/search/practitioners').flush({ items: [] });
+  });
+
+  it('escribirle a alguien nuevo resuelve el slug y después abre el hilo', () => {
+    conBandeja([]);
+
+    escribir('marisol');
+    vi.advanceTimersByTime(300);
     http
       // Sin el prefijo `/community`: lo sirve `CommunityPublicController`,
       // pero registrado sin prefijo de módulo. Con el prefijo la API responde
@@ -197,21 +218,49 @@ describe('Messaging', () => {
     abierta.flush({ id: 'c-9' });
   });
 
-  it('no borra la bandeja cuando un tic falla', () => {
-    montar();
-    http.expectOne('/community/profiles/me').flush(perfilPropio);
-    fixture.detectChanges();
-    http.expectOne((r) => r.url === '/community/conversations').flush({
-      items: [
-        conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }]),
-      ],
-      count: 1,
-      limit: 50,
-      nextCursor: null,
-    });
+  it('el filtro «No leídos» deja sólo las que tienen pendientes', () => {
+    conBandeja([
+      conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Con pendientes' }], 3),
+      conversacion('c-2', [{ profileId: 'pp-3', displayName: 'Al día' }], 0),
+    ]);
+
+    expect(todas('conversacion').length).toBe(2);
+
+    consultar('mensajeria-filtro-no-leidos')?.click();
     fixture.detectChanges();
 
-    fixture.componentInstance['recargar']();
+    expect(todas('conversacion').length).toBe(1);
+    expect(texto()).toContain('Con pendientes');
+    expect(texto()).not.toContain('Al día');
+  });
+
+  it('lo archivado sale de la lista y vive en su propio cajón', () => {
+    conBandeja([
+      conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }]),
+      conversacion('c-2', [{ profileId: 'pp-3', displayName: 'Lic. Rojas' }]),
+    ]);
+
+    TestBed.inject(ChatPreferencias).alternarArchivado('c-1');
+    fixture.detectChanges();
+
+    expect(todas('conversacion').length).toBe(1);
+    expect(texto()).not.toContain('Dra. Quispe');
+    expect(consultar('mensajeria-archivados')).not.toBeNull();
+
+    consultar('mensajeria-archivados')?.click();
+    fixture.detectChanges();
+
+    // En el cajón está la archivada, y sólo ella.
+    expect(todas('conversacion').length).toBe(1);
+    expect(texto()).toContain('Dra. Quispe');
+  });
+
+  it('no borra la bandeja cuando un tic falla', () => {
+    conBandeja([
+      conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }]),
+    ]);
+
+    TestBed.inject(ChatStore).recargarBandeja();
     http
       .expectOne((r) => r.url === '/community/conversations')
       .error(new ProgressEvent('error'));
@@ -220,4 +269,11 @@ describe('Messaging', () => {
     expect(texto()).toContain('Dra. Quispe');
     expect(texto()).toContain('No pudimos cargar tus conversaciones.');
   });
+
+  function escribir(valor: string): void {
+    const campo = consultar('mensajeria-consulta') as HTMLInputElement;
+    campo.value = valor;
+    campo.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+  }
 });

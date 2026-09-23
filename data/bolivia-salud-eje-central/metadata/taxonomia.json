@@ -1,0 +1,139 @@
+{
+  "categorias": [
+    {
+      "id": "hematologia",
+      "archivo": "hematologia.json",
+      "conteo": 37
+    },
+    {
+      "id": "coagulacion_hemostasia",
+      "archivo": "coagulacion_hemostasia.json",
+      "conteo": 40
+    },
+    {
+      "id": "quimica_clinica",
+      "archivo": "quimica_clinica.json",
+      "conteo": 98
+    },
+    {
+      "id": "endocrinologia",
+      "archivo": "endocrinologia.json",
+      "conteo": 63
+    },
+    {
+      "id": "inmunologia_autoinmunidad",
+      "archivo": "inmunologia_autoinmunidad.json",
+      "conteo": 62
+    },
+    {
+      "id": "alergologia",
+      "archivo": "alergologia.json",
+      "conteo": 128
+    },
+    {
+      "id": "serologia_infecciosas",
+      "archivo": "serologia_infecciosas.json",
+      "conteo": 76
+    },
+    {
+      "id": "microbiologia_bacteriologia",
+      "archivo": "microbiologia_bacteriologia.json",
+      "conteo": 34
+    },
+    {
+      "id": "micologia",
+      "archivo": "micologia.json",
+      "conteo": 13
+    },
+    {
+      "id": "parasitologia",
+      "archivo": "parasitologia.json",
+      "conteo": 20
+    },
+    {
+      "id": "virologia",
+      "archivo": "virologia.json",
+      "conteo": 23
+    },
+    {
+      "id": "biologia_molecular",
+      "archivo": "biologia_molecular.json",
+      "conteo": 50
+    },
+    {
+      "id": "genetica_citogenetica_genomica",
+      "archivo": "genetica_citogenetica_genomica.json",
+      "conteo": 34
+    },
+    {
+      "id": "oncologia_marcadores",
+      "archivo": "oncologia_marcadores.json",
+      "conteo": 27
+    },
+    {
+      "id": "toxicologia_drogas",
+      "archivo": "toxicologia_drogas.json",
+      "conteo": 32
+    },
+    {
+      "id": "monitoreo_terapeutico",
+      "archivo": "monitoreo_terapeutico.json",
+      "conteo": 25
+    },
+    {
+      "id": "uroanalisis",
+      "archivo": "uroanalisis.json",
+      "conteo": 40
+    },
+    {
+      "id": "heces_coproparasitologia",
+      "archivo": "heces_coproparasitologia.json",
+      "conteo": 19
+    },
+    {
+      "id": "liquidos_biologicos",
+      "archivo": "liquidos_biologicos.json",
+      "conteo": 23
+    },
+    {
+      "id": "fertilidad_andrologia",
+      "archivo": "fertilidad_andrologia.json",
+      "conteo": 21
+    },
+    {
+      "id": "embarazo_prenatal",
+      "archivo": "embarazo_prenatal.json",
+      "conteo": 25
+    },
+    {
+      "id": "inmunohematologia_banco_sangre",
+      "archivo": "inmunohematologia_banco_sangre.json",
+      "conteo": 21
+    },
+    {
+      "id": "trasplantes_hla",
+      "archivo": "trasplantes_hla.json",
+      "conteo": 18
+    },
+    {
+      "id": "anatomia_patologica_citologia",
+      "archivo": "anatomia_patologica_citologia.json",
+      "conteo": 25
+    },
+    {
+      "id": "metabolismo_neonatal",
+      "archivo": "metabolismo_neonatal.json",
+      "conteo": 30
+    },
+    {
+      "id": "nutricion_vitaminas_oligoelementos",
+      "archivo": "nutricion_vitaminas_oligoelementos.json",
+      "conteo": 26
+    },
+    {
+      "id": "ocupacional_otros",
+      "archivo": "ocupacional_otros.json",
+      "conteo": 25
+    }
+  ]
+}

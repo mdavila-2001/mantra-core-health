@@ -27,13 +27,22 @@ app-map {
   z-index: 0;
 }
 
+/* Cuando el mapa espera un toque, el cursor lo dice: la cruz de apuntar en
+   lugar de la mano de arrastrar. Leaflet pone su `cursor: grab` sobre
+   `.leaflet-container` y `.leaflet-grab`; ambos se pisan, el segundo porque es
+   el que gana durante el arrastre. */
+.mapa--seleccionable .leaflet-container,
+.mapa--seleccionable .leaflet-grab {
+  cursor: crosshair;
+}
+
 .mapa__espera {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
   margin: 0;
-  font-size: var(--fs-small);
+  font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
 
@@ -55,7 +64,7 @@ app-map {
   justify-content: center;
   border-radius: var(--r-full);
   font-weight: 700;
-  font-size: 14px;
+  font-size: var(--fs-body);
   background: var(--tono-bg, var(--bg-inset));
   color: var(--tono-fg, var(--text-secondary));
   border: 1.5px solid var(--tono-bd, var(--border-default));
@@ -78,7 +87,7 @@ app-map {
 
 @media (prefers-reduced-motion: no-preference) {
   .mapa__pin {
-    transition: transform 150ms ease, box-shadow 150ms ease;
+    transition: transform var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
   }
 }
 
@@ -97,7 +106,7 @@ app-map {
 
 .mapa__popup-detalle {
   margin: 0;
-  font-size: var(--fs-small);
+  font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
 
@@ -105,7 +114,7 @@ app-map {
   align-self: flex-start;
   padding: 1px var(--sp-2);
   border-radius: var(--r-full);
-  font-size: var(--fs-small);
+  font-size: var(--fs-caption);
   font-weight: 600;
   background: var(--tono-bg, var(--bg-inset));
   color: var(--tono-fg, var(--text-secondary));
@@ -128,7 +137,7 @@ app-map {
   background: var(--bg-surface);
   color: var(--text-primary);
   font: inherit;
-  font-size: var(--fs-small);
+  font-size: var(--fs-caption);
   font-weight: 600;
   cursor: pointer;
 }

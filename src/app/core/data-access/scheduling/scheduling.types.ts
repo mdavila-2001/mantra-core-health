@@ -165,6 +165,21 @@ export interface NewPaymentState {
   readonly insuranceUsed?: boolean;
 }
 
+/**
+ * Lo que la agenda necesita de una solicitud de seguro para decir en qué está:
+ * número, estado y cuándo se envió. El detalle completo —líneas, dictamen,
+ * disputas— sigue en `GET /insurance-claims/:id`, que pide rol de facturación.
+ */
+export interface BookingInsuranceClaim {
+  readonly id: string;
+  readonly claimIdentifier: string;
+  /** Código del concepto de estado: `CLAIM_SUBMITTED`, `CLAIM_ADJUDICATED`, `CLAIM_PAID`, `CLAIM_REVERSED`. */
+  readonly statusCode: string;
+  readonly statusDisplay: string;
+  /** ISO; `null` si todavía no se envió. */
+  readonly submittedAt: string | null;
+}
+
 export interface Booking {
   readonly id: string;
   readonly patientProfileId?: string;
@@ -212,6 +227,24 @@ export interface Booking {
    * «no tiene nombre», significa «no te corresponde verlo».
    */
   readonly patientName?: string;
+  /**
+   * La aseguradora del paciente titular, o `null` si no declara ninguna
+   * (ALV-021).
+   *
+   * Misma regla de privacidad que `patientName`: `null` es la respuesta
+   * comprobada —«se buscó y no tiene», Particular—; **ausente** es que no
+   * corresponde verla, que es una pregunta distinta.
+   */
+  readonly insuranceCarrierName?: string | null;
+  /**
+   * La solicitud de seguro de esta cita, si se presentó una.
+   *
+   * Se enlaza por la consulta atendida: cita → `clinical.encounters` →
+   * `insurance.insurance_claims.encounter_id`, y viaja la más reciente. Misma
+   * regla que `insuranceCarrierName`: `null` es «se buscó y no hay»; **ausente**
+   * es que quien mira no puede ver al paciente.
+   */
+  readonly insuranceClaim?: BookingInsuranceClaim | null;
   /**
    * Por qué la cita está como está, cuando el último cambio lo explicó.
    *
@@ -485,6 +518,15 @@ export interface NewScheduleTemplate {
   readonly bookingPolicyId?: string;
   readonly validFrom?: string;
   readonly validTo?: string;
+  /**
+   * Horario flexible: la plantilla declara cuándo se atiende, pero **no lo
+   * corta en turnos fijos** — el paciente pide la hora que quiera dentro de la
+   * franja (propietario, 18/09).
+   *
+   * **Todavía no existe en la API real** (P36 de `PENDIENTES-BACKEND.md`): hoy
+   * sólo lo entiende el simulador de `mockup`. Ausente ≡ turnos fijos.
+   */
+  readonly flexibleHours?: boolean;
 }
 
 export interface ScheduleTemplateCreated {
@@ -795,6 +837,8 @@ export interface PublishedTemplate {
   readonly validTo?: string;
   readonly bookingPolicyId?: string;
   readonly statusConceptId: string;
+  /** Ver {@link NewScheduleTemplate.flexibleHours}. */
+  readonly flexibleHours?: boolean;
 }
 
 /** La respuesta del listado de plantillas de un recurso. */
@@ -886,5 +930,87 @@ export interface DirectAppointmentCreated {
    * Horarios libres que la cita retiró al pisar cupos ofrecidos. Se muestra
    * como AVISO («esto quitó N horarios disponibles»), no como pregunta.
    */
+  readonly retractedSlots: number;
+}
+
+/* ============================================================================
+    El turno de mostrador (AC-C3-03 / AC-3.3 de la API)
+   ========================================================================== */
+
+/**
+ * La filiación de quien se presenta en el mostrador, tal como la declara quien
+ * lo atiende.
+ *
+ * Son las mismas reglas de forma que el auto-registro del paciente, **con menos
+ * obligatorios**: quien atiende el mostrador no siempre tiene a mano el
+ * departamento emisor del documento ni la fecha de nacimiento, y exigirlos
+ * dejaría a la persona esperando de pie mientras alguien busca un papel. Lo que
+ * sí es obligatorio es lo que identifica y lo que permite volver a llamar:
+ * nombre, apellido, documento y teléfono.
+ */
+export interface WalkInPatient {
+  readonly name: string;
+  readonly middleName?: string;
+  readonly lastName: string;
+  readonly motherLastName?: string;
+  readonly nationalId: string;
+  /** Departamento emisor del documento (catálogo `VS_BO_DEPARTMENT`). */
+  readonly issuerAdministrativeAreaConceptId?: string;
+  /** `YYYY-MM-DD`, no un instante: es una fecha civil, no un momento. */
+  readonly birthDate?: string;
+  readonly phone: string;
+  /** Ocupación del catálogo (`VS_BO_OCCUPATION`). */
+  readonly occupationConceptId?: string;
+  /** Ocupación en texto libre; la API la ignora si viene el concepto. */
+  readonly occupationFreeText?: string;
+  readonly guardianName?: string;
+  /** La API rechaza un teléfono de tutor sin nombre de tutor. */
+  readonly guardianPhone?: string;
+  readonly guardianRelationshipConceptId?: string;
+}
+
+/**
+ * Alta del turno de mostrador — `POST /scheduling/appointments/walk-in`.
+ *
+ * **Es para quien NO está registrado.** Un documento ya dado de alta responde
+ * 409: a ese paciente se le agenda con {@link NewDirectAppointment}, que es lo
+ * que hace el formulario cuando la búsqueda por CI lo encuentra.
+ */
+export interface NewWalkInAppointment {
+  readonly patient: WalkInPatient;
+  /** La agenda del profesional donde ocurre la atención. */
+  readonly resourceId: string;
+  readonly startAt: string;
+  readonly durationMinutes: number;
+  readonly reasonText?: string;
+  /**
+   * La modalidad de la atención; ausente = presencial.
+   *
+   * No es el canal de la RESERVA: el mostrador siempre escribe `WALK_IN` ahí,
+   * y eso lo pone la API, no este cuerpo.
+   */
+  readonly channel?: ModalidadDeAtencion;
+}
+
+/**
+ * Lo que devuelve el turno de mostrador.
+ *
+ * Una sola transacción deja siete cosas creadas, y por eso la respuesta las
+ * nombra todas: el perfil de paciente, la reserva —que nace `IN_PROGRESS`, no
+ * confirmada: quien llegó al mostrador ya está ahí— y el encuentro clínico ya
+ * abierto, que es a donde el médico entra a registrar la atención.
+ */
+export interface WalkInAppointmentCreated {
+  readonly patientProfileId: string;
+  readonly personId: string;
+  /** El código de paciente asignado; es lo que se le dice en voz alta. */
+  readonly patientCode: string;
+  readonly bookingId: string;
+  readonly bookableSlotId: string;
+  readonly appointmentId: string;
+  /** El encuentro abierto, listo para registrar la atención. */
+  readonly encounterId: string;
+  readonly statusConceptId: string;
+  /** Cupos ofrecidos que este turno retiró. Se informa, no se pregunta. */
   readonly retractedSlots: number;
 }

@@ -43,20 +43,59 @@
 }
 
 .ajustes__fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
   border: 1px solid var(--border-default);
   border-radius: var(--radio-md, 0.75rem);
   background: var(--bg-surface);
 }
 
-/* El permiso no es una casilla: el estado lo decide el navegador, así que la
-   fila muestra en qué está y ofrece pedirlo cuando todavía tiene sentido. */
+/* Ícono decorativo a la derecha del renglón (AC-17-2, TAREA-17 §1). Nunca
+   aporta el nombre accesible: sigue siendo `aria-hidden` en `app-nav-icon`. */
+.ajustes__icono {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-inline-end: var(--e3);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* Apariencia: rótulo a la izquierda, interruptor sol/luna a la derecha. */
+.ajustes__fila--tema {
+  padding: var(--e3);
+}
+
+.ajustes__volver-al-sistema {
+  margin-top: var(--e2);
+}
+
+/* El permiso se enciende y se apaga: ícono a la izquierda, lo que hace en el
+   medio y el interruptor al final del renglón. */
 .ajustes__fila--permiso {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
+  /* Y no `space-between` como el renglón base: con tres piezas ese reparto
+     deja el texto flotando en el medio. Lo que empuja al interruptor contra
+     el borde es el texto, que crece. */
+  justify-content: flex-start;
   gap: var(--e3);
   padding: var(--e3);
-  flex-wrap: wrap;
+}
+
+.ajustes__fila--permiso .ajustes__icono {
+  margin-inline: 0;
+}
+
+.ajustes__fila--permiso .ajustes__texto {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.ajustes__interruptor {
+  flex-shrink: 0;
 }
 
 .ajustes__control {
@@ -82,30 +121,13 @@
   font-size: 0.9rem;
 }
 
-.ajustes__estado {
-  display: flex;
-  align-items: center;
-  gap: var(--e2);
-  flex-shrink: 0;
-}
-
 .ajustes__pastilla {
   display: inline-block;
   padding: 0.15rem var(--e2);
   border: 1px solid var(--border-default);
-  border-radius: 999px;
+  border-radius: var(--r-full);
   font-size: 0.8rem;
   white-space: nowrap;
-}
-
-.ajustes__pastilla[data-tono='exito'] {
-  border-color: var(--exito-borde, var(--border-default));
-  color: var(--exito-texto, var(--text-primary));
-}
-
-.ajustes__pastilla[data-tono='alerta'] {
-  border-color: var(--alerta-borde, var(--border-default));
-  color: var(--alerta-texto, var(--text-primary));
 }
 
 .ajustes__roles {

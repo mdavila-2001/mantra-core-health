@@ -18,6 +18,11 @@
             <app-badge [variant]="estado.tone" data-testid="pedido-estado-badge">
               {{ estado.label }}
             </app-badge>
+            <!-- El medio de pago, sólo si el contrato publica un pago: hoy no
+                 lo publica y el badge no aparece (R-T-E4). -->
+            @if (medioDePago(); as medio) {
+              <app-badge variant="success" data-testid="pedido-medio-de-pago">{{ medio }}</app-badge>
+            }
             <span class="pedido__secundario">{{ estado.descripcion }}</span>
           </p>
         </section>
@@ -45,7 +50,7 @@
               <span class="pedido__secundario">Te proponen</span>
               <span class="pedido__principal">{{ propuesta.propuesta.nombre }}</span>
               @if (propuesta.propuesta.precio !== null) {
-                <span class="cifras-tabulares">{{ propuesta.propuesta.precio }} {{ propuesta.moneda }}</span>
+                <span class="cifras-tabulares">{{ propuesta.propuesta.precio }} {{ moneda(propuesta.moneda) }}</span>
               } @else {
                 <span class="pedido__secundario">Sin precio publicado</span>
               }
@@ -54,7 +59,7 @@
               <span class="pedido__secundario">En lugar de</span>
               <span class="pedido__principal">{{ propuesta.original.nombre }}</span>
               @if (propuesta.original.precio !== null) {
-                <span class="cifras-tabulares">{{ propuesta.original.precio }} {{ propuesta.moneda }}</span>
+                <span class="cifras-tabulares">{{ propuesta.original.precio }} {{ moneda(propuesta.moneda) }}</span>
               } @else {
                 <span class="pedido__secundario">Sin precio publicado</span>
               }
@@ -104,25 +109,12 @@
           </p>
           <p class="pedido__secundario">
             @if (pagado()) {
-              Es un código de identificación. Tu pedido ya está pagado: solo mostralo.
+              Es un código de identificación: tu pedido ya está pagado.
             } @else {
               Es un código de identificación, no un pago: pagás al retirar, en la farmacia.
             }
           </p>
         </section>
-      }
-
-      <!-- ─── El pago (FAR-I5): mostrador real, QR sólo con su gate ──────── -->
-      @if (muestraPago()) {
-        <app-order-payment [pedido]="abierto" [ocupado]="ocupado()" (pagoSimulado)="simularPago()" />
-        @if (pagado()) {
-          <div class="pedido__acciones">
-            <a app-button variant="secondary" size="sm" [routerLink]="rutaDelComprobante(abierto)"
-              data-testid="pedido-comprobante">
-              Ver comprobante
-            </a>
-          </div>
-        }
       }
 
       <!-- ─── Los finales anticipados y sus salidas ──────────────────────── -->
@@ -179,7 +171,7 @@
               </div>
               <div class="pedido__linea-precio">
                 @if (linea.precio !== null) {
-                  <span class="cifras-tabulares">{{ linea.precio }} {{ linea.moneda }}</span>
+                  <span class="cifras-tabulares">{{ linea.precio }} {{ moneda(linea.moneda) }}</span>
                 } @else {
                   <span class="pedido__secundario">Sin precio publicado</span>
                 }
@@ -193,12 +185,45 @@
         <p class="pedido__total">
           @if (abierto.totalEstimado !== null) {
             Total estimado:
-            <strong class="cifras-tabulares">{{ abierto.totalEstimado }} {{ abierto.moneda }}</strong>
+            <strong class="cifras-tabulares">{{ abierto.totalEstimado }} {{ moneda(abierto.moneda) }}</strong>
           } @else {
             Total no disponible: falta algún precio publicado.
           }
         </p>
       </section>
+
+      <!-- ─── Los avisos que el backend emitió por este pedido (R-T-E4) ──── -->
+      @if (avisos().length > 0) {
+        <section class="pedido__bloque" aria-labelledby="pedido-avisos" data-testid="pedido-avisos">
+          <h3 id="pedido-avisos" class="pedido__subtitulo">Avisos de este pedido</h3>
+          <p class="pedido__secundario">
+            Los avisos que te enviamos sobre este pedido. Pueden no estar todos.
+          </p>
+          <ul class="pedido__avisos">
+            @for (aviso of avisos(); track aviso.id) {
+              <li class="pedido__aviso">
+                <span class="pedido__principal">{{ aviso.titulo }}</span>
+                @if (aviso.detalle !== null) {
+                  <span>{{ aviso.detalle }}</span>
+                }
+                <span class="pedido__secundario">
+                  {{ aviso.fecha | date: 'dd/MM/yyyy HH:mm' }}
+                </span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      <app-patient-insurance-settlement
+        [settlement]="abierto.insuranceSettlement ?? null"
+        [availability]="abierto.insuranceSettlementAvailability ?? 'NOT_AVAILABLE'"
+      />
+
+      <!-- ─── Tu factura (T-E4) ──────────────────────────────────────────── -->
+      @if (mostrarFactura()) {
+        <app-tu-factura [orderId]="abierto.id" [estado]="abierto.estado" [factura]="factura()" />
+      }
 
       <!-- ─── Cancelar, mientras el estado lo permite ────────────────────── -->
       @if (puedeCancelar()) {
@@ -210,27 +235,7 @@
         </div>
       }
 
-      <!-- ─── Escenarios de demostración ─────────────────────────────────── -->
-      <!-- La contraparte (FAR-E1) no existe: estos botones hacen lo que haría
-           la farmacia, sólo donde `PUBLIC_DEMO_PRESETS` lo pidió. -->
-      @if (demoActiva && simulaciones().length > 0) {
-        <section class="pedido__demo" aria-labelledby="pedido-demo" data-testid="pedido-demo">
-          <p class="pedido__demo-titulo">
-            <span id="pedido-demo">Escenarios de demostración — lo que haría la farmacia</span>
-            <app-badge variant="info">Demo</app-badge>
-          </p>
-          <div class="pedido__acciones">
-            @for (paso of simulaciones(); track paso) {
-              <button app-button variant="outline" size="sm" type="button"
-                [attr.data-testid]="'pedido-demo-' + paso" (clicked)="simular(paso)">
-                {{ etiquetaDeSimulacion(paso) }}
-              </button>
-            }
-          </div>
-        </section>
-      }
-
-      <a app-button variant="ghost" [routerLink]="listaRoute">Volver a mis pedidos</a>
+      <a app-button variant="ghost" class="volver-al-origen" [routerLink]="listaRoute">Volver a mis pedidos</a>
     </div>
   }
 </app-view-state-host>

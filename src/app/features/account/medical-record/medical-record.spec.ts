@@ -5,6 +5,8 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { SessionStore } from '../../../core/auth/session.store';
+import { FileDownloader } from '../../../core/data-access/files/file-downloader';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { MedicalRecord } from './medical-record';
 
 /**
@@ -28,6 +30,13 @@ import { MedicalRecord } from './medical-record';
 function encabezados(raiz: HTMLElement | null | undefined): readonly string[] {
   return [...(raiz?.querySelectorAll('h2') ?? [])].map((titulo) =>
     (titulo.textContent ?? '').replace(/\s+/g, ' ').trim(),
+  );
+}
+
+/** Los rótulos de las pestañas de la historia (FT-20). */
+function pestanas(raiz: HTMLElement | null | undefined): readonly string[] {
+  return [...(raiz?.querySelectorAll('[role="tab"]') ?? [])].map((tab) =>
+    (tab.textContent ?? '').replace(/\s+/g, ' ').trim(),
   );
 }
 
@@ -150,18 +159,39 @@ describe('MedicalRecord', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
 
+  /** Espía de los toasts (B.3): esta pantalla no monta el contenedor real. */
+  const toasts = { success: vi.fn(), error: vi.fn() };
+
   beforeEach(() => {
+    toasts.success.mockClear();
+    toasts.error.mockClear();
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([{ path: 'my-account/medical-record', component: MedicalRecord }]),
+        { provide: ToastService, useValue: toasts },
       ],
     });
     http = TestBed.inject(HttpTestingController);
   });
 
   afterEach(() => http.verify());
+
+  /**
+   * Se resuelve cuando `FileDownloader.trigger` se llama de verdad, con el
+   * nombre del archivo ofrecido (B.3). Hace falta porque el contenido pasa
+   * por `FileReader` (`blobToDataUrl`), que no es una tarea de la zona de
+   * Angular: `whenStable()`/`detectChanges()` vuelven antes de que termine.
+   * Mismo patrón que `verification-cases.spec.ts`.
+   */
+  function nombreDescargado(): Promise<{ dataUrl: string; fileName: string }> {
+    return new Promise((resolve) => {
+      TestBed.inject(FileDownloader).trigger = (dataUrl: string, fileName: string) => {
+        resolve({ dataUrl, fileName });
+      };
+    });
+  }
 
   /** Abre sesión con perfil de paciente (`pid`) antes de montar. */
   async function montar(claims: Record<string, unknown> = { pid: 'pp-1' }): Promise<void> {
@@ -177,6 +207,19 @@ describe('MedicalRecord', () => {
     http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(resumen);
     http.expectOne((r) => r.url === '/terminology/concepts').flush(conceptos);
     responderFormularios();
+    harness.detectChanges();
+  }
+
+  /**
+   * Abre una de las pestañas de la historia (FT-20).
+   *
+   * `await` de la navegación y no sólo `detectChanges`: la pestaña abierta vive
+   * en la URL, así que el cambio pasa por el router y no está aplicado cuando
+   * el clic vuelve.
+   */
+  async function abrirPestana(indice: number): Promise<void> {
+    harness.routeNativeElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[indice].click();
+    await harness.fixture.whenStable();
     harness.detectChanges();
   }
 
@@ -232,6 +275,10 @@ describe('MedicalRecord', () => {
   it('muestra la receta traducida y su indicación', async () => {
     await montar();
     responder();
+    // Desde FT-20 las recetas viven en su pestaña: sólo el panel abierto se
+    // dibuja, que es lo que hace que una historia larga no cargue las cuatro
+    // listas para mostrar una.
+    await abrirPestana(1);
 
     const texto = harness.routeNativeElement?.textContent ?? '';
     expect(texto).toContain('Amoxicilina');
@@ -244,7 +291,83 @@ describe('MedicalRecord', () => {
 
     const raiz = harness.routeNativeElement;
     expect(raiz?.querySelector('[data-testid="historia-descargar-atencion"]')).not.toBeNull();
+
+    await abrirPestana(1);
     expect(raiz?.querySelector('[data-testid="historia-descargar-receta"]')).not.toBeNull();
+  });
+
+  /* ---- B.3 · el PDF oficial de la receta, desde la API ------------------- */
+
+  it('descargar la receta pide el PDF oficial a la API y dispara la descarga', async () => {
+    await montar();
+    responder();
+    await abrirPestana(1);
+
+    const boton = harness.routeNativeElement?.querySelector<HTMLButtonElement>(
+      '[data-testid="historia-descargar-receta"]',
+    );
+    boton?.click();
+    harness.detectChanges();
+
+    const descargado = nombreDescargado();
+
+    const req = http.expectOne((r) => r.url === '/clinical/prescriptions/m-1/pdf');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+
+    req.flush(new Blob([new Uint8Array([0x25, 0x50, 0x44, 0x46])], { type: 'application/pdf' }), {
+      headers: { 'Content-Disposition': "attachment; filename*=UTF-8''receta-m-1.pdf" },
+    });
+
+    const { dataUrl, fileName } = await descargado;
+    harness.detectChanges();
+
+    expect(dataUrl).toMatch(/^data:application\/pdf;base64,/);
+    expect(fileName).toBe('receta-m-1.pdf');
+    expect(toasts.success).toHaveBeenCalledWith('Descarga iniciada exitosamente', 'Receta oficial');
+  });
+
+  it('si la API falla, avisa el error y el botón vuelve a estar disponible', async () => {
+    await montar();
+    responder();
+    await abrirPestana(1);
+
+    const boton = harness.routeNativeElement?.querySelector<HTMLButtonElement>(
+      '[data-testid="historia-descargar-receta"]',
+    );
+    boton?.click();
+    harness.detectChanges();
+
+    http
+      .expectOne((r) => r.url === '/clinical/prescriptions/m-1/pdf')
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    harness.detectChanges();
+
+    expect(toasts.error).toHaveBeenCalledWith(
+      'No pudimos descargar la receta oficial. Reintentá en un momento.',
+      'Receta oficial',
+    );
+    expect(toasts.success).not.toHaveBeenCalled();
+    // El botón no queda trabado: una segunda descarga sí sale a la red.
+    boton?.click();
+    harness.detectChanges();
+    http.expectOne((r) => r.url === '/clinical/prescriptions/m-1/pdf').flush(new Blob([]));
+  });
+
+  it('una segunda descarga no sale mientras la primera está en vuelo', async () => {
+    await montar();
+    responder();
+    await abrirPestana(1);
+
+    const boton = harness.routeNativeElement?.querySelector<HTMLButtonElement>(
+      '[data-testid="historia-descargar-receta"]',
+    );
+    boton?.click();
+    boton?.click();
+    harness.detectChanges();
+
+    // Sólo una petición en vuelo: `http.expectOne` revienta si hubiera dos.
+    http.expectOne((r) => r.url === '/clinical/prescriptions/m-1/pdf').flush(new Blob([]));
   });
 
   it('una historia sin nada registrado lo dice, con su salida', async () => {
@@ -347,6 +470,77 @@ describe('MedicalRecord', () => {
     expect(harness.routeNativeElement?.textContent).not.toContain('No pudimos armar');
   });
 
+  /* ---- FT-20 · la historia por pestañas ----------------------------------- */
+
+  /** FT-20-R01/R02/R03 · cuatro pestañas, con la primera abierta. */
+  it('organiza la historia en pestañas clickeables con estado activo', async () => {
+    await montar();
+    responder();
+
+    const raiz = harness.routeNativeElement;
+    const tabs = [...(raiz?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])];
+    expect(tabs.length).toBe(4);
+    expect(pestanas(raiz).map((t) => t.split(' (')[0])).toEqual([
+      'Atenciones',
+      'Recetas',
+      'Alergias',
+      'Resultados',
+    ]);
+    expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+    expect(tabs[1].getAttribute('aria-selected')).toBe('false');
+  });
+
+  /** FT-20-R04 · cada pestaña muestra lo suyo y sólo lo suyo. */
+  it('cambiar de pestaña cambia el contenido', async () => {
+    await montar();
+    responder();
+
+    const raiz = harness.routeNativeElement;
+    expect(raiz?.querySelector('[data-testid="historia-atenciones"]')).not.toBeNull();
+    expect(raiz?.querySelector('[data-testid="historia-recetas"]')).toBeNull();
+
+    await abrirPestana(1);
+
+    expect(raiz?.querySelector('[data-testid="historia-recetas"]')).not.toBeNull();
+    expect(raiz?.querySelector('[data-testid="historia-atenciones"]')).toBeNull();
+  });
+
+  /**
+   * FT-20-R05 · el enlace apunta a la sección que se estaba leyendo. Es lo que
+   * permite mandar «mirá mis resultados» como enlace y no como instrucción.
+   */
+  it('la pestaña abierta se puede enlazar', async () => {
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'], pid: 'pp-1' }),
+      refreshToken: 'r-1',
+    });
+    harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/my-account/medical-record?seccion=recetas', MedicalRecord);
+    responder();
+
+    const raiz = harness.routeNativeElement;
+    expect(
+      raiz?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[1].getAttribute('aria-selected'),
+    ).toBe('true');
+    expect(raiz?.querySelector('[data-testid="historia-recetas"]')).not.toBeNull();
+  });
+
+  /**
+   * FT-20-R06/R07 · «Descargar todo» no vive dentro de ninguna pestaña: se
+   * alcanza desde cualquiera de las cuatro.
+   */
+  it('la descarga completa se ve desde cualquier pestaña', async () => {
+    await montar();
+    responder();
+
+    const raiz = harness.routeNativeElement;
+    expect(raiz?.querySelector('[data-testid="historia-descargar-todo"]')).not.toBeNull();
+
+    await abrirPestana(3);
+
+    expect(raiz?.querySelector('[data-testid="historia-descargar-todo"]')).not.toBeNull();
+  });
+
   /* ---- las dos listas que dejaron de mostrarse (F-42) --------------------- */
 
   it('con diagnósticos y formularios cargados, ninguna de las dos listas se dibuja', async () => {
@@ -356,7 +550,9 @@ describe('MedicalRecord', () => {
     responder();
 
     const raiz = harness.routeNativeElement;
-    const titulos = encabezados(raiz);
+    // Desde FT-20 las secciones son pestañas: el nombre de cada una vive en su
+    // pestaña, y sólo el panel abierto tiene su encabezado en el DOM.
+    const titulos = [...encabezados(raiz), ...pestanas(raiz)];
     // Lo que el paciente viene a buscar sigue en pie…
     expect(titulos.some((titulo) => titulo.startsWith('Atenciones'))).toBe(true);
     expect(titulos.some((titulo) => titulo.startsWith('Recetas'))).toBe(true);

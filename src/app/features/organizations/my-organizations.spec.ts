@@ -10,7 +10,7 @@ describe('MyOrganizations — Carril 18', () => {
 
   function flushInicial(): void {
     http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
-    http.expectOne((r) => r.url === '/practices').flush({ items: [], count: 0 });
+    http.expectOne((r) => r.url === '/practices').flush([]);
   }
 
   beforeEach(async () => {
@@ -78,21 +78,62 @@ describe('MyOrganizations — Carril 18', () => {
         validFrom: null,
         validTo: null,
         createdAt: '2026-01-01T00:00:00.000Z',
+        avatarUrl: '/public/media/logo-1',
       },
     ]);
     fixture.detectChanges();
 
     const filas = (
       fixture.componentInstance as unknown as {
-        filas: () => readonly { practiceName: string; statusLabel: string }[];
+        filas: () => readonly {
+          practiceName: string;
+          statusLabel: string;
+          avatarUrl: string | null;
+          verified: boolean;
+        }[];
       }
     ).filas();
     expect(filas).toEqual([
       expect.objectContaining({
         practiceName: 'Clínica Central',
         statusLabel: 'Pendiente de aprobación',
+        avatarUrl: '/public/media/logo-1',
+        // PENDING todavía no es ACTIVE: sin sello hasta que la organización acepte.
+        verified: false,
       }),
     ]);
+  });
+
+  it('una vinculación ACTIVA (la organización ya aceptó) se marca verificada', () => {
+    fixture.detectChanges();
+    http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([
+      {
+        id: 'role-3',
+        practiceId: 'practice-3',
+        practiceName: 'Hospital del Sur',
+        practiceType: null,
+        practiceSiteId: null,
+        roleConceptId: 'role-attending',
+        specialtyConceptId: null,
+        status: '15fb063e-479c-56e6-b5d1-ebd5a36b62db', // ACTIVE
+        isPrimary: true,
+        validFrom: null,
+        validTo: null,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        avatarUrl: null,
+      },
+    ]);
+    http.expectOne((r) => r.url === '/practices').flush([]);
+    fixture.detectChanges();
+
+    const filas = (
+      fixture.componentInstance as unknown as {
+        filas: () => readonly { verified: boolean; avatarUrl: string | null }[];
+      }
+    ).filas();
+    expect(filas[0]).toEqual(
+      expect.objectContaining({ verified: true, avatarUrl: null }),
+    );
   });
 
   it('una vinculación RECHAZADA o FINALIZADA se marca como final', () => {
@@ -113,7 +154,7 @@ describe('MyOrganizations — Carril 18', () => {
         createdAt: '2026-01-01T00:00:00.000Z',
       },
     ]);
-    http.expectOne((r) => r.url === '/practices').flush({ items: [], count: 0 });
+    http.expectOne((r) => r.url === '/practices').flush([]);
     fixture.detectChanges();
 
     const filas = (

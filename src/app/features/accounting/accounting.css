@@ -1,6 +1,6 @@
 /* ============================================================================
     Contabilidad. Sólo la disposición: los colores, tipos y espacios salen de
-    los tokens de REDSAT, nunca de valores literales acá.
+    los tokens de ALOVIDA, nunca de valores literales acá.
     ========================================================================== */
 
 .cuadre {
@@ -25,7 +25,7 @@
 
 .totales dt {
   color: var(--tinta-3);
-  font-size: 13px;
+  font-size: var(--fs-caption);
 }
 
 .totales dd {
@@ -33,20 +33,47 @@
   /* Cifras tabulares: las columnas de importes se comparan de un vistazo sólo
      si los dígitos ocupan lo mismo. */
   font-variant-numeric: tabular-nums;
-  font-size: 21px;
+  font-size: var(--fs-h3);
   font-weight: 600;
 }
 
 .nota {
   margin: var(--e4) 0 0;
   color: var(--tinta-3);
-  font-size: 13px;
+  font-size: var(--fs-caption);
 }
 
 .titulo-de-seccion {
   margin: var(--e6) 0 var(--e3);
-  font-size: 21px;
+  font-size: var(--fs-h3);
   font-weight: 600;
+}
+
+/*
+  El encabezado de un informe exportable: su título (o su selector de cuenta,
+  en Libro mayor y Flujo de caja) a la izquierda, el botón de exportar a la
+  derecha. `.titulo-de-seccion` de adentro pierde su margen propio para no
+  duplicar el que ya pone este contenedor.
+*/
+.informe-encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  margin: var(--e6) 0 var(--e3);
+}
+
+.informe-encabezado .titulo-de-seccion,
+.informe-encabezado app-form-field {
+  margin: 0;
+}
+
+.informe-encabezado__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
 }
 
 .explicacion {
@@ -119,8 +146,13 @@
 
 .facturacion__mes-nombre {
     font-weight: 600;
-    /* El nombre del mes viene de `toLocaleDateString`, en minúscula. */
-    text-transform: capitalize;
+}
+
+/* El nombre del mes viene de `toLocaleDateString` en minúscula («septiembre de
+   2026»). Sólo la inicial: `capitalize` dejaba «Septiembre De 2026». Es ítem de
+   la rejilla `.facturacion__mes`, así que ya es caja de bloque. */
+.facturacion__mes-nombre::first-letter {
+    text-transform: uppercase;
 }
 
 .facturacion__mes-total {
@@ -138,4 +170,92 @@
 
 .libros-abrir {
     margin-block: var(--sp-4);
+}
+
+/* ============================================================================
+    MODO CONTADOR — filas del asiento en curso.
+
+    Sin esto eran `<span>` sueltos, uno pegado al otro: "CajaDebe100.00" en
+    una sola corrida de texto, sin separación entre cuenta, dirección e
+    importe. En una pantalla contable eso es ilegible — hay que poder leer
+    debe/haber y el importe de un vistazo, no deletrearlos.
+    ========================================================================== */
+
+.filas-del-asiento {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    margin: 0 0 var(--sp-4);
+    padding: 0;
+    list-style: none;
+}
+
+.fila-del-asiento {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    align-items: center;
+    gap: var(--sp-1) var(--sp-3);
+    padding: var(--sp-3);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    background: var(--bg-surface);
+}
+
+.fila-del-asiento__cuenta {
+    min-inline-size: 0;
+    overflow-wrap: break-word;
+}
+
+/* Debe/haber no se distinguen sólo por el tono del badge: el texto "Debe" /
+   "Haber" ya los nombra: el color es un refuerzo, no la única señal. */
+.fila-del-asiento__direccion {
+    white-space: nowrap;
+}
+
+/* Mismo criterio que las columnas de importe de `data-table`: a la derecha
+   y en cifras tabulares, así se comparan de un vistazo. */
+.fila-del-asiento__importe {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    text-align: end;
+    white-space: nowrap;
+}
+
+.fila-del-asiento__acciones {
+    display: flex;
+    gap: var(--sp-1);
+    flex-wrap: wrap;
+}
+
+/* Base móvil: cuatro columnas en una fila angosta desbordan. Se apila. */
+@media (max-width: 480px) {
+    .fila-del-asiento {
+        grid-template-columns: 1fr auto;
+    }
+
+    .fila-del-asiento__importe {
+        text-align: start;
+    }
+
+    .fila-del-asiento__acciones {
+        grid-column: 1 / -1;
+    }
+}
+
+
+/* La entrada al cockpit: la acción y su explicación en el mismo renglón, para
+   que no parezca un botón suelto sin contexto. */
+.acceso-al-cockpit {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0 0;
+}
+
+.acceso-al-cockpit__nota {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  flex: 1 1 18rem;
 }

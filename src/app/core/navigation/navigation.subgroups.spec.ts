@@ -27,13 +27,39 @@ describe('NAV_SUBGROUPS', () => {
     expect(inventadas).toEqual([]);
   });
 
-  it('reparte el registro entero: ninguna sección se queda sin bloque', () => {
-    const sinBloque = rutasDelRegistro.filter((ruta) => !rutasRepartidas.includes(ruta));
+  /**
+   * Las que cuelgan del grupo **a propósito**, sin bloque intermedio.
+   *
+   * El armazón las dibuja sueltas con su propio ícono, que es justamente lo que
+   * se busca: «Consultas médicas» es lo que quien atiende abre todos los días y
+   * estaba detrás de «Consultorio», un escalón que había que desplegar para
+   * encontrar una sola cosa (pedido del propietario, 04/09/2026).
+   *
+   * La lista es corta a propósito: es la excepción, no la regla. Un subgrupo se
+   * justifica cuando ordena varias secciones; envolver una sola es ruido.
+   *
+   * Era de dos: `consultation` salió del registro entero el 2026-09-10, cuando
+   * el propietario pidió borrar la pantalla vieja que duplicaba a «Consultas
+   * médicas».
+   */
+  const SUELTAS_A_PROPOSITO = ['schedule'];
+
+  it('reparte el registro entero: ninguna sección se queda sin bloque por descuido', () => {
+    const sinBloque = rutasDelRegistro.filter(
+      (ruta) => !rutasRepartidas.includes(ruta) && !SUELTAS_A_PROPOSITO.includes(ruta),
+    );
 
     // Si esto falla, la sección nueva funciona igual: el armazón la dibuja
-    // suelta, con su propio ícono. Lo que falta es decidir **con quién va**, y
-    // eso es una línea en `NAV_SUBGROUPS`, no un arreglo de código.
+    // suelta, con su propio ícono. Lo que falta es decidir **con quién va** —o
+    // declararla suelta arriba, que también es una decisión—, y eso es una
+    // línea, no un arreglo de código.
     expect(sinBloque).toEqual([]);
+  });
+
+  it('lo declarado como suelto existe: una ruta que ya no está deja la lista mintiendo', () => {
+    const inventadas = SUELTAS_A_PROPOSITO.filter((ruta) => !rutasDelRegistro.includes(ruta));
+
+    expect(inventadas).toEqual([]);
   });
 
   it('ninguna sección está en dos bloques a la vez', () => {

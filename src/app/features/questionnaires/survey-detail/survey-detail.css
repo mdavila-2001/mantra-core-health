@@ -45,33 +45,54 @@
   color: var(--text-secondary);
 }
 
-.encuesta__preguntas {
-  display: grid;
-  gap: var(--sp-3);
-  margin: 0;
-  padding-inline-start: var(--sp-4);
+.encuesta__nota-csv {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
 }
 
-.encuesta__pregunta {
+/* La lista de preguntas: sin viñeta ni sangría. Cada `app-question-editor`
+   trae su propia caja y el número de pregunta va dentro de ella, así que el
+   marcador del `<ol>` sería un segundo número al lado del primero. */
+.encuesta__preguntas {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.encuesta__cabecera {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: var(--sp-2);
-  padding-block-end: var(--sp-3);
-  border-block-end: 1px solid var(--border-default);
+  inline-size: 100%;
 }
 
-.encuesta__pregunta:last-child {
-  padding-block-end: 0;
-  border-block-end: 0;
+.encuesta__cabecera-acciones {
+  display: flex;
+  gap: var(--sp-2);
 }
 
-.encuesta__pregunta-texto {
-  font-weight: 600;
+.encuesta__agregar {
+  margin-block-start: var(--sp-4);
 }
 
-.encuesta__pregunta-tipo,
-.encuesta__pregunta-opciones,
+/* La nota de la previa: dice que lo que se toca no se guarda. Va arriba del
+   cuestionario porque es la advertencia que evita que alguien crea que está
+   respondiendo. */
+.encuesta__previa-nota {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface-alt);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
 .encuesta__respuesta-fecha {
   color: var(--text-secondary);
   font-size: var(--fs-caption);
@@ -88,6 +109,104 @@
   flex-wrap: wrap;
   gap: var(--sp-2);
   margin-block-start: var(--sp-4);
+}
+
+.encuesta__respuestas-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  inline-size: 100%;
+}
+
+.encuesta__resumen {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.encuesta__resumen-pregunta {
+  display: grid;
+  gap: var(--sp-2);
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.encuesta__resumen-pregunta:last-child {
+  padding-block-end: 0;
+  border-block-end: 0;
+}
+
+.encuesta__resumen-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.encuesta__resumen-texto {
+  font-weight: 600;
+}
+
+.encuesta__resumen-total {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  white-space: nowrap;
+}
+
+.encuesta__resumen-nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.encuesta__barras {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.encuesta__barra-fila {
+  display: grid;
+  grid-template-columns: minmax(5rem, 12ch) 1fr auto;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.encuesta__barra-etiqueta {
+  overflow: hidden;
+  font-size: var(--fs-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.encuesta__barra-pista {
+  display: block;
+  inline-size: 100%;
+  block-size: 0.6rem;
+  border-radius: var(--radius-pill, var(--r-full));
+  background: var(--surface-muted, var(--border-default));
+  overflow: hidden;
+}
+
+.encuesta__barra-relleno {
+  display: block;
+  block-size: 100%;
+  background: var(--brand-primary);
+  border-radius: inherit;
+  transition: inline-size var(--dur-base) var(--ease-standard);
+}
+
+.encuesta__barra-cifra {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  white-space: nowrap;
 }
 
 .encuesta__respuestas {
@@ -111,8 +230,19 @@
 }
 
 .encuesta__answers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--sp-2) var(--sp-4);
   margin: 0;
-  padding-inline-start: var(--sp-4);
+}
+
+.encuesta__answer dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.encuesta__answer dd {
+  margin: 0;
 }
 
 @media (max-width: 48rem) {

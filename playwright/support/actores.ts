@@ -13,8 +13,12 @@ import { request, type APIRequestContext } from '@playwright/test';
 /** La contraseña que usan todas las suites por actor del backend. */
 export const CLAVE = 'S3cret-passw0rd';
 
-/** Los tres roles que el barrido recorre. */
-export type Rol = 'administrador' | 'doctora' | 'paciente';
+/** Los roles que el barrido recorre. */
+export type Rol =
+  | 'administrador'
+  | 'doctora'
+  | 'paciente'
+  | 'operadora de facturación';
 
 export interface Actor {
   readonly rol: Rol;
@@ -67,6 +71,28 @@ export async function apiViva(api: APIRequestContext): Promise<boolean> {
   }
 }
 
+/**
+ * La operadora de facturación del prestador (`BILLING_OPERATOR`).
+ *
+ * La siembra `tools/alovida/seed-solicitudes-seguro.mjs` en el repositorio de la
+ * API, con membresía en la organización y el rol acotado a ese tenant.
+ *
+ * **Existe para no certificar T16 con el administrador.** El admin entra a
+ * cualquier lado por el comodín `SUPERADMIN`, así que probar con él no dice
+ * nada del único rol que un usuario real va a tener — y la pantalla de
+ * solicitudes es justamente la del operador de facturación (TAREA-16 · D1.b).
+ */
+export function operadoraDeFacturacion(): Actor {
+  return {
+    rol: 'operadora de facturación',
+    identificador:
+      process.env['E2E_BILLING_OPERATOR_EMAIL'] ??
+      'facturacion.demo@alovida.test',
+    clave: process.env['E2E_BILLING_OPERATOR_PASSWORD'] ?? 'D3mo-passw0rd!',
+    nombre: 'Operadora de facturación',
+  };
+}
+
 /** Credenciales de la cuenta sembrada por `BOOTSTRAP_ADMIN_*` al arrancar la API. */
 export function administrador(): Actor {
   return {
@@ -80,7 +106,7 @@ export function administrador(): Actor {
 
 /**
  * La profesional de demostración que siembra
- * `tools/redesa/cuenta-doctor-demo.mjs`.
+ * `tools/alovida/cuenta-doctor-demo.mjs`.
  *
  * No se registra una nueva en cada corrida —como sí se hace con el paciente—
  * porque un profesional recién registrado nace **sin perfil completo ni
@@ -124,6 +150,66 @@ function sufijoDeAlta(): string {
   return `${String(Date.now()).slice(-9)}${secuenciaDeAltas}`;
 }
 
+/** El catálogo de municipios que el alta del paciente exige como residencia. */
+const MUNICIPALITY_VALUE_SET = 'VS_BO_MUNICIPALITY';
+
+/** El catálogo de departamentos, para el «quién emitió tu documento». */
+const DEPARTMENT_VALUE_SET = 'VS_BO_DEPARTMENT';
+
+/**
+ * Fecha de nacimiento del paciente de prueba: una adulta, fija, para que la
+ * corrida sea reproducible.
+ */
+const PATIENT_BIRTH_DATE = '1995-05-20';
+
+/**
+ * El primer municipio publicado de `VS_BO_MUNICIPALITY`, por la misma ruta que
+ * usa la pantalla de alta (`GET /terminology/value-sets/:id/$expand`).
+ *
+ * El alta del paciente exige un municipio de residencia real —un UUID del
+ * catálogo— y escribirlo acá sería atarse a los ids de una siembra concreta.
+ */
+async function firstConceptIdOfValueSet(
+  api: APIRequestContext,
+  valueSetCode: string,
+): Promise<string> {
+  const valueSets = await api.get('/terminology/value-sets', {
+    params: { code: valueSetCode },
+  });
+  const catalog = (await valueSets.json()) as {
+    items?: { id: string; internalCode: string }[];
+  };
+  const valueSet = (catalog.items ?? []).find(
+    (item) => item.internalCode === valueSetCode,
+  );
+  if (valueSet === undefined) {
+    throw new Error(`el catálogo ${valueSetCode} no está publicado en la API`);
+  }
+
+  const expansion = await api.get(`/terminology/value-sets/${valueSet.id}/$expand`);
+  const firstPage = (await expansion.json()) as { items?: { conceptId: string }[] };
+  const primerMiembro = firstPage.items?.[0];
+  if (primerMiembro === undefined) {
+    throw new Error(`el catálogo ${valueSetCode} no tiene miembros publicados`);
+  }
+  return primerMiembro.conceptId;
+}
+
+async function firstMunicipalityConceptId(api: APIRequestContext): Promise<string> {
+  return firstConceptIdOfValueSet(api, MUNICIPALITY_VALUE_SET);
+}
+
+/**
+ * Un departamento real del catálogo (`VS_BO_DEPARTMENT`), para
+ * `issuerAdministrativeAreaConceptId` — el «departamento que emitió tu
+ * documento» que `RegisterPatientDto` exige. Mismo camino que
+ * {@link firstMunicipalityConceptId}: se obtiene de la API, no se hardcodea
+ * un uuid.
+ */
+async function firstDepartmentConceptId(api: APIRequestContext): Promise<string> {
+  return firstConceptIdOfValueSet(api, DEPARTMENT_VALUE_SET);
+}
+
 /**
  * **Paciente** — se da de alta solo, sin admin ni token.
  *
@@ -139,6 +225,15 @@ export async function crearPaciente(api: APIRequestContext): Promise<Actor> {
   const sufijo = sufijoDeAlta();
   const nationalId = `CI-PW-${sufijo}`;
 
+  // El alta exige fecha de nacimiento, municipio de residencia y
+  // departamento emisor del documento (los tres, UUID del catálogo): sin
+  // ellos `RegisterPatientDto` responde 400 `VALIDATION_FAILED` y ninguna
+  // prueba de paciente corre.
+  const [residenceMunicipalityConceptId, issuerAdministrativeAreaConceptId] =
+    await Promise.all([
+      firstMunicipalityConceptId(api),
+      firstDepartmentConceptId(api),
+    ]);
   const respuesta = await api.post('/iam/auth/register-patient', {
     data: {
       nationalId,
@@ -148,6 +243,9 @@ export async function crearPaciente(api: APIRequestContext): Promise<Actor> {
       phone: '+591 70055555',
       gender: 'FEMALE',
       sexAtBirth: 'FEMALE',
+      birthDate: PATIENT_BIRTH_DATE,
+      residenceMunicipalityConceptId,
+      issuerAdministrativeAreaConceptId,
     },
   });
 

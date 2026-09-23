@@ -1,0 +1,12 @@
+/* ============================================================================
+    El directorio de médicos.
+
+    La rejilla de la portada vive en `shared/styles/rejilla-de-tarjetas.css`,
+    la disciplina de tarjeta que esta pantalla comparte con el directorio de
+    laboratorios, la portada de «Directorios» y «Mis servicios»; acá queda sólo
+    lo propio.
+    ========================================================================== */
+
+:host {
+  display: block;
+}

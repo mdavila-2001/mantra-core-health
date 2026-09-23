@@ -1,0 +1,17 @@
+<!-- En modo ícono el texto se va al nombre accesible y al tooltip: la flecha
+     sola no dice a dónde se vuelve. -->
+<a
+  app-button
+  variant="secondary"
+  data-testid="volver"
+  [iconOnly]="iconOnly()"
+  [attr.aria-label]="iconOnly() ? label() : null"
+  [appTooltip]="iconOnly() ? label() : ''"
+  [href]="href()"
+  (click)="handleClick($event)"
+>
+  <app-nav-icon name="arrow-left" />
+  @if (!iconOnly()) {
+    {{ label() }}
+  }
+</a>

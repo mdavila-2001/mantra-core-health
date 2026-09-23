@@ -1,11 +1,4 @@
-import {
-  test,
-  type PlaywrightTestArgs,
-  type PlaywrightTestOptions,
-  type PlaywrightWorkerArgs,
-  type PlaywrightWorkerOptions,
-  type TestInfo,
-} from '@playwright/test';
+import { test, type PlaywrightWorkerArgs, type TestInfo } from '@playwright/test';
 
 import { ACTORES } from '../../src/testing/acceptance/core/contracts/actor.keys';
 import type { JourneySpec } from '../../src/testing/acceptance/core/contracts/journey.types';
@@ -74,12 +67,25 @@ export function runId(): string {
  * Se escribe a mano porque `Parameters<typeof test>[1]` resuelve a la sobrecarga
  * equivocada —`TestDetails`— y deja `browser` como `any`, que es justo el tipo
  * que hace falta para que un error de fixture se vea al compilar.
+ *
+ * ## Por qué declara `browser` y no todas las fixtures
+ *
+ * Porque Playwright **decide qué fixtures construir leyendo el patrón de
+ * desestructuración** del primer parámetro, y por eso exige que sea uno: un
+ * `args` entero no le dice nada y el runner rechaza el archivo al coleccionarlo.
+ * Pedir la intersección completa obligaba a escribir `async (args, …)`, que es
+ * exactamente lo que dejó la suite sin coleccionar.
+ *
+ * `browser` es lo único que usan los cuatro journeys: cada uno abre sus propios
+ * contextos, uno por actor, porque un journey de dos personas no entra en una
+ * sola sesión. Declarar sólo eso además evita que el runner levante un `page` y
+ * un `context` por prueba que nadie usa.
+ *
+ * Si un journey nuevo necesita otra fixture, se agrega acá y en la
+ * desestructuración de {@link journeyTest} — las dos, o no se construye.
  */
 type CuerpoDePrueba = (
-  args: PlaywrightTestArgs &
-    PlaywrightTestOptions &
-    PlaywrightWorkerArgs &
-    PlaywrightWorkerOptions,
+  args: Pick<PlaywrightWorkerArgs, 'browser'>,
   testInfo: TestInfo,
 ) => Promise<void> | void;
 
@@ -108,13 +114,13 @@ export function journeyTest(
     .filter((actor) => actor !== 'anonimo')
     .filter((actor) => credenciales(actor) === null);
 
-  test(`${spec.id} · ${spec.title}`, async (args, testInfo) => {
+  test(`${spec.id} · ${spec.title}`, async ({ browser }, testInfo) => {
     test.skip(
       faltantes.length > 0,
       `Ambiente E2E incompleto: faltan credenciales de ${faltantes.join(', ')}. ` +
         `Este journey exige ${spec.requiresLive.join(', ')} corriendo de verdad ` +
         `y semillas verificadas por login real; sin eso no se puede afirmar nada.`,
     );
-    await implementacion(args, testInfo);
+    await implementacion({ browser }, testInfo);
   });
 }

@@ -12,6 +12,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type { PedidoFarmacia } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
+import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import {
   dataOf,
@@ -28,6 +29,7 @@ import { PageHeader } from '../../../../shared/components/organisms/page-header/
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { comprobanteDesdePedido } from '../../../../shared/utils/receipt-pdf/from-pedido';
 import { downloadReceiptPdf } from '../../../../shared/utils/receipt-pdf/receipt-pdf';
+import { displayCurrency } from '../../../../core/money/display-currency';
 
 /** A dónde vuelve quien llegó a un comprobante que no existe. */
 const LISTA_ROUTE = '/my-account/pharmacy-orders';
@@ -53,6 +55,14 @@ const LISTA_ROUTE = '/my-account/pharmacy-orders';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrderReceipt {
+
+  /**
+   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
+   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
+   */
+  protected moneda(code?: string | null): string {
+    return displayCurrency(code);
+  }
   private readonly ordersClient = inject(PharmacyOrdersClient);
   private readonly route = inject(ActivatedRoute);
   private readonly navigation = inject(NavigationService);
@@ -83,23 +93,21 @@ export class OrderReceipt {
       return;
     }
     this.state.set(loading());
-    this.ordersClient.pedido(orderId).subscribe((pedido) => {
-      if (pedido === null) {
-        this.state.set(notFound({ label: 'Volver a mis pedidos', route: LISTA_ROUTE }));
-        return;
-      }
-      if (comprobanteDesdePedido(pedido) === null) {
-        // Sin pago registrado no hay comprobante: el vacío honesto, con la
-        // salida al pedido — que es donde el pago se sigue.
-        this.state.set(
-          empty(
-            { label: 'Ver el pedido', route: this.rutaDelPedido(pedido.id) },
-            'Este pedido todavía no tiene un pago registrado.',
-          ),
-        );
-        return;
-      }
-      this.state.set(ready(pedido));
+    this.ordersClient.pedido(orderId).subscribe({
+      next: (pedido) => {
+        if (comprobanteDesdePedido(pedido) === null) {
+          // Payment is not part of the pharmacy-orders API. Do not fabricate a receipt.
+          this.state.set(
+            empty(
+              { label: 'Ver el pedido', route: this.rutaDelPedido(pedido.id) },
+              'Este pedido todavía no tiene un pago registrado.',
+            ),
+          );
+          return;
+        }
+        this.state.set(ready(pedido));
+      },
+      error: (error: unknown) => this.state.set(errorToViewState<PedidoFarmacia>(error)),
     });
   }
 

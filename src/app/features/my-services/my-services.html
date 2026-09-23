@@ -17,25 +17,47 @@
     </app-form-field>
   }
 
+  <!-- Buscador y filtro en el MISMO renglón, igual que en el resto de los
+       listados: el texto a la izquierda, «Estado» al lado. Los dos los
+       resuelve el servidor (`q` e `isActive`), así que el conteo y el «Cargar
+       más» siguen hablando de la lista filtrada y no de otra. -->
+  <app-filter-bar
+    [filters]="filtros"
+    searchLabel="Buscar un servicio por nombre o código"
+    data-testid="my-services-filters"
+  />
+
   <app-view-state-host [state]="estado()" (retry)="recargar()">
     <!-- S2 con la forma de lo que viene: bloques de tarjeta, no renglones de
          texto. Un esqueleto que no se parece al contenido desorienta. -->
-    <div vsh-skeleton class="mis-servicios__esqueleto">
+    <div vsh-skeleton class="rejilla mis-servicios__rejilla">
       @for (hueco of huecosDelEsqueleto; track hueco) {
-        <app-skeleton variant="rect" height="9rem" />
+        <app-skeleton variant="rect" height="11rem" />
       }
     </div>
 
     <!-- Lista y no una hilera de `div`: un lector de pantalla anuncia cuántos
-         servicios hay antes de leer el primero. -->
-    <ul class="mis-servicios__grilla" data-testid="my-services-grid">
-      @for (servicio of servicios(); track servicio.id) {
-        <li class="mis-servicios__item">
-          <app-card variant="outlined" padding="md" data-testid="my-services-item">
-            <div class="mis-servicios__ficha">
-              <h2 class="mis-servicios__nombre">{{ servicio.name }}</h2>
+         servicios hay antes de leer el primero.
 
-              <!-- Sólo lo inactivo lleva distintivo: en una grilla, un «Activo»
+         La rejilla y la tarjeta salen de `rejilla-de-tarjetas.css`, la misma
+         hoja que pinta las portadas de los directorios: el ícono que encabeza,
+         el nombre y el renglón de dato son la anatomía compartida, y lo único
+         propio de esta pantalla es lo que va debajo —el precio y su edición—. -->
+    <ul class="rejilla mis-servicios__rejilla" data-testid="my-services-grid">
+      @for (servicio of servicios(); track servicio.id) {
+        <li>
+          <article class="rejilla__tarjeta" data-testid="my-services-item">
+            <!-- El ícono encabeza la tarjeta y va `aria-hidden` (lo pone el
+                 propio átomo): la tarjeta ya se llama por su servicio, y
+                 anunciarlo lo repetiría una vez por tarjeta. Lo que aporta es
+                 distinguir de un vistazo una consulta de una ecografía, que es
+                 justo lo que una rejilla de tarjetas iguales no dejaba hacer. -->
+            <app-service-icon class="rejilla__icono" [servicio]="servicio.name" />
+
+            <div class="tarjeta-servicio__ficha">
+              <h2 class="rejilla__nombre">{{ servicio.name }}</h2>
+
+              <!-- Sólo lo inactivo lleva distintivo: en una rejilla, un «Activo»
                    repetido en cada tarjeta compite con el precio y no informa
                    nada. Lo excepcional es lo que hay que ver. -->
               @if (!servicio.isActive) {
@@ -43,21 +65,103 @@
               }
             </div>
 
-            <p class="mis-servicios__codigo">{{ servicio.code }}</p>
+            <p class="rejilla__dato">{{ servicio.code }}</p>
 
-            <dl class="mis-servicios__precio">
-              <dt class="mis-servicios__rotulo">Precio de referencia</dt>
-              <dd class="mis-servicios__monto tabular-nums" data-testid="my-services-price">
-                {{ servicio.defaultPrice }}
-              </dd>
-            </dl>
-          </app-card>
+            @if (enEdicion() === servicio.id) {
+              <!-- El campo reemplaza al importe en su mismo lugar: la tarjeta no
+                   cambia de alto al abrirse y la rejilla no salta. -->
+              <div class="tarjeta-servicio__edicion">
+                <app-form-field
+                  label="Precio"
+                  [errorMessage]="errorDelPrecio() ?? ''"
+                  hint="Importe con hasta dos decimales."
+                >
+                  <app-input
+                    inputMode="decimal"
+                    autocomplete="off"
+                    placeholder="0.00"
+                    [value]="borrador()"
+                    (valueChange)="escribirPrecio($event)"
+                    [hasError]="errorDelPrecio() !== null"
+                    [disabled]="guardando() === servicio.id"
+                    testId="my-services-price-input"
+                  />
+                </app-form-field>
+
+                <div class="tarjeta-servicio__acciones">
+                  <button
+                    app-button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    [isLoading]="guardando() === servicio.id"
+                    data-testid="my-services-price-save"
+                    (clicked)="guardarPrecio(servicio)"
+                  >
+                    Guardar
+                  </button>
+                  <button
+                    app-button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    [disabled]="guardando() === servicio.id"
+                    data-testid="my-services-price-cancel"
+                    (clicked)="cancelar()"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <dl class="tarjeta-servicio__precio">
+                <dt class="tarjeta-servicio__rotulo">Precio de referencia</dt>
+                <dd class="tarjeta-servicio__monto tabular-nums" data-testid="my-services-price">
+                  @if (sinPrecio(servicio)) {
+                    <!-- Un «0.00» se lee como que la consulta no se cobra. Lo
+                         que pasa de verdad es que nadie declaró el arancel. -->
+                    <span class="tarjeta-servicio__pendiente">Definí el precio</span>
+                  } @else {
+                    {{ precio(servicio) }}
+                  }
+                </dd>
+              </dl>
+
+              <div class="tarjeta-servicio__acciones">
+                <button
+                  app-button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  data-testid="my-services-price-edit"
+                  [attr.aria-label]="'Editar precio: ' + servicio.name"
+                  (clicked)="editar(servicio)"
+                >
+                  Editar precio
+                </button>
+                <!-- C-12 (2026-09-20) · «que se pueda programar horarios para
+                     Mis Servicios, que bloqueen la agenda de consulta médica
+                     con el motivo OTROS SERVICIOS». -->
+                <button
+                  app-button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  data-testid="my-services-schedule"
+                  [attr.aria-label]="'Programar horario: ' + servicio.name"
+                  (clicked)="programarHorario(servicio)"
+                >
+                  Programar horario
+                </button>
+              </div>
+            }
+          </article>
         </li>
       }
     </ul>
 
     @if (hayMas()) {
-      <div class="mis-servicios__mas">
+      <div class="tarjeta-servicio__mas">
         <button
           app-button
           type="button"
@@ -73,3 +177,98 @@
     }
   </app-view-state-host>
 </div>
+
+
+<!-- ─── Programar el horario de un servicio (C-12) ──────────────────────────
+     El rato se elige MIRANDO el horario real: el modal monta
+     `app-schedule-grid`, el mismo organismo que dibuja «Mis horarios de
+     atención» en `/schedule?vista=agenda`, con las reglas publicadas y los
+     bloqueos ya creados. «Reciclar sus vistas» es esto, y no una grilla nueva
+     que se vería parecida y se desfasaría a la primera diferencia.
+
+     El rato se guarda como una excepción de disponibilidad sobre la agenda del
+     profesional —el mismo mecanismo con que se bloquea un día—, que es lo que
+     produce el bloqueo que el pedido exige. -->
+@if (programando(); as servicio) {
+  <app-content-dialog
+    [heading]="'Programar horario · ' + servicio.name"
+    description="El rato queda bloqueado en tu agenda de consulta médica."
+    size="lg"
+    (closed)="cerrarProgramacion()"
+  >
+    @if (sinAgendaPropia()) {
+      <app-alert tone="info" title="Todavía no tenés agenda propia">
+        Para bloquear un rato hace falta una agenda publicada a tu nombre. Publicá tu horario de
+        atención y volvé acá.
+      </app-alert>
+    } @else {
+      <div class="programar-servicio">
+        <!-- La MISMA grilla del horario, con lo que ya está bloqueado. -->
+        <app-schedule-grid
+          [reglas]="reglasDelHorario()"
+          [bloqueos]="bloqueosDeLaSemana()"
+          rango="atencion"
+          nombre="Tu horario de atención"
+          vigencia="Lo que marques abajo se bloquea sobre este horario."
+          data-testid="my-services-schedule-grid"
+        />
+
+        <div class="programar-servicio__campos">
+          <div class="programar-servicio__dia">
+            <span class="programar-servicio__rotulo" id="programar-dia">¿Qué día?</span>
+            <app-segmented-control
+              data-testid="my-services-schedule-day"
+              ariaLabel="¿Qué día se presta el servicio?"
+              [options]="diasDeLaSemana"
+              [value]="diaElegido()"
+              (valueChange)="diaElegido.set($event)"
+            />
+          </div>
+
+          <div class="programar-servicio__rango">
+            <app-form-field label="Desde" [required]="true">
+              <app-input
+                [value]="desdeElegido()"
+                (valueChange)="fijarDesde($event)"
+                placeholder="14:00"
+                testId="my-services-schedule-from"
+              />
+            </app-form-field>
+            <app-form-field label="Hasta" [required]="true">
+              <app-input
+                [value]="hastaElegido()"
+                (valueChange)="fijarHasta($event)"
+                placeholder="16:00"
+                testId="my-services-schedule-to"
+              />
+            </app-form-field>
+          </div>
+        </div>
+
+        <!-- El motivo se dice antes de guardar: es lo que va a leer quien mire
+             la agenda, y lo que el paciente ve como rato no disponible. -->
+        <p class="programar-servicio__motivo" data-testid="my-services-schedule-reason">
+          En tu agenda va a aparecer como <strong>«Otros servicios · {{ servicio.name }}»</strong>.
+        </p>
+
+        @if (errorDelHorario(); as mensaje) {
+          <app-alert tone="error" title="No se pudo programar">{{ mensaje }}</app-alert>
+        }
+      </div>
+    }
+
+    @if (!sinAgendaPropia()) {
+      <button
+        dialog-actions
+        app-button
+        type="button"
+        variant="primary"
+        data-testid="my-services-schedule-save"
+        [isLoading]="guardandoHorario()"
+        (clicked)="guardarHorarioDelServicio()"
+      >
+        Bloquear ese rato
+      </button>
+    }
+  </app-content-dialog>
+}

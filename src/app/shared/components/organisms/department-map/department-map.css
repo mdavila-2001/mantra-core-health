@@ -1,0 +1,103 @@
+/* El mapa de departamentos. Sólo tokens ALOVIDA.
+
+   La regla que gobierna esta hoja: **la elección nunca se dice sólo con
+   color**. El elegido cambia de relleno, cambia de trazo y además se nombra en
+   la línea de abajo (ver la plantilla). Quitá el color y el control sigue
+   siendo usable; es el requisito de WCAG 2.2 AA que un mapa incumple siempre. */
+
+:host {
+  display: block;
+}
+
+.department-map {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* El lienzo se estira al ancho disponible y conserva su proporción por el
+   `viewBox`. Sin ancho fijo en ninguna medida: a 390 px ocupa la columna, a
+   1440 px lo limita el `max-width` de abajo — un mapa de país que ocupara
+   700 px de alto obligaría a desplazar para llegar al siguiente campo. */
+.department-map__lienzo {
+  display: block;
+  width: 100%;
+  max-width: 22rem;
+  height: auto;
+  margin-inline: auto;
+  overflow: visible;
+}
+
+.department-map__forma {
+  fill: color-mix(in srgb, var(--bg-surface) 88%, var(--text-secondary));
+  stroke: var(--border-default);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  cursor: pointer;
+  transition:
+    fill var(--dur-fast) var(--ease-out),
+    stroke var(--dur-fast) var(--ease-out);
+}
+
+/* El puntero sólo insinúa: el estado de verdad es `--elegido`. Sin esto, pasar
+   por encima y elegir se ven casi igual y no se sabe si quedó marcado. */
+.department-map__departamento:hover .department-map__forma {
+  fill: color-mix(in srgb, var(--brand-primary) 18%, var(--bg-surface));
+}
+
+/* El foco del teclado se ve **sobre el trazo**, no con un `outline` del
+   navegador: un `outline` rectangular sobre una silueta irregular marca el
+   rectángulo que la contiene, que en el caso de Santa Cruz es media pantalla.
+   `outline: none` acá no quita el indicador, lo reemplaza por uno que se
+   entiende. */
+.department-map__forma:focus {
+  outline: none;
+}
+
+.department-map__forma:focus-visible {
+  stroke: var(--brand-primary);
+  stroke-width: 10;
+  /* El elegido con foco tiene que distinguirse del elegido sin foco: el
+     desenfoque exterior lo hace sin mover un píxel del dibujo. */
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--brand-primary) 70%, transparent));
+}
+
+/* Las dos señas visuales del elegido, y son dos a propósito: el relleno para
+   quien ve color, el trazo grueso para quien no. */
+.department-map__departamento--elegido .department-map__forma {
+  fill: var(--brand-primary);
+  stroke: var(--text-primary);
+  stroke-width: 8;
+}
+
+.department-map__sigla {
+  font-family: var(--font-body);
+  font-size: var(--fs-display);
+  font-weight: 600;
+  fill: var(--text-secondary);
+  /* El rótulo está encima de su propio control: sin esto, pulsar justo sobre
+     las letras no elegiría el departamento. */
+  pointer-events: none;
+  user-select: none;
+}
+
+.department-map__departamento--elegido .department-map__sigla {
+  fill: var(--text-inverse, #ffffff);
+  font-weight: 700;
+}
+
+.department-map__elegido {
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* Quien pidió menos movimiento no recibe transiciones. El estado sigue
+   cambiando: lo que se apaga es la animación, no la información. */
+@media (prefers-reduced-motion: reduce) {
+  .department-map__forma {
+    transition: none;
+  }
+}

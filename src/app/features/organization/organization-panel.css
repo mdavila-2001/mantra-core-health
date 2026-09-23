@@ -1,17 +1,17 @@
 /* El panel de la organización (TP-1).
-   Sólo tokens REDSAT: ningún hex suelto, porque el contraste AA lo garantiza
+   Sólo tokens ALOVIDA: ningún hex suelto, porque el contraste AA lo garantiza
    la paleta y un color a mano lo rompe sin que nadie se entere. */
 
 .organizacion {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--sp-6);
 }
 
 .organizacion__selector {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--sp-2);
 }
 
 .organizacion__bloque {
@@ -22,46 +22,46 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--sp-3);
   flex-wrap: wrap;
-  margin-block-end: var(--space-4);
+  margin-block-end: var(--sp-4);
 }
 
 .organizacion__titulo {
   margin: 0;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
+  font-size: var(--fs-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .organizacion__formulario {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--sp-4);
 }
 
 .organizacion__datos {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: var(--space-2) var(--space-4);
+  gap: var(--sp-2) var(--sp-4);
   margin: 0;
 }
 
 .organizacion__datos dt {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
 }
 
 .organizacion__datos dd {
   margin: 0;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
 }
 
 .organizacion__nota {
-  margin-block-start: var(--space-4);
+  margin-block-start: var(--sp-4);
   margin-block-end: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
 }
 
 /* El código de aseguradora es de sólo lectura dentro del formulario editable:
@@ -69,7 +69,7 @@
    que se puede tocar. */
 .organizacion__dato-solo-lectura {
   margin: 0;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
 }
 
 .organizacion__gente {
@@ -78,16 +78,16 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--sp-2);
 }
 
 .organizacion__persona {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
-  padding-block: var(--space-2);
-  border-block-end: 1px solid var(--color-border-subtle);
+  gap: var(--sp-3);
+  padding-block: var(--sp-2);
+  border-block-end: 1px solid var(--border-subtle);
 }
 
 .organizacion__persona:last-child {
@@ -95,9 +95,9 @@
 }
 
 .organizacion__persona-id {
-  color: var(--color-text-primary);
+  color: var(--text-primary);
   font-family: var(--font-family-mono, monospace);
-  font-size: var(--font-size-sm);
+  font-size: var(--fs-caption);
   overflow-wrap: anywhere;
 }
 
@@ -106,7 +106,7 @@
 @media (max-width: 40rem) {
   .organizacion__datos {
     grid-template-columns: 1fr;
-    gap: var(--space-1) 0;
+    gap: var(--sp-1) 0;
   }
 
   .organizacion__persona {
@@ -123,16 +123,16 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--sp-3);
 }
 
 .organizacion__solicitud {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
-  padding-block: var(--space-3);
-  border-block-end: 1px solid var(--color-border-subtle);
+  gap: var(--sp-4);
+  padding-block: var(--sp-3);
+  border-block-end: 1px solid var(--border-subtle);
 }
 
 .organizacion__solicitud:last-child {
@@ -145,19 +145,19 @@
 
 .organizacion__solicitud-cargo {
   margin: 0;
-  color: var(--color-text-primary);
-  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
 .organizacion__solicitud-nota {
   margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
 }
 
 .organizacion__solicitud-acciones {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--sp-2);
   flex-shrink: 0;
 }
 
@@ -174,17 +174,21 @@
 
 .organizacion__fecha {
   margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  text-transform: capitalize;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+/* «EEEE d 'de' MMMM»: sólo la inicial; `capitalize` escribía «De». */
+.organizacion__fecha::first-letter {
+  text-transform: uppercase;
 }
 
 .organizacion__agenda-controles {
   display: flex;
   align-items: flex-end;
-  gap: var(--space-3);
+  gap: var(--sp-3);
   flex-wrap: wrap;
-  margin-block-end: var(--space-4);
+  margin-block-end: var(--sp-4);
 }
 
 .organizacion__citas {
@@ -201,10 +205,10 @@
 .organizacion__cita {
   display: grid;
   grid-template-columns: 4.5rem 1fr 12rem;
-  gap: var(--space-3);
+  gap: var(--sp-3);
   align-items: baseline;
-  padding-block: var(--space-2);
-  border-block-end: 1px solid var(--color-border-subtle);
+  padding-block: var(--sp-2);
+  border-block-end: 1px solid var(--border-subtle);
 }
 
 .organizacion__cita:last-child {
@@ -212,19 +216,19 @@
 }
 
 .organizacion__cita-hora {
-  color: var(--color-text-primary);
-  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
 .organizacion__cita-paciente {
-  color: var(--color-text-primary);
+  color: var(--text-primary);
   overflow-wrap: anywhere;
 }
 
 .organizacion__cita-sede {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
   overflow-wrap: anywhere;
 }
 

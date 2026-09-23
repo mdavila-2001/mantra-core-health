@@ -30,14 +30,14 @@ export const environment: Environment = {
    * salvo que el despliegue la pida (`PUBLIC_DEMO_PRESETS=true`, pensado para
    * el staging de una demo).
    */
-  demoPresets: envFromProcess.demoPresets ?? false,
+  demoPresets: envFromProcess.demoPresets ?? true,
 
   /**
    * Apagada por defecto: sin pasarela real, en producción sólo existe el
    * camino del mostrador. El staging de una demo la enciende con
    * `PUBLIC_PAYMENT_DEMO=true`.
    */
-  paymentDemo: envFromProcess.paymentDemo ?? false,
+  paymentDemo: envFromProcess.paymentDemo ?? true,
 
   /**
    * Apagada por defecto: en producción no hay de dónde leer una membresía
@@ -45,14 +45,21 @@ export const environment: Environment = {
    * mostrar un saldo sembrado. El staging de una demo la enciende con
    * `PUBLIC_LOYALTY_DEMO=true`.
    */
-  loyaltyDemo: envFromProcess.loyaltyDemo ?? false,
+  loyaltyDemo: envFromProcess.loyaltyDemo ?? true,
 
   /**
    * Apagada por defecto: en producción no hay lecturas de campañas, así que
    * sembrarlas sería anunciar descuentos que ningún backend puede honrar. El
    * staging de una demo la enciende con `PUBLIC_CAMPAIGNS_DEMO=true`.
    */
-  campaignsDemo: envFromProcess.campaignsDemo ?? false,
+  campaignsDemo: envFromProcess.campaignsDemo ?? true,
+
+  /**
+   * Siempre encendido en la rama `mockup`: es lo que la define. No lee el
+   * entorno del proceso a propósito, para que no haya forma de apuntar esta
+   * rama a una API real por accidente.
+   */
+  mockBackend: true,
 
   /**
    * Telemetría **apagada** salvo que el despliegue la encienda.

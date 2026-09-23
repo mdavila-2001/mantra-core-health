@@ -41,9 +41,9 @@ type PasoDeLaBilletera = 'saldo' | 'canjear' | 'comprobante';
  *
  * El cliente pidió el módulo aunque el porcentaje por compra sea negociación
  * abierta («pero el módulo tiene que estar disponible»), así que esta pantalla
- * **existe siempre**. Lo que decide `environment.loyaltyDemo` es si hay datos
- * sembrados: apagado, la billetera dice la verdad —que todavía no hay programa
- * activo— en vez de inventar un saldo.
+ * **existe siempre**. Lo que se ve depende de lo que el backend publique: hoy
+ * no hay lecturas de saldo ni de movimientos para el paciente, así que la
+ * billetera dice la verdad en vez de inventar un saldo.
  *
  * ## Qué es real acá
  *
@@ -52,6 +52,14 @@ type PasoDeLaBilletera = 'saldo' | 'canjear' | 'comprobante';
  * (`promotions.points_ledger_entries`) y el cliente las cumple de verdad. Lo
  * simulado es **el código de canje**, porque quien lo escanea —el lado
  * comercio— no existe todavía; por eso su comprobante lleva el chip DEMO.
+ *
+ * ## De dónde salen los datos (R-T-E6B2)
+ *
+ * Del backend, por HTTP: `GET /loyalty/me` y `GET /loyalty/me/points`, y el
+ * canje por `POST /loyalty/me/points/redeem`. El titular no viaja desde acá:
+ * lo resuelve el servidor con el paciente del token. Sin membresía la lectura
+ * responde `enrolled: false` y la pantalla pinta su vacío, que es un estado
+ * normal y no un error. No hay datos de ejemplo ni «Simular compra».
  *
  * Cero identificadores visibles: lo que se lee es el saldo, el nivel y qué pasó.
  */
@@ -134,6 +142,8 @@ export class Loyalty {
               // La salida es «Mis pedidos»: los puntos nacen de comprar, así
               // que la puerta correcta es donde vive la compra.
               { label: 'Ver mis pedidos', route: MIS_PEDIDOS_ROUTE },
+              // Ahora sí lo sabemos: la lectura real responde `enrolled: false`
+              // cuando la persona no tiene membresía en el programa del tenant.
               `Todavía no hay un programa de ${this.nombreDelPrograma} activo para tu cuenta. Cuando lo haya, vas a sumar puntos con cada compra en las farmacias de la red.`,
             ),
           );

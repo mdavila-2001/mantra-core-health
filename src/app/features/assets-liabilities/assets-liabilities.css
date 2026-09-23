@@ -1,0 +1,82 @@
+/* ============================================================================
+    Activos y pasivos. Sólo la disposición: los colores, tipos y espacios
+    salen de los tokens de ALOVIDA, nunca de valores literales acá.
+    ========================================================================== */
+
+.titulo-de-seccion {
+  margin: var(--e6) 0 var(--e3);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+}
+
+.nota {
+  margin: var(--e4) 0 0;
+  color: var(--tinta-3);
+  font-size: var(--fs-caption);
+}
+
+.alerta-de-formulario {
+  margin-bottom: var(--e4);
+}
+
+.cuentas-de-avance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--e4);
+}
+
+.cuentas-de-avance app-form-field {
+  flex: 1 1 220px;
+}
+
+.cuentas-de-avance .nota {
+  flex-basis: 100%;
+  margin-top: 0;
+}
+
+.lista-de-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e4);
+  padding: var(--e4);
+  border: 1px solid var(--filete-2);
+  border-radius: var(--r-card);
+  background: var(--sup-tarjeta);
+}
+
+.item__texto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.item__titulo {
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+.item__detalle {
+  font-size: var(--fs-caption);
+  color: var(--tinta-3);
+}
+
+.item__automatizacion {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  font-size: var(--fs-caption);
+  color: var(--tinta-2);
+}

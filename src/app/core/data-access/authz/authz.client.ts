@@ -3,7 +3,13 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
-import type { AuthzScopeQuery, CareRelationship, LegalRepresentation } from './authz.types';
+import type {
+  AuthzScopeQuery,
+  CareRelationship,
+  CareRelationshipRequestInput,
+  CareRelationshipRespondInput,
+  LegalRepresentation,
+} from './authz.types';
 
 /**
  * Cliente de `authz` (M06) — las bases legítimas de acceso de un paciente.
@@ -47,6 +53,45 @@ export class AuthzClient {
         params: alcanceDe(query),
       })
       .pipe(map((items) => items.map(toLegalRepresentation)));
+  }
+
+  /**
+   * `POST /authz/care-relationships/request` — el profesional que encontró al
+   * paciente en la búsqueda le pide el vínculo (FT-07-R05). Nace `PENDING` y no
+   * concede nada hasta que el paciente responda.
+   */
+  requestCareRelationship(
+    input: CareRelationshipRequestInput,
+  ): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url('/authz/care-relationships/request'),
+      input,
+    );
+  }
+
+  /**
+   * `GET /authz/care-relationships/requests/mine` — la bandeja del paciente:
+   * sus solicitudes todavía pendientes (FT-07-R06). El sujeto sale de la
+   * sesión, por eso no lleva parámetros.
+   */
+  listMyPendingCareRelationshipRequests(): Observable<readonly CareRelationship[]> {
+    return this.http
+      .get<readonly WireCareRelationship[]>(this.url('/authz/care-relationships/requests/mine'))
+      .pipe(map((items) => items.map(toCareRelationship)));
+  }
+
+  /**
+   * `POST /authz/care-relationships/:id/respond` — el paciente acepta (con
+   * las áreas que autoriza) o rechaza (FT-07-R06/R07).
+   */
+  respondToCareRelationshipRequest(
+    id: string,
+    input: CareRelationshipRespondInput,
+  ): Observable<{ readonly ok: boolean }> {
+    return this.http.post<{ readonly ok: boolean }>(
+      this.url(`/authz/care-relationships/${encodeURIComponent(id)}/respond`),
+      input,
+    );
   }
 
   private url(path: string): string {

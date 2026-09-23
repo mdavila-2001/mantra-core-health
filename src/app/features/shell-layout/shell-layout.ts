@@ -16,18 +16,23 @@ import { esPaciente, etiquetasDeRoles } from '../../core/auth/role-labels';
 import { LOGIN_ROUTE } from '../../core/http/auth.interceptor';
 import { Breakpoints } from '../../core/layout/breakpoints';
 import { NavigationService } from '../../core/navigation/navigation.service';
+import { PatientContextService } from '../../core/patient-context/patient-context.service';
 import type { HeaderUser } from '../../shared/components/organisms/header/header.types';
 import type { NavSection } from '../../shared/components/organisms/side-nav/side-nav.types';
 import type { TenantOption } from '../../shared/components/organisms/tenant-switcher/tenant-switcher.types';
+import { ShellService } from '../../shared/components/organisms/shell/shell-service';
 import { TutorialOverlay } from '../../shared/components/organisms/tutorial-overlay/tutorial-overlay';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 // Carril P1: la campana. Es propiedad de P1 durante la tanda —el README lo
 // declara hotspot— y se monta acá porque el armazón es lo único que existe
 // exactamente una vez por sesión con interfaz.
 import { NotificationBell } from '../../shared/components/organisms/notification-bell/notification-bell';
+import { BackLink } from '../../shared/components/atoms/back-link/back-link';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
+import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
 import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
 import { TUTORIALS } from '../../core/tutorials/definitions';
+import { AlovidaThemeToggleDirective } from '../../core/alovida/alovida-theme-toggle.directive';
 
 /**
  * Si un destino de la barra queda debajo de la URL actual.
@@ -39,6 +44,9 @@ import { TUTORIALS } from '../../core/tutorials/definitions';
 function contiene(ruta: string, url: string): boolean {
   return url === ruta || url.startsWith(`${ruta}/`);
 }
+
+/** El panel. Constante y no literal suelto: lo miran dos cosas distintas acá. */
+const PANEL = '/dashboard';
 
 /**
  * Armazón de todas las pantallas con sesión.
@@ -63,12 +71,15 @@ function contiene(ruta: string, url: string): boolean {
     // Un solo marcado para el destino de la barra, esté suelto o dentro de un
     // bloque: ver la nota de la plantilla `#destino`.
     NgTemplateOutlet,
+    AlovidaThemeToggleDirective,
     RouterLink,
     RouterOutlet,
     TutorialOverlay,
     TutorialTarget,
     NotificationBell,
+    BackLink,
     NavIcon,
+    Tooltip,
   ],
   templateUrl: './shell-layout.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -78,17 +89,31 @@ export class ShellLayout {
   private readonly router = inject(Router);
   private readonly breakpoints = inject(Breakpoints);
   private readonly navigation = inject(NavigationService);
+  /* El estado de la barra recogida no es de este componente: ya vivía en
+     `ShellService`, con su persistencia en `localStorage` y su lectura diferida
+     a después del primer render. Acá se consume, no se reimplementa. */
+  private readonly shell = inject(ShellService);
   /* Inyectado, no global: bajo SSR no hay `document` y el armazón se renderiza
      igual en el servidor. */
   private readonly document = inject(DOCUMENT);
 
   protected readonly activeTenantId = this.auth.activeTenantId;
 
+  /* B.1 · por quién se está operando. El armazón es el único lugar que existe
+     una vez por sesión con interfaz, así que es donde el conmutador y su aviso
+     pueden vivir sin que cada pantalla los repita. */
+  private readonly contextoDePaciente = inject(PatientContextService);
+
+  protected readonly dependientes = this.contextoDePaciente.dependents;
+  protected readonly pacienteActivo = this.contextoDePaciente.activePatientProfileId;
+  protected readonly operandoPorDependiente = this.contextoDePaciente.isActingForDependent;
+  protected readonly nombreDelPacienteActivo = this.contextoDePaciente.activePatientName;
+
   /**
    * El shell no mide la ventana: la recibe. Sin esto el nav se queda como columna fija de 260 px
    * también en un teléfono, empujando el contenido fuera de la pantalla.
    *
-   * Con el marco REDSAT el cajón lo resuelve la hoja por `@media`, así que esto
+   * Con el marco ALOVIDA el cajón lo resuelve la hoja por `@media`, así que esto
    * ya no gobierna el marcado; se conserva porque sigue siendo la respuesta a
    * «¿estamos en ancho de cajón?» para quien la necesite.
    */
@@ -113,6 +138,12 @@ export class ShellLayout {
     // acumula— pero hacerlo en el arranque lo cargaría también en las pantallas
     // públicas, donde no hay ningún tutorial que ofrecer.
     this.tutorials.register(TUTORIALS);
+
+    /* Los dependientes se piden una sola vez, al montar el armazón: el
+       conmutador tiene que estar antes de que la persona lo busque, y pedirlos
+       desde cada pantalla los pediría cinco veces. El servicio no hace nada
+       bajo SSR ni en una cuenta que no es de un paciente. */
+    this.contextoDePaciente.loadDependents();
 
     this.urlActual.set(this.rutaLimpia());
     this.router.events
@@ -147,6 +178,20 @@ export class ShellLayout {
    * prefijo de la URL. La hija gana a su padre cuando existe, y el padre sigue
    * ganando cuando la página no está en el menú. Es la misma regla que traía el
    * organismo `app-side-nav`, y se porta con ella.
+   *
+   * ## Las rutas que un renglón representa
+   *
+   * Un renglón se marca además por las rutas que declara `representa`
+   * (`representaEnElMenu` en el registro): pantallas que se entran por él y no
+   * tienen renglón propio. Nació con «Directorios» (08/09/2026), cuando los
+   * cuatro directorios pasaron a abrirse desde su portada — sin esto, estar
+   * dentro de uno dejaba la barra entera apagada.
+   *
+   * **Compiten con la ruta propia, no la pisan**: se mide el largo de la ruta
+   * que emparejó, así que una entrada con renglón propio le sigue ganando a la
+   * portada que la representa. Hoy no puede pasar —lo representado es
+   * justamente lo que no está en el menú— y así sigue siendo cierto si mañana
+   * una de las cuatro recupera su renglón.
    */
   protected readonly rutaActiva = computed<string | null>(() => {
     const url = this.urlActual();
@@ -154,14 +199,32 @@ export class ShellLayout {
       return null;
     }
 
-    return this.sections()
-      .flatMap((seccion) => seccion.items)
-      .map((item) => item.route)
-      .filter((ruta) => contiene(ruta, url))
-      .reduce<string | null>(
-        (mejor, ruta) => (mejor === null || ruta.length > mejor.length ? ruta : mejor),
-        null,
-      );
+    // Lo que cada renglón representa se lee del menú del registro y no de
+    // `sections()`: ese devuelve el contrato del organismo (`NavItem`), que a
+    // propósito no sabe de rutas representadas — dibuja lo que recibe. La
+    // vitrina del sistema de diseño, que `sections()` agrega por su cuenta, no
+    // representa nada y entra igual por su ruta.
+    const representadas = new Map<string, readonly string[]>(
+      [...this.destinosFijos(), ...this.navigation.menu().flatMap((seccion) => seccion.items)]
+        .filter((item) => item.representa !== undefined)
+        .map((item) => [item.route, item.representa ?? []] as const),
+    );
+
+    // Los fijos entran en la cuenta: se dibujan fuera de los grupos, pero son
+    // destinos del menú igual que el resto, y sin esto «Mi perfil» era la única
+    // entrada de la barra que nunca se marcaba al estar parado en ella.
+    return (
+      [...this.destinosFijos(), ...this.sections().flatMap((seccion) => seccion.items)]
+        .flatMap((item) =>
+          [item.route, ...(representadas.get(item.route) ?? [])]
+            .filter((ruta) => contiene(ruta, url))
+            .map((ruta) => ({ renglon: item.route, largo: ruta.length })),
+        )
+        .reduce<{ renglon: string; largo: number } | null>(
+          (mejor, actual) => (mejor === null || actual.largo > mejor.largo ? actual : mejor),
+          null,
+        )?.renglon ?? null
+    );
   });
 
   private rutaLimpia(): string {
@@ -169,20 +232,24 @@ export class ShellLayout {
   }
 
   /* ==========================================================================
-      Los desplegables de la barra
+      El desplegable de la barra
 
-      La barra tiene dos escalones plegables: el dominio (`General`, `Atención`,
-      …) y, adentro, el bloque de cosas parecidas (`Directorios`, `Mi salud`).
-      Los dos se comportan igual, así que los gobierna un solo par de métodos y
-      un solo mapa de estado.
+      La barra tiene **un solo** escalón plegable: el dominio (`General`,
+      `Atención`, …). Adentro van los destinos, sueltos.
+
+      Hubo un segundo escalón —el bloque de cosas parecidas: «Directorios», «Mi
+      salud»— y se retiró (AC-E1-02): con él, entrar a una pantalla costaba tres
+      clics y dos caían sobre rótulos que no llevan a ninguna parte. El reparto
+      en bloques sigue vivo en `core/navigation`, pero ahora sólo decide el
+      **orden** en que salen los destinos, no un renglón que haya que abrir.
 
       **Lo abierto se calcula, y sólo se recuerda lo que la persona toca.** El
       valor por omisión es «abierto si acá adentro está la pantalla en la que
-      estás»: navegar a `/my-account/diagnostic-results` abre «Mi cuenta» y «Mi
-      salud» sin que nadie los despliegue, que es lo que hace que la barra
-      siempre muestre dónde estás parado. Guardar el estado de los veintiún
-      bloques desde el arranque haría lo contrario — congelaría el menú tal como
-      quedó en la primera pantalla.
+      estás»: navegar a `/my-account/diagnostic-results` abre «Mi cuenta» sin
+      que nadie la despliegue, que es lo que hace que la barra siempre muestre
+      dónde estás parado. Guardar el estado de los dominios desde el arranque
+      haría lo contrario — congelaría el menú tal como quedó en la primera
+      pantalla.
      ========================================================================== */
 
   /**
@@ -197,9 +264,16 @@ export class ShellLayout {
    */
   private readonly plegadosAMano = signal<Readonly<Record<string, boolean>>>({});
 
-  /** Clave estable de un desplegable. El grupo la prefija: hay bloques homónimos. */
-  protected clavePlegable(grupo: string, bloque?: string): string {
-    return bloque === undefined ? grupo : `${grupo}/${bloque}`;
+  /**
+   * Clave estable de un desplegable.
+   *
+   * Hoy es el rótulo del dominio y nada más —son pocos y no se repiten—. Sigue
+   * siendo una función y no el rótulo suelto en la plantilla porque es el único
+   * lugar donde se decide de qué está hecha la clave del mapa de plegados: si
+   * mañana hiciera falta prefijarla, se prefija acá y no en cada llamada.
+   */
+  protected clavePlegable(grupo: string): string {
+    return grupo;
   }
 
   /** Si algún destino de la lista es —o contiene— la pantalla actual. */
@@ -222,6 +296,76 @@ export class ShellLayout {
    */
   protected alPlegar(clave: string, abierto: boolean): void {
     this.plegadosAMano.update((estado) => ({ ...estado, [clave]: abierto }));
+  }
+
+  /* ==========================================================================
+      La barra recogida (AC-E1-01)
+
+      Recogerla deja un carril de íconos: la marca sin su palabra, los destinos
+      sueltos con su ícono y el rótulo de cada dominio, también sólo su ícono.
+      Lo que se va es el texto y el cuerpo de los dominios; lo que se gana es el
+      ancho, que en una tabla de nueve columnas se nota.
+
+      **Nada se esconde del lector de pantalla.** Los rótulos no se borran: se
+      marcan `solo-lectores`, así el nombre accesible del enlace sigue siendo su
+      texto y no hace falta duplicarlo en un `aria-label` que podría separarse
+      de él. Para quien mira, el nombre vuelve como globo de ayuda.
+
+      El estado vive en `ShellService` —que ya lo persistía en `localStorage`—
+      y sólo manda por encima de 900 px: más abajo la barra es un cajón, y
+      recoger un cajón no significa nada.
+     ========================================================================== */
+
+  /**
+   * Si la barra está recogida a su carril de íconos.
+   *
+   * Son **dos** preguntas y las dos tienen que decir que sí: que la persona la
+   * haya recogido, y que en este ancho exista un carril al que recogerla. Por
+   * debajo de 901 px la barra es un cajón sobre el contenido, y un cajón
+   * recogido son ocho íconos sin nombre — que es exactamente lo que pasaría
+   * con sólo `shell.isCollapsed()`, porque la preferencia se guarda y viaja del
+   * escritorio al teléfono.
+   */
+  protected readonly navRecogido = computed(
+    () => this.shell.isCollapsed() && this.breakpoints.canCollapseNav(),
+  );
+
+  protected alternarNav(): void {
+    this.shell.toggleCollapsed();
+  }
+
+  /**
+   * Si estamos parados en el panel, que es donde «volver» no tiene a dónde ir.
+   *
+   * El panel es el principio del camino: quien entra, aterriza acá. No hay paso
+   * propio que deshacer, así que `app-back-link` cae a su respaldo… que es el
+   * panel. Pulsarlo desde el panel no hace nada, o —si el historial del
+   * navegador todavía trae la pantalla de ingreso— devuelve a ella, que se lee
+   * como haber cerrado la sesión. El cliente lo reportó así el 13/09/2026.
+   *
+   * En todas las demás pantallas la flecha se queda: ahí sí deshace un paso.
+   */
+  protected readonly enElPanel = computed(() => this.urlActual() === PANEL);
+
+  /**
+   * Clic sobre el rótulo de un dominio.
+   *
+   * Con la barra desplegada no hace nada: el `<details>` pliega solo, que es
+   * justamente por lo que es un `<details>`.
+   *
+   * Recogida, el cuerpo del dominio no se dibuja, así que abrirlo no mostraría
+   * nada. El clic entonces **despliega la barra** y deja ese dominio abierto,
+   * que es lo que la persona estaba pidiendo al tocarlo. Se corta el gesto
+   * nativo para que el `<details>` no cambie de estado por el camino y la barra
+   * no vuelva con los dominios al revés de como quedaron.
+   */
+  protected alTocarElDominio(evento: Event, grupo: string): void {
+    if (!this.navRecogido()) {
+      return;
+    }
+    evento.preventDefault();
+    this.shell.setCollapsed(false);
+    this.plegadosAMano.update((estado) => ({ ...estado, [this.clavePlegable(grupo)]: true }));
   }
 
   protected readonly user = computed<HeaderUser | null>(() => {
@@ -282,6 +426,17 @@ export class ShellLayout {
     ];
   });
 
+  /**
+   * Los dos destinos que van sueltos arriba de la barra: «Mi perfil» y
+   * «Notificaciones».
+   *
+   * Se dibujan con la MISMA plantilla que un ítem dentro de un grupo, así que
+   * heredan la marca de «acá estás», el `data-route` de las pruebas y el estado
+   * deshabilitado sin que haya que repetirlos. Quién los declara es el registro
+   * de secciones (`pinnedTop`), no esta pantalla.
+   */
+  protected readonly destinosFijos = computed(() => this.navigation.pinnedItems());
+
   /** Nombre de la organización activa, para el rótulo del selector. */
   protected readonly organizacionActiva = computed(() => {
     const id = this.activeTenantId();
@@ -333,5 +488,24 @@ export class ShellLayout {
   protected changeTenant(tenantId: string): void {
     this.auth.selectTenant(tenantId);
     void this.router.navigateByUrl('/dashboard');
+  }
+
+  /**
+   * Pasa a operar por un dependiente.
+   *
+   * No navega, a diferencia del cambio de organización: acá el contenido de la
+   * pantalla sigue siendo del mismo tipo —las citas siguen siendo citas— y
+   * quien conmuta suele estar mirando justamente eso. Las pantallas que leen el
+   * contexto se recargan solas.
+   *
+   * @param patientProfileId - El dependiente elegido.
+   */
+  protected elegirPaciente(patientProfileId: string): void {
+    this.contextoDePaciente.selectPatient(patientProfileId);
+  }
+
+  /** Vuelve a operar por uno mismo. */
+  protected volverAMiPerfil(): void {
+    this.contextoDePaciente.resetToSelf();
   }
 }

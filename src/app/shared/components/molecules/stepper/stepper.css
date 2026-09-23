@@ -27,6 +27,54 @@
     min-width: max-content;
 }
 
+/* ---- modo compacto -------------------------------------------------------
+
+   Diez fases con rótulo no entran en un teléfono. En compacto queda el
+   marcador —el rótulo sigue en el nombre accesible y vuelve como globo— y el
+   recorrido se aprieta: menos hueco entre pasos y un riel corto entre ellos.
+
+   `flex-wrap` NO se toca: en 360 px los diez marcadores caen en dos filas de
+   cinco, que es lo que evita el desplazamiento horizontal. Eso vale porque en
+   teléfono el riel no se dibuja: con riel, cinco marcadores de 44 más sus
+   cuatro tramos no entran en los ~278 px de la fila, así que los diez se
+   partían en tres filas y cada una terminaba en un tramo colgado que no unía
+   nada. El avance se sigue leyendo en los propios marcadores —✓, aro lleno y
+   punteado—, que es lo que nunca dependió del color.
+
+   Va antes de las reglas del control a propósito: las de acá pesan más
+   —dos clases contra una— y así el ajuste de ≥780 px, que vive en la media
+   query de abajo, sigue siendo el último en hablar.
+   ========================================================================== */
+
+.stepper--compact {
+    gap: var(--sp-1) var(--sp-2);
+}
+
+/* Sin rótulo a la vista, el paso ya no tiene por qué reservar su ancho. */
+.stepper--compact .stepper__step {
+    min-width: 0;
+}
+
+.stepper--compact .stepper__control {
+    /* El área táctil se vuelve cuadrada: el ancho lo daba el rótulo, que ya no
+       está, y el marcador solo mide 24. Mismo motivo que el alto de al lado. */
+    min-width: 44px;
+    justify-content: center;
+    padding-inline: 0;
+}
+
+/* En teléfono el riel (el `<span class="stepper__connector">` de la plantilla)
+   se retira: partido en tres filas unía pasos que no eran vecinos y dejaba un
+   tramo suelto al final de cada una. Vuelve en ≥780 px, donde los diez entran
+   en una sola fila y la línea sí dice el avance; el `flex-basis` corto es para
+   ese momento: con diez pasos, el tramo de cuatro espacios se comía el ancho
+   que necesitan los marcadores. */
+.stepper--compact .stepper__connector {
+    display: none;
+    flex-basis: var(--sp-2);
+    min-width: var(--sp-2);
+}
+
 /* ---- el paso como control (modo interactivo) ----------------------------- */
 
 /* El botón no se disfraza de botón: hereda la caja del paso y toda su presencia
@@ -57,6 +105,19 @@
     .stepper__control {
         min-height: 0;
         padding-block: var(--sp-1);
+    }
+
+    /* Y por lo mismo el ancho de 44 del modo compacto: acá el paso se acierta
+       con el puntero y le alcanza con lo que mide su marcador. */
+    .stepper--compact .stepper__control {
+        min-width: 0;
+    }
+
+    /* Acá los diez pasos entran en una fila, así que el riel vuelve a unir
+       vecinos de verdad y se dibuja. `block` es lo que ya era: hijo de un
+       contenedor flex, el valor se blockifica igual. */
+    .stepper--compact .stepper__connector {
+        display: block;
     }
 }
 
@@ -147,7 +208,7 @@
 }
 
 .stepper__step--complete .stepper__label {
-    color: var(--text-default);
+    color: var(--text-primary);
 }
 
 .stepper__step--current .stepper__marker {

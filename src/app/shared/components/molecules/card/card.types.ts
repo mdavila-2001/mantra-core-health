@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos de la Card — sistema REDSAT v1.0.
+    Contratos de la Card — sistema ALOVIDA v1.0.
 
     El spec del diseñador no declara tarjeta: es extensión propia armada con
     las superficies del tema (`--bg-surface`), el borde decorativo y las tres

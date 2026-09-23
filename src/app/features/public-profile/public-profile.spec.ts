@@ -38,6 +38,7 @@ describe('PublicProfile', () => {
     trajectory: [],
     ratingAverage: null,
     ratingCount: 0,
+    practiceSites: [],
     acceptsReviews: true,
     posts: [],
     updatedAt: new Date('2026-08-17T22:13:00.252Z'),

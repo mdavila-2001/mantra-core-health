@@ -25,6 +25,21 @@ export { Card } from './card/card';
 export { CARD_PADDINGS, CARD_VARIANTS } from './card/card.types';
 export type { CardPadding, CardVariant } from './card/card.types';
 
+export { FactList } from './fact-list/fact-list';
+export { FACT_LIST_DISPOSICIONES, HECHO_TONOS } from './fact-list/fact-list.types';
+export type { FactListDisposicion, Hecho, HechoTono } from './fact-list/fact-list.types';
+
+export { CommentMediaPicker } from './comment-media-picker/comment-media-picker';
+export {
+  COMMENT_MEDIA_MAX,
+  COMMENT_MEDIA_MAX_BYTES,
+  COMMENT_MEDIA_OPTIONS,
+} from './comment-media-picker/comment-media-picker.types';
+export type {
+  CommentMediaAttachment,
+  CommentMediaKind,
+} from './comment-media-picker/comment-media-picker.types';
+
 /**
  * El diálogo se abre por el servicio, no declarándolo en una plantilla: así hay
  * una sola instancia y el foco no queda repartido entre varias.
@@ -39,7 +54,15 @@ export { EMPTY_STATE_VARIANTS } from './empty-state/empty-state.types';
 export type { EmptyStateVariant } from './empty-state/empty-state.types';
 
 export { FileInput } from './file-input/file-input';
+
+export { FilePreviewImage } from './file-preview-image/file-preview-image';
 export type { RejectedFile } from './file-input/file-input';
+
+/* Hermano de `FilePreviewImage`: los dos parten de un `fileId` ya almacenado.
+   Aquél resuelve la imagen de un adjunto de comentario; éste sirve cualquier
+   archivo propio —con su nombre, su tipo y su tamaño— y delega la vista previa
+   en `FilePreview`, que no se exporta acá porque sólo se usa desde dentro. */
+export { StoredFilePreview } from './stored-file-preview/stored-file-preview';
 
 export { FormField } from './form-field/form-field';
 
@@ -80,10 +103,23 @@ export {
 } from './reference-combobox/reference-combobox.types';
 export type { ReferenceOption } from './reference-combobox/reference-combobox.types';
 
+/* Las acciones de una fila, según ADR-0012: hasta dos van en la fila con su
+   texto, con más van a un desplegable sobre `menu`. */
+export { RowActions } from './row-actions/row-actions';
+export { ROW_ACTIONS_INLINE_MAX } from './row-actions/row-actions.types';
+export type { RowAction } from './row-actions/row-actions.types';
+
+export { SectionHeading } from './section-heading/section-heading';
+
 export { SearchField } from './search-field/search-field';
 export { SEARCH_DEBOUNCE_MS } from './search-field/search-field.types';
 
-/* La tarjeta de la superficie pública (V65). Su diseño vive en `redsat.css`
+/* El selector de vista (FT-04): dos o más representaciones de la MISMA
+   colección. No confundir con `Tabs`, que separa contenidos distintos. */
+export { SegmentedControl } from './segmented-control/segmented-control';
+export type { SegmentedOption } from './segmented-control/segmented-control.types';
+
+/* La tarjeta de la superficie pública (V65). Su diseño vive en `alovida.css`
    §25, no en el componente — ver su `.css`, que está vacío a propósito. */
 export { SearchResult } from './search-result/search-result';
 export { SEARCH_RESULT_TONES } from './search-result/search-result.types';
@@ -104,10 +140,11 @@ export { Tab } from './tabs/tab/tab';
 export {
   TAB_ACTIVATION_KEYS,
   TAB_NAVIGATION_KEYS,
+  TABS_APPEARANCES,
   TABS_ORIENTATIONS,
   TABS_PARENT,
 } from './tabs/tabs.types';
-export type { TabsHost, TabsOrientation } from './tabs/tabs.types';
+export type { TabsAppearance, TabsHost, TabsOrientation } from './tabs/tabs.types';
 
 export { Toast } from './toast/toast';
 export { ToastService } from './toast/toast.service';

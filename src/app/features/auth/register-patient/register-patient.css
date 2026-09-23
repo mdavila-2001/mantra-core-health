@@ -46,6 +46,37 @@
 }
 
 /* ==========================================================================
+    El glifo de los campos que esta pantalla proyecta.
+
+    Los campos que dibuja el motor traen el suyo con
+    `.paginated-form__campo-icono`; los que proyecta esta pantalla —las casillas
+    de nombre, las dos lupas y los dos mapas de localidad— tienen que verse
+    IGUAL, o el mismo formulario mostraría dos tamaños de ícono según quién
+    dibuje el campo. La medida y la tinta son las de esa regla, a proposito.
+
+    El resaltado al enfocar nombra a los tres contenedores uno por uno porque la
+    encapsulación es emulada: una regla de esta hoja sólo alcanza a los nodos de
+    ESTA plantilla, y `app-form-field` dentro del combobox o del mapa es de la
+    suya. Ver `app-form-field:focus-within` en `paginated-form.css`.
+    ========================================================================== */
+.registro__campo-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  margin-inline-end: var(--sp-2);
+  color: var(--text-muted);
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+
+.registro__nombre:focus-within .registro__campo-icono,
+app-reference-combobox:focus-within .registro__campo-icono,
+app-location-picker:focus-within .registro__campo-icono {
+  color: var(--brand-primary);
+}
+
+/* ==========================================================================
     La ubicacion del domicilio.
 
     Antes esto era una linea de texto con el par de coordenadas —«Ubicacion

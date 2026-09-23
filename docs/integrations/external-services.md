@@ -1,6 +1,6 @@
 # Servicios externos
 
-**La API REDESA es la única integración del frontend.** Esta página lo verifica y
+**La API ALOVIDA es la única integración del frontend.** Esta página lo verifica y
 enumera lo que no hay.
 
 ---
@@ -9,7 +9,7 @@ enumera lo que no hay.
 
 | Servicio | Estado | Evidencia |
 |---|---|---|
-| **API REDESA** | **Única integración.** 20 operaciones | `core/data-access/**` |
+| **API ALOVIDA** | **Única integración.** 20 operaciones | `core/data-access/**` |
 | Correo electrónico | **Indirecta.** Lo envía la API; el enlace vuelve al frontend con un token | `/auth/verify-email`, `/auth/reset-password` |
 | Todo lo demás | **No existe** | Ver abajo |
 

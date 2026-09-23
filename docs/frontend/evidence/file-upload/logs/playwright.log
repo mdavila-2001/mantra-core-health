@@ -1,0 +1,17 @@
+
+Running 10 tests using 1 worker
+
+(node:22236) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › playwright/file-upload-preview.spec.ts:80:7 › laboratory: drag, PDF, images and layout at 390px (1.6s)
+  ✓   2 [chromium] › playwright/file-upload-preview.spec.ts:80:7 › laboratory: drag, PDF, images and layout at 768px (1.7s)
+  ✓   3 [chromium] › playwright/file-upload-preview.spec.ts:80:7 › laboratory: drag, PDF, images and layout at 1024px (1.6s)
+  ✓   4 [chromium] › playwright/file-upload-preview.spec.ts:80:7 › laboratory: drag, PDF, images and layout at 1440px (1.9s)
+  ✓   5 [chromium] › playwright/file-upload-preview.spec.ts:80:7 › laboratory: drag, PDF, images and layout at 1920px (2.5s)
+  ✓   6 [chromium] › playwright/file-upload-preview.spec.ts:162:5 › rejections preserve the file; navigation restores previews; removal restores required validation (1.4s)
+  ✓   7 [chromium] › playwright/file-upload-preview.spec.ts:198:5 › imaging center inherits the document picker and preview (1.4s)
+  ✓   8 [chromium] › playwright/file-upload-preview.spec.ts:206:5 › dark theme and damaged document feedback (827ms)
+  ✓   9 [chromium] › playwright/file-upload-preview.spec.ts:224:5 › shared picker previews text and audio, and disabled picker rejects drops (1.2s)
+  ✓  10 [chromium] › playwright/file-upload-preview.spec.ts:295:5 › compact comment picker rejects invalid drag without uploading (513ms)
+
+  10 passed (15.1s)

@@ -95,7 +95,12 @@ describe('Groups', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: AuthService, useValue: { activeTenantId: tenantId } },
+        // `displayName` lo lee `app-vitrina-minima`, que esta pantalla monta
+        // cuando falta la vitrina: propone el enlace a partir del nombre.
+        {
+          provide: AuthService,
+          useValue: { activeTenantId: tenantId, displayName: signal('Dra. Lucía Salas') },
+        },
       ],
     }).compileComponents();
 
@@ -246,7 +251,14 @@ describe('Groups', () => {
     fixture.detectChanges();
     abrirAlta();
 
-    expect(texto()).toContain('Configurar mi perfil público');
+    // El aviso dice qué falta y, desde el 13/09/2026, **ofrece resolverlo acá
+    // mismo**: entre el 10 y el 13 derivaba a «quien administra tu
+    // organización», que no tenía dónde hacerlo. La configuración sigue sin
+    // volver al perfil, que es de donde el propietario la mandó sacar.
+    expect(texto()).toContain('perfil público completo');
+    expect(texto()).not.toContain('Pedíselo a quien administra tu organización');
+    expect(texto()).toContain('Creá tu vitrina pública');
+    expect(texto()).not.toContain('Configurar mi perfil público');
   });
 
   it('con el perfil completo no avisa nada', () => {
@@ -269,7 +281,14 @@ describe('Groups', () => {
     fixture.detectChanges();
     abrirAlta();
 
-    expect(texto()).toContain('Configurar mi perfil público');
+    // El aviso dice qué falta y, desde el 13/09/2026, **ofrece resolverlo acá
+    // mismo**: entre el 10 y el 13 derivaba a «quien administra tu
+    // organización», que no tenía dónde hacerlo. La configuración sigue sin
+    // volver al perfil, que es de donde el propietario la mandó sacar.
+    expect(texto()).toContain('perfil público completo');
+    expect(texto()).not.toContain('Pedíselo a quien administra tu organización');
+    expect(texto()).toContain('Creá tu vitrina pública');
+    expect(texto()).not.toContain('Configurar mi perfil público');
   });
 
   /**
@@ -286,6 +305,13 @@ describe('Groups', () => {
 
     // Sin perfil resuelto se trata como incompleto, que es lo conservador:
     // ofrecer «público» y que falle sería peor que ofrecer sólo privado.
-    expect(texto()).toContain('Configurar mi perfil público');
+    // El aviso dice qué falta y, desde el 13/09/2026, **ofrece resolverlo acá
+    // mismo**: entre el 10 y el 13 derivaba a «quien administra tu
+    // organización», que no tenía dónde hacerlo. La configuración sigue sin
+    // volver al perfil, que es de donde el propietario la mandó sacar.
+    expect(texto()).toContain('perfil público completo');
+    expect(texto()).not.toContain('Pedíselo a quien administra tu organización');
+    expect(texto()).toContain('Creá tu vitrina pública');
+    expect(texto()).not.toContain('Configurar mi perfil público');
   });
 });

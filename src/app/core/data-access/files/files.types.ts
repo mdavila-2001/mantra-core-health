@@ -8,17 +8,30 @@
     valores cerrados del propio subsistema y no catálogo de terminología.
     ========================================================================== */
 
-/** A qué recurso pertenece un adjunto. Son los tres que el modelo admite. */
-export const OWNER_TYPES = ['USER', 'PATIENT', 'TENANT'] as const;
+/** A qué recurso pertenece un adjunto. */
+export const OWNER_TYPES = [
+  'USER',
+  'PATIENT',
+  'TENANT',
+  'CONDITION',
+  'PROCEDURE',
+  // Los tres que el pedido de «adjuntos en todos los formularios» necesita. El
+  // backend todavía no los declara en su `OwnerType` (P25): la maqueta los
+  // sirve y contra la API real el vínculo responde 400 hasta que existan.
+  'MEDICATION_REQUEST',
+  'ALLERGY_INTOLERANCE',
+  'ENCOUNTER',
+] as const;
 
 /**
  * El tipo de propietario de un adjunto.
  *
- * **No existe `ENCOUNTER`.** `file_links.owner_type` admite estos tres y nada
- * más, así que los adjuntos de la ficha cuelgan del **paciente**, no del
- * encuentro concreto. Es una restricción del modelo, no una decisión de la
- * pantalla: quien quiera adjuntos por episodio tiene que promoverlo al `.puml`
- * primero.
+ * `file_links.owner_type_concept_id` es un concepto de terminología, no un
+ * enum fijo de la base — cada valor nuevo (como `CONDITION`/`PROCEDURE`,
+ * ALV-033) se agrega en código (`CONCEPTS.OWNER_*` del backend) y se siembra
+ * solo al arrancar la API. **No hace falta tocar el `.puml` ni el repo de
+ * modelo** para sumar un tipo de propietario nuevo; sólo para agregar una
+ * columna o tabla, que es un caso distinto.
  */
 export type OwnerType = (typeof OWNER_TYPES)[number];
 
@@ -96,4 +109,39 @@ export interface FileLink {
 export interface DownloadUrl {
   readonly url: string;
   readonly expiresAt: Date;
+}
+
+/**
+ * El contenido de un archivo almacenado, con la metadata que **viene con él**.
+ *
+ * ## De dónde sale cada campo
+ *
+ * De la propia respuesta de `GET /common/files/:id/content`, no de un endpoint
+ * de metadata: `mimeType` y `sizeBytes` son el `type` y el `size` del `Blob`
+ * —que el navegador rellena con el `Content-Type` y con los bytes recibidos— y
+ * `originalName` sale de `Content-Disposition`. Es metadata que el sistema ya
+ * emitía y que nadie estaba leyendo.
+ *
+ * ## Por qué el tipo del Blob es fiable
+ *
+ * Porque el backend no sirve lo que declaró quien subió: deduce el tipo de los
+ * primeros bytes al recibir el archivo y persiste **ese**. Un `.html`
+ * renombrado a `.png` llega como `text/plain`, no como `text/html`.
+ */
+export interface StoredFileContent {
+  /** Los bytes, listos para previsualizar o guardar. */
+  readonly blob: Blob;
+  /** Tipo real, tal como lo sirvió la API. Vacío si la respuesta no lo trajo. */
+  readonly mimeType: string;
+  /** Tamaño real de lo recibido, en bytes. */
+  readonly sizeBytes: number;
+  /**
+   * El nombre con el que se subió, **sólo si pudo leerse con certeza**.
+   *
+   * Ausente cuando el archivo no tiene `original_name`, cuando la respuesta no
+   * trae la cabecera —el backend simulado no la emite— o cuando venía
+   * malformada. Quien lo muestre debe traer su propio texto de reserva: acá no
+   * se inventa un nombre.
+   */
+  readonly originalName?: string;
 }

@@ -7,13 +7,17 @@ import { catchError, switchMap } from 'rxjs/operators';
 import { CommunityClient } from '../../../../core/data-access/community/community.client';
 import type {
   CommentThreadItem,
+  OwnPublicProfile,
   PostDetail,
 } from '../../../../core/data-access/community/community.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
+import { BackLink } from '../../../../shared/components/atoms/back-link/back-link';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { Avatar } from '../../../../shared/components/atoms/avatar/avatar';
+import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
@@ -22,6 +26,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
+import { VitrinaMinima } from '../../../communities/vitrina-minima/vitrina-minima';
 
 /** Largo máximo de un artículo. El backend no lo acota más de lo que la prosa pide. */
 const CUERPO_MAXIMO = 20000;
@@ -69,14 +74,18 @@ export interface ArticuloVisible {
   imports: [
     Alert,
     AppButton,
+    Avatar,
+    BackLink,
     Card,
     DatePipe,
     FormActions,
     FormField,
+    NavIcon,
     PageHeader,
     RouterLink,
     Textarea,
     ViewStateHost,
+    VitrinaMinima,
   ],
   templateUrl: './medical-articles.html',
   styleUrl: './medical-articles.css',
@@ -90,6 +99,37 @@ export class MedicalArticles {
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
   private readonly profileId = signal<string | null>(null);
+
+  /* -- Quién firma ------------------------------------------------------------
+     Sale de la MISMA lectura de la vitrina que esta pantalla ya hacía para
+     saber si existe. No es una petición nueva: es un dato que llegaba y se
+     descartaba. */
+
+  private readonly autor = signal<OwnPublicProfile | null>(null);
+
+  /** El nombre con el que se firma. Vacío mientras la vitrina no llegó. */
+  protected readonly autorNombre = computed(() => this.autor()?.displayName ?? '');
+
+  /**
+   * La foto de la vitrina, resuelta a su URL pública.
+   *
+   * Mismo camino que «Configurar mi vitrina» (`/public/media/<id>`). Sin foto
+   * devuelve `null` y el avatar cae solo a las iniciales del nombre.
+   */
+  protected readonly autorFoto = computed(() => {
+    const id = this.autor()?.avatarFileId;
+    return id == null ? null : `/public/media/${id}`;
+  });
+
+  /**
+   * Si la vitrina está listada públicamente.
+   *
+   * Gobierna lo que la cabecera DICE, no lo que el compositor hace: publicar en
+   * una vitrina privada sigue siendo posible y el backend decide igual que
+   * antes. Lo que cambia es que la pantalla deja de prometer «se publica en tu
+   * vitrina pública» cuando esa vitrina no es pública.
+   */
+  protected readonly vitrinaEsPublica = computed(() => this.autor()?.visibility === 'PUBLIC');
   /** Si ya se supo que esta sesión no tiene vitrina. Distinto de «cargando». */
   private readonly sinVitrina = signal(false);
 
@@ -124,9 +164,22 @@ export class MedicalArticles {
 
   protected readonly sinVitrinaTodavia = this.sinVitrina.asReadonly();
 
+  /**
+   * Recién creada la vitrina, la pantalla pasa a ser la de siempre.
+   *
+   * Se recarga en vez de sembrar los signals con lo que devolvió el `PUT`:
+   * publicar necesita `profileId` y la lista de artículos, y el camino que ya
+   * existe los trae juntos. Una vitrina recién creada no tiene artículos, así
+   * que la relectura es barata.
+   */
+  protected alCrearLaVitrina(): void {
+    this.cargar();
+  }
+
   private cargar(): void {
     this.articulos.set(loading());
     this.sinVitrina.set(false);
+    this.autor.set(null);
 
     this.community
       .getOwnProfile()
@@ -136,6 +189,7 @@ export class MedicalArticles {
             return of(null);
           }
           this.profileId.set(perfil.id);
+          this.autor.set(perfil);
           return this.community.listProfilePosts(perfil.id, { limit: 50 });
         }),
         switchMap((pagina) => {

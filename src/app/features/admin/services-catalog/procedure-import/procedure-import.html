@@ -1,0 +1,101 @@
+<app-page-header
+  title="Importar del arancel"
+  subtitle="Los procedimientos del arancel de honorarios, agrupados por especialidad."
+>
+  <a page-actions [routerLink]="['/administration/services-catalog']">
+    Volver al catálogo
+  </a>
+</app-page-header>
+
+<!-- La práctica es a dónde se importa. Va arriba y no dentro de cada tarjeta:
+     es una decisión que vale para toda la sesión de importación. -->
+<form class="importar__practica" (submit)="$event.preventDefault()">
+  <app-form-field
+    label="Importar al catálogo de"
+    hint="El servicio nace en la práctica que elijas."
+  >
+    <app-select
+      data-testid="importar-practica"
+      [options]="opcionesDePractica()"
+      [value]="practicaElegida()"
+      (valueChange)="cambiarPractica($event)"
+    />
+  </app-form-field>
+</form>
+
+@if (practicaElegida() === null) {
+  <!-- Sin práctica se puede mirar el arancel, pero no importar. Decirlo antes
+       evita que alguien recorra 4408 entradas para descubrirlo al tocar. -->
+  <app-alert variant="info" data-testid="importar-sin-practica">
+    Todavía no hay una práctica a la que importar. Podés recorrer el arancel
+    igual.
+  </app-alert>
+}
+
+<app-specialty-browser
+  [state]="estado()"
+  [groups]="grupos()"
+  [filters]="filtros()"
+  [hasMore]="hayMas()"
+  [collapsible]="true"
+  [expandAll]="hayFiltro()"
+  searchLabel="Buscar un procedimiento por nombre"
+  noMatchesText="Ningún procedimiento del arancel coincide. Probá con otra palabra o quitá la especialidad."
+  (filtersChanged)="filtrar($event)"
+  (moreRequested)="traerMas()"
+  (retry)="reintentar()"
+>
+  <ng-template let-procedimiento>
+    <article class="procedimiento" data-testid="procedimiento">
+      <h3 class="procedimiento__nombre">{{ procedimiento.display }}</h3>
+
+      <!-- El encabezado bajo el que el arancel lo lista. Va a UNA línea y con
+           el texto completo en el `title`: en las filas dañadas por el
+           reconocimiento óptico este campo trae párrafos enteros, y sin
+           acotarlo ocupa media tarjeta y tapa el precio. No se filtra ni se
+           limpia — el dato es el que es y se puede leer entero. -->
+      @if (procedimiento.group) {
+        <p
+          class="procedimiento__grupo"
+          [title]="procedimiento.group"
+        >{{ procedimiento.group }}</p>
+      }
+
+      <!-- El precio siempre con moneda, y la moneda es «Bs» por ahora:
+           ver `core/money/display-currency.ts`, que explica por qué no se
+           convierte la UMA. -->
+      <p class="procedimiento__precio">{{ precio(procedimiento) }}</p>
+
+      @if (procedimiento.ocrSuspect) {
+        <!-- Las 228 entradas que salieron dañadas del reconocimiento óptico
+             del arancel. Importar una en silencio mete un nombre y un precio
+             dudosos en la lista de un profesional. -->
+        <p class="procedimiento__aviso" data-testid="procedimiento-revision">
+          <app-badge variant="warning" size="sm">Revisar</app-badge>
+          El arancel marcó esta fila: su nombre y su precio pueden estar mal
+          leídos del documento original.
+        </p>
+      }
+
+      <div class="procedimiento__accion">
+        @if (estaImportado(procedimiento)) {
+          <!-- Ya está: no se ofrece importarlo de nuevo, se dice dónde está. -->
+          <app-badge variant="success" size="sm">Ya está en tu catálogo</app-badge>
+        } @else {
+          <button
+            app-button
+            variant="outline"
+            size="sm"
+            type="button"
+            data-testid="procedimiento-importar"
+            [attr.aria-label]="'Importar: ' + procedimiento.display"
+            [disabled]="practicaElegida() === null || importando() !== null"
+            (clicked)="importar(procedimiento)"
+          >
+            {{ importando() === procedimiento.code ? 'Importando…' : 'Importar' }}
+          </button>
+        }
+      </div>
+    </article>
+  </ng-template>
+</app-specialty-browser>

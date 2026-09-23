@@ -1,0 +1,386 @@
+{
+  "sucursales": [
+    {
+      "id": "suc_plexus_sc_equipetrol",
+      "parent_id": "lab_plexus",
+      "nombre": "Equipetrol",
+      "tipo": "laboratorio",
+      "direccion": "Av. Marcelo Terceros Bánzer #24, 3er anillo externo, barrio Sirari",
+      "zona": "Equipetrol/Sirari",
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": "Todos los días 07:00-23:00",
+      "estado_verificacion": "verificado_sitio_oficial_2026",
+      "fuentes": [
+        "src_plexus_sc"
+      ]
+    },
+    {
+      "id": "suc_plexus_sc_centro",
+      "parent_id": "lab_plexus",
+      "nombre": "Centro",
+      "tipo": "laboratorio",
+      "direccion": "Calle Buenos Aires esquina España",
+      "zona": "Centro",
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "verificado_sitio_oficial_2026",
+      "fuentes": [
+        "src_plexus_sc"
+      ]
+    },
+    {
+      "id": "suc_plexus_sc_area_medica",
+      "parent_id": "lab_plexus",
+      "nombre": "Área Médica",
+      "tipo": "laboratorio",
+      "direccion": "Calle Franz Tamayo #11",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "verificado_sitio_oficial_2026",
+      "fuentes": [
+        "src_plexus_sc"
+      ]
+    },
+    {
+      "id": "suc_zuna_central",
+      "parent_id": "lab_zuna",
+      "nombre": "Central",
+      "tipo": "laboratorio",
+      "direccion": "Av. Alemana Nº 2065",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": "3 441838",
+      "horario": "24 horas, todos los días",
+      "estado_verificacion": "verificado_sitio_oficial_2026",
+      "fuentes": [
+        "src_zuna_red"
+      ]
+    },
+    {
+      "id": "suc_zuna_obrero",
+      "parent_id": "lab_zuna",
+      "nombre": "Hospital Obrero",
+      "tipo": "laboratorio",
+      "direccion": "Av. Japón Nº 3809",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": "3 436089",
+      "horario": "06:30-19:00",
+      "estado_verificacion": "verificado_sitio_oficial_2026",
+      "fuentes": [
+        "src_zuna_red"
+      ]
+    },
+    {
+      "id": "suc_zuna_frances",
+      "parent_id": "lab_zuna",
+      "nombre": "Hospital Francés",
+      "tipo": "laboratorio",
+      "direccion": "Calle Tiluchi Nº 10",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": "3 599361",
+      "horario": "06:30-18:00",
+      "estado_verificacion": "verificado_sitio_oficial_2026",
+      "fuentes": [
+        "src_zuna_red"
+      ]
+    },
+    {
+      "id": "suc_zuna_centro",
+      "parent_id": "lab_zuna",
+      "nombre": "Centro",
+      "tipo": "laboratorio",
+      "direccion": "Calle 21 de Mayo Nº 464",
+      "zona": "Centro",
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": "67706115",
+      "horario": "Lun-Vie 07:00-18:00; Sáb 07:00-12:00",
+      "estado_verificacion": "verificado_sitio_oficial_2026",
+      "fuentes": [
+        "src_zuna_red"
+      ]
+    },
+    {
+      "id": "suc_cenetrop_sc",
+      "parent_id": "lab_cenetrop",
+      "nombre": "CENETROP",
+      "tipo": "centro_referencia",
+      "direccion": null,
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "presencia_institucional_verificada; direccion_no_confirmada_en_fuente_recuperada",
+      "fuentes": [
+        "src_cenetrop"
+      ]
+    },
+    {
+      "id": "suc_hsjdd_sc",
+      "parent_id": "lab_hsjdd",
+      "nombre": "Hospital San Juan de Dios - Laboratorio",
+      "tipo": "laboratorio_hospitalario",
+      "direccion": "Calle Cuéllar #474",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "ubicacion_institucional_referencia; verificar_operacion_especifica",
+      "fuentes": []
+    },
+    {
+      "id": "farm_suc_farmacorp_026",
+      "parent_id": "farm_farmacorp",
+      "nombre": "21 de Mayo",
+      "direccion": "Calle Junín esq. 21 de Mayo",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_027",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Piraí",
+      "direccion": "Av. Piraí esq. 2do Anillo",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_028",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Cañoto FSM",
+      "direccion": "Av. Cañoto esq. México",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_029",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Irala",
+      "direccion": "Av. Irala #564",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_030",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Cañoto FG",
+      "direccion": "Av. Cañoto esq. Alameda Junín",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_031",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Argomosa",
+      "direccion": "Av. Argomosa #100 esq. Charcas",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_032",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Trinidad",
+      "direccion": "Av. Trinidad #710 esq. 2do Anillo",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_033",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Villa 1º de Mayo",
+      "direccion": "Av. Principal esq. Calle 8 Este, Villa 1º de Mayo",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_034",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Torres Gemelas",
+      "direccion": "Av. Cristo Redentor entre 2do y 3er Anillo, Edificio Torres Gemelas",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_035",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Grigotá",
+      "direccion": "Av. Grigotá #500 esq. Av. B. Barrientos",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_hipermaxi_004",
+      "parent_id": "farm_hipermaxi",
+      "nombre": "Norte",
+      "direccion": "Av. Cristo Redentor y 3er Anillo",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "documento_corporativo_historico; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_hipermaxi_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_hipermaxi_005",
+      "parent_id": "farm_hipermaxi",
+      "nombre": "Florida",
+      "direccion": "Calle Florida N°187",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "documento_corporativo_historico; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_hipermaxi_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_hipermaxi_006",
+      "parent_id": "farm_hipermaxi",
+      "nombre": "Cañoto",
+      "direccion": "Av. Cañoto esq. Rafael Peña, Casco Viejo",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "documento_corporativo_historico; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_hipermaxi_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_hipermaxi_007",
+      "parent_id": "farm_hipermaxi",
+      "nombre": "Equipetrol",
+      "direccion": "Av. San Martín, 4to Anillo",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "documento_corporativo_historico; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_hipermaxi_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_hipermaxi_008",
+      "parent_id": "farm_hipermaxi",
+      "nombre": "Beni",
+      "direccion": "Av. Beni, 4to Anillo",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "documento_corporativo_historico; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_hipermaxi_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_hipermaxi_009",
+      "parent_id": "farm_hipermaxi",
+      "nombre": "Plan 3000",
+      "direccion": "Av. Paurito, Barrio Los Álamos",
+      "zona": null,
+      "ciudad": "Santa Cruz de la Sierra",
+      "departamento": "Santa Cruz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "documento_corporativo_historico; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_hipermaxi_hist"
+      ]
+    }
+  ]
+}

@@ -5,14 +5,12 @@ import {
   DestroyRef,
   PLATFORM_ID,
   computed,
-  effect,
   inject,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
-import { environment } from '../../../../environments/environment';
 import { PharmacyOrdersClient } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type { PedidoFarmacia } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -20,9 +18,12 @@ import { NavigationService } from '../../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
+import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
+import { Chip } from '../../../shared/components/atoms/chip/chip';
 import { Switch } from '../../../shared/components/atoms/switch/switch';
 import { Accordion } from '../../../shared/components/molecules/accordion/accordion';
 import { AccordionPanel } from '../../../shared/components/molecules/accordion/accordion-panel/accordion-panel';
+import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { tiempoRelativo } from '../../../shared/date/tiempo-relativo';
@@ -36,6 +37,9 @@ import {
   type BandejaStatusPresentation,
   type GrupoDeBandeja,
 } from './bandeja-status';
+import { entregaEnPantalla, type EntregaEnPantalla } from './entrega-status';
+import { NOTA_DE_DATOS_DE_EJEMPLO } from './pharmacy-inbox.fixtures';
+import { withDisplayCurrency } from '../../../core/money/display-currency';
 
 /**
  * Cada cuánto se refresca la bandeja sola. La campana ya avisa; esto es el
@@ -47,10 +51,28 @@ const SONDEO_MS = 20_000;
 /** La base del detalle: la bandeja enlaza, jamás pinta el uuid. */
 const DETALLE_ROUTE = '/administration/pharmacy-orders';
 
+/**
+ * La etiqueta de una cola, partida antes de su última palabra.
+ *
+ * Existe por el encabezado: la cifra va pegada a la última palabra y las dos
+ * viajan juntas al envolver. Si la etiqueta entrara entera en el ancho de la
+ * columna, el navegador la dejaría entera y cortaría en la única oportunidad
+ * que le queda —el espacio de antes de la cifra—, mandando el contador solo a
+ * la línea de abajo. Partiendo antes, el corte se adelanta y bajan juntos.
+ */
+interface EncabezadoDeCola {
+  /** Todo menos la última palabra, con su espacio final. Vacío si es una sola. */
+  readonly antes: string;
+  /** La última palabra: la que no se separa de la cifra. */
+  readonly ultima: string;
+}
+
 /** Un grupo ya resuelto para la plantilla. */
 interface GrupoResuelto {
   readonly grupo: GrupoDeBandeja;
+  /** La etiqueta entera. Es la que nombra la cola para un lector de pantalla. */
   readonly etiqueta: string;
+  readonly encabezado: EncabezadoDeCola;
   readonly pedidos: readonly PedidoFarmacia[];
 }
 
@@ -67,6 +89,13 @@ interface GrupoResuelto {
  * destacado. La primera carga es la línea de base — encontrar la bandeja
  * llena al abrirla no es «llegó un pedido».
  *
+ * A eso se suman los dos canales que el registro pide ver de un vistazo: el
+ * **cartel** de arriba, que dice cuántos llegaron y no se va solo, y el
+ * **contador por cola**, con énfasis distinto en «Nuevos». El contador se
+ * oculta del árbol accesible a propósito —el distintivo es `role="status"` y
+ * cuatro de ellos serían cuatro regiones vivas peleándose con el aviso—: la
+ * cifra viaja en el encabezado, en palabras.
+ *
  * ## Privacidad
  *
  * Se pinta SOLO lo que el mostrador necesita: quién pidió, los renglones,
@@ -79,7 +108,9 @@ interface GrupoResuelto {
   imports: [
     Accordion,
     AccordionPanel,
+    Alert,
     Badge,
+    Chip,
     DatePipe,
     FormsModule,
     PageHeader,
@@ -103,8 +134,8 @@ export class PharmacyInbox {
 
   protected readonly alarma = inject(AlarmaDePedidos);
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
-  protected readonly demoActiva = environment.demoPresets;
   protected readonly detalleRoute = DETALLE_ROUTE;
+  protected readonly notaDeEjemplo = NOTA_DE_DATOS_DE_EJEMPLO;
 
   protected readonly state = signal<ViewState<readonly PedidoFarmacia[]>>(loading());
 
@@ -120,6 +151,22 @@ export class PharmacyInbox {
    */
   protected readonly avisoDeNuevos = signal('');
 
+  /**
+   * Cuántos pedidos llegaron y nadie acusó recibo todavía. Es lo que sostiene
+   * el cartel de arriba: se apaga al descartarlo o al abrir un pedido, no
+   * solo. Un aviso que se borra por su cuenta deja al mostrador preguntándose
+   * si vio algo o se lo imaginó.
+   */
+  protected readonly nuevosSinVer = signal(0);
+
+  /** El encabezado del cartel: una frase que dice cuántos son. */
+  protected readonly tituloDeNuevos = computed(() => fraseDeNuevos(this.nuevosSinVer()));
+
+  /** Qué está haciendo el interruptor, dicho en palabras al lado suyo. */
+  protected readonly estadoDelSonido = computed(() =>
+    this.alarma.sonidoActivo() ? 'Aviso sonoro activado' : 'Aviso sonoro silenciado',
+  );
+
   private readonly lista = computed(() => {
     const estado = this.state();
     return estado.status === 'ready' ? estado.data : [];
@@ -133,20 +180,21 @@ export class PharmacyInbox {
 
   private readonly grupos = computed<readonly GrupoResuelto[]>(() => {
     const pedidos = this.lista();
-    return GRUPOS_DE_BANDEJA.map((grupo) => ({
-      grupo,
-      etiqueta: etiquetaDeGrupo(grupo),
-      pedidos: pedidos.filter((pedido) => grupoDeBandeja(pedido.estado) === grupo),
-    }));
+    return GRUPOS_DE_BANDEJA.map((grupo) => {
+      const etiqueta = etiquetaDeGrupo(grupo);
+      return {
+        grupo,
+        etiqueta,
+        encabezado: partirEtiqueta(etiqueta),
+        pedidos: pedidos.filter((pedido) => grupoDeBandeja(pedido.estado) === grupo),
+      };
+    });
   });
 
   constructor() {
     this.cargar();
     this.agendar();
     inject(DestroyRef).onDestroy(() => this.detener());
-    // El empujón de la demo de dos ventanas: lo que llega por el canal se
-    // aplica al instante, sin esperar el sondeo. Se va con FAR-E2.
-    effect(() => this.aplicar(this.ordersClient.pedidosEnVivo()));
   }
 
   protected cargar(): void {
@@ -160,6 +208,42 @@ export class PharmacyInbox {
 
   protected presentacionDe(pedido: PedidoFarmacia): BandejaStatusPresentation {
     return toBandejaStatusPresentation(pedido.estado);
+  }
+
+  /** Por qué medio se entrega, o `null` en los pedidos que no lo declaran. */
+  protected entregaDe(pedido: PedidoFarmacia): EntregaEnPantalla | null {
+    return entregaEnPantalla(pedido);
+  }
+
+  /**
+   * El énfasis del contador. `primary` es el único de los seis tonos que las
+   * etiquetas de estado no usan, así que la cola que reclama atención se
+   * distingue del resto sin repetir el color de ningún estado.
+   */
+  protected varianteDeConteo(cola: GrupoResuelto): BadgeVariant {
+    return cola.grupo === 'NUEVOS' && cola.pedidos.length > 0 ? 'primary' : 'secondary';
+  }
+
+  /** El mismo conteo, en palabras, para quien no ve el distintivo. */
+  protected conteoAccesible(cola: GrupoResuelto): string {
+    const cantidad = cola.pedidos.length;
+    if (cantidad === 0) {
+      return 'sin pedidos';
+    }
+    return cantidad === 1 ? '1 pedido' : `${cantidad} pedidos`;
+  }
+
+  /**
+   * El mostrador acusó recibo: por el botón de cerrar o abriendo el pedido.
+   *
+   * Es también lo único que calla la alarma. Volver a la pestaña **no** la
+   * calla —eso apaga el parpadeo del título y nada más—: mirar no es
+   * atender, y si alcanzara con mirar, bastaría pasar por la bandeja para que
+   * un pedido quedara sin tomar y sin avisar.
+   */
+  protected descartarAviso(): void {
+    this.nuevosSinVer.set(0);
+    this.alarma.acusarRecibo();
   }
 
   protected esNuevo(pedido: PedidoFarmacia): boolean {
@@ -184,7 +268,7 @@ export class PharmacyInbox {
   protected totalDe(pedido: PedidoFarmacia): string {
     return pedido.totalEstimado === null
       ? 'Total no disponible'
-      : `${pedido.totalEstimado} ${pedido.moneda ?? ''}`.trim();
+      : withDisplayCurrency(pedido.totalEstimado, pedido.moneda);
   }
 
   /** «hace 5 min», o `null` para caer al formato de fecha de siempre. */
@@ -213,16 +297,6 @@ export class PharmacyInbox {
       label: 'Ver tu organización',
       route: '/administration/my-organization',
     };
-    if (!this.demoActiva) {
-      // VISUAL-FIRST: la pantalla existe; la conexión real es de FAR-E2.
-      this.state.set(
-        empty(
-          volverAlPanel,
-          'Los pedidos de los pacientes van a llegar acá, con su alarma, cuando la conexión con el mostrador esté activa. Próximamente.',
-        ),
-      );
-      return;
-    }
     this.detectarNuevos(pedidos);
     if (pedidos.length === 0) {
       this.state.set(
@@ -253,11 +327,13 @@ export class PharmacyInbox {
       conocidos.add(id);
     }
     this.destacados.update((actuales) => new Set([...actuales, ...nuevos]));
-    this.avisoDeNuevos.set(
-      nuevos.length === 1
-        ? 'Llegó un pedido nuevo a la bandeja.'
-        : `Llegaron ${nuevos.length} pedidos nuevos a la bandeja.`,
-    );
+    // Los dos canales dicen lo mismo porque leen la misma cuenta: lo que
+    // llegó y nadie acusó recibo todavía. Con el delta del tic, dos llegadas
+    // de a una dejaban al lector de pantalla diciendo «Llegó un pedido nuevo»
+    // mientras el cartel de al lado decía «Llegaron 2».
+    const sinVer = this.nuevosSinVer() + nuevos.length;
+    this.nuevosSinVer.set(sinVer);
+    this.avisoDeNuevos.set(`${fraseDeNuevos(sinVer)} a la bandeja.`);
     this.alarma.notificar(nuevos.length);
   }
 
@@ -288,4 +364,27 @@ export class PharmacyInbox {
       error: () => undefined,
     });
   }
+}
+
+/**
+ * La misma frase **y la misma cuenta** para el aviso del lector de pantalla y
+ * para el cartel: si cada canal la redactara por su cuenta, o leyera un
+ * número distinto, terminarían diciendo cosas distintas del mismo hecho.
+ * Compartir la redacción sin compartir el número no alcanza.
+ */
+function fraseDeNuevos(cantidad: number): string {
+  return cantidad === 1 ? 'Llegó un pedido nuevo' : `Llegaron ${cantidad} pedidos nuevos`;
+}
+
+/**
+ * Parte la etiqueta antes de su última palabra. Las seis etiquetas son un
+ * conjunto cerrado (`etiquetaDeGrupo`), no texto arbitrario, y una sola
+ * palabra devuelve `antes` vacío: la unidad indivisible pasa a ser la
+ * etiqueta entera con su cifra, que es lo correcto y siempre entra.
+ */
+function partirEtiqueta(etiqueta: string): EncabezadoDeCola {
+  const corte = etiqueta.lastIndexOf(' ');
+  return corte === -1
+    ? { antes: '', ultima: etiqueta }
+    : { antes: etiqueta.slice(0, corte + 1), ultima: etiqueta.slice(corte + 1) };
 }

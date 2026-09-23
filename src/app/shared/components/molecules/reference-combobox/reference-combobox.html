@@ -13,6 +13,13 @@
   [disabled]="disabled()"
   [comboboxAria]="comboboxAria()"
 >
+  <!-- El glifo del campo, cuando quien monta el combobox lo proyecta. Se vuelve
+       a proyectar hacia el átomo —`ngProjectAs`— porque el hueco de adentro del
+       marco es suyo: sin esto, el ícono caería fuera del control y perdería el
+       borde, el foco y el estado de error que comparte con el campo. Sin nada
+       que proyectar no se dibuja ningún envoltorio. -->
+  <ng-content select="[slot=icon-start]" ngProjectAs="[slot=icon-start]" />
+
   <span slot="icon-end" class="reference-combobox__trailing">
     @if (loading()) {
       <app-spinner size="sm" label="Buscando" />

@@ -7,8 +7,6 @@ import {
   LOCALE_ID,
   signal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
-
 import { AuthService } from '../../../core/auth/auth.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type {
@@ -19,14 +17,16 @@ import type {
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { BackLink } from '../../../shared/components/atoms/back-link/back-link';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
+import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { AGENDA_ROUTE } from '../agenda.routes';
 import { misRecursosDeAgenda } from '../mi-recurso';
 import {
   BlockForm,
@@ -76,16 +76,7 @@ const MESES_ADELANTE = 12;
  */
 @Component({
   selector: 'app-blocks',
-  imports: [
-    Alert,
-    AppButton,
-    AppButtonLink,
-    Badge,
-    BlockForm,
-    PageHeader,
-    RouterLink,
-    ViewStateHost,
-  ],
+  imports: [Alert, AppButton, BackLink, Badge, BlockForm, PageHeader, Tooltip, ViewStateHost],
   templateUrl: './blocks.html',
   styleUrl: './blocks.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -110,7 +101,24 @@ export class Blocks {
    */
   protected readonly editando = signal<BloqueoEnEdicion | null>(null);
 
+  /**
+   * El alta, con el mismo formulario que la corrección.
+   *
+   * ## Por qué no es una ruta
+   *
+   * `rutaNuevo` (`/schedule/blocks/new`) era un `routerLink` a una dirección
+   * que ningún `Route` declara —`app.routes.ts` sólo registra `schedule/blocks`
+   * a secas—, así que el botón «Bloquear días u horarios» caía en el `**`
+   * (404). No hay forma de arreglarlo desde esta carpeta: `app.routes.ts` es
+   * de otro carril. Mientras esa ruta no exista, el alta se abre **en la misma
+   * pantalla**, con el mismo panel que ya usa la corrección — que es
+   * exactamente el patrón que pide el punto 2 del pedido («mismo diseño»), y
+   * evita mandar a alguien a un enlace roto.
+   */
+  protected readonly creando = signal(false);
+
   protected editar(b: BloqueoVisible): void {
+    this.creando.set(false);
     this.editando.set({
       id: b.id,
       desde: b.desde,
@@ -120,24 +128,40 @@ export class Blocks {
     });
   }
 
-  protected cancelarEdicion(): void {
+  protected abrirNuevo(): void {
     this.editando.set(null);
+    this.creando.set(true);
+  }
+
+  protected cancelarFormulario(): void {
+    this.editando.set(null);
+    this.creando.set(false);
   }
 
   /**
-   * Guarda la corrección.
+   * Guarda el formulario: crea si no había nada en edición, corrige si había.
    *
    * Manda el rango completo aunque no se haya tocado: el formulario devuelve
    * los dos instantes ya armados, y recalcular acá cuál cambió sería repetir
    * una cuenta que él ya hizo.
    */
   protected guardar(pedido: BloqueoPedido): void {
-    const actual = this.editando();
-    if (actual === null || this.guardando()) return;
+    if (this.guardando()) return;
 
+    const actual = this.editando();
+    if (actual !== null) {
+      this.guardarCorreccion(actual.id, pedido);
+      return;
+    }
+    if (this.creando()) {
+      this.guardarAlta(pedido);
+    }
+  }
+
+  private guardarCorreccion(id: string, pedido: BloqueoPedido): void {
     this.guardando.set(true);
     this.scheduling
-      .updateException(actual.id, {
+      .updateException(id, {
         exceptionType: pedido.exceptionType,
         reason: pedido.motivo,
         startAt: pedido.desde.toISOString(),
@@ -167,6 +191,37 @@ export class Blocks {
       });
   }
 
+  private guardarAlta(pedido: BloqueoPedido): void {
+    const resourceId = this.recursoId();
+    if (resourceId === null) return;
+
+    this.guardando.set(true);
+    this.scheduling
+      .createException(resourceId, {
+        exceptionType: pedido.exceptionType,
+        startAt: pedido.desde.toISOString(),
+        endAt: pedido.hasta.toISOString(),
+        ...(pedido.motivo.trim() === '' ? {} : { reason: pedido.motivo.trim() }),
+      })
+      .subscribe({
+        next: () => {
+          this.guardando.set(false);
+          this.creando.set(false);
+          this.toast.success('El rato queda cerrado.', 'Bloqueo creado');
+          this.cargar();
+        },
+        error: (error: unknown) => {
+          this.guardando.set(false);
+          this.toast.error(
+            errorToViewState(error).status === 'forbidden'
+              ? 'Esa agenda no es tuya.'
+              : 'No se pudo crear el bloqueo.',
+            'No se creó',
+          );
+        },
+      });
+  }
+
   private readonly recursoId = signal<string | null>(null);
 
   /** Los que todavía no terminaron: es lo que se puede levantar. */
@@ -175,8 +230,7 @@ export class Blocks {
   /** Los que ya pasaron. Se muestran porque explican una agenda de antes. */
   protected readonly historicos = computed(() => this.filtrar((b) => b.pasado));
 
-  protected readonly rutaNuevo = '/schedule/blocks/new';
-  protected readonly rutaAgenda = '/schedule/mine';
+  protected readonly rutaAgenda = AGENDA_ROUTE;
 
   constructor() {
     this.cargar();
@@ -251,7 +305,11 @@ export class Blocks {
         this.estado.set(
           filas.length === 0
             ? empty(
-                { label: 'Bloquear días u horarios', route: this.rutaNuevo },
+                // Sin `route`: el alta se abre desde el botón de la cabecera,
+                // no desde una dirección propia (ver el comentario de
+                // `creando`). `ViewStateNextAction` sin ruta se pinta como
+                // texto, así que la etiqueta queda en modo indicación.
+                { label: 'Usá «Bloquear días u horarios», arriba' },
                 'No tenés ningún bloqueo. Cuando cierres un rato, aparece acá.',
               )
             : ready(filas),

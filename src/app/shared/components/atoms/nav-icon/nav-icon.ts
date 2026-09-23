@@ -371,11 +371,41 @@ import type { NavIconName } from './nav-icon.types';
           <circle cx="12" cy="12" r="8.2" />
           <path d="M8.4 12h7.2" />
         }
+        @case ('edit') {
+          <!-- Un lápiz inclinado, con la punta apoyada en un renglón: «editá
+               esto». Sin hoja debajo —esa es «note», la sección de
+               evoluciones— para que los dos glifos no se confundan en la misma
+               pantalla. Misma caja de 24 y el mismo aire que el resto. -->
+          <path d="m4.6 15.4 9.6-9.6a1.7 1.7 0 0 1 2.4 0l1.6 1.6a1.7 1.7 0 0 1 0 2.4l-9.6 9.6H4.6z" />
+          <path d="m12.8 7.2 4 4" />
+          <path d="M13.4 19.4h6" />
+        }
         @case ('arrow-right') {
           <!-- Flecha a la derecha: «Siguiente». Espejo exacto de arrow-left,
                para que los dos botones del mismo par pesen igual. -->
           <path d="M4.4 12h15.2" />
           <path d="m13.4 5.8 6.2 6.2-6.2 6.2" />
+        }
+
+        @case ('monitor') {
+          <!-- Pantalla con base: «el de mi dispositivo», la preferencia que
+               sigue al sistema en vez de fijar un valor. -->
+          <rect x="3" y="4.5" width="18" height="12" rx="1.8" />
+          <path d="M9 20.5h6M12 16.5v4" />
+        }
+        @case ('sun') {
+          <!-- Sol: el tema claro. -->
+          <circle cx="12" cy="12" r="4.3" />
+          <path d="M12 2.6v2.4M12 19v2.4M4.6 12H2.2M21.8 12h-2.4M5.6 5.6l1.7 1.7M16.7 16.7l1.7 1.7M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7" />
+        }
+        @case ('moon') {
+          <!-- Luna en creciente: el tema oscuro. -->
+          <path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a7 7 0 0 0 10.7 10.7z" />
+        }
+        @case ('camera') {
+          <!-- Cámara con su lente: el permiso de cámara del navegador. -->
+          <path d="M4.5 8.2A1.8 1.8 0 0 1 6.3 6.4h2l1-1.6h5.4l1 1.6h2a1.8 1.8 0 0 1 1.8 1.8v9.4a1.8 1.8 0 0 1-1.8 1.8H6.3a1.8 1.8 0 0 1-1.8-1.8z" />
+          <circle cx="12" cy="13" r="3.4" />
         }
 
         @default {
@@ -392,8 +422,24 @@ import type { NavIconName } from './nav-icon.types';
     </svg>
   `,
   styles: `
+    /* El host trae SU PROPIO tamaño, y no depende de que quien lo monte se
+       acuerde de dárselo.
+
+       El glifo se dibuja con \`width/height: 100%\`, así que sin medida en el
+       host ese 100% no tiene contra qué resolver: el navegador cae al tamaño
+       por defecto de un elemento reemplazado —300 px— o al alto del contenedor.
+       Medido en el navegador: 300 px por ícono en el rail público, y una flecha
+       de 40 px llenando un botón de 40 en el motor de formularios, que es
+       justo lo que el botón evita con su \`::ng-deep svg { width: 1.2em }\` —
+       regla que perdía contra ésta por orden de inyección, no por peso.
+
+       En \`em\` y no en píxeles: así acompaña al talle de quien lo monta sin que
+       nadie tenga que declarar nada. Quien necesite otra medida se la pone al
+       host, que es donde se mide, y gana por especificidad. */
     :host {
       display: inline-flex;
+      inline-size: 1.25em;
+      block-size: 1.25em;
     }
 
     svg {

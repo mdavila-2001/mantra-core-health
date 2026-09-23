@@ -31,6 +31,16 @@ export type { CalendarDay } from './date-picker/date-picker';
 export { DATE_PICKER_MODES } from './date-picker/date-picker.types';
 export type { DatePickerMode } from './date-picker/date-picker.types';
 
+export { FactSection } from './fact-section/fact-section';
+export { BLOQUES_POR_PAGINA, MINIMO_PARA_BUSCAR } from './fact-section/fact-section.types';
+export type { BloqueDeFicha } from './fact-section/fact-section.types';
+
+export { SurveyForm } from './survey-form/survey-form';
+export type {
+  RespuestasDelCuestionario,
+  ValorDeRespuesta,
+} from './survey-form/survey-form';
+
 export { FilterBar, SEARCH_PARAM } from './filter-bar/filter-bar';
 export type { ActiveFilter, FilterDef } from './filter-bar/filter-bar';
 
@@ -48,7 +58,7 @@ export type { EstadoDePin, PinMapa, PuntoGeo } from './map/pin-mapa.types';
 
 /**
  * El rail de la superficie pública. Reemplaza las ocho copias de `app-tabs`
- * que vivían dentro de las plantillas de `features/redsat/buscar/`.
+ * que vivían dentro de las plantillas de `features/alovida/buscar/`.
  */
 export { PublicNavRail } from './public-nav-rail/public-nav-rail';
 export { PUBLIC_NAV_RAIL_SECTIONS } from './public-nav-rail/public-nav-rail.types';
@@ -72,6 +82,15 @@ export type {
   SpecialtyGroup,
   SpecialtyItemContext,
 } from './specialty-browser/specialty-browser.types';
+
+/* La insignia de especialidad (C-09): UNA forma de mostrar una especialidad en
+   todo el proyecto. El grid va al lado porque el orden —la principal primero—
+   y el hueco entre insignias son decisiones del sistema, no de cada pantalla.
+   Están acá y no en `molecules/` porque la insignia monta `StatusSeal`; el
+   porqué completo, en el encabezado de `specialty-badge.ts`. */
+export { SpecialtyBadge } from './specialty-badge/specialty-badge';
+export { SpecialtyBadgeGrid } from './specialty-badge-grid/specialty-badge-grid';
+export type { SpecialtyBadgeItem } from './specialty-badge/specialty-badge.types';
 
 export { StatusSeal } from './status-seal/status-seal';
 export { STATUS_SEAL_VARIANTS, UNKNOWN_STATUS_VARIANT } from './status-seal/status-seal.types';

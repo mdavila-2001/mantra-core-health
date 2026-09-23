@@ -9,7 +9,7 @@ import type { SearchResultItem } from './search-result.types';
  * Lo que estas pruebas fijan.
  *
  * El diseño de esta tarjeta **no vive acá**: vive en la maqueta
- * `V65-buscador/publico/` y en `redsat.css` §25. Así que no se comprueba que se
+ * `V65-buscador/publico/` y en `alovida.css` §25. Así que no se comprueba que se
  * vea bien —eso lo decide el CSS— sino que el **marcado sea el de la maqueta**:
  * las clases exactas, la semántica de lista y qué partes desaparecen cuando el
  * dato no viene.
@@ -140,11 +140,32 @@ describe('SearchResult', () => {
     expect(elemento('.app-resultado__figura')!.textContent!.trim()).toBe('');
   });
 
+  /**
+   * FND-04 (carril 02): una `figureImageUrl` que responde 422/404 —una foto
+   * sembrada cuya versión no pasó el escaneo de malware, reproducido contra el
+   * directorio real— no puede dejar un ícono de imagen rota. Cae al mismo
+   * `figureText` que ya pinta cuando no hay foto.
+   */
+  it('cuando la imagen falla, cae a las iniciales en vez de quedar rota', () => {
+    anfitrion.dato.update((d) => ({
+      ...d,
+      figureText: 'MQ',
+      figureImageUrl: '/f/rota.jpg',
+    }));
+    fixture.detectChanges();
+
+    elemento('.app-resultado__figura img')!.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+
+    expect(elemento('.app-resultado__figura img')).toBeNull();
+    expect(elemento('.app-resultado__figura')!.textContent!.trim()).toBe('MQ');
+  });
+
   // ─── Insignias: el tono va como en la maqueta ──────────────────────────────
 
   /**
    * `data-tono` y no una clase de color: es el atributo con el que
-   * `redsat.css` selecciona (`.app-badge[data-tono="ok"]`). Con una clase
+   * `alovida.css` selecciona (`.app-badge[data-tono="ok"]`). Con una clase
    * inventada la insignia se vería sin color y nadie sabría por qué.
    */
   it('el tipo y los sellos usan .app-badge con data-tono', () => {
@@ -180,10 +201,6 @@ describe('SearchResult', () => {
     fixture.detectChanges();
 
     const lineas = todos('.app-resultado__meta span').map((s) => s.textContent!.trim());
-    expect(lineas).toEqual([
-      'Cardiología · 14 años',
-      'Clínica Los Olivos',
-      'Sopocachi · 1,2 km',
-    ]);
+    expect(lineas).toEqual(['Cardiología · 14 años', 'Clínica Los Olivos', 'Sopocachi · 1,2 km']);
   });
 });

@@ -142,6 +142,27 @@
   margin: 0;
 }
 
+/* ─── Avisos del pedido: la misma caja que un renglón, en una columna ────── */
+
+.pedido__avisos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pedido__aviso {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
 .pedido__lineas {
   display: flex;
   flex-direction: column;
@@ -206,4 +227,11 @@
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--fs-caption);
+}
+
+/* «Volver a…» mide su texto: como hijo de la rejilla se estiraba a los 1 100 px
+   del área (refactor UX). */
+.volver-al-origen {
+  justify-self: start;
+  align-self: flex-start;
 }

@@ -1,7 +1,7 @@
-<!-- El armazón de todo lo autenticado, con el marco REDSAT de la bóveda.
+<!-- El armazón de todo lo autenticado, con el marco ALOVIDA de la bóveda.
 
      Antes esto delegaba en el organismo `app-shell`, que tenía su propia
-     geometría: header a lo ancho arriba, y debajo nav y contenido. REDSAT
+     geometría: header a lo ancho arriba, y debajo nav y contenido. ALOVIDA
      compone al revés —el nav es una columna de altura completa y el header
      vive DENTRO de la columna de contenido— y esa diferencia no se arregla con
      CSS: hay que cambiar el orden del marcado. Por eso el marco se escribe
@@ -18,8 +18,18 @@
      hace esta región. `<output>` ya es una región viva por sí misma. -->
 <output class="solo-lectores" aria-live="polite">{{ anuncio() }}</output>
 
-<div class="app-shell" app-shell>
-  <nav class="app-side-nav" aria-label="Navegación principal" appTutorialTarget="shell-nav">
+<div class="app-shell" app-shell [class.is-nav-recogido]="navRecogido()">
+  <!-- El `id` se declara acá y no lo inventa nadie en caliente: es el destino
+       del `aria-controls` del botón que la recoge, y también el que busca el
+       cajón de ancho chico (`AlovidaRuntimeService`, que sólo lo pone si falta).
+       Un `aria-controls` que apunta a un id inventado después de hidratar no
+       existe durante el render del servidor. -->
+  <nav
+    class="app-side-nav"
+    id="app-side-nav"
+    aria-label="Navegación principal"
+    appTutorialTarget="shell-nav"
+  >
     <div class="app-side-nav__fondo" aria-hidden="true">
       <svg class="app-side-nav__textura" viewBox="0 0 264 1024" preserveAspectRatio="xMidYMid slice" fill="none">
         <defs>
@@ -49,72 +59,124 @@
          el único camino de vuelta al inicio sería el rastro de migas de la
          pantalla en la que uno esté. Un logotipo que lleva al inicio es además
          lo que cualquiera prueba primero. -->
-    <a class="app-side-nav__marca" routerLink="/dashboard" aria-label="AloVida — ir al panel">
-      <img src="/redsat/imagenes/alovida-logo-blanco.svg" alt="" width="34" height="25" />
-      <span>AloVida</span>
-    </a>
+    <div class="app-side-nav__cabecera">
+      <a class="app-side-nav__marca" routerLink="/dashboard" aria-label="AloVida — ir al panel">
+        <img src="/alovida/imagenes/alovida-logo-blanco.svg" alt="" width="34" height="25" />
+        <span class="app-side-nav__palabra">AloVida</span>
+      </a>
+
+      <!-- Recoger la barra (AC-E1-01).
+
+           Vive dentro de la barra y no en el encabezado por dos razones: es lo
+           que gobierna, y recogida sigue estando donde estaba —si viviera en el
+           encabezado, el gesto de volver a desplegarla habría que buscarlo en
+           otra parte de la pantalla.
+
+           Es un botón y no un `<details>` más: no revela contenido oculto,
+           cambia el ancho de una columna que sigue entera. `aria-expanded` dice
+           en cuál de los dos estados está, y apunta con `aria-controls` a la
+           barra que encoge. -->
+      <button
+        class="app-side-nav__recoger"
+        type="button"
+        data-testid="nav-recoger"
+        aria-controls="app-side-nav"
+        [attr.aria-expanded]="!navRecogido()"
+        [attr.aria-label]="navRecogido() ? 'Desplegar el menú' : 'Recoger el menú'"
+        [appTooltip]="navRecogido() ? 'Desplegar el menú' : 'Recoger el menú'"
+        appTooltipPosition="right"
+        (click)="alternarNav()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 6l-6 6 6 6"></path><path d="M20 6l-6 6 6 6"></path></svg>
+      </button>
+    </div>
 
     <!-- Los grupos y sus ítems siguen saliendo del registro de secciones: lo
          que cambia es cómo se pintan, no de dónde vienen.
 
-         Dos escalones plegables, y los dos son `<details>` nativos: el dominio
-         afuera y el bloque de cosas parecidas adentro. Es `<details>` y no un
+         **Un solo escalón plegable, y es el tope** (AC-E1-02). El dominio
+         pliega; adentro van los destinos, y nada más. Es `<details>` y no un
          botón con `aria-expanded` porque el elemento ya trae gratis lo que
          habría que reimplementar —teclado, semántica de revelado, «buscar en la
          página» que abre lo cerrado— y porque sin JavaScript la barra sigue
          siendo navegable.
 
-         Un bloque con **un solo** destino visible no se dibuja como
-         desplegable: sería un clic de más para llegar a lo mismo. Sale suelto,
-         con su ícono, en el lugar que le toca del orden. -->
-    @for (grupo of sections(); track grupo.label) {
-      @let claveGrupo = clavePlegable(grupo.label);
-      <details
-        class="app-side-nav__group"
-        data-testid="nav-grupo"
-        [attr.data-grupo]="grupo.label"
-        [open]="abierto(claveGrupo, grupo.items)"
-        (toggle)="alPlegar(claveGrupo, $any($event.target).open)"
-      >
-        <summary class="app-side-nav__group-summary" [class.tiene-la-pantalla]="contieneLaPantalla(grupo.items)">
-          <app-nav-icon [name]="grupo.icon ?? 'directory'" />
-          <span class="app-side-nav__eyebrow">{{ grupo.label }}</span>
-          <svg class="app-side-nav__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
-        </summary>
+         Acá vivía un segundo `<details>` por bloque («Personas»,
+         «Organizaciones», «Red de salud»…), y con él llegar a una pantalla
+         costaba tres clics, dos de ellos sobre rótulos que no llevan a ningún
+         lado. Se retira: todo destino está ahora a dos clics del borde de la
+         barra, y `shell-layout.spec` falla si vuelve a anidarse uno.
 
-        <div class="app-side-nav__group-cuerpo">
+         Los bloques no desaparecen del modelo, y siguen mandando acá: la barra
+         recorre `grupo.blocks` y no `grupo.items` porque, sin el rótulo que los
+         agrupaba, lo único que queda diciendo que «Laboratorio médico» y
+         «Laboratorio farmacéutico» son la misma clase de cosa es que salgan
+         seguidas. Por `items` el orden es el del registro, y ahí se mezclan.
+
+         Y hay dominios que directamente no se dibujan: los que `aplanado`
+         marca —«General» y «Mi cuenta»— sueltan sus destinos acá arriba, sin
+         rótulo y sin plegable ninguno. Quiénes son lo dice `GRUPOS_APLANADOS`,
+         no esta plantilla. -->
+    <!-- Arriba de los dominios, y sueltos: «Mi perfil» y «Notificaciones». No
+         cuelgan de un desplegable porque nadie se pregunta a qué dominio
+         pertenecen, y para el médico eran un plegable de dos renglones que
+         costaba más abrir que leer. Quién va acá lo dice el registro de
+         secciones con `pinnedTop`, no esta plantilla. -->
+    @if (destinosFijos().length > 0) {
+      <div class="app-side-nav__fijos" data-testid="nav-fijos">
+        @for (item of destinosFijos(); track item.route) {
+          <ng-container *ngTemplateOutlet="destino; context: { $implicit: item }" />
+        }
+      </div>
+    }
+
+    @for (grupo of sections(); track grupo.label) {
+      @if (grupo.aplanado) {
+        <!-- Se recorre por bloques y no `grupo.items` aunque el rótulo del
+             bloque no se dibuje: sin él, lo único que sigue diciendo que «Mis
+             citas», «Mis pedidos» y «Mis puntos» son la misma clase de cosa es
+             que salgan seguidas. Por `items` salen en el orden del registro, y
+             ahí las pantallas clínicas se meten en el medio. -->
+        <div class="app-side-nav__sueltos" data-testid="nav-sueltos" [attr.data-grupo]="grupo.label">
           @for (bloque of grupo.blocks ?? []; track bloque.label) {
-            @if (bloque.items.length > 1) {
-              @let claveBloque = clavePlegable(grupo.label, bloque.label);
-              <details
-                class="app-side-nav__block"
-                data-testid="nav-bloque"
-                [attr.data-bloque]="bloque.label"
-                [open]="abierto(claveBloque, bloque.items)"
-                (toggle)="alPlegar(claveBloque, $any($event.target).open)"
-              >
-                <summary
-                  class="app-side-nav__item"
-                  [class.is-activo]="contieneLaPantalla(bloque.items)"
-                >
-                  <app-nav-icon [name]="bloque.icon ?? 'directory'" />
-                  <span class="side-nav__label">{{ bloque.label }}</span>
-                  <svg class="app-side-nav__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
-                </summary>
-                <div class="app-side-nav__sub">
-                  @for (item of bloque.items; track item.route) {
-                    <ng-container *ngTemplateOutlet="destino; context: { $implicit: item }" />
-                  }
-                </div>
-              </details>
-            } @else {
+            @for (item of bloque.items; track item.route) {
+              <ng-container *ngTemplateOutlet="destino; context: { $implicit: item }" />
+            }
+          }
+        </div>
+      } @else {
+        @let claveGrupo = clavePlegable(grupo.label);
+        <details
+          class="app-side-nav__group"
+          data-testid="nav-grupo"
+          [attr.data-grupo]="grupo.label"
+          [open]="abierto(claveGrupo, grupo.items)"
+          (toggle)="alPlegar(claveGrupo, $any($event.target).open)"
+        >
+          <summary
+            class="app-side-nav__group-summary"
+            [class.tiene-la-pantalla]="contieneLaPantalla(grupo.items)"
+            [appTooltip]="navRecogido() ? grupo.label : ''"
+            appTooltipPosition="right"
+            (click)="alTocarElDominio($event, grupo.label)"
+          >
+            <app-nav-icon [name]="grupo.icon ?? 'directory'" />
+            <!-- Recogida la barra el rótulo no se borra, se esconde de la vista:
+                 así el nombre accesible del desplegable sigue siendo su texto y
+                 no hay un `aria-label` paralelo que pueda quedar desfasado. -->
+            <span class="app-side-nav__eyebrow" [class.solo-lectores]="navRecogido()">{{ grupo.label }}</span>
+            <svg class="app-side-nav__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+          </summary>
+
+          <div class="app-side-nav__group-cuerpo">
+            @for (bloque of grupo.blocks ?? []; track bloque.label) {
               @for (item of bloque.items; track item.route) {
                 <ng-container *ngTemplateOutlet="destino; context: { $implicit: item }" />
               }
             }
-          }
-        </div>
-      </details>
+          </div>
+        </details>
+      }
     }
   </nav>
 
@@ -126,9 +188,14 @@
   <ng-template #destino let-item>
     @if (item.disabled) {
       <!-- Deshabilitado: ni ancla ni foco. Sigue anunciándose como tal. -->
-      <span class="app-side-nav__item is-disabled" aria-disabled="true">
+      <span
+        class="app-side-nav__item is-disabled"
+        aria-disabled="true"
+        [appTooltip]="navRecogido() ? item.label : ''"
+        appTooltipPosition="right"
+      >
         <app-nav-icon [name]="item.icon ?? 'directory'" />
-        <span class="side-nav__label">{{ item.label }}</span>
+        <span class="side-nav__label" [class.solo-lectores]="navRecogido()">{{ item.label }}</span>
       </span>
     } @else {
       <!-- Cada entrada del menú es un objetivo posible: los tutoriales que
@@ -143,9 +210,11 @@
         [routerLink]="item.route"
         [class.is-activo]="rutaActiva() === item.route"
         [attr.aria-current]="rutaActiva() === item.route ? 'page' : null"
+        [appTooltip]="navRecogido() ? item.label : ''"
+        appTooltipPosition="right"
       >
         <app-nav-icon [name]="item.icon ?? 'directory'" />
-        <span class="side-nav__label">{{ item.label }}</span>
+        <span class="side-nav__label" [class.solo-lectores]="navRecogido()">{{ item.label }}</span>
         @if (item.badge) {
           <span class="app-badge" data-tono="info">{{ item.badge }}</span>
         }
@@ -155,6 +224,31 @@
 
   <div class="app-main">
     <header class="app-header" app-header>
+      <!-- La vuelta atrás del marco: arriba a la izquierda, pegada al menú.
+
+           El botón del menú lo inyecta `AlovidaRuntimeService` con un
+           `insertBefore(…, header.firstChild)`, así que en teléfono queda a la
+           izquierda de esta flecha: las dos salidas del marco —abrir el menú y
+           deshacer el último paso— terminan juntas, que es donde se las busca.
+
+           Vive en el armazón y no en cada pantalla porque «volver» es la misma
+           promesa en todas: deshacer el paso que se dio. Las pocas pantallas
+           que ya traen su propio «Volver a X» en el encabezado no se tocan —
+           aquél nombra el destino, éste deshace el paso; no compiten.
+
+           Cuando no hay paso propio que deshacer —enlace de un correo, recarga,
+           primera pantalla de la sesión— `app-back-link` cae a su respaldo, y
+           el respaldo del armazón es el panel.
+
+           **Menos en el panel**, donde no se dibuja. Ahí el respaldo ES la
+           pantalla en la que uno está, así que la flecha o no hace nada o, si
+           el historial todavía trae el ingreso, devuelve a él —y volver al
+           ingreso se lee como haber cerrado la sesión—. Pedido del cliente del
+           13/09/2026. -->
+      @if (!enElPanel()) {
+        <app-back-link class="app-header__volver" fallback="/dashboard" label="Volver" iconOnly />
+      }
+
       <!-- Acá había un buscador «en toda la organización» **sin un solo
            manejador**: ni `(input)`, ni `(keydown.enter)`, ni formulario. Se
            escribía, se apretaba Enter, y no pasaba nada. Y el tutorial del
@@ -164,7 +258,7 @@
 
            Carril 19: se retira el control y su paso de tutorial. El buscador
            global es una funcionalidad que no existe todavía —vive maquetada en
-           `features/redsat/`, que es donde vive el diseño— y dejar su caja en
+           `features/alovida/`, que es donde vive el diseño— y dejar su caja en
            el producto es exactamente la «pantalla que aparenta funcionar» que
            la corrección #7 prohíbe. Cuando el buscador se construya, vuelve
            acá con su manejador y con su paso. -->
@@ -175,6 +269,58 @@
              información nueva: las otras dos son preferencias, y una preferencia
              no compite por la atención con «tu receta está lista». -->
         <app-notification-bell />
+
+        <!-- B.1 · por quién se está operando. Sólo aparece cuando hay a quién
+             elegir: una cuenta sin dependientes no necesita conmutar nada, y un
+             desplegable de un solo elemento es ruido.
+
+             Mismo marcado que el selector de organización —`.menu-anclaje` con
+             su `.app-menu`— porque el comportamiento lo da el runtime, que
+             conmuta el `hidden` de cualquier menú anclado con ese contrato. -->
+        @if (dependientes().length > 0) {
+          <div class="menu-anclaje">
+            <button
+              class="app-tenant-switcher"
+              type="button"
+              data-testid="header-paciente-activo"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-controls="menu-pacientes"
+              [attr.aria-label]="'Atendiendo a: ' + (nombreDelPacienteActivo() ?? 'vos') + '. Cambiar de persona'"
+            >
+              <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              <span>{{ nombreDelPacienteActivo() }}</span>
+              <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+            </button>
+            <div class="app-menu" id="menu-pacientes" role="menu" hidden>
+              <button
+                class="app-menu-item"
+                type="button"
+                role="menuitem"
+                [attr.aria-current]="!operandoPorDependiente() ? 'true' : null"
+                (click)="volverAMiPerfil()"
+              >
+                Yo ({{ user()?.displayName }})
+              </button>
+              @for (dependiente of dependientes(); track dependiente.id) {
+                <button
+                  class="app-menu-item"
+                  type="button"
+                  role="menuitem"
+                  [attr.aria-current]="
+                    pacienteActivo() === dependiente.patientProfileId ? 'true' : null
+                  "
+                  (click)="elegirPaciente(dependiente.patientProfileId)"
+                >
+                  {{ dependiente.fullName }} · {{ dependiente.relationshipDisplay }}
+                </button>
+              }
+              <a class="app-menu-item" role="menuitem" routerLink="/my-account/dependents">
+                Administrar dependientes
+              </a>
+            </div>
+          </div>
+        }
 
         @if (tenants().length > 1) {
           <div class="menu-anclaje">
@@ -209,20 +355,31 @@
           </div>
         }
 
-        <!-- Ajustes. Ocupa el lugar que tenía el conmutador de tema, y no por
-             ahorro de espacio: el tema es una preferencia entre varias —avisos,
-             permisos del navegador— y tenerlo suelto acá lo hacía parecer la
-             única. Ahora las tres viven juntas y el encabezado ofrece una sola
-             puerta a todas.
+        <!-- Interruptor de tema. Volvió al encabezado a pedido del cliente
+             (2026-09-18): claro/oscuro se cambia seguido y no debe exigir ir a
+             Ajustes. Es el mismo `switch` sol/luna del marco público y de
+             Ajustes › Apariencia; el dueño del estado es ThemeService. -->
+        <button class="app-theme-toggle" app-theme-toggle data-testid="header-theme-toggle">
+          <span class="app-theme-toggle__pista">
+            <svg class="icono icono--sm app-theme-toggle__sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></svg>
+            <svg class="icono icono--sm app-theme-toggle__luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 14.8A8.5 8.5 0 0 1 9.2 3.5a8.5 8.5 0 1 0 11.3 11.3z"></path></svg>
+            <span class="app-theme-toggle__perilla" aria-hidden="true"></span>
+          </span>
+        </button>
+
+        <!-- Ajustes. El tema es una preferencia entre varias —avisos, permisos
+             del navegador— y las tres viven juntas en Ajustes; el interruptor
+             de arriba es sólo el atajo para la que más se toca.
 
              Es un enlace y no un botón porque lleva a una pantalla: se puede
              abrir en otra pestaña y se puede copiar la dirección, que es lo que
              cualquiera espera de algo que navega. -->
         <a
           class="app-header__ajustes"
-          routerLink="/ajustes"
+          routerLink="/settings"
           data-testid="header-ajustes"
-          title="Ajustes"
+          appTooltip="Ajustes"
+          appTooltipPosition="bottom"
           aria-label="Ajustes"
         >
           <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -274,6 +431,29 @@
         }
       </div>
     </header>
+
+    <!-- B.1 · el aviso de que se está actuando por otra persona. Va una sola
+         vez acá y no en cada pantalla: quien pide un turno, lee una receta o
+         mira una historia tiene que saber de quién son, y repetirlo pantalla
+         por pantalla garantiza que alguna se olvide.
+
+         `role="status"` y no `alert`: es contexto permanente mientras dure la
+         conmutación, no una interrupción. -->
+    @if (operandoPorDependiente()) {
+      <p class="app-contexto-paciente" role="status" data-testid="aviso-paciente-activo">
+        <!-- La frase entera en UN elemento: el contenedor es flex con `gap`, así
+             que cada nodo de texto suelto se convierte en un elemento propio.
+             Y sin punto final: delante de un botón no aporta nada, y en
+             pantalla angosta se separaba del nombre al ajustar la línea. -->
+        <span
+          >Atendiéndose en representación de:
+          <strong>{{ nombreDelPacienteActivo() }}</strong></span
+        >
+        <button type="button" class="app-contexto-paciente__salir" (click)="volverAMiPerfil()">
+          Volver a mi perfil
+        </button>
+      </p>
+    }
 
     <!-- El índice negativo lo hace enfocable por script tras navegar sin
          meterlo en el orden de tabulación. -->

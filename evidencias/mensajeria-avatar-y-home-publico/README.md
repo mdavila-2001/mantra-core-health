@@ -11,7 +11,7 @@ Qué prueba cada archivo de esta carpeta.
 Corrido contra la API arrancada desde el fuente en `:3030` (no el contenedor, que
 sirve una imagen vieja — ver [[api-desde-el-fuente-en-3010]]) y el front en
 `ng serve --proxy-config proxy.conf.verificacion.json --port 4230`, con
-`tools/redesa/seed-dev-data.mjs` sembrando médicos y pacientes de prueba.
+`tools/alovida/seed-dev-data.mjs` sembrando médicos y pacientes de prueba.
 
 ## El bug que apareció al verificar, no al escribir el código
 

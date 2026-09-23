@@ -730,130 +730,66 @@ describe('MedicalLaboratory', () => {
     expect(componente['opcionesDeTarifario']().map((opcion) => opcion.value)).toContain('sch-7');
   });
 
-  it('el precio viaja al tarifario, con el importe como cadena de dos decimales', () => {
+  it('el catálogo se dibuja como rejilla de tarjetas y el precio sólo se lee', () => {
     cargar(ficha({ studies: [estudio({ prices: [precio()] })] }));
-
-    componente['abrirFormularioDePrecio'](estudio() as never);
-    componente['tarifarioDelPrecio'].set('sch-1');
-    componente['importeBase'].set(120);
-    componente['crearPrecio']();
-
-    const req = http.expectOne('/price-schedules/sch-1/study-prices');
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({
-      diagnosticStudyOfferingId: 'of-1',
-      baseAmount: '120.00',
-    });
-    req.flush({
-      id: 'pr-9',
-      versionNumber: 2,
-      status: 'concepto-vigente',
-      effectiveFrom: '2026-08-29T00:00:00.000Z',
-    });
-
-    http.expectOne('/diagnostic-units/unit-1/administration').flush(ficha());
-  });
-
-  it('sin tarifario elegido no manda el precio', () => {
-    cargar(ficha({ studies: [estudio({ prices: [precio()] })] }));
-
-    componente['abrirFormularioDePrecio'](estudio() as never);
-    componente['importeBase'].set(120);
-
-    expect(componente['precioEsValido']()).toBe(false);
-    componente['crearPrecio']();
-    http.expectNone('/price-schedules/sch-1/study-prices');
-  });
-
-  it('rechaza un importe negativo y un descuento fuera de rango', () => {
-    cargar(ficha({ studies: [estudio({ prices: [precio()] })] }));
-
-    componente['abrirFormularioDePrecio'](estudio() as never);
-    componente['tarifarioDelPrecio'].set('sch-1');
-    componente['importeBase'].set(-1);
-    expect(componente['precioEsValido']()).toBe(false);
-
-    // El cero es un precio válido —un estudio bonificado—, así que no puede
-    // caer con la misma regla que el negativo.
-    componente['importeBase'].set(0);
-    expect(componente['precioEsValido']()).toBe(true);
-
-    componente['factorDeDescuento'].set(1.5);
-    expect(componente['precioEsValido']()).toBe(false);
-
-    componente['factorDeDescuento'].set(0.1);
-    expect(componente['precioEsValido']()).toBe(true);
-  });
-
-  it('sólo deja cerrar la versión de precio que todavía rige', () => {
-    cargar();
-
-    // Sin fecha de fin es vigente y abierta: el servidor escribe `effectiveTo`
-    // tanto al cerrar la versión como al superarla con una nueva, así que la
-    // versión superada siempre trae fecha.
-    expect(componente['sePuedeCerrar'](precio() as never)).toBe(true);
-    expect(
-      componente['sePuedeCerrar'](precio({ effectiveTo: '2026-08-01T00:00:00.000Z' }) as never),
-    ).toBe(false);
-    expect(
-      componente['sePuedeCerrar'](
-        precio({
-          status: CONCEPTO('DU_PRICE_SUPERSEDED', 'Superado'),
-          effectiveTo: '2026-08-01T00:00:00.000Z',
-        }) as never,
-      ),
-    ).toBe(false);
-  });
-
-  it('ofrece cerrar el precio que rige aunque su estado venga con el código del paquete', () => {
-    cargar(
-      ficha({
-        studies: [
-          estudio({
-            prices: [
-              precio({
-                status: CONCEPTO('diagnostic_units:PRICE_ACTIVE', 'Vigente'),
-                effectiveTo: null,
-              }),
-            ],
-          }),
-        ],
-      }),
-    );
     abrirPestana('Estudios');
 
-    // El defecto que esto impide: el botón no aparecía sobre el precio vigente
-    // y no había manera de cerrarlo desde la pantalla.
-    expect(botonesRotulados('Cerrar')).toHaveLength(1);
-  });
-
-  it('no ofrece cerrar una versión que ya tiene fecha de fin', () => {
-    cargar(
-      ficha({
-        studies: [
-          estudio({
-            prices: [precio({ effectiveTo: '2026-08-29T07:36:27.658Z' })],
-          }),
-        ],
-      }),
+    const raiz = harness.routeNativeElement;
+    // La misma tarjeta que «Mis servicios», no una fila de tabla.
+    expect(raiz?.querySelectorAll('[data-testid="lab-study-item"]')).toHaveLength(1);
+    expect(raiz?.querySelector('[data-testid="lab-studies-grid"]')?.tagName).toBe('UL');
+    expect(raiz?.querySelector('[data-testid="lab-study-prices"]')?.textContent).toContain(
+      '120.00',
     );
-    abrirPestana('Estudios');
 
+    // Lo único que no se recicla de «Mis servicios» es escribir el precio.
+    expect(botonesRotulados('Nuevo precio')).toHaveLength(0);
     expect(botonesRotulados('Cerrar')).toHaveLength(0);
+    expect(raiz?.textContent).not.toContain('Nuevo precio de');
   });
 
-  it('cerrar un precio pregunta antes y después relee la ficha', async () => {
-    cargar(ficha({ studies: [estudio({ prices: [precio()] })] }));
+  it('un estudio sin precio lo dice con palabras, y no con un importe en cero', () => {
+    cargar(ficha({ studies: [estudio({ prices: [] })] }));
+    abrirPestana('Estudios');
 
-    await tras(componente['cerrarPrecio'](precio() as never));
-
-    expect(confirmaciones).toHaveLength(1);
-    const req = http.expectOne('/study-prices/pr-1/close');
-    expect(req.request.method).toBe('POST');
-    req.flush({ ok: true });
-
-    http.expectOne('/diagnostic-units/unit-1/administration').flush(ficha());
+    expect(harness.routeNativeElement?.textContent).toContain('Sin precio cargado');
   });
+
+  it('sólo lo que no se está ofreciendo lleva distintivo en la tarjeta', () => {
+    // El código del concepto no es estable —modelo, API y maqueta lo escriben
+    // distinto—, así que preguntar en positivo por `DU_OFFER_ACTIVE` dejaba a
+    // TODAS las tarjetas con un «Activo» que no informa nada. Una grafía
+    // desconocida tiene que pasar por activa, no por excepcional.
+    cargar(
+      ficha({
+        studies: [
+          estudio({ id: 'of-1', status: CONCEPTO('DU_OFFER_ACTIVE', 'Activa') }),
+          estudio({ id: 'of-2', status: CONCEPTO('ACTIVE', 'Activo') }),
+          estudio({ id: 'of-3', status: CONCEPTO('DU_OFFER_DRAFT', 'Borrador') }),
+          estudio({ id: 'of-4', status: CONCEPTO('DU_OFFER_RETIRED', 'Retirada') }),
+        ],
+      }),
+    );
+    abrirPestana('Estudios');
+
+    const tarjetas = [
+      ...(harness.routeNativeElement?.querySelectorAll('[data-testid="lab-study-item"]') ?? []),
+    ];
+    const conDistintivo = tarjetas.filter(
+      (tarjeta) => tarjeta.querySelector('app-badge') !== null,
+    );
+    expect(conDistintivo).toHaveLength(2);
+    expect(conDistintivo.map((t) => t.textContent)).toEqual([
+      expect.stringContaining('Borrador'),
+      expect.stringContaining('Retirada'),
+    ]);
+  });
+
+  // El registro de un precio propio se retiró el 11/09/2026: el catálogo de
+  // estudios pasó a mostrarse con la tarjeta de «Mis servicios» y su importe
+  // sólo se lee. Con él se fueron los siete casos que ejercían el formulario
+  // —alta del precio, validación de importes y cierre de la versión vigente—.
+  // No se relajó ningún requisito: se retiró la capacidad que verificaban.
 
   it('cambiar de unidad olvida los tarifarios recordados de la anterior', () => {
     cargar();

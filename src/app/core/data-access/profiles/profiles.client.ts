@@ -7,14 +7,18 @@ import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
   AccountLink,
   NewJurisdictionAuthorization,
+  NewOwnCredential,
   NewPatientProfile,
   NewPractitionerProfile,
   NewRelatedPerson,
   NewSpecialty,
+  OwnCredentialChanges,
+  OwnLicenseChanges,
   OwnPatientProfile,
   OwnPatientProfileChanges,
   OwnPatientSummary,
   OwnPractitionerProfile,
+  OwnSpecialtyChanges,
   PatientDetail,
   PatientMergeEvent,
   PatientMergeEventPage,
@@ -31,10 +35,14 @@ import type {
   PractitionerLicense,
   PractitionerProfile,
   PractitionerDirectoryPage,
+  SpecialtyCounts,
   PractitionerListItem,
   PractitionerSpecialty,
   RelatedPerson,
   RelatedPersonCreated,
+  Dependent,
+  DependentRelationshipCode,
+  NewDependent,
   PractitionerOnboarding,
   LinkableOrganizationPage,
 } from './profiles.types';
@@ -64,6 +72,40 @@ function fechaIso(fecha: Date): string {
  * person_profiles → *_profiles` en una sola transacción), así que acá alcanza
  * con una petición: nunca hay que crear la persona por separado.
  */
+/**
+ * Un dependiente tal como viaja por el cable.
+ *
+ * La fecha llega como instante ISO aunque la columna sea `date`, y los
+ * opcionales vacíos llegan como `null`: las dos cosas las arregla
+ * {@link toDependent} en la frontera, que es donde corresponde.
+ */
+interface WireDependent {
+  id: string;
+  patientProfileId: string;
+  personId: string;
+  fullName: string;
+  name?: string;
+  lastName?: string;
+  birthDate?: string;
+  ageYears?: number;
+  nationalId?: string;
+  relationshipCode: DependentRelationshipCode;
+  relationshipDisplay: string;
+  isLegalGuardian: boolean;
+}
+
+/**
+ * Normaliza un dependiente del transporte al tipo de la vista.
+ *
+ * `maybeDateOnly` y no `new Date(...)`: una fecha anclada a medianoche UTC
+ * pintada en hora local retrocede un día al oeste de Greenwich, y un cumpleaños
+ * corrido un día es exactamente el defecto que `wire.ts` existe para evitar.
+ */
+function toDependent(body: ConNulos<WireDependent>): Dependent {
+  const limpio = sinNulos<WireDependent>(body);
+  return { ...limpio, birthDate: maybeDateOnly(limpio.birthDate) };
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -96,6 +138,15 @@ export class ProfilesClient {
         'issuerAdministrativeAreaConceptId',
         query.issuerAdministrativeAreaConceptId,
       );
+    }
+    if (query.aboGroupConceptId !== undefined) {
+      params = params.set('aboGroupConceptId', query.aboGroupConceptId);
+    }
+    if (query.rhFactorConceptId !== undefined) {
+      params = params.set('rhFactorConceptId', query.rhFactorConceptId);
+    }
+    if (query.clinicalLanguageConceptId !== undefined) {
+      params = params.set('clinicalLanguageConceptId', query.clinicalLanguageConceptId);
     }
     if (query.cursor !== undefined) {
       params = params.set('cursor', query.cursor);
@@ -245,6 +296,43 @@ export class ProfilesClient {
   }
 
   /**
+   * `GET /profiles/patients/me/dependents` — a quiénes representa el titular.
+   *
+   * Autoservicio, como el resto de `patients/me`: el sujeto sale de la sesión.
+   * Lo que devuelve no es «quién está a su cargo» sino «por quién puede
+   * actuar» — la API lista los apoderamientos vigentes, que es lo que de verdad
+   * habilita a pedir un turno o a abrir una historia.
+   *
+   * @returns Sus dependientes, del más reciente al más viejo.
+   */
+  listOwnDependents(): Observable<readonly Dependent[]> {
+    return this.http
+      .get<ConNulos<WireDependent>[]>(this.url('/profiles/patients/me/dependents'))
+      .pipe(map((body) => body.map((fila) => toDependent(fila))));
+  }
+
+  /**
+   * `POST /profiles/patients/me/dependents` — registra a una persona a cargo.
+   *
+   * Crea su persona y su perfil de paciente y deja al titular como su
+   * representante, todo en una transacción del servidor. **No crea una cuenta**.
+   *
+   * Las claves sin valor se quitan porque el backend valida con
+   * `forbidNonWhitelisted`: una clave declarada en `undefined` vuelve `400`.
+   *
+   * @param dependiente - Filiación y parentesco declarado.
+   * @returns El dependiente recién creado, ya con su apoderamiento.
+   */
+  registerOwnDependent(dependiente: NewDependent): Observable<Dependent> {
+    return this.http
+      .post<ConNulos<WireDependent>>(
+        this.url('/profiles/patients/me/dependents'),
+        stripUndefined({ ...dependiente }),
+      )
+      .pipe(map((body) => toDependent(body)));
+  }
+
+  /**
    * `GET /profiles/practitioners/me/summary` — el perfil profesional propio.
    *
    * Autoservicio, igual que el resumen del paciente: el sujeto lo resuelve el
@@ -292,6 +380,8 @@ export class ProfilesClient {
   listPractitioners(
     filtros: {
       readonly specialtyConceptId?: string;
+      /** Sólo quienes no declaran ninguna especialidad vigente. */
+      readonly withoutSpecialty?: boolean;
       readonly cursor?: string;
       readonly limit?: number;
     } = {},
@@ -299,6 +389,9 @@ export class ProfilesClient {
     let params = new HttpParams();
     if (filtros.specialtyConceptId !== undefined) {
       params = params.set('specialtyConceptId', filtros.specialtyConceptId);
+    }
+    if (filtros.withoutSpecialty === true) {
+      params = params.set('withoutSpecialty', 'true');
     }
     if (filtros.cursor !== undefined) {
       params = params.set('cursor', filtros.cursor);
@@ -323,6 +416,21 @@ export class ProfilesClient {
           };
         }),
       );
+  }
+
+  /**
+   * `GET /profiles/practitioners/specialty-counts` — la portada de la guía.
+   *
+   * Es lo que permite dibujar «Cardiología · 88» sin traerse los 88. Antes esta
+   * pantalla contaba paginando la guía entera hasta agotar el cursor, con un
+   * techo que la dejaba recortada sin avisar.
+   *
+   * @returns Una fila por especialidad con gente, más el total sin repetir.
+   */
+  getSpecialtyCounts(): Observable<SpecialtyCounts> {
+    return this.http
+      .get<ConNulos<SpecialtyCounts>>(this.url('/profiles/practitioners/specialty-counts'))
+      .pipe(map((body) => sinNulos<SpecialtyCounts>(body)));
   }
 
   /**
@@ -372,7 +480,28 @@ export class ProfilesClient {
       readonly motherLastName: string;
       readonly birthDate: string;
       readonly phone: string;
+      /* Los cuatro contactos que el alta declara por separado. El correo de
+         trabajo NO está: es la identidad de acceso y se cambia por su propio
+         trámite. */
+      readonly mobilePhone: string;
+      readonly workMobilePhone: string;
+      readonly workLandline: string;
+      readonly personalEmail: string;
       readonly residenceMunicipalityConceptId: string;
+      /* Facturación. Como en el paciente, `''` BORRA el dato: es la única
+         forma de sacar un NIT que se cargó mal. */
+      readonly taxId: string;
+      readonly taxHolderName: string;
+      /* El domicilio (ALV-009): mismo contrato que
+         `OwnPatientProfileChanges.homeAddressLines`. Sólo el texto y, si se
+         marcó un punto, las dos coordenadas juntas — el municipio ya viaja
+         arriba y el backend conserva lo que no llega. */
+      readonly homeAddressLines: string;
+      /* `null` en los dos QUITA el punto; ausentes es «no lo toqué». La
+         distinción hace falta desde que el perfil deja moverlo: sin ella no
+         habría forma de borrar una ubicación mal puesta. */
+      readonly homeLatitude: number | null;
+      readonly homeLongitude: number | null;
     }>,
   ): Observable<OwnPractitionerProfile> {
     return this.http
@@ -572,6 +701,27 @@ export class ProfilesClient {
    * agregar una nueva — vigente y sin tocar las anteriores, que siguen contando
    * como trayectoria.
    */
+  /**
+   * `PATCH /profiles/practitioners/me/specialties/:id/primary` (UC-05-06·P) —
+   * cuál de las especialidades propias es la principal.
+   *
+   * Sin `profileId`: el sujeto sale de la sesión, como el resto del
+   * autoservicio. Hasta el 13/09/2026 `isPrimary` sólo podía fijarse al
+   * agregar, así que una especialidad cargada después del alta quedaba
+   * adicional para siempre; ver `docs/progress/BLOCKERS.md`.
+   *
+   * Es idempotente: marcar la que ya lo es devuelve la misma especialidad.
+   *
+   * @param specialtyId - La especialidad que pasa a ser la principal.
+   * @returns La especialidad, ya primaria.
+   */
+  setOwnPrimarySpecialty(specialtyId: string): Observable<{ readonly id: string }> {
+    return this.http.patch<{ readonly id: string }>(
+      this.url(`/profiles/practitioners/me/specialties/${specialtyId}/primary`),
+      {},
+    );
+  }
+
   addSpecialty(profileId: string, especialidad: NewSpecialty): Observable<{ readonly id: string }> {
     return this.http.post<{ readonly id: string }>(
       this.url(`/profiles/practitioners/${profileId}/specialties`),
@@ -595,6 +745,106 @@ export class ProfilesClient {
     return this.http.post<{ readonly id: string }>(
       this.url(`/profiles/practitioners/${profileId}/jurisdiction-authorizations`),
       stripUndefined(matricula),
+    );
+  }
+
+  /**
+   * `POST /profiles/practitioners/me/credentials`. Un título propio, uno por
+   * llamada: el registro de procesos pide poder cargar varios de cada clase.
+   * Nace siempre PENDIENTE de verificación.
+   */
+  addOwnCredential(credencial: NewOwnCredential): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url('/profiles/practitioners/me/credentials'),
+      stripUndefined(credencial),
+    );
+  }
+
+  /**
+   * `DELETE /profiles/practitioners/me/credentials/:id`. Retira un título
+   * propio cargado por error — sólo funciona mientras sigue PENDIENTE; uno ya
+   * verificado o rechazado responde `422`.
+   */
+  removeOwnCredential(credentialId: string): Observable<void> {
+    return this.http.delete<void>(
+      this.url(`/profiles/practitioners/me/credentials/${encodeURIComponent(credentialId)}`),
+    );
+  }
+
+  /* ---- Corregir y retirar lo ya cargado ---------------------------------
+     Las acciones de las tres tablas de «Configurar tu perfil», pedidas por el
+     propietario el 13/09/2026: «que en la tabla se pueda eliminar registros,
+     editar registros o descargar elementos».
+
+     **De los cinco, sólo `removeOwnCredential` existe hoy en la API.** Los
+     otros cuatro los atiende el simulador de la rama `mockup` —que es el
+     backend de esta rama, `mockBackend: true` fijo— y están escritos con la
+     forma REST que le toca a cada recurso, para que publicarlos del lado del
+     servidor no obligue a tocar la pantalla. El hueco queda anotado en
+     `docs/progress/BLOCKERS.md`, no escondido acá. */
+
+  /**
+   * `PATCH /profiles/practitioners/me/credentials/:id` — corrige un título
+   * propio.
+   *
+   * Parcial: lo que no viaja no se toca. Mismo límite que el retiro —sólo
+   * mientras sigue PENDIENTE—, porque un título ya verificado es un hecho de
+   * quien lo comprobó y corregirlo por detrás invalidaría la comprobación.
+   */
+  updateOwnCredential(credentialId: string, cambios: OwnCredentialChanges): Observable<void> {
+    return this.http.patch<void>(
+      this.url(`/profiles/practitioners/me/credentials/${encodeURIComponent(credentialId)}`),
+      stripUndefined(cambios),
+    );
+  }
+
+  /**
+   * `PATCH /profiles/practitioners/me/specialties/:id` — corrige una
+   * especialidad propia.
+   *
+   * `isPrimary` **no viaja acá**: cuál es la principal ya tiene su propia
+   * operación (`setOwnPrimarySpecialty`), que es la que sabe desmarcar a la
+   * anterior. Dos caminos para el mismo hecho dejarían dos principales.
+   */
+  updateOwnSpecialty(specialtyId: string, cambios: OwnSpecialtyChanges): Observable<void> {
+    return this.http.patch<void>(
+      this.url(`/profiles/practitioners/me/specialties/${encodeURIComponent(specialtyId)}`),
+      stripUndefined(cambios),
+    );
+  }
+
+  /**
+   * `DELETE /profiles/practitioners/me/specialties/:id` — retira una
+   * especialidad cargada por error.
+   */
+  removeOwnSpecialty(specialtyId: string): Observable<void> {
+    return this.http.delete<void>(
+      this.url(`/profiles/practitioners/me/specialties/${encodeURIComponent(specialtyId)}`),
+    );
+  }
+
+  /**
+   * `PATCH /profiles/practitioners/me/jurisdiction-authorizations/:id` —
+   * corrige una matrícula propia.
+   */
+  updateOwnLicense(licenseId: string, cambios: OwnLicenseChanges): Observable<void> {
+    return this.http.patch<void>(
+      this.url(
+        `/profiles/practitioners/me/jurisdiction-authorizations/${encodeURIComponent(licenseId)}`,
+      ),
+      stripUndefined(cambios),
+    );
+  }
+
+  /**
+   * `DELETE /profiles/practitioners/me/jurisdiction-authorizations/:id` —
+   * retira una matrícula cargada por error.
+   */
+  removeOwnLicense(licenseId: string): Observable<void> {
+    return this.http.delete<void>(
+      this.url(
+        `/profiles/practitioners/me/jurisdiction-authorizations/${encodeURIComponent(licenseId)}`,
+      ),
     );
   }
 
@@ -740,7 +990,14 @@ function toOwnPatientProfile(body: ConNulos<WireOwnPatientProfile>): OwnPatientP
     // Las listas son obligatorias en el contrato, pero se defienden igual: una
     // API anterior a este cambio las omite, y la pantalla las recorre sin
     // preguntar. Vacías dicen «no declaró ninguna», que es lo correcto ahí.
-    coverages: limpio.coverages ?? [],
+    coverages: (limpio.coverages ?? []).map((coverage, index) => ({
+      ...sinNulos(coverage),
+      id: coverage.id ?? `legacy:${coverage.policyIdentifier ?? coverage.memberIdentifier ?? coverage.planId ?? 'coverage'}:${index}`,
+      benefits: (coverage.benefits ?? []).map((benefit, benefitIndex) => ({
+        ...sinNulos(benefit),
+        id: benefit.id ?? `legacy-benefit:${index}:${benefitIndex}`,
+      })),
+    })),
     guardians: limpio.guardians ?? [],
   };
 }

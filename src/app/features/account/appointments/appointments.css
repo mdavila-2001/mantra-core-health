@@ -6,8 +6,22 @@
     escritorio, y una tabla de agenda en 360 px no se lee.
     ========================================================================== */
 
+/* ─── Las dos tareas de la pantalla ─────────────────────────────────────────
+   El conmutador encabeza la vista, así que va pegado al encabezado de página y
+   separado del contenido de la sección que abre: es lo que hace leerlo como
+   «qué estoy haciendo» y no como un control más del bloque de abajo.
+
+   `display: block` porque es un componente y por omisión es `display: inline`,
+   que ignoraría el margen de abajo. */
+.turnos__secciones {
+  display: block;
+  margin-block: var(--sp-2) var(--sp-5);
+}
+
 .turnos__bloque {
   margin-block-end: var(--sp-6);
+  /* Contenedor de la rejilla de filtros (ver FT-05 más abajo). */
+  container-type: inline-size;
 }
 
 /* La cabecera del bloque: el título y el conmutador de vista, que en pantalla
@@ -20,9 +34,90 @@
   gap: var(--sp-3);
 }
 
+/* El selector de vista es un componente del sistema (FT-04): acá sólo se dice
+   que no se estire más allá de su contenido en la cabecera. */
 .turnos__vistas {
-  display: flex;
-  gap: var(--sp-1);
+  flex: none;
+}
+
+/* En teléfono «Tus citas» y el conmutador no entran lado a lado: el control se
+   encogía hasta cortar «Calen…». Baja a su propia fila, entero. */
+@media (max-width: 40rem) {
+  .turnos__vistas {
+    flex-basis: 100%;
+  }
+}
+
+/* ─── FT-05 · la barra de búsqueda y filtros ────────────────────────────────
+   Una rejilla que decide por el ancho de SU contenedor, no de la ventana: el
+   espacio real depende de si el menú lateral está abierto. Con una fila flex que
+   envolvía por anchos fijos, «Hasta» quedaba sola en la segunda línea a 768 y a
+   1280 px (H-15). Ahora: una columna en teléfono, 2 × 2 desde 36rem y las
+   cuatro en una fila desde 56rem, con el buscador como único que crece. */
+.turnos__filtros {
+  display: grid;
+  align-items: end;
+  gap: var(--sp-3);
+  margin-block: var(--sp-4);
+}
+
+@container (min-width: 36rem) {
+  .turnos__filtros {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* 13rem por campo: con 11rem «Todos los estados» y «DD/MM/AAAA» salían
+   recortados (H-06). El que cede ancho es el buscador. */
+@container (min-width: 56rem) {
+  .turnos__filtros {
+    grid-template-columns: minmax(12rem, 1fr) repeat(3, 13rem);
+  }
+}
+
+/* `margin-block-end: 0` cancela el aire que `.turnos__filtro` da a los campos
+   del formulario de abajo: acá desalinearía la fila. */
+.turnos__filtro-campo {
+  display: block;
+  margin-block-end: 0;
+}
+
+/* Acciones sobre la fila, no campos: no se estiran a la celda. */
+.turnos__limpiar,
+.turnos__mas-filtros {
+  justify-self: start;
+}
+
+/* R-03 · el envoltorio de los filtros secundarios no existe para el layout
+   fuera del teléfono: sus campos son celdas de la misma rejilla. */
+.turnos__filtros-plegables {
+  display: contents;
+}
+
+/* El botón que los pliega sólo tiene sentido en teléfono. */
+.turnos__mas-filtros {
+  display: none;
+}
+
+.turnos__mas-filtros-cuenta {
+  margin-inline-start: var(--sp-1);
+}
+
+/* Apilados, los cuatro controles ocupaban la primera pantalla entera antes de
+   la primera cita (H-05): el texto queda a la vista y el resto se pliega. */
+@media (max-width: 40rem) {
+  .turnos__mas-filtros {
+    display: inline-flex;
+  }
+
+  .turnos__filtros-plegables {
+    display: none;
+    gap: var(--sp-3);
+  }
+
+  .turnos__filtros--abiertos .turnos__filtros-plegables {
+    display: grid;
+  }
 }
 
 /* El detalle que comparten las dos vistas. */
@@ -41,11 +136,15 @@
 .turnos__detalle-titulo {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--fs-h4);
-  line-height: var(--lh-h4);
+  font-size: var(--fs-h4, var(--fs-h3));
+  line-height: var(--lh-h4, var(--lh-h3));
   font-weight: 600;
   color: var(--text-primary);
-  text-transform: capitalize;
+}
+
+/* Sólo la inicial: `capitalize` dejaba «Viernes 18 De Sept A Las 09:30» (H-08). */
+.turnos__detalle-titulo::first-letter {
+  text-transform: uppercase;
 }
 
 .turnos__detalle-agenda {
@@ -81,6 +180,24 @@
   font-size: var(--fs-caption);
   line-height: var(--lh-caption, var(--lh-body));
   color: var(--text-secondary);
+}
+
+/* R-02 · «Próximas» y «Anteriores». Subtítulos de la sección, no tarjetas:
+   separan dos momentos de la misma lista sin encerrarlos en otra caja. */
+.turnos__grupo + .turnos__grupo {
+  margin-block-start: var(--sp-6);
+}
+
+.turnos__grupo-titulo {
+  margin-block: 0 var(--sp-3);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.turnos__grupo-cuenta {
+  margin-inline-start: var(--sp-2);
+  color: var(--text-muted);
 }
 
 .turnos__titulo {
@@ -139,14 +256,6 @@
   gap: var(--sp-2);
 }
 
-/* El aviso del modo reprogramación: qué turno se está moviendo y la salida. */
-.turnos__reprogramando {
-  display: grid;
-  gap: var(--sp-2);
-  justify-items: start;
-  margin-block-end: var(--sp-4);
-}
-
 .turnos__cuando {
   display: grid;
   gap: var(--sp-2);
@@ -154,8 +263,15 @@
 
 .turnos__fecha {
   color: var(--text-primary);
-  /* La primera letra del día viene en minúscula del locale. */
-  text-transform: capitalize;
+  /* Lo primero que se busca en la fila: es el único dato con peso (H-07). */
+  font-weight: 600;
+}
+
+/* La primera letra del día viene en minúscula del locale. Sólo la inicial:
+   `capitalize` pone mayúscula en cada palabra (H-08). La fecha es un ítem de
+   la rejilla `.turnos__cuando`, así que ya es caja de bloque. */
+.turnos__fecha::first-letter {
+  text-transform: uppercase;
 }
 
 .turnos__hora {
@@ -218,7 +334,7 @@
    de la hora y con menos peso: la hora sigue siendo lo que se viene a leer. */
 .turnos__sede {
   color: var(--text-muted);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 /* TJ-2 · «reprogramado desde…». Va con la agenda y no como aviso: no es una
@@ -226,5 +342,5 @@
    como uno ajeno. */
 .turnos__reprogramado {
   color: var(--text-muted);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }

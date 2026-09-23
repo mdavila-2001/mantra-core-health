@@ -2,7 +2,7 @@
     Tarjeta de directorio — la forma de grilla de un resultado.
 
     Estilos **encapsulados a propósito**, a diferencia de `search-result`: ver
-    el JSDoc del componente. La regla corta es que `redsat.css` es una copia de
+    el JSDoc del componente. La regla corta es que `alovida.css` es una copia de
     la bóveda y se vuelve a copiar entera, así que lo que nace de este lado
     tiene que vivir de este lado o se pierde.
 
@@ -22,9 +22,9 @@
     background: var(--bg-surface);
     box-shadow: var(--shadow-sm);
     transition:
-        box-shadow 0.16s ease,
-        border-color 0.16s ease,
-        transform 0.16s ease;
+        box-shadow var(--dur-fast) var(--ease-standard),
+        border-color var(--dur-fast) var(--ease-standard),
+        transform var(--dur-fast) var(--ease-standard);
 }
 
 :host(:hover) {
@@ -71,10 +71,18 @@
 
 /* ---- texto -------------------------------------------------------------- */
 
+/* El nombre en `body-lg` y no en `body`: la tarjeta tiene tres niveles de
+   texto —nombre, subtítulo y contexto— y con el nombre y el subtítulo al mismo
+   tamaño la única diferencia era el peso, que a 15 px casi no se ve. Con
+   17/15/13 la jerarquía se lee sin tener que leer: se sabe cuál es el nombre
+   antes de haberlo leído, que es lo que hace que una grilla se recorra rápido.
+
+   Son los tres escalones que la escala ALOVIDA ya tiene; no se inventa
+   ninguno. */
 .tarjeta-resultado__titulo {
     margin: 0;
-    font-size: var(--fs-body);
-    line-height: var(--lh-body);
+    font-size: var(--fs-body-lg);
+    line-height: var(--lh-body-lg);
     font-weight: 600;
 }
 
@@ -96,6 +104,23 @@
 
 .tarjeta-resultado__titulo a:focus-visible {
     outline: none;
+}
+
+/* Pegado al título —de ahí el margen negativo, que come el `gap` del host— y
+   en el tamaño del cuerpo: el subtítulo y el nombre son una sola idea leída en
+   dos renglones, y separarlos los volvía dos datos sueltos.
+
+   Dos líneas como tope, igual que las de contexto: un titular largo estiraba su
+   fila entera de la grilla y dejaba huecos en las tarjetas vecinas. */
+.tarjeta-resultado__subtitulo {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: calc(var(--sp-2) * -1 + 2px) 0 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
 }
 
 .tarjeta-resultado__tipo,

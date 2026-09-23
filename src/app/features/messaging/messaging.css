@@ -1,79 +1,69 @@
-/* La bandeja, con la forma de un chat de escritorio: la lista a la izquierda y
-   la conversación a la derecha, dentro de un marco que no crece con el
-   contenido —la que scrollea es la lista, no la página—. Debajo de 60rem se
-   apila y queda la lista sola: en un teléfono la conversación es otra pantalla.
+/* El marco del chat: ocupa la ventana entera —menos el header de la
+   aplicación—, con la lista a la izquierda y la conversación a la derecha.
 
-   Todo el color sale de `redsat.css`. Ver la nota de `conversation-list.css`. */
+   Antes era una tarjeta de 46rem de alto flotando en el medio de una página
+   con relleno. Un chat no es una tarjeta: es el lugar donde se está, y el
+   composer tiene que estar clavado abajo del todo, no al pie de un rectángulo.
+
+   Debajo de 60rem se ve una cosa o la otra: en un teléfono la conversación es
+   la pantalla completa, y `is-hilo-abierto` decide cuál de las dos. */
 
 .mensajeria__alerta {
   display: block;
-  margin-bottom: var(--e4);
+  margin: var(--e3) var(--e4) 0;
 }
 
 .mensajeria__cargando {
+  padding: var(--e6);
   color: var(--tinta-2);
 }
 
 .mensajeria {
   display: grid;
-  grid-template-columns: minmax(18rem, 23rem) 1fr;
-  /* Alto fijo: el hilo scrollea por dentro. Sin esto el composer se va al pie
-     de una página larguísima y hay que bajar para escribir. */
-  block-size: min(calc(100dvh - 9rem), 46rem);
-  border: 1px solid var(--filete);
-  border-radius: var(--r-card);
+  grid-template-columns: minmax(20rem, 30%) 1fr;
+  block-size: 100%;
+  min-block-size: 0;
   overflow: hidden;
   background: var(--sup-tarjeta);
-  box-shadow: var(--sombra-1);
 }
+
+/* --- Columna izquierda --------------------------------------------------- */
 
 .mensajeria__panel {
   display: flex;
   flex-direction: column;
   min-block-size: 0;
   border-inline-end: 1px solid var(--filete);
+  background: var(--sup-tarjeta);
 }
 
-.mensajeria__panel-cabecera {
+.mensajeria__cabecera {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--e2);
   min-block-size: var(--h-header);
-  padding: 0 var(--e3);
-  border-block-end: 1px solid var(--filete);
-  background: var(--sup-inset);
+  padding: 0 var(--e4);
+  flex: none;
 }
 
 .mensajeria__titulo {
   margin: 0;
   font-family: var(--f-titulo);
-  font-size: 18px;
+  font-size: var(--fs-h3);
   font-weight: 700;
   color: var(--tinta-marca);
 }
 
-.mensajeria__lista {
-  flex: 1 1 auto;
-  min-block-size: 0;
-  overflow-y: auto;
-}
-
-/* --- El buscador de «escribirle a alguien» ------------------------------- */
+/* --- El buscador --------------------------------------------------------- */
 
 .mensajeria__buscador {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--e2);
-  padding: var(--e3);
-  border-block-end: 1px solid var(--filete);
-  background: var(--sup-inset);
+  flex: none;
+  padding: 0 var(--e3) var(--e2);
 }
 
 .mensajeria__campo {
   position: relative;
-  flex: 1 1 10rem;
   display: flex;
   align-items: center;
 }
@@ -93,36 +83,167 @@
 
 .mensajeria__campo input {
   inline-size: 100%;
-  block-size: var(--h-ctrl);
-  padding-inline: calc(var(--e3) * 2 + 16px) var(--e3);
-  border: 1px solid var(--filete);
+  block-size: 36px;
+  padding-inline: calc(var(--e3) * 2 + 16px) var(--e8);
+  border: 1px solid transparent;
   border-radius: var(--r-pill);
-  background: var(--sup-tarjeta);
+  background: var(--sup-inset);
   font: inherit;
+  font-size: var(--fs-caption);
   color: var(--tinta);
+}
+
+/* La cruz nativa del `type="search"` duplicaría el botón de limpiar. */
+.mensajeria__campo input::-webkit-search-cancel-button {
+  appearance: none;
 }
 
 .mensajeria__campo input:focus-visible {
   outline: 2px solid var(--anillo-foco);
   outline-offset: 1px;
   border-color: var(--petroleo);
+  background: var(--sup-tarjeta);
 }
 
-.mensajeria__resultados {
-  flex: 1 1 100%;
+.mensajeria__campo-limpiar {
+  position: absolute;
+  inset-inline-end: var(--e2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 24px;
+  block-size: 24px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--tinta-3);
+  cursor: pointer;
+}
+
+.mensajeria__campo-limpiar svg {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+/* --- Los filtros --------------------------------------------------------- */
+
+.mensajeria__chips {
+  flex: none;
+  display: flex;
+  gap: var(--e2);
+  padding: 0 var(--e3) var(--e2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.mensajeria__chips::-webkit-scrollbar {
+  display: none;
+}
+
+.mensajeria__chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  block-size: 28px;
+  padding-inline: var(--e3);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--sup-inset);
+  color: var(--tinta-2);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--mov-rapido) var(--curva);
+}
+
+.mensajeria__chip:hover {
+  background: var(--neutro-bg);
+}
+
+.mensajeria__chip.is-activo {
+  background: var(--info-bg);
+  color: var(--info-tinta);
+}
+
+.mensajeria__chip-cuenta {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- La lista ------------------------------------------------------------ */
+
+.mensajeria__lista {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+  border-block-start: 1px solid var(--filete-2);
+}
+
+.mensajeria__archivados {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  inline-size: 100%;
+  padding: var(--e3) var(--e4);
+  border: 0;
+  border-block-end: 1px solid var(--filete-2);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mensajeria__archivados:hover,
+.mensajeria__archivados.is-activo {
+  background: var(--sup-inset);
+}
+
+.mensajeria__archivados-icono {
+  display: inline-flex;
+  color: var(--tinta-2);
+}
+
+.mensajeria__archivados-icono svg {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+.mensajeria__archivados-texto {
+  flex: 1 1 auto;
+  text-align: start;
+  font-weight: 600;
+  font-size: var(--fs-body);
+}
+
+.mensajeria__archivados-cuenta {
+  color: var(--tinta-3);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.mensajeria__rotulo {
+  margin: 0;
+  padding: var(--e3) var(--e4) var(--e1);
+  color: var(--tinta-marca);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+.mensajeria__contactos {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.mensajeria__resultado {
+.mensajeria__contacto {
   display: flex;
   flex-direction: column;
   gap: 2px;
   inline-size: 100%;
-  padding: var(--e2) var(--e3);
+  padding: var(--e2) var(--e4);
   border: 0;
-  border-radius: var(--r-ctrl);
   background: none;
   color: inherit;
   font: inherit;
@@ -130,72 +251,100 @@
   cursor: pointer;
 }
 
-.mensajeria__resultado:hover,
-.mensajeria__resultado:focus-visible {
-  background: var(--neutro-bg);
+.mensajeria__contacto:hover,
+.mensajeria__contacto:focus-visible {
+  background: var(--sup-inset);
 }
 
-.mensajeria__resultado-nombre {
+.mensajeria__contacto-nombre {
   font-family: var(--f-titulo);
   font-weight: 600;
 }
 
-.mensajeria__resultado-detalle {
+.mensajeria__contacto-detalle {
   color: var(--tinta-2);
-  font-size: 13px;
+  font-size: var(--fs-caption);
 }
 
-/* --- El panel derecho sin hilo abierto ----------------------------------- */
+.mensajeria__sin-nada {
+  padding: var(--e6) var(--e4);
+  color: var(--tinta-2);
+  text-align: center;
+}
+
+/* --- Columna derecha ----------------------------------------------------- */
+
+.mensajeria__conversacion {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  min-inline-size: 0;
+  background: var(--chat-papel);
+}
+
+/* El hilo se pinta en el `router-outlet`, que no tiene caja propia: su
+   componente es hermano del outlet en el DOM, así que la altura la tiene que
+   dar esta regla. */
+.mensajeria__conversacion > app-thread {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
 
 .mensajeria__vacio {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--e3);
+  gap: var(--e2);
   padding: var(--e6);
   text-align: center;
   color: var(--tinta-2);
-  /* El mismo papel del hilo, para que el panel derecho no cambie de material
-     al abrir una conversación. */
-  background:
-    radial-gradient(60% 50% at 50% 40%, var(--info-bg) 0%, transparent 70%), var(--sup-inset);
 }
 
 .mensajeria__vacio-icono {
-  margin: 0;
+  margin: 0 0 var(--e2);
   color: var(--aguamarina);
+  opacity: .55;
 }
 
 .mensajeria__vacio-icono svg {
-  inline-size: 72px;
-  block-size: 72px;
+  inline-size: 88px;
+  block-size: 88px;
+}
+
+.mensajeria__vacio-titulo {
+  font-family: var(--f-titulo);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--tinta-marca);
 }
 
 .mensajeria__vacio-texto {
-  margin: 0;
-  max-inline-size: 28ch;
+  max-inline-size: 34ch;
+  font-size: var(--fs-caption);
 }
+
+/* --- Angosto ------------------------------------------------------------- */
 
 @media (max-width: 60rem) {
   .mensajeria {
     grid-template-columns: 1fr;
-    block-size: auto;
-    max-block-size: none;
   }
 
   .mensajeria__panel {
     border-inline-end: 0;
   }
 
-  .mensajeria__lista {
-    overflow-y: visible;
+  /* Con hilo abierto se ve el hilo; sin él, la lista. Las dos juntas en 360 px
+     dejan una conversación de 12 caracteres de ancho. */
+  .mensajeria.is-hilo-abierto .mensajeria__panel {
+    display: none;
   }
 
-  /* En angosto la conversación es otra pantalla, así que el hueco de la
-     derecha no tiene sentido: ocuparía una pantalla entera para decir que no
-     hay nada abierto. */
-  .mensajeria__vacio {
+  .mensajeria:not(.is-hilo-abierto) .mensajeria__conversacion {
     display: none;
   }
 }

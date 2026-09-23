@@ -1,0 +1,14 @@
+/* ============================================================================
+    El directorio de centros de salud.
+
+    La tarjeta trae sus propios estilos —ver `centro-card.css`— y acá sólo va
+    lo que es de la página.
+    ========================================================================== */
+
+/* Los chips de ciudad viven en `../../../public-directories/mapa-directorio.css`
+   desde la subtarea 2.3: también los dibuja aseguradoras, y dos copias de las
+   mismas reglas terminan distintas. */
+
+/* La grilla, el recuento y los esqueletos viven en `../centro-card/centro-grid.css`:
+   los comparten las cuatro pantallas del directorio y acá sólo queda lo que es
+   propio de ésta. */

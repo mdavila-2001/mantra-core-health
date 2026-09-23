@@ -48,7 +48,6 @@ const RESUMEN_SIN_VERIFICAR = {
   identityVerified: false,
 };
 
-
 /**
  * Atiende la lectura del perfil completo, que la tarjeta pide junto al resumen.
  *
@@ -124,16 +123,18 @@ describe('MyProfile', () => {
     function conPerfil(perfil: Record<string, unknown>): string {
       http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
       // El resumen dispara la lectura del catálogo para traducir el estado.
-      http.expectOne((r) => r.url === '/terminology/concepts').flush({
-        items: [],
-        count: 0,
-      });
+      http
+        .expectOne((r) => r.url === '/terminology/concepts')
+        .flush({
+          items: [],
+          count: 0,
+        });
       // La señal se toma del componente SIN pasar por `interno`: ése liga las
       // funciones al componente, y una señal ES una función — ligada, pierde
       // `.set`.
-      const señal = (fixture.componentInstance as unknown as Record<string, { set: (v: unknown) => void }>)[
-        'perfil'
-      ];
+      const señal = (
+        fixture.componentInstance as unknown as Record<string, { set: (v: unknown) => void }>
+      )['perfil'];
       señal.set({
         personId: 'per-1',
         patientProfileId: 'pp-1',
@@ -143,7 +144,33 @@ describe('MyProfile', () => {
         ...perfil,
       });
       fixture.detectChanges();
-      return fixture.nativeElement.textContent as string;
+      return textoDeTodasLasPestanas();
+    }
+
+    /**
+     * El texto de la tarjeta con cada pestaña abierta, una tras otra.
+     *
+     * La ficha es UNA tarjeta con pestañas (pedido del 09/09/2026) y
+     * `app-tab` no dibuja el panel que no está abierto: el NIT vive en
+     * «Facturación» y los seguros en «Seguros y tutores», así que el texto de
+     * la pantalla sin recorrerlas sólo tendría «Datos personales». Se recorren
+     * pulsando la tira, que es como lo hace la persona.
+     */
+    function textoDeTodasLasPestanas(): string {
+      const raiz = fixture.nativeElement as HTMLElement;
+      const pestanas = [...raiz.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+      if (pestanas.length === 0) {
+        return raiz.textContent ?? '';
+      }
+      const textos: string[] = [];
+      for (const pestana of pestanas) {
+        pestana.click();
+        fixture.detectChanges();
+        textos.push(raiz.textContent ?? '');
+      }
+      pestanas[0].click();
+      fixture.detectChanges();
+      return textos.join('\n');
     }
 
     it('muestra documento, correo, NIT y las dos direcciones', () => {
@@ -341,7 +368,7 @@ describe('MyProfile', () => {
 
     const actual = estado();
     expect(actual.status).toBe('forbidden');
-    expect(actual.nextAction?.route).toBe('/my-account/identity/verify');
+    expect(actual.nextAction?.route).toBe('/my-account/identity');
   });
 
   it('un 403 corriente NO ofrece salida: no hay nada que la persona pueda hacer', () => {
@@ -421,33 +448,20 @@ describe('MyProfile', () => {
     fixture.detectChanges();
   }
 
-  it('«Tu acceso» nombra el rol en palabras, con el código sólo en data-role', () => {
-    // La sesión se abre después de crear la pantalla: las insignias derivan de
-    // una señal, así que reaccionan igual. Con un rol de trabajo, porque desde
-    // F-22 la tarjeta no se le muestra a un paciente.
-    TestBed.inject(SessionStore).start({
-      accessToken: jwt({ sub: 'u-1', roles: ['USER', 'PRACTITIONER'], tenants: ['t-1'] }),
-      refreshToken: 'r-1',
-    });
-    responderResumen();
-
-    const insignias = [
-      ...(fixture.nativeElement as HTMLElement).querySelectorAll('.mi-perfil__roles app-badge'),
-    ];
-    expect(insignias.map((i) => i.textContent?.trim())).toEqual(['Profesional sanitario']);
-    expect(insignias.map((i) => i.getAttribute('data-role'))).toEqual(['PRACTITIONER']);
-  });
-
   /**
-   * F-22. «Organización: Care Default Tenant» y «Roles: Paciente» responden a
-   * «¿por qué no veo tal cosa?», una pregunta de quien trabaja acá. Un paciente
-   * no tiene secciones que le falten: tiene lo suyo.
+   * Pedido del cliente del 13/09/2026: la tarjeta «Tu acceso» sale de «Mi
+   * perfil». Sus dos renglones —«Organización» y «Roles»— son vocabulario de
+   * sistema, y la respuesta a «¿por qué no veo tal cosa?» no justificaba una
+   * columna entera al lado del perfil.
+   *
+   * Se prueba con un rol de trabajo a propósito: era el único caso en que la
+   * tarjeta se dibujaba, así que es el que demuestra que ya no queda ninguno.
    */
-  it('a un paciente no se le muestra «Tu acceso» ni su organización', () => {
+  it('«Tu acceso» ya no se muestra, tampoco a quien viene a trabajar', () => {
     TestBed.inject(SessionStore).start({
       accessToken: jwt({
         sub: 'u-1',
-        roles: ['USER', 'PATIENT'],
+        roles: ['USER', 'PRACTITIONER'],
         tenants: ['t-1'],
         tenantNames: { 't-1': 'Care Default Tenant' },
       }),
@@ -460,23 +474,9 @@ describe('MyProfile', () => {
     expect(raiz.textContent).not.toContain('Tu acceso');
     expect(raiz.textContent).not.toContain('Care Default Tenant');
     expect(raiz.textContent).not.toContain('Organización');
-  });
-
-  /** Quien atiende y además es paciente entra a trabajar: la tarjeta le sirve. */
-  it('a quien atiende sí se le muestra, aunque además sea paciente', () => {
-    TestBed.inject(SessionStore).start({
-      accessToken: jwt({
-        sub: 'u-1',
-        roles: ['PATIENT', 'PRACTITIONER'],
-        tenants: ['t-1'],
-      }),
-      refreshToken: 'r-1',
-    });
-    responderResumen();
-
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="mi-perfil-acceso"]'),
-    ).not.toBeNull();
+    // Sin lateral que dibujar, la ficha ocupa el ancho entero (REGLA DE LA CASA).
+    expect(raiz.querySelector('.mi-perfil__lateral')).toBeNull();
+    expect(raiz.querySelector('.mi-perfil--sin-lateral')).not.toBeNull();
   });
 
   it('los identificadores del perfil y la persona ya no se muestran', () => {
@@ -514,7 +514,7 @@ describe('MyProfile', () => {
     expect(alerta?.textContent).toContain('cuando tu identidad esté verificada');
     expect(alerta?.textContent).not.toContain('No tenés acceso');
     expect(alerta?.textContent).not.toContain('Verifique su identidad');
-    expect(alerta?.querySelector('a[href="/my-account/identity/verify"]')).not.toBeNull();
+    expect(alerta?.querySelector('a[href="/my-account/identity"]')).not.toBeNull();
   });
 
   it('un 403 corriente sigue siendo un muro, y se pinta como tal', () => {
@@ -548,7 +548,7 @@ describe('MyProfile', () => {
     );
   }
 
-  /** La lista de datos de «Tus datos» — no la de «Tu acceso», que comparte clase. */
+  /** La lista de datos de «Tus datos», acotada a la columna del perfil. */
   function listaDeDatos(): HTMLElement | null {
     return (fixture.nativeElement as HTMLElement).querySelector(
       '.mi-perfil__principal .mi-perfil__datos',
@@ -724,7 +724,15 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
     );
   }
 
-  it('la paciente ve la salida a corregir sus datos, con su destino real', () => {
+  /**
+   * FT-11-R03/R04. El perfil entra en sólo lectura y «Editar» habilita los
+   * campos **acá mismo**, sin cambiar de pantalla: era un enlace a
+   * `/my-account/profile/edit`, que es lo que el pedido del cliente corrige.
+   *
+   * La ruta propia del editor sigue existiendo —puede estar en un favorito— y
+   * su prueba vive en `patient-profile-edit.spec.ts`.
+   */
+  it('la paciente entra en sólo lectura y «Editar» abre el formulario acá mismo', () => {
     montar({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
     http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
     http
@@ -736,9 +744,38 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
       });
     fixture.detectChanges();
 
-    const enlace = enlaceDeEdicion();
-    expect(enlace?.textContent?.trim()).toBe('Editar tus datos');
-    expect(enlace?.getAttribute('href')).toBe('/my-account/profile/edit');
+    const raiz = fixture.nativeElement as HTMLElement;
+    // Sólo lectura: la lista de datos está, el formulario no.
+    expect(raiz.querySelector('[data-testid="mi-perfil-editor"]')).toBeNull();
+
+    const boton = enlaceDeEdicion();
+    // Es un botón de lápiz (pedido del 09/09/2026): el nombre va en
+    // `aria-label`, no en el texto, y el dibujo es el glifo `edit` del set.
+    expect(boton?.getAttribute('aria-label')).toBe('Editar');
+    expect(boton?.querySelector('svg')).not.toBeNull();
+    // Un botón, no un enlace: no lleva a ninguna parte.
+    expect(boton?.tagName).toBe('BUTTON');
+    expect(boton?.getAttribute('href')).toBeNull();
+  });
+
+  /**
+   * FT-11-R07/R08. La contraseña no es un campo del formulario: cambiarla exige
+   * verificar quién es la persona, y un campo suelto en el perfil dejaría la
+   * credencial a merced de cualquiera que encuentre la sesión abierta.
+   */
+  it('ofrece cambiar la contraseña por su propio flujo, fuera del formulario', () => {
+    montar({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
+    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({ items: [], count: 0, limit: 50 });
+    fixture.detectChanges();
+
+    const boton = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+      '[data-testid="mi-perfil-cambiar-contrasena"]',
+    );
+    expect(boton?.textContent?.trim()).toBe('Cambiar contraseña');
+    expect(boton?.getAttribute('href')).toBe('/auth/forgot-password');
   });
 
   /**
@@ -833,35 +870,29 @@ describe('MyProfile · foto de perfil', () => {
     http.verify();
   });
 
-  it('con foto ya guardada, resuelve la URL y la pinta', () => {
+  it('con foto ya guardada, baja la imagen y la pinta como data: URL', async () => {
     http.expectOne('/profiles/patients/me').flush(perfilCon({ photoFileId: 'f-1' }));
 
-    http
-      .expectOne('/common/files/f-1/download-url')
-      .flush({ url: '/media/f-1', expiresAt: new Date().toISOString() });
+    // Por `/content` y no por `download-url`: esa firma apunta a
+    // `file://local/<sha>` y ningún `<img>` la carga. Era el defecto por el
+    // que la foto se guardaba bien y el avatar seguía en iniciales.
+    http.expectOne('/common/files/f-1/content').flush(pngFalso());
+    await esperarLaFoto(() => fotoDelPerfil(fixture) !== null);
     fixture.detectChanges();
 
-    const fotoUrl = (
-      fixture.componentInstance as unknown as { fotoUrl: () => string | null }
-    ).fotoUrl();
-    expect(fotoUrl).toBe('/media/f-1');
+    expect(fotoDelPerfil(fixture)).toMatch(/^data:image\/png;base64,/);
   });
 
-  it('si la URL inicial no se puede resolver, degrada a null sin romper la pantalla', () => {
+  it('si la imagen no se puede leer, degrada a null sin romper la pantalla', () => {
     http.expectOne('/profiles/patients/me').flush(perfilCon({ photoFileId: 'f-1' }));
 
-    http
-      .expectOne('/common/files/f-1/download-url')
-      .error(new ProgressEvent('error'), { status: 500 });
+    http.expectOne('/common/files/f-1/content').error(new ProgressEvent('error'), { status: 500 });
     fixture.detectChanges();
 
-    const fotoUrl = (
-      fixture.componentInstance as unknown as { fotoUrl: () => string | null }
-    ).fotoUrl();
-    expect(fotoUrl).toBeNull();
+    expect(fotoDelPerfil(fixture)).toBeNull();
   });
 
-  it('sube la foto elegida, la fija y pinta la URL resuelta', () => {
+  it('sube la foto elegida, la fija y la pinta', async () => {
     http.expectOne('/profiles/patients/me').flush(perfilCon({}));
     fixture.detectChanges();
 
@@ -879,15 +910,11 @@ describe('MyProfile · foto de perfil', () => {
     expect(puesta.request.body).toEqual({ fileId: 'f-2' });
     puesta.flush(perfilCon({ photoFileId: 'f-2' }));
 
-    http
-      .expectOne('/common/files/f-2/download-url')
-      .flush({ url: '/media/f-2', expiresAt: new Date().toISOString() });
+    http.expectOne('/common/files/f-2/content').flush(pngFalso());
+    await esperarLaFoto(() => fotoDelPerfil(fixture) !== null);
     fixture.detectChanges();
 
-    const fotoUrl = (
-      fixture.componentInstance as unknown as { fotoUrl: () => string | null }
-    ).fotoUrl();
-    expect(fotoUrl).toBe('/media/f-2');
+    expect(fotoDelPerfil(fixture)).toMatch(/^data:image\/png;base64,/);
   });
 
   it('un profesional no ve el control: la tarjeta de paciente no se carga para él', () => {
@@ -904,7 +931,12 @@ describe('MyProfile · foto de perfil', () => {
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
     TestBed.inject(SessionStore).start({
-      accessToken: jwt({ sub: 'u-2', hpid: 'hp-1', roles: ['USER', 'PRACTITIONER'], tenants: ['t-1'] }),
+      accessToken: jwt({
+        sub: 'u-2',
+        hpid: 'hp-1',
+        roles: ['USER', 'PRACTITIONER'],
+        tenants: ['t-1'],
+      }),
       refreshToken: 'r-1',
     });
     const otroFixture = TestBed.createComponent(MyProfile);
@@ -920,5 +952,183 @@ describe('MyProfile · foto de perfil', () => {
       (otroFixture.nativeElement as HTMLElement).querySelector('[data-testid="mi-perfil-foto"]'),
     ).toBeNull();
     otroHttp.verify();
+  });
+});
+
+/** Lo que la tarjeta tiene hoy como foto. `null` es el avatar de iniciales. */
+function fotoDelPerfil(fixture: ComponentFixture<MyProfile>): string | null {
+  return (fixture.componentInstance as unknown as { fotoUrl: () => string | null }).fotoUrl();
+}
+
+/**
+ * Un PNG mínimo, como Blob.
+ *
+ * La foto se resuelve bajando los bytes por `/content` y codificándolos a
+ * `data:`: importa que el Blob traiga tipo, no qué contiene.
+ */
+function pngFalso(): Blob {
+  return new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' });
+}
+
+/**
+ * Espera a que `FileReader` termine de codificar.
+ *
+ * Es asíncrono y **no** pasa por los temporizadores de `fakeAsync`, así que se
+ * sondea en vez de ceder un turno fijo, que resultaba intermitente.
+ */
+async function esperarLaFoto(hayFoto: () => boolean): Promise<void> {
+  for (let intento = 0; intento < 50 && !hayFoto(); intento++) {
+    await new Promise((sigue) => setTimeout(sigue, 0));
+  }
+}
+
+/**
+ * Las etiquetas del catálogo llegan por dos caminos que corren en paralelo: el
+ * resumen pide la del estado, el perfil completo pide las suyas —ocupación,
+ * municipio, departamento—. El resumen las guardaba con `set`, y cuando el
+ * perfil respondía primero (la maqueta responde en el acto), lo pisaba: la
+ * ficha mostraba «Ocupación» en blanco y el municipio «Sin registrar» con los
+ * dos datos cargados. Se vio en la captura del 09/09/2026.
+ */
+describe('MyProfile · las etiquetas del perfil sobreviven a las del resumen', () => {
+  const OCUPACION = '33333333-3333-4333-8333-333333333333';
+  const MUNICIPIO = '44444444-4444-4444-8444-444444444444';
+
+  let fixture: ComponentFixture<MyProfile>;
+  let http: HttpTestingController;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MyProfile],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(MyProfile);
+    http = TestBed.inject(HttpTestingController);
+    resolverEstadosDeCaso(http);
+    fixture.detectChanges();
+    http.expectNone('/identity/me/verification-cases');
+  });
+
+  afterEach(() => http.verify());
+
+  /** La petición de etiquetas que pide exactamente estos ids. */
+  function etiquetasPara(ids: readonly string[]) {
+    return http.expectOne(
+      (r) => r.url === '/terminology/concepts' && r.params.get('ids') === ids.join(','),
+    );
+  }
+
+  it('la ocupación y el municipio se ven aunque sus etiquetas lleguen antes que la del estado', () => {
+    // 1 · El perfil completo responde primero, y con él sus etiquetas.
+    resolverPerfilCompleto(http, {
+      occupationConceptId: OCUPACION,
+      residenceMunicipalityConceptId: MUNICIPIO,
+    });
+    etiquetasPara([MUNICIPIO, OCUPACION]).flush({
+      items: [
+        { conceptId: OCUPACION, code: 'ACC', display: 'Contador/a', codeSystemVersionId: 'c-1' },
+        {
+          conceptId: MUNICIPIO,
+          code: 'SCZ',
+          display: 'Santa Cruz de la Sierra',
+          codeSystemVersionId: 'c-1',
+        },
+      ],
+      count: 2,
+      limit: 50,
+    });
+
+    // 2 · Después llega el resumen, con la sola etiqueta del estado.
+    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
+    etiquetasPara([ESTADO]).flush({
+      items: [{ conceptId: ESTADO, code: 'ACTIVE', display: 'Activa', codeSystemVersionId: 'c-1' }],
+      count: 1,
+      limit: 50,
+    });
+    fixture.detectChanges();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.textContent).toContain('Activa');
+    expect(raiz.textContent).toContain('Contador/a');
+
+    // El municipio vive en «Contacto».
+    const pestanas = raiz.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+    pestanas[1].click();
+    fixture.detectChanges();
+    expect(raiz.querySelector('[data-testid="mi-perfil-municipio"]')?.textContent?.trim()).toBe(
+      'Santa Cruz de la Sierra',
+    );
+  });
+});
+
+/**
+ * §4.H del plan de UX · el camino de vuelta a lo que salió del menú del médico.
+ *
+ * «Mi consultorio propio» y «Organización médica» vivían al pie de la tarjeta
+ * «Tu acceso». La tarjeta se fue el 13/09/2026 y ellos se quedaron, ahora bajo
+ * el perfil, porque eran los únicos accesos a esas dos pantallas. El
+ * 19/09/2026 el propietario sacó «Organización médica» y pidió que el que
+ * quedaba fuera un botón de ícono arriba a la izquierda.
+ *
+ * **El 20/09/2026 el doctor pidió quitar los dos** (C-01/C-02: «deben
+ * eliminarse los botones … solo en caso de mi consultorio se ve como pestaña
+ * para personalizarle el QR y todo lo que ofrece esa view»). Así que este spec
+ * dejó de fijar que el enlace exista y pasó a fijar lo contrario, que es lo
+ * que ahora hay que defender de una reconciliación futura.
+ *
+ * Quitar el único acceso a una pantalla sin que el acceso exista en otro lado
+ * es exactamente la pérdida que el comentario anterior advertía, así que la
+ * otra mitad —que el consultorio se administre ahora **dentro** del perfil, en
+ * la pestaña «Dónde atiendo»— la fija el spec de la ficha
+ * (`practitioner-profile-view.spec.ts`, «el consultorio se administra dentro
+ * del perfil»). Acá no se puede: esta prueba hace fallar a propósito el
+ * resumen profesional para demostrar que los enlaces no dependían de esa
+ * tarjeta, y con la tarjeta en error no hay pestañas que mirar.
+ *
+ * Describe propio porque `esProfesional()` decide en el constructor qué resumen
+ * se pide: la sesión tiene que estar abierta antes de crear la pantalla.
+ */
+describe('MyProfile · los accesos de quien atiende', () => {
+  it('el perfil ya no tiene enlaces sueltos a otras pantallas', () => {
+    TestBed.configureTestingModule({
+      imports: [MyProfile],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    });
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({
+        sub: 'u-2',
+        hpid: 'hp-1',
+        roles: ['USER', 'PRACTITIONER'],
+        tenants: ['t-1'],
+      }),
+      refreshToken: 'r-1',
+    });
+
+    const fixture = TestBed.createComponent(MyProfile);
+    const http = TestBed.inject(HttpTestingController);
+    resolverEstadosDeCaso(http);
+    fixture.detectChanges();
+    // El perfil profesional falla a propósito: los enlaces viven FUERA de esa
+    // tarjeta, y lo que se prueba es justamente que no dependen de ella.
+    http.expectOne('/profiles/practitioners/me/summary').error(new ProgressEvent('error'), {
+      status: 500,
+    });
+    fixture.detectChanges();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+
+    // La barra entera se fue: no queda un `nav` vacío ocupando el margen.
+    expect(raiz.querySelector('nav[aria-label="Dónde ejercés"]')).toBeNull();
+
+    // Y ningún enlace de la pantalla —esté donde esté— salta a las dos
+    // pantallas que C-02 nombra. Se mira por destino y no por `data-testid`,
+    // porque lo que el doctor pidió quitar es el salto, no un atributo.
+    const saltos = [...raiz.querySelectorAll<HTMLAnchorElement>('a[href]')]
+      .map((a) => a.getAttribute('href') ?? '')
+      .filter((href) => /my-practice|medical-organization/.test(href));
+    expect(saltos).toEqual([]);
+
+    http.verify();
   });
 });

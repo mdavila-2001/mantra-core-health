@@ -59,8 +59,8 @@
     font-size: var(--fs-body);
     line-height: var(--lh-body);
     transition:
-        background 0.15s ease,
-        color 0.15s ease;
+        background var(--dur-fast) var(--ease-standard),
+        color var(--dur-fast) var(--ease-standard);
 }
 
 .side-nav__link:hover {
@@ -119,7 +119,7 @@
     max-inline-size: 88vw;
     box-shadow: var(--shadow-lg);
     transform: translateX(-100%);
-    transition: transform 0.15s ease;
+    transition: transform var(--dur-fast) var(--ease-standard);
 }
 
 :host(.side-nav--drawer:not(.side-nav--open)) .side-nav__panel {

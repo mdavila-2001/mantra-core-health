@@ -75,12 +75,7 @@ export const ZONAS_DEL_CUERPO: readonly ZonaDelCuerpo[] = [
     id: 'huesos',
     nombre: 'Huesos y músculos',
     icono: 'huesos',
-    sintomas: [
-      'dolor-de-espalda',
-      'dolor-de-rodilla',
-      'dolor-articular',
-      'hinchazon-de-piernas',
-    ],
+    sintomas: ['dolor-de-espalda', 'dolor-de-rodilla', 'dolor-articular', 'hinchazon-de-piernas'],
   },
   {
     id: 'piel',

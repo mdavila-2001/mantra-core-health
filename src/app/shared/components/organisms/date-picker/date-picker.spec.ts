@@ -1,4 +1,7 @@
+import { Component } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+
+import { FormField } from '../../molecules/form-field/form-field';
 
 import { DatePicker } from './date-picker';
 
@@ -212,11 +215,192 @@ describe('DatePicker', () => {
       expect(fixture.componentInstance.value()).toBeNull();
       expect(inputEl.value).toBe('');
     });
+
+    it('al clickear el input selecciona los dos dígitos del día si se clickea al inicio', () => {
+      fixture.componentRef.setInput('value', new Date(2026, 6, 15));
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.setSelectionRange(1, 1);
+      inputEl.dispatchEvent(new MouseEvent('click'));
+
+      expect(inputEl.selectionStart).toBe(0);
+      expect(inputEl.selectionEnd).toBe(2);
+    });
+
+    it('al clickear en la sección de mes selecciona los dos dígitos del mes', () => {
+      fixture.componentRef.setInput('value', new Date(2026, 6, 15));
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.setSelectionRange(4, 4);
+      inputEl.dispatchEvent(new MouseEvent('click'));
+
+      expect(inputEl.selectionStart).toBe(3);
+      expect(inputEl.selectionEnd).toBe(5);
+    });
+
+    it('al clickear en la sección de año selecciona los cuatro dígitos del año', () => {
+      fixture.componentRef.setInput('value', new Date(2026, 6, 15));
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.setSelectionRange(8, 8);
+      inputEl.dispatchEvent(new MouseEvent('click'));
+
+      expect(inputEl.selectionStart).toBe(6);
+      expect(inputEl.selectionEnd).toBe(10);
+    });
+
+    it('Tab navega de Día a Mes y de Mes a Año', () => {
+      fixture.componentRef.setInput('value', new Date(2026, 6, 15));
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.setSelectionRange(0, 2);
+
+      // Tab desde Día -> Mes [3, 5]
+      const tab1 = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+      inputEl.dispatchEvent(tab1);
+      expect(tab1.defaultPrevented).toBe(true);
+      expect(inputEl.selectionStart).toBe(3);
+      expect(inputEl.selectionEnd).toBe(5);
+
+      // Tab desde Mes -> Año [6, 10]
+      const tab2 = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+      inputEl.dispatchEvent(tab2);
+      expect(tab2.defaultPrevented).toBe(true);
+      expect(inputEl.selectionStart).toBe(6);
+      expect(inputEl.selectionEnd).toBe(10);
+
+      // Tab desde Año no previene default para salir al botón del calendario
+      const tab3 = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+      inputEl.dispatchEvent(tab3);
+      expect(tab3.defaultPrevented).toBe(false);
+    });
+
+    it('Shift+Tab navega de Año a Mes y de Mes a Día', () => {
+      fixture.componentRef.setInput('value', new Date(2026, 6, 15));
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.setSelectionRange(6, 10);
+
+      // Shift+Tab desde Año -> Mes [3, 5]
+      const sTab1 = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true });
+      inputEl.dispatchEvent(sTab1);
+      expect(sTab1.defaultPrevented).toBe(true);
+      expect(inputEl.selectionStart).toBe(3);
+      expect(inputEl.selectionEnd).toBe(5);
+
+      // Shift+Tab desde Mes -> Día [0, 2]
+      const sTab2 = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true });
+      inputEl.dispatchEvent(sTab2);
+      expect(sTab2.defaultPrevented).toBe(true);
+      expect(inputEl.selectionStart).toBe(0);
+      expect(inputEl.selectionEnd).toBe(2);
+    });
+
+    it('Flechas arriba y abajo incrementan o decrementan el segmento seleccionado', () => {
+      fixture.componentRef.setInput('value', new Date(2026, 6, 15));
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.setSelectionRange(0, 2);
+
+      // Flecha arriba en Día: 15 -> 16
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
+      expect(inputEl.value.startsWith('16/')).toBe(true);
+      expect(inputEl.selectionStart).toBe(0);
+      expect(inputEl.selectionEnd).toBe(2);
+
+      // Flecha abajo en Día: 16 -> 15
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+      expect(inputEl.value.startsWith('15/')).toBe(true);
+    });
+
+    it('al teclear un dígito >= 4 en el día completa con 0X y avanza a mes', () => {
+      fixture.componentRef.setInput('value', null);
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.dispatchEvent(new Event('focus'));
+      inputEl.setSelectionRange(0, 2);
+
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: '5' }));
+      expect(inputEl.value).toBe('05/MM/AAAA');
+      expect(inputEl.selectionStart).toBe(3);
+      expect(inputEl.selectionEnd).toBe(5);
+    });
+
+    it('al escribir solo 1 en día, mes y año normaliza a 01 y 0001', () => {
+      fixture.componentRef.setInput('value', null);
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.dispatchEvent(new Event('focus'));
+      inputEl.setSelectionRange(0, 2);
+
+      // Tipear 1 en Día -> '1D/MM/AAAA'
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: '1' }));
+      expect(inputEl.value).toBe('1D/MM/AAAA');
+
+      // Presionar Tab -> Día se normaliza a 01 y salta a Mes
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+      expect(inputEl.value.startsWith('01/')).toBe(true);
+      expect(inputEl.selectionStart).toBe(3);
+      expect(inputEl.selectionEnd).toBe(5);
+
+      // Tipear 1 en Mes -> '01/1M/AAAA'
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: '1' }));
+      expect(inputEl.value).toBe('01/1M/AAAA');
+
+      // Presionar Tab -> Mes se normaliza a 01 y salta a Año
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+      expect(inputEl.value.startsWith('01/01/')).toBe(true);
+      expect(inputEl.selectionStart).toBe(6);
+      expect(inputEl.selectionEnd).toBe(10);
+
+      // Tipear 1 en Año -> '01/01/1AAA'
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: '1' }));
+      expect(inputEl.value).toBe('01/01/1AAA');
+
+      // Al salir / blur, Año se normaliza a 0001 y se obtiene fecha completa 01/01/0001
+      inputEl.dispatchEvent(new Event('blur'));
+      expect(inputEl.value).toBe('01/01/0001');
+
+      const val = fixture.componentInstance.value();
+      expect(val).toBeInstanceOf(Date);
+      expect(val?.getFullYear()).toBe(1);
+      expect(val?.getMonth()).toBe(0);
+      expect(val?.getDate()).toBe(1);
+    });
+
+    it('al tipear 1 en día y presionar / normaliza a 01 y avanza a mes', () => {
+      fixture.componentRef.setInput('value', null);
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.dispatchEvent(new Event('focus'));
+      inputEl.setSelectionRange(0, 2);
+
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: '1' }));
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: '/' }));
+
+      expect(inputEl.value.startsWith('01/')).toBe(true);
+      expect(inputEl.selectionStart).toBe(3);
+      expect(inputEl.selectionEnd).toBe(5);
+    });
   });
 
   describe('navegación de años y meses', () => {
-    it('la grilla de años abre en 1980-2009 cuando no hay fecha elegida', async () => {
+    it('un campo cerrado al pasado abre la grilla de años en 1980-2009', async () => {
+      // `maxDate="today"` es cómo se declaran los tres campos de fecha de
+      // nacimiento de la aplicación, y es la señal que hace que el calendario
+      // mire hacia atrás. Sin ella el campo es una fecha operativa y abre en
+      // hoy — ver la prueba siguiente.
       fixture.componentRef.setInput('value', null);
+      fixture.componentRef.setInput('maxDate', 'today');
       await fixture.whenStable();
       await abrirAnios();
 
@@ -228,6 +412,21 @@ describe('DatePicker', () => {
       expect(anuncio()).toBe('Años 1980 a 2009');
       // Los treinta son de la página: ninguno se muestra atenuado.
       expect(celdas().filter((cell) => cell.classList.contains('other-decade')).length).toBe(0);
+    });
+
+    it('sin tope en el pasado el calendario abre en el mes de hoy, no en enero de 2000', async () => {
+      // El defecto: el mes por defecto salía de una constante —enero de
+      // `MAX_DEFAULT_YEAR`—, una heurística de fecha de nacimiento aplicada a
+      // los veintidós campos que NO piden un nacimiento. Bloquear la agenda de
+      // la semana que viene abría el calendario veintiséis años atrás.
+      fixture.componentRef.setInput('value', null);
+      fixture.componentRef.setInput('minDate', 'today');
+      await fixture.whenStable();
+      await abrir();
+
+      const hoy = new Date();
+      expect(encabezado().textContent).toContain(String(hoy.getFullYear()));
+      expect(encabezado().textContent).toContain(nombreDeMes(hoy.getMonth()));
     });
 
     it('elegir un año abre la grilla de meses y elegir el mes vuelve a los días', async () => {
@@ -252,6 +451,7 @@ describe('DatePicker', () => {
 
     it('carga 1985 en 4 toques: encabezado, año, mes y día', async () => {
       fixture.componentRef.setInput('value', null);
+      fixture.componentRef.setInput('maxDate', 'today');
       await fixture.whenStable();
       await abrir();
 
@@ -528,5 +728,92 @@ describe('DatePicker', () => {
 
     expect(fixture.nativeElement.querySelector('.time-picker-section')).not.toBeNull();
   });
+
+  describe('no se confirma lo que nadie eligió', () => {
+    function confirmar(): HTMLButtonElement {
+      return fixture.nativeElement.querySelector('[data-testid="date-picker-confirm"]');
+    }
+
+    /**
+     * `app-button` deshabilita con `aria-disabled` y no con el atributo nativo,
+     * a propósito: así el botón sigue siendo enfocable y un lector de pantalla
+     * puede llegar a él y decir por qué no se puede usar. Lo que corta el clic
+     * es el propio componente.
+     */
+    function estaDeshabilitado(): boolean {
+      return confirmar().getAttribute('aria-disabled') === 'true';
+    }
+
+    it('sin valor previo, «Confirmar» nace deshabilitado', async () => {
+      fixture.componentRef.setInput('value', null);
+      await fixture.whenStable();
+      await abrir();
+
+      // `open()` siembra el mes que se dibuja, no una elección: antes de este
+      // caso aceptaba el 1 de enero del año por defecto y lo escribía como si
+      // la persona lo hubiera elegido.
+      expect(estaDeshabilitado()).toBe(true);
+    });
+
+    it('elegir un día lo habilita', async () => {
+      fixture.componentRef.setInput('value', null);
+      await fixture.whenStable();
+      await abrir();
+      expect(estaDeshabilitado()).toBe(true);
+
+      const dia = dias().find((d) => !d.disabled)!;
+      dia.click();
+      await fixture.whenStable();
+
+      expect(estaDeshabilitado()).toBe(false);
+    });
+
+    it('confirmar sin elegir no escribe ninguna fecha', async () => {
+      fixture.componentRef.setInput('value', null);
+      await fixture.whenStable();
+      await abrir();
+
+      confirmar().click();
+      await fixture.whenStable();
+
+      expect(input()?.value ?? '').toBe('');
+    });
+
+    it('con valor previo se puede confirmar sin tocar nada: ya hay día, mes y año', async () => {
+      await abrir();
+
+      expect(estaDeshabilitado()).toBe(false);
+    });
+  });
 });
 
+@Component({
+  imports: [DatePicker, FormField],
+  template: `
+    <app-form-field label="Desde"><app-date-picker /></app-form-field>
+    <app-form-field label="Hasta"><app-date-picker /></app-form-field>
+  `,
+})
+class DosFechas {}
+
+describe('DatePicker · nombre del disparador (refactor UX)', () => {
+  it('dentro de un campo, «Abrir calendario» lleva el rótulo: Desde y Hasta no se confunden', async () => {
+    await TestBed.configureTestingModule({ imports: [DosFechas] }).compileComponents();
+    const fixture = TestBed.createComponent(DosFechas);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const raiz = fixture.nativeElement as HTMLElement;
+
+    const nombres = [...raiz.querySelectorAll<HTMLButtonElement>('.date-picker-trigger')].map(
+      (boton) =>
+        (boton.getAttribute('aria-labelledby') ?? '')
+          .split(' ')
+          .map((id) => document.getElementById(id)?.textContent?.replace(/\s+/g, ' ').trim() ?? '')
+          .join(' '),
+    );
+
+    expect(nombres).toHaveLength(2);
+    expect(nombres[0]).toMatch(/^Abrir calendario Desde/);
+    expect(nombres[1]).toMatch(/^Abrir calendario Hasta/);
+  });
+});

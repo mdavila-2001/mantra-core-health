@@ -65,7 +65,8 @@ que corre en tu máquina, el valor por defecto es:
 BACKEND_ORIGIN=http://host.docker.internal:3000
 ```
 
-`docker-compose.yml` declara `extra_hosts: host.docker.internal:host-gateway`
+El servicio `dev` de `docker-compose.yml` declara
+`extra_hosts: host.docker.internal:host-gateway`
 para que también funcione en Docker Engine sobre Linux, donde ese nombre no
 existe de fábrica.
 

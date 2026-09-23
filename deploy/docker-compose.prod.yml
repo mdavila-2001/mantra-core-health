@@ -50,6 +50,9 @@ services:
       - '${HTTP_PORT:-80}:80'
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # `nginx.conf` incluye estos dos. Sin montarlos, nginx no arranca: muere con
+      # `open() "/etc/nginx/api-locations.conf" failed` y el contenedor entra en bucle.
+      - ./api-locations.conf:/etc/nginx/api-locations.conf:ro
       - ./api-proxy.conf:/etc/nginx/api-proxy.conf:ro
     restart: unless-stopped
 
@@ -58,5 +61,5 @@ services:
 #
 # networks:
 #   default:
-#     name: redesa
+#     name: alovida
 #     external: true

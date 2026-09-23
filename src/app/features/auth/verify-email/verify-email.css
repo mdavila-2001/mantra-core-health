@@ -1,7 +1,7 @@
 /* Tarjeta documento centrada, unificada con forgot-password y reset-password (y
    en línea con login/register/tenant): membrete con regla, título en tinta y la
    acción debajo. Sin `text-align: center`: se alinea como las demás. Solo tokens
-   REDSAT. */
+   ALOVIDA. */
 
 /* Pantalla enrutada: el host es un custom element y sin `display` sería EN
    LÍNEA, lo que arma una caja de línea (una franja del fondo) alrededor del

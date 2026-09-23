@@ -6,7 +6,7 @@
     una pantalla de 390 px. Desde 900 px se para y se vuelve rail de íconos
     pegado al margen izquierdo, que es lo que pide la tarea.
 
-    900 px es el mismo umbral que ya usa `styles/redsat.css` para reacomodar el
+    900 px es el mismo umbral que ya usa `styles/alovida.css` para reacomodar el
     marco público. Coincidir es deliberado: dos quiebres distintos a 20 px de
     distancia producen un rango donde el marco cree una cosa y el rail otra.
     ========================================================================== */
@@ -78,8 +78,8 @@
     line-height: var(--lh-body);
     white-space: nowrap;
     transition:
-        background 0.15s ease,
-        color 0.15s ease;
+        background var(--dur-fast) var(--ease-standard),
+        color var(--dur-fast) var(--ease-standard);
 }
 
 .public-nav-rail__link:hover {

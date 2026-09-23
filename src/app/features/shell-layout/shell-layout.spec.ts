@@ -10,6 +10,7 @@ import {
   NAV_ICON_NAMES as NAV_ICON_NAMES_DEL_NAV,
   type NavSection,
 } from '../../shared/components/organisms/side-nav/side-nav.types';
+import { NAV_STORAGE_KEY } from '../../shared/components/organisms/shell/shell-service';
 import { ShellLayout } from './shell-layout';
 
 /**
@@ -56,7 +57,15 @@ describe('ShellLayout', () => {
           { path: 'my-account', children: [] },
           { path: 'my-account/questionnaires', children: [] },
           { path: 'my-account/appointments/book/:id', children: [] },
-          { path: 'ajustes', children: [] },
+          { path: 'settings', children: [] },
+          // Dos de los cuatro directorios y una ficha: no ocupan renglón desde
+          // el 08/09/2026, y son con lo que se comprueba que la portada se
+          // marca por ellos.
+          { path: 'laboratory-directory', children: [] },
+          { path: 'laboratory-directory/:id', children: [] },
+          { path: 'clinics-directory', children: [] },
+          // El panel: es donde la flecha de volver NO se dibuja.
+          { path: 'dashboard', children: [] },
         ]),
       ],
     }).compileComponents();
@@ -117,10 +126,16 @@ describe('ShellLayout', () => {
     ]);
   });
 
+  /**
+   * Todo lo que la barra ofrece, en el orden en que se dibuja: primero los dos
+   * destinos fijos —«Mi perfil» y «Notificaciones», sueltos arriba desde el
+   * 07/09/2026— y después los grupos.
+   */
   function rutasDelMenu(): readonly string[] {
+    const fijos = interno<() => readonly { route: string }[]>('destinosFijos')();
     const secciones =
       interno<() => readonly { items: readonly { route: string }[] }[]>('sections')();
-    return secciones.flatMap((s) => [...s.items].map((i) => i.route));
+    return [...fijos.map((i) => i.route), ...secciones.flatMap((s) => [...s.items].map((i) => i.route))];
   }
 
   it('el menú solo ofrece rutas que existen', () => {
@@ -130,25 +145,37 @@ describe('ShellLayout', () => {
     // exigen ninguno: el panel y el autoservicio. La vitrina la agrega el
     // armazón porque no es una sección del producto.
     expect(rutasDelMenu()).toEqual([
+      // Los dos destinos fijos, sueltos y arriba de todo.
+      '/my-account',
+      '/notification-center',
       '/dashboard',
       // Los tutoriales tampoco exigen rol.
       '/tutorials',
       // Carril P2: la mensajería tampoco exige rol. El filtro real es tener
       // perfil público de `community`, que es un dato de la cuenta.
       '/messaging',
-      '/laboratory-directory',
-      // A5 y A6 del plan de UX: los directorios de clínicas y de farmacias,
-      // por lo mismo que el de laboratorios — oferta publicada, sin rol que la
-      // exprese.
-      '/clinics-directory',
-      '/pharmacies-directory',
+      // La portada de directorios (FT-18, `roles: [ANY_ROLE]`) tampoco exige
+      // rol: no es un directorio en sí, es su índice.
+      //
+      // **Y desde el 08/09/2026 es la única del bloque que ocupa renglón.**
+      // Los cuatro directorios —laboratorios, clínicas, farmacias, médicos—
+      // siguen sin exigir rol y se siguen alcanzando; se entra a ellos por
+      // esta portada, que es la pantalla que dice qué hay en cada uno. Ver
+      // `navigation.map.ts`, sección `directories`.
+      '/directories',
       // El glosario ya NO está: desde el 18/08/2026 (feedback de la analista,
       // F-03) declara los roles de quien atiende, y una sesión sin roles no es
       // de nadie que atienda.
       //
       // «Tu organización» tampoco: no pide rol, pero sí membresía
       // (`requiresTenant`, F-31), y esta sesión no pertenece a ninguna.
-      '/my-account',
+      //
+      // «Mi perfil» ya no aparece en este tramo: encabeza la lista como destino
+      // fijo, fuera del grupo.
+      //
+      // Los dependientes (B.1) van con el mismo criterio que «Mis turnos»: sin
+      // rol, porque el filtro real es tener perfil de paciente.
+      '/my-account/dependents',
       '/my-account/appointments',
       // El archivo clínico del paciente (carril 09). Sin rol por lo mismo que
       // «Mis turnos»: el filtro real es tener perfil de paciente, que es un
@@ -163,10 +190,9 @@ describe('ShellLayout', () => {
       // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
       // perfil de paciente, que es un dato de la cuenta y no un rol.
       '/my-account/questionnaires',
-      // Carril P1: el centro de notificaciones. Tampoco exige rol —cualquiera
-      // con sesión tiene bandeja, y el backend sólo devuelve la propia—, así
-      // que aparece también en una sesión sin roles.
-      '/notification-center',
+      // El centro de notificaciones tampoco aparece acá: es el otro destino
+      // fijo. Sigue sin exigir rol —cualquiera con sesión tiene bandeja—; lo
+      // que cambió es dónde se dibuja.
       // «Preferencias de avisos» ya NO está: dejó de ser una sección y pasó a
       // ser un panel de Ajustes. Y Ajustes tampoco ocupa renglón —declara
       // `fueraDelMenuPara: [ANY_ROLE]`—, porque se entra por el ícono del
@@ -244,11 +270,11 @@ describe('ShellLayout', () => {
 
   /**
    * El armazón dejó de delegar en el organismo `app-shell` y pinta el marco
-   * REDSAT directamente. Estas pruebas fijan lo que ese cambio podría romper
+   * ALOVIDA directamente. Estas pruebas fijan lo que ese cambio podría romper
    * en silencio: la geometría del marco —que es lo que la hoja de la bóveda
    * espera encontrar— y que el menú siga saliendo del registro de secciones.
    */
-  describe('marco REDSAT', () => {
+  describe('marco ALOVIDA', () => {
     function raiz(): HTMLElement {
       fixture.detectChanges();
       return fixture.nativeElement as HTMLElement;
@@ -258,7 +284,7 @@ describe('ShellLayout', () => {
       const marco = raiz().querySelector('.app-shell');
 
       expect(marco).not.toBeNull();
-      // El orden importa: en REDSAT el nav es columna de altura completa y el
+      // El orden importa: en ALOVIDA el nav es columna de altura completa y el
       // header vive DENTRO de la columna de contenido, no encima de las dos.
       expect(marco?.children[0]?.classList.contains('app-side-nav')).toBe(true);
       expect(marco?.children[1]?.classList.contains('app-main')).toBe(true);
@@ -271,13 +297,18 @@ describe('ShellLayout', () => {
     });
 
     /**
-     * Los dos escalones plegables de la barra.
+     * El único escalón plegable de la barra, y los dominios que no lo tienen.
      *
-     * Cincuenta y cinco secciones no entran en una lista: el dominio pliega, y
-     * adentro pliega el bloque de cosas parecidas. Lo que estas pruebas cuidan
-     * no es el `<details>` —eso lo hace el navegador— sino las dos decisiones
-     * que sí son nuestras: qué se dibuja abierto sin que nadie lo toque, y
-     * cuándo un bloque **no** merece ser un desplegable.
+     * Cincuenta y cinco secciones no entran en una lista, así que el dominio
+     * pliega — y **ahí se termina** (AC-E1-02): adentro van los destinos, no
+     * otro desplegable. Lo que estas pruebas cuidan no es el `<details>` —eso lo
+     * hace el navegador— sino las tres decisiones que sí son nuestras: que no se
+     * anide un segundo escalón, qué se dibuja abierto sin que nadie lo toque, y
+     * qué dominios no se dibujan como contenedor en absoluto.
+     *
+     * Las pruebas de plegado usan una sesión de administración a propósito: el
+     * paciente ya no pliega nada —«General» y «Mi cuenta» están aplanados— y
+     * probar el plegado con quien no lo ve sería probarlo contra un DOM vacío.
      */
     describe('los desplegables', () => {
       function conSesion(roles: readonly string[]) {
@@ -285,8 +316,8 @@ describe('ShellLayout', () => {
         fixture.detectChanges();
       }
 
-      it('cada grupo es un desplegable con su ícono y su rótulo', () => {
-        conSesion(['PATIENT']);
+      it('cada grupo que se dibuja es un desplegable con su ícono y su rótulo', () => {
+        conSesion(['SECURITY_ADMIN']);
         const grupos = [...raiz().querySelectorAll('[data-testid="nav-grupo"]')];
 
         expect(grupos.length).toBeGreaterThan(0);
@@ -311,72 +342,516 @@ describe('ShellLayout', () => {
         }
       });
 
-      it('un bloque de varios destinos es un desplegable; uno de un solo destino, no', () => {
-        // El paciente ve los cuatro directorios —bloque— y un solo chat, que es
-        // todo lo que le queda de «Comunidad». Un desplegable con un renglón
-        // adentro es un clic de más para llegar a lo mismo.
-        conSesion(['PATIENT']);
+      it('ningún desplegable cuelga de otro: un nivel es el tope', () => {
+        // El guardia del pedido (AC-E1-02). Acá hubo un segundo escalón —el
+        // bloque de cosas parecidas— y con él entrar a una pantalla costaba tres
+        // clics, dos de ellos sobre rótulos que no llevan a ninguna parte.
+        //
+        // Se comprueba sobre el DOM y con el rol que más secciones ve, que es
+        // donde un segundo nivel volvería a aparecer primero. Es una prueba de
+        // ausencia a propósito: lo que no se puede permitir no es un bloque en
+        // particular sino la forma.
+        conSesion(['SECURITY_ADMIN']);
 
-        const bloques = [...raiz().querySelectorAll('[data-testid="nav-bloque"]')].map((b) =>
-          b.getAttribute('data-bloque'),
-        );
-
-        expect(bloques).toContain('Directorios');
-        expect(bloques).not.toContain('Comunidad');
-        // Y el destino del bloque de uno sigue estando, suelto.
-        expect(
-          [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
-            a.getAttribute('data-route'),
-          ),
-        ).toContain('/messaging');
+        const plegables = [...raiz().querySelectorAll('details')];
+        expect(plegables.length).toBeGreaterThan(0);
+        for (const plegable of plegables) {
+          const adentro = plegable.querySelector('details');
+          expect(adentro, plegable.getAttribute('data-grupo') ?? '').toBeNull();
+        }
       });
 
-      it('el grupo y el bloque de la pantalla actual se dibujan abiertos', async () => {
+      it('todo destino está a dos clics: abrir el dominio y elegir', () => {
+        // El corolario de lo anterior, dicho desde el lado de quien navega:
+        // entre el borde de la barra y cualquier enlace hay, como mucho, un
+        // `<details>` que abrir.
+        conSesion(['SECURITY_ADMIN']);
+
+        const enlaces = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')];
+        expect(enlaces.length).toBeGreaterThan(0);
+        for (const enlace of enlaces) {
+          let plegables = 0;
+          for (let nodo = enlace.parentElement; nodo !== null; nodo = nodo.parentElement) {
+            if (nodo === raiz()) {
+              break;
+            }
+            if (nodo.tagName === 'DETAILS') {
+              plegables += 1;
+            }
+          }
+          expect(plegables, enlace.getAttribute('data-route') ?? '').toBeLessThanOrEqual(1);
+        }
+      });
+
+      it('el paciente no abre nada: sus destinos están todos a un clic', () => {
+        // «General» y «Mi cuenta» están en `GRUPOS_APLANADOS`, y son los dos
+        // únicos dominios que el paciente ve. El resto de los roles abre un
+        // dominio y elige; el paciente ni eso.
         conSesion(['PATIENT']);
-        await router.navigateByUrl('/my-account/questionnaires');
+
+        expect(raiz().querySelectorAll('[data-testid="nav-grupo"]').length).toBe(0);
+        expect(raiz().querySelectorAll('details').length).toBe(0);
+
+        // Y no perdió un solo destino en el camino: los que colgaban de un
+        // bloque plegado siguen ahí, ahora sueltos.
+        const enlaces = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+          a.getAttribute('data-route'),
+        );
+        expect(enlaces).toContain('/my-account/appointments');
+        expect(enlaces).toContain('/my-account/pharmacy-orders');
+        expect(enlaces).toContain('/my-account/loyalty');
+        expect(enlaces).toContain('/my-account/dependents');
+        expect(enlaces).toContain('/my-account/medical-record');
+        expect(enlaces).toContain('/my-account/questionnaires');
+        expect(enlaces).toContain('/messaging');
+        expect(enlaces).toContain('/directories');
+        expect(enlaces).toContain('/nearby-places');
+        // Los fijos de arriba no se movieron: siguen siendo los primeros.
+        expect(enlaces.slice(0, 2)).toEqual(['/my-account', '/notification-center']);
+      });
+
+      function rutasDibujadas(): readonly (string | null)[] {
+        return [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+          a.getAttribute('data-route'),
+        );
+      }
+
+      /** Si las rutas salieron una detrás de la otra, sin nada en el medio. */
+      function seguidas(enlaces: readonly (string | null)[], rutas: readonly string[]): boolean {
+        const posiciones = rutas.map((ruta) => enlaces.indexOf(ruta));
+        expect(posiciones, rutas.join(', ')).not.toContain(-1);
+        return Math.max(...posiciones) - Math.min(...posiciones) === rutas.length - 1;
+      }
+
+      it('sin rótulo que las agrupe, las cosas parecidas siguen saliendo seguidas', () => {
+        // Sin el rótulo, el orden es lo único que queda diciendo que «Mis
+        // citas», «Mis pedidos» y «Mis puntos» son la misma clase de cosa. Por
+        // eso la barra recorre los bloques y no la lista plana del grupo: por
+        // `items` el orden es el del registro, y ahí las cuatro pantallas
+        // clínicas se meten entre las gestiones.
+        conSesion(['PATIENT']);
+
+        const enlaces = rutasDibujadas();
+        expect(
+          seguidas(enlaces, [
+            '/my-account/appointments',
+            '/my-account/pharmacy-orders',
+            '/my-account/loyalty',
+          ]),
+        ).toBe(true);
+        expect(
+          seguidas(enlaces, [
+            '/my-account/medical-record',
+            '/my-account/diagnostic-results',
+            '/my-account/diagnostic-orders',
+            '/my-account/questionnaires',
+          ]),
+        ).toBe(true);
+      });
+
+      it('y también dentro de un dominio que pliega, que es donde se perdió el rótulo', () => {
+        // El caso que nació al retirar el segundo escalón: «Red de salud» era un
+        // desplegable con su rótulo, y ahora sus destinos son renglones más de
+        // «Administración». Lo único que los mantiene juntos es el recorrido por
+        // bloques.
+        //
+        // Se comprueba contra **todos** los bloques que la barra recibió, y no
+        // contra un puñado de rutas escritas acá: qué ve un administrador
+        // depende de los roles de cada sección, y una lista a mano se vuelve
+        // falsa —o inalcanzable— en cuanto una cambia.
+        conSesion(['SECURITY_ADMIN']);
+
+        const enlaces = rutasDibujadas();
+        const bloques = interno<
+          () => readonly {
+            readonly aplanado?: boolean;
+            readonly blocks?: readonly { readonly items: readonly { readonly route: string }[] }[];
+          }[]
+        >('sections')()
+          .filter((grupo) => grupo.aplanado !== true)
+          .flatMap((grupo) => grupo.blocks ?? [])
+          .filter((bloque) => bloque.items.length > 1);
+
+        expect(bloques.length, 'ningún bloque de más de uno se dibujó').toBeGreaterThan(0);
+        for (const bloque of bloques) {
+          expect(seguidas(enlaces, bloque.items.map((item) => item.route))).toBe(true);
+        }
+      });
+
+      /**
+       * El primer dominio plegable que la barra dibujó, y uno de sus destinos.
+       *
+       * Sale del DOM y no de una constante para que la prueba no dependa de qué
+       * secciones ve hoy un administrador: lo que se verifica es la regla —el
+       * dominio de la pantalla actual se abre solo—, no el reparto, que tiene
+       * sus propias pruebas.
+       */
+      function primerGrupoDibujado(): { grupo: string; destino: string } {
+        const grupo = raiz().querySelector('[data-testid="nav-grupo"]');
+        const destino = grupo
+          ?.querySelector('[data-testid="nav-enlace"]')
+          ?.getAttribute('data-route');
+        expect(grupo, 'la sesión de prueba no dibujó ningún dominio plegable').not.toBeNull();
+        expect(destino, 'el dominio no tiene destinos').toBeTruthy();
+        // Las rutas de mentira del banco son un puñado elegido a mano, y el
+        // destino de esta prueba sale del menú: se declara la que toque, o
+        // `navigateByUrl` rechaza y la prueba falla por el doble, no por el
+        // código.
+        router.resetConfig([...router.config, { path: (destino ?? '').slice(1), children: [] }]);
+        return { grupo: grupo?.getAttribute('data-grupo') ?? '', destino: destino ?? '' };
+      }
+
+      /** El `<details>` de un dominio, por su rótulo. */
+      function dominio(grupo: string): HTMLDetailsElement | null {
+        return raiz().querySelector<HTMLDetailsElement>('[data-grupo="' + grupo + '"]');
+      }
+
+      it('el grupo de la pantalla actual se dibuja abierto', async () => {
+        conSesion(['SECURITY_ADMIN']);
+        const { grupo, destino } = primerGrupoDibujado();
+
+        await router.navigateByUrl(destino);
         fixture.detectChanges();
 
-        const grupo = raiz().querySelector<HTMLDetailsElement>('[data-grupo="Mi cuenta"]');
-        const bloque = raiz().querySelector<HTMLDetailsElement>('[data-bloque="Mi salud"]');
-
-        // Nadie los desplegó: si no se abrieran solos, la barra no diría dónde
-        // está uno parado y habría que buscarlo abriendo dominios a mano.
-        expect(grupo?.open).toBe(true);
-        expect(bloque?.open).toBe(true);
+        // Nadie lo desplegó: si no se abriera solo, la barra no diría dónde está
+        // uno parado y habría que buscarlo abriendo dominios a mano.
+        expect(dominio(grupo)?.open).toBe(true);
       });
 
       it('lo que la persona pliega a mano gana sobre eso, y navegar no lo reabre', async () => {
-        conSesion(['PATIENT']);
-        await router.navigateByUrl('/my-account/questionnaires');
+        conSesion(['SECURITY_ADMIN']);
+        const { grupo, destino } = primerGrupoDibujado();
+        await router.navigateByUrl(destino);
         fixture.detectChanges();
 
-        interno<(clave: string, abierto: boolean) => void>('alPlegar')('Mi cuenta', false);
+        interno<(clave: string, abierto: boolean) => void>('alPlegar')(grupo, false);
         fixture.detectChanges();
 
-        expect(
-          raiz().querySelector<HTMLDetailsElement>('[data-grupo="Mi cuenta"]')?.open,
-        ).toBe(false);
+        expect(dominio(grupo)?.open).toBe(false);
 
         // Volver a la misma pantalla no le discute la decisión a quien la tomó.
-        await router.navigateByUrl('/my-account');
+        await router.navigateByUrl(destino);
         fixture.detectChanges();
-        expect(
-          raiz().querySelector<HTMLDetailsElement>('[data-grupo="Mi cuenta"]')?.open,
-        ).toBe(false);
+        expect(dominio(grupo)?.open).toBe(false);
       });
+    });
+
+    /**
+     * Recoger la barra (AC-E1-01).
+     *
+     * Es un cambio de ancho, no de contenido: recogida sigue teniendo los
+     * mismos destinos, con el mismo nombre, en el mismo orden. Lo que estas
+     * pruebas cuidan es justamente eso —que al encogerse no se pierda ni un
+     * nombre accesible— más el gesto que la devuelve, que es lo único que no
+     * puede hacer la hoja de estilos sola.
+     */
+    describe('la barra recogida', () => {
+      beforeEach(() => {
+        // `ShellService` persiste la preferencia en `localStorage` y la lee
+        // tras el primer render. Sin limpiarla, el estado de una prueba se
+        // filtra a la siguiente y el orden de ejecución pasa a importar.
+        try {
+          localStorage.removeItem(NAV_STORAGE_KEY);
+        } catch {
+          // Sin storage no hay nada que limpiar, que es el mismo caso que el
+          // servicio ya tolera.
+        }
+        abrirSesion({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: [] });
+        fixture.detectChanges();
+      });
+
+      function boton(): HTMLButtonElement {
+        const control = raiz().querySelector<HTMLButtonElement>('[data-testid="nav-recoger"]');
+        expect(control, 'la barra no dibujó el botón de recoger').not.toBeNull();
+        return control as HTMLButtonElement;
+      }
+
+      function marco(): HTMLElement {
+        return raiz().querySelector('.app-shell') as HTMLElement;
+      }
+
+      function primerDominio(): string {
+        const grupo = raiz().querySelector('[data-testid="nav-grupo"]');
+        expect(grupo, 'la sesión de prueba no dibujó ningún dominio plegable').not.toBeNull();
+        return grupo?.getAttribute('data-grupo') ?? '';
+      }
+
+      function detalleDe(grupo: string): HTMLDetailsElement | null {
+        return raiz().querySelector<HTMLDetailsElement>('[data-grupo="' + grupo + '"]');
+      }
+
+      it('arranca desplegada y el botón lo dice', () => {
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(boton().getAttribute('aria-expanded')).toBe('true');
+        // Apunta a la barra que encoge, y ese id existe en el marcado: no lo
+        // inventa nadie al hidratar.
+        expect(boton().getAttribute('aria-controls')).toBe('app-side-nav');
+        expect(raiz().querySelector('#app-side-nav')?.classList.contains('app-side-nav')).toBe(true);
+      });
+
+      it('un clic la recoge y otro la devuelve', () => {
+        boton().click();
+        fixture.detectChanges();
+
+        expect(marco().classList.contains('is-nav-recogido')).toBe(true);
+        expect(boton().getAttribute('aria-expanded')).toBe('false');
+        expect(boton().getAttribute('aria-label')).toBe('Desplegar el menú');
+
+        boton().click();
+        fixture.detectChanges();
+
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(boton().getAttribute('aria-label')).toBe('Recoger el menú');
+      });
+
+      it('la preferencia se guarda, que es lo que la trae de vuelta mañana', () => {
+        boton().click();
+        fixture.detectChanges();
+
+        expect(localStorage.getItem(NAV_STORAGE_KEY)).toBe('true');
+      });
+
+      it('recogida no pierde ni un destino, ni el nombre de ninguno', () => {
+        const antes = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+          a.getAttribute('data-route'),
+        );
+
+        boton().click();
+        fixture.detectChanges();
+
+        const despues = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')];
+        expect(despues.map((a) => a.getAttribute('data-route'))).toEqual(antes);
+
+        // El rótulo no se borra: se esconde de la vista. Un ícono sin nombre es
+        // un destino mudo para quien usa lector de pantalla, y `display: none`
+        // lo saca del árbol de accesibilidad además de la pantalla.
+        for (const enlace of despues) {
+          const rotulo = enlace.querySelector('.side-nav__label');
+          expect(rotulo?.textContent?.trim(), enlace.getAttribute('data-route') ?? '').toBeTruthy();
+          expect(rotulo?.classList.contains('solo-lectores')).toBe(true);
+        }
+      });
+
+      it('recogida, el rótulo de un dominio la despliega y deja ese dominio abierto', () => {
+        // Recogida, el cuerpo del dominio no se dibuja: abrir el `<details>`
+        // ahí no mostraría nada. El gesto que sí sirve es desplegar la barra
+        // con ese dominio abierto, y es el que el rótulo tiene que hacer.
+        const grupo = primerDominio();
+        interno<(clave: string, abierto: boolean) => void>('alPlegar')(grupo, false);
+        boton().click();
+        fixture.detectChanges();
+
+        raiz().querySelector<HTMLElement>('[data-grupo="' + grupo + '"] > summary')?.click();
+        fixture.detectChanges();
+
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(detalleDe(grupo)?.open).toBe(true);
+      });
+
+      it('desplegada, el rótulo sigue plegando y nada más', () => {
+        const grupo = primerDominio();
+        const antes = detalleDe(grupo)?.open;
+
+        interno<(evento: Event, grupo: string) => void>('alTocarElDominio')(
+          new Event('click', { cancelable: true }),
+          grupo,
+        );
+        fixture.detectChanges();
+
+        // No tocó el ancho ni forzó el estado del dominio: con la barra
+        // desplegada el `<details>` se gobierna solo, que es por lo que es un
+        // `<details>`.
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(detalleDe(grupo)?.open).toBe(antes);
+      });
+    });
+
+    /**
+     * Recoger la barra.
+     *
+     * Es un cambio de ancho, no de contenido: recogida sigue teniendo los
+     * mismos destinos, con el mismo nombre, en el mismo orden. Lo que estas
+     * pruebas cuidan es justamente eso —que al encogerse no se pierda ni un
+     * nombre accesible— más el gesto que la devuelve, que es lo único que no
+     * puede hacer la hoja de estilos sola.
+     */
+    describe('la barra recogida', () => {
+      beforeEach(() => {
+        // `ShellService` persiste la preferencia en `localStorage` y la lee
+        // tras el primer render. Sin limpiarla, el estado de una prueba se
+        // filtra a la siguiente y el orden de ejecución pasa a importar.
+        try {
+          localStorage.removeItem(NAV_STORAGE_KEY);
+        } catch {
+          // Sin storage no hay nada que limpiar, que es el mismo caso que el
+          // servicio ya tolera.
+        }
+        abrirSesion({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: [] });
+        fixture.detectChanges();
+      });
+
+      function boton(): HTMLButtonElement {
+        const control = raiz().querySelector<HTMLButtonElement>('[data-testid="nav-recoger"]');
+        expect(control, 'la barra no dibujó el botón de recoger').not.toBeNull();
+        return control as HTMLButtonElement;
+      }
+
+      function marco(): HTMLElement {
+        return raiz().querySelector('.app-shell') as HTMLElement;
+      }
+
+      it('arranca desplegada y el botón lo dice', () => {
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(boton().getAttribute('aria-expanded')).toBe('true');
+        // Apunta a la barra que encoge, y ese id existe en el marcado: no lo
+        // inventa nadie al hidratar.
+        expect(boton().getAttribute('aria-controls')).toBe('app-side-nav');
+        expect(raiz().querySelector('#app-side-nav')?.classList.contains('app-side-nav')).toBe(
+          true,
+        );
+      });
+
+      it('un clic la recoge y otro la devuelve', () => {
+        boton().click();
+        fixture.detectChanges();
+
+        expect(marco().classList.contains('is-nav-recogido')).toBe(true);
+        expect(boton().getAttribute('aria-expanded')).toBe('false');
+        expect(boton().getAttribute('aria-label')).toBe('Desplegar el menú');
+
+        boton().click();
+        fixture.detectChanges();
+
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(boton().getAttribute('aria-label')).toBe('Recoger el menú');
+      });
+
+      it('recogida no pierde ni un destino, ni el nombre de ninguno', () => {
+        const antes = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+          a.getAttribute('data-route'),
+        );
+
+        boton().click();
+        fixture.detectChanges();
+
+        const despues = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')];
+        expect(despues.map((a) => a.getAttribute('data-route'))).toEqual(antes);
+
+        // El rótulo no se borra: se esconde de la vista. Un ícono sin nombre es
+        // un destino mudo para quien usa lector de pantalla, y `display: none`
+        // lo saca del árbol de accesibilidad además de la pantalla.
+        for (const enlace of despues) {
+          const rotulo = enlace.querySelector('.side-nav__label');
+          expect(rotulo?.textContent?.trim(), enlace.getAttribute('data-route') ?? '').toBeTruthy();
+          expect(rotulo?.classList.contains('solo-lectores')).toBe(true);
+        }
+      });
+
+      it('recogida, el rótulo de un dominio la despliega y deja ese dominio abierto', () => {
+        // Recogida, el cuerpo del dominio no se dibuja: abrir el `<details>`
+        // ahí no mostraría nada. El gesto que sí sirve es desplegar la barra
+        // con ese dominio abierto, y es el que el rótulo tiene que hacer.
+        const { grupo } = primerGrupoDibujado();
+        interno<(clave: string, abierto: boolean) => void>('alPlegar')(grupo, false);
+        boton().click();
+        fixture.detectChanges();
+
+        const summary = raiz().querySelector<HTMLElement>(`[data-grupo="${grupo}"] > summary`);
+        summary?.click();
+        fixture.detectChanges();
+
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(raiz().querySelector<HTMLDetailsElement>(`[data-grupo="${grupo}"]`)?.open).toBe(true);
+      });
+
+      it('desplegada, el rótulo sigue plegando y nada más', () => {
+        const { grupo } = primerGrupoDibujado();
+        const antes = raiz().querySelector<HTMLDetailsElement>(`[data-grupo="${grupo}"]`)?.open;
+
+        interno<(evento: Event, grupo: string) => void>('alTocarElDominio')(
+          new Event('click', { cancelable: true }),
+          grupo,
+        );
+        fixture.detectChanges();
+
+        // No tocó el ancho ni forzó el estado del dominio: con la barra
+        // desplegada el `<details>` se gobierna solo, que es por lo que es un
+        // `<details>`.
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(raiz().querySelector<HTMLDetailsElement>(`[data-grupo="${grupo}"]`)?.open).toBe(
+          antes,
+        );
+      });
+
+      /** El mismo ayudante de `los desplegables`, que este bloque también usa. */
+      function primerGrupoDibujado(): { grupo: string } {
+        const grupo = raiz().querySelector('[data-testid="nav-grupo"]');
+        expect(grupo, 'la sesión de prueba no dibujó ningún dominio plegable').not.toBeNull();
+        return { grupo: grupo?.getAttribute('data-grupo') ?? '' };
+      }
     });
 
     it('el nav pinta un grupo por sección del registro, con sus destinos', () => {
       const grupos = raiz().querySelectorAll('.app-side-nav__group');
-      const secciones = interno<() => readonly { label: string }[]>('sections')();
+      const secciones = interno<() => readonly { label: string; aplanado?: boolean }[]>(
+        'sections',
+      )();
 
-      expect(grupos.length).toBe(secciones.length);
+      // Los aplanados no cuentan: no dibujan contenedor, sueltan sus destinos.
+      // Lo que esta prueba cuida es que ninguna sección se quede sin pintar, no
+      // que todas se pinten igual.
+      expect(grupos.length).toBe(secciones.filter((s) => s.aplanado !== true).length);
+      expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(
+        secciones.filter((s) => s.aplanado === true).length,
+      );
       // Sin sesión sólo quedan las secciones sin roles, más la vitrina.
       const destinos = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
         a.getAttribute('data-route'),
       );
       expect(destinos).toContain('/dashboard');
       expect(destinos).toContain('/design-system');
+    });
+
+    /**
+     * La flecha de volver, y el único lugar donde no va.
+     *
+     * El panel es el principio del camino: quien entra, aterriza ahí. No hay
+     * paso propio que deshacer, así que `app-back-link` cae a su respaldo… que
+     * es el panel. Pulsarla desde el panel no hacía nada o —si el historial del
+     * navegador todavía traía el ingreso— devolvía a él, que se lee como haber
+     * cerrado la sesión. El cliente lo reportó así el 13/09/2026.
+     */
+    describe('la flecha de volver', () => {
+      async function ir(url: string) {
+        await router.navigateByUrl(url);
+        fixture.detectChanges();
+      }
+
+      function flecha(): Element | null {
+        return raiz().querySelector('app-back-link');
+      }
+
+      it('no se dibuja en el panel', async () => {
+        await ir('/dashboard');
+        expect(flecha()).toBeNull();
+      });
+
+      it('sí se dibuja en cualquier otra pantalla', async () => {
+        await ir('/my-account');
+        expect(flecha()).not.toBeNull();
+      });
+
+      /** Ir y volver: la flecha reaparece al salir del panel y se va al entrar. */
+      it('aparece y desaparece al cruzar el panel', async () => {
+        await ir('/dashboard');
+        expect(flecha()).toBeNull();
+
+        await ir('/settings');
+        expect(flecha()).not.toBeNull();
+
+        await ir('/dashboard');
+        expect(flecha()).toBeNull();
+      });
     });
 
     /**
@@ -414,7 +889,7 @@ describe('ShellLayout', () => {
         // ícono: Ajustes no cuelga de ninguna entrada del menú, así que no hay
         // renglón que decir «acá estás». Marcar «Mi perfil» —su prefijo más
         // cercano no es ninguno— mentiría sobre dónde está uno.
-        await ir('/ajustes');
+        await ir('/settings');
 
         expect(marcadas()).toEqual([]);
       });
@@ -426,6 +901,29 @@ describe('ShellLayout', () => {
 
         expect(marcadas()).toEqual(['/my-account/appointments']);
       });
+
+      it('dentro de un directorio se marca «Directorios», que es por donde se entró', async () => {
+        // La otra mitad del cambio del 08/09/2026. Los cuatro directorios
+        // dejaron de ocupar renglón y se abren desde su portada; sin
+        // `representaEnElMenu` la barra quedaba **entera apagada** mientras se
+        // los recorría, que es la única pregunta que la barra contesta
+        // siempre. No es un ancestro —`/directories` no es prefijo de
+        // `/laboratory-directory`—, es una relación declarada en el registro.
+        await ir('/laboratory-directory');
+        expect(marcadas()).toEqual(['/directories']);
+
+        // Y sigue siendo una sola marca, que es la regla de todo este bloque.
+        await ir('/clinics-directory');
+        expect(marcadas()).toEqual(['/directories']);
+      });
+
+      it('una hija de lo representado también marca la portada', async () => {
+        // El detalle de un laboratorio tampoco tiene renglón. Se compara por
+        // prefijo de ruta, igual que con cualquier otro ancestro.
+        await ir('/laboratory-directory/lab-1');
+
+        expect(marcadas()).toEqual(['/directories']);
+      });
     });
 
     it('el encabezado ofrece Ajustes como enlace, no como botón', () => {
@@ -435,14 +933,18 @@ describe('ShellLayout', () => {
       const ajustes = raiz().querySelector<HTMLAnchorElement>('[data-testid="header-ajustes"]');
 
       expect(ajustes?.tagName).toBe('A');
-      expect(ajustes?.getAttribute('href')).toBe('/ajustes');
+      expect(ajustes?.getAttribute('href')).toBe('/settings');
       expect(ajustes?.getAttribute('aria-label')).toBe('Ajustes');
     });
 
-    it('el conmutador de tema ya no vive suelto en el encabezado', () => {
-      // Se mudó a Ajustes. Suelto acá, el tema parecía la única preferencia
-      // que el producto tiene; ahora es una de tres y viven juntas.
-      expect(raiz().querySelector('[app-theme-toggle]')).toBeNull();
+    it('el encabezado ofrece el interruptor de tema junto a Ajustes', () => {
+      // Volvió a pedido del cliente (2026-09-18): claro/oscuro es un atajo;
+      // Ajustes sigue siendo la puerta a todas las preferencias.
+      const toggle = raiz().querySelector<HTMLButtonElement>('[data-testid="header-theme-toggle"]');
+
+      expect(toggle?.getAttribute('role')).toBe('switch');
+      expect(toggle?.getAttribute('aria-label')).toMatch(/^Cambiar a modo (claro|oscuro)$/);
+      expect(raiz().querySelector('[data-testid="header-ajustes"]')).not.toBeNull();
     });
 
     it('el enlace de salto apunta al contenido, que es enfocable por script', () => {

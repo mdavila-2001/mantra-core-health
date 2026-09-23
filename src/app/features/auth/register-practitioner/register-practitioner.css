@@ -1,13 +1,321 @@
 /* El cascarón —la tarjeta, el membrete, el pie y la columna de ayuda— es
    `../registro-compartido/registro.css`, que esta pantalla y el alta de
-   paciente declaran las dos en su `styleUrls`.
+   paciente declaran las dos en su `styleUrls`. */
 
-   Acá queda lo que sólo es del alta de profesional. Hoy no hay nada: sus seis
-   páginas las dibuja entera el motor (`app-paginated-form`), y lo único
-   proyectado —la lupa del título, el árbol de municipios y los avisos de
-   catálogo caído— trae su propio estilo o usa `.registro__catalogo-caido`, que
-   es compartido.
+/* Las casillas de nombre: entran como UN campo de la página para que los
+   apellidos quepan en la misma pantalla, así que la separación entre ellas la
+   pone este bloque y no el motor. En pantalla ancha van de a dos, como el par
+   de apellidos de abajo. */
+.registro__nombres {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  width: 100%;
+}
 
-   El archivo se queda igual, vacío y declarado: es donde va a aterrizar lo
-   propio de esta pantalla en cuanto la tarjeta 05 le agregue lo suyo —las tres
-   matrículas, los dos contactos y la dirección de trabajo con su mapa—. */
+.registro__nombre {
+  width: 100%;
+}
+
+/* La casilla agregada y su botón de quitar, en la misma línea. */
+.registro__nombre-extra {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.registro__nombre-extra app-input {
+  flex: 1 1 auto;
+}
+
+/* La casilla de especialidad agregada comparte renglón con su botón de
+   quitar, igual que la de nombre. */
+.registro__especialidad-extra {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.registro__especialidad-extra app-select {
+  flex: 1 1 auto;
+}
+
+@media (min-width: 40rem) {
+  .registro__nombres {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .registro__nombre {
+    /* Dos por fila: la mitad, menos la mitad del hueco. */
+    width: calc(50% - (var(--sp-4) / 2));
+  }
+}
+
+/* Subida y vista previa de foto de perfil */
+.registro-foto {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px dashed var(--border-default);
+  background-color: var(--bg-surface);
+  margin-bottom: var(--sp-4);
+}
+
+.registro-foto__avatar {
+  flex-shrink: 0;
+}
+
+.registro-foto__acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: flex-start;
+}
+
+.registro-foto__boton-subir {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.registro-foto__label-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-sm);
+  background-color: var(--brand-primary);
+  color: var(--text-inverse);
+  transition: opacity var(--dur-base) var(--ease-standard);
+}
+
+.registro-foto__label-btn:hover {
+  opacity: 0.9;
+}
+
+.registro-foto__ayuda {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.registro-foto__error {
+  font-size: var(--fs-caption);
+  color: var(--text-danger);
+  margin: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+
+/* ---------------------------------------------------------------- respaldos
+   Los adjuntos de la habilitación y de los títulos. Mismo lenguaje visual que
+   `.registro-foto`: caja punteada, porque es una zona de carga y no un campo. */
+
+.registro-respaldos,
+.registro-titulos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.registro-respaldo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px dashed var(--border-default);
+  background-color: var(--bg-surface);
+}
+
+.registro-respaldo__titulo {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  margin: 0;
+}
+
+.registro-respaldo__dato,
+.registro-titulo__peso,
+.registro-respaldo__peso {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.registro-respaldo__archivo,
+.registro-titulo__archivo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-body);
+}
+
+.registro-respaldo__nombre,
+.registro-titulo__nombre-archivo {
+  overflow-wrap: anywhere;
+}
+
+.registro-respaldo__subir,
+.registro-titulo__subir {
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.registro-respaldo__label-btn,
+.registro-titulo__label-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* El rótulo es de dos palabras y en la fila del título comparte renglón con
+     el nombre y el botón de quitar: sin esto se parte en dos líneas y la fila
+     crece de alto sólo en las que tienen archivo. */
+  white-space: nowrap;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-sm);
+  background-color: var(--brand-primary);
+  color: var(--text-inverse);
+  transition: opacity var(--dur-base) var(--ease-standard);
+}
+
+.registro-respaldo__label-btn:hover,
+.registro-titulo__label-btn:hover {
+  opacity: 0.9;
+}
+
+.registro-respaldos__ayuda,
+.registro-titulos__ayuda,
+.registro-titulo-tipo__ayuda {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.registro-respaldos__error,
+.registro-titulos__error,
+.registro-titulo__error {
+  font-size: var(--fs-caption);
+  color: var(--text-danger);
+  margin: 0;
+}
+
+/* El campo que falta completar se señala también por color, no sólo por el
+   texto de al lado; `aria-invalid` lo dice a quien usa lector de pantalla. */
+.registro-titulo__dato--invalido {
+  border-color: var(--text-danger);
+}
+
+/* ------------------------------------------------------------------ títulos */
+
+.registro-titulo-tipo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px dashed var(--border-default);
+  background-color: var(--bg-surface);
+}
+
+.registro-titulo-tipo__nombre {
+  font-size: var(--fs-body);
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Una fila por título: en pantalla chica se apila, en grande el nombre manda
+   el ancho y los botones quedan a su derecha. */
+.registro-titulo {
+  display: flex;
+  flex-direction: column;
+  /* Los botones de la fila —«Adjuntar archivo» y «Quitar»— son hijos directos:
+     sin esto se estiran a lo ancho de la fila y su rótulo queda centrado en
+     medio de la nada, como si fuera un título. */
+  align-items: flex-start;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--border-default);
+}
+
+/* Las casillas de texto sí ocupan el ancho: son el contenido de la fila. */
+.registro-titulo > .registro-titulo__campo,
+.registro-titulo__estudio {
+  align-self: stretch;
+}
+
+.registro-titulo__campo {
+  display: block;
+  width: 100%;
+}
+
+.registro-titulo__nombre,
+.registro-titulo__dato {
+  width: 100%;
+  font: inherit;
+  color: var(--text-primary);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-default);
+  background-color: var(--surface-raised);
+}
+
+.registro-titulo__nombre:focus-visible,
+.registro-titulo__dato:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 1px;
+}
+
+/* Universidad, país y ciudad de una fila. En teléfono se apilan; desde 640 px
+   entran las tres en un renglón, que es como se leen: son un solo dato. */
+.registro-titulo__estudio {
+  display: grid;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+/* Universidad, país y ciudad del título con el que ejerce. Mismo criterio que
+   el de la fila; acá los hijos son `app-form-field`, que traen su propio
+   rótulo. */
+.registro__estudio {
+  display: grid;
+  gap: var(--sp-3);
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  /* La fila dejó de ser un renglón: con el nombre, tres casillas de dónde se
+     cursó, el adjunto y el botón de quitar, en línea quedaba cada campo en
+     ochenta píxeles. Se apila, y lo que se agrupa en renglón es el bloque de
+     estudio. */
+  .registro-titulo__estudio,
+  .registro__estudio {
+    grid-template-columns: 2fr 1fr 1fr;
+    align-items: start;
+  }
+}

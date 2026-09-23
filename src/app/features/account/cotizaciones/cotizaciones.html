@@ -1,0 +1,43 @@
+<app-page-header title="Cotizaciones" subtitle="Compará disponibilidad y referencias sin asumir precios no publicados." />
+
+<main class="cotizaciones" aria-label="Cotizaciones del paciente">
+  @if (estudiosDeDocumentos().length > 0) {
+    <section aria-labelledby="estudios-documentos-titulo">
+      <h2 id="estudios-documentos-titulo">Estudios en tus documentos actuales</h2>
+      <p>Podés usar estas órdenes propias como referencia al comparar disponibilidad.</p>
+      <ul>
+        @for (estudio of estudiosDeDocumentos(); track estudio.id) {
+          <li><strong>{{ estudio.nombre }}</strong><p>Procedencia: Tu orden de diagnóstico</p></li>
+        }
+      </ul>
+    </section>
+  }
+
+  <label>
+    Buscar
+    <input data-testid="cotizaciones-busqueda" [value]="termino()" (input)="cambiarTermino($any($event.target).value)" />
+  </label>
+  <label>
+    Vertical
+    <select [value]="vertical()" (change)="cambiarVertical($any($event.target).value)">
+      <option value="TODAS">Todas</option><option value="MEDICAMENTOS">Medicamentos</option><option value="ANALISIS">Análisis</option><option value="IMAGENOLOGIA">Imagenología</option><option value="SERVICIOS_MEDICOS">Servicios médicos</option>
+    </select>
+  </label>
+  <label>
+    Ordenar por
+    <select [value]="orden()" (change)="cambiarOrden($any($event.target).value)"><option value="PRECIO">Precio</option><option value="CERCANIA">Cercanía</option></select>
+  </label>
+
+  @if (resultados().length === 0) { <p role="status">No hay cotizaciones que coincidan con tu búsqueda.</p> }
+  <ul data-testid="cotizaciones-resultados">
+    @for (resultado of resultados(); track resultado.id) {
+      <li>
+        <h2>{{ resultado.que }}</h2><p>{{ resultado.donde }}</p>
+        <strong>{{ precioDe(resultado) }}</strong>
+        @if (resultado.price !== null) { <p>Procedencia: {{ resultado.price.source }}</p> }
+        @else { <p>La sede no publicó este precio.</p> }
+        @if (resultado.distanceKm !== null) { <p>{{ resultado.distanceKm }} km</p> }
+      </li>
+    }
+  </ul>
+</main>

@@ -36,6 +36,42 @@ WORKDIR /app
 # se reutiliza mientras esos tres archivos no cambien.
 COPY package.json yarn.lock .yarnrc.yml ./
 
+# Ni Cypress ni los navegadores de Playwright pintan nada en una imagen que sólo
+# compila: son doscientos y pico megas de binarios que se descargan en cada
+# construcción sin caché y que el artefacto no toca. Sin esto, el redespliegue
+# del servidor se quedaba colgado en el `postinstall` de Cypress —medido— y la
+# construcción no llegaba nunca a Angular.
+ENV CYPRESS_INSTALL_BINARY=0 \
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+    HUSKY=0 \
+    # El heap de Node, por debajo del techo del contenedor: así el recolector
+    # empieza a trabajar **antes** de que el kernel mate el proceso. Sin esto,
+    # una construcción con techo de 4 GB moría con
+    # `esbuild: all goroutines are asleep - deadlock` y salida 129 —que no dice
+    # «me quedé sin memoria», pero es lo que era—.
+    NODE_OPTIONS=--max-old-space-size=1536 \
+    # Cuántos procesos de esbuild corren a la vez. Por omisión, uno por núcleo:
+    # con doce núcleos y 447 fragmentos diferidos el pico se va por encima de los
+    # 6 GB y el cgroup mata la construcción (`ng build` a 4,7 GB de RSS, medido).
+    # Con dos trabajadores tarda algo más y cabe. En un portátil con memoria de
+    # sobra no hace falta tocar nada: esto sólo aplica a la imagen.
+    # UN trabajador, no dos, y en esta máquina no es negociable.
+    #
+    # El H310 corre `h310-guardian.service`, que vigila la presión de memoria y
+    # MATA compilaciones: las frena con `memory.high` = RAM/4 y dispara
+    # `cgroup.kill` cuando coinciden PSI ≥20%, memoria disponible ≤10% y swap
+    # libre ≤20%. Tras matar deja 600 s de enfriamiento en los que todo build
+    # nuevo muere al nacer. En el log del despliegue eso se ve sólo como
+    # `exit code: 137`, sin una palabra sobre memoria; quien lo cuenta es
+    # `journalctl -t h310-guardian`.
+    #
+    # Cada trabajador es un proceso con su propio montón, así que bajar de dos a
+    # uno es lo que más recorta el pico —más que el `--max-old-space-size` de
+    # arriba—. Medido el 16/09/2026 en la rama `mockup`: con 1 trabajador y
+    # 1,5 GB de montón la compilación cabe y termina en ~4 min; con 2 y 3 GB la
+    # mataba el guardián.
+    NG_BUILD_MAX_WORKERS=1
+
 # `--immutable` falla si el lockfile no cuadra: es lo que garantiza que lo
 # instalado sea exactamente lo declarado.
 RUN yarn install --immutable
@@ -57,15 +93,44 @@ FROM node:24-bookworm-slim AS runtime
 RUN corepack enable
 WORKDIR /app
 
+COPY package.json yarn.lock .yarnrc.yml ./
+
+# ─── ESTE `COPY` VA ANTES DEL `yarn install` A PROPÓSITO ─────────────────────
+#
+# Preserva la estructura `dist/mantra-core-health/{browser,server}`, que
+# `server.mjs` necesita porque busca `../browser` relativo a sí mismo. Pero el
+# motivo de que esté AQUÍ ARRIBA, y no después de instalar, es otro: es lo único
+# que ENCADENA esta etapa con la anterior.
+#
+# BuildKit construye en grafo, no en lista: dos etapas sin dependencia entre
+# ellas corren EN PARALELO. Con el `COPY --from=build` al final, nada ataba esta
+# etapa a la de compilación hasta el último paso, así que los dos `yarn install`
+# —el de desarrollo de arriba y el de producción de abajo— arrancaban a la vez.
+# Dos instalaciones simultáneas de este repositorio son el pico de memoria real
+# del build: no es Angular. En el H310 eso despertaba a `h310-guardian`, que
+# mataba los dos pasos y dejaba en el log dos `exit code: 137` seguidos, uno por
+# cada `yarn` (despliegue 712, 17/09, con el swap todavía al 57% libre — o sea
+# que ni siquiera era falta de swap, era la presión instantánea).
+#
+# Poniendo el `COPY` primero, esta etapa no puede empezar hasta que la anterior
+# termine, y las instalaciones quedan una detrás de otra.
+#
+# El precio, que conviene saber: la capa del `yarn install` de abajo ya no se
+# reutiliza entre builds, porque el `dist/` cambia en cada commit. Se paga un
+# minuto largo de instalación por despliegue a cambio de que el despliegue
+# termine, que hasta ahora no pasaba nunca.
+COPY --from=build /app/dist/mantra-core-health ./dist/mantra-core-health
+
 # El servidor SSR necesita resolver `express` y `@angular/ssr` en ejecución. Se
 # reinstala solo lo de producción en vez de copiar el `.yarn` entero de la etapa
 # anterior, que arrastra el toolchain de build (esbuild, lmdb) sin usarlo.
-COPY package.json yarn.lock .yarnrc.yml ./
-RUN yarn workspaces focus --production --all || yarn install --immutable
-
-# La estructura `dist/mantra-core-health/{browser,server}` hay que preservarla:
-# `server.mjs` busca `../browser` relativo a sí mismo.
-COPY --from=build /app/dist/mantra-core-health ./dist/mantra-core-health
+#
+# El montón va acotado en la propia orden y NO como `ENV`: un `ENV` aquí se
+# hornea en la imagen final y le pondría techo al heap del servidor SSR en
+# ejecución, que no es lo que se quiere acotar. Lo que se acota es la
+# instalación.
+RUN NODE_OPTIONS=--max-old-space-size=1024 \
+    yarn workspaces focus --production --all || yarn install --immutable
 
 # Usuario sin privilegios. La imagen base trae `node` (uid 1000) creado.
 USER node

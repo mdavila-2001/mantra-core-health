@@ -1,16 +1,73 @@
-<!-- La anatomía es la misma que la de los otros tres directorios y la pone
-     `app-directory-page` (A7 del plan de UX). Acá queda lo propio: el mapeo, el
-     agrupado por especialidad y el filtrado en memoria. -->
-<app-directory-page
-  titulo="Directorio de médicos"
-  subtitulo="Todos los médicos de la red, agrupados por especialidad. Tocá una especialidad para acotar."
-  etiquetaBusqueda="Buscar por nombre o especialidad"
-  [filtros]="filtros()"
-  [estado]="estado()"
-  [grupos]="tramos()"
-  [sustantivo]="sustantivo"
-  [aviso]="aviso()"
-  [textoSinCoincidencias]="sinCoincidencias()"
-  (filtrosCambiaron)="filtrar($event)"
-  (reintentar)="recargar()"
-/>
+@if (enPortada()) {
+  <!-- ─── La portada: elegir especialidad antes que médico ──────────────────
+       El pedido de la bitácora es «un grid de especialidades que al darle click
+       despliega la lista de doctores». Lo que se muestra acá son las que TIENEN
+       gente, con su cantidad, y las dos cosas salen del mismo recuento del
+       backend: una tarjeta que promete y abre vacía es peor que no estar.
+
+       Antes esta pantalla traía la guía entera —paginando hasta agotar el
+       cursor, con un techo que la dejaba recortada sin decirlo— para después
+       mostrarla toda junta. La portada convierte eso en dos lecturas. -->
+  <app-page-header
+    title="Directorio de médicos"
+    [subtitle]="
+      'Elegí una especialidad para ver quién atiende. ' +
+      totalDeProfesionales() +
+      ' profesionales en la red.'
+    "
+  />
+
+  <app-view-state-host [state]="recuento()" (retry)="recargar()">
+    <ul class="rejilla" data-testid="portada-especialidades">
+      @for (tarjeta of tarjetas(); track tarjeta.conceptId) {
+        <li>
+          <!-- La especialidad viaja en la URL y no en un estado interno: es lo
+               que hace compartible «la guía, cardiología» y lo que deja que el
+               chequeo de síntomas mande directo a una, salteándose la portada. -->
+          <a
+            class="rejilla__tarjeta"
+            [routerLink]="[]"
+            [queryParams]="{ especialidad: tarjeta.conceptId }"
+            queryParamsHandling="merge"
+          >
+            <!-- El ícono va **dentro** del enlace y `aria-hidden`: la
+                 tarjeta ya se llama por su especialidad, y anunciarlo lo
+                 repetiría dieciocho veces en la misma pantalla. Lo que aporta
+                 es reconocer la especialidad propia sin leer la rejilla
+                 entera, que es justo lo que una portada de dieciocho tarjetas
+                 iguales no dejaba hacer. -->
+            <app-specialty-icon class="rejilla__icono" [especialidad]="tarjeta.nombre" />
+            <span class="rejilla__nombre">{{ tarjeta.nombre }}</span>
+            <span class="rejilla__dato">
+              {{ tarjeta.cantidad }}
+              {{ tarjeta.cantidad === 1 ? 'médico' : 'médicos' }}
+            </span>
+          </a>
+        </li>
+      }
+    </ul>
+  </app-view-state-host>
+} @else {
+  <!-- Dentro de una especialidad: la anatomía común de los cuatro directorios
+       (A7 del plan de UX), con el mapeo y el buscador propios. La vuelta a la
+       portada es un enlace y no un botón: limpia el parámetro de la URL, que es
+       exactamente lo que significa «ver todas». -->
+  <a app-button variant="ghost" class="rejilla__volver" [routerLink]="[]" [queryParams]="{}">
+    ← Todas las especialidades
+  </a>
+
+  <app-directory-page
+    titulo="Directorio de médicos"
+    subtitulo="Quiénes atienden esta especialidad. Buscá por nombre para acotar."
+    etiquetaBusqueda="Buscar por nombre"
+    [filtros]="filtros()"
+    [estado]="estado()"
+    [grupos]="tramos()"
+    [sustantivo]="sustantivo"
+    [aviso]="aviso()"
+    [textoSinCoincidencias]="sinCoincidencias()"
+    [preventDuplicateNavigation]="true"
+    (filtrosCambiaron)="filtrar($event)"
+    (reintentar)="recargar()"
+  />
+}

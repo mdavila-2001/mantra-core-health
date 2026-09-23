@@ -1,7 +1,42 @@
-<!-- AC-01-11 — El desplegable scrollea en LOS DOS ejes y con altura acotada: sin
-     el tope, abrir un hilo de cuarenta comentarios empuja la publicación
-     siguiente fuera de la pantalla de golpe. -->
+<!-- AC-01-11 — El desplegable scrollea a lo ancho (una URL larga no puede
+     estirar la página). Ya NO tiene tope de alto: el cliente pidió
+     (13/09/2026) que el hilo use la pantalla como en LinkedIn, y la
+     paginación de a veinte con «Ver más comentarios» es lo que impide que
+     un hilo largo empuje todo de golpe. -->
 <div class="comentarios">
+  @if (actorProfileId() !== null) {
+    <!-- El redactor arriba del hilo, como en una red profesional: quien abrió
+         los comentarios está a un toque de escribir el suyo. -->
+    <form class="comentarios__redactor" data-testid="comment-composer" (submit)="enviar($event)">
+      <label class="solo-lectores" [attr.for]="'comentario-' + postId()">Tu comentario</label>
+      <textarea
+        class="comentarios__campo"
+        data-testid="comment-composer-body"
+        [id]="'comentario-' + postId()"
+        rows="1"
+        placeholder="Agregá un comentario…"
+        [value]="borrador()"
+        [disabled]="enviando()"
+        (input)="escribir($event)"
+      ></textarea>
+      @if (borrador().trim().length > 0) {
+        <button
+          app-button
+          data-variante="primario"
+          data-tam="sm"
+          type="submit"
+          data-testid="comment-composer-submit"
+          [disabled]="enviando()"
+        >
+          {{ enviando() ? 'Enviando…' : 'Comentar' }}
+        </button>
+      }
+    </form>
+    @if (falloAlEnviar()) {
+      <p class="comentarios__fallo" role="alert">No pudimos publicar tu comentario. Lo escrito sigue ahí: volvé a intentarlo.</p>
+    }
+  }
+
   @switch (estado()) {
     @case ('datos') {
       @if (destacado(); as elegido) {
@@ -105,6 +140,26 @@
       </p>
 
       <p class="comentario__texto">{{ comentario.bodyText }}</p>
+
+      @if (comentario.media.length > 0) {
+        <!-- REQ-01-011 — la lectura pública ya sirve una URL servida por la
+             API (`/public/media/:fileId`): sin sesión no hay `Authorization`
+             que mandar, así que acá no hace falta `app-file-preview-image`. -->
+        <ul class="comentario__media" data-testid="comment-media">
+          @for (adjunto of comentario.media; track adjunto.url) {
+            <li>
+              <img
+                class="comentario__adjunto"
+                [src]="adjunto.url"
+                [alt]="adjunto.altText ?? ''"
+                width="96"
+                height="96"
+                loading="lazy"
+              />
+            </li>
+          }
+        </ul>
+      }
 
       <p class="comentario__acciones">
         <button

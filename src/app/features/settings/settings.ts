@@ -10,59 +10,48 @@ import {
   type EstadoPermiso,
   type PermisoDelNavegador,
 } from '../../core/permissions/browser-permissions.service';
-import type { ThemeMode } from '../../core/tokens/design-tokens.types';
+import { AlovidaThemeToggleDirective } from '../../core/alovida/alovida-theme-toggle.directive';
 import { ThemeService } from '../../core/tokens/theme.service';
 import { AppButton } from '../../shared/components/atoms/button/button';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
+import type { NavIconName } from '../../shared/components/atoms/nav-icon/nav-icon.types';
+import { Switch } from '../../shared/components/atoms/switch/switch';
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { NotificationPreferences } from '../account/notification-preferences/notification-preferences';
+import { ChatPreferences } from './chat-preferences/chat-preferences';
 
 /** Quién administra los permisos delegados del M29. Mismo rol que su sección. */
-const ROLES_QUE_ADMINISTRAN_PERMISOS: readonly string[] = ['SECURITY_ADMIN'];
-
-/** Las tres opciones de tema, en el orden en que se ofrecen. */
-const TEMAS: readonly { valor: ThemeMode; rotulo: string; detalle: string }[] = [
-  {
-    valor: 'system',
-    rotulo: 'El de mi dispositivo',
-    detalle: 'Sigue la preferencia del sistema y cambia con ella.',
-  },
-  { valor: 'light', rotulo: 'Claro', detalle: 'Siempre claro, sin importar el sistema.' },
-  { valor: 'dark', rotulo: 'Oscuro', detalle: 'Siempre oscuro, sin importar el sistema.' },
-];
+const PERMISSION_ADMIN_ROLES: readonly string[] = ['SECURITY_ADMIN'];
 
 /** Cómo se llama cada permiso del navegador y para qué lo usa el producto. */
-const PERMISOS: readonly {
-  clave: PermisoDelNavegador;
-  rotulo: string;
-  paraQue: string;
+const BROWSER_PERMISSIONS: readonly {
+  key: PermisoDelNavegador;
+  label: string;
+  purpose: string;
+  icon: NavIconName;
 }[] = [
   {
-    clave: 'avisos',
-    rotulo: 'Avisos del navegador',
-    paraQue: 'Para verlos aunque tengas AloVida en otra pestaña. Tu bandeja funciona igual sin esto.',
+    key: 'avisos',
+    label: 'Avisos del navegador',
+    purpose: 'Para verlos aunque tengas AloVida en otra pestaña.',
+    icon: 'bell',
   },
   {
-    clave: 'ubicacion',
-    rotulo: 'Ubicación',
-    paraQue: 'Para buscar farmacias y consultorios cerca tuyo sin escribir la dirección.',
+    key: 'ubicacion',
+    label: 'Ubicación',
+    purpose: 'Para buscar farmacias y consultorios cerca tuyo.',
+    icon: 'pin',
   },
   {
-    clave: 'camara',
-    rotulo: 'Cámara',
-    paraQue: 'Para adjuntar una foto de un estudio o un documento sin salir del navegador.',
+    key: 'camara',
+    label: 'Cámara',
+    purpose: 'Para adjuntar la foto de un estudio o un documento.',
+    icon: 'camera',
   },
 ];
 
-/** Cómo se dice cada estado, y con qué tono se pinta. */
-const ESTADOS: Readonly<Record<EstadoPermiso, { texto: string; tono: string }>> = {
-  concedido: { texto: 'Permitido', tono: 'exito' },
-  denegado: { texto: 'Bloqueado', tono: 'alerta' },
-  'sin-decidir': { texto: 'Sin decidir', tono: 'neutro' },
-  desconocido: { texto: 'Tu navegador no lo informa', tono: 'neutro' },
-  'no-disponible': { texto: 'Este navegador no lo ofrece', tono: 'neutro' },
-};
 
 /**
  * Ajustes — todo lo que la persona configura sobre su propia cuenta, junto.
@@ -82,7 +71,7 @@ const ESTADOS: Readonly<Record<EstadoPermiso, { texto: string; tono: string }>> 
  * Por lo mismo que no lo ocupan el tema ni la campana: los ajustes no son un
  * destino de trabajo. La sección declara `fueraDelMenuPara: [ANY_ROLE]` en el
  * registro, así que sigue teniendo ruta, título y breadcrumb —y se alcanza por
- * `/ajustes`, por el ícono y por un enlace de cualquier otra pantalla—; lo
+ * `/settings`, por el ícono y por un enlace de cualquier otra pantalla—; lo
  * único que no tiene es renglón.
  *
  * ## Lo que esta pantalla NO promete
@@ -97,7 +86,7 @@ const ESTADOS: Readonly<Record<EstadoPermiso, { texto: string; tono: string }>> 
  */
 @Component({
   selector: 'app-settings',
-  imports: [AppButton, NotificationPreferences, PageHeader, RouterLink, Tab, Tabs],
+  imports: [AlovidaThemeToggleDirective, AppButton, ChatPreferences, NavIcon, NotificationPreferences, PageHeader, RouterLink, Switch, Tab, Tabs],
   templateUrl: './settings.html',
   styleUrl: './settings.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -105,16 +94,15 @@ const ESTADOS: Readonly<Record<EstadoPermiso, { texto: string; tono: string }>> 
 export class Settings {
   private readonly theme = inject(ThemeService);
   private readonly session = inject(SessionStore);
-  protected readonly permisos = inject(BrowserPermissionsService);
+  protected readonly permissions = inject(BrowserPermissionsService);
 
-  protected readonly temas = TEMAS;
-  protected readonly permisosDelNavegador = PERMISOS;
+  protected readonly browserPermissions = BROWSER_PERMISSIONS;
 
-  /** Lo elegido, que puede ser «el del sistema» y no coincidir con lo pintado. */
-  protected readonly temaElegido = this.theme.currentTheme;
+  /** Si nadie eligió a mano: el interruptor refleja lo que pide el dispositivo. */
+  protected readonly followsSystem = computed(() => this.theme.currentTheme() === 'system');
 
-  /** Lo que efectivamente se ve: es lo que hace legible la opción «el de mi dispositivo». */
-  protected readonly temaResuelto = this.theme.resolvedTheme;
+  /** Lo que efectivamente se ve, que es lo que el interruptor marca. */
+  protected readonly resolvedTheme = this.theme.resolvedTheme;
 
   protected readonly roles = computed(() => etiquetasDeRoles(this.session.roles()));
 
@@ -123,35 +111,50 @@ export class Settings {
    * M29. Con `rolesAlcanzan` y no con una comparación propia, para que el
    * comodín `SUPERADMIN` valga acá lo mismo que en el menú y en el guard.
    */
-  protected readonly administraPermisos = computed(() =>
-    rolesAlcanzan(ROLES_QUE_ADMINISTRAN_PERMISOS, this.session.roles()),
+  protected readonly managesPermissions = computed(() =>
+    rolesAlcanzan(PERMISSION_ADMIN_ROLES, this.session.roles()),
   );
 
   /** La verificación de identidad sólo se ofrece si el producto la ofrece. */
-  protected readonly verificacionOfrecida = VERIFICACION_DE_IDENTIDAD_OFRECIDA;
+  protected readonly verificationOffered = VERIFICACION_DE_IDENTIDAD_OFRECIDA;
 
-  protected elegirTema(modo: ThemeMode): void {
-    this.theme.setTheme(modo);
+  protected useSystemTheme(): void {
+    this.theme.useSystemTheme();
   }
 
-  protected estadoDe(permiso: PermisoDelNavegador): { texto: string; tono: string } {
-    return ESTADOS[this.permisos.estado()[permiso]];
+  protected stateOf(permission: PermisoDelNavegador): EstadoPermiso {
+    return this.permissions.estado()[permission];
   }
 
-  protected sePuedePedir(permiso: PermisoDelNavegador): boolean {
-    return this.permisos.sePuedePedir(permiso);
+  /**
+   * Si el interruptor va encendido.
+   *
+   * Cuenta también la petición en curso, y no por adorno: mientras el cartel
+   * está en pantalla el interruptor ya se pintó encendido solo, y si la persona
+   * dice que no, este valor vuelve a `false` —cambia de verdad— y Angular lo
+   * devuelve a su sitio. Sin ese ida y vuelta quedaría encendido afirmando un
+   * permiso que nadie concedió.
+   */
+  protected isOn(permission: PermisoDelNavegador): boolean {
+    return this.permissions.estado()[permission] === 'concedido' || this.requesting(permission);
   }
 
-  protected pidiendo(permiso: PermisoDelNavegador): boolean {
-    return this.permisos.enCurso(permiso);
+  protected canRequest(permission: PermisoDelNavegador): boolean {
+    return this.permissions.sePuedePedir(permission);
   }
 
-  /** Un permiso bloqueado sólo se recupera desde el navegador, no desde acá. */
-  protected estaBloqueado(permiso: PermisoDelNavegador): boolean {
-    return this.permisos.estado()[permiso] === 'denegado';
+  protected requesting(permission: PermisoDelNavegador): boolean {
+    return this.permissions.enCurso(permission);
   }
 
-  protected pedir(permiso: PermisoDelNavegador): void {
-    void this.permisos.pedir(permiso);
+  /**
+   * Encender pide el permiso; apagar no existe y por eso el interruptor está
+   * inerte cuando ya está concedido: ninguna página puede quitarse un permiso
+   * a sí misma.
+   */
+  protected toggle(permission: PermisoDelNavegador, encendido: boolean): void {
+    if (encendido && this.canRequest(permission)) {
+      void this.permissions.pedir(permission);
+    }
   }
 }

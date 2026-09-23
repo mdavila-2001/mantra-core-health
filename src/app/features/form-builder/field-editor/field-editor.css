@@ -1,0 +1,440 @@
+/* ============================================================================
+    La tarjeta de un campo del formulario.
+
+    Sólo tokens del sistema. La caja la pone este componente y no una `app-card`
+    anidada: son las filas de una lista dentro de una sección que ya tiene marco.
+
+    La forma es la de una pregunta de Google Forms: tarjeta blanca con esquinas
+    redondeadas, una franja de color a la izquierda en la que se está editando,
+    la pregunta grande arriba con el tipo a su derecha, las opciones debajo con
+    su marca, y un pie con las acciones separadas de «Obligatorio».
+    ========================================================================== */
+
+:host {
+    display: grid;
+    gap: var(--sp-4);
+    padding: var(--sp-5) var(--sp-6);
+    border: 1px solid var(--border-subtle, var(--border-default));
+    border-radius: var(--r-lg);
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
+}
+
+/* ---- el agarre para arrastrar ------------------------------------------- */
+
+/* Arriba del todo y centrado, que es donde lo pone cualquier editor de
+   bloques. Se ve siempre y no sólo al pasar por encima: un control que aparece
+   con el puntero no existe para quien mira la pantalla en una tablet. */
+.editor-campo__agarre {
+    justify-self: center;
+    display: block;
+    inline-size: 1.5rem;
+    block-size: 1rem;
+    margin-block: calc(-1 * var(--sp-3)) calc(-1 * var(--sp-2));
+    color: var(--text-muted);
+    cursor: grab;
+    touch-action: none;
+}
+
+.editor-campo__agarre:active {
+    cursor: grabbing;
+}
+
+.editor-campo__agarre svg {
+    inline-size: 100%;
+    block-size: 100%;
+}
+
+/* La tarjeta que se está arrastrando: se despega, para que se vea cuál es la
+   que va a caer. La clase la pone la lista, que es la que sabe cuál se agarró. */
+:host(.editor-campo--arrastrando) {
+    opacity: 0.55;
+    box-shadow: var(--shadow-md);
+}
+
+/* Dónde va a caer. Una línea gruesa arriba y no un hueco que se abre: el hueco
+   mueve todo lo de abajo y la lista salta mientras se arrastra. */
+:host(.editor-campo--destino) {
+    box-shadow: inset 0 3px 0 0 var(--brand-primary);
+}
+
+/* La franja de color a la izquierda es lo que separa de un vistazo lo que se
+   puede tocar de lo que no. Los propios la llevan —y se enciende más al
+   enfocarlos, como la tarjeta activa de Google Forms—; los del estándar, no. */
+:host(:not(.editor-campo--estandar)) {
+    border-inline-start: 4px solid var(--brand-primary);
+}
+
+:host(:not(.editor-campo--estandar):focus-within) {
+    box-shadow: var(--shadow-md);
+    border-color: var(--brand-primary);
+}
+
+:host(.editor-campo--estandar) {
+    background: var(--bg-surface-alt);
+    box-shadow: none;
+}
+
+/* ---- cabecera: qué se pregunta y de qué tipo ---------------------------- */
+
+/* El nombre ocupa lo que sobra y el tipo lo que necesita: es la proporción de
+   Google Forms y la que corresponde —el nombre es el dato, el tipo la etiqueta. */
+.editor-campo__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-4);
+}
+
+/* La pregunta es lo más grande de la tarjeta: es lo que se lee primero y lo
+   que se corrige más. */
+.editor-campo__nombre-campo {
+    flex: 1 1 18rem;
+    min-inline-size: 0;
+    font-size: var(--fs-h3);
+}
+
+.editor-campo__nombre-fijo {
+    flex: 1 1 14rem;
+    min-inline-size: 0;
+    color: var(--text-primary);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+/* El asterisco en el color de aviso: es la única marca que distingue un campo
+   que bloquea el guardado del formulario. */
+.editor-campo__obligatorio {
+    color: var(--st-error-fg, var(--text-primary));
+}
+
+.editor-campo__tipo {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex: 0 1 16rem;
+    min-inline-size: 0;
+}
+
+.editor-campo__tipo--fijo {
+    flex: none;
+}
+
+.editor-campo__tipo app-select {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+}
+
+.editor-campo__icono {
+    flex: none;
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+    color: var(--brand-primary);
+}
+
+/* El del estándar en gris: el color de marca es para lo que se puede tocar. */
+:host(.editor-campo--estandar) .editor-campo__icono {
+    color: var(--text-muted);
+}
+
+.editor-campo__tipo-nombre {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    white-space: nowrap;
+}
+
+/* ---- la descripción ------------------------------------------------------ */
+
+.editor-campo__descripcion {
+    display: grid;
+    gap: var(--sp-1);
+    justify-items: start;
+}
+
+.editor-campo__descripcion app-textarea {
+    inline-size: 100%;
+}
+
+.editor-campo__descripcion-fija {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    overflow-wrap: anywhere;
+}
+
+/* «Agregar descripción» va al pie, chico y sin marco: es una acción
+   secundaria que no tiene que competir con las opciones. */
+.editor-campo__agregar-descripcion {
+    justify-self: start;
+    margin-block-start: calc(-1 * var(--sp-2));
+}
+
+/* ---- la muestra del control -------------------------------------------- */
+
+/* Sangrada y con la opacidad bajada: se lee como una muestra y no como un
+   campo que hay que completar. El `pointer-events` lo confirma —los controles
+   ya van deshabilitados, pero esto evita hasta el cursor de texto. */
+.editor-campo__muestra {
+    padding-inline-start: var(--sp-3);
+    border-inline-start: 2px solid var(--border-subtle, var(--border-default));
+    opacity: 0.75;
+    pointer-events: none;
+    max-inline-size: 28rem;
+}
+
+/* ---- las respuestas ofrecidas ------------------------------------------- */
+
+/* `fieldset` sin su marco: el borde del navegador encajonaba las opciones
+   dentro de la tarjeta y se leían como otra tarjeta adentro. Lo que aporta es
+   el `legend`, que le da nombre al grupo para el lector de pantalla. */
+.editor-campo__opciones {
+    display: grid;
+    gap: var(--sp-2);
+    justify-items: start;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    max-inline-size: 32rem;
+}
+
+.editor-campo__opcion {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    inline-size: 100%;
+}
+
+.editor-campo__opcion-texto {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+}
+
+/* El botón de quitar sólo se ve al pasar por la fila o al enfocarla, como en
+   Google Forms: diez cruces a la vista hacen ruido. Con `visibility` y no con
+   `display`: la fila no cambia de ancho al aparecer. */
+.editor-campo__quitar-opcion {
+    visibility: hidden;
+}
+
+.editor-campo__opcion:hover .editor-campo__quitar-opcion,
+.editor-campo__opcion:focus-within .editor-campo__quitar-opcion {
+    visibility: visible;
+}
+
+/* La marca de la opción: redonda si se elige una, cuadrada si se pueden
+   marcar varias. Es la convención de cualquier formulario, y es lo único que
+   distingue los dos tipos de un vistazo. Dibujada y no un glifo `○`/`☐`: los
+   glifos cambian de tamaño y de línea base según la tipografía instalada. */
+.editor-campo__marca {
+    flex: none;
+    inline-size: 1.125rem;
+    block-size: 1.125rem;
+    border: 2px solid var(--border-strong, var(--border-default));
+    border-radius: var(--r-full);
+    background: var(--bg-surface);
+}
+
+.editor-campo__marca--casilla {
+    border-radius: var(--r-xs);
+}
+
+/* «Otro» en el editor: el rótulo y un renglón subrayado y vacío, que es como
+   se va a ver al responder. No es un campo donde escribir. */
+.editor-campo__opcion--otro {
+    min-block-size: 44px;
+}
+
+.editor-campo__otro-rotulo {
+    color: var(--text-secondary);
+}
+
+.editor-campo__otro-renglon {
+    flex: 1 1 8rem;
+    min-inline-size: 4rem;
+    max-inline-size: 16rem;
+    block-size: 1.5rem;
+    border-block-end: 1px dashed var(--border-strong, var(--border-default));
+}
+
+.editor-campo__agregar-opcion {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-1);
+    flex-wrap: wrap;
+}
+
+.editor-campo__o {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
+
+.editor-campo__agregar-otro {
+    color: var(--brand-primary);
+}
+
+/* ---- la validación de respuesta ------------------------------------------ */
+
+.editor-campo__validacion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2) var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+    border-radius: var(--r-md);
+    background: var(--bg-surface-alt);
+}
+
+.editor-campo__validacion-rotulo {
+    flex: 0 0 100%;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.editor-campo__regla {
+    flex: 1 1 14rem;
+    min-inline-size: 0;
+    max-inline-size: 18rem;
+}
+
+.editor-campo__cantidad {
+    flex: 0 1 6rem;
+}
+
+.editor-campo__validacion-texto {
+    flex: 1 1 100%;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+/* ---- la muestra de un campo de elección --------------------------------- */
+
+.editor-campo__muestra-opciones {
+    display: grid;
+    gap: var(--sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.editor-campo__muestra-opciones li {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    color: var(--text-secondary);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+}
+
+/* ---- pie: mover, duplicar, quitar, obligatorio -------------------------- */
+
+.editor-campo__pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    padding-block-start: var(--sp-3);
+    border-block-start: 1px solid var(--border-subtle, var(--border-default));
+}
+
+.editor-campo__controles,
+.editor-campo__pie-derecha {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-1);
+}
+
+.editor-campo__pie-derecha {
+    gap: var(--sp-3);
+}
+
+/* La rayita vertical que separa mover de duplicar/quitar: son dos familias de
+   acciones, y pegadas se pulsa «quitar» queriendo «bajar». */
+.editor-campo__separador {
+    inline-size: 1px;
+    block-size: 1.5rem;
+    margin-inline: var(--sp-2);
+    background: var(--border-subtle, var(--border-default));
+}
+
+.editor-campo__glifo {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+}
+
+.editor-campo__borrar {
+    color: var(--st-error-fg, var(--text-primary));
+}
+
+/* «Guardando…» / «Guardado» en gris y pequeño: es un acuse, no un aviso. */
+.editor-campo__estado {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+@media (max-width: 40rem) {
+    :host {
+        padding: var(--sp-4);
+    }
+
+    .editor-campo__muestra {
+        max-inline-size: none;
+    }
+
+    /* En el teléfono no hay puntero que pase por encima: la cruz se ve siempre. */
+    .editor-campo__quitar-opcion {
+        visibility: visible;
+    }
+}
+
+/* ─── Cuadrículas: filas, columnas y sus restricciones ──────────────────────
+   Dos listas seguidas necesitan rótulo o se leen como una sola partida al
+   medio. El de las filas y el de las columnas son `<legend>`: los dos grupos
+   son `fieldset`, así que el rótulo del grupo es lo que ya nombra a sus
+   campos. */
+.editor-campo__grupo-rotulo {
+    padding: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    font-weight: var(--fw-semibold, 600);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* La fila lleva su número en vez de una marca: lo que se responde en una
+   cuadrícula son las columnas, y una marca redonda al lado de la fila diría
+   que la fila es una opción. */
+.editor-campo__numero {
+    flex: none;
+    min-inline-size: 1.5rem;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.editor-campo__restricciones {
+    display: grid;
+    gap: var(--sp-2);
+    justify-items: start;
+    padding: var(--sp-3) var(--sp-4);
+    border-radius: var(--r-md);
+    background: var(--bg-surface-alt);
+}
+
+/* El aviso de la cuadrícula imposible de responder. Ámbar y no rojo: no
+   impide guardar —quizá falten columnas por escribir todavía—, avisa. */
+.editor-campo__aviso {
+    margin: 0;
+    color: var(--c-amber-700, var(--text-secondary));
+    font-size: var(--fs-caption);
+}

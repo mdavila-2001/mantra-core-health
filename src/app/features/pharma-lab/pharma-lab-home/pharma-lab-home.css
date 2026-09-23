@@ -33,8 +33,8 @@
 .lab__reason-input {
   padding: var(--sp-2);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
-  background: var(--surface-default);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
   color: var(--text-primary);
   font: inherit;
   font-size: var(--fs-body);
@@ -47,35 +47,6 @@
   background: var(--surface-subtle, transparent);
   color: var(--text-primary);
   font-size: var(--fs-caption);
-}
-
-.lab__table {
-  inline-size: 100%;
-  border-collapse: collapse;
-  font-size: var(--fs-caption);
-}
-
-.lab__caption {
-  margin-block-end: var(--sp-2);
-  color: var(--text-secondary);
-  text-align: start;
-}
-
-.lab__table th,
-.lab__table td {
-  padding: var(--sp-2);
-  border-block-end: 1px solid var(--border-default);
-  text-align: start;
-  vertical-align: top;
-}
-
-.lab__table th {
-  color: var(--text-secondary);
-  font-weight: 600;
-}
-
-.lab__mono {
-  font-family: var(--font-mono);
 }
 
 .lab__muted,
@@ -100,7 +71,7 @@
 .lab__ratings div {
   padding: var(--sp-3);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-md, var(--radius-sm));
+  border-radius: var(--radius-md, var(--r-sm));
 }
 
 .lab__ratings dt {

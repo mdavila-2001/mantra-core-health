@@ -17,7 +17,7 @@
 # y los archivos que no estén en la navegación.
 
 site_name: Mantra Core Health — Frontend
-site_description: Documentación técnica del frontend del ecosistema REDESA
+site_description: Documentación técnica del frontend del ecosistema ALOVIDA
 docs_dir: docs
 strict: true
 
@@ -35,7 +35,7 @@ theme:
     - content.code.copy
     - toc.follow
   palette:
-    # Mismos roles que el sistema REDSAT: el azul estructura y la aguamarina
+    # Mismos roles que el sistema ALOVIDA: el azul estructura y la aguamarina
     # acciona. Los valores viven en src/styles.css; acá solo la referencia.
     - media: '(prefers-color-scheme: light)'
       scheme: default
@@ -140,12 +140,14 @@ nav:
       - Diseño adaptable: design-system/responsive-design.md
       - Movimiento: design-system/motion.md
       - Íconos: design-system/icons.md
-      - Port de las vistas de la bóveda: design-system/port-redsat.md
+      - Port de las vistas de la bóveda: design-system/port-alovida.md
 
   - Datos y estado:
       - Estado de servidor: data-and-state/server-state.md
       - Estado de cliente: data-and-state/client-state.md
       - Formularios y validación: data-and-state/forms-and-validation.md
+      - Corpus Bolivia · Eje Central: data/bolivia-eje-central.md
+      - Atlas anatómico en el glosario: data/atlas-anatomico.md
       - Caché: data-and-state/caching.md
       - Persistencia: data-and-state/persistence.md
       - Actualizaciones optimistas: data-and-state/optimistic-updates.md

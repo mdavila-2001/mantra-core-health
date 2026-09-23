@@ -21,16 +21,38 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
+import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
 
 /**
  * Una internación tal como la muestra la ficha: sin uuid y con el «sigue
  * abierta» ya resuelto.
+ *
+ * ## Por qué tiene más campos que antes (C-23)
+ *
+ * `GET /clinical/patients/:id/summary` devuelve para cada episodio su
+ * `statusConceptId`, su `typeConceptId`, su `responsiblePractitionerId` y su
+ * `createdAt`, y la ficha **descartaba los cuatro**: mostraba «En curso · desde
+ * el 13/08» y nada más. No es que el contrato no diera para más; es que nadie
+ * lo leía.
  */
 export interface InternacionEnFicha {
   readonly id: string;
   readonly abierta: boolean;
   readonly desde: Date | null;
   readonly hasta: Date | null;
+  /** El tipo de episodio, en palabras. Vacío cuando el episodio no lo declara. */
+  readonly tipo?: string;
+  /** `true` si quien mira es el profesional a cargo. */
+  readonly aMiCargo?: boolean;
+  /** Si hay alguien a cargo, sea quien sea. */
+  readonly conResponsable?: boolean;
+  /**
+   * Cuándo se **escribió** el registro, que no es cuándo empezó la estancia.
+   *
+   * Es la distinción que pide el diseño de registro clínico: registrar tarde es
+   * legítimo, **ocultarlo** no. El servidor manda las dos fechas desde siempre.
+   */
+  readonly registradaEl?: Date | null;
 }
 
 /**
@@ -105,6 +127,21 @@ export class AdmissionBlock {
 
   protected readonly registrando = signal(false);
 
+  /**
+   * Una internación que empieza mañana no es una internación: es un plan.
+   *
+   * **La regla vive acá y no en el calendario**, aunque `app-date-picker`
+   * tenga `maxDate`: ese componente trata «cerrado al pasado» como «es una
+   * fecha de nacimiento» y, con el tope puesto, abre en enero de 2000 —a
+   * veintiséis años del día que se busca—. Se prefirió el formulario, que es
+   * donde el resto del expediente pone sus precondiciones: la interfaz no es
+   * la barrera, así que un tope de calendario tampoco alcanzaría.
+   */
+  protected readonly inicioEnElFuturo = computed(() => {
+    const cargado = this.inicio();
+    return cargado !== null && cargado.getTime() > Date.now();
+  });
+
   /** El resultado de la última escritura. */
   protected readonly registro = signal<ViewState<null>>(ready(null));
 
@@ -139,8 +176,25 @@ export class AdmissionBlock {
       this.hayEncuentro() &&
       !this.sinOrganizacion() &&
       this.internacionAbierta() === null &&
+      !this.inicioEnElFuturo() &&
       !this.registrando(),
   );
+
+  /**
+   * Cuándo el registro fue posterior al inicio, y por tanto hay que decirlo.
+   *
+   * El margen de un minuto no es tolerancia a la mentira: es que el alta sin
+   * fecha cargada usa «ahora» para las dos cosas y la diferencia de milisegundos
+   * entre armar la petición y escribirla no es un registro tardío.
+   */
+  protected registroTardio(internacion: InternacionEnFicha): boolean {
+    const desde = internacion.desde?.getTime();
+    const registrada = internacion.registradaEl?.getTime();
+    if (desde === undefined || registrada === undefined) {
+      return false;
+    }
+    return registrada - desde > 60_000;
+  }
 
   /**
    * El aviso de la internación ya abierta, en palabras.
@@ -169,19 +223,7 @@ export class AdmissionBlock {
     if (state.status === 'validation') {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no permite dar de alta internaciones.';
-    }
-    if (state.status === 'not-found') {
-      return 'El expediente ya no existe. Recargá la pantalla.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
+    return mensajeDeFalloDeEscritura(state, { accion: 'dar de alta internaciones', sinPermiso: 'Tu rol no permite dar de alta internaciones.' });
   });
 
   /**

@@ -1,6 +1,352 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-08-23 — **P15 a P18 son nuevos**, del plan de UX del 22/08. Antes: 2026-08-12 (tarde) · **P14 tiene diagnóstico nuevo y procedimiento de cierre —
+**Actualizado:** 2026-09-16 — **P32 y P33 están CERRADOS**: el backend publicó el consultorio
+propio y el QR bancario por sede, y **el campo viaja en inglés (`isOwnSite`), no como `esPropio`**
+— que es lo que sirve el simulador de esta rama. Ver las dos fichas de abajo. Antes,
+2026-09-13 — **P33 era nuevo**: el QR bancario con el que el profesional cobra
+**en cada sede** no existe en ninguna capa, y el pedido del cliente ya está construido contra la
+maqueta. Antes, 2026-09-12 — **P30 y P31 son nuevos**: la ficha de una clínica y la de una
+farmacia ya viven dentro del panel, y las dos lecturas que las llenan —qué servicios ofrece una
+organización y qué medicamentos tiene una farmacia— no existen en la API. Antes,
+2026-09-10 (noche): **P27 se cerró y su nota estaba equivocada** (ver su
+sección: lo que faltaba no era aceptar coordenadas sino poder QUITAR el punto; resuelto en el
+PR #378 de la API) y **P29 es nuevo** —la matrícula sin `file_id`, que empieza en el repo del
+modelo—. Antes, esa misma tarde: **P27 y P28 nacieron**: el paciente ya puede mover el
+punto de su domicilio y el de su trabajo en el mapa (y el `PATCH` no acepta coordenadas), y el
+perfil del médico no llega a cuatro campos que su propio registro pregunta.
+Antes, ese mismo día: **P23 a P26**, de la tanda del expediente clínico, las
+recetas, los adjuntos y el horario. Los cuatro comparten forma: el frontend ya manda el dato, la
+maqueta ya lo guarda y lo muestra, y **contra la API real la petición se rechaza entera** porque el
+DTO no declara la clave (`forbidNonWhitelisted`). Ninguno se puede llevar a `dev` sin su lado de
+backend.
+
+| | Qué falta, en una línea |
+| --- | --- |
+| **P23** | Cambiar un horario con citas es imposible: el 409 salta con una cita viva mientras la propia operación conserva los cupos con cita |
+| **P24** | `indication_text` en `medication_requests` — el motivo escrito de la receta, para los casos sin diagnóstico previo |
+| **P25** | Tres `OwnerType` y dos rutas `:id/attachments` — hoy sólo diagnósticos y procedimientos aceptan adjuntos |
+| **P26** | `encounter_id` en `allergy_intolerances` **y los cinco bindings de catálogo de alergia, que no existen** |
+| ~~**P27**~~ | ~~Coordenadas en el `PATCH` del perfil~~ — **la nota estaba MAL y ya está resuelto.** Ver abajo |
+| **P28** | Lo que el registro del médico pregunta y su perfil no puede editar: **sexo al nacer**, **documento y departamento emisor**, **correo de trabajo** y el **consultorio propio** |
+| **P29** | `file_id` en `profiles.jurisdiction_authorizations` — la matrícula no puede llevar adjunto, y **esto empieza en el repo del modelo, no en la API** |
+| **P30** | `GET /public/profiles/o/:slug/services` — qué ofrece una organización, con precio de referencia. La ficha ya está construida y espera |
+| **P31** | `GET /public/profiles/f/:slug/products` — qué medicamentos tiene una farmacia, con marca, precio y si hay stock |
+| ~~**P32**~~ | ~~Dos cosas del consultorio propio: `esPropio` en las sedes y `PATCH /practitioners/me/sites/:id`~~ — **CERRADO**, pero el campo se llama **`isOwnSite`**. Ver abajo |
+| ~~**P33**~~ | ~~El **QR bancario por sede**: `bankQrFileId` y `PUT /practitioners/me/sites/:id/bank-qr`~~ — **CERRADO**. Ver abajo |
+| **P34** | Ninguna capa sabe qué farmacia abre 24 h ni cuál está de turno — **empieza en el repo del modelo**, y la guardia rotativa tiene tres preguntas de producto sin responder |
+| **P35** | `POST /quotations` sin interés: fuera `interestRatePercent` y `/simulate`, entran `downPaymentAmount`, `paymentFrequency` e `installments` a medida |
+| **P36** | `schedule_templates` no sabe declarar horario **sin turnos fijos** — empieza en el `.puml`, y falta decidir cómo reserva el paciente en ese modo |
+| **P37** | Las **sucursales** de una cadena de farmacias y su disponibilidad pública dada una receta escrita a mano |
+| **P38** | No hay tendencias del muro: `PostListItem` no trae `hashtags` y no existe un recuento por período |
+
+---
+
+## P30 y P31 · las fichas de clínica y farmacia no tienen qué ofrecer
+
+Las dos nacen del mismo pedido y del mismo día, así que van juntas: el cliente pidió que el
+clic sobre una clínica o una farmacia **no saque a nadie del panel**. Hasta el 11/09/2026 ese
+clic abría `/o/:slug` y `/f/:slug`, que son las fichas anónimas bajo el marco de la red social:
+quien entraba por su propio menú terminaba en el buscador público.
+
+Ahora el destino es `clinics-directory/:slug` y `pharmacies-directory/:slug`, dentro del panel.
+Y una ficha que no dice **qué ofrece** el lugar no justifica el clic: es la misma tarjeta del
+listado, más grande.
+
+### Lo que ya existe, y por qué no alcanza
+
+`GET /public/profiles/:prefix/:slug` sirve la identidad de la ficha —nombre, titular, ciudad,
+dirección— y nada de su oferta. Del otro lado sí existe el dato, pero **detrás de sesión y del
+tenant dueño**:
+
+- Los servicios de una organización se leen y se editan en «Mis servicios», que es la superficie
+  de **su dueño**: trae la práctica, la cuenta de ingresos y el código impositivo, que son cosas
+  de quien factura y no de quien se atiende.
+- El catálogo de una farmacia vive en `pharmacy_inventory`, cuyas lecturas exigen el tenant.
+
+`GET /pharmacy-inventory/availability` tampoco sirve acá: contesta «dónde comprar **esta**
+receta», partiendo de una lista de productos. La pregunta de la ficha es la inversa —«qué tiene
+**esta** farmacia»— y no hay receta de la que partir.
+
+### P30 · `GET /public/profiles/o/:slug/services`
+
+Anónima, paginada por cursor, con la misma envoltura que el resto de `/public/…`
+(`items`, `nextCursor`, `totalHint`, `generatedAt`). Un elemento:
+
+```
+id: string
+code: string            // el código del catálogo: así lo nombra una orden o un presupuesto
+name: string
+description: string | null   // qué incluye, cuando la organización lo escribió
+price: string | null         // TEXTO, no number — ver abajo
+currency: string | null      // 'BOB'; null cuando no hay precio
+isActive: boolean            // un servicio dado de baja se lista rotulado, no se esconde
+```
+
+### P31 · `GET /public/profiles/f/:slug/products`
+
+Igual de anónima y con la misma envoltura. Un elemento:
+
+```
+id: string
+genericName: string          // el genérico: es por lo que busca quien lleva una receta
+brandName: string | null     // null si vende el genérico
+presentation: string | null  // «500 mg comprimidos», «jarabe 120 ml»
+therapeuticGroup: string | null
+price: string | null
+currency: string | null
+inStock: boolean             // el agotado se rotula; esconderlo hace perder el viaje
+requiresPrescription: boolean
+```
+
+### Dos cosas que no son detalle de formato
+
+**Los importes viajan como texto**, igual que en `pharmacy.types.ts` y en el detalle de
+laboratorio: el `numeric` de la base no entra sin pérdida en un `number` de JavaScript, y un
+redondeo en un precio de salud no es un detalle de presentación.
+
+**`price: null` no es `'0.00'`.** Un cero se lee como «no se cobra», que es justo lo que «Mis
+servicios» ya evita con su «Definí el precio». Sin precio publicado va `null`, y la ficha lo
+dice con palabras.
+
+### Por qué cuelgan de `/public/profiles/…` y no de `/o/:slug/services`
+
+Por lo mismo que la ficha: `/o` es **también** una ruta del router del frontend, y
+`proxy.conf.json` enruta comparando el **comienzo** de la ruta. Un prefijo `/o` en el proxy se
+comería la ruta de aplicación. Ya mordió una vez con `/admin` y `/administracion/pacientes`, y
+`scripts/check-route-prefixes.mjs` lo verifica en CI.
+
+### Estado del frontend: las dos pantallas están hechas y esperan
+
+`ClinicDetail` y `PharmacyDetail` están construidas, ruteadas y probadas, y consumen
+`PublicCatalogClient`, que vive **aparte** de `PublicDirectoryClient` justamente porque aquél es
+la transcripción literal de `CONTRATO-PUBLICO.md` y esto todavía no está en ese contrato.
+
+Sobre la rama `mockup` las responde el simulador. **Contra la API real las dos se quedan en su
+estado de error hasta que el backend las publique: ninguna inventa datos ni esconde el hueco.**
+O sea que esto se puede mergear a `dev` antes que el backend y no rompe nada — pero las dos
+fichas se ven vacías hasta que exista.
+## ~~P32 y P33~~ · el consultorio propio y su QR bancario — **CERRADOS**
+
+**Nacieron el 2026-09-13 en la rama `mockup`** (de ahí que esta copia de `dev` no los
+listara) y **se cerraron el 2026-09-16** con la subtarea C.1. Se anotan acá para que
+esta copia no diga que faltan cosas que ya están.
+
+| Lo que faltaba | Cómo quedó |
+|---|---|
+| `esPropio` por sede | **`isOwnSite`**, en `GET /practitioners/:profileId/sites` |
+| Corregir el consultorio propio | `PATCH /practitioners/me/sites/:siteId` |
+| El QR bancario por sede | `bankQrFileId` en la lectura + `PUT /practitioners/me/sites/:siteId/bank-qr` |
+
+Cuatro decisiones que no se deducen del contrato:
+
+1. **Se llama `isOwnSite`, no `esPropio`.** La maqueta lo sirvió en castellano; la regla
+   de gobernanza pide los contratos en inglés técnico, así que el campo viaja en inglés y
+   el tipo `PracticeSite` del frontend se renombró con él. Quien traiga pantallas de
+   `mockup` tiene que renombrarlo también.
+2. **`isOwnSite` no es «la práctica es de tipo consultorio».** Sale de comparar la
+   práctica de la sede con la **práctica personal** del profesional (tipo consultorio y él
+   como cuenta administradora). Un consultorio particular **ajeno** es tan ajeno como un
+   hospital, y darlo por propio ofrecería un «Editar» que el `PATCH` después rechaza.
+3. **El QR autoriza distinto que el `PATCH`.** El `PATCH` exige ser dueño del consultorio;
+   el QR sólo exige **vinculación vigente con la sede**, porque también se cobra en la
+   clínica donde el profesional atiende sin ser dueño del lugar. Lo que se guarda ahí no es
+   la sede: es con qué cobra él en ella.
+4. **El QR no acepta PDF.** El frontend lo sube con categoría `IMAGE` (JPG, PNG, WEBP). Un
+   QR dentro de un PDF no se puede mostrar en el modal ni escanear desde la pantalla, que es
+   lo único que esto hace.
+
+**Lo que sigue abierto del P28:** el consultorio propio ya se corrige, pero **sexo al
+nacer** y **documento + departamento emisor** siguen sin entrar en el `PATCH` del perfil.
+
+**Lo que NO entró, y por qué:**
+
+- **Teléfono de la sede.** `common.contact_points` identifica a su dueño por
+  `owner_type_concept_id` y el value set **no declara ningún miembro para una sede**.
+  Agregarlo es un cambio de modelo (nota de value set + `VS_OWNER` + binding del
+  generador), no un campo más en un DTO.
+- **Horario de atención.** No existe tabla de horarios en `practice`. Lo único que la sede
+  declara es su huso (`time_zone`), y eso sí se corrige.
+
+---
+
+## P34 · No hay forma de saber qué farmacia está abierta a las 3 de la mañana
+
+**Nace el 2026-09-16**, de la subtarea E.2: «filtro en el mapa para identificar sucursales
+abiertas 24 horas y de turno». Las otras dos mitades de esa tarea ya están hechas —la alarma
+de la bandeja y la preparación de la muestra en la orden del paciente—; ésta **no se puede
+hacer sin el modelo**, y por eso se anota en vez de inventarse.
+
+### Lo que hay, y por qué no alcanza
+
+`pharmacy.pharmacy_sites` declara `home_delivery_available`, `pickup_available`,
+`dispensing_mode_concept_id` y `pharmacy_site_type_concept_id`. Ninguno responde la pregunta.
+El único miembro sembrado del tipo de sede es `PHARM_SITE_TYPE_DISPENSING`, así que tampoco
+hay un concepto que se pueda reutilizar. `GET /public/search/pharmacies` devuelve lo que esa
+tabla tiene, y el directorio (`features/public-directories/pharmacies-directory`) pinta lo
+que recibe.
+
+Y no hay tabla de horarios de farmacia en ninguna parte: el `grep` de `hours` sobre `SQL/`
+da cero, igual que en `practice`. `platform_ops.on_call_schedules` existe, pero es la guardia
+de **operaciones de la plataforma** —quién atiende un incidente—, no la de un local.
+
+### Son dos cosas distintas y conviene separarlas
+
+**a) «Abierta 24 horas»** es una propiedad estable del local. Es barata:
+
+```text
+pharmacy_sites.open_24h  boolean  NULL
+```
+
+Nullable de verdad: «no lo declaró» no es «no abre de noche», y un `false` por defecto
+convertiría el silencio de todo el padrón en una afirmación falsa sobre cada farmacia.
+
+**b) «De turno» (guardia rotativa)** NO es una propiedad del local: cambia cada noche y la
+publica una autoridad —en Bolivia, el colegio departamental de bioquímica y farmacia—. Hace
+falta una tabla con fechas, del orden de:
+
+```text
+pharmacy_on_call_shifts
+  pharmacy_site_id  uuid    <<FK>>
+  starts_at         timestamptz
+  ends_at           timestamptz
+  source_concept_id uuid    <<FK>>   -- quién publicó el turno
+```
+
+**Y acá hay tres preguntas que no las decide el frontend**, por eso no se propone el DDL
+cerrado:
+
+1. **Quién carga el rol.** ¿Lo carga cada farmacia, lo carga la plataforma, o se importa del
+   colegio? De eso depende si la tabla necesita procedencia y verificación o alcanza con un
+   alta administrativa.
+2. **Con qué granularidad.** ¿El turno es por municipio, por departamento o por zona? El
+   filtro del mapa cambia según eso: «de turno cerca mío» no significa lo mismo que «de
+   turno en La Paz».
+3. **Qué pasa con un turno vencido.** Una farmacia que figura de turno con el rol del mes
+   pasado es peor que ninguna información: alguien maneja de noche hasta una puerta cerrada.
+   Si no hay una regla de caducidad, el dato no se puede publicar.
+
+### Mientras tanto
+
+El directorio **no muestra un filtro que no puede cumplir**. Un control «24 horas» que
+devuelve la lista entera —o que no devuelve nada— es peor que no tenerlo: enseña que el
+filtro no anda y de paso hace dudar del resto de la pantalla.
+
+---
+
+## P29 · la matrícula no tiene dónde llevar su archivo
+
+El pedido de adjuntar los respaldos desde «editar perfil» quedó a medias por esto, y es el único
+de la lista que **no se arregla escribiendo API**.
+
+**El título sí puede.** `AddOwnCredentialDto` declara `fileId`, así que el diploma se sube por
+`POST /common/files/upload` y su id viaja con la credencial.
+
+**La matrícula no.** `NewJurisdictionAuthorization` no tiene ningún campo de archivo, y no es un
+olvido del DTO: **la tabla tampoco tiene la columna**. Verificado en las dos capas —
+
+```
+profiles.jurisdiction_authorizations
+  practitioner_profile_id · jurisdiction_concept_id · license_number
+  regulatory_authority · practice_scope_concept_id · state_concept_id
+  valid_from · valid_to · created_at · updated_at · … · row_version
+```
+
+— y en el `.puml` del módulo 05 (`diagram_05_profiles.puml`, la entidad no declara `file_id`).
+
+### Por qué no se pone igual en el front
+
+Porque aceptaría el PDF, mostraría su nombre y su peso, y **al guardar lo tiraría en silencio**.
+En el alta eso sería un mockup; acá no: la matrícula se guarda de verdad, así que el archivo
+perdido se lee como un fallo del producto.
+
+### La salida, por el camino obligatorio
+
+`file_id uuid NULL` con FK a `common.files`, igual que `professional_credentials.file_id`, que ya
+existe y es el precedente exacto. Y **empieza en `mantra-core-health-model/`**, no en la API
+(ADR-0021):
+
+```
+.puml  →  gen_ddl.py  →  SQL/  →  base viva  →  entidades MikroORM  →  DTO
+```
+
+Del lado del front son quince líneas ya escritas: el bloque de adjunto del alta, reusado.
+
+</details>
+
+---
+
+## P28 · el perfil del médico no llega a los campos de su registro
+
+El pedido es que la ficha del médico muestre **los mismos campos de su registro** y que su editor
+permita cambiarlos. Buena parte ya se puede y está hecho —el título salió de texto libre a la
+lista cerrada de doce, el domicilio ganó su punto en el mapa, y la ficha muestra los cinco
+contactos que la API ya devolvía—. Lo que **no** se puede es esto, y en los cuatro casos el
+motivo es el mismo: el dato **no existe en el contrato de lectura ni en el de escritura**.
+
+| Campo del registro | Qué falta |
+|---|---|
+| **Sexo al nacer** | `OwnPractitionerProfile` no lo trae y el `PATCH` no lo acepta. El alta sí lo pregunta (`sexAtBirth`) y es dato clínico: manda en dosis, valores de referencia y tamizajes |
+| **Documento + departamento emisor** | Se **leen** (la ficha los muestra) pero el `PATCH` no los acepta: un error de tipeo en la cédula no tiene dónde corregirse |
+| **Correo de trabajo** | Se lee (`workEmail`) y no se edita. Acá es a propósito y está bien: es la identidad de acceso y necesita su propio trámite de verificación — el mismo caso que el correo del paciente |
+| **Consultorio propio** | El alta declara nombre, dirección, municipio y GPS del consultorio (`practice-sites`). El editor del perfil no los toca |
+
+Ninguno es urgente para la maqueta; los cuatro son necesarios para que «editar mi perfil»
+signifique de verdad «corregir lo que declaré al registrarme».
+
+---
+
+## ~~P27~~ · resuelto, y la nota original estaba equivocada
+
+**Corrección (10/09, tarde).** Escribí que «el `PATCH` del perfil no acepta coordenadas».
+**Es falso:** las acepta desde el 04/09 (`80c66e77`), y el servicio las persiste. Lo que de
+verdad faltaba era más chico y más preciso: **no se podía QUITAR el punto**, por dos motivos que
+se sostenían entre sí —`@IsNumber()` rechaza `null` con 400, y la mezcla del servicio conserva el
+punto vigente cuando el cuerpo no trae ninguno—. Una ubicación mal puesta se podía cambiar por
+otra, nunca borrar.
+
+Cerrado en `mantra-core-health-api`, PR **#378**: el par pasa a tener tres estados —ausente
+conserva, dos números mueven, `null` en los dos quita—, con la misma regla en el perfil del
+paciente y en el del médico. **Medio `null` se sigue rechazando**: media coordenada no ubica nada.
+
+> Su prueba de integración quedó **escrita y sin correr** (`quitar-punto-del-mapa.int-spec.ts`):
+> el stack satura la Mac mini y el propietario pidió no levantarlo sin permiso. El cambio está en
+> TESTED, no en VERIFIED.
+
+<details>
+<summary>La nota original, para quien venga del historial</summary>
+
+## P27 · el paciente no puede mover su ubicación
+
+**Qué hace hoy el frontend.** El editor del perfil (pestaña «Ubicación y contacto») muestra el
+mismo selector de mapa que el alta —`app-ubicacion-picker`— debajo del domicilio y debajo de la
+dirección de trabajo: se pide la ubicación al navegador o se marca el pin a mano, y se confirma
+mirándolo. Es el patrón de una app de pedidos, que es como se pidió.
+
+**Qué falta.** `UpdatePatientProfileDto` no declara ninguna clave de coordenadas. El contrato del
+front ya las manda:
+
+```
+homeLatitude   homeLongitude
+workLatitude   workLongitude
+```
+
+Los cuatro son `number | null` y **viajan de a pares**: media coordenada no ubica nada. `null` en
+los dos extremos **quita** el punto; ausentes significan «no lo toqué», que es una afirmación
+distinta y por eso se distinguen.
+
+**Por qué importa más de lo que parece.** El comentario que había en el contrato del front decía
+que «las coordenadas las conserva el backend de la dirección anterior». Leído de cerca, eso
+significa que el punto se fija en el alta y **queda congelado para siempre**: alguien que se muda
+sigue apareciendo en la casa vieja y no tiene ninguna pantalla donde corregirlo.
+
+**Estado.** Implementado y verificado contra la maqueta, que ya guarda los cuatro valores y los
+devuelve. Contra la API real la petición se rechazaría entera con 422 por `forbidNonWhitelisted`.
+
+De paso, la maqueta tampoco guardaba `workAddressLines` —lo declaraba el contrato, la pantalla lo
+mandaba y el handler lo tiraba—, así que editar la dirección de trabajo parecía funcionar hasta
+recargar. Corregido.
+
+Antes: 2026-08-23 — **P15 a P18**, del plan de UX del 22/08. Antes: 2026-08-12 (tarde) · **P14 tiene diagnóstico nuevo y procedimiento de cierre —
 ver su sección: el modelo YA tiene las columnas; lo que falta es aplicar un patch en cada
 entorno con base viva.** P6 a P13 siguen cerrados y comprobados **contra la API viva** en
 `localhost:3000`, con la imagen reconstruida — no leyendo el código.
@@ -20,6 +366,442 @@ un 404 pedido con el identificador equivocado no prueba que algo no exista.
 
 Este archivo existe para no reconstruir de memoria qué falta. Lo resuelto queda anotado igual: saber
 que algo dejó de ser un problema es tan útil como saber que lo sigue siendo.
+
+---
+
+## Abierto · P26 · La alergia no sabe en qué cita se detectó, y no tiene catálogos
+
+**Levantado el 2026-09-10**, construyendo el alta de alergias. El cliente lo pidió como calco del
+diagnóstico:
+
+> «Debe aparecer un campo select para colocar la enfermedad detectada en base a una cita ya
+> existente y/o finalizada. **Lo mismo para alergias.**»
+
+### 1 · Falta la columna del encuentro
+
+`clinical.allergy_intolerances` tiene custodio, paciente, sustancia, tipo, categoría, criticidad,
+estado clínico y verificación — **y ningún `encounter_id`**. `CreateAllergyIntoleranceDto` tampoco
+lo acepta.
+
+| Capa | Qué hace falta |
+| --- | --- |
+| Modelo | `encounter_id uuid NULL` (FK → `clinical.encounters`) en `clinical.allergy_intolerances`. Camino obligatorio: `.puml` → `gen_ddl.py` → `SQL/` → patch → `gen_entities.py`. **Nunca un `ALTER` a mano** (ADR-0021). |
+| DTO de alta | `encounterId?` con `@IsUUID()`. |
+| DTO de lectura | `encounterId?` en `AllergyItemDto`. |
+
+La pantalla **ya lo manda**; contra la API de hoy da 400.
+
+### 2 · No hay ningún catálogo de alergia
+
+Esto es lo más grande, y es lo que impedía que el formulario existiera.
+
+`dynamic-enum-catalog.ts` **no declara un solo `target` de
+`clinical.allergy_intolerances.*` ni de `clinical.allergy_reactions.*`**. Los conceptos de alergia
+del backend son **cinco sueltos** (`ALG_ACTIVE`, `ALG_CONFIRMED`, `ALG_TYPE`,
+`ALG_CATEGORY_MEDICATION`, `ALG_HIGH`), sin conjunto de valores que los agrupe.
+
+Sin catálogo no hay selector, y sin selector no hay formulario: por eso el contrato estaba entero
+desde el principio y **ninguna pantalla lo usaba**.
+
+Hacen falta cinco bindings, con sus conjuntos:
+
+| Target | Conjunto |
+| --- | --- |
+| `clinical.allergy_intolerances.substance_concept_id` | Alérgenos que no son medicamentos (los medicamentos ya salen del vademécum) |
+| `clinical.allergy_intolerances.type_concept_id` | Alergia / intolerancia |
+| `clinical.allergy_intolerances.category_concept_id` | Medicamento, alimento, ambiental, biológico |
+| `clinical.allergy_intolerances.criticality_concept_id` | Baja / alta / no determinable |
+| `clinical.allergy_reactions.manifestation_concept_id` | Manifestaciones clínicas |
+
+### ⚠️ Los códigos de la maqueta son provisionales y están declarados como tales
+
+El simulador acuña `VS_ALLERGY_TYPE`, `VS_ALLERGY_MANIFESTATION` y `VS_ALLERGY_SUBSTANCE` con
+listas cortas —ocho manifestaciones, diez sustancias— para que el formulario se pueda ver y probar.
+**No son un catálogo clínico publicado**, y el comentario del propio fixture lo dice, con el mismo
+criterio que `bo-occupations.catalog.ts`.
+
+El real tiene que salir de una fuente —un subconjunto de SNOMED CT, o el que el equipo clínico
+apruebe— con su procedencia declarada, igual que las 43 fichas estándar. **No lo inventamos acá.**
+
+Al reemplazarlos hay migración de datos: los identificadores se derivan del código.
+
+---
+
+## Abierto · P25 · Sólo diagnósticos y procedimientos aceptan adjuntos
+
+**Levantado el 2026-09-10.** El cliente lo pidió como regla transversal:
+
+> «En todos los formularios debe de poderse poner un adjunto, un gestor para subir archivos de
+> todo tipo y formato **y en varias cantidades**, incluso en la medicación, para referencias o
+> relaciones.»
+
+### Lo que hay
+
+`OwnerType` (`common/dto/enums.ts`) declara cinco: `USER`, `PATIENT`, `TENANT`, `CONDITION`,
+`PROCEDURE`. Y hay dos rutas de dominio: `POST /clinical/conditions/:id/attachments` y
+`POST /clinical/procedures/:id/attachments`.
+
+### Lo que falta
+
+**Tres tipos de dueño y dos rutas.** La receta y la alergia no tienen dónde colgar un archivo, y
+son justamente los dos que el cliente nombró.
+
+| Capa | Qué hace falta |
+| --- | --- |
+| Conceptos | `OWNER_MEDICATION_REQUEST`, `OWNER_ALLERGY_INTOLERANCE`, `OWNER_ENCOUNTER` en `common/constants/concepts.ts`, con el mismo `def('common:owner-type:…')`. **No toca el `.puml`**: `file_links.owner_type_concept_id` es FK a terminología y el concepto se siembra al arrancar — lo dice el propio comentario de `files.types.ts`. |
+| Enum | Los tres valores en `OwnerType`. |
+| Rutas | `POST /clinical/medication-requests/:id/attachments` y `POST /clinical/allergy-intolerances/:id/attachments`, con su `attachFile()` **calcado de `procedures.service.ts`**: busca el recurso → 404 si no está → `filesService.createLink`. Son diez líneas cada una. |
+
+El genérico `POST /common/files/:id/links` **no alcanza** para dato clínico: no exige rol ni
+verifica que el dueño exista. Es a propósito —sirve a cualquier contexto— y por eso cada dominio
+liga por el suyo.
+
+### «De todo tipo y formato»: se amplía con firmas, no se abre
+
+`UPLOAD_MIME_ALLOWLIST` admite hoy ocho tipos —PDF, JPEG, PNG, WebP, GIF, DOCX, XLSX y texto— y el
+tipo se detecta por **firma de bytes** (`sniffMimeType`), no por extensión. Eso es lo que impide
+subir un ejecutable renombrado `.pdf`, y la regla `40-security.md` lo exige.
+
+Ampliarlo es agregar **firma + entrada** por cada formato nuevo: DICOM (`DICM` en el byte 128),
+HEIC/HEIF, TIFF, MP4/MOV (`ftyp`), MP3, WAV, ZIP, PPTX, CSV/RTF. Lo que **no** se debe hacer es
+aceptar cualquier cosa sin sniffing.
+
+Mientras tanto la pantalla **dice la lista real** en su ayuda en vez de prometer «todo tipo»: una
+promesa que el servidor va a romper con un 422 es peor que un límite dicho.
+
+### Varios archivos por petición no hace falta
+
+El frontend sube **en secuencia** —el backend recibe uno por petición,
+`FileInterceptor('file', { files: 1 })`— y el vínculo es por archivo. Si más adelante se quiere una
+sola transacción, `POST /charts/documents` ya recibe `files[]`.
+
+### Estado del frontend
+
+El subidor ya toma tandas de hasta diez, deduce la categoría del tipo del archivo, muestra
+«Adjuntando 3 de 7…» y no cancela la tanda por uno que falle. La maqueta sirve las dos rutas
+nuevas. **Contra la API de hoy responden 404** hasta que existan.
+
+---
+
+## Abierto · P24 · La receta no puede llevar un motivo escrito
+
+**Levantado el 2026-09-10.** El cliente lo pidió textual:
+
+> «Se debería de poder poner o escoger en una lista en la que salgan los diagnósticos ya
+> existentes **y una opción de poder escribir un título de diagnóstico propio**, porque puede
+> existir el caso que sólo se fue a hacer recetar y no necesitaría diagnóstico existente previo,
+> sobre todo casos psiquiátricos.»
+
+### Lo que ya existe
+
+`indicationConditionId` (Patch v4.1.6): la receta apunta a una condición **registrada**, el
+servidor comprueba que sea del mismo paciente y responde 422 si no. Está en el DTO de alta y en
+`MedicationRequestItemDto`.
+
+### Lo que falta
+
+**Una columna de texto.** `clinical.medication_requests` tiene `indication_condition_id` y ningún
+campo de texto para el motivo. Sin ella, la mitad del pedido —el caso psiquiátrico, y el de quien
+sólo fue a que le receten— no tiene dónde guardarse.
+
+| Capa | Qué hace falta |
+| --- | --- |
+| Modelo | `indication_text varchar(200) NULL` en `clinical.medication_requests`. Camino obligatorio: `.puml` → `gen_ddl.py` → `SQL/` → patch para bases vivas → `gen_entities.py`. **Nunca un `ALTER` a mano** (ADR-0021). |
+| DTO de alta | `indicationText?` con `@MaxLength(200)` en `CreateMedicationRequestDto` y en `EditMedicationRequestDraftDto`. |
+| DTO de lectura | `indicationText?` en `MedicationRequestItemDto`. |
+| Servicio | **Excluyente con la condición, y el concepto gana** si llegaran los dos — el mismo criterio que `occupation_free_text` frente a `occupation_concept_id` en `persons`. |
+| PDF | La receta impresa muestra uno u otro bajo «Diagnóstico». |
+
+### Estado del frontend
+
+La pantalla **ya lo manda** (`indicationText`) y la maqueta lo guarda y lo muestra. **Contra la API
+de hoy da 400**: `forbidNonWhitelisted` rechaza la petición entera por la clave que el DTO no
+declara. Es el mismo muro de P19, P20 y P22.
+
+### Dos cosas que este trabajo destapó y NO son pendientes
+
+- **La lectura ya traía el diagnóstico y el frontend lo tiraba.** `MedicationRequestItemDto`
+  publica `indicationConditionId` desde v4.1.6 y el tipo de vista `MedicationRequest` no lo
+  declaraba: el dato llegaba y nadie podía leerlo con tipos. Corregido acá, sin tocar el backend.
+- **«La receta a la que pertenece esa medicación» no existe como entidad.** En este modelo **cada
+  `medication_request` es una línea**; lo que agrupa varias es el encuentro y su fecha, y eso es lo
+  que la tabla muestra ahora en «Receta de». Un **número de receta** compartido por varias líneas
+  sería una entidad nueva (`prescriptions` con sus `lines`), no un campo: es decisión de modelo y
+  de negocio, no un arreglo de pantalla. **Queda planteado, sin resolver.**
+
+---
+
+## Abierto · P23 · Cambiar un horario que tiene citas es imposible hoy
+
+**Levantado el 2026-09-10**, arreglando «la cita no acaba a la hora que debería». Es la causa
+raíz de ese reporte, y no está en el frontend.
+
+### Lo que pasa
+
+Cambiar el horario creaba una plantilla **más** y dejaba viva la anterior; nadie llamaba a
+`DELETE /scheduling/templates/:id`. Como `generate-slots` es idempotente **por instante de
+inicio** —lo dice su contrato y lo hace el simulador—, el cupo de las 08:00 sobrevivía con su
+fin viejo: pasar las consultas de 30 a 45 minutos dejaba el turno de las 08:00 terminando a las
+08:30.
+
+El frontend ya lo arregla llamando al retiro **antes** de publicar. Y ahí aparece el muro.
+
+### El muro
+
+`retireTemplate` (`scheduling-catalog.service.ts:963`) rechaza con **409** en cuanto hay **una**
+cita viva —`ACTIVE_BOOKING_STATES` = `BOOKING_CONFIRMED` + `BOOKING_CHECKED_IN`, sin filtro de
+fecha—. En la maqueta con datos de demostración son **42**. Un profesional en ejercicio siempre
+tiene citas confirmadas, así que **nunca** puede cambiar su horario.
+
+### Por qué el 409 se contradice con la propia operación
+
+El retiro **conserva los cupos con cita** y devuelve `keptSlots` para decirlo. Es decir: la
+operación ya está diseñada para no tocar los turnos comprometidos, y aun así se niega a correr
+cuando existen. Las dos cosas no pueden ser ciertas a la vez.
+
+Las otras dos rutas tampoco alcanzan:
+
+| Ruta | Por qué no sirve |
+| --- | --- |
+| `PATCH /scheduling/templates/:id` | Cambia las reglas y **no toca los cupos materializados** (lo dice su propia descripción). Regenerar después no arregla nada: los instantes viejos ya existen y se cuentan como `skipped`. La grilla publicada sigue siendo la vieja. |
+| `POST /scheduling/resources/:id/close-slots` | Cierra cupos **dejando una excepción** que cubre su rango — y esa excepción bloquearía también los cupos nuevos. |
+
+### Lo que hace falta, en orden de preferencia
+
+1. **Acotar el 409 a las citas del rango que se deja de publicar.** Retirar conserva las citas;
+   frenar por una cita de dentro de tres meses cuando el cambio rige desde mañana no protege a
+   nadie.
+2. O una ruta que **suelte los cupos libres futuros de una plantilla sin retirarla**
+   —`POST /scheduling/templates/:id/release-free-slots?from=`—, que es exactamente lo que
+   «cambiar mi horario» necesita y hoy sólo existe como efecto secundario del retiro.
+3. O que `generate-slots` acepte `replace=true` para una ventana: borra los libres y crea los
+   nuevos en una transacción.
+
+Mientras tanto el frontend **muestra el motivo del servidor tal cual** y enlaza a «Mi agenda»
+para resolver esas citas, en vez de publicar en silencio un horario que no rige.
+
+### Un defecto del simulador que esto destapó
+
+`mock-router.ts` emitía los errores **sin el `code` del contrato**, y `readApiError`
+(`core/http/api-error.ts`) descarta todo cuerpo sin un `code` conocido. Resultado: **cualquier**
+409, 422 o 403 de la maqueta llegaba a la pantalla como «No pudimos completar la operación.
+(sin-id)». Corregido en esta tanda: los seis ayudantes declaran su código.
+
+---
+
+## Abierto · P22 · No hay forma de dar de alta al paciente que llega al mostrador
+
+**Levantado el 2026-09-09**, en la rama `mockup`, construyendo «paciente nuevo» dentro de
+`/schedule/appointment/new`. Es el punto **1.1 del registro de procesos del cliente** —la recepción
+del paciente que no tiene usuario— y hoy no tiene endpoint que lo reciba entero.
+
+### Lo que ya existe, y por qué no alcanza
+
+`POST /iam/users/assisted-registration` es exactamente esta vía: la admite `CLINICIAN`, no fija
+contraseña y devuelve un token de activación de un solo uso. Pero **crea la cuenta y nada más** — lo
+dice su propio DTO: «no hay fila en `profiles.persons`, así que las partes del nombre sólo sobreviven
+compuestas en `iam.users.display_name`». Sin persona no hay dónde poner la cédula
+(`common.identifiers`), ni el celular, ni la ocupación, ni el tutor.
+
+`POST /profiles/patients` tampoco: su `CreatePatientDto` acepta código de paciente, nombre visible,
+fecha de nacimiento y dos conceptos de género. **Ni cédula, ni celular, ni ocupación.** Y exige el
+`patientCode`, que es único en toda la instalación y que el navegador no puede garantizar — el
+servidor ya lo acuña él mismo en el alta que la propia persona hace de sí misma (`PAT-<uuid>`).
+
+### Lo que hay que hacer, y por qué es barato
+
+**Extender `AssistedRegistrationDto` con el bloque de filiación que `RegisterPatientDto` ya declara**
+y que su servicio cree persona + perfil + identificador + teléfono + tutor en la misma transacción.
+No es un endpoint nuevo ni un contrato inventado: los campos existen palabra por palabra en el alta
+que la persona hace de sí misma, y los ayudantes que los persisten **ya están extraídos**
+(`createGuardianRelatedPerson`, `createResidenceAddress`, `composeAccountDisplayName`). Hoy hay dos
+altas de paciente que declaran la misma persona de dos maneras distintas, y una está vacía.
+
+| Campo | §1.1 | Dónde ya está declarado |
+| --- | --- | --- |
+| `name` · `middleName` · `lastName` · `motherLastName` | 1.1.1–2 | `RegisterPatientDto` |
+| `nationalId` | 1.1.3 | ídem |
+| `issuerAdministrativeAreaConceptId` | 1.1.4 | ídem (`VS_BO_DEPARTMENT`) |
+| `birthDate` | 1.1.5 | ídem |
+| `occupationConceptId` · `occupationFreeText` | 1.1.6–7 | ídem (`VS_BO_OCCUPATION`) |
+| `phone` | 1.1.10 | ídem |
+| `guardianName` · `guardianPhone` · `guardianRelationshipConceptId` | 1.1.11 | ídem |
+
+### Lo que la maqueta hace mientras tanto
+
+La pantalla manda ese bloque a `POST /profiles/patients` y, con el perfil devuelto, agenda. **Contra
+la API de hoy da 400**: `forbidNonWhitelisted` rechaza la petición entera por las claves que el DTO
+no declara. Son además **dos transacciones**, así que si la cita falla queda una persona sin cita.
+Las dos cosas se arreglan solas el día que el registro asistido reciba el bloque: una llamada, una
+transacción.
+
+### Tres decisiones que no son técnicas
+
+1. **El correo es obligatorio y el paciente de mostrador puede no tener.** Hoy el correo *es* la
+   identidad de login y lo que evita duplicados. Que el celular ocupe ese lugar exige cambio de
+   modelo **y un canal de entrega que no existe**: la API sólo tiene `IN_APP` y `EMAIL`, no hay SMS
+   ni WhatsApp por donde mandar el enlace de activación.
+2. **El tutor se puede vincular pero no formalizar.** `POST /authz/care-relationships` admite
+   `CLINICIAN`; `POST /authz/legal-representations` es **sólo `SECURITY_ADMIN`**. Con el nombre y el
+   celular del tutor como persona relacionada alcanza para §1.1.11; para la representación legal, no.
+3. **Las 896 ocupaciones del SEGIP no existen.** Está investigado en `bo-occupations.catalog.ts`: el
+   manual responde 404 y el reglamento del RUIP dice que «Ocupación» es declarativa y no requiere
+   respaldo. Hoy hay 64 provisionales; la lista buena es la COB-2023 del INE (606), cuyo patch no
+   está aplicado. Sustituirlas arrastra migración: los identificadores se derivan del código.
+
+---
+
+## Abierto · P21 · Nadie avisa que se liberó un horario
+
+**Levantado el 2026-09-09**, en la rama `mockup`. No bloquea nada: la maqueta lo
+simula entero y la API puede seguir sin esto. Lo que no puede es fingir que ya
+existe.
+
+### Qué pide el registro
+
+Punto 3.4 del módulo Paciente, textual:
+
+> «Si no encuentras cita en el día que necesitas y confirmas para otra fecha
+> PUEDES RECIBIR UNA NOTIFICACION DE LA APP DONDE TE INFORME QUE UN PACIENTE
+> DESCONFIRMO Y EXISTE UN HORARIO DISPONIBLE (ayudando con esto al paciente a
+> poder tener una opción rápida y directa)»
+
+### Qué hace falta, y son tres cosas
+
+1. **Detectar que el cupo quedó libre.** Dos caminos llevan al mismo estado: un
+   `desconfirmar` explícito, y una reserva que sigue confirmada pasados N
+   minutos de su hora sin que la consulta se iniciara. El segundo es el que la
+   maqueta simula, porque es el que se puede observar sin que nadie apriete
+   nada. Los diez minutos son de `horario-liberado.ts`; el número es del
+   propietario, no del modelo.
+2. **Saber a quién le interesa.** El registro lo dice: a quien no consiguió el
+   día que quería y reservó para otra fecha. Hoy no hay dónde guardar «quería el
+   martes»: `scheduling.waiting_list` existe pero nadie la escribe desde el alta
+   de una reserva. La maqueta lo aproxima con «tiene una cita futura con esa
+   profesional», que es lo más cercano con el dato que hay — y es una
+   aproximación, no la regla.
+3. **Empujarlo.** El módulo 35 ya declara `notification_requests` y el canal
+   `IN_APP`, así que la notificación en sí no es trabajo nuevo: es un productor
+   que la emita cuando (1) ocurra y para quien (2) diga.
+
+### Lo que el front ya tiene, y no hay que volver a hacer
+
+La campana lee `GET /notifications/me` y sabe abrir un destino
+(`notification-routes.ts`). Un aviso con `category: 'SCHEDULING'`, su
+`destination` al cupo y `payloadJson.kind = 'SLOT_RELEASED'` entra por ahí sin
+tocar una línea de pantalla.
+
+### Y lo que hay que apagar cuando esto exista
+
+`features/notifications/aviso-de-hueco-libre.ts` **sondea cada veinte
+segundos**, y eso es de maqueta: arranca sólo con `mockBackend`. Contra la API
+real el empujón es del servidor, y sondear sería multiplicar una consulta por
+pestaña abierta para enterarse tarde igual. El día que el canal empuje, ese
+archivo se borra.
+
+---
+
+## Abierto · P20 · El alta de profesional no recibe el consultorio propio
+
+**Levantado el 2026-09-09**, en la rama `mockup`. Misma forma que P19 y **el
+mismo bloqueo**: con `forbidNonWhitelisted` una clave que el DTO no declara
+rechaza el alta entera.
+
+### Por qué el dato viaja en el alta y no por su ruta
+
+El consultorio propio **ya existe de punta a punta**: `POST /practitioners/me/sites`
+(ALV-005/006), con `NewOwnSite` + `NewOwnSiteAddress`, y «Mi perfil → dónde
+trabajo» lo usa para registrarlo. Lo que no se puede es llamarlo desde el alta:
+esa ruta es `/me`, exige sesión, y **el registro termina en el login** — no
+inicia sesión solo. Así que el dato tiene que viajar adentro del alta, y el
+backend reutilizar el servicio que ya tiene.
+
+### Por qué importa que esté en el alta y no sólo en el perfil
+
+Quien ejerce puede atender en varios lugares, pero los demás son de otro: para
+figurar en una clínica hace falta que **esa clínica acepte la vinculación**
+(`practitioner_affiliations`, estado declarado → activo). Hasta que eso pase, su
+agenda no tiene dónde publicarse. El consultorio propio es el único lugar que no
+depende de que nadie confirme nada, y por eso quien se registra para empezar a
+atender lo necesita el primer día — no después de que alguien lo acepte.
+
+Es el punto 12/13/22 del módulo médico del registro de procesos («Dirección de
+trabajo», «Ubicación GPS Trabajo», «Ubicación GPS de cada consultorio de
+atención»).
+
+### Qué hace falta
+
+```
+ownSite?: {
+  name: string
+  timeZone?: string
+  address?: {
+    lines: string[]
+    city?: string
+    municipalityConceptId?: string
+    administrativeAreaConceptId?: string
+    latitude?: number    // exige longitude
+    longitude?: number   // exige latitude
+  }
+}
+```
+
+Es **exactamente** `NewOwnSite`, que el backend ya valida en su controlador de
+sedes. Del lado del servicio, `IamPractitionerSelfRegistrationService` tiene que
+llamar al mismo caso de uso que atiende `POST /practitioners/me/sites` — el que
+crea o reutiliza la práctica personal del profesional. No hace falta tocar el
+modelo.
+
+### Lo que queda por decidir, y no lo decide el front
+
+Si crear el consultorio debe **crear también su recurso de agenda**. Hoy la
+agenda trabaja sobre recursos (`scheduling`), cada uno con su sede, y una sede
+sin recurso no ofrece turnos. Quien conozca `scheduling` tiene que decir si el
+recurso nace con la sede o si se crea al publicar el primer horario. **El front
+no lo asume**: manda la sede y nada más.
+
+---
+
+## Abierto · P19 · El alta de profesional no recibe el domicilio
+
+**Levantado el 2026-09-08**, en la rama `mockup`. **Bloquea el pase a `dev`**: no
+es un dato que se pierda, es un alta que no ocurre.
+
+### Qué pasa
+
+`RegisterPractitionerDto` acepta `residenceMunicipalityConceptId` y nada más. La
+pantalla del alta ahora pregunta también la calle y el punto del mapa —el mismo
+bloque que el alta de paciente— y los manda como `homeAddressLines`,
+`homeLatitude` y `homeLongitude`.
+
+`main.ts` monta el `ValidationPipe` con `forbidNonWhitelisted: true`. Una clave
+que el DTO no declara **no se descarta: rechaza la petición entera con 400**. Así
+que contra la API de hoy, un profesional que escriba su dirección no puede
+registrarse.
+
+En la rama `mockup` esto no se nota —el simulador contesta todo y no valida—, y
+por eso queda escrito acá y no sólo en el código.
+
+### Qué hace falta
+
+Los tres campos **ya existen en `RegisterPatientDto`**, con sus validadores y su
+regla de par (latitud y longitud viajan juntas o no viajan). Son copiables tal
+cual:
+
+```
+homeAddressLines?: string
+homeLatitude?:  number   // exige homeLongitude
+homeLongitude?: number   // exige homeLatitude
+```
+
+Y del lado del servicio, `IamPractitionerSelfRegistrationService` tiene que
+escribirlos donde ya los escribe el del paciente: `common.addresses`, que tiene
+las columnas —no hace falta tocar el modelo, ni `.puml`, ni DDL—.
+
+### Lo que NO entra acá
+
+La **zona** de residencia (AC-05-8) sigue sin preguntarse en ninguno de los dos
+registros, y esa sí es esquema: `common.addresses` no tiene columna de zona.
 
 ---
 
@@ -52,14 +834,42 @@ retroactivo— y que eso cierre sus cupos libres futuros.
 
 El cliente lo pidió textual: «en el perfil público del profesional falta los
 lugares donde atiende». El dato **existe** —`GET /scheduling/slots` agrupa los
-cupos por sede— pero ese endpoint exige sesión, y `/p/:slug` es anónima.
-`PublicProfileDetailDto` sirve `city` y `address`: una sola dirección, no las
-sedes.
+cupos por sede, y `GET /practitioners/:id/sites` devuelve las sedes— pero los
+dos exigen sesión, y `/p/:slug` es anónima. `PublicProfileDetailDto` sirve
+`city` y `address`: una sola dirección, no las sedes.
 
 **Lo que haría falta:** que la respuesta pública traiga los lugares de
 atención —nombre, dirección y, si se puede, los días que atiende en cada uno—.
 Sin horarios en vivo: alcanza con «Atiende en: Clínica X (lun/mié), Consultorio
 Y (vie)».
+
+#### Estado (09/09/2026): la pantalla ya está, el contrato falta
+
+La rama `mockup` lo construyó entero de este lado. `PublicProfileDetail` declara
+`practiceSites` y la ficha las lista —el consultorio propio primero y con su
+distintivo, un pin por sede en el mapa—, así que el día que la API lo mande no
+hay que tocar una línea de pantalla.
+
+La forma que se espera, dentro de `GET /public/profiles/:prefix/:slug`:
+
+```
+practiceSites: {
+  id: string
+  name: string
+  addressText: string | null
+  location: { lat: number, lng: number } | null
+  isOwn: boolean      // consultorio propio, no sede de una organización
+}[]
+```
+
+`isOwn` no es cosmético: el consultorio propio es el único lugar que existe sin
+que una organización haya aceptado nada (ver P20), y para quien elige a quién
+consultar no es lo mismo que una clínica con recepción y cobro de por medio.
+
+**Sigue siendo compatible hacia atrás.** El cliente rellena `practiceSites: []`
+cuando la respuesta no lo trae (`toProfile` en `public-directory.client.ts`), y
+sin sedes la ficha cae al respaldo de `city`/`address` que ya tenía. O sea: esto
+se puede mergear a `dev` antes que el backend, y no rompe nada.
 
 ### P17 · La foto del perfil no se puede subir desde la aplicación
 
@@ -84,12 +894,21 @@ dos escrituras.
 lectura de colección: no existe un `GET` por profesional ni por fecha. Sólo se
 llega a una nota entrando al expediente de su paciente.
 
-Consecuencia: la sección «Evoluciones» del panel del médico **no puede listar
-las notas**. Lista a quién atendió —desde `GET /scheduling/bookings`— con el
-enlace a cada expediente, y lo dice en la propia pantalla.
+Consecuencia: la sección «Evoluciones» del panel del médico lista **una fila
+por atención** —desde `GET /scheduling/bookings`, que es lo que sí se puede
+leer— y trae el texto de cada evolución **bajo demanda** al abrir una fila: una
+petición por clic contra `GET /charts/patients/:id/chart`, no N al cargar.
+
+Lo que sigue faltando es **atar una nota a su atención**. Dentro de esa lectura
+las notas de *esa* atención se reconocen por su día calendario, porque el
+contrato no ata una nota a una reserva: `ChartNote.encounterId` la ata a un
+encuentro, y el encuentro no viaja en la reserva. Dos atenciones de la misma
+persona el mismo día se muestran con las mismas notas, y es una estimación
+admitida a falta de la lectura.
 
 **Lo que haría falta:** `GET /charts/notes` acotado por profesional y ventana
-de fechas, devolviendo la última versión de cada nota.
+de fechas, devolviendo la última versión de cada nota, y el `encounterId` (o el
+`appointmentId`) en la reserva para poder cruzarlos sin estimar por fecha.
 
 ---
 
@@ -532,3 +1351,325 @@ Los cuatro cierres están en uso y verificados contra la API viva, no sólo comp
 y `no-authenticated-user` ofrecen el trámite de verificación; **`no-person-linked` no**, porque
 verificar la identidad de una persona que todavía no está vinculada a la cuenta no es algo que quien
 mira pueda hacer. Ofrecérselo sería un callejón con cartel de salida.
+
+---
+
+## Opiniones públicas de una ficha — 13/09/2026
+
+El cliente pidió que en la ficha pública se vean **las opiniones y quiénes las dieron**, y **quiénes dieron estrellas**, al tocar «8 opiniones» o la estrella de la cabecera. La maqueta lo resuelve con un contrato que la API real **no publica todavía**:
+
+`GET /public/profiles/:prefijo/:slug/reviews?cursor&limit` → página pública (`items`, `nextCursor`, `totalHint`, `generatedAt`) de:
+
+| Campo | Tipo | Nota |
+| --- | --- | --- |
+| `id` | uuid | |
+| `rating` | 1..5 | `overall_rating` |
+| `text` | string | null | `null` si sólo calificó |
+| `publishedAt` | ISO | |
+| `reviewer` | `{ displayName, headline, avatarUrl, slug, kind }` | `slug`/`kind` en `null` si quien opinó no tiene ficha pública; con modo anónimo, `displayName: "Paciente verificado"` |
+| `response` | `{ text, publishedAt }` | null | la primera respuesta de la ficha |
+
+Sin sesión, como el resto de `/public`. Nunca `reviewerProfileId`, `userId` ni uuids de conceptos. Simulador: `core/mock/handlers/public.handlers.ts`; cliente: `PublicDirectoryClient.profileReviews`.
+
+
+---
+
+## ~~P32~~ · El consultorio propio: cuál es, y cómo se corrige — **CERRADO**
+
+> [!success] Cerrado el 2026-09-16, con la subtarea C.1.
+> El backend publicó las dos mitades: el campo en `GET /practitioners/:profileId/sites` y
+> `PATCH /practitioners/me/sites/:siteId` para corregir el consultorio propio.
+>
+> **Se llama `isOwnSite`, no `esPropio`.** Esta maqueta lo sirvió en castellano y la regla de
+> gobernanza pide los contratos en inglés técnico, así que el contrato real viaja en inglés.
+> **El simulador de esta rama sigue devolviendo `esPropio`**, que es lo que consume la pantalla
+> de acá: quien lleve estas pantallas a `dev` tiene que renombrarlo, y quien toque el simulador
+> conviene que sepa que ese nombre no es el del servidor.
+>
+> Dos cosas más que el contrato no dice solo:
+> **`isOwnSite` no es «la práctica es de tipo consultorio»** — sale de comparar la práctica de
+> la sede con la **práctica personal** del profesional. Un consultorio particular **ajeno** es
+> tan ajeno como un hospital, y darlo por propio ofrecería un «Editar» que el `PATCH` rechaza.
+> Y **lo que NO entró**: el teléfono de la sede (`common.contact_points` no declara ningún
+> miembro de `owner_type_concept_id` para una sede) ni el horario de atención (no hay tabla de
+> horarios en `practice`; lo único que la sede declara es su huso).
+
+Lo que sigue es la nota original, tal como se escribió:
+
+**Nace el 2026-09-13.** Son dos huecos de la misma pregunta, y los dos los destapó
+el mismo pedido del cliente: separar «crear mi consultorio» de «atiendo en un
+hospital que ya existe».
+
+### a) `esPropio` en las sedes
+
+`GET /practitioners/:profileId/sites` devuelve las sedes «de sus asignaciones de
+rol vigentes», y ahí conviven dos cosas distintas:
+
+- **su** consultorio, creado con `POST /practitioners/me/sites`, que según el
+  propio contrato «crea —o reutiliza— la **práctica personal** del profesional»;
+- las sedes de **otras** organizaciones, donde lo que tiene es una vinculación
+  que ellas aceptaron.
+
+La respuesta no dice cuál es cuál. `practiceId` viaja, pero nada declara cuál de
+esas prácticas es la personal, así que el frontend no puede deducirlo sin
+adivinar. El efecto en pantalla era que «Consultorio Dra. Rojas» y «Hospital San
+Lucas» se dibujaban **idénticos**, con el mismo botón «Retirar» al lado —cuando
+retirar lo propio y desvincularse de un hospital no son el mismo acto—.
+
+**Qué falta:** un booleano por sede. La maqueta ya lo sirve como `esPropio` y el
+tipo `PracticeSite` lo declara **opcional**: ausente se lee como «no sé» y la
+pantalla lo trata como ajeno, que es la lectura prudente. El día que la API lo
+mande, la interfaz ya lo usa.
+
+### b) `PATCH /practitioners/me/sites/:siteId`
+
+Hoy el consultorio propio se puede **crear** y **retirar**, no corregir. Un
+nombre mal tipeado o una mudanza obligan a retirarlo y crear otro — y eso cambia
+el `id`, que es el que la agenda referencia en cada turno.
+
+Es la mitad del **P28**, que ya declara el consultorio propio entre «lo que el
+registro del médico pregunta y su perfil no puede editar». Con el bloque ahora
+en «Editar tu info → Dónde atiendo», el botón «Editar» existe y la maqueta lo
+atiende; contra la API real la petición no tiene ruta.
+
+**Cuerpo esperado**, el mismo del alta con todo opcional:
+
+```jsonc
+{ "name": "…", "timeZone": "America/La_Paz", "address": { "lines": ["…"], "city": "…", "municipalityConceptId": "…", "latitude": 0, "longitude": 0 } }
+```
+
+**Sólo el propio.** Una sede de otra organización no se corrige desde acá: es de
+ella, y lo que uno tiene con ella es una vinculación, no la sede.
+
+---
+
+## ~~P33~~ · El QR bancario con el que se cobra en cada sede — **CERRADO**
+
+> [!success] Cerrado el 2026-09-16, con la subtarea C.1.
+> `bankQrFileId` viaja en la lectura de sedes y se guarda con
+> `PUT /practitioners/me/sites/:siteId/bank-qr`.
+>
+> **El QR autoriza distinto que el `PATCH` del consultorio.** Aquél exige ser dueño; el QR sólo
+> exige **vinculación vigente con la sede**, porque también se cobra en la clínica donde el
+> profesional atiende sin ser dueño del lugar. Lo que se guarda ahí no es la sede: es con qué
+> cobra él en ella.
+>
+> **No acepta PDF**: se sube con categoría `IMAGE` (JPG, PNG, WEBP). Un QR dentro de un PDF no
+> se puede mostrar en el modal ni escanear desde la pantalla, que es lo único que esto hace.
+
+Lo que sigue es la nota original, tal como se escribió:
+
+**Nace el 2026-09-13**, del pedido del cliente sobre «Dónde atiendo»: cada sede
+tiene que poder mostrar el QR bancario que el profesional quiere usar **ahí**.
+
+### Por qué es por sede y no del profesional
+
+Porque no se cobra igual en todos lados. Una médica que atiende en su
+consultorio y además en la Clínica Los Olivos no recauda por la misma cuenta en
+los dos: en el consultorio cobra ella, y en la clínica puede cobrar la clínica.
+Un QR único de perfil la obligaría a corregirlo cada vez que cambia de
+establecimiento — que es la clase de error que se descubre tarde y con la plata
+en la cuenta equivocada.
+
+### Lo que falta, en las cuatro capas
+
+Esto **no empieza en la API**: la columna no existe. La dirección del cambio la
+fija el ADR-0021 (`.puml` → `gen_ddl.py` → `SQL/` → base → entidades), así que
+el trabajo arranca en `mantra-core-health-model/`.
+
+1. **Modelo** — `practice.practice_sites` gana una FK opcional al archivo:
+
+   ```text
+   bank_qr_file_id  uuid  NULL  → common.files(id)
+   ```
+
+   Opcional de verdad: una sede sin QR es un estado normal y corriente, no un
+   dato faltante. Va en la sede y no en `role_assignments` porque lo que
+   identifica es **dónde** se cobra, no bajo qué vínculo — y el vínculo se
+   renueva, se suspende y se vuelve a crear.
+
+2. **Lectura** — `GET /practitioners/:profileId/sites` devuelve `bankQrFileId`
+   (`string | null`). El tipo `PracticeSite` del frontend ya lo declara
+   **opcional**, con el mismo criterio que `esPropio` (P32): ausente se lee como
+   «no hay ninguno configurado», que es lo que la pantalla avisa en ámbar — y
+   así nunca esconde el camino para cargarlo.
+
+3. **Escritura** — `PUT /practitioners/me/sites/:siteId/bank-qr`:
+
+   ```jsonc
+   { "fileId": "uuid del archivo ya subido, o null para dejarla sin QR" }
+   ```
+
+   Devuelve la sede con el QR aplicado, en el mismo formato que la lista.
+
+**Ruta propia y no parte del `PATCH` del consultorio (P32-b)**, por dos motivos:
+
+- **Alcance.** Aquel `PATCH` corrige el consultorio **propio**, y el QR se
+  configura también en la clínica donde el profesional atiende sin ser dueño de
+  la sede. Lo que se guarda ahí no es la sede: es con qué cobra **él** en ella.
+  El backend tiene que autorizarlo por «tengo una asignación de rol vigente en
+  esta sede», no por «soy el dueño de la práctica».
+- **Contrato.** El archivo ya entró por `POST /common/files/upload`, así que lo
+  único que viaja es su id. Mezclarlo con nombre y dirección obligaría a mandar
+  el consultorio entero para cambiar una imagen.
+
+### Lo que el frontend ya hace
+
+El archivo se sube con `FilesClient.upload(file, 'IMAGE', 'NORMAL')` — un QR no
+es dato clínico— y la imagen se muestra bajando el contenido autenticado
+(`GET /common/files/:id/content`), porque un `<img src>` no manda cabeceras y la
+URL firmada del backend no es una URL de navegador.
+
+Simulador: `core/mock/handlers/practice.handlers.ts`; cliente:
+`PracticeSitesClient.setSiteBankQr`; pantalla:
+`features/account/my-profile/work-history/site-bank-qr-dialog`.
+
+## P35 · Cotizaciones: plan de pagos flexible, sin interés — 18/09/2026
+
+El propietario pidió **quitar por completo la tasa de interés y la simulación de
+crédito** de las cotizaciones: un consultorio no financia, reparte el precio de un
+tratamiento en cuotas a medida de la persona. El frontend (`mockup`) ya lo hace;
+la API real (`dev`) todavía expone el contrato viejo.
+
+### Qué cambia en el contrato de `POST /quotations`
+
+- **Fuera:** `interestRatePercent`, `interestCalculationMethod`
+  (`create-quotation.dto.ts`) y el endpoint `POST /quotations/simulate`.
+- **Nuevo:** `downPaymentAmount` (número, ≥ 0), `paymentFrequency`
+  (`WEEKLY` · `BIWEEKLY` · `MONTHLY`, sólo punto de partida) e `installments`:
+  `[{ installmentNumber, dueDate: 'YYYY-MM-DD', amount }]`, **el cronograma
+  tal como lo dejó quien atiende** — montos y fechas pueden no ser parejos.
+- **Regla de servidor:** anticipo + Σ `amount` = `offeredPrice`, al centavo.
+  Si no, 422 `VALIDATION_FAILED` (el simulador ya responde así).
+- `GET /quotations/:id` devuelve lo mismo: `installments` sin
+  `principalAmount`/`interestAmount`/`totalAmount`, sólo `amount`.
+
+### Dónde guardarlo sin tocar el modelo
+
+`payments.installment_plans` + `payments.installment_schedules` ya declaran
+exactamente esto: `number_of_installments`, `total_amount`, y por cuota
+`sequence_no`, `due_date`, `amount`. `interest_rate` es **nullable**: queda
+en `NULL`. Falta decidir cómo se ata el plan a la cotización (hoy el plan
+cuelga de `payment_intent_id`) — decisión del modelo, no del front.
+
+### Lo que el frontend ya hace
+
+- Alta: `features/quotations/quotation-form` + `flexible-payment-plan.ts`.
+- Consulta: `features/clinical-record/consultation/payment-plan-panel`, lee
+  `GET /quotations?patientProfileId=` y el detalle de los `ACCEPTED`, `SENT`
+  y `DRAFT` vigentes.
+- Simulador: `core/mock/handlers/finance.handlers.ts`.
+
+## P36 · Horario flexible, sin turnos fijos — 18/09/2026
+
+**Pedido del propietario:** poder publicar un horario **sin turnos**: el médico
+declara cuándo atiende y el paciente pide la hora que quiera dentro de la franja.
+
+**Qué hace hoy el front (`mockup`):** «Publicá tu agenda» tiene la pregunta
+«Horario flexible, sin turnos fijos · Sí / No». Con «Sí», la plantilla viaja con
+`flexibleHours: true` y sus reglas **sin** `slotMinutes` ni `gapMinutes`
+(`POST /scheduling/resources/:id/templates`). El simulador genera **un bloque
+abierto por franja**, con capacidad = 1 consulta cada 15 min como techo —una
+suposición de la maqueta, no una regla—.
+
+**Qué falta en la API real:**
+
+- Columna en el modelo (`schedule_templates`, módulo 41) que diga el modo; hoy
+  no existe y el DTO descartaría `flexibleHours`. Empieza en el `.puml`.
+- Decidir cómo reserva el paciente en ese modo: bloque con capacidad (orden de
+  llegada) o pedido de una hora libre que el médico confirma.
+- Mientras tanto, contra la API real el horario se publicaría **con turnos** de
+  la duración por omisión: no llevar esta pantalla a `dev` sin cerrar P36.
+
+**La hora de almuerzo no necesita backend:** un día con almuerzo se publica como
+dos franjas (mañana y tarde), y el generador real ya recorre todas las reglas de
+cada día (`scheduling-catalog.service.ts`).
+
+## P37 · Las sucursales de una farmacia y la receta entre ellas — 19/09/2026
+
+**Pedido del propietario:** en la ficha de una farmacia, «debe mostrar todas sus
+sucursales y pedirle ubicación para la más cercana recomendar dada una receta
+médica».
+
+**Qué hace hoy el front (`mockup`):** la ficha (`/pharmacies-directory/:slug`)
+lista las sucursales de la cadena, dibuja una por pin en el mapa, ofrece «Usar
+mi ubicación» —`navigator.geolocation`, nunca obligatorio— y, con los renglones
+de la receta escritos a mano, ordena las sucursales por «tiene todo» y cercanía
+y recomienda la primera. Las dos lecturas las responde el simulador
+(`core/mock/handlers/public.handlers.ts`); contra la API real la sección se
+queda en su estado de error y **no inventa sucursales ni existencias**.
+
+`GET /public/profiles/f/:slug/branches` → página pública de:
+
+| Campo | Tipo | Nota |
+| --- | --- | --- |
+| `slug` | string | la ficha pública de **esa** sucursal |
+| `name` | string | «Farmacorp · San Miguel» |
+| `siteName` | string | sólo la sucursal, para no repetir la cadena |
+| `city` / `addressText` / `phone` / `openingHours` | string \| null | |
+| `location` | `{ lat, lng }` \| null | sin punto no hay pin ni distancia |
+| `locationAccuracy` | string \| null | ya en palabras: «Ubicación aproximada · centro de la ciudad» |
+| `isCurrent` | boolean | si es la sucursal que se está mirando |
+
+La farmacia sin cadena devuelve **una**: ella. Vacío obligaría a la pantalla a
+distinguir «no tiene sucursales» de «la lectura falló».
+
+`GET /public/profiles/f/:slug/branch-availability?items=a|b|c&lat&lng` →
+`{ items, count, generatedAt }`, con un renglón por sucursal:
+`branch`, `matches[{ term, genericName, brandName, presentation, price, currency }]`,
+`missing[]`, `complete`, `totalAmount`, `currency`, `distanceKm`.
+
+Tres decisiones que el backend tiene que conservar:
+
+- **Los renglones viajan como texto**, separados por `|`: una receta en papel no
+  trae ids de producto, y la coma es parte de lo que la gente escribe.
+- **Sólo cuenta lo que está en stock.** Un agotado se cuenta como faltante — es
+  lo que le pasa a quien llega con la receta —, no se esconde.
+- **El orden lo decide el servidor** (primero las completas, después la más
+  cercana) y la pantalla no reordena: recomendar una y listar otras en otro
+  orden es contradecirse en la misma pantalla.
+
+`lat`/`lng` son opcionales: sin ellas la búsqueda sirve igual, sólo que sin
+distancias. La distancia es **en línea recta** (PAC-MED-005) y el rótulo de la
+pantalla dice lo mismo que el campo.
+
+**Lo que falta del lado del modelo:** hoy la cadena de una farmacia sale del
+corpus de Bolivia (`fixtures/bolivia-eje-central.ts`), no de la base.
+`directory` no declara el vínculo cadena → sucursal para farmacias, y
+`pharmacy_inventory` ya tiene el inventario por sede
+(`GET /pharmacy-inventory/availability`, que es el hermano **con sesión** de la
+segunda lectura de acá). El camino corto es exponer esa disponibilidad también
+en la superficie pública, acotada a las sedes de una cadena.
+## Abierto · P38 · El muro no puede decir de qué se está hablando
+
+**Levantado el 2026-09-17**, construyendo la tercera columna de `/posts` (subtarea E.1,
+AC-E1-03: «tendencias clínicas»).
+
+### Lo que falta
+
+Un recuento de etiquetas por período: qué hashtags aparecieron más en las publicaciones de
+los últimos N días, con su cuenta. Algo de la forma
+`GET /community/trends?tenantId=&days=&limit=` devolviendo `{ tag, posts }`.
+
+### Por qué no se puede hoy
+
+**`PostListItem` no declara `hashtags`.** Sólo los trae `PostDetail`
+(`GET /community/posts/:id`), que es una petición por publicación. Contar etiquetas desde el
+cliente costaría veinte peticiones —una por tarjeta de la página— para un recuento que igual
+sería el de *una página del muro de una persona*, no el del sistema. Eso no es una tendencia:
+es una estadística de lo que uno ya está mirando.
+
+Tampoco alcanza con agregar `hashtags` a `PostListItem`. El dato que la columna necesita es
+transversal al muro de cada uno —qué se está hablando en la organización— y el muro es
+personal por definición: lo arma el fan-out de a quién seguís.
+
+### Lo que la pantalla hace mientras tanto
+
+Muestra **las comunidades clínicas con más integrantes**, que sí es un dato real del servidor
+(`memberCount` en `GET /community/groups`) y sí es una tendencia clínica: cuánta gente se
+juntó alrededor de cada tema. El rótulo lo dice con esas palabras —«N integrantes»— para que
+nadie lea el número como si fuera volumen de publicaciones, y el orden lo pone el cliente
+porque el endpoint no ofrece `sort`.
+
+No es un sustituto permanente: responde «alrededor de qué se organizó la gente», no «de qué
+se está hablando esta semana», que es la pregunta del pedido.

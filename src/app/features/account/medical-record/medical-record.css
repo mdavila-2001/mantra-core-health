@@ -6,10 +6,48 @@
     aplica acá: quien lee su propia historia lee poco y de a una cosa.
     ========================================================================== */
 
+/* FT-20 · el cuerpo y la barra lateral.
+   En teléfono la descarga va PRIMERO —es la acción por la que mucha gente entra
+   y no puede quedar al final de una lista larga—; en escritorio pasa al costado
+   y queda pegada, visible desde cualquier pestaña. */
 .historia {
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   gap: var(--sp-6);
+}
+
+.historia__cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-inline-size: 0;
+}
+
+.historia__tabs {
+  display: block;
+  min-inline-size: 0;
+}
+
+.historia__lateral {
+  min-inline-size: 0;
+}
+
+/* FT-20-R07 · desde 64rem la descarga vive al costado y acompaña el scroll:
+   «Descargar todo» tiene que poder alcanzarse desde cualquier pestaña sin
+   volver arriba. */
+@media (min-width: 64rem) {
+  .historia {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 18rem;
+    align-items: start;
+    gap: var(--sp-6);
+  }
+
+  .historia__lateral {
+    position: sticky;
+    /* Bajo el encabezado de la página, no pegado al borde de la ventana. */
+    inset-block-start: var(--sp-6);
+  }
 }
 
 .historia__bloque {
@@ -105,6 +143,6 @@
 
 .historia__descarga-nota {
   color: var(--text-muted);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
   margin: 0;
 }

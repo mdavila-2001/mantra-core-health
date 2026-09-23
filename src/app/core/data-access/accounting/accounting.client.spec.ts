@@ -21,6 +21,30 @@ describe('AccountingClient — Carril 18 (auto-servicio contable del doctor)', (
 
   afterEach(() => http.verify());
 
+  describe('listPractices', () => {
+    /**
+     * La regresión que este caso cierra: el cliente leía `body.items` de una
+     * respuesta que es un **arreglo desnudo**, así que `.map` recibía
+     * `undefined` y explotaba. Como las dos pantallas que la llaman envuelven
+     * la llamada en `catchError(() => of([]))`, el error se veía como «esta
+     * organización no tiene prácticas» — y sin práctica no hay `practiceId`,
+     * que es de lo que cuelgan las cinco lecturas del módulo. La pantalla de
+     * contabilidad entera quedaba inservible sin que nada avisara.
+     *
+     * No había prueba de este método; por eso llegó así.
+     */
+    it('lee el arreglo desnudo que responde /practices, sin envoltorio de página', () => {
+      let recibidas: readonly { readonly id: string }[] | undefined;
+      client.listPractices().subscribe((p) => (recibidas = p));
+
+      const req = http.expectOne((r) => r.url === '/practices');
+      expect(req.request.method).toBe('GET');
+      req.flush([{ id: 'pr1', code: 'P1', name: 'Práctica 1' }]);
+
+      expect(recibidas).toEqual([{ id: 'pr1', code: 'P1', name: 'Práctica 1' }]);
+    });
+  });
+
   describe('listPaidConsultations', () => {
     it('pide las consultas pagadas de la práctica dada', () => {
       client.listPaidConsultations(PRACTICE).subscribe();
@@ -145,6 +169,198 @@ describe('AccountingClient — Carril 18 (auto-servicio contable del doctor)', (
         transactionNumber: 'JT-2',
         status: 'DRAFT',
         totalAmount: '80.00',
+      });
+    });
+  });
+
+  /* ---- TAREA-20 S3: libro mayor, estado de resultados, balance general --- */
+
+  describe('generalLedger', () => {
+    it('pide la cuenta y normaliza los movimientos, con la fecha anclada al día', () => {
+      let resultado: unknown;
+      client
+        .generalLedger(PRACTICE, { accountId: 'acc-1' })
+        .subscribe((r) => (resultado = r));
+
+      const req = http.expectOne((r) => r.url === '/accounting/general-ledger');
+      expect(req.request.params.get('practiceId')).toBe(PRACTICE);
+      expect(req.request.params.get('accountId')).toBe('acc-1');
+      req.flush({
+        accountId: 'acc-1',
+        code: '1000',
+        name: 'Caja',
+        normalBalanceConceptId: 'debit',
+        currencyConceptId: null,
+        openingBalance: '0.00',
+        items: [
+          {
+            id: 'le-1',
+            transactionId: 't-1',
+            transactionNumber: 'JT-1',
+            transactionDate: '2026-01-31T00:00:00.000Z',
+            directionConceptId: 'debit',
+            debit: '100.00',
+            credit: '0.00',
+            runningBalance: '100.00',
+            memo: null,
+          },
+        ],
+        count: 1,
+        limit: 100,
+        nextCursor: null,
+      });
+
+      expect(resultado).toEqual({
+        accountId: 'acc-1',
+        code: '1000',
+        name: 'Caja',
+        normalBalanceConceptId: 'debit',
+        openingBalance: '0.00',
+        items: [
+          {
+            id: 'le-1',
+            transactionId: 't-1',
+            transactionNumber: 'JT-1',
+            transactionDate: new Date(2026, 0, 31),
+            directionConceptId: 'debit',
+            debit: '100.00',
+            credit: '0.00',
+            runningBalance: '100.00',
+          },
+        ],
+        count: 1,
+        limit: 100,
+        nextCursor: null,
+      });
+    });
+  });
+
+  describe('incomeStatement', () => {
+    it('normaliza ingresos y gastos por separado', () => {
+      let resultado: unknown;
+      client.incomeStatement(PRACTICE).subscribe((r) => (resultado = r));
+
+      http.expectOne((r) => r.url === '/accounting/income-statement').flush({
+        revenueItems: [
+          { accountId: 'acc-rev', code: '4000', name: 'Ingresos', accountTypeConceptId: 'revenue', amount: '500.00' },
+        ],
+        expenseItems: [
+          { accountId: 'acc-exp', code: '5000', name: 'Gastos', accountTypeConceptId: 'expense', amount: '200.00' },
+        ],
+        totalRevenue: '500.00',
+        totalExpense: '200.00',
+        netIncome: '300.00',
+        count: 2,
+        limit: 100,
+        nextCursor: null,
+        truncated: false,
+      });
+
+      expect(resultado).toEqual({
+        revenueItems: [
+          { accountId: 'acc-rev', code: '4000', name: 'Ingresos', accountTypeConceptId: 'revenue', amount: '500.00' },
+        ],
+        expenseItems: [
+          { accountId: 'acc-exp', code: '5000', name: 'Gastos', accountTypeConceptId: 'expense', amount: '200.00' },
+        ],
+        totalRevenue: '500.00',
+        totalExpense: '200.00',
+        netIncome: '300.00',
+        count: 2,
+        limit: 100,
+        nextCursor: null,
+        truncated: false,
+      });
+    });
+  });
+
+  describe('balanceSheet', () => {
+    it('declara si activo == pasivo + patrimonio', () => {
+      let resultado: unknown;
+      client.balanceSheet(PRACTICE).subscribe((r) => (resultado = r));
+
+      http.expectOne((r) => r.url === '/accounting/balance-sheet').flush({
+        assetItems: [{ accountId: 'acc-1', code: '1000', name: 'Caja', accountTypeConceptId: 'asset', amount: '800.00' }],
+        liabilityItems: [],
+        equityItems: [{ accountId: 'acc-eq', code: '3000', name: 'Capital', accountTypeConceptId: 'equity', amount: '500.00' }],
+        netIncomeOfPeriod: '300.00',
+        totalAssets: '800.00',
+        totalLiabilities: '0.00',
+        totalEquity: '800.00',
+        totalLiabilitiesAndEquity: '800.00',
+        balanced: true,
+        count: 2,
+        limit: 100,
+        nextCursor: null,
+        truncated: false,
+      });
+
+      expect((resultado as { balanced: boolean }).balanced).toBe(true);
+      expect((resultado as { totalAssets: string }).totalAssets).toBe('800.00');
+    });
+  });
+
+  /* ---- TAREA-20 S2: MODO CONTADOR ------------------------------------------- */
+
+  describe('createJournalDraft', () => {
+    it('postea el asiento de N filas a /drafts tal cual', () => {
+      let resultado: unknown;
+      client
+        .createJournalDraft({
+          practiceId: PRACTICE,
+          transactionDate: '2026-01-31',
+          description: 'Asiento manual',
+          lines: [
+            { accountId: 'acc-1', direction: 'DEBIT', amount: '100.00' },
+            { accountId: 'acc-2', direction: 'CREDIT', amount: '100.00' },
+          ],
+        })
+        .subscribe((r) => (resultado = r));
+
+      const req = http.expectOne((r) => r.url === '/accounting/journal-transactions/drafts');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body.lines).toHaveLength(2);
+      req.flush({
+        id: 't-3',
+        transactionNumber: 'JT-3',
+        status: 'DRAFT',
+        totalAmount: '100.00',
+        lineCount: 2,
+        postedAt: null,
+      });
+
+      expect(resultado).toEqual({
+        id: 't-3',
+        transactionNumber: 'JT-3',
+        status: 'DRAFT',
+        totalAmount: '100.00',
+        lineCount: 2,
+      });
+    });
+  });
+
+  describe('postJournal', () => {
+    it('postea el asiento de N filas al endpoint directo', () => {
+      client
+        .postJournal({
+          practiceId: PRACTICE,
+          transactionDate: '2026-01-31',
+          lines: [
+            { accountId: 'acc-1', direction: 'DEBIT', amount: '100.00' },
+            { accountId: 'acc-2', direction: 'CREDIT', amount: '100.00' },
+          ],
+        })
+        .subscribe();
+
+      const req = http.expectOne((r) => r.url === '/accounting/journal-transactions');
+      expect(req.request.method).toBe('POST');
+      req.flush({
+        id: 't-4',
+        transactionNumber: 'JT-4',
+        status: 'POSTED',
+        totalAmount: '100.00',
+        lineCount: 2,
+        postedAt: '2026-01-31T10:00:00.000Z',
       });
     });
   });

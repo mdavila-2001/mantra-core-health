@@ -1,0 +1,110 @@
+[
+ {
+  "type": "arteria",
+  "definition": "Las arterias son vasos que conducen la sangre desde el corazón hacia lechos capilares. Su pared se organiza para soportar presión y modular el flujo; una arteria con nombre propio se reconoce por su trayecto, territorio y relaciones, pero este corpus solo afirma esos detalles cuando están explícitos en la fuente."
+ },
+ {
+  "type": "articulacion",
+  "definition": "Una articulación reúne superficies óseas y, según el tipo, cartílago, cápsula, ligamentos, membrana sinovial u otras estructuras. Su estudio combina congruencia, estabilidad y movimiento, pero el grado y dirección del movimiento deben provenir de evidencia anatómica concreta."
+ },
+ {
+  "type": "cartilago",
+  "definition": "El cartílago es tejido conectivo especializado que proporciona soporte flexible o superficies de baja fricción. En el esqueleto puede formar cartílagos articulares, costales, laríngeos u otros componentes con propiedades regionales diferentes."
+ },
+ {
+  "type": "cavidad_espacio",
+  "definition": "Las cavidades y espacios son regiones delimitadas por hueso, fascia, membranas u órganos. Pueden contener vísceras, líquido o paquetes neurovasculares y sirven como unidades topográficas para describir relaciones."
+ },
+ {
+  "type": "condicion_clinica_indexada",
+  "definition": "Esta clase reúne patologías, lesiones o alteraciones que el índice remite a una o más láminas. No se modela como estructura anatómica y su presencia en el Atlas no basta para inferir tratamiento, pronóstico o causalidad."
+ },
+ {
+  "type": "conducto",
+  "definition": "Un conducto es una vía tubular que transporta contenido entre estructuras. La naturaleza del contenido y el epitelio depende del sistema al que pertenece; el nombre y las láminas referenciadas son la evidencia mínima usada aquí."
+ },
+ {
+  "type": "conducto_canal",
+  "definition": "Los conductos y canales son trayectos delimitados por tejidos que permiten el paso de fluidos, secreciones, vasos, nervios u otras estructuras. No debe inferirse el contenido exacto cuando no está explícito."
+ },
+ {
+  "type": "estructura_anatomica_no_tipificada",
+  "definition": "Esta entrada proviene del índice alfabético del Atlas y se conserva como estructura no tipificada cuando su clase específica no puede asignarse de manera segura solo por análisis lexical. Por integridad, el corpus conserva el texto fuente y evita elevarlo automáticamente a término canónico cuando la jerarquía del índice u OCR no lo permite con seguridad."
+ },
+ {
+  "type": "fascia",
+  "definition": "Las fascias envuelven, separan o conectan músculos, vísceras y paquetes neurovasculares. Definen compartimentos y planos quirúrgicos; sus continuidades pueden ser regionalmente complejas."
+ },
+ {
+  "type": "foramen_abertura",
+  "definition": "Un foramen o abertura es un orificio que comunica espacios o permite el paso de estructuras. Su valor anatómico depende de sus límites y de los elementos que lo atraviesan; estos detalles deben validarse en la lámina correspondiente."
+ },
+ {
+  "type": "ganglio",
+  "definition": "En anatomía periférica, un ganglio es una agrupación de cuerpos neuronales fuera del sistema nervioso central; en usos históricos algunos términos encefálicos emplean «ganglios» con otro sentido. Por eso el contexto regional es esencial para interpretar la entrada."
+ },
+ {
+  "type": "glandula",
+  "definition": "Una glándula es una organización epitelial especializada en secreción. Puede ser exocrina o endocrina según la vía de liberación; la categoría concreta y sus productos no se infieren del término si no están especificados."
+ },
+ {
+  "type": "hueso",
+  "definition": "El hueso es un órgano mineralizado que proporciona soporte, protección y superficies para inserciones y articulaciones. Sus accidentes anatómicos —bordes, caras, apófisis, fosas y agujeros— sirven como referencias para músculos, ligamentos, vasos y nervios."
+ },
+ {
+  "type": "ligamento",
+  "definition": "Los ligamentos suelen unir huesos, reforzar cápsulas o limitar/dirigir el movimiento. Su denominación describe normalmente los elementos conectados o su posición; el corpus evita deducir biomecánica específica a partir del nombre solamente."
+ },
+ {
+  "type": "linfatico",
+  "definition": "Las estructuras linfáticas participan en drenaje de líquido intersticial, transporte de linfa y organización inmunitaria. Los vasos y nódulos se interpretan topográficamente por territorios de drenaje, pero no se infieren rutas completas sin fuente."
+ },
+ {
+  "type": "musculo",
+  "definition": "Un músculo es un órgano contráctil cuya arquitectura se describe mediante vientres, tendones o aponeurosis, origen e inserción, relaciones y acción. La identificación topográfica debe mantenerse separada de inferencias sobre acción o inervación cuando esos datos no están explícitos."
+ },
+ {
+  "type": "nervio",
+  "definition": "Un nervio es un haz organizado de fibras nerviosas rodeadas por tejido conectivo. Puede contener componentes sensitivos, motores o autónomos según el nervio; este conjunto de datos no asigna modalidades funcionales a una entrada si el Atlas o una fuente terminológica no las confirma."
+ },
+ {
+  "type": "oido",
+  "definition": "El oído se divide en componentes externo, medio e interno, con relaciones entre conducción mecánica del sonido, laberinto y nervio vestibulococlear. La clasificación exacta de cada entrada depende del contexto de la lámina."
+ },
+ {
+  "type": "ojo",
+  "definition": "Las estructuras oculares se organizan entre globo ocular, túnicas, medios transparentes, músculos extraoculares, aparato lagrimal y elementos neurovasculares. Su interpretación requiere distinguir estructuras intrínsecas del ojo de anexos orbitarios."
+ },
+ {
+  "type": "organo_viscera",
+  "definition": "Un órgano visceral integra varios tejidos en una unidad macroscópica con relaciones topográficas, irrigación, drenaje e inervación. En un atlas anatómico se priorizan forma, partes, superficies y relaciones más que fisiología detallada."
+ },
+ {
+  "type": "plexo",
+  "definition": "Un plexo es una red formada por nervios, vasos u otras estructuras ramificadas. La naturaleza exacta del plexo debe deducirse del término completo y del contexto regional, no de la palabra «plexo» aislada."
+ },
+ {
+  "type": "procedimiento_o_imagen",
+  "definition": "Esta clase representa una forma de explorar, visualizar o intervenir sobre la anatomía. Se conserva porque el índice de un atlas clínico mezcla estructuras y técnicas, pero no se trata como parte anatómica."
+ },
+ {
+  "type": "signo_o_manifestacion_clinica",
+  "definition": "Un signo o manifestación clínica describe un hallazgo observable o una referencia semiológica. Se separa de la anatomía estructural para evitar que un modelo confunda una observación clínica con un órgano o tejido."
+ },
+ {
+  "type": "sistema_nervioso_central",
+  "definition": "El sistema nervioso central comprende encéfalo y médula espinal. Sus estructuras se describen por regiones, núcleos, tractos, cavidades y relaciones meníngeas/vasculares; este corpus evita asignar funciones específicas si no están sustentadas."
+ },
+ {
+  "type": "tendon",
+  "definition": "Un tendón transmite fuerza de un músculo hacia una inserción, con frecuencia ósea, mediante tejido conectivo denso. Su relación con vainas, retináculos y bursas depende de la región."
+ },
+ {
+  "type": "vaso",
+  "definition": "El término vascular puede referirse a arterias, venas o redes especializadas. La identificación precisa depende de la etiqueta completa y de la lámina."
+ },
+ {
+  "type": "vena",
+  "definition": "Las venas conducen sangre desde redes capilares hacia el corazón. Su anatomía se interpreta por origen, tributarias, trayecto y relación con fascias u órganos; muchas forman plexos o acompañan arterias, pero no se infiere una correspondencia uno-a-uno sin evidencia."
+ }
+]

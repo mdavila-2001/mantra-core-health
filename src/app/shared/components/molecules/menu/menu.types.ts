@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos del Menu — sistema REDSAT v1.0.
+    Contratos del Menu — sistema ALOVIDA v1.0.
 
     Extensión propia: el spec no declara menú desplegable. Se arma con la
     superficie y la sombra del sistema. Pendiente de validación del diseñador.

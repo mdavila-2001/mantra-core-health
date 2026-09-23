@@ -62,9 +62,40 @@ describe('FreeNoteBlock', () => {
     fixture.componentRef.setInput('patientProfileId', 'pac-1');
     fixture.componentRef.setInput('encounterId', 'enc-1');
     fixture.detectChanges();
+    atenderALaCuadricula();
   });
 
   afterEach(() => http.verify());
+
+  /**
+   * Responde la lectura del expediente que hace la cuadrícula al montarse.
+   *
+   * Desde **C-14** el bloque tiene dos vistas y la segunda es `app-note-grid`,
+   * que pide el expediente por su cuenta. Con la pestaña «Escribir» abierta —que
+   * es la de arranque— el panel de la cuadrícula **no se dibuja** y esa petición
+   * no existe, así que casi siempre esto no drena nada.
+   *
+   * Se deja igual, y a propósito: el día que una prueba abra la otra vista, la
+   * petición aparece y acá está contestada. Es `match` y no `expectOne`
+   * justamente porque cero es un resultado válido.
+   */
+  function atenderALaCuadricula(): void {
+    http
+      .match((r) => r.url.endsWith('/clinical/patients/pac-1/summary'))
+      .forEach((peticion) =>
+        peticion.flush({
+          patientProfileId: 'pac-1',
+          conditions: [],
+          allergies: [],
+          medicationRequests: [],
+          observations: [],
+          encounters: [],
+          careEpisodes: [],
+          limit: 50,
+          truncated: [],
+        }),
+      );
+  }
 
   it('sin texto no guarda nada: no se pide ni el perfil', () => {
     interno<() => void>('guardar').call(fixture.componentInstance);
@@ -174,5 +205,71 @@ describe('FreeNoteBlock', () => {
 
     expect(interno<() => string>('contenido')()).toBe('<p>Media hora de consulta.</p>');
     expect(interno<() => string | null>('error')()).toContain('probá de nuevo');
+  });
+
+  describe('tieneCambiosPendientes — contrato de DraftBlock', () => {
+    it('recién montado no tiene cambios pendientes', () => {
+      expect(fixture.componentInstance.tieneCambiosPendientes()).toBe(false);
+    });
+
+    it('escribiendo, tiene cambios pendientes', () => {
+      escribir('<p>Refiere cefalea.</p>');
+      expect(fixture.componentInstance.tieneCambiosPendientes()).toBe(true);
+    });
+
+    it('guardada la nota, lo escrito ya no cuenta como pendiente', () => {
+      escribir('<p>Refiere cefalea de tres días.</p>');
+      interno<() => void>('guardar').call(fixture.componentInstance);
+      peticionDePerfil().flush(PERFIL);
+      http.expectOne((r) => r.url.endsWith('/charts/notes')).flush({
+        noteId: 'nota-1',
+        versionId: 'v-1',
+        versionNumber: 1,
+        lifecycleStatusConceptId: 'c-1',
+        versionStatusConceptId: 'c-2',
+      });
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.tieneCambiosPendientes()).toBe(false);
+    });
+
+    it('seguir escribiendo después de guardar vuelve a ser pendiente', () => {
+      escribir('<p>Refiere cefalea de tres días.</p>');
+      interno<() => void>('guardar').call(fixture.componentInstance);
+      peticionDePerfil().flush(PERFIL);
+      http.expectOne((r) => r.url.endsWith('/charts/notes')).flush({
+        noteId: 'nota-1',
+        versionId: 'v-1',
+        versionNumber: 1,
+        lifecycleStatusConceptId: 'c-1',
+        versionStatusConceptId: 'c-2',
+      });
+      fixture.detectChanges();
+
+      escribir('<p>Refiere cefalea de tres días. Agrega náuseas.</p>');
+
+      expect(fixture.componentInstance.tieneCambiosPendientes()).toBe(true);
+    });
+
+    it('la cita elegida cuenta sólo antes del primer guardado', () => {
+      interno<{ set(v: string | null): void }>('citaElegida').set('enc-9');
+      expect(fixture.componentInstance.tieneCambiosPendientes()).toBe(true);
+
+      escribir('<p>Refiere cefalea.</p>');
+      interno<() => void>('guardar').call(fixture.componentInstance);
+      peticionDePerfil().flush(PERFIL);
+      http.expectOne((r) => r.url.endsWith('/charts/notes')).flush({
+        noteId: 'nota-1',
+        versionId: 'v-1',
+        versionNumber: 1,
+        lifecycleStatusConceptId: 'c-1',
+        versionStatusConceptId: 'c-2',
+      });
+      fixture.detectChanges();
+
+      // Después del primer guardado la nota ya está abierta: la cita viaja en
+      // el vínculo de esa nota, no en un alta pendiente de esta pantalla.
+      expect(fixture.componentInstance.tieneCambiosPendientes()).toBe(false);
+    });
   });
 });

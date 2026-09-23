@@ -201,6 +201,8 @@ describe('AuthService', () => {
         password: 'secreto12',
         name: 'Ana',
         lastName: 'Paz',
+        // Obligatorio en el contrato, igual que en el DTO del servidor.
+        residenceMunicipalityConceptId: 'ee4f2681-6c58-5f4c-8f83-8d19de56099a',
       })
       .subscribe();
 

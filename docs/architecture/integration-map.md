@@ -30,7 +30,7 @@ graph LR
     PUB[PublicClient · 1]
   end
 
-  API[(API REDESA)]
+  API[(API ALOVIDA)]
 
   LOGIN --> IAM
   REG --> IAM

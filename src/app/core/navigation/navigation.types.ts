@@ -100,6 +100,20 @@ export const NAV_ICON_NAMES = [
   'arrow-left',
   'arrow-right',
   'remove',
+
+  // `edit`, la cuarta acción del set: el lápiz que habilita los campos de un
+  // formulario que entró en sólo lectura («Mi perfil», FT-11-R04). Estaba en
+  // `atoms/nav-icon/nav-icon.types.ts` —y dibujado— y faltaba acá, que es
+  // justo la separación que esta lista existe para impedir.
+  'edit',
+
+  // Preferencia del dispositivo (TAREA-17): los tres de «Apariencia» y el que
+  // le falta a «Permisos». Igual que `arrow-left`/`remove`, no nombran una
+  // sección. El porqué está donde se dibujan: `atoms/nav-icon/nav-icon.types.ts`.
+  'monitor',
+  'sun',
+  'moon',
+  'camera',
 ] as const;
 export type NavIconName = (typeof NAV_ICON_NAMES)[number];
 
@@ -115,6 +129,17 @@ export interface NavMenuItem {
   readonly label: string;
   readonly route: string;
   readonly icon: NavIconName;
+
+  /**
+   * Las rutas que este renglón **representa** además de la suya.
+   *
+   * Sale de {@link AppSection.representaEnElMenu}, y sólo el armazón la usa:
+   * para decidir cuál de los renglones se marca como «acá estás». Sin esto,
+   * estar dentro de una pantalla sin renglón propio deja la barra entera
+   * apagada, y la barra deja de contestar la única pregunta que contesta
+   * siempre. Ver el porqué en el registro.
+   */
+  readonly representa?: readonly string[];
 }
 
 /**
@@ -150,6 +175,18 @@ export interface NavMenuSection {
   readonly items: readonly NavMenuItem[];
 
   readonly blocks: readonly NavMenuBlock[];
+
+  /**
+   * Si el grupo se dibuja **sin contenedor**: sus destinos van sueltos en la
+   * barra, al mismo nivel que los fijos de arriba, y ni el dominio ni sus
+   * bloques ocupan un renglón plegable.
+   *
+   * Es presentación, no permiso: un grupo aplanado ofrece exactamente los
+   * mismos destinos que uno plegado. Quiénes lo son lo declara
+   * `GRUPOS_APLANADOS` en `navigation.subgroups.ts`, por la misma razón que el
+   * reparto en bloques vive ahí y no en el registro.
+   */
+  readonly aplanado: boolean;
 }
 
 /**
@@ -310,6 +347,42 @@ export interface AppSection {
    * esto sólo la saca de la vista.
    */
   readonly fueraDelMenuPara?: readonly string[];
+
+  /**
+   * Si la sección se dibuja **suelta y arriba de todo**, fuera de su grupo.
+   *
+   * Nace con «Mi perfil» y «Notificaciones» (07/09/2026). Las dos siguen
+   * declarando su `group` —el registro no pierde el reparto, y el breadcrumb lo
+   * sigue usando—, pero en la barra no cuelgan de él: son las dos cosas que
+   * cualquiera abre sin pensar a qué dominio pertenecen, y para el médico
+   * dejaban un desplegable de dos renglones que costaba más abrir que leer.
+   *
+   * Lo que NO es: una forma de sacar la sección de su grupo. El paciente sigue
+   * teniendo «Mi cuenta» con las seis que quedan —sus citas, su historia, sus
+   * resultados—, que sí son un dominio. Si esto vaciara el grupo, el grupo
+   * desaparece solo: el menú ya descarta los que se quedan sin ítems.
+   */
+  readonly pinnedTop?: boolean;
+
+  /**
+   * Las pantallas que **se entran por acá** y no tienen renglón propio.
+   *
+   * Es la contracara de {@link fueraDelMenuPara}: cuando un puñado de
+   * secciones deja de ocupar renglón porque se llega a ellas desde una
+   * portada, la barra se queda sin nada que marcar mientras se las recorre —y
+   * decir dónde estás es lo único que la barra hace siempre—. Declarando acá
+   * esas rutas, el renglón de la portada se marca por ellas.
+   *
+   * **Se declara, no se deduce.** La tentación es sacarlo solo del reparto en
+   * bloques —«marcá la primera del bloque cuando las otras no están»—, y da
+   * respuestas equivocadas en cuanto un bloque no es una portada y sus partes:
+   * «Ajustes» sale del menú y vive en el bloque «Avisos», y con esa regla
+   * estar en Ajustes encendería «Notificaciones», que es otra pantalla. Una
+   * portada sabe que lo es; un bloque no.
+   *
+   * Nace con «Directorios» (08/09/2026), que es hoy la única que lo declara.
+   */
+  readonly representaEnElMenu?: readonly string[];
 
   readonly availability: SectionAvailability;
 

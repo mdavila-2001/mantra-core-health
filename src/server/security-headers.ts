@@ -143,6 +143,57 @@ export function collectInlineScriptHashes(browserDistFolder: string): string[] {
   return [...hashes];
 }
 
+/**
+ * Hashes de los scripts en línea del `index.html` de la fuente, tal cual sale
+ * del repo (AG49-FT01-003).
+ *
+ * `collectInlineScriptHashes` asume un `dist/browser` real para recorrer, y
+ * eso sólo existe tras un `ng build`. Bajo `ng serve --ssr` este mismo
+ * `server.ts` corre igual —lo exporta como `reqHandler` para eso— pero el
+ * bundler de desarrollo no escribe ningún artefacto a disco: `browserDistFolder`
+ * apunta a una carpeta que no existe, el recorrido no encuentra nada y
+ * `script-src` queda sin un solo hash. El script anti-parpadeo del tema —el
+ * único script en línea que no depende de una ruta prerenderizada, ver
+ * `src/index.html`— queda bloqueado por la CSP en cualquier ruta servida así,
+ * que es como corre la suite de Playwright localmente (`E2E_BASE_URL` apunta
+ * a `ng serve`, no al build).
+ *
+ * El contenido de ese script llega **casi** idéntico al HTML que finalmente
+ * sirve el navegador —Angular no lo reescribe— salvo por una cosa: este
+ * repositorio se hace *checkout* en Windows con `\r\n`, y de las dos vías por
+ * las que `ng serve --ssr` puede terminar sirviendo esa etiqueta, una copia el
+ * archivo tal cual (conserva el `\r\n`) y la otra pasa por el serializador DOM
+ * del renderizador SSR en vivo (lo normaliza a `\n`, como cualquier motor de
+ * hidratación de Angular). Se vio pasar las dos por la CSP real: la copia
+ * literal en la carga inicial y la normalizada en una navegación posterior
+ * —mismo script, mismo archivo fuente, dos hashes distintos. Por eso se
+ * hashean **ambos finales de línea** del mismo contenido en vez de uno solo:
+ * cualquiera de los dos que sirva la ruta en cuestión, ya tiene su hash en la
+ * lista. (En Linux/`git config core.autocrlf input` esto es un no-operación:
+ * ambas variantes coinciden y `Set` en `server.ts` deja un solo hash.)
+ *
+ * En un build de producción esto es una entrada redundante —el hash real ya
+ * sale de `collectInlineScriptHashes`, que recorre el artefacto compilado— y
+ * sólo importa de verdad cuando ese recorrido no tuvo nada que mirar.
+ *
+ * Best-effort: una imagen de despliegue que sólo empaqueta `dist/` no trae
+ * `src/`, y entonces esto no encuentra nada — no rompe el arranque, devuelve
+ * una lista vacía y el build ya cubrió el hash por su propio lado.
+ *
+ * @param projectRoot - Raíz del proyecto (`process.cwd()` en `ng serve` y en
+ *   `serve:ssr:mantra-core-health`, que arrancan desde ahí).
+ */
+export function sourceIndexScriptHashes(projectRoot: string): string[] {
+  let html: string;
+  try {
+    html = readFileSync(join(projectRoot, 'src', 'index.html'), 'utf8');
+  } catch {
+    return [];
+  }
+  const conLf = html.replace(/\r\n/g, '\n');
+  return [...new Set([...inlineScriptHashesOf(html), ...inlineScriptHashesOf(conLf)])];
+}
+
 /** El origen de una URL absoluta, o `null` si no lo es. */
 function originOf(url: string | undefined): string | null {
   if (url === undefined || url === '') {
@@ -174,13 +225,18 @@ export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): str
     "style-src 'self' 'unsafe-inline'",
     // Las tipografías están autoalojadas: no hace falta abrir ningún CDN.
     "font-src 'self'",
-    // `data:` cubre los SVG en línea del sistema de diseño. Los tiles de
-    // OpenStreetMap son el único origen de imagen ajeno: el mapa (Leaflet, sin
-    // clave de API) los pide directo del navegador y sin ellos queda gris.
+    // `data:` cubre los SVG en línea del sistema de diseño. Los mosaicos de
+    // OpenStreetMap son el único origen de imagen ajeno y el mapa los pide
+    // directo del navegador. Un solo host, sin comodín: OSM ya no reparte por
+    // subdominios. Estuvo abierto a `*.basemaps.cartocdn.com` hasta el
+    // 19/09/2026, cuando CARTO empezó a estampar «API KEY REQUIRED» sobre
+    // cada mosaico.
     "img-src 'self' data: https://tile.openstreetmap.org",
     `connect-src 'self'${apiOrigin === null ? '' : ` ${apiOrigin}`}`,
     "frame-ancestors 'none'",
     "object-src 'none'",
+    // Vista previa local de audio/video; sin proveedores externos ni iframes.
+    "media-src 'self' blob:",
     "base-uri 'self'",
     "form-action 'self'",
     ...(upgrade ? ['upgrade-insecure-requests'] : []),
@@ -205,11 +261,14 @@ export function securityHeaders(
     'X-Frame-Options': 'DENY',
     // Una URL con identificadores no debe viajar a otro sitio en el `Referer`.
     'Referrer-Policy': 'strict-origin-when-cross-origin',
-    // Cámara y micrófono no se usan. La ubicación sí: «dónde comprar mi
-    // receta» la pide con permiso explícito del navegador para ordenar
-    // sucursales por cercanía — `geolocation=()` la apagaba para toda la
-    // aplicación. `(self)` la permite solo al propio origen, jamás a un iframe.
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(self)',
+    // La cámara no se usa. El micrófono sí, desde el 23/09/2026: el dictado
+    // del chequeo de síntomas (P-02) y la nota de voz de mensajería lo piden
+    // con permiso explícito del navegador — `microphone=()` los apagaba para
+    // toda la aplicación aunque la persona lo concediera (HALL-M4). La
+    // ubicación igual: «dónde comprar mi receta» la pide para ordenar
+    // sucursales por cercanía. `(self)` permite cada uno solo al propio
+    // origen, jamás a un iframe.
+    'Permissions-Policy': 'camera=(), microphone=(self), geolocation=(self)',
     'Strict-Transport-Security': 'max-age=63072000; includeSubDomains',
   };
 }

@@ -1,0 +1,56 @@
+:host {
+  display: block;
+  min-inline-size: 0;
+  inline-size: 100%;
+}
+.preview {
+  margin: 0;
+  padding: var(--sp-3);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+.preview img {
+  display: block;
+  inline-size: 100%;
+  max-block-size: 20rem;
+  object-fit: contain;
+}
+.preview p {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+.preview__navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-2);
+  font-size: var(--fs-caption);
+}
+
+.preview video {
+  display: block;
+  inline-size: 100%;
+  max-block-size: 20rem;
+}
+.preview audio {
+  display: block;
+  inline-size: 100%;
+}
+.preview pre {
+  margin: 0;
+  max-block-size: 16rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: var(--fs-caption);
+  color: var(--text-primary);
+}
+.preview__navigation app-nav-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}

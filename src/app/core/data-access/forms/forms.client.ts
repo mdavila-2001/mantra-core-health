@@ -6,6 +6,8 @@ import { API_BASE_URL, apiUrl } from '../api';
 import type {
   CreateAssignmentInput,
   CreateFieldDefinitionInput,
+  UpdateAssignmentInput,
+  UpdateFieldDefinitionInput,
   ExtensionBudget,
   FieldValueInput,
   FormInstance,
@@ -140,6 +142,87 @@ export class FormsClient {
     return this.http
       .post<{ id: string }>(this.url('/forms/assignments'), input)
       .pipe(map((res) => res.id));
+  }
+
+  /**
+   * `PATCH /forms/field-definitions/:id` — corrige el nombre o el tipo de un
+   * campo propio.
+   *
+   * La definición es **global** (`forms.dynamic_field_definitions`), así que
+   * esto cambia el campo dondequiera que esté colgado. Es lo correcto: es el
+   * mismo campo, no una copia por formulario.
+   *
+   * @param fieldId - Identificador de la definición.
+   * @param cambios - Sólo lo que cambió.
+   */
+  updateFieldDefinition(
+    fieldId: string,
+    cambios: UpdateFieldDefinitionInput,
+  ): Observable<void> {
+    return this.http
+      .patch<unknown>(
+        this.url(`/forms/field-definitions/${encodeURIComponent(fieldId)}`),
+        cambios,
+      )
+      .pipe(map(() => undefined));
+  }
+
+  /**
+   * `PATCH /forms/assignments/:id` — cambia si el campo es obligatorio.
+   *
+   * Va aparte de la definición porque son dos cosas distintas: el campo
+   * «¿Fuma?» es el mismo en todos lados, pero puede ser obligatorio en un
+   * formulario y opcional en otro. Lo obligatorio es de la **asignación**.
+   *
+   * @param assignmentId - Identificador de la asignación.
+   * @param cambios - Sólo lo que cambió.
+   */
+  updateAssignment(
+    assignmentId: string,
+    cambios: UpdateAssignmentInput,
+  ): Observable<void> {
+    return this.http
+      .patch<unknown>(
+        this.url(`/forms/assignments/${encodeURIComponent(assignmentId)}`),
+        cambios,
+      )
+      .pipe(map(() => undefined));
+  }
+
+  /**
+   * `DELETE /forms/assignments/:id` — descuelga un campo propio.
+   *
+   * No borra la definición: el campo sigue en el catálogo global y puede estar
+   * colgado de otro formulario. Lo que se quita es su presencia acá.
+   *
+   * @param assignmentId - Identificador de la asignación.
+   */
+  deleteAssignment(assignmentId: string): Observable<void> {
+    return this.http
+      .delete<unknown>(this.url(`/forms/assignments/${encodeURIComponent(assignmentId)}`))
+      .pipe(map(() => undefined));
+  }
+
+  /**
+   * `PUT /forms/assignments/order` — reordena los campos propios de un target.
+   *
+   * Se manda **la lista entera** en el orden final, no «subí éste un lugar»:
+   * dos reordenamientos seguidos sobre una posición relativa se pisan y el
+   * resultado depende de cuál llegó primero.
+   *
+   * @param targetResourceConceptId - El formulario cuyos campos se reordenan.
+   * @param assignmentIds - Las asignaciones propias, en el orden final.
+   */
+  reorderAssignments(
+    targetResourceConceptId: string,
+    assignmentIds: readonly string[],
+  ): Observable<void> {
+    return this.http
+      .put<unknown>(this.url('/forms/assignments/order'), {
+        targetResourceConceptId,
+        assignmentIds,
+      })
+      .pipe(map(() => undefined));
   }
 
   /**

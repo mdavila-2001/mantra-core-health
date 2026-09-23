@@ -1,25 +1,25 @@
 /* La mini-disponibilidad del profesional, sede por sede (TP-4).
-   Sólo tokens REDSAT: el contraste AA lo garantiza la paleta, y un hex a mano
+   Sólo tokens ALOVIDA: el contraste AA lo garantiza la paleta, y un hex a mano
    lo rompe sin que nadie se entere. */
 
 .disponibilidad {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--sp-4);
 }
 
 .disponibilidad__semana {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--sp-3);
   flex-wrap: wrap;
 }
 
 .disponibilidad__rango {
   margin: 0;
-  color: var(--color-text-primary);
-  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
 .disponibilidad__sede {
@@ -27,10 +27,10 @@
 }
 
 .disponibilidad__sede-nombre {
-  margin: 0 0 var(--space-3);
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 /* Los cupos son una lista de verdad y no una fila de botones sueltos: quien
@@ -42,23 +42,23 @@
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--sp-2);
 }
 
 .disponibilidad__proximo {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--sp-2);
   flex-wrap: wrap;
   margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
 }
 
 .disponibilidad__vacio {
   margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
 }
 
 /* En pantalla angosta los dos botones de semana no caben a los lados del

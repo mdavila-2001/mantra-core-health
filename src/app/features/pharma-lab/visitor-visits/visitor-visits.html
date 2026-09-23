@@ -27,43 +27,28 @@
         Todavía no solicitaste ninguna visita.
       </p>
     } @else {
-      <table class="visits__table" data-testid="visits-table">
-        <caption class="visits__caption">Solicitudes de visita enviadas</caption>
-        <thead>
-          <tr>
-            <th scope="col">Fecha solicitada</th>
-            <th scope="col">Duración</th>
-            <th scope="col">Modalidad</th>
-            <th scope="col">Motivo</th>
-            <th scope="col">Estado</th>
-            <th scope="col">Acción</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (request of panel.requests; track request.id) {
-            <tr [attr.data-testid]="'visit-row-' + request.id">
-              <td>{{ request.requestedStartAt.toLocaleString('es-BO') }}</td>
-              <td>{{ request.durationMinutes }} min</td>
-              <td>{{ concepto(request.modalityConceptId) }}</td>
-              <td>{{ request.reason }}</td>
-              <td [attr.data-testid]="'visit-status-' + request.id">
-                {{ concepto(request.statusConceptId) }}
-              </td>
-              <td>
-                <button
-                  app-button
-                  variant="neutral"
-                  size="sm"
-                  [attr.data-testid]="'cancel-' + request.id"
-                  (click)="cancelar(request)"
-                >
-                  Cancelar
-                </button>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+      <app-data-table
+        data-testid="visits-table"
+        [state]="filas()"
+        [columns]="columnas()"
+        [trackBy]="porId"
+        [rowLabel]="nombreDeFila"
+        caption="Solicitudes de visita enviadas"
+        (retry)="retry()"
+      />
     }
   }
 </app-view-state-host>
+
+<ng-template #celdaAccion let-fila>
+  <button
+    app-button
+    variant="neutral"
+    size="sm"
+    [attr.data-testid]="'cancel-' + fila.id"
+    [attr.aria-label]="'Cancelar: la visita del ' + fila.fecha"
+    (click)="cancelar(fila.request)"
+  >
+    Cancelar
+  </button>
+</ng-template>

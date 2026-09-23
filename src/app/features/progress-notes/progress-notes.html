@@ -1,47 +1,140 @@
 <app-page-header
   title="Evoluciones"
-  subtitle="A quién atendiste últimamente y dónde seguir escribiendo su evolución."
-/>
+  subtitle="Las atenciones que registraste y lo que escribiste en cada una."
+>
+  @if (sePuedeExportar()) {
+    <button page-actions app-button variant="outline" size="sm" (clicked)="exportar()">
+      Exportar a PDF
+    </button>
+  }
+</app-page-header>
 
-<!-- Se dice de frente lo que esta pantalla todavía no puede hacer, en vez de
-     dejar que alguien deduzca que sus notas «se perdieron». Ver el JSDoc del
-     componente: `M15 chart` no tiene lectura de colección de notas. -->
-<app-alert tone="info" title="Por ahora lista a quién atendiste, no las notas una por una">
-  La lectura de las notas clínicas todavía no existe en la API, así que acá va lo que sí se puede
-  leer: las personas que atendiste, con el acceso directo a su expediente, que es donde su
-  evolución vive.
-</app-alert>
+<!-- El período cambia lo que se le pide al servidor, así que va aparte de los
+     filtros: éstos acotan lo ya traído, aquél vuelve a consultar. -->
+<div class="evoluciones__periodo" role="group" aria-label="Período">
+  @for (opcion of periodos; track opcion) {
+    <button
+      app-button
+      size="sm"
+      [variant]="opcion === dias() ? 'primary' : 'outline'"
+      [attr.aria-pressed]="opcion === dias()"
+      [attr.data-testid]="'evoluciones-periodo-' + opcion"
+      (clicked)="verPeriodo(opcion)"
+    >
+      {{ opcion }} días
+    </button>
+  }
+</div>
+
+<app-filter-bar
+  searchLabel="Buscar por paciente o motivo"
+  [filters]="filtrosDisponibles()"
+  (filtersChanged)="fijarFiltros($event)"
+/>
 
 <app-view-state-host [state]="estado()" (retry)="cargar()">
   @if (resumen(); as texto) {
     <p class="evoluciones__resumen" role="status">{{ texto }}</p>
   }
 
-  <ul class="evoluciones__lista">
-    @for (persona of personas(); track persona.profileId) {
-      <li>
-        <app-card variant="outlined" padding="lg" class="evoluciones__fila">
-          <div class="evoluciones__datos">
-            <p class="evoluciones__nombre">{{ persona.nombre }}</p>
-            @if (persona.motivo) {
-              <p class="evoluciones__motivo">{{ persona.motivo }}</p>
-            }
-            <p class="evoluciones__cuando">
-              Última atención:
-              <time [attr.datetime]="persona.ultima.toISOString()">
-                {{ persona.ultima | date: "d 'de' MMMM, HH:mm" }}
-              </time>
-              @if (persona.cuantas > 1) {
-                <span class="evoluciones__veces">
-                  · {{ persona.cuantas }} atenciones en {{ dias }} días
-                </span>
-              }
-            </p>
-          </div>
+  @if (visibles().length === 0) {
+    <p class="evoluciones__sin-coincidencias" role="status">
+      Ninguna atención del período coincide con lo que buscaste.
+    </p>
+  }
 
-          <a app-button variant="secondary" [routerLink]="persona.ruta">Abrir su evolución</a>
-        </app-card>
-      </li>
-    }
-  </ul>
+  @if (visibles().length > 0) {
+    <app-data-table
+      data-testid="evoluciones-tabla"
+      [state]="filasDeTabla()"
+      [columns]="columnas()"
+      [trackBy]="porId"
+      [rowLabel]="nombreDeFila"
+      [rowNavigable]="true"
+      caption="Atenciones del período con su evolución"
+      (rowActivated)="verEvolucion($event)"
+      (retry)="cargar()"
+    />
+  }
 </app-view-state-host>
+
+<!-- Lo que se escribió en esa atención. Se pide al abrir y no al cargar la
+     lista: son datos clínicos enteros por paciente. -->
+@if (abierta(); as atencion) {
+  <app-content-dialog
+    heading="La evolución de esta atención"
+    [description]="atencion.paciente"
+    (closed)="cerrarEvolucion()"
+  >
+    <p class="evoluciones__detalle-cuando">
+      <time [attr.datetime]="atencion.cuando.toISOString()">
+        {{ atencion.cuando | date: "d 'de' MMMM 'de' y, HH:mm" }}
+      </time>
+      · {{ atencion.estadoLabel }}
+    </p>
+
+    <app-view-state-host [state]="notas()" (retry)="verEvolucion(atencion)">
+      @for (nota of notasVisibles(); track nota.id) {
+        <article class="evoluciones__nota" data-testid="evoluciones-nota">
+          @if (nota.motivo) {
+            <h3 class="evoluciones__nota-titulo">{{ nota.motivo }}</h3>
+          }
+          @if (nota.subjetivo) {
+            <p><strong>Lo que refiere:</strong> {{ nota.subjetivo }}</p>
+          }
+          @if (nota.objetivo) {
+            <p><strong>Lo que se observó:</strong> {{ nota.objetivo }}</p>
+          }
+          @if (nota.evaluacion) {
+            <p><strong>Evaluación:</strong> {{ nota.evaluacion }}</p>
+          }
+          @if (nota.plan) {
+            <p><strong>Plan:</strong> {{ nota.plan }}</p>
+          }
+          <p class="evoluciones__nota-pie">
+            {{ nota.firmada ? 'Firmada' : 'Sin firmar' }}
+          </p>
+        </article>
+      }
+    </app-view-state-host>
+
+    <!-- Sólo cuando hay notas: sin ellas, la próxima acción del estado vacío
+         —que el M34 exige— ya ofrece este mismo enlace, y salían los dos. -->
+    @if (notasVisibles().length > 0) {
+      <p class="evoluciones__detalle-salida">
+        <a app-link [routerLink]="atencion.ruta" data-testid="evoluciones-abrir-expediente">
+          Abrir el expediente completo
+        </a>
+      </p>
+    }
+  </app-content-dialog>
+}
+
+<!-- Plantillas de celda de la tabla de evoluciones. -->
+<ng-template #celdaCuando let-atencion>
+  <time [attr.datetime]="atencion.cuando.toISOString()">
+    {{ atencion.cuando | date: "d 'de' MMMM, HH:mm" }}
+  </time>
+</ng-template>
+
+<ng-template #celdaEstado let-atencion>
+  <span class="app-badge" [attr.data-tono]="atencion.estado">{{ atencion.estadoLabel }}</span>
+</ng-template>
+
+<ng-template #celdaAccion let-atencion>
+  <button
+    app-button
+    variant="secondary"
+    size="sm"
+    [attr.data-testid]="'evoluciones-ver-' + atencion.id"
+    [attr.aria-label]="
+      'Ver evolución: ' +
+      atencion.paciente +
+      ', ' +
+      (atencion.cuando | date: &quot;d 'de' MMMM, HH:mm&quot;)
+    "
+    (clicked)="verEvolucion(atencion)"
+  >
+    Ver evolución
+  </button>
+</ng-template>

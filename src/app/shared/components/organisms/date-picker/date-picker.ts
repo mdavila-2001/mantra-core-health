@@ -94,11 +94,30 @@ const FULL_DATE_FORMAT: Intl.DateTimeFormatOptions = {
 
 const MASK_TEMPLATE = 'DD/MM/AAAA';
 
+/** Segmentos editables del input de fecha para navegación estilo input type="date" nativo. */
+export type DateSegment = 'day' | 'month' | 'year';
+
+interface SegmentDef {
+  readonly segment: DateSegment;
+  readonly start: number;
+  readonly end: number;
+}
+
+const SEGMENT_DAY: SegmentDef = { segment: 'day', start: 0, end: 2 };
+const SEGMENT_MONTH: SegmentDef = { segment: 'month', start: 3, end: 5 };
+const SEGMENT_YEAR: SegmentDef = { segment: 'year', start: 6, end: 10 };
+
+function getSegmentAt(pos: number): SegmentDef {
+  if (pos <= 2) return SEGMENT_DAY;
+  if (pos <= 5) return SEGMENT_MONTH;
+  return SEGMENT_YEAR;
+}
+
 /** Formatea una fecha local a DD/MM/AAAA. */
 function formatDateOnly(date: Date): string {
   const dia = String(date.getDate()).padStart(2, '0');
   const mes = String(date.getMonth() + 1).padStart(2, '0');
-  const anio = date.getFullYear();
+  const anio = String(date.getFullYear()).padStart(4, '0');
   return `${dia}/${mes}/${anio}`;
 }
 
@@ -111,14 +130,56 @@ function parseDateOnly(text: string): Date | null {
   const day = Number.parseInt(match[1], 10);
   const month = Number.parseInt(match[2], 10);
   const year = Number.parseInt(match[3], 10);
-  if (month < 1 || month > 12 || year < 1000 || year > 9999 || day < 1) {
+  if (month < 1 || month > 12 || year < 1 || year > 9999 || day < 1) {
     return null;
   }
-  const daysInMonth = new Date(year, month, 0).getDate();
+  const endOfMonth = new Date(year, month, 0);
+  endOfMonth.setFullYear(year);
+  const daysInMonth = endOfMonth.getDate();
   if (day > daysInMonth) {
     return null;
   }
-  return new Date(year, month - 1, day, SAFE_HOUR, 0, 0, 0);
+  const date = new Date(year, month - 1, day, SAFE_HOUR, 0, 0, 0);
+  date.setFullYear(year);
+  return date;
+}
+
+/**
+ * Si se escribió un solo dígito en día o mes, se normaliza con cero a la izquierda (ej. 1 -> 01).
+ * Si se escribieron menos de 4 dígitos en año, se normaliza con ceros a la izquierda (ej. 1 -> 0001).
+ */
+function normalizeDateMask(text: string): string {
+  if (!text || text === MASK_TEMPLATE || text.trim() === '') {
+    return text;
+  }
+  const chars = (text.length === 10 ? text : MASK_TEMPLATE).split('');
+
+  // 1. Día
+  const rawDay = chars.slice(0, 2).join('').replace(/\D/g, '');
+  if (rawDay.length === 1) {
+    chars[0] = '0';
+    chars[1] = rawDay;
+  }
+
+  // 2. Mes
+  const rawMonth = chars.slice(3, 5).join('').replace(/\D/g, '');
+  if (rawMonth.length === 1) {
+    chars[3] = '0';
+    chars[4] = rawMonth;
+  }
+
+  // 3. Año
+  const rawYear = chars.slice(6, 10).join('').replace(/\D/g, '');
+  if (rawYear.length > 0 && rawYear.length < 4) {
+    const padded = rawYear.padStart(4, '0');
+    for (let i = 0; i < 4; i++) {
+      chars[6 + i] = padded[i];
+    }
+  }
+
+  chars[2] = '/';
+  chars[5] = '/';
+  return chars.join('');
 }
 
 /** Nombres desde `Intl`: no se duplican a mano ni quedan pegados a un idioma. */
@@ -166,7 +227,9 @@ function startOfYearPage(year: number): number {
 
 /** Medianoche local: compara fechas por día, sin que la hora corra el límite. */
 function dayTime(date: Date): number {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  d.setFullYear(date.getFullYear());
+  return d.getTime();
 }
 
 /**
@@ -240,6 +303,32 @@ export class DatePicker {
 
   /** Fecha en edición mientras el modal está abierto; se descarta al cancelar. */
   protected readonly draft = signal<Date | null>(null);
+
+  /**
+   * Si hay una fecha **elegida**, y no sólo un calendario parado en algún mes.
+   *
+   * Son dos cosas distintas y hasta ahora se confundían: al abrir sin valor,
+   * `open()` sembraba el borrador con el 1 de enero del año por defecto —lo
+   * necesita para saber qué mes dibujar— y «Confirmar» aceptaba **esa** fecha,
+   * que nadie eligió. El síntoma es una fecha de nacimiento 01/01/2000 en el
+   * perfil de alguien que sólo tocó el botón.
+   *
+   * Nace en `true` cuando el campo ya traía valor: ahí sí hay día, mes y año, y
+   * confirmar sin tocar nada es legítimo —es aceptar lo que ya estaba—.
+   */
+  private readonly dayChosen = signal(false);
+
+  /**
+   * No se confirma sin día, mes y año.
+   *
+   * El año y el mes vienen implícitos en el día: el calendario sólo ofrece días
+   * del mes que está mostrando, así que elegir uno fija los tres a la vez. Lo
+   * que faltaba era exigir ese clic.
+   */
+  protected readonly canConfirm = computed(() => {
+    const draft = this.draft();
+    return this.dayChosen() && draft !== null && !this.isOutOfRange(draft);
+  });
   protected readonly viewMonth = signal<Date>(startOfMonth(new Date(MAX_DEFAULT_YEAR, 0, 1)));
 
   protected readonly monthNames = buildMonthNames();
@@ -252,6 +341,18 @@ export class DatePicker {
 
   private readonly ownId = nextControlId('date');
   protected readonly controlId = computed(() => this.field?.controlId() ?? this.ownId);
+
+  /** Id del texto «Abrir calendario» del disparador. */
+  protected readonly triggerTextId = `${this.ownId}-abrir`;
+
+  /**
+   * El nombre del disparador: su texto más el rótulo del campo que lo envuelve.
+   * Sin campo, `null` y rige el `aria-label` de siempre.
+   */
+  protected readonly triggerLabelledBy = computed(() => {
+    const rotulo = this.field?.labelId();
+    return rotulo ? `${this.triggerTextId} ${rotulo}` : null;
+  });
   protected readonly describedBy = computed(() => this.field?.describedBy() ?? null);
   protected readonly invalid = computed(
     () => this.hasError() || this.field?.invalid() === true || this.parseError(),
@@ -427,46 +528,192 @@ export class DatePicker {
     return new Intl.DateTimeFormat(LOCALE, FULL_DATE_FORMAT).format(day.date);
   }
 
-  protected handleFocus(): void {
-    const input = this.inputEl()?.nativeElement;
+  private ensureMask(input: HTMLInputElement): string {
     const current = input ? input.value : this.inputText();
     if (!current || current === '') {
       this.inputText.set(MASK_TEMPLATE);
       if (input) {
         input.value = MASK_TEMPLATE;
-        input.setSelectionRange(0, 0);
       }
+      return MASK_TEMPLATE;
     }
+    return current;
+  }
+
+  private applyNormalization(input?: HTMLInputElement): string {
+    const el = input ?? this.inputEl()?.nativeElement;
+    const current = el ? el.value : this.inputText();
+    if (!current || current === MASK_TEMPLATE) {
+      return current;
+    }
+
+    const normalized = normalizeDateMask(current);
+    if (normalized !== current) {
+      this.inputText.set(normalized);
+      if (el) {
+        el.value = normalized;
+      }
+      this.checkCompleteMask(normalized);
+    }
+    return normalized;
+  }
+
+  private selectSegment(input: HTMLInputElement, seg: SegmentDef): void {
+    input.setSelectionRange(seg.start, seg.end);
+  }
+
+  private snapToSegment(input: HTMLInputElement): void {
+    this.applyNormalization(input);
+    this.ensureMask(input);
+    const pos = input.selectionStart ?? 0;
+    const seg = getSegmentAt(pos);
+    this.selectSegment(input, seg);
+  }
+
+  protected handleFocus(): void {
+    const input = this.inputEl()?.nativeElement;
+    if (!input) {
+      return;
+    }
+    this.ensureMask(input);
+    setTimeout(() => {
+      if (document.activeElement === input) {
+        const pos = input.selectionStart ?? 0;
+        const seg = getSegmentAt(pos);
+        this.selectSegment(input, seg);
+      }
+    }, 0);
+  }
+
+  protected handleInputClick(event: MouseEvent): void {
+    const input = event.target as HTMLInputElement;
+    this.snapToSegment(input);
+  }
+
+  protected handleInputMouseUp(event: MouseEvent): void {
+    const input = event.target as HTMLInputElement;
+    this.snapToSegment(input);
+    setTimeout(() => {
+      if (document.activeElement === input) {
+        this.snapToSegment(input);
+      }
+    }, 0);
   }
 
   protected handleInputKeydown(event: KeyboardEvent): void {
     const input = event.target as HTMLInputElement;
 
-    // Permitir atajos con teclas modificadoras y teclas especiales de navegación
-    if (
-      event.ctrlKey ||
-      event.metaKey ||
-      event.altKey ||
-      event.key === 'Tab' ||
-      event.key === 'Escape' ||
-      event.key === 'ArrowLeft' ||
-      event.key === 'ArrowRight' ||
-      event.key === 'ArrowUp' ||
-      event.key === 'ArrowDown' ||
-      event.key === 'Home' ||
-      event.key === 'End'
-    ) {
+    // Permitir atajos con teclas modificadoras ctrl/meta/alt
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+
+    if (event.key === 'Escape') {
       return;
     }
 
     if (event.key === 'Enter') {
+      this.applyNormalization(input);
       this.handleTextBlur();
       return;
     }
 
-    if (event.key === '/') {
-      this.handleSlashKey(input);
+    const pos = input.selectionStart ?? 0;
+    const seg = getSegmentAt(pos);
+
+    // Navegación con Tab entre segmentos (Día -> Mes -> Año)
+    if (event.key === 'Tab') {
+      this.applyNormalization(input);
+      if (!event.shiftKey) {
+        if (seg.segment === 'day') {
+          event.preventDefault();
+          this.selectSegment(input, SEGMENT_MONTH);
+          return;
+        }
+        if (seg.segment === 'month') {
+          event.preventDefault();
+          this.selectSegment(input, SEGMENT_YEAR);
+          return;
+        }
+        // En 'year', permitir Tab normal hacia el disparador de calendario
+        return;
+      } else {
+        if (seg.segment === 'year') {
+          event.preventDefault();
+          this.selectSegment(input, SEGMENT_MONTH);
+          return;
+        }
+        if (seg.segment === 'month') {
+          event.preventDefault();
+          this.selectSegment(input, SEGMENT_DAY);
+          return;
+        }
+        // En 'day', permitir Shift+Tab hacia el campo anterior
+        return;
+      }
+    }
+
+    // Navegación con flechas laterales entre segmentos
+    if (event.key === 'ArrowRight') {
       event.preventDefault();
+      this.applyNormalization(input);
+      if (seg.segment === 'day') {
+        this.selectSegment(input, SEGMENT_MONTH);
+      } else {
+        this.selectSegment(input, SEGMENT_YEAR);
+      }
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      this.applyNormalization(input);
+      if (seg.segment === 'year') {
+        this.selectSegment(input, SEGMENT_MONTH);
+      } else {
+        this.selectSegment(input, SEGMENT_DAY);
+      }
+      return;
+    }
+
+    // Tecla / o separador salta al siguiente segmento
+    if (event.key === '/' || event.key === '-' || event.key === '.') {
+      event.preventDefault();
+      this.applyNormalization(input);
+      if (seg.segment === 'day') {
+        this.selectSegment(input, SEGMENT_MONTH);
+      } else if (seg.segment === 'month') {
+        this.selectSegment(input, SEGMENT_YEAR);
+      }
+      return;
+    }
+
+    // Flechas arriba/abajo incrementan o decrementan el segmento activo (como input date nativo)
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.applyNormalization(input);
+      this.stepActiveSegment(input, seg, 1);
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.applyNormalization(input);
+      this.stepActiveSegment(input, seg, -1);
+      return;
+    }
+
+    if (event.key === 'Home') {
+      event.preventDefault();
+      this.applyNormalization(input);
+      this.selectSegment(input, SEGMENT_DAY);
+      return;
+    }
+
+    if (event.key === 'End') {
+      event.preventDefault();
+      this.applyNormalization(input);
+      this.selectSegment(input, SEGMENT_YEAR);
       return;
     }
 
@@ -494,55 +741,257 @@ export class DatePicker {
     }
   }
 
-  private handleSlashKey(input: HTMLInputElement): void {
-    const pos = input.selectionStart ?? 0;
-    if (pos <= 2) {
-      input.setSelectionRange(3, 3);
-    } else if (pos <= 5) {
-      input.setSelectionRange(6, 6);
+  private stepActiveSegment(input: HTMLInputElement, seg: SegmentDef, delta: number): void {
+    const current = this.ensureMask(input);
+    const chars = current.split('');
+    const now = new Date();
+
+    if (seg.segment === 'day') {
+      const rawDay = current.slice(0, 2);
+      let dayVal = /^\d{2}$/.test(rawDay) ? Number.parseInt(rawDay, 10) : now.getDate();
+      dayVal += delta;
+      if (dayVal > 31) dayVal = 1;
+      if (dayVal < 1) dayVal = 31;
+      const formatted = String(dayVal).padStart(2, '0');
+      chars[0] = formatted[0];
+      chars[1] = formatted[1];
+      const nextText = chars.join('');
+      this.inputText.set(nextText);
+      input.value = nextText;
+      this.selectSegment(input, SEGMENT_DAY);
+      this.checkCompleteMask(nextText);
+    } else if (seg.segment === 'month') {
+      const rawMonth = current.slice(3, 5);
+      let monthVal = /^\d{2}$/.test(rawMonth) ? Number.parseInt(rawMonth, 10) : now.getMonth() + 1;
+      monthVal += delta;
+      if (monthVal > 12) monthVal = 1;
+      if (monthVal < 1) monthVal = 12;
+      const formatted = String(monthVal).padStart(2, '0');
+      chars[3] = formatted[0];
+      chars[4] = formatted[1];
+      const nextText = chars.join('');
+      this.inputText.set(nextText);
+      input.value = nextText;
+      this.selectSegment(input, SEGMENT_MONTH);
+      this.checkCompleteMask(nextText);
+    } else {
+      const rawYear = current.slice(6, 10);
+      let yearVal = /^\d{4}$/.test(rawYear) ? Number.parseInt(rawYear, 10) : now.getFullYear();
+      yearVal += delta;
+      if (yearVal < 1900) yearVal = 1900;
+      if (yearVal > 2100) yearVal = 2100;
+      const formatted = String(yearVal).padStart(4, '0');
+      for (let i = 0; i < 4; i++) {
+        chars[6 + i] = formatted[i];
+      }
+      const nextText = chars.join('');
+      this.inputText.set(nextText);
+      input.value = nextText;
+      this.selectSegment(input, SEGMENT_YEAR);
+      this.checkCompleteMask(nextText);
     }
   }
 
   private handleDigitKey(input: HTMLInputElement, digit: string): void {
-    let pos = input.selectionStart ?? 0;
-    const current = input.value.length === 10 ? input.value : MASK_TEMPLATE;
+    const pos = input.selectionStart ?? 0;
+    const end = input.selectionEnd ?? pos;
+    const current = this.ensureMask(input);
     const chars = current.split('');
+    const seg = getSegmentAt(pos);
 
-    if (pos === 2 || pos === 5) {
-      pos++;
+    if (seg.segment === 'day') {
+      const isFullSegmentSelected = pos <= 0 && end >= 2;
+      if (isFullSegmentSelected || pos === 0) {
+        if (digit >= '4') {
+          // El día no puede ser >= 40, autocompletar con 0X y avanzar a Mes
+          chars[0] = '0';
+          chars[1] = digit;
+          chars[2] = '/';
+          chars[5] = '/';
+          const nextText = chars.join('');
+          this.inputText.set(nextText);
+          input.value = nextText;
+          this.selectSegment(input, SEGMENT_MONTH);
+          this.checkCompleteMask(nextText);
+          return;
+        } else {
+          // Primer dígito: 0, 1, 2, 3
+          chars[0] = digit;
+          chars[1] = 'D';
+          chars[2] = '/';
+          chars[5] = '/';
+          const nextText = chars.join('');
+          this.inputText.set(nextText);
+          input.value = nextText;
+          input.setSelectionRange(1, 1);
+          this.checkCompleteMask(nextText);
+          return;
+        }
+      } else if (pos === 1) {
+        chars[1] = digit;
+        chars[2] = '/';
+        chars[5] = '/';
+        const nextText = chars.join('');
+        this.inputText.set(nextText);
+        input.value = nextText;
+        // Día completado -> salta y selecciona Mes
+        this.selectSegment(input, SEGMENT_MONTH);
+        this.checkCompleteMask(nextText);
+        return;
+      }
+    } else if (seg.segment === 'month') {
+      const isFullSegmentSelected = pos <= 3 && end >= 5;
+      if (isFullSegmentSelected || pos === 3) {
+        if (digit >= '2') {
+          // El mes no puede ser >= 20, autocompletar con 0X y avanzar a Año
+          chars[3] = '0';
+          chars[4] = digit;
+          chars[2] = '/';
+          chars[5] = '/';
+          const nextText = chars.join('');
+          this.inputText.set(nextText);
+          input.value = nextText;
+          this.selectSegment(input, SEGMENT_YEAR);
+          this.checkCompleteMask(nextText);
+          return;
+        } else {
+          // Primer dígito: 0 o 1
+          chars[3] = digit;
+          chars[4] = 'M';
+          chars[2] = '/';
+          chars[5] = '/';
+          const nextText = chars.join('');
+          this.inputText.set(nextText);
+          input.value = nextText;
+          input.setSelectionRange(4, 4);
+          this.checkCompleteMask(nextText);
+          return;
+        }
+      } else if (pos === 4) {
+        chars[4] = digit;
+        chars[2] = '/';
+        chars[5] = '/';
+        const nextText = chars.join('');
+        this.inputText.set(nextText);
+        input.value = nextText;
+        // Mes completado -> salta y selecciona Año
+        this.selectSegment(input, SEGMENT_YEAR);
+        this.checkCompleteMask(nextText);
+        return;
+      }
+    } else if (seg.segment === 'year') {
+      const isFullSegmentSelected = pos <= 6 && end >= 10;
+      if (isFullSegmentSelected || pos === 6) {
+        chars[6] = digit;
+        chars[7] = 'A';
+        chars[8] = 'A';
+        chars[9] = 'A';
+        chars[2] = '/';
+        chars[5] = '/';
+        const nextText = chars.join('');
+        this.inputText.set(nextText);
+        input.value = nextText;
+        input.setSelectionRange(7, 7);
+        this.checkCompleteMask(nextText);
+        return;
+      } else if (pos === 7) {
+        chars[7] = digit;
+        chars[2] = '/';
+        chars[5] = '/';
+        const nextText = chars.join('');
+        this.inputText.set(nextText);
+        input.value = nextText;
+        input.setSelectionRange(8, 8);
+        this.checkCompleteMask(nextText);
+        return;
+      } else if (pos === 8) {
+        chars[8] = digit;
+        chars[2] = '/';
+        chars[5] = '/';
+        const nextText = chars.join('');
+        this.inputText.set(nextText);
+        input.value = nextText;
+        input.setSelectionRange(9, 9);
+        this.checkCompleteMask(nextText);
+        return;
+      } else if (pos === 9) {
+        chars[9] = digit;
+        chars[2] = '/';
+        chars[5] = '/';
+        const nextText = chars.join('');
+        this.inputText.set(nextText);
+        input.value = nextText;
+        input.setSelectionRange(10, 10);
+        this.checkCompleteMask(nextText);
+        return;
+      }
     }
-    if (pos > 9) return;
 
-    chars[pos] = digit;
-    chars[2] = '/';
-    chars[5] = '/';
-
-    const nextText = chars.join('');
-    this.inputText.set(nextText);
-    input.value = nextText;
-
-    let nextPos = pos + 1;
+    // Fallback estándar si pos cae en delimitador
+    let nextPos = pos;
     if (nextPos === 2 || nextPos === 5) {
       nextPos++;
     }
-    input.setSelectionRange(nextPos, nextPos);
-    this.checkCompleteMask(nextText);
+    if (nextPos <= 9) {
+      chars[nextPos] = digit;
+      chars[2] = '/';
+      chars[5] = '/';
+      const nextText = chars.join('');
+      this.inputText.set(nextText);
+      input.value = nextText;
+      let afterPos = nextPos + 1;
+      if (afterPos === 2 || afterPos === 5) afterPos++;
+      input.setSelectionRange(afterPos, afterPos);
+      this.checkCompleteMask(nextText);
+    }
   }
 
   private handleBackspaceKey(input: HTMLInputElement): void {
     const pos = input.selectionStart ?? 0;
     const end = input.selectionEnd ?? pos;
-    const current = input.value.length === 10 ? input.value : MASK_TEMPLATE;
+    const current = this.ensureMask(input);
     const chars = current.split('');
 
+    // Si hay un segmento entero seleccionado, se resetea a su placeholder y se mantiene seleccionado
     if (end > pos) {
+      if (pos <= 0 && end >= 2) {
+        chars[0] = 'D';
+        chars[1] = 'D';
+        const nextText = chars.join('');
+        this.inputText.set(nextText);
+        input.value = nextText;
+        this.selectSegment(input, SEGMENT_DAY);
+        this.checkCompleteMask(nextText);
+        return;
+      }
+      if (pos <= 3 && end >= 5) {
+        chars[3] = 'M';
+        chars[4] = 'M';
+        const nextText = chars.join('');
+        this.inputText.set(nextText);
+        input.value = nextText;
+        this.selectSegment(input, SEGMENT_MONTH);
+        this.checkCompleteMask(nextText);
+        return;
+      }
+      if (pos <= 6 && end >= 10) {
+        chars[6] = 'A';
+        chars[7] = 'A';
+        chars[8] = 'A';
+        chars[9] = 'A';
+        const nextText = chars.join('');
+        this.inputText.set(nextText);
+        input.value = nextText;
+        this.selectSegment(input, SEGMENT_YEAR);
+        this.checkCompleteMask(nextText);
+        return;
+      }
+      // Rango arbitrario
       for (let i = pos; i < end; i++) {
         if (i !== 2 && i !== 5) {
           chars[i] = MASK_TEMPLATE[i];
         }
       }
-      chars[2] = '/';
-      chars[5] = '/';
       const nextText = chars.join('');
       this.inputText.set(nextText);
       input.value = nextText;
@@ -551,7 +1000,20 @@ export class DatePicker {
       return;
     }
 
+    // Cursor simple sin selección
     if (pos === 0) return;
+
+    // Si está al inicio de Mes (pos 3), Backspace salta a Día
+    if (pos === 3) {
+      this.selectSegment(input, SEGMENT_DAY);
+      return;
+    }
+    // Si está al inicio de Año (pos 6), Backspace salta a Mes
+    if (pos === 6) {
+      this.selectSegment(input, SEGMENT_MONTH);
+      return;
+    }
+
     let targetPos = pos - 1;
     if (targetPos === 2 || targetPos === 5) {
       targetPos--;
@@ -570,19 +1032,49 @@ export class DatePicker {
   }
 
   private handleDeleteKey(input: HTMLInputElement): void {
-    let pos = input.selectionStart ?? 0;
+    const pos = input.selectionStart ?? 0;
     const end = input.selectionEnd ?? pos;
-    const current = input.value.length === 10 ? input.value : MASK_TEMPLATE;
+    const current = this.ensureMask(input);
     const chars = current.split('');
 
     if (end > pos) {
+      if (pos <= 0 && end >= 2) {
+        chars[0] = 'D';
+        chars[1] = 'D';
+        const nextText = chars.join('');
+        this.inputText.set(nextText);
+        input.value = nextText;
+        this.selectSegment(input, SEGMENT_DAY);
+        this.checkCompleteMask(nextText);
+        return;
+      }
+      if (pos <= 3 && end >= 5) {
+        chars[3] = 'M';
+        chars[4] = 'M';
+        const nextText = chars.join('');
+        this.inputText.set(nextText);
+        input.value = nextText;
+        this.selectSegment(input, SEGMENT_MONTH);
+        this.checkCompleteMask(nextText);
+        return;
+      }
+      if (pos <= 6 && end >= 10) {
+        chars[6] = 'A';
+        chars[7] = 'A';
+        chars[8] = 'A';
+        chars[9] = 'A';
+        const nextText = chars.join('');
+        this.inputText.set(nextText);
+        input.value = nextText;
+        this.selectSegment(input, SEGMENT_YEAR);
+        this.checkCompleteMask(nextText);
+        return;
+      }
       for (let i = pos; i < end; i++) {
         if (i !== 2 && i !== 5) {
           chars[i] = MASK_TEMPLATE[i];
         }
       }
-      chars[2] = '/';
-      chars[5] = '/';
       const nextText = chars.join('');
       this.inputText.set(nextText);
       input.value = nextText;
@@ -591,19 +1083,20 @@ export class DatePicker {
       return;
     }
 
-    if (pos === 2 || pos === 5) {
-      pos++;
+    let targetPos = pos;
+    if (targetPos === 2 || targetPos === 5) {
+      targetPos++;
     }
-    if (pos > 9) return;
+    if (targetPos > 9) return;
 
-    chars[pos] = MASK_TEMPLATE[pos];
+    chars[targetPos] = MASK_TEMPLATE[targetPos];
     chars[2] = '/';
     chars[5] = '/';
 
     const nextText = chars.join('');
     this.inputText.set(nextText);
     input.value = nextText;
-    let nextPos = pos + 1;
+    let nextPos = targetPos + 1;
     if (nextPos === 2 || nextPos === 5) {
       nextPos++;
     }
@@ -674,6 +1167,7 @@ export class DatePicker {
 
   protected handleTextBlur(): void {
     const input = this.inputEl()?.nativeElement;
+    this.applyNormalization(input);
     const raw = input ? input.value : this.inputText();
     const text = raw.trim();
 
@@ -706,15 +1200,20 @@ export class DatePicker {
 
   /** Un año se ofrece solo si alguno de sus días cae dentro del rango. */
   private isYearOutOfRange(year: number): boolean {
-    return this.hasNoDayInRange(
-      new Date(year, 0, 1),
-      new Date(year, MONTHS_PER_YEAR, 0),
-    );
+    const from = new Date(year, 0, 1);
+    from.setFullYear(year);
+    const to = new Date(year, MONTHS_PER_YEAR, 0);
+    to.setFullYear(year);
+    return this.hasNoDayInRange(from, to);
   }
 
   /** Ídem para un mes: el rango puede empezar o terminar dentro de él. */
   private isMonthOutOfRange(year: number, month: number): boolean {
-    return this.hasNoDayInRange(new Date(year, month, 1), new Date(year, month + 1, 0));
+    const from = new Date(year, month, 1);
+    from.setFullYear(year);
+    const to = new Date(year, month + 1, 0);
+    to.setFullYear(year);
+    return this.hasNoDayInRange(from, to);
   }
 
   /**
@@ -733,16 +1232,61 @@ export class DatePicker {
     return false;
   }
 
+  /**
+   * En qué mes se para el calendario cuando el campo viene vacío.
+   *
+   * Lo decide **el rango del campo**, que es la única señal honesta que hay.
+   * Antes lo decidía una constante: se abría siempre en enero de
+   * `MAX_DEFAULT_YEAR` —enero de 2000—, una heurística de fecha de nacimiento
+   * metida dentro de un componente de uso general. De los veinticinco
+   * `app-date-picker` de la aplicación sólo tres piden un nacimiento, y los
+   * tres se declaran con `maxDate="today"`. Los otros veintidós son fechas
+   * operativas cerca de hoy —vigencia de un precio, rango de un bloqueo de
+   * agenda, día de una cita, validez de una receta— y ninguno acota nada:
+   * todos abrían a veintiséis años de distancia del día que se buscaba.
+   *
+   * De ahí las dos ramas: un campo cerrado al pasado conserva el enero de
+   * siempre —es lo que deja la página de años en 1980-2009 y un nacimiento
+   * típico a un toque—; cualquier otro abre en hoy, recortado contra el rango
+   * para no pararse en un mes con todos los días apagados.
+   *
+   * No elige nada: sólo decide qué dibujar. Confirmar sigue exigiendo un clic
+   * en un día, que es lo que cuida `dayChosen`.
+   */
+  private mesPorDefecto(): Date {
+    const hoy = this.withSafeHour(new Date());
+    const min = this.normalizedMinDate();
+    const max = this.normalizedMaxDate();
+
+    // Campo cerrado al pasado: es una fecha de nacimiento. Se conserva el
+    // comportamiento anterior —enero del año por defecto— porque es lo que
+    // deja la página de años en 1980-2009 y pone un año de nacimiento típico
+    // a un toque, sin paginar.
+    if (max && dayTime(max) <= dayTime(hoy)) {
+      const anio = Math.min(max.getFullYear(), MAX_DEFAULT_YEAR);
+      const enero = this.withSafeHour(new Date(anio, 0, 1));
+      return min && dayTime(enero) < dayTime(min) ? min : enero;
+    }
+
+    if (min && dayTime(hoy) < dayTime(min)) {
+      return min;
+    }
+    if (max && dayTime(hoy) > dayTime(max)) {
+      return max;
+    }
+    return hoy;
+  }
+
   protected open(): void {
     if (this.disabled()) {
       return;
     }
-    const defaultYear = Math.min(
-      this.normalizedMaxDate()?.getFullYear() ?? MAX_DEFAULT_YEAR,
-      MAX_DEFAULT_YEAR,
-    );
-    const start = this.value() ?? this.withSafeHour(new Date(defaultYear, 0, 1));
-    this.draft.set(start);
+    const actual = this.value();
+    // `start` sólo decide QUÉ MES dibujar; no es una elección. Por eso el
+    // borrador se siembra con el valor real —que puede ser `null`— y no con él.
+    const start = actual ?? this.mesPorDefecto();
+    this.draft.set(actual);
+    this.dayChosen.set(actual !== null);
     this.viewMonth.set(startOfMonth(start));
     this.panel.set('days');
     this.isOpen.set(true);
@@ -768,6 +1312,11 @@ export class DatePicker {
   }
 
   protected confirm(): void {
+    // Guarda además del `[disabled]` del botón: el diálogo también se confirma
+    // con Enter, y un camino que no pasa por el botón no ve su estado.
+    if (!this.canConfirm()) {
+      return;
+    }
     const draft = this.draft();
     if (draft && !this.isOutOfRange(draft)) {
       this.value.set(draft);
@@ -784,6 +1333,7 @@ export class DatePicker {
     const next = new Date(day.date);
     next.setHours(draft?.getHours() ?? SAFE_HOUR, draft?.getMinutes() ?? 0, 0, 0);
     this.draft.set(next);
+    this.dayChosen.set(true);
   }
 
   protected shiftMonth(offset: number): void {

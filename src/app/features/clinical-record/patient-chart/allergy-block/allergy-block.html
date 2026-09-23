@@ -1,0 +1,166 @@
+<app-card variant="outlined" padding="lg" class="alergia">
+  <h2 class="alergia__titulo">Alergia o intolerancia</h2>
+
+  @if (errorDeLaAlergia(); as mensaje) {
+    <app-alert tone="error" data-testid="alergia-error">{{ mensaje }}</app-alert>
+  }
+
+  <!-- Adjuntar exige que la alergia ya exista, así que el panel sólo puede
+       ofrecerse después de guardar. No se cierra solo: elegir los archivos
+       lleva su tiempo. -->
+  @if (alergiaRecienRegistrada(); as allergyId) {
+    <app-card variant="outlined" padding="lg" class="alergia__adjuntos">
+      <div class="alergia__adjuntos-encabezado">
+        <h3 class="alergia__adjuntos-titulo">Adjuntar archivos a esta alergia</h3>
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="alergia-adjuntos-cerrar"
+          (clicked)="cerrarAdjuntos()"
+        >
+          Listo, sin adjuntar
+        </button>
+      </div>
+      <app-attachment-uploader
+        ownerType="ALLERGY_INTOLERANCE"
+        [ownerId]="allergyId"
+        [linkVia]="enlazarAdjuntoALaAlergia"
+        (attachedAll)="cerrarAdjuntos()"
+      />
+    </app-card>
+  }
+
+  @if (sinOrganizacion()) {
+    <app-alert tone="info" title="Elegí una organización">
+      La alergia queda bajo la custodia de una organización. Elegí una en el encabezado para poder
+      registrarla.
+    </app-alert>
+  } @else {
+    <form class="alergia__form" (submit)="$event.preventDefault(); registrar()">
+      @if (opcionesDeCita().length > 1) {
+        <app-form-field
+          label="¿En qué cita se detectó?"
+          hint="Opcional. La consulta donde apareció, incluidas las ya finalizadas."
+        >
+          <app-select
+            data-testid="alergia-cita"
+            [value]="citaElegida()"
+            (valueChange)="citaElegida.set($event)"
+            [options]="opcionesDeCita()"
+          />
+        </app-form-field>
+      }
+
+      <app-form-field
+        label="Sustancia"
+        hint="A qué es alérgica la persona. Es lo único obligatorio."
+        [required]="true"
+      >
+        <app-concept-select
+          data-testid="alergia-sustancia"
+          [target]="targetSustancia"
+          [(value)]="sustancia"
+          placeholder="Elegí una sustancia"
+        />
+      </app-form-field>
+
+      <app-form-field label="Tipo" hint="Opcional. Alergia inmunológica o intolerancia.">
+        <app-concept-select
+          [target]="targetTipo"
+          [(value)]="tipo"
+          placeholder="Sin especificar"
+        />
+      </app-form-field>
+
+      <app-form-field label="Categoría" hint="Opcional. Qué clase de alérgeno es.">
+        <app-concept-select
+          [target]="targetCategoria"
+          [(value)]="categoria"
+          placeholder="Sin especificar"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Criticidad"
+        hint="Opcional. El riesgo de una exposición futura. Es lo que decide una conducta."
+      >
+        <app-concept-select
+          [target]="targetCriticidad"
+          [(value)]="criticidad"
+          placeholder="Sin especificar"
+        />
+      </app-form-field>
+
+      <!-- Varias reacciones porque el contrato las declara en plural y porque
+           una misma sustancia produce más de una cosa: urticaria **y**
+           broncoespasmo no son dos alergias. -->
+      <fieldset class="alergia__reacciones">
+        <legend class="alergia__reacciones-titulo">¿Qué le pasó?</legend>
+
+        @for (reaccion of reacciones(); track reaccion.clave) {
+          <div class="alergia__reaccion" data-testid="alergia-reaccion">
+            <app-form-field label="Manifestación">
+              <app-concept-select
+                [target]="targetManifestacion"
+                [value]="reaccion.manifestacion"
+                (valueChange)="fijarManifestacion(reaccion.clave, $event)"
+                placeholder="Sin especificar"
+              />
+            </app-form-field>
+
+            <app-form-field label="Gravedad">
+              <app-concept-select
+                [target]="targetSeveridad"
+                [value]="reaccion.severidad"
+                (valueChange)="fijarSeveridad(reaccion.clave, $event)"
+                placeholder="Sin especificar"
+              />
+            </app-form-field>
+
+            <app-form-field label="En palabras" hint="Opcional. Cómo fue, con las palabras de quien registra.">
+              <app-textarea
+                [rows]="2"
+                [value]="reaccion.descripcion"
+                (valueChange)="fijarDescripcion(reaccion.clave, $event)"
+                placeholder="Ronchas en tronco y brazos a los diez minutos de la primera dosis"
+              />
+            </app-form-field>
+
+            @if (reacciones().length > 1) {
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                data-testid="alergia-quitar-reaccion"
+                (clicked)="quitarReaccion(reaccion.clave)"
+              >
+                Quitar esta reacción
+              </button>
+            }
+          </div>
+        }
+
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          data-testid="alergia-agregar-reaccion"
+          (clicked)="agregarReaccion()"
+        >
+          Agregar otra reacción
+        </button>
+      </fieldset>
+
+      <app-form-actions
+        submitLabel="Registrar alergia"
+        [pending]="registrando()"
+        [disabled]="!puedeRegistrar()"
+        (submitted)="registrar()"
+      />
+    </form>
+  }
+</app-card>

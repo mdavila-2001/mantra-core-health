@@ -65,7 +65,7 @@ export interface AccessArea {
    * Las secciones que caen acá **sí o sí**, en el orden en que se muestran.
    *
    * Gana sobre {@link catchAllGroups} de cualquier zona: «Chats» es del grupo
-   * `General` y su lugar es «Mi gente», no el cajón de lo general. Que ninguna
+   * `General` y su lugar es «Pacientes y equipo», no el cajón de lo general. Que ninguna
    * ruta esté declarada en dos zonas lo comprueba la prueba del registro.
    */
   readonly paths: readonly string[];
@@ -74,8 +74,8 @@ export interface AccessArea {
    * Grupos del menú cuyas secciones **sobrantes** caen acá.
    *
    * Es la red de seguridad: una sección nueva en `navigation.map.ts` aparece en
-   * su zona sola, sin tocar este archivo. Entre las cinco zonas cubren los
-   * cinco grupos exactamente una vez, y eso lo hace cumplir la prueba.
+   * su zona sola, sin tocar este archivo. Entre las zonas cubren los grupos
+   * del menú exactamente una vez —salvo {@link GRUPOS_FUERA_DEL_ARBOL}—, y eso lo hace cumplir la prueba.
    */
   readonly catchAllGroups: readonly NavGroup[];
 }
@@ -83,54 +83,151 @@ export interface AccessArea {
 /**
  * Secciones que el árbol no ofrece nunca.
  *
- * Hoy sólo el panel: ofrecer «Panel» dentro del panel es un enlace a la
- * pantalla en la que ya estás, y ocupaba un lugar de los treinta y dos.
+ * **`dashboard`** — ofrecer «Panel» dentro del panel es un enlace a la pantalla
+ * en la que ya estás, y ocupaba un lugar de los treinta y dos.
+ *
+ * **`directories`** (10/09/2026) — la portada de los directorios. Dentro de la
+ * zona «Directorios» era una cuarta tarjeta, «Directorios», al lado de las que
+ * ya llevan a cada directorio concreto: un acceso al agrupador cuyos accesos
+ * estaban a su izquierda. El mismo rodeo que el 08/09 se sacó del menú lateral,
+ * repetido un escalón más adentro.
+ *
+ * Lo que **no** cambia: la sección sigue existiendo, con su ruta, su rol y su
+ * renglón en el menú lateral —que es el pedido explícito del cliente: ese
+ * acceso se conserva porque ya está—. Esto decide sólo dónde **no** se ofrece.
+ *
+ * Va acá y no sacándola de {@link AccessArea.paths}: la zona `red` declara
+ * `catchAllGroups: ['General']`, así que quitarla de `paths` la habría dejado
+ * caer en la misma zona por el cajón —mismo resultado, más difícil de encontrar—.
+ *
+ * **Las siete de «Consultas»** (19/09/2026) — `diagnostics`, `lab-visits`,
+ * `questionnaires`, `form-builder`, `glossary`, `my-services` y
+ * `my-quotations`. La zona le abría diez tarjetas al médico y la pregunta que
+ * la zona existe para responder —«¿a qué vine hoy?»— no se contesta con diez
+ * opciones: se contesta con la agenda, lo que se escribe y el expediente. Las
+ * otras siete son tareas que se hacen **desde** una de esas tres o una vez al
+ * mes, y competían de igual a igual con las que se usan todos los días.
+ * Pedido del propietario del producto mirando la zona del médico.
+ *
+ * Ninguna se vuelve inalcanzable, y por eso salen del árbol y no del registro:
+ * «Formularios», «Glosario», «Mis servicios» y «Cotizaciones» conservan su
+ * renglón en el menú lateral —es la lista cerrada que fija
+ * `navigation.service.spec.ts`—, y las tres que el médico nunca tuvo en el menú
+ * (`diagnostics`, `lab-visits`, `questionnaires`) se llegan desde donde su
+ * propio registro dice que se llegan: los estudios desde el Archivo clínico,
+ * las visitas desde Consultas médicas y la encuesta desde la consulta del
+ * paciente al que se le asigna.
+ *
+ * **Cuatro de «Administración»** (19/09/2026) — `administration/my-practice`,
+ * `administration/pharmacy-orders`, `administration/pharmacy-campaigns` y
+ * `administration/pharmacy-profile`. Pedido del propietario mirando la zona del
+ * médico. «Mis organizaciones» se abre desde «Mi perfil», que es donde
+ * alguien va a buscar «¿dónde atiendo?»; las tres de farmacia son del mostrador
+ * de una farmacia, no del consultorio, y quien lo atiende las sigue teniendo en
+ * su menú lateral. Ninguna ruta se cierra: esto decide sólo dónde no se ofrecen.
  */
-export const SECCIONES_FUERA_DEL_ARBOL: readonly string[] = ['dashboard'];
+export const SECCIONES_FUERA_DEL_ARBOL: readonly string[] = [
+  'dashboard',
+  'directories',
+  'diagnostics',
+  'lab-visits',
+  'questionnaires',
+  'form-builder',
+  'glossary',
+  'my-services',
+  'my-quotations',
+  'administration/my-practice',
+  'administration/pharmacy-orders',
+  'administration/pharmacy-campaigns',
+  'administration/pharmacy-profile',
+  'tutorials',
+];
+
+/**
+ * Grupos del menú que el árbol no ofrece nunca, enteros.
+ *
+ * **`Mi cuenta`** (19/09/2026) — la quinta zona repetía, un escalón más abajo,
+ * lo que ya abre el perfil: los datos propios, los turnos, los avisos y la
+ * identidad verificada. Pedido del propietario del producto mirando el panel
+ * del médico: «para eso tenemos el perfil». Dos puertas a lo mismo en la misma
+ * pantalla se leen como dos destinos distintos.
+ *
+ * Se excluye el **grupo** y no una lista de rutas: una sección nueva de «Mi
+ * cuenta» tampoco tiene lugar en el panel de trabajo, y declararla ruta por
+ * ruta es la lista que alguien se olvida de actualizar. Como en
+ * {@link SECCIONES_FUERA_DEL_ARBOL}, nada se vuelve inalcanzable: el registro
+ * no cambia y el menú lateral las sigue ofreciendo. `tutorials` —que la zona
+ * también llevaba, aunque es del grupo «General»— sale por la lista de rutas:
+ * se dispara desde la pantalla que explica.
+ */
+export const GRUPOS_FUERA_DEL_ARBOL: readonly NavGroup[] = ['Mi cuenta'];
+
+/**
+ * Los accesos que, desde el panel, abren en un **modal** en vez de navegar.
+ *
+ * ## Por qué se declara acá y no en la plantilla del panel
+ *
+ * Por lo mismo que el reparto en zonas: el panel no escribe ni una ruta a mano
+ * —lee el registro—, y meter un `@if (seccion.path === 'groups')` en su
+ * plantilla habría empezado la lista de excepciones que este archivo existe
+ * para evitar. Acá cada excepción tiene nombre, y `access-tree.spec.ts` puede
+ * comprobar que la sección que se nombra existe de verdad.
+ *
+ * El valor es la **clave del contenido**, no un componente: `core/` no importa
+ * componentes de `features/`. El panel traduce la clave al modal que
+ * corresponde (`dashboard/access-tree`).
+ *
+ * ## Qué abre en modal y qué sigue navegando
+ *
+ * Sólo lo que el pedido del 10/09/2026 nombra: «Grupos y foros», que pasa a
+ * abrir Comunidades, y los tres directorios concretos, que se consultan sin
+ * salir del panel. La navegación estructural del menú lateral **no cambia**: las
+ * mismas rutas siguen abriendo las mismas pantallas completas.
+ */
+export const ACCESO_EN_MODAL: Readonly<Record<string, string>> = {
+  groups: 'comunidades',
+  'clinics-directory': 'directorio-clinicas',
+  'laboratory-directory': 'directorio-laboratorios',
+  'pharmacies-directory': 'directorio-farmacias',
+};
 
 /**
  * Las zonas, en el orden en que se dibujan.
  *
  * El orden es el del día de trabajo: primero lo que se hace con un paciente
  * delante, después con quién se hace, después la red de afuera, después lo que
- * sostiene la práctica, y al final lo propio. «Mi cuenta» va última por la
- * misma razón por la que va última en {@link NAV_GROUPS}: mezclar «mis datos»
- * con «los datos que administro» es lo que hace que alguien edite el registro
- * equivocado.
+ * sostiene la práctica. Lo propio —«Mi cuenta»— no tiene zona: lo abre el
+ * perfil (ver {@link GRUPOS_FUERA_DEL_ARBOL}).
  */
 export const ACCESS_AREAS: readonly AccessArea[] = [
   {
     id: 'consulta',
-    label: 'Mi consulta',
-    tagline: 'Tu agenda, tus evoluciones, tus estudios y los formularios de cada atención.',
+    label: 'Consultas',
+    tagline: 'Tu agenda, lo que escribís y el expediente de cada paciente.',
     icon: 'stethoscope',
     tone: 'info',
-    paths: [
-      'schedule',
-      'consultation',
-      'progress-notes',
-      'medical-records',
-      'diagnostics',
-      'interventions',
-      'form-builder',
-      'questionnaires',
-    ],
+    // Tres y no diez (19/09/2026): lo que se abre con un paciente delante. El
+    // resto de «Atención» está en SECCIONES_FUERA_DEL_ARBOL, que explica por
+    // dónde se sigue llegando a cada una. `interventions` sale de `paths` pero
+    // no del árbol: no la ve el médico —es de los cinco roles perioperatorios—
+    // y le llega por el cajón, igual que «Mis visitas médicas» al visitador.
+    paths: ['schedule', 'progress-notes', 'medical-records'],
     catchAllGroups: ['Atención'],
   },
   {
     id: 'gente',
-    label: 'Mi gente',
+    label: 'Pacientes y equipo',
     tagline: 'A quién atendés y con quién trabajás: pacientes, equipo y conversaciones.',
     icon: 'people',
     tone: 'secondary',
     paths: ['messaging', 'groups', 'administration/patients', 'administration/users'],
-    // Sin cajón propio a propósito: «Mi gente» reúne secciones de tres grupos
+    // Sin cajón propio a propósito: «Pacientes y equipo» reúne secciones de tres grupos
     // distintos, así que no puede ser el destino por omisión de ninguno.
     catchAllGroups: [],
   },
   {
     id: 'red',
-    label: 'La red',
+    label: 'Directorios',
     tagline: 'A dónde derivar y a quién: clínicas, laboratorios y farmacias de la plataforma.',
     icon: 'globe',
     tone: 'primary',
@@ -139,27 +236,23 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
   },
   {
     id: 'organizacion',
-    label: 'Mi organización',
+    label: 'Administración',
     tagline: 'Lo que sostiene tu práctica: sedes, cobros, catálogos y permisos.',
     icon: 'building',
     tone: 'success',
     paths: [
-      'my-organizations',
+      // Declarada, aunque el cajón `Administración` ya la recogería: `paths`
+      // fija el ORDEN, y para quien administra una aseguradora el tablero de
+      // siniestralidad es a lo que viene, no lo último de la zona. Del médico
+      // la aparta `hiddenFor: ['PATIENT', 'PRACTITIONER']` en el registro de
+      // navegación, no este archivo.
+      'administration/insurance-analytics',
       'administration/my-organization',
       'administration/medical-organization',
       'administration/accounting',
       'billing',
     ],
     catchAllGroups: ['Administración', 'Facturación'],
-  },
-  {
-    id: 'cuenta',
-    label: 'Mi cuenta',
-    tagline: 'Tus datos, tus turnos, tus avisos y tu identidad verificada.',
-    icon: 'patients',
-    tone: 'warning',
-    paths: ['my-account', 'notification-center', 'my-account/identity/verify', 'tutorials'],
-    catchAllGroups: ['Mi cuenta'],
   },
 ];
 
@@ -191,7 +284,9 @@ export interface AccessAreaView {
  * @returns Las zonas con contenido, en el orden de {@link ACCESS_AREAS}.
  */
 export function buildAccessTree(sections: readonly AppSection[]): readonly AccessAreaView[] {
-  const candidatas = sections.filter((s) => !SECCIONES_FUERA_DEL_ARBOL.includes(s.path));
+  const candidatas = sections.filter(
+    (s) => !SECCIONES_FUERA_DEL_ARBOL.includes(s.path) && !GRUPOS_FUERA_DEL_ARBOL.includes(s.group),
+  );
   const porRuta = new Map(candidatas.map((s) => [s.path, s]));
   const reclamadas = new Set<string>();
 
@@ -237,10 +332,14 @@ function ordenarPorDisponibilidad(secciones: readonly AppSection[]): readonly Ap
  * Los grupos que ninguna zona reclama como cajón.
  *
  * Existe para la prueba del registro, no para el producto: es la forma de que
- * agregar un grupo a {@link NAV_GROUPS} sin darle dueño rompa una prueba en vez
+ * agregar un grupo a {@link NAV_GROUPS} sin darle dueño —ni excluirlo a
+ * propósito— rompa una prueba en vez
  * de esconder secciones en producción.
  */
 export function gruposSinZona(): readonly NavGroup[] {
-  const cubiertos = new Set(ACCESS_AREAS.flatMap((area) => area.catchAllGroups));
+  const cubiertos = new Set([
+    ...ACCESS_AREAS.flatMap((area) => area.catchAllGroups),
+    ...GRUPOS_FUERA_DEL_ARBOL,
+  ]);
   return NAV_GROUPS.filter((grupo) => !cubiertos.has(grupo));
 }

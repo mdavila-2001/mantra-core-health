@@ -2,36 +2,71 @@
   title="Artículos médicos"
   subtitle="Publicá, revisá lo que ya publicaste y respondé los comentarios."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <app-back-link page-actions fallback="/my-account" label="Volver a tu perfil" />
+</app-page-header>
 
 <div class="articulos">
   @if (sinVitrinaTodavia()) {
-    <app-alert tone="info" title="Necesitás tu vitrina pública primero">
-      Los artículos se publican en tu vitrina pública, y todavía no configuraste una.
-    </app-alert>
-    <p class="articulos__ir">
-      <a routerLink="/my-account/preview">Configurar mi vitrina pública</a>
-    </p>
+    <!-- Dejó de ser un callejón sin salida el 13/09/2026. El aviso decía
+         «pedíselo a quien administra tu organización», y nadie podía: el
+         contrato sólo sabe de la vitrina propia. Ahora se crea acá mismo, con
+         lo mínimo que el servidor exige — no vuelve al perfil, que es de donde
+         el propietario la mandó sacar. Ver `docs/progress/BLOCKERS.md`. -->
+    <app-vitrina-minima motivo="articulos" (creada)="alCrearLaVitrina()" />
   } @else {
     <!-- ─── Publicar ────────────────────────────────────────────────────── -->
     <app-card variant="outlined" padding="lg" class="articulos__publicar">
-      <h2 class="articulos__titulo">Publicar un artículo</h2>
+      <!-- El título deja de pesar en pantalla pero NO desaparece: la jerarquía
+           de encabezados la usa quien navega con lector, y la página ya dice
+           «Artículos médicos» arriba. Lo que la superficie tiene que anunciar
+           es el espacio de escritura, no un rótulo administrativo. -->
+      <h2 class="sr-only">Publicar un artículo</h2>
 
-      <form (submit)="$event.preventDefault()">
-        <app-form-field
-          label="Contenido"
-          hint="Se publica en tu vitrina pública, con tu firma."
-        >
+      <form class="compositor" (submit)="$event.preventDefault()">
+        <!-- ── Autor ──────────────────────────────────────────────────────
+             Quién firma, arriba y compacto. Sale de la vitrina propia, que esta
+             pantalla YA pedía para saber si existe: no hay lectura nueva. -->
+        <header class="compositor__autor">
+          <app-avatar
+            [src]="autorFoto()"
+            [name]="autorNombre()"
+            size="lg"
+            [alt]="'Tu foto de vitrina'"
+          />
+          <div class="compositor__identidad">
+            <p class="compositor__nombre">{{ autorNombre() }}</p>
+            <!-- Dónde va a parar lo que se escriba, con el estado REAL de la
+                 vitrina. No es un selector: acá no se elige audiencia, se
+                 configura en «Mi perfil». Decir «pública» cuando está en
+                 privado sería mentirle a quien publica. -->
+            <p class="compositor__alcance">
+              <app-nav-icon [name]="vitrinaEsPublica() ? 'globe' : 'lock'" class="compositor__alcance-icono" />
+              {{ vitrinaEsPublica() ? 'Se publica en tu vitrina pública, con tu firma.' : 'Tu vitrina está en privado: sólo vos vas a ver lo que publiques.' }}
+            </p>
+          </div>
+        </header>
+
+        <!-- ── Escritura ──────────────────────────────────────────────────
+             El `app-form-field` SE QUEDA: es quien asocia el rótulo al control
+             por `for`/`id`, y sacarlo dejaría el área de escritura sin nombre
+             accesible. Lo que se va es su PESO VISUAL: el rótulo se oculta sólo
+             para la vista y la ayuda se mudó a la cabecera, que es donde dice
+             dónde va a parar lo que se escriba. -->
+        <app-form-field class="compositor__campo" label="Contenido del artículo">
           <app-textarea
             [(value)]="nuevoCuerpo"
-            [rows]="8"
+            [rows]="10"
             [maxLength]="cuerpoMaximo"
             [autoResize]="true"
             placeholder="Escribí tu artículo médico…"
           />
         </app-form-field>
 
+        <!-- ── Pie ────────────────────────────────────────────────────────
+             La acción a la derecha, separada por una línea tenue. -->
         <app-form-actions
+          class="compositor__pie"
           submitLabel="Publicar artículo"
           [pending]="publicando()"
           [disabled]="!puedePublicar()"

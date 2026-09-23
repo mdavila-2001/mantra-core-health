@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 /**
- * Las 11 categorías clínicas del glosario, en el orden en que se dibuja la
- * grilla — el mismo de `glossary-reconstruction-spec.md`. No es alfabético: va
- * de lo anatómico a lo asistencial, que es como razona alguien que hojea un
- * diccionario médico.
+ * Las 12 categorías del glosario, en el orden en que se dibuja la grilla — el
+ * mismo de `glossary-reconstruction-spec.md`. No es alfabético: va de lo
+ * anatómico a lo asistencial, que es como razona alguien que hojea un
+ * diccionario médico; `other` («Otros términos», FND-25-01) cierra la grilla
+ * porque agrupa lo que no es clínico en sí mismo.
  *
  * El `internalCode` es la clave real del backend (`glossary-category-<key>`);
  * este archivo sólo la usa para elegir el ícono y el orden, nunca para
@@ -23,6 +24,7 @@ export const GLOSSARY_CATEGORY_ORDER = [
   'glossary-category-lab',
   'glossary-category-imaging',
   'glossary-category-care',
+  'glossary-category-other',
 ] as const;
 
 export type GlossaryCategoryCode = (typeof GLOSSARY_CATEGORY_ORDER)[number];
@@ -156,6 +158,16 @@ export function glossaryCategoryOrder(internalCode: string): number {
           <path d="M12 20 4.5 12.6a4.6 4.6 0 0 1 6.5-6.5l1 1 1-1a4.6 4.6 0 0 1 6.5 6.5Z" />
           <line x1="12" y1="9.5" x2="12" y2="14.5" />
           <line x1="9.5" y1="12" x2="14.5" y2="12" />
+        }
+        @case ('glossary-category-other') {
+          <!-- Documento con etiqueta: terminología general del proceso de
+               atención (consentimiento, historia clínica, receta...), no un
+               concepto clínico en sí. Distinto del signo por defecto de abajo
+               —esta categoría SÍ se reconoce, sólo que agrupa lo no-clínico. -->
+          <path d="M7 3.5h7l3 3V19a1.5 1.5 0 0 1-1.5 1.5h-8.5A1.5 1.5 0 0 1 5.5 19V5A1.5 1.5 0 0 1 7 3.5Z" />
+          <path d="M14 3.5V7h3" />
+          <line x1="8.5" y1="12" x2="15.5" y2="12" />
+          <line x1="8.5" y1="15.5" x2="13" y2="15.5" />
         }
         @default {
           <!-- Cruz médica genérica: cualquier categoría que el frontend todavía no reconozca. -->

@@ -1,0 +1,39 @@
+<app-view-state-host [state]="state()" (retry)="retry.emit()">
+  <div vsh-skeleton><app-skeleton variant="text" [lines]="6" /></div>
+
+  @if (gente(); as datos) {
+    <section class="gente" aria-labelledby="ficha-gente-titulo">
+      <div class="gente__encabezado">
+        <h2 id="ficha-gente-titulo" class="gente__titulo">Quién responde por la empresa</h2>
+        <!-- Nada de esto sale de la API todavía: se dice, no se disimula. -->
+        <app-chip variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+      </div>
+
+      <div class="gente__bloques">
+        <app-ficha-de-contacto
+          data-testid="ficha-representante"
+          [contacto]="datos.representante"
+        >
+          <!-- El poder no se copia acá: se va a buscar donde está. -->
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            type="button"
+            data-testid="ficha-ver-poder"
+            (clicked)="poderPedido.emit()"
+          >
+            Ver el poder en Documentos
+          </button>
+        </app-ficha-de-contacto>
+
+        <!-- Por correo y no por cargo: el cargo es texto del dato y nada lo
+             hace único. Dos «Gerente Comercial» —un interinato, dos sucursales—
+             y la clave repetida deja la lista entera sin dibujar. -->
+        @for (gerente of datos.gerentes; track gerente.correo) {
+          <app-ficha-de-contacto [contacto]="gerente" />
+        }
+      </div>
+    </section>
+  }
+</app-view-state-host>

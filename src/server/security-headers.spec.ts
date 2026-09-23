@@ -1,8 +1,13 @@
+import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 import {
   contentSecurityPolicy,
   cspHashOf,
   inlineScriptHashesOf,
   securityHeaders,
+  sourceIndexScriptHashes,
 } from './security-headers';
 
 /**
@@ -14,6 +19,13 @@ import {
  * con este proyecto concreto.
  */
 describe('security-headers', () => {
+  it('permite previews locales de medios sin abrir frames u objetos', () => {
+    const policy = contentSecurityPolicy();
+    expect(policy).toContain("media-src 'self' blob:");
+    expect(policy).toContain("object-src 'none'");
+    expect(policy).toContain("frame-ancestors 'none'");
+  });
+
   describe('hashes de scripts en línea', () => {
     it('el hash es el sha256 del contenido exacto, en formato CSP', () => {
       // Vector conocido: sha256 de la cadena vacía.
@@ -43,6 +55,66 @@ describe('security-headers', () => {
     });
   });
 
+  describe('`sourceIndexScriptHashes` (AG49-FT01-003)', () => {
+    let raiz: string;
+
+    beforeEach(() => {
+      raiz = mkdtempSync(join(tmpdir(), 'alovida-security-headers-'));
+    });
+
+    afterEach(() => rmSync(raiz, { recursive: true, force: true }));
+
+    it('hashea el script en línea de `src/index.html` bajo la raíz dada', () => {
+      mkdirSync(join(raiz, 'src'));
+      writeFileSync(
+        join(raiz, 'src', 'index.html'),
+        '<html><head><script>tema()</script></head></html>',
+      );
+
+      expect(sourceIndexScriptHashes(raiz)).toEqual([cspHashOf('tema()')]);
+    });
+
+    it('sin `src/index.html` —una imagen de despliegue que sólo trae `dist/`— no rompe: lista vacía', () => {
+      expect(sourceIndexScriptHashes(raiz)).toEqual([]);
+    });
+
+    it('el `index.html` real del repo aporta el hash que ya sirve el navegador (uno o dos, según el final de línea del checkout)', () => {
+      // Fija el caso que motivó esto: sin `dist/browser` que recorrer —como
+      // pasa bajo `ng serve --ssr`— este es el ÚNICO origen del hash del
+      // script anti-parpadeo del tema. Uno o dos elementos, no exactamente
+      // uno: un checkout con `core.autocrlf=false` deja el `\r\n` de Windows
+      // en el archivo y esto aporta las dos variantes (cruda y normalizada a
+      // `\n`); un checkout que ya normalizó a `\n` hace que las dos coincidan
+      // y el `Set` de `server.ts` las deje en una sola.
+      const hashes = sourceIndexScriptHashes(process.cwd());
+
+      expect(hashes.length).toBeGreaterThanOrEqual(1);
+      expect(hashes.length).toBeLessThanOrEqual(2);
+      for (const hash of hashes) {
+        expect(hash).toMatch(/^'sha256-[A-Za-z0-9+/]+=*'$/);
+      }
+    });
+
+    it('CRLF y LF del mismo script son bytes distintos: hashea los dos finales de línea (AG49-FT01-003)', () => {
+      // El caso real que motivó esto: `ng serve --ssr` sirvió el mismo script
+      // dos veces en la misma corrida de Playwright con dos hashes distintos
+      // —uno por cada vía de render— porque el archivo en disco trae `\r\n`
+      // (checkout Windows) y sólo UNA de esas dos vías lo normaliza a `\n` al
+      // servirlo. Sin esto, la CSP sólo cubría la que se probó primero.
+      mkdirSync(join(raiz, 'src'));
+      writeFileSync(join(raiz, 'src', 'index.html'), '<script>tema();\r\nmas();</script>', {
+        encoding: 'utf8',
+      });
+
+      const hashes = sourceIndexScriptHashes(raiz);
+
+      expect(hashes).toEqual(
+        expect.arrayContaining([cspHashOf('tema();\r\nmas();'), cspHashOf('tema();\nmas();')]),
+      );
+      expect(hashes).toHaveLength(2);
+    });
+  });
+
   describe('política', () => {
     it('cierra el clickjacking, que en salud no es un riesgo menor', () => {
       expect(contentSecurityPolicy()).toContain("frame-ancestors 'none'");
@@ -60,7 +132,7 @@ describe('security-headers', () => {
       expect(contentSecurityPolicy()).not.toContain('fonts.googleapis.com');
     });
 
-    it('abre imágenes SOLO a los tiles de OpenStreetMap, y nada más sale a terceros', () => {
+    it('abre imágenes SOLO a los tiles del proveedor del mapa, y nada más sale a terceros', () => {
       const csp = contentSecurityPolicy();
 
       // El mapa (Leaflet sin clave de API) pide sus tiles directo del
@@ -69,6 +141,8 @@ describe('security-headers', () => {
       // El permiso es de imágenes: scripts y conexiones no se abren con él.
       expect(csp).not.toContain('script-src \'self\' https://tile.openstreetmap.org');
       expect(csp).not.toContain('connect-src \'self\' https://tile.openstreetmap.org');
+      // CARTO quedó cerrado: sus mosaicos llegan con marca de agua.
+      expect(csp).not.toContain('cartocdn');
     });
 
     it('con la API en el mismo origen, `connect-src` se queda en `self`', () => {
@@ -113,12 +187,14 @@ describe('security-headers', () => {
       expect(securityHeaders()['Referrer-Policy']).toBe('strict-origin-when-cross-origin');
     });
 
-    it('niega cámara y micrófono; la ubicación queda solo para el propio origen', () => {
+    it('niega la cámara; micrófono y ubicación quedan solo para el propio origen', () => {
       // «Dónde comprar mi receta» pide la posición con permiso del navegador
-      // para ordenar sucursales por cercanía; `geolocation=()` la apagaba para
-      // toda la aplicación. `(self)` nunca la concede a un iframe de terceros.
+      // para ordenar sucursales por cercanía, y el dictado del chequeo de
+      // síntomas y la nota de voz piden el micrófono igual; `()` los apagaba
+      // para toda la aplicación aunque la persona los concediera. `(self)`
+      // nunca los concede a un iframe de terceros.
       expect(securityHeaders()['Permissions-Policy']).toBe(
-        'camera=(), microphone=(), geolocation=(self)',
+        'camera=(), microphone=(self), geolocation=(self)',
       );
     });
   });

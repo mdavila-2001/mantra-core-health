@@ -1,9 +1,10 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, type Observable } from 'rxjs';
+import { map, switchMap, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import { maybeDate, sinNulos } from '../wire';
+import { blobToDataUrl } from '../files/blob-to-data-url';
 import type {
   BlockListItem,
   BlockPage,
@@ -19,8 +20,10 @@ import type {
   ConversationPeer,
   ConversationRead,
   ConversationsQuery,
+  ChatAutoReplySettings,
   DirectMessage,
   DirectMessagePage,
+  EditDirectMessage,
   FeedListItem,
   FeedPage,
   FeedQuery,
@@ -55,6 +58,7 @@ import type {
   NewComment,
   NewConversation,
   NewDirectMessage,
+  UpsertChatAutoReply,
   NewFollow,
   NewModerationDecision,
   NewReport,
@@ -160,6 +164,47 @@ export class CommunityClient {
     return this.http
       .put<WireOwnProfile>(this.url('/community/profiles/me'), datos)
       .pipe(map((body) => sinNulos(body)));
+  }
+
+  /**
+   * `GET /community/profiles/:profileId/auto-reply` — la respuesta automática.
+   *
+   * `null` cuando nunca se configuró, que no es lo mismo que estar apagada: la
+   * pantalla dibuja distinto «todavía no la tocaste» y «la apagaste».
+   *
+   * @param profileId - El perfil público propio.
+   */
+  readAutoReply(profileId: string): Observable<ChatAutoReplySettings | null> {
+    return this.http
+      .get<ConNulos<ChatAutoReplySettings> | null>(
+        this.url(
+          `/community/profiles/${encodeURIComponent(profileId)}/auto-reply`,
+        ),
+      )
+      .pipe(map((body) => (body === null ? null : toAutoReply(body))));
+  }
+
+  /**
+   * `PUT /community/profiles/:profileId/auto-reply` — la configura.
+   *
+   * `PUT` y no `PATCH`: hay una sola fila por perfil y se manda entera, así que
+   * quien configura no tiene que saber si ya existía.
+   *
+   * @param profileId - El perfil público propio.
+   * @param datos - La configuración completa.
+   */
+  upsertAutoReply(
+    profileId: string,
+    datos: UpsertChatAutoReply,
+  ): Observable<ChatAutoReplySettings> {
+    return this.http
+      .put<ConNulos<ChatAutoReplySettings>>(
+        this.url(
+          `/community/profiles/${encodeURIComponent(profileId)}/auto-reply`,
+        ),
+        datos,
+      )
+      .pipe(map(toAutoReply));
   }
 
   // ─── Perfil público ────────────────────────────────────────────────────────
@@ -290,6 +335,46 @@ export class CommunityClient {
       ...datos,
       commentableType: 'POST',
     });
+  }
+
+  /**
+   * `GET /community/comments/media/:fileId/content` — el adjunto de un
+   * comentario (imagen, sticker o GIF), con sesión.
+   *
+   * **No es `FilesClient.imageDataUrl()`.** Ese endpoint sólo entrega el
+   * contenido a quien subió el archivo; un adjunto de comentario lo tiene
+   * que poder ver cualquiera que pueda ver el post —el autor del post,
+   * cualquier otro comentarista— no sólo quien lo subió (FND-01). Por eso
+   * pasa por este otro camino, que autoriza por visibilidad del post en vez
+   * de por dueño del archivo.
+   *
+   * @param fileId - El adjunto a leer (`common.files`).
+   * @returns La imagen como `data:` URL.
+   */
+  commentMediaDataUrl(fileId: string): Observable<string> {
+    return this.http
+      .get(this.url(`/community/comments/media/${encodeURIComponent(fileId)}/content`), {
+        responseType: 'blob',
+      })
+      .pipe(switchMap((bytes) => blobToDataUrl(bytes)));
+  }
+
+  /** Bytes del adjunto autorizados por conversación y perfil participante. */
+  conversationAttachmentDataUrl(
+    conversationId: string,
+    profileId: string,
+    fileId: string,
+  ): Observable<string> {
+    const params = new HttpParams().set('profileId', profileId);
+    return this.http
+      .get(
+        this.url(
+          `/community/conversations/${encodeURIComponent(conversationId)}` +
+            `/attachments/${encodeURIComponent(fileId)}/content`,
+        ),
+        { params, responseType: 'blob' },
+      )
+      .pipe(switchMap((bytes) => blobToDataUrl(bytes)));
   }
 
   /**
@@ -697,6 +782,27 @@ export class CommunityClient {
   }
 
   /**
+   * `POST /patients/me/reviews` — califico **la atención que recibí**, sin
+   * nombrar la vitrina del profesional (C.2).
+   *
+   * Es la que usa el portal del paciente. `publishReview` sigue existiendo y
+   * hace lo mismo: es la que usa quien ya tiene el id de la vitrina en la mano
+   * —el panel interno—. Acá no lo tenemos y no deberíamos: la ficha pública se
+   * abre por slug y **no publica su id**, así que el destinatario lo deriva el
+   * servidor del encuentro declarado.
+   *
+   * El servidor comprueba, como siempre, que la atención sea mía, que haya
+   * terminado, que la haya atendido ese profesional y que no la haya
+   * calificado ya.
+   *
+   * @param review - Atención, estrellas, texto y cómo quiero firmar.
+   * @returns El id de la reseña y si quedó verificada.
+   */
+  publishOwnReview(review: NewReview): Observable<ReviewCreated> {
+    return this.http.post<ReviewCreated>(this.url('/patients/me/reviews'), review);
+  }
+
+  /**
    * `POST /community/profiles/:profileId/reviews/:reviewId/responses` —
    * el profesional contesta una reseña de su propia vitrina.
    *
@@ -1064,6 +1170,34 @@ export class CommunityClient {
   }
 
   /**
+   * `PATCH /community/conversations/:id/messages/:messageId` — cambia el texto
+   * de un mensaje propio (F4.5).
+   *
+   * El servidor lo marca `isEdited` y empuja `conversation:message:updated` a
+   * los demás participantes. Rechaza con **422** el mensaje ajeno, el ya
+   * eliminado y el que quedó fuera de la ventana de edición.
+   *
+   * @param conversationId - El hilo.
+   * @param messageId - Qué mensaje.
+   * @param datos - Quién lo escribió y el texto nuevo.
+   * @returns El mensaje ya editado.
+   */
+  editMessage(
+    conversationId: string,
+    messageId: string,
+    datos: EditDirectMessage,
+  ): Observable<DirectMessage> {
+    return this.http
+      .patch<WireMessage>(
+        this.url(
+          `/community/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}`,
+        ),
+        datos,
+      )
+      .pipe(map(toMessage));
+  }
+
+  /**
    * `POST /community/conversations/:id/read` — marca leído hasta el último.
    *
    * Sin `upToMessageId` el backend usa el mensaje más reciente, que es lo que
@@ -1347,6 +1481,16 @@ type WirePoll = Omit<ConNulos<PollDetail>, 'closesAt' | 'options'> & {
   readonly options: PollDetail['options'];
 };
 
+function toAutoReply(
+  body: ConNulos<ChatAutoReplySettings>,
+): ChatAutoReplySettings {
+  const { updatedAt, ...resto } = body;
+  return {
+    ...sinNulos(resto),
+    ...fecha('updatedAt', updatedAt as string | null),
+  } as ChatAutoReplySettings;
+}
+
 function toProfile({ badges, prestige, ...resto }: WireProfile): PublicProfileDetail {
   return {
     ...sinNulos(resto),
@@ -1553,11 +1697,16 @@ function toPostPage(body: WirePostPage): PostPage {
  * poner un tope de recursión del lado del cliente escondería un hilo que el
  * servidor sí devolvió.
  */
-function toComment({ createdAt, replies, ...resto }: WireComment): CommentThreadItem {
+function toComment({ createdAt, replies, media, ...resto }: WireComment): CommentThreadItem {
   return {
     ...sinNulos(resto),
     createdAt: new Date(createdAt),
     replies: replies.map(toComment),
+    // REQ-01-011: `media` es nuevo en el contrato. Un servidor desplegado
+    // antes que este cliente todavía no lo manda, y `undefined.length` en la
+    // plantilla tumbaría la tarjeta — se normaliza acá, en la única frontera
+    // que conoce la forma real del wire.
+    media: media ?? [],
   };
 }
 

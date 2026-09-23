@@ -19,26 +19,51 @@
       {{ noMatchesText() }}
     </p>
   } @else {
-    @for (group of groups(); track group.conceptId) {
-      <section class="specialty-browser__group" [attr.aria-labelledby]="headingId(group)">
-        <h3 class="specialty-browser__group-title" [id]="headingId(group)">
-          {{ group.label }}
-          <span class="specialty-browser__count">{{ group.items.length }}</span>
-        </h3>
-
-        <!-- Lista y no una hilera de `div`: un lector de pantalla anuncia
-             cuántos hay antes de leer el primero. -->
-        <ul class="specialty-browser__grid">
-          @for (item of group.items; track item) {
-            <li class="specialty-browser__item">
-              <ng-container
-                [ngTemplateOutlet]="itemTemplate()"
-                [ngTemplateOutletContext]="{ $implicit: item, group: group }"
-              />
-            </li>
-          }
-        </ul>
-      </section>
+    @for (group of groups(); track group.conceptId; let primero = $first) {
+      @if (collapsible()) {
+        <details
+          class="specialty-browser__group specialty-browser__group--plegable"
+          [open]="expandAll() || primero"
+        >
+          <summary class="specialty-browser__summary">
+            <h3 class="specialty-browser__group-title" [id]="headingId(group)">
+              {{ group.label }}
+              <span class="specialty-browser__count">{{ group.items.length }}</span>
+            </h3>
+          </summary>
+          <!-- Lista y no una hilera de `div`: un lector de pantalla anuncia
+               cuántos hay antes de leer el primero. -->
+          <ul class="specialty-browser__grid">
+            @for (item of group.items; track item) {
+              <li class="specialty-browser__item">
+                <ng-container
+                  [ngTemplateOutlet]="itemTemplate()"
+                  [ngTemplateOutletContext]="{ $implicit: item, group: group }"
+                />
+              </li>
+            }
+          </ul>
+        </details>
+      } @else {
+        <section class="specialty-browser__group" [attr.aria-labelledby]="headingId(group)">
+          <h3 class="specialty-browser__group-title" [id]="headingId(group)">
+            {{ group.label }}
+            <span class="specialty-browser__count">{{ group.items.length }}</span>
+          </h3>
+          <!-- Lista y no una hilera de `div`: un lector de pantalla anuncia
+               cuántos hay antes de leer el primero. -->
+          <ul class="specialty-browser__grid">
+            @for (item of group.items; track item) {
+              <li class="specialty-browser__item">
+                <ng-container
+                  [ngTemplateOutlet]="itemTemplate()"
+                  [ngTemplateOutletContext]="{ $implicit: item, group: group }"
+                />
+              </li>
+            }
+          </ul>
+        </section>
+      }
     }
   }
 

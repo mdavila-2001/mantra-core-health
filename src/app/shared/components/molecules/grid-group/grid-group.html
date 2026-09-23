@@ -1,0 +1,65 @@
+<!-- ─── La cuadrícula ────────────────────────────────────────────────────────
+     Una tabla de verdad: las columnas y las filas son encabezados, que es lo
+     que deja saber en qué celda se está sin recordar la cabecera. El nombre de
+     cada control lo dice igual —«Tos, A veces»—, porque una casilla anunciada
+     como «casilla, sin marcar» no dice qué se estaría contestando. -->
+<div class="cuadricula__marco">
+  <table
+    class="cuadricula"
+    [class.cuadricula--error]="invalid()"
+    [attr.aria-labelledby]="etiquetadaPor()"
+    [attr.aria-label]="etiqueta()"
+    [attr.aria-describedby]="describedBy()"
+    [attr.aria-required]="required() || null"
+  >
+    <thead>
+      <tr>
+        <!-- La esquina va vacía y **presentacional**: es el cruce de los dos
+             encabezados, no un dato. -->
+        <td class="cuadricula__esquina"></td>
+        @for (columna of columns(); track columna.value) {
+          <th scope="col" class="cuadricula__columna">{{ columna.label }}</th>
+        }
+      </tr>
+    </thead>
+
+    <tbody>
+      @for (fila of rows(); track fila.value) {
+        <tr class="cuadricula__fila">
+          <th scope="row" class="cuadricula__rotulo">{{ fila.label }}</th>
+
+          @for (columna of columns(); track columna.value) {
+            <td class="cuadricula__celda">
+              <!-- `data-columna` va en el rótulo y no en la celda: en teléfono
+                   el nombre de la columna lo dibuja `::after` de este mismo
+                   elemento, y `attr()` sólo lee del elemento al que cuelga. -->
+              <label class="cuadricula__control" [attr.data-columna]="columna.label">
+                <input
+                  class="cuadricula__nativo"
+                  [type]="multiple() ? 'checkbox' : 'radio'"
+                  [attr.name]="multiple() ? null : nombreDeFila(fila.value)"
+                  [checked]="marcada(fila.value, columna.value)"
+                  [disabled]="deshabilitada(fila.value, columna.value)"
+                  [attr.aria-label]="fila.label + ', ' + columna.label"
+                  [attr.data-testid]="'cuadricula-' + fila.value + '-' + columna.value"
+                  (click)="elegir(fila.value, columna.value)"
+                  (blur)="formBridge.emitTouched()"
+                />
+                <span
+                  class="cuadricula__marca"
+                  [class.cuadricula__marca--casilla]="multiple()"
+                  aria-hidden="true"
+                ></span>
+              </label>
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (oneResponsePerColumn()) {
+  <!-- La regla se dice, no se deduce de que una celda deje de responder. -->
+  <p class="cuadricula__regla">Sólo una respuesta por columna.</p>
+}

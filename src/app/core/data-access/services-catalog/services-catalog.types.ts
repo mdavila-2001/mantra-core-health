@@ -21,9 +21,32 @@ export interface ServiceCatalogItem {
   readonly serviceConceptId?: string;
   readonly defaultPrice: string;
   readonly currencyConceptId?: string;
+  /**
+   * Sigla de la moneda (`BOB`, `USD`), cuando la API pudo resolverla.
+   *
+   * Viene del servidor y no se deduce acá: el `currencyConceptId` es un uuid y
+   * el front no tiene catálogo de monedas. Queda `undefined` en las filas que
+   * apuntan a uno de los juegos de conceptos de moneda que el producto todavía
+   * no unificó; en ese caso el importe se muestra sin unidad, que es lo que
+   * hacía antes, en vez de inventarle una.
+   */
+  readonly currencyCode?: string;
   readonly taxCodeId?: string;
   readonly incomeAccountId?: string;
   readonly isActive: boolean;
+}
+
+/**
+ * Lo que se puede corregir de un servicio ya dado de alta.
+ *
+ * El código y la práctica identifican al servicio dentro de su catálogo: no
+ * están acá porque moverlos sería otra operación, no una corrección.
+ */
+export interface ServiceCatalogChanges {
+  readonly name?: string;
+  readonly defaultPrice?: string;
+  readonly currencyConceptId?: string;
+  readonly isActive?: boolean;
 }
 
 /**
@@ -63,4 +86,55 @@ export interface NewServiceCatalogItem {
   readonly taxCodeId?: string;
   readonly incomeAccountId?: string;
   readonly isActive?: boolean;
+}
+
+/* ---- el nomenclador de procedimientos (TAREA-22) --------------------------
+   Es el **arancel de referencia**, no el catálogo de la práctica: acá no hay
+   nada que un profesional haya dado de alta. Sirve para importar. */
+
+/**
+ * Una entrada del arancel de honorarios.
+ *
+ * `referencePrice` viaja como cadena **con su unidad al lado**, y la unidad
+ * puede no ser dinero: `UMA` es la unidad de cuenta del arancel de Santa Cruz,
+ * no una moneda, y su factor de conversión no está declarado en ninguna parte
+ * del producto. Mostrar «20» sin decir «UMA» sería mostrar un precio falso.
+ */
+export interface ProcedureNomenclatureItem {
+  readonly conceptId: string;
+  readonly code: string;
+  readonly display: string;
+  readonly specialty: string | null;
+  readonly group: string | null;
+  readonly referencePrice: string | null;
+  /** `UMA` o `USD`. Ver el comentario de la interfaz. */
+  readonly priceUnit: string | null;
+  /**
+   * Si el texto de origen necesita revisión humana.
+   *
+   * Son las 228 entradas que salieron dañadas del reconocimiento óptico del
+   * arancel. Importar una de éstas en silencio mete un nombre y un precio
+   * dudosos en la lista de un profesional.
+   */
+  readonly ocrSuspect: boolean;
+}
+
+/** Una página del nomenclador, por cursor opaco. */
+export interface ProcedureNomenclaturePage {
+  readonly items: readonly ProcedureNomenclatureItem[];
+  readonly nextCursor: string | null;
+}
+
+/** Una especialidad del arancel, con cuántos procedimientos agrupa. */
+export interface ProcedureSpecialty {
+  readonly specialty: string;
+  readonly count: number;
+}
+
+/** Filtros y paginación del nomenclador. */
+export interface ProcedureNomenclatureQuery {
+  readonly specialty?: string;
+  readonly query?: string;
+  readonly cursor?: string;
+  readonly limit?: number;
 }

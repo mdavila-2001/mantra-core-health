@@ -15,7 +15,7 @@ import { Spinner } from '../spinner/spinner';
 import type { ButtonSize, ButtonType, ButtonVariant } from './button.types';
 
 /**
- * Botón del sistema REDSAT. Selector de atributo: el host ES el `<button>`
+ * Botón del sistema ALOVIDA. Selector de atributo: el host ES el `<button>`
  * nativo, así la semántica, el teclado y los formularios vienen gratis.
  *
  * ```html

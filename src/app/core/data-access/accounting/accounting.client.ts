@@ -5,7 +5,24 @@ import { map, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
+  AccrualRegister,
+  BalanceSheet,
+  ClearingResult,
+  ControllingObject,
+  DocumentFlowNode,
+  FiscalPeriod,
+  FiscalYear,
+  FixedAssetRegister,
+  OpenItemsPage,
+  RunResult,
+  WorkflowAction,
   ChartOfAccounts,
+  FinancialStatementLine,
+  FinancialStatementQuery,
+  GeneralLedgerEntry,
+  GeneralLedgerPage,
+  GeneralLedgerQuery,
+  IncomeStatement,
   JournalPage,
   JournalQuery,
   JournalTransaction,
@@ -13,6 +30,8 @@ import type {
   LedgerAccount,
   LedgerEntry,
   PaidConsultation,
+  PostedJournalResult,
+  PostJournalInput,
   Practice,
   PractitionerEntryResult,
   RegisterConsultationIncomeInput,
@@ -52,11 +71,25 @@ export class AccountingClient {
    *
    * Acota por el tenant de la sesión del lado del servidor; acá no viaja
    * ningún filtro.
+   *
+   * ## Responde un arreglo desnudo, no `{ items, count }`
+   *
+   * El controlador declara `listPractices(): Promise<PracticeSummaryDto[]>` y
+   * eso es literalmente lo que manda. Este cliente leía `body.items`, que en un
+   * arreglo es `undefined`, y el `.map` siguiente reventaba: **el selector de
+   * práctica nunca llegaba a tener una opción, y toda la pantalla de
+   * contabilidad quedaba inservible**, porque las cinco lecturas del módulo
+   * cuelgan de un `practiceId`.
+   *
+   * Los otros dos clientes que leen esta misma ruta —`medical-organization` y
+   * `services-catalog`— siempre la trataron como arreglo. Éste era el único
+   * que no, y el error no se veía como error: la lista salía vacía, que es
+   * indistinguible de una organización sin prácticas.
    */
   listPractices(): Observable<readonly Practice[]> {
     return this.http
-      .get<RespuestaPracticas>(this.url('/practices'))
-      .pipe(map((body) => body.items.map(aPractica)));
+      .get<readonly WirePractica[]>(this.url('/practices'))
+      .pipe(map((body) => body.map(aPractica)));
   }
 
   /** `GET /accounting/accounts` — el plan de cuentas de una práctica. */
@@ -150,9 +183,214 @@ export class AccountingClient {
       .pipe(map(aResultado));
   }
 
+  /**
+   * `GET /accounting/general-ledger` — el libro mayor de **una** cuenta, con
+   * saldo corrido. Pagina por cursor (AC-20-14): pasar `query.cursor` con el
+   * `nextCursor` de la página anterior, nunca un número de página.
+   */
+  generalLedger(practiceId: string, query: GeneralLedgerQuery): Observable<GeneralLedgerPage> {
+    let params = new HttpParams()
+      .set('practiceId', practiceId)
+      .set('accountId', query.accountId);
+    if (query.from !== undefined) params = params.set('from', query.from);
+    if (query.to !== undefined) params = params.set('to', query.to);
+    if (query.cursor !== undefined) params = params.set('cursor', query.cursor);
+    if (query.limit !== undefined) params = params.set('limit', String(query.limit));
+
+    return this.http
+      .get<RespuestaMayor>(this.url('/accounting/general-ledger'), { params })
+      .pipe(map(aLibroMayor));
+  }
+
+  /**
+   * `GET /accounting/income-statement` — ingresos y gastos posteados de la
+   * ventana pedida. Agrega desde la misma fuente que el libro mayor: no debe
+   * dar un número distinto para la misma cuenta y período.
+   */
+  incomeStatement(
+    practiceId: string,
+    query: FinancialStatementQuery = {},
+  ): Observable<IncomeStatement> {
+    return this.http
+      .get<RespuestaEstadoDeResultados>(this.url('/accounting/income-statement'), {
+        params: conFiltrosFinancieros(new HttpParams().set('practiceId', practiceId), query),
+      })
+      .pipe(
+        map((body) => ({
+          ...body,
+          revenueItems: body.revenueItems.map(aLineaFinanciera),
+          expenseItems: body.expenseItems.map(aLineaFinanciera),
+        })),
+      );
+  }
+
+  /**
+   * `GET /accounting/balance-sheet` — activo, pasivo y patrimonio a una
+   * fecha de corte (`query.to`). Distinto del balance de sumas y saldos.
+   */
+  balanceSheet(
+    practiceId: string,
+    query: FinancialStatementQuery = {},
+  ): Observable<BalanceSheet> {
+    return this.http
+      .get<RespuestaBalanceGeneral>(this.url('/accounting/balance-sheet'), {
+        params: conFiltrosFinancieros(new HttpParams().set('practiceId', practiceId), query),
+      })
+      .pipe(
+        map((body) => ({
+          ...body,
+          assetItems: body.assetItems.map(aLineaFinanciera),
+          liabilityItems: body.liabilityItems.map(aLineaFinanciera),
+          equityItems: body.equityItems.map(aLineaFinanciera),
+        })),
+      );
+  }
+
+  /**
+   * `POST /accounting/journal-transactions/drafts` — MODO CONTADOR (TAREA-20
+   * S2): crea el asiento de N filas en borrador, **sin postear**. El servidor
+   * sigue exigiendo que balancee antes de guardar (P-20-2, sin resolver): el
+   * front no debilita esa validación, sólo la anticipa en vivo.
+   */
+  createJournalDraft(input: PostJournalInput): Observable<PostedJournalResult> {
+    return this.http
+      .post<WirePosteo>(this.url('/accounting/journal-transactions/drafts'), input)
+      .pipe(map(aPosteo));
+  }
+
+  /**
+   * `POST /accounting/journal-transactions` — MODO CONTADOR: registra y
+   * postea el asiento de N filas en un solo paso (atajo directo, sin pasar
+   * por revisión/aprobación).
+   */
+  postJournal(input: PostJournalInput): Observable<PostedJournalResult> {
+    return this.http
+      .post<WirePosteo>(this.url('/accounting/journal-transactions'), input)
+      .pipe(map(aPosteo));
+  }
+
+
+  /* ---- el plano SAP -------------------------------------------------------
+     Las cinco acciones del flujo y el cierre de período existen en la API real
+     (`POST journal-transactions/:id/{classify,submit-review,approve,post,reverse}`,
+     `POST fiscal-periods/:id/lock`, `POST clearing-documents`), y desde el
+     PR #403 también las LECTURAS de esta sección: `accounting-cockpit.controller.ts`
+     las publica con los mismos nombres de tabla del modelo; el interceptor
+     mock (`finance.handlers.ts`) las espeja para desarrollar sin la API arriba. */
+
+  /** `GET /accounting/fiscal-years` — el ejercicio con sus doce períodos. */
+  fiscalYear(practiceId: string): Observable<FiscalYear> {
+    return this.http.get<FiscalYear>(this.url('/accounting/fiscal-years'), {
+      params: new HttpParams().set('practiceId', practiceId),
+    });
+  }
+
+  /** `POST /accounting/fiscal-periods/:id/lock` — cerrar el mes. */
+  lockFiscalPeriod(periodId: string): Observable<FiscalPeriod> {
+    return this.http.post<FiscalPeriod>(
+      this.url(`/accounting/fiscal-periods/${periodId}/lock`),
+      {},
+    );
+  }
+
+  /** `GET /accounting/open-items` — lo pendiente de cobro y de pago, con antigüedad. */
+  openItems(practiceId: string): Observable<OpenItemsPage> {
+    return this.http.get<OpenItemsPage>(this.url('/accounting/open-items'), {
+      params: new HttpParams().set('practiceId', practiceId),
+    });
+  }
+
+  /** `POST /accounting/clearing-documents` — compensar partidas contra su cobro. */
+  clearOpenItems(openItemIds: readonly string[]): Observable<ClearingResult> {
+    return this.http.post<ClearingResult>(this.url('/accounting/clearing-documents'), {
+      openItemIds,
+    });
+  }
+
+  /** `GET /accounting/dimensions` — centros de coste y beneficio, y segmentos. */
+  controllingObjects(practiceId: string): Observable<readonly ControllingObject[]> {
+    return this.http
+      .get<{ items: readonly ControllingObject[] }>(this.url('/accounting/dimensions'), {
+        params: new HttpParams().set('practiceId', practiceId),
+      })
+      .pipe(map((r) => r.items));
+  }
+
+  /** `GET …/:id/document-flow` — el original, éste y sus reversiones. */
+  documentFlow(transactionId: string): Observable<readonly DocumentFlowNode[]> {
+    return this.http
+      .get<{ items: readonly DocumentFlowNode[] }>(
+        this.url(`/accounting/journal-transactions/${transactionId}/document-flow`),
+      )
+      .pipe(map((r) => r.items));
+  }
+
+  /**
+   * Mueve un documento por el flujo.
+   *
+   * Una acción por estado y ninguna más: el backend rechaza con 422 cualquier
+   * salto, así que la pantalla ofrece exactamente la que corresponde. Postear
+   * es lo único que toca el mayor; revertir no edita, crea el espejo.
+   */
+  advanceWorkflow(
+    transactionId: string,
+    action: WorkflowAction,
+  ): Observable<{ readonly id: string; readonly transactionNumber: string }> {
+    return this.http.post<{ id: string; transactionNumber: string }>(
+      this.url(`/accounting/journal-transactions/${transactionId}/${action}`),
+      {},
+    );
+  }
+
+
+  /** `GET /accounting/assets` — el registro de activos con su valor neto. */
+  fixedAssets(practiceId: string): Observable<FixedAssetRegister> {
+    return this.http.get<FixedAssetRegister>(this.url('/accounting/assets'), {
+      params: new HttpParams().set('practiceId', practiceId),
+    });
+  }
+
+  /**
+   * `POST /accounting/depreciation/run` — la corrida de amortización.
+   *
+   * No es un informe: crea el asiento del período y mueve los saldos. Por eso
+   * falla si el período está cerrado, igual que cualquier otro posteo.
+   */
+  runDepreciation(practiceId: string): Observable<RunResult> {
+    return this.http.post<RunResult>(this.url('/accounting/depreciation/run'), { practiceId });
+  }
+
+  /** `GET /accounting/accrual-objects` — devengos y cuánto queda por reconocer. */
+  accrualObjects(practiceId: string): Observable<AccrualRegister> {
+    return this.http.get<AccrualRegister>(this.url('/accounting/accrual-objects'), {
+      params: new HttpParams().set('practiceId', practiceId),
+    });
+  }
+
+  /** `POST /accounting/accruals/run` — reconoce el período de cada devengo. */
+  runAccruals(practiceId: string): Observable<RunResult> {
+    return this.http.post<RunResult>(this.url('/accounting/accruals/run'), { practiceId });
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+/** Añade los filtros de estado de resultados / balance general sólo si vienen. */
+function conFiltrosFinancieros(
+  params: HttpParams,
+  query: FinancialStatementQuery,
+): HttpParams {
+  let resultado = params;
+  if (query.fiscalPeriodId !== undefined) {
+    resultado = resultado.set('fiscalPeriodId', query.fiscalPeriodId);
+  }
+  if (query.from !== undefined) resultado = resultado.set('from', query.from);
+  if (query.to !== undefined) resultado = resultado.set('to', query.to);
+  if (query.cursor !== undefined) resultado = resultado.set('cursor', query.cursor);
+  if (query.limit !== undefined) resultado = resultado.set('limit', String(query.limit));
+  return resultado;
 }
 
 /**
@@ -190,6 +428,8 @@ type WireFilaDeBalance = ConNulos<TrialBalanceRow>;
 
 interface WireAsiento {
   readonly id: string;
+  /** El estado del flujo. Lo sirve el simulador; la API todavía no. */
+  readonly flujo?: string | null;
   readonly transactionNumber: string | null;
   readonly transactionDate: string;
   readonly fiscalPeriodId: string | null;
@@ -203,11 +443,6 @@ interface WireAsiento {
 interface WireAsientoDetalle extends WireAsiento {
   readonly practiceId: string;
   readonly lines: readonly WireLinea[];
-}
-
-interface RespuestaPracticas {
-  readonly items: readonly WirePractica[];
-  readonly count: number;
 }
 
 interface RespuestaCuentas {
@@ -249,9 +484,12 @@ function aFilaDeBalance(body: WireFilaDeBalance): TrialBalanceRow {
 }
 
 function aAsiento(body: WireAsiento): JournalTransaction {
-  const { transactionDate, postedAt, ...resto } = body;
+  const { transactionDate, postedAt, flujo, ...resto } = body;
   return {
     ...sinNulos(resto),
+    // Sin estado declarado, un asiento con fecha de posteo está posteado: es lo
+    // único que se puede afirmar del listado que publica la API hoy.
+    status: ((flujo ?? undefined) ?? (postedAt === null ? 'DRAFT' : 'POSTED')) as JournalTransaction['status'],
     // La fecha del asiento es un día, no un instante: anclada a medianoche UTC
     // y pintada en hora local retrocedería un día al oeste de Greenwich.
     transactionDate: maybeDateOnly(transactionDate) ?? new Date(transactionDate),
@@ -307,4 +545,92 @@ function aConsultaPagada(body: WireConsultaPagada): PaidConsultation {
 
 function aResultado(body: WireResultado): PractitionerEntryResult {
   return sinNulos(body as ConNulos<PractitionerEntryResult>);
+}
+
+/* ---- TAREA-20 S3: libro mayor, estado de resultados, balance general ----- */
+
+type WireMovimiento = ConNulos<Omit<GeneralLedgerEntry, 'transactionDate'>> & {
+  readonly transactionDate: string;
+};
+type WireLineaFinanciera = ConNulos<FinancialStatementLine>;
+
+interface RespuestaMayor {
+  readonly accountId: string;
+  readonly code: string | null;
+  readonly name: string | null;
+  readonly normalBalanceConceptId: string | null;
+  readonly currencyConceptId: string | null;
+  readonly openingBalance: string;
+  readonly items: readonly WireMovimiento[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
+interface RespuestaEstadoDeResultados {
+  readonly revenueItems: readonly WireLineaFinanciera[];
+  readonly expenseItems: readonly WireLineaFinanciera[];
+  readonly totalRevenue: string;
+  readonly totalExpense: string;
+  readonly netIncome: string;
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+  readonly truncated: boolean;
+}
+
+interface RespuestaBalanceGeneral {
+  readonly assetItems: readonly WireLineaFinanciera[];
+  readonly liabilityItems: readonly WireLineaFinanciera[];
+  readonly equityItems: readonly WireLineaFinanciera[];
+  readonly netIncomeOfPeriod: string;
+  readonly totalAssets: string;
+  readonly totalLiabilities: string;
+  readonly totalEquity: string;
+  readonly totalLiabilitiesAndEquity: string;
+  readonly balanced: boolean;
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+  readonly truncated: boolean;
+}
+
+function aMovimiento(body: WireMovimiento): GeneralLedgerEntry {
+  const { transactionDate, ...resto } = body;
+  return {
+    ...sinNulos(resto),
+    transactionDate: maybeDateOnly(transactionDate) ?? new Date(transactionDate),
+  };
+}
+
+function aLibroMayor(body: RespuestaMayor): GeneralLedgerPage {
+  const { code, name, normalBalanceConceptId, currencyConceptId, items, ...resto } = body;
+  return {
+    ...resto,
+    ...sinNulos({ code, name, normalBalanceConceptId, currencyConceptId }),
+    items: items.map(aMovimiento),
+  };
+}
+
+function aLineaFinanciera(body: WireLineaFinanciera): FinancialStatementLine {
+  return sinNulos(body);
+}
+
+/* ---- TAREA-20 S2: MODO CONTADOR ------------------------------------------- */
+
+interface WirePosteo {
+  readonly id: string;
+  readonly transactionNumber: string;
+  readonly status: string;
+  readonly totalAmount: string;
+  readonly lineCount: number;
+  readonly postedAt: string | null;
+}
+
+function aPosteo(body: WirePosteo): PostedJournalResult {
+  const { postedAt, ...resto } = body;
+  return {
+    ...resto,
+    ...(maybeDate(postedAt) === undefined ? {} : { postedAt: maybeDate(postedAt) }),
+  };
 }

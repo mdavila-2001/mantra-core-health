@@ -4,6 +4,23 @@
   [breadcrumbs]="breadcrumbs()"
 />
 
+<app-tabs
+  class="cuestionarios__tabs"
+  data-testid="cuestionarios-tabs"
+  [selectedIndex]="seccion()"
+  (selectedIndexChange)="elegirSeccion($event)"
+>
+  <!-- FT-22-R01 · Lo que el paciente declara de sí mismo. Editable. -->
+  <app-tab label="Aspectos médicos">
+    @if (seccion() === 0) {
+      <app-medical-aspects />
+    }
+  </app-tab>
+
+  <!-- FT-22-R02/R05 · Lo que le pidieron responder. Una vez respondida, la
+       encuesta no se edita: es un registro de lo que dijo ese día. -->
+  <app-tab [label]="pendientes() > 0 ? 'Encuestas (' + pendientes() + ' pendientes)' : 'Encuestas'">
+    @if (seccion() === 1) {
 @if (pendientes() > 0) {
   <p class="cuestionarios__resumen" data-testid="cuestionarios-pendientes">
     Tenés {{ pendientes() }}
@@ -66,3 +83,6 @@
     }
   }
 </app-view-state-host>
+    }
+  </app-tab>
+</app-tabs>

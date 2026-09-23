@@ -2,7 +2,7 @@
     La forma de un resultado del buscador público.
 
     Sale de la maqueta `SALUD/Vistas/HTML/V65-buscador/publico/` y de
-    `_assets/redsat.css` §25: cada campo de acá corresponde a una parte que la
+    `_assets/alovida.css` §25: cada campo de acá corresponde a una parte que la
     maqueta dibuja, y no hay ninguno que ella no muestre.
 
     ## Por qué el resultado no conoce al dominio
@@ -22,7 +22,7 @@
  * Los cinco tonos de la insignia **de la superficie pública**.
  *
  * No son los del `app-badge` del banco (`primary`, `success`, `warning`…): son
- * los que `redsat.css` declara para `.app-badge[data-tono]`, y las 14 maquetas
+ * los que `alovida.css` declara para `.app-badge[data-tono]`, y las 14 maquetas
  * de V65 usan sólo estos cinco. Mezclar las dos escalas pondría dos insignias
  * de distinto tamaño y color en la misma tarjeta.
  */
@@ -54,7 +54,7 @@ export interface SearchResultMeta {
 /**
  * Un sello del resultado: «Matrícula verificada», «Espacio pagado»…
  *
- * `tone` no es un color suelto: es uno de los cinco que `redsat.css` declara.
+ * `tone` no es un color suelto: es uno de los cinco que `alovida.css` declara.
  */
 export interface SearchResultSeal {
   readonly label: string;
@@ -82,17 +82,60 @@ export interface SearchResultItem {
    * A dónde lleva el título.
    *
    * Va como `routerLink`, así que es una ruta de la aplicación y no una URL
-   * externa. La superficie pública vive fuera de `/app` — ver `redsat.routes`.
+   * externa. La superficie pública vive fuera de `/app` — ver `alovida.routes`.
    */
   readonly link: string;
   /** Iniciales o símbolo del cuadrado, cuando no hay imagen. */
   readonly figureText?: string;
   /** Imagen del cuadrado. Gana sobre `figureText` si viene. */
   readonly figureImageUrl?: string;
-  /** El tipo, como insignia al lado del título: «Profesional», «Farmacia»… */
+  /**
+   * Qué es esto, en una línea: «Hospital público de segundo nivel», «Farmacia ·
+   * entrega a domicilio», «Cardióloga · Clínica Los Olivos».
+   *
+   * ## Por qué es un campo propio y no la primera línea de `meta`
+   *
+   * Porque no es contexto, es **la respuesta a qué es esto**. Iba en `meta`, o
+   * sea en el mismo gris de 12 px que la ciudad y la puntuación, debajo de una
+   * insignia que decía «Organización» — y el resultado era que la tarjeta de un
+   * hospital público de tercer nivel y la de una clínica privada de 24 horas se
+   * leían iguales de un vistazo: dos nombres y la misma palabra genérica.
+   *
+   * Es lo que un directorio de lugares tiene que dejar comparar, así que va
+   * donde se lee primero, en el tamaño del cuerpo y no en el de una nota al
+   * pie.
+   */
+  readonly subtitle?: string;
+  /**
+   * El tipo, como insignia al lado del título: «Profesional», «Farmacia»…
+   *
+   * **Sólo cuando varía dentro de la lista.** En un directorio de un solo
+   * vertical —clínicas, farmacias— la insignia dice la misma palabra en las
+   * quince tarjetas: no distingue nada, repite el título de la pantalla y le
+   * roba el primer renglón al subtítulo, que es el que sí distingue. Ver
+   * `aTarjeta`, que la omite en esos casos.
+   */
   readonly kind?: SearchResultSeal;
   /** Las líneas de contexto, en el orden en que se muestran. */
   readonly meta?: readonly SearchResultMeta[];
   /** Los sellos, bajo las líneas de contexto. */
   readonly seals?: readonly SearchResultSeal[];
+  /**
+   * Una acción propia de la tarjeta, además del título.
+   *
+   * Opcional y una sola: el título ya lleva a la ficha, así que lo que se
+   * agregue acá tiene que ser algo DISTINTO de «ver más» —«revisar
+   * disponibilidad», que salta a los horarios— o es un segundo botón para el
+   * mismo destino. Los directorios que no la declaran no cambian en nada.
+   */
+  readonly action?: SearchResultAction;
+}
+
+/** Un enlace de acción dentro de la tarjeta. */
+export interface SearchResultAction {
+  readonly label: string;
+  /** Ruta de la aplicación, igual que `link`. */
+  readonly link: string;
+  /** Ancla dentro de esa ruta, para caer en la sección que importa. */
+  readonly fragment?: string;
 }

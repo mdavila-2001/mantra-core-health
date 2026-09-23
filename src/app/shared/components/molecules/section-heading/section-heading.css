@@ -1,0 +1,51 @@
+/* ============================================================================
+    El encabezado de una card de ficha.
+
+    Minimalista a propósito: una marca, un título y un número. Nada de fondos
+    de color ni de reglas separadoras — la card ya tiene borde, y un encabezado
+    con su propia banda dentro de una card con borde son dos cajas anidadas que
+    no aportan una segunda idea.
+    ========================================================================== */
+
+:host {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+}
+
+/* La marca: el ícono sobre un cuadrado tenue del color de marca. Es lo único
+   coloreado del encabezado, y por eso es lo que se reconoce al recorrer una
+   ficha de cinco secciones sin leer los títulos.
+
+   `color-mix` sobre el token y no un color nuevo: así el tenue sigue al tema
+   —claro y oscuro— sin declarar dos valores. */
+.encabezado-seccion__marca {
+    display: grid;
+    place-items: center;
+    flex: none;
+    inline-size: 2rem;
+    block-size: 2rem;
+    border-radius: var(--r-sm);
+    background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+    color: var(--brand-primary);
+}
+
+.encabezado-seccion__marca app-nav-icon {
+    inline-size: 1.125rem;
+    block-size: 1.125rem;
+}
+
+/* El título hereda de la card su tipografía de encabezado; acá sólo se le quita
+   el margen que el navegador le pone a un `h2` suelto. */
+.encabezado-seccion__titulo {
+    margin: 0;
+}
+
+/* El recuento es un dato secundario: mismo renglón, la mitad de peso visual.
+   Tabular porque una ficha con varias secciones se lee comparando los números
+   de una a otra, y con dígitos de ancho distinto esa comparación se hace mal. */
+.encabezado-seccion__cuantos {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    font-variant-numeric: tabular-nums;
+}

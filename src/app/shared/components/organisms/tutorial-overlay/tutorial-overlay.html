@@ -78,6 +78,18 @@
     <p class="tutorial-globo__progreso">
       <span>{{ progresoEnPalabras() }}</span>
       <span class="tutorial-globo__tutorial">{{ activo.tutorial.title }}</span>
+      <!-- La salida que se reconoce sin leer. «Dejarlo» sigue al pie y hace lo
+           mismo —incluida la pregunta de confirmación—, pero está al final de un
+           bloque de texto: un doctor apurado no lo encuentra. -->
+      <button
+        type="button"
+        class="tutorial-globo__cerrar"
+        data-testid="tutorial-cerrar"
+        aria-label="Cerrar el tutorial"
+        (click)="abandonar()"
+      >
+        <span aria-hidden="true">✕</span>
+      </button>
     </p>
 
     <div

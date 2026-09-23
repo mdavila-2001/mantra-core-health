@@ -11,22 +11,19 @@ import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
+import { BackLink } from '../../../../shared/components/atoms/back-link/back-link';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
-import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
 import { Skeleton } from '../../../../shared/components/atoms/skeleton/skeleton';
-import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../../shared/components/molecules/card/card';
-import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
-import { Radio } from '../../../../shared/components/molecules/radio/radio';
-import { RadioGroup } from '../../../../shared/components/molecules/radio-group/radio-group';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
+import { SurveyForm } from '../../../../shared/components/organisms/survey-form/survey-form';
+import type {
+  RespuestasDelCuestionario,
+  ValorDeRespuesta,
+} from '../../../../shared/components/organisms/survey-form/survey-form';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { MIS_CUESTIONARIOS_ROUTE } from '../questionnaires.routes';
-
-/** Lo que una pregunta lleva contestado en el formulario. */
-type Valor = string | number | boolean | readonly string[] | null;
 
 /**
  * Responder un cuestionario.
@@ -54,19 +51,7 @@ type Valor = string | number | boolean | readonly string[] | null;
  */
 @Component({
   selector: 'app-questionnaire-answer',
-  imports: [
-    Alert,
-    AppButton,
-    Card,
-    Checkbox,
-    FormField,
-    PageHeader,
-    Radio,
-    RadioGroup,
-    Skeleton,
-    Textarea,
-    ViewStateHost,
-  ],
+  imports: [Alert, AppButton, BackLink, PageHeader, Skeleton, SurveyForm, ViewStateHost],
   templateUrl: './answer.html',
   styleUrl: './answer.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -79,17 +64,25 @@ export class QuestionnaireAnswer {
   private readonly navigation = inject(NavigationService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+  /** A dónde vuelve quien entró a responder: al listado del que salió. */
+  protected readonly rutaDeMisCuestionarios = MIS_CUESTIONARIOS_ROUTE;
 
   private readonly invitationId = this.route.snapshot.paramMap.get('invitationId') ?? '';
 
   private readonly estado = signal<ViewState<PatientQuestionnaire>>(loading());
   protected readonly vista = this.estado.asReadonly();
 
-  /** Lo contestado hasta ahora, por pregunta. */
-  private readonly respuestas = signal<ReadonlyMap<string, Valor>>(new Map());
+  /**
+   * Lo contestado hasta ahora, por pregunta.
+   *
+   * `protected` y ya no privado: lo escribe `app-survey-form`, que es quien
+   * dibuja los controles. Esta pantalla conserva lo que el organismo no sabe
+   * hacer —validar lo obligatorio y armar el envío—, que es su trabajo real.
+   */
+  protected readonly respuestas = signal<RespuestasDelCuestionario>(new Map());
 
   /** Las obligatorias que todavía faltan, marcadas tras un intento de envío. */
-  private readonly faltantes = signal<ReadonlySet<string>>(new Set());
+  protected readonly faltantes = signal<ReadonlySet<string>>(new Set());
 
   protected readonly enviando = signal(false);
 
@@ -115,53 +108,15 @@ export class QuestionnaireAnswer {
     });
   }
 
-  /** Si una pregunta quedó marcada como faltante. */
-  protected falta(questionId: string): boolean {
-    return this.faltantes().has(questionId);
-  }
-
-  /** El valor actual de una pregunta de texto. */
-  protected textoDe(questionId: string): string {
-    const valor = this.respuestas().get(questionId);
-    return typeof valor === 'string' ? valor : '';
-  }
-
-  /** El valor actual de una pregunta de escala o elección simple. */
-  protected seleccionDe(questionId: string): string | number | boolean | null {
-    const valor = this.respuestas().get(questionId);
-    if (valor === undefined || valor === null || Array.isArray(valor)) return null;
-    return valor as string | number | boolean;
-  }
-
-  /** Si una opción de elección múltiple está marcada. */
-  protected marcada(questionId: string, opcion: string): boolean {
-    const valor = this.respuestas().get(questionId);
-    return Array.isArray(valor) && valor.includes(opcion);
-  }
-
-  /** Los valores de una escala, para pintar un radio por cada uno. */
-  protected escalaDe(question: SurveyQuestion): readonly number[] {
-    const min = question.scaleMin ?? 1;
-    const max = question.scaleMax ?? 5;
-    return Array.from({ length: max - min + 1 }, (_, i) => min + i);
-  }
-
-  /** Registra el valor de una pregunta de valor único. */
-  protected responder(questionId: string, valor: Valor): void {
-    const siguiente = new Map(this.respuestas());
-    siguiente.set(questionId, valor);
-    this.respuestas.set(siguiente);
-    this.despejarFaltante(questionId, valor);
-  }
-
-  /** Agrega o quita una opción de una pregunta de elección múltiple. */
-  protected alternar(questionId: string, opcion: string, marcada: boolean): void {
-    const actual = this.respuestas().get(questionId);
-    const previas = Array.isArray(actual) ? [...(actual as readonly string[])] : [];
-    const siguientes = marcada
-      ? [...previas.filter((o) => o !== opcion), opcion]
-      : previas.filter((o) => o !== opcion);
-    this.responder(questionId, siguientes);
+  /**
+   * Una respuesta cambió: se despeja su marca de faltante.
+   *
+   * El organismo ya guardó el valor —`respuestas` es de dos vías— y avisa acá
+   * sólo para que el aviso de «falta responder» se apague en cuanto la pregunta
+   * queda contestada, sin esperar a otro intento de envío.
+   */
+  protected despejar(evento: { questionId: string; valor: ValorDeRespuesta }): void {
+    this.despejarFaltante(evento.questionId, evento.valor);
   }
 
   /** Envía el cuestionario completo. */
@@ -210,7 +165,7 @@ export class QuestionnaireAnswer {
   }
 
   /** Quita la marca de faltante en cuanto la pregunta queda contestada. */
-  private despejarFaltante(questionId: string, valor: Valor): void {
+  private despejarFaltante(questionId: string, valor: ValorDeRespuesta): void {
     if (!this.faltantes().has(questionId)) return;
     const utilizable =
       typeof valor === 'string'

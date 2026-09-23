@@ -1,0 +1,97 @@
+<!-- Marco público del buscador, calcado del de las maquetas V65. No lleva nav
+     lateral: quien busca todavía no tiene sesión, y el pie es la declaración
+     de qué se paga y qué no —que la ficha de la bóveda exige en toda pantalla
+     pública, así que va en el marco y no en cada vista. -->
+<!-- La marca `data-alovida-maqueta` está explicada en alovida-shell.html: acota
+     los comportamientos portados de la maqueta a las pantallas de la bóveda. -->
+<div class="app-public-shell" data-alovida-maqueta>
+  <header class="app-public-header">
+    <!-- La misma vuelta atrás que el marco con sesión, y por el mismo motivo:
+         está en las catorce pantallas públicas, así que va en el marco y no en
+         cada una. El respaldo es el de la marca —panel con sesión, buscador sin
+         ella—: mandar a `/search` a quien llegó desde su panel lo sacaría de la
+         aplicación, que es justo lo que un «Volver» no puede hacer. -->
+    <app-back-link
+      class="app-public-header__volver"
+      [fallback]="rutaDeLaMarca()"
+      label="Volver"
+      iconOnly
+    />
+
+    <a class="app-public-header__marca" [routerLink]="rutaDeLaMarca()">
+      <img src="/alovida/imagenes/alovida-logo.svg" alt="" width="34" height="25" />
+      <span>AloVida</span>
+    </a>
+
+    <!-- El buscador del marco: está en las 14 pantallas públicas, así que
+         navega a `/search?q=` en vez de tener estado propio. La pantalla de
+         resultados lee `?q=`; este componente no la conoce ni le habla. -->
+    <form class="app-search-field app-public-header__buscador" (submit)="buscar($event)">
+      <label class="solo-lectores" for="buscador-publico"
+        >Buscá profesionales, medicamentos, hospitales, laboratorios o aseguradoras</label
+      >
+      <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      <input
+        id="buscador-publico"
+        name="q"
+        class="app-input"
+        type="search"
+        placeholder="Buscá un médico, un remedio, un hospital…"
+      />
+    </form>
+
+    <div class="app-public-header__acciones">
+      <button class="app-theme-toggle" app-theme-toggle>
+        <span class="app-theme-toggle__pista">
+          <svg class="icono icono--sm app-theme-toggle__sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></svg>
+          <svg class="icono icono--sm app-theme-toggle__luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 14.8A8.5 8.5 0 0 1 9.2 3.5a8.5 8.5 0 1 0 11.3 11.3z"></path></svg>
+          <span class="app-theme-toggle__perilla" aria-hidden="true"></span>
+        </span>
+      </button>
+      <!-- Con sesión no se ofrece entrar: se ofrece VOLVER. Una ficha pública
+           se abre desde el menú de la app —las guías de clínicas y de farmacias
+           enlazan acá—, y ahí «Entrar / Crear cuenta» le dice a quien ya entró
+           que se quedó afuera. -->
+      @if (conSesion()) {
+        <a app-button data-variante="primario" data-tam="sm" routerLink="/dashboard"
+          >Volver a mi panel<span data-solo-ancho><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></span></a
+        >
+      } @else {
+        <a app-button data-variante="secundario" data-tam="sm" routerLink="/auth">Entrar</a>
+        <a app-button data-variante="primario" data-tam="sm" routerLink="/auth/register"
+          >Crear cuenta<span data-solo-ancho><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"></path></svg></span></a
+        >
+      }
+    </div>
+  </header>
+
+  <!-- Carril 01 (AC-01-2): el rail de secciones vive acá, en el marco, y no
+       dentro de cada pantalla. Estaba copiado en ocho plantillas de
+       `features/alovida/buscar/`, con una lista distinta en cada una. -->
+  <div class="app-public-shell__cuerpo">
+    <app-public-nav-rail class="app-public-shell__rail" />
+
+    <!-- El contenido y el pie van juntos en UNA columna, a la derecha del rail.
+         Antes el pie era hermano del cuerpo, así que el rail no podía pasarlo:
+         su borde blanco se cortaba justo donde empezaba la letra chica y la
+         columna quedaba a media altura. Con el pie acá adentro, el rail se
+         estira de punta a punta. -->
+    <div class="app-public-shell__columna">
+      <main class="app-main__inner">
+        <!-- Carril 01: mismo aviso que el marco de sesión, por el mismo
+             motivo. Acá importa incluso más: el buscador es la superficie
+             pública, y sus fichas de profesionales y farmacias son
+             inventadas. -->
+        <app-alovida-design-notice />
+        <router-outlet />
+      </main>
+
+      <footer class="app-public-pie">
+        <p><strong>Quién paga lo que ves</strong>Los resultados se ordenan por cercanía y por calificación. Cuando una ficha está paga, dice «Espacio pagado» en la propia tarjeta: nunca se disfraza de recomendación clínica.</p>
+        <p><strong>Precio y disponibilidad</strong>Los reporta cada prestador y pueden cambiar sin aviso. Confirmá con la farmacia o el consultorio antes de moverte.</p>
+        <p><strong>Esto orienta, no diagnostica</strong>AloVida te ayuda a encontrar a quién consultar. La decisión clínica es del profesional o del farmacéutico.</p>
+        <p><strong>Datos verificados</strong>El sello de verificación cubre la matrícula y la identidad. Lo que el profesional declara sin verificar aparece rotulado como declarado.</p>
+      </footer>
+    </div>
+  </div>
+</div>

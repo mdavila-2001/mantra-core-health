@@ -1,304 +1,634 @@
-<app-page-header
-  title="Mi agenda"
-  subtitle="El horario que tenés publicado y hasta cuándo hay turnos abiertos."
-/>
-
 <app-view-state-host [state]="estado()" (retry)="cargar()">
   @if (patron(); as p) {
-    <!-- Dos preguntas distintas sobre la misma agenda: «qué horario tengo» y
-         «cómo viene mi carga». Activación manual: la solapa se elige, no se
-         carga sola al mover el foco. -->
-    <div class="mi-agenda__solapas" role="tablist" aria-label="Vistas de mi agenda">
-      <button
-        type="button"
-        role="tab"
-        class="mi-agenda__solapa"
-        [class.mi-agenda__solapa--activa]="solapa() === 'patron'"
-        [attr.aria-selected]="solapa() === 'patron'"
-        (click)="verSolapa('patron')"
-      >
-        Mi horario
-      </button>
-      <button
-        type="button"
-        role="tab"
-        class="mi-agenda__solapa"
-        [class.mi-agenda__solapa--activa]="solapa() === 'mes'"
-        [attr.aria-selected]="solapa() === 'mes'"
-        (click)="verSolapa('mes')"
-      >
-        Cómo viene el mes
-      </button>
-    </div>
-
-    @if (solapa() === 'mes') {
-      <!-- D5 del plan de UX · el bloqueo, a la vista.
-
-           Antes el único botón vivía dentro de la vista de un día, a la que se
-           llega tocando ese día en el mes. Quien mira el mes para irse de
-           vacaciones no tiene por qué adivinar que la acción está un nivel más
-           abajo — y con el botón del día, dos semanas eran catorce viajes. El
-           botón del día se conserva: para tapar un martes suelto sigue siendo
-           el camino más corto. -->
-      @if (!diaAbierto()) {
-        @if (bloqueoAbierto()) {
-          <app-block-form
-            [motivos]="motivosDeBloqueo()"
-            (bloquear)="bloquearRango($event)"
-            (cancelar)="bloqueoAbierto.set(false)"
-          />
-        } @else {
-          <div class="mi-agenda__acciones-mes">
+    @if (mode() === 'calendar') {
+      <!-- La agenda del día, que es lo que `/schedule` abre por defecto
+           (propietario, 18/09): el día de hoy, con Semana y Mes a un toque y
+           la tabla de Consultas detrás de un ícono. Es la versión cliqueable
+           que salió de «Cómo viene el mes»: tocar un día en la semana o en el
+           mes lo abre. -->
+      <section class="calendario" aria-label="Tu agenda" data-testid="agenda-calendario">
+        <div class="calendario__barra">
+          <div class="calendario__vistas" role="group" aria-label="Cómo mirar la agenda">
             <button
-              app-button
-              variant="secondary"
               type="button"
-              (clicked)="abrirBloqueo()"
+              class="calendario__vista"
+              data-testid="ver-dia"
+              [class.calendario__vista--activa]="calendarView() === 'day'"
+              [attr.aria-pressed]="calendarView() === 'day'"
+              (click)="showDay()"
             >
-              Bloquear días u horarios
+              Día
+            </button>
+            <button
+              type="button"
+              class="calendario__vista"
+              data-testid="ver-semana"
+              [class.calendario__vista--activa]="calendarView() === 'week'"
+              [attr.aria-pressed]="calendarView() === 'week'"
+              (click)="showWeek()"
+            >
+              Semana
+            </button>
+            <button
+              type="button"
+              class="calendario__vista"
+              data-testid="ver-mes"
+              [class.calendario__vista--activa]="calendarView() === 'month'"
+              [attr.aria-pressed]="calendarView() === 'month'"
+              (click)="showMonth()"
+            >
+              Mes
             </button>
           </div>
-        }
-      }
 
-      <!-- Tocar un día abre su detalle. -->
-      @if (diaAbierto(); as dia) {
-        <app-day-view
-          [dia]="dia"
-          [cupos]="cuposDelDia()"
-          [citas]="citasDelDia()"
-          [bloqueos]="bloqueosDelMes()"
-          [tipologias]="tipologias()"
-          [etiquetas]="estadosResueltos()"
-          [puedeRegistrarLlegada]="puedeRegistrarLlegada()"
-          (accionPedida)="ejecutar($event)"
-          (diaCambiado)="moverDia($event)"
-          (detallePedido)="verDetalleDelBloque($event)"
-          (movimientoPedido)="moverHorario($event)"
-          (cierrePedido)="cerrarRato($event)"
-          (volver)="volverAlMes()"
-        />
-        <div class="mi-agenda__acciones-dia">
-          <button
-            app-button
-            variant="secondary"
-            size="sm"
-            type="button"
-            (clicked)="bloquearDia(dia)"
-          >
-            Bloquear este día
-          </button>
-        </div>
-      } @else {
-        <!-- «Un botón para ver la semana y otro para ver el mes», del pedido
-             original. No se reemplazan: responden preguntas distintas. -->
-        <div class="mi-agenda__vistas" role="group" aria-label="Cómo mirar la agenda">
-          <button
-            app-button
-            [variant]="vista() === 'mes' ? 'secondary' : 'ghost'"
-            size="sm"
-            type="button"
-            data-testid="ver-mes"
-            [attr.aria-pressed]="vista() === 'mes'"
-            (clicked)="verMes()"
-          >
-            Mes
-          </button>
-          <button
-            app-button
-            [variant]="vista() === 'semana' ? 'secondary' : 'ghost'"
-            size="sm"
-            type="button"
-            data-testid="ver-semana"
-            [attr.aria-pressed]="vista() === 'semana'"
-            (clicked)="verSemana()"
-          >
-            Semana
-          </button>
-        </div>
-
-        @if (vista() === 'semana') {
-          <app-week-view
-            [semana]="semanaVisible()"
-            [cupos]="cuposDelMes()"
-            [bloqueos]="bloqueosDelMes()"
-            (semanaElegida)="cambiarSemana($event)"
-            (diaElegido)="abrirDia($event)"
-          />
-        } @else {
-          <app-month-view
-            [mes]="mesVisible()"
-            [cupos]="cuposDelMes()"
-            [bloqueos]="bloqueosDelMes()"
-            (mesElegido)="cambiarMes($event)"
-            (diaElegido)="abrirDia($event)"
-          />
-        }
-      }
-    } @else {
-      <section class="mi-agenda__tarjeta">
-        <h2 class="mi-agenda__titulo">Atendés estos días</h2>
-
-        <!-- La grilla por horas, que es lo que el pedido original pide en su
-             punto 1: «una vista de los días de la semana por horas, resaltado
-             con otro color los que corresponden atención». La semanita de
-             abajo se queda: reconoce de inmediato el formulario con el que se
-             publicó, y la grilla responde otra pregunta —cuándo, no qué días—. -->
-        <app-schedule-grid [reglas]="reglasVigentes()" />
-
-        <ul class="mi-agenda__semana" aria-label="Días que atendés">
-          @for (dia of p.semana; track dia.numero) {
-            <li
-              class="mi-agenda__dia"
-              [class.mi-agenda__dia--activo]="dia.activo"
-              [attr.aria-label]="dia.activo ? dia.largo + ': atendés' : dia.largo + ': no atendés'"
+          <div class="calendario__acciones">
+            <a
+              app-button
+              variant="ghost"
+              size="sm"
+              data-testid="calendario-bloqueos"
+              [routerLink]="rutaBloqueos"
+              aria-label="Ver mis bloqueos"
+              appTooltip="Ver mis bloqueos de agenda"
             >
-              <span aria-hidden="true">{{ dia.corto }}</span>
-            </li>
+              <!-- El mismo candado que en la barra del horario: es la misma
+                 acción, y dos dibujos distintos para ella en la misma pantalla
+                 se leen como dos cosas distintas. -->
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="4" width="18" height="17" rx="2" />
+                <path d="M3 9h18M8 2v4M16 2v4" />
+                <rect x="9" y="14" width="6" height="4.5" rx="1" />
+                <path d="M10.4 14v-1.4a1.6 1.6 0 0 1 3.2 0V14" />
+              </svg>
+              Mis bloqueos
+            </a>
+            <a
+              app-button
+              variant="secondary"
+              size="sm"
+              data-testid="calendario-agendar-cita"
+              [routerLink]="rutaAgendarCita"
+              aria-label="Agendar una cita"
+              appTooltip="Agendar una cita a un paciente"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="4" width="18" height="17" rx="2" />
+                <path d="M3 9h18M8 2v4M16 2v4" />
+                <path d="M12 12v6M9 15h6" />
+              </svg>
+              Agendar una cita
+            </a>
+          </div>
+        </div>
+
+        <div class="calendario__panel">
+          @switch (calendarView()) {
+            @case ('week') {
+              <app-week-view
+                [semana]="semanaVisible()"
+                [cupos]="cuposDelMes()"
+                [citas]="citasDeLaSemana()"
+                [etiquetas]="estadosResueltos()"
+                [bloqueos]="bloqueosDelMes()"
+                [idioma]="idioma"
+                (semanaElegida)="cambiarSemana($event)"
+                (diaElegido)="openDay($event)"
+                (citaElegida)="verDetalleDeLaSemana($event)"
+              />
+            }
+            @case ('month') {
+              <app-month-view
+                [mes]="mesVisible()"
+                [cupos]="cuposDelMes()"
+                [bloqueos]="bloqueosDelMes()"
+                [citas]="citasDelMes()"
+                [etiquetas]="estadosResueltos()"
+                [bookingsFailed]="monthBookingsFailed()"
+                dayDetail="bookings"
+                [selectable]="true"
+                (mesElegido)="cambiarMes($event)"
+                (dayPicked)="openDay($event)"
+              />
+            }
+            @default {
+              @if (diaAbierto(); as dia) {
+                <app-day-view
+                  [dia]="dia"
+                  [cupos]="cuposDelDia()"
+                  [citas]="citasDelDia()"
+                  [bloqueos]="bloqueosDelMes()"
+                  [tipologias]="tipologias()"
+                  [etiquetas]="estadosResueltos()"
+                  [puedeRegistrarLlegada]="puedeRegistrarLlegada()"
+                  [appointmentActions]="appointmentActions()"
+                  [moviendoCita]="moviendoCita()"
+                  [ratoEnVuelo]="ratoEnVuelo()"
+                  [puedeIngresarPorMostrador]="puedeIngresarPorMostrador()"
+                  [puedeAvisarDemora]="puedeAvisarDemora()"
+                  [visitas]="visitasDelDia()"
+                  (accionPedida)="ejecutar($event)"
+                  (diaCambiado)="moverDia($event)"
+                  (detallePedido)="verDetalleDelBloque($event)"
+                  (movimientoPedido)="moverHorario($event)"
+                  (cierrePedido)="cerrarRato($event)"
+                  (ratoTocado)="abrirTarjeta($event)"
+                  (citaActivada)="citaActivada.emit($event)"
+                  (ratoElegidoParaMover)="ratoElegidoParaMover.emit($event)"
+                  (mostradorPedido)="mostradorPedido.emit()"
+                  (demoraPedida)="demoraPedida.emit()"
+                  (quitarOcupado)="quitarOcupado($event)"
+                />
+
+                <!-- LA TARJETA (AG-5): tocar un rato libre del día la abre con
+                     esa franja ya puesta. -->
+                @if (ratoParaCrear(); as rato) {
+                  @if (recurso(); as elRecurso) {
+                    <app-tarjeta-del-dia
+                      [dia]="dia"
+                      [resourceId]="elRecurso.id"
+                      [desdeInicial]="rato.desde"
+                      [hastaInicial]="rato.hasta"
+                      [cupoId]="rato.cupoId"
+                      [ratosTomados]="ratosTomadosDelDia()"
+                      (creada)="tarjetaCreo(dia)"
+                      (cerrada)="cerrarTarjeta()"
+                    />
+                  }
+                }
+                <div class="calendario__pie">
+                  <!-- C-10 · «poder agregar un horario al final en caso de
+                       emergencia». Es una excepción EXTRA —el único tipo del
+                       catálogo que ABRE disponibilidad—, y se pregunta antes,
+                       nombrando que se sale del horario de atención. -->
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    data-testid="agregar-horario-extra"
+                    (clicked)="agregarHorarioExtra(dia)"
+                  >
+                    Agregar un horario al final
+                  </button>
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    data-testid="bloquear-dia"
+                    (clicked)="bloquearDia(dia)"
+                  >
+                    Bloquear este día
+                  </button>
+                </div>
+              }
+            }
           }
-        </ul>
-
-        <ul class="mi-agenda__franjas">
-          @for (franja of p.franjas; track franja.texto) {
-            <li>{{ franja.texto }}</li>
-          }
-        </ul>
-
-        <p class="mi-agenda__estados">
-          <app-badge variant="success">Vigente</app-badge>
-          @if (p.permanente) {
-            <!-- Las palabras y las mayúsculas son del propietario (punto 5). -->
-            <app-badge variant="secondary">HORARIO PERMANENTE</app-badge>
-          }
-          <!-- «Editar sobre la fila», del pedido original. Va acá y no en un
-               menú: cambiar el horario es lo que uno viene a hacer a esta
-               pantalla después de mirarlo. -->
-          <!-- «Editar y borrar deben ser iconos sobre la fila de horarios»,
-               punto 7 del pedido. Icono con NOMBRE ACCESIBLE y tooltip: un
-               botón que sólo es un dibujo no se puede leer ni con lector de
-               pantalla ni por alguien que no reconoce el símbolo. -->
-          <a
-            app-button
-            variant="ghost"
-            size="sm"
-            [iconOnly]="true"
-            data-testid="horario-editar"
-            [routerLink]="rutaEditarHorario"
-            aria-label="Cambiar mi horario"
-            appTooltip="Cambiar mi horario"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-            </svg>
-          </a>
-          <!-- Los bloqueos tienen pantalla propia desde que se les dio el mismo
-               flujo que a los horarios. Desde acá se llega, que es donde uno
-               mira su agenda y se acuerda de que cerró algo. -->
-          <a
-            app-button
-            variant="ghost"
-            size="sm"
-            data-testid="ver-bloqueos"
-            [routerLink]="rutaBloqueos"
-          >
-            Ver mis bloqueos
-          </a>
-        </p>
-
-        @if (p.vigencia) {
-          <p class="mi-agenda__vigencia">{{ p.vigencia }}</p>
-        } @else {
-          <p class="mi-agenda__vigencia">Sin fecha de fin: rige hasta que lo cambies.</p>
-        }
-
-        <!-- El punto 8, textual del propietario. Es una regla, no una nota al
-           margen: acota qué se puede agendar en estos horarios. -->
-        <app-alert tone="info" title="Estos horarios son para consulta y cita">
-          No son para intervenciones quirúrgicas ni procedimientos prolongados. Sí pueden incluir
-          tratamientos que se hagan en la consulta.
-        </app-alert>
-
-        <div class="mi-agenda__acciones">
-          <a app-button variant="secondary" [routerLink]="[rutaDePublicar]">Cambiar mi horario</a>
-          <button
-            app-button
-            variant="ghost"
-            type="button"
-            [isLoading]="retirando()"
-            (clicked)="retirarHorario()"
-          >
-            Retirar horario
-          </button>
         </div>
       </section>
+    } @else {
+      <!-- Dos preguntas distintas sobre la misma agenda: «qué horario tengo» y
+           «cómo viene mi carga». Activación manual: la solapa se elige, no se
+           carga sola al mover el foco. -->
+      <div class="mi-agenda__solapas" role="tablist" aria-label="Vistas de mi agenda">
+        <button
+          type="button"
+          role="tab"
+          class="mi-agenda__solapa"
+          [class.mi-agenda__solapa--activa]="solapa() === 'patron'"
+          [attr.aria-selected]="solapa() === 'patron'"
+          (click)="verSolapa('patron')"
+        >
+          Mis horarios de atención
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="mi-agenda__solapa"
+          [class.mi-agenda__solapa--activa]="solapa() === 'mes'"
+          [attr.aria-selected]="solapa() === 'mes'"
+          (click)="verSolapa('mes')"
+        >
+          Cómo viene el mes
+        </button>
+      </div>
 
-      <!-- Punto 2 · los horarios que ya no rigen. Un médico que cambió su horario
-         tres veces necesita ver cuáles rigieron antes, sobre todo si todavía
-         hay pacientes citados en ellos. -->
-      @if (historicos().length > 0) {
-        <section class="mi-agenda__historicos">
-          <h2 class="mi-agenda__historicos-titulo">Horarios anteriores</h2>
-          <p class="mi-agenda__historicos-nota">
-            Ya no se publican. Los turnos que tenían paciente se conservan.
-          </p>
-          <ul class="mi-agenda__historicos-lista">
-            @for (viejo of historicos(); track viejo.id) {
-              <li class="mi-agenda__historico">
-                <span class="mi-agenda__historico-nombre">{{ viejo.name }}</span>
-                <app-badge variant="warning">Retirado</app-badge>
-                <!-- «Un botón que muestra el preview con un modal de cómo se
-                     veía antes ese horario» — punto 3 del pedido. -->
-                <button
-                  app-button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  data-testid="historico-preview"
-                  (clicked)="verHorarioViejo(viejo)"
+      @if (solapa() === 'mes') {
+        <!-- Un vistazo, no un calendario de trabajo (pedido del cliente, 18/09):
+             cada día muestra su ocupación y, al pasar el puntero o llegar con
+             Tab, un globo con el horario de atención y lo bloqueado. Abrir el
+             día, la semana y el bloqueo desde acá se sacaron: esa versión
+             cliqueable va a vivir en otra pantalla. -->
+        <app-month-view
+          [mes]="mesVisible()"
+          [cupos]="cuposDelMes()"
+          [bloqueos]="bloqueosDelMes()"
+          (mesElegido)="cambiarMes($event)"
+        />
+      } @else {
+        <section class="mi-agenda__tarjeta">
+          <!-- Arriba de la tarjeta, una sola barra: los estados a la izquierda y
+               las acciones del horario a la derecha (pedido del cliente). Se
+               leen antes que la grilla y no compiten con ella. Las acciones son
+               íconos con nombre accesible y tooltip. -->
+          <div class="mi-agenda__estados" data-testid="horario-barra">
+            <div class="mi-agenda__chips" data-testid="horario-chips">
+              <app-badge variant="success">Vigente</app-badge>
+              @if (p.permanente) {
+                <!-- Las palabras y las mayúsculas son del propietario (punto 5). -->
+                <app-badge variant="secondary">HORARIO PERMANENTE</app-badge>
+              }
+            </div>
+            <div class="mi-agenda__barra-acciones" data-testid="horario-acciones">
+              <!-- El parche manual del horizonte rodante: nadie regenera cupos
+                 todavía, así que una agenda se vacía en silencio si no se avisa.
+                 El aviso vive detrás de este «i» (pedido del cliente) para no
+                 empujar la grilla hacia abajo; el globo lleva el mismo texto y
+                 el mismo botón que antes iban en la alerta de arriba. -->
+              @if (seAgotan()) {
+                <div class="mi-agenda__aviso">
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    class="mi-agenda__accion mi-agenda__accion--aviso"
+                    [iconOnly]="true"
+                    data-testid="aviso-agotan"
+                    aria-label="Advertencia: tus turnos se están por agotar"
+                    aria-controls="aviso-agotan-globo"
+                    [attr.aria-expanded]="avisoAbierto()"
+                    (clicked)="alternarAviso()"
+                  >
+                    <!-- Triángulo de advertencia y no la «i» de información: lo
+                       que hay detrás es un aviso de que los turnos se agotan, y
+                       el triángulo lo dice sin tener que abrirlo. -->
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M10.3 3.9 1.9 18.2A2 2 0 0 0 3.6 21.2h16.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"
+                      />
+                      <path d="M12 9.5v4.5M12 17.5h.01" />
+                    </svg>
+                  </button>
+                  <!-- Oculto y no ausente: el texto sigue en el documento para el
+                     lector de pantalla que recorre la barra. -->
+                  <div
+                    id="aviso-agotan-globo"
+                    class="mi-agenda__aviso-globo"
+                    role="dialog"
+                    aria-label="Advertencia"
+                    data-testid="aviso-agotan-globo"
+                    [hidden]="!avisoAbierto()"
+                  >
+                    <app-alert tone="warning" title="Tus turnos publicados se están por agotar">
+                      Llegan hasta el <strong>{{ cuposHastaTexto() }}</strong
+                      >. Después de esa fecha nadie va a poder reservarte, aunque tu horario siga
+                      publicado.
+                      <div alert-actions>
+                        <button
+                          app-button
+                          size="sm"
+                          [isLoading]="generando()"
+                          (clicked)="generarSiguientePeriodo()"
+                        >
+                          Abrir tres meses más
+                        </button>
+                      </div>
+                    </app-alert>
+                  </div>
+                </div>
+              }
+              <!-- «Editar sobre la fila», del pedido original. Va acá y no en un
+                 menú: cambiar el horario es lo que uno viene a hacer a esta
+                 pantalla después de mirarlo. -->
+              <!-- «Editar y borrar deben ser iconos sobre la fila de horarios»,
+                 punto 7 del pedido. Icono con NOMBRE ACCESIBLE y tooltip: un
+                 botón que sólo es un dibujo no se puede leer ni con lector de
+                 pantalla ni por alguien que no reconoce el símbolo. -->
+              <a
+                app-button
+                variant="ghost"
+                size="sm"
+                class="mi-agenda__accion mi-agenda__accion--editar"
+                data-testid="horario-editar"
+                [routerLink]="rutaEditarHorario"
+                aria-label="Cambiar mi horario"
+                appTooltip="Cambiar mi horario"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
                 >
-                  Ver cómo era
-                </button>
-                <!-- «Volví del viaje»: retirar era un camino de ida y publicar
-                     uno nuevo dejaba el viejo en la lista para siempre. -->
-                <button
-                  app-button
-                  variant="secondary"
-                  size="sm"
-                  type="button"
-                  data-testid="historico-reactivar"
-                  [isLoading]="operandoHorario() === viejo.id"
-                  (clicked)="reactivarHorario(viejo)"
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+                Cambiar mi horario
+              </a>
+              <!-- El «borrar» del punto 7. No dice «Borrar»: retirar es lo que
+                 pasa de verdad (ver `retirarHorario`), y el ícono no cambia esa
+                 semántica, sólo su forma. Sigue detrás de la misma confirmación
+                 destructiva — el ícono no es menos protección que el botón de
+                 texto que reemplaza. -->
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                class="mi-agenda__accion mi-agenda__accion--retirar"
+                data-testid="horario-retirar"
+                aria-label="Retirar horario"
+                appTooltip="Retirar horario"
+                [isLoading]="retirando()"
+                (clicked)="retirarHorario()"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
                 >
-                  Volver a activarlo
-                </button>
-              </li>
-            }
-          </ul>
+                  <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
+                  <path d="M10 11v6M14 11v6" />
+                </svg>
+                Retirar horario
+              </button>
+              <!-- Los bloqueos tienen pantalla propia desde que se les dio el mismo
+                 flujo que a los horarios. Desde acá se llega, que es donde uno
+                 mira su agenda y se acuerda de que cerró algo. -->
+              <a
+                app-button
+                variant="ghost"
+                size="sm"
+                class="mi-agenda__accion mi-agenda__accion--bloqueos"
+                data-testid="ver-bloqueos"
+                [routerLink]="rutaBloqueos"
+                aria-label="Ver mis bloqueos"
+                appTooltip="Ver mis bloqueos de agenda"
+              >
+                <!-- Candado sobre el calendario, no una cruz: la cruz se lee
+                   «cancelar» y la tenía a un pelo de distancia del calendario
+                   con «+» de al lado. Un candado dice cerrado. -->
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="3" y="4" width="18" height="17" rx="2" />
+                  <path d="M3 9h18M8 2v4M16 2v4" />
+                  <rect x="9" y="14" width="6" height="4.5" rx="1" />
+                  <path d="M10.4 14v-1.4a1.6 1.6 0 0 1 3.2 0V14" />
+                </svg>
+                Mis bloqueos
+              </a>
+              <!-- Agendar una cita sin ir a buscar el día: es lo que uno quiere
+                 hacer justo después de acordarla en el consultorio. -->
+              <a
+                app-button
+                variant="ghost"
+                size="sm"
+                class="mi-agenda__accion mi-agenda__accion--agendar"
+                data-testid="agendar-cita"
+                [routerLink]="rutaAgendarCita"
+                aria-label="Agendar una cita"
+                appTooltip="Agendar una cita a un paciente"
+              >
+                <!-- El «+» más grande y centrado en la caja del calendario: es
+                   lo único que distingue este ícono del de bloqueos, así que
+                   tiene que verse antes que el marco. -->
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="3" y="4" width="18" height="17" rx="2" />
+                  <path d="M3 9h18M8 2v4M16 2v4" />
+                  <path d="M12 12v6.5M8.75 15.25h6.5" />
+                </svg>
+                Agendar una cita
+              </a>
+            </div>
+          </div>
+
+          <h2 class="mi-agenda__titulo">Atendés estos días</h2>
+
+          <!-- La grilla por horas, que es lo que el pedido original pide en su
+               punto 1. Las 24 horas, el tamaño de turno en cada franja y los
+               bloqueos de esta semana en rojo. La semanita de abajo se queda; el
+               renglón «Lunes, Martes… de 08:00 a 12:00» se fue: repetía en
+               palabras lo que la grilla ya dibuja. -->
+          <!-- El selector de cuánto día se dibuja (AC-C3-01). Dos botones y no un
+               `<select>`: son dos, se alternan de un vistazo y el que está puesto
+               se ve sin abrir nada. `aria-pressed` dice cuál rige; el rótulo
+               lleva el rango entre paréntesis porque «día completo» sin las horas
+               no dice qué se gana. -->
+          <div class="mi-agenda__rango" role="group" aria-label="Cuánto día mostrar en la grilla">
+            <button
+              app-button
+              size="sm"
+              type="button"
+              data-testid="grilla-rango-atencion"
+              [variant]="rangoDeGrilla() === 'atencion' ? 'primary' : 'ghost'"
+              [attr.aria-pressed]="rangoDeGrilla() === 'atencion'"
+              (clicked)="verRango('atencion')"
+            >
+              Horario de consulta
+            </button>
+            <button
+              app-button
+              size="sm"
+              type="button"
+              data-testid="grilla-rango-completo"
+              [variant]="rangoDeGrilla() === 'completo' ? 'primary' : 'ghost'"
+              [attr.aria-pressed]="rangoDeGrilla() === 'completo'"
+              (clicked)="verRango('completo')"
+            >
+              Día completo (00:00 – 23:59)
+            </button>
+          </div>
+
+          <app-schedule-grid
+            [reglas]="reglasVigentes()"
+            [slotMinutes]="slotDelHorario()"
+            [bloqueos]="bloqueosDeLaSemana()"
+            [rango]="rangoDeGrilla()"
+            [nombre]="nombreDelHorario()"
+            [vigencia]="p.vigencia ?? 'Sin fecha de fin: rige hasta que lo cambies.'"
+          />
+
+          <!-- Debajo de la grilla no va la semanita de círculos ni la vigencia
+               (pedido del cliente): los días ya están en la grilla y la vigencia
+               se lee en el globo de cada franja. -->
+          @if (!seAgotan() && cuposHastaTexto()) {
+            <p class="mi-agenda__cupos" role="status">
+              Tenés turnos abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
+              >.
+            </p>
+          }
         </section>
-      }
 
-      <!-- El parche manual del horizonte rodante: nadie regenera cupos todavía,
-         así que una agenda se vacía en silencio si no se avisa. -->
-      @if (seAgotan()) {
-        <app-alert tone="warning" title="Tus turnos publicados se están por agotar">
-          Llegan hasta el <strong>{{ cuposHastaTexto() }}</strong
-          >. Después de esa fecha nadie va a poder reservarte, aunque tu horario siga publicado.
-          <button
-            app-button
-            size="sm"
-            [isLoading]="generando()"
-            (clicked)="generarSiguientePeriodo()"
+        <!-- Punto 2 · los horarios que ya no rigen. Un médico que cambió su horario
+           tres veces necesita ver cuáles rigieron antes, sobre todo si todavía
+           hay pacientes citados en ellos. -->
+        @if (historicos().length > 0) {
+          <section class="mi-agenda__historicos">
+            <h2 class="mi-agenda__historicos-titulo">Horarios anteriores</h2>
+            <p class="mi-agenda__historicos-nota">
+              Ya no se publican. Los turnos que tenían paciente se conservan.
+            </p>
+            <!-- Punto 2: «tabla inferior con históricos». Antes era una lista;
+                 ahora es una tabla real — con `overflow-x:auto` propio para que
+                 no se lleve puesta la página en un teléfono. -->
+            <div class="mi-agenda__historicos-scroll">
+              <table class="mi-agenda__historicos-tabla">
+                <caption class="mi-agenda__historicos-caption">
+                  Horarios que dejaron de publicarse
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Horario</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col">Vigencia</th>
+                    <th scope="col">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (viejo of historicos(); track viejo.id) {
+                    <tr>
+                      <td>{{ viejo.name }}</td>
+                      <td><app-badge variant="warning">Retirado</app-badge></td>
+                      <td>{{ vigenciaDe(viejo) }}</td>
+                      <td class="mi-agenda__historico-acciones">
+                        <!-- «Un botón que muestra el preview con un modal de cómo
+                             se veía antes ese horario» — punto 3. Ícono sobre la
+                             fila, punto 7. -->
+                        <button
+                          app-button
+                          variant="ghost"
+                          size="sm"
+                          type="button"
+                          data-testid="historico-preview"
+                          aria-label="Ver cómo era este horario"
+                          appTooltip="Ver cómo era"
+                          (clicked)="verHorarioViejo(viejo)"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </svg>
+                          Ver cómo era
+                        </button>
+                        <!-- «Volví del viaje»: retirar era un camino de ida y
+                             publicar uno nuevo dejaba el viejo en la lista para
+                             siempre. -->
+                        <button
+                          app-button
+                          variant="secondary"
+                          size="sm"
+                          type="button"
+                          data-testid="historico-reactivar"
+                          aria-label="Volver a activar este horario"
+                          appTooltip="Volver a activarlo"
+                          [isLoading]="operandoHorario() === viejo.id"
+                          (clicked)="reactivarHorario(viejo)"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="M3 12a9 9 0 1 0 3-6.7" />
+                            <path d="M3 4v5h5" />
+                          </svg>
+                          Volver a activarlo
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
+
+        <!-- «Cómo era» ese horario — punto 3: el mismo organismo que dibuja el
+             horario oficial (`ScheduleGrid`), no una imitación en texto. -->
+        @if (historicoAVer(); as viejo) {
+          <app-content-dialog
+            [heading]="'Así era «' + viejo.name + '»'"
+            (closed)="cerrarHistorico()"
           >
-            Abrir tres meses más
-          </button>
-        </app-alert>
-      } @else if (cuposHastaTexto()) {
-        <p class="mi-agenda__cupos" role="status">
-          Tenés turnos abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
-          >.
-        </p>
+            <!-- Sin fechas: un horario retirado no es de esta semana ni de
+                 ninguna, así que la cabecera lleva sólo los nombres de los días. -->
+            <app-schedule-grid
+              [reglas]="viejo.rules"
+              [slotMinutes]="viejo.slotMinutes ?? null"
+              [conFechas]="false"
+              [nombre]="viejo.name"
+              [vigencia]="vigenciaDe(viejo)"
+            />
+            <p class="mi-agenda__historico-resumen">
+              @if (totalTurnosDe(viejo) === 0) {
+                Este horario no llegó a tener turnos.
+              } @else {
+                {{ totalTurnosDe(viejo) }}
+                {{ totalTurnosDe(viejo) === 1 ? 'turno' : 'turnos' }} por semana.
+              }
+              {{ vigenciaDe(viejo) }}
+            </p>
+          </app-content-dialog>
+        }
       }
     }
   }

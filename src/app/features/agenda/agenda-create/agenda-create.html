@@ -47,25 +47,10 @@
   </app-alert>
 } @else {
   <form class="agenda-create" (ngSubmit)="publicar()" [formGroup]="formGeneral">
-    @if (esCambio()) {
-      <!-- Lo que este formulario NO puede hacer, dicho antes y no después.
-
-           `M41 scheduling` publica plantillas y no las modifica: no hay
-           `PUT /templates/:id` ni forma de retirar una. Así que un cambio de
-           horario **agrega** el nuevo, y los turnos que el anterior ya dejó
-           abiertos siguen ahí — un paciente los seguiría viendo. Callarlo
-           sería dejar a alguien atendiendo un martes que creía haber cerrado.
-
-           Queda anotado en `PENDIENTES-BACKEND.md`; cuando la API permita
-           retirar una plantilla, este aviso se va y el cierre se hace solo. -->
-      <app-alert tone="warning" title="Los turnos ya abiertos no se cierran solos">
-        Al publicar, tu horario nuevo pasa a ser el que rige. Pero los turnos que ya se habían
-        abierto con el horario anterior <strong>siguen ofreciéndose</strong>: si alguno cae en un
-        día u horario que ya no atendés, cerralo desde
-        <a [routerLink]="rutaDeMiAgenda">Mi agenda → Cómo viene el mes → Bloquear días u
-        horarios</a>.
-      </app-alert>
-    }
+    <!-- Sin avisos arriba del formulario (propietario, 19/09/2026): ni el de
+         alcance («consulta y cita, no cirugías») ni el de «los turnos ya
+         abiertos no se cierran solos». La limitación de `M41 scheduling` sigue
+         anotada en `PENDIENTES-BACKEND.md`. -->
 
     @if (publicaSoloLaPropia()) {
       <p class="agenda-create__titular">
@@ -147,6 +132,28 @@
     <section class="agenda-create__bloque">
       <h2 class="agenda-create__titulo">¿Qué días atendés?</h2>
 
+      <!-- Horario flexible (propietario, 18/09): la franja se atiende sin
+           cortarla en turnos fijos. Va ANTES de la tabla porque cambia qué
+           columnas tiene: sin turnos no hay duración ni descanso que elegir. -->
+      <div class="agenda-create__pregunta">
+        <div class="agenda-create__pregunta-texto">
+          <span class="agenda-create__pregunta-titulo" id="agenda-create-flexible-titulo">
+            Horario flexible, sin turnos fijos
+          </span>
+          <span class="agenda-create__pregunta-ayuda">
+            Atendés dentro de tu horario y el paciente pide la hora que quiera, sin turnos de
+            duración fija.
+          </span>
+        </div>
+        <app-segmented-control
+          data-testid="agenda-create-flexible"
+          ariaLabel="Horario flexible, sin turnos fijos"
+          [options]="siNo"
+          [value]="flexible() ? 'si' : 'no'"
+          (valueChange)="flexible.set($event === 'si')"
+        />
+      </div>
+
       <!-- LA TABLA. El pedido original la describe así: «una tabla donde cada
            día de la semana es una fila, las columnas que son selects son:
            Desde, Hasta, Tamaño del slot». Antes esto eran fichas por día y un
@@ -161,16 +168,18 @@
       <div class="agenda-create__tabla-scroll">
         <table class="agenda-create__tabla">
           <caption class="agenda-create__tabla-caption">
-            Un día por fila. Encendé los que atendés y completá su horario.
+            Un día por fila. Marcá «Sí» en los que atendés y completá su horario.
           </caption>
           <thead>
             <tr>
               <th scope="col">Día</th>
               <th scope="col">Desde</th>
               <th scope="col">Hasta</th>
-              <th scope="col">Dura</th>
-              <th scope="col">Descanso</th>
-              <th scope="col">Turnos</th>
+              @if (!flexible()) {
+                <th scope="col">Dura</th>
+                <th scope="col">Descanso</th>
+                <th scope="col">Turnos</th>
+              }
             </tr>
           </thead>
           <tbody>
@@ -181,35 +190,40 @@
                 [formGroup]="grupoDe(dia.indice)"
               >
                 <th scope="row" class="agenda-create__fila-dia">
-                  <label class="agenda-create__fila-check">
-                    <input
-                      type="checkbox"
-                      [attr.data-testid]="'agenda-create-dia-' + dia.indice"
-                      [checked]="dia.activo"
-                      [attr.aria-label]="dia.largo"
-                      (change)="alternarDia(dia.indice)"
-                    />
+                  <div class="agenda-create__fila-check">
                     <span>{{ dia.largo }}</span>
-                  </label>
+                    <app-segmented-control
+                      [attr.data-testid]="'agenda-create-dia-' + dia.indice"
+                      [ariaLabel]="'¿Atendés el ' + dia.largo.toLowerCase() + '?'"
+                      [options]="siNo"
+                      [value]="dia.activo ? 'si' : 'no'"
+                      (valueChange)="fijarDia(dia.indice, $event)"
+                    />
+                  </div>
                 </th>
 
                 @if (dia.activo) {
                   <td>
-                    <app-select
-                      [options]="horasDelDia"
+                    <app-input
+                      type="time"
+                      [step]="pasoDeHora"
                       [value]="grupoDe(dia.indice).controls['desde'].value"
                       [ariaLabel]="'Desde, ' + dia.largo"
+                      [testId]="'agenda-create-desde-' + dia.indice"
                       (valueChange)="fijarDeLaFila(dia.indice, 'desde', $event)"
                     />
                   </td>
                   <td>
-                    <app-select
-                      [options]="horasDelDia"
+                    <app-input
+                      type="time"
+                      [step]="pasoDeHora"
                       [value]="grupoDe(dia.indice).controls['hasta'].value"
                       [ariaLabel]="'Hasta, ' + dia.largo"
+                      [testId]="'agenda-create-hasta-' + dia.indice"
                       (valueChange)="fijarDeLaFila(dia.indice, 'hasta', $event)"
                     />
                   </td>
+                  @if (!flexible()) {
                   <td>
                     <app-select
                       [options]="opcionesDeDuracion"
@@ -231,8 +245,11 @@
                   <td class="agenda-create__fila-turnos" aria-live="polite">
                     <strong>{{ turnosDelDia(dia.indice) }}</strong>
                   </td>
+                  }
                 } @else {
-                  <td colspan="5" class="agenda-create__fila-apagada">No atendés</td>
+                  <td [attr.colspan]="flexible() ? 2 : 5" class="agenda-create__fila-apagada">
+                    No atendés
+                  </td>
                 }
               </tr>
             }
@@ -241,7 +258,52 @@
       </div>
 
       @if (sinDias()) {
-        <p class="agenda-create__vacio">Encendé los días en los que atendés para cargar su horario.</p>
+        <p class="agenda-create__vacio">Marcá «Sí» en los días que atendés para cargar su horario.</p>
+      }
+
+      <!-- La hora de almuerzo: una para toda la semana. Por dentro, cada día
+           que la atraviesa se publica como dos franjas —mañana y tarde—, que
+           es lo que el contrato ya sabe guardar. -->
+      <div class="agenda-create__pregunta">
+        <div class="agenda-create__pregunta-texto">
+          <span class="agenda-create__pregunta-titulo">¿Tenés hora de almuerzo?</span>
+          <span class="agenda-create__pregunta-ayuda">
+            En ese rato no se ofrecen consultas, en ninguno de los días que atendés.
+          </span>
+        </div>
+        <app-segmented-control
+          data-testid="agenda-create-almuerzo"
+          ariaLabel="¿Tenés hora de almuerzo?"
+          [options]="siNo"
+          [value]="conAlmuerzo() ? 'si' : 'no'"
+          (valueChange)="conAlmuerzo.set($event === 'si')"
+        />
+      </div>
+
+      @if (conAlmuerzo()) {
+        <div class="agenda-create__almuerzo">
+          <app-form-field label="Almuerzo desde">
+            <app-input
+              type="time"
+              [step]="pasoDeHora"
+              [value]="almuerzoDesde()"
+              testId="agenda-create-almuerzo-desde"
+              (valueChange)="fijarAlmuerzo('desde', $event)"
+            />
+          </app-form-field>
+          <app-form-field
+            label="Hasta"
+            [errorMessage]="almuerzoInvalido() ? 'Tiene que terminar después de empezar.' : ''"
+          >
+            <app-input
+              type="time"
+              [step]="pasoDeHora"
+              [value]="almuerzoHasta()"
+              testId="agenda-create-almuerzo-hasta"
+              (valueChange)="fijarAlmuerzo('hasta', $event)"
+            />
+          </app-form-field>
+        </div>
       }
 
       @if (diasActivos().length > 1) {
@@ -263,39 +325,67 @@
            Se recalcula sola al cambiar una hora o una duración. -->
       @if (!sinDias()) {
         <div class="agenda-create__previa" role="status">
-          <h3 class="agenda-create__previa-titulo">Así van a quedar tus turnos</h3>
+          <h3 class="agenda-create__previa-titulo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 2" />
+            </svg>
+            Así van a quedar tus turnos
+          </h3>
 
-          @for (dia of vistaPrevia().porDia; track dia.dia) {
-            <p class="agenda-create__previa-dia">
-              <strong class="agenda-create__previa-cuenta"
-                >{{ dia.dia | titlecase }}: {{ dia.turnos.length }}
-                {{ dia.turnos.length === 1 ? 'turno' : 'turnos' }}</strong
-              >
-              @if (dia.turnos.length > 0) {
-                <span class="agenda-create__previa-horas">
-                  @for (turno of dia.turnos.slice(0, 3); track turno.desde) {
-                    {{ turno.desde }} ·
-                  }
-                  @if (dia.turnos.length > 4) {
-                    …·
-                  }
-                  @if (dia.turnos.length > 3) {
-                    {{ dia.turnos[dia.turnos.length - 1].desde }}
-                  }
-                </span>
-              }
-            </p>
+          <!-- Una fila por día, en columnas: el día, el rango y la cuenta
+               alineados de un día al otro se comparan de un vistazo. En
+               renglones de texto corrido cada rango arrancaba en otra columna
+               (propietario, 18/09). -->
+          <ul class="agenda-create__previa-lista">
+            @for (dia of vistaPrevia().porDia; track dia.dia) {
+              <li class="agenda-create__previa-dia">
+                <strong class="agenda-create__previa-cuenta">{{ dia.dia | titlecase }}</strong>
+                <!-- El rango, y no una tira de horas de inicio.
+                     Antes decía «08:00 · 08:30 · 09:00 · … · 11:30» para una
+                     franja de 08:00 a 12:00, y `11:30` es cuando **empieza** el
+                     último turno: se leía como que el día termina ahí. La hora
+                     que a nadie le da lo mismo es la de cierre. -->
+                @if (flexible()) {
+                  <span class="agenda-create__previa-horas">
+                    {{ grupoDe(diasActivos()[$index].indice).controls.desde.value }} –
+                    {{ grupoDe(diasActivos()[$index].indice).controls.hasta.value }}
+                  </span>
+                  <span class="agenda-create__previa-detalle">Sin turnos fijos</span>
+                } @else if (dia.turnos.length > 0) {
+                  <span class="agenda-create__previa-horas">
+                    {{ dia.turnos[0].desde }} – {{ dia.turnos[dia.turnos.length - 1].hasta }}
+                  </span>
+                  <span class="agenda-create__previa-detalle">
+                    {{ dia.turnos.length }}
+                    {{ dia.turnos.length === 1 ? 'turno' : 'turnos' }} de
+                    {{ dia.turnos[0].minutos }} min
+                  </span>
+                } @else {
+                  <span class="agenda-create__previa-horas agenda-create__previa-horas--vacia">
+                    No entra ningún turno
+                  </span>
+                }
 
-            <!-- El resto, dicho como información y no como pregunta: el backend
-                 trunca (verificado), así que no hay nada que decidir. -->
-            @if (dia.restoDesde !== null) {
-              <p class="agenda-create__previa-resto">
-                Te queda libre de {{ dia.restoDesde }} a
-                {{ grupoDe(diasActivos()[$index].indice).controls.hasta.value }} ({{ dia.resto }}
-                min): no alcanza para otra consulta.
-              </p>
+                <!-- El resto, dicho como información y no como pregunta: el
+                     backend trunca (verificado), así que no hay nada que
+                     decidir. -->
+                @if (almuerzaEse(diasActivos()[$index].indice)) {
+                  <p class="agenda-create__previa-resto">
+                    Almuerzo de {{ almuerzoDesde() }} a {{ almuerzoHasta() }}: sin consultas.
+                  </p>
+                }
+                @if (!flexible() && dia.restoDesde !== null) {
+                  <p class="agenda-create__previa-resto">
+                    Te queda libre de {{ dia.restoDesde }} a
+                    {{ grupoDe(diasActivos()[$index].indice).controls.hasta.value }} ({{ dia.resto }}
+                    min): no alcanza para otra consulta.
+                  </p>
+                }
+              </li>
             }
-          }
+          </ul>
         </div>
       }
     </section>
@@ -304,19 +394,30 @@
     <section class="agenda-create__bloque">
       <h2 class="agenda-create__titulo">¿Este horario tiene fecha de fin?</h2>
 
-      <div class="agenda-create__opciones" role="radiogroup" aria-label="Vigencia del horario">
-        <!-- «NUNCA CAMBIAR» son las palabras del pedido, y se usan tal cual:
-             la lista de horarios ya etiqueta a éste como HORARIO PERMANENTE, y
-             que las dos pantallas lo nombren distinto obliga a deducir que
-             hablan de lo mismo. -->
-        <label class="agenda-create__opcion">
-          <input type="radio" formControlName="tieneFin" value="no" />
-          <span>Nunca cambia — horario permanente</span>
-        </label>
-        <label class="agenda-create__opcion">
-          <input type="radio" formControlName="tieneFin" value="si" />
-          <span>Sí, hasta una fecha</span>
-        </label>
+      <!-- Un interruptor y no dos tarjetas (propietario, 19/09): la pregunta
+           es de sí o no, y el texto de la izquierda dice en palabras qué
+           significa la posición actual. «Nunca cambia — horario permanente»
+           sigue siendo el nombre del estado apagado: la lista de horarios ya
+           lo etiqueta HORARIO PERMANENTE. -->
+      <div class="agenda-create__interruptor" data-testid="agenda-create-vigencia">
+        <span class="agenda-create__pregunta-texto" aria-live="polite">
+          @if (formGeneral.controls.tieneFin.value === 'si') {
+            <span class="agenda-create__pregunta-titulo">Sí, hasta una fecha</span>
+            <span class="agenda-create__pregunta-ayuda">
+              Para una temporada, un reemplazo o un horario de prueba.
+            </span>
+          } @else {
+            <span class="agenda-create__pregunta-titulo">Nunca cambia — horario permanente</span>
+            <span class="agenda-create__pregunta-ayuda">
+              Sigue vigente hasta que lo cambies vos.
+            </span>
+          }
+        </span>
+        <app-switch
+          label="Tiene fecha de fin"
+          [checked]="formGeneral.controls.tieneFin.value === 'si'"
+          (checkedChange)="formGeneral.controls.tieneFin.setValue($event ? 'si' : 'no')"
+        />
       </div>
 
       @if (formGeneral.controls.tieneFin.value === 'si') {
@@ -343,19 +444,6 @@
 
       @if (avanzadasAbiertas()) {
         <div class="agenda-create__avanzadas">
-          @if (sedes().length > 1) {
-            <app-form-field label="¿En qué sede atendés?" hint="Si atendés en varias, elegí una">
-              <app-select formControlName="practiceId" [options]="sedes()" />
-            </app-form-field>
-          }
-
-          <app-form-field
-            label="¿Cuántos pacientes por turno?"
-            hint="Casi siempre es 1. Poné más sólo si atendés en grupo."
-          >
-            <app-input type="number" formControlName="capacidadPorTurno" />
-          </app-form-field>
-
           <app-form-field
             label="Zona horaria"
             hint="La detectamos sola. Cambiala sólo si atendés en otro huso."
@@ -363,47 +451,84 @@
             <app-input formControlName="timeZone" />
           </app-form-field>
 
-          <label class="agenda-create__opcion">
-            <input
-              type="checkbox"
-              [checked]="usarPolitica()"
-              (change)="usarPolitica.set(!usarPolitica())"
+          <div class="agenda-create__pregunta">
+            <span class="agenda-create__pregunta-titulo">
+              ¿Poner reglas de reserva? (anticipación, cancelación…)
+            </span>
+            <app-segmented-control
+              data-testid="agenda-create-politica"
+              ariaLabel="¿Poner reglas de reserva?"
+              [options]="siNo"
+              [value]="usarPolitica() ? 'si' : 'no'"
+              (valueChange)="usarPolitica.set($event === 'si')"
             />
-            <span>Poner reglas de reserva (anticipación, cancelación…)</span>
-          </label>
+          </div>
 
           @if (usarPolitica()) {
+            <!-- Cada regla en su tarjeta, con la unidad pegada al número: el
+                 médico escribe «60» y lee «60 min», sin ir a buscar la unidad
+                 a la ayuda de abajo. -->
             <div class="agenda-create__politica" [formGroup]="formPolitica">
               <app-form-field
+                class="agenda-create__regla"
                 label="Anticipación mínima"
-                hint="Minutos antes del turno hasta cuándo se puede pedir"
+                hint="Hasta cuánto antes del turno se puede pedir."
               >
-                <app-input type="number" formControlName="minNoticeMinutes" />
-              </app-form-field>
-              <app-form-field label="Se puede reservar con hasta" hint="Días de anticipación">
-                <app-input type="number" formControlName="maxAdvanceDays" />
+                <div class="agenda-create__con-unidad">
+                  <app-input type="number" placeholder="Ej.: 60" formControlName="minNoticeMinutes" />
+                  <span class="agenda-create__unidad" aria-hidden="true">min</span>
+                </div>
               </app-form-field>
               <app-form-field
-                label="Se puede cancelar hasta"
-                hint="Minutos antes del turno"
+                class="agenda-create__regla"
+                label="Se puede reservar con hasta"
+                hint="Cuántos días hacia adelante se ve la agenda."
               >
-                <app-input type="number" formControlName="cancellationWindowMinutes" />
+                <div class="agenda-create__con-unidad">
+                  <app-input type="number" placeholder="Ej.: 30" formControlName="maxAdvanceDays" />
+                  <span class="agenda-create__unidad" aria-hidden="true">días</span>
+                </div>
               </app-form-field>
-              <app-form-field label="Turnos activos por paciente" hint="Máximo simultáneo">
-                <app-input type="number" formControlName="maxActivePerPatient" />
+              <app-form-field
+                class="agenda-create__regla"
+                label="Se puede cancelar hasta"
+                hint="Minutos antes del turno."
+              >
+                <div class="agenda-create__con-unidad">
+                  <app-input
+                    type="number"
+                    placeholder="Ej.: 120"
+                    formControlName="cancellationWindowMinutes"
+                  />
+                  <span class="agenda-create__unidad" aria-hidden="true">min</span>
+                </div>
+              </app-form-field>
+              <app-form-field
+                class="agenda-create__regla"
+                label="Turnos activos por paciente"
+                hint="Máximo de turnos pendientes a la vez."
+              >
+                <div class="agenda-create__con-unidad">
+                  <app-input type="number" placeholder="Ej.: 2" formControlName="maxActivePerPatient" />
+                  <span class="agenda-create__unidad" aria-hidden="true">turnos</span>
+                </div>
               </app-form-field>
             </div>
           }
 
           @if (puedePublicarParaOtro()) {
-            <label class="agenda-create__opcion">
-              <input
-                type="checkbox"
-                [checked]="publicarParaOtro()"
-                (change)="publicarParaOtro.set(!publicarParaOtro())"
+            <div class="agenda-create__pregunta">
+              <span class="agenda-create__pregunta-titulo">
+                ¿Publicar la agenda de otro recurso? (formulario técnico)
+              </span>
+              <app-segmented-control
+                data-testid="agenda-create-otro-recurso"
+                ariaLabel="¿Publicar la agenda de otro recurso?"
+                [options]="siNo"
+                [value]="publicarParaOtro() ? 'si' : 'no'"
+                (valueChange)="publicarParaOtro.set($event === 'si')"
               />
-              <span>Publicar la agenda de otro recurso (formulario técnico)</span>
-            </label>
+            </div>
           }
 
           @if (!publicaSoloLaPropia()) {
@@ -431,11 +556,26 @@
     }
 
     @if (errorMessage(); as mensaje) {
-      <app-alert tone="error" title="No se pudo publicar">{{ mensaje }}</app-alert>
+      <app-alert tone="error" title="No se pudo publicar">
+        {{ mensaje }}
+        <!-- Con citas comprometidas el mensaje dice qué hay que resolver, y el
+             enlace dice dónde: sin él, «resolvelas» es una instrucción sin
+             destino. -->
+        @if (citasQueFrenan()) {
+          <a app-link [routerLink]="[rutaDeMiAgenda]" data-testid="agenda-create-ver-citas">
+            Ver esas citas en Mi agenda
+          </a>
+        }
+      </app-alert>
     }
 
     <div class="agenda-create__acciones">
-      <button app-button type="submit" [isLoading]="cargando()" [disabled]="sinDias()">
+      <button
+        app-button
+        type="submit"
+        [isLoading]="cargando()"
+        [disabled]="sinDias() || almuerzoInvalido()"
+      >
         {{ esCambio() ? 'Guardar mi horario' : 'Publicar mi agenda' }}
       </button>
 
@@ -469,9 +609,70 @@
       <!-- «Cancelar» del pedido original. Vuelve a la agenda sin publicar; no
            limpia nada, porque cancelar y limpiar son dos cosas distintas y
            confundirlas hace perder trabajo. -->
-      <a app-button variant="ghost" data-testid="agenda-create-cancelar" [routerLink]="rutaMiAgenda">
+      <a app-button variant="ghost" data-testid="agenda-create-cancelar" [routerLink]="rutaDeMiAgenda">
         Cancelar
       </a>
     </div>
+
+    <!-- «Previsualizar horario»: el MISMO organismo que dibuja el horario ya
+         publicado en «Mi agenda» (`ScheduleGrid`), no una imitación en texto.
+         Es la misma decisión que el modal «Así era ese horario» del histórico:
+         si la previa no se parece a lo que previsualiza, no sirve de nada. -->
+    @if (previaAbierta()) {
+      <app-content-dialog
+        heading="Así va a quedar tu horario"
+        [description]="resumen()"
+        size="xl"
+        closeLabel="Cerrar"
+        (closed)="cerrarVistaPrevia()"
+      >
+        <!-- Sin fechas: un horario que todavía no se publicó no es de esta
+             semana ni de ninguna, así que la cabecera lleva sólo los días. -->
+        <app-schedule-grid
+          [reglas]="reglasDeLaPrevia()"
+          [slotMinutes]="flexible() ? null : (reglasDeLaPrevia()[0]?.slotMinutes ?? null)"
+          [conFechas]="false"
+          [nombre]="nombreDelRecurso()"
+          [vigencia]="vigenciaDeLaPrevia()"
+        />
+
+        <p class="agenda-create__previa-total">
+          <!-- En horario flexible no hay turnos que contar: la franja se
+               atiende entera y la hora la elige el paciente. -->
+          @if (flexible()) {
+            Horario flexible: sin turnos fijos, el paciente pide la hora que quiera.
+          } @else if (vistaPrevia().total === 0) {
+            Con estas horas no entra ningún turno: revisá las duraciones.
+          } @else {
+            {{ vistaPrevia().total }}
+            {{ vistaPrevia().total === 1 ? 'turno' : 'turnos' }} por semana.
+          }
+          {{ vigenciaDeLaPrevia() }}
+        </p>
+
+        <!-- Dos salidas y las dos cierran: el modal MIRA, no decide. Publicar
+             sigue siendo el botón del pie del formulario, que es donde estaba
+             antes de abrir esto. -->
+        <button
+          dialog-actions
+          app-button
+          type="button"
+          variant="outline"
+          data-testid="agenda-create-previa-volver"
+          (clicked)="cerrarVistaPrevia()"
+        >
+          Volver a editar
+        </button>
+        <button
+          dialog-actions
+          app-button
+          type="button"
+          data-testid="agenda-create-previa-ok"
+          (clicked)="cerrarVistaPrevia()"
+        >
+          Está bien
+        </button>
+      </app-content-dialog>
+    }
   </form>
 }

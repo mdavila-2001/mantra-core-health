@@ -3,6 +3,8 @@
     class="filter-bar__search"
     [value]="searchTerm()"
     [label]="searchLabel()"
+    [placeholder]="searchPlaceholder()"
+    [loading]="searchLoading()"
     (searched)="onSearch($event)"
   />
 

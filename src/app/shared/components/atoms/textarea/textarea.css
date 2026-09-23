@@ -17,9 +17,9 @@
     border-radius: var(--r-sm);
     padding: var(--sp-3) var(--sp-4);
     transition:
-        border-color 0.15s ease,
-        box-shadow 0.15s ease,
-        background-color 0.15s ease;
+        border-color var(--dur-fast) var(--ease-standard),
+        box-shadow var(--dur-fast) var(--ease-standard),
+        background-color var(--dur-fast) var(--ease-standard);
 }
 
 /* Base = móvil: padding táctil mayor. Desde 780px (tablet/escritorio) se compacta. */

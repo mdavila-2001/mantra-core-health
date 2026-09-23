@@ -99,11 +99,28 @@ function colisiona(ruta, prefijo) {
   return `/${ruta}`.startsWith(prefijo);
 }
 
+/**
+ * Rutas que **no** son de primer nivel, con su padre escrito.
+ *
+ * El lector junta todo `path:` del archivo sin saber de quién cuelga —con una
+ * expresión regular no hay árbol—, así que una ruta anidada se denuncia como si
+ * viviera en la raíz. El proxy nunca la ve: lo que viaja es la ruta completa.
+ *
+ * La excepción se declara acá, con el padre, y no se afloja la comparación:
+ * bajar la exigencia dejaría pasar el defecto histórico que este archivo existe
+ * para impedir. Si alguna de éstas se promueve a primer nivel, hay que sacarla
+ * de esta tabla y renombrarla.
+ */
+const ANIDADAS = new Map([
+  ['practitioners', "cuelga de 'search': la URL real es /search/practitioners"],
+]);
+
 const prefijos = prefijosDeLaApi();
 const rutas = rutasDeclaradas();
 const problemas = [];
 
 for (const ruta of rutas) {
+  if (ANIDADAS.has(ruta)) continue;
   for (const prefijo of prefijos) {
     if (colisiona(ruta, prefijo)) {
       problemas.push(`la ruta '/${ruta}' empieza con el prefijo de la API '${prefijo}'`);
@@ -125,3 +142,6 @@ if (problemas.length > 0) {
 
 console.log('✓ check-route-prefixes');
 console.log(`  ${rutas.length} rutas del router, ninguna colisiona con los ${prefijos.length} prefijos de la API`);
+for (const [ruta, motivo] of ANIDADAS) {
+  console.log(`  excepción declarada: '${ruta}' — ${motivo}`);
+}

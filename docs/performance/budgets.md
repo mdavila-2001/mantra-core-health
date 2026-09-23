@@ -48,10 +48,10 @@ Prerenderizadas: 4 rutas
 **El build no falla**: está 483 kB por debajo del umbral de error. Es un aviso
 preexistente, registrado en [la línea base](../reports/baseline.md).
 
-## Actualización: la hoja de REDSAT (2026-08-13)
+## Actualización: la hoja de ALOVIDA (2026-08-13)
 
 Al adoptar el sistema de diseño de la bóveda —ver
-[el port de las vistas](../design-system/port-redsat.md)— la hoja global pasó de
+[el port de las vistas](../design-system/port-alovida.md)— la hoja global pasó de
 14,37 kB a **124,54 kB crudos**, y el total inicial a **775 kB**.
 
 ```text

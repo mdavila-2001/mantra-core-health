@@ -69,7 +69,7 @@
   width: 0.875rem;
   height: 0.875rem;
   flex: none;
-  transition: transform 120ms ease;
+  transition: transform var(--dur-fast) var(--ease-standard);
 }
 
 /* La bandera vive dentro de `app-pais-bandera`, así que su propia hoja está

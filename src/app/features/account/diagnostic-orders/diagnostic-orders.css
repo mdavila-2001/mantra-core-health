@@ -21,9 +21,9 @@
 }
 
 .ordenes__item {
-  background: var(--surface-1);
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--r-md);
   display: grid;
   gap: var(--sp-3);
   padding: var(--sp-4);
@@ -38,14 +38,14 @@
 }
 
 .ordenes__titulo {
-  font-size: var(--fs-lg);
+  font-size: var(--fs-body-lg);
   font-weight: 600;
   margin: 0;
 }
 
 .ordenes__fecha {
   color: var(--text-muted);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
   margin: 0;
 }
 
@@ -62,14 +62,6 @@
   gap: var(--sp-3);
 }
 
-/* El aviso de que la reserva todavía no existe acompaña al botón apagado. Va
-   como texto y no como `title`: un tooltip nativo no existe para quien navega
-   con teclado ni para un lector de pantalla. */
-.ordenes__proximamente {
-  color: var(--text-muted);
-  font-size: var(--fs-sm);
-}
-
 /* El encabezado de cada atención. Separa los grupos sin cajas: la jerarquía la
    dan el espacio y el peso, que en una lista corta se lee mejor que un marco. */
 .ordenes__grupo + .ordenes__grupo {
@@ -77,7 +69,7 @@
 }
 
 .ordenes__grupo-titulo {
-  font-size: var(--fs-md);
+  font-size: var(--fs-body);
   font-weight: 600;
   margin: 0 0 var(--sp-3);
 }

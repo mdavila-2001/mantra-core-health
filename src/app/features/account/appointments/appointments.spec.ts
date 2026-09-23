@@ -5,17 +5,23 @@ import {
   type TestRequest,
 } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { SessionStore } from '../../../core/auth/session.store';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
+import type { AgendaResource, AgendaSlot } from '../../../core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ValueSetOption } from '../../../core/data-access/terminology/terminology.types';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
-import { Appointments, etiquetaDeRecurso } from './appointments';
+import {
+  Appointments,
+  etiquetaDeRecurso,
+  etiquetasSinColision,
+  opcionesDeSedeDe,
+} from './appointments';
 import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
 
 /**
@@ -148,6 +154,109 @@ describe('Appointments', () => {
     fixture.detectChanges();
   }
 
+  /* ---- Refactor UX · piloto «Mis citas» (docs/refactor-profesional) ------- */
+
+  describe('refactor UX: lo que viene primero y la acción a la vista', () => {
+    /** Una cita con fecha propia: la del helper `cita` es siempre la misma. */
+    function citaEn(id: string, inicio: string, fin: string): Record<string, unknown> {
+      return { ...cita(id, CONFIRMADO), startAt: inicio, endAt: fin };
+    }
+
+    function arrancarConCitas(citas: unknown[]): void {
+      montar();
+      responderArranque(citas);
+      responderTerminologia([
+        { conceptId: CONFIRMADO, code: 'BOOKING_CONFIRMED', display: 'Booking confirmed' },
+      ]);
+    }
+
+    function textoDe(selector: string): string[] {
+      const nodos = fixture.nativeElement.querySelectorAll(selector) as NodeListOf<HTMLElement>;
+      return Array.from(nodos, (nodo) => nodo.textContent?.trim() ?? '');
+    }
+
+    it('R-02 · las próximas encabezan la lista y las atendidas van debajo, la más reciente arriba', () => {
+      // El servidor las manda ascendentes: así, el historial enterraba la próxima (H-04).
+      arrancarConCitas([
+        citaEn('vieja', '2020-01-10T13:00:00.000Z', '2020-01-10T13:30:00.000Z'),
+        citaEn('reciente', '2021-05-10T13:00:00.000Z', '2021-05-10T13:30:00.000Z'),
+        citaEn('futura', '2099-03-01T13:00:00.000Z', '2099-03-01T13:30:00.000Z'),
+      ]);
+
+      expect(textoDe('.turnos__grupo-titulo').map((t) => t.replace(/\s+/g, ' '))).toEqual([
+        'Próximas 1',
+        'Anteriores 2',
+      ]);
+      const proximas = fixture.nativeElement.querySelector('[data-testid="turnos-lista-upcoming"]');
+      const anteriores = fixture.nativeElement.querySelector('[data-testid="turnos-lista-past"]');
+      // La fecha se pinta sin año; el 1 de marzo sólo existe en la futura.
+      expect(proximas.textContent).toMatch(/\b1 mar/i);
+      const fechas = Array.from(
+        anteriores.querySelectorAll('.turnos__fecha') as NodeListOf<HTMLElement>,
+        (nodo) => nodo.textContent ?? '',
+      );
+      // La más reciente (mayo de 2021) arriba; la más vieja (enero de 2020) abajo.
+      expect(fechas[0]).toMatch(/may/i);
+      expect(fechas[1]).toMatch(/jan|ene/i);
+      // El orden de `turnosListos` —del que cuelgan calendario y cancelación— no cambia.
+      expect(interno<() => readonly { id: string }[]>('turnosListos')().map((t) => t.id)).toEqual([
+        'vieja',
+        'reciente',
+        'futura',
+      ]);
+    });
+
+    it('R-02 · sin citas pasadas no dibuja un grupo «Anteriores» vacío', () => {
+      arrancarConCitas([
+        citaEn('a', '2099-03-01T13:00:00.000Z', '2099-03-01T13:30:00.000Z'),
+        citaEn('b', '2099-03-02T13:00:00.000Z', '2099-03-02T13:30:00.000Z'),
+      ]);
+
+      expect(textoDe('.turnos__grupo-titulo')).toHaveLength(1);
+      expect(fixture.nativeElement.querySelector('[data-testid="turnos-lista-past"]')).toBeNull();
+    });
+
+    it('R-01 · «Pedir una cita» está en el encabezado y deja el foco en «Agendar una cita»', () => {
+      arrancarConCitas([cita('b-1', CONFIRMADO)]);
+
+      const boton = fixture.nativeElement.querySelector(
+        'app-page-header [data-testid="turnos-pedir"]',
+      ) as HTMLButtonElement | null;
+      expect(boton).not.toBeNull();
+      expect(boton?.textContent?.trim()).toBe('Pedir una cita');
+
+      boton?.click();
+
+      expect(document.activeElement?.id).toBe('pedir-turno');
+      expect(document.activeElement?.textContent?.trim()).toBe('Agendar una cita');
+    });
+
+    it('R-01 · una cuenta sin perfil de paciente no recibe el botón', () => {
+      montar({});
+
+      expect(fixture.nativeElement.querySelector('[data-testid="turnos-pedir"]')).toBeNull();
+    });
+
+    it('R-03 · «Más filtros» anuncia si está abierto y cuántos filtros esconde', () => {
+      arrancarConCitas([cita('b-1', CONFIRMADO), cita('b-2', CONFIRMADO)]);
+      const boton = (): HTMLElement =>
+        fixture.nativeElement.querySelector('[data-testid="turnos-mas-filtros"]');
+
+      expect(boton().getAttribute('aria-expanded')).toBe('false');
+      expect(boton().getAttribute('aria-controls')).toBe('turnos-filtros-plegables');
+
+      boton().click();
+      fixture.detectChanges();
+
+      expect(boton().getAttribute('aria-expanded')).toBe('true');
+      expect(
+        fixture.nativeElement
+          .querySelector('[data-testid="turnos-filtros"]')
+          .classList.contains('turnos__filtros--abiertos'),
+      ).toBe(true);
+    });
+  });
+
   /* ---- TJ-2 · la ventana y la reprogramación ------------------------------ */
 
   describe('reglas finas de la cita (TJ-2)', () => {
@@ -227,6 +336,19 @@ describe('Appointments', () => {
       // médica en una sala de toma de muestras.
       expect(pedido.request.params.get('resourceType')).toBe('PRACTITIONER');
       pedido.flush({ items: [], count: 0 });
+    });
+
+    it('refactor UX: con ?resource=lab (desde «Mis órdenes») arranca pidiendo laboratorios', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?resource=lab');
+      montar();
+      http
+        .expectOne((r) => r.url === '/scheduling/bookings')
+        .flush({ items: [], count: 0, limit: 50, truncated: false });
+
+      const pedido = http.expectOne((r) => r.url === '/scheduling/resources');
+      expect(pedido.request.params.get('resourceType')).toBe('ROOM');
+      pedido.flush({ items: [], count: 0 });
+      expect(interno<() => boolean>('esLaboratorio')()).toBe(true);
     });
 
     it('al cambiar a laboratorio, vuelve a preguntar por recursos de tipo ROOM', () => {
@@ -763,21 +885,6 @@ function etiqueta(conceptId: string, code: string, display = code): [string, unk
   return [conceptId, { conceptId, code, display, codeSystemVersionId: 'csv-1' }];
 }
 
-/** Un cupo ya mapeado por el cliente, para poblar la grilla de horarios. */
-function cupoMock(id: string) {
-  return {
-    id,
-    resourceId: 'r-1',
-    scheduleTemplateId: null,
-    startAt: new Date('2026-08-14T13:00:00.000Z'),
-    endAt: new Date('2026-08-14T13:30:00.000Z'),
-    capacity: 1,
-    remainingCapacity: 1,
-    statusConceptId: 'c-open',
-    serviceConceptId: null,
-  };
-}
-
 /** El motivo que devuelve el diálogo en las pruebas (corrección #14). */
 const MOTIVO_DE_PRUEBA = 'Me surgió un viaje esa semana';
 
@@ -788,7 +895,7 @@ interface Opciones {
   /** La organización activa. Por omisión no hay, como en los casos de E1. */
   readonly tenant?: string;
   readonly resources?: readonly { id: string; name: string }[];
-  readonly slots?: readonly ReturnType<typeof cupoMock>[];
+  readonly slots?: readonly AgendaSlot[];
   /** Las esperas activas del titular (P8). Por omisión, ninguna. */
   readonly waitlist?: readonly {
     id: string;
@@ -846,7 +953,15 @@ function montarCancelacion(opts: Opciones) {
       // hay — los casos de la grilla la declaran.
       {
         provide: AuthService,
-        useValue: { patientProfileId: () => 'p-1', activeTenantId: () => opts.tenant ?? null },
+        // `userId` y `displayName` los necesita `PatientContextService` (B.1),
+        // del que la pantalla toma por quién se está operando: sin ellos el
+        // efecto que descarta la elección al cambiar de cuenta revienta.
+        useValue: {
+          userId: () => 'u-1',
+          displayName: () => 'Ana Quispe',
+          patientProfileId: () => 'p-1',
+          activeTenantId: () => opts.tenant ?? null,
+        },
       },
       { provide: DialogService, useValue: { confirm, confirmWithReason } },
       { provide: ToastService, useValue: toast },
@@ -875,11 +990,6 @@ function api(comp: Appointments) {
   return comp as unknown as {
     esCancelable(t: { codigo: string }): boolean;
     cancelarTurno(t: unknown): Promise<void>;
-    esReprogramable(t: { codigo: string }): boolean;
-    iniciarReprogramacion(t: unknown): void;
-    cancelarReprogramacion(): void;
-    reprogramarA(h: unknown): Promise<void>;
-    reprogramando(): string | null;
     elegirAgenda(clave: string | null): void;
     turnosListos(): readonly { id: string; codigo: string; resourceId: string; estado: string }[];
   };
@@ -1036,256 +1146,43 @@ describe('Appointments · cancelar turno propio', () => {
 });
 
 /**
- * Reprogramar el turno propio (V41-02·A, cara paciente).
+ * **El paciente NO reprograma** (pedido del propietario, 13/09/2026).
  *
- * Lo que estas pruebas fijan:
+ * Antes esta pantalla ofrecía «Reprogramar» sobre las citas vigentes y tenía un
+ * modo entero para mover el turno desde la grilla de horarios. Mover una cita
+ * reordena la agenda del profesional, así que la decisión es suya: el botón, el
+ * modo y el segundo significado del hueco de la grilla se fueron, y al titular
+ * le quedan **ver y cancelar**. La mitad que falta —que quien atiende SÍ pueda
+ * moverla— vive en `features/agenda`.
  *
- * 1. **La allowlist de reprogramar es propia, no la de cancelar.** El backend
- *    sólo mueve una cita vigente (confirmada o con llegada): una solicitada o
- *    pendiente se puede cancelar pero no mover.
- * 2. **El modo es inequívoco.** Fuera de él, la grilla sigue enlazando a pedir
- *    un turno nuevo; dentro, el mismo hueco mueve el turno y no navega.
- * 3. **El servidor es la verdad.** Tras mover se relee todo; el 422 y el 409
- *    son avisos amables, nunca una alarma roja.
+ * Lo que NO se tocó y estas pruebas cuidan: «Reprogramado desde el …» sigue
+ * apareciendo. Cuando el profesional mueve la cita, el paciente necesita
+ * reconocer que es la suya movida y no una ajena.
  */
-describe('Appointments · reprogramar turno propio', () => {
-  const GRILLA = {
-    tenant: 't-1',
-    resources: [{ id: 'r-1', name: 'Consultorio Cardiología' }],
-    slots: [cupoMock('slot-9')],
-  };
-
-  /** El horario destino tal como lo entrega la grilla ya mapeada. */
-  const HORARIO = {
-    id: 'slot-9',
-    desde: new Date('2026-08-14T13:00:00.000Z'),
-    hasta: new Date('2026-08-14T13:30:00.000Z'),
-    resourceId: 'r-1',
-    lugaresLibres: 1,
-  };
-
-  it('muestra "Reprogramar" solo para confirmado y con llegada', () => {
+describe('Appointments · el paciente no reprograma', () => {
+  it('ninguna cita vigente ofrece «Reprogramar»', () => {
     const { fixture } = montarCancelacion({
-      bookings: [
-        citaMock('b-conf', 's-conf'),
-        citaMock('b-in', 's-in'),
-        citaMock('b-req', 's-req'),
-        citaMock('b-canc', 's-canc'),
-      ],
-      labels: [
-        etiqueta('s-conf', 'BOOKING_CONFIRMED'),
-        etiqueta('s-in', 'BOOKING_CHECKED_IN'),
-        etiqueta('s-req', 'scheduling:BOOKING_REQUESTED'),
-        etiqueta('s-canc', 'BOOKING_CANCELLED'),
-      ],
+      bookings: [citaMock('b-conf', 's-conf'), citaMock('b-in', 's-in')],
+      labels: [etiqueta('s-conf', 'BOOKING_CONFIRMED'), etiqueta('s-in', 'BOOKING_CHECKED_IN')],
     });
-    fixture.detectChanges();
 
-    // Confirmado y con llegada sí; solicitado (cancelable pero NO movible) y
-    // cancelado, no.
-    expect(fixture.nativeElement.querySelectorAll('.turnos__reprogramar').length).toBe(2);
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).not.toContain('Reprogramar');
+    expect(fixture.nativeElement.querySelectorAll('.turnos__reprogramar').length).toBe(0);
+    // Cancelar es lo que queda, y sigue estando: las dos son vigentes.
+    expect(fixture.nativeElement.querySelectorAll('.turnos__cancelar').length).toBe(2);
   });
 
-  it('no ofrece reprogramar en los estados que el backend rechaza', () => {
-    const { comp } = montarCancelacion({ bookings: [], labels: [] });
-    const a = api(comp);
-
-    for (const code of [
-      'BOOKING_REQUESTED',
-      'scheduling:BOOKING_REQUESTED',
-      'BOOKING_PENDING_CONFIRMATION',
-      'scheduling:BOOKING_PENDING_CONFIRMATION',
-      'BOOKING_CANCELLED',
-      'scheduling:BOOKING_COMPLETED',
-      'EV_BOOKING_DONE',
-      'scheduling:BOOKING_NO_SHOW',
-      'BOOKING_RESCHEDULED',
-      'FOO',
-      '',
-    ]) {
-      expect(a.esReprogramable({ codigo: code })).toBe(false);
-    }
-
-    for (const code of [
-      'BOOKING_CONFIRMED',
-      'BOOKING_CHECKED_IN',
-      'scheduling:BOOKING_CONFIRMED',
-    ]) {
-      expect(a.esReprogramable({ codigo: code })).toBe(true);
-    }
-  });
-
-  it('entrar al modo identifica el turno origen', () => {
-    const { comp } = montarCancelacion({
-      bookings: [citaMock('b1', 's1')],
-      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      ...GRILLA,
+  it('no queda rastro del modo de reprogramación en la pantalla', () => {
+    const { fixture } = montarCancelacion({
+      bookings: [citaMock('b-conf', 's-conf')],
+      labels: [etiqueta('s-conf', 'BOOKING_CONFIRMED')],
     });
-    const a = api(comp);
 
-    a.iniciarReprogramacion(a.turnosListos()[0]);
-
-    expect(a.reprogramando()).toBe('b1');
-  });
-
-  it('salir del modo no toca nada', () => {
-    const { comp, rescheduleBooking } = montarCancelacion({
-      bookings: [citaMock('b1', 's1')],
-      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      ...GRILLA,
-    });
-    const a = api(comp);
-    a.iniciarReprogramacion(a.turnosListos()[0]);
-
-    a.cancelarReprogramacion();
-
-    expect(a.reprogramando()).toBeNull();
-    expect(rescheduleBooking).not.toHaveBeenCalled();
-  });
-
-  it('fuera del modo, el horario sigue enlazando a pedir un turno nuevo', () => {
-    const { fixture, comp } = montarCancelacion({
-      bookings: [citaMock('b1', 's1')],
-      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      ...GRILLA,
-    });
-    api(comp).elegirAgenda('recurso:r-1');
-    fixture.detectChanges();
-
-    const ancla = fixture.nativeElement.querySelector('.turnos__horario a');
-    expect(ancla).not.toBeNull();
-    expect(ancla.getAttribute('href')).toContain('book/slot-9');
-    expect(fixture.nativeElement.querySelector('.turnos__mover')).toBeNull();
-  });
-
-  it('en el modo, el horario ofrece «mover acá» y no enlaza a la reserva', () => {
-    const { fixture, comp } = montarCancelacion({
-      bookings: [citaMock('b1', 's1')],
-      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      ...GRILLA,
-    });
-    const a = api(comp);
-    a.iniciarReprogramacion(a.turnosListos()[0]);
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelector('.turnos__horario a')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.turnos__mover')).not.toBeNull();
-    // Y el aviso dice qué turno se está moviendo, con su salida.
-    expect(
-      fixture.nativeElement.querySelector('[data-testid="turnos-reprogramando"]'),
-    ).not.toBeNull();
-  });
-
-  it('con la confirmación negada no llama a rescheduleBooking', async () => {
-    const { comp, rescheduleBooking } = montarCancelacion({
-      bookings: [citaMock('b1', 's1')],
-      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      confirm: false,
-      ...GRILLA,
-    });
-    const a = api(comp);
-    a.iniciarReprogramacion(a.turnosListos()[0]);
-
-    await a.reprogramarA(HORARIO);
-
-    expect(rescheduleBooking).not.toHaveBeenCalled();
-  });
-
-  it('con la confirmación afirmativa mueve el turno origen al slot elegido', async () => {
-    const { comp, rescheduleBooking } = montarCancelacion({
-      bookings: [citaMock('b1', 's1')],
-      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      ...GRILLA,
-    });
-    const a = api(comp);
-    a.iniciarReprogramacion(a.turnosListos()[0]);
-
-    await a.reprogramarA(HORARIO);
-
-    expect(rescheduleBooking).toHaveBeenCalledWith('b1', {
-      toSlotId: 'slot-9',
-      reasonText: MOTIVO_DE_PRUEBA,
-    });
-  });
-
-  it('tras mover releé turnos y horarios, limpia el modo y avisa el éxito', async () => {
-    const { comp, searchBookings, toast } = montarCancelacion({
-      bookings: [citaMock('b1', 's1')],
-      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      ...GRILLA,
-    });
-    const a = api(comp);
-    a.iniciarReprogramacion(a.turnosListos()[0]);
-    const horarios = vi.spyOn(comp as unknown as { cargarHorarios(): void }, 'cargarHorarios');
-    const antes = searchBookings.mock.calls.length;
-
-    await a.reprogramarA(HORARIO);
-
-    expect(toast.success).toHaveBeenCalled();
-    expect(toast.error).not.toHaveBeenCalled();
-    expect(searchBookings.mock.calls.length).toBe(antes + 1);
-    expect(horarios).toHaveBeenCalled();
-    expect(a.reprogramando()).toBeNull();
-  });
-
-  it('el 422 de cita no vigente es aviso amable —no rojo—, recarga y sale del modo', async () => {
-    const { comp, rescheduleBooking, searchBookings, toast } = montarCancelacion({
-      bookings: [citaMock('b1', 's1')],
-      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      ...GRILLA,
-    });
-    const a = api(comp);
-    a.iniciarReprogramacion(a.turnosListos()[0]);
-    rescheduleBooking.mockReturnValue(
-      throwError(
-        () =>
-          new HttpErrorResponse({
-            status: 422,
-            error: { code: 'PRECONDITION_FAILED', message: 'Solo se reprograma una cita vigente' },
-          }),
-      ),
+    expect(fixture.nativeElement.querySelector('[data-testid="turnos-reprogramando"]')).toBeNull();
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
+      'Volver sin mover la cita',
     );
-    const horarios = vi.spyOn(comp as unknown as { cargarHorarios(): void }, 'cargarHorarios');
-    const antes = searchBookings.mock.calls.length;
-
-    await a.reprogramarA(HORARIO);
-
-    expect(toast.info).toHaveBeenCalled();
-    expect(toast.error).not.toHaveBeenCalled();
-    expect(searchBookings.mock.calls.length).toBe(antes + 1);
-    expect(horarios).toHaveBeenCalled();
-    expect(a.reprogramando()).toBeNull();
-  });
-
-  it('el 409 de cupo recién ocupado es aviso amable, recarga y deja elegir otro', async () => {
-    const { comp, rescheduleBooking, searchBookings, toast } = montarCancelacion({
-      bookings: [citaMock('b1', 's1')],
-      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      ...GRILLA,
-    });
-    const a = api(comp);
-    a.iniciarReprogramacion(a.turnosListos()[0]);
-    rescheduleBooking.mockReturnValue(
-      throwError(
-        () =>
-          new HttpErrorResponse({
-            status: 409,
-            error: { code: 'CONFLICT', message: 'El slot destino no tiene cupos' },
-          }),
-      ),
-    );
-    const horarios = vi.spyOn(comp as unknown as { cargarHorarios(): void }, 'cargarHorarios');
-    const antes = searchBookings.mock.calls.length;
-
-    await a.reprogramarA(HORARIO);
-
-    expect(toast.info).toHaveBeenCalled();
-    expect(toast.error).not.toHaveBeenCalled();
-    expect(searchBookings.mock.calls.length).toBe(antes + 1);
-    expect(horarios).toHaveBeenCalled();
-    // El modo sigue activo: el turno origen no cambió, sólo hay que elegir
-    // otro horario de la lista ya refrescada.
-    expect(a.reprogramando()).toBe('b1');
   });
 });
 
@@ -1695,5 +1592,178 @@ describe('etiquetaDeRecurso', () => {
     );
     // Los dobles de prueba y las respuestas viejas de la API no traen el campo.
     expect(etiquetaDeRecurso({ name: 'Consultorio 3' })).toBe('Consultorio 3');
+  });
+});
+
+describe('etiquetasSinColision · dos agendas nunca se llaman igual', () => {
+  let contador = 0;
+
+  function recurso(campos: Partial<AgendaResource> = {}): AgendaResource {
+    contador += 1;
+    return {
+      id: `rec-${contador}`,
+      name: 'Consultorio',
+      resourceTypeConceptId: 'tipo',
+      resourceRefType: 'health_practitioner_profiles',
+      resourceRefId: 'perfil',
+      practitionerName: null,
+      practiceId: null,
+      timeZone: null,
+      capacity: 1,
+      stateConceptId: 'activo',
+      site: null,
+      ...campos,
+    };
+  }
+
+  const sede = (id: string, name: string, addressText: string | null = null) => ({
+    id,
+    name,
+    code: id,
+    addressText,
+    timeZone: null,
+  });
+
+  it('deja el rótulo limpio cuando no hay dos iguales', () => {
+    const etiquetas = etiquetasSinColision([
+      { recursos: [recurso({ practitionerName: 'Elena Salas', name: 'Norte' }), recurso({ practitionerName: 'Elena Salas', name: 'Sur' })] },
+      { recursos: [recurso({ practitionerName: 'Oliver Urgel', name: 'Propio' }), recurso({ practitionerName: 'Oliver Urgel', name: 'Tarde' })] },
+    ]);
+
+    expect(etiquetas).toEqual(['Elena Salas', 'Oliver Urgel']);
+  });
+
+  it('separa por sede a dos profesionales del mismo nombre', () => {
+    const etiquetas = etiquetasSinColision([
+      {
+        recursos: [
+          recurso({ practitionerName: 'Elena Salas', name: 'Norte', site: sede('s1', 'Clínica Norte', 'Av. Siempre 123') }),
+          recurso({ practitionerName: 'Elena Salas', name: 'Sur', site: sede('s1', 'Clínica Norte', 'Av. Siempre 123') }),
+        ],
+      },
+      {
+        recursos: [
+          recurso({ practitionerName: 'Elena Salas', name: 'Norte', site: sede('s2', 'Centro Sur') }),
+          recurso({ practitionerName: 'Elena Salas', name: 'Tarde', site: sede('s2', 'Centro Sur') }),
+        ],
+      },
+    ]);
+
+    expect(etiquetas[0]).toBe('Elena Salas — Clínica Norte · Av. Siempre 123');
+    expect(etiquetas[1]).toBe('Elena Salas — Centro Sur');
+    expect(new Set(etiquetas).size).toBe(2);
+  });
+
+  it('cae a los nombres de los consultorios cuando ninguna tiene sede', () => {
+    const etiquetas = etiquetasSinColision([
+      { recursos: [recurso({ practitionerName: 'Elena Salas', name: 'Norte' }), recurso({ practitionerName: 'Elena Salas', name: 'Sur' })] },
+      { recursos: [recurso({ practitionerName: 'Elena Salas', name: 'Martes' }), recurso({ practitionerName: 'Elena Salas', name: 'Tarde' })] },
+    ]);
+
+    expect(etiquetas[0]).toBe('Elena Salas — Norte, Sur');
+    expect(etiquetas[1]).toBe('Elena Salas — Martes, Tarde');
+  });
+
+  it('numera cuando no queda nada que las distinga — el caso observado en Neon', () => {
+    // Dos personas homónimas, mismos nombres de consultorio, ninguna con sede:
+    // una tenía 22 cupos libres y la otra ninguno, y la lista las mostraba
+    // idénticas.
+    const mismos = () => [
+      recurso({ practitionerName: 'Elena Salas', name: 'Consultorio Norte' }),
+      recurso({ practitionerName: 'Elena Salas', name: 'Consultorio Sur' }),
+    ];
+    const etiquetas = etiquetasSinColision([{ recursos: mismos() }, { recursos: mismos() }]);
+
+    expect(etiquetas[0]).toBe('Elena Salas — Consultorio Norte, Consultorio Sur (1 de 2)');
+    expect(etiquetas[1]).toBe('Elena Salas — Consultorio Norte, Consultorio Sur (2 de 2)');
+    expect(new Set(etiquetas).size).toBe(2);
+  });
+
+  it('no toca a la agenda de un solo recurso, que ya trae su nombre interno', () => {
+    const etiquetas = etiquetasSinColision([
+      { recursos: [recurso({ practitionerName: 'Elena Salas', name: 'Consultorio FX-7' })] },
+      { recursos: [recurso({ practitionerName: 'Elena Salas', name: 'Norte' }), recurso({ practitionerName: 'Elena Salas', name: 'Sur' })] },
+    ]);
+
+    expect(etiquetas[0]).toBe('Elena Salas — Consultorio FX-7');
+    expect(etiquetas[1]).toBe('Elena Salas');
+  });
+
+  it('tolera una lista vacía', () => {
+    expect(etiquetasSinColision([])).toEqual([]);
+  });
+});
+
+describe('opcionesDeSedeDe · el desplegable de lugar tampoco repite', () => {
+  let n = 0;
+
+  function recurso(name: string, site: AgendaResource['site'] = null): AgendaResource {
+    n += 1;
+    return {
+      id: `rec-s-${n}`,
+      name,
+      resourceTypeConceptId: 'tipo',
+      resourceRefType: 'health_practitioner_profiles',
+      resourceRefId: 'perfil',
+      practitionerName: 'Elena Salas',
+      practiceId: null,
+      timeZone: null,
+      capacity: 1,
+      stateConceptId: 'activo',
+      site,
+    };
+  }
+
+  const sede = (id: string, name: string, addressText: string | null = null) => ({
+    id,
+    name,
+    code: id,
+    addressText,
+    timeZone: null,
+  });
+
+  it('no pregunta cuando hay un solo lugar', () => {
+    expect(opcionesDeSedeDe([recurso('Norte', sede('s1', 'Clínica Norte'))])).toEqual([]);
+  });
+
+  it('distingue los lugares sin sede por el nombre del recurso — lo visto en pantalla', () => {
+    // Cuatro consultorios de la misma persona, ninguno con sede cargada: el
+    // desplegable mostraba cuatro veces «Sin consultorio registrado».
+    const opciones = opcionesDeSedeDe([
+      recurso('Consultorio Martes'),
+      recurso('Consultorio Norte'),
+      recurso('Consultorio Sur'),
+      recurso('Consultorio Tarde'),
+    ]);
+
+    const rotulos = opciones.map((o) => o.label);
+    expect(rotulos[0]).toBe('Cualquier lugar — ver todos los horarios');
+    expect(new Set(rotulos).size).toBe(rotulos.length);
+    expect(rotulos).toContain('Sin consultorio registrado — Consultorio Norte');
+  });
+
+  it('deja el nombre de la sede limpio cuando ya son distintos', () => {
+    const opciones = opcionesDeSedeDe([
+      recurso('Mañana', sede('s1', 'Clínica Norte', 'Av. Siempre 123')),
+      recurso('Tarde', sede('s2', 'Centro Sur')),
+    ]);
+
+    expect(opciones.map((o) => o.label)).toEqual([
+      'Cualquier lugar — ver todos los horarios',
+      'Clínica Norte · Av. Siempre 123',
+      'Centro Sur',
+    ]);
+  });
+
+  it('junta en un solo lugar los recursos que comparten sede', () => {
+    const misma = sede('s1', 'Clínica Norte');
+    const opciones = opcionesDeSedeDe([
+      recurso('Mañana', misma),
+      recurso('Tarde', misma),
+      recurso('Nocturno', sede('s2', 'Centro Sur')),
+    ]);
+
+    expect(opciones).toHaveLength(3);
+    expect(opciones.map((o) => o.label)).toContain('Clínica Norte');
   });
 });

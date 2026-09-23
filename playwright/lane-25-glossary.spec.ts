@@ -10,34 +10,48 @@ import { entrar, estable } from './support/sesion';
  * `ROLES_QUE_EJERCEN_O_ADMINISTRAN` (`PRACTITIONER`, `CLINICIAN`…, fuera del
  * paciente por F-03). Este entorno no tiene una cuenta `PRACTITIONER`
  * sembrada (mismo hallazgo que TAREA-08: `doctora()` responde «Las
- * credenciales no son válidas», `tools/redesa/` no existe), así que esta
+ * credenciales no son válidas», `tools/alovida/` no existe), así que esta
  * suite entra con `administrador()` — la cuenta de arranque
  * (`BOOTSTRAP_ADMIN_*`), con `SUPERADMIN` entre sus roles, que es el
  * **comodín** que pasa cualquier guard de sección (`WILDCARD_ROLE`,
  * `navigation.types.ts:353`). No es la sesión real de un médico, pero
  * ejercita el mismo guard y el mismo backend.
  *
-> ## Cuatro casos en `fixme`, y por qué NO se borran
+> ## Los cuatro `fixme` de buscar (`?q=`), reactivados el 2026-09-02
  *
- * Los cuatro que dependen de **buscar** (`?q=`) están en `test.fixme`: la
- * tabla de resultados nunca aparece. **No es de este carril** — se verificó
- * con `git stash`, corriendo este mismo spec contra el árbol de `dev` sin
- * ninguno de los cambios de TAREA-25: falla idéntico. La API responde bien
- * (`GET /terminology/concepts?q=paracetamol` devuelve los 3 conceptos,
- * comprobado con `curl` contra `localhost:3000`), y la pantalla se queda con
- * el spinner «Buscando» y la región de resultados sin tabla. Queda anotado
- * como defecto preexistente en la ficha (TAREA-25 §6) para que alguien lo
- * tome con su propio carril: apagarlos con `fixme` los deja visibles y
- * ejecutables el día que se arregle, que es mejor que borrarlos o que
- * dejarlos en rojo permanente escondiendo regresiones nuevas.
+ * Estaban en `test.fixme` porque la tabla de resultados nunca aparecía: una
+ * búsqueda de texto sin categoría (`includeValueSets=true` sin `valueSetId`)
+ * devolvía el concepto pelado —sin `category`/`tags`/`relationsCount`— y
+ * `glosario.html:136` (`termino.tags.length` sobre `undefined`) reventaba al
+ * pintar la primera fila, dejando el spinner «Buscando» congelado. Corregido
+ * en `ConceptsService.searchConcepts`
+ * (`mantra-core-health-api#297`) + cinturón en el template
+ * (`mantra-core-health#284`): reactivados acá una vez verificado contra la
+ * API de esa rama.
+ *
+ * ## ⚠️ Puesto al día con la cuarta ronda, y NO ejecutado (2026-09-12)
+ *
+ * El glosario se reescribió como enciclopedia —fila de categorías, cuerpo con
+ * las definiciones agrupadas por inicial, sin tabla— y este archivo seguía
+ * apuntando al diseño anterior: `.glosario__categoria`, `getByTestId('tabla')`,
+ * `.glosario__grilla-seccion` y `.glosario__termino-enlace` **ya no existen en
+ * el DOM**. Los selectores se actualizaron a los que la plantilla usa hoy.
+ *
+ * **No se pudo correr.** Toda esta suite exige la API viva (`apiViva`, abajo) y
+ * el stack Docker está apagado por pedido del propietario, así que los seis
+ * casos se saltean. Lo que se afirma acá es que el archivo dejó de apuntar a un
+ * DOM que no existe — **no** que pase. El primero que levante el stack tiene
+ * que correrlo antes de confiar en él.
  *
  * ## La aserción más importante del archivo
  *
- * Con la base de este entorno (10 323 conceptos, 0 filas del `code_system`
- * `ndc`), NINGÚN término del glosario tiene ficha de medicamento. La
- * aserción negativa — que la palabra «posología», «dosis» o
- * «contraindicaciones» no aparezca en ninguna ficha — es la red que protege
- * la regla dura del proyecto (`.claude/rules/00-non-negotiables.md` §7/§8):
+ * Desde FND-25-02, los 6 términos de `pharmacology` traen `drugFacts` reales
+ * copiados de un producto del FDA NDC Directory ya importado (135 002 filas,
+ * `code_system=ndc`), así que Paracetamol SÍ muestra ficha de medicamento —lo
+ * que se prueba abajo positivamente. La aserción negativa que sigue
+ * protegiendo la regla dura del proyecto (`.claude/rules/00-non-negotiables.md`
+ * §7/§8) es más angosta y más importante: que la palabra «posología», «dosis»
+ * o «contraindicaciones» no aparezca en ninguna ficha, con datos o sin ellos —
  * un campo ausente es correcto, uno inventado es un daño clínico.
  */
 /**
@@ -56,7 +70,7 @@ async function buscarEnElGlosario(page: Page, texto: string): Promise<void> {
   );
   await page.goto(`/glossary?q=${texto}`);
   await respuesta;
-  await expect(page.getByTestId('tabla')).toBeVisible({ timeout: 60_000 });
+  await expect(page.locator('.glosario__entrada').first()).toBeVisible({ timeout: 60_000 });
 }
 
 test.describe('Carril 25 · glosario', () => {
@@ -65,24 +79,29 @@ test.describe('Carril 25 · glosario', () => {
     test.skip(!(await apiViva(api)), 'La API no responde: sin backend no hay nada que probar.');
   });
 
-  test('la landing muestra el grid de categorías, todas navegables', async ({ page }) => {
+  test('la landing muestra la fila de categorías, todas navegables', async ({ page }) => {
     await entrar(page, administrador());
     await page.goto('/glossary');
     await estable(page);
 
-    const tarjetas = page.locator('.glosario__categoria');
+    const tarjetas = page.locator('.glosario__tarjeta');
     await expect(tarjetas.first()).toBeVisible({ timeout: 60_000 });
     const cantidad = await tarjetas.count();
-    // Hoy son 11 (AC-25-1): cada categoría con contenido queda alcanzable,
+    // Hoy son 12 (AC-25-1): cada categoría con contenido queda alcanzable,
     // ninguna se esconde por «destacar» las cinco que nombró el pedido.
     expect(cantidad).toBeGreaterThanOrEqual(5);
+
+    // FND-25-01: «OTROS TÉRMINOS» es una de las cinco categorías que nombra
+    // la fuente literal del requisito — no basta con `cantidad >= 5`, tiene
+    // que estar ELLA, con ese nombre, navegable como las demás.
+    await expect(page.getByText('Otros términos', { exact: true })).toBeVisible();
 
     for (const tarjeta of await tarjetas.all()) {
       await expect(tarjeta).toHaveAttribute('href', /\/glossary\?category=/);
     }
   });
 
-  test.fixme('buscar por nombre lleva a la tabla, y ?q= restaura la misma vista', async ({
+  test('buscar por nombre filtra el cuerpo, y ?q= restaura la misma vista', async ({
     page,
   }) => {
     await entrar(page, administrador());
@@ -92,22 +111,34 @@ test.describe('Carril 25 · glosario', () => {
     await page.getByLabel('Buscar un término').fill('paracetamol');
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/[?&]q=paracetamol/, { timeout: 60_000 });
-    await expect(page.getByTestId('tabla')).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator('.glosario__entrada').first()).toBeVisible({ timeout: 60_000 });
 
     // Recargar con la URL sola —sin volver a teclear— tiene que dar la misma
     // vista: es lo que hace compartible un glosario filtrado (AC-25-2).
     await buscarEnElGlosario(page, 'paracetamol');
-    await expect(page.locator('.glosario__grilla-seccion')).toHaveCount(0);
+
+    // Con filtro puesto, el cuerpo deja de ser el índice completo y aparece la
+    // salida. La fila de categorías NO se esconde: es el mapa de la
+    // enciclopedia, y esconderla obligaría a volver atrás para cambiar de tema.
+    await expect(page.getByRole('button', { name: 'Ver todo el glosario' })).toBeVisible();
+    await expect(page.locator('.glosario__tarjeta').first()).toBeVisible();
   });
 
-  /** La aserción negativa: la más importante del archivo. */
-  test.fixme('la ficha de un medicamento NO contiene posología, dosis ni contraindicaciones', async ({
+  /**
+   * FND-25-02: desde que los 6 términos de `pharmacology` traen `drugFacts`
+   * reales (FDA NDC), Paracetamol SÍ muestra el bloque «Medicamento» —esta
+   * prueba lo exige positivamente, no sólo tolera que aparezca—, y sigue
+   * exigiendo, con la misma fuerza que antes, que posología/dosis/
+   * contraindicaciones nunca aparezcan: son datos que ninguna fuente
+   * importada respalda todavía (P-25-1).
+   */
+  test('la ficha de Paracetamol muestra principios activos y fabricante reales, nunca posología/dosis/contraindicaciones', async ({
     page,
   }) => {
     await entrar(page, administrador());
     await buscarEnElGlosario(page, 'paracetamol');
 
-    const enlace = page.locator('.glosario__termino-enlace').first();
+    const enlace = page.locator('.glosario__entrada-titulo a').first();
     await expect(enlace).toBeVisible();
     await enlace.click();
     await expect(page.locator('.termino')).toBeVisible({ timeout: 60_000 });
@@ -119,25 +150,29 @@ test.describe('Carril 25 · glosario', () => {
     expect(minuscula).not.toContain('dosis');
     expect(minuscula).not.toContain('contraindicaci');
 
-    // No es sólo la aserción negativa: en esta base tampoco hay ficha de
-    // medicamento que mostrar (0 filas de `ndc`), así que el bloque entero
-    // está ausente — es AC-25-6/-8, no una omisión de la prueba.
-    expect(texto).not.toContain('Medicamento');
+    // Positiva: el bloque real, con datos reales del NDC (FND-25-02) — no
+    // basta con que la aserción negativa pase, hace falta que la ficha
+    // efectivamente muestre lo que el spec pide como «lo más importante».
+    expect(texto).toContain('Medicamento');
+    expect(texto).toContain('Principios activos');
+    expect(texto).toContain('ACETAMINOPHEN');
+    expect(texto).toContain('Fabricante');
+    expect(texto).toContain('FDA National Drug Code');
   });
 
-  test.fixme('un término sin traducción lo dice y no aparece traducido a máquina', async ({
+  test('un término sin traducción lo dice y no aparece traducido a máquina', async ({
     page,
   }) => {
     await entrar(page, administrador());
     await buscarEnElGlosario(page, 'paracetamol');
 
     // Sin conocer de antemano cuál de los resultados está sin traducir, se
-    // recorre la tabla: si ninguno lo está, la prueba no afirma nada falso —
-    // el aviso, cuando existe, nunca puede decir que SÍ está traducido.
-    const filas = page.getByTestId('tabla-fila');
-    const total = await filas.count();
+    // recorren las entradas: si ninguna lo está, la prueba no afirma nada falso
+    // — el aviso, cuando existe, nunca puede decir que SÍ está traducido.
+    const entradas = page.locator('.glosario__entrada');
+    const total = await entradas.count();
     for (let i = 0; i < total; i += 1) {
-      const texto = (await filas.nth(i).textContent()) ?? '';
+      const texto = (await entradas.nth(i).textContent()) ?? '';
       expect(texto).not.toContain('traducido automáticamente');
     }
   });
@@ -160,6 +195,12 @@ test.describe('Carril 25 · glosario', () => {
     }
   });
 
+  // Separado de los otros tres `fixme` reactivados: no depende del bug de
+  // búsqueda (corregido), sino de un CSP roto ajeno en este mismo repo
+  // (`src/server/security-headers.ts`) — B-15 en el `REGISTRO-DEFECTOS.md`
+  // del repo `mantra-core-health-api` (índice único del proyecto).
+  // Verificado el 2026-09-02: los otros 5 casos del archivo pasan 5/5; sólo
+  // este falla.
   test.fixme('cero errores de consola y cero respuestas 4xx/5xx inesperadas', async ({ page }) => {
     const problemas: string[] = [];
     page.on('console', (mensaje) => {
@@ -171,7 +212,7 @@ test.describe('Carril 25 · glosario', () => {
 
     await entrar(page, administrador());
     await buscarEnElGlosario(page, 'paracetamol');
-    const enlace = page.locator('.glosario__termino-enlace').first();
+    const enlace = page.locator('.glosario__entrada-titulo a').first();
     await enlace.click();
     await expect(page.locator('.termino')).toBeVisible({ timeout: 60_000 });
 

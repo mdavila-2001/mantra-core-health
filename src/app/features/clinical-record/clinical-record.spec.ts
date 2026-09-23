@@ -112,6 +112,46 @@ describe('ClinicalRecord', () => {
     expect(html.textContent).not.toContain('Abrir por identificador');
   });
 
+  /**
+   * Propietario, 19/09/2026: el médico no reconoce a nadie por un uuid ni por
+   * el código interno. En su lugar, el carnet y el celular.
+   */
+  it('la tabla muestra documento y teléfono, no el código ni el uuid del perfil', async () => {
+    resolverCatalogoDeDepartamentosVacio();
+
+    interno<(texto: string) => void>('buscar')('peña');
+    await harness.fixture.whenStable();
+    peticion().flush({
+      items: [{ ...PACIENTE, nationalId: '5123456', phone: '+591 70011223' }],
+      count: 1,
+      limit: 25,
+      nextCursor: null,
+    });
+    harness.detectChanges();
+
+    const html = harness.fixture.nativeElement as HTMLElement;
+    const texto = html.textContent ?? '';
+    expect(texto).toContain('5123456');
+    expect(texto).toContain('+591 70011223');
+    expect(texto).not.toContain('PAC-00001');
+    expect(texto).not.toContain('p-001');
+    // El teléfono se puede tocar para llamar desde el móvil.
+    expect(html.querySelector('a[href="tel:+591 70011223"]')).not.toBeNull();
+  });
+
+  it('dice con palabras cuando falta el documento o el teléfono', async () => {
+    resolverCatalogoDeDepartamentosVacio();
+
+    interno<(texto: string) => void>('buscar')('peña');
+    await harness.fixture.whenStable();
+    peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+    harness.detectChanges();
+
+    const texto = (harness.fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain('Sin documento registrado');
+    expect(texto).toContain('Sin teléfono registrado');
+  });
+
   it('buscar publica el texto en la URL y pide con `q`', async () => {
     resolverCatalogoDeDepartamentosVacio();
 
@@ -213,6 +253,58 @@ describe('ClinicalRecord', () => {
     const req = peticion();
     expect(req.request.params.has('q')).toBe(false);
     req.flush({ items: [], count: 0, limit: 25, nextCursor: null });
+  });
+
+  /**
+   * El defecto que esto fija (19/09/2026), visto en el navegador: **buscar por
+   * documento se deshacía solo** si antes se había buscado por nombre.
+   *
+   * La cadena: el botón publica el documento y limpia `q` → el campo de nombre
+   * está atado a `q`, así que se vacía de rebote → al vaciarse avisa con texto
+   * vacío → y ese aviso escribía el mapa de parámetros ENTERO, borrando el
+   * `nationalId` recién puesto. En pantalla se veía como que el botón no hacía
+   * nada: la URL quedaba pelada y la tabla volvía al vacío inicial.
+   */
+  it('el rebote del buscador por nombre al vaciarse no borra el documento', async () => {
+    resolverCatalogoDeDepartamentosVacio();
+
+    interno<(texto: string) => void>('buscar')('peña');
+    await harness.fixture.whenStable();
+    peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+
+    interno<(valor: string) => void>('fijarDocumento')('1234567');
+    interno<() => void>('buscarPorDocumento')();
+    await harness.fixture.whenStable();
+    peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+
+    // Esto es exactamente lo que emite `app-search-field` cuando `q`
+    // desaparece de la URL y su campo se vacía solo.
+    interno<(texto: string) => void>('buscar')('');
+    await harness.fixture.whenStable();
+
+    const router = TestBed.inject(Router);
+    expect(router.url).toContain('nationalId=1234567');
+    expect(estado().status).toBe('ready');
+  });
+
+  /** Y al revés: escribir un nombre sí deja sin efecto al documento. */
+  it('buscar por nombre limpia el documento de la URL', async () => {
+    resolverCatalogoDeDepartamentosVacio();
+
+    interno<(valor: string) => void>('fijarDocumento')('1234567');
+    interno<() => void>('buscarPorDocumento')();
+    await harness.fixture.whenStable();
+    peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+
+    interno<(texto: string) => void>('buscar')('peña');
+    await harness.fixture.whenStable();
+
+    const router = TestBed.inject(Router);
+    expect(router.url).not.toContain('nationalId');
+    const req = peticion();
+    expect(req.request.params.get('q')).toBe('peña');
+    expect(req.request.params.has('nationalId')).toBe(false);
+    req.flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
   });
 
   it('buscar por documento con el campo vacío no navega ni pide nada', async () => {

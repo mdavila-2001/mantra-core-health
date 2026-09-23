@@ -1,12 +1,10 @@
 /* La lista de conversaciones, con la anatomía que tiene en cualquier chat:
-   avatar, nombre y hora arriba, última línea y no-leídos abajo. Las filas se
-   tocan y se separan con un filete, no con aire: una bandeja con tarjetas
-   sueltas ocupa el doble y muestra la mitad.
+   avatar grande, nombre y hora arriba, última línea y no-leídos abajo.
 
-   Los colores son los del sistema (`redsat.css`) y no valores propios: antes
-   esta hoja inventaba `--surface-raised` y `--text-secondary` con respaldos
-   grises, así que la pantalla se veía fría al lado del resto de la aplicación
-   —que es papel cálido y petróleo— y en tema oscuro no cambiaba de tono. */
+   Las filas ya no llevan filete entre sí: se separan con el aire del avatar y
+   se distinguen por el hover, que es como se lee una bandeja de veinte filas
+   sin que parezca una tabla. Los colores son los del sistema (`alovida.css`),
+   más los `--chat-*` que la mensajería agregó. */
 
 .conversaciones {
   margin: 0;
@@ -14,15 +12,16 @@
   list-style: none;
 }
 
-.conversaciones__fila + .conversaciones__fila {
-  border-block-start: 1px solid var(--filete-2);
+.conversaciones__fila {
+  position: relative;
 }
 
 .conversaciones__item {
   display: flex;
   align-items: center;
   gap: var(--e3);
-  padding: var(--e3);
+  padding: var(--e2) var(--e4);
+  min-block-size: 72px;
   color: inherit;
   text-decoration: none;
   transition: background var(--mov-rapido) var(--curva);
@@ -30,7 +29,7 @@
 
 .conversaciones__item:hover,
 .conversaciones__item:focus-visible {
-  background: var(--neutro-bg);
+  background: var(--sup-inset);
 }
 
 /* La abierta se marca con fondo **y** con la barra de marca: el fondo solo es
@@ -48,7 +47,7 @@
 .conversaciones__texto {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-inline-size: 0;
   flex: 1 1 auto;
 }
@@ -56,54 +55,196 @@
 .conversaciones__cabecera,
 .conversaciones__pie {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--e2);
   min-inline-size: 0;
 }
 
-.conversaciones__pie {
-  align-items: center;
-  min-block-size: 20px;
+.conversaciones__con-quien {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-inline-size: 0;
+  font-family: var(--f-titulo);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--tinta);
 }
 
-.conversaciones__con-quien,
+/* Lo que coincide con lo buscado. `mark` con los colores del sistema: el
+   amarillo del navegador no existe en esta paleta. */
+.conversaciones__marca {
+  background: var(--info-bg);
+  color: var(--info-tinta);
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
+.conversaciones__cuando {
+  flex: none;
+  color: var(--tinta-3);
+  font-size: var(--fs-overline);
+}
+
+/* La vista previa: tilde o autor, después el clip si es adjunto, y el texto
+   que se corta. El `min-inline-size: 0` de la primera es lo que hace que el
+   texto se recorte y no empuje al contador fuera de la fila. */
 .conversaciones__vista-previa {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-inline-size: 0;
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+}
+
+.conversaciones__texto-previa {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-inline-size: 0;
 }
 
-.conversaciones__con-quien {
-  font-family: var(--f-titulo);
-  font-weight: 600;
-  color: var(--tinta);
-}
-
-.conversaciones__cuando {
+.conversaciones__autor {
   flex: none;
-  color: var(--tinta-3);
-  font-size: 12px;
-}
-
-.conversaciones__vista-previa {
   color: var(--tinta-2);
-  font-size: 13px;
 }
 
-.conversaciones__sin-leer {
+.conversaciones__tick,
+.conversaciones__clip {
   flex: none;
+  display: inline-flex;
+  color: var(--tinta-3);
 }
 
-/* Sin leer se marca con peso **y** con el globo del contador, nunca sólo con
-   color: el color solo no distingue nada para quien no lo percibe. */
-.conversaciones__fila.is-sin-leer .conversaciones__vista-previa {
-  font-weight: 600;
+.conversaciones__tick svg {
+  inline-size: 15px;
+  block-size: 15px;
+}
+
+.conversaciones__clip svg {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+.conversaciones__marcas {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e1);
+}
+
+.conversaciones__estrella {
+  display: inline-flex;
+  color: var(--tinta-3);
+}
+
+.conversaciones__estrella svg {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+/* El contador: verde y redondo, como el de cualquier chat. Sin leer se marca
+   con el globo **y** con el peso de la vista previa, nunca sólo con color. */
+.conversaciones__sin-leer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 20px;
+  block-size: 20px;
+  padding-inline: 6px;
+  border-radius: var(--r-pill);
+  background: var(--chat-no-leido);
+  color: #fff;
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.conversaciones__fila.is-sin-leer .conversaciones__texto-previa,
+.conversaciones__fila.is-sin-leer .conversaciones__con-quien {
+  font-weight: 700;
   color: var(--tinta);
 }
 
 .conversaciones__fila.is-sin-leer .conversaciones__cuando {
-  color: var(--petroleo);
+  color: var(--chat-no-leido);
   font-weight: 700;
+}
+
+/* --- El menú de la fila -------------------------------------------------- */
+
+/* Aparece al pasar por encima, como en WhatsApp. Con teclado se llega igual:
+   `:focus-within` lo revela, así que quien tabula no se queda sin opciones. */
+.conversaciones__mas {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: var(--e3);
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 24px;
+  block-size: 24px;
+  border: 0;
+  border-radius: var(--r-ctrl);
+  background: none;
+  color: var(--tinta-3);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--mov-rapido) var(--curva);
+}
+
+.conversaciones__fila:hover .conversaciones__mas,
+.conversaciones__fila:focus-within .conversaciones__mas,
+.conversaciones__mas[aria-expanded='true'] {
+  opacity: 1;
+}
+
+.conversaciones__mas svg {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+.conversaciones__menu {
+  position: absolute;
+  inset-block-start: calc(50% + 12px);
+  inset-inline-end: var(--e3);
+  z-index: 3;
+  margin: 0;
+  padding: var(--e1);
+  min-inline-size: 12rem;
+  list-style: none;
+  border: 1px solid var(--filete);
+  border-radius: var(--r-menu);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra);
+}
+
+.conversaciones__menu button {
+  inline-size: 100%;
+  padding: var(--e2) var(--e3);
+  border: 0;
+  border-radius: var(--r-ctrl);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--fs-caption);
+  text-align: start;
+  cursor: pointer;
+}
+
+.conversaciones__menu button:hover,
+.conversaciones__menu button:focus-visible {
+  background: var(--sup-inset);
+}
+
+/* Con el dedo no hay hover: el menú vive siempre visible y algo más grande. */
+@media (hover: none) {
+  .conversaciones__mas {
+    opacity: 1;
+    inline-size: 32px;
+    block-size: 32px;
+  }
 }

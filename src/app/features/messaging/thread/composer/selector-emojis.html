@@ -1,0 +1,85 @@
+<div class="emojis">
+  <!-- Buscar es lo primero: con casi dos mil emojis, recorrer pestañas dejó de
+       ser una forma de encontrar nada. -->
+  <div class="emojis__buscador">
+    <span class="emojis__buscador-icono" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+    </span>
+    <label class="emojis__buscador-campo">
+      <span class="solo-lectores">Buscar un emoji por su nombre</span>
+      <input
+        #buscador
+        type="search"
+        data-testid="emojis-buscar"
+        placeholder="Buscar: jeringa, corazón, bandera…"
+        [value]="consulta()"
+        (input)="alBuscar($any($event.target).value)"
+        (keydown.escape)="limpiarBusqueda()"
+      />
+    </label>
+    @if (consulta() !== '') {
+      <button
+        class="emojis__buscador-limpiar"
+        type="button"
+        aria-label="Limpiar la búsqueda"
+        (click)="limpiarBusqueda()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
+      </button>
+    }
+  </div>
+
+  <!-- Las pestañas se ocultan mientras se busca: la rejilla ya no muestra un
+       grupo, y dejar una marcada diría algo que no es. -->
+  @if (!buscando()) {
+    <div class="emojis__categorias" role="tablist" aria-label="Categorías de emojis">
+      @if (recientes().length > 0) {
+        <button
+          class="emojis__categoria"
+          type="button"
+          role="tab"
+          data-testid="emojis-categoria"
+          [class.is-activa]="grupoActivo() === recientesClave"
+          [attr.aria-selected]="grupoActivo() === recientesClave"
+          aria-label="Recientes"
+          (click)="elegirGrupo(recientesClave)"
+        >
+          🕘
+        </button>
+      }
+      @for (grupo of grupos; track grupo.clave) {
+        <button
+          class="emojis__categoria"
+          type="button"
+          role="tab"
+          data-testid="emojis-categoria"
+          [class.is-activa]="grupoActivo() === grupo.clave"
+          [attr.aria-selected]="grupoActivo() === grupo.clave"
+          [attr.aria-label]="grupo.rotulo"
+          (click)="elegirGrupo(grupo.clave)"
+        >
+          {{ grupo.icono }}
+        </button>
+      }
+    </div>
+  }
+
+  <p class="emojis__rotulo" data-testid="emojis-rotulo" aria-live="polite">
+    {{ rotuloDeLaRejilla() }}
+  </p>
+
+  <div class="emojis__rejilla">
+    @for (emoji of visibles(); track emoji.e) {
+      <button
+        class="emojis__emoji"
+        type="button"
+        data-testid="composer-emoji"
+        [attr.aria-label]="emoji.n"
+        [attr.title]="emoji.n"
+        (click)="elegir(emoji.e)"
+      >
+        {{ emoji.e }}
+      </button>
+    }
+  </div>
+</div>

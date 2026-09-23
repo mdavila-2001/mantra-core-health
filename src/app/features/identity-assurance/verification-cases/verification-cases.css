@@ -5,3 +5,27 @@
 .casos__sin-dato {
     color: var(--text-secondary);
 }
+
+/* Lo que falló al traer la evidencia de un caso (FT-32-R02). */
+.casos__error {
+  margin-block-start: var(--sp-3);
+  color: var(--text-danger);
+  font-size: var(--fs-caption);
+}
+
+/* 5.2 · «Ver» y «Descargar» conviven en la celda de evidencia. En pantalla
+   angosta se apilan en vez de estirar la columna. */
+.casos__evidencia {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* La vista previa cuelga bajo la celda, dentro de la misma fila: es contexto de
+   ese caso, no una pantalla aparte. Se acota para que una imagen grande no
+   empuje la tabla fuera del alto útil. */
+.casos__vista-previa {
+  display: block;
+  margin-block-start: var(--sp-3);
+  max-inline-size: 32rem;
+}

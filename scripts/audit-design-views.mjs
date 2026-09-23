@@ -9,7 +9,7 @@
  *    de secciones (`navigation.map.ts`, que es quien declara los roles) con el
  *    mapa de pantallas de `app.routes.ts`.
  * 2. **¿Existe una vista del diseñador para esa ruta?** — contra
- *    `features/redsat/vistas.manifest.json`, que es el manifiesto de las 126
+ *    `features/alovida/vistas.manifest.json`, que es el manifiesto de las 126
  *    pantallas portadas desde la bóveda.
  * 3. **¿La pantalla lee la API o se está pintando sola?** — buscando qué
  *    cliente de `core/data-access` inyecta, y qué señales de dato falso tiene.
@@ -174,7 +174,7 @@ const SECCION_DE_HELPER = {
 /** Las 126 pantallas portadas desde la bóveda, por su ruta. */
 function leerVistasDelDisenador() {
   const manifiesto = JSON.parse(
-    readFileSync(join(SRC_ROOT, 'app/features/redsat/vistas.manifest.json'), 'utf8'),
+    readFileSync(join(SRC_ROOT, 'app/features/alovida/vistas.manifest.json'), 'utf8'),
   );
   return manifiesto.generadas;
 }
@@ -324,7 +324,7 @@ lineas.push('| `conectada` | Inyecta al menos un cliente de `core/data-access`. 
 lineas.push('| `conectada con deuda` | Lee la API, pero además arrastra un marcador (`TODO`, dato de muestra). |');
 lineas.push('| `presentacional` | Pinta sin pedir nada. Correcto si es un panel de acciones; sospechoso si debía listar. |');
 lineas.push('| `maqueta portada` | Vista de la bóveda con marcado estático. Es el entregable del diseñador, no una pantalla a medio hacer. |');
-lineas.push('| `maqueta` | Pinta con constantes `_DE_MUESTRA` fuera de `redsat/`. |');
+lineas.push('| `maqueta` | Pinta con constantes `_DE_MUESTRA` fuera de `alovida/`. |');
 lineas.push('| `con deuda` | Tiene `TODO`, promesa sin pantalla u otro marcador. |');
 lineas.push('| `placeholder` | Sección declarada `planificada`: cae en `SectionPlaceholder` a propósito. |');
 lineas.push('');
@@ -366,8 +366,8 @@ const maquetas = filasDisenador.filter((f) => f.estado === 'maqueta');
 lineas.push('## Vistas del diseñador portadas desde la bóveda');
 lineas.push('');
 lineas.push(
-  `Las ${filasDisenador.length} pantallas de \`features/redsat/\`, generadas por ` +
-    '`scripts/port-vistas-redsat.mjs` desde la bóveda. Son **la vista del ' +
+  `Las ${filasDisenador.length} pantallas de \`features/alovida/\`, generadas por ` +
+    '`scripts/port-vistas-alovida.mjs` desde la bóveda. Son **la vista del ' +
     'diseñador** a la que se refiere la corrección #8: antes de crear una ' +
     'pantalla nueva hay que buscar acá. ' +
     `${maquetas.length} todavía pintan con datos de muestra.`,

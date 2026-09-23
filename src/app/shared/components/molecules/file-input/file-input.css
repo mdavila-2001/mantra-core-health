@@ -1,153 +1,154 @@
-/* ============================================================================
-    FileInput — Vanilla CSS con tokens REDSAT
-    ========================================================================== */
-
 :host {
   display: block;
-  width: 100%;
+  inline-size: 100%;
+  min-inline-size: 0;
 }
 
 .file-input-container {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  width: 100%;
+  inline-size: 100%;
 }
 
-/* Área Drag & Drop */
 .dropzone {
   position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--sp-6) var(--sp-4);
+  box-sizing: border-box;
+  padding: var(--sp-5) var(--sp-4);
   border: 2px dashed var(--border-strong);
   border-radius: var(--r-md);
-  background-color: var(--bg-surface);
+  background: var(--bg-surface);
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
-  min-height: 120px;
+  transition:
+    border-color var(--dur-fast),
+    background-color var(--dur-fast);
 }
 
-.dropzone:hover:not(.is-disabled) {
+.dropzone:hover:not(.is-disabled),
+.dropzone.is-dragging {
   border-color: var(--brand-primary);
-  background-color: var(--bg-inset);
+  background: var(--bg-inset);
 }
 
 .dropzone.is-dragging {
-  border-color: var(--brand-primary);
-  background-color: var(--c-mint-50);
   box-shadow: 0 0 0 4px var(--focus-ring);
 }
-
 .dropzone.is-disabled {
-  background-color: var(--bg-inset);
-  border-color: var(--border-default);
-  cursor: not-allowed;
   opacity: 0.6;
+  cursor: not-allowed;
+}
+.dropzone.has-files {
+  padding: var(--sp-3);
+}
+.dropzone.has-files .dropzone-icon,
+.dropzone.has-files .dropzone-or {
+  display: none;
 }
 
-/* Input nativo transparente encima */
+/* El input real cubre la zona: conserva selector nativo, teclado y etiqueta. */
 .native-file-input {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
   opacity: 0;
-  cursor: pointer;
-}
-
-.dropzone.is-disabled .native-file-input {
-  cursor: not-allowed;
+  cursor: inherit;
 }
 
 .dropzone-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--sp-1);
+  gap: var(--sp-2);
+  inline-size: 100%;
   pointer-events: none;
 }
 
+.native-file-input:focus-visible + .dropzone-content {
+  outline: 2px solid transparent;
+  border-radius: var(--r-sm);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
 .dropzone-icon {
+  display: grid;
+  place-items: center;
+  padding: var(--sp-2);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
   color: var(--brand-primary);
-  margin-bottom: var(--sp-1);
 }
-
 .dropzone-icon svg {
-  width: 32px;
-  height: 32px;
+  inline-size: 32px;
+  block-size: 32px;
 }
-
 .dropzone-text {
-  font-family: var(--font-body);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
   font-size: var(--fs-body);
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.dropzone-text .highlight {
-  color: var(--brand-primary);
   font-weight: 600;
+  color: var(--text-primary);
 }
-
+.dropzone-or,
 .dropzone-subtext {
-  font-family: var(--font-body);
   font-size: var(--fs-caption);
   color: var(--text-secondary);
-  margin: 0;
+  font-weight: 400;
+}
+.upload-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 44px;
+  padding: var(--sp-2) var(--sp-4);
+  box-sizing: border-box;
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-caption);
 }
 
-/* Lista de archivos seleccionados */
 .file-list {
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
-
 .file-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  padding: var(--sp-2) var(--sp-3);
-  background-color: var(--bg-surface-alt);
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  background: var(--bg-surface-alt);
   border: 1px solid var(--border-default);
-  border-radius: var(--r-sm);
-  min-height: 44px;
+  border-radius: var(--r-md);
 }
-
-/* Base = móvil: fila de archivo con área táctil de 44px. Desde 780px se compacta a 40px. */
-@media (min-width: 780px) {
-  .file-item {
-    min-height: 40px;
-  }
+app-file-preview {
+  grid-column: 1 / -1;
 }
-
 .file-icon {
-  color: var(--brand-primary);
   display: flex;
-  align-items: center;
-  margin-right: var(--sp-2);
+  color: var(--brand-primary);
 }
-
 .file-icon svg {
-  width: 20px;
-  height: 20px;
+  inline-size: 20px;
+  block-size: 20px;
 }
-
 .file-info {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-  margin-right: var(--sp-2);
+  min-inline-size: 0;
 }
-
 .file-name {
-  font-family: var(--font-body);
   font-size: var(--fs-body);
   font-weight: 500;
   color: var(--text-primary);
@@ -155,68 +156,46 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .file-size {
-  font-family: var(--font-body);
   font-size: var(--fs-caption);
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
-
 .remove-file-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-inline-size: 44px;
+  min-block-size: 44px;
   background: transparent;
   border: none;
   color: var(--text-secondary);
   padding: var(--sp-1);
-  border-radius: var(--r-xs);
-  cursor: pointer;
-  transition: color 0.15s ease, background-color 0.15s ease;
-}
-
-.remove-file-btn:hover:not(:disabled) {
-  color: var(--c-error-500);
-  background-color: var(--st-error-bg);
-}
-
-.remove-file-btn svg {
-  width: 18px;
-  height: 18px;
-}
-
-/* ---- ajustes de semántica (2026-07-30) ----------------------------------
-   La lista de adjuntos pasó de <div> a <ul>/<li> y los textos de la zona de
-   soltar de <p> a <span> dentro de un <label>: el input nativo necesitaba una
-   etiqueta real para tener nombre accesible. Estas reglas neutralizan los
-   estilos por defecto de esos elementos. */
-
-.file-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.dropzone-content {
-  cursor: inherit;
-}
-
-.dropzone-icon,
-.dropzone-text,
-.dropzone-subtext {
-  display: block;
-}
-
-.file-info {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-/* El input cubre la zona, así que el foco del teclado se ve en el borde. */
-.native-file-input:focus-visible + .dropzone-content {
-  outline: 2px solid transparent;
   border-radius: var(--r-sm);
-  box-shadow: 0 0 0 4px var(--focus-ring);
+  cursor: pointer;
+}
+.remove-file-btn:hover:not(:disabled) {
+  color: var(--st-error-fg);
+  background: var(--st-error-bg);
+}
+.remove-file-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.remove-file-btn svg {
+  inline-size: 18px;
+  block-size: 18px;
+}
+.file-feedback {
+  color: var(--st-error-fg);
+  font-size: var(--fs-caption);
+  overflow-wrap: anywhere;
+}
+.file-feedback p {
+  margin: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dropzone {
+    transition: none;
+  }
 }

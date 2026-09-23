@@ -1,5 +1,5 @@
 /* ============================================================================
-    TreeSelect — Vanilla CSS con tokens REDSAT.
+    TreeSelect — Vanilla CSS con tokens ALOVIDA.
 
     El disparador es gemelo del de `app-date-picker` a propósito: los dos son
     campos que abren un diálogo, y verse distinto haría creer que se comportan
@@ -31,7 +31,7 @@
   font-size: var(--fs-body);
   color: var(--text-primary);
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  transition: border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard);
   text-align: left;
 }
 
@@ -58,7 +58,7 @@
 }
 
 .has-error .tree-select-trigger {
-  border-color: var(--status-error, #c0392b);
+  border-color: var(--status-error, var(--c-error-500));
 }
 
 .trigger-icon,
@@ -259,7 +259,7 @@
   display: flex;
   align-items: center;
   color: var(--text-secondary);
-  transition: transform 0.15s ease;
+  transition: transform var(--dur-fast) var(--ease-standard);
 }
 
 .branch-caret svg {
@@ -286,7 +286,7 @@
   font-weight: 500;
   color: var(--text-secondary);
   background-color: var(--bg-inset);
-  border-radius: var(--r-pill, 999px);
+  border-radius: var(--r-pill, var(--r-full));
   padding: 2px var(--sp-2);
 }
 

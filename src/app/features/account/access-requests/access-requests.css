@@ -1,0 +1,46 @@
+:host {
+  display: block;
+}
+
+.solicitudes {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+  /* Sin tope propio (regla del cliente §5): con 48rem quedaba a la izquierda. */
+}
+
+.solicitud {
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-3);
+}
+
+.solicitud__quien {
+  margin: 0;
+}
+
+.solicitud__cuando {
+  color: var(--text-secondary);
+}
+
+/* Son decenas de especialidades: en una columna la lista medía 3 500 px.
+   En columnas se recorre de un vistazo, y en el teléfono vuelve a ser una. */
+.solicitud__especialidades {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: var(--sp-2) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+}
+
+.solicitud__especialidades legend {
+  font-weight: 500;
+  padding-inline: var(--sp-1);
+}
+
+.solicitud__acciones {
+  display: flex;
+  gap: var(--sp-3);
+  justify-content: flex-end;
+}

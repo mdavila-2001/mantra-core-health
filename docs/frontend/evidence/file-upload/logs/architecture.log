@@ -1,0 +1,4 @@
+✓ check-architecture
+  1311 archivos · 5462 importaciones internas
+  sin ciclos · capas en una sola dirección · red confinada a core/data-access/ · faker confinado a core/mock/
+  excepción declarada: src/app/core/dev/ (herramienta de desarrollo, diferida)
