@@ -33,7 +33,7 @@ $ corepack yarn typecheck
 exit 0
 
 $ npx playwright test playwright/cotizaciones-paciente.spec.ts playwright/reserva-cotizaciones-recorrido.spec.ts --workers=1 --reporter=list
-2 passed (13.0s)
+2 passed (10.0s)
 
 $ E2E_BASE_URL=http://127.0.0.1:4200 npx playwright test playwright/mockup-barrido.spec.ts --workers=1 --reporter=list
 5 passed (47.0s)
