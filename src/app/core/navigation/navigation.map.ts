@@ -1207,6 +1207,17 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M20 diagnostics',
   },
   {
+    path: 'my-account/cotizaciones',
+    hiddenFor: ['PRACTITIONER'],
+    label: 'Cotizaciones',
+    group: 'Mi cuenta',
+    icon: 'billing',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Compará referencias de precio y cercanía con su procedencia visible.',
+    module: 'M-cotizaciones',
+  },
+  {
     // Carril 10, lado paciente. Sin `roles` a propósito, por el mismo motivo
     // que «Mis turnos»: el filtro real es tener perfil de paciente, que no es
     // un rol sino un dato de la cuenta —el claim `pid` del token—, y la

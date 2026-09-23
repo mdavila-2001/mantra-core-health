@@ -202,6 +202,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/diagnostic-orders/diagnostic-orders').then(
       (m) => m.DiagnosticOrders,
     ),
+  'my-account/cotizaciones': () =>
+    import('./features/account/cotizaciones/cotizaciones').then((m) => m.Cotizaciones),
   'my-account/pharmacy-orders': () =>
     import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
   'my-account/loyalty': () =>
