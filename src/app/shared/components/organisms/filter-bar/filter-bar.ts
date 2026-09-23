@@ -87,6 +87,30 @@ export interface ActiveFilter {
  *
  * Cada chip activo muestra la **etiqueta legible** y emite el **código**: las
  * etiquetas son presentación y cambian con el value set o el idioma.
+ *
+ * **Receta de buscador multicampo** (ADR-0015, regla 5): el organismo emite
+ * un único término normalizado bajo `q` — filtrar por varios campos a la vez
+ * es responsabilidad del consumidor, no de la barra:
+ *
+ * ```ts
+ * const termino = normalizar(this.filtersChanged$().q ?? '');
+ * this.filas = this.todas.filter((fila) =>
+ *   normalizar(fila.nombre).includes(termino) || normalizar(fila.direccion).includes(termino),
+ * );
+ * ```
+ *
+ * **Hueco de acción** (regla 5): un botón proyectado con `filter-bar-action`
+ * queda a la derecha de la fila de controles en escritorio y debajo en
+ * móvil:
+ *
+ * ```html
+ * <app-filter-bar [filters]="filtros" (filtersChanged)="recargar($event)">
+ *   <button filter-bar-action app-button variant="primary" (clicked)="abrirAlta()">
+ *     <svg app-icon>…</svg>
+ *     Agregar
+ *   </button>
+ * </app-filter-bar>
+ * ```
  */
 @Component({
   selector: 'app-filter-bar',

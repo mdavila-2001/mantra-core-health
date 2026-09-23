@@ -183,11 +183,64 @@ describe('Pagination', () => {
     });
   });
 
+  describe('anterior y siguiente con texto (ADR-0015, regla 7)', () => {
+    it('anterior lleva texto visible, no sólo ícono', () => {
+      expect(boton('Página anterior').textContent?.trim()).toBe('Anterior');
+    });
+
+    it('siguiente lleva texto visible, no sólo ícono', () => {
+      expect(boton('Página siguiente').textContent?.trim()).toBe('Siguiente');
+    });
+
+    it('ninguno de los dos es iconOnly', () => {
+      expect(boton('Página anterior').classList).not.toContain('btn--icon-only');
+      expect(boton('Página siguiente').classList).not.toContain('btn--icon-only');
+    });
+  });
+
+  describe('saltar a una página (ADR-0015, regla 7)', () => {
+    function selectDeSalto(): HTMLSelectElement {
+      const select = host().querySelector('.pagination__jump select');
+      if (!(select instanceof HTMLSelectElement)) {
+        throw new Error('no está el select de saltar página');
+      }
+      return select;
+    }
+
+    it('hay una opción por página', async () => {
+      await setInputs({ totalItems: 100, pageSize: 20 });
+      expect(fixture.componentInstance.pageJumpChoices()).toHaveLength(5);
+    });
+
+    it('con una sola página, una sola opción', async () => {
+      await setInputs({ totalItems: 3, pageSize: 20 });
+      expect(fixture.componentInstance.pageJumpChoices()).toHaveLength(1);
+    });
+
+    it('elegir una página navega ahí', async () => {
+      await setInputs({ page: 1 });
+
+      const select = selectDeSalto();
+      select.value = '2';
+      select.dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.page()).toBe(3);
+    });
+
+    it('se puede ocultar', async () => {
+      expect(host().querySelector('.pagination__jump')).not.toBeNull();
+
+      await setInputs({ showPageJump: false });
+      expect(host().querySelector('.pagination__jump')).toBeNull();
+    });
+  });
+
   describe('tamaño de página', () => {
     it('cambiarlo vuelve a la página 1', async () => {
       await setInputs({ page: 12 });
 
-      const select = host().querySelector('select');
+      const select = host().querySelector('.pagination__size select');
       if (!(select instanceof HTMLSelectElement)) {
         throw new Error('el select de tamaño no está en el DOM');
       }
@@ -201,10 +254,10 @@ describe('Pagination', () => {
     });
 
     it('se puede ocultar', async () => {
-      expect(host().querySelector('app-select')).not.toBeNull();
+      expect(host().querySelector('.pagination__size')).not.toBeNull();
 
       await setInputs({ showPageSize: false });
-      expect(host().querySelector('app-select')).toBeNull();
+      expect(host().querySelector('.pagination__size')).toBeNull();
     });
   });
 
