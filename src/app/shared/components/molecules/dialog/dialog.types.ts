@@ -94,6 +94,41 @@ export const DEFAULT_CONFIRM_LABEL = 'Confirmar';
 export const DEFAULT_CANCEL_LABEL = 'Cancelar';
 
 /**
+ * Los textos por omisión de **«¿Confirmás estos cambios?»** (D-08, ADR-0015).
+ *
+ * El doctor pidió el 22/09/2026 que guardar una edición pregunte antes, con
+ * estas palabras. Viven como constante y no como literales dentro del servicio
+ * por dos razones: para que un consumidor pueda mostrar exactamente lo mismo
+ * sin pasar por el servicio —un spec, la vitrina—, y para que si el texto
+ * cambia, cambie en un solo lugar. `cancelLabel` no dice «Cancelar»: en una
+ * confirmación de guardado, cancelar es **volver al formulario**, y el botón lo
+ * dice para que nadie crea que cancela la edición entera.
+ */
+export const CONFIRMAR_CAMBIOS: DialogConfig = {
+  title: '¿Confirmás estos cambios?',
+  message: 'Se guardan y quedan visibles para quien corresponda.',
+  confirmLabel: 'Confirmar',
+  cancelLabel: 'Seguir editando',
+};
+
+/**
+ * Los textos por omisión de **«¿Descartás lo que escribiste?»**: el otro camino
+ * de un formulario con cambios, el que sale de `dismissAttempt` de
+ * `content-dialog` cuando alguien cierra con `Escape` o por el fondo.
+ *
+ * Es destructivo a propósito: descartar borra lo escrito, así que el foco
+ * inicial queda en «Seguir editando» y nadie descarta apretando Enter por
+ * inercia.
+ */
+export const CONFIRMAR_DESCARTE: DialogConfig = {
+  title: '¿Descartás lo que escribiste?',
+  message: 'Lo que cambiaste en este formulario se pierde.',
+  confirmLabel: 'Descartar',
+  cancelLabel: 'Seguir editando',
+  destructive: true,
+};
+
+/**
  * Largo mínimo por defecto de un motivo.
  *
  * Es el mismo que exige el servidor (`MIN_REASON_LENGTH` de
