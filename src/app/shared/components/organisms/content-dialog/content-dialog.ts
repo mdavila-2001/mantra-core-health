@@ -79,6 +79,42 @@ export type ContentDialogSize = (typeof CONTENT_DIALOG_SIZES)[number];
  * emitir {@link dismissAttempt}: quien lo escucha pregunta si se descarta lo
  * escrito y recién entonces cierra. El gesto no se bloquea —eso dejaría un
  * modal sin salida de teclado—, se le cambia el destino.
+ *
+ * ## Guardar con confirmación, cancelar con cambios — la receta de D-08
+ *
+ * El doctor pidió (22/09/2026, ADR-0015) que corregir una fila abra un modal
+ * con los campos llenos, que «Guardar» se habilite **por cambios** y pregunte
+ * «¿Confirmás estos cambios?», y que cancelar con cambios pregunte si se
+ * descartan. Las piezas ya existen y se **componen**, no se reimplementan:
+ *
+ * ```ts
+ * private readonly dialogs = inject(DialogService);
+ * protected readonly hayCambios = computed(() => !igual(this.borrador(), this.original()));
+ *
+ * protected async guardar(): Promise<void> {
+ *   if (!(await this.dialogs.confirmarCambios())) return;   // foco de vuelta a «Guardar»
+ *   this.cliente.actualizar(this.borrador()).subscribe({ next: () => this.cerrar() });
+ * }
+ *
+ * protected async preguntarSiSeDescarta(): Promise<void> {  // (dismissAttempt)
+ *   if (!this.hayCambios() || (await this.dialogs.confirmarDescarte())) this.cerrar();
+ * }
+ * ```
+ *
+ * ```html
+ * <app-content-dialog heading="Editar el título" [dismissible]="!hayCambios()"
+ *                     (dismissAttempt)="preguntarSiSeDescarta()" (closed)="cerrar()">
+ *   …los campos, llenos con el original…
+ *   <app-form-actions dialog-actions submitLabel="Guardar cambios"
+ *                     [disabled]="!hayCambios()" (submitted)="guardar()"
+ *                     (cancelled)="preguntarSiSeDescarta()" />
+ * </app-content-dialog>
+ * ```
+ *
+ * Los dos `confirm` se **apilan** sobre este modal: son otro `<dialog>` con
+ * `showModal()`, y el navegador los pone en la capa superior con su propio
+ * fondo y su propia trampa de foco; al cerrarse, `DialogService` devuelve el
+ * foco al botón que los abrió, que sigue dentro de este modal.
  */
 @Component({
   selector: 'app-content-dialog',

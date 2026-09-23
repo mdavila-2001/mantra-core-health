@@ -1,173 +1,188 @@
 <section class="sintomas" aria-labelledby="sintomas-titulo">
   <h2 class="sintomas__titulo" id="sintomas-titulo">¿Cómo te sentís?</h2>
-  <p class="sintomas__texto">Tocá dónde te pasa. Te decimos a qué especialidad ir.</p>
+  <p class="sintomas__texto">
+    Tocá en la figura o en una pastilla dónde te pasa. Te decimos a qué especialidad ir.
+  </p>
 
   <!-- ─── Elegir sin escribir ───────────────────────────────────────────────
        Un campo de texto vacío es la peor pregunta posible: quien no sabe a qué
        médico ir tampoco sabe con qué palabras nombrarlo. Señalar dónde duele es
        lo que hace cualquiera, y es una decisión de un toque. -->
-  <ul class="sintomas__zonas">
-    @for (zona of zonas(); track zona.id) {
-      <li>
-        <button
-          class="sintomas__zona"
-          type="button"
-          [class.is-abierta]="zonaAbierta() === zona.id"
-          [attr.aria-expanded]="zonaAbierta() === zona.id"
-          [attr.data-testid]="'zona-' + zona.id"
-          (click)="alternarZona(zona)"
-        >
-          <span class="sintomas__zona-icono" aria-hidden="true">
-            @switch (zona.icono) {
-              @case ('cabeza') {
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    d="M15.5 20.5v-2.2c0-.8.4-1.5 1-2A6.5 6.5 0 0 0 12 4.6a6.5 6.5 0 0 0-4.3 11.4c.5.5.8 1.2.8 1.9v2.6"
-                  />
-                  <path d="M9.5 8.6a2.6 2.6 0 0 1 3.6 1.2" />
-                </svg>
+  <div class="sintomas__elegir">
+    <!-- La figura (P-01, doctor 22/09/2026): la misma elección que las
+         pastillas, hecha sobre el cuerpo. Las dos conviven a propósito: la
+         silueta no tiene forma para «piel», «ánimo» ni «general», y las
+         pastillas son el camino que ya conocía quien usa el teclado. -->
+    <app-body-map
+      class="sintomas__silueta"
+      [zonas]="zonasParaLaSilueta()"
+      [value]="zonaAbierta()"
+      (valueChange)="elegirZonaDesdeLaSilueta($event)"
+    />
+
+    <ul class="sintomas__zonas">
+      @for (zona of zonas(); track zona.id) {
+        <li>
+          <button
+            class="sintomas__zona"
+            type="button"
+            [class.is-abierta]="zonaAbierta() === zona.id"
+            [attr.aria-expanded]="zonaAbierta() === zona.id"
+            [attr.data-testid]="'zona-' + zona.id"
+            (click)="alternarZona(zona)"
+          >
+            <span class="sintomas__zona-icono" aria-hidden="true">
+              @switch (zona.icono) {
+                @case ('cabeza') {
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M15.5 20.5v-2.2c0-.8.4-1.5 1-2A6.5 6.5 0 0 0 12 4.6a6.5 6.5 0 0 0-4.3 11.4c.5.5.8 1.2.8 1.9v2.6"
+                    />
+                    <path d="M9.5 8.6a2.6 2.6 0 0 1 3.6 1.2" />
+                  </svg>
+                }
+                @case ('ojo') {
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12Z" />
+                    <circle cx="12" cy="12" r="2.8" />
+                  </svg>
+                }
+                @case ('garganta') {
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M12 3.5a4 4 0 0 0-4 4v3.2c0 1-.3 1.9-.9 2.7l-1 1.3c-.6.8 0 2 1 2H9" />
+                    <path
+                      d="M9 16.7v1.1a2.7 2.7 0 0 0 5.4 0V16h1.7a1.3 1.3 0 0 0 1.2-1.7l-.8-2.6a4 4 0 0 1-.2-1.2V7.5a4 4 0 0 0-4-4"
+                    />
+                  </svg>
+                }
+                @case ('pecho') {
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M12 20.4 4.7 13a4.7 4.7 0 0 1 6.6-6.7l.7.7.7-.7A4.7 4.7 0 0 1 19.3 13z"
+                    />
+                    <path d="M5.4 12.4h2.4l1.4-2.5 2 4.9 1.6-3.3h3.8" />
+                  </svg>
+                }
+                @case ('panza') {
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M9 3.5v4.2a4.6 4.6 0 0 0 4.6 4.6h.7a3.4 3.4 0 0 1 0 6.8h-1.6a3 3 0 0 1-3-3"
+                    />
+                    <path d="M7 3.5h4" />
+                  </svg>
+                }
+                @case ('huesos') {
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M8.5 15.5 15.5 8.5" />
+                    <path d="M6.2 17.8a2.2 2.2 0 1 1-1.6-3.7 2.2 2.2 0 1 1 3.7 1.6z" />
+                    <path d="M17.8 6.2a2.2 2.2 0 1 0 1.6 3.7 2.2 2.2 0 1 0-3.7-1.6z" />
+                  </svg>
+                }
+                @case ('piel') {
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="4" y="4" width="16" height="16" rx="4" />
+                    <circle cx="9.5" cy="10" r="1.2" />
+                    <circle cx="14.5" cy="13.5" r="1.6" />
+                    <circle cx="15" cy="8.5" r=".9" />
+                  </svg>
+                }
+                @case ('animo') {
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="8.5" />
+                    <path d="M9 10.2h.01M15 10.2h.01" />
+                    <path d="M8.8 15.4a4.2 4.2 0 0 1 6.4 0" />
+                  </svg>
+                }
+                @case ('intima') {
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="9.5" r="5" />
+                    <path d="M12 14.5v6M9.2 18h5.6" />
+                  </svg>
+                }
+                @default {
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z" />
+                    <path d="M12 9v6M9 12h6" />
+                  </svg>
+                }
               }
-              @case ('ojo') {
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12Z" />
-                  <circle cx="12" cy="12" r="2.8" />
-                </svg>
-              }
-              @case ('garganta') {
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M12 3.5a4 4 0 0 0-4 4v3.2c0 1-.3 1.9-.9 2.7l-1 1.3c-.6.8 0 2 1 2H9" />
-                  <path
-                    d="M9 16.7v1.1a2.7 2.7 0 0 0 5.4 0V16h1.7a1.3 1.3 0 0 0 1.2-1.7l-.8-2.6a4 4 0 0 1-.2-1.2V7.5a4 4 0 0 0-4-4"
-                  />
-                </svg>
-              }
-              @case ('pecho') {
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    d="M12 20.4 4.7 13a4.7 4.7 0 0 1 6.6-6.7l.7.7.7-.7A4.7 4.7 0 0 1 19.3 13z"
-                  />
-                  <path d="M5.4 12.4h2.4l1.4-2.5 2 4.9 1.6-3.3h3.8" />
-                </svg>
-              }
-              @case ('panza') {
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    d="M9 3.5v4.2a4.6 4.6 0 0 0 4.6 4.6h.7a3.4 3.4 0 0 1 0 6.8h-1.6a3 3 0 0 1-3-3"
-                  />
-                  <path d="M7 3.5h4" />
-                </svg>
-              }
-              @case ('huesos') {
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M8.5 15.5 15.5 8.5" />
-                  <path d="M6.2 17.8a2.2 2.2 0 1 1-1.6-3.7 2.2 2.2 0 1 1 3.7 1.6z" />
-                  <path d="M17.8 6.2a2.2 2.2 0 1 0 1.6 3.7 2.2 2.2 0 1 0-3.7-1.6z" />
-                </svg>
-              }
-              @case ('piel') {
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <rect x="4" y="4" width="16" height="16" rx="4" />
-                  <circle cx="9.5" cy="10" r="1.2" />
-                  <circle cx="14.5" cy="13.5" r="1.6" />
-                  <circle cx="15" cy="8.5" r=".9" />
-                </svg>
-              }
-              @case ('animo') {
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <circle cx="12" cy="12" r="8.5" />
-                  <path d="M9 10.2h.01M15 10.2h.01" />
-                  <path d="M8.8 15.4a4.2 4.2 0 0 1 6.4 0" />
-                </svg>
-              }
-              @case ('intima') {
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <circle cx="12" cy="9.5" r="5" />
-                  <path d="M12 14.5v6M9.2 18h5.6" />
-                </svg>
-              }
-              @default {
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z" />
-                  <path d="M12 9v6M9 12h6" />
-                </svg>
-              }
-            }
-          </span>
-          <span class="sintomas__zona-nombre">{{ zona.nombre }}</span>
-        </button>
-      </li>
-    }
-  </ul>
+            </span>
+            <span class="sintomas__zona-nombre">{{ zona.nombre }}</span>
+          </button>
+        </li>
+      }
+    </ul>
+  </div>
 
   @if (sintomasDeLaZona().length > 0) {
     <ul class="sintomas__opciones" data-testid="zona-abierta">
@@ -187,21 +202,92 @@
     </ul>
   }
 
-  <!-- El texto libre sigue estando, pero deja de ser la única puerta: hay
-       síntomas que no entran en ninguna zona, y escribir es más rápido para
-       quien ya sabe qué decir. -->
-  <details class="sintomas__escribir" [open]="sintomas().length === 0">
-    <summary>O escribilo con tus palabras</summary>
-    <app-textarea
-      class="sintomas__campo"
-      [rows]="2"
-      [autoResize]="true"
-      [maxRows]="5"
-      [value]="texto()"
-      (valueChange)="escribir($event)"
-      placeholder="Me duele la cabeza hace tres días y veo borroso…"
-    />
-  </details>
+  <!-- El texto libre es un panel a la vista, no un desplegable (P-02, doctor
+       22/09/2026): hay síntomas que no entran en ninguna zona, y quien ya sabe
+       qué decir no tiene por qué abrir nada para decirlo. El rótulo lo pone
+       `app-form-field`, que es quien lo asocia al control. -->
+  <div class="sintomas__escribir" data-testid="sintomas-escribir">
+    <app-form-field
+      icon="note"
+      label="Contanos con tus palabras"
+      hint="Podés escribir varios síntomas; no hace falta que sea exacto."
+    >
+      <app-textarea
+        data-testid="sintomas-texto"
+        [rows]="2"
+        [autoResize]="true"
+        [maxRows]="5"
+        [value]="texto()"
+        (valueChange)="escribir($event)"
+        placeholder="Me duele la cabeza hace tres días y veo borroso…"
+      />
+    </app-form-field>
+
+    <!-- Dictar (P-02, Q-12): sólo si el navegador trae reconocedor; sin él no
+         hay botón, porque un botón que al tocarlo dice «acá no se puede» es
+         peor que ninguno. El aviso va ANTES del botón y siempre a la vista:
+         quien va a hablar de su salud tiene que saber a dónde va lo que dice
+         antes de decirlo (Q-M1). No hay servidor nuestro en el medio. -->
+    @if (dictado.soportado) {
+      <div class="sintomas__dictado" data-testid="sintomas-dictado">
+        <p class="sintomas__dictado-aviso" id="sintomas-dictado-aviso">
+          Lo que dictás lo transcribe tu navegador; no lo guardamos.
+        </p>
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          data-testid="sintomas-dictar"
+          aria-describedby="sintomas-dictado-aviso"
+          [attr.aria-pressed]="dictado.escuchando()"
+          (clicked)="alternarDictado()"
+        >
+          <svg
+            class="sintomas__dictado-icono"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <rect x="9" y="3" width="6" height="11" rx="3" />
+            <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3" />
+          </svg>
+          {{ dictado.escuchando() ? 'Detener' : 'Dictar' }}
+        </button>
+        <!-- Los tres errores dicen qué hacer, no qué falló por dentro. -->
+        <p
+          class="sintomas__dictado-estado"
+          role="status"
+          aria-live="polite"
+          data-testid="sintomas-dictado-estado"
+        >
+          @switch (dictado.estado()) {
+            @case ('escuchando') {
+              <span class="sintomas__dictado-punto" aria-hidden="true"></span>
+              Escuchando… decí qué te pasa.
+              @if (dictado.parcial(); as parcial) {
+                <em>{{ parcial }}</em>
+              }
+            }
+            @case ('sin-permiso') {
+              Activá el micrófono en el navegador o escribí.
+            }
+            @case ('sin-resultado') {
+              No te escuchamos, probá de nuevo.
+            }
+            @case ('sin-red') {
+              Sin conexión para transcribir; escribí.
+            }
+          }
+        </p>
+      </div>
+    }
+  </div>
 
   <!-- Lo que se reconoce se ANUNCIA: los chips apareciendo son el acuse de
        recibo para quien mira, y esta región lo es para quien escucha. -->
