@@ -43,11 +43,6 @@
   color: var(--text-secondary);
 }
 
-.sintomas__campo {
-  display: block;
-  margin-block-end: var(--sp-4);
-}
-
 .sintomas__chips,
 .sintomas__sugerencias {
   display: flex;
@@ -272,7 +267,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .sintomas__zona,
-  .sintomas__opciones {
+  .sintomas__opciones,
+  .sintomas__dictado-punto {
     transition: none;
     animation: none;
   }
@@ -306,18 +302,57 @@
   font-weight: 600;
 }
 
+/* El área de texto, a la vista (P-02): un panel más de la tarjeta, con el
+   mismo aire que el bloque de la figura. El rótulo, la ayuda y el ícono son de
+   `app-form-field`; acá sólo se lo ubica. */
 .sintomas__escribir {
   margin: var(--e4) 0 0;
 }
 
-.sintomas__escribir summary {
-  color: var(--tinta-2);
-  cursor: pointer;
-  font-size: var(--fs-body);
+/* Dictar (P-02): una fila bajo el área de texto. El aviso ocupa la fila
+   entera y va primero; el botón y su estado, después, en línea. */
+.sintomas__dictado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  margin-block-start: var(--e2);
 }
 
-.sintomas__escribir .sintomas__campo {
-  margin-block-start: var(--e2);
+.sintomas__dictado-aviso,
+.sintomas__dictado-estado {
+  margin: 0;
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.sintomas__dictado-aviso {
+  flex-basis: 100%;
+}
+
+.sintomas__dictado-icono {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+/* El punto que late mientras escucha: una señal más, no la única (el texto
+   «Escuchando…» y el botón en «Detener» dicen lo mismo). */
+.sintomas__dictado-punto {
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  margin-inline-end: 0.35em;
+  border-radius: 50%;
+  background: var(--brand-primary);
+  vertical-align: middle;
+  animation: sintomas-latido 1.2s ease-in-out infinite;
+}
+
+@keyframes sintomas-latido {
+  50% {
+    opacity: 0.25;
+  }
 }
 
 /* La recomendación, ya sin la tarjeta de dentro: una fila con lo que hay que
