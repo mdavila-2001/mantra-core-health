@@ -15,11 +15,18 @@ test.describe('Cotizaciones del paciente', () => {
     test.setTimeout(180_000);
 
     await entrar(page, PACIENTE);
+    const pedidosDeOrdenes: string[] = [];
+    page.on('request', (pedido) => {
+      if (new URL(pedido.url()).pathname === '/diagnostic-results/me/orders') {
+        pedidosDeOrdenes.push(pedido.url());
+      }
+    });
     await irA(page, '/my-account/cotizaciones');
     await estable(page);
 
     await expect(page.getByRole('heading', { name: 'Cotizaciones' })).toBeVisible();
     await expect(page.getByText('Estudios en tus documentos actuales')).toHaveCount(0);
+    expect(pedidosDeOrdenes).toEqual([]);
 
     const resultados = page.getByTestId('cotizaciones-resultados');
     await expect(resultados).toContainText('Paracetamol');

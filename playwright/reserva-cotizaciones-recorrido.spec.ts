@@ -11,10 +11,11 @@ const PACIENTE: Actor = {
   nombre: 'Paciente',
 };
 
-async function abrir(page: Page, ruta: string): Promise<void> {
+async function abrir(page: Page, ruta: string, titulo: string): Promise<void> {
   await irA(page, ruta);
   await estable(page);
   await expect(page.locator('#contenido-principal')).toBeVisible();
+  await expect(page.getByRole('heading', { name: titulo })).toBeVisible();
 }
 
 test('paciente recorre directorio y cotizaciones sin errores de navegador', async ({ page }) => {
@@ -25,14 +26,20 @@ test('paciente recorre directorio y cotizaciones sin errores de navegador', asyn
   // El ingreso en desarrollo emite advertencias de CSP de su propio HTML
   // servidor. Se mide sólo lo que provocan las dos rutas de este recorrido.
   vigilante.limpiar();
-  await abrir(page, '/directory');
+  await abrir(page, '/directory', 'Directorio de médicos');
 
-  await abrir(page, '/my-account/cotizaciones');
-  await page.getByTestId('cotizaciones-busqueda').fill('hemograma');
-  await expect(page.getByTestId('cotizaciones-resultados')).toContainText('Hemograma');
-  await page.getByLabel('Vertical').selectOption('ANALISIS');
+  await abrir(page, '/my-account/cotizaciones', 'Cotizaciones');
+  const resultados = page.getByTestId('cotizaciones-resultados');
   await page.getByLabel('Ordenar por').selectOption('CERCANIA');
-  await expect(page.getByTestId('cotizaciones-resultados')).toContainText('3 km');
+  const titulos = resultados.locator('h2');
+  await expect.poll(() => titulos.allTextContents()).toEqual([
+    'Tomografía',
+    'Paracetamol',
+    'Hemograma',
+    'Consulta médica',
+  ]);
+  await page.getByLabel('Vertical').selectOption('ANALISIS');
+  await expect.poll(() => titulos.allTextContents()).toEqual(['Hemograma']);
 
   expect(vigilante.erroresDeConsola).toEqual([]);
   expect(vigilante.peticionesFallidas).toEqual([]);

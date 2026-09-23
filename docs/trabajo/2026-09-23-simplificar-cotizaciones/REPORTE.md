@@ -12,7 +12,7 @@
 | H1.S1.M1 | Se reemplazó la prueba de estudios por una que exige su ausencia. | `corepack yarn test --include=src/app/features/account/cotizaciones/cotizaciones.spec.ts --watch=false` antes del cambio | ROJO esperado: `getOwnOrders` se había llamado una vez. |
 | H1.S1.M2 | Se retiraron el bloque de documentos, estados de carga/error/truncamiento y las dependencias de órdenes/terminología. | Mismo comando después del cambio | 3/3 PASS; la prueba conserva ambos clientes simulados y exige cero llamadas. |
 | H1.S1.M3 | Se registraron resultado, pruebas y límites. | Este reporte | Trazabilidad completa. |
-| H1.S1.M4 | Se abrió la ruta autenticada de Cotizaciones contra el SHA integrado y se verificó que no muestra documentos, conserva filtros/precios y presenta el vacío correcto. | `npx playwright test playwright/cotizaciones-paciente.spec.ts --workers=1 --reporter=list` | 1/1 PASS. |
+| H1.S1.M4 | Se abrió la ruta autenticada de Cotizaciones contra el SHA integrado: no muestra el bloque, no solicita `/diagnostic-results/me/orders`, conserva precio/procedencia, filtro, orden y vacío. | `npx playwright test playwright/cotizaciones-paciente.spec.ts playwright/reserva-cotizaciones-recorrido.spec.ts --workers=1 --reporter=list` | 2/2 PASS. |
 
 ## A medias
 
