@@ -323,6 +323,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'my-account/medical-record',
       'my-account/diagnostic-results',
       'my-account/diagnostic-orders',
+      'my-account/cotizaciones',
       'my-account/questionnaires',
     ],
   },
