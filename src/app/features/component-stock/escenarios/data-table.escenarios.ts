@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   input,
+  linkedSignal,
   signal,
   viewChild,
   type TemplateRef,
@@ -172,7 +173,45 @@ function paginaDe(cursor: string | undefined): PaginaDeMuestra {
 /** Fecha fija: un «ahora» real cambiaría la captura en cada corrida. */
 const DATO_DE = new Date('2026-09-21T09:30:00-04:00');
 
-/** Las variantes del escenario: las diez del `ViewState` y tres del contrato. */
+/**
+ * Valores límite: los bordes que una tabla real encuentra y que el camino feliz
+ * de seis filas no ejercita. Todas sintéticas.
+ */
+const FILA_UNICA: readonly PacienteDeMuestra[] = [PRIMERA_PAGINA.filas[0]!];
+
+const TEXTO_LARGO: readonly PacienteDeMuestra[] = [
+  {
+    id: 'l-01',
+    apellido: 'Fernández de Córdova Villarroel Santa Cruz Arteaga',
+    nombre: 'María de los Ángeles Guadalupe Esperanza',
+    // Una huella sin espacios ni guiones: no se puede envolver, así que en
+    // pantallas medianas la tabla desborda y la columna fija tiene que actuar.
+    documento: 'sha256:9f2c4e1b7a3d5f60c8e2b1a4d7f3c6e9a0b5d2f8c1e4a7b3d6f9c2e5a8b1d4f7c0',
+    nacimiento: '1948-06-30',
+    fallecido: false,
+  },
+  {
+    id: 'l-02',
+    apellido: 'Quispe Mamani',
+    nombre: 'Juan',
+    documento: '1 LP',
+    nacimiento: '2025-12-31',
+    fallecido: true,
+  },
+];
+
+/**
+ * El caso inválido a propósito: dos filas con la misma identidad. El `trackBy`
+ * del contrato promete «identidad estable»; con esto la tabla no puede saber
+ * qué fila es cuál al ordenar, paginar o seleccionar.
+ */
+const IDENTIDAD_REPETIDA: readonly PacienteDeMuestra[] = [
+  PRIMERA_PAGINA.filas[0]!,
+  { ...PRIMERA_PAGINA.filas[1]!, id: PRIMERA_PAGINA.filas[0]!.id },
+  PRIMERA_PAGINA.filas[2]!,
+];
+
+/** Las variantes del escenario: las diez del `ViewState`, tres del contrato y los bordes. */
 export const VARIANTES_DE_DATA_TABLE = [
   'ready',
   'ready-seleccionable',
@@ -186,8 +225,79 @@ export const VARIANTES_DE_DATA_TABLE = [
   'not-found',
   'offline',
   'error',
+  'cero-filas',
+  'una-fila',
+  'texto-largo',
+  'trackby-repetido',
 ] as const;
 export type VarianteDeDataTable = (typeof VARIANTES_DE_DATA_TABLE)[number];
+
+/** Las variantes de una sola página: sin cursor hacia adelante. */
+const PAGINA_UNICA: ReadonlySet<VarianteDeDataTable> = new Set([
+  'cero-filas',
+  'una-fila',
+  'texto-largo',
+  'trackby-repetido',
+]);
+
+/** Las filas con las que arranca cada variante. */
+export function filasDe(variante: VarianteDeDataTable): readonly PacienteDeMuestra[] {
+  switch (variante) {
+    case 'cero-filas':
+      return [];
+    case 'una-fila':
+      return FILA_UNICA;
+    case 'texto-largo':
+      return TEXTO_LARGO;
+    case 'trackby-repetido':
+      return IDENTIDAD_REPETIDA;
+    default:
+      return PRIMERA_PAGINA.filas;
+  }
+}
+
+/** La identidad de una fila: lo que el anfitrión le pasa a `trackBy`. */
+export const identidadDePaciente = (fila: PacienteDeMuestra): string => fila.id;
+
+/**
+ * Las columnas del escenario sin sus plantillas de celda: la parte del
+ * contrato que se puede comprobar antes de montar.
+ */
+export const COLUMNAS_DE_MUESTRA: readonly Omit<ColumnDef<PacienteDeMuestra>, 'cell'>[] = [
+  { key: 'apellido', header: 'Apellido', priority: 1, sortable: true },
+  { key: 'nombre', header: 'Nombre', priority: 1 },
+  { key: 'documento', header: 'Documento', priority: 2, align: 'end' },
+  { key: 'nacimiento', header: 'Nacimiento', priority: 2 },
+  { key: 'fallecido', header: 'Estado', priority: 2, sticky: 'end' },
+];
+
+/**
+ * Lo que el contrato de `DataTable` exige y un escenario puede violar: identidad
+ * única por fila (`trackBy`), claves de columna únicas y cabeceras legibles.
+ */
+export function violacionesDelContratoDeTabla<Row>(
+  filas: readonly Row[],
+  trackBy: (fila: Row) => string,
+  columnas: readonly Pick<ColumnDef<Row>, 'key' | 'header'>[],
+): readonly string[] {
+  const violaciones: string[] = [];
+  const vistas = new Map<string, number>();
+  for (const fila of filas) vistas.set(trackBy(fila), (vistas.get(trackBy(fila)) ?? 0) + 1);
+  for (const [identidad, veces] of vistas) {
+    if (veces > 1) {
+      violaciones.push(
+        `trackBy repite la identidad «${identidad}» en ${veces} filas: la tabla no puede saber qué fila es cuál al ordenar, paginar o seleccionar.`,
+      );
+    }
+  }
+  const claves = new Set<string>();
+  for (const columna of columnas) {
+    if (claves.has(columna.key)) violaciones.push(`dos columnas con la clave «${columna.key}».`);
+    claves.add(columna.key);
+    if (columna.header.trim() === '') violaciones.push(`la columna «${columna.key}» no tiene cabecera legible.`);
+  }
+  return violaciones;
+}
 
 /**
  * Anfitrión de `DataTable` para el banco.
@@ -210,7 +320,7 @@ export type VarianteDeDataTable = (typeof VARIANTES_DE_DATA_TABLE)[number];
       [selectable]="seleccionable()"
       [rowNavigable]="navegable()"
       [sort]="orden()"
-      [cursor]="paginado.cursor()"
+      [cursor]="cursor()"
       (sortChanged)="ordenar($event)"
       (cursorChanged)="mover($event)"
       (selectionChanged)="registro.anotar('selectionChanged', $event.length + ' fila(s)')"
@@ -247,15 +357,19 @@ export class EscenarioDataTable implements AnfitrionDeEscenario {
   private readonly celdaEstado =
     viewChild.required<TemplateRef<{ $implicit: PacienteDeMuestra }>>('celdaEstado');
 
-  protected readonly columnas = computed<readonly ColumnDef<PacienteDeMuestra>[]>(() => [
-    { key: 'apellido', header: 'Apellido', priority: 1, sortable: true },
-    { key: 'nombre', header: 'Nombre', priority: 1 },
-    { key: 'documento', header: 'Documento', priority: 2, align: 'end' },
-    { key: 'nacimiento', header: 'Nacimiento', priority: 2, cell: this.celdaNacimiento() },
-    { key: 'fallecido', header: 'Estado', priority: 2, sticky: 'end', cell: this.celdaEstado() },
-  ]);
+  /** Las columnas del contrato, con sus plantillas de celda donde las hay. */
+  protected readonly columnas = computed<readonly ColumnDef<PacienteDeMuestra>[]>(() => {
+    const celdas: Partial<Record<string, TemplateRef<{ $implicit: PacienteDeMuestra }>>> = {
+      nacimiento: this.celdaNacimiento(),
+      fallecido: this.celdaEstado(),
+    };
+    return COLUMNAS_DE_MUESTRA.map((columna) => {
+      const cell = celdas[columna.key];
+      return cell === undefined ? columna : { ...columna, cell };
+    });
+  });
 
-  protected readonly porId = (fila: PacienteDeMuestra): string => fila.id;
+  protected readonly porId = identidadDePaciente;
   protected readonly nombreCompleto = (fila: PacienteDeMuestra): string =>
     `${fila.nombre} ${fila.apellido}`;
 
@@ -263,7 +377,13 @@ export class EscenarioDataTable implements AnfitrionDeEscenario {
   protected readonly navegable = computed(() => this.variante() === 'ready-navegable');
 
   protected readonly orden = signal<SortState | null>(null);
-  private readonly filas = signal<readonly PacienteDeMuestra[]>(PRIMERA_PAGINA.filas);
+  /** Las filas visibles: arrancan con las de la variante y el cursor las cambia. */
+  private readonly filas = linkedSignal(() => filasDe(this.variante()));
+
+  /** Los bordes son de una sola página: sin «Siguiente» que prometa más filas. */
+  protected readonly cursor = computed(() =>
+    PAGINA_UNICA.has(this.variante()) ? {} : this.paginado.cursor(),
+  );
 
   constructor() {
     this.paginado.llego(PRIMERA_PAGINA.siguiente);
@@ -390,7 +510,19 @@ const ESTADOS_SIN_FILAS: readonly {
   },
 ];
 
-export const ESCENARIOS_DE_DATA_TABLE: readonly EscenarioDeComponente[] = [
+/** El contrato de la tabla con los datos de una variante, antes de montar. */
+const contratoDe = (variante: VarianteDeDataTable) => (): readonly string[] =>
+  violacionesDelContratoDeTabla(filasDe(variante), identidadDePaciente, COLUMNAS_DE_MUESTRA);
+
+/**
+ * Un escenario de la tabla antes de sumarle su verificación de contrato. La
+ * variante va tipada con las de este anfitrión: una mal escrita no compila.
+ */
+type EscenarioDeTabla = Omit<EscenarioDeComponente, 'verificarContrato' | 'variante'> & {
+  readonly variante: VarianteDeDataTable;
+};
+
+const ESCENARIOS_BASE: readonly EscenarioDeTabla[] = [
   {
     id: `${CLAVE}#ready`,
     clave: CLAVE,
@@ -448,4 +580,61 @@ export const ESCENARIOS_DE_DATA_TABLE: readonly EscenarioDeComponente[] = [
     host: EscenarioDataTable,
     fuente: FUENTE,
   })),
+  {
+    id: `${CLAVE}#cero-filas`,
+    clave: CLAVE,
+    variante: 'cero-filas',
+    titulo: 'Límite · listo con 0 filas',
+    seVe: 'Un `ready([])`: no es el estado S3 «vacío» con próxima acción, es la tabla lista sin filas. Se ve lo que la tabla hace con eso, sin paginación.',
+    interacciones: ['Tocar «Apellido» → sortChanged apellido asc aunque no haya filas.'],
+    salidasEsperadas: ['sortChanged'],
+    host: EscenarioDataTable,
+    fuente: FUENTE,
+    nivelDePrueba: 'limite',
+  },
+  {
+    id: `${CLAVE}#una-fila`,
+    clave: CLAVE,
+    variante: 'una-fila',
+    titulo: 'Límite · una sola fila',
+    seVe: 'Una fila (Peña, Ana) con las cinco columnas y sin paginación: «Anterior» y «Siguiente» no se dibujan.',
+    interacciones: ['Tocar «Apellido» dos veces → sortChanged apellido asc y luego desc; la fila no cambia.'],
+    salidasEsperadas: ['sortChanged'],
+    host: EscenarioDataTable,
+    fuente: FUENTE,
+    nivelDePrueba: 'limite',
+  },
+  {
+    id: `${CLAVE}#texto-largo`,
+    clave: CLAVE,
+    variante: 'texto-largo',
+    titulo: 'Límite · texto largo y columna fija',
+    seVe: 'Un apellido de 50 caracteres (se envuelve) y una huella de documento de 71 sin espacios (no se envuelve) junto a otros de un carácter. En Tableta girada (1024) la tabla desborda y «Estado» (sticky: end) queda fija al borde derecho. Por debajo de 780 px las columnas de prioridad 2 se pliegan al detalle ▼.',
+    interacciones: [
+      'En Tableta girada (⟳, 1024) desplazar la tabla de costado → «Estado» no se va del borde.',
+      'Tocar «Apellido» → sortChanged apellido asc.',
+    ],
+    salidasEsperadas: ['sortChanged'],
+    host: EscenarioDataTable,
+    fuente: FUENTE,
+    nivelDePrueba: 'limite',
+  },
+  {
+    id: `${CLAVE}#trackby-repetido`,
+    clave: CLAVE,
+    variante: 'trackby-repetido',
+    titulo: 'Inválido · trackBy que repite identidad',
+    seVe: 'NO se monta: el banco rechaza el contrato antes de montar, dice qué viola (dos filas con la identidad «p-01») y deja montado el último escenario válido.',
+    interacciones: ['Elegirlo después de «Listado con orden y cursor» → el aviso aparece y la tabla de seis filas sigue ahí.'],
+    salidasEsperadas: [],
+    host: EscenarioDataTable,
+    fuente: FUENTE,
+    nivelDePrueba: 'invalido',
+  },
 ];
+
+export const ESCENARIOS_DE_DATA_TABLE: readonly EscenarioDeComponente[] = ESCENARIOS_BASE.map((escenario) => ({
+  nivelDePrueba: 'correcto' as const,
+  ...escenario,
+  verificarContrato: contratoDe(escenario.variante),
+}));

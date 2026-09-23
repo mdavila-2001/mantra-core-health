@@ -16,12 +16,13 @@ import {
   type OnDestroy,
   type Type,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 
 import { SessionStore, type SessionTokens } from '../../core/auth/session.store';
-import { valoresParaEntradas } from '../../core/mock/faker';
+import { generarEntradas, type ValorGenerado } from '../../core/mock/faker';
 import { apiRealForzada } from '../../core/mock/modo-api';
 import { MOCK_USERS, emitirAccessToken, emitirRefreshToken } from '../../core/mock/mock-session';
 
@@ -89,6 +90,24 @@ type Pestana = 'props' | 'composicion' | 'salidas' | 'problemas' | 'red' | 'acce
  * escribió un anfitrión.
  */
 const VALORES_GENERADOS = 'valores-generados';
+
+/**
+ * Una dimensión de la acreditación de un componente. El estado va en palabras
+ * y con marca propia: la ficha tiene que leerse igual en escala de grises.
+ */
+export interface DimensionDeAcreditacion {
+  readonly clave: 'descubierto' | 'escenario' | 'monto' | 'interactuado' | 'visual' | 'bloqueado';
+  readonly nombre: string;
+  readonly estado: 'si' | 'no' | 'parcial' | 'sin-medir';
+  readonly detalle: string;
+}
+
+const MARCA_DE_ESTADO: Readonly<Record<DimensionDeAcreditacion['estado'], string>> = {
+  si: '✓ sí',
+  no: '✗ no',
+  parcial: '◐ parcial',
+  'sin-medir': '— sin medir',
+};
 
 interface FalloDeAccesibilidad {
   readonly impacto: string;
@@ -236,6 +255,37 @@ export class ComponentStock implements OnDestroy {
    */
   protected readonly entradasRechazadas = signal<readonly string[]>([]);
 
+  /**
+   * Entradas que el generador llenó sin poder cumplir su tipo (`[]`, `''`, un
+   * texto adivinado por el nombre). El componente monta, pero ese montaje no
+   * acredita su contrato: la ficha lo dice y nombra la entrada.
+   */
+  protected readonly entradasSinVerificar = signal<readonly { nombre: string; motivo: string }[]>([]);
+  /** De dónde salió cada valor del montaje a ciegas, para la tabla de entradas. */
+  protected readonly procedencias = signal<Readonly<Record<string, Omit<ValorGenerado, 'valor'>>>>({});
+
+  /**
+   * Un escenario cuyo contrato no se cumple: no se monta, y lo que estaba
+   * montado sigue ahí. `conservado` dice qué es eso, o `null` si no había nada.
+   */
+  protected readonly contratoRechazado = signal<{
+    readonly escenario: string;
+    readonly violaciones: readonly string[];
+    readonly conservado: string | null;
+  } | null>(null);
+
+  /**
+   * Lo que está montado en el marco ahora, que puede no ser lo elegido: un
+   * escenario rechazado deja en pantalla el último montaje que terminó bien.
+   * La acreditación describe ESTO, no el pedido.
+   */
+  private readonly montajeVigente = signal<{ readonly etiqueta: string; readonly porEscenario: boolean } | null>(
+    null,
+  );
+
+  /** Cuántos `ComponentRef` tiene vivos el banco ahora mismo. Debería ser 0 o 1+matriz. */
+  protected readonly monturasVivas = signal(0);
+
   protected readonly ancho = computed(() =>
     this.apaisado() ? this.dispositivo().alto : this.dispositivo().ancho,
   );
@@ -258,6 +308,19 @@ export class ComponentStock implements OnDestroy {
   private readonly marco = viewChild<ElementRef<HTMLIFrameElement>>('marco');
   private montados: ComponentRef<unknown>[] = [];
 
+  /**
+   * Cada montaje saca un turno y sólo el último puede tocar el marco.
+   *
+   * `montar` espera la carga diferida del componente; si mientras tanto se
+   * eligió otro, la ejecución vieja llegaba tarde, vaciaba el marco y montaba
+   * encima: con B elegido quedaba A a la vista y B vivo sin DOM (medido con
+   * una carga demorada de verdad, `evidencia/runtime-antes/`).
+   */
+  private turno = 0;
+
+  /** El observador de red del montaje vigente y su corte diferido. */
+  private red: { readonly observador: PerformanceObserver; corte: ReturnType<typeof setTimeout> | null } | null = null;
+
   /** Las ramas de la primera entrada que sea una unión: la matriz de variantes. */
   protected readonly variantes = computed(() => {
     const componente = this.elegido();
@@ -276,9 +339,103 @@ export class ComponentStock implements OnDestroy {
       componente.problemas.length +
       this.consola().length +
       this.entradasRechazadas().length +
+      this.entradasSinVerificar().length +
+      (this.contratoRechazado() === null ? 0 : 1) +
       (this.estado() === 'falló' ? 1 : 0) +
       (this.accesibilidad()?.length ?? 0)
     );
+  });
+
+  /**
+   * La marca de una dimensión. En «Bloqueado» el «sí» es lo malo, así que no
+   * lleva el tilde de «bien»: en escala de grises se leería al revés.
+   */
+  protected marca(dimension: DimensionDeAcreditacion): string {
+    if (dimension.clave === 'bloqueado') return dimension.estado === 'si' ? '⚠ bloqueado' : '✓ libre';
+    return MARCA_DE_ESTADO[dimension.estado];
+  }
+
+  /**
+   * Las seis dimensiones de la ficha. Cuatro vienen del índice generado
+   * (`acreditacion`) y dos de lo que pasó en ESTE banco: nada está escrito a
+   * mano, y «descubierto» no alcanza para acreditar nada.
+   */
+  protected readonly acreditacion = computed<readonly DimensionDeAcreditacion[]>(() => {
+    const c = this.elegido();
+    if (c === null) return [];
+    const estatica = c.acreditacion;
+    const escenarios = this.escenarios();
+    const rechazo = this.contratoRechazado();
+    const sinVerificar = this.entradasSinVerificar().length + this.entradasRechazadas().length;
+    // «Montó» e «Interactuado» hablan de lo que está en el marco. Si el escenario
+    // pedido se rechazó, lo que está es el montaje conservado: se acredita ése y
+    // el rechazo se dice aparte, sin hacer creer que no hay nada montado.
+    const vigente = this.montajeVigente();
+    const porEscenario = vigente?.porEscenario ?? this.escenario() !== null;
+
+    const montoDelVigente = ((): Pick<DimensionDeAcreditacion, 'estado' | 'detalle'> => {
+      switch (this.estado()) {
+        case 'falló':
+          return { estado: 'no', detalle: this.error() ?? 'no monta' };
+        case 'montado':
+          if (porEscenario) return { estado: 'si', detalle: 'por escenario, con un contrato escrito a mano' };
+          return sinVerificar > 0
+            ? { estado: 'parcial', detalle: `con valores generados: ${sinVerificar} entrada(s) sin verificar` }
+            : { estado: 'si', detalle: 'con valores generados que cumplen su tipo declarado' };
+        default:
+          return { estado: 'sin-medir', detalle: 'todavía no terminó de montarse' };
+      }
+    })();
+    const monto =
+      rechazo === null
+        ? montoDelVigente
+        : {
+            estado: montoDelVigente.estado,
+            detalle:
+              `montaje vigente: ${rechazo.conservado ?? 'ninguno'} (${montoDelVigente.detalle}). ` +
+              `El escenario pedido «${rechazo.escenario}» no se montó: contrato inválido.`,
+          };
+
+    const salidas = this.salidas().length;
+    return [
+      { clave: 'descubierto', nombre: 'Descubierto', estado: estatica.descubierto ? 'si' : 'no', detalle: c.path },
+      {
+        clave: 'escenario',
+        nombre: 'Escenario',
+        estado: estatica.escenario === null ? 'no' : 'si',
+        detalle:
+          estatica.escenario === null
+            ? 'sin anfitrión escrito a mano: sólo valores generados'
+            : `${escenarios.length} variante(s) en ${estatica.escenario}`,
+      },
+      { clave: 'monto', nombre: 'Montó', ...monto },
+      {
+        clave: 'interactuado',
+        nombre: 'Interactuado',
+        estado: !porEscenario ? 'sin-medir' : salidas > 0 ? 'si' : 'no',
+        detalle:
+          !porEscenario
+            ? 'con valores generados nadie escucha sus salidas'
+            : salidas > 0
+              ? `${salidas} salida(s) registradas en esta sesión`
+              : 'todavía no emitió nada: tocá el componente en el marco',
+      },
+      {
+        clave: 'visual',
+        nombre: 'Verificado visualmente',
+        estado: estatica.capturasVisuales.length > 0 ? 'si' : 'no',
+        detalle:
+          estatica.capturasVisuales.length > 0
+            ? `${estatica.capturasVisuales.length} captura(s) versionada(s) de sus escenarios`
+            : 'sin capturas versionadas de un escenario',
+      },
+      {
+        clave: 'bloqueado',
+        nombre: 'Bloqueado',
+        estado: estatica.bloqueos.length > 0 ? 'si' : 'no',
+        detalle: estatica.bloqueos[0] ?? 'nada externo impide acreditarlo',
+      },
+    ];
   });
 
   protected readonly valorDe = computed(() => (nombre: string) => {
@@ -305,7 +462,10 @@ export class ComponentStock implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // Un montaje que todavía esté cargando ya no es vigente.
+    this.turno++;
     this.desmontar();
+    this.dejarDeMirarLaRed();
     this.restaurarSesion();
   }
 
@@ -314,31 +474,60 @@ export class ComponentStock implements OnDestroy {
   private async montar(componente: ComponenteDelStock, marco: HTMLIFrameElement): Promise<void> {
     const documento = marco.contentDocument;
     if (documento === null) return;
+    const turno = ++this.turno;
+    const escenario = this.escenario();
 
-    this.desmontar();
+    // Un escenario inválido a propósito no se monta: se dice qué viola y lo que
+    // estaba montado sigue ahí. Ver `EscenarioDeComponente.verificarContrato`.
+    const violaciones = escenario?.verificarContrato?.() ?? [];
+    if (escenario !== null && violaciones.length > 0) {
+      this.contratoRechazado.set({
+        escenario: escenario.titulo,
+        violaciones,
+        conservado: this.montajeVigente()?.etiqueta ?? null,
+      });
+      // Si había una carga en curso, el turno nuevo la cancela antes de que toque
+      // el marco: lo que se ve sigue siendo el montaje vigente, y el estado lo dice.
+      if (this.estado() === 'montando') this.estado.set(this.montajeVigente() === null ? 'vacío' : 'montado');
+      // La observación de red NO se toca: pertenece al montaje vigente, que sigue.
+      return;
+    }
+    this.contratoRechazado.set(null);
+
     this.estado.set('montando');
     this.error.set(null);
     this.accesibilidad.set(null);
-
-    const capturados: string[] = [];
-    const restaurarConsola = this.capturarConsola(capturados);
-    const pedidas: string[] = [];
-    const dejarDeMirarLaRed = this.mirarLaRed(pedidas);
     const arranque = performance.now();
 
+    let clase: Type<unknown>;
     try {
       this.aplicarCuenta();
-      const escenario = this.escenario();
       // El componente se carga aunque se monte por su anfitrión: es la prueba
       // de que la ficha apunta al mismo archivo que el escenario importa.
-      const clase = await componente.cargar();
+      clase = await componente.cargar();
+    } catch (error) {
+      if (turno !== this.turno) return;
+      this.fallar(documento, error, arranque);
+      return;
+    }
+    // Mientras cargaba se eligió otra cosa: esta ejecución ya no es la vigente
+    // y no toca el marco. Lo que está montado es de la vigente.
+    if (turno !== this.turno) return;
 
+    // De acá en adelante todo es síncrono: la consola y la red se miran sólo
+    // durante ESTE montaje, sin solaparse con uno que siga pendiente.
+    const capturados: string[] = [];
+    const restaurarConsola = this.capturarConsola(capturados);
+    this.mirarLaRed();
+    try {
+      this.desmontar();
       this.prepararDocumento(documento);
+      const inyector = this.inyectorDelMarco(documento);
 
       if (escenario !== null) {
-        this.montarEscenario(escenario, documento);
+        this.montarEscenario(escenario, inyector, documento);
       } else {
-        this.montarConValoresGenerados(componente, clase, documento);
+        this.montarConValoresGenerados(componente, clase, inyector, documento);
       }
 
       // Angular inyecta los estilos del componente en la cabecera del documento
@@ -347,16 +536,49 @@ export class ComponentStock implements OnDestroy {
       this.copiarEstilos(documento);
 
       this.estado.set('montado');
+      this.montajeVigente.set({
+        etiqueta: `${componente.clase} · ${escenario?.titulo ?? 'valores generados'}`,
+        porEscenario: escenario !== null,
+      });
     } catch (error) {
-      this.estado.set('falló');
-      this.error.set(error instanceof Error ? error.message : String(error));
+      this.fallar(documento, error, arranque);
     } finally {
-      this.milisegundos.set(Math.round(performance.now() - arranque));
       restaurarConsola();
-      dejarDeMirarLaRed();
       this.consola.set(capturados);
-      this.peticiones.set(pedidas);
+      this.milisegundos.set(Math.round(performance.now() - arranque));
     }
+  }
+
+  /**
+   * Un montaje que falla no deja nada detrás: ni una vista rota adjunta al
+   * `ApplicationRef` —que volvía a fallar en cada ciclo y sumaba vistas vivas—
+   * ni el nodo huérfano en el marco.
+   */
+  private fallar(documento: Document, error: unknown, arranque: number): void {
+    this.desmontar();
+    // El observador de red y su corte de 1,5 s eran del intento fallido: no
+    // quedan vivos después de él.
+    this.dejarDeMirarLaRed();
+    documento.body.replaceChildren();
+    this.montajeVigente.set(null);
+    this.estado.set('falló');
+    this.error.set(error instanceof Error ? error.message : String(error));
+    this.milisegundos.set(Math.round(performance.now() - arranque));
+  }
+
+  /**
+   * El inyector de elemento de lo montado: el del banco, pero con el `DOCUMENT`
+   * del marco.
+   *
+   * Sin esto, un organismo que usa `DOCUMENT` —`ContentDialog` bloquea el
+   * scroll del `body` y devuelve el foco al `activeElement`— actuaba sobre el
+   * documento del ANFITRIÓN: bloqueaba el scroll del banco y el foco no volvía
+   * al botón que abrió el modal dentro del marco (medido en
+   * `evidencia/h3-antes/sonda-dialogo-descartable.json`). Es aislamiento
+   * parcial: los servicios `providedIn: 'root'` siguen siendo los del anfitrión.
+   */
+  private inyectorDelMarco(documento: Document): Injector {
+    return Injector.create({ providers: [{ provide: DOCUMENT, useValue: documento }], parent: this.injector });
   }
 
   /**
@@ -367,23 +589,32 @@ export class ComponentStock implements OnDestroy {
    * lee las salidas. No hay valores generados que editar: las entradas las
    * decide el escenario, y eso es lo que lo hace reproducible.
    */
-  private montarEscenario(escenario: EscenarioDeComponente, documento: Document): void {
+  private montarEscenario(escenario: EscenarioDeComponente, inyector: Injector, documento: Document): void {
     const anfitrion = documento.createElement('div');
     documento.body.appendChild(anfitrion);
 
     const referencia = createComponent(escenario.host, {
       environmentInjector: this.entorno,
-      elementInjector: this.injector,
+      elementInjector: inyector,
       hostElement: anfitrion,
     });
+    // Se registra ANTES de adjuntar y detectar: si el primer ciclo falla, el
+    // desmontaje lo encuentra y lo destruye.
+    this.registrar(referencia);
     referencia.setInput('variante', escenario.variante);
     this.app.attachView(referencia.hostView);
     referencia.changeDetectorRef.detectChanges();
-    this.montados.push(referencia);
 
     this.anfitrion.set(referencia.instance);
     this.valores.set({ variante: escenario.variante });
     this.entradasRechazadas.set([]);
+    this.entradasSinVerificar.set([]);
+    this.procedencias.set({});
+  }
+
+  private registrar(referencia: ComponentRef<unknown>): void {
+    this.montados.push(referencia);
+    this.monturasVivas.set(this.montados.length);
   }
 
   /**
@@ -394,6 +625,7 @@ export class ComponentStock implements OnDestroy {
   private montarConValoresGenerados(
     componente: ComponenteDelStock,
     clase: Type<unknown>,
+    inyector: Injector,
     documento: Document,
   ): void {
     const cuerpo = documento.body;
@@ -407,13 +639,17 @@ export class ComponentStock implements OnDestroy {
             rotulo: `${variantes.entrada} = ${rama}`,
           }));
 
-    const generados = valoresParaEntradas(
+    const generados = generarEntradas(
       componente.entradas.map((e) => ({ nombre: e.nombre, tipo: e.tipo, requerido: e.requerido })),
       `${componente.clave}-${this.semilla()}`,
     );
-    const valores = { ...generados, ...this.editados() };
+    const editados = this.editados();
+    const valores = { ...generados.valores, ...editados };
     this.valores.set(valores);
     this.anfitrion.set(null);
+    // Lo que se escribió a mano deja de ser «sin verificar»: lo decidió alguien.
+    this.entradasSinVerificar.set(generados.sinVerificar.filter((s) => !(s.nombre in editados)));
+    this.procedencias.set(generados.procedencias);
 
     const rechazadas: string[] = [];
     for (const instancia of instancias) {
@@ -431,9 +667,10 @@ export class ComponentStock implements OnDestroy {
 
       const referencia = createComponent(clase, {
         environmentInjector: this.entorno,
-        elementInjector: this.injector,
+        elementInjector: inyector,
         hostElement: anfitrion,
       });
+      this.registrar(referencia);
       for (const [nombre, valor] of Object.entries({ ...valores, ...instancia.extra })) {
         try {
           referencia.setInput(nombre, valor);
@@ -446,7 +683,6 @@ export class ComponentStock implements OnDestroy {
       }
       this.app.attachView(referencia.hostView);
       referencia.changeDetectorRef.detectChanges();
-      this.montados.push(referencia);
     }
     this.entradasRechazadas.set(rechazadas);
   }
@@ -457,6 +693,7 @@ export class ComponentStock implements OnDestroy {
       referencia.destroy();
     }
     this.montados = [];
+    this.monturasVivas.set(0);
     this.anfitrion.set(null);
   }
 
@@ -464,8 +701,22 @@ export class ComponentStock implements OnDestroy {
   private prepararDocumento(documento: Document): void {
     documento.body.replaceChildren();
     documento.documentElement.lang = 'es';
+    // El tema vive en atributos del `<html>` del anfitrión (`data-theme` y el
+    // `data-tema` que lee la hoja de ALOVIDA). Sin copiarlos, en oscuro el marco
+    // mezclaba tokens de los dos temas: fondo blanco y cabeceras casi invisibles
+    // (`evidencia/h6/h6-tema-oscuro.png`, antes de esta corrección).
+    for (const atributo of ['data-theme', 'data-tema']) {
+      const valor = document.documentElement.getAttribute(atributo);
+      if (valor === null) documento.documentElement.removeAttribute(atributo);
+      else documento.documentElement.setAttribute(atributo, valor);
+    }
     this.copiarEstilos(documento);
-    documento.body.setAttribute('style', 'margin:0;padding:16px;background:var(--color-bg,#fff)');
+    // Los mismos tokens que el `body` de la aplicación (styles.css). El anterior,
+    // `--color-bg`, no existe: el marco caía siempre al blanco de respaldo.
+    documento.body.setAttribute(
+      'style',
+      'margin:0;padding:16px;background:var(--bg-base,#fff);color:var(--text-primary,inherit)',
+    );
   }
 
   private copiarEstilos(documento: Document): void {
@@ -575,9 +826,16 @@ export class ComponentStock implements OnDestroy {
    * rama `mockup` esta pestaña vacía significa «nada salió a la red», no
    * «el componente no pidió nada». Con «API real» encendida sí se ve todo.
    */
-  private mirarLaRed(destino: string[]): () => void {
-    if (typeof PerformanceObserver === 'undefined') return () => undefined;
+  private mirarLaRed(): void {
+    this.dejarDeMirarLaRed();
+    this.peticiones.set([]);
+    if (typeof PerformanceObserver === 'undefined') return;
     const observador = new PerformanceObserver((lista) => {
+      // Sólo anota el observador del montaje vigente. Lo reemplaza el próximo
+      // montaje REAL; un escenario rechazado no monta nada y no lo toca (antes el
+      // turno del intento rechazado lo apagaba: evidencia/cierre-hallazgos/antes/).
+      if (this.red?.observador !== observador) return;
+      const nuevas: string[] = [];
       for (const entrada of lista.getEntries()) {
         const url = entrada.name;
         if (/\.(js|css|woff2?|png|jpe?g|svg|webp|ico)(\?|$)/.test(url)) continue;
@@ -585,14 +843,25 @@ export class ComponentStock implements OnDestroy {
         // Lo que pide el servidor de desarrollo por su cuenta —componentes
         // por HMR, el cliente de Vite— no es del componente.
         if (/\/@(ng|vite|fs|id)\//.test(url)) continue;
-        destino.push(url.replace(location.origin, ''));
+        nuevas.push(url.replace(location.origin, ''));
       }
+      if (nuevas.length > 0) this.peticiones.update((previas) => [...previas, ...nuevas]);
     });
     observador.observe({ entryTypes: ['resource'] });
     // Se deja mirando después del montaje: las lecturas del backend simulado
     // llegan con latencia a propósito (120–300 ms) y sin esta espera la lista
-    // salía vacía justo en las pantallas que más piden.
-    return () => setTimeout(() => observador.disconnect(), 1500);
+    // salía vacía justo en las pantallas que más piden. El corte es de este
+    // montaje: el siguiente, o salir del banco, lo adelanta.
+    const red = { observador, corte: null as ReturnType<typeof setTimeout> | null };
+    red.corte = setTimeout(() => this.dejarDeMirarLaRed(), 1500);
+    this.red = red;
+  }
+
+  private dejarDeMirarLaRed(): void {
+    if (this.red === null) return;
+    if (this.red.corte !== null) clearTimeout(this.red.corte);
+    this.red.observador.disconnect();
+    this.red = null;
   }
 
   /* ---- acciones ----------------------------------------------------------- */
@@ -675,7 +944,7 @@ export class ComponentStock implements OnDestroy {
     return [
       `## ${c.clase} \`<${c.selector}>\``,
       `- Archivo: \`${c.path}\``,
-      `- Nivel: ${ETIQUETA_DE_NIVEL[c.nivel]} · Prueba: ${c.tieneSpec ? 'sí' : 'no'}`,
+      `- Nivel: ${ETIQUETA_DE_NIVEL[c.nivel]} (${c.nivelOrigen}) · Prueba: ${c.tieneSpec ? 'sí' : 'no'}`,
       `- Montado en ${this.ancho()}×${this.alto()} px (${this.dispositivo().nombre}) en ${this.milisegundos()} ms`,
       this.escenario() === null
         ? '- Montaje: valores generados (a ciegas)'
@@ -686,6 +955,10 @@ export class ComponentStock implements OnDestroy {
       lista('Moléculas', c.usa.moleculas),
       lista('Organismos', c.usa.organismos),
       lista('Clientes de API', c.clientes),
+      lista('Importado sin instanciar', c.relaciones.disponibleSinInstanciar),
+      lista('Sólo sus tipos', c.relaciones.soloTipo),
+      lista('Carga dinámicamente', c.relaciones.cargaDinamica),
+      ...c.unresolvedEvidence.map((u) => `- **sin resolver (${u.causa})**: ${u.detalle}`),
       '',
       `### Problemas (${this.totalDeProblemas()})`,
       ...c.problemas.map((p) => `- **${p.tipo}**: ${p.detalle}`),

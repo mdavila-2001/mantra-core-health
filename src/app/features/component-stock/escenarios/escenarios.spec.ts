@@ -2,7 +2,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { EscenarioContentDialog } from './content-dialog.escenarios';
-import { EscenarioDataTable } from './data-table.escenarios';
+import { EscenarioDataTable, violacionesDelContratoDeTabla } from './data-table.escenarios';
 import type { AnfitrionDeEscenario, EscenarioDeComponente } from './escenario.types';
 import { ESCENARIOS, escenariosDe } from './escenarios';
 import { EscenarioViewStateHost } from './view-state-host.escenarios';
@@ -67,6 +67,10 @@ describe('el registro de escenarios', () => {
       'not-found',
       'offline',
       'error',
+      'cero-filas',
+      'una-fila',
+      'texto-largo',
+      'trackby-repetido',
     ]);
     expect(escenariosDe(CLAVE_DEL_HOST)).toHaveLength(10);
     expect(escenariosDe(CLAVE_DEL_MODAL).map((e) => e.variante)).toEqual([
@@ -101,13 +105,90 @@ describe('EscenarioDataTable', () => {
     return boton?.getAttribute('aria-disabled') === 'true';
   }
 
-  it.each(escenariosDe(CLAVE_DE_LA_TABLA).map((e) => [e.variante, e] as const))(
-    'monta la variante «%s» sin fallar',
+  const validos = escenariosDe(CLAVE_DE_LA_TABLA).filter((e) => e.nivelDePrueba !== 'invalido');
+  const variante = (v: string): EscenarioDeComponente =>
+    escenariosDe(CLAVE_DE_LA_TABLA).find((e) => e.variante === v)!;
+
+  it.each(validos.map((e) => [e.variante, e] as const))(
+    'monta la variante «%s» sin fallar y con el contrato cumplido',
     (_variante, escenario) => {
+      expect(escenario.verificarContrato?.()).toEqual([]);
       const fixture = montar<EscenarioDataTable>(escenario);
       expect(fixture.componentInstance).toBeTruthy();
     },
   );
+
+  it('los tres niveles están: correcto, límite e inválido', () => {
+    const niveles = new Set(escenariosDe(CLAVE_DE_LA_TABLA).map((e) => e.nivelDePrueba));
+    expect([...niveles].sort()).toEqual(['correcto', 'invalido', 'limite']);
+  });
+
+  it('«cero-filas» es un ready([]) con tabla, sin filas y sin paginación', () => {
+    const fixture = montar<EscenarioDataTable>(variante('cero-filas'));
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelector('table')).not.toBeNull();
+    expect(filas(fixture)).toHaveLength(0);
+    expect(raiz.querySelector('[data-testid="tabla-siguiente"]')).toBeNull();
+    expect(texto(fixture)).not.toContain('Registrar un paciente');
+  });
+
+  it('«una-fila» muestra exactamente una fila y ordenar sigue emitiendo', () => {
+    const fixture = montar<EscenarioDataTable>(variante('una-fila'));
+    expect(filas(fixture)).toHaveLength(1);
+    expect(filas(fixture)[0]?.textContent).toContain('Peña');
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="tabla-siguiente"]')).toBeNull();
+
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="tabla-ordenar"]')?.click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.salidas().map((s) => `${s.salida} ${s.detalle}`)).toEqual([
+      'sortChanged apellido asc',
+    ]);
+  });
+
+  it('«texto-largo» lleva el texto entero a la celda y la columna fija', () => {
+    const fixture = montar<EscenarioDataTable>(variante('texto-largo'));
+    expect(filas(fixture)).toHaveLength(2);
+    expect(texto(fixture)).toContain('Fernández de Córdova Villarroel Santa Cruz Arteaga');
+    expect(texto(fixture)).toContain('sha256:9f2c4e1b');
+  });
+
+  it('«trackby-repetido» viola el contrato y dice qué identidad repite', () => {
+    const violaciones = variante('trackby-repetido').verificarContrato?.() ?? [];
+    expect(violaciones).toHaveLength(1);
+    expect(violaciones[0]).toContain('«p-01» en 2 filas');
+    expect(variante('trackby-repetido').nivelDePrueba).toBe('invalido');
+  });
+
+  /*
+   * La razón de que el banco verifique el contrato ANTES de montar, medida:
+   * montado a mano, el anfitrión con identidades repetidas no falla ni avisa.
+   * Sin la verificación previa, el caso inválido pasaría por válido.
+   */
+  it('«trackby-repetido» montado sin el banco no lanza, dibuja las 3 filas y no avisa por consola', () => {
+    const avisos = vi.spyOn(console, 'warn');
+    const errores = vi.spyOn(console, 'error');
+    try {
+      const fixture = montar<EscenarioDataTable>(variante('trackby-repetido'));
+      expect(filas(fixture)).toHaveLength(3);
+      expect(avisos).not.toHaveBeenCalled();
+      expect(errores).not.toHaveBeenCalled();
+    } finally {
+      avisos.mockRestore();
+      errores.mockRestore();
+    }
+  });
+
+  it('la verificación también ve columnas repetidas o sin cabecera', () => {
+    const violaciones = violacionesDelContratoDeTabla(
+      [{ id: 'a' }],
+      (f: { id: string }) => f.id,
+      [
+        { key: 'id', header: 'Id' },
+        { key: 'id', header: ' ' },
+      ],
+    );
+    expect(violaciones).toEqual(['dos columnas con la clave «id».', 'la columna «id» no tiene cabecera legible.']);
+  });
 
   it('«ready» muestra las seis filas con la tabla de verdad y el cursor hacia adelante', () => {
     const fixture = montar<EscenarioDataTable>(escenariosDe(CLAVE_DE_LA_TABLA)[0]!);

@@ -22,6 +22,9 @@
   --aviso: #b45309;
   --bien: #15803d;
 
+  /* El cromo es claro a propósito: sin esto, en un sistema oscuro los controles
+     nativos pintaban texto claro sobre este fondo claro y desaparecían. */
+  color-scheme: light;
   display: block;
   block-size: 100dvh;
   font: 13px/1.5 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -288,6 +291,8 @@
 .lienzo__cabecera h1 {
   margin: 0;
   font-size: 19px;
+  /* El `h1` global cambia de color con el tema; el cromo del banco no. */
+  color: var(--tinta);
 }
 
 .lienzo__meta {
@@ -337,6 +342,78 @@
   color: var(--tinta-suave);
 }
 
+/* ---- acreditación --------------------------------------------------------- */
+
+.acreditacion {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 4px 16px;
+  margin: 10px 0 0;
+}
+
+.acreditacion__fila {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  min-inline-size: 0;
+}
+
+.acreditacion__fila dt {
+  flex: none;
+  inline-size: 9.5rem;
+  font-weight: 600;
+}
+
+.acreditacion__fila dd {
+  margin: 0;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+/* La marca lleva el estado en texto; el color sólo lo refuerza. */
+.acreditacion__marca {
+  display: inline-block;
+  margin-inline-end: 6px;
+  padding: 0 6px;
+  border: 1px solid var(--borde);
+  border-radius: 4px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.acreditacion__marca--si {
+  color: var(--bien);
+}
+
+.acreditacion__marca--no {
+  color: var(--alarma);
+  border-style: dashed;
+}
+
+.acreditacion__marca--parcial {
+  color: var(--aviso);
+  border-style: dotted;
+}
+
+.acreditacion__marca--sin-medir {
+  color: var(--tinta-suave);
+}
+
+/* En «Bloqueado» el «sí» es lo malo: el tono se invierte, el texto no cambia. */
+.acreditacion__fila[data-dimension='bloqueado'] .acreditacion__marca--si {
+  color: var(--alarma);
+  border-style: dashed;
+}
+
+.acreditacion__fila[data-dimension='bloqueado'] .acreditacion__marca--no {
+  color: var(--bien);
+  border-style: solid;
+}
+
+.acreditacion__detalle {
+  color: var(--tinta-suave);
+}
+
 /* ---- el marco ------------------------------------------------------------- */
 
 .marco-zona {
@@ -376,6 +453,23 @@
   border-radius: 4px;
   background: #fef2f2;
   color: #7f1d1d;
+}
+
+/* «Montado sin verificar»: aviso, no error — montó, pero no acredita el contrato. */
+.marco-zona__aviso {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-inline-start: 3px dashed var(--aviso);
+  border-radius: 4px;
+  background: #fffbeb;
+  color: #78350f;
+}
+
+.marco-zona__error p,
+.marco-zona__aviso p,
+.marco-zona__error ul,
+.marco-zona__aviso ul {
+  margin: 0 0 4px;
 }
 
 /* La caja se dimensiona con el zoom aplicado para que no queden huecos: el
@@ -499,6 +593,13 @@
 .pastilla--enlace:hover {
   background: #e0f2fe;
   border-color: #bae6fd;
+}
+
+/* Importado y sin usar: se distingue por el borde punteado, no sólo por el tono. */
+.pastilla--aviso {
+  border-style: dashed;
+  border-color: var(--aviso);
+  color: var(--aviso);
 }
 
 .tabla {
