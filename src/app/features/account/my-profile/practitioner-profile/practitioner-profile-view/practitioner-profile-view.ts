@@ -353,6 +353,45 @@ export class PractitionerProfileView {
     return { declarados, verificados };
   });
 
+  /**
+   * Si hay algún dato de filiación que mostrar.
+   *
+   * Sin ninguno, la sección entera no se dibuja: una lista de «Sin registrar»
+   * no informa. La habilitación es al revés y sí se dibuja vacía — ahí el hueco
+   * le dice al médico que le falta cargar la matrícula, que es accionable.
+   *
+   * **La edad se compara contra `null`, no se evalúa como verdadera.** Es la
+   * única de las cinco que puede ser un número, y un `0` legítimo haría
+   * desaparecer la sección entera con el resto de los datos adentro.
+   */
+  protected readonly tieneDatosDeFiliacion = computed<boolean>(() => {
+    const datos = this.perfil().datosPersonales;
+    if (datos === null) {
+      return false;
+    }
+    return (
+      Boolean(datos.documento || datos.telefono || datos.correo || datos.domicilio) ||
+      datos.edad !== null
+    );
+  });
+
+  /**
+   * Si este título se puede retirar.
+   *
+   * Sólo el dueño, y sólo mientras sigue PENDIENTE: una vez verificado o
+   * rechazado es un hecho de la autoridad, no algo que el titular deshaga.
+   * `in-review` ya distingue pendiente de las otras dos.
+   *
+   * Vive acá porque la ficha dibuja ese botón en **dos** sitios —el dibujo
+   * propio y el de la Guía— y la regla estaba escrita distinto en cada uno: en
+   * el propio faltaba la parte de «sólo el dueño», que quedaba implícita en un
+   * `@if` de más arriba. Dos redacciones de la misma regla es una que se puede
+   * corregir sin la otra.
+   */
+  protected sePuedeRetirar(estudio: FormacionVisible): boolean {
+    return this.esPropio() && estudio.sello === 'in-review';
+  }
+
   /** «Quiero retirar este título». Confirmarlo y retirarlo es de quien escucha. */
   readonly credencialARetirar = output<FormacionVisible>();
 
@@ -363,9 +402,9 @@ export class PractitionerProfileView {
    * operación: un diálogo es una decisión del flujo, y repartirlo entre quien
    * pregunta y quien persiste dejaría la política de descarte en dos sitios.
    *
-   * El botón sólo aparece mientras el título sigue PENDIENTE —`sello ===
-   * 'in-review'`, en la plantilla—, así que lo único que puede fallar del otro
-   * lado es un estado que cambió justo antes; eso lo avisa quien escucha.
+   * El botón sólo aparece mientras el título sigue PENDIENTE (ver
+   * {@link sePuedeRetirar}), así que lo único que puede fallar del otro lado es
+   * un estado que cambió justo antes; eso lo avisa quien escucha.
    */
   protected alPedirRetiro(estudio: FormacionVisible): void {
     if (!this.esPropio() || this.previewMode()) {

@@ -608,7 +608,7 @@
                     <!-- Sólo mientras sigue PENDIENTE: una vez verificado o
                          rechazado es un hecho de la autoridad, no algo que el
                          titular deshaga. -->
-                    @if (estudio.sello === 'in-review') {
+                    @if (sePuedeRetirar(estudio)) {
                       <p class="trayecto__acciones">
                         <button
                           app-button
@@ -861,13 +861,7 @@
              «Sin registrar» no informa. La habilitación sí se dibuja siempre —su
              vacío le dice al médico que le falta registrar la matrícula, que es
              accionable. -->
-          @if (
-            datos.documento ||
-            datos.telefono ||
-            datos.correo ||
-            datos.domicilio ||
-            datos.edad !== null
-          ) {
+          @if (tieneDatosDeFiliacion()) {
             <section>
               <h2 class="profesional__bloque-titulo">Tus datos</h2>
               <dl class="profesional__datos">
@@ -1170,7 +1164,7 @@
                       <!-- ALV-009/formación: sólo mientras sigue PENDIENTE —una
                          vez verificado o rechazado es un hecho de la
                          autoridad, no algo que el titular deshaga. -->
-                      @if (esPropio() && estudio.sello === 'in-review') {
+                      @if (sePuedeRetirar(estudio)) {
                         <button
                           app-button
                           type="button"
