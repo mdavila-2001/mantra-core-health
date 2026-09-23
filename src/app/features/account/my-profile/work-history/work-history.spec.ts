@@ -1589,6 +1589,23 @@ describe('WorkHistory — el consultorio en modal, guardar por cambios y confirm
     http.verify();
   });
 
+  it('al cerrar el modal de una edición, el foco vuelve al «Acciones» de esa fila', async () => {
+    const { fixture, http } = await montarConSedes(true);
+    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    fixture.detectChanges();
+    const componente = api(fixture);
+
+    (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
+    fixture.detectChanges();
+    componente['cerrarAltaDeSede']();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const activo = document.activeElement;
+    expect(activo?.getAttribute('aria-label')).toBe(`Acciones de ${PROPIA.name}`);
+    http.verify();
+  });
+
   it('si no se confirma el descarte, el modal sigue abierto con lo escrito', async () => {
     const { fixture, http } = await montarConSedes(false);
     http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
