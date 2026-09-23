@@ -275,6 +275,11 @@ describe('NavigationService', () => {
       //
       // Bajar un renglón no afloja la regla: quien quiera agregar la
       // undécima la sigue teniendo que discutir.
+      //
+      // **«Chats» SALIÓ el 23/09/2026 (N-01), y la lista baja a nueve.** El
+      // doctor pidió Chats y Tutoriales en la cabecera: Chats es ahora un
+      // ícono con globo y no leídos al lado de la campana, y el renglón sobra.
+      // La ruta sigue abierta (ver la prueba de N-01 más abajo).
       abrirSesion(['PRACTITIONER']);
 
       const fueraDeMiCuenta = service
@@ -337,6 +342,27 @@ describe('NavigationService', () => {
       expect(rutasDelMenu()).not.toContain('/administration/pharmacy-campaigns');
       expect(rutasDelMenu()).not.toContain('/questionnaires');
       expect(rutasDelMenu()).not.toContain('/lab-visits');
+    });
+
+    it('Tutoriales y Chats salen del menú de todos, y la puerta sigue abierta', () => {
+      // N-01 · 2026-09-23 · acceso desde cabecera. Los dos pasaron al
+      // encabezado (íconos con globo y nombre accesible, Chats con no leídos),
+      // así que ningún rol tiene su renglón. Lo que no puede pasar es que la
+      // limpieza del menú les cierre la ruta: los dos siguen sin exigir rol.
+      const sesiones: [readonly string[], readonly string[]][] = [
+        [[], []],
+        [['PATIENT'], []],
+        [['PRACTITIONER'], ['t-1']],
+        [['SECURITY_ADMIN', 'CLINICIAN', 'BILLING', 'PATIENT'], ['t-1']],
+      ];
+      for (const [roles, tenants] of sesiones) {
+        abrirSesion([...roles], [...tenants]);
+        const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
+        expect(alcanzables, roles.join(',')).toContain('/tutorials');
+        expect(alcanzables, roles.join(',')).toContain('/messaging');
+        expect(rutasDelMenu(), roles.join(',')).not.toContain('/tutorials');
+        expect(rutasDelMenu(), roles.join(',')).not.toContain('/messaging');
+      }
     });
 
     it('la Guía de profesionales solo la alcanza el paciente', () => {
