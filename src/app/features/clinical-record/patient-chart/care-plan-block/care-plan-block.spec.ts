@@ -204,4 +204,29 @@ describe('CarePlanBlock', () => {
     expect(señal<string>('meta')()).toBe('');
     expect(interno<() => readonly unknown[]>('actividades')().length).toBe(1);
   });
+
+  describe('tieneCambiosPendientes — contrato de DraftBlock', () => {
+    it('recién montado no tiene cambios pendientes', () => {
+      dibujar();
+      expect(componente.tieneCambiosPendientes()).toBe(false);
+    });
+
+    it('con la meta escrita tiene cambios pendientes', () => {
+      dibujar();
+      señal<string>('meta').set('Bajar la presión');
+      expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+
+    it('una fila de actividad vacía agregada no cuenta como pendiente', () => {
+      dibujar();
+      interno<() => void>('agregarActividad')();
+      expect(componente.tieneCambiosPendientes()).toBe(false);
+    });
+
+    it('una fila de actividad con detalle sí cuenta', () => {
+      dibujar();
+      interno<(clave: number, valor: string) => void>('fijarDetalle')(0, 'Caminar 30 minutos');
+      expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+  });
 });

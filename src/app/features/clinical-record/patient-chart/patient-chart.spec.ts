@@ -6,6 +6,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 
 import { SessionStore } from '../../../core/auth/session.store';
 import type { ClinicalSummary } from '../../../core/data-access/clinical/clinical.types';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import {
   bloquesDeAtencion,
   bloquesDeReceta,
@@ -1169,6 +1170,181 @@ describe('PatientChart', () => {
       interno<(f: unknown) => void>('verDetalle')(diagnostico);
 
       expect(interno<() => string>('tituloDelDetalle')()).toBe('Detalle del diagnóstico');
+    });
+  });
+
+  /**
+   * El alta y el cambio de estado clínico son los dos modales editables del
+   * expediente: cerrarlos con algo sin registrar tiene que preguntar, igual
+   * que `attachment-dialog` ya hace con sus archivos. El detalle de lectura es
+   * el contraste — nunca pregunta, porque no hay nada que perder.
+   */
+  describe('el alta pregunta antes de descartar lo escrito', () => {
+    /** Simula `DialogService.confirm`, contando cuántas veces se preguntó. */
+    function simularConfirmacion(resultado: boolean): { llamados: number } {
+      const contador = { llamados: 0 };
+      TestBed.inject(DialogService).confirm = () => {
+        contador.llamados++;
+        return Promise.resolve(resultado);
+      };
+      return contador;
+    }
+
+    it('recién abierta, sin nada escrito, no tiene cambios pendientes', () => {
+      responderNombre();
+      responderExpediente();
+      interno<(c: string) => void>('abrirAlta')('documentos');
+      harness.fixture.detectChanges();
+
+      expect(interno<() => boolean>('altaSinCambios')()).toBe(true);
+    });
+
+    it('con el bloque de documentos con algo escrito, hay cambios pendientes', () => {
+      responderNombre();
+      responderExpediente();
+      interno<(c: string) => void>('abrirAlta')('documentos');
+      harness.fixture.detectChanges();
+
+      const bloque = interno<() => { tieneCambiosPendientes: () => boolean } | undefined>(
+        'bloqueDelAlta',
+      )();
+      expect(bloque).toBeDefined();
+
+      const titulo = (bloque as unknown as Record<string, { set(v: string): void }>)['titulo'];
+      titulo.set('Laboratorio completo');
+      harness.fixture.detectChanges();
+
+      expect(interno<() => boolean>('altaSinCambios')()).toBe(false);
+    });
+
+    it('con algo escrito, pedir el descarte pregunta y cancelar deja el alta abierta', async () => {
+      responderNombre();
+      responderExpediente();
+      interno<(c: string) => void>('abrirAlta')('documentos');
+      harness.fixture.detectChanges();
+
+      const bloque = interno<() => { tieneCambiosPendientes: () => boolean } | undefined>(
+        'bloqueDelAlta',
+      )();
+      const titulo = (bloque as unknown as Record<string, { set(v: string): void }>)['titulo'];
+      titulo.set('Laboratorio completo');
+      harness.fixture.detectChanges();
+
+      const contador = simularConfirmacion(false);
+      await interno<() => Promise<void>>('pedirDescarteDelAlta')();
+
+      expect(contador.llamados).toBe(1);
+      expect(interno<() => string | null>('altaAbierta')()).toBe('documentos');
+    });
+
+    it('confirmar el descarte cierra el alta', async () => {
+      responderNombre();
+      responderExpediente();
+      interno<(c: string) => void>('abrirAlta')('documentos');
+      harness.fixture.detectChanges();
+
+      const bloque = interno<() => { tieneCambiosPendientes: () => boolean } | undefined>(
+        'bloqueDelAlta',
+      )();
+      const titulo = (bloque as unknown as Record<string, { set(v: string): void }>)['titulo'];
+      titulo.set('Laboratorio completo');
+      harness.fixture.detectChanges();
+
+      simularConfirmacion(true);
+      await interno<() => Promise<void>>('pedirDescarteDelAlta')();
+      harness.fixture.detectChanges();
+
+      expect(interno<() => string | null>('altaAbierta')()).toBeNull();
+    });
+
+    it('sin nada escrito, el modal se puede cerrar sin preguntar', () => {
+      responderNombre();
+      responderExpediente();
+      interno<(c: string) => void>('abrirAlta')('documentos');
+      harness.fixture.detectChanges();
+
+      const contador = simularConfirmacion(false);
+      interno<() => void>('cerrarAlta')();
+
+      expect(contador.llamados).toBe(0);
+      expect(interno<() => string | null>('altaAbierta')()).toBeNull();
+    });
+
+    it('el detalle de lectura nunca pregunta: no tiene nada que perder', () => {
+      responderNombre();
+      responderExpediente();
+
+      const contador = simularConfirmacion(false);
+      const fila = interno<() => readonly { id: string }[]>('observaciones')()[0]!;
+      interno<(f: unknown) => void>('verDetalle')(fila);
+      interno<() => void>('cerrarDetalle')();
+
+      expect(contador.llamados).toBe(0);
+    });
+  });
+
+  describe('cambiar el estado clínico pregunta antes de descartar el destino elegido', () => {
+    function simularConfirmacion(resultado: boolean): { llamados: number } {
+      const contador = { llamados: 0 };
+      TestBed.inject(DialogService).confirm = () => {
+        contador.llamados++;
+        return Promise.resolve(resultado);
+      };
+      return contador;
+    }
+
+    it('sin destino elegido, el modal se cierra sin preguntar', () => {
+      responderNombre();
+      responderExpediente();
+      const fila = interno<() => readonly { id: string }[]>('diagnosticos')()[0]!;
+      interno<(f: unknown) => void>('abrirCambioDeEstado')(fila);
+      harness.fixture.detectChanges();
+
+      const contador = simularConfirmacion(false);
+      interno<() => void>('cerrarCambioDeEstado')();
+
+      expect(contador.llamados).toBe(0);
+      expect(interno<() => unknown>('cambiandoEstadoDe')()).toBeNull();
+    });
+
+    it('con un destino elegido y no aplicado, pedir el descarte pregunta', async () => {
+      responderNombre();
+      responderExpediente();
+      const fila = interno<() => readonly { id: string }[]>('diagnosticos')()[0]!;
+      interno<(f: unknown) => void>('abrirCambioDeEstado')(fila);
+      harness.fixture.detectChanges();
+      interno<(id: string, destino: string | null) => void>('elegirDestinoEstado')(
+        fila.id,
+        'st-resuelta',
+      );
+
+      expect(interno<() => boolean>('estadoSinCambios')()).toBe(false);
+
+      const contador = simularConfirmacion(true);
+      await interno<() => Promise<void>>('pedirDescarteDelEstado')();
+
+      expect(contador.llamados).toBe(1);
+    });
+
+    it('confirmado el descarte, el destino elegido se limpia', async () => {
+      responderNombre();
+      responderExpediente();
+      const fila = interno<() => readonly { id: string }[]>('diagnosticos')()[0]!;
+      interno<(f: unknown) => void>('abrirCambioDeEstado')(fila);
+      harness.fixture.detectChanges();
+      interno<(id: string, destino: string | null) => void>('elegirDestinoEstado')(
+        fila.id,
+        'st-resuelta',
+      );
+
+      simularConfirmacion(true);
+      await interno<() => Promise<void>>('pedirDescarteDelEstado')();
+      // El propio `close()` del organismo emitiría `closed`; acá se ejercita
+      // el efecto que ese evento dispara, igual que hacen el resto de las
+      // pruebas de este archivo con `cerrarDetalle`/`cerrarAlta`.
+      interno<() => void>('cerrarCambioDeEstado')();
+
+      expect(interno<(id: string) => string | null>('destinoEstadoDe')(fila.id)).toBeNull();
     });
   });
 });

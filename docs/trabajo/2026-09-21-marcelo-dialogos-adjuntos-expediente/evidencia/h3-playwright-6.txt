@@ -1,0 +1,10 @@
+
+Running 4 tests using 1 worker
+
+  ok 1 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:56:7 › Expediente · política de descarte del alta › el alta de Documentos pregunta antes de descartar lo escrito, por los tres caminos (7.2s)
+  -  2 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:138:7 › Expediente · política de descarte del alta › el detalle de lectura nunca pregunta
+  ok 3 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:158:7 › Expediente · política de descarte del alta › con movimiento reducido, el alta igual abre (4.7s)
+  ok 4 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:169:7 › Expediente · política de descarte del alta › el alta se ve correctamente en móvil, claro y oscuro (5.2s)
+
+  1 skipped
+  3 passed (22.5s)
