@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { catchError, map, of, switchMap } from 'rxjs';
 
+import { AuthService } from '../../../core/auth/auth.service';
 import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnostics.client';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
@@ -26,6 +27,8 @@ interface EstudioDeDocumento {
   readonly nombre: string;
 }
 
+type EstadoDeOrdenes = 'CARGANDO' | 'LISTO' | 'ERROR' | 'SIN_PERFIL';
+
 @Component({
   selector: 'app-cotizaciones',
   imports: [FormsModule, PageHeader],
@@ -34,6 +37,7 @@ interface EstudioDeDocumento {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Cotizaciones {
+  private readonly auth = inject(AuthService);
   private readonly diagnostics = inject(DiagnosticsClient);
   private readonly terminology = inject(TerminologyClient);
 
@@ -41,6 +45,8 @@ export class Cotizaciones {
   protected readonly vertical = signal<VerticalCotizacion>('TODAS');
   protected readonly orden = signal<OrdenCotizacion>('PRECIO');
   protected readonly estudiosDeDocumentos = signal<readonly EstudioDeDocumento[]>([]);
+  protected readonly estadoDeOrdenes = signal<EstadoDeOrdenes>('CARGANDO');
+  protected readonly ordenesTruncadas = signal(false);
   protected readonly resultados = computed(() => ordenarResultados(
     filtrarResultados(RESULTADOS_DE_MAQUETA, this.termino(), this.vertical()),
     this.orden(),
@@ -49,22 +55,34 @@ export class Cotizaciones {
   constructor() {
     // La API fija el titular a partir de la sesión: no se acepta ni se muestra
     // un perfil ajeno. El catálogo sólo traduce IDs a nombres antes de pintar.
+    if (this.auth.patientProfileId() === null) {
+      this.estadoDeOrdenes.set('SIN_PERFIL');
+      return;
+    }
+
     this.diagnostics
       .getOwnOrders(20)
       .pipe(
-        switchMap((respuesta) =>
-          this.terminology.readConceptLabels(respuesta.items.map((orden) => orden.codeConceptId)).pipe(
+        switchMap((respuesta) => {
+          this.ordenesTruncadas.set(respuesta.truncated);
+          return this.terminology.readConceptLabels(respuesta.items.map((orden) => orden.codeConceptId)).pipe(
+            // Un catálogo caído no borra las órdenes propias: quedan sin
+            // nombre hasta poder volver a resolverlas, nunca como datos falsos.
+            catchError(() => of(new Map())),
             map((etiquetas) => respuesta.items.map((orden) => ({
               id: orden.id,
               nombre: etiquetas.get(orden.codeConceptId)?.display ?? 'Estudio sin nombre disponible',
             }))),
-          ),
-        ),
-        // Si uno de los contratos auxiliares falla, las cotizaciones de
-        // referencia siguen disponibles. No se inventa un nombre ni un precio.
-        catchError(() => of([] as readonly EstudioDeDocumento[])),
+          );
+        }),
       )
-      .subscribe((estudios) => this.estudiosDeDocumentos.set(estudios));
+      .subscribe({
+        next: (estudios) => {
+          this.estudiosDeDocumentos.set(estudios);
+          this.estadoDeOrdenes.set('LISTO');
+        },
+        error: () => this.estadoDeOrdenes.set('ERROR'),
+      });
   }
 
   protected cambiarTermino(value: string): void { this.termino.set(value); }
