@@ -100,10 +100,34 @@ export function recursoDe(p: ProfesionalSimulado): string {
   return uuid(`resource-${p.id}`);
 }
 
+/**
+ * Sede de un profesional REGISTRADO (R-03, H3.S1.M1, 2026-09-22).
+ *
+ * La planilla de `USUARIO_MEDICOS_1.md` no dice dónde atiende cada uno
+ * (`registered-people.ts:103-104`: «la planilla no dice dónde atiende: no se
+ * inventa un consultorio»), así que no hay una sede real que copiar. Ante esa
+ * ambigüedad (Q-E3) se reparte cada uno entre las tres sedes que ya existen
+ * en el simulador, determinista por índice — nunca una sede nueva inventada.
+ */
+const SEDES_PARA_REGISTRADOS = [
+  { practiceId: PRACTICE_OLIVOS, site: SITIO_OLIVOS },
+  { practiceId: PRACTICE_SANLUCAS, site: SITIO_SANLUCAS },
+  { practiceId: PRACTICE_CONSULTORIO, site: SITIO_CONSULTORIO },
+] as const;
+
 export const recursos = new Coleccion<RecursoSimulado>(
   // Los médicos de la red de las aseguradoras no tienen agenda: nadie publicó
-  // sus horarios, y fabricárselos sería ofrecer turnos que no existen.
-  PROFESIONALES.filter((p) => p.especialidades.length > 0 && p.origen === undefined).flatMap((p, i) => {
+  // sus horarios, y fabricárselos sería ofrecer turnos que no existen. Los
+  // 13 registrados de USUARIO_MEDICOS_1.md SÍ entran (R-03): a diferencia de
+  // la red, son personas reales que se dieron de alta — quedarse sin agenda
+  // es lo que R-03 vino a corregir. Los que no tienen ninguna especialidad
+  // mapeada (`especialidadesDe()`, `registered-people.ts:65-77`) siguen sin
+  // recurso: no hay qué agendarles.
+  PROFESIONALES.filter(
+    (p) => p.especialidades.length > 0 && (p.origen === undefined || p.origen === 'USUARIO_PROPIETARIO'),
+  ).flatMap((p, i) => {
+    const registrado = p.origen === 'USUARIO_PROPIETARIO';
+    const sedeRegistrado = registrado ? SEDES_PARA_REGISTRADOS[i % SEDES_PARA_REGISTRADOS.length]! : null;
     const principal: RecursoSimulado = {
       id: recursoDe(p),
       name: `Agenda de ${p.displayName}`,
@@ -116,12 +140,12 @@ export const recursos = new Coleccion<RecursoSimulado>(
       resourceRefType: 'health_practitioner_profiles',
       resourceRefId: p.id,
       practitionerName: p.displayName,
-      practiceId: p.organizacion === 'Hospital San Lucas' ? PRACTICE_SANLUCAS : PRACTICE_OLIVOS,
+      practiceId: sedeRegistrado?.practiceId ?? (p.organizacion === 'Hospital San Lucas' ? PRACTICE_SANLUCAS : PRACTICE_OLIVOS),
       tenantId: p.tenantId,
       timeZone: 'America/La_Paz',
       capacity: 1,
       stateConceptId: ESTADO['ST-ACTIVE']!,
-      site: p.organizacion === 'Hospital San Lucas' ? SITIO_SANLUCAS : SITIO_OLIVOS,
+      site: sedeRegistrado?.site ?? (p.organizacion === 'Hospital San Lucas' ? SITIO_SANLUCAS : SITIO_OLIVOS),
     };
     if (i !== 0) return [principal];
     // La médica tiene además su consultorio propio.

@@ -69,26 +69,31 @@ import { MOCK_USERS } from './mock-session';
        cabeceras dejan vacía. Achicado: en 390 px dos pastillas grandes son un
        cuarto del ancho. */
     @media (max-width: 60rem) {
-      /* Plegado: una sola pastilla dentro de la barra de arriba, a la derecha
-         de la hamburguesa, que es el único hueco que ninguna pantalla usa.
-         Bajo el header tapaba el nombre de la conversación.
+      /* Plegado: bajo el header, no adentro. Vivió pegado a la barra de
+         arriba —112 px de margen calculado para esquivar la hamburguesa y la
+         flecha de «Volver»— hasta que N-01 (2026-09-22) le agregó Tutoriales
+         y Chats a la cabecera: seis íconos a la derecha ya no dejan ese hueco
+         libre a 375 px, y el cartel les quedaba encima. Un offset fijo en
+         píxeles no sobrevive a que la cabecera siga creciendo, así que baja
+         del header entero —el mismo lugar donde ya vivía el panel abierto—
+         en vez de perseguir el próximo hueco.
 
-         Los 112 px son la cuenta de lo que hay antes: 12 de margen + 40 de
-         hamburguesa + 8 de aire + 44 de la flecha de «Volver» del marco + 8.
-         Eran 60 —justo el borde de la flecha— y el cartel la tapaba entera en
-         un teléfono, que es donde la flecha más se usa. */
+         Plegado va a la DERECHA y sin ocupar el ancho completo (doble
+         revisión, H4.S1.M5): a la izquierda tapaba el título de la pantalla
+         («Hola, Ana Lucía…» en el panel del paciente) — hallazgo real de la
+         primera versión de este arreglo. A la derecha, bajo el header, no hay
+         título de pantalla en ninguna de las rutas recorridas. */
       .mock {
-        inset-inline-start: 112px;
-        inset-inline-end: auto;
-        inset-block-start: 14px;
+        inset-inline-start: auto;
+        inset-inline-end: 8px;
+        inset-block-start: calc(var(--h-header, 56px) + 8px);
         inset-block-end: auto;
         max-inline-size: calc(100vw - 16px);
       }
-      /* Abierto, el panel baja del header y ocupa el ancho. */
+      /* Abierto, el panel baja del header y ocupa el ancho completo: ahí sí
+         hace falta el espacio para el texto y la lista de cuentas. */
       .mock:not(.mock--plegado) {
         inset-inline-start: 8px;
-        inset-inline-end: 8px;
-        inset-block-start: calc(var(--h-header, 56px) + 8px);
       }
       .mock__boton {
         padding: 5px 10px;
