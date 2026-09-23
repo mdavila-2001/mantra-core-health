@@ -34,6 +34,7 @@ Registro de las decisiones que gobiernan el frontend.
 | [0012](ADR-0012-botones-con-texto-y-acciones-de-fila.md) | **Todo botón lleva icono y texto; las acciones de fila van en un desplegable** | Aceptado — reemplaza la decisión del 2026-09-13 | Corrección C-06, 2026-09-20 |
 | [0013](ADR-0013-opciones-en-select.md) | **Elegir un valor de una lista se hace con un `select`**; alternar dos estados, con un toggle | Aceptado — con una lectura por confirmar | Correcciones C-21 y C-10, 2026-09-20 |
 | [0014](ADR-0014-pantallas-portadas-que-se-graduan.md) | **Las pantallas portadas de `features/alovida/**` NO se migran**: son referencia de diseño declarada y la fuente de rehidratación de las vistas reales. La adopción se mide sobre las pantallas reales, que ya montan `DataTable`. Se deja escrito el mecanismo de graduación por si alguna vez hace falta | Aceptado | `alovida-design-notice.ts:12-60`, `port-vistas-alovida.mjs:275-284`, `app.routes.ts:1232-1240`, 2026-09-21 |
+| [0015](ADR-0015-tabla-con-acciones.md) | **Toda tabla con acciones de edición sigue la misma disciplina**: modal (nunca formulario en línea), guardar habilitado por cambios, confirmación al guardar y al eliminar, barra con buscador multicampo y filtros arriba, sin scroll lateral, paginación local con `app-pagination` o por cursor con `data-table` según el caso | Aceptado — extiende ADR-0012 y ADR-0013 | D-04/D-05/D-06/D-08/D-09, 2026-09-22 |
 
 ## Plantilla
 
