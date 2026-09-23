@@ -4,6 +4,9 @@
     #scrollBox
     class="data-table__scroll"
     [class.data-table__scroll--overflowing]="overflowing()"
+    [style.max-height]="effectiveMaxHeight()"
+    [style.overflow-y]="effectiveMaxHeight() ? 'auto' : null"
+    [style.overflow-x]="effectiveMaxHeight() ? 'hidden' : null"
   >
     <table class="data-table__table" data-testid="tabla">
       @if (caption()) {

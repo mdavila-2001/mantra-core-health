@@ -19,6 +19,14 @@
     min-inline-size: 0;
 }
 
+/* Hueco de la acción (ADR-0015, regla 5). Vacío no debe sumar separación al
+   `gap` del contenedor en los 8 consumidores que no proyectan nada — de ahí
+   `:empty`, no un `@if` en la plantilla (no hay forma barata de saber desde
+   el componente si hubo proyección sin un `ContentChild`). */
+.filter-bar__action:empty {
+    display: none;
+}
+
 .filter-bar__unavailable {
     margin: var(--sp-1) 0 0;
     font-size: var(--fs-caption);
@@ -67,5 +75,10 @@
 
     .filter-bar__filter {
         flex: 0 1 200px;
+    }
+
+    /* Al final de la fila de controles, a la derecha (ADR-0015, regla 5). */
+    .filter-bar__action {
+        margin-inline-start: auto;
     }
 }

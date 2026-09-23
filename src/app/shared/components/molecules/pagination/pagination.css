@@ -14,12 +14,14 @@
 .pagination__nav {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: var(--sp-1);
 }
 
 .pagination__pages {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: var(--sp-1);
     /* es una lista de verdad para el lector de pantalla, sin viñetas a la vista */
     list-style: none;
@@ -43,9 +45,15 @@
     color: var(--text-secondary);
 }
 
+.pagination__jump {
+    /* primero de los dos selects: es el que empuja el par entero a la derecha */
+    width: auto;
+    min-width: 140px;
+    margin-left: auto;
+}
+
 .pagination__size {
-    /* el select no debe estirarse a todo el ancho como en un formulario */
+    /* va pegado al de saltar página, no repite el empuje */
     width: auto;
     min-width: 160px;
-    margin-left: auto;
 }
