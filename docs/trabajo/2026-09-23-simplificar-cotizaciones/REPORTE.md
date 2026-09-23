@@ -43,8 +43,8 @@ Test Files  1 passed (1)
 Tests  21 passed (21)
 
 $ corepack yarn test --watch=false
-Test Files  1 failed | 574 passed (575)
-Tests  1 failed | 7172 passed (7173)
+Test Files  4 failed | 573 passed (577)
+Tests  18 failed | 7203 passed (7221)
 ```
 
 ## No cubierto
@@ -53,8 +53,8 @@ Tests  1 failed | 7172 passed (7173)
 
 ## Desvíos del plan
 
-- La suite completa dejó un timeout de `register-practitioner.spec.ts` en un caso de backend simulado. Al ejecutarlo solo pasó 95/95; no se reprodujo aisladamente y queda pendiente de clasificación: esa evidencia no permite atribuirle una causa.
-- Los dos rojos anteriores de `shell-layout.spec.ts` se corrigieron actualizando su contrato para incluir la ruta ya existente de Cotizaciones en el bloque clínico. El spec pasó 54/54; `insurance-analytics.spec.ts` también pasó 10/10 aislado.
+- La corrida completa más reciente quedó roja fuera de este carril: `insurance-analytics.spec.ts` (1 fallo de accesibilidad), `register-practitioner.spec.ts` (1 timeout al resolver credenciales canónicas), `pharmacy-inbox.spec.ts` (15 fallos; `ActivatedRoute` ausente en el banco) e `insurance-analytics.handlers.spec.ts` (1 diferencia de loss ratio). Esta rama no modifica ninguno de esos archivos; la evidencia no permite atribuirles una causa ni declararlos ajenos sin clasificación.
+- Los dos rojos anteriores de `shell-layout.spec.ts` se corrigieron actualizando su contrato para incluir la ruta ya existente de Cotizaciones en el bloque clínico. El spec pasó 54/54 en la PR #581.
 
 ## Riesgos residuales
 
