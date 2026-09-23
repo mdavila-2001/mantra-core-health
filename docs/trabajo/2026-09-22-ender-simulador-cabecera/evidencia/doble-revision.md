@@ -144,20 +144,50 @@ herramienta de depuración para los otros cuatro.
 **Nota de la captura 9 (re-captura): `ACEPTABLE CON RESERVAS`** — el `MENOR` queda registrado, sin
 `BLOQUEANTE` ni `MAYOR` abiertos.
 
+## Matriz final H4 (12 celdas, re-captura 2026-09-23) — pasada 1 y pasada 2
+
+Capturas en `h4/matriz/`: {médica, paciente} × {1440, 768, 375} × {claro, oscuro}, tema alternado con el
+interruptor real de la app (`role=switch`), no con un atributo manual (una primera tanda con atributo
+manual dejó el tema a medias y se descartó). Medido con `getBoundingClientRect()` en cada celda:
+
+| Celda | Cartel demo (l,t,r,b) | scrollWidth = clientWidth | Borde der. del avatar |
+|---|---|---|---|
+| ≤ 768, ambos roles y temas | 309,58,352,76 (375) · 702,58,745,76 (768) | 360=360 · 753=753 | 348 · 733 |
+| 1440, ambos roles y temas | 252,859,366,888 (abajo-izq., fuera de la cabecera) | 1425=1425 | 1385 |
+
+Corrección de esta tanda (`mock-banner.ts`): plegado en angosto pasa a «Demo», padding 2×8 px, 10 px de
+letra y `inset-block-start: header + 2px`. El cartel (top 58, bottom 76) queda entre el borde inferior
+de la cabecera (56) y el título (72+): ya no toca «Pérez». El `MENOR` de la captura 9 queda **corregido**.
+En el camino apareció y se corrigió una regla base en el orden equivocado (`.mock__corto` mostraba una
+astilla vacía) y el desborde de 16 px de la cabecera de la médica a 375 px (`.app-header__derecha` gap
+`--e1` en ≤ 400 px; `scrollWidth` = `clientWidth` en las 12 celdas).
+
+**Pasada 1 (verificación):** las 12 imágenes se abrieron una por una (vistas de 375 claro/oscuro de
+ambos roles, 768 claro/oscuro, 1440 oscuro). Orden de íconos campana → organización (médica) → tema →
+Tutoriales → Chats → Ajustes → cuenta; insignia de Chats sin leer visible; sin recortes ni desborde.
+
+**Pasada 2 (adversarial, hecha después de cerrar la 1.ª, sobre las capturas finales):**
+
+| # | Hallazgo | Sev. | Decisión |
+|---|---|---|---|
+| A1 | El tooltip «Tema» queda visible en las capturas 768/1440 (foco tras el clic del interruptor) | MENOR | Artefacto de la captura, no del producto; es el tooltip pedido en H4 |
+| A2 | 1440: «Ver componentes» del cartel demo pisa el texto de la última fila visible de la agenda | MENOR | Preexistente y propio del entorno de desarrollo; no toca acciones ni datos |
+| A3 | 768 médica: el selector de organización se trunca («Mi consulto…») por los dos íconos nuevos | MENOR | Legible y con nombre accesible completo; se registra, no se rediseña la cabecera |
+| A4 | Consola: 2 errores de CSP por scripts en línea del servidor de desarrollo al cargar `/auth` | MENOR / ENVIRONMENT | No hay scripts en línea nuevos en este carril; ocurre en la carga del servidor de desarrollo |
+| A5 | Sin `BLOQUEANTE` ni `MAYOR` abiertos | — | — |
+
 ## Nota final por pantalla
 
 | Pantalla | Capturas | Nota |
 |---|---|---|
 | Directorio y fichas (antes/después R-03) | 1, 2, 3, 4 | `APROBADA` |
-| Cabecera de la médica (N-01, D-05) | 5, 6 | `APROBADA` |
-| Cabecera del paciente en 375 px + cartel de modo demo | 7 (antes, documenta el hallazgo a propósito), 8 (`RECHAZADA`, corregida), 9 (re-captura) | **`ACEPTABLE CON RESERVAS`** (el `MENOR` de la captura 9, declarado) |
+| Cabecera de la médica (N-01, D-05) | 5, 6 + matriz médica (6 celdas) | `ACEPTABLE CON RESERVAS` (A1, A3) |
+| Cabecera del paciente + cartel demo | 7 (antes), 8 (`RECHAZADA`, corregida), 9 (v2) + matriz paciente (6 celdas) | `ACEPTABLE CON RESERVAS` (A1, A2) |
 | Escenarios de reserva completos (A y B) | 10, 11, 12 | `APROBADA` |
 
 ## No cubierto
 
-- Viewport tablet (768–1024 px aprox.) no se capturó en ninguna pantalla esta noche.
-- No se recapturó el tema **claro** del panel del paciente en 375 px (todas las capturas de mobile de
-  esta sesión quedaron en oscuro, porque el tema es una preferencia que persiste entre sesiones y no se
-  alternó para esa pantalla puntual).
-- La ficha del registrado (capturas 2–4) no se repitió en 375 px después del arreglo de R-03 (sólo
-  antes, captura 3); la de «después» sólo se tomó en escritorio (captura 4).
+- La ficha del registrado (capturas 2–4) no se repitió en 375 px después del arreglo de R-03.
+- La matriz cubre el panel de cada rol; el resto de rutas se recorrió con el barrido de clics (5/5),
+  sin captura por viewport.
+- La 1.ª captura de la médica «antes» de N-01 en 375 px no existe como imagen (ver REPORTE).
