@@ -29,6 +29,14 @@ import { REPO_ROOT } from './scan.mjs';
 
 const leer = (ruta) => readFileSync(join(REPO_ROOT, ruta), 'utf8');
 
+describe('scripts de verificación', () => {
+  it('regeneran el índice de componentes antes de compilar o probar', () => {
+    const scripts = JSON.parse(leer('package.json')).scripts;
+    assert.match(scripts.typecheck, /^node scripts\/generate-component-index\.mjs && /);
+    assert.match(scripts.test, /^node scripts\/generate-component-index\.mjs && /);
+  });
+});
+
 describe('selectores de Angular', () => {
   it('separa etiqueta, atributo y etiqueta+atributo', () => {
     assert.deepEqual(parsearSelector('app-card'), [{ etiqueta: 'app-card', atributos: [], clases: [] }]);
