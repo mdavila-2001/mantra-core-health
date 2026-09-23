@@ -410,6 +410,10 @@
             }
           </section>
         </app-tab>
+
+        <!-- «Mis puntos» no se edita: la pestaña está para que la tira sea la
+             misma que en lectura y el lápiz no mueva de lugar a nadie. -->
+        <app-tab [label]="pestanas[4]" disabled />
       </app-tabs>
     </ng-template>
 

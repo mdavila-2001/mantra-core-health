@@ -300,6 +300,27 @@ describe('PatientProfileEdit', () => {
     return http.expectOne('/profiles/patients/me');
   }
 
+  /**
+   * N-03: «Mis puntos» es la quinta pestaña de la ficha. El editor la lleva
+   * en la tira, apagada, para que pulsar el lápiz no mueva de lugar a las
+   * demás; ahí no hay nada que editar.
+   */
+  it('lleva «Mis puntos» en la tira, apagada: no hay nada que editar ahí', () => {
+    montarPintadoYCargado();
+
+    const pestanas = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>(
+      '[role="tab"]',
+    );
+    expect(pestanas.length).toBe(5);
+    expect(pestanas[4].textContent).toContain('Mis puntos');
+    expect(pestanas[4].disabled).toBe(true);
+    expect(pestanas[4].getAttribute('aria-disabled')).toBe('true');
+    // Pulsarla no abre nada: la abierta sigue siendo la primera.
+    pestanas[4].click();
+    fixture.detectChanges();
+    expect(pestanas[0].getAttribute('aria-selected')).toBe('true');
+  });
+
   it('siembra el formulario con lo ya guardado, en las cuatro partes del nombre', () => {
     montarYCargar();
 
