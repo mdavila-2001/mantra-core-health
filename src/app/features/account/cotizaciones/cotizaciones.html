@@ -1,27 +1,6 @@
 <app-page-header title="Cotizaciones" subtitle="Compará disponibilidad y referencias sin asumir precios no publicados." />
 
 <main class="cotizaciones" aria-label="Cotizaciones del paciente">
-  @if (estadoDeOrdenes() === 'SIN_PERFIL') {
-    <p role="status">Esta cuenta no tiene un perfil de paciente activo.</p>
-  } @else if (estadoDeOrdenes() === 'CARGANDO') {
-    <p role="status">Cargando tus órdenes diagnósticas…</p>
-  } @else if (estadoDeOrdenes() === 'ERROR') {
-    <p role="alert">No pudimos cargar tus órdenes diagnósticas. Podés intentar de nuevo más tarde.</p>
-  } @else if (estudiosDeDocumentos().length > 0) {
-    <section aria-labelledby="estudios-documentos-titulo">
-      <h2 id="estudios-documentos-titulo">Estudios en tus documentos actuales</h2>
-      <p>Podés usar estas órdenes propias como referencia al comparar disponibilidad.</p>
-      <ul>
-        @for (estudio of estudiosDeDocumentos(); track estudio.id) {
-          <li><strong>{{ estudio.nombre }}</strong><p>Procedencia: Tu orden de diagnóstico</p></li>
-        }
-      </ul>
-    </section>
-  }
-  @if (ordenesTruncadas()) {
-    <p role="status">Mostramos las 20 órdenes más recientes; consultá Mis estudios para ver el historial completo.</p>
-  }
-
   <label>
     Buscar
     <input data-testid="cotizaciones-busqueda" [value]="termino()" (input)="cambiarTermino($any($event.target).value)" />
