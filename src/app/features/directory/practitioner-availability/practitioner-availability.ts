@@ -114,6 +114,9 @@ export class PractitionerAvailability {
   /** Cuántas semanas hacia adelante respecto de la actual. */
   protected readonly semana = signal(0);
 
+  /** El cupo cuya navegación a reserva sigue en curso, si hay uno. */
+  protected readonly reservaPendienteId = signal<string | null>(null);
+
   protected readonly haySesion = computed(() => this.auth.isAuthenticated());
 
   protected readonly sedes = computed<readonly SedeConCupos[]>(() => {
@@ -188,13 +191,19 @@ export class PractitionerAvailability {
    * `appointments.routes` documenta: no existe `GET /scheduling/slots/:id`.
    */
   protected reservar(sede: SedeConCupos, cupo: AgendaSlot): void {
-    void this.router.navigate([reservaDelPortalRoute(cupo.id)], {
-      queryParams: {
-        recurso: sede.recurso.id,
-        desde: cupo.startAt.toISOString(),
-        hasta: cupo.endAt.toISOString(),
-      },
-    });
+    if (this.reservaPendienteId() !== null) {
+      return;
+    }
+    this.reservaPendienteId.set(cupo.id);
+    void this.router
+      .navigate([reservaDelPortalRoute(cupo.id)], {
+        queryParams: {
+          recurso: sede.recurso.id,
+          desde: cupo.startAt.toISOString(),
+          hasta: cupo.endAt.toISOString(),
+        },
+      })
+      .finally(() => this.reservaPendienteId.set(null));
   }
 
   private async cargar(profileId: string, tenantId: string): Promise<void> {

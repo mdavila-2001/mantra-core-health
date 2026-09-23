@@ -73,6 +73,9 @@
                         type="button"
                         size="sm"
                         variant="secondary"
+                        [isLoading]="reservaPendienteId() === cupo.id"
+                        [disabled]="reservaPendienteId() !== null"
+                        [attr.aria-busy]="reservaPendienteId() === cupo.id ? 'true' : null"
                         [attr.aria-label]="
                           'Pedir turno el ' +
                           (cupo.startAt | date: 'EEEE d \'de\' MMMM') +
@@ -100,6 +103,9 @@
                     type="button"
                     size="sm"
                     variant="primary"
+                    [isLoading]="reservaPendienteId() === proximo.id"
+                    [disabled]="reservaPendienteId() !== null"
+                    [attr.aria-busy]="reservaPendienteId() === proximo.id ? 'true' : null"
                     (clicked)="reservar(sede, proximo)"
                   >
                     {{ proximo.startAt | date: 'EEE d MMM' }} ·
