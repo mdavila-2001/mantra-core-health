@@ -1,6 +1,6 @@
 # Reporte — Disciplina de tabla con acciones (ADR-0015) y «Dónde atiendo»
 
-> **AVANCE: 52 / 68 — 76,5 %.**
+> **AVANCE: 53 / 68 — 77,9 %.**
 
 - Fecha: 2026-09-23 (turno noche del 2026-09-22, ejecutado la madrugada siguiente) ·
   Plan: [PLAN.md](./PLAN.md) · Rama: `pablo/noche-disciplina-tablas-2026-09-22`
@@ -22,8 +22,10 @@
     la dirección vaciada con su aviso; cancelar con cambios, ver «¿Descartar los cambios?». Once
     capturas, consola sin errores en cada paso, mirado en 375/768/1440 y en claro/oscuro. Sólo
     H4.S2.M9 (teclado completo) no se verificó.
-  - H4.S3 (historial laboral como tabla, con adjunto), H5 (veredicto `iconOnly`), H6 (regresión
-    final, gates, cierre): sin empezar, `UNKNOWN`.
+  - H4.S3 (historial laboral como tabla, con adjunto, doble local declarado): `TESTED` (83/83) +
+    `VERIFIED` en el stock de componentes, doble revisión hecha (ACEPTABLE CON RESERVAS); ninguna
+    ruta lo monta todavía.
+  - H5 (veredicto `iconOnly`), H6 (regresión final, gates, cierre): sin empezar, `UNKNOWN`.
 
 ## Completado
 
@@ -80,21 +82,16 @@ exit=0   (sin hallazgos)
 - Dónde quedó: código completo y funcional (verificado con mouse/Playwright), sólo falta la pasada
   de teclado. Rama `pablo/noche-disciplina-tablas-2026-09-22`, compila y todos los tests pasan.
 
-### H4.S3.M3 — Historial como tabla: falta re-captura tras un defecto visual
-- Qué anda: tabla (Institución/Período/Adjunto/Acciones), filtro, paginación, editar con confirmación, retirar con confirmación y adjunto real vía `FilesClient`; 83/83 tests en `work-history.spec.ts`, typecheck y lint exit=0; recorrido en navegador real sin errores de consola. Doble local declarado en `evidencia/h4/doble-historial.md` (recargar pierde ediciones y bajas).
-- Qué no anda: en las capturas, institución y cargo aparecían pegados. Corregido en `work-history.html` (celda `celdaInstitucionHistorial` envuelta en `.historial__institucion`), sin re-capturar.
-- Qué falta exactamente: levantar el servidor, re-capturar 1440 y 375, dos pasadas y escribir `evidencia/doble-revision.md`; capturar tema claro. Tests y lint no se re-corrieron tras el cambio de markup (sólo typecheck).
-- Dónde quedó: rama `pablo/noche-disciplina-tablas-2026-09-22`, compila, sin procesos corriendo (puerto 4200 libre, verificado).
-
 ## Pendiente
 
 | ID | Estado | Qué lo destraba |
 |---|---|---|
-| H4.S3.M3 (tabla del historial, re-captura) | `A MEDIAS` | Re-capturar y hacer la doble revisión (regla 35) tras corregir «institución y cargo pegados». Ver A medias |
 | H5 (veredicto `iconOnly` propios) | `TODO` | Nada — sin empezar |
 | H6 (regresión final, gates, cierre) | `TODO` (con un intento real documentado, ver abajo) | Repetir `yarn test --watch=false` completo en un momento sin contención de recursos en la máquina |
 
 ## Evidencia
+
+- H4.S3: `evidencia/h4s3/doble-revision.md` (dos pasadas, nota ACEPTABLE CON RESERVAS), `evidencia/h4s3/capturas-post-fix/` (5 capturas), `evidencia/h4s3/work-history-spec-post-fix.txt` (83/83), `evidencia/h4/doble-historial.md` (doble local, regla 65).
 
 Índice completo de `evidencia/`:
 
@@ -153,6 +150,8 @@ Consola del navegador: 0 errores en los 7 pasos (revisado con browser_console_me
 
 ## Desvíos del plan
 
+0. **H4.S3 (adelantado dentro del turno):** la doble revisión (regla 35) encontró institución y cargo pegados en la tabla del historial; se corrigió y se re-capturó. El historial como tabla no lo monta ninguna ruta todavía (lo monta Itzan): sólo se ve en el stock.
+
 1. **Reordené H2.S2 después de H3.S2** (ya registrado en el PLAN, resuelto: ambas HECHO ahora).
 2. **El corte real es `8ae7283a`, no el citado en el reparto** (`b655e844`) — reconsultado, seis PR
    de diferencia, ninguno toca mis archivos.
@@ -186,8 +185,7 @@ Consola del navegador: 0 errores en los 7 pasos (revisado con browser_console_me
   «Tipo» a prioridad 2 en pantallas muy angostas, o se prefiere aceptar el recorte?
 - **`confirmarCambios()` de Marcelo sin mergear**: mismo riesgo que en el reporte anterior — cuando
   llegue a `origin/mockup`, hay que reemplazar el `dialogs.confirm()` genérico de `guardarSede()`.
-- **H4.S3 no empezado**: el historial laboral sigue sin la disciplina de tabla; es la mitad de D-09
-  que falta.
+- **Doble local del historial**: editar, retirar y adjuntar viven en memoria; recargar los pierde hasta que Itzan publique `PATCH`/`DELETE`/`fileId`.
 - **Regresión completa sin correr en verde**: dos intentos abortados por infraestructura (worker
   pool). Los tests dirigidos (pagination, data-table, filter-bar, work-history: 147 tests en total)
   sí corrieron limpios; lo que no se confirmó es que el resto de la suite (los otros ~7000 tests)

@@ -218,7 +218,7 @@ Capturas antes/después en `evidencia/h3/capturas/consumidor-glossary-375.png` (
 
 ## H4 — «Dónde atiendo» cumple la disciplina entera
 
-**Prioridad:** ALTA. **Estado:** A MEDIAS (H4.S1 y H4.S2 HECHO; H4.S3 con M3 pendiente de re-captura)
+**Prioridad:** ALTA. **Estado:** HECHO salvo H4.S2.M9 (teclado, A MEDIAS)
 
 ### H4.S1 — La lista pasa a ser tabla, con barra y paginación
 
@@ -263,13 +263,13 @@ sin ver el nombre completo o la insignia en un teléfono angosto?), no una que t
 
 ### H4.S3 — El historial laboral como tabla con la disciplina (D-09)
 
-**Estado:** A MEDIAS (7 de 8 HECHO; M3 espera re-captura tras corregir un defecto visual)
+**Estado:** HECHO (las 8 microtareas; doble revisión con reservas MENOR registradas)
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Estado |
 |---|---|---|---|---|
 | H4.S3.M1 | Localizar el manejador simulado del historial y su colección | Hay ruta:línea en `PLAN.md` | `git grep` + lectura de `profiles.client.ts`/`profiles.types.ts` | HECHO — `ProfilesClient` sólo tiene `listAffiliations()`/`addAffiliation()`; `PractitionerAffiliation` no tiene `fileId`; el manejador es de Itzan (`profiles.handlers.ts`, fuera de mi alcance) |
 | H4.S3.M2 | Manejador ajeno → pedido anotado + doble simulado en tres niveles | Pedido en los dos dailies; doble declarado | `evidencia/h4/doble-historial.md` | HECHO — doble local (`edicionesLocalesDeAfiliacion`, `idsRetiradosLocalmente`) ejercitado en correcto/límite/inválido, ver el documento |
-| H4.S3.M3 | Layout `tabla` con `app-data-table`, barra y paginación en cliente | Con `layout="tabla"` se ve la tabla; sin él, nada cambia | spec + captura | A MEDIAS — anda (tabla, filtro, paginación, editar, retirar verificados en navegador) pero la revisión adversarial (regla 35) encontró un defecto real: institución y cargo salían pegados («Clínica Los OlivosJefa de servicio»). Corregido en `work-history.html` (envoltorio `.historial__institucion`), typecheck exit=0, **falta re-capturar y hacer las dos pasadas** sobre la re-captura. Antes de la corrección: **verificado en navegador real** (stock de componentes, cuenta `medica`): tabla con Institución/Período/Adjunto/Acciones, filtro y paginación reales (`evidencia/h4s3/capturas/h4s3-historial-tabla.png`); `layout` por omisión sigue siendo `'flat'`, no cambia nada para quien no lo pide |
+| H4.S3.M3 | Layout `tabla` con `app-data-table`, barra y paginación en cliente | Con `layout="tabla"` se ve la tabla; sin él, nada cambia | spec + captura | HECHO — verificado en navegador (stock, cuenta `medica`) en 1440/375 × claro/oscuro; la doble revisión encontró institución y cargo pegados (MAYOR), corregido en `work-history.html` y re-capturado; 83/83 tests tras el cambio. Ver `evidencia/h4s3/doble-revision.md` (ACEPTABLE CON RESERVAS) |
 | H4.S3.M4 | Editar y retirar por fila con modal, guardar por cambios y las dos confirmaciones | Ejercitado | capturas | HECHO — **verificado en navegador**: «Editar» abre modal con cargo precargado; «Guardar los cambios» deshabilitado sin cambios, habilitado con cambios; confirmar aplica el cambio y cierra (`h4s3-editar-modal.png`, `h4s3-confirmar-guardar.png`, `h4s3-guardado.png`); «Retirar» confirma y saca la fila con toast (`h4s3-retirar-confirm.png`, `h4s3-retirado.png`) |
 | H4.S3.M5 | Adjunto en agregar y en editar, PDF/JPG/PNG; el contrato real no tiene `fileId`: doble declarado | El archivo se guarda y se descarga desde la fila | captura + nota en `REPORTE.md` | HECHO — subida real contra `FilesClient.upload()` (`POST /common/files/upload`), el `fileId` devuelto se asocia en el doble local; spec correcto/inválido (subida OK / subida falla) en `work-history.spec.ts` |
 | H4.S3.M6 | El modal de alta existente gana confirmación al guardar y descarte con cambios | Observado | captura ×2 | HECHO — `registrar()` ahora pide `dialogs.confirm()`; `intentarCerrarAltaDeVinculo()`/`confirmarDescarteYCerrarAltaDeVinculo()` con el mismo patrón que H4.S2; cubierto por los 8 tests preexistentes de alta (actualizados a `await`) |
