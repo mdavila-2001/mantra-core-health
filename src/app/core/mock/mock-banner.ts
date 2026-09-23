@@ -13,8 +13,17 @@ import { MOCK_USERS } from './mock-session';
   template: `
     <aside class="mock" [class.mock--plegado]="plegado()" aria-label="Modo de demostración">
       <div class="mock__botones">
-        <button type="button" class="mock__boton" (click)="plegado.set(!plegado())">
-          {{ plegado() ? 'Datos de prueba' : 'Ocultar' }}
+        <button
+          type="button"
+          class="mock__boton"
+          [attr.aria-label]="plegado() ? 'Datos de prueba' : 'Ocultar'"
+          (click)="plegado.set(!plegado())"
+        >
+          @if (plegado()) {
+            <span class="mock__largo">Datos de prueba</span><span class="mock__corto" aria-hidden="true">Demo</span>
+          } @else {
+            Ocultar
+          }
         </button>
         <!-- El acceso al stock de componentes. Vive acá y no en el menú porque
              el panel ya está en todas las pantallas y no pide sesión: se llega
@@ -63,6 +72,7 @@ import { MOCK_USERS } from './mock-session';
       font: 12px/1.4 system-ui, sans-serif;
       box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
     }
+    .mock__corto { display: none; }
     /* En angosto no hay esquina libre abajo: el chat clava ahí el campo de
        escribir de borde a borde y el cartel lo tapaba. Se va arriba, bajo el
        header de la aplicación, y a la derecha, que es la franja que las
@@ -89,6 +99,10 @@ import { MOCK_USERS } from './mock-session';
         padding: 5px 10px;
         font-size: 11px;
       }
+      /* Plegado en angosto dice «Demo»: la pastilla completa (114 px) tapaba el
+         final del saludo de la pantalla («…Pérez»); la corta (≈50 px) no llega. */
+      .mock__largo { display: none; }
+      .mock__corto { display: inline; }
       /* El stock de componentes es una herramienta de escritorio. */
       .mock--plegado .mock__boton--stock {
         display: none;
