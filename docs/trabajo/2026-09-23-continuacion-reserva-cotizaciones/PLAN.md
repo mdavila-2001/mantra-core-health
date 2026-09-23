@@ -14,33 +14,32 @@
 
 **CA:** Dado el corte integrado, cuando se ejecutan test o typecheck, entonces el índice de componentes se genera antes de compilar.
 **DoD:** `yarn stock:generate && yarn typecheck` con salida registrada.
-**Estado:** TODO
+**Estado:** HECHO
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H1.S1.M1 | Partir de `origin/mockup` en rama nueva | El PR anterior queda como base | `git merge-base --is-ancestor origin/mockup HEAD` al finalizar | TODO |
-| H1.S1.M2 | Asegurar generación previa a verificación | El índice no queda obsoleto al usar scripts documentados | test de script + `yarn typecheck` | TODO |
+| H1.S1.M1 | Partir de `origin/mockup` en rama nueva | El PR anterior queda como base | Base `5f3a7da0` | HECHO |
+| H1.S1.M2 | Asegurar generación previa a verificación | El índice no queda obsoleto al usar scripts documentados | test de script + `yarn typecheck` | HECHO |
 
 ## H2 — Cotizaciones utilizables por paciente
 
 **CA:** Dado un paciente autenticado, cuando abre Cotizaciones, entonces puede buscar, filtrar y ordenar resultados conocidos sin que un precio simulado parezca real.
 **DoD:** pruebas unitarias y de componente verdes; recorrido Playwright contra mockup.
-**Estado:** TODO
+**Estado:** PARCIAL
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H2.S1.M1 | Crear superficie de Cotizaciones y sus estados | La pantalla muestra carga, vacío, error, sin origen y resultados | spec focalizado | TODO |
-| H2.S1.M2 | Componer fuentes existentes y documentos permitidos | Recetas y órdenes diagnósticas precargan términos; faltantes se declaran | spec focalizado | TODO |
-| H2.S1.M3 | Registrar ruta y menú de paciente | «Cotizaciones» abre la pantalla con rol PATIENT | prueba de navegación + navegador | TODO |
+| H2.S1.M1 | Crear superficie de Cotizaciones y sus estados | La pantalla muestra carga, vacío, error, sin origen y resultados | spec focalizado | HECHO |
+| H2.S1.M2 | Componer fuentes existentes y documentos permitidos | Recetas y órdenes diagnósticas precargan términos; faltantes se declaran | Órdenes propias cubiertas; recetas y servicios sin adaptador reutilizable | PARCIAL |
+| H2.S1.M3 | Registrar ruta y menú de paciente | «Cotizaciones» abre la pantalla con rol PATIENT | prueba de navegación + navegador | PARCIAL |
 
 ## H3 — Medición y cierre honesto
 
 **CA:** Dado el flujo de reserva, cuando se recorre autenticado, entonces se documentan solicitudes, tiempos y cuatro clics sin inventar números.
 **DoD:** evidencia antes/después y reporte con pendientes concretos.
-**Estado:** TODO
+**Estado:** PARCIAL
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
 | H3.S1.M1 | Medir reserva con sesión reproducible | Tabla con solicitudes, ms y cuatro clics | Playwright + evidencia | TODO |
-| H3.S1.M2 | Ejecutar gates y reporte | Rojos propios corregidos; ajenos declarados | lint, typecheck, test, Playwright | TODO |
-
+| H3.S1.M2 | Ejecutar gates y reporte | Rojos propios corregidos; ajenos declarados | lint, typecheck, test, Playwright | PARCIAL |
