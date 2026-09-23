@@ -14,7 +14,7 @@
 
 **CA:** Dado un paciente que abre Cotizaciones, cuando la pantalla termina de renderizar, entonces puede filtrar y ordenar cotizaciones sin ver ni cargar estudios personales.
 **DoD:** prueba de componente dirigida verde y comprobación visual local si el entorno puede arrancar.
-**Estado:** A MEDIAS
+**Estado:** HECHO
 
 ### H1.S1 — Retiro de la dependencia
 
@@ -23,7 +23,7 @@
 | H1.S1.M1 | Fijar la ausencia de documentos con una prueba | La prueba exige que no haya texto ni llamadas a órdenes | `corepack yarn test --include=.../cotizaciones.spec.ts --watch=false` falla antes del cambio | HECHO |
 | H1.S1.M2 | Quitar UI, estado e inyecciones de documentos | La pantalla no depende de Diagnostics ni Terminology | Mismo spec verde | HECHO |
 | H1.S1.M3 | Registrar evidencia y límites | El reporte separa test de verificación visual | `REPORTE.md` con salida literal | HECHO |
-| H1.S1.M4 | Verificar la composición en navegador autenticado | El bloque retirado no deja espacio visual ni aparece al abrir la ruta | Captura o Playwright contra una instancia que sirva este SHA | BLOQUEADO |
+| H1.S1.M4 | Verificar la composición en navegador autenticado | El bloque retirado no deja espacio visual ni aparece al abrir la ruta | `npx playwright test playwright/cotizaciones-paciente.spec.ts --workers=1` contra `origin/mockup@b7785e36` local | HECHO |
 
 ## Riesgos y bloqueos previstos
 
