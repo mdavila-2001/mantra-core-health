@@ -167,6 +167,36 @@
   }
 }
 
+/* ─── La silueta (P-01) ─────────────────────────────────────────────────────
+   La figura y las pastillas son dos puertas al mismo estado. Hasta tablet van
+   una sobre otra, la figura primero: es lo que el doctor pidió ver. Desde
+   escritorio, la figura a la izquierda —14rem: una figura humana es vertical, y
+   más ancha se come el alto de la pantalla— y las pastillas a la derecha, para
+   no apilar dos bloques altos. */
+.sintomas__elegir {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--e2);
+  margin-block-start: var(--e4);
+}
+
+/* El espacio lo pone el `gap` del contenedor, no el margen de la grilla. */
+.sintomas__elegir > .sintomas__zonas {
+  margin-block-start: 0;
+}
+
+.sintomas__silueta {
+  display: block;
+}
+
+@media (min-width: 64rem) {
+  .sintomas__elegir {
+    grid-template-columns: 14rem minmax(0, 1fr);
+    gap: var(--e4);
+    align-items: start;
+  }
+}
+
 .sintomas__zona {
   display: flex;
   flex-direction: column;

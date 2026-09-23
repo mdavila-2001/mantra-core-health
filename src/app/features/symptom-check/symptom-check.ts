@@ -21,6 +21,7 @@ import { Chip } from '@shared/components/atoms/chip/chip';
 import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
+import { BodyMap, type ZonaElegible } from '@shared/components/organisms/body-map/body-map';
 
 import {
   enumerar,
@@ -93,7 +94,7 @@ const VACIO: ReadonlyMap<string, string> = new Map();
  */
 @Component({
   selector: 'app-symptom-check',
-  imports: [Alert, AppButton, Card, Chip, RouterLink, Textarea],
+  imports: [Alert, AppButton, BodyMap, Card, Chip, RouterLink, Textarea],
   templateUrl: './symptom-check.html',
   styleUrl: './symptom-check.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -282,6 +283,29 @@ export class SymptomCheck {
   /** Abre una zona, o la cierra si ya lo estaba. */
   protected alternarZona(zona: ZonaDelCuerpo): void {
     this.zonaAbierta.update((previa) => (previa === zona.id ? null : zona.id));
+  }
+
+  /**
+   * Las zonas tal como las entiende la silueta: `id` y nombre, nada más.
+   *
+   * La figura no conoce síntomas ni especialidades (ver `BodyMap`): se le da
+   * lo justo para dibujar y nombrar, y devuelve un `id`. Las que no tienen
+   * forma («piel», «ánimo», «general») viajan igual y la silueta las ignora:
+   * siguen en las pastillas.
+   */
+  protected readonly zonasParaLaSilueta = computed<readonly ZonaElegible[]>(() =>
+    this.zonas().map(({ id, nombre }) => ({ id, nombre })),
+  );
+
+  /**
+   * La silueta y las pastillas son dos puertas al **mismo** estado (P-01,
+   * doctor 22/09/2026): tocar el pecho en la figura abre lo mismo que tocar la
+   * pastilla «Pecho», y la figura resalta la zona que se abrió desde la
+   * pastilla. La silueta ya resuelve el alternar (volver a tocar suelta), así
+   * que acá sólo se copia lo que devuelve.
+   */
+  protected elegirZonaDesdeLaSilueta(id: string | null): void {
+    this.zonaAbierta.set(id);
   }
 
   /** Si un síntoma ya está elegido, para pintarlo distinto. */
