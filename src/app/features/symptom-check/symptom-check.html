@@ -202,21 +202,92 @@
     </ul>
   }
 
-  <!-- El texto libre sigue estando, pero deja de ser la única puerta: hay
-       síntomas que no entran en ninguna zona, y escribir es más rápido para
-       quien ya sabe qué decir. -->
-  <details class="sintomas__escribir" [open]="sintomas().length === 0">
-    <summary>O escribilo con tus palabras</summary>
-    <app-textarea
-      class="sintomas__campo"
-      [rows]="2"
-      [autoResize]="true"
-      [maxRows]="5"
-      [value]="texto()"
-      (valueChange)="escribir($event)"
-      placeholder="Me duele la cabeza hace tres días y veo borroso…"
-    />
-  </details>
+  <!-- El texto libre es un panel a la vista, no un desplegable (P-02, doctor
+       22/09/2026): hay síntomas que no entran en ninguna zona, y quien ya sabe
+       qué decir no tiene por qué abrir nada para decirlo. El rótulo lo pone
+       `app-form-field`, que es quien lo asocia al control. -->
+  <div class="sintomas__escribir" data-testid="sintomas-escribir">
+    <app-form-field
+      icon="note"
+      label="Contanos con tus palabras"
+      hint="Podés escribir varios síntomas; no hace falta que sea exacto."
+    >
+      <app-textarea
+        data-testid="sintomas-texto"
+        [rows]="2"
+        [autoResize]="true"
+        [maxRows]="5"
+        [value]="texto()"
+        (valueChange)="escribir($event)"
+        placeholder="Me duele la cabeza hace tres días y veo borroso…"
+      />
+    </app-form-field>
+
+    <!-- Dictar (P-02, Q-12): sólo si el navegador trae reconocedor; sin él no
+         hay botón, porque un botón que al tocarlo dice «acá no se puede» es
+         peor que ninguno. El aviso va ANTES del botón y siempre a la vista:
+         quien va a hablar de su salud tiene que saber a dónde va lo que dice
+         antes de decirlo (Q-M1). No hay servidor nuestro en el medio. -->
+    @if (dictado.soportado) {
+      <div class="sintomas__dictado" data-testid="sintomas-dictado">
+        <p class="sintomas__dictado-aviso" id="sintomas-dictado-aviso">
+          Lo que dictás lo transcribe tu navegador; no lo guardamos.
+        </p>
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          data-testid="sintomas-dictar"
+          aria-describedby="sintomas-dictado-aviso"
+          [attr.aria-pressed]="dictado.escuchando()"
+          (clicked)="alternarDictado()"
+        >
+          <svg
+            class="sintomas__dictado-icono"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <rect x="9" y="3" width="6" height="11" rx="3" />
+            <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3" />
+          </svg>
+          {{ dictado.escuchando() ? 'Detener' : 'Dictar' }}
+        </button>
+        <!-- Los tres errores dicen qué hacer, no qué falló por dentro. -->
+        <p
+          class="sintomas__dictado-estado"
+          role="status"
+          aria-live="polite"
+          data-testid="sintomas-dictado-estado"
+        >
+          @switch (dictado.estado()) {
+            @case ('escuchando') {
+              <span class="sintomas__dictado-punto" aria-hidden="true"></span>
+              Escuchando… decí qué te pasa.
+              @if (dictado.parcial(); as parcial) {
+                <em>{{ parcial }}</em>
+              }
+            }
+            @case ('sin-permiso') {
+              Activá el micrófono en el navegador o escribí.
+            }
+            @case ('sin-resultado') {
+              No te escuchamos, probá de nuevo.
+            }
+            @case ('sin-red') {
+              Sin conexión para transcribir; escribí.
+            }
+          }
+        </p>
+      </div>
+    }
+  </div>
 
   <!-- Lo que se reconoce se ANUNCIA: los chips apareciendo son el acuse de
        recibo para quien mira, y esta región lo es para quien escucha. -->
