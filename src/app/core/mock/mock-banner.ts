@@ -100,9 +100,16 @@ import { MOCK_USERS } from './mock-session';
         inset-inline-end: 8px;
         inset-block-start: calc(var(--h-header, 56px) + 8px);
       }
+      .mock--plegado {
+        inset-block-start: calc(var(--h-header, 56px) + 2px);
+      }
       .mock__boton {
         padding: 5px 10px;
         font-size: 11px;
+      }
+      .mock--plegado .mock__boton {
+        padding: 2px 8px;
+        font-size: 10px;
       }
       /* Plegado en angosto dice «Demo»: la pastilla completa (114 px) tapaba el
          final del saludo de la pantalla («…Pérez»); la corta (≈50 px) no llega. */
