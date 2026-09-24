@@ -1,5 +1,14 @@
 # Handoff — ejecución del plan Médico
 
+### Continuación H1 — correos personales y laborales separados (2026-09-24)
+
+- Fuente: L0179 y L0186 de `02_METAPROMPT_MEDICO.md`; MED-E03; sin tocar el plan ni los archivos de Paciente.
+- API: rama `justin/medical-module-execution-20260924`, commit publicado `70f1cfff66545c6ca77323fcd0eccb5cdd26eb44`. Archivos propios: DTO y pruebas de registro, mapeo y prueba del servicio de autorregistro, comentarios de DTOs de lectura/actualización. `workEmail` opcional clasifica correo laboral como WORK y el correo de acceso/personal como HOME; los clientes antiguos que no envían `workEmail` conservan `email` en WORK.
+- FE: misma rama en `wt-medical-execution-fe`, commit publicado `bd6e4690f62c4269dd9a65e8e5b955fe6e68a857`. Archivos propios: `profiles.types.ts`, plantilla, componente y spec del editor médico. El editor prioriza `workEmail` explícito y conserva `email` como fallback; el texto ya no presenta al correo laboral como identidad de acceso.
+- Verificación real: FE spec del editor 86/86; API DTO/servicio 107/107; `corepack yarn typecheck`, ESLint dirigido y `git diff --check` exit 0 en ambos worktrees. El test-first reprodujo el perfil que mostraba el alias personal como laboral y, en API, el rechazo estricto de `workEmail`/uso WORK equivocado antes del fix.
+- No se ejecutó integración contra PostgreSQL ni navegador→API→DB→recarga: el harness disponible trunca esquemas y no se confirmó aislamiento de una base existente. No hay foto de este incremento. L0179/L0186 y MED-E03 siguen `A MEDIAS / TESTED`; los conteos siguen 10 HECHO, 60 A MEDIAS, 11 TODO, 17 BLOQUEADOS y 2 DESCARTADOS.
+- Próximo trabajo concreto: seguir H1 con los datos personales y catálogo aún parciales; para cerrar MED-E03, preparar y verificar un entorno PostgreSQL efímero propio y recorrer conjuntamente todos los contactos/direcciones fiscales después de recargar, con evidencia sanitizada. Nunca usar una base compartida ni leer `.env` administrado.
+
 ### Continuación H1 — CI obligatoria (2026-09-24)
 
 - Fuente: L0169–L0170 de `02_METAPROMPT_MEDICO.md`; sin ampliar el alcance a Paciente.
