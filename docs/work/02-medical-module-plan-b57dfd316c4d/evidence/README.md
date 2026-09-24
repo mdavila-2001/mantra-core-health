@@ -1,9 +1,15 @@
 # Evidencia del plan Médico
 
-No hubo cambio visual de producto, por lo que no existe captura antes/después ni corrección declarada como hecha. Se inspeccionó localmente una captura Playwright de /my-account en modo mock y se revisó su geometría: viewport 1440×1000, body blanco, área principal de 1200 px y tarjeta de 1120 px, con márgenes laterales iguales de 40 px. La captura fue temporal y no se archiva como evidencia de corrección ni de journey clínico.
+## CORR-08 · edición de especialidad
 
-El filtro médico específico aprobó 381 pruebas en 7 archivos con dobles, sin ejecutar suites MyProfile de Paciente. La suite frontend completa actual aprobó 7.375 pruebas. Estos resultados acreditan pruebas unitarias/componentes, no API→DB→recarga.
+PR borrador [#612](https://github.com/mdavila-2001/mantra-core-health/pull/612), rama `justin/mockup-corr-38-editar-perfil-medico-como-alta`. El carril tiene 8/8 celdas verdes en antes y después para fondo claro, centrado, ancho, scroll horizontal y consola. Se abrieron las capturas del editor a 375, 768 y 1440 px, claro y oscuro. La comparación del diálogo muestra el switch antes y su ausencia después; el test fija que el PATCH parcial sólo envía el concepto de especialidad. Una copia del paquete completo (reporte, matrices y 18 capturas) está archivada en `evidence/corr38/`.
 
-El último intento registrado de Playwright carril-19-route-health.spec.ts falló en beforeAll porque la API de localhost:3005 no estaba saludable. No generó fotos del recorrido. No se asignó un número de corrección NN sin una ficha aplicable, así que no se ejecutó scripts/corr-evidencia.sh NN.
+El paquete completo del carril, con matrices, reporte y capturas, vive en el PR bajo `docs/progress/evidence/lane-38/`. La ficha externa fue reconciliada con la base actual en D-19/D-20; MT-38-01 y el DoD integral de CORR-08 continúan pendientes. Esta evidencia visual no eleva ningún criterio del plan médico a HECHO.
+
+## Evidencia de módulo previa
+
+El filtro médico específico aprobó 381 pruebas en 7 archivos con dobles, sin ejecutar suites MyProfile de Paciente. La repetición completa posterior a CORR-08 aprobó 7.376 pruebas en 583 archivos. Estos resultados acreditan pruebas unitarias/componentes, no API→DB→recarga.
+
+Route-health volvió a fallar en `beforeAll` porque la API de localhost:3005 no está saludable; no generó fotos de ese recorrido. El verificador `scripts/atlas/fable-proof-check.py` no existe en esta base.
 
 Una integración aislada de registro profesional aprobó 8/8 en DB desechable con semillas parciales; no ejecutó DDL canónica ni un journey end-to-end. No se guardaron datos personales reales; los fixtures del perfil inspeccionado son de la cuenta sintética de prueba.

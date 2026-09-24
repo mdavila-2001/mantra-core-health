@@ -6,6 +6,7 @@
 - **R-004 — anotaciones antiguas:** “COMPLETO/INCOMPLETO/FALTA” se conserva como texto histórico, no como evidencia. Las filas y escenarios sólo se cierran con aceptación y DoD actuales.
 - **R-005 — integración local:** la API en `localhost:3005` no estaba saludable, Docker daemon/socket no existía y el route-health E2E se detuvo antes del login. No se creó una base ni se sembraron datos.
 - **R-006 — denominador:** se conservan 100 criterios fuente descompuestos; 98 incluidos, 2 ramas de cobro integrado/QR fuera. Ningún criterio se cuenta por duplicado con su encabezado/padre. 0/98 alcanza el DoD; ese porcentaje no describe la funcionalidad existente.
+- **R-007 — CORR-08 es evidencia visual parcial, no cierre médico:** se usa la ficha TAREA-38 existente, sin mapear un número de carril a un hito por inferencia. El perfil con pestañas ya estaba en la base; el PR #612 elimina el switch de certificación que persistía en el diálogo y verifica que el PATCH no sobrescriba ese dato. MT-38-01 y el DoD end-to-end siguen pendientes, y ningún criterio de MATRIX cambia de estado.
 
 ## Bloqueos y decisiones externas sin resolver
 

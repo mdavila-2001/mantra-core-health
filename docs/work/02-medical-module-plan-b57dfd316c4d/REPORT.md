@@ -1,11 +1,11 @@
 # Reporte de ejecución — módulo Médico
 
 - Fecha: 2026-09-24 · Plan: PLAN.md · Rama: justin/medical-module-cierre
-- Fuente funcional única: 02_METAPROMPT_MEDICO.md, copia congelada en MetaPrompts/02-medical-module-plan-b57dfd316c4d/sources/medical-metaprompt.md
+- Fuente funcional única: 02_METAPROMPT_MEDICO.md; copia congelada junto al plan en `sources/medical-metaprompt.md` (MetaPrompts) y SHA-256 verificado.
 - SHA-256 de la fuente: b57dfd316c4d642eb5e1db49257397b8fd2864b511317282ae4b70ff1262a656
-- Base de código frontend: origin/mockup b11dfdd382dd787fab33d5894979ccc2c4d5a96a. El commit actual contiene solo documentación de ejecución.
+- Base de código frontend: origin/mockup b11dfdd382dd787fab33d5894979ccc2c4d5a96a. Esta rama sigue siendo documental; la corrección visual acotada vive en `justin/mockup-corr-38-editar-perfil-medico-como-alta`, commit `55e948a4`, PR borrador #612 contra `mockup`.
 - Peldaño máximo: TESTED para frontend con dobles; no se alcanzó VERIFIED ni REGRESSION_VERIFIED de integración médica.
-- Avance integral: 0/98 criterios incluidos alcanzan DoD; la matriz conserva 100 criterios fuente, 98 incluidos y 2 OUT. Estados actuales: 70 A MEDIAS, 11 TODO, 17 BLOQUEADOS, 2 DESCARTADOS.
+- Avance integral: 0/98 criterios incluidos alcanzan DoD; la matriz conserva 100 criterios fuente, 98 incluidos y 2 OUT. Estados actuales: 70 A MEDIAS, 11 TODO, 17 BLOQUEADOS, 2 DESCARTADOS. CORR-08 aporta evidencia visual parcial, sin cambio en el conteo de criterios end-to-end.
 
 ## Verificado en esta continuación
 
@@ -13,14 +13,14 @@
 |---|---|---|---|
 | Tipos frontend | corepack yarn typecheck | Exit 0 sobre la punta actual de mockup | No acredita integración ni comportamiento visual completo |
 | Perfil, registro y sedes médicos | corepack yarn ng test --watch=false --filter='(RegisterPractitioner&#124;PractitionerProfile&#124;WorkHistory&#124;pestañas de la ficha del médico)' — 7 archivos, 381 pruebas aprobadas; solo suites de Médico con dobles, sin suites MyProfile de Paciente. | 7 archivos; 381 aprobadas | Dobles; sin API ni persistencia real |
-| Regresión frontend completa | corepack yarn test --watch=false | 583 archivos; 7.375 pruebas aprobadas | No reemplaza journeys API/UI/DB ni E2E |
+| Regresión frontend completa | corepack yarn ng test --watch=false | 583 archivos; 7.376 pruebas aprobadas en la repetición posterior a CORR-08 | No reemplaza journeys API/UI/DB ni E2E |
 | Lint | corepack yarn lint | Exit 1; 246 errores @angular-eslint/prefer-on-push-component-change-detection | Son errores repo-wide; no se ocultaron ni se debilitó ninguna prueba |
-| Inspección visual de una ruta médica | Playwright local en modo mock, viewport 1440×1000 | Fondo del body blanco; app-main__inner 1200 px; tarjeta 1120 px (93,3 %), centrada con márgenes de 40/40 px | Se revisó solamente Mi perfil; no se guarda como foto antes/después porque no hubo corrección visual ni lane asignada |
+| Corrección visual CORR-08 | `scripts/corr-evidencia.sh 38 --antes` y `scripts/corr-evidencia.sh 38` | 8/8 celdas verdes en cada fase; capturas 375/768/1440 claro y 1440 oscuro; diálogo comparativo muestra selector antes y su ausencia después | Una ficha visual no acredita persistencia clínica ni cambia el estado del DoD médico |
 | API — alta profesional aislada | integration/practitioner-registration.int-spec.ts, worktree API | 8/8 aprobadas en DB desechable con semillas parciales | No es init DDL canónica ni journey del módulo Médico |
 
-El primer filtro amplio de 229 pruebas se descartó porque también seleccionó suites MyProfile compartidas con Paciente. El resultado válido para Médico es el filtro preciso de 381 pruebas indicado arriba; no se modificaron ni se contaron tareas del plan Paciente.
+El primer filtro amplio de 229 pruebas se descartó porque también seleccionó suites MyProfile compartidas con Paciente. El resultado válido para Médico es el filtro preciso de 381 pruebas indicado arriba; no se modificaron ni se contaron tareas del plan Paciente. Después se completó además la evidencia propia de CORR-08 en una rama independiente.
 
-La regresión completa actual incluye las pruebas que aparecieron como rojas en logs históricos —aviso-de-demora, identity-verification y shell-layout— y ahora pasa sin saltos: 7.375/7.375. Se conservan los logs de la base anterior; no se borraron aserciones ni se ocultaron resultados.
+La regresión completa más reciente incluye las pruebas que aparecieron como rojas en logs históricos —aviso-de-demora, identity-verification y shell-layout— y pasa sin saltos: 7.376/7.376. Se conservan los logs de la base anterior; no se borraron aserciones ni se ocultaron resultados.
 
 ## Avance parcial
 
@@ -30,7 +30,7 @@ La matriz conserva el texto de la fuente y separa evidencia de frontend, API, pe
 
 ### F3 — producto frontend
 
-No se alteró código de producto. La ruta inspeccionada de perfil médico cumple la geometría comprobada; eso no valida visualmente las otras pantallas ni resuelve las carencias funcionales del plan. El workspace solo permite correcciones visuales y exige una ficha/lane 31–40 concreta para cada corrección; no se encontró correspondencia aprobada entre los hitos médicos H1–H8 y esas fichas, y no se inventó una asignación. No hay diff de producto ni evidencia antes/después de una corrección.
+Se publicó una corrección visual acotada con la ficha vigente CORR-08/TAREA-38 en PR borrador #612. El diálogo de edición de especialidad dejó de ofrecer «Certificada por el colegio o consejo» y el PATCH de edición dejó de enviar ese dato al cambiar sólo el concepto de especialidad. La inspección de la base halló que la tarjeta con pestañas ya existía; D-20 de la ficha externa registra por qué no se duplicó y deja MT-38-01 pendiente. La matriz visual tiene 8/8 celdas verdes antes y después, con fotos revisadas. Esta rama del plan no contiene código de producto, no se mergeó el PR y no cambió el estado de los 98 criterios end-to-end.
 
 ### F4 — integración médica
 
@@ -38,7 +38,7 @@ Una prueba de registro profesional pasó 8/8 en DB desechable después de cargar
 
 ### F5 — regresión y evidencia visual
 
-El typecheck, los 381 tests médicos dirigidos y la suite frontend completa actual pasan. El lint sigue fallando con 246 errores Angular ESLint. El último intento registrado de playwright/carril-19-route-health.spec.ts se detuvo en beforeAll porque localhost:3005 no estaba saludable; no se obtuvieron fotos de ese recorrido. No se volvió a ejecutar contra la punta actual porque el API y la base requeridos siguen sin estar disponibles.
+El typecheck, los 381 tests médicos dirigidos, los 81 tests del editor y la suite frontend completa de 7.376 pruebas pasan. La evidencia de CORR-08 pasó 8/8 medidas en cada fase. El lint sigue fallando con 246 errores Angular ESLint; el lint dirigido a los archivos cambiados de CORR-08 pasa. Route-health se volvió a ejecutar y se detuvo en beforeAll porque la API requerida en localhost:3005 no estaba saludable; el verificador `scripts/atlas/fable-proof-check.py` no existe en esta base.
 
 ## Pendiente
 
@@ -48,13 +48,15 @@ El typecheck, los 381 tests médicos dirigidos y la suite frontend completa actu
 | MED-06 fiscal | 2 criterios A MEDIAS; 11 TODO | Entidad y permisos en sus propietarios, adjuntos requeridos, dirección legal/GPS y verificación API→DB→recarga |
 | MED-E01–E17 | Sin journey integral completo | API/DB desechables estables, contratos de terceros validados y actor siguiente disponible |
 | F4 | Parcialmente bloqueado | Resolver init canónica con el dueño del modelo/DDL y recuperar Docker sin afectar servicios compartidos |
-| F5 visual/E2E | Parcialmente bloqueado | API local saludable, lane visual autorizada y evidencia Playwright inspeccionada |
-| F6 | A MEDIAS | Rama documental publicada en origin; no se abrió PR ni hubo merge o deploy |
+| F5 visual/E2E | Parcialmente bloqueado | API local saludable y verificador Fable disponible; CORR-08 ya tiene evidencia visual inspeccionada |
+| F6 | A MEDIAS | Rama documental publicada en origin; PR visual #612 en borrador; sin merge ni deploy |
 
 ## Evidencia histórica y comandos
 
 - Revisión inicial: corepack yarn typecheck exit 0; filtro médico amplio ejecutado antes del rebase, 54 archivos/804 aprobadas; corepack yarn lint exit 1 con 246 errores; carril-19 detenido en beforeAll por API no saludable.
-- Revisión actual: corepack yarn typecheck exit 0; filtro médico específico 7 archivos/381 aprobadas; corepack yarn test --watch=false 583 archivos/7.375 aprobadas; corepack yarn lint exit 1 con 246 errores.
+- Revisión actual previa a CORR-08: typecheck exit 0; filtro médico específico 7 archivos/381 aprobadas; suite completa 583 archivos/7.375 aprobadas; lint exit 1 con 246 errores.
+- Revisión visual CORR-08: `scripts/corr-evidencia.sh 38 --antes` y `scripts/corr-evidencia.sh 38`, 8 celdas cada una/0 rojas; fotos y reporte en `evidence/corr38`; PR #612 borrador, 0 criterios médicos cerrados.
+- Revisión posterior al cambio: `corepack yarn typecheck` exit 0; editor 81/81; suite Angular completa 583 archivos/7.376 aprobadas; eslint dirigido exit 0; lint global exit 1 con 246 errores; route-health bloqueado en beforeAll por API no disponible; comprobador Fable ausente.
 - API dirigida: 21 suites y 505 unitarias aprobadas; typecheck/lint API y checks OpenAPI aprobados; una integración aislada de registro profesional 8/8.
 - Lote de integración API anterior: 12 suites fallidas, 1 omitida y 1 aprobada; 90 fallidas, 8 omitidas y 26 aprobadas por ECONNREFUSED 127.0.0.1:55433. Docker dejó de responder.
 - Suite completa API con heap de 6 GB: agotó heap sin resumen final.
