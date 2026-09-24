@@ -482,6 +482,22 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     expect(html.querySelector('.sintomas__chips')?.textContent).toContain('dolor de cabeza');
   });
 
+  it('lo que se cuenta ilumina la silueta y las pastillas, sin abrir ninguna zona', () => {
+    escribir('me duele la rodilla y ando triste');
+    fixture.detectChanges();
+
+    expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain('Rodillas');
+    expect(
+      html.querySelector('[data-testid="body-map-rodillas"]')?.closest('g')?.classList,
+    ).toContain('body-map__zona--marcada');
+    expect(html.querySelector('[data-testid="zona-animo"]')?.classList).toContain('is-marcada');
+    expect(html.querySelector('[data-testid="zona-abierta"]')).toBeNull();
+
+    // La lectura del servicio se pide igual; se la da por atendida.
+    vi.advanceTimersByTime(600);
+    http.match('/ai/v1/triage/analyze').forEach((req) => req.flush({ symptoms: [], urgency: 'programada' }));
+  });
+
   it('con menos de tres letras no pregunta nada', () => {
     escribir('me');
     vi.advanceTimersByTime(2_000);

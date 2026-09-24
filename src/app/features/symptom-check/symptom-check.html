@@ -16,6 +16,7 @@
       class="sintomas__silueta"
       [zonas]="zonasParaLaSilueta()"
       [value]="zonaAbierta()"
+      [marcadas]="zonasMarcadas()"
       (valueChange)="elegirZonaDesdeLaSilueta($event)"
     />
 
@@ -55,6 +56,7 @@
               class="sintomas__zona"
               type="button"
               [class.is-abierta]="zonaAbierta() === zona.id"
+              [class.is-marcada]="estaMarcada(zona.id)"
               [attr.aria-expanded]="zonaAbierta() === zona.id"
               [attr.data-testid]="'zona-' + zona.id"
               (click)="alternarZona(zona)"
