@@ -19,6 +19,7 @@ import { authInterceptor } from './core/http/auth.interceptor';
 import { timeoutInterceptor } from './core/http/timeout.interceptor';
 import { AuthService } from './core/auth/auth.service';
 import { IdleLogout } from './core/auth/idle-logout';
+import { SessionEndedRedirect } from './core/auth/session-ended-redirect';
 import { AppErrorHandler } from './core/errors/app-error-handler';
 import { tracingInterceptor } from './core/observability/http/tracing.interceptor';
 import { provideObservability } from './core/observability/observability.providers';
@@ -114,6 +115,12 @@ export const appConfig: ApplicationConfig = {
     // vacío queda con la historia clínica de alguien en pantalla.
     provideAppInitializer(() => {
       inject(IdleLogout);
+    }),
+    // Quien pierde la sesión dentro del área privada —por inactividad, desde
+    // otra pestaña o por un refresco rechazado— va al login. Sin esto la
+    // pantalla quedaba en pie sin token y ninguna acción funcionaba.
+    provideAppInitializer(() => {
+      inject(SessionEndedRedirect);
     }),
   ],
 };
