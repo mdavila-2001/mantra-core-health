@@ -80,11 +80,11 @@ describe('MonthView', () => {
     expect(fixture.nativeElement.querySelectorAll('tbody td')).toHaveLength(42);
   });
 
-  it('muestra sólo los turnos disponibles, no los reservados', () => {
+  it('muestra sólo los cupos disponibles, en palabras y sin los reservados', () => {
     // Dos cupos de capacidad 4 y 4, con 1 y 3 libres: 8 publicados, 4 tomados.
     montar([cupoFuturo(11, 4, 1), cupoFuturo(11, 4, 3)], [], MES_FUTURO);
 
-    expect(celda(11)?.querySelector('.mes__cuenta')?.textContent?.trim()).toBe('4');
+    expect(celda(11)?.querySelector('.mes__cuenta')?.textContent?.trim()).toBe('4 cupos disponibles');
     expect(celda(11)?.textContent).not.toContain('/');
   });
 
@@ -111,15 +111,21 @@ describe('MonthView', () => {
   it('un día con cupos y nadie anotado muestra todos como disponibles', () => {
     montar([cupoFuturo(11, 4, 4)], [], MES_FUTURO);
 
-    expect(celda(11)?.querySelector('.mes__cuenta')?.textContent?.trim()).toBe('4');
+    expect(celda(11)?.querySelector('.mes__cuenta')?.textContent?.trim()).toBe('4 cupos disponibles');
     expect(celda(11)?.getAttribute('aria-label')).toContain('4 turnos disponibles');
   });
 
   it('un día sin capacidad restante muestra cero disponibles', () => {
     montar([cupoFuturo(11, 4, 0)], [], MES_FUTURO);
 
-    expect(celda(11)?.querySelector('.mes__cuenta')?.textContent?.trim()).toBe('0');
+    expect(celda(11)?.querySelector('.mes__cuenta')?.textContent?.trim()).toBe('0 cupos disponibles');
     expect(celda(11)?.getAttribute('aria-label')).toContain('sin turnos disponibles');
+  });
+
+  it('un solo cupo libre va en singular', () => {
+    montar([cupoFuturo(11, 4, 1)], [], MES_FUTURO);
+
+    expect(celda(11)?.querySelector('.mes__cuenta')?.textContent?.trim()).toBe('1 cupo disponible');
   });
 
   it('cada celda se entiende con lector de pantalla, sin mirar el color', () => {
