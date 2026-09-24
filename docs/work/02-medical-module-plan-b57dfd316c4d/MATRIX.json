@@ -5536,6 +5536,33 @@
       "pr_opened": false,
       "merged": false,
       "deployed": false
+    },
+    {
+      "date": "2026-09-24",
+      "repo": "mantra-core-health",
+      "branch": "justin/mockup-corr-38-editar-perfil-medico-como-alta",
+      "base_sha": "b11dfdd382dd787fab33d5894979ccc2c4d5a96a",
+      "product_commit": "55e948a4",
+      "product_code_changed": true,
+      "evidence": [
+        "CORR-08: scripts/corr-evidencia.sh 38 --antes y scripts/corr-evidencia.sh 38: 8 celdas cada una, 0 rojas; fotos 375/768/1440 claro y 1440 oscuro inspeccionadas",
+        "Diálogo de edición: antes app-switch de certificación visible; después ausente; PATCH sólo envía specialtyConceptId",
+        "corepack yarn typecheck: exit 0",
+        "corepack yarn eslint dirigido a los archivos cambiados: exit 0",
+        "spec de practitioner-profile-edit: 81/81 pruebas aprobadas",
+        "corepack yarn ng test --watch=false: 583 archivos, 7376 pruebas aprobadas en la repetición posterior al cambio",
+        "corepack yarn lint: exit 1, 246 errores @angular-eslint/prefer-on-push-component-change-detection",
+        "corepack yarn pw playwright/carril-19-route-health.spec.ts --workers=1: bloqueado en beforeAll; API localhost:3005 no saludable",
+        "scripts/atlas/fable-proof-check.py no existe en esta base mockup",
+        "MT-38-01 sigue pendiente; ninguna fila ni escenario médico alcanza el DoD end-to-end"
+      ],
+      "criteria_marked_done": 0,
+      "pushed_to_origin": true,
+      "pr_opened": true,
+      "pr_draft": true,
+      "pr_url": "https://github.com/mdavila-2001/mantra-core-health/pull/612",
+      "merged": false,
+      "deployed": false
     }
   ]
 }

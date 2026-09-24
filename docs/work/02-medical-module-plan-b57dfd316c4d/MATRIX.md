@@ -6,6 +6,8 @@ Cierre end-to-end verificado: **0/98 (0%)**. Esto no afirma ausencia de funciona
 
 Estados de los 100 criterios contables: A MEDIAS: 70, TODO: 11, BLOQUEADO: 17, DESCARTADO: 2.
 
+Actualización 2026-09-24: CORR-08 (PR visual borrador [#612](https://github.com/mdavila-2001/mantra-core-health/pull/612)) añade evidencia de eliminación del switch de certificación y preservación del campo en el PATCH parcial. No se elevó ningún criterio: la matriz sigue en **0/98 HECHO**, porque no hubo journey persistido ni DoD end-to-end.
+
 ## MED-01 — Identidad profesional
 Líneas: L0166–L0171, L0177. 5 criterios contractuales.
 
