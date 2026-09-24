@@ -17,7 +17,7 @@ La fuente L0169 exige CI al profesional y L0170 exige seleccionar su departament
 
 ### Auditoría de L0168 — nombres de pila
 
-El alta FE ya muestra Primer, Segundo y Tercer nombre y permite agregar más. La inspección del cliente/API y del spec actual revela que lo posterior al primer nombre se envía como una sola cadena en `middleName`; la entidad y los DTO actuales no pueden devolver por separado el tercero para edición. El test de la pantalla terminó 97/98: falló un test no relacionado de resolución de tipos de credencial por `ENOSPC`; las aserciones de tercer nombre quedaron entre las aprobadas. No se modifica el modelo/DDL bajo las reglas locales, por lo que L0168 sigue `A MEDIAS` hasta que un contrato/modelo autorizado conserve las partes por separado.
+El alta y el editor FE muestran Primer, Segundo y Tercer nombre y permiten agregar más. Lo posterior al primer nombre viaja en `middleName`; el editor reconstruye las casillas separando esa cadena por espacios. Esa representación admite los nombres de una palabra probados, pero no conserva de forma inequívoca espacios dentro de un nombre compuesto. El spec de alta terminó 97/98: falló un test no relacionado de resolución de tipos de credencial por `ENOSPC`; las aserciones de tercer nombre quedaron entre las aprobadas. L0168 sigue `A MEDIAS` hasta demostrar con datos sintéticos que las tres casillas sobreviven al recorrido real de persistencia y recarga. No se cambia modelo/DDL ni se inventa una nueva codificación sin necesidad explícita de la fuente.
 
 La fuente funcional sigue siendo únicamente el metaprompt Médico congelado con SHA-256 b57dfd316c4d642eb5e1db49257397b8fd2864b511317282ae4b70ff1262a656. El trabajo de Paciente queda separado y sin cambios.
 
