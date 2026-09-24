@@ -108,6 +108,9 @@ import { MOCK_USERS } from './mock-session';
       .mock--plegado {
         inset-block-start: calc(var(--h-header, 56px) + 2px);
       }
+      .mock--plegado {
+        inset-block-start: calc(var(--h-header, 56px) + 2px);
+      }
       .mock__boton {
         padding: 5px 10px;
         font-size: 11px;

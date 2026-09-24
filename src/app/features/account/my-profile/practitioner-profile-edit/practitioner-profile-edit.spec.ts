@@ -532,6 +532,22 @@ describe('PractitionerProfileEdit', () => {
     expect(interno<() => boolean>('puedeAgregarEspecialidad')()).toBe(true);
   });
 
+  it('con tres especialidades cargadas deja agregar la cuarta, pero no otra casilla', () => {
+    montarYCargar({
+      specialties: [
+        { id: 's-1', specialtyConceptId: 'esp-cardio', isPrimary: true },
+        { id: 's-2', specialtyConceptId: 'esp-pediatria', isPrimary: false },
+        { id: 's-3', specialtyConceptId: 'esp-endo', isPrimary: false },
+      ],
+    });
+
+    señal<string>('nuevaEspecialidad').set('esp-orto');
+    expect(interno<() => boolean>('puedeAgregarEspecialidad')()).toBe(true);
+
+    interno<() => void>('agregarCasillaDeEspecialidad')();
+    expect(interno<() => readonly string[]>('especialidadesExtra')()).toEqual([]);
+  });
+
   it('agregarEspecialidad hace un POST y recarga el perfil', () => {
     montarYCargar();
     señal<string>('nuevaEspecialidad').set('esp-cardio');
@@ -917,6 +933,69 @@ describe('PractitionerProfileEdit', () => {
     const req = http.expectOne('/profiles/practitioners/me');
     expect(req.request.body).toEqual({ homeAddressLines: 'Av. Brasil 1234' });
     req.flush({ ...PERFIL_BASE, homeAddress: { lines: 'Av. Brasil 1234' } });
+  });
+
+  it('Contacto ofrece una dirección de trabajo separada del domicilio', () => {
+    const fixture = montarConVista();
+    señal<number>('pestana').set(1);
+    fixture.detectChanges();
+
+    expect(
+      panelAbierto(fixture).querySelector('[data-testid="edicion-direccion-trabajo"]'),
+    ).not.toBeNull();
+  });
+
+  it('siembra la dirección laboral y su punto sin mezclarlos con el domicilio', () => {
+    montarYCargar({
+      homeAddress: { lines: 'Av. Brasil 1234', latitude: -16.5, longitude: -68.15 },
+      workAddress: { lines: 'Calle Warnes 45', latitude: -17.78, longitude: -63.18 },
+    });
+
+    expect(interno<() => string>('direccionTrabajo')()).toBe('Calle Warnes 45');
+    expect(señal<unknown>('gpsDomicilioGuardado')()).toEqual({ lat: -16.5, lng: -68.15 });
+    expect(señal<unknown>('gpsTrabajoGuardado')()).toEqual({ lat: -17.78, lng: -63.18 });
+  });
+
+  it('guardarPresentacion manda workAddressLines sólo cuando cambia', () => {
+    montarYCargar({ workAddress: { lines: 'Calle Warnes 45' } });
+
+    señal<string>('direccionTrabajo').set('Av. Melchor Pinto 620');
+    interno<() => void>('guardarPresentacion')();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ workAddressLines: 'Av. Melchor Pinto 620' });
+    req.flush({ ...PERFIL_BASE, workAddress: { lines: 'Av. Melchor Pinto 620' } });
+  });
+
+  it('guarda y quita el GPS laboral como par, separado del GPS del domicilio', () => {
+    montarYCargar({
+      homeAddress: { lines: 'Av. Brasil 1234', latitude: -16.5, longitude: -68.15 },
+      workAddress: { lines: 'Calle Warnes 45', latitude: -17.78, longitude: -63.18 },
+    });
+
+    señal<unknown>('gpsTrabajo').set({ lat: -17.8, lng: -63.2 });
+    interno<() => void>('guardarPresentacion')();
+
+    const guardar = http.expectOne('/profiles/practitioners/me');
+    expect(guardar.request.body).toEqual({ workLatitude: -17.8, workLongitude: -63.2 });
+    guardar.flush(PERFIL_BASE);
+
+    señal<unknown>('gpsTrabajo').set(null);
+    interno<() => void>('guardarPresentacion')();
+
+    const quitar = http.expectOne('/profiles/practitioners/me');
+    expect(quitar.request.body).toEqual({ workLatitude: null, workLongitude: null });
+    quitar.flush(PERFIL_BASE);
+  });
+
+  it('Contacto muestra selectores GPS independientes para domicilio y trabajo', () => {
+    const fixture = montarConVista();
+    señal<number>('pestana').set(1);
+    fixture.detectChanges();
+
+    const panel = panelAbierto(fixture);
+    expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-domicilio"]')).not.toBeNull();
+    expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-trabajo"]')).not.toBeNull();
   });
 
   /* ---- formación: sólo se agrega ------------------------------------------- */
@@ -1365,6 +1444,21 @@ describe('PractitionerProfileEdit', () => {
       expect(bloque).not.toBeNull();
       expect(bloque?.textContent).toContain('dra.salas@alovida.mock');
       expect(bloque?.querySelectorAll('input, select, textarea')).toHaveLength(0);
+    });
+
+    it('prefiere workEmail cuando el correo de acceso es personal', () => {
+      const fixture = montarConVista({
+        ...CON_IDENTIDAD,
+        email: 'dra.salas.personal@alovida.mock',
+        workEmail: 'dra.salas@hospital.mock',
+      });
+
+      señal<number>('pestana').set(1);
+      fixture.detectChanges();
+
+      const bloque = panelAbierto(fixture).querySelector('[data-testid="edicion-correo-trabajo"]');
+      expect(bloque?.textContent).toContain('dra.salas@hospital.mock');
+      expect(bloque?.textContent).not.toContain('dra.salas.personal@alovida.mock');
     });
 
     it('guardar no manda ninguno de los tres', () => {

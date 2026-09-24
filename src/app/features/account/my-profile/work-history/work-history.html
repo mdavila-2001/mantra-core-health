@@ -30,17 +30,15 @@
       </p>
 
       <!-- Barra: buscador (nombre + dirección, normalizado) y filtro por tipo
-           (ADR-0015, regla 5). El botón de alta se proyecta a la derecha —
-           salvo que ya haya un consultorio propio, que es único y no admite
-           un segundo alta (Q-18). Se dibuja siempre: con cero sedes la tabla
-           igual se monta vacía, más simple que dos caminos según haya datos. -->
+           (ADR-0015, regla 5). El alta sigue disponible aunque ya haya otros
+           consultorios propios: cada uno queda como una sede independiente. -->
       <app-filter-bar
         searchLabel="Buscar por nombre o dirección"
         searchPlaceholder="Nombre o dirección"
         [filters]="filtrosSedes"
         (filtersChanged)="onFiltrosSedesChanged($event)"
       >
-        @if (consultorioPropio() === null && !altaDeSedeAbierta()) {
+        @if (!altaDeSedeAbierta()) {
           <button
             filter-bar-action
             app-button
@@ -80,16 +78,6 @@
           [(page)]="paginaSedes"
           [(pageSize)]="tamanoPaginaSedes"
         />
-      }
-
-      <!-- Uno solo. No es una regla de pantalla: `POST
-           /practitioners/me/sites` «crea —o reutiliza— la práctica personal
-           del profesional», así que la propia es una por persona. -->
-      @if (consultorioPropio(); as propio) {
-        <p class="historial__vacio historial__nota-propia" data-testid="sede-propia-unica">
-          Tu consultorio propio es «{{ propio.name }}». Es uno solo: para cambiarle el nombre o la
-          dirección, usá «Editar» en su línea.
-        </p>
       }
 
       @if (errorDeSede(); as mensaje) {
