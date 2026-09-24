@@ -238,6 +238,13 @@
   gap: var(--sp-1);
 }
 
+/* Si los dos grupos no entran juntos (a 375 px no entran), el de después
+   baja a su propio renglón: sin esto quedaría a la izquierda, debajo del de
+   antes. Con él se queda a la derecha. */
+.nav-controls + .nav-controls {
+  margin-inline-start: auto;
+}
+
 .nav-selectors {
   display: flex;
   align-items: center;
