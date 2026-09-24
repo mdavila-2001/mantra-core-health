@@ -1,4 +1,8 @@
 @if (showMenuButton()) {
+  <!-- H5.S1 (2026-09-22, veredicto de D-05): excepción — hamburguesa
+       universal. Ya tiene `aria-label`; no se le agrega texto ni globo,
+       igual que el mismo botón del armazón real (`shell-layout.html`, sin
+       `appTooltip`). -->
   <button
     app-button
     variant="ghost"
@@ -36,12 +40,17 @@
     />
   }
 
+  <!-- H5.S1 (2026-09-22, veredicto de D-05): tenía `aria-label` dinámico,
+       faltaba el globo (HALL-D7, mismo caso que el interruptor real del
+       armazón). -->
   <button
     app-button
     variant="ghost"
     size="sm"
     [iconOnly]="true"
     [attr.aria-label]="'Cambiar tema. Actual: ' + theme()"
+    appTooltip="Tema"
+    appTooltipPosition="bottom"
     (clicked)="cycleTheme()"
   >
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

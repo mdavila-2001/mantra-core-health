@@ -1,5 +1,5 @@
 import { conceptoPorId, ESPECIALIDAD, MUNICIPIO, OBSERVACION, OCUPACION } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES } from '../fixtures/personas';
+import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, PROFESIONALES_DEMO_REGISTRADOS } from '../fixtures/personas';
 import { IDS } from '../mock-session';
 
 import * as fk from './index';
@@ -107,8 +107,10 @@ describe('faker del backend simulado', () => {
       // Los quince escritos a mano, los 763 médicos reales de la red de
       // Alianza Seguros y Nacional Seguros (`insurer-network.ts`) y los 13 de
       // USUARIO_MEDICOS; 120 pacientes de la maqueta más los 92 de
-      // USUARIO_PACIENTES (`registered-people.ts`).
-      expect(PROFESIONALES.length).toBe(15 + 763 + 13);
+      // USUARIO_PACIENTES (`registered-people.ts`). Y, desde D-H3-PROV-01
+      // (23/09/2026), los 13 profesionales de demostración con agenda simulada.
+      expect(PROFESIONALES_DEMO_REGISTRADOS.length).toBe(13);
+      expect(PROFESIONALES.length).toBe(15 + 763 + 13 + PROFESIONALES_DEMO_REGISTRADOS.length);
       expect(PACIENTES.length).toBe(120 + 92);
     });
 

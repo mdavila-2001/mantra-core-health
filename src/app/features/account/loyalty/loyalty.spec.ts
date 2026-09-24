@@ -113,6 +113,34 @@ describe('Loyalty', () => {
     expect(porTestId('puntos-saldo')).toBeNull();
   });
 
+  /**
+   * N-03: la billetera vive también como pestaña de «Mi perfil». Ahí la
+   * tarjeta ya tiene cabecera, así que `embebido` apaga la propia — y nada más:
+   * lo que se ve del programa es lo mismo en los dos lugares.
+   */
+  describe('cabecera propia o embebida', () => {
+    const cabecera = (): Element | null =>
+      (fixture.nativeElement as HTMLElement).querySelector('app-page-header');
+
+    it('en su ruta lleva cabecera y migas, como siempre', () => {
+      montar({ pid: 'pp-1' }, [clienteDoble()]);
+
+      expect(cabecera()).not.toBeNull();
+      expect(texto()).toContain('Todavía no hay un programa');
+    });
+
+    it('embebida en la ficha, sin cabecera: la tarjeta ya tiene una', () => {
+      montar({ pid: 'pp-1' }, [clienteDoble()]);
+      fixture.componentRef.setInput('embebido', true);
+      fixture.detectChanges();
+
+      expect(cabecera()).toBeNull();
+      expect(texto()).not.toContain('Lo que sumaste con tus compras');
+      // El cuerpo sigue entero: lo que se apaga es sólo el título repetido.
+      expect(texto()).toContain('Todavía no hay un programa');
+    });
+  });
+
   it('mientras la lectura no responde muestra el estado de carga', () => {
     const pendiente = new Subject<Membresia | null>();
     montar({ pid: 'pp-1' }, [clienteDoble({ miMembresia: () => pendiente })]);

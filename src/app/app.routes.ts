@@ -206,8 +206,9 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/cotizaciones/cotizaciones').then((m) => m.Cotizaciones),
   'my-account/pharmacy-orders': () =>
     import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
-  'my-account/loyalty': () =>
-    import('./features/account/loyalty/loyalty').then((m) => m.Loyalty),
+  // 'my-account/loyalty' SALIÓ de acá (N-03/Q-17, 2026-09-22): la sección
+  // redirige en vez de pintar una pantalla — ver `SECCIONES_REDIRIGIDAS`,
+  // que `componenteDe()` consulta antes que esta tabla.
   'my-account/promotions': () =>
     import('./features/account/promotions/promotions').then((m) => m.Promotions),
   'administration/pharmacy-orders': () =>
@@ -1042,13 +1043,34 @@ function rutasDeSecciones(): Routes {
     // (carril 02). Filtrar el menú es cortesía; quien escribe la dirección a
     // mano llega igual, y la corrección #2 pide que la Guía de profesionales no
     // sea *accesible* para quien no es paciente, no sólo que no se vea.
-    canActivate: [seccionRolesGuard],
+    //
+    // Excepción: una sección de `SECCIONES_REDIRIGIDAS` no lleva `canActivate`
+    // — Angular lo rechaza en tiempo de configuración (`NG04014`): un
+    // `redirectTo` se resuelve antes que cualquier guard, así que combinarlos
+    // no es «más seguro», es una ruta inválida.
+    ...(SECCIONES_REDIRIGIDAS[section.path] === undefined
+      ? { canActivate: [seccionRolesGuard] }
+      : {}),
     // La sección viaja con la ruta: el placeholder la lee de acá y no necesita
     // saber cuál de todas es.
     data: { [SECTION_ROUTE_DATA]: section },
     ...componenteDe(section),
   }));
 }
+
+/**
+ * Secciones que siguen registradas (roles, menú, «Tus accesos») pero cuya
+ * pantalla se retiró: la ruta redirige en vez de pintar algo.
+ *
+ * `my-account/loyalty` (N-03/Q-17, 2026-09-22): «Mis puntos» pasa a ser una
+ * pestaña del perfil del paciente. La pestaña no llegó esta noche (Itzan,
+ * regla 65 — contrato simulado y declarado en el daily de los dos), así que
+ * la dirección vieja no puede quedar en un componente que ya no es el
+ * destino real; redirige a «Mi cuenta» hasta que la pestaña exista.
+ */
+export const SECCIONES_REDIRIGIDAS: Readonly<Record<string, string>> = {
+  'my-account/loyalty': '/my-account',
+};
 
 /**
  * El componente de una sección, o la carga diferida del placeholder.
@@ -1059,7 +1081,14 @@ function rutasDeSecciones(): Routes {
  * una pestaña vieja ya no existe—, que sin esto deja la navegación muerta y sin
  * avisar.
  */
-function componenteDe(section: AppSection): Pick<Routes[number], 'component' | 'loadComponent'> {
+function componenteDe(
+  section: AppSection,
+): Pick<Routes[number], 'component' | 'loadComponent' | 'redirectTo' | 'pathMatch'> {
+  const redirige = SECCIONES_REDIRIGIDAS[section.path];
+  if (redirige !== undefined) {
+    return { redirectTo: redirige, pathMatch: 'full' };
+  }
+
   const pantalla = PANTALLAS[section.path];
   if (pantalla !== undefined) {
     return { component: pantalla };

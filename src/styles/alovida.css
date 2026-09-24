@@ -886,12 +886,18 @@ app-shell-layout { display: block; }
 
 .app-header__ajustes {
   display: inline-flex; align-items: center; justify-content: center;
+  position: relative;
   inline-size: 2.5rem; block-size: 2.5rem;
   border-radius: var(--r-full); color: inherit; text-decoration: none;
   transition: background-color var(--mov-rapido) var(--curva);
 }
 .app-header__ajustes:hover, .app-header__ajustes:focus-visible { background: var(--sup-hover, var(--sup-tarjeta)); }
 @media (prefers-reduced-motion: reduce) { .app-header__ajustes { transition: none; } }
+
+/* Badge de no leídos sobre el ícono de Chats (N-01, 2026-09-22), mismo
+   tratamiento que `.campana__badge` de la campana: sobre el borde del
+   ícono, no adentro, para no tapar el ícono justo cuando hay algo que ver. */
+.app-header__chats-badge { position: absolute; inset-block-start: 0.1rem; inset-inline-end: 0.1rem; }
 
 .app-tenant-switcher {
   display: inline-flex; align-items: center; gap: var(--e2);
