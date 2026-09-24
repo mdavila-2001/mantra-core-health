@@ -1,5 +1,13 @@
 # Handoff — ejecución del plan Médico
 
+### Continuación H1 — CI obligatoria (2026-09-24)
+
+- Fuente: L0169–L0170 de `02_METAPROMPT_MEDICO.md`; sin ampliar el alcance a Paciente.
+- API `justin/medical-module-execution-20260924`, commit `09af2caf` publicado: CI y departamento emisor requeridos en DTO; el servicio valida `VS_BO_DEPARTMENT` antes de escribir y persiste el identificador. Los fixtures de integración reciben datos sintéticos.
+- Verificación: 2 suites/104 pruebas dirigidas aprobadas; `corepack yarn typecheck`, ESLint dirigido y `git diff --check` exit 0.
+- No se ejecutó la suite de integración: el bootstrap del harness invoca `resetBusinessData()` y trunca esquemas de negocio; no hay una base aislada identificada para esta corrida. L0169 se conserva `A MEDIAS / TESTED` hasta tener recorrido FE→API→PostgreSQL→recarga y evidencia visual. No se tocó `.env` ni la base compartida.
+- Rama API ya está actualizada en origin; no hubo merge ni despliegue.
+
 - Plan único: 02-medical-module-plan-b57dfd316c4d.
 - Fuente normativa congelada: 02_METAPROMPT_MEDICO.md, SHA-256 b57dfd316c4d642eb5e1db49257397b8fd2864b511317282ae4b70ff1262a656.
 - Estado vigente: 10/98 criterios IN alcanzan su aceptación y DoD puntual end-to-end; matriz: 10 HECHO, 60 A MEDIAS, 11 TODO, 17 BLOQUEADOS, 2 DESCARTADOS. Un smoke real Chromium→API→PostgreSQL cubre 11 credenciales/11 PDFs de cinco tipos, tres especialidades, editor/descarga propia, lectura y recarga, y bloqueo entre actores (resumen vacío/PATCH ajeno 404). Diez incisos L0187, L0188 y L0190–L0197 están HECHO/VERIFIED. MED-E01 y H1–H8 no están completos; L0168 y L0174.AC02 siguen abiertos.
