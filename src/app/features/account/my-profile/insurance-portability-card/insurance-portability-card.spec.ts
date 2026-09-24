@@ -1,4 +1,7 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import type {
@@ -7,6 +10,7 @@ import type {
 } from '../../../../core/data-access/profiles/profiles.types';
 import { PatientContextService } from '../../../../core/patient-context/patient-context.service';
 import { InsurancePortabilityCard } from './insurance-portability-card';
+import { PortabilityExportDialog } from './portability-export-dialog/portability-export-dialog';
 
 /** Una cobertura con lo mínimo que la tarjeta mira: su vigencia. */
 function cobertura(validityStatus: CoverageValidity): OwnCoverage {
@@ -36,6 +40,8 @@ function montar(opciones: {
   TestBed.configureTestingModule({
     imports: [InsurancePortabilityCard],
     providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
       {
         provide: AuthService,
         useValue: { patientProfileId: () => patientProfileId },
@@ -153,6 +159,17 @@ describe('InsurancePortabilityCard', () => {
     expect(query('insurance-portability-card')?.textContent).toContain(
       'trámite personal',
     );
+  });
+
+  it('actuando por un dependiente, el diálogo exporta el perfil del TITULAR, nunca el del dependiente', () => {
+    const fixture = montar({ isActingForDependent: true, patientProfileId: 'own-profile' });
+
+    query('btn-open-portability-dialog')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    fixture.detectChanges();
+
+    const dialogo = fixture.debugElement.query(By.directive(PortabilityExportDialog));
+    expect(dialogo).not.toBeNull();
+    expect(dialogo.componentInstance.patientProfileId()).toBe('own-profile');
   });
 
   it('sin perfil de paciente propio, no ofrece exportar', () => {

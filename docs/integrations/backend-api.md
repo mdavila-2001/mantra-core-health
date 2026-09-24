@@ -1084,10 +1084,13 @@ paciente cruza esta ruta.
 ### `InsurancePortabilityClient` — 4 operaciones · subtarea 3.3, v4.2.19
 
 Portabilidad de póliza e historial de siniestralidad a 1 clic: el titular
-exporta su propio historial (pólizas, siniestros, adjudicaciones,
-diagnósticos), sellado en SHA-256 sobre módulo 52 (`health_export_jobs` +
+exporta su propio historial (pólizas, **atenciones**, siniestros,
+adjudicaciones, diagnósticos — `schemaVersion: 'alovida.insurance-portability/2'`),
+sellado en SHA-256 sobre módulo 52 (`health_export_jobs` +
 `health_export_manifests`), y cualquiera puede verificar el certificado por su
-hash sin sesión.
+hash sin sesión, en mayúsculas o minúsculas. Confirmar en el diálogo sin
+tocar el desplegable descarga PDF y JSON (`BUNDLE` es el formato por
+defecto).
 
 | Método | Ruta | Consumidor |
 |---|---|---|

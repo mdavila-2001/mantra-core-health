@@ -3,27 +3,26 @@
   heading="Solicitar exportación de portabilidad"
   description="Se exporta la información disponible de tus pólizas y siniestros. Al terminar, vas a poder descargar el archivo, consultar la huella SHA-256 del manifiesto y abrir el enlace de verificación."
   [dismissible]="state() !== 'loading'"
-  (dismissAttempt)="close()"
+  (dismissAttempt)="attemptClose()"
   (closed)="close()"
 >
   @switch (state()) {
     @case ('ready') {
       @if (result(); as certificado) {
-        <p class="portability-dialog__estado">
+        <p class="portability-dialog__status">
           Exportación generada — {{ certificado.recordCount }} registro(s) de {{ certificado.policiesCount }} póliza(s).
         </p>
 
-        <p class="portability-dialog__rotulo" id="portability-hash-rotulo">Huella SHA-256 del manifiesto</p>
+        <p class="portability-dialog__label" id="portability-hash-label">Huella SHA-256 del manifiesto</p>
         <code
           class="portability-dialog__hash"
           data-testid="portability-manifest-hash"
-          aria-describedby="portability-hash-rotulo"
+          aria-describedby="portability-hash-label"
         >{{ certificado.manifestHash }}</code>
         <button
           app-button
           type="button"
           variant="outline"
-          size="sm"
           data-testid="btn-copy-portability-hash"
           (clicked)="copyHash()"
         >
@@ -32,8 +31,8 @@
         <span
           role="status"
           aria-live="polite"
-          class="portability-dialog__copiado"
-          data-testid="portability-hash-copiado"
+          class="portability-dialog__copied"
+          data-testid="portability-hash-copied"
           >@if (copied()) {
             Sello copiado al portapapeles
           }</span
@@ -45,7 +44,7 @@
           </a>
         </p>
 
-        <div class="portability-dialog__descargas">
+        <div class="portability-dialog__downloads">
           <button
             app-button
             type="button"
@@ -86,7 +85,7 @@
       <app-form-field label="Formato">
         <app-select
           data-testid="portability-format"
-          [options]="formatos"
+          [options]="formatOptions"
           [value]="format()"
           (valueChange)="setFormat($event)"
         />
@@ -122,7 +121,7 @@
       dialog-actions
       app-button
       type="button"
-      data-testid="btn-generate-portability-download"
+      data-testid="btn-redownload-portability"
       (clicked)="redownload()"
     >
       Volver a descargar archivo de portabilidad
