@@ -156,6 +156,37 @@ function leer<T>(componente: Record<string, UnMiembro>, nombre: string): T {
   return componente[nombre]() as T;
 }
 
+/**
+ * Elige un establecimiento del padrón, de punta a punta: dispara la búsqueda,
+ * responde con un único resultado con ese nombre y lo selecciona.
+ *
+ * El alta ya NO admite escribir la institución a mano —eso es lo que este
+ * carril quitó—, así que cualquier prueba que antes usaba `escribirAMano()`
+ * pasa por acá.
+ */
+function elegirDelPadron(
+  componente: Record<string, UnMiembro>,
+  http: HttpTestingController,
+  nombre: string,
+): void {
+  componente['buscarEnPadron'](nombre);
+  http.expectOne((r) => r.url === PADRON).flush({
+    items: [
+      {
+        facilityConceptId: `fac-${nombre}`,
+        code: 'X',
+        name: nombre,
+        municipality: 'SANTA CRUZ DE LA SIERRA',
+        type: 'CLINICA_PRIVADA',
+        address: null,
+      },
+    ],
+    count: 1,
+    limit: 20,
+  });
+  componente['establecimiento'].set(leer<readonly ReferenceOption[]>(componente, 'resultados')[0]);
+}
+
 describe('WorkHistory', () => {
   afterEach(() => TestBed.resetTestingModule());
 
@@ -227,8 +258,7 @@ describe('WorkHistory', () => {
     http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
 
     const componente = api(fixture);
-    componente['escribirAMano']();
-    componente['institucion'].set('  Clínica del Sur  ');
+    elegirDelPadron(componente, http, 'Clínica del Sur');
     componente['cargo'].set('Jefe de guardia');
     // 1 de marzo local. Con `toISOString()` viajaría como 28 de febrero en
     // cualquier huso al oeste de Greenwich.
@@ -256,8 +286,7 @@ describe('WorkHistory', () => {
     http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
 
     const componente = api(fixture);
-    componente['escribirAMano']();
-    componente['institucion'].set('Clínica del Sur');
+    elegirDelPadron(componente, http, 'Clínica del Sur');
     componente['cargo'].set('Jefe de guardia');
     componente['desde'].set(new Date(2024, 0, 1));
     componente['hasta'].set(new Date(2023, 0, 1));
@@ -283,8 +312,7 @@ describe('WorkHistory', () => {
     http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
 
     const componente = api(fixture);
-    componente['escribirAMano']();
-    componente['institucion'].set('Hospital Obrero N.º 1');
+    elegirDelPadron(componente, http, 'Hospital Obrero N.º 1');
     componente['cargo'].set('Médico de planta');
     componente['desde'].set(new Date(2020, 2, 1));
     fixture.detectChanges();
@@ -393,8 +421,7 @@ describe('WorkHistory', () => {
       const componente = api(fixture);
 
       componente['abrirAltaDeVinculo']();
-      componente['escribirAMano']();
-      componente['institucion'].set('Clínica del Sur');
+      elegirDelPadron(componente, http, 'Clínica del Sur');
       componente['desde'].set(new Date(2021, 2, 1));
       fixture.detectChanges();
 
@@ -433,8 +460,7 @@ describe('WorkHistory', () => {
     fixture.componentInstance.added.subscribe(() => (emitido = true));
 
     const componente = api(fixture);
-    componente['escribirAMano']();
-    componente['institucion'].set('Clínica del Sur');
+    elegirDelPadron(componente, http, 'Clínica del Sur');
     componente['cargo'].set('Jefe de guardia');
     componente['desde'].set(new Date(2021, 2, 1));
     fixture.detectChanges();
@@ -541,9 +567,10 @@ describe('WorkHistory', () => {
       http.verify();
     });
 
-    it('pasar a texto libre descarta lo elegido del padron', async () => {
-      // Quedarse con un establecimiento elegido y además un nombre tecleado
-      // serían dos respuestas a la misma pregunta.
+    it('abrir la corrección de un vínculo descarta lo elegido del padrón en un alta a medio hacer', async () => {
+      // El alta y la corrección comparten el mismo formulario: lo que hubiera
+      // quedado elegido del padrón en un alta que no se llegó a mandar no
+      // puede colarse en la corrección de otro vínculo.
       const { fixture, http } = await listo();
       const componente = api(fixture);
 
@@ -557,10 +584,13 @@ describe('WorkHistory', () => {
         leer<readonly ReferenceOption[]>(componente, 'resultados')[0],
       );
 
-      componente['escribirAMano']();
+      componente['abrirEdicionDeVinculo'](
+        enDominio({ statusKind: 'declarado', organizationName: 'Otro Hospital' }) as never,
+      );
 
       expect(leer(componente, 'establecimiento')).toBeNull();
-      expect(leer(componente, 'nombreDeLaInstitucion')).toBe('');
+      expect(leer(componente, 'modoDeInstitucion')).toBe('libre');
+      expect(leer(componente, 'nombreDeLaInstitucion')).toBe('Otro Hospital');
       http.verify();
     });
 
@@ -905,8 +935,7 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     http.expectOne(SITIOS).flush({ items: [], count: 0 });
     const componente = api(fixture);
 
-    componente['escribirAMano']();
-    componente['institucion'].set('Mi consultorio');
+    elegirDelPadron(componente, http, 'Mi consultorio');
     componente['desde'].set(new Date(2021, 2, 1));
     fixture.detectChanges();
 
