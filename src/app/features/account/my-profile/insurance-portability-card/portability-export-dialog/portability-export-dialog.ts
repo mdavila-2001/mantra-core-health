@@ -1,5 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 
 import { readApiError } from '../../../../../core/http/api-error';
 import { blobToDataUrl } from '../../../../../core/data-access/files/blob-to-data-url';
@@ -50,15 +59,21 @@ export class PortabilityExportDialog {
   private readonly portability = inject(InsurancePortabilityClient);
   private readonly downloader = inject(FileDownloader);
   private readonly toasts = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly state = signal<DialogState>('idle');
-  protected readonly format = signal<PortabilityExportFormat>('PDF');
+  /**
+   * `BUNDLE` es el default: CA-01 (portabilidad a 1 clic) pide que confirmar
+   * en el diálogo descargue JSON y PDF, y elegir un solo formato es la
+   * excepción, no la regla.
+   */
+  protected readonly format = signal<PortabilityExportFormat>('BUNDLE');
 
   /**
    * Los tres formatos, con las MISMAS palabras que tenían como radios: la
    * corrección C-21 cambia el control, no lo que dice cada opción.
    */
-  protected readonly formatos: readonly SelectOption<PortabilityExportFormat>[] = [
+  protected readonly formatOptions: readonly SelectOption<PortabilityExportFormat>[] = [
     { value: 'PDF', label: 'PDF con código QR de verificación' },
     { value: 'JSON', label: 'Archivo JSON interoperable' },
     { value: 'BUNDLE', label: 'Paquete completo (PDF + JSON)' },
@@ -78,6 +93,7 @@ export class PortabilityExportDialog {
 
     this.portability
       .exportPortability({ patientProfileId: this.patientProfileId(), format: this.format() })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (result) => {
           this.result.set(result);
@@ -170,6 +186,21 @@ export class PortabilityExportDialog {
       // El hash queda a la vista, seleccionable a mano: no hay nada más que
       // recuperar si el portapapeles no está disponible.
     }
+  }
+
+  /**
+   * Intento de cierre por Escape o clic en el fondo (`(dismissAttempt)`).
+   *
+   * `[dismissible]="state() !== 'loading'"` sólo bloquea el botón "Cerrar"
+   * del organismo — el propio `ContentDialog` sigue emitiendo
+   * `dismissAttempt` ante Escape o el fondo aunque no sea "dismissible", así
+   * que el consumidor tiene que ignorarlo mientras el pedido está en curso.
+   * Sin esto, cerrar a mitad del `export()` desmontaba el diálogo entero
+   * (`@if (dialogOpen())` en la tarjeta) con la suscripción todavía viva.
+   */
+  protected attemptClose(): void {
+    if (this.state() === 'loading') return;
+    this.close();
   }
 
   protected close(): void {
