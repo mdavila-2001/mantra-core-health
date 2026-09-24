@@ -94,7 +94,7 @@ test.describe('alta pública de aseguradora — casa matriz georreferenciada (su
     await expect(mapa).toBeVisible();
     await expect(mapa.locator('.leaflet-marker-icon').first()).toBeVisible({ timeout: 15_000 });
     await expect(
-      page.getByTestId('registro-organizacion-casa-matriz-location-unconfirmed'),
+      page.getByTestId('registro-organizacion-casa-matriz-location-confirm'),
     ).toBeVisible();
     await capturar(page, 'gps-pin-sin-confirmar');
 
@@ -130,7 +130,7 @@ test.describe('alta pública de aseguradora — casa matriz georreferenciada (su
     const primerPin = await centroDelPin(mapa);
     await expect(mapa.locator('.leaflet-marker-icon')).toHaveCount(1);
     await expect(
-      page.getByTestId('registro-organizacion-casa-matriz-location-unconfirmed'),
+      page.getByTestId('registro-organizacion-casa-matriz-location-confirm'),
     ).toBeVisible();
     await capturar(page, 'marcado-manual-pin-puesto');
 

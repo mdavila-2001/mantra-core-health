@@ -367,7 +367,6 @@
                     <p class="registro__ubicacion-aviso" data-testid="registration-home-geocoding-notice">
                       {{ avisoSinGeocodificacion }}
                     </p>
-                    <p class="registro__ubicacion-aviso">{{ avisoMoverPin }}</p>
                     <div class="registro__ubicacion-acciones">
                       <button
                         app-button
@@ -394,20 +393,6 @@
                       </button>
                     </div>
                   } @else {
-                    <p class="registro__ubicacion-estado">
-                      ¿Es acá donde vivís? Movete por el mapa para comprobarlo.
-                    </p>
-                    <!-- El punto capturado y no confirmado NO viaja en el alta
-                         (`datosPaciente`), y hasta ahora eso pasaba en silencio:
-                         se avanzaba de página creyendo que ya estaba guardado.
-                         El aviso no confirma nada ni frena el envío. -->
-                    <p
-                      class="registro__ubicacion-aviso"
-                      data-testid="registration-home-location-unconfirmed"
-                    >
-                      {{ avisoUbicacionSinConfirmar }}
-                    </p>
-                    <p class="registro__ubicacion-aviso">{{ avisoMoverPin }}</p>
                     <div class="registro__ubicacion-acciones">
                       <button
                         app-button
@@ -647,7 +632,6 @@
                     >
                       {{ avisoSinGeocodificacion }}
                     </p>
-                    <p class="registro__ubicacion-aviso">{{ avisoMoverPin }}</p>
                     <div class="registro__ubicacion-acciones">
                       <button
                         app-button
@@ -674,18 +658,6 @@
                       </button>
                     </div>
                   } @else {
-                    <p class="registro__ubicacion-estado">
-                      ¿Es acá donde trabajás? Movete por el mapa para comprobarlo.
-                    </p>
-                    <!-- El mismo aviso que en el domicilio, y por lo mismo: sin
-                         confirmar, el punto no viaja. -->
-                    <p
-                      class="registro__ubicacion-aviso"
-                      data-testid="registration-work-location-unconfirmed"
-                    >
-                      {{ avisoUbicacionSinConfirmar }}
-                    </p>
-                    <p class="registro__ubicacion-aviso">{{ avisoMoverPin }}</p>
                     <div class="registro__ubicacion-acciones">
                       <button
                         app-button
