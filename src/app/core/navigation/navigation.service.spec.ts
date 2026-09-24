@@ -303,7 +303,7 @@ describe('NavigationService', () => {
       ]);
     });
 
-    it('las dos guías que el médico recupera son las suyas, no la de médicos', () => {
+    it('el médico alcanza los directorios de lugares y, desde el 24/09, el de médicos', () => {
       // FT-09-R01. El pedido decía «Directorio» a secas y hay cuatro. Esta
       // prueba fija cuáles entraron y cuál no: si alguien lee la funcionalidad
       // 9 como «devolverle la Guía de profesionales», falla acá y no en
@@ -319,7 +319,8 @@ describe('NavigationService', () => {
       const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
       expect(alcanzables).toContain('/clinics-directory');
       expect(alcanzables).toContain('/pharmacies-directory');
-      expect(alcanzables).not.toContain('/directory');
+      // Pedido del cliente del 24/09/2026: el médico también busca médicos.
+      expect(alcanzables).toContain('/directory');
     });
 
     it('lo que sale del menú del médico NO le cierra la puerta', () => {
@@ -365,7 +366,7 @@ describe('NavigationService', () => {
       }
     });
 
-    it('la Guía de profesionales solo la alcanza el paciente', () => {
+    it('el Directorio de médicos lo alcanzan el paciente y el médico, no quien administra', () => {
       // Corrección #2. La medición del carril 01 la encontró en el menú de la
       // doctora, que es exactamente lo que el cliente pidió sacar.
       //
@@ -379,8 +380,9 @@ describe('NavigationService', () => {
       const delPaciente = service.visibleSections().map((seccion) => `/${seccion.path}`);
       expect(delPaciente).toContain('/directory');
 
+      // Ampliada el 24/09/2026: el médico también (pedido del cliente).
       abrirSesion(['PRACTITIONER', 'CLINICIAN']);
-      expect(service.visibleSections().map((seccion) => `/${seccion.path}`)).not.toContain('/directory');
+      expect(service.visibleSections().map((seccion) => `/${seccion.path}`)).toContain('/directory');
 
       abrirSesion(['SECURITY_ADMIN']);
       expect(service.visibleSections().map((seccion) => `/${seccion.path}`)).not.toContain('/directory');

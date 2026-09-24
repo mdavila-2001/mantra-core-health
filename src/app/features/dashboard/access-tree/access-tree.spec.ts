@@ -232,17 +232,21 @@ describe('AccessTree', () => {
     }
   });
 
-  it('la Guía de profesionales no está en ninguna zona de la doctora', () => {
-    // Corrección #2 del 15/08/2026. El árbol sale de `NavigationService`, el
-    // mismo origen que el menú, así que esto también fija que no se puedan
-    // desincronizar — ahora a través de un escalón más.
+  it('la doctora encuentra el Directorio de médicos en sus zonas (24/09/2026)', () => {
+    // La corrección #2 del 15/08/2026 se lo había quitado; el cliente pidió
+    // devolvérselo. El árbol sale de `NavigationService`, el mismo origen que
+    // el guard, así que esto también fija que no se puedan desincronizar.
     crear(['PRACTITIONER', 'CLINICIAN']);
 
-    for (const zona of zonas().map((z) => z.dataset['zona'] ?? '')) {
-      abrir(zona);
-      expect(accesos().map((a) => a.dataset['ruta'])).not.toContain('/directory');
-      volver();
-    }
+    const rutas = zonas()
+      .map((z) => z.dataset['zona'] ?? '')
+      .flatMap((zona) => {
+        abrir(zona);
+        const deLaZona = accesos().map((a) => a.dataset['ruta']);
+        volver();
+        return deLaZona;
+      });
+    expect(rutas).toContain('/directory');
   });
 
   it('no ofrece el panel dentro del panel', () => {

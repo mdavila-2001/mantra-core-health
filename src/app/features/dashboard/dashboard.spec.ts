@@ -316,12 +316,12 @@ describe('Dashboard', () => {
       expect(rutas).not.toContain('/dashboard');
     });
 
-    it('la Guía de profesionales no está en ninguna zona de la doctora', () => {
-      // Corrección #2. El panel sale de `NavigationService`, el mismo origen
-      // que el menú, así que esto también fija que no se puedan desincronizar.
+    it('la doctora tiene el Directorio de médicos entre sus accesos (24/09/2026)', () => {
+      // La corrección #2 se lo había quitado; el cliente pidió devolvérselo. El
+      // panel sale de `NavigationService`, el mismo origen que el guard.
       abrirPanel(['PRACTITIONER', 'CLINICIAN']);
 
-      expect(todasLasRutas()).not.toContain('/directory');
+      expect(todasLasRutas()).toContain('/directory');
     });
 
     it('el atajo a la agenda ya no vive acá: la jornada trae el suyo', () => {

@@ -36,8 +36,11 @@ import type {
   GrupoDeDirectorio,
   SustantivoDelDirectorio,
 } from '../../shared/components/organisms/directory-page/directory-page.types';
-import { SEARCH_PARAM } from '../../shared/components/organisms/filter-bar/filter-bar';
-import { aTarjeta } from '../alovida/buscar/public-result.mapper';
+import {
+  SEARCH_PARAM,
+  type FilterDef,
+} from '../../shared/components/organisms/filter-bar/filter-bar';
+import { aTarjeta, rutaDeFicha } from '../alovida/buscar/public-result.mapper';
 import { groupUnits } from '../laboratory-directory/laboratory-directory';
 
 /** Rótulo del bloque de `navigation.subgroups.ts` del que salen los nodos. */
@@ -68,6 +71,12 @@ const SUSTANTIVO: SustantivoDelDirectorio = {
  * un término de por medio no hace falta más.
  */
 const POR_DIRECTORIO = 50;
+
+/**
+ * La clave del desplegable «en qué directorio buscar», en la URL. Su valor es
+ * la ruta del directorio elegido; sin la clave, se busca en todos.
+ */
+export const DIRECTORIO_PARAM = 'directorio';
 
 /**
  * Los directorios en los que busca esta portada, con cómo se busca en cada
@@ -138,9 +147,9 @@ export class DirectoriesOverview {
    * Los directorios que esta sesión puede abrir.
    *
    * Sale de {@link NavigationService.visibleSections}, que ya aplica los
-   * roles de la sesión: quien ejerce no ve el nodo de la guía de médicos, que
-   * sigue siendo exclusiva del paciente (corrección #2), sin que esta pantalla
-   * tenga que repetir esa regla.
+   * roles de la sesión: quien administra no ve el nodo de la guía de médicos,
+   * que es del paciente y del médico (corrección #2, ampliada el 24/09/2026),
+   * sin que esta pantalla tenga que repetir esa regla.
    */
   protected readonly nodos = computed<readonly AppSection[]>(() => {
     const visibles = new Map(
@@ -153,6 +162,12 @@ export class DirectoriesOverview {
 
   protected readonly routeOf = routeOf;
 
+  /** Los nodos que se dibujan: todos, o sólo el elegido en el desplegable. */
+  protected readonly nodosVisibles = computed<readonly AppSection[]>(() => {
+    const elegido = this.elegido();
+    return elegido === null ? this.nodos() : this.nodos().filter((nodo) => nodo.path === elegido);
+  });
+
   /* ---- la búsqueda en los tres directorios de lugares --------------------- */
 
   private readonly laboratorios = inject(DiagnosticUnitsClient);
@@ -163,11 +178,17 @@ export class DirectoriesOverview {
   /**
    * Cómo se busca en cada directorio de lugares, por su ruta.
    *
-   * El de médicos no está: su búsqueda es por especialidad y va por otro
-   * cliente, y el pedido (19/09/2026) fue la barra en los tres directorios de
-   * lugares. Un nodo que no tiene buscador acá simplemente no suma resultados.
+   * El de médicos entró el 24/09/2026 (pedido del cliente, junto con el
+   * desplegable): busca por nombre en el directorio público, y su tarjeta abre
+   * la ficha pública del profesional —el buscador público no expone el
+   * `profileId` que pide `/directory/:profileId`—. Un nodo que no tiene
+   * buscador acá simplemente no suma resultados.
    */
   private readonly buscadores: Readonly<Record<string, Buscador>> = {
+    directory: (q) =>
+      this.publico
+        .searchPractitioners({ q, limit: POR_DIRECTORIO })
+        .pipe(map((pagina) => tarjetas(pagina.items, rutaDeFicha))),
     'laboratory-directory': (q) =>
       this.laboratorios
         .search({ q, limit: POR_DIRECTORIO })
@@ -175,11 +196,11 @@ export class DirectoriesOverview {
     'clinics-directory': (q) =>
       this.publico
         .searchOrganizations({ q, limit: POR_DIRECTORIO })
-        .pipe(map((pagina) => tarjetas(pagina.items, '/clinics-directory'))),
+        .pipe(map((pagina) => tarjetas(pagina.items, fichaEn('/clinics-directory')))),
     'pharmacies-directory': (q) =>
       this.publico
         .searchPharmacies({ q, limit: POR_DIRECTORIO })
-        .pipe(map((pagina) => tarjetas(pagina.items, '/pharmacies-directory'))),
+        .pipe(map((pagina) => tarjetas(pagina.items, fichaEn('/pharmacies-directory')))),
   };
 
   /** El término, de la URL: la barra lo escribe ahí bajo `q`. */
@@ -200,9 +221,54 @@ export class DirectoriesOverview {
     this.nodos().filter((nodo) => this.buscadores[nodo.path] !== undefined),
   );
 
+  /**
+   * El directorio elegido en el desplegable, o `null` = todos.
+   *
+   * Sale de la URL, como el término: recargar o compartir el enlace reproduce
+   * la misma búsqueda. Un valor que no es un directorio de esta sesión —un
+   * enlace viejo, o uno armado a mano— se lee como «todos» en vez de dejar la
+   * búsqueda vacía sin explicación.
+   */
+  private readonly elegido = computed<string | null>(() => {
+    const valor: unknown = this.parametros()[DIRECTORIO_PARAM];
+    return typeof valor === 'string' && this.buscables().some((nodo) => nodo.path === valor)
+      ? valor
+      : null;
+  });
+
+  /** En qué directorios busca de verdad el término: el elegido, o todos. */
+  private readonly buscados = computed(() => {
+    const elegido = this.elegido();
+    return elegido === null
+      ? this.buscables()
+      : this.buscables().filter((nodo) => nodo.path === elegido);
+  });
+
+  /**
+   * El desplegable al lado del buscador (pedido del cliente, 24/09/2026):
+   * «SOLO laboratorios, clínicas o farmacias». Es un filtro de la misma barra,
+   * y no un control aparte, para que viaje en la URL, se vea como chip y lo
+   * limpie «Limpiar todo» igual que cualquier otro filtro.
+   *
+   * Las opciones son los directorios que esta sesión puede abrir, en el orden
+   * de los nodos; «Todos» va primero con valor vacío, que la barra lee como
+   * quitar el filtro.
+   */
+  protected readonly filtros = computed<readonly FilterDef[]>(() => [
+    {
+      key: DIRECTORIO_PARAM,
+      label: 'Directorio',
+      placeholder: TODOS,
+      options: [
+        { value: '', label: TODOS },
+        ...this.buscables().map((nodo) => ({ value: nodo.path, label: nombreCorto(nodo) })),
+      ],
+    },
+  ]);
+
   /** La etiqueta de la barra nombra sólo lo que de verdad busca. */
   protected readonly etiquetaBusqueda = computed(() => {
-    const nombres = this.buscables().map((nodo) => nodo.label.replace(/^Directorio de /u, ''));
+    const nombres = this.buscados().map((nodo) => nombreCorto(nodo).toLowerCase());
     if (nombres.length === 0) {
       return 'Buscar en los directorios';
     }
@@ -231,7 +297,7 @@ export class DirectoriesOverview {
           if (termino === '') {
             return of(ready<readonly GrupoDeDirectorio[]>([]));
           }
-          const nodos = this.buscables();
+          const nodos = this.buscados();
           // Cada directorio falla por su cuenta: si uno no responde, los otros
           // dos siguen mostrando lo suyo en vez de tumbar la búsqueda entera.
           // Sólo si caen todos se muestra el error.
@@ -268,7 +334,12 @@ export class DirectoriesOverview {
       )
       .subscribe((estado) => this.estado.set(estado));
 
-    effect(() => this.peticiones.next(this.termino()));
+    // El término y el directorio elegido: cambiar cualquiera de los dos es
+    // otra búsqueda, así que el efecto depende de los dos.
+    effect(() => {
+      this.buscados();
+      this.peticiones.next(this.termino());
+    });
   }
 
   protected reintentar(): void {
@@ -276,18 +347,26 @@ export class DirectoriesOverview {
   }
 }
 
-/** Las filas públicas como tarjetas, con la ficha dentro del panel. */
+/** Lo que dice el desplegable cuando no acota. */
+const TODOS = 'Todos los directorios';
+
+/** «Directorio de clínicas» → «Clínicas»: lo que ofrece el desplegable. */
+function nombreCorto(nodo: AppSection): string {
+  const nombre = nodo.label.replace(/^Directorio de /u, '');
+  return nombre.charAt(0).toLocaleUpperCase('es') + nombre.slice(1);
+}
+
+/** La ficha de un resultado dentro del panel de su directorio. */
+function fichaEn(rutaDelDirectorio: string): (resultado: PublicSearchResult) => string {
+  return (resultado) => `${rutaDelDirectorio}/${encodeURIComponent(resultado.slug)}`;
+}
+
+/** Las filas públicas como tarjetas, ordenadas por nombre. */
 function tarjetas(
   filas: readonly PublicSearchResult[],
-  rutaDeLaFicha: string,
+  ruta: (resultado: PublicSearchResult) => string,
 ): readonly SearchResultItem[] {
   return filas
-    .map((fila) =>
-      aTarjeta(fila, {
-        mostrarTipo: false,
-        ruta: (resultado: PublicSearchResult) =>
-          `${rutaDeLaFicha}/${encodeURIComponent(resultado.slug)}`,
-      }),
-    )
+    .map((fila) => aTarjeta(fila, { mostrarTipo: false, ruta }))
     .sort((a, b) => a.title.localeCompare(b.title, 'es'));
 }
