@@ -52,7 +52,7 @@ Ningún criterio de aceptación integral alcanzó HECHO. Las verificaciones parc
 | H1–H8 / 98 criterios IN | A MEDIAS / BLOQUEADO / TODO según MATRIX.json | Completar aceptación end-to-end; contratos/infraestructura/propietarios faltantes |
 | F4 | BLOQUEADO parcialmente | Docker local estable, DDL canónica corregida por su propietario y recorridos API/UI aislados |
 | F5 | BLOQUEADO parcialmente | Ejecutar lint/regresión/E2E cuando los servicios estén disponibles y tratar fallos sin ocultarlos |
-| F6 | A MEDIAS | Confirmar base y commits, después push autorizado; el push no equivale a PR, merge ni cierre clínico |
+| F6 | A MEDIAS | Ramas documentales publicadas en origin; no se abrió PR ni se hizo merge o deploy; publicar no equivale a cerrar el plan clínico |
 
 ## Evidencia
 
