@@ -61,6 +61,11 @@ export interface CeldaDelMes {
   readonly reservados: number;
   /** Turnos publicados ese día. */
   readonly total: number;
+  /**
+   * Lo que la celda muestra: los turnos que quedan por ofrecer. `null` cuando
+   * no hay nada que contar — sin agenda, bloqueado o un día que ya pasó.
+   */
+  readonly disponibles: number | null;
   /** El motivo del bloqueo, cuando lo hay. */
   readonly motivo: string | null;
   /** Cómo se anuncia la celda entera a un lector de pantalla. */
@@ -135,7 +140,7 @@ export interface DayDetailRow {
  * ## El color nunca solo
  *
  * Cada celda lleva su número visible y una etiqueta accesible completa
- * («martes 8: seis de ocho turnos reservados»). Un mes que sólo se entienda por
+ * («martes 8: 2 turnos disponibles»). Un mes que sólo se entienda por
  * el tono no lo entiende nadie con baja visión — ni nadie mirando el teléfono
  * al sol.
  */
@@ -204,17 +209,20 @@ export class MonthView implements OnDestroy {
         const bloqueo = bloqueos[0] ?? null;
 
         const estado = decidirEstado(cuenta, bloqueo !== null);
+        const pasado = fecha.getTime() < desdeHoy;
+        const disponibles = disponiblesDelDia(estado, cuenta, pasado);
         return {
           fecha,
           numero: fecha.getDate(),
           delMes: fecha.getMonth() === mesActual.getMonth(),
           esHoy: clave === hoy,
-          pasado: fecha.getTime() < desdeHoy,
+          pasado,
           estado,
           reservados: cuenta.reservados,
           total: cuenta.total,
+          disponibles,
           motivo: bloqueo?.motivo ?? null,
-          etiqueta: etiquetaDeLaCelda(fecha, estado, cuenta, bloqueo?.motivo ?? null),
+          etiqueta: etiquetaDeLaCelda(fecha, estado, disponibles, bloqueo?.motivo ?? null),
           resumen: resumenDelDia(fecha, this.franjasPorDia().get(clave) ?? [], bloqueos),
         };
       }),
@@ -684,6 +692,22 @@ function decidirEstado(
 }
 
 /**
+ * Cuántos turnos quedan por ofrecer ese día.
+ *
+ * La celda dice sólo esto, no lo reservado (pedido del cliente, 24/09): el mes
+ * es para ver dónde queda lugar. Un día que ya pasó no ofrece nada, aunque le
+ * hayan sobrado cupos: contarlos contradiría al globo, que dice que el día ya fue.
+ */
+function disponiblesDelDia(
+  estado: EstadoDelDia,
+  cuenta: { total: number; reservados: number },
+  pasado: boolean,
+): number | null {
+  if (pasado || estado === 'sin-agenda' || estado === 'bloqueado') return null;
+  return Math.max(cuenta.total - cuenta.reservados, 0);
+}
+
+/**
  * Cómo se anuncia una celda.
  *
  * Con el número solo, un lector de pantalla dice «12» y nada más. Acá dice el
@@ -692,7 +716,7 @@ function decidirEstado(
 function etiquetaDeLaCelda(
   fecha: Date,
   estado: EstadoDelDia,
-  cuenta: { total: number; reservados: number },
+  disponibles: number | null,
   motivo: string | null,
 ): string {
   const cuando = fechaLarga(fecha);
@@ -701,11 +725,8 @@ function etiquetaDeLaCelda(
       return `${cuando}: no atendés`;
     case 'bloqueado':
       return motivo === null ? `${cuando}: bloqueado` : `${cuando}: bloqueado — ${motivo}`;
-    case 'libre':
-      return `${cuando}: ${cuenta.total} turnos publicados, ninguno reservado`;
-    case 'lleno':
-      return `${cuando}: completo, ${cuenta.total} de ${cuenta.total} turnos reservados`;
-    case 'con-reservas':
-      return `${cuando}: ${cuenta.reservados} de ${cuenta.total} turnos reservados`;
   }
+  if (disponibles === null) return `${cuando}: día pasado`;
+  if (disponibles === 0) return `${cuando}: sin turnos disponibles`;
+  return `${cuando}: ${disponibles} ${disponibles === 1 ? 'turno disponible' : 'turnos disponibles'}`;
 }
