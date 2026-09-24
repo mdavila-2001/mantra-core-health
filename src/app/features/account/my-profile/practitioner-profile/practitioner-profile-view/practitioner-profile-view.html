@@ -91,20 +91,24 @@
            índice, así que desde «Credenciales» se entraba a editar en «Datos
            personales». Se manda el índice del editor, no el de acá: la ficha
            suprime «Facturación» cuando no la tiene y a partir de ahí las dos
-           numeraciones dejan de coincidir (`pestanaDeEdicion`). -->
-      <a
-        app-button
-        variant="outline"
-        size="sm"
-        [iconOnly]="true"
-        aria-label="Editar"
-        appTooltip="Editar"
-        data-testid="mi-perfil-editar"
-        routerLink="/my-account/edit"
-        [queryParams]="{ pestana: pestanaDeEdicion() }"
-      >
-        <app-nav-icon name="edit" />
-      </a>
+           numeraciones dejan de coincidir (`pestanaDeEdicion`).
+
+           En «Actividad» no hay lápiz: son estadísticas, no se editan. -->
+      @if (pestanaDeEdicion() !== null) {
+        <a
+          app-button
+          variant="outline"
+          size="sm"
+          [iconOnly]="true"
+          aria-label="Editar"
+          appTooltip="Editar"
+          data-testid="mi-perfil-editar"
+          routerLink="/my-account/edit"
+          [queryParams]="{ pestana: pestanaDeEdicion() }"
+        >
+          <app-nav-icon name="edit" />
+        </a>
+      }
     </div>
 
     <!-- Se desarma el `[(…)]` a propósito: el organismo sólo escribe su modelo

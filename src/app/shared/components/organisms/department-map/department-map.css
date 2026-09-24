@@ -70,6 +70,17 @@
   stroke-width: 8;
 }
 
+/* Los límites de provincia: finos y discontinuos, para no competir con el
+   borde del departamento, que es lo que se elige. */
+.department-map__provincias {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text-secondary) 55%, transparent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
 .department-map__sigla {
   font-family: var(--font-body);
   font-size: var(--fs-display);
@@ -81,7 +92,7 @@
   user-select: none;
 }
 
-.department-map__departamento--elegido .department-map__sigla {
+.department-map__sigla--elegida {
   fill: var(--text-inverse, #ffffff);
   font-weight: 700;
 }

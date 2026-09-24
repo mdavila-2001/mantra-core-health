@@ -11,6 +11,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AppMap, CARGADOR_DE_LEAFLET, construirPopup } from './map';
 import type { CargadorDeLeaflet } from './map';
 import type { PinMapa } from './pin-mapa.types';
+import { CARGADOR_DE_PROVINCIAS, type ProvinciasDeBolivia } from './provincias';
 
 /* ---- el doble de Leaflet -------------------------------------------------- */
 
@@ -310,5 +311,142 @@ describe('construirPopup', () => {
     expect(contenido.querySelector('.mapa__popup-cta')).toBeNull();
     expect(contenido.querySelector('.mapa__popup-estado')).toBeNull();
     expect(contenido.querySelector('.mapa__popup-detalle')).toBeNull();
+  });
+});
+
+/* ---- provincias ------------------------------------------------------------ */
+
+/** Un cuadrado de un grado por lado alrededor de Santa Cruz de la Sierra. */
+const PROVINCIAS: ProvinciasDeBolivia = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: { nombre: 'Andrés Ibáñez', departamento: 'Santa Cruz', rotulo: [-63.2, -17.8] },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [-63.7, -18.3],
+            [-62.7, -18.3],
+            [-62.7, -17.3],
+            [-63.7, -17.3],
+            [-63.7, -18.3],
+          ],
+        ],
+      },
+    },
+  ],
+};
+
+interface RegistroDeProvincias {
+  capas: { datos: unknown; opciones: { pane?: string; interactive?: boolean } }[];
+  rotulos: { coordenadas: unknown; opciones: { pane?: string; interactive?: boolean; icon: IconoFalso } }[];
+  paneles: Record<string, HTMLElement>;
+  alMoverse: (() => void) | null;
+  centro: { lat: number; lng: number };
+  zoom: number;
+}
+
+async function crearConProvincias(
+  provincias: ProvinciasDeBolivia | null,
+): Promise<{ fixture: ComponentFixture<AppMap>; provincias: RegistroDeProvincias }> {
+  const registro: RegistroDeProvincias = {
+    capas: [],
+    rotulos: [],
+    paneles: {},
+    alMoverse: null,
+    centro: { lat: -17.7833, lng: -63.1821 },
+    zoom: 12,
+  };
+  const base = leafletFalso(new RegistroLeaflet()) as Record<string, (...args: never[]) => unknown>;
+  const leaflet = {
+    ...base,
+    map: () => ({
+      ...(base['map']() as object),
+      on: (evento: string, manejador: () => void) => {
+        if (evento === 'moveend') registro.alMoverse = manejador;
+      },
+      createPane: (nombre: string) => (registro.paneles[nombre] = document.createElement('div')),
+      getZoom: () => registro.zoom,
+      getCenter: () => registro.centro,
+    }),
+    geoJSON: (datos: unknown, opciones: RegistroDeProvincias['capas'][number]['opciones']) => {
+      registro.capas.push({ datos, opciones });
+      return { addTo: () => undefined };
+    },
+    marker: (coordenadas: unknown, opciones: RegistroDeProvincias['rotulos'][number]['opciones']) => {
+      registro.rotulos.push({ coordenadas, opciones });
+      return { addTo: () => undefined, bindPopup: () => undefined, on: () => undefined };
+    },
+  };
+  TestBed.configureTestingModule({
+    imports: [AppMap],
+    providers: [
+      { provide: CARGADOR_DE_LEAFLET, useValue: () => Promise.resolve(leaflet) },
+      { provide: CARGADOR_DE_PROVINCIAS, useValue: () => Promise.resolve(provincias) },
+    ],
+  });
+  const fixture = TestBed.createComponent(AppMap);
+  fixture.componentRef.setInput('pines', []);
+  fixture.componentRef.setInput('etiqueta', 'Mapa');
+  await fixture.whenStable();
+  for (let i = 0; i < 6; i += 1) await Promise.resolve();
+  fixture.detectChanges();
+  return { fixture, provincias: registro };
+}
+
+describe('AppMap · provincias', () => {
+  it('dibuja los límites en su panel, por debajo de los pines y sin atajar clics', async () => {
+    const { provincias } = await crearConProvincias(PROVINCIAS);
+
+    expect(provincias.capas).toHaveLength(1);
+    expect(provincias.capas[0].datos).toBe(PROVINCIAS);
+    expect(provincias.capas[0].opciones).toMatchObject({ pane: 'provincias', interactive: false });
+    // Los mosaicos van en 200 y los pines en 600.
+    expect(provincias.paneles['provincias'].style.zIndex).toBe('350');
+    expect(provincias.paneles['provincias'].style.pointerEvents).toBe('none');
+  });
+
+  it('escribe el nombre de cada provincia en su punto interior, como texto', async () => {
+    const { provincias } = await crearConProvincias(PROVINCIAS);
+
+    expect(provincias.rotulos).toHaveLength(1);
+    const [rotulo] = provincias.rotulos;
+    expect(rotulo.coordenadas).toEqual([-17.8, -63.2]);
+    expect(rotulo.opciones).toMatchObject({ pane: 'provincias', interactive: false });
+    expect(rotulo.opciones.icon.html.textContent).toBe('Andrés Ibáñez');
+  });
+
+  it('dice en palabras en qué provincia está el centro, y lo actualiza al moverse', async () => {
+    const { fixture, provincias } = await crearConProvincias(PROVINCIAS);
+    const rotulo = (): string | null =>
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="mapa-provincia"]')
+        ?.textContent ?? null;
+
+    expect(rotulo()).toBe('Provincia Andrés Ibáñez · Santa Cruz');
+
+    provincias.centro = { lat: -34.6, lng: -58.38 };
+    provincias.alMoverse?.();
+    fixture.detectChanges();
+    expect(rotulo()).toBeNull();
+  });
+
+  it('los nombres se ven de cerca y se esconden de lejos', async () => {
+    const { fixture, provincias } = await crearConProvincias(PROVINCIAS);
+    const lienzo = (fixture.nativeElement as HTMLElement).querySelector('.mapa__lienzo');
+
+    expect(lienzo?.classList).toContain('mapa__lienzo--con-nombres');
+    provincias.zoom = 6;
+    provincias.alMoverse?.();
+    expect(lienzo?.classList).not.toContain('mapa__lienzo--con-nombres');
+  });
+
+  it('sin el archivo, el mapa queda como era', async () => {
+    const { fixture, provincias } = await crearConProvincias(null);
+
+    expect(provincias.capas).toHaveLength(0);
+    expect(fixture.nativeElement.querySelector('[data-testid="mapa-provincia"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Cargando el mapa');
   });
 });

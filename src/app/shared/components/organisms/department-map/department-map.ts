@@ -5,6 +5,7 @@ import {
   SILUETAS_DE_BOLIVIA,
   type SiluetaDeDepartamento,
 } from './bolivia-departments.geometry';
+import { LIMITES_DE_PROVINCIAS_DE_BOLIVIA } from './bolivia-provinces.geometry';
 
 /**
  * Un departamento que se puede elegir, tal como lo trajo el catálogo.
@@ -89,6 +90,9 @@ export class DepartmentMap {
   readonly testId = input('department-map');
 
   protected readonly viewBox = BOLIVIA_VIEW_BOX;
+
+  /** Las provincias se trazan dentro de cada departamento; no se eligen. */
+  protected readonly limitesDeProvincias = LIMITES_DE_PROVINCIAS_DE_BOLIVIA;
 
   /**
    * Los departamentos que se dibujan: los del catálogo que además tienen
