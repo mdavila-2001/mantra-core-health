@@ -1,4 +1,4 @@
-$ yarn env:generate && yarn lint   # rama itzan/perfil-d05-iconos @ c36afcb4
+$ yarn env:generate && yarn lint   # mockup @ b07429a0, justo antes del #613
 
 src\app\app.ts
   11:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
@@ -567,7 +567,7 @@ src\app\shared\components\organisms\data-table\data-table.spec.ts
   33:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
 
 src\app\shared\components\organisms\date-picker\date-picker.spec.ts
-  838:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  790:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
 
 src\app\shared\components\organisms\filter-bar\filter-bar.spec.ts
    7:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection

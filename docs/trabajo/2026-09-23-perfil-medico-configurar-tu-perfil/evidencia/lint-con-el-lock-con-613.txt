@@ -1,4 +1,4 @@
-$ yarn env:generate && yarn lint   # origin/mockup @ ced84594
+$ yarn env:generate && yarn lint   # mockup @ 04fd526c, el #613 fusionado
 
 src\app\app.ts
   11:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection

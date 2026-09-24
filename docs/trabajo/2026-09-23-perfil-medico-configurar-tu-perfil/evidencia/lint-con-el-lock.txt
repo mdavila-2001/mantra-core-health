@@ -1,18 +1,19 @@
 # Lint con la versión que fija el yarn.lock (la que instala el CI con `yarn install --immutable`)
 
-yarn.lock (c36afcb4 y origin/mockup ced84594, sin diferencias entre sí): "@angular-eslint/eslint-plugin@npm:21.4.0":
+yarn.lock (idéntico en b07429a0, 04fd526c y la rama del #613): "@angular-eslint/eslint-plugin@npm:21.4.0":
 Instalado tras `yarn install --immutable` (exit 0): @angular-eslint/eslint-plugin 21.4.0 · template-parser 21.4.0 · eslint-plugin-template 21.4.0
 Las mediciones anteriores de lint en 0 se hicieron con angular-eslint 22.1.0; el lock pasó de 22.1.0 a 21.4.0 en f4b4caea (22/09).
 
+Qué agrega el #613: `mockup` justo antes de fusionarlo (b07429a0) contra `mockup` con el #613 fusionado (04fd526c, squash).
 Pasos de ci.yml, en el mismo orden: `yarn env:generate` y `yarn lint`.
-  rama (c36afcb4):   ✖ 246 problems (246 errors, 0 warnings) · exit 1   → lint-con-el-lock-rama.txt
-  mockup (ced84594): ✖ 246 problems (246 errors, 0 warnings) · exit 1   → lint-con-el-lock-mockup.txt
+  b07429a0 (antes):        ✖ 246 problems (246 errors, 0 warnings) · exit 1   → lint-con-el-lock-antes.txt
+  04fd526c (con el #613):  ✖ 246 problems (246 errors, 0 warnings) · exit 1   → lint-con-el-lock-con-613.txt
 
 ## Comparación por (archivo, regla), sin depender de la línea
 
-rama: 246 · base: 246
+04fd526c (con el #613): 246 · b07429a0 (antes): 246
 reglas en la rama: @angular-eslint/prefer-on-push-component-change-detection 246
 reglas en la base: @angular-eslint/prefer-on-push-component-change-detection 246
 pares (archivo, regla) con distinta cuenta: 0
-archivos del diff ced84594...c36afcb4 con errores en la rama: 1
+archivos del diff b07429a0...04fd526c con errores en la rama: 1
   src/app/shared/components/organisms/date-picker/date-picker.spec.ts :: @angular-eslint/prefer-on-push-component-change-detection: 1 (base 1)
