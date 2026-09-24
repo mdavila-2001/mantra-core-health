@@ -866,6 +866,9 @@ export class RegisterPractitioner {
     // localidad es la que ubica, y esto es lo que hace falta para llegar a la
     // puerta.
     homeAddressLines: new FormControl('', { nonNullable: true }),
+    // Dirección habitual de trabajo, distinta de la casa y del consultorio
+    // que declara como propio.
+    workAddressLines: new FormControl('', { nonNullable: true }),
     // El consultorio propio: su nombre y su calle. Ver la página
     // «Tu consultorio propio» y el JSDoc de `datosProfesional`.
     officeName: new FormControl('', { nonNullable: true }),
@@ -1123,6 +1126,9 @@ export class RegisterPractitioner {
    */
   readonly gpsDomicilio = signal<Coordenadas | null>(null);
 
+  /** Ubicación laboral, confirmada por separado del domicilio y de sus sedes. */
+  readonly gpsTrabajo = signal<Coordenadas | null>(null);
+
   /**
    * La localidad del consultorio propio.
    *
@@ -1157,6 +1163,18 @@ export class RegisterPractitioner {
     confirmar: 'registration-practitioner-home-location-confirm',
     usarUbicacion: 'registration-practitioner-home-location-use',
     marcarEnMapa: 'registration-practitioner-home-location-pick',
+  };
+
+  /** Identificadores de prueba del mapa para la dirección laboral. */
+  protected readonly idsUbicacionTrabajo: IdsDePrueba = {
+    mapa: 'registration-practitioner-work-map',
+    confirmada: 'registration-practitioner-work-location-confirmed',
+    avisoGeocodificacion: 'registration-practitioner-work-geocoding-notice',
+    quitar: 'registration-practitioner-work-location-remove',
+    sinConfirmar: 'registration-practitioner-work-location-unconfirmed',
+    confirmar: 'registration-practitioner-work-location-confirm',
+    usarUbicacion: 'registration-practitioner-work-location-use',
+    marcarEnMapa: 'registration-practitioner-work-location-pick',
   };
 
   /**
@@ -1665,12 +1683,6 @@ export class RegisterPractitioner {
         titulo: '¿Dónde vivís?',
         clave: 'residence',
         icon: 'home',
-        // Las mismas tres piezas que el alta de paciente: la localidad, la
-        // calle y el punto del mapa. Eran una sola —la localidad— mientras el
-        // DTO del profesional no tuvo dónde poner las otras dos; ver el aviso
-        // de `datosProfesional` sobre lo que la API tiene que aceptar antes de
-        // que esto llegue a `dev`.
-        //
         // La **zona** sigue sin preguntarse, y eso no cambió: `common.addresses`
         // no tiene columna de zona para ninguno de los dos registros.
         hint: 'Tu localidad hace falta; la calle y el punto del mapa son opcionales.',
@@ -1697,6 +1709,32 @@ export class RegisterPractitioner {
             label: 'Ubicación GPS (opcional)',
             hint: 'Si la compartís, quien te busca llega sin llamarte.',
             description: 'Marcá el punto exacto de tu casa y confirmalo para que quede guardado.',
+            control: 'custom',
+          },
+        ],
+      },
+      {
+        titulo: '¿Dónde trabajás?',
+        clave: 'workplace-location',
+        icon: 'building',
+        hint: 'La dirección de tu trabajo queda separada de tu casa y de tu consultorio propio.',
+        campos: [
+          {
+            key: 'workAddressLines',
+            label: 'Dirección del trabajo (opcional)',
+            hint: 'Calle, número y referencia del lugar donde trabajás.',
+            description: 'Se guarda como dirección laboral, separada de tu domicilio.',
+            control: 'text',
+            autocomplete: 'street-address',
+            placeholder: 'Av. Principal 200, Hospital Central',
+            testId: 'registration-practitioner-work-address',
+            icono: 'route',
+          },
+          {
+            key: 'gpsTrabajo',
+            label: 'Ubicación GPS del trabajo (opcional)',
+            hint: 'Confirmá el punto para guardar la ubicación laboral.',
+            description: 'Marcá el lugar donde trabajás y confirmalo en el mapa.',
             control: 'custom',
           },
         ],
@@ -2415,6 +2453,8 @@ export class RegisterPractitioner {
     const municipio = this.municipioProfesional();
     const calleDomicilio = raw.homeAddressLines.trim();
     const gpsDomicilio = this.gpsDomicilio();
+    const calleTrabajo = raw.workAddressLines.trim();
+    const gpsTrabajo = this.gpsTrabajo();
     const consultorio = this.consultorioPropio();
     const sexoAlNacer = raw.sexAtBirth;
     const foto = raw.profilePhotoBase64;
@@ -2423,13 +2463,6 @@ export class RegisterPractitioner {
       // `email` del DTO es el campo de LOGIN de la API, y desde este cambio el
       // login es el correo personal: es el que el profesional conserva aunque
       // cambie de hospital. El institucional viaja aparte, en `workEmail`.
-      //
-      // OJO AL PASE A `dev`: hoy el DTO de la API documenta lo contrario
-      // —«Correo de trabajo; es la identidad de login del profesional»— y NO
-      // declara `workEmail`, así que con `forbidNonWhitelisted` rechazaría el
-      // alta entera. La API tiene que aceptar `workEmail` (opcional, se guarda
-      // como contacto de uso `CONTACT_USE_WORK`, que ya existe) ANTES de que
-      // esta rama llegue a `dev`.
       email: correoPersonal,
       password: raw.password,
       name: raw.name.trim(),
@@ -2448,21 +2481,18 @@ export class RegisterPractitioner {
       ...(municipio === null ? {} : { residenceMunicipalityConceptId: municipio }),
       // La calle y el punto del domicilio (AC-05-8).
       //
-      // OJO AL PASE A `dev`, igual que `workEmail`: `RegisterPractitionerDto`
-      // hoy acepta `residenceMunicipalityConceptId` y nada más, y con
-      // `forbidNonWhitelisted: true` (ver `main.ts`) tres claves que no
-      // declara **rechazan el alta entera con 400**. No es que el dato se
-      // pierda: no se registra nadie. La API tiene que aceptar
-      // `homeAddressLines`, `homeLatitude` y `homeLongitude` —los tres ya
-      // existen en `RegisterPatientDto`, son copiables tal cual— ANTES de que
-      // esta rama llegue a `dev`. Está anotado en `PENDIENTES-BACKEND.md`.
-      //
       // El punto viaja sólo si se confirmó sobre el mapa: `gpsDomicilio` es lo
       // que emite `app-ubicacion-picker`, y ese sólo emite lo confirmado.
       ...(calleDomicilio === '' ? {} : { homeAddressLines: calleDomicilio }),
       ...(gpsDomicilio === null
         ? {}
         : { homeLatitude: gpsDomicilio.lat, homeLongitude: gpsDomicilio.lng }),
+      // Dirección laboral, que se persiste con uso WORK y no modifica HOME ni
+      // el consultorio propio (ownSite).
+      ...(calleTrabajo === '' ? {} : { workAddressLines: calleTrabajo }),
+      ...(gpsTrabajo === null
+        ? {}
+        : { workLatitude: gpsTrabajo.lat, workLongitude: gpsTrabajo.lng }),
       // El consultorio propio, si declaró alguno. Ver `consultorioPropio()`.
       ...(consultorio === null ? {} : { ownSite: consultorio }),
       licenseNumber: raw.licenseNumber.trim(),
