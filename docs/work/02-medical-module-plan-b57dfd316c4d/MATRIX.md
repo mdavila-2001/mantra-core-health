@@ -6,7 +6,9 @@ Cierre end-to-end verificado: **0/98 (0%)**. Esto no afirma ausencia de funciona
 
 Estados de los 100 criterios contables: A MEDIAS: 70, TODO: 11, BLOQUEADO: 17, DESCARTADO: 2.
 
-Actualización 2026-09-24: CORR-08 (PR visual borrador [#612](https://github.com/mdavila-2001/mantra-core-health/pull/612)) añade evidencia de eliminación del switch de certificación y preservación del campo en el PATCH parcial. El smoke adicional recorrió alta de navegador a API real, pero no lectura/edición/recarga de la misma cuenta; no se elevó ningún criterio y la matriz sigue en **0/98 HECHO**.
+Actualización 2026-09-24: CORR-08 (PR visual borrador [#612](https://github.com/mdavila-2001/mantra-core-health/pull/612)) añade evidencia de eliminación del switch de certificación y preservación del campo en el PATCH parcial. El smoke navegador→API real recorrió una misma cuenta: alta con dos títulos universitarios, lectura, descarga propietaria de ambos PDFs, edición de uno y relectura después de recargar. No recorrió varios tipos de posgrado ni acceso público/ajeno en ese mismo journey; no se elevó ningún criterio y la matriz sigue en **0/98 HECHO**.
+
+Reanudación 2026-09-24: no se ejecutó otro smoke integrado. La inspección local observó PostgreSQL temporal en 55439/55440, Angular en 4300/4302/4387 y un runtime Node SSR, con propiedad y datos desconocidos; no se conectó, reinició ni detuvo esos procesos. La evidencia existente y los estados de criterio se conservan sin cambios.
 
 ## MED-01 — Identidad profesional
 Líneas: L0166–L0171, L0177. 5 criterios contractuales.

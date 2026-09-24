@@ -3,6 +3,7 @@
 - Plan único: 02-medical-module-plan-b57dfd316c4d.
 - Fuente normativa congelada: 02_METAPROMPT_MEDICO.md, SHA-256 b57dfd316c4d642eb5e1db49257397b8fd2864b511317282ae4b70ff1262a656.
 - Estado integral: 0/98 criterios IN alcanzan el DoD end-to-end; matriz: 70 A MEDIAS, 11 TODO, 17 BLOQUEADOS, 2 DESCARTADOS. Diez credenciales con adjuntos y conflictos de reservas entre dos consultorios tienen evidencia API/DB. El smoke real leyó y descargó como titular dos títulos universitarios, editó uno y releyó el cambio después de recargar; faltan los posgrados/especialidades de MED-E01 y el journey clínico completo.
+- Reanudación de ejecución solicitada el 2026-09-24: una inspección de solo lectura observó procesos PostgreSQL temporales en 55439/55440, servidores Angular en 4300/4302/4387 y un runtime Node SSR (`dist/mantra-core-health/server/server.mjs`); no se pudo confirmar el dueño de esos procesos ni la seguridad de las bases. Siguiendo el límite ya anotado de no reiniciar Docker ante riesgo para servicios compartidos, no se conectó, reinició ni detuvo ninguno. No se corrió otro journey real ni se elevó ningún criterio.
 - Frontend: rama justin/medical-module-cierre, worktree wt-medical-module-closure. Base actual origin/mockup b11dfdd382dd787fab33d5894979ccc2c4d5a96a. Los cambios de esta rama son documentales, no de producto.
 - Corrección visual independiente: rama justin/mockup-corr-38-editar-perfil-medico-como-alta, commit 55e948a4 sobre origin/mockup b11dfdd382dd787fab33d5894979ccc2c4d5a96a; push confirmado y PR borrador #612. No está mergeada. Cambia sólo frontend/editor y evidencia del carril; no cambia el estado de criterios end-to-end del plan Médico.
 - API de auditoría anterior: rama `justin/medical-module-cierre-api`, worktree `wt-medical-module-api`; base `origin/dev` 7541797cd93dfe3cde50c8a7fd3bf404cc709f12. Esa rama conserva sólo auditoría.
@@ -21,7 +22,7 @@
 
 ## Para continuar
 
-1. Completar MED-E01 en el mismo actor: agregar varios posgrados y especialidades al smoke navegador→API→PostgreSQL; releer tras recarga todos los documentos y probar el acceso ajeno/público con la misma cuenta.
+1. Cuando haya una base y servicios aislados disponibles, completar MED-E01 en el mismo actor: agregar varios posgrados y especialidades al smoke navegador→API→PostgreSQL; releer tras recarga todos los documentos y probar el acceso ajeno/público con la misma cuenta.
 2. Continuar H1/H2 en orden donde los contratos ya existan; no reinterpretar colegio/matrícula ni el catálogo SEGIP que la fuente marca «CHARLAR».
 3. Cerrar la inicialización canónica con quien mantiene el modelo/DDL y mantener la base desechable sintética; nunca leer `.env` administrado ni cambiar esquema sin su propietario.
 4. Continuar H3: probar vistas/calendario y disponibilidades públicas con servicios reales; preservar el bloqueo sobre hospital público, destinatarios de TOUS y «quienes buscaron ese día» mientras falten contratos.
