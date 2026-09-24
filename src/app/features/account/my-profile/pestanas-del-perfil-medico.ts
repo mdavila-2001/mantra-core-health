@@ -19,12 +19,12 @@
  *
  * | Pasos del alta | Pestaña |
  * |---|---|
- * | nombre · documento · sexo y nacimiento · título profesional | Datos personales |
+ * | nombre · documento · sexo y nacimiento · título profesional · tus especialidades | Datos personales |
  * | contacto privado · contacto del trabajo · dónde vivís | Contacto |
  * | — (a nombre de quién factura) | Facturación |
  * | tu consultorio propio | Dónde atiendo |
  * | dónde estudió el título · tus títulos | Trayectoria |
- * | habilitación · respaldos · especialidades | Credenciales |
+ * | habilitación · respaldos | Credenciales |
  * | — (lo que registró con la cuenta) | Actividad |
  *
  * Las dos últimas filas no salen del alta y tampoco se podían tirar: la
@@ -222,9 +222,18 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
   /* 11 · Tus títulos */
   academicTitles: PESTANA_MEDICO.trayectoria,
 
-  /* 12 · Tus especialidades */
-  specialtyPrimary: PESTANA_MEDICO.credenciales,
-  especialidadesExtra: PESTANA_MEDICO.credenciales,
+  /*
+   * 12 · Tus especialidades
+   *
+   * Se mudó de «Credenciales» a «Datos personales» (pedido del propietario,
+   * 24/09/2026): contestan «¿de qué es médico?», la misma pregunta que el
+   * título profesional, y no «¿con qué habilitación ejerce?», que es lo que
+   * queda en Credenciales junto con matrículas y respaldos. La ficha de
+   * lectura ya las mostraba junto a la identidad desde el 19/09/2026 (C-09);
+   * el editor era el único lugar donde seguían separadas de eso mismo.
+   */
+  specialtyPrimary: PESTANA_MEDICO.personales,
+  especialidadesExtra: PESTANA_MEDICO.personales,
 };
 
 /**
