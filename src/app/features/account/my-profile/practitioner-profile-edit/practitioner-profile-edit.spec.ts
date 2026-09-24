@@ -532,6 +532,22 @@ describe('PractitionerProfileEdit', () => {
     expect(interno<() => boolean>('puedeAgregarEspecialidad')()).toBe(true);
   });
 
+  it('con tres especialidades cargadas deja agregar la cuarta, pero no otra casilla', () => {
+    montarYCargar({
+      specialties: [
+        { id: 's-1', specialtyConceptId: 'esp-cardio', isPrimary: true },
+        { id: 's-2', specialtyConceptId: 'esp-pediatria', isPrimary: false },
+        { id: 's-3', specialtyConceptId: 'esp-endo', isPrimary: false },
+      ],
+    });
+
+    señal<string>('nuevaEspecialidad').set('esp-orto');
+    expect(interno<() => boolean>('puedeAgregarEspecialidad')()).toBe(true);
+
+    interno<() => void>('agregarCasillaDeEspecialidad')();
+    expect(interno<() => readonly string[]>('especialidadesExtra')()).toEqual([]);
+  });
+
   it('agregarEspecialidad hace un POST y recarga el perfil', () => {
     montarYCargar();
     señal<string>('nuevaEspecialidad').set('esp-cardio');

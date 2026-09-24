@@ -544,84 +544,87 @@
             <section class="edicion__seccion">
               <h3 class="edicion__titulo">Agregar especialidades</h3>
               <p class="edicion__nota">
-                Podés cargar varias de una vez, como en el registro. Quedan pendientes de
-                verificación hasta que se comprueben contra tu credencial.
+                Podés cargar hasta cuatro especialidades en total, como en el registro. Quedan
+                pendientes de verificación hasta que se comprueben contra tu credencial.
               </p>
 
-              <form class="edicion__formulario" (submit)="$event.preventDefault()">
-                <!-- TJ-3 · F-19: las 36 especialidades del modelo, en castellano. Antes
+              @if (canDeclareSpecialty()) {
+                <form class="edicion__formulario" (submit)="$event.preventDefault()">
+                  <!-- TJ-3 · F-19: las 36 especialidades del modelo, en castellano. Antes
                      esto pedía el catálogo por campo destino y llegaba una sola opción
                      («General medicine specialty»), que además no la usa ninguna fila. -->
-                @if (catalogoCaido()) {
-                  <app-form-field label="Especialidad">
-                    <p class="edicion__aviso" data-testid="especialidades-caidas">
-                      No pudimos traer el catálogo de especialidades.
-                      <button
-                        app-button
-                        variant="ghost"
-                        size="sm"
-                        (clicked)="reintentarEspecialidades()"
-                      >
-                        Reintentar
-                      </button>
-                    </p>
-                  </app-form-field>
-                } @else {
-                  <app-form-field label="Especialidad" [required]="true">
-                    <app-select
-                      data-testid="especialidad-select"
-                      [options]="especialidades()"
-                      [(value)]="nuevaEspecialidad"
-                      placeholder="Elegí una especialidad"
-                    />
-                  </app-form-field>
+                  @if (catalogoCaido()) {
+                    <app-form-field label="Especialidad">
+                      <p class="edicion__aviso" data-testid="especialidades-caidas">
+                        No pudimos traer el catálogo de especialidades.
+                        <button
+                          app-button
+                          variant="ghost"
+                          size="sm"
+                          (clicked)="reintentarEspecialidades()"
+                        >
+                          Reintentar
+                        </button>
+                      </p>
+                    </app-form-field>
+                  } @else {
+                    <app-form-field label="Especialidad" [required]="true">
+                      <app-select
+                        data-testid="especialidad-select"
+                        [options]="especialidades()"
+                        [(value)]="nuevaEspecialidad"
+                        placeholder="Elegí una especialidad"
+                      />
+                    </app-form-field>
 
-                  <!-- Las que se agreguen además, en casillas sumables: las mismas
+                    <!-- Las que se agreguen además, en casillas sumables: las mismas
                        del alta de médico. Antes esto era una sola por envío, así que
                        quien tiene tres especialidades tenía que elegir, guardar y
                        esperar la recarga tres veces. -->
-                  @for (extra of especialidadesExtra(); track $index) {
-                    <app-form-field [label]="'Especialidad ' + ($index + 2)">
-                      <div class="edicion__casilla-extra">
-                        <app-select
-                          [attr.data-testid]="'especialidad-extra-' + $index"
-                          [options]="especialidades()"
-                          placeholder="Elegí una especialidad"
-                          [value]="extra === '' ? null : extra"
-                          (valueChange)="elegirEspecialidadExtra($index, $event)"
-                        />
+                    @for (extra of especialidadesExtra(); track $index) {
+                      <app-form-field [label]="'Especialidad ' + ($index + 2)">
+                        <div class="edicion__casilla-extra">
+                          <app-select
+                            [attr.data-testid]="'especialidad-extra-' + $index"
+                            [options]="especialidades()"
+                            placeholder="Elegí una especialidad"
+                            [value]="extra === '' ? null : extra"
+                            (valueChange)="elegirEspecialidadExtra($index, $event)"
+                          />
+                          <button
+                            app-button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            [iconOnly]="true"
+                            [attr.aria-label]="'Quitar la especialidad ' + ($index + 2)"
+                            [appTooltip]="'Quitar la especialidad ' + ($index + 2)"
+                            [attr.data-testid]="'quitar-especialidad-' + $index"
+                            (clicked)="quitarCasillaDeEspecialidad($index)"
+                          >
+                            <app-nav-icon name="remove" />
+                          </button>
+                        </div>
+                      </app-form-field>
+                    }
+
+                    @if (canAddAnotherSpecialty()) {
+                      <p class="edicion__sumar">
                         <button
                           app-button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          [iconOnly]="true"
-                          [attr.aria-label]="'Quitar la especialidad ' + ($index + 2)"
-                          [appTooltip]="'Quitar la especialidad ' + ($index + 2)"
-                          [attr.data-testid]="'quitar-especialidad-' + $index"
-                          (clicked)="quitarCasillaDeEspecialidad($index)"
+                          data-testid="agregar-casilla-especialidad"
+                          (clicked)="agregarCasillaDeEspecialidad()"
                         >
-                          <app-nav-icon name="remove" />
+                          + Agregar otra especialidad
                         </button>
-                      </div>
-                    </app-form-field>
+                      </p>
+                    }
                   }
 
-                  <p class="edicion__sumar">
-                    <button
-                      app-button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      data-testid="agregar-casilla-especialidad"
-                      (clicked)="agregarCasillaDeEspecialidad()"
-                    >
-                      + Agregar otra especialidad
-                    </button>
-                  </p>
-                }
-
-                <!-- Sin los dos interruptores («Es mi especialidad principal» y
+                  <!-- Sin los dos interruptores («Es mi especialidad principal» y
                      «Tengo certificación de junta»): el propietario pidió el
                      2026-09-10 que esta pantalla se adapte al formulario del alta de
                      médico, y el alta no los tiene. Ahí la principal se elige en un
@@ -632,18 +635,23 @@
                      desde acá **nunca desplaza a la principal**. Cambiar cuál es la
                      principal más adelante no tiene hoy dónde hacerse; está anotado
                      en `docs/progress/BLOCKERS.md`. -->
-                <app-form-actions
-                  class="edicion__campo-ancho"
-                  [submitLabel]="
-                    especialidadesElegidas().length > 1
-                      ? 'Agregar especialidades'
-                      : 'Agregar especialidad'
-                  "
-                  [pending]="guardandoEspecialidad()"
-                  [disabled]="!puedeAgregarEspecialidad()"
-                  (submitted)="agregarEspecialidad()"
-                />
-              </form>
+                  <app-form-actions
+                    class="edicion__campo-ancho"
+                    [submitLabel]="
+                      especialidadesElegidas().length > 1
+                        ? 'Agregar especialidades'
+                        : 'Agregar especialidad'
+                    "
+                    [pending]="guardandoEspecialidad()"
+                    [disabled]="!puedeAgregarEspecialidad()"
+                    (submitted)="agregarEspecialidad()"
+                  />
+                </form>
+              } @else {
+                <p class="edicion__nota" data-testid="limite-especialidades-alcanzado">
+                  Ya alcanzaste el máximo de cuatro especialidades.
+                </p>
+              }
 
               <h4 class="edicion__subtitulo">Tus especialidades cargadas</h4>
               @if (filasEspecialidades().length === 0) {
