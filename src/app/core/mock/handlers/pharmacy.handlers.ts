@@ -285,10 +285,18 @@ export function registrarFarmacia(router: MockRouter): void {
   });
 
   router.get('/pharmacy-inventory/availability', ({ query }) => {
-    const ids = (texto(query, 'productIds') ?? '').split(',').filter((x) => x !== '');
+    // `products` es el nombre del contrato (`@Query('products')` en
+    // `pharmacy-inventory-read.controller.ts`) y el que envía `PharmacyClient`;
+    // el doble leía `productIds`, así que en la maqueta la disponibilidad no
+    // filtraba nada. `productIds` queda como alias de lo que ya lo usara.
+    const ids = (texto(query, 'products') ?? texto(query, 'productIds') ?? '').split(',').filter((x) => x !== '');
     const conceptos = ids.map((id) => productos.get(id)?.medicationConceptId ?? id);
-    const lat = Number(query.get('lat') ?? query.get('originLat') ?? -17.78);
-    const lng = Number(query.get('lng') ?? query.get('originLng') ?? -63.18);
+    // Sin origen no hay distancia (`distanceKm: null`), como en la API: antes el
+    // doble medía desde un punto fijo del centro y mostraba kilómetros que la
+    // persona nunca pidió.
+    const latTexto = query.get('lat') ?? query.get('originLat');
+    const lngTexto = query.get('lng') ?? query.get('originLng');
+    const origen = latTexto === null || lngTexto === null ? null : { lat: Number(latTexto), lng: Number(lngTexto) };
     const items = FARMACIAS.map((f) => {
       const enFarmacia = conceptos.map((conceptId) => productos.filtrar((p) => p.pharmacyId === f.id && p.medicationConceptId === conceptId)[0]);
       const disponibles = enFarmacia.filter((p): p is ProductoSimulado => p !== undefined && p.stock > 0);
@@ -302,7 +310,7 @@ export function registrarFarmacia(router: MockRouter): void {
         addressText: f.addressText,
         latitude: f.lat,
         longitude: f.lng,
-        distanceKm: distanciaKm(lat, lng, f.lat, f.lng),
+        distanceKm: origen === null ? null : distanciaKm(origen.lat, origen.lng, f.lat, f.lng),
         homeDeliveryAvailable: f.homeDelivery,
         pickupAvailable: true,
         complete: faltantes.length === 0,
@@ -312,7 +320,7 @@ export function registrarFarmacia(router: MockRouter): void {
         currency: BOB,
         products: disponibles.map((p) => ({ productId: p.id, productCode: p.productCode, brandName: p.brandName, genericName: p.genericName, strengthText: p.strengthText, packageSizeText: p.packageSizeText, medication: p.medication, availableQuantity: p.stock, price: { unitAmount: p.price, patientAmount: p.price, currency: BOB, priceListCode: 'PUBLICO' } })),
       };
-    }).sort((a, b) => Number(b.complete) - Number(a.complete) || a.distanceKm - b.distanceKm);
+    }).sort((a, b) => Number(b.complete) - Number(a.complete) || (a.distanceKm ?? 0) - (b.distanceKm ?? 0) || a.pharmacyName.localeCompare(b.pharmacyName, 'es'));
     return { requestedProductIds: ids, items, count: items.length };
   });
 
