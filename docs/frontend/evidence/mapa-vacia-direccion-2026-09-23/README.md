@@ -109,13 +109,13 @@ campo y el aviso quedan el rótulo del mapa y unos 37–41 px. A 390 en la asegu
 porque ese rótulo («Ubicación de la casa matriz en el mapa (opcional)») se parte en dos renglones.
 Salidas en `docs/trabajo/2026-09-23-perfil-medico-configurar-tu-perfil/evidencia/h5/navegador-h5s2m6-*.txt`.
 
-En la primera corrida de 1440 oscuro, una captura salió en blanco: sólo el fondo, sin la tarjeta
+En una corrida anterior de 1440 oscuro, una captura salió en blanco: sólo el fondo, sin la tarjeta
 (`laboratorio-central-1-vaciada`), aunque sus comprobaciones pasaron. Es el mismo síntoma de la
-repetición de imagenología de más arriba. Se repitió el recorrido del laboratorio en esa celda
-(33/33, `navegador-h5s2m6-1440-oscuro-laboratorio-repetido.txt`) y sus seis capturas salen de esa
-repetición. Después se midieron las 72 capturas: las 60 de los cuatro estados y las 12 `4b`. Una
+repetición de imagenología de más arriba. Por eso, en la corrida final, de la que salen las 72
+capturas de esta sección (las 60 de los cuatro estados y las 12 `4b`), se midieron todas. Una
 captura con la tarjeta tiene más del 3 % de píxeles con borde marcado respecto de su vecino, y la
-vacía tenía 0,07 %. En la corrida final ninguna quedó por debajo (`capturas-h5s2m6-sin-blancos.txt`).
+que había salido vacía tenía 0,07 %. Ninguna de las 72 quedó por debajo
+(`capturas-h5s2m6-sin-blancos.txt`).
 
 Además de las comprobaciones, el guion informa qué ve la persona justo después de pulsar «Siguiente»
 sin reescribir la dirección, antes de mover nada (líneas `ℹ` de cada salida). También toma esa vista

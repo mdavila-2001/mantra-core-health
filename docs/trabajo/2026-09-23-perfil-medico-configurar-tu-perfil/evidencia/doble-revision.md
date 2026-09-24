@@ -15,8 +15,9 @@ Cada captura de navegador de este carril se revisa dos veces:
 | H5 · el mapa vacía la dirección | `docs/frontend/evidence/mapa-vacia-direccion-2026-09-23/README.md` | ronda 1 |
 | H7 · «Mis puntos» como quinta pestaña | `docs/frontend/evidence/mis-puntos-quinta-pestana-2026-09-23/README.md` | ronda 1 (capturas del #606), rondas 2 a 5 (recapturas) |
 | H6 · ícono y nombre (D-05) | `docs/frontend/evidence/d05-iconos-2026-09-23/README.md` | rondas 2 a 5 |
+| H5.S2.M6 · direcciones obligatorias | la misma carpeta de H5, sección «Direcciones obligatorias: corrección del 24/09» | rondas 6 a 8 |
 
-## Las cinco rondas
+## Las rondas
 
 1. **Ronda 1 — H5 y H7, sobre las capturas del #606.** H5 y H7 llegaron a `mockup` con el #606
    antes de esta revisión. La regla 35 ya estaba publicada cuando se abrió ese PR y no se aplicó;
@@ -34,6 +35,21 @@ Cada captura de navegador de este carril se revisa dos veces:
 5. **Ronda 5**: cerró H6-12 y H6-E9. **Todas las pantallas de H6 quedan `ACEPTABLE CON RESERVAS`,
    sin `MAYOR` del cambio.** H7 conserva dos pantallas `RECHAZADA` por código de otros, y por eso
    H7.S1.M6 queda `A MEDIAS`.
+
+6. **Ronda 6 — H5.S2.M6**, sobre la corrección de H5-01 y H5-02 (decisión de producto del 24/09):
+   cerró los dos. Las tres altas y las sucursales quedan `ACEPTABLE CON RESERVAS`. Pidió corregir la
+   evidencia: faltaban 1920, 1024 y 768, había tres afirmaciones del README que las imágenes no
+   sostenían, y en una captura no se veía el título del paso.
+7. **Ronda 7**, sobre las capturas rehechas en seis celdas: mismas notas. Encontró que el spec de
+   varias zonas horarias no comprobaba que la zona estuviera en la página, que dos filas del README no
+   coincidían con sus imágenes y que ninguna captura mostraba lo que se ve justo después de
+   «Siguiente». La salida `navegador-h5s2m6-1440-oscuro-laboratorio-repetido.txt` que cita esta
+   ronda no viaja: después se rehicieron todas las capturas en una sola corrida, que no necesitó
+   repetición.
+8. **Ronda 8**, sobre las capturas `4b`: mismas notas, sin `MAYOR` del cambio. Pasó a observado un
+   hallazgo del formulario por páginas: a 390 y 1024, tras «Siguiente», el campo en rojo queda fuera
+   de la ventana (`MAYOR` heredado, a decidir por producto). Dejó tres `MENOR` de redacción del
+   README, ya corregidos.
 
 Cada ronda lleva el estado de los hallazgos de la anterior (`CERRADO`, `SIGUE`, `CAMBIA`).
 
@@ -2019,3 +2035,627 @@ Las capturas, el código y el guion no cambiaron desde la tercera pasada. Todos 
 #### H7
 
 Sin cambios respecto de la tercera pasada.
+
+---
+
+<!-- Ronda 6 -->
+
+## Segunda pasada visual: H5.S2.M6 (direcciones obligatorias sin rojo al vaciar, aviso junto al campo)
+
+- Fecha: 2026-09-24
+- Material revisado:
+  - `docs/frontend/evidence/mapa-vacia-direccion-2026-09-23/`: las 48 capturas `corregida-*.png` y, como referencia de antes, `despues-aseguradora-{1,2}-*`, `despues-laboratorio-central-{1,2}-*` y `despues-imagenologia-central-{1,2}-*` (6). Se abrieron como imagen las 54.
+  - `docs/frontend/evidence/mapa-vacia-direccion-2026-09-23/README.md`, completo.
+  - `docs/trabajo/2026-09-23-perfil-medico-configurar-tu-perfil/evidencia/h5/navegador-h5s2m6-{1440-claro,390-claro,1440-oscuro}.txt`, `specs-h5s2m6-rojo-sin-arreglo.txt` y `specs-h5s2m6-verde.txt`.
+  - El diff de `playwright/mapa-vacia-direccion.mjs`, de los tres componentes (`src/app/features/auth/register-organization/register-organization.ts`, `register-laboratory/register-laboratory.ts`, `register-imaging-center/register-imaging-center.ts`) y de sus tres `*.spec.ts`.
+  - Como contexto: la sección «Segunda pasada visual: H5 (el mapa vacía la dirección) y H7» de `evidencia/doble-revision.md` y el criterio de aceptación de H5.S2.M6 en `PLAN.md`.
+- Criterio contra el que se juzga (literal del plan): «Dado un alta con dirección obligatoria, cuando se toca el mapa, entonces el campo vacío no se marca en error hasta que la persona lo toque o intente avanzar, y el aviso se lee junto al campo.»
+- Método: segunda pasada adversarial. Se parte de que la entrega tiene defectos y se buscan motivos para rechazarla. Se responden las diez preguntas por grupo de capturas equivalentes (el agrupamiento se declara en cada grupo) y cada hallazgo lleva severidad. La primera pasada es la tabla del implementador en el README; sus afirmaciones se contrastan contra las imágenes en «Afirmaciones del README que no se sostienen».
+- Límite del método: solo se miraron imágenes y se leyeron archivos; no se ejecutó nada. No son observables en una imagen: `aria-invalid`, la región viva y su anuncio, a qué campo describe cada texto (`aria-describedby`), el foco tras pulsar «Siguiente», el orden de tabulación y que la página no avance (en 1440 el título queda fuera del encuadre en algunas capturas). Lo que solo sale del código se marca «según el código, no observado». Las distancias en píxeles que se citan medidas sobre la imagen son aproximadas (±3 px).
+- Regla de nota:
+  - `RECHAZADA`: queda algún BLOQUEANTE o MAYOR del cambio o del requisito.
+  - `ACEPTABLE CON RESERVAS`: solo quedan MENOR del cambio.
+  - `APROBADA`: no quedan hallazgos abiertos.
+  - Los heredados (ya estaban antes del cambio, o viven en código que el cambio no toca) se listan aparte y no cuentan para la nota. Los defectos de la evidencia tampoco cuentan para la nota, pero se listan con lo que hay que hacer antes del PR. Ante la duda, la nota más baja.
+
+### Resumen de notas
+
+| Pantalla | Nota | Motivo |
+|---|---|---|
+| Alta de la aseguradora: casa matriz («Datos de la aseguradora») | ACEPTABLE CON RESERVAS | H5-01 y H5-02 cerrados en las tres celdas. Quedan solo MENOR: H5C-01 (el rótulo del mapa entre el campo y el aviso), H5C-02 («Nombre comercial» queda debajo del mapa), H5C-03 (zona horaria obligatoria debajo del mapa en países multizona, según el código, no observado), y H5-04 y H5-05 de la ronda anterior |
+| Alta del laboratorio: paso de la central | ACEPTABLE CON RESERVAS | H5-01 cerrado en las tres celdas. Quedan MENOR: H5C-01 (misma disposición), H5-04, H5-05 y H5-06 |
+| Alta de imagenología: paso de la central | ACEPTABLE CON RESERVAS | Igual que el laboratorio: H5-01 cerrado; quedan H5C-01, H5-04, H5-05 y H5-06, todos MENOR |
+| Sucursales de laboratorio e imagenología (regresión) | ACEPTABLE CON RESERVAS | Sin regresión: la dirección opcional se vacía sin rojo y el aviso sigue dentro de su tarjeta, en las tres celdas. Quedan H5-04, H5-05 y H5-06, MENOR, de la ronda anterior |
+
+Ninguna pantalla queda `APROBADA` porque siguen abiertos MENOR de H5. Ninguna queda `RECHAZADA`: no se encontró ningún BLOQUEANTE ni MAYOR del cambio. El MAYOR que sí se ve en estas capturas (contraste del mensaje de error en tema oscuro, H5C-H1) es heredado.
+
+### Estado de H5-01 y H5-02
+
+| ID | Estado | Qué lo sostiene |
+|---|---|---|
+| H5-01 (el vaciado pone el campo en rojo y sigue en rojo tras confirmar) | **CERRADO** | En las `-1-vaciada` y `-2-confirmada` de las tres altas y las tres celdas (18 capturas), el campo vacío tiene borde neutro y muestra su ayuda, no el mensaje de error: «La de la casa matriz. Las de cada sucursal se cargan después.» en la aseguradora y «Calle, número y zona. Es la que figura en tus papeles.» en las centrales. Contraste directo: `despues-aseguradora-1-vaciada-1440-claro.png` (borde y mensaje rojos) frente a `corregida-aseguradora-1-vaciada-1440-claro.png` (sin rojo), y `despues-laboratorio-central-2-confirmada-1440-claro.png` frente a `corregida-laboratorio-central-2-confirmada-1440-claro.png`. El rojo aparece solo en `-3-tocada` y `-4-al-avanzar`, como pide la decisión |
+| H5-02 (en la aseguradora el aviso queda a unos 200 px, con «Nombre comercial» en medio) | **CERRADO** | `corregida-aseguradora-1-vaciada-1440-claro.png` y `corregida-aseguradora-1-vaciada-390-claro.png`: entre «Dirección» y el aviso ya no hay ningún control, y el aviso queda a 41 px del pie del campo a 1440 y a 58 px a 390 (salidas del guion; coincide con lo medido sobre la imagen). «Nombre comercial (opcional)» pasa debajo del mapa (`corregida-aseguradora-2-confirmada-1440-claro.png`). La disposición queda igual a la de las centrales. Residual: el rótulo del mapa sigue entre el campo y el aviso (H5C-01, MENOR, compartido con las centrales) |
+
+### Capturas
+
+| Alta | Estados | Celdas | Archivos |
+|---|---|---|---|
+| Aseguradora («Datos de la aseguradora», paso 2 de 8) | 1-vaciada · 2-confirmada · 3-tocada · 4-al-avanzar | 1440×1000 claro · 390×844 claro · 1440×1000 oscuro | `corregida-aseguradora-{1..4}-*-{1440-claro,390-claro,1440-oscuro}.png` (12) |
+| Laboratorio, central (paso 4 de 10) | los mismos cuatro | las mismas tres | `corregida-laboratorio-central-*` (12) |
+| Laboratorio, sucursal (paso 5 de 10) | 1-vaciada · 2-confirmada | las mismas tres | `corregida-laboratorio-sucursal-*` (6) |
+| Imagenología, central (paso 5 de 11) | los mismos cuatro | las mismas tres | `corregida-imagenologia-central-*` (12) |
+| Imagenología, sucursal (paso 6 de 11) | 1-vaciada · 2-confirmada | las mismas tres | `corregida-imagenologia-sucursal-*` (6) |
+
+A 1440 cada captura muestra la ventana (1000 px de alto), no la página entera; a 390 muestran la página entera. La celda de escritorio del repo es 1440×900 (la matriz de viewports del repo); estas usan 1000 de alto (ver H5C-E1).
+
+### Las diez preguntas, por grupo
+
+#### G1 · Aseguradora, vaciada y confirmada, en claro
+
+Capturas: `corregida-aseguradora-1-vaciada-1440-claro.png`, `corregida-aseguradora-2-confirmada-1440-claro.png`, `corregida-aseguradora-1-vaciada-390-claro.png` y `corregida-aseguradora-2-confirmada-390-claro.png`.
+
+1. **Lo primero que se ve mal:** el pin, un círculo blanco sobre el plano claro, casi no se ve (H5-07, heredado). En lo que toca al cambio: el aviso cuelga del rótulo «Ubicación de la casa matriz en el mapa (opcional)» y no del campo; se lee como el encabezado del bloque del mapa (H5C-01).
+2. **Texto cortado o solapado:** a 1440, en `-1`, la botonera flotante de la maqueta tapa «¿Es acá donde está la casa…» y la línea «Todavía no confirmaste…» queda cortada por el borde inferior; en `-2` el rótulo «NIT» sale cortado por el borde superior (encuadre). A 390 no hay cortes ni desborde horizontal; el rótulo del mapa ocupa dos renglones.
+3. **¿Terminado o prototipo?** Terminado. El campo vacío con su ayuda en gris y el aviso informativo debajo forman un estado limpio, sin mezcla de tonos. La fila «Volver a ubicarme / ⊖ Quitar la ubicación» sigue sangrada unos 14 px respecto de la columna cuando no hay botón de confirmar (H5-09, heredado).
+4. **Coherencia con el producto:** ahora sí es coherente con las centrales: campo → ayuda → rótulo del mapa → aviso → mapa. «Nombre comercial» pasa al final de la página, después del bloque del mapa (H5C-02).
+5. **Tema oscuro:** no aplica en este grupo (el oscuro está en G3).
+6. **¿El estado orienta?** Sí. El campo no acusa y el aviso dice qué hacer. En `-2` se suman «El punto del mapa se guarda tal cual… escribila vos arriba», «Si el pin no cayó justo…» y «Usá tu GPS o tocá el plano…»: cuatro textos de ayuda alrededor del mapa (H5-04, sigue).
+7. **Jerarquía:** en `-1` la vista va al aviso; «Confirmar dirección actual» queda debajo del pliegue a 1440 y visible a 390. En `-2` la acción principal pasa a «Siguiente». Correcto.
+8. **Datos:** NIT «1023456789», sintético. «Dirección» vacía. El plano muestra lugares públicos. No hay datos personales.
+9. **¿Muestra el requisito?** Sí: el campo vacío no está en error ni al vaciarse ni tras confirmar, y el aviso queda a 41 px (1440) y 58 px (390) del campo, sin controles en medio.
+10. **Motivo de rechazo:** ninguno MAYOR. Reservas: H5C-01 y H5C-02.
+
+#### G2 · Aseguradora, tocada y al avanzar, en claro
+
+Capturas: `corregida-aseguradora-3-tocada-1440-claro.png`, `corregida-aseguradora-4-al-avanzar-1440-claro.png`, `corregida-aseguradora-3-tocada-390-claro.png` y `corregida-aseguradora-4-al-avanzar-390-claro.png`. Las `-3` y `-4` de cada ancho tienen el mismo contenido salvo el encuadre del plano.
+
+1. **Lo primero que se ve mal:** dos mensajes para un mismo hecho: el rojo «Escribí la dirección (hasta 300 caracteres).» y, debajo del rótulo del mapa, el aviso «Volvé a escribir la dirección para este punto.». Ahora el rojo llega después de una acción de la persona, que es lo que la decisión pide, y el aviso sigue al lado como pide el criterio. No se registra como defecto.
+2. **Texto cortado o solapado:** a 1440 la botonera de la maqueta queda junto a «Atrás», sin taparlo. A 1440 el título de la página y «Paso 2 de 8» quedan fuera del encuadre; se ve el subtítulo «Lo que la plataforma necesita para facturarle y ubicarla.» (H5C-E5). A 390 no hay cortes.
+3. **¿Terminado o prototipo?** Terminado. El error usa la molécula de campo del sistema.
+4. **Coherencia con el producto:** el borde y el mensaje de error son los mismos que en las centrales (G5).
+5. **Tema oscuro:** no aplica (G3).
+6. **¿El estado orienta?** Sí. El error dice qué falta y el aviso dice por qué quedó vacío.
+7. **Jerarquía:** la vista va al campo en rojo, que es lo que hay que resolver. Correcto.
+8. **Datos:** igual que G1.
+9. **¿Muestra el requisito?** Sí: tocar el campo lo marca (`-3`) e intentar avanzar lo marca sin dejar pasar (`-4`; a 390 se ve «Paso 2 de 8»). El NIT lleno sigue sin rojo, así que el único rojo es la dirección.
+10. **Motivo de rechazo:** ninguno del cambio.
+
+#### G3 · Aseguradora en oscuro
+
+Capturas: `corregida-aseguradora-{1-vaciada,2-confirmada,3-tocada,4-al-avanzar}-1440-oscuro.png`.
+
+1. **Lo primero que se ve mal:** en `-3` y `-4` el mensaje de error se lee muy tenue sobre la tarjeta oscura; el README lo mide en 2,99:1 (H5C-H1, heredado, MAYOR). El plano sigue en colores claros y encandila (H5-08, heredado).
+2. **Texto cortado o solapado:** la atribución del mapa es ilegible y «Iniciá sesión» casi no se lee (H5-08). La botonera de la maqueta tapa «¿Es acá donde está la casa…» en `-1`.
+3. **¿Terminado o prototipo?** Lo propio del cambio se ve terminado: el campo vacío sin rojo y el aviso con los tokens oscuros.
+4. **Coherencia con el producto:** coherente con las centrales en oscuro (G6).
+5. **Tema oscuro:** el aviso se lee bien (fondo verde azulado, texto claro). El borde rojo se distingue en `-3` y `-4`, pero su mensaje no (H5C-H1). El asterisco de «Dirección *» también queda tenue (heredado). El pin oscuro se ve mejor que en claro.
+6. **¿El estado orienta?** En `-1` y `-2` sí. En `-3` y `-4` la orientación depende de un mensaje de bajo contraste (heredado).
+7. **Jerarquía:** «Confirmar dirección actual» y «Siguiente» en aguamarina destacan. Correcto.
+8. **Datos:** igual que G1.
+9. **¿Muestra el requisito?** Sí, en las cuatro: sin rojo al vaciar y al confirmar; rojo al tocar y al avanzar; aviso junto al campo.
+10. **Motivo de rechazo:** solo heredados (H5C-H1, H5-08).
+
+#### G4 · Centrales de laboratorio e imagenología, vaciada y confirmada, en claro
+
+Capturas: `corregida-laboratorio-central-{1-vaciada,2-confirmada}-{1440-claro,390-claro}.png` y `corregida-imagenologia-central-{1-vaciada,2-confirmada}-{1440-claro,390-claro}.png`. Las de laboratorio e imagenología son iguales salvo el título, el número de paso y «tu laboratorio» / «tu centro».
+
+1. **Lo primero que se ve mal:** el campo vacío muestra en gris «Av. Cañoto esq. Ballivián 234, Zona Central», que de un vistazo parece escrito (H5-06, sigue). El pin casi no se ve (H5-07).
+2. **Texto cortado o solapado:** a 390 el ejemplo se corta («Zona C…»), como antes del cambio. A 1440 la botonera de la maqueta tapa «Sin el punto, tu laboratorio/centro…» y el botón circular de volver.
+3. **¿Terminado o prototipo?** Terminado. Sin el rojo, el estado deja de verse «sin resolver», que era la queja de H5-01.
+4. **Coherencia con el producto:** coherente con la aseguradora corregida y con las sucursales: el mismo gesto ya no produce error en un paso y no en otro.
+5. **Tema oscuro:** no aplica (G6).
+6. **¿El estado orienta?** Sí. Siguen varias ayudas alrededor del mapa (H5-04). A 390 debajo de la tarjeta aparece «Tus datos están a salvo» con «Tu información clínica la ve el profesional que te atiende, nadie más.», un texto de paciente en el alta de una empresa (H5C-H2, heredado).
+7. **Jerarquía:** en `-1` la acción es «Confirmar dirección actual»; en `-2`, la flecha de avanzar. Correcto.
+8. **Datos:** ejemplos de calle pública. No hay datos personales.
+9. **¿Muestra el requisito?** Sí: vacío sin rojo, al vaciar y al confirmar, en los dos anchos.
+10. **Motivo de rechazo:** ninguno MAYOR. Reservas H5-04, H5-05, H5-06 y H5C-01.
+
+#### G5 · Centrales, tocada y al avanzar, en claro
+
+Capturas: `corregida-laboratorio-central-{3-tocada,4-al-avanzar}-{1440-claro,390-claro}.png` y `corregida-imagenologia-central-{3-tocada,4-al-avanzar}-{1440-claro,390-claro}.png`.
+
+1. **Lo primero que se ve mal:** nada nuevo. El borde y el mensaje rojos conviven con el ejemplo en gris dentro del campo; en rojo, el ejemplo con forma de dirección confunde algo más (H5-06).
+2. **Texto cortado o solapado:** a 1440, en `-4`, la página se desplazó unos 29 px; título y paso siguen visibles. La botonera de la maqueta tapa el botón circular de volver.
+3. **¿Terminado o prototipo?** Terminado.
+4. **Coherencia con el producto:** coherente con la aseguradora (G2).
+5. **Tema oscuro:** no aplica (G6).
+6. **¿El estado orienta?** Sí: «Escribí la dirección legal de la central.» y el aviso al lado.
+7. **Jerarquía:** la vista va al campo en rojo.
+8. **Datos:** igual que G4.
+9. **¿Muestra el requisito?** Sí: rojo solo tras tocar el campo o pulsar avanzar; en `-4` se ve que sigue en «Dónde está la central» («Paso 4 de 10» y «Paso 5 de 11»).
+10. **Motivo de rechazo:** ninguno del cambio.
+
+#### G6 · Centrales en oscuro
+
+Capturas: `corregida-laboratorio-central-{1..4}-*-1440-oscuro.png` y `corregida-imagenologia-central-{1..4}-*-1440-oscuro.png`.
+
+1. **Lo primero que se ve mal:** el mensaje de error tenue en `-3` y `-4` (H5C-H1) y el plano claro que encandila (H5-08). La atribución del mapa es ilegible en las centrales pero legible en las sucursales en oscuro (G7), con el mismo componente (heredado).
+2. **Texto cortado o solapado:** la botonera de la maqueta tapa «Sin el punto…» y el botón de volver.
+3. **¿Terminado o prototipo?** Terminado en lo propio del cambio.
+4. **Coherencia con el producto:** idéntico a la aseguradora en oscuro.
+5. **Tema oscuro:** el aviso y el campo vacío se leen bien; el mensaje de error, no (heredado).
+6. **¿El estado orienta?** Igual que G3.
+7. **Jerarquía:** correcta.
+8. **Datos:** igual que G4.
+9. **¿Muestra el requisito?** Sí en las ocho.
+10. **Motivo de rechazo:** solo heredados.
+
+#### G7 · Sucursales de laboratorio e imagenología (regresión)
+
+Capturas: `corregida-laboratorio-sucursal-{1-vaciada,2-confirmada}-{1440-claro,390-claro,1440-oscuro}.png` y `corregida-imagenologia-sucursal-{1-vaciada,2-confirmada}-{1440-claro,390-claro,1440-oscuro}.png`.
+
+1. **Lo primero que se ve mal:** en la tarjeta «Sucursal 1» conviven dos ⊖ con funciones distintas: el de quitar la sucursal (arriba a la derecha, sin rótulo) y «⊖ Quitar la ubicación» (ahora con rótulo). El pin casi no se ve en claro.
+2. **Texto cortado o solapado:** a 390 la atribución del mapa se parte en dos renglones y «contributors» cae sobre el borde inferior del plano; «Volver a ubicarme» y «Quitar la ubicación» quedan cada uno en su renglón con mucho aire (H5C-H3, heredado). A 1440, en `-2`, el campo de la dirección queda fuera del encuadre y la botonera de la maqueta tapa «Tus datos están a salvo».
+3. **¿Terminado o prototipo?** A 1440, terminado. A 390, la pila de tres botones con separación desigual se ve menos acabada (heredado).
+4. **Coherencia con el producto:** el aviso sigue dentro de la tarjeta, pegado a su campo. Coherente.
+5. **Tema oscuro:** el aviso y la tarjeta usan bien los tokens oscuros; aquí la atribución sí se lee.
+6. **¿El estado orienta?** Sí. Como el campo es opcional, no hay rojo, igual que antes del cambio.
+7. **Jerarquía:** correcta.
+8. **Datos:** «Sucursal Equipetrol» y «Av. San Martín 456» son ejemplos del campo; el nombre de la sucursal también está vacío porque el recorrido no lo escribe.
+9. **¿Muestra el requisito?** Para la regresión, sí: la sucursal se vacía sin rojo y con su aviso, en las tres celdas. A 390 la `-2` sí muestra el campo vacío tras confirmar, lo que cierra en ese ancho lo que H5-E2 señalaba.
+10. **Motivo de rechazo:** ninguno del cambio. Las `-2` de 1440 de laboratorio e imagenología son idénticas byte a byte (H5C-E2).
+
+### Hallazgos
+
+#### Defectos del cambio
+
+| ID | Severidad | Origen | Descripción | Captura o `ruta:línea` |
+|---|---|---|---|---|
+| H5C-01 | MENOR | Del cambio (en la aseguradora); en las centrales viene de H5, misma familia que H5-12 | Entre el campo y el aviso quedan la ayuda del campo y el rótulo del mapa: «Ubicación de la casa matriz en el mapa (opcional)», que a 390 ocupa dos renglones, o «Ubicación en el mapa (opcional)». El aviso se lee como encabezado del bloque del mapa más que como nota del campo. Cumple el criterio («se lee junto al campo»: 41 px a 1440, 37–58 px a 390, sin controles en medio), pero no está «pegado» como dice el README. La comprobación del guion solo cuenta `input`, `select` y `textarea`, así que no ve el rótulo (`playwright/mapa-vacia-direccion.mjs:156`) | `corregida-aseguradora-1-vaciada-390-claro.png`, `corregida-*-central-1-vaciada-*` |
+| H5C-02 | MENOR | Del cambio | Al mover el mapa, «Nombre comercial (opcional)» queda al final de la página, separado del NIT por todo el bloque de ubicación (unos 700 px a 1440) y fuera del primer pliegue en `-1`. Es opcional y el orden nuevo agrupa bien la ubicación, pero es un campo de identidad, no de ubicación. Conviene que producto lo confirme | `corregida-aseguradora-1-vaciada-1440-claro.png` (no se ve), `corregida-aseguradora-2-confirmada-1440-claro.png`; `src/app/features/auth/register-organization/register-organization.ts:575` y `:599` |
+| H5C-03 | MENOR | Del cambio. Según el código, no observado | En países con varias zonas horarias, «Zona horaria de la casa matriz», que es obligatoria, pasa a ir después del mapa. Un rechazo por zona vacía queda debajo de un plano de unos 320 px. Ninguna captura ni ningún spec recorre un país multizona; el README lo declara no cubierto | `src/app/features/auth/register-organization/register-organization.ts:584-597` |
+
+#### Heredados (no cuentan para la nota)
+
+| ID | Severidad | Hallazgo | Capturas o `ruta:línea` |
+|---|---|---|---|
+| H5C-H1 | MAYOR | En tema oscuro el mensaje de error del campo se lee muy tenue. El README lo mide en 2,99:1, por debajo del 4,5:1 de AA; en la imagen se confirma que se ve apagado. El color es un tono fijo de la rampa y no el token de estado que cambia con el tema. Importa más ahora: en oscuro, el rojo que aparece al tocar o al avanzar es la señal principal, y es la que menos se lee. La molécula es compartida y este cambio no la toca | Las seis `-3-tocada` y `-4-al-avanzar` en `1440-oscuro`; `src/app/shared/components/molecules/form-field/form-field.css:149` |
+| H5C-H2 | MENOR | «Tus datos están a salvo» dice «Tu información clínica la ve el profesional que te atiende, nadie más.» en el alta de un laboratorio o de un centro de imagenología, donde quien se registra es una empresa, no un paciente | Todas las capturas a 390 de laboratorio e imagenología y las `-sucursal-2` a 1440; `src/app/shared/components/organisms/registro-ayuda/registro-ayuda.html:31` |
+| H5C-H3 | MENOR | A 390, dentro de la tarjeta de la sucursal, la atribución del mapa se parte en dos renglones y los botones «Volver a ubicarme» y «Quitar la ubicación» quedan apilados con mucho aire, alineados unos 14 px más adentro que la columna | `corregida-*-sucursal-{1,2}-390-claro.png` |
+| H5C-H4 | MENOR | Según el código, no observado: el aviso no forma parte de la descripción accesible del campo. `describedBy` solo junta el error, la ayuda y la descripción del propio campo, y el aviso vive en el campo del mapa. Quien vuelve con lector de pantalla al campo vacío oye su rótulo y su ayuda, no el aviso; el aviso se anunció una sola vez, al aparecer. Viene de H5, no de esta microtarea | `src/app/shared/components/molecules/form-field/form-field.ts:104-113`; `src/app/features/auth/register-organization/register-organization.html:67-79` |
+
+Estado de los hallazgos abiertos de la ronda anterior, visto en estas capturas:
+
+| ID | Estado | Nota |
+|---|---|---|
+| H5-04 (varias ayudas alrededor del mapa) | SIGUE | Todas las `-2` y `-1` |
+| H5-05 (la confirmación solo se percibe porque desaparece el botón) | SIGUE | Todas las `-2`; el pin no cambia de aspecto visible entre `-1` y `-2` |
+| H5-06 (el ejemplo en gris parece una dirección escrita) | SIGUE en las centrales y sucursales; no aplica en la aseguradora, cuyo campo no tiene ejemplo | `corregida-*-central-*`, `corregida-*-sucursal-*` |
+| H5-07 (pin casi invisible en claro) | SIGUE (heredado) | Todas las claras |
+| H5-08 (plano claro en oscuro, atribución e «Iniciá sesión» ilegibles) | SIGUE (heredado) | Todas las oscuras de la aseguradora y las centrales |
+| H5-09 (fila «Volver a ubicarme ⊖» sangrada, ⊖ sin rótulo) | CAMBIA (heredado) | El ⊖ ahora dice «Quitar la ubicación». Viene de otro cambio del carril (los botones del mapa con ícono y nombre), no de H5.S2.M6. Siguen el sangrado de unos 14 px y, en las sucursales, el ⊖ sin rótulo de la tarjeta junto al que ahora tiene nombre |
+| H5-11 (botonera flotante de la maqueta tapa contenido) | SIGUE a 1440 (heredado); no aparece a 390 | Casi todas las de 1440 |
+| H5-E2 (confirmadas con el campo fuera del encuadre) | CAMBIA | Resuelto a 390 (página entera). Sigue a 1440 en las `-sucursal-2` |
+
+#### Defectos de la evidencia
+
+| ID | Severidad | Hallazgo | Qué hace falta |
+|---|---|---|---|
+| H5C-E1 | MENOR | El orden de la página de la aseguradora cambió y solo hay 1440 y 390. La norma del repo pide cinco viewports para páginas y admite uno solo con justificación escrita (la regla de evidencia visual del repo). El README lista 768, 1024 y 1920 como no mirados, pero no da la justificación. Según el código, la página es de una columna en todos los anchos (sin `disposicion` y con campos que ocupan la fila entera, `src/app/shared/components/organisms/paginated-form/paginated-form.css:71-84`), así que el riesgo de responsive es bajo. Además, la celda de escritorio se tomó a 1440×1000 y no a 1440×900 | Escribir esa justificación en el README y en el reporte, o sumar las capturas de 768, 1024 y 1920 de la aseguradora, antes del PR |
+| H5C-E2 | MENOR | `corregida-laboratorio-sucursal-2-confirmada-1440-claro.png` y `corregida-imagenologia-sucursal-2-confirmada-1440-claro.png` son idénticas byte a byte (mismo hash), y lo mismo pasa con sus versiones `1440-oscuro`. La imagen no permite saber de qué alta sale cada una, y el campo queda fuera del encuadre | Encuadrar la `-2` de 1440 con el título, el paso y el campo, como a 390 |
+| H5C-E3 | MENOR | Las capturas de antes (`despues-*`) son anteriores al cambio que puso nombre a los botones del mapa. Entre el antes y el después hay diferencias que no son de H5.S2.M6, como «⊖» frente a «⊖ Quitar la ubicación». El README no lo aclara y dice «igual que antes del cambio» para las sucursales | Una línea en el README que diga que la base de las `despues-*` es anterior |
+| H5C-E4 | MENOR | Las tres salidas del guion no registran ni el ancho ni el tema. `navegador-h5s2m6-1440-oscuro.txt` tiene el mismo texto que `navegador-h5s2m6-1440-claro.txt`, y solo el nombre del archivo lo liga al oscuro; las imágenes lo corroboran | Que el guion imprima la celda (`CELDA`, `playwright/mapa-vacia-direccion.mjs:37`) en su salida |
+| H5C-E5 | MENOR | En `corregida-aseguradora-4-al-avanzar-1440-{claro,oscuro}.png` el título «Datos de la aseguradora» y «Paso 2 de 8» quedan fuera del encuadre. Que la página no avanzó se sostiene con la comprobación «y no deja pasar de página» y con la captura de 390, no con la de 1440 | Encuadre que incluya el título |
+
+### Afirmaciones del README que no se sostienen
+
+1. Línea 99–100: «a 390, 58 px en la aseguradora (su ayuda ocupa dos renglones)». La causa no es esa. El pie que mide el guion es el del `app-form-field` e incluye la ayuda del campo (`playwright/mapa-vacia-direccion.mjs:162`). Los 21 px de diferencia con las centrales son el segundo renglón del rótulo del mapa, «Ubicación de la casa matriz en el mapa (opcional)», que a 390 se parte y el de las centrales no. Medido sobre `corregida-aseguradora-1-vaciada-390-claro.png`: la ayuda termina cerca de y=606, el rótulo ocupa y≈620–660 y el aviso empieza cerca de y=665. En `corregida-laboratorio-central-1-vaciada-390-claro.png`, rótulo de un renglón y 37 px.
+2. Línea 126: «el aviso en dos renglones justo después de la ayuda del campo». Entre la ayuda y el aviso está el rótulo del mapa, en dos renglones (misma captura).
+3. Línea 110: «el aviso en la línea siguiente, sobre el mapa». A 1440 entre el campo y el aviso están la ayuda y el rótulo del mapa (`corregida-aseguradora-1-vaciada-1440-claro.png`). Es «cerca y sin controles en medio», no «la línea siguiente».
+4. Línea 118: «igual que antes del cambio» (sucursal). Se sostiene para el comportamiento (sin rojo, aviso debajo). No se sostiene para la imagen: los botones del mapa cambiaron por otro cambio del carril (H5C-E3).
+5. Línea 113: «sigue en «Datos de la aseguradora»». La captura de 1440 no lo muestra (H5C-E5). Lo sostienen el guion y la captura de 390.
+
+Se sostienen contra las imágenes y las salidas: sin rojo al vaciar ni al confirmar; rojo al tocar y al avanzar; «Nombre comercial» debajo del mapa; «0 controles en medio»; 41 px a 1440 en las tres altas; 85/85 por celda (3 × 21 comprobaciones de las direcciones obligatorias + 2 × 10 de las sucursales + 2 globales; coincide por aritmética con el 85 de la corrida original, que era otro recorrido); consola y red sin errores con 0 avisos de CSP excluidos; y la reserva del mensaje tenue en oscuro.
+
+Fuera del material pedido, pero se encontró al verificar el criterio: `PLAN.md:322` sigue en `EN CURSO` con «sin correr todavía», y el `REPORTE.md` (sección H5.S2.M6) dice «nada verificado todavía». Las salidas de specs y guion ya existen. Hay que actualizarlos antes de cerrar.
+
+### Specs y guion: qué prueban y qué no
+
+- Specs, rojo sin el arreglo y verde con él (`specs-h5s2m6-rojo-sin-arreglo.txt`: 4 fallidas de 113; `specs-h5s2m6-verde.txt`: 113/113). Discriminan el arreglo las tres «la deja vacía sin marcarla en rojo, aunque la persona ya la hubiera tocado» (`register-organization.spec.ts:646`, `register-laboratory.spec.ts:322`, `register-imaging-center.spec.ts:368`) y «el aviso queda junto a «Dirección»: el mapa es el campo siguiente» (`register-organization.spec.ts:657`). Las de «tocarla después» y «intentar avanzar» pasan con y sin el arreglo: vigilan que el arreglo no apague de más, y es correcto que no discriminen. Los specs emiten `puntoElegido` directo sobre el selector de ubicación; no ejercitan un toque real sobre el plano.
+- Guion: las comprobaciones nuevas (`playwright/mapa-vacia-direccion.mjs:196-205`, `:221-223`, `:235-267`) miden «rojo» como `aria-invalid="true"` o la presencia de `.form-field-error` (`:143-149`). Con eso el «sin rojo» cubre el borde y el mensaje de la molécula. «Único rojo de la página» solo cuenta `.form-field-error` (`:258-261`). «Sin otro control en medio» no ve rótulos ni botones (H5C-01). La espera de teselas se traga su propio vencimiento (`:106-113`, `.catch(() => {})`); en estas 48 imágenes el plano está completo.
+
+### No cubierto
+
+- 768×1024, 1024×768 y 1920×1080 en las tres altas, y el tema oscuro a 390 (H5C-E1).
+- La aseguradora en un país con varias zonas horarias, donde la zona queda debajo del mapa (H5C-03).
+- Lo que una imagen no muestra: `aria-invalid`, el anuncio de la región viva, la descripción accesible del campo (H5C-H4), a dónde va el foco tras pulsar «Siguiente» sin reescribir, y el orden de tabulación nuevo en la aseguradora (Dirección → controles del mapa → Nombre comercial).
+- Volver a la página después de haber pasado de ella, y el vaciado por «Volver a ubicarme» (GPS) en lugar de un toque sobre el plano.
+- No se revisaron las salidas de tipos, lint ni compilación de este cambio.
+
+---
+
+<!-- Ronda 7 -->
+
+## Segunda pasada visual, repetida: H5.S2.M6
+
+- Fecha: 2026-09-24
+- Qué se repite: la segunda pasada de H5.S2.M6 («Direcciones obligatorias sin rojo al vaciar, aviso junto al campo»), sobre las capturas que se volvieron a tomar después de la primera ronda. El código de producto de las tres altas no cambió: el diff de `register-organization.ts`, `register-laboratory.ts` y `register-imaging-center.ts` tiene el mismo texto que en la ronda 1. Cambiaron el guion, las capturas, un spec y el README.
+- Material revisado:
+  - Las 60 capturas `corregida-*.png` de `docs/frontend/evidence/mapa-vacia-direccion-2026-09-23/`. Se abrieron como imagen las 60; las 12 de 1920, 1024 y 768 son nuevas.
+  - `docs/frontend/evidence/mapa-vacia-direccion-2026-09-23/README.md`, secciones «Direcciones obligatorias: corrección del 24/09» y «No cubierto», completas.
+  - En `docs/trabajo/2026-09-23-perfil-medico-configurar-tu-perfil/evidencia/h5/`: las siete salidas `navegador-h5s2m6-*.txt` (incluida `-1440-oscuro-laboratorio-repetido`), `capturas-h5s2m6-sin-blancos.txt`, `specs-h5s2m6-rojo-multizona.txt` y `specs-h5s2m6-verde.txt`.
+  - El guion `playwright/mapa-vacia-direccion.mjs` en su estado actual (función `capturar`, `playwright/mapa-vacia-direccion.mjs:102-126`) y el spec nuevo de `src/app/features/auth/register-organization/register-organization.spec.ts:665-679`.
+- Método: segunda pasada adversarial, con las diez preguntas de `critical-double-review` §3 por grupo de capturas equivalentes (el agrupamiento se declara en cada grupo) y severidad por hallazgo. Se arrastra cada hallazgo de la ronda 1 con `CERRADO`, `SIGUE` o `CAMBIA`.
+- Límite del método: solo se miraron imágenes y se leyeron archivos; no se ejecutó nada. En una imagen no se ven `aria-invalid`, el anuncio de la región viva, la descripción accesible, el foco ni la posición en la que queda la página tras pulsar «Siguiente». Lo que solo sale del código o de las fechas de los archivos se marca así («según el código» o «según las fechas de los archivos»). Las medidas en píxeles son de las salidas del guion; las que se estiman sobre la imagen se dan con ±3 px.
+- Regla de nota:
+  - `RECHAZADA`: queda algún BLOQUEANTE o MAYOR del cambio o del requisito.
+  - `ACEPTABLE CON RESERVAS`: solo quedan MENOR del cambio.
+  - `APROBADA`: no quedan hallazgos abiertos.
+  - Los heredados y los defectos de la evidencia se listan aparte y no cuentan para la nota; los de evidencia se resuelven antes del PR. Ante la duda, la nota más baja.
+
+### Resumen de notas
+
+| Pantalla | Nota | Motivo |
+|---|---|---|
+| Alta de la aseguradora (casa matriz, «Datos de la aseguradora») | ACEPTABLE CON RESERVAS | H5-01 y H5-02 siguen cerrados, ahora en seis celdas (1920, 1440, 1024, 768 y 390 en claro; 1440 en oscuro). Quedan MENOR del cambio: H5C-01, H5C-02, H5C-03 y H5C-04 (nuevo, según el código), más H5-04 y H5-05 |
+| Alta del laboratorio: paso de la central | ACEPTABLE CON RESERVAS | Sin rojo al vaciar ni al confirmar; rojo al tocar y al avanzar, en las tres celdas. Quedan MENOR: H5C-01, H5-04, H5-05 y H5-06 |
+| Alta de imagenología: paso de la central | ACEPTABLE CON RESERVAS | Igual que el laboratorio |
+| Sucursales de laboratorio e imagenología (regresión) | ACEPTABLE CON RESERVAS | Sin regresión en las tres celdas. Siguen H5-04, H5-05 y H5-06 |
+
+Ninguna pantalla queda `RECHAZADA`: no aparece ningún BLOQUEANTE ni MAYOR del cambio. El MAYOR heredado H5C-H1 sigue visible en las capturas oscuras «tocada» y «al avanzar», y se suma un posible MAYOR heredado, H5C-H5, según el código y no observado. Ninguno cuenta para la nota. Antes del PR quedan dos defectos de evidencia por corregir: dos filas del README contradicen sus imágenes (H5C-E6) y los gates no corrieron sobre el árbol final (H5C-E8).
+
+### Estado de los hallazgos anteriores
+
+| ID | Sev. | Estado | Qué lo sostiene |
+|---|---|---|---|
+| H5-01 (el vaciado pone el campo en rojo) | MAYOR | **CERRADO** (sigue cerrado) | Las 30 capturas «vaciada» y «confirmada» de las direcciones obligatorias, en las seis celdas, muestran el campo con borde neutro y su ayuda. Las cuatro nuevas de 1920/1024/768 lo confirman: `corregida-aseguradora-{1,2}-{1920,1024,768}-claro.png` |
+| H5-02 (aviso a ~200 px con «Nombre comercial» en medio) | MAYOR | **CERRADO** (sigue cerrado) | Sin controles en medio, a 37–58 px según la celda (salidas del guion: 37 a 1440 y 1024, 41 a 1920 y 768, 58 a 390). Se ve en `corregida-aseguradora-1-vaciada-{1920,1440,1024,768,390}-claro.png` |
+| H5C-01 (ayuda y rótulo del mapa entre el campo y el aviso) | MENOR | **SIGUE** | Declarado en el README como MENOR aceptado. En todas las «vaciada» |
+| H5C-02 («Nombre comercial» al final, lejos del NIT) | MENOR | **SIGUE** | Declarado «a confirmar con producto». A 1920 se ve la página entera, con «Nombre comercial» debajo del mapa (`corregida-aseguradora-1-vaciada-1920-claro.png`). Ver también H5C-04 |
+| H5C-03 (zona horaria obligatoria debajo del mapa en países multizona) | MENOR | **CAMBIA** | El spec nuevo cubre la otra mitad del problema: que el mapa quede pegado a «Dirección» también en un país multizona (`register-organization.spec.ts:665-679`). Que la zona obligatoria quede debajo del mapa sigue igual y sin captura. Además, el spec no prueba que haya recorrido el caso multizona (H5C-E7) |
+| H5C-H1 (contraste del mensaje de error en oscuro) | MAYOR, heredado | **SIGUE** | `corregida-*-{3-tocada,4-al-avanzar}-1440-oscuro.png`. Ahora el README lo declara |
+| H5C-H2 (texto de paciente en el alta de empresas) | MENOR, heredado | **SIGUE** | Capturas de 390 y las de sucursal «confirmada» a 1440. Ahora el README lo declara |
+| H5C-H3 (a 390, atribución en dos renglones y botones apilados en la sucursal) | MENOR, heredado | **SIGUE** | `corregida-*-sucursal-{1,2}-390-claro.png`. El README lo describe como observación, no como hallazgo |
+| H5C-H4 (el aviso no forma parte de la descripción accesible del campo) | MENOR, heredado | **SIGUE** (según el código) | Ahora el README lo declara |
+| H5C-E1 (faltaban 768/1024/1920 y su justificación) | MENOR | **CERRADO** | Hay 12 capturas nuevas de la aseguradora a 1920, 1024 y 768, y una justificación escrita para no tomarlas en las centrales (README, «No cubierto»). Las celdas usan los altos del repo (`playwright/mapa-vacia-direccion.mjs:37`) |
+| H5C-E2 (las «confirmada» de sucursal a 1440, idénticas) | MENOR | **CAMBIA** | Siguen idénticas byte a byte, en claro y en oscuro (hashes iguales), y el campo sigue fuera del encuadre. Ahora el README lo declara y lo explica. Queda como residuo MENOR: esas dos imágenes no prueban por sí mismas de qué alta salen; a 390 sí se ve |
+| H5C-E3 (las capturas de antes son previas al cambio de los botones) | MENOR | **CERRADO** | Declarado en el README |
+| H5C-E4 (la salida del guion no decía la celda) | MENOR | **CERRADO** | Las siete salidas empiezan con `celda: <ancho>×<alto> · tema … · recorridos …` |
+| H5C-E5 («al avanzar» a 1440 sin título) | MENOR | **CERRADO** | «Datos de la aseguradora» y «Dónde está la central» a la vista en todas las «tocada» y «al avanzar» de escritorio. El contador de pasos no se ve a 1440/1920/1024 (declarado); a 768 y 390 sí. Ver H5C-E9, que sale de cómo se resolvió |
+| Afirmación del README sobre los 58 px | — | **CERRADO** | Corregida: se debe al rótulo del mapa partido en dos renglones |
+| Afirmaciones «justo después de la ayuda» y «la línea siguiente» | — | **CERRADO** | Corregidas: la tabla dice que debajo del campo van su ayuda, el rótulo del mapa y el aviso |
+| Afirmación «igual que antes del cambio» (sucursales) | — | **CERRADO** | Ya no se dice de las sucursales. Sigue en la línea 145 para el ejemplo cortado a 390, sin una captura de antes a 390 (ver H5C-E6) |
+| Afirmación «sigue en Datos de la aseguradora» sin la imagen | — | **CERRADO** | El título se ve en `corregida-aseguradora-4-al-avanzar-1440-claro.png` |
+| Estado viejo en `PLAN.md`/`REPORTE.md` (fuera del material pedido) | — | **SIGUE** | `REPORTE.md:92` sigue diciendo «nada verificado todavía» y `REPORTE.md:98` «nada de esto corrió». Además, `PLAN.md:322` dice «sin correr todavía» |
+| H5-04, H5-05, H5-06 | MENOR | **SIGUE** | Todas las «confirmada» (H5-04 y H5-05); el ejemplo en gris de las centrales y las sucursales (H5-06) |
+| H5-07, H5-08, H5-11 | heredados | **SIGUE** | El pin claro casi no se ve; en oscuro, el plano encandila y la atribución e «Iniciá sesión» no se leen; la botonera de la maqueta tapa texto y, a 1024, el pie del bloque del mapa |
+| H5-09 | MENOR, heredado | **SIGUE** | El sangrado de «Volver a ubicarme» sin el botón de confirmar |
+| H5-E2 | MENOR | **CAMBIA** | Resuelto a 390 y en las centrales (con título y campo a la vista). Sigue en las «confirmada» de sucursal a 1440 (H5C-E2) |
+
+### Capturas
+
+| Alta | Estados | Celdas | Archivos |
+|---|---|---|---|
+| Aseguradora («Datos de la aseguradora», paso 2 de 8) | 1-vaciada · 2-confirmada · 3-tocada · 4-al-avanzar | 1920×1080, 1440×900, 1024×768, 768×1024 y 390×844 en claro; 1440×900 en oscuro | `corregida-aseguradora-*` (24) |
+| Laboratorio, central (paso 4 de 10) | los mismos cuatro | 1440×900 claro · 390×844 claro · 1440×900 oscuro | `corregida-laboratorio-central-*` (12; las seis oscuras salen de la repetición) |
+| Imagenología, central (paso 5 de 11) | los mismos cuatro | las mismas tres | `corregida-imagenologia-central-*` (12) |
+| Laboratorio, sucursal (paso 5 de 10) | 1-vaciada · 2-confirmada | las mismas tres | `corregida-laboratorio-sucursal-*` (6) |
+| Imagenología, sucursal (paso 6 de 11) | 1-vaciada · 2-confirmada | las mismas tres | `corregida-imagenologia-sucursal-*` (6) |
+
+A 1920, 1440 y 1024 las capturas son la ventana. En las de direcciones obligatorias, el guion lleva el título del paso al borde superior antes de capturar (`playwright/mapa-vacia-direccion.mjs:109-113`). A 768 y 390 son la página entera. Ninguna de las 60 salió en blanco: se abrieron todas y coincide con `capturas-h5s2m6-sin-blancos.txt`, donde el mínimo es 3,76 %.
+
+### Las diez preguntas, por grupo
+
+#### G1 · Aseguradora a 1920×1080, claro (nuevas)
+
+Capturas: `corregida-aseguradora-{1-vaciada,2-confirmada,3-tocada,4-al-avanzar}-1920-claro.png`.
+
+1. **Lo primero que se ve mal:** el pin, un círculo blanco sobre el plano claro, casi no se ve (H5-07, heredado). Los campos se estiran a unos 1700 px: un NIT de diez dígitos en una caja de ese ancho. Es la regla del cliente de ir «a lo ancho» (regla del cliente del 09/09), no un defecto.
+2. **Texto cortado o solapado:** no hay cortes. La botonera de la maqueta queda sobre el pie, junto a «¿Ya tenés cuenta?», sin taparlo.
+3. **¿Terminado o prototipo?** Terminado. A este ancho la página entera entra en la ventana: título, NIT, «Dirección», aviso, mapa, «Nombre comercial» y la botonera.
+4. **Coherencia con el producto:** es el mismo orden que a 1440, 768 y 390.
+5. **Tema oscuro:** no aplica (no hay oscuro a 1920; declarado).
+6. **¿El estado orienta?** Sí. En «confirmada» se juntan cuatro textos de ayuda alrededor del mapa (H5-04).
+7. **Jerarquía:** en «vaciada» destacan «Confirmar dirección actual» y «Siguiente», ambos en petróleo lleno; están separados por unos 200 px y un campo, y el primero pertenece al bloque del mapa. Es aceptable.
+8. **Datos:** NIT sintético. No se ven datos personales.
+9. **¿Muestra el requisito?** Sí: sin rojo en 1 y 2; rojo con «Escribí la dirección (hasta 300 caracteres).» en 3 y 4; el aviso a 41 px, sin controles en medio. En 4, el título sigue siendo «Datos de la aseguradora».
+10. **Motivo de rechazo:** ninguno del cambio. La afirmación del README sobre esta celda no se sostiene (H5C-E6).
+
+#### G2 · Aseguradora a 1024×768, claro (nuevas)
+
+Capturas: `corregida-aseguradora-{1-vaciada,2-confirmada,3-tocada,4-al-avanzar}-1024-claro.png`.
+
+1. **Lo primero que se ve mal:** la botonera de la maqueta tapa «Si el pin no cayó justo, tocá el mapa…» en 1, 3 y 4, y «Quitar la ubicación» en 2. «Confirmar dirección actual» queda cortado por el borde inferior de la ventana (H5-11 y encuadre).
+2. **Texto cortado o solapado:** además de lo anterior, a este alto no entran «Nombre comercial» ni «Siguiente». Es el tamaño de la ventana, no un defecto.
+3. **¿Terminado o prototipo?** Terminado. El aviso ocupa un renglón.
+4. **Coherencia con el producto:** es el mismo orden que en los demás anchos.
+5. **Tema oscuro:** no aplica.
+6. **¿El estado orienta?** Sí, en lo que entra en la ventana.
+7. **Jerarquía:** la vista va al campo y al aviso. «Siguiente» queda unos 250 px por debajo de la ventana, así que tras pulsarlo el campo en rojo queda arriba, fuera de la vista (H5C-H5, según el código).
+8. **Datos:** igual que G1.
+9. **¿Muestra el requisito?** Sí. En 2, a diferencia de lo que dice el README, «Dirección» sí se ve: vacía y sin rojo, con el título arriba (H5C-E6).
+10. **Motivo de rechazo:** ninguno del cambio.
+
+#### G3 · Aseguradora a 768×1024, claro (nuevas)
+
+Capturas: `corregida-aseguradora-{1-vaciada,2-confirmada,3-tocada,4-al-avanzar}-768-claro.png`, de página entera.
+
+1. **Lo primero que se ve mal:** nada propio del cambio. El pin claro casi no se ve (H5-07).
+2. **Texto cortado o solapado:** no hay cortes ni desborde horizontal. La etiqueta «Demo» cuelga bajo el conmutador de tema, igual que a 390.
+3. **¿Terminado o prototipo?** Terminado. Es la celda más limpia: la página entera, con «Paso 2 de 8».
+4. **Coherencia con el producto:** mismo orden y mismos componentes.
+5. **Tema oscuro:** no aplica.
+6. **¿El estado orienta?** Sí. En 2 siguen los textos redundantes (H5-04).
+7. **Jerarquía:** correcta. «Siguiente» queda a unos 800 px del campo (H5C-H5).
+8. **Datos:** igual que G1.
+9. **¿Muestra el requisito?** Sí, los cuatro estados. El aviso está a 41 px.
+10. **Motivo de rechazo:** ninguno del cambio.
+
+#### G4 · Aseguradora a 1440×900 y 390×844, claro (re-capturadas)
+
+Capturas: `corregida-aseguradora-{1..4}-*-1440-claro.png` y `corregida-aseguradora-{1..4}-*-390-claro.png`.
+
+1. **Lo primero que se ve mal:** a 1440, la botonera de la maqueta tapa el campo «Nombre comercial», al pie de la ventana. A 390 no hay nada nuevo.
+2. **Texto cortado o solapado:** a 1440 el pie queda cortado por la ventana: se ve el rótulo de «Nombre comercial» y el borde de su caja. A 390 no hay cortes: el rótulo del mapa y el aviso ocupan dos renglones cada uno.
+3. **¿Terminado o prototipo?** Terminado.
+4. **Coherencia con el producto:** igual que G1–G3.
+5. **Tema oscuro:** no aplica (G5).
+6. **¿El estado orienta?** Sí (H5-04 en 2).
+7. **Jerarquía:** correcta.
+8. **Datos:** igual que G1.
+9. **¿Muestra el requisito?** Sí. El aviso a 37 px (1440) y 58 px (390).
+10. **Motivo de rechazo:** ninguno del cambio. Reservas H5C-01 y H5C-02.
+
+#### G5 · Aseguradora en oscuro, 1440×900 (re-capturadas)
+
+Capturas: `corregida-aseguradora-{1..4}-*-1440-oscuro.png`.
+
+1. **Lo primero que se ve mal:** en 3 y 4 el mensaje de error se lee tenue (H5C-H1, heredado); el asterisco de «NIT» y el de «Dirección», también. El plano claro encandila y la atribución no se lee (H5-08).
+2. **Texto cortado o solapado:** la botonera de la maqueta tapa «Nombre comercial», como en G4.
+3. **¿Terminado o prototipo?** Lo del cambio, sí: el campo vacío sin rojo y el aviso con los tokens oscuros.
+4. **Coherencia con el producto:** igual que las centrales en oscuro.
+5. **Tema oscuro:** el aviso y el campo se leen; el mensaje de error, no (heredado).
+6. **¿El estado orienta?** En 1 y 2, sí. En 3 y 4 depende de un mensaje de bajo contraste (heredado).
+7. **Jerarquía:** «Confirmar dirección actual» en aguamarina destaca.
+8. **Datos:** igual que G1.
+9. **¿Muestra el requisito?** Sí, en las cuatro.
+10. **Motivo de rechazo:** solo heredados.
+
+#### G6 · Centrales de laboratorio e imagenología en claro, 1440×900 y 390×844 (re-capturadas)
+
+Capturas: `corregida-{laboratorio,imagenologia}-central-{1..4}-*-{1440,390}-claro.png` (16). Laboratorio e imagenología son iguales salvo el título, el paso y «tu laboratorio» / «tu centro».
+
+1. **Lo primero que se ve mal:** el ejemplo en gris «Av. Cañoto esq. Ballivián 234, Zona Central» parece escrito (H5-06).
+2. **Texto cortado o solapado:** a 1440 el título del paso queda pegado al borde superior de la ventana, sin recorte visible. La botonera de la maqueta tapa «El punto es lo que te hace aparecer». A 390 el ejemplo se corta («Zona C…»).
+3. **¿Terminado o prototipo?** Terminado.
+4. **Coherencia con el producto:** la misma disposición que la aseguradora.
+5. **Tema oscuro:** no aplica (G7).
+6. **¿El estado orienta?** Sí (H5-04 en 2). A 390, «Tus datos están a salvo» con el texto de paciente (H5C-H2).
+7. **Jerarquía:** correcta. A 390, la flecha de avanzar queda a unos 800 px del campo (H5C-H5).
+8. **Datos:** ejemplos. No se ven datos personales.
+9. **¿Muestra el requisito?** Sí: sin rojo en 1 y 2, rojo en 3 y 4, el aviso a 37 px. En 4 sigue «Dónde está la central».
+10. **Motivo de rechazo:** ninguno del cambio.
+
+#### G7 · Centrales en oscuro, 1440×900 (re-capturadas; las del laboratorio salen de la repetición)
+
+Capturas: `corregida-{laboratorio,imagenologia}-central-{1..4}-*-1440-oscuro.png` (8).
+
+1. **Lo primero que se ve mal:** el mensaje de error tenue en 3 y 4 (H5C-H1); la atribución ilegible y el plano claro (H5-08).
+2. **Texto cortado o solapado:** la botonera de la maqueta tapa el pie de la ventana.
+3. **¿Terminado o prototipo?** Lo del cambio, terminado. La captura que había salido en blanco ya tiene la tarjeta completa (`corregida-laboratorio-central-1-vaciada-1440-oscuro.png`).
+4. **Coherencia con el producto:** igual que la aseguradora en oscuro.
+5. **Tema oscuro:** igual que G5.
+6. **¿El estado orienta?** Igual que G5.
+7. **Jerarquía:** correcta.
+8. **Datos:** igual que G6.
+9. **¿Muestra el requisito?** Sí, en las ocho.
+10. **Motivo de rechazo:** solo heredados.
+
+#### G8 · Sucursales (regresión), en las tres celdas
+
+Capturas: `corregida-{laboratorio,imagenologia}-sucursal-{1-vaciada,2-confirmada}-{1440-claro,390-claro,1440-oscuro}.png` (12).
+
+1. **Lo primero que se ve mal:** en la tarjeta de la sucursal hay dos ⊖: el de quitar la sucursal, sin rótulo, y el de «Quitar la ubicación» (H5-09).
+2. **Texto cortado o solapado:** a 390, la atribución del mapa se parte y los botones quedan apilados con mucho aire (H5C-H3). A 1440, la botonera de la maqueta tapa «Tu información clínica…».
+3. **¿Terminado o prototipo?** A 1440, terminado. A 390, la pila de botones se ve menos acabada (heredado).
+4. **Coherencia con el producto:** el aviso sigue dentro de la tarjeta, pegado a su campo.
+5. **Tema oscuro:** el aviso y la tarjeta se leen; aquí la atribución sí se lee.
+6. **¿El estado orienta?** Sí. El campo es opcional y no hay rojo, igual que en la ronda 1.
+7. **Jerarquía:** correcta.
+8. **Datos:** ejemplos del campo.
+9. **¿Muestra el requisito?** Para la regresión, sí. Las «confirmada» a 1440 no muestran el campo ni el alta, y las dos son idénticas (H5C-E2); a 390 sí se ven los dos.
+10. **Motivo de rechazo:** ninguno del cambio.
+
+### Hallazgos nuevos
+
+| ID | Severidad | Origen | Descripción | Captura o `ruta:línea` |
+|---|---|---|---|---|
+| H5C-04 | MENOR | Del cambio. Según el código, no observado | En un país con varias zonas horarias, «Datos de la aseguradora» tiene cinco campos y el motor la parte en dos páginas de hasta cuatro (`src/app/shared/forms/paginated/paginar-campos.ts:51`, `MAX_CAMPOS_POR_PAGINA = 4`). Con el orden nuevo, la página «(2 de 2)» queda con un solo campo: «Nombre comercial (opcional)». Antes quedaba sola la del mapa, y el aviso caía en una página distinta que el campo que vaciaba. El cambio corrige eso y a cambio deja un paso entero para un campo opcional. A confirmar con producto junto con H5C-02 | `src/app/features/auth/register-organization/register-organization.ts:563-605` |
+| H5C-H5 | MAYOR, a confirmar en navegador | Heredado. Según el código, no observado | Cuando «Siguiente» rechaza la página, el formulario por páginas marca los campos y no mueve el foco ni desplaza la página hasta el primer error (`src/app/shared/components/organisms/paginated-form/paginated-form.ts:548-549` y `:640-652`). En la aseguradora, «Siguiente» queda a unos 800 px de «Dirección» a 768 y a unos 1000 px a 390, y a 1024×768 queda fuera de la ventana junto con el campo. Quien pulsa «Siguiente» puede no ver que el campo quedó en rojo: solo nota que la página no avanza. El cambio no alarga esa distancia: el mapa ya estaba entre el campo y el botón. Pero es el camino que la decisión de producto usa para mostrar el error | `corregida-aseguradora-1-vaciada-390-claro.png` y `-768-claro.png` (distancias medidas sobre la imagen) |
+
+### Defectos de la evidencia (nuevos)
+
+| ID | Severidad | Hallazgo | Qué hace falta antes del PR |
+|---|---|---|---|
+| H5C-E6 | MENOR | Dos filas del README contradicen sus imágenes. **Línea 139:** «a 1920 … en la 1 y la 2 se ven también el nombre del alta y «Paso 2 de 8»». En `corregida-aseguradora-{1,2}-1920-claro.png` arriba solo está «Datos de la aseguradora»; tampoco se ven «Registrá tu aseguradora» ni el paso, y así lo dice el propio README en las líneas 120–122. **Línea 141:** «`aseguradora-2-confirmada-1024-claro` — sólo muestra el plano para abajo … «Dirección» no entra en la ventana» (con «OK con reserva»). La captura muestra el título, el NIT y «Dirección» vacía y sin rojo; el guion lleva la página arriba antes de cada captura (`playwright/mapa-vacia-direccion.mjs:105`). Las dos filas parecen escritas sobre una corrida anterior. Además, la **línea 145** («igual que antes del cambio», por el ejemplo cortado a 390) no tiene una captura de antes a 390 que la sostenga. Es verosímil, porque el diff no toca el ejemplo, pero no está mostrado | Corregir las líneas 139 y 141 contra las imágenes actuales. En la 145, decir «el ejemplo es el de antes; el diff no lo toca» en vez de «igual que antes» |
+| H5C-E7 | MENOR | El spec nuevo «en un país con varias zonas horarias, el mapa también queda pegado a «Dirección»» (`src/app/features/auth/register-organization/register-organization.spec.ts:665-679`) no comprueba que la zona horaria esté en la página. Su rojo sin el arreglo (`specs-h5s2m6-rojo-multizona.txt`, `:678`) no prueba que haya recorrido el caso multizona: con el orden viejo, un país de zona única también falla, porque entre «Dirección» y el mapa estaba «Nombre comercial». Según el código sí lo recorre (Estados Unidos tiene varias zonas y el país se fija con `setValue`, que dispara `valueChanges`), pero el spec no lo afirma | Una aserción de que `registro-organizacion-zona` está en esa página. De paso, deja fijada la ubicación de la zona respecto del mapa (H5C-03) |
+| H5C-E8 | MENOR | Según las fechas de los archivos, los gates de este cambio corrieron antes de las últimas ediciones. `cierre-h5s2m6-lint.txt` y `cierre-h5s2m6-tipos.txt` son de las 06:33, `cierre-h5s2m6-build.txt` de las 06:46 y `cierre-h5s2m6-suite-cobertura.txt` de las 06:47. Después se editaron `register-organization.spec.ts` (06:48, el spec nuevo) y `playwright/mapa-vacia-direccion.mjs` (06:56), que entra en el typecheck del repo. Además, `register-organization.ts` se reescribió a las 06:52:50 al volver del rojo multizona, después de `specs-h5s2m6-verde.txt` (06:50). Su diff es el mismo texto que en la ronda 1, y las corridas de navegador (06:56–07:00) son posteriores, así que el riesgo es bajo. Pero el verde de specs no es sobre el archivo final (regla 30.4) | Volver a correr lint, tipos y los tres specs sobre el árbol final antes del PR |
+| H5C-E9 | MENOR | Para cerrar H5C-E5, las capturas «tocada» y «al avanzar» de escritorio se toman después de llevar el título al borde superior (`playwright/mapa-vacia-direccion.mjs:109-113`). Así se ve el paso, pero ninguna captura muestra qué ve la persona justo después de pulsar «Siguiente», que es lo que importa para H5C-H5 | Una captura «al avanzar» sin reencuadrar, a 390 o a 1024, tal como queda la página tras el clic. Sirve también como evidencia de H5C-H5 |
+
+### Afirmaciones del README que no se sostienen
+
+1. Línea 139 (1920): «en la 1 y la 2 se ven también el nombre del alta y «Paso 2 de 8»». Es falso en las imágenes y contradice las líneas 120–122 del mismo README (H5C-E6).
+2. Línea 141 (1024, confirmada): «Sólo muestra el plano para abajo … «Dirección» no entra en la ventana». Es falso: la captura muestra «Dirección» vacía y sin rojo. La reserva que se anota ahí («la salida del guion lo dice, no esta captura») ya no hace falta (H5C-E6).
+3. Línea 145: «igual que antes del cambio» (el ejemplo cortado a 390). No hay una captura de antes a 390; se sostiene por el código, no por una imagen.
+
+Lo que sí se sostiene contra las imágenes y las salidas:
+
+- La tabla de celdas: 85/85 en 1440 claro, 390 claro y 1440 oscuro, y 23/23 en 1920, 1024 y 768.
+- La repetición del laboratorio en oscuro: 33/33, y sus seis capturas salen de ella.
+- Consola y red sin errores, con 0 avisos de CSP excluidos, en las siete salidas.
+- 37–41 px de distancia, y 58 px a 390 en la aseguradora por el rótulo del mapa partido en dos renglones.
+- Que ninguna de las 60 capturas salió en blanco.
+- Que las «confirmada» de sucursal a 1440 son idénticas.
+- Que las capturas de antes son previas al cambio de los botones.
+- Los tres MENOR del cambio y los hallazgos ajenos que el README ahora declara.
+- Todas las demás filas de la tabla de capturas.
+
+### No cubierto
+
+- El tema oscuro solo a 1440. No hay oscuro a 390, 768, 1024 ni 1920 en ninguna alta.
+- Las centrales de laboratorio e imagenología a 1920, 1024 y 768 no se capturaron; el README lo justifica.
+- La aseguradora en un país con varias zonas horarias: sin captura. El spec cubre que el mapa quede pegado a «Dirección», pero no la posición de la zona ni que la sección se parta en dos páginas (H5C-03, H5C-04, H5C-E7).
+- Lo que una imagen no muestra: `aria-invalid`, el anuncio de la región viva, la descripción accesible del campo (H5C-H4), el foco y la posición de la página tras pulsar «Siguiente» (H5C-H5, H5C-E9), y el orden de tabulación nuevo en la aseguradora.
+- Volver a la página después de haber pasado de ella, y el vaciado por «Volver a ubicarme» en lugar de un toque sobre el plano.
+- El contenido de las salidas de gates no se revisó; solo sus fechas (H5C-E8).
+
+---
+
+<!-- Ronda 8 -->
+
+## Segunda pasada visual, tercera vez: H5.S2.M6
+
+- Fecha: 2026-09-24
+- Alcance: solo lo que cambió desde la ronda 2. Se revisan las 12 capturas nuevas `4b-tras-siguiente`, las 8 de la aseguradora a 1920 y 1024 que la ronda 2 había marcado, la sección «Direcciones obligatorias: corrección del 24/09» y «No cubierto» del README, y las salidas nombradas por la coordinación.
+- El código de producto no cambió. El diff de `src/app/features/auth/register-organization/register-organization.ts` tiene el mismo hash que en la ronda 1, y el de laboratorio e imagenología tampoco cambió. `register-organization.ts` se reescribió a las 07:21:15, al volver del rojo, con el mismo contenido.
+- Material revisado:
+  - Las 20 capturas de arriba, abiertas como imagen.
+  - `docs/frontend/evidence/mapa-vacia-direccion-2026-09-23/README.md`, líneas 82–185.
+  - En `docs/trabajo/2026-09-23-perfil-medico-configurar-tu-perfil/evidencia/h5/`: `navegador-h5s2m6-*.txt` (seis celdas), `specs-h5s2m6-rojo-multizona.txt`, `specs-h5s2m6-verde.txt`, `cierre-h5s2m6-{lint,tipos,tipos-cypress}.txt` y `capturas-h5s2m6-sin-blancos.txt` (72 líneas).
+  - `playwright/mapa-vacia-direccion.mjs:268-295`, el bloque que toma la vista tras «Siguiente».
+  - `src/app/features/auth/register-organization/register-organization.spec.ts:665-683`.
+- No se volvieron a mirar las otras 52 capturas: las marcas de tiempo muestran que se re-tomaron, pero el pedido acota la ronda. Queda en «No cubierto».
+- Método y regla de nota: los mismos de las rondas 1 y 2. Diez preguntas por grupo, severidad por hallazgo, y estado `CERRADO` / `SIGUE` / `CAMBIA` para lo anterior. Los heredados y los defectos de evidencia no cuentan para la nota. Ante la duda, la nota más baja.
+- Límite: solo se leyeron imágenes y archivos; no se ejecutó nada. Lo que sale del código o de las fechas de los archivos se marca así.
+
+### Resumen de notas
+
+| Pantalla | Nota | Motivo |
+|---|---|---|
+| Alta de la aseguradora (casa matriz) | ACEPTABLE CON RESERVAS | H5-01 y H5-02 siguen cerrados; las capturas de 1920 y 1024 lo confirman otra vez. Quedan los MENOR del cambio H5C-01, H5C-02, H5C-03 y H5C-04, declarados en el README, más H5-04 y H5-05 |
+| Alta del laboratorio: paso de la central | ACEPTABLE CON RESERVAS | Sin cambios respecto de la ronda 2. Quedan H5C-01, H5-04, H5-05 y H5-06, todos MENOR |
+| Alta de imagenología: paso de la central | ACEPTABLE CON RESERVAS | Igual que el laboratorio |
+| Sucursales (regresión) | ACEPTABLE CON RESERVAS | No se volvieron a revisar en esta ronda; se mantiene la nota de la ronda 2 |
+
+H5C-H5 queda observado y sigue como MAYOR **heredado**: el formulario por páginas no lleva la vista ni el foco al campo en rojo, y el cambio no toca ese código. No baja la nota con la regla acordada. Pero si producto decide que «intentar avanzar» tiene que *verse* como un error en todos los anchos, pasa a ser del requisito y las tres altas quedan `RECHAZADA` a 390 y 1024. Lo tiene que decidir producto, no esta revisión.
+
+### Estado de los hallazgos anteriores
+
+| ID | Estado | Qué lo sostiene |
+|---|---|---|
+| H5-01, H5-02 | **CERRADO** (siguen cerrados) | `corregida-aseguradora-{1,2}-{1920,1024}-claro.png`: «Dirección» vacía, sin rojo, y el aviso debajo, sin controles en medio. A 1920 y 768 hay 41 px; a 1024, 37 px (salidas del guion) |
+| H5C-01 | **SIGUE** (MENOR, declarado) | La ayuda y el rótulo del mapa siguen entre el campo y el aviso (README:166-167) |
+| H5C-02 | **SIGUE** (MENOR, declarado, «a confirmar con producto») | README:168-169. A 1920 se ve la página entera, con «Nombre comercial» abajo |
+| H5C-03 | **SIGUE** (MENOR) | La zona obligatoria sigue debajo del mapa en los países multizona; ahora hay un spec, pero no hay captura |
+| H5C-04 | **SIGUE** (MENOR, ahora declarado) | README:171: «la segunda queda con «Nombre comercial» solo». Sigue sin captura |
+| H5C-H1 | **SIGUE** (MAYOR heredado) | README:183-189. Además, en `corregida-aseguradora-4b-tras-siguiente-1440-oscuro.png` el mensaje de error queda en el borde superior de la ventana y casi no se lee: es el primer, y a veces el único, indicio tras «Siguiente» en oscuro |
+| H5C-H2, H5C-H4 | **SIGUE** (heredados, declarados) | README:190-195 |
+| H5C-H3 | **SIGUE** (heredado) | No se volvió a mirar en esta ronda |
+| H5C-H5 | **CAMBIA**: pasa de «según el código» a **observado**. MAYOR heredado | Salidas `ℹ`: a 390 y 1024, «el campo en rojo NO queda a la vista; el foco queda en paginated-form-continuar». Se ve en `corregida-aseguradora-4b-tras-siguiente-{390,1024}-claro.png` y en `corregida-{laboratorio,imagenologia}-central-4b-tras-siguiente-390-claro.png`: el plano, los botones, «Siguiente», y ni el campo ni el aviso. Lo único que cambia en la vista es el globo «Siguiente» sobre la flecha, en las centrales. El README lo declara como hallazgo ajeno con `ruta:línea` (README:176-182) |
+| H5C-E2 | **SIGUE** (MENOR, declarado) | Las dos «confirmada» de sucursal a 1440 siguen idénticas byte a byte, en claro y en oscuro |
+| H5C-E6 | **CERRADO** | README:146 (1920, «desde el título del paso») y README:147 (1024, la 1 y la 2 con «Dirección» vacía sin rojo) coinciden con las imágenes. README:156 ya no dice «igual que antes» |
+| H5C-E7 | **CERRADO** | El spec comprueba que la zona está en la página (`register-organization.spec.ts:673-676`). Su rojo sin el arreglo cae en la aserción del orden (`:682`, `specs-h5s2m6-rojo-multizona.txt`), así que la de la zona pasó con el código viejo: el caso multizona sí se recorre. Verde 114/114 (`specs-h5s2m6-verde.txt`). Según las fechas, el rojo corrió con el archivo sin arreglo (compilado 07:21:02, restaurado 07:21:15) y el verde sobre el archivo final (inicio 07:22:41) |
+| H5C-E8 | **CAMBIA**: queda un residuo MENOR | Lint, tipos de la app y tipos de Cypress salen con `exit=0` sobre el árbol final (07:28–07:29). La parte de Playwright de `yarn typecheck` no corrió, pero su `tsconfig` solo incluye `**/*.ts` con `allowJs: false`, así que no mira el guion `.mjs`. Los tres specs de las altas dan 114/114 sobre el árbol final. La suite completa y el build siguen siendo de las 06:46–06:47, anteriores al último spec. El código de producto que compiló el build es el mismo byte a byte (mismo hash del diff), y el build no compila specs. Queda solo que la suite completa no corrió con el spec final, que ya corrió aparte |
+| H5C-E9 | **CERRADO** | Existen las 12 capturas `4b-tras-siguiente`, tomadas sin volver a encuadrar (`playwright/mapa-vacia-direccion.mjs:285`, sin `capturar`), y las líneas `ℹ` informan la vista y el foco |
+| Estado viejo en `PLAN.md`/`REPORTE.md` | **SIGUE** | `REPORTE.md:92` («nada verificado todavía») y la fila H5.S2.M6 de `PLAN.md:322` («sin correr todavía», `EN CURSO`). Los dos archivos son de las 06:15, anteriores a toda esta evidencia |
+| H5-04, H5-05, H5-06, H5-07, H5-08, H5-09, H5-11 | **SIGUE** | Sin cambio de producto. En las `4b` de 1440 y 1920, la botonera de la maqueta vuelve a tapar el pie (H5-11) |
+
+### Las diez preguntas, por grupo
+
+#### G1 · Aseguradora a 1920 y 1024, estados 1–4 (re-capturadas)
+
+Capturas: `corregida-aseguradora-{1-vaciada,2-confirmada,3-tocada,4-al-avanzar}-{1920,1024}-claro.png`.
+
+1. **Lo primero que se ve mal:** a 1024, la botonera de la maqueta tapa «Si el pin no cayó justo…» y, en 2, «Quitar la ubicación»; «Confirmar dirección actual» queda cortado por el pie de la ventana (H5-11). A 1920, nada propio del cambio.
+2. **Texto cortado o solapado:** a 1024 no entran «Nombre comercial» ni «Siguiente»: es el alto de la ventana, no un defecto. A 1920 no hay recortes.
+3. **¿Terminado o prototipo?** Terminado.
+4. **Coherencia con el producto:** la misma disposición que en 1440, 768 y 390.
+5. **Tema oscuro:** no aplica; no hay oscuro en estos anchos (declarado).
+6. **¿El estado orienta?** Sí: el aviso está a la vista en las cuatro.
+7. **Jerarquía:** correcta.
+8. **Datos:** el NIT es sintético; no hay datos de personas.
+9. **¿Muestra el requisito?** Sí: sin rojo en 1 y 2, rojo con su mensaje en 3 y 4, y el aviso junto al campo. Las filas README:146-148 coinciden con las imágenes.
+10. **Motivo de rechazo:** ninguno del cambio.
+
+#### G2 · `4b` a 1440 y 1920 (aseguradora), claro y oscuro
+
+Capturas: `corregida-aseguradora-4b-tras-siguiente-{1440-claro,1440-oscuro,1920-claro}.png`.
+
+1. **Lo primero que se ve mal:** a 1440, el campo en rojo quedó pegado al borde superior de la ventana (su caja empieza a unos 8 px) y el rótulo «Dirección» queda afuera. Lo que se ve arriba es una caja vacía con borde rojo y el mensaje «Escribí la dirección…». Por eso el mensaje se entiende sin el rótulo.
+2. **Texto cortado o solapado:** el rótulo «Dirección *» queda cortado arriba, a 1440. La botonera de la maqueta tapa el pie a 1440 y a 1920.
+3. **¿Terminado o prototipo?** Terminado.
+4. **Coherencia con el producto:** coherente con las demás capturas.
+5. **Tema oscuro:** a 1440 en oscuro, el mensaje de error en el borde superior se lee tenue (H5C-H1). El borde rojo se distingue.
+6. **¿El estado orienta?** A 1920 sí: se ve toda la página. A 1440, apenas: el error está en el límite de la ventana (ver H5C-E10).
+7. **Jerarquía:** correcta.
+8. **Datos:** sin datos de personas.
+9. **¿Muestra el requisito?** Sí: intentar avanzar marca el campo, y queda a la vista.
+10. **Motivo de rechazo:** ninguno del cambio. La afirmación «a la vista» a 1440 es frágil (H5C-E10).
+
+#### G3 · `4b` de las centrales a 1440, claro y oscuro
+
+Capturas: `corregida-{laboratorio,imagenologia}-central-4b-tras-siguiente-1440-{claro,oscuro}.png`.
+
+1. **Lo primero que se ve mal:** nada nuevo. El globo oscuro «Siguiente» sobre la flecha es el tooltip del botón de solo ícono.
+2. **Texto cortado o solapado:** no. La botonera de la maqueta tapa el pie de la ventana.
+3. **¿Terminado o prototipo?** Terminado.
+4. **Coherencia con el producto:** igual que las `4-al-avanzar`, más el globo.
+5. **Tema oscuro:** el mensaje de error se lee tenue (H5C-H1).
+6. **¿El estado orienta?** Sí: la tarjeta entera entra en 900 px, así que el campo en rojo queda a la vista.
+7. **Jerarquía:** correcta.
+8. **Datos:** son ejemplos.
+9. **¿Muestra el requisito?** Sí.
+10. **Motivo de rechazo:** ninguno del cambio. README:152 atribuye el globo a que «el foco quedó ahí». En la captura el puntero también quedó sobre el botón: el guion captura sin moverlo (`playwright/mapa-vacia-direccion.mjs:285`). La causa no se ve en la imagen (H5C-E12).
+
+#### G4 · `4b` a 390 y 1024 (aseguradora y centrales)
+
+Capturas: `corregida-aseguradora-4b-tras-siguiente-{390,1024}-claro.png`, `corregida-{laboratorio,imagenologia}-central-4b-tras-siguiente-390-claro.png`.
+
+1. **Lo primero que se ve mal:** la persona pulsó «Siguiente» y no pasa nada visible. La página no avanza, el campo en rojo y el aviso están fuera de la ventana, y la vista es la misma que antes del clic. En las centrales solo aparece el globo «Siguiente» (H5C-H5).
+2. **Texto cortado o solapado:** a 1024, la botonera de la maqueta tapa «¿Ya tenés cuenta?».
+3. **¿Terminado o prototipo?** Cada pieza está terminada. El comportamiento se siente roto.
+4. **Coherencia con el producto:** es el comportamiento del formulario por páginas en todas las altas y para cualquier campo obligatorio (README:179-180). Por eso es heredado.
+5. **Tema oscuro:** no hay `4b` oscuro a estos anchos.
+6. **¿El estado orienta?** No: es un error mudo en la ventana visible.
+7. **Jerarquía:** la vista queda en «Siguiente», que no hizo nada visible.
+8. **Datos:** sin datos de personas.
+9. **¿Muestra el requisito?** Solo en parte. El campo queda marcado: lo confirman las comprobaciones, y la `4-al-avanzar` encuadrada lo muestra. Pero la persona no lo ve sin subir por su cuenta.
+10. **Motivo de rechazo:** H5C-H5 (MAYOR heredado). No cuenta para la nota; ver la condición en «Resumen de notas».
+
+#### G5 · `4b` a 768 (aseguradora)
+
+Captura: `corregida-aseguradora-4b-tras-siguiente-768-claro.png`.
+
+1. **Lo primero que se ve mal:** nada. «Dirección *» con su rótulo, el borde rojo y el mensaje quedan a unos 60–120 px del borde superior; el aviso y «Siguiente» también se ven.
+2. **Texto cortado o solapado:** la etiqueta «Demo» de la cabecera queda flotando sobre el rótulo del campo (heredado, de la maqueta).
+3. **¿Terminado o prototipo?** Terminado.
+4. **Coherencia con el producto:** coherente.
+5. **Tema oscuro:** no aplica.
+6. **¿El estado orienta?** Sí.
+7. **Jerarquía:** correcta.
+8. **Datos:** sin datos de personas.
+9. **¿Muestra el requisito?** Sí.
+10. **Motivo de rechazo:** ninguno.
+
+### Hallazgos nuevos
+
+No hay hallazgos nuevos del cambio. Los tres son defectos de evidencia, todos MENOR.
+
+| ID | Severidad | Hallazgo | Qué hace falta |
+|---|---|---|---|
+| H5C-E10 | MENOR | «A 1440 el campo en rojo queda a la vista» es un resultado frágil. `aLaVista` cuenta como visible cualquier caja con una parte dentro de la ventana (`playwright/mapa-vacia-direccion.mjs:278`). La posición de la página tras el clic es la que deja la herramienta al desplazar lo justo para mostrar «Siguiente», después del encuadre previo del guion. En `corregida-aseguradora-4b-tras-siguiente-1440-claro.png` el campo quedó a unos 8 px del borde y su rótulo, afuera. Alguien que baje un poco más para llegar al botón lo pierde. README:149 dice «Dirección en rojo … dentro de la ventana», y el rótulo «Dirección» no está | Describir 1440 como «en el borde superior, con el rótulo fuera». También se puede medir la caja entera del campo con su rótulo (`app-form-field`) en lugar del `<input>` |
+| H5C-E11 | MENOR | README:116 dice «se midieron las 60 capturas» y el paréntesis de la línea siguiente suma «las 60 de los cuatro estados y las 12 `4b`». La cuenta se contradice: el archivo `capturas-h5s2m6-sin-blancos.txt` tiene 72 líneas | Decir «las 72» |
+| H5C-E12 | MENOR | README:152 atribuye el globo «Siguiente» de las centrales a que «el foco quedó ahí». La captura se toma con el puntero todavía sobre el botón, así que el globo puede venir del paso del puntero. La salida `ℹ` confirma el foco, pero no qué disparó el globo | «porque el foco y el puntero quedaron ahí», o mover el puntero antes de la `4b` |
+
+### Afirmaciones del README que no se sostienen
+
+1. README:149. «"Dirección" en rojo, con su mensaje, dentro de la ventana», para la celda 1440. En esa celda el rótulo «Dirección» queda fuera, y la caja está en el borde (H5C-E10).
+2. README:116. «las 60 capturas», en vez de 72 (H5C-E11).
+3. README:152. «porque el foco quedó ahí», que la imagen no permite distinguir del paso del puntero (H5C-E12).
+
+Lo que sí se sostiene contra las imágenes y las salidas:
+
+- Las filas de 1920 y 1024 (README:146-148).
+- Las filas de las `4b` de 1920, 768, 1024 y 390 (README:149-153).
+- La lectura de H5C-H5 (README:122-125 y 176-182).
+- La declaración de H5C-04 junto a H5C-03 (README:170-173).
+- La tabla de celdas: 85/85 en tres celdas y 23/23 en otras tres, que coincide con las seis salidas.
+- Los `exit=0` de lint y tipos.
+
+### No cubierto
+
+- En esta ronda no se volvieron a abrir las 52 capturas re-tomadas de los estados 1–4 fuera de 1920 y 1024, ni las 12 de sucursal. Según las marcas de tiempo son de la corrida de las 07:23–07:25. No se sabe si difieren de las que se revisaron en la ronda 2.
+- No hay `4b` en oscuro a 390 ni a 1024, ni en las centrales a 1024, 768 o 1920.
+- La vista tras «Siguiente» depende de cómo se llegó al botón. El guion la mide con un solo camino (encuadre del título y después desplazamiento automático hasta el botón); otros recorridos pueden dar otra vista.
+- La suite completa no corrió con el spec final (H5C-E8, residuo).
+- Sigue sin cubrir lo que una imagen no muestra: `aria-invalid`, los anuncios y el orden de tabulación.
