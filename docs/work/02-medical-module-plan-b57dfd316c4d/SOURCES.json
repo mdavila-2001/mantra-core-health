@@ -1,0 +1,26 @@
+{
+  "plan_id": "02-medical-module-plan-b57dfd316c4d",
+  "module": "MED",
+  "created_at_utc": "2026-09-24T00:04:13.938889+00:00",
+  "plan": "PLAN.md",
+  "plan_sha256": "6d6bd9894bf944b6bd566ab402f10c97e8b501bcf7bddea07a3f6042e4d0d664",
+  "sources": [
+    {
+      "original_absolute_path": "/Users/josejeremias/Downloads/02_METAPROMPT_MEDICO.md",
+      "snapshot": "sources/medical-metaprompt.md",
+      "sha256": "b57dfd316c4d642eb5e1db49257397b8fd2864b511317282ae4b70ff1262a656",
+      "role": "Única fuente funcional; metodología, requisitos MED y extracto L0164–L0266."
+    }
+  ],
+  "workspace_rules": "AGENTS.md aportado por el usuario; verificar vigencia al ejecutar",
+  "supersedes_own_plan_id": null,
+  "implementation_executed": true,
+  "implementation_status": "PARTIAL",
+  "execution_record": {
+    "frontend_branch": "justin/mockup-corr-38-editar-perfil-medico-como-alta",
+    "product_commit": "55e948a4",
+    "pull_request": "https://github.com/mdavila-2001/mantra-core-health/pull/612",
+    "pull_request_status": "draft",
+    "medical_criteria_closed": 0
+  }
+}

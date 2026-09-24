@@ -369,12 +369,12 @@ export interface OwnPractitionerProfile {
   readonly phone?: string;
 
   /* --- los cinco contactos, cada uno con su nombre -----------------------
-     Vienen separados desde que el alta los pide así. `email` es el de trabajo
-     y a la vez el de acceso; el personal viaja aparte. */
+     Preferí los campos con uso explícito. `email` se conserva como alias para
+     perfiles y clientes anteriores. */
 
-  /** Correo de trabajo, el mismo con el que se entra. */
+  /** Correo de trabajo. */
   readonly workEmail?: string;
-  /** Correo personal, el que no sirve para entrar. */
+  /** Correo personal declarado por el profesional. */
   readonly personalEmail?: string;
   /** Celular personal o privado. */
   readonly mobilePhone?: string;
@@ -410,6 +410,8 @@ export interface OwnPractitionerProfile {
    * cuando no hay fila vigente — mismo contrato que {@link OwnPatientProfile}.
    */
   readonly homeAddress?: OwnAddress;
+  /** Dirección y punto del lugar de trabajo, separados del domicilio personal. */
+  readonly workAddress?: OwnAddress;
 
   readonly practitionerCategoryConceptId: string;
   readonly verificationStatusConceptId: string;
