@@ -1,7 +1,9 @@
 # Reporte — Baseline comparable de Directorio y Reserva
 
-> **AVANCE: 11 / 12 microtareas HECHO (91,7 %).** La restante (`H1.S2.M5`, publicar la tabla a
-> Ender) se entrega en el PR de PromptManager, porque el daily de equipo no vive en este repositorio.
+> **AVANCE: 10 / 12 microtareas HECHO (83,3 %).** Las dos restantes están en «A medias»:
+> `H1.S2.M5` (publicar la tabla a Ender) depende de que se mergee el PR de PromptManager, y
+> `H3.S1.M2` no cumple la condición de entrega de la regla 35.2 porque el CI del repositorio no
+> arranca — ver «El CI del frontend no llegó a correr».
 
 - Fecha: 2026-09-24 · Plan: [PLAN.md](./PLAN.md) · Rama: `justin/baseline-historico-reserva-2026-09-23`.
 - Peldaño de evidencia (regla 30): `VERIFIED` local, con 10 muestras por corte y escenario y **tres
@@ -81,7 +83,6 @@ el par y el resto de la imagen es idéntico píxel a píxel
 | H1.S2.M3 | Cuatro activaciones seguidas de una tarjeta producen **una** navegación, en los dos cortes | aserción dura del spec (`toBe(1)`) | pasa en `antes` y en `despues` |
 | H1.S2.M4 | Catorce capturas comparables, 1440×900 y 390×844, sin médicos reales y con el estado asentado **aseverado**, no confiado a un flag | `evidencia/antes/`, `evidencia/despues/` | 7 pares |
 | H3.S1.M1 | Evidencia publicada: spec, 20 muestras, resumen agregado, capturas y doble revisión | este reporte y `evidencia/` | completo |
-| H3.S1.M2 | PR [#610](https://github.com/mdavila-2001/mantra-core-health/pull/610) hacia `mockup`, sin auto-merge | `gh pr view 610` | `MERGEABLE`; los checks **encolados**, ver abajo |
 | H3.S1.M3 | Resumen en PromptManager PR [#38](https://github.com/PabloArauzCaballero/AlovidaPromptManager/pull/38) hacia `main`, sin auto-merge | `gh pr view 38` | `MERGEABLE` · `CLEAN`, su check en verde |
 
 ## La medición
@@ -187,6 +188,18 @@ anterior. Esta es la **única** atribución del documento, y se apoya en que el 
 dentro del PR #583, se titula literalmente «fix: mostrar disponibilidad en tarjetas de directorio».
 
 ## A medias
+
+- **H3.S1.M2 — dejar el PR de producto mergeable.**
+  1. *Qué anda:* [#610](https://github.com/mdavila-2001/mantra-core-health/pull/610) está abierto,
+     no es borrador, `mergeable` da `MERGEABLE` y no tiene conflictos con `mockup`.
+  2. *Qué no anda:* `mergeStateStatus` da `UNSTABLE`, que la regla 35.2 no admite como entrega.
+  3. *Qué falta exactamente:* que los tres checks —`dependencias`, `e2e`, `verificar`— salgan de
+     la cola y terminen. **Ninguno está fallando: están encolados**, y no por este PR — todos los
+     PR abiertos del repositorio están igual. Es `ENVIRONMENT` (regla 80.4), con la evidencia en
+     [`evidencia/pr-mergeable.txt`](evidencia/pr-mergeable.txt). En su lugar se corrieron a mano
+     los guardrails que el `CLAUDE.md` del repo manda correr así.
+  4. *Dónde quedó:* rama `justin/baseline-historico-reserva-2026-09-23`, empujada, con el PR
+     abierto y sin auto-merge. No se tocaron privilegios ni se deshabilitó ningún check.
 
 - **H1.S2.M5 — publicar la tabla a Ender.**
   1. *Qué anda:* la tabla está completa, con 10 muestras por corte y escenario, y es reproducible.
