@@ -247,8 +247,8 @@ export interface PractitionerRegistration {
   readonly email: string;
   readonly password: string;
   /**
-   * Las especialidades elegidas EN el alta (hasta 3; la primera queda como
-   * principal). El registro del cliente las pide junto a la profesión — módulo
+   * Las especialidades elegidas EN el alta (una principal y hasta tres
+   * adicionales). El registro del cliente las pide junto a la profesión — módulo
    * Médico §1.4.2 — y hasta ahora sólo se podían declarar después, desde el
    * perfil, adonde la mayoría no volvía.
    */
@@ -285,11 +285,7 @@ export interface PractitionerRegistration {
    * mismo significado — la localidad ubica, esto es lo que hace falta para
    * llegar a la puerta.
    *
-   * **La API todavía no los acepta.** `RegisterPractitionerDto` declara sólo
-   * `residenceMunicipalityConceptId`, y con `forbidNonWhitelisted: true` una
-   * clave que no declara rechaza el alta entera con 400. Van acá porque el
-   * simulador de la rama `mockup` sí los guarda y la pantalla ya los pregunta;
-   * lo que falta está anotado en `PENDIENTES-BACKEND.md`.
+   * La API guarda estas líneas en la dirección HOME de la persona.
    */
   readonly homeAddressLines?: string;
 
@@ -304,6 +300,15 @@ export interface PractitionerRegistration {
   /** Longitud del domicilio. Ver {@link homeLatitude}. */
   readonly homeLongitude?: number;
 
+  /** Dirección laboral del profesional, independiente de su domicilio y sedes propias. */
+  readonly workAddressLines?: string;
+
+  /** Latitud laboral confirmada en el mapa; sólo viaja junto con la longitud. */
+  readonly workLatitude?: number;
+
+  /** Longitud laboral; ver {@link workLatitude}. */
+  readonly workLongitude?: number;
+
   /**
    * El consultorio propio, si declaró uno al registrarse.
    *
@@ -312,7 +317,8 @@ export interface PractitionerRegistration {
    * esa ruta —termina en el login, sin sesión— así que el dato viaja adentro
    * del alta y el backend usa el servicio que ya tiene.
    *
-   * **La API todavía no lo acepta**; ver `PENDIENTES-BACKEND.md`.
+   * La API lo provisiona durante el alta con el mismo caso de uso que la ruta
+   * autenticada de sedes propias.
    */
   readonly ownSite?: NewOwnSite;
 
@@ -394,10 +400,8 @@ export interface PractitionerRegistration {
 /**
  * Un título declarado en el alta pública.
  *
- * Es el subconjunto mínimo de {@link NewOwnCredential} que el alta sabe
- * persistir hoy. El nombre del título, el país, la ciudad y el diploma **no
- * viajan**: no tienen dónde guardarse sin cambiar el modelo, y esta pantalla no
- * es donde eso se decide.
+ * Es el subconjunto que el alta persiste por fila. El nombre del título, el
+ * país y la ciudad **no viajan** porque el contrato no los almacena.
  */
 export interface NewRegistrationCredential {
   /** Uno de los cinco `CREDENTIAL_TYPE_*` del catálogo, por concept id. */
@@ -406,6 +410,8 @@ export interface NewRegistrationCredential {
   readonly number: string;
   /** Dónde se cursó, como texto libre. */
   readonly issuingInstitutionText?: string;
+  /** PDF ya subido anónimamente y reclamado al crear la cuenta. */
+  readonly fileId?: string;
 }
 
 export interface RegisteredPractitioner {

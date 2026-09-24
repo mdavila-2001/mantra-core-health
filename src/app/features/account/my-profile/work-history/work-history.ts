@@ -455,25 +455,6 @@ export class WorkHistory implements OnInit {
     return rama?.conceptId ?? null;
   });
 
-  /**
-   * El consultorio propio, si ya tiene uno. **Hay uno solo.**
-   *
-   * No es una regla de pantalla: es lo que el backend modela. `POST
-   * /practitioners/me/sites` crea —o **reutiliza**— la práctica personal del
-   * profesional, así que la práctica propia es una sola por persona. Lo que
-   * faltaba era decirlo en la interfaz: el botón «Agregar un consultorio
-   * propio» seguía ahí después de crear el primero, invitando a cargar el
-   * segundo.
-   *
-   * `isOwnSite` lo manda la API desde el cierre del P32-a. Si llegara ausente
-   * —un frontend desplegado contra una API anterior— todo se lee como ajeno y
-   * el botón de alta sigue disponible: la degradación prudente nunca esconde
-   * un camino.
-   */
-  protected readonly consultorioPropio = computed<PracticeSite | null>(
-    () => this.sedes().find((sede) => sede.isOwnSite === true) ?? null,
-  );
-
   /* -- Tabla, barra y paginación de «Dónde atiendo» (ADR-0015, H4.S1) ------ */
 
   /** El filtro «Tipo»: sólo dos valores del value set cerrado propio, no un catálogo. */

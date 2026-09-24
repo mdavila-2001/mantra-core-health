@@ -244,4 +244,10 @@ export const CAMPOS_DEL_ALTA_SIN_PESTANA: Readonly<Record<string, string>> = {
     'ofrecer. Estuvo declarado como si viviera en «Datos personales» hasta el 21/09/2026, ' +
     'y ahí no estaba. Que la persona no pueda ver ni corregir lo que declaró en el alta es ' +
     'un hueco del contrato, no una decisión de diseño: queda registrado como Q-I5.',
+  workAddressLines:
+    'El alta la guarda como dirección laboral, separada del domicilio y del consultorio ' +
+    'propio, pero la ficha del médico todavía no la lee ni la muestra en ninguna pestaña.',
+  gpsTrabajo:
+    'El punto de mapa del lugar de trabajo se guarda con el alta; la ficha todavía no ' +
+    'lo devuelve ni lo dibuja en ninguna pestaña.',
 };
