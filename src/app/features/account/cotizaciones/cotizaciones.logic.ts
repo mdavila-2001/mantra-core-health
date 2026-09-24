@@ -31,6 +31,8 @@ export interface CotizacionResultado {
   readonly donde: string;
   readonly price: PrecioPublicado | null;
   readonly distanceKm: number | null;
+  /** Quién no publicó el precio, dicho para la persona, cuando `price` es `null`. */
+  readonly sinPrecio?: string;
   /** Por qué no hay distancia, dicho para la persona («no aplica», «no publicó su ubicación»). */
   readonly sinDistancia?: string;
   /** Aviso sobre la fila misma (p. ej. texto de un escaneo por revisar). */
