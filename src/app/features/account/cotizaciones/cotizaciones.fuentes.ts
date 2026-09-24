@@ -43,17 +43,21 @@ const TOPE_DE_PRESTACIONES = 25;
 const PROCEDENCIA_UMA = 'Referencia del Colegio Médico de Santa Cruz 2025, en UMA (sin conversión)';
 
 /**
- * La marca de procedencia de lo que sirve el backend simulado.
+ * La procedencia de un precio servido por una sede.
  *
- * Los precios de farmacia y de estudios de la maqueta salen de los dobles
- * (`pharmacy.handlers.ts`, y una fórmula sintética en `diagnostics.handlers.ts`),
- * aunque lleven nombres de sedes con forma de reales. Sin esta marca la celda
- * atribuiría un precio inventado a una institución con nombre (regla 00 §2.1).
- * El arancel de referencia **no** la lleva: la maqueta sirve la tabla real
- * del propietario (`fee-schedules.generated.ts`).
+ * Con el backend simulado, los precios de farmacia y de estudios salen de los
+ * dobles (`pharmacy.handlers.ts`, y una fórmula sintética en
+ * `diagnostics.handlers.ts`) aunque las sedes lleven nombres con forma de
+ * reales. Decir «publicado por <sede>» —aun con una marca al final— sería
+ * atribuirle a una institución con nombre un precio inventado (regla 00 §2.1),
+ * así que en la maqueta se dice lo contrario: que es de ejemplo y que esa sede
+ * **no** lo publicó. El arancel de referencia no pasa por acá: la maqueta sirve
+ * la tabla real del propietario (`fee-schedules.generated.ts`).
  */
-function deMaqueta(procedencia: string): string {
-  return environment.mockBackend ? `${procedencia} · dato de la maqueta` : procedencia;
+function procedenciaDeSede(queFue: 'Precio' | 'Tarifario', sede: string): string {
+  return environment.mockBackend
+    ? `${queFue} de ejemplo de la maqueta: ${sede} no lo publicó`
+    : `${queFue} publicado por ${sede}`;
 }
 
 /** Lo que devuelve una búsqueda: las filas y qué fuentes no respondieron. */
@@ -221,7 +225,7 @@ function filasDeSede(sede: AvailabilitySite): CotizacionResultado[] {
     distanceKm: sede.distanceKm,
     sinPrecio: 'La farmacia no publicó este precio',
     sinDistancia: 'Sin ubicación publicada',
-    accion: { etiqueta: 'Ver farmacias', ruta: '/pharmacies-directory' },
+    accion: { etiqueta: 'Directorio de farmacias', ruta: '/pharmacies-directory' },
   }));
 }
 
@@ -249,7 +253,7 @@ function precioDeProducto(
   return {
     amount: importe,
     currency: precio.currency.code,
-    source: deMaqueta(`Precio publicado por ${sede.pharmacyName}`),
+    source: procedenciaDeSede('Precio', sede.pharmacyName),
   };
 }
 
@@ -276,7 +280,7 @@ function filaDeEstudio(
         : {
             amount: importe,
             currency: publicado.currency.code,
-            source: deMaqueta(`Tarifario publicado por ${centro.name}`),
+            source: procedenciaDeSede('Tarifario', centro.name),
           },
     distanceKm: null,
     sinPrecio: 'El centro no publicó el precio de este estudio',

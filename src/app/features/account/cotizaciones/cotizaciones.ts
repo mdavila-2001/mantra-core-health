@@ -11,6 +11,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { catchError, map, of, startWith, switchMap, type Observable } from 'rxjs';
 
+import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import {
@@ -108,6 +109,12 @@ export class Cotizaciones {
   private readonly auth = inject(AuthService);
   private readonly profiles = inject(ProfilesClient);
 
+  /**
+   * Con el backend simulado los precios de farmacia y de estudios son de
+   * ejemplo: se dice arriba de todo, no sólo fila por fila (R2-02).
+   */
+  protected readonly esMaqueta = environment.mockBackend;
+
   protected readonly termino = signal('');
   protected readonly vertical = signal<VerticalCotizacion>('TODAS');
   protected readonly orden = signal<OrdenCotizacion>('PRECIO');
@@ -196,6 +203,11 @@ export class Cotizaciones {
     );
   });
 
+  /** La búsqueda volvió bien y no encontró nada: S2, con su propio vacío. */
+  protected readonly sinResultados = computed(
+    () => this.busqueda().status === 'ready' && this.resultados().length === 0,
+  );
+
   protected readonly fuentesCaidas = computed<string>(() => {
     const actual = this.busqueda();
     return actual.status === 'ready'
@@ -214,16 +226,11 @@ export class Cotizaciones {
     if (actual.status !== 'ready') {
       return actual as ViewState<readonly CotizacionResultado[]>;
     }
+    // Sin resultados no es «colección vacía» (S1) sino «la búsqueda no
+    // encontró» (S2, ADR-0005): lo pinta la pantalla con su propio vacío, no
+    // el genérico del host («Todavía no hay nada acá»).
     return this.resultados().length === 0
-      ? empty(
-          {
-            label:
-              this.vertical() === 'TODAS'
-                ? 'Probá con otra palabra o con el nombre genérico'
-                : 'Probá con otra palabra o con «Todas» las verticales',
-          },
-          'No encontramos cotizaciones para esa búsqueda.',
-        )
+      ? empty({ label: 'Probá con otra palabra' }, 'No encontramos cotizaciones.')
       : ready(this.resultadosPaginados());
   });
 
@@ -266,9 +273,17 @@ export class Cotizaciones {
   }
 
   protected precioDe(fila: CotizacionResultado): string {
-    return fila.price === null
-      ? 'Precio no publicado'
-      : `${fila.price.amount.toLocaleString('es-BO', { maximumFractionDigits: 2 })} ${fila.price.currency}`;
+    if (fila.price === null) {
+      return 'Precio no publicado';
+    }
+    // Dinero con dos decimales fijos («35,00 BOB», «30,50 BOB»); la UMA es una
+    // unidad de arancel, no dinero, y va como la publica el Colegio («4 UMA»).
+    const decimales = fila.price.currency === 'UMA' ? 0 : 2;
+    const importe = fila.price.amount.toLocaleString('es-BO', {
+      minimumFractionDigits: decimales,
+      maximumFractionDigits: 2,
+    });
+    return `${importe} ${fila.price.currency}`;
   }
 
   protected procedenciaDe(fila: CotizacionResultado): string {
@@ -305,6 +320,10 @@ export class Cotizaciones {
 
   protected ordenarPorPrecio(): void {
     this.cambiarOrden('PRECIO');
+  }
+
+  protected limpiarBusqueda(): void {
+    this.buscar('');
   }
 
   protected reintentar(): void {

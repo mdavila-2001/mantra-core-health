@@ -42,7 +42,7 @@ describe('Cotizaciones', () => {
       source: 'Lista PUBLICO de Farmacia Central',
     },
     distanceKm: 2.4,
-    accion: { etiqueta: 'Ver farmacias', ruta: '/pharmacies-directory' },
+    accion: { etiqueta: 'Directorio de farmacias', ruta: '/pharmacies-directory' },
   };
   const SIN_PRECIO: CotizacionResultado = {
     id: 'estudio:1',
@@ -136,7 +136,7 @@ describe('Cotizaciones', () => {
     await asentar();
 
     expect(buscar).toHaveBeenCalledWith('para', 'TODAS', null);
-    expect(texto()).toContain('12,5 BOB');
+    expect(texto()).toContain('12,50 BOB');
     expect(texto()).toContain('Lista PUBLICO de Farmacia Central');
     expect(texto()).toContain('2,4 km');
   });
@@ -245,7 +245,7 @@ describe('Cotizaciones', () => {
     componente().buscar('zzzz');
     await asentar();
 
-    expect(texto()).toContain('No encontramos cotizaciones para esa búsqueda.');
+    expect(texto()).toContain('No encontramos cotizaciones');
   });
 
   it('un error ofrece reintentar y reintentar vuelve a consultar', async () => {
@@ -286,7 +286,7 @@ describe('Cotizaciones', () => {
     await asentar();
 
     const accion = raiz().querySelector('a.cotizaciones__accion');
-    expect(accion?.textContent).toContain('Ver farmacias');
+    expect(accion?.textContent).toContain('Directorio de farmacias');
     expect(accion?.querySelector('svg')).not.toBeNull();
     expect(accion?.getAttribute('href')).toBe('/pharmacies-directory');
   });

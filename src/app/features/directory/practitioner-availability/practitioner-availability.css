@@ -26,6 +26,11 @@
   display: block;
 }
 
+/* Dos sedes no se tocan: cada tarjeta es un lugar distinto. */
+.disponibilidad__sede + .disponibilidad__sede {
+  margin-top: var(--sp-3);
+}
+
 .disponibilidad__sede-nombre {
   margin: 0 0 var(--sp-3);
   font-size: var(--fs-body);

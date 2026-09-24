@@ -99,7 +99,7 @@ describe('CotizacionesFuentes', () => {
       price: {
         amount: 12.5,
         currency: 'BOB',
-        source: 'Precio publicado por Farmacia s1 · dato de la maqueta',
+        source: 'Precio de ejemplo de la maqueta: Farmacia s1 no lo publicó',
       },
       distanceKm: 1.2,
     });
@@ -177,7 +177,7 @@ describe('CotizacionesFuentes', () => {
       price: {
         amount: 80,
         currency: 'BOB',
-        source: 'Tarifario publicado por Laboratorio Central · dato de la maqueta',
+        source: 'Tarifario de ejemplo de la maqueta: Laboratorio Central no lo publicó',
       },
       distanceKm: null,
       accion: { ruta: '/laboratory-directory/u1' },
