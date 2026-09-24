@@ -601,8 +601,12 @@
                los controles a un mismo grupo. El botón proyectado queda fuera,
                así que llama a `registrar()` directo en vez de ser un submit. -->
         <form class="historial__formulario" (submit)="$event.preventDefault(); guardarVinculo()">
-          <!-- Dos formas de nombrar la institución, nunca las dos a la vez: elegirla
-               del padrón y además escribirla serían dos respuestas a una pregunta. -->
+          <!-- La institución se elige SIEMPRE del padrón: escribirla a mano
+               permitía inventar un hospital que no existe. El modo «libre»
+               sigue existiendo para corregir un vínculo YA guardado —lo pone
+               `abrirEdicionDeVinculo`, nunca esta pantalla de alta— porque lo
+               que se guardó es el nombre canónico y no un id contra el que
+               volver a buscar; dar de alta uno nuevo no tiene escape a mano. -->
           @if (modoDeInstitucion() === 'padron') {
             <app-form-field
               label="Institución"
@@ -619,16 +623,6 @@
                 (selectionChange)="establecimiento.set($event)"
               />
             </app-form-field>
-
-            <p class="historial__escape">
-              <!-- El padrón cubre sólo Santa Cruz: quien trabajó en otro
-                   departamento necesita esta salida, y decirlo evita que la busque
-                   como si fuera una falla. -->
-              ¿Trabajaste fuera de Santa Cruz o no la encontrás?
-              <button app-button variant="ghost" size="sm" type="button" (click)="escribirAMano()">
-                Escribir el nombre a mano
-              </button>
-            </p>
           } @else {
             <app-form-field
               label="Institución"
