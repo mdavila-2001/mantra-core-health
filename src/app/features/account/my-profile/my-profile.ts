@@ -32,7 +32,6 @@ import { AppButtonLink } from '../../../shared/components/atoms/button/button-li
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
-import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
@@ -128,7 +127,6 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
     StatusSeal,
     Tab,
     Tabs,
-    Tooltip,
     ViewStateHost,
   ],
   templateUrl: './my-profile.html',

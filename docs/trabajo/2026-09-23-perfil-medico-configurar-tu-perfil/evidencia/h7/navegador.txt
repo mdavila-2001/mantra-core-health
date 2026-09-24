@@ -1,0 +1,24 @@
+$ node playwright/mis-puntos-quinta-pestana.mjs <url de la app> despues   (2026-09-23, corte b7785e36 + cambios de H7)
+✔ la ficha tiene cinco pestañas, en su orden — Datos personales | Contacto | Facturación | Seguros y tutores | Mis puntos
+✔ se entra por «Datos personales»
+✔ la billetera no trae cabecera propia
+✔ una sola cabecera en la pantalla — 1 cabeceras
+✔ la billetera dice algo del programa (saldo, vacío o error, nunca en blanco) — Todavía no hay nada acá Todavía no hay un programa de Puntos AloVida activo par
+✔ la billetera queda dentro de la tarjeta
+✔ 1440 · sin desborde horizontal
+✔ 375 · sin desborde horizontal
+✔ 375 · la pestaña «Mis puntos» sigue alcanzable en la tira
+✔ 768 · sin desborde horizontal
+✔ /my-account?pestana=puntos entra en la billetera
+✔ una clave desconocida cae en la primera pestaña
+✔ /my-account/loyalty sigue llegando, con su propia cabecera
+✔ editor · «Mis puntos» sigue en la tira
+✔ editor · pero apagada
+✔ editor · pulsarla no abre nada
+✔ sin errores de página
+✔ sin respuestas 4xx/5xx
+
+18/18 comprobaciones en verde
+
+Una corrida anterior se cortó en el botón de entrar: tomó una compilación intermedia de la app, a
+mitad de las ediciones (clase ENVIRONMENT). Repetida sobre la compilación completa, 18/18.

@@ -9,12 +9,13 @@ import {
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
-import { catchError, map, of, switchMap, type Observable } from 'rxjs';
+import { catchError, map, of, switchMap, timer, type Observable } from 'rxjs';
 
 import { ProfilesClient } from '@core/data-access/profiles/profiles.client';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import { TerminologyClient } from '@core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '@core/data-access/terminology/terminology.types';
+import { TriageIaClient } from '@core/data-access/triage-ia/triage-ia.client';
 import { ZONAS_DEL_CUERPO, type ZonaDelCuerpo } from './zonas.datos';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Chip } from '@shared/components/atoms/chip/chip';
@@ -43,7 +44,21 @@ import {
   TODOS_LOS_SINTOMAS,
 } from './sintomas';
 import { Dictado } from './dictado';
+import {
+  combinar,
+  lecturaVigente,
+  sintomasDeLaLectura,
+  zonasDeLaLectura,
+  type LecturaDelTexto,
+} from './lectura-ia';
 import { ultimaFrase } from './texto';
+
+/**
+ * Cuánto se espera a que la persona haga una pausa antes de preguntarle al
+ * servicio de triage. Mientras tanto el motor local ya pintó lo suyo: esto sólo
+ * evita una petición por tecla.
+ */
+const PAUSA_PARA_LEER_MS = 600;
 
 /** Tope por página del listado de profesionales. */
 const POR_PAGINA = 50;
@@ -112,6 +127,7 @@ export class SymptomCheck {
   private readonly publico = inject(PublicDirectoryClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly router = inject(Router);
+  private readonly triageIa = inject(TriageIaClient);
   protected readonly dictado = inject(Dictado);
 
   constructor() {
@@ -200,14 +216,81 @@ export class SymptomCheck {
   });
 
   /**
-   * Los chips: lo reconocido en el texto, menos lo quitado, más lo agregado.
+   * Lo que entendió el servicio de triage (AlovidaAIService) del último texto
+   * en el que la persona hizo una pausa, junto con ese texto.
    *
-   * El orden es el de aparición en el texto y después los agregados: ver el
-   * porqué en `reconocer`.
+   * El motor local reconoce las filas de la tabla al instante; el servicio suma
+   * lo que la tabla no tiene —«me duele la pantorrilla», «manchas en la
+   * espalda»— y ubica lo que sí tiene («hormigueo · mano izquierda»). Ver
+   * `lectura-ia.ts`.
+   *
+   * Con menos de tres letras no se pregunta nada, y así en el servidor (texto
+   * vacío) no se programa ni un temporizador. Si el servicio falla o tarda,
+   * `TriageIaClient` devuelve `null` y la pantalla sigue con lo local.
+   */
+  private readonly lecturaGuardada = toSignal(
+    toObservable(this.texto).pipe(
+      map((texto) => texto.trim()),
+      switchMap((texto) =>
+        texto.length < 3
+          ? of(null)
+          : timer(PAUSA_PARA_LEER_MS).pipe(
+              switchMap(() => this.triageIa.analizar(texto)),
+              map((lectura): LecturaDelTexto | null => (lectura === null ? null : { texto, lectura })),
+            ),
+      ),
+    ),
+    { initialValue: null },
+  );
+
+  /** La lectura del servicio que todavía vale para lo escrito. */
+  private readonly lecturaVigente = computed(() =>
+    lecturaVigente(this.lecturaGuardada(), this.texto()),
+  );
+
+  /** Los hallazgos del servicio que todavía valen para lo escrito. */
+  private readonly deLaLectura = computed(() => sintomasDeLaLectura(this.lecturaVigente()));
+
+  /**
+   * Las zonas del cuerpo de lo que se contó: la silueta las ilumina mientras
+   * la persona escribe o dicta, y las pastillas «Piel», «Ánimo» y «General»
+   * también.
+   *
+   * Manda la ubicación del servicio cuando la hay («hormigueo · mano» es la
+   * mano); si no, la primera zona de la tabla que ofrece ese síntoma.
+   */
+  protected readonly zonasMarcadas = computed<readonly string[]>(() => {
+    const delServicio = zonasDeLaLectura(this.lecturaVigente());
+    const marcadas = new Set<string>();
+    for (const sintoma of this.sintomas()) {
+      const ubicadas = delServicio.get(sintoma.id);
+      if (ubicadas !== undefined && ubicadas.length > 0) {
+        ubicadas.forEach((zona) => marcadas.add(zona));
+        continue;
+      }
+      const deLaTabla = ZONAS_DEL_CUERPO.find((zona) => zona.sintomas.includes(sintoma.id));
+      if (deLaTabla !== undefined) marcadas.add(deLaTabla.id);
+    }
+    return [...marcadas];
+  });
+
+  protected estaMarcada(idDeZona: string): boolean {
+    return this.zonasMarcadas().includes(idDeZona);
+  }
+
+  /**
+   * Los chips: lo reconocido en el texto —acá y por el servicio—, menos lo
+   * quitado, más lo agregado.
+   *
+   * El orden es el de aparición en el texto, después lo que sólo vio el
+   * servicio y al final los agregados: ver el porqué en `reconocer` y en
+   * `combinar`.
    */
   protected readonly sintomas = computed<readonly Sintoma[]>(() => {
     const quitados = this.quitados();
-    const delTexto = reconocer(this.texto()).filter((s) => !quitados.has(s.id));
+    const delTexto = combinar(reconocer(this.texto()), this.deLaLectura()).filter(
+      (s) => !quitados.has(s.id),
+    );
     const yaEstan = new Set(delTexto.map((s) => s.id));
     return [...delTexto, ...this.agregados().filter((s) => !yaEstan.has(s.id))];
   });

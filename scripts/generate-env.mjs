@@ -70,6 +70,15 @@ const MANIFEST = [
     legacyKey: 'API_BASE_URL',
   },
 
+  // Servicio de triage por IA. Relativo (`/ai`) o absoluto, con las mismas
+  // reglas que el endpoint de trazas: sin credenciales y sin query. El servicio
+  // es público, así que no hay secreto que pueda viajar en esta variable.
+  {
+    key: 'PUBLIC_AI_BASE_URL',
+    field: 'aiBaseUrl',
+    validate: validateTracesEndpoint,
+  },
+
   // --- Telemetría ----------------------------------------------------------
   //
   // Ninguna de estas seis es un secreto, y no puede serlo: el endpoint de

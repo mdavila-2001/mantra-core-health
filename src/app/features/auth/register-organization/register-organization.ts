@@ -568,6 +568,16 @@ export class RegisterOrganization {
             testId: 'registro-organizacion-direccion',
             mensajeDeError: 'Escribí la dirección (hasta 300 caracteres).',
           },
+          // El mapa va pegado a «Dirección», como en las otras altas: cuando lo
+          // tocan, vacía el campo y lo dice arriba del plano, y ese aviso tiene
+          // que leerse junto al campo que vació (D-06).
+          {
+            key: 'gpsCasaMatriz',
+            label: 'Ubicación de la casa matriz en el mapa (opcional)',
+            hint: 'Usá tu GPS o tocá el plano. Sin el punto, la aseguradora no aparece cuando alguien busca la más cercana.',
+            control: 'custom' as const,
+            ancho: 'completo' as const,
+          },
           // Sólo en países multizona: uno de zona única (Bolivia, Argentina)
           // no tiene nada que preguntar acá — `acomodarPaisYTipoSocietario`
           // ya le asignó la única zona que tiene, en segundo plano.
@@ -591,13 +601,6 @@ export class RegisterOrganization {
             hint: 'Con el que la conocen los afiliados. Es el que se ve en el directorio.',
             control: 'text' as const,
             testId: 'registro-organizacion-comercial',
-          },
-          {
-            key: 'gpsCasaMatriz',
-            label: 'Ubicación de la casa matriz en el mapa (opcional)',
-            hint: 'Usá tu GPS o tocá el plano. Sin el punto, la aseguradora no aparece cuando alguien busca la más cercana.',
-            control: 'custom' as const,
-            ancho: 'completo' as const,
           },
         ],
       },
@@ -836,7 +839,11 @@ export class RegisterOrganization {
 
   /** Tocaron el mapa de la casa matriz: la dirección escrita ya no vale (D-06). */
   vaciarDireccionPorElMapa(): void {
-    this.form.controls.address.setValue('');
+    const direccion = this.form.controls.address;
+    direccion.setValue('');
+    // El vaciado lo hizo el sistema, no la persona: el campo vuelve a «sin
+    // tocar» y el error de obligatorio espera a que lo toque o intente avanzar.
+    direccion.markAsUntouched();
     this.direccionVaciadaPorElMapa.set(true);
   }
 

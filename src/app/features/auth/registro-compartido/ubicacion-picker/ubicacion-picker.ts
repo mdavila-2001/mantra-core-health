@@ -13,7 +13,6 @@ import { DOCUMENT } from '@angular/common';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
-import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
 import { AppMap } from '../../../../shared/components/organisms/map/map';
 import type { PinMapa } from '../../../../shared/components/organisms/map/pin-mapa.types';
 
@@ -152,7 +151,7 @@ export const AVISO_REESCRIBIR_DIRECCION = 'Volvé a escribir la dirección para 
  */
 @Component({
   selector: 'app-ubicacion-picker',
-  imports: [AppButton, NavIcon, AppMap, AnnounceOnAppear, Tooltip],
+  imports: [AppButton, NavIcon, AppMap, AnnounceOnAppear],
   templateUrl: './ubicacion-picker.html',
   styleUrl: './ubicacion-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

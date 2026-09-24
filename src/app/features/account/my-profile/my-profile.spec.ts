@@ -772,10 +772,12 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
     expect(raiz.querySelector('[data-testid="mi-perfil-editor"]')).toBeNull();
 
     const boton = enlaceDeEdicion();
-    // Es un botón de lápiz (pedido del 09/09/2026): el nombre va en
-    // `aria-label`, no en el texto, y el dibujo es el glifo `edit` del set.
-    expect(boton?.getAttribute('aria-label')).toBe('Editar');
+    // Lápiz y nombre a la vista (D-05, 22/09/2026): el glifo `edit` del set y
+    // «Editar» escrito, que es también su nombre accesible. Ya no es un botón
+    // de sólo ícono.
+    expect(boton?.textContent?.trim()).toBe('Editar');
     expect(boton?.querySelector('svg')).not.toBeNull();
+    expect(boton?.classList.contains('btn--icon-only')).toBe(false);
     // Un botón, no un enlace: no lleva a ninguna parte.
     expect(boton?.tagName).toBe('BUTTON');
     expect(boton?.getAttribute('href')).toBeNull();

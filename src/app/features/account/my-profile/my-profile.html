@@ -97,24 +97,21 @@
           </div>
 
           <!-- FT-11-R04 · el lápiz habilita los campos ACÁ, no manda a otra
-               pantalla. Es un botón de ícono —pedido del cliente del 09/09—:
-               el nombre «Editar» va en `aria-label` para el lector de pantalla
-               y en el globo, que aparece con el puntero y con el foco del
-               teclado. El botón desaparece mientras se edita: sus acciones son
-               las del formulario, y dos «Editar» simultáneos no significan
-               nada. -->
+               pantalla. Lápiz y nombre (D-05, 22/09): el lápiz del 09/09 solo
+               no alcanza, porque puede ser editar, firmar o anotar
+               (ADR-0012). El botón desaparece mientras se edita: sus acciones
+               son las del formulario, y dos «Editar» simultáneos no
+               significan nada. -->
           @if (!editando() && datos() !== null) {
             <button
               app-button
               variant="outline"
               size="sm"
-              [iconOnly]="true"
-              aria-label="Editar"
-              appTooltip="Editar"
               data-testid="mi-perfil-editar"
               (clicked)="editar()"
             >
               <app-nav-icon name="edit" />
+              Editar
             </button>
           }
         </div>

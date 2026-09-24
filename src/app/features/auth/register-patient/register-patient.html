@@ -58,6 +58,7 @@
            motor no tiene por qué saber de Leaflet ni de permisos del
            navegador. -->
         <div class="registro__body">
+          <!-- `iconOnlyNav`: excepción ADR-0012 §3 (D-05, 23/09), pasar de página; el motor pone aria-label y globo, y la última página dice «Crear cuenta». -->
           <app-paginated-form
             data-testid="registro-form-paciente"
             [paginas]="paginasPaciente()"
@@ -167,6 +168,7 @@
                            página rompen lo único que un ícono aporta, que es el
                            reconocimiento. El `aria-label` es el que dice qué
                            hace; el dibujo tiene que acompañar, no contradecir. -->
+                      <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento de la lista, con aria-label y globo. -->
                       <button
                         app-button
                         type="button"
@@ -328,17 +330,21 @@
                       >
                         Usar mi ubicación
                       </button>
+                      <!-- D-05: ícono + nombre. Sin punto todavía no hay ubicación que
+                           quitar: el botón sólo cierra el mapa, y así se llama. -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
-                        aria-label="Quitar la ubicación de tu domicilio"
-                        appTooltip="Quitar la ubicación de tu domicilio"
+                        aria-label="Cerrar el mapa de tu domicilio"
                         data-testid="registration-home-location-remove"
                         (clicked)="quitarUbicacion()"
                       >
-                        <app-nav-icon name="remove" />
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                        Cerrar el mapa
                       </button>
                     </div>
                     @if (gpsRechazado()) {
@@ -372,17 +378,19 @@
                       >
                         Volver a ubicarme
                       </button>
+                      <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
+                           la que quitar, y junto al «−» del zoom del plano el aro con un
+                           menos se lee como «alejar». -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
                         aria-label="Quitar la ubicación de tu domicilio"
-                        appTooltip="Quitar la ubicación de tu domicilio"
                         data-testid="registration-home-location-remove"
                         (clicked)="quitarUbicacion()"
                       >
                         <app-nav-icon name="remove" />
+                        Quitar la ubicación
                       </button>
                     </div>
                   } @else {
@@ -419,17 +427,19 @@
                       >
                         Volver a ubicarme
                       </button>
+                      <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
+                           la que quitar, y junto al «−» del zoom del plano el aro con un
+                           menos se lee como «alejar». -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
                         aria-label="Quitar la ubicación de tu domicilio"
-                        appTooltip="Quitar la ubicación de tu domicilio"
                         data-testid="registration-home-location-remove"
                         (clicked)="quitarUbicacion()"
                       >
                         <app-nav-icon name="remove" />
+                        Quitar la ubicación
                       </button>
                     </div>
                   }
@@ -604,17 +614,21 @@
                       >
                         Usar mi ubicación
                       </button>
+                      <!-- D-05: ícono + nombre. Sin punto todavía no hay ubicación que
+                           quitar: el botón sólo cierra el mapa, y así se llama. -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
-                        aria-label="Quitar la ubicación de tu lugar de trabajo"
-                        appTooltip="Quitar la ubicación de tu lugar de trabajo"
+                        aria-label="Cerrar el mapa de tu lugar de trabajo"
                         data-testid="registration-work-location-remove"
                         (clicked)="quitarUbicacionDeTrabajo()"
                       >
-                        <app-nav-icon name="remove" />
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                        Cerrar el mapa
                       </button>
                     </div>
                     @if (gpsTrabajoRechazado()) {
@@ -644,17 +658,19 @@
                       >
                         Volver a ubicarme
                       </button>
+                      <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
+                           la que quitar, y junto al «−» del zoom del plano el aro con un
+                           menos se lee como «alejar». -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
                         aria-label="Quitar la ubicación de tu lugar de trabajo"
-                        appTooltip="Quitar la ubicación de tu lugar de trabajo"
                         data-testid="registration-work-location-remove"
                         (clicked)="quitarUbicacionDeTrabajo()"
                       >
                         <app-nav-icon name="remove" />
+                        Quitar la ubicación
                       </button>
                     </div>
                   } @else {
@@ -689,17 +705,19 @@
                       >
                         Volver a ubicarme
                       </button>
+                      <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
+                           la que quitar, y junto al «−» del zoom del plano el aro con un
+                           menos se lee como «alejar». -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
                         aria-label="Quitar la ubicación de tu lugar de trabajo"
-                        appTooltip="Quitar la ubicación de tu lugar de trabajo"
                         data-testid="registration-work-location-remove"
                         (clicked)="quitarUbicacionDeTrabajo()"
                       >
                         <app-nav-icon name="remove" />
+                        Quitar la ubicación
                       </button>
                     </div>
                   }
