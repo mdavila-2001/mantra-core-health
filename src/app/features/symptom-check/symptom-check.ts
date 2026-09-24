@@ -22,7 +22,11 @@ import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
 import { FormField } from '@shared/components/molecules/form-field/form-field';
-import { BodyMap, type ZonaElegible } from '@shared/components/organisms/body-map/body-map';
+import {
+  BodyMap,
+  ZONAS_CON_SILUETA,
+  type ZonaElegible,
+} from '@shared/components/organisms/body-map/body-map';
 
 import {
   enumerar,
@@ -260,6 +264,25 @@ export class SymptomCheck {
 
   /** Las zonas del cuerpo, tal cual la tabla. */
   protected readonly zonas = signal(ZONAS_DEL_CUERPO);
+
+  /**
+   * Las pastillas: sólo lo que no tiene un lugar en la figura («piel»,
+   * «ánimo», «general»).
+   *
+   * Con la figura partida en veinte zonas, repetirlas todas como pastillas
+   * sería una segunda lista de veinte botones al lado del dibujo. Cada zona de
+   * la figura ya es un botón con nombre, alcanzable con el tabulador: lo que
+   * necesita una pastilla es lo que no se puede señalar.
+   */
+  protected readonly zonasSinSilueta = computed(() =>
+    this.zonas().filter((zona) => !ZONAS_CON_SILUETA.has(zona.id)),
+  );
+
+  /** El nombre de la zona abierta, para titular sus síntomas al lado de la figura. */
+  protected readonly nombreDeLaZonaAbierta = computed<string | null>(() => {
+    const abierta = this.zonaAbierta();
+    return this.zonas().find((zona) => zona.id === abierta)?.nombre ?? null;
+  });
 
   /** Qué zona está abierta, o `null` si ninguna. Una sola a la vez. */
   protected readonly zonaAbierta = signal<string | null>(null);
