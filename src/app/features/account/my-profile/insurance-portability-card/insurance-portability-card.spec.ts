@@ -1,4 +1,7 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import type {
@@ -7,6 +10,7 @@ import type {
 } from '../../../../core/data-access/profiles/profiles.types';
 import { PatientContextService } from '../../../../core/patient-context/patient-context.service';
 import { InsurancePortabilityCard } from './insurance-portability-card';
+import { PortabilityExportDialog } from './portability-export-dialog/portability-export-dialog';
 
 /** Una cobertura con lo mínimo que la tarjeta mira: su vigencia. */
 function cobertura(validityStatus: CoverageValidity): OwnCoverage {
@@ -36,6 +40,8 @@ function montar(opciones: {
   TestBed.configureTestingModule({
     imports: [InsurancePortabilityCard],
     providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
       {
         provide: AuthService,
         useValue: { patientProfileId: () => patientProfileId },
@@ -60,14 +66,22 @@ describe('InsurancePortabilityCard', () => {
     expect(query('btn-open-portability-dialog')).not.toBeNull();
   });
 
-  it('el botón se llama «Exportar certificado de portabilidad»', () => {
+  it('el botón se llama «Solicitar exportación de portabilidad»', () => {
     montar();
 
     // Es el nombre accesible que fija el requisito, y el mismo con el que se
     // titula el diálogo que abre (WCAG 2.5.3, la etiqueta está en el nombre).
     expect(query('btn-open-portability-dialog')?.textContent?.trim()).toBe(
-      'Exportar certificado de portabilidad',
+      'Solicitar exportación de portabilidad',
     );
+  });
+
+  it('describe la información disponible sin afirmar que tenga firma digital', () => {
+    montar();
+
+    const texto = query('insurance-portability-card')?.textContent ?? '';
+    expect(texto).toContain('información de pólizas y siniestros disponible');
+    expect(texto).not.toContain('firma digital');
   });
 
   describe('estado de las coberturas', () => {
@@ -145,6 +159,17 @@ describe('InsurancePortabilityCard', () => {
     expect(query('insurance-portability-card')?.textContent).toContain(
       'trámite personal',
     );
+  });
+
+  it('actuando por un dependiente, el diálogo exporta el perfil del TITULAR, nunca el del dependiente', () => {
+    const fixture = montar({ isActingForDependent: true, patientProfileId: 'own-profile' });
+
+    query('btn-open-portability-dialog')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    fixture.detectChanges();
+
+    const dialogo = fixture.debugElement.query(By.directive(PortabilityExportDialog));
+    expect(dialogo).not.toBeNull();
+    expect(dialogo.componentInstance.patientProfileId()).toBe('own-profile');
   });
 
   it('sin perfil de paciente propio, no ofrece exportar', () => {

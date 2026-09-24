@@ -63,19 +63,19 @@ export class InsurancePortabilityCard {
     const total = this.coverages().length;
     if (total === 0) return 'No tenés coberturas declaradas.';
 
-    const vigentes = this.coverages().filter(
+    const currentCount = this.coverages().filter(
       (coverage) => coverage.validityStatus === 'CURRENT',
     ).length;
 
-    if (vigentes === total) {
+    if (currentCount === total) {
       return total === 1 ? '1 cobertura vigente.' : `${total} coberturas vigentes.`;
     }
-    if (vigentes === 0) {
+    if (currentCount === 0) {
       return total === 1
         ? '1 cobertura declarada, ninguna vigente.'
         : `${total} coberturas declaradas, ninguna vigente.`;
     }
-    return `${vigentes} de ${total} coberturas vigentes.`;
+    return `${currentCount} de ${total} coberturas vigentes.`;
   });
 
   protected readonly dialogOpen = signal(false);

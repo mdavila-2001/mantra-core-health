@@ -139,22 +139,34 @@ describe('PortabilityExportDialog', () => {
     http.verify();
   });
 
-  it('renderiza los tres formatos con PDF preseleccionado', () => {
+  it('renderiza los tres formatos con el paquete completo preseleccionado', () => {
     montar();
 
-    /* Antes se comprobaba que los tres radios EXISTIERAN, y nada más: el
-       título decía «con PDF preseleccionado» y eso no se verificaba en ningún
-       lado. Ahora se afirman las tres cosas que el título promete —los tres
+    /* CA-01 (portabilidad a 1 clic) exige que confirmar SIN tocar el
+       desplegable baje los dos archivos: por eso el default es BUNDLE, no
+       PDF. Se afirman las tres cosas que el título promete —los tres
        formatos, en orden, con su texto, y cuál viene elegido—. */
     expect(formatosOfrecidos()).toEqual([
-      'PDF oficial certificado con código QR',
+      'PDF con código QR de verificación',
       'Archivo JSON interoperable',
       'Paquete completo (PDF + JSON)',
     ]);
 
     const select = query('portability-format')?.querySelector<HTMLSelectElement>('select');
     expect(select?.selectedOptions[0]?.textContent?.trim()).toBe(
-      'PDF oficial certificado con código QR',
+      'Paquete completo (PDF + JSON)',
+    );
+  });
+
+  it('presenta la exportación y su verificación sin prometer una certificación legal', () => {
+    montar();
+
+    const dialog = query('portability-export-dialog');
+    expect(dialog?.getAttribute('heading')).toBe('Solicitar exportación de portabilidad');
+    expect(dialog?.getAttribute('description')).toContain('información disponible');
+    expect(dialog?.getAttribute('description')).not.toMatch(/firma digital|certificaci[oó]n/i);
+    expect(query('btn-generate-portability-download')?.textContent).toContain(
+      'Solicitar exportación',
     );
   });
 
@@ -179,6 +191,41 @@ describe('PortabilityExportDialog', () => {
 
     const [llamada] = await descargado;
     expect(llamada.fileName).toBe('portabilidad-cert-1.pdf');
+    expect(query('portability-export-dialog')?.textContent).toContain('Exportación generada');
+    expect(query('portability-export-dialog')?.textContent).not.toContain('Certificado emitido');
+    expect(document.querySelector('#portability-hash-label')?.textContent).toBe(
+      'Huella SHA-256 del manifiesto',
+    );
+    expect(query('portability-verification-link')?.textContent).toContain(
+      'Consultar los datos de verificación en línea',
+    );
+  });
+
+  it('confirmar sin tocar el desplegable baja los dos archivos (CA-01: BUNDLE por defecto)', async () => {
+    montar();
+    const descargado = esperarDescarga(2);
+
+    query('btn-generate-portability-download')?.dispatchEvent(
+      new MouseEvent('click', { bubbles: true }),
+    );
+
+    const pedido = http.expectOne((r) => r.url === '/insurance/portability/export');
+    expect((pedido.request.body as { format: string }).format).toBe('BUNDLE');
+    pedido.flush(exportResultWire({ format: 'BUNDLE' }));
+    fixture.detectChanges();
+
+    http
+      .expectOne((r) => r.url === '/insurance/portability/certificates/cert-1/pdf')
+      .flush(new Blob([new Uint8Array([1])]));
+    http
+      .expectOne((r) => r.url === '/insurance/portability/certificates/cert-1/json')
+      .flush(new Blob([new Uint8Array([2])]));
+
+    const llamadas = await descargado;
+    expect(llamadas.map((l) => l.fileName).sort()).toEqual([
+      'portabilidad-cert-1.json',
+      'portabilidad-cert-1.pdf',
+    ]);
   });
 
   it('el aviso de «copiado» es una región viva: un lector de pantalla lo anuncia', async () => {
@@ -201,7 +248,7 @@ describe('PortabilityExportDialog', () => {
     // los cambios de un nodo que ya estaba en el árbol. Si apareciera recién
     // al copiar, buena parte de los lectores no diría nada (WCAG 2.2 AA,
     // SC 4.1.3 Mensajes de estado).
-    const aviso = query('portability-hash-copiado');
+    const aviso = query('portability-hash-copied');
     expect(aviso).not.toBeNull();
     expect(aviso?.getAttribute('role')).toBe('status');
     expect(aviso?.getAttribute('aria-live')).toBe('polite');
@@ -223,7 +270,7 @@ describe('PortabilityExportDialog', () => {
     fixture.detectChanges();
 
     expect(escrito).toEqual([HASH]);
-    expect(query('portability-hash-copiado')?.textContent?.trim()).toBe(
+    expect(query('portability-hash-copied')?.textContent?.trim()).toBe(
       'Sello copiado al portapapeles',
     );
   });
@@ -294,6 +341,31 @@ describe('PortabilityExportDialog', () => {
 
     const cerrar = query('btn-cancel-portability-dialog');
     expect(cerrar?.getAttribute('aria-disabled')).toBe('true');
+
+    http.expectOne((r) => r.url === '/insurance/portability/export').flush(exportResultWire());
+    http.expectOne((r) => r.url === '/insurance/portability/certificates/cert-1/pdf').flush(new Blob([]));
+  });
+
+  it('Escape o el fondo no cierran el diálogo mientras carga', () => {
+    montar();
+    const cerrado = vi.fn();
+    fixture.componentInstance.closed.subscribe(cerrado);
+
+    query('btn-generate-portability-download')?.dispatchEvent(
+      new MouseEvent('click', { bubbles: true }),
+    );
+    fixture.detectChanges();
+
+    // El `<dialog>` nativo dispara `cancel` ante Escape: `ContentDialog`
+    // sigue emitiendo `dismissAttempt` aunque `dismissible` sea `false`
+    // (es el punto de la señal: «quien lo escucha decide»). Antes de este
+    // fix, `(dismissAttempt)="close()"` cerraba igual en pleno request.
+    const dialogo = document.querySelector('dialog[data-testid="content-dialog"]');
+    dialogo?.dispatchEvent(new Event('cancel', { cancelable: true }));
+    fixture.detectChanges();
+
+    expect(cerrado).not.toHaveBeenCalled();
+    expect(query('portability-export-dialog')).not.toBeNull();
 
     http.expectOne((r) => r.url === '/insurance/portability/export').flush(exportResultWire());
     http.expectOne((r) => r.url === '/insurance/portability/certificates/cert-1/pdf').flush(new Blob([]));
