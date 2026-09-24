@@ -26,4 +26,8 @@ El smoke móvil más reciente probó Chromium → API real → PostgreSQL 18 des
 
 ## H1 · Correos personales y laborales separados
 
-[`h1-separated-emails/REPORT.md`](h1-separated-emails/REPORT.md) registra el contrato opcional `workEmail`, la persistencia unitaria en usos HOME/WORK y la lectura explícita en el editor. FE 86/86, API 107/107, typecheck y ESLint dirigidos pasan; no se ejecutó journey PostgreSQL→recarga ni hay captura, así que L0179/L0186 y MED-E03 siguen parciales.
+[`h1-separated-emails/REPORT.md`](h1-separated-emails/REPORT.md) registra el contrato opcional `workEmail`, la persistencia unitaria en usos HOME/WORK y la lectura explícita en el editor. FE 86/86, API alta 107/107, lectura API 138/138, typecheck y ESLint dirigidos pasan; no se ejecutó journey PostgreSQL→recarga ni hay captura, así que L0179/L0186 y MED-E03 siguen parciales.
+
+## H1 · Límite y catálogo de especialidades
+
+[`h1-specialty-slots/REPORT.md`](h1-specialty-slots/REPORT.md) registra L0174: una especialidad principal más tres adicionales, lista completa sin filtrar por profesión, pruebas FE 186/186 y API 189/189. La regresión completa quedó limitada por ENOSPC; no hubo Chromium/PostgreSQL/foto, por lo que AC01/AC02 permanecen parciales.

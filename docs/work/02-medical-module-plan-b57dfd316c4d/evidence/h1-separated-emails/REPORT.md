@@ -18,6 +18,7 @@ Cambios publicados en `justin/medical-module-execution-20260924`:
 | FE | `corepack yarn test --watch=false --include=src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts` | 1 archivo, 86/86 pruebas aprobadas. Incluye caso con correo de acceso personal y `workEmail` diferente; el perfil muestra el laboral. |
 | API | `corepack yarn test --runInBand --no-cache src/modules/iam/dto/register-practitioner.dto.spec.ts src/modules/iam/services/iam-practitioner-self-registration.service.spec.ts` | 2 suites, 107/107 pruebas aprobadas. DTO admite/rechaza `workEmail` inválido; servicio espera usos HOME y WORK distintos. El comportamiento legacy sin `workEmail` sigue cubierto. |
 | FE/API | `corepack yarn typecheck`; ESLint dirigido a los TS afectados; `git diff --check` | Salida 0 en ambos worktrees. |
+| Lectura propia del API | `corepack yarn test --runInBand --no-cache src/modules/profiles/services/profiles-practitioners.service.spec.ts` | 1 suite, 138/138 pruebas aprobadas; `workEmail` y `personalEmail` regresan desde usos HOME/WORK distintos. Commit API `924e8f03a53afc7c3cdb2dc7dbbf8107ba114b8b`. |
 
 El ciclo test-first reprodujo ambos defectos antes del cambio: el editor usaba `email` como correo de trabajo aunque existiera un `workEmail` diferente, y el API rechazaba `workEmail` con whitelist estricta mientras guardaba `email` como WORK.
 

@@ -128,7 +128,7 @@ No confundas registro profesional con registro empresarial del consultorio: vinc
 | Grupo | Fuente | Requisitos que deben descomponerse |
 |---|---|---|
 | MED-01 Identidad | L166–171; L177 | Nombre completo en tres campos de nombres y dos apellidos; CI exigido y departamento; nacimiento y edad automática. |
-| MED-02 Ocupación, profesión y especialidades | L172–176 | Ocupación/catalogación SEGIP y buscador solicitados; hasta tres espacios de especialidad; relación entre profesión, matrícula y colegio. La decisión previa de retirar «ocupación» no puede reemplazar el Registro sin cambio de alcance documentado. |
+| MED-02 Ocupación, profesión y especialidades | L172–176 | Ocupación/catalogación SEGIP y buscador solicitados; L0174 pide tres casillas adicionales de especialidad con el catálogo sin filtro por profesión; L0176 trata profesión, matrícula y colegio. La decisión previa de retirar «ocupación» no puede reemplazar el Registro sin cambio de alcance documentado. |
 | MED-03 Contactos separados | L178–186 | Celular y correo personal; domicilio/GPS; celular/fijo de trabajo, dirección/GPS y correo laboral separados. No usar el email de acceso como sustituto universal. |
 | MED-04 Credenciales | L187–199 | Hasta dos carreras/títulos universitarios; matrícula ministerial; múltiples diplomados, maestrías, doctorados y especialidades con documentos; colegio y rótulo/selección conforme a profesión, también al editar. |
 | MED-05 Consultorios | L200 | GPS de cada consultorio de atención y capacidad de manejar varios. |
