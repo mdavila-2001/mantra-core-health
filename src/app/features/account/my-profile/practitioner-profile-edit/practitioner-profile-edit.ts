@@ -1976,7 +1976,6 @@ export class PractitionerProfileEdit {
   protected readonly edicionInstitucionEscrita = signal('');
   protected readonly edicionEmision = signal<Date | null>(null);
   protected readonly edicionEspecialidad = signal<string | null>(null);
-  protected readonly edicionCertificada = signal(false);
   protected readonly edicionAutoridad = signal('');
   protected readonly edicionInscripcion = signal<Date | null>(null);
 
@@ -2016,7 +2015,6 @@ export class PractitionerProfileEdit {
       this.edicionInstitucionDeclarada(),
       emision === null ? null : fechaIso(emision),
       this.edicionEspecialidad(),
-      this.edicionCertificada(),
       this.edicionAutoridad().trim(),
       inscripcion === null ? null : fechaIso(inscripcion),
     ]);
@@ -2220,7 +2218,6 @@ export class PractitionerProfileEdit {
       return;
     }
     this.edicionEspecialidad.set(especialidad.specialtyConceptId);
-    this.edicionCertificada.set(especialidad.boardCertified);
     this.abrirEdicion({
       recurso: 'especialidad',
       id: fila.id,
@@ -2347,7 +2344,6 @@ export class PractitionerProfileEdit {
       case 'especialidad':
         return this.profiles.updateOwnSpecialty(enCurso.id, {
           specialtyConceptId: this.edicionEspecialidad() ?? undefined,
-          boardCertified: this.edicionCertificada(),
         });
       case 'matricula': {
         const inscripcion = this.edicionInscripcion();

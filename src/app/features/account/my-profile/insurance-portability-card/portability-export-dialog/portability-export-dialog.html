@@ -1,7 +1,7 @@
 <app-content-dialog
   data-testid="portability-export-dialog"
-  heading="Exportar certificado de portabilidad"
-  description="El certificado incluye tus pólizas registradas, los siniestros cubiertos y una certificación con código QR de verificación."
+  heading="Solicitar exportación de portabilidad"
+  description="Se exporta la información disponible de tus pólizas y siniestros. Al terminar, vas a poder descargar el archivo, consultar la huella SHA-256 del manifiesto y abrir el enlace de verificación."
   [dismissible]="state() !== 'loading'"
   (dismissAttempt)="close()"
   (closed)="close()"
@@ -10,10 +10,10 @@
     @case ('ready') {
       @if (result(); as certificado) {
         <p class="portability-dialog__estado">
-          Certificado emitido — {{ certificado.recordCount }} registro(s) de {{ certificado.policiesCount }} póliza(s).
+          Exportación generada — {{ certificado.recordCount }} registro(s) de {{ certificado.policiesCount }} póliza(s).
         </p>
 
-        <p class="portability-dialog__rotulo" id="portability-hash-rotulo">Sello digital (SHA-256)</p>
+        <p class="portability-dialog__rotulo" id="portability-hash-rotulo">Huella SHA-256 del manifiesto</p>
         <code
           class="portability-dialog__hash"
           data-testid="portability-manifest-hash"
@@ -41,7 +41,7 @@
 
         <p>
           <a app-link [href]="certificado.verificationUrl" data-testid="portability-verification-link">
-            Verificar este certificado en línea
+            Consultar los datos de verificación en línea
           </a>
         </p>
 
@@ -69,8 +69,9 @@
     }
     @default {
       <p>
-        Vas a exportar tus pólizas registradas, los siniestros cubiertos y una certificación con
-        código QR de verificación.
+        Vas a exportar la información disponible de tus pólizas y siniestros. Al terminar, vas a
+        poder descargar el archivo, consultar la huella SHA-256 del manifiesto y abrir el enlace de
+        verificación.
       </p>
 
       @if (state() === 'error' && errorMessage(); as mensaje) {
@@ -114,7 +115,7 @@
       [disabled]="state() === 'loading'"
       (clicked)="generate()"
     >
-      Descargar archivo certificado
+      Solicitar exportación
     </button>
   } @else {
     <button
@@ -124,7 +125,7 @@
       data-testid="btn-generate-portability-download"
       (clicked)="redownload()"
     >
-      Volver a descargar
+      Volver a descargar archivo de portabilidad
     </button>
   }
 </app-content-dialog>
