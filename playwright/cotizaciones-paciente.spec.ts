@@ -28,20 +28,23 @@ test.describe('Cotizaciones del paciente', () => {
     await expect(page.getByText('Estudios en tus documentos actuales')).toHaveCount(0);
     expect(pedidosDeOrdenes).toEqual([]);
 
+    // Sin término no se lista nada: se pide qué cotizar.
+    await expect(page.getByTestId('cotizaciones-sin-termino')).toBeVisible();
+
+    const busqueda = page.getByTestId('cotizaciones-busqueda').locator('input');
     const resultados = page.getByTestId('cotizaciones-resultados');
-    await expect(resultados).toContainText('Paracetamol');
-    await expect(resultados).toContainText('Tomografía');
-    await expect(resultados).toContainText('Precio no publicado');
-    await expect(resultados).toContainText('5 UMA');
-    await expect(resultados).toContainText('Procedencia: Maqueta · referencia UMA');
 
-    await page.getByTestId('cotizaciones-busqueda').fill('tomografía');
-    await expect(resultados).toContainText('Tomografía');
-    await expect(resultados).not.toContainText('Paracetamol');
+    // Servicios médicos: el arancel de referencia, en UMA y rotulado, sin convertir.
+    await busqueda.fill('consulta medica general');
+    await expect(resultados).toContainText('UMA');
+    await expect(resultados).toContainText('Referencia del Colegio Médico de Santa Cruz 2025');
+    await expect(resultados).not.toContainText(/Bs\.? ?\d/u);
 
-    await page.getByTestId('cotizaciones-busqueda').fill('sin coincidencias');
-    await expect(page.locator('main.cotizaciones p[role="status"]')).toHaveText(
-      'No hay cotizaciones que coincidan con tu búsqueda.',
-    );
+    // Medicamentos: precio de la lista de cada farmacia, con su procedencia.
+    await busqueda.fill('paracetamol');
+    await expect(resultados).toContainText('Lista de precios PUBLICO publicada por');
+
+    await busqueda.fill('sin coincidencias');
+    await expect(resultados).toContainText('No encontramos cotizaciones para esa búsqueda.');
   });
 });

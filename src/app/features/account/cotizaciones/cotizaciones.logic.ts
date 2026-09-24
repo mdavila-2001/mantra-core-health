@@ -1,19 +1,26 @@
 /** Las cuatro verticales explícitas de Cotizaciones del paciente. */
 export type VerticalCotizacion =
-  | 'TODAS'
-  | 'MEDICAMENTOS'
-  | 'ANALISIS'
-  | 'IMAGENOLOGIA'
-  | 'SERVICIOS_MEDICOS';
+  'TODAS' | 'MEDICAMENTOS' | 'ANALISIS' | 'IMAGENOLOGIA' | 'SERVICIOS_MEDICOS';
 
 /** La orden que puede elegir la persona. */
 export type OrdenCotizacion = 'PRECIO' | 'CERCANIA';
 
-/** Un precio publicado con su unidad y procedencia; `null` significa no publicado. */
+/**
+ * Un precio publicado con su unidad y procedencia; `null` significa no publicado.
+ *
+ * `currency` es el código que trae la fuente (`BOB`, `USD`, `UMA`…) y se
+ * muestra tal cual: UMA no es una moneda y nada acá la convierte.
+ */
 export interface PrecioPublicado {
   readonly amount: number;
-  readonly currency: 'BOB' | 'UMA';
+  readonly currency: string;
   readonly source: string;
+}
+
+/** A dónde lleva la fila: una pantalla existente, con ícono + texto. */
+export interface AccionDeCotizacion {
+  readonly etiqueta: string;
+  readonly ruta: string;
 }
 
 /** La fila normalizada que una fuente existente entrega a la pantalla. */
@@ -24,11 +31,20 @@ export interface CotizacionResultado {
   readonly donde: string;
   readonly price: PrecioPublicado | null;
   readonly distanceKm: number | null;
+  /** Por qué no hay distancia, dicho para la persona («no aplica», «no publicó su ubicación»). */
+  readonly sinDistancia?: string;
+  /** Aviso sobre la fila misma (p. ej. texto de un escaneo por revisar). */
+  readonly advertencia?: string;
+  readonly accion?: AccionDeCotizacion;
 }
 
 /** Quita tildes, espacios laterales y diferencias de mayúscula antes de comparar. */
 export function normalizarCotizacion(texto: string): string {
-  return texto.normalize('NFD').replace(/[\u0300-\u036f]/gu, '').toLocaleLowerCase('es').trim();
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/gu, '')
+    .toLocaleLowerCase('es')
+    .trim();
 }
 
 /** Aplica la búsqueda y vertical sin mutar la fuente. */
@@ -65,9 +81,7 @@ export function ordenarResultados(
     return [...resultados];
   }
   return [...resultados].sort((izquierda, derecha) =>
-    orden === 'PRECIO'
-      ? compararPrecio(izquierda, derecha)
-      : compararDistancia(izquierda, derecha),
+    orden === 'PRECIO' ? compararPrecio(izquierda, derecha) : compararDistancia(izquierda, derecha),
   );
 }
 
