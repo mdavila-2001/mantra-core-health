@@ -1430,6 +1430,21 @@ describe('PractitionerProfileEdit', () => {
       expect(bloque?.querySelectorAll('input, select, textarea')).toHaveLength(0);
     });
 
+    it('prefiere workEmail cuando el correo de acceso es personal', () => {
+      const fixture = montarConVista({
+        ...CON_IDENTIDAD,
+        email: 'dra.salas.personal@alovida.mock',
+        workEmail: 'dra.salas@hospital.mock',
+      });
+
+      señal<number>('pestana').set(1);
+      fixture.detectChanges();
+
+      const bloque = panelAbierto(fixture).querySelector('[data-testid="edicion-correo-trabajo"]');
+      expect(bloque?.textContent).toContain('dra.salas@hospital.mock');
+      expect(bloque?.textContent).not.toContain('dra.salas.personal@alovida.mock');
+    });
+
     it('guardar no manda ninguno de los tres', () => {
       montarYCargar(CON_IDENTIDAD);
 
