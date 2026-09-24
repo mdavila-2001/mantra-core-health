@@ -25,6 +25,9 @@ import { envFromProcess } from './env.generated';
 export const environment: Environment = {
   apiBaseUrl: envFromProcess.apiBaseUrl ?? '',
 
+  /** Mismo origen: ver `aiBaseUrl` en `environment.types.ts`. */
+  aiBaseUrl: envFromProcess.aiBaseUrl ?? '/ai',
+
   /**
    * Apagada por defecto: en producción la barra de demostración no existe
    * salvo que el despliegue la pida (`PUBLIC_DEMO_PRESETS=true`, pensado para
