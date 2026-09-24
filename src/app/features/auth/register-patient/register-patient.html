@@ -330,18 +330,21 @@
                       >
                         Usar mi ubicación
                       </button>
-                      <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento, con aria-label y globo. -->
+                      <!-- D-05: ícono + nombre. Sin punto todavía no hay ubicación que
+                           quitar: el botón sólo cierra el mapa, y así se llama. -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
-                        aria-label="Quitar la ubicación de tu domicilio"
-                        appTooltip="Quitar la ubicación de tu domicilio"
+                        aria-label="Cerrar el mapa de tu domicilio"
                         data-testid="registration-home-location-remove"
                         (clicked)="quitarUbicacion()"
                       >
-                        <app-nav-icon name="remove" />
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                        Cerrar el mapa
                       </button>
                     </div>
                     @if (gpsRechazado()) {
@@ -375,18 +378,19 @@
                       >
                         Volver a ubicarme
                       </button>
-                      <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento, con aria-label y globo. -->
+                      <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
+                           la que quitar, y junto al «−» del zoom del plano el aro con un
+                           menos se lee como «alejar». -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
                         aria-label="Quitar la ubicación de tu domicilio"
-                        appTooltip="Quitar la ubicación de tu domicilio"
                         data-testid="registration-home-location-remove"
                         (clicked)="quitarUbicacion()"
                       >
                         <app-nav-icon name="remove" />
+                        Quitar la ubicación
                       </button>
                     </div>
                   } @else {
@@ -423,18 +427,19 @@
                       >
                         Volver a ubicarme
                       </button>
-                      <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento, con aria-label y globo. -->
+                      <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
+                           la que quitar, y junto al «−» del zoom del plano el aro con un
+                           menos se lee como «alejar». -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
                         aria-label="Quitar la ubicación de tu domicilio"
-                        appTooltip="Quitar la ubicación de tu domicilio"
                         data-testid="registration-home-location-remove"
                         (clicked)="quitarUbicacion()"
                       >
                         <app-nav-icon name="remove" />
+                        Quitar la ubicación
                       </button>
                     </div>
                   }
@@ -609,18 +614,21 @@
                       >
                         Usar mi ubicación
                       </button>
-                      <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento, con aria-label y globo. -->
+                      <!-- D-05: ícono + nombre. Sin punto todavía no hay ubicación que
+                           quitar: el botón sólo cierra el mapa, y así se llama. -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
-                        aria-label="Quitar la ubicación de tu lugar de trabajo"
-                        appTooltip="Quitar la ubicación de tu lugar de trabajo"
+                        aria-label="Cerrar el mapa de tu lugar de trabajo"
                         data-testid="registration-work-location-remove"
                         (clicked)="quitarUbicacionDeTrabajo()"
                       >
-                        <app-nav-icon name="remove" />
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                        Cerrar el mapa
                       </button>
                     </div>
                     @if (gpsTrabajoRechazado()) {
@@ -650,18 +658,19 @@
                       >
                         Volver a ubicarme
                       </button>
-                      <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento, con aria-label y globo. -->
+                      <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
+                           la que quitar, y junto al «−» del zoom del plano el aro con un
+                           menos se lee como «alejar». -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
                         aria-label="Quitar la ubicación de tu lugar de trabajo"
-                        appTooltip="Quitar la ubicación de tu lugar de trabajo"
                         data-testid="registration-work-location-remove"
                         (clicked)="quitarUbicacionDeTrabajo()"
                       >
                         <app-nav-icon name="remove" />
+                        Quitar la ubicación
                       </button>
                     </div>
                   } @else {
@@ -696,18 +705,19 @@
                       >
                         Volver a ubicarme
                       </button>
-                      <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento, con aria-label y globo. -->
+                      <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
+                           la que quitar, y junto al «−» del zoom del plano el aro con un
+                           menos se lee como «alejar». -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
                         aria-label="Quitar la ubicación de tu lugar de trabajo"
-                        appTooltip="Quitar la ubicación de tu lugar de trabajo"
                         data-testid="registration-work-location-remove"
                         (clicked)="quitarUbicacionDeTrabajo()"
                       >
                         <app-nav-icon name="remove" />
+                        Quitar la ubicación
                       </button>
                     </div>
                   }
