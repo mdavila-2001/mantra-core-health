@@ -352,7 +352,11 @@ describe('SymptomCheck · dictar', () => {
     expect(boton().textContent).toContain('Dictar');
     expect(boton().querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     const aviso = html.querySelector('#sintomas-dictado-aviso');
-    expect(aviso?.textContent).toContain('lo transcribe tu navegador; no lo guardamos');
+    // Dice las tres cosas que la persona tiene que saber antes de hablar: quién
+    // transcribe, que el texto se analiza para entenderla y que no se guarda.
+    expect(aviso?.textContent).toContain('lo transcribe tu navegador');
+    expect(aviso?.textContent).toContain('lo analizamos para entenderte');
+    expect(aviso?.textContent).toContain('no lo guardamos');
     expect(boton().getAttribute('aria-describedby')).toBe('sintomas-dictado-aviso');
     // El aviso está ANTES del botón en el DOM: el botón «sigue» al aviso.
     const posicion = aviso?.compareDocumentPosition(boton()) ?? 0;
@@ -396,5 +400,91 @@ describe('SymptomCheck · dictar', () => {
       'Activá el micrófono en el navegador o escribí',
     );
     expect(boton().textContent).toContain('Dictar');
+  });
+});
+
+/**
+ * Lo que suma el servicio de triage (AlovidaAIService): partes del cuerpo que
+ * la tabla no tiene. La respuesta es la real del servicio desplegado para la
+ * frase del pedido (2026-09-23); ver `lectura-ia.spec.ts` para la combinación
+ * aislada.
+ */
+describe('SymptomCheck · lo que entiende el servicio de triage', () => {
+  let fixture: ReturnType<typeof TestBed.createComponent<SymptomCheck>>;
+  let http: HttpTestingController;
+  let html: HTMLElement;
+
+  const MANCHAS = {
+    symptoms: [
+      {
+        code: 'mancha:espalda',
+        label: 'manchas en la espalda',
+        kind: 'anatomy',
+        zones: ['espalda', 'piel'],
+        bodyPart: { code: 'espalda', label: 'espalda', side: null },
+        alarm: false,
+        especialidades: [
+          { nombre: 'Dermatología', peso: 3 },
+          { nombre: 'Medicina general', peso: 1 },
+        ],
+      },
+    ],
+    urgency: 'programada',
+  };
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(SymptomCheck);
+    fixture.detectChanges();
+    html = fixture.nativeElement as HTMLElement;
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    http.verify();
+  });
+
+  function escribir(texto: string): void {
+    (fixture.componentInstance as unknown as { escribir(v: string): void }).escribir(texto);
+    fixture.detectChanges();
+    // La lista de especialidades con gente se pide al escribir; vacía = sin filtro.
+    for (const req of http.match((r) => r.url === '/profiles/practitioners')) {
+      req.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+    }
+  }
+
+  it('pregunta después de una pausa y suma lo que el motor local no reconoce', () => {
+    escribir('Me salieron unas manchas raras en la espalda');
+    expect(html.textContent).not.toContain('manchas en la espalda');
+    http.expectNone('/ai/v1/triage/analyze');
+
+    vi.advanceTimersByTime(600);
+    const req = http.expectOne('/ai/v1/triage/analyze');
+    expect(req.request.body).toEqual({ text: 'Me salieron unas manchas raras en la espalda' });
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush(MANCHAS);
+    fixture.detectChanges();
+
+    expect(html.querySelector('.sintomas__chips')?.textContent).toContain('manchas en la espalda');
+    expect(html.querySelector('.sintomas__recomendaciones')?.textContent).toContain('Dermatología');
+  });
+
+  it('si el servicio no responde, la pantalla sigue con lo que reconoce sola', () => {
+    escribir('me duele la cabeza');
+    vi.advanceTimersByTime(600);
+    http.expectOne('/ai/v1/triage/analyze').flush('caído', { status: 503, statusText: 'Service Unavailable' });
+    fixture.detectChanges();
+
+    expect(html.querySelector('.sintomas__chips')?.textContent).toContain('dolor de cabeza');
+  });
+
+  it('con menos de tres letras no pregunta nada', () => {
+    escribir('me');
+    vi.advanceTimersByTime(2_000);
+    http.expectNone('/ai/v1/triage/analyze');
   });
 });
