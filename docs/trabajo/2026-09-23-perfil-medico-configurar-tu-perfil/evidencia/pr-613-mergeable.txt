@@ -25,3 +25,27 @@ Lectura: mergeable = MERGEABLE, sin draft. mergeStateStatus = UNSTABLE porque lo
 están pendientes: ninguno falla. Todas las corridas del CI del repo, de cualquier rama (dev incluida), siguen en
 «queued» sin arrancar: no hay quién las ejecute. Clase EXTERNAL. Los gates del CI se corrieron a mano sobre el
 árbol final y están en evidencia/h6/cierre-*.
+
+
+# Después del push de H5.S2.M6 (head 182910f0)
+
+$ gh pr view 613 --json number,url,isDraft,mergeable,mergeStateStatus,reviewDecision,baseRefName,headRefName,headRefOid
+{"baseRefName":"mockup","headRefName":"itzan/perfil-d05-iconos","headRefOid":"182910f0c2ed8f1badf2920625bef4dff3930c51","isDraft":false,"mergeStateStatus":"UNSTABLE","mergeable":"MERGEABLE","number":613,"reviewDecision":"","url":"https://github.com/mdavila-2001/mantra-core-health/pull/613"}
+
+$ gh pr checks 613
+dependencias	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35994687883/job/107616726371	
+e2e	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35994687883/job/107616726761	
+verificar	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/35994687883/job/107616726641	
+exit=8
+
+$ gh run list --limit 10   (id, estado, conclusión, rama, creada)
+35994687883 queued  itzan/perfil-d05-iconos 2026-09-24T11:43:30Z
+35976582004 completed cancelled itzan/perfil-d05-iconos 2026-09-24T08:40:03Z
+35976361267 completed cancelled itzan/perfil-d05-iconos 2026-09-24T08:37:46Z
+35970549687 queued  justin/mockup-corr-38-editar-perfil-medico-como-alta 2026-09-24T07:36:41Z
+35966800277 queued  justin/mockup-corr-39-matriculas-y-adjuntos-en-editar 2026-09-24T06:54:29Z
+35963037027 queued  justin/baseline-historico-reserva-2026-09-23 2026-09-24T06:07:54Z
+35962948589 completed cancelled justin/baseline-historico-reserva-2026-09-23 2026-09-24T06:06:43Z
+35962183691 completed cancelled justin/baseline-historico-reserva-2026-09-23 2026-09-24T05:56:43Z
+35960755870 queued  codex/patient-insurance-portability-20260924 2026-09-24T05:37:18Z
+35957803404 queued  justin/mockup-corr-04-paciente-imagenologia 2026-09-24T04:56:54Z
