@@ -5676,7 +5676,7 @@
         "La instancia de PostgreSQL/API/Angular fue propia y temporal; no se conectó ni alteró los servicios compartidos observados en otros puertos."
       ],
       "criteria_marked_done": 0,
-      "pushed_to_origin": false,
+      "pushed_to_origin": true,
       "pr_opened": false,
       "merged": false,
       "deployed": false
