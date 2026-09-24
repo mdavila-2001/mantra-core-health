@@ -20,6 +20,16 @@ En `justin/medical-module-execution-20260924` se añadió al editor médico la d
 
 Los estados de `RP-MED-L0180`, `RP-MED-L0184`, `RP-MED-L0185` y `RP-MED-L0200` permanecen `A MEDIAS / TESTED`: se corrigieron huecos de UI/contrato y hay pruebas de unidad, pero falta verificar el recorrido navegador→API→PostgreSQL→recarga y sus fotos. El conteo global queda 10/98 `HECHO`; este avance no convierte MED-E03/H2 ni el plan completo en terminados.
 
+## Continuación H1: dirección laboral capturada en el alta
+
+La rama FE `18b05cc3f0896310fde4ffe23d666861ac26bea5` agrega un paso separado para dirección/GPS laboral y los pasa en el cuerpo HTTP explícito. La rama API `aa609a865cbd8140f5057ee9b1f874aa57e3f86c` valida líneas y coordenadas en par y registra la dirección con `ADDR_USE_WORK`, independiente de HOME y de sedes propias. No se modificó modelo ni DDL.
+
+| Área | Verificación | Resultado | Límite |
+|---|---|---|---|
+| Alta frontend | `corepack yarn test --watch=false --include=src/app/features/auth/register-practitioner/register-practitioner.spec.ts` | 1 archivo, 98/98 aprobadas; typecheck y ESLint dirigidos exit 0 | Pruebas de componente/cliente; sin captura ni browser con API real |
+| Alta API | `corepack yarn test --runInBand src/modules/iam/dto/register-practitioner.dto.spec.ts src/modules/iam/services/iam-practitioner-self-registration.service.spec.ts` | 2 suites, 104/104 aprobadas; typecheck y ESLint dirigidos exit 0 | Servicio bajo dobles; sin PostgreSQL ni lectura tras recarga |
+| Estado de criterios | `MATRIX.md` y reporte parcial en `evidence/h1-work-address-registration/REPORT.md` | No se marca ningún criterio HECHO; el conteo sigue 10/98 | MED-03, MED-E03, H1 y el plan general requieren el journey completo |
+
 ## Verificado en esta continuación
 
 | Área | Verificación | Resultado | Límite |

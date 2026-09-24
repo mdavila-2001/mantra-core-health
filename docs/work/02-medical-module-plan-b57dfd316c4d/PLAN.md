@@ -33,6 +33,10 @@ El propietario indicó continuar el plan Médico completo y publicar los cambios
 - La matriz vigente tiene 10/98 `HECHO`; MED-E01/H1 y el plan integral no están completos. Consultar `MATRIX.json`, `REPORT.md`, `CONTRACTS.md` y `HANDOFF.md` para límites y pendientes.
 - Reanudación del 2026-09-24: la inspección de solo lectura observó PostgreSQL temporal en 55439/55440, Angular en 4300/4302/4387 y un runtime Node SSR (`dist/mantra-core-health/server/server.mjs`), con dueños y datos desconocidos. No se conectó, reinició ni detuvo esos servicios. Para completar el smoke se levantaron instancias propias aisladas en puerto 55444 y 4390, se ejecutó MED-E01 ampliado y se inspeccionaron ambas capturas móviles. En el corte inicial no se elevó ningún criterio; una continuación aislada posterior probó el editor real y elevó diez incisos puntuales. Los demás escenarios y bloqueos del plan siguen abiertos.
 
+### Continuación H1 — dirección laboral durante el alta
+
+La ficha del alta profesional ya separaba domicilio y consultorio propio, pero aún no capturaba la dirección laboral pedida en L0184–L0185. Se añadió un paso propio para la dirección y el GPS laboral; el cliente HTTP los incluye explícitamente y el API los valida y guarda como fila `ADDR_USE_WORK`, distinta de la fila `ADDR_USE_HOME`. FE: 98/98 pruebas dirigidas, typecheck y ESLint dirigido aprobados. API: 104/104 pruebas dirigidas, typecheck y ESLint dirigido aprobados. Cambios publicados en FE `18b05cc3` y API `aa609a86`. La evidencia está en [evidence/h1-work-address-registration/REPORT.md](evidence/h1-work-address-registration/REPORT.md). No se ejecutó navegador→API→PostgreSQL ni se guardó captura; ningún criterio cambia a HECHO y H1/MED-E03 siguen parciales.
+
 ## 0. Instrucciones operativas para ejecutar este plan
 
 ### Alcance de esta sesión y reglas vigentes
