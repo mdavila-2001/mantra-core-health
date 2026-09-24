@@ -1,6 +1,79 @@
-.cotizaciones { display: grid; gap: var(--sp-4); max-width: 72rem; margin: 0 auto; padding: var(--sp-6); }
-.cotizaciones label { display: grid; gap: var(--sp-2); font-weight: 600; }
-.cotizaciones input, .cotizaciones select { min-height: 2.75rem; border: 1px solid var(--c-border); border-radius: var(--r-md); padding: 0 var(--sp-3); }
-.cotizaciones ul { display: grid; gap: var(--sp-3); list-style: none; margin: 0; padding: 0; }
-.cotizaciones li { border: 1px solid var(--c-border); border-radius: var(--r-md); padding: var(--sp-4); }
-.cotizaciones h2, .cotizaciones p { margin: 0 0 var(--sp-2); }
+.cotizaciones {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+/* Mobile-first: los controles apilados; desde tableta, la búsqueda ocupa la
+   fila entera y los dos selects comparten la siguiente con el origen. */
+.cotizaciones__controles {
+  display: grid;
+  gap: var(--sp-3);
+  align-items: end;
+}
+
+@media (min-width: 780px) {
+  .cotizaciones__controles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cotizaciones__busqueda,
+  .cotizaciones__origen {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cotizaciones__controles {
+    grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+  }
+
+  .cotizaciones__busqueda {
+    grid-column: 1 / 2;
+  }
+}
+
+.cotizaciones__que {
+  display: block;
+  font-weight: 600;
+}
+
+.cotizaciones__buscando,
+.cotizaciones__vertical,
+.cotizaciones__procedencia,
+.cotizaciones__advertencia {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.cotizaciones__advertencia {
+  font-style: italic;
+}
+
+.cotizaciones__precio {
+  display: block;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.cotizaciones__precio--no-publicado,
+.cotizaciones__distancia--sin {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.cotizaciones__distancia {
+  font-variant-numeric: tabular-nums;
+}
+
+.cotizaciones__accion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.cotizaciones__accion svg {
+  width: 1em;
+  height: 1em;
+  flex: none;
+}

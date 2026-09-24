@@ -260,11 +260,12 @@ export class WorkHistory implements OnInit {
   /**
    * Cómo se está nombrando la institución.
    *
-   * `'padron'` es el camino normal: se elige de los 523 establecimientos
-   * reales. `'libre'` es la salida para lo que el padrón no cubre —cualquier
-   * cosa fuera de Santa Cruz—, y hay que pedirla explícitamente: si estuviera
-   * disponible de entrada nadie usaría el catálogo, y volveríamos a tener el
-   * mismo hospital escrito de cinco formas.
+   * `'padron'` es el ÚNICO camino para dar de alta un vínculo: se elige de los
+   * 523 establecimientos reales. `'libre'` ya no tiene puerta de entrada desde
+   * el alta —permitirla dejaba inventar hospitales que no existen—; sigue
+   * existiendo sólo porque `abrirEdicionDeVinculo` la usa para mostrar el
+   * nombre de un vínculo YA guardado, que se persistió como texto plano y no
+   * como un id contra el que volver a buscar.
    */
   protected readonly modoDeInstitucion = signal<'padron' | 'libre'>('padron');
 
@@ -450,25 +451,6 @@ export class WorkHistory implements OnInit {
     );
     return rama?.conceptId ?? null;
   });
-
-  /**
-   * El consultorio propio, si ya tiene uno. **Hay uno solo.**
-   *
-   * No es una regla de pantalla: es lo que el backend modela. `POST
-   * /practitioners/me/sites` crea —o **reutiliza**— la práctica personal del
-   * profesional, así que la práctica propia es una sola por persona. Lo que
-   * faltaba era decirlo en la interfaz: el botón «Agregar un consultorio
-   * propio» seguía ahí después de crear el primero, invitando a cargar el
-   * segundo.
-   *
-   * `isOwnSite` lo manda la API desde el cierre del P32-a. Si llegara ausente
-   * —un frontend desplegado contra una API anterior— todo se lee como ajeno y
-   * el botón de alta sigue disponible: la degradación prudente nunca esconde
-   * un camino.
-   */
-  protected readonly consultorioPropio = computed<PracticeSite | null>(
-    () => this.sedes().find((sede) => sede.isOwnSite === true) ?? null,
-  );
 
   /* -- Tabla, barra y paginación de «Dónde atiendo» (ADR-0015, H4.S1) ------ */
 
@@ -964,18 +946,6 @@ export class WorkHistory implements OnInit {
         this.resultados.set([]);
       },
     });
-  }
-
-  /**
-   * Pasa a escribir el nombre a mano.
-   *
-   * Se lleva lo elegido: quedarse con un establecimiento del padrón y además un
-   * texto libre serían dos respuestas a la misma pregunta.
-   */
-  protected escribirAMano(): void {
-    this.establecimiento.set(null);
-    this.resultados.set([]);
-    this.modoDeInstitucion.set('libre');
   }
 
   /** Vuelve a buscar en el padrón, descartando lo escrito a mano. */

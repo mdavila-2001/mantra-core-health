@@ -160,6 +160,7 @@ describe('RegisterPractitioner', () => {
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
       homeAddressLines: '',
+      workAddressLines: '',
       officeName: '',
       officeAddressLines: '',
       regulatoryAuthority: extra.regulatoryAuthority ?? '',
@@ -188,9 +189,7 @@ describe('RegisterPractitioner', () => {
       // formulario; las que sí lo prueban lo pasan por `extra` o lo pisan
       // directo en `formProfesional.controls.sexAtBirth`.
       sexAtBirth:
-        extra.sexAtBirth === undefined
-          ? 'FEMALE'
-          : (extra.sexAtBirth as BirthSexCode | null),
+        extra.sexAtBirth === undefined ? 'FEMALE' : (extra.sexAtBirth as BirthSexCode | null),
       licenseIssueDate: null,
       issuerAdministrativeAreaConceptId: 'dep-1',
       profilePhotoBase64: extra.profilePhotoBase64 ?? null,
@@ -262,10 +261,9 @@ describe('RegisterPractitioner', () => {
         'personal-contact',
         'access',
         'residence',
-        // El consultorio propio va pegado al domicilio: son las dos preguntas
-        // de «dónde», y separarlas dejaba la del trabajo perdida entre los
-        // títulos. Es opcional, y aun así el lugar desde el que se publica la
-        // agenda mientras ninguna organización lo haya aceptado.
+        'workplace-location',
+        // El consultorio propio es una sede del profesional, separada de la
+        // dirección laboral que se declara arriba.
         'own-office',
         // El título profesional va ANTES de la habilitación: de él dependen el
         // colegio que se ofrece ahí y la lista de especialidades. Preguntarlo
@@ -285,10 +283,7 @@ describe('RegisterPractitioner', () => {
 
     it('cada bloque trae los campos que le tocan, en su orden', () => {
       expect(camposDe('name')).toEqual(['name', 'lastName', 'motherLastName']);
-      expect(camposDe('document')).toEqual([
-        'nationalId',
-        'issuerAdministrativeAreaConceptId',
-      ]);
+      expect(camposDe('document')).toEqual(['nationalId', 'issuerAdministrativeAreaConceptId']);
       // AC-05-7: el sexo entra al formulario, y va antes de la fecha de
       // nacimiento, como pide el orden.
       // La ocupación se quitó del alta de profesional: lo que dice qué clase de
@@ -306,6 +301,7 @@ describe('RegisterPractitioner', () => {
       // y el punto del mapa. Era sólo la localidad mientras el DTO del
       // profesional no tuvo dónde poner las otras dos.
       expect(camposDe('residence')).toEqual(['municipio', 'homeAddressLines', 'gpsDomicilio']);
+      expect(camposDe('workplace-location')).toEqual(['workAddressLines', 'gpsTrabajo']);
       // El consultorio propio: cuatro campos, todos opcionales. Es un calco del
       // lugar de trabajo del alta de paciente, con el nombre que le da el
       // dominio — quien ejerce puede atender en varios lugares, y éste es el
@@ -375,9 +371,7 @@ describe('RegisterPractitioner', () => {
         'issuingInstitutionText',
         'otherCredentials',
       ]) {
-        expect(claves, `«${ausente}» no tiene dónde guardarse todavía`).not.toContain(
-          ausente,
-        );
+        expect(claves, `«${ausente}» no tiene dónde guardarse todavía`).not.toContain(ausente);
       }
     });
 
@@ -427,9 +421,7 @@ describe('RegisterPractitioner', () => {
 
     for (const campo of campos) {
       if (campo.label === '') {
-        expect(campo.control, `«${campo.key}» no tiene rótulo y no es proyectado`).toBe(
-          'custom',
-        );
+        expect(campo.control, `«${campo.key}» no tiene rótulo y no es proyectado`).toBe('custom');
       }
       if (campo.icono === null) continue;
       expect(NAV_ICON_NAMES, `«${campo.key}» usa un glifo que no está en el set`).toContain(
@@ -438,8 +430,8 @@ describe('RegisterPractitioner', () => {
     }
   });
 
-  it('tiene trece páginas, ninguna de más de cuatro preguntas', () => {
-    // Trece y no menos porque el límite es de **campos por página**, no de
+  it('tiene catorce páginas, ninguna de más de cuatro preguntas', () => {
+    // Catorce y no menos porque el límite es de **campos por página**, no de
     // páginas: apretar el orden pedido en menos pasos es lo que este motor vino
     // a deshacer (AC-05-2, `MAX_CAMPOS_POR_PAGINA`). Las últimas cuatro son la
     // de contactos privados —separada de la del acceso al dejar de mezclar el
@@ -447,12 +439,13 @@ describe('RegisterPractitioner', () => {
     // —que no caben en la de habilitación, ya llena— y la contraseña, que
     // cierra el alta sola.
     //
-    // La treceava es el **consultorio propio** (08/09/2026): sus cuatro campos
+    // La página laboral separa dirección/GPS de casa y sede propia, conforme a
+    // MED-03. El consultorio propio (08/09/2026) conserva su página porque sus cuatro campos
     // no caben en la de residencia, que ya tiene tres, y meterlos ahí además
     // mezclaría dos lugares distintos en una pregunta.
     const paginas = component.paginasProfesional();
 
-    expect(paginas.length).toBe(13);
+    expect(paginas.length).toBe(14);
     for (const pagina of paginas) {
       expect(
         pagina.campos.length,
@@ -477,10 +470,10 @@ describe('RegisterPractitioner', () => {
    * Las especialidades EN el alta — registro del cliente, módulo Médico §1.4.2
    * y §1.4.4.
    *
-   * Lo que fijan: que se ofrecen las de la profesión elegida y no las otras
-   * (un odontólogo no es cardiólogo), que el colegio cambia solo sin pisar una
-   * elección explícita, y que los conceptos VIAJAN en el cuerpo — el cliente
-   * lo arma nombre por nombre y descarta en silencio lo que no nombra.
+   * Lo que fijan: que el catálogo completo no se filtra por profesión, que el
+   * colegio cambia solo sin pisar una elección explícita, y que los conceptos
+   * VIAJAN en el cuerpo — el cliente lo arma nombre por nombre y descarta en
+   * silencio lo que no nombra.
    */
   describe('las especialidades del alta', () => {
     /** Responde el catálogo con dos médicas y dos odontológicas. */
@@ -505,33 +498,25 @@ describe('RegisterPractitioner', () => {
      * Lo que se ofrece para elegir especialidad. Hasta el 23/09/2026 se leía
      * del desplegable «Especialidad principal» de la página; ese desplegable
      * se retiró (D-01) y ahora se elige sólo en las casillas, que llaman a
-     * este mismo método en la plantilla. Las pruebas de abajo siguen fijando
-     * el filtro por profesión y que no quede viejo si alguien lo memoriza.
+     * este mismo método en la plantilla. Las pruebas de abajo fijan que la
+     * lista es el catálogo completo para cualquier profesión (L0174).
      */
     function opcionesDeLaPagina(): readonly { value: string; label: string }[] {
       return (
         component as unknown as {
-          opcionesEspecialidadFiltradas: () => readonly { value: string; label: string }[];
+          allSpecialtyOptions: () => readonly { value: string; label: string }[];
         }
-      ).opcionesEspecialidadFiltradas();
+      ).allSpecialtyOptions();
     }
 
     /**
      * **El orden real, que es el que fallaba.**
      *
-     * Las dos pruebas de abajo ponen el título ANTES de leer las páginas por
-     * primera vez, y así pasaban incluso con el defecto: el `computed` se
-     * estrenaba con el título ya elegido. En la pantalla el orden es el
-     * inverso —el catálogo llega al abrir el paso, la persona elige su
-     * profesión después—, y ahí el `computed` ya estaba calculado con el
-     * título vacío y no volvía a correr, porque el valor de un `FormControl`
-     * no es una señal y no lo despierta.
-     *
-     * Resultado en producción: un odontólogo veía las 52 médicas con las 11
-     * suyas al final. El stakeholder lo reportó como «no están las
-     * especialidades de odontología».
+     * L0174 especifica que la lista de especialidades no se filtra por
+     * profesión. La lista debe conservar todas sus opciones antes y después
+     * de elegir el título profesional.
      */
-    it('filtra aunque las opciones ya se hayan leído antes de elegir profesión', () => {
+    it('conserva el catálogo completo si el título se elige después de leerlo', () => {
       catalogoDeEspecialidades();
       // Se leen una vez, como al pintar el paso: acá el título está vacío y
       // corresponde ofrecer todo.
@@ -545,25 +530,30 @@ describe('RegisterPractitioner', () => {
       component.formProfesional.controls.professionalTitle.setValue('Odontólogo / Odontóloga');
       fixture.detectChanges();
 
-      expect(opcionesDeLaPagina().map((o) => o.value)).toEqual(['e-endo', 'e-orto']);
+      expect(opcionesDeLaPagina().map((o) => o.value)).toEqual([
+        'e-cardio',
+        'e-pedia',
+        'e-endo',
+        'e-orto',
+      ]);
     });
 
-    it('un odontólogo ve las odontológicas y NO las médicas', () => {
+    it('un odontólogo ve también las especialidades médicas del catálogo', () => {
       catalogoDeEspecialidades();
       component.formProfesional.controls.professionalTitle.setValue('Odontólogo / Odontóloga');
       fixture.detectChanges();
 
       const valores = opcionesDeLaPagina().map((o) => o.value);
-      expect(valores).toEqual(['e-endo', 'e-orto']);
+      expect(valores).toEqual(['e-cardio', 'e-pedia', 'e-endo', 'e-orto']);
     });
 
-    it('un médico ve las médicas y NO las odontológicas', () => {
+    it('un médico ve también las especialidades odontológicas del catálogo', () => {
       catalogoDeEspecialidades();
       component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
       fixture.detectChanges();
 
       const valores = opcionesDeLaPagina().map((o) => o.value);
-      expect(valores).toEqual(['e-cardio', 'e-pedia']);
+      expect(valores).toEqual(['e-cardio', 'e-pedia', 'e-endo', 'e-orto']);
     });
 
     it('el título profesional se busca con lupa, y sigue siendo lista cerrada', () => {
@@ -620,7 +610,12 @@ describe('RegisterPractitioner', () => {
 
       expect(titulo.value).toBe('Odontólogo / Odontóloga');
       expect(autoridad.value).toBe('Colegio de Odontólogos de Bolivia');
-      expect(opcionesDeLaPagina().map((o) => o.label)).toEqual(['Endodoncia', 'Ortodoncia']);
+      expect(opcionesDeLaPagina().map((o) => o.label)).toEqual([
+        'Cardiología',
+        'Pediatría',
+        'Endodoncia',
+        'Ortodoncia',
+      ]);
       // Y el rótulo vuelve al regresar al paso, que es para lo que existe.
       expect(component.tituloProfesionalSeleccionado()?.label).toBe('Odontólogo / Odontóloga');
     });
@@ -665,7 +660,11 @@ describe('RegisterPractitioner', () => {
       expect(Object.keys(component.formProfesional.controls)).not.toContain('specialtyPrimary');
       const rotulos = component
         .paginasProfesional()
-        .flatMap((pagina) => [pagina.titulo, pagina.hint ?? '', ...pagina.campos.map((c) => c.label)]);
+        .flatMap((pagina) => [
+          pagina.titulo,
+          pagina.hint ?? '',
+          ...pagina.campos.map((c) => c.label),
+        ]);
       expect(rotulos.filter((rotulo) => /principal/i.test(rotulo))).toEqual([]);
     });
 
@@ -692,7 +691,7 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
-    it('se pueden declarar más de tres especialidades', () => {
+    it('permite una especialidad principal y tres adicionales', () => {
       catalogoDeEspecialidades();
       completarProfesional({
         professionalTitle: 'Médico / Médica',
@@ -708,6 +707,14 @@ describe('RegisterPractitioner', () => {
         'e-orto',
       ]);
       req.flush(RESPUESTA_PRO);
+    });
+
+    it('no permite sumar una quinta especialidad: el techo de L0174 es cuatro, sin principal (D-01)', () => {
+      component.especialidadesExtra.set(['e-cardio', 'e-pedia', 'e-endo', 'e-orto']);
+
+      component.agregarEspecialidad();
+
+      expect(component.especialidadesExtra()).toEqual(['e-cardio', 'e-pedia', 'e-endo', 'e-orto']);
     });
 
     it('agregar suma una casilla vacía, y quitar saca la que se señala', () => {
@@ -738,15 +745,13 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
-    it('cambiar de profesión limpia una especialidad que ya no corresponde', () => {
-      // Un desplegable con un valor que no está entre sus opciones muestra un
-      // vacío que miente: parece que no elegiste y el cuerpo lo manda igual.
+    it('cambiar de profesión conserva la especialidad elegida: el catálogo es el mismo (L0174)', () => {
       catalogoDeEspecialidades();
       completarProfesional({ especialidadesExtra: ['e-endo'] });
 
       component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
 
-      expect(component.especialidadesExtra()).toEqual(['']);
+      expect(component.especialidadesExtra()).toEqual(['e-endo']);
     });
 
     it('elegir la misma dos veces declara una', () => {
@@ -762,7 +767,6 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
   });
-
 
   describe('rótulos dinámicos de matrícula y colegio según profesión (M-1.4.3)', () => {
     function campoCredencial(key: 'licenseNumber' | 'sedesLicenseNumber') {
@@ -810,11 +814,15 @@ describe('RegisterPractitioner', () => {
       fixture.detectChanges();
       expect(campoCredencial('licenseNumber')?.label).toBe('Matrícula de Odontólogo');
 
-      component.formProfesional.controls.professionalTitle.setValue('Médico especialista / Médica especialista');
+      component.formProfesional.controls.professionalTitle.setValue(
+        'Médico especialista / Médica especialista',
+      );
       fixture.detectChanges();
       expect(campoCredencial('licenseNumber')?.label).toBe('Matrícula Profesional (Médico)');
 
-      component.formProfesional.controls.professionalTitle.setValue('Licenciado / Licenciada en Nutrición');
+      component.formProfesional.controls.professionalTitle.setValue(
+        'Licenciado / Licenciada en Nutrición',
+      );
       fixture.detectChanges();
       expect(campoCredencial('licenseNumber')?.label).toBe('Matrícula profesional');
       expect(campoCredencial('sedesLicenseNumber')?.label).toBe('Registro del SEDES');
@@ -871,9 +879,7 @@ describe('RegisterPractitioner', () => {
     completarProfesional();
     component.formProfesional.controls.issuerAdministrativeAreaConceptId.setValue(null);
 
-    expect(component.formProfesional.controls.issuerAdministrativeAreaConceptId.invalid).toBe(
-      true,
-    );
+    expect(component.formProfesional.controls.issuerAdministrativeAreaConceptId.invalid).toBe(true);
 
     component.submit();
     http.expectNone('/iam/auth/register-practitioner');
@@ -988,6 +994,29 @@ describe('RegisterPractitioner', () => {
     req.flush(RESPUESTA_PRO);
   });
 
+  it('manda la dirección y el GPS del trabajo separados del domicilio y del consultorio propio', () => {
+    completarProfesional();
+    component.formProfesional.patchValue({
+      homeAddressLines: 'Casa, Calle Norte 10',
+      workAddressLines: 'Hospital Central, Av. Principal 200',
+    });
+    component.gpsDomicilio.set({ lat: -16.5, lng: -68.11 });
+    component.gpsTrabajo.set({ lat: -17.78, lng: -63.18 });
+
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-practitioner');
+    expect(req.request.body.homeAddressLines).toBe('Casa, Calle Norte 10');
+    expect(req.request.body.homeLatitude).toBe(-16.5);
+    expect(req.request.body.homeLongitude).toBe(-68.11);
+    expect(req.request.body.workAddressLines).toBe('Hospital Central, Av. Principal 200');
+    expect(req.request.body.workLatitude).toBe(-17.78);
+    expect(req.request.body.workLongitude).toBe(-63.18);
+    expect(req.request.body.ownSite).toBeUndefined();
+
+    req.flush(RESPUESTA_PRO);
+  });
+
   /**
    * Títulos y respaldos. **Sólo estado de pantalla**: en esta rama el archivo
    * no se sube a ningún lado y nada de esto viaja en el alta. Lo que se fija
@@ -1056,7 +1085,6 @@ describe('RegisterPractitioner', () => {
       fixture.detectChanges();
     }
 
-
     it('permite cargar más de un título del mismo tipo', () => {
       component.agregarTitulo('UNIVERSITARIO');
       component.agregarTitulo('UNIVERSITARIO');
@@ -1116,7 +1144,11 @@ describe('RegisterPractitioner', () => {
       const [profesion] = component.titulosDe('UNIVERSITARIO');
 
       component.escribirDatoDeTitulo(profesion.id, 'nombre', 'Derecho');
-      component.escribirDatoDeTitulo(profesion.id, 'universidad', 'Universidad Gabriel René Moreno');
+      component.escribirDatoDeTitulo(
+        profesion.id,
+        'universidad',
+        'Universidad Gabriel René Moreno',
+      );
       component.escribirDatoDeTitulo(profesion.id, 'pais', 'Bolivia');
       component.escribirDatoDeTitulo(profesion.id, 'ciudad', 'Santa Cruz de la Sierra');
 
@@ -1205,17 +1237,19 @@ describe('RegisterPractitioner', () => {
      * el contrato exige el concepto y la pantalla no lo inventa.
      */
     function catalogoDeTiposDeTitulo(): void {
-      http.expectOne((r) => r.url.startsWith('/system-context/dynamic-enums')).flush({
-        code: 'professional-credential-type',
-        name: 'Tipo de credencial profesional',
-        definitionId: 'def-1',
-        valueSetId: 'vs-cred',
-        options: [
-          { conceptId: 'c-degree', code: 'CREDENTIAL_TYPE_DEGREE', label: 'Academic degree' },
-          { conceptId: 'c-diploma', code: 'CREDENTIAL_TYPE_DIPLOMA', label: 'Diploma course' },
-          { conceptId: 'c-master', code: 'CREDENTIAL_TYPE_MASTER', label: "Master's degree" },
-        ],
-      });
+      http
+        .expectOne((r) => r.url.startsWith('/system-context/dynamic-enums'))
+        .flush({
+          code: 'professional-credential-type',
+          name: 'Tipo de credencial profesional',
+          definitionId: 'def-1',
+          valueSetId: 'vs-cred',
+          options: [
+            { conceptId: 'c-degree', code: 'CREDENTIAL_TYPE_DEGREE', label: 'Academic degree' },
+            { conceptId: 'c-diploma', code: 'CREDENTIAL_TYPE_DIPLOMA', label: 'Diploma course' },
+            { conceptId: 'c-master', code: 'CREDENTIAL_TYPE_MASTER', label: "Master's degree" },
+          ],
+        });
     }
 
     it('los títulos declarados VIAJAN en el alta, uno por fila', () => {
@@ -1263,6 +1297,93 @@ describe('RegisterPractitioner', () => {
         (req.request.body.credentials as readonly { number: string }[]).map((c) => c.number),
       ).toEqual(['TIT-1', 'TIT-2']);
       req.flush(RESPUESTA_PRO);
+    });
+
+    it('sube el PDF de cada fila y envía su fileId antes del alta', () => {
+      catalogoDeTiposDeTitulo();
+      component.agregarTitulo('UNIVERSITARIO');
+      component.agregarTitulo('MAESTRIA');
+      const [carrera] = component.titulosDe('UNIVERSITARIO');
+      const [maestria] = component.titulosDe('MAESTRIA');
+      const pdfCarrera = archivoDe('medicina.pdf', 'application/pdf', 1024);
+      const pdfMaestria = archivoDe('salud-publica.pdf', 'application/pdf', 2048);
+      component.escribirDatoDeTitulo(carrera.id, 'numero', 'TIT-1');
+      component.escribirDatoDeTitulo(maestria.id, 'numero', 'MAE-1');
+      component.updateTitleFiles(carrera.id, [pdfCarrera]);
+      component.updateTitleFiles(maestria.id, [pdfMaestria]);
+      completarProfesional();
+
+      component.submit();
+
+      const primeraSubida = http.expectOne('/iam/auth/upload-registration-document');
+      expect((primeraSubida.request.body as FormData).get('file')).toBe(pdfCarrera);
+      primeraSubida.flush({
+        fileId: 'file-title-1',
+        originalName: pdfCarrera.name,
+        sizeBytes: 1024,
+        mimeType: 'application/pdf',
+      });
+
+      const segundaSubida = http.expectOne('/iam/auth/upload-registration-document');
+      expect((segundaSubida.request.body as FormData).get('file')).toBe(pdfMaestria);
+      segundaSubida.flush({
+        fileId: 'file-title-2',
+        originalName: pdfMaestria.name,
+        sizeBytes: 2048,
+        mimeType: 'application/pdf',
+      });
+
+      const alta = http.expectOne('/iam/auth/register-practitioner');
+      expect(alta.request.body.credentials).toEqual([
+        { credentialTypeConceptId: 'c-degree', number: 'TIT-1', fileId: 'file-title-1' },
+        { credentialTypeConceptId: 'c-master', number: 'MAE-1', fileId: 'file-title-2' },
+      ]);
+      alta.flush(RESPUESTA_PRO);
+    });
+
+    it('si falla una subida, el alta no sale y el reintento reutiliza el PDF ya subido', () => {
+      catalogoDeTiposDeTitulo();
+      component.agregarTitulo('UNIVERSITARIO');
+      component.agregarTitulo('MAESTRIA');
+      const [carrera] = component.titulosDe('UNIVERSITARIO');
+      const [maestria] = component.titulosDe('MAESTRIA');
+      const pdfCarrera = archivoDe('medicina.pdf', 'application/pdf', 1024);
+      const pdfMaestria = archivoDe('salud-publica.pdf', 'application/pdf', 2048);
+      component.escribirDatoDeTitulo(carrera.id, 'numero', 'TIT-1');
+      component.escribirDatoDeTitulo(maestria.id, 'numero', 'MAE-1');
+      component.updateTitleFiles(carrera.id, [pdfCarrera]);
+      component.updateTitleFiles(maestria.id, [pdfMaestria]);
+      completarProfesional();
+
+      component.submit();
+      http.expectOne('/iam/auth/upload-registration-document').flush({
+        fileId: 'file-title-1',
+        originalName: pdfCarrera.name,
+        sizeBytes: 1024,
+        mimeType: 'application/pdf',
+      });
+      http.expectOne('/iam/auth/upload-registration-document').flush(null, {
+        status: 422,
+        statusText: 'Unprocessable Entity',
+      });
+      http.expectNone('/iam/auth/register-practitioner');
+
+      component.submit();
+
+      const reintento = http.expectOne('/iam/auth/upload-registration-document');
+      expect((reintento.request.body as FormData).get('file')).toBe(pdfMaestria);
+      reintento.flush({
+        fileId: 'file-title-2',
+        originalName: pdfMaestria.name,
+        sizeBytes: 2048,
+        mimeType: 'application/pdf',
+      });
+      const alta = http.expectOne('/iam/auth/register-practitioner');
+      expect(alta.request.body.credentials).toEqual([
+        { credentialTypeConceptId: 'c-degree', number: 'TIT-1', fileId: 'file-title-1' },
+        { credentialTypeConceptId: 'c-master', number: 'MAE-1', fileId: 'file-title-2' },
+      ]);
+      alta.flush(RESPUESTA_PRO);
     });
 
     it('sin títulos el cuerpo no los menciona', () => {
@@ -1379,9 +1500,7 @@ describe('RegisterPractitioner', () => {
         enElPaso<HTMLInputElement>(`registro-pro-titulo-pais-${id}`)?.hasAttribute('maxlength'),
       ).toBe(false);
       expect(
-        enElPaso<HTMLInputElement>(`registro-pro-titulo-ciudad-${id}`)?.hasAttribute(
-          'maxlength',
-        ),
+        enElPaso<HTMLInputElement>(`registro-pro-titulo-ciudad-${id}`)?.hasAttribute('maxlength'),
       ).toBe(false);
     });
 
@@ -1396,8 +1515,9 @@ describe('RegisterPractitioner', () => {
         .replace(/\s+/g, ' ')
         .trim();
       expect(alcance).toBe(
-        'En esta alta se guardan el tipo, el número y la universidad de cada título. ' +
-          'El nombre, el país, la ciudad y el archivo que completes aquí todavía no se guardan.',
+        'En esta alta se guardan el tipo, el número, la universidad y el PDF de cada título. ' +
+          'El nombre, el país y la ciudad que completes aquí todavía no se guardan. ' +
+          'Si falla una carga, podés reintentar y se conservan las que ya subieron.',
       );
     });
 
@@ -1427,12 +1547,17 @@ describe('RegisterPractitioner', () => {
       completarProfesional();
       component.submit();
 
+      http.expectOne('/iam/auth/upload-registration-document').flush({
+        fileId: 'file-title-1',
+        originalName: 'medicina.pdf',
+        sizeBytes: 1024,
+        mimeType: 'application/pdf',
+      });
       const req = http.expectOne('/iam/auth/register-practitioner');
-      // La credencial lleva los tres datos que el modelo sabe guardar, y nada
-      // más: el nombre del título, el país, la ciudad y el archivo se preguntan
-      // en pantalla pero no tienen columna, así que no se mandan.
+      // La credencial lleva tipo, número, institución y el fileId del PDF. El
+      // nombre del título, el país y la ciudad no se envían: no tienen columna.
       expect(req.request.body.credentials).toEqual([
-        { credentialTypeConceptId: 'c-degree', number: 'TIT-1' },
+        { credentialTypeConceptId: 'c-degree', number: 'TIT-1', fileId: 'file-title-1' },
       ]);
       expect(req.request.body.academicTitles).toBeUndefined();
       expect(req.request.body.credentialAttachments).toBeUndefined();
@@ -1458,19 +1583,21 @@ describe('RegisterPractitioner', () => {
 
       /** La respuesta buena, con los cinco tipos que publica la API. */
       function catalogoDeTiposCompleto(): void {
-        http.expectOne((r) => r.url.startsWith('/system-context/dynamic-enums')).flush({
-          code: 'professional-credential-type',
-          name: 'Tipo de credencial profesional',
-          definitionId: 'def-1',
-          valueSetId: 'vs-cred',
-          options: [
-            { conceptId: 'c-degree', code: 'CREDENTIAL_TYPE_DEGREE', label: 'Academic degree' },
-            { conceptId: 'c-diploma', code: 'CREDENTIAL_TYPE_DIPLOMA', label: 'Diploma course' },
-            { conceptId: 'c-master', code: 'CREDENTIAL_TYPE_MASTER', label: "Master's degree" },
-            { conceptId: 'c-doctor', code: 'CREDENTIAL_TYPE_DOCTORATE', label: 'Doctorate' },
-            { conceptId: 'c-spec', code: 'CREDENTIAL_TYPE_SPECIALTY', label: 'Specialty' },
-          ],
-        });
+        http
+          .expectOne((r) => r.url.startsWith('/system-context/dynamic-enums'))
+          .flush({
+            code: 'professional-credential-type',
+            name: 'Tipo de credencial profesional',
+            definitionId: 'def-1',
+            valueSetId: 'vs-cred',
+            options: [
+              { conceptId: 'c-degree', code: 'CREDENTIAL_TYPE_DEGREE', label: 'Academic degree' },
+              { conceptId: 'c-diploma', code: 'CREDENTIAL_TYPE_DIPLOMA', label: 'Diploma course' },
+              { conceptId: 'c-master', code: 'CREDENTIAL_TYPE_MASTER', label: "Master's degree" },
+              { conceptId: 'c-doctor', code: 'CREDENTIAL_TYPE_DOCTORATE', label: 'Doctorate' },
+              { conceptId: 'c-spec', code: 'CREDENTIAL_TYPE_SPECIALTY', label: 'Specialty' },
+            ],
+          });
       }
 
       /** Una fila lista para viajar: la que el catálogo caído deja varada. */
@@ -1828,7 +1955,10 @@ describe('RegisterPractitioner', () => {
       const archivoGigante = new File([new ArrayBuffer(6 * 1024 * 1024)], 'foto.jpg', {
         type: 'image/jpeg',
       });
-      const fakeInput = { files: [archivoGigante], value: 'foto.jpg' } as unknown as HTMLInputElement;
+      const fakeInput = {
+        files: [archivoGigante],
+        value: 'foto.jpg',
+      } as unknown as HTMLInputElement;
 
       component.alSeleccionarFoto({ target: fakeInput } as unknown as Event);
 
@@ -1964,7 +2094,12 @@ describe('RegisterPractitioner', () => {
       expect(cuerpo['homeLatitude']).toBe(-16.5);
       expect(cuerpo['ownSite']).toEqual({
         name: 'Mi consultorio',
-        address: { lines: [], municipalityConceptId: 'mun-trabajo', latitude: -17.78, longitude: -63.18 },
+        address: {
+          lines: [],
+          municipalityConceptId: 'mun-trabajo',
+          latitude: -17.78,
+          longitude: -63.18,
+        },
       });
     });
   });

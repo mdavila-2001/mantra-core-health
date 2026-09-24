@@ -56,17 +56,20 @@ describe('las pestañas de la ficha del médico', () => {
    * declarado como si viviera en «Datos personales» y ahí no está —la lectura
    * del perfil médico no devuelve el dato, así que no hay nada que mostrar—.
    * Son cinco desde el 23/09/2026: los tres contactos del trabajo, que el
-   * médico pidió sacar de «Contacto» (D-03).
+   * médico pidió sacar de «Contacto» (D-03). Y siete desde que el alta suma la
+   * dirección laboral y su punto en el mapa, que la ficha todavía no lee.
    *
    * La lista se sigue fijando entera a propósito. Es el freno a que ausentarse
    * de la ficha sea la salida fácil: sumar un campo acá exige tocar esta
    * prueba y escribir el motivo, que es exactamente la fricción que se quiere.
    */
-  it('las cinco ausencias son las declaradas, y las cinco dicen por qué', () => {
+  it('las siete ausencias son las declaradas, y las siete dicen por qué', () => {
     expect(Object.keys(CAMPOS_DEL_ALTA_SIN_PESTANA).sort()).toEqual([
       'email',
+      'gpsTrabajo',
       'password',
       'sexAtBirth',
+      'workAddressLines',
       'workLandline',
       'workMobilePhone',
     ]);
@@ -78,6 +81,8 @@ describe('las pestañas de la ficha del médico', () => {
     }
     // El correo de trabajo se va de «Contacto», pero el de acceso no se pierde.
     expect(CAMPOS_DEL_ALTA_SIN_PESTANA['email']).toContain('correo de acceso');
+    expect(CAMPOS_DEL_ALTA_SIN_PESTANA['workAddressLines']).toContain('dirección laboral');
+    expect(CAMPOS_DEL_ALTA_SIN_PESTANA['gpsTrabajo']).toContain('lugar de trabajo');
   });
 
   /** Un campo no puede estar en los dos mapas: sería mostrarse y no mostrarse. */
@@ -111,6 +116,18 @@ describe('las pestañas de la ficha del médico', () => {
     expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.trayectoria]).toBe('Trayectoria');
     expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.credenciales]).toBe('Credenciales');
     expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.actividad]).toBe('Actividad');
+  });
+
+  /**
+   * «Las especialidades deben estar en "datos personales" ... no en
+   * credenciales» (pedido del propietario, 24/09/2026). Contestan «¿de qué es
+   * médico?», la misma pregunta que el título profesional, no «¿con qué
+   * habilitación ejerce?» que es lo que queda en Credenciales.
+   */
+  it('las especialidades viven en Datos personales, no en Credenciales', () => {
+    expect(CAMPO_DEL_ALTA_EN_PESTANA['especialidadesExtra']).toBe(PESTANA_MEDICO.personales);
+    // Y no hay «principal» que ubicar: el alta dejó de preguntarla (D-01, 23/09/2026).
+    expect(CAMPO_DEL_ALTA_EN_PESTANA['specialtyPrimary']).toBeUndefined();
   });
 
   it('las tres primeras pestañas se llaman igual que las del paciente', async () => {

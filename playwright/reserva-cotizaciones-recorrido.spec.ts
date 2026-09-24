@@ -30,16 +30,20 @@ test('paciente recorre directorio y cotizaciones sin errores de navegador', asyn
 
   await abrir(page, '/my-account/cotizaciones', 'Cotizaciones');
   const resultados = page.getByTestId('cotizaciones-resultados');
-  await page.getByLabel('Ordenar por').selectOption('CERCANIA');
-  const titulos = resultados.locator('h2');
-  await expect.poll(() => titulos.allTextContents()).toEqual([
-    'Tomografía',
-    'Paracetamol',
-    'Hemograma',
-    'Consulta médica',
-  ]);
-  await page.getByLabel('Vertical').selectOption('ANALISIS');
-  await expect.poll(() => titulos.allTextContents()).toEqual(['Hemograma']);
+  await page.getByTestId('cotizaciones-busqueda').locator('input').fill('paracetamol');
+  await page.getByLabel('Ordenar por').selectOption({ label: 'Cercanía' });
+  // Con el origen elegido, cercanía ordena por los kilómetros que calculó la API.
+  const distancias = resultados.locator('.cotizaciones__distancia');
+  await expect(distancias.first()).toContainText('km en línea recta');
+  const kilometros = (await distancias.allTextContents()).map((texto) =>
+    Number(texto.replace(/[^\d,]/gu, '').replace(',', '.')),
+  );
+  expect(kilometros).toEqual([...kilometros].sort((a, b) => a - b));
+
+  await page.getByLabel('Vertical').selectOption({ label: 'Análisis' });
+  await page.getByTestId('cotizaciones-busqueda').locator('input').fill('hemograma');
+  await expect(resultados).toContainText('Hemograma');
+  await expect(resultados).not.toContainText('Paracetamol');
 
   expect(vigilante.erroresDeConsola).toEqual([]);
   expect(vigilante.peticionesFallidas).toEqual([]);

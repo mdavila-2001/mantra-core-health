@@ -558,6 +558,22 @@ describe('PractitionerProfileEdit', () => {
     expect(interno<() => boolean>('puedeAgregarEspecialidad')()).toBe(true);
   });
 
+  it('con tres especialidades cargadas deja agregar la cuarta, pero no otra casilla', () => {
+    montarYCargar({
+      specialties: [
+        { id: 's-1', specialtyConceptId: 'esp-cardio', isPrimary: true },
+        { id: 's-2', specialtyConceptId: 'esp-pediatria', isPrimary: false },
+        { id: 's-3', specialtyConceptId: 'esp-endo', isPrimary: false },
+      ],
+    });
+
+    señal<string>('nuevaEspecialidad').set('esp-orto');
+    expect(interno<() => boolean>('puedeAgregarEspecialidad')()).toBe(true);
+
+    interno<() => void>('agregarCasillaDeEspecialidad')();
+    expect(interno<() => readonly string[]>('especialidadesExtra')()).toEqual([]);
+  });
+
   it('agregarEspecialidad hace un POST y recarga el perfil', async () => {
     montarYCargar();
     señal<string>('nuevaEspecialidad').set('esp-cardio');
@@ -818,7 +834,8 @@ describe('PractitionerProfileEdit', () => {
 
   it('dibujada, la tabla de especialidades no dice «principal» en ninguna fila', () => {
     const fixture = montarConVista(PRINCIPAL_AL_FINAL);
-    señal<number>('pestana').set(5);
+    // Las especialidades viven en «Datos personales» desde el 24/09/2026.
+    señal<number>('pestana').set(0);
     fixture.detectChanges();
 
     const tabla = panelAbierto(fixture).querySelector('[data-testid="tabla-especialidades"]');
@@ -884,6 +901,69 @@ describe('PractitionerProfileEdit', () => {
     const req = http.expectOne('/profiles/practitioners/me');
     expect(req.request.body).toEqual({ homeAddressLines: 'Av. Brasil 1234' });
     req.flush({ ...PERFIL_BASE, homeAddress: { lines: 'Av. Brasil 1234' } });
+  });
+
+  it('Contacto ofrece una dirección de trabajo separada del domicilio', () => {
+    const fixture = montarConVista();
+    señal<number>('pestana').set(1);
+    fixture.detectChanges();
+
+    expect(
+      panelAbierto(fixture).querySelector('[data-testid="edicion-direccion-trabajo"]'),
+    ).not.toBeNull();
+  });
+
+  it('siembra la dirección laboral y su punto sin mezclarlos con el domicilio', () => {
+    montarYCargar({
+      homeAddress: { lines: 'Av. Brasil 1234', latitude: -16.5, longitude: -68.15 },
+      workAddress: { lines: 'Calle Warnes 45', latitude: -17.78, longitude: -63.18 },
+    });
+
+    expect(interno<() => string>('direccionTrabajo')()).toBe('Calle Warnes 45');
+    expect(señal<unknown>('gpsDomicilioGuardado')()).toEqual({ lat: -16.5, lng: -68.15 });
+    expect(señal<unknown>('gpsTrabajoGuardado')()).toEqual({ lat: -17.78, lng: -63.18 });
+  });
+
+  it('guardarPresentacion manda workAddressLines sólo cuando cambia', () => {
+    montarYCargar({ workAddress: { lines: 'Calle Warnes 45' } });
+
+    señal<string>('direccionTrabajo').set('Av. Melchor Pinto 620');
+    interno<() => void>('guardarPresentacion')();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ workAddressLines: 'Av. Melchor Pinto 620' });
+    req.flush({ ...PERFIL_BASE, workAddress: { lines: 'Av. Melchor Pinto 620' } });
+  });
+
+  it('guarda y quita el GPS laboral como par, separado del GPS del domicilio', () => {
+    montarYCargar({
+      homeAddress: { lines: 'Av. Brasil 1234', latitude: -16.5, longitude: -68.15 },
+      workAddress: { lines: 'Calle Warnes 45', latitude: -17.78, longitude: -63.18 },
+    });
+
+    señal<unknown>('gpsTrabajo').set({ lat: -17.8, lng: -63.2 });
+    interno<() => void>('guardarPresentacion')();
+
+    const guardar = http.expectOne('/profiles/practitioners/me');
+    expect(guardar.request.body).toEqual({ workLatitude: -17.8, workLongitude: -63.2 });
+    guardar.flush(PERFIL_BASE);
+
+    señal<unknown>('gpsTrabajo').set(null);
+    interno<() => void>('guardarPresentacion')();
+
+    const quitar = http.expectOne('/profiles/practitioners/me');
+    expect(quitar.request.body).toEqual({ workLatitude: null, workLongitude: null });
+    quitar.flush(PERFIL_BASE);
+  });
+
+  it('Contacto muestra selectores GPS independientes para domicilio y trabajo', () => {
+    const fixture = montarConVista();
+    señal<number>('pestana').set(1);
+    fixture.detectChanges();
+
+    const panel = panelAbierto(fixture);
+    expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-domicilio"]')).not.toBeNull();
+    expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-trabajo"]')).not.toBeNull();
   });
 
   /* ---- formación: sólo se agrega ------------------------------------------- */
@@ -1276,9 +1356,9 @@ describe('PractitionerProfileEdit', () => {
       expect(pregunta.preguntas).toBe(1);
     });
 
-    it('Credenciales ya no tiene el formulario en línea: se abre desde «Agregar especialidad»', () => {
+    it('no hay formulario en línea: el alta se abre desde «Agregar especialidad», en «Datos personales»', () => {
       const fixture = montarConVista();
-      componente.pestana.set(5);
+      componente.pestana.set(0);
       fixture.detectChanges();
       const panel = panelAbierto(fixture);
 
@@ -1349,18 +1429,21 @@ describe('PractitionerProfileEdit', () => {
       expect(visibles()).toEqual(['s-1']);
     });
 
-    it('las dos barras de Credenciales escriben cada una en su clave', () => {
+    it('la barra de especialidades y la de matrículas escriben cada una en su clave', () => {
       const fixture = montarConVista(CON_ESPECIALIDADES);
-      componente.pestana.set(5);
-      fixture.detectChanges();
-
-      const abierto = fixture.debugElement
-        .queryAll(By.css('[role="tabpanel"]'))
-        .find((panel) => !(panel.nativeElement as HTMLElement).hasAttribute('hidden'));
-      const claves = (abierto?.queryAll(By.directive(FilterBar)) ?? []).map((barra) =>
-        (barra.componentInstance as FilterBar).searchParam(),
-      );
-      expect(claves).toEqual(['qEspecialidades', 'qMatriculas']);
+      /** Las claves de las barras de la pestaña abierta. */
+      const clavesDe = (pestana: number): readonly string[] => {
+        componente.pestana.set(pestana);
+        fixture.detectChanges();
+        const abierto = fixture.debugElement
+          .queryAll(By.css('[role="tabpanel"]'))
+          .find((panel) => !(panel.nativeElement as HTMLElement).hasAttribute('hidden'));
+        return (abierto?.queryAll(By.directive(FilterBar)) ?? []).map((barra) =>
+          (barra.componentInstance as FilterBar).searchParam(),
+        );
+      };
+      expect(clavesDe(0)).toEqual(['qEspecialidades']);
+      expect(clavesDe(5)).toEqual(['qMatriculas']);
     });
   });
 
@@ -2050,6 +2133,12 @@ describe('PractitionerProfileEdit', () => {
   });
 
   /**
+   * Disciplina de tablas: buscador y paginación (pedido del propietario,
+   * 24/09/2026). Las tres tablas —Formación, Especialidades y Matrículas—
+   * comparten la misma implementación, así que se prueba a fondo en una y se
+   * repite el filtro en las otras dos.
+   */
+  /**
    * «Actividad»: la pestaña que existe **para** decir que no se edita.
    *
    * El doctor pidió que el editor tenga todas las pestañas de la ficha (C-05).
@@ -2308,16 +2397,19 @@ describe('PractitionerProfileEdit', () => {
     it('lo verificado dice por qué no tiene botones: «Verificada: ya no se corrige», «Activo: ya no se corrige»', () => {
       const fixture = montarConVista(CON_ESTADOS);
       darEtiquetasDeMatricula();
-      componente.pestana.set(5);
-      fixture.detectChanges();
-      const panel = panelAbierto(fixture);
+      /** La nota de la fila, buscada en la pestaña abierta. */
       const nota = (testId: string) =>
-        panel
+        panelAbierto(fixture)
           .querySelector(`[data-testid="${testId}"]`)
           ?.parentElement?.querySelector('.edicion__acciones-nota')
           ?.textContent?.trim();
+      componente.pestana.set(0);
+      fixture.detectChanges();
       expect(nota('especialidad-acciones-spec-ok')).toBe('Verificada: ya no se corrige');
       expect(nota('especialidad-acciones-spec-pend')).toBeUndefined();
+
+      componente.pestana.set(5);
+      fixture.detectChanges();
       expect(nota('matricula-acciones-lic-activa')).toBe('Activo: ya no se corrige');
       expect(nota('matricula-acciones-lic-pendiente')).toBeUndefined();
     });
@@ -2343,7 +2435,7 @@ describe('PractitionerProfileEdit', () => {
       expect(titulo?.querySelectorAll('[data-testid="row-actions-trigger"]')).toHaveLength(1);
       expect(titulo?.querySelectorAll('.row-actions__inline')).toHaveLength(0);
 
-      componente.pestana.set(5);
+      componente.pestana.set(0);
       fixture.detectChanges();
       const especialidad = panelAbierto(fixture).querySelector(
         '[data-testid="especialidad-acciones-spec-pend"]',
@@ -2374,15 +2466,19 @@ describe('PractitionerProfileEdit', () => {
       expect(titulo?.closest('.edicion__celda-principal')?.textContent).toContain('T-1');
       expect(titulo?.textContent?.trim()).toBeTruthy();
 
-      componente.pestana.set(5);
+      componente.pestana.set(0);
       fixture.detectChanges();
-      const panel = panelAbierto(fixture);
       const especialidades = [
-        ...panel.querySelectorAll('[data-testid="especialidad-estado-en-fila"]'),
+        ...panelAbierto(fixture).querySelectorAll('[data-testid="especialidad-estado-en-fila"]'),
       ].map((e) => e.textContent?.trim());
       expect(especialidades).toContain('Verificada');
       expect(especialidades).toHaveLength(2);
-      expect(panel.querySelectorAll('[data-testid="matricula-estado-en-fila"]')).toHaveLength(2);
+
+      componente.pestana.set(5);
+      fixture.detectChanges();
+      expect(
+        panelAbierto(fixture).querySelectorAll('[data-testid="matricula-estado-en-fila"]'),
+      ).toHaveLength(2);
     });
 
     it('el filtro «Estado» de especialidades dice «Verificada», como la tabla', () => {
@@ -2525,7 +2621,7 @@ describe('PractitionerProfileEdit', () => {
       expect(bloque?.querySelectorAll('input, select, textarea')).toHaveLength(0);
     });
 
-    it('«Contacto» no ofrece nada del trabajo: ni celular, ni fijo, ni correo (D-03)', () => {
+    it('«Contacto» no ofrece celular, fijo ni correo del trabajo (D-03); la dirección del trabajo sí', () => {
       const fixture = montarConVista(CON_IDENTIDAD);
 
       señal<number>('pestana').set(1);
@@ -2535,8 +2631,11 @@ describe('PractitionerProfileEdit', () => {
       for (const testId of ['edicion-celular-trabajo', 'edicion-fijo-trabajo', 'edicion-correo-trabajo']) {
         expect(panel.querySelector(`[data-testid="${testId}"]`), testId).toBeNull();
       }
-      expect((panel.textContent ?? '').replace(/\s+/g, ' ')).not.toMatch(/del trabajo|de trabajo/i);
+      const texto = (panel.textContent ?? '').replace(/\s+/g, ' ');
+      expect(texto).not.toMatch(/(celular|fijo|tel[eé]fono|correo)[^.]{0,20}\b(del|de) trabajo/i);
       expect(panel.textContent).not.toContain('dra.salas@alovida.mock');
+      // D-03 cubre teléfonos y correo; la dirección donde atiende se queda (24/09/2026).
+      expect(panel.querySelector('[data-testid="edicion-direccion-trabajo"]')).not.toBeNull();
     });
 
     it('guardar no manda los contactos del trabajo: lo guardado no se borra (D-03)', () => {
@@ -2778,6 +2877,38 @@ describe('PractitionerProfileEdit', () => {
       montarYCargar();
 
       expect(interno<() => number>('pestana')()).toBe(0);
+    });
+  });
+
+  /**
+   * «Falta un botón en editar perfil para cancelar edición» (pedido del
+   * propietario, 24/09/2026). Datos personales, Contacto y Facturación son
+   * UN formulario con UN botón de guardar: cancelar descarta lo tipeado en
+   * los tres paneles sin salir de la pantalla ni pegarle a la red.
+   */
+  describe('cancelar la edición de Datos personales, Contacto y Facturación', () => {
+    it('vuelve a sembrar el formulario con lo último guardado, sin pegarle al servidor', () => {
+      montarYCargar({ professionalTitle: 'Cardióloga' });
+
+      señal<string>('titulo').set('Un título a medio escribir');
+      interno<() => void>('cancelarEdicion')();
+
+      expect(señal<string>('titulo')()).toBe('Cardióloga');
+      // `http.verify()` del `afterEach` ya se encarga de que no haya quedado
+      // ninguna petición pendiente — cancelar no debe disparar ninguna.
+    });
+
+    it('no hace nada mientras hay un guardado en curso', () => {
+      montarYCargar({ professionalTitle: 'Cardióloga' });
+
+      señal<string>('titulo').set('Un título a medio escribir');
+      señal<boolean>('guardandoPresentacion').set(true);
+      interno<() => void>('cancelarEdicion')();
+
+      // Cancelar a mitad de un `PATCH` dejaría el formulario mostrando un
+      // valor que la respuesta, todavía en vuelo, podría pisar igual.
+      expect(señal<string>('titulo')()).toBe('Un título a medio escribir');
+      señal<boolean>('guardandoPresentacion').set(false);
     });
   });
 });

@@ -104,6 +104,9 @@ import {
 /** El tipo de título (formación), del catálogo dinámico: los cinco `CREDENTIAL_TYPE_*`. */
 const TARGET_CREDENCIAL = 'profiles.professional_credentials.credential_type_concept_id';
 
+/** Una especialidad principal y hasta tres adicionales por profesional. */
+const MAX_SPECIALTIES_PER_PRACTITIONER = 4;
+
 /** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
 function fechaIso(fecha: Date): string {
   const anio = fecha.getFullYear();
@@ -138,6 +141,8 @@ interface FilaEspecialidad {
   readonly estado: string;
   /** Si todavía no se verificó: la especialidad sí trae ese sí/no (`verified`). */
   readonly pendiente: boolean;
+  /** Si todavía la ejerce (sin fecha de fin). Sólo éstas cuentan para el tope de cuatro. */
+  readonly vigente: boolean;
 }
 
 /** Una fila de «Tus matrículas cargadas». */
@@ -476,6 +481,8 @@ export class PractitionerProfileEdit {
    * `PATCH`, y el backend la lee de vuelta en el resumen.
    */
   protected readonly direccion = signal('');
+  /** Dirección laboral, separada del domicilio personal. */
+  protected readonly direccionTrabajo = signal('');
 
   /**
    * El punto del domicilio en el mapa — lo que el alta ya preguntaba
@@ -488,6 +495,9 @@ export class PractitionerProfileEdit {
    */
   protected readonly gpsDomicilio = signal<Coordenadas | null | undefined>(undefined);
   protected readonly gpsDomicilioGuardado = signal<Coordenadas | null>(null);
+  /** El GPS laboral se guarda por separado del punto del domicilio. */
+  protected readonly gpsTrabajo = signal<Coordenadas | null | undefined>(undefined);
+  protected readonly gpsTrabajoGuardado = signal<Coordenadas | null>(null);
 
   /**
    * El punto con el que abre el mapa: lo último que la persona dejó, o lo guardado.
@@ -501,6 +511,11 @@ export class PractitionerProfileEdit {
     return elegido === undefined ? this.gpsDomicilioGuardado() : elegido;
   });
 
+  protected readonly gpsTrabajoInicial = computed(() => {
+    const elegido = this.gpsTrabajo();
+    return elegido === undefined ? this.gpsTrabajoGuardado() : elegido;
+  });
+
   protected readonly idsGpsDomicilio: IdsDePrueba = {
     mapa: 'edicion-domicilio-mapa',
     confirmada: 'edicion-domicilio-confirmada',
@@ -510,6 +525,17 @@ export class PractitionerProfileEdit {
     confirmar: 'edicion-domicilio-confirmar',
     usarUbicacion: 'edicion-domicilio-usar-ubicacion',
     marcarEnMapa: 'edicion-domicilio-marcar',
+  };
+
+  protected readonly idsGpsTrabajo: IdsDePrueba = {
+    mapa: 'edicion-trabajo-mapa',
+    confirmada: 'edicion-trabajo-confirmada',
+    avisoGeocodificacion: 'edicion-trabajo-aviso-geo',
+    quitar: 'edicion-trabajo-quitar-gps',
+    sinConfirmar: 'edicion-trabajo-sin-confirmar',
+    confirmar: 'edicion-trabajo-confirmar',
+    usarUbicacion: 'edicion-trabajo-usar-ubicacion',
+    marcarEnMapa: 'edicion-trabajo-marcar',
   };
 
   /** Las doce opciones del alta, compartidas: ver `titulos-profesionales`. */
@@ -600,7 +626,22 @@ export class PractitionerProfileEdit {
 
   /** Suma una casilla vacía de especialidad. */
   protected agregarCasillaDeEspecialidad(): void {
+    if (!this.canAddAnotherSpecialty()) return;
     this.especialidadesExtra.update((actuales) => [...actuales, '']);
+  }
+
+  /** No ofrece más casillas que el cupo de especialidades que todavía queda. */
+  protected canAddAnotherSpecialty(): boolean {
+    const activas = this.filasEspecialidades().filter((fila) => fila.vigente).length;
+    return activas + 1 + this.especialidadesExtra().length < MAX_SPECIALTIES_PER_PRACTITIONER;
+  }
+
+  /** Muestra el formulario mientras el profesional tenga cupo disponible. */
+  protected canDeclareSpecialty(): boolean {
+    return (
+      this.filasEspecialidades().filter((fila) => fila.vigente).length <
+      MAX_SPECIALTIES_PER_PRACTITIONER
+    );
   }
 
   /**
@@ -661,9 +702,11 @@ export class PractitionerProfileEdit {
   protected readonly maxBytesDeRespaldo = MAX_ATTACHMENT_BYTES;
   protected readonly guardandoEspecialidad = signal(false);
 
-  protected readonly puedeAgregarEspecialidad = computed(
-    () => this.nuevaEspecialidad() !== null || this.especialidadesExtra().some((e) => e !== ''),
-  );
+  protected readonly puedeAgregarEspecialidad = computed(() => {
+    const elegidas = this.especialidadesElegidas().length;
+    const activas = this.filasEspecialidades().filter((fila) => fila.vigente).length;
+    return elegidas > 0 && activas + elegidas <= MAX_SPECIALTIES_PER_PRACTITIONER;
+  });
 
   /**
    * El título que respalda lo que se agrega, o `null` si no se eligió. Viaja
@@ -987,6 +1030,7 @@ export class PractitionerProfileEdit {
         ? 'Verificada'
         : this.etiqueta(especialidad.verificationStatusConceptId, PENDIENTE_DE_VERIFICACION),
       pendiente: !especialidad.verified,
+      vigente: especialidad.validTo === undefined,
     }));
   });
 
@@ -1307,6 +1351,15 @@ export class PractitionerProfileEdit {
     const lng = perfil.homeAddress?.longitude;
     this.gpsDomicilioGuardado.set(lat === undefined || lng === undefined ? null : { lat, lng });
     this.gpsDomicilio.set(undefined);
+    this.direccionTrabajo.set(perfil.workAddress?.lines ?? '');
+    const latTrabajo = perfil.workAddress?.latitude;
+    const lngTrabajo = perfil.workAddress?.longitude;
+    this.gpsTrabajoGuardado.set(
+      latTrabajo === undefined || lngTrabajo === undefined
+        ? null
+        : { lat: latTrabajo, lng: lngTrabajo },
+    );
+    this.gpsTrabajo.set(undefined);
     if (this.ramasMunicipios().length === 0 && !this.catalogoMunicipiosCaido()) {
       this.cargarMunicipios();
     }
@@ -1332,6 +1385,29 @@ export class PractitionerProfileEdit {
   protected reintentarMunicipios(): void {
     this.municipios.olvidar();
     this.cargarMunicipios();
+  }
+
+  /**
+   * Cancela la edición de Datos personales, Contacto y Facturación.
+   *
+   * No navega a ningún lado: es un formulario repartido en tres pestañas de
+   * la MISMA pantalla, y «cancelar» yéndose obligaría a volver a entrar para
+   * seguir mirando el resto del perfil. Vuelve a sembrar los tres paneles con
+   * lo último que el servidor confirmó —la misma función que ya usa un
+   * guardado exitoso—, así que descarta lo tipeado sin tocar la red.
+   *
+   * Nada mientras hay un guardado en curso: cancelar a mitad de un `PATCH`
+   * dejaría el formulario mostrando un valor que la respuesta, todavía en
+   * vuelo, podría pisar igual.
+   */
+  protected cancelarEdicion(): void {
+    const original = this.datos();
+    if (original === null || this.guardandoPresentacion()) {
+      return;
+    }
+    this.erroresDelServidor.set(new Map());
+    this.sembrarFormulario(original);
+    this.toasts.success('Descartamos los cambios sin guardar.', 'Edición cancelada');
   }
 
   /**
@@ -1382,6 +1458,9 @@ export class PractitionerProfileEdit {
       homeAddressLines: string;
       homeLatitude: number | null;
       homeLongitude: number | null;
+      workAddressLines: string;
+      workLatitude: number | null;
+      workLongitude: number | null;
       taxId: string;
       taxHolderName: string;
     }> = {};
@@ -1411,6 +1490,17 @@ export class PractitionerProfileEdit {
     } else if (gps !== undefined) {
       cambios.homeLatitude = gps.lat;
       cambios.homeLongitude = gps.lng;
+    }
+    if (this.direccionTrabajo() !== (original.workAddress?.lines ?? '')) {
+      cambios.workAddressLines = this.direccionTrabajo();
+    }
+    const gpsTrabajo = this.gpsTrabajo();
+    if (gpsTrabajo === null) {
+      cambios.workLatitude = null;
+      cambios.workLongitude = null;
+    } else if (gpsTrabajo !== undefined) {
+      cambios.workLatitude = gpsTrabajo.lat;
+      cambios.workLongitude = gpsTrabajo.lng;
     }
     if (this.titulo() !== (original.professionalTitle ?? '')) {
       cambios.professionalTitle = this.titulo();
@@ -1544,7 +1634,12 @@ export class PractitionerProfileEdit {
   protected async agregarEspecialidad(): Promise<void> {
     const profileId = this.profileId();
     const elegidas = this.especialidadesElegidas();
-    if (profileId === null || elegidas.length === 0 || this.guardandoEspecialidad()) {
+    if (
+      profileId === null ||
+      elegidas.length === 0 ||
+      !this.puedeAgregarEspecialidad() ||
+      this.guardandoEspecialidad()
+    ) {
       return;
     }
 
@@ -1787,6 +1882,8 @@ export class PractitionerProfileEdit {
   }
 
   protected abrirAltaDeEspecialidad(): void {
+    // Con cuatro vigentes no hay cupo: el botón se apaga y esto lo sostiene.
+    if (!this.canDeclareSpecialty()) return;
     this.altaDeEspecialidadAbierta.set(true);
   }
 

@@ -210,6 +210,86 @@
                 </dl>
               </section>
             }
+
+            <!-- ─── Especialidades ───────────────────────────────────────
+                 Mudadas de «Credenciales» (pedido del propietario,
+                 24/09/2026): contestan «¿de qué es médico?», la misma
+                 pregunta que el título profesional, y no «¿con qué
+                 habilitación ejerce?», que es lo que queda en Credenciales
+                 junto con la matrícula. Su tabla, su barra y el alta en un
+                 modal siguen iguales (D-04, ADR-0015). -->
+            <section class="edicion__seccion" data-testid="edicion-especialidades-cargadas">
+              <h3 class="edicion__titulo">Tus especialidades cargadas</h3>
+              <p class="edicion__nota">
+                Podés cargar hasta cuatro especialidades en total, como en el registro. Lo que
+                agregás queda pendiente de verificación hasta que se compruebe contra tu credencial.
+              </p>
+
+              <app-filter-bar
+                searchLabel="Buscar por especialidad"
+                searchPlaceholder="Especialidad"
+                [searchParam]="claveBusquedaEspecialidad"
+                [filters]="filtrosEspecialidades"
+                (filtersChanged)="onFiltrosEspecialidades($event)"
+              >
+                <button
+                  filter-bar-action
+                  app-button
+                  variant="primary"
+                  size="sm"
+                  type="button"
+                  data-testid="especialidad-agregar"
+                  [disabled]="!canDeclareSpecialty()"
+                  (clicked)="abrirAltaDeEspecialidad()"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  Agregar especialidad
+                </button>
+              </app-filter-bar>
+
+              <!-- El botón se apaga en la barra y el porqué se dice acá: un botón
+                   apagado sin motivo se lee como una falla. -->
+              @if (!canDeclareSpecialty()) {
+                <p class="edicion__nota" data-testid="limite-especialidades-alcanzado">
+                  Ya alcanzaste el máximo de cuatro especialidades.
+                </p>
+              }
+
+              @if (filasEspecialidades().length === 0) {
+                <p class="edicion__vacio">Todavía no cargaste ninguna especialidad.</p>
+              } @else if (filasEspecialidadesVisibles().length === 0) {
+                <p class="edicion__vacio" data-testid="especialidades-sin-coincidencias">
+                  Ninguna especialidad coincide con la búsqueda o el filtro.
+                </p>
+              } @else {
+                <app-data-table
+                  class="edicion__tabla"
+                  data-testid="tabla-especialidades"
+                  [state]="estadoEspecialidades()"
+                  [columns]="columnasEspecialidades()"
+                  [trackBy]="claveDeFila"
+                  caption="Especialidades cargadas"
+                  maxHeight="420px"
+                />
+                <app-pagination
+                  class="edicion__paginacion"
+                  data-testid="paginacion-especialidades"
+                  [totalItems]="filasEspecialidadesVisibles().length"
+                  [(page)]="paginaEspecialidades"
+                  [(pageSize)]="tamanoPaginaEspecialidades"
+                />
+              }
+            </section>
           </app-tab>
 
           <!-- ─── Contacto ──────────────────────────────────────────────── -->
@@ -284,6 +364,36 @@
                   [ids]="idsGpsDomicilio"
                   [inicial]="gpsDomicilioInicial()"
                   (confirmado)="gpsDomicilio.set($event)"
+                />
+
+                <!-- La dirección del trabajo sí se queda en «Contacto» (decisión del
+                     24/09/2026): D-03 sacó de acá los teléfonos y el correo del
+                     trabajo, no la dirección donde atiende. -->
+                <app-form-field
+                  class="edicion__campo-ancho"
+                  label="Dirección del trabajo"
+                  [errorMessage]="errorDelServidor('workAddressLines')"
+                  hint="Dónde atendés en tu lugar de trabajo; no es tu domicilio personal."
+                >
+                  <app-input
+                    data-testid="edicion-direccion-trabajo"
+                    [(value)]="direccionTrabajo"
+                    placeholder="Calle Warnes 45, lugar de trabajo"
+                  />
+                </app-form-field>
+
+                <app-ubicacion-picker
+                  class="edicion__campo-ancho"
+                  pinId="edicion-trabajo"
+                  etiquetaConfirmada="Tu lugar de trabajo"
+                  pregunta="¿Es acá donde atendés? Movete por el mapa para comprobarlo."
+                  etiquetaQuitar="Quitar la ubicación de tu trabajo"
+                  etiquetaMapa="La ubicación de tu trabajo en el mapa"
+                  etiquetaMarcar="Marcar tu lugar de trabajo en el mapa"
+                  indicacionMarcar="Tocá el mapa en la puerta del lugar de trabajo para poner el pin."
+                  [ids]="idsGpsTrabajo"
+                  [inicial]="gpsTrabajoInicial()"
+                  (confirmado)="gpsTrabajo.set($event)"
                 />
 
                 <!-- Los tres teléfonos son el MISMO campo del alta: el país se
@@ -469,79 +579,15 @@
           </app-tab>
 
           <!-- ─── Credenciales ──────────────────────────────────────────────
-               Especialidades y matrículas: van juntas porque son la misma
-               pregunta —qué estás habilitado a ejercer y dónde—. Cada una con
-               su tabla, su barra con buscador y «Agregar» a la derecha, y el
-               alta en un modal (D-04, ADR-0015). -->
+               La habilitación para ejercer: las matrículas, con su tabla, su
+               barra con buscador y «Agregar» a la derecha, y el alta en un
+               modal (D-04, ADR-0015). Las especialidades vivían acá y se
+               mudaron a «Datos personales» el 24/09/2026. -->
           <app-tab [label]="pestanas[5]">
-            <section class="edicion__seccion" data-testid="edicion-especialidades-cargadas">
-              <h3 class="edicion__titulo">Tus especialidades cargadas</h3>
-              <p class="edicion__nota">
-                Lo que agregás queda pendiente de verificación hasta que se compruebe contra tu
-                credencial.
-              </p>
-
-              <app-filter-bar
-                searchLabel="Buscar por especialidad"
-                searchPlaceholder="Especialidad"
-                [searchParam]="claveBusquedaEspecialidad"
-                [filters]="filtrosEspecialidades"
-                (filtersChanged)="onFiltrosEspecialidades($event)"
-              >
-                <button
-                  filter-bar-action
-                  app-button
-                  variant="primary"
-                  size="sm"
-                  type="button"
-                  data-testid="especialidad-agregar"
-                  (clicked)="abrirAltaDeEspecialidad()"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    aria-hidden="true"
-                    focusable="false"
-                  >
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                  Agregar especialidad
-                </button>
-              </app-filter-bar>
-
-              @if (filasEspecialidades().length === 0) {
-                <p class="edicion__vacio">Todavía no cargaste ninguna especialidad.</p>
-              } @else if (filasEspecialidadesVisibles().length === 0) {
-                <p class="edicion__vacio" data-testid="especialidades-sin-coincidencias">
-                  Ninguna especialidad coincide con la búsqueda o el filtro.
-                </p>
-              } @else {
-                <app-data-table
-                  class="edicion__tabla"
-                  data-testid="tabla-especialidades"
-                  [state]="estadoEspecialidades()"
-                  [columns]="columnasEspecialidades()"
-                  [trackBy]="claveDeFila"
-                  caption="Especialidades cargadas"
-                  maxHeight="420px"
-                />
-                <app-pagination
-                  class="edicion__paginacion"
-                  data-testid="paginacion-especialidades"
-                  [totalItems]="filasEspecialidadesVisibles().length"
-                  [(page)]="paginaEspecialidades"
-                  [(pageSize)]="tamanoPaginaEspecialidades"
-                />
-              }
-            </section>
-
             <!-- Las matrículas, con la misma disciplina que los títulos (D-04,
                  ADR-0015): barra con buscador y «Agregar matrícula» a la derecha,
-                 y el alta en un modal. Su búsqueda tiene clave propia en la URL
-                 porque la tabla comparte pestaña con la de especialidades. -->
+                 y el alta en un modal. Su búsqueda tiene clave propia en la URL,
+                 como la de cada tabla de esta pantalla. -->
             <section class="edicion__seccion" data-testid="edicion-matriculas-cargadas">
               <h3 class="edicion__titulo">Tus matrículas cargadas</h3>
               <p class="edicion__nota">
@@ -651,9 +697,12 @@
         @if (editandoPresentacion()) {
           <app-form-actions
             class="edicion__guardar"
+            data-testid="presentacion-acciones"
             submitLabel="Guardar cambios"
+            cancelLabel="Cancelar edición"
             [pending]="guardandoPresentacion()"
             (submitted)="guardarPresentacion()"
+            (cancelled)="cancelarEdicion()"
           />
         }
       </app-card>
@@ -1196,18 +1245,20 @@
           </app-form-field>
         }
 
-        <p class="edicion__sumar">
-          <button
-            app-button
-            type="button"
-            variant="ghost"
-            size="sm"
-            data-testid="agregar-casilla-especialidad"
-            (clicked)="agregarCasillaDeEspecialidad()"
-          >
-            + Agregar otra especialidad
-          </button>
-        </p>
+        @if (canAddAnotherSpecialty()) {
+          <p class="edicion__sumar">
+            <button
+              app-button
+              type="button"
+              variant="ghost"
+              size="sm"
+              data-testid="agregar-casilla-especialidad"
+              (clicked)="agregarCasillaDeEspecialidad()"
+            >
+              + Agregar otra especialidad
+            </button>
+          </p>
+        }
       }
 
       <!-- El respaldo es un título ya verificado: es el único camino que el
