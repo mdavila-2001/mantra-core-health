@@ -410,6 +410,8 @@ export interface OwnPractitionerProfile {
    * cuando no hay fila vigente — mismo contrato que {@link OwnPatientProfile}.
    */
   readonly homeAddress?: OwnAddress;
+  /** Dirección y punto del lugar de trabajo, separados del domicilio personal. */
+  readonly workAddress?: OwnAddress;
 
   readonly practitionerCategoryConceptId: string;
   readonly verificationStatusConceptId: string;
