@@ -104,3 +104,11 @@ El `AGENTS.md` limita normalmente el trabajo del workspace a cambios visuales fr
 ## Reanudación del plan — 2026-09-24
 
 El propietario volvió a pedir la ejecución completa y el push. La inspección de solo lectura encontró PostgreSQL temporal en 55439/55440, Angular en 4300/4302/4387 y SSR; los procesos desconocidos quedaron intactos. Más tarde se levantaron PostgreSQL 18, API y Angular propios en 55444/3000/4390 y se completó el recorrido documentado en `evidence/h1-real-api/REPORT.md`: 10 criterios pasan a HECHO; MED-E01/H1 siguen parciales.
+
+### Continuación H1 — CI profesional obligatoria
+
+La fuente L0169 marca el CI profesional como obligatorio y L0170 requiere su departamento emisor. La API ahora rechaza altas sin `nationalId` o `issuerAdministrativeAreaConceptId`, comprueba el concepto contra `VS_BO_DEPARTMENT` antes de cualquier escritura y persiste siempre el identificador. Se añadieron identidades sintéticas a los fixtures de integración; el caso sin CI del spec de departamento ahora espera HTTP 400.
+
+Verificación en la rama API `justin/medical-module-execution-20260924`, commit `09af2caf`: `corepack yarn test --runInBand --no-cache src/modules/iam/dto/register-practitioner.dto.spec.ts src/modules/iam/services/iam-practitioner-self-registration.service.spec.ts` — 2 suites, 104/104 pruebas aprobadas; `corepack yarn typecheck` — exit 0; ESLint dirigido a los 30 TypeScript modificados — exit 0; `git diff --check` — exit 0. El test-first observó el defecto: el DTO aceptaba un alta sin CI.
+
+No se corrió la integración contra base: `bootstrapTestApp()` usa `resetBusinessData()`, que trunca todos los esquemas de negocio, y no se confirmó una base desechable aislada. No se leyó `.env` ni se conectó a servicios compartidos. No se cambió el frontend en este incremento y no se declara cumplimiento persistente: L0169 sigue `A MEDIAS / TESTED`, MED-E01/H1 siguen parciales y el conteo global permanece en 10/98 `HECHO`.
