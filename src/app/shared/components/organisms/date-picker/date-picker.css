@@ -238,9 +238,16 @@
   gap: var(--sp-1);
 }
 
-/* Si los dos grupos no entran juntos (a 375 px no entran), el de después
-   baja a su propio renglón: sin esto quedaría a la izquierda, debajo del de
-   antes. Con él se queda a la derecha. */
+/* Con el relleno lateral de un botón `sm` cada flecha con nombre pide unos
+   70 px, y los dos grupos dejaban de entrar juntos por debajo de ~390 px: el
+   panel crecía en escalera. Con este relleno entran en un renglón a 360. */
+.nav-controls > [app-button] {
+  padding-inline: var(--sp-2);
+}
+
+/* Si aun así los dos grupos no entran juntos, el de después baja a su propio
+   renglón: sin esto quedaría a la izquierda, debajo del de antes. Con él se
+   queda a la derecha. */
 .nav-controls + .nav-controls {
   margin-inline-start: auto;
 }
