@@ -106,6 +106,17 @@ describe('las pestañas de la ficha del médico', () => {
     expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.actividad]).toBe('Actividad');
   });
 
+  /**
+   * «Las especialidades deben estar en "datos personales" ... no en
+   * credenciales» (pedido del propietario, 24/09/2026). Contestan «¿de qué es
+   * médico?», la misma pregunta que el título profesional, no «¿con qué
+   * habilitación ejerce?» que es lo que queda en Credenciales.
+   */
+  it('las especialidades viven en Datos personales, no en Credenciales', () => {
+    expect(CAMPO_DEL_ALTA_EN_PESTANA['specialtyPrimary']).toBe(PESTANA_MEDICO.personales);
+    expect(CAMPO_DEL_ALTA_EN_PESTANA['especialidadesExtra']).toBe(PESTANA_MEDICO.personales);
+  });
+
   it('las tres primeras pestañas se llaman igual que las del paciente', async () => {
     // El pedido es que las dos fichas se lean igual. Donde el dato es el mismo,
     // el rótulo tiene que ser el mismo: «Datos personales», «Contacto» y

@@ -49,6 +49,8 @@ import type { DialogDetail } from '../../../shared/components/molecules/dialog/d
 import { patientChartRoute } from '../../clinical-record/clinical-record.routes';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
+import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
+import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { primerDiaDelMes, sumarMeses } from '../../../shared/date/calendario-mes';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
@@ -205,6 +207,7 @@ const VISITAS_QUE_NO_OCUPAN: ReadonlySet<string> = new Set([
     ScheduleGrid,
     ContentDialog,
     RouterLink,
+    RowActions,
     ViewStateHost,
   ],
   templateUrl: './my-agenda.html',
@@ -1158,7 +1161,12 @@ export class MyAgenda implements OnInit {
     // Una llamada para todo el mes, igual que la semana. Si falla, el globo
     // del día dice que no pudo traer las citas; la ocupación sigue en pie.
     this.scheduling
-      .searchBookings({ resourceId: recurso.id, from: desde, to: hasta, limit: MONTH_BOOKINGS_LIMIT })
+      .searchBookings({
+        resourceId: recurso.id,
+        from: desde,
+        to: hasta,
+        limit: MONTH_BOOKINGS_LIMIT,
+      })
       .subscribe({
         next: (pagina: { items: readonly Booking[] }) => {
           this.citasDelMes.set(pagina.items);
@@ -1335,9 +1343,7 @@ export class MyAgenda implements OnInit {
     const ir = await this.dialogs.confirm({
       title: 'Detalle de la cita',
       message:
-        cuando === undefined
-          ? SIN_DATO
-          : formatDate(cuando, "EEEE d 'de' MMMM", this.idioma),
+        cuando === undefined ? SIN_DATO : formatDate(cuando, "EEEE d 'de' MMMM", this.idioma),
       details: [...detalleDeLaCita(cita, estado, this.idioma, franja)],
       confirmLabel: puedeAbrirExpediente ? 'Abrir expediente' : 'Cerrar',
       cancelLabel: puedeAbrirExpediente ? 'Cerrar' : 'Volver',
@@ -1474,6 +1480,45 @@ export class MyAgenda implements OnInit {
    * era encontrar el día, tocar el rato y abrir la tarjeta.
    */
   protected readonly rutaAgendarCita = APPOINTMENT_NEW_ROUTE;
+
+  /**
+   * Las acciones del horario, en un desplegable (ADR-0012: con tres o más la
+   * barra no las aguanta). Eran cuatro recuadros de color de 44 px con su
+   * texto, que en un escritorio se comían el renglón y en un teléfono lo
+   * partían en tres. Cada una sigue llevando ícono y texto, ahora dentro del
+   * menú; el disparador también.
+   */
+  protected readonly accionesDelHorario = computed<readonly RowAction[]>(() => [
+    { code: 'editar', label: 'Cambiar mi horario', icon: 'edit' },
+    { code: 'bloqueos', label: 'Mis bloqueos', icon: 'lock' },
+    { code: 'agendar', label: 'Agendar una cita', icon: 'calendar' },
+    // Retirar y no borrar: la plantilla no se borra nunca (ver `retirarHorario`).
+    // Va última, lejos del dedo que busca «Cambiar».
+    {
+      code: 'retirar',
+      label: 'Retirar horario',
+      icon: 'remove',
+      destructive: true,
+      disabled: this.retirando(),
+    },
+  ]);
+
+  protected ejecutarAccionDelHorario(code: string): void {
+    switch (code) {
+      case 'editar':
+        void this.router.navigateByUrl(this.rutaEditarHorario);
+        return;
+      case 'bloqueos':
+        void this.router.navigateByUrl(this.rutaBloqueos);
+        return;
+      case 'agendar':
+        void this.router.navigateByUrl(this.rutaAgendarCita);
+        return;
+      case 'retirar':
+        void this.retirarHorario();
+        return;
+    }
+  }
 
   /** El horario sobre el que hay una operación en vuelo. */
   protected readonly operandoHorario = signal<string | null>(null);

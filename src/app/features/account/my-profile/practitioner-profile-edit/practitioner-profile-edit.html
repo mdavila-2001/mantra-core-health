@@ -181,21 +181,14 @@
               </section>
             }
 
-            <!-- ─── Especialidades ──────────────────────────────────────────
-                 Se mudaron acá el 24/09/2026 (pedido del propietario): vivían
-                 en «Credenciales», junto a la matrícula, pero contestan «¿de
-                 qué es médico?» — la misma pregunta que el título
-                 profesional, de arriba — y no un trámite de habilitación. La
-                 ficha (`practitioner-profile-view.html`) ya las lee en
-                 «Datos personales» desde el 19/09/2026; el editor quedaba
-                 desalineado con la pestaña que dice corregir.
-
-                 Se AGREGAN, no se editan: una especialidad declarada es un
-                 hecho a verificar, no un texto que se corrige. Por eso tiene
-                 su propio formulario y su propio botón, fuera de
-                 `editandoPresentacion` — el mismo criterio que ya regía en
-                 «Credenciales» para especialidades y matrículas. -->
-            <section class="edicion__seccion">
+            <!-- ─── Especialidades ───────────────────────────────────────
+                 Mudadas de «Credenciales» (pedido del propietario,
+                 24/09/2026): contestan «¿de qué es médico?», la misma
+                 pregunta que el título profesional de arriba, y no «¿con qué
+                 habilitación ejerce?», que es lo que queda en Credenciales
+                 junto con la matrícula. Se AGREGAN, no se editan — igual que
+                 las otras dos tablas de esta pantalla. -->
+            <section class="edicion__seccion" data-testid="edicion-especialidades">
               <h3 class="edicion__titulo">Agregar especialidades</h3>
               <p class="edicion__nota">
                 Podés cargar hasta cuatro especialidades en total, como en el registro. Quedan
@@ -308,17 +301,40 @@
               }
 
               <h4 class="edicion__subtitulo">Tus especialidades cargadas</h4>
-              @if (filasEspecialidades().length === 0) {
+              @if (totalEspecialidades() === 0) {
                 <p class="edicion__vacio">Todavía no cargaste ninguna especialidad.</p>
               } @else {
-                <app-data-table
-                  class="edicion__tabla"
-                  data-testid="tabla-especialidades"
-                  [state]="estadoEspecialidades()"
-                  [columns]="columnasEspecialidades()"
-                  [trackBy]="claveDeFila"
-                  caption="Especialidades cargadas, la principal primero"
+                <app-search-field
+                  class="edicion__buscador"
+                  data-testid="especialidades-buscador"
+                  label="Buscar en tus especialidades cargadas"
+                  placeholder="Especialidad o estado"
+                  [value]="busquedaEspecialidades()"
+                  (searched)="buscarEnEspecialidades($event)"
                 />
+                @if (sinCoincidenciasEspecialidades()) {
+                  <p class="edicion__vacio" data-testid="especialidades-sin-coincidencias">
+                    Ninguna especialidad coincide con «{{ busquedaEspecialidades() }}».
+                  </p>
+                } @else {
+                  <app-data-table
+                    class="edicion__tabla"
+                    data-testid="tabla-especialidades"
+                    [state]="estadoEspecialidades()"
+                    [columns]="columnasEspecialidades()"
+                    [trackBy]="claveDeFila"
+                    caption="Especialidades cargadas, la principal primero"
+                  />
+                  <app-pagination
+                    class="edicion__paginacion"
+                    data-testid="especialidades-paginacion"
+                    [totalItems]="totalEspecialidadesFiltrada()"
+                    [page]="paginaActualEspecialidades()"
+                    (pageChange)="irAPaginaDeEspecialidades($event)"
+                    [(pageSize)]="porPaginaEspecialidades"
+                    [pageSizeOptions]="tamanosDePaginaTabla"
+                  />
+                }
               }
             </section>
           </app-tab>
@@ -661,26 +677,56 @@
                 Del título más reciente al más antiguo. Lo pendiente lo revisa el equipo que
                 verifica.
               </p>
-              @if (filasFormacion().length === 0) {
+              @if (totalFormacion() === 0) {
                 <p class="edicion__vacio">Todavía no cargaste ningún título.</p>
               } @else {
-                <app-data-table
-                  class="edicion__tabla"
-                  data-testid="tabla-formacion"
-                  [state]="estadoFormacion()"
-                  [columns]="columnasFormacion()"
-                  [trackBy]="claveDeFila"
-                  caption="Títulos y formación cargados, del más reciente al más antiguo"
+                <app-search-field
+                  class="edicion__buscador"
+                  data-testid="formacion-buscador"
+                  label="Buscar en tu trayectoria cargada"
+                  placeholder="Tipo, número o institución"
+                  [value]="busquedaFormacion()"
+                  (searched)="buscarEnFormacion($event)"
                 />
+                @if (sinCoincidenciasFormacion()) {
+                  <p class="edicion__vacio" data-testid="formacion-sin-coincidencias">
+                    Ningún título coincide con «{{ busquedaFormacion() }}».
+                  </p>
+                } @else {
+                  <app-data-table
+                    class="edicion__tabla"
+                    data-testid="tabla-formacion"
+                    [state]="estadoFormacion()"
+                    [columns]="columnasFormacion()"
+                    [trackBy]="claveDeFila"
+                    caption="Títulos y formación cargados, del más reciente al más antiguo"
+                  />
+                  <app-pagination
+                    class="edicion__paginacion"
+                    data-testid="formacion-paginacion"
+                    [totalItems]="totalFormacionFiltrada()"
+                    [page]="paginaActualFormacion()"
+                    (pageChange)="irAPaginaDeFormacion($event)"
+                    [(pageSize)]="porPaginaFormacion"
+                    [pageSizeOptions]="tamanosDePaginaTabla"
+                  />
+                }
               }
             </section>
           </app-tab>
 
           <!-- ─── Credenciales ──────────────────────────────────────────────
-               La matrícula se AGREGA, no se edita. Las especialidades vivían
-               acá también hasta el 24/09/2026: el propietario pidió que se
-               editen junto con el resto de «Datos personales», que es donde
-               ya se leen en la ficha (ver esa pestaña, arriba). -->
+               La habilitación para ejercer y sus respaldos: se AGREGA, no se
+               edita.
+
+               Las especialidades vivían acá también, y se mudaron a «Datos
+               personales» (pedido del propietario, 24/09/2026): contestan
+               «¿de qué es médico?», la misma pregunta que el título
+               profesional, y no «¿con qué habilitación ejerce?», que es lo
+               que sigue viviendo en esta pestaña. La ficha de lectura ya las
+               mostraba junto a la identidad desde el 19/09/2026 (C-09); esta
+               pantalla era el único lugar donde seguían separadas de eso
+               mismo. -->
           <app-tab [label]="pestanas[5]">
             <section class="edicion__seccion">
               <h3 class="edicion__titulo">Agregar una matrícula</h3>
@@ -762,17 +808,40 @@
               </form>
 
               <h4 class="edicion__subtitulo">Tus matrículas cargadas</h4>
-              @if (filasMatriculas().length === 0) {
+              @if (totalMatriculas() === 0) {
                 <p class="edicion__vacio">Todavía no cargaste ninguna matrícula.</p>
               } @else {
-                <app-data-table
-                  class="edicion__tabla"
-                  data-testid="tabla-matriculas"
-                  [state]="estadoMatriculas()"
-                  [columns]="columnasMatriculas()"
-                  [trackBy]="claveDeFila"
-                  caption="Matrículas cargadas"
+                <app-search-field
+                  class="edicion__buscador"
+                  data-testid="matriculas-buscador"
+                  label="Buscar en tus matrículas cargadas"
+                  placeholder="Número o autoridad"
+                  [value]="busquedaMatriculas()"
+                  (searched)="buscarEnMatriculas($event)"
                 />
+                @if (sinCoincidenciasMatriculas()) {
+                  <p class="edicion__vacio" data-testid="matriculas-sin-coincidencias">
+                    Ninguna matrícula coincide con «{{ busquedaMatriculas() }}».
+                  </p>
+                } @else {
+                  <app-data-table
+                    class="edicion__tabla"
+                    data-testid="tabla-matriculas"
+                    [state]="estadoMatriculas()"
+                    [columns]="columnasMatriculas()"
+                    [trackBy]="claveDeFila"
+                    caption="Matrículas cargadas"
+                  />
+                  <app-pagination
+                    class="edicion__paginacion"
+                    data-testid="matriculas-paginacion"
+                    [totalItems]="totalMatriculasFiltrada()"
+                    [page]="paginaActualMatriculas()"
+                    (pageChange)="irAPaginaDeMatriculas($event)"
+                    [(pageSize)]="porPaginaMatriculas"
+                    [pageSizeOptions]="tamanosDePaginaTabla"
+                  />
+                }
               }
             </section>
           </app-tab>
@@ -818,22 +887,16 @@
              pestañas y no se duplica. En «Trayectoria» y «Credenciales» no
              aparece: ahí no se corrige nada, se agrega, y cada bloque tiene su
              propio «Agregar». Un «Guardar cambios» presente mientras se carga
-             una matrícula prometería guardar algo que no guarda.
-
-             «Cancelar» faltaba (reporte del 24/09/2026): quien tecleaba algo
-             y se arrepentía no tenía forma de volver a lo guardado sin salir
-             de la pantalla y perder también la pestaña en la que estaba.
-             `cancelarPresentacion` vuelve a sembrar el formulario con el
-             último perfil que llegó del servidor — nunca manda nada —, así
-             que cancelar dos veces seguidas es tan inofensivo como una. -->
+             una matrícula prometería guardar algo que no guarda. -->
         @if (editandoPresentacion()) {
           <app-form-actions
             class="edicion__guardar"
+            data-testid="presentacion-acciones"
             submitLabel="Guardar cambios"
-            cancelLabel="Cancelar"
+            cancelLabel="Cancelar edición"
             [pending]="guardandoPresentacion()"
             (submitted)="guardarPresentacion()"
-            (cancelled)="cancelarPresentacion()"
+            (cancelled)="cancelarEdicion()"
           />
         }
       </app-card>

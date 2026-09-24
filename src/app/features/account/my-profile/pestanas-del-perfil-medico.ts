@@ -19,20 +19,13 @@
  *
  * | Pasos del alta | Pestaña |
  * |---|---|
- * | nombre · documento · sexo y nacimiento · título profesional · especialidades | Datos personales |
+ * | nombre · documento · sexo y nacimiento · título profesional · tus especialidades | Datos personales |
  * | contacto privado · contacto del trabajo · dónde vivís | Contacto |
  * | — (a nombre de quién factura) | Facturación |
  * | tu consultorio propio | Dónde atiendo |
  * | dónde estudió el título · tus títulos | Trayectoria |
  * | habilitación · respaldos | Credenciales |
  * | — (lo que registró con la cuenta) | Actividad |
- *
- * Las especialidades se movieron de «Credenciales» a «Datos personales» el
- * 24/09/2026 (pedido del propietario): iban con la habilitación por ser parte
- * del mismo paso del alta, pero contestan la misma pregunta que el título
- * profesional —«¿de qué es médico?»— y no un trámite. La ficha
- * (`practitioner-profile-view.html`) ya las leía en «Datos personales» desde
- * el 19/09/2026; esto alinea al editor con ella.
  *
  * Las dos últimas filas no salen del alta y tampoco se podían tirar: la
  * trayectoria laboral (UC-05-16) y los contadores de la plataforma ya se
@@ -229,12 +222,16 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
   /* 11 · Tus títulos */
   academicTitles: PESTANA_MEDICO.trayectoria,
 
-  /* 12 · Tus especialidades.
-     Vivían en «Credenciales» y se mudaron a «Datos personales» el
-     24/09/2026 (pedido del propietario): contestan «¿de qué es médico?»,
-     la misma pregunta que el título profesional, no un trámite de
-     habilitación. La ficha ya las lee ahí desde el 19/09/2026; esto
-     alinea al editor. */
+  /*
+   * 12 · Tus especialidades
+   *
+   * Se mudó de «Credenciales» a «Datos personales» (pedido del propietario,
+   * 24/09/2026): contestan «¿de qué es médico?», la misma pregunta que el
+   * título profesional, y no «¿con qué habilitación ejerce?», que es lo que
+   * queda en Credenciales junto con matrículas y respaldos. La ficha de
+   * lectura ya las mostraba junto a la identidad desde el 19/09/2026 (C-09);
+   * el editor era el único lugar donde seguían separadas de eso mismo.
+   */
   specialtyPrimary: PESTANA_MEDICO.personales,
   especialidadesExtra: PESTANA_MEDICO.personales,
 };

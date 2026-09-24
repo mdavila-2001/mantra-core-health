@@ -73,7 +73,7 @@ test.describe('Cierre local · reserva y Cotizaciones', () => {
 
     await irA(page, '/my-account/cotizaciones');
     await estable(page);
-    const busqueda = page.getByTestId('cotizaciones-busqueda');
+    const busqueda = page.getByTestId('cotizaciones-busqueda').locator('input');
     await busqueda.focus();
     await page.keyboard.type('tomografia');
     await expect(page.getByTestId('cotizaciones-resultados')).toContainText('Tomografía');
@@ -84,7 +84,9 @@ test.describe('Cierre local · reserva y Cotizaciones', () => {
     await page.keyboard.press('Home');
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
-    await expect(vertical).toHaveValue('MEDICAMENTOS');
+    // `app-select` numera sus opciones: la 1 es «Medicamentos».
+    await expect(vertical).toHaveValue('1');
+    await expect(page.getByTestId('cotizaciones-resultados')).toContainText('No encontramos cotizaciones');
   });
 
   test('cuatro toques sobre una especialidad abren una sola lista', async ({ page }) => {

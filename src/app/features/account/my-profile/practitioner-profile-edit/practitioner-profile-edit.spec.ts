@@ -438,72 +438,6 @@ describe('PractitionerProfileEdit', () => {
   });
 
   /**
-   * El botón «Cancelar» que faltaba (reporte del 24/09/2026): quien tecleaba
-   * algo y se arrepentía no tenía forma de volver a lo guardado sin salir de
-   * la pantalla.
-   */
-  describe('cancelarPresentacion', () => {
-    it('no manda ninguna petición', () => {
-      montarYCargar();
-
-      señal<string>('titulo').set('Cardióloga intervencionista');
-      interno<() => void>('cancelarPresentacion')();
-
-      http.expectNone('/profiles/practitioners/me');
-    });
-
-    it('vuelve cada campo a lo que ya estaba guardado', () => {
-      montarYCargar({ taxId: '5414404011' });
-
-      señal<string>('titulo').set('Cardióloga intervencionista');
-      señal<string>('bio').set('Un texto a medio escribir.');
-      señal<string>('nit').set('87654321');
-      interno<() => void>('cancelarPresentacion')();
-
-      expect(interno<() => string>('titulo')()).toBe('Cardióloga');
-      expect(interno<() => string>('bio')()).toBe('Bio actual.');
-      expect(interno<() => string>('nit')()).toBe('5414404011');
-    });
-
-    it('limpia los rechazos del servidor que hubieran quedado pintados', () => {
-      montarYCargar();
-      señal<string>('nit').set('12345678');
-      interno<() => void>('guardarPresentacion')();
-      http.expectOne('/profiles/practitioners/me').flush(
-        {
-          code: 'VALIDATION_FAILED',
-          message: 'Validación fallida',
-          details: { violations: ['taxId no existe en el padrón.'] },
-          timestamp: '2026-09-24T00:00:00.000Z',
-          path: '/profiles/practitioners/me',
-        },
-        { status: 422, statusText: 'Unprocessable Entity' },
-      );
-      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toContain('padrón');
-
-      interno<() => void>('cancelarPresentacion')();
-
-      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe('');
-    });
-  });
-
-  it('el botón «Cancelar» se ofrece junto a «Guardar cambios» y descarta lo tecleado', () => {
-    const fixture = montarConVista();
-
-    señal<string>('titulo').set('Cardióloga intervencionista');
-    fixture.detectChanges();
-
-    const botones = [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')];
-    const cancelar = botones.find((boton) => boton.textContent?.trim() === 'Cancelar');
-    expect(cancelar).toBeDefined();
-
-    cancelar?.click();
-    fixture.detectChanges();
-
-    expect(interno<() => string>('titulo')()).toBe('Cardióloga');
-  });
-
-  /**
    * «Acepto pacientes nuevos» ya no se pregunta (propietario, 13/09/2026):
    * siempre está habilitado. Un perfil viejo que lo tenía apagado se corrige en
    * el primer guardado.
@@ -1479,6 +1413,134 @@ describe('PractitionerProfileEdit', () => {
   });
 
   /**
+   * Disciplina de tablas: buscador y paginación (pedido del propietario,
+   * 24/09/2026). Las tres tablas —Formación, Especialidades y Matrículas—
+   * comparten la misma implementación, así que se prueba a fondo en una y se
+   * repite el filtro en las otras dos.
+   */
+  describe('buscador y paginación de las tres tablas', () => {
+    /** Siete títulos: más que una página (5), para poder probar el corte. */
+    const SIETE_TITULOS = Array.from({ length: 7 }, (_, i) => ({
+      id: `cred-${i}`,
+      credentialTypeConceptId: 'cred-titulo',
+      number: `TIT-${i}`,
+      issuingInstitutionText:
+        i === 0 ? 'Universidad Mayor de San Andrés' : 'Universidad Católica Boliviana',
+      issueDate: `2016-0${(i % 9) + 1}-01T12:00:00.000Z`,
+      stateConceptId: 'st-pending',
+    }));
+
+    it('arranca mostrando la primera página, sin recortar por búsqueda', () => {
+      montarYCargar({ credentials: SIETE_TITULOS });
+
+      expect(interno<() => number>('totalFormacion')()).toBe(7);
+      expect(interno<() => number>('totalFormacionFiltrada')()).toBe(7);
+      expect(interno<() => readonly unknown[]>('formacionEnPagina')()).toHaveLength(5);
+      expect(interno<() => number>('paginaActualFormacion')()).toBe(1);
+    });
+
+    it('el buscador filtra por tipo, número o institución, sin tildes ni mayúsculas', () => {
+      montarYCargar({ credentials: SIETE_TITULOS });
+
+      interno<(texto: string) => void>('buscarEnFormacion')('andres');
+
+      expect(interno<() => number>('totalFormacionFiltrada')()).toBe(1);
+      expect(
+        interno<() => readonly { numero: string }[]>('formacionEnPagina')().map((f) => f.numero),
+      ).toEqual(['TIT-0']);
+      // El total sin filtrar no cambia: el buscador recorta la VISTA, no borra nada.
+      expect(interno<() => number>('totalFormacion')()).toBe(7);
+    });
+
+    it('paginar corta el resultado, y buscar vuelve a la página 1', () => {
+      montarYCargar({ credentials: SIETE_TITULOS });
+
+      interno<(pagina: number) => void>('irAPaginaDeFormacion')(2);
+      expect(interno<() => readonly unknown[]>('formacionEnPagina')()).toHaveLength(2);
+      expect(interno<() => number>('paginaActualFormacion')()).toBe(2);
+
+      // Buscar algo que da una sola página: quedarse en la 2 mostraría una
+      // tabla vacía con el paginador diciendo que hay más.
+      interno<(texto: string) => void>('buscarEnFormacion')('catolica');
+      expect(interno<() => number>('paginaActualFormacion')()).toBe(1);
+      expect(interno<() => number>('totalFormacionFiltrada')()).toBe(6);
+    });
+
+    it('sin coincidencias, lo dice sin tocar la lectura completa', () => {
+      montarYCargar({ credentials: SIETE_TITULOS });
+
+      interno<(texto: string) => void>('buscarEnFormacion')('inexistente');
+
+      expect(interno<() => boolean>('sinCoincidenciasFormacion')()).toBe(true);
+      expect(interno<() => readonly unknown[]>('formacionEnPagina')()).toHaveLength(0);
+      expect(interno<() => number>('totalFormacion')()).toBe(7);
+    });
+
+    it('sin nada cargado no hay «sin coincidencias»: es el vacío de siempre', () => {
+      montarYCargar({ credentials: [] });
+
+      expect(interno<() => boolean>('sinCoincidenciasFormacion')()).toBe(false);
+      expect(interno<() => number>('totalFormacion')()).toBe(0);
+    });
+
+    it('la misma disciplina en Especialidades: buscador y «sin coincidencias»', () => {
+      montarYCargar({
+        specialties: [
+          {
+            id: 'spec-1',
+            specialtyConceptId: 'esp-cardio',
+            isPrimary: true,
+            boardCertified: false,
+            verificationStatusConceptId: 'st-pending',
+            verified: false,
+          },
+          {
+            id: 'spec-2',
+            specialtyConceptId: 'esp-pediatria',
+            isPrimary: false,
+            boardCertified: false,
+            verificationStatusConceptId: 'st-pending',
+            verified: false,
+          },
+        ],
+      });
+
+      interno<(texto: string) => void>('buscarEnEspecialidades')('cardio');
+      expect(interno<() => number>('totalEspecialidadesFiltrada')()).toBe(1);
+
+      interno<(texto: string) => void>('buscarEnEspecialidades')('no existe');
+      expect(interno<() => boolean>('sinCoincidenciasEspecialidades')()).toBe(true);
+    });
+
+    it('la misma disciplina en Matrículas: buscador y «sin coincidencias»', () => {
+      montarYCargar({
+        licenses: [
+          {
+            id: 'lic-1',
+            jurisdictionConceptId: 'jur-bo',
+            licenseNumber: 'MP-123',
+            regulatoryAuthority: 'SEDES Santa Cruz',
+            stateConceptId: 'st-ok',
+          },
+          {
+            id: 'lic-2',
+            jurisdictionConceptId: 'jur-bo',
+            licenseNumber: 'MP-456',
+            regulatoryAuthority: 'Ministerio de Salud',
+            stateConceptId: 'st-ok',
+          },
+        ],
+      });
+
+      interno<(texto: string) => void>('buscarEnMatriculas')('sedes');
+      expect(interno<() => number>('totalMatriculasFiltrada')()).toBe(1);
+
+      interno<(texto: string) => void>('buscarEnMatriculas')('no existe');
+      expect(interno<() => boolean>('sinCoincidenciasMatriculas')()).toBe(true);
+    });
+  });
+
+  /**
    * «Actividad»: la pestaña que existe **para** decir que no se edita.
    *
    * El doctor pidió que el editor tenga todas las pestañas de la ficha (C-05).
@@ -1800,6 +1862,38 @@ describe('PractitionerProfileEdit', () => {
       montarYCargar();
 
       expect(interno<() => number>('pestana')()).toBe(0);
+    });
+  });
+
+  /**
+   * «Falta un botón en editar perfil para cancelar edición» (pedido del
+   * propietario, 24/09/2026). Datos personales, Contacto y Facturación son
+   * UN formulario con UN botón de guardar: cancelar descarta lo tipeado en
+   * los tres paneles sin salir de la pantalla ni pegarle a la red.
+   */
+  describe('cancelar la edición de Datos personales, Contacto y Facturación', () => {
+    it('vuelve a sembrar el formulario con lo último guardado, sin pegarle al servidor', () => {
+      montarYCargar({ professionalTitle: 'Cardióloga' });
+
+      señal<string>('titulo').set('Un título a medio escribir');
+      interno<() => void>('cancelarEdicion')();
+
+      expect(señal<string>('titulo')()).toBe('Cardióloga');
+      // `http.verify()` del `afterEach` ya se encarga de que no haya quedado
+      // ninguna petición pendiente — cancelar no debe disparar ninguna.
+    });
+
+    it('no hace nada mientras hay un guardado en curso', () => {
+      montarYCargar({ professionalTitle: 'Cardióloga' });
+
+      señal<string>('titulo').set('Un título a medio escribir');
+      señal<boolean>('guardandoPresentacion').set(true);
+      interno<() => void>('cancelarEdicion')();
+
+      // Cancelar a mitad de un `PATCH` dejaría el formulario mostrando un
+      // valor que la respuesta, todavía en vuelo, podría pisar igual.
+      expect(señal<string>('titulo')()).toBe('Un título a medio escribir');
+      señal<boolean>('guardandoPresentacion').set(false);
     });
   });
 });

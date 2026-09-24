@@ -17,6 +17,7 @@ export interface ZonaElegible {
 /** Una zona ya lista para pintar: su dato y su contorno, juntos. */
 interface ZonaDibujable extends ZonaElegible {
   readonly d: string;
+  readonly centros: readonly (readonly [number, number])[];
   readonly acercaA?: IdDeVista;
 }
 
@@ -109,8 +110,15 @@ export class BodyMap {
    */
   readonly marcadas = input<readonly string[]>([]);
 
-  /** El `id` del degradado de volumen de esta instancia. */
-  protected readonly idDelVolumen = `body-map-volumen-${siguienteSilueta++}`;
+  /**
+   * Los `id` de los degradados de esta instancia: el volumen (costados más
+   * oscuros), la luz (de arriba a la izquierda) y el relleno de la elegida.
+   * Por instancia, para que dos siluetas en la misma página no se los pisen.
+   */
+  private readonly numero = siguienteSilueta++;
+  protected readonly idDelVolumen = `body-map-volumen-${this.numero}`;
+  protected readonly idDeLaLuz = `body-map-luz-${this.numero}`;
+  protected readonly idDeLaElegida = `body-map-elegida-${this.numero}`;
 
   /** La zona bajo el puntero o con el foco, para nombrarla antes de tocarla. */
   private readonly apuntada = signal<string | null>(null);
@@ -141,7 +149,7 @@ export class BodyMap {
       const zonas = vista.zonas.flatMap((silueta) => {
         const zona = porId.get(silueta.id);
         if (zona === undefined) return [];
-        return [{ ...zona, d: silueta.d, acercaA: silueta.acercaA }];
+        return [{ ...zona, d: silueta.d, centros: silueta.centros, acercaA: silueta.acercaA }];
       });
       return zonas.length > 0 ? [{ vista, zonas }] : [];
     });
@@ -159,6 +167,17 @@ export class BodyMap {
     if (elegida === this.elegidaAlPedirVista()) return pedida;
     if (pedida.zonas.some((zona) => zona.id === elegida)) return pedida;
     return vistas.find((v) => v.zonas.some((zona) => zona.id === elegida)) ?? pedida;
+  });
+
+  /**
+   * Dónde va el marcador de la elegida: un punto por cada parte de la zona en
+   * la vista puesta (las dos manos llevan dos). Vacío si no hay elegida o si
+   * no está en esta vista.
+   */
+  protected readonly centrosDeLaElegida = computed<readonly (readonly [number, number])[]>(() => {
+    const elegida = this.value();
+    if (elegida === null) return [];
+    return this.vista()?.zonas.find((zona) => zona.id === elegida)?.centros ?? [];
   });
 
   protected readonly opcionesDeVista = computed<readonly SegmentedOption<IdDeVista>[]>(() =>
