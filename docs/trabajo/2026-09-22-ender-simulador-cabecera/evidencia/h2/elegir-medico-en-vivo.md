@@ -32,7 +32,7 @@ adentro) ≈90ms, después disponibilidad: resources (120ms) → 2×slots en par
 
 ## Confirmación del caso de 1 sede (los 12 registrados por R-03)
 
-Un registrado con cupos (p. ej. Romel Rivero Saavedra) tiene **un solo recurso** — su «elegir médico»
+Un registrado con cupos (p. ej. persona real proveniente de la planilla — REDACTADA) tiene **un solo recurso** — su «elegir médico»
 es más corto: 1 perfil + 1 terminología + 1 recurso + 1 `listSlots` = **4 peticiones**, sin la foto (los
 registrados no tienen `photoFileId`). Confirmado leyendo `agenda.ts` (un recurso por registrado, sin el
 segundo «consultorio propio» que sólo tiene la médica) — no se repitió la medición en vivo para este

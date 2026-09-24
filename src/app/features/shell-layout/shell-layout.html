@@ -407,19 +407,18 @@
           data-testid="header-chats"
           appTooltip="Chats"
           appTooltipPosition="bottom"
-          aria-label="Chats"
+          [attr.aria-label]="etiquetaChats()"
         >
           <app-nav-icon name="chat" />
           @if (chatsSinLeer() > 0) {
-            <!-- `app-badge` ya arma su propio aria-label accesible desde
-                 `value` + `label` (role="status"): no hace falta duplicar el
-                 conteo a mano, igual que la campana de arriba. -->
+            <!-- Sin «0» permanente, igual que la campana. Fuera del árbol
+                 accesible: el número ya viaja en el nombre del enlace. -->
             <app-badge
               class="app-header__chats-badge"
               variant="error"
               size="sm"
               [value]="chatsSinLeer()"
-              label="chats sin leer"
+              aria-hidden="true"
               data-testid="header-chats-badge"
             />
           }
