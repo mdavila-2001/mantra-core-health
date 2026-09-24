@@ -844,8 +844,8 @@ export class PractitionerProfileEdit {
    *
    * El doctor pidió que editar muestre todos los campos (C-05). Éstos no se
    * pueden escribir —el contrato de corrección del perfil no los acepta, y en
-   * el caso del correo de trabajo está excluido a propósito porque es la
-   * identidad de acceso—, pero eso no es razón para que no aparezcan: quien
+   * el caso del correo de trabajo está excluido a propósito porque el contrato
+   * de perfil no lo acepta—, pero eso no es razón para que no aparezcan: quien
    * entra a corregir su documento hoy no encuentra ni el dato ni el motivo.
    *
    * Se dibujan como renglones de ficha y **no como campos deshabilitados**: un
@@ -860,7 +860,7 @@ export class PractitionerProfileEdit {
     return {
       documento: perfil.nationalId ?? '',
       departamento: this.etiqueta(perfil.issuerAdministrativeAreaConceptId, ''),
-      correoDeTrabajo: perfil.email ?? '',
+      correoDeTrabajo: perfil.workEmail ?? perfil.email ?? '',
     };
   });
 

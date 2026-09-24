@@ -330,16 +330,13 @@
                 </app-form-field>
               </form>
 
-              <!-- El cuarto contacto del alta. Se muestra y no se edita, y esto
-                   sí es una decisión y no un hueco: es la identidad con la que
-                   se entra, y cambiarla desde un formulario de perfil dejaría
-                   a cualquiera que tome la sesión un minuto quedándose con la
-                   cuenta. El contrato lo excluye con esa misma razón escrita. -->
+              <!-- El cuarto contacto del alta. Se muestra y no se edita acá:
+                   el contrato PATCH del perfil no incluye el correo laboral. -->
               @if (soloLectura(); as fijos) {
                 <section class="edicion__fijos" data-testid="edicion-correo-trabajo">
                   <h3 class="edicion__subtitulo">Tu correo de trabajo</h3>
                   <p class="edicion__nota">
-                    Es con el que entrás. Se cambia por su propio trámite, no desde acá.
+                    Es el correo laboral asociado a tu perfil.
                   </p>
                   <dl class="edicion__fijo">
                     <dt>Correo de trabajo</dt>
