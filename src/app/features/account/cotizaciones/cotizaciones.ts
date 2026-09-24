@@ -216,7 +216,12 @@ export class Cotizaciones {
     }
     return this.resultados().length === 0
       ? empty(
-          { label: 'Probá con otra palabra o con «Todas» las verticales' },
+          {
+            label:
+              this.vertical() === 'TODAS'
+                ? 'Probá con otra palabra o con el nombre genérico'
+                : 'Probá con otra palabra o con «Todas» las verticales',
+          },
           'No encontramos cotizaciones para esa búsqueda.',
         )
       : ready(this.resultadosPaginados());
@@ -231,15 +236,21 @@ export class Cotizaciones {
   private readonly celdaAccion =
     viewChild.required<TemplateRef<{ $implicit: CotizacionResultado }>>('celdaAccion');
 
-  /** Qué, dónde, precio, distancia y acción (H3.S2.M3). */
+  /**
+   * Qué (y dónde), precio, distancia y acción (H3.S2.M3).
+   *
+   * Todas con prioridad 1: el dónde y la distancia son la mitad de la
+   * decisión, y con prioridad 2 la tabla los escondía en móvil detrás de un
+   * «▼» sin rótulo. El dónde va dentro de la celda del qué para que en 390 px
+   * entren las cuatro columnas.
+   */
   protected readonly columnas = computed<readonly ColumnDef<CotizacionResultado>[]>(() => [
-    { key: 'que', header: 'Qué', priority: 1, cell: this.celdaQue() },
-    { key: 'donde', header: 'Dónde', priority: 2 },
+    { key: 'que', header: 'Qué y dónde', priority: 1, cell: this.celdaQue() },
     { key: 'price', header: 'Precio', priority: 1, align: 'end', cell: this.celdaPrecio() },
     {
       key: 'distanceKm',
-      header: 'Distancia',
-      priority: 2,
+      header: 'Distancia (línea recta)',
+      priority: 1,
       align: 'end',
       cell: this.celdaDistancia(),
     },
@@ -257,7 +268,7 @@ export class Cotizaciones {
   protected precioDe(fila: CotizacionResultado): string {
     return fila.price === null
       ? 'Precio no publicado'
-      : `${fila.price.amount} ${fila.price.currency}`;
+      : `${fila.price.amount.toLocaleString('es-BO', { maximumFractionDigits: 2 })} ${fila.price.currency}`;
   }
 
   protected procedenciaDe(fila: CotizacionResultado): string {
@@ -267,9 +278,14 @@ export class Cotizaciones {
   }
 
   protected distanciaDe(fila: CotizacionResultado): string {
+    // Sin origen la API de farmacias no calcula distancia: la falta es del
+    // origen, no de la sede, y decirlo así es lo que deja saber qué hacer.
+    if (fila.distanceKm === null && fila.vertical === 'MEDICAMENTOS' && this.origen() === null) {
+      return 'Elegí desde dónde medir';
+    }
     return fila.distanceKm === null
       ? (fila.sinDistancia ?? 'Sin distancia publicada')
-      : `${fila.distanceKm.toLocaleString('es-BO', { maximumFractionDigits: 1 })} km en línea recta`;
+      : `${fila.distanceKm.toLocaleString('es-BO', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
   }
 
   protected buscar(termino: string): void {

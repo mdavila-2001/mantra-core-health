@@ -42,7 +42,7 @@ test.describe('Cotizaciones del paciente', () => {
 
     // Medicamentos: precio de la lista de cada farmacia, con su procedencia.
     await busqueda.fill('paracetamol');
-    await expect(resultados).toContainText('Lista PUBLICO de');
+    await expect(resultados).toContainText('Precio publicado por');
 
     await busqueda.fill('sin coincidencias');
     await expect(resultados).toContainText('No encontramos cotizaciones para esa búsqueda.');
