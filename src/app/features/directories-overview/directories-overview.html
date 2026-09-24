@@ -5,6 +5,7 @@
 <app-directory-page
   titulo="Directorios"
   subtitulo="Elegí a quién o a dónde buscar, o escribí el nombre de lo que buscás. Cada directorio se abre completo, agrupado como una guía."
+  [filtros]="filtros()"
   [etiquetaBusqueda]="etiquetaBusqueda()"
   [estado]="estado()"
   [grupos]="grupos()"
@@ -23,7 +24,7 @@
          como haber salido de la aplicación. Lo único propio de acá es el nodo
          central y el filete que baja hasta cada tarjeta. -->
     <ul class="rejilla mapa__nodos">
-      @for (nodo of nodos(); track nodo.path) {
+      @for (nodo of nodosVisibles(); track nodo.path) {
         <li class="mapa__item">
           <a class="rejilla__tarjeta" [routerLink]="routeOf(nodo)">
             <app-nav-icon class="rejilla__icono" [name]="nodo.icon" />

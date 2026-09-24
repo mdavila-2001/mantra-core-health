@@ -29,6 +29,12 @@ export interface FilterDef {
   /** Clave estable; es la que viaja a la URL y al backend. */
   readonly key: string;
   readonly label: string;
+  /**
+   * Lo que dice el desplegable mientras no hay nada elegido. Por omisión, el
+   * `label`. Hace falta cuando «sin elegir» significa algo —«Todos los
+   * directorios»— y el rótulo del chip activo es otra cosa («Directorio: …»).
+   */
+  readonly placeholder?: string;
   /** Opciones del value set. Vacío ⇒ el filtro se muestra deshabilitado. */
   readonly options: readonly SelectOption<string>[];
   /** Motivo visible cuando el value set no está disponible. */
@@ -254,7 +260,9 @@ export class FilterBar {
 
   /** Elegir un filtro es una decisión: queda en el historial. */
   protected onFilterChange(filter: FilterDef, code: string | null): void {
-    this.applyParams({ [filter.key]: code }, false);
+    // Una opción con valor vacío es «ninguno»: se quita de la URL en vez de
+    // dejar `?clave=` colgando.
+    this.applyParams({ [filter.key]: code === '' ? null : code }, false);
   }
 
   protected removeFilter(active: ActiveFilter): void {
