@@ -362,9 +362,7 @@ describe('PractitionerProfileView', () => {
     // Las formas que la insignia reemplazó: el chip con tono propio y los dos
     // `app-badge` sueltos que decían «Principal» y «Certificada».
     const sueltos = [...host.querySelectorAll('app-chip, app-badge')].filter((e) =>
-      /Cardiología|Medicina interna|^Principal$|^Certificada$/.test(
-        (e.textContent ?? '').trim(),
-      ),
+      /Cardiología|Medicina interna|^Principal$|^Certificada$/.test((e.textContent ?? '').trim()),
     );
     expect(sueltos).toHaveLength(0);
   });
@@ -474,9 +472,11 @@ describe('PractitionerProfileView', () => {
     vencida: false,
   };
 
+  /* Desde el 24/09/2026 los títulos viven en «Credenciales» y el botón vino
+     con ellos: «Trayectoria» son los cargos. */
   it('el dueño ve «Retirar» sólo en un título pendiente, no en uno verificado', () => {
     const host = montar({ ...PERFIL, formacion: [...PERFIL.formacion, FORMACION_PENDIENTE] }, true);
-    seleccionarPestana(host, 'Trayectoria');
+    seleccionarPestana(host, 'Credenciales');
 
     expect(host.querySelector('[data-testid="formacion-retirar-cr-1"]')).toBeNull();
     expect(host.querySelector('[data-testid="formacion-retirar-cr-2"]')).not.toBeNull();
@@ -497,7 +497,7 @@ describe('PractitionerProfileView', () => {
     const host = montar({ ...PERFIL, formacion: [FORMACION_PENDIENTE] }, true, false, (vista) =>
       vista.credencialARetirar.subscribe((estudio) => pedidos.push(estudio)),
     );
-    seleccionarPestana(host, 'Trayectoria');
+    seleccionarPestana(host, 'Credenciales');
 
     host.querySelector<HTMLButtonElement>('[data-testid="formacion-retirar-cr-2"]')?.click();
     fixture.detectChanges();
@@ -512,9 +512,9 @@ describe('PractitionerProfileView', () => {
       vista.credencialARetirar.subscribe((estudio) => pedidos.push(estudio)),
     );
 
-    (
-      fixture.componentInstance as unknown as { alPedirRetiro: (e: unknown) => void }
-    ).alPedirRetiro(FORMACION_PENDIENTE);
+    (fixture.componentInstance as unknown as { alPedirRetiro: (e: unknown) => void }).alPedirRetiro(
+      FORMACION_PENDIENTE,
+    );
 
     expect(pedidos).toEqual([]);
   });
@@ -953,7 +953,8 @@ describe('PractitionerProfileView', () => {
       const fases = Array.from(host.querySelectorAll('.trayecto')).map((s) =>
         s.querySelector('.trayecto__titulo')?.textContent?.trim(),
       );
-      expect(fases).toEqual(['Actividad actual', 'Experiencia histórica', 'Formación y títulos']);
+      // Los títulos NO: son estudios y viven en «Credenciales» (24/09/2026).
+      expect(fases).toEqual(['Actividad actual', 'Experiencia histórica']);
 
       // Un nodo por hito, cada uno con su marca.
       const enCurso = host.querySelector('.trayecto--curso');
@@ -966,10 +967,10 @@ describe('PractitionerProfileView', () => {
       expect(enCurso?.textContent).toContain('Sede Central Sopocachi');
     });
 
-    it('el nodo de un título toma el color de su sello', () => {
-      // El anillo y el sello hablan del MISMO trámite: si el anillo fuera
-      // siempre del color de la fase, un título rechazado se vería igual que
-      // uno verificado hasta leer la etiqueta.
+    it('un título se lee en «Credenciales», en su bloque y con su sello, no en «Trayectoria»', () => {
+      // «En trayectoria aparecen los cargos ... en contraposición aparecen los
+      // que deberían aparecer en credenciales, es decir registros de Estudios»
+      // — propietario, 24/09/2026.
       const host = montar(
         {
           ...PERFIL,
@@ -980,10 +981,16 @@ describe('PractitionerProfileView', () => {
         },
         true,
       );
-      seleccionarPestana(host, 'Trayectoria');
 
-      const nodo = host.querySelector('.trayecto--formacion .trayecto__nodo');
-      expect(nodo?.classList.contains('trayecto__nodo--rejected')).toBe(true);
+      seleccionarPestana(host, 'Trayectoria');
+      expect(host.querySelector('.trayecto--formacion')).toBeNull();
+
+      seleccionarPestana(host, 'Credenciales');
+      const bloque = host.querySelector(
+        '[data-testid="credenciales-grupo"][data-kind="education"]',
+      );
+      expect(bloque?.querySelector('h3')?.textContent).toContain('Títulos y formación');
+      expect(bloque?.querySelector('app-status-seal')?.textContent).toContain('Rechazado');
     });
 
     it('quien visita conserva su ficha de siempre, con sus sub-pestañas', () => {
@@ -1178,9 +1185,7 @@ describe('PractitionerProfileView', () => {
       // ficha diciendo lo contrario de la verdad.
       const host = montar({ ...PERFIL, telemedicina: false }, true);
 
-      expect(host.querySelector('.mi-perfil__cabecera')?.textContent).not.toContain(
-        'telemedicina',
-      );
+      expect(host.querySelector('.mi-perfil__cabecera')?.textContent).not.toContain('telemedicina');
     });
 
     it('el consultorio se administra dentro del perfil, con el mismo bloque de «Mis organizaciones»', () => {

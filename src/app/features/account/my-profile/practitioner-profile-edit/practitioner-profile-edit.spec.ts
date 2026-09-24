@@ -1023,6 +1023,42 @@ describe('PractitionerProfileEdit', () => {
     expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-trabajo"]')).not.toBeNull();
   });
 
+  /* ---- Trayectoria son los cargos; los títulos, Credenciales -------------- */
+
+  it('«Trayectoria» abre los formularios de los cargos, no los de los títulos', () => {
+    // «En trayectoria aparecen los cargos históricos, pero al darle editar no
+    // aparecen los formularios correspondientes ... aparecen los que deberían
+    // aparecer en credenciales» — propietario, 24/09/2026.
+    const fixture = montarConVista();
+    señal<number>('pestana').set(4);
+    fixture.detectChanges();
+
+    const panel = panelAbierto(fixture);
+    const historial = panel.querySelector('app-work-history');
+    // El MISMO componente que la ficha, pidiendo sólo el historial laboral.
+    expect(historial?.getAttribute('secciones')).toBe('historial');
+    expect(historial?.getAttribute('layout')).toBe('tabla');
+    expect(panel.querySelector('[data-testid="credencial-tipo"]')).toBeNull();
+    expect(panel.querySelector('[data-testid="edicion-formacion-cargada"]')).toBeNull();
+
+    // Las lecturas propias del historial no son asunto de esta prueba.
+    http.match(() => true);
+  });
+
+  it('«Credenciales» junta matrículas y títulos, cada uno en su bloque', () => {
+    const fixture = montarConVista();
+    señal<number>('pestana').set(5);
+    fixture.detectChanges();
+
+    const panel = panelAbierto(fixture);
+    const titulos = [...panel.querySelectorAll('.edicion__titulo')].map((h) =>
+      h.textContent?.trim(),
+    );
+    expect(titulos).toEqual(['Agregar una matrícula', 'Agregar formación']);
+    expect(panel.querySelector('[data-testid="credencial-tipo"]')).not.toBeNull();
+    expect(panel.querySelector('app-work-history')).toBeNull();
+  });
+
   /* ---- formación: sólo se agrega ------------------------------------------- */
 
   it('el botón de agregar formación exige tipo y número', () => {
