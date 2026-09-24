@@ -44,7 +44,7 @@
       ],
       "criteria_count": 9,
       "status": "A MEDIAS",
-      "evidence": "Angular con dobles"
+      "evidence": "Alta laboral añadida con pruebas FE/API (98/98 y 104/104); editor/sedes previos con pruebas FE/API (178/178 y 140/140). Persistencia real y recarga pendientes."
     },
     {
       "id": "MED-04",
@@ -5725,6 +5725,27 @@
         "corepack yarn test --watch=false — suite incompleta por ENOSPC: 107 archivos pasaron, 472 fallaron al cargar/ejecutar; 3.203 pruebas pasaron y 30 fallaron; dos fallos identificados son shell-layout preexistentes.",
         "No se ejecutó journey Playwright navegador→API→PostgreSQL→recarga ni se produjo foto válida; falta de espacio local/ENOSPC. No hay evidencia de persistencia real en esta continuación.",
         "La matriz queda en 10/98 HECHO, 60 A MEDIAS, 11 TODO, 17 BLOQUEADOS y 2 DESCARTADOS; no se elevó ningún criterio a HECHO."
+      ],
+      "criteria_marked_done": 0,
+      "pushed_to_origin": true,
+      "merged": false,
+      "deployed": false
+    },
+    {
+      "date": "2026-09-24",
+      "repo": "mantra-core-health + mantra-core-health-api",
+      "branch": "justin/medical-module-execution-20260924",
+      "source_sha256": "b57dfd316c4d642eb5e1db49257397b8fd2864b511317282ae4b70ff1262a656",
+      "frontend_head": "18b05cc3",
+      "api_head": "aa609a86",
+      "product_code_changed": true,
+      "evidence": [
+        "Alta profesional: dirección laboral y GPS separados del domicilio y de la sede propia; cliente HTTP los incluye explícitamente; API valida el par y escribe common.addresses con ADDR_USE_WORK dentro de la transacción del alta. Sin cambios al modelo/DDL ni al flujo de Paciente.",
+        "FE corepack yarn test --watch=false --include=src/app/features/auth/register-practitioner/register-practitioner.spec.ts — 1 archivo, 98/98 pruebas aprobadas; typecheck y ESLint dirigidos exit 0.",
+        "API corepack yarn test --runInBand src/modules/iam/dto/register-practitioner.dto.spec.ts src/modules/iam/services/iam-practitioner-self-registration.service.spec.ts — 2 suites, 104/104 pruebas aprobadas; typecheck y ESLint dirigidos exit 0.",
+        "El test-first reprodujo el rechazo de DTO, la falta de escritura de dirección laboral y el descarte silencioso del cliente HTTP antes del cambio.",
+        "No hubo recorrido navegador→API→PostgreSQL→recarga ni captura de esta continuación. Sin suite FE global nueva; la última permanece incompleta por ENOSPC. MED-03/MED-E03 no cumplen aceptación end-to-end.",
+        "La matriz permanece en 10/98 HECHO, 60 A MEDIAS, 11 TODO, 17 BLOQUEADOS y 2 DESCARTADOS; no se elevó ningún criterio a HECHO."
       ],
       "criteria_marked_done": 0,
       "pushed_to_origin": true,
