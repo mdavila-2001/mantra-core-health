@@ -2,13 +2,13 @@
 
 Fuente congelada SHA-256: `b57dfd316c4d642eb5e1db49257397b8fd2864b511317282ae4b70ff1262a656`. Criterios fuente: **100**; incluidos: **98**; OUT: **2**; HECHO: **0**.
 
-Cierre end-to-end verificado: **0/98 (0%)**. Esto no afirma ausencia de funcionalidad: las pruebas frontend son parciales y usan dobles. Ningún criterio se declara HECHO sin persistencia e integración.
+Cierre end-to-end verificado: **0/98 (0%)**. Esto no afirma ausencia de funcionalidad: hay pruebas de frontend, API y PostgreSQL, y un journey navegador→API→DB parcial para credenciales. Ningún criterio se declara HECHO sin satisfacer su escenario y DoD completos.
 
 Estados de los 100 criterios contables: A MEDIAS: 70, TODO: 11, BLOQUEADO: 17, DESCARTADO: 2.
 
-Actualización 2026-09-24: CORR-08 (PR visual borrador [#612](https://github.com/mdavila-2001/mantra-core-health/pull/612)) añade evidencia de eliminación del switch de certificación y preservación del campo en el PATCH parcial. El smoke navegador→API real recorrió una misma cuenta: alta con dos títulos universitarios, lectura, descarga propietaria de ambos PDFs, edición de uno y relectura después de recargar. No recorrió varios tipos de posgrado ni acceso público/ajeno en ese mismo journey; no se elevó ningún criterio y la matriz sigue en **0/98 HECHO**.
+Actualización 2026-09-24: CORR-08 (PR visual borrador [#612](https://github.com/mdavila-2001/mantra-core-health/pull/612)) añade evidencia de eliminación del switch de certificación y preservación del campo en el PATCH parcial. Un smoke anterior recorrió dos títulos universitarios; la continuación ejecutó Chromium 1/1 con un actor y API/PostgreSQL reales: ocho credenciales (dos por cada uno de cuatro tipos visibles), tres especialidades, ocho PDFs distintos y descarga propia de todos; ficha autenticada sin `fileId`, PATCH y relectura de las ocho filas/archivos y las tres especialidades tras recargar. Capturas inspeccionadas en `evidence/h1-real-api/extended-smoke/`. No se elevó ningún criterio porque el editor de perfil, la credencial documental de tipo especialidad en el mismo actor y el resto de MED-E01 siguen pendientes; la matriz sigue en **0/98 HECHO**.
 
-Reanudación 2026-09-24: no se ejecutó otro smoke integrado. La inspección local observó PostgreSQL temporal en 55439/55440, Angular en 4300/4302/4387 y un runtime Node SSR, con propiedad y datos desconocidos; no se conectó, reinició ni detuvo esos procesos. La evidencia existente y los estados de criterio se conservan sin cambios.
+Reanudación 2026-09-24: se detectaron servicios en 55439/55440, 4300/4302/4387 y un runtime Node SSR, con propiedad desconocida; no se conectó, reinició ni detuvo ninguno. Para el smoke se usaron instancias aisladas propias en 55444/3000/4390, luego retiradas.
 
 ## MED-01 — Identidad profesional
 Líneas: L0166–L0171, L0177. 5 criterios contractuales.

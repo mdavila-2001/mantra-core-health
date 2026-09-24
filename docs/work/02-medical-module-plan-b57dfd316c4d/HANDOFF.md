@@ -20,6 +20,18 @@
 - E2E carril-19 se volvió a ejecutar en la fase anterior y quedó bloqueado en beforeAll por API local no saludable; no se guardaron fotos de ese recorrido. El smoke extendido de alta dejó evidencia en `evidence/h1-real-api/extended-smoke/`, pero no cierra los escenarios H1–H8. CORR-08 usa su ficha TAREA-38 explícita; no se asignó una ficha NN a H1–H8 por inferencia.
 - Las ramas `justin/medical-module-cierre`, `justin/medical-module-cierre-api` y `justin/medical-module-execution-20260924` (API) están publicadas en sus origin. El PR visual #612 sigue en borrador; no hubo merge ni deploy. El worktree frontend de ejecución no contiene cambios de producto.
 
+## H8: handoff de contratos pendientes
+
+| Frente | Propietario propuesto para validar | Decisión/contrato que falta | Aceptación de fuente |
+|---|---|---|---|
+| Recepción asistida e identidad existente | Profiles/IAM y responsable del módulo Paciente | Identificador de la persona existente, datos pendientes, tutor, permiso, activación y expiración; conservar una identidad única | MED-E07 |
+| Sala virtual | Clinical/platforma y proveedor real | Participantes permitidos, sesión, enlace, expiración, finalización y auditoría | MED-E11 |
+| Demora, lista de espera y notificaciones | Messaging/Notificaciones con Médico y Paciente | Significado de TOUS, evento, destinatarios (incluidas personas que buscaron sin anotarse), deduplicación, persistencia y envío con app cerrada | MED-E06 |
+| Cronograma farmacológico | Clinical/Medication y Messaging/Notificaciones | Pauta estructurada, zona horaria, T−15/T, cancelación al cambiar/suspender y reintentos sin duplicado; no calcular indicaciones ambiguas | MED-E12 |
+| Factura, cobertura y lotes periódicos | Billing/Reporting y propietario del contrato de aseguradora | Emisor/destinatario, cobertura e importes separados, calendario semanal/quincenal/mensual, idempotencia, reversión y cancelación; sin simular pago | MED-E13–E16 |
+
+Estos son handoffs para confirmación de sus propietarios, no acuerdos ya aceptados. No se contactó a terceros ni se implementó un contrato supuesto. `CONTRACTS.md` y `DECISIONS.md` contienen los hallazgos y bloqueos detallados.
+
 ## Para continuar
 
 1. Completar el tramo pendiente de MED-E01: probar el editor de credenciales desde navegador→API→PostgreSQL, conservar tipo/documentos tras modificar credenciales y validar acceso desde otro actor en el mismo escenario; la API ya tiene cobertura separada de denegación 403 y no hay que repetir ni mezclar cuentas de Paciente.
