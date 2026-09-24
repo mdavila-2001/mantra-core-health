@@ -10,7 +10,6 @@ import {
   SINTOMAS_DE_ALARMA,
   TODOS_LOS_SINTOMAS,
 } from './sintomas';
-import { ZONAS_CON_SILUETA } from '@shared/components/organisms/body-map/body-map';
 import { ZONAS_DEL_CUERPO } from './zonas.datos';
 import { ultimaFrase } from './texto';
 
@@ -268,19 +267,5 @@ describe('la tabla', () => {
         expect(conocidos.has(id), `${zona.id} ofrece «${id}»`).toBe(true);
       }
     }
-  });
-
-  /**
-   * La figura y la tabla hablan de las mismas zonas: una forma sin fila sería
-   * un botón que no abre nada, y una fila de cuerpo sin forma, una parte que no
-   * se puede señalar ni elegir (ya no hay pastilla que la ofrezca).
-   */
-  it('cada forma de la figura tiene su zona, y cada zona sin forma es de las que no se señalan', () => {
-    const enLaTabla = new Set(ZONAS_DEL_CUERPO.map((zona) => zona.id));
-    for (const id of ZONAS_CON_SILUETA) {
-      expect(enLaTabla.has(id), `la figura dibuja «${id}» y la tabla no la tiene`).toBe(true);
-    }
-    const sinForma = ZONAS_DEL_CUERPO.filter((zona) => !ZONAS_CON_SILUETA.has(zona.id));
-    expect(sinForma.map((zona) => zona.id)).toEqual(['piel', 'animo', 'general']);
   });
 });

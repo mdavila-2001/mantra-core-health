@@ -52,7 +52,7 @@ describe('las pestañas de la ficha del médico', () => {
   });
 
   /**
-   * Eran una y son dos desde el 21/09/2026: se sumó `sexAtBirth`, que estaba
+   * Eran una, dos desde el 21/09/2026 y cuatro desde que el alta suma la dirección laboral: se sumó `sexAtBirth`, que estaba
    * declarado como si viviera en «Datos personales» y ahí no está —la lectura
    * del perfil médico no devuelve el dato, así que no hay nada que mostrar—.
    *
@@ -60,10 +60,17 @@ describe('las pestañas de la ficha del médico', () => {
    * de la ficha sea la salida fácil: sumar un campo acá exige tocar esta
    * prueba y escribir el motivo, que es exactamente la fricción que se quiere.
    */
-  it('las dos ausencias son las declaradas, y las dos dicen por qué', () => {
-    expect(Object.keys(CAMPOS_DEL_ALTA_SIN_PESTANA).sort()).toEqual(['password', 'sexAtBirth']);
+  it('las ausencias son las declaradas, y cada una dice por qué', () => {
+    expect(Object.keys(CAMPOS_DEL_ALTA_SIN_PESTANA).sort()).toEqual([
+      'gpsTrabajo',
+      'password',
+      'sexAtBirth',
+      'workAddressLines',
+    ]);
     expect(CAMPOS_DEL_ALTA_SIN_PESTANA['password']).toContain('Cambiar contraseña');
     expect(CAMPOS_DEL_ALTA_SIN_PESTANA['sexAtBirth']).toContain('no lo devuelve');
+    expect(CAMPOS_DEL_ALTA_SIN_PESTANA['workAddressLines']).toContain('dirección laboral');
+    expect(CAMPOS_DEL_ALTA_SIN_PESTANA['gpsTrabajo']).toContain('lugar de trabajo');
   });
 
   /** Un campo no puede estar en los dos mapas: sería mostrarse y no mostrarse. */

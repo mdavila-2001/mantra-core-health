@@ -1,52 +1,22 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import { BodyMap, ZONAS_CON_SILUETA, type ZonaElegible } from './body-map';
-import { VISTAS_DEL_CUERPO } from './body-zones.geometry';
+import { BodyMap, type ZonaElegible } from './body-map';
+import { SILUETAS_DEL_CUERPO } from './body-zones.geometry';
 
 /**
- * Las zonas con forma, tal como las entrega `symptom-check` a partir de su
- * tabla de zonas: `id` y nombre. Más una sin silueta («piel»), para probar que
- * no se dibuja.
+ * Las siete zonas con forma, tal como las entrega `symptom-check` a partir de
+ * su tabla de zonas: `id` y nombre. Más una sin silueta («piel»), para probar
+ * que no se dibuja.
  */
 const ZONAS: readonly ZonaElegible[] = [
-  { id: 'cabeza', nombre: 'Cabeza' },
+  { id: 'cabeza', nombre: 'Cabeza y mareos' },
   { id: 'ojos', nombre: 'Ojos' },
-  { id: 'oidos', nombre: 'Oídos' },
-  { id: 'nariz', nombre: 'Nariz' },
-  { id: 'boca', nombre: 'Boca y dientes' },
-  { id: 'garganta', nombre: 'Garganta y cuello' },
-  { id: 'nuca', nombre: 'Nuca' },
-  { id: 'hombros', nombre: 'Hombros' },
+  { id: 'orl', nombre: 'Oído, nariz y garganta' },
   { id: 'pecho', nombre: 'Pecho y respiración' },
-  { id: 'estomago', nombre: 'Estómago' },
-  { id: 'abdomen', nombre: 'Panza e intestino' },
-  { id: 'espalda', nombre: 'Espalda' },
-  { id: 'rinones', nombre: 'Cintura y riñones' },
+  { id: 'panza', nombre: 'Panza y digestión' },
+  { id: 'huesos', nombre: 'Huesos y músculos' },
   { id: 'intima', nombre: 'Salud íntima' },
-  { id: 'gluteos', nombre: 'Glúteos y cola' },
-  { id: 'brazos', nombre: 'Brazos y codos' },
-  { id: 'manos', nombre: 'Manos y muñecas' },
-  { id: 'caderas', nombre: 'Caderas' },
-  { id: 'piernas', nombre: 'Piernas' },
-  { id: 'rodillas', nombre: 'Rodillas' },
-  { id: 'pies', nombre: 'Pies y tobillos' },
   { id: 'piel', nombre: 'Piel y pelo' },
-];
-
-const FRENTE = [
-  'cabeza',
-  'garganta',
-  'hombros',
-  'pecho',
-  'estomago',
-  'brazos',
-  'abdomen',
-  'intima',
-  'caderas',
-  'manos',
-  'piernas',
-  'rodillas',
-  'pies',
 ];
 
 describe('BodyMap', () => {
@@ -69,34 +39,18 @@ describe('BodyMap', () => {
     return forma;
   }
 
-  function vistaPuesta(): string | null {
-    const lienzo = html.querySelector('svg[data-testid^="body-map-vista-"]');
-    return lienzo?.getAttribute('data-testid')?.replace('body-map-vista-', '') ?? null;
-  }
-
-  function pasarA(vista: string): void {
-    const opcion = Array.from(html.querySelectorAll<HTMLElement>('[role="radio"]')).find(
-      (radio) => radio.textContent?.trim() === vista,
-    );
-    if (opcion === undefined) throw new Error(`no está la vista ${vista}`);
-    opcion.click();
-    fixture.detectChanges();
-  }
-
   /* ---- La geometría ---- */
 
-  it('trae tres vistas: frente, espalda y cara', () => {
-    expect(VISTAS_DEL_CUERPO.map((vista) => vista.id)).toEqual(['frente', 'espalda', 'cara']);
-  });
-
-  it('de frente, las zonas van de arriba abajo', () => {
-    expect(VISTAS_DEL_CUERPO[0].zonas.map((zona) => zona.id)).toEqual(FRENTE);
-  });
-
-  /** Cada parte que alguien señala tiene su zona: veintiuna, no siete. */
-  it('entre las tres vistas hay veintiuna zonas distintas', () => {
-    expect(ZONAS_CON_SILUETA.size).toBe(21);
-    expect(ZONAS_CON_SILUETA.has('piel')).toBe(false);
+  it('trae las siete zonas con forma, de arriba abajo', () => {
+    expect(SILUETAS_DEL_CUERPO.map((silueta) => silueta.id)).toEqual([
+      'cabeza',
+      'ojos',
+      'orl',
+      'pecho',
+      'panza',
+      'huesos',
+      'intima',
+    ]);
   });
 
   /**
@@ -105,30 +59,18 @@ describe('BodyMap', () => {
    * y la silueta se volvería inusable con el dedo sin que nada fallara a la vista.
    */
   it('cada zona es un contorno cerrado con vértices', () => {
-    for (const vista of VISTAS_DEL_CUERPO) {
-      for (const silueta of vista.zonas) {
-        const nombre = `${vista.id}/${silueta.id}`;
-        expect(silueta.d.startsWith('M'), `${nombre} no empieza en un punto`).toBe(true);
-        expect(silueta.d.trimEnd().endsWith('Z'), `${nombre} no cierra su contorno`).toBe(true);
-        expect(silueta.d.split(' ').length, `${nombre} tiene pocos vértices`).toBeGreaterThan(8);
-      }
-    }
-  });
-
-  /** Una zona no se repite dentro de una vista: serían dos botones con el mismo nombre. */
-  it('ninguna zona aparece dos veces en la misma vista', () => {
-    for (const vista of VISTAS_DEL_CUERPO) {
-      const ids = vista.zonas.map((zona) => zona.id);
-      expect(new Set(ids).size, vista.id).toBe(ids.length);
+    for (const silueta of SILUETAS_DEL_CUERPO) {
+      expect(silueta.d.startsWith('M'), `${silueta.id} no empieza en un punto`).toBe(true);
+      expect(silueta.d.trimEnd().endsWith('Z'), `${silueta.id} no cierra su contorno`).toBe(true);
+      expect((silueta.d.match(/[MLC]/g) ?? []).length).toBeGreaterThanOrEqual(4);
     }
   });
 
   /* ---- El control ---- */
 
-  it('empieza de frente, con un control por zona y su nombre accesible completo', () => {
-    expect(vistaPuesta()).toBe('frente');
+  it('dibuja un control por zona con forma, con su nombre accesible completo', () => {
     const formas = html.querySelectorAll('[role="button"]');
-    expect(formas).toHaveLength(FRENTE.length);
+    expect(formas).toHaveLength(7);
     expect(formaDe('pecho').getAttribute('aria-label')).toBe('Pecho y respiración');
   });
 
@@ -138,50 +80,9 @@ describe('BodyMap', () => {
   });
 
   it('cada zona es alcanzable con el tabulador', () => {
-    for (const id of FRENTE) {
-      expect(formaDe(id).getAttribute('tabindex')).toBe('0');
+    for (const silueta of SILUETAS_DEL_CUERPO) {
+      expect(formaDe(silueta.id).getAttribute('tabindex')).toBe('0');
     }
-  });
-
-  /* ---- Las vistas ---- */
-
-  it('de espaldas aparecen la nuca, la espalda, la cintura y los glúteos', () => {
-    pasarA('Espalda');
-
-    expect(vistaPuesta()).toBe('espalda');
-    for (const id of ['nuca', 'espalda', 'rinones', 'gluteos']) {
-      expect(formaDe(id)).toBeTruthy();
-    }
-    expect(html.querySelector('[data-testid="body-map-pecho"]')).toBeNull();
-  });
-
-  /** A escala de cuerpo entero, la cara es más chica que un dedo: tocarla la acerca. */
-  it('tocar la cabeza de frente acerca la cara y la deja elegida', () => {
-    formaDe('cabeza').dispatchEvent(new MouseEvent('click'));
-    fixture.detectChanges();
-
-    expect(vistaPuesta()).toBe('cara');
-    expect(component.value()).toBe('cabeza');
-    for (const id of ['ojos', 'oidos', 'nariz', 'boca']) {
-      expect(formaDe(id)).toBeTruthy();
-    }
-  });
-
-  /** Lo elegido desde afuera siempre queda a la vista: la figura se da vuelta sola. */
-  it('una zona elegida desde afuera que no está en la vista la cambia', () => {
-    fixture.componentRef.setInput('value', 'gluteos');
-    fixture.detectChanges();
-
-    expect(vistaPuesta()).toBe('espalda');
-    expect(formaDe('gluteos').getAttribute('aria-pressed')).toBe('true');
-  });
-
-  it('con zonas de una sola vista no hay selector de vista', () => {
-    fixture.componentRef.setInput('zonas', [{ id: 'pecho', nombre: 'Pecho' }]);
-    fixture.detectChanges();
-
-    expect(html.querySelector('[role="radiogroup"]')).toBeNull();
-    expect(formaDe('pecho')).toBeTruthy();
   });
 
   it('un clic elige la zona', () => {
@@ -190,23 +91,23 @@ describe('BodyMap', () => {
 
     expect(component.value()).toBe('pecho');
     expect(formaDe('pecho').getAttribute('aria-pressed')).toBe('true');
-    expect(formaDe('estomago').getAttribute('aria-pressed')).toBe('false');
+    expect(formaDe('panza').getAttribute('aria-pressed')).toBe('false');
   });
 
   /** El equivalente por teclado no es un añadido: Enter y la barra hacen lo mismo que el clic. */
   it('Enter elige, y la barra también', () => {
-    formaDe('rodillas').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    formaDe('cabeza').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
     fixture.detectChanges();
-    expect(component.value()).toBe('rodillas');
+    expect(component.value()).toBe('cabeza');
 
-    formaDe('estomago').dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
+    formaDe('panza').dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
     fixture.detectChanges();
-    expect(component.value()).toBe('estomago');
+    expect(component.value()).toBe('panza');
   });
 
   it('la barra no desplaza la página', () => {
     const evento = new KeyboardEvent('keydown', { key: ' ', cancelable: true });
-    formaDe('manos').dispatchEvent(evento);
+    formaDe('huesos').dispatchEvent(evento);
 
     expect(evento.defaultPrevented).toBe(true);
   });
@@ -236,10 +137,10 @@ describe('BodyMap', () => {
 
   /** Quien monta el organismo puede elegir desde afuera (la pastilla) y la figura lo refleja. */
   it('un `value` puesto desde afuera resalta esa zona', () => {
-    fixture.componentRef.setInput('value', 'hombros');
+    fixture.componentRef.setInput('value', 'huesos');
     fixture.detectChanges();
 
-    expect(formaDe('hombros').getAttribute('aria-pressed')).toBe('true');
+    expect(formaDe('huesos').getAttribute('aria-pressed')).toBe('true');
   });
 
   /** Un `value` que no corresponde a ninguna zona no resalta nada ni rompe. */

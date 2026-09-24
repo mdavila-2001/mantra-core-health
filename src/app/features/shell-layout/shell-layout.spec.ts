@@ -187,6 +187,9 @@ describe('ShellLayout', () => {
       // Las órdenes propias, la otra mitad del mismo circuito. Tampoco exigen
       // rol: el filtro real es tener perfil de paciente.
       '/my-account/diagnostic-orders',
+      // Cotizaciones comparte el bloque de datos clínicos del paciente: se
+      // consulta después de ver las órdenes y antes de los cuestionarios.
+      '/my-account/cotizaciones',
       // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
       // perfil de paciente, que es un dato de la cuenta y no un rol.
       '/my-account/questionnaires',
@@ -444,6 +447,7 @@ describe('ShellLayout', () => {
             '/my-account/medical-record',
             '/my-account/diagnostic-results',
             '/my-account/diagnostic-orders',
+            '/my-account/cotizaciones',
             '/my-account/questionnaires',
           ]),
         ).toBe(true);

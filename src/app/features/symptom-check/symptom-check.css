@@ -184,52 +184,12 @@
   display: block;
 }
 
-/* 18rem: el ancho de la figura (14rem) más el aire para que el selector
-   «Frente · Espalda · Cara» entre sin cortarse. */
-@media (min-width: 48rem) {
+@media (min-width: 64rem) {
   .sintomas__elegir {
-    grid-template-columns: 18rem minmax(0, 1fr);
-    gap: var(--e5);
+    grid-template-columns: 14rem minmax(0, 1fr);
+    gap: var(--e4);
     align-items: start;
   }
-}
-
-/* Lo que se abre al tocar la figura, al lado; debajo, lo que no se señala. */
-.sintomas__lado {
-  display: flex;
-  flex-direction: column;
-  gap: var(--e2);
-  min-inline-size: 0;
-}
-
-.sintomas__lado-titulo {
-  margin: 0;
-  font-size: var(--fs-h3);
-  line-height: var(--lh-h3);
-  color: var(--tinta);
-}
-
-.sintomas__lado-titulo::first-letter {
-  text-transform: uppercase;
-}
-
-.sintomas__lado > .sintomas__opciones {
-  margin-block-start: 0;
-}
-
-.sintomas__lado-otros {
-  margin-block-start: var(--e4);
-}
-
-/* Sin zona abierta, el rótulo es lo primero del panel: sin margen arriba. */
-.sintomas__lado-otros:first-child {
-  margin-block-start: 0;
-}
-
-/* Al lado de la figura hay menos ancho: las tres pastillas, en una fila. */
-.sintomas__lado .sintomas__zonas {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  max-inline-size: 30rem;
 }
 
 .sintomas__zona {
