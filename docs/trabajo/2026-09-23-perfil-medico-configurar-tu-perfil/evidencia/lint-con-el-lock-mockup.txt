@@ -1,0 +1,641 @@
+$ yarn env:generate && yarn lint   # origin/mockup @ ced84594
+
+src\app\app.ts
+  11:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\core\alovida\alovida-theme-toggle.directive.spec.ts
+  14:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\core\data-access\public-directory\public-search.store.spec.ts
+   68:5  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+   98:5  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  270:7  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  337:7  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  454:5  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  640:5  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  713:5  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\core\navigation\navigation-history.service.spec.ts
+  13:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  18:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\core\navigation\navigation.service.spec.ts
+  16:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\core\observability\routing\router-tracing.spec.ts
+  17:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\core\tutorials\tutorial.engine.spec.ts
+  33:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\admin\clinical-forms\forms-catalog.spec.ts
+  39:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\acceso-de-emergencia-formulario\acceso-de-emergencia-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\accesos-clinicos-del-paciente-formulario\accesos-clinicos-del-paciente-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\accesos-clinicos-del-paciente-listado\accesos-clinicos-del-paciente-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\accesos-clinicos-listado\accesos-clinicos-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\accesos-clinicos-revocar\accesos-clinicos-revocar.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\alcance-de-recurso-formulario\alcance-de-recurso-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\alcance-de-recurso-listado\alcance-de-recurso-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\asignaciones-de-rol-formulario\asignaciones-de-rol-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\asignaciones-de-rol-listado\asignaciones-de-rol-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\cache-invalidar\cache-invalidar.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\categorias-de-permiso-formulario\categorias-de-permiso-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\categorias-de-permiso-listado\categorias-de-permiso-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\concesiones-de-permiso-formulario\concesiones-de-permiso-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\concesiones-de-permiso-listado\concesiones-de-permiso-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\decisiones-evaluar\decisiones-evaluar.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\permisos-de-campo-formulario\permisos-de-campo-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\permisos-de-campo-listado\permisos-de-campo-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\permisos-del-rol-formulario\permisos-del-rol-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\permisos-del-rol-listado\permisos-del-rol-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\permisos-formulario\permisos-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\permisos-listado\permisos-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\politicas-de-acceso-formulario\politicas-de-acceso-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\politicas-de-acceso-listado\politicas-de-acceso-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\relaciones-de-cuidado-formulario\relaciones-de-cuidado-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\relaciones-de-cuidado-listado\relaciones-de-cuidado-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\relaciones-de-cuidado-revocar\relaciones-de-cuidado-revocar.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\representaciones-legales-formulario\representaciones-legales-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\representaciones-legales-listado\representaciones-legales-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\representaciones-legales-revocar\representaciones-legales-revocar.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\roles-formulario\roles-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\accesos\roles-listado\roles-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\buscar\calificar-la-atencion-formulario\calificar-la-atencion-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\buscar\hospitales-listado\facility-directions-dialog\facility-directions-dialog.spec.ts
+  61:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\buscar\medicamentos-listado\pharmacy-availability-dialog\pharmacy-availability-dialog.spec.ts
+  104:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\buscar\perfil-aseguradora-detalle\perfil-aseguradora-detalle.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\buscar\perfil-farmacia-detalle\perfil-farmacia-detalle.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\buscar\perfil-laboratorio-detalle\perfil-laboratorio-detalle.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\buscar\perfil-organizacion-detalle\perfil-organizacion-detalle.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\buscar\perfil-profesional-detalle\perfil-profesional-detalle.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\buscar\seguidos-y-guardados-listado\seguidos-y-guardados-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\archivos-eliminar\archivos-eliminar.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\archivos-formulario\archivos-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\archivos-listado\archivos-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\archivos-obtener-enlace\archivos-obtener-enlace.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\archivos-subir\archivos-subir.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\contenido-detalle\contenido-detalle.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\derivados-formulario\derivados-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\derivados-listado\derivados-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\direcciones-formulario\direcciones-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\direcciones-listado\direcciones-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\identificadores-formulario\identificadores-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\identificadores-listado\identificadores-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\puntos-de-contacto-formulario\puntos-de-contacto-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\puntos-de-contacto-listado\puntos-de-contacto-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\puntos-de-contacto-verificar\puntos-de-contacto-verificar.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\versiones-formulario\versiones-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\versiones-internas-escanear\versiones-internas-escanear.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\versiones-internas-listado\versiones-internas-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\versiones-listado\versiones-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\vinculos-formulario\vinculos-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\datos-compartidos\vinculos-listado\vinculos-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\directorio\asignaciones-de-sucursal-formulario\asignaciones-de-sucursal-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\directorio\membresias-dar-de-baja\membresias-dar-de-baja.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\directorio\membresias-formulario\membresias-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\directorio\membresias-listado\membresias-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\directorio\organizaciones-formulario\organizaciones-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\directorio\organizaciones-hijas-formulario\organizaciones-hijas-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\directorio\organizaciones-listado\organizaciones-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\directorio\organizaciones-suspender\organizaciones-suspender.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\directorio\organizaciones-verificar\organizaciones-verificar.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\directorio\roles-formulario\roles-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\directorio\sucursales-formulario\sucursales-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\directorio\sucursales-listado\sucursales-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\directorio\transferencias-formulario\transferencias-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\inicio\portada\portada.ts
+  10:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\apoderados-de-portal-formulario\apoderados-de-portal-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\apoderados-de-portal-listado\apoderados-de-portal-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\autorizaciones-de-jurisdiccion-formulario\autorizaciones-de-jurisdiccion-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\autorizaciones-de-jurisdiccion-listado\autorizaciones-de-jurisdiccion-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\credenciales-listado\credenciales-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\credenciales-verificar\credenciales-verificar.ts
+  7:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\especialidades-formulario\especialidades-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\especialidades-listado\especialidades-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\pacientes-formulario\pacientes-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\pacientes-fusionar\pacientes-fusionar.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\pacientes-listado\pacientes-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\pacientes-revertir\pacientes-revertir.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\personas-listado\personas-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\personas-registrar-defuncion\personas-registrar-defuncion.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\personas-relacionadas-formulario\personas-relacionadas-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\personas-relacionadas-listado\personas-relacionadas-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\profesionales-formulario\profesionales-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\profesionales-listado\profesionales-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\resumen-propio-listado\resumen-propio-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\vinculos-de-cuenta-formulario\vinculos-de-cuenta-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\vinculos-de-cuenta-listado\vinculos-de-cuenta-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\vinculos-de-identidad-formulario\vinculos-de-identidad-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\personas\vinculos-de-identidad-listado\vinculos-de-identidad-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\shell\alovida-public-shell.ts
+  21:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\shell\alovida-shell.ts
+  36:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\conceptos-listado\conceptos-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\conjuntos-de-valor-formulario\conjuntos-de-valor-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\conjuntos-de-valor-listado\conjuntos-de-valor-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\consulta-de-concepto-listado\consulta-de-concepto-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\deprecacion-de-concepto-formulario\deprecacion-de-concepto-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\designaciones-formulario\designaciones-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\designaciones-listado\designaciones-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\expansion-de-conjunto-de-valores-detalle\expansion-de-conjunto-de-valores-detalle.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\expansion-de-conjunto-de-valores-formulario\expansion-de-conjunto-de-valores-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\politicas-de-catalogo-formulario\politicas-de-catalogo-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\politicas-de-catalogo-listado\politicas-de-catalogo-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\propiedades-formulario\propiedades-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\propiedades-listado\propiedades-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\relaciones-formulario\relaciones-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\relaciones-listado\relaciones-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\sistemas-de-codigos-formulario\sistemas-de-codigos-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\sistemas-de-codigos-listado\sistemas-de-codigos-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\traduccion-entre-catalogos-formulario\traduccion-entre-catalogos-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\versiones-de-sistema-formulario\versiones-de-sistema-formulario.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\versiones-de-sistema-listado\versiones-de-sistema-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\versiones-importar\versiones-importar.ts
+  7:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\versiones-listado\versiones-listado.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\alovida\terminologia\versiones-publicar\versiones-publicar.ts
+  7:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\auth\registro-compartido\location-picker\location-picker.spec.ts
+  33:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\clinical-record\clinical-record.spec.ts
+  16:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\directories-overview\directories-overview.spec.ts
+  10:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\nearby-places\search-origin-picker\search-origin-picker.spec.ts
+  21:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\public-profile\public-post-card\public-post-card.spec.ts
+  24:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  27:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\public-profile\public-post-comments\public-post-comments.spec.ts
+  85:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  88:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\public-profile\public-post-reactions\public-post-reactions.spec.ts
+  36:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  39:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\questionnaires\survey-detail\question-editor\question-editor.spec.ts
+  28:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\features\section-placeholder\section-placeholder.spec.ts
+  17:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\a11y\announce-on-appear.spec.ts
+  16:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\a11y.spec.ts
+   64:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+   79:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+   89:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  104:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  114:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  128:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  138:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  149:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  160:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  172:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  184:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  190:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  202:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  215:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  247:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\atoms\back-link\back-link.spec.ts
+   9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  12:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  15:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  25:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\atoms\button\button-link.spec.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\atoms\button\button.spec.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\atoms\link\link.spec.ts
+  12:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  25:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\atoms\select\select.spec.ts
+  205:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\atoms\textarea\textarea.spec.ts
+   9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  32:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\atoms\tooltip\tooltip.spec.ts
+   7:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  27:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\accordion\accordion.spec.ts
+  7:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\avatar-group\avatar-group.spec.ts
+  7:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\card-detail-panel\card-detail-panel.spec.ts
+  12:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\card\card.spec.ts
+  8:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\checkbox-group\checkbox-group.spec.ts
+  20:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  38:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\empty-state\empty-state.spec.ts
+  7:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\form-field\form-field.spec.ts
+  7:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\grid-group\grid-group.spec.ts
+  17:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\menu\menu.spec.ts
+  8:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\pdf-export-button\pdf-export-button.spec.ts
+  16:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\phone-input\phone-input.spec.ts
+  9:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\post-preferences-menu\post-preferences-menu.spec.ts
+   8:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  11:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\radio-group\radio-group.spec.ts
+    8:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  133:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\reference-combobox\reference-combobox.spec.ts
+  14:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  43:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\row-actions\row-actions.spec.ts
+  20:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\search-field\search-field.spec.ts
+   8:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  28:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\search-result\search-result.spec.ts
+  21:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\segmented-control\segmented-control.spec.ts
+  15:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\stepper\stepper.spec.ts
+   8:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  17:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  35:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\stored-file-preview\stored-file-preview.spec.ts
+  19:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\tab-help-block\tab-help-block.spec.ts
+  13:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\molecules\tabs\tabs.spec.ts
+  7:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\attachment-dialog\attachment-dialog.spec.ts
+  18:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\auth-layout\auth-layout.spec.ts
+  6:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\auth-split\auth-split.spec.ts
+  17:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\content-dialog\content-dialog.spec.ts
+    6:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  211:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\data-table\data-table.spec.ts
+  33:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\date-picker\date-picker.spec.ts
+  838:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\filter-bar\filter-bar.spec.ts
+   7:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  34:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  45:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  57:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\form-actions\form-actions.spec.ts
+  19:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\form-section\form-section.spec.ts
+  11:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\header\header.spec.ts
+  18:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\page-header\page-header.spec.ts
+  12:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\paginated-form\paginated-form.spec.ts
+   40:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  112:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  163:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  711:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  831:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\public-nav-rail\public-nav-rail.spec.ts
+  13:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  16:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\shell\shell.spec.ts
+  11:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  14:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  27:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\side-nav\side-nav.spec.ts
+  28:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  31:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\specialty-browser\specialty-browser.spec.ts
+  43:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  46:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\status-seal\status-seal.spec.ts
+  16:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\tenant-switcher\tenant-switcher.spec.ts
+  12:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\components\organisms\view-state-host\view-state-host.spec.ts
+  20:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\forms\file-drop-target.spec.ts
+  5:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\forms\value-accessor-groups.spec.ts
+  14:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\forms\value-accessor.spec.ts
+  15:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+  42:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\motion\motion.spec.ts
+  52:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+src\app\shared\motion\pointer-scene.spec.ts
+  42:1  error  The component's `changeDetection` value should be set to `ChangeDetectionStrategy.OnPush`  @angular-eslint/prefer-on-push-component-change-detection
+
+✖ 246 problems (246 errors, 0 warnings)
+
+lint exit 1
