@@ -29,7 +29,7 @@
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H2.S1.M1 | Crear superficie de Cotizaciones y sus estados | La pantalla muestra carga, vacío, error, sin origen y resultados | spec focalizado | HECHO |
+| H2.S1.M1 | Crear superficie de Cotizaciones y sus estados | La pantalla muestra carga, vacío, error, sin origen y resultados | carga/error/sin perfil y resultados cubiertos; faltan vacío/sin origen | PARCIAL |
 | H2.S1.M2 | Componer fuentes existentes y documentos permitidos | Recetas y órdenes diagnósticas precargan términos; faltantes se declaran | Órdenes propias cubiertas; recetas y servicios sin adaptador reutilizable | PARCIAL |
 | H2.S1.M3 | Registrar ruta y menú de paciente | «Cotizaciones» abre la pantalla con rol PATIENT | prueba de navegación + navegador | PARCIAL |
 

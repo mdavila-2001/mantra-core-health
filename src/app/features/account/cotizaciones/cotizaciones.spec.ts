@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { vi } from 'vitest';
 
 import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnostics.client';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
@@ -7,34 +7,16 @@ import { Cotizaciones } from './cotizaciones';
 
 describe('Cotizaciones', () => {
   let fixture: ComponentFixture<Cotizaciones>;
+  const getOwnOrders = vi.fn();
+  const readConceptLabels = vi.fn();
 
   beforeEach(() => {
+    getOwnOrders.mockClear();
+    readConceptLabels.mockClear();
     TestBed.configureTestingModule({
       providers: [
-        {
-          provide: DiagnosticsClient,
-          useValue: {
-            getOwnOrders: () => of({
-              patientProfileId: 'pp-propio',
-              items: [{
-                id: 'orden-interna',
-                codeConceptId: 'concepto-hemograma',
-                createdAt: new Date('2026-09-23T00:00:00.000Z'),
-                hasReleasedResult: false,
-              }],
-              limit: 20,
-              truncated: false,
-            }),
-          },
-        },
-        {
-          provide: TerminologyClient,
-          useValue: {
-            readConceptLabels: () => of(new Map([
-              ['concepto-hemograma', { display: 'Hemograma', value: 'concepto-hemograma' }],
-            ])),
-          },
-        },
+        { provide: DiagnosticsClient, useValue: { getOwnOrders } },
+        { provide: TerminologyClient, useValue: { readConceptLabels } },
       ],
     });
     fixture = TestBed.createComponent(Cotizaciones);
@@ -58,13 +40,12 @@ describe('Cotizaciones', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Paracetamol');
   });
 
-  it('muestra los estudios de las órdenes propias sin exponer identificadores', () => {
+  it('no carga ni muestra estudios personales dentro del comparador', () => {
     const texto: string = fixture.nativeElement.textContent;
 
-    expect(texto).toContain('Estudios en tus documentos actuales');
-    expect(texto).toContain('Hemograma');
-    expect(texto).toContain('Tu orden de diagnóstico');
-    expect(texto).not.toContain('orden-interna');
-    expect(texto).not.toContain('concepto-hemograma');
+    expect(getOwnOrders).not.toHaveBeenCalled();
+    expect(readConceptLabels).not.toHaveBeenCalled();
+    expect(texto).not.toContain('Estudios en tus documentos actuales');
+    expect(texto).not.toContain('Tu orden de diagnóstico');
   });
 });
