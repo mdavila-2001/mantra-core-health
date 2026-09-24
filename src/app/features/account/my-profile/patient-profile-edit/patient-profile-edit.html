@@ -272,6 +272,19 @@
                     placeholder="Av. Prolongación Beni #5100, esq. 6to anillo"
                   />
                 </app-form-field>
+                @if (domicilioPorReescribir()) {
+                  <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                       anuncia sin robar el foco, que sigue en el mapa. -->
+                  <app-alert
+                    appAnuncio
+                    [asertivo]="false"
+                    [enfocar]="false"
+                    tone="info"
+                    data-testid="perfil-domicilio-reescribir"
+                  >
+                    {{ avisoReescribir }}
+                  </app-alert>
+                }
 
                 <!-- El punto en el mapa, como en una app de pedidos: se pide la
                      ubicación o se marca el pin a mano, y se confirma mirándolo.
@@ -287,6 +300,7 @@
                   [ids]="idsGpsDomicilio"
                   [inicial]="gpsDomicilioGuardado()"
                   (confirmado)="gpsDomicilio.set($event)"
+                  (puntoElegido)="vaciarDomicilioPorElMapa()"
                 />
               </div>
 
@@ -301,6 +315,19 @@
                     placeholder="Calle Ayacucho #241, Casco Viejo"
                   />
                 </app-form-field>
+                @if (trabajoPorReescribir()) {
+                  <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                       anuncia sin robar el foco, que sigue en el mapa. -->
+                  <app-alert
+                    appAnuncio
+                    [asertivo]="false"
+                    [enfocar]="false"
+                    tone="info"
+                    data-testid="perfil-trabajo-reescribir"
+                  >
+                    {{ avisoReescribir }}
+                  </app-alert>
+                }
 
                 <app-ubicacion-picker
                 pinId="perfil-trabajo"
@@ -313,6 +340,7 @@
                   [ids]="idsGpsTrabajo"
                   [inicial]="gpsTrabajoGuardado()"
                   (confirmado)="gpsTrabajo.set($event)"
+                  (puntoElegido)="vaciarTrabajoPorElMapa()"
                 />
               </div>
 
@@ -410,6 +438,10 @@
             }
           </section>
         </app-tab>
+
+        <!-- «Mis puntos» no se edita: la pestaña está para que la tira sea la
+             misma que en lectura y el lápiz no mueva de lugar a nadie. -->
+        <app-tab [label]="pestanas[4]" disabled />
       </app-tabs>
     </ng-template>
 

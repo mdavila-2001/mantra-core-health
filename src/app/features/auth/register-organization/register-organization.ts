@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
 import {
   FormControl,
@@ -52,6 +52,7 @@ import {
   type ClaveDeDocumentoDelAlta,
 } from '../registro-compartido/documentos-legales';
 import {
+  AVISO_REESCRIBIR_DIRECCION,
   UbicacionPicker,
   type Coordenadas,
   type IdsDePrueba,
@@ -816,6 +817,28 @@ export class RegisterOrganization {
    * `documentosSubidos`, arriba).
    */
   readonly gpsCasaMatriz = signal<Coordenadas | null>(null);
+
+  /**
+   * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
+   *
+   * Tocar el mapa deja «Dirección» en blanco —el punto nuevo ya no es esa
+   * calle— y lo dice al lado. El aviso acompaña al campo vacío: en cuanto se
+   * vuelve a escribir, se va solo.
+   */
+  private readonly direccionVaciadaPorElMapa = signal(false);
+  private readonly direccionEscrita = toSignal(this.form.controls.address.valueChanges, {
+    initialValue: '',
+  });
+  readonly direccionPorReescribir = computed(
+    () => this.direccionVaciadaPorElMapa() && this.direccionEscrita().trim() === '',
+  );
+  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
+
+  /** Tocaron el mapa de la casa matriz: la dirección escrita ya no vale (D-06). */
+  vaciarDireccionPorElMapa(): void {
+    this.form.controls.address.setValue('');
+    this.direccionVaciadaPorElMapa.set(true);
+  }
 
   protected readonly idsUbicacionCasaMatriz: IdsDePrueba = {
     mapa: 'registro-organizacion-casa-matriz-map',

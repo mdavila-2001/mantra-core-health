@@ -276,6 +276,19 @@
             </ng-template>
 
             <ng-template appCampoPersonalizado="gpsDomicilio">
+              @if (domicilioPorReescribir()) {
+                <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                     anuncia sin robar el foco, que sigue en el mapa. -->
+                <app-alert
+                  appAnuncio
+                  [asertivo]="false"
+                  [enfocar]="false"
+                  tone="info"
+                  data-testid="registro-domicilio-reescribir"
+                >
+                  {{ avisoReescribir }}
+                </app-alert>
+              }
               @if (mapaDomicilioAbierto()) {
                 <div class="registro__ubicacion">
                   <!-- El mapa reemplazó al par de coordenadas. Un «-17,7833, -63,1821»
@@ -334,11 +347,11 @@
                       </p>
                     }
                   } @else if (direccionConfirmada()) {
-                    <p
-                      appAnuncio
-                      class="registro__ubicacion-estado"
-                      data-testid="registro-direccion-confirmada"
-                    >
+                    <!-- D-07 (pedido del cliente del 22/09/2026): «Listo, guardamos…» no se
+                         muestra: el pin ya se llama por su nombre y los botones cambian, así
+                         que el texto aclaraba lo obvio. Sigue en el DOM sólo para lectores de
+                         pantalla, con el mismo anuncio y el mismo identificador de prueba. -->
+                    <p appAnuncio class="solo-lectores" data-testid="registro-direccion-confirmada">
                       Listo, guardamos esta dirección.
                     </p>
                     <!-- AC-03-9: el punto se guarda, pero el nombre de la
@@ -547,6 +560,19 @@
                  permiso del navegador que el domicilio, con su propio estado:
                  son dos puntos distintos y confirmar uno no confirma el otro. -->
             <ng-template appCampoPersonalizado="gpsTrabajo">
+              @if (trabajoPorReescribir()) {
+                <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                     anuncia sin robar el foco, que sigue en el mapa. -->
+                <app-alert
+                  appAnuncio
+                  [asertivo]="false"
+                  [enfocar]="false"
+                  tone="info"
+                  data-testid="registration-work-address-reescribir"
+                >
+                  {{ avisoReescribir }}
+                </app-alert>
+              }
               @if (mapaTrabajoAbierto()) {
                 <div class="registro__ubicacion">
                   <app-map
@@ -597,11 +623,8 @@
                       </p>
                     }
                   } @else if (direccionTrabajoConfirmada()) {
-                    <p
-                      appAnuncio
-                      class="registro__ubicacion-estado"
-                      data-testid="registration-work-location-confirmed"
-                    >
+                    <!-- D-07: ver la copia del domicilio. -->
+                    <p appAnuncio class="solo-lectores" data-testid="registration-work-location-confirmed">
                       Listo, guardamos este punto.
                     </p>
                     <p

@@ -6,7 +6,7 @@ import { recursos } from './agenda';
 import { vitrinas } from './comunidad';
 import { DENTAL_FEE_SCHEDULE, MEDICAL_FEE_SCHEDULE } from './fee-schedules.generated';
 import { INSURER_NETWORK_PRACTITIONERS } from './insurer-network.generated';
-import { credencialesDe, licenciasDe, PROFESIONALES } from './personas';
+import { credencialesDe, licenciasDe, PROFESIONALES, PROFESIONALES_DEMO_REGISTRADOS } from './personas';
 
 /* ============================================================================
     Los catálogos de `markdown_convertidos/` que el propietario pidió ver.
@@ -72,7 +72,10 @@ describe('los médicos reales de la red de las aseguradoras', () => {
   it('reemplazan a los generados con faker, todos', () => {
     expect(deLaRed.length).toBe(INSURER_NETWORK_PRACTITIONERS.length);
     const deLaPlanilla = PROFESIONALES.filter((p) => p.origen === 'USUARIO_PROPIETARIO');
-    expect(PROFESIONALES.length).toBe(15 + deLaRed.length + deLaPlanilla.length);
+    // Los de demostración (D-H3-PROV-01) son un grupo aparte: ni red ni planilla.
+    const deDemostracion = PROFESIONALES.filter((p) => p.origen === 'DEMO');
+    expect(deDemostracion).toEqual([...PROFESIONALES_DEMO_REGISTRADOS]);
+    expect(PROFESIONALES.length).toBe(15 + deLaRed.length + deLaPlanilla.length + deDemostracion.length);
   });
 
   it('aparecen en el directorio público con su aseguradora', () => {

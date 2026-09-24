@@ -4,8 +4,10 @@ import {
   Component,
   computed,
   DOCUMENT,
+  effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
@@ -85,6 +87,7 @@ const PANEL = '/dashboard';
     Tooltip,
   ],
   templateUrl: './shell-layout.html',
+  styleUrl: './shell-layout.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShellLayout {
@@ -135,21 +138,26 @@ export class ShellLayout {
   private readonly tutorials = inject(TutorialRegistry);
 
   /**
-   * No leídos de Chats para el ícono de la cabecera (N-01, H4.S1.M2,
-   * 2026-09-22 — Q-E4). `ChatStore` ya es `providedIn: 'root'`
-   * (`core/messaging/chat.store.ts`) y `Messaging` es quien lo enciende con
-   * `iniciar()` al entrar a `/messaging`; acá **no** se vuelve a encender ni
-   * se cuenta aparte, sólo se lee el mismo `sinLeer()` que ya expone. Es una
-   * decisión deliberada, no un descuido: encenderlo desde el armazón
-   * contradiría el motivo por el que `ChatStore` no sondea desde el arranque
-   * (`chat.store.ts:138-142`, «quien está en la agenda no tiene por qué
-   * estar pidiendo conversaciones cada minuto»). El badge muestra lo último
-   * que se supo — 0 hasta que la sesión entró una vez a Chats o llegó un
-   * mensaje por el socket ya conectado — en vez de forzar un sondeo global
-   * nuevo para que el número esté siempre «fresco» en toda la aplicación.
+   * No leídos de Chats para el ícono de la cabecera (N-01, H4.S1.M2, Q-E4).
+   *
+   * Es **la misma cuenta** que el título de la pestaña de `Messaging`
+   * (`ChatStore.sinLeer`): el armazón no cuenta nada, la lee. Y **no enciende**
+   * Chats: `iniciar()` sondea cada minuto y marca actividad, y eso sigue siendo
+   * sólo de `/messaging` (`chat.store.ts`, «quien está en la agenda no tiene
+   * por qué estar pidiendo conversaciones cada minuto»). Para que el número
+   * esté desde la primera pantalla —y no en 0 hasta pasar por Chats— el
+   * armazón pide `prepararContador()`: una lectura de la bandeja y el socket,
+   * sin sondeo y sin marcar actividad (ver el constructor).
    */
   private readonly chats = inject(ChatStore);
   protected readonly chatsSinLeer = this.chats.sinLeer;
+
+  /** El nombre accesible de Chats: el ícono solo no dice cuántos hay sin leer. */
+  protected readonly etiquetaChats = computed(() => {
+    const cuantos = this.chatsSinLeer();
+    if (cuantos === 0) return 'Chats';
+    return `Chats, ${cuantos} ${cuantos === 1 ? 'mensaje sin leer' : 'mensajes sin leer'}`;
+  });
 
   constructor() {
     // El catálogo de tutoriales se registra acá y no en un proveedor de arranque
@@ -164,6 +172,17 @@ export class ShellLayout {
        desde cada pantalla los pediría cinco veces. El servicio no hace nada
        bajo SSR ni en una cuenta que no es de un paciente. */
     this.contextoDePaciente.loadDependents();
+
+    /* N-01 · el número de Chats de la cabecera tiene que estar desde cualquier
+       pantalla, no sólo después de pasar por `/messaging`. En cuanto hay sesión
+       se prepara el contador: una lectura de la bandeja y el socket, sin
+       sondeo y sin contar como «estar en Chats» (ver
+       `ChatStore.prepararContador`). Es idempotente. */
+    effect(() => {
+      if (this.user() !== null) {
+        untracked(() => this.chats.prepararContador());
+      }
+    });
 
     this.urlActual.set(this.rutaLimpia());
     this.router.events

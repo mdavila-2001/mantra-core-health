@@ -52,7 +52,11 @@
         </p>
       }
     } @else if (confirmada()) {
-      <p appAnuncio class="registro__ubicacion-estado" [attr.data-testid]="ids().confirmada">
+      <!-- D-07 (pedido del cliente del 22/09/2026): «Listo, guardamos…» no se
+           muestra: el pin ya se llama por su nombre y los botones cambian, así
+           que el texto aclaraba lo obvio. Sigue en el DOM sólo para lectores de
+           pantalla, con el mismo anuncio y el mismo identificador de prueba. -->
+      <p appAnuncio class="solo-lectores" [attr.data-testid]="ids().confirmada">
         Listo, guardamos esta dirección.
       </p>
       <!-- AC-03-9: el punto se guarda, pero el nombre de la calle no se
