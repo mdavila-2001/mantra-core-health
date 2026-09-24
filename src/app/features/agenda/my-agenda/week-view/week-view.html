@@ -146,8 +146,23 @@
               </li>
             }
             @if (dia.masCitas > 0) {
+              <!-- Lo que no entra en la celda se ve abriendo el día: el «+N» es
+                   la puerta a esa vista, no un rótulo. Lleva al día TOCADO, no
+                   al de hoy ni al último abierto (pedido 2026-09-24). -->
               <li class="semana__cita semana__cita--resto">
-                +{{ dia.masCitas }} {{ dia.masCitas === 1 ? 'turno más' : 'turnos más' }}
+                <button
+                  type="button"
+                  class="semana__resto-boton"
+                  data-testid="semana-ver-dia"
+                  [attr.aria-label]="'Ver los ' + (dia.masCitas + dia.citas.length) + ' turnos del ' + (dia.fecha | date: 'EEEE d')"
+                  (click)="diaElegido.emit(dia.fecha)"
+                >
+                  +{{ dia.masCitas }} {{ dia.masCitas === 1 ? 'turno más' : 'turnos más' }}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
+                </button>
               </li>
             }
           </ul>
