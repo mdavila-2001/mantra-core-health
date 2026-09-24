@@ -1,9 +1,36 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { expect, test, type Download, type Page, type TestInfo } from '@playwright/test';
 
 import { entrarAlSimulador } from './support/simulador';
+
+/**
+ * Dispara una acción y junta TODAS las descargas que produzca, hasta llegar
+ * a `cantidad` o vencer el plazo.
+ *
+ * `Promise.all([page.waitForEvent('download'), page.waitForEvent('download'),
+ * accion()])` es frágil cuando BUNDLE dispara dos descargas casi
+ * simultáneas: los dos `waitForEvent` compiten por el mismo primer evento en
+ * vez de quedarse, cada uno, con una de las dos. Escuchar con `page.on` y
+ * juntar en un array no tiene esa carrera.
+ */
+async function esperarDescargas(
+  page: Page,
+  cantidad: number,
+  accion: () => Promise<void>,
+): Promise<Download[]> {
+  const descargas: Download[] = [];
+  const escuchar = (descarga: Download) => descargas.push(descarga);
+  page.on('download', escuchar);
+  try {
+    await accion();
+    await expect.poll(() => descargas.length, { timeout: 15_000 }).toBeGreaterThanOrEqual(cantidad);
+  } finally {
+    page.off('download', escuchar);
+  }
+  return descargas;
+}
 
 /**
  * Portabilidad de póliza e historial de siniestralidad a 1 clic (subtarea
@@ -59,6 +86,36 @@ async function abrirDialogo(page: Page): Promise<void> {
   await expect(page.getByTestId('content-dialog-title')).toContainText(TITULO_DEL_DIALOGO);
 }
 
+/**
+ * Completa el alta de un dependiente, mismo patrón que `b1-dependientes.spec.ts`.
+ *
+ * El selector de fecha se maneja tecla por tecla (el campo está enmascarado y
+ * `fill()` no pasa por su manejador), y el desplegable de parentesco se elige
+ * por ETIQUETA — `app-select` guarda el índice en el `value` del `<option>`.
+ */
+async function registrarDependiente(page: Page, nombre: string): Promise<void> {
+  await page.getByTestId('dependents-nuevo').click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+
+  await page.getByTestId('dependent-name').fill(nombre);
+  await page.getByTestId('dependent-last-name').fill('Quispe');
+
+  const fecha = page.getByTestId('dependent-birth-date').getByRole('textbox');
+  await fecha.click();
+  await fecha.press('Home');
+  await fecha.pressSequentially('14032018');
+  await fecha.blur();
+  await expect(fecha).toHaveValue('14/03/2018');
+
+  await page
+    .getByTestId('dependent-relationship')
+    .getByRole('combobox')
+    .selectOption({ label: 'Soy su madre' });
+
+  await page.getByTestId('dependent-submit').click();
+  await expect(page.getByRole('dialog')).toBeHidden({ timeout: 15_000 });
+}
+
 for (const viewport of [
   { width: 1440, height: 900 },
   { width: 390, height: 844 },
@@ -75,14 +132,15 @@ for (const viewport of [
 
       await abrirDialogo(page);
 
-      // PDF ya viene preseleccionado. Desde C-21 (ADR-0013) los tres formatos
-      // son un desplegable y no tres radios, así que la preselección se lee en
-      // la opción marcada y por su TEXTO: `app-select` guarda el índice de la
-      // opción en el `value` del `<option>`, y afirmar sobre ese número no
-      // diría nada de lo que el médico ve.
+      // El paquete completo viene preseleccionado (CA-01: confirmar sin tocar
+      // el desplegable baja los dos archivos). Desde C-21 (ADR-0013) los tres
+      // formatos son un desplegable y no tres radios, así que la preselección
+      // se lee en la opción marcada y por su TEXTO: `app-select` guarda el
+      // índice de la opción en el `value` del `<option>`, y afirmar sobre ese
+      // número no diría nada de lo que el paciente ve.
       const selectorDeFormato = page.getByTestId('portability-format').locator('select');
       await expect(selectorDeFormato.locator('option:checked')).toHaveText(
-        'PDF con código QR de verificación',
+        'Paquete completo (PDF + JSON)',
       );
 
       const desborde = await page.evaluate(
@@ -114,19 +172,45 @@ for (const viewport of [
         );
       }
 
-      const [descarga] = await Promise.all([
-        page.waitForEvent('download'),
-        page.getByTestId('btn-generate-portability-download').click(),
-      ]);
-      expect(descarga.suggestedFilename()).toMatch(/^portabilidad-.+\.pdf$/);
+      // BUNDLE por defecto: confirmar UNA vez dispara DOS descargas (CA-01).
+      const descargas = await esperarDescargas(page, 2, async () => {
+        await page.getByTestId('btn-generate-portability-download').click();
+      });
+      const descargaPdf = descargas.find((d) => d.suggestedFilename().endsWith('.pdf'))!;
+      const descargaJson = descargas.find((d) => d.suggestedFilename().endsWith('.json'))!;
+      expect(descargaPdf.suggestedFilename()).toMatch(/^portabilidad-.+\.pdf$/);
+      expect(descargaJson.suggestedFilename()).toMatch(/^portabilidad-.+\.json$/);
       const rutaPdf = info.outputPath(`portabilidad-${viewport.width}.pdf`);
-      await descarga.saveAs(rutaPdf);
+      await descargaPdf.saveAs(rutaPdf);
       expect(readFileSync(rutaPdf).subarray(0, 5).toString('latin1')).toBe('%PDF-');
+      const rutaJsonBundle = info.outputPath(`portabilidad-bundle-${viewport.width}.json`);
+      await descargaJson.saveAs(rutaJsonBundle);
+      const certificadoBundle = JSON.parse(readFileSync(rutaJsonBundle, 'utf8')) as {
+        readonly schemaVersion: string;
+        readonly encounters: readonly unknown[];
+      };
+      expect(certificadoBundle.schemaVersion).toBe('alovida.insurance-portability/2');
+      expect(certificadoBundle.encounters.length).toBeGreaterThan(0);
 
       const hash = page.getByTestId('portability-manifest-hash');
       await expect(hash).toBeVisible();
       const manifestHash = (await hash.textContent())?.trim() ?? '';
       expect(manifestHash).toMatch(SHA256_HEX);
+
+      // Objetivos táctiles del estado `ready`: "Copiar hash" perdió su
+      // `size="sm"` (32 px) justamente para cumplir este mismo umbral.
+      const objetivosListos = [
+        ['btn-copy-portability-hash', page.getByTestId('btn-copy-portability-hash')],
+        ['btn-download-portability-pdf', page.getByTestId('btn-download-portability-pdf')],
+        ['btn-download-portability-json', page.getByTestId('btn-download-portability-json')],
+        ['btn-redownload-portability', page.getByTestId('btn-redownload-portability')],
+      ] as const;
+      for (const [nombre, objetivo] of objetivosListos) {
+        const caja = await objetivo.boundingBox();
+        expect(Math.round(caja!.height), `alto de ${nombre}`).toBeGreaterThanOrEqual(
+          altoMinimoTactil,
+        );
+      }
 
       await screenshotWithoutOverflow(page, info, `portabilidad-lista-${viewport.width}`);
 
@@ -261,5 +345,83 @@ for (const viewport of [
       const hashReal = createHash('sha256').update(readFileSync(rutaJson)).digest('hex');
       expect(hashReal).toBe(manifestHash);
     });
+
+    test('actuando por un dependiente, exporta el historial del TITULAR y avisa que es un trámite personal', async ({
+      page,
+    }, info) => {
+      await entrarAlSimulador(page, 'paciente', '');
+      await page.goto('/my-account/dependents');
+      const nombreDependiente = `Valentina-${viewport.width}`;
+      await registrarDependiente(page, nombreDependiente);
+
+      // El alta y la elección de a quién representar viven EN MEMORIA
+      // (`PatientContextService`, sin persistencia): un `page.goto` recarga
+      // el documento entero y las pierde — y de paso pierde al dependiente
+      // mismo, porque `pacientes` (la colección que respalda el alta) tampoco
+      // persiste entre recargas. Por eso la navegación a `/my-account` es
+      // por el enlace lateral «Mi perfil» (`routerLink`, sin recarga), no
+      // por `page.goto`.
+      const enlacePerfil = page.getByTestId('nav-enlace').filter({ hasText: 'Mi perfil' });
+      // En angosto el menú es un cajón cerrado por defecto: el enlace existe
+      // en el DOM pero está fuera de la vista hasta abrirlo con el botón de
+      // hamburguesa (`header-menu`), que sólo se renderiza en ese modo.
+      const botonMenu = page.getByTestId('header-menu');
+      if (await botonMenu.isVisible()) await botonMenu.click();
+      await enlacePerfil.click();
+      await page.waitForURL((url) => url.pathname === '/my-account');
+
+      await page.getByRole('tab', { name: 'Seguros y tutores' }).click();
+
+      const tarjeta = page.getByTestId('insurance-portability-card');
+      await expect(tarjeta).toBeVisible();
+      await expect(tarjeta).toContainText('trámite personal');
+
+      await page.getByTestId('btn-open-portability-dialog').click();
+      await expect(dialogo(page)).toBeVisible();
+
+      const descargas = await esperarDescargas(page, 2, async () => {
+        await page.getByTestId('btn-generate-portability-download').click();
+      });
+      const descargaJson = descargas.find((d) => d.suggestedFilename().endsWith('.json'))!;
+      const rutaJson = info.outputPath(`portabilidad-dependiente-${viewport.width}.json`);
+      await descargaJson.saveAs(rutaJson);
+      const certificado = JSON.parse(readFileSync(rutaJson, 'utf8')) as {
+        readonly patient: { readonly fullName: string };
+      };
+      // El certificado NUNCA lleva el nombre del dependiente recién creado:
+      // el `patientProfileId` que viajó al backend fue siempre el del titular.
+      expect(certificado.patient.fullName).not.toContain('Valentina');
+
+      await expect(page.getByTestId('portability-manifest-hash')).toBeVisible();
+      await screenshotWithoutOverflow(page, info, `portabilidad-dependiente-${viewport.width}`);
+    });
+
+    // NO HAY test E2E de «titular sin coberturas» en este archivo — BLOCKED,
+    // no omitido por descuido. Se intentaron las dos vías reales:
+    // (1) Ningún usuario de `mock-session.ts` (los únicos que pueden iniciar
+    //     sesión: `buscarUsuario` sólo resuelve esa lista corta) carece de
+    //     coberturas. El fixture sin aseguradora existe (`PACIENTES[1]`,
+    //     "p-mamani"), pero no tiene credencial de ingreso propia, y
+    //     portabilidad SIEMPRE exporta al titular de la SESIÓN
+    //     (`auth.patientProfileId()`), nunca a un id elegido a mano — no hay
+    //     forma de "impersonar" ese fixture desde la UI.
+    // (2) Aislar la respuesta en el borde HTTP con `page.route()` (regla 65)
+    //     NO es viable: `mockBackendInterceptor` (`core/mock/mock-backend.
+    //     interceptor.ts`) es un `HttpInterceptorFn` que responde con
+    //     `of(...)`/`throwError(...)` y NUNCA llama a `next(request)` para
+    //     una ruta reconocida — no sale ningún XHR/`fetch` real al proceso
+    //     del navegador, así que no hay conexión de red que Playwright pueda
+    //     interceptar. `page.route()` y `page.waitForResponse()` esperan
+    //     para siempre un evento que no va a ocurrir (comprobado: el intento
+    //     agotó el timeout de 180 s del test).
+    // El caso SÍ está verificado, en las capas donde es alcanzable:
+    // `insurance-portability.service.spec.ts` (AC-02, sin lanzar) ·
+    // `insurance-portability.handlers.spec.ts` (el mismo caso contra el
+    // router simulado real, con `PACIENTE_SIN_COBERTURAS`) ·
+    // `insurance-portability-card.spec.ts` ("sin coberturas declaradas…
+    // ofrece exportar igual"). Cerrar el E2E exige un seam de prueba nuevo
+    // (por ejemplo, un endpoint o flag de la maqueta que permita loguearse
+    // como cualquier `PacienteSimulado` por id) — trabajo de otro carril,
+    // no una corrección de este archivo.
   });
 }
