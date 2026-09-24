@@ -301,17 +301,40 @@
               }
 
               <h4 class="edicion__subtitulo">Tus especialidades cargadas</h4>
-              @if (filasEspecialidades().length === 0) {
+              @if (totalEspecialidades() === 0) {
                 <p class="edicion__vacio">Todavía no cargaste ninguna especialidad.</p>
               } @else {
-                <app-data-table
-                  class="edicion__tabla"
-                  data-testid="tabla-especialidades"
-                  [state]="estadoEspecialidades()"
-                  [columns]="columnasEspecialidades()"
-                  [trackBy]="claveDeFila"
-                  caption="Especialidades cargadas, la principal primero"
+                <app-search-field
+                  class="edicion__buscador"
+                  data-testid="especialidades-buscador"
+                  label="Buscar en tus especialidades cargadas"
+                  placeholder="Especialidad o estado"
+                  [value]="busquedaEspecialidades()"
+                  (searched)="buscarEnEspecialidades($event)"
                 />
+                @if (sinCoincidenciasEspecialidades()) {
+                  <p class="edicion__vacio" data-testid="especialidades-sin-coincidencias">
+                    Ninguna especialidad coincide con «{{ busquedaEspecialidades() }}».
+                  </p>
+                } @else {
+                  <app-data-table
+                    class="edicion__tabla"
+                    data-testid="tabla-especialidades"
+                    [state]="estadoEspecialidades()"
+                    [columns]="columnasEspecialidades()"
+                    [trackBy]="claveDeFila"
+                    caption="Especialidades cargadas, la principal primero"
+                  />
+                  <app-pagination
+                    class="edicion__paginacion"
+                    data-testid="especialidades-paginacion"
+                    [totalItems]="totalEspecialidadesFiltrada()"
+                    [page]="paginaActualEspecialidades()"
+                    (pageChange)="irAPaginaDeEspecialidades($event)"
+                    [(pageSize)]="porPaginaEspecialidades"
+                    [pageSizeOptions]="tamanosDePaginaTabla"
+                  />
+                }
               }
             </section>
           </app-tab>
@@ -654,17 +677,40 @@
                 Del título más reciente al más antiguo. Lo pendiente lo revisa el equipo que
                 verifica.
               </p>
-              @if (filasFormacion().length === 0) {
+              @if (totalFormacion() === 0) {
                 <p class="edicion__vacio">Todavía no cargaste ningún título.</p>
               } @else {
-                <app-data-table
-                  class="edicion__tabla"
-                  data-testid="tabla-formacion"
-                  [state]="estadoFormacion()"
-                  [columns]="columnasFormacion()"
-                  [trackBy]="claveDeFila"
-                  caption="Títulos y formación cargados, del más reciente al más antiguo"
+                <app-search-field
+                  class="edicion__buscador"
+                  data-testid="formacion-buscador"
+                  label="Buscar en tu trayectoria cargada"
+                  placeholder="Tipo, número o institución"
+                  [value]="busquedaFormacion()"
+                  (searched)="buscarEnFormacion($event)"
                 />
+                @if (sinCoincidenciasFormacion()) {
+                  <p class="edicion__vacio" data-testid="formacion-sin-coincidencias">
+                    Ningún título coincide con «{{ busquedaFormacion() }}».
+                  </p>
+                } @else {
+                  <app-data-table
+                    class="edicion__tabla"
+                    data-testid="tabla-formacion"
+                    [state]="estadoFormacion()"
+                    [columns]="columnasFormacion()"
+                    [trackBy]="claveDeFila"
+                    caption="Títulos y formación cargados, del más reciente al más antiguo"
+                  />
+                  <app-pagination
+                    class="edicion__paginacion"
+                    data-testid="formacion-paginacion"
+                    [totalItems]="totalFormacionFiltrada()"
+                    [page]="paginaActualFormacion()"
+                    (pageChange)="irAPaginaDeFormacion($event)"
+                    [(pageSize)]="porPaginaFormacion"
+                    [pageSizeOptions]="tamanosDePaginaTabla"
+                  />
+                }
               }
             </section>
           </app-tab>
@@ -762,17 +808,40 @@
               </form>
 
               <h4 class="edicion__subtitulo">Tus matrículas cargadas</h4>
-              @if (filasMatriculas().length === 0) {
+              @if (totalMatriculas() === 0) {
                 <p class="edicion__vacio">Todavía no cargaste ninguna matrícula.</p>
               } @else {
-                <app-data-table
-                  class="edicion__tabla"
-                  data-testid="tabla-matriculas"
-                  [state]="estadoMatriculas()"
-                  [columns]="columnasMatriculas()"
-                  [trackBy]="claveDeFila"
-                  caption="Matrículas cargadas"
+                <app-search-field
+                  class="edicion__buscador"
+                  data-testid="matriculas-buscador"
+                  label="Buscar en tus matrículas cargadas"
+                  placeholder="Número o autoridad"
+                  [value]="busquedaMatriculas()"
+                  (searched)="buscarEnMatriculas($event)"
                 />
+                @if (sinCoincidenciasMatriculas()) {
+                  <p class="edicion__vacio" data-testid="matriculas-sin-coincidencias">
+                    Ninguna matrícula coincide con «{{ busquedaMatriculas() }}».
+                  </p>
+                } @else {
+                  <app-data-table
+                    class="edicion__tabla"
+                    data-testid="tabla-matriculas"
+                    [state]="estadoMatriculas()"
+                    [columns]="columnasMatriculas()"
+                    [trackBy]="claveDeFila"
+                    caption="Matrículas cargadas"
+                  />
+                  <app-pagination
+                    class="edicion__paginacion"
+                    data-testid="matriculas-paginacion"
+                    [totalItems]="totalMatriculasFiltrada()"
+                    [page]="paginaActualMatriculas()"
+                    (pageChange)="irAPaginaDeMatriculas($event)"
+                    [(pageSize)]="porPaginaMatriculas"
+                    [pageSizeOptions]="tamanosDePaginaTabla"
+                  />
+                }
               }
             </section>
           </app-tab>
