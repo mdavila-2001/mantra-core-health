@@ -19,3 +19,7 @@ Este inventario combina lectura de contratos con una ampliación de ejecución a
 | QR/cobro | Hay referencias genéricas a pagos/QR en la plataforma. | OUT para cobro médico integrado; no se altera destructivamente ni se presenta como aceptado. | Payments externo / fuera de este plan. | No crear cobro QR ni simular pago. Mantener factura/cobertura/informes independientes del hecho de pago.
 
 No se fabricaron ejemplos de contrato para aseguradora, sala, SEGIP o TOUS. Los puertos sin especificación aprobada permanecen propuestos/bloqueados y requieren ejemplos sintéticos validados por su propietario.
+
+## Alta propia — correos personal/de acceso y laboral (L0179, L0186)
+
+En el DTO de alta, `email` sigue siendo el identificador de acceso. Cuando el cliente también envía `workEmail`, `email` se declara como contacto personal (`CONTACT_USE_HOME`) y `workEmail` como laboral (`CONTACT_USE_WORK`). El campo laboral es opcional para conservar clientes anteriores: sin `workEmail`, `email` se persiste como contacto WORK y el campo existente `personalEmail` continúa opcional. El contrato de lectura propia devuelve `workEmail` y `personalEmail` según su uso; el frontend prefiere esos campos explícitos y conserva `email` como alias compatible. Los tests unitarios verifican validación y selección de usos. La persistencia real y lectura tras recarga no se ejecutaron en esta continuación, así que MED-E03 sigue `A MEDIAS`; no se cambia modelo ni DDL.
