@@ -67,11 +67,12 @@ const ESTADO_POR_ERROR: Readonly<Record<string, EstadoDelDictado>> = {
  * ## Qué hace con lo dicho, y qué no
  *
  * Lo que el navegador transcribe se entrega a quien llamó a `empezar` —y a
- * nadie más—. **No se registra, no se guarda y no pasa por ningún servicio
- * de ALOVIDA**: la transcripción la hace el reconocedor del navegador, que es
- * lo que el aviso de la pantalla le dice a la persona antes de que hable
- * (Q-M1). Ni un `console.*` en este archivo: lo que alguien dicta sobre su
- * salud es dato de salud (regla 90.2.1).
+ * nadie más—. **No se registra ni se guarda**: la transcripción la hace el
+ * reconocedor del navegador. Después, como lo tecleado, el texto se manda al
+ * servicio de triage para entenderlo mejor (`TriageIaClient`), que lo analiza
+ * sin guardarlo ni registrarlo; es lo que el aviso de la pantalla le dice a la
+ * persona antes de que hable (Q-M1). Ni un `console.*` en este archivo: lo que
+ * alguien dicta sobre su salud es dato de salud (regla 90.2.1).
  *
  * ## Por qué se provee en el componente y no en `root`
  *

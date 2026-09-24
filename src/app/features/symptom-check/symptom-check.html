@@ -237,11 +237,12 @@
          hay botón, porque un botón que al tocarlo dice «acá no se puede» es
          peor que ninguno. El aviso va ANTES del botón y siempre a la vista:
          quien va a hablar de su salud tiene que saber a dónde va lo que dice
-         antes de decirlo (Q-M1). No hay servidor nuestro en el medio. -->
+         antes de decirlo (Q-M1). Lo transcribe el navegador; después el
+         servicio de triage lo analiza sin guardarlo, como a lo tecleado. -->
     @if (dictado.soportado) {
       <div class="sintomas__dictado" data-testid="sintomas-dictado">
         <p class="sintomas__dictado-aviso" id="sintomas-dictado-aviso">
-          Lo que dictás lo transcribe tu navegador; no lo guardamos.
+          Lo que dictás lo transcribe tu navegador y lo analizamos para entenderte; no lo guardamos.
         </p>
         <button
           app-button
