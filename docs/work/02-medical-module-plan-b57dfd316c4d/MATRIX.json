@@ -5704,9 +5704,10 @@
         "Diez criterios por inciso (L0187, L0188, L0190–L0197) cambian a HECHO/VERIFIED. MED-E01 y H1 completos se mantienen A MEDIAS por L0168/L0174.AC02 y los criterios restantes; conteo global 10/98. Sin cambio de producto, merge ni despliegue."
       ],
       "criteria_marked_done": 10,
-      "pushed_to_origin": false,
+      "pushed_to_origin": true,
       "merged": false,
-      "deployed": false
+      "deployed": false,
+      "docs_commit": "92fa9813"
     }
   ]
 }
