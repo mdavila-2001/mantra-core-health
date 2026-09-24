@@ -99,11 +99,12 @@ describe('CotizacionesFuentes', () => {
       price: {
         amount: 12.5,
         currency: 'BOB',
-        source: 'Lista de precios PUBLICO publicada por Farmacia s1',
+        source: 'Lista PUBLICO de Farmacia s1',
       },
       distanceKm: 1.2,
     });
     expect(resultados[1]!.price).toBeNull();
+    expect(resultados[1]!.sinPrecio).toBe('La farmacia no publicó este precio');
   });
 
   it('medicamentos sin productos no pide disponibilidad', async () => {
@@ -176,7 +177,7 @@ describe('CotizacionesFuentes', () => {
       price: {
         amount: 80,
         currency: 'BOB',
-        source: 'Tarifario TAR-2026 publicado por Laboratorio Central',
+        source: 'Tarifario TAR-2026 de Laboratorio Central',
       },
       distanceKm: null,
       accion: { ruta: '/laboratory-directory/u1' },
@@ -225,6 +226,9 @@ describe('CotizacionesFuentes', () => {
     });
     expect(resultados[0]!.advertencia).toBeDefined();
     expect(resultados[1]!.price).toBeNull();
+    expect(resultados[1]!.sinPrecio).toBe(
+      'El arancel de referencia no trae precio para esta prestación',
+    );
   });
 
   it('con «Todas» consulta las cuatro en paralelo y una caída no tira las otras', async () => {

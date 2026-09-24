@@ -39,7 +39,7 @@ describe('Cotizaciones', () => {
     price: {
       amount: 12.5,
       currency: 'BOB',
-      source: 'Lista de precios PUBLICO publicada por Farmacia Central',
+      source: 'Lista PUBLICO de Farmacia Central',
     },
     distanceKm: 2.4,
     accion: { etiqueta: 'Ver farmacias', ruta: '/pharmacies-directory' },
@@ -51,6 +51,7 @@ describe('Cotizaciones', () => {
     donde: 'Centro Imagen',
     price: null,
     distanceKm: null,
+    sinPrecio: 'El centro no publicó el precio de este estudio',
     sinDistancia: 'El centro no publica su ubicación en el directorio',
   };
   const ARANCEL: CotizacionResultado = {
@@ -136,7 +137,7 @@ describe('Cotizaciones', () => {
 
     expect(buscar).toHaveBeenCalledWith('para', 'TODAS', null);
     expect(texto()).toContain('12.5 BOB');
-    expect(texto()).toContain('Lista de precios PUBLICO publicada por Farmacia Central');
+    expect(texto()).toContain('Lista PUBLICO de Farmacia Central');
     expect(texto()).toContain('2,4 km en línea recta');
   });
 
@@ -148,7 +149,7 @@ describe('Cotizaciones', () => {
 
     const precio = raiz().querySelector('.cotizaciones__precio--no-publicado');
     expect(precio?.textContent?.trim()).toBe('Precio no publicado');
-    expect(precio?.getAttribute('title')).toBe('La sede no publicó este precio');
+    expect(precio?.getAttribute('title')).toBe('El centro no publicó el precio de este estudio');
     expect(texto()).toContain('El centro no publica su ubicación en el directorio');
   });
 

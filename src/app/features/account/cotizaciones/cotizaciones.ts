@@ -261,7 +261,9 @@ export class Cotizaciones {
   }
 
   protected procedenciaDe(fila: CotizacionResultado): string {
-    return fila.price === null ? 'La sede no publicó este precio' : fila.price.source;
+    return fila.price === null
+      ? (fila.sinPrecio ?? 'Precio no publicado por la fuente')
+      : fila.price.source;
   }
 
   protected distanciaDe(fila: CotizacionResultado): string {

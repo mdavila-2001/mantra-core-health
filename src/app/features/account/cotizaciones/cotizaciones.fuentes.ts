@@ -204,6 +204,7 @@ function filasDeSede(sede: AvailabilitySite): CotizacionResultado[] {
         : `${sede.pharmacyName} · ${sede.siteName}`,
     price: precioDeProducto(producto, sede),
     distanceKm: sede.distanceKm,
+    sinPrecio: 'La farmacia no publicó este precio',
     sinDistancia: 'La sede no publicó su ubicación',
     accion: { etiqueta: 'Ver farmacias', ruta: '/pharmacies-directory' },
   }));
@@ -233,7 +234,7 @@ function precioDeProducto(
   return {
     amount: importe,
     currency: precio.currency.code,
-    source: `Lista de precios ${precio.priceListCode} publicada por ${sede.pharmacyName}`,
+    source: `Lista ${precio.priceListCode} de ${sede.pharmacyName}`,
   };
 }
 
@@ -260,9 +261,10 @@ function filaDeEstudio(
         : {
             amount: importe,
             currency: publicado.currency.code,
-            source: `Tarifario ${publicado.scheduleCode} publicado por ${centro.name}`,
+            source: `Tarifario ${publicado.scheduleCode} de ${centro.name}`,
           },
     distanceKm: null,
+    sinPrecio: 'El centro no publicó el precio de este estudio',
     sinDistancia: 'El centro no publica su ubicación en el directorio',
     accion: { etiqueta: 'Ver el centro', ruta: `/laboratory-directory/${centro.id}` },
   };
@@ -285,6 +287,7 @@ function filaDePrestacion(prestacion: ProcedureNomenclatureItem): CotizacionResu
             source: unidad === 'UMA' ? PROCEDENCIA_UMA : `Arancel de referencia, en ${unidad}`,
           },
     distanceKm: null,
+    sinPrecio: 'El arancel de referencia no trae precio para esta prestación',
     sinDistancia: 'No aplica: es un arancel de referencia, no una sede',
     ...(prestacion.ocrSuspect
       ? { advertencia: 'El texto de esta fila viene de un escaneo y está por revisar' }
