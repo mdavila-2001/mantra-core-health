@@ -373,8 +373,8 @@ export class IamClient {
 
   /**
    * `POST /iam/auth/upload-registration-document`. Pre-carga pública de un
-   * documento legal en PDF (subtarea 1.2): quien todavía no tiene cuenta
-   * sube el archivo antes del alta y reenvía el `fileId` que devuelve.
+   * PDF para un alta que todavía no tiene sesión: el `fileId` devuelto se
+   * reenvía en el alta de organización o en su fila de credencial profesional.
    *
    * Multipart sin fijar `Content-Type` a mano: el navegador pone el
    * `boundary`. `observe: 'events'` + `reportProgress: true` para que la

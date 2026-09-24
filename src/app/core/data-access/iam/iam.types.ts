@@ -394,10 +394,8 @@ export interface PractitionerRegistration {
 /**
  * Un título declarado en el alta pública.
  *
- * Es el subconjunto mínimo de {@link NewOwnCredential} que el alta sabe
- * persistir hoy. El nombre del título, el país, la ciudad y el diploma **no
- * viajan**: no tienen dónde guardarse sin cambiar el modelo, y esta pantalla no
- * es donde eso se decide.
+ * Es el subconjunto que el alta persiste por fila. El nombre del título, el
+ * país y la ciudad **no viajan** porque el contrato no los almacena.
  */
 export interface NewRegistrationCredential {
   /** Uno de los cinco `CREDENTIAL_TYPE_*` del catálogo, por concept id. */
@@ -406,6 +404,8 @@ export interface NewRegistrationCredential {
   readonly number: string;
   /** Dónde se cursó, como texto libre. */
   readonly issuingInstitutionText?: string;
+  /** PDF ya subido anónimamente y reclamado al crear la cuenta. */
+  readonly fileId?: string;
 }
 
 export interface RegisteredPractitioner {
