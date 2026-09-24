@@ -113,7 +113,7 @@ rg -n 'teleconsult|virtual|encounter|medication|reminder' src/app/features src/a
 
 ### Hitos y microtareas
 
-Cada hito sigue el ciclo común de verificación de abajo. Bajo el alcance actual, toda implementación se limita a presentación; los contratos y criterios funcionales quedan auditados/documentados y se ejecutan sólo si hay una ampliación expresa. Médico es responsable del cambio propio y consulta al propietario del contrato compartido cuando dependa de otro módulo.
+Cada hito sigue el ciclo común de verificación de abajo. La autorización expresa del propietario amplió el alcance Médico a cambios funcionales de frontend y API en worktrees aislados. Se implementan requisitos con contrato claro; cuando dependen de un módulo compartido, tercero, modelo o DDL protegidos, se documentan y se dejan bloqueados hasta contar con el contrato/permiso correspondiente. Médico es responsable del cambio propio y consulta al propietario del contrato compartido cuando dependa de otro módulo.
 
 **H1 — Alta y edición profesional (MED-01–04; MED-E01/E02 y contactos de E03)**
 
@@ -160,9 +160,9 @@ Cada hito sigue el ciclo común de verificación de abajo. Bajo el alcance actua
 
 **H8 — Verificación, revisión y entrega**
 
-- [ ] `H8.S1.M1`: revisar cobertura de los siete apartados, 15 grupos MED y 17 escenarios MED-E del documento fuente. Mantener matriz por inciso, no sólo por grupo. Cada criterio recibe estado, nivel de evidencia y bloqueo real.
-- [ ] `H8.S1.M2`: ejecutar las verificaciones permitidas del ciclo común, evidencia visual antes/después y regresión; inspeccionar fotos. Para integración clínica/fiscal, registrar `NO EJECUTADO` cuando no exista permiso o infraestructura; no certificarla por mocks.
-- [ ] `H8.S1.M3`: entregar registro profesional, operación clínica, teleconsulta/medicación y administración fiscal por separado; incluir prompts pendientes de sala/notificación y facturación periódica con propietario propuesto, contrato y aceptación.
+- [x] `H8.S1.M1`: revisar cobertura de los siete apartados, 15 grupos MED y 17 escenarios MED-E del documento fuente. Mantener matriz por inciso, no sólo por grupo. Cada criterio recibe estado, nivel de evidencia y bloqueo real. `MATRIX.md` y `MATRIX.json` conservan 100 criterios fuente, 98 incluidos, estados por inciso y 17 escenarios.
+- [x] `H8.S1.M2`: ejecutar las verificaciones permitidas del ciclo común, evidencia visual antes/después y regresión; inspeccionar fotos. Para integración clínica/fiscal, registrar `NO EJECUTADO` cuando no exista permiso o infraestructura; no certificarla por mocks. Typecheck, pruebas dirigidas, suite FE, smokes aislados, inspección de evidencia CORR-08 y el smoke real extendido están documentados; fallos/bloqueos de lint global, route-health y Fable se preservan.
+- [x] `H8.S1.M3`: entregar registro profesional, operación clínica, teleconsulta/medicación y administración fiscal por separado; incluir prompts pendientes de sala/notificación y facturación periódica con propietario propuesto, contrato y aceptación. Ver `HANDOFF.md` y su tabla de propietarios/contratos/escenarios pendientes.
 - [ ] `H8.S1.M4`: preparar el PR correspondiente contra `mockup` cuando sea una corrección autorizada, con fotos y reporte; dejar revisión independiente/humana pendiente y no mergear. Este encargo de preparación no abre PRs.
 
 ### Ciclo común de verificación y reversión
