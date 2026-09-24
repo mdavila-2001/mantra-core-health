@@ -107,31 +107,49 @@
 
 /* ─── La figura ─────────────────────────────────────────────────────────── */
 
-/* El volumen del contorno: costados más oscuros que el centro. */
+/* El volumen del contorno: costados más oscuros que el centro, con un tinte
+   apenas frío de la marca para que la figura se lea como un modelo clínico y
+   no como un recorte gris. */
 .body-map__volumen-borde {
-  stop-color: color-mix(in srgb, var(--text-secondary) 30%, var(--bg-surface));
+  stop-color: color-mix(in srgb, color-mix(in srgb, var(--brand-primary) 18%, var(--text-secondary)) 34%, var(--bg-surface));
 }
 
 .body-map__volumen-centro {
-  stop-color: color-mix(in srgb, var(--text-secondary) 12%, var(--bg-surface));
+  stop-color: color-mix(in srgb, color-mix(in srgb, var(--brand-primary) 12%, var(--text-secondary)) 13%, var(--bg-surface));
+}
+
+/* La luz: un brillo que cae de arriba a la izquierda y se apaga antes del
+   borde. Es lo que le da redondez al pecho, los hombros y la cabeza. */
+.body-map__luz-fuerte {
+  stop-color: var(--bg-surface);
+  stop-opacity: 0.55;
+}
+
+.body-map__luz-nula {
+  stop-color: var(--bg-surface);
+  stop-opacity: 0;
 }
 
 /* El contorno entero, debajo de todo: da el borde exterior parejo. El relleno
    es el degradado de volumen (atributo `fill` en la plantilla). */
 .body-map__contorno {
-  stroke: color-mix(in srgb, var(--text-secondary) 55%, var(--bg-surface));
-  stroke-width: 2.2;
+  stroke: color-mix(in srgb, var(--text-secondary) 62%, var(--bg-surface));
+  stroke-width: 1.4;
   stroke-linejoin: round;
   pointer-events: none;
 }
 
-/* Las zonas son transparentes: el volumen se ve a través. Se separan con una
-   costura fina del color del fondo, así se leen como partes de una misma
-   figura y no como piezas sueltas. */
+.body-map__luz {
+  pointer-events: none;
+}
+
+/* Las zonas son transparentes: el volumen se ve a través. La costura entre
+   ellas es un hilo tenue: se adivina dónde termina cada parte sin cortar la
+   figura en pedazos. */
 .body-map__forma {
   fill: transparent;
-  stroke: var(--bg-surface);
-  stroke-width: 1.2;
+  stroke: color-mix(in srgb, var(--text-secondary) 13%, transparent);
+  stroke-width: 0.5;
   stroke-linejoin: round;
   /* Una zona con hueco (la cara sin ojos, nariz ni boca) no lo rellena: el
      clic en el hueco llega a la zona de adentro. */
@@ -143,12 +161,25 @@
     stroke-width var(--dur-fast) var(--ease-out);
 }
 
+/* Pelo, cejas y labios: formas llenas y tenues, un tono más hondo que la piel. */
+.body-map__rellenos {
+  fill: color-mix(in srgb, var(--text-primary) 34%, var(--bg-surface));
+  fill-opacity: 0.85;
+  pointer-events: none;
+}
+
+/* Iris y fosas nasales: lo más oscuro del dibujo, lo que hace que la cara mire. */
+.body-map__acentos {
+  fill: color-mix(in srgb, var(--text-primary) 72%, var(--bg-surface));
+  pointer-events: none;
+}
+
 /* Los rasgos no se pulsan: el clic atraviesa hasta la zona de abajo. Van
-   tenues: ayudan a leer la figura sin competir con las zonas. */
+   finos y tenues: ayudan a leer la figura sin competir con las zonas. */
 .body-map__detalles {
   fill: none;
-  stroke: color-mix(in srgb, var(--text-secondary) 40%, transparent);
-  stroke-width: 1;
+  stroke: color-mix(in srgb, var(--text-secondary) 52%, transparent);
+  stroke-width: 0.8;
   stroke-linecap: round;
   stroke-linejoin: round;
   pointer-events: none;
@@ -161,7 +192,7 @@
 .body-map__zona--marcada .body-map__forma {
   fill: color-mix(in srgb, var(--brand-secondary) 34%, transparent);
   stroke: var(--brand-secondary);
-  stroke-width: 2;
+  stroke-width: 1.6;
   stroke-dasharray: 4 3;
   animation: body-map-latido var(--dur-slow) var(--ease-out) 2;
 }
@@ -175,9 +206,9 @@
 /* El puntero sólo insinúa: el estado de verdad es `--elegida`, y sobre la
    elegida el puntero no la hace parecer suelta. */
 .body-map__zona:not(.body-map__zona--elegida):hover .body-map__forma {
-  fill: color-mix(in srgb, var(--brand-primary) 24%, transparent);
-  stroke: color-mix(in srgb, var(--brand-primary) 60%, var(--bg-surface));
-  stroke-width: 1.6;
+  fill: color-mix(in srgb, var(--brand-primary) 20%, transparent);
+  stroke: color-mix(in srgb, var(--brand-primary) 70%, var(--bg-surface));
+  stroke-width: 1.2;
 }
 
 /* El foco del teclado se ve **sobre el trazo**, no con un `outline` del
@@ -190,22 +221,70 @@
 /* Sin `filter` por lo mismo que la elegida (ver abajo): el halo se hace con
    el trazo, que no cambia la forma que recibe el clic. */
 .body-map__forma:focus-visible {
-  stroke: var(--brand-primary);
-  stroke-width: 5;
+  stroke: var(--focus-ring);
+  stroke-width: 3;
   stroke-dasharray: none;
 }
 
-/* Las dos señas visuales de la elegida, y son dos a propósito: el relleno para
-   quien ve color, el trazo grueso para quien no. Gana sobre la marcada.
+/* Las señas de la elegida: el relleno en degradado para quien ve color, el
+   trazo marcado para quien no, y el marcador de abajo. Gana sobre la marcada.
 
    Sin `filter`: con una sombra, el navegador toma la caja entera de la forma
    para el clic, y la cabeza de la vista «Cara» —que tiene huecos donde van
    ojos, nariz y boca— se tragaba los clics de esas zonas. */
 .body-map__zona--elegida .body-map__forma {
-  fill: var(--brand-primary);
-  stroke: var(--text-primary);
-  stroke-width: 3;
+  fill: var(--body-map-relleno-elegida, var(--brand-primary));
+  stroke: color-mix(in srgb, var(--brand-primary) 55%, var(--text-primary));
+  stroke-width: 1.8;
   stroke-dasharray: none;
+}
+
+.body-map__elegida-arriba {
+  stop-color: color-mix(in srgb, var(--brand-primary) 72%, var(--bg-surface));
+}
+
+.body-map__elegida-abajo {
+  stop-color: var(--brand-primary-active);
+}
+
+/* ─── El marcador de la elegida ───────────────────────────────────────────
+   Un punto de la marca dentro de un halo claro, y una onda que se expande y
+   se apaga dos veces al elegir: lo que se ve primero cuando se mira la figura. */
+
+.body-map__marcador {
+  pointer-events: none;
+}
+
+.body-map__marcador-halo {
+  fill: var(--bg-surface);
+  stroke: var(--brand-primary-active);
+  stroke-width: 1.2;
+}
+
+.body-map__marcador-punto {
+  fill: var(--brand-primary-active);
+}
+
+.body-map__marcador-onda {
+  fill: none;
+  stroke: var(--bg-surface);
+  stroke-width: 1.4;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: body-map-onda 1.6s var(--ease-out) 3;
+}
+
+@keyframes body-map-onda {
+  0% {
+    opacity: 0.9;
+    scale: 0.8;
+  }
+
+  100% {
+    opacity: 0;
+    scale: 2.4;
+  }
 }
 
 /* ─── Las líneas de abajo ───────────────────────────────────────────────── */
@@ -249,7 +328,8 @@
     transition: none;
   }
 
-  .body-map__zona--marcada .body-map__forma {
+  .body-map__zona--marcada .body-map__forma,
+  .body-map__marcador-onda {
     animation: none;
   }
 }
