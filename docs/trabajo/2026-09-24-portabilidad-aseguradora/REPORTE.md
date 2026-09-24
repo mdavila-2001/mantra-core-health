@@ -110,7 +110,10 @@ Evidencia: `playwright/carril-insurance-portability.spec.ts` → 10/10 en 1440×
   ajenos (ninguno de portabilidad; verificado con `eslint` acotado a los archivos propios → 0).
 - M3 push + PRs: **HECHO el push y la creación de los 3 PRs; EN CURSO la verificación de
   mergeabilidad** (regla 35). Estado al momento de escribir este reporte:
-  - API #455: `mergeable=MERGEABLE`. El check `docs` falló dos veces (la original y un
+  - API #455: **aprobado por `Jsaldias39`** (`reviewDecision=APPROVED`, 2026-09-24 23:14 UTC; sin
+    comentarios bloqueantes de `copilot-pull-request-reviewer`). `mergeable`/`mergeStateStatus` en
+    `UNKNOWN` (GitHub recalculando tras el último rerun; estado transitorio, no un bloqueo). El
+    check `docs` falló dos veces (la original y un
     `gh run rerun --failed`), ambas con el mismo error: `docker: Error response from daemon:
     unauthorized: access to the requested resource is not authorized` al levantar
     `quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z`. **Confirmado que es una caída de CI a
