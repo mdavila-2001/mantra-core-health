@@ -4,15 +4,16 @@
   class="portability-card"
   data-testid="insurance-portability-card"
 >
-  <h3 card-header>Portabilidad de póliza y siniestros a 1 clic</h3>
+  <h3 card-header>Portabilidad de póliza y siniestros</h3>
 
   <p class="portability-card__estado" data-testid="portability-coverage-summary">
     {{ coverageSummary() }}
   </p>
 
   <p class="portability-card__descripcion">
-    ¿Estás evaluando cambiar de aseguradora o necesitás tu histórico oficial? Descargá tu
-    expediente completo de coberturas, atenciones y siniestralidad certificado con firma digital.
+    ¿Estás evaluando cambiar de aseguradora o necesitás tu historial? Solicitá una exportación de
+    la información de pólizas y siniestros disponible para tu perfil. El resultado incluye una
+    huella SHA-256 y un enlace para consultar su verificación.
   </p>
 
   @if (isActingForDependent()) {
@@ -30,7 +31,7 @@
         data-testid="btn-open-portability-dialog"
         (clicked)="openDialog()"
       >
-        Exportar certificado de portabilidad
+        Solicitar exportación de portabilidad
       </button>
     </div>
   }

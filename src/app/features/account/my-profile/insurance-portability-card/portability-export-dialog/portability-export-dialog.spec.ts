@@ -147,14 +147,26 @@ describe('PortabilityExportDialog', () => {
        lado. Ahora se afirman las tres cosas que el título promete —los tres
        formatos, en orden, con su texto, y cuál viene elegido—. */
     expect(formatosOfrecidos()).toEqual([
-      'PDF oficial certificado con código QR',
+      'PDF con código QR de verificación',
       'Archivo JSON interoperable',
       'Paquete completo (PDF + JSON)',
     ]);
 
     const select = query('portability-format')?.querySelector<HTMLSelectElement>('select');
     expect(select?.selectedOptions[0]?.textContent?.trim()).toBe(
-      'PDF oficial certificado con código QR',
+      'PDF con código QR de verificación',
+    );
+  });
+
+  it('presenta la exportación y su verificación sin prometer una certificación legal', () => {
+    montar();
+
+    const dialog = query('portability-export-dialog');
+    expect(dialog?.getAttribute('heading')).toBe('Solicitar exportación de portabilidad');
+    expect(dialog?.getAttribute('description')).toContain('información disponible');
+    expect(dialog?.getAttribute('description')).not.toMatch(/firma digital|certificaci[oó]n/i);
+    expect(query('btn-generate-portability-download')?.textContent).toContain(
+      'Solicitar exportación',
     );
   });
 
@@ -179,6 +191,14 @@ describe('PortabilityExportDialog', () => {
 
     const [llamada] = await descargado;
     expect(llamada.fileName).toBe('portabilidad-cert-1.pdf');
+    expect(query('portability-export-dialog')?.textContent).toContain('Exportación generada');
+    expect(query('portability-export-dialog')?.textContent).not.toContain('Certificado emitido');
+    expect(document.querySelector('#portability-hash-rotulo')?.textContent).toBe(
+      'Huella SHA-256 del manifiesto',
+    );
+    expect(query('portability-verification-link')?.textContent).toContain(
+      'Consultar los datos de verificación en línea',
+    );
   });
 
   it('el aviso de «copiado» es una región viva: un lector de pantalla lo anuncia', async () => {

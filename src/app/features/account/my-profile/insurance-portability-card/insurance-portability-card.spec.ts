@@ -60,14 +60,22 @@ describe('InsurancePortabilityCard', () => {
     expect(query('btn-open-portability-dialog')).not.toBeNull();
   });
 
-  it('el botón se llama «Exportar certificado de portabilidad»', () => {
+  it('el botón se llama «Solicitar exportación de portabilidad»', () => {
     montar();
 
     // Es el nombre accesible que fija el requisito, y el mismo con el que se
     // titula el diálogo que abre (WCAG 2.5.3, la etiqueta está en el nombre).
     expect(query('btn-open-portability-dialog')?.textContent?.trim()).toBe(
-      'Exportar certificado de portabilidad',
+      'Solicitar exportación de portabilidad',
     );
+  });
+
+  it('describe la información disponible sin afirmar que tenga firma digital', () => {
+    montar();
+
+    const texto = query('insurance-portability-card')?.textContent ?? '';
+    expect(texto).toContain('información de pólizas y siniestros disponible');
+    expect(texto).not.toContain('firma digital');
   });
 
   describe('estado de las coberturas', () => {

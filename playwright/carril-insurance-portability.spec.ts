@@ -18,7 +18,7 @@ test.describe.configure({ mode: 'serial' });
 
 const SHA256_HEX = /^[0-9a-f]{64}$/;
 
-const TITULO_DEL_DIALOGO = 'Exportar certificado de portabilidad';
+const TITULO_DEL_DIALOGO = 'Solicitar exportación de portabilidad';
 
 /** Bien formado —64 hex— pero de ningún certificado emitido: la maqueta responde 404. */
 const HASH_INEXISTENTE = 'f'.repeat(64);
@@ -82,7 +82,7 @@ for (const viewport of [
       // diría nada de lo que el médico ve.
       const selectorDeFormato = page.getByTestId('portability-format').locator('select');
       await expect(selectorDeFormato.locator('option:checked')).toHaveText(
-        'PDF oficial certificado con código QR',
+        'PDF con código QR de verificación',
       );
 
       const desborde = await page.evaluate(
