@@ -554,6 +554,18 @@
                 (confirmado)="gpsDomicilio.set($event)"
               />
             </ng-template>
+
+            <ng-template appCampoPersonalizado="gpsTrabajo">
+              <app-ubicacion-picker
+                pinId="trabajo"
+                etiquetaConfirmada="Tu lugar de trabajo"
+                pregunta="¿Es acá donde trabajás? Movete por el mapa para comprobarlo."
+                etiquetaQuitar="Quitar la ubicación de tu trabajo"
+                etiquetaMapa="La ubicación de tu trabajo en el mapa"
+                [ids]="idsUbicacionTrabajo"
+                (confirmado)="gpsTrabajo.set($event)"
+              />
+            </ng-template>
           </app-paginated-form>
         </div>
 

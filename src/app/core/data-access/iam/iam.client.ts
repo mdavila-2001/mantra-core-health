@@ -242,6 +242,14 @@ export class IamClient {
       ...(registration.homeLatitude === undefined || registration.homeLongitude === undefined
         ? {}
         : { homeLatitude: registration.homeLatitude, homeLongitude: registration.homeLongitude }),
+      // La dirección laboral se declara por separado del domicilio y del
+      // consultorio propio. Las coordenadas viajan juntas o no viajan.
+      ...(registration.workAddressLines === undefined
+        ? {}
+        : { workAddressLines: registration.workAddressLines }),
+      ...(registration.workLatitude === undefined || registration.workLongitude === undefined
+        ? {}
+        : { workLatitude: registration.workLatitude, workLongitude: registration.workLongitude }),
       // El consultorio propio. Va acá por lo mismo que los tres de arriba: lo
       // que el contrato declara y esta lista no repita se descarta en silencio.
       ...(registration.ownSite === undefined ? {} : { ownSite: registration.ownSite }),
