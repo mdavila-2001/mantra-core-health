@@ -1,0 +1,88 @@
+✔ editor-domicilio: la dirección está escrita
+✔ editor-domicilio: sin tocar el mapa no hay aviso
+✔ editor-domicilio: tocar el mapa vacía la dirección
+✔ editor-domicilio: el aviso está junto al campo
+✔ editor-domicilio: el aviso es una región viva, sin robar el foco
+✔ editor-domicilio: la confirmación no se ve
+✔ editor-domicilio: pero está para el lector, con su anuncio
+✔ editor-domicilio: «Listo, guardamos» no se pinta en ningún lugar de la vista
+✔ editor-domicilio: volver a escribir se lleva el aviso
+✔ editor-domicilio: mover el pin vuelve a vaciar
+✔ editor: el trabajo no tiene aviso
+✔ editor 375: sin desborde horizontal
+✔ editor 768: sin desborde horizontal
+✔ alta-domicilio: la dirección está escrita
+✔ alta-domicilio: sin tocar el mapa no hay aviso
+✔ alta-domicilio: tocar el mapa vacía la dirección
+✔ alta-domicilio: el aviso está junto al campo
+✔ alta-domicilio: el aviso es una región viva, sin robar el foco
+✔ alta-domicilio: la confirmación no se ve
+✔ alta-domicilio: pero está para el lector, con su anuncio
+✔ alta-domicilio: «Listo, guardamos» no se pinta en ningún lugar de la vista
+✔ alta-domicilio: volver a escribir se lleva el aviso
+✔ alta-domicilio: mover el pin vuelve a vaciar
+✔ alta-trabajo: la dirección está escrita
+✔ alta-trabajo: sin tocar el mapa no hay aviso
+✔ alta-trabajo: tocar el mapa vacía la dirección
+✔ alta-trabajo: el aviso está junto al campo
+✔ alta-trabajo: el aviso es una región viva, sin robar el foco
+✔ alta-trabajo: la confirmación no se ve
+✔ alta-trabajo: pero está para el lector, con su anuncio
+✔ alta-trabajo: «Listo, guardamos» no se pinta en ningún lugar de la vista
+✔ alta-trabajo: volver a escribir se lleva el aviso
+✔ alta-trabajo: mover el pin vuelve a vaciar
+✔ aseguradora: la dirección está escrita
+✔ aseguradora: sin tocar el mapa no hay aviso
+✔ aseguradora: tocar el mapa vacía la dirección
+✔ aseguradora: el aviso está junto al campo
+✔ aseguradora: el aviso es una región viva, sin robar el foco
+✔ aseguradora: la confirmación no se ve
+✔ aseguradora: pero está para el lector, con su anuncio
+✔ aseguradora: «Listo, guardamos» no se pinta en ningún lugar de la vista
+✔ aseguradora: volver a escribir se lleva el aviso
+✔ aseguradora: mover el pin vuelve a vaciar
+✔ laboratorio-central: la dirección está escrita
+✔ laboratorio-central: sin tocar el mapa no hay aviso
+✔ laboratorio-central: tocar el mapa vacía la dirección
+✔ laboratorio-central: el aviso está junto al campo
+✔ laboratorio-central: el aviso es una región viva, sin robar el foco
+✔ laboratorio-central: la confirmación no se ve
+✔ laboratorio-central: pero está para el lector, con su anuncio
+✔ laboratorio-central: «Listo, guardamos» no se pinta en ningún lugar de la vista
+✔ laboratorio-central: volver a escribir se lleva el aviso
+✔ laboratorio-central: mover el pin vuelve a vaciar
+✔ laboratorio-sucursal: la dirección está escrita
+✔ laboratorio-sucursal: sin tocar el mapa no hay aviso
+✔ laboratorio-sucursal: tocar el mapa vacía la dirección
+✔ laboratorio-sucursal: el aviso está junto al campo
+✔ laboratorio-sucursal: el aviso es una región viva, sin robar el foco
+✔ laboratorio-sucursal: la confirmación no se ve
+✔ laboratorio-sucursal: pero está para el lector, con su anuncio
+✔ laboratorio-sucursal: «Listo, guardamos» no se pinta en ningún lugar de la vista
+✔ laboratorio-sucursal: volver a escribir se lleva el aviso
+✔ laboratorio-sucursal: mover el pin vuelve a vaciar
+✔ imagenologia-central: la dirección está escrita
+✔ imagenologia-central: sin tocar el mapa no hay aviso
+✔ imagenologia-central: tocar el mapa vacía la dirección
+✔ imagenologia-central: el aviso está junto al campo
+✔ imagenologia-central: el aviso es una región viva, sin robar el foco
+✔ imagenologia-central: la confirmación no se ve
+✔ imagenologia-central: pero está para el lector, con su anuncio
+✔ imagenologia-central: «Listo, guardamos» no se pinta en ningún lugar de la vista
+✔ imagenologia-central: volver a escribir se lleva el aviso
+✔ imagenologia-central: mover el pin vuelve a vaciar
+✔ imagenologia-sucursal: la dirección está escrita
+✔ imagenologia-sucursal: sin tocar el mapa no hay aviso
+✔ imagenologia-sucursal: tocar el mapa vacía la dirección
+✔ imagenologia-sucursal: el aviso está junto al campo
+✔ imagenologia-sucursal: el aviso es una región viva, sin robar el foco
+✔ imagenologia-sucursal: la confirmación no se ve
+✔ imagenologia-sucursal: pero está para el lector, con su anuncio
+✔ imagenologia-sucursal: «Listo, guardamos» no se pinta en ningún lugar de la vista
+✔ imagenologia-sucursal: volver a escribir se lleva el aviso
+✔ imagenologia-sucursal: mover el pin vuelve a vaciar
+✔ sin errores de página ni de consola — excluidos por la CSP del servidor de desarrollo: 10
+✔ sin respuestas 4xx/5xx
+
+85/85 comprobaciones en verde
+capturas en <repo>\docs\frontend\evidence\mapa-vacia-direccion-2026-09-23
