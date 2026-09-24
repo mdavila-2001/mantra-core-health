@@ -285,11 +285,7 @@ export interface PractitionerRegistration {
    * mismo significado — la localidad ubica, esto es lo que hace falta para
    * llegar a la puerta.
    *
-   * **La API todavía no los acepta.** `RegisterPractitionerDto` declara sólo
-   * `residenceMunicipalityConceptId`, y con `forbidNonWhitelisted: true` una
-   * clave que no declara rechaza el alta entera con 400. Van acá porque el
-   * simulador de la rama `mockup` sí los guarda y la pantalla ya los pregunta;
-   * lo que falta está anotado en `PENDIENTES-BACKEND.md`.
+   * La API guarda estas líneas en la dirección HOME de la persona.
    */
   readonly homeAddressLines?: string;
 
@@ -304,6 +300,15 @@ export interface PractitionerRegistration {
   /** Longitud del domicilio. Ver {@link homeLatitude}. */
   readonly homeLongitude?: number;
 
+  /** Dirección laboral del profesional, independiente de su domicilio y sedes propias. */
+  readonly workAddressLines?: string;
+
+  /** Latitud laboral confirmada en el mapa; sólo viaja junto con la longitud. */
+  readonly workLatitude?: number;
+
+  /** Longitud laboral; ver {@link workLatitude}. */
+  readonly workLongitude?: number;
+
   /**
    * El consultorio propio, si declaró uno al registrarse.
    *
@@ -312,7 +317,8 @@ export interface PractitionerRegistration {
    * esa ruta —termina en el login, sin sesión— así que el dato viaja adentro
    * del alta y el backend usa el servicio que ya tiene.
    *
-   * **La API todavía no lo acepta**; ver `PENDIENTES-BACKEND.md`.
+   * La API lo provisiona durante el alta con el mismo caso de uso que la ruta
+   * autenticada de sedes propias.
    */
   readonly ownSite?: NewOwnSite;
 

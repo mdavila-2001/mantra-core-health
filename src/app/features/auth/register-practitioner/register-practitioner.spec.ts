@@ -161,6 +161,7 @@ describe('RegisterPractitioner', () => {
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
       homeAddressLines: '',
+      workAddressLines: '',
       officeName: '',
       officeAddressLines: '',
       regulatoryAuthority: extra.regulatoryAuthority ?? '',
@@ -264,10 +265,9 @@ describe('RegisterPractitioner', () => {
         'personal-contact',
         'access',
         'residence',
-        // El consultorio propio va pegado al domicilio: son las dos preguntas
-        // de «dónde», y separarlas dejaba la del trabajo perdida entre los
-        // títulos. Es opcional, y aun así el lugar desde el que se publica la
-        // agenda mientras ninguna organización lo haya aceptado.
+        'workplace-location',
+        // El consultorio propio es una sede del profesional, separada de la
+        // dirección laboral que se declara arriba.
         'own-office',
         // El título profesional va ANTES de la habilitación: de él dependen el
         // colegio que se ofrece ahí y la lista de especialidades. Preguntarlo
@@ -308,6 +308,7 @@ describe('RegisterPractitioner', () => {
       // y el punto del mapa. Era sólo la localidad mientras el DTO del
       // profesional no tuvo dónde poner las otras dos.
       expect(camposDe('residence')).toEqual(['municipio', 'homeAddressLines', 'gpsDomicilio']);
+      expect(camposDe('workplace-location')).toEqual(['workAddressLines', 'gpsTrabajo']);
       // El consultorio propio: cuatro campos, todos opcionales. Es un calco del
       // lugar de trabajo del alta de paciente, con el nombre que le da el
       // dominio — quien ejerce puede atender en varios lugares, y éste es el
@@ -440,8 +441,8 @@ describe('RegisterPractitioner', () => {
     }
   });
 
-  it('tiene trece páginas, ninguna de más de cuatro preguntas', () => {
-    // Trece y no menos porque el límite es de **campos por página**, no de
+  it('tiene catorce páginas, ninguna de más de cuatro preguntas', () => {
+    // Catorce y no menos porque el límite es de **campos por página**, no de
     // páginas: apretar el orden pedido en menos pasos es lo que este motor vino
     // a deshacer (AC-05-2, `MAX_CAMPOS_POR_PAGINA`). Las últimas cuatro son la
     // de contactos privados —separada de la del acceso al dejar de mezclar el
@@ -449,12 +450,13 @@ describe('RegisterPractitioner', () => {
     // —que no caben en la de habilitación, ya llena— y la contraseña, que
     // cierra el alta sola.
     //
-    // La treceava es el **consultorio propio** (08/09/2026): sus cuatro campos
+    // La página laboral separa dirección/GPS de casa y sede propia, conforme a
+    // MED-03. El consultorio propio (08/09/2026) conserva su página porque sus cuatro campos
     // no caben en la de residencia, que ya tiene tres, y meterlos ahí además
     // mezclaría dos lugares distintos en una pregunta.
     const paginas = component.paginasProfesional();
 
-    expect(paginas.length).toBe(13);
+    expect(paginas.length).toBe(14);
     for (const pagina of paginas) {
       expect(
         pagina.campos.length,
@@ -983,6 +985,29 @@ describe('RegisterPractitioner', () => {
     expect(req.request.body.email).toBe('ana.paz@gmail.test');
     expect(req.request.body.workEmail).toBe('ana@hospital.test');
     expect(req.request.body.personalEmail).toBeUndefined();
+
+    req.flush(RESPUESTA_PRO);
+  });
+
+  it('manda la dirección y el GPS del trabajo separados del domicilio y del consultorio propio', () => {
+    completarProfesional();
+    component.formProfesional.patchValue({
+      homeAddressLines: 'Casa, Calle Norte 10',
+      workAddressLines: 'Hospital Central, Av. Principal 200',
+    });
+    component.gpsDomicilio.set({ lat: -16.5, lng: -68.11 });
+    component.gpsTrabajo.set({ lat: -17.78, lng: -63.18 });
+
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-practitioner');
+    expect(req.request.body.homeAddressLines).toBe('Casa, Calle Norte 10');
+    expect(req.request.body.homeLatitude).toBe(-16.5);
+    expect(req.request.body.homeLongitude).toBe(-68.11);
+    expect(req.request.body.workAddressLines).toBe('Hospital Central, Av. Principal 200');
+    expect(req.request.body.workLatitude).toBe(-17.78);
+    expect(req.request.body.workLongitude).toBe(-63.18);
+    expect(req.request.body.ownSite).toBeUndefined();
 
     req.flush(RESPUESTA_PRO);
   });
