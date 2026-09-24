@@ -10,7 +10,9 @@ import {
   estadosPresentes,
   filasDeLaPagina,
   institucionConCodigo,
+  matriculaPendiente,
   normalizarParaBuscar,
+  OPCIONES_DE_INSTITUCION_CON_SIGLA,
 } from './practitioner-profile-edit.logic';
 
 describe('practitioner-profile-edit.logic', () => {
@@ -105,6 +107,23 @@ describe('practitioner-profile-edit.logic', () => {
     });
   });
 
+  describe('una matrícula se corrige sólo mientras está pendiente', () => {
+    it('pendiente con el código de la API o del simulador', () => {
+      expect(matriculaPendiente('AUTH_PENDING')).toBe(true);
+      expect(matriculaPendiente('ST-PENDING')).toBe(true);
+    });
+
+    it('activa o vencida ya no se corrige', () => {
+      expect(matriculaPendiente('AUTH_ACTIVE')).toBe(false);
+      expect(matriculaPendiente('AUTH_EXPIRED')).toBe(false);
+      expect(matriculaPendiente('ST-ACTIVE')).toBe(false);
+    });
+
+    it('sin el código todavía, cuenta como pendiente', () => {
+      expect(matriculaPendiente(undefined)).toBe(true);
+    });
+  });
+
   describe('la institución con su código (Q-8)', () => {
     it('la sigla sale de la etiqueta del catálogo, la misma que muestra el desplegable', () => {
       expect(codigoDeInstitucion('Universidad Mayor de San Andrés')).toBe('UMSA');
@@ -115,6 +134,28 @@ describe('practitioner-profile-edit.logic', () => {
       expect(institucionConCodigo('Universidad Mayor de San Andrés')).toBe(
         'Universidad Mayor de San Andrés (UMSA)',
       );
+    });
+
+    it('en el desplegable la sigla va adelante, para que el recorte a 375 px no se la lleve', () => {
+      const etiqueta = (valor: string) =>
+        OPCIONES_DE_INSTITUCION_CON_SIGLA.find((o) => o.value === valor)?.label;
+      expect(etiqueta('Universidad Mayor de San Andrés')).toBe(
+        'UMSA · Universidad Mayor de San Andrés — La Paz',
+      );
+      expect(etiqueta('Universidad Privada del Valle')).toBe(
+        'Univalle · Universidad Privada del Valle',
+      );
+    });
+
+    it('ninguna etiqueta conserva el paréntesis: toda sigla del catálogo quedó adelante', () => {
+      expect(OPCIONES_DE_INSTITUCION_CON_SIGLA.filter((o) => o.label.includes('('))).toEqual([]);
+    });
+
+    it('sin sigla, la opción queda igual: separadores, «Universidad NUR» y la salida a mano', () => {
+      const etiquetas = OPCIONES_DE_INSTITUCION_CON_SIGLA.map((o) => o.label);
+      expect(etiquetas).toContain('Universidad NUR — Santa Cruz');
+      expect(etiquetas).toContain('— Sistema de la Universidad Boliviana —');
+      expect(etiquetas).toContain('Otra institución o estudié en el exterior…');
     });
 
     it('lo escrito a mano se muestra tal cual, aunque parezca una sigla', () => {

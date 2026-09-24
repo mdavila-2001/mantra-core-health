@@ -49,12 +49,11 @@ describe('SpecialtyBadge', () => {
   });
 
   describe('tono: uno solo, igual para todas (D-01)', () => {
-    /** Las combinaciones que antes podían cambiar el tono o sumar una marca. */
+    /** Las combinaciones que podrían cambiar el tono o sumar una marca. */
     const VARIANTES: readonly Record<string, unknown>[] = [
-      { certificada: false },
-      { certificada: true },
-      { certificada: true, estado: 'Verificada', sello: 'approved' },
-      { certificada: false, estado: 'En revisión', sello: 'pending' },
+      {},
+      { estado: 'Verificada', sello: 'approved' },
+      { estado: 'En revisión', sello: 'pending' },
     ];
 
     it('va en el secundario de marca, no en un color sorteado', () => {
@@ -85,6 +84,16 @@ describe('SpecialtyBadge', () => {
       }
     });
 
+    it('tampoco se distingue la certificada: la insignia no tiene con qué (24/09/2026)', () => {
+      const entradas = reflectComponentType(SpecialtyBadge)?.inputs.map((i) => i.propName);
+      expect(entradas).not.toContain('certificada');
+      // El único dibujo es el ícono de la especialidad: ninguna marca aparte.
+      const fueraDelIcono = [...host().querySelectorAll('svg')].filter(
+        (svg) => svg.closest('app-specialty-icon') === null,
+      );
+      expect(fueraDelIcono).toHaveLength(0);
+    });
+
     it('no declara un solo color propio: todo entra por el mapa de tonos', () => {
       const css = readFileSync(BADGE_CSS, 'utf8');
       // Cualquier literal de color sería un valor que el tema oscuro no puede
@@ -92,20 +101,6 @@ describe('SpecialtyBadge', () => {
       expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
       expect(css).not.toMatch(/\b(rgb|hsl)a?\(/);
       expect(css).toContain("@import '../../tone/tone.css'");
-    });
-  });
-
-  describe('nada se dice sólo con color', () => {
-    it('«certificada» lleva glifo y texto para quien no ve la pantalla', async () => {
-      await setInputs({ certificada: true });
-      const marca = host().querySelector('.specialty-badge__certificada');
-      expect(marca?.querySelector('svg')).not.toBeNull();
-      expect(marca?.querySelector('.sr-only')?.textContent).toContain('Certificada');
-    });
-
-    it('sin certificar no dibuja la marca', async () => {
-      await setInputs({ certificada: false });
-      expect(host().querySelector('.specialty-badge__certificada')).toBeNull();
     });
   });
 

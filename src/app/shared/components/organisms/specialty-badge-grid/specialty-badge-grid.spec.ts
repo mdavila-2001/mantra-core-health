@@ -11,7 +11,6 @@ function especialidad(
   return {
     id,
     nombre,
-    certificada: false,
     estado: '',
     sello: null,
     ...extra,
@@ -82,7 +81,11 @@ describe('SpecialtyBadgeGrid', () => {
       // rejilla con cualquier nombre, no tiene que adelantarla.
       const marcada = { ...especialidad('3', 'Pediatría'), principal: true } as SpecialtyBadgeItem;
       await setInputs({
-        especialidades: [especialidad('1', 'Cardiología'), especialidad('2', 'Medicina interna'), marcada],
+        especialidades: [
+          especialidad('1', 'Cardiología'),
+          especialidad('2', 'Medicina interna'),
+          marcada,
+        ],
       });
       expect(nombres()).toEqual(['Cardiología', 'Medicina interna', 'Pediatría']);
     });
@@ -112,11 +115,10 @@ describe('SpecialtyBadgeGrid', () => {
     });
   });
 
-  it('pasa cada dato a su insignia: certificada y estado, en el tono de todas', async () => {
+  it('pasa cada dato a su insignia: el estado, en el tono de todas', async () => {
     await setInputs({
       especialidades: [
         especialidad('1', 'Cardiología', {
-          certificada: true,
           estado: 'Vigente',
           sello: 'approved',
         }),
@@ -124,7 +126,6 @@ describe('SpecialtyBadgeGrid', () => {
     });
     const insignia = insignias()[0]!;
     expect(insignia.classList).toContain('tone--secondary');
-    expect(insignia.querySelector('.specialty-badge__certificada')).not.toBeNull();
     expect(insignia.querySelector('app-status-seal')).not.toBeNull();
     expect((insignia.textContent ?? '').replace(/\s+/g, ' ')).toContain('Vigente');
   });

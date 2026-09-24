@@ -175,6 +175,41 @@
   margin-block-start: var(--sp-3);
 }
 
+/* La nota de una sección y su buscador: sin este aire, las letras que bajan de
+   la línea tocaban el borde de la caja. */
+.edicion__nota + app-filter-bar {
+  margin-block-start: var(--sp-3);
+}
+
+/* El historial laboral es otra tarjeta: va separado de la de títulos, que
+   termina en su paginador. */
+.edicion__historial {
+  margin-block-start: var(--sp-5);
+}
+
+/* El estado debajo del identificador, sólo mientras la columna «Estado» vive en
+   el detalle de la fila: por debajo de 780 px. Es el corte de `data-table`
+   (`MOBILE_DETAIL_PRIORITY`, `@media (min-width: 780px)` en su hoja), repetido
+   acá porque una propiedad personalizada no vale dentro de `@media`: si ese
+   corte cambia, este cambia con él. */
+.edicion__celda-principal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.edicion__estado-en-fila {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+@media (min-width: 780px) {
+  .edicion__estado-en-fila {
+    display: none;
+  }
+}
+
 /* El paginador de las tres tablas, abajo a la derecha (H4.S3). Se ciñe a su
    contenido y se empuja al final del bloque; sin esto, el propio paginador
    separa los botones de los selects a los dos extremos del renglón. Cuando

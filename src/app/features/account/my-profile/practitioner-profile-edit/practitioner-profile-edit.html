@@ -258,7 +258,7 @@
                   class="edicion__campo-ancho"
                   label="Dirección"
                   [errorMessage]="errorDelServidor('homeAddressLines')"
-                  hint="Dónde atendés o dónde te ubican tus pacientes."
+                  hint="Tu domicilio particular."
                 >
                   <app-input
                     data-testid="edicion-direccion"
@@ -464,7 +464,7 @@
                  Su barra busca bajo `q` y la de títulos bajo `qTitulos`, así
                  que una no filtra la otra. -->
             @if (pestana() === pestanaEditor.trayectoria) {
-              <app-work-history secciones="historial" layout="tabla" />
+              <app-work-history class="edicion__historial" secciones="historial" layout="tabla" />
             }
           </app-tab>
 
@@ -685,6 +685,38 @@
      mientras el trámite sigue abierto, porque un título ya verificado es un
      hecho de quien lo comprobó y corregirlo por detrás invalidaría la
      comprobación (el servidor responde 422). -->
+<!-- Por debajo de 780 px la columna «Estado» pasa al detalle de la fila, con las
+     demás secundarias, y sin ella lo pendiente y lo verificado se ven iguales.
+     Entonces el estado va debajo del identificador, en la misma celda: no suma
+     una columna ni ancho. Desde 780 px la columna vuelve y esta línea se
+     esconde (`.edicion__estado-en-fila`). -->
+<ng-template #celdaNumeroFormacion let-fila>
+  <span class="edicion__celda-principal">
+    <span>{{ fila.numero }}</span>
+    <span class="edicion__estado-en-fila" data-testid="formacion-estado-en-fila">{{
+      fila.estado
+    }}</span>
+  </span>
+</ng-template>
+
+<ng-template #celdaEspecialidad let-fila>
+  <span class="edicion__celda-principal">
+    <span>{{ fila.especialidad }}</span>
+    <span class="edicion__estado-en-fila" data-testid="especialidad-estado-en-fila">{{
+      fila.estado
+    }}</span>
+  </span>
+</ng-template>
+
+<ng-template #celdaNumeroMatricula let-fila>
+  <span class="edicion__celda-principal">
+    <span>{{ fila.numero }}</span>
+    <span class="edicion__estado-en-fila" data-testid="matricula-estado-en-fila">{{
+      fila.estado
+    }}</span>
+  </span>
+</ng-template>
+
 <ng-template #celdaAccionesFormacion let-fila>
   <div class="edicion__acciones">
     <app-row-actions
@@ -709,6 +741,11 @@
       [attr.data-testid]="'especialidad-acciones-' + fila.id"
       (actionSelected)="ejecutarAccionDeEspecialidad($event, fila)"
     />
+    <!-- Como un título verificado (24/09/2026): lo ya revisado no se edita ni
+         se retira, y decirlo evita que se busque el botón que falta. -->
+    @if (!fila.pendiente) {
+      <span class="edicion__acciones-nota">{{ fila.estado }}: ya no se corrige</span>
+    }
   </div>
 </ng-template>
 
@@ -720,6 +757,11 @@
       [attr.data-testid]="'matricula-acciones-' + fila.id"
       (actionSelected)="ejecutarAccionDeMatricula($event, fila)"
     />
+    <!-- Como un título verificado (24/09/2026): lo ya revisado no se edita ni
+         se retira, y decirlo evita que se busque el botón que falta. -->
+    @if (!fila.pendiente) {
+      <span class="edicion__acciones-nota">{{ fila.estado }}: ya no se corrige</span>
+    }
   </div>
 </ng-template>
 
@@ -762,7 +804,7 @@
             <app-input data-testid="edicion-credencial-numero" [(value)]="edicionNumero" />
           </app-form-field>
 
-          <app-form-field label="Institución">
+          <app-form-field class="edicion__campo-ancho" label="Institución">
             <app-select
               data-testid="edicion-credencial-institucion"
               [options]="opcionesInstitucion"
@@ -772,7 +814,7 @@
           </app-form-field>
 
           @if (edicionInstitucionFueraDeCatalogo()) {
-            <app-form-field label="¿Cuál?">
+            <app-form-field class="edicion__campo-ancho" label="¿Cuál?">
               <app-input
                 data-testid="edicion-credencial-institucion-otra"
                 [(value)]="edicionInstitucionEscrita"
@@ -822,7 +864,6 @@
               placeholder="Elegí la especialidad"
             />
           </app-form-field>
-
         }
 
         @case ('matricula') {
@@ -927,6 +968,7 @@
            «Universidad Mayor de San Andres», y quien verifica el título tenía
            que reconciliarlas a ojo. -->
       <app-form-field
+        class="edicion__campo-ancho"
         label="Institución (opcional)"
         hint="Las universidades del sistema boliviano y las privadas autorizadas."
       >
@@ -944,6 +986,7 @@
            campo abre. -->
       @if (institucionFueraDeCatalogo()) {
         <app-form-field
+          class="edicion__campo-ancho"
           label="¿Cuál?"
           hint="El nombre completo de la institución, como figura en tu diploma."
         >

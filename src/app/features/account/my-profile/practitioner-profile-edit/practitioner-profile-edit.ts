@@ -62,7 +62,6 @@ import { separarNombres, unirNombres } from '../../../../core/profesion/nombres-
 import { opcionesAutoridadReguladora } from '../../../../core/profesion/autoridades-reguladoras';
 import {
   INSTITUCION_FUERA_DE_CATALOGO,
-  OPCIONES_INSTITUCION_EDUCATIVA,
   esInstitucionDelCatalogo,
 } from '../../../../core/profesion/instituciones-educativas';
 import {
@@ -91,12 +90,15 @@ import { PESTANA_EDITOR, PESTANAS_DEL_EDITOR_MEDICO } from '../pestanas-del-perf
 import { WorkHistory } from '../work-history/work-history';
 import {
   OPCIONES_DE_ESTADO,
+  OPCIONES_DE_ESTADO_DE_ESPECIALIDAD,
   coincideConElConcepto,
   coincideConElEstado,
   coincideConLaBusqueda,
   estadosPresentes,
   filasDeLaPagina,
   institucionConCodigo,
+  matriculaPendiente,
+  OPCIONES_DE_INSTITUCION_CON_SIGLA,
 } from './practitioner-profile-edit.logic';
 
 /** El tipo de título (formación), del catálogo dinámico: los cinco `CREDENTIAL_TYPE_*`. */
@@ -149,6 +151,8 @@ interface FilaMatricula {
   readonly estadoConceptId: string;
   /** El carnet del colegio, si se adjuntó. */
   readonly fileId?: string;
+  /** Si todavía se puede corregir: lo dice el código de su estado (`matriculaPendiente`). */
+  readonly pendiente: boolean;
 }
 
 /** Cuál de las tres tablas se está editando en el diálogo. */
@@ -766,7 +770,8 @@ export class PractitionerProfileEdit {
      a mano viven en `core/profesion/instituciones-educativas.ts`; acá sólo se
      decide cuál de los dos campos responde. */
 
-  protected readonly opcionesInstitucion = OPCIONES_INSTITUCION_EDUCATIVA;
+  /** Con la sigla adelante, para que se lea aunque el desplegable cerrado recorte el nombre. */
+  protected readonly opcionesInstitucion = OPCIONES_DE_INSTITUCION_CON_SIGLA;
 
   /** Lo elegido en el desplegable. `null` mientras no se eligió nada. */
   protected readonly institucionElegida = signal<string | null>(null);
@@ -856,16 +861,31 @@ export class PractitionerProfileEdit {
   private readonly celdaAccionesFormacion =
     viewChild.required<TemplateRef<{ $implicit: FilaFormacion }>>('celdaAccionesFormacion');
 
+  /* -- El estado en la fila, en el teléfono --------------------------------
+     Por debajo de 780 px las columnas de prioridad 2 pasan al detalle, «Estado»
+     incluida, y la fila de algo pendiente se veía igual a la de algo
+     verificado. El identificador lleva el estado debajo en esos anchos (ver la
+     plantilla); desde 780 px lo dice su columna. */
+
+  private readonly celdaNumeroFormacion =
+    viewChild.required<TemplateRef<{ $implicit: FilaFormacion }>>('celdaNumeroFormacion');
+
+  private readonly celdaEspecialidad =
+    viewChild.required<TemplateRef<{ $implicit: FilaEspecialidad }>>('celdaEspecialidad');
+
+  private readonly celdaNumeroMatricula =
+    viewChild.required<TemplateRef<{ $implicit: FilaMatricula }>>('celdaNumeroMatricula');
+
   /**
    * Desde 780 px las seis columnas van en la fila, como pide D-09. Más angosto,
-   * la fila lleva sólo el número y las acciones, y el resto pasa al detalle
-   * (prioridad 2), que se abre con ▼; es lo que hace el historial laboral de la
+   * la fila lleva el número, con su estado debajo, y las acciones; el resto pasa
+   * al detalle (prioridad 2), que se abre con ▼; es lo que hace el historial laboral de la
    * misma pestaña. Medido a 375 (H4.S3.M4): con el tipo y el estado también en
    * la fila, la tabla medía 411 px en 301 y se desplazaba a lo ancho.
    */
   protected readonly columnasFormacion = computed<readonly ColumnDef<FilaFormacion>[]>(() => [
     { key: 'tipo', header: 'Tipo', priority: 2 },
-    { key: 'numero', header: 'Número / título', priority: 1 },
+    { key: 'numero', header: 'Número / título', priority: 1, cell: this.celdaNumeroFormacion() },
     { key: 'institucion', header: 'Institución', priority: 2 },
     { key: 'emision', header: 'Emisión', priority: 2 },
     { key: 'estado', header: 'Estado', priority: 2 },
@@ -888,7 +908,7 @@ export class PractitionerProfileEdit {
    */
   protected readonly columnasEspecialidades = computed<readonly ColumnDef<FilaEspecialidad>[]>(
     () => [
-      { key: 'especialidad', header: 'Especialidad', priority: 1 },
+      { key: 'especialidad', header: 'Especialidad', priority: 1, cell: this.celdaEspecialidad() },
       { key: 'desde', header: 'Desde', priority: 2 },
       { key: 'estado', header: 'Estado', priority: 2 },
       {
@@ -914,7 +934,7 @@ export class PractitionerProfileEdit {
    * en la fila, a 375 la tabla medía 425 px en 301 (H4.S3.M4).
    */
   protected readonly columnasMatriculas = computed<readonly ColumnDef<FilaMatricula>[]>(() => [
-    { key: 'numero', header: 'Nº de matrícula', priority: 1 },
+    { key: 'numero', header: 'Nº de matrícula', priority: 1, cell: this.celdaNumeroMatricula() },
     { key: 'autoridad', header: 'Autoridad', priority: 2 },
     { key: 'inscripcion', header: 'Inscripción', priority: 2 },
     { key: 'estado', header: 'Estado', priority: 2 },
@@ -981,6 +1001,7 @@ export class PractitionerProfileEdit {
       estado: this.etiqueta(matricula.stateConceptId, PENDIENTE_DE_VERIFICACION),
       estadoConceptId: matricula.stateConceptId,
       ...(matricula.fileId === undefined ? {} : { fileId: matricula.fileId }),
+      pendiente: matriculaPendiente(this.etiquetas().get(matricula.stateConceptId)?.code),
     }));
   });
 
@@ -1073,7 +1094,11 @@ export class PractitionerProfileEdit {
   );
 
   protected readonly filtrosEspecialidades: readonly FilterDef[] = [
-    { key: CLAVE_ESTADO_ESPECIALIDAD, label: 'Estado', options: OPCIONES_DE_ESTADO },
+    {
+      key: CLAVE_ESTADO_ESPECIALIDAD,
+      label: 'Estado',
+      options: OPCIONES_DE_ESTADO_DE_ESPECIALIDAD,
+    },
   ];
 
   private readonly estadoEspecialidadElegido = signal(
@@ -1882,8 +1907,11 @@ export class PractitionerProfileEdit {
      o más, la fila muestra un solo disparador y las acciones viven en un
      desplegable. Lo decide `app-row-actions` por cuántas son, no esta
      pantalla. Un título pendiente con diploma tiene tres (editar, descargar
-     y retirar); una especialidad, dos. La descarga y el retiro en curso
-     apagan su acción y lo dicen en el texto, como lo hacía el botón. */
+     y retirar); una especialidad pendiente, dos. Lo ya revisado de las tres
+     tablas no se edita ni se retira: se ve y, si tiene archivo, se descarga
+     (títulos desde el corte; especialidades y matrículas desde el 24/09/2026).
+     La descarga y el retiro en curso apagan su acción y lo dicen en el
+     texto, como lo hacía el botón. */
 
   /** Lo que se le puede hacer a un título. Lo verificado ya no se edita ni se retira. */
   protected accionesDeFormacion(fila: FilaFormacion): readonly RowAction[] {
@@ -1900,16 +1928,24 @@ export class PractitionerProfileEdit {
     return acciones;
   }
 
+  /** Lo que se le puede hacer a una especialidad. Verificada, ya no se edita ni se retira. */
   protected accionesDeEspecialidad(fila: FilaEspecialidad): readonly RowAction[] {
+    if (!fila.pendiente) return [];
     return [{ code: 'editar', label: 'Editar', icon: 'edit' }, this.accionDeRetiro(fila.id)];
   }
 
+  /** Lo que se le puede hacer a una matrícula. Fuera de «pendiente», sólo bajar el carnet. */
   protected accionesDeMatricula(fila: FilaMatricula): readonly RowAction[] {
-    const acciones: RowAction[] = [{ code: 'editar', label: 'Editar', icon: 'edit' }];
+    const acciones: RowAction[] = [];
+    if (fila.pendiente) {
+      acciones.push({ code: 'editar', label: 'Editar', icon: 'edit' });
+    }
     if (fila.fileId !== undefined) {
       acciones.push(this.accionDeDescarga(fila.id));
     }
-    acciones.push(this.accionDeRetiro(fila.id));
+    if (fila.pendiente) {
+      acciones.push(this.accionDeRetiro(fila.id));
+    }
     return acciones;
   }
 

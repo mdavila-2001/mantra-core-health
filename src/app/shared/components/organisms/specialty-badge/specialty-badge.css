@@ -53,17 +53,6 @@
     overflow-wrap: break-word;
 }
 
-.specialty-badge__certificada {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-}
-
-.specialty-badge__certificada svg {
-    inline-size: 1em;
-    block-size: 1em;
-}
-
 .specialty-badge__sello {
     flex: none;
 }

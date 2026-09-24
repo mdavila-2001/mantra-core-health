@@ -1,4 +1,5 @@
 import {
+  OPCIONES_INSTITUCION_EDUCATIVA,
   UNIVERSIDADES_DEL_SISTEMA,
   UNIVERSIDADES_PRIVADAS,
 } from '../../../../core/profesion/instituciones-educativas';
@@ -34,10 +35,39 @@ export function coincideConLaBusqueda(termino: string, campos: readonly string[]
 /** Los dos estados por los que se filtra: el trámite sigue abierto, o ya se revisó. */
 export type EstadoDeVerificacion = 'pendiente' | 'verificado';
 
-/** Las opciones del filtro «Estado». Una lista cerrada: el filtro nunca es texto libre. */
+/**
+ * Las opciones del filtro «Estado». Una lista cerrada: el filtro nunca es texto libre.
+ * Dicen lo mismo que la columna, que muestra la etiqueta del estado: «Pendiente».
+ */
 export const OPCIONES_DE_ESTADO: readonly SelectOption<EstadoDeVerificacion>[] = [
-  { value: 'pendiente', label: 'Pendiente de verificación' },
+  { value: 'pendiente', label: 'Pendiente' },
   { value: 'verificado', label: 'Verificado' },
+];
+
+/**
+ * Los códigos del estado de una matrícula que todavía se puede corregir.
+ *
+ * La matrícula no trae un sí/no de verificación, como la especialidad
+ * (`verified`) o el título (`verifiedAt`): sólo el concepto de su estado. La API
+ * lo llama `AUTH_PENDING` y el simulador, `ST-PENDING`. Cualquier otro estado
+ * —activa, vencida— ya pasó por quien la revisó y no se corrige desde acá, igual
+ * que un título verificado (decisión del 24/09/2026).
+ */
+const CODIGOS_DE_MATRICULA_PENDIENTE: ReadonlySet<string> = new Set(['AUTH_PENDING', 'ST-PENDING']);
+
+/**
+ * Si una matrícula todavía se puede corregir. Sin el código a la vista —las
+ * etiquetas llegan después que el perfil, o no llegan— cuenta como pendiente,
+ * que es lo que la fila dice mientras tanto.
+ */
+export function matriculaPendiente(codigoDelEstado: string | undefined): boolean {
+  return codigoDelEstado === undefined || CODIGOS_DE_MATRICULA_PENDIENTE.has(codigoDelEstado);
+}
+
+/** Las mismas dos, en femenino: la tabla de especialidades dice «Verificada». */
+export const OPCIONES_DE_ESTADO_DE_ESPECIALIDAD: readonly SelectOption<EstadoDeVerificacion>[] = [
+  { value: 'pendiente', label: 'Pendiente' },
+  { value: 'verificado', label: 'Verificada' },
 ];
 
 /**
@@ -104,9 +134,9 @@ export function coincideConElEstado(filtro: string | null, pendiente: boolean): 
  * El catálogo de `core/profesion/instituciones-educativas.ts` no tiene un campo
  * de código, y ninguna capa del proyecto tiene un padrón de instituciones con
  * id. Lo que sí tiene cada casa de estudios es su sigla dentro de la etiqueta,
- * entre paréntesis —«Universidad Mayor de San Andrés (UMSA) — La Paz»—, y así
- * se lee en el desplegable. La tabla la toma de esa misma etiqueta, para que el
- * desplegable y la tabla no puedan mostrar dos siglas distintas.
+ * entre paréntesis —«Universidad Mayor de San Andrés (UMSA) — La Paz»—. El
+ * desplegable la pone adelante y la tabla al lado del nombre, y las dos la toman
+ * de esa misma etiqueta, para que no puedan mostrar dos siglas distintas.
  */
 
 /** Las instituciones que se eligen del desplegable, sin separadores de grupo. */
@@ -133,3 +163,24 @@ export function institucionConCodigo(institucion: string): string {
   const codigo = codigoDeInstitucion(institucion);
   return codigo === null ? institucion : `${institucion} (${codigo})`;
 }
+
+/**
+ * Una opción del desplegable con la sigla adelante: «UMSA · Universidad Mayor de
+ * San Andrés — La Paz». Un `<select>` cerrado recorta lo que no entra, y a
+ * 375 px cortaba justo la sigla, que es lo que tiene que leerse (Q-8). Adelante
+ * se lee a cualquier ancho. Lo que no trae sigla —los separadores, «Universidad
+ * NUR», la salida a texto libre— queda igual, y el valor no cambia nunca.
+ */
+export function conSiglaAdelante<T extends { readonly label: string }>(opcion: T): T {
+  const sigla = opcion.label.match(SIGLA_EN_LA_ETIQUETA);
+  if (sigla === null) return opcion;
+  const nombre = opcion.label
+    .replace(sigla[0], '')
+    .replace(/\s{2,}/gu, ' ')
+    .trim();
+  return { ...opcion, label: `${sigla[1]} · ${nombre}` };
+}
+
+/** El desplegable de institución del editor, con cada sigla adelante. */
+export const OPCIONES_DE_INSTITUCION_CON_SIGLA =
+  OPCIONES_INSTITUCION_EDUCATIVA.map(conSiglaAdelante);

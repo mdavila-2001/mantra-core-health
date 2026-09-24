@@ -1,4 +1,4 @@
-import { booleanAttribute, ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 import { SpecialtyIcon } from '../../atoms/specialty-icon/specialty-icon';
 import { StatusSeal } from '../status-seal/status-seal';
@@ -11,7 +11,6 @@ import type { StatusSealVariant } from '../status-seal/status-seal.types';
  * ```html
  * <app-specialty-badge
  *   [especialidad]="e.nombre"
- *   [certificada]="e.certificada"
  *   [estado]="e.estado"
  *   [sello]="e.sello"
  * />
@@ -32,6 +31,11 @@ import type { StatusSealVariant } from '../status-seal/status-seal.types';
  * vieran iguales (D-01) y la distinción se retiró de la insignia. El dato
  * `isPrimary` sigue en el contrato: sólo dejó de mostrarse.
  *
+ * Por la misma razón, desde el 24/09/2026 tampoco marca la certificación del
+ * consejo: una tilde en una sola insignia la volvía distinta de las otras, que
+ * es justo lo que D-01 quita. El dato `boardCertified` sigue en el contrato y
+ * se dice con palabras donde corresponde, en «Credenciales» de la ficha.
+ *
  * **Por qué no el hash.** Repartía `success`, `info` y `secondary` entre
  * especialidades, y los dos primeros **significan algo** en este sistema, así
  * que una especialidad podía leerse como el estado de un trámite. Un color
@@ -49,9 +53,8 @@ import type { StatusSealVariant } from '../status-seal/status-seal.types';
  *
  * ## Nada se dice sólo con color
  *
- * «Certificada» lleva un glifo —forma, no color— con su texto para lectores.
- * El estado lo pone
- * `app-status-seal`, que ya exige `label` por la misma razón.
+ * El estado lo pone `app-status-seal`, que exige `label` por la misma razón:
+ * el tono acompaña al texto, no lo reemplaza.
  *
  * ## Por qué vive en `organisms/` y no en `molecules/`
  *
@@ -79,8 +82,6 @@ import type { StatusSealVariant } from '../status-seal/status-seal.types';
 export class SpecialtyBadge {
   /** El nombre de la especialidad. El ícono se resuelve de acá adentro. */
   readonly especialidad = input.required<string>();
-
-  readonly certificada = input(false, { transform: booleanAttribute });
 
   /** El estado en palabras. Sin texto no se dibuja sello, aunque haya `sello`. */
   readonly estado = input('');

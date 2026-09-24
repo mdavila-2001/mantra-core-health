@@ -2121,6 +2121,18 @@ describe('PractitionerProfileEdit', () => {
       return acciones.map((accion) => accion.code);
     }
 
+    /** Las etiquetas de los dos estados de matrícula de `CON_ESTADOS`, con el código del simulador. */
+    function darEtiquetasDeMatricula(): void {
+      const estado = (conceptId: string, code: string, display: string) =>
+        [conceptId, { conceptId, code, display, codeSystemVersionId: 'csv-1' }] as const;
+      señal<ReadonlyMap<string, unknown>>('etiquetas').set(
+        new Map([
+          estado('st-activo', 'ST-ACTIVE', 'Activo'),
+          estado('st-pendiente', 'ST-PENDING', 'Pendiente'),
+        ]),
+      );
+    }
+
     it('con doce títulos se ven diez y el paginador dice «1–10 de 12»; la página 2 trae los otros dos', () => {
       const fixture = montarConVista(DOCE_TITULOS);
       componente.pestana.set(4);
@@ -2268,19 +2280,46 @@ describe('PractitionerProfileEdit', () => {
       expect(codigos(porId('c-ok-archivo'))).toEqual(['descargar']);
       expect(codigos(porId('c-ok'))).toEqual([]);
 
-      const [especialidad] = interno<() => readonly unknown[]>('filasEspecialidades')();
-      expect(
-        codigos(
-          interno<(f: unknown) => readonly { code: string }[]>('accionesDeEspecialidad')(
-            especialidad,
-          ),
-        ),
-      ).toEqual(['editar', 'retirar']);
-      const [conCarnet, sinCarnet] = interno<() => readonly unknown[]>('filasMatriculas')();
+      // Lo verificado de especialidades y matrículas, igual que los títulos (24/09/2026).
+      const [verificada, pendiente] = interno<() => readonly unknown[]>('filasEspecialidades')();
+      const accionesDeEspecialidad =
+        interno<(f: unknown) => readonly { code: string }[]>('accionesDeEspecialidad');
+      expect(codigos(accionesDeEspecialidad(verificada))).toEqual([]);
+      expect(codigos(accionesDeEspecialidad(pendiente))).toEqual(['editar', 'retirar']);
+
+      darEtiquetasDeMatricula();
+      const [activa, porVerificar] = interno<() => readonly unknown[]>('filasMatriculas')();
       const accionesDeMatricula =
         interno<(f: unknown) => readonly { code: string }[]>('accionesDeMatricula');
-      expect(codigos(accionesDeMatricula(conCarnet))).toEqual(['editar', 'descargar', 'retirar']);
-      expect(codigos(accionesDeMatricula(sinCarnet))).toEqual(['editar', 'retirar']);
+      expect(codigos(accionesDeMatricula(activa))).toEqual(['descargar']);
+      expect(codigos(accionesDeMatricula(porVerificar))).toEqual(['editar', 'retirar']);
+    });
+
+    it('mientras no llega el estado de una matrícula, se la trata como pendiente: es lo que dice la fila', () => {
+      montarYCargar(CON_ESTADOS);
+      const [activa] = interno<() => readonly unknown[]>('filasMatriculas')();
+      expect(
+        codigos(
+          interno<(f: unknown) => readonly { code: string }[]>('accionesDeMatricula')(activa),
+        ),
+      ).toEqual(['editar', 'descargar', 'retirar']);
+    });
+
+    it('lo verificado dice por qué no tiene botones: «Verificada: ya no se corrige», «Activo: ya no se corrige»', () => {
+      const fixture = montarConVista(CON_ESTADOS);
+      darEtiquetasDeMatricula();
+      componente.pestana.set(5);
+      fixture.detectChanges();
+      const panel = panelAbierto(fixture);
+      const nota = (testId: string) =>
+        panel
+          .querySelector(`[data-testid="${testId}"]`)
+          ?.parentElement?.querySelector('.edicion__acciones-nota')
+          ?.textContent?.trim();
+      expect(nota('especialidad-acciones-spec-ok')).toBe('Verificada: ya no se corrige');
+      expect(nota('especialidad-acciones-spec-pend')).toBeUndefined();
+      expect(nota('matricula-acciones-lic-activa')).toBe('Activo: ya no se corrige');
+      expect(nota('matricula-acciones-lic-pendiente')).toBeUndefined();
     });
 
     it('con tres acciones la fila muestra un solo disparador; con dos, los botones con su texto', () => {
@@ -2307,12 +2346,49 @@ describe('PractitionerProfileEdit', () => {
       componente.pestana.set(5);
       fixture.detectChanges();
       const especialidad = panelAbierto(fixture).querySelector(
-        '[data-testid="especialidad-acciones-spec-ok"]',
+        '[data-testid="especialidad-acciones-spec-pend"]',
       );
       const botones = [...(especialidad?.querySelectorAll('.row-actions__inline') ?? [])].map((b) =>
         b.textContent?.trim(),
       );
       expect(botones).toEqual(['Editar', 'Retirar']);
+    });
+
+    it('el estado va debajo del identificador en las tres tablas, para cuando su columna pasa al detalle', () => {
+      const fixture = montarConVista({
+        ...CON_ESTADOS,
+        credentials: [
+          {
+            id: 'c-pend',
+            credentialTypeConceptId: 'cred-titulo',
+            number: 'T-1',
+            stateConceptId: 'st-pending',
+          },
+        ],
+      });
+      componente.pestana.set(4);
+      fixture.detectChanges();
+      const titulo = panelAbierto(fixture).querySelector(
+        '[data-testid="tabla-formacion"] [data-testid="formacion-estado-en-fila"]',
+      );
+      expect(titulo?.closest('.edicion__celda-principal')?.textContent).toContain('T-1');
+      expect(titulo?.textContent?.trim()).toBeTruthy();
+
+      componente.pestana.set(5);
+      fixture.detectChanges();
+      const panel = panelAbierto(fixture);
+      const especialidades = [
+        ...panel.querySelectorAll('[data-testid="especialidad-estado-en-fila"]'),
+      ].map((e) => e.textContent?.trim());
+      expect(especialidades).toContain('Verificada');
+      expect(especialidades).toHaveLength(2);
+      expect(panel.querySelectorAll('[data-testid="matricula-estado-en-fila"]')).toHaveLength(2);
+    });
+
+    it('el filtro «Estado» de especialidades dice «Verificada», como la tabla', () => {
+      const filtro =
+        interno<readonly { options: readonly { label: string }[] }[]>('filtrosEspecialidades')[0]!;
+      expect(filtro.options.map((o) => o.label)).toEqual(['Pendiente', 'Verificada']);
     });
 
     it('cada acción elegida llama a lo que hacía su botón', () => {
