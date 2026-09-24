@@ -1,15 +1,33 @@
 <!-- Sin zonas no hay silueta: las formas están, pero sin `id` no hay nada que
      elegir, y un dibujo que no se puede pulsar es peor que su ausencia. -->
-@if (dibujables().length > 0) {
+@if (vista(); as actual) {
   <div class="body-map">
+    <!-- Con una sola vista no hay nada que elegir: el selector sobra. -->
+    @if (opcionesDeVista().length > 1) {
+      <app-segmented-control
+        class="body-map__vistas"
+        ariaLabel="Cómo mirar el cuerpo"
+        [options]="opcionesDeVista()"
+        [value]="actual.vista.id"
+        (valueChange)="cambiarVista($event)"
+      />
+    }
+
     <svg
       class="body-map__lienzo"
-      [attr.viewBox]="viewBox"
+      [class.body-map__lienzo--cara]="actual.vista.id === 'cara'"
+      [attr.viewBox]="actual.vista.viewBox"
       role="group"
-      [attr.aria-label]="etiqueta()"
+      [attr.aria-label]="etiqueta() + ' (' + actual.vista.nombre + ')'"
+      [attr.data-testid]="testId() + '-vista-' + actual.vista.id"
       focusable="false"
     >
-      @for (zona of dibujables(); track zona.id) {
+      <!-- El contorno entero va debajo: es lo que hace que la figura se lea
+           como una persona aunque falte alguna zona, y le da el borde exterior
+           parejo que las zonas, cortadas entre sí, no tienen. -->
+      <path class="body-map__contorno" [attr.d]="actual.vista.contorno" aria-hidden="true" />
+
+      @for (zona of actual.zonas; track zona.id) {
         <g class="body-map__zona" [class.body-map__zona--elegida]="zona.id === value()">
           <!-- El `role="button"` y el `tabindex` son lo que convierte un dibujo
                en un control: sin ellos la silueta sería un adorno que sólo
@@ -24,12 +42,16 @@
             [attr.aria-pressed]="zona.id === value()"
             [attr.aria-label]="zona.nombre"
             [attr.data-testid]="testId() + '-' + zona.id"
-            (click)="elegir(zona.id)"
-            (keydown.enter)="elegir(zona.id)"
-            (keydown.space)="elegirConBarra($event, zona.id)"
+            (click)="elegir(zona)"
+            (keydown.enter)="elegir(zona)"
+            (keydown.space)="elegirConBarra($event, zona)"
           />
         </g>
       }
+
+      <!-- Clavículas, columna, rasgos de la cara: ayudan a leer la figura y
+           no se pulsan (el clic pasa a la zona de abajo). -->
+      <path class="body-map__detalles" [attr.d]="actual.vista.detalles" aria-hidden="true" />
     </svg>
 
     <!-- La tercera señal de lo elegido, además del relleno y del trazo: en

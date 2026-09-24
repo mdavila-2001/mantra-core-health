@@ -169,11 +169,30 @@ describe('SymptomCheck · la silueta', () => {
     );
   });
 
-  it('tocar una pastilla resalta esa zona en la figura', () => {
-    tocar('zona-panza');
+  it('tocar una zona la resalta en la figura y suelta la anterior', () => {
+    tocar('body-map-pecho');
+    tocar('body-map-estomago');
 
-    expect(presionada('body-map-panza')).toBe('true');
+    expect(presionada('body-map-estomago')).toBe('true');
     expect(presionada('body-map-pecho')).toBe('false');
+  });
+
+  /** Zonas finas: cada parte ofrece lo suyo, y lleva a especialidades distintas. */
+  it('la rodilla ofrece la rodilla, no el hombro', () => {
+    tocar('body-map-rodillas');
+    const opciones = html.querySelector('[data-testid="zona-abierta"]')?.textContent ?? '';
+
+    expect(opciones).toContain('dolor de rodilla');
+    expect(opciones).not.toContain('dolor de hombro');
+  });
+
+  it('de frente, tocar la cabeza acerca la cara para elegir los ojos', () => {
+    tocar('body-map-cabeza');
+    tocar('body-map-ojos');
+
+    expect(html.querySelector('[data-testid="zona-abierta"]')?.textContent).toContain(
+      'visión borrosa',
+    );
   });
 
   it('volver a tocar la zona en la figura la cierra', () => {
@@ -197,10 +216,14 @@ describe('SymptomCheck · la silueta', () => {
     expect(html.querySelector('app-alert')?.textContent).toContain('guardia');
   });
 
-  /** Las pastillas se conservan: son el camino de «piel», «ánimo» y «general», que no tienen forma. */
-  it('las pastillas siguen estando, incluidas las que no tienen forma', () => {
+  /**
+   * Las pastillas son el camino de «piel», «ánimo» y «general», que no tienen
+   * forma; lo que se señala en el cuerpo no se repite como pastilla.
+   */
+  it('las pastillas son sólo lo que no tiene forma', () => {
     expect(html.querySelector('[data-testid="zona-piel"]')).not.toBeNull();
     expect(html.querySelector('[data-testid="body-map-piel"]')).toBeNull();
+    expect(html.querySelector('[data-testid="zona-pecho"]')).toBeNull();
   });
 });
 
