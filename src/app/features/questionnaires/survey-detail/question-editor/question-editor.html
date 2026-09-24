@@ -1,187 +1,239 @@
-@if (!abierta()) {
-  <!-- ─── Plegada: se lee ────────────────────────────────────────────────────
-       La fila entera abre el editor cuando se puede editar. En una versión
-       publicada no es un botón: no hay nada que abrir, y un control que no
-       hace nada es peor que su ausencia. -->
-  <div
-    class="editor-pregunta__fila"
-    [class.editor-pregunta__fila--pulsable]="editable()"
-    [attr.role]="editable() ? 'button' : null"
-    [attr.tabindex]="editable() ? 0 : null"
-    [attr.aria-expanded]="editable() ? false : null"
-    [attr.aria-label]="editable() ? 'Editar: ' + pregunta().questionText : null"
-    (click)="editable() && abrir.emit()"
-    (keydown.enter)="editable() && abrir.emit()"
-    (keydown.space)="editable() && abrir.emit()"
-  >
-    <span class="editor-pregunta__posicion">{{ pregunta().position }}</span>
+<!-- ─── La fila: se lee, con aspecto de formulario ──────────────────────────────
+     El rótulo, la marca de obligatoria y el control con el que se va a
+     responder, **deshabilitado**: es una muestra de cómo se ve la pregunta, no
+     un lugar donde escribir. Para cambiar algo está el botón que abre el modal.
 
-    <app-question-type-icon class="editor-pregunta__icono" [tipo]="pregunta().answerType" />
+     La fila entera también abre, porque es donde está la pregunta y porque el
+     teclado ya llegaba así. En una versión publicada no es un botón: no hay
+     nada que abrir, y un control que no hace nada es peor que su ausencia. -->
+<div
+  class="editor-pregunta__fila"
+  [class.editor-pregunta__fila--pulsable]="editable()"
+  [attr.role]="editable() ? 'button' : null"
+  [attr.tabindex]="editable() ? 0 : null"
+  [attr.aria-expanded]="editable() ? abierta() : null"
+  [attr.aria-label]="editable() ? 'Editar: ' + pregunta().questionText : null"
+  (click)="editable() && abrir.emit()"
+  (keydown.enter)="editable() && abrir.emit()"
+  (keydown.space)="editable() && abrir.emit()"
+>
+  <span class="editor-pregunta__posicion">{{ pregunta().position }}</span>
 
-    <span class="editor-pregunta__cuerpo">
-      <span class="editor-pregunta__texto">
-        {{ pregunta().questionText }}
-        @if (pregunta().required) {
-          <span class="editor-pregunta__obligatoria" aria-label="obligatoria">*</span>
-        }
-      </span>
-      <span class="editor-pregunta__meta">
-        {{ etiquetaDelTipo() }}
-        @if (detalle()) {
-          · {{ detalle() }}
-        }
-      </span>
+  <app-question-type-icon class="editor-pregunta__icono" [tipo]="pregunta().answerType" />
+
+  <span class="editor-pregunta__cuerpo">
+    <span class="editor-pregunta__texto">
+      {{ pregunta().questionText }}
+      @if (pregunta().required) {
+        <span class="editor-pregunta__obligatoria" aria-label="obligatoria">*</span>
+      }
+    </span>
+    <span class="editor-pregunta__meta">
+      {{ etiquetaDelTipo() }}
+      @if (detalle()) {
+        · {{ detalle() }}
+      }
     </span>
 
-    @if (editable()) {
-      <!-- `stopPropagation`: la fila entera abre el editor, y sin esto mover
-           una pregunta la abriría además de moverla. -->
-      <span class="editor-pregunta__controles">
-        <button
-          app-button
-          variant="ghost"
-          size="sm"
-          type="button"
-          [disabled]="esPrimera()"
-          aria-label="Subir la pregunta"
-          (click)="$event.stopPropagation(); mover.emit(-1)"
-        >↑</button>
-        <button
-          app-button
-          variant="ghost"
-          size="sm"
-          type="button"
-          [disabled]="esUltima()"
-          aria-label="Bajar la pregunta"
-          (click)="$event.stopPropagation(); mover.emit(1)"
-        >↓</button>
-      </span>
-    }
-  </div>
-} @else {
-  <!-- ─── Desplegada: se edita ─────────────────────────────────────────────── -->
-  <div class="editor-pregunta__edicion">
-    <app-form-field label="Pregunta" hint="Cómo la va a leer el paciente." [required]="true">
-      <app-input
-        [value]="texto()"
-        (valueChange)="cambiarTexto($event)"
-        placeholder="¿Cómo calificarías la atención recibida?"
-        data-testid="editor-texto"
-      />
-    </app-form-field>
-
-    <app-form-field label="Tipo de respuesta" [required]="true">
-      <app-select
-        [options]="tipos"
-        [value]="tipo()"
-        (valueChange)="cambiarTipo($event)"
-        data-testid="editor-tipo"
-      />
-    </app-form-field>
-
-    @if (pideOpciones()) {
-      <!-- Una fila por opción, con su botón de quitar. Ver el JSDoc: el
-           `textarea` de «una por línea» que había antes no decía cuántas eran
-           ni dejaba quitar la del medio. -->
-      <fieldset class="editor-pregunta__opciones">
-        <legend>Opciones</legend>
-        @for (opcion of opciones(); track $index) {
-          <div class="editor-pregunta__opcion">
-            <span class="editor-pregunta__opcion-marca" aria-hidden="true">
-              @if (tipo() === 'SINGLE_CHOICE') {
+    <!-- `aria-hidden`: el enunciado, el tipo y el detalle ya están dichos
+         arriba, y repetirlos en controles apagados sólo alarga lo que un
+         lector de pantalla tiene que escuchar antes de llegar a las acciones. -->
+    <span class="editor-pregunta__vista" aria-hidden="true">
+      @if (listaEnLaFila()) {
+        @for (opcion of opcionesGuardadas(); track $index) {
+          <span class="editor-pregunta__opcion">
+            <span class="editor-pregunta__opcion-marca">
+              @if (pregunta().answerType === 'SINGLE_CHOICE') {
                 ○
               } @else {
                 ☐
               }
             </span>
-            <app-input
-              [value]="opcion"
-              (valueChange)="cambiarOpcion($index, $event)"
-              [placeholder]="'Opción ' + ($index + 1)"
-              [attr.aria-label]="'Opción ' + ($index + 1)"
-              [attr.data-testid]="'editor-opcion-' + $index"
-            />
-            <button
-              app-button
-              variant="ghost"
-              size="sm"
-              type="button"
-              [disabled]="opciones().length <= 2"
-              [attr.aria-label]="'Quitar la opción ' + ($index + 1)"
-              (click)="quitarOpcion($index)"
-            >✕</button>
-          </div>
+            <app-input [value]="opcion" [disabled]="true" />
+          </span>
         }
-        <button
-          app-button
-          variant="ghost"
-          size="sm"
-          type="button"
-          (click)="agregarOpcion()"
-          data-testid="editor-agregar-opcion"
-        >
-          + Agregar opción
-        </button>
-      </fieldset>
-    }
+      } @else {
+        <app-input [placeholder]="muestraDeRespuesta()" [disabled]="true" />
+      }
+    </span>
+  </span>
 
-    @if (pideEscala()) {
-      <div class="editor-pregunta__escala">
-        <app-form-field label="Mínimo" [required]="true">
-          <app-input
-            type="number"
-            [value]="minimo()"
-            (valueChange)="cambiarMinimo($event)"
-            data-testid="editor-minimo"
-          />
-        </app-form-field>
-        <app-form-field label="Máximo" [required]="true">
-          <app-input
-            type="number"
-            [value]="maximo()"
-            (valueChange)="cambiarMaximo($event)"
-            data-testid="editor-maximo"
-          />
-        </app-form-field>
-      </div>
-    }
+  @if (editable()) {
+    <!-- `stopPropagation`: la fila entera abre el modal, y sin esto mover una
+         pregunta la abriría además de moverla.
 
-    <app-checkbox
-      [checked]="obligatoria()"
-      (checkedChange)="obligatoria.set($event)"
-      label="Obligatoria"
-    />
-
-    @if (problema(); as aviso) {
-      <p class="editor-pregunta__problema" role="status">{{ aviso }}</p>
-    }
-
-    <div class="editor-pregunta__acciones">
-      <button
-        app-button
-        variant="primary"
-        size="sm"
-        type="button"
-        [disabled]="problema() !== null || guardando()"
-        (click)="confirmar()"
-        data-testid="editor-guardar"
-      >
-        {{ guardando() ? 'Guardando…' : 'Listo' }}
-      </button>
-      <button app-button variant="ghost" size="sm" type="button" (click)="cerrar.emit()">
-        Cancelar
-      </button>
+         El botón que abre va **último**: los dos primeros de esta caja son
+         subir y bajar, y los escenarios de navegador los localizan por
+         posición. -->
+    <span class="editor-pregunta__controles">
       <button
         app-button
         variant="ghost"
         size="sm"
         type="button"
-        class="editor-pregunta__borrar"
-        (click)="borrar.emit()"
-        data-testid="editor-borrar"
-      >
-        Borrar pregunta
-      </button>
+        [disabled]="esPrimera()"
+        aria-label="Subir la pregunta"
+        (click)="$event.stopPropagation(); mover.emit(-1)"
+      >↑</button>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        [disabled]="esUltima()"
+        aria-label="Bajar la pregunta"
+        (click)="$event.stopPropagation(); mover.emit(1)"
+      >↓</button>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        [attr.aria-expanded]="abierta()"
+        [attr.aria-label]="'Editar: ' + pregunta().questionText"
+        (click)="$event.stopPropagation(); abrir.emit()"
+        data-testid="editor-pregunta-abrir"
+      >Editar</button>
+    </span>
+  }
+</div>
+
+@if (abierta()) {
+  <!-- ─── El modal: acá se edita ─────────────────────────────────────────────
+       El fondo, la inertización de lo de atrás, la trampa de foco, `Escape` y
+       la devolución del foco a quien lo abrió los da `app-content-dialog`
+       sobre el `<dialog>` nativo. Acá sólo se agrega qué se pregunta antes de
+       dejar cerrar con cambios sin guardar: `guardaDeCierre`. -->
+  <app-content-dialog
+    heading="Editar la pregunta"
+    description="Lo que escribas no se guarda hasta que pulses «Listo»."
+    [closeGuard]="guardaDeCierre"
+    (closed)="cerrar.emit()"
+    data-testid="editor-pregunta-modal"
+  >
+    <div class="editor-pregunta__edicion">
+      <app-form-field label="Pregunta" hint="Cómo la va a leer el paciente." [required]="true">
+        <app-input
+          [value]="texto()"
+          (valueChange)="cambiarTexto($event)"
+          placeholder="¿Cómo calificarías la atención recibida?"
+          data-testid="editor-texto"
+        />
+      </app-form-field>
+
+      <app-form-field label="Tipo de respuesta" [required]="true">
+        <app-select
+          [options]="tipos"
+          [value]="tipo()"
+          (valueChange)="cambiarTipo($event)"
+          data-testid="editor-tipo"
+        />
+      </app-form-field>
+
+      @if (pideOpciones()) {
+        <!-- Una fila por opción, con su botón de quitar. Ver el JSDoc: el
+             `textarea` de «una por línea» que había antes no decía cuántas eran
+             ni dejaba quitar la del medio. -->
+        <fieldset class="editor-pregunta__opciones">
+          <legend>Opciones</legend>
+          @for (opcion of opciones(); track $index) {
+            <div class="editor-pregunta__opcion">
+              <span class="editor-pregunta__opcion-marca" aria-hidden="true">
+                @if (tipo() === 'SINGLE_CHOICE') {
+                  ○
+                } @else {
+                  ☐
+                }
+              </span>
+              <app-input
+                [value]="opcion"
+                (valueChange)="cambiarOpcion($index, $event)"
+                [placeholder]="'Opción ' + ($index + 1)"
+                [attr.aria-label]="'Opción ' + ($index + 1)"
+                [attr.data-testid]="'editor-opcion-' + $index"
+              />
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                [disabled]="opciones().length <= 2"
+                [attr.aria-label]="'Quitar la opción ' + ($index + 1)"
+                (click)="quitarOpcion($index)"
+              >✕</button>
+            </div>
+          }
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            type="button"
+            (click)="agregarOpcion()"
+            data-testid="editor-agregar-opcion"
+          >
+            + Agregar opción
+          </button>
+        </fieldset>
+      }
+
+      @if (pideEscala()) {
+        <div class="editor-pregunta__escala">
+          <app-form-field label="Mínimo" [required]="true">
+            <app-input
+              type="number"
+              [value]="minimo()"
+              (valueChange)="cambiarMinimo($event)"
+              data-testid="editor-minimo"
+            />
+          </app-form-field>
+          <app-form-field label="Máximo" [required]="true">
+            <app-input
+              type="number"
+              [value]="maximo()"
+              (valueChange)="cambiarMaximo($event)"
+              data-testid="editor-maximo"
+            />
+          </app-form-field>
+        </div>
+      }
+
+      <app-checkbox
+        [checked]="obligatoria()"
+        (checkedChange)="obligatoria.set($event)"
+        label="Obligatoria"
+      />
+
+      @if (problema(); as aviso) {
+        <p class="editor-pregunta__problema" role="status">{{ aviso }}</p>
+      }
+
+      <div class="editor-pregunta__acciones">
+        <button
+          app-button
+          variant="primary"
+          size="sm"
+          type="button"
+          [disabled]="problema() !== null || guardando()"
+          (click)="confirmar()"
+          data-testid="editor-guardar"
+        >
+          {{ guardando() ? 'Guardando…' : 'Listo' }}
+        </button>
+        <button app-button variant="ghost" size="sm" type="button" (click)="cancelar()">
+          Cancelar
+        </button>
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          class="editor-pregunta__borrar"
+          (click)="borrar.emit()"
+          data-testid="editor-borrar"
+        >
+          Borrar pregunta
+        </button>
+      </div>
     </div>
-  </div>
+  </app-content-dialog>
 }

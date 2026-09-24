@@ -1,5 +1,5 @@
 /* ============================================================================
-    Una pregunta del cuestionario: plegada se lee, desplegada se edita.
+    Una pregunta del cuestionario: en la lista se lee, en un modal se edita.
 
     Sólo tokens del sistema. La caja la pone este componente y no una `app-card`
     anidada: son filas de una lista, y una card por fila dentro de la card de la
@@ -13,13 +13,14 @@
     background: var(--bg-surface);
 }
 
-/* La abierta se despega del resto: es donde está el trabajo. */
+/* La que tiene el modal abierto se marca: al cerrarlo, la vista vuelve a la
+   fila que se estaba editando y hay que poder encontrarla de un vistazo. */
 :host(.editor-pregunta--abierta) {
     border-color: var(--brand-primary);
     box-shadow: var(--shadow-sm);
 }
 
-/* ---- plegada ------------------------------------------------------------ */
+/* ---- la fila, en lectura ------------------------------------------------ */
 
 .editor-pregunta__fila {
     display: flex;
@@ -95,12 +96,29 @@
     gap: var(--sp-1);
 }
 
-/* ---- desplegada --------------------------------------------------------- */
+/* La muestra: los mismos controles del formulario, apagados. Es cómo se va a
+   ver la pregunta, no un lugar donde escribir —para eso está el modal—, así que
+   no toma el puntero: el clic sigue siendo el de la fila, que es la que abre. */
+.editor-pregunta__vista {
+    display: grid;
+    gap: var(--sp-2);
+    margin-block-start: var(--sp-2);
+    pointer-events: none;
+}
 
+/* En la muestra no hay botón de quitar: la tercera columna del editor sobra, y
+   dejarla reservada correría las opciones respecto del enunciado. */
+.editor-pregunta__vista .editor-pregunta__opcion {
+    grid-template-columns: 1.25rem minmax(0, 1fr);
+}
+
+/* ---- el modal ----------------------------------------------------------- */
+
+/* Sin `padding` propio: el que rodea al contenido lo pone el cuerpo del
+   diálogo, y sumarle otro dejaría el formulario flotando en el medio. */
 .editor-pregunta__edicion {
     display: grid;
     gap: var(--sp-3);
-    padding: var(--sp-4);
 }
 
 .editor-pregunta__opciones {

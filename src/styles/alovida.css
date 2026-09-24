@@ -2498,6 +2498,10 @@ h1, h2, h3, .titulo-h1, .app-dialog__titulo { overflow-wrap: break-word; }
 @media (max-width: 400px) {
   .app-main__inner { --app-main-inline-padding: var(--e3); padding: var(--e4) var(--e3) var(--e7); }
   .app-header { padding: 0 var(--e3); gap: var(--e2); }
+  /* N-01 (2026-09-22): con Tutoriales y Chats la cabecera de la médica (siete
+     controles) desbordaba 16 px a 375 px y recortaba el avatar. Se aprieta el
+     hueco entre íconos; el tamaño de cada blanco táctil no cambia. */
+  .app-header__derecha { gap: var(--e1); }
   .app-card { padding: var(--e4); }
   .pagina-indice { padding: var(--e6) var(--e3); }
   .app-tenant-switcher span { display: none; }

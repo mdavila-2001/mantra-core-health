@@ -30,17 +30,15 @@
       </p>
 
       <!-- Barra: buscador (nombre + dirección, normalizado) y filtro por tipo
-           (ADR-0015, regla 5). El botón de alta se proyecta a la derecha —
-           salvo que ya haya un consultorio propio, que es único y no admite
-           un segundo alta (Q-18). Se dibuja siempre: con cero sedes la tabla
-           igual se monta vacía, más simple que dos caminos según haya datos. -->
+           (ADR-0015, regla 5). El alta sigue disponible aunque ya haya otros
+           consultorios propios: cada uno queda como una sede independiente. -->
       <app-filter-bar
         searchLabel="Buscar por nombre o dirección"
         searchPlaceholder="Nombre o dirección"
         [filters]="filtrosSedes"
         (filtersChanged)="onFiltrosSedesChanged($event)"
       >
-        @if (consultorioPropio() === null && !altaDeSedeAbierta()) {
+        @if (!altaDeSedeAbierta()) {
           <button
             filter-bar-action
             app-button
@@ -80,16 +78,6 @@
           [(page)]="paginaSedes"
           [(pageSize)]="tamanoPaginaSedes"
         />
-      }
-
-      <!-- Uno solo. No es una regla de pantalla: `POST
-           /practitioners/me/sites` «crea —o reutiliza— la práctica personal
-           del profesional», así que la propia es una por persona. -->
-      @if (consultorioPropio(); as propio) {
-        <p class="historial__vacio historial__nota-propia" data-testid="sede-propia-unica">
-          Tu consultorio propio es «{{ propio.name }}». Es uno solo: para cambiarle
-          el nombre o la dirección, usá «Editar» en su línea.
-        </p>
       }
 
       @if (errorDeSede(); as mensaje) {
@@ -156,9 +144,9 @@
         >
           @if (sedeEnEdicion()) {
             <p class="historial__intro" data-testid="sede-edicion-aviso">
-              Los campos vienen con lo que ya tenías cargado: corregí lo que haga
-              falta. Lo que dejes en blanco queda como está, y para cambiar la
-              dirección escribila entera de nuevo.
+              Los campos vienen con lo que ya tenías cargado: corregí lo que haga falta. Lo que
+              dejes en blanco queda como está, y para cambiar la dirección escribila entera de
+              nuevo.
             </p>
           }
 
@@ -185,7 +173,11 @@
             <!-- D-06: tocar el mapa vació este campo — se anuncia acá, junto
                  al campo, para quien no ve el mapa. -->
             @if (avisoDireccionVaciada()) {
-              <p class="historial__aviso-mapa" data-testid="sede-direccion-vaciada" aria-live="polite">
+              <p
+                class="historial__aviso-mapa"
+                data-testid="sede-direccion-vaciada"
+                aria-live="polite"
+              >
                 Volvé a escribir la dirección: marcar el mapa reemplaza el texto anterior.
               </p>
             }
@@ -341,7 +333,7 @@
     </ng-template>
   }
 
-    <!-- El historial laboral. Se suprime entero cuando esta pantalla se monta
+  <!-- El historial laboral. Se suprime entero cuando esta pantalla se monta
          como «Mis organizaciones» o como la pestaña «Dónde atiendo» del
          editor: allá la pregunta es dónde atiende hoy, no dónde ejerció antes. -->
   @if (muestraHistorial()) {
@@ -392,6 +384,72 @@
       }
     }
 
+    <!-- ─── Lo que se puede corregir o retirar (sólo en «Trayectoria») ─────
+           La pestaña ya pinta la historia entera arriba, así que acá no se
+           repite: se lista únicamente lo accionable —lo declarado por el
+           profesional y lo que ninguna institución contestó todavía—, y va
+           pegado al formulario que es el que corrige. Sin nada que tocar, el
+           bloque no existe. -->
+    @if (layout() === 'timeline' && vinculosEditables().length > 0) {
+      <h3 class="historial__subtitulo">Corregir o retirar</h3>
+      <p class="historial__intro">
+        Lo que declaraste vos, y las solicitudes que todavía nadie contestó. Lo que una institución
+        ya confirmó o rechazó no se edita desde acá.
+      </p>
+      <ul class="historial__lista" data-testid="vinculos-editables">
+        @for (afiliacion of vinculosEditables(); track afiliacion.id) {
+          <li class="historial__item">
+            <div class="historial__institucion">
+              <strong>{{ afiliacion.organizationName }}</strong>
+              @if (afiliacion.roleTitle) {
+                <span class="historial__cargo">{{ afiliacion.roleTitle }}</span>
+              }
+            </div>
+
+            <div class="historial__periodo">
+              <span class="historial__fechas">
+                {{ afiliacion.startDate | date: 'MM/yyyy' }} —
+                @if (afiliacion.endDate) {
+                  {{ afiliacion.endDate | date: 'MM/yyyy' }}
+                } @else {
+                  actualidad
+                }
+              </span>
+            </div>
+
+            <div class="historial__acciones-sede">
+              @if (puedeCorregirse(afiliacion)) {
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="vinculo-editar"
+                  [attr.aria-label]="'Corregir el vínculo con ' + afiliacion.organizationName"
+                  (clicked)="abrirEdicionDeVinculo(afiliacion)"
+                >
+                  Editar
+                </button>
+              }
+              @if (puedeRetirarse(afiliacion)) {
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="vinculo-retirar"
+                  [attr.aria-label]="'Retirar el vínculo con ' + afiliacion.organizationName"
+                  (clicked)="retirarVinculo(afiliacion)"
+                >
+                  Retirar
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+
     <!-- ─── La línea de tiempo ──────────────────────────────────────────────
            Mismo reparto visual que el historial de verificaciones de arriba: una
            lista con su sello a la izquierda y el período a la derecha.
@@ -435,6 +493,41 @@
                 <p class="historial__vinculo historial__vinculo--{{ afiliacion.statusKind }}">
                   {{ aviso }}
                 </p>
+              }
+
+              <!-- Corregir alcanza sólo a lo que el profesional declaró por su
+                     cuenta; retirar, también a la solicitud que todavía nadie
+                     contestó. Lo que una organización ya decidió no se toca
+                     desde acá: ver `puedeCorregirse` y `puedeRetirarse`. -->
+              @if (puedeCorregirse(afiliacion) || puedeRetirarse(afiliacion)) {
+                <div class="historial__acciones-sede">
+                  @if (puedeCorregirse(afiliacion)) {
+                    <button
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      data-testid="vinculo-editar"
+                      [attr.aria-label]="'Corregir el vínculo con ' + afiliacion.organizationName"
+                      (clicked)="abrirEdicionDeVinculo(afiliacion)"
+                    >
+                      Editar
+                    </button>
+                  }
+                  @if (puedeRetirarse(afiliacion)) {
+                    <button
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      data-testid="vinculo-retirar"
+                      [attr.aria-label]="'Retirar el vínculo con ' + afiliacion.organizationName"
+                      (clicked)="retirarVinculo(afiliacion)"
+                    >
+                      Retirar
+                    </button>
+                  }
+                </div>
               }
             </li>
           }
@@ -481,7 +574,11 @@
            destino. -->
     @if (altaDeVinculoAbierta()) {
       <app-content-dialog
-        heading="Añadir elemento a tu historial"
+        [heading]="
+          vinculoEnEdicion() === null
+            ? 'Añadir elemento a tu historial'
+            : 'Corregir «' + vinculoEnEdicion()?.organizationName + '»'
+        "
         description="El hospital, la clínica o el consultorio donde ejerciste, y desde cuándo."
         size="md"
         closeLabel="Cancelar"
@@ -503,7 +600,7 @@
                modal: es lo que hace que Enter en un campo guarde, y lo que ata
                los controles a un mismo grupo. El botón proyectado queda fuera,
                así que llama a `registrar()` directo en vez de ser un submit. -->
-        <form class="historial__formulario" (submit)="$event.preventDefault(); registrar()">
+        <form class="historial__formulario" (submit)="$event.preventDefault(); guardarVinculo()">
           <!-- Dos formas de nombrar la institución, nunca las dos a la vez: elegirla
                del padrón y además escribirla serían dos respuestas a una pregunta. -->
           @if (modoDeInstitucion() === 'padron') {
@@ -561,7 +658,7 @@
 
           <!-- El desplegable sólo aparece si hay consultorios que ofrecer: un
                selector vacío es una pregunta sin respuestas posibles. -->
-          @if (opcionesDeSede().length > 0) {
+          @if (opcionesDeSede().length > 0 && vinculoEnEdicion() === null) {
             <app-form-field
               label="Consultorio de la plataforma"
               hint="Opcional. Si la institución es una de las sedes donde ya atendés, atalo acá."
@@ -597,9 +694,9 @@
           data-testid="guardar-vinculo"
           [isLoading]="registrando()"
           [disabled]="!puedeRegistrar()"
-          (clicked)="registrar()"
+          (clicked)="guardarVinculo()"
         >
-          Agregar al historial
+          {{ vinculoEnEdicion() === null ? 'Agregar al historial' : 'Guardar los cambios' }}
         </button>
       </app-content-dialog>
     }

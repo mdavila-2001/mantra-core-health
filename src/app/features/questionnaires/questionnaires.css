@@ -4,6 +4,10 @@
     El alta va en la misma pantalla, plegada: crear una encuesta es un acto
     breve —tres campos— y mandarlo a otra ruta obligaría a volver para ver el
     resultado.
+
+    La barra de búsqueda y filtro va **arriba de la lista y dentro del estado
+    con datos**: es una herramienta sobre lo que ya está cargado, no una
+    cabecera de la sección.
     ========================================================================== */
 
 .encuestas__alta {
@@ -15,6 +19,37 @@
   display: flex;
   justify-content: flex-end;
   margin-block-start: var(--sp-4);
+}
+
+/* Buscador y filtro en un renglón mientras entren; en pantalla angosta el
+   filtro baja entero, porque partir una fila de opciones excluyentes en dos
+   renglones desarma el control. */
+.encuestas__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-3);
+}
+
+.encuestas__buscador {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+}
+
+.encuestas__filtro {
+  display: flex;
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  overflow-x: auto;
+}
+
+.encuestas__recuento {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  margin-block: 0 var(--sp-4);
 }
 
 .encuestas__lista {

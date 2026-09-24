@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, viewChild } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { ContentDialog } from './content-dialog';
@@ -11,6 +11,7 @@ import { ContentDialog } from './content-dialog';
       <app-content-dialog
         heading="Dónde conseguirlo"
         description="Lista y mapa de las farmacias que lo publican."
+        [closeGuard]="guard()"
         (opened)="conLayout.set(true)"
         (closed)="cerrar()"
       >
@@ -24,6 +25,9 @@ import { ContentDialog } from './content-dialog';
 class HostComponent {
   readonly abierto = signal(false);
   readonly conLayout = signal(false);
+  readonly guard = signal<(() => boolean | Promise<boolean>) | null>(null);
+
+  readonly contentDialog = viewChild(ContentDialog);
 
   cerrar(): void {
     this.abierto.set(false);
@@ -145,6 +149,57 @@ describe('ContentDialog', () => {
     await fixture.whenStable();
 
     expect(document.body.style.overflow).toBe(antes);
+  });
+
+  describe('closeGuard', () => {
+    it('sin guard, Escape cierra igual que antes', async () => {
+      await abrir();
+
+      dialogo()?.dispatchEvent(new Event('cancel', { cancelable: true }));
+      await fixture.whenStable();
+
+      expect(dialogo()).toBeNull();
+    });
+
+    it('con guard que deniega, Escape NO cierra el modal', async () => {
+      host.guard.set(() => false);
+      await abrir();
+
+      dialogo()?.dispatchEvent(new Event('cancel', { cancelable: true }));
+      await fixture.whenStable();
+
+      expect(dialogo()).not.toBeNull();
+    });
+
+    it('con guard asíncrono que permite, el cierre llega tras resolver la promesa', async () => {
+      let resolver: (permitido: boolean) => void = () => undefined;
+      const pendiente = new Promise<boolean>((resolve) => (resolver = resolve));
+      host.guard.set(() => pendiente);
+      await abrir();
+
+      dialogo()?.dispatchEvent(new Event('cancel', { cancelable: true }));
+      await fixture.whenStable();
+      expect(dialogo()).not.toBeNull();
+
+      resolver(true);
+      // `close()` no expone la promesa que espera al guard: sin esperar
+      // primero a `pendiente`, `whenStable()` podía ganarle la carrera al
+      // `.then()` que todavía no corrió y leer el <dialog> antes de que
+      // `doClose()` lo sacara del árbol.
+      await pendiente;
+      await fixture.whenStable();
+      expect(dialogo()).toBeNull();
+    });
+
+    it('`close(true)` salta el guard: cierra aunque deniegue', async () => {
+      host.guard.set(() => false);
+      await abrir();
+
+      host.contentDialog()?.close(true);
+      await fixture.whenStable();
+
+      expect(dialogo()).toBeNull();
+    });
   });
 });
 
