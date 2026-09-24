@@ -15,6 +15,10 @@
 
 La fuente L0169 exige CI al profesional y L0170 exige seleccionar su departamento emisor. La rama API `justin/medical-module-execution-20260924` aplica ambos campos como requeridos en el DTO, vuelve a comprobar el catálogo del departamento antes de escribir y persiste el identificador nacional en toda alta válida. Los fixtures de integración usan identidades sintéticas. Commit publicado: `09af2caf` (API). Las pruebas API dirigidas pasan 104/104, `corepack yarn typecheck` y ESLint dirigido pasan. Sigue `A MEDIAS`: no se verificó el recorrido FE→API→PostgreSQL→recarga ni una captura. No se ejecutaron pruebas de integración porque el harness trunca esquemas de negocio y la base configurada no tiene aislamiento confirmado.
 
+### Auditoría de L0168 — nombres de pila
+
+El alta FE ya muestra Primer, Segundo y Tercer nombre y permite agregar más. La inspección del cliente/API y del spec actual revela que lo posterior al primer nombre se envía como una sola cadena en `middleName`; la entidad y los DTO actuales no pueden devolver por separado el tercero para edición. El test de la pantalla terminó 97/98: falló un test no relacionado de resolución de tipos de credencial por `ENOSPC`; las aserciones de tercer nombre quedaron entre las aprobadas. No se modifica el modelo/DDL bajo las reglas locales, por lo que L0168 sigue `A MEDIAS` hasta que un contrato/modelo autorizado conserve las partes por separado.
+
 La fuente funcional sigue siendo únicamente el metaprompt Médico congelado con SHA-256 b57dfd316c4d642eb5e1db49257397b8fd2864b511317282ae4b70ff1262a656. El trabajo de Paciente queda separado y sin cambios.
 
 - Frontend: rama justin/medical-module-cierre, worktree wt-medical-module-closure. El trabajo comenzó desde mockup a43ad2b311e1a69ff708fba5cef1e5a2100bbbc2; la rama se rebasó sobre origin/mockup b11dfdd382dd787fab33d5894979ccc2c4d5a96a antes del push. No hay cambios de producto.
