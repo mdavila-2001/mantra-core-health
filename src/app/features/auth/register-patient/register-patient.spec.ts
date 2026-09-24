@@ -1409,6 +1409,39 @@ describe('RegisterPatient', () => {
     expect(component.direccionConfirmada()).toBe(false);
   });
 
+  /**
+   * D-06: tocar el mapa deja «Línea de dirección 1» en blanco, porque el
+   * punto nuevo ya no es esa calle; y el aviso se va al volver a escribir.
+   */
+  it('tocar el mapa vacía la dirección escrita del domicilio, y sólo esa', () => {
+    const domicilio = component.formPaciente.controls.homeAddressLines;
+    const trabajo = component.formPaciente.controls.workAddressLines;
+    domicilio.setValue('Av. Banzer #42');
+    trabajo.setValue('Calle Libertad #120');
+
+    component.fijarPuntoDomicilio({ lat: -16.5, lng: -68.15 });
+
+    expect(domicilio.value).toBe('');
+    expect(component.domicilioPorReescribir()).toBe(true);
+    expect(trabajo.value).toBe('Calle Libertad #120');
+    expect(component.trabajoPorReescribir()).toBe(false);
+    // Vaciar no es teclear: el campo no queda como tocado por la persona.
+    expect(domicilio.dirty).toBe(false);
+
+    domicilio.setValue('Av. Banzer #42, 3er anillo');
+    expect(component.domicilioPorReescribir()).toBe(false);
+  });
+
+  it('tocar el mapa del trabajo vacía la dirección del trabajo', () => {
+    const trabajo = component.formPaciente.controls.workAddressLines;
+    trabajo.setValue('Calle Libertad #120');
+
+    component.fijarPuntoDeTrabajo({ lat: -17.4, lng: -66.1 });
+
+    expect(trabajo.value).toBe('');
+    expect(component.trabajoPorReescribir()).toBe(true);
+  });
+
   it('quitar la ubicación con el mapa vacío abierto lo cierra', () => {
     component.marcarDomicilioEnMapa();
     component.quitarUbicacion();

@@ -470,6 +470,15 @@
                   <p class="mi-perfil__nota">Todavía no pudimos traer estos datos.</p>
                 }
               </app-tab>
+
+              <!-- ─── Mis puntos ───────────────────────────────────────────── -->
+              <!-- N-03: la billetera del programa de fidelidad, dentro de la
+                   misma tarjeta. Es la MISMA pantalla que sirve la ruta
+                   `/my-account/loyalty`, embebida: sin su cabecera, porque la
+                   tarjeta ya tiene una. -->
+              <app-tab [label]="pestanas[4]">
+                <app-loyalty embebido data-testid="mi-perfil-puntos" />
+              </app-tab>
             </app-tabs>
           }
         </app-view-state-host>
