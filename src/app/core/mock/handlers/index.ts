@@ -18,7 +18,7 @@ import { registrarPracticas } from './practice.handlers';
 import { registrarProcedimientos } from './procedures.handlers';
 import { registrarPublico } from './public.handlers';
 import { registrarAnaliticaDeSeguros } from './insurance-analytics.handlers';
-import { registrarPortabilidadDeSeguros } from './insurance-portability.handlers';
+import { registerInsurancePortability } from './insurance-portability.handlers';
 import { registrarSeguros } from './insurance.handlers';
 import { registrarTerminologia } from './terminology.handlers';
 import { registrarVarios } from './misc.handlers';
@@ -45,7 +45,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarIdentidad(router);
   registrarSeguros(router);
   registrarAnaliticaDeSeguros(router);
-  registrarPortabilidadDeSeguros(router);
+  registerInsurancePortability(router);
   registrarEncuestas(router);
   registrarFinanzas(router);
   registrarModulosAdministrativos(router);
