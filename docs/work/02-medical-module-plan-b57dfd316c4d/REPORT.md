@@ -7,13 +7,26 @@
 - Peldaño máximo: `VERIFIED` para la persistencia/lectura segura de credenciales, exclusión de reservas concurrentes multi-sede y diez criterios puntuales de credenciales/especialidades con journey Chromium→API→PostgreSQL. El plan integral conserva 10/98 criterios HECHO; MED-E01/H1 y los escenarios restantes no están completos ni alcanzan `REGRESSION_VERIFIED`.
 - Avance integral: 10/98 criterios incluidos alcanzan aceptación y DoD puntual; matriz: 100 criterios fuente, 98 IN, 2 OUT; 10 HECHO, 60 A MEDIAS, 11 TODO, 17 BLOQUEADOS, 2 DESCARTADOS. CORR-08 mantiene alcance visual parcial.
 
+## Continuación: dirección laboral y más de un consultorio propio
+
+En `justin/medical-module-execution-20260924` se añadió al editor médico la dirección laboral como dato distinto del domicilio, junto con un segundo selector de mapa. FE carga y envía `workAddressLines` y el par `workLatitude`/`workLongitude` por separado; ausente significa “sin tocar” y dos `null` quitan el pin. La API lee el uso `ADDR_USE_WORK` sólo en la ficha propia, valida el par de coordenadas y reemplaza la dirección vigente con ese uso. No se cambió modelo ni DDL. También se eliminó la condición de interfaz que ocultaba “Agregar mi consultorio propio” después de la primera sede; cada sede conserva su propia dirección y GPS. Las puntas publicadas son FE `5588753cc9b3c0a70ce2cf19e4eda6090e5635c4` y API `982ed2b9a96a7a14afa4137b96847144c8f50726`.
+
+| Área | Verificación | Resultado | Límite |
+|---|---|---|---|
+| Editor médico y sedes | Dos specs dirigidos: `practitioner-profile-edit` y `work-history` | 2 archivos, 178/178 pruebas aprobadas; ESLint dirigido y `corepack yarn typecheck` exit 0 | Dobles HTTP; sin recorrido visual/Playwright ni persistencia real de este cambio |
+| API de perfil médico | Spec de servicio más spec de DTO para `workAddress` | 2 suites, 140/140 pruebas aprobadas; ESLint dirigido y `corepack yarn typecheck` exit 0 | Sin PostgreSQL/API real; no demuestra lectura tras reinicio |
+| Suite FE completa | `corepack yarn test --watch=false` | No terminó: 107 archivos pasaron y 472 fallaron al cargar/ejecutar; 3.203 pruebas pasaron y 30 fallaron. El runner devolvió `ENOSPC` creando archivos temporales; dos fallos identificados son los rojos preexistentes de `shell-layout`. | No es un resultado de regresión completo; no se omitieron ni debilitaron tests |
+| Evidencia visual del cambio | Intento anterior del smoke de Playwright en la rama FE | No se produjo captura válida; el sistema ya había devuelto `ENOSPC` al escribir salida visual | Los criterios relacionados siguen parciales; no se declara DoD visual |
+
+Los estados de `RP-MED-L0180`, `RP-MED-L0184`, `RP-MED-L0185` y `RP-MED-L0200` permanecen `A MEDIAS / TESTED`: se corrigieron huecos de UI/contrato y hay pruebas de unidad, pero falta verificar el recorrido navegador→API→PostgreSQL→recarga y sus fotos. El conteo global queda 10/98 `HECHO`; este avance no convierte MED-E03/H2 ni el plan completo en terminados.
+
 ## Verificado en esta continuación
 
 | Área | Verificación | Resultado | Límite |
 |---|---|---|---|
 | Tipos frontend | corepack yarn typecheck | Exit 0 sobre la punta actual de mockup | No acredita integración ni comportamiento visual completo |
 | Perfil, registro y sedes médicos | corepack yarn ng test --watch=false --filter='(RegisterPractitioner&#124;PractitionerProfile&#124;WorkHistory&#124;pestañas de la ficha del médico)' — 7 archivos, 381 pruebas aprobadas; solo suites de Médico con dobles, sin suites MyProfile de Paciente. | 7 archivos; 381 aprobadas | Dobles; sin API ni persistencia real |
-| Regresión frontend completa | corepack yarn ng test --watch=false | 583 archivos; 7.376 pruebas aprobadas en la repetición posterior a CORR-08 | No reemplaza journeys API/UI/DB ni E2E |
+| Regresión frontend completa previa a la última continuación | corepack yarn ng test --watch=false | 583 archivos; 7.376 pruebas aprobadas en la repetición posterior a CORR-08 | No reemplaza journeys API/UI/DB ni E2E; la ejecución posterior se interrumpió por ENOSPC, ver arriba |
 | Lint | corepack yarn lint | Exit 1; 246 errores @angular-eslint/prefer-on-push-component-change-detection | Son errores repo-wide; no se ocultaron ni se debilitó ninguna prueba |
 | Corrección visual CORR-08 | `scripts/corr-evidencia.sh 38 --antes` y `scripts/corr-evidencia.sh 38` | 8/8 celdas verdes en cada fase; capturas 375/768/1440 claro y 1440 oscuro; diálogo comparativo muestra selector antes y su ausencia después | Una ficha visual no acredita persistencia clínica ni cambia el estado del DoD médico |
 | API — alta profesional aislada | integration/practitioner-registration.int-spec.ts, worktree API | 8/8 aprobadas en DB desechable con semillas parciales | No es init DDL canónica ni journey del módulo Médico |
@@ -25,7 +38,7 @@
 
 El primer filtro amplio de 229 pruebas se descartó porque también seleccionó suites MyProfile compartidas con Paciente. El resultado válido para Médico es el filtro preciso de 381 pruebas indicado arriba; no se modificaron ni se contaron tareas del plan Paciente. Después se completó además la evidencia propia de CORR-08 en una rama independiente.
 
-La regresión completa más reciente del frontend incluye las pruebas que aparecieron como rojas en logs históricos —aviso-de-demora, identity-verification y shell-layout— y pasa sin saltos: 7.376/7.376. Las nuevas pruebas de agenda y credenciales API también pasan; no se borraron aserciones ni se ocultaron resultados.
+La regresión completa anterior al cambio H2 incluye las pruebas que aparecieron como rojas en logs históricos —aviso-de-demora, identity-verification y shell-layout— y pasó sin saltos: 7.376/7.376. La ejecución posterior al cambio H2 quedó incompleta por ENOSPC y está detallada arriba; no se borraron aserciones ni se ocultaron resultados.
 
 ## Avance parcial
 
@@ -45,7 +58,7 @@ En agenda, FX-2 pasó 13/13 y FX-9 pasó 4/4 en PostgreSQL 18 efímero; las 21 s
 
 ### F5 — regresión y evidencia visual
 
-El typecheck, los 381 tests médicos dirigidos, los 81 tests del editor y la suite frontend completa de 7.376 pruebas pasan. La evidencia de CORR-08 pasó 8/8 medidas en cada fase. El lint sigue fallando con 246 errores Angular ESLint; el lint dirigido a los archivos cambiados de CORR-08 pasa. Route-health se volvió a ejecutar y se detuvo en beforeAll porque la API requerida en localhost:3005 no estaba saludable; el verificador `scripts/atlas/fable-proof-check.py` no existe en esta base.
+Antes del último cambio H2, el typecheck, los 381 tests médicos dirigidos, los 81 tests del editor y la suite frontend completa de 7.376 pruebas pasaron. En esta última continuación pasaron 178 pruebas FE dirigidas, 140 API, ambos typechecks y ambos lints dirigidos; el intento de suite completa quedó incompleto por ENOSPC. La evidencia de CORR-08 pasó 8/8 medidas en cada fase. El lint global sigue fallando con 246 errores Angular ESLint; el lint dirigido de este cambio pasa. Route-health se había detenido en beforeAll porque la API requerida en localhost:3005 no estaba saludable; el verificador `scripts/atlas/fable-proof-check.py` no existe en esta base.
 
 ## Pendiente
 
