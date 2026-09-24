@@ -116,3 +116,16 @@ No se corrió la integración contra base: `bootstrapTestApp()` usa `resetBusine
 ### Auditoría L0168 — tercer nombre de pila
 
 La lectura de `register-practitioner.html` y del editor médico confirmó campos visibles Primer, Segundo y Tercer nombre, además de campos dinámicos posteriores. El alta une lo posterior al primer nombre en `middleName`; `separarNombres` reconstruye las casillas del editor por espacios, con tests para nombres de una palabra. La API persiste y devuelve la cadena completa, pero no distingue espacios internos de nombres compuestos. El spec FE dirigido produjo 97 aprobadas y una falla `ENOSPC` en el test de tipos de credencial; las pruebas específicas de tercer nombre están incluidas en las aprobadas. L0168 continúa `A MEDIAS / TESTED` hasta un journey real de alta→API→PostgreSQL→recarga con las tres casillas; no se cambia DDL/modelo.
+
+## Continuación H1 — correos personales y laborales separados
+
+La FE ya enviaba correo de acceso/personal en `email` y correo laboral en `workEmail`, pero el DTO estricto de registro rechazaba este último. Además, el servicio trataba `email` como contacto WORK. El cambio publicado en FE `bd6e4690f62c4269dd9a65e8e5b955fe6e68a857` y API `70f1cfff66545c6ca77323fcd0eccb5cdd26eb44` admite y valida `workEmail`, persiste email de acceso/personal con `CONTACT_USE_HOME` y el dato laboral con `CONTACT_USE_WORK`. Si un cliente anterior omite `workEmail`, `email` continúa en WORK; `personalEmail` se mantiene compatible. El lector privado devuelve los contactos por uso y el editor prefiere `workEmail`, con `email` como respaldo para respuestas antiguas.
+
+| Área | Verificación | Resultado | Límite |
+|---|---|---|---|
+| Editor de perfil médico FE | `corepack yarn test --watch=false --include=src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts` | 1 archivo, 86/86 pruebas aprobadas, incluida preferencia por `workEmail` frente al alias `email` | Doble HTTP; no consulta una API real ni demuestra recarga persistida |
+| Registro/API | `corepack yarn test --runInBand --no-cache src/modules/iam/dto/register-practitioner.dto.spec.ts src/modules/iam/services/iam-practitioner-self-registration.service.spec.ts` | 2 suites, 107/107 pruebas aprobadas; DTO valida `workEmail` y el servicio afirma los usos HOME/WORK; el caso anterior sin `workEmail` sigue cubierto | Pruebas unitarias; no se ejecutó PostgreSQL ni se releyó el perfil tras guardar |
+| Calidad del cambio | `corepack yarn typecheck` y ESLint dirigido en FE/API; `git diff --check` | Exit 0 en ambos worktrees | No es una regresión global completa |
+| Evidencia navegador/DB | No se ejecutó en esta continuación | No se generó foto ni journey FE→API→DB→recarga | El harness de integración invoca truncado de esquemas de negocio y no se confirmó aislamiento de una base disponible |
+
+L0179 y L0186 quedan `A MEDIAS / TESTED`; MED-E03 sigue parcial porque la aceptación exige leer de nuevo el conjunto completo de datos personales, laborales y fiscales después de recarga. Los criterios HECHO no cambian: 10/98 incluidos.
