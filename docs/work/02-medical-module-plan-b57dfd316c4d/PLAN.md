@@ -1,6 +1,6 @@
 # Plan de cierre del módulo Médico
 
-> **Estado al 2026-09-24:** F0.M1–M3, M5 y F2 ejecutados; F1 parcial; F3 tiene una corrección visual CORR-08 publicada en PR borrador #612, sin merge; F4 parcial (un recorrido API de alta profesional 8/8, sin journey UI→API→persistencia completo); F5 parcial (typecheck, pruebas dirigidas, suite frontend completa y evidencia visual pasan; lint global, route-health y verificador Fable siguen bloqueados); F6 documentado en ramas aisladas. Ninguno de los 98 criterios incluidos alcanza el DoD end-to-end.
+> **Estado al 2026-09-24:** F0.M1–M3, M5 y F2 ejecutados; F1 parcial; F3 tiene una corrección visual CORR-08 publicada en PR borrador #612, sin merge; F4 parcial (alta API con diez credenciales/adjuntos, PATCH propio, lock concurrente de agenda; falta el journey navegador→API real); F5 parcial (typecheck, pruebas dirigidas, suite frontend completa y evidencia visual pasan; lint global, route-health y verificador Fable siguen bloqueados); F6 documentado en ramas aisladas. Ninguno de los 98 criterios incluidos alcanza el DoD end-to-end.
 
 **ID único:** `02-medical-module-plan-b57dfd316c4d`.
 **Objetivo:** cerrar el alcance de Médico desde el alta profesional y la disponibilidad hasta consulta, reconsulta, teleconsulta, medicación y documentación fiscal, sin pasarela ni delivery.
@@ -20,13 +20,23 @@ La fuente funcional sigue siendo únicamente el metaprompt Médico congelado con
 - Matriz: 100 criterios fuente; 98 incluidos, 2 fuera de alcance; 70 A MEDIAS, 11 TODO, 17 BLOQUEADOS, 2 DESCARTADOS y 0 HECHO. La evidencia parcial nueva no satisface el DoD integral de ningún criterio. Ver la actualización execution_updates de MATRIX.json y REPORT.md.
 - Publicación: las ramas justin/medical-module-cierre y justin/medical-module-cierre-api se subieron a sus respectivos origin; se abrió PR borrador #612 para la corrección visual CORR-08. No se mergeó ni desplegó.
 
+### Continuación autorizada — credenciales y agenda
+
+El propietario indicó continuar el plan Médico completo y publicar los cambios en ramas aisladas. La instrucción se aplica a Médico; no cambia el dueño ni los archivos del plan Paciente, no autoriza merge/deploy y mantiene protegidos `.env`, `proxy.conf.json`, el repositorio de modelo y DDL.
+
+- API `justin/medical-module-execution-20260924`, punta publicada `783d26976e8ca0eb16d0bbf2f514a636ab9e7461`: PATCH autenticado de credencial propia y lectura privada de `fileId`; alta transaccional con dos títulos y dos de cada tipo de posgrado, PDF por fila; `pg_advisory_xact_lock` por profesional antes de verificar reservas. El último commit refuerza la lectura de tipo e institución en integración.
+- Frontend de la rama homónima, punta publicada `df611861172f25c94a36dcaf417253a093768506`: alta médica carga los PDFs secuencialmente, asocia cada archivo a su credencial y permite reintentar sin repetir cargas completas.
+- Evidencia API: profiles 18 suites/402; PostgreSQL PATCH 4/4; diez credenciales/archivos 1/1; scheduling 21 suites/492; FX-2 13/13 y FX-9 4/4. FX-9 dio RED sin lock (dos citas en consultorios del mismo médico, dos filas) y GREEN con él (una cita/una fila). Typecheck y ESLint dirigidos pasan.
+- Evidencia FE: 97 pruebas de componente, Playwright 4/4 con API simulada, typecheck, ESLint dirigido y build exit 0; foto móvil revisada en el worktree FE. No se ejecutó el navegador contra API real ni edición/recarga integral.
+- La matriz sigue en 0/98 `HECHO`: el tramo aporta evidencia parcial, no cierre end-to-end. Consultar `REPORT.md`, `MATRIX.json`, `CONTRACTS.md` y `HANDOFF.md` para límites y pendientes.
+
 ## 0. Instrucciones operativas para ejecutar este plan
 
 ### Alcance de esta sesión y reglas vigentes
 
 Esta ejecución continúa el plan de MÉDICO basado exclusivamente en la fuente congelada. El plan de Paciente corresponde a otro trabajo: no es fuente de este documento ni se modifica.
 
-- En este workspace rige `AGENTS.md`: base `mockup`, sólo cambios visuales del frontend `mantra-core-health/`. No editar `mantra-core-health-api/`, `mantra-core-health-model/`, `.env` ni `proxy.conf.json`. La referencia `dev` de la fuente describe su objetivo funcional y no sustituye estas restricciones. Conservar y auditar todo el alcance MED, pero dejar las implementaciones funcionales fuera del permiso vigente como bloqueadas por alcance hasta una instrucción explícita que lo amplíe.
+- El `AGENTS.md` rige el trabajo ordinario visual sobre `mockup`. La instrucción posterior y explícita del propietario amplió este plan Médico a implementación y push en ramas aisladas. No extender esa excepción al plan Paciente; no tocar sus worktrees/archivos. Permanecen protegidos `.env`, `proxy.conf.json`, el repositorio de modelo y DDL; no hacer merge/deploy. Las ambigüedades médicas «CHARLAR» siguen bloqueadas sin contrato confirmado.
 - Leer instrucciones vigentes al iniciar, `mantra-core-health/CLAUDE.md` y `docs/components/composition-rules.md` §5. Vistas blancas, centradas en `.app-main__inner`, ancho ≥ 85 %, holgura ≤ 2 px; usar `app-page-header`, `app-card`, `app-tabs`, `app-data-table`, `app-empty-state`, `app-badge`, `app-file-input`. Preservar comportamientos y contratos en todo ajuste visual.
 - Usar `corepack yarn`, nunca npm. Nuevos identificadores, rutas y archivos en inglés; pantalla en castellano rioplatense. No introducir biblioteca visual ni segunda capa de estilos.
 - Una corrección 31–40 corresponde a su ficha, su rama `justin/mockup-corr-XX-<slug>` y su PR contra `mockup`, sin merge. No asignar un número NN a un hito Hn arbitrario. Leer y resolver las ambigüedades bloqueantes de la ficha antes de modificarla.

@@ -4,7 +4,7 @@
 - Fuente funcional única: 02_METAPROMPT_MEDICO.md; copia congelada junto al plan en `sources/medical-metaprompt.md` (MetaPrompts) y SHA-256 verificado.
 - SHA-256 de la fuente: b57dfd316c4d642eb5e1db49257397b8fd2864b511317282ae4b70ff1262a656
 - Base de código frontend: origin/mockup b11dfdd382dd787fab33d5894979ccc2c4d5a96a. Esta rama sigue siendo documental; la corrección visual acotada vive en `justin/mockup-corr-38-editar-perfil-medico-como-alta`, commit `55e948a4`, PR borrador #612 contra `mockup`.
-- Peldaño máximo: `VERIFIED` para el PATCH API de una credencial propia pendiente, ejercitado por HTTP y leído de PostgreSQL; el plan médico integral sigue en 0/98 criterios `HECHO` y no alcanza `REGRESSION_VERIFIED`.
+- Peldaño máximo: `VERIFIED` para persistencia/lectura segura de credenciales y para excluir reservas concurrentes entre consultorios del mismo profesional; el plan Médico integral sigue en 0/98 criterios `HECHO` y no alcanza `REGRESSION_VERIFIED`.
 - Avance integral: 0/98 criterios incluidos alcanzan DoD; la matriz conserva 100 criterios fuente, 98 incluidos y 2 OUT. Estados actuales: 70 A MEDIAS, 11 TODO, 17 BLOQUEADOS, 2 DESCARTADOS. CORR-08 aporta evidencia visual parcial, sin cambio en el conteo de criterios end-to-end.
 
 ## Verificado en esta continuación
@@ -17,12 +17,14 @@
 | Lint | corepack yarn lint | Exit 1; 246 errores @angular-eslint/prefer-on-push-component-change-detection | Son errores repo-wide; no se ocultaron ni se debilitó ninguna prueba |
 | Corrección visual CORR-08 | `scripts/corr-evidencia.sh 38 --antes` y `scripts/corr-evidencia.sh 38` | 8/8 celdas verdes en cada fase; capturas 375/768/1440 claro y 1440 oscuro; diálogo comparativo muestra selector antes y su ausencia después | Una ficha visual no acredita persistencia clínica ni cambia el estado del DoD médico |
 | API — alta profesional aislada | integration/practitioner-registration.int-spec.ts, worktree API | 8/8 aprobadas en DB desechable con semillas parciales | No es init DDL canónica ni journey del módulo Médico |
-| API — edición de credencial propia | `justin/medical-module-execution-20260924`, commit `ddd5ea1a`; `PATCH /profiles/practitioners/me/credentials/:credentialId` | 18 suites profiles/402 unitarias, typecheck, ESLint dirigido, build y OpenAPI lint exit 0; PostgreSQL 18 efímero: integración HTTP 4/4 | Prueba una credencial pendiente, su lectura posterior, mass assignment, ID ajeno/sin sesión y lock real; no prueba pluralidad, archivos ni el navegador conectado a la API |
+| API — credenciales y adjuntos propios | rama `justin/medical-module-execution-20260924`, punta `783d2697`; PATCH de credencial propia y PDF por fila al alta | Profiles 18 suites/402 unitarias; PATCH PostgreSQL 4/4; alta PostgreSQL 1/1 con 10 credenciales (2 por tipo), tipo/institución y adjuntos leídos, resumen privado, ocultamiento público, descarga por dueño y reuso rechazado | No es recorrido de navegador→API real ni edición/recarga compuesta |
 | Editor/cliente frontend de credenciales | `corepack yarn test --watch=false --include=src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts --include=src/app/core/data-access/profiles/profiles.client.spec.ts`; `corepack yarn typecheck` | 2 archivos/127 pruebas aprobadas; typecheck exit 0 en worktree temporal limpio sin `.env` | El editor prueba PATCH con backend de prueba; no es una sesión de navegador contra la API real |
+| Alta de credenciales en frontend | rama `justin/medical-module-execution-20260924`, commit `df611861`; PDFs por fila, orden secuencial y reintento parcial | 97 pruebas de componente, Playwright 4/4; typecheck, ESLint dirigido y build exit 0; captura móvil revisada | El Playwright usa API simulada; no prueba varias credenciales en API/DB real desde el navegador |
+| Agenda médica y concurrencia | FX-2/FX-9 en PostgreSQL 18 efímero; lock transaccional por profesional | scheduling 21 suites/492 unitarias; FX-2 13/13; FX-9 4/4; typecheck y ESLint dirigidos exit 0. Sin lock, dos citas simultáneas en consultorios distintos; con lock, queda una | No acredita hospital público, grilla semanal, agenda pública completa ni notificación externa |
 
 El primer filtro amplio de 229 pruebas se descartó porque también seleccionó suites MyProfile compartidas con Paciente. El resultado válido para Médico es el filtro preciso de 381 pruebas indicado arriba; no se modificaron ni se contaron tareas del plan Paciente. Después se completó además la evidencia propia de CORR-08 en una rama independiente.
 
-La regresión completa más reciente incluye las pruebas que aparecieron como rojas en logs históricos —aviso-de-demora, identity-verification y shell-layout— y pasa sin saltos: 7.376/7.376. Se conservan los logs de la base anterior; no se borraron aserciones ni se ocultaron resultados.
+La regresión completa más reciente del frontend incluye las pruebas que aparecieron como rojas en logs históricos —aviso-de-demora, identity-verification y shell-layout— y pasa sin saltos: 7.376/7.376. Las nuevas pruebas de agenda y credenciales API también pasan; no se borraron aserciones ni se ocultaron resultados.
 
 ## Avance parcial
 
@@ -36,7 +38,9 @@ Se publicó una corrección visual acotada con la ficha vigente CORR-08/TAREA-38
 
 ### F4 — integración médica
 
-Una prueba de registro profesional pasó 8/8 en DB desechable después de cargar terminología sintética parcial. En la continuación autorizada se añadió PATCH de edición de credenciales propias pendientes y una prueba HTTP PostgreSQL real pasó 4/4: la actualización persistió y se leyó por otra llamada HTTP; se negaron mass assignment, acceso ajeno y falta de sesión, y se observó la espera del bloqueo real. La UI existente ya envía el PATCH y sus specs dirigidos pasan 127/127, pero esos specs usan backend de prueba. No se completó el journey navegador→API→persistencia→recarga→segundo actor ni la aceptación de múltiples carreras/documentos. La base canónica sigue sin inicializar porque el patch de aseguradoras exige 17 catálogos antes de que corra el seeder; Docker no responde.
+Una prueba de registro profesional pasó 8/8 en DB desechable después de cargar terminología sintética parcial. La integración PostgreSQL del alta de credenciales pasó 1/1: guardó diez entradas (dos títulos universitarios y dos de cada tipo de posgrado), sus tipos, instituciones y PDFs distintos; el resumen privado las relee, el público omite `fileId`, sólo el dueño descarga y el reuso se rechaza sin cuenta parcial. El PATCH propio pasa 4/4 e incluye lectura posterior, controles de propiedad, mass assignment y lock real. En frontend se agregaron cargas secuenciales por fila; sus 97 tests y 4 Playwright pasan con API simulada. No se completó el journey navegador→API real→persistencia→recarga/edición.
+
+En agenda, FX-2 pasó 13/13 y FX-9 pasó 4/4 en PostgreSQL 18 efímero; las 21 suites de scheduling pasan 492/492. FX-9 confirmó con dos consultorios del mismo profesional que quitar el lock permitía dos citas concurrentes y dos filas; con el advisory lock transaccional queda una. Estos resultados no acreditan hospital público, vista semanal, búsqueda pública completa ni TOUS. La base canónica sigue sin inicializar porque el patch de aseguradoras exige 17 catálogos antes de que corra el seeder; Docker no responde.
 
 ### F5 — regresión y evidencia visual
 
@@ -46,7 +50,7 @@ El typecheck, los 381 tests médicos dirigidos, los 81 tests del editor y la sui
 
 | Trabajo | Estado | Qué lo destraba |
 |---|---|---|
-| H1–H8 / criterios incluidos | 0/98 HECHO | Implementación dentro del alcance permitido, contratos aprobados y cierre por aceptación/DoD |
+| H1–H8 / criterios incluidos | 0/98 HECHO | Recorridos integrales de navegador con servicios reales, contratos aprobados y cierre por aceptación/DoD |
 | MED-06 fiscal | 2 criterios A MEDIAS; 11 TODO | Entidad y permisos en sus propietarios, adjuntos requeridos, dirección legal/GPS y verificación API→DB→recarga |
 | MED-E01–E17 | Sin journey integral completo | API/DB desechables estables, contratos de terceros validados y actor siguiente disponible |
 | F4 | Parcialmente bloqueado | Resolver init canónica con el dueño del modelo/DDL y recuperar Docker sin afectar servicios compartidos |
@@ -59,16 +63,16 @@ El typecheck, los 381 tests médicos dirigidos, los 81 tests del editor y la sui
 - Revisión actual previa a CORR-08: typecheck exit 0; filtro médico específico 7 archivos/381 aprobadas; suite completa 583 archivos/7.375 aprobadas; lint exit 1 con 246 errores.
 - Revisión visual CORR-08: `scripts/corr-evidencia.sh 38 --antes` y `scripts/corr-evidencia.sh 38`, 8 celdas cada una/0 rojas; fotos y reporte en `evidence/corr38`; PR #612 borrador, 0 criterios médicos cerrados.
 - Revisión posterior al cambio: `corepack yarn typecheck` exit 0; editor 81/81; suite Angular completa 583 archivos/7.376 aprobadas; eslint dirigido exit 0; lint global exit 1 con 246 errores; route-health bloqueado en beforeAll por API no disponible; comprobador Fable ausente.
-- API anterior: 21 suites y 505 unitarias aprobadas; typecheck/lint API y checks OpenAPI aprobados; una integración aislada de registro profesional 8/8. En la rama nueva, la suite profiles pasa 18/18 suites y 402/402, typecheck/lint/build/OpenAPI lint pasan, y el PATCH propio pasa 4/4 contra PostgreSQL 18 temporal.
+- API anterior: 21 suites y 505 unitarias aprobadas; typecheck/lint API y checks OpenAPI aprobados; una integración aislada de registro profesional 8/8. En la rama de ejecución, profiles pasa 18/18 suites y 402/402; el alta con 10 adjuntos pasa 1/1, el PATCH 4/4, scheduling 21/21 suites/492 y FX-2/FX-9 13/13 y 4/4. Typecheck, ESLint dirigido, build y OpenAPI lint pasan en los cambios correspondientes.
 - Frontend H1: el primer intento dirigido y typecheck fallaron antes de compilar porque el worktree limpio no tenía `src/environments/env.generated.ts`. Se creó un worktree temporal sin `.env`, se ejecutó `corepack yarn env:generate` (salida: `sin variables definidas (se usan los valores por defecto)`), luego las suites exactas editor/cliente pasaron 2/2 archivos y 127/127 pruebas y `corepack yarn typecheck` terminó exit 0. El worktree temporal se eliminó. No se leyó ni modificó el `.env` administrado.
 - Lote de integración API anterior: 12 suites fallidas, 1 omitida y 1 aprobada; 90 fallidas, 8 omitidas y 26 aprobadas por ECONNREFUSED 127.0.0.1:55433. Docker dejó de responder.
 - Suite completa API con heap de 6 GB: agotó heap sin resumen final.
 - La inicialización SQL canónica falló porque el patch de aseguradoras esperaba 17 catálogos y recibió 0. Una copia temporal no canónica levantó 1260 tablas; no cuenta como init canónica.
 - La carga parcial reportó 1369 conceptos y 7104 referencias huérfanas al omitir semillas de otros módulos.
-- No se omitieron ni debilitaron pruebas. La rama API de ejecución sí actualizó OpenAPI para su PATCH; modelo/DDL, `.env`, `proxy.conf.json` y archivos del plan Paciente permanecen sin cambios.
+- No se omitieron ni debilitaron pruebas. API y FE de ejecución están publicadas en las puntas `783d2697` y `df611861`; modelo/DDL, `.env`, `proxy.conf.json` y archivos del plan Paciente permanecen sin cambios.
 
 ## No cubierto y riesgos residuales
 
-No se ejecutó el flujo completo de alta/edición; el aislamiento de tenants; agenda con reinicio/deduplicación; activación PAC; episodio clínico completo; teleconsulta con proveedor; jobs persistentes de medicación; emisión, entrega y periodicidad fiscal; ni MED-E01–E17 como journeys end-to-end. Siguen pendientes contratos de SEGIP, avisos/TOUS, sala virtual, cobertura y lotes de aseguradora. No se simularon pagos ni se fabricaron contratos externos.
+No se ejecutó el flujo combinado de alta/edición desde navegador; el aislamiento integral de tenants; agenda con reinicio/deduplicación; activación PAC; episodio clínico completo; teleconsulta con proveedor; jobs persistentes de medicación; emisión, entrega y periodicidad fiscal; ni MED-E01–E17 como journeys end-to-end. Siguen pendientes contratos de SEGIP, avisos/TOUS, sala virtual, cobertura y lotes de aseguradora. No se simularon pagos ni se fabricaron contratos externos.
 
 El `AGENTS.md` limita normalmente el trabajo del workspace a cambios visuales frontend; la instrucción posterior del propietario autorizó ejecutar el plan Médico completo y publicar su rama, por lo que esta continuación añadió el cambio API mínimo descrito arriba. Esa ampliación aplica a este plan y no elimina las restricciones globales para otros trabajos. La rama API está publicada; no se hizo merge ni despliegue y el plan clínico sigue incompleto.
