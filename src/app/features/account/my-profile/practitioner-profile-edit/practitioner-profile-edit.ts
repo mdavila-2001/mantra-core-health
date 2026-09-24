@@ -8,7 +8,7 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   FormControl,
   ReactiveFormsModule,
@@ -51,6 +51,9 @@ import {
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { FileInput } from '../../../../shared/components/molecules/file-input/file-input';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
+import { Pagination } from '../../../../shared/components/molecules/pagination/pagination';
+import { RowActions } from '../../../../shared/components/molecules/row-actions/row-actions';
+import type { RowAction } from '../../../../shared/components/molecules/row-actions/row-actions.types';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
@@ -73,6 +76,11 @@ import {
 } from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
+import {
+  FilterBar,
+  SEARCH_PARAM,
+  type FilterDef,
+} from '../../../../shared/components/organisms/filter-bar/filter-bar';
 import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
@@ -81,6 +89,15 @@ import { ViewStateHost } from '../../../../shared/components/organisms/view-stat
 import { CONTADORES_DE_ACTIVIDAD } from '../contadores-de-actividad';
 import { PESTANA_EDITOR, PESTANAS_DEL_EDITOR_MEDICO } from '../pestanas-del-perfil-medico';
 import { WorkHistory } from '../work-history/work-history';
+import {
+  OPCIONES_DE_ESTADO,
+  coincideConElConcepto,
+  coincideConElEstado,
+  coincideConLaBusqueda,
+  estadosPresentes,
+  filasDeLaPagina,
+  institucionConCodigo,
+} from './practitioner-profile-edit.logic';
 
 /** El tipo de título (formación), del catálogo dinámico: los cinco `CREDENTIAL_TYPE_*`. */
 const TARGET_CREDENCIAL = 'profiles.professional_credentials.credential_type_concept_id';
@@ -117,6 +134,8 @@ interface FilaEspecialidad {
   readonly especialidad: string;
   readonly desde: string;
   readonly estado: string;
+  /** Si todavía no se verificó: la especialidad sí trae ese sí/no (`verified`). */
+  readonly pendiente: boolean;
 }
 
 /** Una fila de «Tus matrículas cargadas». */
@@ -126,6 +145,8 @@ interface FilaMatricula {
   readonly autoridad: string;
   readonly inscripcion: string;
   readonly estado: string;
+  /** El concepto detrás de `estado`: es lo que filtra el «Estado» de la barra. */
+  readonly estadoConceptId: string;
   /** El carnet del colegio, si se adjuntó. */
   readonly fileId?: string;
 }
@@ -139,7 +160,16 @@ interface EdicionEnCurso {
   readonly id: string;
   /** Cómo se llama lo que se está corrigiendo, para el encabezado y el aviso. */
   readonly nombre: string;
+  /** Si ya tiene el diploma o el respaldo adjunto: el selector ofrece reemplazarlo. */
+  readonly archivoActual: boolean;
 }
+
+/** El bloque de cada recurso, para el título de sus avisos. */
+const BLOQUE_DE_RECURSO: Readonly<Record<RecursoEditable, string>> = {
+  formacion: 'Formación',
+  especialidad: 'Especialidades',
+  matricula: 'Matrículas',
+};
 
 /** Lo que dice la columna «Estado» mientras el concepto no tiene etiqueta. */
 const PENDIENTE_DE_VERIFICACION = 'Pendiente de verificación';
@@ -199,6 +229,57 @@ function telefonoOpcional(control: AbstractControl): ValidationErrors | null {
  * significado y su propio momento.
  */
 /**
+ * La clave de la búsqueda de la tabla de títulos en la URL. Propia y no `q`:
+ * en Trayectoria la barra convive con la del historial laboral
+ * (`app-work-history`), que usa `q`, y con una sola clave lo que se busca en
+ * una tabla filtraría también la otra.
+ */
+const CLAVE_BUSQUEDA_TITULO = 'qTitulos';
+
+/**
+ * La clave de la búsqueda de la tabla de matrículas en la URL. Propia por lo
+ * mismo que la de títulos: en Credenciales la tabla convive con la de
+ * especialidades.
+ */
+const CLAVE_BUSQUEDA_MATRICULA = 'qMatriculas';
+
+/** La clave de la búsqueda de la tabla de especialidades en la URL. */
+const CLAVE_BUSQUEDA_ESPECIALIDAD = 'qEspecialidades';
+
+/**
+ * La clave del filtro «Estado» de la tabla de títulos en la URL. Propia y no
+ * `estado` a secas: la URL es una sola para todo el editor y la comparten las
+ * barras de sus tablas.
+ */
+const CLAVE_ESTADO_TITULO = 'estadoTitulo';
+
+/** Las claves del filtro «Estado» de especialidades y matrículas, propias por lo mismo. */
+const CLAVE_ESTADO_ESPECIALIDAD = 'estadoEspecialidad';
+const CLAVE_ESTADO_MATRICULA = 'estadoMatricula';
+
+/**
+ * Filas por página de las tres tablas. El paginador trae veinte por omisión
+ * (`pagination.types.ts`); acá son diez, como en el historial laboral de la
+ * misma pestaña.
+ */
+const FILAS_POR_PAGINA = 10;
+
+/**
+ * Las claves que escriben en la URL las barras de las tablas del editor.
+ * Incluye `q`, la que usan por omisión las barras de `app-work-history`
+ * («Dónde atiendo» y el historial laboral).
+ */
+const CLAVES_DE_LAS_BARRAS: readonly string[] = [
+  SEARCH_PARAM,
+  CLAVE_BUSQUEDA_TITULO,
+  CLAVE_ESTADO_TITULO,
+  CLAVE_BUSQUEDA_ESPECIALIDAD,
+  CLAVE_ESTADO_ESPECIALIDAD,
+  CLAVE_BUSQUEDA_MATRICULA,
+  CLAVE_ESTADO_MATRICULA,
+];
+
+/**
  * La fecha como `YYYY-MM-DD` con componentes **locales** — el mismo espejo de
  * `maybeDateOnly` que usa el historial laboral. `toISOString()` pasaría por
  * UTC y en Bolivia devolvería el día anterior.
@@ -218,6 +299,7 @@ function soloFecha(fecha: Date): string {
     ContentDialog,
     DataTable,
     DatePicker,
+    FilterBar,
     FormActions,
     FileInput,
     FormField,
@@ -225,9 +307,11 @@ function soloFecha(fecha: Date): string {
     LocationPicker,
     NavIcon,
     PageHeader,
+    Pagination,
     PhoneInput,
     ReactiveFormsModule,
     RouterLink,
+    RowActions,
     Select,
     Switch,
     Tab,
@@ -252,6 +336,7 @@ export class PractitionerProfileEdit {
   private readonly catalogo = inject(MedicalSpecialtiesCatalog);
   private readonly terminologia = inject(TerminologyClient);
   private readonly ruta = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -576,6 +661,55 @@ export class PractitionerProfileEdit {
     () => this.nuevaEspecialidad() !== null || this.especialidadesExtra().some((e) => e !== ''),
   );
 
+  /**
+   * El título que respalda lo que se agrega, o `null` si no se eligió. Viaja
+   * como `supportingCredentialId`, que es el único camino que el contrato
+   * admite para respaldar una especialidad.
+   *
+   * Vale para todas las especialidades de un mismo envío. Y sólo en el alta:
+   * ni la lectura ni la corrección traen el vínculo, así que después no se
+   * muestra ni se corrige.
+   */
+  protected readonly tituloDeRespaldo = signal<string | null>(null);
+
+  /**
+   * Los títulos que pueden respaldar una especialidad: sólo los ya
+   * verificados. La API rechaza uno pendiente («La credencial de soporte no
+   * está verificada»), así que ofrecerlo sería prometer un envío que falla.
+   */
+  protected readonly opcionesDeRespaldo = computed<readonly SelectOption<string>[]>(() =>
+    this.filasFormacion()
+      .filter((fila) => !fila.pendiente)
+      .map((fila) => ({
+        value: fila.id,
+        label:
+          fila.institucion === '—'
+            ? `${fila.tipo} · ${fila.numero}`
+            : `${fila.tipo} · ${fila.numero} · ${fila.institucion}`,
+      })),
+  );
+
+  /* -- El alta de especialidades, en un modal (D-04, 23/09/2026) -----------
+     Como el del título y el de la matrícula: se abre desde «Agregar
+     especialidad», en la barra de su tabla, con las casillas sumables
+     adentro; confirma antes de guardar y pregunta antes de tirar lo elegido. */
+
+  /** Si el modal del alta está abierto. Se monta con `@if`: existir es estar abierto. */
+  protected readonly altaDeEspecialidadAbierta = signal(false);
+
+  private readonly dialogoAltaDeEspecialidad = viewChild<ContentDialog>(
+    'dialogoAltaDeEspecialidad',
+  );
+
+  /** Si hay algo elegido en el alta: es lo que se pierde al cerrarla sin guardar. */
+  protected readonly hayDatosEnAltaDeEspecialidad = computed(
+    () => this.puedeAgregarEspecialidad() || this.tituloDeRespaldo() !== null,
+  );
+
+  /** La guarda del modal: sin nada elegido cierra; con algo, pregunta si se descarta. */
+  protected readonly guardaDeAltaDeEspecialidad = (): boolean | Promise<boolean> =>
+    !this.hayDatosEnAltaDeEspecialidad() || this.dialogs.confirmarDescarte();
+
   /* -- Nueva matrícula --------------------------------------------------------- */
 
   protected readonly nuevoNumeroDeMatricula = signal('');
@@ -594,6 +728,28 @@ export class PractitionerProfileEdit {
   protected readonly puedeAgregarMatricula = computed(
     () => this.nuevoNumeroDeMatricula().trim() !== '',
   );
+
+  /* -- El alta de la matrícula, en un modal (D-04, 23/09/2026) -------------
+     Como el del título: se abre desde «Agregar matrícula», en la barra de su
+     tabla, confirma antes de guardar y pregunta antes de tirar lo escrito. */
+
+  /** Si el modal del alta está abierto. Se monta con `@if`: existir es estar abierto. */
+  protected readonly altaDeMatriculaAbierta = signal(false);
+
+  private readonly dialogoAltaDeMatricula = viewChild<ContentDialog>('dialogoAltaDeMatricula');
+
+  /** Si hay algo escrito en el alta: es lo que se pierde al cerrarla sin guardar. */
+  protected readonly hayDatosEnAltaDeMatricula = computed(
+    () =>
+      this.nuevoNumeroDeMatricula().trim() !== '' ||
+      this.nuevaAutoridad() !== '' ||
+      this.nuevaFechaInscripcion() !== null ||
+      this.archivoDeMatricula().length > 0,
+  );
+
+  /** La guarda del modal: sin nada escrito cierra; con algo, pregunta si se descarta. */
+  protected readonly guardaDeAltaDeMatricula = (): boolean | Promise<boolean> =>
+    !this.hayDatosEnAltaDeMatricula() || this.dialogs.confirmarDescarte();
 
   /* -- Nueva formación ----------------------------------------------------
      Mismo criterio que especialidad y matrícula: se agrega, no se edita —
@@ -647,6 +803,35 @@ export class PractitionerProfileEdit {
     () => this.nuevoTipoCredencial() !== null && this.nuevoNumeroCredencial().trim() !== '',
   );
 
+  /* -- El alta del título, en un modal (D-04, 23/09/2026) -----------------
+     El formulario ya no está en línea sobre la tabla: se abre desde «Agregar
+     título», en la barra, dentro de un `app-content-dialog`. Los campos son los
+     mismos y viajan igual; lo nuevo es la confirmación antes de guardar y la
+     pregunta antes de tirar lo escrito. */
+
+  /** Si el modal del alta está abierto. Se monta con `@if`: existir es estar abierto. */
+  protected readonly altaDeTituloAbierta = signal(false);
+
+  private readonly dialogoAltaDeTitulo = viewChild<ContentDialog>('dialogoAltaDeTitulo');
+
+  /** Si hay algo escrito en el alta: es lo que se pierde al cerrarla sin guardar. */
+  protected readonly hayDatosEnAltaDeTitulo = computed(
+    () =>
+      this.nuevoTipoCredencial() !== null ||
+      this.nuevoNumeroCredencial().trim() !== '' ||
+      this.institucionElegida() !== null ||
+      this.nuevaFechaEmisionCredencial() !== null ||
+      this.archivoDeCredencial().length > 0,
+  );
+
+  /**
+   * Lo que el modal consulta antes de cerrarse, sea por «Cancelar», por la cruz,
+   * por `Escape` o por el fondo. Sin nada escrito cierra; con algo, pregunta si
+   * se descarta. Guardar cierra saltándola: lo guardado no se descarta.
+   */
+  protected readonly guardaDeAltaDeTitulo = (): boolean | Promise<boolean> =>
+    !this.hayDatosEnAltaDeTitulo() || this.dialogs.confirmarDescarte();
+
   /* -- Lo ya cargado, en tablas --------------------------------------------
      Pedido del propietario (13/09/2026): debajo de cada «Agregar», la tabla con
      lo que ya está cargado. Se leen del mismo perfil que siembra el formulario,
@@ -671,12 +856,19 @@ export class PractitionerProfileEdit {
   private readonly celdaAccionesFormacion =
     viewChild.required<TemplateRef<{ $implicit: FilaFormacion }>>('celdaAccionesFormacion');
 
+  /**
+   * Desde 780 px las seis columnas van en la fila, como pide D-09. Más angosto,
+   * la fila lleva sólo el número y las acciones, y el resto pasa al detalle
+   * (prioridad 2), que se abre con ▼; es lo que hace el historial laboral de la
+   * misma pestaña. Medido a 375 (H4.S3.M4): con el tipo y el estado también en
+   * la fila, la tabla medía 411 px en 301 y se desplazaba a lo ancho.
+   */
   protected readonly columnasFormacion = computed<readonly ColumnDef<FilaFormacion>[]>(() => [
-    { key: 'tipo', header: 'Tipo', priority: 1 },
+    { key: 'tipo', header: 'Tipo', priority: 2 },
     { key: 'numero', header: 'Número / título', priority: 1 },
     { key: 'institucion', header: 'Institución', priority: 2 },
     { key: 'emision', header: 'Emisión', priority: 2 },
-    { key: 'estado', header: 'Estado', priority: 1 },
+    { key: 'estado', header: 'Estado', priority: 2 },
     {
       key: 'acciones',
       header: 'Acciones',
@@ -689,14 +881,16 @@ export class PractitionerProfileEdit {
   /**
    * Sin columna «Tipo» desde el 23/09/2026: decía «Principal» o «Adicional» y
    * ofrecía «Marcar como principal», y el médico pidió que todas las
-   * especialidades se vieran iguales (D-01). Lo que queda en el teléfono son
-   * las mismas tres que muestra la tabla de matrículas.
+   * especialidades se vieran iguales (D-01). En el teléfono la fila lleva la
+   * especialidad y las acciones, y la fecha y el estado pasan al detalle, como
+   * en las otras dos tablas: con el estado en la fila, a 375 medía 350 px en 301
+   * (H4.S3.M4).
    */
   protected readonly columnasEspecialidades = computed<readonly ColumnDef<FilaEspecialidad>[]>(
     () => [
       { key: 'especialidad', header: 'Especialidad', priority: 1 },
       { key: 'desde', header: 'Desde', priority: 2 },
-      { key: 'estado', header: 'Estado', priority: 1 },
+      { key: 'estado', header: 'Estado', priority: 2 },
       {
         key: 'acciones',
         header: 'Acciones',
@@ -714,11 +908,16 @@ export class PractitionerProfileEdit {
   private readonly celdaAccionesMatricula =
     viewChild.required<TemplateRef<{ $implicit: FilaMatricula }>>('celdaAccionesMatricula');
 
+  /**
+   * Mismo criterio que la de títulos: en el teléfono, el número y las acciones;
+   * autoridad, inscripción y estado van al detalle. Con la autoridad y el estado
+   * en la fila, a 375 la tabla medía 425 px en 301 (H4.S3.M4).
+   */
   protected readonly columnasMatriculas = computed<readonly ColumnDef<FilaMatricula>[]>(() => [
     { key: 'numero', header: 'Nº de matrícula', priority: 1 },
-    { key: 'autoridad', header: 'Autoridad', priority: 1 },
+    { key: 'autoridad', header: 'Autoridad', priority: 2 },
     { key: 'inscripcion', header: 'Inscripción', priority: 2 },
-    { key: 'estado', header: 'Estado', priority: 1 },
+    { key: 'estado', header: 'Estado', priority: 2 },
     {
       key: 'acciones',
       header: 'Acciones',
@@ -738,7 +937,7 @@ export class PractitionerProfileEdit {
         id: credencial.id,
         tipo: this.etiqueta(credencial.credentialTypeConceptId, 'Título'),
         numero: credencial.number,
-        institucion: credencial.issuingInstitutionText ?? '—',
+        institucion: institucionConCodigo(credencial.issuingInstitutionText ?? '—'),
         emision: fechaLegible(credencial.issueDate),
         estado:
           credencial.verifiedAt !== undefined
@@ -767,6 +966,7 @@ export class PractitionerProfileEdit {
       estado: especialidad.verified
         ? 'Verificada'
         : this.etiqueta(especialidad.verificationStatusConceptId, PENDIENTE_DE_VERIFICACION),
+      pendiente: !especialidad.verified,
     }));
   });
 
@@ -779,13 +979,151 @@ export class PractitionerProfileEdit {
       autoridad: matricula.regulatoryAuthority ?? '—',
       inscripcion: fechaLegible(matricula.validFrom),
       estado: this.etiqueta(matricula.stateConceptId, PENDIENTE_DE_VERIFICACION),
+      estadoConceptId: matricula.stateConceptId,
       ...(matricula.fileId === undefined ? {} : { fileId: matricula.fileId }),
     }));
   });
 
-  protected readonly estadoFormacion = computed(() => ready(this.filasFormacion()));
-  protected readonly estadoEspecialidades = computed(() => ready(this.filasEspecialidades()));
-  protected readonly estadoMatriculas = computed(() => ready(this.filasMatriculas()));
+  /* -- La barra de la tabla de títulos (D-10, ADR-0015 regla 5) ------------
+     Buscador por tipo, número e institución, sin distinguir tildes ni
+     mayúsculas, y filtro por estado. `app-filter-bar` guarda lo elegido en la
+     URL y avisa sólo cuando cambia: lo buscado arranca con lo que la URL ya
+     traiga, que es lo que la barra muestra al dibujarse. */
+
+  protected readonly claveBusquedaTitulo = CLAVE_BUSQUEDA_TITULO;
+
+  protected readonly filtrosFormacion: readonly FilterDef[] = [
+    { key: CLAVE_ESTADO_TITULO, label: 'Estado', options: OPCIONES_DE_ESTADO },
+  ];
+
+  private readonly busquedaFormacion = signal(
+    this.ruta.snapshot.queryParamMap.get(CLAVE_BUSQUEDA_TITULO) ?? '',
+  );
+
+  private readonly estadoFormacionElegido = signal(
+    this.ruta.snapshot.queryParamMap.get(CLAVE_ESTADO_TITULO),
+  );
+
+  /** Los títulos que pasan la búsqueda y el filtro, en el mismo orden. */
+  protected readonly filasFormacionVisibles = computed(() =>
+    this.filasFormacion().filter(
+      (fila) =>
+        coincideConLaBusqueda(this.busquedaFormacion(), [
+          fila.tipo,
+          fila.numero,
+          fila.institucion,
+        ]) && coincideConElEstado(this.estadoFormacionElegido(), fila.pendiente),
+    ),
+  );
+
+  /* -- La paginación de las tres tablas (H4.S3) -------------------------
+     En cliente, como el historial laboral: la lectura trae el perfil entero,
+     y pedir una página por vez sería una petición por tecla para una lista
+     que ya está en memoria (ADR-0015, «Paginación»). Buscar o filtrar
+     vuelve a la primera página. */
+
+  protected readonly paginaFormacion = signal(1);
+  protected readonly tamanoPaginaFormacion = signal(FILAS_POR_PAGINA);
+  protected readonly paginaEspecialidades = signal(1);
+  protected readonly tamanoPaginaEspecialidades = signal(FILAS_POR_PAGINA);
+  protected readonly paginaMatriculas = signal(1);
+  protected readonly tamanoPaginaMatriculas = signal(FILAS_POR_PAGINA);
+
+  protected readonly estadoFormacion = computed(() =>
+    ready(
+      filasDeLaPagina(
+        this.filasFormacionVisibles(),
+        this.paginaFormacion(),
+        this.tamanoPaginaFormacion(),
+      ),
+    ),
+  );
+  protected readonly estadoEspecialidades = computed(() =>
+    ready(
+      filasDeLaPagina(
+        this.filasEspecialidadesVisibles(),
+        this.paginaEspecialidades(),
+        this.tamanoPaginaEspecialidades(),
+      ),
+    ),
+  );
+  protected readonly estadoMatriculas = computed(() =>
+    ready(
+      filasDeLaPagina(
+        this.filasMatriculasVisibles(),
+        this.paginaMatriculas(),
+        this.tamanoPaginaMatriculas(),
+      ),
+    ),
+  );
+
+  /* -- La barra de la tabla de matrículas (D-10, ADR-0015 regla 5) ---------
+     Busca por número y autoridad. Arranca con lo que la URL ya traiga, igual
+     que la de títulos. */
+
+  /* -- La barra de la tabla de especialidades (D-10, ADR-0015 regla 5) -----
+     Busca por el nombre de la especialidad y filtra por estado, cada uno con
+     su clave en la URL. La especialidad trae un sí/no de verificada, como el
+     título, así que el filtro es el mismo. */
+
+  protected readonly claveBusquedaEspecialidad = CLAVE_BUSQUEDA_ESPECIALIDAD;
+
+  private readonly busquedaEspecialidades = signal(
+    this.ruta.snapshot.queryParamMap.get(CLAVE_BUSQUEDA_ESPECIALIDAD) ?? '',
+  );
+
+  protected readonly filtrosEspecialidades: readonly FilterDef[] = [
+    { key: CLAVE_ESTADO_ESPECIALIDAD, label: 'Estado', options: OPCIONES_DE_ESTADO },
+  ];
+
+  private readonly estadoEspecialidadElegido = signal(
+    this.ruta.snapshot.queryParamMap.get(CLAVE_ESTADO_ESPECIALIDAD),
+  );
+
+  /** Las especialidades que pasan la búsqueda y el filtro, en el mismo orden. */
+  protected readonly filasEspecialidadesVisibles = computed(() =>
+    this.filasEspecialidades().filter(
+      (fila) =>
+        coincideConLaBusqueda(this.busquedaEspecialidades(), [fila.especialidad]) &&
+        coincideConElEstado(this.estadoEspecialidadElegido(), fila.pendiente),
+    ),
+  );
+
+  protected readonly claveBusquedaMatricula = CLAVE_BUSQUEDA_MATRICULA;
+
+  private readonly busquedaMatriculas = signal(
+    this.ruta.snapshot.queryParamMap.get(CLAVE_BUSQUEDA_MATRICULA) ?? '',
+  );
+
+  /**
+   * El filtro «Estado» de las matrículas ofrece los estados que traen.
+   *
+   * La matrícula no tiene un sí/no de verificada como el título: sólo su
+   * `stateConceptId`, del value set del modelo. Traducirlo a «pendiente» o
+   * «verificada» sería inventar una equivalencia que el contrato no declara,
+   * así que se filtra por el concepto, con la etiqueta que muestra la tabla.
+   * Sin matrículas no hay opciones, y la barra dibuja el filtro deshabilitado.
+   */
+  protected readonly filtrosMatriculas = computed<readonly FilterDef[]>(() => [
+    {
+      key: CLAVE_ESTADO_MATRICULA,
+      label: 'Estado',
+      options: estadosPresentes(this.filasMatriculas()),
+    },
+  ]);
+
+  private readonly estadoMatriculaElegido = signal(
+    this.ruta.snapshot.queryParamMap.get(CLAVE_ESTADO_MATRICULA),
+  );
+
+  /** Las matrículas que pasan la búsqueda y el filtro, en el mismo orden. */
+  protected readonly filasMatriculasVisibles = computed(() =>
+    this.filasMatriculas().filter(
+      (fila) =>
+        coincideConLaBusqueda(this.busquedaMatriculas(), [fila.numero, fila.autoridad]) &&
+        coincideConElConcepto(this.estadoMatriculaElegido(), fila.estadoConceptId),
+    ),
+  );
 
   /** La etiqueta de un concepto, o lo que se diga mientras no llegue. */
   private etiqueta(conceptId: string | undefined, porDefecto: string): string {
@@ -1174,8 +1512,11 @@ export class PractitionerProfileEdit {
    * Si alguna falla se avisa y **no** se limpia el formulario: lo elegido
    * sigue ahí para reintentar. La recarga corre igual, así que las que sí
    * entraron aparecen en el perfil y no se agregan dos veces.
+   *
+   * Antes de enviar se pregunta «¿Confirmás estos datos?», como en el alta del
+   * título. Si no se confirma no viaja nada y el modal sigue abierto.
    */
-  protected agregarEspecialidad(): void {
+  protected async agregarEspecialidad(): Promise<void> {
     const profileId = this.profileId();
     const elegidas = this.especialidadesElegidas();
     if (profileId === null || elegidas.length === 0 || this.guardandoEspecialidad()) {
@@ -1183,6 +1524,17 @@ export class PractitionerProfileEdit {
     }
 
     const varias = elegidas.length > 1;
+    const confirmado = await this.dialogs.confirmarCambios({
+      title: '¿Confirmás estos datos?',
+      message: varias
+        ? `Se agregan ${elegidas.length} especialidades y quedan pendientes de verificación.`
+        : 'La especialidad se agrega y queda pendiente de verificación.',
+    });
+    if (!confirmado) {
+      return;
+    }
+
+    const respaldo = this.tituloDeRespaldo();
     this.guardandoEspecialidad.set(true);
     forkJoin(
       elegidas.map((especialidad) =>
@@ -1190,13 +1542,15 @@ export class PractitionerProfileEdit {
           specialtyConceptId: especialidad,
           isPrimary: this.ESPECIALIDAD_ADICIONAL.isPrimary,
           boardCertified: this.ESPECIALIDAD_ADICIONAL.boardCertified,
+          ...(respaldo === null ? {} : { supportingCredentialId: respaldo }),
         }),
       ),
     ).subscribe({
       next: () => {
         this.guardandoEspecialidad.set(false);
-        this.nuevaEspecialidad.set(null);
-        this.especialidadesExtra.set([]);
+        // Cerrar saltando la guarda: lo que se acaba de guardar no se descarta.
+        this.dialogoAltaDeEspecialidad()?.close(true);
+        this.cerrarAltaDeEspecialidad();
         this.toasts.success(
           varias
             ? `Se agregaron ${elegidas.length} especialidades. Quedan pendientes de verificación.`
@@ -1231,11 +1585,23 @@ export class PractitionerProfileEdit {
    * Si la subida falla **no se crea la matrícula**: una matrícula sin el carnet
    * que la persona creyó haber adjuntado es peor que un error, porque nadie se
    * entera hasta que se la rechazan.
+   *
+   * Antes de enviar se pregunta «¿Confirmás estos datos?», como en el alta del
+   * título. Si no se confirma no viaja nada y el modal sigue abierto, con lo
+   * escrito intacto.
    */
-  protected agregarMatricula(): void {
+  protected async agregarMatricula(): Promise<void> {
     const profileId = this.profileId();
     const numero = this.nuevoNumeroDeMatricula().trim();
     if (profileId === null || numero === '' || this.guardandoMatricula()) {
+      return;
+    }
+
+    const confirmado = await this.dialogs.confirmarCambios({
+      title: '¿Confirmás estos datos?',
+      message: 'La matrícula se agrega a tus credenciales y queda pendiente de verificación.',
+    });
+    if (!confirmado) {
       return;
     }
 
@@ -1273,10 +1639,9 @@ export class PractitionerProfileEdit {
       .subscribe({
         next: () => {
           this.guardandoMatricula.set(false);
-          this.nuevoNumeroDeMatricula.set('');
-          this.nuevaAutoridad.set('');
-          this.nuevaFechaInscripcion.set(null);
-          this.archivoDeMatricula.set([]);
+          // Cerrar saltando la guarda: lo que se acaba de guardar no se descarta.
+          this.dialogoAltaDeMatricula()?.close(true);
+          this.cerrarAltaDeMatricula();
           this.toasts.success(
             'Se agregó la matrícula. Queda pendiente de verificación.',
             'Matrículas',
@@ -1306,11 +1671,24 @@ export class PractitionerProfileEdit {
    * Si la subida falla **no se crea el título**: un título sin el diploma que
    * la persona creyó haber adjuntado es peor que un error, porque nadie se
    * entera hasta que lo rechazan.
+   *
+   * Antes de enviar se pregunta «¿Confirmás estos datos?» (D-04, H3.S1.M4). El
+   * ADR-0015 exime el alta de esa pregunta; el encargo de esta pantalla la
+   * pide. Si no se confirma no viaja nada y el modal sigue abierto, con lo
+   * escrito intacto.
    */
-  protected agregarCredencial(): void {
+  protected async agregarCredencial(): Promise<void> {
     const tipo = this.nuevoTipoCredencial();
     const numero = this.nuevoNumeroCredencial().trim();
     if (tipo === null || numero === '' || this.guardandoCredencial()) {
+      return;
+    }
+
+    const confirmado = await this.dialogs.confirmarCambios({
+      title: '¿Confirmás estos datos?',
+      message: 'El título se agrega a tu trayectoria y queda pendiente de verificación.',
+    });
+    if (!confirmado) {
       return;
     }
 
@@ -1349,12 +1727,10 @@ export class PractitionerProfileEdit {
       .subscribe({
         next: () => {
           this.guardandoCredencial.set(false);
-          this.nuevoTipoCredencial.set(null);
-          this.nuevoNumeroCredencial.set('');
-          this.institucionElegida.set(null);
-          this.institucionEscrita.set('');
-          this.nuevaFechaEmisionCredencial.set(null);
-          this.archivoDeCredencial.set([]);
+          // Cerrar saltando la guarda: lo que se acaba de guardar no se descarta.
+          // Sin modal a la vista (las pruebas sin plantilla) se desmonta igual.
+          this.dialogoAltaDeTitulo()?.close(true);
+          this.cerrarAltaDeTitulo();
           this.toasts.success('Se agregó el título. Queda pendiente de verificación.', 'Formación');
           this.cargar();
         },
@@ -1363,6 +1739,121 @@ export class PractitionerProfileEdit {
           this.toasts.error('No se pudo agregar el título. Probá de nuevo.', 'Formación');
         },
       });
+  }
+
+  protected abrirAltaDeTitulo(): void {
+    this.altaDeTituloAbierta.set(true);
+  }
+
+  /** «Cancelar» cierra por el mismo camino que `Escape`: la guarda decide. */
+  protected pedirCierreDeAltaDeTitulo(): void {
+    this.dialogoAltaDeTitulo()?.close();
+  }
+
+  /** El modal ya se cerró: se desmonta y el próximo alta empieza en blanco. */
+  protected cerrarAltaDeTitulo(): void {
+    this.altaDeTituloAbierta.set(false);
+    this.nuevoTipoCredencial.set(null);
+    this.nuevoNumeroCredencial.set('');
+    this.institucionElegida.set(null);
+    this.institucionEscrita.set('');
+    this.nuevaFechaEmisionCredencial.set(null);
+    this.archivoDeCredencial.set([]);
+  }
+
+  protected abrirAltaDeEspecialidad(): void {
+    this.altaDeEspecialidadAbierta.set(true);
+  }
+
+  /** «Cancelar» cierra por el mismo camino que `Escape`: la guarda decide. */
+  protected pedirCierreDeAltaDeEspecialidad(): void {
+    this.dialogoAltaDeEspecialidad()?.close();
+  }
+
+  /** El modal ya se cerró: se desmonta y el próximo alta empieza en blanco. */
+  protected cerrarAltaDeEspecialidad(): void {
+    this.altaDeEspecialidadAbierta.set(false);
+    this.nuevaEspecialidad.set(null);
+    this.especialidadesExtra.set([]);
+    this.tituloDeRespaldo.set(null);
+  }
+
+  /** Lo que la barra de la tabla de especialidades dejó escrito. */
+  protected onFiltrosEspecialidades(activos: Readonly<Record<string, string>>): void {
+    const busqueda = activos[CLAVE_BUSQUEDA_ESPECIALIDAD] ?? '';
+    const estado = activos[CLAVE_ESTADO_ESPECIALIDAD] ?? null;
+    if (busqueda !== this.busquedaEspecialidades() || estado !== this.estadoEspecialidadElegido()) {
+      this.paginaEspecialidades.set(1);
+    }
+    this.busquedaEspecialidades.set(busqueda);
+    this.estadoEspecialidadElegido.set(estado);
+  }
+
+  protected abrirAltaDeMatricula(): void {
+    this.altaDeMatriculaAbierta.set(true);
+  }
+
+  /** «Cancelar» cierra por el mismo camino que `Escape`: la guarda decide. */
+  protected pedirCierreDeAltaDeMatricula(): void {
+    this.dialogoAltaDeMatricula()?.close();
+  }
+
+  /** El modal ya se cerró: se desmonta y el próximo alta empieza en blanco. */
+  protected cerrarAltaDeMatricula(): void {
+    this.altaDeMatriculaAbierta.set(false);
+    this.nuevoNumeroDeMatricula.set('');
+    this.nuevaAutoridad.set('');
+    this.nuevaFechaInscripcion.set(null);
+    this.archivoDeMatricula.set([]);
+  }
+
+  /** Lo que la barra de la tabla de matrículas dejó escrito. */
+  protected onFiltrosMatriculas(activos: Readonly<Record<string, string>>): void {
+    const busqueda = activos[CLAVE_BUSQUEDA_MATRICULA] ?? '';
+    const estado = activos[CLAVE_ESTADO_MATRICULA] ?? null;
+    if (busqueda !== this.busquedaMatriculas() || estado !== this.estadoMatriculaElegido()) {
+      this.paginaMatriculas.set(1);
+    }
+    this.busquedaMatriculas.set(busqueda);
+    this.estadoMatriculaElegido.set(estado);
+  }
+
+  /** Lo que la barra de la tabla de títulos dejó elegido. */
+  protected onFiltrosFormacion(activos: Readonly<Record<string, string>>): void {
+    const busqueda = activos[CLAVE_BUSQUEDA_TITULO] ?? '';
+    const estado = activos[CLAVE_ESTADO_TITULO] ?? null;
+    if (busqueda !== this.busquedaFormacion() || estado !== this.estadoFormacionElegido()) {
+      this.paginaFormacion.set(1);
+    }
+    this.busquedaFormacion.set(busqueda);
+    this.estadoFormacionElegido.set(estado);
+  }
+
+  /**
+   * Al cambiar de pestaña, la búsqueda de la tabla que se deja no sigue a la
+   * que se abre. La barra guarda lo buscado en la URL, que es una sola para
+   * todo el editor: sin esto, «umsa» escrito en Trayectoria seguiría filtrando
+   * —y apareciendo en el buscador— al pasar a otra pestaña.
+   */
+  protected olvidarBusquedaDeLasTablas(): void {
+    this.busquedaFormacion.set('');
+    this.estadoFormacionElegido.set(null);
+    this.busquedaEspecialidades.set('');
+    this.estadoEspecialidadElegido.set(null);
+    this.busquedaMatriculas.set('');
+    this.estadoMatriculaElegido.set(null);
+    this.paginaFormacion.set(1);
+    this.paginaEspecialidades.set(1);
+    this.paginaMatriculas.set(1);
+    const url = this.router.parseUrl(this.router.url);
+    const presentes = CLAVES_DE_LAS_BARRAS.filter((clave) => clave in url.queryParams);
+    if (presentes.length === 0) {
+      return;
+    }
+    for (const clave of presentes) {
+      delete url.queryParams[clave];
+    }
+    void this.router.navigateByUrl(url, { replaceUrl: true });
   }
 
   /* ======================================================================
@@ -1385,6 +1876,91 @@ export class PractitionerProfileEdit {
 
   /** Qué fila se está retirando. */
   protected readonly retirando = signal<string | null>(null);
+
+  /* -- Las acciones de cada fila, con `app-row-actions` (H4.S3.M7) -------
+     ADR-0012 §2: hasta dos acciones van en la fila, con su texto; con tres
+     o más, la fila muestra un solo disparador y las acciones viven en un
+     desplegable. Lo decide `app-row-actions` por cuántas son, no esta
+     pantalla. Un título pendiente con diploma tiene tres (editar, descargar
+     y retirar); una especialidad, dos. La descarga y el retiro en curso
+     apagan su acción y lo dicen en el texto, como lo hacía el botón. */
+
+  /** Lo que se le puede hacer a un título. Lo verificado ya no se edita ni se retira. */
+  protected accionesDeFormacion(fila: FilaFormacion): readonly RowAction[] {
+    const acciones: RowAction[] = [];
+    if (fila.pendiente) {
+      acciones.push({ code: 'editar', label: 'Editar', icon: 'edit' });
+    }
+    if (fila.fileId !== undefined) {
+      acciones.push(this.accionDeDescarga(fila.id));
+    }
+    if (fila.pendiente) {
+      acciones.push(this.accionDeRetiro(fila.id));
+    }
+    return acciones;
+  }
+
+  protected accionesDeEspecialidad(fila: FilaEspecialidad): readonly RowAction[] {
+    return [{ code: 'editar', label: 'Editar', icon: 'edit' }, this.accionDeRetiro(fila.id)];
+  }
+
+  protected accionesDeMatricula(fila: FilaMatricula): readonly RowAction[] {
+    const acciones: RowAction[] = [{ code: 'editar', label: 'Editar', icon: 'edit' }];
+    if (fila.fileId !== undefined) {
+      acciones.push(this.accionDeDescarga(fila.id));
+    }
+    acciones.push(this.accionDeRetiro(fila.id));
+    return acciones;
+  }
+
+  /** Despacha la acción que eligió la fila de un título. */
+  protected ejecutarAccionDeFormacion(code: string, fila: FilaFormacion): void {
+    if (code === 'editar') {
+      this.editarFormacion(fila);
+    } else if (code === 'descargar') {
+      this.descargarDiploma(fila);
+    } else if (code === 'retirar') {
+      this.retirarFormacion(fila);
+    }
+  }
+
+  protected ejecutarAccionDeEspecialidad(code: string, fila: FilaEspecialidad): void {
+    if (code === 'editar') {
+      this.editarEspecialidad(fila);
+    } else if (code === 'retirar') {
+      this.retirarEspecialidad(fila);
+    }
+  }
+
+  protected ejecutarAccionDeMatricula(code: string, fila: FilaMatricula): void {
+    if (code === 'editar') {
+      this.editarMatricula(fila);
+    } else if (code === 'descargar') {
+      this.descargarCarnet(fila);
+    } else if (code === 'retirar') {
+      this.retirarMatricula(fila);
+    }
+  }
+
+  /** Una descarga a la vez: mientras baja un archivo, las demás se apagan. */
+  private accionDeDescarga(id: string): RowAction {
+    return {
+      code: 'descargar',
+      label: this.descargando() === id ? 'Descargando…' : 'Descargar',
+      disabled: this.descargando() !== null,
+    };
+  }
+
+  /** Retirar no se deshace: tinta de error, y un retiro a la vez. */
+  private accionDeRetiro(id: string): RowAction {
+    return {
+      code: 'retirar',
+      label: this.retirando() === id ? 'Retirando…' : 'Retirar',
+      icon: 'remove',
+      destructive: true,
+      disabled: this.retirando() !== null,
+    };
+  }
 
   /** Lo que el diálogo está corrigiendo, o `null` si está cerrado. */
   protected readonly edicion = signal<EdicionEnCurso | null>(null);
@@ -1420,15 +1996,65 @@ export class PractitionerProfileEdit {
   });
 
   /**
+   * El diploma o el respaldo que reemplaza al que está cargado (D-08). Uno,
+   * opcional: sin elegir nada, el archivo que había queda como estaba.
+   */
+  protected readonly archivoDeEdicion = signal<readonly File[]>([]);
+
+  /**
+   * Todo lo que el diálogo puede cambiar, en una cadena comparable. Se toma al
+   * abrir (`edicionOriginal`) y se compara con la de ahora: así «Guardar» sabe
+   * si hay algo que guardar sin un `effect` que lo vigile. Los textos van sin
+   * espacios de los costados, porque así viajan: un espacio de más no es un cambio.
+   */
+  private readonly huellaDeEdicion = computed(() => {
+    const emision = this.edicionEmision();
+    const inscripcion = this.edicionInscripcion();
+    return JSON.stringify([
+      this.edicionTipo(),
+      this.edicionNumero().trim(),
+      this.edicionInstitucionDeclarada(),
+      emision === null ? null : fechaIso(emision),
+      this.edicionEspecialidad(),
+      this.edicionCertificada(),
+      this.edicionAutoridad().trim(),
+      inscripcion === null ? null : fechaIso(inscripcion),
+    ]);
+  });
+
+  /** La huella de lo que la fila tenía al abrir el diálogo. */
+  private readonly edicionOriginal = signal('');
+
+  /** Si algo difiere de lo que había, o se eligió un archivo nuevo. */
+  protected readonly hayCambiosEnEdicion = computed(
+    () => this.huellaDeEdicion() !== this.edicionOriginal() || this.archivoDeEdicion().length > 0,
+  );
+
+  private readonly dialogoEdicion = viewChild<ContentDialog>('dialogoEdicion');
+
+  /**
+   * Lo que el diálogo consulta antes de cerrarse por «Cancelar», la cruz,
+   * `Escape` o el fondo (D-08). Mientras guarda no se cierra; sin cambios cierra
+   * directo; con cambios pregunta si se descartan.
+   */
+  protected readonly guardaDeEdicion = (): boolean | Promise<boolean> => {
+    if (this.guardandoEdicion()) {
+      return false;
+    }
+    return !this.hayCambiosEnEdicion() || this.dialogs.confirmarDescarte();
+  };
+
+  /**
    * Si lo que hay en el diálogo se puede guardar.
    *
    * Se exige lo mismo que el alta de cada recurso: un `PATCH` que vaciara el
    * número de un título dejaría una fila que la de alta nunca habría dejado
-   * crear.
+   * crear. Y, desde el 23/09/2026 (D-08, Q-I1), que algo haya cambiado: guardar
+   * lo mismo que ya estaba es un trámite sin efecto.
    */
   protected readonly puedeGuardarEdicion = computed(() => {
     const enCurso = this.edicion();
-    if (enCurso === null || this.guardandoEdicion()) {
+    if (enCurso === null || this.guardandoEdicion() || !this.hayCambiosEnEdicion()) {
       return false;
     }
     switch (enCurso.recurso) {
@@ -1580,7 +2206,12 @@ export class PractitionerProfileEdit {
     );
     this.edicionInstitucionEscrita.set(delCatalogo ? '' : institucion);
     this.edicionEmision.set(credencial.issueDate ?? null);
-    this.edicion.set({ recurso: 'formacion', id: fila.id, nombre: fila.tipo });
+    this.abrirEdicion({
+      recurso: 'formacion',
+      id: fila.id,
+      nombre: fila.tipo,
+      archivoActual: credencial.fileId !== undefined,
+    });
   }
 
   protected editarEspecialidad(fila: FilaEspecialidad): void {
@@ -1590,7 +2221,12 @@ export class PractitionerProfileEdit {
     }
     this.edicionEspecialidad.set(especialidad.specialtyConceptId);
     this.edicionCertificada.set(especialidad.boardCertified);
-    this.edicion.set({ recurso: 'especialidad', id: fila.id, nombre: fila.especialidad });
+    this.abrirEdicion({
+      recurso: 'especialidad',
+      id: fila.id,
+      nombre: fila.especialidad,
+      archivoActual: false,
+    });
   }
 
   protected editarMatricula(fila: FilaMatricula): void {
@@ -1601,14 +2237,33 @@ export class PractitionerProfileEdit {
     this.edicionNumero.set(matricula.licenseNumber);
     this.edicionAutoridad.set(matricula.regulatoryAuthority ?? '');
     this.edicionInscripcion.set(matricula.validFrom ?? null);
-    this.edicion.set({ recurso: 'matricula', id: fila.id, nombre: fila.numero });
+    this.abrirEdicion({
+      recurso: 'matricula',
+      id: fila.id,
+      nombre: fila.numero,
+      archivoActual: matricula.fileId !== undefined,
+    });
   }
 
+  /**
+   * Abre el diálogo con los campos ya sembrados, y guarda la huella de lo que
+   * había: es contra ella que «Guardar» decide si hay cambios.
+   */
+  private abrirEdicion(enCurso: EdicionEnCurso): void {
+    this.archivoDeEdicion.set([]);
+    this.edicionOriginal.set(this.huellaDeEdicion());
+    this.edicion.set(enCurso);
+  }
+
+  /** «Cancelar» cierra por el mismo camino que `Escape`: la guarda decide. */
+  protected pedirCierreDeEdicion(): void {
+    this.dialogoEdicion()?.close();
+  }
+
+  /** El diálogo ya se cerró: se desmonta y el archivo elegido se suelta. */
   protected cerrarEdicion(): void {
-    if (this.guardandoEdicion()) {
-      return;
-    }
     this.edicion.set(null);
+    this.archivoDeEdicion.set([]);
   }
 
   /**
@@ -1618,19 +2273,49 @@ export class PractitionerProfileEdit {
    * campo vaciado a propósito —una institución que se borra— tiene que llegar
    * como cadena vacía y no desaparecer del cuerpo, porque `stripUndefined` sólo
    * quita los `undefined`.
+   *
+   * Antes de enviar se pregunta «¿Confirmás estos cambios?» (D-08); si no se
+   * confirma, el diálogo sigue abierto con lo escrito. Con un archivo nuevo, se
+   * sube primero y su identificador viaja como `fileId`, igual que en el alta:
+   * si la subida falla no se corrige nada, porque una corrección sin el
+   * documento que la persona creyó reemplazar es peor que un error.
    */
-  protected guardarEdicion(): void {
+  protected async guardarEdicion(): Promise<void> {
     const enCurso = this.edicion();
     if (enCurso === null || !this.puedeGuardarEdicion()) {
       return;
     }
+    if (!(await this.dialogs.confirmarCambios())) {
+      return;
+    }
     this.guardandoEdicion.set(true);
 
-    const { bloque, peticion } = this.peticionDeEdicion(enCurso);
-    peticion.subscribe({
+    const archivo = this.archivoDeEdicion()[0];
+    if (archivo === undefined) {
+      this.enviarEdicion(enCurso, undefined);
+      return;
+    }
+    this.files.upload(archivo, 'DOCUMENT', 'PHI').subscribe({
+      next: ({ id }) => this.enviarEdicion(enCurso, id),
+      error: () => {
+        this.guardandoEdicion.set(false);
+        this.toasts.error(
+          'No pudimos subir el archivo, así que no se guardaron los cambios. Probá de nuevo.',
+          BLOQUE_DE_RECURSO[enCurso.recurso],
+        );
+      },
+    });
+  }
+
+  /** La corrección en sí, con el archivo nuevo ya subido si lo había. */
+  private enviarEdicion(enCurso: EdicionEnCurso, fileId: string | undefined): void {
+    const bloque = BLOQUE_DE_RECURSO[enCurso.recurso];
+    this.peticionDeEdicion(enCurso, fileId).subscribe({
       next: () => {
         this.guardandoEdicion.set(false);
-        this.edicion.set(null);
+        // Cerrar saltando la guarda: lo que se acaba de guardar no se descarta.
+        this.dialogoEdicion()?.close(true);
+        this.cerrarEdicion();
         this.toasts.success('Se guardaron los cambios.', bloque);
         this.cargar();
       },
@@ -1641,42 +2326,37 @@ export class PractitionerProfileEdit {
     });
   }
 
-  /** Qué se manda y a qué bloque pertenece el aviso, según el recurso abierto. */
-  private peticionDeEdicion(enCurso: EdicionEnCurso): {
-    readonly bloque: string;
-    readonly peticion: Observable<void>;
-  } {
+  /**
+   * Qué se manda según el recurso abierto. El `fileId` sólo existe para el
+   * título y la matrícula: la especialidad no tiene archivo en el contrato
+   * (HALL-E7).
+   */
+  private peticionDeEdicion(enCurso: EdicionEnCurso, fileId: string | undefined): Observable<void> {
+    const archivo = fileId === undefined ? {} : { fileId };
     switch (enCurso.recurso) {
       case 'formacion': {
         const emision = this.edicionEmision();
-        return {
-          bloque: 'Formación',
-          peticion: this.profiles.updateOwnCredential(enCurso.id, {
-            credentialTypeConceptId: this.edicionTipo() ?? undefined,
-            number: this.edicionNumero().trim(),
-            issuingInstitutionText: this.edicionInstitucionDeclarada(),
-            issueDate: emision === null ? undefined : fechaIso(emision),
-          }),
-        };
+        return this.profiles.updateOwnCredential(enCurso.id, {
+          credentialTypeConceptId: this.edicionTipo() ?? undefined,
+          number: this.edicionNumero().trim(),
+          issuingInstitutionText: this.edicionInstitucionDeclarada(),
+          issueDate: emision === null ? undefined : fechaIso(emision),
+          ...archivo,
+        });
       }
       case 'especialidad':
-        return {
-          bloque: 'Especialidades',
-          peticion: this.profiles.updateOwnSpecialty(enCurso.id, {
-            specialtyConceptId: this.edicionEspecialidad() ?? undefined,
-            boardCertified: this.edicionCertificada(),
-          }),
-        };
+        return this.profiles.updateOwnSpecialty(enCurso.id, {
+          specialtyConceptId: this.edicionEspecialidad() ?? undefined,
+          boardCertified: this.edicionCertificada(),
+        });
       case 'matricula': {
         const inscripcion = this.edicionInscripcion();
-        return {
-          bloque: 'Matrículas',
-          peticion: this.profiles.updateOwnLicense(enCurso.id, {
-            licenseNumber: this.edicionNumero().trim(),
-            regulatoryAuthority: this.edicionAutoridad().trim(),
-            validFrom: inscripcion === null ? undefined : fechaIso(inscripcion),
-          }),
-        };
+        return this.profiles.updateOwnLicense(enCurso.id, {
+          licenseNumber: this.edicionNumero().trim(),
+          regulatoryAuthority: this.edicionAutoridad().trim(),
+          validFrom: inscripcion === null ? undefined : fechaIso(inscripcion),
+          ...archivo,
+        });
       }
     }
   }
