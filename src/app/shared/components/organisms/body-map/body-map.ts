@@ -26,6 +26,9 @@ interface VistaDibujable {
   readonly zonas: readonly ZonaDibujable[];
 }
 
+/** Para que cada silueta tenga su propio degradado aunque haya dos en la página. */
+let siguienteSilueta = 0;
+
 /** Los `id` de zona que tienen forma en alguna vista. El resto va como pastilla. */
 export const ZONAS_CON_SILUETA: ReadonlySet<string> = new Set(
   VISTAS_DEL_CUERPO.flatMap((vista) => vista.zonas.map((zona) => zona.id)),
@@ -97,8 +100,34 @@ export class BodyMap {
   /** Prefijo del `data-testid` de cada zona; el sufijo es su `id`. */
   readonly testId = input('body-map');
 
+  /**
+   * Zonas que nombra lo que la persona escribió o dictó.
+   *
+   * Se iluminan **sin quedar elegidas**: elegir es tocar, y esto es la figura
+   * devolviendo «te entendí esto» mientras se habla. Quien lo monta decide qué
+   * zonas son (ver `symptom-check`); acá sólo se pintan y se nombran.
+   */
+  readonly marcadas = input<readonly string[]>([]);
+
+  /** El `id` del degradado de volumen de esta instancia. */
+  protected readonly idDelVolumen = `body-map-volumen-${siguienteSilueta++}`;
+
+  /** La zona bajo el puntero o con el foco, para nombrarla antes de tocarla. */
+  private readonly apuntada = signal<string | null>(null);
+
   /** La vista que eligió la persona con el selector (o con el acercamiento). */
   private readonly vistaPedida = signal<IdDeVista>('frente');
+
+  /**
+   * La zona que estaba elegida cuando se pidió la vista.
+   *
+   * Mientras siga siendo la misma, **manda la vista pedida**: quien está en la
+   * cara con los ojos elegidos y toca «Frente» quiere ver el frente, aunque los
+   * ojos no estén ahí. Sin esto la figura volvía sola a la cara y el selector
+   * parecía roto (reporte del cliente, 24/09/2026). Si la elegida cambia
+   * después —una pastilla, un chip—, vuelve a regir «lo elegido a la vista».
+   */
+  private readonly elegidaAlPedirVista = signal<string | null | undefined>(undefined);
 
   /**
    * Las vistas que tienen algo que pulsar, cada una con sus zonas en el orden
@@ -119,14 +148,15 @@ export class BodyMap {
   });
 
   /**
-   * La vista que se muestra: la pedida, salvo que lo elegido no esté en ella;
-   * entonces, la primera que lo tenga.
+   * La vista que se muestra: la pedida, salvo que lo elegido **cambie** y no
+   * esté en ella; entonces, la primera que lo tenga.
    */
   protected readonly vista = computed<VistaDibujable | null>(() => {
     const vistas = this.vistas();
     const pedida = vistas.find((v) => v.vista.id === this.vistaPedida()) ?? vistas[0] ?? null;
     const elegida = this.value();
     if (pedida === null || elegida === null) return pedida;
+    if (elegida === this.elegidaAlPedirVista()) return pedida;
     if (pedida.zonas.some((zona) => zona.id === elegida)) return pedida;
     return vistas.find((v) => v.zonas.some((zona) => zona.id === elegida)) ?? pedida;
   });
@@ -134,6 +164,38 @@ export class BodyMap {
   protected readonly opcionesDeVista = computed<readonly SegmentedOption<IdDeVista>[]>(() =>
     this.vistas().map(({ vista }) => ({ value: vista.id, label: vista.nombre })),
   );
+
+  private readonly marcadasPorId = computed(() => new Set(this.marcadas()));
+
+  /** Las marcadas, en palabras y en el orden de la tabla: «Espalda y Piel y pelo». */
+  protected readonly nombresMarcados = computed<string | null>(() => {
+    const marcadas = this.marcadasPorId();
+    const nombres = this.zonas()
+      .filter((zona) => marcadas.has(zona.id))
+      .map((zona) => zona.nombre);
+    if (nombres.length === 0) return null;
+    return nombres.length === 1 ? nombres[0] : `${nombres.slice(0, -1).join(', ')} y ${nombres.at(-1)}`;
+  });
+
+  /** El nombre de la zona apuntada, salvo que ya sea la elegida (eso ya se dice abajo). */
+  protected readonly nombreApuntado = computed<string | null>(() => {
+    const apuntada = this.apuntada();
+    if (apuntada === null || apuntada === this.value()) return null;
+    return this.zonas().find((zona) => zona.id === apuntada)?.nombre ?? null;
+  });
+
+  protected estaMarcada(id: string): boolean {
+    return this.marcadasPorId().has(id);
+  }
+
+  /** El nombre que se anuncia: el de la zona y, si lo contado la nombra, eso también. */
+  protected nombreAccesible(zona: ZonaDibujable): string {
+    return this.estaMarcada(zona.id) ? `${zona.nombre} (por lo que contaste)` : zona.nombre;
+  }
+
+  protected apuntar(id: string | null): void {
+    this.apuntada.set(id);
+  }
 
   /** El nombre de la elegida, para decirlo con palabras además de con el dibujo. */
   protected readonly nombreElegido = computed<string | null>(() => {
@@ -143,7 +205,11 @@ export class BodyMap {
   });
 
   protected cambiarVista(id: IdDeVista): void {
+    // La zona apuntada desaparece con la vista y nunca avisa que el puntero se
+    // fue: sin esto su nombre quedaba flotando sobre la vista nueva.
+    this.apuntada.set(null);
     this.vistaPedida.set(id);
+    this.elegidaAlPedirVista.set(this.value());
   }
 
   /**
@@ -158,8 +224,10 @@ export class BodyMap {
    */
   protected elegir(zona: ZonaDibujable): void {
     if (zona.acercaA !== undefined && this.vistas().some((v) => v.vista.id === zona.acercaA)) {
+      this.apuntada.set(null);
       this.vistaPedida.set(zona.acercaA);
       this.value.set(zona.id);
+      this.elegidaAlPedirVista.set(zona.id);
       return;
     }
     this.value.set(this.value() === zona.id ? null : zona.id);

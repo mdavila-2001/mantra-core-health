@@ -176,6 +176,83 @@ describe('BodyMap', () => {
     expect(formaDe('gluteos').getAttribute('aria-pressed')).toBe('true');
   });
 
+  /**
+   * El error que reportó el cliente (24/09/2026): con una zona de la cara
+   * elegida, «Frente» y «Espalda» no hacían nada, porque la figura volvía sola
+   * a la única vista que tenía esa zona. La vista que elige la persona manda.
+   */
+  it('desde la cara se puede volver a frente y a espalda con una zona de la cara elegida', () => {
+    formaDe('cabeza').dispatchEvent(new MouseEvent('click'));
+    fixture.detectChanges();
+    formaDe('ojos').dispatchEvent(new MouseEvent('click'));
+    fixture.detectChanges();
+    expect(component.value()).toBe('ojos');
+
+    pasarA('Frente');
+    expect(vistaPuesta()).toBe('frente');
+    pasarA('Espalda');
+    expect(vistaPuesta()).toBe('espalda');
+    pasarA('Cara');
+    expect(vistaPuesta()).toBe('cara');
+    // Lo elegido no se pierde al mirar otra vista: sigue dicho en palabras.
+    expect(component.value()).toBe('ojos');
+  });
+
+  it('después de cambiar de vista a mano, elegir desde afuera vuelve a dar vuelta la figura', () => {
+    pasarA('Espalda');
+    fixture.componentRef.setInput('value', 'pecho');
+    fixture.detectChanges();
+
+    expect(vistaPuesta()).toBe('frente');
+  });
+
+  /* ---- Lo que se contó ---- */
+
+  it('las zonas marcadas por lo que se contó se ven, se anuncian y se nombran, sin quedar elegidas', () => {
+    fixture.componentRef.setInput('marcadas', ['rodillas', 'gluteos', 'piel']);
+    fixture.detectChanges();
+
+    const rodillas = formaDe('rodillas');
+    expect(rodillas.closest('g')?.classList).toContain('body-map__zona--marcada');
+    expect(rodillas.getAttribute('aria-label')).toBe('Rodillas (por lo que contaste)');
+    expect(rodillas.getAttribute('aria-pressed')).toBe('false');
+    expect(component.value()).toBeNull();
+    // Nombra también la que no se ve de frente (glúteos) y la que no tiene forma (piel).
+    expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain(
+      'Glúteos y cola, Rodillas y Piel y pelo',
+    );
+    expect(formaDe('pecho').closest('g')?.classList).not.toContain('body-map__zona--marcada');
+  });
+
+  it('sin nada contado no hay leyenda de marcadas', () => {
+    expect(html.querySelector('[data-testid="body-map-marcadas"]')).toBeNull();
+  });
+
+  /* ---- Apuntar antes de tocar ---- */
+
+  it('apuntar una zona la nombra arriba, y cambiar de vista borra el nombre', () => {
+    formaDe('pecho').dispatchEvent(new Event('pointerenter'));
+    fixture.detectChanges();
+    expect(html.querySelector('.body-map__pista')?.textContent?.trim()).toBe('Pecho y respiración');
+
+    // La forma se va con la vista y no avisa que el puntero salió.
+    pasarA('Espalda');
+    expect(html.querySelector('.body-map__pista')).toBeNull();
+  });
+
+  it('dejar la zona borra el nombre, y la elegida no se repite arriba', () => {
+    formaDe('pecho').dispatchEvent(new Event('pointerenter'));
+    fixture.detectChanges();
+    formaDe('pecho').dispatchEvent(new Event('pointerleave'));
+    fixture.detectChanges();
+    expect(html.querySelector('.body-map__pista')).toBeNull();
+
+    formaDe('pecho').dispatchEvent(new MouseEvent('click'));
+    formaDe('pecho').dispatchEvent(new Event('pointerenter'));
+    fixture.detectChanges();
+    expect(html.querySelector('.body-map__pista')).toBeNull();
+  });
+
   it('con zonas de una sola vista no hay selector de vista', () => {
     fixture.componentRef.setInput('zonas', [{ id: 'pecho', nombre: 'Pecho' }]);
     fixture.detectChanges();
