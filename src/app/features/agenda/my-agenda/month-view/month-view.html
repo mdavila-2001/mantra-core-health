@@ -11,7 +11,7 @@
 
   <table class="mes__grilla">
     <caption class="mes__leyenda">
-      Turnos disponibles por día.
+      Cupos disponibles de cada día.
     </caption>
     <thead>
       <tr>
@@ -180,9 +180,12 @@
 <ng-template #contenido let-celda>
   <span class="mes__numero" aria-hidden="true">{{ celda.numero }}</span>
 
-  <!-- El número SIEMPRE visible: el color solo no alcanza. -->
+  <!-- El número SIEMPRE visible: el color solo no alcanza. Y en palabras: un
+       «4» suelto no dice de qué son los cuatro. -->
   @if (celda.disponibles !== null) {
-    <span class="mes__cuenta" aria-hidden="true">{{ celda.disponibles }}</span>
+    <span class="mes__cuenta" aria-hidden="true">{{
+      celda.disponibles === 1 ? '1 cupo disponible' : celda.disponibles + ' cupos disponibles'
+    }}</span>
   } @else if (celda.estado === 'bloqueado') {
     <span class="mes__motivo" aria-hidden="true">{{ celda.motivo ?? 'Bloqueado' }}</span>
   }
