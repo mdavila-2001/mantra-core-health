@@ -6,6 +6,8 @@ import type { BreadcrumbItem } from '../../molecules/breadcrumb/breadcrumb.types
 import { Menu } from '../../molecules/menu/menu';
 import { MenuItem } from '../../molecules/menu/menu-item/menu-item';
 import { MenuTrigger } from '../../molecules/menu/menu-trigger/menu-trigger';
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
+import type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
 
 /**
  * Una acción secundaria del encabezado. Van por datos y no por proyección
@@ -16,6 +18,8 @@ export interface PageHeaderAction {
   /** Código estable que identifica la acción al emitirse. */
   readonly code: string;
   readonly label: string;
+  /** Va en el botón y en el menú: toda opción lleva ícono (2026-09-24). */
+  readonly icon: NavIconName;
   readonly disabled?: boolean;
 }
 
@@ -39,7 +43,7 @@ export interface PageHeaderAction {
  */
 @Component({
   selector: 'app-page-header',
-  imports: [AppButton, Breadcrumb, Menu, MenuItem, MenuTrigger],
+  imports: [AppButton, Breadcrumb, Menu, MenuItem, MenuTrigger, NavIcon],
   templateUrl: './page-header.html',
   styleUrl: './page-header.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

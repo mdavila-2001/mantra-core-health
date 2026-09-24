@@ -222,8 +222,12 @@
     Acciones
   </button>
   <app-menu #menuDeAcciones>
-    <app-menu-item (selected)="abrirCambioDeEstado(fila)">Cambiar estado clínico…</app-menu-item>
+    <app-menu-item (selected)="abrirCambioDeEstado(fila)">
+      <app-nav-icon slot="icon" name="refresh" />
+      Cambiar estado clínico…
+    </app-menu-item>
     <app-menu-item (selected)="abrirAdjuntos(fila, 'diagnosticos')">
+      <app-nav-icon slot="icon" name="paperclip" />
       Adjuntar archivos…
     </app-menu-item>
   </app-menu>

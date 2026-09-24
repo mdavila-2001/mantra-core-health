@@ -34,6 +34,7 @@
       [destructive]="entry.action === 'report'"
       (selected)="activate(entry)"
     >
+      <app-nav-icon slot="icon" [name]="entry.icon" />
       {{ entry.label }}
     </app-menu-item>
   }
