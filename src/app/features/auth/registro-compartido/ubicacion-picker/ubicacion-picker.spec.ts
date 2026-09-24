@@ -14,7 +14,6 @@ const IDS: IdsDePrueba = {
   confirmada: 'confirmada',
   avisoGeocodificacion: 'aviso-geo',
   quitar: 'quitar',
-  sinConfirmar: 'sin-confirmar',
   confirmar: 'confirmar',
   usarUbicacion: 'usar',
   marcarEnMapa: 'marcar',
@@ -31,7 +30,6 @@ describe('UbicacionPicker', () => {
     component = fixture.componentInstance;
     fixture.componentRef.setInput('pinId', 'domicilio');
     fixture.componentRef.setInput('etiquetaConfirmada', 'Tu dirección');
-    fixture.componentRef.setInput('pregunta', '¿Es acá donde vivís?');
     fixture.componentRef.setInput('etiquetaQuitar', 'Quitar la ubicación');
     fixture.componentRef.setInput('ids', IDS);
     fixture.detectChanges();
@@ -85,7 +83,6 @@ describe('UbicacionPicker', () => {
     expect(component.marcando()).toBe(false);
     expect(component.confirmada()).toBe(false);
     expect(recibidos).toEqual([]);
-    expect(raiz().querySelector(`[data-testid="${IDS.sinConfirmar}"]`)).not.toBeNull();
     expect(raiz().querySelector(`[data-testid="${IDS.confirmar}"]`)).not.toBeNull();
     // El pin puesto a mano no se llama «Acá te encontramos»: eso sería mentir.
     expect(component['pines']()[0].titulo).toBe('El punto que marcaste');
@@ -186,11 +183,11 @@ describe('UbicacionPicker', () => {
     expect(raiz().querySelector(`[data-testid="${IDS.marcarEnMapa}"]`)).not.toBeNull();
   });
 
-  it('con un punto sin confirmar avisa que no se va a guardar', () => {
+  it('con un punto sin confirmar ofrece confirmarlo', () => {
     component.punto.set({ lat: -17.78, lng: -63.18 });
     fixture.detectChanges();
 
-    expect(raiz().querySelector(`[data-testid="${IDS.sinConfirmar}"]`)).not.toBeNull();
+    expect(raiz().querySelector(`[data-testid="${IDS.confirmar}"]`)).not.toBeNull();
     expect(raiz().querySelector(`[data-testid="${IDS.confirmada}"]`)).toBeNull();
   });
 

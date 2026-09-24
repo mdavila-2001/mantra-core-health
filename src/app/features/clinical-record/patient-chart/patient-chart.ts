@@ -37,6 +37,7 @@ import type { BreadcrumbItem } from '../../../shared/components/molecules/breadc
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Menu } from '../../../shared/components/molecules/menu/menu';
 import { MenuItem } from '../../../shared/components/molecules/menu/menu-item/menu-item';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { MenuTrigger } from '../../../shared/components/molecules/menu/menu-trigger/menu-trigger';
 import { AttachmentDialog } from '../../../shared/components/organisms/attachment-dialog/attachment-dialog';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
@@ -324,6 +325,7 @@ interface Expediente {
     Menu,
     MenuItem,
     MenuTrigger,
+    NavIcon,
     ObservationBlock,
     PdfExportButton,
     PageHeader,

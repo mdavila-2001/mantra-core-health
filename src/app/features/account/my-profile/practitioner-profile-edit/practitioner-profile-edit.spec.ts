@@ -523,6 +523,31 @@ describe('PractitionerProfileEdit', () => {
 
   /* ---- especialidades: sólo se agregan ------------------------------------- */
 
+  /**
+   * Se mudaron de «Credenciales» a «Datos personales» el 24/09/2026 (pedido
+   * del propietario): la ficha ya las lee ahí, y el editor quedaba
+   * desalineado con la pestaña que dice corregir.
+   */
+  it('«Agregar especialidades» vive en «Datos personales», no en «Credenciales»', () => {
+    const fixture = montarConVista();
+
+    // Pestaña 0, «Datos personales»: el select de especialidad está.
+    expect(
+      panelAbierto(fixture).querySelector('[data-testid="especialidad-select"]'),
+    ).not.toBeNull();
+
+    señal<number>('pestana').set(5);
+    fixture.detectChanges();
+
+    // Pestaña 5, «Credenciales»: ya no queda ni el formulario ni la tabla.
+    const credenciales = panelAbierto(fixture);
+    expect(credenciales.querySelector('[data-testid="especialidad-select"]')).toBeNull();
+    expect(credenciales.querySelector('[data-testid="tabla-especialidades"]')).toBeNull();
+    expect(credenciales.textContent).not.toContain('Agregar especialidades');
+    // La matrícula, que sí es de esta pestaña, sigue estando.
+    expect(credenciales.textContent).toContain('Agregar una matrícula');
+  });
+
   it('el botón de agregar especialidad exige haber elegido una', () => {
     montarYCargar();
 
@@ -996,6 +1021,42 @@ describe('PractitionerProfileEdit', () => {
     const panel = panelAbierto(fixture);
     expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-domicilio"]')).not.toBeNull();
     expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-trabajo"]')).not.toBeNull();
+  });
+
+  /* ---- Trayectoria son los cargos; los títulos, Credenciales -------------- */
+
+  it('«Trayectoria» abre los formularios de los cargos, no los de los títulos', () => {
+    // «En trayectoria aparecen los cargos históricos, pero al darle editar no
+    // aparecen los formularios correspondientes ... aparecen los que deberían
+    // aparecer en credenciales» — propietario, 24/09/2026.
+    const fixture = montarConVista();
+    señal<number>('pestana').set(4);
+    fixture.detectChanges();
+
+    const panel = panelAbierto(fixture);
+    const historial = panel.querySelector('app-work-history');
+    // El MISMO componente que la ficha, pidiendo sólo el historial laboral.
+    expect(historial?.getAttribute('secciones')).toBe('historial');
+    expect(historial?.getAttribute('layout')).toBe('tabla');
+    expect(panel.querySelector('[data-testid="credencial-tipo"]')).toBeNull();
+    expect(panel.querySelector('[data-testid="edicion-formacion-cargada"]')).toBeNull();
+
+    // Las lecturas propias del historial no son asunto de esta prueba.
+    http.match(() => true);
+  });
+
+  it('«Credenciales» junta matrículas y títulos, cada uno en su bloque', () => {
+    const fixture = montarConVista();
+    señal<number>('pestana').set(5);
+    fixture.detectChanges();
+
+    const panel = panelAbierto(fixture);
+    const titulos = [...panel.querySelectorAll('.edicion__titulo')].map((h) =>
+      h.textContent?.trim(),
+    );
+    expect(titulos).toEqual(['Agregar una matrícula', 'Agregar formación']);
+    expect(panel.querySelector('[data-testid="credencial-tipo"]')).not.toBeNull();
+    expect(panel.querySelector('app-work-history')).toBeNull();
   });
 
   /* ---- formación: sólo se agrega ------------------------------------------- */

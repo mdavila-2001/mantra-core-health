@@ -30,7 +30,10 @@
               <app-form-field label="Nombre" [errorMessage]="errorDelServidor('name')">
                 <app-input [(value)]="nombre" placeholder="Tu nombre" />
               </app-form-field>
-              <app-form-field label="Segundo nombre (opcional)" [errorMessage]="errorDelServidor('middleName')">
+              <app-form-field
+                label="Segundo nombre (opcional)"
+                [errorMessage]="errorDelServidor('middleName')"
+              >
                 <app-input
                   data-testid="edicion-segundo-nombre"
                   [(value)]="segundoNombre"
@@ -88,10 +91,16 @@
                   + Agregar otro nombre
                 </button>
               </p>
-              <app-form-field label="Apellido paterno" [errorMessage]="errorDelServidor('lastName')">
+              <app-form-field
+                label="Apellido paterno"
+                [errorMessage]="errorDelServidor('lastName')"
+              >
                 <app-input [(value)]="apellidoPaterno" />
               </app-form-field>
-              <app-form-field label="Apellido materno (opcional)" [errorMessage]="errorDelServidor('motherLastName')">
+              <app-form-field
+                label="Apellido materno (opcional)"
+                [errorMessage]="errorDelServidor('motherLastName')"
+              >
                 <app-input [(value)]="apellidoMaterno" />
               </app-form-field>
 
@@ -384,7 +393,7 @@
                 <app-form-field
                   class="edicion__campo-ancho"
                   label="Dirección"
-                [errorMessage]="errorDelServidor('homeAddressLines')"
+                  [errorMessage]="errorDelServidor('homeAddressLines')"
                   hint="Dónde atendés o dónde te ubican tus pacientes."
                 >
                   <app-input
@@ -403,7 +412,6 @@
                   class="edicion__campo-ancho"
                   pinId="edicion-domicilio"
                   etiquetaConfirmada="Tu domicilio"
-                  pregunta="¿Es acá donde vivís? Movete por el mapa para comprobarlo."
                   etiquetaQuitar="Quitar la ubicación de tu domicilio"
                   etiquetaMapa="La ubicación de tu domicilio en el mapa"
                   etiquetaMarcar="Marcar mi domicilio en el mapa"
@@ -430,7 +438,6 @@
                   class="edicion__campo-ancho"
                   pinId="edicion-trabajo"
                   etiquetaConfirmada="Tu lugar de trabajo"
-                  pregunta="¿Es acá donde atendés? Movete por el mapa para comprobarlo."
                   etiquetaQuitar="Quitar la ubicación de tu trabajo"
                   etiquetaMapa="La ubicación de tu trabajo en el mapa"
                   etiquetaMarcar="Marcar tu lugar de trabajo en el mapa"
@@ -448,7 +455,11 @@
                 <app-form-field
                   label="Celular personal"
                   hint="Elegí el país si tu número no es de Bolivia. No se publica en tu ficha."
-                  [errorMessage]="enRojo(celularPersonal) ? mensajeTelefonoIncompleto : errorDelServidor('mobilePhone')"
+                  [errorMessage]="
+                    enRojo(celularPersonal)
+                      ? mensajeTelefonoIncompleto
+                      : errorDelServidor('mobilePhone')
+                  "
                 >
                   <app-phone-input
                     [formControl]="celularPersonal"
@@ -466,7 +477,11 @@
                 <app-form-field
                   label="Celular del trabajo (opcional)"
                   hint="Elegí el país si tu número no es de Bolivia."
-                  [errorMessage]="enRojo(celularTrabajo) ? mensajeTelefonoIncompleto : errorDelServidor('workMobilePhone')"
+                  [errorMessage]="
+                    enRojo(celularTrabajo)
+                      ? mensajeTelefonoIncompleto
+                      : errorDelServidor('workMobilePhone')
+                  "
                 >
                   <app-phone-input
                     [formControl]="celularTrabajo"
@@ -477,7 +492,11 @@
                 <app-form-field
                   label="Fijo del trabajo (opcional)"
                   hint="El de la línea del consultorio."
-                  [errorMessage]="enRojo(fijoTrabajo) ? mensajeTelefonoIncompleto : errorDelServidor('workLandline')"
+                  [errorMessage]="
+                    enRojo(fijoTrabajo)
+                      ? mensajeTelefonoIncompleto
+                      : errorDelServidor('workLandline')
+                  "
                 >
                   <app-phone-input
                     [formControl]="fijoTrabajo"
@@ -517,8 +536,8 @@
                su caja al montarse, que es lo único que obliga a diferir. -->
           <app-tab [label]="pestanas[2]">
             <p class="edicion__nota">
-              A nombre de quién salen los comprobantes que emitís. Se guarda junto con tus
-              datos personales.
+              A nombre de quién salen los comprobantes que emitís. Se guarda junto con tus datos
+              personales.
             </p>
 
             <form class="edicion__formulario" (submit)="$event.preventDefault()">
@@ -564,162 +583,29 @@
           </app-tab>
 
           <!-- ─── Trayectoria ───────────────────────────────────────────────
-               Se AGREGA, no se edita: un título verificado es un hecho
-               comprobado, no un texto que se corrige. Nace pendiente de
-               verificación; el tipo sale del catálogo dinámico (los cinco
-               CREDENTIAL_TYPE_*). Debajo, la tabla de lo ya cargado. -->
+               Los cargos: dónde ejerciste y dónde ejercés, con su tabla para
+               agregar, corregir o retirar cada vínculo. Es lo que la ficha
+               muestra en esta misma pestaña, así que el lápiz tiene que llevar
+               a los formularios de ESOS registros.
+
+               Hasta el 24/09/2026 acá vivía «Agregar formación», y el cargo no
+               tenía formulario en el editor: quien pulsaba Editar sobre su
+               trayectoria encontraba los estudios, que son una credencial. Los
+               títulos se mudaron a «Credenciales», junto a las matrículas.
+
+               Es el MISMO `app-work-history` que monta la ficha, en `tabla`
+               como «Dónde atiendo». Sólo se dibuja con la pestaña abierta,
+               igual que aquélla. -->
           <app-tab [label]="pestanas[4]">
-            <section class="edicion__seccion">
-              <h3 class="edicion__titulo">Agregar formación</h3>
-              <p class="edicion__nota">
-                Títulos, diplomados, maestrías y doctorados. Queda pendiente de verificación; podés
-                cargar varios de cada clase.
-              </p>
-
-              <form class="edicion__formulario" (submit)="$event.preventDefault()">
-                <app-form-field label="Tipo de título" [required]="true">
-                  <app-concept-select
-                    data-testid="credencial-tipo"
-                    [target]="targetCredencial"
-                    [(value)]="nuevoTipoCredencial"
-                    placeholder="Elegí un tipo"
-                  />
-                </app-form-field>
-
-                <app-form-field
-                  label="Número / título obtenido"
-                  [required]="true"
-                  hint="El número de tu diploma, o el nombre del título si no tiene número."
-                >
-                  <app-input
-                    data-testid="credencial-numero"
-                    [(value)]="nuevoNumeroCredencial"
-                    placeholder="Médico cirujano"
-                  />
-                </app-form-field>
-
-                <!-- Lista cerrada y no texto libre (propietario, 13/09/2026):
-                     escrita a mano, la misma casa de estudios llegaba como
-                     «UMSA», «U.M.S.A.» y «Universidad Mayor de San Andres», y
-                     quien verifica el título tenía que reconciliarlas a ojo. -->
-                <app-form-field
-                  label="Institución (opcional)"
-                  hint="Las universidades del sistema boliviano y las privadas autorizadas."
-                >
-                  <app-select
-                    data-testid="credencial-institucion"
-                    [options]="opcionesInstitucion"
-                    [(value)]="institucionElegida"
-                    placeholder="Elegí dónde lo cursaste"
-                  />
-                </app-form-field>
-
-                <!-- La salida para quien se formó afuera. Sin esto, una lista
-                     de universidades bolivianas le impide cargar su título a
-                     cualquiera que estudió en Cuba, Argentina o España — que es
-                     justo el caso que este campo abre. -->
-                @if (institucionFueraDeCatalogo()) {
-                  <app-form-field
-                    label="¿Cuál?"
-                    hint="El nombre completo de la institución, como figura en tu diploma."
-                  >
-                    <app-input
-                      data-testid="credencial-institucion-otra"
-                      [(value)]="institucionEscrita"
-                      placeholder="Universidad de La Habana"
-                    />
-                  </app-form-field>
-                }
-
-                <app-form-field label="Fecha de emisión (opcional)">
-                  <app-date-picker
-                    [(value)]="nuevaFechaEmisionCredencial"
-                    placeholder="Seleccionar fecha"
-                  />
-                </app-form-field>
-
-                <!-- El diploma. Mismo criterio que el alta de médico: opcional, PDF o
-                     foto, hasta 5 MB. Llega al servidor —el contrato del título
-                     declara `fileId`— y es lo que después mira quien verifica.
-                     Desde el 13/09/2026 la matrícula tiene el mismo campo y el
-                     mismo camino. -->
-                <app-form-field
-                  class="edicion__campo-ancho"
-                  label="Diploma o certificado (opcional)"
-                  hint="PDF, JPG o PNG. Hasta 5 MB. Lo mira el equipo que verifica; no se publica."
-                >
-                  <app-file-input
-                    data-testid="credencial-archivo"
-                    testId="credencial-archivo"
-                    removeTestId="credencial-archivo-quitar"
-                    [(files)]="archivoDeCredencial"
-                    [accept]="formatosDeRespaldo"
-                    [maxSizeBytes]="maxBytesDeRespaldo"
-                    [maxFiles]="1"
-                    accessibleLabel="Diploma o certificado del título"
-                  />
-                </app-form-field>
-
-                <app-form-actions
-                  class="edicion__campo-ancho"
-                  submitLabel="Agregar título"
-                  [pending]="guardandoCredencial()"
-                  [disabled]="!puedeAgregarCredencial()"
-                  (submitted)="agregarCredencial()"
-                />
-              </form>
-            </section>
-
-            <!-- Lo ya cargado. Sin esta tabla, quien agregaba un título no veía
-                 dónde había quedado —vivía en la ficha de lectura— y lo volvía a
-                 cargar (propietario, 13/09/2026). -->
-            <section class="edicion__seccion" data-testid="edicion-formacion-cargada">
-              <h3 class="edicion__titulo">Tu trayectoria cargada</h3>
-              <p class="edicion__nota">
-                Del título más reciente al más antiguo. Lo pendiente lo revisa el equipo que
-                verifica.
-              </p>
-              @if (totalFormacion() === 0) {
-                <p class="edicion__vacio">Todavía no cargaste ningún título.</p>
-              } @else {
-                <app-search-field
-                  class="edicion__buscador"
-                  data-testid="formacion-buscador"
-                  label="Buscar en tu trayectoria cargada"
-                  placeholder="Tipo, número o institución"
-                  [value]="busquedaFormacion()"
-                  (searched)="buscarEnFormacion($event)"
-                />
-                @if (sinCoincidenciasFormacion()) {
-                  <p class="edicion__vacio" data-testid="formacion-sin-coincidencias">
-                    Ningún título coincide con «{{ busquedaFormacion() }}».
-                  </p>
-                } @else {
-                  <app-data-table
-                    class="edicion__tabla"
-                    data-testid="tabla-formacion"
-                    [state]="estadoFormacion()"
-                    [columns]="columnasFormacion()"
-                    [trackBy]="claveDeFila"
-                    caption="Títulos y formación cargados, del más reciente al más antiguo"
-                  />
-                  <app-pagination
-                    class="edicion__paginacion"
-                    data-testid="formacion-paginacion"
-                    [totalItems]="totalFormacionFiltrada()"
-                    [page]="paginaActualFormacion()"
-                    (pageChange)="irAPaginaDeFormacion($event)"
-                    [(pageSize)]="porPaginaFormacion"
-                    [pageSizeOptions]="tamanosDePaginaTabla"
-                  />
-                }
-              }
-            </section>
+            @if (pestana() === pestanaEditor.trayectoria) {
+              <app-work-history secciones="historial" layout="tabla" />
+            }
           </app-tab>
 
           <!-- ─── Credenciales ──────────────────────────────────────────────
-               La habilitación para ejercer y sus respaldos: se AGREGA, no se
-               edita.
+               La habilitación para ejercer y sus respaldos, y los títulos y la
+               formación: cada uno en su bloque, con su tabla, y se AGREGAN, no
+               se editan.
 
                Las especialidades vivían acá también, y se mudaron a «Datos
                personales» (pedido del propietario, 24/09/2026): contestan
@@ -841,6 +727,153 @@
                     [page]="paginaActualMatriculas()"
                     (pageChange)="irAPaginaDeMatriculas($event)"
                     [(pageSize)]="porPaginaMatriculas"
+                    [pageSizeOptions]="tamanosDePaginaTabla"
+                  />
+                }
+              }
+            </section>
+
+            <!-- Los títulos y la formación: se AGREGAN, no se editan —un título
+                 verificado es un hecho comprobado—. Vivían en «Trayectoria», que
+                 son los cargos (propietario, 24/09/2026). -->
+            <section class="edicion__seccion">
+              <h3 class="edicion__titulo">Agregar formación</h3>
+              <p class="edicion__nota">
+                Títulos, diplomados, maestrías y doctorados. Queda pendiente de verificación; podés
+                cargar varios de cada clase.
+              </p>
+
+              <form class="edicion__formulario" (submit)="$event.preventDefault()">
+                <app-form-field label="Tipo de título" [required]="true">
+                  <app-concept-select
+                    data-testid="credencial-tipo"
+                    [target]="targetCredencial"
+                    [(value)]="nuevoTipoCredencial"
+                    placeholder="Elegí un tipo"
+                  />
+                </app-form-field>
+
+                <app-form-field
+                  label="Número / título obtenido"
+                  [required]="true"
+                  hint="El número de tu diploma, o el nombre del título si no tiene número."
+                >
+                  <app-input
+                    data-testid="credencial-numero"
+                    [(value)]="nuevoNumeroCredencial"
+                    placeholder="Médico cirujano"
+                  />
+                </app-form-field>
+
+                <!-- Lista cerrada y no texto libre (propietario, 13/09/2026):
+                     escrita a mano, la misma casa de estudios llegaba como
+                     «UMSA», «U.M.S.A.» y «Universidad Mayor de San Andres», y
+                     quien verifica el título tenía que reconciliarlas a ojo. -->
+                <app-form-field
+                  label="Institución (opcional)"
+                  hint="Las universidades del sistema boliviano y las privadas autorizadas."
+                >
+                  <app-select
+                    data-testid="credencial-institucion"
+                    [options]="opcionesInstitucion"
+                    [(value)]="institucionElegida"
+                    placeholder="Elegí dónde lo cursaste"
+                  />
+                </app-form-field>
+
+                <!-- La salida para quien se formó afuera. Sin esto, una lista
+                     de universidades bolivianas le impide cargar su título a
+                     cualquiera que estudió en Cuba, Argentina o España — que es
+                     justo el caso que este campo abre. -->
+                @if (institucionFueraDeCatalogo()) {
+                  <app-form-field
+                    label="¿Cuál?"
+                    hint="El nombre completo de la institución, como figura en tu diploma."
+                  >
+                    <app-input
+                      data-testid="credencial-institucion-otra"
+                      [(value)]="institucionEscrita"
+                      placeholder="Universidad de La Habana"
+                    />
+                  </app-form-field>
+                }
+
+                <app-form-field label="Fecha de emisión (opcional)">
+                  <app-date-picker
+                    [(value)]="nuevaFechaEmisionCredencial"
+                    placeholder="Seleccionar fecha"
+                  />
+                </app-form-field>
+
+                <!-- El diploma. Mismo criterio que el alta de médico: opcional, PDF o
+                     foto, hasta 5 MB. Llega al servidor —el contrato del título
+                     declara `fileId`— y es lo que después mira quien verifica.
+                     Desde el 13/09/2026 la matrícula tiene el mismo campo y el
+                     mismo camino. -->
+                <app-form-field
+                  class="edicion__campo-ancho"
+                  label="Diploma o certificado (opcional)"
+                  hint="PDF, JPG o PNG. Hasta 5 MB. Lo mira el equipo que verifica; no se publica."
+                >
+                  <app-file-input
+                    data-testid="credencial-archivo"
+                    testId="credencial-archivo"
+                    removeTestId="credencial-archivo-quitar"
+                    [(files)]="archivoDeCredencial"
+                    [accept]="formatosDeRespaldo"
+                    [maxSizeBytes]="maxBytesDeRespaldo"
+                    [maxFiles]="1"
+                    accessibleLabel="Diploma o certificado del título"
+                  />
+                </app-form-field>
+
+                <app-form-actions
+                  class="edicion__campo-ancho"
+                  submitLabel="Agregar título"
+                  [pending]="guardandoCredencial()"
+                  [disabled]="!puedeAgregarCredencial()"
+                  (submitted)="agregarCredencial()"
+                />
+              </form>
+
+              <!-- Lo ya cargado. Sin esta tabla, quien agregaba un título no veía
+                   dónde había quedado —vivía en la ficha de lectura— y lo volvía a
+                   cargar (propietario, 13/09/2026). Mismo rango que «Tus matrículas
+                   cargadas»: es la tabla de su bloque, no otro bloque. -->
+              <h4 class="edicion__subtitulo" data-testid="edicion-formacion-cargada">
+                Tus títulos cargados
+              </h4>
+              @if (totalFormacion() === 0) {
+                <p class="edicion__vacio">Todavía no cargaste ningún título.</p>
+              } @else {
+                <app-search-field
+                  class="edicion__buscador"
+                  data-testid="formacion-buscador"
+                  label="Buscar en tus títulos cargados"
+                  placeholder="Tipo, número o institución"
+                  [value]="busquedaFormacion()"
+                  (searched)="buscarEnFormacion($event)"
+                />
+                @if (sinCoincidenciasFormacion()) {
+                  <p class="edicion__vacio" data-testid="formacion-sin-coincidencias">
+                    Ningún título coincide con «{{ busquedaFormacion() }}».
+                  </p>
+                } @else {
+                  <app-data-table
+                    class="edicion__tabla"
+                    data-testid="tabla-formacion"
+                    [state]="estadoFormacion()"
+                    [columns]="columnasFormacion()"
+                    [trackBy]="claveDeFila"
+                    caption="Títulos y formación cargados, del más reciente al más antiguo"
+                  />
+                  <app-pagination
+                    class="edicion__paginacion"
+                    data-testid="formacion-paginacion"
+                    [totalItems]="totalFormacionFiltrada()"
+                    [page]="paginaActualFormacion()"
+                    (pageChange)="irAPaginaDeFormacion($event)"
+                    [(pageSize)]="porPaginaFormacion"
                     [pageSizeOptions]="tamanosDePaginaTabla"
                   />
                 }
@@ -1149,7 +1182,6 @@
               placeholder="Elegí la especialidad"
             />
           </app-form-field>
-
         }
 
         @case ('matricula') {

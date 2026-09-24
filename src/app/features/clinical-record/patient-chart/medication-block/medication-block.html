@@ -79,10 +79,7 @@
                     [disabled]="accionEnCurso() !== null"
                     (selected)="firmar(receta)"
                   >
-                    <svg slot="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                      stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M5 12l4 4L19 6" />
-                    </svg>
+                    <app-nav-icon slot="icon" name="check" />
                     Firmar
                   </app-menu-item>
                 }
@@ -90,10 +87,7 @@
                   [disabled]="accionEnCurso() !== null"
                   (selected)="emitir(receta)"
                 >
-                  <svg slot="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M6 2h12v20l-6-4-6 4z" />
-                  </svg>
+                  <app-nav-icon slot="icon" name="check-circle" />
                   Emitir
                 </app-menu-item>
               </app-menu>

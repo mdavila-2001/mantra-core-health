@@ -15,7 +15,7 @@
           [ariaLabel]="filter.label"
           [options]="filter.options"
           [value]="valueOf(filter)"
-          [placeholder]="filter.label"
+          [placeholder]="filter.placeholder ?? filter.label"
           (valueChange)="onFilterChange(filter, $event)"
         />
       } @else {

@@ -2,7 +2,7 @@ import type {
   PortabilityExportFormat,
   PortabilityExportInput,
 } from '../../data-access/insurance/insurance-portability.types';
-import { PACIENTE } from '../fixtures/personas';
+import { PACIENTE, pacientePorId } from '../fixtures/personas';
 import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, iso, nuevoId, uuid } from '../mock-store';
 import { sha256Hex } from '../sha256';
@@ -24,14 +24,14 @@ import { perfilPropioDe } from './profiles.handlers';
     para llegar a los 14 reclamos / Bs 12 450 que pide la demostración.
     ========================================================================== */
 
-interface ReclamoHistorico {
+interface HistoricalClaim {
   readonly claimIdentifier: string;
   readonly billed: number;
   readonly diasAtras: number;
 }
 
 /** Suman exactamente Bs 11 200 — con los 3 reclamos reales (Bs 1 250 cubiertos) da Bs 12 450. */
-const RECLAMOS_HISTORICOS: readonly ReclamoHistorico[] = [
+const HISTORICAL_CLAIMS: readonly HistoricalClaim[] = [
   { claimIdentifier: 'CLM-2025-0301', billed: 900, diasAtras: 620 },
   { claimIdentifier: 'CLM-2025-0308', billed: 950, diasAtras: 590 },
   { claimIdentifier: 'CLM-2025-0315', billed: 1000, diasAtras: 560 },
@@ -45,7 +45,7 @@ const RECLAMOS_HISTORICOS: readonly ReclamoHistorico[] = [
   { claimIdentifier: 'CLM-2025-0371', billed: 1200, diasAtras: 320 },
 ] as const;
 
-const DIAGNOSTICOS = [
+const DIAGNOSES = [
   {
     code: 'I10',
     codeSystem: 'ICD-10-CM',
@@ -62,7 +62,35 @@ const DIAGNOSTICOS = [
   },
 ] as const;
 
-interface ReclamoDelInforme {
+/**
+ * Atenciones de demostración (CA-01: la API agrega `clinical.encounters` al
+ * certificado, sin motivo de consulta por minimización de PHI ante un
+ * tercero). Determinista, tal como el resto del fixture.
+ */
+const ENCOUNTERS_DEMO = [
+  {
+    encounterId: uuid('portability-encounter-1'),
+    startAt: iso(-40, 9),
+    endAt: iso(-40, 10),
+    encounterClass: 'ENCOUNTER_CLASS_AMBULATORY',
+    type: null,
+    status: 'ENCOUNTER_FINISHED',
+    organizationName: 'Centro Médico Foianini',
+    branchName: null,
+  },
+  {
+    encounterId: uuid('portability-encounter-2'),
+    startAt: iso(-210, 15),
+    endAt: iso(-210, 16),
+    encounterClass: 'ENCOUNTER_CLASS_AMBULATORY',
+    type: null,
+    status: 'ENCOUNTER_FINISHED',
+    organizationName: 'Clínica Foianini',
+    branchName: null,
+  },
+] as const;
+
+interface ReportClaim {
   readonly claimIdentifier: string;
   readonly carrierName: string;
   readonly submittedAt: string;
@@ -71,13 +99,13 @@ interface ReclamoDelInforme {
   readonly status: string;
 }
 
-function dosDecimales(valor: number): string {
+function twoDecimals(valor: number): string {
   return (Math.round(valor * 100) / 100).toFixed(2);
 }
 
-function reclamosDelInforme(patientProfileId: string): readonly ReclamoDelInforme[] {
+function reportClaims(patientProfileId: string): readonly ReportClaim[] {
   const reales = reclamosDePaciente(patientProfileId).map(
-    (s): ReclamoDelInforme => ({
+    (s): ReportClaim => ({
       claimIdentifier: s.claimIdentifier,
       carrierName: nombreDeAseguradora(s.carrierIndex),
       submittedAt: s.submittedAt,
@@ -86,20 +114,28 @@ function reclamosDelInforme(patientProfileId: string): readonly ReclamoDelInform
       status: s.status.code,
     }),
   );
-  const historicos = RECLAMOS_HISTORICOS.map(
-    (h): ReclamoDelInforme => ({
-      claimIdentifier: h.claimIdentifier,
-      carrierName: 'Plan anterior',
-      submittedAt: iso(-h.diasAtras, 10),
-      billedAmount: dosDecimales(h.billed),
-      approvedAmount: dosDecimales(h.billed),
-      status: 'PAID',
-    }),
-  );
+  // El relleno histórico es SOLO del titular de demostración (PACIENTE): es
+  // lo que arma los 14 reclamos / Bs 12 450 que pide el certificado de
+  // ejemplo. Sumárselo a cualquier otro paciente —incluido el que no
+  // declaró coberturas, para probar CA-02— inventaría siniestralidad que
+  // esa persona nunca tuvo.
+  const historicos =
+    patientProfileId === PACIENTE.id
+      ? HISTORICAL_CLAIMS.map(
+          (h): ReportClaim => ({
+            claimIdentifier: h.claimIdentifier,
+            carrierName: 'Plan anterior',
+            submittedAt: iso(-h.diasAtras, 10),
+            billedAmount: twoDecimals(h.billed),
+            approvedAmount: twoDecimals(h.billed),
+            status: 'PAID',
+          }),
+        )
+      : [];
   return [...reales, ...historicos].sort((a, b) => a.submittedAt.localeCompare(b.submittedAt));
 }
 
-function periodo(reclamos: readonly ReclamoDelInforme[]) {
+function periodStats(reclamos: readonly ReportClaim[]) {
   const billedAmount = reclamos.reduce((s, r) => s + Number(r.billedAmount), 0);
   const coveredAmount = reclamos.reduce((s, r) => s + Number(r.approvedAmount ?? 0), 0);
   const approvedCount = reclamos.filter((r) => r.approvedAmount !== null).length;
@@ -110,9 +146,9 @@ function periodo(reclamos: readonly ReclamoDelInforme[]) {
     approvedCount,
     deniedCount: 0,
     pendingCount,
-    billedAmount: dosDecimales(billedAmount),
-    coveredAmount: dosDecimales(coveredAmount),
-    patientCopayAmount: dosDecimales(billedAmount - coveredAmount),
+    billedAmount: twoDecimals(billedAmount),
+    coveredAmount: twoDecimals(coveredAmount),
+    patientCopayAmount: twoDecimals(billedAmount - coveredAmount),
     deniedAmount: '0.00',
     firstClaimAt: fechas[0],
     lastClaimAt: fechas.at(-1),
@@ -120,11 +156,11 @@ function periodo(reclamos: readonly ReclamoDelInforme[]) {
     coveredMonths:
       fechas[0] === undefined
         ? '0.00'
-        : dosDecimales((Date.now() - Date.parse(fechas[0])) / (1000 * 60 * 60 * 24 * 30.44)),
+        : twoDecimals((Date.now() - Date.parse(fechas[0])) / (1000 * 60 * 60 * 24 * 30.44)),
   };
 }
 
-function porAnio(reclamos: readonly ReclamoDelInforme[]) {
+function buildYearStats(reclamos: readonly ReportClaim[]) {
   const anios = new Map<number, { claimsCount: number; billed: number; covered: number }>();
   for (const r of reclamos) {
     const anio = new Date(r.submittedAt).getUTCFullYear();
@@ -139,19 +175,28 @@ function porAnio(reclamos: readonly ReclamoDelInforme[]) {
     .map(([year, a]) => ({
       year,
       claimsCount: a.claimsCount,
-      billedAmount: dosDecimales(a.billed),
-      coveredAmount: dosDecimales(a.covered),
+      billedAmount: twoDecimals(a.billed),
+      coveredAmount: twoDecimals(a.covered),
     }));
 }
 
-function armarInforme(patientProfileId: string, certificateId: string, generatedAt: string) {
-  const perfil = perfilPropioDe(PACIENTE);
-  const reclamos = reclamosDelInforme(patientProfileId);
+function buildReport(patientProfileId: string, certificateId: string, generatedAt: string) {
+  // El titular a mostrar es SIEMPRE el que pidió el certificado, no un
+  // paciente fijo: sin esto, exportar con otro `patientProfileId` (otro
+  // titular, o el de demostración) devolvía el nombre y las coberturas de
+  // `PACIENTE` sin importar a quién pertenecía el historial.
+  const perfil = perfilPropioDe(pacientePorId(patientProfileId) ?? PACIENTE);
+  const reclamos = reportClaims(patientProfileId);
   const hace36Meses = new Date(Date.now() - 36 * 30.44 * 24 * 60 * 60 * 1000).toISOString();
   const ultimos36 = reclamos.filter((r) => r.submittedAt >= hace36Meses);
+  // Igual que las pólizas: sin coberturas declaradas no hay atenciones ni
+  // diagnósticos que mostrar en la maqueta — el certificado deja constancia
+  // de la ausencia (arrays vacíos), no inventa historial clínico.
+  const encuentros = perfil.coverages.length === 0 ? [] : ENCOUNTERS_DEMO;
+  const diagnosticos = perfil.coverages.length === 0 ? [] : DIAGNOSES;
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 'alovida.insurance-portability/2',
     certificateId,
     generatedAt,
     issuer: 'AloVida',
@@ -172,13 +217,14 @@ function armarInforme(patientProfileId: string, certificateId: string, generated
       effectiveFrom: c.effectiveFrom,
       effectiveTo: c.effectiveTo,
     })),
+    encounters: encuentros,
     claims: reclamos,
-    conditions: DIAGNOSTICOS,
+    conditions: diagnosticos,
     summary: {
       currencyCode: 'BOB',
-      allTime: periodo(reclamos),
-      last36Months: periodo(ultimos36),
-      byYear: porAnio(reclamos),
+      allTime: periodStats(reclamos),
+      last36Months: periodStats(ultimos36),
+      byYear: buildYearStats(reclamos),
       claimsOver2000Count: reclamos.filter((r) => Number(r.billedAmount) > 2000).length,
       // Sin prima de lista enganchada en la maqueta: `null`, nunca inventada.
       estimatedLossRatioPercent: null,
@@ -186,7 +232,7 @@ function armarInforme(patientProfileId: string, certificateId: string, generated
   };
 }
 
-interface CertificadoSimulado {
+interface SimulatedCertificate {
   readonly id: string;
   readonly patientProfileId: string;
   readonly manifestHash: string;
@@ -207,10 +253,10 @@ interface CertificadoSimulado {
  * a hoy (`iso(-N)`), igual que todo el resto de la maqueta. Dentro de una
  * sesión es estable, que es lo que la verificación por QR necesita.
  */
-function certificadoDeDemostracion(): CertificadoSimulado {
+function demoCertificate(): SimulatedCertificate {
   const id = uuid('portability-demo-certificate');
   const generatedAt = iso(-1, 12);
-  const informe = armarInforme(PACIENTE.id, id, generatedAt);
+  const informe = buildReport(PACIENTE.id, id, generatedAt);
   const canonicalJson = JSON.stringify(informe);
   return {
     id,
@@ -224,33 +270,33 @@ function certificadoDeDemostracion(): CertificadoSimulado {
   };
 }
 
-const certificados = new Coleccion<CertificadoSimulado>(
-  [certificadoDeDemostracion()],
+const certificados = new Coleccion<SimulatedCertificate>(
+  [demoCertificate()],
   'portability-certificates',
 );
 
-function esTitularOPlataforma(request: MockRequest, patientProfileId: string): boolean {
+function isOwnerOrPlatform(request: MockRequest, patientProfileId: string): boolean {
   const user = request.user;
   if (user === null) return false;
   if (user.patientProfileId === patientProfileId) return true;
   return user.roles.includes('SUPERADMIN') || user.roles.includes('SECURITY_ADMIN');
 }
 
-export function registrarPortabilidadDeSeguros(router: MockRouter): void {
+export function registerInsurancePortability(router: MockRouter): void {
   router.post('/insurance/portability/export', (request) => {
     const datos = cuerpo<PortabilityExportInput>(request);
     const patientProfileId = datos.patientProfileId;
     if (patientProfileId === undefined) {
       return forbidden('Falta el perfil de paciente a exportar.');
     }
-    if (!esTitularOPlataforma(request, patientProfileId)) {
+    if (!isOwnerOrPlatform(request, patientProfileId)) {
       return forbidden('No podés exportar el historial de otra persona.');
     }
 
     const format: PortabilityExportFormat = datos.format ?? 'BUNDLE';
     const id = nuevoId('portability-certificate');
     const generatedAt = ahora();
-    const informe = armarInforme(patientProfileId, id, generatedAt);
+    const informe = buildReport(patientProfileId, id, generatedAt);
     const canonicalJson = JSON.stringify(informe);
     const manifestHash = sha256Hex(canonicalJson);
 
@@ -282,7 +328,7 @@ export function registrarPortabilidadDeSeguros(router: MockRouter): void {
   router.get('/insurance/portability/certificates/:certificateId/pdf', (request) => {
     const certificado = certificados.get(request.params['certificateId']!);
     if (certificado === undefined) return notFound('Certificado no encontrado');
-    if (!esTitularOPlataforma(request, certificado.patientProfileId)) return forbidden();
+    if (!isOwnerOrPlatform(request, certificado.patientProfileId)) return forbidden();
 
     return {
       status: 200,
@@ -300,7 +346,7 @@ export function registrarPortabilidadDeSeguros(router: MockRouter): void {
   router.get('/insurance/portability/certificates/:certificateId/json', (request) => {
     const certificado = certificados.get(request.params['certificateId']!);
     if (certificado === undefined) return notFound('Certificado no encontrado');
-    if (!esTitularOPlataforma(request, certificado.patientProfileId)) return forbidden();
+    if (!isOwnerOrPlatform(request, certificado.patientProfileId)) return forbidden();
 
     return {
       status: 200,
@@ -314,8 +360,13 @@ export function registrarPortabilidadDeSeguros(router: MockRouter): void {
 
   // Pública: sin sesión, sin PHI — sólo confirma que el sello existe.
   router.get('/public/portability/verify/:manifestHash', ({ params }) => {
-    const hash = params['manifestHash']!;
-    const certificado = certificados.todos().find((c) => c.manifestHash === hash);
+    // El sello se guarda en minúsculas (`sha256Hex`); mayúsculas o mixto son
+    // el MISMO certificado (CA-04: «acepta hashes en mayúsculas o
+    // minúsculas»), así que se normaliza antes de comparar.
+    const hash = params['manifestHash']!.toLowerCase();
+    const certificado = certificados
+      .todos()
+      .find((c) => c.manifestHash.toLowerCase() === hash);
     if (certificado === undefined) return notFound('Certificado no encontrado');
 
     return {
