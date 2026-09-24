@@ -180,6 +180,147 @@
                 </dl>
               </section>
             }
+
+            <!-- ─── Especialidades ──────────────────────────────────────────
+                 Se mudaron acá el 24/09/2026 (pedido del propietario): vivían
+                 en «Credenciales», junto a la matrícula, pero contestan «¿de
+                 qué es médico?» — la misma pregunta que el título
+                 profesional, de arriba — y no un trámite de habilitación. La
+                 ficha (`practitioner-profile-view.html`) ya las lee en
+                 «Datos personales» desde el 19/09/2026; el editor quedaba
+                 desalineado con la pestaña que dice corregir.
+
+                 Se AGREGAN, no se editan: una especialidad declarada es un
+                 hecho a verificar, no un texto que se corrige. Por eso tiene
+                 su propio formulario y su propio botón, fuera de
+                 `editandoPresentacion` — el mismo criterio que ya regía en
+                 «Credenciales» para especialidades y matrículas. -->
+            <section class="edicion__seccion">
+              <h3 class="edicion__titulo">Agregar especialidades</h3>
+              <p class="edicion__nota">
+                Podés cargar hasta cuatro especialidades en total, como en el registro. Quedan
+                pendientes de verificación hasta que se comprueben contra tu credencial.
+              </p>
+
+              @if (canDeclareSpecialty()) {
+                <form class="edicion__formulario" (submit)="$event.preventDefault()">
+                  <!-- TJ-3 · F-19: las 36 especialidades del modelo, en castellano. Antes
+                     esto pedía el catálogo por campo destino y llegaba una sola opción
+                     («General medicine specialty»), que además no la usa ninguna fila. -->
+                  @if (catalogoCaido()) {
+                    <app-form-field label="Especialidad">
+                      <p class="edicion__aviso" data-testid="especialidades-caidas">
+                        No pudimos traer el catálogo de especialidades.
+                        <button
+                          app-button
+                          variant="ghost"
+                          size="sm"
+                          (clicked)="reintentarEspecialidades()"
+                        >
+                          Reintentar
+                        </button>
+                      </p>
+                    </app-form-field>
+                  } @else {
+                    <app-form-field label="Especialidad" [required]="true">
+                      <app-select
+                        data-testid="especialidad-select"
+                        [options]="especialidades()"
+                        [(value)]="nuevaEspecialidad"
+                        placeholder="Elegí una especialidad"
+                      />
+                    </app-form-field>
+
+                    <!-- Las que se agreguen además, en casillas sumables: las mismas
+                       del alta de médico. Antes esto era una sola por envío, así que
+                       quien tiene tres especialidades tenía que elegir, guardar y
+                       esperar la recarga tres veces. -->
+                    @for (extra of especialidadesExtra(); track $index) {
+                      <app-form-field [label]="'Especialidad ' + ($index + 2)">
+                        <div class="edicion__casilla-extra">
+                          <app-select
+                            [attr.data-testid]="'especialidad-extra-' + $index"
+                            [options]="especialidades()"
+                            placeholder="Elegí una especialidad"
+                            [value]="extra === '' ? null : extra"
+                            (valueChange)="elegirEspecialidadExtra($index, $event)"
+                          />
+                          <button
+                            app-button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            [iconOnly]="true"
+                            [attr.aria-label]="'Quitar la especialidad ' + ($index + 2)"
+                            [appTooltip]="'Quitar la especialidad ' + ($index + 2)"
+                            [attr.data-testid]="'quitar-especialidad-' + $index"
+                            (clicked)="quitarCasillaDeEspecialidad($index)"
+                          >
+                            <app-nav-icon name="remove" />
+                          </button>
+                        </div>
+                      </app-form-field>
+                    }
+
+                    @if (canAddAnotherSpecialty()) {
+                      <p class="edicion__sumar">
+                        <button
+                          app-button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          data-testid="agregar-casilla-especialidad"
+                          (clicked)="agregarCasillaDeEspecialidad()"
+                        >
+                          + Agregar otra especialidad
+                        </button>
+                      </p>
+                    }
+                  }
+
+                  <!-- Sin los dos interruptores («Es mi especialidad principal» y
+                     «Tengo certificación de junta»): el propietario pidió el
+                     2026-09-10 que esta pantalla se adapte al formulario del alta de
+                     médico, y el alta no los tiene. Ahí la principal se elige en un
+                     select —«Especialidad principal (opcional)»— al registrarse, y la
+                     certificación de junta no se pregunta.
+
+                     Consecuencia declarada, no escondida: agregar una especialidad
+                     desde acá **nunca desplaza a la principal**. Cambiar cuál es la
+                     principal más adelante no tiene hoy dónde hacerse; está anotado
+                     en `docs/progress/BLOCKERS.md`. -->
+                  <app-form-actions
+                    class="edicion__campo-ancho"
+                    [submitLabel]="
+                      especialidadesElegidas().length > 1
+                        ? 'Agregar especialidades'
+                        : 'Agregar especialidad'
+                    "
+                    [pending]="guardandoEspecialidad()"
+                    [disabled]="!puedeAgregarEspecialidad()"
+                    (submitted)="agregarEspecialidad()"
+                  />
+                </form>
+              } @else {
+                <p class="edicion__nota" data-testid="limite-especialidades-alcanzado">
+                  Ya alcanzaste el máximo de cuatro especialidades.
+                </p>
+              }
+
+              <h4 class="edicion__subtitulo">Tus especialidades cargadas</h4>
+              @if (filasEspecialidades().length === 0) {
+                <p class="edicion__vacio">Todavía no cargaste ninguna especialidad.</p>
+              } @else {
+                <app-data-table
+                  class="edicion__tabla"
+                  data-testid="tabla-especialidades"
+                  [state]="estadoEspecialidades()"
+                  [columns]="columnasEspecialidades()"
+                  [trackBy]="claveDeFila"
+                  caption="Especialidades cargadas, la principal primero"
+                />
+              }
+            </section>
           </app-tab>
 
           <!-- ─── Contacto ──────────────────────────────────────────────── -->
@@ -536,138 +677,11 @@
           </app-tab>
 
           <!-- ─── Credenciales ──────────────────────────────────────────────
-               Especialidades y matrículas: las dos se AGREGAN y ninguna se
-               edita. Van juntas porque son la misma pregunta —qué estás
-               habilitado a ejercer y dónde— y separadas en dos tarjetas se leían
-               como dos trámites distintos. Cada una con su tabla debajo. -->
+               La matrícula se AGREGA, no se edita. Las especialidades vivían
+               acá también hasta el 24/09/2026: el propietario pidió que se
+               editen junto con el resto de «Datos personales», que es donde
+               ya se leen en la ficha (ver esa pestaña, arriba). -->
           <app-tab [label]="pestanas[5]">
-            <section class="edicion__seccion">
-              <h3 class="edicion__titulo">Agregar especialidades</h3>
-              <p class="edicion__nota">
-                Podés cargar hasta cuatro especialidades en total, como en el registro. Quedan
-                pendientes de verificación hasta que se comprueben contra tu credencial.
-              </p>
-
-              @if (canDeclareSpecialty()) {
-                <form class="edicion__formulario" (submit)="$event.preventDefault()">
-                  <!-- TJ-3 · F-19: las 36 especialidades del modelo, en castellano. Antes
-                     esto pedía el catálogo por campo destino y llegaba una sola opción
-                     («General medicine specialty»), que además no la usa ninguna fila. -->
-                  @if (catalogoCaido()) {
-                    <app-form-field label="Especialidad">
-                      <p class="edicion__aviso" data-testid="especialidades-caidas">
-                        No pudimos traer el catálogo de especialidades.
-                        <button
-                          app-button
-                          variant="ghost"
-                          size="sm"
-                          (clicked)="reintentarEspecialidades()"
-                        >
-                          Reintentar
-                        </button>
-                      </p>
-                    </app-form-field>
-                  } @else {
-                    <app-form-field label="Especialidad" [required]="true">
-                      <app-select
-                        data-testid="especialidad-select"
-                        [options]="especialidades()"
-                        [(value)]="nuevaEspecialidad"
-                        placeholder="Elegí una especialidad"
-                      />
-                    </app-form-field>
-
-                    <!-- Las que se agreguen además, en casillas sumables: las mismas
-                       del alta de médico. Antes esto era una sola por envío, así que
-                       quien tiene tres especialidades tenía que elegir, guardar y
-                       esperar la recarga tres veces. -->
-                    @for (extra of especialidadesExtra(); track $index) {
-                      <app-form-field [label]="'Especialidad ' + ($index + 2)">
-                        <div class="edicion__casilla-extra">
-                          <app-select
-                            [attr.data-testid]="'especialidad-extra-' + $index"
-                            [options]="especialidades()"
-                            placeholder="Elegí una especialidad"
-                            [value]="extra === '' ? null : extra"
-                            (valueChange)="elegirEspecialidadExtra($index, $event)"
-                          />
-                          <button
-                            app-button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            [iconOnly]="true"
-                            [attr.aria-label]="'Quitar la especialidad ' + ($index + 2)"
-                            [appTooltip]="'Quitar la especialidad ' + ($index + 2)"
-                            [attr.data-testid]="'quitar-especialidad-' + $index"
-                            (clicked)="quitarCasillaDeEspecialidad($index)"
-                          >
-                            <app-nav-icon name="remove" />
-                          </button>
-                        </div>
-                      </app-form-field>
-                    }
-
-                    @if (canAddAnotherSpecialty()) {
-                      <p class="edicion__sumar">
-                        <button
-                          app-button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          data-testid="agregar-casilla-especialidad"
-                          (clicked)="agregarCasillaDeEspecialidad()"
-                        >
-                          + Agregar otra especialidad
-                        </button>
-                      </p>
-                    }
-                  }
-
-                  <!-- Sin los dos interruptores («Es mi especialidad principal» y
-                     «Tengo certificación de junta»): el propietario pidió el
-                     2026-09-10 que esta pantalla se adapte al formulario del alta de
-                     médico, y el alta no los tiene. Ahí la principal se elige en un
-                     select —«Especialidad principal (opcional)»— al registrarse, y la
-                     certificación de junta no se pregunta.
-
-                     Consecuencia declarada, no escondida: agregar una especialidad
-                     desde acá **nunca desplaza a la principal**. Cambiar cuál es la
-                     principal más adelante no tiene hoy dónde hacerse; está anotado
-                     en `docs/progress/BLOCKERS.md`. -->
-                  <app-form-actions
-                    class="edicion__campo-ancho"
-                    [submitLabel]="
-                      especialidadesElegidas().length > 1
-                        ? 'Agregar especialidades'
-                        : 'Agregar especialidad'
-                    "
-                    [pending]="guardandoEspecialidad()"
-                    [disabled]="!puedeAgregarEspecialidad()"
-                    (submitted)="agregarEspecialidad()"
-                  />
-                </form>
-              } @else {
-                <p class="edicion__nota" data-testid="limite-especialidades-alcanzado">
-                  Ya alcanzaste el máximo de cuatro especialidades.
-                </p>
-              }
-
-              <h4 class="edicion__subtitulo">Tus especialidades cargadas</h4>
-              @if (filasEspecialidades().length === 0) {
-                <p class="edicion__vacio">Todavía no cargaste ninguna especialidad.</p>
-              } @else {
-                <app-data-table
-                  class="edicion__tabla"
-                  data-testid="tabla-especialidades"
-                  [state]="estadoEspecialidades()"
-                  [columns]="columnasEspecialidades()"
-                  [trackBy]="claveDeFila"
-                  caption="Especialidades cargadas, la principal primero"
-                />
-              }
-            </section>
-
             <section class="edicion__seccion">
               <h3 class="edicion__titulo">Agregar una matrícula</h3>
               <p class="edicion__nota">
@@ -804,13 +818,22 @@
              pestañas y no se duplica. En «Trayectoria» y «Credenciales» no
              aparece: ahí no se corrige nada, se agrega, y cada bloque tiene su
              propio «Agregar». Un «Guardar cambios» presente mientras se carga
-             una matrícula prometería guardar algo que no guarda. -->
+             una matrícula prometería guardar algo que no guarda.
+
+             «Cancelar» faltaba (reporte del 24/09/2026): quien tecleaba algo
+             y se arrepentía no tenía forma de volver a lo guardado sin salir
+             de la pantalla y perder también la pestaña en la que estaba.
+             `cancelarPresentacion` vuelve a sembrar el formulario con el
+             último perfil que llegó del servidor — nunca manda nada —, así
+             que cancelar dos veces seguidas es tan inofensivo como una. -->
         @if (editandoPresentacion()) {
           <app-form-actions
             class="edicion__guardar"
             submitLabel="Guardar cambios"
+            cancelLabel="Cancelar"
             [pending]="guardandoPresentacion()"
             (submitted)="guardarPresentacion()"
+            (cancelled)="cancelarPresentacion()"
           />
         }
       </app-card>

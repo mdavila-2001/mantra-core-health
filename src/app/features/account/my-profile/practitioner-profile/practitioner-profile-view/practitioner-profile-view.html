@@ -188,10 +188,12 @@
             </dd>
           </div>
 
-          <!-- Las especialidades (pedido del 19/09/2026). Van con la identidad
-               y no en «Credenciales»: contestan «¿de qué es médico?», la
-               pregunta que se hace antes que ninguna. En «Credenciales»
-               siguen, con su vigencia y su sello.
+          <!-- Las especialidades (pedido del 19/09/2026, y otra vez el
+               24/09/2026). Van con la identidad y no en «Credenciales»:
+               contestan «¿de qué es médico?», la pregunta que se hace antes
+               que ninguna. Hasta el 24/09/2026 se mostraban ACÁ Y ADEMÁS en
+               «Credenciales», con su vigencia y su sello; el propietario pidió
+               sacarlas de ahí — un solo lugar, no dos con distinto detalle.
 
                Desde C-09 es la insignia compartida, la misma en toda la
                aplicación. El hash de color se retiró: repartía tonos que en
@@ -646,8 +648,12 @@
       </app-tab>
 
       <!-- ─── Credenciales ─────────────────────────────────────────────────
-           Pasos 9, 10 y 12 del alta: la habilitación para ejercer, sus
-           respaldos y las especialidades. -->
+           Pasos 9 y 10 del alta: la habilitación para ejercer y sus
+           respaldos. Las especialidades (paso 12) se mudaron enteras a
+           «Datos personales» el 24/09/2026, pedido del propietario: no se
+           quiere el mismo dato repetido en dos pestañas con distinto
+           detalle. `app-credentials-panel` sigue sabiendo dibujar la clase
+           `specialty` — no se le pasa ninguna. -->
       <app-tab [label]="pestanas[5]" appTutorialTarget="perfil-credenciales">
         <!-- Eran cinco listas apiladas con cada credencial dicha DOS veces
              —una en la lista de su clase y otra en «Verificado»/«Declarado»—.
@@ -659,7 +665,6 @@
         <app-credentials-panel
           appTutorialTarget="perfil-matriculas"
           [matriculas]="perfil().matriculas"
-          [especialidades]="perfil().especialidades"
           [formacion]="perfil().formacion"
           [idiomas]="perfil().idiomas"
         />

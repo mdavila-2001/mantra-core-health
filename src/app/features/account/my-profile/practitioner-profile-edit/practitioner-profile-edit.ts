@@ -1215,6 +1215,28 @@ export class PractitionerProfileEdit {
   }
 
   /**
+   * Descarta lo tecleado en «Datos personales», «Contacto» y «Facturación» sin
+   * mandar ningún `PATCH`.
+   *
+   * Vuelve a sembrar el formulario con el último perfil que llegó del
+   * servidor —lo mismo que hace un guardado exitoso— así que cancelar deja el
+   * formulario exactamente como estaba antes de tocarlo, y no como estaba al
+   * abrir la pantalla si ya se había guardado una vez. Los tres teléfonos son
+   * `FormControl` y `sembrarFormulario` ya los resetea con `.reset(...)`, que
+   * también les borra el estado de tocados —así el error rojo de un teléfono
+   * a medias desaparece con la cancelación, no sólo el valor.
+   */
+  protected cancelarPresentacion(): void {
+    const original = this.datos();
+    if (original === null) {
+      return;
+    }
+    this.erroresDelServidor.set(new Map());
+    this.sembrarFormulario(original);
+    this.toasts.info('Se descartaron los cambios sin guardar.', 'Perfil');
+  }
+
+  /**
    * Los rechazos del servidor, por campo.
    *
    * Hasta el 21/09/2026 un `PATCH` rechazado mostraba **sólo** «No se pudo

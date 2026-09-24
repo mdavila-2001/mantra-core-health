@@ -438,6 +438,72 @@ describe('PractitionerProfileEdit', () => {
   });
 
   /**
+   * El botón «Cancelar» que faltaba (reporte del 24/09/2026): quien tecleaba
+   * algo y se arrepentía no tenía forma de volver a lo guardado sin salir de
+   * la pantalla.
+   */
+  describe('cancelarPresentacion', () => {
+    it('no manda ninguna petición', () => {
+      montarYCargar();
+
+      señal<string>('titulo').set('Cardióloga intervencionista');
+      interno<() => void>('cancelarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+    });
+
+    it('vuelve cada campo a lo que ya estaba guardado', () => {
+      montarYCargar({ taxId: '5414404011' });
+
+      señal<string>('titulo').set('Cardióloga intervencionista');
+      señal<string>('bio').set('Un texto a medio escribir.');
+      señal<string>('nit').set('87654321');
+      interno<() => void>('cancelarPresentacion')();
+
+      expect(interno<() => string>('titulo')()).toBe('Cardióloga');
+      expect(interno<() => string>('bio')()).toBe('Bio actual.');
+      expect(interno<() => string>('nit')()).toBe('5414404011');
+    });
+
+    it('limpia los rechazos del servidor que hubieran quedado pintados', () => {
+      montarYCargar();
+      señal<string>('nit').set('12345678');
+      interno<() => void>('guardarPresentacion')();
+      http.expectOne('/profiles/practitioners/me').flush(
+        {
+          code: 'VALIDATION_FAILED',
+          message: 'Validación fallida',
+          details: { violations: ['taxId no existe en el padrón.'] },
+          timestamp: '2026-09-24T00:00:00.000Z',
+          path: '/profiles/practitioners/me',
+        },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toContain('padrón');
+
+      interno<() => void>('cancelarPresentacion')();
+
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe('');
+    });
+  });
+
+  it('el botón «Cancelar» se ofrece junto a «Guardar cambios» y descarta lo tecleado', () => {
+    const fixture = montarConVista();
+
+    señal<string>('titulo').set('Cardióloga intervencionista');
+    fixture.detectChanges();
+
+    const botones = [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')];
+    const cancelar = botones.find((boton) => boton.textContent?.trim() === 'Cancelar');
+    expect(cancelar).toBeDefined();
+
+    cancelar?.click();
+    fixture.detectChanges();
+
+    expect(interno<() => string>('titulo')()).toBe('Cardióloga');
+  });
+
+  /**
    * «Acepto pacientes nuevos» ya no se pregunta (propietario, 13/09/2026):
    * siempre está habilitado. Un perfil viejo que lo tenía apagado se corrige en
    * el primer guardado.
@@ -522,6 +588,31 @@ describe('PractitionerProfileEdit', () => {
   });
 
   /* ---- especialidades: sólo se agregan ------------------------------------- */
+
+  /**
+   * Se mudaron de «Credenciales» a «Datos personales» el 24/09/2026 (pedido
+   * del propietario): la ficha ya las lee ahí, y el editor quedaba
+   * desalineado con la pestaña que dice corregir.
+   */
+  it('«Agregar especialidades» vive en «Datos personales», no en «Credenciales»', () => {
+    const fixture = montarConVista();
+
+    // Pestaña 0, «Datos personales»: el select de especialidad está.
+    expect(
+      panelAbierto(fixture).querySelector('[data-testid="especialidad-select"]'),
+    ).not.toBeNull();
+
+    señal<number>('pestana').set(5);
+    fixture.detectChanges();
+
+    // Pestaña 5, «Credenciales»: ya no queda ni el formulario ni la tabla.
+    const credenciales = panelAbierto(fixture);
+    expect(credenciales.querySelector('[data-testid="especialidad-select"]')).toBeNull();
+    expect(credenciales.querySelector('[data-testid="tabla-especialidades"]')).toBeNull();
+    expect(credenciales.textContent).not.toContain('Agregar especialidades');
+    // La matrícula, que sí es de esta pestaña, sigue estando.
+    expect(credenciales.textContent).toContain('Agregar una matrícula');
+  });
 
   it('el botón de agregar especialidad exige haber elegido una', () => {
     montarYCargar();
