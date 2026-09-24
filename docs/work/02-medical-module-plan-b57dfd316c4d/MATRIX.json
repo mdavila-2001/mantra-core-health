@@ -5486,7 +5486,11 @@
       ],
       "criteria_marked_done": 0,
       "rebased_onto_sha": "b11dfdd382dd787fab33d5894979ccc2c4d5a96a",
-      "rebase_note": "Rama documental rebasada sobre origin/mockup después de incorporar cuatro commits upstream; la suite frontend completa no se repitió."
+      "rebase_note": "Rama documental rebasada sobre origin/mockup después de incorporar cuatro commits upstream; la suite frontend completa no se repitió.",
+      "pushed_to_origin": true,
+      "pr_opened": false,
+      "merged": false,
+      "deployed": false
     },
     {
       "date": "2026-09-24",
@@ -5504,7 +5508,11 @@
         "init DDL canónica falló por catálogo de aseguradoras incompleto antes del seeder; una copia temporal no canónica levantó 1260 tablas",
         "criterios: no se elevó ninguno a HECHO; 0/98 alcanza el DoD end-to-end"
       ],
-      "criteria_marked_done": 0
+      "criteria_marked_done": 0,
+      "pushed_to_origin": true,
+      "pr_opened": false,
+      "merged": false,
+      "deployed": false
     }
   ]
 }

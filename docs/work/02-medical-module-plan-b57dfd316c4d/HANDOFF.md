@@ -11,7 +11,7 @@
 - DDL canónica: inicialización detenida porque un patch de aseguradoras exige 17 catálogos antes de que corra el seeder. La prueba que pasó usó una copia temporal de SQL sin ese patch y carga parcial de 1369 conceptos; no cuenta como inicialización completa.
 - Docker: daemon local dejó de responder luego de las pruebas; no reiniciar mientras haya posibilidad de servicios compartidos.
 - Capturas: ninguna; no hubo cambios visuales y E2E no alcanzó a iniciar por API no saludable.
-- Push autorizado, no merge ni deploy. El push registrará progreso parcial, no cierre del plan.
+- Las ramas justin/medical-module-cierre y justin/medical-module-cierre-api están publicadas en sus origin respectivos; no se abrió PR ni se hizo merge o deploy. La publicación conserva el estado parcial del plan.
 
 ## Para continuar
 
