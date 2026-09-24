@@ -402,6 +402,8 @@ export class PractitionerProfileEdit {
    * `PATCH`, y el backend la lee de vuelta en el resumen.
    */
   protected readonly direccion = signal('');
+  /** Dirección laboral, separada del domicilio personal. */
+  protected readonly direccionTrabajo = signal('');
 
   /**
    * El punto del domicilio en el mapa — lo que el alta ya preguntaba
@@ -414,6 +416,9 @@ export class PractitionerProfileEdit {
    */
   protected readonly gpsDomicilio = signal<Coordenadas | null | undefined>(undefined);
   protected readonly gpsDomicilioGuardado = signal<Coordenadas | null>(null);
+  /** El GPS laboral se guarda por separado del punto del domicilio. */
+  protected readonly gpsTrabajo = signal<Coordenadas | null | undefined>(undefined);
+  protected readonly gpsTrabajoGuardado = signal<Coordenadas | null>(null);
 
   /**
    * El punto con el que abre el mapa: lo último que la persona dejó, o lo guardado.
@@ -427,6 +432,11 @@ export class PractitionerProfileEdit {
     return elegido === undefined ? this.gpsDomicilioGuardado() : elegido;
   });
 
+  protected readonly gpsTrabajoInicial = computed(() => {
+    const elegido = this.gpsTrabajo();
+    return elegido === undefined ? this.gpsTrabajoGuardado() : elegido;
+  });
+
   protected readonly idsGpsDomicilio: IdsDePrueba = {
     mapa: 'edicion-domicilio-mapa',
     confirmada: 'edicion-domicilio-confirmada',
@@ -436,6 +446,17 @@ export class PractitionerProfileEdit {
     confirmar: 'edicion-domicilio-confirmar',
     usarUbicacion: 'edicion-domicilio-usar-ubicacion',
     marcarEnMapa: 'edicion-domicilio-marcar',
+  };
+
+  protected readonly idsGpsTrabajo: IdsDePrueba = {
+    mapa: 'edicion-trabajo-mapa',
+    confirmada: 'edicion-trabajo-confirmada',
+    avisoGeocodificacion: 'edicion-trabajo-aviso-geo',
+    quitar: 'edicion-trabajo-quitar-gps',
+    sinConfirmar: 'edicion-trabajo-sin-confirmar',
+    confirmar: 'edicion-trabajo-confirmar',
+    usarUbicacion: 'edicion-trabajo-usar-ubicacion',
+    marcarEnMapa: 'edicion-trabajo-marcar',
   };
 
   /** Las doce opciones del alta, compartidas: ver `titulos-profesionales`. */
@@ -971,6 +992,15 @@ export class PractitionerProfileEdit {
     const lng = perfil.homeAddress?.longitude;
     this.gpsDomicilioGuardado.set(lat === undefined || lng === undefined ? null : { lat, lng });
     this.gpsDomicilio.set(undefined);
+    this.direccionTrabajo.set(perfil.workAddress?.lines ?? '');
+    const latTrabajo = perfil.workAddress?.latitude;
+    const lngTrabajo = perfil.workAddress?.longitude;
+    this.gpsTrabajoGuardado.set(
+      latTrabajo === undefined || lngTrabajo === undefined
+        ? null
+        : { lat: latTrabajo, lng: lngTrabajo },
+    );
+    this.gpsTrabajo.set(undefined);
     if (this.ramasMunicipios().length === 0 && !this.catalogoMunicipiosCaido()) {
       this.cargarMunicipios();
     }
@@ -1048,6 +1078,9 @@ export class PractitionerProfileEdit {
       homeAddressLines: string;
       homeLatitude: number | null;
       homeLongitude: number | null;
+      workAddressLines: string;
+      workLatitude: number | null;
+      workLongitude: number | null;
       taxId: string;
       taxHolderName: string;
     }> = {};
@@ -1077,6 +1110,17 @@ export class PractitionerProfileEdit {
     } else if (gps !== undefined) {
       cambios.homeLatitude = gps.lat;
       cambios.homeLongitude = gps.lng;
+    }
+    if (this.direccionTrabajo() !== (original.workAddress?.lines ?? '')) {
+      cambios.workAddressLines = this.direccionTrabajo();
+    }
+    const gpsTrabajo = this.gpsTrabajo();
+    if (gpsTrabajo === null) {
+      cambios.workLatitude = null;
+      cambios.workLongitude = null;
+    } else if (gpsTrabajo !== undefined) {
+      cambios.workLatitude = gpsTrabajo.lat;
+      cambios.workLongitude = gpsTrabajo.lng;
     }
     if (this.titulo() !== (original.professionalTitle ?? '')) {
       cambios.professionalTitle = this.titulo();

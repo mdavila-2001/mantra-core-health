@@ -256,6 +256,33 @@
                   (confirmado)="gpsDomicilio.set($event)"
                 />
 
+                <app-form-field
+                  class="edicion__campo-ancho"
+                  label="Dirección del trabajo"
+                  [errorMessage]="errorDelServidor('workAddressLines')"
+                  hint="Dónde atendés en tu lugar de trabajo; no es tu domicilio personal."
+                >
+                  <app-input
+                    data-testid="edicion-direccion-trabajo"
+                    [(value)]="direccionTrabajo"
+                    placeholder="Calle Warnes 45, lugar de trabajo"
+                  />
+                </app-form-field>
+
+                <app-ubicacion-picker
+                  class="edicion__campo-ancho"
+                  pinId="edicion-trabajo"
+                  etiquetaConfirmada="Tu lugar de trabajo"
+                  pregunta="¿Es acá donde atendés? Movete por el mapa para comprobarlo."
+                  etiquetaQuitar="Quitar la ubicación de tu trabajo"
+                  etiquetaMapa="La ubicación de tu trabajo en el mapa"
+                  etiquetaMarcar="Marcar tu lugar de trabajo en el mapa"
+                  indicacionMarcar="Tocá el mapa en la puerta del lugar de trabajo para poner el pin."
+                  [ids]="idsGpsTrabajo"
+                  [inicial]="gpsTrabajoInicial()"
+                  (confirmado)="gpsTrabajo.set($event)"
+                />
+
                 <!-- Los tres teléfonos son el MISMO campo del alta: el país se
                      elige con su bandera y se escribe sólo el número nacional.
                      Eran cajas de texto libre con «+591 70000000» de ejemplo, y

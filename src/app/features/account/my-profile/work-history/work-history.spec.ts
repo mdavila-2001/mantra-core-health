@@ -937,10 +937,9 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
  * 1. El bloque **sale de Trayectoria**. Hasta ahora el componente dibujaba
  *    siempre los dos —consultorios e historial— y el único interruptor era
  *    `soloConsultorios`, que sólo sabía suprimir el segundo.
- * 2. **El consultorio propio es uno solo**, y se corrige. No es regla de
- *    pantalla: `POST /practitioners/me/sites` reutiliza la práctica personal,
- *    así que la propia es una por persona — y el botón de alta seguía
- *    ofreciendo la segunda.
+ * 2. **Se pueden cargar varios consultorios propios**, y corregir cada uno.
+ *    `POST /practitioners/me/sites` reutiliza la práctica personal y registra
+ *    cada sede por separado.
  * 3. **Atender en un hospital que ya existe no es crear un consultorio.** Había
  *    una sola puerta, así que quien atiende en la Clínica Foianini terminaba
  *    creándose un consultorio con el nombre de la clínica.
@@ -1007,15 +1006,48 @@ describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', (
     cerrarAcciones(fixture);
   });
 
-  it('teniendo uno propio, ya no ofrece crear otro', async () => {
+  it('teniendo un consultorio propio, permite agregar otro', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [propia()], count: 1 });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('[data-testid="sede-agregar"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-agregar"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-propia-unica"]')).toBeNull();
+  });
+
+  it('registra un segundo consultorio propio y conserva ambos en la lista', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [propia()], count: 1 });
+    fixture.detectChanges();
+
+    const agregar = fixture.nativeElement.querySelector(
+      '[data-testid="sede-agregar"]',
+    ) as HTMLButtonElement | null;
+    expect(agregar).not.toBeNull();
+    agregar!.click();
+    fixture.detectChanges();
+
+    const componente = api(fixture);
+    componente['nombreDeSedeNueva'].set('Consultorio Centro');
+    componente['registrarSede']();
+
+    const alta = http.expectOne((r) => r.url === SITIO_PROPIO && r.method === 'POST');
+    expect(alta.request.body).toMatchObject({ name: 'Consultorio Centro' });
+    alta.flush(sedeEnCable({ id: 'site-centro', name: 'Consultorio Centro', isOwnSite: true }));
+    http.expectOne(SITIOS).flush({
+      items: [
+        propia(),
+        sedeEnCable({ id: 'site-centro', name: 'Consultorio Centro', isOwnSite: true }),
+      ],
+      count: 2,
+    });
+    fixture.detectChanges();
+
     expect(
-      fixture.nativeElement.querySelector('[data-testid="sede-propia-unica"]')?.textContent,
-    ).toContain('Consultorio Dra. Pérez');
+      fixture.nativeElement.querySelectorAll('[data-testid="sedes-propias"] tbody tr').length,
+    ).toBe(2);
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-agregar"]')).not.toBeNull();
+    http.verify();
   });
 
   /**
@@ -1300,12 +1332,13 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     http.verify();
   });
 
-  it('esconde el alta cuando ya hay un consultorio propio: la práctica personal es UNA', async () => {
+  it('mantiene disponible el alta cuando ya hay un consultorio propio', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('[data-testid="sede-agregar"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-agregar"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-propia-unica"]')).toBeNull();
     http.verify();
   });
 
