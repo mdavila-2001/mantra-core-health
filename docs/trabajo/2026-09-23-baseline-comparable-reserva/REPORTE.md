@@ -4,9 +4,10 @@
 > Ender) se entrega en el PR de PromptManager, porque el daily de equipo no vive en este repositorio.
 
 - Fecha: 2026-09-24 · Plan: [PLAN.md](./PLAN.md) · Rama: `justin/baseline-historico-reserva-2026-09-23`.
-- Peldaño de evidencia (regla 30): `VERIFIED` local, con 10 muestras por corte y escenario y las dos
-  pasadas de revisión de capturas, la segunda por un agente distinto del que implementó.
-  **No** se declara despliegue remoto.
+- Peldaño de evidencia (regla 30): `VERIFIED` local, con 10 muestras por corte y escenario y **tres
+  pasadas** de revisión de capturas —la primera de verificación, las otras dos adversariales y por un
+  agente distinto del que implementó (regla 35.1.4: toda corrección exige volver a revisar)—.
+  La primera ronda rechazó cuatro pares de siete; la segunda, uno. **No** se declara despliegue remoto.
 
 ## Los dos cortes, con su nombre correcto
 
@@ -80,8 +81,8 @@ el par y el resto de la imagen es idéntico píxel a píxel
 | H1.S2.M3 | Cuatro activaciones seguidas de una tarjeta producen **una** navegación, en los dos cortes | aserción dura del spec (`toBe(1)`) | pasa en `antes` y en `despues` |
 | H1.S2.M4 | Catorce capturas comparables, 1440×900 y 390×844, sin médicos reales y con el estado asentado **aseverado**, no confiado a un flag | `evidencia/antes/`, `evidencia/despues/` | 7 pares |
 | H3.S1.M1 | Evidencia publicada: spec, 20 muestras, resumen agregado, capturas y doble revisión | este reporte y `evidencia/` | completo |
-| H3.S1.M2 | PR hacia `mockup`, sin auto-merge | `gh pr view` | ver [`evidencia/pr-mergeable.txt`](evidencia/pr-mergeable.txt) |
-| H3.S1.M3 | Resumen en PromptManager hacia `main`, sin auto-merge | PR aparte | ver [`evidencia/pr-mergeable.txt`](evidencia/pr-mergeable.txt) |
+| H3.S1.M2 | PR [#610](https://github.com/mdavila-2001/mantra-core-health/pull/610) hacia `mockup`, sin auto-merge | `gh pr view 610` | `MERGEABLE`; los checks **encolados**, ver abajo |
+| H3.S1.M3 | Resumen en PromptManager PR [#38](https://github.com/PabloArauzCaballero/AlovidaPromptManager/pull/38) hacia `main`, sin auto-merge | `gh pr view 38` | `MERGEABLE` · `CLEAN`, su check en verde |
 
 ## La medición
 
@@ -144,8 +145,10 @@ superan la mediana vieja. Es la comparación más firme de las dos.
 | Etiqueta del primer cupo | `vie 25 · 08:30–09:00` | `vie 25 · 08:30–09:00` |
 | Mensaje del camino por defecto | «Todavía no publicó horarios» | «Todavía no publicó horarios» |
 
-Los cinco últimos son la prueba de que la fixture es equivalente entre cortes. Sin eso, comparar
-tiempos no querría decir nada.
+Las **cuatro filas de datos** —sedes, cupos, etiqueta y mensaje— son la prueba de que la fixture es
+equivalente entre cortes. Sin eso, comparar tiempos no querría decir nada. Las otras dos filas dicen
+otra cosa: que el recorrido se comporta igual. «0 peticiones de negocio» en los dos cortes **no**
+prueba que los datos sean los mismos; cero es compatible con datos distintos.
 
 ## Hallazgos
 
@@ -160,7 +163,7 @@ tiempos no querría decir nada.
 
 ### Del instrumento que se heredó
 
-Cinco defectos, todos encontrados **auditándolo antes de creerle**, todos corregidos en el spec.
+Seis defectos, todos encontrados **auditándolo antes de creerle**, todos corregidos en el spec.
 
 | ID | Hallazgo | Consecuencia |
 |---|---|---|
@@ -175,7 +178,7 @@ Cinco defectos, todos encontrados **auditándolo antes de creerle**, todos corre
 
 | ID | Hallazgo |
 |---|---|
-| D-1 | El daily del 22/09 dice «el recorrido hasta un cupo midió 1.468 ms». **No se reproduce**: la muestra vieja no declara escenario ni cantidad de corridas, y con este instrumento el mismo recorrido da 1163 ms de mediana en el corte actual y 1691 en el anterior |
+| D-1 | El daily del 22/09 dice «el recorrido hasta un cupo midió 1.468 ms». **No se reproduce**: la muestra vieja no declara escenario ni cantidad de corridas, y con este instrumento el mismo recorrido da **1108 ms** de mediana en el corte actual y **1428 ms** en el anterior |
 | D-2 | El daily adjudica al PR #583 que cuatro toques produzcan una sola navegación. **Ya se cumplía en `b7785e36`**: no es un delta de #583 |
 
 El delta visual que **sí** corresponde al carril de Directorio está en `02` y `05`: la acción
@@ -202,6 +205,27 @@ dentro del PR #583, se titula literalmente «fix: mostrar disponibilidad en tarj
 | Las tres cifras del listado (P-3) | seguimiento | Dueño del listado. No se inventa la causa |
 | El rojo de `insurance-analytics` bajo carga | seguimiento | Es un `Test timed out in 5000ms` con dos servidores de desarrollo corriendo; aislado pasa 10/10 |
 
+## El CI del frontend no llegó a correr, y no es este PR
+
+Los tres checks de #610 (`dependencias`, `e2e`, `verificar`) quedaron **encolados**, no fallando.
+No es de este cambio: **todos** los PR abiertos del repositorio están igual —#604, #605, #606 y
+#607— y el más viejo lleva más de una hora así. Coincide con lo que el `CLAUDE.md` de este
+repositorio ya declara: «El CI propio está caído; los `check-*.mjs` se corren a mano».
+
+Así que se corrieron a mano, y se clasifican (regla 80.4):
+
+| Guardrail | Exit | Qué reporta |
+|---|---|---|
+| `check-tokens.mjs` | `0` | 212 tokens, iguales en `styles.css` y en el catálogo tipado |
+| `check-architecture.mjs` | `1` | 3 dependencias circulares, **todas** en `src/app/core/mock/fixtures/` |
+| `check-css-tokens.mjs` | `1` | 4 tokens sin declarar, **todos** en `src/app/features/` y `src/app/shared/` |
+| `check-doc-coverage.mjs` | `1` | 13 hallazgos, ninguno de esta carpeta |
+| `check-doc-links.mjs` | `1` | 10 enlaces rotos, **todos** en `docs/tareas/subtarea-2.4-transparencia-copagos/` |
+
+Los cuatro rojos caen enteros fuera del diff de este PR, que son dos cosas: el spec de Playwright y
+esta carpeta de evidencia. Ninguno nombra un archivo que este PR agregue o modifique. La salida
+literal está en [`evidencia/pr-mergeable.txt`](evidencia/pr-mergeable.txt).
+
 ## No cubierto
 
 - **No se ejecutaron `yarn lint` ni `yarn test` completos en este trabajo.** El lint global (243
@@ -213,6 +237,9 @@ dentro del PR #583, se titula literalmente «fix: mostrar disponibilidad en tarj
 - **No se re-capturó contra `4c9e419f`.** La decisión fue declarar el SHA real y no adjudicar nada al
   PR #583, en vez de fabricar una comparación de un solo PR que la evidencia no sostiene.
 - **No hay validación remota.** Todo es local, contra dos `ng serve` en `4200` y `4210`.
+- **No se esperó a que el CI del frontend corriera**, porque no arranca en ningún PR del repositorio.
+  Se corrieron los guardrails a mano y se clasificaron sus rojos; si el CI arranca y algo cae dentro
+  de este diff, es información nueva que este reporte no tiene.
 - **No se afirma integración con API real.** El backend de las dos corridas es el simulador en memoria.
 
 ## Cómo reproducirlo

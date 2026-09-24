@@ -41,9 +41,14 @@ const SALIDA = join('docs', 'trabajo', '2026-09-23-baseline-comparable-reserva',
  * capturas, una de ellas siguió saliendo a 66,5 % de opacidad y 2 px arriba de
  * su sitio. Así que no se le cree al flag: antes de disparar se espera a que
  * **todas las animaciones finitas de la página hayan terminado**. Las infinitas
- * —un spinner, un esqueleto latiendo— se excluyen a propósito: su `finished` no
- * resuelve nunca, y además, si hay una corriendo, lo correcto es que la captura
- * la muestre, no que la congele fingiendo que la pantalla ya cargó.
+ * se excluyen de esa espera porque su `finished` no resuelve nunca.
+ *
+ * El flag se conserva como segundo cinturón, y eso tiene una consecuencia que
+ * conviene saber antes de copiar este helper: **también cancela las infinitas**,
+ * así que un spinner o un esqueleto latiendo saldría congelado. Acá no corre
+ * ninguno —las catorce capturas esperan contenido real antes de disparar—, pero
+ * quien agregue una captura donde un indicador de carga sea lo que hay que
+ * probar tiene que quitar el flag, no confiar en él.
  */
 async function foto(page: Page, archivo: string): Promise<void> {
   await page.evaluate(async () => {
