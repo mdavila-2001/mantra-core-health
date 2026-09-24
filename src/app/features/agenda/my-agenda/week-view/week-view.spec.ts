@@ -195,6 +195,29 @@ describe('WeekView', () => {
       expect(fixture.nativeElement.textContent).toContain('+2 turnos más');
     });
 
+    it('el «+N turnos más» abre ESE día, no el de hoy', () => {
+      // Pedido 2026-09-24: el resto de la jornada se ve en la vista del día, y
+      // tiene que abrirse en la fecha tocada.
+      montar(
+        [],
+        [],
+        [8, 9, 10, 11].map((h) => cita(10, h, `Paciente ${h}`)),
+        ETIQUETAS,
+      );
+      const abiertos: Date[] = [];
+      fixture.componentInstance.diaElegido.subscribe((d: Date) => abiertos.push(d));
+
+      const botones: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll(
+        '[data-testid="semana-ver-dia"]',
+      );
+      expect(botones).toHaveLength(1);
+      expect(botones[0].textContent).toContain('+1 turno más');
+      botones[0].click();
+
+      expect(abiertos).toHaveLength(1);
+      expect(abiertos[0].getTime()).toBe(new Date(2026, 8, 10).getTime());
+    });
+
     it('un día sin cupos publicados igual muestra a quien viene', () => {
       // El alta directa del profesional (AG-2) crea la cita con su cupo
       // puntual: el día no figura como jornada publicada. Decir «No atendés» y
