@@ -44,7 +44,13 @@ import {
   TODOS_LOS_SINTOMAS,
 } from './sintomas';
 import { Dictado } from './dictado';
-import { combinar, lecturaVigente, sintomasDeLaLectura, type LecturaDelTexto } from './lectura-ia';
+import {
+  combinar,
+  lecturaVigente,
+  sintomasDeLaLectura,
+  zonasDeLaLectura,
+  type LecturaDelTexto,
+} from './lectura-ia';
 import { ultimaFrase } from './texto';
 
 /**
@@ -237,10 +243,40 @@ export class SymptomCheck {
     { initialValue: null },
   );
 
-  /** Los hallazgos del servicio que todavía valen para lo escrito. */
-  private readonly deLaLectura = computed(() =>
-    sintomasDeLaLectura(lecturaVigente(this.lecturaGuardada(), this.texto())),
+  /** La lectura del servicio que todavía vale para lo escrito. */
+  private readonly lecturaVigente = computed(() =>
+    lecturaVigente(this.lecturaGuardada(), this.texto()),
   );
+
+  /** Los hallazgos del servicio que todavía valen para lo escrito. */
+  private readonly deLaLectura = computed(() => sintomasDeLaLectura(this.lecturaVigente()));
+
+  /**
+   * Las zonas del cuerpo de lo que se contó: la silueta las ilumina mientras
+   * la persona escribe o dicta, y las pastillas «Piel», «Ánimo» y «General»
+   * también.
+   *
+   * Manda la ubicación del servicio cuando la hay («hormigueo · mano» es la
+   * mano); si no, la primera zona de la tabla que ofrece ese síntoma.
+   */
+  protected readonly zonasMarcadas = computed<readonly string[]>(() => {
+    const delServicio = zonasDeLaLectura(this.lecturaVigente());
+    const marcadas = new Set<string>();
+    for (const sintoma of this.sintomas()) {
+      const ubicadas = delServicio.get(sintoma.id);
+      if (ubicadas !== undefined && ubicadas.length > 0) {
+        ubicadas.forEach((zona) => marcadas.add(zona));
+        continue;
+      }
+      const deLaTabla = ZONAS_DEL_CUERPO.find((zona) => zona.sintomas.includes(sintoma.id));
+      if (deLaTabla !== undefined) marcadas.add(deLaTabla.id);
+    }
+    return [...marcadas];
+  });
+
+  protected estaMarcada(idDeZona: string): boolean {
+    return this.zonasMarcadas().includes(idDeZona);
+  }
 
   /**
    * Los chips: lo reconocido en el texto —acá y por el servicio—, menos lo

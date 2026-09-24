@@ -99,6 +99,16 @@ function ladoDicho(lado: string): string {
 }
 
 /**
+ * Dónde está cada síntoma según el servicio: `id` → zonas de la silueta.
+ *
+ * El servicio ubica mejor que la tabla: «se me durmió la mano» es *manos*, no
+ * las cuatro zonas donde la tabla ofrece «hormigueo».
+ */
+export function zonasDeLaLectura(lectura: LecturaIa | null): ReadonlyMap<string, readonly string[]> {
+  return new Map((lectura?.symptoms ?? []).map((hallazgo) => [hallazgo.code, hallazgo.zones]));
+}
+
+/**
  * Lo reconocido acá más lo que aportó el servicio, sin repetir.
  *
  * Un síntoma que reconocieron los dos queda **en la versión del servicio**,
