@@ -48,6 +48,8 @@ import { Menu } from '../../shared/components/molecules/menu/menu';
 import { RowActions } from '../../shared/components/molecules/row-actions/row-actions';
 import type { RowAction } from '../../shared/components/molecules/row-actions/row-actions.types';
 import { MenuItem } from '../../shared/components/molecules/menu/menu-item/menu-item';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
+import type { NavIconName } from '../../shared/components/atoms/nav-icon/nav-icon.types';
 import { MenuTrigger } from '../../shared/components/molecules/menu/menu-trigger/menu-trigger';
 import { Link } from '../../shared/components/atoms/link/link';
 import { Select } from '../../shared/components/atoms/select/select';
@@ -468,6 +470,7 @@ type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'slots';
     Menu,
     MenuItem,
     MenuTrigger,
+    NavIcon,
     RowActions,
     StatusSeal,
     DataTable,
@@ -983,14 +986,12 @@ export class Agenda {
    * botones hacían crecer la fila a tres renglones— es la misma decisión del
    * 2026-09-13 que ADR-0012 conserva, y no se vuelve a tomar acá.
    *
-   * ## Por qué algunas no llevan ícono
+   * ## Todas llevan ícono
    *
-   * El set de íconos del sistema es **cerrado a propósito** y todavía no cubre
-   * las acciones de fila más comunes: no tiene ver, aceptar, completar ni
-   * registrar llegada. El propio contrato de `RowAction` dice que el ícono es
-   * opcional y que «agregar nombres al set es una decisión de quien lo lleva y
-   * no se toma de paso». Así que se usan los cinco que existen y el resto va
-   * con su texto, que es lo que C-06 exige. Pedido a Itzan en el daily.
+   * Hasta el 2026-09-24 ver, aceptar, rechazar, completar y registrar llegada
+   * iban sólo con texto porque el set no los tenía, y el desplegable mezclaba
+   * opciones con dibujo y sin él. El propietario pidió ícono en todas: el set
+   * se amplió y `RowAction.icon` pasó a ser obligatorio.
    *
    * ## Los códigos no cambiaron
    *
@@ -1012,6 +1013,7 @@ export class Agenda {
       {
         code: 'agenda-detalle',
         label: this.porResponder(cita) ? 'Ver detalle de la solicitud' : 'Ver detalle de la cita',
+        icon: 'eye',
       },
     ];
 
@@ -1025,10 +1027,11 @@ export class Agenda {
           icon: 'history',
         });
       }
-      acciones.push({ code: 'agenda-aceptar', label: 'Aceptar la solicitud' });
+      acciones.push({ code: 'agenda-aceptar', label: 'Aceptar la solicitud', icon: 'check' });
       acciones.push({
         code: 'agenda-rechazar',
         label: 'Rechazar la solicitud',
+        icon: 'close',
         destructive: true,
       });
     }
@@ -1047,14 +1050,14 @@ export class Agenda {
         label: 'Continuar la consulta',
         icon: 'arrow-right',
       });
-      acciones.push({ code: 'agenda-completar', label: 'Completar la cita' });
+      acciones.push({ code: 'agenda-completar', label: 'Completar la cita', icon: 'check-circle' });
     }
 
     if (this.puedeOperarCitas() && this.estaVigente(cita)) {
       acciones.push(
         cita.llegadaRegistrada
-          ? { code: 'agenda-llego', label: 'Ya llegó', disabled: true }
-          : { code: 'agenda-llegada', label: 'Registrar que llegó' },
+          ? { code: 'agenda-llego', label: 'Ya llegó', icon: 'arrive', disabled: true }
+          : { code: 'agenda-llegada', label: 'Registrar que llegó', icon: 'arrive' },
       );
     }
 
@@ -1875,10 +1878,11 @@ export class Agenda {
   protected readonly estadosDePago: readonly {
     readonly code: PaymentStateCode;
     readonly label: string;
+    readonly icon: NavIconName;
   }[] = [
-    { code: 'PENDING', label: 'Pendiente de pago' },
-    { code: 'PARTIALLY_PAID', label: 'Parcialmente pagada' },
-    { code: 'PAID', label: 'Pagada' },
+    { code: 'PENDING', label: 'Pendiente de pago', icon: 'clock' },
+    { code: 'PARTIALLY_PAID', label: 'Parcialmente pagada', icon: 'billing' },
+    { code: 'PAID', label: 'Pagada', icon: 'check-circle' },
   ];
 
   protected aceptarCita(cita: CitaVisible): void {
