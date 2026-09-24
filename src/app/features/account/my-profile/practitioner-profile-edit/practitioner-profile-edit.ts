@@ -81,7 +81,6 @@ import { DatePicker } from '../../../../shared/components/organisms/date-picker/
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { CONTADORES_DE_ACTIVIDAD } from '../contadores-de-actividad';
 import { PESTANA_EDITOR, PESTANAS_DEL_EDITOR_MEDICO } from '../pestanas-del-perfil-medico';
 import { WorkHistory } from '../work-history/work-history';
 
@@ -334,16 +333,6 @@ export class PractitionerProfileEdit {
   readonly pestana = model<number>(PESTANA_EDITOR.personales);
   protected readonly pestanas = PESTANAS_DEL_EDITOR_MEDICO;
   protected readonly pestanaEditor = PESTANA_EDITOR;
-
-  /**
-   * Los cuatro contadores de «Actividad», sin sus valores.
-   *
-   * La pestaña existe para decir que **ninguno** se edita, y el porqué de cada
-   * uno ({@link CONTADORES_DE_ACTIVIDAD}). Los números se leen en la ficha:
-   * duplicar acá el tablero sería mostrar dos veces lo mismo y prometer que
-   * desde el editor se tocan.
-   */
-  protected readonly contadores = CONTADORES_DE_ACTIVIDAD;
 
   /**
    * Si la pestaña abierta es de las que se corrigen.

@@ -13,9 +13,9 @@
            de 44rem pegada a la izquierda. Es lo que el cliente rechazó dos
            veces y lo que `composition-rules.md` §5 prohíbe desde el 09/09.
 
-           Las pestañas son las de la ficha de lectura
-           (`PESTANAS_DEL_EDITOR_MEDICO`): quien pulsa el lápiz en «Contacto»
-           llega acá y encuentra «Contacto». Los valores viven en señales del
+           Las pestañas son las de la ficha de lectura menos «Actividad», que
+           son estadísticas y no se editan (`PESTANAS_DEL_EDITOR_MEDICO`):
+           quien pulsa el lápiz en «Contacto» llega acá y encuentra «Contacto». Los valores viven en señales del
            componente y no en los controles, así que cambiar de pestaña no
            pierde lo tecleado aunque `app-tab` desmonte el panel que se va. -->
       <app-card variant="outlined" padding="lg" class="edicion__bloque">
@@ -844,40 +844,6 @@
                 }
               }
             </section>
-          </app-tab>
-
-          <!-- ─── Actividad ─────────────────────────────────────────────────
-               «Necesito que TODAS las pestañas sean editables, o sea su
-               información» —doctor, 20/09/2026 (C-05)—. Ésta es la única que
-               no tiene ni un campo, y estaba directamente ausente del editor:
-               quien la buscaba no la encontraba y tampoco sabía por qué.
-
-               No se hizo editable porque los cuatro son CUENTAS de lo que ya
-               pasó, no datos declarados: un contador que se escribe a mano
-               deja de contar y pasa a ser una afirmación sin respaldo sobre
-               actos clínicos. Lo que sí se puede hacer es contestar la
-               pregunta en la pantalla en vez de en un informe: acá está cada
-               contador, qué cuenta y qué hay que hacer para que se mueva. -->
-          <app-tab [label]="pestanas[6]">
-            <p class="edicion__nota">
-              Acá no hay nada que escribir, y es a propósito: estas cuatro cifras las lleva la
-              plataforma a partir de lo que vas registrando.
-            </p>
-
-            <ul class="edicion__contadores" data-testid="edicion-actividad">
-              @for (contador of contadores; track contador.clave) {
-                <li class="edicion__contador">
-                  <p class="edicion__contador-rotulo">{{ contador.rotulo }}</p>
-                  <p class="edicion__contador-pie">{{ contador.pie }}</p>
-                  <p class="edicion__contador-pie">{{ contador.seMueveCon }}</p>
-                </li>
-              }
-            </ul>
-
-            <p class="edicion__nota">
-              Los números, su evolución mes a mes y los indicadores de calidad se leen en
-              <a routerLink="/my-account">tu perfil</a>, en esta misma pestaña.
-            </p>
           </app-tab>
         </app-tabs>
 

@@ -20,6 +20,7 @@ import {
 import type * as Leaflet from 'leaflet';
 
 import type { PinMapa, PuntoGeo } from './pin-mapa.types';
+import { CARGADOR_DE_PROVINCIAS, type ProvinciasDeBolivia, provinciaEn } from './provincias';
 
 /**
  * Mosaicos del servidor comunitario de OpenStreetMap, sin clave de API.
@@ -66,6 +67,20 @@ const MARGEN_DE_ENCUADRE: Leaflet.PointTuple = [32, 32];
  */
 const CENTRO_POR_DEFECTO: Leaflet.LatLngTuple = [-17.7833, -63.1821];
 const ZOOM_POR_DEFECTO = 12;
+
+/**
+ * Desde qué zoom se escriben los nombres de las provincias sobre el mapa. Más
+ * lejos, las 112 se pisan unas con otras y el plano se vuelve ilegible; los
+ * límites se dibujan siempre, y la provincia del centro la dice el rótulo fijo.
+ */
+const ZOOM_DE_NOMBRES_DE_PROVINCIA = 8;
+
+/**
+ * El panel propio de las provincias: por encima de los mosaicos (200) y por
+ * debajo de los pines (600), para que un límite o un nombre nunca tape un pin.
+ */
+const PANEL_DE_PROVINCIAS = 'provincias';
+const Z_DEL_PANEL_DE_PROVINCIAS = '350';
 
 /** El `<link>` del CSS de Leaflet, compartido entre todas las instancias. */
 const ID_DE_ESTILOS = 'leaflet-css';
@@ -202,9 +217,13 @@ export class AppMap implements OnDestroy {
   private readonly documento = inject(DOCUMENT);
   private readonly injector = inject(Injector);
   private readonly cargarLeaflet = inject(CARGADOR_DE_LEAFLET);
+  private readonly cargarProvincias = inject(CARGADOR_DE_PROVINCIAS);
   private readonly lienzo = viewChild.required<ElementRef<HTMLElement>>('lienzo');
 
   protected readonly listo = signal(false);
+
+  /** «Provincia X · Departamento» del punto que está en el centro del mapa. */
+  protected readonly provinciaAlCentro = signal<string | null>(null);
 
   private leaflet: typeof Leaflet | null = null;
   private mapa: Leaflet.Map | null = null;
@@ -287,6 +306,71 @@ export class AppMap implements OnDestroy {
     this.dibujar(this.pines());
     this.resaltar(this.seleccionado());
     this.vigilarElTamano(lienzo);
+    void this.dibujarProvincias(L, mapa, lienzo);
+  }
+
+  /**
+   * Los límites de las 112 provincias, sus nombres, y cuál es la del centro.
+   *
+   * Llega después del mapa y no lo demora: los mosaicos y los pines ya están
+   * cuando el archivo termina de bajar. Si no baja, el mapa queda como era.
+   *
+   * Nada de esto es interactivo: un clic sobre un límite tiene que seguir
+   * llegando al mapa, que es lo que usa «marcá en el mapa dónde vivís».
+   */
+  private async dibujarProvincias(
+    L: typeof Leaflet,
+    mapa: Leaflet.Map,
+    lienzo: HTMLElement,
+  ): Promise<void> {
+    if (typeof L.geoJSON !== 'function' || typeof mapa.createPane !== 'function') {
+      return;
+    }
+    const provincias = await this.cargarProvincias();
+    if (provincias === null || this.destruido || this.mapa !== mapa) {
+      return;
+    }
+
+    const panel = mapa.createPane(PANEL_DE_PROVINCIAS);
+    panel.style.zIndex = Z_DEL_PANEL_DE_PROVINCIAS;
+    panel.style.pointerEvents = 'none';
+
+    // `L.geoJSON` pide el tipo de `@types/geojson`; el nuestro es el mismo
+    // contrato escrito en `provincias.ts`, sin depender de ese paquete.
+    L.geoJSON(provincias as unknown as Parameters<typeof L.geoJSON>[0], {
+      pane: PANEL_DE_PROVINCIAS,
+      interactive: false,
+      style: () => ({ className: 'mapa__provincia', weight: 1.5, fill: false }),
+    }).addTo(mapa);
+
+    for (const { properties } of provincias.features) {
+      const nombre = this.documento.createElement('span');
+      nombre.className = 'mapa__provincia-nombre';
+      nombre.textContent = properties.nombre;
+      L.marker([properties.rotulo[1], properties.rotulo[0]], {
+        pane: PANEL_DE_PROVINCIAS,
+        interactive: false,
+        keyboard: false,
+        icon: L.divIcon({ className: 'mapa__provincia-rotulo', html: nombre, iconSize: [0, 0] }),
+      }).addTo(mapa);
+    }
+
+    const alMoverse = (): void => {
+      lienzo.classList.toggle(
+        'mapa__lienzo--con-nombres',
+        mapa.getZoom() >= ZOOM_DE_NOMBRES_DE_PROVINCIA,
+      );
+      this.provinciaAlCentro.set(this.nombrarProvincia(provincias, mapa.getCenter()));
+    };
+    mapa.on('moveend', alMoverse);
+    alMoverse();
+  }
+
+  private nombrarProvincia(provincias: ProvinciasDeBolivia, centro: PuntoGeo): string | null {
+    const provincia = provinciaEn(provincias, centro);
+    return provincia === null
+      ? null
+      : `Provincia ${provincia.properties.nombre} · ${provincia.properties.departamento}`;
   }
 
   /**

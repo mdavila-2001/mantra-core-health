@@ -5,6 +5,12 @@
   [attr.aria-label]="etiqueta()"
 >
   <div class="mapa__lienzo" #lienzo></div>
+  <!-- La provincia del centro, en palabras: los límites y los nombres se
+       dibujan sobre el plano, pero a escala de barrio el nombre de la
+       provincia suele quedar fuera de la vista. -->
+  @if (provinciaAlCentro(); as provincia) {
+    <p class="mapa__provincia-actual" data-testid="mapa-provincia">{{ provincia }}</p>
+  }
   @if (!listo()) {
     <p class="mapa__espera">Cargando el mapa…</p>
   }

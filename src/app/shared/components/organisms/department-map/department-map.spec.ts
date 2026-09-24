@@ -73,6 +73,39 @@ describe('DepartmentMap', () => {
     expect(formaDe('SC').getAttribute('aria-label')).toBe('Santa Cruz');
   });
 
+  /**
+   * «En TODOS LOS MAPAS se pongan las provincias» —cliente, 24/09/2026—. Las
+   * líneas son dibujo, no control: no se tabulan, no se anuncian y no le roban
+   * el clic al departamento que tienen debajo.
+   */
+  it('traza las provincias sin volverlas un control', () => {
+    const provincias = html.querySelector('[data-testid="department-map-provincias"]');
+    expect(provincias?.getAttribute('d')?.startsWith('M')).toBe(true);
+    expect((provincias?.getAttribute('d')?.match(/M/g) ?? []).length).toBeGreaterThan(100);
+    expect(provincias?.getAttribute('aria-hidden')).toBe('true');
+    expect(provincias?.hasAttribute('tabindex')).toBe(false);
+    expect(provincias?.hasAttribute('role')).toBe(false);
+  });
+
+  it('las siglas quedan por encima de las provincias, y la del elegido cambia de tono', () => {
+    const svg = html.querySelector('svg');
+    const hijos = Array.from(svg?.children ?? []);
+    const provincias = hijos.findIndex((hijo) =>
+      hijo.classList.contains('department-map__provincias'),
+    );
+    const primeraSigla = hijos.findIndex((hijo) =>
+      hijo.classList.contains('department-map__sigla'),
+    );
+    expect(provincias).toBeGreaterThan(-1);
+    expect(primeraSigla).toBeGreaterThan(provincias);
+
+    formaDe('SC').dispatchEvent(new MouseEvent('click'));
+    fixture.detectChanges();
+    const elegidas = html.querySelectorAll('.department-map__sigla--elegida');
+    expect(elegidas).toHaveLength(1);
+    expect(elegidas[0].textContent?.trim()).toBe('SC');
+  });
+
   it('cada departamento es alcanzable con el tabulador', () => {
     for (const silueta of SILUETAS_DE_BOLIVIA) {
       expect(formaDe(silueta.sigla).getAttribute('tabindex')).toBe('0');

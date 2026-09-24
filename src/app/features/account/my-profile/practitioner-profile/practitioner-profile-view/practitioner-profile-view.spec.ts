@@ -721,6 +721,24 @@ describe('PractitionerProfileView', () => {
     expect(host.textContent).toContain('Son los registros que dejaste asentados con esta cuenta');
   });
 
+  /**
+   * «En el perfil del doctor no debe poder editarse actividad, porque es solo
+   * estadísticas» —cliente, 24/09/2026—. Hasta ese día el lápiz de esta
+   * pestaña abría el editor en una pestaña «Actividad» sin campos.
+   */
+  it('en «Actividad» no hay lápiz: son estadísticas, no se editan', () => {
+    const host = montar(PERFIL, true);
+    expect(host.querySelector('[data-testid="mi-perfil-editar"]')).not.toBeNull();
+
+    seleccionarPestana(host, 'Actividad');
+    expect(host.querySelector('[data-testid="mi-perfil-editar"]')).toBeNull();
+
+    // Y vuelve en cuanto se sale de ahí, apuntando a la pestaña que se mira.
+    seleccionarPestana(host, 'Credenciales');
+    const lapiz = host.querySelector('[data-testid="mi-perfil-editar"]');
+    expect(lapiz?.getAttribute('href')).toContain('pestana=5');
+  });
+
   it('un visitante ve la actividad en tercera persona', () => {
     const host = montar(PERFIL, false);
     expect(host.textContent).toContain('Actividad en la plataforma');
