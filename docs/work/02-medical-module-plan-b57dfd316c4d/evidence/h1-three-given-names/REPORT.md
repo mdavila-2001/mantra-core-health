@@ -7,14 +7,14 @@
 
 ## Estado observado
 
-El formulario de alta muestra Primer, Segundo y Tercer nombre y deja agregar otros nombres. El cliente combina el segundo, tercer y nombres dinámicos en `middleName`; el API y la entidad `Persons` sólo exponen `name`, `middleName`, `lastName` y `motherLastName`. Por eso el tercer nombre no vuelve como parte separada para que el profesional la lea/edite después. La presentación de tres campos existe; la persistencia estructurada no.
+El formulario de alta y el editor muestran Primer, Segundo y Tercer nombre y dejan agregar otros. El cliente combina los nombres desde el segundo en `middleName`; el API y la entidad `Persons` exponen `name`, `middleName`, `lastName` y `motherLastName`. El editor reconstruye los campos con `separarNombres()`, que los parte por espacios. La estrategia conserva nombres de una palabra, pero no distingue espacios internos de un nombre compuesto.
 
 ## Verificación
 
 - `corepack yarn test --watch=false --include=src/app/features/auth/register-practitioner/register-practitioner.spec.ts` — el runner construyó la app; 97 pruebas aprobadas y 1 fallida (`resuelve los cinco tipos canónicos de credencial desde el backend simulado`) por `ENOSPC: no space left on device, write`. Las pruebas que comprueban el envío del tercer nombre están entre las aprobadas.
 - El spec vigente afirma que `middleName: 'María'` más `thirdName: 'Eugenia'` se envían como `middleName: 'María Eugenia'`; y verifica que los nombres adicionales también se pliegan en esa misma cadena.
-- Lectura de API: `Persons`/DTO de perfil contienen `middleName`, sin `thirdName`; el registro escribe `dto.middleName` como parte persistente.
+- Lectura de API: `Persons`/DTO de perfil contienen `middleName`, sin `thirdName`; el registro escribe `dto.middleName` y la lectura propia lo devuelve. El test del editor confirma que los nombres adicionales vuelven a sus casillas al separar la cadena por espacios.
 
 ## Límite y decisión
 
-L0168 conserva `A MEDIAS / TESTED`; no se declara completa la mera presencia visual. Una parte persistente separada exige una extensión del modelo/DDL compartido que las instrucciones locales actuales prohíben tocar. No se inventa un delimitador ni se divide automáticamente `middleName`, porque una persona puede tener varios nombres reales y el corte no sería recuperable. No se cambió código de producto.
+L0168 conserva `A MEDIAS / TESTED` hasta que un recorrido de datos sintéticos pruebe alta→API→PostgreSQL→recarga en las tres casillas. No se inventa un delimitador ni se cambia modelo/DDL: la fuente no pide expresamente conservar espacios dentro de nombres compuestos. La ambigüedad actual de ese caso queda anotada; no se cambió código de producto.
