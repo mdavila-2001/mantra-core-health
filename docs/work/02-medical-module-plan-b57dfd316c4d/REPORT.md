@@ -7,6 +7,12 @@
 - Peldaño máximo: `VERIFIED` para la persistencia/lectura segura de credenciales, exclusión de reservas concurrentes multi-sede y diez criterios puntuales de credenciales/especialidades con journey Chromium→API→PostgreSQL. El plan integral conserva 10/98 criterios HECHO; MED-E01/H1 y los escenarios restantes no están completos ni alcanzan `REGRESSION_VERIFIED`.
 - Avance integral: 10/98 criterios incluidos alcanzan aceptación y DoD puntual; matriz: 100 criterios fuente, 98 IN, 2 OUT; 10 HECHO, 60 A MEDIAS, 11 TODO, 17 BLOQUEADOS, 2 DESCARTADOS. CORR-08 mantiene alcance visual parcial.
 
+## Continuación H1: tres casillas adicionales y especialidades sin filtro por profesión
+
+La línea L0174 del archivo fuente confirma ambas condiciones: tres espacios adicionales a la profesión y catálogo no filtrado por profesión. El código anterior capaba el total de API en tres y dividía opciones de interfaz según odontología/medicina. Se corrigió a cuatro especialidades totales (una principal más tres adicionales) en la alta, onboarding y editor; el alta ya muestra todas las opciones y conserva una elección aunque cambie la profesión.
+
+Ramas publicadas: frontend `justin/medical-module-execution-20260924` commit `444e915e`, API misma rama commit `5ff4bfe8`. Ver [reporte de pruebas y límites](evidence/h1-specialty-slots/REPORT.md). No se declara cerrado el criterio porque falta el recorrido browser→API→PostgreSQL→recarga y la captura exigida por el DoD. L0174.AC01/AC02 y MED-E01 continúan parciales; la cuenta sigue 10/98.
+
 ## Continuación: dirección laboral y más de un consultorio propio
 
 En `justin/medical-module-execution-20260924` se añadió al editor médico la dirección laboral como dato distinto del domicilio, junto con un segundo selector de mapa. FE carga y envía `workAddressLines` y el par `workLatitude`/`workLongitude` por separado; ausente significa “sin tocar” y dos `null` quitan el pin. La API lee el uso `ADDR_USE_WORK` sólo en la ficha propia, valida el par de coordenadas y reemplaza la dirección vigente con ese uso. No se cambió modelo ni DDL. También se eliminó la condición de interfaz que ocultaba “Agregar mi consultorio propio” después de la primera sede; cada sede conserva su propia dirección y GPS. Las puntas publicadas son FE `5588753cc9b3c0a70ce2cf19e4eda6090e5635c4` y API `982ed2b9a96a7a14afa4137b96847144c8f50726`.
@@ -125,6 +131,7 @@ La FE ya enviaba correo de acceso/personal en `email` y correo laboral en `workE
 |---|---|---|---|
 | Editor de perfil médico FE | `corepack yarn test --watch=false --include=src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts` | 1 archivo, 86/86 pruebas aprobadas, incluida preferencia por `workEmail` frente al alias `email` | Doble HTTP; no consulta una API real ni demuestra recarga persistida |
 | Registro/API | `corepack yarn test --runInBand --no-cache src/modules/iam/dto/register-practitioner.dto.spec.ts src/modules/iam/services/iam-practitioner-self-registration.service.spec.ts` | 2 suites, 107/107 pruebas aprobadas; DTO valida `workEmail` y el servicio afirma los usos HOME/WORK; el caso anterior sin `workEmail` sigue cubierto | Pruebas unitarias; no se ejecutó PostgreSQL ni se releyó el perfil tras guardar |
+| Lectura API | `corepack yarn test --runInBand --no-cache src/modules/profiles/services/profiles-practitioners.service.spec.ts` | 1 suite, 138/138; el perfil propio devuelve correos personales/laborales de acuerdo con HOME/WORK. Commit API publicado `924e8f03a53afc7c3cdb2dc7dbbf8107ba114b8b` | Dobles de repositorio; no prueba escritura/lectura real en DB |
 | Calidad del cambio | `corepack yarn typecheck` y ESLint dirigido en FE/API; `git diff --check` | Exit 0 en ambos worktrees | No es una regresión global completa |
 | Evidencia navegador/DB | No se ejecutó en esta continuación | No se generó foto ni journey FE→API→DB→recarga | El harness de integración invoca truncado de esquemas de negocio y no se confirmó aislamiento de una base disponible |
 
