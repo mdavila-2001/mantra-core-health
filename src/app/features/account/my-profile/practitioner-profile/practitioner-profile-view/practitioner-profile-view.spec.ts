@@ -923,6 +923,23 @@ describe('PractitionerProfileView', () => {
       expect(texto.match(/Matrícula N\.º LIC-3/g) ?? []).toHaveLength(1);
     });
 
+    /**
+     * Hasta el 24/09/2026 la especialidad aparecía ACÁ ADEMÁS de en «Datos
+     * personales», con su vigencia y su sello. El propietario pidió sacarla
+     * de «Credenciales»: un solo lugar, no dos con distinto detalle.
+     */
+    it('las especialidades ya no aparecen en «Credenciales»: viven sólo en «Datos personales»', () => {
+      const host = montar({ ...PERFIL, datosPersonales: DATOS }, true);
+
+      seleccionarPestana(host, 'Credenciales');
+      const rejilla = host.querySelector('[data-testid="credenciales-rejilla"]');
+      expect(rejilla?.querySelector('[data-kind="specialty"]')).toBeNull();
+
+      seleccionarPestana(host, 'Datos personales');
+      expect(host.querySelector('[data-testid="perfil-especialidades-chips"]')).not.toBeNull();
+      expect(host.textContent).toContain('Cardiología');
+    });
+
     /* ---- la trayectoria como nodos (propietario, 13/09/2026) ------------- */
 
     it('la trayectoria propia son nodos, no las tarjetas de la ficha del paciente', () => {
