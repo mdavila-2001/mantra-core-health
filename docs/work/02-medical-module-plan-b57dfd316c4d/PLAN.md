@@ -49,9 +49,23 @@ La ficha del alta profesional ya separaba domicilio y consultorio propio, pero a
 
 La lectura del alta confirmó que FE ya enviaba `email` como correo de acceso/personal y `workEmail` como correo laboral. La API rechazaba `workEmail` por validación estricta y, sin ese dato, clasificaba `email` como WORK. Se añadió `workEmail` opcional al DTO y el servicio lo guarda con `CONTACT_USE_WORK`; cuando llega, `email` queda como contacto HOME y continúa siendo la identidad de acceso. Cuando no llega, `email` conserva el comportamiento laboral anterior y `personalEmail` sigue compatible. La lectura del perfil ya entrega ambos usos por separado; el editor ahora prioriza `workEmail` y usa `email` como alias de compatibilidad.
 
-Cambios publicados en la rama `justin/medical-module-execution-20260924`: FE `bd6e4690f62c4269dd9a65e8e5b955fe6e68a857`, API `70f1cfff66545c6ca77323fcd0eccb5cdd26eb44`. Ver [evidence/h1-separated-emails/REPORT.md](evidence/h1-separated-emails/REPORT.md). FE: 86/86 pruebas del editor; API: 107/107 pruebas DTO/servicio; `corepack yarn typecheck` y ESLint dirigido pasan en ambos.
+Cambios publicados en la rama `justin/medical-module-execution-20260924`: FE `bd6e4690f62c4269dd9a65e8e5b955fe6e68a857`, API implementación `70f1cfff66545c6ca77323fcd0eccb5cdd26eb44`; cobertura de lectura API añadida en `924e8f03a53afc7c3cdb2dc7dbbf8107ba114b8b`. Ver [evidence/h1-separated-emails/REPORT.md](evidence/h1-separated-emails/REPORT.md). FE: editor 86/86; API: DTO/servicio de alta 107/107 y lectura propia 138/138; `corepack yarn typecheck` y ESLint dirigido pasan.
 
-L0179, L0186 y MED-E03 siguen `A MEDIAS / TESTED`: los tests unitarios demuestran los usos HOME/WORK, pero no se hizo el journey navegador→API→PostgreSQL→lectura tras recarga ni se guardó una captura. La suite de integración disponible trunca esquemas de negocio y no se confirmó una base aislada para ejecutarla; no se conectó a servicios compartidos. Los conteos permanecen en 10/98 `HECHO`.
+L0179, L0186 y MED-E03 siguen `A MEDIAS / TESTED`: los tests unitarios de alta y lectura demuestran los usos HOME/WORK, pero no se hizo el journey navegador→API→PostgreSQL→lectura tras recarga ni se guardó una captura. La suite de integración disponible trunca esquemas de negocio y no se confirmó una base aislada para ejecutarla; no se conectó a servicios compartidos. Los conteos permanecen en 10/98 `HECHO`.
+
+### Verificación adicional — lectura propia de correos
+
+Se añadió en API un spec de lectura de perfil con dos correos sintéticos, uno `CONTACT_USE_HOME` y otro `CONTACT_USE_WORK`; verifica que la respuesta privada devuelve `personalEmail` y `workEmail` distintos. La suite `corepack yarn test --runInBand --no-cache src/modules/profiles/services/profiles-practitioners.service.spec.ts` pasó 138/138; typecheck y ESLint dirigido pasaron. Commit publicado `924e8f03a53afc7c3cdb2dc7dbbf8107ba114b8b`. Es sólo cobertura de lectura bajo dobles, no demuestra escritura PostgreSQL ni recarga; no cambia el estado de L0179/L0186/MED-E03.
+
+### Continuación H1 — tres especialidades adicionales y lista completa (L0174)
+
+La fuente congelada dice literalmente que hay tres espacios adicionales a la profesión y que la lista no se filtra por profesión. La API y el perfil limitaban a tres especialidades totales; el alta además separaba opciones odontológicas y médicas. Se alinearon FE, DTOs de autorregistro/onboarding, límite de dominio y OpenAPI para aceptar una principal más tres adicionales (cuatro totales), y el catálogo ahora permanece completo al cambiar de profesión. El editor de perfil limita las adiciones pendientes al cupo total de cuatro.
+
+Cambios publicados en `justin/medical-module-execution-20260924`: FE `444e915e` y API `5ff4bfe8`. Pruebas dirigidas: FE 186/186 en dos specs; API 189/189 en tres suites. Typecheck y ESLint dirigidos pasan; OpenAPI pasa lint y comparación de compatibilidad contra `origin/dev`. El generador automático de OpenAPI no arrancó porque este entorno no define `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` ni `DB_NAME`; no se leyó `.env` ni se accedió a los PostgreSQL observados. Se actualizaron los tres esquemas afectados de YAML/JSON al mismo límite y ambos documentos pasan validación.
+
+La regresión FE completa terminó con 552/579 archivos aprobados, 7.115 pruebas aprobadas y 3 fallidas; otras 24 suites no arrancaron por `ENOSPC`. Las fallas funcionales fueron dos assertions en `shell-layout` y una en `pestanas-del-perfil-medico` sobre `gpsTrabajo`/`workAddressLines`; no se cambiaron en este trabajo. El lint global conserva 246 errores preexistentes de `@angular-eslint/prefer-on-push-component-change-detection`; el lint dirigido de archivos modificados pasa.
+
+L0174.AC01 y L0174.AC02 permanecen `A MEDIAS / TESTED`: no se recorrió este incremento en Chromium contra API/PostgreSQL con recarga ni se guardó captura. MED-E01 y el conteo global siguen en 10/98 `HECHO`; detalle en [evidence/h1-specialty-slots/REPORT.md](evidence/h1-specialty-slots/REPORT.md).
 
 ## 0. Instrucciones operativas para ejecutar este plan
 
@@ -343,7 +357,7 @@ No confundas registro profesional con registro empresarial del consultorio: vinc
 | Grupo | Fuente | Requisitos que deben descomponerse |
 |---|---|---|
 | MED-01 Identidad | L166–171; L177 | Nombre completo en tres campos de nombres y dos apellidos; CI exigido y departamento; nacimiento y edad automática. |
-| MED-02 Ocupación, profesión y especialidades | L172–176 | Ocupación/catalogación SEGIP y buscador solicitados; hasta tres espacios de especialidad; relación entre profesión, matrícula y colegio. La decisión previa de retirar «ocupación» no puede reemplazar el Registro sin cambio de alcance documentado. |
+| MED-02 Ocupación, profesión y especialidades | L172–176 | Ocupación/catalogación SEGIP y buscador solicitados; L0174 pide tres casillas adicionales de especialidad con el catálogo sin filtro por profesión; L0176 trata profesión, matrícula y colegio. La decisión previa de retirar «ocupación» no puede reemplazar el Registro sin cambio de alcance documentado. |
 | MED-03 Contactos separados | L178–186 | Celular y correo personal; domicilio/GPS; celular/fijo de trabajo, dirección/GPS y correo laboral separados. No usar el email de acceso como sustituto universal. |
 | MED-04 Credenciales | L187–199 | Hasta dos carreras/títulos universitarios; matrícula ministerial; múltiples diplomados, maestrías, doctorados y especialidades con documentos; colegio y rótulo/selección conforme a profesión, también al editar. |
 | MED-05 Consultorios | L200 | GPS de cada consultorio de atención y capacidad de manejar varios. |
