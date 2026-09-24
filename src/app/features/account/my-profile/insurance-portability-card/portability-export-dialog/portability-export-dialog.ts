@@ -59,7 +59,7 @@ export class PortabilityExportDialog {
    * corrección C-21 cambia el control, no lo que dice cada opción.
    */
   protected readonly formatos: readonly SelectOption<PortabilityExportFormat>[] = [
-    { value: 'PDF', label: 'PDF oficial certificado con código QR' },
+    { value: 'PDF', label: 'PDF con código QR de verificación' },
     { value: 'JSON', label: 'Archivo JSON interoperable' },
     { value: 'BUNDLE', label: 'Paquete completo (PDF + JSON)' },
   ];
@@ -96,10 +96,10 @@ export class PortabilityExportDialog {
     if (error instanceof HttpErrorResponse) {
       return (
         readApiError(error)?.message ??
-        'No se pudo generar el certificado. Probá de nuevo.'
+        'No se pudo generar la exportación. Probá de nuevo.'
       );
     }
-    return 'No se pudo generar el certificado. Probá de nuevo.';
+    return 'No se pudo generar la exportación. Probá de nuevo.';
   }
 
   /** Vuelve a descargar el/los archivo(s) del certificado ya emitido. */
