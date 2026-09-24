@@ -481,10 +481,10 @@ describe('RegisterPractitioner', () => {
    * Las especialidades EN el alta — registro del cliente, módulo Médico §1.4.2
    * y §1.4.4.
    *
-   * Lo que fijan: que se ofrecen las de la profesión elegida y no las otras
-   * (un odontólogo no es cardiólogo), que el colegio cambia solo sin pisar una
-   * elección explícita, y que los conceptos VIAJAN en el cuerpo — el cliente
-   * lo arma nombre por nombre y descarta en silencio lo que no nombra.
+   * Lo que fijan: que el catálogo completo no se filtra por profesión, que el
+   * colegio cambia solo sin pisar una elección explícita, y que los conceptos
+   * VIAJAN en el cuerpo — el cliente lo arma nombre por nombre y descarta en
+   * silencio lo que no nombra.
    */
   describe('las especialidades del alta', () => {
     /** Responde el catálogo con dos médicas y dos odontológicas. */
@@ -516,19 +516,11 @@ describe('RegisterPractitioner', () => {
     /**
      * **El orden real, que es el que fallaba.**
      *
-     * Las dos pruebas de abajo ponen el título ANTES de leer las páginas por
-     * primera vez, y así pasaban incluso con el defecto: el `computed` se
-     * estrenaba con el título ya elegido. En la pantalla el orden es el
-     * inverso —el catálogo llega al abrir el paso, la persona elige su
-     * profesión después—, y ahí el `computed` ya estaba calculado con el
-     * título vacío y no volvía a correr, porque el valor de un `FormControl`
-     * no es una señal y no lo despierta.
-     *
-     * Resultado en producción: un odontólogo veía las 52 médicas con las 11
-     * suyas al final. El stakeholder lo reportó como «no están las
-     * especialidades de odontología».
+     * L0174 especifica que la lista de especialidades no se filtra por
+     * profesión. La lista debe conservar todas sus opciones antes y después
+     * de elegir el título profesional.
      */
-    it('filtra aunque las opciones ya se hayan leído antes de elegir profesión', () => {
+    it('conserva el catálogo completo si el título se elige después de leerlo', () => {
       catalogoDeEspecialidades();
       // Se leen una vez, como al pintar el paso: acá el título está vacío y
       // corresponde ofrecer todo.
@@ -542,25 +534,30 @@ describe('RegisterPractitioner', () => {
       component.formProfesional.controls.professionalTitle.setValue('Odontólogo / Odontóloga');
       fixture.detectChanges();
 
-      expect(opcionesDeLaPagina().map((o) => o.value)).toEqual(['e-endo', 'e-orto']);
+      expect(opcionesDeLaPagina().map((o) => o.value)).toEqual([
+        'e-cardio',
+        'e-pedia',
+        'e-endo',
+        'e-orto',
+      ]);
     });
 
-    it('un odontólogo ve las odontológicas y NO las médicas', () => {
+    it('un odontólogo ve también las especialidades médicas del catálogo', () => {
       catalogoDeEspecialidades();
       component.formProfesional.controls.professionalTitle.setValue('Odontólogo / Odontóloga');
       fixture.detectChanges();
 
       const valores = opcionesDeLaPagina().map((o) => o.value);
-      expect(valores).toEqual(['e-endo', 'e-orto']);
+      expect(valores).toEqual(['e-cardio', 'e-pedia', 'e-endo', 'e-orto']);
     });
 
-    it('un médico ve las médicas y NO las odontológicas', () => {
+    it('un médico ve también las especialidades odontológicas del catálogo', () => {
       catalogoDeEspecialidades();
       component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
       fixture.detectChanges();
 
       const valores = opcionesDeLaPagina().map((o) => o.value);
-      expect(valores).toEqual(['e-cardio', 'e-pedia']);
+      expect(valores).toEqual(['e-cardio', 'e-pedia', 'e-endo', 'e-orto']);
     });
 
     it('el título profesional se busca con lupa, y sigue siendo lista cerrada', () => {
@@ -617,7 +614,12 @@ describe('RegisterPractitioner', () => {
 
       expect(titulo.value).toBe('Odontólogo / Odontóloga');
       expect(autoridad.value).toBe('Colegio de Odontólogos de Bolivia');
-      expect(opcionesDeLaPagina().map((o) => o.label)).toEqual(['Endodoncia', 'Ortodoncia']);
+      expect(opcionesDeLaPagina().map((o) => o.label)).toEqual([
+        'Cardiología',
+        'Pediatría',
+        'Endodoncia',
+        'Ortodoncia',
+      ]);
       // Y el rótulo vuelve al regresar al paso, que es para lo que existe.
       expect(component.tituloProfesionalSeleccionado()?.label).toBe('Odontólogo / Odontóloga');
     });
@@ -656,16 +658,14 @@ describe('RegisterPractitioner', () => {
       expect(autoridad.value).toBe('Servicio Departamental de Salud (SEDES)');
     });
 
-    it('cambiar de profesión limpia una especialidad que ya no corresponde', () => {
-      // Un desplegable con un valor que no está entre sus opciones muestra un
-      // vacío que miente: parece que no elegiste y el cuerpo lo manda igual.
+    it('cambiar de profesión conserva la especialidad elegida', () => {
       catalogoDeEspecialidades();
       component.formProfesional.controls.professionalTitle.setValue('Odontólogo / Odontóloga');
       component.formProfesional.controls.specialtyPrimary.setValue('e-endo');
 
       component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
 
-      expect(component.formProfesional.controls.specialtyPrimary.value).toBe('');
+      expect(component.formProfesional.controls.specialtyPrimary.value).toBe('e-endo');
     });
 
     it('las especialidades elegidas VIAJAN en el cuerpo, en orden', () => {
@@ -692,7 +692,7 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
-    it('se pueden declarar más de tres especialidades', () => {
+    it('permite una especialidad principal y tres adicionales', () => {
       catalogoDeEspecialidades();
       completarProfesional({
         professionalTitle: 'Médico / Médica',
@@ -709,6 +709,14 @@ describe('RegisterPractitioner', () => {
         'e-orto',
       ]);
       req.flush(RESPUESTA_PRO);
+    });
+
+    it('no permite sumar una cuarta especialidad adicional', () => {
+      component.especialidadesExtra.set(['e-pedia', 'e-endo', 'e-orto']);
+
+      component.agregarEspecialidad();
+
+      expect(component.especialidadesExtra()).toEqual(['e-pedia', 'e-endo', 'e-orto']);
     });
 
     it('agregar suma una casilla vacía, y quitar saca la que se señala', () => {
@@ -740,13 +748,13 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
-    it('cambiar de profesión limpia también una especialidad agregada', () => {
+    it('cambiar de profesión conserva también una especialidad agregada', () => {
       catalogoDeEspecialidades();
       completarProfesional({ especialidadesExtra: ['e-endo'] });
 
       component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
 
-      expect(component.especialidadesExtra()).toEqual(['']);
+      expect(component.especialidadesExtra()).toEqual(['e-endo']);
     });
 
     it('elegir la misma dos veces declara una', () => {

@@ -92,25 +92,13 @@ function fechaIso(fecha: Date): string {
 /** Sólo letras, dígitos, punto y guion — el mismo `@Matches` del backend. */
 const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;
 
+/** El registro del cliente permite tres especialidades además de la principal. */
+const MAX_ADDITIONAL_SPECIALTIES = 3;
+
 /**
- * Las especialidades que pertenecen a la odontología, por código de catálogo.
- *
- * El listado del stakeholder (`LISTA_DE_ESPECIALIDADES_ODONTOLOGICAS.md`) viene
- * como PROFESIÓN → ESPECIALIDAD: al elegir «Odontólogo» se ofrecen éstas y sólo
- * éstas, y al elegir una profesión médica, las demás. El vínculo es de
- * interfaz a propósito — el modelo no tiene tabla profesión→especialidad y no
- * se inventó una: un conjunto, un dueño, y esta lista decide qué se MUESTRA.
- *
- * `CIRUGIA_BUCOMAXILOFACIAL` está acá aunque venga del listado del SNRM: es la
- * única especialidad de residencia médica cuyo requisito es Odontología (así lo
- * exige el SNRM y así quedó en la nota del value set).
- *
- * **Se exporta para que una prueba pueda comprobar que estos códigos existen**
- * en el catálogo que la aplicación va a recibir. No es un detalle académico:
- * el backend simulado los tenía inventados (`SP-ODONTO` y compañía), así que
- * este conjunto no acertaba ninguno y la rama odontológica del alta ofrecía
- * una lista vacía. Un conjunto que filtra por código sólo sirve si los dos
- * lados dicen el mismo código, y eso hay que poder comprobarlo.
+ * Códigos odontológicos mantenidos para comprobar la cobertura del catálogo.
+ * L0174 deja disponible la lista completa para cualquier profesión; este
+ * conjunto no restringe las opciones del alta.
  */
 export const ESPECIALIDADES_ODONTOLOGICAS: ReadonlySet<string> = new Set([
   'ODONTOLOGIA',
@@ -1185,14 +1173,14 @@ export class RegisterPractitioner {
   /**
    * Especialidades agregadas además de la principal.
    *
-   * Mismo criterio que `nombresExtra`: casillas fijas que casi nadie llena son
-   * ruido, y un techo arbitrario deja afuera al que sí las tiene. La cadena
-   * vacía es «esta casilla todavía no eligió nada».
+   * Hasta tres especialidades además de la principal, como pide el registro del
+   * cliente. La cadena vacía es «esta casilla todavía no eligió nada».
    */
   readonly especialidadesExtra = signal<readonly string[]>([]);
 
   /** Suma una casilla vacía de especialidad. */
   agregarEspecialidad(): void {
+    if (this.especialidadesExtra().length >= MAX_ADDITIONAL_SPECIALTIES) return;
     this.especialidadesExtra.update((actuales) => [...actuales, '']);
   }
 
@@ -1343,11 +1331,10 @@ export class RegisterPractitioner {
   readonly catalogoMunicipiosCaido = signal(false);
 
   /**
-   * Las especialidades (VS_MEDICAL_SPECIALTY, 63 desde el 27/08), y su catálogo.
+   * Las especialidades (VS_MEDICAL_SPECIALTY) y su catálogo.
    *
    * Se guardan CON su código además del par value/label: el código es lo que
-   * decide si una especialidad es odontológica, y por lo tanto en cuál de las
-   * dos listas —la del odontólogo o la del resto— aparece.
+   * identifica cada entrada del catálogo y permite comprobar su cobertura.
    */
   private readonly especialidades = inject(MedicalSpecialtiesCatalog);
   readonly opcionesEspecialidad = signal<readonly { value: string; label: string; code: string }[]>(
@@ -1358,28 +1345,16 @@ export class RegisterPractitioner {
   /**
    * El título profesional elegido, **como señal**.
    *
-   * Duplica el valor del `FormControl` a propósito. Las tres listas de
-   * especialidad se arman dentro de `paginasProfesional`, que es un `computed`,
-   * y un `computed` sólo se recalcula cuando cambia una SEÑAL que leyó: el
-   * valor de un `FormControl` no lo despierta. Leerlo desde ahí hacía que el
-   * filtro se evaluara una sola vez —con el título todavía vacío, o sea «no hay
-   * con qué filtrar, devolvé todo»— y no volviera a correr nunca.
-   *
-   * Se veía así: un odontólogo elegía su profesión y en el paso siguiente le
-   * seguían apareciendo las 52 especialidades médicas, con las 11 suyas al
-   * final. El stakeholder lo reportó como «no están las especialidades de
-   * odontología»; sí estaban, abajo de todo.
-   *
-   * La escribe la MISMA suscripción que ya acomodaba el colegio —por eso el
-   * colegio se acomodaba y la lista no—, así que no hay dos fuentes de verdad:
-   * el control manda, esto lo espeja para el grafo de señales.
+   * Duplica el valor del `FormControl` a propósito. Las etiquetas del colegio
+   * profesional dependen de esta selección; el catálogo de especialidades
+   * permanece completo para cualquier profesión, como indica L0174.
    */
   private readonly tituloProfesionalElegido = signal('');
 
   /**
    * Lo escrito en la lupa del título. **Nunca reemplaza al valor del control**:
-   * el `FormControl` sigue siendo el que manda, y de él cuelgan el colegio
-   * automático y el filtro de especialidades.
+   * el `FormControl` sigue siendo el que manda y de él cuelga el colegio
+   * automático. El catálogo de especialidades no depende de ese valor.
    */
   readonly busquedaTituloProfesional = signal('');
 
@@ -1405,9 +1380,9 @@ export class RegisterPractitioner {
   /**
    * Escribe la elección en el mismo control de siempre.
    *
-   * Es la línea que conserva la cadena entera: `professionalTitle` →
-   * `regulatoryAuthority` → especialidades válidas. Escribir el título en un
-   * estado propio de la lupa la habría cortado en silencio.
+   * Es la línea que conserva la cadena `professionalTitle` →
+   * `regulatoryAuthority`. Escribir el título en un estado propio de la lupa
+   * habría cortado esa actualización en silencio.
    */
   elegirTituloProfesional(opcion: ReferenceOption | null): void {
     this.formProfesional.controls.professionalTitle.setValue(opcion?.value ?? '');
@@ -1930,14 +1905,14 @@ export class RegisterPractitioner {
         titulo: 'Tus especialidades',
         clave: 'specialties',
         icon: 'directory',
-        hint: 'Las que hagan falta. Son lo que un paciente busca cuando necesita a alguien como vos.',
+        hint: 'Hasta tres además de la principal. La lista completa está disponible para cualquier profesión.',
         campos: [
           {
             key: 'specialtyPrimary',
             label: 'Especialidad principal (opcional)',
             hint: 'La que responde «¿de qué sos?».',
             control: 'select',
-            options: this.opcionesEspecialidadFiltradas(),
+            options: this.allSpecialtyOptions(),
             placeholder: 'Sin especialidad',
             testId: 'registro-pro-especialidad-1',
             icono: 'stethoscope',
@@ -2075,7 +2050,7 @@ export class RegisterPractitioner {
     this.cargarMunicipios();
     this.cargarEspecialidades();
     this.cargarTiposDeCredencial();
-    this.acomodarColegioYEspecialidades();
+    this.syncCollegeWithProfession();
 
     // El aviso de un envío fallido se va en cuanto se corrige algo.
     //
@@ -2092,20 +2067,16 @@ export class RegisterPractitioner {
    * otro colegio del par: una elección explícita distinta (SEDES, Enfermería…)
    * no se pisa, porque el automatismo es una ayuda, no una regla.
    *
-   * Y al cambiar de profesión, las especialidades elegidas que ya no pertenecen
-   * a la lista nueva se limpian: un desplegable con un valor que no está entre
-   * sus opciones muestra un vacío que miente.
-   *
    * Se llama desde el constructor: `takeUntilDestroyed` pide contexto de
-   * inyección. Sin eso el espejo del título no se instala y el filtro de
-   * especialidades vuelve a congelarse — ver {@link tituloProfesionalElegido}.
+   * inyección. Sin eso el espejo del título no se instala y el rótulo del
+   * colegio deja de actualizarse — ver {@link tituloProfesionalElegido}.
    */
-  private acomodarColegioYEspecialidades(): void {
+  private syncCollegeWithProfession(): void {
     const titulo = this.formProfesional.controls.professionalTitle;
     const autoridad = this.formProfesional.controls.regulatoryAuthority;
     titulo.valueChanges.pipe(takeUntilDestroyed()).subscribe((valor) => {
-      // Primero el espejo: de acá leen las listas del `computed`, y también la
-      // limpieza de más abajo.
+      // Primero el espejo: de acá leen las etiquetas del colegio en el grafo
+      // de señales.
       this.tituloProfesionalElegido.set(valor);
 
       // El colegio sigue a la profesión: la opción «Colegio de la profesión»
@@ -2119,22 +2090,6 @@ export class RegisterPractitioner {
       if (cambiar) {
         autoridad.setValue(colegio);
       }
-
-      // Cambiar de profesión cambia la lista que se ofrece, así que lo ya
-      // elegido que dejó de estar en ella se vacía. Alcanza también a las
-      // casillas agregadas: si no, quedarían mostrando una especialidad que el
-      // desplegable ya no ofrece.
-      const validas = new Set(this.opcionesEspecialidadFiltradas().map((o) => o.value));
-      for (const control of this.controlesDeEspecialidad()) {
-        if (control.value !== '' && !validas.has(control.value)) {
-          control.setValue('');
-        }
-      }
-      this.especialidadesExtra.update((actuales) =>
-        actuales.map((especialidad) =>
-          especialidad !== '' && !validas.has(especialidad) ? '' : especialidad,
-        ),
-      );
     });
   }
 
@@ -2142,21 +2097,9 @@ export class RegisterPractitioner {
     return [this.formProfesional.controls.specialtyPrimary] as const;
   }
 
-  /**
-   * Las especialidades que corresponde OFRECER según la profesión elegida:
-   * odontólogo → las odontológicas; cualquier otra → el resto del catálogo.
-   * Sin profesión elegida se ofrece todo, porque no hay con qué filtrar.
-   */
-  protected opcionesEspecialidadFiltradas(): readonly SelectOption<string>[] {
-    const titulo = this.tituloProfesionalElegido();
-    const todas = this.opcionesEspecialidad();
-    const filtradas =
-      titulo === ''
-        ? todas
-        : titulo === TITULO_ODONTOLOGO
-          ? todas.filter((o) => ESPECIALIDADES_ODONTOLOGICAS.has(o.code))
-          : todas.filter((o) => !ESPECIALIDADES_ODONTOLOGICAS.has(o.code));
-    return filtradas.map(({ value, label }) => ({ value, label }));
+  /** El catálogo completo está disponible cualquiera sea la profesión elegida. */
+  protected allSpecialtyOptions(): readonly SelectOption<string>[] {
+    return this.opcionesEspecialidad().map(({ value, label }) => ({ value, label }));
   }
 
   /**
