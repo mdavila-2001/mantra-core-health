@@ -13,3 +13,7 @@ El filtro médico específico aprobó 381 pruebas en 7 archivos con dobles, sin 
 Route-health volvió a fallar en `beforeAll` porque la API de localhost:3005 no está saludable; no generó fotos de ese recorrido. El verificador `scripts/atlas/fable-proof-check.py` no existe en esta base.
 
 Una integración aislada de registro profesional aprobó 8/8 en DB desechable con semillas parciales; no ejecutó DDL canónica ni un journey end-to-end. No se guardaron datos personales reales; los fixtures del perfil inspeccionado son de la cuenta sintética de prueba.
+
+## H1 · Editor, tipos documentales y acceso entre actores
+
+El smoke móvil más reciente probó Chromium → API real → PostgreSQL 18 desechable para una profesional sintética. Capturas del alta, tres especialidades, las credenciales cargadas desde el perfil, diálogo de edición y estado tras recargar, junto con la especificación Playwright reproducible, están en [`h1-real-api/extended-smoke/editor/`](h1-real-api/extended-smoke/editor/). El recorrido verificó 11 credenciales con 11 PDFs únicos (tres DEGREE, dos DIPLOMA, dos MASTER, dos DOCTORATE, dos SPECIALTY), tres especialidades, edición/descarga propia y un segundo actor sin acceso al UUID ajeno. El escenario MED-E01 sigue A MEDIAS por requisitos personales y de catálogo; 10 criterios individuales quedaron HECHO/VERIFIED.
