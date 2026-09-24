@@ -86,6 +86,9 @@ import { WorkHistory } from '../work-history/work-history';
 /** El tipo de título (formación), del catálogo dinámico: los cinco `CREDENTIAL_TYPE_*`. */
 const TARGET_CREDENCIAL = 'profiles.professional_credentials.credential_type_concept_id';
 
+/** Una especialidad principal y hasta tres adicionales por profesional. */
+const MAX_SPECIALTIES_PER_PRACTITIONER = 4;
+
 /** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
 function fechaIso(fecha: Date): string {
   const anio = fecha.getFullYear();
@@ -547,7 +550,22 @@ export class PractitionerProfileEdit {
 
   /** Suma una casilla vacía de especialidad. */
   protected agregarCasillaDeEspecialidad(): void {
+    if (!this.canAddAnotherSpecialty()) return;
     this.especialidadesExtra.update((actuales) => [...actuales, '']);
+  }
+
+  /** No ofrece más casillas que el cupo de especialidades que todavía queda. */
+  protected canAddAnotherSpecialty(): boolean {
+    const activas = this.filasEspecialidades().filter((fila) => fila.vigente).length;
+    return activas + 1 + this.especialidadesExtra().length < MAX_SPECIALTIES_PER_PRACTITIONER;
+  }
+
+  /** Muestra el formulario mientras el profesional tenga cupo disponible. */
+  protected canDeclareSpecialty(): boolean {
+    return (
+      this.filasEspecialidades().filter((fila) => fila.vigente).length <
+      MAX_SPECIALTIES_PER_PRACTITIONER
+    );
   }
 
   /**
@@ -607,9 +625,11 @@ export class PractitionerProfileEdit {
   protected readonly maxBytesDeRespaldo = MAX_ATTACHMENT_BYTES;
   protected readonly guardandoEspecialidad = signal(false);
 
-  protected readonly puedeAgregarEspecialidad = computed(
-    () => this.nuevaEspecialidad() !== null || this.especialidadesExtra().some((e) => e !== ''),
-  );
+  protected readonly puedeAgregarEspecialidad = computed(() => {
+    const elegidas = this.especialidadesElegidas().length;
+    const activas = this.filasEspecialidades().filter((fila) => fila.vigente).length;
+    return elegidas > 0 && activas + elegidas <= MAX_SPECIALTIES_PER_PRACTITIONER;
+  });
 
   /* -- Nueva matrícula --------------------------------------------------------- */
 
@@ -1298,7 +1318,12 @@ export class PractitionerProfileEdit {
   protected agregarEspecialidad(): void {
     const profileId = this.profileId();
     const elegidas = this.especialidadesElegidas();
-    if (profileId === null || elegidas.length === 0 || this.guardandoEspecialidad()) {
+    if (
+      profileId === null ||
+      elegidas.length === 0 ||
+      !this.puedeAgregarEspecialidad() ||
+      this.guardandoEspecialidad()
+    ) {
       return;
     }
 

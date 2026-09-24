@@ -247,8 +247,8 @@ export interface PractitionerRegistration {
   readonly email: string;
   readonly password: string;
   /**
-   * Las especialidades elegidas EN el alta (hasta 3; la primera queda como
-   * principal). El registro del cliente las pide junto a la profesión — módulo
+   * Las especialidades elegidas EN el alta (una principal y hasta tres
+   * adicionales). El registro del cliente las pide junto a la profesión — módulo
    * Médico §1.4.2 — y hasta ahora sólo se podían declarar después, desde el
    * perfil, adonde la mayoría no volvía.
    */
