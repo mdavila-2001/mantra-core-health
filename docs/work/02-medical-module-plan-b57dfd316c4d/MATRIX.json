@@ -5171,7 +5171,7 @@
     "out_of_scope": 2,
     "done": 0,
     "global_percent": 0,
-    "percent_note": "0/98 criterios incluidos alcanzan el DoD integral. Hay evidencia frontend parcial; aún no hay cierre end-to-end verificado.",
+    "percent_note": "0/98 criterios incluidos alcanzan el DoD integral. Hay evidencia parcial frontend/API/PostgreSQL y un journey real parcial de credenciales; aún no hay cierre end-to-end verificado.",
     "status_breakdown": {
       "A MEDIAS": 70,
       "TODO": 11,
