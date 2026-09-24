@@ -58,6 +58,7 @@
            motor no tiene por qué saber de Leaflet ni de permisos del
            navegador. -->
         <div class="registro__body">
+          <!-- `iconOnlyNav`: excepción ADR-0012 §3 (D-05, 23/09), pasar de página; el motor pone aria-label y globo, y la última página dice «Crear cuenta». -->
           <app-paginated-form
             data-testid="registro-form-paciente"
             [paginas]="paginasPaciente()"
@@ -167,6 +168,7 @@
                            página rompen lo único que un ícono aporta, que es el
                            reconocimiento. El `aria-label` es el que dice qué
                            hace; el dibujo tiene que acompañar, no contradecir. -->
+                      <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento de la lista, con aria-label y globo. -->
                       <button
                         app-button
                         type="button"
@@ -328,6 +330,7 @@
                       >
                         Usar mi ubicación
                       </button>
+                      <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento, con aria-label y globo. -->
                       <button
                         app-button
                         variant="ghost"
@@ -372,6 +375,7 @@
                       >
                         Volver a ubicarme
                       </button>
+                      <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento, con aria-label y globo. -->
                       <button
                         app-button
                         variant="ghost"
@@ -419,6 +423,7 @@
                       >
                         Volver a ubicarme
                       </button>
+                      <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento, con aria-label y globo. -->
                       <button
                         app-button
                         variant="ghost"
@@ -604,6 +609,7 @@
                       >
                         Usar mi ubicación
                       </button>
+                      <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento, con aria-label y globo. -->
                       <button
                         app-button
                         variant="ghost"
@@ -644,6 +650,7 @@
                       >
                         Volver a ubicarme
                       </button>
+                      <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento, con aria-label y globo. -->
                       <button
                         app-button
                         variant="ghost"
@@ -689,6 +696,7 @@
                       >
                         Volver a ubicarme
                       </button>
+                      <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento, con aria-label y globo. -->
                       <button
                         app-button
                         variant="ghost"
