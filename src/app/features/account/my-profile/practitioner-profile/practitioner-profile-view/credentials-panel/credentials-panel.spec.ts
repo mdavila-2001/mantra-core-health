@@ -64,6 +64,7 @@ describe('CredentialsPanel', () => {
       especialidades?: readonly EspecialidadVisible[];
       formacion?: readonly FormacionVisible[];
       idiomas?: readonly IdiomaVisible[];
+      retirables?: ReadonlySet<string>;
     } = {},
   ) {
     TestBed.configureTestingModule({ imports: [CredentialsPanel] });
@@ -72,6 +73,9 @@ describe('CredentialsPanel', () => {
     fixture.componentRef.setInput('especialidades', over.especialidades ?? [ESPECIALIDAD]);
     fixture.componentRef.setInput('formacion', over.formacion ?? [FORMACION]);
     fixture.componentRef.setInput('idiomas', over.idiomas ?? [IDIOMA]);
+    if (over.retirables !== undefined) {
+      fixture.componentRef.setInput('retirables', over.retirables);
+    }
     fixture.detectChanges();
     return fixture;
   }
@@ -109,6 +113,59 @@ describe('CredentialsPanel', () => {
       .click();
     fixture.detectChanges();
     expect(tarjetas(fixture)).toEqual(['specialty', 'language']);
+  });
+
+  function bloques(fixture: ReturnType<typeof montar>): readonly string[] {
+    return [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll(
+        '[data-testid="credenciales-grupo"]',
+      ),
+    ].map((bloque) => bloque.querySelector('h3')?.textContent?.replace(/\s+/g, ' ').trim() ?? '');
+  }
+
+  it('cada clase es su propio bloque, con su nombre y cuántas tiene, en orden fijo', () => {
+    // Hasta el 24/09/2026 las cuatro clases iban entreveradas en UNA rejilla y
+    // sólo las distinguía un rótulo chico en cada tarjeta: «completamente
+    // inentendible», dijo el propietario.
+    const fixture = montar({ especialidades: [ESPECIALIDAD, { ...ESPECIALIDAD, id: 'esp-2' }] });
+
+    expect(bloques(fixture)).toEqual([
+      'Matrículas 1',
+      'Especialidades 2',
+      'Títulos y formación 1',
+      'Idiomas 1',
+    ]);
+    const especialidades = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="credenciales-grupo"][data-kind="specialty"]',
+    );
+    expect(
+      [...especialidades!.querySelectorAll('[data-testid="credencial"]')].map((t) =>
+        t.getAttribute('data-kind'),
+      ),
+    ).toEqual(['specialty', 'specialty']);
+  });
+
+  it('el filtro no deja bloques vacíos colgando', () => {
+    const fixture = montar();
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="credenciales-filtro-verificadas"]')!
+      .click();
+    fixture.detectChanges();
+
+    expect(bloques(fixture)).toEqual(['Matrículas 1', 'Títulos y formación 1']);
+  });
+
+  it('«Retirar» sólo aparece en el título que la ficha marcó, y avisa con el título', () => {
+    const pendiente: FormacionVisible = { ...FORMACION, id: 'cr-2', sello: 'in-review' };
+    const fixture = montar({ formacion: [FORMACION, pendiente], retirables: new Set(['cr-2']) });
+    const pedidos: FormacionVisible[] = [];
+    fixture.componentInstance.retirar.subscribe((estudio) => pedidos.push(estudio));
+    const raiz = fixture.nativeElement as HTMLElement;
+
+    expect(raiz.querySelector('[data-testid="formacion-retirar-cr-1"]')).toBeNull();
+    raiz.querySelector<HTMLButtonElement>('[data-testid="formacion-retirar-cr-2"]')!.click();
+
+    expect(pedidos).toEqual([pendiente]);
   });
 
   it('un idioma no lleva sello: no tramita nada', () => {
