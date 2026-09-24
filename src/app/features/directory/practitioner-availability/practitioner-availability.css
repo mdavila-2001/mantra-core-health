@@ -61,6 +61,19 @@
   font-size: var(--fs-caption);
 }
 
+/* La carga y el error de UNA sede (R-02): la sede ya se ve con su nombre, y
+   esta línea dice qué pasa con sus turnos sin tapar a las demás. */
+.disponibilidad__buscando,
+.disponibilidad__error {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
 /* En pantalla angosta los dos botones de semana no caben a los lados del
    rango; apilarlos es mejor que partir las etiquetas. */
 @media (max-width: 30rem) {
