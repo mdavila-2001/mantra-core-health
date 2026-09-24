@@ -4,6 +4,21 @@ import { MonthView, placePopover, type BloqueoDelMes } from './month-view';
 
 const MES = new Date(2026, 7, 1); // agosto de 2026
 
+/**
+ * Un mes que no pasa nunca: la celda sólo cuenta turnos de días que vienen, y
+ * agosto de 2026 ya quedó atrás.
+ */
+const MES_FUTURO = new Date(2030, 0, 1);
+
+/** Un cupo de `MES_FUTURO`. */
+function cupoFuturo(dia: number, capacity: number, remaining: number) {
+  return {
+    ...cupo(dia, capacity, remaining),
+    startAt: new Date(2030, 0, dia, 9, 0),
+    endAt: new Date(2030, 0, dia, 9, 30),
+  };
+}
+
 /** Un cupo mínimo: sólo importan la fecha y las dos capacidades. */
 function cupo(dia: number, capacity: number, remaining: number) {
   return {
@@ -24,8 +39,9 @@ function cupo(dia: number, capacity: number, remaining: number) {
  *
  * Lo que estas pruebas fijan:
  *
- * 1. **La celda dice ocupación, no citas.** «6/8», nunca quién viene: los
- *    nombres son la vista del día, y un mes con nombres es ilegible.
+ * 1. **La celda dice lo disponible, no citas ni reservas.** «2», nunca quién
+ *    viene ni cuántos reservaron (cliente, 24/09): los nombres son la vista
+ *    del día, y un mes con nombres es ilegible.
  * 2. **El color nunca solo.** Cada celda lleva su número visible y una etiqueta
  *    accesible completa; un mes que sólo se entienda por el tono no lo entiende
  *    nadie con baja visión.
@@ -64,11 +80,19 @@ describe('MonthView', () => {
     expect(fixture.nativeElement.querySelectorAll('tbody td')).toHaveLength(42);
   });
 
-  it('muestra la ocupación como «reservados/total»', () => {
+  it('muestra sólo los turnos disponibles, no los reservados', () => {
     // Dos cupos de capacidad 4 y 4, con 1 y 3 libres: 8 publicados, 4 tomados.
-    montar([cupo(11, 4, 1), cupo(11, 4, 3)]);
+    montar([cupoFuturo(11, 4, 1), cupoFuturo(11, 4, 3)], [], MES_FUTURO);
 
-    expect(celda(11)?.textContent).toContain('4/8');
+    expect(celda(11)?.querySelector('.mes__cuenta')?.textContent?.trim()).toBe('4');
+    expect(celda(11)?.textContent).not.toContain('/');
+  });
+
+  it('un día que ya pasó no cuenta turnos: ya no se ofrecen', () => {
+    montar([cupo(11, 4, 3)]);
+
+    expect(celda(11)?.querySelector('.mes__cuenta')).toBeNull();
+    expect(celda(11)?.getAttribute('aria-label')).toContain('día pasado');
   });
 
   it('no muestra nombres ni citas: es ocupación, no la agenda del día', () => {
@@ -84,27 +108,28 @@ describe('MonthView', () => {
     expect(celda(12)?.getAttribute('aria-label')).toContain('no atendés');
   });
 
-  it('un día con cupos y nadie anotado es libre, con su cuenta en cero', () => {
-    montar([cupo(11, 4, 4)]);
+  it('un día con cupos y nadie anotado muestra todos como disponibles', () => {
+    montar([cupoFuturo(11, 4, 4)], [], MES_FUTURO);
 
-    expect(celda(11)?.textContent).toContain('0/4');
-    expect(celda(11)?.getAttribute('aria-label')).toContain('ninguno reservado');
+    expect(celda(11)?.querySelector('.mes__cuenta')?.textContent?.trim()).toBe('4');
+    expect(celda(11)?.getAttribute('aria-label')).toContain('4 turnos disponibles');
   });
 
-  it('un día sin capacidad restante es «completo»', () => {
-    montar([cupo(11, 4, 0)]);
+  it('un día sin capacidad restante muestra cero disponibles', () => {
+    montar([cupoFuturo(11, 4, 0)], [], MES_FUTURO);
 
-    expect(celda(11)?.textContent).toContain('4/4');
-    expect(celda(11)?.getAttribute('aria-label')).toContain('completo');
+    expect(celda(11)?.querySelector('.mes__cuenta')?.textContent?.trim()).toBe('0');
+    expect(celda(11)?.getAttribute('aria-label')).toContain('sin turnos disponibles');
   });
 
   it('cada celda se entiende con lector de pantalla, sin mirar el color', () => {
-    montar([cupo(11, 8, 2)]);
+    montar([cupoFuturo(11, 8, 2)], [], MES_FUTURO);
 
     const etiqueta = celda(11)?.getAttribute('aria-label') ?? '';
-    // `es-BO` formatea con coma: «martes, 11 de agosto».
-    expect(etiqueta).toContain('11 de agosto');
-    expect(etiqueta).toContain('6 de 8 turnos reservados');
+    // `es-BO` formatea con coma: «viernes, 11 de enero».
+    expect(etiqueta).toContain('11 de enero');
+    expect(etiqueta).toContain('2 turnos disponibles');
+    expect(etiqueta).not.toContain('reservad');
   });
 
   it('un día bloqueado muestra su motivo y NO se ve como libre', () => {
@@ -122,7 +147,7 @@ describe('MonthView', () => {
     expect(celda(11)?.textContent).toContain('Congreso');
     expect(celda(11)?.getAttribute('aria-label')).toContain('bloqueado — Congreso');
     // Y sobre todo: no dice que esté libre.
-    expect(celda(11)?.getAttribute('aria-label')).not.toContain('ninguno reservado');
+    expect(celda(11)?.getAttribute('aria-label')).not.toContain('disponible');
   });
 
   it('el bloqueo gana sobre la ocupación: es lo que hay que ver', () => {
@@ -273,13 +298,13 @@ describe('MonthView', () => {
     expect(filasDelGlobo()).toEqual(['08:00–08:30 Libre', '09:00–09:30 1 de 2 lugares libres']);
   });
 
-  it('el globo de un día pasado no contradice a la celda: dice lo reservado y que el día ya fue', async () => {
-    // Agosto de 2026 ya pasó: la celda dice «1/2» y el globo, antes, «Sin
-    // turnos disponibles» (propietario, 18/09).
+  it('el globo de un día pasado dice que el día ya fue, sin contar reservas', async () => {
+    // Agosto de 2026 ya pasó: antes el globo decía «Sin turnos disponibles»
+    // (propietario, 18/09). Lo reservado ya no se muestra (cliente, 24/09).
     montar([cupo(11, 2, 1)]);
 
     const texto = await globoDe(11);
-    expect(texto).toContain('1 de 2 turnos reservados');
+    expect(texto).not.toContain('reservado');
     expect(texto).toContain('Día pasado: ya no se ofrecen turnos.');
     expect(texto).not.toContain('Sin turnos disponibles');
   });
