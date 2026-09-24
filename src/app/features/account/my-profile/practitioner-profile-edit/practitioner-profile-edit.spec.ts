@@ -919,6 +919,69 @@ describe('PractitionerProfileEdit', () => {
     req.flush({ ...PERFIL_BASE, homeAddress: { lines: 'Av. Brasil 1234' } });
   });
 
+  it('Contacto ofrece una dirección de trabajo separada del domicilio', () => {
+    const fixture = montarConVista();
+    señal<number>('pestana').set(1);
+    fixture.detectChanges();
+
+    expect(
+      panelAbierto(fixture).querySelector('[data-testid="edicion-direccion-trabajo"]'),
+    ).not.toBeNull();
+  });
+
+  it('siembra la dirección laboral y su punto sin mezclarlos con el domicilio', () => {
+    montarYCargar({
+      homeAddress: { lines: 'Av. Brasil 1234', latitude: -16.5, longitude: -68.15 },
+      workAddress: { lines: 'Calle Warnes 45', latitude: -17.78, longitude: -63.18 },
+    });
+
+    expect(interno<() => string>('direccionTrabajo')()).toBe('Calle Warnes 45');
+    expect(señal<unknown>('gpsDomicilioGuardado')()).toEqual({ lat: -16.5, lng: -68.15 });
+    expect(señal<unknown>('gpsTrabajoGuardado')()).toEqual({ lat: -17.78, lng: -63.18 });
+  });
+
+  it('guardarPresentacion manda workAddressLines sólo cuando cambia', () => {
+    montarYCargar({ workAddress: { lines: 'Calle Warnes 45' } });
+
+    señal<string>('direccionTrabajo').set('Av. Melchor Pinto 620');
+    interno<() => void>('guardarPresentacion')();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ workAddressLines: 'Av. Melchor Pinto 620' });
+    req.flush({ ...PERFIL_BASE, workAddress: { lines: 'Av. Melchor Pinto 620' } });
+  });
+
+  it('guarda y quita el GPS laboral como par, separado del GPS del domicilio', () => {
+    montarYCargar({
+      homeAddress: { lines: 'Av. Brasil 1234', latitude: -16.5, longitude: -68.15 },
+      workAddress: { lines: 'Calle Warnes 45', latitude: -17.78, longitude: -63.18 },
+    });
+
+    señal<unknown>('gpsTrabajo').set({ lat: -17.8, lng: -63.2 });
+    interno<() => void>('guardarPresentacion')();
+
+    const guardar = http.expectOne('/profiles/practitioners/me');
+    expect(guardar.request.body).toEqual({ workLatitude: -17.8, workLongitude: -63.2 });
+    guardar.flush(PERFIL_BASE);
+
+    señal<unknown>('gpsTrabajo').set(null);
+    interno<() => void>('guardarPresentacion')();
+
+    const quitar = http.expectOne('/profiles/practitioners/me');
+    expect(quitar.request.body).toEqual({ workLatitude: null, workLongitude: null });
+    quitar.flush(PERFIL_BASE);
+  });
+
+  it('Contacto muestra selectores GPS independientes para domicilio y trabajo', () => {
+    const fixture = montarConVista();
+    señal<number>('pestana').set(1);
+    fixture.detectChanges();
+
+    const panel = panelAbierto(fixture);
+    expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-domicilio"]')).not.toBeNull();
+    expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-trabajo"]')).not.toBeNull();
+  });
+
   /* ---- formación: sólo se agrega ------------------------------------------- */
 
   it('el botón de agregar formación exige tipo y número', () => {

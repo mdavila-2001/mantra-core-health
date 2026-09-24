@@ -498,11 +498,12 @@ export class ProfilesClient {
          marcó un punto, las dos coordenadas juntas — el municipio ya viaja
          arriba y el backend conserva lo que no llega. */
       readonly homeAddressLines: string;
-      /* `null` en los dos QUITA el punto; ausentes es «no lo toqué». La
-         distinción hace falta desde que el perfil deja moverlo: sin ella no
-         habría forma de borrar una ubicación mal puesta. */
       readonly homeLatitude: number | null;
       readonly homeLongitude: number | null;
+      /* Dirección de trabajo: mismo ciclo, con calle y pin propios. */
+      readonly workAddressLines: string;
+      readonly workLatitude: number | null;
+      readonly workLongitude: number | null;
     }>,
   ): Observable<OwnPractitionerProfile> {
     return this.http
