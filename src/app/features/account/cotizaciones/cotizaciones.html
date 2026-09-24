@@ -58,7 +58,7 @@
     <app-empty-state
       data-testid="cotizaciones-sin-ubicacion"
       title="Elegí desde dónde medir la distancia"
-      description="Para ordenar por cercanía necesitamos un punto de partida. Elegilo arriba de la tabla, o seguí ordenando por precio."
+      description="Para ordenar por cercanía necesitamos un punto de partida. Elegí desde dónde medir, arriba, o seguí ordenando por precio."
     >
       <button
         app-button
@@ -151,7 +151,56 @@
     }
 
     @if (!sinResultados()) {
+      <!-- En pantalla angosta los resultados son tarjetas: una tabla de cuatro
+           columnas en 390 px partía cada fila en ~290 px de alto (R3-01). La
+           tabla se queda para los estados que no son «con filas» —carga, error—
+           que resuelve su host, y para 780 px en adelante. -->
+      @if (hayFilas()) {
+        <ul class="cotizaciones__tarjetas" aria-label="Cotizaciones encontradas">
+          @for (fila of resultadosPaginados(); track fila.id) {
+            <li class="cotizaciones__tarjeta" data-testid="cotizaciones-tarjeta">
+              <span class="cotizaciones__que">{{ fila.que }}</span>
+              <span class="cotizaciones__donde">{{ fila.donde }}</span>
+              <p class="cotizaciones__cifras">
+                <span
+                  class="cotizaciones__precio"
+                  [class.cotizaciones__precio--no-publicado]="fila.price === null"
+                  [attr.title]="procedenciaDe(fila)"
+                  >{{ precioDe(fila) }}</span
+                >
+                <span
+                  class="cotizaciones__distancia"
+                  [class.cotizaciones__distancia--sin]="fila.distanceKm === null"
+                  >{{ distanciaDe(fila) }}</span
+                >
+              </p>
+              <span class="cotizaciones__procedencia">{{ procedenciaDe(fila) }}</span>
+              @if (fila.advertencia) {
+                <span class="cotizaciones__advertencia">{{ fila.advertencia }}</span>
+              }
+              @if (fila.accion; as accion) {
+                <a app-link class="cotizaciones__accion" [routerLink]="accion.ruta">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                  {{ accion.etiqueta }}
+                </a>
+              }
+            </li>
+          }
+        </ul>
+      }
+
       <app-data-table
+        [class.cotizaciones__tabla--con-filas]="hayFilas()"
         data-testid="cotizaciones-resultados"
         [state]="estadoTabla()"
         [columns]="columnas()"

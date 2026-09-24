@@ -136,7 +136,7 @@ describe('Cotizaciones', () => {
     await asentar();
 
     expect(buscar).toHaveBeenCalledWith('para', 'TODAS', null);
-    expect(texto()).toContain('12,50 BOB');
+    expect(texto()).toContain('12,50 BOB');
     expect(texto()).toContain('Lista PUBLICO de Farmacia Central');
     expect(texto()).toContain('2,4 km');
   });
@@ -160,7 +160,7 @@ describe('Cotizaciones', () => {
     componente().buscar('consulta');
     await asentar();
 
-    expect(texto()).toContain('5 UMA');
+    expect(texto()).toContain('5 UMA');
     expect(texto()).toContain('Referencia del Colegio Médico de Santa Cruz 2025');
     expect(texto()).not.toMatch(/Bs\.? ?\d/u);
   });
@@ -171,7 +171,7 @@ describe('Cotizaciones', () => {
     componente().buscar('x y');
     await asentar();
 
-    const filas = Array.from(raiz().querySelectorAll('.cotizaciones__que')).map(
+    const filas = Array.from(raiz().querySelectorAll('app-data-table .cotizaciones__que')).map(
       (f) => f.textContent,
     );
     expect(filas).toEqual(['Paracetamol 500 mg', 'Tomografía de cráneo']);
@@ -277,6 +277,20 @@ describe('Cotizaciones', () => {
       raiz().querySelector('[data-testid="cotizaciones-fuente-caida"]')?.textContent,
     ).toContain('Análisis');
     expect(texto()).toContain('Paracetamol 500 mg');
+  });
+
+  it('con filas, también las pinta como tarjetas para pantalla angosta', async () => {
+    buscar.mockReturnValue(respuesta([FARMACIA, ARANCEL]));
+    await montar();
+    componente().buscar('para');
+    await asentar();
+
+    const tarjetas = raiz().querySelectorAll('[data-testid="cotizaciones-tarjeta"]');
+    expect(tarjetas).toHaveLength(2);
+    expect(tarjetas[0]!.textContent).toContain('Farmacia Central');
+    expect(raiz().querySelector('app-data-table')?.classList).toContain(
+      'cotizaciones__tabla--con-filas',
+    );
   });
 
   it('cada fila lleva a una pantalla existente con ícono + texto', async () => {

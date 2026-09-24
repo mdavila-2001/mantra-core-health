@@ -97,3 +97,43 @@ a[app-link].cotizaciones__accion:hover {
   margin: 0;
   color: var(--text-primary);
 }
+
+/* Mobile-first: con filas, en angosto se ven las tarjetas y la tabla se
+   oculta; desde 780 px, al revés. Sin filas (carga, error) la tabla —su
+   host de estados— se ve en cualquier ancho. */
+.cotizaciones__tarjetas {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cotizaciones__tarjeta {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.cotizaciones__cifras {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+app-data-table.cotizaciones__tabla--con-filas {
+  display: none;
+}
+
+@media (min-width: 780px) {
+  .cotizaciones__tarjetas {
+    display: none;
+  }
+
+  app-data-table.cotizaciones__tabla--con-filas {
+    display: block;
+  }
+}
