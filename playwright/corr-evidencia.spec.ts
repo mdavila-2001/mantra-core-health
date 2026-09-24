@@ -298,7 +298,18 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
             await expect(page.locator('app-file-preview img')).toBeVisible();
           }
           const foto = join(FOTOS, `${nombre}-${vp.nombre}-${tema}.png`);
-          await page.screenshot({ path: foto, fullPage: true });
+          // Playwright fija los elementos `position: fixed` al alto de la
+          // ventana original al capturar `fullPage`. En estas pantallas el
+          // menú y el aviso de la maqueta quedaban pegados arriba/abajo y
+          // tapaban campos de la página larga. Se conserva el ancho de prueba
+          // y se extiende sólo el alto para que la captura muestre el contenido
+          // completo con esos elementos fuera del formulario.
+          const altoDocumento = await page.evaluate(() => document.documentElement.scrollHeight);
+          await page.setViewportSize({
+            width: vp.width,
+            height: Math.max(vp.height, altoDocumento + 64),
+          });
+          await page.screenshot({ path: foto });
           const bytes = statSync(foto).size;
           if (bytes < FOTO_MIN_BYTES && esperado !== 'no-encontrado') {
             errores.push(`${ruta} @ ${vp.nombre}/${tema}: foto vacía (${bytes} B)`);

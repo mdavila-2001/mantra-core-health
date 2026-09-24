@@ -1476,7 +1476,6 @@ export class PractitionerProfileEdit {
   protected readonly edicionInstitucionEscrita = signal('');
   protected readonly edicionEmision = signal<Date | null>(null);
   protected readonly edicionEspecialidad = signal<string | null>(null);
-  protected readonly edicionCertificada = signal(false);
   protected readonly edicionAutoridad = signal('');
   protected readonly edicionInscripcion = signal<Date | null>(null);
 
@@ -1665,7 +1664,6 @@ export class PractitionerProfileEdit {
       return;
     }
     this.edicionEspecialidad.set(especialidad.specialtyConceptId);
-    this.edicionCertificada.set(especialidad.boardCertified);
     this.edicion.set({ recurso: 'especialidad', id: fila.id, nombre: fila.especialidad });
   }
 
@@ -1740,7 +1738,6 @@ export class PractitionerProfileEdit {
           bloque: 'Especialidades',
           peticion: this.profiles.updateOwnSpecialty(enCurso.id, {
             specialtyConceptId: this.edicionEspecialidad() ?? undefined,
-            boardCertified: this.edicionCertificada(),
           }),
         };
       case 'matricula': {
