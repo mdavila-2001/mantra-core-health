@@ -1,9 +1,11 @@
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { concatMap, filter, from, map, of, throwIfEmpty, toArray, type Observable } from 'rxjs';
 
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
 import {
@@ -16,6 +18,7 @@ import type {
   BirthSexCode,
   NewRegistrationCredential,
   PractitionerRegistration,
+  UploadedRegistrationDocument,
 } from '../../../core/data-access/iam/iam.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
@@ -286,13 +289,9 @@ const TIPOS_DE_TITULO = [
 type CodigoDeTitulo = (typeof TIPOS_DE_TITULO)[number]['codigo'];
 
 /**
- * Un título declarado en el alta, con su respaldo adjunto.
- *
- * **Sólo vive en el navegador.** Esta rama es el mockup: el archivo no se sube
- * a ningún lado y el título no se persiste. Lo que se guarda acá es lo mínimo
- * para dibujar la lista —qué título es, cómo se llama y qué archivo eligió la
- * persona—, no el contenido del archivo. Ver `docs/handoff/` para lo que falta
- * del lado de `dev`.
+ * Un título declarado en el alta, con su respaldo adjunto y fileId cuando ya
+ * se subió. El id sobrevive a un fallo posterior para que el reintento no
+ * vuelva a cargar el mismo archivo.
  */
 interface TituloDeclarado {
   /** Identificador local, sólo para el `track` de la lista. */
@@ -315,6 +314,7 @@ interface TituloDeclarado {
   /** El nombre del archivo elegido, o `null` si todavía no adjuntó ninguno. */
   readonly archivo: string | null;
   readonly pesoBytes: number | null;
+  readonly fileId: string | null;
 }
 
 /**
@@ -677,12 +677,8 @@ export class RegisterPractitioner {
   }
 
   /**
-   * Los títulos que viajan en el alta.
-   *
-   * Sólo van los tres datos que hoy tienen dónde guardarse: el tipo, el número
-   * y la institución. El nombre, el país, la ciudad y el archivo se preguntan
-   * en pantalla y **no** viajan: ninguno tiene columna sin cambiar el modelo, y
-   * esta pantalla no es donde eso se decide.
+   * Los títulos que viajan en el alta. El PDF va como fileId, asociado a la
+   * misma fila que su tipo, número e institución.
    */
   private credencialesDeclaradas(): readonly NewRegistrationCredential[] {
     const conceptos = this.conceptoPorCodigo();
@@ -698,6 +694,7 @@ export class RegisterPractitioner {
           credentialTypeConceptId: conceptId,
           number: numero,
           ...(universidad === '' ? {} : { issuingInstitutionText: universidad }),
+          ...(titulo.fileId === null ? {} : { fileId: titulo.fileId }),
         },
       ];
     });
@@ -902,6 +899,8 @@ export class RegisterPractitioner {
   }[];
 
   protected readonly formatosDeRespaldo = FORMATOS_DE_RESPALDO;
+  /** Los títulos académicos usan la pre-carga existente, que acepta sólo PDF. */
+  protected readonly formatosDeTitulo = '.pdf';
 
   /**
    * Los títulos que la persona fue agregando, de los cuatro tipos.
@@ -972,6 +971,7 @@ export class RegisterPractitioner {
         ciudad: '',
         archivo: null,
         pesoBytes: null,
+        fileId: null,
       },
     ]);
   }
@@ -1038,7 +1038,7 @@ export class RegisterPractitioner {
     this.attachmentFiles.update(current => ({ ...current, [id]: files }));
     const file = files[0];
     this.titulos.update(titles => titles.map(title => title.id === id
-      ? { ...title, archivo: file?.name ?? null, pesoBytes: file?.size ?? null } : title));
+      ? { ...title, archivo: file?.name ?? null, pesoBytes: file?.size ?? null, fileId: null } : title));
     this.errorAdjunto.set(null);
   }
 
@@ -1447,13 +1447,10 @@ export class RegisterPractitioner {
    *   tiene dónde ir: sería una tercera fila de `common.identifiers`, y eso es
    *   esquema. Lo que sí se corrigió es que el segundo dejara de archivarse
    *   como título de grado: es una habilitación y vive con la matrícula.
-   * - **Universidad, lugar de estudio y otros títulos** (AC-05-13). La pantalla
-   *   los pregunta desde el 09/09 —para el título con el que ejerce y para cada
-   *   otra profesión, diplomado, maestría y doctorado que cargue— pero **no
-   *   viajan**: viven en `credentials`, detrás de la sesión, con su propio
-   *   endpoint, y el alta pública no los recibe. Dos de los tres tienen columna
-   *   (`issuing_institution_text`, `issuing_country_concept_id`); la **ciudad no
-   *   tiene ninguna**. Ver `docs/handoff/alta-profesional-titulos-y-adjuntos.md`.
+   * - **Lugar de estudio** (AC-05-13). La universidad se guarda por credencial;
+   *   el país y la ciudad se siguen preguntando, pero no viajan porque el alta
+   *   no define esos campos. Los PDFs de credenciales ahora se precargan y se
+   *   asocian a su fila en el alta.
    *
    * ## El tope de cuatro campos por página no se relaja (AC-05-2)
    *
@@ -2334,13 +2331,59 @@ export class RegisterPractitioner {
 
     this.state.set(loading());
 
-    this.iam.registerPractitioner(this.datosProfesional()).subscribe({
+    this.subirPdfDeTitulosPendientes().subscribe({
       next: () => {
-        this.state.set(ready(null));
-        this.registered.set(true);
+        this.iam.registerPractitioner(this.datosProfesional()).subscribe({
+          next: () => {
+            this.state.set(ready(null));
+            this.registered.set(true);
+          },
+          error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+        });
       },
       error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
     });
+  }
+
+  /**
+   * Sube en orden los PDFs que todavía no tienen fileId. Al guardar cada
+   * respuesta en su fila antes de continuar, un fallo posterior deja el
+   * progreso disponible para reintentar sin reclamar dos veces el mismo PDF.
+   */
+  private subirPdfDeTitulosPendientes(): Observable<void> {
+    const titulosConNumero = this.titulos().filter((titulo) => titulo.numero.trim() !== '');
+    return from(titulosConNumero).pipe(
+      concatMap((titulo) => {
+        const archivo = this.attachmentFiles()[titulo.id]?.[0];
+        if (titulo.fileId !== null || archivo === undefined) {
+          return of(undefined);
+        }
+        return this.iam.uploadRegistrationDocument(archivo).pipe(
+          filter(
+            (evento): evento is HttpResponse<UploadedRegistrationDocument> =>
+              evento instanceof HttpResponse,
+          ),
+          map((respuesta) => {
+            const documento = respuesta.body;
+            if (!documento?.fileId || documento.fileId.trim() === '') {
+              throw new Error('No pudimos confirmar la carga del PDF. Volvé a intentarlo.');
+            }
+            this.recordarFileIdDelTitulo(titulo.id, documento.fileId);
+            return undefined;
+          }),
+          throwIfEmpty(() => new Error('No pudimos confirmar la carga del PDF. Volvé a intentarlo.')),
+        );
+      }),
+      toArray(),
+      map(() => undefined),
+    );
+  }
+
+  /** Recuerda el PDF subido en la fila que lo originó. */
+  private recordarFileIdDelTitulo(id: string, fileId: string): void {
+    this.titulos.update((titulos) =>
+      titulos.map((titulo) => (titulo.id === id ? { ...titulo, fileId } : titulo)),
+    );
   }
 
   /**
@@ -2437,10 +2480,9 @@ export class RegisterPractitioner {
       ...(this.especialidadesElegidas().length === 0
         ? {}
         : { specialtyConceptIds: this.especialidadesElegidas() }),
-      // Los títulos declarados (subtarea 1.6). Sólo viaja lo que hoy tiene
-      // dónde guardarse: tipo, número e institución. El nombre del título, el
-      // país, la ciudad y el diploma se siguen preguntando y **no** viajan:
-      // ninguno tiene columna sin cambiar el modelo.
+      // Los títulos declarados (subtarea 1.6). El PDF ya está precargado y su
+      // fileId viaja con la credencial correspondiente. Nombre, país y ciudad
+      // permanecen locales porque este contrato no los recibe.
       ...(this.credencialesDeclaradas().length === 0
         ? {}
         : { credentials: this.credencialesDeclaradas() }),
