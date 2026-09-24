@@ -1,196 +1,14 @@
-# Plan de cierre del módulo Médico
+# METAPROMPT — Cierre del módulo Médico
 
-> **Estado al 2026-09-24:** F0.M1–M3, M5 y F2 ejecutados; F1 parcial; F3 tiene una corrección visual CORR-08 publicada en PR borrador #612, sin merge; F4 parcial (un recorrido API de alta profesional 8/8, sin journey UI→API→persistencia completo); F5 parcial (typecheck, pruebas dirigidas, suite frontend completa y evidencia visual pasan; lint global, route-health y verificador Fable siguen bloqueados); F6 documentado en ramas aisladas. Ninguno de los 98 criterios incluidos alcanza el DoD end-to-end.
+**Proyecto:** Mantra Core Health / ALOVIDA.  
+**Módulo:** MED.  
+**Destinatario:** Claude Fable o Codex Astra.  
+**Base funcional:** `dev` de frontend y backend; comprobar SHAs al iniciar.  
+**Alcance:** Registro del propietario, sin pasarela/cobros integrados ni delivery.  
+**Fuente principal:** líneas L0164–L0266 del Registro; extracto literal incluido.  
+**Naturaleza:** instrucciones de trabajo; no una auditoría certificada ni permiso de producción.
 
-**ID único:** `02-medical-module-plan-b57dfd316c4d`.
-**Objetivo:** cerrar el alcance de Médico desde el alta profesional y la disponibilidad hasta consulta, reconsulta, teleconsulta, medicación y documentación fiscal, sin pasarela ni delivery.
-**Arquitectura:** conservar Angular, señales, SSR, organismos y clientes existentes; Médico conserva la autoría clínica y consume identidad, representación, agenda, diagnósticos y facturación mediante los contratos compartidos. No crear una segunda identidad de paciente ni duplicar los servicios de otros módulos.
-**Stack:** Angular 21 y `corepack yarn` según instrucciones locales; revalidar versiones antes de ejecutar.
-**Fuente funcional única:** `/Users/josejeremias/Downloads/02_METAPROMPT_MEDICO.md`, conservada sin cambios en [sources/medical-metaprompt.md](sources/medical-metaprompt.md). SHA-256: `b57dfd316c4d642eb5e1db49257397b8fd2864b511317282ae4b70ff1262a656`.
-**Procedencia:** [PROVENANCE.md](PROVENANCE.md), [SOURCES.json](SOURCES.json). El bloque operativo 0 es elaboración del agente; las secciones A–I y 1–8 proceden del documento de Médico, con las adaptaciones de rutas y aclaración del hash que se detallan en la procedencia.
-
-## Registro de ejecución — 2026-09-24
-
-La fuente funcional sigue siendo únicamente el metaprompt Médico congelado con SHA-256 b57dfd316c4d642eb5e1db49257397b8fd2864b511317282ae4b70ff1262a656. El trabajo de Paciente queda separado y sin cambios.
-
-- Frontend: rama justin/medical-module-cierre, worktree wt-medical-module-closure. El trabajo comenzó desde mockup a43ad2b311e1a69ff708fba5cef1e5a2100bbbc2; la rama se rebasó sobre origin/mockup b11dfdd382dd787fab33d5894979ccc2c4d5a96a antes del push. No hay cambios de producto.
-- API: rama justin/medical-module-cierre-api desde origin/dev 7541797cd93dfe3cde50c8a7fd3bf404cc709f12. Se usó un worktree separado para auditoría y verificación con servicios sintéticos; no hay cambios de código API, DDL ni modelo.
-- Verificación frontend más reciente: typecheck exit 0; filtro Médico específico 7 archivos/381 pruebas aprobadas; suite completa 583 archivos/7.376 aprobadas; lint exit 1 con 246 errores globales preexistentes. La corrección visual aislada CORR-08 tiene 8/8 celdas verdes antes y después y PR borrador #612; no acredita integración ni cierra criterio médico.
-- API: 21 suites dirigidas/505 pruebas unitarias aprobadas; typecheck, lint y validación OpenAPI aprobados. Un recorrido de registro profesional pasó 8/8 con terminología canónica sintética cargada en base desechable. La inicialización DDL canónica falla en el patch de aseguradoras que exige 17 catálogos antes de que corra el seeder; se probó aparte una copia temporal de SQL omitiendo ese patch, por lo que no cuenta como inicialización canónica. El daemon Docker dejó de responder y los puertos aislados quedaron cerrados. La suite de integración por lotes registró 12 suites fallidas, 1 omitida y 1 aprobada (90 pruebas fallidas, 8 omitidas, 26 aprobadas), asociadas al rechazo de conexión a 127.0.0.1:55433; la suite API completa de unitarios agotó el heap configurado en 6 GB sin resumen final.
-- Matriz: 100 criterios fuente; 98 incluidos, 2 fuera de alcance; 70 A MEDIAS, 11 TODO, 17 BLOQUEADOS, 2 DESCARTADOS y 0 HECHO. La evidencia parcial nueva no satisface el DoD integral de ningún criterio. Ver la actualización execution_updates de MATRIX.json y REPORT.md.
-- Publicación: las ramas justin/medical-module-cierre y justin/medical-module-cierre-api se subieron a sus respectivos origin; se abrió PR borrador #612 para la corrección visual CORR-08. No se mergeó ni desplegó.
-
-## 0. Instrucciones operativas para ejecutar este plan
-
-### Alcance de esta sesión y reglas vigentes
-
-Esta ejecución continúa el plan de MÉDICO basado exclusivamente en la fuente congelada. El plan de Paciente corresponde a otro trabajo: no es fuente de este documento ni se modifica.
-
-- En este workspace rige `AGENTS.md`: base `mockup`, sólo cambios visuales del frontend `mantra-core-health/`. No editar `mantra-core-health-api/`, `mantra-core-health-model/`, `.env` ni `proxy.conf.json`. La referencia `dev` de la fuente describe su objetivo funcional y no sustituye estas restricciones. Conservar y auditar todo el alcance MED, pero dejar las implementaciones funcionales fuera del permiso vigente como bloqueadas por alcance hasta una instrucción explícita que lo amplíe.
-- Leer instrucciones vigentes al iniciar, `mantra-core-health/CLAUDE.md` y `docs/components/composition-rules.md` §5. Vistas blancas, centradas en `.app-main__inner`, ancho ≥ 85 %, holgura ≤ 2 px; usar `app-page-header`, `app-card`, `app-tabs`, `app-data-table`, `app-empty-state`, `app-badge`, `app-file-input`. Preservar comportamientos y contratos en todo ajuste visual.
-- Usar `corepack yarn`, nunca npm. Nuevos identificadores, rutas y archivos en inglés; pantalla en castellano rioplatense. No introducir biblioteca visual ni segunda capa de estilos.
-- Una corrección 31–40 corresponde a su ficha, su rama `justin/mockup-corr-XX-<slug>` y su PR contra `mockup`, sin merge. No asignar un número NN a un hito Hn arbitrario. Leer y resolver las ambigüedades bloqueantes de la ficha antes de modificarla.
-- Ejecutar los roles Dios, Obrero, Revisor de código y Revisor visual en secuencia. Autorrevisión no equivale a aprobación independiente. No lanzar subagentes ni iniciar otros agentes.
-- `NO_TEST_WEAKENING`: no skip, no eliminación de aserciones. Comparar los fallos históricos `aviso-de-demora`, `identity-verification`, `shell-layout` con el conteo real de línea base; no ocultar regresiones bajo esos nombres.
-- Para una corrección numerada: `scripts/corr-evidencia.sh NN --antes`, después `scripts/corr-evidencia.sh NN`, Playwright `--workers=1`, abrir cada foto, completar `docs/progress/evidence/lane-NN/REPORT.md` desde la plantilla de `.claude/skills/lane-NN-*/evidencia.md`. Tras cada microtarea, aplicar `.claude/agents/corr-revisor-codigo.md`. No declarar hecho visual sin foto.
-
-### Límites con el agente de Paciente y demás módulos
-
-| Responsable | Qué corresponde a este plan de Médico | Qué se consume o se entrega al otro responsable |
-|---|---|---|
-| Médico | Alta/edición profesional, credenciales, consultorios, agenda del médico, ficha, diagnóstico, emisión y versión de receta/órdenes, reconsulta/cierre y documentos fiscales de su actividad | Publicar contratos mínimos y evidencias de los eventos emitidos. |
-| Paciente | H4 cubre la recepción desde médico/secretaría y el enlace a la persona existente; H5/H6 comprueban el efecto de los documentos e indicaciones emitidos | Alta propia, activación del lado paciente, perfil, tutor/representación y experiencia del paciente son del otro plan. No reimplementar sus pantallas ni cambiar sus archivos sin coordinar el cambio concreto. |
-| Laboratorio/Imagenología/Farmacia | Emitir orden/receta y recibir resultado, conservando paciente, consulta, ítems, autoría y versión | El prestador conserva catálogo, stock, preparación, resultado y retiro. No construir nuevamente sus flujos. |
-| Aseguradora/Facturación/Notificaciones | Consumir decisiones de cobertura y documentar las necesidades de facturas/avisos exigidas por MED | Acordar propietario de contratos y cambios compartidos; no duplicar motor de cobertura, notificaciones o facturación. |
-
-Antes de escribir código, revisar asignaciones conocidas, planes y `git worktree list`, y registrar los archivos/criterios asumidos en `HANDOFF.md`. Un worktree existente no demuestra que su agente esté activo o inactivo. Si otro plan asume el mismo cambio, acordar la división antes de editar esa parte; avanzar con lo independiente.
-
-Trabajar en un worktree propio cuando corresponda según el protocolo vigente. No reutilizar `wt-patient-plan`, cambiar la rama del checkout compartido ni modificar planes/handoffs ajenos. Rutas, navegación, bootstrap, componentes compartidos, esquema y archivos generados requieren coordinación del cambio concreto. Separar salidas, puertos y procesos de pruebas. No usar `git add .`. El nombre único y el worktree no garantizan ausencia de conflictos de integración.
-
-### Artefactos y reanudación
-
-Guardar los resultados futuros en `mantra-core-health/docs/work/02-medical-module-plan-b57dfd316c4d/`: `PLAN.md`, `REPORT.md`, `MATRIX.md`, `MATRIX.json`, `DECISIONS.md`, `CONTRACTS.md`, `HANDOFF.md` y `evidence/`. Estos nombres reemplazan los nombres en castellano de la plantilla. No escribir artefactos en otros repositorios sin alcance autorizado.
-
-Al cerrar cada hito, guardar en `HANDOFF.md`: rama/SHA, archivos propios y ajenos modificados, criterios cubiertos, pruebas realmente ejecutadas, bloqueos, dependencias de otros agentes y próxima microtarea. Reanudar desde ese punto. Leer sólo el hito y las dependencias pertinentes para economizar contexto; no repetir auditorías ni pruebas válidas para el mismo diff sin una razón nueva.
-
-El hash `c34d8c...` citado dentro de la fuente pertenece a un Registro de 522 líneas que no se verificó. Las referencias L0164–L0266 de este plan corresponden al extracto literal incluido en el archivo de Médico; no atribuirlas a posiciones de otro Registro ni importar una versión distinta silenciosamente.
-
-### Casos que requieren revisión expresa
-
-1. Edición de profesión con credenciales existentes: no borrar ni reinterpretar documentos (H1, MED-E01/E02).
-2. Dos sedes con horarios incompatibles, cancelación repetida y entrega de avisos tras reinicio: conservar cupo y destinatario correctos (H3, MED-E04/E05/E06).
-3. Paciente precreado y tutor pendiente: activar la misma persona, con permiso real, sin duplicar identidad (H4, MED-E07).
-4. Documento ajeno, resultado corregido o teleconsulta expirada: negar accesos indebidos y preservar historia/autoría (H5/H6, MED-E09/E10/E11).
-5. Indicación ambigua y lote fiscal repetido: no inventar pauta, no duplicar avisos/facturas ni fingir pagos (H6/H7, MED-E12–17).
-
-### F0 — Descubrimiento y matriz
-
-- [x] `F0.S1.M1`: leer este plan y su fuente congelada, instrucciones del workspace y las fichas aplicables; anotar restricciones y decisiones bloqueantes en `DECISIONS.md`. No iniciar ejecución por el solo hecho de leer el documento.
-- [x] `F0.S1.M2`: desde la raíz del workspace registrar los resultados de los comandos siguientes. Son observaciones del checkout actual, no certificación de `dev` ni de la API:
-
-```bash
-git -C mantra-core-health status --short
-git -C mantra-core-health branch --show-current
-git -C mantra-core-health rev-parse HEAD
-git -C mantra-core-health remote -v
-git -C mantra-core-health worktree list
-```
-
-- [x] `F0.S1.M3`: inventariar cada inciso aplicable L0164–L0266 con ID `RP-MED-Lnnnn`; dividir obligaciones mixtas en hijos. Inicializar evidencia `SIN_EVALUAR`. No contar encabezados además de sus hijos ni transformar anotaciones históricas en estado real. Usar las columnas de C.
-- [ ] `F0.S1.M4`: leer los archivos candidatos y clientes reales, localizar contratos y asignar responsables antes de concretar un parche. Registrar `EXISTENTE` o `PROPUESTO`, entradas/salidas, autorización, fechas, versión, errores e idempotencia. Las firmas aún no verificadas no se inventan.
-- [x] `F0.S1.M5`: se identificó CORR-08 (TAREA-38) como corrección visual autorizada y se guardaron las matrices/fotos antes y después. El kill-test de la sección 6 queda `NO EJECUTADO`: el alcance es visual, la API no está disponible y no se autorizó crear/persistir una consulta clínica; esta evidencia no certifica persistencia.
-
-### Archivos de entrada localizados
-
-Existencia comprobada en el checkout local durante la preparación; no se auditó su implementación ni se verificaron en `dev`. Rutas relativas a `mantra-core-health/`; volver a resolverlas al ejecutar.
-
-| Área | Archivos candidatos | Prueba existente |
-|---|---|---|
-| Alta profesional | `src/app/features/auth/register-practitioner/register-practitioner.ts`, `.html`, `.css` | `src/app/features/auth/register-practitioner/register-practitioner.spec.ts` |
-| Perfil compartido | `src/app/features/account/my-profile/my-profile.ts`, `.html`, `.css` | `src/app/features/account/my-profile/my-profile.spec.ts` |
-| Formación/trayectoria | `src/app/features/account/my-profile/work-history/work-history.ts`, `.html`, `.css` | `src/app/features/account/my-profile/work-history/work-history.spec.ts` |
-| Agenda profesional | `src/app/features/agenda/agenda.ts`, `.html`, `.css`, `agenda.routes.ts` | `src/app/features/agenda/agenda.spec.ts` |
-| Expediente/consulta | `src/app/features/clinical-record/patient-chart/patient-chart.ts`, `.html`, `.css` | `src/app/features/clinical-record/patient-chart/patient-chart.spec.ts` |
-
-Las extensiones abreviadas se refieren al mismo nombre y carpeta de su fila. `my-profile` es compartido con Paciente: localizar el segmento profesional y delimitar el diff antes de editar. Para sedes, fiscal, recepción, sala y medicación, resolver la implementación real mediante búsqueda, desde el frontend:
-
-```bash
-rg -n 'consultorio|practice|fiscal|billing|invoice|activation|guardian' src/app/features src/app/core
-rg -n 'teleconsult|virtual|encounter|medication|reminder' src/app/features src/app/core
-```
-
-### Hitos y microtareas
-
-Cada hito sigue el ciclo común de verificación de abajo. Bajo el alcance actual, toda implementación se limita a presentación; los contratos y criterios funcionales quedan auditados/documentados y se ejecutan sólo si hay una ampliación expresa. Médico es responsable del cambio propio y consulta al propietario del contrato compartido cuando dependa de otro módulo.
-
-**H1 — Alta y edición profesional (MED-01–04; MED-E01/E02 y contactos de E03)**
-
-- [ ] `H1.S1.M1`: contrastar alta y edición con nombres/CI/nacimiento, ocupación y especialidades, contactos personales/laborales, dos títulos y múltiples posgrados. Dada la misma persona, al editar después del alta, entonces se conservan las categorías y documentos separados.
-- [ ] `H1.S1.M2`: acordar etiqueta/selección de matrícula y colegio por profesión y procedencia del catálogo de ocupación. Registrar ambigüedades de L172–176; no inventar catálogo oficial ni volver obligatorios tres nombres.
-- [ ] `H1.S1.M3`: corregir la presentación autorizada en alta, segmento profesional de perfil y trayectoria, una microtarea por brecha. Entrada: identidad/documentos existentes. Salida: perfil profesional coherente para H2/H3, sin alterar contratos. Verificar con los tres specs indicados en la tabla y MED-E01/E02/E03 según alcance.
-
-**H2 — Consultorios y perfil fiscal (MED-05/06; MED-E03 y controles de documentos)**
-
-- [ ] `H2.S1.M1`: localizar editor de sedes y perfil fiscal; distinguir domicilio, trabajo y domicilio legal. Dadas dos sedes y datos legales diferentes, al leer el perfil, entonces no se intercambian direcciones/GPS ni emisores.
-- [ ] `H2.S1.M2`: inventariar razón social/tipo societario, constitución, NIT/PDF, SEPREC, licencia, SEDES, representante/poder/correo; declarar ausencias sin fabricar documentos o validaciones.
-- [ ] `H2.S1.M3`: aplicar los ajustes visuales autorizados y entregar a H3 la referencia de sede existente y a H7 la entidad emisora existente. Comprobar archivo propio, carga fallida, descarga ajena y GPS sólo donde el entorno autorizado permita demostrarlo; pendientes de API permanecen visibles.
-
-**H3 — Disponibilidad, calendario y avisos (MED-07/08; MED-E04/E05/E06)**
-
-- [ ] `H3.S1.M1`: mapear profesional/sede/tipo de establecimiento, horario y zona; comparar las vistas diaria, semanal y mensual. Dado el mismo conjunto de citas, al cambiar vista, entonces horario, sede y nombre se mantienen.
-- [ ] `H3.S1.M2`: documentar conflictos entre sedes y eventos de demora/cancelación con destinatarios definidos por L221–222; no sustituir quienes buscaron por una lista manual sin decisión.
-- [ ] `H3.S1.M3`: corregir la presentación de agenda usando sus organismos y spec existente; compartir con Paciente el contrato de disponibilidad y avisos. La comprobación transaccional de solapamientos y deduplicación requiere el servicio real y no se acredita con el spec del componente.
-
-**H4 — Recepción desde Médico/Secretaría (MED-09; MED-E07)**
-
-- [ ] `H4.S1.M1`: localizar la pantalla que recibe a un paciente existente o inicia su registro asistido; acordar con el responsable de Paciente identificador, datos pendientes, vínculo de activación y representación.
-- [ ] `H4.S1.M2`: contrastar nombres, CI/departamento, nacimiento/edad, ocupación, celular y tutor pendiente de L223–236. Dado un paciente precreado, al completar la activación del otro módulo, entonces continúa la misma identidad y ficha.
-- [ ] `H4.S1.M3`: ajustar sólo el lado de Médico autorizado; entregar los casos de enlace expirado, repetido y tutor sin permiso al contrato común. No implementar el alta propia ni el perfil general del paciente desde este hito.
-
-**H5 — Consulta, documentos, resultados y cierre (MED-10/11/12, salvo sala/cronograma; MED-E08/E09/E10)**
-
-- [ ] `H5.S1.M1`: trazar paciente–consulta–diagnóstico–receta–orden–resultado en el expediente. Dada una ficha guardada, entonces el aviso ocurre en el evento exigido, distinguiéndolo del cierre de consulta.
-- [ ] `H5.S1.M2`: documentar contratos para receta versionada, órdenes separadas y resultado recibido, con autor y destinatario. Una reconsulta debe conservar versiones previas y enlazar la nueva receta; no sobrescribir historia.
-- [ ] `H5.S1.M3`: corregir presentación del expediente y acciones autorizadas; probar el spec existente y registrar MED-E08/E09/E10. Sólo con entorno/alcance funcional autorizado ejecutar el kill-test de la fuente y lectura posterior con otro actor. Entregar a H6 indicaciones estructuradas y a H7 referencia de consulta.
-
-**H6 — Teleconsulta y cronograma de medicación (MED-11/12; MED-E11/E12)**
-
-- [ ] `H6.S1.M1`: descubrir proveedor de sala, permisos, sesión y finalización. Dada una teleconsulta, sólo profesional/paciente autorizados acceden y un enlace expirado falla. Sala ausente: contrato interno propuesto y bloqueo externo explícito, sin crear un proveedor ficticio.
-- [ ] `H6.S1.M2`: precisar inicio/fin/frecuencia/excepciones de cada medicamento y eventos T−15/T; cambio o suspensión cancela avisos futuros sin duplicarlos. Dada una indicación ambigua o a demanda, entonces no se calcula una pauta inventada.
-- [ ] `H6.S1.M3`: preparar cambios visuales y handoff específico para sala/notificaciones/plataforma. Coordinar con Paciente las pantallas receptoras y con notificaciones la ejecución en background. Un timer abierto no acredita recepción móvil; mantener MED-E11/E12 pendientes hasta evidencia adecuada.
-
-**H7 — Documentación fiscal sin/con seguro (MED-13/14/15; MED-E13–17)**
-
-- [ ] `H7.S1.M1`: localizar destinatario fiscal, NIT/razón social guardados, emisor e importes. Dado un NIT del paciente correcto, al preparar su documento, entonces se recuperan sus datos sin exponer otro tenant ni simular un pago.
-- [ ] `H7.S1.M2`: separar importes de paciente/aseguradora, consulta vinculada y categorías de informe. Confirmar calendario semanal/quincenal/mensual y plazos del seguro; no inventar tarifas, acuerdos ni equivalencias de deducible/copago/coaseguro.
-- [ ] `H7.S1.M3`: documentar idempotencia de lote, reinicio/cancelación, emisor/destinatario y factura frente a comprobante de pago. Retirar del alcance sólo cobro QR L249/L257; conservar el resto del criterio y no ejecutar transferencias.
-- [ ] `H7.S1.M4`: implementar únicamente presentación autorizada y entregar handoff para facturación periódica al propietario compartido. MED-E13–17 se verifica por evidencia real; un componente que muestra importes no prueba contabilidad integrada.
-
-**H8 — Verificación, revisión y entrega**
-
-- [ ] `H8.S1.M1`: revisar cobertura de los siete apartados, 15 grupos MED y 17 escenarios MED-E del documento fuente. Mantener matriz por inciso, no sólo por grupo. Cada criterio recibe estado, nivel de evidencia y bloqueo real.
-- [ ] `H8.S1.M2`: ejecutar las verificaciones permitidas del ciclo común, evidencia visual antes/después y regresión; inspeccionar fotos. Para integración clínica/fiscal, registrar `NO EJECUTADO` cuando no exista permiso o infraestructura; no certificarla por mocks.
-- [ ] `H8.S1.M3`: entregar registro profesional, operación clínica, teleconsulta/medicación y administración fiscal por separado; incluir prompts pendientes de sala/notificación y facturación periódica con propietario propuesto, contrato y aceptación.
-- [ ] `H8.S1.M4`: preparar el PR correspondiente contra `mockup` cuando sea una corrección autorizada, con fotos y reporte; dejar revisión independiente/humana pendiente y no mergear. Este encargo de preparación no abre PRs.
-
-### Ciclo común de verificación y reversión
-
-Después de cada microtarea implementada: spec pertinente, tipos/lint, diff, checklist de revisión y evidencia. Desde el frontend, ejemplo para H1; comprobar la opción del runner antes de usarla:
-
-```bash
-corepack yarn typecheck && corepack yarn lint
-corepack yarn ng test --watch=false --filter='RegisterPractitioner'
-git diff --stat
-```
-
-Para otro componente, resolver el spec exacto indicado o descubierto en su hito. Salida esperada: tipos/lint y spec exitosos; documentar un fallo preexistente sólo con línea base comparable. Si el cambio introduce regresión, corregir antes de seguir. No crear tests que sólo dupliquen un retoque visual reversible; conservar las pruebas y evidencia exigidas por AGENTS.md.
-
-Al finalizar la corrección autorizada:
-
-```bash
-corepack yarn test --watch=false
-corepack yarn pw playwright/carril-19-route-health.spec.ts --workers=1
-```
-
-Comparar conteos antes/después y ejecutar la evidencia numerada según las instrucciones locales. Si se requiere build por cambios de plantilla, revisar sus scripts para no editar configuración protegida. Reversión de cualquier microtarea: revertir únicamente su parche/commit propio, preservando cambios ajenos; nunca reset destructivo ni restauración global de archivos compartidos.
-
-### Prompt para retomar
-
-```text
-Leé MetaPrompts/02-medical-module-plan-b57dfd316c4d/PLAN.md y, en el worktree
-wt-medical-module-closure, docs/work/02-medical-module-plan-b57dfd316c4d/HANDOFF.md,
-REPORT.md, MATRIX.json, DECISIONS.md y CONTRACTS.md.
-Continuá el plan único de MÉDICO, basado sólo en 02_METAPROMPT_MEDICO.md; el plan
-PACIENTE pertenece a otro trabajo. F0.M1–M3 y F2 ya están hechos. Seguí el próximo
-hito en orden y sin subagentes. Respetá AGENTS.md: sólo presentación frontend en
-mockup; no API/modelo/.env/proxy.conf.json. Capturá el defecto visual antes de
-corregir y no marques HECHO sin foto y DoD. Mantén los bloqueos de integración
-reales; no uses personas ni datos clínicos reales ni bases compartidas.
-```
-
----
-
-Las secciones siguientes conservan la especificación de Médico. Leer sus mandatos de ejecución bajo las restricciones del bloque 0. Los controles generales de la plantilla no agregan procesos de otros módulos que no estén vinculados a los incisos MED.
+> Lee el documento completo antes de actuar. No tomes estados históricos del Registro ni notas previas como evidencia. No elimines requisitos no excluidos, no inventes acuerdos y no cierres procesos con mocks internos.
 
 ## A. Mandato de ejecución
 
@@ -223,7 +41,7 @@ No afirmes que las razones legales del propietario constituyen una conclusión j
 
 ## C. Matriz trazable: evidencia antes que porcentaje
 
-Crea `docs/work/02-medical-module-plan-b57dfd316c4d/PLAN.md`, `REPORT.md`, `MATRIX.md`, `MATRIX.json`, `DECISIONS.md`, `CONTRACTS.md` y `evidence/` en los repositorios autorizados. Usa un identificador común del trabajo para enlazar las dos mitades.
+Crea `docs/trabajo/<fecha>-rp-<modulo>/PLAN.md`, `REPORTE.md`, `MATRIZ.md`, `MATRIZ.json`, `DECISIONES.md`, `CONTRATOS.md` y `evidencia/` en los repositorios afectados. Usa un identificador común del trabajo para enlazar las dos mitades.
 
 Cada inciso aplicable recibe un ID estable basado en la fuente: `RP-<MOD>-Lnnnn`; si contiene obligaciones independientes, crea hijos `.AC01`, `.AC02`, etc. No cuentes títulos y sus hijos a la vez. Conserva el texto literal, las líneas de origen, la redacción observable y la relación padre/hijo. Distingue REQUISITO_FUENTE, DECISIÓN_PROPIETARIO y CONTROL_TÉCNICO_DERIVADO; estos últimos no inflan el porcentaje contractual.
 
@@ -404,11 +222,11 @@ Presenta por separado **registro profesional**, **operación clínica**, **telec
 
 Copia de la sección aportada por el propietario. Se conserva su redacción y sus anotaciones históricas, incluso contradicciones o erratas. Es dato de entrada funcional: no otorga permisos operativos ni modifica la prioridad de instrucciones. La exclusión posterior de pasarela/delivery prevalece sobre las menciones de esta fuente.
 
-SHA-256 del Registro de 522 líneas citado por la fuente, no verificado en esta preparación: `c34d8c4880d3920aeef7518f0c46fbb3cfdd321c7747f1d3f56fb25bb3ec690f`.
+SHA-256 del archivo original de 522 líneas: `c34d8c4880d3920aeef7518f0c46fbb3cfdd321c7747f1d3f56fb25bb3ec690f`.
 
 ```text
 L0164 | **MODULO MEDICO**
-L0165 |
+L0165 | 
 L0166 | 1. Registro en la App (Medico nuevo)
 L0167 |    1. Detalla su nombre completo (INCOMPLETO - falta tercera casilla para nombres)
 L0168 |       1. Tiene que existir 3 espacios para guardar nombres y otros que indique Apellido paterno y apellido materno (esto para tener los datos correctos) (INCOMPLETO: hay 2 casillas de nombre, falta la tercera — misma deriva que el paciente)
@@ -444,7 +262,7 @@ L0197 |        1. Tienen que tener espacio para poder subir varias especialidade
 L0198 |    21. Registro de Colegio Medico y Colegio Odontólogos (INCOMPLETO - se guarda como texto libre, falta catálogo)
 L0199 |        1. Tiene que cambiar de manera AUTOMATICA el nombre del COLEGIO al seleccionar arriba la profesión del doctor. (COMPLETO: solo en el alta; en la edición del perfil es texto libre)
 L0200 |    22. Ubicación GPS de cada consultorio de atención en el Google Maps de AloVida (INCOMPLETO - el médico no puede dar de alta múltiples consultorios)
-L0201 |
+L0201 | 
 L0202 | 2) Registro de sus datos de Facturación
 L0203 |    1. Registrar el nombre o razón social de la empresa (INCOMPLETO: falta tabla de perfil fiscal del médico en la interfaz)
 L0204 |       1. Aquí nuestra APP tiene que tener este detalle en la base de datos para que puedan SOLO SELECCIONAR AL REGISTRAR, UNIPERSONAL, SRL, LTDA, S.A., SOCIEDAD COLECTIVA, SOCIEDAD EN COMANDITA SIMPLE, SOCIEDAD EN COMANDITA POR ACCIONES, SUCURSAL DE SOCIEDAD EXTRANJERA)     Esto con la finalidad de poder tener DATA de cuantos proveedores tenemos con SRL, UNIPERSONAL y S.A. (INCOMPLETO: el catálogo de los 8 tipos existe en la API; ninguna pantalla lo ofrece)
@@ -466,7 +284,7 @@ L0219 | 4) Revisión de su Calendario de Citas para consultas Medicas
 L0220 |    1. El medico puede revisar de manera online su Calendario de Citas con horarios, nombre completo del paciente de forma diaria, semanal y mensual (INCOMPLETO: hay vista diaria y mensual con el nombre; falta la semanal; el listado de \`/schedule\` no muestra el nombre)
 L0221 |    2. Mediante la APP el medico puede informar al paciente o los pacientes que se va demorar en el horario de cita agendado para no perjudicarlos (EL PACIENTE RECIBIRA UNA NOTIFICACION DEL COMUNICADO DEL MEDICO) (COMPLETO por código; no probado en la app: el botón aparece solo con agenda propia. Solo aviso dentro d—--------------------------------------------\*e la app, sin push ni SMS)
 L0222 |    3. Si el medico tiene un paciente que se le desmarca en el horario ya confirmado, la APP de manera AUTOMATICA enviara una NOTIFICACION a los PACIENTES que estuvieron revisando horarios para ese mismo día y no consiguieron horario (ayudando con esto al medico a que no pierda el paciente y También al PACIENTE a poder contar con la cita que requería).  (INCOMPLETO: hay lista de espera con aviso, pero el paciente debe anotarse y el aviso sale por barrido del worker, no al desmarcar; no es «quienes buscaron ese día»; sin UI del médico)
-L0223 | 5) Recepción del paciente
+L0223 | 5) Recepción del paciente 
 L0224 |    1. Si el paciente es nuevo y no cuenta con USUARIO YA CREADO en la APP
 L0225 |       1. Detalla su nombre completo  (INCOMPLETO: el nombre queda en la cuenta, no en una persona/paciente)
 L0226 |       2. Tiene que existir 3 espacios para guardar nombres y otros que indique Apellido paterno y apellido materno (esto para tener los datos correctos) (INCOMPLETO: falta la tercera casilla)
@@ -480,7 +298,7 @@ L0233 |       9. Edad (la app tiene que arrojar de manera automática la edad de
 L0234 |       10. Numero celular usuario (FALTA: solo pide correo)
 L0235 |       11. Numero celular persona tutor o autorizada (si no está registr
 L0236 |       12. ado el paciente y tampoco el TUTOR la asistente registra de esa manera y guarda así el registro, posteriormente al recibir el link la persona confirma los datos y enlaza al DEPENDIENTE y al TUTOR con el numero de celular del paciente y el TUTOR)   (INCOMPLETO: hay código/link de activación; falta el celular del tutor, la confirmación de datos y el enlace dependiente↔tutor desde esta pantalla)
-L0237 | 6) Consulta, elaboración de la ficha medica
+L0237 | 6) Consulta, elaboración de la ficha medica 
 L0238 |    1. SIMULACION CON UN PACIENTE QUE NO CUENTA CON SEGURO MEDICO
 L0239 |       1. El medico realiza su Diagnóstico y crea su ficha medica del paciente en la APP quedando guardada y el paciente recibirá un TOUS donde recibirá el aviso de la recepción de su ficha medica creada por el médico. (INCOMPLETO: la ficha y el diagnóstico existen; el aviso al paciente llega recién al cerrar la consulta, no al crear la ficha)
 L0240 |       2. El medico envía un link al paciente junto con todos los análisis que requiere por separado (Receta medicamentos, Laboratorios, Análisis clínicos, etc.)   (INCOMPLETO: receta y pedidos existen y la receta avisa in-app; no hay «link» y la orden de laboratorio no avisa al paciente — TODO en la API)
