@@ -5644,6 +5644,25 @@
       "pushed_to_origin": false,
       "merged": false,
       "deployed": false
+    },
+    {
+      "date": "2026-09-24",
+      "repo": "mantra-core-health + mantra-core-health-api",
+      "branch": "justin/medical-module-cierre (execution status update)",
+      "source_sha256": "b57dfd316c4d642eb5e1db49257397b8fd2864b511317282ae4b70ff1262a656",
+      "frontend_head": "df611861172f25c94a36dcaf417253a093768506",
+      "api_head": "783d26976e8ca0eb16d0bbf2f514a636ab9e7461",
+      "product_code_changed": false,
+      "evidence": [
+        "El propietario volvió a autorizar la ejecución completa del plan Médico y el push; esta actualización mantiene el alcance en la fuente congelada con SHA-256 b57dfd316c4d642eb5e1db49257397b8fd2864b511317282ae4b70ff1262a656.",
+        "Inspección de solo lectura observó PostgreSQL temporal en 55439/55440, Angular en 4300/4302/4387 y un runtime Node SSR (dist/mantra-core-health/server/server.mjs); dueño de procesos y contenido de bases desconocidos. No se conectó, escribió, reinició ni detuvo esos procesos.",
+        "No se repitió el smoke ni se amplió MED-E01 por falta de entorno aislado seguro. El smoke previo del mismo actor cubre dos títulos universitarios, lectura, descargas propias, PATCH y relectura tras recarga; diez credenciales de cuatro tipos sólo fueron verificadas en una integración API/DB separada.",
+        "No cambian los estados: 100 criterios fuente, 98 IN, 2 OUT, 70 A MEDIAS, 11 TODO, 17 BLOQUEADO, 2 DESCARTADO, 0 HECHO. No se hizo cambio de producto, merge ni despliegue."
+      ],
+      "criteria_marked_done": 0,
+      "pushed_to_origin": true,
+      "merged": false,
+      "deployed": false
     }
   ]
 }
