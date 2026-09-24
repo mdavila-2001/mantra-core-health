@@ -31,6 +31,7 @@
 | `sort` | `SortState \| null` | no | `null` | `data-table.ts:112` |
 | `cursor` | `CursorState` | no | `{}` | `data-table.ts:113` |
 | `rowNavigable` | `boolean` (`booleanAttribute`) | no | `false` | `data-table.ts:132` |
+| `maxHeight` | `string \| null` | no | `null` | `data-table.ts:120` |
 
 **Sobre `state`**: es el mecanismo de estado del organismo. `DataTable` **no usa `ViewStateHost` como
 envoltorio externo que el consumidor arma**: lo monta internamente (`data-table.html:2`,
@@ -180,6 +181,54 @@ algo que el organismo no ofrezca — no hace falta un adaptador temporal ni una 
   muertos — probado en `data-table.spec.ts:286-291`.
 - El cursor que se emite es **el que llegó del backend**, nunca un número inventado por el
   organismo (`data-table.ts:296-308`, probado en `data-table.spec.ts:302-321`).
+
+## Alto máximo y scroll vertical (ADR-0015, regla 6)
+
+> Agregado 2026-09-23, carril `pablo/noche-disciplina-tablas-2026-09-22`, sobre el corte
+> `8ae7283a`. Extiende este contrato — no lo reemplaza — con el input publicado en H3.S2.
+
+- **Entrada:** `maxHeight: string | null`, por omisión `null` (`data-table.ts:120`). Una cadena
+  vacía se trata igual que `null` — no hay una caja de alto cero (`effectiveMaxHeight`,
+  `data-table.ts:123`).
+- **Por omisión, apagado**: los 30 consumidores medidos en H1 no cambian de comportamiento
+  (regla 95.1) — verificado sin tocarlos, con `yarn typecheck` limpio y captura de 3 de ellos
+  (`progress-notes`, `my-quotations`, `diagnostics`) sin diferencia visible.
+- **Con un valor**: la caja de scroll (`.data-table__scroll`) recibe `max-height` y
+  `overflow-y: auto`; el `overflow-x` se fuerza a `hidden` — no hay scroll lateral, punto,
+  independientemente de cuántas columnas tenga la tabla.
+- **Las columnas secundarias siguen plegadas al detalle también en escritorio** mientras la opción
+  está activa (clase `.data-table--constrained` en el host, `data-table.ts:65`): es el mecanismo
+  que reemplaza al scroll lateral, no un `overflow-x` distinto — el mismo `MOBILE_DETAIL_PRIORITY`
+  que ya pliega en móvil, extendido con una clase en vez de sólo un breakpoint.
+- **`sticky: 'end'`** (`data-table.types.ts:24-40`) queda sin efecto práctico cuando `maxHeight`
+  está activo, porque no hay scroll lateral que esconda nada; el campo no se retira porque un
+  consumidor que no adopte `maxHeight` lo sigue necesitando exactamente igual que hoy.
+- **Verificado**: `data-table.spec.ts`, describe `alto máximo, opt-in (H3.S2, ADR-0015 regla 6)` —
+  5 tests (correcto activo/inactivo, límite con lista vacía, inválido con cadena vacía, y que el
+  CSS de plegado esté presente).
+
+## Paginación externa (ADR-0015, regla 7)
+
+> Mismo agregado que la sección anterior.
+
+- El `<nav>` de paginación **interno** del organismo (por cursor, ver arriba) sigue existiendo sin
+  cambios y se sigue dibujando solo si `hasPrevious() || hasNext()`.
+- Cuando el consumidor tiene un listado **local, ya cargado entero en memoria** (no por cursor), la
+  decisión de ADR-0015 es que pagine con `app-pagination` **al lado**, no con el `<nav>` interno de
+  `data-table` — las dos piezas no se combinan dentro de un mismo listado: o pagina el organismo
+  (cursor) o pagina `app-pagination` (cliente), nunca las dos a la vez sobre los mismos datos.
+- Marcado de referencia, un listado local con `app-pagination` afuera:
+
+  ```html
+  <app-data-table [state]="pagina()" [columns]="columnas" [trackBy]="porId" maxHeight="480px" />
+  <app-pagination [totalItems]="todas().length" [(page)]="pagina" [(pageSize)]="tamano" />
+  ```
+
+  El consumidor recorta `pagina()` a partir de `todas()` y de `page`/`pageSize` — `data-table` no
+  sabe nada de eso, sólo pinta `state().data`, igual que hoy.
+- **No se probó en un consumidor real todavía** (H4.S1 es la primera vez que se aplica, sobre
+  «Dónde atiendo»): esta sección documenta la decisión y el marcado de referencia, no un caso
+  medido — se declara así, no se presenta como comprobado (regla 00 §1.1).
 
 ## Verificación
 

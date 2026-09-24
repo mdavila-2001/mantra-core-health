@@ -42,6 +42,31 @@ class HostComponent {
   readonly emisiones: Readonly<Record<string, string>>[] = [];
 }
 
+@Component({
+  imports: [FilterBar],
+  template: `
+    <app-filter-bar [filters]="filtros()">
+      <button filter-bar-action type="button">Agregar</button>
+    </app-filter-bar>
+  `,
+})
+class HostComponentConProyeccion {
+  readonly filtros = signal<readonly FilterDef[]>(FILTROS);
+}
+
+@Component({
+  imports: [FilterBar],
+  template: `
+    <app-filter-bar [filters]="filtros()">
+      <button filter-bar-action type="button">Primero</button>
+      <button filter-bar-action type="button">Segundo</button>
+    </app-filter-bar>
+  `,
+})
+class HostComponentConDosProyecciones {
+  readonly filtros = signal<readonly FilterDef[]>(FILTROS);
+}
+
 describe('FilterBar', () => {
   let fixture: ComponentFixture<HostComponent>;
   let host: HostComponent;
@@ -66,7 +91,7 @@ describe('FilterBar', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [HostComponent],
+      imports: [HostComponent, HostComponentConProyeccion, HostComponentConDosProyecciones],
       providers: [provideRouter([{ path: 'listado', component: VistaListado }])],
     }).compileComponents();
     fixture = TestBed.createComponent(HostComponent);
@@ -173,6 +198,38 @@ describe('FilterBar', () => {
       expect(root().querySelector('.filter-bar__unavailable')?.textContent).toContain(
         'No se pudo cargar el catálogo de diagnósticos.',
       );
+    });
+  });
+
+  describe('hueco de la acción, proyectado (ADR-0015, regla 5)', () => {
+    it('límite: sin proyección, el hueco queda vacío y no visible (no suma separación)', () => {
+      // el host de arriba (HostComponent) no proyecta nada
+      const hueco = root().querySelector('.filter-bar__action');
+      expect(hueco?.childNodes.length ?? 0).toBe(0);
+      expect(hueco && getComputedStyle(hueco).display).toBe('none');
+    });
+
+    it('correcto: con proyección, el botón aparece dentro del hueco', async () => {
+      const otraFixture = TestBed.createComponent(HostComponentConProyeccion);
+      otraFixture.detectChanges();
+      await otraFixture.whenStable();
+
+      const hueco = (otraFixture.nativeElement as HTMLElement).querySelector(
+        '.filter-bar__action',
+      );
+      expect(hueco?.querySelector('button')?.textContent?.trim()).toBe('Agregar');
+    });
+
+    it('inválido: con dos proyecciones, las dos entran al mismo hueco (no hay mecanismo para elegir una) — declarado, no oculto', async () => {
+      const otraFixture = TestBed.createComponent(HostComponentConDosProyecciones);
+      otraFixture.detectChanges();
+      await otraFixture.whenStable();
+
+      const hueco = (otraFixture.nativeElement as HTMLElement).querySelector(
+        '.filter-bar__action',
+      );
+      const botones = [...(hueco?.querySelectorAll('button') ?? [])];
+      expect(botones.map((boton) => boton.textContent?.trim())).toEqual(['Primero', 'Segundo']);
     });
   });
 });

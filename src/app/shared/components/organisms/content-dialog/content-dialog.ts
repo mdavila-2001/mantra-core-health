@@ -133,6 +133,17 @@ export class ContentDialog implements OnDestroy {
   readonly closeLabel = input('Cerrar');
 
   /**
+   * Se consulta antes de cerrar, salvo que `close(true)` lo salte.
+   *
+   * `null` —el valor por omisión— no pregunta nada: es el comportamiento de
+   * siempre, el que usan los consumidores que no lo declaran. Quien lo
+   * declara puede devolver una promesa: es lo que necesita `EditDialog` para
+   * preguntar «¿Descartás los cambios?» antes de dejar que `Escape`, el fondo
+   * o el botón de cerrar tiren lo que no se guardó.
+   */
+  readonly closeGuard = input<(() => boolean | Promise<boolean>) | null>(null);
+
+  /**
    * Ancho de referencia del panel.
    *
    * `sm` una confirmación breve, `md` un formulario clínico, `lg` una cola de
@@ -177,6 +188,9 @@ export class ContentDialog implements OnDestroy {
   private bloqueado = false;
   private cerrado = false;
 
+  /** Se está evaluando `closeGuard()`: una segunda petición no abre un segundo diálogo. */
+  private cerrando = false;
+
   constructor() {
     this.origen = this.isBrowser ? this.document.activeElement : null;
     afterNextRender(() => this.showModal());
@@ -186,11 +200,32 @@ export class ContentDialog implements OnDestroy {
     this.unlockScroll();
   }
 
-  /** Cierra el modal. Idempotente: `Escape` y el botón pueden llegar juntos. */
-  close(): void {
-    if (this.cerrado) {
+  /**
+   * Cierra el modal. Idempotente: `Escape` y el botón pueden llegar juntos.
+   *
+   * Con `force` en verdadero se salta `closeGuard()`: lo usa quien ya decidió
+   * por su cuenta —por ejemplo, al guardar— y no quiere que se le pregunte si
+   * quiere descartar lo que acaba de confirmar.
+   */
+  close(force = false): void {
+    if (this.cerrado || this.cerrando) {
       return;
     }
+    const guard = this.closeGuard();
+    if (force || guard === null) {
+      this.doClose();
+      return;
+    }
+    this.cerrando = true;
+    Promise.resolve(guard()).then((permitido) => {
+      this.cerrando = false;
+      if (permitido) {
+        this.doClose();
+      }
+    });
+  }
+
+  private doClose(): void {
     this.cerrado = true;
     this.closeNative();
     this.unlockScroll();

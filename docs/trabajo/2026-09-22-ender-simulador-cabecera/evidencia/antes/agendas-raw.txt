@@ -1,0 +1,1 @@
+[H1.S2.M2] directorio=791 conRecurso=26 conCuposEn14dias=26 registrados=13 registradosConEspecialidad=12

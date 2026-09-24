@@ -1,7 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
+import { vi } from 'vitest';
 import { BehaviorSubject } from 'rxjs';
 
 import { PractitionersDirectory, type GrupoDeEspecialidad } from './practitioners-directory';
@@ -64,6 +65,7 @@ const CONCEPTOS = {
 describe('PractitionersDirectory', () => {
   let componente: PractitionersDirectory;
   let http: HttpTestingController;
+  let router: Router;
   /**
    * Los parámetros de la URL, empujables desde la prueba.
    *
@@ -85,6 +87,7 @@ describe('PractitionersDirectory', () => {
       ],
     });
     http = TestBed.inject(HttpTestingController);
+    router = TestBed.inject(Router);
   });
 
   afterEach(() => http.verify());
@@ -242,6 +245,22 @@ describe('PractitionersDirectory', () => {
       expect(peticion.request.params.has('specialtyConceptId')).toBe(false);
       peticion.flush({ items: [FILA], count: 1, limit: 50, nextCursor: null });
       responderConceptos();
+    });
+
+    it('abre una especialidad una sola vez ante cuatro activaciones rápidas', () => {
+      montar();
+      responderRecuento([{ specialtyConceptId: 'esp-cardio', practitionerCount: 12 }]);
+      responderConceptos();
+      const navegar = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+      const evento = new MouseEvent('click', { bubbles: true, cancelable: true });
+      const abrir = interno<(evento: MouseEvent, conceptId: string) => void>('abrirEspecialidad');
+
+      for (let indice = 0; indice < 4; indice += 1) {
+        abrir(evento, 'esp-cardio');
+      }
+
+      expect(evento.defaultPrevented).toBe(true);
+      expect(navegar).toHaveBeenCalledTimes(1);
     });
 
     it('con especialidad en la URL no dibuja la portada: va derecho a la lista', () => {

@@ -671,6 +671,23 @@ export interface NewPractitionerAffiliation {
   readonly endDate?: string;
 }
 
+/**
+ * Corrección de un vínculo laboral (`PATCH`). Todo opcional: lo ausente no se
+ * toca. `endDate: null` vuelve a marcarlo vigente. `practiceSiteId` no se
+ * edita a propósito —para cambiar de sede se carga otro vínculo—.
+ */
+export interface UpdatePractitionerAffiliation {
+  readonly organizationName?: string;
+  readonly roleTitle?: string;
+  /** `''` lo borra. */
+  readonly departmentText?: string;
+  readonly affiliationTypeConceptId?: string;
+  /** ISO `YYYY-MM-DD`. */
+  readonly startDate?: string;
+  /** ISO `YYYY-MM-DD`, o `null` para volver a «en curso». */
+  readonly endDate?: string | null;
+}
+
 /* ---- personas relacionadas / contactos (UC-05-10) ----------------------- */
 
 /**

@@ -284,3 +284,20 @@ thead .data-table__cell {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* Alto máximo, opt-in (H3.S2, ADR-0015 regla 6): con `.data-table--constrained`
+   las columnas secundarias siguen plegadas al detalle aunque el viewport ya
+   sea de escritorio — es eso, y no un `overflow-x` distinto, lo que evita el
+   scroll lateral. Dos clases > una: gana por especificidad, sin `!important`,
+   sin depender del orden respecto del media query de arriba. */
+.data-table--constrained .data-table__secondary {
+    display: none;
+}
+
+.data-table--constrained .data-table__detail-toggle-cell {
+    display: table-cell;
+}
+
+.data-table--constrained .data-table__detail-row {
+    display: table-row;
+}

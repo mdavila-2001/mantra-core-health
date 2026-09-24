@@ -48,6 +48,13 @@ export class Pagination {
   readonly pageSize = model<number>(DEFAULT_PAGE_SIZE);
   readonly pageSizeOptions = input<readonly number[]>(DEFAULT_PAGE_SIZE_OPTIONS);
   readonly showPageSize = input(true, { transform: booleanAttribute });
+  /**
+   * El select para saltar directo a una página (ADR-0015, regla 7: «elegir de
+   * una lista → select», ADR-0013). Complementa los botones numerados —no los
+   * reemplaza—, porque con muchas páginas la ventana de botones deja huecos
+   * («…») que el select sí cubre entero.
+   */
+  readonly showPageJump = input(true, { transform: booleanAttribute });
 
   protected readonly gap = PAGE_GAP;
 
@@ -75,6 +82,14 @@ export class Pagination {
 
   protected readonly pageSizeChoices = computed<SelectOption<number>[]>(() =>
     this.pageSizeOptions().map((size) => ({ value: size, label: `${size} por página` })),
+  );
+
+  /** Una opción por página, `1..totalPages`. Con una sola página, una sola opción. */
+  readonly pageJumpChoices = computed<SelectOption<number>[]>(() =>
+    Array.from({ length: this.totalPages() }, (_, index) => {
+      const numero = index + 1;
+      return { value: numero, label: `Página ${numero}` };
+    }),
   );
 
   /**
@@ -118,6 +133,12 @@ export class Pagination {
 
   protected goToNext(): void {
     this.goTo(this.currentPage() + 1);
+  }
+
+  protected goToFromSelect(page: number | null): void {
+    if (page !== null) {
+      this.goTo(page);
+    }
   }
 
   protected changePageSize(size: number | null): void {

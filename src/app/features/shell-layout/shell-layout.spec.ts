@@ -149,11 +149,12 @@ describe('ShellLayout', () => {
       '/my-account',
       '/notification-center',
       '/dashboard',
-      // Los tutoriales tampoco exigen rol.
-      '/tutorials',
-      // Carril P2: la mensajería tampoco exige rol. El filtro real es tener
-      // perfil público de `community`, que es un dato de la cuenta.
-      '/messaging',
+      // Tutoriales y Chats YA NO están acá (N-01, 2026-09-22): los dos pasan
+      // a un ícono con globo en la cabecera para cualquier sesión
+      // (`fueraDelMenuPara: [ANY_ROLE]`), calcado de «Ajustes». Ninguno de
+      // los dos exigía rol antes tampoco; lo que cambió es que ya no ocupan
+      // un renglón de primer nivel para nadie.
+      //
       // La portada de directorios (FT-18, `roles: [ANY_ROLE]`) tampoco exige
       // rol: no es un directorio en sí, es su índice.
       //
@@ -402,11 +403,18 @@ describe('ShellLayout', () => {
         );
         expect(enlaces).toContain('/my-account/appointments');
         expect(enlaces).toContain('/my-account/pharmacy-orders');
-        expect(enlaces).toContain('/my-account/loyalty');
+        // «Mis puntos» YA NO es un renglón (N-03/Q-17, 2026-09-22): pasa a
+        // ser una pestaña del perfil (pendiente de Itzan) y su URL vieja
+        // redirige a `/my-account` — ver `app.routes.ts`.
+        expect(enlaces).not.toContain('/my-account/loyalty');
         expect(enlaces).toContain('/my-account/dependents');
         expect(enlaces).toContain('/my-account/medical-record');
         expect(enlaces).toContain('/my-account/questionnaires');
-        expect(enlaces).toContain('/messaging');
+        // «Chats» YA NO es un enlace del menú (N-01, 2026-09-22): es un
+        // ícono de la cabecera para cualquier sesión, con su propio
+        // `data-testid="header-chats"` — sigue a un clic, pero no en esta
+        // lista de `[data-testid="nav-enlace"]`.
+        expect(enlaces).not.toContain('/messaging');
         expect(enlaces).toContain('/directories');
         expect(enlaces).toContain('/nearby-places');
         // Los fijos de arriba no se movieron: siguen siendo los primeros.
@@ -439,7 +447,10 @@ describe('ShellLayout', () => {
           seguidas(enlaces, [
             '/my-account/appointments',
             '/my-account/pharmacy-orders',
-            '/my-account/loyalty',
+            // «Mis puntos» salió del registro visible (N-03/Q-17,
+            // 2026-09-22): con su renglón retirado, «Promociones» queda
+            // pegada a «Mis pedidos» en el orden real del registro.
+            '/my-account/promotions',
           ]),
         ).toBe(true);
         expect(
@@ -939,6 +950,23 @@ describe('ShellLayout', () => {
       expect(ajustes?.tagName).toBe('A');
       expect(ajustes?.getAttribute('href')).toBe('/settings');
       expect(ajustes?.getAttribute('aria-label')).toBe('Ajustes');
+    });
+
+    it('el encabezado ofrece Tutoriales y Chats como enlaces, con globo y no como botón (N-01)', () => {
+      // Calcados de «Ajustes»: `<a routerLink>`, `aria-label` y `appTooltip`
+      // (ADR-0012 §3) — nunca un `<button>`, porque los dos llevan a una
+      // pantalla. Para ambos roles porque ninguno de los dos exige rol
+      // (`roles: [ANY_ROLE]` en `navigation.map.ts`).
+      const tutoriales = raiz().querySelector<HTMLAnchorElement>('[data-testid="header-tutoriales"]');
+      const chats = raiz().querySelector<HTMLAnchorElement>('[data-testid="header-chats"]');
+
+      expect(tutoriales?.tagName).toBe('A');
+      expect(tutoriales?.getAttribute('href')).toBe('/tutorials');
+      expect(tutoriales?.getAttribute('aria-label')).toBe('Tutoriales');
+
+      expect(chats?.tagName).toBe('A');
+      expect(chats?.getAttribute('href')).toBe('/messaging');
+      expect(chats?.getAttribute('aria-label')).toBe('Chats');
     });
 
     it('el encabezado ofrece el interruptor de tema junto a Ajustes', () => {
