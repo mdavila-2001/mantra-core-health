@@ -1264,6 +1264,83 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
+    it('sube el PDF de cada fila y envía su fileId antes del alta', () => {
+      catalogoDeTiposDeTitulo();
+      component.agregarTitulo('UNIVERSITARIO');
+      component.agregarTitulo('MAESTRIA');
+      const [carrera] = component.titulosDe('UNIVERSITARIO');
+      const [maestria] = component.titulosDe('MAESTRIA');
+      const pdfCarrera = archivoDe('medicina.pdf', 'application/pdf', 1024);
+      const pdfMaestria = archivoDe('salud-publica.pdf', 'application/pdf', 2048);
+      component.escribirDatoDeTitulo(carrera.id, 'numero', 'TIT-1');
+      component.escribirDatoDeTitulo(maestria.id, 'numero', 'MAE-1');
+      component.updateTitleFiles(carrera.id, [pdfCarrera]);
+      component.updateTitleFiles(maestria.id, [pdfMaestria]);
+      completarProfesional();
+
+      component.submit();
+
+      const primeraSubida = http.expectOne('/iam/auth/upload-registration-document');
+      expect((primeraSubida.request.body as FormData).get('file')).toBe(pdfCarrera);
+      primeraSubida.flush({ fileId: 'file-title-1', originalName: pdfCarrera.name, sizeBytes: 1024, mimeType: 'application/pdf' });
+
+      const segundaSubida = http.expectOne('/iam/auth/upload-registration-document');
+      expect((segundaSubida.request.body as FormData).get('file')).toBe(pdfMaestria);
+      segundaSubida.flush({ fileId: 'file-title-2', originalName: pdfMaestria.name, sizeBytes: 2048, mimeType: 'application/pdf' });
+
+      const alta = http.expectOne('/iam/auth/register-practitioner');
+      expect(alta.request.body.credentials).toEqual([
+        { credentialTypeConceptId: 'c-degree', number: 'TIT-1', fileId: 'file-title-1' },
+        { credentialTypeConceptId: 'c-master', number: 'MAE-1', fileId: 'file-title-2' },
+      ]);
+      alta.flush(RESPUESTA_PRO);
+    });
+
+    it('si falla una subida, el alta no sale y el reintento reutiliza el PDF ya subido', () => {
+      catalogoDeTiposDeTitulo();
+      component.agregarTitulo('UNIVERSITARIO');
+      component.agregarTitulo('MAESTRIA');
+      const [carrera] = component.titulosDe('UNIVERSITARIO');
+      const [maestria] = component.titulosDe('MAESTRIA');
+      const pdfCarrera = archivoDe('medicina.pdf', 'application/pdf', 1024);
+      const pdfMaestria = archivoDe('salud-publica.pdf', 'application/pdf', 2048);
+      component.escribirDatoDeTitulo(carrera.id, 'numero', 'TIT-1');
+      component.escribirDatoDeTitulo(maestria.id, 'numero', 'MAE-1');
+      component.updateTitleFiles(carrera.id, [pdfCarrera]);
+      component.updateTitleFiles(maestria.id, [pdfMaestria]);
+      completarProfesional();
+
+      component.submit();
+      http.expectOne('/iam/auth/upload-registration-document').flush({
+        fileId: 'file-title-1',
+        originalName: pdfCarrera.name,
+        sizeBytes: 1024,
+        mimeType: 'application/pdf',
+      });
+      http.expectOne('/iam/auth/upload-registration-document').flush(null, {
+        status: 422,
+        statusText: 'Unprocessable Entity',
+      });
+      http.expectNone('/iam/auth/register-practitioner');
+
+      component.submit();
+
+      const reintento = http.expectOne('/iam/auth/upload-registration-document');
+      expect((reintento.request.body as FormData).get('file')).toBe(pdfMaestria);
+      reintento.flush({
+        fileId: 'file-title-2',
+        originalName: pdfMaestria.name,
+        sizeBytes: 2048,
+        mimeType: 'application/pdf',
+      });
+      const alta = http.expectOne('/iam/auth/register-practitioner');
+      expect(alta.request.body.credentials).toEqual([
+        { credentialTypeConceptId: 'c-degree', number: 'TIT-1', fileId: 'file-title-1' },
+        { credentialTypeConceptId: 'c-master', number: 'MAE-1', fileId: 'file-title-2' },
+      ]);
+      alta.flush(RESPUESTA_PRO);
+    });
+
     it('sin títulos el cuerpo no los menciona', () => {
       catalogoDeTiposDeTitulo();
       completarProfesional();
@@ -1395,8 +1472,9 @@ describe('RegisterPractitioner', () => {
         .replace(/\s+/g, ' ')
         .trim();
       expect(alcance).toBe(
-        'En esta alta se guardan el tipo, el número y la universidad de cada título. ' +
-          'El nombre, el país, la ciudad y el archivo que completes aquí todavía no se guardan.',
+        'En esta alta se guardan el tipo, el número, la universidad y el PDF de cada título. ' +
+          'El nombre, el país y la ciudad que completes aquí todavía no se guardan. ' +
+          'Si falla una carga, podés reintentar y se conservan las que ya subieron.',
       );
     });
 
@@ -1426,12 +1504,17 @@ describe('RegisterPractitioner', () => {
       completarProfesional();
       component.submit();
 
+      http.expectOne('/iam/auth/upload-registration-document').flush({
+        fileId: 'file-title-1',
+        originalName: 'medicina.pdf',
+        sizeBytes: 1024,
+        mimeType: 'application/pdf',
+      });
       const req = http.expectOne('/iam/auth/register-practitioner');
-      // La credencial lleva los tres datos que el modelo sabe guardar, y nada
-      // más: el nombre del título, el país, la ciudad y el archivo se preguntan
-      // en pantalla pero no tienen columna, así que no se mandan.
+      // La credencial lleva tipo, número, institución y el fileId del PDF. El
+      // nombre del título, el país y la ciudad no se envían: no tienen columna.
       expect(req.request.body.credentials).toEqual([
-        { credentialTypeConceptId: 'c-degree', number: 'TIT-1' },
+        { credentialTypeConceptId: 'c-degree', number: 'TIT-1', fileId: 'file-title-1' },
       ]);
       expect(req.request.body.academicTitles).toBeUndefined();
       expect(req.request.body.credentialAttachments).toBeUndefined();
