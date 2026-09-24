@@ -281,7 +281,11 @@
   "38": [
     {
       "ruta": "/my-account/edit",
-      "nombre": "editar-perfil-medico"
+      "nombre": "practitioner-profile-editor"
+    },
+    {
+      "ruta": "/my-account/edit?pestana=5",
+      "nombre": "edit-specialties-no-switches"
     }
   ],
   "39": [
