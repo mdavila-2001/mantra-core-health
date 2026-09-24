@@ -1,8 +1,8 @@
 # Reporte — Perfil del médico: configurar tu perfil (noche 2026-09-22)
 
-> **AVANCE: 83 / 109 — 76,1 %.**
+> **AVANCE: 83 / 110 — 75,5 %.**
 
-- Fecha: 2026-09-23 · Plan: [PLAN.md](./PLAN.md) · Rama(s): `itzan/perfil-medico-nucleo` (H1–H4) · `itzan/perfil-medico-configurar-tu-perfil` (H5 y H7, fusionada en `mockup` con el #606 el 24/09) · `itzan/perfil-d05-iconos` (H6, la recaptura de H7 y este plan y reporte; PR contra `mockup`, sobre `b11dfdd3`)
+- Fecha: 2026-09-23 · Plan: [PLAN.md](./PLAN.md) · Rama(s): `itzan/perfil-medico-nucleo` (H1–H4) · `itzan/perfil-medico-configurar-tu-perfil` (H5 y H7, fusionada en `mockup` con el #606 el 24/09) · `itzan/perfil-d05-iconos` (H6, la recaptura de H7 y este plan y reporte; [PR #613](https://github.com/mdavila-2001/mantra-core-health/pull/613) contra `mockup`, sobre `b11dfdd3`)
 - Corte: `origin/mockup` @ `b7785e36` (movido desde `05d83cb8` el 23/09; ver «Desvíos del plan»)
 - Peldaño de evidencia alcanzado: **por hito**, en la tabla de abajo. El del trabajo es el más bajo: `UNKNOWN` (H8 sin empezar)
 
@@ -93,6 +93,12 @@ Por decisión de Itzan (23/09), H5 se entrega en un PR propio contra `mockup` si
 - Qué falta exactamente: el veredicto, el cambio y la justificación de esos 6, en la rama núcleo, que es la dueña de esos archivos.
 - Dónde quedó: rama `itzan/perfil-d05-iconos`, sobre `mockup` `b11dfdd3`, en el PR de H6; compila (tipos 0, compilación de producción 0).
 
+### H6.S1.M10 — El PR de H6, mergeable (regla 35.2)
+- Qué anda: el [PR #613](https://github.com/mdavila-2001/mantra-core-health/pull/613) contra `mockup` da `mergeable: MERGEABLE`, sin draft y sin conflictos.
+- Qué no anda: `mergeStateStatus: UNSTABLE`. Sus tres checks (`verificar`, `dependencias`, `e2e`) están pendientes, sin fallar: todas las corridas del CI del repo, de cualquier rama y también de `dev`, siguen en «queued» sin arrancar (clase `EXTERNAL`, `evidencia/pr-613-mergeable.txt`).
+- Qué falta exactamente: que el CI vuelva a tener quién lo ejecute, y volver a consultar `gh pr view 613` y `gh pr checks 613`. Mientras tanto, los pasos del CI están corridos a mano sobre el árbol final (`evidencia/h6/cierre-*`).
+- Dónde quedó: publicado; la revisión humana es la que manda el repo.
+
 ### H7.S1.M6 — La ficha abre la pestaña que nombra la URL
 - Qué anda: `/my-account?pestana=puntos` abre la billetera con «Mis puntos» seleccionada, en el spec y en el navegador (1440 y 390); una clave desconocida cae en la primera pestaña.
 - Qué no anda: en el teléfono, la pestaña seleccionada queda fuera de la parte visible de la tira; la segunda pasada rechazó esa pantalla (H7R-02, `MAYOR`). La tira de pestañas sólo se corre hasta una pestaña cuando la persona la elige (`src/app/shared/components/molecules/tabs/tabs.ts:88-95`); una selección que llega por `[(selectedIndex)]` no la trae a la vista.
@@ -119,6 +125,7 @@ Por decisión de Itzan (23/09), H5 se entrega en un PR propio contra `mockup` si
 - `evidencia/h7/navegador.txt` — salida literal del guion de navegador del #606 (18/18) y la primera corrida fallida con su clase. `evidencia/h7/navegador-recaptura.txt` — la recaptura del 24/09 en los cinco viewports del repo (61/61, más dos mediciones informativas con resultado negativo: los hallazgos H7R-01 y H7R-02).
 - `docs/frontend/evidence/mis-puntos-quinta-pestana-2026-09-23/` — 24 capturas + `README.md` con la primera pasada (recapturadas el 24/09 en la rama de H6).
 - `evidencia/doble-revision.md` — la segunda pasada de capturas (regla 35), en sus rondas: H5 y H7 sobre las capturas del #606; H6 y la recaptura de H7, repetida hasta que ninguna pantalla de este cambio quedó `RECHAZADA`.
+- `evidencia/pr-613-mergeable.txt` — salida literal de `gh pr view 613 --json …` y `gh pr checks 613` después del último push, con el listado de corridas del CI que muestra que ninguna arranca.
 - `evidencia/h5/` — specs dirigidos (`spec-ubicacion-picker*.txt`, `spec-patient-profile-edit.txt`, `spec-register-*.txt`), `typecheck.txt` y `navegador-mapa-vacia-direccion.txt` (85/85), `navegador-imagenologia-repeticion.txt` (22/22) y `e2e-consumidores-confirmacion.txt` (11 PASS, 2 bloqueadas por entorno). Capturas en el repo: `docs/frontend/evidence/mapa-vacia-direccion-2026-09-23/` (20, con la inspección de cada una en su `README.md`).
 - `evidencia/h5/cierre-*` — gates de cierre del PR #606, corridos sobre la rama rebasada en `origin/mockup` @ `a43ad2b3`:
   - `cierre-lint.txt` (0), `cierre-tipos.txt` (0), `cierre-typecheck.txt` (`yarn typecheck`: app + Cypress + Playwright, 0), `cierre-tipos-cypress.txt` (0).
