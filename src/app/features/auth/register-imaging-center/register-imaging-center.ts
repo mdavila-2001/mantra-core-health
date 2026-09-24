@@ -881,7 +881,11 @@ export class RegisterImagingCenter {
 
   /** Tocaron el mapa de la central: la dirección escrita ya no vale (D-06). */
   vaciarDireccionPorElMapa(): void {
-    this.form.controls.addressLines.setValue('');
+    const direccion = this.form.controls.addressLines;
+    direccion.setValue('');
+    // El vaciado lo hizo el sistema, no la persona: el campo vuelve a «sin
+    // tocar» y el error de obligatorio espera a que lo toque o intente avanzar.
+    direccion.markAsUntouched();
     this.direccionVaciadaPorElMapa.set(true);
   }
 
