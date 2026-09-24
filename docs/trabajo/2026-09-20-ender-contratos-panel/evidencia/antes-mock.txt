@@ -1,0 +1,14 @@
+$ yarn env:generate && yarn test --include=src/app/core/mock/mock-backend.spec.ts
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+Using Vitest configuration file: vitest.config.ts
+
+ RUN  v4.1.10 .../wt-ender-contratos-panel
+
+ Test Files  1 passed (1)
+      Tests  21 passed (21)
+   Start at  02:45:10
+   Duration  2.11s
+
+(Los warnings NG8113 de imports sin usar en otros features —MedicalArticles, Questionnaires,
+Groups, NearbyPlaces, SurveysHome, SymptomCheck— son preexistentes del build, no de este trabajo:
+ninguno de esos archivos está en mi alcance.)

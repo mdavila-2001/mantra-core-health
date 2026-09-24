@@ -62,6 +62,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'data-table',
+    '[class.data-table--constrained]': 'effectiveMaxHeight() !== null',
   },
 })
 export class DataTable<Row> {
@@ -100,6 +101,26 @@ export class DataTable<Row> {
 
   /** Rótulo de la tabla. Va en `<caption>`, aunque sea solo para lectores. */
   readonly caption = input<string>('');
+
+  /**
+   * Alto máximo de la caja de la tabla (p. ej. `'480px'`), con scroll
+   * **vertical** dentro de esa caja. Por omisión `null`: apagado, sin
+   * cambio para los consumidores actuales (regla 95.1).
+   *
+   * Cuando está activa, el scroll lateral se apaga (`overflow-x: hidden`) y
+   * las columnas secundarias se pliegan a la fila de detalle **también en
+   * escritorio** — el mismo mecanismo que ya usa el móvil
+   * (`MOBILE_DETAIL_PRIORITY`), extendido con la clase `.data-table--constrained`.
+   * Es lo que ADR-0015 (regla 6, ver `docs/adr/ADR-0015-tabla-con-acciones.md`)
+   * pide como reemplazo del scroll lateral con `sticky: 'end'`.
+   *
+   * Una cadena vacía no es un alto válido: se trata igual que `null` (por
+   * omisión, apagado), no como una caja de alto cero.
+   */
+  readonly maxHeight = input<string | null>(null);
+
+  /** El valor efectivo: una cadena vacía cae al por omisión, no a una caja de alto cero. */
+  protected readonly effectiveMaxHeight = computed(() => this.maxHeight() || null);
   /**
    * Cómo se nombra una fila para quien usa lector de pantalla: el «de quién»
    * de «Ver el detalle de …» y «Seleccionar …». Sin él, la fila se nombra por

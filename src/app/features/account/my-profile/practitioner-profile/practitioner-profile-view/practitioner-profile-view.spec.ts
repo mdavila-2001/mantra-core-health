@@ -5,7 +5,6 @@ import { provideRouter } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { AuthService } from '../../../../../core/auth/auth.service';
-import { ToastService } from '../../../../../shared/components/molecules/toast/toast.service';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
 import { PESTANAS_DEL_PERFIL_MEDICO } from '../../pestanas-del-perfil-medico';
 import { PractitionerProfileView } from './practitioner-profile-view';
@@ -129,62 +128,43 @@ const PERFIL: PerfilProfesionalVisible = {
 describe('PractitionerProfileView', () => {
   let fixture: ComponentFixture<PractitionerProfileView>;
   let http: HttpTestingController;
-  /** `confirm()` resuelve a `true` salvo que una prueba lo cambie. */
-  let confirmar = true;
-  const dialogs = { confirm: vi.fn(async () => confirmar) };
+  /** El diálogo lo usa el contenedor; acá sólo hay que proveer alguno. */
+  const dialogs = { confirm: vi.fn(async () => true) };
 
   /**
    * Con `esPropio=true` se embebe `<app-work-history>`, que lee su historial al
    * iniciarse. Sin responderle, `http.verify()` fallaría en cualquier prueba
    * que monte la vista como dueño.
    *
-   * **Una sola lectura, no dos.** Acá se respondía también
-   * `/practitioners/prac-1/sites`, porque el bloque pedía los consultorios
-   * aunque no fuera a dibujarlos. Desde el 13/09/2026 «Dónde atiendo» salió de
-   * Trayectoria —la pestaña se monta con `secciones="historial"`— y esa
-   * petición ya no se hace: pedir lo que no se dibuja era una llamada por
-   * visita a una pantalla que no la usa.
+   * **Una lectura por montaje, y cada montaje pide sólo lo suyo.** La ficha
+   * propia monta el bloque dos veces: en «Trayectoria» con
+   * `secciones="historial"` —que pide las afiliaciones y no los
+   * consultorios— y en «Dónde atiendo» con `secciones="consultorios"`
+   * —que pide los consultorios y no las afiliaciones— (C-02, 20/09/2026).
+   *
+   * Las dos asimetrías están guardadas en el propio componente
+   * (`work-history.ts`, `cargar` y `cargarSedes`), y el conteo de este helper
+   * es lo que las fija: si alguien quita un guarda, acá aparece una petición
+   * de más y `http.verify()` la delata. Pedir lo que no se dibuja es una
+   * llamada por visita a una pantalla que no la usa.
    */
   function responderWorkHistory(): void {
     http.expectOne('/profiles/practitioners/me/affiliations').flush({ items: [], count: 0 });
+    http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
   }
 
   /**
-   * La misma pantalla, con una sesión que **no** trae perfil profesional.
-   *
-   * Aparte de `montar` porque el proveedor de sesión se declara al configurar
-   * el módulo y después ya no se puede cambiar.
+   * @param antesDeDibujar - Corre con el componente creado y sus entradas
+   *   puestas, **antes** del primer `detectChanges()`. Es la única forma de
+   *   enganchar una salida a tiempo: una prueba que se suscribe después no
+   *   puede distinguir «no emitió» de «emitió y no lo vi», y que ninguna
+   *   intención salga en el primer dibujo es justamente lo que hay que fijar.
    */
-  function montarConSesionSinPerfil(): void {
-    TestBed.configureTestingModule({
-      providers: [
-        provideRouter([]),
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        {
-          provide: AuthService,
-          useValue: { practitionerProfileId: signal(null), userId: signal('u-1') },
-        },
-      ],
-    });
-    http = TestBed.inject(HttpTestingController);
-    fixture = TestBed.createComponent(PractitionerProfileView);
-    fixture.componentRef.setInput('perfil', PERFIL);
-    fixture.componentRef.setInput('esPropio', true);
-    fixture.componentRef.setInput('previewMode', false);
-    fixture.detectChanges();
-    // Sin perfil en la sesión, el historial laboral ni se pide: sus dos
-    // lecturas cuelgan del id que no hay.
-    for (const peticion of http.match(() => true)) {
-      peticion.flush({ items: [], count: 0 });
-    }
-    fixture.detectChanges();
-  }
-
   function montar(
     perfil: PerfilProfesionalVisible = PERFIL,
     esPropio = false,
     previewMode = false,
+    antesDeDibujar?: (vista: PractitionerProfileView) => void,
   ): HTMLElement {
     TestBed.configureTestingModule({
       providers: [
@@ -203,6 +183,7 @@ describe('PractitionerProfileView', () => {
     fixture.componentRef.setInput('perfil', perfil);
     fixture.componentRef.setInput('esPropio', esPropio);
     fixture.componentRef.setInput('previewMode', previewMode);
+    antesDeDibujar?.(fixture.componentInstance);
     fixture.detectChanges();
     if (esPropio && !previewMode) {
       responderWorkHistory();
@@ -225,6 +206,72 @@ describe('PractitionerProfileView', () => {
 
   afterEach(() => {
     http?.verify();
+  });
+
+  /**
+   * Congela un objeto y todo lo que cuelga de él.
+   *
+   * Las fechas se dejan enteras: congelarlas no aporta —sus métodos de lectura
+   * no las tocan— y romper `Date` complicaría la comparación sin probar nada.
+   */
+  function congelar<T>(valor: T): T {
+    if (valor !== null && typeof valor === 'object' && !(valor instanceof Date)) {
+      for (const hijo of Object.values(valor)) {
+        congelar(hijo);
+      }
+      Object.freeze(valor);
+    }
+    return valor;
+  }
+
+  /**
+   * El perfil es de quien lo resolvió: acá sólo se lee.
+   *
+   * Se pasa congelado, así que cualquier escritura revienta en el acto —el
+   * módulo es estricto—, y además se compara el objeto antes y después por si
+   * alguien le colgara algo que `Object.freeze` no alcanza.
+   */
+  it('no muta el perfil que recibe: anda con el objeto congelado y lo deja igual', () => {
+    const perfil = congelar(structuredClone(PERFIL) as PerfilProfesionalVisible);
+    const antes = JSON.stringify(perfil);
+
+    const host = montar(perfil, true);
+    seleccionarPestana(host, 'Credenciales');
+    seleccionarPestana(host, 'Trayectoria');
+
+    expect(JSON.stringify(perfil)).toBe(antes);
+  });
+
+  /**
+   * Una salida es una intención de la persona, nunca un efecto de que llegaran
+   * datos.
+   *
+   * Se enganchan **las cuatro** antes del primer dibujo, y después se le pasa lo
+   * que el contenedor le iría pasando al resolver: otro perfil, la foto recién
+   * subida, el fin de la subida. Nada de eso lo pidió nadie, así que nada de eso
+   * puede salir por una salida.
+   */
+  it('no emite ninguna intención al dibujarse ni al llegarle datos nuevos', () => {
+    const emitidas: string[] = [];
+    const host = montar(PERFIL, true, false, (vista) => {
+      vista.trayectoriaCambio.subscribe(() => emitidas.push('trayectoriaCambio'));
+      vista.fotoElegida.subscribe(() => emitidas.push('fotoElegida'));
+      vista.credencialARetirar.subscribe(() => emitidas.push('credencialARetirar'));
+      vista.pestanaVisible.subscribe(() => emitidas.push('pestanaVisible'));
+    });
+
+    expect(emitidas).toEqual([]);
+
+    fixture.componentRef.setInput('fotoSubiendo', true);
+    fixture.detectChanges();
+    fixture.componentRef.setInput('fotoSubiendo', false);
+    fixture.componentRef.setInput('fotoRecien', 'data:image/png;base64,AAAA');
+    fixture.componentRef.setInput('errorDeFoto', 'No pudimos subir la foto.');
+    fixture.detectChanges();
+
+    expect(emitidas).toEqual([]);
+    // Y lo recibido sí se ve: la prueba no pasa por no haber dibujado nada.
+    expect(host.textContent).toContain('No pudimos subir la foto');
   });
 
   it('pinta la identidad completa en la portada', () => {
@@ -291,6 +338,55 @@ describe('PractitionerProfileView', () => {
     const disponibilidad = host.querySelector('.profesional__disponibilidad');
     expect(disponibilidad?.textContent).toContain('Cardiología');
     expect(disponibilidad?.textContent).toContain('Medicina interna');
+  });
+
+  /* -- C-09: una sola forma de mostrar una especialidad --------------------
+     Estas tres pruebas existen porque la migración a la insignia pasó por la
+     suite sin que una sola prueba se enterara: 350 en verde antes y 350 en
+     verde después, con cinco formas reemplazadas en el medio. Una suite que
+     no nota el cambio tampoco va a notar la vuelta atrás. */
+
+  it('la especialidad se pinta SIEMPRE con la insignia compartida', () => {
+    const host = montar();
+
+    const insignias = [...host.querySelectorAll('app-specialty-badge')];
+    expect(insignias.length).toBeGreaterThan(0);
+    expect(
+      insignias.map((i) => i.querySelector('.specialty-badge__nombre')?.textContent?.trim()),
+    ).toContain('Cardiología');
+  });
+
+  it('no queda ningún chip ni badge de especialidad armado a mano', () => {
+    const host = montar();
+
+    // Las formas que la insignia reemplazó: el chip con tono propio y los dos
+    // `app-badge` sueltos que decían «Principal» y «Certificada».
+    const sueltos = [...host.querySelectorAll('app-chip, app-badge')].filter((e) =>
+      /Cardiología|Medicina interna|^Principal$|^Certificada$/.test(
+        (e.textContent ?? '').trim(),
+      ),
+    );
+    expect(sueltos).toHaveLength(0);
+  });
+
+  it('el tono no depende de quién mira: propia y ajena pintan igual', () => {
+    const tonos = (esPropio: boolean): string[] => {
+      // `montar` configura el módulo de prueba, y eso sólo se puede hacer una
+      // vez por instancia: para montar la segunda variante hay que resetearlo.
+      TestBed.resetTestingModule();
+      const host = montar(PERFIL, esPropio);
+      return [
+        ...new Set(
+          [...host.querySelectorAll('app-specialty-badge')].map(
+            (i) => [...i.classList].find((c) => c.startsWith('tone--')) ?? 'sin-tono',
+          ),
+        ),
+      ].sort();
+    };
+
+    // Antes de C-09 la propia repartía color por un hash del nombre y la
+    // ajena pintaba todo gris: la misma especialidad, dos colores.
+    expect(tonos(true)).toEqual(tonos(false));
   });
 
   /* -- Las 3 pestañas superiores (carril 05) -------------------------------- */
@@ -392,34 +488,35 @@ describe('PractitionerProfileView', () => {
     expect(host.querySelector('[data-testid="formacion-retirar-cr-2"]')).toBeNull();
   });
 
-  it('retirar confirma y hace un DELETE del título', async () => {
-    confirmar = true;
-    montar({ ...PERFIL, formacion: [FORMACION_PENDIENTE] }, true);
+  /* Pedir el retiro es una intención: quién confirma y quién borra se prueba
+     donde ahora ocurre, en `practitioner-profile.spec.ts`. Acá se fija lo que
+     esta vista promete — que avisa, con qué, y que no persiste nada. */
 
-    await (
-      fixture.componentInstance as unknown as {
-        retirarCredencial: (e: unknown) => Promise<void>;
-      }
-    ).retirarCredencial(FORMACION_PENDIENTE);
+  it('pedir retirar un título emite la intención y no manda ninguna petición', () => {
+    const pedidos: unknown[] = [];
+    const host = montar({ ...PERFIL, formacion: [FORMACION_PENDIENTE] }, true, false, (vista) =>
+      vista.credencialARetirar.subscribe((estudio) => pedidos.push(estudio)),
+    );
+    seleccionarPestana(host, 'Trayectoria');
 
-    expect(dialogs.confirm).toHaveBeenCalled();
-    const req = http.expectOne('/profiles/practitioners/me/credentials/cr-2');
-    expect(req.request.method).toBe('DELETE');
-    req.flush(null);
+    host.querySelector<HTMLButtonElement>('[data-testid="formacion-retirar-cr-2"]')?.click();
+    fixture.detectChanges();
+
+    expect(pedidos).toEqual([FORMACION_PENDIENTE]);
+    http.expectNone('/profiles/practitioners/me/credentials/cr-2');
   });
 
-  it('sin confirmar, no se manda ningún DELETE', async () => {
-    confirmar = false;
-    montar({ ...PERFIL, formacion: [FORMACION_PENDIENTE] }, true);
+  it('en vista previa no emite el retiro, aunque le llegue esPropio en true', () => {
+    const pedidos: unknown[] = [];
+    montar({ ...PERFIL, formacion: [FORMACION_PENDIENTE] }, true, true, (vista) =>
+      vista.credencialARetirar.subscribe((estudio) => pedidos.push(estudio)),
+    );
 
-    await (
-      fixture.componentInstance as unknown as {
-        retirarCredencial: (e: unknown) => Promise<void>;
-      }
-    ).retirarCredencial(FORMACION_PENDIENTE);
+    (
+      fixture.componentInstance as unknown as { alPedirRetiro: (e: unknown) => void }
+    ).alPedirRetiro(FORMACION_PENDIENTE);
 
-    expect(dialogs.confirm).toHaveBeenCalled();
-    http.expectNone('/profiles/practitioners/me/credentials/cr-2');
+    expect(pedidos).toEqual([]);
   });
 
   it('el dueño ve el formulario de alta de trayectoria embebido', () => {
@@ -453,47 +550,52 @@ describe('PractitionerProfileView', () => {
     expect(host.querySelector('app-tab-help-block')).toBeNull();
   });
 
-  describe('el aviso de «Credenciales» es un toast (19/09/2026)', () => {
-    // Qué ayudas se cerraron vive en `localStorage`, que jsdom comparte entre
-    // las pruebas del archivo: sin limpiarlo, la prueba de arriba —que abre
-    // «Credenciales»— deja el aviso marcado como visto y acá no volvería a
-    // salir nunca.
-    beforeEach(() => localStorage.clear());
-
-    /** Los avisos encolados, sin pasar por el contenedor que los pinta. */
-    function avisos(): readonly { readonly title?: string; readonly message: string }[] {
-      return TestBed.inject(ToastService).toasts();
-    }
-
-    it('no sale al abrir la ficha: sale al abrir esa pestaña', () => {
+  /**
+   * Qué pestaña se está mirando.
+   *
+   * De acá salía el aviso único de «Credenciales». Ahora la vista sólo dice
+   * **qué se abrió**; si eso merece un aviso, y si ya se dio una vez, lo decide
+   * quien escucha (`practitioner-profile.spec.ts`).
+   */
+  describe('avisar qué pestaña se mira', () => {
+    it('no avisa nada en el primer dibujo: sólo cuando alguien cambia de pestaña', () => {
       // El contenido proyectado de una pestaña se INSTANCIA aunque la pestaña
-      // esté cerrada, así que lanzarlo desde el panel hacía saltar el aviso de
-      // «Credenciales» estando en «Datos personales». Éste es ese defecto.
-      const host = montar(PERFIL, true);
+      // esté cerrada, así que cualquier cosa lanzada desde el panel saltaba
+      // estando en «Datos personales». Quien sabe qué pestaña se mira es esta
+      // ficha, y sólo lo sabe cuando alguien la abre.
+      const vistas: string[] = [];
+      const host = montar(PERFIL, true, false, (vista) =>
+        vista.pestanaVisible.subscribe((pestana) => vistas.push(pestana)),
+      );
 
-      expect(avisos()).toHaveLength(0);
+      expect(vistas).toEqual([]);
 
       seleccionarPestana(host, 'Credenciales');
-      expect(avisos()).toHaveLength(1);
-      expect(avisos()[0]?.title).toBe('Credenciales');
-      expect(avisos()[0]?.message).toContain('verificado contra una fuente');
+      expect(vistas).toEqual(['Credenciales']);
     });
 
-    it('no se repite al volver a la pestaña', () => {
-      const host = montar(PERFIL, true);
+    it('avisa cada visita, también la repetida: recordar es de quien escucha', () => {
+      const vistas: string[] = [];
+      const host = montar(PERFIL, true, false, (vista) =>
+        vista.pestanaVisible.subscribe((pestana) => vistas.push(pestana)),
+      );
 
       seleccionarPestana(host, 'Credenciales');
       seleccionarPestana(host, 'Actividad');
       seleccionarPestana(host, 'Credenciales');
 
-      expect(avisos()).toHaveLength(1);
+      expect(vistas).toEqual(['Credenciales', 'Actividad', 'Credenciales']);
     });
 
-    it('a un visitante no se le habla: la explicación es para el dueño', () => {
-      const host = montar(PERFIL, false);
+    it('la ficha de un colega no avisa: sus pestañas son otras tres', () => {
+      const vistas: string[] = [];
+      const host = montar(PERFIL, false, false, (vista) =>
+        vista.pestanaVisible.subscribe((pestana) => vistas.push(pestana)),
+      );
+
       seleccionarPestana(host, 'Credenciales y verificaciones');
 
-      expect(avisos()).toHaveLength(0);
+      expect(vistas).toEqual([]);
     });
   });
 
@@ -884,50 +986,20 @@ describe('PractitionerProfileView', () => {
 
   /* -- La foto del dueño: sube, fija y — si hay vitrina — la repite (carril 05) */
 
-  describe('alElegirFoto', () => {
-    /** PNG mínimo: el tipo es lo único que el handler necesita. */
+  /**
+   * Elegir la foto.
+   *
+   * Subirla son tres llamadas encadenadas y una propagación best-effort a la
+   * vitrina pública: todo eso vive ahora en el contenedor y se prueba en
+   * `practitioner-profile.spec.ts`, contra peticiones reales. Acá queda lo que
+   * esta vista promete — avisar con qué archivo, no llamar a nadie, y pintar lo
+   * que le devuelvan.
+   */
+  describe('elegir la foto', () => {
+    /** PNG mínimo: el tipo es lo único que hace falta. */
     function archivoFoto(): File {
       return new File(['x'], 'foto.png', { type: 'image/png' });
     }
-
-    /**
-     * Respuesta mínima válida de `PUT /profiles/practitioners/:id/photo`.
-     *
-     * `traducirPerfilPropio` llama `.map()` sobre `specialties`, `credentials`,
-     * `licenses` y `affiliations`: sin esos cuatro arreglos —aunque sea
-     * vacíos— la traducción revienta antes de que el flujo llegue a
-     * `propagarAVitrina`, y el pedido a `/community/profiles/me` nunca sale.
-     */
-    function respuestaFoto(photoFileId: string) {
-      return {
-        profileId: 'prac-1',
-        photoFileId,
-        createdAt: new Date().toISOString(),
-        specialties: [],
-        credentials: [],
-        licenses: [],
-        affiliations: [],
-      };
-    }
-
-    /**
-     * El caso que rompía en producción: la cuenta entra, ve su perfil y el
-     * botón de la foto, elige un PNG… y no pasa nada. El handler se iba en
-     * silencio cuando la sesión no traía perfil profesional —pasa de verdad:
-     * una persona duplicada cuya cuenta quedó atada al registro sin perfil no
-     * lleva el claim `hpid`— y desde afuera se lee como «no acepta PNG».
-     */
-    it('sin perfil profesional en la sesión lo DICE, en vez de no hacer nada', () => {
-      TestBed.resetTestingModule();
-      montarConSesionSinPerfil();
-      const host = fixture.nativeElement as HTMLElement;
-
-      eligeFoto(host, archivoFoto());
-
-      // Ni una petición: no hay dónde guardarla. Pero la persona se entera.
-      http.expectNone((r) => r.url === '/common/files/upload');
-      expect(host.textContent).toContain('no está asociada a un perfil profesional');
-    });
 
     /** Simula elegir un archivo en el input de foto y dispara `change`. */
     function eligeFoto(host: HTMLElement, archivo: File): void {
@@ -940,97 +1012,55 @@ describe('PractitionerProfileView', () => {
       fixture.detectChanges();
     }
 
-    it('sube, fija la foto profesional y la pinta', async () => {
-      const host = montar(PERFIL, true);
+    it('emite el archivo elegido y no manda ninguna petición', () => {
+      const elegidas: File[] = [];
+      const host = montar(PERFIL, true, false, (vista) =>
+        vista.fotoElegida.subscribe((archivo) => elegidas.push(archivo)),
+      );
+      const archivo = archivoFoto();
 
-      eligeFoto(host, archivoFoto());
+      eligeFoto(host, archivo);
 
-      http.expectOne('/common/files/upload').flush({ id: 'file-1' });
-      http.expectOne('/profiles/practitioners/prac-1/photo').flush(respuestaFoto('file-1'));
-      // Sin vitrina: la propagación no dispara ningún pedido más.
-      http.expectOne('/community/profiles/me').flush(null);
-      http.expectOne('/common/files/file-1/content').flush(pngFalso());
-      await esperarLaFoto(fixture, host);
-
-      const img = host.querySelector('.mi-perfil__foto .avatar__image');
-      // `data:` y no una ruta: la URL firmada del backend apunta a
-      // `file://local/<sha>` y ningún navegador la carga. Ése era el defecto.
-      expect(img?.getAttribute('src')).toMatch(/^data:image\/png;base64,/);
+      expect(elegidas).toHaveLength(1);
+      expect(elegidas[0]).toBe(archivo);
+      http.expectNone((r) => r.url === '/common/files/upload');
     });
 
-    it('con vitrina existente, repite la foto como avatar sin perder lo ya declarado', async () => {
-      const host = montar(PERFIL, true);
+    it('con una subida en curso no vuelve a emitir: la misma foto no se sube dos veces', () => {
+      const elegidas: File[] = [];
+      const host = montar(PERFIL, true, false, (vista) =>
+        vista.fotoElegida.subscribe((archivo) => elegidas.push(archivo)),
+      );
+      fixture.componentRef.setInput('fotoSubiendo', true);
+      fixture.detectChanges();
 
       eligeFoto(host, archivoFoto());
 
-      http.expectOne('/common/files/upload').flush({ id: 'file-1' });
-      http.expectOne('/profiles/practitioners/prac-1/photo').flush(respuestaFoto('file-1'));
-
-      http.expectOne('/community/profiles/me').flush({
-        id: 'vit-1',
-        tenantId: 'ten-1',
-        targetId: 'prac-1',
-        slug: 'dra-lucia-salas',
-        displayName: 'Dra. Lucía Salas',
-        headline: 'Cardióloga',
-        biography: 'Bio',
-        acceptsReviews: true,
-        visibility: 'PUBLIC',
-        statusConceptId: 'st-1',
-      });
-
-      const puesta = http.expectOne('/community/profiles/me');
-      expect(puesta.request.method).toBe('PUT');
-      expect(puesta.request.body).toEqual({
-        tenantId: 'ten-1',
-        slug: 'dra-lucia-salas',
-        displayName: 'Dra. Lucía Salas',
-        headline: 'Cardióloga',
-        biography: 'Bio',
-        acceptsReviews: true,
-        avatarFileId: 'file-1',
-      });
-      puesta.flush({
-        id: 'vit-1',
-        tenantId: 'ten-1',
-        targetId: 'prac-1',
-        slug: 'dra-lucia-salas',
-        displayName: 'Dra. Lucía Salas',
-        visibility: 'PUBLIC',
-        statusConceptId: 'st-1',
-        avatarFileId: 'file-1',
-      });
-
-      http.expectOne('/common/files/file-1/content').flush(pngFalso());
-      await esperarLaFoto(fixture, host);
-
-      const img = host.querySelector('.mi-perfil__foto .avatar__image');
-      // `data:` y no una ruta: la URL firmada del backend apunta a
-      // `file://local/<sha>` y ningún navegador la carga. Ése era el defecto.
-      expect(img?.getAttribute('src')).toMatch(/^data:image\/png;base64,/);
+      expect(elegidas).toEqual([]);
     });
 
-    it('si falla la propagación a la vitrina, la foto profesional igual se pinta', async () => {
-      // Best-effort: lo que ya se guardó arriba no debe perderse por un error
-      // accesorio.
+    it('pinta la foto que le pasan recién subida, sin releer el perfil', () => {
       const host = montar(PERFIL, true);
 
-      eligeFoto(host, archivoFoto());
-
-      http.expectOne('/common/files/upload').flush({ id: 'file-1' });
-      http.expectOne('/profiles/practitioners/prac-1/photo').flush(respuestaFoto('file-1'));
-      http.expectOne('/community/profiles/me').flush('boom', { status: 500, statusText: 'Error' });
-
-      http.expectOne('/common/files/file-1/content').flush(pngFalso());
-      await esperarLaFoto(fixture, host);
+      fixture.componentRef.setInput('fotoRecien', 'data:image/png;base64,AAAA');
+      fixture.detectChanges();
 
       const img = host.querySelector('.mi-perfil__foto .avatar__image');
       // `data:` y no una ruta: la URL firmada del backend apunta a
       // `file://local/<sha>` y ningún navegador la carga. Ése era el defecto.
-      expect(img?.getAttribute('src')).toMatch(/^data:image\/png;base64,/);
-      // El fallo fue accesorio (la propagación a la vitrina): no queda como
-      // mensaje de error de la subida, que sí funcionó.
-      expect(host.textContent).not.toContain('No pudimos subir la foto');
+      expect(img?.getAttribute('src')).toBe('data:image/png;base64,AAAA');
+    });
+
+    it('el fallo remoto que le pasan se lee bajo el retrato', () => {
+      const host = montar(PERFIL, true);
+
+      fixture.componentRef.setInput(
+        'errorDeFoto',
+        'Tu cuenta todavía no está asociada a un perfil profesional.',
+      );
+      fixture.detectChanges();
+
+      expect(host.textContent).toContain('no está asociada a un perfil profesional');
     });
 
     it('un visitante no ve el control de foto: nadie le cambia la foto a nadie', () => {
@@ -1096,31 +1126,75 @@ describe('PractitionerProfileView', () => {
       expect(host.textContent).not.toContain('8812345011');
     });
   });
+
+  /* -- «Dónde atiendo» después de C-01 y C-02 (doctor, 20/09/2026) --------- */
+
+  describe('la pestaña «Dónde atiendo»', () => {
+    it('ya no muestra «Cómo atendés»', () => {
+      // El kill-test del hito, en prueba: «abrí Dónde atiendo; si ves
+      // Telemedicina o Pacientes nuevos, C-01 no está hecho».
+      const host = montar(PERFIL, true);
+      seleccionarPestana(host, 'Dónde atiendo');
+      const panel = host.querySelector('[role="tabpanel"]')!;
+
+      expect(panel.textContent).not.toContain('Cómo atendés');
+      expect(panel.textContent).not.toContain('Pacientes nuevos');
+      expect(panel.textContent).not.toContain('Telemedicina');
+    });
+
+    it('«Telemedicina» no se perdió: se dice en la cabecera de la ficha propia', () => {
+      // La otra mitad de C-01, y la que encontró el defecto: el chip de
+      // telemedicina vivía sólo en la ficha AJENA
+      // (`.profesional__disponibilidad`), así que quitar «Cómo atendés»
+      // borraba el dato de la vista del propio médico. Sin esta prueba, el
+      // borrado se habría visto igual de verde que la reubicación.
+      const host = montar({ ...PERFIL, telemedicina: true }, true);
+
+      expect(host.querySelector('.mi-perfil__cabecera')?.textContent).toContain(
+        'Atendés por telemedicina',
+      );
+    });
+
+    it('y no se estampa cuando no la ofrece', () => {
+      // El valor por omisión de quien nunca tocó el ajuste no se anuncia. Es
+      // la lección de «Acepto pacientes nuevos», que se estampaba en toda
+      // ficha diciendo lo contrario de la verdad.
+      const host = montar({ ...PERFIL, telemedicina: false }, true);
+
+      expect(host.querySelector('.mi-perfil__cabecera')?.textContent).not.toContain(
+        'telemedicina',
+      );
+    });
+
+    it('el consultorio se administra dentro del perfil, con el mismo bloque de «Mis organizaciones»', () => {
+      // C-02: el enlace suelto se fue de `my-profile.html`, y lo que ese
+      // enlace daba tiene que estar acá. Se comprueba el componente y su
+      // modo, no un `data-testid` del bloque: lo que importa es que sea EL
+      // mismo `app-work-history` —con su alta, su retiro y su QR— y no una
+      // copia parecida.
+      const host = montar(PERFIL, true);
+      seleccionarPestana(host, 'Dónde atiendo');
+      const bloque = host.querySelector('[data-testid="perfil-consultorio"] app-work-history');
+
+      expect(bloque).not.toBeNull();
+      expect(bloque?.getAttribute('secciones')).toBe('consultorios');
+    });
+
+    it('en la ficha de OTRO no se administra nada: sólo se mira dónde atiende', () => {
+      // La ficha ajena es la misma vista (la Guía la monta con `esPropio`
+      // en falso, y `practitioner-detail.ts` la importa tal cual). Un bloque
+      // de edición ahí adentro sería ofrecerle a un paciente el alta del
+      // consultorio de su médico.
+      const host = montar(PERFIL, false);
+
+      expect(host.querySelector('[data-testid="perfil-consultorio"]')).toBeNull();
+      expect(host.querySelector('app-work-history[secciones="consultorios"]')).toBeNull();
+    });
+
+    it('la vista previa del perfil público tampoco lo ofrece', () => {
+      const host = montar(PERFIL, true, true);
+
+      expect(host.querySelector('[data-testid="perfil-consultorio"]')).toBeNull();
+    });
+  });
 });
-
-/**
- * Un PNG de un pixel, como Blob.
- *
- * La foto se resuelve bajando los bytes por `/content` y codificándolos: el
- * contenido da igual, lo que importa es que sea un Blob con tipo — de ahí sale
- * el `data:image/png` que termina en el `src`.
- */
-function pngFalso(): Blob {
-  return new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' });
-}
-
-/**
- * Espera a que la foto aterrice en el DOM.
- *
- * La codificación a `data:` la hace `FileReader`, que es asíncrono y **no**
- * pasa por los temporizadores de `fakeAsync`. Ceder un turno fijo alcanzaba a
- * veces y a veces no —dos de estas pruebas fallaban de forma intermitente—, así
- * que se sondea hasta que el `src` existe.
- */
-async function esperarLaFoto(fixture: ComponentFixture<unknown>, host: HTMLElement): Promise<void> {
-  for (let intento = 0; intento < 50; intento++) {
-    await new Promise((listo) => setTimeout(listo, 0));
-    fixture.detectChanges();
-    if (host.querySelector('.mi-perfil__foto .avatar__image') !== null) return;
-  }
-}

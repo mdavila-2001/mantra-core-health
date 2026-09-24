@@ -1,9 +1,13 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+import { vi } from 'vitest';
 
 import { ResultCard } from './result-card';
 import type { SearchResultItem } from '../search-result/search-result.types';
+
+@Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
+class RoutePlaceholder {}
 
 /**
  * `ResultCard` es el hermano de grilla de `SearchResult` (mismo
@@ -18,9 +22,14 @@ import type { SearchResultItem } from '../search-result/search-result.types';
   imports: [ResultCard],
   template: `
     <ul>
-      <li app-result-card [resultado]="dato()"></li>
+      <li
+        app-result-card
+        [resultado]="dato()"
+        [preventDuplicateNavigation]="impedirDuplicado()"
+      ></li>
     </ul>
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 class Anfitrion {
   readonly dato = signal<SearchResultItem>({
@@ -28,11 +37,14 @@ class Anfitrion {
     title: 'Dra. Marisol Quispe Ticona',
     link: '/buscar/perfil-profesional-detalle',
   });
+
+  readonly impedirDuplicado = signal(false);
 }
 
 describe('ResultCard', () => {
   let fixture: ComponentFixture<Anfitrion>;
   let anfitrion: Anfitrion;
+  let router: Router;
 
   const elemento = (selector: string): HTMLElement | null =>
     fixture.nativeElement.querySelector(selector);
@@ -40,11 +52,12 @@ describe('ResultCard', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Anfitrion],
-      providers: [provideRouter([])],
+      providers: [provideRouter([{ path: '**', component: RoutePlaceholder }])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Anfitrion);
     anfitrion = fixture.componentInstance;
+    router = TestBed.inject(Router);
     fixture.detectChanges();
   });
 
@@ -112,5 +125,57 @@ describe('ResultCard', () => {
     const img = elemento('.tarjeta-resultado__figura img');
     expect(img).not.toBeNull();
     expect(img!.getAttribute('src')).toBe('/f/buena.jpg');
+  });
+
+  it('cuando opta por navegación única navega solo una vez ante dos activaciones', () => {
+    anfitrion.impedirDuplicado.set(true);
+    fixture.detectChanges();
+    const navigateByUrl = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+    const link = elemento('.tarjeta-resultado__titulo a') as HTMLAnchorElement;
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+
+    expect(link.getAttribute('aria-busy')).toBe('true');
+    expect(link.getAttribute('aria-disabled')).toBe('true');
+
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+    expect(navigateByUrl).toHaveBeenCalledTimes(1);
+  });
+
+  it('cuando opta por navegación única no deja cargando un Ctrl-clic', () => {
+    anfitrion.impedirDuplicado.set(true);
+    fixture.detectChanges();
+
+    const link = elemento('.tarjeta-resultado__titulo a') as HTMLAnchorElement;
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, ctrlKey: true }));
+    fixture.detectChanges();
+
+    expect(link.getAttribute('aria-busy')).toBeNull();
+  });
+
+  it('muestra la acción distinta y tampoco la navega dos veces', () => {
+    anfitrion.dato.update((dato) => ({
+      ...dato,
+      action: {
+        label: 'Revisar disponibilidad',
+        link: '/buscar/perfil-profesional-detalle',
+        fragment: 'horarios',
+      },
+    }));
+    anfitrion.impedirDuplicado.set(true);
+    fixture.detectChanges();
+    const navegar = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+    const accion = elemento('.tarjeta-resultado__accion') as HTMLAnchorElement;
+    expect(accion.textContent?.trim()).toBe('Revisar disponibilidad');
+    expect(accion.getAttribute('href')).toBe('/buscar/perfil-profesional-detalle#horarios');
+
+    accion.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    accion.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+    expect(navegar).toHaveBeenCalledTimes(1);
+    expect(navegar).toHaveBeenCalledWith('/buscar/perfil-profesional-detalle#horarios');
   });
 });

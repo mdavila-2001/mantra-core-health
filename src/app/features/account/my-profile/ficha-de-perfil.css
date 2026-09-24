@@ -1,22 +1,5 @@
-/* ============================================================================
-    La FICHA de «Mi perfil», en una hoja compartida.
-
-    ## Por qué está acá y no en `my-profile.css`
-
-    El cliente pidió el 2026-09-10 que «la información del perfil del médico se
-    muestre de la misma manera que la del paciente». No parecida: la misma
-    tarjeta —retrato, título, lápiz, pestañas y renglones `dt`/`dd`— con los
-    datos que a un médico le corresponden.
-
-    Estas reglas nacieron dentro de `my-profile.css`, que es el componente del
-    paciente. El del médico es OTRO componente, y el CSS de Angular está
-    encapsulado: copiarlas allá habría dado dos tarjetas que se ven iguales el
-    primer día y se separan en el primer retoque que se haga en una sola. Esta
-    hoja es la única definición; los dos componentes la importan.
-
-    Acá vive sólo la TARJETA. La distribución de la página —la rejilla de
-    perfil + lateral— se queda en `my-profile.css`, que es su dueño.
-    ========================================================================== */
+/* La FICHA de «Mi perfil», en una hoja compartida entre paciente y médico.
+   Define sólo la TARJETA común. La distribución vive en my-profile.css. */
 
 .mi-perfil__bloque {
   display: block;
@@ -308,16 +291,9 @@ app-tab > .mi-perfil__seccion:first-child > .mi-perfil__subtitulo:first-child {
   gap: var(--sp-2);
 }
 
-/* Un bloque con caja propia DENTRO de una pestaña. Lo usa «Cómo atendés», que
-   contesta otra pregunta que el mapa de sedes de arriba y pegado a él se leía
-   como su pie. */
-.mi-perfil__bloque-interno {
-  display: block;
-  margin-block-start: var(--sp-5);
-}
-
-/* Un subtítulo que abre su propia caja: el aire de arriba ya lo pone el
-   `padding` de la tarjeta. */
-.mi-perfil__subtitulo--primero {
-  margin-block-start: 0;
-}
+/* Acá vivían `.mi-perfil__bloque-interno` y `.mi-perfil__subtitulo--primero`.
+   Existían para una sola caja, «Cómo atendés», que se retiró el 20/09/2026
+   (C-01). Se van con ella y no se dejan «por si acaso»: ningún otro
+   `.html` del repo las nombraba —comprobado antes de borrarlas—, así que
+   sacarlas no le cambia el dibujo a nadie, tampoco a la ficha del paciente,
+   que comparte este archivo. */

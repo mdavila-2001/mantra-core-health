@@ -101,6 +101,16 @@
       <app-access-tree [sections]="seccionesVisibles()" appTutorialTarget="panel-accesos" />
     </app-card>
 
+    <!-- ─── Tus consultas (C-24) ────────────────────────────────────────────
+         Reporte semanal/mensual, mapa de calor y otras atenciones. Sólo para
+         quien atiende: sin perfil profesional no hay ninguna cifra propia
+         que reportar (mismo criterio que la franja de arriba). -->
+    @if (atiendePacientes()) {
+      @defer (on immediate) {
+        <app-consultas-resumen class="panel__bloque--ancho" />
+      }
+    }
+
     <!-- ─── Últimos pacientes ─────────────────────────────────────────────────
        Sólo para quien administra: al resto la API le responde 403, así que
        pedirlo sería provocar un error para después esconderlo.

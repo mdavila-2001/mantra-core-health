@@ -1,6 +1,7 @@
 import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
@@ -20,13 +21,23 @@ import {
   RegistroAyuda,
   type TarjetaDeAyuda,
 } from '../../../shared/components/organisms/registro-ayuda/registro-ayuda';
+import {
+  MAX_ATTACHMENT_BYTES,
+  SUPPORT_FILE_FORMATS,
+} from '../registro-compartido/credenciales-del-medico';
+import {
+  MENSAJE_CONTRASENA_CORTA,
+  validadoresDeContrasena,
+} from '../registro-compartido/politica-de-contrasena';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
+  AVISO_REESCRIBIR_DIRECCION,
   UbicacionPicker,
   type Coordenadas,
   type IdsDePrueba,
 } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+import { Alert } from '../../../shared/components/molecules/alert/alert';
 
 /* ============================================================================
     Alta del centro de imagenología — «MODULO ANALISIS MEDICOS (RAYOS X,
@@ -149,13 +160,10 @@ export type ClaveDeAdjunto =
   | 'radioproteccionFile';
 
 /** Formatos que se aceptan. El proceso pide PDF; se acepta la foto del papel. */
-const FORMATOS_DE_RESPALDO = 'application/pdf,image/jpeg,image/png';
+const FORMATOS_DE_RESPALDO = SUPPORT_FILE_FORMATS;
 
-/** Cinco megas, el mismo tope que las otras altas. */
-const MAX_BYTES_ADJUNTO = 5 * 1024 * 1024;
-
-/** Mínimo de la contraseña, igual que en las otras altas. */
-const MIN_PASSWORD = 8;
+/** Cinco megas, el mismo tope que las otras altas: la misma constante. */
+const MAX_BYTES_ADJUNTO = MAX_ATTACHMENT_BYTES;
 
 const MAX_NOMBRE = 300;
 const MAX_DIRECCION = 300;
@@ -368,6 +376,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     FormField,
     AuthSplit,
     AnnounceOnAppear,
+    Alert,
     PaginatedForm,
     CampoPersonalizado,
     RegistroAyuda,
@@ -480,7 +489,7 @@ export class RegisterImagingCenter {
     // --- la cuenta ---------------------------------------------------------
     password: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
+      validators: [...validadoresDeContrasena],
     }),
   });
 
@@ -798,7 +807,7 @@ export class RegisterImagingCenter {
           icono: 'lock' as const,
           autocomplete: 'new-password',
           testId: 'registro-imagen-password',
-          mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
+          mensajeDeError: MENSAJE_CONTRASENA_CORTA,
         },
       ],
     },
@@ -843,48 +852,6 @@ export class RegisterImagingCenter {
     return this.form.controls[clave].value;
   }
 
-  /**
-   * Guarda el archivo elegido, si pasa formato y peso.
-   *
-   * Vacía el `<input>` siempre: sin eso, elegir dos veces seguidas el mismo
-   * archivo no dispara `change` la segunda, y quien corrigió un rechazo con el
-   * mismo papel no vería pasar nada.
-   */
-  adjuntar(clave: ClaveDeAdjunto, evento: Event): void {
-    const entrada = evento.target as HTMLInputElement;
-    const archivo = entrada.files?.[0];
-    this.errorAdjunto.set(null);
-    entrada.value = '';
-    if (!archivo) return;
-
-    if (!FORMATOS_DE_RESPALDO.split(',').includes(archivo.type)) {
-      this.errorAdjunto.set('El respaldo tiene que ser un PDF, un JPG o un PNG.');
-      return;
-    }
-    if (archivo.size > MAX_BYTES_ADJUNTO) {
-      this.errorAdjunto.set('El archivo supera el límite de 5 MB.');
-      return;
-    }
-
-    const control = this.form.controls[clave];
-    control.setValue({ archivo: archivo.name, pesoBytes: archivo.size });
-    // Un papel recién adjuntado no puede seguir mostrando «falta este papel».
-    control.markAsTouched();
-  }
-
-  /** Quita el adjunto de un control. */
-  quitarAdjunto(clave: ClaveDeAdjunto): void {
-    this.form.controls[clave].setValue(null);
-    this.errorAdjunto.set(null);
-  }
-
-  /** El peso de un adjunto, en la unidad que se lee de un vistazo. */
-  pesoLegible(bytes: number | null): string {
-    if (bytes === null) return '';
-    const enMegas = bytes / (1024 * 1024);
-    return enMegas >= 1 ? `${enMegas.toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} kB`;
-  }
-
   /* --- la ubicación de la central ---------------------------------------- */
 
   /**
@@ -894,6 +861,44 @@ export class RegisterImagingCenter {
    * **sólo lo confirmado** y se guarda para sí el estado intermedio.
    */
   readonly gpsCentral = signal<Coordenadas | null>(null);
+
+  /**
+   * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
+   *
+   * Tocar el mapa deja «Dirección» en blanco —el punto nuevo ya no es esa
+   * calle— y lo dice al lado. El aviso acompaña al campo vacío: en cuanto se
+   * vuelve a escribir, se va solo. Las sucursales llevan el suyo, por id.
+   */
+  private readonly direccionVaciadaPorElMapa = signal(false);
+  private readonly direccionEscrita = toSignal(this.form.controls.addressLines.valueChanges, {
+    initialValue: '',
+  });
+  readonly direccionPorReescribir = computed(
+    () => this.direccionVaciadaPorElMapa() && this.direccionEscrita().trim() === '',
+  );
+  private readonly sucursalesVaciadasPorElMapa = signal<ReadonlySet<string>>(new Set());
+  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
+
+  /** Tocaron el mapa de la central: la dirección escrita ya no vale (D-06). */
+  vaciarDireccionPorElMapa(): void {
+    const direccion = this.form.controls.addressLines;
+    direccion.setValue('');
+    // El vaciado lo hizo el sistema, no la persona: el campo vuelve a «sin
+    // tocar» y el error de obligatorio espera a que lo toque o intente avanzar.
+    direccion.markAsUntouched();
+    this.direccionVaciadaPorElMapa.set(true);
+  }
+
+  /** Lo mismo, para el mapa de una sucursal. */
+  vaciarDireccionDeSucursalPorElMapa(id: string): void {
+    this.actualizarSucursal(id, { direccion: '' });
+    this.sucursalesVaciadasPorElMapa.update((ids) => new Set([...ids, id]));
+  }
+
+  /** Si esa sucursal tiene la dirección en blanco porque tocaron su mapa. */
+  sucursalPorReescribir(sucursal: SucursalDeclarada): boolean {
+    return this.sucursalesVaciadasPorElMapa().has(sucursal.id) && sucursal.direccion.trim() === '';
+  }
 
   protected readonly idsUbicacionCentral: IdsDePrueba = {
     mapa: 'registro-imagen-central-map',

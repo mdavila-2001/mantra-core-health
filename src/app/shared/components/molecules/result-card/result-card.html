@@ -11,7 +11,15 @@
     <!-- El enlace cubre la tarjeta entera con el ::after de abajo, pero el
          nombre sigue siendo el texto del enlace: es lo que anuncia un lector
          de pantalla, y «tarjeta» no le dice a nadie a dónde va. -->
-    <a [routerLink]="r.link">{{ r.title }}</a>
+    <a
+      [attr.href]="r.link"
+      [attr.aria-busy]="navegando() ? 'true' : null"
+      [attr.aria-disabled]="navegando() ? 'true' : null"
+      [style.pointer-events]="navegando() ? 'none' : null"
+      (click)="navegar($event)"
+    >
+      {{ navegando() ? 'Abriendo…' : r.title }}
+    </a>
   </p>
 
   <!-- El subtítulo va pegado al título y en el tamaño del cuerpo: es qué es
@@ -43,6 +51,26 @@
     </p>
   }
 
-  <!-- El pie: lo escribe quien usa la tarjeta. Ver el JSDoc del componente. -->
-  <span class="tarjeta-resultado__pie"><ng-content /></span>
+  <!-- El pie: la acción propia comparte el destino con el título sólo cuando
+       salta a una sección concreta (por ejemplo, horarios). El enlace queda
+       por encima del área táctil de la tarjeta y usa el mismo candado de
+       navegación única. -->
+  <span class="tarjeta-resultado__pie">
+    @if (r.action; as accion) {
+      <a
+        app-button
+        variant="outline"
+        size="sm"
+        class="tarjeta-resultado__accion"
+        [attr.href]="accion.link + (accion.fragment ? '#' + accion.fragment : '')"
+        [attr.aria-busy]="navegando() ? 'true' : null"
+        [attr.aria-disabled]="navegando() ? 'true' : null"
+        [style.pointer-events]="navegando() ? 'none' : null"
+        (click)="navegar($event, accion.link, accion.fragment)"
+      >
+        {{ navegando() ? 'Abriendo…' : accion.label }}
+      </a>
+    }
+    <ng-content />
+  </span>
 }

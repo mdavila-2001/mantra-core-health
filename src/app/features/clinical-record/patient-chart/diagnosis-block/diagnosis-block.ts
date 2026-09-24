@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  forwardRef,
   inject,
   input,
   output,
@@ -34,6 +35,7 @@ import { environment } from '../../../../../environments/environment';
 import { CASOS_DIAGNOSTICO_DEMO, conceptIdPorCodigo } from '../demo-presets';
 import type { CasoDiagnosticoDemo } from '../demo-presets';
 import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
 
 /**
  * La columna que gobierna el diagnóstico.
@@ -221,11 +223,12 @@ function enDias(dias: number): Date {
     FormField,
     Textarea,
   ],
+  providers: [{ provide: DRAFT_BLOCK, useExisting: forwardRef(() => DiagnosisBlock) }],
   templateUrl: './diagnosis-block.html',
   styleUrl: './diagnosis-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DiagnosisBlock {
+export class DiagnosisBlock implements DraftBlock {
   private readonly clinical = inject(ClinicalClient);
   private readonly systemContext = inject(SystemContextClient);
   private readonly auth = inject(AuthService);
@@ -440,6 +443,26 @@ export class DiagnosisBlock {
 
   /** La cita elegida, o `null` por «sin cita asociada». */
   protected readonly citaElegida = signal<string | null>(null);
+
+  /**
+   * Contrato de `DraftBlock`. No incluye las opciones de los catálogos ni
+   * `catalogoListo`/`registrando`/`registro` — eso es lo que el bloque cargó,
+   * no lo que la persona escribió.
+   */
+  readonly tieneCambiosPendientes = computed(
+    () =>
+      this.diagnostico() !== null ||
+      this.categoria() !== null ||
+      this.severidad() !== null ||
+      this.lateralidad() !== null ||
+      this.cursoClinico() !== null ||
+      this.inicio() !== null ||
+      this.fechaEsperada() !== null ||
+      this.duracionDias() !== null ||
+      this.esCronico() ||
+      this.notasClinicas().trim() !== '' ||
+      this.citaElegida() !== null,
+  );
 
   /** Las opciones del selector de cita, con la vacía primero. */
   protected readonly opcionesDeCita = computed<readonly SelectOption<string | null>[]>(() => [

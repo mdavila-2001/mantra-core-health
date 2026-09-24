@@ -1,8 +1,10 @@
-<app-page-header
-  title="Mis puntos"
-  subtitle="Lo que sumaste con tus compras, y cómo canjearlo."
-  [breadcrumbs]="breadcrumbs()"
-/>
+@if (!embebido()) {
+  <app-page-header
+    title="Mis puntos"
+    subtitle="Lo que sumaste con tus compras, y cómo canjearlo."
+    [breadcrumbs]="breadcrumbs()"
+  />
+}
 
 @if (sinPerfilDePaciente) {
   <!-- Sesión válida de una cuenta que no es de un paciente: la pantalla no le

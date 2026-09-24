@@ -79,6 +79,42 @@ export type ContentDialogSize = (typeof CONTENT_DIALOG_SIZES)[number];
  * emitir {@link dismissAttempt}: quien lo escucha pregunta si se descarta lo
  * escrito y recién entonces cierra. El gesto no se bloquea —eso dejaría un
  * modal sin salida de teclado—, se le cambia el destino.
+ *
+ * ## Guardar con confirmación, cancelar con cambios — la receta de D-08
+ *
+ * El doctor pidió (22/09/2026, ADR-0015) que corregir una fila abra un modal
+ * con los campos llenos, que «Guardar» se habilite **por cambios** y pregunte
+ * «¿Confirmás estos cambios?», y que cancelar con cambios pregunte si se
+ * descartan. Las piezas ya existen y se **componen**, no se reimplementan:
+ *
+ * ```ts
+ * private readonly dialogs = inject(DialogService);
+ * protected readonly hayCambios = computed(() => !igual(this.borrador(), this.original()));
+ *
+ * protected async guardar(): Promise<void> {
+ *   if (!(await this.dialogs.confirmarCambios())) return;   // foco de vuelta a «Guardar»
+ *   this.cliente.actualizar(this.borrador()).subscribe({ next: () => this.cerrar() });
+ * }
+ *
+ * protected async preguntarSiSeDescarta(): Promise<void> {  // (dismissAttempt)
+ *   if (!this.hayCambios() || (await this.dialogs.confirmarDescarte())) this.cerrar();
+ * }
+ * ```
+ *
+ * ```html
+ * <app-content-dialog heading="Editar el título" [dismissible]="!hayCambios()"
+ *                     (dismissAttempt)="preguntarSiSeDescarta()" (closed)="cerrar()">
+ *   …los campos, llenos con el original…
+ *   <app-form-actions dialog-actions submitLabel="Guardar cambios"
+ *                     [disabled]="!hayCambios()" (submitted)="guardar()"
+ *                     (cancelled)="preguntarSiSeDescarta()" />
+ * </app-content-dialog>
+ * ```
+ *
+ * Los dos `confirm` se **apilan** sobre este modal: son otro `<dialog>` con
+ * `showModal()`, y el navegador los pone en la capa superior con su propio
+ * fondo y su propia trampa de foco; al cerrarse, `DialogService` devuelve el
+ * foco al botón que los abrió, que sigue dentro de este modal.
  */
 @Component({
   selector: 'app-content-dialog',
@@ -95,6 +131,17 @@ export class ContentDialog implements OnDestroy {
   readonly description = input<string | null>(null);
 
   readonly closeLabel = input('Cerrar');
+
+  /**
+   * Se consulta antes de cerrar, salvo que `close(true)` lo salte.
+   *
+   * `null` —el valor por omisión— no pregunta nada: es el comportamiento de
+   * siempre, el que usan los consumidores que no lo declaran. Quien lo
+   * declara puede devolver una promesa: es lo que necesita `EditDialog` para
+   * preguntar «¿Descartás los cambios?» antes de dejar que `Escape`, el fondo
+   * o el botón de cerrar tiren lo que no se guardó.
+   */
+  readonly closeGuard = input<(() => boolean | Promise<boolean>) | null>(null);
 
   /**
    * Ancho de referencia del panel.
@@ -141,6 +188,9 @@ export class ContentDialog implements OnDestroy {
   private bloqueado = false;
   private cerrado = false;
 
+  /** Se está evaluando `closeGuard()`: una segunda petición no abre un segundo diálogo. */
+  private cerrando = false;
+
   constructor() {
     this.origen = this.isBrowser ? this.document.activeElement : null;
     afterNextRender(() => this.showModal());
@@ -150,11 +200,32 @@ export class ContentDialog implements OnDestroy {
     this.unlockScroll();
   }
 
-  /** Cierra el modal. Idempotente: `Escape` y el botón pueden llegar juntos. */
-  close(): void {
-    if (this.cerrado) {
+  /**
+   * Cierra el modal. Idempotente: `Escape` y el botón pueden llegar juntos.
+   *
+   * Con `force` en verdadero se salta `closeGuard()`: lo usa quien ya decidió
+   * por su cuenta —por ejemplo, al guardar— y no quiere que se le pregunte si
+   * quiere descartar lo que acaba de confirmar.
+   */
+  close(force = false): void {
+    if (this.cerrado || this.cerrando) {
       return;
     }
+    const guard = this.closeGuard();
+    if (force || guard === null) {
+      this.doClose();
+      return;
+    }
+    this.cerrando = true;
+    Promise.resolve(guard()).then((permitido) => {
+      this.cerrando = false;
+      if (permitido) {
+        this.doClose();
+      }
+    });
+  }
+
+  private doClose(): void {
     this.cerrado = true;
     this.closeNative();
     this.unlockScroll();

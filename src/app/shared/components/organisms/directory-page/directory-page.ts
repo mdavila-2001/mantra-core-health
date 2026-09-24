@@ -95,6 +95,9 @@ export class DirectoryPage {
    */
   readonly portada = input(false);
 
+  /** Activa el bloqueo opt-in de navegaciones repetidas en sus tarjetas. */
+  readonly preventDuplicateNavigation = input(false);
+
   readonly filtrosCambiaron = output<Readonly<Record<string, string>>>();
   readonly reintentar = output<void>();
 

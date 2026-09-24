@@ -11,7 +11,7 @@
 
   <table class="mes__grilla">
     <caption class="mes__leyenda">
-      Turnos reservados sobre turnos publicados, por día.
+      Turnos disponibles por día.
     </caption>
     <thead>
       <tr>
@@ -102,13 +102,6 @@
         <div class="mes__globo-cabecera">
           <p class="mes__globo-titulo">{{ dia.resumen.title }}</p>
           <p class="mes__globo-linea">{{ dia.resumen.hours }}</p>
-          <!-- Lo mismo que dice la celda, en palabras: el globo no puede
-               contradecir al «4/8» que tiene al lado. -->
-          @if (dia.total > 0) {
-            <p class="mes__globo-linea" data-testid="mes-globo-ocupacion">
-              {{ dia.reservados }} de {{ dia.total }} {{ dia.total === 1 ? 'turno reservado' : 'turnos reservados' }}.
-            </p>
-          }
           @for (bloqueo of dia.resumen.blocks; track $index) {
             <p class="mes__globo-linea mes__globo-linea--bloqueo">{{ bloqueo }}</p>
           }
@@ -162,6 +155,18 @@
                     <span class="mes__globo-secundario">{{ fila.secondary }}</span>
                   }
                 </span>
+                <!-- C-08 · el chip dice si está atendida o no, con color, con
+                     silueta Y con la palabra. `app-status-seal` da las tres:
+                     en escala de grises «Atendida» y «No asistió» se siguen
+                     distinguiendo, que es lo que la regla 95.4.6 exige. -->
+                @if (fila.estado; as estado) {
+                  <app-status-seal
+                    class="mes__globo-chip"
+                    data-testid="mes-globo-chip"
+                    [variant]="estado.variant"
+                    [label]="estado.label"
+                  />
+                }
               </li>
             }
           </ul>
@@ -171,15 +176,13 @@
   }
 </div>
 
-<!-- Lo de adentro de un día, igual se abra o no: el número y su ocupación. -->
+<!-- Lo de adentro de un día, igual se abra o no: el número y lo que queda libre. -->
 <ng-template #contenido let-celda>
   <span class="mes__numero" aria-hidden="true">{{ celda.numero }}</span>
 
   <!-- El número SIEMPRE visible: el color solo no alcanza. -->
-  @if (celda.estado === 'con-reservas' || celda.estado === 'lleno') {
-    <span class="mes__cuenta" aria-hidden="true">{{ celda.reservados }}/{{ celda.total }}</span>
-  } @else if (celda.estado === 'libre') {
-    <span class="mes__cuenta" aria-hidden="true">0/{{ celda.total }}</span>
+  @if (celda.disponibles !== null) {
+    <span class="mes__cuenta" aria-hidden="true">{{ celda.disponibles }}</span>
   } @else if (celda.estado === 'bloqueado') {
     <span class="mes__motivo" aria-hidden="true">{{ celda.motivo ?? 'Bloqueado' }}</span>
   }

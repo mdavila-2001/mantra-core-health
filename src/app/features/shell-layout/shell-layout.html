@@ -358,14 +358,71 @@
         <!-- Interruptor de tema. Volvió al encabezado a pedido del cliente
              (2026-09-18): claro/oscuro se cambia seguido y no debe exigir ir a
              Ajustes. Es el mismo `switch` sol/luna del marco público y de
-             Ajustes › Apariencia; el dueño del estado es ThemeService. -->
-        <button class="app-theme-toggle" app-theme-toggle data-testid="header-theme-toggle">
+             Ajustes › Apariencia; el dueño del estado es ThemeService.
+
+             H5.S1 (2026-09-22, veredicto de D-05): el `aria-label` ya lo pone
+             la directiva `[app-theme-toggle]` (`role="switch"`, dinámico
+             según el tema — HALL-D7 lo verificó), pero el globo faltaba. La
+             excepción de ADR-0012 §3 quedaba a medias sin él. -->
+        <button
+          class="app-theme-toggle"
+          app-theme-toggle
+          data-testid="header-theme-toggle"
+          appTooltip="Tema"
+          appTooltipPosition="bottom"
+        >
           <span class="app-theme-toggle__pista">
             <svg class="icono icono--sm app-theme-toggle__sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></svg>
             <svg class="icono icono--sm app-theme-toggle__luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 14.8A8.5 8.5 0 0 1 9.2 3.5a8.5 8.5 0 1 0 11.3 11.3z"></path></svg>
             <span class="app-theme-toggle__perilla" aria-hidden="true"></span>
           </span>
         </button>
+
+        <!-- Tutoriales y Chats (N-01, 2026-09-22). Calcados de «Ajustes» de
+             abajo: `<a routerLink>` con `aria-label` y `appTooltip` (ADR-0012
+             §3), nunca un `<button>`, porque los dos llevan a una pantalla.
+             Van acá, junto al tema y Ajustes, y no junto a la campana: la
+             campana es la única que trae información que exige mirarla ya
+             (el comentario de arriba sigue siendo cierto para ella); Chats y
+             Tutoriales son destinos a los que se navega, como Ajustes, y el
+             badge de Chats es una invitación a entrar, no una alerta.
+             `app-nav-icon` en vez de un SVG en línea nuevo: ya está importado
+             en este componente para el menú lateral (`NavIcon`, L163/197/216)
+             y el catálogo de íconos ya tiene `teach` y `chat` — copiar el SVG
+             de Ajustes a mano habría duplicado un ícono que ya existe. -->
+        <a
+          class="app-header__ajustes"
+          routerLink="/tutorials"
+          data-testid="header-tutoriales"
+          appTooltip="Tutoriales"
+          appTooltipPosition="bottom"
+          aria-label="Tutoriales"
+        >
+          <app-nav-icon name="teach" />
+        </a>
+
+        <a
+          class="app-header__ajustes"
+          routerLink="/messaging"
+          data-testid="header-chats"
+          appTooltip="Chats"
+          appTooltipPosition="bottom"
+          [attr.aria-label]="etiquetaChats()"
+        >
+          <app-nav-icon name="chat" />
+          @if (chatsSinLeer() > 0) {
+            <!-- Sin «0» permanente, igual que la campana. Fuera del árbol
+                 accesible: el número ya viaja en el nombre del enlace. -->
+            <app-badge
+              class="app-header__chats-badge"
+              variant="error"
+              size="sm"
+              [value]="chatsSinLeer()"
+              aria-hidden="true"
+              data-testid="header-chats-badge"
+            />
+          }
+        </a>
 
         <!-- Ajustes. El tema es una preferencia entre varias —avisos, permisos
              del navegador— y las tres viven juntas en Ajustes; el interruptor

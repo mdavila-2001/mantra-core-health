@@ -4,6 +4,7 @@ import type { ThemeMode } from '../../../../core/tokens/design-tokens.types';
 import { ThemeService } from '../../../../core/tokens/theme.service';
 import { AppButton } from '../../atoms/button/button';
 import { Avatar } from '../../atoms/avatar/avatar';
+import { Tooltip } from '../../atoms/tooltip/tooltip';
 import { Menu } from '../../molecules/menu/menu';
 import { MenuItem } from '../../molecules/menu/menu-item/menu-item';
 import { MenuTrigger } from '../../molecules/menu/menu-trigger/menu-trigger';
@@ -33,7 +34,7 @@ import type { HeaderUser } from './header.types';
   // igual que `button[app-button]` y `a[app-link]`. Un `<app-header>` suelto
   // no es ningún landmark y obligaría a envolverlo en cada pantalla.
   selector: 'header[app-header]',
-  imports: [AppButton, Avatar, Menu, MenuItem, MenuTrigger, TenantSwitcher],
+  imports: [AppButton, Avatar, Menu, MenuItem, MenuTrigger, TenantSwitcher, Tooltip],
   templateUrl: './header.html',
   styleUrl: './header.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -261,7 +261,12 @@
   opacity: 0.72;
 }
 
-.profesional__item-encabezado {
+/* El encabezado de un hito de la línea de tiempo (`.trayecto__encabezado`) es
+   esta misma regla, letra por letra. Se declara una sola vez: dos copias se
+   ven iguales el primer día y se separan en el primer retoque a una de ellas.
+   Además, juntas pasaban el presupuesto de 12 kB del build por 29 bytes. */
+.profesional__item-encabezado,
+.trayecto__encabezado {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -277,7 +282,9 @@
   color: var(--text-secondary);
 }
 
-.profesional__item-fechas {
+/* Ídem: las fechas de un hito de la línea de tiempo son estas mismas. */
+.profesional__item-fechas,
+.trayecto__fechas {
   margin: 0;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
@@ -632,13 +639,6 @@
   padding-block-end: var(--sp-1);
 }
 
-.trayecto__encabezado {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
-}
-
 .trayecto__nombre {
   font-weight: 600;
   color: var(--text-primary);
@@ -648,15 +648,6 @@
    Es un dato del hito, no otro hito. */
 .trayecto__cargo {
   color: var(--text-secondary);
-}
-
-.trayecto__fechas {
-  margin: 0;
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--text-secondary);
-  /* Los meses abreviados llegan en minúscula del pipe de fecha. */
-  text-transform: capitalize;
 }
 
 /* «Retirar» va debajo y a la izquierda del cuerpo, no al lado del sello:
@@ -693,4 +684,16 @@
 
 .trayecto__nodo--unknown {
   --trayecto-color: var(--border-strong);
+}
+
+/* ─── El chip de telemedicina en la cabecera de la ficha propia ────────────
+   Vive acá y no en `ficha-de-perfil.css` a propósito: ese archivo lo comparte
+   literalmente la ficha del paciente —el cliente pidió que las dos se vean
+   igual—, y un paciente no atiende por telemedicina.
+
+   `justify-self: start` porque `.mi-perfil__rotulo` es una rejilla: sin esto
+   el chip se estira al ancho de la columna y deja de leerse como una
+   etiqueta. */
+.mi-perfil__modalidad {
+  justify-self: start;
 }

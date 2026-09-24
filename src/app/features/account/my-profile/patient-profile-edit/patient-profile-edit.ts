@@ -43,10 +43,13 @@ import { Card } from '../../../../shared/components/molecules/card/card';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import {
+  AVISO_REESCRIBIR_DIRECCION,
   UbicacionPicker,
   type Coordenadas,
   type IdsDePrueba,
 } from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
+import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
+import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { PESTANA, PESTANAS_DEL_PERFIL } from '../pestanas-del-perfil';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import {
@@ -134,6 +137,8 @@ function mismoDia(una: Date, otra: Date): boolean {
 @Component({
   selector: 'app-patient-profile-edit',
   imports: [
+    Alert,
+    AnnounceOnAppear,
     ReferenceCombobox,
     UbicacionPicker,
     AppButton,
@@ -290,6 +295,36 @@ export class PatientProfileEdit {
    */
   protected readonly gpsDomicilio = signal<Coordenadas | null | undefined>(undefined);
   protected readonly gpsTrabajo = signal<Coordenadas | null | undefined>(undefined);
+
+  /**
+   * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
+   *
+   * Un toque sobre el mapa deja el campo en blanco —el punto nuevo ya no es
+   * la calle que estaba escrita— y lo dice al lado del campo. El aviso
+   * acompaña al campo vacío, no a la persona: en cuanto vuelve a escribir, se
+   * va solo.
+   */
+  private readonly domicilioVaciadoPorElMapa = signal(false);
+  private readonly trabajoVaciadoPorElMapa = signal(false);
+  protected readonly domicilioPorReescribir = computed(
+    () => this.domicilioVaciadoPorElMapa() && this.domicilio().trim() === '',
+  );
+  protected readonly trabajoPorReescribir = computed(
+    () => this.trabajoVaciadoPorElMapa() && this.direccionTrabajo().trim() === '',
+  );
+  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
+
+  /** Tocaron el mapa del domicilio: la dirección escrita ya no vale (D-06). */
+  protected vaciarDomicilioPorElMapa(): void {
+    this.domicilio.set('');
+    this.domicilioVaciadoPorElMapa.set(true);
+  }
+
+  /** Lo mismo, para el trabajo. */
+  protected vaciarTrabajoPorElMapa(): void {
+    this.direccionTrabajo.set('');
+    this.trabajoVaciadoPorElMapa.set(true);
+  }
 
   /** El punto guardado que el selector muestra al abrir. */
   protected readonly gpsDomicilioGuardado = signal<Coordenadas | null>(null);
@@ -519,6 +554,8 @@ export class PatientProfileEdit {
     // anterior no puede seguir contando como cambio pendiente al releer.
     this.gpsDomicilio.set(undefined);
     this.gpsTrabajo.set(undefined);
+    this.domicilioVaciadoPorElMapa.set(false);
+    this.trabajoVaciadoPorElMapa.set(false);
 
     // Sin `emitEvent`: sembrar no es teclear, y el control ya queda validado.
     // El espejo se actualiza a mano, que es lo que ese evento haría. Se siembra

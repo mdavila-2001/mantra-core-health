@@ -17,6 +17,14 @@ export interface ConceptoSimulado {
   readonly valueSets: readonly string[];
   readonly selectable: boolean;
   readonly ordinal: number;
+  /**
+   * Lo que el sistema de codificación declara del concepto, por código
+   * (`concept_properties.property_code` en el modelo real). Ausente en la
+   * mayoría de los conceptos: sólo lo llevan quienes lo declaran con
+   * {@link declararPropiedades}. Espeja `ConceptDetail.properties` de
+   * `core/data-access/terminology/terminology.types.ts`.
+   */
+  readonly properties?: Readonly<Record<string, unknown>>;
 }
 
 export interface ConjuntoSimulado {
@@ -71,6 +79,21 @@ function definir(
     ids[code] = id;
   });
   return ids;
+}
+
+/**
+ * Agrega propiedades (`concept_properties`) a un concepto ya definido.
+ *
+ * Sólo se usa para lo que el `GET /terminology/concepts/:id` real declara
+ * como `properties: Record<string, unknown>` — un mapa `código -> value_json`
+ * que el modelo NO acota (`terminology.constants.ts` de la API: "tantas como
+ * haga falta, una por código"). No lanza si el código no existe: mejor una
+ * propiedad que no aparece que romper el arranque del catálogo.
+ */
+function declararPropiedades(code: string, propiedades: Readonly<Record<string, unknown>>): void {
+  const existente = registro.get(code);
+  if (existente === undefined) return;
+  registro.set(code, { ...existente, properties: { ...existente.properties, ...propiedades } });
 }
 
 /* ---- Bolivia: departamentos, municipios, ocupaciones, empleadores --------- */
@@ -441,12 +464,22 @@ export const CATEGORIA_PROFESIONAL = definir('VS_PRACTITIONER_CATEGORY', [
 ]);
 
 conjunto('VS_CREDENTIAL_TYPE', 'Tipos de credencial', 'Títulos y certificaciones.');
+/*
+ * Los rótulos son los que la API sirve en castellano, copiados de
+ * `src/common/seed/terminology-designations.es.ts` del backend. Hasta el
+ * 20/09/2026 la maqueta repetía el rótulo del **sistema de codificación**
+ * —«Academic degree credential», «Specialty degree credential»—, que está en
+ * inglés a propósito porque es el catálogo, no la interfaz: el perfil del
+ * profesional los mostraba así, en inglés, contra la regla 29. La designación
+ * en castellano existía en el catálogo desde siempre y es la que el cliente de
+ * terminología pide con `lang`.
+ */
 export const TIPO_CREDENCIAL = definir('VS_CREDENTIAL_TYPE', [
-  ['CREDENTIAL_TYPE_DEGREE', 'Academic degree credential'],
-  ['CREDENTIAL_TYPE_DIPLOMA', 'Diploma course credential'],
-  ['CREDENTIAL_TYPE_MASTER', "Master's degree credential"],
-  ['CREDENTIAL_TYPE_DOCTORATE', 'Doctorate degree credential'],
-  ['CREDENTIAL_TYPE_SPECIALTY', 'Specialty degree credential'],
+  ['CREDENTIAL_TYPE_DEGREE', 'Título universitario'],
+  ['CREDENTIAL_TYPE_DIPLOMA', 'Diplomado'],
+  ['CREDENTIAL_TYPE_MASTER', 'Maestría'],
+  ['CREDENTIAL_TYPE_DOCTORATE', 'Doctorado'],
+  ['CREDENTIAL_TYPE_SPECIALTY', 'Título de especialidad'],
 ], 0);
 
 conjunto('VS_JURISDICTION', 'Jurisdicciones', 'Ámbito de la matrícula.');
@@ -899,6 +932,48 @@ export const MEDICAMENTO = definir('VS_MEDICATION', [
   ['MED-CIPROFLOXACINO', 'Ciprofloxacino 500 mg comprimidos', 'Antibiótico quinolona.'],
   ['MED-INSULINA-NPH', 'Insulina NPH 100 UI/ml', 'Insulina de acción intermedia.'],
 ]);
+
+/**
+ * Frecuencia por defecto del medicamento (C-20 / H4, reparto de Ender 2026-09-20).
+ *
+ * `property_code: 'default_frequency'` es una **extensión declarada del
+ * simulador** (regla 65): el vademécum real
+ * (`mantra-core-health-api/src/common/seed/data/vademecum/vademecum.dataset.json`)
+ * sólo publica `dose_forms`, `strengths`, `routes`, `therapeutic_class` y
+ * `atc_route_variants` — cero apariciones de `frequency`, verificado con
+ * `git grep -n "dose_forms\|strengths\|therapeutic_class" origin/dev` sobre
+ * `mantra-core-health-api` el 2026-09-20/21. La clave se acordó con Justin
+ * (que la consume en `patient-chart/medication-block/**`) para su H4.
+ *
+ * Mismo camino que B-13 (`mantra-core-health-api/REGISTRO-DEFECTOS.md:101`):
+ * **dato de desarrollo sin fuente autoritativa, no apto para uso clínico ni
+ * producción.** Quién debe proveer la posología real —negocio + un
+ * profesional prescriptor, nunca quien escribe el simulador— queda registrado
+ * como Q-D6 en `docs/trabajo/2026-09-20-ender-contratos-panel/PLAN.md`.
+ *
+ * Deliberadamente en ALGUNOS medicamentos y no en todos (H4.S3.M1): la ficha
+ * de un medicamento sin esta propiedad tiene que seguir andando en la receta.
+ * `MED-INSULINA-NPH` la lleva con un `value_json` del tipo equivocado (un
+ * número en vez de texto) a propósito, para ejercitar el caso inválido de
+ * H4.S3.M2 sin inventar un medicamento que no exista en el catálogo.
+ */
+declararPropiedades('MED-PARACETAMOL', {
+  default_frequency: 'Cada 8 horas — dato sintético de desarrollo, no apto para uso clínico',
+});
+declararPropiedades('MED-IBUPROFENO', {
+  default_frequency: 'Cada 8 horas — dato sintético de desarrollo, no apto para uso clínico',
+});
+declararPropiedades('MED-OMEPRAZOL', {
+  default_frequency: 'Una vez al día — dato sintético de desarrollo, no apto para uso clínico',
+});
+declararPropiedades('MED-AMOXICILINA', {
+  default_frequency: 'Cada 8 horas — dato sintético de desarrollo, no apto para uso clínico',
+});
+declararPropiedades('MED-METFORMINA', {
+  default_frequency: 'Cada 12 horas — dato sintético de desarrollo, no apto para uso clínico',
+});
+// `value_json` mal formado a propósito (número, no texto): ver el comentario de arriba.
+declararPropiedades('MED-INSULINA-NPH', { default_frequency: 42 });
 
 /* ---- organizaciones ------------------------------------------------------ */
 

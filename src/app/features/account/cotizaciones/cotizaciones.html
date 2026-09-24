@@ -1,0 +1,166 @@
+<app-page-header
+  title="Cotizaciones"
+  subtitle="Compará dónde conseguirlo y cuánto cuesta. Si un precio no está publicado, te lo decimos: no lo inventamos."
+/>
+
+<main class="cotizaciones" aria-label="Cotizaciones del paciente">
+  <section class="cotizaciones__controles" aria-label="Qué buscar y cómo ordenar">
+    <app-search-field
+      class="cotizaciones__busqueda"
+      data-testid="cotizaciones-busqueda"
+      label="Qué querés cotizar"
+      placeholder="Paracetamol, hemograma, consulta…"
+      [value]="termino()"
+      [loading]="buscando()"
+      (searched)="buscar($event)"
+    />
+
+    <app-form-field label="Vertical" class="cotizaciones__campo">
+      <app-select
+        data-testid="cotizaciones-vertical"
+        [options]="opcionesDeVertical"
+        [value]="vertical()"
+        (valueChange)="cambiarVertical($event)"
+      />
+    </app-form-field>
+
+    <app-form-field label="Ordenar por" class="cotizaciones__campo">
+      <app-select
+        data-testid="cotizaciones-orden"
+        [options]="opcionesDeOrden"
+        [value]="orden()"
+        (valueChange)="cambiarOrden($event)"
+      />
+    </app-form-field>
+
+    <!-- El origen de la distancia: el mismo selector que «Lugares cercanos»
+         (casa / trabajo / ubicación actual). Cambiarlo recalcula. -->
+    <div class="cotizaciones__origen" data-testid="cotizaciones-origen">
+      <app-search-origin-picker
+        [places]="lugaresGuardados()"
+        [origin]="origen()"
+        (originChange)="origen.set($event)"
+      />
+    </div>
+  </section>
+
+  @if (!terminoValido()) {
+    <app-empty-state
+      data-testid="cotizaciones-sin-termino"
+      title="Escribí qué querés cotizar"
+      description="Un medicamento, un análisis, un estudio de imagen o una consulta. Buscamos en las farmacias, los centros de diagnóstico y el arancel de referencia."
+    />
+  } @else if (faltaOrigen()) {
+    <app-empty-state
+      data-testid="cotizaciones-sin-ubicacion"
+      title="Elegí desde dónde medir la distancia"
+      description="Para ordenar por cercanía necesitamos un punto de partida: tu casa, tu trabajo o tu ubicación actual, en el selector de arriba."
+    >
+      <button
+        app-button
+        empty-actions
+        type="button"
+        variant="secondary"
+        (clicked)="ordenarPorPrecio()"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M3 6h13M3 12h9M3 18h5" />
+          <path d="M18 9v12M15 18l3 3 3-3" />
+        </svg>
+        Ordenar por precio
+      </button>
+    </app-empty-state>
+  } @else {
+    @if (fuentesCaidas() !== '') {
+      <app-alert
+        tone="warning"
+        title="Una parte no respondió"
+        data-testid="cotizaciones-fuente-caida"
+      >
+        No pudimos consultar: {{ fuentesCaidas() }}. Te mostramos el resto.
+      </app-alert>
+    }
+
+    <!-- Alto máximo y scroll vertical, sin scroll lateral (ADR-0015); la
+         paginación es en cliente porque la lista ya está entera en memoria. -->
+    @if (buscando()) {
+      <p class="cotizaciones__buscando" role="status">Buscando cotizaciones…</p>
+    }
+
+    <app-data-table
+      data-testid="cotizaciones-resultados"
+      [state]="estadoTabla()"
+      [columns]="columnas()"
+      [trackBy]="porId"
+      [rowLabel]="nombreAccesible"
+      caption="Cotizaciones encontradas"
+      maxHeight="560px"
+      (retry)="reintentar()"
+    />
+
+    @if (resultados().length > 0) {
+      <app-pagination
+        [totalItems]="resultados().length"
+        [(page)]="pagina"
+        [(pageSize)]="tamanoPagina"
+      />
+    }
+  }
+</main>
+
+<ng-template #celdaQue let-fila>
+  <span class="cotizaciones__que">{{ fila.que }}</span>
+  <span class="cotizaciones__vertical">{{ etiquetaDeVertical(fila) }}</span>
+  @if (fila.advertencia) {
+    <span class="cotizaciones__advertencia">{{ fila.advertencia }}</span>
+  }
+</ng-template>
+
+<ng-template #celdaPrecio let-fila>
+  <!-- La procedencia viaja en el `title` y también en texto: un tooltip solo
+       no lo alcanza quien navega con el teclado o con lector. -->
+  <span
+    class="cotizaciones__precio"
+    [class.cotizaciones__precio--no-publicado]="fila.price === null"
+    [attr.title]="procedenciaDe(fila)"
+  >
+    {{ precioDe(fila) }}
+  </span>
+  <span class="cotizaciones__procedencia">{{ procedenciaDe(fila) }}</span>
+</ng-template>
+
+<ng-template #celdaDistancia let-fila>
+  <span
+    class="cotizaciones__distancia"
+    [class.cotizaciones__distancia--sin]="fila.distanceKm === null"
+  >
+    {{ distanciaDe(fila) }}
+  </span>
+</ng-template>
+
+<ng-template #celdaAccion let-fila>
+  @if (fila.accion; as accion) {
+    <a app-link class="cotizaciones__accion" [routerLink]="accion.ruta">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M5 12h14M13 6l6 6-6 6" />
+      </svg>
+      {{ accion.etiqueta }}
+    </a>
+  }
+</ng-template>

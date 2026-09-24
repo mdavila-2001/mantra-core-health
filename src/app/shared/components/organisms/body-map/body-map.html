@@ -1,0 +1,114 @@
+<!-- Sin zonas no hay silueta: las formas están, pero sin `id` no hay nada que
+     elegir, y un dibujo que no se puede pulsar es peor que su ausencia. -->
+@if (vista(); as actual) {
+  <div class="body-map">
+    <!-- Con una sola vista no hay nada que elegir: el selector sobra. -->
+    @if (opcionesDeVista().length > 1) {
+      <app-segmented-control
+        class="body-map__vistas"
+        ariaLabel="Cómo mirar el cuerpo"
+        [options]="opcionesDeVista()"
+        [value]="actual.vista.id"
+        (valueChange)="cambiarVista($event)"
+      />
+    }
+
+    <!-- El escenario: un fondo apenas más claro al centro y una sombra de
+         piso. Es lo que hace que la figura se lea como una persona parada y no
+         como un recorte pegado sobre la página. -->
+    <div class="body-map__escenario" [class.body-map__escenario--cara]="actual.vista.id === 'cara'">
+      <!-- Qué se va a tocar, antes de tocarlo. Es una ayuda para el puntero:
+           con teclado o lector de pantalla el nombre ya llega por el
+           `aria-label` de cada zona, así que acá no se anuncia. -->
+      @if (nombreApuntado(); as apuntada) {
+        <span class="body-map__pista" aria-hidden="true">{{ apuntada }}</span>
+      }
+
+      <svg
+        class="body-map__lienzo"
+        [class.body-map__lienzo--cara]="actual.vista.id === 'cara'"
+        [attr.viewBox]="actual.vista.viewBox"
+        role="group"
+        [attr.aria-label]="etiqueta() + ' (' + actual.vista.nombre + ')'"
+        [attr.data-testid]="testId() + '-vista-' + actual.vista.id"
+        focusable="false"
+      >
+        <!-- El volumen: más oscuro en los costados que al centro, como un
+             cilindro iluminado de frente. Los colores salen de tokens (ver la
+             hoja); el `id` es por instancia para que dos siluetas en la misma
+             página no se pisen el degradado. -->
+        <defs>
+          <linearGradient [attr.id]="idDelVolumen" x1="0" y1="0" x2="1" y2="0">
+            <stop class="body-map__volumen-borde" offset="0" />
+            <stop class="body-map__volumen-centro" offset="0.5" />
+            <stop class="body-map__volumen-borde" offset="1" />
+          </linearGradient>
+        </defs>
+
+        <!-- El contorno entero va debajo: es lo que hace que la figura se lea
+             como una persona aunque falte alguna zona, y le da el borde exterior
+             parejo que las zonas, cortadas entre sí, no tienen. -->
+        <path
+          class="body-map__contorno"
+          [attr.d]="actual.vista.contorno"
+          [attr.fill]="'url(#' + idDelVolumen + ')'"
+          aria-hidden="true"
+        />
+
+        @for (zona of actual.zonas; track zona.id) {
+          <g
+            class="body-map__zona"
+            [class.body-map__zona--elegida]="zona.id === value()"
+            [class.body-map__zona--marcada]="estaMarcada(zona.id)"
+          >
+            <!-- El `role="button"` y el `tabindex` son lo que convierte un dibujo
+                 en un control: sin ellos la silueta sería un adorno que sólo
+                 funciona con el dedo. El nombre accesible es el completo
+                 («Pecho y respiración»), y si lo contado la nombra, lo dice. -->
+            <path
+              class="body-map__forma"
+              role="button"
+              tabindex="0"
+              [attr.d]="zona.d"
+              [attr.aria-pressed]="zona.id === value()"
+              [attr.aria-label]="nombreAccesible(zona)"
+              [attr.data-testid]="testId() + '-' + zona.id"
+              (click)="elegir(zona)"
+              (keydown.enter)="elegir(zona)"
+              (keydown.space)="elegirConBarra($event, zona)"
+              (pointerenter)="apuntar(zona.id)"
+              (pointerleave)="apuntar(null)"
+              (focus)="apuntar(zona.id)"
+              (blur)="apuntar(null)"
+            />
+          </g>
+        }
+
+        <!-- Clavículas, columna, rasgos de la cara: ayudan a leer la figura y
+             no se pulsan (el clic pasa a la zona de abajo). -->
+        <path class="body-map__detalles" [attr.d]="actual.vista.detalles" aria-hidden="true" />
+      </svg>
+    </div>
+
+    <!-- La tercera señal de lo elegido, además del relleno y del trazo: en
+         palabras. Es la que sirve cuando no se distinguen los colores y la que
+         un lector de pantalla anuncia al cambiar. -->
+    <p class="body-map__elegida" aria-live="polite" [attr.data-testid]="testId() + '-elegida'">
+      @if (nombreElegido(); as nombre) {
+        Zona elegida: <strong>{{ nombre }}</strong>
+      } @else {
+        Tocá una parte del cuerpo.
+      }
+    </p>
+
+    <!-- Lo que se ilumina por lo que la persona escribió o dictó, dicho en
+         palabras: el color solo no alcanza, y además nombra las zonas que no
+         entran en la vista puesta (los glúteos cuando se mira de frente). -->
+    @if (nombresMarcados(); as marcados) {
+      <p class="body-map__marcadas" aria-live="polite" [attr.data-testid]="testId() + '-marcadas'">
+        <span class="body-map__marca" aria-hidden="true"></span>
+        Por lo que contaste: <strong>{{ marcados }}</strong>
+      </p>
+    }
+  </div>
+}

@@ -1,0 +1,5 @@
+
+Running 4 tests using 1 worker
+
+  x  1 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:50:7 › Expediente · política de descarte del alta › el alta de Documentos pregunta antes de descartar lo escrito, por los tres caminos (5.2m)
+  x  2 [chromium] › playwright\expediente-dialogo-descarte.spec.ts:121:7 › Expediente · política de descarte del alta › el detalle de lectura nunca pregunta (5.1m)

@@ -50,12 +50,17 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import {
+  MENSAJE_CONTRASENA_CORTA,
+  validadoresDeContrasena,
+} from '../registro-compartido/politica-de-contrasena';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import type {
   CampoDeFormulario,
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
+import { AVISO_REESCRIBIR_DIRECCION } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
 import { InsuranceClient } from '../../../core/data-access/insurance/insurance.client';
 import type { CarrierCatalogEntry } from '../../../core/data-access/insurance/insurance.types';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
@@ -79,7 +84,6 @@ function fechaIso(fecha: Date): string {
 }
 
 /** Mínimos que exigen los DTO del backend. */
-const MIN_PASSWORD = 8;
 const MIN_DOCUMENTO = 4;
 
 /** Sólo letras, dígitos, punto y guion — el mismo `@Matches` del backend. */
@@ -524,7 +528,7 @@ export class RegisterPatient {
       motherLastName: new FormControl('', { nonNullable: true }),
       password: new FormControl('', {
         nonNullable: true,
-        validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
+        validators: [...validadoresDeContrasena],
       }),
       // **Obligatorio desde la TAREA 03 (AC-03-3).** Invierte una decisión
       // escrita: el correo era opcional a propósito —«podés entrar sin él, con
@@ -935,6 +939,32 @@ export class RegisterPatient {
   /** La pista de que tocar el mapa corre el pin. Ver la constante. */
   protected readonly avisoMoverPin = AVISO_MOVER_PIN;
 
+  /**
+   * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
+   *
+   * Es la misma regla que `app-ubicacion-picker` avisa con `puntoElegido`,
+   * aplicada a las dos copias en línea de esta pantalla: tocar el mapa deja
+   * «Línea de dirección 1» en blanco y lo dice al lado. El aviso acompaña al
+   * campo vacío, no a la persona: en cuanto vuelve a escribir, se va solo.
+   */
+  private readonly domicilioVaciadoPorElMapa = signal(false);
+  private readonly trabajoVaciadoPorElMapa = signal(false);
+  private readonly domicilioEscrito = toSignal(
+    this.formPaciente.controls.homeAddressLines.valueChanges,
+    { initialValue: '' },
+  );
+  private readonly trabajoEscrito = toSignal(
+    this.formPaciente.controls.workAddressLines.valueChanges,
+    { initialValue: '' },
+  );
+  readonly domicilioPorReescribir = computed(
+    () => this.domicilioVaciadoPorElMapa() && this.domicilioEscrito().trim() === '',
+  );
+  readonly trabajoPorReescribir = computed(
+    () => this.trabajoVaciadoPorElMapa() && this.trabajoEscrito().trim() === '',
+  );
+  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
+
   /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
   private readonly departamentos = inject(BoDepartmentsCatalog);
   readonly opcionesDepartamento = signal<readonly SelectOption<string>[]>([]);
@@ -1317,7 +1347,7 @@ export class RegisterPatient {
             placeholder: 'Tu contraseña',
             testId: 'registro-password',
             icono: 'lock',
-            mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
+            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
           },
         ],
       },
@@ -1931,11 +1961,17 @@ export class RegisterPatient {
    */
   fijarPuntoDomicilio(punto: Coordenadas): void {
     this.fijarPunto(this.destinoDomicilio, punto);
+    // D-06: el punto nuevo ya no es la calle que estaba escrita. Se vacía «en
+    // nombre del formulario», igual que al sembrar: no lo tecleó la persona.
+    this.escribirDireccionSembrada(this.formPaciente.controls.homeAddressLines, '');
+    this.domicilioVaciadoPorElMapa.set(true);
   }
 
   /** Lo mismo, para el trabajo. */
   fijarPuntoDeTrabajo(punto: Coordenadas): void {
     this.fijarPunto(this.destinoTrabajo, punto);
+    this.escribirDireccionSembrada(this.formPaciente.controls.workAddressLines, '');
+    this.trabajoVaciadoPorElMapa.set(true);
   }
 
   /** Las seis señales del domicilio, con el nombre que espera {@link pedirUbicacion}. */

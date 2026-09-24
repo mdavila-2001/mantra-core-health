@@ -1,0 +1,68 @@
+Corrección post-merge de H2 (2026-09-21) — reconciliación con una sesión paralela
+
+Otra sesión trabajó el mismo reparto de Ender en paralelo y publicó su propia revisión en
+AlovidaPromptManager (PR #18, "docs(ender): los contratos de H2, H3 y H4 que Pablo y Justin
+estaban esperando"). Antes de aplicar nada de lo que proponía, cada afirmación se verificó de
+nuevo contra `mantra-core-health-api` @ c2c071a4 (regla 00: "leer el código nunca cuenta como
+verificación", y tampoco alcanza con leer la afirmación de otra sesión sin volver a la fuente).
+
+CONFIRMADO Y CORREGIDO acá (2 hallazgos reales que se me habían pasado):
+
+1. `requiresText` estaba en `true` también para ABSENCE, CONFERENCE y ERRAND. El contrato real
+   declara un único motivo que exige texto:
+     scheduling-catalog.service.ts:163  const MOTIVO_QUE_EXIGE_TEXTO: ExceptionType = 'OTHER';
+     scheduling-catalog.service.ts:1245 requiresText: type === MOTIVO_QUE_EXIGE_TEXTO,
+   Corregido: sólo OTHER exige `reason`. Antes, un formulario que sólo manda `reason` cuando el
+   usuario escribió algo (el patrón correcto) podía dar 201 contra la API real y un rechazo
+   inventado contra la maqueta — el error simétrico de "más permisivo que la API", en el sentido
+   opuesto.
+
+2. `exceptionType` inválido devolvía 422 (`validation()`); el contrato real lo valida a nivel de
+   DTO con `@IsIn(EXCEPTION_TYPES)` (scheduling-catalog.dto.ts:754) y el `ValidationPipe` global
+   de la API (sin `exceptionFactory` propio, main.ts:158-165) devuelve **400** para eso, no 422.
+   Corregido en POST y PATCH.
+
+AGREGADO (validación que faltaba por completo, no la tenía ninguna de las dos sesiones
+verificada hasta ahora):
+
+3. OTHER sin `reason` (o con `reason` sólo espacios) ahora se rechaza con 422 — es una
+   precondición de negocio en la API real (`PreconditionFailedException` en
+   scheduling-catalog.service.ts:1262/1738, que en este proyecto es 422, no 412 —
+   domain.exception.ts:106-118), no una validación de forma. Antes se aceptaba con texto vacío.
+
+VERIFICADO Y NO ADOPTADO — la otra sesión proponía dos cambios que la evidencia real contradice:
+
+4. Proponían derivar `isAvailable` de `exceptionType` (EXTRA → `isAvailable: true` automático).
+   Verificado en la API real: `scheduling-catalog.service.ts:1299` —
+   `const isAvailable = dto.isAvailable ?? false;` — sin ninguna rama que lo derive del tipo.
+   `blocks: type !== 'EXTRA'` (línea 1249) es sólo la etiqueta informativa del catálogo
+   (`GET /scheduling/exception-types`), no determina el `isAvailable` de una excepción concreta.
+   Adoptar su cambio habría hecho el simulador MÁS permisivo que la API real (abriría
+   disponibilidad sin que el cliente lo pida), exactamente el defecto que ambas sesiones
+   veníamos corrigiendo. No se tocó: `isAvailable` sigue viniendo del cuerpo del pedido.
+   Test nuevo que lo fija: "isAvailable es del cuerpo del pedido, no se deriva del tipo".
+
+5. Proponían que la duración configurable de la visita del visitador (H3) "no existe en ningún
+   contrato real" (su `git grep` de `visitDuration|duracion.*visit|visit.*duration` da cero).
+   Ya verificado esta noche con evidencia directa de archivo — `doctor_visit_policies.entity.ts`
+   y `doctor_visit_windows.entity.ts` SÍ tienen `maxDurationMinutes`/`slotDurationMinutes` en
+   `c2c071a4` — y re-confirmado ahora: su patrón de búsqueda no incluye el nombre real del campo
+   (que no contiene "duracion" ni la secuencia "visit"+"duration"), por eso su grep no lo
+   encontró. No se cambia nada de H3: el campo `maxDurationMinutes` que ya usa el simulador es
+   el correcto.
+
+$ yarn test --include=.../scheduling.handlers.spec.ts --include=.../mock-backend.spec.ts
+ Test Files  2 passed (2)
+      Tests  32 passed (32)   (eran 29; +3 tests nuevos: OTHER sin reason, ABSENCE/CONFERENCE/
+                                ERRAND sin reason, isAvailable no se deriva del tipo)
+
+$ yarn typecheck
+(sin salida — exit 0)
+
+$ yarn lint
+(sin salida — exit 0)
+
+No se tocó H4 (properties/default_frequency): la otra sesión implementó su propia versión
+(mismo nombre de clave, `default_frequency`, convergencia independiente) pero su código todavía
+no se publicó como PR contra `mockup` — no hay conflicto real en el producto todavía, sólo en la
+documentación de AlovidaPromptManager, que se reconcilia aparte.

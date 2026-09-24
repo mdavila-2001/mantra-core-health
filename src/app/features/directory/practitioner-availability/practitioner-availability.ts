@@ -21,6 +21,7 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { Spinner } from '../../../shared/components/atoms/spinner/spinner';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
@@ -40,16 +41,22 @@ const SEMANAS_ADELANTE = 2;
  */
 const HORIZONTE_PROXIMO_MS = 60 * UN_DIA_MS;
 
+/**
+ * El tope de filas que acepta `GET /scheduling/slots` (`AGENDA_MAX_LIMIT` de la
+ * API). La lectura única por sede cubre la semana visible **y** el horizonte del
+ * próximo hueco; como la API devuelve los cupos ordenados por inicio, los de la
+ * semana visible llegan primero y el tope sólo puede recortar el horizonte.
+ */
+const TOPE_DE_CUPOS = 500;
+
 /** Las dos formas de `resourceRefType` que apuntan a un perfil profesional. */
 const TABLAS_DE_PERFIL_PROFESIONAL: readonly string[] = [
   'practitioner_profiles',
   'health_practitioner_profiles',
 ];
 
-/** Una sede con sus cupos de la semana visible. */
-interface SedeConCupos {
-  /** El recurso agendable, que es lo que en pantalla se llama «sede». */
-  readonly recurso: AgendaResource;
+/** Los cupos de una sede para la semana visible. */
+interface CuposDeSede {
   /** Los cupos libres de la semana visible, en orden. */
   readonly cupos: readonly AgendaSlot[];
   /**
@@ -59,6 +66,19 @@ interface SedeConCupos {
    * ninguno en el horizonte.
    */
   readonly proximo: AgendaSlot | null;
+}
+
+/**
+ * Una sede con el estado de su propia lectura (H2.S2.M4).
+ *
+ * Cada sede carga por separado: la que respondió ya muestra sus cupos mientras
+ * otra sigue «Buscando turnos…», en vez de esperar a la más lenta.
+ */
+interface SedeConCupos {
+  /** El recurso agendable, que es lo que en pantalla se llama «sede». */
+  readonly recurso: AgendaResource;
+  /** El estado de la lectura de cupos de esta sede. */
+  readonly cupos: ViewState<CuposDeSede>;
 }
 
 /**
@@ -78,12 +98,17 @@ interface SedeConCupos {
  * Eso es exactamente una sede a los fines de esta pantalla, y por eso el
  * componente pide los recursos del profesional y no las sedes de una práctica.
  *
- * ## Por qué el «próximo hueco» se busca aparte
+ * ## Una lectura por sede, y el «próximo hueco» sale de la misma (R-02)
  *
- * Porque sólo hace falta cuando la semana visible está vacía, que es
- * justamente cuando la persona se queda sin saber qué hacer. Pedirlo siempre
- * sería una segunda consulta por sede en el caso normal —el que sí tiene
- * huecos— para un dato que no se muestra.
+ * `GET /scheduling/slots` no admite filtro por profesional ni varios
+ * `resourceId` (Q-J3: la API y el doble aceptan uno solo), así que la unidad
+ * mínima es una lectura **por sede**, y las de todas las sedes salen en
+ * paralelo. Antes, con la semana vacía, cada sede hacía una segunda lectura
+ * **después** de la primera para buscar el próximo hueco: hasta 2N peticiones y
+ * dos esperas en serie. Ahora la única lectura cubre la semana visible más el
+ * horizonte del próximo hueco (67 días, dentro de los 92 que admite la API): los
+ * cupos anteriores al fin de semana son los de la grilla, y el primero posterior
+ * sólo se usa cuando la grilla quedó vacía.
  *
  * ## Sin sesión
  *
@@ -93,7 +118,7 @@ interface SedeConCupos {
  */
 @Component({
   selector: 'app-practitioner-availability',
-  imports: [AppButton, Card, DatePipe, EmptyState, ViewStateHost],
+  imports: [AppButton, Card, DatePipe, EmptyState, Spinner, ViewStateHost],
   templateUrl: './practitioner-availability.html',
   styleUrl: './practitioner-availability.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -114,12 +139,21 @@ export class PractitionerAvailability {
   /** Cuántas semanas hacia adelante respecto de la actual. */
   protected readonly semana = signal(0);
 
+  /** El cupo cuya navegación a reserva sigue en curso, si hay uno. */
+  protected readonly reservaPendienteId = signal<string | null>(null);
+
   protected readonly haySesion = computed(() => this.auth.isAuthenticated());
 
   protected readonly sedes = computed<readonly SedeConCupos[]>(() => {
     const actual = this.estado();
     return actual.status === 'ready' ? actual.data : [];
   });
+
+  /**
+   * El número de la carga vigente. Cambiar de semana rápido deja lecturas en
+   * vuelo: la que vuelve tarde no puede pisar la grilla de la semana nueva.
+   */
+  private cargaVigente = 0;
 
   /** Lunes de la semana visible, a medianoche. */
   protected readonly desde = computed(() => {
@@ -188,17 +222,25 @@ export class PractitionerAvailability {
    * `appointments.routes` documenta: no existe `GET /scheduling/slots/:id`.
    */
   protected reservar(sede: SedeConCupos, cupo: AgendaSlot): void {
-    void this.router.navigate([reservaDelPortalRoute(cupo.id)], {
-      queryParams: {
-        recurso: sede.recurso.id,
-        desde: cupo.startAt.toISOString(),
-        hasta: cupo.endAt.toISOString(),
-      },
-    });
+    if (this.reservaPendienteId() !== null) {
+      return;
+    }
+    this.reservaPendienteId.set(cupo.id);
+    void this.router
+      .navigate([reservaDelPortalRoute(cupo.id)], {
+        queryParams: {
+          recurso: sede.recurso.id,
+          desde: cupo.startAt.toISOString(),
+          hasta: cupo.endAt.toISOString(),
+        },
+      })
+      .finally(() => this.reservaPendienteId.set(null));
   }
 
   private async cargar(profileId: string, tenantId: string): Promise<void> {
+    const carga = ++this.cargaVigente;
     this.estado.set(loading());
+    let suyos: readonly AgendaResource[];
     try {
       const pagina = await this.esperar(this.scheduling.listResources({ tenantId }));
 
@@ -207,51 +249,81 @@ export class PractitionerAvailability {
       // `resourceRefId`: pedirlo sería agregar un parámetro a la API para
       // ahorrarse un `filter` sobre una lista que ya es del tamaño de una
       // organización.
-      const suyos = pagina.items.filter(
+      suyos = pagina.items.filter(
         (recurso) =>
           TABLAS_DE_PERFIL_PROFESIONAL.includes(recurso.resourceRefType) &&
           recurso.resourceRefId === profileId,
       );
-
-      const sedes = await Promise.all(suyos.map((recurso) => this.cuposDe(recurso)));
-      this.estado.set(ready(sedes));
     } catch (error) {
-      this.estado.set(errorToViewState<readonly SedeConCupos[]>(error));
+      if (carga === this.cargaVigente) {
+        this.estado.set(errorToViewState<readonly SedeConCupos[]>(error));
+      }
+      return;
+    }
+    if (carga !== this.cargaVigente) return;
+
+    // Las sedes se muestran ya, cada una con su propia carga: la que responde
+    // primero no espera a la más lenta.
+    this.estado.set(ready(suyos.map((recurso) => ({ recurso, cupos: loading() }))));
+    await Promise.all(suyos.map((recurso) => this.cargarSede(recurso, carga)));
+  }
+
+  /** Los cupos de una sede, si su lectura ya volvió bien. */
+  protected datosDe(sede: SedeConCupos): CuposDeSede | null {
+    return sede.cupos.status === 'ready' ? sede.cupos.data : null;
+  }
+
+  /** Vuelve a leer una sola sede, la que falló. */
+  protected reintentarSede(recurso: AgendaResource): void {
+    this.ponerCupos(recurso.id, loading(), this.cargaVigente);
+    void this.cargarSede(recurso, this.cargaVigente);
+  }
+
+  private async cargarSede(recurso: AgendaResource, carga: number): Promise<void> {
+    try {
+      const cupos = await this.cuposDe(recurso);
+      this.ponerCupos(recurso.id, ready(cupos), carga);
+    } catch (error) {
+      this.ponerCupos(recurso.id, errorToViewState<CuposDeSede>(error), carga);
     }
   }
 
-  private async cuposDe(recurso: AgendaResource): Promise<SedeConCupos> {
+  private ponerCupos(recursoId: string, cupos: ViewState<CuposDeSede>, carga: number): void {
+    if (carga !== this.cargaVigente) return;
+    this.estado.update((actual) =>
+      actual.status === 'ready'
+        ? ready(
+            actual.data.map((sede) => (sede.recurso.id === recursoId ? { ...sede, cupos } : sede)),
+          )
+        : actual,
+    );
+  }
+
+  private async cuposDe(recurso: AgendaResource): Promise<CuposDeSede> {
     const ahora = new Date();
     // Nunca antes de ahora: un cupo de esta mañana ya pasó, y ofrecerlo sólo
     // sirve para que la reserva lo rechace.
     const desde = new Date(Math.max(this.desde().getTime(), ahora.getTime()));
+    const finDeSemana = this.hasta().getTime();
 
     const pagina = await this.esperar(
       this.scheduling.listSlots({
         resourceId: recurso.id,
         from: desde,
-        to: this.hasta(),
+        to: new Date(finDeSemana + HORIZONTE_PROXIMO_MS),
         onlyAvailable: true,
+        limit: TOPE_DE_CUPOS,
       }),
     );
 
-    if (pagina.items.length > 0) {
-      return { recurso, cupos: pagina.items, proximo: null };
+    const cupos = pagina.items.filter((cupo) => cupo.startAt.getTime() < finDeSemana);
+    if (cupos.length > 0) {
+      return { cupos, proximo: null };
     }
-
-    // Sólo con la semana vacía se pregunta por el próximo: es el caso en que la
+    // Sólo con la semana vacía se ofrece el próximo: es el caso en que la
     // persona se queda sin saber qué hacer.
-    const siguiente = await this.esperar(
-      this.scheduling.listSlots({
-        resourceId: recurso.id,
-        from: this.hasta(),
-        to: new Date(this.hasta().getTime() + HORIZONTE_PROXIMO_MS),
-        onlyAvailable: true,
-        limit: 1,
-      }),
-    );
-
-    return { recurso, cupos: [], proximo: siguiente.items[0] ?? null };
+    const proximo = pagina.items.find((cupo) => cupo.startAt.getTime() >= finDeSemana) ?? null;
+    return { cupos: [], proximo };
   }
 
   /**

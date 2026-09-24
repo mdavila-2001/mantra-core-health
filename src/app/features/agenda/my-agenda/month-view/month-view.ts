@@ -22,6 +22,13 @@ import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { nextControlId } from '@shared/forms/form-control.context';
 import type { EstadoResuelto } from '../day-view/day-view';
 import {
+  toBookingStatusPresentation,
+  type BookingStatusPresentation,
+} from '../../booking-status';
+import { pacienteDeLaCita } from '../detalle-de-la-cita';
+import type { ValueSetOption } from '../../../../core/data-access/terminology/terminology.types';
+import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
+import {
   claveDelDia,
   DIAS_DE_LA_SEMANA,
   fechaLarga,
@@ -54,6 +61,11 @@ export interface CeldaDelMes {
   readonly reservados: number;
   /** Turnos publicados ese día. */
   readonly total: number;
+  /**
+   * Lo que la celda muestra: los turnos que quedan por ofrecer. `null` cuando
+   * no hay nada que contar — sin agenda, bloqueado o un día que ya pasó.
+   */
+  readonly disponibles: number | null;
   /** El motivo del bloqueo, cuando lo hay. */
   readonly motivo: string | null;
   /** Cómo se anuncia la celda entera a un lector de pantalla. */
@@ -89,8 +101,21 @@ export interface DayDetailRow {
   readonly time: string;
   /** El paciente (citas) o cuántos lugares quedan (disponibles). */
   readonly primary: string;
-  /** El estado de la cita, cuando está resuelto. */
+  /** Una segunda línea, cuando la fila la tiene. Los cupos la usan. */
   readonly secondary: string | null;
+  /**
+   * El estado de la cita como CHIP — C-08 (2026-09-20).
+   *
+   * Antes este dato era `secondary: etiquetas.get(...).display`, o sea el
+   * `display` del catálogo, **que viene en inglés**: el globo del mes anunciaba
+   * «Booking in progress» sobre una cita en curso. `booking-status.ts` ya
+   * resuelve las tres formas que la identidad exige —color, silueta y palabra
+   * en castellano— y era el único lugar de la agenda que no lo usaba.
+   *
+   * `null` en las filas que no son citas: un cupo libre no tiene estado de
+   * cita, y ponerle uno neutro sería inventar información.
+   */
+  readonly estado: BookingStatusPresentation | null;
 }
 
 /**
@@ -115,13 +140,13 @@ export interface DayDetailRow {
  * ## El color nunca solo
  *
  * Cada celda lleva su número visible y una etiqueta accesible completa
- * («martes 8: seis de ocho turnos reservados»). Un mes que sólo se entienda por
+ * («martes 8: 2 turnos disponibles»). Un mes que sólo se entienda por
  * el tono no lo entiende nadie con baja visión — ni nadie mirando el teléfono
  * al sol.
  */
 @Component({
   selector: 'app-month-view',
-  imports: [AppButton, NgTemplateOutlet],
+  imports: [AppButton, NgTemplateOutlet, StatusSeal],
   templateUrl: './month-view.html',
   styleUrl: './month-view.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -184,17 +209,20 @@ export class MonthView implements OnDestroy {
         const bloqueo = bloqueos[0] ?? null;
 
         const estado = decidirEstado(cuenta, bloqueo !== null);
+        const pasado = fecha.getTime() < desdeHoy;
+        const disponibles = disponiblesDelDia(estado, cuenta, pasado);
         return {
           fecha,
           numero: fecha.getDate(),
           delMes: fecha.getMonth() === mesActual.getMonth(),
           esHoy: clave === hoy,
-          pasado: fecha.getTime() < desdeHoy,
+          pasado,
           estado,
           reservados: cuenta.reservados,
           total: cuenta.total,
+          disponibles,
           motivo: bloqueo?.motivo ?? null,
-          etiqueta: etiquetaDeLaCelda(fecha, estado, cuenta, bloqueo?.motivo ?? null),
+          etiqueta: etiquetaDeLaCelda(fecha, estado, disponibles, bloqueo?.motivo ?? null),
           resumen: resumenDelDia(fecha, this.franjasPorDia().get(clave) ?? [], bloqueos),
         };
       }),
@@ -408,8 +436,14 @@ export class MonthView implements OnDestroy {
             ? hora(cita.startAt as Date)
             : `${hora(cita.startAt as Date)}–${hora(cita.endAt)}`,
         // Mismas palabras que el día y la semana: sin nombre no se inventa uno.
-        primary: cita.patientName ?? 'Paciente sin nombre registrado',
-        secondary: this.etiquetas().get(cita.statusConceptId)?.display ?? null,
+        primary: pacienteDeLaCita(cita),
+        secondary: null,
+        // C-08 · el chip sale del mapa único de `booking-status.ts`, no de una
+        // lista nueva y no del `display` inglés del catálogo.
+        estado: toBookingStatusPresentation(
+          this.conceptoDe(cita.statusConceptId),
+          'Reservada',
+        ),
       }));
   }
 
@@ -445,7 +479,30 @@ export class MonthView implements OnDestroy {
             ? 'Libre'
             : `${cupo.remainingCapacity} de ${cupo.capacity} lugares libres`,
         secondary: null,
+        estado: null,
       }));
+  }
+
+  /**
+   * El concepto de estado, con la forma que espera `booking-status.ts`.
+   *
+   * La agenda guarda los estados resueltos como `{code, display}` y el mapa de
+   * presentación pide un `ValueSetOption`. Se adapta acá en vez de cambiar
+   * cualquiera de los dos: el mapa lo comparten cuatro pantallas y `EstadoResuelto`
+   * es lo mínimo que la agenda necesita del catálogo.
+   */
+  private conceptoDe(conceptId: string): ValueSetOption | undefined {
+    const resuelto = this.etiquetas().get(conceptId);
+    return resuelto === undefined
+      ? undefined
+      : {
+          conceptId,
+          code: resuelto.code,
+          display: resuelto.display,
+          // El catálogo no viaja hasta acá y el mapa no lo mira: sólo usa
+          // `code`. Se declara vacío en vez de inventar un identificador.
+          codeSystemVersionId: '',
+        };
   }
 
   /** Los bloqueos que tocan esa fecha, en orden. */
@@ -635,6 +692,22 @@ function decidirEstado(
 }
 
 /**
+ * Cuántos turnos quedan por ofrecer ese día.
+ *
+ * La celda dice sólo esto, no lo reservado (pedido del cliente, 24/09): el mes
+ * es para ver dónde queda lugar. Un día que ya pasó no ofrece nada, aunque le
+ * hayan sobrado cupos: contarlos contradiría al globo, que dice que el día ya fue.
+ */
+function disponiblesDelDia(
+  estado: EstadoDelDia,
+  cuenta: { total: number; reservados: number },
+  pasado: boolean,
+): number | null {
+  if (pasado || estado === 'sin-agenda' || estado === 'bloqueado') return null;
+  return Math.max(cuenta.total - cuenta.reservados, 0);
+}
+
+/**
  * Cómo se anuncia una celda.
  *
  * Con el número solo, un lector de pantalla dice «12» y nada más. Acá dice el
@@ -643,7 +716,7 @@ function decidirEstado(
 function etiquetaDeLaCelda(
   fecha: Date,
   estado: EstadoDelDia,
-  cuenta: { total: number; reservados: number },
+  disponibles: number | null,
   motivo: string | null,
 ): string {
   const cuando = fechaLarga(fecha);
@@ -652,11 +725,8 @@ function etiquetaDeLaCelda(
       return `${cuando}: no atendés`;
     case 'bloqueado':
       return motivo === null ? `${cuando}: bloqueado` : `${cuando}: bloqueado — ${motivo}`;
-    case 'libre':
-      return `${cuando}: ${cuenta.total} turnos publicados, ninguno reservado`;
-    case 'lleno':
-      return `${cuando}: completo, ${cuenta.total} de ${cuenta.total} turnos reservados`;
-    case 'con-reservas':
-      return `${cuando}: ${cuenta.reservados} de ${cuenta.total} turnos reservados`;
   }
+  if (disponibles === null) return `${cuando}: día pasado`;
+  if (disponibles === 0) return `${cuando}: sin turnos disponibles`;
+  return `${cuando}: ${disponibles} ${disponibles === 1 ? 'turno disponible' : 'turnos disponibles'}`;
 }

@@ -256,6 +256,19 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     ],
   },
   {
+    label: 'Plataforma',
+    group: 'Administración',
+    icon: 'monitor',
+    // El portal administrativo de la plataforma misma: qué datos guarda y por
+    // qué, cómo la usan, cómo se prueba y si está lista para producción.
+    paths: [
+      'administration/data-catalog',
+      'administration/web-analytics',
+      'administration/qa-lab',
+      'administration/operations',
+    ],
+  },
+  {
     label: 'Farmacia',
     group: 'Administración',
     icon: 'bag',
@@ -274,7 +287,9 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     group: 'Facturación',
     icon: 'billing',
     // Lo que se cobra y cómo se asienta.
-    paths: ['billing', 'administration/accounting', 'assets-liabilities'],
+    // «Activos y pasivos» salió de acá el 2026-09-19: dejó de ser sección y
+    // pasó a ser un bloque dentro de Contabilidad (ver `navigation.map.ts`).
+    paths: ['billing', 'administration/accounting'],
   },
 
   /* -- Mi cuenta ---------------------------------------------------------- */
@@ -308,6 +323,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'my-account/medical-record',
       'my-account/diagnostic-results',
       'my-account/diagnostic-orders',
+      'my-account/cotizaciones',
       'my-account/questionnaires',
     ],
   },

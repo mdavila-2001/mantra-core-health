@@ -167,6 +167,9 @@ describe('InsuranceClaimDetail · cláusula y justificación del rechazo', () =>
     expect(badge).not.toBeNull();
     // Tono de error: la cláusula es un rechazo, no un aviso genérico.
     expect(badge?.className).toContain('badge--error');
+
+    // El boliviano se muestra como «Bs», no como «Boliviano» (display-currency.ts).
+    expect(fixture.nativeElement.textContent).toContain('Importes en Bs.');
   });
 
   it('el badge de la cláusula lleva el nombre accesible con el texto de la cita', () => {

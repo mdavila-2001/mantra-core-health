@@ -9,18 +9,25 @@ import {
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
-import { catchError, map, of, switchMap, type Observable } from 'rxjs';
+import { catchError, map, of, switchMap, timer, type Observable } from 'rxjs';
 
 import { ProfilesClient } from '@core/data-access/profiles/profiles.client';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import { TerminologyClient } from '@core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '@core/data-access/terminology/terminology.types';
+import { TriageIaClient } from '@core/data-access/triage-ia/triage-ia.client';
 import { ZONAS_DEL_CUERPO, type ZonaDelCuerpo } from './zonas.datos';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Chip } from '@shared/components/atoms/chip/chip';
 import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
+import { FormField } from '@shared/components/molecules/form-field/form-field';
+import {
+  BodyMap,
+  ZONAS_CON_SILUETA,
+  type ZonaElegible,
+} from '@shared/components/organisms/body-map/body-map';
 
 import {
   enumerar,
@@ -36,7 +43,22 @@ import {
   type Sintoma,
   TODOS_LOS_SINTOMAS,
 } from './sintomas';
+import { Dictado } from './dictado';
+import {
+  combinar,
+  lecturaVigente,
+  sintomasDeLaLectura,
+  zonasDeLaLectura,
+  type LecturaDelTexto,
+} from './lectura-ia';
 import { ultimaFrase } from './texto';
+
+/**
+ * Cuánto se espera a que la persona haga una pausa antes de preguntarle al
+ * servicio de triage. Mientras tanto el motor local ya pintó lo suyo: esto sólo
+ * evita una petición por tecla.
+ */
+const PAUSA_PARA_LEER_MS = 600;
 
 /** Tope por página del listado de profesionales. */
 const POR_PAGINA = 50;
@@ -93,8 +115,10 @@ const VACIO: ReadonlyMap<string, string> = new Map();
  */
 @Component({
   selector: 'app-symptom-check',
-  imports: [Alert, AppButton, Card, Chip, RouterLink, Textarea],
+  imports: [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink, Textarea],
   templateUrl: './symptom-check.html',
+  // El dictado vive y muere con la pantalla: ver `Dictado`.
+  providers: [Dictado],
   styleUrl: './symptom-check.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -103,6 +127,8 @@ export class SymptomCheck {
   private readonly publico = inject(PublicDirectoryClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly router = inject(Router);
+  private readonly triageIa = inject(TriageIaClient);
+  protected readonly dictado = inject(Dictado);
 
   constructor() {
     /* El índice del motor se arma la primera vez que se lo usa, y armarlo
@@ -190,14 +216,81 @@ export class SymptomCheck {
   });
 
   /**
-   * Los chips: lo reconocido en el texto, menos lo quitado, más lo agregado.
+   * Lo que entendió el servicio de triage (AlovidaAIService) del último texto
+   * en el que la persona hizo una pausa, junto con ese texto.
    *
-   * El orden es el de aparición en el texto y después los agregados: ver el
-   * porqué en `reconocer`.
+   * El motor local reconoce las filas de la tabla al instante; el servicio suma
+   * lo que la tabla no tiene —«me duele la pantorrilla», «manchas en la
+   * espalda»— y ubica lo que sí tiene («hormigueo · mano izquierda»). Ver
+   * `lectura-ia.ts`.
+   *
+   * Con menos de tres letras no se pregunta nada, y así en el servidor (texto
+   * vacío) no se programa ni un temporizador. Si el servicio falla o tarda,
+   * `TriageIaClient` devuelve `null` y la pantalla sigue con lo local.
+   */
+  private readonly lecturaGuardada = toSignal(
+    toObservable(this.texto).pipe(
+      map((texto) => texto.trim()),
+      switchMap((texto) =>
+        texto.length < 3
+          ? of(null)
+          : timer(PAUSA_PARA_LEER_MS).pipe(
+              switchMap(() => this.triageIa.analizar(texto)),
+              map((lectura): LecturaDelTexto | null => (lectura === null ? null : { texto, lectura })),
+            ),
+      ),
+    ),
+    { initialValue: null },
+  );
+
+  /** La lectura del servicio que todavía vale para lo escrito. */
+  private readonly lecturaVigente = computed(() =>
+    lecturaVigente(this.lecturaGuardada(), this.texto()),
+  );
+
+  /** Los hallazgos del servicio que todavía valen para lo escrito. */
+  private readonly deLaLectura = computed(() => sintomasDeLaLectura(this.lecturaVigente()));
+
+  /**
+   * Las zonas del cuerpo de lo que se contó: la silueta las ilumina mientras
+   * la persona escribe o dicta, y las pastillas «Piel», «Ánimo» y «General»
+   * también.
+   *
+   * Manda la ubicación del servicio cuando la hay («hormigueo · mano» es la
+   * mano); si no, la primera zona de la tabla que ofrece ese síntoma.
+   */
+  protected readonly zonasMarcadas = computed<readonly string[]>(() => {
+    const delServicio = zonasDeLaLectura(this.lecturaVigente());
+    const marcadas = new Set<string>();
+    for (const sintoma of this.sintomas()) {
+      const ubicadas = delServicio.get(sintoma.id);
+      if (ubicadas !== undefined && ubicadas.length > 0) {
+        ubicadas.forEach((zona) => marcadas.add(zona));
+        continue;
+      }
+      const deLaTabla = ZONAS_DEL_CUERPO.find((zona) => zona.sintomas.includes(sintoma.id));
+      if (deLaTabla !== undefined) marcadas.add(deLaTabla.id);
+    }
+    return [...marcadas];
+  });
+
+  protected estaMarcada(idDeZona: string): boolean {
+    return this.zonasMarcadas().includes(idDeZona);
+  }
+
+  /**
+   * Los chips: lo reconocido en el texto —acá y por el servicio—, menos lo
+   * quitado, más lo agregado.
+   *
+   * El orden es el de aparición en el texto, después lo que sólo vio el
+   * servicio y al final los agregados: ver el porqué en `reconocer` y en
+   * `combinar`.
    */
   protected readonly sintomas = computed<readonly Sintoma[]>(() => {
     const quitados = this.quitados();
-    const delTexto = reconocer(this.texto()).filter((s) => !quitados.has(s.id));
+    const delTexto = combinar(reconocer(this.texto()), this.deLaLectura()).filter(
+      (s) => !quitados.has(s.id),
+    );
     const yaEstan = new Set(delTexto.map((s) => s.id));
     return [...delTexto, ...this.agregados().filter((s) => !yaEstan.has(s.id))];
   });
@@ -255,6 +348,25 @@ export class SymptomCheck {
   /** Las zonas del cuerpo, tal cual la tabla. */
   protected readonly zonas = signal(ZONAS_DEL_CUERPO);
 
+  /**
+   * Las pastillas: sólo lo que no tiene un lugar en la figura («piel»,
+   * «ánimo», «general»).
+   *
+   * Con la figura partida en veinte zonas, repetirlas todas como pastillas
+   * sería una segunda lista de veinte botones al lado del dibujo. Cada zona de
+   * la figura ya es un botón con nombre, alcanzable con el tabulador: lo que
+   * necesita una pastilla es lo que no se puede señalar.
+   */
+  protected readonly zonasSinSilueta = computed(() =>
+    this.zonas().filter((zona) => !ZONAS_CON_SILUETA.has(zona.id)),
+  );
+
+  /** El nombre de la zona abierta, para titular sus síntomas al lado de la figura. */
+  protected readonly nombreDeLaZonaAbierta = computed<string | null>(() => {
+    const abierta = this.zonaAbierta();
+    return this.zonas().find((zona) => zona.id === abierta)?.nombre ?? null;
+  });
+
   /** Qué zona está abierta, o `null` si ninguna. Una sola a la vez. */
   protected readonly zonaAbierta = signal<string | null>(null);
 
@@ -284,6 +396,29 @@ export class SymptomCheck {
     this.zonaAbierta.update((previa) => (previa === zona.id ? null : zona.id));
   }
 
+  /**
+   * Las zonas tal como las entiende la silueta: `id` y nombre, nada más.
+   *
+   * La figura no conoce síntomas ni especialidades (ver `BodyMap`): se le da
+   * lo justo para dibujar y nombrar, y devuelve un `id`. Las que no tienen
+   * forma («piel», «ánimo», «general») viajan igual y la silueta las ignora:
+   * siguen en las pastillas.
+   */
+  protected readonly zonasParaLaSilueta = computed<readonly ZonaElegible[]>(() =>
+    this.zonas().map(({ id, nombre }) => ({ id, nombre })),
+  );
+
+  /**
+   * La silueta y las pastillas son dos puertas al **mismo** estado (P-01,
+   * doctor 22/09/2026): tocar el pecho en la figura abre lo mismo que tocar la
+   * pastilla «Pecho», y la figura resalta la zona que se abrió desde la
+   * pastilla. La silueta ya resuelve el alternar (volver a tocar suelta), así
+   * que acá sólo se copia lo que devuelve.
+   */
+  protected elegirZonaDesdeLaSilueta(id: string | null): void {
+    this.zonaAbierta.set(id);
+  }
+
   /** Si un síntoma ya está elegido, para pintarlo distinto. */
   protected estaElegido(sintoma: Sintoma): boolean {
     return this.sintomas().some((s) => s.id === sintoma.id);
@@ -303,6 +438,26 @@ export class SymptomCheck {
     if (valor.trim() !== '') {
       this.haceFalta.set(true);
     }
+  }
+
+  /**
+   * Dictar o dejar de dictar (P-02): un solo botón que alterna.
+   *
+   * Lo dictado **se agrega al final** de lo que ya había, con un espacio: la
+   * persona pudo haber empezado a escribir y seguir hablando, y pisarle el
+   * texto sería perderle lo que cargó (regla 95.3.3). Pasa por `escribir`
+   * como si lo hubiera tecleado: mismo reconocimiento, misma alarma, mismo
+   * pedido del catálogo.
+   */
+  protected alternarDictado(): void {
+    if (this.dictado.escuchando()) {
+      this.dictado.detener();
+      return;
+    }
+    this.dictado.empezar((final) => {
+      const previo = this.texto().trimEnd();
+      this.escribir(previo === '' ? final : `${previo} ${final}`);
+    });
   }
 
   /** Quita un chip. Un falso positivo no puede quedar atrapado. */

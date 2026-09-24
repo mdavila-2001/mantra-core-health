@@ -1,0 +1,30 @@
+<app-content-dialog
+  size="lg"
+  [heading]="titulo()"
+  description="Explicá por qué existe la tabla y qué significa una fila. Lo que nadie sabe se deja vacío: no se inventa."
+  [dismissible]="!guardando()"
+  (closed)="closed.emit()"
+>
+  @if (error(); as mensaje) {
+    <app-alert [tone]="conflicto() ? 'warning' : 'error'" data-testid="annotation-error">
+      {{ mensaje }}
+      @if (conflicto()) {
+        <div alert-actions>
+          <button app-button variant="outline" size="sm" (clicked)="reloadRequested.emit()">Recargar la ficha</button>
+        </div>
+      }
+    </app-alert>
+  }
+
+  <app-paginated-form
+    [paginas]="paginas()"
+    [form]="form"
+    [label]="titulo()"
+    submitLabel="Guardar"
+    cancelLabel="Cancelar"
+    [pending]="guardando()"
+    (enviado)="guardar()"
+    (cancelado)="closed.emit()"
+    data-testid="annotation-form"
+  />
+</app-content-dialog>

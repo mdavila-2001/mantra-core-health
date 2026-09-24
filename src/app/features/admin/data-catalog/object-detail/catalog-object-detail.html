@@ -1,0 +1,229 @@
+<app-page-header
+  [title]="titulo()"
+  subtitle="Hechos técnicos observados y la justificación de negocio, con su evidencia y su revisión."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="ficha-objeto">
+  @if (aviso(); as mensaje) {
+    <app-alert tone="success" data-testid="object-notice">{{ mensaje }}</app-alert>
+  }
+  @if (error(); as mensaje) {
+    <app-alert tone="error" data-testid="object-error">{{ mensaje }}</app-alert>
+  }
+
+  <app-view-state-host [state]="detalle()" (retry)="cargar()">
+    @if (objeto(); as o) {
+      <div class="ficha-objeto__estado">
+        <app-badge [variant]="observationStatus(o.observation.status).tone">
+          {{ observationStatus(o.observation.status).label }}
+        </app-badge>
+        @if (o.annotation; as ficha) {
+          <app-badge [variant]="reviewStatus(ficha.reviewStatus).tone" data-testid="object-review-status">
+            Ficha: {{ reviewStatus(ficha.reviewStatus).label }} · revisión {{ ficha.currentRevisionNo }}
+          </app-badge>
+          @if (ficha.approvedRevisionNo !== null && !ficha.approvalIsCurrent) {
+            <span class="ficha-objeto__nota">
+              La revisión {{ ficha.approvedRevisionNo }} estaba aprobada; la vigente todavía no.
+            </span>
+          }
+        } @else {
+          <app-badge variant="secondary">Sin ficha</app-badge>
+        }
+        <span class="ficha-objeto__acciones">
+          <button app-button variant="primary" size="sm" data-testid="object-edit" (clicked)="editando.set(true)">
+            {{ o.annotation ? 'Editar ficha' : 'Crear ficha' }}
+          </button>
+          <button app-button variant="outline" size="sm" data-testid="object-add-evidence" (clicked)="anadiendoEvidencia.set(true)">
+            Añadir evidencia
+          </button>
+          @if (puedeRevisar()) {
+            <button app-button variant="outline" size="sm" data-testid="object-approve" (clicked)="revisar('APPROVED')">Aprobar</button>
+            <button app-button variant="danger" size="sm" data-testid="object-reject" (clicked)="revisar('REJECTED')">Rechazar</button>
+          }
+        </span>
+      </div>
+
+      <app-card variant="outlined" padding="md" class="ficha-objeto__tarjeta">
+        <app-tabs [(selectedIndex)]="pestana" data-testid="object-tabs">
+          <app-tab label="Ficha">
+            <div class="ficha-objeto__columnas">
+              <section aria-label="Justificación de negocio">
+                <h3 class="ficha-objeto__titulo">Justificación</h3>
+                @if (hechosNegocio().length > 0) {
+                  <app-fact-list [hechos]="hechosNegocio()" etiqueta="Justificación de negocio" />
+                  @if (o.annotation?.content?.openQuestions?.length) {
+                    <h4 class="ficha-objeto__subtitulo">Preguntas abiertas</h4>
+                    <ul class="ficha-objeto__lista">
+                      @for (q of o.annotation!.content.openQuestions; track q.question) {
+                        <li>{{ q.question }}@if (q.owner) { — {{ q.owner }} }</li>
+                      }
+                    </ul>
+                  }
+                } @else {
+                  <p class="ficha-objeto__vacio">Nadie explicó todavía por qué existe esta tabla.</p>
+                }
+                @if (faltantes().length > 0) {
+                  <app-alert tone="warning" title="Falta para completar la ficha">{{ faltantes().join(', ') }}</app-alert>
+                }
+              </section>
+              <section aria-label="Hechos técnicos">
+                <h3 class="ficha-objeto__titulo">Técnica (observada)</h3>
+                <app-fact-list [hechos]="hechosTecnicos()" etiqueta="Hechos técnicos" />
+                @if (o.governance; as g) {
+                  <h4 class="ficha-objeto__subtitulo">Registro de gobierno</h4>
+                  <p class="ficha-objeto__nota">
+                    Equipo: {{ g.ownerTeam ?? 'sin declarar' }} · PII: {{ g.containsPii === null ? 'sin determinar' : g.containsPii ? 'sí' : 'no' }}
+                    · PHI: {{ g.containsPhi === null ? 'sin determinar' : g.containsPhi ? 'sí' : 'no' }}
+                  </p>
+                }
+              </section>
+            </div>
+          </app-tab>
+
+          <app-tab label="Columnas">
+            <app-view-state-host [state]="columnas()" (retry)="cargar()">
+              @if (columnas(); as estado) {
+                @if (estado.status === 'ready') {
+                  <div class="ficha-objeto__scroll">
+                    <table class="ficha-objeto__tabla" data-testid="object-columns">
+                      <caption class="ficha-objeto__oculto">Columnas observadas</caption>
+                      <thead>
+                        <tr><th scope="col">#</th><th scope="col">Columna</th><th scope="col">Tipo</th><th scope="col">Nulos</th><th scope="col">Claves</th></tr>
+                      </thead>
+                      <tbody>
+                        @for (c of estado.data; track c.id) {
+                          <tr>
+                            <td>{{ c.ordinal }}</td>
+                            <td><code>{{ c.columnName }}</code></td>
+                            <td>{{ c.nativeType }}</td>
+                            <td>{{ c.isNullable ? 'Admite nulos' : 'Obligatoria' }}</td>
+                            <td>
+                              @if (c.isPrimaryKey) { <app-badge variant="primary">PK</app-badge> }
+                              @if (c.isUnique && !c.isPrimaryKey) { <app-badge variant="info">Única</app-badge> }
+                              @if (c.foreignKey; as fk) {
+                                <span class="ficha-objeto__nota">→ {{ fk.targetSchema }}.{{ fk.targetTable }}({{ fk.targetColumns.join(', ') }})</span>
+                              }
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              }
+            </app-view-state-host>
+          </app-tab>
+
+          <app-tab label="Evidencia">
+            @if (evidencia().length === 0) {
+              <p class="ficha-objeto__vacio">Sin evidencia. Una ficha no se aprueba sin al menos una.</p>
+            } @else {
+              <ul class="ficha-objeto__lista" data-testid="object-evidence">
+                @for (e of evidencia(); track e.id) {
+                  <li>
+                    <strong>{{ evidenceLabel(e.kind) }}</strong> · <code>{{ e.reference }}</code>
+                    @if (e.sourceRevision) { · {{ e.sourceRevision }} }
+                    <span class="ficha-objeto__nota">{{ e.createdAt | date: 'short' }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          </app-tab>
+
+          <app-tab label="Historial">
+            @if (historial().revisions.length === 0) {
+              <p class="ficha-objeto__vacio">La ficha no tiene revisiones.</p>
+            } @else {
+              <ol class="ficha-objeto__lista" data-testid="object-history">
+                @for (r of historial().revisions; track r.revisionNo) {
+                  <li>
+                    Revisión {{ r.revisionNo }} · {{ reviewStatus(r.submittedStatus).label }} · {{ r.createdAt | date: 'short' }}
+                    @if (r.changeReason) { — {{ r.changeReason }} }
+                    @for (d of historial().decisions; track $index) {
+                      @if (d.revisionNo === r.revisionNo) {
+                        <div class="ficha-objeto__nota">
+                          {{ d.decision === 'APPROVED' ? 'Aprobada' : 'Rechazada' }} el {{ d.decidedAt | date: 'short' }}
+                          @if (d.comment) { — «{{ d.comment }}» }
+                        </div>
+                      }
+                    }
+                  </li>
+                }
+              </ol>
+            }
+          </app-tab>
+
+          <app-tab label="Impacto">
+            <app-segmented-control
+              ariaLabel="Dirección del impacto"
+              [options]="opcionesDireccion"
+              [value]="direccion() === 'upstream' ? 'upstream' : 'downstream'"
+              (valueChange)="cambiarDireccion($event)"
+            />
+            <app-view-state-host [state]="impacto()" (retry)="cargarImpacto()">
+              @if (impacto(); as estado) {
+                @if (estado.status === 'ready') {
+                  @if (estado.data.nodes.length <= 1) {
+                    <p class="ficha-objeto__vacio">No hay claves foráneas observadas en esta dirección.</p>
+                  } @else {
+                    <ul class="ficha-objeto__lista" data-testid="object-impact">
+                      @for (n of estado.data.nodes; track n.objectId) {
+                        @if (n.depth > 0) {
+                          <li>
+                            <span class="ficha-objeto__profundidad">nivel {{ n.depth }}</span>
+                            <a [routerLink]="['/administration/data-catalog', n.objectId]">{{ nombreNodo(n) }}</a>
+                            <span class="ficha-objeto__nota">
+                              {{ n.reviewStatus ? reviewStatus(n.reviewStatus).label : 'sin ficha' }} · {{ n.owner ?? 'sin responsable' }}
+                            </span>
+                          </li>
+                        }
+                      }
+                    </ul>
+                  }
+                  @if (estado.data.truncated) {
+                    <app-alert tone="warning">
+                      Resultado cortado ({{ estado.data.truncatedReason === 'MAX_NODES' ? 'demasiados objetos' : 'profundidad máxima' }}): puede haber más impacto.
+                    </app-alert>
+                  }
+                  <p class="ficha-objeto__nota">{{ estado.data.scope }}</p>
+                }
+              }
+            </app-view-state-host>
+          </app-tab>
+
+          <app-tab label="Cambios">
+            @if (cambios().length === 0) {
+              <p class="ficha-objeto__vacio">Sin cambios estructurales detectados.</p>
+            } @else {
+              <ol class="ficha-objeto__lista">
+                @for (e of cambios(); track e.id) {
+                  <li>
+                    <strong>{{ e.changeKind }}</strong>
+                    @if (e.column) { · <code>{{ e.column }}</code> }
+                    · {{ e.detectedAt | date: 'short' }}
+                    <div class="ficha-objeto__nota"><code>{{ cambiosDe(e) }}</code></div>
+                  </li>
+                }
+              </ol>
+            }
+          </app-tab>
+        </app-tabs>
+      </app-card>
+
+      @if (editando()) {
+        <app-annotation-dialog
+          [objectId]="o.id"
+          [technicalName]="titulo()"
+          [annotation]="o.annotation"
+          (saved)="fichaGuardada($event)"
+          (reloadRequested)="recargarTrasConflicto()"
+          (closed)="editando.set(false)"
+        />
+      }
+      @if (anadiendoEvidencia()) {
+        <app-evidence-dialog [objectId]="o.id" (saved)="evidenciaAnadida()" (closed)="anadiendoEvidencia.set(false)" />
+      }
+    }
+  </app-view-state-host>
+</div>

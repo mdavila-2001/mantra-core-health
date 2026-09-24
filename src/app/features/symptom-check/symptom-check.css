@@ -43,11 +43,6 @@
   color: var(--text-secondary);
 }
 
-.sintomas__campo {
-  display: block;
-  margin-block-end: var(--sp-4);
-}
-
 .sintomas__chips,
 .sintomas__sugerencias {
   display: flex;
@@ -167,6 +162,76 @@
   }
 }
 
+/* ─── La silueta (P-01) ─────────────────────────────────────────────────────
+   La figura y las pastillas son dos puertas al mismo estado. Hasta tablet van
+   una sobre otra, la figura primero: es lo que el doctor pidió ver. Desde
+   escritorio, la figura a la izquierda —14rem: una figura humana es vertical, y
+   más ancha se come el alto de la pantalla— y las pastillas a la derecha, para
+   no apilar dos bloques altos. */
+.sintomas__elegir {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--e2);
+  margin-block-start: var(--e4);
+}
+
+/* El espacio lo pone el `gap` del contenedor, no el margen de la grilla. */
+.sintomas__elegir > .sintomas__zonas {
+  margin-block-start: 0;
+}
+
+.sintomas__silueta {
+  display: block;
+}
+
+/* 21rem: el ancho de la figura (16rem) más el acolchado del escenario, y el
+   aire para que el selector «Frente · Espalda · Cara» entre sin cortarse. */
+@media (min-width: 48rem) {
+  .sintomas__elegir {
+    grid-template-columns: 21rem minmax(0, 1fr);
+    gap: var(--e5);
+    align-items: start;
+  }
+}
+
+/* Lo que se abre al tocar la figura, al lado; debajo, lo que no se señala. */
+.sintomas__lado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  min-inline-size: 0;
+}
+
+.sintomas__lado-titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--tinta);
+}
+
+.sintomas__lado-titulo::first-letter {
+  text-transform: uppercase;
+}
+
+.sintomas__lado > .sintomas__opciones {
+  margin-block-start: 0;
+}
+
+.sintomas__lado-otros {
+  margin-block-start: var(--e4);
+}
+
+/* Sin zona abierta, el rótulo es lo primero del panel: sin margen arriba. */
+.sintomas__lado-otros:first-child {
+  margin-block-start: 0;
+}
+
+/* Al lado de la figura hay menos ancho: las tres pastillas, en una fila. */
+.sintomas__lado .sintomas__zonas {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-inline-size: 30rem;
+}
+
 .sintomas__zona {
   display: flex;
   flex-direction: column;
@@ -193,6 +258,14 @@
   border-color: var(--aguamarina);
   background: var(--sup-inset);
   transform: translateY(-1px);
+}
+
+/* Lo que se contó nombra esta pastilla: la misma seña que la figura, un borde
+   punteado del color secundario. Si además está abierta, manda `is-abierta`. */
+.sintomas__zona.is-marcada:not(.is-abierta) {
+  border-style: dashed;
+  border-color: var(--brand-secondary);
+  background: color-mix(in srgb, var(--brand-secondary) 10%, var(--bg-surface));
 }
 
 .sintomas__zona.is-abierta {
@@ -242,7 +315,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .sintomas__zona,
-  .sintomas__opciones {
+  .sintomas__opciones,
+  .sintomas__dictado-punto {
     transition: none;
     animation: none;
   }
@@ -276,18 +350,57 @@
   font-weight: 600;
 }
 
+/* El área de texto, a la vista (P-02): un panel más de la tarjeta, con el
+   mismo aire que el bloque de la figura. El rótulo, la ayuda y el ícono son de
+   `app-form-field`; acá sólo se lo ubica. */
 .sintomas__escribir {
   margin: var(--e4) 0 0;
 }
 
-.sintomas__escribir summary {
-  color: var(--tinta-2);
-  cursor: pointer;
-  font-size: var(--fs-body);
+/* Dictar (P-02): una fila bajo el área de texto. El aviso ocupa la fila
+   entera y va primero; el botón y su estado, después, en línea. */
+.sintomas__dictado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  margin-block-start: var(--e2);
 }
 
-.sintomas__escribir .sintomas__campo {
-  margin-block-start: var(--e2);
+.sintomas__dictado-aviso,
+.sintomas__dictado-estado {
+  margin: 0;
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.sintomas__dictado-aviso {
+  flex-basis: 100%;
+}
+
+.sintomas__dictado-icono {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+/* El punto que late mientras escucha: una señal más, no la única (el texto
+   «Escuchando…» y el botón en «Detener» dicen lo mismo). */
+.sintomas__dictado-punto {
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  margin-inline-end: 0.35em;
+  border-radius: 50%;
+  background: var(--brand-primary);
+  vertical-align: middle;
+  animation: sintomas-latido 1.2s ease-in-out infinite;
+}
+
+@keyframes sintomas-latido {
+  50% {
+    opacity: 0.25;
+  }
 }
 
 /* La recomendación, ya sin la tarjeta de dentro: una fila con lo que hay que

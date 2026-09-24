@@ -190,12 +190,13 @@ describe('AppMap', () => {
     expect(primero.opciones.keyboard).toBe(false);
   });
 
-  it('usa el proveedor de tiles de la demo, en vez del servidor público bloqueado de OSM', async () => {
+  it('pide los mosaicos a OpenStreetMap, sin clave y sin marca de agua', async () => {
     const { registro } = await crearMontado();
 
-    expect(registro.tiles).toEqual([
-      'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    ]);
+    expect(registro.tiles).toEqual(['https://tile.openstreetmap.org/{z}/{x}/{y}.png']);
+    // CARTO estampa «API KEY REQUIRED» sobre cada mosaico desde el 19/09/2026:
+    // llegan con 200 y el mapa se ve roto sin que la consola diga nada.
+    expect(registro.tiles.join(' ')).not.toContain('cartocdn');
   });
 
   it('con varios pines encuadra con fitBounds sobre todas las coordenadas', async () => {

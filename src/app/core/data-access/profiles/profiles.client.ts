@@ -31,6 +31,7 @@ import type {
   PractitionerAffiliation,
   PractitionerAffiliationPage,
   NewPractitionerAffiliation,
+  UpdatePractitionerAffiliation,
   PractitionerCredential,
   PractitionerLicense,
   PractitionerProfile,
@@ -138,6 +139,15 @@ export class ProfilesClient {
         'issuerAdministrativeAreaConceptId',
         query.issuerAdministrativeAreaConceptId,
       );
+    }
+    if (query.aboGroupConceptId !== undefined) {
+      params = params.set('aboGroupConceptId', query.aboGroupConceptId);
+    }
+    if (query.rhFactorConceptId !== undefined) {
+      params = params.set('rhFactorConceptId', query.rhFactorConceptId);
+    }
+    if (query.clinicalLanguageConceptId !== undefined) {
+      params = params.set('clinicalLanguageConceptId', query.clinicalLanguageConceptId);
     }
     if (query.cursor !== undefined) {
       params = params.set('cursor', query.cursor);
@@ -488,11 +498,12 @@ export class ProfilesClient {
          marcó un punto, las dos coordenadas juntas — el municipio ya viaja
          arriba y el backend conserva lo que no llega. */
       readonly homeAddressLines: string;
-      /* `null` en los dos QUITA el punto; ausentes es «no lo toqué». La
-         distinción hace falta desde que el perfil deja moverlo: sin ella no
-         habría forma de borrar una ubicación mal puesta. */
       readonly homeLatitude: number | null;
       readonly homeLongitude: number | null;
+      /* Dirección de trabajo: mismo ciclo, con calle y pin propios. */
+      readonly workAddressLines: string;
+      readonly workLatitude: number | null;
+      readonly workLongitude: number | null;
     }>,
   ): Observable<OwnPractitionerProfile> {
     return this.http
@@ -680,6 +691,40 @@ export class ProfilesClient {
         stripUndefined(afiliacion),
       )
       .pipe(map(toAffiliation));
+  }
+
+  /**
+   * `PATCH /profiles/practitioners/me/affiliations/:affiliationId` — corrige un
+   * vínculo propio. Sólo viaja lo que cambió; `endDate: null` sí viaja, porque
+   * es la forma de volver a marcarlo vigente.
+   *
+   * `404` es «no existe o no es tuyo» (la misma respuesta a propósito), `409`
+   * el vínculo resultante choca con otro del historial y `422` un período que
+   * termina antes de empezar.
+   */
+  updateAffiliation(
+    affiliationId: string,
+    cambios: UpdatePractitionerAffiliation,
+  ): Observable<PractitionerAffiliation> {
+    return this.http
+      .patch<WireAffiliation>(
+        this.url(`/profiles/practitioners/me/affiliations/${encodeURIComponent(affiliationId)}`),
+        stripUndefined(cambios),
+      )
+      .pipe(map(toAffiliation));
+  }
+
+  /**
+   * `DELETE /profiles/practitioners/me/affiliations/:affiliationId` — baja
+   * definitiva de un vínculo propio (`204`). `404` si no existe o no es tuyo.
+   * No toca la membresía que la organización haya otorgado al aprobarlo.
+   */
+  removeAffiliation(affiliationId: string): Observable<void> {
+    return this.http
+      .delete<void>(
+        this.url(`/profiles/practitioners/me/affiliations/${encodeURIComponent(affiliationId)}`),
+      )
+      .pipe(map(() => undefined));
   }
 
   /**

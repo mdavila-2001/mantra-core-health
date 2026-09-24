@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  forwardRef,
   inject,
   input,
   output,
@@ -16,8 +17,12 @@ import type { SelectOption } from '../../../../shared/components/atoms/select/se
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { RichTextEditor } from '../../../../shared/components/molecules/rich-text-editor/rich-text-editor';
+import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
+import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
+import { NoteGrid } from './note-grid/note-grid';
 
 /**
  * La hoja en blanco: escribir la consulta sin completar campos.
@@ -53,12 +58,13 @@ import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
  */
 @Component({
   selector: 'app-free-note-block',
-  imports: [AppButton, Alert, FormField, RichTextEditor, Select],
+  imports: [AppButton, Alert, FormField, NoteGrid, RichTextEditor, Select, Tab, Tabs],
+  providers: [{ provide: DRAFT_BLOCK, useExisting: forwardRef(() => FreeNoteBlock) }],
   templateUrl: './free-note-block.html',
   styleUrl: './free-note-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FreeNoteBlock {
+export class FreeNoteBlock implements DraftBlock {
   /** De quién es la historia. */
   readonly patientProfileId = input.required<string>();
 
@@ -84,6 +90,15 @@ export class FreeNoteBlock {
    * pestaña «Notas» sin desmontar nada, atarlo es una línea.
    */
   readonly guardada = output<void>();
+
+  /**
+   * Qué vista está abierta: `0` escribir, `1` la cuadrícula (C-14).
+   *
+   * Arranca en «Escribir» porque es lo que el bloque hacía y lo que la mayoría
+   * de las consultas necesita; la cuadrícula es para lo que se compara entre
+   * consultas.
+   */
+  protected readonly vista = signal(0);
 
   /** Lo escrito, como HTML saneado por el editor. */
   protected readonly contenido = signal('');
@@ -111,6 +126,26 @@ export class FreeNoteBlock {
 
   /** Cuántas versiones lleva escritas en esta sesión. */
   protected readonly versiones = signal(0);
+
+  /**
+   * El texto tal como quedó en el último guardado exitoso. Arranca vacío, así
+   * que antes del primer guardado equivale a "nada guardado todavía".
+   */
+  private readonly ultimoGuardado = signal('');
+
+  /**
+   * Contrato de `DraftBlock`. Una nota guardada no es un borrador pendiente
+   * —ya quedó en la historia—, pero seguir escribiendo después sí lo es. Y la
+   * cita elegida sólo es borrador **antes** del primer guardado: después viaja
+   * en el vínculo con la nota abierta (`persistir()`), no en un alta pendiente
+   * de esta pantalla. Sin texto no hay nada que proteger: borrar todo después
+   * de guardar no pierde nada (la versión ya quedó en el historial).
+   */
+  readonly tieneCambiosPendientes = computed(
+    () =>
+      (!this.vacio() && this.contenido() !== this.ultimoGuardado()) ||
+      (this.noteId() === null && this.citaElegida() !== null),
+  );
 
   private readonly notes = inject(ChartNotesClient);
   private readonly profiles = inject(ProfilesClient);
@@ -172,6 +207,11 @@ export class FreeNoteBlock {
       next: (referencia) => {
         this.noteId.set(referencia.noteId);
         this.versiones.set(referencia.versionNumber);
+        // El texto capturado al armar la petición, no `contenido()` de nuevo:
+        // si la persona siguió escribiendo mientras la petición estaba en
+        // vuelo, eso todavía no se guardó y tiene que seguir contando como
+        // borrador pendiente.
+        this.ultimoGuardado.set(texto);
         this.guardando.set(false);
         this.toast.success(
           referencia.versionNumber === 1

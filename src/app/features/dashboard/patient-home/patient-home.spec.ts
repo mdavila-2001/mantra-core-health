@@ -145,9 +145,7 @@ describe('PatientHome', () => {
     ]) {
       expect(t).not.toContain(palabra);
     }
-    expect(texto()).not.toMatch(
-      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
-    );
+    expect(texto()).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
   });
 
   it('muestra el próximo turno, no el más viejo ni uno que ya pasó', async () => {
@@ -216,9 +214,9 @@ describe('PatientHome', () => {
     );
 
     const raiz = fixture.nativeElement as HTMLElement;
-    expect(
-      raiz.querySelector('[data-testid="mi-salud-cita-profesional"]')?.textContent,
-    ).toContain('Dra. Valeria Rojas');
+    expect(raiz.querySelector('[data-testid="mi-salud-cita-profesional"]')?.textContent).toContain(
+      'Dra. Valeria Rojas',
+    );
     expect(raiz.querySelector('[data-testid="mi-salud-cita-lugar"]')?.textContent).toContain(
       'Consultorio 3',
     );
@@ -271,20 +269,24 @@ describe('PatientHome', () => {
     expect(receta?.textContent).toContain('2026');
   });
 
-  /** La Guía es de los pacientes: es donde buscan con quién atenderse. */
-  it('ofrece los accesos del paciente, la Guía incluida', async () => {
+  /**
+   * La grilla «Ir a lo tuyo» se retiró a pedido del doctor (P-03, 22/09/2026):
+   * turnos e historia siguen a mano desde las tarjetas del resumen, y la Guía,
+   * desde el menú. Lo que se comprueba es que no volvió, y que el camino a los
+   * turnos no se fue con ella.
+   */
+  it('ya no ofrece la grilla de accesos; los turnos siguen a mano desde el resumen', async () => {
     await montar();
     responder([], null);
 
-    const rutas = [
-      ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>(
-        '[data-testid="mi-salud-acceso"]',
-      ),
-    ].map((enlace) => enlace.getAttribute('href'));
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('[data-testid="mi-salud-acceso"]')).toBeNull();
+    expect(html.querySelector('nav.mi-salud__accesos')).toBeNull();
 
-    expect(rutas).toContain('/directory');
+    const rutas = [...html.querySelectorAll<HTMLAnchorElement>('a[href]')].map((enlace) =>
+      enlace.getAttribute('href'),
+    );
     expect(rutas).toContain('/my-account/appointments');
-    expect(rutas).toContain('/my-account/medical-record');
   });
 
   /** Media pantalla útil es mejor que un error que tapa lo que sí se pudo leer. */
@@ -293,12 +295,14 @@ describe('PatientHome', () => {
     http
       .expectOne((r) => r.url === '/scheduling/bookings')
       .flush('nope', { status: 500, statusText: 'Server Error' });
-    http.expectOne((r) => r.url === `/clinical/patients/${PERFIL}/summary`).flush({
-      ...historiaVacia(),
-      medicationRequests: [
-        { id: 'r-1', medicationConceptId: 'm-1', issuedAt: '2026-08-10T10:00:00.000Z' },
-      ],
-    });
+    http
+      .expectOne((r) => r.url === `/clinical/patients/${PERFIL}/summary`)
+      .flush({
+        ...historiaVacia(),
+        medicationRequests: [
+          { id: 'r-1', medicationConceptId: 'm-1', issuedAt: '2026-08-10T10:00:00.000Z' },
+        ],
+      });
     fixture.detectChanges();
 
     expect(texto()).toContain('Ver y descargar');

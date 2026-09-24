@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
+import { UbicacionPicker } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
 import {
   MODALIDADES,
   RegisterImagingCenter,
@@ -27,11 +28,6 @@ function archivo(nombre: string, tipo: string, bytes: number): File {
   return { name: nombre, type: tipo, size: bytes } as unknown as File;
 }
 
-/** El evento de un `<input type="file">` al que se le eligió un archivo. */
-function eventoDeArchivo(elegido: File | null): { evento: Event; entrada: { value: string } } {
-  const entrada = { files: elegido === null ? [] : [elegido], value: 'C:\\fakepath\\algo.pdf' };
-  return { evento: { target: entrada } as unknown as Event, entrada };
-}
 
 const PDF = () => archivo('sedes.pdf', 'application/pdf', 120_000);
 
@@ -239,9 +235,7 @@ describe('RegisterImagingCenter', () => {
   /* --- los adjuntos ------------------------------------------------------ */
 
   it('guarda el archivo elegido con su nombre y su peso', () => {
-    const { evento } = eventoDeArchivo(PDF());
-
-    component.adjuntar('radioproteccionFile', evento);
+    component.updateAttachment('radioproteccionFile', [PDF()]);
 
     expect(component.adjuntoDe('radioproteccionFile')).toEqual({
       archivo: 'sedes.pdf',
@@ -250,49 +244,20 @@ describe('RegisterImagingCenter', () => {
     expect(component.errorAdjunto()).toBeNull();
   });
 
-  it('rechaza lo que no es PDF, JPG o PNG', () => {
-    const { evento } = eventoDeArchivo(archivo('planilla.xlsx', 'application/vnd.ms-excel', 1000));
+  it('quitar un adjunto lo saca', () => {
+    component.updateAttachment('sedesFile', [PDF()]);
 
-    component.adjuntar('sedesFile', evento);
-
-    expect(component.adjuntoDe('sedesFile')).toBeNull();
-    expect(component.errorAdjunto()).toContain('PDF');
-  });
-
-  it('rechaza un archivo de más de 5 MB', () => {
-    const { evento } = eventoDeArchivo(archivo('sedes.pdf', 'application/pdf', 6 * 1024 * 1024));
-
-    component.adjuntar('sedesFile', evento);
-
-    expect(component.adjuntoDe('sedesFile')).toBeNull();
-    expect(component.errorAdjunto()).toContain('5 MB');
-  });
-
-  it('vacía el input después de elegir, para que el mismo archivo se pueda volver a elegir', () => {
-    // Sin esto, quien corrige un rechazo con el mismo papel no ve pasar nada:
-    // el `change` no se dispara dos veces con el mismo valor.
-    const { evento, entrada } = eventoDeArchivo(PDF());
-
-    component.adjuntar('sedesFile', evento);
-
-    expect(entrada.value).toBe('');
-  });
-
-  it('quitar un adjunto lo saca y borra el error anterior', () => {
-    component.adjuntar('sedesFile', eventoDeArchivo(archivo('x.txt', 'text/plain', 10)).evento);
-    component.adjuntar('sedesFile', eventoDeArchivo(PDF()).evento);
-
-    component.quitarAdjunto('sedesFile');
+    component.updateAttachment('sedesFile', []);
 
     expect(component.adjuntoDe('sedesFile')).toBeNull();
     expect(component.errorAdjunto()).toBeNull();
   });
 
-  it('dice el peso en la unidad que se lee de un vistazo', () => {
-    expect(component.pesoLegible(2 * 1024 * 1024)).toBe('2.0 MB');
-    expect(component.pesoLegible(120_000)).toBe('117 kB');
-    expect(component.pesoLegible(null)).toBe('');
-  });
+  // El rechazo por formato y por peso, el vaciado del `<input>` y el peso
+  // legible se probaban acá sobre métodos que ninguna plantilla llamaba desde
+  // que los adjuntos pasaron a `app-file-input`. Esas pruebas se retiraron con
+  // ese código: quien rechaza y quien formatea el peso es la molécula, y lo
+  // prueba su propio spec.
 
   /* --- sucursales -------------------------------------------------------- */
 
@@ -359,5 +324,84 @@ describe('RegisterImagingCenter', () => {
     const form = fixture.debugElement.query(By.css('[data-testid="registro-form-imagenologia"]'));
 
     expect(form).not.toBeNull();
+  });
+
+  /* --- el mapa vacía la dirección de la central (D-06) ------------------- */
+
+  describe('el mapa vacía la dirección de la central', () => {
+    /** Avanza el asistente hasta la página cuyo título contiene `fragmento`. */
+    function avanzarHasta(fragmento: string): void {
+      for (let paso = 0; paso < 12; paso += 1) {
+        const titulo =
+          fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent ?? '';
+        if (titulo.includes(fragmento)) return;
+        fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]')?.click();
+        fixture.detectChanges();
+      }
+      throw new Error(`No se alcanzó una página con título que contenga «${fragmento}»`);
+    }
+
+    /** La dirección escrita y dejada: tocada, como la deja quien la escribió. */
+    function direccionEscritaYDejada(): HTMLInputElement {
+      fixture.detectChanges();
+      completarLoObligatorio();
+      fixture.detectChanges();
+      avanzarHasta('Dónde está la central');
+      const campo: HTMLInputElement = fixture.nativeElement.querySelector(
+        '[data-testid="registro-imagen-direccion"]',
+      );
+      campo.dispatchEvent(new FocusEvent('blur'));
+      fixture.detectChanges();
+      return campo;
+    }
+
+    function tocarElMapa(): void {
+      const mapa = fixture.debugElement.query(By.directive(UbicacionPicker));
+      (mapa.componentInstance as UbicacionPicker).puntoElegido.emit({ lat: -17.7833, lng: -63.1821 });
+      fixture.detectChanges();
+    }
+
+    function errorDe(campo: HTMLElement): string {
+      return campo.closest('app-form-field')?.querySelector('.form-field-error')?.textContent?.trim() ?? '';
+    }
+
+    it('la deja vacía sin marcarla en rojo, aunque la persona ya la hubiera tocado', () => {
+      const campo = direccionEscritaYDejada();
+      expect(component.form.controls.addressLines.touched).toBe(true);
+
+      tocarElMapa();
+
+      expect(campo.value).toBe('');
+      expect(errorDe(campo)).toBe('');
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-imagen-direccion-reescribir"]'),
+      ).not.toBeNull();
+    });
+
+    it('tocarla después sí la marca, y el aviso sigue a su lado', () => {
+      const campo = direccionEscritaYDejada();
+      tocarElMapa();
+
+      campo.dispatchEvent(new FocusEvent('blur'));
+      fixture.detectChanges();
+
+      expect(errorDe(campo)).toBe('Escribí la dirección legal de la central.');
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-imagen-direccion-reescribir"]'),
+      ).not.toBeNull();
+    });
+
+    it('intentar avanzar sin reescribirla la marca y no deja pasar', () => {
+      const campo = direccionEscritaYDejada();
+      tocarElMapa();
+
+      fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]').click();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.paginated-form__titulo').textContent).toContain(
+        'Dónde está la central',
+      );
+      expect(errorDe(campo)).toBe('Escribí la dirección legal de la central.');
+    });
   });
 });

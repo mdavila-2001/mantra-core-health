@@ -3,7 +3,6 @@
     app-button
     variant="ghost"
     size="sm"
-    [iconOnly]="true"
     [disabled]="isFirstPage()"
     aria-label="Página anterior"
     (clicked)="goToPrevious()"
@@ -11,6 +10,7 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <polyline points="15 18 9 12 15 6" />
     </svg>
+    Anterior
   </button>
 
   <ul class="pagination__pages">
@@ -39,16 +39,26 @@
     app-button
     variant="ghost"
     size="sm"
-    [iconOnly]="true"
     [disabled]="isLastPage()"
     aria-label="Página siguiente"
     (clicked)="goToNext()"
   >
+    Siguiente
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <polyline points="9 18 15 12 9 6" />
     </svg>
   </button>
 </nav>
+
+@if (showPageJump()) {
+  <app-select
+    class="pagination__jump"
+    ariaLabel="Ir a la página"
+    [options]="pageJumpChoices()"
+    [value]="currentPage()"
+    (valueChange)="goToFromSelect($event)"
+  />
+}
 
 <!-- El rango cambia con cada salto de página: se anuncia, pero sin interrumpir. -->
 <p class="pagination__range tabular-nums" aria-live="polite">

@@ -4,6 +4,9 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
+import { signal } from '@angular/core';
+
+import { AuthService } from '../../core/auth/auth.service';
 import { MyServices } from './my-services';
 import type {
   Practice,
@@ -502,5 +505,169 @@ describe('MyServices', () => {
       expect(estado().status).toBe('empty');
       expect(texto()).toContain('coincide');
     });
+  });
+});
+
+/* ==========================================================================
+   C-12 (2026-09-20) — programar el horario de un servicio propio
+   ========================================================================== */
+
+/**
+ * «Que se pueda programar horarios para Mis Servicios, que bloqueen la agenda
+ * de consulta medica con el motivo OTROS SERVICIOS.»
+ *
+ * Lo que estas pruebas fijan:
+ *
+ * 1. **El rato se guarda como una excepcion de disponibilidad** sobre la agenda
+ *    del profesional. Es el mismo mecanismo con que se bloquea un dia, y es lo
+ *    que produce el bloqueo que el pedido exige (supuesto `Q-P5`, declarado).
+ * 2. **El motivo viaja como `OTHER` + texto, no como un tipo inventado.**
+ *    «OTROS SERVICIOS» no esta en la lista cerrada de siete motivos del
+ *    contrato; ampliarla es decision de negocio (`Q-D6`). `OTHER` es el unico
+ *    que exige texto, y el texto es exactamente para esto.
+ * 3. **Sin agenda propia no se ofrece a medias**: se dice que falta publicar el
+ *    horario, en vez de dejar un formulario que no puede guardar nada.
+ */
+describe('MyServices · programar el horario de un servicio (C-12)', () => {
+  const TENANT = '11111111-1111-1111-1111-111111111111';
+  const PERFIL = '22222222-2222-2222-2222-222222222222';
+
+  let harness: RouterTestingHarness;
+  let componente: MyServices;
+  let http: HttpTestingController;
+
+  async function montar(perfil: string | null = PERFIL): Promise<void> {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([{ path: 'my-services', component: MyServices }]),
+        {
+          provide: AuthService,
+          useValue: {
+            practitionerProfileId: signal<string | null>(perfil),
+            activeTenantId: signal<string | null>(TENANT),
+            roles: signal<readonly string[]>(['PRACTITIONER']),
+          },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    harness = await RouterTestingHarness.create();
+    componente = await harness.navigateByUrl('/my-services', MyServices);
+    http.expectOne((r) => r.url === '/practices').flush(UNA_PRACTICA);
+    harness.detectChanges();
+    http.expectOne((r) => r.url === '/billing/service-catalog').flush(pagina([servicio()]));
+    harness.detectChanges();
+  }
+
+  function api<T>(nombre: string): T {
+    const valor = (componente as unknown as Record<string, unknown>)[nombre];
+    return (typeof valor === 'function' ? valor.bind(componente) : valor) as T;
+  }
+
+  /** Responde la agenda del profesional y su horario publicado. */
+  function conAgendaPropia(): void {
+    http.expectOne((r) => r.url === '/scheduling/resources').flush({
+      items: [{ id: 'res-1', name: 'Agenda', resourceRefId: PERFIL }],
+      count: 1,
+    });
+    harness.detectChanges();
+    http.expectOne((r) => r.url === '/scheduling/resources/res-1/templates').flush({
+      items: [
+        {
+          id: 'tpl-1',
+          name: 'Horario',
+          statusConceptId: 'c',
+          retired: false,
+          rules: [{ dayOfWeek: 2, startTime: '09:00:00', endTime: '13:00:00' }],
+        },
+      ],
+      count: 1,
+    });
+    http.expectOne((r) => r.url === '/scheduling/resources/res-1/exceptions').flush({
+      items: [],
+      count: 0,
+    });
+    harness.detectChanges();
+  }
+
+  afterEach(() => {
+    for (const req of http.match(() => true)) req.flush({ items: [], count: 0 });
+    http.verify();
+  });
+
+  it('abre el modal reciclando la MISMA grilla del horario, no una nueva', async () => {
+    await montar();
+    api<(s: ServiceCatalogItem) => void>('programarHorario')(servicio());
+    conAgendaPropia();
+
+    const raiz = harness.routeNativeElement as HTMLElement;
+    expect(raiz.ownerDocument.querySelector('app-schedule-grid')).not.toBeNull();
+    // Y con las reglas del horario publicado, no con una grilla vacia.
+    expect(api<() => readonly unknown[]>('reglasDelHorario')()).toHaveLength(1);
+  });
+
+  it('el bloqueo viaja como OTHER + texto, nunca como un tipo inventado', async () => {
+    await montar();
+    api<(s: ServiceCatalogItem) => void>('programarHorario')(servicio({ name: 'Ecografia' }));
+    conAgendaPropia();
+
+    // `api()` liga las funciones al componente, y una señal ES una función: se
+    // toma la propiedad cruda para poder escribirla.
+    (componente as unknown as Record<string, { set(v: string): void }>)['diaElegido'].set('2');
+    api<(v: string) => void>('fijarDesde')('14:00');
+    api<(v: string) => void>('fijarHasta')('16:00');
+    api<() => void>('guardarHorarioDelServicio')();
+
+    const req = http.expectOne(
+      (r) => r.url === '/scheduling/resources/res-1/exceptions' && r.method === 'POST',
+    );
+    expect(req.request.body.exceptionType).toBe('OTHER');
+    expect(req.request.body.reason).toBe('Otros servicios · Ecografia');
+    // No se manda ningun tipo que el contrato no declare.
+    expect(req.request.body.exceptionType).not.toBe('OTHER_SERVICES');
+    // Y no es una excepcion que ABRE: esto bloquea.
+    expect(req.request.body.isAvailable).toBeUndefined();
+    // El rango sale del dia y las horas elegidas.
+    const desde = new Date(req.request.body.startAt as string);
+    const hasta = new Date(req.request.body.endAt as string);
+    expect(desde.getDay()).toBe(2);
+    expect(desde.getHours()).toBe(14);
+    expect(hasta.getHours()).toBe(16);
+
+    req.flush({ id: 'exc-1', blockedSlots: 3 });
+    harness.detectChanges();
+    // Y el modal se cierra: el rato ya quedo bloqueado.
+    expect(api<() => unknown>('programando')()).toBeNull();
+  });
+
+  it('un rango invertido no manda nada y lo dice', async () => {
+    await montar();
+    api<(s: ServiceCatalogItem) => void>('programarHorario')(servicio());
+    conAgendaPropia();
+
+    api<(v: string) => void>('fijarDesde')('16:00');
+    api<(v: string) => void>('fijarHasta')('14:00');
+    api<() => void>('guardarHorarioDelServicio')();
+
+    http.expectNone((r) => r.method === 'POST');
+    expect(api<() => string | null>('errorDelHorario')()).toContain('antes de terminar');
+  });
+
+  it('sin agenda propia lo dice, en vez de ofrecer un formulario que no guarda', async () => {
+    await montar(null);
+    api<(s: ServiceCatalogItem) => void>('programarHorario')(servicio());
+    harness.detectChanges();
+
+    expect(api<() => boolean>('sinAgendaPropia')()).toBe(true);
+    const texto = (harness.routeNativeElement as HTMLElement).ownerDocument.body.textContent ?? '';
+    expect(texto).toContain('Todavía no tenés agenda propia');
+    expect(
+      (harness.routeNativeElement as HTMLElement).ownerDocument.querySelector(
+        '[data-testid="my-services-schedule-save"]',
+      ),
+    ).toBeNull();
   });
 });

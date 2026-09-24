@@ -3,7 +3,7 @@ import { PatientCoverageCard } from '../../../shared/components/molecules/patien
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -32,7 +32,6 @@ import { AppButtonLink } from '../../../shared/components/atoms/button/button-li
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
-import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
@@ -44,8 +43,9 @@ import {
   CaseStatusCatalog,
   toCaseStatusPresentation,
 } from '../../identity-verification/case-status';
+import { Loyalty } from '../loyalty/loyalty';
 import { PatientProfileEdit } from './patient-profile-edit/patient-profile-edit';
-import { PESTANAS_DEL_PERFIL } from './pestanas-del-perfil';
+import { indiceDePestana, PESTANAS_DEL_PERFIL } from './pestanas-del-perfil';
 import { PractitionerProfile } from './practitioner-profile/practitioner-profile';
 
 /**
@@ -118,6 +118,7 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
     DatePipe,
     InsurancePortabilityCard,
     Link,
+    Loyalty,
     NavIcon,
     PageHeader,
     PatientProfileEdit,
@@ -126,7 +127,6 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
     StatusSeal,
     Tab,
     Tabs,
-    Tooltip,
     ViewStateHost,
   ],
   templateUrl: './my-profile.html',
@@ -220,9 +220,17 @@ export class MyProfile {
    * del 09/09/2026). El índice se comparte con el editor embebido: pulsar el
    * lápiz estando en «Contacto» abre el formulario en «Contacto», y al volver
    * a sólo lectura se sigue en la misma.
+   *
+   * La URL puede pedir una al entrar (`?pestana=puntos`): es lo que permite
+   * que la vieja ruta de «Mis puntos» siga llegando a la billetera ahora que
+   * vive acá (N-03). Se lee una vez, al construir: editar y cambiar de pestaña
+   * son estados momentáneos de la pantalla, no lugares, y no se escriben de
+   * vuelta en la URL.
    */
   protected readonly pestanas = PESTANAS_DEL_PERFIL;
-  protected readonly pestana = signal(0);
+  protected readonly pestana = signal(
+    indiceDePestana(inject(ActivatedRoute).snapshot.queryParamMap.get('pestana')) ?? 0,
+  );
 
   /**
    * Adónde va «Cambiar contraseña» (FT-11-R08).

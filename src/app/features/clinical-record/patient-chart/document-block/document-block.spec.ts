@@ -205,4 +205,35 @@ describe('DocumentBlock', () => {
     expect(req.request.body.encounterId).toBe('enc-9');
     req.flush(RESPUESTA);
   });
+
+  describe('tieneCambiosPendientes — contrato de DraftBlock', () => {
+    it('recién montado no tiene cambios pendientes', () => {
+      dibujar();
+      expect(componente.tieneCambiosPendientes()).toBe(false);
+    });
+
+    it('con un título escrito tiene cambios pendientes', () => {
+      dibujar();
+      señal<string | number | null>('titulo').set('Laboratorio completo');
+      expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+
+    it('con un archivo elegido y nada más también cuenta', () => {
+      dibujar();
+      señal<readonly File[]>('archivos').set([archivo('laboratorio.pdf')]);
+      expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+
+    it('registrado, vuelve a no tener cambios pendientes', () => {
+      dibujar();
+      señal<string | number | null>('titulo').set('Laboratorio completo');
+      expect(componente.tieneCambiosPendientes()).toBe(true);
+
+      interno<() => void>('registrar')();
+      const req = http.expectOne('/charts/documents');
+      req.flush(RESPUESTA);
+
+      expect(componente.tieneCambiosPendientes()).toBe(false);
+    });
+  });
 });

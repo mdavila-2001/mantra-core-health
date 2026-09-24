@@ -84,3 +84,8 @@
 .broker__agreement-validity {
   margin-inline-start: auto;
 }
+@media (max-width: 48rem) {
+  .broker__facts {
+    grid-template-columns: 1fr;
+  }
+}

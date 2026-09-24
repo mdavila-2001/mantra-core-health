@@ -1,0 +1,42 @@
+
+Running 1 test using 1 worker
+
+  x  1 [chromium] › playwright\consulta-rejilla.spec.ts:49:7 › Consulta · rejilla de registro › todo lo que se registra está en la rejilla y abre en modal (5.1m)
+
+
+  1) [chromium] › playwright\consulta-rejilla.spec.ts:49:7 › Consulta · rejilla de registro › todo lo que se registra está en la rejilla y abre en modal 
+
+    Test timeout of 300000ms exceeded.
+
+    Error: locator.fill: Test timeout of 300000ms exceeded.
+    Call log:
+      - waiting for getByRole('textbox', { name: 'Buscar por nombre o código' })
+
+
+      58 |     // sin esperar la demora del tipeo.
+      59 |     const buscador = page.getByRole('textbox', { name: 'Buscar por nombre o código' });
+    > 60 |     await buscador.fill('Ana');
+         |                    ^
+      61 |     await buscador.press('Enter');
+      62 |     await page.getByRole('link', { name: 'Ver expediente' }).first().click();
+      63 |     await page.waitForURL(/\/medical-records\/[^/]+$/, { timeout: 60_000 });
+        at D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\playwright\consulta-rejilla.spec.ts:60:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\consulta-rejilla-Consulta--55614--la-rejilla-y-abre-en-modal-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\consulta-rejilla-Consulta--55614--la-rejilla-y-abre-en-modal-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\consulta-rejilla-Consulta--55614--la-rejilla-y-abre-en-modal-chromium\trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts\playwright\salida\consulta-rejilla-Consulta--55614--la-rejilla-y-abre-en-modal-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  Slow test file: [chromium] › playwright\consulta-rejilla.spec.ts (5.1m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  1 failed
+    [chromium] › playwright\consulta-rejilla.spec.ts:49:7 › Consulta · rejilla de registro › todo lo que se registra está en la rejilla y abre en modal 

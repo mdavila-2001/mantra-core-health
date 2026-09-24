@@ -226,9 +226,12 @@ export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): str
     // Las tipografías están autoalojadas: no hace falta abrir ningún CDN.
     "font-src 'self'",
     // `data:` cubre los SVG en línea del sistema de diseño. Los mosaicos de
-    // CARTO son el único origen de imagen ajeno y el mapa los pide directo del
-    // navegador; el comodín cubre los subdominios `a` a `d` del proveedor.
-    "img-src 'self' data: https://*.basemaps.cartocdn.com",
+    // OpenStreetMap son el único origen de imagen ajeno y el mapa los pide
+    // directo del navegador. Un solo host, sin comodín: OSM ya no reparte por
+    // subdominios. Estuvo abierto a `*.basemaps.cartocdn.com` hasta el
+    // 19/09/2026, cuando CARTO empezó a estampar «API KEY REQUIRED» sobre
+    // cada mosaico.
+    "img-src 'self' data: https://tile.openstreetmap.org",
     `connect-src 'self'${apiOrigin === null ? '' : ` ${apiOrigin}`}`,
     "frame-ancestors 'none'",
     "object-src 'none'",
@@ -258,11 +261,14 @@ export function securityHeaders(
     'X-Frame-Options': 'DENY',
     // Una URL con identificadores no debe viajar a otro sitio en el `Referer`.
     'Referrer-Policy': 'strict-origin-when-cross-origin',
-    // Cámara y micrófono no se usan. La ubicación sí: «dónde comprar mi
-    // receta» la pide con permiso explícito del navegador para ordenar
-    // sucursales por cercanía — `geolocation=()` la apagaba para toda la
-    // aplicación. `(self)` la permite solo al propio origen, jamás a un iframe.
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(self)',
+    // La cámara no se usa. El micrófono sí, desde el 23/09/2026: el dictado
+    // del chequeo de síntomas (P-02) y la nota de voz de mensajería lo piden
+    // con permiso explícito del navegador — `microphone=()` los apagaba para
+    // toda la aplicación aunque la persona lo concediera (HALL-M4). La
+    // ubicación igual: «dónde comprar mi receta» la pide para ordenar
+    // sucursales por cercanía. `(self)` permite cada uno solo al propio
+    // origen, jamás a un iframe.
+    'Permissions-Policy': 'camera=(), microphone=(self), geolocation=(self)',
     'Strict-Transport-Security': 'max-age=63072000; includeSubDomains',
   };
 }

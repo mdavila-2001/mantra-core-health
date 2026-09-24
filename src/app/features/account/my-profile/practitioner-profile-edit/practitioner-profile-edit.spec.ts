@@ -1,8 +1,9 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import type { WritableSignal } from '@angular/core';
+import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 
 import { PractitionerProfileEdit } from './practitioner-profile-edit';
 
@@ -45,9 +46,36 @@ describe('PractitionerProfileEdit', () => {
   let componente: PractitionerProfileEdit;
   let http: HttpTestingController;
 
+  /**
+   * Los parámetros de la URL con la que se entra al editor.
+   *
+   * Vive acá y no dentro de la prueba que lo usa porque el `ActivatedRoute`
+   * falso se provee una sola vez, en el armado: reconfigurar el `TestBed` a
+   * mitad de un archivo deja el inyector anterior a medio desmontar y ensucia
+   * los demás specs del lote —comprobado: hacerlo puso en rojo pruebas de dos
+   * pantallas que no tienen nada que ver con ésta—. El `getter` es lo que
+   * permite que cada prueba lo cambie antes de montar.
+   */
+  let parametros: Record<string, string> = {};
+
   beforeEach(() => {
+    parametros = {};
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              get queryParamMap() {
+                return convertToParamMap(parametros);
+              },
+            },
+          },
+        },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
   });
@@ -139,6 +167,49 @@ describe('PractitionerProfileEdit', () => {
     componente = TestBed.createComponent(PractitionerProfileEdit).componentInstance;
     http.expectOne('/profiles/practitioners/me/summary').flush({ ...PERFIL_BASE, ...perfil });
     responderCatalogo();
+  }
+
+  /**
+   * Monta **con vista**, que es lo que hace falta para mirar el panel abierto:
+   * las demás pruebas de este archivo hablan con el componente y no necesitan
+   * dibujarlo.
+   *
+   * Dibujarlo trae dos lecturas de más —el catálogo del tipo de credencial y
+   * las etiquetas de los conceptos— y se responden acá en vez de en el
+   * `afterEach` general: sólo aparecen cuando hay vista, así que drenarlas
+   * para todo el archivo aflojaría el `verify()` de las otras treinta pruebas
+   * sin necesidad.
+   */
+  function montarConVista(perfil: object = {}): ComponentFixture<PractitionerProfileEdit> {
+    const fixture = TestBed.createComponent(PractitionerProfileEdit);
+    componente = fixture.componentInstance;
+    fixture.detectChanges();
+    http.expectOne('/profiles/practitioners/me/summary').flush({ ...PERFIL_BASE, ...perfil });
+    responderCatalogo();
+    fixture.detectChanges();
+    for (const pendiente of http.match((r) => r.url.startsWith('/system-context/'))) {
+      /* La forma sí importa: `app-concept-select` hace `options.map(…)` sin red
+         de contención, así que una respuesta vacía mal formada revienta el
+         render entero en vez de dejar el select sin opciones. */
+      pendiente.flush({
+        code: 'credential-type',
+        name: 'Tipo de credencial',
+        definitionId: 'def-1',
+        valueSetId: 'vs-1',
+        allowCustomValue: false,
+        options: [],
+      });
+    }
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  /** El panel que se está viendo. Los otros seis quedan en el DOM, ocultos. */
+  function panelAbierto(fixture: ComponentFixture<PractitionerProfileEdit>): HTMLElement {
+    const paneles = [...fixture.nativeElement.querySelectorAll('[role="tabpanel"]')];
+    const abierto = paneles.find((p) => !(p as HTMLElement).hasAttribute('hidden'));
+    expect(abierto).toBeDefined();
+    return abierto as HTMLElement;
   }
 
   function interno<T>(nombre: string): T {
@@ -459,6 +530,22 @@ describe('PractitionerProfileEdit', () => {
 
     señal<string>('nuevaEspecialidad').set('esp-cardio');
     expect(interno<() => boolean>('puedeAgregarEspecialidad')()).toBe(true);
+  });
+
+  it('con tres especialidades cargadas deja agregar la cuarta, pero no otra casilla', () => {
+    montarYCargar({
+      specialties: [
+        { id: 's-1', specialtyConceptId: 'esp-cardio', isPrimary: true },
+        { id: 's-2', specialtyConceptId: 'esp-pediatria', isPrimary: false },
+        { id: 's-3', specialtyConceptId: 'esp-endo', isPrimary: false },
+      ],
+    });
+
+    señal<string>('nuevaEspecialidad').set('esp-orto');
+    expect(interno<() => boolean>('puedeAgregarEspecialidad')()).toBe(true);
+
+    interno<() => void>('agregarCasillaDeEspecialidad')();
+    expect(interno<() => readonly string[]>('especialidadesExtra')()).toEqual([]);
   });
 
   it('agregarEspecialidad hace un POST y recarga el perfil', () => {
@@ -848,6 +935,69 @@ describe('PractitionerProfileEdit', () => {
     req.flush({ ...PERFIL_BASE, homeAddress: { lines: 'Av. Brasil 1234' } });
   });
 
+  it('Contacto ofrece una dirección de trabajo separada del domicilio', () => {
+    const fixture = montarConVista();
+    señal<number>('pestana').set(1);
+    fixture.detectChanges();
+
+    expect(
+      panelAbierto(fixture).querySelector('[data-testid="edicion-direccion-trabajo"]'),
+    ).not.toBeNull();
+  });
+
+  it('siembra la dirección laboral y su punto sin mezclarlos con el domicilio', () => {
+    montarYCargar({
+      homeAddress: { lines: 'Av. Brasil 1234', latitude: -16.5, longitude: -68.15 },
+      workAddress: { lines: 'Calle Warnes 45', latitude: -17.78, longitude: -63.18 },
+    });
+
+    expect(interno<() => string>('direccionTrabajo')()).toBe('Calle Warnes 45');
+    expect(señal<unknown>('gpsDomicilioGuardado')()).toEqual({ lat: -16.5, lng: -68.15 });
+    expect(señal<unknown>('gpsTrabajoGuardado')()).toEqual({ lat: -17.78, lng: -63.18 });
+  });
+
+  it('guardarPresentacion manda workAddressLines sólo cuando cambia', () => {
+    montarYCargar({ workAddress: { lines: 'Calle Warnes 45' } });
+
+    señal<string>('direccionTrabajo').set('Av. Melchor Pinto 620');
+    interno<() => void>('guardarPresentacion')();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ workAddressLines: 'Av. Melchor Pinto 620' });
+    req.flush({ ...PERFIL_BASE, workAddress: { lines: 'Av. Melchor Pinto 620' } });
+  });
+
+  it('guarda y quita el GPS laboral como par, separado del GPS del domicilio', () => {
+    montarYCargar({
+      homeAddress: { lines: 'Av. Brasil 1234', latitude: -16.5, longitude: -68.15 },
+      workAddress: { lines: 'Calle Warnes 45', latitude: -17.78, longitude: -63.18 },
+    });
+
+    señal<unknown>('gpsTrabajo').set({ lat: -17.8, lng: -63.2 });
+    interno<() => void>('guardarPresentacion')();
+
+    const guardar = http.expectOne('/profiles/practitioners/me');
+    expect(guardar.request.body).toEqual({ workLatitude: -17.8, workLongitude: -63.2 });
+    guardar.flush(PERFIL_BASE);
+
+    señal<unknown>('gpsTrabajo').set(null);
+    interno<() => void>('guardarPresentacion')();
+
+    const quitar = http.expectOne('/profiles/practitioners/me');
+    expect(quitar.request.body).toEqual({ workLatitude: null, workLongitude: null });
+    quitar.flush(PERFIL_BASE);
+  });
+
+  it('Contacto muestra selectores GPS independientes para domicilio y trabajo', () => {
+    const fixture = montarConVista();
+    señal<number>('pestana').set(1);
+    fixture.detectChanges();
+
+    const panel = panelAbierto(fixture);
+    expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-domicilio"]')).not.toBeNull();
+    expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-trabajo"]')).not.toBeNull();
+  });
+
   /* ---- formación: sólo se agrega ------------------------------------------- */
 
   it('el botón de agregar formación exige tipo y número', () => {
@@ -1050,6 +1200,31 @@ describe('PractitionerProfileEdit', () => {
       const dialogos = interno<{ confirm: () => Promise<boolean> }>('dialogs');
       dialogos.confirm = () => Promise.resolve(true);
     }
+
+    it('editar una especialidad no ofrece el seleccionable de certificación de junta', () => {
+      const fixture = montarConVista({
+        ...PERFIL_CON_FILAS,
+        specialties: [{ ...PERFIL_CON_FILAS.specialties[0], boardCertified: true }],
+      });
+      const fila = interno<() => readonly { id: string }[]>('filasEspecialidades')()[0]!;
+      interno<(f: unknown) => void>('editarEspecialidad')(fila);
+      fixture.detectChanges();
+
+      const dialogo = fixture.nativeElement.querySelector('[data-testid="edicion-dialogo"]');
+      expect(dialogo).not.toBeNull();
+      expect(dialogo.textContent).not.toContain('Certificada por el colegio o consejo');
+      expect(dialogo.querySelector('app-switch')).toBeNull();
+
+      señal<string | null>('edicionEspecialidad').set('esp-pediatria');
+      interno<() => void>('guardarEdicion')();
+      const request = http.expectOne('/profiles/practitioners/me/specialties/spec-9');
+      expect(request.request.method).toBe('PATCH');
+      expect(request.request.body).toEqual({ specialtyConceptId: 'esp-pediatria' });
+      request.flush(null);
+      http
+        .expectOne('/profiles/practitioners/me/summary')
+        .flush({ ...PERFIL_BASE, ...PERFIL_CON_FILAS });
+    });
 
     it('la fila pendiente se puede corregir y retirar; la verificada no', () => {
       montarYCargar(PERFIL_CON_FILAS);
@@ -1337,6 +1512,363 @@ describe('PractitionerProfileEdit', () => {
 
       interno<(texto: string) => void>('buscarEnMatriculas')('no existe');
       expect(interno<() => boolean>('sinCoincidenciasMatriculas')()).toBe(true);
+    });
+  });
+
+  /**
+   * «Actividad»: la pestaña que existe **para** decir que no se edita.
+   *
+   * El doctor pidió que el editor tenga todas las pestañas de la ficha (C-05).
+   * Los cuatro contadores no se editan —son cuentas de lo que ya pasó, y uno
+   * escrito a mano deja de contar—, así que la respuesta no fue sacar la
+   * pestaña sino tenerla sin un solo campo y explicando por qué.
+   *
+   * Las dos mitades se fijan acá, porque cada una se puede romper sin la otra:
+   * alguien puede volver a quitar la pestaña, y alguien puede «completarla»
+   * poniéndole controles.
+   */
+  describe('la pestaña «Actividad» del editor', () => {
+    it('está, y enumera los cuatro contadores', () => {
+      const fixture = montarConVista();
+
+      señal<number>('pestana').set(6);
+      fixture.detectChanges();
+
+      const lista = fixture.nativeElement.querySelector('[data-testid="edicion-actividad"]');
+      expect(lista).not.toBeNull();
+      expect(lista.querySelectorAll('li')).toHaveLength(4);
+    });
+
+    it('no ofrece ni un control para escribir', () => {
+      const fixture = montarConVista();
+
+      señal<number>('pestana').set(6);
+      fixture.detectChanges();
+
+      /* El panel VISIBLE, no el primero del documento: buscar en «Datos
+         personales» —que sí tiene campos— daría rojo por mirar donde no es. */
+      expect(panelAbierto(fixture).querySelectorAll('input, select, textarea')).toHaveLength(0);
+    });
+
+    it('no muestra «Guardar cambios», porque no hay nada que guardar', () => {
+      montarConVista();
+
+      señal<number>('pestana').set(6);
+      expect(interno<() => boolean>('editandoPresentacion')()).toBe(false);
+    });
+  });
+
+  /**
+   * Lo que el alta pregunta, el editor muestra y nadie puede corregir acá.
+   *
+   * «Editar muestre TODOS los campos» (C-05). Estos tres no se pueden escribir
+   * —el contrato del perfil no los acepta, y el correo de trabajo está
+   * excluido a propósito porque es la identidad de acceso—, y hasta el
+   * 21/09/2026 el editor sencillamente no los mostraba: quien venía a
+   * corregirlos no encontraba ni el dato ni el motivo.
+   *
+   * Las tres pruebas cubren las tres formas de romperlo: que el dato
+   * desaparezca, que alguien le ponga un control, y que alguien lo mande en el
+   * `PATCH` creyendo que ahí se guarda.
+   */
+  describe('lo que se muestra y no se corrige', () => {
+    const CON_IDENTIDAD = {
+      nationalId: '5414404',
+      issuerAdministrativeAreaConceptId: 'dep-scz',
+      email: 'dra.salas@alovida.mock',
+    };
+
+    it('«Datos personales» muestra el documento, sin control para escribirlo', () => {
+      const fixture = montarConVista(CON_IDENTIDAD);
+
+      const bloque = panelAbierto(fixture).querySelector('[data-testid="edicion-documento"]');
+      expect(bloque).not.toBeNull();
+      expect(bloque?.textContent).toContain('5414404');
+      expect(bloque?.querySelectorAll('input, select, textarea')).toHaveLength(0);
+    });
+
+    it('«Contacto» muestra el correo de trabajo, sin control para escribirlo', () => {
+      const fixture = montarConVista(CON_IDENTIDAD);
+
+      señal<number>('pestana').set(1);
+      fixture.detectChanges();
+
+      const bloque = panelAbierto(fixture).querySelector('[data-testid="edicion-correo-trabajo"]');
+      expect(bloque).not.toBeNull();
+      expect(bloque?.textContent).toContain('dra.salas@alovida.mock');
+      expect(bloque?.querySelectorAll('input, select, textarea')).toHaveLength(0);
+    });
+
+    it('prefiere workEmail cuando el correo de acceso es personal', () => {
+      const fixture = montarConVista({
+        ...CON_IDENTIDAD,
+        email: 'dra.salas.personal@alovida.mock',
+        workEmail: 'dra.salas@hospital.mock',
+      });
+
+      señal<number>('pestana').set(1);
+      fixture.detectChanges();
+
+      const bloque = panelAbierto(fixture).querySelector('[data-testid="edicion-correo-trabajo"]');
+      expect(bloque?.textContent).toContain('dra.salas@hospital.mock');
+      expect(bloque?.textContent).not.toContain('dra.salas.personal@alovida.mock');
+    });
+
+    it('guardar no manda ninguno de los tres', () => {
+      montarYCargar(CON_IDENTIDAD);
+
+      señal<string>('titulo').set('Cardióloga intervencionista');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ professionalTitle: 'Cardióloga intervencionista' });
+      req.flush(PERFIL_BASE);
+    });
+  });
+
+  /**
+   * El rechazo del servidor, anclado al campo que nombra.
+   *
+   * Hasta el 21/09/2026 un `PATCH` rechazado decía sólo «No se pudo guardar el
+   * cambio»: el detalle que el servidor manda se tiraba entero. Con quince
+   * campos en un mismo formulario, eso deja probando de nuevo lo mismo.
+   *
+   * El cuerpo de los rechazos es el del contrato del proyecto
+   * (`details.violations`, con el nombre del campo al frente del mensaje), no
+   * uno inventado para la prueba.
+   */
+  describe('cuando el servidor rechaza el guardado', () => {
+    function rechazar(cuerpo: object, status = 422): void {
+      montarYCargar();
+      señal<string>('nit').set('12345678');
+      interno<() => void>('guardarPresentacion')();
+      http
+        .expectOne('/profiles/practitioners/me')
+        .flush(cuerpo, { status, statusText: 'Unprocessable Entity' });
+    }
+
+    it('el mensaje del campo queda pegado a ese campo', () => {
+      rechazar({
+        code: 'VALIDATION_FAILED',
+        message: 'Validación fallida',
+        details: { violations: ['taxId no existe en el padrón.'] },
+        timestamp: '2026-09-21T00:00:00.000Z',
+        path: '/profiles/practitioners/me',
+      });
+
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toContain('padrón');
+      // Y no se derrama sobre los demás: un campo sin problema queda limpio.
+      expect(interno<(c: string) => string>('errorDelServidor')('personalEmail')).toBe('');
+    });
+
+    it('un rechazo sin campo sigue saliendo por el aviso general', () => {
+      rechazar(
+        {
+          code: 'INTERNAL',
+          message: 'Algo salió mal',
+          timestamp: '2026-09-21T00:00:00.000Z',
+          path: '/profiles/practitioners/me',
+        },
+        500,
+      );
+
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe('');
+    });
+
+    /**
+     * El nivel inválido del contrato: un cuerpo que NO tiene la forma que el
+     * proyecto documenta. Pasa de verdad —un balanceador que devuelve su
+     * propio HTML, un servicio que contesta texto plano— y lo que no puede
+     * pasar es que el formulario se quede mudo o se caiga: sin campo que
+     * señalar, el mensaje tiene que salir igual por el aviso general.
+     */
+    it('un cuerpo que no respeta el contrato de errores no deja al formulario mudo', () => {
+      rechazar('502 Bad Gateway' as unknown as object, 502);
+
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe('');
+      // Y lo que se escribió sigue ahí: un cuerpo raro no puede costarle a
+      // nadie lo que ya había tecleado.
+      expect(señal<string>('nit')()).toBe('12345678');
+    });
+
+    /**
+     * Segundo nivel inválido: el cuerpo tiene la forma correcta pero
+     * `violations` no es la lista de textos que el contrato promete. Leerla
+     * como si lo fuera es la forma más barata de romper la pantalla con un
+     * dato del servidor.
+     */
+    it('unas violaciones con la forma equivocada tampoco rompen nada', () => {
+      rechazar({
+        code: 'VALIDATION_ERROR',
+        message: 'Revisá los datos',
+        timestamp: '2026-09-21T00:00:00.000Z',
+        path: '/profiles/practitioners/me',
+        details: { violations: { taxId: 'no es una lista' } },
+      });
+
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe('');
+      expect(señal<string>('nit')()).toBe('12345678');
+    });
+
+    /**
+     * Que el getter devuelva el mensaje no prueba que se vea: falta que esté
+     * enlazado al campo correcto, que es el error que un `errorMessage` mal
+     * puesto comete en silencio. Esta prueba mira el DOM del panel abierto.
+     */
+    it('y se pinta debajo del campo que nombra, no en otro', () => {
+      const fixture = montarConVista();
+
+      señal<number>('pestana').set(2);
+      señal<string>('nit').set('12345678');
+      interno<() => void>('guardarPresentacion')();
+      http.expectOne('/profiles/practitioners/me').flush(
+        {
+          code: 'VALIDATION_FAILED',
+          message: 'Validación fallida',
+          details: { violations: ['taxId no existe en el padrón.'] },
+          timestamp: '2026-09-21T00:00:00.000Z',
+          path: '/profiles/practitioners/me',
+        },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+      fixture.detectChanges();
+
+      const campos = [...panelAbierto(fixture).querySelectorAll('app-form-field')];
+      const nit = campos.find((c) => (c.textContent ?? '').includes('NIT'));
+      const razonSocial = campos.find((c) => (c.textContent ?? '').includes('Razón social'));
+
+      expect(nit?.textContent).toContain('padrón');
+      expect(razonSocial?.textContent).not.toContain('padrón');
+    });
+
+    it('un guardado nuevo limpia los rechazos del anterior', () => {
+      rechazar({
+        code: 'VALIDATION_FAILED',
+        message: 'Validación fallida',
+        details: { violations: ['taxId no existe en el padrón.'] },
+        timestamp: '2026-09-21T00:00:00.000Z',
+        path: '/profiles/practitioners/me',
+      });
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toContain('padrón');
+
+      // Sin esto, un NIT corregido seguiría mostrando el error del intento
+      // anterior aunque el servidor ya lo haya aceptado.
+      señal<string>('nit').set('87654321');
+      interno<() => void>('guardarPresentacion')();
+      http.expectOne('/profiles/practitioners/me').flush(PERFIL_BASE);
+
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe('');
+    });
+
+    /**
+     * Un intento que no llega al servidor no tiene quién confirme los rechazos
+     * del anterior. Hasta el 22/09/2026 se quedaban pintados: la persona
+     * devolvía el valor a lo guardado, apretaba Guardar, leía «No había ningún
+     * cambio para guardar» y el campo seguía en rojo por un valor que ya no
+     * estaba escrito.
+     */
+    it('volver a lo guardado y apretar Guardar no deja el mensaje de un valor que ya no está', () => {
+      rechazar({
+        code: 'VALIDATION_FAILED',
+        message: 'Validación fallida',
+        details: { violations: ['taxId no existe en el padrón.'] },
+        timestamp: '2026-09-21T00:00:00.000Z',
+        path: '/profiles/practitioners/me',
+      });
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toContain('padrón');
+
+      señal<string>('nit').set('');
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe('');
+    });
+
+    it('un intento frenado por un teléfono a medias tampoco deja rechazos viejos pintados', () => {
+      rechazar({
+        code: 'VALIDATION_FAILED',
+        message: 'Validación fallida',
+        details: { violations: ['taxId no existe en el padrón.'] },
+        timestamp: '2026-09-21T00:00:00.000Z',
+        path: '/profiles/practitioners/me',
+      });
+
+      interno<{ setValue(valor: string): void }>('celularTrabajo').setValue('+591 7001');
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe('');
+    });
+  });
+
+  /**
+   * El lápiz de la ficha manda `?pestana=`, y hasta el 21/09/2026 nadie lo
+   * leía: el editor prometía abrirse donde uno venía mirando y siempre abría
+   * en la primera.
+   */
+  describe('con qué pestaña se entra', () => {
+    it('abre en la pestaña que pide la URL', () => {
+      parametros = { pestana: '5' };
+
+      montarYCargar();
+
+      expect(interno<() => number>('pestana')()).toBe(5);
+    });
+
+    it('sin parámetro abre en la primera, como siempre', () => {
+      montarYCargar();
+
+      expect(interno<() => number>('pestana')()).toBe(0);
+    });
+
+    it('un número fuera de rango no deja el editor sin panel', () => {
+      // Escrito a mano en la barra de direcciones. Siete pestañas: el 99 no
+      // puede dejar `app-tabs` apuntando a la nada.
+      parametros = { pestana: '99' };
+
+      montarYCargar();
+
+      expect(interno<() => number>('pestana')()).toBe(0);
+    });
+
+    it('un parámetro que no es un número tampoco', () => {
+      parametros = { pestana: 'credenciales' };
+
+      montarYCargar();
+
+      expect(interno<() => number>('pestana')()).toBe(0);
+    });
+  });
+
+  /**
+   * «Falta un botón en editar perfil para cancelar edición» (pedido del
+   * propietario, 24/09/2026). Datos personales, Contacto y Facturación son
+   * UN formulario con UN botón de guardar: cancelar descarta lo tipeado en
+   * los tres paneles sin salir de la pantalla ni pegarle a la red.
+   */
+  describe('cancelar la edición de Datos personales, Contacto y Facturación', () => {
+    it('vuelve a sembrar el formulario con lo último guardado, sin pegarle al servidor', () => {
+      montarYCargar({ professionalTitle: 'Cardióloga' });
+
+      señal<string>('titulo').set('Un título a medio escribir');
+      interno<() => void>('cancelarEdicion')();
+
+      expect(señal<string>('titulo')()).toBe('Cardióloga');
+      // `http.verify()` del `afterEach` ya se encarga de que no haya quedado
+      // ninguna petición pendiente — cancelar no debe disparar ninguna.
+    });
+
+    it('no hace nada mientras hay un guardado en curso', () => {
+      montarYCargar({ professionalTitle: 'Cardióloga' });
+
+      señal<string>('titulo').set('Un título a medio escribir');
+      señal<boolean>('guardandoPresentacion').set(true);
+      interno<() => void>('cancelarEdicion')();
+
+      // Cancelar a mitad de un `PATCH` dejaría el formulario mostrando un
+      // valor que la respuesta, todavía en vuelo, podría pisar igual.
+      expect(señal<string>('titulo')()).toBe('Un título a medio escribir');
+      señal<boolean>('guardandoPresentacion').set(false);
     });
   });
 });

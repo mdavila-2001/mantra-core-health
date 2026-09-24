@@ -733,6 +733,23 @@ export const SINTOMAS: readonly Sintoma[] = [
     especialidades: [{ nombre: 'Odontología', peso: 3 }],
   },
   {
+    id: 'dolor-de-mandibula',
+    nombre: 'dolor de mandíbula',
+    sinonimos: [
+      'bruxismo',
+      'aprieto los dientes',
+      'rechino los dientes',
+      'me cruje la mandibula',
+      'me traba la mandibula',
+      'no puedo abrir bien la boca',
+    ],
+    partes: ['mandibula', 'quijada'],
+    especialidades: [
+      { nombre: 'Odontología', peso: 3 },
+      { nombre: 'Traumatología', peso: 1 },
+    ],
+  },
+  {
     id: 'llagas-en-la-boca',
     nombre: 'llagas en la boca',
     sinonimos: [
@@ -1021,10 +1038,21 @@ export const SINTOMAS: readonly Sintoma[] = [
     ],
   },
   {
+    id: 'dolor-de-codo',
+    nombre: 'dolor de codo',
+    sinonimos: ['codo de tenista', 'epicondilitis', 'no puedo estirar el brazo'],
+    partes: ['codo', 'antebrazo'],
+    especialidades: [
+      { nombre: 'Traumatología', peso: 3 },
+      { nombre: 'Fisioterapia', peso: 2 },
+      { nombre: 'Reumatología', peso: 1 },
+    ],
+  },
+  {
     id: 'dolor-de-mano',
     nombre: 'dolor de mano o muñeca',
     sinonimos: ['tunel carpiano', 'no puedo cerrar la mano', 'dedos rigidos'],
-    partes: ['mano', 'muneca', 'codo'],
+    partes: ['mano', 'muneca', 'dedo'],
     especialidades: [
       { nombre: 'Traumatología', peso: 3 },
       { nombre: 'Reumatología', peso: 2 },

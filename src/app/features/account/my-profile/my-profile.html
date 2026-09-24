@@ -15,6 +15,30 @@
      REGLA DE LA CASA, ver `docs/components/composition-rules.md` §5. -->
 <div class="mi-perfil" [class.mi-perfil--sin-lateral]="!hayLateral()">
   <div class="mi-perfil__principal">
+    <!-- ─── Acá vivía el enlace suelto a «Mis organizaciones» ────────────────
+       Se retiró el 20/09/2026 por C-02: «deben eliminarse los botones @Mi
+       consultorio propio @Mi organización médica. Solo en caso de mi
+       consultorio se ve como pestaña para personalizarle el QR y todo lo que
+       ofrece esa view».
+
+       El argumento que lo sostenía hasta hoy era bueno y NO se ignoró: era el
+       único acceso a esa pantalla desde que salió del menú del médico
+       (§4.H del plan de UX del 22/08/2026), así que borrarlo a secas convertía
+       una limpieza visual en una pérdida de acceso. Por eso no se borró a
+       secas: lo que esa pantalla ofrece —el consultorio propio, su corrección,
+       su retiro, el padrón y el QR bancario— ahora se monta dentro del perfil,
+       en la pestaña «Dónde atiendo»
+       (`practitioner-profile-view.html`, sección `perfil-consultorio`). El
+       acceso no se perdió: dejó de ser un salto a otra pantalla.
+
+       `/administration/my-practice` sigue existiendo y sigue estando en el
+       menú: esa pantalla y su entrada no son de este alcance y se deciden
+       aparte (Q-I2).
+
+       Del otro botón que nombra C-02 —«Mi organización médica»— no queda nada
+       en este corte: no hay ningún enlace del perfil a
+       `administration/medical-organization`. No se inventa que se lo quitó. -->
+
     <!-- ─── El perfil, según quién entró ──────────────────────────────────────
        Con perfil profesional se muestra la trayectoria; si no, el resumen de
        paciente. No es una preferencia de presentación: son dos endpoints
@@ -73,24 +97,21 @@
           </div>
 
           <!-- FT-11-R04 · el lápiz habilita los campos ACÁ, no manda a otra
-               pantalla. Es un botón de ícono —pedido del cliente del 09/09—:
-               el nombre «Editar» va en `aria-label` para el lector de pantalla
-               y en el globo, que aparece con el puntero y con el foco del
-               teclado. El botón desaparece mientras se edita: sus acciones son
-               las del formulario, y dos «Editar» simultáneos no significan
-               nada. -->
+               pantalla. Lápiz y nombre (D-05, 22/09): el lápiz del 09/09 solo
+               no alcanza, porque puede ser editar, firmar o anotar
+               (ADR-0012). El botón desaparece mientras se edita: sus acciones
+               son las del formulario, y dos «Editar» simultáneos no
+               significan nada. -->
           @if (!editando() && datos() !== null) {
             <button
               app-button
               variant="outline"
               size="sm"
-              [iconOnly]="true"
-              aria-label="Editar"
-              appTooltip="Editar"
               data-testid="mi-perfil-editar"
               (clicked)="editar()"
             >
               <app-nav-icon name="edit" />
+              Editar
             </button>
           }
         </div>
@@ -441,37 +462,25 @@
                   <!-- Portabilidad de póliza y siniestralidad a 1 clic (subtarea 3.3):
                        siempre visible, tengas o no coberturas declaradas — el derecho
                        de portabilidad no depende de eso. -->
-                  <app-insurance-portability-card />
+                  <app-insurance-portability-card [coverages]="p.coverages" />
                 } @else {
                   <p class="mi-perfil__nota">Todavía no pudimos traer estos datos.</p>
                 }
+              </app-tab>
+
+              <!-- ─── Mis puntos ───────────────────────────────────────────── -->
+              <!-- N-03: la billetera del programa de fidelidad, dentro de la
+                   misma tarjeta. Es la MISMA pantalla que sirve la ruta
+                   `/my-account/loyalty`, embebida: sin su cabecera, porque la
+                   tarjeta ya tiene una. -->
+              <app-tab [label]="pestanas[4]">
+                <app-loyalty embebido data-testid="mi-perfil-puntos" />
               </app-tab>
             </app-tabs>
           }
         </app-view-state-host>
         }
       </app-card>
-    }
-
-    <!-- «Tu acceso» —organización y roles— salió de esta pantalla por pedido
-         del cliente del 13/09/2026: son vocabulario de sistema, y la respuesta
-         a «¿por qué no veo tal cosa?» no justificaba una columna al lado del
-         perfil. `my-profile.spec.ts` lo fija.
-
-         Ahí vivían dos enlaces; queda uno. «Organización médica» la sacó el
-         propietario el 19/09/2026: el médico administra dónde atiende ÉL, y la
-         organización es de la organización. La pantalla sigue existiendo en
-         `/administration/medical-organization` —no se borró nada— pero ya no se
-         ofrece desde el perfil.
-
-         «Mi consultorio propio» se queda: es su único acceso desde que salió
-         del menú del médico en §4.H del plan de UX del 22/08/2026, y borrarlo
-         convertiría una limpieza visual en una pérdida de acceso. Va FUERA del
-         lateral a propósito: no depende de que haya verificación que mostrar. -->
-    @if (esProfesional()) {
-      <nav class="mi-perfil__enlaces" aria-label="Dónde ejercés">
-        <a app-link routerLink="/administration/my-practice">Mi consultorio propio</a>
-      </nav>
     }
   </div>
 

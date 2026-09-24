@@ -12,6 +12,7 @@ import {
 
 import { Dialog } from './dialog';
 import type { DialogConfig, DialogReasonConfig, DialogResult } from './dialog.types';
+import { CONFIRMAR_CAMBIOS, CONFIRMAR_DESCARTE } from './dialog.types';
 
 /**
  * Abre confirmaciones sin que la pantalla tenga que declarar el diálogo.
@@ -41,6 +42,55 @@ export class DialogService {
   async confirm(config: DialogConfig): Promise<boolean> {
     const { confirmed } = await this.open(config);
     return confirmed;
+  }
+
+  /**
+   * La confirmación de un **guardado** (D-08, ADR-0015): «¿Confirmás estos
+   * cambios?», con los textos de {@link CONFIRMAR_CAMBIOS} y lo que se le pase
+   * encima.
+   *
+   * Es azúcar sobre {@link confirm} y no otra cosa: mismo `<dialog>`, mismo
+   * foco de vuelta, misma promesa. Existe para que los veintitantos «Guardar»
+   * de la casa pregunten **lo mismo con las mismas palabras** sin que cada
+   * pantalla copie el título; y para que `confirm()` —que veintiséis archivos
+   * ya usan para destruir— no cambie de comportamiento para nadie.
+   *
+   * ```ts
+   * protected async guardar(): Promise<void> {
+   *   if (!(await this.dialogs.confirmarCambios())) {
+   *     return;                       // el foco vuelve solo al botón «Guardar»
+   *   }
+   *   this.perfil.actualizar(this.borrador()).subscribe(…);
+   * }
+   * ```
+   *
+   * Llamado desde un botón dentro de un `app-content-dialog`, el `confirm` se
+   * apila encima (dos `showModal()`; el navegador lo resuelve en la capa
+   * superior) y al cerrarse devuelve el foco al botón que lo disparó, porque
+   * {@link open} guarda `document.activeElement` antes de montar nada.
+   */
+  confirmarCambios(opciones: Partial<DialogConfig> = {}): Promise<boolean> {
+    return this.confirm({ ...CONFIRMAR_CAMBIOS, ...opciones });
+  }
+
+  /**
+   * La confirmación de un **descarte**: «¿Descartás lo que escribiste?», con
+   * los textos de {@link CONFIRMAR_DESCARTE}. Es la respuesta a
+   * `dismissAttempt` de `app-content-dialog` cuando hay cambios sin guardar:
+   *
+   * ```ts
+   * protected async preguntarSiSeDescarta(): Promise<void> {
+   *   if (!this.hayCambios() || (await this.dialogs.confirmarDescarte())) {
+   *     this.cerrar();
+   *   }
+   * }
+   * ```
+   *
+   * Sin cambios no se pregunta nada: un diálogo que confirma el descarte de
+   * nada es un trámite, no una protección.
+   */
+  confirmarDescarte(opciones: Partial<DialogConfig> = {}): Promise<boolean> {
+    return this.confirm({ ...CONFIRMAR_DESCARTE, ...opciones });
   }
 
   /**

@@ -632,4 +632,23 @@ describe('DiagnosisBlock', () => {
       expect(interno<() => boolean>('puedeRegistrar')()).toBe(false);
     });
   });
+
+  describe('tieneCambiosPendientes — contrato de DraftBlock', () => {
+    it('recién montado no tiene cambios pendientes', () => {
+      responderCatalogo();
+      expect(componente.tieneCambiosPendientes()).toBe(false);
+    });
+
+    it('con el diagnóstico elegido tiene cambios pendientes', () => {
+      responderCatalogo();
+      señal<string | null>('diagnostico').set('dx-1');
+      expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+
+    it('con sólo notas clínicas escritas también cuenta', () => {
+      responderCatalogo();
+      señal<string>('notasClinicas').set('Paciente refiere mejoría parcial.');
+      expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+  });
 });

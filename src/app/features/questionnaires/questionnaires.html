@@ -61,57 +61,142 @@
 }
 
 <app-view-state-host [state]="vista()" (retry)="cargar()">
-  <div vsh-skeleton><app-skeleton variant="text" [lines]="4" /></div>
+  <!-- S2 · Cargando. El esqueleto tiene la forma de las filas, no la de la
+       barra de filtros: mientras la lista viaja no hay nada que filtrar, así
+       que los controles todavía no existen. -->
+  <div vsh-skeleton data-testid="encuestas-cargando">
+    <app-skeleton variant="text" [lines]="4" />
+  </div>
+
+  <!-- S3 · Vacío del dominio: no hay ninguna encuesta. Se sobrescribe el vacío
+       por omisión del anfitrión para darle un `data-testid` propio y la acción
+       real de la pantalla, que es abrir el alta.
+
+       Sin `@if` alrededor **a propósito**: un bloque de control envolviendo un
+       nodo proyectado lo manda al slot por defecto y el estado desaparecía del
+       DOM (la misma trampa que documenta `view-state-host.html`). El anfitrión
+       ya decide cuándo dibujarlo. -->
+  <app-empty-state
+    vsh-empty
+    variant="empty"
+    title="Todavía no tenés encuestas"
+    [description]="mensajeVacio()"
+    data-testid="encuestas-sin-encuestas"
+  >
+    <button app-button empty-actions type="button" variant="primary" (click)="alternarFormulario()">
+      Crear una encuesta
+    </button>
+  </app-empty-state>
 
   @if (vista(); as estado) {
     @if (estado.status === 'ready') {
-      <ul class="encuestas__lista" data-testid="encuestas-lista">
-        @for (encuesta of estado.data; track encuesta.id) {
-          <li>
-            <app-card variant="outlined" padding="lg">
-              <div class="encuestas__fila">
-                <!-- El ícono de la sección, no uno por encuesta: en este
-                     listado todas son encuestas, así que lo que aporta es
-                     reconocer la fila como tal de un vistazo, igual que en las
-                     tarjetas de los directorios. -->
-                <span class="encuestas__marca" aria-hidden="true">
-                  <app-nav-icon name="survey" />
-                </span>
+      <!-- La barra vive DENTRO de la rama con datos: filtrar una lista que no
+           está cargada no significa nada, y mostrar los controles en el vacío
+           del dominio sugeriría que hay algo escondido detrás del filtro. -->
+      <div class="encuestas__barra" data-testid="encuestas-barra">
+        <app-search-field
+          class="encuestas__buscador"
+          data-testid="encuestas-buscar"
+          label="Buscar entre tus encuestas"
+          placeholder="Buscar por título o consigna"
+          [(value)]="busqueda"
+        />
 
-                <div class="encuestas__datos">
-                  <h2 class="encuestas__titulo">{{ encuesta.title }}</h2>
+        <div class="encuestas__filtro" data-testid="encuestas-filtro-estado">
+          <app-segmented-control
+            [options]="opcionesEstado()"
+            [value]="filtroEstado()"
+            ariaLabel="Filtrar las encuestas por estado"
+            (valueChange)="elegirEstado($event)"
+          />
+        </div>
+      </div>
 
-                  @if (encuesta.description) {
-                    <p class="encuestas__consigna">{{ encuesta.description }}</p>
-                  }
-
-                  <p class="encuestas__meta">
-                    Versión {{ encuesta.latestVersionNumber }} ·
-                    {{ encuesta.questionCount }}
-                    {{ encuesta.questionCount === 1 ? 'pregunta' : 'preguntas' }}
-                    @if (!encuesta.published) {
-                      · sin publicar
-                    }
-                  </p>
-                </div>
-
-                <div class="encuestas__acciones-fila">
-                  <app-badge [variant]="encuesta.tono">{{ encuesta.palabra }}</app-badge>
-                  <a
-                    app-button-link
-                    variant="secondary"
-                    [routerLink]="encuesta.ruta"
-                    [attr.data-testid]="'abrir-' + encuesta.id"
-                    [attr.aria-label]="'Abrir: ' + encuesta.title"
-                  >
-                    Abrir
-                  </a>
-                </div>
-              </div>
-            </app-card>
-          </li>
+      <!-- El recuento se anuncia: quien filtra con lector de pantalla no ve la
+           lista acortarse. -->
+      <p
+        class="encuestas__recuento"
+        role="status"
+        aria-live="polite"
+        data-testid="encuestas-recuento"
+      >
+        {{ visibles().length }}
+        {{ visibles().length === 1 ? 'encuesta' : 'encuestas' }}
+        @if (hayFiltro()) {
+          de {{ cargadas().length }}
         }
-      </ul>
+      </p>
+
+      @if (sinResultados()) {
+        <!-- NO es S3: hay encuestas, lo que no hay es coincidencias. Por eso la
+             barra de arriba sigue en pantalla y la salida es aflojar el filtro,
+             no crear nada. -->
+        <app-empty-state
+          variant="no-results"
+          title="Ninguna encuesta coincide con el filtro"
+          description="Probá con otro título, otra consigna u otro estado."
+          data-testid="encuestas-sin-resultados"
+        >
+          <button
+            app-button
+            empty-actions
+            type="button"
+            variant="outline"
+            (click)="limpiarFiltros()"
+            data-testid="encuestas-limpiar-filtros"
+          >
+            Limpiar filtros
+          </button>
+        </app-empty-state>
+      } @else {
+        <ul class="encuestas__lista" data-testid="encuestas-lista">
+          @for (encuesta of visibles(); track encuesta.id) {
+            <li>
+              <app-card variant="outlined" padding="lg">
+                <div class="encuestas__fila">
+                  <!-- El ícono de la sección, no uno por encuesta: en este
+                       listado todas son encuestas, así que lo que aporta es
+                       reconocer la fila como tal de un vistazo, igual que en las
+                       tarjetas de los directorios. -->
+                  <span class="encuestas__marca" aria-hidden="true">
+                    <app-nav-icon name="survey" />
+                  </span>
+
+                  <div class="encuestas__datos">
+                    <h2 class="encuestas__titulo">{{ encuesta.title }}</h2>
+
+                    @if (encuesta.description) {
+                      <p class="encuestas__consigna">{{ encuesta.description }}</p>
+                    }
+
+                    <p class="encuestas__meta">
+                      Versión {{ encuesta.latestVersionNumber }} ·
+                      {{ encuesta.questionCount }}
+                      {{ encuesta.questionCount === 1 ? 'pregunta' : 'preguntas' }}
+                      @if (!encuesta.published) {
+                        · sin publicar
+                      }
+                    </p>
+                  </div>
+
+                  <div class="encuestas__acciones-fila">
+                    <app-badge [variant]="encuesta.tono">{{ encuesta.palabra }}</app-badge>
+                    <a
+                      app-button-link
+                      variant="secondary"
+                      [routerLink]="encuesta.ruta"
+                      [attr.data-testid]="'abrir-' + encuesta.id"
+                      [attr.aria-label]="'Abrir: ' + encuesta.title"
+                    >
+                      Abrir
+                    </a>
+                  </div>
+                </div>
+              </app-card>
+            </li>
+          }
+        </ul>
+      }
     }
   }
 </app-view-state-host>

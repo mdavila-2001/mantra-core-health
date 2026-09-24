@@ -1,0 +1,255 @@
+/* La silueta del cuerpo. Sólo tokens ALOVIDA; el molde es `department-map.css`.
+
+   La regla que gobierna esta hoja: **ningún estado se dice sólo con color**.
+   La zona elegida cambia de relleno, de trazo y se nombra abajo; la marcada
+   por lo que se contó lleva un trazo punteado y también se nombra abajo.
+   Quitá el color y el control sigue siendo usable. */
+
+:host {
+  display: block;
+}
+
+.body-map {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+/* En angosto el selector de vista reparte la fila entera (así lo hace
+   `app-segmented-control` por debajo de 30rem); centrado, la columna lo
+   encogía hasta cortar «Frente» en «Fren…». */
+@media (max-width: 30rem) {
+  .body-map__vistas {
+    align-self: stretch;
+  }
+}
+
+/* ─── El escenario ──────────────────────────────────────────────────────────
+   Un panel con el centro apenas más claro y una sombra de piso bajo los pies:
+   la figura queda parada en un lugar, no recortada sobre la página. */
+
+.body-map__escenario {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  inline-size: 100%;
+  padding: var(--sp-5) var(--sp-4) var(--sp-6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-xl);
+  background: radial-gradient(
+    ellipse 70% 60% at 50% 42%,
+    var(--bg-surface) 0%,
+    var(--bg-surface-alt) 100%
+  );
+  box-shadow: var(--shadow-sm);
+}
+
+/* La sombra de piso: una elipse difusa bajo los pies. En la cara no va (es un
+   busto, no hay piso). */
+.body-map__escenario::after {
+  content: '';
+  position: absolute;
+  inset-block-end: var(--sp-4);
+  inset-inline-start: 50%;
+  inline-size: 44%;
+  block-size: var(--sp-4);
+  translate: -50% 0;
+  border-radius: var(--r-full);
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--text-primary) 16%, transparent),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.body-map__escenario--cara::after {
+  content: none;
+}
+
+/* El nombre de lo que se va a tocar, flotando arriba del escenario. */
+.body-map__pista {
+  position: absolute;
+  inset-block-start: var(--sp-3);
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  z-index: 1;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-full);
+  background: var(--text-primary);
+  color: var(--text-inverse);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+}
+
+/* Una figura humana es vertical: 16rem de ancho la deja en unos 35rem de alto
+   en escritorio. A 375 px ocupa la columna; el `viewBox` conserva la
+   proporción. */
+.body-map__lienzo {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 16rem;
+  height: auto;
+  overflow: visible;
+}
+
+/* La cara es un busto apaisado: más ancha, para que ojos, nariz y boca sean
+   objetivos cómodos para el dedo. */
+.body-map__lienzo--cara {
+  max-width: 19rem;
+}
+
+/* ─── La figura ─────────────────────────────────────────────────────────── */
+
+/* El volumen del contorno: costados más oscuros que el centro. */
+.body-map__volumen-borde {
+  stop-color: color-mix(in srgb, var(--text-secondary) 30%, var(--bg-surface));
+}
+
+.body-map__volumen-centro {
+  stop-color: color-mix(in srgb, var(--text-secondary) 12%, var(--bg-surface));
+}
+
+/* El contorno entero, debajo de todo: da el borde exterior parejo. El relleno
+   es el degradado de volumen (atributo `fill` en la plantilla). */
+.body-map__contorno {
+  stroke: color-mix(in srgb, var(--text-secondary) 55%, var(--bg-surface));
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+/* Las zonas son transparentes: el volumen se ve a través. Se separan con una
+   costura fina del color del fondo, así se leen como partes de una misma
+   figura y no como piezas sueltas. */
+.body-map__forma {
+  fill: transparent;
+  stroke: var(--bg-surface);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+  /* Una zona con hueco (la cara sin ojos, nariz ni boca) no lo rellena: el
+     clic en el hueco llega a la zona de adentro. */
+  fill-rule: evenodd;
+  cursor: pointer;
+  transition:
+    fill var(--dur-fast) var(--ease-out),
+    stroke var(--dur-fast) var(--ease-out),
+    stroke-width var(--dur-fast) var(--ease-out);
+}
+
+/* Los rasgos no se pulsan: el clic atraviesa hasta la zona de abajo. Van
+   tenues: ayudan a leer la figura sin competir con las zonas. */
+.body-map__detalles {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text-secondary) 40%, transparent);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+/* ─── Estados ───────────────────────────────────────────────────────────── */
+
+/* Marcada por lo que se contó: un tinte del color secundario y un trazo
+   punteado, que es la seña que no depende del color. */
+.body-map__zona--marcada .body-map__forma {
+  fill: color-mix(in srgb, var(--brand-secondary) 34%, transparent);
+  stroke: var(--brand-secondary);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+  animation: body-map-latido var(--dur-slow) var(--ease-out) 2;
+}
+
+@keyframes body-map-latido {
+  50% {
+    fill: color-mix(in srgb, var(--brand-secondary) 60%, transparent);
+  }
+}
+
+/* El puntero sólo insinúa: el estado de verdad es `--elegida`, y sobre la
+   elegida el puntero no la hace parecer suelta. */
+.body-map__zona:not(.body-map__zona--elegida):hover .body-map__forma {
+  fill: color-mix(in srgb, var(--brand-primary) 24%, transparent);
+  stroke: color-mix(in srgb, var(--brand-primary) 60%, var(--bg-surface));
+  stroke-width: 1.6;
+}
+
+/* El foco del teclado se ve **sobre el trazo**, no con un `outline` del
+   navegador: un `outline` rectangular sobre una forma irregular marca el
+   rectángulo que la contiene, que en los brazos es media figura. */
+.body-map__forma:focus {
+  outline: none;
+}
+
+/* Sin `filter` por lo mismo que la elegida (ver abajo): el halo se hace con
+   el trazo, que no cambia la forma que recibe el clic. */
+.body-map__forma:focus-visible {
+  stroke: var(--brand-primary);
+  stroke-width: 5;
+  stroke-dasharray: none;
+}
+
+/* Las dos señas visuales de la elegida, y son dos a propósito: el relleno para
+   quien ve color, el trazo grueso para quien no. Gana sobre la marcada.
+
+   Sin `filter`: con una sombra, el navegador toma la caja entera de la forma
+   para el clic, y la cabeza de la vista «Cara» —que tiene huecos donde van
+   ojos, nariz y boca— se tragaba los clics de esas zonas. */
+.body-map__zona--elegida .body-map__forma {
+  fill: var(--brand-primary);
+  stroke: var(--text-primary);
+  stroke-width: 3;
+  stroke-dasharray: none;
+}
+
+/* ─── Las líneas de abajo ───────────────────────────────────────────────── */
+
+.body-map__elegida,
+.body-map__marcadas {
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.body-map__marcadas {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px dashed var(--brand-secondary);
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--brand-secondary) 10%, var(--bg-surface));
+  color: var(--text-primary);
+}
+
+/* La misma seña que en la figura, para que se lea como su leyenda. */
+.body-map__marca {
+  display: inline-block;
+  inline-size: var(--sp-3);
+  block-size: var(--sp-3);
+  border: 2px dashed var(--brand-secondary);
+  border-radius: var(--r-xs);
+  background: color-mix(in srgb, var(--brand-secondary) 34%, transparent);
+}
+
+/* Quien pidió menos movimiento no recibe transiciones ni latido. El estado
+   sigue cambiando: lo que se apaga es la animación, no la información. */
+@media (prefers-reduced-motion: reduce) {
+  .body-map__forma {
+    transition: none;
+  }
+
+  .body-map__zona--marcada .body-map__forma {
+    animation: none;
+  }
+}

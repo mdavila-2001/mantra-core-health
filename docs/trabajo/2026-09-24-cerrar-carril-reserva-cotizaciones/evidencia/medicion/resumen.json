@@ -1,0 +1,30 @@
+{
+  "corte": "5a776c41",
+  "base": "origin/mockup 4daf00aa",
+  "instrumento": "playwright/baseline-comparable-reserva.spec.ts — «hasta los cupos», cuatro activaciones (el mismo de #610)",
+  "n": 10,
+  "muestrasMs": [
+    2678,
+    941,
+    938,
+    1008,
+    1231,
+    1279,
+    953,
+    1398,
+    853,
+    975
+  ],
+  "minMs": 853,
+  "medianaMs": 992,
+  "maxMs": 2678,
+  "navegacionesTrasCuatroClics": [
+    1
+  ],
+  "comparacion": {
+    "antes_b7785e36": 1428,
+    "despues_a43ad2b3": 1108,
+    "final": 992
+  },
+  "nota": "La muestra 1 es la primera tras levantar ng serve (compilación en frío de chunks). Peticiones de negocio observables: 0 — el simulador es un interceptor en memoria; el conteo de lecturas de cupos está en el spec con HttpTestingController (N sedes → N lecturas, antes hasta 2N en serie)."
+}

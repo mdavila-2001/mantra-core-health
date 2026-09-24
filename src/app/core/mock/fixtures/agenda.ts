@@ -100,10 +100,55 @@ export function recursoDe(p: ProfesionalSimulado): string {
   return uuid(`resource-${p.id}`);
 }
 
-export const recursos = new Coleccion<RecursoSimulado>(
+/** La zona de una sede que no declara la suya. Es la de las sedes de la maqueta. */
+export const ZONA_HORARIA_POR_OMISION = 'America/La_Paz';
+
+/**
+ * Las dos sedes donde atienden los profesionales de demostración. Las dos son
+ * instituciones inventadas de la maqueta (`instituciones.spec.ts` las nombra
+ * como «los inventados que reemplaza»), así que no se le atribuye a nadie un
+ * lugar real. El consultorio propio de la médica queda afuera: es de una
+ * persona.
+ */
+export const SEDES_DEMO = {
+  'Clínica Los Olivos': { practiceId: PRACTICE_OLIVOS, site: SITIO_OLIVOS },
+  'Hospital San Lucas': { practiceId: PRACTICE_SANLUCAS, site: SITIO_SANLUCAS },
+} as const;
+
+/**
+ * La agenda **simulada** de un profesional de demostración (R-03, 22/09/2026;
+ * D-H3-PROV-01, 23/09/2026).
+ *
+ * Los 13 actores de `PROFESIONALES_DEMO_REGISTRADOS` no son nadie: la sede sale
+ * de su organización (una de `SEDES_DEMO`), el id de la misma semilla que el
+ * resto (`resource-<id del perfil>`) y el nombre dice que la agenda es
+ * simulada. Una sede sin `timeZone` cae en `ZONA_HORARIA_POR_OMISION`.
+ */
+export function recursoDeDemo(
+  p: ProfesionalSimulado,
+  sede: { readonly practiceId: string; readonly site: RecursoSimulado['site'] } = SEDES_DEMO[p.organizacion as keyof typeof SEDES_DEMO] ?? SEDES_DEMO['Clínica Los Olivos'],
+): RecursoSimulado {
+  return {
+    id: recursoDe(p),
+    name: `Agenda simulada · ${p.displayName}`,
+    resourceTypeConceptId: uuid('concept-resource-practitioner'),
+    resourceRefType: 'health_practitioner_profiles',
+    resourceRefId: p.id,
+    practitionerName: p.displayName,
+    practiceId: sede.practiceId,
+    tenantId: p.tenantId,
+    timeZone: sede.site?.timeZone ?? ZONA_HORARIA_POR_OMISION,
+    capacity: 1,
+    stateConceptId: ESTADO['ST-ACTIVE']!,
+    site: sede.site,
+  };
+}
+
+export const recursos = new Coleccion<RecursoSimulado>([
   // Los médicos de la red de las aseguradoras no tienen agenda: nadie publicó
-  // sus horarios, y fabricárselos sería ofrecer turnos que no existen.
-  PROFESIONALES.filter((p) => p.especialidades.length > 0 && p.origen === undefined).flatMap((p, i) => {
+  // sus horarios, y fabricárselos sería ofrecer turnos que no existen. Y un
+  // médico escrito sin especialidad tampoco: no hay nada que reservarle.
+  ...PROFESIONALES.filter((p) => p.especialidades.length > 0 && p.origen === undefined).flatMap((p, i) => {
     const principal: RecursoSimulado = {
       id: recursoDe(p),
       name: `Agenda de ${p.displayName}`,
@@ -136,7 +181,12 @@ export const recursos = new Coleccion<RecursoSimulado>(
       },
     ];
   }),
-);
+  // Los profesionales de demostración van **después** de los escritos: así los
+  // índices de arriba —y con ellos la alternancia mañana/tarde de sus
+  // plantillas— no se mueven. Las personas de la planilla del propietario no
+  // tienen agenda: la planilla no dice dónde atienden (D-H3-PROV-01).
+  ...PROFESIONALES.filter((p) => p.origen === 'DEMO').map((p) => recursoDeDemo(p)),
+]);
 
 export const RECURSO_MEDICA = recursoDe(MEDICA);
 export const RECURSO_CONSULTORIO_MEDICA = uuid(`resource-consultorio-${MEDICA.id}`);
@@ -255,9 +305,27 @@ const MOTIVOS = [
   'Segunda opinión',
 ];
 
+/**
+ * La tipología de actividad de una reserva generada, determinista (C-24 /
+ * hallazgo D5 post-#559): antes las tres asignaciones de `serviceConceptId`
+ * de este archivo eran `ACT-CONSULTA` fijo, así que "otras atenciones" del
+ * panel (`consultas-resumen.ts`) nunca tenía nada que clasificar — la lógica
+ * era correcta, faltaba el dato. La teleconsulta se deduce del canal, que ya
+ * la distingue; procedimientos y exámenes salen con una cadencia fija sobre
+ * el índice, para que la cifra del panel se pueda contar a mano dos veces y
+ * dé lo mismo.
+ */
+function servicioDe(indice: number, canal: string): string {
+  if (canal === CANAL['CH-TELECONSULTA']) return ACTIVIDAD['ACT-TELECONSULTA']!;
+  if (indice % 11 === 5) return ACTIVIDAD['ACT-PROCEDIMIENTO']!;
+  if (indice % 13 === 7) return ACTIVIDAD['ACT-EXAMEN']!;
+  return ACTIVIDAD['ACT-CONSULTA']!;
+}
+
 function reserva(indice: number, cupo: CupoSimulado, estado: keyof typeof ESTADO_RESERVA, extra: Partial<ReservaSimulada> = {}): ReservaSimulada {
   const paciente = PACIENTES[indice % PACIENTES.length]!;
   const confirmada = ['BK-CONFIRMED', 'BK-CHECKED-IN', 'BK-IN-PROGRESS', 'BK-COMPLETED'].includes(estado);
+  const canal = indice % 3 === 0 ? CANAL['CH-TELECONSULTA']! : CANAL['CH-PRESENCIAL']!;
   return {
     id: uuid(`booking-${cupo.id}`),
     patientProfileId: paciente.id,
@@ -268,8 +336,8 @@ function reserva(indice: number, cupo: CupoSimulado, estado: keyof typeof ESTADO
     startAt: cupo.startAt,
     endAt: cupo.endAt,
     statusConceptId: ESTADO_RESERVA[estado]!,
-    serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
-    bookingChannelConceptId: indice % 3 === 0 ? CANAL['CH-TELECONSULTA']! : CANAL['CH-PRESENCIAL']!,
+    serviceConceptId: servicioDe(indice, canal),
+    bookingChannelConceptId: canal,
     confirmedAt: confirmada ? masMinutos(cupo.startAt, -60 * 24 * 2) : null,
     checkedInAt: ['BK-CHECKED-IN', 'BK-IN-PROGRESS', 'BK-COMPLETED'].includes(estado) ? masMinutos(cupo.startAt, -10) : null,
     reasonText: MOTIVOS[indice % MOTIVOS.length]!,

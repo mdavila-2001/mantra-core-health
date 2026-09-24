@@ -215,7 +215,15 @@ export function registrarTerminologia(router: MockRouter): void {
 
     const c = conceptoPorId(params['id']!);
     if (c === undefined) return notFound('Concepto no encontrado');
-    return { ...opcion(c), designations: [{ language: 'es', value: c.display, preferred: true }] };
+    // `properties` va sólo en la ficha, no en la búsqueda/lista (`opcion()`):
+    // mismo contrato que `ConceptDetailDto.properties` en la API real
+    // (search-concepts.dto.ts) — son varias filas por concepto y traerlas en
+    // cada resultado de un autocompletar es peso que la lista no usa.
+    return {
+      ...opcion(c),
+      designations: [{ language: 'es', value: c.display, preferred: true }],
+      properties: c.properties ?? {},
+    };
   });
 
   router.get('/terminology/code-systems', () => ({

@@ -1,10 +1,17 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { AuthService } from '../../../../core/auth/auth.service';
+import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
+import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { PractitionerProfile } from './practitioner-profile';
-import type { PerfilProfesionalVisible } from './practitioner-profile-view/practitioner-profile-view.types';
+import type {
+  FormacionVisible,
+  PerfilProfesionalVisible,
+} from './practitioner-profile-view/practitioner-profile-view.types';
 
 /**
  * El contenedor del perfil profesional propio.
@@ -520,3 +527,298 @@ async function esperarLaFoto(hayFoto: () => boolean): Promise<void> {
     await new Promise((sigue) => setTimeout(sigue, 0));
   }
 }
+
+/**
+ * Las tres operaciones que la ficha propia pide y este contenedor hace.
+ *
+ * Antes vivían dentro de `practitioner-profile-view`, que recibía el perfil por
+ * `input()` y a la vez escribía en el servidor. La vista ahora sólo avisa —qué
+ * foto se eligió, qué título se quiere retirar, qué pestaña se abrió— y estas
+ * pruebas son las de aquel archivo, en el sitio donde el comportamiento vive.
+ */
+describe('PractitionerProfile · las operaciones que la vista pide', () => {
+  let componente: PractitionerProfile;
+  let http: HttpTestingController;
+  /** `confirm()` resuelve a `true` salvo que una prueba lo cambie. */
+  let confirmar = true;
+  const dialogs = { confirm: vi.fn(async () => confirmar) };
+
+  const FORMACION_PENDIENTE: FormacionVisible = {
+    id: 'cr-2',
+    tipo: 'Diplomado',
+    numero: 'DIP-1',
+    institucion: '',
+    desde: null,
+    hasta: null,
+    estado: 'Pendiente',
+    sello: 'in-review',
+    vencida: false,
+  };
+
+  /** PNG mínimo: el tipo es lo único que hace falta para elegirlo. */
+  function archivoFoto(): File {
+    return new File(['x'], 'foto.png', { type: 'image/png' });
+  }
+
+  /**
+   * Respuesta mínima válida de `PUT /profiles/practitioners/:id/photo`.
+   *
+   * La traducción llama `.map()` sobre `specialties`, `credentials`, `licenses`
+   * y `affiliations`: sin esos cuatro arreglos —aunque sea vacíos— revienta
+   * antes de que el flujo llegue a la propagación, y el pedido a
+   * `/community/profiles/me` nunca sale.
+   */
+  function respuestaFoto(photoFileId: string) {
+    return {
+      profileId: 'prac-1',
+      photoFileId,
+      createdAt: new Date().toISOString(),
+      specialties: [],
+      credentials: [],
+      licenses: [],
+      affiliations: [],
+    };
+  }
+
+  /**
+   * Monta el contenedor y resuelve su carga inicial.
+   *
+   * @param profileId - El perfil profesional de la sesión. `null` es una cuenta
+   *   que existe: una persona duplicada cuya cuenta quedó atada al registro sin
+   *   perfil no lleva el claim `hpid`.
+   */
+  function montar(profileId: string | null = 'prac-1'): void {
+    // El módulo se arma DENTRO de cada prueba, porque la sesión cambia entre
+    // ellas y un proveedor no se puede reemplazar una vez instanciado. El reset
+    // es lo que permite configurarlo acá en vez de en el `beforeEach`.
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: AuthService,
+          useValue: { practitionerProfileId: signal(profileId), userId: signal('u-1') },
+        },
+        { provide: DialogService, useValue: dialogs },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    componente = TestBed.createComponent(PractitionerProfile).componentInstance;
+    responderLaCarga(profileId);
+  }
+
+  /** La lectura que dispara el constructor. Acá se prueban las operaciones. */
+  function responderLaCarga(profileId: string | null): void {
+    http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush(PERFIL);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+    if (profileId !== null) {
+      http
+        .expectOne((r) => r.url === `/practitioners/${profileId}/sites`)
+        .flush({ items: [], count: 0 });
+    }
+  }
+
+  /** Una operación o señal protegida del contenedor, atada a su instancia. */
+  function operacion<T>(nombre: string): T {
+    const valor = (componente as unknown as Record<string, unknown>)[nombre];
+    return (typeof valor === 'function' ? valor.bind(componente) : valor) as T;
+  }
+
+  /** Los avisos encolados, sin pasar por el contenedor que los pinta. */
+  function avisos(): readonly { readonly title?: string; readonly message: string }[] {
+    return TestBed.inject(ToastService).toasts();
+  }
+
+  /**
+   * Cierra lo que pidió la ficha al dibujarse.
+   *
+   * Esperar a que `FileReader` codifique la foto cede turnos, y en esos turnos
+   * la pantalla se renderiza: el bloque de trayectoria embebido lee su historial
+   * y sus consultorios. No es lo que estas pruebas miden, pero queda colgando de
+   * `verify()`, así que se responde en vez de aflojar la comprobación.
+   */
+  function responderLoQueDibujoLaFicha(): void {
+    for (const peticion of http.match(() => true)) {
+      peticion.flush({ items: [], count: 0 });
+    }
+  }
+
+  beforeEach(() => {
+    // Qué ayudas se cerraron vive en `localStorage`, que jsdom comparte entre
+    // las pruebas del archivo: sin limpiarlo, la primera que abre
+    // «Credenciales» deja el aviso marcado como visto y no vuelve a salir.
+    localStorage.clear();
+    confirmar = true;
+    dialogs.confirm.mockClear();
+  });
+
+  afterEach(() => http.verify());
+
+  /* -- La foto ------------------------------------------------------------ */
+
+  /**
+   * El caso que rompía en producción: la cuenta entra, ve su perfil y el botón
+   * de la foto, elige un PNG… y no pasa nada. Se salía en silencio cuando la
+   * sesión no traía perfil profesional, y desde afuera se lee como «no acepta
+   * PNG».
+   */
+  it('sin perfil profesional en la sesión lo DICE, en vez de no hacer nada', () => {
+    montar(null);
+
+    operacion<(archivo: File) => void>('subirFoto')(archivoFoto());
+
+    // Ni una petición: no hay dónde guardarla. Pero la persona se entera.
+    http.expectNone((r) => r.url === '/common/files/upload');
+    expect(operacion<() => string>('errorDeFoto')()).toContain(
+      'no está asociada a un perfil profesional',
+    );
+  });
+
+  it('sube, fija la foto profesional y la deja lista para pintar', async () => {
+    montar();
+
+    operacion<(archivo: File) => void>('subirFoto')(archivoFoto());
+
+    http.expectOne('/common/files/upload').flush({ id: 'file-1' });
+    http.expectOne('/profiles/practitioners/prac-1/photo').flush(respuestaFoto('file-1'));
+    // Sin vitrina: la propagación no dispara ningún pedido más.
+    http.expectOne('/community/profiles/me').flush(null);
+    http.expectOne('/common/files/file-1/content').flush(pngFalso());
+    await esperarLaFoto(() => operacion<() => string | null>('fotoRecien')() !== null);
+
+    // `data:` y no una ruta: la URL firmada del backend apunta a
+    // `file://local/<sha>` y ningún navegador la carga. Ése era el defecto.
+    expect(operacion<() => string | null>('fotoRecien')()).toMatch(/^data:image\/png;base64,/);
+    expect(operacion<() => boolean>('fotoSubiendo')()).toBe(false);
+    responderLoQueDibujoLaFicha();
+  });
+
+  it('con vitrina existente, repite la foto como avatar sin perder lo ya declarado', async () => {
+    montar();
+
+    operacion<(archivo: File) => void>('subirFoto')(archivoFoto());
+
+    http.expectOne('/common/files/upload').flush({ id: 'file-1' });
+    http.expectOne('/profiles/practitioners/prac-1/photo').flush(respuestaFoto('file-1'));
+
+    http.expectOne('/community/profiles/me').flush({
+      id: 'vit-1',
+      tenantId: 'ten-1',
+      targetId: 'prac-1',
+      slug: 'dra-lucia-salas',
+      displayName: 'Dra. Lucía Salas',
+      headline: 'Cardióloga',
+      biography: 'Bio',
+      acceptsReviews: true,
+      visibility: 'PUBLIC',
+      statusConceptId: 'st-1',
+    });
+
+    const puesta = http.expectOne('/community/profiles/me');
+    expect(puesta.request.method).toBe('PUT');
+    // El `PUT` es completo, no un `PATCH`: mandar sólo `{ avatarFileId }`
+    // borraría lo que la persona declaró en otra pantalla.
+    expect(puesta.request.body).toEqual({
+      tenantId: 'ten-1',
+      slug: 'dra-lucia-salas',
+      displayName: 'Dra. Lucía Salas',
+      headline: 'Cardióloga',
+      biography: 'Bio',
+      acceptsReviews: true,
+      avatarFileId: 'file-1',
+    });
+    puesta.flush({
+      id: 'vit-1',
+      tenantId: 'ten-1',
+      targetId: 'prac-1',
+      slug: 'dra-lucia-salas',
+      displayName: 'Dra. Lucía Salas',
+      visibility: 'PUBLIC',
+      statusConceptId: 'st-1',
+      avatarFileId: 'file-1',
+    });
+
+    http.expectOne('/common/files/file-1/content').flush(pngFalso());
+    await esperarLaFoto(() => operacion<() => string | null>('fotoRecien')() !== null);
+
+    expect(operacion<() => string | null>('fotoRecien')()).toMatch(/^data:image\/png;base64,/);
+    responderLoQueDibujoLaFicha();
+  });
+
+  it('si falla la propagación a la vitrina, la foto profesional igual se fija', async () => {
+    // Best-effort: lo que ya se guardó arriba no debe perderse por un error
+    // accesorio.
+    montar();
+
+    operacion<(archivo: File) => void>('subirFoto')(archivoFoto());
+
+    http.expectOne('/common/files/upload').flush({ id: 'file-1' });
+    http.expectOne('/profiles/practitioners/prac-1/photo').flush(respuestaFoto('file-1'));
+    http.expectOne('/community/profiles/me').flush('boom', { status: 500, statusText: 'Error' });
+
+    http.expectOne('/common/files/file-1/content').flush(pngFalso());
+    await esperarLaFoto(() => operacion<() => string | null>('fotoRecien')() !== null);
+
+    expect(operacion<() => string | null>('fotoRecien')()).toMatch(/^data:image\/png;base64,/);
+    // El fallo fue accesorio: no queda como mensaje de error de la subida, que
+    // sí funcionó.
+    expect(operacion<() => string>('errorDeFoto')()).toBe('');
+    responderLoQueDibujoLaFicha();
+  });
+
+  /* -- Retirar un título -------------------------------------------------- */
+
+  it('retirar confirma y hace un DELETE del título', async () => {
+    montar();
+
+    await operacion<(e: FormacionVisible) => Promise<void>>('retirarCredencial')(
+      FORMACION_PENDIENTE,
+    );
+
+    expect(dialogs.confirm).toHaveBeenCalled();
+    const req = http.expectOne('/profiles/practitioners/me/credentials/cr-2');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+
+    // Retirado, el perfil se relee: la trayectoria que se está mirando cambió.
+    responderLaCarga('prac-1');
+  });
+
+  it('sin confirmar, no se manda ningún DELETE', async () => {
+    confirmar = false;
+    montar();
+
+    await operacion<(e: FormacionVisible) => Promise<void>>('retirarCredencial')(
+      FORMACION_PENDIENTE,
+    );
+
+    expect(dialogs.confirm).toHaveBeenCalled();
+    http.expectNone('/profiles/practitioners/me/credentials/cr-2');
+  });
+
+  /* -- El aviso único de «Credenciales» (19/09/2026) ---------------------- */
+
+  it('el aviso sale al abrir «Credenciales», y con ninguna otra pestaña', () => {
+    montar();
+
+    operacion<(pestana: string) => void>('alVerPestana')('Datos personales');
+    expect(avisos()).toHaveLength(0);
+
+    operacion<(pestana: string) => void>('alVerPestana')('Credenciales');
+    expect(avisos()).toHaveLength(1);
+    expect(avisos()[0]?.title).toBe('Credenciales');
+    expect(avisos()[0]?.message).toContain('verificado contra una fuente');
+  });
+
+  it('no se repite al volver a la pestaña', () => {
+    montar();
+
+    operacion<(pestana: string) => void>('alVerPestana')('Credenciales');
+    operacion<(pestana: string) => void>('alVerPestana')('Actividad');
+    operacion<(pestana: string) => void>('alVerPestana')('Credenciales');
+
+    expect(avisos()).toHaveLength(1);
+  });
+});

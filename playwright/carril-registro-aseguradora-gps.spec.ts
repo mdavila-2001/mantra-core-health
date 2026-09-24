@@ -5,6 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { subirLosCincoDocumentos } from './helpers/documentos-legales';
 import { centroDelPin, tocar } from './helpers/mapa';
+import { completarCuentaDelOwner } from './helpers/owner';
 import { completarGerencias, completarRepresentanteLegal } from './helpers/representante-legal';
 
 /**
@@ -196,14 +197,7 @@ test.describe('alta pública de aseguradora — casa matriz georreferenciada (su
     await completarGerencias(page);
 
     await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-    await page.getByTestId('registro-organizacion-owner-nombre').fill('Ana');
-    await page.getByTestId('registro-organizacion-owner-apellido-paterno').fill('Paz');
-    await page.getByTestId('paginated-form-continuar').click();
-
-    await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-    await page.getByTestId('registro-organizacion-owner-correo').fill('sin-casa-matriz@andina.test');
-    await page.getByTestId('registro-organizacion-owner-password').fill('secreto12');
-    await page.getByTestId('paginated-form-continuar').click();
+    await completarCuentaDelOwner(page, { email: 'sin-casa-matriz@andina.test' });
 
     await expect(page.getByTestId('registro-organizacion-exito')).toBeVisible({ timeout: 20_000 });
   });
@@ -244,14 +238,7 @@ test.describe('alta pública de aseguradora — casa matriz georreferenciada (su
     await completarGerencias(page);
 
     await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-    await page.getByTestId('registro-organizacion-owner-nombre').fill('Ana');
-    await page.getByTestId('registro-organizacion-owner-apellido-paterno').fill('Paz');
-    await page.getByTestId('paginated-form-continuar').click();
-
-    await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-    await page.getByTestId('registro-organizacion-owner-correo').fill('con-casa-matriz@andina.test');
-    await page.getByTestId('registro-organizacion-owner-password').fill('secreto12');
-    await page.getByTestId('paginated-form-continuar').click();
+    await completarCuentaDelOwner(page, { email: 'con-casa-matriz@andina.test' });
 
     await expect(page.getByTestId('registro-organizacion-exito')).toBeVisible({ timeout: 20_000 });
     await capturar(page, 'exito-con-casa-matriz');

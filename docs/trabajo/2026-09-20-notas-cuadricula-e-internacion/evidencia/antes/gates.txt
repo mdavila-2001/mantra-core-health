@@ -1,0 +1,7 @@
+=== BASELINE 2026-09-21T00:58:05-04:00 · corte 68dcb562 · tras yarn stock:generate ===
+
+--- yarn typecheck ---
+TYPECHECK_EXIT=0
+
+--- yarn lint ---
+LINT_EXIT=0

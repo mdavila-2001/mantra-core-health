@@ -271,4 +271,27 @@ describe('ObservationBlock', () => {
     expect(señal<string | null>('medicion')()).toBeNull();
     expect(señal<string | number | null>('valorNumerico')()).toBe('');
   });
+
+  describe('tieneCambiosPendientes — contrato de DraftBlock', () => {
+    it('recién montado no tiene cambios pendientes', () => {
+      dibujar();
+      expect(componente.tieneCambiosPendientes()).toBe(false);
+    });
+
+    it('con algo elegido o escrito tiene cambios pendientes', () => {
+      dibujar();
+      completar();
+      expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+
+    it('registrado, vuelve a no tener cambios pendientes', () => {
+      dibujar();
+      completar();
+      interno<() => void>('registrar')();
+      http.expectOne('/clinical/observations').flush(RESPUESTA);
+      fixture.detectChanges();
+
+      expect(componente.tieneCambiosPendientes()).toBe(false);
+    });
+  });
 });

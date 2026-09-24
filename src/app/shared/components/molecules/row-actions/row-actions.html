@@ -1,0 +1,63 @@
+@if (collapses()) {
+  <!-- Tres o más: un solo disparador. Lleva ícono Y texto, como cualquier
+       botón desde ADR-0012; el nombre accesible además dice de qué fila es. -->
+  <button
+    app-button
+    type="button"
+    variant="ghost"
+    size="sm"
+    class="row-actions__trigger"
+    data-testid="row-actions-trigger"
+    [attr.aria-label]="triggerLabel()"
+    [appMenuTrigger]="panel"
+  >
+    <app-nav-icon name="sliders" />
+    {{ label() }}
+  </button>
+
+  <!-- `app-menu` muda el panel al `<body>` mientras está abierto: dentro de una
+       tabla con `overflow`, un panel posicionado en su lugar sale recortado. -->
+  <app-menu #panel>
+    @for (action of actions(); track action.code) {
+      <app-menu-item
+        [attr.data-action]="action.code"
+        [disabled]="action.disabled ?? false"
+        [destructive]="action.destructive ?? false"
+        (selected)="select(action)"
+      >
+        @if (action.icon) {
+          <app-nav-icon slot="icon" [name]="action.icon" />
+        }
+        {{ action.label }}
+      </app-menu-item>
+    }
+  </app-menu>
+} @else {
+  <!-- Dos o menos: en la fila, con su texto. La fila no crece por dos botones.
+
+       Todas van en `ghost`, incluida la destructiva. Una lista repite estas
+       mismas acciones en cada fila: con botones sólidos, veinte filas son
+       cuarenta bloques de color compitiendo con el contenido, y la acción
+       destructiva —en rojo lleno, repetida— termina siendo lo más gritón de
+       la pantalla. La destructiva se distingue por su tinta al apuntarla o
+       enfocarla, no por gritar en reposo. -->
+  @for (action of actions(); track action.code) {
+    <button
+      app-button
+      type="button"
+      size="sm"
+      variant="ghost"
+      class="row-actions__inline"
+      [class.row-actions__inline--destructive]="action.destructive ?? false"
+      [attr.data-action]="action.code"
+      [attr.aria-label]="inlineLabel(action)"
+      [disabled]="action.disabled ?? false"
+      (click)="select(action)"
+    >
+      @if (action.icon) {
+        <app-nav-icon [name]="action.icon" />
+      }
+      {{ action.label }}
+    </button>
+  }
+}

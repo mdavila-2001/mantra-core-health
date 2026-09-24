@@ -369,12 +369,12 @@ export interface OwnPractitionerProfile {
   readonly phone?: string;
 
   /* --- los cinco contactos, cada uno con su nombre -----------------------
-     Vienen separados desde que el alta los pide así. `email` es el de trabajo
-     y a la vez el de acceso; el personal viaja aparte. */
+     Preferí los campos con uso explícito. `email` se conserva como alias para
+     perfiles y clientes anteriores. */
 
-  /** Correo de trabajo, el mismo con el que se entra. */
+  /** Correo de trabajo. */
   readonly workEmail?: string;
-  /** Correo personal, el que no sirve para entrar. */
+  /** Correo personal declarado por el profesional. */
   readonly personalEmail?: string;
   /** Celular personal o privado. */
   readonly mobilePhone?: string;
@@ -410,6 +410,8 @@ export interface OwnPractitionerProfile {
    * cuando no hay fila vigente — mismo contrato que {@link OwnPatientProfile}.
    */
   readonly homeAddress?: OwnAddress;
+  /** Dirección y punto del lugar de trabajo, separados del domicilio personal. */
+  readonly workAddress?: OwnAddress;
 
   readonly practitionerCategoryConceptId: string;
   readonly verificationStatusConceptId: string;
@@ -459,6 +461,21 @@ export interface PatientSearchQuery {
   readonly nationalId?: string;
   /** Departamento que lo expidió (`VS_BO_DEPARTMENT`). */
   readonly issuerAdministrativeAreaConceptId?: string;
+  /**
+   * Grupo sanguíneo, factor Rh e idioma clínico (`VS_BLOOD_GROUP`,
+   * `VS_RH_FACTOR`, `VS_LANGUAGE`). Filtran sobre el mismo dato que ya vive en
+   * `PatientDetail.aboGroupConceptId` / `rhFactorConceptId` /
+   * `clinicalLanguageConceptId`: la ficha lo tenía desde antes de que el
+   * listado existiera; esto sólo lo hace filtrable sin abrir cada ficha.
+   *
+   * **`insuranceStatusConceptId` no tiene filtro acá.** No existe un conjunto
+   * de valores real para «estado de seguro» (Asegurada/Particular/En trámite)
+   * en el catálogo — inventarlo sería un catálogo sin procedencia. Queda
+   * registrado como ambigüedad para producto, no simulado.
+   */
+  readonly aboGroupConceptId?: string;
+  readonly rhFactorConceptId?: string;
+  readonly clinicalLanguageConceptId?: string;
   /** Cursor opaco devuelto por la página anterior. */
   readonly cursor?: string;
   readonly limit?: number;
@@ -486,6 +503,16 @@ export interface PatientListItem {
   readonly phone?: string;
   readonly birthDate?: Date;
   readonly personStatusConceptId?: string;
+  /**
+   * Grupo sanguíneo, factor Rh e idioma clínico. Mismo caso que
+   * `nationalId`/`phone`: el dato ya vive en `PatientDetail`, y filtrar por
+   * él (`PatientSearchQuery`) exige poder mostrarlo también en la fila — un
+   * filtro cuya columna no se ve deja a la persona sin saber qué encontró.
+   * Opcionales: no todo paciente tiene el dato registrado.
+   */
+  readonly aboGroupConceptId?: string;
+  readonly rhFactorConceptId?: string;
+  readonly clinicalLanguageConceptId?: string;
   /**
    * Derivado del backend, y booleano a propósito: una lista de pacientes tiene
    * que poder marcar a quien falleció sin resolver terminología antes.
@@ -632,6 +659,23 @@ export interface NewPractitionerAffiliation {
   readonly startDate: string;
   /** ISO `YYYY-MM-DD`. Se omite si sigue ejerciendo ahí. */
   readonly endDate?: string;
+}
+
+/**
+ * Corrección de un vínculo laboral (`PATCH`). Todo opcional: lo ausente no se
+ * toca. `endDate: null` vuelve a marcarlo vigente. `practiceSiteId` no se
+ * edita a propósito —para cambiar de sede se carga otro vínculo—.
+ */
+export interface UpdatePractitionerAffiliation {
+  readonly organizationName?: string;
+  readonly roleTitle?: string;
+  /** `''` lo borra. */
+  readonly departmentText?: string;
+  readonly affiliationTypeConceptId?: string;
+  /** ISO `YYYY-MM-DD`. */
+  readonly startDate?: string;
+  /** ISO `YYYY-MM-DD`, o `null` para volver a «en curso». */
+  readonly endDate?: string | null;
 }
 
 /* ---- personas relacionadas / contactos (UC-05-10) ----------------------- */

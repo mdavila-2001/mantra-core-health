@@ -55,7 +55,11 @@
              anuncia cuántos hay antes de leer el primero. -->
           <ul class="directorio__grilla">
             @for (resultado of grupo.resultados; track resultado.id) {
-              <li app-result-card [resultado]="resultado"></li>
+              <li
+                app-result-card
+                [resultado]="resultado"
+                [preventDuplicateNavigation]="preventDuplicateNavigation()"
+              ></li>
             }
           </ul>
         </section>

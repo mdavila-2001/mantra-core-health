@@ -45,10 +45,15 @@ export {
 } from './bolivia';
 
 export {
+  generarEntrada,
+  generarEntradas,
   muestras,
   valorParaEntrada,
   valoresParaEntradas,
   type EntradaAGenerar,
+  type EntradasGeneradas,
+  type ProcedenciaDelValor,
+  type ValorGenerado,
 } from './props';
 
 export {

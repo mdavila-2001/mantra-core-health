@@ -42,6 +42,7 @@ const COLUMNAS: readonly ColumnDef<Paciente>[] = [
       [selectable]="selectable()"
       [sort]="sort()"
       [cursor]="cursor()"
+      [maxHeight]="maxHeight()"
       (sortChanged)="ordenes.push($event)"
       (cursorChanged)="cursores.push($event)"
       (selectionChanged)="selecciones.push($event)"
@@ -59,6 +60,7 @@ class HostComponent {
   readonly selectable = signal(false);
   readonly sort = signal<SortState | null>(null);
   readonly cursor = signal<CursorState>({});
+  readonly maxHeight = signal<string | null>(null);
   readonly ordenes: SortState[] = [];
   readonly cursores: string[] = [];
   readonly selecciones: (readonly Paciente[])[] = [];
@@ -374,6 +376,66 @@ describe('DataTable', () => {
       expect(css).toContain('@media (min-width: 780px)');
       // la fila de detalle existe justamente para no perder esas columnas
       expect(css).toContain('.data-table__detail-row');
+    });
+  });
+
+  describe('alto máximo, opt-in (H3.S2, ADR-0015 regla 6)', () => {
+    function cajaDeScroll(): HTMLElement {
+      const caja = root().querySelector<HTMLElement>('.data-table__scroll');
+      if (caja === null) {
+        throw new Error('no está la caja de scroll');
+      }
+      return caja;
+    }
+
+    it('correcto: por omisión (null) no cambia nada para los consumidores actuales', () => {
+      expect(root().querySelector('app-data-table')?.classList).not.toContain(
+        'data-table--constrained',
+      );
+      expect(cajaDeScroll().style.maxHeight).toBe('');
+      expect(cajaDeScroll().style.overflowY).toBe('');
+      expect(cajaDeScroll().style.overflowX).toBe('');
+    });
+
+    it('correcto: activo, aplica alto máximo y apaga el scroll lateral', async () => {
+      host.maxHeight.set('480px');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(root().querySelector('app-data-table')?.classList).toContain(
+        'data-table--constrained',
+      );
+      expect(cajaDeScroll().style.maxHeight).toBe('480px');
+      expect(cajaDeScroll().style.overflowY).toBe('auto');
+      expect(cajaDeScroll().style.overflowX).toBe('hidden');
+    });
+
+    it('límite: con la opción activa, la lista vacía sigue sin scroll lateral', async () => {
+      host.state.set(ready([]));
+      host.maxHeight.set('320px');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(cajaDeScroll().style.overflowX).toBe('hidden');
+      expect(root().querySelectorAll('tbody tr').length).toBe(0);
+    });
+
+    it('inválido: una cadena vacía no es un alto — cae al por omisión, no a una caja de alto cero', async () => {
+      host.maxHeight.set('');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(root().querySelector('app-data-table')?.classList).not.toContain(
+        'data-table--constrained',
+      );
+      expect(cajaDeScroll().style.maxHeight).toBe('');
+    });
+
+    it('con la opción activa, las columnas secundarias siguen plegadas al detalle aunque el viewport sea de escritorio', () => {
+      const css = readFileSync(DATA_TABLE_CSS, 'utf8');
+
+      expect(css).toContain('.data-table--constrained .data-table__secondary');
+      expect(css).toContain('.data-table--constrained .data-table__detail-row');
     });
   });
 });

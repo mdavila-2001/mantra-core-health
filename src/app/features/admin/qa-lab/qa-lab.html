@@ -1,0 +1,168 @@
+<app-page-header
+  title="QA Lab"
+  subtitle="Las pruebas se ejecutan en el servidor, contra destinos aprobados. Acá se piden, se aprueban y se revisan."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="qa">
+  <div class="qa__acciones">
+    <button app-button variant="primary" data-testid="qa-new-plan" (clicked)="pidiendoPlan.set(true)">Pedir ejecución</button>
+  </div>
+
+  <app-card variant="outlined" padding="md">
+    <app-tabs [(selectedIndex)]="pestana" data-testid="qa-tabs">
+      <app-tab label="Planes">
+        <app-view-state-host [state]="planes()" (retry)="cargar()">
+          <div class="qa__scroll">
+            <table class="qa__tabla" data-testid="qa-plans">
+              <caption class="qa__oculto">Planes de ejecución</caption>
+              <thead>
+                <tr><th scope="col">Estado</th><th scope="col">Pedido</th><th scope="col">Entorno</th><th scope="col">Resultado</th><th scope="col"></th></tr>
+              </thead>
+              <tbody>
+                @for (p of listaDe(planes()); track p.id) {
+                  <tr>
+                    <td><app-badge [variant]="planStatus(p.status).tone">{{ planStatus(p.status).label }}</app-badge></td>
+                    <td>{{ p.createdAt | date: 'short' }}</td>
+                    <td>{{ entornoDe(p.environmentId) }}</td>
+                    <td>
+                      {{ p.counters.casesPassed }} pasaron · {{ p.counters.casesFailed }} fallaron
+                      @if (p.counters.casesNotRun > 0) { · {{ p.counters.casesNotRun }} sin ejecutar }
+                      @if (p.error; as e) { <div class="qa__nota">{{ e.code }}</div> }
+                    </td>
+                    <td><a [routerLink]="['/administration/qa-lab/plans', p.id]">Ver plan</a></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </app-view-state-host>
+      </app-tab>
+
+      <app-tab label="Suites">
+        <app-view-state-host [state]="suites()" (retry)="cargar()">
+          <div class="qa__scroll">
+            <table class="qa__tabla" data-testid="qa-suites">
+              <caption class="qa__oculto">Suites</caption>
+              <thead><tr><th scope="col">Suite</th><th scope="col">Versión</th><th scope="col">Casos activos</th><th scope="col">Última corrida</th></tr></thead>
+              <tbody>
+                @for (s of listaDe(suites()); track s.id) {
+                  <tr>
+                    <td><strong>{{ s.code }}</strong> <span class="qa__nota">{{ s.name }}</span></td>
+                    <td>v{{ s.version }}</td>
+                    <td>{{ s.activeCases }} de {{ s.cases }}</td>
+                    <td>
+                      @if (s.lastRun; as r) {
+                        <app-badge [variant]="conceptStatus(r.status).tone">{{ conceptStatus(r.status).label }}</app-badge>
+                        <span class="qa__nota">{{ r.finishedAt | date: 'short' }}</span>
+                      } @else {
+                        <span class="qa__nota">Nunca se ejecutó</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </app-view-state-host>
+      </app-tab>
+
+      <app-tab label="Corridas">
+        <app-view-state-host [state]="corridas()" (retry)="cargar()">
+          <div class="qa__scroll">
+            <table class="qa__tabla" data-testid="qa-runs">
+              <caption class="qa__oculto">Corridas</caption>
+              <thead><tr><th scope="col">Corrida</th><th scope="col">Estado</th><th scope="col">Pasaron / fallaron / omitidos</th><th scope="col"></th></tr></thead>
+              <tbody>
+                @for (r of listaDe(corridas()); track r.id) {
+                  <tr>
+                    <td>{{ r.runNumber }} <span class="qa__nota">{{ r.finishedAt | date: 'short' }}</span></td>
+                    <td><app-badge [variant]="conceptStatus(r.status).tone">{{ conceptStatus(r.status).label }}</app-badge></td>
+                    <td>{{ r.totals.passed }} / {{ r.totals.failed }} / {{ r.totals.skipped }}</td>
+                    <td><button app-button variant="ghost" size="sm" (clicked)="abrirCorrida(r.id)">Ver resultados</button></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </app-view-state-host>
+      </app-tab>
+
+      <app-tab label="Defectos">
+        <app-view-state-host [state]="defectos()" (retry)="cargar()">
+          <div class="qa__scroll">
+            <table class="qa__tabla" data-testid="qa-defects">
+              <caption class="qa__oculto">Defectos</caption>
+              <thead><tr><th scope="col">Defecto</th><th scope="col">Severidad</th><th scope="col">Estado</th><th scope="col">Apariciones</th></tr></thead>
+              <tbody>
+                @for (d of listaDe(defectos()); track d.id) {
+                  <tr>
+                    <td>{{ d.defectNumber }} @if (d.isFlaky) { <app-badge variant="warning">Inestable</app-badge> }</td>
+                    <td><app-badge [variant]="conceptStatus(d.severity).tone">{{ conceptStatus(d.severity).label }}</app-badge></td>
+                    <td>{{ conceptStatus(d.status).label }}</td>
+                    <td>{{ d.occurrences }} · última {{ d.lastSeenAt | date: 'short' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </app-view-state-host>
+      </app-tab>
+
+      <app-tab label="Destinos">
+        <app-view-state-host [state]="destinos()" (retry)="cargar()">
+          <ul class="qa__lista" data-testid="qa-targets">
+            @for (t of listaDe(destinos()); track t.id) {
+              <li>
+                <strong>{{ entornoDe(t.environmentId) }}</strong> → <code>{{ t.scheme }}://{{ t.host }}:{{ t.port }}</code>
+                · rutas {{ t.allowedPathPrefixes.join(', ') }}
+                <div class="qa__nota">
+                  {{ t.allowMutations ? 'Admite mutaciones' : 'Sólo lectura' }} ·
+                  {{ t.allowPrivateNetwork ? 'Red interna autorizada' : 'Sin red interna' }} ·
+                  máx. {{ t.limits.maxRequests }} peticiones / {{ t.limits.maxDurationSeconds }} s ·
+                  credencial: {{ t.authSecretRef ?? 'ninguna' }}
+                  @if (t.authSecretRef && t.authSecretConfigured === false) {
+                    <app-badge variant="error">Variable no configurada en el runner</app-badge>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        </app-view-state-host>
+      </app-tab>
+    </app-tabs>
+  </app-card>
+</div>
+
+@if (pidiendoPlan()) {
+  <app-new-plan-dialog
+    [suites]="listaDe(suites())"
+    [environments]="entornos()"
+    (created)="planCreado($event)"
+    (closed)="pidiendoPlan.set(false)"
+  />
+}
+
+@if (corridaAbierta(); as estado) {
+  <app-content-dialog heading="Resultados de la corrida" size="lg" (closed)="corridaAbierta.set(null)">
+    <app-view-state-host [state]="estado">
+      @if (estado.status === 'ready') {
+        <ul class="qa__lista" data-testid="qa-run-results">
+          @for (r of estado.data.results; track r.id) {
+            <li>
+              <app-badge [variant]="conceptStatus(r.status).tone">{{ conceptStatus(r.status).label }}</app-badge>
+              <strong>{{ r.caseCode }}</strong>
+              @if (r.errorText) { <div class="qa__nota">{{ r.errorText }}</div> }
+              @for (a of r.assertions; track $index) {
+                <div class="qa__nota">
+                  {{ a.passed ? '✓' : '✗' }} {{ a.message }}
+                  @if (a.actualValue !== null) { · observado: <code>{{ a.actualValue }}</code> }
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </app-view-state-host>
+  </app-content-dialog>
+}

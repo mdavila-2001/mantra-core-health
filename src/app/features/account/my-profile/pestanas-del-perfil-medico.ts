@@ -19,12 +19,12 @@
  *
  * | Pasos del alta | Pestaña |
  * |---|---|
- * | nombre · documento · sexo y nacimiento · título profesional | Datos personales |
+ * | nombre · documento · sexo y nacimiento · título profesional · tus especialidades | Datos personales |
  * | contacto privado · contacto del trabajo · dónde vivís | Contacto |
  * | — (a nombre de quién factura) | Facturación |
  * | tu consultorio propio | Dónde atiendo |
  * | dónde estudió el título · tus títulos | Trayectoria |
- * | habilitación · respaldos · especialidades | Credenciales |
+ * | habilitación · respaldos | Credenciales |
  * | — (lo que registró con la cuenta) | Actividad |
  *
  * Las dos últimas filas no salen del alta y tampoco se podían tirar: la
@@ -68,19 +68,28 @@ export const PESTANA_MEDICO = {
 } as const;
 
 /**
- * Las pestañas del **editor** del perfil médico: las mismas de la ficha, menos
- * dos.
+ * Las pestañas del **editor** del perfil médico: **las mismas de la ficha**.
  *
  * Pedido del cliente, repetido el 2026-09-11: editar el perfil tiene que ser
  * «en varias pestañas». Hasta hoy el editor eran cuatro tarjetas apiladas con
  * cuatro botones de guardar, que es justo lo que prohíbe
  * `docs/components/composition-rules.md` §5.
  *
- * Son las de {@link PESTANAS_DEL_PERFIL_MEDICO} en el mismo orden, salteando la
- * única que no tiene nada que editar acá:
+ * Son las de {@link PESTANAS_DEL_PERFIL_MEDICO}, las siete, en el mismo orden.
  *
- * - **Actividad** — son los contadores de la plataforma. No se editan: se
- *   miran.
+ * ## «Actividad» está, y no tiene ni un campo
+ *
+ * El doctor pidió el 20/09/2026 que «TODAS las pestañas sean editables, o sea
+ * su información» (C-05). «Actividad» son cuatro contadores de lo que la
+ * persona ya hizo, y un contador que se escribe a mano deja de contar: pasa a
+ * ser una afirmación sin respaldo sobre actos clínicos. Así que no se hizo
+ * editable **ni se dejó afuera**: la pestaña existe, enumera los cuatro con lo
+ * que cuenta cada uno y dice qué hay que hacer para que el número se mueva
+ * ({@link CONTADORES_DE_ACTIVIDAD}).
+ *
+ * El desvío es deliberado y esta es la diferencia que importa: antes faltaba
+ * la pestaña y quien la buscaba no encontraba nada ni sabía por qué; ahora la
+ * encuentra y lee el motivo en la pantalla, no en un informe.
  *
  * ## «Dónde atiendo» volvió, y por qué
  *
@@ -95,9 +104,19 @@ export const PESTANA_MEDICO = {
  * ficha **muestra**, y cargar un consultorio es editar. Así que el bloque viene
  * acá, que es donde alguien que quiere cambiar dónde atiende lo va a buscar.
  *
- * **No se duplica nada**: las tres superficies montan el MISMO
- * `app-work-history` —esta pestaña, «Mi consultorio propio» y Trayectoria— con
- * distinto valor de su input `secciones`. Un arreglo llega a las tres.
+ * **La ficha sí se lo quedó, el 20/09/2026.** El doctor pidió que el
+ * consultorio «se vea como pestaña para personalizarle el QR y todo lo que
+ * ofrece esa view» (C-02), y con eso el enlace suelto del perfil a
+ * `/administration/my-practice` se retiró. El argumento de arriba no era
+ * malo —la ficha muestra— pero perdió contra el pedido: sin esa pestaña, para
+ * cargar el QR de cobro hay que salir del perfil. El desvío queda anotado acá
+ * en vez de borrar el párrafo que lo contradice: el que viene tiene que poder
+ * ver que hubo una decisión, no una distracción.
+ *
+ * **No se duplica nada**: las cuatro superficies montan el MISMO
+ * `app-work-history` —esta pestaña, la de la ficha, «Mis organizaciones» y
+ * Trayectoria— con distinto valor de su input `secciones`. Un arreglo llega a
+ * las cuatro.
  *
  * El orden importa: quien viene de la ficha encuentra las pestañas donde las
  * dejó.
@@ -109,9 +128,16 @@ export const PESTANAS_DEL_EDITOR_MEDICO = [
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.dondeAtiendo],
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.trayectoria],
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.credenciales],
+  PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.actividad],
 ] as const;
 
-/** Los índices con nombre del editor. No son los de la ficha: son seis. */
+/**
+ * Los índices con nombre del editor. Desde el 20/09/2026 **son los mismos que
+ * los de la ficha**: quien pulsa el lápiz en una pestaña llega a esa pestaña, y
+ * el índice no hay que traducirlo. Se conservan como constante propia porque
+ * eso puede volver a dejar de ser cierto, y entonces el lugar donde arreglarlo
+ * es uno solo.
+ */
 export const PESTANA_EDITOR = {
   personales: 0,
   contacto: 1,
@@ -119,6 +145,7 @@ export const PESTANA_EDITOR = {
   dondeAtiendo: 3,
   trayectoria: 4,
   credenciales: 5,
+  actividad: 6,
 } as const;
 
 /**
@@ -142,8 +169,11 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
   nationalId: PESTANA_MEDICO.personales,
   issuerAdministrativeAreaConceptId: PESTANA_MEDICO.personales,
 
-  /* 3 · Contanos un poco sobre vos */
-  sexAtBirth: PESTANA_MEDICO.personales,
+  /* 3 · Contanos un poco sobre vos.
+     `sexAtBirth` estaba acá y era MENTIRA: se movió a
+     `CAMPOS_DEL_ALTA_SIN_PESTANA` el 21/09/2026 con su motivo. Este mapa
+     existe justamente para que un campo no apunte a una pestaña donde no
+     está, y éste apuntaba a una donde nunca estuvo. */
   birthDate: PESTANA_MEDICO.personales,
 
   /* 4 · Cómo te contactamos en privado */
@@ -160,7 +190,12 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
   homeAddressLines: PESTANA_MEDICO.contacto,
   gpsDomicilio: PESTANA_MEDICO.contacto,
 
-  /* 7 · Tu consultorio propio */
+  /* 7 · Tu consultorio propio.
+     Los cuatro siguen en «Dónde atiendo», y desde el 20/09/2026 el mapa dice
+     más verdad que antes sin haber cambiado una línea: esa pestaña montaba
+     sólo el mapa de sedes —que enseña el nombre, la dirección y el pin, pero
+     no el municipio suelto— y ahora monta además el bloque del consultorio,
+     donde los cuatro se ven y se corrigen con su propio control (C-02). */
   officeName: PESTANA_MEDICO.dondeAtiendo,
   municipioConsultorio: PESTANA_MEDICO.dondeAtiendo,
   officeAddressLines: PESTANA_MEDICO.dondeAtiendo,
@@ -187,20 +222,41 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
   /* 11 · Tus títulos */
   academicTitles: PESTANA_MEDICO.trayectoria,
 
-  /* 12 · Tus especialidades */
-  specialtyPrimary: PESTANA_MEDICO.credenciales,
-  especialidadesExtra: PESTANA_MEDICO.credenciales,
+  /*
+   * 12 · Tus especialidades
+   *
+   * Se mudó de «Credenciales» a «Datos personales» (pedido del propietario,
+   * 24/09/2026): contestan «¿de qué es médico?», la misma pregunta que el
+   * título profesional, y no «¿con qué habilitación ejerce?», que es lo que
+   * queda en Credenciales junto con matrículas y respaldos. La ficha de
+   * lectura ya las mostraba junto a la identidad desde el 19/09/2026 (C-09);
+   * el editor era el único lugar donde seguían separadas de eso mismo.
+   */
+  specialtyPrimary: PESTANA_MEDICO.personales,
+  especialidadesExtra: PESTANA_MEDICO.personales,
 };
 
 /**
- * El campo del alta que la ficha NO muestra, y por qué.
+ * Los campos del alta que la ficha NO muestra, y por qué.
  *
- * Uno solo. Se declara acá para que el spec pueda distinguir «se olvidaron de
- * mapearlo» de «se decidió no mostrarlo», que es la diferencia entre un defecto
- * y una decisión.
+ * Se declaran acá para que el spec pueda distinguir «se olvidaron de mapearlo»
+ * de «se decidió no mostrarlo», que es la diferencia entre un defecto y una
+ * decisión.
  */
 export const CAMPOS_DEL_ALTA_SIN_PESTANA: Readonly<Record<string, string>> = {
   password:
     'Una contraseña no se muestra nunca. La ficha ofrece el camino para cambiarla ' +
     '(«Cambiar contraseña»), que es lo único que se puede hacer con ella.',
+  sexAtBirth:
+    'El alta lo pregunta y la lectura del perfil médico no lo devuelve, así que no hay ' +
+    'dato que mostrar: la ficha no lo enseña en ninguna pestaña y el editor no lo puede ' +
+    'ofrecer. Estuvo declarado como si viviera en «Datos personales» hasta el 21/09/2026, ' +
+    'y ahí no estaba. Que la persona no pueda ver ni corregir lo que declaró en el alta es ' +
+    'un hueco del contrato, no una decisión de diseño: queda registrado como Q-I5.',
+  workAddressLines:
+    'El alta la guarda como dirección laboral, separada del domicilio y del consultorio ' +
+    'propio, pero la ficha del médico todavía no la lee ni la muestra en ninguna pestaña.',
+  gpsTrabajo:
+    'El punto de mapa del lugar de trabajo se guarda con el alta; la ficha todavía no ' +
+    'lo devuelve ni lo dibuja en ninguna pestaña.',
 };

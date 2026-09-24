@@ -18,7 +18,10 @@ test.describe.configure({ mode: 'serial' });
 
 const SHA256_HEX = /^[0-9a-f]{64}$/;
 
-const TITULO_DEL_DIALOGO = 'Exportar mi historial de póliza y siniestralidad';
+const TITULO_DEL_DIALOGO = 'Solicitar exportación de portabilidad';
+
+/** Bien formado —64 hex— pero de ningún certificado emitido: la maqueta responde 404. */
+const HASH_INEXISTENTE = 'f'.repeat(64);
 
 /**
  * El diálogo se localiza por su **rol**, no por el `data-testid`.
@@ -72,32 +75,35 @@ for (const viewport of [
 
       await abrirDialogo(page);
 
-      // PDF ya viene preseleccionado — el radio group nace en 'PDF'.
-      const radioPdf = page.getByTestId('radio-format-pdf');
-      await expect(radioPdf.locator('input[type="radio"]')).toBeChecked();
+      // PDF ya viene preseleccionado. Desde C-21 (ADR-0013) los tres formatos
+      // son un desplegable y no tres radios, así que la preselección se lee en
+      // la opción marcada y por su TEXTO: `app-select` guarda el índice de la
+      // opción en el `value` del `<option>`, y afirmar sobre ese número no
+      // diría nada de lo que el médico ve.
+      const selectorDeFormato = page.getByTestId('portability-format').locator('select');
+      await expect(selectorDeFormato.locator('option:checked')).toHaveText(
+        'PDF con código QR de verificación',
+      );
 
       const desborde = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
       );
       expect(desborde, `desborde con el diálogo abierto (${viewport.width})`).toBeLessThanOrEqual(1);
 
-      // Objetivos táctiles de los radios: **antes** de generar. Emitido el
-      // certificado, el `@switch` del diálogo reemplaza el selector de formato
-      // por el sello y las descargas, así que después de este punto los radios
-      // ya no existen en el DOM.
+      // Objetivo táctil del selector de formato: **antes** de generar. Emitido
+      // el certificado, el `@switch` del diálogo lo reemplaza por el sello y
+      // las descargas, así que después de este punto ya no existe en el DOM.
       //
       // El umbral es el que el sistema de diseño promete PARA ESE ANCHO, no un
-      // 44 universal: tanto el radio (`molecules/radio/radio.css:56-58`) como
-      // el botón `md` (`atoms/button/button.css:128-146`) declaran 44 px en
-      // móvil y **bajan a 40 px desde 780 px a propósito** —«cada talle
-      // recupera su geometría del spec», dice el propio CSS—. Medido en 1440:
-      // 39,99 px el radio, 40 px el botón. Los 40 siguen muy por encima del
-      // mínimo de WCAG 2.2 AA (24 px, SC 2.5.8); los 44 son el nivel AAA.
+      // 44 universal: tanto el select (`atoms/select/select.css:15` y `:26-28`)
+      // como el botón `md` (`atoms/button/button.css:128-146`) declaran 44 px
+      // en móvil y **bajan a 40 px desde 780 px a propósito** —«cada talle
+      // recupera su geometría del spec», dice el propio CSS—. Los 40 siguen muy
+      // por encima del mínimo de WCAG 2.2 AA (24 px, SC 2.5.8); los 44 son el
+      // nivel AAA.
       const altoMinimoTactil = viewport.width >= 780 ? 40 : 44;
       const objetivos = [
-        ['radio-format-pdf', page.getByTestId('radio-format-pdf').locator('label')],
-        ['radio-format-json', page.getByTestId('radio-format-json').locator('label')],
-        ['radio-format-both', page.getByTestId('radio-format-both').locator('label')],
+        ['portability-format', selectorDeFormato],
         ['btn-cancel-portability-dialog', page.getByTestId('btn-cancel-portability-dialog')],
         ['btn-generate-portability-download', page.getByTestId('btn-generate-portability-download')],
       ] as const;
@@ -134,9 +140,102 @@ for (const viewport of [
       await page.goto(`/verify/portability/${manifestHash}`);
       await expect(page.getByTestId('portability-verify-valid')).toBeVisible();
       await expect(page.getByTestId('portability-verify-hash')).toHaveText(manifestHash);
+      // Quién lo selló y cuántos registros trae: es lo que el requisito pide
+      // que vea quien escanea, y sale de la respuesta, no de un rótulo fijo.
+      await expect(page.getByTestId('portability-verify-issuer')).not.toBeEmpty();
+      await expect(page.getByTestId('portability-verify-record-count')).not.toBeEmpty();
+
+      // El mismo sello en MAYÚSCULAS es el mismo certificado.
+      await page.goto(`/verify/portability/${manifestHash.toUpperCase()}`);
+      await expect(page.getByTestId('portability-verify-valid')).toBeVisible();
+
+      // Bien formado pero de ningún certificado: «no encontrado», que es
+      // distinto de «el sello está mal escrito».
+      await page.goto(`/verify/portability/${HASH_INEXISTENTE}`);
+      await expect(page.getByTestId('portability-verify-not-found')).toBeVisible();
+      await expect(page.getByTestId('portability-verify-valid')).toHaveCount(0);
 
       await page.goto('/verify/portability/no-tiene-forma-de-sha256');
       await expect(page.getByTestId('portability-verify-invalid')).toBeVisible();
+    });
+
+    test('la verificación pública funciona sin sesión y distingue sus tres estados', async ({
+      browser,
+    }) => {
+      // Contexto limpio: ni cookies ni almacenamiento. Quien escanea el QR es
+      // una aseguradora o un auditor, no alguien con sesión en AloVida — si la
+      // ruta cayera tras un guard, acá se vería como una redirección a /auth.
+      const contexto = await browser.newContext({ viewport });
+      const anonima = await contexto.newPage();
+      try {
+        await anonima.goto(`/verify/portability/${HASH_INEXISTENTE}`);
+        await expect(anonima.getByTestId('portability-verify-not-found')).toBeVisible();
+        expect(anonima.url()).toContain('/verify/portability/');
+
+        await anonima.goto('/verify/portability/no-tiene-forma-de-sha256');
+        await expect(anonima.getByTestId('portability-verify-invalid')).toBeVisible();
+
+        // Y no desborda en este ancho: se abre desde el teléfono, escaneando.
+        const desborde = await anonima.evaluate(
+          () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        );
+        expect(desborde, `desborde de la verificación (${viewport.width})`).toBeLessThanOrEqual(1);
+      } finally {
+        await contexto.close();
+      }
+    });
+
+    test('el diálogo se abre y se cierra con el teclado, y el foco vuelve al botón', async ({
+      page,
+    }) => {
+      await entrarAlSimulador(page, 'paciente', '');
+      await page.goto('/my-account');
+      await page.getByRole('tab', { name: 'Seguros y tutores' }).click();
+
+      const abrir = page.getByTestId('btn-open-portability-dialog');
+      await expect(abrir).toBeVisible();
+
+      // El nombre accesible del botón es el título del diálogo que abre
+      // (WCAG 2.5.3: la etiqueta visible está en el nombre accesible).
+      await expect(abrir).toHaveAccessibleName(TITULO_DEL_DIALOGO);
+
+      // El foco tiene que LLEGAR POR TECLADO para que `:focus-visible` aplique:
+      // con `.focus()` a secas Chromium puede no pintar el anillo, que es
+      // justamente lo que se quiere comprobar. Salir y volver con Tab es una
+      // navegación de teclado de verdad, sin depender de cuántos pasos hay
+      // desde el principio de la página.
+      //
+      // Y se mide sobre el estilo calculado del elemento, no con
+      // `getComputedStyle(el, ':focus-visible')`: el segundo argumento es para
+      // pseudo-ELEMENTOS (`::before`), y con una pseudo-clase devuelve el
+      // estilo base — `outline-width` sale vacío y `parseFloat` da NaN.
+      await abrir.focus();
+      await page.keyboard.press('Shift+Tab');
+      await page.keyboard.press('Tab');
+      await expect(abrir).toBeFocused();
+
+      const anillo = await abrir.evaluate((el) => {
+        const estilo = getComputedStyle(el);
+        return { ancho: estilo.outlineWidth, estilo: estilo.outlineStyle };
+      });
+      // La regla global de `styles.css` es `outline: 4px solid var(--focus-ring)`.
+      expect(anillo.estilo, 'estilo del anillo de foco').not.toBe('none');
+      expect(parseFloat(anillo.ancho), 'ancho del anillo de foco').toBeGreaterThan(0);
+
+      await page.keyboard.press('Enter');
+      await expect(dialogo(page)).toBeVisible();
+
+      // El foco entra al diálogo: si se quedara afuera, quien navega con
+      // teclado seguiría tabulando por la página de atrás.
+      const focoDentro = await page.evaluate(() => {
+        const dialogo = document.querySelector('dialog[open]');
+        return dialogo !== null && dialogo.contains(document.activeElement);
+      });
+      expect(focoDentro, 'el foco entra al diálogo').toBe(true);
+
+      await page.keyboard.press('Escape');
+      await expect(dialogo(page)).toHaveCount(0);
+      await expect(abrir).toBeFocused();
     });
 
     test('elegir JSON descarga un archivo cuyo SHA-256 coincide con el sello mostrado', async ({
@@ -144,8 +243,11 @@ for (const viewport of [
     }, info) => {
       await abrirDialogo(page);
 
-      await page.getByTestId('radio-format-json').locator('label').click();
-      await expect(page.getByTestId('radio-format-json').locator('input[type="radio"]')).toBeChecked();
+      const selectorDeFormato = page.getByTestId('portability-format').locator('select');
+      await selectorDeFormato.selectOption({ label: 'Archivo JSON interoperable' });
+      await expect(selectorDeFormato.locator('option:checked')).toHaveText(
+        'Archivo JSON interoperable',
+      );
 
       const [descarga] = await Promise.all([
         page.waitForEvent('download'),

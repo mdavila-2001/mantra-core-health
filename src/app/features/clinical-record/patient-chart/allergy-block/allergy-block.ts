@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  forwardRef,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
@@ -18,6 +27,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { AttachmentUploader } from '../../../../shared/components/organisms/attachment-uploader/attachment-uploader';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
+import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
 import { mensajeDeEscritura } from '../../mensaje-de-escritura';
 
 /** El alérgeno. Los medicamentos salen del vademécum; el resto, de este set. */
@@ -76,11 +86,12 @@ interface ReaccionEnCurso {
     Select,
     Textarea,
   ],
+  providers: [{ provide: DRAFT_BLOCK, useExisting: forwardRef(() => AllergyBlock) }],
   templateUrl: './allergy-block.html',
   styleUrl: './allergy-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AllergyBlock {
+export class AllergyBlock implements DraftBlock {
   private readonly clinical = inject(ClinicalClient);
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
@@ -120,6 +131,22 @@ export class AllergyBlock {
   protected readonly reacciones = signal<readonly ReaccionEnCurso[]>([
     { clave: 0, manifestacion: null, severidad: null, descripcion: '' },
   ]);
+
+  /**
+   * Contrato de `DraftBlock`. Una fila de reacción recién agregada (o la
+   * inicial) no cuenta sola: sólo pesa si alguien la llenó.
+   */
+  readonly tieneCambiosPendientes = computed(
+    () =>
+      this.sustancia() !== null ||
+      this.tipo() !== null ||
+      this.categoria() !== null ||
+      this.criticidad() !== null ||
+      this.citaElegida() !== null ||
+      this.reacciones().some(
+        (r) => r.manifestacion !== null || r.severidad !== null || r.descripcion.trim() !== '',
+      ),
+  );
 
   private siguienteClave = 1;
 

@@ -107,11 +107,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // aprender, y el catálogo ya se filtra por rol tutorial por tutorial. Poner
     // roles acá escondería el centro entero a quien tiene pocos.
     path: 'tutorials',
-    // §4.H · fuera del menú del médico. Los recorridos guiados se disparan
-    // **desde la pantalla que explican**, que es donde sirven; un renglón fijo
-    // en el menú para «aprender a usar esto» era además la confesión del
-    // síntoma 1 del plan.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    // N-01 (2026-09-22): pasa de `['PRACTITIONER']` a `[ANY_ROLE]` — ahora es
+    // un ícono con globo en la cabecera (`shell-layout.html`), calcado de
+    // «Ajustes», para los dos roles. La ruta sigue existiendo y funcionando
+    // igual; lo único que cambia es que ya no ocupa un renglón para nadie.
+    // §4.H (el motivo original, para el médico) sigue valiendo: acá se
+    // generaliza al paciente.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Tutoriales',
     group: 'General',
     icon: 'teach',
@@ -133,6 +135,10 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // turnos» tampoco los declara—. La pantalla lo dice cuando falta, en vez
     // de esconderse del menú.
     path: 'messaging',
+    // N-01 (2026-09-22): ícono con globo y contador de no leídos en la
+    // cabecera, calcado de «Ajustes» — la ruta sigue existiendo y
+    // funcionando; sólo deja de ocupar un renglón de primer nivel.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Chats',
     group: 'General',
     icon: 'chat',
@@ -861,6 +867,52 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M19 community',
   },
   {
+    // Portal administrativo · catálogo de datos (API módulo 67). Los roles son
+    // los mismos que exige `GET /admin/catalog/*`: la guarda evita llegar a
+    // una pantalla que sólo devolvería 403; la autoridad sigue siendo la API.
+    path: 'administration/data-catalog',
+    label: 'Catálogo de datos',
+    group: 'Administración',
+    icon: 'book',
+    roles: ['SECURITY_ADMIN', 'PLATFORM_ADMIN', 'GOVERNANCE_ADMIN', 'DATA_PLATFORM_ADMIN', 'DPO'],
+    availability: 'disponible',
+    summary: 'Qué tablas existen, por qué existen, quién responde por ellas y con qué evidencia.',
+    module: 'M67 data_catalog',
+  },
+  {
+    // Analítica de producto y RUM sobre `telemetry` (`/admin/analytics`).
+    path: 'administration/web-analytics',
+    label: 'Analítica web',
+    group: 'Administración',
+    icon: 'chart',
+    roles: ['PLATFORM_ADMIN', 'SECURITY_ADMIN', 'DATA_PLATFORM_ADMIN', 'MARKETING_MANAGER', 'DPO'],
+    availability: 'disponible',
+    summary: 'Tráfico, embudos, Core Web Vitals y salud del pipeline de eventos.',
+    module: 'M28 telemetry',
+  },
+  {
+    // QA Lab: lectura del laboratorio (M36) y runner en el servidor (M68).
+    path: 'administration/qa-lab',
+    label: 'QA Lab',
+    group: 'Administración',
+    icon: 'flask',
+    roles: ['QA_ADMIN', 'QA_ENGINEER', 'RELEASE_MANAGER', 'PLATFORM_ADMIN'],
+    availability: 'disponible',
+    summary: 'Suites, planes de ejecución con aprobación y resultados con evidencia.',
+    module: 'M36 qa_lab · M68 qa_execution',
+  },
+  {
+    // Consola de operación y preparación para producción (`/admin/ops`).
+    path: 'administration/operations',
+    label: 'Operación',
+    group: 'Administración',
+    icon: 'monitor',
+    roles: ['PLATFORM_ADMIN', 'SRE', 'SECURITY_ADMIN', 'RELEASE_MANAGER', 'GOVERNANCE_ADMIN'],
+    availability: 'disponible',
+    summary: 'Preparación para producción con evidencia, incidentes, SLO y backups.',
+    module: 'M11 system_ops · M46 platform_ops',
+  },
+  {
     // W5/M44. El backend tiene **una** lectura —`GET /health-context/contexts/
     // resolve`— y doce comandos, así que la sección entra como panel de
     // operaciones, igual que M29, M40 y M27: la portada agrupa lo que se puede
@@ -1025,30 +1077,24 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // es la suya lo hace la API, que responde 403 ante la de otra organización.
     roles: ['SECURITY_ADMIN', 'ACCOUNTING_APPROVER', 'PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Revisá el balance de sumas y saldos y el libro diario de tu práctica.',
+    summary: 'Cuánto entró hoy, esta semana y este mes; en qué se te va; quién te debe y a quién le debés.',
     module: 'M16 accounting',
   },
 
-  {
-    // FT-26 (05/09/2026) — activos fijos y pasivos de la práctica, en
-    // auto-servicio del doctor. Va junto a Contabilidad por el mismo motivo
-    // que ese registro: los dos leen y escriben el mismo `practiceId`, y son
-    // la misma persona —quien ejerce— la que entra a los dos.
-    //
-    // Sólo `PRACTITIONER`: a diferencia de Contabilidad, no hay todavía un
-    // motor admin equivalente para dar de alta activos/pasivos (el que existe,
-    // `AccountingAssetController`/`AccountingLiabilityController`, es
-    // `SECURITY_ADMIN` puro y no comparte pantalla con éste — ver el reporte
-    // del carril). Cuando eso cambie, se suma el rol acá.
-    path: 'assets-liabilities',
-    label: 'Activos y pasivos',
-    group: 'Facturación',
-    icon: 'chart',
-    roles: ['PRACTITIONER'],
-    availability: 'disponible',
-    summary: 'Tus activos fijos y tus deudas: alta, avance y automatización.',
-    module: 'M16 accounting',
-  },
+  // FT-26 (05/09/2026) — activos fijos y pasivos de la práctica. **Dejó de ser
+  // sección del menú el 2026-09-19**, por pedido del propietario: «esto debe
+  // estar integrado en contabilidad (lo de activos y pasivos)».
+  //
+  // Tenía sentido como entrada aparte para quien sabe contabilidad y no para
+  // quien no: «activo», «pasivo» y «gasto» son tres palabras que hay que
+  // conocer para elegir entre dos renglones del menú que se llaman casi igual y
+  // llevan el mismo ícono. Ahora es un bloque del resumen de Contabilidad —«Lo
+  // que tenés y lo que debés»—, que lo explica en castellano y lleva a la
+  // pantalla de alta.
+  //
+  // La pantalla sigue entera en `administration/accounting/assets-liabilities`
+  // (`PANTALLAS_HIJAS`), con los mismos roles que tenía acá, y la dirección
+  // vieja `assets-liabilities` redirige.
 
   /* -- Mi cuenta · autoservicio, con navegación propia --------------------
      El vault lo pide separado: son datos de la persona sobre sí misma, no
@@ -1165,6 +1211,17 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Los estudios que te pidió un médico, con las indicaciones para hacértelos.',
     module: 'M20 diagnostics',
+  },
+  {
+    path: 'my-account/cotizaciones',
+    hiddenFor: ['PRACTITIONER'],
+    label: 'Cotizaciones',
+    group: 'Mi cuenta',
+    icon: 'billing',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Compará referencias de precio y cercanía con su procedencia visible.',
+    module: 'M-cotizaciones',
   },
   {
     // Carril 10, lado paciente. Sin `roles` a propósito, por el mismo motivo
@@ -1297,6 +1354,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // así que va `billing`, el de valor acumulado. Un icono propio es del
     // dueño del sistema de iconos, no de este carril.
     path: 'my-account/loyalty',
+    // N-03/Q-17 (2026-09-22, Itzan): «Mis puntos» pasa a ser una pestaña del
+    // perfil del paciente y retira su renglón de primer nivel. La pestaña en
+    // sí no llegó esta noche (regla 65: contrato simulado — la ruta vieja
+    // redirige a `/my-account` en `app.routes.ts`, declarado en el daily de
+    // los dos). La sección se conserva registrada (roles, disponibilidad)
+    // para no perder ese contrato si alguien más la referencia.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Mis puntos',
     group: 'Mi cuenta',
     icon: 'star',
@@ -1319,17 +1383,24 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M51 promotions',
   },
   {
-    // **«Mi consultorio propio»** (propietario, 2026-09-10), en el lugar que
+    // **«Mis organizaciones»** (propietario, 2026-09-10), en el lugar que
     // ocupaba «Tu organización». Aquélla mostraba la organización del tenant
     // activo —la clínica donde el médico está afiliado—, que no es suya: junto
-    // a «Mis organizaciones» y «Organización médica» eran tres tarjetas
-    // parecidas y ninguna contestaba «¿dónde atiendo yo?».
+    // a la vieja «Mis organizaciones» y a «Organización médica» eran tres
+    // tarjetas parecidas y ninguna contestaba «¿dónde atiendo yo?».
+    //
+    // Nació como «Mi consultorio propio» y el propietario la renombró el
+    // 19/09/2026: la pantalla nunca listó sólo el consultorio propio —lista
+    // TODOS los lugares donde atiende, el suyo y las clínicas y hospitales
+    // donde trabaja—, así que el nombre prometía menos de lo que hay. El
+    // nombre queda libre: la vieja pantalla `my-organizations` es desde el
+    // 10/09/2026 la pestaña «Mis vinculaciones» de «Organización médica».
     //
     // `my-practice` y no `my-office`: es el término del modelo (`M14 practice`)
     // y el que ya usa `NewOwnSite` en el contrato. La ruta no puede empezar por
     // `practices`, que el proxy reserva entero para la API.
     path: 'administration/my-practice',
-    label: 'Mi consultorio propio',
+    label: 'Mis organizaciones',
     group: 'Administración',
     icon: 'hospital',
     // Sólo de quien ejerce: un consultorio propio es de un profesional.
@@ -1343,7 +1414,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // a buscar «¿dónde atiendo?».
     fueraDelMenuPara: ['PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Los lugares donde atendés por tu cuenta: dirección, mapa y horario.',
+    summary: 'Dónde atendés: tu consultorio y las organizaciones donde trabajás.',
     module: 'M14 practice',
   },
   {
@@ -1368,7 +1439,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'administration/my-organization',
     // **Invisible para el médico desde el 2026-09-10**, no sólo fuera de su
     // menú. El propietario pidió sacar «Tu organización» «de todos lados» y
-    // poner en su lugar «Mi consultorio propio»: con `fueraDelMenuPara` la
+    // poner en su lugar «Mis organizaciones»: con `fueraDelMenuPara` la
     // tarjeta seguía apareciendo en «Tus accesos», que es justo donde la
     // señaló, al lado de otras dos parecidas.
     //

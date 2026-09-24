@@ -2,10 +2,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, DeferBlockBehavior, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { provideRouter } from '@angular/router';
 
 import { of } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { maybeDateOnly } from '../../../../core/data-access/wire';
 import { BoMunicipalitiesCatalog } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
@@ -41,22 +43,25 @@ const enCable = (over: Record<string, unknown> = {}) => ({
  * poder controlar: preguntárselo al backend significaría pintar y despintar una
  * sección del perfil.
  */
-async function montar(practitionerProfileId: string | null) {
+async function montar(practitionerProfileId: string | null, confirmar = true) {
+  const dialogs = { confirm: vi.fn(async () => confirmar) };
   await TestBed.configureTestingModule({
     imports: [WorkHistory],
     providers: [
       provideHttpClient(),
       provideHttpClientTesting(),
+      provideRouter([]),
       {
         provide: AuthService,
         useValue: { practitionerProfileId: signal(practitionerProfileId) },
       },
+      { provide: DialogService, useValue: dialogs },
     ],
   }).compileComponents();
 
   const fixture: ComponentFixture<WorkHistory> = TestBed.createComponent(WorkHistory);
   fixture.detectChanges();
-  return { fixture, http: TestBed.inject(HttpTestingController) };
+  return { fixture, http: TestBed.inject(HttpTestingController), dialogs };
 }
 
 /**
@@ -86,8 +91,100 @@ interface UnMiembro {
  * sabe qué guarda cada señal—, así que el tipo se declara acá, en la prueba que
  * sí lo sabe, en vez de aflojar el helper para todas.
  */
+/**
+ * Las acciones de una sede, sin importar en qué forma las dibuje ADR-0012.
+ *
+ * En la sede propia son tres y viven en un desplegable —cuyo panel se muda al
+ * `<body>` mientras está abierto, así que buscarlo dentro de la fila no lo
+ * encuentra—; en la ajena son dos y se quedan en la fila. El spec pregunta por
+ * la acción y no por la forma: preguntar por la forma lo rompería cada vez que
+ * una sede gane o pierda una acción, aunque la pantalla siguiera funcionando.
+ */
+function accionesDeSede(
+  fixture: ComponentFixture<WorkHistory>,
+  fila: HTMLElement,
+): HTMLElement[] {
+  const disparador = fila.querySelector<HTMLButtonElement>(
+    '[data-testid="row-actions-trigger"]',
+  );
+  if (disparador === null) {
+    return [...fila.querySelectorAll<HTMLElement>('app-row-actions [data-action]')];
+  }
+  cerrarAcciones(fixture);
+  disparador.click();
+  fixture.detectChanges();
+  return [...document.querySelectorAll<HTMLElement>('app-menu [role="menuitem"]')];
+}
+
+/** Una acción de esa sede por su código, o `null` si esa sede no la ofrece. */
+function accionDeSede(
+  fixture: ComponentFixture<WorkHistory>,
+  fila: HTMLElement,
+  code: string,
+): HTMLElement | null {
+  return accionesDeSede(fixture, fila).find((el) => el.dataset['action'] === code) ?? null;
+}
+
+/**
+ * Los códigos que esa sede ofrece, en orden.
+ *
+ * Pedilos UNA vez por fila y repartí de ahí: volver a abrir el mismo
+ * desplegable dentro de la misma prueba devuelve vacío, porque el disparador
+ * acaba de recibir el foco de vuelta del cierre y se come ese clic.
+ */
+function codigosDeSede(
+  fixture: ComponentFixture<WorkHistory>,
+  fila: HTMLElement,
+): (string | undefined)[] {
+  return accionesDeSede(fixture, fila).map((el) => el.dataset['action']);
+}
+
+/**
+ * Cierra el desplegable que hubiera abierto. Si quedara abierto entre dos
+ * filas, la siguiente leería el panel de la anterior y el spec mediría otra
+ * sede sin avisar.
+ */
+function cerrarAcciones(fixture: ComponentFixture<WorkHistory>): void {
+  if (document.querySelector('app-menu [role="menuitem"]') === null) {
+    return;
+  }
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  fixture.detectChanges();
+}
+
 function leer<T>(componente: Record<string, UnMiembro>, nombre: string): T {
   return componente[nombre]() as T;
+}
+
+/**
+ * Elige un establecimiento del padrón, de punta a punta: dispara la búsqueda,
+ * responde con un único resultado con ese nombre y lo selecciona.
+ *
+ * El alta ya NO admite escribir la institución a mano —eso es lo que este
+ * carril quitó—, así que cualquier prueba que antes usaba `escribirAMano()`
+ * pasa por acá.
+ */
+function elegirDelPadron(
+  componente: Record<string, UnMiembro>,
+  http: HttpTestingController,
+  nombre: string,
+): void {
+  componente['buscarEnPadron'](nombre);
+  http.expectOne((r) => r.url === PADRON).flush({
+    items: [
+      {
+        facilityConceptId: `fac-${nombre}`,
+        code: 'X',
+        name: nombre,
+        municipality: 'SANTA CRUZ DE LA SIERRA',
+        type: 'CLINICA_PRIVADA',
+        address: null,
+      },
+    ],
+    count: 1,
+    limit: 20,
+  });
+  componente['establecimiento'].set(leer<readonly ReferenceOption[]>(componente, 'resultados')[0]);
 }
 
 describe('WorkHistory', () => {
@@ -161,15 +258,14 @@ describe('WorkHistory', () => {
     http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
 
     const componente = api(fixture);
-    componente['escribirAMano']();
-    componente['institucion'].set('  Clínica del Sur  ');
+    elegirDelPadron(componente, http, 'Clínica del Sur');
     componente['cargo'].set('Jefe de guardia');
     // 1 de marzo local. Con `toISOString()` viajaría como 28 de febrero en
     // cualquier huso al oeste de Greenwich.
     componente['desde'].set(new Date(2021, 2, 1));
     fixture.detectChanges();
 
-    componente['registrar']();
+    await (componente['registrar'] as unknown as () => Promise<void>)();
 
     const req = http.expectOne((r) => r.url === AFILIACIONES && r.method === 'POST');
     expect(req.request.body).toEqual({
@@ -190,8 +286,7 @@ describe('WorkHistory', () => {
     http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
 
     const componente = api(fixture);
-    componente['escribirAMano']();
-    componente['institucion'].set('Clínica del Sur');
+    elegirDelPadron(componente, http, 'Clínica del Sur');
     componente['cargo'].set('Jefe de guardia');
     componente['desde'].set(new Date(2024, 0, 1));
     componente['hasta'].set(new Date(2023, 0, 1));
@@ -217,13 +312,12 @@ describe('WorkHistory', () => {
     http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
 
     const componente = api(fixture);
-    componente['escribirAMano']();
-    componente['institucion'].set('Hospital Obrero N.º 1');
+    elegirDelPadron(componente, http, 'Hospital Obrero N.º 1');
     componente['cargo'].set('Médico de planta');
     componente['desde'].set(new Date(2020, 2, 1));
     fixture.detectChanges();
 
-    componente['registrar']();
+    await (componente['registrar'] as unknown as () => Promise<void>)();
 
     http.expectOne((r) => r.url === AFILIACIONES && r.method === 'POST').flush(
       { code: 'CONFLICT', message: 'Ese vínculo ya está en el historial laboral' },
@@ -327,14 +421,13 @@ describe('WorkHistory', () => {
       const componente = api(fixture);
 
       componente['abrirAltaDeVinculo']();
-      componente['escribirAMano']();
-      componente['institucion'].set('Clínica del Sur');
+      elegirDelPadron(componente, http, 'Clínica del Sur');
       componente['desde'].set(new Date(2021, 2, 1));
       fixture.detectChanges();
 
       // Primero el camino que falla: el modal NO puede cerrarse, porque
       // cerrarlo tiraría lo escrito y dejaría el error sin dónde leerse.
-      componente['registrar']();
+      await (componente['registrar'] as unknown as () => Promise<void>)();
       http
         .expectOne((r) => r.url === AFILIACIONES && r.method === 'POST')
         .flush('boom', { status: 500, statusText: 'Server Error' });
@@ -343,7 +436,7 @@ describe('WorkHistory', () => {
       expect(leer<boolean>(componente, 'altaDeVinculoAbierta')).toBe(true);
       expect(fixture.nativeElement.querySelector('[data-testid="afiliacion-error"]')).not.toBeNull();
 
-      componente['registrar']();
+      await (componente['registrar'] as unknown as () => Promise<void>)();
       http
         .expectOne((r) => r.url === AFILIACIONES && r.method === 'POST')
         .flush(enCable({ id: 'af-2' }));
@@ -367,12 +460,11 @@ describe('WorkHistory', () => {
     fixture.componentInstance.added.subscribe(() => (emitido = true));
 
     const componente = api(fixture);
-    componente['escribirAMano']();
-    componente['institucion'].set('Clínica del Sur');
+    elegirDelPadron(componente, http, 'Clínica del Sur');
     componente['cargo'].set('Jefe de guardia');
     componente['desde'].set(new Date(2021, 2, 1));
     fixture.detectChanges();
-    componente['registrar']();
+    await (componente['registrar'] as unknown as () => Promise<void>)();
 
     http
       .expectOne((r) => r.url === AFILIACIONES && r.method === 'POST')
@@ -423,7 +515,7 @@ describe('WorkHistory', () => {
       componente['desde'].set(new Date(2021, 2, 1));
       fixture.detectChanges();
 
-      componente['registrar']();
+      await (componente['registrar'] as unknown as () => Promise<void>)();
 
       const req = http.expectOne((r) => r.url === AFILIACIONES && r.method === 'POST');
       expect(req.request.body.organizationName).toBe('CLINICA FOIANINI');
@@ -475,9 +567,10 @@ describe('WorkHistory', () => {
       http.verify();
     });
 
-    it('pasar a texto libre descarta lo elegido del padron', async () => {
-      // Quedarse con un establecimiento elegido y además un nombre tecleado
-      // serían dos respuestas a la misma pregunta.
+    it('abrir la corrección de un vínculo descarta lo elegido del padrón en un alta a medio hacer', async () => {
+      // El alta y la corrección comparten el mismo formulario: lo que hubiera
+      // quedado elegido del padrón en un alta que no se llegó a mandar no
+      // puede colarse en la corrección de otro vínculo.
       const { fixture, http } = await listo();
       const componente = api(fixture);
 
@@ -491,10 +584,13 @@ describe('WorkHistory', () => {
         leer<readonly ReferenceOption[]>(componente, 'resultados')[0],
       );
 
-      componente['escribirAMano']();
+      componente['abrirEdicionDeVinculo'](
+        enDominio({ statusKind: 'declarado', organizationName: 'Otro Hospital' }) as never,
+      );
 
       expect(leer(componente, 'establecimiento')).toBeNull();
-      expect(leer(componente, 'nombreDeLaInstitucion')).toBe('');
+      expect(leer(componente, 'modoDeInstitucion')).toBe('libre');
+      expect(leer(componente, 'nombreDeLaInstitucion')).toBe('Otro Hospital');
       http.verify();
     });
 
@@ -657,6 +753,7 @@ async function montarConSedes(
     providers: [
       provideHttpClient(),
       provideHttpClientTesting(),
+      provideRouter([]),
       { provide: AuthService, useValue: { practitionerProfileId: signal('prac-1') } },
       { provide: DialogService, useValue: dialogs },
       { provide: BoMunicipalitiesCatalog, useValue: municipios },
@@ -671,7 +768,15 @@ async function montarConSedes(
   }
   fixture.detectChanges();
   const http = TestBed.inject(HttpTestingController);
-  http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+  /* Cada modo pide sólo lo que dibuja. `historial` no lee las sedes —eso ya
+     estaba— y desde el 20/09/2026 `consultorios` tampoco lee el historial
+     (`work-history.ts`, guarda de `cargar`): con el consultorio adentro del
+     perfil, la ficha monta este componente dos veces y esa lectura se hacía
+     por duplicado para no dibujarse nunca. El helper espeja la asimetría; el
+     `http.verify()` de cada prueba es lo que la fija. */
+  if (secciones !== 'consultorios') {
+    http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+  }
   return { fixture, http, dialogs };
 }
 
@@ -699,7 +804,9 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     expect(
       fixture.nativeElement.querySelector('[data-testid="sedes-vacio"]'),
     ).not.toBeNull();
-    expect(fixture.nativeElement.querySelectorAll('[data-testid="sede-propia"]').length).toBe(0);
+    expect(
+      fixture.nativeElement.querySelectorAll('[data-testid="sedes-propias"] tbody tr').length,
+    ).toBe(0);
     http.verify();
   });
 
@@ -734,7 +841,7 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     http.expectOne(SITIOS).flush({ items: [sedeEnCable()], count: 1 });
     fixture.detectChanges();
     expect(leer<boolean>(componente, 'altaDeSedeAbierta')).toBe(false);
-    expect(fixture.nativeElement.querySelectorAll('[data-testid="sede-propia"]').length).toBe(1);
+    expect(fixture.nativeElement.querySelectorAll('[data-testid="sedes-propias"] tbody tr').length).toBe(1);
     http.verify();
   });
 
@@ -755,6 +862,10 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     sinDireccion.flush(sedeEnCable());
     http.expectOne(SITIOS).flush({ items: [], count: 0 });
 
+    // D-06: tocar el mapa vacía la dirección — así que si nadie la vuelve a
+    // escribir después, `direccionDelFormulario()` sigue leyendo «vacía» y el
+    // punto se pierde igual que la calle. El aviso junto al campo
+    // (`sede-direccion-vaciada`) es lo que evita esto en la práctica.
     componente['abrirAltaDeSede']();
     componente['nombreDeSedeNueva'].set('Consultorio');
     componente['direccionDeSede'].set('Calle 1');
@@ -762,6 +873,24 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
       lat: -16.5,
       lng: -68.15,
     });
+    expect(leer<string>(componente, 'direccionDeSede')).toBe('');
+    fixture.detectChanges();
+    componente['guardarSede']();
+
+    const sinRetipear = http.expectOne((r) => r.url === SITIO_PROPIO && r.method === 'POST');
+    expect(sinRetipear.request.body).toEqual({ name: 'Consultorio' });
+    sinRetipear.flush(sedeEnCable());
+    http.expectOne(SITIOS).flush({ items: [], count: 0 });
+
+    // Quien sí vuelve a escribir la dirección (lo que el aviso le pide) manda
+    // la calle y el punto juntos.
+    componente['abrirAltaDeSede']();
+    componente['nombreDeSedeNueva'].set('Consultorio');
+    (componente['marcarPunto'] as unknown as (p: { lat: number; lng: number }) => void)({
+      lat: -16.5,
+      lng: -68.15,
+    });
+    componente['direccionDeSede'].set('Calle 1');
     fixture.detectChanges();
     componente['guardarSede']();
 
@@ -806,13 +935,12 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     http.expectOne(SITIOS).flush({ items: [], count: 0 });
     const componente = api(fixture);
 
-    componente['escribirAMano']();
-    componente['institucion'].set('Mi consultorio');
+    elegirDelPadron(componente, http, 'Mi consultorio');
     componente['desde'].set(new Date(2021, 2, 1));
     fixture.detectChanges();
 
     expect(leer<boolean>(componente, 'puedeRegistrar')).toBe(true);
-    componente['registrar']();
+    await (componente['registrar'] as unknown as () => Promise<void>)();
 
     const req = http.expectOne((r) => r.url === AFILIACIONES && r.method === 'POST');
     expect(req.request.body).toEqual({
@@ -838,10 +966,9 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
  * 1. El bloque **sale de Trayectoria**. Hasta ahora el componente dibujaba
  *    siempre los dos —consultorios e historial— y el único interruptor era
  *    `soloConsultorios`, que sólo sabía suprimir el segundo.
- * 2. **El consultorio propio es uno solo**, y se corrige. No es regla de
- *    pantalla: `POST /practitioners/me/sites` reutiliza la práctica personal,
- *    así que la propia es una por persona — y el botón de alta seguía
- *    ofreciendo la segunda.
+ * 2. **Se pueden cargar varios consultorios propios**, y corregir cada uno.
+ *    `POST /practitioners/me/sites` reutiliza la práctica personal y registra
+ *    cada sede por separado.
  * 3. **Atender en un hospital que ya existe no es crear un consultorio.** Había
  *    una sola puerta, así que quien atiende en la Clínica Foianini terminaba
  *    creándose un consultorio con el nombre de la clínica.
@@ -865,6 +992,10 @@ describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', (
 
   it('con `secciones="consultorios"» no dibuja el historial laboral', async () => {
     const { fixture, http } = await montarConSedes(true, 'consultorios');
+    // Ni lo pide. Es la simétrica de la prueba de arriba, y la que faltaba:
+    // la ficha del médico monta este componente dos veces, así que una
+    // lectura que no se dibuja se paga dos veces por visita.
+    expect(http.match(AFILIACIONES)).toHaveLength(0);
     http.expectOne(SITIOS).flush({ items: [], count: 0 });
     fixture.detectChanges();
 
@@ -889,26 +1020,63 @@ describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', (
     fixture.detectChanges();
 
     const filas = [
-      ...fixture.nativeElement.querySelectorAll('[data-testid="sede-propia"]'),
+      ...fixture.nativeElement.querySelectorAll('[data-testid="sedes-propias"] tbody tr'),
     ] as HTMLElement[];
     expect(filas).toHaveLength(2);
-    expect(filas[0].querySelector('[data-testid="sede-editar"]')).not.toBeNull();
-    expect(filas[1].querySelector('[data-testid="sede-editar"]')).toBeNull();
+    const propiaOfrece = codigosDeSede(fixture, filas[0]!);
+    const ajenaOfrece = codigosDeSede(fixture, filas[1]!);
+
+    expect(propiaOfrece).toContain('editar');
+    expect(ajenaOfrece).not.toContain('editar');
     // Retirar sigue estando en los dos: dejar de atender en un lugar vale para
     // el propio y para el ajeno.
-    expect(filas[0].querySelector('[data-testid="sede-quitar"]')).not.toBeNull();
-    expect(filas[1].querySelector('[data-testid="sede-quitar"]')).not.toBeNull();
+    expect(propiaOfrece).toContain('retirar');
+    expect(ajenaOfrece).toContain('retirar');
+    cerrarAcciones(fixture);
   });
 
-  it('teniendo uno propio, ya no ofrece crear otro', async () => {
+  it('teniendo un consultorio propio, permite agregar otro', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [propia()], count: 1 });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('[data-testid="sede-agregar"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-agregar"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-propia-unica"]')).toBeNull();
+  });
+
+  it('registra un segundo consultorio propio y conserva ambos en la lista', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [propia()], count: 1 });
+    fixture.detectChanges();
+
+    const agregar = fixture.nativeElement.querySelector(
+      '[data-testid="sede-agregar"]',
+    ) as HTMLButtonElement | null;
+    expect(agregar).not.toBeNull();
+    agregar!.click();
+    fixture.detectChanges();
+
+    const componente = api(fixture);
+    componente['nombreDeSedeNueva'].set('Consultorio Centro');
+    componente['registrarSede']();
+
+    const alta = http.expectOne((r) => r.url === SITIO_PROPIO && r.method === 'POST');
+    expect(alta.request.body).toMatchObject({ name: 'Consultorio Centro' });
+    alta.flush(sedeEnCable({ id: 'site-centro', name: 'Consultorio Centro', isOwnSite: true }));
+    http.expectOne(SITIOS).flush({
+      items: [
+        propia(),
+        sedeEnCable({ id: 'site-centro', name: 'Consultorio Centro', isOwnSite: true }),
+      ],
+      count: 2,
+    });
+    fixture.detectChanges();
+
     expect(
-      fixture.nativeElement.querySelector('[data-testid="sede-propia-unica"]')?.textContent,
-    ).toContain('Consultorio Dra. Pérez');
+      fixture.nativeElement.querySelectorAll('[data-testid="sedes-propias"] tbody tr').length,
+    ).toBe(2);
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-agregar"]')).not.toBeNull();
+    http.verify();
   });
 
   /**
@@ -990,35 +1158,41 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
 
   /** Las filas de «Dónde atiendo», en el orden en que se dibujan. */
   function filas(fixture: ComponentFixture<WorkHistory>): HTMLElement[] {
-    return [...fixture.nativeElement.querySelectorAll('[data-testid="sede-propia"]')];
+    return [...fixture.nativeElement.querySelectorAll('[data-testid="sedes-propias"] tbody tr')];
   }
 
-  it('editar y retirar son íconos con nombre accesible y globo', async () => {
+  /**
+   * Antes esta prueba exigía lo contrario: que editar y retirar fueran glifos
+   * sin texto, cada uno con su globo. ADR-0012 invirtió la regla —el globo era
+   * el parche de un botón mudo— y lo que se exige ahora es el texto a la vista.
+   * No se debilitó: cambió de exigencia junto con la decisión, y sigue
+   * midiendo lo mismo, que es si se entiende qué hace cada acción.
+   */
+  it('editar y retirar se leen con su texto, y el disparador dice de qué sede', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [conQr()], count: 1 });
     fixture.detectChanges();
 
-    const editar = filas(fixture)[0]!.querySelector('[data-testid="sede-editar"]')!;
-    const retirar = filas(fixture)[0]!.querySelector('[data-testid="sede-quitar"]')!;
+    const fila = filas(fixture)[0]!;
 
-    // Sin texto visible: lo que queda es el glifo.
-    expect(editar.textContent?.trim()).toBe('');
-    expect(retirar.textContent?.trim()).toBe('');
+    // Tres acciones: la sede propia colapsa. El disparador nombra la sede,
+    // porque «Acciones» repetido cuatro veces no le sirve a quien navega por
+    // lista de botones.
+    const disparador = fila.querySelector('[data-testid="row-actions-trigger"]')!;
+    expect(disparador.getAttribute('aria-label')).toBe('Acciones de Consultorio Dra. Pérez');
+
+    const acciones = accionesDeSede(fixture, fila);
+    const editar = acciones.find((el) => el.dataset['action'] === 'editar')!;
+    const retirar = acciones.find((el) => el.dataset['action'] === 'retirar')!;
+
+    expect(editar.textContent?.trim()).toBe('Editar');
+    expect(retirar.textContent?.trim()).toBe('Retirar');
+
+    // El ícono sigue estando: acompaña al texto, no lo sustituye.
     expect(editar.querySelector('svg')).not.toBeNull();
     expect(retirar.querySelector('svg')).not.toBeNull();
 
-    // Y el nombre nombra la sede: «Editar» repetido cuatro veces no le sirve a
-    // quien navega por lista de botones.
-    expect(editar.getAttribute('aria-label')).toBe('Editar Consultorio Dra. Pérez');
-
-    // El globo, con el teclado y no sólo con el puntero: un ícono sin texto
-    // que sólo se explica al apuntarlo no se explica a quien no apunta.
-    editar.dispatchEvent(new FocusEvent('focus'));
-    fixture.detectChanges();
-    expect(document.body.querySelector('app-tooltip-panel')?.textContent?.trim()).toBe(
-      'Editar Consultorio Dra. Pérez',
-    );
-    editar.dispatchEvent(new FocusEvent('blur'));
+    cerrarAcciones(fixture);
   });
 
   /**
@@ -1030,13 +1204,18 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
     http.expectOne(SITIOS).flush({ items: [conQr(), sinQr()], count: 2 });
     fixture.detectChanges();
 
-    const nombres = filas(fixture).map((fila) =>
-      fila.querySelector('[data-testid="sede-quitar"]')!.getAttribute('aria-label'),
+    const [propiaFila, ajenaFila] = filas(fixture);
+    expect(accionDeSede(fixture, propiaFila!, 'retirar')!.textContent?.trim()).toBe('Retirar');
+    expect(accionDeSede(fixture, ajenaFila!, 'retirar')!.textContent?.trim()).toBe(
+      'Dejar de atender',
     );
-    expect(nombres).toEqual([
-      'Retirar Consultorio Dra. Pérez de tus consultorios',
-      'Dejar de atender en Hospital San Lucas',
-    ]);
+
+    // De qué sede se trata ya no lo repite cada etiqueta: en la ajena, que se
+    // dibuja en la fila, lo dice el nombre accesible.
+    expect(accionDeSede(fixture, ajenaFila!, 'retirar')!.getAttribute('aria-label')).toBe(
+      'Dejar de atender — Hospital San Lucas',
+    );
+    cerrarAcciones(fixture);
   });
 
   it('toda sede tiene su botón de QR, propia o ajena', async () => {
@@ -1044,30 +1223,36 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
     http.expectOne(SITIOS).flush({ items: [conQr(), sinQr()], count: 2 });
     fixture.detectChanges();
 
-    expect(
-      filas(fixture).map((fila) => fila.querySelector('[data-testid="sede-qr"]') !== null),
-    ).toEqual([true, true]);
+    expect(filas(fixture).map((fila) => codigosDeSede(fixture, fila).includes('qr'))).toEqual([
+      true,
+      true,
+    ]);
+    cerrarAcciones(fixture);
   });
 
-  it('sin QR configurado el botón va en ámbar Y lo dice con palabras', async () => {
+  /**
+   * El ámbar se fue con el botón sólo-ícono: ADR-0012 no le deja tono propio a
+   * una acción suelta. Lo que decía sigue dicho en palabras, y en dos lugares:
+   * el nombre de la acción y el aviso de la fila. Lo que se perdió está
+   * anotado en el `.css`: el ámbar avisaba sin abrir el desplegable.
+   */
+  it('sin QR configurado lo dice con palabras, y en la fila', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [conQr(), sinQr()], count: 2 });
     fixture.detectChanges();
 
-    const [conImagen, sinImagen] = filas(fixture).map(
-      (fila) => fila.querySelector('[data-testid="sede-qr"]')!,
-    );
+    const [conImagen, sinImagen] = filas(fixture);
 
-    expect(sinImagen!.classList).toContain('historial__qr--sin-configurar');
-    expect(conImagen!.classList).not.toContain('historial__qr--sin-configurar');
+    expect(accionDeSede(fixture, sinImagen!, 'qr')!.textContent?.trim()).toBe(
+      'Configurar QR bancario',
+    );
+    expect(accionDeSede(fixture, conImagen!, 'qr')!.textContent?.trim()).toBe('Ver QR bancario');
 
-    // El color no puede ser la única señal.
-    expect(sinImagen!.getAttribute('aria-label')).toBe(
-      'Configurar el QR bancario de Hospital San Lucas',
-    );
-    expect(conImagen!.getAttribute('aria-label')).toBe(
-      'Ver el QR bancario de Consultorio Dra. Pérez',
-    );
+    // Y el aviso de la fila, que no depende de abrir nada, sigue apareciendo
+    // sólo en la que no lo tiene.
+    expect(sinImagen!.querySelector('[data-testid="sede-sin-qr"]')).not.toBeNull();
+    expect(conImagen!.querySelector('[data-testid="sede-sin-qr"]')).toBeNull();
+    cerrarAcciones(fixture);
   });
 
   /**
@@ -1080,9 +1265,10 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
     http.expectOne(SITIOS).flush({ items: [sedeEnCable()], count: 1 });
     fixture.detectChanges();
 
-    expect(filas(fixture)[0]!.querySelector('[data-testid="sede-qr"]')!.classList).toContain(
-      'historial__qr--sin-configurar',
+    expect(accionDeSede(fixture, filas(fixture)[0]!, 'qr')!.textContent?.trim()).toBe(
+      'Configurar QR bancario',
     );
+    cerrarAcciones(fixture);
   });
 
   /**
@@ -1096,7 +1282,7 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
 
     expect(fixture.nativeElement.querySelector('app-site-bank-qr-dialog')).toBeNull();
 
-    filas(fixture)[0]!.querySelector<HTMLButtonElement>('[data-testid="sede-qr"]')!.click();
+    accionDeSede(fixture, filas(fixture)[0]!, 'qr')!.click();
     fixture.detectChanges();
 
     expect(
@@ -1105,11 +1291,11 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
   });
 
   /**
-   * Tras guardar, lo único visible es que esa fila deja el ámbar. Releer las
-   * cuatro sedes para enterarse de eso es una vuelta completa por un dato que
-   * ya está en la mano.
+   * Tras guardar, lo único que cambia es que esa sede pasa de «Configurar» a
+   * «Ver». Releer las cuatro sedes para enterarse de eso es una vuelta
+   * completa por un dato que ya está en la mano.
    */
-  it('guardar un QR apaga el ámbar de esa fila sin releer la lista', async () => {
+  it('guardar un QR cambia lo que ofrece esa fila, sin releer la lista', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [sinQr()], count: 1 });
     fixture.detectChanges();
@@ -1119,9 +1305,10 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
     (componente['qrGuardado'] as unknown as (f: string) => void)('file-nuevo');
     fixture.detectChanges();
 
-    expect(filas(fixture)[0]!.querySelector('[data-testid="sede-qr"]')!.classList).not.toContain(
-      'historial__qr--sin-configurar',
+    expect(accionDeSede(fixture, filas(fixture)[0]!, 'qr')!.textContent?.trim()).toBe(
+      'Ver QR bancario',
     );
+    cerrarAcciones(fixture);
     // Y no se volvió a pedir la lista de sedes.
     expect(http.match(SITIOS).length).toBe(0);
     // El modal, que sigue abierto, sí baja la imagen nueva: es el contenido del
@@ -1152,10 +1339,14 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     const marcas = fixture.nativeElement.querySelectorAll('[data-testid="sede-propia-marca"]');
     expect(marcas.length).toBe(1);
     // Corregir alcanza sólo al propio: la sede del hospital es de él.
-    const editar = fixture.nativeElement.querySelectorAll('[data-testid="sede-editar"]');
-    expect(editar.length).toBe(1);
+    const sedes = [
+      ...fixture.nativeElement.querySelectorAll('[data-testid="sedes-propias"] tbody tr'),
+    ] as HTMLElement[];
+    const ofrecen = sedes.map((fila) => codigosDeSede(fixture, fila));
+    expect(ofrecen.filter((codigos) => codigos.includes('editar'))).toHaveLength(1);
     // El QR, en cambio, va en las dos: también se cobra donde no sos dueño.
-    expect(fixture.nativeElement.querySelectorAll('[data-testid="sede-qr"]').length).toBe(2);
+    expect(ofrecen.filter((codigos) => codigos.includes('qr'))).toHaveLength(2);
+    cerrarAcciones(fixture);
     http.verify();
   });
 
@@ -1170,12 +1361,13 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     http.verify();
   });
 
-  it('esconde el alta cuando ya hay un consultorio propio: la práctica personal es UNA', async () => {
+  it('mantiene disponible el alta cuando ya hay un consultorio propio', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('[data-testid="sede-agregar"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-agregar"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-propia-unica"]')).toBeNull();
     http.verify();
   });
 
@@ -1186,8 +1378,12 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     http.expectOne(SITIOS).flush({ items: [sedeEnCable()], count: 1 });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('[data-testid="sede-editar"]')).toBeNull();
+    const fila = fixture.nativeElement.querySelector(
+      '[data-testid="sedes-propias"] tbody tr',
+    ) as HTMLElement;
+    expect(codigosDeSede(fixture, fila)).not.toContain('editar');
     expect(fixture.nativeElement.querySelector('[data-testid="sede-agregar"]')).not.toBeNull();
+    cerrarAcciones(fixture);
     http.verify();
   });
 
@@ -1206,7 +1402,7 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     // Vaciarla a propósito: el formulario ya no abre en blanco, así que «en
     // blanco» es una decisión de quien edita y no el estado inicial.
     componente['direccionDeSede'].set('');
-    componente['guardarSede']();
+    await (componente['guardarSede'] as unknown as () => Promise<void>)();
 
     const req = http.expectOne(
       (r) => r.url === `${SITIO_PROPIO}/site-propia` && r.method === 'PATCH',
@@ -1232,7 +1428,7 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     componente['ciudadDeSede'].set('Santa Cruz');
     componente['municipioDeSede'].set('mun-scz');
     fixture.detectChanges();
-    componente['guardarSede']();
+    await (componente['guardarSede'] as unknown as () => Promise<void>)();
 
     const req = http.expectOne(
       (r) => r.url === `${SITIO_PROPIO}/site-propia` && r.method === 'PATCH',
@@ -1281,9 +1477,739 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     fixture.detectChanges();
     const componente = api(fixture);
 
+    // La distinción es del negocio y se conserva: en la propia se deja de
+    // ofrecer un consultorio que es suyo, en la ajena se corta un vínculo con
+    // una organización. Lo que ya no hace la etiqueta es repetir el nombre de
+    // la sede: eso lo pone el nombre accesible, a partir de `fila`.
     const etiqueta = componente['etiquetaDeRetiro'] as unknown as (s: unknown) => string;
-    expect(etiqueta(PROPIA)).toBe('Retirar Consultorio Dra. Pérez de tus consultorios');
-    expect(etiqueta(AJENA)).toBe('Dejar de atender en Hospital San Lucas');
+    expect(etiqueta(PROPIA)).toBe('Retirar');
+    expect(etiqueta(AJENA)).toBe('Dejar de atender');
+    http.verify();
+  });
+});
+
+/**
+ * H4.S1/H4.S2 (ADR-0015): el consultorio en modal, guardar habilitado por
+ * cambios y confirmación antes de persistir una edición.
+ */
+describe('WorkHistory — el consultorio en modal, guardar por cambios y confirmación (ADR-0015)', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  const PROPIA = sedeEnCable({
+    id: 'site-propia',
+    name: 'Consultorio Dra. Pérez',
+    isOwnSite: true,
+    addressText: 'Av. Brasil 1234',
+  });
+
+  it('el formulario nace en un modal, nunca en línea debajo de la lista', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [], count: 0 });
+    const componente = api(fixture);
+
+    componente['abrirAltaDeSede']();
+    fixture.detectChanges();
+
+    const modal = fixture.nativeElement.querySelector('[data-testid="content-dialog"]');
+    expect(modal).not.toBeNull();
+    expect(modal?.querySelector('[data-testid="sede-formulario"]')).not.toBeNull();
+    // El formulario no vive suelto en la sección, fuera del modal.
+    expect(
+      fixture.nativeElement.querySelector(
+        '[data-testid="sedes-propias"] > [data-testid="sede-formulario"]',
+      ),
+    ).toBeNull();
+    http.verify();
+  });
+
+  it('editar sin tocar nada deja Guardar deshabilitado', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    const componente = api(fixture);
+
+    (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
+    fixture.detectChanges();
+
+    expect(leer<boolean>(componente, 'puedeGuardarSede')).toBe(false);
+    const guardar = fixture.nativeElement.querySelector('[data-testid="sede-guardar"]');
+    expect(guardar?.getAttribute('aria-disabled')).toBe('true');
+    http.verify();
+  });
+
+  it('cambiar el nombre habilita Guardar; volverlo a como estaba lo apaga', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    const componente = api(fixture);
+
+    (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
+    componente['nombreDeSedeNueva'].set('Otro nombre');
+    fixture.detectChanges();
+    expect(leer<boolean>(componente, 'puedeGuardarSede')).toBe(true);
+
+    componente['nombreDeSedeNueva'].set('Consultorio Dra. Pérez');
+    fixture.detectChanges();
+    expect(leer<boolean>(componente, 'puedeGuardarSede')).toBe(false);
+    http.verify();
+  });
+
+  it('el alta (sin edición) no exige que «cambie» nada: manda por validez', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [], count: 0 });
+    const componente = api(fixture);
+
+    componente['abrirAltaDeSede']();
+    fixture.detectChanges();
+    expect(leer<boolean>(componente, 'puedeGuardarSede')).toBe(false); // sin nombre
+
+    componente['nombreDeSedeNueva'].set('Consultorio nuevo');
+    fixture.detectChanges();
+    expect(leer<boolean>(componente, 'puedeGuardarSede')).toBe(true);
+    http.verify();
+  });
+
+  it('guardar una edición pide confirmación antes de mandar el PATCH', async () => {
+    const { fixture, http, dialogs } = await montarConSedes(true);
+    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    const componente = api(fixture);
+
+    (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
+    componente['nombreDeSedeNueva'].set('Otro nombre');
+    fixture.detectChanges();
+    await (componente['guardarSede'] as unknown as () => Promise<void>)();
+
+    expect(dialogs.confirm).toHaveBeenCalled();
+    http
+      .expectOne((r) => r.url === `${SITIO_PROPIO}/site-propia` && r.method === 'PATCH')
+      .flush(sedeEnCable());
+    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    http.verify();
+  });
+
+  it('si no se confirma, no manda el PATCH y el modal sigue abierto con lo escrito', async () => {
+    const { fixture, http, dialogs } = await montarConSedes(false);
+    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    const componente = api(fixture);
+
+    (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
+    componente['nombreDeSedeNueva'].set('Otro nombre');
+    fixture.detectChanges();
+    await (componente['guardarSede'] as unknown as () => Promise<void>)();
+
+    expect(dialogs.confirm).toHaveBeenCalled();
+    http.expectNone((r) => r.method === 'PATCH');
+    expect(leer<boolean>(componente, 'altaDeSedeAbierta')).toBe(true);
+    expect(leer<string>(componente, 'nombreDeSedeNueva')).toBe('Otro nombre');
+    http.verify();
+  });
+
+  it('el alta (sin edición) no pide confirmación al guardar', async () => {
+    const { fixture, http, dialogs } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [], count: 0 });
+    const componente = api(fixture);
+
+    componente['abrirAltaDeSede']();
+    componente['nombreDeSedeNueva'].set('Consultorio nuevo');
+    fixture.detectChanges();
+    componente['guardarSede']();
+
+    expect(dialogs.confirm).not.toHaveBeenCalled();
+    http.expectOne((r) => r.url === SITIO_PROPIO && r.method === 'POST').flush(sedeEnCable());
+    http.expectOne(SITIOS).flush({ items: [], count: 0 });
+    http.verify();
+  });
+
+  it('cancelar sin cambios cierra directo, sin preguntar', async () => {
+    const { fixture, http, dialogs } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    const componente = api(fixture);
+
+    (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
+    fixture.detectChanges();
+    componente['intentarCerrarAltaDeSede']();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(dialogs.confirm).not.toHaveBeenCalled();
+    expect(leer<boolean>(componente, 'altaDeSedeAbierta')).toBe(false);
+    http.verify();
+  });
+
+  it('cancelar con cambios pregunta si se descarta; confirmado, cierra y limpia', async () => {
+    const { fixture, http, dialogs } = await montarConSedes(true);
+    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    const componente = api(fixture);
+
+    (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
+    componente['nombreDeSedeNueva'].set('Otro nombre');
+    fixture.detectChanges();
+    componente['intentarCerrarAltaDeSede']();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(dialogs.confirm).toHaveBeenCalled();
+    expect(leer<boolean>(componente, 'altaDeSedeAbierta')).toBe(false);
+    http.verify();
+  });
+
+  it('al cerrar el modal de una edición, el foco vuelve al «Acciones» de esa fila', async () => {
+    const { fixture, http } = await montarConSedes(true);
+    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    fixture.detectChanges();
+    const componente = api(fixture);
+
+    (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
+    fixture.detectChanges();
+    componente['cerrarAltaDeSede']();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const activo = document.activeElement;
+    expect(activo?.getAttribute('aria-label')).toBe(`Acciones de ${PROPIA.name}`);
+    http.verify();
+  });
+
+  it('si no se confirma el descarte, el modal sigue abierto con lo escrito', async () => {
+    const { fixture, http } = await montarConSedes(false);
+    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    const componente = api(fixture);
+
+    (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
+    componente['nombreDeSedeNueva'].set('Otro nombre');
+    fixture.detectChanges();
+    componente['intentarCerrarAltaDeSede']();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(leer<boolean>(componente, 'altaDeSedeAbierta')).toBe(true);
+    expect(leer<string>(componente, 'nombreDeSedeNueva')).toBe('Otro nombre');
+    http.verify();
+  });
+
+  it('D-06: tocar el mapa anuncia que hay que volver a escribir la dirección', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [], count: 0 });
+    const componente = api(fixture);
+
+    componente['abrirAltaDeSede']();
+    componente['direccionDeSede'].set('Calle 1');
+    fixture.detectChanges();
+    expect(leer<boolean>(componente, 'avisoDireccionVaciada')).toBe(false);
+
+    (componente['marcarPunto'] as unknown as (p: { lat: number; lng: number }) => void)({
+      lat: -16.5,
+      lng: -68.15,
+    });
+    fixture.detectChanges();
+
+    expect(leer<string>(componente, 'direccionDeSede')).toBe('');
+    expect(leer<boolean>(componente, 'avisoDireccionVaciada')).toBe(true);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="sede-direccion-vaciada"]'),
+    ).not.toBeNull();
+    http.verify();
+  });
+});
+
+/** H4.S1 (ADR-0015): la barra de «Dónde atiendo» busca, filtra y pagina en cliente. */
+describe('WorkHistory — barra y paginación de «Dónde atiendo» (ADR-0015, H4.S1)', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  const consultorio = (n: number) =>
+    sedeEnCable({
+      id: `site-${n}`,
+      name: `Consultorio ${n}`,
+      isOwnSite: n === 1,
+      addressText: n % 2 === 0 ? 'AV. BANZER, SANTA CRUZ' : 'CALLE LIBERTAD, LA PAZ',
+    });
+  const DOCE_SEDES = Array.from({ length: 12 }, (_, i) => consultorio(i + 1));
+
+  it('busca por nombre o dirección, normalizado', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: DOCE_SEDES, count: 12 });
+    const componente = api(fixture);
+
+    (componente['onFiltrosSedesChanged'] as unknown as (a: Record<string, string>) => void)({
+      q: 'banzer',
+    });
+    fixture.detectChanges();
+
+    const filtradas = leer<readonly { name: string }[]>(componente, 'sedesFiltradas');
+    expect(filtradas.length).toBe(6); // los pares: 2,4,6,8,10,12
+    expect(filtradas.every((s) => s.name !== undefined)).toBe(true);
+    http.verify();
+  });
+
+  it('filtra por tipo (propio / ajeno)', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: DOCE_SEDES, count: 12 });
+    const componente = api(fixture);
+
+    (componente['onFiltrosSedesChanged'] as unknown as (a: Record<string, string>) => void)({
+      tipo: 'propio',
+    });
+    fixture.detectChanges();
+
+    const filtradas = leer<readonly { name: string }[]>(componente, 'sedesFiltradas');
+    expect(filtradas).toEqual([expect.objectContaining({ name: 'Consultorio 1' })]);
+    http.verify();
+  });
+
+  it('pagina en cliente, 10 por página por omisión', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: DOCE_SEDES, count: 12 });
+    const componente = api(fixture);
+    fixture.detectChanges();
+
+    expect(leer<readonly unknown[]>(componente, 'sedesPaginadas').length).toBe(10);
+
+    componente['paginaSedes'].set(2);
+    fixture.detectChanges();
+    expect(leer<readonly unknown[]>(componente, 'sedesPaginadas').length).toBe(2);
+
+    const paginador = fixture.nativeElement.querySelector('app-pagination');
+    expect(paginador).not.toBeNull();
+    http.verify();
+  });
+
+  it('sin resultados de la búsqueda lo dice, sin confundirlo con «no hay sedes»', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: DOCE_SEDES, count: 12 });
+    const componente = api(fixture);
+
+    (componente['onFiltrosSedesChanged'] as unknown as (a: Record<string, string>) => void)({
+      q: 'no existe ninguna así',
+    });
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="sedes-sin-resultados"]'),
+    ).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="sedes-vacio"]')).toBeNull();
+    http.verify();
+  });
+});
+
+/**
+ * H4.S3 — el historial laboral como tabla (D-09, ADR-0015).
+ *
+ * `ProfilesClient` no tiene `PATCH`/`DELETE` de afiliaciones ni el tipo
+ * `PractitionerAffiliation` trae `fileId` (confirmado leyendo
+ * `profiles.client.ts` y `profiles.types.ts`): el manejador real es de Itzan
+ * y no está. Por regla 65 esto se aísla detrás de un doble local —un
+ * `Map`/`Set` en memoria, declarado como tal— y se ejercita en sus tres
+ * niveles (correcto, límite, inválido) en vez de quedar `BLOQUEADO`. La
+ * subida del adjunto en sí **no** es parte del doble: usa `FilesClient` real
+ * y comparte infraestructura, así que esa parte se prueba contra el POST
+ * real de `/common/files/upload`.
+ */
+describe('WorkHistory — el historial como tabla, doble local (H4.S3, regla 65)', () => {
+  async function montarConTabla(confirmar = true) {
+    const { fixture, http, dialogs } = await montar('prac-1', confirmar);
+    fixture.componentRef.setInput('layout', 'tabla');
+    http
+      .expectOne(AFILIACIONES)
+      .flush({ items: [enCable(), enCable({ id: 'af-2', organizationName: 'Clínica del Sur', roleTitle: 'Pediatra' })], count: 2 });
+    http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
+    fixture.detectChanges();
+    return { fixture, http, dialogs, componente: api(fixture) };
+  }
+
+  it('dibuja app-data-table con las afiliaciones reales', async () => {
+    const { fixture, http } = await montarConTabla();
+
+    expect(fixture.nativeElement.querySelector('app-data-table')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Hospital Obrero N.º 1');
+    expect(fixture.nativeElement.textContent).toContain('Clínica del Sur');
+    http.verify();
+  });
+
+  it('«editar» desde las acciones de la fila precarga el cargo actual', async () => {
+    const { http, componente } = await montarConTabla();
+
+    (componente['ejecutarAccionDeAfiliacion'] as unknown as (c: string, a: unknown) => void)(
+      'editar',
+      enCable(),
+    );
+
+    expect(leer<boolean>(componente, 'edicionAfiliacionAbierta')).toBe(true);
+    expect(leer<string>(componente, 'cargoEnEdicion')).toBe('Médico de planta');
+    http.verify();
+  });
+
+  it('guardar el cargo editado pide confirmación y lo aplica sólo al doble local, sin PATCH real (nivel correcto)', async () => {
+    const { http, dialogs, componente } = await montarConTabla(true);
+
+    (componente['ejecutarAccionDeAfiliacion'] as unknown as (c: string, a: unknown) => void)(
+      'editar',
+      enCable(),
+    );
+    componente['cargoEnEdicion'].set('Jefe de cardiología');
+
+    await (componente['guardarEdicionDeAfiliacion'] as unknown as () => Promise<void>)();
+
+    expect(dialogs.confirm).toHaveBeenCalled();
+    expect(
+      leer<readonly { readonly organizationName: string; readonly roleTitle: string | null }[]>(
+        componente,
+        'afiliacionesEnTabla',
+      ).find((a) => a.organizationName === 'Hospital Obrero N.º 1')?.roleTitle,
+    ).toBe('Jefe de cardiología');
+    expect(leer<boolean>(componente, 'edicionAfiliacionAbierta')).toBe(false);
+    // El doble es local: nunca sale un PATCH de afiliaciones hacia el servidor.
+    http.expectNone((r) => r.url === AFILIACIONES && r.method === 'PATCH');
+    http.verify();
+  });
+
+  it('si no se confirma el guardado, el cargo no cambia y el modal sigue abierto (nivel inválido)', async () => {
+    const { http, dialogs, componente } = await montarConTabla(false);
+
+    (componente['ejecutarAccionDeAfiliacion'] as unknown as (c: string, a: unknown) => void)(
+      'editar',
+      enCable(),
+    );
+    componente['cargoEnEdicion'].set('Jefe de cardiología');
+
+    await (componente['guardarEdicionDeAfiliacion'] as unknown as () => Promise<void>)();
+
+    expect(dialogs.confirm).toHaveBeenCalled();
+    expect(
+      leer<readonly { readonly organizationName: string; readonly roleTitle: string | null }[]>(
+        componente,
+        'afiliacionesEnTabla',
+      ).find((a) => a.organizationName === 'Hospital Obrero N.º 1')?.roleTitle,
+    ).toBe('Médico de planta');
+    expect(leer<boolean>(componente, 'edicionAfiliacionAbierta')).toBe(true);
+    http.verify();
+  });
+
+  it('cerrar con cambios sin guardar pregunta si se descarta; confirmado, cierra y limpia', async () => {
+    const { http, dialogs, componente } = await montarConTabla(true);
+
+    (componente['ejecutarAccionDeAfiliacion'] as unknown as (c: string, a: unknown) => void)(
+      'editar',
+      enCable(),
+    );
+    componente['cargoEnEdicion'].set('Otro cargo');
+
+    componente['intentarCerrarEdicionDeAfiliacion']();
+    await Promise.resolve();
+
+    expect(dialogs.confirm).toHaveBeenCalled();
+    expect(leer<boolean>(componente, 'edicionAfiliacionAbierta')).toBe(false);
+    http.verify();
+  });
+
+  it('subir un adjunto al guardar sube el archivo real y le asocia el fileId a la fila (nivel correcto)', async () => {
+    const { http, dialogs, componente } = await montarConTabla(true);
+
+    (componente['ejecutarAccionDeAfiliacion'] as unknown as (c: string, a: unknown) => void)(
+      'editar',
+      enCable(),
+    );
+    componente['archivoAdjunto'].set([
+      new File(['x'], 'certificado.pdf', { type: 'application/pdf' }),
+    ]);
+
+    const guardando = (componente['guardarEdicionDeAfiliacion'] as unknown as () => Promise<void>)();
+    await Promise.resolve();
+
+    expect(dialogs.confirm).toHaveBeenCalled();
+    const subida = http.expectOne((r) => r.url.endsWith('/common/files/upload'));
+    expect(subida.request.method).toBe('POST');
+    subida.flush({ id: 'file-77' });
+    await guardando;
+
+    expect(
+      leer<readonly { readonly organizationName: string; readonly fileId: string | null }[]>(
+        componente,
+        'afiliacionesEnTabla',
+      ).find((a) => a.organizationName === 'Hospital Obrero N.º 1')?.fileId,
+    ).toBe('file-77');
+    expect(leer<boolean>(componente, 'edicionAfiliacionAbierta')).toBe(false);
+    http.verify();
+  });
+
+  it('si la subida del adjunto falla, el error se muestra y la edición sigue abierta (nivel inválido)', async () => {
+    const { http, componente } = await montarConTabla(true);
+
+    (componente['ejecutarAccionDeAfiliacion'] as unknown as (c: string, a: unknown) => void)(
+      'editar',
+      enCable(),
+    );
+    componente['archivoAdjunto'].set([
+      new File(['x'], 'certificado.pdf', { type: 'application/pdf' }),
+    ]);
+
+    const guardando = (componente['guardarEdicionDeAfiliacion'] as unknown as () => Promise<void>)();
+    await Promise.resolve();
+    http
+      .expectOne((r) => r.url.endsWith('/common/files/upload'))
+      .flush({ message: 'nope' }, { status: 500, statusText: 'Server Error' });
+    await guardando;
+
+    expect(leer<string | null>(componente, 'errorDeAdjunto')).not.toBeNull();
+    expect(leer<boolean>(componente, 'edicionAfiliacionAbierta')).toBe(true);
+    http.verify();
+  });
+
+  it('«retirar» pide confirmación y, confirmada, saca la fila sin pedir un DELETE real (nivel correcto)', async () => {
+    const { http, dialogs, componente } = await montarConTabla(true);
+
+    await (componente['retirarAfiliacionLocal'] as unknown as (a: unknown) => Promise<void>)(
+      enCable(),
+    );
+
+    expect(dialogs.confirm).toHaveBeenCalled();
+    expect(
+      leer<readonly { readonly organizationName: string }[]>(componente, 'afiliacionesEnTabla').some(
+        (a) => a.organizationName === 'Hospital Obrero N.º 1',
+      ),
+    ).toBe(false);
+    http.expectNone((r) => r.method === 'DELETE');
+    http.verify();
+  });
+
+  it('si no se confirma el retiro, la fila sigue en la tabla (nivel límite)', async () => {
+    const { http, dialogs, componente } = await montarConTabla(false);
+
+    await (componente['retirarAfiliacionLocal'] as unknown as (a: unknown) => Promise<void>)(
+      enCable(),
+    );
+
+    expect(dialogs.confirm).toHaveBeenCalled();
+    expect(
+      leer<readonly { readonly organizationName: string }[]>(componente, 'afiliacionesEnTabla').some(
+        (a) => a.organizationName === 'Hospital Obrero N.º 1',
+      ),
+    ).toBe(true);
+    http.verify();
+  });
+
+  it('la búsqueda filtra por institución o cargo, sin importar los acentos', async () => {
+    const { http, componente } = await montarConTabla();
+
+    (componente['onFiltrosHistorialChanged'] as unknown as (a: Record<string, string>) => void)({
+      q: 'clinica',
+    });
+
+    const filtrado = leer<readonly { readonly organizationName: string }[]>(
+      componente,
+      'historialFiltrado',
+    );
+    expect(filtrado).toHaveLength(1);
+    expect(filtrado[0].organizationName).toBe('Clínica del Sur');
+    http.verify();
+  });
+});
+
+/**
+ * Una afiliación ya mapeada al dominio: es lo que el componente recibe de la
+ * lista, con las fechas como `Date`. `enCable` es la forma del transporte y no
+ * sirve para alimentar al formulario —el date-picker pide un `Date`—.
+ *
+ * @param over - Lo que cambia respecto del vínculo de ejemplo.
+ */
+const enDominio = (over: Record<string, unknown> = {}) => {
+  const { startDate, endDate, createdAt, ...resto } = enCable(over);
+  // El mismo `maybeDateOnly` que usa `toAffiliation`, y no `new Date(texto)`:
+  // el constructor lee «2020-03-01» como medianoche UTC y en Bolivia eso es el
+  // día anterior. La prueba tiene que recibir lo que recibe la pantalla.
+  return {
+    ...resto,
+    startDate: maybeDateOnly(String(startDate)) ?? new Date(NaN),
+    endDate: endDate === null ? null : (maybeDateOnly(String(endDate)) ?? null),
+    createdAt: new Date(String(createdAt)),
+  };
+};
+
+/**
+ * Monta el bloque con un vínculo ya en la lista y el diálogo bajo control.
+ *
+ * @param afiliacion - El vínculo que devuelve el `GET`, tal como llega por el cable.
+ * @param confirmar - Qué contesta el diálogo de confirmación.
+ */
+async function montarConVinculo(
+  afiliacion: Record<string, unknown>,
+  confirmar = true,
+  layout: 'flat' | 'timeline' = 'flat',
+) {
+  const dialogs = { confirm: vi.fn(async () => confirmar) };
+  await TestBed.configureTestingModule({
+    deferBlockBehavior: DeferBlockBehavior.Manual,
+    imports: [WorkHistory],
+    providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
+      provideRouter([]),
+      { provide: AuthService, useValue: { practitionerProfileId: signal('prac-1') } },
+      { provide: DialogService, useValue: dialogs },
+    ],
+  }).compileComponents();
+
+  const fixture: ComponentFixture<WorkHistory> = TestBed.createComponent(WorkHistory);
+  fixture.componentRef.setInput('layout', layout);
+  fixture.detectChanges();
+  const http = TestBed.inject(HttpTestingController);
+  http.expectOne(AFILIACIONES).flush({ items: [afiliacion], count: 1 });
+  http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
+  fixture.detectChanges();
+  return { fixture, http, dialogs };
+}
+
+describe('WorkHistory — corregir y retirar un vínculo laboral', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  /**
+   * Quién puede tocar qué. Es la regla que sostiene todo lo demás: un sello lo
+   * pone una organización, y que el profesional pueda reescribir por detrás lo
+   * que alguien ya confirmó convierte el sello en una mentira.
+   */
+  it('sólo deja corregir lo declarado, y retirar además lo que nadie contestó', async () => {
+    const { fixture, http } = await montarConVinculo(enCable({ statusKind: 'declarado' }));
+    const componente = api(fixture);
+
+    const puedeCorregirse = (kind: string) =>
+      componente['puedeCorregirse'](enDominio({ statusKind: kind }) as never) as boolean;
+    const puedeRetirarse = (kind: string) =>
+      componente['puedeRetirarse'](enDominio({ statusKind: kind }) as never) as boolean;
+
+    expect(puedeCorregirse('declarado')).toBe(true);
+    expect(puedeCorregirse('pendiente')).toBe(false);
+    expect(puedeCorregirse('aprobado')).toBe(false);
+    expect(puedeCorregirse('rechazado')).toBe(false);
+    expect(puedeCorregirse('revocado')).toBe(false);
+
+    // Retirar una solicitud que nadie contestó es arrepentirse a tiempo; lo ya
+    // decidido por una organización queda.
+    expect(puedeRetirarse('declarado')).toBe(true);
+    expect(puedeRetirarse('pendiente')).toBe(true);
+    expect(puedeRetirarse('aprobado')).toBe(false);
+    expect(puedeRetirarse('rechazado')).toBe(false);
+
+    http.verify();
+  });
+
+  it('el renglón de un vínculo aprobado no ofrece ni corregir ni retirar', async () => {
+    const { fixture, http } = await montarConVinculo(enCable({ statusKind: 'aprobado' }));
+
+    const raiz: HTMLElement = fixture.nativeElement;
+    expect(raiz.querySelector('[data-testid="vinculo-editar"]')).toBeNull();
+    expect(raiz.querySelector('[data-testid="vinculo-retirar"]')).toBeNull();
+
+    http.verify();
+  });
+
+  it('corrige con un PATCH y manda el fin vacío como null, para volver a ponerlo en curso', async () => {
+    const { fixture, http } = await montarConVinculo(
+      enCable({ statusKind: 'declarado', endDate: '2023-12-31', current: false }),
+    );
+    const componente = api(fixture);
+
+    componente['abrirEdicionDeVinculo'](
+      enDominio({ statusKind: 'declarado', endDate: '2023-12-31' }) as never,
+    );
+    fixture.detectChanges();
+
+    // El fin se vacía a mano: es el gesto de «seguís ejerciendo ahí».
+    componente['hasta'].set(null);
+    componente['cargo'].set('Jefa de guardia');
+    componente['guardarVinculo']();
+
+    const req = http.expectOne(
+      (r) => r.url === `${AFILIACIONES}/af-1` && r.method === 'PATCH',
+    );
+    expect(req.request.body).toEqual({
+      organizationName: 'Hospital Obrero N.º 1',
+      roleTitle: 'Jefa de guardia',
+      startDate: '2020-03-01',
+      // El null explícito es lo que el contrato lee como «volvió a estar
+      // vigente». Omitirlo dejaría el cierre puesto por error sin forma de
+      // deshacerse.
+      endDate: null,
+    });
+
+    req.flush(enCable({ endDate: null }));
+    http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+    http.verify();
+  });
+
+  it('corrigiendo no se ofrece la sede: el PATCH no la admite', async () => {
+    const { fixture, http } = await montarConVinculo(enCable({ statusKind: 'declarado' }));
+    const componente = api(fixture);
+
+    componente['abrirEdicionDeVinculo'](enDominio({ statusKind: 'declarado' }) as never);
+    fixture.detectChanges();
+
+    expect(componente['vinculoEnEdicion']()).not.toBeNull();
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).not.toContain('Consultorio de la plataforma');
+    // Y el formulario dice qué se está haciendo, no «Agregar un vínculo».
+    expect(texto).toContain('Corregir «Hospital Obrero N.º 1»');
+
+    http.verify();
+  });
+
+  it('retira con un DELETE, y sólo después de que la persona confirme', async () => {
+    const { fixture, http, dialogs } = await montarConVinculo(
+      enCable({ statusKind: 'declarado' }),
+    );
+    const componente = api(fixture);
+
+    await componente['retirarVinculo'](enDominio({ statusKind: 'declarado' }) as never);
+
+    expect(dialogs.confirm).toHaveBeenCalledOnce();
+    const req = http.expectOne(
+      (r) => r.url === `${AFILIACIONES}/af-1` && r.method === 'DELETE',
+    );
+    req.flush(null);
+    http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+    http.verify();
+  });
+
+  it('si la persona cancela el diálogo, no se borra nada', async () => {
+    const { fixture, http, dialogs } = await montarConVinculo(
+      enCable({ statusKind: 'declarado' }),
+      false,
+    );
+    const componente = api(fixture);
+
+    await componente['retirarVinculo'](enDominio({ statusKind: 'declarado' }) as never);
+
+    expect(dialogs.confirm).toHaveBeenCalledOnce();
+    http.expectNone((r) => r.method === 'DELETE');
+    http.verify();
+  });
+  /**
+   * La razón de ser del bloque: en «Trayectoria» —que es el único lugar donde
+   * el perfil monta este componente— la lista plana está suprimida a propósito,
+   * así que sin este bloque los botones no existirían para nadie.
+   */
+  it('en «Trayectoria» ofrece lo accionable, sin repetir la historia entera', async () => {
+    const { fixture, http } = await montarConVinculo(
+      enCable({ statusKind: 'declarado' }),
+      true,
+      'timeline',
+    );
+
+    const raiz: HTMLElement = fixture.nativeElement;
+    expect(raiz.querySelector('[data-testid="vinculos-editables"]')).not.toBeNull();
+    expect(raiz.querySelector('[data-testid="vinculo-editar"]')).not.toBeNull();
+    expect(raiz.querySelector('[data-testid="vinculo-retirar"]')).not.toBeNull();
+
+    http.verify();
+  });
+
+  it('sin nada que tocar, el bloque no se dibuja', async () => {
+    const { fixture, http } = await montarConVinculo(
+      enCable({ statusKind: 'aprobado' }),
+      true,
+      'timeline',
+    );
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="vinculos-editables"]'),
+    ).toBeNull();
+
     http.verify();
   });
 });

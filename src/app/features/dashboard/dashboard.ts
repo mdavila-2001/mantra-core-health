@@ -20,6 +20,7 @@ import { TutorialTarget } from '../../shared/components/organisms/tutorial-overl
 import { SetupNotice } from '../admin/getting-started/setup-notice/setup-notice';
 import { AccessTree } from './access-tree/access-tree';
 import { AgendaDeHoy } from './agenda-de-hoy/agenda-de-hoy';
+import { ConsultasResumen } from './consultas-resumen/consultas-resumen';
 import { PatientHome } from './patient-home/patient-home';
 
 /**
@@ -79,6 +80,7 @@ const ROLES_DE_TRABAJO: readonly string[] = [
     AccessTree,
     AgendaDeHoy,
     Card,
+    ConsultasResumen,
     Alert,
     AppButtonLink,
     PageHeader,

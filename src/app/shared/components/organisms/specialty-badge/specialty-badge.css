@@ -1,0 +1,80 @@
+/* ============================================================================
+    Insignia de especialidad. Sin un solo literal de color: el tono entra por
+    `tone.css`, la misma y única copia del mapa que usan Badge y Chip, así el
+    tema oscuro lo resuelve el sistema y no este archivo.
+    ========================================================================== */
+
+@import '../../tone/tone.css';
+
+:host {
+    display: inline-flex;
+    align-items: center;
+    /* `wrap` no es cosmético: sin él, el sello y «Principal» —que no se
+       encogen— se quedaban con el ancho y al nombre le tocaba lo que sobraba.
+       Con la caja angosta el texto salía apilado letra por letra, en vertical.
+       No lo vio ningún test: se vio en la captura. */
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    /* `min-width: 0` para que el nombre pueda encogerse: sin esto, un item de
+       grid se niega a bajar de su contenido y empuja la fila a lo ancho. */
+    min-inline-size: 0;
+    padding: var(--sp-2) var(--sp-3);
+    font-family: var(--font-body);
+    font-size: var(--fs-caption);
+    line-height: 1.2;
+    border: 1px solid var(--tone-bd, transparent);
+    border-radius: var(--r-md);
+    background: var(--tone-bg, transparent);
+    color: var(--tone-fg, currentColor);
+}
+
+/* El ícono acompaña al texto: se dimensiona en `em` para seguirlo si la
+   tipografía cambia, igual que en el botón. */
+.specialty-badge__icono {
+    flex: none;
+    inline-size: 1.25em;
+    block-size: 1.25em;
+}
+
+/* El nombre es lo que manda: crece y se queda con el espacio libre, y los
+   demás elementos se acomodan alrededor. `flex: 1 1 auto` es lo que faltaba
+   — sin él se encogía hasta el ancho de una letra.
+
+   `break-word` y no `anywhere`: `anywhere` autoriza a partir por cualquier
+   carácter apenas la caja aprieta, y eso es lo que producía «Cardiología» en
+   vertical. Con `break-word` sólo se parte la palabra que no entra de ninguna
+   manera. Un nombre de especialidad puede ocupar dos renglones; lo que no
+   puede es recortarse —«Ginecología y obst…» deja de ser el dato— ni
+   deletrearse hacia abajo. */
+.specialty-badge__nombre {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    font-weight: 600;
+    overflow-wrap: break-word;
+}
+
+.specialty-badge__certificada {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+}
+
+.specialty-badge__certificada svg {
+    inline-size: 1em;
+    block-size: 1em;
+}
+
+/* Etiqueta de apoyo: más chica y con menos peso que el nombre, porque el dato
+   es la especialidad y esto la califica. */
+.specialty-badge__principal {
+    flex: none;
+    font-size: var(--fs-overline);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.85;
+}
+
+.specialty-badge__sello {
+    flex: none;
+}

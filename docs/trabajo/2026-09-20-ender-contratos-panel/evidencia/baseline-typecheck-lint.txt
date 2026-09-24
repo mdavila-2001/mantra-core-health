@@ -1,0 +1,7 @@
+$ yarn typecheck
+(sin salida — exit 0)
+
+$ yarn lint
+(sin salida — exit 0)
+
+Baseline limpio: no hay deuda previa que confundir con lo que yo toque esta noche.
