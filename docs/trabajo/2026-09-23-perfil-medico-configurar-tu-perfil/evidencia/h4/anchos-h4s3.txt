@@ -1,0 +1,12 @@
+== 1440 light
+tabla-formacion · alto máximo 420px (clase true) · scroll 1070/1070 · lateral=false · columnas: Tipo · Número / título · Institución · Emisión · Estado · Acciones · disparadores de menú=0 · acciones en la fila=1 · página sin desborde
+tabla-especialidades · alto máximo 420px (clase true) · scroll 1070/1070 · lateral=false · columnas: Especialidad · Desde · Estado · Acciones · disparadores de menú=0 · acciones en la fila=4 · página sin desborde
+tabla-matriculas · alto máximo 420px (clase true) · scroll 1070/1070 · lateral=false · columnas: Nº de matrícula · Autoridad · Inscripción · Estado · Acciones · disparadores de menú=1 · acciones en la fila=2 · página sin desborde
+== 768 light
+tabla-formacion · alto máximo 420px (clase true) · scroll 678/678 · lateral=false · columnas: Número / título · Acciones · Ver el detalle de la fila · disparadores de menú=0 · acciones en la fila=1 · página sin desborde
+tabla-especialidades · alto máximo 420px (clase true) · scroll 678/678 · lateral=false · columnas: Especialidad · Acciones · Ver el detalle de la fila · disparadores de menú=0 · acciones en la fila=4 · página sin desborde
+tabla-matriculas · alto máximo 420px (clase true) · scroll 678/678 · lateral=false · columnas: Nº de matrícula · Acciones · Ver el detalle de la fila · disparadores de menú=1 · acciones en la fila=2 · página sin desborde
+== 375 dark
+tabla-formacion · alto máximo 420px (clase true) · scroll 301/301 · lateral=false · columnas: Número / título · Acciones · Ver el detalle de la fila · disparadores de menú=0 · acciones en la fila=1 · página 380/375
+tabla-especialidades · alto máximo 420px (clase true) · scroll 301/301 · lateral=false · columnas: Especialidad · Acciones · Ver el detalle de la fila · disparadores de menú=0 · acciones en la fila=4 · página 380/375
+tabla-matriculas · alto máximo 420px (clase true) · scroll 301/301 · lateral=false · columnas: Nº de matrícula · Acciones · Ver el detalle de la fila · disparadores de menú=1 · acciones en la fila=2 · página 380/375

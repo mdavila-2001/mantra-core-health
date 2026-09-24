@@ -1,0 +1,53 @@
+H3.S3.M1 · Trayectoria 1440 claro: historial montado=1 · historial después de los títulos · filas títulos=2 · filas historial=3
+H3.S3.M1 · barras: [{"clave":"qTitulos","boton":"Agregar título","lugar":"a la derecha del buscador"},{"clave":"q","boton":null,"lugar":"sin botón de alta"}]
+hallazgo · «Añadir elemento a tu historial» del historial dentro de su barra=false
+desborde lateral 1440: {"scrollWidth":1440,"clientWidth":1440}
+H3.S1.M3 · columna «Institución» de los títulos: ESP-1000 → «Colegio Médico de Bolivia» · TIT-1000 → «Universidad Mayor de San Andrés (UMSA)»
+H3.S4.M3 · buscar «zzz» en la barra de títulos → URL qTitulos=zzz · títulos 2→0 · historial 3→3
+H3.S4.M3 · buscar «zzz» en la barra del historial → URL q=zzz · títulos=2 · historial=0 · «sin resultados»=1
+H3.S4.M3 · al pasar a Credenciales → URL (ninguna)
+H3.S1.M1 · formulario en línea en la pestaña=0 · modal abierto=1
+H3.S1.M1 · Escape sin nada escrito → modal=0 · pregunta de descarte=0
+H3.S1.M1 · Escape con algo escrito → pregunta de descarte=1
+H3.S1.M1 · «Seguir editando» → modal=1 · número conservado=«TIT-B-60935»
+H3.S1 · alta: tipo=«Título universitario» · institución=«Universidad Mayor de San Andrés (UMSA) — La Paz» · número=TIT-B-60935 · archivo=diploma-60935.pdf
+H3.S1.M4 · al agregar → «¿Confirmás estos datos?»=1
+H3.S1 · guardado: modal cerrado · fila TIT-B-60935 en la tabla (id 9b4d424f-9d47-4d53-aba2-14e40d0524d2)
+H3.S1.M2 · descarga antes de recargar: diploma-TIT-B-60935.pdf · trae el contenido subido («DIPLOMA-ORIGINAL-60935»)=true
+H3.S1.M2 · tras recargar: fila TIT-B-60935=1 · «Descargar»=1
+H3.S1.M3 · el título recién agregado, elegido del desplegable como «Universidad Mayor de San Andrés (UMSA) — La Paz», se lee en la tabla como «Universidad Mayor de San Andrés (UMSA)»
+H3.S1.M2 · descarga tras recargar: diploma-TIT-B-60935 · es el archivo subido (nombre «diploma-60935.pdf» adentro)=false · 2 bytes, empieza «{}»
+H3.S2 · abrir «Editar»: número lleno=«TIT-B-60935» · selector de archivo=«Reemplazar el diploma (opcional) Arrastrá tu archivo acá o seleccioná desde tu dispositivo Adjuntar archivo PDF · JPEG ·» · «Guardar cambios» apagado=true
+H3.S2.M5 · Escape sin cambios → modal=0 · pregunta de descarte=0
+H3.S2.M3 · con un cambio → «Guardar cambios» apagado=false
+H3.S2.M4 · al guardar → «¿Confirmás estos cambios?»=1
+H3.S2.M4 · «Seguir editando» → modal=1 · foco en «Guardar cambios»
+H3.S2.M5 · Escape con cambios → pregunta de descarte=1
+H3.S2.M5 · «Descartar» → modal=0 · la fila sigue con TIT-B-60935=1
+H3.S2.M2 · descarga antes de recargar: trae el nuevo=true · trae el original=false
+H3.S2.M2 · corregido y recargado: fila TIT-B-60935-C=1
+H3.S2.M2 · descarga tras recargar: diploma-TIT-B-60935-C · es el nuevo=false · es el original=false · 2 bytes, empieza «{}»
+H3.S4.M4 · «Editar» en «Clínica Los Olivos Jefa de servicio» → «Corregir el vínculo» · «Guardar los cambios» apagado=true
+H3.S4.M5 · columnas del historial: INSTITUCIÓN · PERÍODO · ACCIONES · Ver el detalle de la fila · «Adjunto»=false · selector de archivo en la corrección=0
+H3.S4.M4 · al guardar → «¿Confirmás estos cambios?»=1
+H3.S4.M4 · cargo «Cargo B 60935» tras recargar=1
+H3.S4.M4 · «Retirar» en «Consultorio Rojas» → confirmación=1
+H3.S4.M4 · tras retirar y recargar: filas 3→2 · «Consultorio Rojas» sigue=0
+H3.S3.M4 · Trayectoria 375 oscuro: barras [{"clave":"qTitulos","boton":"Agregar título","lugar":"debajo del buscador"},{"clave":"q","boton":null,"lugar":"sin botón de alta"}] · desborde {"scrollWidth":380,"clientWidth":375}
+H4 · Credenciales 1440 claro: formulario en línea de especialidad=0 · de matrícula=0
+H4.S3.M2 · barras: [{"clave":"qEspecialidades","boton":"Agregar especialidad","lugar":"a la derecha del buscador"},{"clave":"qMatriculas","boton":"Agregar matrícula","lugar":"a la derecha del buscador"}] · desborde {"scrollWidth":1440,"clientWidth":1440}
+H4.S1.M1/M2 · modal abierto · respaldo: desplegable=1 · aviso sin títulos verificados=0
+H4.S1.M1 · casillas: «Medicina General» + «Medicina Familiar» · botón quitar texto=«Quitar» · aria-label=«Quitar la especialidad 2»
+H4.S1.M2 · respaldo elegido=«Título de especialidad · ESP-1000 · Colegio Médico de Bolivia»
+H4.S1 · al agregar → «¿Confirmás estos datos?»=1 · texto=«¿Confirmás estos datos? Se agregan 2 especialidades y quedan pendientes de verificación. Seguir editando Confirmar»
+H4.S1 · tras recargar: «Medicina General»=1 · «Medicina Familiar»=1
+H4.S1.M3 · «Editar» especialidad: «Guardar cambios» apagado=true
+H4.S1.M3 · Escape sin cambios → modal=0 · pregunta de descarte=0
+H4.S2.M1 · Escape sin nada escrito → modal=0 · pregunta de descarte=0
+H4.S2.M3 · al agregar MP-B-60935 (Ministerio de Salud) → «¿Confirmás estos datos?»=1
+H4.S2.M2 · «Editar» matrícula: número lleno=«MP-B-60935» · selector=«Reemplazar el respaldo (opcional) Arrastrá tu archivo acá o seleccioná desde tu dispositivo Adjuntar archivo PDF · JPEG »
+H4.S2.M2 · descarga antes de recargar: trae el nuevo=true · trae el original=false
+H4.S2.M2 · corregida y recargada: descarga matricula-MP-B-60935 · es el nuevo=false · es el original=false · 2 bytes, empieza «{}»
+H4.S3.M1 · «zzz» en especialidades → URL qEspecialidades=zzz · especialidades 4→0 · matrículas 3→3
+H4.S3.M1 · «MP-B-60935» en matrículas → URL qMatriculas=MP-B-60935 · especialidades=4 · matrículas=1
+H4.S3.M2 · Credenciales 375 oscuro: barras [{"clave":"qEspecialidades","boton":"Agregar especialidad","lugar":"debajo del buscador"},{"clave":"qMatriculas","boton":"Agregar matrícula","lugar":"debajo del buscador"}] · desborde {"scrollWidth":380,"clientWidth":375}

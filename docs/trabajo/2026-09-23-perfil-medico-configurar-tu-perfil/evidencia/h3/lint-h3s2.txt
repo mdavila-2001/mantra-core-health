@@ -1,0 +1,2 @@
+$ yarn eslint <archivos tocados en H3.S1–S2>
+exit=0

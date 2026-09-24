@@ -1,0 +1,12 @@
+# H2.S3.M6 — el PATCH del perfil propio, retenido en la red — 2026-09-23T23:04:03.820Z
+
+Celular personal: «7100 0000» → «71234567» (pestaña Contacto del editor, sesión de la médica sintética)
+Peticiones a /profiles/ que salieron a la red con el interruptor encendido:
+  PATCH <url de la app>/profiles/practitioners/me
+
+PATCH /profiles/practitioners/me
+content-type: application/json
+cuerpo: {"mobilePhone":"+591 71234567"}
+claves: ["mobilePhone"] · del trabajo: ninguna
+
+La petición se cortó en la red (abort) después de leerla: no se dio por guardado nada.

@@ -1,0 +1,13 @@
+# Consola y red de H2 — 2026-09-23T23:04:03.976Z
+
+## Consola (error/warning, sin la CSP del servidor de desarrollo)
+[error] <url de la app>/my-account/edit — Failed to load resource: net::ERR_FAILED
+
+## Red (>= 400 o fallida)
+FAILED GET https://tile.openstreetmap.org/12/1329/2253.png — net::ERR_ABORTED
+FAILED GET https://tile.openstreetmap.org/12/1329/2254.png — net::ERR_ABORTED
+FAILED GET https://tile.openstreetmap.org/12/1328/2253.png — net::ERR_ABORTED
+FAILED GET https://tile.openstreetmap.org/12/1330/2253.png — net::ERR_ABORTED
+FAILED GET https://tile.openstreetmap.org/12/1328/2254.png — net::ERR_ABORTED
+FAILED GET https://tile.openstreetmap.org/12/1330/2254.png — net::ERR_ABORTED
+FAILED PATCH <url de la app>/profiles/practitioners/me — net::ERR_FAILED

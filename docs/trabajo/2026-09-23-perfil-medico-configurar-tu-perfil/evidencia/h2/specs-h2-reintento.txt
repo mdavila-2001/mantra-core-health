@@ -1,0 +1,128 @@
+inicio=17:38:28 memoria_libre_MB=4051
+Using Vitest configuration file: <repo>\vitest.config.ts
+[33m❯[39m Building...
+[32m✔[39m Building...
+[1mInitial chunk files[22m                                                                        [2m | [22m[1mNames[22m                                                                                   [2m | [22m [1mRaw size[22m
+[32mspec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit.js[39m[2m | [22m[2mspec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit[22m[2m | [22m[36m792.11 kB[39m[2m | [22m
+[32mspec-app-features-auth-register-practitioner-register-practitioner.js[39m                      [2m | [22m[2mspec-app-features-auth-register-practitioner-register-practitioner[22m                      [2m | [22m[36m581.04 kB[39m[2m | [22m
+[32mchunk-JGKGPDBY.js[39m                                                                          [2m | [22m[2m-[22m                                                                                       [2m | [22m[36m494.12 kB[39m[2m | [22m
+[32mstyles.css[39m                                                                                 [2m | [22m[2mstyles[22m                                                                                  [2m | [22m[36m166.11 kB[39m[2m | [22m
+[32mchunk-USFLRTZF.js[39m                                                                          [2m | [22m[2m-[22m                                                                                       [2m | [22m[36m121.26 kB[39m[2m | [22m
+[32mchunk-OEMTXTUZ.js[39m                                                                          [2m | [22m[2m-[22m                                                                                       [2m | [22m [36m59.95 kB[39m[2m | [22m
+[32mchunk-WKW3FDJN.js[39m                                                                          [2m | [22m[2m-[22m                                                                                       [2m | [22m [36m33.51 kB[39m[2m | [22m
+[32mchunk-SOTNGF5F.js[39m                                                                          [2m | [22m[2m-[22m                                                                                       [2m | [22m [36m22.65 kB[39m[2m | [22m
+[32mchunk-HZXEPMDQ.js[39m                                                                          [2m | [22m[2m-[22m                                                                                       [2m | [22m  [36m5.27 kB[39m[2m | [22m
+[32mchunk-3BKIIAWM.js[39m                                                                          [2m | [22m[2m-[22m                                                                                       [2m | [22m  [36m3.96 kB[39m[2m | [22m
+[32minit-testbed.js[39m                                                                            [2m | [22m[2minit-testbed[22m                                                                            [2m | [22m  [36m1.21 kB[39m[2m | [22m
+[32mvitest-mock-patch.js[39m                                                                       [2m | [22m[2mvitest-mock-patch[22m                                                                       [2m | [22m[36m974 bytes[39m[2m | [22m
+[32msetup-test-setup.js[39m                                                                        [2m | [22m[2msetup-test-setup[22m                                                                        [2m | [22m[36m911 bytes[39m[2m | [22m
+
+[1m [22m                                                                                          [2m | [22m[1mInitial total[22m                                                                           [2m | [22m  [1m2.28 MB[22m
+
+[1mLazy chunk files[22m                                                                           [2m | [22m[1mNames[22m                                                                                   [2m | [22m [1mRaw size[22m
+[32mchunk-5ARSYAXT.js[39m                                                                          [2m | [22m[2mindex[22m                                                                                   [2m | [22m  [36m4.99 MB[39m[2m | [22m
+[32mchunk-ZTPBSJRC.js[39m                                                                          [2m | [22m[2mmap[22m                                                                                     [2m | [22m[36m224 bytes[39m[2m | [22m
+[32mchunk-LDUT7L2I.js[39m                                                                          [2m | [22m[2mlocation-picker[22m                                                                         [2m | [22m[36m158 bytes[39m[2m | [22m
+
+Application bundle generation complete. [151.055 seconds] - 2026-09-23T21:41:47.406Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+[37m      75 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+[37m      85 │     [32mRouterLink[37m,
+         ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButton is not used within the template of NearbyPlaces[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/nearby-places/nearby-places.ts:103:4:
+[37m      103 │     [32mAppButton[37m,
+          ╵     [32m~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:72:4:
+[37m      72 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:99:39:
+[37m      99 │ ...: [Alert, AppButton, BodyMap, [32mCard[37m, Chip, FormField, RouterLink...
+         ╵                                  [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:99:62:
+[37m      99 │ ... AppButton, BodyMap, Card, Chip, FormField, [32mRouterLink[37m, Textarea],
+         ╵                                                [32m~~~~~~~~~~[0m
+
+[39m[22m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m<repo>[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Unhandled Errors [49m[22m[31m⎯⎯⎯⎯⎯⎯[39m
+[31m[1m
+Vitest caught 2 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Unhandled Error [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[31m[1mError[22m: [vitest-pool]: Worker forks emitted error.[39m
+[90m [2m❯[22m EventEmitter.onTaskError node_modules/vitest/dist/chunks/cli-api.BK8pd4xc.js:[2m3459:21[22m[39m
+[90m [2m❯[22m EventEmitter.emit node:events:[2m514:28[22m[39m
+[90m [2m❯[22m ChildProcess.emitUnexpectedExit node_modules/vitest/dist/chunks/cli-api.BK8pd4xc.js:[2m3025:22[22m[39m
+[90m [2m❯[22m ChildProcess.emit node:events:[2m514:28[22m[39m
+[90m [2m❯[22m Process.ChildProcess._handle.onexit node:internal/child_process:[2m295:12[22m[39m
+
+[31m[1mCaused by: Error[22m: Worker exited unexpectedly[39m
+[90m [2m❯[22m ChildProcess.emitUnexpectedExit node_modules/vitest/dist/chunks/cli-api.BK8pd4xc.js:[2m3023:33[22m[39m
+[90m [2m❯[22m ChildProcess.emit node:events:[2m514:28[22m[39m
+[90m [2m❯[22m Process.ChildProcess._handle.onexit node:internal/child_process:[2m295:12[22m[39m
+
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Unhandled Error [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[31m[1mError[22m: [vitest-pool]: Worker forks emitted error.[39m
+[90m [2m❯[22m EventEmitter.onTaskError node_modules/vitest/dist/chunks/cli-api.BK8pd4xc.js:[2m3459:21[22m[39m
+[90m [2m❯[22m EventEmitter.emit node:events:[2m514:28[22m[39m
+[90m [2m❯[22m ChildProcess.emitUnexpectedExit node_modules/vitest/dist/chunks/cli-api.BK8pd4xc.js:[2m3025:22[22m[39m
+[90m [2m❯[22m ChildProcess.emit node:events:[2m514:28[22m[39m
+[90m [2m❯[22m Process.ChildProcess._handle.onexit node:internal/child_process:[2m295:12[22m[39m
+
+[31m[1mCaused by: Error[22m: Worker exited unexpectedly[39m
+[90m [2m❯[22m ChildProcess.emitUnexpectedExit node_modules/vitest/dist/chunks/cli-api.BK8pd4xc.js:[2m3023:33[22m[39m
+[90m [2m❯[22m ChildProcess.emit node:events:[2m514:28[22m[39m
+[90m [2m❯[22m Process.ChildProcess._handle.onexit node:internal/child_process:[2m295:12[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39m
+
+
+[2m Test Files [22m [2mno tests[22m
+[2m      Tests [22m [2mno tests[22m
+[2m     Errors [22m [1m[31m2 errors[39m[22m
+[2m   Start at [22m 17:41:59
+[2m   Duration [22m 170ms[2m (transform 0ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)[22m
+

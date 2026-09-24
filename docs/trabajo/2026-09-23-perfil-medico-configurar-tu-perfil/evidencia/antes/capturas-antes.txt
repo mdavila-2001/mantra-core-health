@@ -1,0 +1,15 @@
+M2 · botones «Editar» en Trayectoria antes de agregar: 0
+M2 · título de prueba agregado (tipo «Título universitario»); botones «Editar» ahora: 1
+M2 · «Editar» título: abre modal: SÍ · botón: «Guardar cambios» · habilitado sin tocar nada: SÍ
+M2 · «Editar» especialidad: abre modal: SÍ · botón: «Guardar cambios» · habilitado sin tocar nada: SÍ
+M2 · «Editar» matrícula: abre modal: SÍ · botón: «Guardar cambios» · habilitado sin tocar nada: SÍ
+M3 · «Retirar» título: confirmación: SÍ — «Retirar este título ¿Retirar «Título universitario · TIT-PRUEBA-H1»? No se puede deshacer desde acá. Cancelar Retirar» · filas 3 → 3
+M3 · «Retirar» especialidad: confirmación: SÍ — «Retirar esta especialidad ¿Retirar «Cardiología»? No se puede deshacer desde acá. Cancelar Retirar» · filas 4 → 4
+M3 · «Retirar» matrícula: confirmación: SÍ — «Retirar esta matrícula ¿Retirar «MP-2400»? No se puede deshacer desde acá. Cancelar Retirar» · filas 4 → 4
+M4 · ficha: insignia en la pestaña «Datos personales»
+M4 · ficha (/my-account): .specialty-badge__principal=1 · app-badge «Principal»=0 · texto «Principal»=1
+M4 · directorio-detalle (/directory/be0f3a66-c03e-4eac-a416-c1068238d3d2): .specialty-badge__principal=0 · app-badge «Principal»=0 · texto «Principal»=0
+M4 · directorio-lista (/directory): .specialty-badge__principal=0 · app-badge «Principal»=0 · texto «Principal»=0
+M4 · perfil-publico (/p/valeria-rojas): .specialty-badge__principal=0 · app-badge «Principal»=0 · texto «Principal»=0
+consola: 0 distintas · red: 6 distintas
+exit=0
