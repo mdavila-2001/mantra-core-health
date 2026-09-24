@@ -171,10 +171,12 @@
                 <span
                   class="cotizaciones__distancia"
                   [class.cotizaciones__distancia--sin]="fila.distanceKm === null"
-                  >{{ distanciaDe(fila) }}</span
+                  >{{ distanciaDe(fila)
+                  }}{{ fila.distanceKm === null ? '' : ' en línea recta' }}</span
                 >
               </p>
               <span class="cotizaciones__procedencia">{{ procedenciaDe(fila) }}</span>
+              <span class="cotizaciones__vertical">{{ etiquetaDeVertical(fila) }}</span>
               @if (fila.advertencia) {
                 <span class="cotizaciones__advertencia">{{ fila.advertencia }}</span>
               }
