@@ -3,12 +3,13 @@
     <a
       app-button
       variant="primary"
-      size="sm"
+      size="md"
       [href]="url"
       target="_blank"
       rel="noopener noreferrer"
       data-testid="btn-whatsapp-claim"
       [appTooltip]="'Abre WhatsApp con ' + carrierName() + ' en una pestaña nueva'"
+      (keydown.space)="onWhatsappKeydownSpace($event)"
     >
       <svg class="contact-channels__icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
         <path
@@ -24,9 +25,9 @@
     <a
       app-button
       variant="outline"
-      size="sm"
+      size="md"
       [href]="href"
-      data-testid="btn-callcenter-claim"
+      data-testid="btn-call-center-phone"
       [appTooltip]="'Llamar al call center de ' + carrierName()"
     >
       Llamar al call center · {{ callCenterDisplay() }}
