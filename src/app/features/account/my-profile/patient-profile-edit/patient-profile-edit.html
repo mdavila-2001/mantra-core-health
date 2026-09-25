@@ -96,16 +96,18 @@
                 </app-form-field>
               }
 
-              <button
-                app-button
-                type="button"
-                variant="ghost"
-                size="sm"
-                data-testid="perfil-agregar-nombre"
-                (clicked)="agregarNombre()"
-              >
-                + Agregar otro nombre
-              </button>
+              <p class="datos__sumar">
+                <button
+                  app-button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  data-testid="perfil-agregar-nombre"
+                  (clicked)="agregarNombre()"
+                >
+                  + Agregar otro nombre
+                </button>
+              </p>
 
               <app-form-field
                 label="Apellido paterno"
@@ -396,16 +398,15 @@
         </app-tab>
 
         <!-- ─── Seguros ─────────────────────────────────────────────────── -->
-        <!-- Bloqueada en el editor desde el 25/09/2026 (pedido del
-             propietario): no se leen ni se escriben acá. No es que el `PATCH`
-             no las acepte hoy y algún día las acepte —como pasa con «Tutores»,
-             que sí puede cambiar—; una cobertura es el resultado de una
-             integración posterior (la aseguradora, no la persona, la declara),
-             así que nunca se corrige desde este formulario. Mismo tratamiento
-             que «Mis puntos»: apagada, con el cursor de bloqueado, para que
-             quien la vea no la confunda con un campo editable. La ficha de
-             lectura (`my-profile.html`) sigue mostrando el detalle completo. -->
-        <app-tab [label]="pestanas[3]" disabled />
+        <!-- Fuera del editor desde el 25/09/2026 (pedido del propietario): no
+             se leen ni se escriben acá. No es que el `PATCH` no las acepte hoy
+             y algún día las acepte —como pasa con «Tutores», que sí puede
+             cambiar—; una cobertura es el resultado de una integración
+             posterior (la aseguradora, no la persona, la declara), así que
+             nunca se corrige desde este formulario. Antes iba apagada en la
+             tira; el mismo día se pidió sacarla directamente, igual que «Mis
+             puntos». La ficha de lectura (`my-profile.html`) sigue mostrando
+             el detalle completo. -->
 
         <!-- ─── Tutores ─────────────────────────────────────────────────── -->
         <app-tab [label]="pestanas[4]">
@@ -432,9 +433,9 @@
           </section>
         </app-tab>
 
-        <!-- «Mis puntos» no se edita: la pestaña está para que la tira sea la
-             misma que en lectura y el lápiz no mueva de lugar a nadie. -->
-        <app-tab [label]="pestanas[5]" disabled />
+        <!-- «Mis puntos» no se edita: es la billetera del programa de
+             fidelidad, no un dato declarado, y desde el 25/09/2026 (pedido del
+             propietario) se saca de la tira del editor en vez de apagarla. -->
       </app-tabs>
     </ng-template>
 
