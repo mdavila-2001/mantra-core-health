@@ -1,0 +1,15 @@
+$ corepack yarn test --watch=false --include=medical-record.spec.ts --include=history-view-model.spec.ts
+ Test Files  2 passed (2)
+      Tests  56 passed (56)       # baseline C6: 33 + 19 = 52; las 4 nuevas son las de la reconsulta
+
+$ ... --include=scheduling.handlers.spec.ts --include=scheduling.client.spec.ts --include=detalle-de-la-cita.spec.ts --include=encounter-timeline.spec.ts
+ Test Files  4 passed (4)
+      Tests  83 passed (83)       # antes: 2 failed | 81 passed (los 2 fallos eran preexistentes, ver 01-)
+
+$ ... --include=agenda.spec.ts --include=follow-up-block.spec.ts
+ Test Files  2 passed (2)
+      Tests  139 passed (139)
+
+$ ... --include=appointments.spec.ts --include=upcoming-and-past.spec.ts
+ Test Files  2 passed (2)
+      Tests  91 passed (91)

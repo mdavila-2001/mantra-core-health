@@ -1,0 +1,53 @@
+$ corepack yarn dev --port 4218        (un solo servidor, el puerto que reserva la ficha)
+$ curl -o /dev/null -w "%{http_code}" http://localhost:4218/
+200
+
+$ E2E_BASE_URL=http://localhost:4218 npx playwright test playwright/clinica-c8-recorrido-completo.spec.ts --reporter=list --workers=1
+
+  ok 1 la consulta muestra «Lo registrado en este encuentro» con su línea (22.9s)
+  ok 2 la médica ve la reconsulta en su agenda: el motivo y el «Qué es» del detalle (9.8s)
+  ok 3 «Mis citas» de la paciente explica de qué consulta sale la reconsulta (9.2s)
+  ok 4 la historia de la paciente reparte los diagnósticos en tres bloques (14.4s)
+  ok 5 la línea del encuentro nombra la reconsulta que salió de esa atención (10.1s)
+  ok 6 ningún uuid llega a la historia de la paciente, en ninguna pestaña (14.8s)
+
+  6 passed (1.4m)
+
+`scripts/pw-guard.mjs` NO existe en este árbol (era artefacto de C0, carril no
+entregado), así que el servidor se levantó a mano y se apagó al terminar. El
+recorrido corre con `--workers=1`, que es lo que pide el kill-test del prompt.
+
+## Las cuatro correcciones que hicieron falta, y por qué ninguna debilita nada
+
+El archivo se había escrito SIN navegador. Corriéndolo aparecieron cuatro cosas,
+todas del lado de la prueba y ninguna del producto:
+
+1. `getByRole('link', { name: /iniciar la consulta/i })` — ese control NO EXISTE.
+   La puerta de la agenda es un botón que cubre la tarjeta del turno
+   (`dia-ir-a-atender`, nombre accesible «Atender a <paciente>, HH:MM»).
+2. Tocarlo no siempre navega: `atenderDesdeLaTarjeta` lee el estado del ciclo y,
+   si desde ese estado no se entra, abre un diálogo que lo explica. El recorrido
+   ahora BUSCA la primera cita del día que sí entra. Las de las 08:00 en adelante
+   de la agenda sembrada ya están cerradas.
+3. «Lo registrado en este encuentro» exige un encuentro ABIERTO, y
+   `POST /scheduling/bookings/:id/start` no abre ninguno: sólo mueve la cita a
+   `BK-IN-PROGRESS`. El encuentro lo abre la consulta
+   (`POST /clinical/encounters/check-in`, UC-08-02) con «abrir el encuentro».
+   El recorrido lo toca, que es el camino de la persona. Antes se saltaba la
+   prueba «no hay encuentro abierto» — es decir, se medía la pantalla en el único
+   estado en que la sección no se dibuja.
+4. «Mi historia» es un ACORDEÓN: abrir una atención cierra la anterior, así que
+   «desplegar todas» dejaba abierta sólo la última. Se recorren de a una hasta
+   encontrar la reconsulta.
+
+## Lo que el recorrido destapó del producto (no de la prueba)
+
+El `app-badge` «Reconsulta» con `data-testid="cita-reconsulta-sello"` que entregó
+C4 **no es alcanzable para un profesional con calendario**: vive en la celda de
+motivo de la tabla de consultas, y esa tabla está en la solapa `consultations`,
+que `pestanas()` sólo arma cuando el profesional NO tiene calendario (con
+calendario las solapas son `calendar` y `schedule`). Sus 125 pruebas de unidad lo
+fijan y en la aplicación nadie lo ve. Lo que la médica sí alcanza es el motivo
+«Reconsulta: …» en la tarjeta del día —que es lo que la prueba 2 afirma— y el
+«Qué es: Reconsulta» del detalle de la cita, cubierto por unidad y no por
+navegador. Queda anotado como pendiente con dueño en `REPORTE-FINAL.md`.

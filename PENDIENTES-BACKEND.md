@@ -1,6 +1,12 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-09-16 — **P32 y P33 están CERRADOS**: el backend publicó el consultorio
+**Actualizado:** 2026-09-26 — **P39 a P42 son nuevos**, de la noche del paquete «Encuentro
+clínico» (2026-09-25). De los cuatro **sólo P42 tiene frontend detrás**: la reconsulta está
+construida y andando contra el simulador, y es lo único del paquete que la API va a tener que
+sostener. P39, P40 y P41 nacen numerados porque el plan del paquete los numeró, pero sus carriles
+(C1, C2 y C3) **no se entregaron**: no hay pantalla esperándolos, así que no son deuda que
+bloquee nada — son el alcance que quedó escrito. Antes,
+2026-09-16 — **P32 y P33 están CERRADOS**: el backend publicó el consultorio
 propio y el QR bancario por sede, y **el campo viaja en inglés (`isOwnSite`), no como `esPropio`**
 — que es lo que sirve el simulador de esta rama. Ver las dos fichas de abajo. Antes,
 2026-09-13 — **P33 era nuevo**: el QR bancario con el que el profesional cobra
@@ -38,6 +44,10 @@ backend.
 | **P36** | `schedule_templates` no sabe declarar horario **sin turnos fijos** — empieza en el `.puml`, y falta decidir cómo reserva el paciente en ese modo |
 | **P37** | Las **sucursales** de una cadena de farmacias y su disponibilidad pública dada una receta escrita a mano |
 | **P38** | No hay tendencias del muro: `PostListItem` no trae `hashtags` y no existe un recuento por período |
+| **P39** | Filas clave/valor de la nota médica: `entries_json` en `chart.clinical_note_versions` — **nadie lo espera todavía**: el carril C1 no se entregó |
+| **P40** | `based_on_note_ids` y `category` textual en las órdenes de análisis, más el concepto `SR_OTHER` — **carril C2 no entregado** |
+| **P41** | Estados `COND_PROVISIONAL` / `COND_REFUTED` y `POST /clinical/conditions/:id/verification` con motivo y evidencia — **carril C3 no entregado** |
+| **P42** | La **reconsulta**: `follow_up_of_booking_id` en la reserva, `ACT_FOLLOW_UP`, «una reconsulta futura por cita» y el vínculo en `BookingItemDto`. **Esto sí tiene frontend detrás y funcionando contra el simulador** |
 
 ---
 
@@ -1673,3 +1683,83 @@ porque el endpoint no ofrece `sort`.
 
 No es un sustituto permanente: responde «alrededor de qué se organizó la gente», no «de qué
 se está hablando esta semana», que es la pregunta del pedido.
+
+---
+
+## P42 · Reconsulta: el vínculo entre una cita y la consulta de la que salió — 25/09/2026
+
+> **P42 · Reconsulta: el vínculo entre una cita y la consulta de la que salió.**
+> Origen: carril C4 del paquete «Encuentro clínico» (2026-09-25). Hoy todo esto vive **sólo en
+> el simulador del frontend** (`core/mock/handlers/scheduling.handlers.ts`); la API real no
+> conoce ninguna de estas piezas.
+>
+> **1. Esquema — `scheduling.appointment_bookings.follow_up_of_booking_id`**
+> Columna nueva, `uuid NULL`, FK a `scheduling.appointment_bookings(id)`. Es el vínculo, y va en
+> **un solo lado**: la reconsulta apunta a la consulta de la que salió. El sentido inverso se
+> **deriva al leer**; guardarlo en los dos dejaría dos verdades que se pueden contradecir —una
+> cancelación que actualizara un lado y no el otro bastaría para que la cita origen siguiera
+> diciendo que ya tiene reconsulta—. Índice sobre la columna: se consulta en cada lectura de la
+> agenda. Recordar que el DDL se genera desde el `.puml` (regla 97.1): la columna se declara en
+> el modelo, no con un `ALTER TABLE` a mano.
+>
+> **2. Terminología — concepto `ACT_FOLLOW_UP`**
+> Entrada nueva en el value set de tipos de cita (`VS_APPOINTMENT_TYPE` en el simulador, con
+> los códigos `APT-*`). La reconsulta nace con ese `type_concept_id`. Como todo catálogo
+> cerrado, va como concepto codificado y **no** como enum de TypeScript ni etiqueta a mano
+> (regla 97.4.7). Del lado del frontend el rótulo visible es el literal «Reconsulta», así que el
+> concepto no bloquea la pantalla: bloquea poder clasificar y contar reconsultas.
+>
+> **3. Regla de negocio — «una reconsulta por consulta»**
+> `POST /scheduling/appointments/direct` con `followUpOf` responde:
+> - **403** si el `resourceId` no es una agenda del profesional de la sesión;
+> - **404** si la cita de origen no existe;
+> - **422** si el paciente no es el de esa cita, o si `startAt` no es futuro;
+> - **409** si esa consulta ya tiene una reconsulta **por venir** y no cancelada —una ya pasada
+>   no bloquea: citar de nuevo a alguien que ya volvió es legítimo—.
+>
+> La unicidad tiene que ser **de la escritura, no de un `if` previo** (regla 96.3.2): dos
+> peticiones simultáneas con el mismo origen no pueden crear dos reconsultas. Un índice único
+> parcial sobre `follow_up_of_booking_id` filtrado por «no cancelada y futura» no es inmutable
+> —«futura» depende de `now()`—, así que la garantía va por bloqueo del origen dentro de la
+> transacción (`SELECT ... FOR UPDATE` sobre la cita de origen) o por un único parcial sobre los
+> estados vivos. Lo que **no** alcanza es comprobar y después insertar.
+>
+> Los cuatro rechazos corren **sólo cuando `followUpOf` viene**: una cita puntual sin
+> reconsulta se sigue creando exactamente como hoy, que es lo que esperan `appointment-new` y
+> el turno de mostrador.
+>
+> **4. Contrato — `BookingItemDto`**
+> `GET /scheduling/bookings` y `GET /scheduling/bookings/:id` tienen que devolver:
+> - `followUpOf: { bookingId, encounterId, startAt } | null` — **`startAt` es el del origen, ya
+>   resuelto por el servidor.** Sin él, la agenda y «Mis citas» necesitan una petición por fila
+>   para poder decir «de la cita del 12 de septiembre», o se quedan sin poder nombrarla. Es el
+>   único campo del vínculo que no viaja en la escritura.
+> - `followUpBookingId: string | null` — la reconsulta viva de esta cita, derivada al leer.
+>
+> Los dos respetan la misma compuerta de privacidad que `patientName` y `reasonText`: viajan al
+> titular y al profesional de esa agenda. Ausente no es `null`: ausente es «no te corresponde
+> verlo», `null` es «se buscó y no hay».
+>
+> **5. Lo que el frontend ya tiene**
+> `follow-up.types.ts` **ya no existe**: C8 subió `FollowUpOrigin`, `FollowUpOriginRef` y los dos
+> campos del vínculo a `scheduling.types.ts`, que es donde viven los tipos congelados del módulo.
+> El simulador implementa el contrato completo de arriba y sus 24 pruebas lo fijan
+> (`core/mock/handlers/scheduling.handlers.spec.ts`), así que sirve de **especificación
+> ejecutable** para la API. Consumidores hoy: la agenda del profesional, el detalle de la cita,
+> «Mis citas» del paciente y la línea del encuentro de «Mi historia».
+
+---
+
+## P39, P40 y P41 · el alcance del paquete que no llegó a construirse — 25/09/2026
+
+Los tres nacieron con el plan del paquete «Encuentro clínico» y **ninguno tiene pantalla
+esperándolo**: sus carriles no se entregaron. Se escriben para que el número no se reuse y para
+que, cuando alguien retome el carril, no haya que volver a decidir el alcance. Lo de abajo es
+literal del plan maestro (§10), no un contrato ampliado acá.
+
+| # | Carril | Qué falta en la API | Estado del frontend |
+|---|---|---|---|
+| **P39** | C1 · nota médica clave/valor | `entries_json jsonb` en `chart.clinical_note_versions` (o `chart.clinical_note_entries`), aceptado en `POST /charts/notes` y `PUT …/versions`, devuelto en `GET /charts/patients/:id/chart` y en el `GET /charts/notes` de `dev` | **Nada.** La casilla «Notas» abre la hoja libre de siempre. El `TODO C8` de `history-view-model.ts:382` marca dónde entrarían los apartados |
+| **P40** | C2 · órdenes de análisis | `based_on_note_ids` (o `clinical.service_request_notes`) y `category` textual en `POST /clinical/service-requests`; lectura en `GET /diagnostics/patients/:id/orders` y `GET /diagnostic-results/me/orders`; concepto `SR_OTHER` | **Nada.** La línea del encuentro deriva la categoría de la orden con una heurística, anotada en el `TODO C8` de `history-view-model.ts:408` |
+| **P41** | C3 · diagnóstico presuntivo | Estados `COND_PROVISIONAL` y `COND_REFUTED` (hoy sólo `COND_CONFIRMED`), `POST /clinical/conditions/:id/verification` con motivo y evidencia (`note_id` / `service_request_id` / `diagnostic_report_id`), y la regla «al confirmar exige fin esperado o curso crónico y pasa a `COND_ACTIVE`». Camino `.puml` → `gen_ddl.py` → `SQL/` → patch → `gen_entities.py` (ADR-0021) | **Parcial, y del lado del simulador.** C6 reparte los diagnósticos en «en estudio / activas / históricos` resolviendo el estado por **código de catálogo**, así que la pantalla ya sabe leer los tres. Lo que no existe es escribirlos: «quién confirmó» y el motivo escrito quedan en los `TODO C8` de `history-view-model.ts:207` y `:247` |
+
