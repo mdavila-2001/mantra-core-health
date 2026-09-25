@@ -1685,4 +1685,36 @@ describe('PractitionerProfileEdit', () => {
       expect(interno<() => number>('pestana')()).toBe(0);
     });
   });
+
+  /**
+   * «Falta un botón en editar perfil para cancelar edición» (pedido del
+   * propietario, 24/09/2026). Datos personales, Contacto y Facturación son
+   * UN formulario con UN botón de guardar: cancelar descarta lo tipeado en
+   * los tres paneles sin salir de la pantalla ni pegarle a la red.
+   */
+  describe('cancelar la edición de Datos personales, Contacto y Facturación', () => {
+    it('vuelve a sembrar el formulario con lo último guardado, sin pegarle al servidor', () => {
+      montarYCargar({ professionalTitle: 'Cardióloga' });
+
+      señal<string>('titulo').set('Un título a medio escribir');
+      interno<() => void>('cancelarEdicion')();
+
+      expect(señal<string>('titulo')()).toBe('Cardióloga');
+      // `http.verify()` del `afterEach` ya se encarga de que no haya quedado
+      // ninguna petición pendiente — cancelar no debe disparar ninguna.
+    });
+
+    it('no hace nada mientras hay un guardado en curso', () => {
+      montarYCargar({ professionalTitle: 'Cardióloga' });
+
+      señal<string>('titulo').set('Un título a medio escribir');
+      señal<boolean>('guardandoPresentacion').set(true);
+      interno<() => void>('cancelarEdicion')();
+
+      // Cancelar a mitad de un `PATCH` dejaría el formulario mostrando un
+      // valor que la respuesta, todavía en vuelo, podría pisar igual.
+      expect(señal<string>('titulo')()).toBe('Un título a medio escribir');
+      señal<boolean>('guardandoPresentacion').set(false);
+    });
+  });
 });

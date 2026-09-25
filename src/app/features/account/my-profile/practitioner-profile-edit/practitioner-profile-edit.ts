@@ -1038,6 +1038,29 @@ export class PractitionerProfileEdit {
   }
 
   /**
+   * Cancela la edición de Datos personales, Contacto y Facturación.
+   *
+   * No navega a ningún lado: es un formulario repartido en tres pestañas de
+   * la MISMA pantalla, y «cancelar» yéndose obligaría a volver a entrar para
+   * seguir mirando el resto del perfil. Vuelve a sembrar los tres paneles con
+   * lo último que el servidor confirmó —la misma función que ya usa un
+   * guardado exitoso—, así que descarta lo tipeado sin tocar la red.
+   *
+   * Nada mientras hay un guardado en curso: cancelar a mitad de un `PATCH`
+   * dejaría el formulario mostrando un valor que la respuesta, todavía en
+   * vuelo, podría pisar igual.
+   */
+  protected cancelarEdicion(): void {
+    const original = this.datos();
+    if (original === null || this.guardandoPresentacion()) {
+      return;
+    }
+    this.erroresDelServidor.set(new Map());
+    this.sembrarFormulario(original);
+    this.toasts.success('Descartamos los cambios sin guardar.', 'Edición cancelada');
+  }
+
+  /**
    * Guarda la presentación.
    *
    * Sólo se manda lo que cambió respecto de lo cargado: mandar los cuatro
