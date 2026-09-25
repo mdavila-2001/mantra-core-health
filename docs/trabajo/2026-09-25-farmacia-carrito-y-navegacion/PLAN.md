@@ -176,8 +176,21 @@ esta regla 20 sí exige y que sí existe: **el carril 19 (imagenología y centro
 "Lugares cercanos") queda superado por los carriles 41/46 de este plan; imagenología y centros
 cercanos pierden su pantalla propia; «Cómo llegar» de la vitrina pública (fuera de "Mi cuenta") sigue
 existiendo sin cambios.**
-## H7 — Borrar el hub viejo (Ola 3, condicionado a que Justin e Itzan mergeen) — TODO
-## H8 — Regresión y cierre — TODO
+## H7 — Borrar el hub viejo (Ola 3)
+**Estado:** TODO — precondición no cumplida: Justin (tienda, H3) e Itzan (página de farmacia, H4) todavía
+no publicaron en `origin/mockup` (nadie corrió esos carriles en esta sesión). No se declara `BLOQUEADO`
+(es la excepción explícita del prompt §7.4): queda `TODO` con la precondición escrita.
+
+## H8 — Regresión y cierre
+**Estado:** EN CURSO
+
+**Decisión de secuenciamiento (capturas):** H4.S1.M4 y H5.S1.M6 piden capturas de Playwright reales, que
+exigen el stack local completo (Postgres + API de `mantra-core-health-api`, no sólo este front) — no está
+levantado, y levantarlo es costoso para hacerlo una vez por hito. Con el resto del carril de la noche
+(C9/C5/C7, también en este repo) todavía pendiente de UI, se levanta el stack **una sola vez, al final**,
+después de C9/C5/C7, y se capturan todas las pantallas visuales de la noche en un solo pase de
+Playwright. Hasta entonces, H4.S1.M4 y H5.S1.M6 quedan `TODO`, y el peldaño de evidencia de H4/H5 es
+`TESTED` (specs dirigidos en verde) — no `VERIFIED`: falta la prueba visual real.
 
 > Nota de proceso: H3–H8 se detallan en este `PLAN.md` (copiando CA/DoD del prompt fuente) en el momento
 > de abrir cada uno, no todos de antemano, para que el archivo refleje el estado real (regla 50 §4)
