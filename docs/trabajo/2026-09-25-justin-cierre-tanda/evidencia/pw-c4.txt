@@ -1,0 +1,158 @@
+
+Running 10 tests using 1 worker
+
+  x   1 [chromium] › playwright\clinica-c4-reconsulta.spec.ts:74:7 › C4 · la reconsulta se agenda desde la consulta › la casilla abre el bloque con el motivo de la cita ya puesto (3.1m)
+  x   2 [chromium] › playwright\clinica-c4-reconsulta.spec.ts:88:7 › C4 · la reconsulta se agenda desde la consulta › elegir día y horario crea la cita, y el éxito dice para cuándo quedó (3.0m)
+  x   3 [chromium] › playwright\clinica-c4-reconsulta.spec.ts:106:7 › C4 · la reconsulta se agenda desde la consulta › la segunda reconsulta de la misma consulta se rechaza con un mensaje (3.0m)
+  x   4 [chromium] › playwright\clinica-c4-reconsulta.spec.ts:134:7 › C4 · el sello se ve en las dos agendas › en Consultas médicas la fila lleva el sello y de qué consulta salió (25.9s)
+  ok  5 [chromium] › playwright\clinica-c4-reconsulta.spec.ts:149:7 › C4 · el sello se ve en las dos agendas › en «Mis citas» la paciente ve el sello y por qué la citaron de nuevo (9.6s)
+  ok  6 [chromium] › playwright\clinica-c4-reconsulta.spec.ts:161:9 › C4 · el sello se ve en las dos agendas › el sello se lee entero en movil-chico (8.7s)
+  ok  7 [chromium] › playwright\clinica-c4-reconsulta.spec.ts:161:9 › C4 · el sello se ve en las dos agendas › el sello se lee entero en movil (8.8s)
+  ok  8 [chromium] › playwright\clinica-c4-reconsulta.spec.ts:161:9 › C4 · el sello se ve en las dos agendas › el sello se lee entero en tablet (8.8s)
+  ok  9 [chromium] › playwright\clinica-c4-reconsulta.spec.ts:161:9 › C4 · el sello se ve en las dos agendas › el sello se lee entero en escritorio (9.2s)
+  ok 10 [chromium] › playwright\clinica-c4-reconsulta.spec.ts:161:9 › C4 · el sello se ve en las dos agendas › el sello se lee entero en escritorio-ancho (8.5s)
+
+
+  1) [chromium] › playwright\clinica-c4-reconsulta.spec.ts:74:7 › C4 · la reconsulta se agenda desde la consulta › la casilla abre el bloque con el motivo de la cita ya puesto 
+
+    Test timeout of 180000ms exceeded.
+
+    Error: locator.click: Test timeout of 180000ms exceeded.
+    Call log:
+      - waiting for getByRole('link', { name: /iniciar la consulta/i }).first()
+
+
+      66 |   await esperarAQueSeAsiente(page);
+      67 |
+    > 68 |   await page.getByRole('link', { name: /iniciar la consulta/i }).first().click();
+         |                                                                          ^
+      69 |   await page.waitForURL((url) => url.searchParams.has('cita'), { timeout: 30_000 });
+      70 |   await esperarAQueSeAsiente(page);
+      71 | }
+        at abrirConsultaDesdeLaCita (C:\Users\usuario\Documents\Sistema Salud\mantra-core-health\playwright\clinica-c4-reconsulta.spec.ts:68:74)
+        at C:\Users\usuario\Documents\Sistema Salud\mantra-core-health\playwright\clinica-c4-reconsulta.spec.ts:75:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\clinica-c4-reconsulta-C4-·-3e3a5-motivo-de-la-cita-ya-puesto-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\clinica-c4-reconsulta-C4-·-3e3a5-motivo-de-la-cita-ya-puesto-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\clinica-c4-reconsulta-C4-·-3e3a5-motivo-de-la-cita-ya-puesto-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace artifacts\playwright\salida\clinica-c4-reconsulta-C4-·-3e3a5-motivo-de-la-cita-ya-puesto-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › playwright\clinica-c4-reconsulta.spec.ts:88:7 › C4 · la reconsulta se agenda desde la consulta › elegir día y horario crea la cita, y el éxito dice para cuándo quedó 
+
+    Test timeout of 180000ms exceeded.
+
+    Error: locator.click: Test timeout of 180000ms exceeded.
+    Call log:
+      - waiting for getByRole('link', { name: /iniciar la consulta/i }).first()
+
+
+      66 |   await esperarAQueSeAsiente(page);
+      67 |
+    > 68 |   await page.getByRole('link', { name: /iniciar la consulta/i }).first().click();
+         |                                                                          ^
+      69 |   await page.waitForURL((url) => url.searchParams.has('cita'), { timeout: 30_000 });
+      70 |   await esperarAQueSeAsiente(page);
+      71 | }
+        at abrirConsultaDesdeLaCita (C:\Users\usuario\Documents\Sistema Salud\mantra-core-health\playwright\clinica-c4-reconsulta.spec.ts:68:74)
+        at C:\Users\usuario\Documents\Sistema Salud\mantra-core-health\playwright\clinica-c4-reconsulta.spec.ts:89:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\clinica-c4-reconsulta-C4-·-daf2a-xito-dice-para-cuándo-quedó-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\clinica-c4-reconsulta-C4-·-daf2a-xito-dice-para-cuándo-quedó-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\clinica-c4-reconsulta-C4-·-daf2a-xito-dice-para-cuándo-quedó-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace artifacts\playwright\salida\clinica-c4-reconsulta-C4-·-daf2a-xito-dice-para-cuándo-quedó-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › playwright\clinica-c4-reconsulta.spec.ts:106:7 › C4 · la reconsulta se agenda desde la consulta › la segunda reconsulta de la misma consulta se rechaza con un mensaje 
+
+    Test timeout of 180000ms exceeded.
+
+    Error: locator.click: Test timeout of 180000ms exceeded.
+    Call log:
+      - waiting for getByRole('link', { name: /iniciar la consulta/i }).first()
+
+
+      66 |   await esperarAQueSeAsiente(page);
+      67 |
+    > 68 |   await page.getByRole('link', { name: /iniciar la consulta/i }).first().click();
+         |                                                                          ^
+      69 |   await page.waitForURL((url) => url.searchParams.has('cita'), { timeout: 30_000 });
+      70 |   await esperarAQueSeAsiente(page);
+      71 | }
+        at abrirConsultaDesdeLaCita (C:\Users\usuario\Documents\Sistema Salud\mantra-core-health\playwright\clinica-c4-reconsulta.spec.ts:68:74)
+        at C:\Users\usuario\Documents\Sistema Salud\mantra-core-health\playwright\clinica-c4-reconsulta.spec.ts:107:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\clinica-c4-reconsulta-C4-·-912d2-a-se-rechaza-con-un-mensaje-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\clinica-c4-reconsulta-C4-·-912d2-a-se-rechaza-con-un-mensaje-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\clinica-c4-reconsulta-C4-·-912d2-a-se-rechaza-con-un-mensaje-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace artifacts\playwright\salida\clinica-c4-reconsulta-C4-·-912d2-a-se-rechaza-con-un-mensaje-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium] › playwright\clinica-c4-reconsulta.spec.ts:134:7 › C4 · el sello se ve en las dos agendas › en Consultas médicas la fila lleva el sello y de qué consulta salió 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByTestId('cita-reconsulta-sello').first()
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for getByTestId('cita-reconsulta-sello').first()
+
+
+      138 |
+      139 |     const sello = page.getByTestId('cita-reconsulta-sello').first();
+    > 140 |     await expect(sello).toBeVisible();
+          |                         ^
+      141 |     await expect(sello).toHaveText('Reconsulta');
+      142 |     await expect(page.getByText(/de la cita del/i).first()).toBeVisible();
+      143 |   });
+        at C:\Users\usuario\Documents\Sistema Salud\mantra-core-health\playwright\clinica-c4-reconsulta.spec.ts:140:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\clinica-c4-reconsulta-C4-·-2c4b7-llo-y-de-qué-consulta-salió-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\clinica-c4-reconsulta-C4-·-2c4b7-llo-y-de-qué-consulta-salió-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\clinica-c4-reconsulta-C4-·-2c4b7-llo-y-de-qué-consulta-salió-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace artifacts\playwright\salida\clinica-c4-reconsulta-C4-·-2c4b7-llo-y-de-qué-consulta-salió-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    [chromium] › playwright\clinica-c4-reconsulta.spec.ts:74:7 › C4 · la reconsulta se agenda desde la consulta › la casilla abre el bloque con el motivo de la cita ya puesto 
+    [chromium] › playwright\clinica-c4-reconsulta.spec.ts:88:7 › C4 · la reconsulta se agenda desde la consulta › elegir día y horario crea la cita, y el éxito dice para cuándo quedó 
+    [chromium] › playwright\clinica-c4-reconsulta.spec.ts:106:7 › C4 · la reconsulta se agenda desde la consulta › la segunda reconsulta de la misma consulta se rechaza con un mensaje 
+    [chromium] › playwright\clinica-c4-reconsulta.spec.ts:134:7 › C4 · el sello se ve en las dos agendas › en Consultas médicas la fila lleva el sello y de qué consulta salió 
+  6 passed (10.7m)
+EXIT=1
