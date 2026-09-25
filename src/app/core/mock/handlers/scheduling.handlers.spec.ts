@@ -426,7 +426,14 @@ describe('handlers de reconsulta (cita directa con followUpOf)', () => {
     );
 
     const reconsulta = listado.body.items.find((i) => i.id === body.bookingId)!;
-    expect(reconsulta.followUpOf).toEqual({ bookingId: origen.id, encounterId: null });
+    // La lectura resuelve **cuándo** fue la consulta de origen, que es lo que
+    // el contrato declara en `FollowUpOriginRef.startAt` y lo que permite decir
+    // «de la cita del 12 de septiembre» sin una petición por fila.
+    expect(reconsulta.followUpOf).toEqual({
+      bookingId: origen.id,
+      encounterId: null,
+      startAt: origen.startAt,
+    });
 
     const laDeOrigen = listado.body.items.find((i) => i.id === origen.id)!;
     expect(laDeOrigen.followUpBookingId).toBe(body.bookingId);
@@ -440,7 +447,11 @@ describe('handlers de reconsulta (cita directa con followUpOf)', () => {
       'GET',
       `/scheduling/bookings/${body.bookingId}`,
     );
-    expect(detalle.body.followUpOf).toEqual({ bookingId: origen.id, encounterId: null });
+    expect(detalle.body.followUpOf).toEqual({
+      bookingId: origen.id,
+      encounterId: null,
+      startAt: origen.startAt,
+    });
     // La reconsulta recién creada no tiene todavía una propia.
     expect(detalle.body.followUpBookingId).toBeNull();
 
