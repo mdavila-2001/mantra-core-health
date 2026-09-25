@@ -72,6 +72,48 @@ export interface PharmacyProductSearchQuery {
   readonly search?: string;
   /** Medicamento del vademécum (`medication_concept_id`). */
   readonly conceptId?: string;
+  /**
+   * Sólo lo publicado por esta farmacia. Lo agrega «Farmacia» (pestaña
+   * Comprar, 25/09/2026) para mostrar el catálogo de una sede elegida — sin
+   * este filtro la búsqueda mezcla las de todas.
+   */
+  readonly pharmacyId?: string;
+  readonly limit?: number;
+}
+
+/**
+ * Una sede publicada, con su ubicación — a diferencia de
+ * {@link AvailabilitySite}, que sólo existe evaluada contra productos
+ * concretos, ésta se lista suelta: es lo que «elegir farmacia» necesita
+ * antes de que la persona haya buscado nada.
+ */
+export interface PharmacySite {
+  readonly siteId: string;
+  readonly siteName: string;
+  readonly pharmacyId: string;
+  readonly pharmacyName: string;
+  readonly addressText: string | null;
+  readonly latitude: number | null;
+  readonly longitude: number | null;
+  /** Distancia Haversine en km al origen consultado; `null` sin origen. */
+  readonly distanceKm: number | null;
+  readonly homeDeliveryAvailable: boolean | null;
+  readonly pickupAvailable: boolean | null;
+  readonly productCount: number;
+}
+
+/** La página de la lista de sedes. */
+export interface PharmacySitePage {
+  readonly items: readonly PharmacySite[];
+  readonly count: number;
+}
+
+/** Los filtros de la lista de sedes. Sin ninguno, lista todas por nombre. */
+export interface PharmacySiteQuery {
+  /** Texto a buscar en el nombre de la farmacia o la sede. */
+  readonly search?: string;
+  /** Con origen, la lista sale ordenada por cercanía. */
+  readonly origin?: GeoPoint;
   readonly limit?: number;
 }
 

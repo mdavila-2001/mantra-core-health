@@ -274,14 +274,46 @@ export function registrarFarmacia(router: MockRouter): void {
   router.get('/pharmacy/products', ({ query }) => {
     const q = texto(query, 'search');
     const conceptId = texto(query, 'conceptId');
+    const pharmacyId = texto(query, 'pharmacyId');
     const limit = Number(query.get('limit') ?? 50) || 50;
     const items = productos
       .todos()
       .filter((p) => contiene(p.brandName, q) || contiene(p.genericName, q) || contiene(p.productCode, q))
       .filter((p) => conceptId === null || p.medicationConceptId === conceptId)
+      .filter((p) => pharmacyId === null || p.pharmacyId === pharmacyId)
       .slice(0, limit)
       .map(({ medicationConceptId: _m, price: _p, stock: _s, ...p }) => p);
     return { items, limit, truncated: items.length >= limit };
+  });
+
+  // «Farmacia» · pestaña Comprar (25/09/2026): sedes sueltas, con su
+  // ubicación, sin exigir productos de antemano. Reusa `FARMACIAS` y
+  // `distanciaKm` tal cual los usa `/pharmacy-inventory/availability` — es
+  // el mismo dato, sólo que acá se lista sin evaluarlo contra nada.
+  router.get('/pharmacy/sites', ({ query }) => {
+    const q = texto(query, 'search');
+    const latTexto = query.get('lat');
+    const lngTexto = query.get('lng');
+    const origen = latTexto === null || lngTexto === null ? null : { lat: Number(latTexto), lng: Number(lngTexto) };
+    const limit = Number(query.get('limit') ?? 50) || 50;
+    const items = FARMACIAS
+      .filter((f) => contiene(f.name, q) || contiene(f.siteName, q))
+      .map((f) => ({
+        siteId: f.siteId,
+        siteName: f.siteName,
+        pharmacyId: f.id,
+        pharmacyName: f.name,
+        addressText: f.addressText,
+        latitude: f.lat,
+        longitude: f.lng,
+        distanceKm: origen === null ? null : distanciaKm(origen.lat, origen.lng, f.lat, f.lng),
+        homeDeliveryAvailable: f.homeDelivery,
+        pickupAvailable: true,
+        productCount: productos.filtrar((p) => p.pharmacyId === f.id).length,
+      }))
+      .sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity) || a.pharmacyName.localeCompare(b.pharmacyName, 'es'))
+      .slice(0, limit);
+    return { items, count: items.length };
   });
 
   router.get('/pharmacy-inventory/availability', ({ query }) => {

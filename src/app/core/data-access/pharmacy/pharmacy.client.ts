@@ -9,6 +9,8 @@ import type {
   PharmacyDirectoryPage,
   PharmacyProductSearchPage,
   PharmacyProductSearchQuery,
+  PharmacySitePage,
+  PharmacySiteQuery,
 } from './pharmacy.types';
 
 /**
@@ -56,6 +58,28 @@ export class PharmacyClient {
       params = params.set(clave, String(valor));
     }
     return this.http.get<PharmacyProductSearchPage>(this.url('/pharmacy/products'), { params });
+  }
+
+  /**
+   * `GET /pharmacy/sites` — las sedes publicadas, sueltas.
+   *
+   * A diferencia de {@link availability}, no exige productos: es lo que
+   * «elegir farmacia» (pestaña Comprar de «Farmacia», 25/09/2026) necesita
+   * antes de que la persona haya buscado nada — ver farmacias cercanas o
+   * buscar una por nombre.
+   */
+  nearbySites(query: PharmacySiteQuery = {}): Observable<PharmacySitePage> {
+    let params = new HttpParams();
+    if (query.search !== undefined && query.search !== '') {
+      params = params.set('search', query.search);
+    }
+    if (query.origin !== undefined) {
+      params = params.set('lat', String(query.origin.lat)).set('lng', String(query.origin.lng));
+    }
+    if (query.limit !== undefined) {
+      params = params.set('limit', String(query.limit));
+    }
+    return this.http.get<PharmacySitePage>(this.url('/pharmacy/sites'), { params });
   }
 
   /**
