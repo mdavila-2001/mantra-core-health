@@ -47,11 +47,13 @@ lo escriba o se corrija la instrucción de los prompts.
 ## Entrega — PR #682
 
 `gh pr view 682 --json ...` → `mergeable: MERGEABLE`, `mergeStateStatus: UNSTABLE`,
-`reviewDecision: ""` (evidencia literal en `evidencia/h4-pr-checks.txt`). El `UNSTABLE` es por los
+`reviewDecision: ""` (evidencia literal en `evidencia/h4-pr-checks.txt`). El `UNSTABLE` fue por los
 tres checks (`dependencias`, `e2e`, `verificar`) en `pending`, no en `fail` — el runner propio de CI
-está caído (memoria conocida: "El CI no corre"), no un fallo introducido por este trabajo. La entrega
-queda a un check verde/una review de distancia de `MERGEABLE` limpio; no depende de código nuevo de
-este carril.
+está caído (memoria conocida: "El CI no corre"), no un fallo introducido por este trabajo.
+
+**Actualización:** `gh pr view 682 --json state` → **`MERGED`**. El propietario lo mergeó a `mockup`
+verificado (`git show origin/mockup:src/app/features/progress-notes/progress-notes.html` contiene
+«Notas médicas»). C7 queda completamente integrado.
 
 ## Pendiente
 

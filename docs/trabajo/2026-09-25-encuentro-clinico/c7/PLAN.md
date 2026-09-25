@@ -64,7 +64,9 @@ prompt: nada de "hoja en blanco" ni "nota clínica" **visible**) sí se cumple.
 **Estado:** HECHO — commits por carpeta/archivo, push a `claude/clinica-c7-nombres`, PR #682 a
 `mockup` (reviewers `jsaldias39`, `PabloArauzCaballero`), `REPORTE.md` escrito.
 `mergeable: MERGEABLE` / `mergeStateStatus: UNSTABLE` (checks del runner propio en `pending`, caído
-— ver `evidencia/h4-pr-checks.txt` y `REPORTE.md` §"Entrega").
+— ver `evidencia/h4-pr-checks.txt` y `REPORTE.md` §"Entrega"). **PR #682 mergeado a `mockup`** —
+confirmado con `gh pr view 682 --json state` → `MERGED` y con el contenido real presente en
+`origin/mockup`.
 
 **Reconsulta post-PR:** mientras esto se cerraba, PR #677 (C9) y PR #679 (C5) se mergearon a
 `mockup` (`963b7283` → `9fa933be`), y Farmacia tocó `navigation.{map,subgroups}.ts` y
