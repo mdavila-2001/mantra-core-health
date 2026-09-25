@@ -185,6 +185,13 @@
                   </figure>
                 }
 
+                <!-- Carril 43 · H5: lo que no entró al carrito, por su nombre. -->
+                @if (avisoDelCarrito(); as aviso) {
+                  <p class="compra__aviso-carrito" data-testid="compra-aviso-carrito" role="status">
+                    {{ aviso }}
+                  </p>
+                }
+
                 <ul class="compra__sedes" data-testid="compra-sedes">
                   @for (sede of sedesOrdenadas(); track sede.codigo) {
                     <li
@@ -273,6 +280,19 @@
                             {{ sede.completa ? 'Tiene todo' : 'Le falta algo' }}
                           </app-badge>
                         }
+                        <button
+                          app-button
+                          variant="secondary"
+                          size="sm"
+                          type="button"
+                          data-testid="where-to-buy-add-to-cart"
+                          [attr.aria-label]="
+                            'Agregar la receta al carrito: ' + sede.farmacia + ' · ' + sede.sede
+                          "
+                          (clicked)="agregarRecetaAlCarrito(sede)"
+                        >
+                          Agregar la receta al carrito
+                        </button>
                         <button
                           app-button
                           variant="primary"

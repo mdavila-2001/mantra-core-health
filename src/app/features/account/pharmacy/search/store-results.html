@@ -1,0 +1,40 @@
+<ul class="sedes" [attr.data-testid]="testids.searchResults">
+  @for (sede of items(); track porId(sede)) {
+    <li class="sede">
+      <div class="sede__quien">
+        <p class="sede__farmacia">{{ sede.pharmacyName }}</p>
+        <p class="sede__nombre">{{ sede.siteName }}</p>
+        @if (sede.addressText) {
+          <p class="sede__direccion">{{ sede.addressText }}</p>
+        }
+      </div>
+
+      <div class="sede__datos">
+        <p class="sede__distancia" [class.sede__distancia--ausente]="sede.distanceKm === null">
+          {{ distanciaDe(sede) }}
+        </p>
+        @if (desdeDe(sede)) {
+          <p class="sede__desde">{{ desdeDe(sede) }}</p>
+        }
+      </div>
+
+      <a
+        app-button
+        variant="secondary"
+        size="sm"
+        [attr.data-testid]="testids.resultStore"
+        [routerLink]="rutaDeTienda(sede)"
+        [queryParams]="parametrosDeTienda(sede)"
+        [attr.aria-label]="'Entrar a ' + sede.pharmacyName + ' · ' + sede.siteName"
+      >
+        Entrar
+      </a>
+    </li>
+  }
+</ul>
+
+@if (sinOrigen()) {
+  <p class="sedes__aviso" role="status">
+    Estas farmacias no están ordenadas por cercanía: falta elegir desde dónde medir.
+  </p>
+}
