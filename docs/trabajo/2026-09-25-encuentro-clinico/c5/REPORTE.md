@@ -1,9 +1,17 @@
 # Reporte — C5: receta siempre ligada a un diagnóstico confirmado, o con motivo plano
 
-> **AVANCE: 8 / 9 — 88,9 %.** (H1, H2.M1, H3.M1-M4 hechos; falta H4/H5 — Playwright corrido y cierre del PR)
+> **AVANCE: 8 / 9 — 88,9 %.** (H1, H2.M1, H3.M1-M4, H5 hechos; H4 — Playwright — corrido de verdad y
+> A MEDIAS: encontró y corrigió 5 bugs propios del spec, pero descubrió que el badge de vínculo
+> nunca aparece porque la receta queda en `Borrador` sin firmar — ver `PLAN.md` §H4 y
+> `evidencia/c5-receta-playwright.md`)
 
-- Fecha: 2026-09-25 · Plan: [PLAN.md](./PLAN.md) · Rama: `claude/clinica-c5-receta`
-- Peldaño de evidencia alcanzado: **TESTED** por área (specs dirigidos en verde: mock handler 10/10, `medication-block` 63/63, `clinical-pdf` 45/45). **No** `VERIFIED`: falta la prueba visual real y el E2E corrido, diferidos al pase final de la noche.
+- Fecha: 2026-09-25 · Plan: [PLAN.md](./PLAN.md) · Rama: `claude/clinica-c5-receta` (mergeada, PR
+  #679) → fixes de Playwright en `pablo/fix-clinica-c5-receta-spec`
+- Peldaño de evidencia alcanzado: **TESTED** por área (specs dirigidos en verde: mock handler 10/10,
+  `medication-block` 63/63, `clinical-pdf` 45/45) + `VERIFIED_FUNCTIONAL_ONLY` parcial en Playwright:
+  `prescription-official-pdf.spec.ts` 1/2 (el fallo es ajeno y pre-existente); `clinica-c5-receta.spec.ts`
+  corregido de un 404 instantáneo a ejercitar el flujo real completo, bloqueado en la aserción final
+  por el hallazgo de "Borrador sin firmar" (no arreglado esta noche, ver evidencia).
 
 ## Completado
 
