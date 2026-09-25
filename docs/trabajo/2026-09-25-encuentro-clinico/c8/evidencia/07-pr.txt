@@ -1,0 +1,16 @@
+$ git push -u origin claude/clinica-c8-integracion
+ * [new branch]        claude/clinica-c8-integracion -> claude/clinica-c8-integracion
+
+$ gh pr create --base mockup --head claude/clinica-c8-integracion --title "feat(integracion): C8 …"
+https://github.com/mdavila-2001/mantra-core-health/pull/678
+
+$ gh pr view 678 --json number,url,isDraft,mergeable,mergeStateStatus,baseRefName,headRefName
+{"baseRefName":"mockup","headRefName":"claude/clinica-c8-integracion","isDraft":false,
+ "mergeStateStatus":"UNSTABLE","mergeable":"MERGEABLE","number":678,
+ "url":"https://github.com/mdavila-2001/mantra-core-health/pull/678"}
+
+`mergeable: MERGEABLE` y `isDraft: false`, que es lo que pide el DoD.
+
+`mergeStateStatus: UNSTABLE` NO es un rojo: son los tres checks del repo en
+`QUEUED` sin runner (`EXTERNAL`, regla 80.4) — el mismo estado que los PR #672,
+#673, #674 y #675 de la misma noche. Ninguna corrida arrancó.
