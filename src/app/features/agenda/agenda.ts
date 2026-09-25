@@ -1095,6 +1095,11 @@ export class Agenda {
     return acciones;
   }
 
+  /** Las de la fila menos «Ver detalle»: dentro del detalle ya se lo está viendo. */
+  protected accionesDelDetalle(cita: CitaVisible): readonly RowAction[] {
+    return this.accionesDe(cita).filter((accion) => accion.code !== 'agenda-detalle');
+  }
+
   /** De qué fila son las acciones, para su nombre accesible. */
   protected filaDe(cita: CitaVisible): string {
     return cita.cuando === null

@@ -272,7 +272,11 @@ function generarCupos(): CupoSimulado[] {
         const inicio = fecha(dia, Math.floor(m / 60), m % 60);
         const fin = new Date(inicio.getTime() + (regla.slotMinutes ?? plantilla.slotMinutes) * 60_000);
         cupos.push({
-          id: uuid(`slot-${plantilla.id}-${dia}-${m}`),
+          // Por FECHA, no por distancia a hoy: las reservas sobreviven a F5 en
+          // `sessionStorage` y los cupos se regeneran; con `dia` relativo, al
+          // día siguiente cada id apuntaba a otro día y ninguna reserva guardada
+          // casaba con su cupo — el día entero salía «No disponible».
+          id: uuid(`slot-${plantilla.id}-${isoDia(dia)}-${m}`),
           resourceId: plantilla.resourceId,
           scheduleTemplateId: plantilla.id,
           startAt: inicio.toISOString(),
@@ -471,8 +475,6 @@ function sembrarCupoPorLiberarse(): void {
 
 export const reservas = new Coleccion<ReservaSimulada>(generarReservas());
 
-sembrarCupoPorLiberarse();
-
 /* ---- bloqueos ------------------------------------------------------------- */
 
 export const bloqueos = new Coleccion<BloqueoSimulado>([
@@ -554,3 +556,23 @@ plantillas.persistirEn('mock.agenda.plantillas');
 reservas.persistirEn('mock.agenda.reservas');
 bloqueos.persistirEn('mock.agenda.bloqueos');
 listaDeEspera.persistirEn('mock.agenda.listaDeEspera');
+
+/* Los cupos no se guardan y las reservas sí: la capacidad libre de cada cupo se
+   recalcula desde las reservas que quedaron, no desde las que se generaron al
+   cargar. Si no, un cupo marcado como tomado por una reserva que ya no existe
+   —o libre bajo una que sí— dice lo contrario de lo que muestra la agenda. */
+function sincronizarCapacidadConReservas(): void {
+  const ocupados = new Map<string, number>();
+  for (const r of reservas.todos()) {
+    if (r.statusConceptId === ESTADO_RESERVA['BK-CANCELLED'] || r.statusConceptId === ESTADO_RESERVA['BK-REJECTED']) continue;
+    ocupados.set(r.bookableSlotId, (ocupados.get(r.bookableSlotId) ?? 0) + 1);
+  }
+  for (const cupo of cupos.todos()) {
+    cupos.actualizar(cupo.id, { remainingCapacity: Math.max(0, cupo.capacity - (ocupados.get(cupo.id) ?? 0)) });
+  }
+}
+
+// Después de recuperar lo guardado: nace «nueve minutos antes de ahora» en
+// cada carga, y una copia guardada de otra hora ya no sirve para el recorrido.
+sembrarCupoPorLiberarse();
+sincronizarCapacidadConReservas();

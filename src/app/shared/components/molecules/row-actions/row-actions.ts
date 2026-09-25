@@ -73,12 +73,18 @@ export class RowActions {
   /** El texto visible del disparador cuando las acciones van al desplegable. */
   readonly label = input<string>('Acciones');
 
+  /**
+   * Todas a la vista, sin desplegable. Para un modal: el panel del menú se
+   * muda al `<body>`, que detrás de un `<dialog>` abierto queda inerte.
+   */
+  readonly inline = input<boolean>(false);
+
   /** Emite el `code` de la acción elegida, venga del botón o del menú. */
   readonly actionSelected = output<string>();
 
   /** Con tres o más, la fila no las aguanta: van al desplegable. */
   protected readonly collapses = computed(
-    () => this.actions().length > ROW_ACTIONS_INLINE_MAX,
+    () => !this.inline() && this.actions().length > ROW_ACTIONS_INLINE_MAX,
   );
 
   protected readonly triggerLabel = computed(() => {
