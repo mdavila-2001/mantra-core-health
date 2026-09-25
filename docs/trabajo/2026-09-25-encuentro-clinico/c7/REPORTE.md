@@ -1,11 +1,22 @@
 # Reporte — C7: homogeneización de nombres, «Notas médicas», adiós a la hoja en blanco
 
-> **AVANCE: 6 / 8 — 75,0 %.**
+> **AVANCE: 7 / 8 — 87,5 %.**
 
 - Fecha: 2026-09-25 · Plan: [PLAN.md](./PLAN.md) · Rama: `claude/clinica-c7-nombres`
-- Peldaño de evidencia alcanzado: `TESTED` en todas las áreas tocadas (typecheck + build + tests
-  dirigidos en verde, con salida pegada). No `VERIFIED`: nada de esto se ejercitó en navegador
-  todavía — ver H3 y "No cubierto".
+- Peldaño de evidencia alcanzado: **`VERIFIED_FUNCTIONAL_ONLY`** para «Notas médicas» (Playwright real
+  corrido, PASS, tema claro en 5 viewports, doble revisión hecha — falta tema oscuro). `TESTED` para
+  el resto de las áreas tocadas (typecheck + build + tests dirigidos en verde). `observation-block` y
+  el envoltorio `free-note-block`→`measurement-grid` dentro de la consulta siguen en `TESTED`: no se
+  pudieron ejercitar en navegador esta noche por un bloqueo ajeno (ver H3.M1 abajo).
+
+**Corrección sobre un supuesto anterior de este mismo reporte:** se creía que el pase de Playwright
+necesitaba levantar Postgres + `mantra-core-health-api`. Es falso — la rama `mockup` corre contra el
+interceptor propio del front, sin backend. Lo que sí faltaba, y no se había detectado antes, es que
+**`scripts/pw-guard.mjs` no existe en el repo**: los tres prompts clínicos (C9, C5, C7) lo dan por
+escrito y corriendo, pero nadie lo escribió nunca. Se corrió con el mecanismo real del repo en su
+lugar: `ng serve --port <PUERTO>` + `E2E_BASE_URL=http://localhost:<PUERTO> npx playwright test
+<spec>` (`playwright.config.ts:41` ya lee esa variable). Esto se avisa en el daily para que alguien
+lo escriba o se corrija la instrucción de los prompts.
 
 ## Completado
 
@@ -16,21 +27,22 @@
 | C7.H2.M2 | `observation-block`: «Medición», «Registrar una medición», «Qué se midió», «¿En qué consulta se tomó?» | `ng test --include=.../observation-block/*.spec.ts --include=.../measurement-grid/*.spec.ts` | 2 files / 26 tests OK (`evidencia/h2m2-test.txt`) |
 | C7.H2.M3 | `progress-notes` → «Notas médicas»: título, `maxHeight` + `app-pagination` local (ADR-0015), renombres `AttendedEncounter`/`MedicalNoteRow`, todos los rótulos y testids de UI | `ng test --include=src/app/features/progress-notes/*.spec.ts` | 1 file / 16 tests OK (`evidencia/h2m3-test.txt`); kill-test acotado a la carpeta = 0 (`evidencia/h2m3-killtest.txt`) |
 | C7.H2.M4 | `procedures-block.html` («Nota clínica»→«Nota médica»), `faker/clinico.ts` (`notaDeEvolucion`→`textoDeNotaMedica` + constante privada) y su export; `care-plan-block`, `toast-samples.ts`, `aviso-ficha-medica.spec.ts` sin términos viejos | `ng test` (4 `--include`) | 5 files / 66 tests OK (`evidencia/h2m4-test.txt`) |
-| C7.H4 (parcial) | Regresión ampliada de todo lo tocado + `navigation.service.spec.ts` (fila «Evoluciones»→«Notas médicas», rota por el cambio de H1) | `ng test` (9 `--include`), `corepack yarn typecheck`, `corepack yarn build` | 15 files / 234 tests OK (`evidencia/h4-regresion.txt`); typecheck exit 0 (`evidencia/h4-typecheck.txt`); build sin errores |
+| C7.H4 (parcial) | Regresión ampliada de todo lo tocado + `navigation.service.spec.ts` (fila «Evoluciones»→«Notas médicas», rota por el cambio de H1); merge de `origin/mockup` (C9 #677 y C5 #679 ya integrados) y re-verificación completa | `ng test` (9 `--include`), `corepack yarn typecheck`, `corepack yarn build` | 15 files / 235 tests OK post-merge (`evidencia/h4-regresion-post-merge.txt`); typecheck exit 0; build sin errores |
+| C7.H3.M1 | Playwright de «Notas médicas» corrido de verdad contra `ng serve` | `E2E_BASE_URL=http://localhost:4217 npx playwright test playwright/clinica-c7-notas-medicas-pdf.spec.ts` | **PASS** (8.3 s) — heading «Notas médicas», botón PDF, 0 desborde en 5 viewports, descarga real, consola limpia (`evidencia/playwright/pdf-premium/`) |
 
 ## A medias
 
-### C7.H3.M1 — Playwright: renombre y ajuste de specs
-- Qué anda: `playwright/pdf-premium-evoluciones.spec.ts` → `playwright/clinica-c7-notas-medicas-pdf.spec.ts` (`git mv`), con el título del test, el `heading` esperado, los nombres de captura y los mensajes de aserción actualizados a «Notas médicas». `consulta-rejilla.spec.ts` y `formularios-cuadricula.spec.ts` fueron revisados: ninguno necesitaba cambios (ver "Decisiones y ambigüedades"). `tsc -p playwright/tsconfig.json --noEmit` da exit 0.
-- Qué no anda: ninguno de los tres specs se corrió contra un navegador real esta noche.
-- Qué falta exactamente: `node scripts/pw-guard.mjs --port 4217 --spec playwright/clinica-c7-notas-medicas-pdf.spec.ts --spec playwright/consulta-rejilla.spec.ts --serve`, con Postgres + `mantra-core-health-api` arriba, en el pase final consolidado de la noche (mismo criterio ya usado en Farmacia/C9/C5, para no levantar el stack completo cuatro veces).
-- Dónde quedó: rama `claude/clinica-c7-nombres`, compila, sin ejecutar.
+### C7.H3.M1 — `consulta-rejilla.spec.ts`, bloqueado por un archivo ajeno
+- Qué anda: se corrió de verdad (`ng serve --port 4217` + Playwright). `clinica-c7-notas-medicas-pdf.spec.ts` da `PASS`.
+- Qué no anda: `consulta-rejilla.spec.ts` da `FAIL` — timeout en `/medical-records` esperando `getByRole('textbox', {name:'Buscar por nombre o código'})`. El campo real tiene `label="Nombre o código"` (`clinical-record.html:29`, commit `15e93630`, muy anterior a esta noche): un locator desactualizado en un archivo fuera de mi alcance, no una regresión de C7.
+- Qué falta exactamente: que quien pueda tocar `clinical-record.html` o `consulta-rejilla.spec.ts` corrija el locator. Mientras tanto, las dos casillas que a C7 le interesaban de ese spec (`observaciones`→«Registrar una observación», `notas`→«Escribir una nota clínica», ambas en `consultation.ts`, también ajeno) **no se pudieron verificar visualmente** esta noche: el spec nunca llega a esa pantalla.
+- Dónde quedó: `claude/clinica-c7-nombres`, evidencia en `evidencia/playwright/consulta-rejilla-fallo/`.
 
-### C7.H3.M2 — Capturas de «Notas médicas» y doble revisión crítica
-- Qué anda: nada todavía — no se empezó.
-- Qué no anda: no hay capturas.
-- Qué falta exactamente: cinco viewports, claro/oscuro, con la doble revisión (regla 35) sobre las capturas finales, en el mismo pase consolidado de H3.M1.
-- Dónde quedó: `TODO` en `PLAN.md`.
+### C7.H3.M2 — Tema oscuro de «Notas médicas»
+- Qué anda: tema claro, 5 viewports, corrido y con doble revisión — **APROBADA** (`evidencia/doble-revision.md`).
+- Qué no anda: tema oscuro no se capturó — el spec existente no lo alterna.
+- Qué falta exactamente: un test o una corrida manual con `data-theme="dark"` en los mismos 5 viewports, con su propia doble revisión.
+- Dónde quedó: `A MEDIAS` en `PLAN.md`.
 
 ## Entrega — PR #682
 
@@ -45,8 +57,8 @@ este carril.
 
 | ID | Estado | Qué lo destraba |
 |---|---|---|
-| C7.H3.M1 (ejecución) | A MEDIAS | Levantar el stack (`ng serve` puerto 4217 + Postgres + API) para el pase consolidado de Playwright de la noche |
-| C7.H3.M2 | TODO | Depende de C7.H3.M1 ejecutado |
+| C7.H3.M1 (`consulta-rejilla.spec.ts`) | BLOQUEADO | Locator desactualizado en `clinical-record.html`/`consulta-rejilla.spec.ts`, ajeno a C7 |
+| C7.H3.M2 (tema oscuro) | TODO | Escribir/correr una variante con `data-theme="dark"` |
 | Rename de `FreeNoteBlock`/`app-free-note-block` a `measurement-grid` en `patient-chart.ts` | BLOQUEADO | `patient-chart.ts` es de C3, congelado esta noche — ver "Desvíos del plan" |
 | Renombrar los títulos de modal «Observación»/«Nota clínica» en `consultation.ts` | BLOQUEADO | `consultation.ts` está explícitamente fuera de mi ficha («ARCHIVOS DE OTROS») |
 | Renombrar el nombre de archivo del PDF (`evoluciones-<fecha>.pdf`) en `progress-notes-pdf.ts` | BLOQUEADO / A CONFIRMAR | El archivo no está en mis `ARCHIVOS RESERVADOS`; a confirmar con C8 si debía serlo |
@@ -66,23 +78,31 @@ exit 0 — 549 componentes, 306 pantallas (evidencia/h4-typecheck.txt)
 $ corepack yarn build 2>&1 | grep -iE "error|✘"
 (sin salida = build limpio)
 
-$ ng test (9 --include, todo lo tocado por C7)
+$ ng test (9 --include, todo lo tocado por C7, post-merge de origin/mockup)
 Test Files  15 passed (15)
-     Tests  234 passed (234)
-(evidencia/h4-regresion.txt)
+     Tests  235 passed (235)
+(evidencia/h4-regresion-post-merge.txt)
+
+$ E2E_BASE_URL=http://localhost:4217 npx playwright test playwright/clinica-c7-notas-medicas-pdf.spec.ts
+1 passed (8.3s)
+(evidencia/playwright/pdf-premium/)
 ```
 
 Archivos completos de evidencia: `evidencia/inventario.md`, `evidencia/inventario-conteo.txt`,
 `evidencia/free-note-block-grep.txt`, `evidencia/h2m1-test.txt`, `evidencia/h2m2-test.txt`,
 `evidencia/h2m3-test.txt`, `evidencia/h2m3-killtest.txt`, `evidencia/h2m4-test.txt`,
-`evidencia/h4-regresion.txt`, `evidencia/h4-typecheck.txt`, `evidencia/h4-lint.txt`.
+`evidencia/h4-regresion.txt`, `evidencia/h4-regresion-post-merge.txt`, `evidencia/h4-typecheck.txt`,
+`evidencia/h4-lint.txt`, `evidencia/h4-pr-checks.txt`, `evidencia/doble-revision.md`,
+`evidencia/playwright/pdf-premium/`, `evidencia/playwright/consulta-rejilla-fallo/`.
 
 ## No cubierto
 
-- Nada de esto se abrió en un navegador esta noche: ni el modal de «Registrar una medición», ni la
-  pantalla «Notas médicas» con datos reales, ni el envoltorio `free-note-block` dentro de la
-  consulta de verdad. Todo lo `HECHO` de arriba es peldaño `TESTED` (unitarios dirigidos + build),
-  no `VERIFIED`.
+- El modal «Registrar una medición» (`observation-block`) y el envoltorio `free-note-block`→
+  `measurement-grid` dentro de una consulta real no se abrieron en navegador esta noche: el único
+  spec que llega ahí (`consulta-rejilla.spec.ts`) falla antes, en un paso ajeno a C7. Siguen en
+  peldaño `TESTED` (unitarios dirigidos + build), no `VERIFIED`.
+- «Notas médicas» sí se verificó en navegador (tema claro, 5 viewports, PASS) — es la única pieza de
+  C7 en peldaño `VERIFIED_FUNCTIONAL_ONLY`. Falta el tema oscuro.
 - No se verificó accesibilidad (foco, lector de pantalla) sobre `app-pagination` recién agregado a
   `progress-notes`, más allá de lo que ya cubre el propio componente compartido.
 - No se corrió la suite completa (`yarn test`) — por la inestabilidad ya documentada de esta
@@ -137,3 +157,15 @@ Archivos completos de evidencia: `evidencia/inventario.md`, `evidencia/inventari
 3. **`shared/utils/progress-notes-pdf/**`** no está en mis `ARCHIVOS RESERVADOS`, aunque genera el
    PDF de la pantalla que sí reescribí. Se decidió no tocarlo (nombre de archivo `evoluciones-
    <fecha>.pdf` sin cambiar) para no invadir alcance ajeno sin confirmación. A confirmar con C8.
+4. **`scripts/pw-guard.mjs` no existe.** Los tres prompts clínicos de esta noche (C9, C5, C7) citan
+   `node scripts/pw-guard.mjs --port ... --spec ... --serve` como si ya existiera. No se escribió
+   nunca en este repo (verificado con una búsqueda completa del árbol). Se decidió **no escribirlo
+   esta noche** — es infraestructura compartida, fuera del alcance declarado de C7, y el fallback
+   real del repo (`ng serve --port X` + `E2E_BASE_URL=http://localhost:X npx playwright test
+   <spec>`, que sí funciona con `playwright.config.ts:41`) alcanza para verificar sin inventar una
+   herramienta nueva de paso. Avisado en el daily de equipo para que alguien lo escriba o se corrija
+   la instrucción de los tres prompts.
+5. **`consulta-rejilla.spec.ts` falla por un locator ajeno** (`clinical-record.html`, «Nombre o
+   código» vs. el «Buscar por nombre o código» que el spec espera, desde el commit `15e93630`,
+   anterior a esta noche). No se corrigió: ni el archivo ni el spec están en mi alcance declarado
+   para ese propósito, y arreglarlo sería un fix de un bug ajeno de paso. Queda avisado en el daily.

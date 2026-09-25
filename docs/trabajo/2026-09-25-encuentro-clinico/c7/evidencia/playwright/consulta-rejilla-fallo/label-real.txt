@@ -1,0 +1,2 @@
+29:        label="Nombre o código"
+34:          placeholder="Nombre o código de paciente"
