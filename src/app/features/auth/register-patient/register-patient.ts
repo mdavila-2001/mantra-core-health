@@ -116,15 +116,6 @@ interface DestinoDeUbicacion {
   readonly delNavegador: WritableSignal<boolean>;
 }
 
-/**
- * Lo que se le dice a quien ya tiene un pin y quiere correrlo.
- *
- * Es la otra mitad del selector: el GPS acierta la manzana, no la puerta, y
- * hasta ahora la única salida era «Volver a ubicarme», que devolvía la misma
- * manzana. Tocar el plano corre el pin al punto exacto.
- */
-const AVISO_MOVER_PIN =
-  'Si el pin no cayó justo, tocá el mapa en el lugar correcto y lo movemos.';
 
 /**
  * El identificador del pin del domicilio en el mapa.
@@ -159,22 +150,6 @@ const PIN_TRABAJO = 'trabajo';
 const AVISO_SIN_GEOCODIFICACION =
   'El punto del mapa se guarda tal cual, pero no podemos convertirlo en el nombre de la calle: escribila vos arriba.';
 
-/**
- * Lo que se le dice a quien capturó un punto y no lo confirmó.
- *
- * **El dato se perdía en silencio.** Sólo viaja al alta lo confirmado sobre el
- * mapa (`datosPaciente`), y eso está bien —el GPS acierta la manzana, no la
- * puerta, y entre «esto es lo que encontramos» y «esta es mi dirección» tiene
- * que haber alguien mirando el plano—; lo que estaba mal es que quien se
- * quedaba a medias avanzaba de página creyendo que su ubicación ya estaba
- * guardada, y nadie se lo decía.
- *
- * El aviso **no bloquea ni confirma por su cuenta**: la confirmación sigue
- * siendo un acto de la persona. Sólo deja de ser silenciosa la consecuencia de
- * no hacerla.
- */
-const AVISO_UBICACION_SIN_CONFIRMAR =
-  'Todavía no confirmaste este punto, así que no se va a guardar. Pulsá el botón de confirmar si es el lugar correcto.';
 
 /**
  * Cuánto se espera al navegador antes de dar la ubicación por perdida.
@@ -931,12 +906,6 @@ export class RegisterPatient {
 
   /** El aviso de AC-03-9, expuesto a la plantilla. Ver la constante. */
   protected readonly avisoSinGeocodificacion = AVISO_SIN_GEOCODIFICACION;
-
-  /** El aviso del punto capturado sin confirmar. Ver la constante. */
-  protected readonly avisoUbicacionSinConfirmar = AVISO_UBICACION_SIN_CONFIRMAR;
-
-  /** La pista de que tocar el mapa corre el pin. Ver la constante. */
-  protected readonly avisoMoverPin = AVISO_MOVER_PIN;
 
   /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
   private readonly departamentos = inject(BoDepartmentsCatalog);

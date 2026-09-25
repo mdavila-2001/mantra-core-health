@@ -822,7 +822,6 @@ export class RegisterOrganization {
     confirmada: 'registro-organizacion-casa-matriz-location-confirmed',
     avisoGeocodificacion: 'registro-organizacion-casa-matriz-geocoding-notice',
     quitar: 'registro-organizacion-casa-matriz-location-remove',
-    sinConfirmar: 'registro-organizacion-casa-matriz-location-unconfirmed',
     confirmar: 'registro-organizacion-casa-matriz-location-confirm',
     usarUbicacion: 'registro-organizacion-casa-matriz-location-use',
     marcarEnMapa: 'registro-organizacion-casa-matriz-location-pick',

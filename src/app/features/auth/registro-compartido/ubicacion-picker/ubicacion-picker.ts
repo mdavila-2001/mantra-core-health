@@ -39,7 +39,6 @@ export interface IdsDePrueba {
   readonly confirmada: string;
   readonly avisoGeocodificacion: string;
   readonly quitar: string;
-  readonly sinConfirmar: string;
   readonly confirmar: string;
   readonly usarUbicacion: string;
   /** El botón que abre el mapa vacío para poner el pin a mano. */
@@ -73,27 +72,7 @@ const GPS_MAX_AGE_MS = 300_000;
 export const AVISO_SIN_GEOCODIFICACION =
   'El punto del mapa se guarda tal cual, pero no podemos convertirlo en el nombre de la calle: escribila vos arriba.';
 
-/**
- * Lo que se le dice a quien capturó un punto y no lo confirmó.
- *
- * **El dato se perdía en silencio.** Sólo viaja al alta lo confirmado sobre el
- * mapa, y eso está bien —el GPS acierta la manzana, no la puerta—; lo que
- * estaba mal es que quien se quedaba a medias avanzaba de página creyendo que
- * su ubicación ya estaba guardada. El aviso no confirma nada ni frena el envío:
- * sólo deja de ser silenciosa la consecuencia de no confirmar.
- */
-export const AVISO_UBICACION_SIN_CONFIRMAR =
-  'Todavía no confirmaste este punto, así que no se va a guardar. Pulsá el botón de confirmar si es el lugar correcto.';
 
-/**
- * Lo que se le dice a quien ya tiene un pin y quiere correrlo.
- *
- * Es la otra mitad del selector: el GPS acierta la manzana, no la puerta, y
- * hasta ahora la única salida era «Volver a ubicarme», que devolvía la misma
- * manzana. Tocar el plano corre el pin al punto exacto.
- */
-export const AVISO_MOVER_PIN =
-  'Si el pin no cayó justo, tocá el mapa en el lugar correcto y lo movemos.';
 
 /**
  * El punto de un lugar sobre el mapa, capturado del navegador **o marcado a
@@ -127,7 +106,7 @@ export const AVISO_MOVER_PIN =
  * ## Qué sale de acá
  *
  * Sólo lo **confirmado**. Mientras el punto esté capturado y sin confirmar, el
- * componente lo dibuja y lo avisa, pero emite `null`: entre «esto es lo que
+ * componente lo dibuja, pero emite `null`: entre «esto es lo que
  * encontramos» y «esta es mi dirección» tiene que haber alguien mirando el
  * plano. Quien lo consume guarda lo que reciba, sin volver a preguntarse si
  * estaba confirmado.
@@ -172,8 +151,6 @@ export class UbicacionPicker {
   /** Cómo se llama el pin una vez confirmado («Tu dirección»). */
   readonly etiquetaConfirmada = input.required<string>();
 
-  /** La pregunta que se hace sobre el mapa («¿Es acá donde vivís?»). */
-  readonly pregunta = input.required<string>();
 
   /** Nombre accesible del botón que quita la ubicación. */
   readonly etiquetaQuitar = input.required<string>();
@@ -254,8 +231,6 @@ export class UbicacionPicker {
   private readonly vieneDelNavegador = signal(false);
 
   protected readonly avisoSinGeocodificacion = AVISO_SIN_GEOCODIFICACION;
-  protected readonly avisoUbicacionSinConfirmar = AVISO_UBICACION_SIN_CONFIRMAR;
-  protected readonly avisoMoverPin = AVISO_MOVER_PIN;
 
   /**
    * El pin, tal como lo espera `app-map`.
