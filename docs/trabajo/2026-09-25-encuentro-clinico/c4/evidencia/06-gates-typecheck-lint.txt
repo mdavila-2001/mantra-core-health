@@ -1,0 +1,10 @@
+corepack yarn typecheck   -> 0 errores (sin ninguna linea "error TS")
+
+corepack yarn lint        -> 6 problems (6 errors, 0 warnings), TODOS PREEXISTENTES
+  playwright/auditoria-qa-mockup.spec.ts            1:29, 17:20, 18:21
+  playwright/carril-insurance-whatsapp.spec.ts      70:10
+  src/app/features/insurance/insurance-claim-detail/insurance-contact-channels/insurance-contact-channels.spec.ts  135:75
+  src/app/shared/components/molecules/patient-coverage-card/patient-coverage-card.spec.ts                          114:71
+
+Ninguno de esos cuatro archivos lo toca C4 (ver `git diff --name-only`).
+Cero errores nuevos.
