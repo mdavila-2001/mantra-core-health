@@ -247,6 +247,34 @@
 
 /* Lo que ya no se puede corregir dice por qué, en vez de dejar la celda vacía:
    una celda en blanco se lee como una pantalla a medio cargar. */
+/* El sello de verificado, al estilo de las redes sociales: azul con el tilde
+   blanco. El azul es propio a propósito —ningún token de la paleta es ese azul—
+   y se aclara en oscuro para que no se pierda sobre el fondo petróleo. */
+.edicion__verificado {
+  --sello-verificado: #1877f2;
+  flex: none;
+  inline-size: 1.375rem;
+  block-size: 1.375rem;
+}
+
+.edicion__verificado-sello {
+  fill: var(--sello-verificado);
+}
+
+.edicion__verificado-tilde {
+  fill: #fff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .edicion__verificado {
+    --sello-verificado: #3b8ff5;
+  }
+}
+
+:root[data-theme='dark'] .edicion__verificado {
+  --sello-verificado: #3b8ff5;
+}
+
 .edicion__acciones-nota {
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
