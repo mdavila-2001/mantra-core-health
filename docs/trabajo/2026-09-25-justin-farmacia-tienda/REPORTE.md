@@ -1,4 +1,4 @@
-> **AVANCE: 34 / 41 — 82,9 %.**
+> **AVANCE: 33 / 41 — 80,5 %.**
 
 # Reporte — La tienda: buscador por precio y distancia, y la receta completa al carrito
 
@@ -24,7 +24,6 @@
 | H4.S1.M1–M4 | Mis recetas: agrupadas por consulta, nombres por terminología, enlace con el id, 4 estados | `--include=…/prescriptions-page.spec.ts` | PASS · **9/9** · `evidencia/h4/` |
 | H5.S1.M1–M4 | `cartLinesFromDraft` pura, botón `where-to-buy-add-to-cart`, aviso de lo omitido, los 36 casos previos intactos | `--include=…/where-to-buy.spec.ts` | PASS · **46/46** (36 previos + 10 nuevos) · `evidencia/h5/` |
 | H5.S2.M1 | `createOrderRequest(...).medicationRequestId === requestId` | mismo spec | PASS |
-| H6.S1.M2 | PR abierto contra `mockup` y consultado con `gh` | `gh pr view --json mergeable,mergeStateStatus` | `evidencia/despues/pr.txt` |
 | H6.S1.M3 | `PLAN.md` y este reporte en disco; nada corriendo | `git status` | PASS |
 
 ## A medias
@@ -63,6 +62,21 @@
   la doble revisión de la regla 35.
 - **Dónde quedó:** `src/app/app.routes.ts` y
   `src/app/features/account/pharmacy/prescriptions/`; compila y sus 9 specs pasan.
+
+### H6.S1.M2 — PR mergeable
+- **Qué anda:** PR **#675** contra `mockup`, no es draft, `mergeable: MERGEABLE`, sin conflictos.
+  Alcance verificado: `git diff --stat origin/mockup -- src/app/features/account/cotizaciones`
+  sale **vacío**, y los únicos archivos ajenos del diff son exactamente los 6 de la Ola 0 de
+  Pablo, que entraron por cherry-pick y no se editaron.
+- **Qué no anda:** `mergeStateStatus: UNSTABLE`. Los tres checks (`verificar`, `e2e`,
+  `dependencias`) quedaron **en cola**, no arrancados. **Ninguno en rojo**, pero tampoco en
+  verde: la regla 35.2 exige verlos pasar y no se los vio.
+- **Qué falta exactamente:** `gh pr checks 675 --watch` hasta que los tres terminen; si alguno
+  falla, clasificarlo (regla 80.4) antes de tocar nada. Ojo: el `CLAUDE.md` del repo avisa que
+  «el CI propio está caído».
+- **Dónde quedó:** https://github.com/mdavila-2001/mantra-core-health/pull/675 · salida literal
+  en `evidencia/despues/pr.txt`. Este commit de cierre vuelve a disparar el CI, así que la
+  corrida a mirar es la última de la rama.
 
 ### H6.S1.M1 — Regresión completa
 - **Qué anda:** `corepack yarn typecheck` en 0 y `corepack yarn lint` con **los mismos 6 errores

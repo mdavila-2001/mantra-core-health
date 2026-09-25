@@ -205,7 +205,7 @@ primera línea.
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
 | H6.S1.M1 | Regresión + e2e del área | Sin rojos nuevos | `typecheck`, `lint`, specs dirigidos | A MEDIAS (suite completa, build y Playwright prohibidos en esta sesión) |
-| H6.S1.M2 | PR a `mockup` mergeable | `gh pr view` sin conflictos | `gh pr view --json mergeable,mergeStateStatus` | HECHO — PR #675, mergeable=MERGEABLE (checks en curso al cierre) |
+| H6.S1.M2 | PR a `mockup` mergeable | `gh pr view` sin conflictos | `gh pr view --json mergeable,mergeStateStatus` | A MEDIAS — `mergeable=MERGEABLE`, `isDraft=false`, base `mockup`; `mergeStateStatus=UNSTABLE` con los 3 checks **en cola**, ninguno en rojo |
 | H6.S1.M3 | `REPORTE.md` al día; nada corriendo | Existe y cumple | `git status` | HECHO |
 
 ## Riesgos y bloqueos previstos
