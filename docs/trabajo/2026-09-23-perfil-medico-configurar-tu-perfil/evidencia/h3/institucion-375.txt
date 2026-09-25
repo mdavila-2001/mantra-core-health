@@ -1,0 +1,4 @@
+375 oscuro · encabezados visibles: TIPO · NÚMERO / TÍTULO · Institución · Emisión · ESTADO · ACCIONES · Ver el detalle de la fila · botón de detalle en la fila TIT-1000=1
+detalle de TIT-1000: Institución: Universidad Mayor de San Andrés (UMSA) · Emisión: 26/09/2014
+para tocar el botón de detalle la tabla se desplazó 110 px a la derecha; se vuelve al inicio para leer el detalle
+consola con error: 0

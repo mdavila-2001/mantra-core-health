@@ -92,9 +92,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
       (m) => m.PractitionersDirectory,
     ),
-  // FT-19 · farmacias, imagenología y centros médicos cerca del paciente.
-  'nearby-places': () =>
-    import('./features/nearby-places/nearby-places').then((m) => m.NearbyPlaces),
   'laboratory-directory': () =>
     import('./features/laboratory-directory/laboratory-directory').then(
       (m) => m.LaboratoryDirectory,
@@ -430,6 +427,18 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/medical-record/where-to-buy/where-to-buy')
         .then((m) => m.WhereToBuy)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El carrito de farmacia (Ola 0, plan `04-farmacia-ecommerce-2026-09-25`
+    // §4.1). Hija de «Farmacia» (`my-account/pharmacy`), con `seccionRolesGuard`
+    // porque esa sección declara `roles: ['PATIENT']`.
+    path: 'my-account/pharmacy/cart',
+    title: `${APP_TITLE} - Tu carrito`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy/cart/cart-page')
+        .then((m) => m.CartPage)
         .catch(() => chunkFallido()),
   },
   {
@@ -1201,6 +1210,10 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   'administracion/proveedores-identidad': '/administration/identity-providers',
   'administracion/verificacion-identidad': '/administration/identity-assurance',
   'administracion/terminologia': '/administration/terminology',
+  // «Lugares cercanos» (FT-19) salió del registro (H6, 2026-09-25): la
+  // farmacia se elige ahora desde la tienda y el carrito, no desde una
+  // pantalla de "cerca de mí" aparte. Sigue en historiales y en favoritos.
+  'nearby-places': '/my-account/pharmacy',
 };
 
 /**

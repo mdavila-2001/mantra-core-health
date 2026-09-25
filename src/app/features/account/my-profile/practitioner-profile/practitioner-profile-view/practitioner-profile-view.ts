@@ -306,8 +306,9 @@ export class PractitionerProfileView {
 
   /* Las especialidades ya no se preparan aca: `app-specialty-badge-grid`
      recibe `perfil().especialidades` tal cual —`EspecialidadVisible` tiene los
-     campos que la insignia pide—, ordena la principal primero y dice en
-     palabras lo que antes iba en el `aria-label` del chip. Suben de
+     campos que la insignia pide—, las deja en el orden en que llegaron (sin
+     principal desde el 23/09/2026, D-01) y dice en palabras lo que antes iba
+     en el `aria-label` del chip. Suben de
      «Credenciales» a la primera pestania por pedido del cliente (19/09/2026);
      en «Credenciales» siguen, con su vigencia y su sello, que es otra
      pregunta. */

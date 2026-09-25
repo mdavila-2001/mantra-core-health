@@ -2170,6 +2170,57 @@ describe('Agenda', () => {
    * La tarjeta no repite un botón: hace lo que la cita admite en su estado, y
    * el estado sale del ciclo (`booking-status.ts`), no de una bandera nueva.
    */
+  describe('`?booking=<id>` abre esa cita lista para atenderla (panel de inicio)', () => {
+    /** La cita pedida por id y la etiqueta de su estado, como las responde la API. */
+    async function responderCitaPedida(code: string, display: string): Promise<void> {
+      http
+        .expectOne('/scheduling/bookings/b-1')
+        .flush({ ...CITA, statusConceptId: 'c-pedida' });
+      http
+        .expectOne((r) => r.url === '/terminology/concepts' && r.params.get('ids') === 'c-pedida')
+        .flush({
+          items: [{ conceptId: 'c-pedida', code, display, codeSystemVersionId: 'csv-1' }],
+          count: 1,
+          limit: 200,
+        });
+      await harness.fixture.whenStable();
+    }
+
+    it('una cita CONFIRMADA ofrece «Iniciar consulta», la inicia y entra a atender', async () => {
+      const confirmar = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule?vista=table&booking=b-1');
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      await responderCitaPedida('BOOKING_CONFIRMED', 'Confirmada');
+
+      expect(confirmar.mock.calls[0]?.[0]?.confirmLabel).toBe('Iniciar consulta');
+      http.expectOne('/scheduling/bookings/b-1/start').flush({
+        bookingId: 'b-1',
+        statusConceptId: 'c-curso',
+        occurredAt: '2026-08-15T12:00:00.000Z',
+      });
+      await harness.fixture.whenStable();
+
+      const rutas = navegar.mock.calls.map(([comandos]) => String((comandos as unknown[])[0] ?? ''));
+      expect(rutas.some((ruta) => /\/medical-records\/[^/]+\/consultation$/.test(ruta))).toBe(true);
+    });
+
+    it('una cita EN CURSO ofrece «Continuar consulta», sin repetir el inicio', async () => {
+      const confirmar = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule?vista=table&booking=b-1');
+      await responderConEstado('BOOKING_IN_PROGRESS', 'En curso');
+      await responderCitaPedida('BOOKING_IN_PROGRESS', 'En curso');
+
+      expect(confirmar.mock.calls[0]?.[0]?.confirmLabel).toBe('Continuar consulta');
+      const rutas = navegar.mock.calls.map(([comandos]) => String((comandos as unknown[])[0] ?? ''));
+      expect(rutas.some((ruta) => /\/medical-records\/[^/]+\/consultation$/.test(ruta))).toBe(true);
+      // Sin `POST …/start`: el `http.verify()` del afterEach lo confirma.
+    });
+  });
+
   describe('la tarjeta del calendario lleva a atender (C-04)', () => {
     /** Activa la tarjeta como lo hace el día, con la reserva cruda. */
     function tocarLaTarjeta(): void {

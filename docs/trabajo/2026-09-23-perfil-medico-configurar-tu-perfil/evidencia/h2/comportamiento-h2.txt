@@ -1,0 +1,80 @@
+ficha · Datos personales · escritorio claro: «Estado de la práctica»=no · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+ficha · Contacto · escritorio claro: «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no · texto: Correo personal valeria-rojas@gmail.mock Correo de trabajo valeria-rojas@alovida.mock Celular personal +591 71000000 Municipio de residencia Santa Cruz de la Sierra Domicilio Av. Banzer N.º 120 Ver en el mapa
+ficha · Trayectoria · escritorio claro: aviso=["Trayectoria"]
+ficha · Credenciales · escritorio claro: aviso=["Credenciales"] · Todas (6) Verificadas (3) Declaradas (3) Matrículas 2 Nacional (Bolivia) Matrícula N.º MP-2400 Ministerio de Salud y Deportes Activo Departamental Santa Cruz Matrícula N.º SEDES-MP-2400 SEDES Santa Cr
+ficha · Datos personales · escritorio-grande claro: «Estado de la práctica»=no · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+ficha · Contacto · escritorio-grande claro: «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no · texto: Correo personal valeria-rojas@gmail.mock Correo de trabajo valeria-rojas@alovida.mock Celular personal +591 71000000 Municipio de residencia Santa Cruz de la Sierra Domicilio Av. Banzer N.º 120 Ver en el mapa
+ficha · Trayectoria · escritorio-grande claro: aviso=["Trayectoria"]
+ficha · Credenciales · escritorio-grande claro: aviso=["Credenciales"] · Todas (6) Verificadas (3) Declaradas (3) Matrículas 2 Nacional (Bolivia) Matrícula N.º MP-2400 Ministerio de Salud y Deportes Activo Departamental Santa Cruz Matrícula N.º SEDES-MP-2400 SEDES Santa Cr
+ficha · Datos personales · tableta-horizontal claro: «Estado de la práctica»=no · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+ficha · Contacto · tableta-horizontal claro: «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no · texto: Correo personal valeria-rojas@gmail.mock Correo de trabajo valeria-rojas@alovida.mock Celular personal +591 71000000 Municipio de residencia Santa Cruz de la Sierra Domicilio Av. Banzer N.º 120 Ver en el mapa
+ficha · Trayectoria · tableta-horizontal claro: aviso=["Trayectoria"]
+ficha · Credenciales · tableta-horizontal claro: aviso=["Credenciales"] · Todas (6) Verificadas (3) Declaradas (3) Matrículas 2 Nacional (Bolivia) Matrícula N.º MP-2400 Ministerio de Salud y Deportes Activo Departamental Santa Cruz Matrícula N.º SEDES-MP-2400 SEDES Santa Cr
+ficha · Datos personales · tableta claro: «Estado de la práctica»=no · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+ficha · Contacto · tableta claro: «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no · texto: Correo personal valeria-rojas@gmail.mock Correo de trabajo valeria-rojas@alovida.mock Celular personal +591 71000000 Municipio de residencia Santa Cruz de la Sierra Domicilio Av. Banzer N.º 120 Ver en el mapa
+ficha · Trayectoria · tableta claro: aviso=["Trayectoria"]
+ficha · Credenciales · tableta claro: aviso=["Credenciales"] · Todas (6) Verificadas (3) Declaradas (3) Matrículas 2 Nacional (Bolivia) Matrícula N.º MP-2400 Ministerio de Salud y Deportes Activo Departamental Santa Cruz Matrícula N.º SEDES-MP-2400 SEDES Santa Cr
+ficha · Datos personales · movil claro: «Estado de la práctica»=no · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+ficha · Contacto · movil claro: «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no · texto: Correo personal valeria-rojas@gmail.mock Correo de trabajo valeria-rojas@alovida.mock Celular personal +591 71000000 Municipio de residencia Santa Cruz de la Sierra Domicilio Av. Banzer N.º 120 Ver en el mapa
+ficha · Trayectoria · movil claro: aviso=["Trayectoria"]
+ficha · Credenciales · movil claro: aviso=["Credenciales"] · Todas (6) Verificadas (3) Declaradas (3) Matrículas 2 Nacional (Bolivia) Matrícula N.º MP-2400 Ministerio de Salud y Deportes Activo Departamental Santa Cruz Matrícula N.º SEDES-MP-2400 SEDES Santa Cr
+ficha · Datos personales · escritorio oscuro: «Estado de la práctica»=no · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+ficha · Contacto · escritorio oscuro: «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no · texto: Correo personal valeria-rojas@gmail.mock Correo de trabajo valeria-rojas@alovida.mock Celular personal +591 71000000 Municipio de residencia Santa Cruz de la Sierra Domicilio Av. Banzer N.º 120 Ver en el mapa
+ficha · Trayectoria · escritorio oscuro: aviso=["Trayectoria"]
+ficha · Credenciales · escritorio oscuro: aviso=["Credenciales"] · Todas (6) Verificadas (3) Declaradas (3) Matrículas 2 Nacional (Bolivia) Matrícula N.º MP-2400 Ministerio de Salud y Deportes Activo Departamental Santa Cruz Matrícula N.º SEDES-MP-2400 SEDES Santa Cr
+ficha · Datos personales · escritorio-grande oscuro: «Estado de la práctica»=no · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+ficha · Contacto · escritorio-grande oscuro: «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no · texto: Correo personal valeria-rojas@gmail.mock Correo de trabajo valeria-rojas@alovida.mock Celular personal +591 71000000 Municipio de residencia Santa Cruz de la Sierra Domicilio Av. Banzer N.º 120 Ver en el mapa
+ficha · Trayectoria · escritorio-grande oscuro: aviso=["Trayectoria"]
+ficha · Credenciales · escritorio-grande oscuro: aviso=["Credenciales"] · Todas (6) Verificadas (3) Declaradas (3) Matrículas 2 Nacional (Bolivia) Matrícula N.º MP-2400 Ministerio de Salud y Deportes Activo Departamental Santa Cruz Matrícula N.º SEDES-MP-2400 SEDES Santa Cr
+ficha · Datos personales · tableta-horizontal oscuro: «Estado de la práctica»=no · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+ficha · Contacto · tableta-horizontal oscuro: «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no · texto: Correo personal valeria-rojas@gmail.mock Correo de trabajo valeria-rojas@alovida.mock Celular personal +591 71000000 Municipio de residencia Santa Cruz de la Sierra Domicilio Av. Banzer N.º 120 Ver en el mapa
+ficha · Trayectoria · tableta-horizontal oscuro: aviso=["Trayectoria"]
+ficha · Credenciales · tableta-horizontal oscuro: aviso=["Credenciales"] · Todas (6) Verificadas (3) Declaradas (3) Matrículas 2 Nacional (Bolivia) Matrícula N.º MP-2400 Ministerio de Salud y Deportes Activo Departamental Santa Cruz Matrícula N.º SEDES-MP-2400 SEDES Santa Cr
+ficha · Datos personales · tableta oscuro: «Estado de la práctica»=no · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+ficha · Contacto · tableta oscuro: «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no · texto: Correo personal valeria-rojas@gmail.mock Correo de trabajo valeria-rojas@alovida.mock Celular personal +591 71000000 Municipio de residencia Santa Cruz de la Sierra Domicilio Av. Banzer N.º 120 Ver en el mapa
+ficha · Trayectoria · tableta oscuro: aviso=["Trayectoria"]
+ficha · Credenciales · tableta oscuro: aviso=["Credenciales"] · Todas (6) Verificadas (3) Declaradas (3) Matrículas 2 Nacional (Bolivia) Matrícula N.º MP-2400 Ministerio de Salud y Deportes Activo Departamental Santa Cruz Matrícula N.º SEDES-MP-2400 SEDES Santa Cr
+ficha · Datos personales · movil oscuro: «Estado de la práctica»=no · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+ficha · Contacto · movil oscuro: «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no · texto: Correo personal valeria-rojas@gmail.mock Correo de trabajo valeria-rojas@alovida.mock Celular personal +591 71000000 Municipio de residencia Santa Cruz de la Sierra Domicilio Av. Banzer N.º 120 Ver en el mapa
+ficha · Trayectoria · movil oscuro: aviso=["Trayectoria"]
+ficha · Credenciales · movil oscuro: aviso=["Credenciales"] · Todas (6) Verificadas (3) Declaradas (3) Matrículas 2 Nacional (Bolivia) Matrícula N.º MP-2400 Ministerio de Salud y Deportes Activo Departamental Santa Cruz Matrícula N.º SEDES-MP-2400 SEDES Santa Cr
+editor · Datos personales · escritorio claro: sección del correo de acceso=0 · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Contacto · escritorio claro: campo del correo de trabajo=1 con «valeria-rojas@alovida.mock» · celular del trabajo=0 · fijo del trabajo=0 · «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Datos personales · escritorio-grande claro: sección del correo de acceso=0 · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Contacto · escritorio-grande claro: campo del correo de trabajo=1 con «valeria-rojas@alovida.mock» · celular del trabajo=0 · fijo del trabajo=0 · «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Datos personales · tableta-horizontal claro: sección del correo de acceso=0 · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Contacto · tableta-horizontal claro: campo del correo de trabajo=1 con «valeria-rojas@alovida.mock» · celular del trabajo=0 · fijo del trabajo=0 · «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Datos personales · tableta claro: sección del correo de acceso=0 · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Contacto · tableta claro: campo del correo de trabajo=1 con «valeria-rojas@alovida.mock» · celular del trabajo=0 · fijo del trabajo=0 · «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Datos personales · movil claro: sección del correo de acceso=0 · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Contacto · movil claro: campo del correo de trabajo=1 con «valeria-rojas@alovida.mock» · celular del trabajo=0 · fijo del trabajo=0 · «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Datos personales · escritorio oscuro: sección del correo de acceso=0 · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Contacto · escritorio oscuro: campo del correo de trabajo=1 con «valeria-rojas@alovida.mock» · celular del trabajo=0 · fijo del trabajo=0 · «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Datos personales · escritorio-grande oscuro: sección del correo de acceso=0 · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Contacto · escritorio-grande oscuro: campo del correo de trabajo=1 con «valeria-rojas@alovida.mock» · celular del trabajo=0 · fijo del trabajo=0 · «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Datos personales · tableta-horizontal oscuro: sección del correo de acceso=0 · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Contacto · tableta-horizontal oscuro: campo del correo de trabajo=1 con «valeria-rojas@alovida.mock» · celular del trabajo=0 · fijo del trabajo=0 · «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Datos personales · tableta oscuro: sección del correo de acceso=0 · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Contacto · tableta oscuro: campo del correo de trabajo=1 con «valeria-rojas@alovida.mock» · celular del trabajo=0 · fijo del trabajo=0 · «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Datos personales · movil oscuro: sección del correo de acceso=0 · «Correo de trabajo»=no · teléfonos del trabajo=[] · «Correo de acceso»=no
+editor · Contacto · movil oscuro: campo del correo de trabajo=1 con «valeria-rojas@alovida.mock» · celular del trabajo=0 · fijo del trabajo=0 · «Correo de trabajo»=SÍ · teléfonos del trabajo=[] · «Correo de acceso»=no
+insignias · ficha · pestaña «Datos personales»: insignias=2 · tonos=["tone--secondary"] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=["Cardiología Verificado","Medicina Interna Verificado"]
+insignias · ficha · pestaña «Contacto»: insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+insignias · ficha · pestaña «Facturación»: insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+insignias · ficha · pestaña «Dónde atiendo»: insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+insignias · ficha · pestaña «Trayectoria»: insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+insignias · ficha · pestaña «Credenciales»: insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+insignias · ficha · pestaña «Actividad»: insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+insignias · editor · Datos personales: encabezados=["ESPECIALIDAD","DESDE","ESTADO","ACCIONES","Ver el detalle de la fila"] · botones con «principal»=0 · insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+editor · Credenciales · matrícula 1: «MP-2400 Ministerio de Salud y Deportes 25/09/2016 Activo Descargar Activo: ya no se corrige» · botones=["Descargar [ícono]","▼"]
+editor · Credenciales · matrícula 2: «SEDES-MP-2400 SEDES Santa Cruz 24/09/2020 Activo Activo: ya no se corrige» · botones=["▼"]
+editor · Credenciales · título 1: «Título de especialidad ESP-1000 Colegio Médico de Bolivia 25/09/2019 Verificado Verificado: ya no se corrige» · botones=["▼"]
+editor · Credenciales · título 2: «Título universitario TIT-1000 Universidad Mayor de San Andrés (UMSA) 26/09/2014 Verificado Descargar Verificado: ya no s» · botones=["Descargar [ícono]","▼"]
+insignias · perfil público (/p/valeria-rojas): insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+insignias · guía, detalle (paciente, /directory/be0f3a66-c03e-4eac-a416-c1068238d3d2) → /directory/be0f3a66-c03e-4eac-a416-c1068238d3d2: insignias=2 · tonos=["tone--secondary"] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=["Cardiología Verificado","Medicina Interna Verificado"]
+insignias · guía, lista (paciente, /directory): insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+alta · especialidades: página 13 de 14
+alta · especialidades: «Especialidad 1» visible=1 · «principal» en pantalla=0 · botón=«+ Agregar otra especialidad»
+PATCH · interruptor de la API real alcanzable: SÍ
+PATCH · editor abierto sin recargar: /my-account/edit · interruptor=false
+PATCH · PATCH · claves=["mobilePhone"] · del trabajo=ninguna

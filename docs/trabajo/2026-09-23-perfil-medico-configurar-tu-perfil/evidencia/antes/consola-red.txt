@@ -1,0 +1,12 @@
+# Consola y red ANTES de tocar — 2026-09-23T18:25:07.730Z — <url de la app>
+
+## Consola (error/warning, sin la CSP de ng serve)
+ninguno
+
+## Red (>= 400 o fallida)
+FAILED GET https://tile.openstreetmap.org/12/1329/2253.png — net::ERR_ABORTED
+FAILED GET https://tile.openstreetmap.org/12/1329/2254.png — net::ERR_ABORTED
+FAILED GET https://tile.openstreetmap.org/12/1328/2253.png — net::ERR_ABORTED
+FAILED GET https://tile.openstreetmap.org/12/1330/2253.png — net::ERR_ABORTED
+FAILED GET https://tile.openstreetmap.org/12/1328/2254.png — net::ERR_ABORTED
+FAILED GET https://tile.openstreetmap.org/12/1330/2254.png — net::ERR_ABORTED

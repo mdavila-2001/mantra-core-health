@@ -1,0 +1,85 @@
+Using Vitest configuration file: <repo>\vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                               | Names                                                          |  Raw size
+spec-app-features-account-my-profile-work-history-work-history.js | spec-app-features-account-my-profile-work-history-work-history | 999.59 kB | 
+styles.css                                                        | styles                                                         | 166.29 kB | 
+chunk-ZLIN7ROU.js                                                 | -                                                              |  81.16 kB | 
+chunk-JBWBLPNK.js                                                 | -                                                              |   5.19 kB | 
+init-testbed.js                                                   | init-testbed                                                   |   1.21 kB | 
+vitest-mock-patch.js                                              | vitest-mock-patch                                              | 974 bytes | 
+setup-test-setup.js                                               | setup-test-setup                                               | 911 bytes | 
+
+                                                                  | Initial total                                                  |   1.26 MB
+
+Lazy chunk files                                                  | Names                                                          |  Raw size
+chunk-U4HMPOWE.js                                                 | location-picker                                                |  39.99 kB | 
+chunk-3DEQCBMH.js                                                 | map                                                            |  22.68 kB | 
+
+Application bundle generation complete. [126.929 seconds] - 2026-09-24T22:41:35.637Z
+
+▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+      75 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+      85 │     RouterLink,
+         ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButton is not used within the template of NearbyPlaces [plugin angular-compiler]
+
+    src/app/features/nearby-places/nearby-places.ts:103:4:
+      103 │     AppButton,
+          ╵     ~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:118:39:
+      118 │ ... [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink...
+          ╵                                 ~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:118:62:
+      118 │ ...AppButton, BodyMap, Card, Chip, FormField, RouterLink, Textarea],
+          ╵                                               ~~~~~~~~~~
+
+
+
+ RUN  v4.1.10 <repo>
+
+
+ Test Files  1 passed (1)
+      Tests  96 passed (96)
+   Start at  18:41:36
+   Duration  15.42s (transform 2.71s, setup 3.00s, import 2.36s, tests 8.05s, environment 1.70s)
+

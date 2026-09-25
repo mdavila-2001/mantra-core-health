@@ -128,7 +128,18 @@
           }
         </p>
 
-        <p class="ahora__paciente">{{ cita.paciente }}</p>
+        <!-- Toda la tarjeta lleva a la cita: el enlace es el nombre y su
+             `::after` cubre la tarjeta entera. La agenda la abre lista para
+             «Iniciar consulta» — o «Continuar», si ya empezó. -->
+        <p class="ahora__paciente">
+          <a
+            class="enlace-a-la-cita"
+            data-testid="panel-hoy-destacada-abrir"
+            [routerLink]="rutaDeLaAgenda"
+            [queryParams]="paramsDeLaCita(cita)"
+            [attr.aria-label]="nombreDelEnlace(cita)"
+          >{{ cita.paciente }}</a>
+        </p>
 
         <ul class="ahora__datos">
           @if (cita.motivo) {
@@ -183,7 +194,15 @@
             </time>
 
             <div class="lista__quien">
-              <p class="lista__paciente">{{ cita.paciente }}</p>
+              <p class="lista__paciente">
+                <a
+                  class="enlace-a-la-cita"
+                  data-testid="panel-hoy-fila-abrir"
+                  [routerLink]="rutaDeLaAgenda"
+                  [queryParams]="paramsDeLaCita(cita)"
+                  [attr.aria-label]="nombreDelEnlace(cita)"
+                >{{ cita.paciente }}</a>
+              </p>
               @if (cita.motivo) {
                 <p class="lista__motivo">{{ cita.motivo }}</p>
               }

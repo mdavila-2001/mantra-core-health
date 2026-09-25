@@ -1,0 +1,112 @@
+<app-page-header title="Tu carrito" subtitle="Revisá las líneas antes de continuar." [breadcrumbs]="breadcrumbs()" />
+
+@if (cart(); as carrito) {
+  <div class="cart-page" data-testid="pharmacy-cart-page">
+    <section class="cart-page__bloque" aria-labelledby="cart-sede">
+      <h2 id="cart-sede" class="cart-page__titulo">Dónde</h2>
+      <p class="cart-page__principal">{{ carrito.site.pharmacyName }} · {{ carrito.site.siteName }}</p>
+      @if (carrito.site.addressText !== null) {
+        <p class="cart-page__secundario">{{ carrito.site.addressText }}</p>
+      }
+    </section>
+
+    <ul class="cart-page__lineas" [attr.data-testid]="testids.cartLines">
+      @for (linea of carrito.lines; track linea.productId) {
+        <li class="cart-page__linea" [attr.data-product-id]="linea.productId">
+          <div class="cart-page__linea-datos">
+            <p class="cart-page__principal">{{ linea.name }}</p>
+            @if (linea.presentation !== null) {
+              <p class="cart-page__secundario">{{ linea.presentation }}</p>
+            }
+            @if (linea.unitAmount !== null) {
+              <p class="cart-page__secundario">
+                {{ withDisplayCurrency(linea.unitAmount, linea.currency) }} c/u
+              </p>
+            }
+          </div>
+
+          <div class="cart-page__linea-controles">
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              [attr.data-testid]="testids.storeQtyMinus"
+              [attr.aria-label]="'Quitar una unidad de ' + linea.name"
+              (click)="decrementar(linea)"
+            >
+              −
+            </button>
+            <span [attr.data-testid]="testids.storeQtyValue" aria-live="polite">{{ linea.quantity }}</span>
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              [attr.data-testid]="testids.storeQtyPlus"
+              [attr.aria-label]="'Agregar una unidad de ' + linea.name"
+              (click)="incrementar(linea)"
+            >
+              +
+            </button>
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              [attr.aria-label]="'Quitar ' + linea.name + ' del carrito'"
+              (click)="quitar(linea.productId)"
+            >
+              Quitar
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+
+    <p class="cart-page__total" [attr.data-testid]="testids.cartTotal">
+      @if (estimatedTotal(); as total) {
+        Total estimado: {{ withDisplayCurrency(total.amount, total.currency) }}
+      } @else {
+        Total estimado: no disponible — falta el precio de alguna línea.
+      }
+    </p>
+
+    @if (errorAlContinuar(); as error) {
+      <app-alert tone="warning" title="No se pudo continuar">
+        {{ error }}
+      </app-alert>
+    }
+
+    <div class="cart-page__acciones">
+      <button
+        app-button
+        variant="secondary"
+        type="button"
+        [attr.data-testid]="testids.cartClear"
+        (click)="vaciar()"
+      >
+        Vaciar
+      </button>
+      <a app-button variant="ghost" [routerLink]="seguirComprandoRoute()">Seguir comprando</a>
+      <button
+        app-button
+        variant="primary"
+        type="button"
+        [attr.data-testid]="testids.cartContinue"
+        [disabled]="continuando()"
+        (click)="continuar()"
+      >
+        {{ continuando() ? 'Revisando disponibilidad…' : 'Continuar' }}
+      </button>
+    </div>
+  </div>
+} @else {
+  <app-empty-state
+    variant="empty"
+    title="Tu carrito está vacío"
+    description="Agregá medicamentos desde la tienda de una farmacia para armar tu pedido."
+  >
+    <a app-button empty-actions variant="primary" [routerLink]="pharmacyRoute">Ir a la tienda</a>
+  </app-empty-state>
+}

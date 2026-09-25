@@ -26,6 +26,7 @@ import { FormField } from '@shared/components/molecules/form-field/form-field';
 import {
   BodyMap,
   ZONAS_CON_SILUETA,
+  type SexoDeLaSilueta,
   type ZonaElegible,
 } from '@shared/components/organisms/body-map/body-map';
 
@@ -201,6 +202,44 @@ export class SymptomCheck {
   );
 
   /**
+   * El sexo asignado al nacer del propio perfil (P-04, 2026-09-25).
+   *
+   * Se pide **al abrir**, a diferencia de las especialidades: cambia qué
+   * silueta se dibuja desde el primer instante, así que esperar a la primera
+   * tecla se vería como que la figura «cambia sola» a mitad de la pantalla.
+   * Sin sesión no se pide —no hay perfil propio que leer—, y un fallo o un
+   * perfil `INTERSEX`/`UNKNOWN` **no rompen el flujo**: se sigue mostrando la
+   * silueta neutra y la lista completa, que es mejor que arriesgar esconder
+   * un síntoma real por un dato que no se pudo confirmar.
+   */
+  private readonly sexoAlNacer = toSignal(
+    this.sinSesion() ? of(undefined) : this.leerSexoPropio(),
+    { initialValue: undefined as 'MALE' | 'FEMALE' | 'INTERSEX' | 'UNKNOWN' | undefined },
+  );
+
+  /** El sexo, recortado a lo que la silueta sabe dibujar (ver `BodyMap`). */
+  protected readonly siluetaSexo = computed<SexoDeLaSilueta | undefined>(() => {
+    const sexo = this.sexoAlNacer();
+    return sexo === 'MALE' || sexo === 'FEMALE' ? sexo : undefined;
+  });
+
+  /**
+   * Si un síntoma corresponde al sexo del propio perfil.
+   *
+   * Sin `soloParaSexo` es de cualquiera. Sin sexo conocido —`INTERSEX`,
+   * `UNKNOWN`, sin sesión o todavía sin resolver— no se filtra nada: se
+   * prefiere mostrar de más antes que esconder un síntoma real por un dato
+   * que no se pudo confirmar.
+   */
+  private sintomaVisible(sintoma: Sintoma): boolean {
+    const solo = sintoma.soloParaSexo;
+    if (solo === undefined) return true;
+    const sexo = this.siluetaSexo();
+    if (sexo === undefined) return true;
+    return solo === sexo;
+  }
+
+  /**
    * Los síntomas de alarma: los que dice el texto **y los que se tocaron**.
    *
    * Las zonas del cuerpo ofrecen «dolor de pecho» y «dificultad para respirar»
@@ -292,12 +331,15 @@ export class SymptomCheck {
       (s) => !quitados.has(s.id),
     );
     const yaEstan = new Set(delTexto.map((s) => s.id));
-    return [...delTexto, ...this.agregados().filter((s) => !yaEstan.has(s.id))];
+    const todos = [...delTexto, ...this.agregados().filter((s) => !yaEstan.has(s.id))];
+    // «Salud íntima» no ofrece lo que no corresponde al sexo del propio
+    // perfil (P-04): ni por texto reconocido, ni por lo agregado a mano.
+    return todos.filter((s) => this.sintomaVisible(s));
   });
 
   /** Lo que el autocompletado ofrece para la última palabra que se escribe. */
   protected readonly sugerencias = computed(() =>
-    sugerir(ultimaFrase(this.texto()), this.sintomas()),
+    sugerir(ultimaFrase(this.texto()), this.sintomas()).filter((s) => this.sintomaVisible(s)),
   );
 
   protected readonly recomendaciones = computed<readonly Recomendacion[]>(() =>
@@ -375,7 +417,9 @@ export class SymptomCheck {
    *
    * Un `id` de la tabla de zonas que no exista allá **se ignora**: la zona
    * ofrece uno menos y la pantalla sigue en pie. Es la única forma de que dos
-   * listas convivan sin que una rompa a la otra.
+   * listas convivan sin que una rompa a la otra. Y en «Salud íntima», los que
+   * no corresponden al sexo del propio perfil tampoco se ofrecen (P-04):
+   * quien busca en la zona íntima no puede elegir ahí lo del otro sexo.
    */
   protected readonly sintomasDeLaZona = computed<readonly Sintoma[]>(() => {
     const abierta = this.zonaAbierta();
@@ -388,7 +432,8 @@ export class SymptomCheck {
     }
     return zona.sintomas
       .map((id) => TODOS_LOS_SINTOMAS.find((s) => s.id === id))
-      .filter((s): s is Sintoma => s !== undefined);
+      .filter((s): s is Sintoma => s !== undefined)
+      .filter((s) => this.sintomaVisible(s));
   });
 
   /** Abre una zona, o la cierra si ya lo estaba. */
@@ -508,6 +553,19 @@ export class SymptomCheck {
       queryParams:
         conceptId === undefined || conceptId === '' ? { q: nombre } : { especialidad: conceptId },
     });
+  }
+
+  /**
+   * El sexo asignado al nacer del propio perfil, tolerante a fallo.
+   *
+   * Sólo se llama con sesión (ver {@link sexoAlNacer}): sin ella no hay
+   * `/profiles/patients/me` que leer.
+   */
+  private leerSexoPropio(): Observable<'MALE' | 'FEMALE' | 'INTERSEX' | 'UNKNOWN' | undefined> {
+    return this.profiles.getOwnPatientProfile().pipe(
+      map((perfil) => perfil.sexAtBirth),
+      catchError(() => of(undefined)),
+    );
   }
 
   /**

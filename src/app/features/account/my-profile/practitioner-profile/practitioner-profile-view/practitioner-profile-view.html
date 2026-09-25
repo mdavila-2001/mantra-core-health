@@ -232,10 +232,9 @@
             </dd>
           </div>
 
-          <div class="mi-perfil__dato">
-            <dt>Estado de la práctica</dt>
-            <dd>{{ perfil().estadoDePractica }}</dd>
-          </div>
+          <!-- La fila del estado de la práctica se retiró de esta pestaña el 23/09/2026
+             a pedido del médico (D-02). El dato sigue en el contrato y en el pie del
+             sello de la portada. -->
 
           <div class="mi-perfil__dato mi-perfil__dato--ancho">
             <dt>Presentación</dt>
@@ -270,23 +269,13 @@
 
       <!-- ─── Contacto ─────────────────────────────────────────────────────
            Pasos 4, 5 y 6 del alta. El registro pregunta CINCO contactos por
-           separado —celular personal, celular del trabajo, fijo del trabajo,
-           correo personal y correo de trabajo— y la ficha vieja mostraba uno
-           de cada clase. -->
+           separado: dos personales y tres laborales (celular, fijo y correo).
+           Desde el 23/09/2026 no van los teléfonos del trabajo: el médico pidió
+           que «Contacto» no los tuviera (D-03). El correo de trabajo sí, y se
+           corrige en el editor (#645, 24/09/2026). -->
       <app-tab [label]="pestanas[1]">
         @if (perfil().datosPersonales; as datos) {
           <dl class="mi-perfil__datos">
-            <div class="mi-perfil__dato">
-              <dt>Correo de trabajo</dt>
-              <dd>
-                @if (datos.correo) {
-                  {{ datos.correo }}
-                } @else {
-                  <span class="mi-perfil__ausente">Sin registrar</span>
-                }
-              </dd>
-            </div>
-
             <div class="mi-perfil__dato">
               <dt>Correo personal</dt>
               <dd>
@@ -299,32 +288,21 @@
             </div>
 
             <div class="mi-perfil__dato">
+              <dt>Correo de trabajo</dt>
+              <dd>
+                @if (datos.correo) {
+                  {{ datos.correo }}
+                } @else {
+                  <span class="mi-perfil__ausente">Sin registrar</span>
+                }
+              </dd>
+            </div>
+
+            <div class="mi-perfil__dato">
               <dt>Celular personal</dt>
               <dd class="mi-perfil__cifra">
                 @if (datos.celularPersonal) {
                   {{ datos.celularPersonal }}
-                } @else {
-                  <span class="mi-perfil__ausente">Sin registrar</span>
-                }
-              </dd>
-            </div>
-
-            <div class="mi-perfil__dato">
-              <dt>Celular del trabajo</dt>
-              <dd class="mi-perfil__cifra">
-                @if (datos.celularTrabajo) {
-                  {{ datos.celularTrabajo }}
-                } @else {
-                  <span class="mi-perfil__ausente">Sin registrar</span>
-                }
-              </dd>
-            </div>
-
-            <div class="mi-perfil__dato">
-              <dt>Fijo del trabajo</dt>
-              <dd class="mi-perfil__cifra">
-                @if (datos.fijoTrabajo) {
-                  {{ datos.fijoTrabajo }}
                 } @else {
                   <span class="mi-perfil__ausente">Sin registrar</span>
                 }
@@ -721,10 +699,10 @@
             <p class="profesional__titulo">{{ perfil().titulo }}</p>
           }
 
-          <!-- C-09: la especialidad principal ya se ve abajo, en su insignia y
-               con la palabra «Principal». Este renglón queda sólo para el caso
-               en que el perfil declare una principal y NO tenga la lista
-               cargada: ahí no habría insignia y el dato se perdería. -->
+          <!-- C-09: las especialidades se ven abajo, en sus insignias, todas
+               iguales (D-01, 23/09/2026). Este renglón queda sólo para el caso
+               en que el perfil traiga con qué presentar a la persona y NO tenga
+               la lista cargada: ahí no habría insignia y el dato se perdería. -->
           @if (perfil().especialidadPrincipal && perfil().especialidades.length === 0) {
             <p class="profesional__especialidad">{{ perfil().especialidadPrincipal }}</p>
           }
@@ -850,7 +828,7 @@
                 }
                 @if (datos.correo) {
                   <div class="profesional__dato">
-                    <dt>Correo</dt>
+                    <dt>Correo de trabajo</dt>
                     <dd>{{ datos.correo }}</dd>
                   </div>
                 }
@@ -860,11 +838,10 @@
                     <dd>{{ datos.domicilio }}</dd>
                   </div>
                 }
-                <!-- Los cuatro contactos que el registro pregunta por separado y
-                   la calle. La ficha mostraba UN teléfono y UN correo con los
-                   cinco datos ya disponibles en la API. Cada renglón sólo
-                   aparece si la persona lo declaró: un «—» repetido cinco veces
-                   se lee como una ficha rota. -->
+                <!-- Los contactos personales que el registro pregunta y la calle.
+                   Los laborales salieron el 23/09/2026 (D-03). Cada renglón
+                   sólo aparece si la persona lo declaró: un «—» repetido se lee
+                   como una ficha rota. -->
                 @if (datos.direccion) {
                   <div class="profesional__dato">
                     <dt>Dirección</dt>
@@ -875,18 +852,6 @@
                   <div class="profesional__dato">
                     <dt>Celular personal</dt>
                     <dd class="profesional__cifra">{{ datos.celularPersonal }}</dd>
-                  </div>
-                }
-                @if (datos.celularTrabajo) {
-                  <div class="profesional__dato">
-                    <dt>Celular del trabajo</dt>
-                    <dd class="profesional__cifra">{{ datos.celularTrabajo }}</dd>
-                  </div>
-                }
-                @if (datos.fijoTrabajo) {
-                  <div class="profesional__dato">
-                    <dt>Fijo del trabajo</dt>
-                    <dd class="profesional__cifra">{{ datos.fijoTrabajo }}</dd>
                   </div>
                 }
                 @if (datos.correoPersonal) {
@@ -1246,8 +1211,6 @@
                     <div class="profesional__item-encabezado">
                       <app-specialty-badge
                         [especialidad]="especialidad.nombre"
-                        [principal]="especialidad.principal"
-                        [certificada]="especialidad.certificada"
                         [estado]="especialidad.estado"
                         [sello]="especialidad.sello"
                       />
@@ -1290,9 +1253,6 @@
                       >
                         <div class="profesional__item-encabezado">
                           <span class="profesional__item-titulo">{{ especialidad.nombre }}</span>
-                          @if (especialidad.principal) {
-                            <app-badge variant="primary" value="Principal" />
-                          }
                           @if (especialidad.certificada) {
                             <app-badge variant="success" value="Certificada" />
                           }
