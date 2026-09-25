@@ -1,3 +1,4 @@
+import { encuentros } from './clinica';
 import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from './conceptos';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from './personas';
 import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
@@ -514,6 +515,23 @@ function sembrarCupoPorLiberarse(): void {
 /** El día, en milisegundos. Una reconsulta se agenda **desde mañana**. */
 const UN_DIA = 24 * 60 * 60 * 1000;
 
+/**
+ * El encuentro del que cuelga la reconsulta sembrada, o `null` si no hay ninguno.
+ *
+ * El más reciente ya cerrado de la paciente principal: es una atención que la
+ * historia clínica lista, así que es una en la que la línea del encuentro se
+ * puede desplegar y mirar.
+ */
+function encuentroDeOrigen(): string | null {
+  return (
+    encuentros
+      .todos()
+      .filter((e) => e.patientProfileId === PACIENTE.id)
+      .filter((e) => e.endAt !== null)
+      .sort((a, b) => b.startAt.localeCompare(a.startAt))[0]?.id ?? null
+  );
+}
+
 function sembrarReconsulta(): void {
   const origen = reservas
     .todos()
@@ -540,11 +558,21 @@ function sembrarReconsulta(): void {
       // acuerda con la persona enfrente, en el consultorio.
       bookingChannelConceptId: CANAL['CH-PRESENCIAL']!,
       reasonText: `Reconsulta: ${origen.reasonText}`,
-      // `encounterId` en `null` a propósito: el fixture de agenda no modela los
-      // encuentros clínicos, y atarlo al `appointmentId` sería inventar una
-      // relación que el modelo no declara. El handler sí lo propaga cuando el
-      // cliente lo manda.
-      followUpOf: { bookingId: origen.id, encounterId: null },
+      // C8 · `encounterId` **dejó de ser `null`**. C4 lo dejó así porque este
+      // fixture no modelaba encuentros clínicos, y la nota advertía —con razón—
+      // que atarlo al `appointmentId` habría inventado una relación que el
+      // modelo no declara: el `appointmentId` de una reserva apunta a otra
+      // tabla, y el `Encounter` que se lee ni siquiera lo expone.
+      //
+      // Pero el vínculo que el contrato SÍ declara es exactamente éste
+      // (`FollowUpOriginRef.encounterId`), y sin él la integración de C6 —la
+      // línea del encuentro nombrando la reconsulta— no se puede ver en la
+      // aplicación por ningún camino: quedaba probada en unitarias y muerta en
+      // pantalla. Así que la reconsulta se cuelga de un encuentro **real** de la
+      // misma paciente, y como el origen de arriba, se **busca**: el más
+      // reciente ya cerrado. Fijarlo por índice o derivar su id por convención
+      // de texto lo ataría a cómo `clinica.ts` genera los suyos hoy.
+      followUpOf: { bookingId: origen.id, encounterId: encuentroDeOrigen() },
       createdAt: ahora(),
     }),
   );
