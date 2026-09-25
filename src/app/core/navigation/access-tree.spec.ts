@@ -61,14 +61,17 @@ describe('el registro de zonas', () => {
 });
 
 describe('buildAccessTree', () => {
-  /** Las secciones que un rol alcanza, tal como se las pasa el panel. */
-  function seccionesDe(roles: readonly string[]): readonly AppSection[] {
-    return APP_SECTIONS.filter((seccion) => isVisibleTo(seccion, roles, ['t-1']));
+  /** Las secciones que un rol (y, opcionalmente, un tipo de organización) alcanza, tal como se las pasa el panel. */
+  function seccionesDe(
+    roles: readonly string[],
+    tipo: string | null = null,
+  ): readonly AppSection[] {
+    return APP_SECTIONS.filter((seccion) => isVisibleTo(seccion, roles, ['t-1'], tipo));
   }
 
   /** Todas las rutas repartidas, sin importar en qué zona cayeron. */
-  function rutasRepartidas(roles: readonly string[]): readonly string[] {
-    return buildAccessTree(seccionesDe(roles)).flatMap((zona) =>
+  function rutasRepartidas(roles: readonly string[], tipo: string | null = null): readonly string[] {
+    return buildAccessTree(seccionesDe(roles, tipo)).flatMap((zona) =>
       zona.sections.map((seccion) => seccion.path),
     );
   }
@@ -292,5 +295,27 @@ describe('buildAccessTree', () => {
 
   it('sin secciones no hay zonas, y no una fila de tarjetas vacías', () => {
     expect(buildAccessTree([])).toEqual([]);
+  });
+
+  /**
+   * La aseguradora (2026-09-25). Con `hiddenForTenantTypes` cerrando los
+   * directorios y el autoservicio del paciente, a una sesión `USER` con tenant
+   * `PAYER` sólo le queda «Chats» (zona «Pacientes y equipo») y las tres
+   * pantallas de seguros (zona «Administración») — dos zonas, no una.
+   */
+  it('la aseguradora ve dos zonas: Pacientes y equipo (Chats), y Administración', () => {
+    const arbol = buildAccessTree(seccionesDe(['USER'], 'PAYER'));
+
+    expect(arbol.map((zona) => zona.area.id)).toEqual(['gente', 'organizacion']);
+
+    const gente = arbol.find((zona) => zona.area.id === 'gente');
+    expect(gente?.sections.map((s) => s.path)).toEqual(['messaging']);
+
+    const organizacion = arbol.find((zona) => zona.area.id === 'organizacion');
+    expect(organizacion?.sections.map((s) => s.path)).toEqual([
+      'administration/insurance-analytics',
+      'administration/my-organization',
+      'administration/insurance',
+    ]);
   });
 });

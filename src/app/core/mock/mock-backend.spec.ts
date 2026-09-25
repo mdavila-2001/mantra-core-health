@@ -19,7 +19,17 @@ import { crearRouterSimulado } from './handlers';
 import { perfilProfesionalDe } from './handlers/profiles.handlers';
 import { esTelefonoCompleto } from '../../shared/components/molecules/phone-input/phone-input.paises';
 import { isMockReply, type MockMethod, type MockRequest } from './mock-router';
-import { buscarUsuario, emitirAccessToken, MOCK_USERS, type MockUser } from './mock-session';
+import {
+  buscarUsuario,
+  emitirAccessToken,
+  MOCK_USERS,
+  TENANT_ASEGURADORA,
+  TENANT_CLINICA,
+  TENANT_CONSULTORIO,
+  TENANT_HOSPITAL,
+  type MockUser,
+} from './mock-session';
+import { decodeAccessToken } from '../auth/access-token';
 
 /* ============================================================================
     El backend simulado, recorrido entero.
@@ -123,6 +133,23 @@ describe('backend simulado', () => {
       expect(respuesta.accessToken).toBeTypeOf('string');
       expect(buscarUsuario(user.email)?.id).toBe(user.id);
     }
+  });
+
+  it('el token dice de qué tipo es cada organización de la cuenta (tenantTypes)', () => {
+    const aseguradora = MOCK_USERS.find((u) => u.key === 'aseguradora')!;
+    const claimsAseguradora = decodeAccessToken(emitirAccessToken(aseguradora));
+    expect(claimsAseguradora?.tenantTypes).toEqual({ [TENANT_ASEGURADORA]: 'PAYER' });
+
+    // La médica tiene tres organizaciones, de tres tipos distintos: el
+    // consultorio propio y la clínica son prestador; el hospital es
+    // institucional.
+    const medica = MOCK_USERS.find((u) => u.key === 'medica')!;
+    const claimsMedica = decodeAccessToken(emitirAccessToken(medica));
+    expect(claimsMedica?.tenantTypes).toEqual({
+      [TENANT_CONSULTORIO]: 'PROVIDER',
+      [TENANT_CLINICA]: 'PROVIDER',
+      [TENANT_HOSPITAL]: 'HOSPITAL',
+    });
   });
 
   it('dynamic-enum de credenciales replica las cinco opciones canónicas del API', () => {

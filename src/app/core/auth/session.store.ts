@@ -111,6 +111,26 @@ export class SessionStore {
     return tenants.length === 1 ? (tenants[0] ?? null) : this.ownTenantId();
   });
 
+  /**
+   * Código de tipo de la organización **activa** (`'PAYER'`, `'PROVIDER'`,
+   * `'PHARMACY'`…), o `null`.
+   *
+   * `null` en tres casos que no se distinguen porque a quien lo consume no le
+   * hace falta distinguirlos: sin organización activa (varios tenants sin
+   * elegir y sin `ownTenantId`), sin el claim `tenantTypes` en el token —una
+   * API vieja o un token emitido antes de que este claim existiera— o con un
+   * tipo que no está en el catálogo. En los tres casos el efecto es el mismo:
+   * ninguna sección se oculta por tipo de organización, que es el menú de hoy.
+   *
+   * Es dato de presentación, igual que `tenantName`: no autoriza nada. Sirve
+   * para que el registro de navegación pueda ocultarle a una organización una
+   * sección que no es suya (`AppSection.hiddenForTenantTypes`).
+   */
+  readonly activeTenantType = computed<string | null>(() => {
+    const id = this.activeTenantId();
+    return id === null ? null : (this.claims()?.tenantTypes?.[id] ?? null);
+  });
+
   /** Si hay que pedirle a la persona que elija organización. */
   readonly needsTenantSelection = computed(
     () =>

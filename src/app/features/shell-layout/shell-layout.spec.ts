@@ -251,6 +251,17 @@ describe('ShellLayout', () => {
     expect(rotulosDelMenu()).toContain('Sistema de diseño');
   });
 
+  it('tampoco a la aseguradora: es tan ajena a su trabajo como al del médico (2026-09-25)', () => {
+    abrirSesion({
+      sub: 'u-3',
+      roles: ['USER'],
+      tenants: ['t-1'],
+      tenantTypes: { 't-1': 'PAYER' },
+    });
+    expect(rotulosDelMenu()).not.toContain('Sistema de diseño');
+    expect(rutasDelMenu()).not.toContain('/design-system');
+  });
+
   /**
    * El armazón es **el único lugar que puede ver las dos capas**: `core/` no
    * importa de `shared/` (lo hace cumplir `scripts/check-architecture.mjs`), así
@@ -849,6 +860,28 @@ describe('ShellLayout', () => {
       // pintados, aunque la ruta sigue existiendo y siendo alcanzable.
       expect(destinos).not.toContain('/dashboard');
       expect(destinos).toContain('/design-system');
+    });
+
+    it('la barra de la aseguradora: cinco renglones, un solo dominio plegable (2026-09-25)', () => {
+      abrirSesion({
+        sub: 'u-3',
+        roles: ['USER'],
+        tenants: ['t-1'],
+        tenantTypes: { 't-1': 'PAYER' },
+      });
+
+      const destinos = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+        a.getAttribute('data-route'),
+      );
+      expect(destinos).toEqual([
+        '/my-account',
+        '/notification-center',
+        '/administration/insurance',
+        '/administration/insurance-analytics',
+        '/administration/my-organization',
+      ]);
+      expect(raiz().querySelectorAll('.app-side-nav__group').length).toBe(1);
+      expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(0);
     });
 
     /**
