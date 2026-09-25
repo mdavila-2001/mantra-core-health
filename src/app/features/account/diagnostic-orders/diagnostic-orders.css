@@ -1,75 +1,29 @@
 /* ============================================================================
-    Las órdenes del paciente.
-
-    Mobile-first, como el resto del portal, y con una razón propia: esta
-    pantalla se lee de camino al laboratorio, en el teléfono y con prisa. Cada
-    orden es una tarjeta que se lee entera de arriba abajo, y la preparación no
-    queda nunca por debajo de las acciones.
+    «Mis órdenes» (C9, ADR-0015): una tarjeta centrada a lo ancho con cuatro
+    pestañas; dentro de cada una, buscador + filtros, tabla sin scroll lateral
+    y paginación. Mobile-first: la tabla pliega Consulta al detalle por
+    prioridad antes de recurrir a un scroll que el propietario prohibió.
     ========================================================================== */
 
-.ordenes__estado {
-  color: var(--text-muted);
-  margin-block: var(--sp-4);
+.ordenes {
+  display: block;
 }
 
-.ordenes__lista {
-  display: grid;
-  gap: var(--sp-4);
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.ordenes__item {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  display: grid;
-  gap: var(--sp-3);
-  padding: var(--sp-4);
-}
-
-.ordenes__encabezado {
-  align-items: start;
+.ordenes__skeleton {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block: var(--sp-4);
 }
 
-.ordenes__titulo {
-  font-size: var(--fs-body-lg);
-  font-weight: 600;
-  margin: 0;
-}
-
-.ordenes__fecha {
+.ordenes__resumen {
   color: var(--text-muted);
   font-size: var(--fs-caption);
-  margin: 0;
+  margin: var(--sp-4) 0 0;
 }
 
-.ordenes__etiquetas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-
-.ordenes__acciones {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-3);
-}
-
-/* El encabezado de cada atención. Separa los grupos sin cajas: la jerarquía la
-   dan el espacio y el peso, que en una lista corta se lee mejor que un marco. */
-.ordenes__grupo + .ordenes__grupo {
-  margin-block-start: var(--sp-6);
-}
-
-.ordenes__grupo-titulo {
-  font-size: var(--fs-body);
-  font-weight: 600;
-  margin: 0 0 var(--sp-3);
+.ordenes__vacio {
+  color: var(--text-muted);
+  margin-block: var(--sp-6);
+  text-align: center;
 }
