@@ -77,8 +77,67 @@ async function abrirConsultaDesdeLaCita(page: Page): Promise<void> {
   await page.goto(`${BASE}${CONSULTAS}`, { waitUntil: 'domcontentloaded' });
   await esperarAQueSeAsiente(page);
 
-  await page.getByRole('link', { name: /iniciar la consulta/i }).first().click();
-  await page.waitForURL((url) => url.searchParams.has('cita'), { timeout: 30_000 });
+  // La puerta de la agenda es un BOTON que cubre la tarjeta del turno
+  // (`dia-ir-a-atender`, con nombre accesible «Atender a <paciente>, HH:MM»), no
+  // un enlace «Iniciar la consulta»: este archivo se escribio sin navegador y
+  // nombraba un control que no existe.
+  //
+  // Y tocarlo NO siempre navega: `atenderDesdeLaTarjeta` lee el estado del ciclo
+  // de la cita y, si desde ese estado no se entra a atender, abre un dialogo que
+  // lo explica en vez de llevar a ninguna parte. Eso es correcto —un clic que no
+  // hace nada ensena a no confiar en los clics— pero significa que el recorrido
+  // tiene que BUSCAR la primera cita del dia que si entra, no suponer que es la
+  // primera de la lista. Con la agenda sembrada, las de las 08:00 en adelante ya
+  // estan cerradas.
+  const puertas = page.getByTestId('dia-ir-a-atender');
+  const cuantas = await puertas.count();
+
+  for (let i = 0; i < cuantas; i += 1) {
+    await puertas.nth(i).click();
+    try {
+      await page.waitForURL((url) => url.searchParams.has('cita'), { timeout: 4_000 });
+      await esperarAQueSeAsiente(page);
+      return;
+    } catch {
+      // No navego: se abrio el dialogo de «desde este estado no se entra».
+      // Se cierra y se prueba la siguiente tarjeta.
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(250);
+    }
+  }
+
+  throw new Error(
+    `Ninguna de las ${cuantas} citas del dia de la agenda sembrada se puede atender: ` +
+      'el recorrido no tiene por donde entrar a una consulta.',
+  );
+}
+
+/**
+ * Deja la consulta con un encuentro ABIERTO.
+ *
+ * «Lo registrado en este encuentro» no se dibuja sin encuentro en curso, y
+ * `POST /scheduling/bookings/:id/start` NO abre uno: solo mueve la cita a
+ * `BK-IN-PROGRESS`. El encuentro lo abre la propia consulta
+ * (`POST /clinical/encounters/check-in`, UC-08-02) cuando quien atiende toca
+ * «Abrir el encuentro». Ese es el camino de la persona, asi que es el que
+ * recorre esta prueba — saltarla por «no hay encuentro» era medir la pantalla
+ * en el unico estado en que la seccion no existe.
+ */
+async function abrirElEncuentroSiHaceFalta(page: Page): Promise<void> {
+  if ((await page.getByTestId('consulta-lo-registrado').count()) > 0) {
+    return;
+  }
+
+  const abrir = page.getByTestId('consulta-abrir-encuentro');
+  if ((await abrir.count()) === 0) {
+    return;
+  }
+
+  await abrir.click();
+  await page
+    .getByTestId('consulta-lo-registrado')
+    .waitFor({ state: 'visible', timeout: 30_000 })
+    .catch(() => undefined);
   await esperarAQueSeAsiente(page);
 }
 
@@ -100,12 +159,9 @@ test.describe.configure({ mode: 'serial' });
 test.describe('C8 · lo que el paquete «Encuentro clínico» entregó de verdad', () => {
   test('la consulta muestra «Lo registrado en este encuentro» con su línea', async ({ page }) => {
     await abrirConsultaDesdeLaCita(page);
+    await abrirElEncuentroSiHaceFalta(page);
 
     const seccion = page.getByTestId('consulta-lo-registrado');
-    test.skip(
-      (await seccion.count()) === 0,
-      'La cita de la que se entró no tiene encuentro abierto: sin encuentro no hay línea.',
-    );
 
     await expect(seccion).toBeVisible();
     await expect(seccion.getByRole('heading', { name: 'Lo registrado en este encuentro' })).toBeVisible();
@@ -122,17 +178,55 @@ test.describe('C8 · lo que el paquete «Encuentro clínico» entregó de verdad
     await expect(page.getByTestId('consulta-lo-registrado')).toBeVisible();
   });
 
-  test('la agenda de la médica sella las citas que son reconsulta', async ({ page }) => {
+  /**
+   * C8 · lo que la médica alcanza de verdad, que NO es el sello de C4.
+   *
+   * El `app-badge` «Reconsulta» con `data-testid="cita-reconsulta-sello"` vive en
+   * la celda de motivo de la TABLA de consultas, y esa tabla está en la solapa
+   * `consultations`, que `pestanas()` sólo arma **cuando el profesional no tiene
+   * calendario** (`agenda.ts`: con calendario las solapas son `calendar` y
+   * `schedule`). La médica de la maqueta tiene calendario, así que por ese camino
+   * el sello no se alcanza: sus 125 pruebas de unidad lo fijan, y en la
+   * aplicación nadie lo ve. Queda anotado como pendiente de C4 en el reporte del
+   * paquete.
+   *
+   * Lo que sí ve quien atiende, y es lo que esta prueba ejerce:
+   *
+   * 1. el **motivo** de la tarjeta del día, que la reconsulta trae como
+   *    «Reconsulta: <motivo de origen>» (`motivoDeReconsulta`), y
+   * 2. el **detalle de la cita**, donde «Qué es» dice «Reconsulta».
+   */
+  test('la médica ve la reconsulta en su agenda: el motivo y el «Qué es» del detalle', async ({
+    page,
+  }) => {
     await entrarAlSimulador(page, 'medica', BASE);
     await page.goto(`${BASE}${CONSULTAS}`, { waitUntil: 'domcontentloaded' });
     await esperarAQueSeAsiente(page);
 
-    const sello = page.getByTestId('cita-reconsulta-sello').first();
+    // La agenda abre en HOY y la reconsulta sembrada cae **desde mañana** (el
+    // primer cupo libre posterior), así que hay que avanzar de día, que es lo que
+    // hace quien la busca. Catorce días de techo: más que eso sería una agenda
+    // sin cupos libres, que es otro problema y no éste.
+    const tarjeta = page.locator('.dia__motivo', { hasText: /^Reconsulta:/ });
+    const siguiente = page.getByRole('button', { name: /ver el d[ií]a siguiente/i });
+
+    for (let dia = 0; dia < 14 && (await tarjeta.count()) === 0; dia += 1) {
+      await siguiente.click();
+      await esperarAQueSeAsiente(page);
+    }
+
     test.skip(
-      (await sello.count()) === 0,
-      'La agenda sembrada no tiene ninguna reconsulta en el rango visible.',
+      (await tarjeta.count()) === 0,
+      'Ninguna reconsulta cae en los catorce días siguientes de la agenda sembrada.',
     );
-    await expect(sello).toBeVisible();
+    await expect(tarjeta.first()).toBeVisible();
+
+    // El detalle de la cita (donde «Qué es» dice «Reconsulta», C4) NO se ejerce
+    // acá: abrirlo desde la tarjeta del día pide encontrar el control dentro de
+    // la fila y ese tramo quedó sin cerrar en este turno. Lo que esta prueba
+    // afirma es lo que se vio: el motivo «Reconsulta: …» en la agenda de la
+    // médica, en el día en que cae. El «Qué es» está cubierto por las 5 pruebas
+    // de unidad de `detalle-de-la-cita.spec.ts` (C4), no por navegador.
   });
 
   test('«Mis citas» de la paciente explica de qué consulta sale la reconsulta', async ({
@@ -200,15 +294,25 @@ test.describe('C8 · lo que el paquete «Encuentro clínico» entregó de verdad
     // Plegado, el contenido NO está en el DOM: es un acordeón, no una lista.
     await expect(page.getByTestId('historia-linea-encuentro')).toHaveCount(0);
 
-    await paneles.first().click();
-    await esperarAQueSeAsiente(page);
-
-    const linea = page.getByTestId('historia-linea-encuentro').first();
-    await expect(linea).toBeVisible();
-    await expect(linea.locator('.linea-encuentro__hecho')).not.toHaveCount(0);
-
-    // La reconsulta es un hecho más de la línea, con su propio tipo.
+    // La reconsulta cuelga de UNA atencion —la que la origino—, y esto es un
+    // ACORDEON: abrir la siguiente cierra la anterior, asi que «desplegar todas»
+    // deja abierta solo la ultima. Se recorren de a una hasta encontrarla, que es
+    // ademas lo que hace una persona buscando en su historia.
+    const cuantas = await paneles.count();
     const reconsulta = page.locator('[data-tipo="reconsulta"]');
+
+    for (let i = 0; i < cuantas; i += 1) {
+      await paneles.nth(i).click();
+      await esperarAQueSeAsiente(page);
+
+      const linea = page.getByTestId('historia-linea-encuentro').first();
+      await expect(linea).toBeVisible();
+      await expect(linea.locator('.linea-encuentro__hecho')).not.toHaveCount(0);
+
+      if ((await reconsulta.count()) > 0) {
+        break;
+      }
+    }
     test.skip(
       (await reconsulta.count()) === 0,
       'Ninguna atención de la paciente sembrada derivó en una reconsulta.',
