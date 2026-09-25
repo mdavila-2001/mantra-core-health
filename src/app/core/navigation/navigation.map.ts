@@ -80,14 +80,17 @@ const ROLES_QUE_EJERCEN_O_ADMINISTRAN = [
 export const APP_SECTIONS: readonly AppSection[] = [
   {
     path: 'dashboard',
-    // §4.H · fuera del menú del médico. La lista cerrada del cliente son ocho
-    // y el panel no es una de ellas; se sigue llegando por la marca del
-    // armazón, que ahora es un enlace a `/dashboard` justamente por esto, y es
-    // el destino del login y del cambio de organización.
+    // §4.H, generalizado (2026-09-25): nació `['PRACTITIONER']` porque la
+    // lista cerrada del médico son ocho y el panel no es una de ellas, pero
+    // el motivo real —la marca del armazón ya es un enlace a `/dashboard`,
+    // ofrecer «Panel» abajo es la pantalla en la que ya estás— vale para
+    // cualquier rol, no sólo para el médico (mismo caso que `access-tree.ts`
+    // excluye `dashboard` de su propio panel de accesos). Se sigue llegando
+    // por la marca, por el login y por el cambio de organización.
     //
     // **No se le tocan los `roles`**: el panel lo tiene que poder abrir
     // cualquiera —lo exige `navigation.map.spec`— y esto no habla de permisos.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Panel',
     group: 'General',
     icon: 'home',
