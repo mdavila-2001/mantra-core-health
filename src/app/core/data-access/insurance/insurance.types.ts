@@ -430,6 +430,47 @@ export interface ClaimDispute {
   readonly filingDeadline: Date | null;
 }
 
+/**
+ * Disponibilidad del desglose de liquidación (Tarea 3 · H8, CA-3.1/CA-3.3).
+ * Idéntica semántica que `InsuranceSettlementAvailability` del paciente.
+ */
+export type ClaimSettlementAvailability =
+  | 'AVAILABLE'
+  | 'PENDING_PUBLICATION'
+  | 'UNDER_REVIEW'
+  | 'NOT_AVAILABLE';
+
+/** Una exclusión formal del desglose, con su cita de cláusula. */
+export interface ClaimExclusion {
+  readonly claimLineId: string;
+  readonly itemName: string | null;
+  readonly amount: string;
+  readonly policyClauseReference: string;
+  readonly denialRationale: string | null;
+}
+
+/**
+ * El desglose conciliado de liquidación (contrato H8 §3–§5):
+ * `totalBilledAmount = totalApprovedAmount + totalPatientAmount +
+ * totalDeniedAmount`. `reconciled` es `true` sólo cuando esa ecuación cuadra
+ * al centavo — un `false` no se tapa redondeando.
+ */
+export interface ClaimSettlementBreakdown {
+  readonly availability: ClaimSettlementAvailability;
+  readonly totalBilledAmount: string | null;
+  readonly totalApprovedAmount: string | null;
+  readonly totalPatientAmount: string | null;
+  readonly totalDeniedAmount: string | null;
+  readonly reconciled: boolean;
+  readonly exclusions: readonly ClaimExclusion[];
+}
+
+/** La EOB de la versión vigente, si ya se publicó. */
+export interface ClaimEob {
+  readonly id: string;
+  readonly publishedAt: Date;
+}
+
 /** El detalle completo de una solicitud. */
 export interface ClaimDetail {
   readonly header: ClaimListItem;
@@ -440,4 +481,6 @@ export interface ClaimDetail {
   readonly adjudication: ClaimAdjudication | null;
   readonly adjudicationHistory: readonly ClaimAdjudication[];
   readonly disputes: readonly ClaimDispute[];
+  readonly settlement: ClaimSettlementBreakdown;
+  readonly eob: ClaimEob | null;
 }

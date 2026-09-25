@@ -30,6 +30,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { currencySuffix, formatAmount, formatMoney } from '../money-format';
 import { displayCurrency } from '../../../core/money/display-currency';
+import { addDecimalStrings, sameDecimalString } from '../../../core/money/decimal-strings';
 import { InsuranceContactChannels } from './insurance-contact-channels/insurance-contact-channels';
 
 /**
@@ -129,6 +130,29 @@ export class InsuranceClaimDetail {
       detail.header.billedTotal.amount,
       detail.lineBilledTotal.amount,
     );
+  });
+
+  /**
+   * Comprobación local, adicional a `settlement.reconciled`: cubierto +
+   * copago + rechazado = facturado, con aritmética decimal exacta. La API ya
+   * lo garantiza; esto es una segunda capa para que un cambio futuro del
+   * contrato no pueda mostrar un descuadre como liquidación firme sin que la
+   * pantalla lo note.
+   */
+  protected readonly settlementEquationHolds = computed(() => {
+    const detail = this.claim();
+    if (!detail || detail.settlement.availability !== 'AVAILABLE') return true;
+    const { totalBilledAmount, totalApprovedAmount, totalPatientAmount, totalDeniedAmount } =
+      detail.settlement;
+    if (
+      totalBilledAmount == null ||
+      totalApprovedAmount == null ||
+      totalPatientAmount == null ||
+      totalDeniedAmount == null
+    )
+      return false;
+    const sum = addDecimalStrings([totalApprovedAmount, totalPatientAmount, totalDeniedAmount]);
+    return sum !== null && sameDecimalString(totalBilledAmount, sum);
   });
 
   constructor() {

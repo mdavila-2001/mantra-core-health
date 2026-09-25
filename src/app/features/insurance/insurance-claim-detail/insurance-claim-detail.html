@@ -142,6 +142,121 @@
       </app-alert>
     }
 
+    <!-- ---- liquidación conciliada (Tarea 3 · H8, CA-3.1/CA-3.3) ---------- -->
+    <section class="claim__settlement" aria-labelledby="claim-settlement-title" data-testid="claim-settlement">
+      <h2 id="claim-settlement-title" class="claim__section-title">Liquidación</h2>
+
+      @switch (detail.settlement.availability) {
+        @case ('AVAILABLE') {
+          <dl class="claim__facts">
+            <div>
+              <dt>Facturado</dt>
+              <dd class="claim__money" data-testid="claim-settlement-billed">
+                {{ detail.settlement.totalBilledAmount }} {{ moneda(detail.header.billedTotal.currency?.code) }}
+              </dd>
+            </div>
+            <div>
+              <dt>Cubierto por el seguro</dt>
+              <dd class="claim__money" data-testid="claim-settlement-approved">
+                {{ detail.settlement.totalApprovedAmount }} {{ moneda(detail.header.billedTotal.currency?.code) }}
+              </dd>
+            </div>
+            <div>
+              <dt>Copago del paciente</dt>
+              <dd class="claim__money" data-testid="claim-settlement-patient">
+                {{ detail.settlement.totalPatientAmount }} {{ moneda(detail.header.billedTotal.currency?.code) }}
+              </dd>
+            </div>
+            <div>
+              <dt>Rechazado</dt>
+              <dd class="claim__money" data-testid="claim-settlement-denied">
+                {{ detail.settlement.totalDeniedAmount }} {{ moneda(detail.header.billedTotal.currency?.code) }}
+              </dd>
+            </div>
+            <div>
+              <dt>EOB</dt>
+              <dd>
+                @if (detail.eob) {
+                  Publicada el
+                  <time [attr.datetime]="detail.eob.publishedAt.toISOString()">
+                    {{ detail.eob.publishedAt.toLocaleDateString('es-BO') }}
+                  </time>
+                } @else {
+                  <span class="claim__absent">Sin publicar</span>
+                }
+              </dd>
+            </div>
+          </dl>
+
+          <!-- La API ya declara `reconciled`; se vuelve a comprobar en el
+               navegador con aritmética decimal exacta (nunca redondeando) para
+               que un descuadre nunca pueda pasar desapercibido por un cambio
+               futuro del contrato. -->
+          @if (!detail.settlement.reconciled || !settlementEquationHolds()) {
+            <app-alert tone="warning" data-testid="claim-settlement-mismatch">
+              El desglose no cuadra: la suma de cubierto, copago y rechazado no
+              es igual al total facturado. No se muestra como liquidación
+              firme.
+            </app-alert>
+          }
+
+          <h3 class="claim__settlement-subtitle">Exclusiones</h3>
+          @if (detail.settlement.exclusions.length > 0) {
+            <table class="claim__table" data-testid="claim-exclusions-table">
+              <caption class="sr-only">Ítems excluidos de la liquidación</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Ítem</th>
+                  <th scope="col" class="claim__col-money">Monto</th>
+                  <th scope="col">Cláusula</th>
+                  <th scope="col">Motivo</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (exclusion of detail.settlement.exclusions; track exclusion.claimLineId) {
+                  <tr>
+                    <td>{{ exclusion.itemName ?? 'Sin nombre registrado' }}</td>
+                    <td class="claim__col-money claim__money">
+                      {{ exclusion.amount }} {{ moneda(detail.header.billedTotal.currency?.code) }}
+                    </td>
+                    <td>
+                      <app-badge
+                        variant="error"
+                        size="sm"
+                        class="claim__clause"
+                        [label]="'Cláusula de exclusión: ' + exclusion.policyClauseReference"
+                        data-testid="claim-exclusion-clause"
+                      >{{ exclusion.policyClauseReference }}</app-badge>
+                    </td>
+                    <td class="claim__rationale" data-testid="claim-exclusion-rationale">
+                      {{ exclusion.denialRationale ?? 'No informada' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <p class="claim__note">Sin exclusiones.</p>
+          }
+        }
+        @case ('PENDING_PUBLICATION') {
+          <app-alert tone="info" data-testid="claim-settlement-pending">
+            La aseguradora todavía no publicó la liquidación de esta solicitud.
+          </app-alert>
+        }
+        @case ('UNDER_REVIEW') {
+          <app-alert tone="warning" data-testid="claim-settlement-under-review">
+            La liquidación está en revisión: falta una cláusula, hay un
+            descuadre, o la solicitud fue revertida. No se muestra como
+            liquidación firme.
+          </app-alert>
+        }
+        @default {
+          <p class="claim__note">Sin liquidación disponible.</p>
+        }
+      }
+    </section>
+
     <!-- ---- los ítems ---------------------------------------------------- -->
     <section class="claim__lines" aria-labelledby="claim-lines">
       <h2 id="claim-lines" class="claim__section-title">Ítems de la solicitud</h2>

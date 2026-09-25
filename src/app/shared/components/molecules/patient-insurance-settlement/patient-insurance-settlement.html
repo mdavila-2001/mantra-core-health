@@ -18,19 +18,27 @@
     <dl class="settlement__amounts cifras-tabulares">
       <div>
         <dt>Total facturado</dt>
-        <dd>{{ details.totalBilledAmount }} {{ currency(details.currencyCode) }}</dd>
+        <dd data-testid="settlement-total-billed">
+          {{ details.totalBilledAmount }} {{ currency(details.currencyCode) }}
+        </dd>
       </div>
       <div>
         <dt>Cubierto por el seguro</dt>
-        <dd>{{ details.totalApprovedAmount }} {{ currency(details.currencyCode) }}</dd>
+        <dd data-testid="settlement-total-approved">
+          {{ details.totalApprovedAmount }} {{ currency(details.currencyCode) }}
+        </dd>
       </div>
       <div class="settlement__patient">
         <dt>A tu cargo</dt>
-        <dd>{{ details.totalPatientAmount }} {{ currency(details.currencyCode) }}</dd>
+        <dd data-testid="settlement-total-patient">
+          {{ details.totalPatientAmount }} {{ currency(details.currencyCode) }}
+        </dd>
       </div>
       <div>
         <dt>Excluido sin asignar</dt>
-        <dd>{{ details.totalDeniedAmount }} {{ currency(details.currencyCode) }}</dd>
+        <dd data-testid="settlement-total-denied">
+          {{ details.totalDeniedAmount }} {{ currency(details.currencyCode) }}
+        </dd>
       </div>
     </dl>
     <p class="settlement__note">
@@ -42,13 +50,21 @@
       <h4>Exclusiones del seguro</h4>
       <ul class="settlement__exclusions">
         @for (exclusion of details.exclusions; track exclusion.claimLineId) {
-          <li>
+          <li data-testid="settlement-exclusion">
             <strong
               >{{ exclusion.itemName }} · {{ exclusion.amount }}
               {{ currency(details.currencyCode) }}</strong
             >
-            <p class="settlement__clause">Cláusula: {{ exclusion.policyClauseReference }}</p>
             <p class="settlement__clause">
+              Cláusula:
+              <app-badge
+                variant="error"
+                size="sm"
+                [label]="'Cláusula de exclusión: ' + exclusion.policyClauseReference"
+                data-testid="settlement-exclusion-clause"
+              >{{ exclusion.policyClauseReference }}</app-badge>
+            </p>
+            <p class="settlement__clause" data-testid="settlement-exclusion-rationale">
               Justificación: {{ exclusion.denialRationale ?? 'No informada' }}
             </p>
           </li>

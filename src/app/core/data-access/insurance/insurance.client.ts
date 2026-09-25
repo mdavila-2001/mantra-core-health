@@ -9,6 +9,7 @@ import type {
   ClaimAdjudication,
   ClaimDetail,
   ClaimDispute,
+  ClaimEob,
   ClaimLine,
   ClaimLineDuplicateStudy,
   ClaimListItem,
@@ -112,15 +113,19 @@ type WireClaimLine = Omit<ClaimLine, 'duplicateStudy'> & {
   readonly duplicateStudy: WireClaimLineDuplicateStudy | null;
 };
 
+/** `eob.publishedAt` viaja como ISO-8601; el resto del desglose ya son cadenas. */
+type WireClaimEob = Omit<ClaimEob, 'publishedAt'> & { readonly publishedAt: string };
+
 type WireClaimDetail = Omit<
   ClaimDetail,
-  'header' | 'lines' | 'adjudication' | 'adjudicationHistory' | 'disputes'
+  'header' | 'lines' | 'adjudication' | 'adjudicationHistory' | 'disputes' | 'eob'
 > & {
   readonly header: WireClaimListItem;
   readonly lines: readonly WireClaimLine[];
   readonly adjudication: WireClaimAdjudication | null;
   readonly adjudicationHistory: readonly WireClaimAdjudication[];
   readonly disputes: readonly WireClaimDispute[];
+  readonly eob: WireClaimEob | null;
 };
 
 /**
@@ -381,6 +386,7 @@ function toClaimDetail(body: WireClaimDetail): ClaimDetail {
     adjudication: body.adjudication ? toClaimAdjudication(body.adjudication) : null,
     adjudicationHistory: body.adjudicationHistory.map(toClaimAdjudication),
     disputes: body.disputes.map(toClaimDispute),
+    eob: body.eob ? { ...body.eob, publishedAt: new Date(body.eob.publishedAt) } : null,
   };
 }
 
