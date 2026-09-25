@@ -44,7 +44,9 @@ test.describe('Cierre local · reserva y Cotizaciones', () => {
         if (vista.width <= 900) {
           await expect
             .poll(() =>
-              page.locator('.app-side-nav').evaluate((elemento) => elemento.getBoundingClientRect().right),
+              page
+                .locator('.app-side-nav')
+                .evaluate((elemento) => elemento.getBoundingClientRect().right),
             )
             .toBeLessThanOrEqual(0);
         }
@@ -86,7 +88,9 @@ test.describe('Cierre local · reserva y Cotizaciones', () => {
     await page.keyboard.press('Enter');
     // `app-select` numera sus opciones: la 1 es «Medicamentos».
     await expect(vertical).toHaveValue('1');
-    await expect(page.getByTestId('cotizaciones-resultados')).toContainText('No encontramos cotizaciones');
+    await expect(page.getByTestId('cotizaciones-sin-resultados')).toContainText(
+      'No encontramos cotizaciones',
+    );
   });
 
   test('cuatro toques sobre una especialidad abren una sola lista', async ({ page }) => {
@@ -94,7 +98,9 @@ test.describe('Cierre local · reserva y Cotizaciones', () => {
     await entrar(page, PACIENTE);
     await irA(page, '/directory');
     await estable(page);
-    const especialidad = page.locator('[data-testid="portada-especialidades"] .rejilla__tarjeta').first();
+    const especialidad = page
+      .locator('[data-testid="portada-especialidades"] .rejilla__tarjeta')
+      .first();
     const destino = await especialidad.getAttribute('href');
     expect(destino).toContain('?especialidad=');
 
@@ -114,9 +120,14 @@ test.describe('Cierre local · reserva y Cotizaciones', () => {
     });
 
     await expect(page).toHaveURL(new RegExp(`${destino!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`));
-    await expect.poll(() => page.evaluate(() => window.sessionStorage.getItem('especialidad-push-state'))).toBe('1');
+    await expect
+      .poll(() => page.evaluate(() => window.sessionStorage.getItem('especialidad-push-state')))
+      .toBe('1');
     mkdirSync(SALIDA, { recursive: true });
-    await page.screenshot({ path: join(SALIDA, 'directorio-especialidad-navegacion-unica.png'), fullPage: true });
+    await page.screenshot({
+      path: join(SALIDA, 'directorio-especialidad-navegacion-unica.png'),
+      fullPage: true,
+    });
   });
 
   test('cuatro activaciones rápidas de un resultado navegan una sola vez', async ({ page }) => {
@@ -158,12 +169,14 @@ test.describe('Cierre local · reserva y Cotizaciones', () => {
       pushState: Number(window.sessionStorage.getItem('cierre-cotizaciones-push-state')),
       url: `${window.location.pathname}${window.location.search}`,
     }));
-    console.info(JSON.stringify({
-      activaciones: 4,
-      ms: Math.round(performance.now() - inicio),
-      recursos: [...new Set(recursos)].sort(),
-      ...medicion,
-    }));
+    console.info(
+      JSON.stringify({
+        activaciones: 4,
+        ms: Math.round(performance.now() - inicio),
+        recursos: [...new Set(recursos)].sort(),
+        ...medicion,
+      }),
+    );
     expect(medicion.pushState).toBe(1);
   });
 
@@ -196,7 +209,10 @@ test.describe('Cierre local · reserva y Cotizaciones', () => {
     const disponibilidad = page.getByRole('link', { name: 'Revisar disponibilidad' }).first();
     await expect(disponibilidad).toBeVisible();
     mkdirSync(SALIDA, { recursive: true });
-    await page.screenshot({ path: join(SALIDA, 'directorio-accion-disponibilidad.png'), fullPage: true });
+    await page.screenshot({
+      path: join(SALIDA, 'directorio-accion-disponibilidad.png'),
+      fullPage: true,
+    });
 
     recursos.length = 0;
     const inicio = performance.now();
@@ -211,7 +227,10 @@ test.describe('Cierre local · reserva y Cotizaciones', () => {
       recursos: [...new Set(recursos)].sort(),
     };
     mkdirSync(SALIDA, { recursive: true });
-    writeFileSync(join(SALIDA, '..', 'medicion-flujo-reserva.json'), `${JSON.stringify(muestra, null, 2)}\n`);
+    writeFileSync(
+      join(SALIDA, '..', 'medicion-flujo-reserva.json'),
+      `${JSON.stringify(muestra, null, 2)}\n`,
+    );
     console.info(JSON.stringify(muestra));
   });
 });

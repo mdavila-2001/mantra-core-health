@@ -82,8 +82,16 @@ export function ordenarResultados(
   if (orden === 'CERCANIA' && !hasOrigin) {
     return [...resultados];
   }
-  return [...resultados].sort((izquierda, derecha) =>
-    orden === 'PRECIO' ? compararPrecio(izquierda, derecha) : compararDistancia(izquierda, derecha),
+  // Desempate estable: a igual distancia manda el precio, a igual precio la
+  // distancia, y al final el nombre y el id. Sin esto, cinco sedes a 0,4 km
+  // salían en el orden en que las devolvió la fuente (regla 96.6.2).
+  return [...resultados].sort(
+    (izquierda, derecha) =>
+      (orden === 'PRECIO'
+        ? compararPrecio(izquierda, derecha) || compararDistancia(izquierda, derecha)
+        : compararDistancia(izquierda, derecha) || compararPrecio(izquierda, derecha)) ||
+      izquierda.que.localeCompare(derecha.que, 'es') ||
+      izquierda.id.localeCompare(derecha.id),
   );
 }
 

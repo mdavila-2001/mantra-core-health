@@ -14,6 +14,7 @@ import type {
 } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { ServicesCatalogClient } from '../../../core/data-access/services-catalog/services-catalog.client';
 import type { ProcedureNomenclatureItem } from '../../../core/data-access/services-catalog/services-catalog.types';
+import { environment } from '../../../../environments/environment';
 import type { SearchOrigin } from '../../nearby-places/search-origin-picker/search-origin-picker.types';
 import {
   normalizarCotizacion,
@@ -40,6 +41,24 @@ const TOPE_DE_PRESTACIONES = 25;
  * Cruz (2025, en UMA)». UMA no es una moneda y no se convierte.
  */
 const PROCEDENCIA_UMA = 'Referencia del Colegio Médico de Santa Cruz 2025, en UMA (sin conversión)';
+
+/**
+ * La procedencia de un precio servido por una sede.
+ *
+ * Con el backend simulado, los precios de farmacia y de estudios salen de los
+ * dobles (`pharmacy.handlers.ts`, y una fórmula sintética en
+ * `diagnostics.handlers.ts`) aunque las sedes lleven nombres con forma de
+ * reales. Decir «publicado por <sede>» —aun con una marca al final— sería
+ * atribuirle a una institución con nombre un precio inventado (regla 00 §2.1),
+ * así que en la maqueta se dice lo contrario: que es de ejemplo y que esa sede
+ * **no** lo publicó. El arancel de referencia no pasa por acá: la maqueta sirve
+ * la tabla real del propietario (`fee-schedules.generated.ts`).
+ */
+function procedenciaDeSede(queFue: 'Precio' | 'Tarifario', sede: string): string {
+  return environment.mockBackend
+    ? `${queFue} de ejemplo de la maqueta: ${sede} no lo publicó`
+    : `${queFue} publicado por ${sede}`;
+}
 
 /** Lo que devuelve una búsqueda: las filas y qué fuentes no respondieron. */
 export interface BusquedaDeCotizaciones {
@@ -198,15 +217,16 @@ function filasDeSede(sede: AvailabilitySite): CotizacionResultado[] {
     id: `farmacia:${sede.siteId}:${producto.productId}`,
     vertical: 'MEDICAMENTOS',
     que: nombreDeProducto(producto),
-    donde:
-      sede.siteName === sede.pharmacyName
-        ? sede.pharmacyName
-        : `${sede.pharmacyName} · ${sede.siteName}`,
+    // El nombre de la farmacia puede traer ya la sucursal («Farmacorp ·
+    // Grigotá»): no se repite («Farmacorp · Grigotá · Grigotá»).
+    donde: sede.pharmacyName.includes(sede.siteName)
+      ? sede.pharmacyName
+      : `${sede.pharmacyName} · ${sede.siteName}`,
     price: precioDeProducto(producto, sede),
     distanceKm: sede.distanceKm,
     sinPrecio: 'La farmacia no publicó este precio',
-    sinDistancia: 'La sede no publicó su ubicación',
-    accion: { etiqueta: 'Ver farmacias', ruta: '/pharmacies-directory' },
+    sinDistancia: 'Sin ubicación publicada',
+    accion: { etiqueta: 'Directorio de farmacias', ruta: '/pharmacies-directory' },
   }));
 }
 
@@ -234,7 +254,7 @@ function precioDeProducto(
   return {
     amount: importe,
     currency: precio.currency.code,
-    source: `Lista ${precio.priceListCode} de ${sede.pharmacyName}`,
+    source: procedenciaDeSede('Precio', sede.pharmacyName),
   };
 }
 
@@ -261,11 +281,11 @@ function filaDeEstudio(
         : {
             amount: importe,
             currency: publicado.currency.code,
-            source: `Tarifario ${publicado.scheduleCode} de ${centro.name}`,
+            source: procedenciaDeSede('Tarifario', centro.name),
           },
     distanceKm: null,
     sinPrecio: 'El centro no publicó el precio de este estudio',
-    sinDistancia: 'El centro no publica su ubicación en el directorio',
+    sinDistancia: 'No disponible: el directorio de centros no trae su ubicación',
     accion: { etiqueta: 'Ver el centro', ruta: `/laboratory-directory/${centro.id}` },
   };
 }
@@ -277,7 +297,10 @@ function filaDePrestacion(prestacion: ProcedureNomenclatureItem): CotizacionResu
     id: `arancel:${prestacion.code}`,
     vertical: 'SERVICIOS_MEDICOS',
     que: prestacion.display,
-    donde: prestacion.specialty ?? 'Arancel de referencia',
+    donde:
+      prestacion.specialty === null
+        ? 'Arancel de referencia'
+        : `Arancel de referencia · ${prestacion.specialty}`,
     price:
       importe === null || !Number.isFinite(importe) || unidad === null
         ? null
@@ -287,7 +310,7 @@ function filaDePrestacion(prestacion: ProcedureNomenclatureItem): CotizacionResu
             source: unidad === 'UMA' ? PROCEDENCIA_UMA : `Arancel de referencia, en ${unidad}`,
           },
     distanceKm: null,
-    sinPrecio: 'El arancel de referencia no trae precio para esta prestación',
+    sinPrecio: 'El arancel de referencia no fija precio para esta prestación',
     sinDistancia: 'No aplica: es un arancel de referencia, no una sede',
     ...(prestacion.ocrSuspect
       ? { advertencia: 'El texto de esta fila viene de un escaneo y está por revisar' }

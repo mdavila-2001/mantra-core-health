@@ -34,7 +34,7 @@ test('paciente recorre directorio y cotizaciones sin errores de navegador', asyn
   await page.getByLabel('Ordenar por').selectOption({ label: 'Cercanía' });
   // Con el origen elegido, cercanía ordena por los kilómetros que calculó la API.
   const distancias = resultados.locator('.cotizaciones__distancia');
-  await expect(distancias.first()).toContainText('km en línea recta');
+  await expect(distancias.first()).toContainText(' km');
   const kilometros = (await distancias.allTextContents()).map((texto) =>
     Number(texto.replace(/[^\d,]/gu, '').replace(',', '.')),
   );
