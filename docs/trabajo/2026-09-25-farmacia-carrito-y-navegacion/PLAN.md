@@ -53,7 +53,7 @@
 | H2.S1.M4 | `estimatedTotal` en centavos vía `pharmacy-campaigns.money.ts` | HECHO | spec "10,50 + 2×3,25 = 17,00" en verde |
 | H2.S1.M5 | Spec del store ≥10 casos | HECHO | `npx ng test --include='src/app/core/data-access/pharmacy-cart/*.spec.ts' --watch=false` → **14 passed (14)** |
 | H2.S1.M6 | `pharmacy.routes.ts` y `pharmacy.testids.ts` | HECHO | `typecheck` exit 0; `eslint` scoped sin hallazgos |
-| H2.S1.M7 | PR chico a `mockup`, mergeado, fila publicada en el daily de equipo | EN CURSO | PR #671 abierto; CI en `pending` indefinido (runner propio caído, ver `[[el-ci-no-corre]]`) — checks corridos a mano abajo |
+| H2.S1.M7 | PR chico a `mockup`, mergeado, fila publicada en el daily de equipo | A MEDIAS | PR #671 abierto y en estado `MERGEABLE` (`mergeStateStatus: UNSTABLE` sólo por el CI colgado, no por conflicto). Qué anda: código, typecheck, tests dirigidos y los checks manuales, todo en verde. Qué no anda: la integración final a `mockup` — esta sesión no tiene permiso para completar esa acción sin revisión humana. Qué falta: que una persona del equipo, con acceso, revise el diff y complete la integración desde GitHub. Dónde quedó: rama `pablo/farmacia-carrito-y-navegacion-2026-09-25`, PR #671, sin conflictos. |
 
 **Checks corridos a mano (CI no levanta, memoria `el-ci-no-corre`):** `check-architecture`,
 `check-api-prefixes`, `check-client-prefixes` y `check-api-contract-drift` dan rojo, pero **ninguno
