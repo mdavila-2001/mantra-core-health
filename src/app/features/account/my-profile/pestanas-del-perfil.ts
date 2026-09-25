@@ -13,7 +13,9 @@
  * El orden es el del alta: lo que identifica a la persona, cómo ubicarla, a
  * nombre de quién factura, y lo que declaró de terceros. «Mis puntos» va al
  * final: no es un dato declarado sino la billetera del programa de fidelidad,
- * y el editor la muestra apagada porque ahí no hay nada que editar.
+ * y el editor no la ofrece porque ahí no hay nada que editar (desde el
+ * 25/09/2026 la saca de la tira en vez de mostrarla apagada; «Seguros» lleva
+ * el mismo tratamiento y el mismo motivo).
  *
  * Pedido del cliente del 09/09/2026: «un solo card grande con distintas
  * pestañas», en vez de tres tarjetas apiladas.
