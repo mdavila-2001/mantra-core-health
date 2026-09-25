@@ -300,7 +300,7 @@ describe('NavigationService', () => {
         'Directorios',
         'Consultas médicas',
         'Archivo clínico',
-        'Evoluciones',
+        'Notas médicas',
         'Glosario',
         'Formularios',
         'Mis servicios',

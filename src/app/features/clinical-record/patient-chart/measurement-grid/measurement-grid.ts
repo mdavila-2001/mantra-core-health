@@ -12,22 +12,22 @@ import {
 import { forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
-import { AuthService } from '../../../../../core/auth/auth.service';
-import { ClinicalClient } from '../../../../../core/data-access/clinical/clinical.client';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
 import type {
   Encounter,
   Observation,
-} from '../../../../../core/data-access/clinical/clinical.types';
-import { TerminologyClient } from '../../../../../core/data-access/terminology/terminology.client';
-import type { ConceptLabels } from '../../../../../core/data-access/terminology/terminology.types';
-import { AppButton } from '../../../../../shared/components/atoms/button/button';
-import { Input } from '../../../../../shared/components/atoms/input/input';
-import { Spinner } from '../../../../../shared/components/atoms/spinner/spinner';
-import { Alert } from '../../../../../shared/components/molecules/alert/alert';
-import { ConceptSelect } from '../../../../../shared/components/molecules/concept-select/concept-select';
-import { FormField } from '../../../../../shared/components/molecules/form-field/form-field';
-import { ToastService } from '../../../../../shared/components/molecules/toast/toast.service';
-import { TARGET_MEDICION } from '../../observation-block/observation-block';
+} from '../../../../core/data-access/clinical/clinical.types';
+import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
+import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
+import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { Input } from '../../../../shared/components/atoms/input/input';
+import { Spinner } from '../../../../shared/components/atoms/spinner/spinner';
+import { Alert } from '../../../../shared/components/molecules/alert/alert';
+import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
+import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
+import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { TARGET_MEDICION } from '../observation-block/observation-block';
 
 /** Una columna de la cuadrícula: un concepto de terminología y su nombre. */
 export interface ColumnaDeCuadricula {
@@ -57,7 +57,7 @@ const CELDA_VACIA = '—';
  * **La cuadrícula de la consulta** — corrección **C-14**.
  *
  * ```html
- * <app-note-grid [patientProfileId]="id" [encounterId]="enc" (guardada)="recargar()" />
+ * <app-measurement-grid [patientProfileId]="id" [encounterId]="enc" (guardada)="recargar()" />
  * ```
  *
  * ## Qué pidió el cliente, textual
@@ -111,13 +111,13 @@ const CELDA_VACIA = '—';
  * valor de catálogo.
  */
 @Component({
-  selector: 'app-note-grid',
+  selector: 'app-measurement-grid',
   imports: [Alert, AppButton, ConceptSelect, DatePipe, FormField, Input, Spinner],
-  templateUrl: './note-grid.html',
-  styleUrl: './note-grid.css',
+  templateUrl: './measurement-grid.html',
+  styleUrl: './measurement-grid.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class NoteGrid {
+export class MeasurementGrid {
   private readonly clinical = inject(ClinicalClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly auth = inject(AuthService);
@@ -271,6 +271,14 @@ export class NoteGrid {
   protected readonly vacio = computed(
     () => !this.cargando() && this.columnas().length === 0 && this.filas().length === 0,
   );
+
+  /**
+   * Hay una medición escrita en la fila de esta sesión que todavía no se
+   * guardó (C7). Pública porque el envoltorio `FreeNoteBlock` la usa para su
+   * contrato `DraftBlock` — no tiene estado propio del que valga la pena
+   * preguntar dos veces.
+   */
+  readonly hayCambiosSinGuardar = computed(() => this.puedeCargarFila() && !this.filaVacia());
 
   /* -- Editar -------------------------------------------------------------- */
 

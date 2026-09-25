@@ -3,8 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { AuthService } from '../../../../../core/auth/auth.service';
-import { NoteGrid, type ColumnaDeCuadricula, type FilaDeCuadricula } from './note-grid';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { MeasurementGrid, type ColumnaDeCuadricula, type FilaDeCuadricula } from './measurement-grid';
 
 /**
  * La cuadrícula de la consulta — **C-14**.
@@ -23,7 +23,7 @@ import { NoteGrid, type ColumnaDeCuadricula, type FilaDeCuadricula } from './not
  * 5. **El orden es determinista**, con desempate: dos consultas del mismo
  *    instante no pueden alternar de lugar entre dos lecturas.
  */
-describe('NoteGrid', () => {
+describe('MeasurementGrid', () => {
   const PACIENTE = 'pp-1';
   const HOY = 'enc-hoy';
   const ANTES = 'enc-antes';
@@ -76,7 +76,7 @@ describe('NoteGrid', () => {
     } = {},
   ) {
     await TestBed.configureTestingModule({
-      imports: [NoteGrid],
+      imports: [MeasurementGrid],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -90,7 +90,7 @@ describe('NoteGrid', () => {
       ],
     }).compileComponents();
 
-    const fixture: ComponentFixture<NoteGrid> = TestBed.createComponent(NoteGrid);
+    const fixture: ComponentFixture<MeasurementGrid> = TestBed.createComponent(MeasurementGrid);
     fixture.componentRef.setInput('patientProfileId', PACIENTE);
     fixture.componentRef.setInput(
       'encounterId',
@@ -115,7 +115,7 @@ describe('NoteGrid', () => {
   }
 
   /** Lee un miembro protegido, que es donde vive el estado de la cuadrícula. */
-  function interno<T>(fixture: ComponentFixture<NoteGrid>, nombre: string): T {
+  function interno<T>(fixture: ComponentFixture<MeasurementGrid>, nombre: string): T {
     return (fixture.componentInstance as unknown as Record<string, T>)[nombre];
   }
 

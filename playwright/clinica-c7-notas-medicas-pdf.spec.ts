@@ -7,7 +7,7 @@ import type { Actor } from './support/actores';
 import { entrar, estable, irA } from './support/sesion';
 
 /**
- * Evidencia de navegador del botón «Exportar a PDF» de Evoluciones.
+ * Evidencia de navegador del botón «Exportar a PDF» de Notas médicas.
  *
  * ## Por qué hace falta esta prueba y no alcanza con las unitarias
  *
@@ -45,7 +45,7 @@ const VIEWPORTS = [
   { nombre: '1920x1080-escritorio-grande', width: 1920, height: 1080 },
 ] as const;
 
-test('Evoluciones: el botón de PDF se ve, no desborda y descarga un archivo', async ({ page }) => {
+test('Notas médicas: el botón de PDF se ve, no desborda y descarga un archivo', async ({ page }) => {
   mkdirSync(EVIDENCIA, { recursive: true });
 
   const erroresDeConsola: string[] = [];
@@ -62,7 +62,7 @@ test('Evoluciones: el botón de PDF se ve, no desborda y descarga un archivo', a
 
   // La cabecera de la pantalla es la señal de que la ruta pintó; el botón llega
   // después, cuando la lectura termina.
-  await expect(page.getByRole('heading', { name: 'Evoluciones' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Notas médicas' })).toBeVisible();
 
   const boton = page.getByRole('button', { name: 'Exportar a PDF' });
   await expect(boton).toBeVisible({ timeout: 30_000 });
@@ -91,7 +91,7 @@ test('Evoluciones: el botón de PDF se ve, no desborda y descarga un archivo', a
     ).toBeLessThanOrEqual(viewport.width + 1);
 
     await page.screenshot({
-      path: join(EVIDENCIA, `evoluciones-${viewport.nombre}.png`),
+      path: join(EVIDENCIA, `notas-medicas-${viewport.nombre}.png`),
       fullPage: true,
     });
 
@@ -110,8 +110,12 @@ test('Evoluciones: el botón de PDF se ve, no desborda y descarga un archivo', a
   const descarga = await Promise.all([page.waitForEvent('download'), boton.click()]).then(
     ([evento]) => evento,
   );
-  const destino = join(EVIDENCIA, 'evoluciones-descargado.pdf');
+  const destino = join(EVIDENCIA, 'notas-medicas-descargado.pdf');
   await descarga.saveAs(destino);
+  // El nombre de archivo lo arma `progress-notes-pdf.ts` (`evoluciones-<fecha>.pdf`),
+  // un archivo ajeno a este carril (no está en `ARCHIVOS RESERVADOS`) — se deja tal
+  // cual, no se inventa un rename que el propio descargador no hace. Ver
+  // `PLAN.md` §"Ajenos, anotados" y `evidencia/inventario.md`.
   expect(descarga.suggestedFilename()).toMatch(/^evoluciones-\d{4}-\d{2}-\d{2}\.pdf$/);
 
   // El servidor de desarrollo inyecta sus propios scripts en línea (recarga en
@@ -136,5 +140,5 @@ test('Evoluciones: el botón de PDF se ve, no desborda y descarga un archivo', a
     ].join('\n'),
     'utf8',
   );
-  expect(propios, 'errores de consola atribuibles a Evoluciones').toEqual([]);
+  expect(propios, 'errores de consola atribuibles a Notas médicas').toEqual([]);
 });
