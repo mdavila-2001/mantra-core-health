@@ -1,0 +1,3 @@
+dependencias	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/36096356148/job/107949332809	
+e2e	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/36096356148/job/107949332735	
+verificar	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/36096356148/job/107949332936	

@@ -189,3 +189,89 @@ describe('handlers de solicitudes de seguro · antiduplicación de estudios', ()
     expect(detalle.lines.every((l) => l.duplicateStudy === null)).toBe(true);
   });
 });
+
+/**
+ * Desglose conciliado de liquidación (Tarea 3 · H8, CA-3.1/CA-3.3). Antes de
+ * esta corrección, `totalPatientAmount` se calculaba como `billed - approved`
+ * a nivel de cabecera, contando el importe rechazado dos veces.
+ */
+describe('handlers de solicitudes de seguro · desglose de liquidación (Tarea 3 · H8)', () => {
+  const router = new MockRouter();
+  const usuario = buscarUsuario('admin')!;
+
+  registrarSeguros(router);
+
+  function call<T>(method: MockMethod, path: string, body: unknown = null): T {
+    const match = router.match(method, path);
+    if (match === null) throw new Error(`No existe ${method} ${path}`);
+    return match.handler({
+      method,
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body,
+      headers: new HttpHeaders(),
+      user: usuario,
+    }) as T;
+  }
+
+  interface DetalleWire {
+    readonly settlement: {
+      readonly availability: string;
+      readonly totalBilledAmount: string | null;
+      readonly totalApprovedAmount: string | null;
+      readonly totalPatientAmount: string | null;
+      readonly totalDeniedAmount: string | null;
+      readonly reconciled: boolean;
+      readonly exclusions: readonly { readonly policyClauseReference: string }[];
+    };
+    readonly eob: { readonly id: string } | null;
+  }
+
+  function detalleDe(claimId: string): DetalleWire {
+    const lista = call<{ items: readonly { id: string; claimIdentifier: string }[] }>(
+      'GET',
+      '/insurance-claims',
+    );
+    const id = lista.items.find((item) => item.claimIdentifier === claimId)!.id;
+    return call<DetalleWire>('GET', `/insurance-claims/${id}`);
+  }
+
+  it('CLM-2026-0177 concilia: 300 = 150 (cubierto) + 30 (copago) + 120 (rechazado)', () => {
+    const { settlement } = detalleDe('CLM-2026-0177');
+    expect(settlement.availability).toBe('AVAILABLE');
+    expect(settlement.reconciled).toBe(true);
+    expect(settlement).toMatchObject({
+      totalBilledAmount: '300.00',
+      totalApprovedAmount: '150.00',
+      totalPatientAmount: '30.00',
+      totalDeniedAmount: '120.00',
+    });
+  });
+
+  it('CLM-2026-0163 concilia: 890 = 0 + 0 + 890 (todo rechazado)', () => {
+    const { settlement } = detalleDe('CLM-2026-0163');
+    expect(settlement.reconciled).toBe(true);
+    expect(settlement).toMatchObject({
+      totalBilledAmount: '890.00',
+      totalApprovedAmount: '0.00',
+      totalPatientAmount: '0.00',
+      totalDeniedAmount: '890.00',
+    });
+  });
+
+  it('CLM-2026-0183 tiene una exclusión sin cláusula y queda UNDER_REVIEW, sin importes', () => {
+    const { settlement, eob } = detalleDe('CLM-2026-0183');
+    expect(settlement.availability).toBe('UNDER_REVIEW');
+    expect(settlement.reconciled).toBe(false);
+    expect(settlement.totalApprovedAmount).toBeNull();
+    expect(settlement.exclusions).toEqual([]);
+    expect(eob).not.toBeNull();
+  });
+
+  it('una solicitud sin dictamen queda PENDING_PUBLICATION, sin EOB', () => {
+    const { settlement, eob } = detalleDe('CLM-2026-0158');
+    expect(settlement.availability).toBe('PENDING_PUBLICATION');
+    expect(eob).toBeNull();
+  });
+});

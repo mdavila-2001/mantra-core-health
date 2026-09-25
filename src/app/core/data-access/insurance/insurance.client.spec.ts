@@ -302,4 +302,61 @@ describe('InsuranceClient', () => {
     expect(request.request.body).toEqual(body);
     request.flush({ ok: true });
   });
+
+  /** Tarea 3 · H8: el desglose de liquidación (`settlement`/`eob`) del detalle. */
+  it('getClaim conserva el desglose de liquidación sin convertir sus importes a número', () => {
+    let detalle: import('./insurance.types').ClaimDetail | undefined;
+    client.getClaim('claim-1').subscribe((d) => (detalle = d));
+
+    http.expectOne('/insurance-claims/claim-1').flush({
+      header: {
+        id: 'claim-1',
+        claimIdentifier: 'CLM-1',
+        patient: { id: 'p-1', displayName: 'Paciente', patientCode: null, memberIdentifier: null },
+        carrierName: 'Aseguradora X',
+        insuranceCarrierId: 'c-1',
+        carrierWhatsappNumber: null,
+        carrierCallCenterPhone: null,
+        carrierSupportEmail: null,
+        policyIdentifier: null,
+        policyBrokerName: null,
+        billedTotal: { amount: '300.00', currency: null },
+        approvedTotal: { amount: '150.00', currency: null },
+        submittedAt: null,
+        status: null,
+        hasOpenDispute: false,
+      },
+      lines: [],
+      lineBilledTotal: { amount: '300.00', currency: null },
+      lineApprovedTotal: { amount: '150.00', currency: null },
+      adjudication: null,
+      adjudicationHistory: [],
+      disputes: [],
+      settlement: {
+        availability: 'AVAILABLE',
+        totalBilledAmount: '300.00',
+        totalApprovedAmount: '150.00',
+        totalPatientAmount: '30.00',
+        totalDeniedAmount: '120.00',
+        reconciled: true,
+        exclusions: [
+          {
+            claimLineId: 'l-1',
+            itemName: 'ECG',
+            amount: '120.00',
+            policyClauseReference: 'Cláusula 12.3',
+            denialRationale: null,
+          },
+        ],
+      },
+      eob: { id: 'eob-1', publishedAt: '2026-09-20T12:00:00.000Z' },
+    });
+
+    expect(detalle?.settlement.totalApprovedAmount).toBe('150.00');
+    expect(detalle?.settlement.exclusions[0]?.amount).toBe('120.00');
+    expect(detalle?.eob).toEqual({
+      id: 'eob-1',
+      publishedAt: new Date('2026-09-20T12:00:00.000Z'),
+    });
+  });
 });
