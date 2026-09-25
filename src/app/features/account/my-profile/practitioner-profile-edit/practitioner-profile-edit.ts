@@ -115,7 +115,7 @@ function fechaIso(fecha: Date): string {
   return `${anio}-${mes}-${dia}`;
 }
 
-/** Una fila de «Tu trayectoria cargada». */
+/** Una fila de «Tus títulos cargados». */
 interface FilaFormacion {
   readonly id: string;
   readonly tipo: string;
@@ -1804,7 +1804,7 @@ export class PractitionerProfileEdit {
 
     const confirmado = await this.dialogs.confirmarCambios({
       title: '¿Confirmás estos datos?',
-      message: 'El título se agrega a tu trayectoria y queda pendiente de verificación.',
+      message: 'El título se agrega a tus credenciales y queda pendiente de verificación.',
     });
     if (!confirmado) {
       return;
