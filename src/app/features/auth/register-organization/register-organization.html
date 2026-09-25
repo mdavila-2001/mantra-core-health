@@ -65,6 +65,19 @@
           data-testid="registro-organizacion-form"
         >
           <ng-template appCampoPersonalizado="gpsCasaMatriz">
+            @if (direccionPorReescribir()) {
+              <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                   anuncia sin robar el foco, que sigue en el mapa. -->
+              <app-alert
+                appAnuncio
+                [asertivo]="false"
+                [enfocar]="false"
+                tone="info"
+                data-testid="registro-organizacion-direccion-reescribir"
+              >
+                {{ avisoReescribir }}
+              </app-alert>
+            }
             <app-ubicacion-picker
               pinId="casa-matriz"
               etiquetaConfirmada="Casa matriz"
@@ -75,6 +88,7 @@
               [ids]="idsUbicacionCasaMatriz"
               [inicial]="gpsCasaMatriz()"
               (confirmado)="gpsCasaMatriz.set($event)"
+              (puntoElegido)="vaciarDireccionPorElMapa()"
             />
           </ng-template>
           <ng-template appCampoPersonalizado="constitutionFileId">

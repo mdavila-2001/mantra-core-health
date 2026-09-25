@@ -119,6 +119,19 @@
             </ng-template>
 
             <ng-template appCampoPersonalizado="gpsCentral">
+              @if (direccionPorReescribir()) {
+                <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                     anuncia sin robar el foco, que sigue en el mapa. -->
+                <app-alert
+                  appAnuncio
+                  [asertivo]="false"
+                  [enfocar]="false"
+                  tone="info"
+                  data-testid="registro-imagen-direccion-reescribir"
+                >
+                  {{ avisoReescribir }}
+                </app-alert>
+              }
               <app-ubicacion-picker
                 pinId="imagenologia-central"
                 etiquetaConfirmada="Tu centro"
@@ -127,6 +140,7 @@
                 etiquetaMapa="La ubicación de tu centro en el mapa"
                 [ids]="idsUbicacionCentral"
                 (confirmado)="gpsCentral.set($event)"
+                (puntoElegido)="vaciarDireccionPorElMapa()"
               />
             </ng-template>
 
@@ -171,6 +185,19 @@
                         (valueChange)="escribirDireccionDeSucursal(sucursal.id, $event)"
                       />
                     </app-form-field>
+                    @if (sucursalPorReescribir(sucursal)) {
+                      <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                           anuncia sin robar el foco, que sigue en el mapa. -->
+                      <app-alert
+                        appAnuncio
+                        [asertivo]="false"
+                        [enfocar]="false"
+                        tone="info"
+                        [attr.data-testid]="'registro-imagen-' + sucursal.id + '-direccion-reescribir'"
+                      >
+                        {{ avisoReescribir }}
+                      </app-alert>
+                    }
 
                     <app-ubicacion-picker
                       [pinId]="sucursal.id"
@@ -180,6 +207,7 @@
                       etiquetaMapa="La ubicación de esta sucursal en el mapa"
                       [ids]="idsDeSucursal(sucursal.id)"
                       (confirmado)="fijarGpsDeSucursal(sucursal.id, $event)"
+                      (puntoElegido)="vaciarDireccionDeSucursalPorElMapa(sucursal.id)"
                     />
                   </section>
                 } @empty {
