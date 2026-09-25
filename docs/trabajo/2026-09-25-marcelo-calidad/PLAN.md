@@ -50,13 +50,13 @@ concepto por `code` dentro de una versión; y la decisión está en tu daily ant
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Si se traba | Estado |
 |---|---|---|---|---|---|
-| H1.S2.M1 | DTO: `create-designation.dto.ts` — campos, obligatorios, validadores | Tabla | `grep -nE "@Is|@Api|!:|\?:" ../mantra-core-health-api/src/modules/terminology/dto/create-designation.dto.ts` | — | TODO |
-| H1.S2.M2 | Entidad: `concept_designations.entity.ts` — columnas, FK a concepto, ¿clave estable (concepto + language + use)? | Tabla | `grep -nE "fieldName|unique" ….entity.ts` | — | TODO |
-| H1.S2.M3 | Endpoint: `terminology-concepts.controller.ts:241` — qué servicio llama, qué devuelve | Tabla | `sed -n 235,262p …controller.ts` | — | TODO |
-| H1.S2.M4 | Repositorio: `repositories/` — ¿hay `findByCode(versionId, code)` o equivalente? ¿alta de designación? | Tabla | `grep -rn "designation\|byCode\|findByCode" ../mantra-core-health-api/src/modules/terminology/repositories/*.ts` | — | TODO |
-| H1.S2.M5 | Índice único en `src/orm/catalog/indexes/terminology.idx.ts` para designaciones | Hallazgo | `grep -n "concept_designations" …terminology.idx.ts` | — | TODO |
-| H1.S2.M6 | Decisión Q-9 escrita en tu daily con hora: «SÍ: columnas `code, language, use, value`, clave estable X» o «NO: falta Y» | Sección con hora | `grep -n "Q-9" Marcelo-Daily-Noche-2026-09-25.md` | — | TODO |
-| H1.S2.M7 | Commit + push del daily (en **este** repo de estándar: `repartos/2026-09-25/PromptNoche/Marcelo/`) para que Itzan y Justin lo lean | Visible | `git log origin/<rama> -1 --format=%ci` | Sin acceso al repo de estándar → pegalo también en `docs/trabajo/…/Q-9.md` del front y avisá por el canal que use el equipo | TODO |
+| H1.S2.M1 | DTO: `create-designation.dto.ts` — campos, obligatorios, validadores | Tabla | `grep -nE "@Is|@Api|!:|\?:" ../mantra-core-health-api/src/modules/terminology/dto/create-designation.dto.ts` | — | HECHO |
+| H1.S2.M2 | Entidad: `concept_designations.entity.ts` — columnas, FK a concepto, ¿clave estable (concepto + language + use)? | Tabla | `grep -nE "fieldName|unique" ….entity.ts` | — | HECHO |
+| H1.S2.M3 | Endpoint: `terminology-concepts.controller.ts:241` — qué servicio llama, qué devuelve | Tabla | `sed -n 235,262p …controller.ts` | — | HECHO |
+| H1.S2.M4 | Repositorio: `repositories/` — ¿hay `findByCode(versionId, code)` o equivalente? ¿alta de designación? | Tabla | `grep -rn "designation\|byCode\|findByCode" ../mantra-core-health-api/src/modules/terminology/repositories/*.ts` | — | HECHO |
+| H1.S2.M5 | Índice único en `src/orm/catalog/indexes/terminology.idx.ts` para designaciones | Hallazgo | `grep -n "concept_designations" …terminology.idx.ts` | — | HECHO |
+| H1.S2.M6 | Decisión Q-9 escrita en tu daily con hora: «SÍ: columnas `code, language, use, value`, clave estable X» o «NO: falta Y» | Sección con hora | `grep -n "Q-9" Marcelo-Daily-Noche-2026-09-25.md` | — | HECHO |
+| H1.S2.M7 | Commit + push del daily (en **este** repo de estándar: `repartos/2026-09-25/PromptNoche/Marcelo/`) para que Itzan y Justin lo lean | Visible | `git log origin/<rama> -1 --format=%ci` | Sin acceso al repo de estándar → pegalo también en `docs/trabajo/…/Q-9.md` del front y avisá por el canal que use el equipo | HECHO |
 
 #### H1.S3 — Fixtures de E2E
 
@@ -68,9 +68,9 @@ concepto por `code` dentro de una versión; y la decisión está en tu daily ant
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Si se traba | Estado |
 |---|---|---|---|---|---|
-| H1.S3.M1 | ¿Ya generaste los fixtures de la API (H7.S2)? Si todavía no, creá **ahora** a mano `ok-50.csv`, `con-errores.csv` y `no-es-nada.pdf` con §4 (son triviales) y reemplazalos por los generados en H7.S2.M6 | Decisión | `ls playwright/fixtures/carga-masiva/` | — | TODO |
-| H1.S3.M2 | Copiar o crear los 8 archivos; `grande.csv` por script (`node -e` que escribe 11 MiB) e ignorado | 8 archivos | `ls playwright/fixtures/carga-masiva \| wc -l` → 9 (con README) | XLSX sin lib en el front → usá los de H7.S2; si aún no están, `con-errores.xlsx` se crea con cualquier planilla **a mano una vez** y se declara | TODO |
-| H1.S3.M3 | `README.md`: tabla de §4 + «sintético, 2026-09-25» | Existe | `grep -n "sintético" README.md` | — | TODO |
+| H1.S3.M1 | ¿Ya generaste los fixtures de la API (H7.S2)? Si todavía no, creá **ahora** a mano `ok-50.csv`, `con-errores.csv` y `no-es-nada.pdf` con §4 (son triviales) y reemplazalos por los generados en H7.S2.M6 | Decisión | `ls playwright/fixtures/carga-masiva/` | — | HECHO |
+| H1.S3.M2 | Copiar o crear los 8 archivos; `grande.csv` por script (`node -e` que escribe 11 MiB) e ignorado | 8 archivos | `ls playwright/fixtures/carga-masiva \| wc -l` → 9 (con README) | XLSX sin lib en el front → usá los de H7.S2; si aún no están, `con-errores.xlsx` se crea con cualquier planilla **a mano una vez** y se declara | HECHO |
+| H1.S3.M3 | `README.md`: tabla de §4 + «sintético, 2026-09-25» | Existe | `grep -n "sintético" README.md` | — | HECHO |
 
 ### H2 — Specs: baseline contra hoy y contrato contra §3
 
@@ -90,8 +90,8 @@ hoy, entonces falla **exactamente** en los pasos cuyo testid aún no existe, y e
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Si se traba | Estado |
 |---|---|---|---|---|---|
-| H2.S1.M1 | Leer 2 specs vecinos (`carril-02-accesos-rbac`, `mockup-barrido`): login, base URL, esperas, `testId` | Rutas + 3 rasgos en `PLAN.md` | — | — | TODO |
-| H2.S1.M2 | Cuenta admin del simulador y ruta real de la pantalla | En `PLAN.md` | `grep -rn "SECURITY_ADMIN" src/app/core/mock \| head`; `grep -n -B10 "version-import" src/app/app.routes.ts` | — | TODO |
+| H2.S1.M1 | Leer 2 specs vecinos (`carril-02-accesos-rbac`, `mockup-barrido`): login, base URL, esperas, `testId` | Rutas + 3 rasgos en `PLAN.md` | — | — | HECHO |
+| H2.S1.M2 | Cuenta admin del simulador y ruta real de la pantalla | En `PLAN.md` | `grep -rn "SECURITY_ADMIN" src/app/core/mock \| head`; `grep -n -B10 "version-import" src/app/app.routes.ts` | — | HECHO |
 | H2.S1.M3 | `carga-masiva-baseline.spec.ts`: login → ruta → elegir sistema y versión (por rol/etiqueta) → `setInputFiles` NDJSON de 3 líneas → botón «Importar» → bloque de resultado visible | Compila | `yarn typecheck` | — | HECHO |
 | H2.S1.M4 | Consola y red vigiladas: `page.on('console')` con `error` y `page.on('response')` con ≥ 500 hacen fallar | Aserción presente | lectura + corrida | — | HECHO |
 | H2.S1.M5 | Correr | Verde | `E2E_BASE_URL=http://localhost:4200 yarn pw playwright/carga-masiva-baseline.spec.ts --workers=1 --trace on` → `evidencia/h2/baseline.txt` | Rojo → clasificar (80.4); si es `PRODUCT_BUG` de la pantalla actual, **reportar** en `docs/trabajo/…/defectos.md`, no arreglar | HECHO |
@@ -118,8 +118,8 @@ sin `waitForTimeout` ni `networkidle`.
 | H2.S2.M10 | Test 10 «teclado»: Tab hasta `carga-archivo`, Enter abre el diálogo (`filechooser`), Tab → validar → Enter | Compila | idem | — | HECHO |
 | H2.S2.M11 | Test 11 «accesibilidad»: `axe` (`@axe-core/playwright` **si ya está** en `package.json`; si no, `DESCARTADO` con evidencia: no agregás dependencia) sin violaciones `serious`/`critical` | Compila o `DESCARTADO` | `grep -n "axe" package.json` | — | HECHO |
 | H2.S2.M12 | Cada test aislado y etiquetado en el título con el backend que lo respalda (`[backend simulado]` / `[API real]`) leído de una variable de entorno | Sin estado compartido | lectura | — | HECHO |
-| H2.S2.M13 | Correr contra la pantalla **de hoy** y guardar qué falla y por qué (testid ausente) | Lista | `yarn pw playwright/carga-masiva.spec.ts --workers=1` → `evidencia/h2/contrato-antes.txt` | — | TODO |
-| H2.S2.M14 | Commit + push del spec y avisar en tu daily (Justin puede correrlo contra su rama) | Visible | `git log origin/<rama> -1` | — | TODO |
+| H2.S2.M13 | Correr contra la pantalla **de hoy** y guardar qué falla y por qué (testid ausente) | Lista | `yarn pw playwright/carga-masiva.spec.ts --workers=1` → `evidencia/h2/contrato-antes.txt` | — | HECHO |
+| H2.S2.M14 | Commit + push del spec y avisar en tu daily (Justin puede correrlo contra su rama) | Visible | `git log origin/<rama> -1` | — | HECHO |
 
 ### H3 — Corrida contra la rama de Justin (backend simulado)
 
@@ -166,10 +166,10 @@ severidad, nota `RECHAZADA` / `ACEPTABLE CON RESERVAS` / `APROBADA`).
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Si se traba | Estado |
 |---|---|---|---|---|---|
-| H4.S1.M1 | Leer cómo el repo ya captura (`scripts/run-recorrido*.mjs`, `playwright/mockup-barrido.spec.ts`) y cómo cambia de tema | Rutas + mecanismo de tema en `PLAN.md` | — | — | TODO |
-| H4.S1.M2 | Script: login, ruta, 3 viewports, 2 temas, 4 estados disparados por `data-testid` de §3 (si no existen, captura el estado inicial y lo marca) | 24 PNG | `node scripts/capturas-carga-masiva.mjs && ls evidencia/h4/capturas \| wc -l` → 24 | — | TODO |
-| H4.S1.M3 | Estabilidad: `prefers-reduced-motion`, `document.fonts.ready`, datos fijos (fixtures) | Dos corridas con diff de píxeles mínimo | `node … ; node … ; compare` (o hash) → pegado | Diff grande → identificar qué se mueve (reloj, animación) y fijarlo | TODO |
-| H4.S1.M4 | Commit + push del script | Visible | `git log origin/<rama> -1` | — | TODO |
+| H4.S1.M1 | Leer cómo el repo ya captura (`scripts/run-recorrido*.mjs`, `playwright/mockup-barrido.spec.ts`) y cómo cambia de tema | Rutas + mecanismo de tema en `PLAN.md` | — | — | HECHO |
+| H4.S1.M2 | Script: login, ruta, 3 viewports, 2 temas, 4 estados disparados por `data-testid` de §3 (si no existen, captura el estado inicial y lo marca) | 24 PNG | `node scripts/capturas-carga-masiva.mjs && ls evidencia/h4/capturas \| wc -l` → 24 | — | HECHO |
+| H4.S1.M3 | Estabilidad: `prefers-reduced-motion`, `document.fonts.ready`, datos fijos (fixtures) | Dos corridas con diff de píxeles mínimo | `node … ; node … ; compare` (o hash) → pegado | Diff grande → identificar qué se mueve (reloj, animación) y fijarlo | HECHO |
+| H4.S1.M4 | Commit + push del script | Visible | `git log origin/<rama> -1` | — | HECHO |
 
 #### H4.S2 — Las dos pasadas (contra la rama de Justin)
 
@@ -181,12 +181,12 @@ diez preguntas de `critical-double-review` §3 por captura con severidad y nota.
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Si se traba | Estado |
 |---|---|---|---|---|---|
-| H4.S2.M1 | Correr el script contra la rama de Justin | 24 PNG | `evidencia/h4/capturas-justin/` | Rama no está → `A MEDIAS`; las dos pasadas se hacen sobre la pantalla de hoy como ensayo, marcado «ensayo» | TODO |
-| H4.S2.M2 | Primera pasada: una línea por captura (`visual-proof` §5: layout, texto, estados, tema, sin scroll horizontal) | 24 líneas | `doble-revision.md` §1 | — | TODO |
-| H4.S2.M3 | Segunda pasada, adversarial: las diez preguntas por captura, severidad `BLOQUEANTE` / `MAYOR` / `MENOR`, nota por pantalla; ante la duda, la más baja | 24 notas | `doble-revision.md` §2 | Podés usar el revisor `visual-reviewer` de `.claude/agents/` del front como segundo par de ojos (un agente a la vez, regla 70) | TODO |
-| H4.S2.M4 | Drag & drop real, **a mano**: arrastrar `ok-50.csv` desde el explorador a la zona en 1280 y 768; anotar si se toma y si `is-dragging` se ve | 2 observaciones | `doble-revision.md` §3 | — | TODO |
-| H4.S2.M5 | Reportar cada `BLOQUEANTE`/`MAYOR` a Justin: `defectos.md` + línea en su daily con ruta a la captura | Lista | `grep -c "BLOQUEANTE\|MAYOR" doble-revision.md` = filas en `defectos.md` | — | TODO |
-| H4.S2.M6 | Si Justin corrige durante la noche: re-capturar y **las dos pasadas otra vez** sobre la re-captura | Sección §4 | `doble-revision.md` §4 | No corrigió → queda `RECHAZADA`/`CON RESERVAS` en el reporte, no se maquilla | TODO |
+| H4.S2.M1 | Correr el script contra la rama de Justin | 24 PNG | `evidencia/h4/capturas-justin/` | Rama no está → `A MEDIAS`; las dos pasadas se hacen sobre la pantalla de hoy como ensayo, marcado «ensayo» | HECHO |
+| H4.S2.M2 | Primera pasada: una línea por captura (`visual-proof` §5: layout, texto, estados, tema, sin scroll horizontal) | 24 líneas | `doble-revision.md` §1 | — | HECHO |
+| H4.S2.M3 | Segunda pasada, adversarial: las diez preguntas por captura, severidad `BLOQUEANTE` / `MAYOR` / `MENOR`, nota por pantalla; ante la duda, la más baja | 24 notas | `doble-revision.md` §2 | Podés usar el revisor `visual-reviewer` de `.claude/agents/` del front como segundo par de ojos (un agente a la vez, regla 70) | HECHO |
+| H4.S2.M4 | Drag & drop real, **a mano**: arrastrar `ok-50.csv` desde el explorador a la zona en 1280 y 768; anotar si se toma y si `is-dragging` se ve | 2 observaciones | `doble-revision.md` §3 | — | A MEDIAS |
+| H4.S2.M5 | Reportar cada `BLOQUEANTE`/`MAYOR` a Justin: `defectos.md` + línea en su daily con ruta a la captura | Lista | `grep -c "BLOQUEANTE\|MAYOR" doble-revision.md` = filas en `defectos.md` | — | HECHO |
+| H4.S2.M6 | Si Justin corrige durante la noche: re-capturar y **las dos pasadas otra vez** sobre la re-captura | Sección §4 | `doble-revision.md` §4 | No corrigió → queda `RECHAZADA`/`CON RESERVAS` en el reporte, no se maquilla | DESCARTADO |
 
 ### H5 — Gate de seguridad y PHI del trabajo entero
 
@@ -207,14 +207,14 @@ amenaza tiene control localizado o «AUSENTE» declarado.
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Si se traba | Estado |
 |---|---|---|---|---|---|
-| H5.S1.M1 | Subida sin rol → `@Roles('SECURITY_ADMIN')` (`terminology-versions.controller.ts`) | Fila | `gate-seguridad-phi.md` | — | TODO |
-| H5.S1.M2 | Archivo enorme / zip bomb → tope de multer (`loadStorageEnv().maxSizeBytes`) + tope de filas XLSX (tuyo: `MAX_FILAS_XLSX`, H7.S3.M6) | Fila (o «AUSENTE» → riesgo) | idem | — | TODO |
-| H5.S1.M3 | Contenido del archivo en logs → `grep -rn "logger\." …/import/*.ts …/concept-file-import.service.ts …/row-validator.ts` | Fila con salida del `grep` | idem | Ramas no están → sobre `dev`, marcado «pre-cambio» | TODO |
-| H5.S1.M4 | 500 con stacktrace ante binario basura → `IMPORT_FORMAT_UNSUPPORTED` (Itzan) | Fila | idem | — | TODO |
-| H5.S1.M5 | CSV injection en la descarga de errores del cliente → prefijo `'` (Justin, H4.S2.M8) | Fila | idem | — | TODO |
-| H5.S1.M6 | Dos archivos en el multipart (`files: 1`) → 4xx | Fila | idem | — | TODO |
-| H5.S1.M7 | PHI: fixtures sintéticos declarados (tus dos READMEs: API y E2E); capturas sin datos de personas; ningún catálogo real cargado | Fila | idem | — | TODO |
-| H5.S1.M8 | Rate limit del endpoint (hallazgo de Itzan H4.S2.M7 o tu `grep`) | Fila | idem | — | TODO |
+| H5.S1.M1 | Subida sin rol → `@Roles('SECURITY_ADMIN')` (`terminology-versions.controller.ts`) | Fila | `gate-seguridad-phi.md` | — | HECHO |
+| H5.S1.M2 | Archivo enorme / zip bomb → tope de multer (`loadStorageEnv().maxSizeBytes`) + tope de filas XLSX (tuyo: `MAX_FILAS_XLSX`, H7.S3.M6) | Fila (o «AUSENTE» → riesgo) | idem | — | HECHO |
+| H5.S1.M3 | Contenido del archivo en logs → `grep -rn "logger\." …/import/*.ts …/concept-file-import.service.ts …/row-validator.ts` | Fila con salida del `grep` | idem | Ramas no están → sobre `dev`, marcado «pre-cambio» | HECHO |
+| H5.S1.M4 | 500 con stacktrace ante binario basura → `IMPORT_FORMAT_UNSUPPORTED` (Itzan) | Fila | idem | — | HECHO |
+| H5.S1.M5 | CSV injection en la descarga de errores del cliente → prefijo `'` (Justin, H4.S2.M8) | Fila | idem | — | HECHO |
+| H5.S1.M6 | Dos archivos en el multipart (`files: 1`) → 4xx | Fila | idem | — | HECHO |
+| H5.S1.M7 | PHI: fixtures sintéticos declarados (tus dos READMEs: API y E2E); capturas sin datos de personas; ningún catálogo real cargado | Fila | idem | — | HECHO |
+| H5.S1.M8 | Rate limit del endpoint (hallazgo de Itzan H4.S2.M7 o tu `grep`) | Fila | idem | — | HECHO |
 
 #### H5.S2 — Matriz negativa desde afuera (contra la API real, si está)
 
@@ -225,10 +225,10 @@ PDF, entonces 401 / 403 / 413 / 4xx / 422, y `count(*)` no cambia.
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Si se traba | Estado |
 |---|---|---|---|---|---|
-| H5.S2.M1 | ¿Está la rama de Itzan y arranca? (worktree, `.env`, `docker compose up -d postgres postgres-init`, `yarn start:dev`, readiness) | 200 o no | `evidencia/h5/api.txt` | No → `DESCARTADO` con la salida; la matriz queda cubierta por los specs de Itzan, y lo anotás | TODO |
-| H5.S2.M2 | Token admin (cuenta demo, sin copiar la contraseña) y token `PRACTITIONER` si hay | Variables | — | Sin `PRACTITIONER` → sólo sin token | TODO |
-| H5.S2.M3 | Los cinco `curl` negativos + `count(*)` antes/después | 5 HTTP + 2 conteos | `evidencia/h5/negativos.txt` | — | TODO |
-| H5.S2.M4 | Riesgo residual por amenaza sin control | Columna llena | `gate-seguridad-phi.md` | — | TODO |
+| H5.S2.M1 | ¿Está la rama de Itzan y arranca? (worktree, `.env`, `docker compose up -d postgres postgres-init`, `yarn start:dev`, readiness) | 200 o no | `evidencia/h5/api.txt` | No → `DESCARTADO` con la salida; la matriz queda cubierta por los specs de Itzan, y lo anotás | DESCARTADO |
+| H5.S2.M2 | Token admin (cuenta demo, sin copiar la contraseña) y token `PRACTITIONER` si hay | Variables | — | Sin `PRACTITIONER` → sólo sin token | DESCARTADO |
+| H5.S2.M3 | Los cinco `curl` negativos + `count(*)` antes/después | 5 HTTP + 2 conteos | `evidencia/h5/negativos.txt` | — | DESCARTADO |
+| H5.S2.M4 | Riesgo residual por amenaza sin control | Columna llena | `gate-seguridad-phi.md` | — | DESCARTADO |
 
 ### H6 — API real, regresión, PR y cierre
 
@@ -249,11 +249,11 @@ enlazado desde el `REPORTE.md`.
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Si se traba | Estado |
 |---|---|---|---|---|---|
-| H6.S1.M1 | Ambas ramas arriba y arrancables | Sí/no | `git fetch` ×2 + readiness | Falta una → `DESCARTADO` con evidencia; el peldaño máximo del E2E es «backend simulado», declarado | TODO |
-| H6.S1.M2 | `yarn start:real-api` en el worktree de Justin, spec con `E2E_BACKEND=real` | Verde | `evidencia/h6/real.txt` + trace | Rojo → clasificar y reportar al dueño | TODO |
-| H6.S1.M3 | `yarn pw:rutas --workers=1` y `yarn pw:accesos --workers=1`, **en serie** | Sin rojos nuevos vs baseline | `evidencia/h6/regresion-pw.txt` | — | TODO |
-| H6.S1.M4 | `yarn test` completo (Vitest, ~140 s) en tu worktree | Sin rojos nuevos | `evidencia/h6/test.txt` | — | TODO |
-| H6.S1.M5 | Cross-browser del spec: `--project=firefox` y `--project=webkit` si el config los define, **uno por comando** | Salidas | `evidencia/h6/cross.txt` | No definidos → `DESCARTADO` con `grep -n "projects" playwright.config.ts` | TODO |
+| H6.S1.M1 | Ambas ramas arriba y arrancables | Sí/no | `git fetch` ×2 + readiness | Falta una → `DESCARTADO` con evidencia; el peldaño máximo del E2E es «backend simulado», declarado | DESCARTADO |
+| H6.S1.M2 | `yarn start:real-api` en el worktree de Justin, spec con `E2E_BACKEND=real` | Verde | `evidencia/h6/real.txt` + trace | Rojo → clasificar y reportar al dueño | DESCARTADO |
+| H6.S1.M3 | `yarn pw:rutas --workers=1` y `yarn pw:accesos --workers=1`, **en serie** | Sin rojos nuevos vs baseline | `evidencia/h6/regresion-pw.txt` | — | A MEDIAS |
+| H6.S1.M4 | `yarn test` completo (Vitest, ~140 s) en tu worktree | Sin rojos nuevos | `evidencia/h6/test.txt` | — | A MEDIAS |
+| H6.S1.M5 | Cross-browser del spec: `--project=firefox` y `--project=webkit` si el config los define, **uno por comando** | Salidas | `evidencia/h6/cross.txt` | No definidos → `DESCARTADO` con `grep -n "projects" playwright.config.ts` | DESCARTADO |
 
 #### H6.S2 — PR y cierre
 
@@ -263,15 +263,15 @@ enlazado desde el `REPORTE.md`.
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Si se traba | Estado |
 |---|---|---|---|---|---|
-| H6.S2.M1 | Diff sólo con tus archivos | `grep` vacío | `git diff origin/mockup --stat \| grep -vE "playwright/carga-masiva|playwright/fixtures/carga-masiva|scripts/capturas-carga-masiva|docs/trabajo/2026-09-25-marcelo"` → vacío | Aparece → revertir | TODO |
-| H6.S2.M2 | Rebase sobre `origin/mockup` | Limpio | `git fetch && git rebase origin/mockup && git status` | Conflicto → resolvelo | TODO |
-| H6.S2.M3 | PR con plantilla (qué, cómo correrlo, contra qué backend, evidencia, defectos reportados) | URL | `gh pr create --base mockup …` | `gh` sin auth → push + `evidencia/pr/body.md` | TODO |
-| H6.S2.M4 | `gh pr view <n> --json number,url,isDraft,mergeable,mergeStateStatus,reviewDecision,baseRefName,headRefName` | `MERGEABLE` | `evidencia/pr/view.json` | `UNKNOWN` → bucle `until`; `BEHIND` → M2 | TODO |
-| H6.S2.M5 | `gh pr checks <n> --watch --fail-fast` | Sin `fail` | `evidencia/pr/checks.txt` | Rojo → clasificar; `EXTERNAL` → `A MEDIAS` | TODO |
-| H6.S2.M6 | Reporte de evidencia de QA (`qa-evidence-reporting`): qué se corrió, contra qué backend, qué pasó, qué no se cubrió | Archivo | `docs/trabajo/2026-09-25-marcelo-calidad/evidencia/qa-evidencia.md` | — | TODO |
-| H6.S2.M7 | Procesos corriendo (`ng serve` ×n, API, compose, navegadores) cerrados o declarados | Lista | `Get-Process node,chrome`; `docker compose ps` | — | TODO |
-| H6.S2.M8 | `REPORTE.md` con `> **AVANCE: <HECHO> / 98 — <%>.**` primero, tres secciones, peldaño por área (E2E: simulado / real), enlaces a `doble-revision.md`, `gate-seguridad-phi.md`, `qa-evidencia.md`, `defectos.md` | `head -3` | `head -3 docs/trabajo/2026-09-25-marcelo-calidad/REPORTE.md` | — | TODO |
-| H6.S2.M9 | Daily `Marcelo-Daily-Noche-2026-09-25.md` con §1.4, Q-9 con hora, avance, defectos reportados por persona | Existe | `ls` | — | TODO |
+| H6.S2.M1 | Diff sólo con tus archivos | `grep` vacío | `git diff origin/mockup --stat \| grep -vE "playwright/carga-masiva|playwright/fixtures/carga-masiva|scripts/capturas-carga-masiva|docs/trabajo/2026-09-25-marcelo"` → vacío | Aparece → revertir | HECHO |
+| H6.S2.M2 | Rebase sobre `origin/mockup` | Limpio | `git fetch && git rebase origin/mockup && git status` | Conflicto → resolvelo | HECHO |
+| H6.S2.M3 | PR con plantilla (qué, cómo correrlo, contra qué backend, evidencia, defectos reportados) | URL | `gh pr create --base mockup …` | `gh` sin auth → push + `evidencia/pr/body.md` | HECHO |
+| H6.S2.M4 | `gh pr view <n> --json number,url,isDraft,mergeable,mergeStateStatus,reviewDecision,baseRefName,headRefName` | `MERGEABLE` | `evidencia/pr/view.json` | `UNKNOWN` → bucle `until`; `BEHIND` → M2 | HECHO |
+| H6.S2.M5 | `gh pr checks <n> --watch --fail-fast` | Sin `fail` | `evidencia/pr/checks.txt` | Rojo → clasificar; `EXTERNAL` → `A MEDIAS` | A MEDIAS |
+| H6.S2.M6 | Reporte de evidencia de QA (`qa-evidence-reporting`): qué se corrió, contra qué backend, qué pasó, qué no se cubrió | Archivo | `docs/trabajo/2026-09-25-marcelo-calidad/evidencia/qa-evidencia.md` | — | HECHO |
+| H6.S2.M7 | Procesos corriendo (`ng serve` ×n, API, compose, navegadores) cerrados o declarados | Lista | `Get-Process node,chrome`; `docker compose ps` | — | HECHO |
+| H6.S2.M8 | `REPORTE.md` con `> **AVANCE: <HECHO> / 98 — <%>.**` primero, tres secciones, peldaño por área (E2E: simulado / real), enlaces a `doble-revision.md`, `gate-seguridad-phi.md`, `qa-evidencia.md`, `defectos.md` | `head -3` | `head -3 docs/trabajo/2026-09-25-marcelo-calidad/REPORTE.md` | — | HECHO |
+| H6.S2.M9 | Daily `Marcelo-Daily-Noche-2026-09-25.md` con §1.4, Q-9 con hora, avance, defectos reportados por persona | Existe | `ls` | — | HECHO |
 
 ### H7 — Dependencia XLSX, fixtures de la API y parseador XLSX (heredado del carril de Ender)
 
@@ -294,13 +294,13 @@ los 45 minutos no decidiste, la decisión es «XLSX `A MEDIAS`, el detector de I
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Si se traba | Estado |
 |---|---|---|---|---|---|
-| H7.S1.M1 | Worktree de la API desde `origin/dev` y rama `marcelo/carga-masiva-xlsx-2026-09-25`; `yarn install`; baseline `lint`/`typecheck`/`build` | SHA + 3 exit codes | `git worktree add ../mch-api-marcelo origin/dev && … && git rev-parse HEAD`; → `evidencia/antes/api-baseline.txt` | `worktree` ocupado → otro nombre | TODO |
-| H7.S1.M2 | Confirmar que nada CSV/XLSX está instalado transitivamente | Lista o vacío | `yarn why xlsx; yarn why exceljs; yarn why csv-parse; yarn why papaparse; yarn why fast-csv` → pegado | — | TODO |
-| H7.S1.M3 | ¿Qué usa el equipo en repos hermanos? | Lista | `grep -l "exceljs\|\"xlsx\"" ../*/package.json ../*/*/package.json 2>/dev/null` → pegado | Ninguno → candidata por omisión `exceljs` | TODO |
-| H7.S1.M4 | Evaluar **una** candidata: qué resuelve, tamaño instalado (`du -sh node_modules/<lib>`), licencia, última publicación (`yarn npm info <lib> --fields time --json`), audit | Tabla con 5 datos | `yarn add <lib> && yarn npm audit; echo "exit=$?"` → pegado | Audit `high`/`critical` sin fix → **no se agrega**, H7.S3 `A MEDIAS`; audit sin red → `--environment production` una vez; si no, decidí por fecha y **anotá que el audit no corrió** | TODO |
-| H7.S1.M5 | ¿Lee desde `Buffer`? ¿Permite acotar filas/hojas? Verificado **en `node_modules/<lib>`**, no de memoria | Rutas citadas | `grep -n "Buffer\|load(" node_modules/<lib>/index.d.ts \| head` → pegado | — | TODO |
-| H7.S1.M6 | `decision-dependencia.md` (Contexto / Decisión / Consecuencias / Reversa; cita la cabecera del servicio que descartó la dependencia) | Archivo | `ls docs/trabajo/2026-09-25-marcelo-calidad/` | — | TODO |
-| H7.S1.M7 | Commit de `package.json` + `yarn.lock` **solos** + push | Sólo esos 2 archivos | `git show --stat HEAD` | — | TODO |
+| H7.S1.M1 | Worktree de la API desde `origin/dev` y rama `marcelo/carga-masiva-xlsx-2026-09-25`; `yarn install`; baseline `lint`/`typecheck`/`build` | SHA + 3 exit codes | `git worktree add ../mch-api-marcelo origin/dev && … && git rev-parse HEAD`; → `evidencia/antes/api-baseline.txt` | `worktree` ocupado → otro nombre | HECHO |
+| H7.S1.M2 | Confirmar que nada CSV/XLSX está instalado transitivamente | Lista o vacío | `yarn why xlsx; yarn why exceljs; yarn why csv-parse; yarn why papaparse; yarn why fast-csv` → pegado | — | HECHO |
+| H7.S1.M3 | ¿Qué usa el equipo en repos hermanos? | Lista | `grep -l "exceljs\|\"xlsx\"" ../*/package.json ../*/*/package.json 2>/dev/null` → pegado | Ninguno → candidata por omisión `exceljs` | HECHO |
+| H7.S1.M4 | Evaluar **una** candidata: qué resuelve, tamaño instalado (`du -sh node_modules/<lib>`), licencia, última publicación (`yarn npm info <lib> --fields time --json`), audit | Tabla con 5 datos | `yarn add <lib> && yarn npm audit; echo "exit=$?"` → pegado | Audit `high`/`critical` sin fix → **no se agrega**, H7.S3 `A MEDIAS`; audit sin red → `--environment production` una vez; si no, decidí por fecha y **anotá que el audit no corrió** | HECHO |
+| H7.S1.M5 | ¿Lee desde `Buffer`? ¿Permite acotar filas/hojas? Verificado **en `node_modules/<lib>`**, no de memoria | Rutas citadas | `grep -n "Buffer\|load(" node_modules/<lib>/index.d.ts \| head` → pegado | — | HECHO |
+| H7.S1.M6 | `decision-dependencia.md` (Contexto / Decisión / Consecuencias / Reversa; cita la cabecera del servicio que descartó la dependencia) | Archivo | `ls docs/trabajo/2026-09-25-marcelo-calidad/` | — | HECHO |
+| H7.S1.M7 | Commit de `package.json` + `yarn.lock` **solos** + push | Sólo esos 2 archivos | `git show --stat HEAD` | — | HECHO |
 
 #### H7.S2 — Fixtures sintéticos de la API publicados en la hora 2
 
@@ -312,12 +312,12 @@ con `README.md` de procedencia sintética; y los tuyos de E2E (H1.S3) son **copi
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Si se traba | Estado |
 |---|---|---|---|---|---|
-| H7.S2.M1 | Leer 2 `README.md` de `test/fixtures/**` de la API para copiar forma | Rutas en `PLAN.md` | — | — | TODO |
-| H7.S2.M2 | `generar-fixtures.mjs` que escribe los 14 CSV de §4 con contenidos **exactos** (posiciones de error 5/9/14/20/33 en `con-errores`) + `no-es-nada.pdf` | 15 archivos | `node test/fixtures/terminology-import/generar-fixtures.mjs && ls *.csv \| wc -l` → 13 (+ pdf + README) | — | TODO |
-| H7.S2.M3 | Determinismo | Hashes iguales | `sha256sum *.csv > a; node generar-fixtures.mjs; sha256sum *.csv > b; diff a b` → vacío | — | TODO |
-| H7.S2.M4 | Gemelos `.xlsx` + `grande-10k.xlsx` + `celda-numerica.xlsx` (celda `10` numérica, fórmula `=1+1` con valor cacheado y otra sin) con la lib; hoja `conceptos`; fechas de creación fijas si la lib las escribe | 16 `.xlsx` | `ls *.xlsx \| wc -l` → 16 | XLSX descartado en H7.S1 → sólo CSV; anotá | TODO |
-| H7.S2.M5 | `README.md`: tabla de §4 + «sintético, generado el 2026-09-25 por `generar-fixtures.mjs`, sin procedencia externa» | Existe | `grep -n "sintético" README.md` | — | TODO |
-| H7.S2.M6 | Commit + **push dentro de la hora 2** + línea en tu daily con hora; reemplazar tus copias de E2E por estas (`sha256sum` iguales) | Visible | `git log origin/marcelo/carga-masiva-xlsx-2026-09-25 -1 --format=%ci` | — | TODO |
+| H7.S2.M1 | Leer 2 `README.md` de `test/fixtures/**` de la API para copiar forma | Rutas en `PLAN.md` | — | — | HECHO |
+| H7.S2.M2 | `generar-fixtures.mjs` que escribe los 14 CSV de §4 con contenidos **exactos** (posiciones de error 5/9/14/20/33 en `con-errores`) + `no-es-nada.pdf` | 15 archivos | `node test/fixtures/terminology-import/generar-fixtures.mjs && ls *.csv \| wc -l` → 13 (+ pdf + README) | — | HECHO |
+| H7.S2.M3 | Determinismo | Hashes iguales | `sha256sum *.csv > a; node generar-fixtures.mjs; sha256sum *.csv > b; diff a b` → vacío | — | HECHO |
+| H7.S2.M4 | Gemelos `.xlsx` + `grande-10k.xlsx` + `celda-numerica.xlsx` (celda `10` numérica, fórmula `=1+1` con valor cacheado y otra sin) con la lib; hoja `conceptos`; fechas de creación fijas si la lib las escribe | 16 `.xlsx` | `ls *.xlsx \| wc -l` → 16 | XLSX descartado en H7.S1 → sólo CSV; anotá | HECHO |
+| H7.S2.M5 | `README.md`: tabla de §4 + «sintético, generado el 2026-09-25 por `generar-fixtures.mjs`, sin procedencia externa» | Existe | `grep -n "sintético" README.md` | — | HECHO |
+| H7.S2.M6 | Commit + **push dentro de la hora 2** + línea en tu daily con hora; reemplazar tus copias de E2E por estas (`sha256sum` iguales) | Visible | `git log origin/marcelo/carga-masiva-xlsx-2026-09-25 -1 --format=%ci` | — | HECHO |
 
 #### H7.S3 — Parseador XLSX contra el contrato de Itzan
 
@@ -329,13 +329,13 @@ valor y la sin valor a problema; `grande-10k` parsea en < 5 s.
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Si se traba | Estado |
 |---|---|---|---|---|---|
-| H7.S3.M1 | Traer `row-contract.ts` de Itzan: `git fetch && git cherry-pick <SHA de su commit del contrato>` (un archivo) | Compila | `yarn typecheck` | Itzan no publicó a la hora 1 → escribí `row-contract.ts` vos con §1 **literal** (contenido idéntico por contrato) y anotalo: Pablo conserva el de Itzan al integrar | TODO |
-| H7.S3.M2 | `src/modules/terminology/import/xlsx-parser.ts`: `class XlsxParser implements ParseadorDeArchivo { formato = 'xlsx' }`, lee desde `Buffer`, hoja `conceptos` o la primera, celdas a texto, columnas por nombre y alias del perfil (si `import-profiles.ts` de Itzan aún no está, copiá el perfil `conceptos` de §1 en el spec y anotalo) | Compila | `yarn typecheck` | XLSX descartado → `DESCARTADO` con referencia a H7.S1.M4 | TODO |
-| H7.S3.M3 | Spec cruzado: para cada fixture gemelo, `deepEqual(csv.parsear(csvBuf, perfil), xlsx.parsear(xlsxBuf, perfil))` con el `CsvParser` de Itzan si está (`cherry-pick` de su commit) o, si no, contra la tabla de §4 escrita a mano en el spec | 12 PASS | `yarn test src/modules/terminology/import/xlsx-parser` | — | TODO |
-| H7.S3.M4 | Spec: `celda-numerica` (3 casos) | 3 PASS | idem | — | TODO |
-| H7.S3.M5 | Spec de límite: `grande-10k.xlsx` < 5 s; `heapUsed` antes/después pegado | PASS con tiempo | idem | Tarda más → meta «parsea», tiempo como riesgo; **no subas `testTimeout`** | TODO |
-| H7.S3.M6 | Acotar lectura: `MAX_FILAS_XLSX` nombrada y documentada (zip bomb) si la lib lo permite; si no, riesgo anotado | Constante o riesgo | `grep -n "MAX_FILAS" xlsx-parser.ts` | — | TODO |
-| H7.S3.M7 | **No tocás `index.ts`** (es de Itzan): Pablo agrega el export al integrar. `xlsx-parser.ts` queda autocontenido y exporta la clase | `grep` vacío | `git diff origin/dev --stat \| grep -E "index.ts|csv-parser|format-detector|import-profiles|services/|controllers/|dto/"` → vacío (salvo el cherry-pick del contrato) | — | TODO |
-| H7.S3.M8 | Sin contenido de filas en logs | `grep` vacío | `grep -n "console\.\|logger\." xlsx-parser.ts` → vacío | — | TODO |
-| H7.S3.M9 | Rebase sobre `origin/dev`, PR API con plantilla (`gh pr create --base dev …`), `gh pr view` + `gh pr checks` pegados | `MERGEABLE` | `evidencia/pr/api-view.json`, `api-checks.txt` | `gh` sin auth → push + cuerpo en `evidencia/pr/api-body.md`; `UNKNOWN` → bucle `until` | TODO |
+| H7.S3.M1 | Traer `row-contract.ts` de Itzan: `git fetch && git cherry-pick <SHA de su commit del contrato>` (un archivo) | Compila | `yarn typecheck` | Itzan no publicó a la hora 1 → escribí `row-contract.ts` vos con §1 **literal** (contenido idéntico por contrato) y anotalo: Pablo conserva el de Itzan al integrar | HECHO |
+| H7.S3.M2 | `src/modules/terminology/import/xlsx-parser.ts`: `class XlsxParser implements ParseadorDeArchivo { formato = 'xlsx' }`, lee desde `Buffer`, hoja `conceptos` o la primera, celdas a texto, columnas por nombre y alias del perfil (si `import-profiles.ts` de Itzan aún no está, copiá el perfil `conceptos` de §1 en el spec y anotalo) | Compila | `yarn typecheck` | XLSX descartado → `DESCARTADO` con referencia a H7.S1.M4 | HECHO |
+| H7.S3.M3 | Spec cruzado: para cada fixture gemelo, `deepEqual(csv.parsear(csvBuf, perfil), xlsx.parsear(xlsxBuf, perfil))` con el `CsvParser` de Itzan si está (`cherry-pick` de su commit) o, si no, contra la tabla de §4 escrita a mano en el spec | 12 PASS | `yarn test src/modules/terminology/import/xlsx-parser` | — | HECHO |
+| H7.S3.M4 | Spec: `celda-numerica` (3 casos) | 3 PASS | idem | — | HECHO |
+| H7.S3.M5 | Spec de límite: `grande-10k.xlsx` < 5 s; `heapUsed` antes/después pegado | PASS con tiempo | idem | Tarda más → meta «parsea», tiempo como riesgo; **no subas `testTimeout`** | HECHO |
+| H7.S3.M6 | Acotar lectura: `MAX_FILAS_XLSX` nombrada y documentada (zip bomb) si la lib lo permite; si no, riesgo anotado | Constante o riesgo | `grep -n "MAX_FILAS" xlsx-parser.ts` | — | HECHO |
+| H7.S3.M7 | **No tocás `index.ts`** (es de Itzan): Pablo agrega el export al integrar. `xlsx-parser.ts` queda autocontenido y exporta la clase | `grep` vacío | `git diff origin/dev --stat \| grep -E "index.ts|csv-parser|format-detector|import-profiles|services/|controllers/|dto/"` → vacío (salvo el cherry-pick del contrato) | — | HECHO |
+| H7.S3.M8 | Sin contenido de filas en logs | `grep` vacío | `grep -n "console\.\|logger\." xlsx-parser.ts` → vacío | — | HECHO |
+| H7.S3.M9 | Rebase sobre `origin/dev`, PR API con plantilla (`gh pr create --base dev …`), `gh pr view` + `gh pr checks` pegados | `MERGEABLE` | `evidencia/pr/api-view.json`, `api-checks.txt` | `gh` sin auth → push + cuerpo en `evidencia/pr/api-body.md`; `UNKNOWN` → bucle `until` | HECHO |
 
