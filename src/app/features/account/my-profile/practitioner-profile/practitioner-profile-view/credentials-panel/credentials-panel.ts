@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 
+import { AppButton } from '../../../../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../../../../../shared/components/molecules/card/card';
 import { StatusSeal } from '../../../../../../shared/components/organisms/status-seal/status-seal';
@@ -10,10 +11,12 @@ import type {
   MatriculaVisible,
 } from '../practitioner-profile-view.types';
 import {
+  CREDENTIAL_GROUP_LABELS,
   CREDENTIAL_ICONS,
-  CREDENTIAL_KIND_LABELS,
+  CREDENTIAL_KINDS,
   type CredencialEnTarjeta,
   type CredentialFilter,
+  type CredentialKind,
 } from './credentials-panel.types';
 
 /**
@@ -27,9 +30,11 @@ import {
  * por estado. El cliente lo llamó «un layout diarreico» el 19/09/2026 y pidió
  * un ícono que identifique cada credencial, en rejilla.
  *
- * Ahora cada credencial es **una** tarjeta, con el ícono de su clase, su sello
- * y su fuente; lo declarado y lo verificado se separan con un filtro arriba en
- * vez de repitiendo la lista entera. Ninguna información se perdió: lo que
+ * Ahora cada credencial es **una** tarjeta, con su sello y su fuente; lo
+ * declarado y lo verificado se separan con un filtro arriba en vez de
+ * repitiendo la lista entera. Y desde el 24/09/2026 las tarjetas van en un
+ * bloque por clase —matrículas, especialidades, títulos, idiomas— en vez de
+ * una sola rejilla entreverada, que el propietario encontró inentendible. Ninguna información se perdió: lo que
  * antes decía el título de la sección ahora lo dice el sello de la tarjeta.
  *
  * ## El aviso de para qué sirve la pestaña no vive acá
@@ -45,7 +50,7 @@ import {
  */
 @Component({
   selector: 'app-credentials-panel',
-  imports: [Card, NavIcon, StatusSeal],
+  imports: [AppButton, Card, NavIcon, StatusSeal],
   templateUrl: './credentials-panel.html',
   styleUrl: './credentials-panel.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,10 +66,15 @@ export class CredentialsPanel {
   readonly especialidades = input<readonly EspecialidadVisible[]>([]);
   readonly formacion = input.required<readonly FormacionVisible[]>();
   readonly idiomas = input.required<readonly IdiomaVisible[]>();
+  /** Los títulos que se pueden retirar. Quién puede y cuándo lo decide la ficha. */
+  readonly retirables = input<ReadonlySet<string>>(new Set());
+
+  /** «Quiero retirar este título». Confirmarlo y retirarlo es de quien escucha. */
+  readonly retirar = output<FormacionVisible>();
 
   protected readonly filtro = signal<CredentialFilter>('all');
   protected readonly ICONOS = CREDENTIAL_ICONS;
-  protected readonly ROTULOS = CREDENTIAL_KIND_LABELS;
+  protected readonly GRUPOS = CREDENTIAL_GROUP_LABELS;
 
   /** Todas las credenciales, de las cuatro clases, en una sola lista. */
   protected readonly todas = computed<readonly CredencialEnTarjeta[]>(() => [
@@ -138,6 +148,16 @@ export class CredentialsPanel {
     }
   });
 
+  /** Lo visible, en un bloque por clase y en el orden fijo de las clases. */
+  protected readonly grupos = computed<
+    readonly { readonly clase: CredentialKind; readonly tarjetas: readonly CredencialEnTarjeta[] }[]
+  >(() =>
+    CREDENTIAL_KINDS.map((clase) => ({
+      clase,
+      tarjetas: this.visibles().filter((credencial) => credencial.clase === clase),
+    })).filter((grupo) => grupo.tarjetas.length > 0),
+  );
+
   /** Qué decir cuando el corte elegido no tiene nada. */
   protected readonly vacio = computed(() => {
     switch (this.filtro()) {
@@ -152,6 +172,13 @@ export class CredentialsPanel {
 
   protected elegirFiltro(filtro: CredentialFilter): void {
     this.filtro.set(filtro);
+  }
+
+  protected pedirRetiro(id: string): void {
+    const estudio = this.formacion().find((candidato) => candidato.id === id);
+    if (estudio !== undefined) {
+      this.retirar.emit(estudio);
+    }
   }
 }
 
