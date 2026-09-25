@@ -194,7 +194,7 @@ export function recomendar(
 }
 
 /**
- * Si el directorio tiene a alguien de esta especialidad.
+ * Busca en `disponibles` la clave que corresponde a `nombre`.
  *
  * No se compara con `=`. Los nombres del directorio son los que cada
  * profesional o cada catálogo escribió —«Otorrinolaringología y Cirugía de
@@ -202,25 +202,58 @@ export function recomendar(
  * coincidía con «Otorrinolaringología» ni con «Cardiología». El filtro que
  * existe para no mandar a un directorio vacío terminaba vaciando la
  * recomendación entera.
+ *
+ * La usan tanto `estaDisponible` (¿se recomienda?) como {@link conceptIdDe}
+ * (¿a qué especialidad del directorio salto al tocarla?): antes cada una
+ * tenía su propio criterio —uno tolerante, el otro exacto— y una especialidad
+ * podía pasar el primero y fallar el segundo. El síntoma era «me recomienda
+ * Traumatología pero al tocarla no me lleva a la lista de traumatólogos, me
+ * deja en el directorio por categoría»: `verProfesionales` no encontraba el
+ * `conceptId`, caía al buscador por texto (`q`), y esa ruta nunca pone el
+ * parámetro `especialidad` que saca de la portada agrupada.
  */
-function estaDisponible(nombre: string, disponibles: ReadonlySet<string>): boolean {
+function buscarClaveDisponible(
+  nombre: string,
+  disponibles: ReadonlySet<string>,
+): string | undefined {
   const buscada = normalizar(nombre);
   if (disponibles.has(buscada)) {
-    return true;
+    return buscada;
   }
   for (const ofrecida of disponibles) {
     if (ofrecida.length < 6) {
       continue;
     }
     if (ofrecida.includes(buscada) || buscada.includes(ofrecida)) {
-      return true;
+      return ofrecida;
     }
     // «Cardióloga» y «Cardiología»: la misma especialidad dicha de dos maneras.
     if (distancia(buscada, ofrecida, 2) <= 2) {
-      return true;
+      return ofrecida;
     }
   }
-  return false;
+  return undefined;
+}
+
+/** Si el directorio tiene a alguien de esta especialidad. Ver {@link buscarClaveDisponible}. */
+function estaDisponible(nombre: string, disponibles: ReadonlySet<string>): boolean {
+  return buscarClaveDisponible(nombre, disponibles) !== undefined;
+}
+
+/**
+ * El `conceptId` de una especialidad recomendada, con la misma tolerancia que
+ * decidió recomendarla (ver {@link buscarClaveDisponible}).
+ *
+ * `undefined` cuando no hay coincidencia: quien llama cae al buscador por
+ * texto, que es el destino que ya existía para una especialidad sin
+ * identificador.
+ */
+export function conceptIdDe(
+  nombre: string,
+  disponibles: ReadonlyMap<string, string>,
+): string | undefined {
+  const clave = buscarClaveDisponible(nombre, new Set(disponibles.keys()));
+  return clave === undefined ? undefined : disponibles.get(clave);
 }
 
 /**

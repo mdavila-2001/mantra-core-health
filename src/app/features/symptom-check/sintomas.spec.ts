@@ -1,4 +1,5 @@
 import {
+  conceptIdDe,
   explicar,
   normalizar,
   reconocer,
@@ -163,6 +164,28 @@ describe('recomendar', () => {
 
     expect(conFemenino.map((r) => r.nombre)).toContain('Oftalmología');
     expect(conNombreLargo.map((r) => r.nombre)).toContain('Otorrinolaringología');
+  });
+});
+
+describe('conceptIdDe', () => {
+  it('resuelve el mismo par que hizo que la especialidad se recomendara', () => {
+    // Este es el bug reportado: «me duele la pantorrilla» recomienda
+    // Traumatología, pero el directorio la tiene escrita distinto
+    // («Traumatología y Ortopedia»). `recomendar` la ofrece igual porque
+    // `estaDisponible` es tolerante; antes, `verProfesionales` buscaba el
+    // `conceptId` con igualdad exacta, no lo encontraba, y la navegación caía
+    // al buscador por texto — que nunca pone `especialidad` en la URL y deja
+    // a la persona en el directorio agrupado por categoría en vez de en la
+    // lista de traumatólogos.
+    const disponibles = new Map([['traumatologia y ortopedia', 'con-trauma']]);
+
+    expect(conceptIdDe('Traumatología', disponibles)).toBe('con-trauma');
+  });
+
+  it('sin coincidencia ni siquiera difusa, no resuelve nada', () => {
+    const disponibles = new Map([['cardiologia', 'con-cardio']]);
+
+    expect(conceptIdDe('Reumatología', disponibles)).toBeUndefined();
   });
 });
 

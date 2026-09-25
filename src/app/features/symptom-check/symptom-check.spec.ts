@@ -140,6 +140,58 @@ describe('SymptomCheck · a dónde lleva «ver quién atiende»', () => {
       queryParams: { q: 'Reumatología' },
     });
   });
+
+  it('resuelve el concepto aunque el catálogo la escriba distinto, no sólo con igualdad exacta', () => {
+    // El bug reportado: «me duele la pantorrilla» recomienda Traumatología,
+    // pero en el directorio la especialidad está escrita «Traumatología y
+    // Ortopedia» — `recomendar` la ofrece igual porque tolera esa diferencia
+    // (ver sintomas.spec.ts), y antes `verProfesionales` la buscaba con
+    // igualdad exacta, no la encontraba, y cada clic caía al buscador por
+    // texto en vez de a la lista filtrada, dejando a la persona en el
+    // directorio agrupado por categoría.
+    montar();
+    http
+      .expectOne((r) => r.url === '/profiles/practitioners')
+      .flush({
+        items: [
+          {
+            profileId: 'per-2',
+            practitionerCode: 'MED-2',
+            displayName: 'Dr. Rojas',
+            verificationStatusConceptId: 'st',
+            verified: true,
+            acceptsNewPatients: true,
+            telehealthAvailable: false,
+            specialties: [{ specialtyConceptId: 'con-trauma', isPrimary: true }],
+          },
+        ],
+        count: 1,
+        limit: 50,
+        nextCursor: null,
+      });
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [
+          {
+            conceptId: 'con-trauma',
+            code: 'TRAUMATOLOGY',
+            display: 'Traumatología y Ortopedia',
+            codeSystemVersionId: 'csv-1',
+          },
+        ],
+        count: 1,
+        limit: 200,
+      });
+    fixture.detectChanges();
+
+    verProfesionales('Traumatología');
+
+    expect(navegar).toHaveBeenCalledWith(['/directory'], {
+      queryParams: { especialidad: 'con-trauma' },
+    });
+  });
 });
 
 /**
