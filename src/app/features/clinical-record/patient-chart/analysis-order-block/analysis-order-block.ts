@@ -7,6 +7,7 @@ import {
   effect,
   inject,
   input,
+  output,
   signal,
   untracked,
 } from '@angular/core';
@@ -164,13 +165,13 @@ export interface EstudioEnFicha {
  * requiere estar atendiendo.
  */
 @Component({
-  selector: 'app-diagnostics-block',
+  selector: 'app-analysis-order-block',
   imports: [Alert, Card, ConceptSelect, DatePipe, DuplicateStudyWarningDialog, FormActions, FormField],
-  templateUrl: './diagnostics-block.html',
-  styleUrl: './diagnostics-block.css',
+  templateUrl: './analysis-order-block.html',
+  styleUrl: './analysis-order-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DiagnosticsBlock {
+export class AnalysisOrderBlock {
   private readonly diagnostics = inject(DiagnosticsClient);
   private readonly systemContext = inject(SystemContextClient);
   private readonly terminology = inject(TerminologyClient);
@@ -179,6 +180,9 @@ export class DiagnosticsBlock {
 
   /** La persona de la ficha. */
   readonly patientProfileId = input.required<string>();
+
+  /** C0: el host relee el encuentro solo después de un alta confirmada. */
+  readonly cambio = output<void>();
 
   /**
    * El encuentro en curso, o `null` si no hay ninguno abierto.
@@ -488,6 +492,7 @@ export class DiagnosticsBlock {
         // porque lo pintamos nosotros y no porque el servidor lo tenga es
         // exactamente la clase de mentira que el expediente no puede permitirse.
         this.cargar(patientProfileId);
+        this.cambio.emit();
       },
       error: (error: unknown) => {
         this.pidiendo.set(false);

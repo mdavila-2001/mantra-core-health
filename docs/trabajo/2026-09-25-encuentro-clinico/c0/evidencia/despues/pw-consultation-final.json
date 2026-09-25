@@ -1,0 +1,27 @@
+{
+  "outcome": "FAILED",
+  "attempt": 1,
+  "failedTests": [
+    "[chromium] › playwright\\consulta-rejilla.spec.ts:116:7 › C0 · contrato de la consulta › doce acciones, modales y encuentro persistente al recargar (24.6s)"
+  ],
+  "attempts": [
+    {
+      "attempt": 1,
+      "outcome": "FAILED",
+      "reason": "fallo sin evidencia de infraestructura; no se reintenta",
+      "code": 1,
+      "signal": null,
+      "pid": 32536,
+      "log": "D:\\Trabajos Secundarios\\Mantra Core Technologies\\wt-clinica-c0\\artifacts\\pw-guard\\20260925-200558-intento-1.log",
+      "cleanupConfirmed": true,
+      "failedTests": [
+        "[chromium] › playwright\\consulta-rejilla.spec.ts:116:7 › C0 · contrato de la consulta › doce acciones, modales y encuentro persistente al recargar (24.6s)"
+      ],
+      "completedTests": 1,
+      "assertionFailure": false,
+      "durationSeconds": 36.13
+    }
+  ],
+  "durationSeconds": 38.48,
+  "exitCode": 1
+}

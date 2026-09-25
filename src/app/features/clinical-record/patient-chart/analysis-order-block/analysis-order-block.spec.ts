@@ -4,7 +4,7 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
 import { SessionStore } from '../../../../core/auth/session.store';
-import { DiagnosticsBlock, TARGET_ESTUDIO } from './diagnostics-block';
+import { AnalysisOrderBlock, TARGET_ESTUDIO } from './analysis-order-block';
 
 /**
  * Pedir un laboratorio o una imagen desde la ficha, y ver qué volvió — punto 10
@@ -101,9 +101,9 @@ function jwt(payload: Record<string, unknown>): string {
   return `${b64({ alg: 'HS256' })}.${b64(payload)}.firma`;
 }
 
-describe('DiagnosticsBlock', () => {
-  let fixture: ComponentFixture<DiagnosticsBlock>;
-  let componente: DiagnosticsBlock;
+describe('AnalysisOrderBlock', () => {
+  let fixture: ComponentFixture<AnalysisOrderBlock>;
+  let componente: AnalysisOrderBlock;
   let http: HttpTestingController;
 
   beforeEach(() => {
@@ -117,7 +117,7 @@ describe('DiagnosticsBlock', () => {
       refreshToken: 'r-1',
     });
 
-    fixture = TestBed.createComponent(DiagnosticsBlock);
+    fixture = TestBed.createComponent(AnalysisOrderBlock);
     componente = fixture.componentInstance;
     fixture.componentRef.setInput('patientProfileId', 'p-1');
     fixture.componentRef.setInput('encounterId', 'enc-1');
@@ -312,7 +312,9 @@ describe('DiagnosticsBlock', () => {
     expect(componente['puedePedir']()).toBe(true);
   });
 
-  it('el alta pega contra `clinical`, que es donde viven las invariantes', () => {
+  it('el alta conserva las invariantes de clinical y emite cambio solo tras guardarse', () => {
+    const changed = vi.fn();
+    componente.cambio.subscribe(changed);
     fixture.detectChanges();
     responderCatalogos();
     responderCircuito();
@@ -332,6 +334,7 @@ describe('DiagnosticsBlock', () => {
     expect(req.request.body.custodianTenantId).toBe('t-1');
     // La prioridad no se eligió: la clave se omite, no viaja en null.
     expect('priorityConceptId' in req.request.body).toBe(false);
+    expect(changed).not.toHaveBeenCalled();
 
     req.flush({
       id: 'sr-1',
@@ -345,6 +348,7 @@ describe('DiagnosticsBlock', () => {
     responderCircuito({ ...CIRCUITO_VACIO, orders: [ORDEN] });
     fixture.detectChanges();
     expect(componente['estudios']().length).toBe(1);
+    expect(changed).toHaveBeenCalledTimes(1);
   });
 
   /**
@@ -418,6 +422,18 @@ describe('DiagnosticsBlock', () => {
         createdAt: '2026-08-14T10:00:00.000Z',
       });
       responderCircuito();
+    });
+
+    it('no emite cambio si el servidor rechaza el alta', () => {
+      const changed = vi.fn();
+      componente.cambio.subscribe(changed);
+      componente['pedir']();
+      responderChequeo(false);
+      http.expectOne((r) => r.url === '/clinical/service-requests')
+        .flush({ message: 'Fallo sintético' }, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+      expect(componente['errorDelPedido']()).not.toBeNull();
+      expect(changed).not.toHaveBeenCalled();
     });
 
     it('si el chequeo falla, no manda el alta (fail closed)', () => {

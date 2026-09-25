@@ -1,5 +1,8 @@
 import type { PatientSettlementFields } from '../insurance/patient-insurance-settlement.types';
 
+/** Clasificación de C2; el simulador la resuelve al concepto. Pendiente de backend P40. */
+export type AnalysisCategory = 'LAB' | 'IMAGING' | 'OTHER';
+
 /* ============================================================================
     Tipos de la vista para el circuito diagnóstico: `diagnostics` (M20) y la
     orden de servicio de `clinical` (M08).
@@ -36,6 +39,10 @@ export interface DiagnosticOrder {
   readonly encounterId?: string;
   readonly codeConceptId: string;
   readonly categoryConceptId?: string;
+  /** Categoría de análisis de C2; pendiente de backend P40. */
+  readonly category?: AnalysisCategory;
+  /** Notas médicas que motivan la orden de C2; pendiente de backend P40. */
+  readonly basedOnNoteIds?: readonly string[];
   readonly statusConceptId: string;
   readonly priorityConceptId?: string;
   readonly requesterProfileId?: string;
@@ -101,6 +108,10 @@ export interface NewDiagnosticOrder {
   readonly codeConceptId: string;
   readonly encounterId?: string;
   readonly categoryConceptId?: string;
+  /** Categoría de análisis de C2; pendiente de backend P40. */
+  readonly category?: AnalysisCategory;
+  /** Notas médicas que motivan la orden de C2; pendiente de backend P40. */
+  readonly basedOnNoteIds?: readonly string[];
   readonly priorityConceptId?: string;
   readonly requesterProfileId?: string;
   readonly performerTenantId?: string;
@@ -285,6 +296,8 @@ export interface PatientOrder extends PatientSettlementFields {
   readonly encounterId?: string;
   readonly codeConceptId: string;
   readonly categoryConceptId?: string;
+  /** Categoría de análisis de C2; pendiente de backend P40. */
+  readonly category?: AnalysisCategory;
   readonly statusConceptId: string;
   readonly priorityConceptId?: string;
   readonly createdAt: Date;

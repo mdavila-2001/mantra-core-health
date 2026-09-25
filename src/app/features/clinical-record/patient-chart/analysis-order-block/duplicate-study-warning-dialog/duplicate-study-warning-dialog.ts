@@ -42,7 +42,7 @@ const MIN_JUSTIFICATION_LENGTH = 20;
  * no se ofrece.
  *
  * Es un componente de la `feature`, no una molécula compartida: hoy tiene un
- * solo consumidor (`DiagnosticsBlock`).
+ * solo consumidor (`AnalysisOrderBlock`).
  */
 @Component({
   selector: 'app-duplicate-study-warning-dialog',

@@ -1,3 +1,5 @@
+import type { MedicalNoteEntry } from '../clinical/clinical.types';
+
 /* ============================================================================
     La nota clínica narrativa: lo que el médico escribe con sus palabras.
 
@@ -18,6 +20,8 @@ export interface CreateClinicalNoteInput {
   readonly encounterId?: string;
   /** Qué clase de nota es; sin él, la que el servidor tome por omisión. */
   readonly noteTypeConceptId?: string;
+  /** Filas estructuradas de C1; lectura y escritura reales pendientes de backend P39. */
+  readonly entries?: readonly MedicalNoteEntry[];
   /** Motivo de consulta. */
   readonly chiefComplaintText?: string;
   /** Lo que refiere el paciente. */
@@ -53,6 +57,8 @@ export interface ClinicalNoteVersionRef {
 export interface AppendClinicalNoteVersionInput {
   /** Quién escribe esta versión. */
   readonly authorProfileId: string;
+  /** Filas estructuradas de C1; lectura y escritura reales pendientes de backend P39. */
+  readonly entries?: readonly MedicalNoteEntry[];
   /** Motivo de consulta. */
   readonly chiefComplaintText?: string;
   /** Lo que refiere el paciente. */

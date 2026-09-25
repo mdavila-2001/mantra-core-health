@@ -20,6 +20,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
 import { toBookingStatusPresentation, type BookingStatusPresentation } from './booking-status';
 import {
+  BOOKING_QUERY_PARAM,
   CITA_QUERY_PARAM,
   consultationRoute,
   MOTIVO_QUERY_PARAM,
@@ -2845,6 +2846,7 @@ export class Agenda {
       motivoCrudo: cita.reasonText ?? null,
       appointmentId: cita.appointmentId ?? null,
       paramsDeLaAtencion: {
+        [BOOKING_QUERY_PARAM]: cita.id,
         ...(cita.reasonText === undefined ? {} : { [MOTIVO_QUERY_PARAM]: cita.reasonText }),
         ...(cita.appointmentId === undefined || cita.appointmentId === null
           ? {}

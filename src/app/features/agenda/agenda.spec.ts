@@ -995,7 +995,7 @@ describe('Agenda', () => {
 
     const fila = citas().data?.[0] as Record<string, unknown>;
     expect(fila['appointmentId']).toBe('ap-1');
-    expect(fila['paramsDeLaAtencion']).toEqual({ motivo: 'Control anual', cita: 'ap-1' });
+    expect(fila['paramsDeLaAtencion']).toEqual({ motivo: 'Control anual', cita: 'ap-1', booking: CITA.id });
   });
 
   /**
@@ -1008,7 +1008,7 @@ describe('Agenda', () => {
 
     const fila = citas().data?.[0] as Record<string, unknown>;
     expect(fila['appointmentId']).toBeNull();
-    expect(fila['paramsDeLaAtencion']).toEqual({ motivo: 'Control anual' });
+    expect(fila['paramsDeLaAtencion']).toEqual({ motivo: 'Control anual', booking: CITA.id });
   });
 
   it('una cita sin motivo no inventa uno para llevar', async () => {

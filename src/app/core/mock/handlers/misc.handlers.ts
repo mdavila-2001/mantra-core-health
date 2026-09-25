@@ -93,7 +93,7 @@ const ENUMS: readonly (readonly [patron: RegExp, valueSet: string, name: string]
   /*
    * Laboratorio e imagenología (antiduplicación de estudios, v4.2.17, T-26,
    * subtarea 3.2). Sin estas tres filas el selector «Estudio» de
-   * `DiagnosticsBlock` caía al fallback `VS_RECORD_STATUS` y la maqueta no
+   * `AnalysisOrderBlock` caía al fallback `VS_RECORD_STATUS` y la maqueta no
    * podía pedir un estudio: mismo defecto que ya se había cerrado para el
    * diagnóstico. Van antes de `/category/` a secas, que casaría con
    * `service_requests.category_concept_id` pero con el conjunto equivocado.

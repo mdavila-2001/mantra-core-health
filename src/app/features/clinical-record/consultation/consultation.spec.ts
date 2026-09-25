@@ -1,9 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { By } from '@angular/platform-browser';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
+import { MedicalNoteBlock } from '../patient-chart/medical-note-block/medical-note-block';
 import { Consultation } from './consultation';
 
 /**
@@ -11,9 +13,8 @@ import { Consultation } from './consultation';
  *
  * Lo que fijan estas pruebas:
  *
- * 1. **Están todas las posibilidades.** Las siete altas del expediente, el
- *    formulario clínico y la internación —cada una con su cantidad leída— y
- *    «Pagos», que no da de alta nada y por eso no lleva cifra.
+ * 1. **Están las doce posibilidades de C0**, en orden y con cantidades leídas.
+ *    Órdenes, reconsulta y Pagos no agregan lecturas para ofrecer una cifra.
  * 2. **Cada casilla abre su formulario en modal**, y uno solo a la vez.
  * 3. **El check-in manda lo que el contrato pide y nada más.** Un motivo en
  *    blanco no viaja, y el turno de origen viaja sólo si existe.
@@ -48,17 +49,12 @@ const CHART = {
 };
 
 const CLAVES = [
-  'diagnosticos',
-  'alergias',
-  'medicacion',
-  'observaciones',
-  'notas',
-  'planes',
-  'documentos',
-  'formulario',
-  'internacion',
-  // La décima, y la única de sólo lectura: lo que la persona ya pagó.
-  'pagos',
+  'notas', 'ordenes', 'diagnosticos', 'reconsulta', 'medicacion', 'alergias',
+  'observaciones', 'planes', 'documentos', 'formulario', 'internacion', 'pagos',
+];
+const TITULOS = [
+  'Nota médica', 'Orden de análisis', 'Diagnóstico', 'Reconsulta', 'Receta', 'Alergia',
+  'Medición', 'Plan de cuidados', 'Documento', 'Formulario clínico', 'Internación', 'Pagos',
 ];
 
 describe('Consultation', () => {
@@ -109,13 +105,16 @@ describe('Consultation', () => {
     componente = await harness.navigateByUrl('/medical-records/p-1/consultation', Consultation);
   });
 
-  it('ofrece las diez posibilidades en la rejilla, con su cantidad', async () => {
+  it('ofrece las doce posibilidades en la rejilla, con su cantidad', async () => {
     await responderLectura();
 
-    const casillas = interno<() => readonly { clave: string; cantidad: number | null }[]>(
+    const casillas = interno<() => readonly { clave: string; titulo: string; cantidad: number | null }[]>(
       'casillas',
     )();
     expect(casillas.map((c) => c.clave)).toEqual(CLAVES);
+    expect(casillas.map((c) => c.titulo)).toEqual(TITULOS);
+    expect(casillas.find((c) => c.clave === 'ordenes')?.cantidad).toBeNull();
+    expect(casillas.find((c) => c.clave === 'reconsulta')?.cantidad).toBeNull();
     expect(casillas.find((c) => c.clave === 'diagnosticos')?.cantidad).toBe(2);
     expect(casillas.find((c) => c.clave === 'documentos')?.cantidad).toBe(1);
     expect(casillas.find((c) => c.clave === 'formulario')?.cantidad).toBeNull();
@@ -127,7 +126,7 @@ describe('Consultation', () => {
     const botones = harness.routeNativeElement!.querySelectorAll(
       '[data-testid^="consulta-casilla-"]',
     );
-    expect(botones).toHaveLength(10);
+    expect(botones).toHaveLength(12);
   });
 
   /**
@@ -135,6 +134,46 @@ describe('Consultation', () => {
    * única línea que dice qué va a pasar al confirmar. Prometer que «se
    * registra» ahí sería mentir en el peor lugar posible.
    */
+  it('Nota médica recibe el encuentro y las citas sin efectuar altas', async () => {
+    await responderLectura({ encounters: [{ id: 'e-1', statusConceptId: 'st', startAt: '2026-03-01T10:00:00Z' }] });
+    interno<(key: string) => void>('abrir').call(componente, 'notas');
+    await harness.fixture.whenStable();
+    const note = harness.fixture.debugElement.query(By.directive(MedicalNoteBlock))
+      .componentInstance as MedicalNoteBlock;
+    expect(note.patientProfileId()).toBe('p-1');
+    expect(note.encounterId()).toBe('e-1');
+    expect(note.citas()).toEqual(interno<() => readonly unknown[]>('citas')());
+    expect(harness.routeNativeElement?.textContent).toContain('En construcción (C1)');
+    http.expectNone((request) => request.method === 'POST');
+  });
+
+  it('destruye el modal al cerrar y permite reabrir la misma casilla de inmediato', async () => {
+    await responderLectura();
+    const tile = harness.routeNativeElement!.querySelector<HTMLButtonElement>('[data-testid="consulta-casilla-notas"]')!;
+    tile.click();
+    await harness.fixture.whenStable();
+    const previous = harness.routeNativeElement!.querySelector('dialog')!;
+    expect(previous.open).toBe(true);
+
+    harness.routeNativeElement!.querySelector<HTMLButtonElement>('[data-testid="content-dialog-close"]')!.click();
+    expect(previous.isConnected).toBe(false);
+    tile.click();
+    await harness.fixture.whenStable();
+    const reopened = harness.routeNativeElement!.querySelector('dialog')!;
+    expect(reopened).not.toBe(previous);
+    expect(reopened.open).toBe(true);
+    expect(harness.routeNativeElement!.querySelectorAll('dialog')).toHaveLength(1);
+  });
+
+  it('distingue la reserva de reconsulta de la cita clínica del check-in', async () => {
+    await responderLectura();
+    componente = await harness.navigateByUrl('/medical-records/p-1/consultation?cita=ap-1&booking=b-1', Consultation);
+    expect(interno<() => string | null>('originBookingId')()).toBe('b-1');
+    expect(interno<() => string | null>('citaDeOrigen')()).toBe('ap-1');
+    componente = await harness.navigateByUrl('/medical-records/p-1/consultation?cita=ap-1', Consultation);
+    expect(interno<() => string | null>('originBookingId')()).toBeNull();
+  });
+
   it('el modal de pagos no promete que se registre nada', async () => {
     await responderLectura();
 

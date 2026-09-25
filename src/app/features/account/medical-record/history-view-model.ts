@@ -26,9 +26,11 @@ import type {
   SeccionesNuevasDeLaHistoria,
 } from '../../../shared/utils/clinical-pdf/historia-con-encuentros';
 import {
+  CODIGO_ACTIVA,
+  CODIGO_CONFIRMADO,
+  CODIGO_DESCARTADO,
   diagnosisStateOf,
   esCronica,
-  type DiagnosisState,
   type ResolverCodigo,
 } from '../../../shared/clinical/diagnosis-state';
 
@@ -64,11 +66,10 @@ export type ResolverEtiqueta = (conceptId: string | undefined) => string;
  * 1. **`Intl` no rellena con cero.** `es-BO` con `dateStyle: 'short'` devuelve
  *    `9/1/24` en el ICU de este entorno; el rótulo que el carril pide —«hasta
  *    24/11»— quedaría dependiendo de qué datos de locale tenga la máquina.
- * 2. **`onsetAt`, `expectedResolutionAt` y `resolvedAt` son fechas de
- *    calendario, no instantes.** El backend las emite a medianoche UTC, así que
- *    leerlas en hora local las corre **un día para atrás** en toda Bolivia
- *    (UTC−4): un diagnóstico «hasta el 24/11» se imprimía «23/11». Una fecha
- *    clínica movida un día no es un detalle de formato.
+ * 2. La presentación conserva el día UTC recibido. Leer una medianoche UTC
+ *    en hora local la corre un día hacia atrás en Bolivia (UTC−4). Esto sólo
+ *    decide el texto: el helper canónico compara los instantes completos para
+ *    determinar si el diagnóstico sigue vigente.
  */
 function fechaClinica(cuando: Date): string {
   const dos = (valor: number): string => String(valor).padStart(2, '0');
@@ -110,9 +111,37 @@ export interface DiagnosticoVisible {
   readonly hechos: readonly Hecho[];
 }
 
+/** Los estados canónicos se muestran en los tres grupos ya publicados por C6. */
+type HistoryDiagnosisGroup = 'en-estudio' | 'activa' | 'historico';
+
+const HISTORY_GROUP_BY_STATE = {
+  IN_STUDY: 'en-estudio',
+  ACTIVE: 'activa',
+  HISTORIC: 'historico',
+  REFUTED: 'historico',
+} as const;
+
+/** Usa los códigos ya cargados por la historia, sin otra lectura de terminología. */
+function historyDiagnosisGroup(
+  condition: Condition,
+  code: ResolverCodigo,
+  now: Date,
+): HistoryDiagnosisGroup {
+  const state = diagnosisStateOf(
+    {
+      ...condition,
+      verificationStatusConceptId: code(condition.verificationStatusConceptId),
+      clinicalStatusConceptId: code(condition.clinicalStatusConceptId),
+    },
+    { confirmed: CODIGO_CONFIRMADO, refuted: CODIGO_DESCARTADO, active: CODIGO_ACTIVA },
+    now,
+  );
+  return HISTORY_GROUP_BY_STATE[state];
+}
+
 /** Uno de los tres bloques de la pestaña. */
 export interface BloqueDeDiagnosticos {
-  readonly estado: DiagnosisState;
+  readonly estado: HistoryDiagnosisGroup;
   readonly titulo: string;
   /** El `data-testid` con el que la prueba de navegador lo encuentra. */
   readonly testId: string;
@@ -122,21 +151,21 @@ export interface BloqueDeDiagnosticos {
 }
 
 /** El tono de cada bloque. El color acompaña; la palabra la pone el sello. */
-const TONO_DEL_BLOQUE: Readonly<Record<DiagnosisState, Tone>> = Object.freeze({
+const TONO_DEL_BLOQUE: Readonly<Record<HistoryDiagnosisGroup, Tone>> = Object.freeze({
   'en-estudio': 'warning',
   activa: 'success',
   historico: 'info',
 });
 
 /** El `data-testid` de cada bloque, tal como lo nombra el carril. */
-const TESTID_DEL_BLOQUE: Readonly<Record<DiagnosisState, string>> = Object.freeze({
+const TESTID_DEL_BLOQUE: Readonly<Record<HistoryDiagnosisGroup, string>> = Object.freeze({
   'en-estudio': 'historia-en-estudio',
   activa: 'historia-activas',
   historico: 'historia-historicos',
 });
 
 /** Qué dice cada bloque vacío. Ninguno se calla: un bloque mudo no es un dato. */
-const VACIO_DEL_BLOQUE: Readonly<Record<DiagnosisState, string>> = Object.freeze({
+const VACIO_DEL_BLOQUE: Readonly<Record<HistoryDiagnosisGroup, string>> = Object.freeze({
   'en-estudio': 'No tenés diagnósticos en estudio.',
   activa: 'No tenés enfermedades activas registradas.',
   historico: 'No tenés diagnósticos históricos.',
@@ -156,7 +185,8 @@ export function bloquesDeDiagnosticos(
   etiqueta: ResolverEtiqueta,
   codigo: ResolverCodigo,
 ): readonly BloqueDeDiagnosticos[] {
-  const titulos: Readonly<Record<DiagnosisState, string>> = {
+  const now = new Date();
+  const titulos: Readonly<Record<HistoryDiagnosisGroup, string>> = {
     'en-estudio': 'En estudio',
     activa: 'Enfermedades activas',
     historico: 'Históricos',
@@ -168,16 +198,17 @@ export function bloquesDeDiagnosticos(
     testId: TESTID_DEL_BLOQUE[estado],
     vacio: VACIO_DEL_BLOQUE[estado],
     filas: condiciones
-      .filter((condicion) => diagnosisStateOf(condicion, codigo) === estado)
-      .map((condicion) => diagnosticoVisible(condicion, estado, etiqueta, codigo)),
+      .filter((condicion) => historyDiagnosisGroup(condicion, codigo, now) === estado)
+      .map((condicion) => diagnosticoVisible(condicion, estado, etiqueta, codigo, now)),
   }));
 }
 
 function diagnosticoVisible(
   condicion: Condition,
-  estado: DiagnosisState,
+  estado: HistoryDiagnosisGroup,
   etiqueta: ResolverEtiqueta,
   codigo: ResolverCodigo,
+  now: Date,
 ): DiagnosticoVisible {
   const hechos: Hecho[] = [];
 
@@ -191,7 +222,7 @@ function diagnosticoVisible(
   }
 
   if (estado === 'historico') {
-    hechos.push({ etiqueta: 'Por qué', valor: razonDelHistorico(condicion, etiqueta) });
+    hechos.push({ etiqueta: 'Por qué', valor: razonDelHistorico(condicion, etiqueta, codigo, now) });
   }
 
   // El estado clínico entero, siempre: el bloque resume y esta fila no esconde
@@ -226,7 +257,7 @@ function diagnosticoVisible(
  */
 function plazoDe(
   condicion: Condition,
-  estado: DiagnosisState,
+  estado: HistoryDiagnosisGroup,
   codigo: ResolverCodigo,
 ): string | null {
   if (estado === 'historico') {
@@ -241,16 +272,29 @@ function plazoDe(
 }
 
 /**
- * Por qué un diagnóstico es histórico: «resuelto el <fecha>» o el estado que
- * lo cerró.
+ * Por qué un diagnóstico es histórico: resolución, plazo vencido o estado.
+ * El vencimiento del plazo no afirma que el profesional lo haya resuelto.
  *
  * // TODO C8: C3 iba a dejar `verification.reasonText` —el motivo escrito del
  * // rechazo— y no llegó. Mientras tanto se dice la **etiqueta del catálogo**
  * // («Descartado»), que es un hecho publicado, en vez de un texto inventado.
  */
-function razonDelHistorico(condicion: Condition, etiqueta: ResolverEtiqueta): string {
+function razonDelHistorico(
+  condicion: Condition,
+  etiqueta: ResolverEtiqueta,
+  codigo: ResolverCodigo,
+  now: Date,
+): string {
   if (condicion.resolvedAt !== undefined) {
     return `resuelto el ${fechaClinica(condicion.resolvedAt)}`;
+  }
+  if (
+    codigo(condicion.verificationStatusConceptId) === CODIGO_CONFIRMADO &&
+    codigo(condicion.clinicalStatusConceptId) === CODIGO_ACTIVA &&
+    condicion.expectedResolutionAt !== undefined &&
+    condicion.expectedResolutionAt.getTime() < now.getTime()
+  ) {
+    return `plazo esperado vencido el ${fechaClinica(condicion.expectedResolutionAt)}`;
   }
   if (condicion.verificationStatusConceptId !== undefined) {
     return etiqueta(condicion.verificationStatusConceptId);
@@ -286,9 +330,10 @@ export function atencionesDeLaHistoria(
   etiqueta: ResolverEtiqueta,
   codigo: ResolverCodigo,
 ): readonly EncounterInHistory[] {
+  const now = new Date();
   return [...resumen.encounters]
     .sort((a, b) => (b.startAt?.getTime() ?? 0) - (a.startAt?.getTime() ?? 0))
-    .map((encuentro) => atencionDeLaHistoria(encuentro, resumen, detalle, etiqueta, codigo));
+    .map((encuentro) => atencionDeLaHistoria(encuentro, resumen, detalle, etiqueta, codigo, now));
 }
 
 function atencionDeLaHistoria(
@@ -297,6 +342,7 @@ function atencionDeLaHistoria(
   detalle: DetalleDeAtenciones,
   etiqueta: ResolverEtiqueta,
   codigo: ResolverCodigo,
+  now: Date,
 ): EncounterInHistory {
   const motivo = encuentro.reasonText ?? 'Consulta';
   const cuando = encuentro.startAt ?? null;
@@ -319,7 +365,7 @@ function atencionDeLaHistoria(
       .map((orden) => ordenDeLaLinea(orden, etiqueta)),
     diagnosticos: resumen.conditions
       .filter((condicion) => condicion.encounterId === encuentro.id)
-      .map((condicion) => diagnosticoDeLaLinea(condicion, etiqueta, codigo)),
+      .map((condicion) => diagnosticoDeLaLinea(condicion, etiqueta, codigo, now)),
     recetas: resumen.medicationRequests
       .filter((receta) => receta.encounterId === encuentro.id)
       .map((receta) => recetaDeLaLinea(receta, resumen, etiqueta)),
@@ -425,8 +471,9 @@ function diagnosticoDeLaLinea(
   condicion: Condition,
   etiqueta: ResolverEtiqueta,
   codigo: ResolverCodigo,
+  now: Date,
 ): TimelineCondition {
-  const estado = diagnosisStateOf(condicion, codigo);
+  const estado = historyDiagnosisGroup(condicion, codigo, now);
   const plazo = plazoDe(condicion, estado, codigo);
 
   return {
@@ -434,7 +481,10 @@ function diagnosticoDeLaLinea(
     nombre: etiqueta(condicion.codeConceptId),
     estado: ROTULO_EN_LA_LINEA[estado],
     tono: TONO_DEL_BLOQUE[estado],
-    detalle: estado === 'historico' ? razonDelHistorico(condicion, etiqueta) : matizVigente(plazo),
+    detalle:
+      estado === 'historico'
+        ? razonDelHistorico(condicion, etiqueta, codigo, now)
+        : matizVigente(plazo),
     cuando: condicion.onsetAt ?? condicion.createdAt,
   };
 }
@@ -445,7 +495,7 @@ function diagnosticoDeLaLinea(
  * Distinto del título del bloque: ahí el encabezado ya dice de qué grupo es, y
  * acá el hecho tiene que decirlo solo porque está entre una orden y una receta.
  */
-const ROTULO_EN_LA_LINEA: Readonly<Record<DiagnosisState, string>> = Object.freeze({
+const ROTULO_EN_LA_LINEA: Readonly<Record<HistoryDiagnosisGroup, string>> = Object.freeze({
   'en-estudio': 'Diagnóstico en estudio',
   activa: 'Diagnóstico confirmado',
   historico: 'Diagnóstico histórico',
@@ -517,7 +567,7 @@ export function seccionesNuevasDeLaHistoria(
 
 function filasDelBloque(
   bloques: readonly BloqueDeDiagnosticos[],
-  estado: DiagnosisState,
+  estado: HistoryDiagnosisGroup,
 ): readonly DiagnosticoDeLaHistoria[] {
   const bloque = bloques.find((candidato) => candidato.estado === estado);
   return (bloque?.filas ?? []).map((fila) => ({

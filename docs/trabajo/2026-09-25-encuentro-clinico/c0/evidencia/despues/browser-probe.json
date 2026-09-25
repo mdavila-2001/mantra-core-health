@@ -1,0 +1,5222 @@
+{
+  "date": "2026-09-25T19:50:03.679Z",
+  "probes": [
+    {
+      "area": "consultation",
+      "width": 1920,
+      "theme": "light",
+      "steps": [
+        {
+          "key": "notas",
+          "at": "focus",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "consulta-casilla-notas",
+              "class": "consulta__casilla"
+            },
+            "dialogs": [],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "notas",
+          "at": "open",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "content-dialog-close",
+              "class": "content-dialog__cerrar btn btn--ghost btn--sm"
+            },
+            "dialogs": [
+              {
+                "open": true,
+                "rect": {
+                  "x": 557.5,
+                  "y": 442,
+                  "width": 805,
+                  "height": 196,
+                  "top": 442,
+                  "right": 1362.5,
+                  "bottom": 638,
+                  "left": 557.5
+                }
+              }
+            ],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "notas",
+          "at": "tab",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "content-dialog-close",
+              "class": "content-dialog__cerrar btn btn--ghost btn--sm"
+            },
+            "dialogs": [
+              {
+                "open": true,
+                "rect": {
+                  "x": 557.5,
+                  "y": 442,
+                  "width": 805,
+                  "height": 196,
+                  "top": 442,
+                  "right": 1362.5,
+                  "bottom": 638,
+                  "left": 557.5
+                }
+              }
+            ],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "notas",
+          "at": "escaped",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "consulta-casilla-notas",
+              "class": "consulta__casilla"
+            },
+            "dialogs": [],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "ordenes",
+          "at": "focus",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "consulta-casilla-ordenes",
+              "class": "consulta__casilla"
+            },
+            "dialogs": [],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "ordenes",
+          "at": "open",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "content-dialog-close",
+              "class": "content-dialog__cerrar btn btn--ghost btn--sm"
+            },
+            "dialogs": [
+              {
+                "open": true,
+                "rect": {
+                  "x": 557.5,
+                  "y": 192,
+                  "width": 805,
+                  "height": 696,
+                  "top": 192,
+                  "right": 1362.5,
+                  "bottom": 888,
+                  "left": 557.5
+                }
+              }
+            ],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "ordenes",
+          "at": "tab",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": null,
+              "class": "btn btn--disabled btn--md btn--primary"
+            },
+            "dialogs": [
+              {
+                "open": true,
+                "rect": {
+                  "x": 557.5,
+                  "y": 192,
+                  "width": 805,
+                  "height": 696,
+                  "top": 192,
+                  "right": 1362.5,
+                  "bottom": 888,
+                  "left": 557.5
+                }
+              }
+            ],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "ordenes",
+          "at": "escaped",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "consulta-casilla-ordenes",
+              "class": "consulta__casilla"
+            },
+            "dialogs": [
+              {
+                "open": false,
+                "rect": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 0,
+                  "height": 0,
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                }
+              }
+            ],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "reconsulta",
+          "at": "focus",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "consulta-casilla-reconsulta",
+              "class": "consulta__casilla"
+            },
+            "dialogs": [
+              {
+                "open": false,
+                "rect": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 0,
+                  "height": 0,
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                }
+              }
+            ],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "reconsulta",
+          "at": "missing-dialog",
+          "error": "expect(locator).toBeVisible() failed\n\nLocator: getByRole('dialog')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"to.be.visible\" with timeout 5000ms\n  - waiting for getByRole('dialog')\n",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "consulta-casilla-reconsulta",
+              "class": "consulta__casilla"
+            },
+            "dialogs": [
+              {
+                "open": false,
+                "rect": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 0,
+                  "height": 0,
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                }
+              }
+            ],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "area": "consultation",
+      "width": 1920,
+      "theme": "dark",
+      "steps": [
+        {
+          "key": "notas",
+          "at": "focus",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "consulta-casilla-notas",
+              "class": "consulta__casilla"
+            },
+            "dialogs": [],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "notas",
+          "at": "open",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "content-dialog-close",
+              "class": "content-dialog__cerrar btn btn--ghost btn--sm"
+            },
+            "dialogs": [
+              {
+                "open": true,
+                "rect": {
+                  "x": 557.5,
+                  "y": 442,
+                  "width": 805,
+                  "height": 196,
+                  "top": 442,
+                  "right": 1362.5,
+                  "bottom": 638,
+                  "left": 557.5
+                }
+              }
+            ],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "notas",
+          "at": "tab",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "content-dialog-close",
+              "class": "content-dialog__cerrar btn btn--ghost btn--sm"
+            },
+            "dialogs": [
+              {
+                "open": true,
+                "rect": {
+                  "x": 557.5,
+                  "y": 442,
+                  "width": 805,
+                  "height": 196,
+                  "top": 442,
+                  "right": 1362.5,
+                  "bottom": 638,
+                  "left": 557.5
+                }
+              }
+            ],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "notas",
+          "at": "escaped",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "consulta-casilla-notas",
+              "class": "consulta__casilla"
+            },
+            "dialogs": [],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "ordenes",
+          "at": "focus",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "consulta-casilla-ordenes",
+              "class": "consulta__casilla"
+            },
+            "dialogs": [],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "ordenes",
+          "at": "open",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "content-dialog-close",
+              "class": "content-dialog__cerrar btn btn--ghost btn--sm"
+            },
+            "dialogs": [
+              {
+                "open": true,
+                "rect": {
+                  "x": 557.5,
+                  "y": 192,
+                  "width": 805,
+                  "height": 696,
+                  "top": 192,
+                  "right": 1362.5,
+                  "bottom": 888,
+                  "left": 557.5
+                }
+              }
+            ],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "ordenes",
+          "at": "tab",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": null,
+              "class": "btn btn--disabled btn--md btn--primary"
+            },
+            "dialogs": [
+              {
+                "open": true,
+                "rect": {
+                  "x": 557.5,
+                  "y": 192,
+                  "width": 805,
+                  "height": 696,
+                  "top": 192,
+                  "right": 1362.5,
+                  "bottom": 888,
+                  "left": 557.5
+                }
+              }
+            ],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "ordenes",
+          "at": "escaped",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "consulta-casilla-ordenes",
+              "class": "consulta__casilla"
+            },
+            "dialogs": [],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "reconsulta",
+          "at": "focus",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "consulta-casilla-reconsulta",
+              "class": "consulta__casilla"
+            },
+            "dialogs": [],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "reconsulta",
+          "at": "open",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "content-dialog-close",
+              "class": "content-dialog__cerrar btn btn--ghost btn--sm"
+            },
+            "dialogs": [
+              {
+                "open": true,
+                "rect": {
+                  "x": 557.5,
+                  "y": 368.5,
+                  "width": 805,
+                  "height": 343,
+                  "top": 368.5,
+                  "right": 1362.5,
+                  "bottom": 711.5,
+                  "left": 557.5
+                }
+              }
+            ],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "reconsulta",
+          "at": "tab",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "content-dialog-close",
+              "class": "content-dialog__cerrar btn btn--ghost btn--sm"
+            },
+            "dialogs": [
+              {
+                "open": true,
+                "rect": {
+                  "x": 557.5,
+                  "y": 368.5,
+                  "width": 805,
+                  "height": 343,
+                  "top": 368.5,
+                  "right": 1362.5,
+                  "bottom": 711.5,
+                  "left": 557.5
+                }
+              }
+            ],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              }
+            ]
+          }
+        },
+        {
+          "key": "reconsulta",
+          "at": "escaped",
+          "state": {
+            "active": {
+              "tag": "BUTTON",
+              "testid": "consulta-casilla-reconsulta",
+              "class": "consulta__casilla"
+            },
+            "dialogs": [],
+            "events": [
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-notas",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-notas",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": null,
+                "tag": "BUTTON",
+                "active": null,
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-ordenes",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-ordenes",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Enter",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              },
+              {
+                "type": "click",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Enter",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Tab",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "keydown",
+                "key": "Escape",
+                "testid": "content-dialog-close",
+                "tag": "BUTTON",
+                "active": "content-dialog-close",
+                "trusted": true
+              },
+              {
+                "type": "focusin",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              },
+              {
+                "type": "keyup",
+                "key": "Escape",
+                "testid": "consulta-casilla-reconsulta",
+                "tag": "BUTTON",
+                "active": "consulta-casilla-reconsulta",
+                "trusted": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "area": "history",
+      "width": 390,
+      "theme": "light",
+      "dom": {
+        "clientWidth": 390,
+        "scrollWidth": 403,
+        "overflow": [
+          {
+            "tag": "SPAN",
+            "class": "app-header__account-name",
+            "testid": null,
+            "rect": {
+              "x": 426.59375,
+              "y": 7.5,
+              "width": 153.828125,
+              "right": 580.421875
+            },
+            "scrollWidth": 0,
+            "clientWidth": 0,
+            "css": {
+              "display": "inline",
+              "minWidth": "0px",
+              "width": "auto",
+              "whiteSpace": "nowrap",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "DIV",
+            "class": "app-header__derecha",
+            "testid": null,
+            "rect": {
+              "x": 100,
+              "y": 7.5,
+              "width": 303,
+              "right": 403
+            },
+            "scrollWidth": 303,
+            "clientWidth": 303,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "303px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "0",
+              "gap": "4px",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "DIV",
+            "class": "menu-anclaje",
+            "testid": null,
+            "rect": {
+              "x": 363,
+              "y": 7.5,
+              "width": 40,
+              "right": 403
+            },
+            "scrollWidth": 40,
+            "clientWidth": 40,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "40px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "class": "app-avatar app-header__account",
+            "testid": "header-cuenta",
+            "rect": {
+              "x": 363,
+              "y": 7.5,
+              "width": 40,
+              "right": 403
+            },
+            "scrollWidth": 36,
+            "clientWidth": 36,
+            "css": {
+              "display": "inline-flex",
+              "minWidth": "0px",
+              "width": "40px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "0",
+              "gap": "normal",
+              "padding": "1px 6px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "class": "tabs__tab",
+            "testid": null,
+            "rect": {
+              "x": -70.953125,
+              "y": 353,
+              "width": 109.203125,
+              "right": 38.25
+            },
+            "scrollWidth": 109,
+            "clientWidth": 109,
+            "css": {
+              "display": "block",
+              "minWidth": "max-content",
+              "width": "109.203px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "12px 16px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "tabs__rotulo",
+            "testid": null,
+            "rect": {
+              "x": -54.953125,
+              "y": 367,
+              "width": 77.203125,
+              "right": 22.25
+            },
+            "scrollWidth": 0,
+            "clientWidth": 0,
+            "css": {
+              "display": "inline",
+              "minWidth": "0px",
+              "width": "auto",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "OUTPUT",
+            "class": "solo-lectores",
+            "testid": null,
+            "rect": {
+              "x": -1,
+              "y": -1,
+              "width": 1,
+              "right": 0
+            },
+            "scrollWidth": 161,
+            "clientWidth": 1,
+            "css": {
+              "display": "block",
+              "minWidth": "0px",
+              "width": "1px",
+              "whiteSpace": "nowrap",
+              "overflowX": "hidden",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "-1px"
+            }
+          },
+          {
+            "tag": "NAV",
+            "class": "app-side-nav",
+            "testid": null,
+            "rect": {
+              "x": -303,
+              "y": 0,
+              "width": 300,
+              "right": -3
+            },
+            "scrollWidth": 300,
+            "clientWidth": 300,
+            "css": {
+              "display": "flex",
+              "minWidth": "0px",
+              "width": "300px",
+              "whiteSpace": "normal",
+              "overflowX": "hidden",
+              "flexShrink": "1",
+              "gap": "20px",
+              "padding": "24px 0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "DIV",
+            "class": "app-side-nav__cabecera",
+            "testid": null,
+            "rect": {
+              "x": -303,
+              "y": 24,
+              "width": 300,
+              "right": -3
+            },
+            "scrollWidth": 300,
+            "clientWidth": 300,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "300px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "8px",
+              "padding": "0px 20px 20px",
+              "margin": "0px 0px 4px"
+            }
+          },
+          {
+            "tag": "DIV",
+            "class": "app-side-nav__fijos",
+            "testid": "nav-fijos",
+            "rect": {
+              "x": -303,
+              "y": 97,
+              "width": 300,
+              "right": -3
+            },
+            "scrollWidth": 300,
+            "clientWidth": 300,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "300px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "2px",
+              "padding": "0px 0px 12px",
+              "margin": "0px 0px 8px"
+            }
+          },
+          {
+            "tag": "DIV",
+            "class": "app-side-nav__sueltos",
+            "testid": "nav-sueltos",
+            "rect": {
+              "x": -303,
+              "y": 228,
+              "width": 300,
+              "right": -3
+            },
+            "scrollWidth": 300,
+            "clientWidth": 300,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "300px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "2px",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "DIV",
+            "class": "app-side-nav__sueltos",
+            "testid": "nav-sueltos",
+            "rect": {
+              "x": -303,
+              "y": 292,
+              "width": 300,
+              "right": -3
+            },
+            "scrollWidth": 300,
+            "clientWidth": 300,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "300px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "2px",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 97,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 143,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 228,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 292,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 338,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 384,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 430,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link is-activo",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 476,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 522,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 568,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 614,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 660,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__marca",
+            "testid": null,
+            "rect": {
+              "x": -283,
+              "y": 24,
+              "width": 260,
+              "right": -23
+            },
+            "scrollWidth": 260,
+            "clientWidth": 260,
+            "css": {
+              "display": "flex",
+              "minWidth": "0px",
+              "width": "260px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 4px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "class": "tabs__tab",
+            "testid": null,
+            "rect": {
+              "x": -183.515625,
+              "y": 353,
+              "width": 108.5625,
+              "right": -74.953125
+            },
+            "scrollWidth": 109,
+            "clientWidth": 109,
+            "css": {
+              "display": "block",
+              "minWidth": "max-content",
+              "width": "108.562px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "12px 16px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "tabs__rotulo",
+            "testid": null,
+            "rect": {
+              "x": -167.515625,
+              "y": 367,
+              "width": 76.5625,
+              "right": -90.953125
+            },
+            "scrollWidth": 0,
+            "clientWidth": 0,
+            "css": {
+              "display": "inline",
+              "minWidth": "0px",
+              "width": "auto",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 487.5,
+              "width": 109.78125,
+              "right": -129.125
+            },
+            "scrollWidth": 110,
+            "clientWidth": 110,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "109.781px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 671.5,
+              "width": 108.09375,
+              "right": -130.8125
+            },
+            "scrollWidth": 108,
+            "clientWidth": 108,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "108.094px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "app-side-nav__palabra",
+            "testid": null,
+            "rect": {
+              "x": -233,
+              "y": 24,
+              "width": 89.046875,
+              "right": -143.953125
+            },
+            "scrollWidth": 89,
+            "clientWidth": 89,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "89.0469px",
+              "whiteSpace": "nowrap",
+              "overflowX": "hidden",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 533.5,
+              "width": 91.53125,
+              "right": -147.375
+            },
+            "scrollWidth": 92,
+            "clientWidth": 92,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "91.5312px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 154.5,
+              "width": 87.546875,
+              "right": -151.359375
+            },
+            "scrollWidth": 88,
+            "clientWidth": 88,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "87.5469px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 303.5,
+              "width": 87.234375,
+              "right": -151.671875
+            },
+            "scrollWidth": 87,
+            "clientWidth": 87,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "87.2344px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 441.5,
+              "width": 80.859375,
+              "right": -158.046875
+            },
+            "scrollWidth": 81,
+            "clientWidth": 81,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "80.8594px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 625.5,
+              "width": 78.28125,
+              "right": -160.625
+            },
+            "scrollWidth": 78,
+            "clientWidth": 78,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "78.2812px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 579.5,
+              "width": 76.015625,
+              "right": -162.890625
+            },
+            "scrollWidth": 76,
+            "clientWidth": 76,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "76.0156px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 239.5,
+              "width": 67.890625,
+              "right": -171.015625
+            },
+            "scrollWidth": 68,
+            "clientWidth": 68,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "67.8906px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 395.5,
+              "width": 56.390625,
+              "right": -182.515625
+            },
+            "scrollWidth": 56,
+            "clientWidth": 56,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "56.3906px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 349.5,
+              "width": 54.34375,
+              "right": -184.5625
+            },
+            "scrollWidth": 54,
+            "clientWidth": 54,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "54.3438px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 108.5,
+              "width": 51.78125,
+              "right": -187.125
+            },
+            "scrollWidth": 52,
+            "clientWidth": 52,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "51.7812px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "class": "tabs__tab",
+            "testid": null,
+            "rect": {
+              "x": -317.5,
+              "y": 353,
+              "width": 129.984375,
+              "right": -187.515625
+            },
+            "scrollWidth": 130,
+            "clientWidth": 130,
+            "css": {
+              "display": "block",
+              "minWidth": "max-content",
+              "width": "129.984px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "12px 16px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "tabs__rotulo",
+            "testid": null,
+            "rect": {
+              "x": -301.5,
+              "y": 367,
+              "width": 97.984375,
+              "right": -203.515625
+            },
+            "scrollWidth": 0,
+            "clientWidth": 0,
+            "css": {
+              "display": "inline",
+              "minWidth": "0px",
+              "width": "auto",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "IMG",
+            "class": "",
+            "testid": null,
+            "rect": {
+              "x": -279,
+              "y": 25.578125,
+              "width": 34,
+              "right": -245
+            },
+            "scrollWidth": 34,
+            "clientWidth": 34,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "34px",
+              "whiteSpace": "normal",
+              "overflowX": "clip",
+              "flexShrink": "0",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "APP-NAV-ICON",
+            "class": "",
+            "testid": null,
+            "rect": {
+              "x": -267,
+              "y": 110.953125,
+              "width": 16.09375,
+              "right": -250.90625
+            },
+            "scrollWidth": 16,
+            "clientWidth": 16,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "16.0938px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "0",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "svg",
+            "class": {},
+            "testid": null,
+            "rect": {
+              "x": -267,
+              "y": 110.953125,
+              "width": 16.09375,
+              "right": -250.90625
+            },
+            "scrollWidth": 16,
+            "clientWidth": 16,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "16.0938px",
+              "whiteSpace": "normal",
+              "overflowX": "hidden",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "area": "history",
+      "width": 390,
+      "theme": "dark",
+      "dom": {
+        "clientWidth": 390,
+        "scrollWidth": 403,
+        "overflow": [
+          {
+            "tag": "SPAN",
+            "class": "app-header__account-name",
+            "testid": null,
+            "rect": {
+              "x": 426.59375,
+              "y": 7.5,
+              "width": 153.828125,
+              "right": 580.421875
+            },
+            "scrollWidth": 0,
+            "clientWidth": 0,
+            "css": {
+              "display": "inline",
+              "minWidth": "0px",
+              "width": "auto",
+              "whiteSpace": "nowrap",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "DIV",
+            "class": "app-header__derecha",
+            "testid": null,
+            "rect": {
+              "x": 100,
+              "y": 7.5,
+              "width": 303,
+              "right": 403
+            },
+            "scrollWidth": 303,
+            "clientWidth": 303,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "303px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "0",
+              "gap": "4px",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "DIV",
+            "class": "menu-anclaje",
+            "testid": null,
+            "rect": {
+              "x": 363,
+              "y": 7.5,
+              "width": 40,
+              "right": 403
+            },
+            "scrollWidth": 40,
+            "clientWidth": 40,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "40px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "class": "app-avatar app-header__account",
+            "testid": "header-cuenta",
+            "rect": {
+              "x": 363,
+              "y": 7.5,
+              "width": 40,
+              "right": 403
+            },
+            "scrollWidth": 36,
+            "clientWidth": 36,
+            "css": {
+              "display": "inline-flex",
+              "minWidth": "0px",
+              "width": "40px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "0",
+              "gap": "normal",
+              "padding": "1px 6px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "class": "tabs__tab",
+            "testid": null,
+            "rect": {
+              "x": -70.953125,
+              "y": 353,
+              "width": 109.203125,
+              "right": 38.25
+            },
+            "scrollWidth": 109,
+            "clientWidth": 109,
+            "css": {
+              "display": "block",
+              "minWidth": "max-content",
+              "width": "109.203px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "12px 16px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "tabs__rotulo",
+            "testid": null,
+            "rect": {
+              "x": -54.953125,
+              "y": 367,
+              "width": 77.203125,
+              "right": 22.25
+            },
+            "scrollWidth": 0,
+            "clientWidth": 0,
+            "css": {
+              "display": "inline",
+              "minWidth": "0px",
+              "width": "auto",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "OUTPUT",
+            "class": "solo-lectores",
+            "testid": null,
+            "rect": {
+              "x": -1,
+              "y": -1,
+              "width": 1,
+              "right": 0
+            },
+            "scrollWidth": 161,
+            "clientWidth": 1,
+            "css": {
+              "display": "block",
+              "minWidth": "0px",
+              "width": "1px",
+              "whiteSpace": "nowrap",
+              "overflowX": "hidden",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "-1px"
+            }
+          },
+          {
+            "tag": "NAV",
+            "class": "app-side-nav",
+            "testid": null,
+            "rect": {
+              "x": -303,
+              "y": 0,
+              "width": 300,
+              "right": -3
+            },
+            "scrollWidth": 300,
+            "clientWidth": 300,
+            "css": {
+              "display": "flex",
+              "minWidth": "0px",
+              "width": "300px",
+              "whiteSpace": "normal",
+              "overflowX": "hidden",
+              "flexShrink": "1",
+              "gap": "20px",
+              "padding": "24px 0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "DIV",
+            "class": "app-side-nav__cabecera",
+            "testid": null,
+            "rect": {
+              "x": -303,
+              "y": 24,
+              "width": 300,
+              "right": -3
+            },
+            "scrollWidth": 300,
+            "clientWidth": 300,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "300px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "8px",
+              "padding": "0px 20px 20px",
+              "margin": "0px 0px 4px"
+            }
+          },
+          {
+            "tag": "DIV",
+            "class": "app-side-nav__fijos",
+            "testid": "nav-fijos",
+            "rect": {
+              "x": -303,
+              "y": 97,
+              "width": 300,
+              "right": -3
+            },
+            "scrollWidth": 300,
+            "clientWidth": 300,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "300px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "2px",
+              "padding": "0px 0px 12px",
+              "margin": "0px 0px 8px"
+            }
+          },
+          {
+            "tag": "DIV",
+            "class": "app-side-nav__sueltos",
+            "testid": "nav-sueltos",
+            "rect": {
+              "x": -303,
+              "y": 228,
+              "width": 300,
+              "right": -3
+            },
+            "scrollWidth": 300,
+            "clientWidth": 300,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "300px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "2px",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "DIV",
+            "class": "app-side-nav__sueltos",
+            "testid": "nav-sueltos",
+            "rect": {
+              "x": -303,
+              "y": 292,
+              "width": 300,
+              "right": -3
+            },
+            "scrollWidth": 300,
+            "clientWidth": 300,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "300px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "2px",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 97,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 143,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 228,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 292,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 338,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 384,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 430,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link is-activo",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 476,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 522,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 568,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 614,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__item side-nav__link",
+            "testid": "nav-enlace",
+            "rect": {
+              "x": -291,
+              "y": 660,
+              "width": 276,
+              "right": -15
+            },
+            "scrollWidth": 276,
+            "clientWidth": 276,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "276px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 24px",
+              "margin": "0px 12px"
+            }
+          },
+          {
+            "tag": "A",
+            "class": "app-side-nav__marca",
+            "testid": null,
+            "rect": {
+              "x": -283,
+              "y": 24,
+              "width": 260,
+              "right": -23
+            },
+            "scrollWidth": 260,
+            "clientWidth": 260,
+            "css": {
+              "display": "flex",
+              "minWidth": "0px",
+              "width": "260px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "12px",
+              "padding": "0px 4px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "class": "tabs__tab",
+            "testid": null,
+            "rect": {
+              "x": -183.515625,
+              "y": 353,
+              "width": 108.5625,
+              "right": -74.953125
+            },
+            "scrollWidth": 109,
+            "clientWidth": 109,
+            "css": {
+              "display": "block",
+              "minWidth": "max-content",
+              "width": "108.562px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "12px 16px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "tabs__rotulo",
+            "testid": null,
+            "rect": {
+              "x": -167.515625,
+              "y": 367,
+              "width": 76.5625,
+              "right": -90.953125
+            },
+            "scrollWidth": 0,
+            "clientWidth": 0,
+            "css": {
+              "display": "inline",
+              "minWidth": "0px",
+              "width": "auto",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 487.5,
+              "width": 109.78125,
+              "right": -129.125
+            },
+            "scrollWidth": 110,
+            "clientWidth": 110,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "109.781px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 671.5,
+              "width": 108.09375,
+              "right": -130.8125
+            },
+            "scrollWidth": 108,
+            "clientWidth": 108,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "108.094px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "app-side-nav__palabra",
+            "testid": null,
+            "rect": {
+              "x": -233,
+              "y": 24,
+              "width": 89.046875,
+              "right": -143.953125
+            },
+            "scrollWidth": 89,
+            "clientWidth": 89,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "89.0469px",
+              "whiteSpace": "nowrap",
+              "overflowX": "hidden",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 533.5,
+              "width": 91.53125,
+              "right": -147.375
+            },
+            "scrollWidth": 92,
+            "clientWidth": 92,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "91.5312px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 154.5,
+              "width": 87.546875,
+              "right": -151.359375
+            },
+            "scrollWidth": 88,
+            "clientWidth": 88,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "87.5469px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 303.5,
+              "width": 87.234375,
+              "right": -151.671875
+            },
+            "scrollWidth": 87,
+            "clientWidth": 87,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "87.2344px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 441.5,
+              "width": 80.859375,
+              "right": -158.046875
+            },
+            "scrollWidth": 81,
+            "clientWidth": 81,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "80.8594px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 625.5,
+              "width": 78.28125,
+              "right": -160.625
+            },
+            "scrollWidth": 78,
+            "clientWidth": 78,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "78.2812px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 579.5,
+              "width": 76.015625,
+              "right": -162.890625
+            },
+            "scrollWidth": 76,
+            "clientWidth": 76,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "76.0156px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 239.5,
+              "width": 67.890625,
+              "right": -171.015625
+            },
+            "scrollWidth": 68,
+            "clientWidth": 68,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "67.8906px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 395.5,
+              "width": 56.390625,
+              "right": -182.515625
+            },
+            "scrollWidth": 56,
+            "clientWidth": 56,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "56.3906px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 349.5,
+              "width": 54.34375,
+              "right": -184.5625
+            },
+            "scrollWidth": 54,
+            "clientWidth": 54,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "54.3438px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "side-nav__label",
+            "testid": null,
+            "rect": {
+              "x": -238.90625,
+              "y": 108.5,
+              "width": 51.78125,
+              "right": -187.125
+            },
+            "scrollWidth": 52,
+            "clientWidth": 52,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "51.7812px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "class": "tabs__tab",
+            "testid": null,
+            "rect": {
+              "x": -317.5,
+              "y": 353,
+              "width": 129.984375,
+              "right": -187.515625
+            },
+            "scrollWidth": 130,
+            "clientWidth": 130,
+            "css": {
+              "display": "block",
+              "minWidth": "max-content",
+              "width": "129.984px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "12px 16px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "class": "tabs__rotulo",
+            "testid": null,
+            "rect": {
+              "x": -301.5,
+              "y": 367,
+              "width": 97.984375,
+              "right": -203.515625
+            },
+            "scrollWidth": 0,
+            "clientWidth": 0,
+            "css": {
+              "display": "inline",
+              "minWidth": "0px",
+              "width": "auto",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "IMG",
+            "class": "",
+            "testid": null,
+            "rect": {
+              "x": -279,
+              "y": 25.578125,
+              "width": 34,
+              "right": -245
+            },
+            "scrollWidth": 34,
+            "clientWidth": 34,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "34px",
+              "whiteSpace": "normal",
+              "overflowX": "clip",
+              "flexShrink": "0",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "APP-NAV-ICON",
+            "class": "",
+            "testid": null,
+            "rect": {
+              "x": -267,
+              "y": 110.953125,
+              "width": 16.09375,
+              "right": -250.90625
+            },
+            "scrollWidth": 16,
+            "clientWidth": 16,
+            "css": {
+              "display": "flex",
+              "minWidth": "auto",
+              "width": "16.0938px",
+              "whiteSpace": "normal",
+              "overflowX": "visible",
+              "flexShrink": "0",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          },
+          {
+            "tag": "svg",
+            "class": {},
+            "testid": null,
+            "rect": {
+              "x": -267,
+              "y": 110.953125,
+              "width": 16.09375,
+              "right": -250.90625
+            },
+            "scrollWidth": 16,
+            "clientWidth": 16,
+            "css": {
+              "display": "block",
+              "minWidth": "auto",
+              "width": "16.0938px",
+              "whiteSpace": "normal",
+              "overflowX": "hidden",
+              "flexShrink": "1",
+              "gap": "normal",
+              "padding": "0px",
+              "margin": "0px"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "baseComparisons": [
+    {
+      "file": "src/app/features/shell-layout/shell-layout.html",
+      "sameAsBase": true,
+      "sha256Base": "a59698a1abf8a05ceff552763611b742841df70f07dbc9ea0bbb88aac5092c88",
+      "sha256Worktree": "a59698a1abf8a05ceff552763611b742841df70f07dbc9ea0bbb88aac5092c88"
+    },
+    {
+      "file": "src/app/features/shell-layout/shell-layout.css",
+      "sameAsBase": true,
+      "sha256Base": "fbf4fb98e5aff426b7e45300081a05c2cbcfbf02f9b85f17d9f6f627a96d9314",
+      "sha256Worktree": "fbf4fb98e5aff426b7e45300081a05c2cbcfbf02f9b85f17d9f6f627a96d9314"
+    },
+    {
+      "file": "src/app/features/account/medical-record/medical-record.css",
+      "sameAsBase": true,
+      "sha256Base": "c90698508a16ca7b5c3b4bfb2f31c027c523aac5f655d177bb0d386b0548ade8",
+      "sha256Worktree": "c90698508a16ca7b5c3b4bfb2f31c027c523aac5f655d177bb0d386b0548ade8"
+    },
+    {
+      "file": "src/app/features/account/medical-record/medical-record.html",
+      "sameAsBase": true,
+      "sha256Base": "b733ad54fa4f3e3d768c1738b1f1ed0deedf2ee58d1df4f6cebaf5e22b00ff12",
+      "sha256Worktree": "b733ad54fa4f3e3d768c1738b1f1ed0deedf2ee58d1df4f6cebaf5e22b00ff12"
+    },
+    {
+      "file": "src/app/shared/components/organisms/content-dialog/content-dialog.ts",
+      "sameAsBase": true,
+      "sha256Base": "04a351fb874ddf0cb914ab2936843f9f4cdb7437d0c910156c00f3b46b87102f",
+      "sha256Worktree": "04a351fb874ddf0cb914ab2936843f9f4cdb7437d0c910156c00f3b46b87102f"
+    },
+    {
+      "file": "src/styles/alovida.css",
+      "sameAsBase": true,
+      "sha256Base": "ff4766f91907f113c6699b08b43c9f8fbb168870763da455f3e68c47912888b3",
+      "sha256Worktree": "ff4766f91907f113c6699b08b43c9f8fbb168870763da455f3e68c47912888b3"
+    }
+  ]
+}
