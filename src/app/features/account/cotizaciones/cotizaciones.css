@@ -37,7 +37,6 @@
   font-weight: 600;
 }
 
-.cotizaciones__buscando,
 .cotizaciones__donde,
 .cotizaciones__vertical,
 .cotizaciones__procedencia,
@@ -90,4 +89,11 @@ a[app-link].cotizaciones__accion:hover {
   width: 1em;
   height: 1em;
   flex: none;
+}
+
+/* La carga se anuncia con texto de cuerpo, no de pie: es lo único que dice que
+   algo está pasando mientras el esqueleto late (R2-15). */
+.cotizaciones__buscando {
+  margin: 0;
+  color: var(--text-primary);
 }
