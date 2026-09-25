@@ -31,6 +31,7 @@ import {
 } from '@shared/components/organisms/body-map/body-map';
 
 import {
+  conceptIdDe,
   enumerar,
   explicar,
   normalizar,
@@ -537,18 +538,24 @@ export class SymptomCheck {
    * memoria por su chip, así que el texto alcanzaba. **Eso cambió**: ahora el
    * directorio acota por `?especialidad=<conceptId>` contra el servidor, y una
    * búsqueda de texto sólo funciona de rebote, porque el buscador matchea el
-   * encabezado del grupo.
+   * encabezado del grupo — y sin ese parámetro el directorio se queda en la
+   * portada agrupada por categoría en vez de abrir la lista.
    *
    * El identificador no cuesta una consulta: la lista de especialidades con
-   * gente ya se lee para no recomendar una vacía, y lo único que faltaba era no
-   * tirar el concepto al quedarse con el nombre.
+   * gente ya se lee para no recomendar una vacía. La búsqueda usa la misma
+   * tolerancia que decidió recomendar la especialidad ({@link conceptIdDe}):
+   * antes acá se buscaba por igualdad exacta mientras que la recomendación se
+   * filtraba con coincidencia difusa («Cardióloga» ↔ «Cardiología»), así que
+   * una especialidad podía recomendarse y no encontrar cómo enlazar — el bug
+   * era «recomienda Traumatología pero al tocarla no lleva a los
+   * traumatólogos».
    *
    * Sin identificador —sesión pública, o un nombre de la tabla de síntomas que
    * el catálogo no tiene— se cae al texto, que es como funcionaba hasta ahora:
    * peor destino, nunca una pantalla rota.
    */
   protected verProfesionales(nombre: string): void {
-    const conceptId = this.especialidadesDisponibles().get(normalizar(nombre));
+    const conceptId = conceptIdDe(nombre, this.especialidadesDisponibles());
     void this.router.navigate([this.rutaDeResultados()], {
       queryParams:
         conceptId === undefined || conceptId === '' ? { q: nombre } : { especialidad: conceptId },

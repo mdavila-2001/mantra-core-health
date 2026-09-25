@@ -131,6 +131,17 @@
   flex: 1 1 auto;
 }
 
+/* El botón de sumar una casilla va en su propio renglón, alineado a la
+   izquierda: dentro de la grilla del formulario se estiraría a todo el ancho
+   y compartiría fila con «Apellido paterno»/«Apellido materno», que quedaban
+   apretados junto a él. Mismo tratamiento que en el editor de médico
+   (`.edicion__sumar`). */
+.datos__sumar {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin: 0;
+}
+
 /* El aviso de catálogo caído: dice qué pasó y ofrece la salida en la misma
    línea, para no empujar el resto del formulario hacia abajo. */
 .datos__aviso {

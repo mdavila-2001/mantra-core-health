@@ -1,0 +1,34 @@
+
+C:\Users\usuario\Documents\Sistema Salud\mantra-core-health\playwright\auditoria-qa-mockup.spec.ts
+   1:29  error  'Page' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  17:20  error  Array type using 'Array<T>' is forbidden. Use 'T[]' instead             @typescript-eslint/array-type
+  18:21  error  Array type using 'Array<T>' is forbidden. Use 'T[]' instead             @typescript-eslint/array-type
+
+C:\Users\usuario\Documents\Sistema Salud\mantra-core-health\playwright\carga-masiva.spec.ts
+    6:25   error  'doctora' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  174:85   error  Unexpected empty object pattern                                             no-empty-pattern
+  198:93   error  Unexpected empty object pattern                                             no-empty-pattern
+  228:96   error  Unexpected empty object pattern                                             no-empty-pattern
+  250:89   error  Unexpected empty object pattern                                             no-empty-pattern
+  273:72   error  Unexpected empty object pattern                                             no-empty-pattern
+  292:95   error  Unexpected empty object pattern                                             no-empty-pattern
+  292:99   error  'testInfo' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  313:101  error  Unexpected empty object pattern                                             no-empty-pattern
+  338:87   error  Unexpected empty object pattern                                             no-empty-pattern
+  363:91   error  Unexpected empty object pattern                                             no-empty-pattern
+  396:112  error  Unexpected empty object pattern                                             no-empty-pattern
+  426:92   error  Unexpected empty object pattern                                             no-empty-pattern
+
+C:\Users\usuario\Documents\Sistema Salud\mantra-core-health\playwright\carril-insurance-whatsapp.spec.ts
+  70:10  error  'esRuidoDelServidorDeDesarrollo' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\usuario\Documents\Sistema Salud\mantra-core-health\src\app\features\insurance\insurance-claim-detail\insurance-contact-channels\insurance-contact-channels.spec.ts
+  135:75  error  Unexpected empty arrow function  @typescript-eslint/no-empty-function
+
+C:\Users\usuario\Documents\Sistema Salud\mantra-core-health\src\app\shared\components\molecules\patient-coverage-card\patient-coverage-card.spec.ts
+  114:71  error  Unexpected empty arrow function  @typescript-eslint/no-empty-function
+
+✖ 19 problems (19 errors, 0 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+
+EXIT=1
