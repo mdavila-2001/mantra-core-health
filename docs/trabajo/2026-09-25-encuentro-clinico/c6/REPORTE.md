@@ -17,7 +17,7 @@
 | C6.H3.M1 | Pestaña «Diagnósticos» con sus tres bloques y `diagnosisStateOf`/`DIAGNOSIS_STATE_LABELS` propios, resueltos por **código** de catálogo. **Kill-test cubierto**: `DXV-REFUTED` nunca cae en «Enfermedades activas», ni con `COND-ACTIVE` | `corepack yarn test --include='…/medical-record.spec.ts'` y `--include='…/history-view-model.spec.ts'` | PASS · **33 + 19 passed** · [`evidencia/02-pantalla-y-modelo.txt`](./evidencia/02-pantalla-y-modelo.txt) |
 | C6.H3.M2 | «Atenciones» con `EncounterInHistory` (renombra `AtencionVisible`) y la línea del encuentro al desplegar. Al montar **no** salen `/charts/…/chart` ni `/diagnostic-results/me/orders`; al primer despliegue salen las dos, una sola vez para toda la historia | Dos pruebas propias con `http.expectNone` / `http.expectOne` | PASS · dentro de las 33 |
 | C6.H3.M3 | «Qué nunca ve el paciente»: ningún uuid de 36 caracteres en el HTML renderizado, en la pestaña de diagnósticos, con la línea desplegada, ni en el organismo | Tres pruebas con `expect(innerHTML).not.toMatch(/uuid/)` | PASS · dentro de las 33 + 12 |
-| C6.H5.M1 | Gates, tres commits, push y PR contra `mockup`; el diff **no toca** `where-to-buy/` | `corepack yarn typecheck` · `corepack yarn lint` · `git diff origin/mockup --stat -- …/where-to-buy` · `gh pr view` | PASS · typecheck **0**, lint **6 errores los 6 preexistentes**, diff de `where-to-buy` **vacío** · [`evidencia/03-gates.txt`](./evidencia/03-gates.txt), [`evidencia/04-pr.txt`](./evidencia/04-pr.txt) |
+| C6.H5.M1 | Gates, tres commits, push y **PR #674 contra `mockup`**, `mergeable: MERGEABLE` y sin draft; el diff **no toca** `where-to-buy/` | `corepack yarn typecheck` · `corepack yarn lint` · `git diff origin/mockup --stat -- …/where-to-buy` · `gh pr view 674 --json …` | PASS · typecheck **0**, lint **6 errores los 6 preexistentes**, diff de `where-to-buy` **vacío**, `mergeable: MERGEABLE` · [`evidencia/03-gates.txt`](./evidencia/03-gates.txt), [`evidencia/04-pr.txt`](./evidencia/04-pr.txt) |
 
 ## A medias
 
@@ -151,6 +151,24 @@ Lo que se escribió pero **no se ejercitó**:
    que es de otro agente. Se revirtió con `git checkout --` en el momento y se verificó con
    `git diff origin/mockup --stat -- …/where-to-buy`, que sale vacío. Lección: prettier por archivo,
    nunca por carpeta, cuando la carpeta está compartida.
+
+## Estado del PR (regla 35.2)
+
+**PR #674** → https://github.com/mdavila-2001/mantra-core-health/pull/674 · base `mockup`.
+
+```text
+{"baseRefName":"mockup","headRefName":"claude/clinica-c6-historia-paciente","isDraft":false,
+ "mergeStateStatus":"UNSTABLE","mergeable":"MERGEABLE","number":674}
+```
+
+- `mergeable: MERGEABLE` — sin conflictos. `isDraft: false`. Base correcta.
+- `mergeStateStatus: UNSTABLE` **no es un check en rojo**: los tres (`dependencias`, `e2e`,
+  `verificar`) siguen en `pending` con 0 s de ejecución después de nueve minutos de
+  `gh pr checks --watch`, o sea que no llegaron a arrancar. Coincide con lo que el `CLAUDE.md`
+  del repo declara: «El CI propio está caído; los `check-*.mjs` se corren a mano». Se corrieron a
+  mano y están en `evidencia/03-gates.txt`, los cuatro en exit 0.
+- Clasificación del fallo (regla 80.4): **`ENVIRONMENT`**, con esa evidencia. No se tocó ningún
+  check, no se forzó nada, no se usó ningún privilegio.
 
 ## Riesgos residuales
 
