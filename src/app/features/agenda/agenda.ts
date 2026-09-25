@@ -35,6 +35,10 @@ import type {
   PaymentStateCode,
   PaymentStateInfo,
 } from '../../core/data-access/scheduling/scheduling.types';
+// El sello de reconsulta (C4). Los dos campos viven en `follow-up.types.ts`
+// hasta que C0 publique los tipos congelados.
+import { esReconsulta } from '../../core/data-access/scheduling/follow-up.types';
+import type { BookingConReconsulta } from '../../core/data-access/scheduling/follow-up.types';
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
@@ -358,6 +362,19 @@ export interface CitaVisible {
   readonly admitePago: boolean;
   /** Con la llegada ya registrada, el check-in no se vuelve a ofrecer. */
   readonly llegadaRegistrada: boolean;
+  /**
+   * De cuándo es la consulta de la que salió esta cita, si es una reconsulta
+   * (C4). `null` cuando no lo es, que es lo corriente.
+   *
+   * Es una **fecha y no un identificador** porque lo que la fila necesita decir
+   * es «de la cita del 12 de septiembre»: el uuid del origen no ayuda a nadie a
+   * reconocer de qué consulta se trata. `null` con la cita marcada como
+   * reconsulta significa que el origen quedó sin horario, y ahí el sello va
+   * solo.
+   */
+  readonly reconsultaDe: Date | null;
+  /** Si esta cita es una reconsulta, aunque no se sepa de cuándo era la otra. */
+  readonly esReconsulta: boolean;
 }
 
 /** Lo que el historial guarda de una consulta, para avisar al completar la cita. */
@@ -534,6 +551,9 @@ export class Agenda {
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaPago');
   private readonly celdaPaciente =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaPaciente');
+  /** C4: el motivo con el sello de reconsulta, cuando lo es. */
+  private readonly celdaMotivo =
+    viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaMotivo');
   private readonly celdaFranja =
     viewChild.required<TemplateRef<{ $implicit: CupoVisible }>>('celdaFranja');
   private readonly celdaDisponibilidad =
@@ -1401,7 +1421,10 @@ export class Agenda {
     // sigue en «Ver detalle», que es donde importa.
     { key: 'cuando', header: 'Fecha y hora', priority: 1, cell: this.celdaCuando() },
     { key: 'paciente', header: 'Paciente', priority: 1, cell: this.celdaPaciente() },
-    { key: 'motivo', header: 'Motivo de consulta', priority: 3 },
+    // C4: con celda propia, porque una reconsulta lleva su sello junto al
+    // motivo. Sin el sello, la fila de la reconsulta se lee igual que la de
+    // una cita cualquiera y se pierde de qué consulta salió.
+    { key: 'motivo', header: 'Motivo de consulta', priority: 3, cell: this.celdaMotivo() },
     // ALV-021. Texto plano — «Particular» o el nombre de la aseguradora no
     // necesitan sello ni color.
     { key: 'cobertura', header: 'Seguro', priority: 3, cell: this.celdaSeguro() },
@@ -2732,7 +2755,9 @@ export class Agenda {
   }
 
   private aplicarCitas(
-    resultado: { error: unknown } | { items: readonly Booking[]; truncated: boolean },
+    resultado:
+      | { error: unknown }
+      | { items: readonly BookingConReconsulta[]; truncated: boolean },
   ): void {
     if ('error' in resultado) {
       this.citas.set(errorToViewState<readonly CitaVisible[]>(resultado.error));
@@ -2779,7 +2804,7 @@ export class Agenda {
 
   /* -- Traducciones -------------------------------------------------------- */
 
-  private aCitaVisible(cita: Booking): CitaVisible {
+  private aCitaVisible(cita: BookingConReconsulta): CitaVisible {
     const paciente = cita.patientProfileId ?? null;
     const estado = toBookingStatusPresentation(
       cita.statusConceptId === undefined
@@ -2831,6 +2856,11 @@ export class Agenda {
           ? consultationRoute(paciente)
           : null,
       llegadaRegistrada: cita.checkedInAt !== undefined,
+      // C4. El sello sale del vínculo y no del tipo de cita: el origen es lo
+      // que el servidor garantiza, y una cita clasificada como reconsulta sin
+      // consulta detrás no podría decir de cuál salió.
+      esReconsulta: esReconsulta(cita),
+      reconsultaDe: cita.followUpOf?.startAt ?? null,
       solicitada: cita.createdAt,
       pago: cita.paymentState ?? null,
       admitePago: estado.code !== '' && !CODIGOS_SIN_PAGO.has(estado.code),

@@ -62,6 +62,15 @@ import type {
   NewWalkInAppointment,
   WalkInAppointmentCreated,
 } from './scheduling.types';
+// Los campos de la reconsulta (C4) viven en su propio archivo hasta que C0
+// publique los tipos congelados. Ver `follow-up.types.ts`.
+import { aOrigenDeReconsulta } from './follow-up.types';
+import type {
+  BookingConReconsulta,
+  BookingPageConReconsulta,
+  ConOrigenDeReconsulta,
+  WireConReconsulta,
+} from './follow-up.types';
 
 /**
  * Cliente de `scheduling` (M41): la lectura de la agenda y el ciclo de la
@@ -162,7 +171,7 @@ export class SchedulingClient {
    * y las ausencias quedan fuera salvo que se pidan: una agenda del día que
    * mezcla lo vigente con lo cancelado no se puede leer de un vistazo.
    */
-  searchBookings(query: BookingQuery = {}): Observable<BookingPage> {
+  searchBookings(query: BookingQuery = {}): Observable<BookingPageConReconsulta> {
     let params = new HttpParams();
     if (query.patientProfileId !== undefined) {
       params = params.set('patientProfileId', query.patientProfileId);
@@ -211,7 +220,7 @@ export class SchedulingClient {
   }
 
   /** `GET /scheduling/bookings/:id` — una cita concreta (UC-41-15). */
-  getBooking(bookingId: string): Observable<Booking> {
+  getBooking(bookingId: string): Observable<BookingConReconsulta> {
     return this.http
       .get<WireBooking>(this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}`))
       .pipe(map(toBooking));
@@ -472,8 +481,19 @@ export class SchedulingClient {
    * nada — si el rato pisa un compromiso del profesional en CUALQUIERA de sus
    * sedes, responde 422 con qué, cuándo y dónde, y ese mensaje se puede
    * mostrar tal cual.
+   *
+   * ## La reconsulta entra por acá (C4)
+   *
+   * Con `followUpOf` la cita nace además **atada a la consulta de la que
+   * salió**, y el servidor corre cuatro rechazos más: **403** la agenda no es
+   * del profesional de la sesión, **404** la cita de origen no existe, **422**
+   * el paciente no es el de esa cita o el horario no es futuro, **409** esa
+   * consulta ya tiene una reconsulta por venir. Sin el campo, nada de eso
+   * corre: una cita puntual se sigue creando como siempre.
    */
-  createDirectAppointment(cita: NewDirectAppointment): Observable<DirectAppointmentCreated> {
+  createDirectAppointment(
+    cita: NewDirectAppointment & ConOrigenDeReconsulta,
+  ): Observable<DirectAppointmentCreated> {
     return this.http.post<DirectAppointmentCreated>(this.url('/scheduling/appointments/direct'), {
       patientProfileId: cita.patientProfileId,
       resourceId: cita.resourceId,
@@ -487,6 +507,16 @@ export class SchedulingClient {
       // en silencio** — la petición sale sin él y nada falla. Es el mismo
       // patrón que dejó la modalidad sin escribir del lado de la API.
       ...(cita.channel === undefined ? {} : { channel: cita.channel }),
+      // La reconsulta (C4). Se manda **sólo si viene**, por la misma razón que
+      // el resto: una clave declarada en `undefined` vuelve 400.
+      ...(cita.followUpOf === undefined
+        ? {}
+        : {
+            followUpOf: {
+              bookingId: cita.followUpOf.bookingId,
+              encounterId: cita.followUpOf.encounterId,
+            },
+          }),
     });
   }
 
@@ -873,7 +903,11 @@ type WireBooking = Omit<
   | 'statusReason'
   | 'delayNotice'
   | 'paymentState'
-> & {
+> &
+  // C4: el vínculo de la reconsulta, con el instante del origen todavía en
+  // texto. `followUpBookingId` no lleva fecha y atraviesa `toBooking` dentro
+  // del resto.
+  WireConReconsulta & {
   readonly startAt?: string | null;
   readonly endAt?: string | null;
   readonly confirmedAt?: string | null;
@@ -937,10 +971,14 @@ function toBooking({
   rescheduledFrom,
   statusReason,
   delayNotice,
+  followUpOf,
   ...resto
-}: WireBooking): Booking {
+}: WireBooking): BookingConReconsulta {
   return {
     ...resto,
+    // C4: el origen con su instante convertido. Se omite cuando no vino, por la
+    // misma razón que las cinco fechas de arriba.
+    ...aOrigenDeReconsulta(followUpOf),
     ...optionalDate('startAt', startAt),
     ...optionalDate('endAt', endAt),
     ...optionalDate('confirmedAt', confirmedAt),

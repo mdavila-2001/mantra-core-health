@@ -365,3 +365,28 @@
     column-gap: var(--sp-1);
   }
 }
+
+/* ---- el sello de reconsulta (C4) ------------------------------------------
+   El motivo, el sello y de qué consulta salió, en la misma celda. En el
+   teléfono caen uno debajo del otro: el sello no compite con el motivo por el
+   ancho, que es lo único que se lee de corrido. */
+.agenda__motivo {
+  display: block;
+}
+
+.agenda__reconsulta-sello {
+  margin-block-start: var(--sp-1);
+}
+
+.agenda__reconsulta-origen {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-overline);
+}
+
+@media (min-width: 48.75rem) {
+  .agenda__reconsulta-sello {
+    margin-block-start: 0;
+    margin-inline-start: var(--sp-2);
+  }
+}

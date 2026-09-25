@@ -1,5 +1,6 @@
 import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from './conceptos';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from './personas';
+import type { FollowUpOrigin } from '../../data-access/scheduling/follow-up.types';
 import { TENANT_CLINICA } from '../mock-session';
 import { ahora, Coleccion, fecha, iso, isoDia, masMinutos, uuid } from '../mock-store';
 
@@ -71,6 +72,13 @@ export interface ReservaSimulada {
   readonly statusReason: { reasonText: string; actorKind: 'PATIENT' | 'PROVIDER'; toStateConceptId: string; changedAt: string } | null;
   readonly delayNotice: { delayMinutes: number; message: string; announcedAt: string } | null;
   readonly paymentState: { state: 'PENDING' | 'PARTIALLY_PAID' | 'PAID'; label: string; conceptId: string; insuranceUsed: boolean; markedByUserId: string; markedAt: string } | null;
+  /**
+   * De qué cita salió ésta, si es una reconsulta (C4). `null` es lo corriente.
+   *
+   * // TODO C8: el contrato equivalente vive en `follow-up.types.ts` y sube a
+   * `scheduling.types.ts` cuando C0 publique los tipos congelados.
+   */
+  readonly followUpOf: FollowUpOrigin | null;
   readonly createdAt: string;
 }
 
@@ -190,6 +198,25 @@ export const recursos = new Coleccion<RecursoSimulado>([
 
 export const RECURSO_MEDICA = recursoDe(MEDICA);
 export const RECURSO_CONSULTORIO_MEDICA = uuid(`resource-consultorio-${MEDICA.id}`);
+
+/**
+ * El tipo de cita de una **reconsulta** (C4).
+ *
+ * Se deriva acá y no se lee de `TIPO_CITA` porque `VS_APPOINTMENT_TYPE` todavía
+ * no la declara: `conceptos.ts` tiene `APT-PRIMERA`, `APT-CONTROL` y
+ * `APT-URGENCIA`, y ese archivo es de C0, que no publicó.
+ *
+ * El id que sale de acá es **exactamente** el que produciría `definir()` allá
+ * —misma semilla `concept-<código>`, `conceptos.ts:69—`, así que el día que la
+ * entrada exista el identificador coincide y no hay nada que migrar. Lo único
+ * que falta hasta entonces es la etiqueta del catálogo, y por eso la pantalla
+ * escribe «Reconsulta» literal en vez de buscarla: un uuid crudo en la agenda
+ * sería peor que una palabra fija.
+ *
+ * // TODO C8: reemplazar por `TIPO_CITA['APT-RECONSULTA']` cuando C0 agregue
+ * `['APT-RECONSULTA', 'Reconsulta']` al value set.
+ */
+export const TIPO_CITA_RECONSULTA = uuid('concept-APT-RECONSULTA');
 
 export const plantillas = new Coleccion<PlantillaSimulada>([
   {
@@ -354,6 +381,7 @@ function reserva(indice: number, cupo: CupoSimulado, estado: keyof typeof ESTADO
       estado === 'BK-COMPLETED'
         ? { state: indice % 2 === 0 ? 'PAID' : 'PARTIALLY_PAID', label: indice % 2 === 0 ? 'Pagada' : 'Pago parcial', conceptId: ESTADO['ST-COMPLETED']!, insuranceUsed: paciente.aseguradora !== undefined, markedByUserId: MEDICA.userId, markedAt: masMinutos(cupo.endAt, 5) }
         : null,
+    followUpOf: null,
     createdAt: masMinutos(cupo.startAt, -60 * 24 * 5),
     ...extra,
   };
@@ -473,6 +501,60 @@ function sembrarCupoPorLiberarse(): void {
   );
 }
 
+/* ---- la reconsulta sembrada (C4) ------------------------------------------
+
+   Una cita futura que **recuerda de qué consulta salió**. Existe para que las
+   tres pantallas que la muestran —la agenda del doctor, el detalle de la cita y
+   «Mis citas» del paciente— tengan qué mostrar sin que nadie tenga que agendar
+   una a mano primero. Es el kill-test del carril: si esto no aparece en
+   `/my-account/appointments`, la reconsulta no existe.
+
+   Se cuelga de una consulta **ya atendida de la paciente principal**, que es la
+   única que se puede abrir con las dos cuentas de la maqueta. No se fija por
+   índice: se busca, porque el generador de arriba reparte estados por posición
+   y un cambio suyo dejaría este seed apuntando a una cita cancelada sin que
+   nada fallara. */
+
+/** El día, en milisegundos. Una reconsulta se agenda **desde mañana**. */
+const UN_DIA = 24 * 60 * 60 * 1000;
+
+function sembrarReconsulta(): void {
+  const origen = reservas
+    .todos()
+    .filter((r) => r.patientProfileId === PACIENTE.id)
+    .filter((r) => r.resourceId === RECURSO_MEDICA || r.resourceId === RECURSO_CONSULTORIO_MEDICA)
+    .filter((r) => r.statusConceptId === ESTADO_RESERVA['BK-COMPLETED'])
+    .filter((r) => new Date(r.startAt).getTime() < Date.now())
+    .sort((a, b) => b.startAt.localeCompare(a.startAt))[0];
+  if (origen === undefined) return;
+
+  const desde = Date.now() + UN_DIA;
+  const destino = cupos
+    .todos()
+    .filter((c) => c.resourceId === RECURSO_MEDICA)
+    .filter((c) => c.remainingCapacity > 0 && c.statusConceptId === ESTADO['ST-ACTIVE'])
+    .filter((c) => new Date(c.startAt).getTime() > desde)
+    .sort((a, b) => a.startAt.localeCompare(b.startAt))[0];
+  if (destino === undefined) return;
+
+  reservas.agregar(
+    reserva(0, destino, 'BK-CONFIRMED', {
+      typeConceptId: TIPO_CITA_RECONSULTA,
+      // Presencial y no el canal que le tocaría por índice: una reconsulta se
+      // acuerda con la persona enfrente, en el consultorio.
+      bookingChannelConceptId: CANAL['CH-PRESENCIAL']!,
+      reasonText: `Reconsulta: ${origen.reasonText}`,
+      // `encounterId` en `null` a propósito: el fixture de agenda no modela los
+      // encuentros clínicos, y atarlo al `appointmentId` sería inventar una
+      // relación que el modelo no declara. El handler sí lo propaga cuando el
+      // cliente lo manda.
+      followUpOf: { bookingId: origen.id, encounterId: null },
+      createdAt: ahora(),
+    }),
+  );
+  cupos.actualizar(destino.id, { remainingCapacity: 0 });
+}
+
 export const reservas = new Coleccion<ReservaSimulada>(generarReservas());
 
 /* ---- bloqueos ------------------------------------------------------------- */
@@ -576,3 +658,7 @@ function sincronizarCapacidadConReservas(): void {
 // cada carga, y una copia guardada de otra hora ya no sirve para el recorrido.
 sembrarCupoPorLiberarse();
 sincronizarCapacidadConReservas();
+
+// Después de sincronizar: la reconsulta elige un cupo libre, y la capacidad libre
+// sólo dice la verdad una vez recontada contra las reservas que sobrevivieron a F5.
+sembrarReconsulta();
