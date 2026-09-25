@@ -86,34 +86,43 @@ async function abrirDialogo(page: Page): Promise<void> {
   await expect(page.getByTestId('content-dialog-title')).toContainText(TITULO_DEL_DIALOGO);
 }
 
+/** Un paciente del padrón con cuenta propia (índice 1 de `personas.ts`). */
+const DEPENDIENTE = { documento: '5009871', nombre: 'Jorge Luis Mamani Choque' };
+
+/** Entra con un CI, borrando antes la sesión anterior (vive en `localStorage`). */
+async function entrarConCi(page: Page, documento: string): Promise<void> {
+  await page.goto('/auth');
+  await page.evaluate(() => localStorage.clear());
+  await page.goto('/auth');
+  await page.getByTestId('login-identifier').fill(documento);
+  await page.getByTestId('login-password').fill('demo');
+  await page.getByTestId('login-submit').click();
+  await expect(page.getByTestId('header-cuenta')).toBeVisible({ timeout: 30_000 });
+}
+
 /**
- * Completa el alta de un dependiente, mismo patrón que `b1-dependientes.spec.ts`.
- *
- * El selector de fecha se maneja tecla por tecla (el campo está enmascarado y
- * `fill()` no pasa por su manejador), y el desplegable de parentesco se elige
- * por ETIQUETA — `app-select` guarda el índice en el `value` del `<option>`.
+ * Deja a la titular representando a {@link DEPENDIENTE}, mismo recorrido que
+ * `b1-dependientes.spec.ts`: la titular pide por CI, esa cuenta acepta, y la
+ * titular vuelve a entrar y elige actuar por esa persona. Termina en la
+ * pantalla de Dependientes, con el dependiente activo.
  */
-async function registrarDependiente(page: Page, nombre: string): Promise<void> {
+async function vincularDependiente(page: Page): Promise<void> {
+  await entrarConCi(page, '7654321');
+  await page.goto('/my-account/dependents');
   await page.getByTestId('dependents-nuevo').click();
-  await expect(page.getByRole('dialog')).toBeVisible();
-
-  await page.getByTestId('dependent-name').fill(nombre);
-  await page.getByTestId('dependent-last-name').fill('Quispe');
-
-  const fecha = page.getByTestId('dependent-birth-date').getByRole('textbox');
-  await fecha.click();
-  await fecha.press('Home');
-  await fecha.pressSequentially('14032018');
-  await fecha.blur();
-  await expect(fecha).toHaveValue('14/03/2018');
-
-  await page
-    .getByTestId('dependent-relationship')
-    .getByRole('combobox')
-    .selectOption({ label: 'Soy su madre' });
-
+  await page.getByRole('dialog').getByRole('textbox').fill(DEPENDIENTE.documento);
   await page.getByTestId('dependent-submit').click();
   await expect(page.getByRole('dialog')).toBeHidden({ timeout: 15_000 });
+
+  await entrarConCi(page, DEPENDIENTE.documento);
+  await page.goto('/my-account/dependents');
+  await page.getByRole('button', { name: /^Aceptar la solicitud de / }).click();
+  await expect(page.getByTestId('dependents-solicitudes')).toHaveCount(0);
+
+  await entrarConCi(page, '7654321');
+  await page.goto('/my-account/dependents');
+  await page.getByRole('button', { name: `Actuar por ${DEPENDIENTE.nombre}` }).click();
+  await expect(page.getByTestId('dependents-lista')).toContainText('Perfil activo');
 }
 
 for (const viewport of [
@@ -349,17 +358,12 @@ for (const viewport of [
     test('actuando por un dependiente, exporta el historial del TITULAR y avisa que es un trámite personal', async ({
       page,
     }, info) => {
-      await entrarAlSimulador(page, 'paciente', '');
-      await page.goto('/my-account/dependents');
-      const nombreDependiente = `Valentina-${viewport.width}`;
-      await registrarDependiente(page, nombreDependiente);
+      await vincularDependiente(page);
 
-      // El alta y la elección de a quién representar viven EN MEMORIA
+      // La elección de a quién representar vive EN MEMORIA
       // (`PatientContextService`, sin persistencia): un `page.goto` recarga
-      // el documento entero y las pierde — y de paso pierde al dependiente
-      // mismo, porque `pacientes` (la colección que respalda el alta) tampoco
-      // persiste entre recargas. Por eso la navegación a `/my-account` es
-      // por el enlace lateral «Mi perfil» (`routerLink`, sin recarga), no
+      // el documento entero y la pierde. Por eso la navegación a `/my-account`
+      // es por el enlace lateral «Mi perfil» (`routerLink`, sin recarga), no
       // por `page.goto`.
       const enlacePerfil = page.getByTestId('nav-enlace').filter({ hasText: 'Mi perfil' });
       // En angosto el menú es un cajón cerrado por defecto: el enlace existe
@@ -388,9 +392,9 @@ for (const viewport of [
       const certificado = JSON.parse(readFileSync(rutaJson, 'utf8')) as {
         readonly patient: { readonly fullName: string };
       };
-      // El certificado NUNCA lleva el nombre del dependiente recién creado:
+      // El certificado NUNCA lleva el nombre del dependiente:
       // el `patientProfileId` que viajó al backend fue siempre el del titular.
-      expect(certificado.patient.fullName).not.toContain('Valentina');
+      expect(certificado.patient.fullName).not.toContain('Mamani');
 
       await expect(page.getByTestId('portability-manifest-hash')).toBeVisible();
       await screenshotWithoutOverflow(page, info, `portabilidad-dependiente-${viewport.width}`);

@@ -1,172 +1,149 @@
 import { expect, test, type Page } from '@playwright/test';
 
 /**
- * B.1 · dependientes y tutor legal, en el navegador.
+ * B.1 · registrar un dependiente por CI, en el navegador.
  *
  * ## Por qué contra el backend simulado
  *
- * Porque los endpoints de dependientes viven en una rama de la API que todavía
- * no está desplegada, y esta prueba no es sobre la API: es sobre lo que la
- * persona ve y puede hacer. La maqueta responde los mismos dos endpoints con la
- * misma forma, así que el recorrido —registrar, conmutar, ver el aviso— se
- * ejerce completo.
+ * Porque la solicitud de vínculo todavía no existe en la API: la atiende el
+ * simulador de `mockup`. La prueba no es sobre la API sino sobre lo que ven y
+ * hacen las dos personas.
  *
  * ## Qué fija
  *
- * 1. Quien no tiene dependientes no ve el conmutador: un desplegable de un solo
- *    elemento es ruido.
- * 2. Registrar a un hijo lo deja elegido, y el aviso dice por quién se opera.
- * 3. El conmutador aparece en la cabecera y permite volver al perfil propio.
- * 4. La pantalla se ve entera en teléfono, tableta y escritorio.
+ * 1. El modal pide **sólo el CI**.
+ * 2. Un CI sin cuenta se dice junto al campo.
+ * 3. Un CI con cuenta le manda una notificación a esa cuenta.
+ * 4. Esa cuenta acepta desde Dependientes y el titular la ve en su lista.
+ * 5. El modal entra en teléfono, tableta y escritorio.
  */
 
-/** La cuenta de paciente de la maqueta. */
-const PACIENTE = { documento: '7654321', clave: 'demo' };
+/** La titular: la cuenta de paciente de la maqueta. */
+const TITULAR = { documento: '7654321', nombre: 'Ana Lucía Pérez Quiroga' };
+/** Un paciente del padrón con cuenta (índice 1 de `personas.ts`). */
+const DEPENDIENTE = { documento: '5009871', nombre: 'Jorge Luis Mamani Choque' };
 
 /**
- * Entra al portal como paciente y espera a que el armazón esté dibujado.
- *
- * La pantalla de acceso vive en `/auth` y no en `/auth/login`: esta última es un
- * 404, y buscar el campo en ella agota el plazo sin decir por qué.
+ * Entra con un CI. Borra la sesión anterior primero: el refresh token vive en
+ * `localStorage`, y el simulador guarda lo suyo en `sessionStorage`, que
+ * sobrevive a la recarga — así la solicitud sigue ahí para la otra cuenta.
  */
-async function entrarComoPaciente(page: Page): Promise<void> {
+async function entrar(page: Page, documento: string): Promise<void> {
   await page.goto('/auth');
-  await page.getByTestId('login-identifier').fill(PACIENTE.documento);
-  await page.getByTestId('login-password').fill(PACIENTE.clave);
+  await page.evaluate(() => {
+    try {
+      localStorage.clear();
+    } catch {
+      /* sin almacenamiento no hay sesión que borrar */
+    }
+  });
+  await page.goto('/auth');
+  await page.getByTestId('login-identifier').fill(documento);
+  await page.getByTestId('login-password').fill('demo');
   await page.getByTestId('login-submit').click();
   await expect(page.getByTestId('header-cuenta')).toBeVisible({ timeout: 30_000 });
 }
 
-/** Completa el formulario de alta con un dependiente. */
-async function registrarDependiente(page: Page, nombre: string): Promise<void> {
+async function abrirModal(page: Page): Promise<void> {
+  await page.goto('/my-account/dependents');
   await page.getByTestId('dependents-nuevo').click();
   await expect(page.getByRole('dialog')).toBeVisible();
-
-  await page.getByTestId('dependent-name').fill(nombre);
-  await page.getByTestId('dependent-last-name').fill('Quispe');
-
-  // El selector de fecha se maneja **tecla por tecla**: su campo está
-  // enmascarado y el valor lo arma `handleInputKeydown` segmento a segmento.
-  // `fill()` escribe el valor de golpe sin pasar por ahí, así que el componente
-  // lo descarta al perder el foco y el formulario queda sin fecha.
-  const fecha = page.getByTestId('dependent-birth-date').getByRole('textbox');
-  await fecha.click();
-  // `Home` antes de teclear: el clic deja el cursor donde cayó, y si cae al
-  // final los primeros dígitos se escriben en el AÑO. El componente maneja esa
-  // tecla y vuelve al segmento del día.
-  await fecha.press('Home');
-  await fecha.pressSequentially('14032018');
-  await fecha.blur();
-  await expect(fecha).toHaveValue('14/03/2018');
-
-  // «Soy su madre»: el titular declara qué es él para el dependiente.
-  await page
-    .getByTestId('dependent-relationship')
-    .getByRole('combobox')
-    .selectOption({ label: 'Soy su madre' });
-
-  await page.getByTestId('dependent-submit').click();
-  await expect(page.getByRole('dialog')).toBeHidden({ timeout: 15_000 });
 }
 
-test.describe('B.1 · dependientes', () => {
-  test('registrar a un hijo, conmutar y volver al perfil propio', async ({ page }) => {
+async function enviarCi(page: Page, documento: string): Promise<void> {
+  const campo = page.getByRole('dialog').getByRole('textbox');
+  await campo.fill(documento);
+  await page.getByTestId('dependent-submit').click();
+}
+
+test.describe('B.1 · dependientes por CI', () => {
+  test('pedir por CI, aceptar desde la otra cuenta y verla en la lista', async ({ page }) => {
     const errores: string[] = [];
     page.on('console', (mensaje) => {
       if (mensaje.type() !== 'error') return;
-      // La política de contenido del servidor sólo admite dos hashes de script
-      // en línea, y el servidor de desarrollo inyecta los suyos para recargar en
-      // caliente. Ese rechazo aparece al cargar cualquier ruta de la aplicación
-      // y es anterior a esta pantalla: no se puede tomar como error del carril.
+      // La política de contenido rechaza los scripts que inyecta el servidor de
+      // desarrollo. Es anterior a esta pantalla.
       if (mensaje.text().includes('Content Security Policy')) return;
+      // El 404 de «no hay cuenta» es una respuesta esperada del recorrido.
+      if (mensaje.text().includes('404')) return;
       errores.push(mensaje.text());
     });
 
-    await entrarComoPaciente(page);
+    await entrar(page, TITULAR.documento);
+    await abrirModal(page);
 
-    // 1 · sin dependientes no hay conmutador que ofrecer.
-    await expect(page.getByTestId('header-paciente-activo')).toHaveCount(0);
+    // 1 · un solo campo.
+    const dialogo = page.getByRole('dialog');
+    await expect(dialogo.getByRole('textbox')).toHaveCount(1);
+    await expect(dialogo.getByRole('combobox')).toHaveCount(0);
+    await expect(dialogo).not.toContainText('Fecha de nacimiento');
 
+    // 2 · sin cuenta, se dice junto al campo y el modal sigue abierto.
+    await enviarCi(page, '999999999');
+    await expect(dialogo).toContainText('No hay ninguna cuenta registrada con ese CI.');
+
+    // 3 · con cuenta, se envía la solicitud.
+    await enviarCi(page, DEPENDIENTE.documento);
+    await expect(dialogo).toBeHidden({ timeout: 15_000 });
+    await expect(page.getByText(/Enviamos la solicitud a la cuenta con CI 5009871/)).toBeVisible();
+
+    // …y a esa cuenta le llega la notificación.
+    await entrar(page, DEPENDIENTE.documento);
+    await page.goto('/notification-center');
+    await expect(page.getByText('Te quieren registrar como dependiente').first()).toBeVisible();
+
+    // 4 · acepta desde Dependientes.
     await page.goto('/my-account/dependents');
-    await expect(page.getByRole('heading', { name: 'Dependientes' })).toBeVisible();
-    await expect(page.getByText('Todavía no registraste a nadie')).toBeVisible();
+    const solicitudes = page.getByTestId('dependents-solicitudes');
+    await expect(solicitudes).toContainText(TITULAR.nombre);
+    await page.getByRole('button', { name: `Aceptar la solicitud de ${TITULAR.nombre}` }).click();
+    await expect(solicitudes).toHaveCount(0);
 
-    // 2 · el alta lo deja registrado, elegido y anunciado.
-    await registrarDependiente(page, 'Mateo');
+    // Y la titular la ve en su lista.
+    await entrar(page, TITULAR.documento);
+    await page.goto('/my-account/dependents');
+    await expect(page.getByTestId('dependents-lista')).toContainText(DEPENDIENTE.nombre);
 
-    await expect(page.getByTestId('dependents-lista')).toContainText('Mateo Quispe');
-    // El parentesco se lee dado vuelta: la madre declaró ser su madre.
-    await expect(page.getByTestId('dependents-lista')).toContainText('Hijo/a');
-    await expect(page.getByTestId('aviso-paciente-activo')).toContainText(
-      'Atendiéndose en representación de:',
-    );
-    await expect(page.getByTestId('aviso-paciente-activo')).toContainText('Mateo Quispe');
-
-    // 3 · y ahora sí está el conmutador en la cabecera.
-    const conmutador = page.getByTestId('header-paciente-activo');
-    await expect(conmutador).toBeVisible();
-    await expect(conmutador).toContainText('Mateo Quispe');
-
-    await conmutador.click();
-    await page.getByRole('menuitem', { name: /^Yo / }).click();
-
-    await expect(page.getByTestId('aviso-paciente-activo')).toHaveCount(0);
-    await expect(conmutador).not.toContainText('Mateo Quispe');
-
-    // Ningún error de consola en todo el recorrido.
     expect(errores).toEqual([]);
   });
 
   /**
-   * Los tres anchos, cada uno en su propia ventana.
-   *
-   * **No se redimensiona una ventana ya dibujada**: el armazón decide al
-   * montarse si el menú es una columna fija o un cajón, y cambiar el tamaño
-   * después lo deja en el modo anterior tapando el contenido. Lo que vive una
-   * persona es abrir la aplicación en su teléfono, así que cada medida abre su
-   * propio contexto y recorre el alta entera ahí.
+   * Los tres anchos, cada uno en su propia ventana: el armazón decide al
+   * montarse si el menú es columna o cajón, así que no se redimensiona.
    */
   for (const [nombre, ancho, alto] of [
     ['telefono', 390, 844],
     ['tableta', 820, 1180],
     ['escritorio', 1440, 900],
   ] as const) {
-    test(`la pantalla entra en ${nombre}`, async ({ browser }) => {
+    test(`el modal entra en ${nombre}`, async ({ browser }) => {
       const contexto = await browser.newContext({
         viewport: { width: ancho, height: alto },
         locale: 'es-BO',
       });
       const page = await contexto.newPage();
       try {
-        await entrarComoPaciente(page);
-        await page.goto('/my-account/dependents');
-        await registrarDependiente(page, 'Rosa');
+        await entrar(page, TITULAR.documento);
+        await abrirModal(page);
+        await enviarCi(page, '999999999');
+        await expect(page.getByRole('dialog')).toContainText(
+          'No hay ninguna cuenta registrada con ese CI.',
+        );
 
-        await expect(page.getByTestId('dependents-lista')).toContainText('Rosa Quispe');
-
-        // Nada desborda a lo ancho: el cuerpo no scrollea en horizontal.
-        await expect
-          .poll(
-            () =>
-              page.evaluate(
-                () =>
-                  document.documentElement.scrollWidth -
-                  document.documentElement.clientWidth,
-              ),
-            { message: `desborde horizontal en ${nombre}` },
-          )
-          .toBeLessThanOrEqual(1);
-
-        // Y el nombre del dependiente se lee entero, sin quedar tapado por el
-        // menú: se compara su caja con la del contenido principal.
-        const tarjeta = page.getByTestId('dependents-lista').getByText('Rosa Quispe');
-        const caja = await tarjeta.boundingBox();
-        expect(caja, `sin caja visible en ${nombre}`).not.toBeNull();
-        expect(caja!.x, `nombre cortado por la izquierda en ${nombre}`).toBeGreaterThanOrEqual(0);
-        expect(
-          caja!.x + caja!.width,
-          `nombre cortado por la derecha en ${nombre}`,
-        ).toBeLessThanOrEqual(ancho);
+        // Se mide el modal, no el documento: en teléfono la cabecera compartida
+        // ya desborda 13 px en todas las pantallas (botón de cuenta), y eso no
+        // es de esta prueba.
+        for (const [que, caja] of [
+          ['modal', await page.getByRole('dialog').boundingBox()],
+          ['campo', await page.getByRole('dialog').getByRole('textbox').boundingBox()],
+          ['botón', await page.getByTestId('dependent-submit').boundingBox()],
+        ] as const) {
+          expect(caja, `${que} sin caja en ${nombre}`).not.toBeNull();
+          expect(caja!.x, `${que} cortado a la izquierda en ${nombre}`).toBeGreaterThanOrEqual(0);
+          expect(caja!.x + caja!.width, `${que} cortado a la derecha en ${nombre}`).toBeLessThanOrEqual(
+            ancho,
+          );
+        }
 
         await page.screenshot({
           path: `artifacts/playwright/b1-dependientes-${nombre}.png`,

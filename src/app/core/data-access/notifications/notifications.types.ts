@@ -32,7 +32,8 @@ export type NotificationDestinationType =
   | 'CONVERSATION'
   | 'APPOINTMENT'
   | 'POST'
-  | 'DIAGNOSTIC_REPORT';
+  | 'DIAGNOSTIC_REPORT'
+  | 'DEPENDENT_LINK_REQUEST';
 
 /**
  * A dónde lleva una notificación.

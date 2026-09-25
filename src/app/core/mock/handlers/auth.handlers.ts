@@ -1,4 +1,5 @@
 import { ESTADO, TIPO_SOCIETARIO } from '../fixtures/conceptos';
+import { pacientes, type PacienteSimulado } from '../fixtures/personas';
 import { conflict, notFound, reply, unauthorized, type MockRouter } from '../mock-router';
 import {
   buscarUsuario,
@@ -6,7 +7,11 @@ import {
   emitirRefreshToken,
   expiracion,
   MOCK_USERS,
+  resolverCuentasDePacientes,
+  TENANT_NAMES,
+  TENANT_PLATAFORMA,
   usuarioDeRefreshToken,
+  type MockUser,
 } from '../mock-session';
 import { ahora, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
 
@@ -69,6 +74,42 @@ const usuariosAdicionales: UsuarioListado[] = [
   lastLoginAt: ultimo === null ? null : iso(ultimo as number, 10),
   createdAt: iso(creado as number, 8),
 }));
+
+/**
+ * La cuenta de un paciente del padrón: entra con su CI, como las de prueba.
+ *
+ * Sin esto la única cuenta de paciente era la de demostración, y una solicitud
+ * de dependiente no tenía quién la aceptara. Un paciente sin correo es un
+ * dependiente dado de alta sin cuenta: no entra.
+ */
+function cuentaDe(p: PacienteSimulado): MockUser {
+  return {
+    key: `paciente-${p.nationalId}`,
+    id: p.userId,
+    email: p.email,
+    nationalId: p.nationalId,
+    displayName: p.displayName,
+    roles: ['PATIENT'],
+    tenants: [TENANT_PLATAFORMA],
+    tenantNames: TENANT_NAMES,
+    patientProfileId: p.id,
+    personId: p.personId,
+  };
+}
+
+resolverCuentasDePacientes(({ identificador, id, key }) => {
+  const p = pacientes
+    .todos()
+    .find(
+      (c) =>
+        c.email !== '' &&
+        !c.deceased &&
+        ((identificador !== undefined && c.nationalId === identificador) ||
+          (id !== undefined && c.userId === id) ||
+          (key !== undefined && `paciente-${c.nationalId}` === key)),
+    );
+  return p === undefined ? undefined : cuentaDe(p);
+});
 
 export function registrarAuth(router: MockRouter): void {
   router.post('/iam/auth/login', ({ body }) => {
