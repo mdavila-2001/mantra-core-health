@@ -19,6 +19,41 @@
     pantalla sólo quiera contar cuántas alergias hay.
     ========================================================================== */
 
+/** Decisión terminal de C3. Pendiente de backend P41. */
+export type DiagnosisOutcome = 'CONFIRMED' | 'REFUTED';
+
+/** Evidencia que respalda la decisión; C3 resuelve sus vínculos (P41). */
+export interface DiagnosisEvidence {
+  readonly kind: 'NOTE' | 'ANALYSIS';
+  readonly noteId?: string;
+  readonly encounterId?: string;
+  readonly serviceRequestId?: string;
+  readonly diagnosticReportId?: string;
+}
+
+/** Decisión registrada por C3; los instantes viajan como ISO (P41). */
+export interface DiagnosisVerification {
+  readonly outcome: DiagnosisOutcome;
+  readonly decidedAt: string;
+  readonly decidedByProfileId: string;
+  readonly reasonText: string | null;
+  readonly basedOn: DiagnosisEvidence | null;
+}
+
+/** Entrada de C3 para confirmar o rechazar; pendiente de backend P41. */
+export interface NewDiagnosisVerification {
+  readonly outcome: DiagnosisOutcome;
+  /** Hasta 500 caracteres; se exige motivo o evidencia. */
+  readonly reasonText?: string;
+  readonly basedOn?: DiagnosisEvidence;
+  /** Obligatorio al confirmar si el diagnóstico todavía no declara inicio. */
+  readonly onsetAt?: string;
+  /** Obligatorio al confirmar salvo curso crónico. */
+  readonly expectedResolutionAt?: string;
+  /** Un curso crónico se confirma sin fin esperado. */
+  readonly clinicalCourseConceptId?: string;
+}
+
 /** Un diagnóstico o problema del paciente. */
 export interface Condition {
   readonly id: string;
@@ -26,6 +61,8 @@ export interface Condition {
   readonly categoryConceptId?: string;
   readonly clinicalStatusConceptId?: string;
   readonly verificationStatusConceptId?: string;
+  /** Decisión y evidencia de C3; pendiente de backend P41. */
+  readonly verification?: DiagnosisVerification | null;
   readonly severityConceptId?: string;
   readonly encounterId?: string;
   /** Curso clínico: agudo/crónico/subagudo/recurrente (Patch v4.0.8). */
@@ -284,6 +321,12 @@ export interface CareEpisodeRegistration {
   readonly createdAt: Date;
 }
 
+/** Una fila de la nota médica de C1; pendiente de backend P39. */
+export interface MedicalNoteEntry {
+  readonly label: string;
+  readonly value: string;
+}
+
 /** Una nota del expediente, con su versión vigente. */
 export interface ChartNote {
   readonly noteId: string;
@@ -293,6 +336,8 @@ export interface ChartNote {
   readonly currentVersionId?: string;
   readonly versionNumber?: number;
   readonly authorProfileId?: string;
+  /** Filas estructuradas de C1; lectura y escritura reales pendientes de backend P39. */
+  readonly entries?: readonly MedicalNoteEntry[];
   readonly chiefComplaintText?: string;
   readonly subjectiveText?: string;
   readonly objectiveText?: string;

@@ -79,6 +79,21 @@ function condicion(campos: Partial<Condition> = {}): Condition {
   };
 }
 
+const DIAGNOSIS_CODES = {
+  confirmed: 'id-confirmado',
+  refuted: 'id-descartado',
+  active: 'id-activa',
+};
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-09-25T12:00:00.000Z'));
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe('diagnosisStateOf', () => {
   it('confirmado y activo es una enfermedad activa', () => {
     expect(
@@ -87,18 +102,18 @@ describe('diagnosisStateOf', () => {
           verificationStatusConceptId: 'id-confirmado',
           clinicalStatusConceptId: 'id-activa',
         }),
-        codigo,
+        DIAGNOSIS_CODES,
       ),
-    ).toBe('activa');
+    ).toBe('ACTIVE');
   });
 
   it('provisional o diferencial está en estudio', () => {
     expect(
-      diagnosisStateOf(condicion({ verificationStatusConceptId: 'id-provisional' }), codigo),
-    ).toBe('en-estudio');
+      diagnosisStateOf(condicion({ verificationStatusConceptId: 'id-provisional' }), DIAGNOSIS_CODES),
+    ).toBe('IN_STUDY');
     expect(
-      diagnosisStateOf(condicion({ verificationStatusConceptId: 'id-diferencial' }), codigo),
-    ).toBe('en-estudio');
+      diagnosisStateOf(condicion({ verificationStatusConceptId: 'id-diferencial' }), DIAGNOSIS_CODES),
+    ).toBe('IN_STUDY');
   });
 
   /**
@@ -106,21 +121,21 @@ describe('diagnosisStateOf', () => {
    * certeza: si el bloque se decidiera por el estado clínico, este diagnóstico
    * aparecería como una enfermedad que la persona no tiene.
    */
-  it('descartado es histórico aunque el estado clínico diga que está activo', () => {
+  it('descartado es REFUTED aunque el estado clínico diga que está activo', () => {
     expect(
       diagnosisStateOf(
         condicion({
           verificationStatusConceptId: 'id-descartado',
           clinicalStatusConceptId: 'id-activa',
         }),
-        codigo,
+        DIAGNOSIS_CODES,
       ),
-    ).toBe('historico');
+    ).toBe('REFUTED');
   });
 
-  it('resuelto es histórico, por el estado clínico o por la fecha de resolución', () => {
-    expect(diagnosisStateOf(condicion({ clinicalStatusConceptId: 'id-resuelta' }), codigo)).toBe(
-      'historico',
+  it('resuelto sin certeza sigue en estudio; confirmado con fecha de resolución es histórico', () => {
+    expect(diagnosisStateOf(condicion({ clinicalStatusConceptId: 'id-resuelta' }), DIAGNOSIS_CODES)).toBe(
+      'IN_STUDY',
     );
     expect(
       diagnosisStateOf(
@@ -128,9 +143,9 @@ describe('diagnosisStateOf', () => {
           verificationStatusConceptId: 'id-confirmado',
           resolvedAt: new Date(2026, 8, 3),
         }),
-        codigo,
+        DIAGNOSIS_CODES,
       ),
-    ).toBe('historico');
+    ).toBe('HISTORIC');
   });
 
   it('en remisión es histórico: dejó de ser una enfermedad activa', () => {
@@ -140,23 +155,24 @@ describe('diagnosisStateOf', () => {
           verificationStatusConceptId: 'id-confirmado',
           clinicalStatusConceptId: 'id-remision',
         }),
-        codigo,
+        DIAGNOSIS_CODES,
       ),
-    ).toBe('historico');
+    ).toBe('HISTORIC');
   });
 
   /** El nivel inválido del contrato: el catálogo no resuelve nada. */
   it('sin certeza declarada cae en estudio, que es la afirmación más débil', () => {
-    expect(diagnosisStateOf(condicion(), codigo)).toBe('en-estudio');
+    expect(diagnosisStateOf(condicion(), DIAGNOSIS_CODES)).toBe('IN_STUDY');
     expect(
-      diagnosisStateOf(condicion({ verificationStatusConceptId: 'id-inexistente' }), codigo),
-    ).toBe('en-estudio');
+      diagnosisStateOf(condicion({ verificationStatusConceptId: 'id-inexistente' }), DIAGNOSIS_CODES),
+    ).toBe('IN_STUDY');
   });
 
-  it('los tres bloques tienen nombre para quien lee su historia', () => {
-    expect(DIAGNOSIS_STATE_LABELS['en-estudio']).toBe('En estudio');
-    expect(DIAGNOSIS_STATE_LABELS.activa).toBe('Enfermedades activas');
-    expect(DIAGNOSIS_STATE_LABELS.historico).toBe('Históricos');
+  it('los cuatro estados canónicos tienen nombre legible', () => {
+    expect(DIAGNOSIS_STATE_LABELS.IN_STUDY).toBe('En estudio');
+    expect(DIAGNOSIS_STATE_LABELS.ACTIVE).toBe('Enfermedad activa');
+    expect(DIAGNOSIS_STATE_LABELS.HISTORIC).toBe('Diagnóstico histórico');
+    expect(DIAGNOSIS_STATE_LABELS.REFUTED).toBe('Rechazado');
   });
 });
 
@@ -172,6 +188,40 @@ describe('bloquesDeDiagnosticos', () => {
     expect(bloques.every((bloque) => bloque.filas.length === 0)).toBe(true);
     // Cada vacío orienta en vez de quedarse mudo.
     expect(bloques.every((bloque) => bloque.vacio !== '')).toBe(true);
+  });
+
+  it('agrupa rechazado, vencido y confirmado sin estado clínico en históricos', () => {
+    const [inStudy, active, historic] = bloquesDeDiagnosticos(
+      [
+        condicion({
+          id: 'refuted',
+          verificationStatusConceptId: 'id-descartado',
+          clinicalStatusConceptId: 'id-activa',
+        }),
+        condicion({
+          id: 'expired',
+          verificationStatusConceptId: 'id-confirmado',
+          clinicalStatusConceptId: 'id-activa',
+          expectedResolutionAt: new Date('2026-09-25T11:59:59.999Z'),
+        }),
+        condicion({ id: 'no-clinical-status', verificationStatusConceptId: 'id-confirmado' }),
+        condicion({ id: 'unconfirmed-resolved', resolvedAt: new Date('2026-09-24T12:00:00.000Z') }),
+      ],
+      etiqueta,
+      codigo,
+    );
+
+    expect(inStudy!.filas.map((row) => row.id)).toEqual(['unconfirmed-resolved']);
+    expect(active!.filas).toEqual([]);
+    expect(historic!.filas.map((row) => row.id)).toEqual([
+      'refuted',
+      'expired',
+      'no-clinical-status',
+    ]);
+    expect(historic!.filas.find((row) => row.id === 'expired')!.hechos).toContainEqual({
+      etiqueta: 'Por qué',
+      valor: 'plazo esperado vencido el 25/09/2026',
+    });
   });
 
   /** El nivel correcto: con fecha esperada de resolución, se dice hasta cuándo. */
@@ -198,6 +248,7 @@ describe('bloquesDeDiagnosticos', () => {
       [
         condicion({
           verificationStatusConceptId: 'id-confirmado',
+          clinicalStatusConceptId: 'id-activa',
           clinicalCourseConceptId: 'id-cronica',
           expectedResolutionAt: new Date(Date.UTC(2026, 10, 24)),
         }),
@@ -212,7 +263,12 @@ describe('bloquesDeDiagnosticos', () => {
   /** El nivel inválido: sin curso ni plazo, no se inventa ninguno. */
   it('sin curso ni plazo no inventa una duración', () => {
     const [, activas] = bloquesDeDiagnosticos(
-      [condicion({ verificationStatusConceptId: 'id-confirmado' })],
+      [
+        condicion({
+          verificationStatusConceptId: 'id-confirmado',
+          clinicalStatusConceptId: 'id-activa',
+        }),
+      ],
       etiqueta,
       codigo,
     );
@@ -223,7 +279,11 @@ describe('bloquesDeDiagnosticos', () => {
   it('un histórico dice por qué: la fecha de resolución, o el estado que lo cerró', () => {
     const [, , historicos] = bloquesDeDiagnosticos(
       [
-        condicion({ id: 'a', resolvedAt: new Date(Date.UTC(2026, 8, 3)) }),
+        condicion({
+          id: 'a',
+          verificationStatusConceptId: 'id-confirmado',
+          resolvedAt: new Date(Date.UTC(2026, 8, 3)),
+        }),
         condicion({ id: 'b', verificationStatusConceptId: 'id-descartado' }),
       ],
       etiqueta,
@@ -305,7 +365,11 @@ describe('atencionesDeLaHistoria', () => {
     const [atencion] = atencionesDeLaHistoria(
       resumen({
         conditions: [
-          condicion({ encounterId: 'e-1', verificationStatusConceptId: 'id-confirmado' }),
+          condicion({
+            encounterId: 'e-1',
+            verificationStatusConceptId: 'id-confirmado',
+            clinicalStatusConceptId: 'id-activa',
+          }),
         ],
         medicationRequests: [
           {
@@ -398,9 +462,53 @@ describe('atencionesDeLaHistoria', () => {
 });
 
 describe('seccionesNuevasDeLaHistoria', () => {
+  it('la frontera vigente y el motivo del vencido coinciden en grupos, línea y papel', () => {
+    const base = condicion({
+      encounterId: 'e-1',
+      verificationStatusConceptId: 'id-confirmado',
+      clinicalStatusConceptId: 'id-activa',
+    });
+    const conditions = [
+      { ...base, id: 'expired', expectedResolutionAt: new Date('2026-09-25T11:59:59.999Z') },
+      { ...base, id: 'boundary', expectedResolutionAt: new Date('2026-09-25T12:00:00.000Z') },
+    ];
+    const groups = bloquesDeDiagnosticos(conditions, etiqueta, codigo);
+    const encounters = atencionesDeLaHistoria(
+      resumen({ conditions }),
+      { notas: [], ordenes: [], citas: [] },
+      etiqueta,
+      codigo,
+    );
+    const sections = seccionesNuevasDeLaHistoria(groups, encounters);
+    const reason = 'plazo esperado vencido el 25/09/2026';
+
+    expect(groups[1]!.filas.map((row) => row.id)).toEqual(['boundary']);
+    expect(groups[2]!.filas.map((row) => row.id)).toEqual(['expired']);
+    expect(encounters[0]!.diagnosticos.find((row) => row.id === 'expired')).toMatchObject({
+      estado: 'Diagnóstico histórico',
+      detalle: reason,
+    });
+    expect(encounters[0]!.diagnosticos.find((row) => row.id === 'boundary')).toMatchObject({
+      estado: 'Diagnóstico confirmado',
+      detalle: 'activa hasta el 25/09/2026',
+    });
+    expect(sections.diagnosticos.historicos.map((row) => row.detalle)).toEqual([reason]);
+    expect(sections.lineas[0]!.hechos).toContainEqual(
+      expect.objectContaining({
+        titulo: 'Diagnóstico histórico: Hipertensión',
+        detalle: reason,
+      }),
+    );
+  });
+
   it('el papel dice lo mismo que la pantalla, bloque por bloque', () => {
     const condiciones = [
-      condicion({ id: 'a', verificationStatusConceptId: 'id-confirmado', encounterId: 'e-1' }),
+      condicion({
+        id: 'a',
+        verificationStatusConceptId: 'id-confirmado',
+        clinicalStatusConceptId: 'id-activa',
+        encounterId: 'e-1',
+      }),
       condicion({ id: 'b', verificationStatusConceptId: 'id-descartado' }),
     ];
     const bloques = bloquesDeDiagnosticos(condiciones, etiqueta, codigo);

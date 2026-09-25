@@ -195,6 +195,9 @@ export interface BookingInsuranceClaim {
  * detrás. No es un fallo: la reserva nace en la agenda y el encuentro es un
  * registro posterior, así que se puede citar de nuevo a alguien desde una cita
  * que todavía no abrió su consulta.
+ *
+ * Contrato compartido de C0/C4; la persistencia y lectura reales de este
+ * vínculo siguen pendientes de backend P42. El simulador conserva el origen.
  */
 export interface FollowUpOrigin {
   /** La reserva de la que nace esta reconsulta. */
@@ -987,6 +990,7 @@ export interface NewDirectAppointment {
    * **Ausente es una cita puntual corriente**, que es lo que agendan
    * `appointment-new` y el mostrador: los rechazos propios de la reconsulta
    * —403, 404, 422 y 409— sólo corren cuando este campo viaja.
+   * El simulador asigna `APT-RECONSULTA`; la escritura real depende de P42.
    */
   readonly followUpOf?: FollowUpOrigin;
 }

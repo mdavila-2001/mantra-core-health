@@ -14,6 +14,9 @@ import type {
 } from '../../../shared/components/organisms/encounter-timeline/encounter-timeline.types';
 import type { Tone } from '../../../shared/components/tone/tone.types';
 import {
+  CODIGO_ACTIVA,
+  CODIGO_CONFIRMADO,
+  CODIGO_DESCARTADO,
   diagnosisStateOf,
   type DiagnosisState,
   type ResolverCodigo,
@@ -47,9 +50,10 @@ import {
 
 /** El tono de cada bloque, el mismo que usa la historia del paciente. */
 const TONO_DEL_ESTADO: Readonly<Record<DiagnosisState, Tone>> = Object.freeze({
-  'en-estudio': 'warning',
-  activa: 'success',
-  historico: 'info',
+  IN_STUDY: 'warning',
+  ACTIVE: 'success',
+  HISTORIC: 'info',
+  REFUTED: 'info',
 });
 
 /** Resuelve un identificador de concepto a su etiqueta de pantalla. */
@@ -146,7 +150,11 @@ function diagnosticoDeLaLinea(
     id: condicion.id,
     nombre: etiqueta(condicion.codeConceptId),
     estado: etiqueta(condicion.verificationStatusConceptId),
-    tono: TONO_DEL_ESTADO[diagnosisStateOf(condicion, codigo)],
+    tono: TONO_DEL_ESTADO[diagnosisStateOf({
+      ...condicion,
+      verificationStatusConceptId: codigo(condicion.verificationStatusConceptId),
+      clinicalStatusConceptId: codigo(condicion.clinicalStatusConceptId),
+    }, { confirmed: CODIGO_CONFIRMADO, refuted: CODIGO_DESCARTADO, active: CODIGO_ACTIVA })],
     detalle: condicion.resolvedAt === undefined ? null : 'resuelto',
     cuando: condicion.createdAt,
   };

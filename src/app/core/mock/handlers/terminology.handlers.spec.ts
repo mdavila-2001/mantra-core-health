@@ -1,7 +1,14 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import { registrarTerminologia } from './terminology.handlers';
-import { MEDICAMENTO } from '../fixtures/conceptos';
+import {
+  ACTIVIDAD,
+  CATEGORIA_ORDEN,
+  conjuntoPorCodigo,
+  MEDICAMENTO,
+  TIPO_CITA,
+  VERIFICACION_DX,
+} from '../fixtures/conceptos';
 import { valorDeTexto } from '../../data-access/terminology/terminology.types';
 import { MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
@@ -380,5 +387,48 @@ describe('doble de la carga masiva de terminología', () => {
   it('la plantilla también exige administración de seguridad', () => {
     expect(llamar('GET', '/terminology/import-template', { user: null }).status).toBe(401);
     expect(llamar('GET', '/terminology/import-template', { user: paciente }).status).toBe(403);
+  });
+});
+
+describe('contrato C0: expansión de conceptos clínicos', () => {
+  const router = new MockRouter();
+  registrarTerminologia(router);
+
+  function expand(code: string): readonly { conceptId: string; code: string; display: string }[] {
+    const valueSet = conjuntoPorCodigo(code);
+    if (valueSet === undefined) throw new Error('No existe el conjunto ' + code);
+    const path = '/terminology/value-sets/' + valueSet.id + '/$expand';
+    const match = router.match('GET', path);
+    if (match === null) throw new Error('No existe GET ' + path);
+    const result = match.handler({
+      method: 'GET',
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body: null,
+      headers: new HttpHeaders(),
+      user: null,
+    }) as { items: readonly { conceptId: string; code: string; display: string }[] };
+    return result.items;
+  }
+
+  it.each([
+    ['VS_ACTIVITY_TYPE', 'ACT-FOLLOW-UP', 'Reconsulta', ACTIVIDAD['ACT-FOLLOW-UP']],
+    ['VS_APPOINTMENT_TYPE', 'APT-RECONSULTA', 'Reconsulta', TIPO_CITA['APT-RECONSULTA']],
+    ['VS_SERVICE_REQUEST_CATEGORY', 'SRQ-OTHER', 'Otro', CATEGORIA_ORDEN['SRQ-OTHER']],
+  ])('expande %s con un único %s, su etiqueta y su ID estable', (valueSet, code, display, id) => {
+    const items = expand(valueSet!);
+    expect(id).toEqual(expect.any(String));
+    expect(items.filter((item) => item.code === code)).toEqual([
+      expect.objectContaining({ conceptId: id, code, display }),
+    ]);
+    expect(expand(valueSet!)).toEqual(items);
+  });
+
+  it('conserva todos los estados de verificación diagnóstica publicados', () => {
+    const items = expand('VS_CONDITION_VERIFICATION');
+    for (const [code, conceptId] of Object.entries(VERIFICACION_DX)) {
+      expect(items).toContainEqual(expect.objectContaining({ code, conceptId }));
+    }
   });
 });
