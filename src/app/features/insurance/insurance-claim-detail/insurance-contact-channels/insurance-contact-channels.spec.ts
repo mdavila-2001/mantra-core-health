@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { vi } from 'vitest';
 
 import type { ClaimListItem } from '../../../../core/data-access/insurance/insurance.types';
 import { InsuranceContactChannels } from './insurance-contact-channels';
@@ -81,7 +82,7 @@ describe('InsuranceContactChannels', () => {
     await crear(header({ carrierWhatsappNumber: null, carrierCallCenterPhone: '800-10-6060' }));
 
     expect(fixture.debugElement.query(By.css('[data-testid="btn-whatsapp-claim"]'))).toBeNull();
-    expect(fixture.debugElement.query(By.css('[data-testid="btn-callcenter-claim"]'))).toBeTruthy();
+    expect(fixture.debugElement.query(By.css('[data-testid="btn-call-center-phone"]'))).toBeTruthy();
   });
 
   it('el enlace de WhatsApp abre en pestaña nueva y sin dejar referencia a la sesión (Escenario 1)', async () => {
@@ -95,7 +96,7 @@ describe('InsuranceContactChannels', () => {
   it('el call center se marca sin espacios en el href tel: (Escenario 3)', async () => {
     await crear(header({ carrierCallCenterPhone: '800-10-6060' }));
 
-    const boton = fixture.debugElement.query(By.css('[data-testid="btn-callcenter-claim"]'));
+    const boton = fixture.debugElement.query(By.css('[data-testid="btn-call-center-phone"]'));
     expect(boton.nativeElement.getAttribute('href')).toBe('tel:800106060');
     expect(boton.nativeElement.textContent).toContain('800-10-6060');
   });
@@ -107,12 +108,51 @@ describe('InsuranceContactChannels', () => {
     expect(boton.nativeElement.getAttribute('href')).toBe('mailto:siniestros@aseguradora.com.bo');
   });
 
+  it('el mensaje de WhatsApp nunca incluye campos clínicos, aunque la cabecera los traiga (CA-2.4)', async () => {
+    const conCamposClinicos = {
+      ...header({ carrierWhatsappNumber: '+59171548278' }),
+      diagnosisText: 'Diabetes mellitus tipo 2 (E11.9)',
+      medicationText: 'Metformina 850 mg cada 12 horas',
+      clinicalNotes: 'Paciente refiere dolor abdominal desde hace 3 días.',
+    } as unknown as ClaimListItem;
+    await crear(conCamposClinicos);
+
+    const boton = fixture.debugElement.query(By.css('[data-testid="btn-whatsapp-claim"]'));
+    const href = boton.nativeElement.getAttribute('href') as string;
+    const mensaje = decodeURIComponent(href.split('?text=')[1]);
+
+    expect(mensaje).not.toContain('Diabetes');
+    expect(mensaje).not.toContain('E11.9');
+    expect(mensaje).not.toContain('Metformina');
+    expect(mensaje).not.toContain('dolor abdominal');
+  });
+
+  it('la tecla Espacio activa el enlace de WhatsApp igual que un clic (CA-2.1)', async () => {
+    await crear(header({ carrierWhatsappNumber: '+59171548278' }));
+
+    const boton = fixture.debugElement.query(By.css('[data-testid="btn-whatsapp-claim"]'));
+    const anchorEl = boton.nativeElement as HTMLAnchorElement;
+    const clickSpy = vi.spyOn(anchorEl, 'click').mockImplementation(() => {});
+
+    const event = new KeyboardEvent('keydown', { key: ' ', cancelable: true });
+    anchorEl.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('un call center guardado sin ningún dígito no deja un enlace tel: roto (CA-2.3)', async () => {
+    await crear(header({ carrierCallCenterPhone: 'N/A' }));
+
+    expect(fixture.debugElement.query(By.css('[data-testid="btn-call-center-phone"]'))).toBeNull();
+  });
+
   it('sin ningún canal, muestra la nota de ausencia y ningún enlace', async () => {
     await crear(header());
 
     expect(fixture.debugElement.query(By.css('[data-testid="insurance-contact-absent"]'))).toBeTruthy();
     expect(fixture.debugElement.query(By.css('[data-testid="btn-whatsapp-claim"]'))).toBeNull();
-    expect(fixture.debugElement.query(By.css('[data-testid="btn-callcenter-claim"]'))).toBeNull();
+    expect(fixture.debugElement.query(By.css('[data-testid="btn-call-center-phone"]'))).toBeNull();
     expect(fixture.debugElement.query(By.css('[data-testid="btn-support-email-claim"]'))).toBeNull();
   });
 });
