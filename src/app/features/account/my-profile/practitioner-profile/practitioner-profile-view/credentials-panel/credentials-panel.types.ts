@@ -20,12 +20,15 @@ export const CREDENTIAL_ICONS: Readonly<Record<CredentialKind, NavIconName>> = {
   language: 'globe',
 } as const;
 
-/** El rótulo de la clase, tal como se lee arriba de cada tarjeta. */
-export const CREDENTIAL_KIND_LABELS: Readonly<Record<CredentialKind, string>> = {
-  license: 'Matrícula',
-  specialty: 'Especialidad',
-  education: 'Formación',
-  language: 'Idioma',
+/**
+ * El encabezado del bloque de cada clase, en plural: es el nombre de la lista,
+ * no de una tarjeta.
+ */
+export const CREDENTIAL_GROUP_LABELS: Readonly<Record<CredentialKind, string>> = {
+  license: 'Matrículas',
+  specialty: 'Especialidades',
+  education: 'Títulos y formación',
+  language: 'Idiomas',
 } as const;
 
 /**

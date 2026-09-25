@@ -549,6 +549,37 @@ describe('PractitionerProfileEdit', () => {
 
   /* ---- especialidades: sólo se agregan ------------------------------------- */
 
+  /**
+   * Se mudaron de «Credenciales» a «Datos personales» el 24/09/2026 (pedido
+   * del propietario): la ficha ya las lee ahí, y el editor quedaba
+   * desalineado con la pestaña que dice corregir.
+   */
+  it('«Agregar especialidades» vive en «Datos personales», no en «Credenciales»', () => {
+    const fixture = montarConVista();
+
+    // Pestaña 0, «Datos personales»: la sección y su «Agregar especialidad» están.
+    // El alta es un modal (D-04), así que el select vive en él y no en el panel.
+    const personales = panelAbierto(fixture);
+    expect(
+      personales.querySelector('[data-testid="edicion-especialidades-cargadas"]'),
+    ).not.toBeNull();
+    expect(personales.querySelector('[data-testid="especialidad-agregar"]')).not.toBeNull();
+
+    señal<number>('pestana').set(5);
+    fixture.detectChanges();
+
+    // Pestaña 5, «Credenciales»: ya no queda ni el formulario ni la tabla.
+    const credenciales = panelAbierto(fixture);
+    expect(credenciales.querySelector('[data-testid="especialidad-select"]')).toBeNull();
+    expect(credenciales.querySelector('[data-testid="tabla-especialidades"]')).toBeNull();
+    expect(credenciales.querySelector('[data-testid="especialidad-agregar"]')).toBeNull();
+    expect(credenciales.textContent).not.toContain('Agregar especialidad');
+    // La matrícula, que sí es de esta pestaña, sigue estando.
+    expect(
+      credenciales.querySelector('[data-testid="edicion-matriculas-cargadas"]'),
+    ).not.toBeNull();
+  });
+
   it('el botón de agregar especialidad exige haber elegido una', () => {
     montarYCargar();
 
@@ -966,6 +997,44 @@ describe('PractitionerProfileEdit', () => {
     expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-trabajo"]')).not.toBeNull();
   });
 
+  /* ---- Trayectoria son los cargos; los títulos, Credenciales -------------- */
+
+  it('«Trayectoria» abre los formularios de los cargos, no los de los títulos', () => {
+    // «En trayectoria aparecen los cargos históricos, pero al darle editar no
+    // aparecen los formularios correspondientes ... aparecen los que deberían
+    // aparecer en credenciales» — propietario, 24/09/2026.
+    const fixture = montarConVista();
+    señal<number>('pestana').set(4);
+    fixture.detectChanges();
+
+    const panel = panelAbierto(fixture);
+    const historial = panel.querySelector('app-work-history');
+    // El MISMO componente que la ficha, pidiendo sólo el historial laboral.
+    expect(historial?.getAttribute('secciones')).toBe('historial');
+    expect(historial?.getAttribute('layout')).toBe('tabla');
+    expect(panel.querySelector('[data-testid="credencial-tipo"]')).toBeNull();
+    expect(panel.querySelector('[data-testid="edicion-formacion-cargada"]')).toBeNull();
+
+    // Las lecturas propias del historial no son asunto de esta prueba.
+    http.match(() => true);
+  });
+
+  it('«Credenciales» junta matrículas y títulos, cada uno en su bloque', () => {
+    const fixture = montarConVista();
+    señal<number>('pestana').set(5);
+    fixture.detectChanges();
+
+    const panel = panelAbierto(fixture);
+    const titulos = [...panel.querySelectorAll('.edicion__titulo')].map((h) =>
+      h.textContent?.trim(),
+    );
+    expect(titulos).toEqual(['Tus matrículas cargadas', 'Tus títulos cargados']);
+    // Cada bloque ofrece su alta a la derecha de su barra; el formulario vive en un modal (D-04).
+    expect(panel.querySelector('app-filter-bar [data-testid="matricula-agregar"]')).not.toBeNull();
+    expect(panel.querySelector('app-filter-bar [data-testid="credencial-agregar"]')).not.toBeNull();
+    expect(panel.querySelector('app-work-history')).toBeNull();
+  });
+
   /* ---- formación: sólo se agrega ------------------------------------------- */
 
   it('el botón de agregar formación exige tipo y número', () => {
@@ -1218,9 +1287,9 @@ describe('PractitionerProfileEdit', () => {
       expect(await guarda()).toBe(true);
     });
 
-    it('Trayectoria ya no tiene el formulario en línea: se abre desde «Agregar título»', () => {
+    it('Credenciales no tiene el formulario del título en línea: se abre desde «Agregar título»', () => {
       const fixture = montarConVista();
-      componente.pestana.set(4);
+      componente.pestana.set(5);
       fixture.detectChanges();
       const panel = panelAbierto(fixture);
 
@@ -1429,7 +1498,7 @@ describe('PractitionerProfileEdit', () => {
       expect(visibles()).toEqual(['s-1']);
     });
 
-    it('la barra de especialidades y la de matrículas escriben cada una en su clave', () => {
+    it('las barras de especialidades, matrículas y títulos escriben cada una en su clave', () => {
       const fixture = montarConVista(CON_ESPECIALIDADES);
       /** Las claves de las barras de la pestaña abierta. */
       const clavesDe = (pestana: number): readonly string[] => {
@@ -1443,7 +1512,7 @@ describe('PractitionerProfileEdit', () => {
         );
       };
       expect(clavesDe(0)).toEqual(['qEspecialidades']);
-      expect(clavesDe(5)).toEqual(['qMatriculas']);
+      expect(clavesDe(5)).toEqual(['qMatriculas', 'qTitulos']);
     });
   });
 
@@ -1639,7 +1708,7 @@ describe('PractitionerProfileEdit', () => {
 
     it('la institución del catálogo se lee con su sigla y la escrita a mano, tal cual (Q-8)', () => {
       const fixture = montarConVista(CON_TITULOS);
-      componente.pestana.set(4);
+      componente.pestana.set(5);
       fixture.detectChanges();
 
       const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
@@ -1694,7 +1763,7 @@ describe('PractitionerProfileEdit', () => {
       expect(visibles()).toEqual(['cred-a', 'cred-b']);
     });
 
-    it('Trayectoria monta el historial laboral como tabla debajo de los títulos', () => {
+    it('Trayectoria monta sólo el historial laboral; los títulos van en Credenciales, debajo de las matrículas', () => {
       const fixture = montarConVista();
       componente.pestana.set(4);
       fixture.detectChanges();
@@ -1704,10 +1773,18 @@ describe('PractitionerProfileEdit', () => {
       const bloque = historial.componentInstance as WorkHistory;
       expect(bloque.secciones()).toBe('historial');
       expect(bloque.layout()).toBe('tabla');
-      const titulos = panelAbierto(fixture).querySelector(
-        '[data-testid="edicion-formacion-cargada"]',
-      );
-      const posicion = titulos?.compareDocumentPosition(historial.nativeElement as Node) ?? 0;
+      expect(
+        panelAbierto(fixture).querySelector('[data-testid="edicion-formacion-cargada"]'),
+      ).toBeNull();
+      http.match(() => true);
+
+      componente.pestana.set(5);
+      fixture.detectChanges();
+      const panel = panelAbierto(fixture);
+      const matriculas = panel.querySelector('[data-testid="edicion-matriculas-cargadas"]');
+      const titulos = panel.querySelector('[data-testid="edicion-formacion-cargada"]');
+      expect(titulos).not.toBeNull();
+      const posicion = matriculas?.compareDocumentPosition(titulos as Node) ?? 0;
       expect(posicion & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
@@ -1721,11 +1798,12 @@ describe('PractitionerProfileEdit', () => {
 
     it('la barra de títulos escribe en su propia clave', () => {
       const fixture = montarConVista();
-      componente.pestana.set(4);
+      componente.pestana.set(5);
       fixture.detectChanges();
 
-      const barra = fixture.debugElement.query(By.directive(FilterBar))
-        .componentInstance as FilterBar;
+      const barra = fixture.debugElement
+        .query(By.css('[data-testid="edicion-formacion-cargada"]'))
+        .query(By.directive(FilterBar)).componentInstance as FilterBar;
       expect(barra.searchParam()).toBe('qTitulos');
     });
 
@@ -2224,7 +2302,7 @@ describe('PractitionerProfileEdit', () => {
 
     it('con doce títulos se ven diez y el paginador dice «1–10 de 12»; la página 2 trae los otros dos', () => {
       const fixture = montarConVista(DOCE_TITULOS);
-      componente.pestana.set(4);
+      componente.pestana.set(5);
       fixture.detectChanges();
 
       const tabla = panelAbierto(fixture);
@@ -2427,7 +2505,7 @@ describe('PractitionerProfileEdit', () => {
           },
         ],
       });
-      componente.pestana.set(4);
+      componente.pestana.set(5);
       fixture.detectChanges();
       const titulo = panelAbierto(fixture).querySelector(
         '[data-testid="formacion-acciones-c-pend-archivo"]',
@@ -2458,7 +2536,7 @@ describe('PractitionerProfileEdit', () => {
           },
         ],
       });
-      componente.pestana.set(4);
+      componente.pestana.set(5);
       fixture.detectChanges();
       const titulo = panelAbierto(fixture).querySelector(
         '[data-testid="tabla-formacion"] [data-testid="formacion-estado-en-fila"]',
@@ -2628,7 +2706,11 @@ describe('PractitionerProfileEdit', () => {
       fixture.detectChanges();
 
       const panel = panelAbierto(fixture);
-      for (const testId of ['edicion-celular-trabajo', 'edicion-fijo-trabajo', 'edicion-correo-trabajo']) {
+      for (const testId of [
+        'edicion-celular-trabajo',
+        'edicion-fijo-trabajo',
+        'edicion-correo-trabajo',
+      ]) {
         expect(panel.querySelector(`[data-testid="${testId}"]`), testId).toBeNull();
       }
       const texto = (panel.textContent ?? '').replace(/\s+/g, ' ');

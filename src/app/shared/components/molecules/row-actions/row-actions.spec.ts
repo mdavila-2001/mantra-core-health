@@ -11,8 +11,8 @@ const DOS: readonly RowAction[] = [
 
 const CINCO: readonly RowAction[] = [
   { code: 'ver', label: 'Ver detalle', icon: 'note' },
-  { code: 'aceptar', label: 'Aceptar' },
-  { code: 'iniciar', label: 'Iniciar', disabled: true },
+  { code: 'aceptar', label: 'Aceptar', icon: 'check' },
+  { code: 'iniciar', label: 'Iniciar', icon: 'stethoscope', disabled: true },
   { code: 'reprogramar', label: 'Reprogramar', icon: 'calendar' },
   { code: 'anular', label: 'Anular', icon: 'remove', destructive: true },
 ];
@@ -103,6 +103,13 @@ describe('RowActions', () => {
     await abrir();
     for (const item of items()) {
       expect(item.textContent?.trim()).not.toBe('');
+    }
+  });
+
+  it('ninguna opción del desplegable queda sin su ícono', async () => {
+    await abrir();
+    for (const item of items()) {
+      expect(item.querySelector('app-nav-icon svg')).not.toBeNull();
     }
   });
 

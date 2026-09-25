@@ -23,8 +23,8 @@
  * | contacto privado · contacto del trabajo · dónde vivís | Contacto |
  * | — (a nombre de quién factura) | Facturación |
  * | tu consultorio propio | Dónde atiendo |
- * | dónde estudió el título · tus títulos | Trayectoria |
- * | habilitación · respaldos | Credenciales |
+ * | — (los cargos: dónde ejerció y dónde ejerce) | Trayectoria |
+ * | dónde estudió el título · habilitación · respaldos · tus títulos | Credenciales |
  * | — (lo que registró con la cuenta) | Actividad |
  *
  * Las dos últimas filas no salen del alta y tampoco se podían tirar: la
@@ -202,11 +202,15 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
   /* 8 · Tu título profesional y foto */
   profilePhotoBase64: PESTANA_MEDICO.personales,
   professionalTitle: PESTANA_MEDICO.personales,
-  professionalTitleEducation: PESTANA_MEDICO.trayectoria,
-  professionalTitleUniversity: PESTANA_MEDICO.trayectoria,
-  professionalTitleCountry: PESTANA_MEDICO.trayectoria,
-  professionalTitleCity: PESTANA_MEDICO.trayectoria,
-  professionalTitleFile: PESTANA_MEDICO.trayectoria,
+  /* Dónde estudió y sus títulos (paso 11) viven en «Credenciales» desde el
+     24/09/2026: son estudios, y «Trayectoria» son los cargos. El editor de
+     Trayectoria ofrecía el formulario de un título a quien venía a corregir
+     un cargo. */
+  professionalTitleEducation: PESTANA_MEDICO.credenciales,
+  professionalTitleUniversity: PESTANA_MEDICO.credenciales,
+  professionalTitleCountry: PESTANA_MEDICO.credenciales,
+  professionalTitleCity: PESTANA_MEDICO.credenciales,
+  professionalTitleFile: PESTANA_MEDICO.credenciales,
 
   /* 9 · Tu habilitación para ejercer */
   licenseNumber: PESTANA_MEDICO.credenciales,
@@ -218,7 +222,7 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
   credentialAttachments: PESTANA_MEDICO.credenciales,
 
   /* 11 · Tus títulos */
-  academicTitles: PESTANA_MEDICO.trayectoria,
+  academicTitles: PESTANA_MEDICO.credenciales,
 
   /*
    * 12 · Tus especialidades

@@ -33,6 +33,7 @@ import { DialogService } from '../../../../shared/components/molecules/dialog/di
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { Menu } from '../../../../shared/components/molecules/menu/menu';
 import { MenuItem } from '../../../../shared/components/molecules/menu/menu-item/menu-item';
+import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { MenuTrigger } from '../../../../shared/components/molecules/menu/menu-trigger/menu-trigger';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
@@ -210,6 +211,7 @@ export interface RecetaEnFicha {
     FormField,
     Menu,
     MenuItem,
+    NavIcon,
     MenuTrigger,
     ReferenceCombobox,
     Select,

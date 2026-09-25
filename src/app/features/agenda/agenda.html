@@ -551,6 +551,7 @@
             [disabled]="cita.pago?.state === opcion.code"
             (selected)="marcarPago(cita, opcion.code)"
           >
+            <app-nav-icon slot="icon" [name]="opcion.icon" />
             {{ opcion.label }}
           </app-menu-item>
         }
@@ -558,6 +559,7 @@
           <!-- El seguro es una marca SEPARADA del estado, por decisión del
                propietario: se alterna sola y no cambia en qué estado está. -->
           <app-menu-item (selected)="alternarSeguro(cita)">
+            <app-nav-icon slot="icon" name="umbrella" />
             {{ cita.pago.insuranceUsed ? 'Quitar «con seguro»' : 'Marcar «con seguro»' }}
           </app-menu-item>
         }

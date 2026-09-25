@@ -1,29 +1,24 @@
 /* El formulario ocupa el área de contenido y va centrado: regla de la casa
    pedida por el cliente el 09/09/2026 (`docs/components/composition-rules.md`
-   §5), que vale para toda pantalla nueva o retocada desde esa fecha.
+   §5).
 
-   Antes tenía `max-inline-size: 40rem` con esta nota: «un campo de fecha
-   estirado a 1400 px se lee como un error de maquetado». El diagnóstico era
-   correcto y la solución, no: medido en 1440 px, el formulario ocupaba 600 px
-   de un área de 1176 y dejaba **536 px en blanco a la derecha**. Lo que evita
-   las casillas kilométricas no es acotar el bloque sino repartir los campos en
-   columnas —una en móvil, dos desde 780 px, tres desde 1120— y dejar que el
-   tope lo ponga `.app-main__inner`. */
+   **Los campos se alinean por FILAS** (disciplina obligatoria desde el
+   24/09/2026): dos columnas de una grilla, no dos pilas independientes. Cada
+   campo de la izquierda cuadra con el de su misma fila a la derecha —
+   consultorio ↔ día, con quién ↔ hora, cómo lo atendés ↔ duración—; una
+   pila por columna dejaba cada campo a una altura distinta según cuánto
+   midiera el hint del vecino. En móvil es una sola columna, en el orden del
+   documento. */
 .cita {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--sp-5);
+    gap: var(--sp-5) var(--sp-4);
+    align-items: start;
     inline-size: 100%;
     margin-inline: auto;
 }
 
-/* Cada grupo es una decisión —con quién, cuándo, cómo— y apila sus campos por
-   dentro. Es lo que hace que el formulario use el ancho sin que ningún campo
-   se estire de lado a lado. */
-.cita__grupo {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-5);
+.cita > * {
     min-inline-size: 0;
 }
 
@@ -35,89 +30,41 @@
     grid-column: 1 / -1;
 }
 
+/* Un solo campo con su nota al pie: el buscador y el «¿No aparece?». */
+.cita__quien {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-5);
+}
+
 @media (min-width: 780px) {
     .cita {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    /* «Cómo lo atendés» y el motivo caben al lado de nada más: con dos
-       columnas quedan solos en su fila, así que la ocupan entera en vez de
-       dejar la mitad vacía —que es justo lo que la regla prohíbe—. */
-    .cita__grupo--como {
-        grid-column: 1 / -1;
-    }
+    /* Columna izquierda: consultorio, con quién, cómo lo atendés. Derecha:
+       día, hora, duración. Las filas fijas de la derecha son las que hacen
+       que cada par quede a la misma altura. */
+    .cita__consultorio { grid-column: 1; }
+    .cita__quien { grid-column: 1; }
+    .cita__modalidad { grid-column: 1; }
+    .cita__dia { grid-column: 2; grid-row: 1; }
+    .cita__hora { grid-column: 2; grid-row: 2; }
+    .cita__duracion { grid-column: 2; grid-row: 3; }
+
+    /* El motivo cierra a todo el ancho. Con una sola agenda la izquierda
+       tiene una fila menos y el motivo sube a ocupar ese hueco. */
+    .cita__motivo { grid-column: 1 / -1; }
+    .cita--sin-sede .cita__motivo { grid-column: 1; grid-row: 3; }
 
     /* Con el alta abierta manda ella: once campos de filiación no entran en
-       media pantalla, y las otras dos decisiones sí caben juntas debajo. */
-    .cita--alta .cita__grupo--quien {
-        grid-column: 1 / -1;
-    }
-
-    .cita--alta .cita__grupo--como {
-        grid-column: auto;
-    }
-}
-
-@media (min-width: 1120px) {
-    .cita {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .cita__grupo--como {
-        grid-column: auto;
-    }
-
-    /* Con el alta abierta quedan dos grupos para tres columnas: «cuándo» toma
-       dos y no queda ningún hueco. */
-    .cita--alta .cita__grupo--cuando {
-        grid-column: span 2;
-    }
-}
-
-/* Día y hora van juntos: son una sola decisión partida en dos campos. En
-   móvil se apilan solos por el `minmax`, sin media query. */
-.cita__cuando,
-.cita__duracion {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-    gap: var(--sp-4);
-}
-
-.cita__modalidad {
-    margin: 0;
-    padding: var(--sp-4);
-    border: 1px solid var(--border-subtle);
-    /* `--radius-md` no existe en styles.css (el token real es `--r-md`): sin
-       fallback, `border-radius` cae a su inicial `0` y la caja quedaba con
-       las esquinas cuadradas, la única de la pantalla que no combina con el
-       resto de las cajas con borde (ver `alert.css`, que usa `--r-md`). */
-    border-radius: var(--r-md);
-}
-
-.cita__modalidad-titulo {
-    padding-inline: var(--sp-1);
-    /* Mismo defecto: `--fs-sm` no existe. `font-size` se hereda del cuerpo del
-       formulario (15 px) en vez de leerse como una leyenda secundaria.
-       `--fs-caption` es el token real, el mismo que usa `form-field.css`
-       para su hint. */
-    font-size: var(--fs-caption);
-    font-weight: 600;
-    color: var(--text-secondary);
-}
-
-.cita__modalidad-opciones {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--sp-4);
-    margin-block-start: var(--sp-2);
-}
-
-.cita__modalidad-opcion {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sp-2);
-    cursor: pointer;
-    color: var(--text-primary);
+       media pantalla, así que ocupa la fila entera y lo demás baja debajo. */
+    .cita--alta .cita__quien { grid-column: 1 / -1; grid-row: 2; }
+    .cita--alta .cita__modalidad { grid-row: 3; }
+    .cita--alta .cita__hora { grid-row: 3; }
+    .cita--alta .cita__duracion { grid-row: 4; }
+    .cita--alta .cita__motivo,
+    .cita--alta.cita--sin-sede .cita__motivo { grid-column: 1; grid-row: 4; }
 }
 
 /* La frase de «qué va a pasar» se lee como una nota del sistema, no como un
@@ -128,7 +75,7 @@
     border-inline-start: 3px solid var(--border-strong);
     background: var(--bg-inset);
     color: var(--text-secondary);
-    /* `--fs-sm` tampoco existe acá: ver la nota de `.cita__modalidad-titulo`. */
+    /* `--fs-sm` tampoco existe acá: el token real es `--fs-caption`. */
     font-size: var(--fs-caption);
 }
 

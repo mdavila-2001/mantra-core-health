@@ -357,7 +357,6 @@
                   class="edicion__campo-ancho"
                   pinId="edicion-domicilio"
                   etiquetaConfirmada="Tu domicilio"
-                  pregunta="¿Es acá donde vivís? Movete por el mapa para comprobarlo."
                   etiquetaQuitar="Quitar la ubicación de tu domicilio"
                   etiquetaMapa="La ubicación de tu domicilio en el mapa"
                   etiquetaMarcar="Marcar mi domicilio en el mapa"
@@ -387,7 +386,6 @@
                   class="edicion__campo-ancho"
                   pinId="edicion-trabajo"
                   etiquetaConfirmada="Tu lugar de trabajo"
-                  pregunta="¿Es acá donde atendés? Movete por el mapa para comprobarlo."
                   etiquetaQuitar="Quitar la ubicación de tu trabajo"
                   etiquetaMapa="La ubicación de tu trabajo en el mapa"
                   etiquetaMarcar="Marcar tu lugar de trabajo en el mapa"
@@ -490,100 +488,29 @@
           </app-tab>
 
           <!-- ─── Trayectoria ───────────────────────────────────────────────
-               Se AGREGA, no se edita: un título verificado es un hecho
-               comprobado, no un texto que se corrige. Nace pendiente de
-               verificación; el tipo sale del catálogo dinámico (los cinco
-               CREDENTIAL_TYPE_*).
+               Los cargos: dónde ejerciste y dónde ejercés, con su tabla para
+               agregar, corregir o retirar cada vínculo. Es lo que la ficha
+               muestra en esta misma pestaña, así que el lápiz tiene que llevar
+               a los formularios de ESOS registros.
 
-               Desde el 23/09/2026 (D-04) el alta vive en un modal que se abre
-               desde «Agregar título», a la derecha de la barra de la tabla
-               (ADR-0015, regla 5). El formulario en línea sobre la tabla
-               empujaba lo ya cargado fuera de la pantalla. -->
+               Hasta el 24/09/2026 acá vivían también los títulos; se mudaron a
+               «Credenciales», junto a las matrículas (propietario). Es el MISMO
+               `app-work-history` que «Dónde atiendo», con su bloque de historial
+               como tabla. Sólo se dibuja con la pestaña abierta, igual que
+               aquélla: montado pide el historial. -->
           <app-tab [label]="pestanas[4]">
-            <!-- Lo ya cargado. Sin esta tabla, quien agregaba un título no veía
-                 dónde había quedado —vivía en la ficha de lectura— y lo volvía a
-                 cargar (propietario, 13/09/2026). -->
-            <section class="edicion__seccion" data-testid="edicion-formacion-cargada">
-              <h3 class="edicion__titulo">Tu trayectoria cargada</h3>
-              <p class="edicion__nota">
-                Títulos, diplomados, maestrías y doctorados, del más reciente al más antiguo. Lo que
-                agregás queda pendiente de verificación: lo revisa el equipo que verifica.
-              </p>
-
-              <!-- La barra se dibuja siempre, aun sin títulos: es la que ofrece
-                   «Agregar título». Busca en tipo, número e institución. -->
-              <app-filter-bar
-                searchLabel="Buscar por tipo, número o institución"
-                searchPlaceholder="Tipo, número o institución"
-                [searchParam]="claveBusquedaTitulo"
-                [filters]="filtrosFormacion"
-                (filtersChanged)="onFiltrosFormacion($event)"
-              >
-                <button
-                  filter-bar-action
-                  app-button
-                  variant="primary"
-                  size="sm"
-                  type="button"
-                  data-testid="credencial-agregar"
-                  (clicked)="abrirAltaDeTitulo()"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    aria-hidden="true"
-                    focusable="false"
-                  >
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                  Agregar título
-                </button>
-              </app-filter-bar>
-
-              @if (filasFormacion().length === 0) {
-                <p class="edicion__vacio">Todavía no cargaste ningún título.</p>
-              } @else if (filasFormacionVisibles().length === 0) {
-                <p class="edicion__vacio" data-testid="formacion-sin-coincidencias">
-                  Ningún título coincide con la búsqueda o el filtro.
-                </p>
-              } @else {
-                <app-data-table
-                  class="edicion__tabla"
-                  data-testid="tabla-formacion"
-                  [state]="estadoFormacion()"
-                  [columns]="columnasFormacion()"
-                  [trackBy]="claveDeFila"
-                  caption="Títulos y formación cargados, del más reciente al más antiguo"
-                  maxHeight="420px"
-                />
-                <app-pagination
-                  class="edicion__paginacion"
-                  data-testid="paginacion-formacion"
-                  [totalItems]="filasFormacionVisibles().length"
-                  [(page)]="paginaFormacion"
-                  [(pageSize)]="tamanoPaginaFormacion"
-                />
-              }
-            </section>
-
-            <!-- «Lugares donde trabajé» (D-09): el mismo `app-work-history` de
-                 «Dónde atiendo», con su bloque de historial como tabla. Sólo
-                 con la pestaña abierta, como aquel: montado pide el historial.
-                 Su barra busca bajo `q` y la de títulos bajo `qTitulos`, así
-                 que una no filtra la otra. -->
             @if (pestana() === pestanaEditor.trayectoria) {
               <app-work-history class="edicion__historial" secciones="historial" layout="tabla" />
             }
           </app-tab>
 
           <!-- ─── Credenciales ──────────────────────────────────────────────
-               La habilitación para ejercer: las matrículas, con su tabla, su
-               barra con buscador y «Agregar» a la derecha, y el alta en un
-               modal (D-04, ADR-0015). Las especialidades vivían acá y se
-               mudaron a «Datos personales» el 24/09/2026. -->
+               La habilitación para ejercer y la formación: las matrículas y los
+               títulos, cada uno con su tabla, su barra con buscador y «Agregar»
+               a la derecha, y el alta en un modal (D-04, ADR-0015). Se AGREGAN,
+               no se editan. Las especialidades vivían acá y se mudaron a «Datos
+               personales»; los títulos llegaron desde «Trayectoria». Las dos
+               mudanzas, el 24/09/2026 (propietario). -->
           <app-tab [label]="pestanas[5]">
             <!-- Las matrículas, con la misma disciplina que los títulos (D-04,
                  ADR-0015): barra con buscador y «Agregar matrícula» a la derecha,
@@ -648,6 +575,79 @@
                   [totalItems]="filasMatriculasVisibles().length"
                   [(page)]="paginaMatriculas"
                   [(pageSize)]="tamanoPaginaMatriculas"
+                />
+              }
+            </section>
+
+            <!-- Los títulos y la formación. Vivían en «Trayectoria», que son los
+                 cargos, y se mudaron acá con las matrículas (propietario,
+                 24/09/2026). Se AGREGAN, no se editan: un título verificado es un
+                 hecho comprobado. El alta vive en un modal que abre «Agregar
+                 título», a la derecha de la barra (D-04, ADR-0015, regla 5). Sin
+                 esta tabla, quien agregaba un título no veía dónde había quedado
+                 y lo volvía a cargar (propietario, 13/09/2026). -->
+            <section class="edicion__seccion" data-testid="edicion-formacion-cargada">
+              <h3 class="edicion__titulo">Tus títulos cargados</h3>
+              <p class="edicion__nota">
+                Títulos, diplomados, maestrías y doctorados, del más reciente al más antiguo. Lo que
+                agregás queda pendiente de verificación: lo revisa el equipo que verifica.
+              </p>
+
+              <!-- La barra se dibuja siempre, aun sin títulos: es la que ofrece
+                   «Agregar título». Busca en tipo, número e institución. -->
+              <app-filter-bar
+                searchLabel="Buscar por tipo, número o institución"
+                searchPlaceholder="Tipo, número o institución"
+                [searchParam]="claveBusquedaTitulo"
+                [filters]="filtrosFormacion"
+                (filtersChanged)="onFiltrosFormacion($event)"
+              >
+                <button
+                  filter-bar-action
+                  app-button
+                  variant="primary"
+                  size="sm"
+                  type="button"
+                  data-testid="credencial-agregar"
+                  (clicked)="abrirAltaDeTitulo()"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  Agregar título
+                </button>
+              </app-filter-bar>
+
+              @if (filasFormacion().length === 0) {
+                <p class="edicion__vacio">Todavía no cargaste ningún título.</p>
+              } @else if (filasFormacionVisibles().length === 0) {
+                <p class="edicion__vacio" data-testid="formacion-sin-coincidencias">
+                  Ningún título coincide con la búsqueda o el filtro.
+                </p>
+              } @else {
+                <app-data-table
+                  class="edicion__tabla"
+                  data-testid="tabla-formacion"
+                  [state]="estadoFormacion()"
+                  [columns]="columnasFormacion()"
+                  [trackBy]="claveDeFila"
+                  caption="Títulos y formación cargados, del más reciente al más antiguo"
+                  maxHeight="420px"
+                />
+                <app-pagination
+                  class="edicion__paginacion"
+                  data-testid="paginacion-formacion"
+                  [totalItems]="filasFormacionVisibles().length"
+                  [(page)]="paginaFormacion"
+                  [(pageSize)]="tamanoPaginaFormacion"
                 />
               }
             </section>

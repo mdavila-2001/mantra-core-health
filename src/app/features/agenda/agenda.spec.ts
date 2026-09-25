@@ -2259,8 +2259,27 @@ describe('Agenda', () => {
     // En curso ya no se cancela ni se mueve: el backend tampoco lo acepta.
     expect(boton('agenda-cancelar')).toBeNull();
 
-    interno<(c: unknown) => void>('completarCita')(citas().data?.[0]);
+    const confirmar = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+    void interno<(c: unknown) => Promise<void>>('completarCita')(citas().data?.[0]);
     await harness.fixture.whenStable();
+
+    // Antes de completar se revisa el historial del paciente y se pregunta.
+    http
+      .expectOne((r) => r.url === '/clinical/patients/p-1/summary')
+      .flush({
+        patientProfileId: 'p-1',
+        conditions: [],
+        allergies: [],
+        medicationRequests: [],
+        observations: [],
+        encounters: [],
+        careEpisodes: [],
+        limit: 50,
+        truncated: [],
+      });
+    // La respuesta y el diálogo se encadenan en promesas: dejarlas correr.
+    await new Promise((listo) => setTimeout(listo, 0));
+    expect(confirmar).toHaveBeenCalledTimes(1);
 
     const req = http.expectOne('/scheduling/bookings/b-1/complete');
     req.flush({
@@ -2269,6 +2288,111 @@ describe('Agenda', () => {
       occurredAt: '2026-08-15T12:30:00.000Z',
     });
     responderResto();
+  });
+
+  describe('completar la cita pide confirmación', () => {
+    /** El resumen que la API devuelve; los bloques que no se pasan van vacíos. */
+    function resumenClinico(parcial: Record<string, unknown[]> = {}): Record<string, unknown> {
+      return {
+        patientProfileId: 'p-1',
+        conditions: [],
+        allergies: [],
+        medicationRequests: [],
+        observations: [],
+        encounters: [],
+        careEpisodes: [],
+        limit: 50,
+        truncated: [],
+        ...parcial,
+      };
+    }
+
+    async function completarConRespuesta(
+      respuesta: () => void,
+      confirma: boolean,
+    ): Promise<ReturnType<typeof vi.spyOn>> {
+      await montar();
+      await responderConEstado('BOOKING_IN_PROGRESS', 'En curso');
+      await verSolapaDeCitas();
+      const confirmar = vi
+        .spyOn(TestBed.inject(DialogService), 'confirm')
+        .mockResolvedValue(confirma);
+
+      void interno<(c: unknown) => Promise<void>>('completarCita')(citas().data?.[0]);
+      await harness.fixture.whenStable();
+      respuesta();
+      await new Promise((listo) => setTimeout(listo, 0));
+      return confirmar as unknown as ReturnType<typeof vi.spyOn>;
+    }
+
+    const resumenDe = (cuerpo: Record<string, unknown>) => (): void => {
+      http.expectOne((r) => r.url === '/clinical/patients/p-1/summary').flush(cuerpo);
+    };
+
+    it('sin nada registrado avisa que pudo ser un clic por error', async () => {
+      const confirmar = await completarConRespuesta(resumenDe(resumenClinico()), false);
+
+      const [config] = confirmar.mock.calls[0] as [{ message: string; confirmLabel: string }];
+      expect(config.message).toContain('no tiene nada registrado');
+      expect(config.confirmLabel).toBe('Completar igual');
+      // Dijo que no: la cita no se toca.
+      http.expectNone('/scheduling/bookings/b-1/complete');
+    });
+
+    it('con un encuentro del día lista lo registrado y completa al confirmar', async () => {
+      const confirmar = await completarConRespuesta(
+        resumenDe(
+          resumenClinico({
+            encounters: [{ id: 'e-1', statusConceptId: 'c-x', startAt: CITA.startAt }],
+            medicationRequests: [
+              { id: 'r-1', encounterId: 'e-1' },
+              { id: 'r-2', encounterId: 'e-otro' },
+            ],
+          }),
+        ),
+        true,
+      );
+
+      const [config] = confirmar.mock.calls[0] as [
+        { message: string; details: { label: string; value: string }[] },
+      ];
+      expect(config.details).toEqual([
+        { label: 'Encuentros', value: '1' },
+        { label: 'Recetas', value: '1' },
+      ]);
+      http.expectOne('/scheduling/bookings/b-1/complete').flush({
+        bookingId: 'b-1',
+        statusConceptId: 'c-completada',
+        occurredAt: '2026-08-15T12:30:00.000Z',
+      });
+      responderResto();
+    });
+
+    it('un encuentro de otro día no cuenta como de esta cita', async () => {
+      const confirmar = await completarConRespuesta(
+        resumenDe(
+          resumenClinico({
+            encounters: [{ id: 'e-1', statusConceptId: 'c-x', startAt: '2026-01-02T13:00:00.000Z' }],
+          }),
+        ),
+        false,
+      );
+
+      const [config] = confirmar.mock.calls[0] as [{ message: string }];
+      expect(config.message).toContain('no tiene nada registrado');
+    });
+
+    it('si no se puede leer el historial, lo dice y deja completar igual', async () => {
+      const confirmar = await completarConRespuesta(() => {
+        http
+          .expectOne((r) => r.url === '/clinical/patients/p-1/summary')
+          .flush({ message: 'Sin permiso' }, { status: 403, statusText: 'Forbidden' });
+      }, false);
+
+      const [config] = confirmar.mock.calls[0] as [{ message: string; confirmLabel: string }];
+      expect(config.message).toContain('No pudimos revisar');
+      expect(config.confirmLabel).toBe('Completar la cita');
+    });
   });
 
   it('una cita completada no ofrece ninguna acción', async () => {

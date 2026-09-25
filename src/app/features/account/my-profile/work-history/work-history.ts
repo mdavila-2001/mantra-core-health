@@ -1389,7 +1389,9 @@ export class WorkHistory implements OnInit {
    * algo pendiente, y retirar va último porque es el que no se deshace.
    */
   protected accionesDeSede(sede: PracticeSite): readonly RowAction[] {
-    const acciones: RowAction[] = [{ code: 'qr', label: this.etiquetaDelQr(sede) }];
+    const acciones: RowAction[] = [
+      { code: 'qr', label: this.etiquetaDelQr(sede), icon: 'qr' },
+    ];
     if (sede.isOwnSite) {
       acciones.push({ code: 'editar', label: 'Editar', icon: 'edit' });
     }

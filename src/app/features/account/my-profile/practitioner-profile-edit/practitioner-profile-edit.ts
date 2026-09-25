@@ -521,7 +521,6 @@ export class PractitionerProfileEdit {
     confirmada: 'edicion-domicilio-confirmada',
     avisoGeocodificacion: 'edicion-domicilio-aviso-geo',
     quitar: 'edicion-domicilio-quitar-gps',
-    sinConfirmar: 'edicion-domicilio-sin-confirmar',
     confirmar: 'edicion-domicilio-confirmar',
     usarUbicacion: 'edicion-domicilio-usar-ubicacion',
     marcarEnMapa: 'edicion-domicilio-marcar',
@@ -532,7 +531,6 @@ export class PractitionerProfileEdit {
     confirmada: 'edicion-trabajo-confirmada',
     avisoGeocodificacion: 'edicion-trabajo-aviso-geo',
     quitar: 'edicion-trabajo-quitar-gps',
-    sinConfirmar: 'edicion-trabajo-sin-confirmar',
     confirmar: 'edicion-trabajo-confirmar',
     usarUbicacion: 'edicion-trabajo-usar-ubicacion',
     marcarEnMapa: 'edicion-trabajo-marcar',
@@ -2080,6 +2078,7 @@ export class PractitionerProfileEdit {
     return {
       code: 'descargar',
       label: this.descargando() === id ? 'Descargando…' : 'Descargar',
+      icon: 'download',
       disabled: this.descargando() !== null,
     };
   }

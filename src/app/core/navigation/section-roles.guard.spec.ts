@@ -76,18 +76,19 @@ describe('seccionRolesGuard', () => {
     expect(ejecutar('/directory', ['USER', 'PATIENT'])).toBe(true);
   });
 
-  it('la doctora escribiendo la dirección a mano no entra', () => {
+  it('la doctora entra a la Guía y a la ficha (pedido del 24/09/2026)', () => {
+    expect(ejecutar('/directory', ['USER', 'PRACTITIONER', 'CLINICIAN'])).toBe(true);
+    expect(ejecutar('/directory/abc-123', ['PRACTITIONER'])).toBe(true);
+  });
+
+  it('quien no es paciente ni médico, escribiendo la dirección a mano, no entra', () => {
     // Es el caso que el filtrado del menú no cubría: el enlace guardado, el
     // correo con la dirección, el historial del navegador.
-    expect(destino(ejecutar('/directory', ['USER', 'PRACTITIONER', 'CLINICIAN']))).toBe(
-      SECCION_DENEGADA_ROUTE,
-    );
+    expect(destino(ejecutar('/directory', ['USER', 'CLINICIAN']))).toBe(SECCION_DENEGADA_ROUTE);
   });
 
   it('la ficha de un profesional tampoco: es parte de la Guía', () => {
-    expect(destino(ejecutar('/directory/abc-123', ['PRACTITIONER']))).toBe(
-      SECCION_DENEGADA_ROUTE,
-    );
+    expect(destino(ejecutar('/directory/abc-123', ['CLINICIAN']))).toBe(SECCION_DENEGADA_ROUTE);
   });
 
   it('rebota al panel y no al login: la sesión es válida, el rol no alcanza', () => {
@@ -177,7 +178,7 @@ describe('seccionRolesGuard', () => {
   });
 
   it('los parámetros de consulta no confunden la resolución', () => {
-    expect(destino(ejecutar('/directory?especialidad=cardiologia', ['PRACTITIONER']))).toBe(
+    expect(destino(ejecutar('/directory?especialidad=cardiologia', ['CLINICIAN']))).toBe(
       SECCION_DENEGADA_ROUTE,
     );
   });

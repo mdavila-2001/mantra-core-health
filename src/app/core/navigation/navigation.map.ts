@@ -164,9 +164,10 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // que un texto no puede desincronizarse del otro.
     //
     // `roles: [ANY_ROLE]` porque la portada en sí no oculta nada: quien entra
-    // ve los nodos que sus propios roles ya le abren — p. ej. quien ejerce no
-    // ve el nodo de la guía de médicos, que sigue siendo exclusiva del
-    // paciente (corrección #2). El filtro real vive en cada sección, no acá.
+    // ve los nodos que sus propios roles ya le abren — p. ej. quien administra
+    // no ve el nodo de la guía de médicos, que es del paciente y del médico
+    // (corrección #2, ampliada el 24/09/2026). El filtro real vive en cada
+    // sección, no acá.
     //
     // Va **antes** que los cuatro en este registro a propósito: el orden de
     // dibujo del menú sale de acá (`navigation.subgroups.ts` sólo agrupa).
@@ -243,13 +244,18 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // «Directorios», que es la que ahora ocupa el renglón. Ver el motivo
     // entero en la sección `directories`. Esto **no** toca la corrección #2:
     // `roles` + `exclusiveRoles` siguen siendo quienes cierran la puerta, y
-    // esta línea sólo decide dónde se ofrece — al médico se le sigue negando
-    // la pantalla, no se le esconde un renglón que igual podría abrir.
+    // esta línea sólo decide dónde se ofrece — a quien administra se le sigue
+    // negando la pantalla, no se le esconde un renglón que igual podría abrir.
     fueraDelMenuPara: [ANY_ROLE],
     label: 'Directorio de médicos',
     group: 'General',
     icon: 'directory',
-    roles: ['PATIENT'],
+    // **El médico vuelve a entrar** (pedido del cliente, 24/09/2026): «añadamos
+    // doctores al directorio en el perfil de doctores también». Buscar a un
+    // colega para derivar es parte de atender, igual que saber dónde queda una
+    // farmacia. `exclusiveRoles` se queda: el resto de la corrección #2 —que
+    // no lo vean los roles de administración ni el comodín— no cambió.
+    roles: ['PATIENT', 'PRACTITIONER'],
     exclusiveRoles: true,
     availability: 'disponible',
     summary: 'Todos los médicos de la red, agrupados por especialidad.',
@@ -350,8 +356,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // (§4.H, 22/08) se lo quitara, y lo sigue teniendo: la sección es suya
     // —`roles: [ANY_ROLE]`, sin `hiddenFor`—, aparece en su portada de
     // directorios y en «Tus accesos». Lo único que cambia es por dónde entra.
-    // «Directorio de médicos» (`directory`) sigue siendo exclusivo del
-    // paciente por la corrección #2, que esta decisión tampoco toca.
+    // «Directorio de médicos» (`directory`) se le abrió aparte, el 24/09/2026
+    // (ver su fila).
     fueraDelMenuPara: [ANY_ROLE],
     label: 'Directorio de clínicas',
     group: 'General',
