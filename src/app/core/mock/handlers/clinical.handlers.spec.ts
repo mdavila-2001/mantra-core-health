@@ -1,12 +1,15 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { condiciones, type CondicionSimulada } from '../fixtures/clinica';
-import { ESTUDIO, VERIFICACION_DX } from '../fixtures/conceptos';
+import type { ClinicalNoteVersionRef } from '../../data-access/chart-notes/chart-notes.types';
+import { condiciones, notas, NOTA_TIPO_EVOLUCION, type CondicionSimulada, type NotaSimulada } from '../fixtures/clinica';
+import { ESTADO, ESTUDIO, VERIFICACION_DX } from '../fixtures/conceptos';
 import { PACIENTE } from '../fixtures/personas';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
+import { Coleccion } from '../mock-store';
 import { registrarClinica } from './clinical.handlers';
 import { registrarDiagnostico } from './diagnostics.handlers';
+import { registerMedicalNotes } from './medical-notes.handlers';
 
 interface OrdenWire {
   readonly id: string;
@@ -27,9 +30,9 @@ interface OrdenWire {
  * 3. Repetir guarda el enlace **y** la justificación, y nace activa.
  * 4. Sin duplicado, el alta sigue igual que siempre.
  *
- * El router registra `clinical` **y** `diagnostics`: la primera escribe la
- * orden, la segunda es la única forma de releerla y comprobar qué quedó
- * guardado — el alta sólo devuelve `id`/`status`.
+ * El router registra `clinical` **y** `diagnostics`: diagnóstico escribe y
+ * relee la orden para comprobar qué quedó guardado; clínica conserva las
+ * otras escrituras del encuentro. El alta sólo devuelve `id`/`status`.
  */
 describe('POST /clinical/service-requests · antiduplicación de estudios', () => {
   const router = new MockRouter();
@@ -243,4 +246,133 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
 
     expect(respuesta.status).toBe(409);
   });
+});
+
+describe('/charts/notes · contrato tras mudar el handler', () => {
+  const router = new MockRouter();
+  const doctor = buscarUsuario('medica')!;
+
+  registrarClinica(router);
+  registerMedicalNotes(router);
+
+  function call<T>(method: MockMethod, path: string, body: unknown): T {
+    const match = router.match(method, path);
+    if (match === null) throw new Error(`No existe ${method} ${path}`);
+    return match.handler({
+      method,
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body,
+      headers: new HttpHeaders(),
+      user: doctor,
+    }) as T;
+  }
+
+  function createNote(body: unknown = { patientProfileId: PACIENTE.id }) {
+    return call<{ status: number; body: ClinicalNoteVersionRef }>('POST', '/charts/notes', body);
+  }
+
+  it('las tres rutas pertenecen a notas; clínica deja de registrar notas y órdenes', () => {
+    const notesRouter = new MockRouter();
+    registerMedicalNotes(notesRouter);
+    expect(notesRouter.rutas()).toEqual([
+      { method: 'POST', pattern: '/charts/notes' },
+      { method: 'PUT', pattern: '/charts/notes/:id/versions' },
+      { method: 'POST', pattern: '/charts/notes/:id/versions' },
+    ]);
+
+    const clinicalRouter = new MockRouter();
+    registrarClinica(clinicalRouter);
+    expect(clinicalRouter.rutas().some(({ pattern }) => pattern.startsWith('/charts/notes'))).toBe(false);
+    expect(clinicalRouter.match('POST', '/clinical/service-requests')).toBeNull();
+  });
+
+  it('conserva el 201, los campos de la nota, la lectura del expediente y la persistencia', () => {
+    const input = {
+      patientProfileId: PACIENTE.id,
+      authorProfileId: doctor.practitionerProfileId!,
+      encounterId: 'c0-note-contract-encounter',
+      noteTypeConceptId: 'c0-note-type',
+      chiefComplaintText: 'Motivo sintético C0',
+      subjectiveText: 'Subjetivo sintético C0',
+      objectiveText: 'Objetivo sintético C0',
+      assessmentText: 'Apreciación sintética C0',
+      planText: 'Plan sintético C0',
+    };
+    const response = createNote(input);
+    expect(response).toEqual({
+      status: 201,
+      body: {
+        noteId: expect.any(String),
+        versionId: expect.any(String),
+        versionNumber: 1,
+        lifecycleStatusConceptId: ESTADO['ST-DRAFT'],
+        versionStatusConceptId: ESTADO['ST-DRAFT'],
+      },
+    });
+    const { patientProfileId: _patientId, ...chartInput } = input;
+    const chart = call<{ notes: readonly Omit<NotaSimulada, 'patientProfileId' | 'id'>[] }>(
+      'GET', `/charts/patients/${PACIENTE.id}/chart`, null,
+    );
+    expect(chart.notes.find((note) => note.noteId === response.body.noteId)).toMatchObject({
+      ...chartInput,
+      currentVersionId: response.body.versionId,
+      versionNumber: 1,
+      signedAt: null,
+      releasedToPatient: false,
+    });
+    const restored = new Coleccion<NotaSimulada>([], 'mock.clinica.notas');
+    expect(restored.get(response.body.noteId)).toMatchObject(input);
+  });
+
+  it('un cuerpo vacío conserva los valores por omisión anteriores', () => {
+    const response = createNote({});
+    expect(response.status).toBe(201);
+    expect(notas.get(response.body.noteId)).toMatchObject({
+      patientProfileId: '',
+      authorProfileId: doctor.practitionerProfileId,
+      noteTypeConceptId: NOTA_TIPO_EVOLUCION,
+      lifecycleStatusConceptId: ESTADO['ST-DRAFT'],
+      chiefComplaintText: '',
+      subjectiveText: '',
+      objectiveText: '',
+      assessmentText: '',
+      planText: '',
+    });
+  });
+
+  for (const method of ['PUT', 'POST'] as const) {
+    it(`${method} agrega una versión, conserva la nota y persiste el cambio`, () => {
+      const initial = createNote({ patientProfileId: PACIENTE.id, subjectiveText: 'Texto inicial sintético' });
+      const response = call<{ status: number; body: ClinicalNoteVersionRef }>(
+        method, `/charts/notes/${initial.body.noteId}/versions`, { planText: 'Plan actualizado sintético' },
+      );
+      expect(response).toEqual({
+        status: 201,
+        body: {
+          ...initial.body,
+          versionId: expect.any(String),
+          versionNumber: 2,
+        },
+      });
+      expect(response.body.versionId).not.toBe(initial.body.versionId);
+      const restored = new Coleccion<NotaSimulada>([], 'mock.clinica.notas');
+      expect(restored.get(initial.body.noteId)).toMatchObject({
+        noteId: initial.body.noteId,
+        patientProfileId: PACIENTE.id,
+        subjectiveText: 'Texto inicial sintético',
+        planText: 'Plan actualizado sintético',
+        currentVersionId: response.body.versionId,
+        versionNumber: 2,
+      });
+    });
+
+    it(`${method} conserva el 404 de una nota inexistente`, () => {
+      expect(call<MockReply>(method, '/charts/notes/c0-missing-note/versions', {})).toEqual({
+        status: 404,
+        body: { statusCode: 404, code: 'NOT_FOUND', message: 'Nota no encontrada', error: 'Not Found' },
+      });
+    });
+  }
 });

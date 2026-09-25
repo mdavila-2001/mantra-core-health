@@ -86,6 +86,36 @@ describe('backend simulado', () => {
     }
   });
 
+  it('registra una sola vez cada ruta trasladada y la reserva de C3', () => {
+    const routes = [
+      { method: 'POST', pattern: '/charts/notes' },
+      { method: 'PUT', pattern: '/charts/notes/:id/versions' },
+      { method: 'POST', pattern: '/charts/notes/:id/versions' },
+      { method: 'POST', pattern: '/clinical/service-requests' },
+      { method: 'POST', pattern: '/clinical/conditions/:id/verification' },
+    ];
+    for (const route of routes) {
+      expect(router.rutas().filter((candidate) =>
+        candidate.method === route.method && candidate.pattern === route.pattern,
+      )).toEqual([route]);
+    }
+  });
+
+  it('la verificación reservada para C3 responde 404 con su mensaje contractual', () => {
+    const request = peticion('POST', '/clinical/conditions/:id/verification', buscarUsuario('medica')!);
+    const match = router.match('POST', request.path);
+    expect(match).not.toBeNull();
+    expect(match!.handler(request)).toEqual({
+      status: 404,
+      body: {
+        statusCode: 404,
+        code: 'NOT_FOUND',
+        message: 'Pendiente: carril C3',
+        error: 'Not Found',
+      },
+    });
+  });
+
   it('cada cuenta de prueba entra y su token vuelve a ella', () => {
     for (const user of MOCK_USERS) {
       const login = router.match('POST', '/iam/auth/login')!;
