@@ -27,7 +27,6 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
-import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
 import { mensajeDeEscritura } from '../../mensaje-de-escritura';
 
@@ -120,9 +119,6 @@ export class CarePlanBlock implements DraftBlock {
   /** El encuentro en curso, cuando el bloque vive dentro de la atención. */
   readonly encounterId = input<string | null>(null);
 
-  /** Las citas de la persona, para atar el plan a la consulta donde se acordó. */
-  readonly citas = input<readonly CitaDelPaciente[]>([]);
-
   /**
    * Los diagnósticos de la persona, ya traducidos por el expediente.
    *
@@ -143,7 +139,6 @@ export class CarePlanBlock implements DraftBlock {
   protected readonly motivo = signal('');
   protected readonly desde = signal<Date | null>(null);
   protected readonly hasta = signal<Date | null>(null);
-  protected readonly citaElegida = signal<string | null>(null);
   protected readonly diagnosticoElegido = signal<string | null>(null);
 
   /**
@@ -162,7 +157,6 @@ export class CarePlanBlock implements DraftBlock {
       this.motivo().trim() !== '' ||
       this.desde() !== null ||
       this.hasta() !== null ||
-      this.citaElegida() !== null ||
       this.diagnosticoElegido() !== null ||
       this.actividades().some(
         (a) => a.tipo !== null || a.detalle.trim() !== '' || a.cuando !== null,
@@ -173,14 +167,6 @@ export class CarePlanBlock implements DraftBlock {
 
   protected readonly registrando = signal(false);
   protected readonly registro = signal<ViewState<null>>(ready(null));
-
-  protected readonly opcionesDeCita = computed<readonly SelectOption<string | null>[]>(() => [
-    { value: null, label: 'Sin cita asociada' },
-    ...this.citas().map((cita) => ({
-      value: cita.id,
-      label: cita.enCurso ? `${cita.etiqueta} · en curso` : cita.etiqueta,
-    })),
-  ]);
 
   /** Si la persona tiene diagnósticos de los que el plan pueda colgar. */
   protected readonly hayDiagnosticos = computed(() => this.diagnosticos().length > 0);
@@ -280,7 +266,7 @@ export class CarePlanBlock implements DraftBlock {
 
     const desde = this.desde();
     const hasta = this.hasta();
-    const encuentro = this.citaElegida() ?? this.encounterId();
+    const encuentro = this.encounterId();
     const diagnostico = this.diagnosticoElegido();
     // El motivo escrito sólo viaja cuando no hay diagnóstico elegido: el
     // diagnóstico ya **es** el motivo, y mandar los dos duplicaría el dato.
@@ -329,7 +315,6 @@ export class CarePlanBlock implements DraftBlock {
     this.motivo.set('');
     this.desde.set(null);
     this.hasta.set(null);
-    this.citaElegida.set(null);
     this.diagnosticoElegido.set(null);
     this.actividades.set([{ clave: this.siguienteClave++, tipo: null, detalle: '', cuando: null }]);
   }

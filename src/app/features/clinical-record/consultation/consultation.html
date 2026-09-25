@@ -154,9 +154,7 @@
               @if (casilla.cantidad !== null) {
                 <span class="consulta__casilla-cantidad">
                   {{ casilla.cantidad }}
-                  <span class="consulta__casilla-cantidad-rotulo">
-                    en la historia
-                  </span>
+                  <span class="consulta__casilla-cantidad-rotulo"> en la historia </span>
                 </span>
               }
             </button>
@@ -179,9 +177,7 @@
         aria-labelledby="consulta-linea-titulo"
         data-testid="consulta-lo-registrado"
       >
-        <h2 id="consulta-linea-titulo" class="consulta__titulo">
-          Lo registrado en este encuentro
-        </h2>
+        <h2 id="consulta-linea-titulo" class="consulta__titulo">Lo registrado en este encuentro</h2>
 
         <app-encounter-timeline
           data-testid="consulta-linea-encuentro"
@@ -271,7 +267,6 @@
         <app-care-plan-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
-          [citas]="citas()"
           [diagnosticos]="diagnosticosParaElPlan()"
           (cambio)="altaRegistrada()"
         />

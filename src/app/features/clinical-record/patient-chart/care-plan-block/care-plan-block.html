@@ -57,21 +57,6 @@
       </app-form-field>
     }
 
-    @if (opcionesDeCita().length > 1) {
-      <app-form-field
-        icon="calendar"
-        label="¿En qué cita se acordó?"
-        hint="Opcional. La consulta donde se decidió, incluidas las ya finalizadas."
-      >
-        <app-select
-          data-testid="plan-cita"
-          [value]="citaElegida()"
-          (valueChange)="citaElegida.set($event)"
-          [options]="opcionesDeCita()"
-        />
-      </app-form-field>
-    }
-
     <app-form-field label="Desde" hint="Opcional. Cuándo empieza a correr.">
       <app-date-picker [(value)]="desde" mode="date-only" />
     </app-form-field>
@@ -81,15 +66,11 @@
       hint="Opcional. Cuándo se lo vuelve a evaluar."
       [errorMessage]="vigenciaInvalida() ? 'El fin no puede caer antes del inicio.' : ''"
     >
-      <app-date-picker
-        [(value)]="hasta"
-        mode="date-only"
-        [hasError]="vigenciaInvalida()"
-      />
+      <app-date-picker [(value)]="hasta" mode="date-only" [hasError]="vigenciaInvalida()" />
     </app-form-field>
 
-    <!-- Los pasos, cada uno en su caja: sin el marco, tres campos repetidos se
-         leen como un formulario que se repite por error. -->
+    <!-- Los pasos, en líneas sueltas: el marco hacía leer una tabla dentro del
+         formulario, y son tres campos más, no otro formulario. -->
     <fieldset class="plan__actividades">
       <legend class="plan__actividades-titulo">¿Qué hay que hacer?</legend>
 
