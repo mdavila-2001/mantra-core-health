@@ -344,6 +344,29 @@
               </dd>
             </div>
           </dl>
+
+          <!-- El municipio en los mismos controles que el editor, cargados con
+               lo guardado y bloqueados: se ve, no se cambia (25/09/2026). -->
+          @if (datos.municipioResidenciaId; as municipio) {
+            <section class="mi-perfil__domicilio" data-testid="perfil-residencia">
+              <h2 class="mi-perfil__titulo">Municipio de residencia</h2>
+              <app-residence-readonly [municipioId]="municipio" />
+            </section>
+          }
+
+          <!-- El domicilio en el mapa, no sólo como enlace a otra pestaña del
+               navegador (pedido del 25/09/2026). -->
+          @if (datos.ubicacionDomicilio; as punto) {
+            <section class="mi-perfil__domicilio" data-testid="perfil-mapa-domicilio">
+              <h2 class="mi-perfil__titulo">Ubicación del domicilio</h2>
+              <app-map
+                [pines]="pinesDomicilio()"
+                etiqueta="Mapa con la ubicación del domicilio"
+                [centro]="punto"
+                [zoom]="16"
+              />
+            </section>
+          }
         } @else {
           <p class="mi-perfil__nota mi-perfil__nota--primera">
             Todavía no pudimos traer estos datos.

@@ -68,6 +68,21 @@ describe('LocationPicker', () => {
       .filter((texto) => texto !== '' && texto !== 'Elegí tu ciudad o municipio');
   }
 
+  it('en sólo lectura muestra lo guardado y no deja cambiarlo', () => {
+    fixture.componentRef.setInput('readonly', true);
+    component.value.set('mun-scz');
+    fixture.detectChanges();
+
+    const select = html.querySelector<HTMLSelectElement>('select');
+    expect(select?.disabled).toBe(true);
+    expect(select?.value).not.toBe('');
+    expect(html.querySelector('app-department-map')?.hasAttribute('inert')).toBe(true);
+
+    pulsarDepartamento('CB');
+    expect(component.value()).toBe('mun-scz');
+    expect(opcionesDeCiudad()).toEqual(['Santa Cruz de la Sierra', 'Warnes']);
+  });
+
   it('mientras no hay departamento no ofrece ciudades: dice qué falta', () => {
     expect(html.querySelector('[data-testid="location-pendiente"]')?.textContent).toContain(
       'Elegí primero tu departamento',
