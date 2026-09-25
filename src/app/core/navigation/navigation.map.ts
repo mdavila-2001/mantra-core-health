@@ -1330,8 +1330,41 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M27 identity_assurance',
   },
   {
+    // «Farmacia» — pedido del propietario, 24/09/2026: «mis pedidos y
+    // cotizaciones deben estar dentro de farmacia». Monta «Mis pedidos»
+    // (de abajo) y una «Cotizaciones» fija en Medicamentos (reusando la
+    // sección de más adelante, sin su selector) como pestañas
+    // (`PharmacyHub`). Sólo «Mis pedidos» pierde su fila propia acá: sigue
+    // registrada —ruta, roles, guard—, pero ya no ocupa renglón. La sección
+    // «Cotizaciones» de «Mi cuenta» **conserva la suya**, con las otras tres
+    // verticales (Análisis, Imagenología, Servicios médicos) — no se movió.
+    //
+    // **No es «Directorios · Farmacias»** (`pharmacies-directory`): esa es
+    // la vitrina pública de sedes, y ésta es lo propio de la cuenta del
+    // paciente. Las dos siguen en pie, sin tocarse.
+    //
+    // Mismos roles que «Mis pedidos», que hereda al montarla como pestaña:
+    // su contenido nace de una receta propia.
+    path: 'my-account/pharmacy',
+    label: 'Farmacia',
+    group: 'Mi cuenta',
+    icon: 'bag',
+    roles: ['PATIENT'],
+    availability: 'disponible',
+    summary: 'Tus pedidos de farmacia y cuánto cuesta comprar, en un solo lugar.',
+    module: 'M24 pharmacy',
+  },
+  {
     // Carril FAR-I2 · los pedidos de farmacia de la persona: del envío al
     // retiro, con la decisión de sustitución en el medio.
+    //
+    // **Sin renglón propio desde el 24/09/2026** (`fueraDelMenuPara`): el
+    // punto de entrada del menú es «Farmacia», que la monta como su primera
+    // pestaña. La sección sigue entera —ruta, roles, guard— porque el
+    // detalle de un pedido, el checkout, el recibo y los enlaces de
+    // notificación (`notification-routes.ts`) navegan de vuelta acá con
+    // `/my-account/pharmacy-orders`: sacarle la ruta habría roto esos cuatro
+    // caminos, no sólo el menú.
     //
     // **Con `roles: ['PATIENT']`, a diferencia del resto de «Mi cuenta».** El
     // pedido nace de una receta propia y la guardia del carril lo exige
@@ -1343,6 +1376,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'Mi cuenta',
     icon: 'bag',
     roles: ['PATIENT'],
+    fueraDelMenuPara: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Seguí tus pedidos de farmacia: del envío al retiro.',
     module: 'M24 pharmacy',

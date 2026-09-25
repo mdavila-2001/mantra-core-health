@@ -1,11 +1,13 @@
-<app-page-header
-  title="Cotizaciones"
-  [subtitle]="
-    esMaqueta
-      ? 'Compará dónde conseguirlo y cuánto cuesta. En esta maqueta, los precios de farmacias y de estudios son de ejemplo; el arancel de referencia es el real.'
-      : 'Compará dónde conseguirlo y cuánto cuesta. Si un precio no está publicado, te lo decimos: no lo inventamos.'
-  "
-/>
+@if (!embedded()) {
+  <app-page-header
+    title="Cotizaciones"
+    [subtitle]="
+      esMaqueta
+        ? 'Compará dónde conseguirlo y cuánto cuesta. En esta maqueta, los precios de farmacias y de estudios son de ejemplo; el arancel de referencia es el real.'
+        : 'Compará dónde conseguirlo y cuánto cuesta. Si un precio no está publicado, te lo decimos: no lo inventamos.'
+    "
+  />
+}
 
 <main class="cotizaciones" aria-label="Cotizaciones del paciente">
   <section class="cotizaciones__controles" aria-label="Qué buscar y cómo ordenar">
@@ -19,14 +21,16 @@
       />
     </app-form-field>
 
-    <app-form-field label="Vertical" class="cotizaciones__campo">
-      <app-select
-        data-testid="cotizaciones-vertical"
-        [options]="opcionesDeVertical"
-        [value]="vertical()"
-        (valueChange)="cambiarVertical($event)"
-      />
-    </app-form-field>
+    @if (fixedVertical() === null) {
+      <app-form-field label="Vertical" class="cotizaciones__campo">
+        <app-select
+          data-testid="cotizaciones-vertical"
+          [options]="opcionesDeVertical"
+          [value]="vertical()"
+          (valueChange)="cambiarVertical($event)"
+        />
+      </app-form-field>
+    }
 
     <app-form-field label="Ordenar por" class="cotizaciones__campo">
       <app-select
@@ -52,7 +56,11 @@
     <app-empty-state
       data-testid="cotizaciones-sin-termino"
       title="Escribí qué querés cotizar"
-      description="Un medicamento, un análisis, un estudio de imagen o una consulta. Buscamos en las farmacias, los centros de diagnóstico y el arancel de referencia."
+      [description]="
+        fixedVertical() === 'MEDICAMENTOS'
+          ? 'Un medicamento. Buscamos en las farmacias de la plataforma.'
+          : 'Un medicamento, un análisis, un estudio de imagen o una consulta. Buscamos en las farmacias, los centros de diagnóstico y el arancel de referencia.'
+      "
     />
   } @else if (faltaOrigen()) {
     <app-empty-state

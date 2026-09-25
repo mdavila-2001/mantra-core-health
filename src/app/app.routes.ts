@@ -206,6 +206,14 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/cotizaciones/cotizaciones').then((m) => m.Cotizaciones),
   'my-account/pharmacy-orders': () =>
     import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
+  // «Farmacia»: el punto de entrada del menú desde el 24/09/2026 (pedido del
+  // propietario). Monta «Mis pedidos» (`PharmacyOrders`, arriba) y una
+  // «Cotizaciones» fija en Medicamentos (`Cotizaciones`, reusada) como
+  // pestañas —ver `PharmacyHub`—. «Mis pedidos» ya no tiene renglón propio
+  // (su ruta sigue viva para el detalle, el checkout y las notificaciones);
+  // «Cotizaciones» sí conserva el suyo, con las otras tres verticales.
+  'my-account/pharmacy': () =>
+    import('./features/account/pharmacy-hub/pharmacy-hub').then((m) => m.PharmacyHub),
   // 'my-account/loyalty' SALIÓ de acá (N-03/Q-17, 2026-09-22): la sección
   // redirige en vez de pintar una pantalla — ver `SECCIONES_REDIRIGIDAS`,
   // que `componenteDe()` consulta antes que esta tabla.

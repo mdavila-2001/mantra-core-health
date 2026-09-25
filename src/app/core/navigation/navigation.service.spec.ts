@@ -409,17 +409,28 @@ describe('NavigationService', () => {
       expect(rutasDelMenu()).toContain('/directories');
     });
 
-    it('«Mis pedidos» sólo aparece en el menú del paciente', () => {
-      // FAR-I2: la única sección de «Mi cuenta» con roles declarados — el
-      // pedido nace de una receta propia, y la guardia lo exige en la sección.
+    it('«Farmacia» sólo aparece en el menú del paciente, y «Mis pedidos» sigue alcanzable sin renglón propio', () => {
+      // FAR-I2 + 24/09/2026: «Mis pedidos» y «Cotizaciones» del paciente se
+      // absorbieron dentro de «Farmacia» (pestañas de `PharmacyHub`), así que
+      // el renglón propio de «Mis pedidos» sale del menú (`fueraDelMenuPara`)
+      // y lo reemplaza «Farmacia», que hereda su rol declarado — el pedido
+      // nace de una receta propia, y la guardia lo exige en la sección.
       abrirSesion(['PATIENT']);
-      expect(rutasDelMenu()).toContain('/my-account/pharmacy-orders');
+      expect(rutasDelMenu()).toContain('/my-account/pharmacy');
+      expect(rutasDelMenu()).not.toContain('/my-account/pharmacy-orders');
+
+      // La ruta sigue viva: el detalle, el checkout, el recibo y las
+      // notificaciones vuelven a `/my-account/pharmacy-orders` sin pasar por
+      // el menú.
+      expect(service.visibleSections().map((s) => `/${s.path}`)).toContain(
+        '/my-account/pharmacy-orders',
+      );
 
       abrirSesion([]);
-      expect(rutasDelMenu()).not.toContain('/my-account/pharmacy-orders');
+      expect(rutasDelMenu()).not.toContain('/my-account/pharmacy');
 
       abrirSesion(['PRACTITIONER', 'CLINICIAN']);
-      expect(rutasDelMenu()).not.toContain('/my-account/pharmacy-orders');
+      expect(rutasDelMenu()).not.toContain('/my-account/pharmacy');
     });
 
     it('un rol clínico no ve administración, y un administrador no ve el archivo clínico', () => {

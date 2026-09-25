@@ -1,8 +1,10 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
   inject,
+  input,
   signal,
   viewChild,
   type TemplateRef,
@@ -115,8 +117,23 @@ export class Cotizaciones {
    */
   protected readonly esMaqueta = environment.mockBackend;
 
+  /**
+   * `true` cuando esta pantalla vive **dentro** de «Farmacia», como una de
+   * sus pestañas (`PharmacyHub`). Igual que en `PharmacyOrders`: sólo cambia
+   * el membrete.
+   */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
+  /**
+   * Con vertical fija, la pantalla arranca ahí y no ofrece el selector: quien
+   * la embebe decide qué compara, no quien mira. Hoy sólo «Farmacia» la usa,
+   * fija en `MEDICAMENTOS` — el comparador de las cuatro verticales sigue
+   * siendo su propio destino, sin tocar.
+   */
+  readonly fixedVertical = input<Exclude<VerticalCotizacion, 'TODAS'> | null>(null);
+
   protected readonly termino = signal('');
-  protected readonly vertical = signal<VerticalCotizacion>('TODAS');
+  protected readonly vertical = signal<VerticalCotizacion>(this.fixedVertical() ?? 'TODAS');
   protected readonly orden = signal<OrdenCotizacion>('PRECIO');
   protected readonly origen = signal<SearchOrigin | null>(null);
   protected readonly pagina = signal(1);

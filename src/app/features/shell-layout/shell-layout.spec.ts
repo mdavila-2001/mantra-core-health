@@ -410,7 +410,10 @@ describe('ShellLayout', () => {
           a.getAttribute('data-route'),
         );
         expect(enlaces).toContain('/my-account/appointments');
-        expect(enlaces).toContain('/my-account/pharmacy-orders');
+        // «Mis pedidos» dejó de tener renglón propio el 24/09/2026: lo
+        // absorbió «Farmacia» (pestañas de `PharmacyHub`) — ver el registro.
+        expect(enlaces).toContain('/my-account/pharmacy');
+        expect(enlaces).not.toContain('/my-account/pharmacy-orders');
         // «Mis puntos» YA NO es un renglón (N-03/Q-17, 2026-09-22): es una
         // pestaña del perfil (#606) y su URL vieja redirige a
         // `/my-account?pestana=puntos` — ver `app.routes.ts`.
@@ -443,7 +446,7 @@ describe('ShellLayout', () => {
 
       it('sin rótulo que las agrupe, las cosas parecidas siguen saliendo seguidas', () => {
         // Sin el rótulo, el orden es lo único que queda diciendo que «Mis
-        // citas», «Mis pedidos» y «Mis puntos» son la misma clase de cosa. Por
+        // citas», «Farmacia» y «Mis puntos» son la misma clase de cosa. Por
         // eso la barra recorre los bloques y no la lista plana del grupo: por
         // `items` el orden es el del registro, y ahí las cuatro pantallas
         // clínicas se meten entre las gestiones.
@@ -453,10 +456,12 @@ describe('ShellLayout', () => {
         expect(
           seguidas(enlaces, [
             '/my-account/appointments',
-            '/my-account/pharmacy-orders',
+            // «Mis pedidos» salió del registro visible el 24/09/2026: la
+            // absorbió «Farmacia», que queda en su lugar del orden.
+            '/my-account/pharmacy',
             // «Mis puntos» salió del registro visible (N-03/Q-17,
             // 2026-09-22): con su renglón retirado, «Promociones» queda
-            // pegada a «Mis pedidos» en el orden real del registro.
+            // pegada a «Farmacia» en el orden real del registro.
             '/my-account/promotions',
           ]),
         ).toBe(true);
