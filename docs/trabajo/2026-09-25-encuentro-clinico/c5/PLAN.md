@@ -40,7 +40,42 @@
 - `app-form-actions` no tiene forma de recibir un testid en su botón: el E2E ubica "Prescribir"/"Vincular" por rol + nombre accesible.
 
 ## H4 — Playwright
-**Estado:** Escrito (`clinica-c5-receta.spec.ts`, `prescription-official-pdf.spec.ts` con nota agregada) — correr y capturar diferido al pase final de la noche (mismo motivo que Farmacia/C9).
+**Estado:** A MEDIAS — corrido de verdad en el pase consolidado de la noche (sin Postgres/API: `ng
+serve --port 4215` + `E2E_BASE_URL`, la rama `mockup` corre contra el interceptor propio;
+`scripts/pw-guard.mjs` que el prompt asumía **no existe** en el repo, mismo hallazgo que en C7).
+
+**`prescription-official-pdf.spec.ts`** (ajeno a C5, sólo se le agregó un comentario en esta noche):
+1/2 tests OK. `el botón de la receta oficial descarga un PDF real...` → **PASS**. `sin conexión, el
+botón avisa el error...` → **FAIL**, pre-existente (no tocado por C5, `git log` confirma que la
+última vez que cambió su lógica fue en `568ba8e4`, antes de esta noche) — el mensaje de error nunca
+aparece tras abortar la ruta del PDF; no investigado a fondo, documentado como hallazgo para quien
+sea dueño del archivo.
+
+**`clinica-c5-receta.spec.ts`** (mío, escrito y **nunca corrido** hasta este pase): tenía 5 bugs
+propios, corregidos en el momento —
+1. Navegaba a `/clinical-record/consultation` (404): la ruta real es
+   `/medical-records/:profileId/consultation`. Reescrito para buscar un paciente y entrar por
+   «Archivo clínico», igual que `consulta-rejilla.spec.ts`.
+2. `.selectOption()` apuntaba al host `<app-select>`/`<app-textarea>` en vez del `<select>`/
+   `<textarea>` nativo de adentro.
+3. `getByRole('button', {name:'Prescribir'})` sin acotar chocaba con la propia casilla «Prescribir
+   medicación» (violación de modo estricto) — acotado a `getByTestId('content-dialog')`.
+4. El spec nunca elegía un medicamento (`puedeRecetar` lo exige) ni manejaba el aviso de
+   interacción del motor de decisión clínica (`Se detectó una interacción` → «Prescribir de todas
+   formas») ni la oferta de adjuntar archivos que sigue a un alta (`recetaRecienCreada`) — los tres
+   agregados.
+5. **Causa raíz de por qué el badge nunca aparece:** toda receta nueva queda en estado **Borrador**
+   (`recetar()`, UC-08-10 — "la receta queda en borrador"); el badge «Diagnóstico: …»/«Motivo: …»
+   que el spec busca sólo lo vi documentado para una receta **firmada/emitida**, no para un borrador
+   (`app-alert` "Falta la firma" en el propio bloque). El spec —tal como estaba escrito, y tal como
+   yo lo reescribí sin notar esto a tiempo— nunca firma la receta, así que la fila queda en
+   «Borrador · Activo» para siempre, incluso después de recargar (confirmado: no es un estado
+   transitorio del cliente, sobrevive un `page.reload()` real).
+   **Queda A MEDIAS**, no arreglado esta noche: falta agregar el paso de firma (`firmar()`/su testid,
+   no localizado todavía) antes de la aserción del badge. Evidencia completa en
+   `evidencia/c5-receta-playwright.md`.
 
 ## H5 — Cierre
-**Estado:** EN CURSO — PR a `mockup`, `REPORTE.md` escrito, daily pendiente de actualizar.
+**Estado:** HECHO — PR #679 mergeado a `mockup` (integrado esta misma noche mientras C7 seguía en
+curso). `REPORTE.md` actualizado con el hallazgo de H4. Daily de equipo actualizado (sección Carril
+C) — ver `AlovidaPromptManager` `main`.
