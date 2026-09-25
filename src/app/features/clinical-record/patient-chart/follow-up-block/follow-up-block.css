@@ -84,3 +84,266 @@
     justify-items: start;
   }
 }
+
+/* ─── El calendario del mes ───────────────────────────────────────────────
+   Los tonos salen de los tríos `--st-*`, igual que el mes de la agenda: verde
+   para «te queda lugar», rojo para «ese día no». El color nunca va solo — cada
+   casilla dice en palabras cuántos horarios quedan— porque en escala de grises
+   o con daltonismo el verde y el rojo son la misma casilla. */
+
+.reconsulta__calendario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  inline-size: 100%;
+}
+
+.reconsulta__mes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-2);
+}
+
+.reconsulta__mes-titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  font-weight: 600;
+}
+
+/* Sólo la inicial: `capitalize` daría «Octubre De 2026». */
+.reconsulta__mes-titulo::first-letter {
+  text-transform: uppercase;
+}
+
+.reconsulta__grilla {
+  inline-size: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.reconsulta__grilla th {
+  padding-block-end: var(--sp-1);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.reconsulta__grilla th abbr {
+  text-decoration: none;
+}
+
+.reconsulta__celda {
+  padding: 1px;
+  vertical-align: top;
+}
+
+.reconsulta__dia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  inline-size: 100%;
+  min-block-size: 3rem;
+  padding: var(--sp-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+}
+
+.reconsulta__dia:hover:not(:disabled) {
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.reconsulta__dia:disabled {
+  cursor: not-allowed;
+}
+
+.reconsulta__dia:focus-visible {
+  outline: 2px solid var(--st-primary-bd);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reconsulta__dia {
+    transition: none;
+  }
+
+  .reconsulta__dia:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+.reconsulta__dia-numero {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.reconsulta__dia-cuenta {
+  font-size: var(--fs-caption);
+  line-height: 1.1;
+  text-align: center;
+}
+
+.reconsulta__dia-fuera {
+  display: block;
+  padding: var(--sp-1);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.reconsulta__dia[data-estado='libre'] {
+  background: var(--st-success-bg);
+  border-color: var(--st-success-bd);
+  color: var(--st-success-fg);
+}
+
+.reconsulta__dia[data-estado='sin-cupos'] {
+  background: var(--st-error-bg);
+  border-color: var(--st-error-bd);
+  color: var(--st-error-fg);
+}
+
+/* Fuera del plazo: apagado, no rojo. No es que no haya lugar; es que ese día
+   no se puede reconsultar. */
+.reconsulta__dia[data-estado='fuera'] {
+  background: var(--bg-surface-alt);
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.reconsulta__dia--hoy {
+  outline: 2px solid var(--st-primary-bd);
+  outline-offset: -2px;
+}
+
+/* El elegido: se distingue por el anillo y no por otro color de fondo, que
+   competiría con el verde y el rojo de la disponibilidad. */
+.reconsulta__dia--elegido {
+  box-shadow:
+    0 0 0 2px var(--bg-surface),
+    0 0 0 4px var(--st-primary-bd);
+}
+
+.reconsulta__buscando {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.reconsulta__leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.reconsulta__marca {
+  display: inline-block;
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  margin-inline-end: calc(var(--sp-1) * -1 + 2px);
+  border-radius: var(--r-xs, 3px);
+  vertical-align: -1px;
+}
+
+.reconsulta__marca[data-estado='libre'] {
+  background: var(--st-success-bg);
+  border: 1px solid var(--st-success-bd);
+}
+
+.reconsulta__marca[data-estado='sin-cupos'] {
+  background: var(--st-error-bg);
+  border: 1px solid var(--st-error-bd);
+}
+
+/* ─── Las tarjetas de horario ─────────────────────────────────────────────
+   Como los ratos de la agenda: la hora grande, la duración y la sede debajo.
+   Entran en una grilla que se acomoda al ancho en vez de una columna de
+   renglones iguales. */
+
+.reconsulta__cupos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reconsulta__cupo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  inline-size: 100%;
+  block-size: 100%;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-inline-start: 4px solid var(--st-primary-bd);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    box-shadow var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard);
+}
+
+.reconsulta__cupo:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-md);
+}
+
+.reconsulta__cupo:focus-visible {
+  outline: 2px solid var(--st-primary-bd);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reconsulta__cupo {
+    transition: none;
+  }
+}
+
+/* La elegida: fondo de acento y el mismo anillo del día elegido. No se
+   distingue sólo por el borde, que a 1 px se pierde. */
+.reconsulta__cupo--elegido {
+  background: var(--st-primary-bg);
+  border-color: var(--st-primary-bd);
+  color: var(--st-primary-fg);
+  box-shadow:
+    0 0 0 2px var(--bg-surface),
+    0 0 0 4px var(--st-primary-bd);
+}
+
+.reconsulta__cupo-hora {
+  font-size: var(--fs-body-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.reconsulta__cupo-duracion,
+.reconsulta__cupo-sede {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.reconsulta__cupo--elegido .reconsulta__cupo-duracion,
+.reconsulta__cupo--elegido .reconsulta__cupo-sede {
+  color: inherit;
+}

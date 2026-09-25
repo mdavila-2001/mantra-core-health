@@ -95,7 +95,7 @@ async function checkTile(page: Page, tile: (typeof TILES)[number], capture?: str
   }
   if (tile.key === 'reconsulta') {
     await expect(dialog.locator('app-follow-up-block')).toBeVisible();
-    await expect(dialog.locator('[data-testid="reconsulta-fecha"], [data-testid="reconsulta-ya-agendada"]')).toBeVisible();
+    await expect(dialog.locator('[data-testid="reconsulta-calendario"], [data-testid="reconsulta-ya-agendada"]')).toBeVisible();
     await expect(dialog.getByTestId('reconsulta-sin-cita')).toHaveCount(0);
   }
   const box = await dialog.boundingBox();

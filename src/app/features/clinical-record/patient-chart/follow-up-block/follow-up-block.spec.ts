@@ -72,6 +72,8 @@ async function montar(
     encounterId?: string | null;
     origen?: Record<string, unknown>;
     reconsulta?: Record<string, unknown>;
+    /** Los cupos libres del mes, que el calendario pide apenas se resuelve. */
+    cupos?: readonly unknown[];
   } = {},
 ) {
   await TestBed.configureTestingModule({
@@ -116,9 +118,24 @@ async function montar(
         .flush(citaDeOrigen({ id: 'b-reconsulta', ...opciones.reconsulta }));
     }
     fixture.detectChanges();
+
+    // Con la consulta resuelta, el calendario pide los cupos del mes para
+    // pintar de verde y de rojo. Con la reconsulta ya agendada no hay
+    // formulario, así que no pide nada.
+    if (opciones.reconsulta === undefined) {
+      responderCuposDelMes(http, opciones.cupos ?? []);
+      fixture.detectChanges();
+    }
   }
 
   return { fixture, http };
+}
+
+/** Responde la lectura de cupos del mes que dispara el calendario. */
+function responderCuposDelMes(http: HttpTestingController, cupos: readonly unknown[]): void {
+  http
+    .expectOne((r) => r.url === '/scheduling/slots')
+    .flush({ items: cupos, count: cupos.length, limit: 1500, truncated: false });
 }
 
 /** Una señal, una computada o un método del componente. */
@@ -128,17 +145,14 @@ function api(fixture: ComponentFixture<FollowUpBlock>): Record<string, UnMiembro
   return fixture.componentInstance as unknown as Record<string, UnMiembro>;
 }
 
-/** Elige el día de mañana y responde con los cupos que se le pasen. */
-function elegirDia(
-  fixture: ComponentFixture<FollowUpBlock>,
-  http: HttpTestingController,
-  cupos: readonly unknown[],
-): void {
+/**
+ * Elige el día de mañana.
+ *
+ * Ya no pide nada: los cupos del día salen de la lectura del mes que el
+ * calendario hizo al montar.
+ */
+function elegirDia(fixture: ComponentFixture<FollowUpBlock>): void {
   (api(fixture)['dia'] as unknown as { set(v: Date): void }).set(manana(0));
-  fixture.detectChanges();
-  http
-    .expectOne((r) => r.url === '/scheduling/slots')
-    .flush({ items: cupos, count: cupos.length, limit: 500, truncated: false });
   fixture.detectChanges();
 }
 
@@ -178,7 +192,9 @@ describe('FollowUpBlock', () => {
   it('sin reconsulta previa ofrece el formulario, con el día y el motivo heredado', async () => {
     const { fixture, http } = await montar();
 
-    expect(fixture.nativeElement.querySelector('[data-testid="reconsulta-fecha"]')).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="reconsulta-calendario"]'),
+    ).not.toBeNull();
     expect(fixture.nativeElement.querySelector('[data-testid="reconsulta-guardar"]')).not.toBeNull();
     expect(api(fixture)['motivo']()).toBe('Reconsulta: Control de presión arterial');
     http.verify();
@@ -201,36 +217,106 @@ describe('FollowUpBlock', () => {
     http.verify();
   });
 
-  it('al elegir el día pide sólo los cupos libres de ese día y los parte en mañana y tarde', async () => {
-    const { fixture, http } = await montar();
+  it('pide los cupos libres del mes entero de una sola vez, para pintar el calendario', async () => {
+    await TestBed.configureTestingModule({
+      imports: [FollowUpBlock],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: AuthService,
+          useValue: { activeTenantId: signal('t-1'), practitionerProfileId: signal('hp-1') },
+        },
+      ],
+    }).compileComponents();
 
-    (api(fixture)['dia'] as unknown as { set(v: Date): void }).set(manana(0));
+    const fixture = TestBed.createComponent(FollowUpBlock);
+    fixture.componentRef.setInput('patientProfileId', 'pp-1');
+    fixture.componentRef.setInput('bookingId', 'b-origen');
+    fixture.componentRef.setInput('encounterId', 'enc-1');
+    fixture.detectChanges();
+
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/scheduling/bookings/b-origen').flush(citaDeOrigen());
+    http.expectOne((r) => r.url === '/scheduling/resources').flush({ items: [RECURSO], count: 1 });
     fixture.detectChanges();
 
     const req = http.expectOne((r) => r.url === '/scheduling/slots');
     expect(req.request.params.get('resourceId')).toBe('r-1');
     expect(req.request.params.get('onlyAvailable')).toBe('true');
-    req.flush({
-      items: [cupo('s-manana', manana(8, 30)), cupo('s-tarde', manana(15))],
-      count: 2,
-      limit: 500,
-      truncated: false,
-    });
+    // La ventana es el mes a la vista, no un día: es lo que hace falta para
+    // saber de qué color va cada casilla.
+    const desde = new Date(req.request.params.get('from')!);
+    const hasta = new Date(req.request.params.get('to')!);
+    expect(desde.getDate()).toBe(1);
+    expect(hasta.getDate()).toBe(1);
+    expect(hasta.getTime()).toBeGreaterThan(desde.getTime());
+    req.flush({ items: [], count: 0, limit: 1500, truncated: false });
     fixture.detectChanges();
+    http.verify();
+  });
+
+  it('el calendario pinta de verde los días con lugar y de rojo los que no', async () => {
+    const { fixture, http } = await montar({ cupos: [cupo('s-manana', manana(8, 30))] });
+
+    const dias: HTMLButtonElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('[data-testid="reconsulta-dia"]'),
+    );
+    const verdes = dias.filter((d) => d.getAttribute('data-estado') === 'libre');
+    const rojos = dias.filter((d) => d.getAttribute('data-estado') === 'sin-cupos');
+
+    // El único día con cupo es mañana: verde, y el resto del mes en rojo.
+    expect(verdes).toHaveLength(1);
+    expect(verdes[0]!.textContent).toContain('1 horario');
+    expect(verdes[0]!.disabled).toBe(false);
+    expect(rojos.length).toBeGreaterThan(0);
+    // Los rojos no se pueden elegir: llevarían a una lista vacía.
+    expect(rojos.every((d) => d.disabled)).toBe(true);
+    expect(rojos[0]!.textContent).toContain('Sin lugar');
+
+    // Y tocar el verde elige ese día, sin pedir nada más.
+    verdes[0]!.click();
+    fixture.detectChanges();
+    expect((api(fixture)['dia']() as Date).getDate()).toBe(manana(0).getDate());
+    http.verify();
+  });
+
+  it('el día elegido reparte sus cupos en mañana y tarde, en tarjetas', async () => {
+    const { fixture, http } = await montar({
+      cupos: [cupo('s-manana', manana(8, 30)), cupo('s-tarde', manana(15))],
+    });
+    elegirDia(fixture);
 
     const franjas = api(fixture)['franjas']() as { manana: unknown[]; tarde: unknown[] };
     expect(franjas.manana).toHaveLength(1);
     expect(franjas.tarde).toHaveLength(1);
     expect(fixture.nativeElement.textContent).toContain('Mañana');
     expect(fixture.nativeElement.textContent).toContain('Tarde');
-    // La etiqueta lleva la hora y la sede, que es lo que hace elegible un rato.
+    // La sede va en la tarjeta: es lo que hace elegible un rato.
     expect(fixture.nativeElement.textContent).toContain('Clínica Los Olivos');
+
+    const tarjetas: HTMLButtonElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('[data-testid="reconsulta-cupo-opcion"]'),
+    );
+    expect(tarjetas).toHaveLength(2);
+    expect(tarjetas[0]!.textContent).toContain('08:30 – 09:00');
+
+    // Tocar una tarjeta la deja elegida, y lo dice con `aria-pressed`.
+    tarjetas[0]!.click();
+    fixture.detectChanges();
+    expect(api(fixture)['cupoElegido']()).toBe('s-manana');
+    expect(
+      fixture.nativeElement
+        .querySelectorAll('[data-testid="reconsulta-cupo-opcion"]')[0]
+        .getAttribute('aria-pressed'),
+    ).toBe('true');
     http.verify();
   });
 
   it('un día sin cupos lo dice en vez de dejar el grupo vacío', async () => {
     const { fixture, http } = await montar();
-    elegirDia(fixture, http, []);
+    elegirDia(fixture);
 
     expect(fixture.nativeElement.querySelector('[data-testid="reconsulta-sin-cupos"]')).not.toBeNull();
     expect(api(fixture)['puedeAgendar']()).toBe(false);
@@ -252,8 +338,8 @@ describe('FollowUpBlock', () => {
   /* ---- agendar ------------------------------------------------------------- */
 
   it('agenda la reconsulta con el cupo, la duración del cupo y el origen, y avisa el cambio', async () => {
-    const { fixture, http } = await montar();
-    elegirDia(fixture, http, [cupo('s-manana', manana(8, 30), 20)]);
+    const { fixture, http } = await montar({ cupos: [cupo('s-manana', manana(8, 30), 20)] });
+    elegirDia(fixture);
 
     (api(fixture)['cupoElegido'] as unknown as { set(v: string): void }).set('s-manana');
     fixture.detectChanges();
@@ -298,8 +384,8 @@ describe('FollowUpBlock', () => {
   });
 
   it('el éxito se ve con la fecha y con la salida a Consultas médicas', async () => {
-    const { fixture, http } = await montar();
-    elegirDia(fixture, http, [cupo('s-manana', manana(9))]);
+    const { fixture, http } = await montar({ cupos: [cupo('s-manana', manana(9))] });
+    elegirDia(fixture);
     (api(fixture)['cupoElegido'] as unknown as { set(v: string): void }).set('s-manana');
     fixture.detectChanges();
 
@@ -330,8 +416,8 @@ describe('FollowUpBlock', () => {
   });
 
   it('el 409 se cuenta en el bloque como «ya hay una», no como un error', async () => {
-    const { fixture, http } = await montar();
-    elegirDia(fixture, http, [cupo('s-manana', manana(9))]);
+    const { fixture, http } = await montar({ cupos: [cupo('s-manana', manana(9))] });
+    elegirDia(fixture);
     (api(fixture)['cupoElegido'] as unknown as { set(v: string): void }).set('s-manana');
     fixture.detectChanges();
 
@@ -355,8 +441,8 @@ describe('FollowUpBlock', () => {
   });
 
   it('el 403 de una agenda ajena se explica con esas palabras', async () => {
-    const { fixture, http } = await montar();
-    elegirDia(fixture, http, [cupo('s-manana', manana(9))]);
+    const { fixture, http } = await montar({ cupos: [cupo('s-manana', manana(9))] });
+    elegirDia(fixture);
     (api(fixture)['cupoElegido'] as unknown as { set(v: string): void }).set('s-manana');
     fixture.detectChanges();
 
