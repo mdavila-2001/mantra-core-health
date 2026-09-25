@@ -146,3 +146,64 @@
   font-size: var(--fs-caption);
   margin: 0;
 }
+
+/* ---- C6 · la tarjeta única, las atenciones y los diagnósticos ------------- */
+
+/* Regla 8: una sola tarjeta con las pestañas dentro, a lo ancho del área de
+   contenido. Sin `max-inline-size` propio — el tope lo pone `.app-main__inner`
+   y nadie más. */
+.historia__tarjeta {
+  display: block;
+  inline-size: 100%;
+}
+
+.historia__atenciones {
+  display: block;
+}
+
+/* El cuerpo de una atención desplegada: primero sus acciones, después la línea.
+   Las acciones arriba porque «Descargar PDF» es sobre la atención entera, y
+   debajo de la línea se leería como si fuera del último hecho. */
+.historia__atencion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* Cada bloque de diagnósticos con su propio aire: en móvil son tres listas
+   seguidas y sin separación se leen como una sola. */
+.historia__dx-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-6);
+}
+
+.historia__dx-bloque:last-child {
+  margin-block-end: 0;
+}
+
+.historia__dx-titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* El diagnóstico apila su cabecera y su tabla de datos: el badge tiene que
+   quedar al lado del nombre, no al final de la ficha. */
+.historia__dx {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  align-items: stretch;
+}
+
+.historia__dx-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}

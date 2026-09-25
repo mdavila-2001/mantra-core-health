@@ -1,0 +1,9 @@
+$ corepack yarn test --watch=false --include='src/app/features/account/medical-record/medical-record.spec.ts'
+(worktree: C:/Users/usuario/Documents/Sistema Salud/wt-clinica-c6 · rama claude/clinica-c6-historia-paciente @ bf2c3545)
+
+ RUN  v4.1.10 C:/Users/usuario/Documents/Sistema Salud/wt-clinica-c6
+
+ Test Files  1 passed (1)
+      Tests  21 passed (21)
+   Start at  03:49:41
+   Duration  6.05s

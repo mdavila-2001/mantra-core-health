@@ -1,11 +1,27 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
 
+import { BodyMap } from '@shared/components/organisms/body-map/body-map';
 import { RECONOCEDOR_DE_VOZ } from './dictado';
 import type { EventoDeErrorDeVoz, EventoDeResultadoDeVoz, ReconocedorDeVoz } from './dictado.types';
 import { SymptomCheck } from './symptom-check';
+
+/**
+ * Responde el `GET /profiles/patients/me` que se pide al abrir, con sesión
+ * (P-04, 2026-09-25): sin él, `http.verify()` de cada `describe` de acá abajo
+ * se queja de una petición sin responder. Sin `sexAtBirth`, responde como un
+ * perfil sin ese dato: no filtra nada, que es el comportamiento de siempre
+ * para las pruebas que no son sobre el sexo del paciente.
+ */
+function responderSexoPropio(
+  http: HttpTestingController,
+  sexAtBirth?: 'MALE' | 'FEMALE' | 'INTERSEX' | 'UNKNOWN',
+): void {
+  http.expectOne('/profiles/patients/me').flush(sexAtBirth === undefined ? {} : { sexAtBirth });
+}
 
 /**
  * A dónde manda el chequeo de síntomas.
@@ -40,6 +56,7 @@ describe('SymptomCheck · a dónde lleva «ver quién atiende»', () => {
     fixture = TestBed.createComponent(SymptomCheck);
     componente = fixture.componentInstance;
     fixture.detectChanges();
+    responderSexoPropio(http);
     // La lista de especialidades con gente se pide recién cuando alguien
     // empieza a escribir —antes no hace falta y sería una consulta al abrir la
     // pantalla de inicio del paciente—. Sin esto no hay nada que responder.
@@ -145,6 +162,7 @@ describe('SymptomCheck · la silueta', () => {
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(SymptomCheck);
     fixture.detectChanges();
+    responderSexoPropio(http);
     html = fixture.nativeElement as HTMLElement;
   });
 
@@ -243,6 +261,7 @@ describe('SymptomCheck · el área de texto', () => {
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(SymptomCheck);
     fixture.detectChanges();
+    responderSexoPropio(http);
     html = fixture.nativeElement as HTMLElement;
   });
 
@@ -323,6 +342,7 @@ describe('SymptomCheck · dictar', () => {
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(SymptomCheck);
     fixture.detectChanges();
+    responderSexoPropio(http);
     html = fixture.nativeElement as HTMLElement;
   }
 
@@ -440,6 +460,7 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(SymptomCheck);
     fixture.detectChanges();
+    responderSexoPropio(http);
     html = fixture.nativeElement as HTMLElement;
   });
 
@@ -502,5 +523,148 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     escribir('me');
     vi.advanceTimersByTime(2_000);
     http.expectNone('/ai/v1/triage/analyze');
+  });
+});
+
+/**
+ * «Salud íntima» respeta el sexo del propio perfil (P-04, 2026-09-25): quien
+ * busca ahí no puede elegir lo que corresponde al otro sexo, ni por la
+ * pastilla, ni por el texto reconocido, ni por la sugerencia. Sin ese dato
+ * —perfil `INTERSEX`/`UNKNOWN`, sin sesión, o un fallo al leerlo— se ve todo,
+ * como hasta ahora: mejor mostrar de más que esconder un síntoma real.
+ */
+describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () => {
+  let fixture: ReturnType<typeof TestBed.createComponent<SymptomCheck>>;
+  let componente: SymptomCheck;
+  let html: HTMLElement;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(SymptomCheck);
+    componente = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  afterEach(() => http.verify());
+
+  /** Abre la zona íntima tocándola en la figura, como en «la silueta». */
+  function abrirZonaIntima(): void {
+    html = fixture.nativeElement as HTMLElement;
+    const forma = html.querySelector<HTMLElement>('[data-testid="body-map-intima"]');
+    if (forma === null) throw new Error('la figura no dibuja «intima»');
+    forma.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    fixture.detectChanges();
+    html = fixture.nativeElement as HTMLElement;
+  }
+
+  function pastillasDeLaZona(): readonly string[] {
+    return Array.from(
+      html.querySelectorAll('[data-testid="zona-abierta"] .sintomas__opcion-chip'),
+    ).map((boton) => boton.textContent?.trim() ?? '');
+  }
+
+  function siluetaHija(): BodyMap {
+    return fixture.debugElement.query(By.directive(BodyMap)).componentInstance as BodyMap;
+  }
+
+  it('con perfil `FEMALE`, no ofrece los síntomas exclusivos de varón', () => {
+    responderSexoPropio(http, 'FEMALE');
+    abrirZonaIntima();
+
+    const pastillas = pastillasDeLaZona();
+    expect(pastillas).toContain('dolor menstrual');
+    expect(pastillas).toContain('control de embarazo');
+    expect(pastillas).not.toContain('consulta de próstata');
+    expect(pastillas).not.toContain('problemas de erección');
+    expect(pastillas).not.toContain('dolor o bulto en los testículos');
+  });
+
+  it('con perfil `MALE`, no ofrece los síntomas exclusivos de mujer', () => {
+    responderSexoPropio(http, 'MALE');
+    abrirZonaIntima();
+
+    const pastillas = pastillasDeLaZona();
+    expect(pastillas).toContain('consulta de próstata');
+    expect(pastillas).toContain('problemas de erección');
+    expect(pastillas).not.toContain('dolor menstrual');
+    expect(pastillas).not.toContain('control de embarazo');
+    expect(pastillas).not.toContain('flujo o picazón vaginal');
+  });
+
+  it('con perfil `INTERSEX`, no filtra: se ve todo', () => {
+    responderSexoPropio(http, 'INTERSEX');
+    abrirZonaIntima();
+
+    const pastillas = pastillasDeLaZona();
+    expect(pastillas).toContain('dolor menstrual');
+    expect(pastillas).toContain('consulta de próstata');
+  });
+
+  it('sin sexo resuelto todavía (la lectura no respondió), no filtra: se ve todo', () => {
+    // A propósito no se responde `http.expectOne(...)`: mientras está en
+    // vuelo, `sexoAlNacer` sigue en su valor inicial (`undefined`).
+    abrirZonaIntima();
+
+    const pastillas = pastillasDeLaZona();
+    expect(pastillas).toContain('dolor menstrual');
+    expect(pastillas).toContain('consulta de próstata');
+
+    // Se responde al final para que `http.verify()` no se queje.
+    http.expectOne('/profiles/patients/me').flush({});
+  });
+
+  it('si la lectura del propio perfil falla, no filtra: se ve todo', () => {
+    http
+      .expectOne('/profiles/patients/me')
+      .flush('error', { status: 500, statusText: 'Internal Server Error' });
+    fixture.detectChanges();
+    abrirZonaIntima();
+
+    const pastillas = pastillasDeLaZona();
+    expect(pastillas).toContain('dolor menstrual');
+    expect(pastillas).toContain('consulta de próstata');
+  });
+
+  it('el texto reconocido tampoco ofrece lo que no corresponde al sexo', () => {
+    responderSexoPropio(http, 'MALE');
+    (componente as unknown as { escribir(v: string): void }).escribir(
+      'tengo dolor menstrual y me duele la cabeza',
+    );
+    fixture.detectChanges();
+    http.match(() => true); // el catálogo de especialidades, atendido sin más.
+
+    const nombres = (componente as unknown as { sintomas(): { nombre: string }[] })
+      .sintomas()
+      .map((s) => s.nombre);
+    expect(nombres).toContain('dolor de cabeza');
+    expect(nombres).not.toContain('dolor menstrual');
+  });
+
+  it('no filtra las alarmas: siguen viéndose pase lo que pase con el sexo', () => {
+    responderSexoPropio(http, 'FEMALE');
+    (componente as unknown as { escribir(v: string): void }).escribir('me duele el pecho');
+    fixture.detectChanges();
+    http.match(() => true);
+
+    html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('app-alert')?.textContent).toContain('guardia');
+  });
+
+  it('pasa el sexo del propio perfil a la silueta', () => {
+    responderSexoPropio(http, 'FEMALE');
+    fixture.detectChanges();
+
+    expect(siluetaHija().sexo()).toBe('FEMALE');
+  });
+
+  it('sin sexo conocido, la silueta queda neutra', () => {
+    responderSexoPropio(http, 'UNKNOWN');
+    fixture.detectChanges();
+
+    expect(siluetaHija().sexo()).toBeUndefined();
   });
 });

@@ -3,12 +3,14 @@ import { inject, Injectable } from '@angular/core';
 import { expand, forkJoin, map, of, reduce, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { nombreDeContentDisposition } from '../files/content-disposition';
 import type { ConNulos } from '../wire';
 import type {
   CodeSystemListItem,
   CodeSystemVersionListItem,
   CodeSystemVersionState,
   ConceptDetail,
+  ConceptImportOptions,
   ConceptImportResult,
   ConceptLabels,
   ConceptSearchPage,
@@ -18,6 +20,9 @@ import type {
   GlossaryTagQuery,
   GlossaryTermDetail,
   GlossaryTermPage,
+  ImportProfile,
+  ImportTemplateDownload,
+  ImportTemplateFormat,
   ValueSetExpansionPage,
   ValueSetExpansionQuery,
   ValueSetOption,
@@ -407,23 +412,86 @@ export class TerminologyClient {
   }
 
   /**
-   * `POST /terminology/versions/{id}/import-file` — importa un archivo NDJSON.
+   * `POST /terminology/versions/{id}/import-file` — importa un archivo.
    *
    * Va como multipart y **no** por `common/files`: aquella subida valida el
    * tipo por bytes mágicos y sólo admite PDF e imágenes, porque existe para
    * evidencia clínica; un archivo de texto no tiene firma binaria y se rechaza.
-   * Acá el tipo se comprueba por parseo, que para NDJSON prueba más.
+   * Acá el tipo se comprueba por parseo, que prueba más.
    *
    * El contenido no se almacena: se convierte en conceptos y se descarta.
+   *
+   * ## `dryRun` y `profile`
+   *
+   * `dryRun: true` lee el archivo entero, lo valida y devuelve el informe con
+   * la vista previa **sin escribir nada** (§2 del contrato de carga masiva).
+   * Es el único modo con el que la pantalla arranca, porque un archivo de
+   * catálogo mal armado que entra a medias no se deshace con un botón.
+   *
+   * Los dos van al `FormData` como texto, no como booleano: `multipart` no
+   * transporta tipos, y el DTO del otro lado espera `'true'` / `'false'`.
+   * Cuando no se piden no se mandan, así que el servidor aplica sus omisiones
+   * (`dryRun=false`, `profile=conceptos`) y el consumidor viejo —una sola
+   * llamada con el archivo— sigue enviando exactamente lo que enviaba.
+   *
+   * **El status no se ramifica** (Q-J1): el dry-run puede responder 200 y la
+   * carga real 201, y de ese número no depende nada; lo que la pantalla lee es
+   * `aborted`, `errors` e `inserted`.
+   *
+   * @param versionId - La versión en borrador que recibe los conceptos.
+   * @param file - El archivo, tal como lo entregó el selector.
+   * @param options - `dryRun` para validar sin guardar, `profile` para decir
+   *   qué se está cargando.
    */
-  importConceptsFile(versionId: string, file: File): Observable<ConceptImportResult> {
+  importConceptsFile(
+    versionId: string,
+    file: File,
+    options: ConceptImportOptions = {},
+  ): Observable<ConceptImportResult> {
     const form = new FormData();
     form.append('file', file);
+    if (options.dryRun !== undefined) form.append('dryRun', String(options.dryRun));
+    if (options.profile !== undefined) form.append('profile', options.profile);
 
     return this.http.post<ConceptImportResult>(
       this.url(`/terminology/versions/${encodeURIComponent(versionId)}/import-file`),
       form,
     );
+  }
+
+  /**
+   * `GET /terminology/import-template` — la plantilla del perfil, para llenarla.
+   *
+   * Dos líneas: los nombres canónicos de las columnas y una fila de ejemplo.
+   * Existe porque el modo de fallo más común de una carga masiva es el
+   * encabezado: quien arma el archivo a mano no tiene de dónde sacar los
+   * nombres que el importador reconoce, y descubrirlos por ensayo y error
+   * cuesta una carga rechazada por intento.
+   *
+   * Se pide con `observe: 'response'` y no sólo el cuerpo porque el nombre del
+   * archivo viaja en `Content-Disposition`: es el servidor el que decide cómo
+   * se llama lo que se guarda, y la pantalla sólo tiene una reserva por si la
+   * cabecera no viene (mismo patrón que `downloadCertificatePdf`).
+   *
+   * @param profile - Qué perfil de columnas se quiere.
+   * @param format - `csv` o `xlsx`.
+   */
+  downloadImportTemplate(
+    profile: ImportProfile,
+    format: ImportTemplateFormat,
+  ): Observable<ImportTemplateDownload> {
+    return this.http
+      .get(this.url('/terminology/import-template'), {
+        params: new HttpParams().set('profile', profile).set('format', format),
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(
+        map((respuesta) => ({
+          blob: respuesta.body ?? new Blob([]),
+          fileName: nombreDeContentDisposition(respuesta.headers.get('Content-Disposition')),
+        })),
+      );
   }
 
   /**

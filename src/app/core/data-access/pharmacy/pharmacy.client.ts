@@ -6,10 +6,12 @@ import { API_BASE_URL, apiUrl } from '../api';
 import type {
   AvailabilityQuery,
   AvailabilityResult,
+  PharmacyDetail,
   PharmacyDirectoryPage,
   PharmacyProductSearchPage,
   PharmacyProductSearchQuery,
   PharmacySitePage,
+  PharmacySitePrices,
   PharmacySiteQuery,
 } from './pharmacy.types';
 
@@ -61,6 +63,17 @@ export class PharmacyClient {
   }
 
   /**
+   * `GET /pharmacy/pharmacies/:id` — el perfil de una farmacia, con sus
+   * sedes y direcciones.
+   *
+   * Carril A (Ola 0, 2026-09-25): lo necesita «Farmacia» para mostrar la
+   * ficha de una tienda antes de listar su catálogo.
+   */
+  getPharmacy(id: string): Observable<PharmacyDetail> {
+    return this.http.get<PharmacyDetail>(this.url(`/pharmacy/pharmacies/${id}`));
+  }
+
+  /**
    * `GET /pharmacy/sites` — las sedes publicadas, sueltas.
    *
    * A diferencia de {@link availability}, no exige productos: es lo que
@@ -80,6 +93,24 @@ export class PharmacyClient {
       params = params.set('limit', String(query.limit));
     }
     return this.http.get<PharmacySitePage>(this.url('/pharmacy/sites'), { params });
+  }
+
+  /**
+   * `GET /pharmacy/sites/:siteId/prices` — los precios públicos vigentes de
+   * una sede.
+   *
+   * Carril A (Ola 0, 2026-09-25): el catálogo con precio real de la página
+   * de farmacia. `productId` acota a un producto puntual; sin él, `product`
+   * nunca viaja como clave (el backend valida con `forbidNonWhitelisted`).
+   */
+  getSitePrices(siteId: string, productId?: string): Observable<PharmacySitePrices> {
+    let params = new HttpParams();
+    if (productId !== undefined) {
+      params = params.set('product', productId);
+    }
+    return this.http.get<PharmacySitePrices>(this.url(`/pharmacy/sites/${siteId}/prices`), {
+      params,
+    });
   }
 
   /**

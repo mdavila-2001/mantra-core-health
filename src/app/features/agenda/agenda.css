@@ -133,6 +133,13 @@
   }
 }
 
+/* En el detalle de una cita de la semana van todas a la vista y el modal es
+   angosto: envuelven a cualquier ancho en vez de salirse por el borde. */
+.agenda__acciones.agenda__acciones--detalle {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 /* En la tabla de Consultas, la tabla entra entera en su caja — sin columna fija
    que se pinte encima de Pago (propietario, 18/09) ni scroll lateral que
    esconda la acción.

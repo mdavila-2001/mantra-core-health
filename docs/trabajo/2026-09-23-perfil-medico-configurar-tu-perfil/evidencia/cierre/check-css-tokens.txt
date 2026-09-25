@@ -1,0 +1,22 @@
+$ node scripts/check-css-tokens.mjs   # 2026-09-24, rama en bc245a02
+
+✗ check-css-tokens — 3 token(s) sin declarar, 4 uso(s) sin valor de reserva
+
+  --s  (2 uso(s))
+      src\app\shared\components\organisms\auth-stage\auth-stage.css
+  --x  (1 uso(s))
+      src\app\shared\components\organisms\auth-stage\auth-stage.css
+  --dur  (1 uso(s))
+      src\app\shared\components\organisms\auth-stage\auth-stage.css
+
+  Un token que no existe no rompe la compilación: la declaración se descarta y
+  la propiedad cae a su valor inicial. La pantalla se ve mal y las pruebas
+  pasan.
+
+  Dos salidas, y las dos son válidas:
+    · usar el token real  — mirá los declarados en 'src/styles.css' y
+      'src/styles/alovida.css', que son espacios de nombres distintos;
+    · dar valor de reserva — 'var(--x, 12px)', para lo que se fija en tiempo
+      de ejecución o pertenece a un tema opcional.
+
+exit=1

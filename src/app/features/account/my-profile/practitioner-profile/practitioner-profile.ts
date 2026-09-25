@@ -478,8 +478,6 @@ export class PractitionerProfile {
         // Los cuatro contactos del alta y la calle: la API ya los devolvía y la
         // ficha mostraba sólo uno de cada clase.
         celularPersonal: perfil.mobilePhone ?? '',
-        celularTrabajo: perfil.workMobilePhone ?? '',
-        fijoTrabajo: perfil.workLandline ?? '',
         correoPersonal: perfil.personalEmail ?? '',
         direccion: perfil.homeAddress?.lines ?? '',
         mapaDomicilio: enlaceAlMapa(perfil.homeAddress),
@@ -504,7 +502,6 @@ export class PractitionerProfile {
     return perfil.specialties.map((especialidad: PractitionerSpecialty) => ({
       id: especialidad.id,
       nombre: label(etiquetas, especialidad.specialtyConceptId),
-      principal: especialidad.isPrimary,
       certificada: especialidad.boardCertified,
       alcance: especialidad.practiceScopeText ?? '',
       desde: especialidad.validFrom ?? null,
@@ -629,17 +626,13 @@ function sello(etiquetas: ConceptLabels, conceptId: string | undefined): StatusS
 /**
  * La especialidad con la que se presenta.
  *
- * La marcada como principal; si ninguna lo está, la primera vigente. Sin
- * ninguna vigente no se cae a una pasada: presentar a alguien con una
+ * La primera vigente, en el orden en que llegan. Hasta el 23/09/2026 era la
+ * marcada como principal; el médico pidió que ninguna se distinguiera (D-01).
+ * Sin ninguna vigente no se cae a una pasada: presentar a alguien con una
  * especialidad que dejó de ejercer es decir algo falso.
  */
 function especialidadPrincipal(especialidades: readonly EspecialidadVisible[]): string {
-  return (
-    especialidades.find((especialidad) => especialidad.principal && especialidad.hasta === null)
-      ?.nombre ??
-    especialidades.find((especialidad) => especialidad.hasta === null)?.nombre ??
-    ''
-  );
+  return especialidades.find((especialidad) => especialidad.hasta === null)?.nombre ?? '';
 }
 
 /** Milisegundos de una fecha opcional; las ausentes van al fondo del orden. */

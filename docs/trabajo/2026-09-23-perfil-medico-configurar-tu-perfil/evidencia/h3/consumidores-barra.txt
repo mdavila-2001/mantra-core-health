@@ -1,0 +1,13 @@
+/administration/patients (admin@alovida.mock) → /administration/patients: barras=1 · clave=q · tras buscar «a» la URL dice q=a
+/administration/clinical-forms (admin@alovida.mock) → /administration/clinical-forms: barras=1 · clave=q · tras buscar «a» la URL dice q=a
+/administration/services-catalog/import (admin@alovida.mock) → /administration/services-catalog/import: barras=1 · clave=q · tras buscar «a» la URL dice q=a
+/form-builder (medica@alovida.mock) → /form-builder: barras=1 · clave=q · tras buscar «a» la URL dice q=a
+/glossary (medica@alovida.mock) → /glossary: barras=1 · clave=q · tras buscar «a» la URL dice q=a
+/my-services (medica@alovida.mock) → /my-services: barras=1 · clave=q · tras buscar «a» la URL dice q=a
+/progress-notes (medica@alovida.mock) → /progress-notes: barras=1 · clave=q · tras buscar «a» la URL dice q=a
+/directory (paciente@alovida.mock) → /directory: barras=1 · clave=q · tras buscar «a» la URL dice especialidad=417fdcbc-0159-421c-afd5-6ce05874b098&q=a
+/directories (paciente@alovida.mock) → /directories: barras=1 · clave=q · tras buscar «a» la URL dice q=a
+/clinics-directory (paciente@alovida.mock) → /clinics-directory: barras=1 · clave=q · tras buscar «a» la URL dice q=a
+/pharmacies-directory (paciente@alovida.mock) → /pharmacies-directory: barras=1 · clave=q · tras buscar «a» la URL dice q=a
+/laboratory-directory (paciente@alovida.mock) → /laboratory-directory: barras=1 · clave=q · tras buscar «a» la URL dice q=a
+/design-system (medica@alovida.mock) → /design-system: barras=3 · clave=q · tras buscar «a» la URL dice q=a

@@ -1,0 +1,7 @@
+# fallos-simulados.spec.ts aislado: en la suite completa dio QuotaExceededError (localStorage del worker lleno) — 2026-09-24
+## rama (bc245a02)
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+## mockup (fae0efc2)
+ Test Files  1 passed (1)
+      Tests  6 passed (6)

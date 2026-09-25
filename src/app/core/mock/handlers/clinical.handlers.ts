@@ -23,7 +23,7 @@ import {
 } from '../fixtures/clinica';
 import { CLASE_ENCUENTRO, ESPECIALIDAD, ESTADO, ESTADO_CONDICION, ESTADO_ENCUENTRO, ESTADO_RECETA, INTENCION_DEL_PLAN, SEVERIDAD, VERIFICACION_DX } from '../fixtures/conceptos';
 import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/personas';
-import { forbidden, notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, notFound, preconditionFailed, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, isoDia, nuevoId, uuid } from '../mock-store';
 import {
   DUPLICATE_STUDY_WINDOW_DAYS,
@@ -298,6 +298,9 @@ export function registrarClinica(router: MockRouter): void {
 
   router.post('/clinical/medication-requests', (request) => {
     const datos = cuerpo<{ patientProfileId: string; medicationConceptId: string; encounterId?: string; indicationConditionId?: string; indicationText?: string; doseText?: string; frequencyText?: string; validFrom?: string; validTo?: string; patientInstructionsText?: string; prescriberProfileId?: string }>(request);
+    const fallo = falloDeIndicacion(datos.indicationConditionId, datos.indicationText);
+    if (fallo !== null) return fallo;
+
     const nueva: RecetaSimulada = {
       id: nuevoId('rx'),
       patientProfileId: datos.patientProfileId ?? '',
@@ -325,6 +328,30 @@ export function registrarClinica(router: MockRouter): void {
     };
     recetas.agregar(nueva);
     return { status: 201, body: registroReceta(nueva) };
+  });
+
+  /**
+   * `POST /clinical/medication-requests/:id/edit` (C5) — vincular después una
+   * receta con motivo plano a un diagnóstico confirmado, o cambiarlo. Existe
+   * en la API real (`clinical-records.controller.ts`) y no existía en el
+   * mock: se agrega acá, mismas reglas de indicación que el alta, sólo sobre
+   * un borrador — una receta emitida es un documento cerrado.
+   */
+  router.post('/clinical/medication-requests/:id/edit', (request) => {
+    const r = recetas.get(request.params['id']!);
+    if (r === undefined) return notFound();
+    if (r.issuedAt !== null) {
+      return conflict('La receta ya fue emitida: no se puede editar su indicación.');
+    }
+    const datos = cuerpo<{ indicationConditionId?: string; indicationText?: string }>(request);
+    const fallo = falloDeIndicacion(datos.indicationConditionId, datos.indicationText);
+    if (fallo !== null) return fallo;
+
+    const actualizada = recetas.actualizar(r.id, {
+      indicationConditionId: datos.indicationConditionId,
+      indicationText: datos.indicationConditionId === undefined ? datos.indicationText : undefined,
+    })!;
+    return registroReceta(actualizada);
   });
 
   router.post('/clinical/medication-requests/:id/sign', ({ params }) => {
@@ -785,6 +812,33 @@ const PLANTILLAS_CREADAS: ReturnType<typeof plantilla>[] = [];
  */
 export function plantillasVigentes(): readonly ReturnType<typeof plantilla>[] {
   return [...PLANTILLAS_DE_EXPEDIENTE, ...PLANTILLAS_CREADAS];
+}
+
+/**
+ * Las reglas de "¿para qué es esta receta?" (C5, pedido literal del
+ * propietario): siempre un diagnóstico **confirmado**, o un motivo escrito.
+ * Nunca los dos vacíos, y un `indicationConditionId` que no apunte a un
+ * `DXV-CONFIRMED` real es tan inválido como no mandar nada — se comparte
+ * entre el alta y `/:id/edit` para que las dos rutas exijan lo mismo.
+ */
+function falloDeIndicacion(
+  indicationConditionId: string | undefined,
+  indicationText: string | undefined,
+): MockReply | null {
+  if (indicationConditionId === undefined && (indicationText ?? '').trim() === '') {
+    return validation('La receta necesita un diagnóstico confirmado o un motivo.', [
+      { field: 'indicationConditionId', message: 'Falta indicationConditionId o indicationText.' },
+    ]);
+  }
+  if (indicationConditionId !== undefined) {
+    const condicion = condiciones.get(indicationConditionId);
+    if (condicion === undefined || condicion.verificationStatusConceptId !== VERIFICACION_DX['DXV-CONFIRMED']) {
+      return validation('La receta sólo se liga a un diagnóstico confirmado.', [
+        { field: 'indicationConditionId', message: 'El diagnóstico no está confirmado.' },
+      ]);
+    }
+  }
+  return null;
 }
 
 function registroReceta(r: RecetaSimulada) {

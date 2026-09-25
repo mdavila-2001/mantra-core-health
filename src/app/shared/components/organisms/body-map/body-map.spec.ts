@@ -1,7 +1,11 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { BodyMap, ZONAS_CON_SILUETA, type ZonaElegible } from './body-map';
-import { VISTAS_DEL_CUERPO } from './body-zones.geometry';
+import {
+  VISTAS_DEL_CUERPO,
+  VISTAS_DEL_CUERPO_FEMENINA,
+  VISTAS_DEL_CUERPO_MASCULINA,
+} from './body-zones.geometry';
 
 /**
  * Las zonas con forma, tal como las entrega `symptom-check` a partir de su
@@ -336,5 +340,56 @@ describe('BodyMap', () => {
     fixture.detectChanges();
 
     expect(html.querySelector('svg')).toBeNull();
+  });
+});
+
+/**
+ * El sexo de la silueta (P-04, 2026-09-25): `symptom-check` lo pasa según el
+ * propio perfil, y sin ese dato se dibuja la neutra de siempre. Acá sólo se
+ * prueba que `BodyMap` elige el arreglo de vistas que corresponde; el ancho
+ * de hombro/cintura/cadera de cada uno lo prueba `gen-body-zones.py` al
+ * generarlo.
+ */
+describe('BodyMap · el sexo de la silueta', () => {
+  let fixture: ComponentFixture<BodyMap>;
+  let html: HTMLElement;
+
+  function dDePecho(vistas: typeof VISTAS_DEL_CUERPO): string {
+    const frente = vistas.find((vista) => vista.id === 'frente');
+    const pecho = frente?.zonas.find((zona) => zona.id === 'pecho');
+    if (pecho === undefined) throw new Error('la vista de frente no trae «pecho»');
+    return pecho.d;
+  }
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [BodyMap] });
+    fixture = TestBed.createComponent(BodyMap);
+    fixture.componentRef.setInput('zonas', ZONAS);
+    fixture.detectChanges();
+    html = fixture.nativeElement as HTMLElement;
+  });
+
+  function dDibujado(id: string): string | null {
+    return html.querySelector(`[data-testid="body-map-${id}"]`)?.getAttribute('d') ?? null;
+  }
+
+  it('sin `sexo`, dibuja la silueta neutra', () => {
+    expect(dDibujado('pecho')).toBe(dDePecho(VISTAS_DEL_CUERPO));
+  });
+
+  it('con `sexo` "MALE", dibuja la silueta masculina', () => {
+    fixture.componentRef.setInput('sexo', 'MALE');
+    fixture.detectChanges();
+
+    expect(dDibujado('pecho')).toBe(dDePecho(VISTAS_DEL_CUERPO_MASCULINA));
+    expect(dDibujado('pecho')).not.toBe(dDePecho(VISTAS_DEL_CUERPO));
+  });
+
+  it('con `sexo` "FEMALE", dibuja la silueta femenina', () => {
+    fixture.componentRef.setInput('sexo', 'FEMALE');
+    fixture.detectChanges();
+
+    expect(dDibujado('pecho')).toBe(dDePecho(VISTAS_DEL_CUERPO_FEMENINA));
+    expect(dDibujado('pecho')).not.toBe(dDePecho(VISTAS_DEL_CUERPO));
   });
 });

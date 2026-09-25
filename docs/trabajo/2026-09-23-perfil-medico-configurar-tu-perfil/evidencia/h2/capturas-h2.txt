@@ -1,0 +1,33 @@
+ficha · Datos personales · escritorio claro: «Estado de la práctica»=no · «Correo de acceso»=SÍ · «Se cambia por su propio trámite»=SÍ
+ficha · Contacto · escritorio claro: «trabajo»=no · texto: Correo personal valeria-rojas@gmail.mock Celular personal +591 71000000 Municipio de residencia Santa Cruz de la Sierra Domicilio Av. Banzer N.º 120 Ver en el mapa
+ficha · Datos personales · tableta claro: «Estado de la práctica»=no · «Correo de acceso»=SÍ · «Se cambia por su propio trámite»=SÍ
+ficha · Contacto · tableta claro: «trabajo»=no · texto: Correo personal valeria-rojas@gmail.mock Celular personal +591 71000000 Municipio de residencia Santa Cruz de la Sierra Domicilio Av. Banzer N.º 120 Ver en el mapa
+ficha · Datos personales · movil claro: «Estado de la práctica»=no · «Correo de acceso»=SÍ · «Se cambia por su propio trámite»=SÍ
+ficha · Contacto · movil claro: «trabajo»=no · texto: Correo personal valeria-rojas@gmail.mock Celular personal +591 71000000 Municipio de residencia Santa Cruz de la Sierra Domicilio Av. Banzer N.º 120 Ver en el mapa
+ficha · Datos personales · escritorio oscuro: «Estado de la práctica»=no · «Correo de acceso»=SÍ · «Se cambia por su propio trámite»=SÍ
+ficha · Contacto · escritorio oscuro: «trabajo»=no · texto: Correo personal valeria-rojas@gmail.mock Celular personal +591 71000000 Municipio de residencia Santa Cruz de la Sierra Domicilio Av. Banzer N.º 120 Ver en el mapa
+ficha · Datos personales · tableta oscuro: «Estado de la práctica»=no · «Correo de acceso»=SÍ · «Se cambia por su propio trámite»=SÍ
+ficha · Contacto · tableta oscuro: «trabajo»=no · texto: Correo personal valeria-rojas@gmail.mock Celular personal +591 71000000 Municipio de residencia Santa Cruz de la Sierra Domicilio Av. Banzer N.º 120 Ver en el mapa
+ficha · Datos personales · movil oscuro: «Estado de la práctica»=no · «Correo de acceso»=SÍ · «Se cambia por su propio trámite»=SÍ
+ficha · Contacto · movil oscuro: «trabajo»=no · texto: Correo personal valeria-rojas@gmail.mock Celular personal +591 71000000 Municipio de residencia Santa Cruz de la Sierra Domicilio Av. Banzer N.º 120 Ver en el mapa
+editor · Datos personales · escritorio claro: sección del correo de acceso=SÍ — «Tu correo de acceso Es con el que entrás. Se cambia por su propio trámite, no desde acá. Correo de acceso valeria-rojas@alovida.mock»
+editor · Contacto · escritorio claro: «trabajo»=["ar la ubicación Dirección del trabajo Dónde atendés en tu lugar de ","trabajo; no es tu domicilio personal."," ubicación Marcar tu lugar de trabajo en el mapa Celular personal +"] · texto: Dónde te ubican y por dónde te contactan. Se guarda junto con tus datos personales. CH LP CB OR PT TJ SC BE PD Departamento elegido: Santa Cruz Localidad de residencia (opcional) Elegí tu ciudad o municipio Santa Cruz de la Sierra Montero Warnes Cotoca La Guardia Puerto Suárez Puerto Quijarro Sólo se ofrecen las del departamento que elegiste. Dirección Tu domicilio particular. + − Leaflet | © Open
+editor · Datos personales · movil oscuro: sección del correo de acceso=SÍ — «Tu correo de acceso Es con el que entrás. Se cambia por su propio trámite, no desde acá. Correo de acceso valeria-rojas@alovida.mock»
+editor · Contacto · movil oscuro: «trabajo»=["ar la ubicación Dirección del trabajo Dónde atendés en tu lugar de ","trabajo; no es tu domicilio personal."," ubicación Marcar tu lugar de trabajo en el mapa Celular personal +"] · texto: Dónde te ubican y por dónde te contactan. Se guarda junto con tus datos personales. CH LP CB OR PT TJ SC BE PD Departamento elegido: Santa Cruz Localidad de residencia (opcional) Elegí tu ciudad o municipio Santa Cruz de la Sierra Montero Warnes Cotoca La Guardia Puerto Suárez Puerto Quijarro Sólo se ofrecen las del departamento que elegiste. Dirección Tu domicilio particular. + − Leaflet | © Open
+insignias · ficha · pestaña «Datos personales»: insignias=2 · tonos=["tone--secondary"] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=["Cardiología Verificado","Medicina Interna Verificado"]
+insignias · ficha · pestaña «Contacto»: insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+insignias · ficha · pestaña «Facturación»: insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+insignias · ficha · pestaña «Dónde atiendo»: insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+insignias · ficha · pestaña «Trayectoria»: insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+insignias · ficha · pestaña «Credenciales»: insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+insignias · ficha · pestaña «Actividad»: insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+insignias · editor · Datos personales: encabezados=["ESPECIALIDAD","DESDE","ESTADO","ACCIONES","Ver el detalle de la fila"] · botones con «principal»=0 · insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+insignias · perfil público (/p/valeria-rojas): insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+insignias · guía, detalle (paciente, /directory/be0f3a66-c03e-4eac-a416-c1068238d3d2) → /directory/be0f3a66-c03e-4eac-a416-c1068238d3d2: insignias=2 · tonos=["tone--secondary"] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=["Cardiología Verificado","Medicina Interna Verificado"]
+insignias · guía, lista (paciente, /directory): insignias=0 · tonos=[] · .specialty-badge__principal=0 · «principal» en pantalla=0 · nombres=[]
+alta · especialidades: página 13 de 14
+alta · especialidades: «Especialidad 1» visible=1 · «principal» en pantalla=0 · botón=«+ Agregar otra especialidad»
+PATCH · interruptor de la API real alcanzable: SÍ
+PATCH · editor abierto sin recargar: /my-account/edit · interruptor=false
+PATCH · PATCH · claves=["mobilePhone"] · del trabajo=ninguna
+consola: 1 distintas · red: 7 distintas
