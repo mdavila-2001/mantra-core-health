@@ -40,9 +40,11 @@ describe('NAV_SUBGROUPS', () => {
    *
    * Era de dos: `consultation` salió del registro entero el 2026-09-10, cuando
    * el propietario pidió borrar la pantalla vieja que duplicaba a «Consultas
-   * médicas».
+   * médicas». Volvió a ser de dos el 2026-09-25: al retirarse «Notas médicas»
+   * del producto, «Historia clínica» quedaba envolviendo sólo al archivo
+   * clínico, y se disolvió por la misma regla.
    */
-  const SUELTAS_A_PROPOSITO = ['schedule'];
+  const SUELTAS_A_PROPOSITO = ['schedule', 'medical-records'];
 
   it('reparte el registro entero: ninguna sección se queda sin bloque por descuido', () => {
     const sinBloque = rutasDelRegistro.filter(

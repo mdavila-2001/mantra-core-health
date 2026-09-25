@@ -131,13 +131,10 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
 
      Ahora «Consultas médicas» cuelga directo de Atención. Un subgrupo se
      justifica cuando ordena varias secciones, no cuando envuelve una. */
-  {
-    label: 'Historia clínica',
-    group: 'Atención',
-    icon: 'folder',
-    // Lo que queda escrito del paciente: el archivo y lo que se le agrega hoy.
-    paths: ['medical-records', 'progress-notes'],
-  },
+  /* «Historia clínica» agrupaba el archivo clínico con «Notas médicas». Al
+     retirarse la segunda (25/09/2026) quedaba un subgrupo envolviendo una sola
+     sección, que es exactamente lo que el párrafo de arriba dice que no se
+     hace: «Archivo clínico» cuelga directo de Atención. */
   {
     label: 'Estudios y procedimientos',
     group: 'Atención',

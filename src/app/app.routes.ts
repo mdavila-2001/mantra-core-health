@@ -104,12 +104,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/public-directories/pharmacies-directory').then(
       (m) => m.PharmaciesDirectory,
     ),
-  // §4.H del plan de UX · las dos pantallas nuevas del panel del médico.
-  // Diferidas como el resto: sólo las alcanza quien atiende, y el presupuesto
-  // del bundle inicial está al límite —cargarlas de entrada lo pasaba por 4 kB
-  // y le costaba la descarga a todo el mundo, paciente incluido—.
-  'progress-notes': () =>
-    import('./features/progress-notes/progress-notes').then((m) => m.ProgressNotes),
+  // §4.H del plan de UX · la agenda del médico. Diferida como el resto: sólo
+  // la alcanza quien atiende, y el presupuesto del bundle inicial está al
+  // límite —cargarla de entrada lo pasaba por 4 kB y le costaba la descarga a
+  // todo el mundo, paciente incluido—.
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
   diagnostics: () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
   interventions: () =>

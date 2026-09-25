@@ -225,16 +225,12 @@ describe('buildAccessTree', () => {
    * zona por el cajón sin que nada se queje, que es exactamente lo que este
    * archivo existe para impedir.
    */
-  it('la zona de Consultas le abre tres tarjetas al médico', () => {
+  it('la zona de Consultas le abre dos tarjetas al médico', () => {
     const consulta = buildAccessTree(seccionesDe(['PRACTITIONER'])).find(
       (zona) => zona.area.id === 'consulta',
     );
 
-    expect(consulta?.sections.map((s) => s.path)).toEqual([
-      'schedule',
-      'progress-notes',
-      'medical-records',
-    ]);
+    expect(consulta?.sections.map((s) => s.path)).toEqual(['schedule', 'medical-records']);
   });
 
   /**
