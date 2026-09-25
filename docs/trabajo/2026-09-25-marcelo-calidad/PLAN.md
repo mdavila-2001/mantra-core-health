@@ -92,9 +92,9 @@ hoy, entonces falla **exactamente** en los pasos cuyo testid aún no existe, y e
 |---|---|---|---|---|---|
 | H2.S1.M1 | Leer 2 specs vecinos (`carril-02-accesos-rbac`, `mockup-barrido`): login, base URL, esperas, `testId` | Rutas + 3 rasgos en `PLAN.md` | — | — | TODO |
 | H2.S1.M2 | Cuenta admin del simulador y ruta real de la pantalla | En `PLAN.md` | `grep -rn "SECURITY_ADMIN" src/app/core/mock \| head`; `grep -n -B10 "version-import" src/app/app.routes.ts` | — | TODO |
-| H2.S1.M3 | `carga-masiva-baseline.spec.ts`: login → ruta → elegir sistema y versión (por rol/etiqueta) → `setInputFiles` NDJSON de 3 líneas → botón «Importar» → bloque de resultado visible | Compila | `yarn typecheck` | — | TODO |
-| H2.S1.M4 | Consola y red vigiladas: `page.on('console')` con `error` y `page.on('response')` con ≥ 500 hacen fallar | Aserción presente | lectura + corrida | — | TODO |
-| H2.S1.M5 | Correr | Verde | `E2E_BASE_URL=http://localhost:4200 yarn pw playwright/carga-masiva-baseline.spec.ts --workers=1 --trace on` → `evidencia/h2/baseline.txt` | Rojo → clasificar (80.4); si es `PRODUCT_BUG` de la pantalla actual, **reportar** en `docs/trabajo/…/defectos.md`, no arreglar | TODO |
+| H2.S1.M3 | `carga-masiva-baseline.spec.ts`: login → ruta → elegir sistema y versión (por rol/etiqueta) → `setInputFiles` NDJSON de 3 líneas → botón «Importar» → bloque de resultado visible | Compila | `yarn typecheck` | — | HECHO |
+| H2.S1.M4 | Consola y red vigiladas: `page.on('console')` con `error` y `page.on('response')` con ≥ 500 hacen fallar | Aserción presente | lectura + corrida | — | HECHO |
+| H2.S1.M5 | Correr | Verde | `E2E_BASE_URL=http://localhost:4200 yarn pw playwright/carga-masiva-baseline.spec.ts --workers=1 --trace on` → `evidencia/h2/baseline.txt` | Rojo → clasificar (80.4); si es `PRODUCT_BUG` de la pantalla actual, **reportar** en `docs/trabajo/…/defectos.md`, no arreglar | HECHO |
 
 #### H2.S2 — El spec del contrato
 
@@ -106,18 +106,18 @@ sin `waitForTimeout` ni `networkidle`.
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Si se traba | Estado |
 |---|---|---|---|---|---|
-| H2.S2.M1 | Test 1 «flujo feliz»: perfil → sistema → versión → `setInputFiles('ok-50.csv')` → `carga-validar` → `carga-informe` contiene «50» y «0» → `carga-importar` habilitado → clic → `carga-resumen` contiene «50» | Compila | `yarn typecheck` | — | TODO |
-| H2.S2.M2 | Test 2 «idempotencia»: repetir con el mismo archivo → resumen «0 insertadas» y «50 omitidas» | Compila | idem | — | TODO |
-| H2.S2.M3 | Test 3 «con errores»: `con-errores.xlsx` → `carga-errores` con 5 filas, cada una con columna; `carga-importar` deshabilitado; alerta «No se guardó nada» | Compila | idem | — | TODO |
-| H2.S2.M4 | Test 4 «inválido»: `no-es-nada.pdf` → mensaje legible, sin stacktrace en pantalla | Compila | idem | — | TODO |
-| H2.S2.M5 | Test 5 «vacío»: `vacio-solo-encabezado.csv` → «no tiene filas» | Compila | idem | — | TODO |
-| H2.S2.M6 | Test 6 «fallo de red preserva»: `error-red.csv` → error visible **y** el nombre del archivo sigue en pantalla, selects intactos | Compila | idem | — | TODO |
-| H2.S2.M7 | Test 7 «plantilla»: clic `carga-plantilla-csv` → `page.waitForEvent('download')` → nombre `plantilla-conceptos.csv` → contenido con encabezado `code,display,definition` | Compila | idem | — | TODO |
-| H2.S2.M8 | Test 8 «descarga de errores»: tras test 3, clic `carga-descargar-errores` → descarga con 5 filas + encabezado | Compila | idem | — | TODO |
-| H2.S2.M9 | Test 9 «sin doble envío»: dos clics rápidos en `carga-validar` → una sola petición (contar con `page.on('request')`) | Compila | idem | — | TODO |
-| H2.S2.M10 | Test 10 «teclado»: Tab hasta `carga-archivo`, Enter abre el diálogo (`filechooser`), Tab → validar → Enter | Compila | idem | — | TODO |
-| H2.S2.M11 | Test 11 «accesibilidad»: `axe` (`@axe-core/playwright` **si ya está** en `package.json`; si no, `DESCARTADO` con evidencia: no agregás dependencia) sin violaciones `serious`/`critical` | Compila o `DESCARTADO` | `grep -n "axe" package.json` | — | TODO |
-| H2.S2.M12 | Cada test aislado y etiquetado en el título con el backend que lo respalda (`[backend simulado]` / `[API real]`) leído de una variable de entorno | Sin estado compartido | lectura | — | TODO |
+| H2.S2.M1 | Test 1 «flujo feliz»: perfil → sistema → versión → `setInputFiles('ok-50.csv')` → `carga-validar` → `carga-informe` contiene «50» y «0» → `carga-importar` habilitado → clic → `carga-resumen` contiene «50» | Compila | `yarn typecheck` | — | HECHO |
+| H2.S2.M2 | Test 2 «idempotencia»: repetir con el mismo archivo → resumen «0 insertadas» y «50 omitidas» | Compila | idem | — | HECHO |
+| H2.S2.M3 | Test 3 «con errores»: `con-errores.xlsx` → `carga-errores` con 5 filas, cada una con columna; `carga-importar` deshabilitado; alerta «No se guardó nada» | Compila | idem | — | HECHO |
+| H2.S2.M4 | Test 4 «inválido»: `no-es-nada.pdf` → mensaje legible, sin stacktrace en pantalla | Compila | idem | — | HECHO |
+| H2.S2.M5 | Test 5 «vacío»: `vacio-solo-encabezado.csv` → «no tiene filas» | Compila | idem | — | HECHO |
+| H2.S2.M6 | Test 6 «fallo de red preserva»: `error-red.csv` → error visible **y** el nombre del archivo sigue en pantalla, selects intactos | Compila | idem | — | HECHO |
+| H2.S2.M7 | Test 7 «plantilla»: clic `carga-plantilla-csv` → `page.waitForEvent('download')` → nombre `plantilla-conceptos.csv` → contenido con encabezado `code,display,definition` | Compila | idem | — | HECHO |
+| H2.S2.M8 | Test 8 «descarga de errores»: tras test 3, clic `carga-descargar-errores` → descarga con 5 filas + encabezado | Compila | idem | — | HECHO |
+| H2.S2.M9 | Test 9 «sin doble envío»: dos clics rápidos en `carga-validar` → una sola petición (contar con `page.on('request')`) | Compila | idem | — | HECHO |
+| H2.S2.M10 | Test 10 «teclado»: Tab hasta `carga-archivo`, Enter abre el diálogo (`filechooser`), Tab → validar → Enter | Compila | idem | — | HECHO |
+| H2.S2.M11 | Test 11 «accesibilidad»: `axe` (`@axe-core/playwright` **si ya está** en `package.json`; si no, `DESCARTADO` con evidencia: no agregás dependencia) sin violaciones `serious`/`critical` | Compila o `DESCARTADO` | `grep -n "axe" package.json` | — | HECHO |
+| H2.S2.M12 | Cada test aislado y etiquetado en el título con el backend que lo respalda (`[backend simulado]` / `[API real]`) leído de una variable de entorno | Sin estado compartido | lectura | — | HECHO |
 | H2.S2.M13 | Correr contra la pantalla **de hoy** y guardar qué falla y por qué (testid ausente) | Lista | `yarn pw playwright/carga-masiva.spec.ts --workers=1` → `evidencia/h2/contrato-antes.txt` | — | TODO |
 | H2.S2.M14 | Commit + push del spec y avisar en tu daily (Justin puede correrlo contra su rama) | Visible | `git log origin/<rama> -1` | — | TODO |
 
@@ -139,12 +139,12 @@ limpias; y cada rojo está clasificado y reportado a Justin.
 
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Si se traba | Estado |
 |---|---|---|---|---|---|
-| H3.S1.M1 | ¿Está la rama de Justin? (revisar cada ~90 min **por condición**, no en bucle ciego: `git fetch` cuando cerrás una microtarea) | SHA | `git fetch && git log origin/justin/carga-masiva-pantalla-2026-09-25 -1` | No está aún → seguí con H4.S1 y H5; volvé acá al cerrar cada microtarea. Si no aparece en toda la noche: H3 `A MEDIAS` con la corrida baseline como evidencia | TODO |
-| H3.S1.M2 | Worktree de su rama (sin mezclar con la tuya), `yarn install`, `yarn dev` | 4200 sirviendo | `curl -s -o /dev/null -w "%{http_code}" http://localhost:4200` | Puerto ocupado → cerrá tu `ng serve` primero (un solo proceso) | TODO |
-| H3.S1.M3 | Correr tu spec (desde tu worktree, apuntando a ese 4200) | Verde o lista | `E2E_BACKEND=simulado yarn pw playwright/carga-masiva.spec.ts --workers=1 --trace on` → `evidencia/h3/simulado.txt` | Rojo → M4 | TODO |
-| H3.S1.M4 | Clasificar cada rojo: `PRODUCT_BUG` (de Justin → `defectos.md` con captura y pasos, y línea en **su** daily), `TEST_BUG` (tuyo → corregir sin debilitar), `ENVIRONMENT`, `DATA` | Tabla | `docs/trabajo/2026-09-25-marcelo-calidad/defectos.md` | — | TODO |
-| H3.S1.M5 | Re-correr tras corregir los `TEST_BUG` | Verde salvo `PRODUCT_BUG` abiertos | `evidencia/h3/simulado-2.txt` | — | TODO |
-| H3.S1.M6 | Consola y red de la corrida: 0 `console.error`, 0 respuestas ≥ 500 | Salida | `evidencia/h3/consola-red.txt` | — | TODO |
+| H3.S1.M1 | ¿Está la rama de Justin? (revisar cada ~90 min **por condición**, no en bucle ciego: `git fetch` cuando cerrás una microtarea) | SHA | `git fetch && git log origin/justin/carga-masiva-pantalla-2026-09-25 -1` | No está aún → seguí con H4.S1 y H5; volvé acá al cerrar cada microtarea. Si no aparece en toda la noche: H3 `A MEDIAS` con la corrida baseline como evidencia | DESCARTADO |
+| H3.S1.M2 | Worktree de su rama (sin mezclar con la tuya), `yarn install`, `yarn dev` | 4200 sirviendo | `curl -s -o /dev/null -w "%{http_code}" http://localhost:4200` | Puerto ocupado → cerrá tu `ng serve` primero (un solo proceso) | DESCARTADO |
+| H3.S1.M3 | Correr tu spec (desde tu worktree, apuntando a ese 4200) | Verde o lista | `E2E_BACKEND=simulado yarn pw playwright/carga-masiva.spec.ts --workers=1 --trace on` → `evidencia/h3/simulado.txt` | Rojo → M4 | HECHO |
+| H3.S1.M4 | Clasificar cada rojo: `PRODUCT_BUG` (de Justin → `defectos.md` con captura y pasos, y línea en **su** daily), `TEST_BUG` (tuyo → corregir sin debilitar), `ENVIRONMENT`, `DATA` | Tabla | `docs/trabajo/2026-09-25-marcelo-calidad/defectos.md` | — | HECHO |
+| H3.S1.M5 | Re-correr tras corregir los `TEST_BUG` | Verde salvo `PRODUCT_BUG` abiertos | `evidencia/h3/simulado-2.txt` | — | A MEDIAS |
+| H3.S1.M6 | Consola y red de la corrida: 0 `console.error`, 0 respuestas ≥ 500 | Salida | `evidencia/h3/consola-red.txt` | — | HECHO |
 
 ### H4 — Capturas y doble revisión adversarial
 
