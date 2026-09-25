@@ -643,21 +643,35 @@ describe('NavigationService', () => {
     // señal es el tipo de la organización activa (`tenantTypes` del token,
     // claim nuevo de este mismo carril), no un rol: la cuenta sigue siendo
     // `USER` a secas.
-    it('sólo ve lo que el registro de procesos le pide: dos renglones fijos y tres de Administración', () => {
+    //
+    // **Sync a `dev` (2026-09-25):** acá Panel, Tutoriales y Chats
+    // (`dashboard`, `tutorials`, `messaging`) todavía son renglones del
+    // grupo «General» aplanado —`fueraDelMenuPara: [ANY_ROLE]` (N-01) no
+    // llegó a esta rama—, así que la aseguradora los sigue viendo como
+    // renglón, igual que cualquier otra sesión. Este carril no los toca: no
+    // están en `hiddenForTenantTypes`, y el pedido del cliente tampoco los
+    // nombra. Cuando N-01 llegue a `dev`, esta lista vuelve a bajar a cinco.
+    it('sólo ve lo que el registro de procesos le pide, más lo que todavía no se apagó del menú general', () => {
       abrirSesion(['USER'], ['t-1'], { 't-1': 'PAYER' });
 
       expect(rutasDelMenu()).toEqual([
         '/my-account',
         '/notification-center',
+        '/dashboard',
+        '/tutorials',
+        '/messaging',
         '/administration/insurance',
         '/administration/insurance-analytics',
         '/administration/my-organization',
       ]);
-      // Un solo dominio: sin «General» (Directorios, Chats) ni «Mi cuenta»
-      // (el autoservicio del paciente), que es justo lo que la captura del
-      // pedido mostraba de más.
-      expect(service.menu().map((grupo) => grupo.label)).toEqual(['Administración']);
-      expect(service.menu()[0]?.blocks.map((bloque) => bloque.label)).toEqual([
+      // Dos dominios en dev (uno en mockup, donde General ya no tiene nada
+      // que ofrecerle): «General» sólo con lo que ningún carril apagó
+      // todavía, y «Administración» con las tres de seguros. Sin «Mi
+      // cuenta» (el autoservicio del paciente), que es lo que el pedido
+      // señalaba.
+      expect(service.menu().map((grupo) => grupo.label)).toEqual(['General', 'Administración']);
+      const administracion = service.menu().find((grupo) => grupo.label === 'Administración');
+      expect(administracion?.blocks.map((bloque) => bloque.label)).toEqual([
         'Seguros',
         'Organizaciones',
       ]);
@@ -676,8 +690,10 @@ describe('NavigationService', () => {
       ]) {
         expect(alcanzables, ruta).not.toContain(ruta);
       }
-      // Lo que el registro le pide sigue alcanzable, aunque no todo ocupe
-      // renglón (dashboard, tutorials y messaging son íconos de cabecera).
+      // Lo que el registro le pide sigue alcanzable. En dev, dashboard,
+      // tutorials y messaging siguen siendo renglones del menú (ver la
+      // nota de arriba); la aserción sólo pide que se puedan alcanzar, no
+      // dónde se dibujan.
       for (const ruta of [
         '/dashboard',
         '/tutorials',

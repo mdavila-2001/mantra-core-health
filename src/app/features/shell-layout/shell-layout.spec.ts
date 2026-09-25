@@ -823,7 +823,12 @@ describe('ShellLayout', () => {
       expect(destinos).toContain('/design-system');
     });
 
-    it('la barra de la aseguradora: cinco renglones, un solo dominio plegable (2026-09-25)', () => {
+    it('la barra de la aseguradora: lo que pide el registro, más lo que dev todavía no apagó (2026-09-25)', () => {
+      // Sync a `dev`: acá dashboard/tutorials/messaging siguen siendo
+      // renglones del grupo «General» aplanado (N-01 no llegó a esta rama),
+      // así que la aseguradora los sigue viendo igual que cualquier sesión.
+      // Este carril no los toca — no son del registro de procesos, pero
+      // tampoco están en su lista de lo que se le cierra.
       abrirSesion({
         sub: 'u-3',
         roles: ['USER'],
@@ -837,12 +842,18 @@ describe('ShellLayout', () => {
       expect(destinos).toEqual([
         '/my-account',
         '/notification-center',
+        '/dashboard',
+        '/tutorials',
+        '/messaging',
         '/administration/insurance',
         '/administration/insurance-analytics',
         '/administration/my-organization',
       ]);
+      // Un solo dominio PLEGABLE («Administración»): «General» tiene
+      // contenido para esta sesión, pero está aplanado y se dibuja suelto,
+      // no como `<details>`.
       expect(raiz().querySelectorAll('.app-side-nav__group').length).toBe(1);
-      expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(0);
+      expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(1);
     });
 
     /**
