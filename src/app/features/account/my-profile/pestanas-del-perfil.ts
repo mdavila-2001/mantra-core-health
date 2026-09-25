@@ -17,12 +17,19 @@
  *
  * Pedido del cliente del 09/09/2026: «un solo card grande con distintas
  * pestañas», en vez de tres tarjetas apiladas.
+ *
+ * **«Seguros» y «Tutores» se separaron el 24/09/2026** (pedido del
+ * propietario): eran una sola pestaña «Seguros y tutores» con dos listas
+ * adentro, y son dos categorías de dato distintas —una póliza no es un
+ * contacto de emergencia—. Van consecutivas, en el mismo lugar que ocupaba la
+ * pestaña combinada.
  */
 export const PESTANAS_DEL_PERFIL = [
   'Datos personales',
   'Contacto',
   'Facturación',
-  'Seguros y tutores',
+  'Seguros',
+  'Tutores',
   'Mis puntos',
 ] as const;
 
@@ -32,7 +39,8 @@ export const PESTANA = {
   contacto: 1,
   facturacion: 2,
   seguros: 3,
-  puntos: 4,
+  tutores: 4,
+  puntos: 5,
 } as const;
 
 /**

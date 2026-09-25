@@ -121,7 +121,7 @@ for (const viewport of [
         nombre: 'Paciente copagos',
       });
       await irA(page, '/my-account');
-      await page.getByRole('tab', { name: 'Seguros y tutores' }).click();
+      await page.getByRole('tab', { name: 'Seguros', exact: true }).click();
       const policy = page
         .getByTestId('patient-coverage-card')
         .filter({ hasText: 'Plan Copagos Real' });

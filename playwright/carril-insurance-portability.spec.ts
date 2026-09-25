@@ -76,7 +76,7 @@ function esRuidoDelServidorDeDesarrollo(texto: string): boolean {
 async function abrirDialogo(page: Page): Promise<void> {
   await entrarAlSimulador(page, 'paciente', '');
   await page.goto('/my-account');
-  await page.getByRole('tab', { name: 'Seguros y tutores' }).click();
+  await page.getByRole('tab', { name: 'Seguros', exact: true }).click();
 
   const tarjeta = page.getByTestId('insurance-portability-card');
   await expect(tarjeta).toBeVisible();
@@ -274,7 +274,7 @@ for (const viewport of [
     }) => {
       await entrarAlSimulador(page, 'paciente', '');
       await page.goto('/my-account');
-      await page.getByRole('tab', { name: 'Seguros y tutores' }).click();
+      await page.getByRole('tab', { name: 'Seguros', exact: true }).click();
 
       const abrir = page.getByTestId('btn-open-portability-dialog');
       await expect(abrir).toBeVisible();
@@ -370,7 +370,7 @@ for (const viewport of [
       await enlacePerfil.click();
       await page.waitForURL((url) => url.pathname === '/my-account');
 
-      await page.getByRole('tab', { name: 'Seguros y tutores' }).click();
+      await page.getByRole('tab', { name: 'Seguros', exact: true }).click();
 
       const tarjeta = page.getByTestId('insurance-portability-card');
       await expect(tarjeta).toBeVisible();
