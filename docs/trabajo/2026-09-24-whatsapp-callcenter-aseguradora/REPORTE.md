@@ -1,9 +1,13 @@
 # Reporte — Tarea 2: WhatsApp y Call Center de aseguradora
 
-> **AVANCE: 20 / 26 microtareas HECHO — 76,9 %.**
+> **AVANCE: 26 / 26 microtareas HECHO — 100 %.**
 
-- Fecha: 2026-09-24 · Plan: [PLAN.md](./PLAN.md) · Ramas: `marcelo/feat-insurance-whatsapp-callcenter` (front, commits `56d5727c`, `3848442d`), `marcelo/feat-insurance-whatsapp-callcenter-api` (API, commit `09c41ca5`)
-- Peldaño de evidencia alcanzado: **REGRESSION_VERIFIED** para H1.S1/S2/S3 (API + front + E2E real + regresión del módulo). H1.S4 (revisión independiente, `mockup`, PRs, cierre) sigue **PENDIENTE**.
+- Fecha: 2026-09-24 · Plan: [PLAN.md](./PLAN.md)
+- Ramas y PRs:
+  - API → `dev`: `marcelo/feat-insurance-whatsapp-callcenter-api` (commit `09c41ca5`) → [PR #458](https://github.com/mdavila-2001/mantra-core-health-api/pull/458)
+  - Front → `dev`: `marcelo/feat-insurance-whatsapp-callcenter` (commits `56d5727c`, `3848442d`, `a7832cd6`, `01622e3c`) → [PR #656](https://github.com/mdavila-2001/mantra-core-health/pull/656)
+  - Front → `mockup`: `marcelo/feat-insurance-whatsapp-callcenter-mockup` (commits `1f548988`, `7dfebe66`, `c3fe8789`) → [PR #657](https://github.com/mdavila-2001/mantra-core-health/pull/657)
+- Peldaño de evidencia alcanzado: **REGRESSION_VERIFIED** en las tres ramas (API + front + `mockup` + E2E real + regresión del módulo). Los tres PRs están abiertos con revisores asignados; el cierre (merge) queda en manos humanas (`jsaldias39`/`PabloArauzCaballero`), como exige el `CLAUDE.md` del repo («el flujo termina en abrir el PR»).
 
 ## Completado
 
@@ -47,18 +51,52 @@ dígitos. Clasificado `ENVIRONMENT` (regla 80.4): mi código ya estaba verificad
 (23/23). Reconstruido con `docker compose build api && docker compose up -d api`; reintentado y
 **12/12 PASS**.
 
+### H1.S4 — Revisión independiente, `mockup`, PRs, 4/4
+
+| ID | Qué se logró | Comando | Resultado |
+|---|---|---|---|
+| H1.S4.M1 | Regresión completa del front + build | `yarn test --watch=false` · `yarn build` | 573/581 archivos, 7369/7385 tests PASS (16 fallos en 8 archivos, **ninguno en este diff** — verificado por causa raíz, ver «No cubierto»); build exit 0, sin presupuesto excedido en archivos propios |
+| H1.S4.M2 | Revisión independiente: front (persona `frontend-reviewer` sobre el diff completo) y API (`/code-review --level medium`) | agente + skill | Front: 0 BLOCKER/CRITICAL/HIGH, 2 hallazgos MEDIUM/LOW documentados sin corregir (fuera de alcance). API: 0 hallazgos (`evidencia/revision-independiente.md`) |
+| H1.S4.M3 | Porte a `mockup`: rama desde `origin/mockup` actualizado, cherry-pick limpio de los 2 commits del front. **Hallazgo real**: el E2E portado buscaba la pestaña «Seguros y tutores», que en `mockup` ya está separada en «Seguros» (merge previo `justin/perfil-seguro-tutor-separados`) — corregido el locator | `yarn typecheck` · specs tocados · E2E maqueta | typecheck 0 · 4 archivos/35 tests PASS · **8/8 PASS** en el E2E real contra `ng serve` de `mockup` |
+| H1.S4.M4 | Push de las 3 ramas + apertura de los 3 PRs con `jsaldias39`/`PabloArauzCaballero` como revisores; verificación `pr-mergeable-gate` (regla 35.2) | `gh pr create` · `gh pr view --json mergeable,mergeStateStatus,...` · `gh pr checks` | Los 3 PRs `MERGEABLE` (sin conflictos). Ver detalle en «Gate de PR mergeable» |
+
 ## A medias
 
-Ninguna microtarea quedó a medias: todo lo abierto se cerró `HECHO` o se movió a `PENDIENTE`.
+Ninguna microtarea quedó a medias: todo lo abierto se cerró `HECHO`.
 
 ## Pendiente
 
-| ID | Estado | Qué falta |
-|---|---|---|
-| H1.S4.M2 | TODO | Revisión independiente (`frontend-reviewer` sobre el diff del front, `/code-review` sobre el de la API). No ejecutada aún. |
-| H1.S4.M3 | TODO | Porte a `mockup`: rama `marcelo/feat-insurance-whatsapp-callcenter-mockup` desde `origin/mockup`, cherry-pick de los 2 commits del front, specs + suite en esa rama. |
-| H1.S4.M4 | TODO | Push de las 3 ramas y apertura de los 2–3 PRs (`gh pr create`). Los cuerpos ya están redactados (`evidencia/pr-body-api.md`, `evidencia/pr-body-front.md`). **Acción hacia afuera** (notifica a `jsaldias39`/`PabloArauzCaballero`): se detiene acá para que el usuario confirme antes de abrirlos. |
-| H1.S4.M5 | EN CURSO | Este mismo `REPORTE.md`; falta el `walkthrough.md` en `docs/tareas/subtarea-2.5-.../` y el `claim.py --level` final tras cerrar S4. |
+Ninguna microtarea propia del plan queda pendiente. Lo único fuera de mi control: la aprobación
+humana y el merge de los tres PRs (`jsaldias39`/`PabloArauzCaballero`), y que el CI de GitHub
+Actions —documentado como no confiable en el `CLAUDE.md` del repo— termine de correr.
+
+## Gate de PR mergeable (regla 35.2)
+
+| PR | `mergeable` | `mergeStateStatus` | `reviewDecision` | Checks |
+|---|---|---|---|---|
+| [API #458](https://github.com/mdavila-2001/mantra-core-health-api/pull/458) → `dev` | `MERGEABLE` | `BLOCKED` | `REVIEW_REQUIRED` | `docs`: **fail**, clasificado `EXTERNAL` (ver abajo); `fork-guard`: skipping |
+| [Front #656](https://github.com/mdavila-2001/mantra-core-health/pull/656) → `dev` | `MERGEABLE` | `UNSTABLE` | — | `dependencias`/`e2e`/`verificar`: pending, no progresa (CI documentado como caído en `CLAUDE.md`: «El CI propio está caído; los `check-*.mjs` se corren a mano») |
+| [Front #657](https://github.com/mdavila-2001/mantra-core-health/pull/657) → `mockup` | `MERGEABLE` | `UNSTABLE` | — | mismo patrón que #656 |
+
+**Ningún PR tiene conflictos** (`mergeable: MERGEABLE` en los tres). `BLOCKED`/`UNSTABLE` se deben
+a: (a) aprobación humana pendiente (condición explícitamente aceptada por la regla 35.2), y (b) el
+estado documentado del CI de este proyecto, no a un defecto de este cambio.
+
+**El check `docs` del PR de la API falló por una causa externa, verificada, no por mi código:**
+
+```text
+$ gh run view 36090296101 --repo mdavila-2001/mantra-core-health-api --job 107931095776 --log-failed
+Levantar MinIO  Unable to find image 'quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z' locally
+Levantar MinIO  docker: Error response from daemon: unauthorized: access to the requested resource is not authorized
+Levantar MinIO  ##[error]Process completed with exit code 125.
+```
+
+El job falla en el paso de infraestructura ("Levantar MinIO"), **antes** de que corra una sola
+línea de mi código: el runner no pudo autenticarse contra el registro `quay.io` para bajar la
+imagen de MinIO. Clasificado `EXTERNAL` (regla 80.4); no corregible desde este PR.
+
+Per el `CLAUDE.md` del front: **«El merge a `dev` exige revisión humana… El flujo termina en abrir
+el PR.»** Los tres PRs están en ese punto: abiertos, sin conflictos, con revisores asignados.
 
 ## Evidencia
 
