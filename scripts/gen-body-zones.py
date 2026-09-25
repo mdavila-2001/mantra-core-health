@@ -32,6 +32,14 @@ desde la axila, palmas al frente y pulgares hacia afuera. Con los brazos
 pegados la figura se leía como un maniquí, y el brazo y el costado del pecho
 eran dos objetivos táctiles sin espacio entre ellos.
 
+## Sexo de la silueta (2026-09-25)
+
+`construir()` devuelve las tres proporciones a la vez: `neutro` (la figura de
+siempre), `masculino` y `femenino`. Las tres comparten cabeza, brazos, piernas
+de la rodilla para abajo y la vista de cara; sólo cambia el ancho relativo de
+hombro, cintura y cadera de `MEDIA_SILUETA`, por una tabla de factores por
+altura (`BANDAS_DE_SEXO`) que `BodyMap` elige según el sexo del paciente.
+
 ## Tres capas de dibujo además de las zonas
 
 - `detalles`: líneas finas (clavículas, pectorales, columna, rótulas…). Se
@@ -127,6 +135,77 @@ def con_espejo(geom):
     """Una forma del lado derecho unida a su reflejo."""
     reflejo = [Polygon(espejo(list(p.exterior.coords))) for p in poligonos(geom)]
     return unary_union([geom, *reflejo])
+
+
+# ─── Proporciones por sexo (P-04, 2026-09-25) ───────────────────────────────
+#
+# La figura neutra queda tal cual estaba: `BANDAS_DE_SEXO['neutro']` es `None`,
+# y sin tabla no se toca ni un punto. Masculina y femenina escalan la
+# DISTANCIA AL EJE de cada punto de `MEDIA_SILUETA`, según una tabla de
+# factores por altura (`y`) que se interpola linealmente entre sus puntos y se
+# recorta en los extremos. Sólo se tocan hombro, pecho, cintura y cadera —de
+# `y≈90` a `y≈300`—: la cabeza, los brazos y de la rodilla para abajo quedan
+# iguales en las tres, porque no son lo que distingue una silueta de otra en
+# este dibujo esquemático.
+
+
+def factor_en(y, bandas):
+    """El factor de escala en una altura `y`, interpolado en `bandas`."""
+    if bandas is None:
+        return 1.0
+    if y <= bandas[0][0]:
+        return bandas[0][1]
+    for (y0, f0), (y1, f1) in zip(bandas, bandas[1:]):
+        if y0 <= y <= y1:
+            if y1 == y0:
+                return f1
+            t = (y - y0) / (y1 - y0)
+            return f0 + (f1 - f0) * t
+    return bandas[-1][1]
+
+
+def escalar_silueta(puntos, bandas):
+    """Cada punto se aleja o se acerca del eje según el factor de su altura."""
+    if bandas is None:
+        return puntos
+    return [(CX + (x - CX) * factor_en(y, bandas), y) for x, y in puntos]
+
+
+# Hombro más ancho, cintura apenas afinada, cadera más angosta.
+BANDAS_MASCULINO = [
+    (0, 1.0),
+    (90, 1.0),
+    (100, 1.08),
+    (135, 1.07),
+    (161, 1.03),
+    (186, 0.97),
+    (214, 0.91),
+    (250, 0.9),
+    (292, 0.95),
+    (316, 1.0),
+    (440, 1.0),
+]
+
+# Hombro más angosto, cintura marcada, cadera más ancha.
+BANDAS_FEMENINO = [
+    (0, 1.0),
+    (90, 1.0),
+    (100, 0.93),
+    (135, 0.92),
+    (161, 0.87),
+    (186, 0.93),
+    (214, 1.03),
+    (250, 1.1),
+    (292, 1.04),
+    (316, 1.0),
+    (440, 1.0),
+]
+
+BANDAS_DE_SEXO = {
+    "neutro": None,
+    "masculino": BANDAS_MASCULINO,
+    "femenino": BANDAS_FEMENINO,
+}
 
 
 # ─── La figura de cuerpo entero ────────────────────────────────────────────
@@ -232,8 +311,8 @@ DEDOS = [(172, 249, 5.2), (172.6, 257, 4.2), (172.6, 263, 3)]
 PULGAR = [(172, 226, 3.6), (175.6, 234, 3), (177.6, 240.4, 2.4), (177.8, 243.6, 1.9)]
 
 
-def figura_entera():
-    derecha = catmull_rom(MEDIA_SILUETA, pasos=10)
+def figura_entera(bandas=None):
+    derecha = catmull_rom(escalar_silueta(MEDIA_SILUETA, bandas), pasos=10)
     izquierda = list(reversed(espejo(derecha)))
     tronco = Polygon(derecha + izquierda[1:-1]).buffer(0)
 
@@ -355,7 +434,7 @@ def elipse(cx, cy, rx, ry, giro=0.0):
 HOMBRO = [(113, 70), (190, 70), (190, 116), (148, 117), (141, 114), (134, 104), (126, 93), (116, 85)]
 
 
-def celdas_de_cuerpo(brazos, frente: bool):
+def celdas_de_cuerpo(brazos, frente: bool, bandas=None):
     hombros = unary_union([ambos_lados(HOMBRO), brazos.intersection(banda(-INF, 116))])
     comunes = [
         ("hombros", hombros),
@@ -377,7 +456,16 @@ def celdas_de_cuerpo(brazos, frente: bool):
             ("pecho", sobre(simetrica([(50, 150), (70, 146), (88, 134), (100, 129)]))),
             ("estomago", sobre(simetrica([(50, 172), (76, 177), (100, 179)]))),
             # Las líneas de la ingle: del hueso de la cadera al pubis.
-            ("intima", Polygon(catmull_rom(simetrica([(74, 201), (84, 220), (94, 238), (100, 247)]), pasos=8) + [(100, 201)]).buffer(0)),
+            (
+                "intima",
+                Polygon(
+                    catmull_rom(
+                        escalar_silueta(simetrica([(74, 201), (84, 220), (94, 238), (100, 247)]), bandas),
+                        pasos=8,
+                    )
+                    + [(100, 201)]
+                ).buffer(0),
+            ),
             ("abdomen", sobre(simetrica([(40, 202), (74, 201), (100, 201)]))),
             ("caderas", banda(-INF, 252)),
             *piernas,
@@ -656,16 +744,18 @@ def polo_de_inaccesibilidad(pol, paso=0.5):
     return mejor
 
 
-def construir():
-    cuerpo, brazos = figura_entera()
-    cara_fig, cara, orejas, cuello = figura_cara()
+def vistas_de(bandas, cara_vista):
+    """Frente y espalda con la proporción de `bandas` (`None` = neutra), más
+    la cara —que es la misma figura para los tres perfiles: no es lo que
+    distingue una silueta de otra acá (ver `BANDAS_DE_SEXO`)."""
+    cuerpo, brazos = figura_entera(bandas)
     return [
         {
             "id": "frente",
             "nombre": "Frente",
             "viewBox": "0 0 200 440",
             "figura": cuerpo,
-            "zonas": repartir(cuerpo, celdas_de_cuerpo(brazos, True)),
+            "zonas": repartir(cuerpo, celdas_de_cuerpo(brazos, True, bandas)),
             "detalles": detalles_frente(),
             "rellenos": rellenos_cuerpo(cuerpo, True),
             "acentos": [],
@@ -675,52 +765,71 @@ def construir():
             "nombre": "Espalda",
             "viewBox": "0 0 200 440",
             "figura": cuerpo,
-            "zonas": repartir(cuerpo, celdas_de_cuerpo(brazos, False)),
+            "zonas": repartir(cuerpo, celdas_de_cuerpo(brazos, False, bandas)),
             "detalles": detalles_espalda(),
             "rellenos": rellenos_cuerpo(cuerpo, False),
             "acentos": [],
         },
-        {
-            "id": "cara",
-            "nombre": "Cara",
-            "viewBox": "0 0 200 240",
-            "figura": cara_fig,
-            "zonas": repartir(cara_fig, celdas_de_cara(cara, orejas, cuello)),
-            "detalles": detalles_cara(),
-            "rellenos": rellenos_cara(cara),
-            "acentos": acentos_cara(),
-        },
+        cara_vista,
     ]
 
 
-def ts(vistas):
+def construir():
+    """Las vistas de los tres perfiles de sexo: `neutro`, `masculino` y
+    `femenino` (ver `BANDAS_DE_SEXO`). La cara se arma una sola vez."""
+    cara_fig, cara, orejas, cuello = figura_cara()
+    cara_vista = {
+        "id": "cara",
+        "nombre": "Cara",
+        "viewBox": "0 0 200 240",
+        "figura": cara_fig,
+        "zonas": repartir(cara_fig, celdas_de_cara(cara, orejas, cuello)),
+        "detalles": detalles_cara(),
+        "rellenos": rellenos_cara(cara),
+        "acentos": acentos_cara(),
+    }
+    return {clave: vistas_de(bandas, cara_vista) for clave, bandas in BANDAS_DE_SEXO.items()}
+
+
+NOMBRE_EXPORT = {
+    "neutro": "VISTAS_DEL_CUERPO",
+    "masculino": "VISTAS_DEL_CUERPO_MASCULINA",
+    "femenino": "VISTAS_DEL_CUERPO_FEMENINA",
+}
+
+
+def ts(perfiles):
     lineas = [ENCABEZADO]
-    lineas.append("export const VISTAS_DEL_CUERPO: readonly VistaDelCuerpo[] = [")
-    for v in vistas:
-        lineas.append("  {")
-        lineas.append(f"    id: '{v['id']}',")
-        lineas.append(f"    nombre: '{v['nombre']}',")
-        lineas.append(f"    viewBox: '{v['viewBox']}',")
-        lineas.append(f"    contorno: '{a_d(v['figura'])}',")
-        lineas.append(f"    detalles: '{trazos_a_d(v['detalles'])}',")
-        lineas.append(f"    rellenos: '{formas_a_d(v['rellenos'])}',")
-        lineas.append(f"    acentos: '{formas_a_d(v['acentos'])}',")
-        lineas.append("    zonas: [")
-        # El orden del tabulador: de arriba abajo por el centro de cada zona y,
-        # a la misma altura, de izquierda a derecha.
-        for zid, geom in sorted(v["zonas"], key=lambda z: (round(z[1].centroid.y / 4), z[1].centroid.x)):
-            d = a_d(geom)
-            if not d:
-                continue
-            # De frente, la cabeza es chica para señalar ojos, nariz o boca:
-            # tocarla acerca la vista de la cara.
-            acerca = " acercaA: 'cara'," if (v["id"], zid) == ("frente", "cabeza") else ""
-            pts = ", ".join(f"[{num(x)}, {num(y)}]" for x, y in centros(geom))
-            lineas.append(f"      {{ id: '{zid}',{acerca} centros: [{pts}], d: '{d}' }},")
-        lineas.append("    ],")
-        lineas.append("  },")
-    lineas.append("];")
-    return "\n".join(lineas) + "\n"
+    for clave in ("neutro", "masculino", "femenino"):
+        lineas.append(f"export const {NOMBRE_EXPORT[clave]}: readonly VistaDelCuerpo[] = [")
+        for v in perfiles[clave]:
+            lineas.append("  {")
+            lineas.append(f"    id: '{v['id']}',")
+            lineas.append(f"    nombre: '{v['nombre']}',")
+            lineas.append(f"    viewBox: '{v['viewBox']}',")
+            lineas.append(f"    contorno: '{a_d(v['figura'])}',")
+            lineas.append(f"    detalles: '{trazos_a_d(v['detalles'])}',")
+            lineas.append(f"    rellenos: '{formas_a_d(v['rellenos'])}',")
+            lineas.append(f"    acentos: '{formas_a_d(v['acentos'])}',")
+            lineas.append("    zonas: [")
+            # El orden del tabulador: de arriba abajo por el centro de cada
+            # zona y, a la misma altura, de izquierda a derecha.
+            for zid, geom in sorted(
+                v["zonas"], key=lambda z: (round(z[1].centroid.y / 4), z[1].centroid.x)
+            ):
+                d = a_d(geom)
+                if not d:
+                    continue
+                # De frente, la cabeza es chica para señalar ojos, nariz o
+                # boca: tocarla acerca la vista de la cara.
+                acerca = " acercaA: 'cara'," if (v["id"], zid) == ("frente", "cabeza") else ""
+                pts = ", ".join(f"[{num(x)}, {num(y)}]" for x, y in centros(geom))
+                lineas.append(f"      {{ id: '{zid}',{acerca} centros: [{pts}], d: '{d}' }},")
+            lineas.append("    ],")
+            lineas.append("  },")
+        lineas.append("];")
+        lineas.append("")
+    return "\n".join(lineas).rstrip("\n") + "\n"
 
 
 ENCABEZADO = """/* ============================================================================
@@ -759,6 +868,16 @@ ENCABEZADO = """/* =============================================================
     ## Orden
 
     El orden de `zonas` es el del tabulador: de arriba abajo.
+
+    ## Tres proporciones de cuerpo (P-04, 2026-09-25)
+
+    `VISTAS_DEL_CUERPO` es la figura neutra de siempre. `_MASCULINA` y
+    `_FEMENINA` son la misma figura con hombro, cintura y cadera escalados
+    (`BANDAS_DE_SEXO` en el script): quien monta el organismo (`BodyMap`)
+    elige una de las tres según el sexo del paciente, o la neutra si no lo
+    sabe. La cabeza, los brazos, las piernas de la rodilla para abajo y la
+    vista de la cara son **la misma figura en las tres**: no es lo que
+    distingue una silueta de otra en este dibujo esquemático.
     ========================================================================== */
 
 /** Una zona dibujable: su `id` (el de la tabla de zonas) y su contorno. */
@@ -796,32 +915,34 @@ export interface VistaDelCuerpo {
 """
 
 
-def preview(vistas):
+def preview(perfiles):
     colores = ["#f6c6c6", "#f6dcc0", "#f3efb8", "#cdeec2", "#bfe6e6", "#c6d6f6", "#dcc8f4", "#f4c6e4"]
     partes = []
-    for v in vistas:
-        paths = "".join(
-            f'<path d="{a_d(g)}" fill="{colores[i % len(colores)]}" stroke="#fff" stroke-width="1.2"><title>{z}</title></path>'
-            for i, (z, g) in enumerate(v["zonas"])
-        )
-        marcas = "".join(
-            f'<circle cx="{x}" cy="{y}" r="2" fill="#c00"/>' for _z, g in v["zonas"] for x, y in centros(g)
-        )
-        partes.append(
-            f'<figure><svg viewBox="{v["viewBox"]}" width="320"><path d="{a_d(v["figura"])}" fill="#ddd" stroke="#666" stroke-width="2"/>'
-            f'{paths}<path d="{formas_a_d(v["rellenos"])}" fill="#8a8a8a" opacity=".55"/>'
-            f'<path d="{formas_a_d(v["acentos"])}" fill="#444"/>'
-            f'<path d="{trazos_a_d(v["detalles"])}" fill="none" stroke="#777" stroke-width="0.8" stroke-linecap="round"/>{marcas}</svg>'
-            f"<figcaption>{v['id']}</figcaption></figure>"
-        )
-    return '<body style="display:flex;gap:24px;font:14px sans-serif;background:#fff">' + "".join(partes) + "</body>"
+    for clave in ("neutro", "masculino", "femenino"):
+        for v in perfiles[clave]:
+            paths = "".join(
+                f'<path d="{a_d(g)}" fill="{colores[i % len(colores)]}" stroke="#fff" stroke-width="1.2"><title>{z}</title></path>'
+                for i, (z, g) in enumerate(v["zonas"])
+            )
+            marcas = "".join(
+                f'<circle cx="{x}" cy="{y}" r="2" fill="#c00"/>' for _z, g in v["zonas"] for x, y in centros(g)
+            )
+            partes.append(
+                f'<figure><svg viewBox="{v["viewBox"]}" width="320"><path d="{a_d(v["figura"])}" fill="#ddd" stroke="#666" stroke-width="2"/>'
+                f'{paths}<path d="{formas_a_d(v["rellenos"])}" fill="#8a8a8a" opacity=".55"/>'
+                f'<path d="{formas_a_d(v["acentos"])}" fill="#444"/>'
+                f'<path d="{trazos_a_d(v["detalles"])}" fill="none" stroke="#777" stroke-width="0.8" stroke-linecap="round"/>{marcas}</svg>'
+                f"<figcaption>{clave} · {v['id']}</figcaption></figure>"
+            )
+    return '<body style="display:flex;flex-wrap:wrap;gap:24px;font:14px sans-serif;background:#fff">' + "".join(partes) + "</body>"
 
 
 if __name__ == "__main__":
-    vistas = construir()
-    DESTINO.write_text(ts(vistas), encoding="utf-8", newline="\n")
-    for v in vistas:
-        print(v["id"], [(z, round(g.area)) for z, g in v["zonas"]])
+    perfiles = construir()
+    DESTINO.write_text(ts(perfiles), encoding="utf-8", newline="\n")
+    for clave, vistas in perfiles.items():
+        for v in vistas:
+            print(clave, v["id"], [(z, round(g.area)) for z, g in v["zonas"]])
     if "--preview" in sys.argv:
         salida = Path(sys.argv[sys.argv.index("--preview") + 1])
-        salida.write_text(preview(vistas), encoding="utf-8")
+        salida.write_text(preview(perfiles), encoding="utf-8")
