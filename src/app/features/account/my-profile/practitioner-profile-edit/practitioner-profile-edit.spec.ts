@@ -524,6 +524,31 @@ describe('PractitionerProfileEdit', () => {
 
   /* ---- especialidades: sólo se agregan ------------------------------------- */
 
+  /**
+   * Se mudaron de «Credenciales» a «Datos personales» el 24/09/2026 (pedido
+   * del propietario): la ficha ya las lee ahí, y el editor quedaba
+   * desalineado con la pestaña que dice corregir.
+   */
+  it('«Agregar especialidades» vive en «Datos personales», no en «Credenciales»', () => {
+    const fixture = montarConVista();
+
+    // Pestaña 0, «Datos personales»: el select de especialidad está.
+    expect(
+      panelAbierto(fixture).querySelector('[data-testid="especialidad-select"]'),
+    ).not.toBeNull();
+
+    señal<number>('pestana').set(5);
+    fixture.detectChanges();
+
+    // Pestaña 5, «Credenciales»: ya no queda ni el formulario ni la tabla.
+    const credenciales = panelAbierto(fixture);
+    expect(credenciales.querySelector('[data-testid="especialidad-select"]')).toBeNull();
+    expect(credenciales.querySelector('[data-testid="tabla-especialidades"]')).toBeNull();
+    expect(credenciales.textContent).not.toContain('Agregar especialidades');
+    // La matrícula, que sí es de esta pestaña, sigue estando.
+    expect(credenciales.textContent).toContain('Agregar una matrícula');
+  });
+
   it('el botón de agregar especialidad exige haber elegido una', () => {
     montarYCargar();
 

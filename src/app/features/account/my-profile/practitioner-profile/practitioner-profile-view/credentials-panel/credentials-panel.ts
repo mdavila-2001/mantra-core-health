@@ -52,7 +52,13 @@ import {
 })
 export class CredentialsPanel {
   readonly matriculas = input.required<readonly MatriculaVisible[]>();
-  readonly especialidades = input.required<readonly EspecialidadVisible[]>();
+  /**
+   * Opcional y no `required` (2026-09-24): las especialidades se mudaron a
+   * «Datos personales» (pedido del propietario) y esta pestaña ya no las
+   * recibe. El panel conserva la capacidad de dibujar la clase `specialty`
+   * por si alguna otra pantalla vuelve a necesitarla; hoy nadie la alimenta.
+   */
+  readonly especialidades = input<readonly EspecialidadVisible[]>([]);
   readonly formacion = input.required<readonly FormacionVisible[]>();
   readonly idiomas = input.required<readonly IdiomaVisible[]>();
 
