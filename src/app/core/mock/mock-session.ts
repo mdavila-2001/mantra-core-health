@@ -1,11 +1,13 @@
 import { uuid } from './mock-store';
+import type { TenantTypeCode } from '../data-access/directory/directory.types';
 
 /* ============================================================================
     Las cuentas del backend simulado y sus tokens.
 
     El token de acceso es un JWT «de utilería»: tres segmentos, con un payload
-    real que `decodeAccessToken` lee tal cual (sub, roles, tenants, name, pid,
-    hpid, exp). La firma es decorativa: nadie la verifica en esta rama.
+    real que `decodeAccessToken` lee tal cual (sub, roles, tenants, name,
+    tenantNames, tenantTypes, ownTenantId, pid, hpid, exp). La firma es
+    decorativa: nadie la verifica en esta rama.
     ========================================================================== */
 
 export interface MockUser {
@@ -42,6 +44,35 @@ export const TENANT_NAMES: Readonly<Record<string, string>> = {
   [TENANT_FARMACIA]: 'Farmacia Vida',
   [TENANT_LABORATORIO]: 'Laboratorio Central',
   [TENANT_ASEGURADORA]: 'Seguros Andina',
+};
+
+/**
+ * El tipo de cada tenant del simulador, para el claim `tenantTypes` — el
+ * mismo dato que la API real firmaría a partir de `tenant_type_concept_id`.
+ *
+ * Sigue al fixture de `directory.handlers.ts` (`TIPO_ORGANIZACION`) para que
+ * el token y `GET /admin/tenants` digan lo mismo de un mismo tenant: el
+ * consultorio, la clínica y la plataforma son `ORG-CLINICA` ahí, y acá
+ * `'PROVIDER'`; el laboratorio también es `ORG-CLINICA` en el fixture —el
+ * simulador no distingue un centro de diagnóstico de un prestador genérico—,
+ * y se deja anotado que la API real emitiría `'DIAGNOSTIC_CENTER'`, un código
+ * que `TenantTypeCode` (front) todavía no declara.
+ *
+ * Sin campo por cuenta en {@link MockUser}: a diferencia del nombre —que la
+ * médica reescribe para «Mi consultorio»—, el tipo de un tenant no varía
+ * según quién entra, así que basta una tabla y `emitirAccessToken` la
+ * consulta por cada tenant de la cuenta.
+ */
+export const TENANT_TYPES: Readonly<Record<string, TenantTypeCode>> = {
+  [TENANT_CONSULTORIO]: 'PROVIDER',
+  [TENANT_CLINICA]: 'PROVIDER',
+  [TENANT_HOSPITAL]: 'HOSPITAL',
+  [TENANT_PLATAFORMA]: 'PROVIDER',
+  [TENANT_FARMACIA]: 'PHARMACY',
+  // La API real emitiría 'DIAGNOSTIC_CENTER' (directory.concepts.ts:169 de la
+  // API); el front todavía no lo tiene en TENANT_TYPE_CODES.
+  [TENANT_LABORATORIO]: 'PROVIDER',
+  [TENANT_ASEGURADORA]: 'PAYER',
 };
 
 /** Perfiles que aparecen en toda la aplicación (agenda, expediente, red). */
@@ -221,6 +252,15 @@ const VIDA_TOKEN_SEGUNDOS = 60 * 60 * 8;
 
 export function emitirAccessToken(user: MockUser, ahora = Date.now()): string {
   const header = base64url(JSON.stringify({ alg: 'none', typ: 'JWT' }));
+  // Sólo los tenants de la cuenta, y sólo los que tienen tipo conocido: mismo
+  // criterio que usaría la API real (`TENANT_TYPE_CODE_BY_CONCEPT_ID`), donde
+  // un `tenant_type_concept_id` fuera del catálogo tampoco entra al mapa.
+  const tenantTypes = Object.fromEntries(
+    user.tenants.flatMap((tenantId) => {
+      const tipo = TENANT_TYPES[tenantId];
+      return tipo === undefined ? [] : [[tenantId, tipo]];
+    }),
+  );
   const payload = base64url(
     JSON.stringify({
       sub: user.id,
@@ -229,6 +269,7 @@ export function emitirAccessToken(user: MockUser, ahora = Date.now()): string {
       roles: user.roles,
       tenants: user.tenants,
       tenantNames: user.tenantNames,
+      ...(Object.keys(tenantTypes).length === 0 ? {} : { tenantTypes }),
       ...(user.ownTenantId === undefined ? {} : { ownTenantId: user.ownTenantId }),
       ...(user.patientProfileId === undefined ? {} : { pid: user.patientProfileId }),
       ...(user.practitionerProfileId === undefined ? {} : { hpid: user.practitionerProfileId }),
