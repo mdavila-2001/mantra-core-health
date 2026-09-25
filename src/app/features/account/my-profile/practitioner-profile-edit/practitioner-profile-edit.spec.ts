@@ -2455,24 +2455,25 @@ describe('PractitionerProfileEdit', () => {
       ).toEqual(['editar', 'descargar', 'retirar']);
     });
 
-    it('lo verificado dice por qué no tiene botones: «Verificada: ya no se corrige», «Activo: ya no se corrige»', () => {
+    it('lo verificado lleva el sello azul, sin la frase «ya no se corrige»', () => {
       const fixture = montarConVista(CON_ESTADOS);
       darEtiquetasDeMatricula();
-      /** La nota de la fila, buscada en la pestaña abierta. */
-      const nota = (testId: string) =>
+      /** El sello de la fila, buscado en la pestaña abierta. */
+      const sello = (testId: string) =>
         panelAbierto(fixture)
           .querySelector(`[data-testid="${testId}"]`)
-          ?.parentElement?.querySelector('.edicion__acciones-nota')
-          ?.textContent?.trim();
+          ?.parentElement?.querySelector('[data-testid="sello-verificado"]');
       componente.pestana.set(0);
       fixture.detectChanges();
-      expect(nota('especialidad-acciones-spec-ok')).toBe('Verificada: ya no se corrige');
-      expect(nota('especialidad-acciones-spec-pend')).toBeUndefined();
+      expect(sello('especialidad-acciones-spec-ok')?.getAttribute('aria-label')).toBe('Verificada');
+      expect(sello('especialidad-acciones-spec-pend')).toBeFalsy();
+      expect(panelAbierto(fixture).textContent).not.toContain('ya no se corrige');
 
       componente.pestana.set(5);
       fixture.detectChanges();
-      expect(nota('matricula-acciones-lic-activa')).toBe('Activo: ya no se corrige');
-      expect(nota('matricula-acciones-lic-pendiente')).toBeUndefined();
+      expect(sello('matricula-acciones-lic-activa')?.getAttribute('aria-label')).toBe('Activo');
+      expect(sello('matricula-acciones-lic-pendiente')).toBeFalsy();
+      expect(panelAbierto(fixture).textContent).not.toContain('ya no se corrige');
     });
 
     it('con tres acciones la fila muestra un solo disparador; con dos, los botones con su texto', () => {
