@@ -355,6 +355,23 @@ export class DiagnosticOrders {
 
   protected readonly totalFiltrado = computed(() => this.filasFiltradas().length);
 
+  /**
+   * Lo que la tabla pinta.
+   *
+   * `estado()` trae **todas** las filas, sin pestaña ni buscador ni página:
+   * lo que la tabla tiene que mostrar es `filasPaginadas()`. Bug real
+   * encontrado en la verificación de navegador (C7, pase consolidado de
+   * Playwright del 2026-09-25): la plantilla ataba `<app-data-table>`
+   * directo a `estado()`, así que el resumen «N órdenes» sí contaba bien
+   * (leía `filasFiltradas()`) pero la tabla seguía mostrando las filas sin
+   * filtrar. Se conservan `loading`/`empty`/`error` de `estado()` tal cual;
+   * sólo se sustituye el `data` de la rama `ready`.
+   */
+  protected readonly filasDeTabla = computed<ViewState<readonly PatientOrderRow[]>>(() => {
+    const actual = this.estado();
+    return actual.status === 'ready' ? ready(this.filasPaginadas()) : actual;
+  });
+
   protected limpiarFiltros(): void {
     this.q.set('');
     this.filtroEstado.set(null);
