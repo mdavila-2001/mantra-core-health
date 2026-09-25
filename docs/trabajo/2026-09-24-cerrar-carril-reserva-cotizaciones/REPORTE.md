@@ -10,7 +10,7 @@
 - **Doble revisión adversarial (regla 35.1):** 6 rondas, cada una por un agente distinto del que
   implementó, con la postura de rechazar. Las cinco primeras rechazaron con motivo real —la
   quinta por un solo defecto de encuadre en una captura (`encuadrar()` dejaba un renglón cortado
-  en `cotizaciones-sin-ubicacion-390-*`)—; la sexta, sobre el set corregido, cierra el ciclo.
+  en `cotizaciones-sin-ubicacion-390-*`)—; la sexta **aprobó** el set corregido, sin regresión.
   Detalle completo, hallazgo por hallazgo, en
   [`evidencia/doble-revision.md`](./evidencia/doble-revision.md).
 - **Los seis PRs de código se fusionaron antes de terminar esta doble revisión** (#630–635,

@@ -109,6 +109,19 @@ cuando quedaban 5 usos directos fuera de `encuadrar()`: eso es correcto — esos
 `scrollIntoViewIfNeeded()` sin más ya alcanzaba (sin barra fija tapando el objetivo), y `encuadrar()`
 sólo hacía falta donde SÍ tapaba.
 
-## Ronda 6 — sobre el defecto de R5-01, re-capturado
+## Ronda 6 — sobre el defecto de R5-01, re-capturado · veredicto: **APROBADA**
 
-_Pendiente: se agrega el veredicto del revisor._
+Sexto revisor, de solo lectura, acotado a verificar el cierre de R5-01 y buscar regresión.
+
+| Captura | Nota | Hallazgos |
+|---|---|---|
+| `cotizaciones-sin-ubicacion-390-light.png` | APROBADA | Estado vacío completo bajo la barra fija: ícono, título y descripción visibles sin cortes ni solapamiento. R5-01 resuelto |
+| `cotizaciones-sin-ubicacion-390-dark.png` | APROBADA | Mismo resultado en oscuro, sin corte de renglón |
+| `cotizaciones-sin-ubicacion-1440-light.png` | APROBADA | Sin cambios visibles, sin regresión |
+| `cotizaciones-sin-ubicacion-1440-dark.png` | APROBADA | Sin regresión |
+| `cotizaciones-paracetamol-390-light.png` | APROBADA | `encuadrar()` no rompió esta vista |
+| `cotizaciones-arancel-uma-390-light.png` | APROBADA | Sin cortes ni solapamientos |
+
+**Veredicto global: APROBADA.** R5-01 resuelto; sin regresión en las capturas de control. Cierra
+la doble revisión adversarial de este carril: 6 rondas, 5 rechazos con motivo real corregido cada
+vez, aprobación final.
