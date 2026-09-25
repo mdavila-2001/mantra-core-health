@@ -1,85 +1,145 @@
 /* ============================================================================
     Importación de terminología por archivo.
 
-    Tres pasos en tres tarjetas, en orden y a la vista: elegir destino, subir, y
-    —cuando ya hay resultado— publicar. Sin acordeones ni asistente que esconda
-    lo que viene: el tercer paso es justamente el que se olvida, y esconderlo
-    sería ayudar a olvidarlo.
+    UNA tarjeta, centrada y a lo ancho del área de contenido (regla del cliente
+    del 09/09, `docs/components/composition-rules.md` §5): sin tope propio de
+    ancho —el tope lo pone `.app-main__inner` y nadie más— y sin columna
+    lateral que reservar. Lo que evita las casillas kilométricas no es acotar
+    el formulario sino repartir los campos en columnas según el ancho.
+
+    Tres secciones en orden y a la vista, no tres pestañas: es un flujo
+    secuencial y el paso 3 no tiene nada que mostrar hasta que los otros dos
+    están resueltos. Una pestaña que se puede abrir vacía invita a empezar por
+    el final.
+
+    Mobile-first: la rejilla arranca en una columna y suma columnas con
+    `min-width`. Ningún literal de color ni de espaciado — sólo tokens.
     ========================================================================== */
 
 :host {
   display: block;
 }
 
-.importar__pasos {
-  display: grid;
-  gap: var(--sp-3);
+.carga {
+  inline-size: 100%;
   margin-block-start: var(--sp-4);
-  /* El ancho lo fija el contenido: un formulario en una línea de 2000 px no se
-     lee. */
-  max-inline-size: 44rem;
+  margin-inline: auto;
 }
 
-.importar__paso {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
+/* Cada paso es un bloque con aire propio; la línea que los separa hace de
+   corte visual sin necesidad de encerrarlos en tarjetas aparte. */
+.carga__paso {
+  display: grid;
+  gap: var(--sp-3);
+  padding-block-end: var(--sp-4);
+}
+
+.carga__paso:last-of-type {
+  padding-block-end: 0;
+}
+
+.carga__paso-titulo {
+  border-block-start: 1px solid var(--border-subtle);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  margin-block: var(--sp-4) var(--sp-3);
+  padding-block-start: var(--sp-4);
+}
+
+.carga__paso-titulo:first-child {
+  border-block-start: 0;
+  margin-block-start: 0;
+  padding-block-start: 0;
+}
+
+/* Una columna en móvil, dos desde 780 px, tres desde 1120 px: los tres cortes
+   de la regla §5. Sin esto, «Qué vas a cargar» sería una casilla de 1400 px. */
+.carga__campos {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 780px) {
+  .carga__campos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .carga__campos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Los botones envuelven en vez de desbordar: a 375 px «Descargar plantilla
+   (CSV)» y «(XLSX)» no entran en una línea, y un scroll lateral para llegar al
+   segundo es un control que nadie encuentra. */
+.carga__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.carga__resultado {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.carga__informe {
+  background: var(--bg-inset);
   border-radius: var(--r-md);
   display: grid;
-  gap: var(--sp-3);
-  padding: var(--sp-4);
+  gap: var(--sp-2);
+  padding: var(--sp-3);
 }
 
-.importar__titulo {
-  font-size: var(--fs-h3);
+/* El ancla del foco NO dibuja anillo propio: `styles.css` ya declara
+   `:focus-visible { outline: 4px solid var(--focus-ring) }` para todo, y uno
+   distinto acá haría que el informe se vea como un control que no es. */
+
+.carga__informe-titulo {
+  font-size: var(--fs-body);
   font-weight: 600;
   margin: 0;
 }
 
-.importar__acciones {
-  display: flex;
-  gap: var(--sp-2);
-}
-
 /* Las cifras del informe se comparan entre sí: tabulares y en fila. */
-.importar__resultado {
+.carga__cifras {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-4);
   margin: 0;
 }
 
-.importar__resultado dt {
+.carga__cifras dt {
   color: var(--text-muted);
   font-size: var(--fs-caption);
 }
 
-.importar__resultado dd {
+.carga__cifras dd {
+  font-size: var(--fs-h3);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   margin: 0;
 }
 
-.importar__errores ul {
+.carga__tabla {
   display: grid;
-  gap: var(--sp-1);
-  margin-block: var(--sp-2) 0;
-  padding-inline-start: var(--sp-4);
+  gap: var(--sp-2);
+  /* La tabla nunca empuja el ancho de la tarjeta: sin esto, una definición
+     larga estira la rejilla y aparece el scroll lateral que §5 prohíbe. */
+  min-inline-size: 0;
 }
 
-.importar__errores summary {
-  cursor: pointer;
-}
-
-/* El número de línea es lo que se busca al leer la lista: se distingue del
-   mensaje sin depender del color. */
-.importar__linea {
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  margin-inline-end: var(--sp-2);
-}
-
-.importar__nota {
+.carga__nota {
   color: var(--text-muted);
   font-size: var(--fs-caption);
-  margin-block: var(--sp-2) 0;
+  margin: 0;
+}
+
+/* Se dice aparte del motivo del fallo porque es la respuesta a la pregunta
+   que viene después de «qué pasó»: si hay que volver a empezar. */
+.carga__preservado {
+  display: block;
+  margin-block-start: var(--sp-1);
 }

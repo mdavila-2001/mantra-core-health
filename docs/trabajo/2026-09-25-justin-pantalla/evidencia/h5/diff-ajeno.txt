@@ -1,0 +1,26 @@
+$ git diff origin/mockup --stat | grep -E "file-input|app.routes|navigation|playwright|alovida/terminologia"
+(salida vacía = ningún archivo de otros tocado) exit del grep=1
+$ git diff origin/mockup --stat
+ docs/trabajo/2026-09-25-justin-pantalla/PLAN.md    | 287 +++++++++
+ .../evidencia/antes/lint.txt                       |  19 +
+ .../evidencia/antes/spec-client.txt                |   8 +
+ .../evidencia/antes/spec.txt                       |  88 +++
+ .../evidencia/antes/typecheck.txt                  |   7 +
+ .../evidencia/h2/mock-backend.txt                  |   8 +
+ .../evidencia/h2/spec-doble.txt                    |   3 +
+ .../evidencia/h3/spec-cliente.txt                  |   3 +
+ .../evidencia/h3/typecheck.txt                     |   1 +
+ .../evidencia/h4/spec-pantalla.txt                 |   3 +
+ .../evidencia/h4/teclado.md                        |  54 ++
+ .../evidencia/h4/tokens.txt                        |  13 +
+ .../evidencia/h4/typecheck-lint.txt                |   2 +
+ .../terminology/terminology.client.spec.ts         | 209 ++++++-
+ .../data-access/terminology/terminology.client.ts  |  74 ++-
+ .../data-access/terminology/terminology.types.ts   |  98 ++-
+ .../mock/handlers/terminology.handlers.spec.ts     | 336 ++++++++--
+ src/app/core/mock/handlers/terminology.handlers.ts | 277 ++++++++-
+ .../terminology/version-import/version-import.css  | 138 +++--
+ .../terminology/version-import/version-import.html | 388 ++++++++----
+ .../version-import/version-import.spec.ts          | 677 +++++++++++++++++++--
+ .../terminology/version-import/version-import.ts   | 475 +++++++++++++--
+ 22 files changed, 2867 insertions(+), 301 deletions(-)
