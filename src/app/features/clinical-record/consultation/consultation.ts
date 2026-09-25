@@ -1,5 +1,6 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   computed,
   effect,
@@ -48,6 +49,7 @@ import {
   type ContextoDelDocumento,
 } from '../../../shared/utils/clinical-pdf/from-summary';
 import {
+  BOOKING_QUERY_PARAM,
   CITA_QUERY_PARAM,
   CLINICAL_RECORD_ROUTE,
   MOTIVO_QUERY_PARAM,
@@ -60,7 +62,9 @@ import { AllergyBlock } from '../patient-chart/allergy-block/allergy-block';
 import { CarePlanBlock, type DiagnosticoDelPlan } from '../patient-chart/care-plan-block/care-plan-block';
 import { DiagnosisBlock, type CitaDelPaciente } from '../patient-chart/diagnosis-block/diagnosis-block';
 import { DocumentBlock } from '../patient-chart/document-block/document-block';
-import { FreeNoteBlock } from '../patient-chart/free-note-block/free-note-block';
+import { AnalysisOrderBlock } from '../patient-chart/analysis-order-block/analysis-order-block';
+import { FollowUpBlock } from '../patient-chart/follow-up-block/follow-up-block';
+import { MedicalNoteBlock } from '../patient-chart/medical-note-block/medical-note-block';
 import {
   MedicationBlock,
   type DiagnosticoEnFicha,
@@ -89,7 +93,7 @@ const TOPE_DEL_MOTIVO = 500;
  * —una por pestaña de la historia que admite alta— más las dos que sólo tienen
  * sentido atendiendo: el formulario clínico de la especialidad y la internación.
  *
- * Y una décima que no registra nada, «Pagos»: la respuesta a «¿esto ya está
+ * Y una casilla que no registra nada, «Pagos»: la respuesta a «¿esto ya está
  * pagado?», que se necesita en la consulta misma cuando quien atiende también
  * ejecuta el tratamiento.
  */
@@ -99,6 +103,8 @@ export type CasillaDeConsulta =
   | 'medicacion'
   | 'observaciones'
   | 'notas'
+  | 'ordenes'
+  | 'reconsulta'
   | 'planes'
   | 'documentos'
   | 'formulario'
@@ -143,10 +149,8 @@ interface DefinicionDeCasilla {
 }
 
 /**
- * Las diez casillas, en el orden en que se atiende: primero lo que se
- * diagnostica, después lo que se indica, y al final lo que sólo pasa en una
- * consulta con cama o con una ficha de especialidad. Cierra «Pagos», que es lo
- * único que se mira en vez de escribirse.
+ * Contrato C0 de las doce casillas. El orden visible se declara abajo en
+ * ORDEN_DE_CASILLAS y comienza por Nota médica, Orden de análisis y Diagnóstico.
  */
 const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
   diagnosticos: {
@@ -171,18 +175,32 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
     testId: 'consulta-casilla-medicacion',
   },
   observaciones: {
-    titulo: 'Observación',
-    descripcion: 'Un signo vital, una medida o un hallazgo.',
-    tituloDelModal: 'Registrar una observación',
+    titulo: 'Medición',
+    descripcion: 'Un signo vital o un valor medido.',
+    tituloDelModal: 'Registrar una medición',
     icono: 'M3 12h4l2-6 4 12 2-6h6',
     testId: 'consulta-casilla-observaciones',
   },
   notas: {
-    titulo: 'Nota clínica',
-    descripcion: 'La hoja en blanco: motivo, evaluación y plan en texto.',
-    tituloDelModal: 'Escribir una nota clínica',
+    titulo: 'Nota médica',
+    descripcion: 'El registro clínico de este encuentro.',
+    tituloDelModal: 'Escribir una nota médica',
     icono: 'M6 3h9l5 5v13H6V3Zm9 0v5h5M9 13h6M9 17h6',
     testId: 'consulta-casilla-notas',
+  },
+  ordenes: {
+    titulo: 'Orden de análisis',
+    descripcion: 'Un estudio solicitado durante la consulta.',
+    tituloDelModal: 'Pedir un análisis',
+    icono: 'M9 3h6v5l4 10a2 2 0 0 1-2 3H7a2 2 0 0 1-2-3l4-10V3Zm-2 12h10',
+    testId: 'consulta-casilla-ordenes',
+  },
+  reconsulta: {
+    titulo: 'Reconsulta',
+    descripcion: 'La próxima cita, con fecha acordada.',
+    tituloDelModal: 'Agendar la reconsulta',
+    icono: 'M4 5h16v16H4V5Zm4-2v4m8-4v4M4 10h16m-8 3v5m-2-2 2 2 2-2',
+    testId: 'consulta-casilla-reconsulta',
   },
   planes: {
     titulo: 'Plan de cuidados',
@@ -222,19 +240,17 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
 };
 
 const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
-  'diagnosticos',
-  'alergias',
-  'medicacion',
-  'observaciones',
   'notas',
+  'ordenes',
+  'diagnosticos',
+  'reconsulta',
+  'medicacion',
+  'alergias',
+  'observaciones',
   'planes',
   'documentos',
   'formulario',
   'internacion',
-  // Última y a propósito: es la única que **no** registra nada. Quien ejecuta
-  // el tratamiento en el mismo acto —odontología, dermatología— decide la
-  // sesión siguiente con esto a la vista, y hasta ahora la respuesta sólo
-  // estaba en Contabilidad, con el paciente sentado enfrente.
   'pagos',
 ];
 
@@ -245,11 +261,9 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
  *
  * Reemplaza a la pantalla de atención anterior, que abría con un formulario
  * de una pregunta y escondía el resto detrás de tres pestañas. Acá lo que se
- * puede registrar está **todo a la vista**, una casilla por posibilidad —las
- * mismas ocho de la historia clínica más el formulario de especialidad y la
- * internación—, y cada una abre su propio formulario en modal, que es lo que la
- * regla de la casa pide para toda edición que pida datos. La décima, «Pagos»,
- * no registra: contesta si lo hecho ya está cobrado.
+ * puede registrar está a la vista en doce casillas. Cada una abre su bloque
+ * en un modal. Nota médica reserva el contrato de C1; órdenes y reconsulta
+ * reutilizan sus bloques funcionales. Pagos consulta lo que ya está cobrado.
  *
  * ## El encuentro sigue mandando
  *
@@ -269,6 +283,7 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
   selector: 'app-consultation',
   imports: [
     AdmissionBlock,
+    AnalysisOrderBlock,
     Alert,
     AllergyBlock,
     AppButton,
@@ -280,7 +295,8 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
     DocumentBlock,
     EncounterTimeline,
     FormField,
-    FreeNoteBlock,
+    FollowUpBlock,
+    MedicalNoteBlock,
     MedicationBlock,
     ObservationBlock,
     PaymentsBlock,
@@ -298,6 +314,7 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Consultation {
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly clinical = inject(ClinicalClient);
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
@@ -336,6 +353,12 @@ export class Consultation {
    */
   protected readonly citaDeOrigen = toSignal(
     this.route.queryParamMap.pipe(map((params) => params.get(CITA_QUERY_PARAM))),
+    { initialValue: null },
+  );
+
+  /** Reserva de origen: nunca reutilizar el appointmentId del check-in. */
+  protected readonly originBookingId = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get(BOOKING_QUERY_PARAM))),
     { initialValue: null },
   );
 
@@ -476,7 +499,7 @@ export class Consultation {
   /* -- La rejilla ----------------------------------------------------------- */
 
   /**
-   * Las diez casillas con su cantidad. La cantidad sale de lo ya leído y no
+   * Las doce casillas con su cantidad. La cantidad sale de lo ya leído y no
    * de una petición por casilla: dos lecturas de la misma lista pueden
    * discrepar.
    */
@@ -488,6 +511,8 @@ export class Consultation {
       medicacion: datos?.resumen.medicationRequests.length ?? 0,
       observaciones: datos?.resumen.observations.length ?? 0,
       notas: datos?.chart.notes.length ?? 0,
+      ordenes: null,
+      reconsulta: null,
       planes: datos?.chart.carePlans.length ?? 0,
       documentos: datos?.chart.documents.length ?? 0,
       // El formulario no deja una fila propia en la historia: lo que guarda
@@ -516,8 +541,29 @@ export class Consultation {
     this.casillaAbierta.set(clave);
   }
 
+  /** Mantiene Tab dentro de la consulta, incluso cuando el stub solo ofrece Cerrar. */
+  protected keepModalFocus(event: Event): void {
+    if (!(event instanceof KeyboardEvent) || !(event.currentTarget instanceof HTMLElement)) return;
+    const dialog = event.currentTarget.querySelector('dialog');
+    if (dialog === null) return;
+    if (event.target instanceof Element && event.target.closest('dialog') !== dialog) return;
+    const controls = Array.from(dialog.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    )).filter((control) => control.getClientRects().length > 0 && control.tabIndex >= 0);
+    const first = controls.at(0);
+    const last = controls.at(-1);
+    const boundary = event.shiftKey ? first : last;
+    const destination = event.shiftKey ? last : first;
+    if (destination !== undefined && event.target === boundary) {
+      event.preventDefault();
+      destination.focus();
+    }
+  }
+
   protected cerrarCasilla(): void {
     this.casillaAbierta.set(null);
+    // Retirar el dialog cerrado antes de que otro clic pueda reutilizarlo.
+    this.changeDetector.detectChanges();
   }
 
   protected readonly tituloDelModal = computed(() => {

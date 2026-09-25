@@ -86,7 +86,7 @@ import { InsuranceContactChannels } from './insurance-contact-channels/insurance
   // `imports` sólo habilita `| date` en la plantilla; `duplicateSummary()`
   // arma el texto del globo en esta clase e inyecta `DatePipe` directo, que
   // necesita el proveedor explícito (NG0201 si falta — visto en el diálogo
-  // de antiduplicación de `DiagnosticsBlock`).
+  // de antiduplicación de `AnalysisOrderBlock`).
   providers: [DatePipe],
   templateUrl: './insurance-claim-detail.html',
   styleUrl: './insurance-claim-detail.css',

@@ -14,7 +14,7 @@ import { of, switchMap } from 'rxjs';
 import { ChartTemplatesClient } from '../../../../core/data-access/chart-templates/chart-templates.client';
 import { DiagnosisBlock } from '../diagnosis-block/diagnosis-block';
 import { AllergyBlock } from '../allergy-block/allergy-block';
-import { DiagnosticsBlock } from '../diagnostics-block/diagnostics-block';
+import { AnalysisOrderBlock } from '../analysis-order-block/analysis-order-block';
 import { FreeNoteBlock } from '../free-note-block/free-note-block';
 import { ProceduresBlock } from '../procedures-block/procedures-block';
 import type {
@@ -216,7 +216,7 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
     Card,
     DiagnosisBlock,
     AllergyBlock,
-    DiagnosticsBlock,
+    AnalysisOrderBlock,
     FreeNoteBlock,
     Checkbox,
     DatePicker,

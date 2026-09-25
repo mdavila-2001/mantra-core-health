@@ -867,18 +867,18 @@ describe('SpecialtyFormBlock', () => {
     elegir(BLOQUE_CIRUGIA);
     fixture.detectChanges();
     expect(html.querySelector('app-procedures-block')).not.toBeNull();
-    expect(html.querySelector('app-diagnostics-block')).toBeNull();
+    expect(html.querySelector('app-analysis-order-block')).toBeNull();
     drenarLecturasDelBloque();
 
     elegir(BLOQUE_ODONTOLOGIA);
     fixture.detectChanges();
     expect(html.querySelector('app-procedures-block')).not.toBeNull();
-    expect(html.querySelector('app-diagnostics-block')).toBeNull();
+    expect(html.querySelector('app-analysis-order-block')).toBeNull();
     drenarLecturasDelBloque();
 
     elegir(BLOQUE_LABORATORIO);
     fixture.detectChanges();
-    expect(html.querySelector('app-diagnostics-block')).not.toBeNull();
+    expect(html.querySelector('app-analysis-order-block')).not.toBeNull();
     expect(html.querySelector('app-procedures-block')).toBeNull();
     drenarLecturasDelBloque();
   });
