@@ -111,85 +111,109 @@ de terminología · `core/http/api-error.ts` (ver ambigüedad Q-J4) · la API ·
 **CA:** Dado `terminology.handlers.ts`, cuando la pantalla llama `import-file` con un archivo cuyo
 nombre contiene `ok` / `con-errores` / `grande` / `.pdf` / `vacio` / `error-red`, responde §2 en los
 tres niveles; y `import-template` devuelve el CSV de dos líneas.
-**DoD:** `terminology.handlers.spec.ts` en verde.
-**Estado:** TODO
+**DoD:** `terminology.handlers.spec.ts` en verde → **21/21 PASS** (`evidencia/h2/spec-doble.txt`);
+`mock-backend.spec.ts` sigue en **31/31** (`evidencia/h2/mock-backend.txt`).
+**Publicado:** commit `8926f5af`, push a `origin` el 2026-09-25 **04:00:55 -0400**.
+**Estado:** HECHO
 
 ### H2.S1 — El manejador
 
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
 | H2.S1.M1 | Leer 2 manejadores que leen `FormData` y cómo devuelven errores | Rutas en el plan | F-4, F-5, F-6 | HECHO |
-| H2.S1.M2 | Nivel correcto `*ok*`: informe con `preview` de 20 filas `ZZ-`; `inserted` según `dryRun`; segunda real con el mismo nombre → `inserted:0, skipped:50` (memoria por `versionId`) | spec | `--include=**/terminology.handlers.spec.ts` | TODO |
-| H2.S1.M3 | Nivel límite: `*con-errores*` → `aborted:true, errors:5, inserted:0` con `line` 5/9/14/20/33 y su `column`; `*grande*` → 413 | spec ×2 | idem | TODO |
-| H2.S1.M4 | Nivel inválido: `*.pdf*` → 422 `IMPORT_FORMAT_UNSUPPORTED`; `*vacio*` → 422 `IMPORT_EMPTY_FILE`; sin archivo → 412; `*error-red*` → ver Q-J5 | spec ×4 | idem | TODO |
-| H2.S1.M5 | Sin rol admin → 403 | spec o `DESCARTADO` con evidencia | idem | TODO |
-| H2.S1.M6 | `GET /terminology/import-template?profile&format` → CSV de 2 líneas + `Content-Disposition`; `format` desconocido → 422 | spec | idem | TODO |
-| H2.S1.M7 | Commit + push del doble | `git log origin/<rama> -1` | TODO |
+| H2.S1.M2 | Nivel correcto `*ok*`: informe con `preview` de 20 filas `ZZ-`; `inserted` según `dryRun`; segunda real con el mismo nombre → `inserted:0, skipped:50` (memoria por `versionId`) | spec | `--include=**/terminology.handlers.spec.ts` | HECHO |
+| H2.S1.M3 | Nivel límite: `*con-errores*` → `aborted:true, errors:5, inserted:0` con `line` 5/9/14/20/33 y su `column`; `*grande*` → 413 | spec ×2 | idem | HECHO |
+| H2.S1.M4 | Nivel inválido: `*.pdf*` → 422 `IMPORT_FORMAT_UNSUPPORTED`; `*vacio*` → 422 `IMPORT_EMPTY_FILE`; sin archivo → 412; `*error-red*` → ver Q-J5 | spec ×4 | idem | HECHO |
+| H2.S1.M5 | Sin rol admin → 403 | spec o `DESCARTADO` con evidencia | idem | HECHO |
+| H2.S1.M6 | `GET /terminology/import-template?profile&format` → CSV de 2 líneas + `Content-Disposition`; `format` desconocido → 422 | spec | idem | HECHO |
+| H2.S1.M7 | Commit + push del doble | `git log origin/<rama> -1` | HECHO |
 
 ## H3 — Cliente y tipos (sección import)
 
 **CA:** `importarArchivo(versionId, file, { dryRun, profile })` y `descargarPlantilla(profile, format)`
 coinciden con §2 y tipan con §2; nada existente cambia de nombre ni de tipo.
-**DoD:** `terminology.client.spec.ts` ensanchado en verde + `typecheck` 0.
-**Estado:** TODO
+**DoD:** `terminology.client.spec.ts` ensanchado en verde → **37/37 PASS** (eran 26; +11 de import,
+`evidencia/h3/spec-cliente.txt`) · `corepack yarn typecheck` exit **0** (`evidencia/h3/typecheck.txt`).
+**Estado:** HECHO
+
+> **Desvío declarado:** `ConceptImportResult.batchId` pasó de `string` a **`string | null`**. §2 del
+> contrato declara `"batchId": "uuid | null"` y dice que es `null` en dry-run y en `aborted`, así que
+> dejarlo `string` sería un tipo que miente. `grep -rn "batchId" src/app` confirma que **no hay ningún
+> consumidor** fuera de mis archivos reservados y de los specs, así que el ensanche no rompe a nadie.
+> El resto de los campos nuevos —`format`, `profile`, `dryRun`, `aborted`, `preview` y
+> `ImportFileIssue.column`— van **opcionales**, como pedía la instrucción.
 
 ### H3.S1 — Tipos y métodos
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
 | H3.S1.M1 | Leer cómo el cliente arma `FormData` y cómo el repo descarga un Blob | Rutas | F-10 | HECHO |
-| H3.S1.M2 | Tipos: `ConceptImportResult` ensanchado (nuevos **opcionales**), `ImportFileIssue.column?`, `ImportPreviewRow`, `ImportProfile`, `ImportTemplateFormat` | `typecheck` 0 | `corepack yarn typecheck` | TODO |
-| H3.S1.M3 | `importarArchivo(versionId, file, opciones)` con `dryRun` y `profile` en el `FormData` | Compila | `typecheck` | TODO |
-| H3.S1.M4 | `descargarPlantilla(profile, format): Observable<BinaryDownload>` | Compila | `typecheck` | TODO |
-| H3.S1.M5 | Spec: el `FormData` lleva `file`, `dryRun='true'`, `profile='conceptos'`; URL de §2 | PASS | `--include=**/terminology.client.spec.ts` | TODO |
-| H3.S1.M6 | Spec: la plantilla pide `responseType:'blob'` con los query params y lee `Content-Disposition` | PASS | idem | TODO |
-| H3.S1.M7 | Spec: un 422 con `code` de import llega al consumidor con su código legible | PASS | idem | TODO |
+| H3.S1.M2 | Tipos: `ConceptImportResult` ensanchado (nuevos **opcionales**), `ImportFileIssue.column?`, `ImportPreviewRow`, `ImportProfile`, `ImportTemplateFormat` | `typecheck` 0 | `corepack yarn typecheck` | HECHO |
+| H3.S1.M3 | `importarArchivo(versionId, file, opciones)` con `dryRun` y `profile` en el `FormData` | Compila | `typecheck` | HECHO |
+| H3.S1.M4 | `descargarPlantilla(profile, format): Observable<BinaryDownload>` | Compila | `typecheck` | HECHO |
+| H3.S1.M5 | Spec: el `FormData` lleva `file`, `dryRun='true'`, `profile='conceptos'`; URL de §2 | PASS | `--include=**/terminology.client.spec.ts` | HECHO |
+| H3.S1.M6 | Spec: la plantilla pide `responseType:'blob'` con los query params y lee `Content-Disposition` | PASS | idem | HECHO |
+| H3.S1.M7 | Spec: un 422 con `code` de import llega al consumidor con su código legible | PASS | idem | HECHO |
 
 ## H4 — La pantalla en tres pasos
 
 **CA/DoD:** los del prompt §4 H4.
-**Estado:** TODO
+**DoD ejecutado:** `version-import.spec.ts` → **39/39 PASS** (baseline 5; +34 pruebas, ninguna
+borrada ni debilitada — `evidencia/h4/spec-pantalla.txt`) · `typecheck` exit **0** · `lint` con los
+**mismos 6 errores del baseline y 0 nuevos** (`evidencia/h4/typecheck-lint.txt`) · cero literales de
+color y 3 de `px` justificados uno por uno (`evidencia/h4/tokens.txt`).
+**Estado:** HECHO salvo M3 (`A MEDIAS`: recorrido escrito y derivado del DOM del spec, no observado
+en navegador) y M7 (`BLOQUEADO`: sin navegador).
+
+> **Desvío declarado — secciones en vez de pestañas.** `CLAUDE.md` §6 y
+> `docs/components/composition-rules.md` §5 piden «UNA tarjeta **con pestañas**». Se cumple la
+> tarjeta única, centrada, `inline-size: 100%`, `margin-inline: auto` y **sin tope propio de ancho**
+> —que es lo que la regla vino a arreglar—, pero las tres partes van como **secciones en orden**, no
+> como pestañas, porque esto es un flujo secuencial y no tres vistas equivalentes: la 3 no tiene nada
+> que mostrar hasta que la 1 y la 2 están resueltas, y una pestaña que se puede abrir vacía invita a
+> empezar por el final. Es además lo que pide el prompt (H4.S1.M2, literal: «tres secciones dentro de
+> **una** tarjeta a lo ancho»). A confirmar con Pablo.
 
 ### H4.S1 — Paso 1 «Qué vas a cargar» y paso 2 «El archivo»
 
 | ID | Microtarea | DoD | Estado |
 |---|---|---|---|
 | H4.S1.M1 | Muestrear 2 pantallas de `features/admin/**` | `content-packs.css`, `version-import.css` — tarjeta `--bg-surface` + `--border-default` + `--r-md` + `--sp-4` | HECHO |
-| H4.S1.M2 | Tres secciones dentro de **una** tarjeta a lo ancho | spec + CSS | TODO |
-| H4.S1.M3 | `carga-perfil` | spec | TODO |
-| H4.S1.M4 | `carga-sistema` y `carga-version`, alerta de «sin versiones» conservada | spec existente verde | TODO |
-| H4.S1.M5 | `carga-plantilla-csv` / `carga-plantilla-xlsx` | spec | TODO |
-| H4.S1.M6 | Texto de ayuda del paso 2 derivado del perfil | spec | TODO |
-| H4.S1.M7 | `app-file-input` con `accept` ensanchado, envuelto en `[data-testid=carga-archivo]` | spec | TODO |
-| H4.S1.M8 | Cambiar el archivo limpia informe, preview, errores y resumen | spec | TODO |
+| H4.S1.M2 | Tres secciones dentro de **una** tarjeta a lo ancho | spec + CSS | HECHO |
+| H4.S1.M3 | `carga-perfil` | spec | HECHO |
+| H4.S1.M4 | `carga-sistema` y `carga-version`, alerta de «sin versiones» conservada | spec existente verde | HECHO |
+| H4.S1.M5 | `carga-plantilla-csv` / `carga-plantilla-xlsx` | spec | HECHO |
+| H4.S1.M6 | Texto de ayuda del paso 2 derivado del perfil | spec | HECHO |
+| H4.S1.M7 | `app-file-input` con `accept` ensanchado, envuelto en `[data-testid=carga-archivo]` | spec | HECHO |
+| H4.S1.M8 | Cambiar el archivo limpia informe, preview, errores y resumen | spec | HECHO |
 
 ### H4.S2 — Validar, importar, resumen, descargar, otro
 
 | ID | Microtarea | DoD | Estado |
 |---|---|---|---|
-| H4.S2.M1 | `carga-validar` → `dryRun:true`; sin doble envío | spec | TODO |
-| H4.S2.M2 | «validando» como parcial M34 | spec | TODO |
-| H4.S2.M3 | `carga-informe` + alerta de `aborted` | spec | TODO |
-| H4.S2.M4 | `carga-preview` con `app-data-table` y vacío que orienta | spec | TODO |
-| H4.S2.M5 | `carga-errores` (`fila`,`columna`,`motivo`), «primeros 20 de M», oculta si 0 | spec ×2 | TODO |
-| H4.S2.M6 | `carga-importar`: `computed(informe.errors===0 && !cargando)`; «Importar N conceptos»; sin `dryRun`; sin doble envío | spec ×3 | TODO |
-| H4.S2.M7 | `carga-resumen` con `batchId` y explicación de «omitidas» | spec | TODO |
-| H4.S2.M8 | `carga-descargar-errores`: CSV en cliente vía `CsvExportService` (F-9), `=1+1` → `'=1+1` | spec | TODO |
-| H4.S2.M9 | Datos preservados ante fallo (red, 413, 422, 5xx) | spec ×2 | TODO |
-| H4.S2.M10 | `carga-otro` | spec | TODO |
-| H4.S2.M11 | Mapeo de errores por código | spec por código | TODO |
+| H4.S2.M1 | `carga-validar` → `dryRun:true`; sin doble envío | spec | HECHO |
+| H4.S2.M2 | «validando» como parcial M34 | spec | HECHO |
+| H4.S2.M3 | `carga-informe` + alerta de `aborted` | spec | HECHO |
+| H4.S2.M4 | `carga-preview` con `app-data-table` y vacío que orienta | spec | HECHO |
+| H4.S2.M5 | `carga-errores` (`fila`,`columna`,`motivo`), «primeros 20 de M», oculta si 0 | spec ×2 | HECHO |
+| H4.S2.M6 | `carga-importar`: `computed(informe.errors===0 && !cargando)`; «Importar N conceptos»; sin `dryRun`; sin doble envío | spec ×3 | HECHO |
+| H4.S2.M7 | `carga-resumen` con `batchId` y explicación de «omitidas» | spec | HECHO |
+| H4.S2.M8 | `carga-descargar-errores`: CSV en cliente vía `CsvExportService` (F-9), `=1+1` → `'=1+1` | spec | HECHO |
+| H4.S2.M9 | Datos preservados ante fallo (red, 413, 422, 5xx) | spec ×2 | HECHO |
+| H4.S2.M10 | `carga-otro` | spec | HECHO |
+| H4.S2.M11 | Mapeo de errores por código | spec por código | HECHO |
 | H4.S2.M12 | Tabla de los nueve estados M34 | la tabla de arriba | HECHO |
 
 ### H4.S3 — Accesibilidad, microcopy, tokens
 
 | ID | Microtarea | DoD | Estado |
 |---|---|---|---|
-| H4.S3.M1 | Nombres accesibles + `aria-live` en el informe | spec | TODO |
-| H4.S3.M2 | Foco al informe tras validar y al resumen tras importar | spec | TODO |
-| H4.S3.M3 | Recorrido de teclado escrito | `evidencia/h4/teclado.md` | TODO |
-| H4.S3.M4 | Microcopy revisada (lista abajo) | este plan | TODO |
-| H4.S3.M5 | Sólo tokens en el CSS | `grep -nE "#[0-9a-fA-F]{3,6}\|[0-9]+px"` vacío | TODO |
-| H4.S3.M6 | `lint` + `typecheck` + spec dirigido | `evidencia/h4/` | TODO |
+| H4.S3.M1 | Nombres accesibles + `aria-live` en el informe | spec | HECHO |
+| H4.S3.M2 | Foco al informe tras validar y al resumen tras importar | spec | HECHO |
+| H4.S3.M3 | Recorrido de teclado escrito | `evidencia/h4/teclado.md` | A MEDIAS |
+| H4.S3.M4 | Microcopy revisada (lista abajo) | este plan | HECHO |
+| H4.S3.M5 | Sólo tokens en el CSS | `grep -nE "#[0-9a-fA-F]{3,6}\|[0-9]+px"` vacío | HECHO |
+| H4.S3.M6 | `lint` + `typecheck` + spec dirigido | `evidencia/h4/` | HECHO |
 | H4.S3.M7 | Recorrer la ruta contra `yarn dev` | — | BLOQUEADO (sin navegador, regla 70) |
 
 ## H5 — Prueba visual y regresión
@@ -253,6 +277,25 @@ coinciden con §2 y tipan con §2; nada existente cambia de nombre ni de tipo.
 | Q-J3 | ¿Vista previa tras importar? | No: tras importar se muestra sólo el resumen | Pablo | H4.S2.M7 |
 | **Q-J4** | Los códigos `IMPORT_*` **no están** en `API_ERROR_CODES` (F-8), así que `errorToViewState` los devuelve como error genérico | La pantalla lee el `code` **del cuerpo crudo del `HttpErrorResponse`**, sin tocar `core/http/api-error.ts` (fuera de alcance). Cuando Itzan publique los códigos, Pablo los agrega ahí y la pantalla sigue andando igual | Pablo / Itzan | H4.S2.M11 |
 | **Q-J5** | Un manejador del simulador **no puede** emitir un fallo de red (status 0) (F-6): la única vía es `sessionStorage['mock:fallos']`, y el interceptor es de otro | `*error-red*` devuelve **503 `DEPENDENCY_UNAVAILABLE`** con `correlationId` (S9, lo más cercano que el manejador puede emitir) y el doble **documenta** cómo provocar el S8 real: `sessionStorage.setItem('mock:fallos', '[{"patron":"/import-file","modo":"red"}]')`. El S8 de la pantalla sí se verifica en su spec con `HttpTestingController` (status 0) | Pablo | H2.S1.M4 |
+
+## Defecto propio encontrado y corregido
+
+**Al escribir el spec del doble borré un spec ajeno, y lo restauré.**
+`src/app/core/mock/handlers/terminology.handlers.spec.ts` **ya existía** en `origin/mockup` con 71
+líneas y **4 pruebas** de las propiedades de un concepto (la frecuencia por defecto de un
+medicamento, C-20). Lo creé con `Write` dando por hecho que no estaba, y lo pisé entero: el commit
+`8926f5af` lo dejó con mis 21 pruebas y sin las 4 de antes. Es exactamente lo que prohíbe la regla
+00 §4.1. Lo destapó `git diff origin/mockup --stat`, que mostraba el archivo como **modificado con
+borrados** en vez de nuevo.
+
+Corregido antes de abrir el PR: se recuperó el contenido original con
+`git show origin/mockup:<ruta>`, mi `describe` quedó **anidado debajo** del que ya estaba, y el
+archivo pasó de 21 a **25 pruebas** (4 + 21). Verificado con la aserción más dura posible:
+`git diff origin/mockup -- <ruta> | grep "^-"` sale **vacío**, o sea que el diff del PR no borra ni
+una línea de lo que había.
+
+*Lección para el resto del carril: comprobar la existencia del archivo antes de un `Write`, no
+después.*
 
 ## Riesgos
 
