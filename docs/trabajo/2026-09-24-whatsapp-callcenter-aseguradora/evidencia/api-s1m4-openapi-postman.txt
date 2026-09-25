@@ -1,0 +1,29 @@
+H1.S1.M4 — Regenerar OpenAPI/Postman
+
+yarn build -> exit 0 (background task ba5w0flei, ver api-s1m4-build.txt)
+node tools/openapi/generate-openapi.mjs -> OK, 1251 paths, 1361 operaciones, 1222 esquemas.
+python3 tools/postman/generate_postman.py -> OK.
+
+Resultado: `git status --short openapi docs/postman` NO salio vacio: 1484
+inserciones/1304 borrados en openapi.json/yaml y 76 lineas en el collection
+de Postman.
+
+Verificado con `git diff` que NINGUNA linea del diff menciona "whatsapp" ni
+"contact-channels" ni toca el esquema `UpdateCarrierContactChannelsDto`
+(grep de esos terminos = 0 en ambos diffs). El contenido del diff es el
+contrato de PATCH/DELETE de credenciales del profesional
+(ProfilesPractitionersController_updateOwnCredential /
+_removeOwnCredential), que llego a `dev` el mismo 2026-09-24 via el merge
+de "cierre-plan-2-3-y-7-1" / "medical-module-execution" y cuyo openapi.json
+comiteado en el repo nunca se regenero despues de ese merge. Es deriva
+preexistente y AJENA a esta tarea (regla 00 SS3: prohibido tocar archivos
+fuera del alcance declarado). Se revirtio con
+`git checkout -- openapi/openapi.json openapi/openapi.yaml
+docs/postman/Salud-API.postman_collection.json
+docs/postman/Salud-Local.postman_environment.json`.
+
+Conclusion: el cambio de la Tarea 2 (regex de 8 digitos en
+UpdateCarrierContactChannelsDto.whatsappNumber) NO produce diff de
+contrato, tal como predijo la revision de factibilidad del plan: el
+`@ApiProperty` no declara `pattern`. `git status --short openapi
+docs/postman` queda vacio tras el revert.

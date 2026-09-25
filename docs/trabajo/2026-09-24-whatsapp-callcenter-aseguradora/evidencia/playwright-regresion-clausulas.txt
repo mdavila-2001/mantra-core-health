@@ -1,0 +1,42 @@
+
+Running 6 tests using 1 worker
+
+  ok 1 [chromium] › playwright\carril-adjudicacion-clausulas.spec.ts:41:7 › la cláusula de exclusión en la pantalla (maqueta) › un ítem denegado muestra la cita de la cláusula y la justificación (5.6s)
+  ok 2 [chromium] › playwright\carril-adjudicacion-clausulas.spec.ts:75:9 › la cláusula de exclusión en la pantalla (maqueta) › la celda de la cláusula no desborda el detalle en 390 px (6.1s)
+  ok 3 [chromium] › playwright\carril-adjudicacion-clausulas.spec.ts:75:9 › la cláusula de exclusión en la pantalla (maqueta) › la celda de la cláusula no desborda el detalle en 768 px (6.6s)
+  ok 4 [chromium] › playwright\carril-adjudicacion-clausulas.spec.ts:75:9 › la cláusula de exclusión en la pantalla (maqueta) › la celda de la cláusula no desborda el detalle en 1440 px (6.8s)
+  ok 5 [chromium] › playwright\carril-adjudicacion-clausulas.spec.ts:138:7 › la validación de la cláusula contractual (API) › DENIED sin cláusula responde 400 nombrando el campo (1.8s)
+  x  6 [chromium] › playwright\carril-adjudicacion-clausulas.spec.ts:161:7 › la validación de la cláusula contractual (API) › el mismo cuerpo CON cláusula ya no es un 400 de validación (pasa a 404: reclamo inexistente) (1.5s)
+
+
+  1) [chromium] › playwright\carril-adjudicacion-clausulas.spec.ts:161:7 › la validación de la cláusula contractual (API) › el mismo cuerpo CON cláusula ya no es un 400 de validación (pasa a 404: reclamo inexistente) 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 404
+    Received: 403
+
+      182 |     // cláusula presente, la petición llega al servicio y ahí el reclamo no
+      183 |     // existe.
+    > 184 |     expect(respuesta.status()).toBe(404);
+          |                                ^
+      185 |   });
+      186 | });
+      187 |
+        at D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\playwright\carril-adjudicacion-clausulas.spec.ts:184:32
+
+    Error Context: artifacts\playwright\salida\carril-adjudicacion-clausu-2cfe3--a-404-reclamo-inexistente--chromium\error-context.md
+
+    Error Context: artifacts\playwright\salida\carril-adjudicacion-clausu-2cfe3--a-404-reclamo-inexistente--chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\carril-adjudicacion-clausu-2cfe3--a-404-reclamo-inexistente--chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace artifacts\playwright\salida\carril-adjudicacion-clausu-2cfe3--a-404-reclamo-inexistente--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › playwright\carril-adjudicacion-clausulas.spec.ts:161:7 › la validación de la cláusula contractual (API) › el mismo cuerpo CON cláusula ya no es un 400 de validación (pasa a 404: reclamo inexistente) 
+  5 passed (30.0s)

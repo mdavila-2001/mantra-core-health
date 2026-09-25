@@ -1,0 +1,170 @@
+✓ src/app/features/component-stock/component-index.generated.ts
+  547 componentes · 3 otros · 304 pantallas · 138 maquetas · 23 atomos · 45 moleculas · 34 organismos
+  202 con algo que mirar
+  relaciones: 2163 template-instantiates · 6 imports-available sin instanciar · 69 type-only · 208 dynamic-loads
+  nivel: 0 declarado · 547 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 547/547 · con escenario 3/547 · verificados visualmente 3/547 · bloqueados 70/547 · montó e interactuó: se miden en el banco (runtime)
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+Using Vitest configuration file: D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\vitest.config.ts
+[33m❯[39m Building...
+[32m✔[39m Building...
+[1mInitial chunk files[22m                                          [2m | [22m[1mNames[22m                                                     [2m | [22m [1mRaw size[22m
+[32mchunk-M5MBRT5O.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m  [36m1.12 MB[39m[2m | [22m
+[32mchunk-DIWCXLRS.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m  [36m1.01 MB[39m[2m | [22m
+[32mchunk-GRYVEGVI.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m[36m672.62 kB[39m[2m | [22m
+[32mchunk-V2X4OFWV.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m[36m647.50 kB[39m[2m | [22m
+[32mchunk-A3DRMFNB.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m[36m594.04 kB[39m[2m | [22m
+[32mchunk-6MAKOHDY.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m[36m451.36 kB[39m[2m | [22m
+[32mchunk-BJOXDDCN.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m[36m181.42 kB[39m[2m | [22m
+[32mstyles.css[39m                                                   [2m | [22m[2mstyles[22m                                                    [2m | [22m[36m166.16 kB[39m[2m | [22m
+[32mchunk-KFAKKTBC.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m[36m149.50 kB[39m[2m | [22m
+[32mchunk-6BDVW46W.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m [36m43.16 kB[39m[2m | [22m
+[32mchunk-SESFJL5K.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m [36m38.16 kB[39m[2m | [22m
+[32mchunk-72OZBVNU.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m [36m37.81 kB[39m[2m | [22m
+[32mchunk-6EKIFHSW.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m [36m32.99 kB[39m[2m | [22m
+[32mchunk-HPKZ42QH.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m [36m29.95 kB[39m[2m | [22m
+[32mchunk-7NFYULJ2.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m [36m28.54 kB[39m[2m | [22m
+[32mchunk-5FVYP3OC.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m [36m15.52 kB[39m[2m | [22m
+[32mchunk-TYN6C4HD.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m [36m14.90 kB[39m[2m | [22m
+[32mchunk-WE5HBIBW.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m [36m14.53 kB[39m[2m | [22m
+[32mchunk-3N56SKB2.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m [36m11.19 kB[39m[2m | [22m
+[32mchunk-YCLYD4GD.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m [36m10.80 kB[39m[2m | [22m
+[32mchunk-HTXJ4JFW.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m [36m10.70 kB[39m[2m | [22m
+[32mchunk-LIN7TBUP.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m [36m10.48 kB[39m[2m | [22m
+[32mchunk-YXGL6556.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m [36m10.38 kB[39m[2m | [22m
+[32mchunk-2TQORCOZ.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m  [36m9.23 kB[39m[2m | [22m
+[32mspec-app-core-mock-mock-backend.js[39m                           [2m | [22m[2mspec-app-core-mock-mock-backend[22m                           [2m | [22m  [36m8.79 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-insurance-portability.handlers.js[39m[2m | [22m[2mspec-app-core-mock-handlers-insurance-portability.handlers[22m[2m | [22m  [36m7.35 kB[39m[2m | [22m
+[32mchunk-6SERRZBD.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m  [36m7.17 kB[39m[2m | [22m
+[32mspec-app-core-mock-fixtures-bolivia-eje-central.js[39m           [2m | [22m[2mspec-app-core-mock-fixtures-bolivia-eje-central[22m           [2m | [22m  [36m6.74 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-scheduling.handlers.js[39m           [2m | [22m[2mspec-app-core-mock-handlers-scheduling.handlers[22m           [2m | [22m  [36m6.62 kB[39m[2m | [22m
+[32mspec-app-core-mock-faker-faker.js[39m                            [2m | [22m[2mspec-app-core-mock-faker-faker[22m                            [2m | [22m  [36m6.12 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-pharma-lab.handlers.js[39m           [2m | [22m[2mspec-app-core-mock-handlers-pharma-lab.handlers[22m           [2m | [22m  [36m5.84 kB[39m[2m | [22m
+[32mspec-app-core-mock-aviso-ficha-medica.js[39m                     [2m | [22m[2mspec-app-core-mock-aviso-ficha-medica[22m                     [2m | [22m  [36m5.80 kB[39m[2m | [22m
+[32mspec-app-core-mock-fixtures-instituciones.js[39m                 [2m | [22m[2mspec-app-core-mock-fixtures-instituciones[22m                 [2m | [22m  [36m5.77 kB[39m[2m | [22m
+[32mspec-app-core-mock-fixtures-markdown-catalogs-visibility.js[39m  [2m | [22m[2mspec-app-core-mock-fixtures-markdown-catalogs-visibility[22m  [2m | [22m  [36m5.58 kB[39m[2m | [22m
+[32mspec-app-core-mock-fixtures-anatomia.js[39m                      [2m | [22m[2mspec-app-core-mock-fixtures-anatomia[22m                      [2m | [22m  [36m5.51 kB[39m[2m | [22m
+[32mchunk-HZXEPMDQ.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m  [36m5.27 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-insurance.handlers.js[39m            [2m | [22m[2mspec-app-core-mock-handlers-insurance.handlers[22m            [2m | [22m  [36m4.91 kB[39m[2m | [22m
+[32mspec-app-core-mock-horario-liberado.js[39m                       [2m | [22m[2mspec-app-core-mock-horario-liberado[22m                       [2m | [22m  [36m4.80 kB[39m[2m | [22m
+[32mspec-app-core-mock-fixtures-anatomia-atlas.js[39m                [2m | [22m[2mspec-app-core-mock-fixtures-anatomia-atlas[22m                [2m | [22m  [36m4.68 kB[39m[2m | [22m
+[32mspec-app-core-mock-fallos-simulados.js[39m                       [2m | [22m[2mspec-app-core-mock-fallos-simulados[22m                       [2m | [22m  [36m4.56 kB[39m[2m | [22m
+[32mspec-app-core-mock-fixtures-insurer-network.js[39m               [2m | [22m[2mspec-app-core-mock-fixtures-insurer-network[22m               [2m | [22m  [36m4.37 kB[39m[2m | [22m
+[32mspec-app-core-mock-aviso-de-demora.js[39m                        [2m | [22m[2mspec-app-core-mock-aviso-de-demora[22m                        [2m | [22m  [36m4.31 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-clinical.handlers.js[39m             [2m | [22m[2mspec-app-core-mock-handlers-clinical.handlers[22m             [2m | [22m  [36m4.13 kB[39m[2m | [22m
+[32mspec-app-core-mock-faker-props.js[39m                            [2m | [22m[2mspec-app-core-mock-faker-props[22m                            [2m | [22m  [36m3.93 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-diagnostics.handlers.js[39m          [2m | [22m[2mspec-app-core-mock-handlers-diagnostics.handlers[22m          [2m | [22m  [36m3.62 kB[39m[2m | [22m
+[32mchunk-PISI6QEW.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m  [36m3.61 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-insurance-analytics.handlers.js[39m  [2m | [22m[2mspec-app-core-mock-handlers-insurance-analytics.handlers[22m  [2m | [22m  [36m3.43 kB[39m[2m | [22m
+[32mspec-app-core-mock-fixtures-fichas-estandar.js[39m               [2m | [22m[2mspec-app-core-mock-fixtures-fichas-estandar[22m               [2m | [22m  [36m3.38 kB[39m[2m | [22m
+[32mspec-app-core-mock-catalogo-publico.js[39m                       [2m | [22m[2mspec-app-core-mock-catalogo-publico[22m                       [2m | [22m  [36m3.30 kB[39m[2m | [22m
+[32mchunk-7BVYAS5U.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m  [36m2.86 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-terminology.handlers.js[39m          [2m | [22m[2mspec-app-core-mock-handlers-terminology.handlers[22m          [2m | [22m  [36m2.81 kB[39m[2m | [22m
+[32mchunk-W5VSKOGV.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m  [36m2.56 kB[39m[2m | [22m
+[32mspec-app-core-mock-persistencia-por-build.js[39m                 [2m | [22m[2mspec-app-core-mock-persistencia-por-build[22m                 [2m | [22m  [36m2.39 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-practice.handlers.js[39m             [2m | [22m[2mspec-app-core-mock-handlers-practice.handlers[22m             [2m | [22m  [36m1.44 kB[39m[2m | [22m
+[32minit-testbed.js[39m                                              [2m | [22m[2minit-testbed[22m                                              [2m | [22m  [36m1.21 kB[39m[2m | [22m
+[32mspec-app-core-mock-sha256.js[39m                                 [2m | [22m[2mspec-app-core-mock-sha256[22m                                 [2m | [22m  [36m1.12 kB[39m[2m | [22m
+[32mvitest-mock-patch.js[39m                                         [2m | [22m[2mvitest-mock-patch[22m                                         [2m | [22m[36m974 bytes[39m[2m | [22m
+[32msetup-test-setup.js[39m                                          [2m | [22m[2msetup-test-setup[22m                                          [2m | [22m[36m911 bytes[39m[2m | [22m
+
+[1m [22m                                                            [2m | [22m[1mInitial total[22m                                             [2m | [22m  [1m5.46 MB[22m
+
+Application bundle generation complete. [86.190 seconds] - 2026-09-25T01:00:31.758Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+[37m      75 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+[37m      85 │     [32mRouterLink[37m,
+         ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButton is not used within the template of NearbyPlaces[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/nearby-places/nearby-places.ts:103:4:
+[37m      103 │     [32mAppButton[37m,
+          ╵     [32m~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:103:39:
+[37m      103 │ ... [Alert, AppButton, BodyMap, [32mCard[37m, Chip, FormField, RouterLink...
+          ╵                                 [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:103:62:
+[37m      103 │ ...AppButton, BodyMap, Card, Chip, FormField, [32mRouterLink[37m, Textarea],
+          ╵                                               [32m~~~~~~~~~~[0m
+
+[39m[22m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mD:/Trabajos Secundarios/Mantra Core Technologies/mantra-core-health[39m
+
+(node:22464) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31300) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30920) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20592) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29204) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34768) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13372) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21996) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18408) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:8204) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:32172) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19184) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31232) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34260) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15504) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[2m Test Files [22m [1m[32m26 passed[39m[22m[90m (26)[39m
+[2m      Tests [22m [1m[32m223 passed[39m[22m[90m (223)[39m
+[2m   Start at [22m 21:00:32
+[2m   Duration [22m 18.67s[2m (transform 38.17s, setup 29.23s, import 108.11s, tests 6.05s, environment 130.64s)[22m
+
+EXIT=0

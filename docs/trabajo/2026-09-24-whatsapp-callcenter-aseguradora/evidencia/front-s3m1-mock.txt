@@ -1,0 +1,102 @@
+✓ src/app/features/component-stock/component-index.generated.ts
+  547 componentes · 3 otros · 304 pantallas · 138 maquetas · 23 atomos · 45 moleculas · 34 organismos
+  202 con algo que mirar
+  relaciones: 2163 template-instantiates · 6 imports-available sin instanciar · 69 type-only · 208 dynamic-loads
+  nivel: 0 declarado · 547 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 547/547 · con escenario 3/547 · verificados visualmente 3/547 · bloqueados 70/547 · montó e interactuó: se miden en el banco (runtime)
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+Using Vitest configuration file: D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\vitest.config.ts
+[33m❯[39m Building...
+[32m✔[39m Building...
+[1mInitial chunk files[22m                                          [2m | [22m[1mNames[22m                                                     [2m | [22m [1mRaw size[22m
+[32mspec-app-core-mock-mock-backend.js[39m                           [2m | [22m[2mspec-app-core-mock-mock-backend[22m                           [2m | [22m  [36m3.45 MB[39m[2m | [22m
+[32mchunk-2SY2HGQP.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m[36m831.84 kB[39m[2m | [22m
+[32mchunk-GHOJ2VHJ.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m[36m731.74 kB[39m[2m | [22m
+[32mstyles.css[39m                                                   [2m | [22m[2mstyles[22m                                                    [2m | [22m[36m166.16 kB[39m[2m | [22m
+[32mchunk-74IUG6PQ.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m [36m71.62 kB[39m[2m | [22m
+[32mchunk-POOJSZU6.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m [36m23.37 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-insurance-portability.handlers.js[39m[2m | [22m[2mspec-app-core-mock-handlers-insurance-portability.handlers[22m[2m | [22m  [36m7.01 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-scheduling.handlers.js[39m           [2m | [22m[2mspec-app-core-mock-handlers-scheduling.handlers[22m           [2m | [22m  [36m6.21 kB[39m[2m | [22m
+[32mchunk-HZXEPMDQ.js[39m                                            [2m | [22m[2m-[22m                                                         [2m | [22m  [36m5.27 kB[39m[2m | [22m
+[32mspec-app-core-mock-handlers-insurance.handlers.js[39m            [2m | [22m[2mspec-app-core-mock-handlers-insurance.handlers[22m            [2m | [22m  [36m4.74 kB[39m[2m | [22m
+[32minit-testbed.js[39m                                              [2m | [22m[2minit-testbed[22m                                              [2m | [22m  [36m1.21 kB[39m[2m | [22m
+[32mvitest-mock-patch.js[39m                                         [2m | [22m[2mvitest-mock-patch[22m                                         [2m | [22m[36m974 bytes[39m[2m | [22m
+[32msetup-test-setup.js[39m                                          [2m | [22m[2msetup-test-setup[22m                                          [2m | [22m[36m911 bytes[39m[2m | [22m
+
+[1m [22m                                                            [2m | [22m[1mInitial total[22m                                             [2m | [22m  [1m5.30 MB[22m
+
+Application bundle generation complete. [81.342 seconds] - 2026-09-25T00:46:10.916Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+[37m      75 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+[37m      85 │     [32mRouterLink[37m,
+         ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButton is not used within the template of NearbyPlaces[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/nearby-places/nearby-places.ts:103:4:
+[37m      103 │     [32mAppButton[37m,
+          ╵     [32m~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:103:39:
+[37m      103 │ ... [Alert, AppButton, BodyMap, [32mCard[37m, Chip, FormField, RouterLink...
+          ╵                                 [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:103:62:
+[37m      103 │ ...AppButton, BodyMap, Card, Chip, FormField, [32mRouterLink[37m, Textarea],
+          ╵                                               [32m~~~~~~~~~~[0m
+
+[39m[22m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mD:/Trabajos Secundarios/Mantra Core Technologies/mantra-core-health[39m
+
+(node:30748) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:32784) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25596) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21940) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[2m Test Files [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+[2m      Tests [22m [1m[32m50 passed[39m[22m[90m (50)[39m
+[2m   Start at [22m 20:46:11
+[2m   Duration [22m 16.55s[2m (transform 16.36s, setup 5.50s, import 26.73s, tests 2.71s, environment 12.97s)[22m
+
