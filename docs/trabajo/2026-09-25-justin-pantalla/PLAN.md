@@ -95,9 +95,9 @@ de terminología · `core/http/api-error.ts` (ver ambigüedad Q-J4) · la API ·
 |---|---|---|---|
 | H1.S2.M1 | Ruta real + guard | `app.routes.ts:763-771` → F-1 | HECHO |
 | H1.S2.M2 | Cuenta admin del simulador | `mock-session.ts:110` → F-2 (`admin@alovida.mock`, sintética) | HECHO |
-| H1.S2.M3 | `yarn dev`, abrir, capturar 1280 y 375 | — | BLOQUEADO |
-| H1.S2.M4 | Subir un NDJSON de 3 líneas por el flujo actual | — | BLOQUEADO |
-| H1.S2.M5 | Consola y red | — | BLOQUEADO |
+| H1.S2.M3 | `yarn dev`, abrir, capturar 1280 y 375 | — | HECHO (2026-09-26) — capturado a 375, 768 y **1440** en vez de 1280; `evidencia/h5/capturas.md` |
+| H1.S2.M4 | Subir un NDJSON de 3 líneas por el flujo actual | — | PENDIENTE — el recorrido usó CSV y XLSX; el NDJSON no se subió |
+| H1.S2.M5 | Consola y red | — | HECHO (2026-09-26) — **0 errores propios** en 6 recorridos; los 2 de CSP son del servidor de dev, preexistentes |
 
 > **Causa del bloqueo (M3–M5):** la corrida prohíbe explícitamente levantar cualquier servidor
 > (`yarn dev`/`start`/`build`/Playwright) porque hay **cuatro carriles en paralelo** en esta
@@ -214,16 +214,16 @@ en navegador) y M7 (`BLOQUEADO`: sin navegador).
 | H4.S3.M4 | Microcopy revisada (lista abajo) | este plan | HECHO |
 | H4.S3.M5 | Sólo tokens en el CSS | `grep -nE "#[0-9a-fA-F]{3,6}\|[0-9]+px"` vacío | HECHO |
 | H4.S3.M6 | `lint` + `typecheck` + spec dirigido | `evidencia/h4/` | HECHO |
-| H4.S3.M7 | Recorrer la ruta contra `yarn dev` | — | BLOQUEADO (sin navegador, regla 70) |
+| H4.S3.M7 | Recorrer la ruta contra `yarn dev` | — | A MEDIAS (2026-09-26) — `ok-50.csv` y `con-errores.xlsx` recorridos de punta a punta, y la plantilla CSV baja (`plantilla-conceptos.csv`); `no-es-nada.pdf` y `error-red.csv` **no** |
 
 ## H5 — Prueba visual y regresión
 
 | ID | Microtarea | DoD | Estado |
 |---|---|---|---|
-| H5.S1.M1 | 24 capturas (3×2×4) | — | BLOQUEADO (sin navegador) |
-| H5.S1.M2 | Una línea por captura | — | BLOQUEADO |
-| H5.S1.M3 | Sin scroll horizontal a 375 | — | A MEDIAS (verificado por lectura del CSS mobile-first, no observado) |
-| H5.S1.M4 | Contraste en oscuro | — | BLOQUEADO |
+| H5.S1.M1 | 24 capturas (3×2×4) | — | HECHO (2026-09-26) — las 24, en `evidencia/h5/capturas/` |
+| H5.S1.M2 | Una línea por captura | — | HECHO (2026-09-26) — `evidencia/h5/capturas.md` |
+| H5.S1.M3 | Sin scroll horizontal a 375 | — | HECHO (2026-09-26) — `scrollWidth === innerWidth` medido en los **cuatro** estados, claro y oscuro |
+| H5.S1.M4 | Contraste en oscuro | — | PENDIENTE — el tema oscuro se aplica (fondo `rgb(8, 22, 28)` medido), pero **ninguna relación de contraste se midió** |
 | H5.S1.M5 | `yarn test` completo | — | DESCARTADO: la corrida prohíbe la suite entera; la corre el operador, centralizada |
 | H5.S1.M6 | Diff no toca archivos de otros | `git diff origin/mockup --stat \| grep -E "file-input\|app.routes\|navigation\|playwright\|alovida/terminologia"` vacío | HECHO |
 

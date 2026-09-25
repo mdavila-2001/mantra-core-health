@@ -1,4 +1,4 @@
-> **AVANCE: 55 / 68 — 80,9 %.**
+> **AVANCE: 60 / 68 — 88,2 %.**
 
 # Reporte — Carga masiva: pantalla, cliente y doble del simulador
 
@@ -12,7 +12,7 @@
   navegador. Lo que hay es comportamiento ejercitado en pruebas contra un doble declarado.
 
 Desglose de los 68: **49 HECHO** en las tablas del plan + **6** de cierre (H6.S2.M1–M3 y M5–M7) =
-**55 HECHO** · **7 BLOQUEADO** · **3 A MEDIAS** · **3 DESCARTADO**. `A MEDIAS` y `BLOQUEADO` cuentan
+**60 HECHO** · **2 PENDIENTE** · **3 A MEDIAS** · **3 DESCARTADO**. Cinco microtareas que la noche dejó `BLOQUEADO` por falta de navegador se cerraron el **2026-09-26 por la mañana**, cuando la máquina quedó libre: ver «El peldaño visual, cerrado» más abajo. `A MEDIAS` y `BLOQUEADO` cuentan
 como no hechas.
 
 ## El PR
@@ -54,6 +54,29 @@ ninguno en `fail` — ver H6.S2.M4 en §A medias.
    (`http.expectOne` falla si hubiera dos). Dos pruebas.
 3. **Datos preservados ante fallo.** Red (status 0), 413, 422 y 500: el archivo y las tres
    selecciones siguen, y el motivo queda anclado en la sección 3. Seis pruebas.
+
+## El peldaño visual, cerrado el 2026-09-26
+
+La noche del 25 había **cuatro carriles en paralelo** en la máquina y la regla 70 prohibía
+levantar servidores, así que todo lo visual quedó `BLOQUEADO` y el peldaño de la entrega quedó en
+`UNKNOWN` — declarado como tal, no disimulado. A la mañana siguiente la máquina quedó libre y se
+cerró con el navegador:
+
+- **24 capturas** de los cuatro estados, en tres anchos y los dos temas.
+- **`scrollWidth === innerWidth` en los cuatro estados a 375 px**, claro y oscuro: H5.S1.M3
+  pasa de una afirmación de lectura del CSS a una observación.
+- **El tema oscuro se aplica de verdad** (fondo `rgb(8, 22, 28)` contra blanco). Sin medirlo,
+  seis capturas «oscuras» podrían haber sido seis claras.
+- **0 errores de consola propios** en seis recorridos completos.
+- El recorrido **`ok-50.csv` → validar → informe → importar → resumen** y el
+  **`con-errores.xlsx` → aborta entero** ejercidos en la pantalla real, no sólo contra el doble
+  en pruebas.
+
+Detalle y salidas literales: [`evidencia/h5/capturas.md`](./evidencia/h5/capturas.md).
+
+Lo que **sigue abierto** de este bloque: el contraste medido en oscuro (H5.S1.M4), el NDJSON de
+tres líneas (H1.S2.M4), y los dos archivos de error del recorrido (`no-es-nada.pdf` y
+`error-red.csv`, H4.S3.M7). Los tres están nombrados arriba con su motivo.
 
 ## A medias
 
@@ -102,9 +125,12 @@ ninguno en `fail` — ver H6.S2.M4 en §A medias.
 
 | ID | Estado | Qué lo destraba |
 |---|---|---|
-| H1.S2.M3, M4, M5 | `BLOQUEADO` | Un navegador. La corrida prohíbe levantar cualquier servidor: hay **cuatro carriles en paralelo** en esta máquina (regla 70.1.4–70.1.6). No hay capturas «antes» ni lista de errores de consola previa. |
-| H4.S3.M7 | `BLOQUEADO` | Ídem: recorrer la ruta contra `yarn dev` con `ok-50.csv`, `con-errores.xlsx`, `no-es-nada.pdf` y `error-red.csv`. |
-| H5.S1.M1, M2, M4 | `BLOQUEADO` | Ídem: las **24 capturas** (3 viewports × 2 temas × 4 estados), su primera pasada y el contraste en oscuro. **Peldaño visual = `UNKNOWN`.** La segunda pasada adversarial no es mía (regla 35.1.6): es de Marcelo. |
+| H1.S2.M3 | **CERRADO 2026-09-26** | Capturado con `yarn dev` en el 4219, a 375, 768 y 1440 (no a 1280). |
+| H1.S2.M4 | `PENDIENTE` | El NDJSON de tres líneas no se subió: el recorrido usó CSV y XLSX. |
+| H1.S2.M5 | **CERRADO 2026-09-26** | Consola y red observadas en seis recorridos completos: **0 errores propios**. Los 2 de CSP por corrida son del servidor de dev —bloquea los dos scripts en línea del `<head>`, uno es el anti-parpadeo del tema— y son preexistentes. |
+| H4.S3.M7 | `A MEDIAS` desde el 2026-09-26 | Recorrido de punta a punta con `ok-50.csv` (validar → informe → importar → resumen) y `con-errores.xlsx` (aborta entero, «Importar» sigue deshabilitado), más la plantilla que baja como `plantilla-conceptos.csv`. **`no-es-nada.pdf` y `error-red.csv` no se recorrieron**: el turno se cortó ahí. |
+| H5.S1.M1, M2 | **CERRADAS 2026-09-26** | Las **24 capturas** (3 viewports × 2 temas × 4 estados) están en `evidencia/h5/capturas/`, con una línea cada una en `evidencia/h5/capturas.md`. **El peldaño visual de la entrega deja de ser `UNKNOWN`.** La segunda pasada adversarial sigue sin ser mía (regla 35.1.6): es de Marcelo. |
+| H5.S1.M4 | `PENDIENTE` | El tema oscuro **se aplica** —el fondo del cuerpo pasa a `rgb(8, 22, 28)`, medido en las seis corridas—, pero **ninguna relación de contraste se midió**. No se declara. |
 | H5.S1.M5 | `DESCARTADO` | La suite entera está prohibida en esta corrida; la corre el operador, centralizada, al final. |
 | H6.S1.M2, M3 | `DESCARTADO` | La rama de Itzan **existe** (`e57c0126`, 03:45) pero trae **sólo el contrato de fila §1**: cero apariciones de `dryRun`, `import-template` e `IMPORT_FORMAT_UNSUPPORTED` en toda la rama. El endpoint HTTP que esta pantalla consume no está escrito, así que levantar Postgres y la API no habría dado nada que recorrer. Evidencia en `evidencia/h6/api.txt`. |
 
