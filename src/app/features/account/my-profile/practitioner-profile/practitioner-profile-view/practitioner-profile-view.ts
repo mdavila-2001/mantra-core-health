@@ -28,10 +28,7 @@ import { SpecialtyBadge } from '../../../../../shared/components/organisms/speci
 import { SpecialtyBadgeGrid } from '../../../../../shared/components/organisms/specialty-badge-grid/specialty-badge-grid';
 import { StatusSeal } from '../../../../../shared/components/organisms/status-seal/status-seal';
 import { TutorialTarget } from '../../../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
-import type {
-  FormacionVisible,
-  PerfilProfesionalVisible,
-} from './practitioner-profile-view.types';
+import type { FormacionVisible, PerfilProfesionalVisible } from './practitioner-profile-view.types';
 
 /** Con qué pestaña abre la ficha: la primera, sea cuál sea el dibujo. */
 const PRIMERA_PESTANA = 0;
@@ -398,6 +395,21 @@ export class PractitionerProfileView {
   protected sePuedeRetirar(estudio: FormacionVisible): boolean {
     return this.esPropio() && estudio.sello === 'in-review';
   }
+
+  /**
+   * Los títulos que el panel de «Credenciales» puede ofrecer retirar. El panel
+   * no sabe de dueños: recibe los ids ya decididos acá. La vista previa la
+   * sigue frenando {@link alPedirRetiro}, igual que cuando el botón vivía en
+   * «Trayectoria».
+   */
+  protected readonly formacionRetirable = computed<ReadonlySet<string>>(
+    () =>
+      new Set(
+        this.perfil()
+          .formacion.filter((estudio) => this.sePuedeRetirar(estudio))
+          .map((estudio) => estudio.id),
+      ),
+  );
 
   /** «Quiero retirar este título». Confirmarlo y retirarlo es de quien escucha. */
   readonly credencialARetirar = output<FormacionVisible>();

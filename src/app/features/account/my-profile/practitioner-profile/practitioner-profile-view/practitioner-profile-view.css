@@ -552,10 +552,6 @@
   --trayecto-color: var(--border-strong);
 }
 
-.trayecto--formacion {
-  --trayecto-color: var(--brand-primary);
-}
-
 /* El rótulo de la fase. Se aparta del `mi-perfil__subtitulo` —versalitas
    grises de pie de página— porque acá encabeza un tramo de la historia y tiene
    que pesar como un encabezado, no como una etiqueta. */
@@ -648,42 +644,6 @@
    Es un dato del hito, no otro hito. */
 .trayecto__cargo {
   color: var(--text-secondary);
-}
-
-/* «Retirar» va debajo y a la izquierda del cuerpo, no al lado del sello:
-   pegada al sello parecía una acción SOBRE el veredicto. */
-.trayecto__acciones {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin: var(--sp-1) 0 0;
-  /* El botón fantasma trae su propio relleno; esto lo devuelve al filo de la
-     columna para que se alinee con el nombre de arriba. */
-  margin-inline-start: calc(var(--sp-3) * -1);
-}
-
-/* El nodo de un título toma el color de su sello. Mismo mapa variante → tono
-   que usa `app-status-seal`, para que el anillo y el sello no digan cosas
-   distintas de un mismo trámite. */
-.trayecto__nodo--pending,
-.trayecto__nodo--in-review {
-  --trayecto-color: var(--st-warning-fg);
-}
-
-.trayecto__nodo--approved {
-  --trayecto-color: var(--st-success-fg);
-}
-
-.trayecto__nodo--rejected {
-  --trayecto-color: var(--st-error-fg);
-}
-
-.trayecto__nodo--expired {
-  --trayecto-color: var(--st-info-fg);
-}
-
-.trayecto__nodo--unknown {
-  --trayecto-color: var(--border-strong);
 }
 
 /* ─── El chip de telemedicina en la cabecera de la ficha propia ────────────
