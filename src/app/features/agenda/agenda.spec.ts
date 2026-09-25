@@ -654,25 +654,33 @@ describe('Agenda', () => {
   /**
    * El botón que abre el modal, o `null` si no se ofrece.
    *
-   * C-11 (2026-09-20): **bajó del encabezado de la página al del día.** El
-   * `data-testid` cambió de `agenda-ingreso-mostrador` a
-   * `dia-ingreso-mostrador` con la mudanza; la capacidad no cambió, y la sigue
-   * decidiendo `puedeIngresarPorMostrador()` de esta pantalla, que se la pasa
-   * al día por input.
+   * C-11 (2026-09-20) lo había bajado del encabezado de la página al del día.
+   * Desde el 24/09 **el médico no lo ve en ninguno de los dos**: el ingreso por
+   * mostrador es de quien reparte turnos, que no tiene calendario y lo sigue
+   * teniendo en el encabezado de la página.
    */
   function botonDeMostrador(): HTMLElement | null {
-    return harness.fixture.nativeElement.querySelector('[data-testid="dia-ingreso-mostrador"]');
+    return harness.fixture.nativeElement.querySelector(
+      '[data-testid="dia-ingreso-mostrador"], [data-testid="agenda-ingreso-mostrador"]',
+    );
   }
 
-  it('ofrece el ingreso por mostrador a quien atiende, con recurso elegido', async () => {
+  it('al médico no le ofrece el ingreso por mostrador, ni en el día ni arriba', async () => {
     await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule');
     await responderTodo();
 
+    // El día está pintado: la ausencia no es porque falte la agenda.
+    expect(harness.fixture.nativeElement.querySelector('app-day-view')).not.toBeNull();
+    expect(botonDeMostrador()).toBeNull();
+    expect(harness.fixture.nativeElement.querySelector('app-walk-in-form')).toBeNull();
+  });
+
+  it('se lo sigue ofreciendo a quien reparte turnos, con recurso elegido', async () => {
+    await montar({ roles: ['SCHEDULING_AGENT'] }, '/schedule');
+    await responder();
+    harness.fixture.detectChanges();
+
     expect(botonDeMostrador()?.textContent).toContain('Ingreso Mostrador');
-    // Y NO en el encabezado de la página: ahí es exactamente de donde se fue.
-    expect(
-      harness.fixture.nativeElement.querySelector('[data-testid="agenda-ingreso-mostrador"]'),
-    ).toBeNull();
     // Cerrado hasta que alguien lo toque: el `<dialog>` atrapa el foco, y
     // dejarlo montado metería sus campos en el orden de tabulación de atrás.
     expect(harness.fixture.nativeElement.querySelector('app-walk-in-form')).toBeNull();
@@ -682,7 +690,7 @@ describe('Agenda', () => {
     // Mismo criterio que el aviso de demora. La autoridad sigue siendo la API
     // —`walk-in` declara SCHEDULING_ADMIN, AGENT y PRACTITIONER—; esconder el
     // botón sólo evita ofrecer un gesto que no se puede completar.
-    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await montar({ roles: ['SCHEDULING_AGENT'] });
     await responderRecursos([]);
     harness.fixture.detectChanges();
 
@@ -690,8 +698,9 @@ describe('Agenda', () => {
   });
 
   it('el botón abre el modal sobre la agenda, sin navegar', async () => {
-    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule');
-    await responderTodo();
+    await montar({ roles: ['SCHEDULING_AGENT'] }, '/schedule');
+    await responder();
+    harness.fixture.detectChanges();
 
     const antes = TestBed.inject(Router).url;
     botonDeMostrador()?.click();
