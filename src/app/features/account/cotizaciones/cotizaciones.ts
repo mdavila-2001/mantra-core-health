@@ -203,6 +203,11 @@ export class Cotizaciones {
     );
   });
 
+  /** Hay filas para mostrar: en angosto se pintan como tarjetas. */
+  protected readonly hayFilas = computed(
+    () => this.busqueda().status === 'ready' && this.resultados().length > 0,
+  );
+
   /** La búsqueda volvió bien y no encontró nada: S2, con su propio vacío. */
   protected readonly sinResultados = computed(
     () => this.busqueda().status === 'ready' && this.resultados().length === 0,
@@ -283,7 +288,8 @@ export class Cotizaciones {
       minimumFractionDigits: decimales,
       maximumFractionDigits: 2,
     });
-    return `${importe} ${fila.price.currency}`;
+    // Espacio duro: el importe no se separa de su unidad al partir el renglón.
+    return `${importe}\u00A0${fila.price.currency}`;
   }
 
   protected procedenciaDe(fila: CotizacionResultado): string {

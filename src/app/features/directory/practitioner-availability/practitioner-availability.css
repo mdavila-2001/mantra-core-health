@@ -76,7 +76,7 @@
   flex-wrap: wrap;
   margin: 0;
   color: var(--text-secondary);
-  font-size: var(--fs-caption);
+  font-size: var(--fs-body);
 }
 
 /* En pantalla angosta los dos botones de semana no caben a los lados del
