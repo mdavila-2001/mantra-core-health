@@ -1,8 +1,11 @@
 import type {
   AvailabilityResult,
   AvailabilitySite,
+  PharmacyDetail,
   PharmacyProduct,
   PharmacyProductSearchPage,
+  PharmacySitePage,
+  PharmacySitePrices,
 } from './pharmacy.types';
 
 /**
@@ -24,6 +27,7 @@ export const FIXTURE_IDS = {
   productoIbuprofeno: '7d3e5f10-90ab-4cde-8f01-234567890bbb',
   sedeCentro: '4f9a2b30-1c2d-4e5f-8a9b-000000000001',
   sedeSur: '4f9a2b30-1c2d-4e5f-8a9b-000000000002',
+  sedeNorte: '4f9a2b30-1c2d-4e5f-8a9b-000000000003',
   farmaciaAndina: '9e8d7c60-5b4a-4321-9876-000000000010',
   farmaciaDelSur: '9e8d7c60-5b4a-4321-9876-000000000020',
 } as const;
@@ -160,4 +164,117 @@ export const DISPONIBILIDAD_FIXTURE: AvailabilityResult = {
   requestedProductIds: [FIXTURE_IDS.productoAmoxicilina, FIXTURE_IDS.productoIbuprofeno],
   items: [SEDE_COMPLETA, SEDE_PARCIAL],
   count: 2,
+};
+
+/**
+ * H3.S1 (Ola 0, carril Marcelo 2026-09-25) — el perfil de Farmacia Andina, con
+ * su única sede (la misma `sedeCentro` que {@link PRECIOS_DE_SEDE}): lo que
+ * `getPharmacy()` necesita para probar la pantalla de perfil sin pegarle a la
+ * API real.
+ */
+export const FARMACIA_DETALLE: PharmacyDetail = {
+  id: FIXTURE_IDS.farmaciaAndina,
+  code: 'FARMACIA_ANDINA',
+  name: 'Farmacia Andina',
+  legalName: 'Farmacia Andina S.R.L.',
+  type: { code: 'RETAIL', display: 'Farmacia de mostrador' },
+  siteCount: 1,
+  productCount: 2,
+  homeDeliveryAvailable: true,
+  pickupAvailable: true,
+  sites: [
+    {
+      id: FIXTURE_IDS.sedeCentro,
+      code: 'FARMACIA_ANDINA_S1',
+      name: 'Sucursal Centro',
+      addressText: 'Calle Libertad 245, entre Ballivián y Sucre',
+      latitude: -17.7833,
+      longitude: -63.1821,
+    },
+  ],
+};
+
+/**
+ * H3.S1 — precios de `sedeCentro`: un producto sin receta (ibuprofeno) y uno
+ * con receta (amoxicilina), de la misma sede que {@link FARMACIA_DETALLE}.
+ */
+export const PRECIOS_DE_SEDE: PharmacySitePrices = {
+  siteId: FIXTURE_IDS.sedeCentro,
+  siteName: 'Sucursal Centro',
+  items: [
+    {
+      productId: FIXTURE_IDS.productoAmoxicilina,
+      productCode: AMOXICILINA.productCode,
+      brandName: AMOXICILINA.brandName,
+      genericName: AMOXICILINA.genericName,
+      strengthText: AMOXICILINA.strengthText,
+      packageSizeText: AMOXICILINA.packageSizeText,
+      medication: AMOXICILINA.medication,
+      requiresPrescription: true,
+      unitAmount: '68.00',
+      patientAmount: '68.00',
+      currency: { code: 'BOB', display: 'Boliviano' },
+      priceListCode: 'PUBLICO-2026',
+    },
+    {
+      productId: FIXTURE_IDS.productoIbuprofeno,
+      productCode: IBUPROFENO.productCode,
+      brandName: IBUPROFENO.brandName,
+      genericName: IBUPROFENO.genericName,
+      strengthText: IBUPROFENO.strengthText,
+      packageSizeText: IBUPROFENO.packageSizeText,
+      medication: IBUPROFENO.medication,
+      requiresPrescription: false,
+      unitAmount: '28.50',
+      patientAmount: '28.50',
+      currency: { code: 'BOB', display: 'Boliviano' },
+      priceListCode: 'PUBLICO-2026',
+    },
+  ],
+};
+
+/** H3.S1 — tres sedes sueltas con `distanceKm`, para «elegir farmacia». */
+export const SEDES_CERCANAS: PharmacySitePage = {
+  items: [
+    {
+      siteId: FIXTURE_IDS.sedeCentro,
+      siteName: 'Sucursal Centro',
+      pharmacyId: FIXTURE_IDS.farmaciaAndina,
+      pharmacyName: 'Farmacia Andina',
+      addressText: 'Calle Libertad 245, entre Ballivián y Sucre',
+      latitude: -17.7833,
+      longitude: -63.1821,
+      distanceKm: 1.2,
+      homeDeliveryAvailable: true,
+      pickupAvailable: true,
+      productCount: 2,
+    },
+    {
+      siteId: FIXTURE_IDS.sedeSur,
+      siteName: 'Sucursal Plan Tres Mil',
+      pharmacyId: FIXTURE_IDS.farmaciaDelSur,
+      pharmacyName: 'Farmacia del Sur',
+      addressText: 'Av. Paurito esq. calle 7',
+      latitude: -17.83,
+      longitude: -63.12,
+      distanceKm: 4.7,
+      homeDeliveryAvailable: false,
+      pickupAvailable: true,
+      productCount: 1,
+    },
+    {
+      siteId: FIXTURE_IDS.sedeNorte,
+      siteName: 'Sucursal Norte',
+      pharmacyId: FIXTURE_IDS.farmaciaAndina,
+      pharmacyName: 'Farmacia Andina',
+      addressText: 'Av. Banzer km 5',
+      latitude: -17.72,
+      longitude: -63.16,
+      distanceKm: 8.3,
+      homeDeliveryAvailable: true,
+      pickupAvailable: true,
+      productCount: 2,
+    },
+  ],
+  count: 3,
 };

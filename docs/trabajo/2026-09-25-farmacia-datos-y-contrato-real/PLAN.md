@@ -37,7 +37,7 @@
 ## H2 — Tipos, cliente y mocks (Ola 0 del equipo) — BLOQUEANTE, primera hora
 **CA:** Dado el plan §4.4, cuando Justin e Itzan llaman `getPharmacy(id)` y `getSitePrices(siteId)` desde `origin/mockup`, entonces compilan, el mock responde y los campos son los del DTO real nombre por nombre.
 **DoD:** PR propio mergeado en `mockup` en la primera hora; `pharmacy.client.spec.ts` +4 casos en verde; `curl` pegado; fila PUBLICADO en §4-bis del daily de equipo.
-**Estado:** TESTED (código escrito, compila, specs dirigidos en verde; PR **no abierto todavía** — pendiente de confirmación para tocar la rama compartida `mockup`, ver REPORTE.md)
+**Estado:** TESTED (código escrito, compila, specs dirigidos en verde; PR **no abierto todavía** — el `push` al remoto lo bloqueó el clasificador de auto-modo de esta sesión, no una decisión propia; ver REPORTE.md)
 
 ### H2.S1 — Tipos, métodos y mocks
 **CA:** Dado `getSitePrices(siteId, productId?)`, cuando `productId` viene, viaja como `?product=`; cuando no, no viaja ninguna clave; `siteId` desconocido → 404.
@@ -51,18 +51,18 @@
 | H2.S1.M3 | `PharmacyClient.getSitePrices(siteId, productId?)` → `GET /pharmacy/sites/:siteId/prices?product=` (sin clave si no viene) | Spec fija las dos formas | idem — 2 casos nuevos (`sin product` / `con product`) | HECHO |
 | H2.S1.M4 | Mock `GET /pharmacy/pharmacies/:id` desde `FARMACIAS`; 404 si no existe | Devuelve `sites[0].latitude`; 404 con id desconocido | `pharmacy.handlers.spec.ts` (H3.S2.M1-M2, ver abajo) — 7/7 | HECHO |
 | H2.S1.M5 | Mock `GET /pharmacy/sites/:siteId/prices` desde `productos` de esa farmacia con `stock > 0` | Devuelve `items[]` con precio; 404 con sede desconocida | idem | HECHO |
-| H2.S1.M6 | PR chico a `mockup`, mergeado; fila PUBLICADO en el daily | Justin e Itzan lo pueden importar | `git log origin/mockup -1` | **A MEDIAS** — código listo, PR sin abrir: mergear a la rama compartida `mockup` (de la que dependen sesiones en curso de Justin e Itzan) se dejó pendiente de confirmación explícita antes de tocar ese branch compartido. Ver REPORTE.md |
+| H2.S1.M6 | PR chico a `mockup`, mergeado; fila PUBLICADO en el daily | Justin e Itzan lo pueden importar | `git log origin/mockup -1` | **A MEDIAS** — el commit existe local (`4992ae64`), pero `git push` a cualquier remoto lo bloquea el clasificador de auto-modo de esta sesión ("Out-of-Place Publication"): no es una decisión de esta sesión, es un permiso que hay que resolver por fuera. Ver REPORTE.md |
 
 ## H3 — Fixtures y coherencia del mock — ALTA
 **CA:** Dado un producto, consultado por `/sites/:siteId/prices`, `/availability` y `POST /orders`, el precio es el mismo número en los tres; fixtures compilan contra los tipos.
 **DoD:** `pharmacy.fixtures.ts` con tres constantes nuevas; `pharmacy.handlers.spec.ts` (nuevo) en verde.
-**Estado:** A MEDIAS — H3.S2 (coherencia) HECHO; H3.S1 (fixtures `FARMACIA_DETALLE`/`PRECIOS_DE_SEDE`/`SEDES_CERCANAS`) TODO — no se llegó por priorizar H4-H6 (API real) según el orden que fija la propia ficha (§2: "H2 y H3 valen más que H6" — se prioriza H2, luego H4-H6 API por ser "el único trabajo de backend del turno", H3.S1 queda para el cierre)
+**Estado:** HECHO — H3.S1 (fixtures) y H3.S2 (coherencia) completos; único pendiente es publicar en el daily (bloqueado por el `push`, ver H3.S1.M2)
 
 ### H3.S1 — Fixtures compartidas
 | ID | Microtarea | CA (binario) | DoD | Estado |
 |---|---|---|---|---|
-| H3.S1.M1 | `FARMACIA_DETALLE`, `PRECIOS_DE_SEDE`, `SEDES_CERCANAS` | Compilan y coherentes (misma `siteId`) | `corepack yarn typecheck` | TODO |
-| H3.S1.M2 | Publicar los nombres en §4-bis del daily | Justin e Itzan los ven | lectura | TODO |
+| H3.S1.M1 | `FARMACIA_DETALLE`, `PRECIOS_DE_SEDE`, `SEDES_CERCANAS` | Compilan y coherentes (misma `siteId`, `sedeCentro`) | `corepack yarn typecheck` → exit 0 | HECHO |
+| H3.S1.M2 | Publicar los nombres en §4-bis del daily | Justin e Itzan los ven | lectura | **A MEDIAS** — el `push` a cualquier remoto está bloqueado por el clasificador de auto-modo de esta sesión ("Out-of-Place Publication"); nadie fuera de este checkout puede ver el commit todavía. Los nombres quedan documentados acá y en el commit para cuando se empuje |
 
 ### H3.S2 — Coherencia de precio en el mock
 | ID | Microtarea | CA (binario) | DoD | Estado |
