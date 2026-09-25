@@ -320,11 +320,15 @@ export class PatientChart {
     this.nombre() === '' ? 'Expediente clínico' : this.nombre(),
   );
 
-  protected readonly subtitulo = computed(() =>
-    this.nombre() === ''
-      ? 'Historia clínica y expediente de la persona atendida.'
-      : 'Historia clínica y expediente.',
-  );
+  /** La fecha de la última atención va junto al subtítulo, no en una tarjeta aparte. */
+  protected readonly subtitulo = computed(() => {
+    const base =
+      this.nombre() === ''
+        ? 'Historia clínica y expediente de la persona atendida.'
+        : 'Historia clínica y expediente.';
+    const ultima = this.ultimaAtencion();
+    return ultima === null ? base : `${base} Última atención: ${this.fechaCorta(ultima)}`;
+  });
 
   /**
    * La atención que ya está abierta con esta persona, si la hay.
@@ -803,14 +807,6 @@ export class PatientChart {
    * deducirla del texto sería adivinar—: se muestran todas, que son pocas.
    */
   protected readonly alergiasDestacadas = this.alergias;
-
-  /** Las cifras del expediente, para dimensionarlo sin abrir pestaña por pestaña. */
-  protected readonly cifras = computed(() => [
-    { clave: 'diagnosticos', rotulo: 'Diagnósticos', valor: this.diagnosticos().length },
-    { clave: 'medicacion', rotulo: 'Medicación', valor: this.medicacion().length },
-    { clave: 'encuentros', rotulo: 'Encuentros', valor: this.encuentros().length },
-    { clave: 'observaciones', rotulo: 'Observaciones', valor: this.observaciones().length },
-  ]);
 
   /**
    * Cuándo fue la última vez que se la atendió.

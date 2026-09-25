@@ -190,13 +190,6 @@ const EXPEDIENTE: TutorialDefinition = {
       placement: 'bottom',
     },
     {
-      id: 'contexto',
-      title: 'Cuánto expediente hay',
-      body: 'Las cifras te dicen el tamaño de la historia sin abrir pestaña por pestaña, y cuándo fue la última atención.',
-      target: 'expediente-contexto',
-      placement: 'bottom',
-    },
-    {
       id: 'bloques',
       title: 'La historia, por bloques',
       body: 'Diagnósticos, medicación, observaciones, encuentros, notas y documentos. Cada pestaña dice cuántos registros trae.',

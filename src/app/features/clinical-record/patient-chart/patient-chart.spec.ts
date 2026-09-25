@@ -500,17 +500,6 @@ describe('PatientChart', () => {
     expect(interno<() => readonly unknown[]>('alergiasDestacadas')()).toHaveLength(0);
   });
 
-  /** Cuánto expediente hay, sin abrir pestaña por pestaña. */
-  it('cuenta los bloques en la banda de contexto', () => {
-    responderNombre();
-    responderExpediente();
-
-    const cifras = interno<() => readonly { clave: string; valor: number }[]>('cifras')();
-    expect(cifras.find((c) => c.clave === 'diagnosticos')?.valor).toBe(1);
-    expect(cifras.find((c) => c.clave === 'observaciones')?.valor).toBe(1);
-    expect(cifras.find((c) => c.clave === 'medicacion')?.valor).toBe(0);
-  });
-
   /**
    * Sin encuentros no se afirma «sin atención previa»: el bloque puede venir
    * recortado, o la atención puede constar en otra organización.
