@@ -216,19 +216,41 @@ describe('Appointments', () => {
       expect(fixture.nativeElement.querySelector('[data-testid="turnos-lista-past"]')).toBeNull();
     });
 
-    it('R-01 · «Pedir una cita» está en el encabezado y deja el foco en «Agendar una cita»', () => {
+    it('R-01 · el botón del encabezado cambia de sección —no scrollea— y deja el foco detrás', async () => {
       arrancarConCitas([cita('b-1', CONFIRMADO)]);
 
-      const boton = fixture.nativeElement.querySelector(
-        'app-page-header [data-testid="turnos-pedir"]',
-      ) as HTMLButtonElement | null;
-      expect(boton).not.toBeNull();
-      expect(boton?.textContent?.trim()).toBe('Pedir una cita');
+      const boton = (): HTMLButtonElement | null =>
+        fixture.nativeElement.querySelector('app-page-header [data-testid="turnos-pedir"]');
+      expect(boton()?.textContent?.trim()).toBe('Pedir una cita');
+      expect(
+        fixture.nativeElement.querySelector('[aria-labelledby="turnos-propios"]'),
+      ).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[aria-labelledby="pedir-turno"]')).toBeNull();
 
-      boton?.click();
+      boton()?.click();
+      await fixture.whenStable();
+      fixture.detectChanges();
 
+      // Cambió de sección: «Tus citas» ya no está en el DOM, no sólo fuera de vista.
+      expect(fixture.nativeElement.querySelector('[aria-labelledby="turnos-propios"]')).toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[aria-labelledby="pedir-turno"]'),
+      ).not.toBeNull();
       expect(document.activeElement?.id).toBe('pedir-turno');
       expect(document.activeElement?.textContent?.trim()).toBe('Agendar una cita');
+      expect(boton()?.textContent?.trim()).toBe('Tus citas');
+
+      // Y el mismo botón vuelve, con el foco en el título de «Tus citas».
+      boton()?.click();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(
+        fixture.nativeElement.querySelector('[aria-labelledby="turnos-propios"]'),
+      ).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[aria-labelledby="pedir-turno"]')).toBeNull();
+      expect(document.activeElement?.id).toBe('turnos-propios');
+      expect(boton()?.textContent?.trim()).toBe('Pedir una cita');
     });
 
     it('R-01 · una cuenta sin perfil de paciente no recibe el botón', () => {
@@ -349,6 +371,15 @@ describe('Appointments', () => {
       expect(pedido.request.params.get('resourceType')).toBe('ROOM');
       pedido.flush({ items: [], count: 0 });
       expect(interno<() => boolean>('esLaboratorio')()).toBe(true);
+
+      // Abre «Agendar una cita» directo, sin pasar por «Tus citas» primero, y
+      // deja el foco en su título (lo mismo que promete el botón del
+      // encabezado, para quien llega acá desde «Mis órdenes»).
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('[aria-labelledby="pedir-turno"]')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[aria-labelledby="turnos-propios"]')).toBeNull();
+      expect(document.activeElement?.id).toBe('pedir-turno');
     });
 
     it('al cambiar a laboratorio, vuelve a preguntar por recursos de tipo ROOM', () => {
@@ -434,10 +465,14 @@ describe('Appointments', () => {
       expect(fixture.nativeElement.textContent).toContain('Consultorio Cardiología');
     });
 
-    it('el vacío de laboratorios no le dice a la persona que espere sin más', () => {
+    it('el vacío de laboratorios no le dice a la persona que espere sin más', async () => {
       montar();
       responderArranque([]);
 
+      // «Agendar una cita» está en la otra sección desde el toggle del
+      // encabezado; hay que abrirla para ver este aviso.
+      interno<(s: string) => void>('elegirSeccion')('pedir');
+      await fixture.whenStable();
       interno<(tipo: string) => void>('cambiarTipoDeRecurso')('ROOM');
       fixture.detectChanges();
       http.expectOne((r) => r.url === '/scheduling/resources').flush({ items: [], count: 0 });
@@ -1283,9 +1318,14 @@ describe('Appointments · estados con palabra y avisos con salida (E3)', () => {
     expect(fixture.nativeElement.querySelector('.turnos__reprogramar')).toBeNull();
   });
 
-  it('sin organización activa, el aviso dice que se elige desde el encabezado', () => {
+  it('sin organización activa, el aviso dice que se elige desde el encabezado', async () => {
     // Sin `tenant`: el caso real de una sesión sin organización activa.
-    const { fixture } = montarCancelacion({ bookings: [], labels: [] });
+    const { fixture, comp } = montarCancelacion({ bookings: [], labels: [] });
+    fixture.detectChanges();
+
+    // El aviso vive en «Agendar una cita», la otra sección del toggle.
+    p8(comp).elegirSeccion('pedir');
+    await fixture.whenStable();
     fixture.detectChanges();
 
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
@@ -1408,6 +1448,7 @@ function p8(comp: Appointments) {
     anotarmeEnEspera(): Promise<void>;
     yaEnEspera(): boolean;
     esperas(): readonly { id: string; agenda: string }[];
+    elegirSeccion(seccion: 'citas' | 'pedir'): void;
   };
 }
 
@@ -1494,7 +1535,7 @@ describe('Appointments · lista de espera (P8)', () => {
     expect(enrollWaitlist).not.toHaveBeenCalled();
   });
 
-  it('ya anotado en esa agenda: se dice, no se ofrece anotarse de nuevo', () => {
+  it('ya anotado en esa agenda: se dice, no se ofrece anotarse de nuevo', async () => {
     const { fixture, comp } = montarCancelacion({
       bookings: [],
       labels: [],
@@ -1503,6 +1544,9 @@ describe('Appointments · lista de espera (P8)', () => {
       waitlist: [esperaMock('r-1')],
     });
 
+    // «Anotarme en la lista de espera» vive en «Agendar una cita».
+    p8(comp).elegirSeccion('pedir');
+    await fixture.whenStable();
     p8(comp).elegirAgenda('recurso:r-1');
     fixture.detectChanges();
 
