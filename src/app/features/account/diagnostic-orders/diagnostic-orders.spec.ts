@@ -9,12 +9,14 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { DiagnosticOrders } from './diagnostic-orders';
 import type { AnalysisCategory, PatientOrderRow } from './diagnostic-orders.types';
 import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
+import type { ViewState } from '../../../core/view-state/view-state.types';
 
 /** Acceso a lo `protected`, igual que `work-history.spec.ts` (regla: no exponer sólo para testear). */
 interface Interno {
   readonly onFiltrosCambiaron: (activos: Readonly<Record<string, string>>) => void;
   readonly limpiarFiltros: () => void;
   readonly filasFiltradas: () => readonly PatientOrderRow[];
+  readonly filasDeTabla: () => ViewState<readonly PatientOrderRow[]>;
   readonly accionesDe: (fila: PatientOrderRow) => readonly RowAction[];
   readonly ejecutarAccion: (codigo: string, fila: PatientOrderRow) => void;
   readonly tab: () => AnalysisCategory | null;
@@ -225,6 +227,25 @@ describe('DiagnosticOrders', () => {
 
     expect(api(componente).filasFiltradas().length).toBe(1);
     expect(api(componente).filasFiltradas()[0].studyLabel).toBe('Hemograma');
+  });
+
+  it('lo que la tabla pinta refleja el buscador, no sólo el resumen (regresión: quedaban atados a estado() sin filtrar)', async () => {
+    configurar(PROFILE_ID);
+    const componente = await mount();
+    responder(
+      [orden({ codeConceptId: 'c-hemo' }), orden({ codeConceptId: 'c-rx' })],
+      [concepto('c-hemo', 'STUDY-HEMO', 'Hemograma'), concepto('c-rx', 'STUDY-RX', 'Radiografía')],
+    );
+
+    api(componente).onFiltrosCambiaron({ q: 'HEMO' });
+    harness.detectChanges();
+
+    const filasDeTabla = api(componente).filasDeTabla();
+    expect(filasDeTabla.status).toBe('ready');
+    if (filasDeTabla.status === 'ready') {
+      expect(filasDeTabla.data.length).toBe(1);
+      expect(filasDeTabla.data[0].studyLabel).toBe('Hemograma');
+    }
   });
 
   it('el filtro «Con resultado» deja sólo las que enlazan a un resultado', async () => {
