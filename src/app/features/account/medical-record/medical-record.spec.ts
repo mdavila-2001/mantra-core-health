@@ -135,6 +135,179 @@ const FORMULARIO_DETALLE = {
 
 const SIN_FORMULARIOS = { items: [], limit: 50, truncated: false };
 
+/* ---- C6 · lo que la línea del encuentro necesita -------------------------- */
+
+/**
+ * El expediente: una nota liberada al paciente y otra que **no** lo está.
+ *
+ * La segunda existe a propósito: `releasedToPatient` es la decisión del
+ * profesional sobre si esa nota se comparte, y la pantalla no puede ser la que
+ * la muestre.
+ */
+const EXPEDIENTE = {
+  patientProfileId: 'pp-1',
+  notes: [
+    {
+      noteId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeea1b2',
+      encounterId: 'e-1',
+      lifecycleStatusConceptId: 'st-activa',
+      chiefComplaintText: 'Odinofagia de tres días',
+      planText: 'Reposo e hidratación',
+      releasedToPatient: true,
+      signedAt: '2026-03-01T10:20:00.000Z',
+      createdAt: '2026-03-01T10:15:00.000Z',
+    },
+    {
+      noteId: 'ffffffff-bbbb-4ccc-8ddd-eeeeeeee9999',
+      encounterId: 'e-1',
+      lifecycleStatusConceptId: 'st-activa',
+      chiefComplaintText: 'BORRADOR INTERNO',
+      releasedToPatient: false,
+      createdAt: '2026-03-01T10:16:00.000Z',
+    },
+  ],
+  carePlans: [],
+  documents: [],
+  limit: 50,
+  truncated: [],
+};
+
+/** Las órdenes propias: un hemograma de esa misma atención. */
+const ORDENES = {
+  patientProfileId: 'pp-1',
+  items: [
+    {
+      id: 'o-1',
+      encounterId: 'e-1',
+      codeConceptId: 'lab-hemograma',
+      categoryConceptId: 'cat-lab',
+      statusConceptId: 'st-cumplida',
+      hasReleasedResult: true,
+      createdAt: '2026-03-01T10:25:00.000Z',
+    },
+  ],
+  limit: 50,
+  truncated: false,
+};
+
+/** Los conceptos que sólo traen las órdenes: la segunda lectura del catálogo. */
+const CONCEPTOS_DE_ORDENES = {
+  items: [
+    {
+      conceptId: 'lab-hemograma',
+      code: 'HEM',
+      display: 'Hemograma',
+      codeSystemVersionId: 'v1',
+    },
+    {
+      conceptId: 'cat-lab',
+      code: 'LAB',
+      display: 'Análisis de laboratorio',
+      codeSystemVersionId: 'v1',
+    },
+    { conceptId: 'st-cumplida', code: 'DONE', display: 'Cumplida', codeSystemVersionId: 'v1' },
+  ],
+  count: 3,
+  limit: 200,
+};
+
+/**
+ * Tres diagnósticos, uno por bloque, con los códigos **reales** del catálogo.
+ *
+ * `dx-refutada` es el kill-test de C6: un diagnóstico que el profesional
+ * descartó no puede aparecer nunca entre las enfermedades activas.
+ */
+const RESUMEN_CON_TRES_DIAGNOSTICOS = {
+  ...RESUMEN,
+  conditions: [
+    {
+      id: 'dx-activa',
+      codeConceptId: 'con-hipertension',
+      clinicalStatusConceptId: 'st-cond-activa',
+      verificationStatusConceptId: 'st-confirmado',
+      expectedResolutionAt: '2026-11-24T00:00:00.000Z',
+      encounterId: 'e-1',
+      onsetAt: '2024-01-10T00:00:00.000Z',
+      createdAt: '2024-01-10T00:00:00.000Z',
+    },
+    {
+      id: 'dx-en-estudio',
+      codeConceptId: 'con-dislipidemia',
+      clinicalStatusConceptId: 'st-cond-activa',
+      verificationStatusConceptId: 'st-provisional',
+      encounterId: 'e-1',
+      createdAt: '2026-02-01T00:00:00.000Z',
+    },
+    {
+      id: 'dx-refutada',
+      codeConceptId: 'con-faringitis',
+      // Activa en lo clínico y **descartada** en la certeza: si el bloque se
+      // decidiera por el estado clínico, ésta caería entre las activas.
+      clinicalStatusConceptId: 'st-cond-activa',
+      verificationStatusConceptId: 'st-descartado',
+      encounterId: 'e-1',
+      createdAt: '2026-02-05T00:00:00.000Z',
+    },
+  ],
+};
+
+/** El catálogo de esos tres diagnósticos, con los códigos publicados. */
+const CONCEPTOS_DE_DIAGNOSTICOS = {
+  items: [
+    {
+      conceptId: 'con-hipertension',
+      code: 'I10',
+      display: 'Hipertensión',
+      codeSystemVersionId: 'v1',
+    },
+    {
+      conceptId: 'con-dislipidemia',
+      code: 'E78.5',
+      display: 'Dislipidemia',
+      codeSystemVersionId: 'v1',
+    },
+    {
+      conceptId: 'con-faringitis',
+      code: 'J02',
+      display: 'Faringitis aguda',
+      codeSystemVersionId: 'v1',
+    },
+    {
+      conceptId: 'st-cond-activa',
+      code: 'COND-ACTIVE',
+      display: 'Activa',
+      codeSystemVersionId: 'v1',
+    },
+    {
+      conceptId: 'st-confirmado',
+      code: 'DXV-CONFIRMED',
+      display: 'Confirmado',
+      codeSystemVersionId: 'v1',
+    },
+    {
+      conceptId: 'st-provisional',
+      code: 'DXV-PROVISIONAL',
+      display: 'Provisional',
+      codeSystemVersionId: 'v1',
+    },
+    {
+      conceptId: 'st-descartado',
+      code: 'DXV-REFUTED',
+      display: 'Descartado',
+      codeSystemVersionId: 'v1',
+    },
+    { conceptId: 'st-activa', code: 'ACTIVE', display: 'Activa', codeSystemVersionId: 'v1' },
+    {
+      conceptId: 'med-amoxi',
+      code: 'J01CA04',
+      display: 'Amoxicilina',
+      codeSystemVersionId: 'v1',
+    },
+  ],
+  count: 9,
+  limit: 200,
+};
+
 const CONCEPTOS = {
   items: [
     {
@@ -223,6 +396,35 @@ describe('MedicalRecord', () => {
     harness.detectChanges();
   }
 
+  /**
+   * Despliega una atención del acordeón (C6).
+   *
+   * Hace falta en casi toda prueba de «Atenciones» porque el contenido plegado
+   * **no está en el DOM**: es lo que hace que una historia de cuarenta consultas
+   * no dibuje cuarenta líneas para mostrar una.
+   */
+  function desplegarAtencion(indice = 0): void {
+    const triggers = harness.routeNativeElement?.querySelectorAll<HTMLButtonElement>(
+      '.accordion-panel__trigger',
+    );
+    triggers?.[indice]?.click();
+    harness.detectChanges();
+  }
+
+  /** Resuelve las dos lecturas perezosas de la línea: expediente y órdenes. */
+  function responderDetalle(
+    expediente: object = EXPEDIENTE,
+    ordenes: object = ORDENES,
+    conceptos: object | null = CONCEPTOS_DE_ORDENES,
+  ): void {
+    http.expectOne((r) => r.url === '/charts/patients/pp-1/chart').flush(expediente);
+    http.expectOne((r) => r.url === '/diagnostic-results/me/orders').flush(ordenes);
+    if (conceptos !== null) {
+      http.expectOne((r) => r.url === '/terminology/concepts').flush(conceptos);
+    }
+    harness.detectChanges();
+  }
+
   /** Resuelve la lectura de formularios propios: listado y detalle de cada uno. */
   function responderFormularios(listado: object = FORMULARIOS): void {
     http.expectOne((r) => r.url === '/forms/me/instances').flush(listado);
@@ -256,9 +458,22 @@ describe('MedicalRecord', () => {
     expect(harness.routeNativeElement?.textContent).toContain('Esta sección es para pacientes');
   });
 
-  it('el diagnóstico se lee dentro de su atención y no como lista aparte', async () => {
+  /**
+   * C6 · cambió el requisito, no la aserción de fondo.
+   *
+   * Hasta C6 esta prueba fijaba además que **no** hubiera una lista suelta de
+   * diagnósticos (F-42). El carril C6 pide exactamente esa lista, en su propia
+   * pestaña, así que aquellas dos cláusulas se trasladaron a las pruebas de la
+   * pestaña «Diagnósticos» de más abajo: no se borraron, cambiaron de sitio
+   * porque cambió lo que el producto tiene que hacer. Lo que esta prueba sigue
+   * fijando —y era lo que importaba— es que el diagnóstico **también** se lea
+   * dentro de la consulta que lo registró y que nunca salga como uuid.
+   */
+  it('el diagnóstico se lee dentro de la atención que lo registró', async () => {
     await montar();
     responder();
+    desplegarAtencion();
+    responderDetalle();
 
     const raiz = harness.routeNativeElement;
     const atenciones = raiz?.querySelector('[data-testid="historia-atenciones"]');
@@ -267,9 +482,8 @@ describe('MedicalRecord', () => {
     // El diagnóstico es el contexto de esa consulta, no un registro suelto.
     expect(texto).toContain('Faringitis aguda');
     expect(texto).not.toContain('con-faringitis');
-    // Y la lista suelta no existe: ésa es la herramienta del profesional.
-    expect(raiz?.querySelector('#historia-diagnosticos')).toBeNull();
-    expect(encabezados(raiz).some((titulo) => titulo.startsWith('Diagnósticos'))).toBe(false);
+    // Y se lee dentro de la línea del encuentro, no como un renglón más.
+    expect(raiz?.querySelector('[data-testid="historia-linea-encuentro"]')).not.toBeNull();
   });
 
   it('muestra la receta traducida y su indicación', async () => {
@@ -290,6 +504,9 @@ describe('MedicalRecord', () => {
     responder();
 
     const raiz = harness.routeNativeElement;
+    // La descarga de una atención vive dentro de su panel: plegado no existe.
+    desplegarAtencion();
+    responderDetalle();
     expect(raiz?.querySelector('[data-testid="historia-descargar-atencion"]')).not.toBeNull();
 
     await abrirPestana(1);
@@ -400,10 +617,13 @@ describe('MedicalRecord', () => {
     responderFormularios(SIN_FORMULARIOS);
     harness.detectChanges();
 
-    const texto = harness.routeNativeElement?.textContent ?? '';
     // La atención sigue: perder la traducción no justifica perder la historia.
-    expect(texto).toContain('Dolor de garganta');
-    // Y lo que no se pudo traducir sale como ausencia, nunca como uuid.
+    expect(harness.routeNativeElement?.textContent).toContain('Dolor de garganta');
+
+    // Y lo que no se pudo traducir sale como ausencia, nunca como uuid. Se
+    // mira en la pestaña de recetas, que es donde vive `med-amoxi`.
+    await abrirPestana(1);
+    const texto = harness.routeNativeElement?.textContent ?? '';
     expect(texto).toContain('Sin registrar');
     expect(texto).not.toContain('med-amoxi');
   });
@@ -445,6 +665,8 @@ describe('MedicalRecord', () => {
     http
       .expectOne((r) => r.url === '/diagnostic-results/me')
       .flush({ patientProfileId: 'pp-1', items: [], limit: 50, truncated: false });
+    // C6 · sin órdenes no hay conceptos nuevos que traducir: la lectura ni sale.
+    http.expectNone((r) => r.url === '/terminology/concepts');
   });
 
   it('si las lecturas secundarias fallan, la descarga sigue en pie', async () => {
@@ -465,6 +687,7 @@ describe('MedicalRecord', () => {
     http
       .expectOne((r) => r.url === '/diagnostic-results/me')
       .flush(null, { status: 500, statusText: 'Server Error' });
+    http.expectNone((r) => r.url === '/terminology/concepts');
     harness.detectChanges();
 
     expect(harness.routeNativeElement?.textContent).not.toContain('No pudimos armar');
@@ -472,19 +695,21 @@ describe('MedicalRecord', () => {
 
   /* ---- FT-20 · la historia por pestañas ----------------------------------- */
 
-  /** FT-20-R01/R02/R03 · cuatro pestañas, con la primera abierta. */
+  /** FT-20-R01/R02/R03 + C6 · cinco pestañas, con la primera abierta. */
   it('organiza la historia en pestañas clickeables con estado activo', async () => {
     await montar();
     responder();
 
     const raiz = harness.routeNativeElement;
     const tabs = [...(raiz?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])];
-    expect(tabs.length).toBe(4);
+    expect(tabs.length).toBe(5);
     expect(pestanas(raiz).map((t) => t.split(' (')[0])).toEqual([
       'Atenciones',
       'Recetas',
       'Alergias',
       'Resultados',
+      // C6 · al final para no mover los enlaces `?seccion=` que ya circulan.
+      'Diagnósticos',
     ]);
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
     expect(tabs[1].getAttribute('aria-selected')).toBe('false');
@@ -543,10 +768,20 @@ describe('MedicalRecord', () => {
 
   /* ---- las dos listas que dejaron de mostrarse (F-42) --------------------- */
 
-  it('con diagnósticos y formularios cargados, ninguna de las dos listas se dibuja', async () => {
+  /**
+   * C6 · la mitad de F-42 sigue en pie y la otra mitad cambió por requisito.
+   *
+   * **Sigue:** los formularios clínicos no se listan — se leen porque los
+   * llevan los documentos, no porque haya una lista— y el valor que el backend
+   * enmascaró no llega a la pantalla por ningún lado.
+   *
+   * **Cambió:** los diagnósticos ahora tienen su propia pestaña, que es lo que
+   * el carril C6 pide. Aquella aserción no se debilitó: se invirtió, porque el
+   * producto invirtió su requisito, y su contrato nuevo lo fijan las pruebas de
+   * la pestaña «Diagnósticos».
+   */
+  it('los formularios siguen sin listarse, y los diagnósticos ya tienen su pestaña', async () => {
     await montar();
-    // `RESUMEN` trae una condición y `FORMULARIOS` una instancia respondida:
-    // hay datos para ambas listas, y aun así ninguna se pinta.
     responder();
 
     const raiz = harness.routeNativeElement;
@@ -556,10 +791,10 @@ describe('MedicalRecord', () => {
     // Lo que el paciente viene a buscar sigue en pie…
     expect(titulos.some((titulo) => titulo.startsWith('Atenciones'))).toBe(true);
     expect(titulos.some((titulo) => titulo.startsWith('Recetas'))).toBe(true);
-    // …y las dos listas sueltas no están, ni por encabezado ni por contenido.
-    expect(titulos.some((titulo) => titulo.startsWith('Diagnósticos'))).toBe(false);
+    // …los diagnósticos ya son una pestaña (C6)…
+    expect(titulos.some((titulo) => titulo.startsWith('Diagnósticos'))).toBe(true);
+    // …y la lista de formularios sigue sin existir.
     expect(titulos).not.toContain('Formularios clínicos');
-    expect(raiz?.querySelector('#historia-diagnosticos')).toBeNull();
     expect(raiz?.querySelector('[data-testid="historia-formularios"]')).toBeNull();
 
     const texto = raiz?.textContent ?? '';
@@ -591,11 +826,16 @@ describe('MedicalRecord', () => {
     expect(texto).not.toContain('Reintentar');
   });
 
-  it('una historia con sólo condiciones se declara vacía', async () => {
+  /**
+   * C6 · una historia con sólo diagnósticos **ya no está vacía**.
+   *
+   * Antes lo estaba, y con razón: las condiciones no se listaban por su cuenta,
+   * así que un archivo que sólo las tuviera no dibujaba ni una fila. Desde que
+   * existe la pestaña «Diagnósticos» sí hay tres bloques que leer, y decirle a
+   * esa persona que su historia está vacía sería falso.
+   */
+  it('una historia con sólo diagnósticos ya no se declara vacía', async () => {
     await montar();
-    // Las condiciones no se listan por su cuenta: sin atenciones, recetas,
-    // alergias ni resultados no queda una sola fila que mirar, y decir que hay
-    // algo registrado sería mandar a buscar lo que no se ve.
     http
       .expectOne((r) => r.url === '/clinical/patients/pp-1/summary')
       .flush({ ...RESUMEN, medicationRequests: [], encounters: [] });
@@ -604,9 +844,197 @@ describe('MedicalRecord', () => {
     harness.detectChanges();
 
     const texto = harness.routeNativeElement?.textContent ?? '';
-    expect(texto).toContain('Todavía no hay atenciones');
-    // El vacío llega con su salida, no como una pantalla en blanco.
-    expect(texto).toContain('Pedir un turno');
-    expect(texto).not.toContain('Faringitis aguda');
+    expect(texto).not.toContain('Todavía no hay atenciones');
+    expect(texto).toContain('Diagnósticos (1)');
+
+    // Y el diagnóstico se lee en su pestaña, en palabras y sin uuid.
+    await abrirPestana(4);
+    const conDiagnosticos = harness.routeNativeElement?.textContent ?? '';
+    expect(conDiagnosticos).toContain('Faringitis aguda');
+    expect(conDiagnosticos).not.toContain('con-faringitis');
+  });
+
+  /* ---- C6 · la pestaña «Diagnósticos» ------------------------------------ */
+
+  /** Abre la pestaña «Diagnósticos» con los tres casos del catálogo cargados. */
+  async function abrirDiagnosticos(): Promise<void> {
+    await montar();
+    responder(RESUMEN_CON_TRES_DIAGNOSTICOS, CONCEPTOS_DE_DIAGNOSTICOS);
+    await abrirPestana(4);
+  }
+
+  /** El texto de un bloque, con los espacios normalizados. */
+  function bloque(testId: string): string {
+    const nodo = harness.routeNativeElement?.querySelector(`[data-testid="${testId}"]`);
+    return (nodo?.textContent ?? '').replace(/\s+/g, ' ').trim();
+  }
+
+  it('reparte los diagnósticos en los tres bloques, por código de catálogo', async () => {
+    await abrirDiagnosticos();
+
+    expect(bloque('historia-en-estudio')).toContain('Dislipidemia');
+    expect(bloque('historia-activas')).toContain('Hipertensión');
+    expect(bloque('historia-historicos')).toContain('Faringitis aguda');
+  });
+
+  /**
+   * **El kill-test del carril.** Si un diagnóstico rechazado apareciera como
+   * enfermedad activa, la historia estaría afirmando que la persona tiene algo
+   * que su médico descartó. Es activo en lo clínico (`COND-ACTIVE`) y descartado
+   * en la certeza (`DXV-REFUTED`): la certeza manda.
+   */
+  it('un diagnóstico descartado NUNCA aparece como enfermedad activa', async () => {
+    await abrirDiagnosticos();
+
+    expect(bloque('historia-activas')).not.toContain('Faringitis aguda');
+    expect(bloque('historia-en-estudio')).not.toContain('Faringitis aguda');
+    expect(bloque('historia-historicos')).toContain('Faringitis aguda');
+    // Y dice por qué es histórico, con la etiqueta del catálogo.
+    expect(bloque('historia-historicos')).toContain('Descartado');
+  });
+
+  it('una enfermedad activa dice hasta cuándo', async () => {
+    await abrirDiagnosticos();
+
+    expect(bloque('historia-activas')).toContain('hasta el 24/11/2026');
+  });
+
+  it('un diagnóstico crónico dice «crónica» en vez de una fecha', async () => {
+    await montar();
+    responder(
+      {
+        ...RESUMEN_CON_TRES_DIAGNOSTICOS,
+        conditions: [
+          {
+            ...RESUMEN_CON_TRES_DIAGNOSTICOS.conditions[0],
+            clinicalCourseConceptId: 'st-cronica',
+            expectedResolutionAt: undefined,
+          },
+        ],
+      },
+      {
+        ...CONCEPTOS_DE_DIAGNOSTICOS,
+        items: [
+          ...CONCEPTOS_DE_DIAGNOSTICOS.items,
+          {
+            conceptId: 'st-cronica',
+            code: 'COND_COURSE_CHRONIC',
+            display: 'Crónica',
+            codeSystemVersionId: 'v1',
+          },
+        ],
+      },
+    );
+    await abrirPestana(4);
+
+    expect(bloque('historia-activas')).toContain('crónica');
+    expect(bloque('historia-activas')).not.toContain('hasta el');
+  });
+
+  it('los tres bloques existen aunque estén vacíos, y cada vacío orienta', async () => {
+    await montar();
+    responder({ ...RESUMEN_CON_TRES_DIAGNOSTICOS, conditions: [] }, CONCEPTOS_DE_DIAGNOSTICOS);
+    await abrirPestana(4);
+
+    // Sin ni un diagnóstico, la pestaña lo dice con su orientación (S3).
+    const texto = harness.routeNativeElement?.textContent ?? '';
+    expect(texto).toContain('Todavía no tenés diagnósticos registrados');
+  });
+
+  it('ningún uuid llega al HTML de la pestaña de diagnósticos', async () => {
+    await abrirDiagnosticos();
+
+    expect(harness.routeNativeElement?.innerHTML ?? '').not.toMatch(
+      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
+    );
+  });
+
+  /* ---- C6 · la línea del encuentro --------------------------------------- */
+
+  it('al abrir la pantalla NO pide el expediente ni las órdenes', async () => {
+    await montar();
+    responder();
+
+    // Son dos lecturas que sólo sirven cuando alguien quiere ver qué pasó en
+    // una consulta. Cobrárselas a todos para que el acordeón esté listo por si
+    // acaso es exactamente lo que el carril prohíbe.
+    http.expectNone((r) => r.url === '/charts/patients/pp-1/chart');
+    http.expectNone((r) => r.url === '/diagnostic-results/me/orders');
+  });
+
+  it('el primer despliegue pide las dos lecturas, y el segundo ninguna', async () => {
+    await montar();
+    responder();
+
+    desplegarAtencion();
+    responderDetalle();
+
+    // Plegar y volver a desplegar no vuelve a salir a la red: `expectNone`
+    // revienta si hubiera una segunda lectura.
+    desplegarAtencion();
+    desplegarAtencion();
+    http.expectNone((r) => r.url === '/charts/patients/pp-1/chart');
+    http.expectNone((r) => r.url === '/diagnostic-results/me/orders');
+  });
+
+  it('la línea cuenta la consulta: nota, estudio, diagnóstico y receta', async () => {
+    await montar();
+    responder();
+    desplegarAtencion();
+    responderDetalle();
+
+    const linea = harness.routeNativeElement?.querySelector(
+      '[data-testid="historia-linea-encuentro"]',
+    );
+    const texto = (linea?.textContent ?? '').replace(/\s+/g, ' ').trim();
+    expect(texto).toContain('Nota #a1b2');
+    expect(texto).toContain('Análisis de laboratorio: Hemograma — resultado disponible');
+    expect(texto).toContain('Faringitis aguda');
+  });
+
+  it('una nota no liberada al paciente no se dibuja', async () => {
+    await montar();
+    responder();
+    desplegarAtencion();
+    responderDetalle();
+
+    // `releasedToPatient: false` es la decisión del profesional sobre si esa
+    // nota se comparte: aunque el servidor la mandara, la pantalla no la pinta.
+    expect(harness.routeNativeElement?.textContent).not.toContain('BORRADOR INTERNO');
+  });
+
+  it('si el expediente falla, la atención se muestra igual y lo declara', async () => {
+    await montar();
+    responder();
+    desplegarAtencion();
+
+    // Las órdenes primero: las dos lecturas van en un `forkJoin`, y el fallo de
+    // una cancela a la hermana. Al revés, `flush` reventaría con «Cannot flush a
+    // cancelled request» — que es un detalle del harness, no del producto.
+    http.expectOne((r) => r.url === '/diagnostic-results/me/orders').flush(ORDENES);
+    http
+      .expectOne((r) => r.url === '/charts/patients/pp-1/chart')
+      .flush(
+        { code: 'ERROR', message: 'Chart caído', timestamp: '', path: '' },
+        { status: 500, statusText: 'Server Error' },
+      );
+    harness.detectChanges();
+
+    const texto = harness.routeNativeElement?.textContent ?? '';
+    // El diagnóstico del resumen sigue en la línea…
+    expect(texto).toContain('Faringitis aguda');
+    // …y la pérdida se declara en vez de callarse.
+    expect(texto).toContain('Falta parte del detalle');
+  });
+
+  it('ningún uuid llega al HTML con la línea desplegada', async () => {
+    await montar();
+    responder();
+    desplegarAtencion();
+    responderDetalle();
+
+    expect(harness.routeNativeElement?.innerHTML ?? '').not.toMatch(
+      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
+    );
   });
 });

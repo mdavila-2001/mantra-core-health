@@ -1,0 +1,139 @@
+/* ============================================================================
+    La línea del encuentro: riel vertical con un marcador por hecho.
+
+    Sólo distribución y riel. El contenido de cada hecho lo pintan
+    `app-fact-list` y `app-badge`, que traen sus propios tonos.
+
+    Mobile-first: el riel ya es de una columna en teléfono y no cambia de forma
+    al crecer — lo único que se ensancha es el cuerpo del hecho. Un riel que en
+    escritorio pasa a dos columnas deja de ser una línea de tiempo.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.linea-encuentro__riel {
+  /* Un `<ol>` de verdad: los marcadores nativos se quitan porque el riel los
+       reemplaza con el ícono del tipo, que dice más que un número. */
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* El hecho: marcador a la izquierda, cuerpo a la derecha. El `1px` del riel se
+   dibuja con el borde del propio marcador, así no hace falta un
+   pseudo-elemento por hecho ni una línea absoluta que se desalinee. */
+.linea-encuentro__hecho {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--sp-3);
+  padding-block-end: var(--sp-4);
+}
+
+.linea-encuentro__hecho:last-child {
+  padding-block-end: 0;
+}
+
+/* ---- el marcador y su riel ----------------------------------------------- */
+
+.linea-encuentro__marca {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: var(--sp-8);
+  block-size: var(--sp-8);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+}
+
+/* El tramo de riel que une un hecho con el siguiente. Cuelga del marcador y no
+   del `<li>` para que arranque en su centro; el último hecho no lo dibuja
+   porque no hay nada debajo con lo que unirse. */
+.linea-encuentro__hecho:not(:last-child) .linea-encuentro__marca::after {
+  content: '';
+  position: absolute;
+  inline-size: 1px;
+  block-size: 100%;
+  background: var(--border-subtle);
+  transform: translateY(var(--sp-8));
+}
+
+.linea-encuentro__icono {
+  color: inherit;
+}
+
+/* El tono del marcador dice de qué hecho se trata **además** del ícono: el
+   color solo nunca porta el significado (el título lo escribe con palabras).
+   Los tríos son los mismos `--st-*` del sistema que usan Badge y Chip, así el
+   modo oscuro lo resuelve el tema y no este archivo. */
+.linea-encuentro__hecho[data-tipo='diagnostico'] .linea-encuentro__marca {
+  border-color: var(--st-primary-bd);
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+}
+
+.linea-encuentro__hecho[data-tipo='receta'] .linea-encuentro__marca {
+  border-color: var(--st-secondary-bd);
+  background: var(--st-secondary-bg);
+  color: var(--st-secondary-fg);
+}
+
+.linea-encuentro__hecho[data-tipo='reconsulta'] .linea-encuentro__marca {
+  border-color: var(--st-info-bd);
+  background: var(--st-info-bg);
+  color: var(--st-info-fg);
+}
+
+/* ---- el cuerpo del hecho ------------------------------------------------- */
+
+.linea-encuentro__cuerpo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+  /* El cuerpo arranca a la altura del marcador, no del borde de su caja. */
+  padding-block-start: var(--sp-1);
+}
+
+.linea-encuentro__titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* El matiz va en el mismo renglón y en peso normal: «— activa hasta 24/11» es
+   parte de la frase, no otro dato. */
+.linea-encuentro__detalle {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.linea-encuentro__cuando {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.linea-encuentro__sello {
+  align-self: flex-start;
+}
+
+.linea-encuentro__cargando,
+.linea-encuentro__vacio {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+/* El cierre de la atención cierra la línea: va debajo del último hecho y
+   alineado con los cuerpos, no con el riel. */
+.linea-encuentro__cierre {
+  margin: var(--sp-3) 0 0;
+  padding-inline-start: calc(var(--sp-8) + var(--sp-3));
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
