@@ -204,6 +204,10 @@ convertiría a estos carriles en rehenes de un defecto ajeno y el rojo enseñar�
 
 ## Doble revisión crítica de las capturas (regla 35.1)
 
+Evidencia: [`evidencia/doble-revision.md`](./evidencia/doble-revision.md), con nota por pantalla.
+**Tres capturas quedaron `RECHAZADA`** —las del carrito— y por eso ese recorrido no se entrega
+como `HECHO`.
+
 **Primera pasada: hecha, sobre las 26 capturas.** Lo que salió de mirarlas está arriba —el carrito
 vacío y las citas duplicadas se vieron en la captura antes que en un número—. El tema oscuro se
 comprobó midiendo el fondo del cuerpo (`rgb(8, 22, 28)`), no de vista: sin eso, seis capturas
@@ -232,6 +236,21 @@ C8 de su última microtarea.
   el carrito, ni el sembrado de reconsultas. Están reportados con su causa y su corte.
 - **No se tocó `--text-muted`.** Vive en 96 archivos y su valor es una excepción aceptada del
   sistema de diseño.
+
+## Desvíos del plan
+
+1. **El `PLAN.md` se escribió después de empezar, y eso incumple la regla 20.** El orden real fue:
+   correr la suite y los gates, escribir el spec de cierre, y recién entonces el plan. La regla es
+   explícita —«prohibido escribir el primer `Edit`/`Write` de código antes de que exista el archivo
+   de plan»— y no admite excepción por tamaño ni por tratarse de verificación. Se declara acá en
+   lugar de fechar el archivo hacia atrás, que sería falsear el registro (regla 00 §5).
+2. **La Regla 8 se midió sobre `.historia`, no sobre la tarjeta**, por el motivo explicado arriba.
+   El plan decía «la tarjeta»; medirla habría publicado un incumplimiento inexistente.
+3. **Tres pruebas del spec de cierre se reescribieron durante la corrida**, y las tres veces el
+   motivo fue un defecto de la prueba, no del producto: `entrarAlSimulador` llamado dentro del
+   bucle, un arreglo de módulo que el reinicio de trabajador de Playwright vaciaba, y el NDJSON
+   medido antes de completar el paso 1. Los tres están documentados en el propio archivo, en el
+   lugar donde alguien volvería a tropezar.
 
 ## Procesos al cerrar
 
