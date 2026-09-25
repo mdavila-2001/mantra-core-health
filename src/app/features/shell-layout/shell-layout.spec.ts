@@ -233,6 +233,17 @@ describe('ShellLayout', () => {
     expect(rotulosDelMenu()).toContain('Sistema de diseño');
   });
 
+  it('tampoco a la aseguradora: es tan ajena a su trabajo como al del médico (2026-09-25)', () => {
+    abrirSesion({
+      sub: 'u-3',
+      roles: ['USER'],
+      tenants: ['t-1'],
+      tenantTypes: { 't-1': 'PAYER' },
+    });
+    expect(rotulosDelMenu()).not.toContain('Sistema de diseño');
+    expect(rutasDelMenu()).not.toContain('/design-system');
+  });
+
   /**
    * El armazón es **el único lugar que puede ver las dos capas**: `core/` no
    * importa de `shared/` (lo hace cumplir `scripts/check-architecture.mjs`), así
@@ -810,6 +821,39 @@ describe('ShellLayout', () => {
       );
       expect(destinos).toContain('/dashboard');
       expect(destinos).toContain('/design-system');
+    });
+
+    it('la barra de la aseguradora: lo que pide el registro, más lo que dev todavía no apagó (2026-09-25)', () => {
+      // Sync a `dev`: acá dashboard/tutorials/messaging siguen siendo
+      // renglones del grupo «General» aplanado (N-01 no llegó a esta rama),
+      // así que la aseguradora los sigue viendo igual que cualquier sesión.
+      // Este carril no los toca — no son del registro de procesos, pero
+      // tampoco están en su lista de lo que se le cierra.
+      abrirSesion({
+        sub: 'u-3',
+        roles: ['USER'],
+        tenants: ['t-1'],
+        tenantTypes: { 't-1': 'PAYER' },
+      });
+
+      const destinos = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+        a.getAttribute('data-route'),
+      );
+      expect(destinos).toEqual([
+        '/my-account',
+        '/notification-center',
+        '/dashboard',
+        '/tutorials',
+        '/messaging',
+        '/administration/insurance',
+        '/administration/insurance-analytics',
+        '/administration/my-organization',
+      ]);
+      // Un solo dominio PLEGABLE («Administración»): «General» tiene
+      // contenido para esta sesión, pero está aplanado y se dibuja suelto,
+      // no como `<details>`.
+      expect(raiz().querySelectorAll('.app-side-nav__group').length).toBe(1);
+      expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(1);
     });
 
     /**

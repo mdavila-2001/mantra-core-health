@@ -56,8 +56,20 @@ describe('NavigationService', () => {
    * este claim. Vacío = alguien que no pertenece a ninguna organización, que es
    * el caso del paciente.
    */
-  function abrirSesion(roles: readonly string[], tenants: readonly string[] = ['t-1']) {
-    session.start({ accessToken: jwt({ sub: 'u-1', roles, tenants }), refreshToken: 'r' });
+  function abrirSesion(
+    roles: readonly string[],
+    tenants: readonly string[] = ['t-1'],
+    tenantTypes?: Readonly<Record<string, string>>,
+  ) {
+    session.start({
+      accessToken: jwt({
+        sub: 'u-1',
+        roles,
+        tenants,
+        ...(tenantTypes === undefined ? {} : { tenantTypes }),
+      }),
+      refreshToken: 'r',
+    });
   }
 
   /**
@@ -621,6 +633,86 @@ describe('NavigationService', () => {
       // «Consultas» desde ALV-016 (antes «Turnos», §4.H del plan de UX):
       // la ruta sigue siendo `schedule`.
       expect(service.currentSection()?.label).toBe('Consultas médicas');
+    });
+  });
+
+  describe('la aseguradora', () => {
+    // Pedido del propietario, 2026-09-25: el módulo «Aseguradora de salud»
+    // del registro de procesos del cliente pide tres pantallas —datos
+    // legales, qué aprueba/no aprueba, y siniestralidad—, y nada más. La
+    // señal es el tipo de la organización activa (`tenantTypes` del token,
+    // claim nuevo de este mismo carril), no un rol: la cuenta sigue siendo
+    // `USER` a secas.
+    //
+    // **Sync a `dev` (2026-09-25):** acá Panel, Tutoriales y Chats
+    // (`dashboard`, `tutorials`, `messaging`) todavía son renglones del
+    // grupo «General» aplanado —`fueraDelMenuPara: [ANY_ROLE]` (N-01) no
+    // llegó a esta rama—, así que la aseguradora los sigue viendo como
+    // renglón, igual que cualquier otra sesión. Este carril no los toca: no
+    // están en `hiddenForTenantTypes`, y el pedido del cliente tampoco los
+    // nombra. Cuando N-01 llegue a `dev`, esta lista vuelve a bajar a cinco.
+    it('sólo ve lo que el registro de procesos le pide, más lo que todavía no se apagó del menú general', () => {
+      abrirSesion(['USER'], ['t-1'], { 't-1': 'PAYER' });
+
+      expect(rutasDelMenu()).toEqual([
+        '/my-account',
+        '/notification-center',
+        '/dashboard',
+        '/tutorials',
+        '/messaging',
+        '/administration/insurance',
+        '/administration/insurance-analytics',
+        '/administration/my-organization',
+      ]);
+      // Dos dominios en dev (uno en mockup, donde General ya no tiene nada
+      // que ofrecerle): «General» sólo con lo que ningún carril apagó
+      // todavía, y «Administración» con las tres de seguros. Sin «Mi
+      // cuenta» (el autoservicio del paciente), que es lo que el pedido
+      // señalaba.
+      expect(service.menu().map((grupo) => grupo.label)).toEqual(['General', 'Administración']);
+      const administracion = service.menu().find((grupo) => grupo.label === 'Administración');
+      expect(administracion?.blocks.map((bloque) => bloque.label)).toEqual([
+        'Seguros',
+        'Organizaciones',
+      ]);
+    });
+
+    it('no alcanza a entrar a lo que le cerraron: sigue existiendo el guard, no sólo el menú', () => {
+      abrirSesion(['USER'], ['t-1'], { 't-1': 'PAYER' });
+
+      const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
+      for (const ruta of [
+        '/directories',
+        '/directory',
+        '/my-account/appointments',
+        '/my-account/medical-record',
+        '/administration/pharmacy-orders',
+      ]) {
+        expect(alcanzables, ruta).not.toContain(ruta);
+      }
+      // Lo que el registro le pide sigue alcanzable. En dev, dashboard,
+      // tutorials y messaging siguen siendo renglones del menú (ver la
+      // nota de arriba); la aserción sólo pide que se puedan alcanzar, no
+      // dónde se dibujan.
+      for (const ruta of [
+        '/dashboard',
+        '/tutorials',
+        '/messaging',
+        '/administration/insurance',
+        '/administration/insurance-analytics',
+        '/administration/my-organization',
+      ]) {
+        expect(alcanzables, ruta).toContain(ruta);
+      }
+    });
+
+    it('sin el claim de tipo, nada cambia: es el menú de hoy', () => {
+      // Una API que todavía no emite `tenantTypes`, o un token viejo: la
+      // degradación es no ocultar nada, no romper el menú de esta cuenta.
+      abrirSesion(['USER'], ['t-1']);
+
+      expect(rutasDelMenu()).toContain('/directories');
+      expect(rutasDelMenu()).toContain('/my-account/appointments');
     });
   });
 });

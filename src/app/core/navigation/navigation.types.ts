@@ -12,6 +12,10 @@
         comparte navegación con las pantallas de gestión.
     ========================================================================== */
 
+// `core→core` está permitido (`scripts/check-architecture.mjs`): el tipo de
+// organización es del dominio `directory`, no de `shared/`.
+import type { TenantTypeCode } from '../data-access/directory/directory.types';
+
 /**
  * Nombres de ícono que el registro puede usar.
  *
@@ -329,6 +333,26 @@ export interface AppSection {
   readonly hiddenFor?: readonly string[];
 
   /**
+   * Tipos de organización para los que la sección **no existe**, igual que
+   * {@link hiddenFor} pero mirando el tipo de la organización **activa**
+   * (`SessionStore.activeTenantType`) en vez del rol.
+   *
+   * Existe porque hay secciones que ningún rol distingue —el autoservicio del
+   * paciente y los directorios los ve cualquier `roles: [ANY_ROLE]`— pero que
+   * son ajenas a según **qué clase de organización** está operando: el
+   * autoservicio del paciente no es de una aseguradora, aunque quien entra
+   * tenga el mismo rol global `USER` que cualquier otra cuenta.
+   *
+   * Mismo contrato que `hiddenFor`: ni menú, ni «Tus accesos», ni puerta —el
+   * guard también lo mira—, y el comodín `SUPERADMIN` **no** lo salva (misma
+   * regla, mismo motivo: no es un permiso que otorgar, es un dato que decide
+   * si la sección existe para esta sesión). Un tipo de organización
+   * desconocido o sin organización activa (`activeTenantType === null`) **no
+   * oculta nada**: es el menú de hoy, no una restricción nueva.
+   */
+  readonly hiddenForTenantTypes?: readonly TenantTypeCode[];
+
+  /**
    * Roles para los que la sección **sigue existiendo y funcionando, pero no
    * ocupa una entrada de primer nivel** en el menú.
    *
@@ -489,12 +513,23 @@ export function isVisibleTo(
   section: AppSection,
   roles: readonly string[],
   tenants: readonly string[] = [],
+  activeTenantType: string | null = null,
 ): boolean {
   const required = section.roles;
 
   // Lo primero, porque no admite excepción: una sección oculta para este rol no
   // existe para esta sesión, comodín incluido. Ver {@link AppSection.hiddenFor}.
   if (section.hiddenFor?.some((role) => roles.includes(role)) === true) {
+    return false;
+  }
+
+  // Igual que `hiddenFor`, pero por el tipo de la organización ACTIVA en vez
+  // del rol: comodín incluido, y sin organización activa o sin el claim no
+  // oculta nada. Ver {@link AppSection.hiddenForTenantTypes}.
+  if (
+    activeTenantType !== null &&
+    section.hiddenForTenantTypes?.some((tipo) => tipo === activeTenantType) === true
+  ) {
     return false;
   }
 
@@ -530,8 +565,9 @@ export function apareceEnElMenu(
   section: AppSection,
   roles: readonly string[],
   tenants: readonly string[] = [],
+  activeTenantType: string | null = null,
 ): boolean {
-  if (!isVisibleTo(section, roles, tenants)) {
+  if (!isVisibleTo(section, roles, tenants, activeTenantType)) {
     return false;
   }
   const fuera = section.fueraDelMenuPara;

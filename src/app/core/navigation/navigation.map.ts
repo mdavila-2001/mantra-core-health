@@ -180,6 +180,22 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // bloque de uno no es un desplegable (`shell-layout.html`). Resultado: se
     // aprieta «Directorios» y se llega derecho a la pantalla que deja elegir.
     path: 'directories',
+    // Aseguradora (2026-09-25, pedido del propietario). El módulo «Aseguradora
+    // de salud» del registro de procesos del cliente pide tres cosas: datos
+    // legales de la empresa, configurar qué aprueba y qué no, y reportes de
+    // siniestralidad — «Aseguradora», «Tu organización» y «Siniestralidad y
+    // analítica», que ya existen y no llevan esta marca. Todo lo demás que una
+    // sesión `USER` con tenant `PAYER` veía —los cuatro directorios y su
+    // portada, el autoservicio de «Mi cuenta» y el mostrador de farmacia— es
+    // ajeno a una aseguradora, y sale con `hiddenForTenantTypes`.
+    //
+    // Mismo contrato que `hiddenFor`, mirando el tipo de la organización activa
+    // en vez del rol: ni menú, ni «Tus accesos», ni puerta (el guard también lo
+    // comprueba), comodín `SUPERADMIN` incluido. La señal es el claim nuevo del
+    // token, `tenantTypes` — ver `SessionStore.activeTenantType`. Sin el claim
+    // (API vieja, token emitido antes de este cambio) no se oculta nada: es el
+    // menú de hoy.
+    hiddenForTenantTypes: ['PAYER'],
     // Los cuatro se entran por acá y ya no tienen renglón, así que este
     // renglón se marca también mientras se los recorre: sin esto, abrir un
     // directorio dejaba la barra entera apagada y sin decir dónde estabas.
@@ -233,6 +249,10 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // «Médicos» y no «doctores» por el mismo pedido (F2): en la superficie que
     // ve un paciente o un profesional se dice «médico».
     path: 'directory',
+    // Aseguradora: incluida por simetría con los otros tres directorios —ya
+    // es exclusiva del paciente y del médico (`exclusiveRoles`), así que ninguna
+    // sesión `USER` la veía—. Ver la nota completa en `directories`.
+    hiddenForTenantTypes: ['PAYER'],
     // Fuera del menú para todos (08/09/2026): se entra por la portada
     // «Directorios», que es la que ahora ocupa el renglón. Ver el motivo
     // entero en la sección `directories`. Esto **no** toca la corrección #2:
@@ -302,6 +322,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // de `/diagnostics`, que sigue siendo la cola clínica de órdenes/resultados.
     // La ruta tampoco coincide con `/diagnostic-units`, prefijo exclusivo de API.
     path: 'laboratory-directory',
+    // Aseguradora: no es de una organización PAYER. Ver la nota completa en
+    // `directories`, la primera fila que lleva esta marca.
+    hiddenForTenantTypes: ['PAYER'],
     // Fuera del menú para todos (08/09/2026): se entra por la portada
     // «Directorios». El motivo entero está en la sección `directories`.
     fueraDelMenuPara: [ANY_ROLE],
@@ -336,6 +359,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // `scripts/check-route-prefixes.mjs`, que existe justamente por esto.
     // Además se lee mejor: el rótulo dice «clínicas».
     path: 'clinics-directory',
+    // Aseguradora: no es de una organización PAYER. Ver la nota completa en
+    // `directories`, la primera fila que lleva esta marca.
+    hiddenForTenantTypes: ['PAYER'],
     // Fuera del menú para todos (08/09/2026): se entra por la portada
     // «Directorios». El motivo entero está en la sección `directories`.
     //
@@ -360,6 +386,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // `GET /public/search/pharmacies`. Mismo razonamiento que el de clínicas:
     // la fuente de datos ya estaba y lo que faltaba era la puerta.
     path: 'pharmacies-directory',
+    // Aseguradora: no es de una organización PAYER. Ver la nota completa en
+    // `directories`, la primera fila que lleva esta marca.
+    hiddenForTenantTypes: ['PAYER'],
     // Fuera del menú para todos (08/09/2026), por lo mismo que el de clínicas:
     // se entra por la portada «Directorios». Sigue siendo del médico —saber
     // dónde se consigue lo que uno receta es parte de atender, que es lo que
@@ -1101,6 +1130,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // un dato de la cuenta, y la pantalla lo dice cuando falta en vez de
     // esconderse del menú.
     path: 'my-account/dependents',
+    // Aseguradora: no es de una organización PAYER. Ver la nota completa en
+    // `directories`, la primera fila que lleva esta marca.
+    hiddenForTenantTypes: ['PAYER'],
     // Es del paciente: a quien atiende no se le ofrece.
     hiddenFor: ['PRACTITIONER'],
     label: 'Dependientes',
@@ -1136,6 +1168,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // no es un rol sino un dato de la cuenta —el claim `pid` del token—, y la
     // pantalla lo dice cuando falta en vez de esconderse del menú.
     path: 'my-account/appointments',
+    // Aseguradora: no es de una organización PAYER. Ver la nota completa en
+    // `directories`, la primera fila que lleva esta marca.
+    hiddenForTenantTypes: ['PAYER'],
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
@@ -1156,6 +1191,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Encendida con el carril 09: `GET /clinical/patients/:id/summary` acepta
     // ahora al titular, con el aislamiento comprobado del lado del servidor.
     path: 'my-account/medical-record',
+    // Aseguradora: no es de una organización PAYER. Ver la nota completa en
+    // `directories`, la primera fila que lleva esta marca.
+    hiddenForTenantTypes: ['PAYER'],
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
@@ -1176,6 +1214,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // mismos estudios desde el otro lado, sólo los propios y sólo los que un
     // profesional ya validó. Sin `roles` por lo mismo que las dos de arriba.
     path: 'my-account/diagnostic-results',
+    // Aseguradora: no es de una organización PAYER. Ver la nota completa en
+    // `directories`, la primera fila que lleva esta marca.
+    hiddenForTenantTypes: ['PAYER'],
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
@@ -1195,6 +1236,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Sin `roles` por lo mismo que su hermana: el filtro real es tener perfil
     // de paciente, y la pantalla lo dice cuando falta.
     path: 'my-account/diagnostic-orders',
+    // Aseguradora: no es de una organización PAYER. Ver la nota completa en
+    // `directories`, la primera fila que lleva esta marca.
+    hiddenForTenantTypes: ['PAYER'],
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
@@ -1208,6 +1252,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
   {
     path: 'my-account/cotizaciones',
+    // Aseguradora: no es de una organización PAYER. Ver la nota completa en
+    // `directories`, la primera fila que lleva esta marca.
+    hiddenForTenantTypes: ['PAYER'],
     hiddenFor: ['PRACTITIONER'],
     label: 'Cotizaciones',
     group: 'Mi cuenta',
@@ -1225,6 +1272,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     //
     // La ruta tampoco puede llamarse `surveys`: ver la nota de «Encuestas».
     path: 'my-account/questionnaires',
+    // Aseguradora: no es de una organización PAYER. Ver la nota completa en
+    // `directories`, la primera fila que lleva esta marca.
+    hiddenForTenantTypes: ['PAYER'],
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
@@ -1459,6 +1509,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // decodifica. El corte por TIPO de tenant (farmacia vs clínica) es del
     // backend de FAR-E2: al leer, el front sólo tiene `tenantTypeConceptId`.
     path: 'administration/pharmacy-orders',
+    // Aseguradora: el mostrador de una farmacia no es de una organización
+    // PAYER. Ver la nota completa en `directories`.
+    hiddenForTenantTypes: ['PAYER'],
     // §4.H · fuera del menú del médico: es la bandeja del mostrador de una
     // farmacia, no del consultorio.
     fueraDelMenuPara: ['PRACTITIONER'],
@@ -1478,6 +1531,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // que la bandeja de al lado: la membresía manda (claim `tenants`), no un
     // rol del token — no existe un rol de farmacia minorista.
     path: 'administration/pharmacy-campaigns',
+    // Aseguradora: el mostrador de una farmacia no es de una organización
+    // PAYER. Ver la nota completa en `directories`.
+    hiddenForTenantTypes: ['PAYER'],
     roles: [ANY_ROLE],
     // §4.H · fuera del menú del médico, como la bandeja de al lado. El corte
     // por membresía es `requiresTenant`, y un tenant es un tenant: el médico
@@ -1507,6 +1563,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // y owner/admin/staff son filas de `tenant_memberships` que el front no
     // decodifica.
     path: 'administration/pharmacy-profile',
+    // Aseguradora: el mostrador de una farmacia no es de una organización
+    // PAYER. Ver la nota completa en `directories`.
+    hiddenForTenantTypes: ['PAYER'],
     // §4.H · fuera del menú del médico: la ficha legal la lleva quien
     // administra la farmacia, no el consultorio.
     fueraDelMenuPara: ['PRACTITIONER'],
