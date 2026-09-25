@@ -303,9 +303,10 @@ describe('PatientProfileEdit', () => {
   }
 
   /**
-   * N-03: «Mis puntos» es la quinta pestaña de la ficha. El editor la lleva
+   * N-03: «Mis puntos» es la última pestaña de la ficha. El editor la lleva
    * en la tira, apagada, para que pulsar el lápiz no mueva de lugar a las
-   * demás; ahí no hay nada que editar.
+   * demás; ahí no hay nada que editar. Desde el 24/09/2026, con «Seguros» y
+   * «Tutores» separadas, es la SEXTA.
    */
   it('lleva «Mis puntos» en la tira, apagada: no hay nada que editar ahí', () => {
     montarPintadoYCargado();
@@ -313,14 +314,48 @@ describe('PatientProfileEdit', () => {
     const pestanas = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>(
       '[role="tab"]',
     );
-    expect(pestanas.length).toBe(5);
-    expect(pestanas[4].textContent).toContain('Mis puntos');
-    expect(pestanas[4].disabled).toBe(true);
-    expect(pestanas[4].getAttribute('aria-disabled')).toBe('true');
+    expect(pestanas.length).toBe(6);
+    expect(pestanas[5].textContent).toContain('Mis puntos');
+    expect(pestanas[5].disabled).toBe(true);
+    expect(pestanas[5].getAttribute('aria-disabled')).toBe('true');
     // Pulsarla no abre nada: la abierta sigue siendo la primera.
-    pestanas[4].click();
+    pestanas[5].click();
     fixture.detectChanges();
     expect(pestanas[0].getAttribute('aria-selected')).toBe('true');
+  });
+
+  /**
+   * Pedido del propietario del 24/09/2026: separar el seguro del tutor en dos
+   * categorías, también en el editor. Antes «Seguros y tutores» era una sola
+   * pestaña con dos listas; ahora son dos, y cada una lee sólo lo suyo.
+   */
+  it('«Seguros» y «Tutores» son pestañas separadas en el editor: cada una lee sólo lo suyo', () => {
+    montarPintadoYCargado({
+      coverages: [{ carrierName: 'Alianza Vida Seguros', planName: 'AFI Gold' }],
+      guardians: [{ displayName: 'Carlos Mamani', phone: '+591 70055443' }],
+    });
+
+    const pestanas = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+    ];
+    expect(pestanas.map((p) => p.textContent?.trim())).toEqual([
+      'Datos personales',
+      'Contacto',
+      'Facturación',
+      'Seguros',
+      'Tutores',
+      'Mis puntos',
+    ]);
+
+    abrirPestana(3);
+    let raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.textContent).toContain('Alianza Vida Seguros');
+    expect(raiz.textContent).not.toContain('Carlos Mamani');
+
+    abrirPestana(4);
+    raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.textContent).toContain('Carlos Mamani');
+    expect(raiz.textContent).not.toContain('Alianza Vida Seguros');
   });
 
   it('siembra el formulario con lo ya guardado, en las cuatro partes del nombre', () => {

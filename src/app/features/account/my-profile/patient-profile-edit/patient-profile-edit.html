@@ -395,14 +395,15 @@
           </section>
         </app-tab>
 
-        <!-- ─── Seguros y tutores ───────────────────────────────────────── -->
+        <!-- ─── Seguros ─────────────────────────────────────────────────── -->
+        <!-- Se leen, no se escriben: el `PATCH` de datos propios no los acepta
+             —cada seguro tiene su propio circuito—. La pestaña está igual para
+             que el formulario tenga las mismas que la ficha, y para que quien
+             las busque no crea que se perdieron. Separada de «Tutores» el
+             24/09/2026: eran una sola pestaña con dos listas adentro. -->
         <app-tab [label]="pestanas[3]">
-          <!-- Se leen, no se escriben: el `PATCH` de datos propios no los acepta
-               —cada seguro y cada tutor tiene su propio circuito—. La pestaña
-               está igual para que el formulario tenga las mismas cuatro que la
-               ficha, y para que quien las busque no crea que se perdieron. -->
           <section class="datos__seccion">
-            <h3 class="datos__titulo">Seguros y tutores</h3>
+            <h3 class="datos__titulo">Seguros</h3>
             <p class="datos__nota">Lo que declaraste al registrarte. Todavía no se corrige desde acá.</p>
 
             @if (datos(); as p) {
@@ -420,6 +421,17 @@
               } @else {
                 <p class="datos__nota">No declaraste ningún seguro.</p>
               }
+            }
+          </section>
+        </app-tab>
+
+        <!-- ─── Tutores ─────────────────────────────────────────────────── -->
+        <app-tab [label]="pestanas[4]">
+          <section class="datos__seccion">
+            <h3 class="datos__titulo">Tutores</h3>
+            <p class="datos__nota">Lo que declaraste al registrarte. Todavía no se corrige desde acá.</p>
+
+            @if (datos(); as p) {
               @if (p.guardians.length > 0) {
                 <ul class="datos__lista" data-testid="perfil-tutores">
                   @for (tutor of p.guardians; track tutor.displayName ?? '') {
@@ -440,7 +452,7 @@
 
         <!-- «Mis puntos» no se edita: la pestaña está para que la tira sea la
              misma que en lectura y el lápiz no mueva de lugar a nadie. -->
-        <app-tab [label]="pestanas[4]" disabled />
+        <app-tab [label]="pestanas[5]" disabled />
       </app-tabs>
     </ng-template>
 

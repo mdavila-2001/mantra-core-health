@@ -45,7 +45,7 @@
   color: var(--text-muted);
 }
 
-/* Seguros y tutores, en lectura: la misma lista de la ficha. */
+/* Seguros y tutores (pestañas separadas), en lectura: la misma lista de la ficha. */
 .datos__lista {
   margin: var(--sp-3) 0 0;
   padding: 0;

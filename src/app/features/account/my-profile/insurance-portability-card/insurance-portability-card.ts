@@ -13,9 +13,9 @@ import { PortabilityExportDialog } from './portability-export-dialog/portability
  * procesos 6.3 · ítem 5): la tarjeta que ofrece al titular exportar su
  * historial de seguros para llevarlo a otra aseguradora.
  *
- * Va al pie de la pestaña «Seguros y tutores» de `/my-account`, **siempre
- * visible** — el derecho de portabilidad existe aunque el titular no haya
- * declarado ninguna cobertura todavía.
+ * Va al pie de la pestaña «Seguros» de `/my-account` (separada de «Tutores»
+ * el 24/09/2026), **siempre visible** — el derecho de portabilidad existe
+ * aunque el titular no haya declarado ninguna cobertura todavía.
  *
  * Dice de entrada **en qué estado están las coberturas** de quien mira: es
  * la primera pregunta de alguien que está por llevarse su historial a otra
