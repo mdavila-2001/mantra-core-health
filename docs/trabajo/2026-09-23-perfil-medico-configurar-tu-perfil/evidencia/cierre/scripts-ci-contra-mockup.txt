@@ -1,0 +1,46 @@
+# Scripts del CI en rojo, corridos en mockup (fae0efc2) y comparados con la rama (bc245a02) — 2026-09-24
+check-architecture: rama exit=1 · mockup exit=1 · salida idéntica a la rama
+check-api-prefixes: rama exit=1 · mockup exit=1 · salida idéntica a la rama
+check-form-pages: rama exit=1 · mockup exit=1 · salida idéntica a la rama
+check-css-tokens: rama exit=1 · mockup exit=1 · salida idéntica a la rama
+generate-doc-report: rama exit=1 · mockup exit=1 · difiere en 32 líneas:
+281,286c281,286
+<       77.82 kB  main-RVJG3ZWJ.js
+<       18.37 kB  chunk-5OW3MYGT.js
+<       5.55 kB  chunk-ASC6KA4O.js
+<       5.27 kB  chunk-L2VPNW2P.js
+<       4.54 kB  chunk-UMLVS246.js
+<       3.72 kB  chunk-5KKQNPHU.js
+---
+>       77.82 kB  main-MKTICBDK.js
+>       18.37 kB  chunk-XHLNF7X4.js
+>       5.55 kB  chunk-5FKSBTRB.js
+>       5.27 kB  chunk-75NULLLQ.js
+>       4.54 kB  chunk-HCUW2J2U.js
+>       3.72 kB  chunk-ITW7VXNI.js
+288,291c288,291
+<       1.38 kB  chunk-N4EBH2C6.js
+<       1.17 kB  chunk-KUB2RXYY.js
+<       0.67 kB  chunk-3YP2YVSU.js
+<       0.07 kB  chunk-IW46HC6F.js
+---
+>       1.38 kB  chunk-AKBPNVVR.js
+>       1.17 kB  chunk-BLSRG2MB.js
+>       0.67 kB  chunk-LPBWLNHV.js
+>       0.07 kB  chunk-IVZ4THVL.js
+293,297c293,297
+<       3813.30 kB  chunk-5NVHQ2ZP.js
+<       726.41 kB  chunk-TQOS5TDA.js
+<       594.55 kB  chunk-VMQYV22Y.js
+<       503.45 kB  chunk-K47TTDII.js
+<       432.96 kB  chunk-FWMMDP6O.js
+---
+>       3813.30 kB  chunk-OOAXFO3A.js
+>       726.51 kB  chunk-QNZL2PVJ.js
+>       594.55 kB  chunk-AYV5JBG4.js
+>       503.45 kB  chunk-6J4HLR5E.js
+>       432.96 kB  chunk-ZAF5CSYV.js
+300c300
+<   427 páginas · ~613k palabras · 6 generadas
+---
+>   421 páginas · ~601k palabras · 6 generadas

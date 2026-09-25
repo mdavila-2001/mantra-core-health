@@ -1,0 +1,17 @@
+{
+ "claseEnElHost": true,
+ "atributosDelHost": [
+  "_ngcontent-ng-c3785072934",
+  "_nghost-ng-c3088542059"
+ ],
+ "maxHeight": "420px",
+ "secundarias": 4,
+ "secundariasVisibles": 4,
+ "textoSecundarias": [
+  "Período",
+  "09/2023 —  actualidad",
+  "09/2018 —  09/2023",
+  "09/2025 —  actualidad"
+ ],
+ "reglaCompilada": ".data-table--constrained[_ngcontent-ng-c3088542059] .data-table__secondary[_ngcontent-ng-c3088542059] { display: none; }"
+}
