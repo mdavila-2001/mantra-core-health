@@ -1,0 +1,25 @@
+✔ imagenologia-central: la dirección está escrita
+✔ imagenologia-central: sin tocar el mapa no hay aviso
+✔ imagenologia-central: tocar el mapa vacía la dirección
+✔ imagenologia-central: el aviso está junto al campo
+✔ imagenologia-central: el aviso es una región viva, sin robar el foco
+✔ imagenologia-central: la confirmación no se ve
+✔ imagenologia-central: pero está para el lector, con su anuncio
+✔ imagenologia-central: «Listo, guardamos» no se pinta en ningún lugar de la vista
+✔ imagenologia-central: volver a escribir se lleva el aviso
+✔ imagenologia-central: mover el pin vuelve a vaciar
+✔ imagenologia-sucursal: la dirección está escrita
+✔ imagenologia-sucursal: sin tocar el mapa no hay aviso
+✔ imagenologia-sucursal: tocar el mapa vacía la dirección
+✔ imagenologia-sucursal: el aviso está junto al campo
+✔ imagenologia-sucursal: el aviso es una región viva, sin robar el foco
+✔ imagenologia-sucursal: la confirmación no se ve
+✔ imagenologia-sucursal: pero está para el lector, con su anuncio
+✔ imagenologia-sucursal: «Listo, guardamos» no se pinta en ningún lugar de la vista
+✔ imagenologia-sucursal: volver a escribir se lleva el aviso
+✔ imagenologia-sucursal: mover el pin vuelve a vaciar
+✔ sin errores de página ni de consola — excluidos por la CSP del servidor de desarrollo: 0
+✔ sin respuestas 4xx/5xx
+
+22/22 comprobaciones en verde
+capturas en <repo>\docs\frontend\evidence\mapa-vacia-direccion-2026-09-23

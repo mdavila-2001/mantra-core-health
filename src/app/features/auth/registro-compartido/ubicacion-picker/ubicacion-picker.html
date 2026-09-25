@@ -33,17 +33,20 @@
         >
           {{ etiquetaPedir() }}
         </button>
+        <!-- D-05: ícono + nombre. Sin punto todavía no hay ubicación que
+             quitar: el botón sólo cierra el mapa, y así se llama. -->
         <button
           app-button
           variant="ghost"
           size="sm"
-          [iconOnly]="true"
-          [attr.aria-label]="etiquetaQuitar()"
-          [appTooltip]="etiquetaQuitar()"
           [attr.data-testid]="ids().quitar"
           (clicked)="quitarUbicacion()"
         >
-          <app-nav-icon name="remove" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+          Cerrar el mapa
         </button>
       </div>
       @if (rechazado()) {
@@ -76,17 +79,19 @@
         >
           Volver a ubicarme
         </button>
+        <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
+             la que quitar, y junto al «−» del zoom del plano el aro con un menos
+             se lee como «alejar». -->
         <button
           app-button
           variant="ghost"
           size="sm"
-          [iconOnly]="true"
           [attr.aria-label]="etiquetaQuitar()"
-          [appTooltip]="etiquetaQuitar()"
           [attr.data-testid]="ids().quitar"
           (clicked)="quitarUbicacion()"
         >
           <app-nav-icon name="remove" />
+          Quitar la ubicación
         </button>
       </div>
     } @else {
@@ -117,17 +122,19 @@
         >
           Volver a ubicarme
         </button>
+        <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
+             la que quitar, y junto al «−» del zoom del plano el aro con un menos
+             se lee como «alejar». -->
         <button
           app-button
           variant="ghost"
           size="sm"
-          [iconOnly]="true"
           [attr.aria-label]="etiquetaQuitar()"
-          [appTooltip]="etiquetaQuitar()"
           [attr.data-testid]="ids().quitar"
           (clicked)="quitarUbicacion()"
         >
           <app-nav-icon name="remove" />
+          Quitar la ubicación
         </button>
       </div>
     }
