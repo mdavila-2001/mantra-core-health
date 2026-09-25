@@ -19,6 +19,7 @@ import { catchError, switchMap } from 'rxjs/operators';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
 import type {
+  CarePlan,
   ClinicalSummary,
   PatientChart as ExpedienteDePaciente,
 } from '../../../core/data-access/clinical/clinical.types';
@@ -601,15 +602,9 @@ export class PatientChart {
       secundario: `${fila.activities.length} actividad${fila.activities.length === 1 ? '' : 'es'}`,
       estado: this.label(fila.statusConceptId),
       cuando: fila.startDate ?? fila.createdAt,
-      detalle: this.label(fila.intentConceptId),
-      // `CarePlan` no trae encuentro ni condición en la lectura de `chart`, y
-      // tampoco hay alta: el plan de cuidados es hoy sólo de lectura.
-      vinculos: [
-        {
-          rotulo: 'Vínculos clínicos',
-          valor: 'El plan de cuidados no guarda encuentro ni diagnóstico.',
-        },
-      ],
+      detalle: this.motivoDelPlan(fila),
+      // `CarePlan` no trae encuentro en la lectura de `chart`.
+      vinculos: [{ rotulo: 'Motivo', valor: this.motivoDelPlan(fila) }],
     })),
   );
 
@@ -803,6 +798,19 @@ export class PatientChart {
       };
     }),
   );
+
+  /**
+   * El motivo del plan: el diagnóstico del que cuelga, o lo que se escribió a
+   * mano cuando no había uno. Siempre hay uno de los dos en lo que se abre
+   * desde acá; los planes viejos de la semilla pueden no tener ninguno.
+   */
+  private motivoDelPlan(fila: CarePlan): string {
+    const dx = this.diagnosticosParaElPlan().find((d) => d.id === fila.conditionId);
+    if (dx !== undefined) {
+      return dx.etiqueta;
+    }
+    return fila.reasonText ?? 'Sin motivo registrado';
+  }
 
   /** Los mismos diagnósticos, para colgar de uno el plan de cuidados. */
   protected readonly diagnosticosParaElPlan = computed<readonly DiagnosticoDelPlan[]>(() =>

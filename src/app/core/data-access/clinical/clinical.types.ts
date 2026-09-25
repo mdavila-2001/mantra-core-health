@@ -362,6 +362,14 @@ export interface CarePlan {
   readonly id: string;
   readonly statusConceptId: string;
   readonly intentConceptId?: string;
+  /** El diagnóstico del que cuelga, cuando el motivo es uno ya registrado. */
+  readonly conditionId?: string;
+  /**
+   * El motivo escrito a mano, cuando no cuelga de un diagnóstico.
+   *
+   * Todavía sólo lo devuelve la maqueta: la lectura real de `chart` no lo trae.
+   */
+  readonly reasonText?: string;
   readonly goalText?: string;
   readonly startDate?: Date;
   readonly endDate?: Date;
