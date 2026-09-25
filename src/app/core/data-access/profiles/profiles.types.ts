@@ -1221,3 +1221,22 @@ export interface NewDependent {
   readonly issuerAdministrativeAreaConceptId?: string;
   readonly relationshipConceptId: string;
 }
+
+/**
+ * Una solicitud para representar a alguien que ya tiene cuenta.
+ *
+ * La respuesta no trae el nombre del dueño del CI a propósito: si lo trajera,
+ * cualquiera podría averiguar quién es quién escribiendo documentos.
+ */
+export interface DependentLinkRequestSent {
+  readonly id: string;
+  readonly status: 'PENDING';
+}
+
+/** Una solicitud que otra persona le hizo a esta cuenta, pendiente de respuesta. */
+export interface IncomingDependentLinkRequest {
+  readonly id: string;
+  /** Quién pide representarla. */
+  readonly requesterDisplayName: string;
+  readonly createdAt: Date;
+}

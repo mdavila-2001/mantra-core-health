@@ -26,7 +26,8 @@ import {
   type PacienteSimulado,
   type ProfesionalSimulado,
 } from '../fixtures/personas';
-import { conflict, forbidden, noContent, notFound, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, noContent, notFound, reply, type MockRequest, type MockRouter } from '../mock-router';
+import { emitirNotificacion } from './notifications.handlers';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -501,11 +502,42 @@ interface ApoderamientoSimulado {
   readonly relationshipConceptId: string;
 }
 
-const apoderamientos: ApoderamientoSimulado[] = [];
+/*
+ * Persistido para que aceptar una solicitud sobreviva al cambio de cuenta, que
+ * recarga la aplicación. Un apoderamiento cuyo dependiente ya no existe —el
+ * alta sin cuenta crea pacientes que no se persisten— se ignora al leer.
+ */
+const apoderamientos = new Coleccion<ApoderamientoSimulado>([]).persistirEn(
+  'mock.profiles.apoderamientos',
+);
+
+/**
+ * Un pedido de representar a alguien que ya tiene cuenta.
+ *
+ * Se persiste como las notificaciones: el aviso sobrevive a F5 y, si la
+ * solicitud no, tocarlo llevaría a una bandeja vacía.
+ */
+interface SolicitudDeVinculo {
+  readonly id: string;
+  readonly titularId: string;
+  readonly dependienteId: string;
+  readonly estado: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  readonly createdAt: string;
+}
+
+const solicitudes = new Coleccion<SolicitudDeVinculo>([]);
+solicitudes.persistirEn('mock.profiles.solicitudes-de-dependiente');
+
+/** Una cuenta registrada: el alta de un dependiente sin cuenta deja el correo vacío. */
+function cuentaConDocumento(documento: string): PacienteSimulado | undefined {
+  return pacientes.todos().find((p) => p.nationalId === documento && p.email !== '');
+}
 
 /** Los apoderamientos de un titular. */
 function dependientesDe(titularId: string): readonly ApoderamientoSimulado[] {
-  return apoderamientos.filter((a) => a.titularId === titularId);
+  return apoderamientos.filtrar(
+    (a) => a.titularId === titularId && pacientePorId(a.dependienteId) !== undefined,
+  );
 }
 
 /**
@@ -517,9 +549,9 @@ function dependientesDe(titularId: string): readonly ApoderamientoSimulado[] {
  */
 export function representaA(titularId: string | undefined, pacienteId: string): boolean {
   if (titularId === undefined) return false;
-  return apoderamientos.some(
-    (a) => a.titularId === titularId && a.dependienteId === pacienteId,
-  );
+  return apoderamientos
+    .todos()
+    .some((a) => a.titularId === titularId && a.dependienteId === pacienteId);
 }
 
 /**
@@ -822,15 +854,134 @@ export function registrarPerfiles(router: MockRouter): void {
       identityVerified: false,
     };
     pacientes.agregar(nuevo);
-    apoderamientos.push({
+    const apoderamiento = apoderamientos.agregar({
       id: nuevoId('proxy'),
       titularId: titular.id,
       dependienteId: id,
       relationshipConceptId: datos.relationshipConceptId ?? '',
     });
 
-    return { status: 201, body: resumenDeDependiente(apoderamientos.at(-1)!) };
+    return { status: 201, body: resumenDeDependiente(apoderamiento) };
   });
+
+  /* ---- dependientes que ya tienen cuenta: solicitud y aceptación ---------- */
+
+  /**
+   * Pide representar a quien ya tiene cuenta con ese CI.
+   *
+   * No crea el vínculo: le avisa a esa cuenta, que decide. La respuesta no dice
+   * de quién es el CI para no servir de buscador de personas por documento.
+   */
+  router.post('/profiles/patients/me/dependent-requests', (request) => {
+    const titular = pacienteDeSesion(request);
+    if (titular === undefined) {
+      return forbidden('Esta cuenta no tiene perfil de paciente');
+    }
+    const documento = (cuerpo<{ nationalId?: string }>(request).nationalId ?? '').trim();
+    if (documento === '') {
+      return reply(400, {
+        statusCode: 400,
+        code: 'VALIDATION_FAILED',
+        message: 'Escribí el CI de la persona.',
+        error: 'Bad Request',
+      });
+    }
+    const destinatario = cuentaConDocumento(documento);
+    const esElPropio = documento === request.user?.nationalId || destinatario?.id === titular.id;
+    if (esElPropio) {
+      return reply(422, {
+        statusCode: 422,
+        code: 'VALIDATION_FAILED',
+        message: 'Ese CI es el tuyo: no podés registrarte como tu propio dependiente.',
+        error: 'Unprocessable Entity',
+      });
+    }
+    if (destinatario === undefined) {
+      return notFound('No hay ninguna cuenta registrada con ese CI.');
+    }
+    if (representaA(titular.id, destinatario.id)) {
+      return conflict('Esa persona ya es tu dependiente.');
+    }
+    const pendiente = solicitudes.filtrar(
+      (s) => s.titularId === titular.id && s.dependienteId === destinatario.id && s.estado === 'PENDING',
+    )[0];
+    if (pendiente !== undefined) {
+      return conflict('Ya le enviaste una solicitud a esa persona. Falta que la acepte.');
+    }
+
+    const solicitud = solicitudes.agregar({
+      id: nuevoId('solicitud-dependiente'),
+      titularId: titular.id,
+      dependienteId: destinatario.id,
+      estado: 'PENDING',
+      createdAt: ahora(),
+    });
+    emitirNotificacion({
+      userId: destinatario.userId,
+      category: 'CLINICAL',
+      subject: 'Te quieren registrar como dependiente',
+      bodyText: `${titular.displayName} pide registrarte como su dependiente. Si aceptás, va a poder pedirte turnos y ver tu historia clínica.`,
+      destination: { type: 'DEPENDENT_LINK_REQUEST', id: solicitud.id },
+    });
+    return { status: 201, body: { id: solicitud.id, status: 'PENDING' } };
+  });
+
+  router.get('/profiles/patients/me/dependent-requests/incoming', (request) => {
+    const yo = pacienteDeSesion(request);
+    if (yo === undefined) return [];
+    return solicitudes
+      .filtrar((s) => s.dependienteId === yo.id && s.estado === 'PENDING')
+      .map((s) => ({
+        id: s.id,
+        requesterDisplayName: pacientePorId(s.titularId)?.displayName ?? '',
+        createdAt: s.createdAt,
+      }));
+  });
+
+  /** Sólo la persona a la que se le pidió puede responder, y una sola vez. */
+  function responderSolicitud(request: MockRequest, estado: 'ACCEPTED' | 'REJECTED') {
+    const yo = pacienteDeSesion(request);
+    const solicitud = solicitudes.get(request.params['id']!);
+    if (yo === undefined || solicitud === undefined || solicitud.dependienteId !== yo.id) {
+      return notFound('Solicitud no encontrada');
+    }
+    if (solicitud.estado !== 'PENDING') {
+      return conflict('Esa solicitud ya fue respondida.');
+    }
+    solicitudes.actualizar(solicitud.id, { estado });
+    const titular = pacientePorId(solicitud.titularId);
+    if (estado === 'ACCEPTED') {
+      apoderamientos.agregar({
+        id: nuevoId('proxy'),
+        titularId: solicitud.titularId,
+        dependienteId: yo.id,
+        relationshipConceptId: '',
+      });
+    }
+    if (titular !== undefined) {
+      emitirNotificacion({
+        userId: titular.userId,
+        category: 'CLINICAL',
+        subject:
+          estado === 'ACCEPTED'
+            ? `${yo.displayName} aceptó ser tu dependiente`
+            : `${yo.displayName} rechazó ser tu dependiente`,
+        bodyText:
+          estado === 'ACCEPTED'
+            ? 'Ya aparece en tu lista de dependientes.'
+            : 'No se creó ningún vínculo.',
+        destination: { type: 'DEPENDENT_LINK_REQUEST', id: solicitud.id },
+      });
+    }
+    return { id: solicitud.id, status: estado };
+  }
+
+  router.post('/profiles/patients/me/dependent-requests/:id/accept', (request) =>
+    responderSolicitud(request, 'ACCEPTED'),
+  );
+  router.post('/profiles/patients/me/dependent-requests/:id/reject', (request) =>
+    responderSolicitud(request, 'REJECTED'),
+  );
 
   router.post('/profiles/patients/:id/related-persons', ({ params }) => ({
     status: 201,

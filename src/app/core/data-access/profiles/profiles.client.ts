@@ -42,7 +42,9 @@ import type {
   RelatedPerson,
   RelatedPersonCreated,
   Dependent,
+  DependentLinkRequestSent,
   DependentRelationshipCode,
+  IncomingDependentLinkRequest,
   NewDependent,
   PractitionerOnboarding,
   LinkableOrganizationPage,
@@ -331,6 +333,53 @@ export class ProfilesClient {
         stripUndefined({ ...dependiente }),
       )
       .pipe(map((body) => toDependent(body)));
+  }
+
+  /**
+   * `POST /profiles/patients/me/dependent-requests` — pide representar a quien
+   * ya tiene cuenta con ese CI.
+   *
+   * No crea nada todavía: a esa cuenta le llega una notificación y el vínculo
+   * nace recién cuando la acepta. `404` es «no hay cuenta con ese CI».
+   *
+   * Hoy sólo la atiende el simulador de `mockup`; la API no la publica.
+   */
+  requestDependentLink(nationalId: string): Observable<DependentLinkRequestSent> {
+    return this.http.post<DependentLinkRequestSent>(
+      this.url('/profiles/patients/me/dependent-requests'),
+      { nationalId },
+    );
+  }
+
+  /** `GET /profiles/patients/me/dependent-requests/incoming` — las que esperan respuesta. */
+  listIncomingDependentLinkRequests(): Observable<readonly IncomingDependentLinkRequest[]> {
+    return this.http
+      .get<
+        { id: string; requesterDisplayName: string; createdAt: string }[]
+      >(this.url('/profiles/patients/me/dependent-requests/incoming'))
+      .pipe(
+        map((body) => body.map((fila) => ({ ...fila, createdAt: new Date(fila.createdAt) }))),
+      );
+  }
+
+  /** `POST …/dependent-requests/:id/accept` — quien pidió pasa a representar a esta cuenta. */
+  acceptDependentLinkRequest(requestId: string): Observable<void> {
+    return this.http
+      .post<unknown>(
+        this.url(`/profiles/patients/me/dependent-requests/${encodeURIComponent(requestId)}/accept`),
+        {},
+      )
+      .pipe(map(() => undefined));
+  }
+
+  /** `POST …/dependent-requests/:id/reject`. */
+  rejectDependentLinkRequest(requestId: string): Observable<void> {
+    return this.http
+      .post<unknown>(
+        this.url(`/profiles/patients/me/dependent-requests/${encodeURIComponent(requestId)}/reject`),
+        {},
+      )
+      .pipe(map(() => undefined));
   }
 
   /**
