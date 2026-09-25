@@ -77,4 +77,38 @@ describe('PharmacyClient', () => {
     expect(req.request.params.get('limit')).toBe('10');
     req.flush(DISPONIBILIDAD_FIXTURE);
   });
+
+  it('busca productos filtrados por farmacia', () => {
+    client.searchProducts({ pharmacyId: 'ph-1' }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/pharmacy/products');
+    expect(req.request.params.get('pharmacyId')).toBe('ph-1');
+    req.flush({ items: [], limit: 50, truncated: false });
+  });
+
+  it('lista sedes sin exigir origen ni búsqueda', () => {
+    let count = -1;
+    client.nearbySites().subscribe((page) => (count = page.count));
+
+    const req = http.expectOne((r) => r.url === '/pharmacy/sites');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.has('search')).toBe(false);
+    expect(req.request.params.has('lat')).toBe(false);
+    expect(req.request.params.has('lng')).toBe(false);
+    req.flush({ items: [], count: 0 });
+
+    expect(count).toBe(0);
+  });
+
+  it('lista sedes con búsqueda y origen cuando vienen', () => {
+    client
+      .nearbySites({ search: 'central', origin: { lat: -17.7833, lng: -63.1821 } })
+      .subscribe();
+
+    const req = http.expectOne((r) => r.url === '/pharmacy/sites');
+    expect(req.request.params.get('search')).toBe('central');
+    expect(req.request.params.get('lat')).toBe('-17.7833');
+    expect(req.request.params.get('lng')).toBe('-63.1821');
+    req.flush({ items: [], count: 0 });
+  });
 });

@@ -9,12 +9,18 @@ import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { Cotizaciones } from '../cotizaciones/cotizaciones';
 import { PharmacyOrders } from '../pharmacy-orders/pharmacy-orders';
+import { PharmacyShop } from './pharmacy-shop/pharmacy-shop';
 
-/** Las dos pestañas, en el orden en que se usan: primero lo ya pedido, después cuánto cuesta lo próximo. */
-const PESTANAS = ['Mis pedidos', 'Cotizaciones'] as const;
+/**
+ * Las tres pestañas. El orden **no cambia** el de las dos que ya existían
+ * —«Mis pedidos» sigue siendo la que abre por defecto, y `?tab=cotizaciones`
+ * sigue abriendo la misma—; «Comprar» se agrega al final para no correr el
+ * índice de nadie que ya tuviera un enlace guardado.
+ */
+const PESTANAS = ['Mis pedidos', 'Cotizaciones', 'Comprar'] as const;
 
-/** El índice con nombre, para no escribir `1` donde se quiere decir «cotizaciones». */
-const PESTANA = { pedidos: 0, cotizaciones: 1 } as const;
+/** El índice con nombre, para no escribir un número donde se quiere decir cuál pestaña. */
+const PESTANA = { pedidos: 0, cotizaciones: 1, comprar: 2 } as const;
 
 /**
  * **Farmacia** — los pedidos del paciente y cuánto cuesta comprar, en una
@@ -40,14 +46,22 @@ const PESTANA = { pedidos: 0, cotizaciones: 1 } as const;
  * tocar. No es un recorte: es que acá adentro sólo tiene sentido lo que se
  * compra en una farmacia.
  *
+ * ## «Comprar» (25/09/2026) — el carrito
+ *
+ * Tercera pestaña: elegir una farmacia, mirar su catálogo y armar un
+ * carrito libre (no atado a una receta). Al «Continuar» arma el mismo
+ * `BorradorDePedido` que `where-to-buy.ts` y entra por la misma puerta que
+ * «Mis pedidos» —`/my-account/pharmacy-orders/new`—, con `requestId: ''`.
+ * Ver `PharmacyShop`.
+ *
  * ## La pestaña vive en la URL
  *
- * `?tab=cotizaciones` la abre directo — un enlace guardado sigue abriendo lo
- * que abría.
+ * `?tab=cotizaciones` y `?tab=comprar` abren directo — un enlace guardado
+ * sigue abriendo lo que abría.
  */
 @Component({
   selector: 'app-pharmacy-hub',
-  imports: [Card, Cotizaciones, PageHeader, PharmacyOrders, Spinner, Tab, Tabs],
+  imports: [Card, Cotizaciones, PageHeader, PharmacyOrders, PharmacyShop, Spinner, Tab, Tabs],
   templateUrl: './pharmacy-hub.html',
   styleUrl: './pharmacy-hub.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,11 +74,7 @@ export class PharmacyHub {
   protected readonly pestanas = PESTANAS;
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
-  protected readonly pestana = signal<number>(
-    this.route.snapshot.queryParamMap.get('tab') === 'cotizaciones'
-      ? PESTANA.cotizaciones
-      : PESTANA.pedidos,
-  );
+  protected readonly pestana = signal<number>(pestanaDe(this.route.snapshot.queryParamMap.get('tab')));
 
   /**
    * Cambia de pestaña y lo deja escrito en la URL.
@@ -76,9 +86,20 @@ export class PharmacyHub {
     this.pestana.set(indice);
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { tab: indice === PESTANA.cotizaciones ? 'cotizaciones' : null },
+      queryParams: { tab: TAB_DE_PESTANA[indice] ?? null },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
   }
+}
+
+/** El `?tab=` de cada índice, para que la URL y el índice no se desincronicen. */
+const TAB_DE_PESTANA: Readonly<Record<number, string>> = {
+  [PESTANA.cotizaciones]: 'cotizaciones',
+  [PESTANA.comprar]: 'comprar',
+};
+
+/** El índice inicial según `?tab=`, por defecto «Mis pedidos». */
+function pestanaDe(tab: string | null): number {
+  return tab === 'cotizaciones' ? PESTANA.cotizaciones : tab === 'comprar' ? PESTANA.comprar : PESTANA.pedidos;
 }
