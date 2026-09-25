@@ -1,1 +1,190 @@
-<app-alert tone="info">En construcción (C1)</app-alert>
+<div class="nota">
+  @if (errorDeLaNota(); as mensaje) {
+    <app-alert tone="error" data-testid="nota-medica-error">{{ mensaje }}</app-alert>
+  }
+
+  <!-- Sin encuentro no hay nota: la nota es de una consulta, no de una
+       persona suelta. Se dice antes y no con un 422 después. -->
+  @if (!hayEncuentro()) {
+    <app-alert tone="info" title="Abrí el encuentro para registrar" data-testid="nota-medica-sin-encuentro">
+      La nota pertenece a una consulta. Registrá el encuentro y el formulario se habilita.
+    </app-alert>
+  }
+
+  <!-- ─── La tabla que se escribe ────────────────────────────────────────── -->
+  <form class="nota__form" data-testid="nota-medica-form" (submit)="$event.preventDefault(); guardar()">
+    <div class="nota__encabezado">
+      <h3 class="nota__titulo">Lo que observaste, campo por campo</h3>
+      <span class="nota__contador" data-testid="nota-medica-contador">
+        {{ filasConContenido().length }} de {{ tope }}
+      </span>
+    </div>
+
+    <ul class="nota__filas">
+      @for (fila of filas(); track fila.clave) {
+        <li class="nota__fila" data-testid="nota-medica-fila" [attr.data-fila]="fila.clave">
+          <app-form-field
+            label="Campo"
+            class="nota__campo"
+            [errorMessage]="problemaDe(fila.clave)"
+          >
+            <app-input
+              placeholder="Presión arterial"
+              testId="nota-medica-rotulo"
+              [value]="fila.rotulo"
+              [hasError]="problemaDe(fila.clave) !== ''"
+              [disabled]="!hayEncuentro() || guardando()"
+              (valueChange)="fijarRotulo(fila.clave, $event)"
+            />
+          </app-form-field>
+
+          <app-form-field label="Valor" class="nota__valor">
+            <!-- Una línea que crece: el valor suele ser corto, y cuando no lo
+                 es, el campo se estira en vez de esconderlo. Enter agrega la
+                 fila siguiente; Shift+Enter deja el salto. -->
+            <app-textarea
+              placeholder="120/80 mmHg"
+              data-testid="nota-medica-valor"
+              [rows]="1"
+              [autoResize]="true"
+              [value]="fila.valor"
+              [disabled]="!hayEncuentro() || guardando()"
+              (valueChange)="fijarValor(fila.clave, $event)"
+              (keydown.enter)="enterEnElValor($event)"
+            />
+          </app-form-field>
+
+          <!-- Con texto y no sólo un ícono (ADR-0012): «Quitar» dice qué hace. -->
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            type="button"
+            class="nota__quitar"
+            data-testid="nota-medica-quitar"
+            [disabled]="!hayEncuentro() || guardando()"
+            (clicked)="quitarFila(fila.clave)"
+          >
+            Quitar
+          </button>
+        </li>
+      }
+    </ul>
+
+    <div class="nota__acciones-de-fila">
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        type="button"
+        data-testid="nota-medica-agregar-fila"
+        [disabled]="!hayEncuentro() || guardando() || filas().length >= tope"
+        (clicked)="agregarFila()"
+      >
+        Agregar fila
+      </button>
+      @if (pasaElTope()) {
+        <span class="nota__tope" role="status">Hasta {{ tope }} filas por nota.</span>
+      }
+    </div>
+
+    <app-form-field
+      label="Texto libre"
+      hint="Opcional. Lo que no entra en una fila."
+    >
+      <app-textarea
+        data-testid="nota-medica-texto"
+        [rows]="3"
+        [autoResize]="true"
+        [value]="textoLibre()"
+        [disabled]="!hayEncuentro() || guardando()"
+        (valueChange)="textoLibre.set($event)"
+        placeholder="Refiere que el cuadro empezó tras un viaje largo."
+      />
+    </app-form-field>
+
+    <app-form-actions
+      submitLabel="Guardar la nota"
+      [pending]="guardando()"
+      [disabled]="!puedeGuardar()"
+      (submitted)="guardar()"
+    />
+  </form>
+
+  <!-- ─── Lo ya escrito ──────────────────────────────────────────────────── -->
+  <section class="nota__lista" aria-labelledby="nota-medica-lista-titulo">
+    <h3 id="nota-medica-lista-titulo" class="nota__titulo">
+      {{ hayEncuentro() ? 'De esta consulta' : 'Notas de esta persona' }}
+    </h3>
+
+    <app-view-state-host [state]="notas()" (retry)="recargar()">
+      @if (hayEncuentro() && deEstaConsulta().length === 0) {
+        <p class="nota__vacio" data-testid="nota-medica-sin-notas">
+          Todavía no hay ninguna nota en esta consulta.
+        </p>
+      }
+
+      @for (nota of deEstaConsulta(); track nota.id) {
+        <ng-container *ngTemplateOutlet="tarjetaDeNota; context: { $implicit: nota }" />
+      }
+
+      <!-- Las anteriores, plegadas: se consultan, no se leen de corrido. -->
+      @if (anteriores().length > 0) {
+        <app-accordion class="nota__anteriores">
+          <app-accordion-panel
+            [heading]="(hayEncuentro() ? 'Anteriores' : 'Todas') + ' (' + anteriores().length + ')'"
+            [expanded]="!hayEncuentro()"
+            data-testid="nota-medica-anteriores"
+          >
+            <div class="nota__tarjetas">
+              @for (nota of anteriores(); track nota.id) {
+                <ng-container *ngTemplateOutlet="tarjetaDeNota; context: { $implicit: nota }" />
+              }
+            </div>
+          </app-accordion-panel>
+        </app-accordion>
+      }
+    </app-view-state-host>
+  </section>
+</div>
+
+<!-- Una nota, la misma tarjeta arriba y adentro del acordeón. -->
+<ng-template #tarjetaDeNota let-nota>
+  <app-card variant="outlined" padding="md" class="nota__tarjeta" data-testid="nota-medica-item">
+    <div class="nota__tarjeta-encabezado">
+      <div class="nota__tarjeta-datos">
+        <span class="nota__tarjeta-rotulo">{{ nota.rotulo }}</span>
+        <app-badge
+          [variant]="nota.firmada ? 'success' : 'secondary'"
+          data-testid="nota-medica-sello"
+        >
+          {{ nota.firmada ? 'Firmada' : 'Borrador' }}
+        </app-badge>
+        <span class="nota__tarjeta-meta">
+          {{ nota.cuando | date: 'd MMM y, HH:mm' }} · {{ nota.autor }}
+        </span>
+      </div>
+      @if (!nota.firmada && nota.versionId !== null) {
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          data-testid="nota-medica-firmar"
+          [isLoading]="firmando() === nota.id"
+          [disabled]="firmando() !== null"
+          (clicked)="firmar(nota)"
+        >
+          Firmar
+        </button>
+      }
+    </div>
+
+    @if (nota.hechos.length > 0) {
+      <app-fact-list [hechos]="nota.hechos" etiqueta="Filas de la nota" />
+    }
+    @if (nota.texto) {
+      <p class="nota__texto" data-testid="nota-medica-texto-libre">{{ nota.texto }}</p>
+    }
+  </app-card>
+</ng-template>

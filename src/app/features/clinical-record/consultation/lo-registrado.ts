@@ -113,21 +113,24 @@ function cabeceraDe(encuentro: Encounter): EncounterHeader {
 }
 
 /**
- * Una nota del expediente con sus apartados, en el vocabulario del profesional.
+ * Una nota del expediente, en el vocabulario del profesional.
  *
- * Los cinco rótulos son los del contrato de `ChartNote` —el SOAP de toda la
- * vida— y no los de la historia del paciente. Un apartado sin texto viaja en
- * `null` en vez de omitirse: la lista de hechos ya sabe callar lo vacío, y
- * omitirlo acá haría que dos notas con distintos apartados se leyeran como si
- * el contrato fuera otro.
+ * Desde C1 la nota es una tabla de filas campo/valor (`entries`) y ésas van
+ * primero, tal como se escribieron; el texto libre va debajo. Los cinco
+ * apartados SOAP siguen para las notas de antes, que los traen llenos. Un
+ * apartado sin texto viaja en `null` en vez de omitirse: la lista de hechos
+ * ya sabe callar lo vacío, y omitirlo acá haría que dos notas con distintos
+ * apartados se leyeran como si el contrato fuera otro.
  */
 function notaDeLaLinea(nota: ChartNote): TimelineNote {
+  const entradas = nota.entries ?? [];
   const filas: Hecho[] = [
-    { etiqueta: 'Motivo de consulta', valor: nota.chiefComplaintText ?? null },
-    { etiqueta: 'Subjetivo', valor: nota.subjectiveText ?? null },
-    { etiqueta: 'Objetivo', valor: nota.objectiveText ?? null },
-    { etiqueta: 'Evaluación', valor: nota.assessmentText ?? null },
-    { etiqueta: 'Plan', valor: nota.planText ?? null },
+    ...entradas.map((fila) => ({ etiqueta: fila.label, valor: fila.value })),
+    { etiqueta: 'Motivo de consulta', valor: nota.chiefComplaintText || null },
+    { etiqueta: entradas.length > 0 ? 'Texto libre' : 'Subjetivo', valor: nota.subjectiveText || null },
+    { etiqueta: 'Objetivo', valor: nota.objectiveText || null },
+    { etiqueta: 'Evaluación', valor: nota.assessmentText || null },
+    { etiqueta: 'Plan', valor: nota.planText || null },
   ];
 
   return {
