@@ -1,0 +1,174 @@
+
+Running 11 tests using 1 worker
+
+  ✓   1 [chromium] › playwright/carga-masiva.spec.ts:35:7 › carga masiva — contrato §3/§7 [backend simulado] › 1 · flujo feliz: valida e importa ok-50.csv (3.0s)
+  ✓   2 [chromium] › playwright/carga-masiva.spec.ts:63:7 › carga masiva — contrato §3/§7 [backend simulado] › 2 · idempotencia: reimportar el mismo archivo omite todo (2.9s)
+  ✘   3 [chromium] › playwright/carga-masiva.spec.ts:84:7 › carga masiva — contrato §3/§7 [backend simulado] › 3 · con errores: aborta entero y deshabilita Importar (2.5s)
+  ✘   4 [chromium] › playwright/carga-masiva.spec.ts:98:7 › carga masiva — contrato §3/§7 [backend simulado] › 4 · inválido: un PDF da un mensaje legible, sin stacktrace (3.0m)
+  ✓   5 [chromium] › playwright/carga-masiva.spec.ts:112:7 › carga masiva — contrato §3/§7 [backend simulado] › 5 · vacío: archivo sólo con encabezado dice que no tiene filas (2.4s)
+  ✓   6 [chromium] › playwright/carga-masiva.spec.ts:123:7 › carga masiva — contrato §3/§7 [backend simulado] › 6 · fallo de red preserva el archivo elegido y los selects (2.4s)
+  ✓   7 [chromium] › playwright/carga-masiva.spec.ts:137:7 › carga masiva — contrato §3/§7 [backend simulado] › 7 · plantilla CSV: descarga con el encabezado canónico (2.2s)
+  ✓   8 [chromium] › playwright/carga-masiva.spec.ts:147:7 › carga masiva — contrato §3/§7 [backend simulado] › 8 · descarga de errores: CSV con las filas con problema (2.5s)
+  ✘   9 [chromium] › playwright/carga-masiva.spec.ts:163:7 › carga masiva — contrato §3/§7 [backend simulado] › 9 · sin doble envío: dos clics rápidos en Validar sólo mandan una petición (3.8s)
+  ✘  10 [chromium] › playwright/carga-masiva.spec.ts:184:7 › carga masiva — contrato §3/§7 [backend simulado] › 10 · teclado: Tab hasta el archivo, Enter abre el diálogo (17.5s)
+  -  11 [chromium] › playwright/carga-masiva.spec.ts:202:7 › carga masiva — contrato §3/§7 [backend simulado] › 11 · accesibilidad: axe sin violaciones serias, si la dependencia está
+
+
+  1) [chromium] › playwright/carga-masiva.spec.ts:84:7 › carga masiva — contrato §3/§7 [backend simulado] › 3 · con errores: aborta entero y deshabilita Importar 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('No se guardó nada')
+    Expected: visible
+    Error: strict mode violation: getByText('No se guardó nada') resolved to 2 elements:
+        1) <p class="alert__title" _ngcontent-ng-c2551114955="">No se guardó nada</p> aka getByText('No se guardó nada', { exact: true })
+        2) <p class="carga__nota" _ngcontent-ng-c2454185353=""> Se muestran las primeras 20 filas válidas. Todav…</p> aka getByText('Se muestran las primeras 20')
+
+    Call log:
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for getByText('No se guardó nada')
+
+
+      93 |     await expect(errores).toBeVisible();
+      94 |     await expect(page.getByTestId('carga-importar')).toBeDisabled();
+    > 95 |     await expect(page.getByText('No se guardó nada')).toBeVisible();
+         |                                                       ^
+      96 |   });
+      97 |
+      98 |   test('4 · inválido: un PDF da un mensaje legible, sin stacktrace', async ({ page }) => {
+        at /Users/josejeremias/Desktop/Mantra Core Technologies/Mantra Core Health/wt-justin-cargamasiva-lectura/playwright/carga-masiva.spec.ts:95:55
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/playwright/salida/carga-masiva-carga-masiva--bea65-tero-y-deshabilita-Importar-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/playwright/salida/carga-masiva-carga-masiva--bea65-tero-y-deshabilita-Importar-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts/playwright/salida/carga-masiva-carga-masiva--bea65-tero-y-deshabilita-Importar-chromium/trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts/playwright/salida/carga-masiva-carga-masiva--bea65-tero-y-deshabilita-Importar-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › playwright/carga-masiva.spec.ts:98:7 › carga masiva — contrato §3/§7 [backend simulado] › 4 · inválido: un PDF da un mensaje legible, sin stacktrace 
+
+    Test timeout of 180000ms exceeded.
+
+    Error: locator.click: Test timeout of 180000ms exceeded.
+    Call log:
+      - waiting for getByTestId('carga-validar')
+        - locator resolved to <button app-button="" type="button" aria-busy="false" aria-disabled="true" _nghost-ng-c1077680052="" data-testid="carga-validar" _ngcontent-ng-c2454185353="" class="btn btn--disabled btn--md btn--primary">…</button>
+      - attempting click action
+        2 × waiting for element to be visible, enabled and stable
+          - element is not enabled
+        - retrying click action
+        - waiting 20ms
+        2 × waiting for element to be visible, enabled and stable
+          - element is not enabled
+        - retrying click action
+          - waiting 100ms
+        343 × waiting for element to be visible, enabled and stable
+            - element is not enabled
+          - retrying click action
+            - waiting 500ms
+
+
+      102 |       .locator('input[type=file]')
+      103 |       .setInputFiles('playwright/fixtures/carga-masiva/no-es-nada.pdf');
+    > 104 |     await page.getByTestId('carga-validar').click();
+          |                                             ^
+      105 |
+      106 |     const cuerpo = page.locator('body');
+      107 |     await expect(cuerpo).not.toContainText('at Object.');
+        at /Users/josejeremias/Desktop/Mantra Core Technologies/Mantra Core Health/wt-justin-cargamasiva-lectura/playwright/carga-masiva.spec.ts:104:45
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/playwright/salida/carga-masiva-carga-masiva--faeca-saje-legible-sin-stacktrace-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/playwright/salida/carga-masiva-carga-masiva--faeca-saje-legible-sin-stacktrace-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts/playwright/salida/carga-masiva-carga-masiva--faeca-saje-legible-sin-stacktrace-chromium/trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts/playwright/salida/carga-masiva-carga-masiva--faeca-saje-legible-sin-stacktrace-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › playwright/carga-masiva.spec.ts:163:7 › carga masiva — contrato §3/§7 [backend simulado] › 9 · sin doble envío: dos clics rápidos en Validar sólo mandan una petición 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 0
+
+      179 |     await expect(page.getByTestId('carga-informe')).toBeVisible();
+      180 |
+    > 181 |     expect(peticiones).toBe(1);
+          |                        ^
+      182 |   });
+      183 |
+      184 |   test('10 · teclado: Tab hasta el archivo, Enter abre el diálogo', async ({ page }) => {
+        at /Users/josejeremias/Desktop/Mantra Core Technologies/Mantra Core Health/wt-justin-cargamasiva-lectura/playwright/carga-masiva.spec.ts:181:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/playwright/salida/carga-masiva-carga-masiva--9afa0-ar-sólo-mandan-una-petición-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/playwright/salida/carga-masiva-carga-masiva--9afa0-ar-sólo-mandan-una-petición-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts/playwright/salida/carga-masiva-carga-masiva--9afa0-ar-sólo-mandan-una-petición-chromium/trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts/playwright/salida/carga-masiva-carga-masiva--9afa0-ar-sólo-mandan-una-petición-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium] › playwright/carga-masiva.spec.ts:184:7 › carga masiva — contrato §3/§7 [backend simulado] › 10 · teclado: Tab hasta el archivo, Enter abre el diálogo 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByTestId('carga-informe')
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for getByTestId('carga-informe')
+
+
+      197 |     await page.getByTestId('carga-validar').focus();
+      198 |     await page.keyboard.press('Enter');
+    > 199 |     await expect(page.getByTestId('carga-informe')).toBeVisible();
+          |                                                     ^
+      200 |   });
+      201 |
+      202 |   test('11 · accesibilidad: axe sin violaciones serias, si la dependencia está', async ({
+        at /Users/josejeremias/Desktop/Mantra Core Technologies/Mantra Core Health/wt-justin-cargamasiva-lectura/playwright/carga-masiva.spec.ts:199:53
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/playwright/salida/carga-masiva-carga-masiva--6ec9b-chivo-Enter-abre-el-diálogo-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/playwright/salida/carga-masiva-carga-masiva--6ec9b-chivo-Enter-abre-el-diálogo-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts/playwright/salida/carga-masiva-carga-masiva--6ec9b-chivo-Enter-abre-el-diálogo-chromium/trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts/playwright/salida/carga-masiva-carga-masiva--6ec9b-chivo-Enter-abre-el-diálogo-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    [chromium] › playwright/carga-masiva.spec.ts:84:7 › carga masiva — contrato §3/§7 [backend simulado] › 3 · con errores: aborta entero y deshabilita Importar 
+    [chromium] › playwright/carga-masiva.spec.ts:98:7 › carga masiva — contrato §3/§7 [backend simulado] › 4 · inválido: un PDF da un mensaje legible, sin stacktrace 
+    [chromium] › playwright/carga-masiva.spec.ts:163:7 › carga masiva — contrato §3/§7 [backend simulado] › 9 · sin doble envío: dos clics rápidos en Validar sólo mandan una petición 
+    [chromium] › playwright/carga-masiva.spec.ts:184:7 › carga masiva — contrato §3/§7 [backend simulado] › 10 · teclado: Tab hasta el archivo, Enter abre el diálogo 
+  1 skipped
+  6 passed (3.8m)
