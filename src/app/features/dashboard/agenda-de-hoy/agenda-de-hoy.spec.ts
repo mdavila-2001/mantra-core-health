@@ -499,4 +499,25 @@ describe('AgendaDeHoy', () => {
     );
     expect(raiz.querySelectorAll('[data-testid="panel-hoy-lista"] .lista__fila')).toHaveLength(1);
   });
+
+  it('la tarjeta «Ahora» y cada renglón llevan a SU cita en la agenda, para iniciarla', () => {
+    crear();
+    responderRecursos({ id: 'r-1', sede: null });
+    responderCitas('r-1', [
+      { id: 'b-1', desde: hoyALas(9), hasta: hoyALas(9, 30), estado: ESTADO.enCurso, paciente: 'Ana Pérez' },
+      { id: 'b-2', desde: hoyALas(10), hasta: hoyALas(10, 30), estado: ESTADO.confirmada, paciente: 'Luis Rojas' },
+    ]);
+    responderCatalogo();
+    fijarReloj(9, 15);
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    const tarjeta = raiz.querySelector<HTMLAnchorElement>('[data-testid="panel-hoy-destacada-abrir"]');
+    expect(tarjeta?.getAttribute('href')).toBe('/schedule?booking=b-1');
+    expect(tarjeta?.getAttribute('aria-label')).toMatch(/^Abrir la consulta de Ana Pérez, a las 09:00/);
+    // El enlace vive DENTRO de la tarjeta: su `::after` la cubre entera.
+    expect(tarjeta?.closest('[data-testid="panel-hoy-destacada"]')).not.toBeNull();
+
+    const filas = raiz.querySelectorAll<HTMLAnchorElement>('[data-testid="panel-hoy-fila-abrir"]');
+    expect([...filas].map((a) => a.getAttribute('href'))).toEqual(['/schedule?booking=b-2']);
+  });
 });

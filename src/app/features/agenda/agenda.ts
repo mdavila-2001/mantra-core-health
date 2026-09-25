@@ -71,7 +71,7 @@ import { ToastService } from '../../shared/components/molecules/toast/toast.serv
 import { DataTable } from '../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
-import { AGENDA_CREATE_ROUTE, bookingNewRoute } from './agenda.routes';
+import { AGENDA_BOOKING_PARAM, AGENDA_CREATE_ROUTE, bookingNewRoute } from './agenda.routes';
 import { MyAgenda } from './my-agenda/my-agenda';
 import { WalkInForm, type TurnoDeMostrador } from './walk-in/walk-in-form';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
@@ -1503,6 +1503,14 @@ export class Agenda {
       this.recursosLeidos();
       untracked(() => this.cargarAgenda());
     });
+
+    // `?booking=<id>`: se llegó desde «Lo que toca hoy» tocando una cita.
+    effect(() => {
+      const pedida = this.params()?.get(AGENDA_BOOKING_PARAM) ?? null;
+      if (pedida !== null) {
+        untracked(() => this.abrirCitaPedida(pedida));
+      }
+    });
   }
 
   /* -- Acciones ------------------------------------------------------------ */
@@ -2316,6 +2324,68 @@ export class Agenda {
       return;
     }
     void this.verDetalleDeLaCita(cita);
+  }
+
+  /**
+   * Abre la cita que pidió la URL (`?booking=<id>`) lista para atenderla.
+   *
+   * Es el destino de la tarjeta «Ahora» y de los renglones del panel de
+   * inicio. Se lee la cita **por su id** y no se busca en la lista cargada:
+   * la lista es la de UNA agenda y una ventana, y quien atiende en dos sedes
+   * tiene citas de hoy que esa lista no trae.
+   *
+   * El parámetro se borra antes de preguntar: un «atrás» o una recarga no
+   * tienen que volver a ofrecer una consulta ya decidida. Lo que se ofrece
+   * sale del mismo ciclo que la tarjeta del calendario: una confirmada se
+   * inicia, una en curso se continúa y cualquier otra muestra su detalle.
+   */
+  private abrirCitaPedida(bookingId: string): void {
+    this.publicar({ [AGENDA_BOOKING_PARAM]: null });
+
+    this.scheduling
+      .getBooking(bookingId)
+      .pipe(
+        switchMap((booking) =>
+          this.terminology.readConceptLabels([booking.statusConceptId]).pipe(
+            catchError(() => of<ConceptLabels>(new Map())),
+            map((etiquetas) => ({ booking, etiquetas })),
+          ),
+        ),
+      )
+      .subscribe({
+        next: ({ booking, etiquetas }) => {
+          this.etiquetas.update((actuales) => new Map([...actuales, ...etiquetas]));
+          void this.ofrecerAtender(this.aCitaVisible(booking));
+        },
+        error: (error: unknown) => this.avisarFallo(error, 'No se pudo abrir la cita.'),
+      });
+  }
+
+  /** El paso de la cita pedida: iniciar, continuar o, si no se puede, su detalle. */
+  private async ofrecerAtender(cita: CitaVisible): Promise<void> {
+    const enCurso = this.sePuedeCompletar(cita);
+    const iniciable = this.sePuedeIniciar(cita) && this.puedeAtender();
+    if (!enCurso && !iniciable) {
+      await this.verDetalleDeLaCita(cita);
+      return;
+    }
+
+    const atender = await this.dialogs.confirm({
+      title: enCurso ? 'Consulta en curso' : 'Iniciar la consulta',
+      message: enCurso
+        ? 'Esta consulta ya empezó. Podés volver a ella y seguir registrando.'
+        : 'Al iniciarla se abre la pantalla de atención de este paciente.',
+      details: this.detalleDeSolicitud(cita),
+      confirmLabel: enCurso ? 'Continuar consulta' : 'Iniciar consulta',
+      cancelLabel: 'Ahora no',
+    });
+    if (!atender) return;
+
+    if (enCurso) {
+      this.continuarAtencion(cita);
+    } else {
+      this.iniciarAtencion(cita);
+    }
   }
 
   /**
