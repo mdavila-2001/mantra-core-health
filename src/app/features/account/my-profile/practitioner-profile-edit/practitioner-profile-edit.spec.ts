@@ -1622,15 +1622,14 @@ describe('PractitionerProfileEdit', () => {
   /**
    * Lo que el alta pregunta, el editor muestra y nadie puede corregir acá.
    *
-   * «Editar muestre TODOS los campos» (C-05). Estos tres no se pueden escribir
-   * —el contrato del perfil no los acepta, y el correo de trabajo está
-   * excluido a propósito porque es la identidad de acceso—, y hasta el
+   * «Editar muestre TODOS los campos» (C-05). El documento y su departamento no
+   * se pueden escribir —el contrato del perfil no los acepta—, y hasta el
    * 21/09/2026 el editor sencillamente no los mostraba: quien venía a
    * corregirlos no encontraba ni el dato ni el motivo.
    *
-   * Las tres pruebas cubren las tres formas de romperlo: que el dato
-   * desaparezca, que alguien le ponga un control, y que alguien lo mande en el
-   * `PATCH` creyendo que ahí se guarda.
+   * Las pruebas cubren las formas de romperlo: que el dato desaparezca, que
+   * alguien le ponga un control, y que alguien lo mande en el `PATCH` creyendo
+   * que ahí se guarda.
    */
   describe('lo que se muestra y no se corrige', () => {
     const CON_IDENTIDAD = {
@@ -1648,34 +1647,7 @@ describe('PractitionerProfileEdit', () => {
       expect(bloque?.querySelectorAll('input, select, textarea')).toHaveLength(0);
     });
 
-    it('«Contacto» muestra el correo de trabajo, sin control para escribirlo', () => {
-      const fixture = montarConVista(CON_IDENTIDAD);
-
-      señal<number>('pestana').set(1);
-      fixture.detectChanges();
-
-      const bloque = panelAbierto(fixture).querySelector('[data-testid="edicion-correo-trabajo"]');
-      expect(bloque).not.toBeNull();
-      expect(bloque?.textContent).toContain('dra.salas@alovida.mock');
-      expect(bloque?.querySelectorAll('input, select, textarea')).toHaveLength(0);
-    });
-
-    it('prefiere workEmail cuando el correo de acceso es personal', () => {
-      const fixture = montarConVista({
-        ...CON_IDENTIDAD,
-        email: 'dra.salas.personal@alovida.mock',
-        workEmail: 'dra.salas@hospital.mock',
-      });
-
-      señal<number>('pestana').set(1);
-      fixture.detectChanges();
-
-      const bloque = panelAbierto(fixture).querySelector('[data-testid="edicion-correo-trabajo"]');
-      expect(bloque?.textContent).toContain('dra.salas@hospital.mock');
-      expect(bloque?.textContent).not.toContain('dra.salas.personal@alovida.mock');
-    });
-
-    it('guardar no manda ninguno de los tres', () => {
+    it('guardar no manda el documento ni el correo que nadie tocó', () => {
       montarYCargar(CON_IDENTIDAD);
 
       señal<string>('titulo').set('Cardióloga intervencionista');
@@ -1684,6 +1656,71 @@ describe('PractitionerProfileEdit', () => {
       const req = http.expectOne('/profiles/practitioners/me');
       expect(req.request.body).toEqual({ professionalTitle: 'Cardióloga intervencionista' });
       req.flush(PERFIL_BASE);
+    });
+  });
+
+  /**
+   * El correo de trabajo se corrige acá.
+   *
+   * Hasta el 24/09/2026 se mostraba como dato fijo con el argumento de que era
+   * la identidad de acceso. No lo es: el alta lo siembra con el mismo valor que
+   * el login, pero es una fila de contactos (correo × trabajo) y la cuenta no la
+   * lee. Lo que sí lo distingue de los otros contactos es que es obligatorio.
+   */
+  describe('el correo de trabajo', () => {
+    const CON_CORREO = { email: 'dra.salas@alovida.mock' };
+
+    function campo(fixture: ComponentFixture<PractitionerProfileEdit>): HTMLInputElement | null {
+      señal<number>('pestana').set(1);
+      fixture.detectChanges();
+      return panelAbierto(fixture).querySelector('input[data-testid="edicion-correo-trabajo"]');
+    }
+
+    it('«Contacto» lo ofrece en un campo, cargado con el guardado', async () => {
+      const fixture = montarConVista(CON_CORREO);
+
+      const input = campo(fixture);
+      await fixture.whenStable();
+      expect(input).not.toBeNull();
+      expect(input?.value).toBe('dra.salas@alovida.mock');
+    });
+
+    it('prefiere workEmail cuando el correo de acceso es otro', async () => {
+      const fixture = montarConVista({
+        email: 'dra.salas.personal@alovida.mock',
+        workEmail: 'dra.salas@hospital.mock',
+      });
+
+      const input = campo(fixture);
+      await fixture.whenStable();
+      expect(input?.value).toBe('dra.salas@hospital.mock');
+    });
+
+    it('corregido, viaja como workEmail y sin espacios', () => {
+      montarYCargar(CON_CORREO);
+
+      señal<string>('correoTrabajo').set('  dra.salas@clinica.bo ');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ workEmail: 'dra.salas@clinica.bo' });
+      req.flush({ ...PERFIL_BASE, workEmail: 'dra.salas@clinica.bo' });
+    });
+
+    it.each([
+      ['vacío', '   ', 'Escribí tu correo de trabajo.'],
+      ['sin dominio con punto', 'dra.salas@clinica', 'Revisá el correo: le falta algo, como la @ o el dominio.'],
+      ['sin @', 'dra.salas.clinica.bo', 'Revisá el correo: le falta algo, como la @ o el dominio.'],
+    ])('%s no viaja: se marca y lleva a «Contacto»', (_caso, valor, mensaje) => {
+      montarYCargar(CON_CORREO);
+      señal<number>('pestana').set(0);
+
+      señal<string>('correoTrabajo').set(valor);
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(señal<string>('errorCorreoTrabajo')()).toBe(mensaje);
+      expect(señal<number>('pestana')()).toBe(1);
     });
   });
 

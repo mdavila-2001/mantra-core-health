@@ -504,20 +504,24 @@
                     testId="edicion-fijo-trabajo"
                   />
                 </app-form-field>
+                <!-- El correo de trabajo es un contacto, no la cuenta: el alta lo
+                     siembra con el mismo valor que el login, pero cambiarlo acá
+                     no cambia con qué correo se entra. -->
+                <app-form-field
+                  label="Correo de trabajo"
+                  hint="El que se muestra en tu perfil. No cambia el correo con el que entrás."
+                  [errorMessage]="errorCorreoTrabajo() || errorDelServidor('workEmail')"
+                >
+                  <app-input
+                    type="email"
+                    autocomplete="work email"
+                    [(value)]="correoTrabajo"
+                    [hasError]="!!(errorCorreoTrabajo() || errorDelServidor('workEmail'))"
+                    placeholder="tu.nombre@consultorio.com"
+                    testId="edicion-correo-trabajo"
+                  />
+                </app-form-field>
               </form>
-
-              <!-- El cuarto contacto del alta. Se muestra y no se edita acá:
-                   el contrato PATCH del perfil no incluye el correo laboral. -->
-              @if (soloLectura(); as fijos) {
-                <section class="edicion__fijos" data-testid="edicion-correo-trabajo">
-                  <h3 class="edicion__subtitulo">Tu correo de trabajo</h3>
-                  <p class="edicion__nota">Es el correo laboral asociado a tu perfil.</p>
-                  <dl class="edicion__fijo">
-                    <dt>Correo de trabajo</dt>
-                    <dd>{{ fijos.correoDeTrabajo || 'Sin registrar' }}</dd>
-                  </dl>
-                </section>
-              }
             }
           </app-tab>
 

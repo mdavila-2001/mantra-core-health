@@ -481,9 +481,10 @@ export class ProfilesClient {
       readonly motherLastName: string;
       readonly birthDate: string;
       readonly phone: string;
-      /* Los cuatro contactos que el alta declara por separado. El correo de
-         trabajo NO está: es la identidad de acceso y se cambia por su propio
-         trámite. */
+      /* Los cinco contactos que el alta declara por separado. El correo de
+         trabajo es un contacto más: cambiarlo no cambia el correo de acceso,
+         y a diferencia de los otros no se puede vaciar. */
+      readonly workEmail: string;
       readonly mobilePhone: string;
       readonly workMobilePhone: string;
       readonly workLandline: string;
