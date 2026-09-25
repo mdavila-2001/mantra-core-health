@@ -424,6 +424,35 @@
           }
         </a>
 
+        <!-- El carrito de farmacia (H4.S1, carril 41/46). Es la compra del
+             paciente, no una herramienta de la médica ni de otro rol: sólo se
+             ofrece con `esPacienteDelCarrito()`. Mismo bloque que Chats, con
+             `name="bag"` y el contador del `CartStore`. -->
+        @if (esPacienteDelCarrito()) {
+          <a
+            class="app-header__ajustes"
+            [routerLink]="pharmacyCartRoute"
+            [attr.data-testid]="pharmacyTestids.headerCart"
+            appTooltip="Carrito"
+            appTooltipPosition="bottom"
+            [attr.aria-label]="etiquetaCarrito()"
+          >
+            <app-nav-icon name="bag" />
+            @if (unidadesDelCarrito() > 0) {
+              <!-- Sin «0» permanente, igual que Chats. Fuera del árbol
+                   accesible: el número ya viaja en el nombre del enlace. -->
+              <app-badge
+                class="app-header__chats-badge"
+                variant="error"
+                size="sm"
+                [value]="unidadesDelCarrito()"
+                aria-hidden="true"
+                [attr.data-testid]="pharmacyTestids.headerCartBadge"
+              />
+            }
+          </a>
+        }
+
         <!-- Ajustes. El tema es una preferencia entre varias —avisos, permisos
              del navegador— y las tres viven juntas en Ajustes; el interruptor
              de arriba es sólo el atajo para la que más se toca.

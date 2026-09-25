@@ -23,6 +23,7 @@ const CINCO: readonly RowAction[] = [
     <app-row-actions
       [actions]="acciones()"
       [fila]="fila()"
+      [inline]="inline()"
       (actionSelected)="elegidos.push($event)"
     />
   `,
@@ -30,6 +31,7 @@ const CINCO: readonly RowAction[] = [
 class HostComponent {
   readonly acciones = signal<readonly RowAction[]>(CINCO);
   readonly fila = signal('la solicitud de Ana Pérez');
+  readonly inline = signal(false);
   readonly elegidos: string[] = [];
 }
 
@@ -197,5 +199,19 @@ describe('RowActions', () => {
       .map((i) => i.dataset['action']);
 
     expect(destructivas).toEqual(['anular']);
+  });
+
+  it('con `inline` dibuja las cinco en la fila y ningún desplegable (dentro de un modal el menú quedaría inerte)', () => {
+    host.inline.set(true);
+    fixture.detectChanges();
+
+    expect(root().querySelector('[data-testid="row-actions-trigger"]')).toBeNull();
+    expect(botonesEnFila().map((boton) => boton.textContent?.trim())).toEqual([
+      'Ver detalle',
+      'Aceptar',
+      'Iniciar',
+      'Reprogramar',
+      'Anular',
+    ]);
   });
 });

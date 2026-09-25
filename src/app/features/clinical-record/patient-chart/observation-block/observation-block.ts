@@ -308,7 +308,7 @@ export class ObservationBlock implements DraftBlock {
           this.limpiar();
           this.toasts.success(
             'Queda en la pestaña «Observaciones» del expediente.',
-            'Observación registrada',
+            'Medición registrada',
           );
           this.cambio.emit();
         },

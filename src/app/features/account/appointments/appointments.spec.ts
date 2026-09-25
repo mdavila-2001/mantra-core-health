@@ -866,6 +866,90 @@ describe('Appointments', () => {
 
     expect(interno<() => string | null>('recursoParaEspera')()).toBe('r-norte');
   });
+
+  /**
+   * El sello de reconsulta en «Mis citas» (C4).
+   *
+   * Un turno que la persona **no pidió** aparece en su lista igual que los
+   * suyos. Sin nada que lo explique se lee como un error de la aplicación —o
+   * como el turno de otro—, y la salida natural es cancelarlo. El sello y la
+   * frase son lo que evita eso.
+   */
+  describe('el sello de reconsulta (C4)', () => {
+    /** Una cita futura que salió de una consulta del 12 de septiembre. */
+    function reconsulta(extra: Record<string, unknown> = {}): Record<string, unknown> {
+      return {
+        ...cita('b-reconsulta', CONFIRMADO),
+        startAt: '2099-03-01T13:00:00.000Z',
+        endAt: '2099-03-01T13:30:00.000Z',
+        reasonText: 'Reconsulta: Control general',
+        followUpOf: {
+          bookingId: 'b-origen',
+          encounterId: null,
+          startAt: '2026-09-12T13:00:00.000Z',
+        },
+        followUpBookingId: null,
+        ...extra,
+      };
+    }
+
+    function arrancarCon(citas: unknown[]): void {
+      montar();
+      responderArranque(citas);
+      responderTerminologia([
+        { conceptId: CONFIRMADO, code: 'BOOKING_CONFIRMED', display: 'Booking confirmed' },
+      ]);
+    }
+
+    function raiz(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('la fila de una reconsulta lleva el sello', () => {
+      arrancarCon([reconsulta()]);
+
+      const sellos = raiz().querySelectorAll('[data-testid="mis-citas-reconsulta-sello"]');
+      expect(sellos.length).toBeGreaterThan(0);
+      expect(sellos[0]!.textContent?.trim()).toBe('Reconsulta');
+    });
+
+    it('y la frase dice quién la agendó y por qué consulta', () => {
+      arrancarCon([reconsulta()]);
+
+      const frase = raiz().querySelector('[data-testid="mis-citas-reconsulta-frase"]');
+      expect(frase).not.toBeNull();
+      expect(frase!.textContent).toContain('Tu médico te citó de nuevo por la consulta del');
+      expect(frase!.textContent).toContain('12');
+    });
+
+    /**
+     * La consulta de origen puede haber quedado sin cupo. Inventarle una fecha
+     * o dejar un hueco serían las dos maneras de hacerlo peor: se dice quién la
+     * agendó, que es lo que importa.
+     */
+    it('sin la fecha del origen la frase cambia entera, no queda con un hueco', () => {
+      arrancarCon([reconsulta({ followUpOf: { bookingId: 'b-origen', encounterId: null } })]);
+
+      const frase = raiz().querySelector('[data-testid="mis-citas-reconsulta-frase"]');
+      expect(frase!.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+        'Tu médico te citó de nuevo por una consulta anterior.',
+      );
+    });
+
+    it('un turno que la persona pidió no lleva sello ni frase', () => {
+      arrancarCon([cita('b-propia', CONFIRMADO)]);
+
+      expect(raiz().querySelector('[data-testid="mis-citas-reconsulta-sello"]')).toBeNull();
+      expect(raiz().querySelector('[data-testid="mis-citas-reconsulta-frase"]')).toBeNull();
+    });
+
+    it('el estado sigue viéndose: el sello lo acompaña, no lo reemplaza', () => {
+      arrancarCon([reconsulta()]);
+
+      expect(raiz().textContent).toContain('Confirmado');
+      expect(raiz().textContent).toContain('Reconsulta');
+    });
+  });
 });
 
 /**

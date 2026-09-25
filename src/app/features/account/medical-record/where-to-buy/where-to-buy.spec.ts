@@ -15,6 +15,8 @@ import type {
   AvailabilityResult,
   AvailabilitySite,
 } from '../../../../core/data-access/pharmacy/pharmacy.types';
+import { CART_STORAGE, type CartStorage } from '../../../../core/data-access/pharmacy-cart/cart.storage';
+import type { CartState } from '../../../../core/data-access/pharmacy-cart/pharmacy-cart.types';
 import { CartStore } from '../../../../core/data-access/pharmacy-cart/cart.store';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import { SessionStore } from '../../../../core/auth/session.store';
@@ -225,6 +227,28 @@ function leafletDoblado(): unknown {
   };
 }
 
+/**
+ * El carrito en memoria, no en `localStorage`.
+ *
+ * `CartStore` persiste por cuenta (H3.S1) y el adaptador de navegador es el
+ * que trae la factory del token. Los `it` de este archivo comparten un mismo
+ * jsdom: con el adaptador real, el carrito que deja una prueba aparece en la
+ * siguiente y dispara el diálogo de «cambiar de farmacia» que esa prueba no
+ * espera. Mismo doble que usa `cart.store.spec.ts`.
+ */
+class MemoriaCartStorage implements CartStorage {
+  private readonly datos = new Map<string, CartState>();
+  read(clave: string): CartState | null {
+    return this.datos.get(clave) ?? null;
+  }
+  write(clave: string, cart: CartState): void {
+    this.datos.set(clave, cart);
+  }
+  clear(clave: string): void {
+    this.datos.delete(clave);
+  }
+}
+
 describe('WhereToBuy', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
@@ -247,6 +271,7 @@ describe('WhereToBuy', () => {
         provideRouter([
           { path: 'my-account/medical-record/where-to-buy/:requestId', component: WhereToBuy },
         ]),
+        { provide: CART_STORAGE, useValue: new MemoriaCartStorage() },
         {
           provide: CARGADOR_DE_LEAFLET,
           useValue: (() => Promise.resolve(leafletDoblado())) as CargadorDeLeaflet,

@@ -1,5 +1,5 @@
 <app-page-header
-  title="Evoluciones"
+  title="Notas médicas"
   subtitle="Las atenciones que registraste y lo que escribiste en cada una."
 >
   @if (sePuedeExportar()) {
@@ -11,14 +11,14 @@
 
 <!-- El período cambia lo que se le pide al servidor, así que va aparte de los
      filtros: éstos acotan lo ya traído, aquél vuelve a consultar. -->
-<div class="evoluciones__periodo" role="group" aria-label="Período">
+<div class="notas-medicas__periodo" role="group" aria-label="Período">
   @for (opcion of periodos; track opcion) {
     <button
       app-button
       size="sm"
       [variant]="opcion === dias() ? 'primary' : 'outline'"
       [attr.aria-pressed]="opcion === dias()"
-      [attr.data-testid]="'evoluciones-periodo-' + opcion"
+      [attr.data-testid]="'notas-medicas-periodo-' + opcion"
       (clicked)="verPeriodo(opcion)"
     >
       {{ opcion }} días
@@ -34,27 +34,29 @@
 
 <app-view-state-host [state]="estado()" (retry)="cargar()">
   @if (resumen(); as texto) {
-    <p class="evoluciones__resumen" role="status">{{ texto }}</p>
+    <p class="notas-medicas__resumen" role="status">{{ texto }}</p>
   }
 
   @if (visibles().length === 0) {
-    <p class="evoluciones__sin-coincidencias" role="status">
+    <p class="notas-medicas__sin-coincidencias" role="status">
       Ninguna atención del período coincide con lo que buscaste.
     </p>
   }
 
   @if (visibles().length > 0) {
     <app-data-table
-      data-testid="evoluciones-tabla"
+      data-testid="notas-medicas-tabla"
       [state]="filasDeTabla()"
       [columns]="columnas()"
       [trackBy]="porId"
       [rowLabel]="nombreDeFila"
       [rowNavigable]="true"
-      caption="Atenciones del período con su evolución"
-      (rowActivated)="verEvolucion($event)"
+      maxHeight="480px"
+      caption="Atenciones del período con su nota médica"
+      (rowActivated)="verNota($event)"
       (retry)="cargar()"
     />
+    <app-pagination [totalItems]="visibles().length" [(page)]="pagina" [(pageSize)]="tamanoPagina" />
   }
 </app-view-state-host>
 
@@ -62,22 +64,22 @@
      lista: son datos clínicos enteros por paciente. -->
 @if (abierta(); as atencion) {
   <app-content-dialog
-    heading="La evolución de esta atención"
+    heading="La nota de esta atención"
     [description]="atencion.paciente"
-    (closed)="cerrarEvolucion()"
+    (closed)="cerrarNota()"
   >
-    <p class="evoluciones__detalle-cuando">
+    <p class="notas-medicas__detalle-cuando">
       <time [attr.datetime]="atencion.cuando.toISOString()">
         {{ atencion.cuando | date: "d 'de' MMMM 'de' y, HH:mm" }}
       </time>
       · {{ atencion.estadoLabel }}
     </p>
 
-    <app-view-state-host [state]="notas()" (retry)="verEvolucion(atencion)">
+    <app-view-state-host [state]="notas()" (retry)="verNota(atencion)">
       @for (nota of notasVisibles(); track nota.id) {
-        <article class="evoluciones__nota" data-testid="evoluciones-nota">
+        <article class="notas-medicas__nota" data-testid="notas-medicas-nota">
           @if (nota.motivo) {
-            <h3 class="evoluciones__nota-titulo">{{ nota.motivo }}</h3>
+            <h3 class="notas-medicas__nota-titulo">{{ nota.motivo }}</h3>
           }
           @if (nota.subjetivo) {
             <p><strong>Lo que refiere:</strong> {{ nota.subjetivo }}</p>
@@ -91,7 +93,7 @@
           @if (nota.plan) {
             <p><strong>Plan:</strong> {{ nota.plan }}</p>
           }
-          <p class="evoluciones__nota-pie">
+          <p class="notas-medicas__nota-pie">
             {{ nota.firmada ? 'Firmada' : 'Sin firmar' }}
           </p>
         </article>
@@ -101,8 +103,8 @@
     <!-- Sólo cuando hay notas: sin ellas, la próxima acción del estado vacío
          —que el M34 exige— ya ofrece este mismo enlace, y salían los dos. -->
     @if (notasVisibles().length > 0) {
-      <p class="evoluciones__detalle-salida">
-        <a app-link [routerLink]="atencion.ruta" data-testid="evoluciones-abrir-expediente">
+      <p class="notas-medicas__detalle-salida">
+        <a app-link [routerLink]="atencion.ruta" data-testid="notas-medicas-abrir-expediente">
           Abrir el expediente completo
         </a>
       </p>
@@ -110,7 +112,7 @@
   </app-content-dialog>
 }
 
-<!-- Plantillas de celda de la tabla de evoluciones. -->
+<!-- Plantillas de celda de la tabla de notas médicas. -->
 <ng-template #celdaCuando let-atencion>
   <time [attr.datetime]="atencion.cuando.toISOString()">
     {{ atencion.cuando | date: "d 'de' MMMM, HH:mm" }}
@@ -126,15 +128,15 @@
     app-button
     variant="secondary"
     size="sm"
-    [attr.data-testid]="'evoluciones-ver-' + atencion.id"
+    [attr.data-testid]="'notas-medicas-ver-' + atencion.id"
     [attr.aria-label]="
-      'Ver evolución: ' +
+      'Ver nota: ' +
       atencion.paciente +
       ', ' +
       (atencion.cuando | date: &quot;d 'de' MMMM, HH:mm&quot;)
     "
-    (clicked)="verEvolucion(atencion)"
+    (clicked)="verNota(atencion)"
   >
-    Ver evolución
+    Ver nota
   </button>
 </ng-template>

@@ -1,0 +1,86 @@
+/* Bloque de reconsulta: el día, los horarios libres y el motivo. Misma forma
+   que el resto de los bloques del expediente —una tarjeta con su título y su
+   formulario— para que la casilla no se lea como otra pantalla. */
+
+:host {
+  display: block;
+}
+
+.reconsulta {
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-4);
+  max-inline-size: 68ch;
+}
+
+.reconsulta__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.reconsulta__de-la-cita {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.reconsulta__formulario {
+  display: grid;
+  gap: var(--sp-4);
+  /* Móvil primero: el botón ocupa el ancho y sube a su tamaño natural recién
+     cuando hay sitio (ver la consulta de más abajo). */
+  justify-items: stretch;
+}
+
+/* El rótulo de la mitad de la jornada. No es una etiqueta de formulario: es un
+   separador dentro del grupo de radios, y por eso no lleva `for`. */
+.reconsulta__franja {
+  margin: var(--sp-2) 0 var(--sp-1);
+  color: var(--text-muted);
+  font-size: var(--fs-overline);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.reconsulta__franja:first-child {
+  margin-block-start: 0;
+}
+
+/* ─── La que ya está agendada ─────────────────────────────────────────────
+   Sin tono de alerta: no es un aviso ni un error, es el dato. Se distingue por
+   la superficie hundida, que es lo que el sistema usa para «esto ya ocurrió». */
+.reconsulta__agendada {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-subtle);
+}
+
+.reconsulta__agendada-titulo {
+  margin: 0;
+  font-weight: 600;
+}
+
+.reconsulta__agendada-cuando {
+  margin: 0;
+  /* Es el dato que se busca al abrir el bloque: se lee primero. */
+  font-size: var(--fs-body-lg);
+}
+
+.reconsulta__agendada-motivo {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+@media (min-width: 40rem) {
+  .reconsulta__formulario {
+    justify-items: start;
+  }
+}

@@ -332,3 +332,14 @@
   color: var(--text-muted);
   font-size: var(--fs-caption);
 }
+
+/* ---- la reconsulta (C4) ---------------------------------------------------
+   La frase que explica un turno que la persona no pidió. Ocupa el renglón
+   entero, igual que el motivo: es prosa, y partida en dos columnas no se lee.
+   Sin color de alerta: no pasó nada malo, la citaron de nuevo. */
+.turnos__reconsulta {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}

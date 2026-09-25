@@ -2,7 +2,22 @@ import { ChangeDetectionStrategy, Component, computed, input, model, signal } fr
 
 import { SegmentedControl } from '../../molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../molecules/segmented-control/segmented-control.types';
-import { VISTAS_DEL_CUERPO, type IdDeVista, type VistaDelCuerpo } from './body-zones.geometry';
+import {
+  VISTAS_DEL_CUERPO,
+  VISTAS_DEL_CUERPO_FEMENINA,
+  VISTAS_DEL_CUERPO_MASCULINA,
+  type IdDeVista,
+  type VistaDelCuerpo,
+} from './body-zones.geometry';
+
+/**
+ * El sexo con el que se dibuja la silueta, o `undefined` para la neutra.
+ *
+ * No es un dato clínico: es sólo qué proporción de cuerpo dibujar. Quien
+ * monta el organismo decide de dónde sale —el sexo asignado al nacer del
+ * propio perfil, típicamente— y con qué hacer si no lo sabe (acá, la neutra).
+ */
+export type SexoDeLaSilueta = 'MALE' | 'FEMALE';
 
 /**
  * Una zona del cuerpo que se puede elegir, tal como la trae quien monta el
@@ -61,6 +76,13 @@ export const ZONAS_CON_SILUETA: ReadonlySet<string> = new Set(
  * vista puesta, la figura se da vuelta sola a la primera vista que la tenga:
  * lo elegido siempre está a la vista.
  *
+ * ## Sexo de la silueta (P-04, 2026-09-25)
+ *
+ * Las tres vistas existen además en proporción masculina y femenina —hombro,
+ * cintura y cadera, nada más—: quien monta el organismo pasa `sexo` con el
+ * del propio perfil, y sin ese dato se ve la neutra de siempre. Ver
+ * {@link SexoDeLaSilueta}.
+ *
  * ## El equivalente por teclado no es un añadido, es la mitad del control
  *
  * Cada zona es un `<path>` con `role="button"`, su `tabindex`, su `aria-label`
@@ -111,6 +133,30 @@ export class BodyMap {
   readonly marcadas = input<readonly string[]>([]);
 
   /**
+   * El sexo con el que se dibuja la figura (P-04, 2026-09-25).
+   *
+   * `'MALE'` y `'FEMALE'` cambian la proporción de hombro, cintura y cadera
+   * (`body-zones.geometry.ts`); sin ese dato —perfil `INTERSEX`/`UNKNOWN`,
+   * sin sesión, o todavía sin resolver— se dibuja la neutra de siempre. La
+   * cabeza, los brazos, las piernas y la cara son la misma figura en las
+   * tres: no es lo que distingue una silueta de otra en este dibujo
+   * esquemático.
+   */
+  readonly sexo = input<SexoDeLaSilueta | undefined>(undefined);
+
+  /** Las vistas de la proporción que corresponde a {@link sexo}. */
+  private readonly vistasDelSexo = computed<readonly VistaDelCuerpo[]>(() => {
+    switch (this.sexo()) {
+      case 'MALE':
+        return VISTAS_DEL_CUERPO_MASCULINA;
+      case 'FEMALE':
+        return VISTAS_DEL_CUERPO_FEMENINA;
+      default:
+        return VISTAS_DEL_CUERPO;
+    }
+  });
+
+  /**
    * Los `id` de los degradados de esta instancia: el volumen (costados más
    * oscuros), la luz (de arriba a la izquierda) y el relleno de la elegida.
    * Por instancia, para que dos siluetas en la misma página no se los pisen.
@@ -145,7 +191,7 @@ export class BodyMap {
    */
   protected readonly vistas = computed<readonly VistaDibujable[]>(() => {
     const porId = new Map(this.zonas().map((zona) => [zona.id, zona]));
-    return VISTAS_DEL_CUERPO.flatMap((vista) => {
+    return this.vistasDelSexo().flatMap((vista) => {
       const zonas = vista.zonas.flatMap((silueta) => {
         const zona = porId.get(silueta.id);
         if (zona === undefined) return [];

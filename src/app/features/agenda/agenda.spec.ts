@@ -2170,6 +2170,57 @@ describe('Agenda', () => {
    * La tarjeta no repite un botón: hace lo que la cita admite en su estado, y
    * el estado sale del ciclo (`booking-status.ts`), no de una bandera nueva.
    */
+  describe('`?booking=<id>` abre esa cita lista para atenderla (panel de inicio)', () => {
+    /** La cita pedida por id y la etiqueta de su estado, como las responde la API. */
+    async function responderCitaPedida(code: string, display: string): Promise<void> {
+      http
+        .expectOne('/scheduling/bookings/b-1')
+        .flush({ ...CITA, statusConceptId: 'c-pedida' });
+      http
+        .expectOne((r) => r.url === '/terminology/concepts' && r.params.get('ids') === 'c-pedida')
+        .flush({
+          items: [{ conceptId: 'c-pedida', code, display, codeSystemVersionId: 'csv-1' }],
+          count: 1,
+          limit: 200,
+        });
+      await harness.fixture.whenStable();
+    }
+
+    it('una cita CONFIRMADA ofrece «Iniciar consulta», la inicia y entra a atender', async () => {
+      const confirmar = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule?vista=table&booking=b-1');
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      await responderCitaPedida('BOOKING_CONFIRMED', 'Confirmada');
+
+      expect(confirmar.mock.calls[0]?.[0]?.confirmLabel).toBe('Iniciar consulta');
+      http.expectOne('/scheduling/bookings/b-1/start').flush({
+        bookingId: 'b-1',
+        statusConceptId: 'c-curso',
+        occurredAt: '2026-08-15T12:00:00.000Z',
+      });
+      await harness.fixture.whenStable();
+
+      const rutas = navegar.mock.calls.map(([comandos]) => String((comandos as unknown[])[0] ?? ''));
+      expect(rutas.some((ruta) => /\/medical-records\/[^/]+\/consultation$/.test(ruta))).toBe(true);
+    });
+
+    it('una cita EN CURSO ofrece «Continuar consulta», sin repetir el inicio', async () => {
+      const confirmar = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule?vista=table&booking=b-1');
+      await responderConEstado('BOOKING_IN_PROGRESS', 'En curso');
+      await responderCitaPedida('BOOKING_IN_PROGRESS', 'En curso');
+
+      expect(confirmar.mock.calls[0]?.[0]?.confirmLabel).toBe('Continuar consulta');
+      const rutas = navegar.mock.calls.map(([comandos]) => String((comandos as unknown[])[0] ?? ''));
+      expect(rutas.some((ruta) => /\/medical-records\/[^/]+\/consultation$/.test(ruta))).toBe(true);
+      // Sin `POST …/start`: el `http.verify()` del afterEach lo confirma.
+    });
+  });
+
   describe('la tarjeta del calendario lleva a atender (C-04)', () => {
     /** Activa la tarjeta como lo hace el día, con la reserva cruda. */
     function tocarLaTarjeta(): void {
@@ -2784,6 +2835,81 @@ describe('Agenda', () => {
         'Profesional',
         'Motivo',
       ]);
+    });
+  });
+
+  /**
+   * El sello de reconsulta (C4).
+   *
+   * Una reconsulta es una cita como cualquier otra —mismo estado, mismo ciclo—
+   * y por eso la fila no se distingue sola. El sello y «de la cita del …» son
+   * lo único que dice de qué consulta salió, y sin eso la fila es un turno que
+   * nadie sabe explicar.
+   */
+  describe('el sello de reconsulta (C4)', () => {
+    /** Una cita que sale de otra, tal como la manda la API con `followUpOf`. */
+    const RECONSULTA = {
+      ...CITA,
+      id: 'b-reconsulta',
+      reasonText: 'Reconsulta: Control anual',
+      followUpOf: { bookingId: 'b-1', encounterId: null, startAt: '2026-08-08T13:00:00.000Z' },
+      followUpBookingId: null,
+    };
+
+    async function montarCon(citas: unknown[]): Promise<void> {
+      await montar();
+      await responderRecursos();
+      responderResto({ citas });
+      harness.detectChanges();
+    }
+
+    function fila(indice = 0): Record<string, unknown> {
+      return citas().data?.[indice] as Record<string, unknown>;
+    }
+
+    it('marca la cita como reconsulta y guarda de cuándo era la consulta de origen', async () => {
+      await montarCon([RECONSULTA]);
+
+      expect(fila()['esReconsulta']).toBe(true);
+      expect(fila()['reconsultaDe']).toEqual(new Date('2026-08-08T13:00:00.000Z'));
+    });
+
+    it('una cita común no lleva sello, y eso no es un dato faltante', async () => {
+      await montarCon([CITA]);
+
+      expect(fila()['esReconsulta']).toBe(false);
+      expect(fila()['reconsultaDe']).toBeNull();
+      expect(
+        (harness.fixture.nativeElement as HTMLElement).querySelector('[data-testid="cita-reconsulta-sello"]'),
+      ).toBeNull();
+    });
+
+    it('la fila muestra el sello junto al motivo y de qué consulta salió', async () => {
+      await montarCon([RECONSULTA]);
+
+      const sello = (harness.fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="cita-reconsulta-sello"]',
+      );
+      expect(sello).not.toBeNull();
+      expect(sello?.textContent?.trim()).toBe('Reconsulta');
+      expect((harness.fixture.nativeElement as HTMLElement).textContent).toContain('de la cita del');
+      // El motivo sigue estando: el sello lo acompaña, no lo reemplaza.
+      expect((harness.fixture.nativeElement as HTMLElement).textContent).toContain('Reconsulta: Control anual');
+    });
+
+    /**
+     * El contrato admite una cita sin cupo, así que el origen puede no tener
+     * horario. Decir «de la cita del —» sería peor que no decir nada.
+     */
+    it('sin fecha del origen el sello va solo, sin la frase', async () => {
+      await montarCon([{ ...RECONSULTA, followUpOf: { bookingId: 'b-1', encounterId: null } }]);
+
+      expect(fila()['esReconsulta']).toBe(true);
+      expect(fila()['reconsultaDe']).toBeNull();
+      expect(
+        (harness.fixture.nativeElement as HTMLElement).querySelector('[data-testid="cita-reconsulta-sello"]'),
+      ).not.toBeNull();
+      expect((harness.fixture.nativeElement as HTMLElement).textContent).not.toContain('de la cita del');
     });
   });
 });

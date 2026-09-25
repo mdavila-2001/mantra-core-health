@@ -111,4 +111,107 @@ describe('PharmacyClient', () => {
     expect(req.request.params.get('lng')).toBe('-63.1821');
     req.flush({ items: [], count: 0 });
   });
+
+  it('obtiene el perfil de una farmacia por id', () => {
+    let sitios = -1;
+    client.getPharmacy(FIXTURE_IDS.farmaciaAndina).subscribe((detalle) => (sitios = detalle.sites.length));
+
+    const req = http.expectOne((r) => r.url === `/pharmacy/pharmacies/${FIXTURE_IDS.farmaciaAndina}`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      id: FIXTURE_IDS.farmaciaAndina,
+      code: 'FARM_ANDINA',
+      name: 'Farmacia Andina',
+      legalName: 'Farmacia Andina S.R.L.',
+      type: null,
+      siteCount: 1,
+      productCount: 2,
+      homeDeliveryAvailable: true,
+      pickupAvailable: true,
+      sites: [
+        {
+          id: FIXTURE_IDS.sedeCentro,
+          code: 'S1',
+          name: 'Sucursal Centro',
+          addressText: 'Calle Libertad 245',
+          latitude: -17.7833,
+          longitude: -63.1821,
+        },
+      ],
+    });
+
+    expect(sitios).toBe(1);
+  });
+
+  it('pide los precios de una sede sin declarar `product` cuando no viene', () => {
+    let count = -1;
+    client.getSitePrices(FIXTURE_IDS.sedeCentro).subscribe((precios) => (count = precios.count));
+
+    const req = http.expectOne((r) => r.url === `/pharmacy/sites/${FIXTURE_IDS.sedeCentro}/prices`);
+    expect(req.request.method).toBe('GET');
+    // Un opcional en `undefined` que viaja como clave declarada vuelve 400.
+    expect(req.request.params.has('product')).toBe(false);
+    req.flush({
+      siteId: FIXTURE_IDS.sedeCentro,
+      siteName: 'Sucursal Centro',
+      pharmacyId: FIXTURE_IDS.farmaciaAndina,
+      pharmacyName: 'Farmacia Andina',
+      items: [],
+      count: 0,
+    });
+
+    expect(count).toBe(0);
+  });
+
+  it('acota los precios de una sede a un producto cuando `productId` viene', () => {
+    client.getSitePrices(FIXTURE_IDS.sedeCentro, FIXTURE_IDS.productoAmoxicilina).subscribe();
+
+    const req = http.expectOne((r) => r.url === `/pharmacy/sites/${FIXTURE_IDS.sedeCentro}/prices`);
+    expect(req.request.params.get('product')).toBe(FIXTURE_IDS.productoAmoxicilina);
+    req.flush({
+      siteId: FIXTURE_IDS.sedeCentro,
+      siteName: 'Sucursal Centro',
+      pharmacyId: FIXTURE_IDS.farmaciaAndina,
+      pharmacyName: 'Farmacia Andina',
+      items: [],
+      count: 0,
+    });
+  });
+
+  it('devuelve `requiresPrescription` y el precio tal cual los sirve la sede', () => {
+    let requierePrescripcion: boolean | null = null;
+    let unitAmount = '';
+    client.getSitePrices(FIXTURE_IDS.sedeCentro).subscribe((precios) => {
+      requierePrescripcion = precios.items[0].requiresPrescription;
+      unitAmount = precios.items[0].unitAmount;
+    });
+
+    const req = http.expectOne((r) => r.url === `/pharmacy/sites/${FIXTURE_IDS.sedeCentro}/prices`);
+    req.flush({
+      siteId: FIXTURE_IDS.sedeCentro,
+      siteName: 'Sucursal Centro',
+      pharmacyId: FIXTURE_IDS.farmaciaAndina,
+      pharmacyName: 'Farmacia Andina',
+      items: [
+        {
+          productId: FIXTURE_IDS.productoAmoxicilina,
+          productCode: 'AMX-500-CAP',
+          brandName: 'Amoxil',
+          genericName: 'Amoxicilina',
+          strengthText: '500 mg',
+          packageSizeText: 'Caja x 21 cápsulas',
+          medication: { code: 'MESH-AMOX', display: 'Amoxicilina' },
+          requiresPrescription: true,
+          unitAmount: '68.00',
+          patientAmount: '68.00',
+          currency: { code: 'BOB', display: 'Boliviano' },
+          priceListCode: 'PUBLICO-2026',
+        },
+      ],
+      count: 1,
+    });
+
+    expect(requierePrescripcion).toBe(true);
+    expect(unitAmount).toBe('68.00');
+  });
 });

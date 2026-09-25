@@ -104,8 +104,9 @@ solicitud.
 (`mock.agenda.reservas`), que es de la pestaña. Para que la médica vea lo que
 reservó la paciente hay que cerrar sesión y entrar en **la misma pestaña**. Una
 pestaña o un navegador nuevos empiezan con la maqueta limpia. Los cupos no se
-guardan: después de F5, el cupo reservado vuelve a ofrecerse aunque la reserva
-siga ahí.
+guardan: se regeneran en cada carga con un id por **fecha** (no por distancia a
+hoy, que al día siguiente los desenganchaba de sus reservas) y su capacidad
+libre se recalcula desde las reservas guardadas.
 
 ### Escenario A — la paciente pide turno con la médica, y la médica lo ve
 

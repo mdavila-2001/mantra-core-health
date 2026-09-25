@@ -86,6 +86,38 @@ describe('Documento de receta', () => {
     expect(textoDe(bloquesDeReceta({ ...RECETA, medicamentos: [] }))).toContain('Sin medicamentos');
   });
 
+  /* ---- C5: la sección "Diagnóstico" nunca sale vacía ------------------------ */
+
+  it('C5: con un diagnóstico confirmado, dice "Diagnóstico: <nombre>"', () => {
+    const texto = textoDe(
+      bloquesDeReceta({
+        ...RECETA,
+        porQueEs: { tipo: 'diagnostico', texto: 'Faringitis aguda' },
+      }),
+    );
+
+    expect(texto).toContain('Diagnóstico');
+    expect(texto).toContain('Faringitis aguda');
+  });
+
+  it('C5: con un motivo escrito, dice "Motivo: <texto>"', () => {
+    const texto = textoDe(
+      bloquesDeReceta({
+        ...RECETA,
+        porQueEs: { tipo: 'motivo', texto: 'Control de síntomas' },
+      }),
+    );
+
+    expect(texto).toContain('Motivo');
+    expect(texto).toContain('Control de síntomas');
+  });
+
+  it('C5: sin `porQueEs` (pendiente de integración), la sección no queda vacía ni inventa un dato', () => {
+    const { porQueEs: _sinUsar, ...sinPorQueEs } = RECETA;
+
+    expect(textoDe(bloquesDeReceta(sinPorQueEs))).toContain('Sin indicación registrada');
+  });
+
   it('los datos que faltan salen como no registrados, nunca como hueco', () => {
     const texto = textoDe(
       bloquesDeReceta({ ...RECETA, paciente: { nombre: '' }, profesional: { nombre: '' } }),

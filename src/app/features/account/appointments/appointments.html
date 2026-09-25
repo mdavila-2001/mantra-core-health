@@ -185,6 +185,21 @@
                   <p class="turnos__detalle-agenda">{{ turno.agenda }}</p>
                 }
                 <app-badge [variant]="turno.tono">{{ turno.estado }}</app-badge>
+                <!-- C4 · un turno que la persona no pidió necesita decir de
+                     dónde salió, o se lee como un error de la aplicación. -->
+                @if (turno.esReconsulta) {
+                  <app-badge variant="secondary" data-testid="mis-citas-reconsulta-sello">
+                    Reconsulta
+                  </app-badge>
+                  <p class="turnos__reconsulta">
+                    @if (turno.reconsultaDe; as origen) {
+                      Tu médico te citó de nuevo por la consulta del
+                      {{ origen | date: "d 'de' MMMM" }}.
+                    } @else {
+                      Tu médico te citó de nuevo por una consulta anterior.
+                    }
+                  </p>
+                }
                 @if (turno.motivo !== '') {
                   <p class="turnos__motivo">Motivo de consulta: {{ turno.motivo }}</p>
                 }
@@ -276,6 +291,13 @@
                         </div>
                         <div class="turnos__acciones">
                           <app-badge [variant]="turno.tono">{{ turno.estado }}</app-badge>
+                          <!-- C4 · el mismo sello que en el detalle: la lista es
+                               donde la mayoría mira sus turnos. -->
+                          @if (turno.esReconsulta) {
+                            <app-badge variant="secondary" data-testid="mis-citas-reconsulta-sello">
+                              Reconsulta
+                            </app-badge>
+                          }
                           @if (esCancelable(turno)) {
                             <button
                               app-button
@@ -294,6 +316,20 @@
                             </button>
                           }
                         </div>
+                        @if (turno.esReconsulta) {
+                          <!-- La respuesta a «¿y este turno que yo no pedí?».
+                               Sin la fecha del origen —aquélla pudo quedar sin
+                               horario— la frase cambia entera en vez de quedar
+                               con un hueco. -->
+                          <p class="turnos__reconsulta" data-testid="mis-citas-reconsulta-frase">
+                            @if (turno.reconsultaDe; as origen) {
+                              Tu médico te citó de nuevo por la consulta del
+                              {{ origen | date: "d 'de' MMMM" }}.
+                            } @else {
+                              Tu médico te citó de nuevo por una consulta anterior.
+                            }
+                          </p>
+                        }
                         @if (turno.motivo !== '') {
                           <p class="turnos__motivo">{{ turno.motivo }}</p>
                         }

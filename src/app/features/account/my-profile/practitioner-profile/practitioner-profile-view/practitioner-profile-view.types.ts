@@ -36,7 +36,6 @@ export interface FormacionVisible {
 export interface EspecialidadVisible {
   readonly id: string;
   readonly nombre: string;
-  readonly principal: boolean;
   readonly certificada: boolean;
   readonly alcance: string;
   readonly desde: Date | null;
@@ -237,8 +236,6 @@ export interface DatosPersonalesVisibles {
    * Vacío es «no lo declaró»: la ficha no dibuja el renglón.
    */
   readonly celularPersonal: string;
-  readonly celularTrabajo: string;
-  readonly fijoTrabajo: string;
   readonly correoPersonal: string;
   /** La calle del domicilio. El municipio sigue en `domicilio`. */
   readonly direccion: string;

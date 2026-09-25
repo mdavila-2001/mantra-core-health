@@ -21,7 +21,6 @@ import type {
   PracticeSite,
 } from '../../../../core/data-access/practice-sites/practice-sites.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
-import { FilesClient } from '../../../../core/data-access/files/files.client';
 import type {
   LinkableOrganization,
   PractitionerAffiliation,
@@ -47,7 +46,6 @@ import { RowActions } from '../../../../shared/components/molecules/row-actions/
 import type { RowAction } from '../../../../shared/components/molecules/row-actions/row-actions.types';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
-import { FileInput } from '../../../../shared/components/molecules/file-input/file-input';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { AppMap } from '../../../../shared/components/organisms/map/map';
@@ -132,7 +130,6 @@ import { Pagination } from '../../../../shared/components/molecules/pagination/p
     DatePicker,
     DatePipe,
     DecimalPipe,
-    FileInput,
     FilterBar,
     FormField,
     Input,
@@ -156,7 +153,6 @@ export class WorkHistory implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
   private readonly dialogs = inject(DialogService);
-  private readonly files = inject(FilesClient);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
 
@@ -683,12 +679,7 @@ export class WorkHistory implements OnInit {
   }
 
   private async confirmarDescarteYCerrarAltaDeVinculo(): Promise<void> {
-    const confirmado = await this.dialogs.confirm({
-      title: '¿Descartar los cambios?',
-      message: 'Lo que escribiste en este vínculo no se va a guardar.',
-      confirmLabel: 'Descartar',
-      cancelLabel: 'Seguir editando',
-    });
+    const confirmado = await this.dialogs.confirmarDescarte();
     if (confirmado) {
       this.cerrarAltaDeVinculo();
     }
@@ -916,7 +907,14 @@ export class WorkHistory implements OnInit {
         this.added.emit();
       },
       error: (error: unknown) => {
-        this.registro.set(errorToViewState<null>(error));
+        const estado = errorToViewState<null>(error);
+        this.registro.set(estado);
+        // Ese error se lee dentro del modal del alta, que al retirar está
+        // cerrado: sin el aviso, un retiro fallido no diría nada.
+        this.toasts.error(
+          mensajeDe(estado) ?? 'No pudimos retirarlo. Probá de nuevo.',
+          'No se retiró el vínculo',
+        );
       },
     });
   }
@@ -1019,12 +1017,7 @@ export class WorkHistory implements OnInit {
   }
 
   private async confirmarDescarteYCerrarSede(): Promise<void> {
-    const confirmado = await this.dialogs.confirm({
-      title: '¿Descartar los cambios?',
-      message: 'Lo que escribiste en este consultorio no se va a guardar.',
-      confirmLabel: 'Descartar',
-      cancelLabel: 'Seguir editando',
-    });
+    const confirmado = await this.dialogs.confirmarDescarte();
     if (confirmado) {
       this.cerrarAltaDeSede();
     }
@@ -1495,60 +1488,17 @@ export class WorkHistory implements OnInit {
   /* -- Historial laboral como tabla (H4.S3, ADR-0015, D-09) ----------------
    *
    * `layout="tabla"`: mismas cinco reglas que «Dónde atiendo» — barra,
-   * paginación en cliente, modal con confirmación. Lo que NO es igual es la
-   * persistencia de editar/retirar/adjuntar: `profiles.client.ts` sólo
-   * expone `listAffiliations`/`addAffiliation` (verificado por código, no
-   * supuesto). No hay PATCH ni DELETE de afiliaciones, y el tipo
-   * `PractitionerAffiliation` no tiene `fileId` (HALL-E3, Q-9). El manejador
-   * que los agregaría puede vivir en `profiles.handlers.ts`, que es de Itzan
-   * y no está entre mis archivos reservados.
+   * paginación en cliente, modal con confirmación. Corregir el cargo y
+   * retirar un vínculo van al servidor con `updateAffiliation` y
+   * `removeAffiliation`, los mismos que usa la línea de tiempo.
    *
-   * Regla 65, obligatoria: se simula el contrato en tres niveles en vez de
-   * quedar `BLOQUEADO`. El archivo SÍ se sube de verdad —mismo
-   * `FilesClient.upload()` que ya usa el QR bancario y las credenciales del
-   * perfil (`DOCUMENT`/`PHI`, mismo criterio que `practitioner-profile-edit`
-   * para documentos profesionales)—; lo que es un doble es sólo el VÍNCULO
-   * entre esa afiliación y el archivo, y la edición de cargo: viven en un
-   * mapa en memoria de este componente, no en el servidor. Recargar la
-   * página los pierde — se declara así en el `REPORTE.md`, nunca como
-   * `VERIFIED` a secas.
+   * La tabla no ofrece adjunto: un vínculo laboral no tiene dónde guardar un
+   * archivo. No hay columna en `profiles.practitioner_affiliations`, ni
+   * campo en el DTO de la API ni en `PractitionerAffiliation` /
+   * `UpdatePractitionerAffiliation`, y `common.file_links` no acepta una
+   * afiliación como dueña. Guardado sólo en esta pantalla, el adjunto se
+   * perdía al recargar; vuelve cuando el contrato lo tenga.
    */
-
-  /** Cargo y adjunto editados localmente, por id de afiliación. */
-  private readonly edicionesLocalesDeAfiliacion = signal<
-    ReadonlyMap<string, { readonly roleTitle: string | null; readonly fileId: string | null }>
-  >(new Map());
-
-  /** Afiliaciones retiradas sólo en este componente (sin DELETE real). */
-  private readonly idsRetiradosLocalmente = signal<ReadonlySet<string>>(new Set());
-
-  /**
-   * El historial tal como se ve en la tabla: datos reales del servidor más
-   * las ediciones locales superpuestas, y sin las retiradas localmente.
-   *
-   * **Nivel inválido del doble**: si `afiliaciones()` cambia (se relee del
-   * servidor) y un id editado localmente ya no está, el mapa lo sigue
-   * teniendo pero `.get()` simplemente no encuentra fila a la que
-   * aplicarlo — no rompe, no lanza, el dato local queda huérfano y sin
-   * efecto. Es el comportamiento correcto para un doble: no inventa una fila
-   * que el servidor no mandó.
-   */
-  protected readonly afiliacionesEnTabla = computed<
-    readonly (PractitionerAffiliation & { readonly fileId: string | null })[]
-  >(() => {
-    const ediciones = this.edicionesLocalesDeAfiliacion();
-    const retirados = this.idsRetiradosLocalmente();
-    return this.afiliaciones()
-      .filter((afiliacion) => !retirados.has(afiliacion.id))
-      .map((afiliacion) => {
-        const edicion = ediciones.get(afiliacion.id);
-        return {
-          ...afiliacion,
-          roleTitle: edicion === undefined ? afiliacion.roleTitle : edicion.roleTitle,
-          fileId: edicion?.fileId ?? null,
-        };
-      });
-  });
 
   protected readonly busquedaHistorial = signal('');
   protected readonly paginaHistorial = signal(1);
@@ -1557,9 +1507,9 @@ export class WorkHistory implements OnInit {
   protected readonly historialFiltrado = computed(() => {
     const termino = normalizarTexto(this.busquedaHistorial());
     if (termino === '') {
-      return this.afiliacionesEnTabla();
+      return this.afiliaciones();
     }
-    return this.afiliacionesEnTabla().filter((afiliacion) => {
+    return this.afiliaciones().filter((afiliacion) => {
       const institucion = normalizarTexto(afiliacion.organizationName);
       const cargo = normalizarTexto(afiliacion.roleTitle ?? '');
       return institucion.includes(termino) || cargo.includes(termino);
@@ -1571,9 +1521,9 @@ export class WorkHistory implements OnInit {
     return this.historialFiltrado().slice(inicio, inicio + this.tamanoPaginaHistorial());
   });
 
-  protected readonly estadoHistorialTabla = computed<
-    ViewState<readonly (PractitionerAffiliation & { readonly fileId: string | null })[]>
-  >(() => ready(this.historialPaginado()));
+  protected readonly estadoHistorialTabla = computed<ViewState<readonly PractitionerAffiliation[]>>(
+    () => ready(this.historialPaginado()),
+  );
 
   protected onFiltrosHistorialChanged(activos: Readonly<Record<string, string>>): void {
     this.busquedaHistorial.set(activos['q'] ?? '');
@@ -1581,34 +1531,29 @@ export class WorkHistory implements OnInit {
   }
 
   private readonly celdaInstitucionHistorial = viewChild.required<
-    TemplateRef<{ $implicit: PractitionerAffiliation & { readonly fileId: string | null } }>
+    TemplateRef<{ $implicit: PractitionerAffiliation }>
   >('celdaInstitucionHistorial');
   private readonly celdaPeriodoHistorial =
-    viewChild.required<
-      TemplateRef<{ $implicit: PractitionerAffiliation & { readonly fileId: string | null } }>
-    >('celdaPeriodoHistorial');
-  private readonly celdaAdjuntoHistorial =
-    viewChild.required<
-      TemplateRef<{ $implicit: PractitionerAffiliation & { readonly fileId: string | null } }>
-    >('celdaAdjuntoHistorial');
+    viewChild.required<TemplateRef<{ $implicit: PractitionerAffiliation }>>(
+      'celdaPeriodoHistorial',
+    );
   private readonly celdaAccionesHistorial =
-    viewChild.required<
-      TemplateRef<{ $implicit: PractitionerAffiliation & { readonly fileId: string | null } }>
-    >('celdaAccionesHistorial');
+    viewChild.required<TemplateRef<{ $implicit: PractitionerAffiliation }>>(
+      'celdaAccionesHistorial',
+    );
 
-  protected readonly columnasHistorial = computed<
-    readonly ColumnDef<PractitionerAffiliation & { readonly fileId: string | null }>[]
-  >(() => [
-    {
-      key: 'organizationName',
-      header: 'Institución',
-      priority: 1,
-      cell: this.celdaInstitucionHistorial(),
-    },
-    { key: 'startDate', header: 'Período', priority: 2, cell: this.celdaPeriodoHistorial() },
-    { key: 'fileId', header: 'Adjunto', priority: 2, cell: this.celdaAdjuntoHistorial() },
-    { key: 'acciones', header: 'Acciones', priority: 1, cell: this.celdaAccionesHistorial() },
-  ]);
+  protected readonly columnasHistorial = computed<readonly ColumnDef<PractitionerAffiliation>[]>(
+    () => [
+      {
+        key: 'organizationName',
+        header: 'Institución',
+        priority: 1,
+        cell: this.celdaInstitucionHistorial(),
+      },
+      { key: 'startDate', header: 'Período', priority: 2, cell: this.celdaPeriodoHistorial() },
+      { key: 'acciones', header: 'Acciones', priority: 1, cell: this.celdaAccionesHistorial() },
+    ],
+  );
 
   protected readonly porIdDeAfiliacion = (afiliacion: PractitionerAffiliation): string =>
     afiliacion.id;
@@ -1628,18 +1573,19 @@ export class WorkHistory implements OnInit {
       return;
     }
     if (code === 'retirar') {
-      void this.retirarAfiliacionLocal(afiliacion);
+      void this.retirarVinculo(afiliacion);
     }
   }
 
-  /* -- Edición local de una afiliación (cargo + adjunto) -------------------- */
+  /* -- Corrección de una afiliación desde la tabla (el cargo) --------------- */
 
   protected readonly afiliacionEnEdicion = signal<PractitionerAffiliation | null>(null);
   protected readonly edicionAfiliacionAbierta = signal(false);
   protected readonly cargoEnEdicion = signal('');
-  protected readonly archivoAdjunto = signal<readonly File[]>([]);
-  protected readonly subiendoAdjunto = signal(false);
-  protected readonly errorDeAdjunto = signal<string | null>(null);
+  /** Mientras viaja el `PATCH` del cargo. */
+  protected readonly guardandoAfiliacion = signal(false);
+  /** Por qué no se guardó la corrección; se lee dentro del modal. */
+  protected readonly errorDeEdicionDeAfiliacion = signal<string | null>(null);
 
   private borradorOriginalDeAfiliacion: { cargo: string } | null = null;
 
@@ -1647,17 +1593,13 @@ export class WorkHistory implements OnInit {
     if (this.borradorOriginalDeAfiliacion === null) {
       return false;
     }
-    return (
-      this.cargoEnEdicion().trim() !== this.borradorOriginalDeAfiliacion.cargo ||
-      this.archivoAdjunto().length > 0
-    );
+    return this.cargoEnEdicion().trim() !== this.borradorOriginalDeAfiliacion.cargo;
   });
 
   protected abrirEdicionDeAfiliacion(afiliacion: PractitionerAffiliation): void {
     this.afiliacionEnEdicion.set(afiliacion);
     this.cargoEnEdicion.set(afiliacion.roleTitle ?? '');
-    this.archivoAdjunto.set([]);
-    this.errorDeAdjunto.set(null);
+    this.errorDeEdicionDeAfiliacion.set(null);
     this.borradorOriginalDeAfiliacion = { cargo: afiliacion.roleTitle ?? '' };
     this.edicionAfiliacionAbierta.set(true);
   }
@@ -1671,12 +1613,7 @@ export class WorkHistory implements OnInit {
   }
 
   private async confirmarDescarteYCerrarAfiliacion(): Promise<void> {
-    const confirmado = await this.dialogs.confirm({
-      title: '¿Descartar los cambios?',
-      message: 'Lo que corregiste en este vínculo no se va a guardar.',
-      confirmLabel: 'Descartar',
-      cancelLabel: 'Seguir editando',
-    });
+    const confirmado = await this.dialogs.confirmarDescarte();
     if (confirmado) {
       this.cerrarEdicionDeAfiliacion();
     }
@@ -1687,10 +1624,14 @@ export class WorkHistory implements OnInit {
     this.afiliacionEnEdicion.set(null);
     this.borradorOriginalDeAfiliacion = null;
     this.cargoEnEdicion.set('');
-    this.archivoAdjunto.set([]);
-    this.errorDeAdjunto.set(null);
+    this.guardandoAfiliacion.set(false);
+    this.errorDeEdicionDeAfiliacion.set(null);
   }
 
+  /**
+   * Guarda la corrección de un vínculo de la tabla, con confirmación. Sólo
+   * se llega con el cargo cambiado (`hayCambiosEnAfiliacion`).
+   */
   protected async guardarEdicionDeAfiliacion(): Promise<void> {
     const afiliacion = this.afiliacionEnEdicion();
     if (afiliacion === null || !this.hayCambiosEnAfiliacion()) {
@@ -1706,58 +1647,24 @@ export class WorkHistory implements OnInit {
       return;
     }
 
-    const archivo = this.archivoAdjunto()[0];
-    if (archivo === undefined) {
-      this.aplicarEdicionLocal(afiliacion.id, null);
-      this.cerrarEdicionDeAfiliacion();
-      return;
-    }
-
-    this.subiendoAdjunto.set(true);
-    this.errorDeAdjunto.set(null);
-    this.files.upload(archivo, 'DOCUMENT', 'PHI').subscribe({
-      next: (subido) => {
-        this.subiendoAdjunto.set(false);
-        this.aplicarEdicionLocal(afiliacion.id, subido.id);
-        this.toasts.success('Quedó guardado en este vínculo.', 'Historial actualizado');
-        this.cerrarEdicionDeAfiliacion();
-      },
-      error: () => {
-        this.subiendoAdjunto.set(false);
-        this.errorDeAdjunto.set('No pudimos subir el archivo. Probá de nuevo.');
-      },
-    });
-  }
-
-  private aplicarEdicionLocal(id: string, fileIdNuevo: string | null): void {
+    this.guardandoAfiliacion.set(true);
+    this.errorDeEdicionDeAfiliacion.set(null);
     const cargo = this.cargoEnEdicion().trim();
-    this.edicionesLocalesDeAfiliacion.update((mapa) => {
-      const actual = mapa.get(id);
-      const copia = new Map(mapa);
-      copia.set(id, {
-        roleTitle: cargo === '' ? null : cargo,
-        fileId: fileIdNuevo ?? actual?.fileId ?? null,
-      });
-      return copia;
+    this.profiles.updateAffiliation(afiliacion.id, { roleTitle: cargo }).subscribe({
+      next: () => {
+        this.toasts.success('Los cambios ya figuran en tu historial.', 'Vínculo corregido');
+        this.cerrarEdicionDeAfiliacion();
+        this.cargar();
+        this.added.emit();
+      },
+      error: (error: unknown) => {
+        this.guardandoAfiliacion.set(false);
+        this.errorDeEdicionDeAfiliacion.set(
+          mensajeDe(errorToViewState<null>(error)) ??
+            'No pudimos guardar los cambios. Probá de nuevo.',
+        );
+      },
     });
-  }
-
-  /** Retira una afiliación del historial (doble local, con confirmación — D-04). */
-  private async retirarAfiliacionLocal(afiliacion: PractitionerAffiliation): Promise<void> {
-    const confirmado = await this.dialogs.confirm({
-      title: 'Retirar del historial',
-      message: `¿Retirar el vínculo con «${afiliacion.organizationName}» de tu historial laboral?`,
-      confirmLabel: 'Retirar',
-      cancelLabel: 'Cancelar',
-    });
-    if (!confirmado) {
-      return;
-    }
-    this.idsRetiradosLocalmente.update((ids) => new Set([...ids, afiliacion.id]));
-    this.toasts.success(
-      'Ya no figura en tu historial (guardado en este dispositivo).',
-      'Vínculo retirado',
-    );
   }
 
   private cargar(): void {

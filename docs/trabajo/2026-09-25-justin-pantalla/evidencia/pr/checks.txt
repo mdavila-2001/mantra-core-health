@@ -1,0 +1,24 @@
+$ gh pr checks 673
+dependencias	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/36115610659/job/108008875447	
+e2e	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/36115610659/job/108008875569	
+verificar	pending	0	https://github.com/mdavila-2001/mantra-core-health/actions/runs/36115610659/job/108008875245	
+
+$ gh run view 36115610659 --json status,jobs
+status queued | started 2026-09-25T08:55:58Z | verificar/dependencias/e2e: queued, 0 s transcurridos
+
+$ gh run list --limit 5   ← ¿es sólo mi PR?
+2026-09-25T09:06:10Z      queued             justin/farmacia-tienda-y-receta-2026-09-25
+2026-09-25T09:04:31Z      queued             claude/clinica-c4-reconsulta
+2026-09-25T09:00:43Z      queued             claude/clinica-c6-historia-paciente
+2026-09-25T08:55:58Z      queued             justin/carga-masiva-pantalla-2026-09-25
+2026-09-25T08:51:19Z   completed  cancelled  claude/clinica-c4-reconsulta
+
+=== CLASIFICACIÓN: EXTERNAL (regla 80.4) ===
+Las CUATRO corridas más recientes del repo están queued sin arrancar, de cuatro ramas
+distintas y de dos personas distintas: no hay runner tomando los trabajos. No es mi PR.
+Coincide con lo que el propio CLAUDE.md del repo declara: «El CI propio está caído; los
+check-*.mjs se corren a mano».
+
+Por eso mergeStateStatus dice UNSTABLE: los checks están PENDIENTES, ninguno en fail.
+mergeable = MERGEABLE, isDraft = false, base = mockup. Regla 35.2.4: la microtarea que
+entrega los checks (H6.S2.M4) queda A MEDIAS con esta salida, no se declara verde.

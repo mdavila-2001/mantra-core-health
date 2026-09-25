@@ -467,6 +467,32 @@
   }
 </ng-template>
 
+<!-- C4 · el motivo, y el sello cuando la cita es una reconsulta.
+
+     El sello va JUNTO AL MOTIVO y no en la columna de estado: una reconsulta
+     confirmada sigue estando confirmada, y pisar ese sello borraría el estado
+     del ciclo. Lo que agrega es de dónde salió, que es información del motivo.
+
+     «De la cita del …» se omite cuando el origen quedó sin horario: decir «de
+     la cita del —» sería peor que no decir nada. -->
+<ng-template #celdaMotivo let-cita>
+  <span class="agenda__motivo">{{ cita.motivo }}</span>
+  @if (cita.esReconsulta) {
+    <app-badge
+      class="agenda__reconsulta-sello"
+      variant="secondary"
+      size="sm"
+      data-testid="cita-reconsulta-sello"
+      >Reconsulta</app-badge
+    >
+    @if (cita.reconsultaDe) {
+      <span class="agenda__reconsulta-origen">
+        de la cita del {{ cita.reconsultaDe | date: "d 'de' MMMM" }}
+      </span>
+    }
+  }
+</ng-template>
+
 <ng-template #celdaFranja let-cupo>
   <span class="agenda__cuando">{{ cupo.desde | date: 'EEEE d MMM, HH:mm' }}</span>
   <span class="agenda__hasta">hasta {{ cupo.hasta | date: 'HH:mm' }}</span>
@@ -570,7 +596,7 @@
   </div>
 </ng-template>
 
-<ng-template #celdaAccionesCita let-cita>
+<ng-template #celdaAccionesCita let-cita let-inline="inline">
   <!-- C-06 (2026-09-20) · «botón = icono + texto; las acciones de una tabla, en
        un desplegable».
 
@@ -586,7 +612,9 @@
        vivir en la fila y dentro del menú, y los datos sí. -->
   <app-row-actions
     class="agenda__acciones"
-    [actions]="accionesDe(cita)"
+    [class.agenda__acciones--detalle]="inline ?? false"
+    [actions]="inline ? accionesDelDetalle(cita) : accionesDe(cita)"
+    [inline]="inline ?? false"
     [fila]="filaDe(cita)"
     (actionSelected)="ejecutarAccionDeFila(cita, $event)"
   />
@@ -596,10 +624,10 @@
      Consultas, sobre la cita traducida igual que una fila. Así Ver detalle,
      Aceptar, Iniciar, Llegó, Demora, Mover y Cancelar son idénticos en las dos
      vistas y no hay una segunda copia que se desfase (propietario, 18/09). -->
-<ng-template #accionesDeLaCitaDelDia let-booking>
+<ng-template #accionesDeLaCitaDelDia let-booking let-inline="inline">
   <ng-container
     [ngTemplateOutlet]="celdaAccionesCita"
-    [ngTemplateOutletContext]="{ $implicit: citaDelDia(booking) }"
+    [ngTemplateOutletContext]="{ $implicit: citaDelDia(booking), inline: inline ?? false }"
   />
 </ng-template>
 

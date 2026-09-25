@@ -26,6 +26,7 @@ import { DataTable } from '@shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '@shared/components/organisms/data-table/data-table.types';
 import type { FilterDef } from '@shared/components/organisms/filter-bar/filter-bar';
 import { FilterBar } from '@shared/components/organisms/filter-bar/filter-bar';
+import { Pagination } from '@shared/components/molecules/pagination/pagination';
 import { PageHeader } from '@shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
 import { PROGRESS_NOTES_PDF_DOWNLOADER } from '@shared/utils/progress-notes-pdf/progress-notes-pdf';
@@ -70,7 +71,7 @@ const CODIGOS_COMPLETADA = new Set(['BOOKING_COMPLETED', 'BOOKING_FULFILLED']);
 const CODIGO_EN_CURSO = 'BOOKING_IN_PROGRESS';
 
 /** Una atención registrada, ya resuelta para pintar. */
-export interface AtencionRegistrada {
+export interface AttendedEncounter {
   /** El id de la reserva. Es la identidad de la fila. */
   readonly id: string;
   readonly profileId: string;
@@ -88,7 +89,7 @@ export interface AtencionRegistrada {
 }
 
 /** Una nota de la atención, ya lista para leerse. */
-export interface NotaDeLaAtencion {
+export interface MedicalNoteRow {
   readonly id: string;
   readonly motivo: string | null;
   readonly subjetivo: string | null;
@@ -100,17 +101,26 @@ export interface NotaDeLaAtencion {
 }
 
 /**
- * **Evoluciones** — la sexta de las ocho opciones del panel del médico (§4.H
- * del plan de UX del 22/08/2026).
+ * **Notas médicas** (rótulo anterior retirado por C7, 2026-09-25) — la sexta
+ * de las ocho opciones del panel del médico (§4.H del plan de UX del
+ * 22/08/2026).
  *
  * ## Una fila por atención, no por persona
  *
  * Antes agrupaba por paciente y cada fila llevaba al expediente, o sea al
  * **mismo destino** que «Ver expediente» del Archivo clínico: dos secciones
  * distintas que terminaban en la misma pantalla, y ninguna de las dos mostraba
- * una evolución. La pregunta que trae acá no es «a quién atendí» —eso lo
+ * una nota médica. La pregunta que trae acá no es «a quién atendí» —eso lo
  * contesta la agenda— sino «qué vengo escribiendo», y eso se contesta con una
  * fila por **atención** y con lo que se escribió en cada una.
+ *
+ * ## «Una fila por nota», pedido y no logrado esta noche (C7, 2026-09-25)
+ *
+ * El pedido de homogeneización pide una fila por **nota**, no por atención.
+ * No se pudo: no existe lectura de colección (ver el punto siguiente), así que
+ * no hay forma de traer las notas de un período sin antes saber a qué
+ * atenciones pertenecen. Se mantiene la fila por atención de hoy — ver
+ * `PLAN.md` de este carril.
  *
  * ## Lo que todavía falta del backend, dicho de frente
  *
@@ -118,8 +128,8 @@ export interface NotaDeLaAtencion {
  * —se escriben y se versionan— pero **no tiene lectura de colección**: no
  * existe `GET /charts/notes?practitionerId&from&to`. Así que la lista sale de
  * `GET /scheduling/bookings`, que es lo que sí se puede leer, y el texto de
- * cada evolución se trae **bajo demanda** al abrir una fila: una petición por
- * clic contra `GET /charts/patients/:id/chart`, no N al cargar la pantalla.
+ * cada nota se trae **bajo demanda** al abrir una fila: una petición por clic
+ * contra `GET /charts/patients/:id/chart`, no N al cargar la pantalla.
  *
  * Dentro de esa lectura, las notas de *esa* atención se reconocen por su día:
  * el contrato no ata una nota a una reserva, sólo a un encuentro
@@ -137,6 +147,7 @@ export interface NotaDeLaAtencion {
     FilterBar,
     Link,
     PageHeader,
+    Pagination,
     RouterLink,
     ViewStateHost,
   ],
@@ -171,7 +182,7 @@ export class ProgressNotes {
   private readonly filtros = signal<Readonly<Record<string, string>>>({});
 
   /** Todas las atenciones del período, sin filtrar. */
-  protected readonly atenciones = computed<readonly AtencionRegistrada[]>(() => {
+  protected readonly atenciones = computed<readonly AttendedEncounter[]>(() => {
     const actual = this.estado();
     return actual.status === 'ready' ? aAtenciones(actual.data, this.etiquetas()) : [];
   });
@@ -186,34 +197,43 @@ export class ProgressNotes {
   /* ---- la lista, en la tabla del sistema (refactor UX) -------------------
      Eran 64 tarjetas grandes y casi vacías: la pantalla medía 12 000 px en
      escritorio y 16 000 en el teléfono. Una tabla se escanea; la fila entera
-     abre la evolución, y el botón explícito se conserva. */
+     abre la nota, y el botón explícito se conserva. */
 
   private readonly celdaCuando =
-    viewChild.required<TemplateRef<{ $implicit: AtencionRegistrada }>>('celdaCuando');
+    viewChild.required<TemplateRef<{ $implicit: AttendedEncounter }>>('celdaCuando');
   private readonly celdaEstado =
-    viewChild.required<TemplateRef<{ $implicit: AtencionRegistrada }>>('celdaEstado');
+    viewChild.required<TemplateRef<{ $implicit: AttendedEncounter }>>('celdaEstado');
   private readonly celdaAccion =
-    viewChild.required<TemplateRef<{ $implicit: AtencionRegistrada }>>('celdaAccion');
+    viewChild.required<TemplateRef<{ $implicit: AttendedEncounter }>>('celdaAccion');
 
-  protected readonly filasDeTabla = computed<ViewState<readonly AtencionRegistrada[]>>(() =>
-    ready(this.visibles()),
+  /** La página local que se muestra (ADR-0015: lista ya entera en memoria). */
+  protected readonly pagina = signal(1);
+  protected readonly tamanoPagina = signal(10);
+
+  protected readonly visiblesPagina = computed<readonly AttendedEncounter[]>(() => {
+    const inicio = (this.pagina() - 1) * this.tamanoPagina();
+    return this.visibles().slice(inicio, inicio + this.tamanoPagina());
+  });
+
+  protected readonly filasDeTabla = computed<ViewState<readonly AttendedEncounter[]>>(() =>
+    ready(this.visiblesPagina()),
   );
 
-  protected readonly columnas = computed<readonly ColumnDef<AtencionRegistrada>[]>(() => [
+  protected readonly columnas = computed<readonly ColumnDef<AttendedEncounter>[]>(() => [
     { key: 'cuando', header: 'Fecha', priority: 1, cell: this.celdaCuando() },
     { key: 'paciente', header: 'Paciente', priority: 1 },
     { key: 'motivo', header: 'Motivo', priority: 2 },
     { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
     { key: 'tipo', header: 'Tipo de cita', priority: 3 },
     { key: 'canal', header: 'Canal', priority: 3 },
-    { key: 'accion', header: 'Evolución', priority: 1, cell: this.celdaAccion() },
+    { key: 'accion', header: 'Nota', priority: 1, cell: this.celdaAccion() },
   ]);
 
-  protected readonly porId = (fila: AtencionRegistrada): string => fila.id;
+  protected readonly porId = (fila: AttendedEncounter): string => fila.id;
   /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
-  protected readonly nombreDeFila = (fila: AtencionRegistrada): string => fila.paciente;
+  protected readonly nombreDeFila = (fila: AttendedEncounter): string => fila.paciente;
 
-  protected readonly visibles = computed<readonly AtencionRegistrada[]>(() => {
+  protected readonly visibles = computed<readonly AttendedEncounter[]>(() => {
     const filtros = this.filtros();
     const busqueda = (filtros['q'] ?? '').trim().toLowerCase();
     return this.atenciones().filter((fila) => {
@@ -294,10 +314,10 @@ export class ProgressNotes {
   /* ── El detalle de una atención ─────────────────────────────────────────── */
 
   /** La fila cuyo detalle está abierto, o `null`. */
-  protected readonly abierta = signal<AtencionRegistrada | null>(null);
+  protected readonly abierta = signal<AttendedEncounter | null>(null);
 
   /** Las notas de esa atención, mientras el modal está abierto. */
-  protected readonly notas = signal<ViewState<readonly NotaDeLaAtencion[]>>(loading());
+  protected readonly notas = signal<ViewState<readonly MedicalNoteRow[]>>(loading());
 
   /**
    * Las notas a pintar. Vacío en cualquier estado que no sea `ready`.
@@ -306,7 +326,7 @@ export class ProgressNotes {
    * una de sus ramas tiene `data`, y `tsc` no revisa las plantillas —el error
    * aparecería recién al compilar, como un 404 de ruta.
    */
-  protected readonly notasVisibles = computed<readonly NotaDeLaAtencion[]>(() => {
+  protected readonly notasVisibles = computed<readonly MedicalNoteRow[]>(() => {
     const actual = this.notas();
     return actual.status === 'ready' ? actual.data : [];
   });
@@ -321,15 +341,17 @@ export class ProgressNotes {
       return;
     }
     this.dias.set(dias);
+    this.pagina.set(1);
     this.cargar();
   }
 
   protected fijarFiltros(valores: Readonly<Record<string, string>>): void {
     this.filtros.set(valores);
+    this.pagina.set(1);
   }
 
   /** Abre el detalle y recién ahí pide el expediente de esa persona. */
-  protected verEvolucion(fila: AtencionRegistrada): void {
+  protected verNota(fila: AttendedEncounter): void {
     this.abierta.set(fila);
     this.notas.set(loading());
     this.clinical.getChart(fila.profileId).subscribe({
@@ -345,11 +367,11 @@ export class ProgressNotes {
         );
       },
       error: (error: unknown) =>
-        this.notas.set(errorToViewState<readonly NotaDeLaAtencion[]>(error)),
+        this.notas.set(errorToViewState<readonly MedicalNoteRow[]>(error)),
     });
   }
 
-  protected cerrarEvolucion(): void {
+  protected cerrarNota(): void {
     this.abierta.set(null);
   }
 
@@ -479,7 +501,7 @@ function esTexto(valor: string | null | undefined): valor is string {
   return typeof valor === 'string';
 }
 
-function aNota(nota: ChartNote): NotaDeLaAtencion {
+function aNota(nota: ChartNote): MedicalNoteRow {
   return {
     id: nota.noteId,
     motivo: nota.chiefComplaintText ?? null,
@@ -524,11 +546,11 @@ function ocurrio(cita: Booking): boolean {
 export function aAtenciones(
   citas: readonly Booking[],
   etiquetas: ReadonlyMap<string, EtiquetaDeConcepto>,
-): readonly AtencionRegistrada[] {
+): readonly AttendedEncounter[] {
   const label = (id: string | undefined): string | null =>
     id === undefined ? null : (etiquetas.get(id)?.display ?? null);
 
-  const filas: AtencionRegistrada[] = [];
+  const filas: AttendedEncounter[] = [];
   for (const cita of citas) {
     if (!ocurrio(cita)) {
       continue;
