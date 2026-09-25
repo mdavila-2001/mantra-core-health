@@ -32,6 +32,15 @@
 - Qué falta exactamente: cinco viewports, claro/oscuro, con la doble revisión (regla 35) sobre las capturas finales, en el mismo pase consolidado de H3.M1.
 - Dónde quedó: `TODO` en `PLAN.md`.
 
+## Entrega — PR #682
+
+`gh pr view 682 --json ...` → `mergeable: MERGEABLE`, `mergeStateStatus: UNSTABLE`,
+`reviewDecision: ""` (evidencia literal en `evidencia/h4-pr-checks.txt`). El `UNSTABLE` es por los
+tres checks (`dependencias`, `e2e`, `verificar`) en `pending`, no en `fail` — el runner propio de CI
+está caído (memoria conocida: "El CI no corre"), no un fallo introducido por este trabajo. La entrega
+queda a un check verde/una review de distancia de `MERGEABLE` limpio; no depende de código nuevo de
+este carril.
+
 ## Pendiente
 
 | ID | Estado | Qué lo destraba |
