@@ -71,8 +71,45 @@ escribir); no se debilita el plan para evadirlo (regla 60). Salidas en
 `Omit<CartLine, 'quantity'>` porque el propio contrato separa la cantidad en un tercer parámetro con
 default `1`. A confirmar con Justin si su H3 (tienda) necesita otra forma al integrar.
 
-## H3 — Persistencia por usuario y `toDraft()` — TODO (detalle en el prompt fuente, se copia a este plan al abrir el hito)
-## H4 — El ícono en la cabecera — TODO
+## H3 — Persistencia por usuario y `toDraft()`
+**CA:** Dado un carrito con dos líneas, cuando la persona recarga o vuelve a entrar con la misma cuenta, el carrito está igual; con otra cuenta, está vacío; `toDraft(site)` produce un `BorradorDePedido` con la misma forma que `borradorDePedido()` de `where-to-buy.ts`.
+**Estado:** HECHO
+
+### H3.S1 — Persistencia
+**Estado:** HECHO
+
+| ID | Microtarea | Estado | DoD ejecutado |
+|---|---|---|---|
+| H3.S1.M1 | `cart.storage.ts`: implementación real sobre `localStorage`, clave `mantra.pharmacy.cart.<userId>`, `try/catch` | HECHO | spec "persistencia por cuenta" (4 casos) |
+| H3.S1.M2 | Persistencia en el store; cargar al cambiar de cuenta, escribir en cada cambio | HECHO | **Desvío del plan:** no es un segundo `effect()` sobre el estado (el diseño original) — se detectó una condición de carrera real: el `effect()` de carga y uno de escritura comparten el mismo primer flush, y el de carga puede correr después y pisar con el storage vacío lo que la escritura recién puso. Se resolvió con `persistir()` síncrono dentro de cada mutador (`add`/`replaceWith`/`setQuantity`/`clear`), igual que `TutorialProgressStore.guardar()`. Sin este cambio, 3 de 22 tests fallaban (`storage.datos.get(...)` volvía `undefined`); con el cambio, 22/22 en verde. No se proveyó nada en `app.config`: la factory del `InjectionToken` ya elige browser-vs-noop, igual que `TUTORIAL_STORAGE` |
+| H3.S1.M3 | SSR: sin `window` no se toca storage | HECHO | `corepack yarn build` exit 0, sin `serve:ssr` en `package.json` (no existe ese script en este repo; el build ya ejercita el bundle de servidor) |
+| H3.S1.M4 | Nota de privacidad (qué/dónde/cuándo se borra) | HECHO | JSDoc en `cart.storage.ts` §"Privacidad del carrito" |
+
+### H3.S2 — `toDraft(site)`
+**Estado:** HECHO
+
+| ID | Microtarea | Estado | DoD ejecutado |
+|---|---|---|---|
+| H3.S2.M1 | `toDraft(site)` en el store | HECHO | `typecheck` exit 0 |
+| H3.S2.M2 | Spec de igualdad estructural (con/sin stock, con/sin `requestId`) | HECHO | **Desvío del plan:** el DoD pedía comparar contra `borradorDePedido()` **importada** de `where-to-buy.ts`; se descubrió que eso viola `no-restricted-imports` del propio ESLint (`core/` nunca importa de `features/`) — confirmado corriendo `eslint` (1 error real). Se reemplazó por expectativas escritas a mano, verificadas por lectura línea a línea contra `borradorDePedido()` (`where-to-buy.ts:836-885`, mismo criterio de `disponible`/precio/`requestId`), documentado en el spec. `npx ng test --include='src/app/core/data-access/pharmacy-cart/*.spec.ts' --watch=false` → **22 passed (22)** |
+
+**Privacidad del carrito (H3.S1.M4, Q-P2):** qué se guarda — nombres de medicamentos y cantidades (dato
+de salud); dónde — `localStorage` del navegador de la persona, clave `mantra.pharmacy.cart.<userId>`;
+cuándo se borra — al vaciar, al confirmar el pedido (H5.S2) y al borrar datos del sitio desde el
+navegador. Nunca en logs ni capturas.
+## H4 — El ícono en la cabecera
+**CA:** Dado un paciente con 3 unidades en el carrito, hay un enlace a `/my-account/pharmacy/cart` con ícono `bag`, badge «3» y `aria-label` con el número y la farmacia; sin unidades no hay badge; la médica no ve el enlace.
+**Estado:** EN CURSO (falta M4: capturas — se hace en una sola pasada de Playwright junto con H5, porque `/cart` recién existe con H5 wireado)
+
+### H4.S1 — El bloque del ícono
+**Estado:** EN CURSO
+
+| ID | Microtarea | Estado | DoD ejecutado |
+|---|---|---|---|
+| H4.S1.M1 | `CartStore` inyectado en `shell-layout.ts`, `unidadesDelCarrito()` y `etiquetaCarrito()` | HECHO | `typecheck` exit 0 |
+| H4.S1.M2 | Bloque en `shell-layout.html` junto a Chats, sólo para paciente (`esPacienteDelCarrito()`) | HECHO | `shell-layout.spec.ts` "el paciente ve el carrito; la médica, no" |
+| H4.S1.M3 | Badge sin «0», `aria-hidden`, número en el `aria-label` | HECHO | `shell-layout.spec.ts` "sin unidades..." y "con 3 unidades..." — `npx ng test --include='src/app/features/shell-layout/*.spec.ts' --watch=false` → **70 passed / 1 failed** (el mismo preexistente de íconos, sin cambios) |
+| H4.S1.M4 | Capturas 375/1440 claro y oscuro, con badge | TODO | se hace junto con las de H5 (misma pantalla, un solo pase de Playwright) |
 ## H5 — La pantalla del carrito — TODO
 ## H6 — «Lugares cercanos» desaparece, con redirección — TODO
 ## H7 — Borrar el hub viejo (Ola 3, condicionado a que Justin e Itzan mergeen) — TODO

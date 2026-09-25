@@ -1,23 +1,59 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 
+import { AuthService } from '../../auth/auth.service';
+import type { AvailabilitySite } from '../pharmacy/pharmacy.types';
 import { aCentavos, aTexto } from '../pharmacy-campaigns/pharmacy-campaigns.money';
+import type { BorradorDePedido, LineaDePedido } from '../pharmacy-orders/pharmacy-orders.types';
+import { CART_STORAGE } from './cart.storage';
 import type { AddOutcome, CartLine, CartSite, CartState } from './pharmacy-cart.types';
 
 /** Lo que hace falta para agregar una línea: todo `CartLine` menos la cantidad. */
 export type NuevaLineaDeCarrito = Omit<CartLine, 'quantity'>;
 
+const CLAVE_BASE = 'mantra.pharmacy.cart';
+
 /**
- * El carrito de farmacia (Ola 0, `core/data-access/pharmacy-cart`).
+ * El carrito de farmacia (`core/data-access/pharmacy-cart`).
  *
- * En memoria por ahora: la persistencia por usuario sobre `localStorage`
- * llega en H3.S1, calcada de `TutorialProgressStore`
- * (`core/tutorials/tutorial-progress.store.ts`). Un carrito es de **una sola
- * sede**: agregar algo de otra sede no se resuelve solo — se dice
- * (`conflict`) y decide la persona, nunca el store.
+ * Persistido por cuenta sobre `localStorage` (H3.S1). La carga al cambiar de
+ * cuenta usa el mismo `effect()` que `TutorialProgressStore`
+ * (`core/tutorials/tutorial-progress.store.ts`); la escritura, en cambio,
+ * **no** es un segundo `effect()` sobre el propio estado: un `effect()` recién
+ * corre en el primer flush de cambios (el próximo `tick`), así que si algo
+ * mutara el carrito antes de ese flush, el `effect()` de carga —que sí
+ * depende sólo de `auth.userId()` y también espera al mismo flush— podría
+ * correr primero y pisar lo recién escrito con lo que hubiera en el
+ * almacenamiento (vacío). Por eso se persiste **síncronamente dentro de cada
+ * mutador** (`persistir()`), exactamente como `TutorialProgressStore.guardar()`.
+ * Un carrito es de **una sola sede**: agregar algo de otra sede no se resuelve
+ * solo — se dice (`conflict`) y decide la persona, nunca el store.
  */
 @Injectable({ providedIn: 'root' })
 export class CartStore {
+  private readonly auth = inject(AuthService);
+  private readonly storage = inject(CART_STORAGE);
+
   private readonly estado = signal<CartState | null>(null);
+
+  constructor() {
+    // Cambiar de cuenta cambia el carrito: sin esto, quien entra después ve
+    // el de quien estuvo antes en el mismo navegador — un mostrador
+    // compartido es el caso normal en una clínica.
+    effect(() => {
+      const usuario = this.auth.userId();
+      this.estado.set(this.storage.read(claveDe(usuario)));
+    });
+  }
+
+  /** Escribe (o borra) el carrito bajo la clave de la cuenta vigente, ahora mismo. */
+  private persistir(carrito: CartState | null): void {
+    const clave = claveDe(this.auth.userId());
+    if (carrito === null) {
+      this.storage.clear(clave);
+    } else {
+      this.storage.write(clave, carrito);
+    }
+  }
 
   /** El carrito activo, o `null` si no hay ninguno. */
   readonly cart = this.estado.asReadonly();
@@ -89,13 +125,17 @@ export class CartStore {
         )
       : [...lineasPrevias, { ...line, quantity }];
 
-    this.estado.set({ site, requestId, lines: lineas, updatedAt: ahora() });
+    const siguiente: CartState = { site, requestId, lines: lineas, updatedAt: ahora() };
+    this.estado.set(siguiente);
+    this.persistir(siguiente);
     return 'added';
   }
 
   /** Vacía el carrito y lo arma de nuevo con estas líneas, de esta sede. */
   replaceWith(site: CartSite, lines: readonly CartLine[], requestId: string | null): void {
-    this.estado.set({ site, requestId, lines, updatedAt: ahora() });
+    const siguiente: CartState = { site, requestId, lines, updatedAt: ahora() };
+    this.estado.set(siguiente);
+    this.persistir(siguiente);
   }
 
   /** `0` quita la línea. Si no queda ninguna, el carrito vuelve a `null`. */
@@ -108,7 +148,9 @@ export class CartStore {
       quantity <= 0
         ? actual.lines.filter((l) => l.productId !== productId)
         : actual.lines.map((l) => (l.productId === productId ? { ...l, quantity } : l));
-    this.estado.set(lineas.length === 0 ? null : { ...actual, lines: lineas, updatedAt: ahora() });
+    const siguiente = lineas.length === 0 ? null : { ...actual, lines: lineas, updatedAt: ahora() };
+    this.estado.set(siguiente);
+    this.persistir(siguiente);
   }
 
   /** Quita una línea. Si no queda ninguna, el carrito vuelve a `null`. */
@@ -119,7 +161,58 @@ export class CartStore {
   /** Vacía el carrito. */
   clear(): void {
     this.estado.set(null);
+    this.persistir(null);
   }
+
+  /**
+   * El borrador de pedido (H3.S2), revalidado contra una disponibilidad
+   * fresca de la sede — la misma forma que produce `borradorDePedido()` de
+   * `where-to-buy.ts` para "Dónde comprar mi receta".
+   *
+   * Precio, moneda y disponibilidad salen de `site.products` (lo que la sede
+   * publica **ahora**, al tocar «Continuar»), no del precio que el carrito
+   * tenía guardado: una promoción puede haber terminado entre que se agregó
+   * la línea y que se confirma el pedido. La presentación sí viaja del
+   * carrito: no cambia entre agregar y confirmar, y `site.products` no
+   * siempre trae el mismo formato para recalcularla.
+   */
+  toDraft(site: AvailabilitySite): BorradorDePedido {
+    const carrito = this.estado();
+    const porProducto = new Map(site.products.map((producto) => [producto.productId, producto]));
+    const lineas: readonly LineaDePedido[] = (carrito?.lines ?? []).map((linea): LineaDePedido => {
+      const producto = porProducto.get(linea.productId);
+      const disponible = producto !== undefined && !site.missingProductIds.includes(linea.productId);
+      const precio = producto?.price?.patientAmount ?? producto?.price?.unitAmount ?? null;
+      return {
+        productId: linea.productId,
+        medicamento: linea.name,
+        presentacion: linea.presentation,
+        cantidad: linea.quantity,
+        precio: disponible ? precio : null,
+        moneda:
+          disponible && precio !== null
+            ? (producto?.price?.currency?.code ?? site.currency?.code ?? null)
+            : null,
+        disponible,
+      };
+    });
+    return {
+      requestId: carrito?.requestId ?? '',
+      siteId: site.siteId,
+      pharmacyId: site.pharmacyId,
+      farmacia: site.pharmacyName,
+      sede: site.siteName,
+      direccion: site.addressText,
+      lineas,
+      totalEstimado: site.totalAmount,
+      moneda: site.currency?.code ?? null,
+    };
+  }
+}
+
+/** La clave de `localStorage` para una cuenta. Sin cuenta, «anonimo» — el mismo criterio que `TutorialProgressStore`. */
+function claveDe(usuario: string | null): string {
+  return `${CLAVE_BASE}.${usuario ?? 'anonimo'}`;
 }
 
 function ahora(): string {

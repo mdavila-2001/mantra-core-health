@@ -6,6 +6,8 @@ import { provideRouter, Router } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
 import type { ConversationListItem } from '../../core/data-access/community/community.types';
+import { CartStore, type NuevaLineaDeCarrito } from '../../core/data-access/pharmacy-cart/cart.store';
+import type { CartSite } from '../../core/data-access/pharmacy-cart/pharmacy-cart.types';
 import { ChatStore } from '../../core/messaging/chat.store';
 import { ChatSocketService } from '../../core/messaging/chat-socket.service';
 import { NavigationService } from '../../core/navigation/navigation.service';
@@ -1105,6 +1107,74 @@ describe('ShellLayout', () => {
           });
         });
       }
+    });
+
+    /**
+     * H4.S1 · 2026-09-25 · El carrito de farmacia en la cabecera, sólo para el
+     * paciente: es su compra, no una herramienta de la médica ni de otro rol.
+     */
+    describe('H4 · Carrito en la cabecera', () => {
+      function enlace(testId: string): HTMLAnchorElement | null {
+        return raiz().querySelector<HTMLAnchorElement>(`[data-testid="${testId}"]`);
+      }
+
+      const SEDE: CartSite = {
+        pharmacyId: 'ph-1',
+        pharmacyName: 'Farmacia Uno',
+        siteId: 'site-a',
+        siteName: 'Sede A',
+        addressText: null,
+      };
+
+      function linea(overrides: Partial<NuevaLineaDeCarrito> = {}): NuevaLineaDeCarrito {
+        return {
+          productId: 'prod-1',
+          name: 'Paracetamol 500mg',
+          presentation: null,
+          unitAmount: '10.00',
+          currency: 'BOB',
+          requiresPrescription: false,
+          medicationConceptId: null,
+          ...overrides,
+        };
+      }
+
+      it('el paciente ve el carrito; la médica, no', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        expect(enlace('header-cart')).not.toBeNull();
+
+        abrirSesion({ sub: 'u-2', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+        expect(enlace('header-cart')).toBeNull();
+      });
+
+      it('el ícono es un enlace a /my-account/pharmacy/cart con nombre accesible y globo', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+
+        const carrito = enlace('header-cart');
+        expect(carrito?.tagName).toBe('A');
+        expect(carrito?.getAttribute('href')).toBe('/my-account/pharmacy/cart');
+        expect(carrito?.getAttribute('aria-label')).toBe('Carrito');
+        expect(carrito?.querySelector('app-nav-icon')).not.toBeNull();
+      });
+
+      it('sin unidades no hay badge, y el nombre no inventa un número', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+
+        expect(raiz().querySelector('[data-testid="header-cart-badge"]')).toBeNull();
+        expect(enlace('header-cart')?.getAttribute('aria-label')).toBe('Carrito');
+      });
+
+      it('con 3 unidades el ícono muestra «3» y el nombre dice cuántas y en qué farmacia', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        TestBed.inject(CartStore).add(SEDE, linea(), 3);
+
+        const badge = raiz().querySelector('[data-testid="header-cart-badge"]');
+        expect(badge?.textContent?.trim()).toBe('3');
+        expect(badge?.getAttribute('aria-hidden')).toBe('true');
+        expect(enlace('header-cart')?.getAttribute('aria-label')).toBe(
+          'Carrito, 3 unidades en Farmacia Uno',
+        );
+      });
     });
 
     it('el encabezado ofrece el interruptor de tema junto a Ajustes', () => {
