@@ -1,0 +1,13 @@
+
+Running 8 tests using 1 worker
+
+  ok 1 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:97:7 › el detalle de reclamo en la pantalla (maqueta) › CA-2.1: WhatsApp abre en pestaña nueva con clic, Enter y Espacio, sin datos clínicos (10.2s)
+  ok 2 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:143:7 › el detalle de reclamo en la pantalla (maqueta) › CA-2.2: sin WhatsApp registrado, sólo call center con el testid del CA (6.2s)
+  ok 3 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:160:7 › el detalle de reclamo en la pantalla (maqueta) › CA-2.3: sin ningún canal registrado, la nota de ausencia y ningún enlace (6.3s)
+  ok 4 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:179:9 › el detalle de reclamo en la pantalla (maqueta) › CA-2.5: objetivos táctiles y sin desborde en 390 px (6.7s)
+  ok 5 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:179:9 › el detalle de reclamo en la pantalla (maqueta) › CA-2.5: objetivos táctiles y sin desborde en 768 px (6.6s)
+  ok 6 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:179:9 › el detalle de reclamo en la pantalla (maqueta) › CA-2.5: objetivos táctiles y sin desborde en 1440 px (7.0s)
+  ok 7 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:216:9 › la tarjeta de cobertura en /my-account (maqueta) › CA-2.1/2.5: la tarjeta ofrece los mismos canales, medibles, en 390 px (11.9s)
+  ok 8 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:216:9 › la tarjeta de cobertura en /my-account (maqueta) › CA-2.1/2.5: la tarjeta ofrece los mismos canales, medibles, en 1440 px (11.7s)
+
+  8 passed (1.2m)
