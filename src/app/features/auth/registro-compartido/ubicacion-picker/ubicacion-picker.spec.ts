@@ -14,6 +14,7 @@ const IDS: IdsDePrueba = {
   confirmada: 'confirmada',
   avisoGeocodificacion: 'aviso-geo',
   quitar: 'quitar',
+  sinConfirmar: 'sin-confirmar',
   confirmar: 'confirmar',
   usarUbicacion: 'usar',
   marcarEnMapa: 'marcar',
@@ -30,6 +31,7 @@ describe('UbicacionPicker', () => {
     component = fixture.componentInstance;
     fixture.componentRef.setInput('pinId', 'domicilio');
     fixture.componentRef.setInput('etiquetaConfirmada', 'Tu dirección');
+    fixture.componentRef.setInput('pregunta', '¿Es acá donde vivís?');
     fixture.componentRef.setInput('etiquetaQuitar', 'Quitar la ubicación');
     fixture.componentRef.setInput('ids', IDS);
     fixture.detectChanges();
@@ -83,6 +85,7 @@ describe('UbicacionPicker', () => {
     expect(component.marcando()).toBe(false);
     expect(component.confirmada()).toBe(false);
     expect(recibidos).toEqual([]);
+    expect(raiz().querySelector(`[data-testid="${IDS.sinConfirmar}"]`)).not.toBeNull();
     expect(raiz().querySelector(`[data-testid="${IDS.confirmar}"]`)).not.toBeNull();
     // El pin puesto a mano no se llama «Acá te encontramos»: eso sería mentir.
     expect(component['pines']()[0].titulo).toBe('El punto que marcaste');
@@ -104,6 +107,66 @@ describe('UbicacionPicker', () => {
     expect(recibidos.at(-1)).toEqual({ lat: -17.79, lng: -63.19 });
   });
 
+  /**
+   * D-06: cada toque sobre el mapa avisa al padre para que vacíe la dirección
+   * escrita. Tres niveles: el toque normal, el toque sobre un pin que ya
+   * estaba (sigue siendo un toque), y lo que NO es un toque.
+   */
+  describe('«puntoElegido»: el aviso de que tocaron el mapa (D-06)', () => {
+    function elegidos(): Coordenadas[] {
+      const recibidos: Coordenadas[] = [];
+      component.puntoElegido.subscribe((valor) => recibidos.push(valor));
+      return recibidos;
+    }
+
+    it('tocar el mapa vacío lo emite con el punto, aunque no esté confirmado', () => {
+      const elegido = elegidos();
+      const confirmados = emitidos();
+      component.marcarEnMapa();
+
+      component.fijarPunto({ lat: -16.5, lng: -68.15 });
+
+      expect(elegido).toEqual([{ lat: -16.5, lng: -68.15 }]);
+      // Elegir no es confirmar: por el otro canal no sale nada todavía.
+      expect(confirmados).toEqual([]);
+    });
+
+    it('tocar sobre un pin que ya estaba, confirmado o no, también lo emite', () => {
+      const elegido = elegidos();
+      component.punto.set({ lat: -17.78, lng: -63.18 });
+      component.confirmarDireccionActual();
+
+      component.fijarPunto({ lat: -17.79, lng: -63.19 });
+      component.fijarPunto({ lat: -17.79, lng: -63.19 });
+
+      // Dos toques, dos avisos: cada uno es «tocaron una dirección en el mapa».
+      expect(elegido).toEqual([
+        { lat: -17.79, lng: -63.19 },
+        { lat: -17.79, lng: -63.19 },
+      ]);
+    });
+
+    it('pedir la ubicación al navegador, confirmar o quitar no lo emiten: nadie tocó el mapa', () => {
+      // Misma técnica que más abajo: jsdom no define `geolocation`.
+      const geo = {
+        getCurrentPosition: (ok: (p: { coords: { latitude: number; longitude: number } }) => void) =>
+          ok({ coords: { latitude: -17.78, longitude: -63.18 } }),
+      };
+      Object.defineProperty(window.navigator, 'geolocation', { value: geo, configurable: true });
+      const elegido = elegidos();
+
+      component.usarMiUbicacion();
+      expect(component.punto()).toEqual({ lat: -17.78, lng: -63.18 });
+      component.confirmarDireccionActual();
+      component.quitarUbicacion();
+
+      expect(component.punto()).toBeNull();
+      expect(elegido).toEqual([]);
+
+      Reflect.deleteProperty(window.navigator, 'geolocation');
+    });
+  });
+
   it('el mapa abierto para marcar avisa al organismo que espera un toque', () => {
     component.marcarEnMapa();
     fixture.detectChanges();
@@ -123,11 +186,11 @@ describe('UbicacionPicker', () => {
     expect(raiz().querySelector(`[data-testid="${IDS.marcarEnMapa}"]`)).not.toBeNull();
   });
 
-  it('con un punto sin confirmar ofrece confirmarlo', () => {
+  it('con un punto sin confirmar avisa que no se va a guardar', () => {
     component.punto.set({ lat: -17.78, lng: -63.18 });
     fixture.detectChanges();
 
-    expect(raiz().querySelector(`[data-testid="${IDS.confirmar}"]`)).not.toBeNull();
+    expect(raiz().querySelector(`[data-testid="${IDS.sinConfirmar}"]`)).not.toBeNull();
     expect(raiz().querySelector(`[data-testid="${IDS.confirmada}"]`)).toBeNull();
   });
 
@@ -148,6 +211,22 @@ describe('UbicacionPicker', () => {
 
     expect(recibidos).toEqual([{ lat: -17.78, lng: -63.18 }]);
     expect(component.confirmada()).toBe(true);
+  });
+
+  it('la confirmación no se ve, pero el lector de pantalla la recibe (D-07)', () => {
+    component.punto.set({ lat: -17.78, lng: -63.18 });
+    component.confirmarDireccionActual();
+    fixture.detectChanges();
+
+    const confirmacion = raiz().querySelector<HTMLElement>(`[data-testid="${IDS.confirmada}"]`);
+    expect(confirmacion).not.toBeNull();
+    expect(confirmacion?.textContent).toContain('Listo, guardamos esta dirección');
+    // Sólo para lectores: fuera de la vista, pero anunciada y en el DOM.
+    expect(confirmacion?.classList.contains('solo-lectores')).toBe(true);
+    expect(confirmacion?.getAttribute('aria-live')).toBe('assertive');
+    // Lo que sí se ve es el pin con su nombre y el aviso de la calle.
+    expect(component['pines']()[0].titulo).toBe('Tu dirección');
+    expect(raiz().querySelector(`[data-testid="${IDS.avisoGeocodificacion}"]`)).not.toBeNull();
   });
 
   it('confirmar sin punto no emite nada: no hay qué confirmar', () => {

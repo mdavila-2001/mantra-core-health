@@ -1,0 +1,92 @@
+celda: 1440×900 · tema claro · recorridos aseguradora, laboratorio, imagenologia
+✔ aseguradora: la dirección está escrita
+✔ aseguradora: sin tocar el mapa no hay aviso
+✔ aseguradora: tocar el mapa vacía la dirección
+✔ aseguradora: el aviso está junto al campo
+✔ aseguradora: el aviso es una región viva, sin robar el foco
+✔ aseguradora: el vaciado no pone el campo en rojo
+✔ aseguradora: el aviso va pegado al campo, sin otro control en medio — 0 controles en medio, 37 px
+✔ aseguradora: la confirmación no se ve
+✔ aseguradora: pero está para el lector, con su anuncio
+✔ aseguradora: «Listo, guardamos» no se pinta en ningún lugar de la vista
+✔ aseguradora: confirmar el punto tampoco lo pone en rojo
+✔ aseguradora: volver a escribir se lleva el aviso
+✔ aseguradora: mover el pin vuelve a vaciar
+✔ aseguradora: tampoco en rojo tras escribir y volver a tocar el mapa
+✔ aseguradora: entrar y salir del campo vacío lo marca
+✔ aseguradora: con su mensaje
+✔ aseguradora: y el aviso sigue a su lado
+✔ aseguradora: un vaciado nuevo vuelve a dejarlo sin rojo
+ℹ aseguradora: tras «Siguiente», el campo en rojo queda a la vista; el foco queda en paginated-form-continuar
+✔ aseguradora: intentar avanzar lo marca
+✔ aseguradora: y es el único rojo de la página
+✔ aseguradora: y no deja pasar de página
+✔ laboratorio-central: la dirección está escrita
+✔ laboratorio-central: sin tocar el mapa no hay aviso
+✔ laboratorio-central: tocar el mapa vacía la dirección
+✔ laboratorio-central: el aviso está junto al campo
+✔ laboratorio-central: el aviso es una región viva, sin robar el foco
+✔ laboratorio-central: el vaciado no pone el campo en rojo
+✔ laboratorio-central: el aviso va pegado al campo, sin otro control en medio — 0 controles en medio, 37 px
+✔ laboratorio-central: la confirmación no se ve
+✔ laboratorio-central: pero está para el lector, con su anuncio
+✔ laboratorio-central: «Listo, guardamos» no se pinta en ningún lugar de la vista
+✔ laboratorio-central: confirmar el punto tampoco lo pone en rojo
+✔ laboratorio-central: volver a escribir se lleva el aviso
+✔ laboratorio-central: mover el pin vuelve a vaciar
+✔ laboratorio-central: tampoco en rojo tras escribir y volver a tocar el mapa
+✔ laboratorio-central: entrar y salir del campo vacío lo marca
+✔ laboratorio-central: con su mensaje
+✔ laboratorio-central: y el aviso sigue a su lado
+✔ laboratorio-central: un vaciado nuevo vuelve a dejarlo sin rojo
+ℹ laboratorio-central: tras «Siguiente», el campo en rojo queda a la vista; el foco queda en paginated-form-continuar
+✔ laboratorio-central: intentar avanzar lo marca
+✔ laboratorio-central: y es el único rojo de la página
+✔ laboratorio-central: y no deja pasar de página
+✔ laboratorio-sucursal: la dirección está escrita
+✔ laboratorio-sucursal: sin tocar el mapa no hay aviso
+✔ laboratorio-sucursal: tocar el mapa vacía la dirección
+✔ laboratorio-sucursal: el aviso está junto al campo
+✔ laboratorio-sucursal: el aviso es una región viva, sin robar el foco
+✔ laboratorio-sucursal: la confirmación no se ve
+✔ laboratorio-sucursal: pero está para el lector, con su anuncio
+✔ laboratorio-sucursal: «Listo, guardamos» no se pinta en ningún lugar de la vista
+✔ laboratorio-sucursal: volver a escribir se lleva el aviso
+✔ laboratorio-sucursal: mover el pin vuelve a vaciar
+✔ imagenologia-central: la dirección está escrita
+✔ imagenologia-central: sin tocar el mapa no hay aviso
+✔ imagenologia-central: tocar el mapa vacía la dirección
+✔ imagenologia-central: el aviso está junto al campo
+✔ imagenologia-central: el aviso es una región viva, sin robar el foco
+✔ imagenologia-central: el vaciado no pone el campo en rojo
+✔ imagenologia-central: el aviso va pegado al campo, sin otro control en medio — 0 controles en medio, 37 px
+✔ imagenologia-central: la confirmación no se ve
+✔ imagenologia-central: pero está para el lector, con su anuncio
+✔ imagenologia-central: «Listo, guardamos» no se pinta en ningún lugar de la vista
+✔ imagenologia-central: confirmar el punto tampoco lo pone en rojo
+✔ imagenologia-central: volver a escribir se lleva el aviso
+✔ imagenologia-central: mover el pin vuelve a vaciar
+✔ imagenologia-central: tampoco en rojo tras escribir y volver a tocar el mapa
+✔ imagenologia-central: entrar y salir del campo vacío lo marca
+✔ imagenologia-central: con su mensaje
+✔ imagenologia-central: y el aviso sigue a su lado
+✔ imagenologia-central: un vaciado nuevo vuelve a dejarlo sin rojo
+ℹ imagenologia-central: tras «Siguiente», el campo en rojo queda a la vista; el foco queda en paginated-form-continuar
+✔ imagenologia-central: intentar avanzar lo marca
+✔ imagenologia-central: y es el único rojo de la página
+✔ imagenologia-central: y no deja pasar de página
+✔ imagenologia-sucursal: la dirección está escrita
+✔ imagenologia-sucursal: sin tocar el mapa no hay aviso
+✔ imagenologia-sucursal: tocar el mapa vacía la dirección
+✔ imagenologia-sucursal: el aviso está junto al campo
+✔ imagenologia-sucursal: el aviso es una región viva, sin robar el foco
+✔ imagenologia-sucursal: la confirmación no se ve
+✔ imagenologia-sucursal: pero está para el lector, con su anuncio
+✔ imagenologia-sucursal: «Listo, guardamos» no se pinta en ningún lugar de la vista
+✔ imagenologia-sucursal: volver a escribir se lleva el aviso
+✔ imagenologia-sucursal: mover el pin vuelve a vaciar
+✔ sin errores de página ni de consola — excluidos por la CSP del servidor de desarrollo: 0
+✔ sin respuestas 4xx/5xx
+
+85/85 comprobaciones en verde
+capturas en docs\frontend\evidence\mapa-vacia-direccion-2026-09-23

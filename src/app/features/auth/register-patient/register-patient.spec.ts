@@ -1250,16 +1250,72 @@ describe('RegisterPatient', () => {
     req.flush(RESPUESTA);
   });
 
-  it('el punto capturado y sin confirmar no viaja, y no frena el envío', () => {
-    completar();
-    component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
-    component.submit();
+  /**
+   * El punto sin confirmar se perdía **en silencio**.
+   *
+   * Que no viaje está bien y tiene su prueba arriba. Lo que faltaba es decirlo:
+   * quien capturaba su ubicación y pasaba de página creía que ya estaba
+   * guardada, y nadie le avisaba de lo contrario. El aviso no confirma nada por
+   * su cuenta ni frena el envío — sólo deja de ser silenciosa la consecuencia.
+   */
+  describe('aviso del punto capturado sin confirmar (P5)', () => {
+    /** El aviso de una de las dos ubicaciones, si está en el DOM. */
+    function aviso(cual: 'home' | 'work'): HTMLElement | null {
+      fixture.detectChanges();
+      return (fixture.nativeElement as HTMLElement).querySelector(
+        `[data-testid="registration-${cual}-location-unconfirmed"]`,
+      );
+    }
 
-    const req = http.expectOne('/iam/auth/register-patient');
-    expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain(
-      'homeLatitude',
-    );
-    req.flush(RESPUESTA);
+    it('no dice nada mientras no haya punto capturado', () => {
+      completar();
+      avanzarHasta('residence');
+
+      expect(aviso('home')).toBeNull();
+    });
+
+    it('avisa en el domicilio cuando el punto está capturado y sin confirmar', () => {
+      completar();
+      avanzarHasta('residence');
+      component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+
+      expect(aviso('home')?.textContent).toContain('no se va a guardar');
+    });
+
+    it('el aviso del domicilio se va al confirmar', () => {
+      completar();
+      avanzarHasta('residence');
+      component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+      component.confirmarDireccionActual();
+
+      expect(aviso('home')).toBeNull();
+    });
+
+    /**
+     * El trabajo tiene el mismo problema y la misma solución: son dos puntos
+     * distintos con su propio estado, y confirmar uno no confirma el otro.
+     */
+    it('avisa igual en el lugar de trabajo, y se va al confirmar', () => {
+      completar();
+      avanzarHasta('work-location');
+      component.gpsTrabajo.set({ lat: -16.5, lng: -68.15 });
+      expect(aviso('work')?.textContent).toContain('no se va a guardar');
+
+      component.confirmarDireccionDeTrabajo();
+      expect(aviso('work')).toBeNull();
+    });
+
+    it('no bloquea el envío: el alta sale con el punto sin confirmar', () => {
+      completar();
+      component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-patient');
+      expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain(
+        'homeLatitude',
+      );
+      req.flush(RESPUESTA);
+    });
   });
 
   /**
@@ -1351,6 +1407,39 @@ describe('RegisterPatient', () => {
 
     expect(component.gpsDomicilio()).toEqual({ lat: -17.79, lng: -63.19 });
     expect(component.direccionConfirmada()).toBe(false);
+  });
+
+  /**
+   * D-06: tocar el mapa deja «Línea de dirección 1» en blanco, porque el
+   * punto nuevo ya no es esa calle; y el aviso se va al volver a escribir.
+   */
+  it('tocar el mapa vacía la dirección escrita del domicilio, y sólo esa', () => {
+    const domicilio = component.formPaciente.controls.homeAddressLines;
+    const trabajo = component.formPaciente.controls.workAddressLines;
+    domicilio.setValue('Av. Banzer #42');
+    trabajo.setValue('Calle Libertad #120');
+
+    component.fijarPuntoDomicilio({ lat: -16.5, lng: -68.15 });
+
+    expect(domicilio.value).toBe('');
+    expect(component.domicilioPorReescribir()).toBe(true);
+    expect(trabajo.value).toBe('Calle Libertad #120');
+    expect(component.trabajoPorReescribir()).toBe(false);
+    // Vaciar no es teclear: el campo no queda como tocado por la persona.
+    expect(domicilio.dirty).toBe(false);
+
+    domicilio.setValue('Av. Banzer #42, 3er anillo');
+    expect(component.domicilioPorReescribir()).toBe(false);
+  });
+
+  it('tocar el mapa del trabajo vacía la dirección del trabajo', () => {
+    const trabajo = component.formPaciente.controls.workAddressLines;
+    trabajo.setValue('Calle Libertad #120');
+
+    component.fijarPuntoDeTrabajo({ lat: -17.4, lng: -66.1 });
+
+    expect(trabajo.value).toBe('');
+    expect(component.trabajoPorReescribir()).toBe(true);
   });
 
   it('quitar la ubicación con el mapa vacío abierto lo cierra', () => {

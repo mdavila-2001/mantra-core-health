@@ -1,9 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+import { of } from 'rxjs';
 
 import { SessionStore } from '../../../core/auth/session.store';
+import { LoyaltyClient } from '../../../core/data-access/loyalty/loyalty.client';
 import { resolverEstadosDeCaso } from '../../../../testing/case-status';
 import { MyProfile } from './my-profile';
 
@@ -47,6 +49,22 @@ const RESUMEN_SIN_VERIFICAR = {
   personStatus: ESTADO,
   identityVerified: false,
 };
+
+/**
+ * Doble de la billetera: la quinta pestaña la monta y pediría `/loyalty/me`.
+ *
+ * Sin membresía, que es el estado más común y no llama a nada más. Lo que la
+ * billetera hace con sus datos lo prueba su propio spec.
+ */
+function billeteraSinPrograma(): { provide: typeof LoyaltyClient; useValue: unknown } {
+  return {
+    provide: LoyaltyClient,
+    useValue: {
+      miMembresia: () => of(null),
+      misMovimientos: () => of({ movimientos: [], nextCursor: null }),
+    },
+  };
+}
 
 /**
  * Atiende la lectura del perfil completo, que la tarjeta pide junto al resumen.
@@ -698,7 +716,12 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        billeteraSinPrograma(),
+      ],
     }).compileComponents();
 
     http = TestBed.inject(HttpTestingController);
@@ -749,13 +772,90 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
     expect(raiz.querySelector('[data-testid="mi-perfil-editor"]')).toBeNull();
 
     const boton = enlaceDeEdicion();
-    // Es un botón de lápiz (pedido del 09/09/2026): el nombre va en
-    // `aria-label`, no en el texto, y el dibujo es el glifo `edit` del set.
-    expect(boton?.getAttribute('aria-label')).toBe('Editar');
+    // Lápiz y nombre a la vista (D-05, 22/09/2026): el glifo `edit` del set y
+    // «Editar» escrito, que es también su nombre accesible. Ya no es un botón
+    // de sólo ícono.
+    expect(boton?.textContent?.trim()).toBe('Editar');
     expect(boton?.querySelector('svg')).not.toBeNull();
+    expect(boton?.classList.contains('btn--icon-only')).toBe(false);
     // Un botón, no un enlace: no lleva a ninguna parte.
     expect(boton?.tagName).toBe('BUTTON');
     expect(boton?.getAttribute('href')).toBeNull();
+  });
+
+  /** Responde lo que la ficha pide al entrar, y la deja pintada. */
+  function pintarLaFicha(): void {
+    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({ items: [], count: 0, limit: 50 });
+    fixture.detectChanges();
+  }
+
+  function pestanasDeLaFicha(): HTMLButtonElement[] {
+    return [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+    ];
+  }
+
+  /**
+   * N-03. «Mis puntos» deja de ser una pantalla aparte con su propia cabecera
+   * y pasa a ser la quinta pestaña de la tarjeta: la misma billetera, sin el
+   * título repetido.
+   */
+  describe('«Mis puntos» como quinta pestaña', () => {
+    const PACIENTE = { sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'], pid: 'pp-1' };
+
+    it('la ficha tiene cinco pestañas y la última es «Mis puntos»', () => {
+      montar(PACIENTE);
+      pintarLaFicha();
+
+      const pestanas = pestanasDeLaFicha();
+      expect(pestanas.map((p) => p.textContent?.trim())).toEqual([
+        'Datos personales',
+        'Contacto',
+        'Facturación',
+        'Seguros y tutores',
+        'Mis puntos',
+      ]);
+      // Se entra por «Datos personales», como siempre.
+      expect(pestanas[0].getAttribute('aria-selected')).toBe('true');
+    });
+
+    it('abrirla muestra la billetera dentro de la tarjeta, sin cabecera duplicada', () => {
+      montar(PACIENTE);
+      pintarLaFicha();
+
+      pestanasDeLaFicha()[4].click();
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      const billetera = raiz.querySelector('[data-testid="mi-perfil-puntos"]');
+      expect(billetera).not.toBeNull();
+      expect(billetera?.querySelector('app-page-header')).toBeNull();
+      // Una sola cabecera en la pantalla: la de «Mi perfil».
+      expect(raiz.querySelectorAll('app-page-header').length).toBe(1);
+      expect(billetera?.textContent).toContain('Todavía no hay un programa');
+    });
+
+    it('«?pestana=puntos» abre la billetera al entrar: la ruta vieja sigue llegando', async () => {
+      await TestBed.inject(Router).navigate(['/'], { queryParams: { pestana: 'puntos' } });
+      montar(PACIENTE);
+      pintarLaFicha();
+
+      expect(pestanasDeLaFicha()[4].getAttribute('aria-selected')).toBe('true');
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('[data-testid="mi-perfil-puntos"]'),
+      ).not.toBeNull();
+    });
+
+    it('una pestaña que no existe en la URL no rompe nada: se entra por la primera', async () => {
+      await TestBed.inject(Router).navigate(['/'], { queryParams: { pestana: 'zzz' } });
+      montar(PACIENTE);
+      pintarLaFicha();
+
+      expect(pestanasDeLaFicha()[0].getAttribute('aria-selected')).toBe('true');
+    });
   });
 
   /**

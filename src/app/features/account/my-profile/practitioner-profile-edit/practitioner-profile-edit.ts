@@ -52,6 +52,8 @@ import {
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { FileInput } from '../../../../shared/components/molecules/file-input/file-input';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
+import { Pagination } from '../../../../shared/components/molecules/pagination/pagination';
+import { SearchField } from '../../../../shared/components/molecules/search-field/search-field';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
@@ -183,6 +185,67 @@ function telefonoOpcional(control: AbstractControl): ValidationErrors | null {
 }
 
 /**
+ * Lo mínimo para que el correo de trabajo llegue al servidor: algo, una @ y un
+ * dominio con punto. `Validators.email` deja pasar `ana@clinica`, que el
+ * `@IsEmail` del API rechaza.
+ */
+const PATRON_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * El correo de trabajo guardado. Un perfil anterior a los contactos separados
+ * no trae `workEmail`: ahí el de trabajo era el único correo, `email`.
+ */
+function correoDeTrabajoDe(perfil: OwnPractitionerProfile): string {
+  return perfil.workEmail ?? perfil.email ?? '';
+}
+
+/**
+ * Tamaños de página de las tres tablas de esta pantalla.
+ *
+ * Más chicos que los `[12, 24, 48]` del glosario: acá la lista es el
+ * currículum de una sola persona, no un catálogo — cinco filas ya llenan la
+ * primera página.
+ */
+const TAMANOS_DE_PAGINA_TABLA: readonly number[] = Object.freeze([5, 10, 20]);
+
+/** Sin tildes y en minúsculas, como el resto de los buscadores del sistema. */
+function normalizar(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLocaleLowerCase('es');
+}
+
+/**
+ * Filtra filas por texto libre.
+ *
+ * Las tres tablas llegan **enteras** del perfil — no hay cursor del backend
+ * para un currículum de a lo sumo unas pocas filas —, así que buscar acá es
+ * cortar el arreglo ya leído, no pedirle otra página a nadie.
+ *
+ * @param filas - Las filas ya armadas para la tabla.
+ * @param busqueda - Lo que se tipeó en el buscador.
+ * @param columnas - Qué columnas de cada fila se comparan contra la búsqueda.
+ */
+function filtrarFilas<Fila>(
+  filas: readonly Fila[],
+  busqueda: string,
+  columnas: (fila: Fila) => readonly string[],
+): readonly Fila[] {
+  const termino = normalizar(busqueda.trim());
+  if (termino === '') return filas;
+  return filas.filter((fila) =>
+    columnas(fila).some((valor) => normalizar(valor).includes(termino)),
+  );
+}
+
+/** La página pedida, acotada a lo que el resultado filtrado realmente tiene. */
+function paginaEnRango(pedida: number, total: number, porPagina: number): number {
+  const paginas = Math.max(1, Math.ceil(total / porPagina));
+  return Math.min(paginas, Math.max(1, pedida));
+}
+
+/**
  * **Configurar el perfil profesional** — título, biografía, disponibilidad,
  * especialidades y matrículas.
  *
@@ -234,9 +297,11 @@ function soloFecha(fecha: Date): string {
     LocationPicker,
     NavIcon,
     PageHeader,
+    Pagination,
     PhoneInput,
     ReactiveFormsModule,
     RouterLink,
+    SearchField,
     Select,
     Switch,
     Tab,
@@ -374,6 +439,12 @@ export class PractitionerProfileEdit {
   /** El mismo texto que el alta pone bajo un teléfono incompleto. */
   protected readonly mensajeTelefonoIncompleto = 'El número está incompleto para el país elegido.';
   protected readonly correoPersonal = signal('');
+  protected readonly correoTrabajo = signal('');
+  /**
+   * Por qué no se guardó el correo de trabajo. Es obligatorio desde el alta,
+   * así que a diferencia de los otros contactos no se puede vaciar.
+   */
+  protected readonly errorCorreoTrabajo = signal('');
 
   /* -- Facturación: a nombre de quién salen los comprobantes que emite ------
      El alta de médico no los pregunta, así que acá es donde se cargan por
@@ -434,6 +505,7 @@ export class PractitionerProfileEdit {
     confirmada: 'edicion-domicilio-confirmada',
     avisoGeocodificacion: 'edicion-domicilio-aviso-geo',
     quitar: 'edicion-domicilio-quitar-gps',
+    sinConfirmar: 'edicion-domicilio-sin-confirmar',
     confirmar: 'edicion-domicilio-confirmar',
     usarUbicacion: 'edicion-domicilio-usar-ubicacion',
     marcarEnMapa: 'edicion-domicilio-marcar',
@@ -444,6 +516,7 @@ export class PractitionerProfileEdit {
     confirmada: 'edicion-trabajo-confirmada',
     avisoGeocodificacion: 'edicion-trabajo-aviso-geo',
     quitar: 'edicion-trabajo-quitar-gps',
+    sinConfirmar: 'edicion-trabajo-sin-confirmar',
     confirmar: 'edicion-trabajo-confirmar',
     usarUbicacion: 'edicion-trabajo-usar-ubicacion',
     marcarEnMapa: 'edicion-trabajo-marcar',
@@ -836,9 +909,145 @@ export class PractitionerProfileEdit {
     }));
   });
 
-  protected readonly estadoFormacion = computed(() => ready(this.filasFormacion()));
-  protected readonly estadoEspecialidades = computed(() => ready(this.filasEspecialidades()));
-  protected readonly estadoMatriculas = computed(() => ready(this.filasMatriculas()));
+  /* -- Buscador y paginación de las tres tablas ----------------------------
+     Misma disciplina que el resto de los listados del sistema (`glossary.ts`
+     es el espejo más directo): un buscador de texto libre arriba de la tabla
+     y un paginador abajo. Las tres tablas ya llegan enteras con el perfil —no
+     hay cursor del backend para un currículum de a lo sumo unas pocas filas—,
+     así que filtrar y paginar es trabajo de esta pantalla, no una página más
+     que pedirle a la API. */
+
+  protected readonly tamanosDePaginaTabla = TAMANOS_DE_PAGINA_TABLA;
+
+  protected readonly busquedaFormacion = signal('');
+  protected readonly busquedaEspecialidades = signal('');
+  protected readonly busquedaMatriculas = signal('');
+
+  private readonly formacionFiltrada = computed<readonly FilaFormacion[]>(() =>
+    filtrarFilas(this.filasFormacion(), this.busquedaFormacion(), (fila) => [
+      fila.tipo,
+      fila.numero,
+      fila.institucion,
+      fila.estado,
+    ]),
+  );
+
+  private readonly especialidadesFiltradas = computed<readonly FilaEspecialidad[]>(() =>
+    filtrarFilas(this.filasEspecialidades(), this.busquedaEspecialidades(), (fila) => [
+      fila.especialidad,
+      fila.rol,
+      fila.estado,
+    ]),
+  );
+
+  private readonly matriculasFiltradas = computed<readonly FilaMatricula[]>(() =>
+    filtrarFilas(this.filasMatriculas(), this.busquedaMatriculas(), (fila) => [
+      fila.numero,
+      fila.autoridad,
+      fila.estado,
+    ]),
+  );
+
+  /** Cuántas hay realmente cargadas, sin recortar por el buscador. */
+  protected readonly totalFormacion = computed(() => this.filasFormacion().length);
+  protected readonly totalEspecialidades = computed(() => this.filasEspecialidades().length);
+  protected readonly totalMatriculas = computed(() => this.filasMatriculas().length);
+
+  /** Cuántas quedan después del buscador — lo que el paginador tiene que repartir. */
+  protected readonly totalFormacionFiltrada = computed(() => this.formacionFiltrada().length);
+  protected readonly totalEspecialidadesFiltrada = computed(
+    () => this.especialidadesFiltradas().length,
+  );
+  protected readonly totalMatriculasFiltrada = computed(() => this.matriculasFiltradas().length);
+
+  /** El buscador dejó la lista en cero. No es un vacío del servidor: no hay nada que reintentar. */
+  protected readonly sinCoincidenciasFormacion = computed(
+    () => this.totalFormacion() > 0 && this.formacionFiltrada().length === 0,
+  );
+  protected readonly sinCoincidenciasEspecialidades = computed(
+    () => this.totalEspecialidades() > 0 && this.especialidadesFiltradas().length === 0,
+  );
+  protected readonly sinCoincidenciasMatriculas = computed(
+    () => this.totalMatriculas() > 0 && this.matriculasFiltradas().length === 0,
+  );
+
+  protected readonly porPaginaFormacion = signal(TAMANOS_DE_PAGINA_TABLA[0]);
+  protected readonly porPaginaEspecialidades = signal(TAMANOS_DE_PAGINA_TABLA[0]);
+  protected readonly porPaginaMatriculas = signal(TAMANOS_DE_PAGINA_TABLA[0]);
+
+  /** La página pedida, 1-based. Puede quedar fuera de rango: manda la `*Actual`. */
+  private readonly paginaPedidaFormacion = signal(1);
+  private readonly paginaPedidaEspecialidades = signal(1);
+  private readonly paginaPedidaMatriculas = signal(1);
+
+  protected readonly paginaActualFormacion = computed(() =>
+    paginaEnRango(
+      this.paginaPedidaFormacion(),
+      this.formacionFiltrada().length,
+      this.porPaginaFormacion(),
+    ),
+  );
+  protected readonly paginaActualEspecialidades = computed(() =>
+    paginaEnRango(
+      this.paginaPedidaEspecialidades(),
+      this.especialidadesFiltradas().length,
+      this.porPaginaEspecialidades(),
+    ),
+  );
+  protected readonly paginaActualMatriculas = computed(() =>
+    paginaEnRango(
+      this.paginaPedidaMatriculas(),
+      this.matriculasFiltradas().length,
+      this.porPaginaMatriculas(),
+    ),
+  );
+
+  private readonly formacionEnPagina = computed<readonly FilaFormacion[]>(() => {
+    const desde = (this.paginaActualFormacion() - 1) * this.porPaginaFormacion();
+    return this.formacionFiltrada().slice(desde, desde + this.porPaginaFormacion());
+  });
+  private readonly especialidadesEnPagina = computed<readonly FilaEspecialidad[]>(() => {
+    const desde = (this.paginaActualEspecialidades() - 1) * this.porPaginaEspecialidades();
+    return this.especialidadesFiltradas().slice(desde, desde + this.porPaginaEspecialidades());
+  });
+  private readonly matriculasEnPagina = computed<readonly FilaMatricula[]>(() => {
+    const desde = (this.paginaActualMatriculas() - 1) * this.porPaginaMatriculas();
+    return this.matriculasFiltradas().slice(desde, desde + this.porPaginaMatriculas());
+  });
+
+  protected readonly estadoFormacion = computed(() => ready(this.formacionEnPagina()));
+  protected readonly estadoEspecialidades = computed(() => ready(this.especialidadesEnPagina()));
+  protected readonly estadoMatriculas = computed(() => ready(this.matriculasEnPagina()));
+
+  /**
+   * Busca en una de las tres tablas.
+   *
+   * Vuelve a la página 1: quedarse en la página 3 de un resultado que ahora
+   * tiene una sola sería mostrar una tabla vacía con el paginador diciendo
+   * que hay más.
+   */
+  protected buscarEnFormacion(texto: string): void {
+    this.busquedaFormacion.set(texto);
+    this.paginaPedidaFormacion.set(1);
+  }
+  protected buscarEnEspecialidades(texto: string): void {
+    this.busquedaEspecialidades.set(texto);
+    this.paginaPedidaEspecialidades.set(1);
+  }
+  protected buscarEnMatriculas(texto: string): void {
+    this.busquedaMatriculas.set(texto);
+    this.paginaPedidaMatriculas.set(1);
+  }
+
+  protected irAPaginaDeFormacion(pagina: number): void {
+    this.paginaPedidaFormacion.set(pagina);
+  }
+  protected irAPaginaDeEspecialidades(pagina: number): void {
+    this.paginaPedidaEspecialidades.set(pagina);
+  }
+  protected irAPaginaDeMatriculas(pagina: number): void {
+    this.paginaPedidaMatriculas.set(pagina);
+  }
 
   /** La etiqueta de un concepto, o lo que se diga mientras no llegue. */
   private etiqueta(conceptId: string | undefined, porDefecto: string): string {
@@ -850,10 +1059,9 @@ export class PractitionerProfileEdit {
    * Los datos del alta que el editor **muestra y no deja tocar**.
    *
    * El doctor pidió que editar muestre todos los campos (C-05). Éstos no se
-   * pueden escribir —el contrato de corrección del perfil no los acepta, y en
-   * el caso del correo de trabajo está excluido a propósito porque el contrato
-   * de perfil no lo acepta—, pero eso no es razón para que no aparezcan: quien
-   * entra a corregir su documento hoy no encuentra ni el dato ni el motivo.
+   * pueden escribir —el contrato de corrección del perfil no los acepta—, pero
+   * eso no es razón para que no aparezcan: quien entra a corregir su documento
+   * hoy no encuentra ni el dato ni el motivo.
    *
    * Se dibujan como renglones de ficha y **no como campos deshabilitados**: un
    * control apagado invita a buscar cómo encenderlo, y acá no hay forma.
@@ -867,7 +1075,6 @@ export class PractitionerProfileEdit {
     return {
       documento: perfil.nationalId ?? '',
       departamento: this.etiqueta(perfil.issuerAdministrativeAreaConceptId, ''),
-      correoDeTrabajo: perfil.workEmail ?? perfil.email ?? '',
     };
   });
 
@@ -984,6 +1191,8 @@ export class PractitionerProfileEdit {
     this.celularTrabajo.reset(perfil.workMobilePhone ?? '');
     this.fijoTrabajo.reset(perfil.workLandline ?? '');
     this.correoPersonal.set(perfil.personalEmail ?? '');
+    this.correoTrabajo.set(correoDeTrabajoDe(perfil));
+    this.errorCorreoTrabajo.set('');
     this.nit.set(perfil.taxId ?? '');
     this.razonSocial.set(perfil.taxHolderName ?? '');
     this.telemedicina.set(perfil.telehealthAvailable);
@@ -1036,6 +1245,29 @@ export class PractitionerProfileEdit {
   }
 
   /**
+   * Cancela la edición de Datos personales, Contacto y Facturación.
+   *
+   * No navega a ningún lado: es un formulario repartido en tres pestañas de
+   * la MISMA pantalla, y «cancelar» yéndose obligaría a volver a entrar para
+   * seguir mirando el resto del perfil. Vuelve a sembrar los tres paneles con
+   * lo último que el servidor confirmó —la misma función que ya usa un
+   * guardado exitoso—, así que descarta lo tipeado sin tocar la red.
+   *
+   * Nada mientras hay un guardado en curso: cancelar a mitad de un `PATCH`
+   * dejaría el formulario mostrando un valor que la respuesta, todavía en
+   * vuelo, podría pisar igual.
+   */
+  protected cancelarEdicion(): void {
+    const original = this.datos();
+    if (original === null || this.guardandoPresentacion()) {
+      return;
+    }
+    this.erroresDelServidor.set(new Map());
+    this.sembrarFormulario(original);
+    this.toasts.success('Descartamos los cambios sin guardar.', 'Edición cancelada');
+  }
+
+  /**
    * Guarda la presentación.
    *
    * Sólo se manda lo que cambió respecto de lo cargado: mandar los cuatro
@@ -1067,6 +1299,24 @@ export class PractitionerProfileEdit {
       return;
     }
 
+    // El correo de trabajo, igual: uno vacío o mal escrito no viaja.
+    const correoTrabajo = this.correoTrabajo().trim();
+    const correoTrabajoCambio = correoTrabajo !== correoDeTrabajoDe(original);
+    this.errorCorreoTrabajo.set(
+      !correoTrabajoCambio
+        ? ''
+        : correoTrabajo === ''
+          ? 'Escribí tu correo de trabajo.'
+          : PATRON_CORREO.test(correoTrabajo)
+            ? ''
+            : 'Revisá el correo: le falta algo, como la @ o el dominio.',
+    );
+    if (this.errorCorreoTrabajo()) {
+      this.pestana.set(PESTANA_EDITOR.contacto);
+      this.toasts.error('El correo de trabajo no es válido. Revisalo en «Contacto».', 'Perfil');
+      return;
+    }
+
     const cambios: Partial<{
       professionalTitle: string;
       professionalBio: string;
@@ -1080,6 +1330,7 @@ export class PractitionerProfileEdit {
       workMobilePhone: string;
       workLandline: string;
       personalEmail: string;
+      workEmail: string;
       birthDate: string;
       residenceMunicipalityConceptId: string;
       homeAddressLines: string;
@@ -1170,6 +1421,9 @@ export class PractitionerProfileEdit {
     }
     if (this.correoPersonal() !== (original.personalEmail ?? '')) {
       cambios.personalEmail = this.correoPersonal();
+    }
+    if (correoTrabajoCambio) {
+      cambios.workEmail = correoTrabajo;
     }
     // Facturación. Se comparan contra el original y no se descartan los
     // vacíos: `''` es cómo se saca un NIT cargado mal, igual que en el editor
@@ -1532,7 +1786,6 @@ export class PractitionerProfileEdit {
   protected readonly edicionInstitucionEscrita = signal('');
   protected readonly edicionEmision = signal<Date | null>(null);
   protected readonly edicionEspecialidad = signal<string | null>(null);
-  protected readonly edicionCertificada = signal(false);
   protected readonly edicionAutoridad = signal('');
   protected readonly edicionInscripcion = signal<Date | null>(null);
 
@@ -1721,7 +1974,6 @@ export class PractitionerProfileEdit {
       return;
     }
     this.edicionEspecialidad.set(especialidad.specialtyConceptId);
-    this.edicionCertificada.set(especialidad.boardCertified);
     this.edicion.set({ recurso: 'especialidad', id: fila.id, nombre: fila.especialidad });
   }
 
@@ -1796,7 +2048,6 @@ export class PractitionerProfileEdit {
           bloque: 'Especialidades',
           peticion: this.profiles.updateOwnSpecialty(enCurso.id, {
             specialtyConceptId: this.edicionEspecialidad() ?? undefined,
-            boardCertified: this.edicionCertificada(),
           }),
         };
       case 'matricula': {

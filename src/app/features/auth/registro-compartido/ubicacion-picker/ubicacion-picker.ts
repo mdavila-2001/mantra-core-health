@@ -13,7 +13,6 @@ import { DOCUMENT } from '@angular/common';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
-import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
 import { AppMap } from '../../../../shared/components/organisms/map/map';
 import type { PinMapa } from '../../../../shared/components/organisms/map/pin-mapa.types';
 
@@ -39,6 +38,7 @@ export interface IdsDePrueba {
   readonly confirmada: string;
   readonly avisoGeocodificacion: string;
   readonly quitar: string;
+  readonly sinConfirmar: string;
   readonly confirmar: string;
   readonly usarUbicacion: string;
   /** El botón que abre el mapa vacío para poner el pin a mano. */
@@ -72,7 +72,36 @@ const GPS_MAX_AGE_MS = 300_000;
 export const AVISO_SIN_GEOCODIFICACION =
   'El punto del mapa se guarda tal cual, pero no podemos convertirlo en el nombre de la calle: escribila vos arriba.';
 
+/**
+ * Lo que se le dice a quien capturó un punto y no lo confirmó.
+ *
+ * **El dato se perdía en silencio.** Sólo viaja al alta lo confirmado sobre el
+ * mapa, y eso está bien —el GPS acierta la manzana, no la puerta—; lo que
+ * estaba mal es que quien se quedaba a medias avanzaba de página creyendo que
+ * su ubicación ya estaba guardada. El aviso no confirma nada ni frena el envío:
+ * sólo deja de ser silenciosa la consecuencia de no confirmar.
+ */
+export const AVISO_UBICACION_SIN_CONFIRMAR =
+  'Todavía no confirmaste este punto, así que no se va a guardar. Pulsá el botón de confirmar si es el lugar correcto.';
 
+/**
+ * Lo que se le dice a quien ya tiene un pin y quiere correrlo.
+ *
+ * Es la otra mitad del selector: el GPS acierta la manzana, no la puerta, y
+ * hasta ahora la única salida era «Volver a ubicarme», que devolvía la misma
+ * manzana. Tocar el plano corre el pin al punto exacto.
+ */
+export const AVISO_MOVER_PIN =
+  'Si el pin no cayó justo, tocá el mapa en el lugar correcto y lo movemos.';
+
+/**
+ * Lo que el formulario pone junto al campo de dirección después de vaciarlo
+ * porque tocaron el mapa (D-06; ver {@link UbicacionPicker.puntoElegido}).
+ *
+ * Vive acá y no en cada formulario para que las ocho instancias digan lo
+ * mismo: el aviso es parte de la regla, no de cada pantalla.
+ */
+export const AVISO_REESCRIBIR_DIRECCION = 'Volvé a escribir la dirección para este punto.';
 
 /**
  * El punto de un lugar sobre el mapa, capturado del navegador **o marcado a
@@ -105,15 +134,24 @@ export const AVISO_SIN_GEOCODIFICACION =
  *
  * ## Qué sale de acá
  *
- * Sólo lo **confirmado**. Mientras el punto esté capturado y sin confirmar, el
- * componente lo dibuja, pero emite `null`: entre «esto es lo que
- * encontramos» y «esta es mi dirección» tiene que haber alguien mirando el
- * plano. Quien lo consume guarda lo que reciba, sin volver a preguntarse si
- * estaba confirmado.
+ * Dos cosas, y conviene no confundirlas.
+ *
+ * Por `confirmado` sale sólo lo **confirmado**. Mientras el punto esté
+ * capturado y sin confirmar, el componente lo dibuja y lo avisa, pero emite
+ * `null`: entre «esto es lo que encontramos» y «esta es mi dirección» tiene
+ * que haber alguien mirando el plano. Quien lo consume guarda lo que reciba,
+ * sin volver a preguntarse si estaba confirmado.
+ *
+ * Por `puntoElegido` sale **cada toque sobre el mapa**, confirmado o no. No
+ * es un dato para guardar: es el aviso de que el pin ya no está donde decía
+ * la dirección escrita (D-06, pedido del cliente del 22/09/2026: «si una toca
+ * una dirección en el mapa, el textfield de ubicación debe ponerse en blanco
+ * sí o sí»). El campo de dirección vive en el padre, así que es el padre quien
+ * lo vacía al recibirlo; acá no hay nada que vaciar.
  */
 @Component({
   selector: 'app-ubicacion-picker',
-  imports: [AppButton, NavIcon, AppMap, AnnounceOnAppear, Tooltip],
+  imports: [AppButton, NavIcon, AppMap, AnnounceOnAppear],
   templateUrl: './ubicacion-picker.html',
   styleUrl: './ubicacion-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -151,6 +189,8 @@ export class UbicacionPicker {
   /** Cómo se llama el pin una vez confirmado («Tu dirección»). */
   readonly etiquetaConfirmada = input.required<string>();
 
+  /** La pregunta que se hace sobre el mapa («¿Es acá donde vivís?»). */
+  readonly pregunta = input.required<string>();
 
   /** Nombre accesible del botón que quita la ubicación. */
   readonly etiquetaQuitar = input.required<string>();
@@ -193,6 +233,30 @@ export class UbicacionPicker {
   readonly confirmado = output<Coordenadas | null>();
 
   /**
+   * Cada toque sobre el mapa, con el punto donde cayó el pin (D-06).
+   *
+   * Sale **antes** de confirmar, porque lo que avisa no es «esta es mi
+   * dirección» sino «la dirección escrita ya no describe este pin»: el mapa no
+   * se geocodifica (ver {@link AVISO_SIN_GEOCODIFICACION}), así que un texto
+   * viejo al lado de un pin nuevo es exactamente lo que confunde. El padre lo
+   * escucha para vaciar su campo de dirección y pedir que la vuelvan a escribir.
+   *
+   * **Qué lo emite y qué no, decidido así:**
+   *
+   * - Tocar el plano, sea el primer pin o correr uno que ya estaba: **sí**. Las
+   *   dos son «tocar una dirección en el mapa», que es la regla literal.
+   * - «Usar mi ubicación»: **no**. Nadie eligió un punto todavía; el navegador
+   *   propone la manzana y la persona lo mira después. Vaciar lo que escribió
+   *   por apretar ese botón sería borrarle trabajo sin que haya tocado nada.
+   * - Quitar la ubicación: **no**. Sin pin no hay punto que contradiga al texto;
+   *   el campo escrito sigue siendo la única dirección que queda.
+   *
+   * Si el cliente quisiera que el navegador también vacíe, es agregar la
+   * emisión en `usarMiUbicacion` al llegar la posición: una línea.
+   */
+  readonly puntoElegido = output<Coordenadas>();
+
+  /**
    * Las coordenadas que la persona compartió, si las compartió.
    *
    * **Nunca se muestran como números.** Son la entrada del mapa, y lo que la
@@ -231,6 +295,8 @@ export class UbicacionPicker {
   private readonly vieneDelNavegador = signal(false);
 
   protected readonly avisoSinGeocodificacion = AVISO_SIN_GEOCODIFICACION;
+  protected readonly avisoUbicacionSinConfirmar = AVISO_UBICACION_SIN_CONFIRMAR;
+  protected readonly avisoMoverPin = AVISO_MOVER_PIN;
 
   /**
    * El pin, tal como lo espera `app-map`.
@@ -312,10 +378,12 @@ export class UbicacionPicker {
    */
   fijarPunto(punto: Coordenadas): void {
     this.desconfirmar();
-    this.punto.set({ lat: punto.lat, lng: punto.lng });
+    const elegido = { lat: punto.lat, lng: punto.lng };
+    this.punto.set(elegido);
     this.vieneDelNavegador.set(false);
     this.marcando.set(false);
     this.rechazado.set(false);
+    this.puntoElegido.emit(elegido);
   }
 
   /**

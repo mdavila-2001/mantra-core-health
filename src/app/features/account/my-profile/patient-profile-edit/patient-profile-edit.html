@@ -78,6 +78,7 @@
                          pantalla con botones idénticos y ninguna forma de saber cuál
                          es cuál. El mismo texto va en el globo, que aparece con el
                          puntero y con el foco del teclado. -->
+                    <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento de la lista, con aria-label y globo. -->
                     <button
                       app-button
                       type="button"
@@ -272,6 +273,19 @@
                     placeholder="Av. Prolongación Beni #5100, esq. 6to anillo"
                   />
                 </app-form-field>
+                @if (domicilioPorReescribir()) {
+                  <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                       anuncia sin robar el foco, que sigue en el mapa. -->
+                  <app-alert
+                    appAnuncio
+                    [asertivo]="false"
+                    [enfocar]="false"
+                    tone="info"
+                    data-testid="perfil-domicilio-reescribir"
+                  >
+                    {{ avisoReescribir }}
+                  </app-alert>
+                }
 
                 <!-- El punto en el mapa, como en una app de pedidos: se pide la
                      ubicación o se marca el pin a mano, y se confirma mirándolo.
@@ -279,6 +293,7 @@
                 <app-ubicacion-picker
                 pinId="perfil-domicilio"
                 etiquetaConfirmada="Tu casa"
+                pregunta="¿Es acá donde vivís? Movete por el mapa para comprobarlo."
                 etiquetaQuitar="Quitar la ubicación de tu casa"
                 etiquetaMapa="La ubicación de tu casa en el mapa"
                 etiquetaMarcar="Marcar mi casa en el mapa"
@@ -286,6 +301,7 @@
                   [ids]="idsGpsDomicilio"
                   [inicial]="gpsDomicilioGuardado()"
                   (confirmado)="gpsDomicilio.set($event)"
+                  (puntoElegido)="vaciarDomicilioPorElMapa()"
                 />
               </div>
 
@@ -300,10 +316,24 @@
                     placeholder="Calle Ayacucho #241, Casco Viejo"
                   />
                 </app-form-field>
+                @if (trabajoPorReescribir()) {
+                  <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                       anuncia sin robar el foco, que sigue en el mapa. -->
+                  <app-alert
+                    appAnuncio
+                    [asertivo]="false"
+                    [enfocar]="false"
+                    tone="info"
+                    data-testid="perfil-trabajo-reescribir"
+                  >
+                    {{ avisoReescribir }}
+                  </app-alert>
+                }
 
                 <app-ubicacion-picker
                 pinId="perfil-trabajo"
                 etiquetaConfirmada="Tu trabajo"
+                pregunta="¿Es acá donde trabajás? Movete por el mapa para comprobarlo."
                 etiquetaQuitar="Quitar la ubicación de tu trabajo"
                 etiquetaMapa="La ubicación de tu trabajo en el mapa"
                 etiquetaMarcar="Marcar mi trabajo en el mapa"
@@ -311,6 +341,7 @@
                   [ids]="idsGpsTrabajo"
                   [inicial]="gpsTrabajoGuardado()"
                   (confirmado)="gpsTrabajo.set($event)"
+                  (puntoElegido)="vaciarTrabajoPorElMapa()"
                 />
               </div>
 
@@ -408,6 +439,10 @@
             }
           </section>
         </app-tab>
+
+        <!-- «Mis puntos» no se edita: la pestaña está para que la tira sea la
+             misma que en lectura y el lápiz no mueva de lugar a nadie. -->
+        <app-tab [label]="pestanas[4]" disabled />
       </app-tabs>
     </ng-template>
 

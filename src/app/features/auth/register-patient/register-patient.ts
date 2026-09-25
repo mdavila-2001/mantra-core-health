@@ -60,6 +60,7 @@ import type {
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
+import { AVISO_REESCRIBIR_DIRECCION } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
 import { InsuranceClient } from '../../../core/data-access/insurance/insurance.client';
 import type { CarrierCatalogEntry } from '../../../core/data-access/insurance/insurance.types';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
@@ -116,6 +117,15 @@ interface DestinoDeUbicacion {
   readonly delNavegador: WritableSignal<boolean>;
 }
 
+/**
+ * Lo que se le dice a quien ya tiene un pin y quiere correrlo.
+ *
+ * Es la otra mitad del selector: el GPS acierta la manzana, no la puerta, y
+ * hasta ahora la única salida era «Volver a ubicarme», que devolvía la misma
+ * manzana. Tocar el plano corre el pin al punto exacto.
+ */
+const AVISO_MOVER_PIN =
+  'Si el pin no cayó justo, tocá el mapa en el lugar correcto y lo movemos.';
 
 /**
  * El identificador del pin del domicilio en el mapa.
@@ -150,6 +160,22 @@ const PIN_TRABAJO = 'trabajo';
 const AVISO_SIN_GEOCODIFICACION =
   'El punto del mapa se guarda tal cual, pero no podemos convertirlo en el nombre de la calle: escribila vos arriba.';
 
+/**
+ * Lo que se le dice a quien capturó un punto y no lo confirmó.
+ *
+ * **El dato se perdía en silencio.** Sólo viaja al alta lo confirmado sobre el
+ * mapa (`datosPaciente`), y eso está bien —el GPS acierta la manzana, no la
+ * puerta, y entre «esto es lo que encontramos» y «esta es mi dirección» tiene
+ * que haber alguien mirando el plano—; lo que estaba mal es que quien se
+ * quedaba a medias avanzaba de página creyendo que su ubicación ya estaba
+ * guardada, y nadie se lo decía.
+ *
+ * El aviso **no bloquea ni confirma por su cuenta**: la confirmación sigue
+ * siendo un acto de la persona. Sólo deja de ser silenciosa la consecuencia de
+ * no hacerla.
+ */
+const AVISO_UBICACION_SIN_CONFIRMAR =
+  'Todavía no confirmaste este punto, así que no se va a guardar. Pulsá el botón de confirmar si es el lugar correcto.';
 
 /**
  * Cuánto se espera al navegador antes de dar la ubicación por perdida.
@@ -906,6 +932,38 @@ export class RegisterPatient {
 
   /** El aviso de AC-03-9, expuesto a la plantilla. Ver la constante. */
   protected readonly avisoSinGeocodificacion = AVISO_SIN_GEOCODIFICACION;
+
+  /** El aviso del punto capturado sin confirmar. Ver la constante. */
+  protected readonly avisoUbicacionSinConfirmar = AVISO_UBICACION_SIN_CONFIRMAR;
+
+  /** La pista de que tocar el mapa corre el pin. Ver la constante. */
+  protected readonly avisoMoverPin = AVISO_MOVER_PIN;
+
+  /**
+   * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
+   *
+   * Es la misma regla que `app-ubicacion-picker` avisa con `puntoElegido`,
+   * aplicada a las dos copias en línea de esta pantalla: tocar el mapa deja
+   * «Línea de dirección 1» en blanco y lo dice al lado. El aviso acompaña al
+   * campo vacío, no a la persona: en cuanto vuelve a escribir, se va solo.
+   */
+  private readonly domicilioVaciadoPorElMapa = signal(false);
+  private readonly trabajoVaciadoPorElMapa = signal(false);
+  private readonly domicilioEscrito = toSignal(
+    this.formPaciente.controls.homeAddressLines.valueChanges,
+    { initialValue: '' },
+  );
+  private readonly trabajoEscrito = toSignal(
+    this.formPaciente.controls.workAddressLines.valueChanges,
+    { initialValue: '' },
+  );
+  readonly domicilioPorReescribir = computed(
+    () => this.domicilioVaciadoPorElMapa() && this.domicilioEscrito().trim() === '',
+  );
+  readonly trabajoPorReescribir = computed(
+    () => this.trabajoVaciadoPorElMapa() && this.trabajoEscrito().trim() === '',
+  );
+  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
 
   /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
   private readonly departamentos = inject(BoDepartmentsCatalog);
@@ -1903,11 +1961,17 @@ export class RegisterPatient {
    */
   fijarPuntoDomicilio(punto: Coordenadas): void {
     this.fijarPunto(this.destinoDomicilio, punto);
+    // D-06: el punto nuevo ya no es la calle que estaba escrita. Se vacía «en
+    // nombre del formulario», igual que al sembrar: no lo tecleó la persona.
+    this.escribirDireccionSembrada(this.formPaciente.controls.homeAddressLines, '');
+    this.domicilioVaciadoPorElMapa.set(true);
   }
 
   /** Lo mismo, para el trabajo. */
   fijarPuntoDeTrabajo(punto: Coordenadas): void {
     this.fijarPunto(this.destinoTrabajo, punto);
+    this.escribirDireccionSembrada(this.formPaciente.controls.workAddressLines, '');
+    this.trabajoVaciadoPorElMapa.set(true);
   }
 
   /** Las seis señales del domicilio, con el nombre que espera {@link pedirUbicacion}. */

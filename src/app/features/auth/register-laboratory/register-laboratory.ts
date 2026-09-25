@@ -1,6 +1,7 @@
 import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
@@ -31,10 +32,12 @@ import {
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
+  AVISO_REESCRIBIR_DIRECCION,
   UbicacionPicker,
   type Coordenadas,
   type IdsDePrueba,
 } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+import { Alert } from '../../../shared/components/molecules/alert/alert';
 
 /* ============================================================================
     Alta del laboratorio de sangre — proceso 4.1 del registro del stakeholder.
@@ -280,6 +283,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     FormField,
     AuthSplit,
     AnnounceOnAppear,
+    Alert,
     PaginatedForm,
     CampoPersonalizado,
     RegistroAyuda,
@@ -712,11 +716,50 @@ export class RegisterLaboratory {
    */
   readonly gpsCentral = signal<Coordenadas | null>(null);
 
+  /**
+   * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
+   *
+   * Tocar el mapa deja «Dirección» en blanco —el punto nuevo ya no es esa
+   * calle— y lo dice al lado. El aviso acompaña al campo vacío: en cuanto se
+   * vuelve a escribir, se va solo. Las sucursales llevan el suyo, por id.
+   */
+  private readonly direccionVaciadaPorElMapa = signal(false);
+  private readonly direccionEscrita = toSignal(this.form.controls.addressLines.valueChanges, {
+    initialValue: '',
+  });
+  readonly direccionPorReescribir = computed(
+    () => this.direccionVaciadaPorElMapa() && this.direccionEscrita().trim() === '',
+  );
+  private readonly sucursalesVaciadasPorElMapa = signal<ReadonlySet<string>>(new Set());
+  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
+
+  /** Tocaron el mapa de la central: la dirección escrita ya no vale (D-06). */
+  vaciarDireccionPorElMapa(): void {
+    const direccion = this.form.controls.addressLines;
+    direccion.setValue('');
+    // El vaciado lo hizo el sistema, no la persona: el campo vuelve a «sin
+    // tocar» y el error de obligatorio espera a que lo toque o intente avanzar.
+    direccion.markAsUntouched();
+    this.direccionVaciadaPorElMapa.set(true);
+  }
+
+  /** Lo mismo, para el mapa de una sucursal. */
+  vaciarDireccionDeSucursalPorElMapa(id: string): void {
+    this.actualizarSucursal(id, { direccion: '' });
+    this.sucursalesVaciadasPorElMapa.update((ids) => new Set([...ids, id]));
+  }
+
+  /** Si esa sucursal tiene la dirección en blanco porque tocaron su mapa. */
+  sucursalPorReescribir(sucursal: SucursalDeclarada): boolean {
+    return this.sucursalesVaciadasPorElMapa().has(sucursal.id) && sucursal.direccion.trim() === '';
+  }
+
   protected readonly idsUbicacionCentral: IdsDePrueba = {
     mapa: 'registro-lab-central-map',
     confirmada: 'registro-lab-central-location-confirmed',
     avisoGeocodificacion: 'registro-lab-central-geocoding-notice',
     quitar: 'registro-lab-central-location-remove',
+    sinConfirmar: 'registro-lab-central-location-unconfirmed',
     confirmar: 'registro-lab-central-location-confirm',
     usarUbicacion: 'registro-lab-central-location-use',
     marcarEnMapa: 'registro-lab-central-location-pick',
@@ -779,6 +822,7 @@ export class RegisterLaboratory {
       confirmada: `registro-lab-${id}-location-confirmed`,
       avisoGeocodificacion: `registro-lab-${id}-geocoding-notice`,
       quitar: `registro-lab-${id}-location-remove`,
+      sinConfirmar: `registro-lab-${id}-location-unconfirmed`,
       confirmar: `registro-lab-${id}-location-confirm`,
       usarUbicacion: `registro-lab-${id}-location-use`,
       marcarEnMapa: `registro-lab-${id}-location-pick`,

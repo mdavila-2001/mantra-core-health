@@ -58,6 +58,7 @@
            motor no tiene por qué saber de Leaflet ni de permisos del
            navegador. -->
         <div class="registro__body">
+          <!-- `iconOnlyNav`: excepción ADR-0012 §3 (D-05, 23/09), pasar de página; el motor pone aria-label y globo, y la última página dice «Crear cuenta». -->
           <app-paginated-form
             data-testid="registro-form-paciente"
             [paginas]="paginasPaciente()"
@@ -167,6 +168,7 @@
                            página rompen lo único que un ícono aporta, que es el
                            reconocimiento. El `aria-label` es el que dice qué
                            hace; el dibujo tiene que acompañar, no contradecir. -->
+                      <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento de la lista, con aria-label y globo. -->
                       <button
                         app-button
                         type="button"
@@ -276,6 +278,19 @@
             </ng-template>
 
             <ng-template appCampoPersonalizado="gpsDomicilio">
+              @if (domicilioPorReescribir()) {
+                <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                     anuncia sin robar el foco, que sigue en el mapa. -->
+                <app-alert
+                  appAnuncio
+                  [asertivo]="false"
+                  [enfocar]="false"
+                  tone="info"
+                  data-testid="registro-domicilio-reescribir"
+                >
+                  {{ avisoReescribir }}
+                </app-alert>
+              }
               @if (mapaDomicilioAbierto()) {
                 <div class="registro__ubicacion">
                   <!-- El mapa reemplazó al par de coordenadas. Un «-17,7833, -63,1821»
@@ -315,17 +330,21 @@
                       >
                         Usar mi ubicación
                       </button>
+                      <!-- D-05: ícono + nombre. Sin punto todavía no hay ubicación que
+                           quitar: el botón sólo cierra el mapa, y así se llama. -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
-                        aria-label="Quitar la ubicación de tu domicilio"
-                        appTooltip="Quitar la ubicación de tu domicilio"
+                        aria-label="Cerrar el mapa de tu domicilio"
                         data-testid="registration-home-location-remove"
                         (clicked)="quitarUbicacion()"
                       >
-                        <app-nav-icon name="remove" />
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                        Cerrar el mapa
                       </button>
                     </div>
                     @if (gpsRechazado()) {
@@ -334,11 +353,11 @@
                       </p>
                     }
                   } @else if (direccionConfirmada()) {
-                    <p
-                      appAnuncio
-                      class="registro__ubicacion-estado"
-                      data-testid="registro-direccion-confirmada"
-                    >
+                    <!-- D-07 (pedido del cliente del 22/09/2026): «Listo, guardamos…» no se
+                         muestra: el pin ya se llama por su nombre y los botones cambian, así
+                         que el texto aclaraba lo obvio. Sigue en el DOM sólo para lectores de
+                         pantalla, con el mismo anuncio y el mismo identificador de prueba. -->
+                    <p appAnuncio class="solo-lectores" data-testid="registro-direccion-confirmada">
                       Listo, guardamos esta dirección.
                     </p>
                     <!-- AC-03-9: el punto se guarda, pero el nombre de la
@@ -348,6 +367,7 @@
                     <p class="registro__ubicacion-aviso" data-testid="registration-home-geocoding-notice">
                       {{ avisoSinGeocodificacion }}
                     </p>
+                    <p class="registro__ubicacion-aviso">{{ avisoMoverPin }}</p>
                     <div class="registro__ubicacion-acciones">
                       <button
                         app-button
@@ -358,20 +378,36 @@
                       >
                         Volver a ubicarme
                       </button>
+                      <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
+                           la que quitar, y junto al «−» del zoom del plano el aro con un
+                           menos se lee como «alejar». -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
                         aria-label="Quitar la ubicación de tu domicilio"
-                        appTooltip="Quitar la ubicación de tu domicilio"
                         data-testid="registration-home-location-remove"
                         (clicked)="quitarUbicacion()"
                       >
                         <app-nav-icon name="remove" />
+                        Quitar la ubicación
                       </button>
                     </div>
                   } @else {
+                    <p class="registro__ubicacion-estado">
+                      ¿Es acá donde vivís? Movete por el mapa para comprobarlo.
+                    </p>
+                    <!-- El punto capturado y no confirmado NO viaja en el alta
+                         (`datosPaciente`), y hasta ahora eso pasaba en silencio:
+                         se avanzaba de página creyendo que ya estaba guardado.
+                         El aviso no confirma nada ni frena el envío. -->
+                    <p
+                      class="registro__ubicacion-aviso"
+                      data-testid="registration-home-location-unconfirmed"
+                    >
+                      {{ avisoUbicacionSinConfirmar }}
+                    </p>
+                    <p class="registro__ubicacion-aviso">{{ avisoMoverPin }}</p>
                     <div class="registro__ubicacion-acciones">
                       <button
                         app-button
@@ -391,17 +427,19 @@
                       >
                         Volver a ubicarme
                       </button>
+                      <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
+                           la que quitar, y junto al «−» del zoom del plano el aro con un
+                           menos se lee como «alejar». -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
                         aria-label="Quitar la ubicación de tu domicilio"
-                        appTooltip="Quitar la ubicación de tu domicilio"
                         data-testid="registration-home-location-remove"
                         (clicked)="quitarUbicacion()"
                       >
                         <app-nav-icon name="remove" />
+                        Quitar la ubicación
                       </button>
                     </div>
                   }
@@ -532,6 +570,19 @@
                  permiso del navegador que el domicilio, con su propio estado:
                  son dos puntos distintos y confirmar uno no confirma el otro. -->
             <ng-template appCampoPersonalizado="gpsTrabajo">
+              @if (trabajoPorReescribir()) {
+                <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                     anuncia sin robar el foco, que sigue en el mapa. -->
+                <app-alert
+                  appAnuncio
+                  [asertivo]="false"
+                  [enfocar]="false"
+                  tone="info"
+                  data-testid="registration-work-address-reescribir"
+                >
+                  {{ avisoReescribir }}
+                </app-alert>
+              }
               @if (mapaTrabajoAbierto()) {
                 <div class="registro__ubicacion">
                   <app-map
@@ -563,17 +614,21 @@
                       >
                         Usar mi ubicación
                       </button>
+                      <!-- D-05: ícono + nombre. Sin punto todavía no hay ubicación que
+                           quitar: el botón sólo cierra el mapa, y así se llama. -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
-                        aria-label="Quitar la ubicación de tu lugar de trabajo"
-                        appTooltip="Quitar la ubicación de tu lugar de trabajo"
+                        aria-label="Cerrar el mapa de tu lugar de trabajo"
                         data-testid="registration-work-location-remove"
                         (clicked)="quitarUbicacionDeTrabajo()"
                       >
-                        <app-nav-icon name="remove" />
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                        Cerrar el mapa
                       </button>
                     </div>
                     @if (gpsTrabajoRechazado()) {
@@ -582,11 +637,8 @@
                       </p>
                     }
                   } @else if (direccionTrabajoConfirmada()) {
-                    <p
-                      appAnuncio
-                      class="registro__ubicacion-estado"
-                      data-testid="registration-work-location-confirmed"
-                    >
+                    <!-- D-07: ver la copia del domicilio. -->
+                    <p appAnuncio class="solo-lectores" data-testid="registration-work-location-confirmed">
                       Listo, guardamos este punto.
                     </p>
                     <p
@@ -595,6 +647,7 @@
                     >
                       {{ avisoSinGeocodificacion }}
                     </p>
+                    <p class="registro__ubicacion-aviso">{{ avisoMoverPin }}</p>
                     <div class="registro__ubicacion-acciones">
                       <button
                         app-button
@@ -605,20 +658,34 @@
                       >
                         Volver a ubicarme
                       </button>
+                      <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
+                           la que quitar, y junto al «−» del zoom del plano el aro con un
+                           menos se lee como «alejar». -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
                         aria-label="Quitar la ubicación de tu lugar de trabajo"
-                        appTooltip="Quitar la ubicación de tu lugar de trabajo"
                         data-testid="registration-work-location-remove"
                         (clicked)="quitarUbicacionDeTrabajo()"
                       >
                         <app-nav-icon name="remove" />
+                        Quitar la ubicación
                       </button>
                     </div>
                   } @else {
+                    <p class="registro__ubicacion-estado">
+                      ¿Es acá donde trabajás? Movete por el mapa para comprobarlo.
+                    </p>
+                    <!-- El mismo aviso que en el domicilio, y por lo mismo: sin
+                         confirmar, el punto no viaja. -->
+                    <p
+                      class="registro__ubicacion-aviso"
+                      data-testid="registration-work-location-unconfirmed"
+                    >
+                      {{ avisoUbicacionSinConfirmar }}
+                    </p>
+                    <p class="registro__ubicacion-aviso">{{ avisoMoverPin }}</p>
                     <div class="registro__ubicacion-acciones">
                       <button
                         app-button
@@ -638,17 +705,19 @@
                       >
                         Volver a ubicarme
                       </button>
+                      <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
+                           la que quitar, y junto al «−» del zoom del plano el aro con un
+                           menos se lee como «alejar». -->
                       <button
                         app-button
                         variant="ghost"
                         size="sm"
-                        [iconOnly]="true"
                         aria-label="Quitar la ubicación de tu lugar de trabajo"
-                        appTooltip="Quitar la ubicación de tu lugar de trabajo"
                         data-testid="registration-work-location-remove"
                         (clicked)="quitarUbicacionDeTrabajo()"
                       >
                         <app-nav-icon name="remove" />
+                        Quitar la ubicación
                       </button>
                     </div>
                   }

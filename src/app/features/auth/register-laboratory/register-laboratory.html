@@ -111,13 +111,28 @@
             </ng-template>
 
             <ng-template appCampoPersonalizado="gpsCentral">
+              @if (direccionPorReescribir()) {
+                <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                     anuncia sin robar el foco, que sigue en el mapa. -->
+                <app-alert
+                  appAnuncio
+                  [asertivo]="false"
+                  [enfocar]="false"
+                  tone="info"
+                  data-testid="registro-lab-direccion-reescribir"
+                >
+                  {{ avisoReescribir }}
+                </app-alert>
+              }
               <app-ubicacion-picker
                 pinId="laboratorio-central"
                 etiquetaConfirmada="Tu laboratorio"
+                pregunta="¿Es acá donde está la central? Movete por el mapa para comprobarlo."
                 etiquetaQuitar="Quitar la ubicación de la central"
                 etiquetaMapa="La ubicación de tu laboratorio en el mapa"
                 [ids]="idsUbicacionCentral"
                 (confirmado)="gpsCentral.set($event)"
+                (puntoElegido)="vaciarDireccionPorElMapa()"
               />
             </ng-template>
 
@@ -162,14 +177,29 @@
                         (valueChange)="escribirDireccionDeSucursal(sucursal.id, $event)"
                       />
                     </app-form-field>
+                    @if (sucursalPorReescribir(sucursal)) {
+                      <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
+                           anuncia sin robar el foco, que sigue en el mapa. -->
+                      <app-alert
+                        appAnuncio
+                        [asertivo]="false"
+                        [enfocar]="false"
+                        tone="info"
+                        [attr.data-testid]="'registro-lab-' + sucursal.id + '-direccion-reescribir'"
+                      >
+                        {{ avisoReescribir }}
+                      </app-alert>
+                    }
 
                     <app-ubicacion-picker
                       [pinId]="sucursal.id"
                       etiquetaConfirmada="Esta sucursal"
+                      pregunta="¿Es acá donde está esta sucursal? Movete por el mapa para comprobarlo."
                       etiquetaQuitar="Quitar la ubicación de esta sucursal"
                       etiquetaMapa="La ubicación de esta sucursal en el mapa"
                       [ids]="idsDeSucursal(sucursal.id)"
                       (confirmado)="fijarGpsDeSucursal(sucursal.id, $event)"
+                      (puntoElegido)="vaciarDireccionDeSucursalPorElMapa(sucursal.id)"
                     />
                   </section>
                 } @empty {
