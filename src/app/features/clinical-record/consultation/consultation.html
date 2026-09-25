@@ -196,7 +196,7 @@
 </app-view-state-host>
 
 <!-- ─── El formulario de la casilla elegida ──────────────────────────────
-     Un solo modal para las doce, con el bloque elegido adentro. Cada bloque
+     Un solo modal para las diez, con el bloque elegido adentro. Cada bloque
      es EL MISMO que usa el expediente, atado al encuentro en curso cuando lo
      hay y a una cita ya existente cuando no. La última —Pagos— no escribe:
      muestra lo cobrado. -->
@@ -244,14 +244,6 @@
           (descargar)="descargarReceta($event)"
         />
       }
-      @case ('observaciones') {
-        <app-observation-block
-          [patientProfileId]="pacienteDeLaFicha()"
-          [encounterId]="encuentroActual()"
-          [citas]="citas()"
-          (cambio)="altaRegistrada()"
-        />
-      }
       @case ('notas') {
         <app-medical-note-block
           [patientProfileId]="pacienteDeLaFicha()"
@@ -296,14 +288,6 @@
         <app-specialty-form-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
-          (cambio)="recargar()"
-        />
-      }
-      @case ('internacion') {
-        <app-admission-block
-          [patientProfileId]="pacienteDeLaFicha()"
-          [encounterId]="encuentroActual()"
-          [internaciones]="internaciones()"
           (cambio)="recargar()"
         />
       }

@@ -57,7 +57,6 @@ import {
 } from '../clinical-record.routes';
 import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
 import { loRegistradoEnElEncuentro, type LoRegistrado } from './lo-registrado';
-import { AdmissionBlock, type InternacionEnFicha } from '../patient-chart/admission-block/admission-block';
 import { AllergyBlock } from '../patient-chart/allergy-block/allergy-block';
 import { CarePlanBlock, type DiagnosticoDelPlan } from '../patient-chart/care-plan-block/care-plan-block';
 import { DiagnosisBlock, type CitaDelPaciente } from '../patient-chart/diagnosis-block/diagnosis-block';
@@ -70,7 +69,6 @@ import {
   type DiagnosticoEnFicha,
   type RecetaEnFicha,
 } from '../patient-chart/medication-block/medication-block';
-import { ObservationBlock } from '../patient-chart/observation-block/observation-block';
 import { PaymentsBlock } from '../patient-chart/payments-block/payments-block';
 import { SpecialtyFormBlock } from '../patient-chart/specialty-form-block/specialty-form-block';
 import {
@@ -89,9 +87,15 @@ const SIN_DATO = 'Sin registrar';
 const TOPE_DEL_MOTIVO = 500;
 
 /**
- * Las casillas de la rejilla. Son **todas** las posibilidades del expediente
- * —una por pestaña de la historia que admite alta— más las dos que sólo tienen
- * sentido atendiendo: el formulario clínico de la especialidad y la internación.
+ * Las casillas de la rejilla. Las posibilidades del expediente que se
+ * registran atendiendo —una por pestaña de la historia que admite alta— más la
+ * que sólo tiene sentido con la persona delante: el formulario clínico de la
+ * especialidad.
+ *
+ * Dos que estaban dejaron de estar (pedido del propietario, 25/09/2026):
+ * «Medición» no existe más —un signo vital es una fila de la nota médica, no
+ * un registro aparte— e «Internación» sale de la consulta por ahora; el bloque
+ * sigue vivo en el expediente, que es donde se abre y se cierra un episodio.
  *
  * Y una casilla que no registra nada, «Pagos»: la respuesta a «¿esto ya está
  * pagado?», que se necesita en la consulta misma cuando quien atiende también
@@ -101,14 +105,12 @@ export type CasillaDeConsulta =
   | 'diagnosticos'
   | 'alergias'
   | 'medicacion'
-  | 'observaciones'
   | 'notas'
   | 'ordenes'
   | 'reconsulta'
   | 'planes'
   | 'documentos'
   | 'formulario'
-  | 'internacion'
   | 'pagos';
 
 /** Lo que dice cada casilla antes de abrirse. */
@@ -149,8 +151,9 @@ interface DefinicionDeCasilla {
 }
 
 /**
- * Contrato C0 de las doce casillas. El orden visible se declara abajo en
- * ORDEN_DE_CASILLAS y comienza por Nota médica, Orden de análisis y Diagnóstico.
+ * Contrato C0 de las casillas, ya sin Medición ni Internación. El orden
+ * visible se declara abajo en ORDEN_DE_CASILLAS y comienza por Nota médica,
+ * Orden de análisis y Diagnóstico.
  */
 const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
   diagnosticos: {
@@ -173,13 +176,6 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
     tituloDelModal: 'Prescribir medicación',
     icono: 'M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm2 8h6M9 15h4',
     testId: 'consulta-casilla-medicacion',
-  },
-  observaciones: {
-    titulo: 'Medición',
-    descripcion: 'Un signo vital o un valor medido.',
-    tituloDelModal: 'Registrar una medición',
-    icono: 'M3 12h4l2-6 4 12 2-6h6',
-    testId: 'consulta-casilla-observaciones',
   },
   notas: {
     titulo: 'Nota médica',
@@ -223,13 +219,6 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
     icono: 'M4 4h16v16H4V4Zm4 5h8M8 12h8M8 15h5',
     testId: 'consulta-casilla-formulario',
   },
-  internacion: {
-    titulo: 'Internación',
-    descripcion: 'Abrir o cerrar un episodio con cama.',
-    tituloDelModal: 'Registrar una internación',
-    icono: 'M3 18V9h18v9M3 13h18M7 9V6h4v3',
-    testId: 'consulta-casilla-internacion',
-  },
   pagos: {
     titulo: 'Pagos',
     descripcion: 'Lo que ya pagó: comprobantes, fechas e importes.',
@@ -246,11 +235,9 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
   'reconsulta',
   'medicacion',
   'alergias',
-  'observaciones',
   'planes',
   'documentos',
   'formulario',
-  'internacion',
   'pagos',
 ];
 
@@ -261,9 +248,10 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
  *
  * Reemplaza a la pantalla de atención anterior, que abría con un formulario
  * de una pregunta y escondía el resto detrás de tres pestañas. Acá lo que se
- * puede registrar está a la vista en doce casillas. Cada una abre su bloque
- * en un modal. Nota médica reserva el contrato de C1; órdenes y reconsulta
- * reutilizan sus bloques funcionales. Pagos consulta lo que ya está cobrado.
+ * puede registrar está a la vista en diez casillas. Cada una abre su bloque
+ * en un modal. Nota médica es la tabla de filas campo/valor de C1; órdenes y
+ * reconsulta reutilizan sus bloques funcionales. Pagos consulta lo que ya
+ * está cobrado.
  *
  * ## El encuentro sigue mandando
  *
@@ -282,7 +270,6 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
 @Component({
   selector: 'app-consultation',
   imports: [
-    AdmissionBlock,
     AnalysisOrderBlock,
     Alert,
     AllergyBlock,
@@ -298,7 +285,6 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
     FollowUpBlock,
     MedicalNoteBlock,
     MedicationBlock,
-    ObservationBlock,
     PaymentsBlock,
     PageHeader,
     PaymentPlanPanel,
@@ -499,7 +485,7 @@ export class Consultation {
   /* -- La rejilla ----------------------------------------------------------- */
 
   /**
-   * Las doce casillas con su cantidad. La cantidad sale de lo ya leído y no
+   * Las diez casillas con su cantidad. La cantidad sale de lo ya leído y no
    * de una petición por casilla: dos lecturas de la misma lista pueden
    * discrepar.
    */
@@ -509,7 +495,6 @@ export class Consultation {
       diagnosticos: datos?.resumen.conditions.length ?? 0,
       alergias: datos?.resumen.allergies.length ?? 0,
       medicacion: datos?.resumen.medicationRequests.length ?? 0,
-      observaciones: datos?.resumen.observations.length ?? 0,
       notas: datos?.chart.notes.length ?? 0,
       ordenes: null,
       reconsulta: null,
@@ -518,7 +503,6 @@ export class Consultation {
       // El formulario no deja una fila propia en la historia: lo que guarda
       // termina en diagnósticos, procedimientos o laboratorio.
       formulario: null,
-      internacion: datos?.resumen.careEpisodes.length ?? 0,
       // Los pagos no están en las dos lecturas del expediente —son de la caja,
       // no de la historia— y pedirlos acá sería una tercera petición cuyo
       // número podría discrepar del que muestra el propio bloque al abrirse.
@@ -595,32 +579,6 @@ export class Consultation {
   }
 
   /* -- Lo que los bloques necesitan de la consulta ------------------------- */
-
-  /**
-   * Las internaciones, con todo lo que la lectura devuelve (C-23).
-   *
-   * Hasta acá se proyectaban cuatro campos de ocho: el estado del catálogo, el
-   * tipo de episodio, el profesional a cargo y la fecha de registro llegaban en
-   * la misma respuesta y se tiraban. El bloque no pedía poco porque el contrato
-   * diera poco.
-   *
-   * El responsable se resuelve a **«tuya» o «de otro»** en vez de mostrarse: es
-   * un `practitionerProfileId`, y un uuid en pantalla no es un nombre. Ponerle
-   * nombre exigiría una lectura de perfiles que esta pantalla no hace.
-   */
-  protected readonly internaciones = computed<readonly InternacionEnFicha[]>(() => {
-    const propio = this.auth.practitionerProfileId();
-    return (this.datos()?.resumen.careEpisodes ?? []).map((episodio) => ({
-      id: episodio.id,
-      abierta: episodio.endAt === undefined,
-      desde: episodio.startAt ?? null,
-      hasta: episodio.endAt ?? null,
-      tipo: this.labelOpcional(episodio.typeConceptId),
-      conResponsable: episodio.responsiblePractitionerId !== undefined,
-      aMiCargo: propio !== null && episodio.responsiblePractitionerId === propio,
-      registradaEl: episodio.createdAt,
-    }));
-  });
 
   protected readonly recetas = computed<readonly RecetaEnFicha[]>(() =>
     (this.datos()?.resumen.medicationRequests ?? []).map((receta) => ({
@@ -883,20 +841,6 @@ export class Consultation {
       return SIN_DATO;
     }
     return this.etiquetas().get(conceptId)?.display ?? SIN_DATO;
-  }
-
-  /**
-   * La etiqueta de un concepto, o **nada**.
-   *
-   * Distinta de `label` a propósito: donde el consumidor tiene su propio texto
-   * de reserva —el bloque de internación deriva «En curso» de la fecha de
-   * cierre— devolver «Sin registrar» pisaría algo mejor con algo peor.
-   */
-  private labelOpcional(conceptId: string | undefined): string | undefined {
-    if (conceptId === undefined) {
-      return undefined;
-    }
-    return this.etiquetas().get(conceptId)?.display;
   }
 }
 
