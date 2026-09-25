@@ -202,39 +202,41 @@
 
           <h3 class="claim__settlement-subtitle">Exclusiones</h3>
           @if (detail.settlement.exclusions.length > 0) {
-            <table class="claim__table" data-testid="claim-exclusions-table">
-              <caption class="sr-only">Ítems excluidos de la liquidación</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Ítem</th>
-                  <th scope="col" class="claim__col-money">Monto</th>
-                  <th scope="col">Cláusula</th>
-                  <th scope="col">Motivo</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (exclusion of detail.settlement.exclusions; track exclusion.claimLineId) {
+            <div class="claim__table-scroll">
+              <table class="claim__table" data-testid="claim-exclusions-table">
+                <caption class="sr-only">Ítems excluidos de la liquidación</caption>
+                <thead>
                   <tr>
-                    <td>{{ exclusion.itemName ?? 'Sin nombre registrado' }}</td>
-                    <td class="claim__col-money claim__money">
-                      {{ exclusion.amount }} {{ moneda(detail.header.billedTotal.currency?.code) }}
-                    </td>
-                    <td>
-                      <app-badge
-                        variant="error"
-                        size="sm"
-                        class="claim__clause"
-                        [label]="'Cláusula de exclusión: ' + exclusion.policyClauseReference"
-                        data-testid="claim-exclusion-clause"
-                      >{{ exclusion.policyClauseReference }}</app-badge>
-                    </td>
-                    <td class="claim__rationale" data-testid="claim-exclusion-rationale">
-                      {{ exclusion.denialRationale ?? 'No informada' }}
-                    </td>
+                    <th scope="col">Ítem</th>
+                    <th scope="col" class="claim__col-money">Monto</th>
+                    <th scope="col">Cláusula</th>
+                    <th scope="col">Motivo</th>
                   </tr>
-                }
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  @for (exclusion of detail.settlement.exclusions; track exclusion.claimLineId) {
+                    <tr>
+                      <td>{{ exclusion.itemName ?? 'Sin nombre registrado' }}</td>
+                      <td class="claim__col-money claim__money">
+                        {{ exclusion.amount }} {{ moneda(detail.header.billedTotal.currency?.code) }}
+                      </td>
+                      <td>
+                        <app-badge
+                          variant="error"
+                          size="sm"
+                          class="claim__clause"
+                          [label]="'Cláusula de exclusión: ' + exclusion.policyClauseReference"
+                          data-testid="claim-exclusion-clause"
+                        >{{ exclusion.policyClauseReference }}</app-badge>
+                      </td>
+                      <td class="claim__rationale" data-testid="claim-exclusion-rationale">
+                        {{ exclusion.denialRationale ?? 'No informada' }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
           } @else {
             <p class="claim__note">Sin exclusiones.</p>
           }
