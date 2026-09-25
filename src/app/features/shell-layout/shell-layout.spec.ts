@@ -150,13 +150,17 @@ describe('ShellLayout', () => {
     // «un ítem que lleva a una ruta vacía es peor que no tenerlo».
     //
     // Sin sesión los roles son `[]`, así que solo quedan las secciones que no
-    // exigen ninguno: el panel y el autoservicio. La vitrina la agrega el
-    // armazón porque no es una sección del producto.
+    // exigen ninguno: el autoservicio. La vitrina la agrega el armazón porque
+    // no es una sección del producto.
     expect(rutasDelMenu()).toEqual([
       // Los dos destinos fijos, sueltos y arriba de todo.
       '/my-account',
       '/notification-center',
-      '/dashboard',
+      // El Panel ya NO está (2026-09-25): la marca del armazón ya es un
+      // enlace a `/dashboard` para cualquier sesión, así que un renglón acá
+      // era la pantalla en la que ya estás. Sigue sin exigir rol y se sigue
+      // alcanzando por su ruta — `navigation.service.spec` lo prueba.
+      //
       // Tutoriales y Chats YA NO están acá (N-01, 2026-09-22): los dos pasan
       // a un ícono con globo en la cabecera para cualquier sesión
       // (`fueraDelMenuPara: [ANY_ROLE]`), calcado de «Ajustes». Ninguno de
@@ -835,7 +839,10 @@ describe('ShellLayout', () => {
       const destinos = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
         a.getAttribute('data-route'),
       );
-      expect(destinos).toContain('/dashboard');
+      // El Panel no ocupa renglón para nadie desde el 2026-09-25 (la marca
+      // del armazón ya lleva a `/dashboard`): no está entre los destinos
+      // pintados, aunque la ruta sigue existiendo y siendo alcanzable.
+      expect(destinos).not.toContain('/dashboard');
       expect(destinos).toContain('/design-system');
     });
 
