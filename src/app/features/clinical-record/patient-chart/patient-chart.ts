@@ -73,10 +73,7 @@ import { DocumentBlock } from './document-block/document-block';
 import { DRAFT_BLOCK } from './draft-block';
 import { FreeNoteBlock } from './free-note-block/free-note-block';
 import { MedicationBlock } from './medication-block/medication-block';
-import type {
-  DiagnosticoEnFicha,
-  RecetaEnFicha,
-} from './medication-block/medication-block';
+import type { DiagnosticoEnFicha, RecetaEnFicha } from './medication-block/medication-block';
 import { ObservationBlock } from './observation-block/observation-block';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
 
@@ -808,8 +805,8 @@ export class PatientChart {
   );
 
   /** Los mismos diagnósticos, para colgar de uno el plan de cuidados. */
-  protected readonly diagnosticosParaElPlan = computed<readonly DiagnosticoDelPlan[]>(
-    () => this.diagnosticosParaReceta(),
+  protected readonly diagnosticosParaElPlan = computed<readonly DiagnosticoDelPlan[]>(() =>
+    this.diagnosticosParaReceta(),
   );
 
   /**
@@ -916,7 +913,9 @@ export class PatientChart {
     const codigos = (this.datos()?.resumen.conditions ?? [])
       .filter((fila) => fila.encounterId === encounterId)
       .map((fila) => this.label(fila.codeConceptId));
-    return codigos.length === 0 ? 'Sin diagnósticos documentados en este encuentro' : codigos.join(', ');
+    return codigos.length === 0
+      ? 'Sin diagnósticos documentados en este encuentro'
+      : codigos.join(', ');
   }
 
   /** Una fecha corta, sin depender del `DatePipe` de la plantilla. */
@@ -924,9 +923,11 @@ export class PatientChart {
     if (fecha === undefined) {
       return '';
     }
-    return new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short', year: 'numeric' }).format(
-      fecha,
-    );
+    return new Intl.DateTimeFormat('es', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }).format(fecha);
   }
 
   /* -- El detalle de una fila, en modal ------------------------------------
@@ -989,44 +990,40 @@ export class PatientChart {
     this.nombre() === '' ? `Paciente ${this.profileId()}` : this.nombre(),
   );
 
-  /* -- La banda de contexto ------------------------------------------------
-     Lo que hay que saber ANTES de abrir una pestaña. Antes esto no existía y la
-     pantalla abría en «Diagnósticos (2)»: para enterarse de que la persona es
-     alérgica a algo había que acordarse de ir a mirar. */
+  /* -- El aviso de apertura ------------------------------------------------
+     Lo que hay que saber ANTES de abrir una pestaña. Vivía en una banda fija
+     arriba de la página, y una banda que está siempre se deja de leer: ocupaba
+     media pantalla en cada visita y empujaba las pestañas abajo del pliegue.
+     Ahora se dice una vez, en un modal, al abrir el expediente. */
 
   /**
-   * Las alergias, arriba y a la vista, no en la segunda pestaña.
+   * Las alergias, de frente al entrar, no en la segunda pestaña.
    *
    * Es el único bloque del expediente que cambia una conducta **antes** de
-   * leerlo: recetar sin haberlas visto es el error que esta banda existe para
+   * leerlo: recetar sin haberlas visto es el error que este aviso existe para
    * evitar. No se filtra por criticidad —la criticidad llega como concepto y
    * deducirla del texto sería adivinar—: se muestran todas, que son pocas.
    */
   protected readonly alergiasDestacadas = this.alergias;
 
-  /** Las cifras del expediente, para dimensionarlo sin abrir pestaña por pestaña. */
-  protected readonly cifras = computed(() => [
-    { clave: 'diagnosticos', rotulo: 'Diagnósticos', valor: this.diagnosticos().length },
-    { clave: 'medicacion', rotulo: 'Medicación', valor: this.medicacion().length },
-    { clave: 'encuentros', rotulo: 'Encuentros', valor: this.encuentros().length },
-    { clave: 'observaciones', rotulo: 'Observaciones', valor: this.observaciones().length },
-  ]);
+  /** Cerrado a mano: el modal de apertura no vuelve mientras se lea la ficha. */
+  private readonly avisosCerrados = signal(false);
 
   /**
-   * Cuándo fue la última vez que se la atendió.
+   * El modal de apertura, sólo si hay algo que avisar.
    *
-   * De los encuentros, que es donde consta. `null` mientras no haya ninguno con
-   * fecha: inventar «sin atención previa» a partir de un bloque vacío diría algo
-   * que el expediente no dice.
+   * Sin alergias y sin consulta abierta no se interpone nada entre quien entra
+   * y el expediente: un modal vacío que hay que cerrar sería peor que la banda
+   * que reemplaza.
    */
-  protected readonly ultimaAtencion = computed<Date | null>(() => {
-    const fechas = this.encuentros()
-      .map((fila) => fila.cuando)
-      .filter((fecha): fecha is Date => fecha !== null);
-    return fechas.length === 0
-      ? null
-      : fechas.reduce((mayor, fecha) => (fecha > mayor ? fecha : mayor));
-  });
+  protected readonly avisosVisibles = computed(
+    () =>
+      !this.avisosCerrados() && (this.alergiasDestacadas().length > 0 || this.atencionEnCurso()),
+  );
+
+  protected cerrarAvisos(): void {
+    this.avisosCerrados.set(true);
+  }
 
   /**
    * Aviso de recorte, en palabras.
@@ -1284,7 +1281,13 @@ export class PatientChart {
       // se dibujan si alguna fila las llena: una columna vacía se lee como un
       // dato que no cargó, no como una columna que ese bloque no tiene.
       ...(clave === 'medicacion' && filas.some((fila) => (fila.diagnostico ?? '') !== '')
-        ? [{ key: 'diagnostico', header: 'Diagnóstico', priority: 2 } satisfies ColumnDef<FilaClinica>]
+        ? [
+            {
+              key: 'diagnostico',
+              header: 'Diagnóstico',
+              priority: 2,
+            } satisfies ColumnDef<FilaClinica>,
+          ]
         : []),
       ...(clave === 'medicacion' && filas.some((fila) => (fila.cita ?? '') !== '')
         ? [{ key: 'cita', header: 'Receta de', priority: 3 } satisfies ColumnDef<FilaClinica>]
@@ -1642,7 +1645,6 @@ export class PatientChart {
     return SIN_DATO;
   }
 }
-
 
 /**
  * Los identificadores de concepto del expediente, sin los ausentes.
