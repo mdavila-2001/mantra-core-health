@@ -538,11 +538,12 @@ describe('PractitionerProfileView', () => {
 
   /* -- I-D (F-31): la ayuda es de quien arma su perfil, no de quien lo mira -- */
 
-  it('el dueño ve la ayuda de cada pestaña', () => {
+  it('el dueño ya no ve la ayuda como bloque: salió a un toast', () => {
     const host = montar(PERFIL, true);
 
+    // «Trayectoria» pasó a toast el 24/09/2026 (lo lanza practitioner-profile).
     seleccionarPestana(host, 'Trayectoria');
-    expect(host.querySelector('app-tab-help-block')).not.toBeNull();
+    expect(host.querySelector('app-tab-help-block')).toBeNull();
     // En «Credenciales» la explicación dejó de ser una caja arriba de todo y
     // pasó a un toast (19/09/2026): lo que se comprueba acá es que la pestaña
     // ya no la dibuja como bloque.

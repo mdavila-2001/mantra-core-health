@@ -494,17 +494,10 @@
            Los títulos del paso 11 se mudaron a «Credenciales» el 24/09/2026:
            son estudios, y acá el lápiz tiene que llevar a los cargos. -->
       <app-tab [label]="pestanas[4]" appTutorialTarget="perfil-trayectoria">
-        <app-tab-help-block helpId="perfil-trayectoria-ayuda" tutorialId="perfil-profesional">
-          <p>
-            Acá se arma la línea de tiempo de tus cargos: dónde ejerciste antes y dónde ejercés hoy.
-            Es lo que un paciente ve en el Directorio de médicos antes de pedir una cita. Tus
-            títulos y estudios están en «Credenciales».
-          </p>
-          <p>
-            <strong>Ejemplo:</strong> médico residente en el Hospital Obrero N.º 1 (2012–2016) y
-            actividad actual en la Sede Central Sopocachi.
-          </p>
-        </app-tab-help-block>
+        <!-- La ayuda de esta pestaña ya no es un bloque fijo arriba de la línea
+             de tiempo: sale como aviso de 3 s al abrirla (`alVerPestana` de
+             practitioner-profile).
+             Fijo empujaba «Actividad actual» debajo del pliegue. -->
 
         <!-- ─── La trayectoria, como una línea de nodos ─────────────────────
              Eran tres listas de la MISMA tarjeta marfil (`mi-perfil__item`),
@@ -530,17 +523,22 @@
           @if (perfil().actividadActual.length > 0) {
             <ol class="trayecto__linea">
               @for (afiliacion of perfil().actividadActual; track afiliacion.id) {
+                <!-- El hito en curso es el que más importa hoy: nombre arriba,
+                     cargo y fecha en una sola línea secundaria, y el estado
+                     al filo derecho, donde no se mezcla con el cargo. -->
                 <li class="trayecto__nodo">
                   <span class="trayecto__marca" aria-hidden="true"></span>
-                  <div class="trayecto__cuerpo">
-                    <div class="trayecto__encabezado">
+                  <div class="trayecto__cuerpo trayecto__cuerpo--curso">
+                    <div class="trayecto__cuerpo">
                       <span class="trayecto__nombre">{{ afiliacion.organizacion }}</span>
-                      @if (afiliacion.cargo) {
-                        <span class="trayecto__cargo">{{ afiliacion.cargo }}</span>
-                      }
-                      <app-badge variant="success" value="En curso" />
+                      <p class="trayecto__fechas">
+                        @if (afiliacion.cargo) {
+                          <span class="trayecto__cargo">{{ afiliacion.cargo }}</span> ·
+                        }
+                        Desde {{ afiliacion.desde | date: 'MMM y' }}
+                      </p>
                     </div>
-                    <p class="trayecto__fechas">Desde {{ afiliacion.desde | date: 'MMM y' }}</p>
+                    <app-badge variant="success" value="En curso" />
                   </div>
                 </li>
               }
