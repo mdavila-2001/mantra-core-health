@@ -19,7 +19,15 @@
 | C4.H3.M3 | Éxito con fecha/hora y «Ver en Consultas médicas»; el 409 se ve en el bloque (en ámbar, no como error); `(cambio)` se emite una vez y la consulta de origen se **relee** | mismo spec | PASS · `evidencia/04-follow-up-block.txt` |
 | C4.H3.M4 | Agenda del doctor: `app-badge` «Reconsulta» con `data-testid="cita-reconsulta-sello"` junto al motivo + «de la cita del <fecha>». Detalle de la cita: «Qué es» = «Reconsulta» + «De la cita del» | `... --include='src/app/features/agenda/agenda.spec.ts'` y `... --include='.../my-agenda/detalle-de-la-cita.spec.ts'` | PASS · **125/125** (121 previos + 4) y **5/5** (spec nuevo) · `evidencia/05-sellos-agenda-detalle-miscitas.txt` |
 | C4.H3.M5 | Mis citas del paciente: `data-testid="mis-citas-reconsulta-sello"` + «Tu médico te citó de nuevo por la consulta del <fecha>» | `... --include='src/app/features/account/appointments/appointments.spec.ts'` | PASS · **84/84** (79 previos + 5) · `evidencia/05-sellos-agenda-detalle-miscitas.txt` |
-| C4.H5.M1 | Gates sin rojos nuevos, cuatro commits, push y PR contra `mockup` | `corepack yarn typecheck` · `corepack yarn lint` · `gh pr view` | PASS · `evidencia/06-gates-typecheck-lint.txt` · `evidencia/07-pr.txt` |
+| C4.H5.M1 | Gates sin rojos nuevos, cinco commits, push y **PR #672 contra `mockup`**, `mergeable=MERGEABLE`, `isDraft=false` | `corepack yarn typecheck` · `corepack yarn lint` · `gh pr view 672 --json …` | PASS con una reserva declarada abajo · `evidencia/06-gates-typecheck-lint.txt` · `evidencia/07-pr.txt` |
+
+> **Reserva sobre el PR (regla 35.2).** `mergeable = MERGEABLE`, `isDraft = false`,
+> `baseRefName = mockup`. `mergeStateStatus = UNSTABLE` porque los **tres checks siguen en cola
+> (`pending`) tras quince minutos de `--watch`**; ninguno está en `fail`. El `CLAUDE.md` del
+> repositorio declara que «el CI propio está caído; los `check-*.mjs` se corren a mano», así que
+> la cola parada es una condición preexistente y no de esta rama. En su lugar se corrieron a
+> mano `typecheck`, `lint`, `check-architecture` y `check-css-tokens`. **No se afirma que el CI
+> esté en verde: se afirma que ningún check falló y que ninguno llegó a correr.**
 
 ## A medias
 
