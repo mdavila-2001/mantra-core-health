@@ -42,7 +42,7 @@ describe('Cotizaciones', () => {
       source: 'Lista PUBLICO de Farmacia Central',
     },
     distanceKm: 2.4,
-    accion: { etiqueta: 'Ver farmacias', ruta: '/pharmacies-directory' },
+    accion: { etiqueta: 'Directorio de farmacias', ruta: '/pharmacies-directory' },
   };
   const SIN_PRECIO: CotizacionResultado = {
     id: 'estudio:1',
@@ -136,9 +136,9 @@ describe('Cotizaciones', () => {
     await asentar();
 
     expect(buscar).toHaveBeenCalledWith('para', 'TODAS', null);
-    expect(texto()).toContain('12.5 BOB');
+    expect(texto()).toContain('12,50 BOB');
     expect(texto()).toContain('Lista PUBLICO de Farmacia Central');
-    expect(texto()).toContain('2,4 km en línea recta');
+    expect(texto()).toContain('2,4 km');
   });
 
   it('el precio no publicado se dice, con la procedencia en el title', async () => {
@@ -160,7 +160,7 @@ describe('Cotizaciones', () => {
     componente().buscar('consulta');
     await asentar();
 
-    expect(texto()).toContain('5 UMA');
+    expect(texto()).toContain('5 UMA');
     expect(texto()).toContain('Referencia del Colegio Médico de Santa Cruz 2025');
     expect(texto()).not.toMatch(/Bs\.? ?\d/u);
   });
@@ -171,7 +171,7 @@ describe('Cotizaciones', () => {
     componente().buscar('x y');
     await asentar();
 
-    const filas = Array.from(raiz().querySelectorAll('.cotizaciones__que')).map(
+    const filas = Array.from(raiz().querySelectorAll('app-data-table .cotizaciones__que')).map(
       (f) => f.textContent,
     );
     expect(filas).toEqual(['Paracetamol 500 mg', 'Tomografía de cráneo']);
@@ -210,6 +210,15 @@ describe('Cotizaciones', () => {
     expect(buscar).toHaveBeenLastCalledWith('para', 'TODAS', origen);
   });
 
+  it('sin origen, la distancia de las farmacias pide elegir desde dónde medir', async () => {
+    buscar.mockReturnValue(respuesta([{ ...FARMACIA, distanceKm: null }]));
+    await montar();
+    componente().buscar('para');
+    await asentar();
+
+    expect(texto()).toContain('Elegí desde dónde medir');
+  });
+
   it('cambiar la vertical consulta sólo esa', async () => {
     buscar.mockReturnValue(respuesta([FARMACIA]));
     await montar();
@@ -236,7 +245,7 @@ describe('Cotizaciones', () => {
     componente().buscar('zzzz');
     await asentar();
 
-    expect(texto()).toContain('No encontramos cotizaciones para esa búsqueda.');
+    expect(texto()).toContain('No encontramos cotizaciones');
   });
 
   it('un error ofrece reintentar y reintentar vuelve a consultar', async () => {
@@ -270,6 +279,20 @@ describe('Cotizaciones', () => {
     expect(texto()).toContain('Paracetamol 500 mg');
   });
 
+  it('con filas, también las pinta como tarjetas para pantalla angosta', async () => {
+    buscar.mockReturnValue(respuesta([FARMACIA, ARANCEL]));
+    await montar();
+    componente().buscar('para');
+    await asentar();
+
+    const tarjetas = raiz().querySelectorAll('[data-testid="cotizaciones-tarjeta"]');
+    expect(tarjetas).toHaveLength(2);
+    expect(tarjetas[0]!.textContent).toContain('Farmacia Central');
+    expect(raiz().querySelector('app-data-table')?.classList).toContain(
+      'cotizaciones__tabla--con-filas',
+    );
+  });
+
   it('cada fila lleva a una pantalla existente con ícono + texto', async () => {
     buscar.mockReturnValue(respuesta([FARMACIA]));
     await montar();
@@ -277,7 +300,7 @@ describe('Cotizaciones', () => {
     await asentar();
 
     const accion = raiz().querySelector('a.cotizaciones__accion');
-    expect(accion?.textContent).toContain('Ver farmacias');
+    expect(accion?.textContent).toContain('Directorio de farmacias');
     expect(accion?.querySelector('svg')).not.toBeNull();
     expect(accion?.getAttribute('href')).toBe('/pharmacies-directory');
   });

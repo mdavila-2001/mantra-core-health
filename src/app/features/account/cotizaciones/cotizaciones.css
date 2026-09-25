@@ -37,7 +37,7 @@
   font-weight: 600;
 }
 
-.cotizaciones__buscando,
+.cotizaciones__donde,
 .cotizaciones__vertical,
 .cotizaciones__procedencia,
 .cotizaciones__advertencia {
@@ -66,9 +66,23 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* El color del enlace vuelve al token de marca, como en `login.css`:
+   `styles/alovida.css` trae un `a[app-link] { color: var(--petroleo) }` global
+   que le gana al `:host` del átomo, y en oscuro `--petroleo` (#12719F) queda en
+   3,4:1 sobre el fondo. `--brand-primary` es aguamarina en oscuro. El defecto
+   global queda anotado para el barrido del puerto ALOVIDA. */
+a[app-link].cotizaciones__accion {
+  color: var(--brand-primary);
+}
+
+a[app-link].cotizaciones__accion:hover {
+  color: var(--brand-primary-hover);
+}
+
 .cotizaciones__accion {
   display: inline-flex;
   align-items: center;
+  white-space: nowrap;
   gap: var(--sp-1);
 }
 
@@ -76,4 +90,51 @@
   width: 1em;
   height: 1em;
   flex: none;
+}
+
+/* La carga se anuncia con texto de cuerpo, no de pie: es lo único que dice que
+   algo está pasando mientras el esqueleto late (R2-15). */
+.cotizaciones__buscando {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+/* Mobile-first: con filas, en angosto se ven las tarjetas y la tabla se
+   oculta; desde 780 px, al revés. Sin filas (carga, error) la tabla —su
+   host de estados— se ve en cualquier ancho. */
+.cotizaciones__tarjetas {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cotizaciones__tarjeta {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.cotizaciones__cifras {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+app-data-table.cotizaciones__tabla--con-filas {
+  display: none;
+}
+
+@media (min-width: 780px) {
+  .cotizaciones__tarjetas {
+    display: none;
+  }
+
+  app-data-table.cotizaciones__tabla--con-filas {
+    display: block;
+  }
 }

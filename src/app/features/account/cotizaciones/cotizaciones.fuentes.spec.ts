@@ -99,7 +99,7 @@ describe('CotizacionesFuentes', () => {
       price: {
         amount: 12.5,
         currency: 'BOB',
-        source: 'Lista PUBLICO de Farmacia s1',
+        source: 'Precio de ejemplo de la maqueta: Farmacia s1 no lo publicó',
       },
       distanceKm: 1.2,
     });
@@ -177,7 +177,7 @@ describe('CotizacionesFuentes', () => {
       price: {
         amount: 80,
         currency: 'BOB',
-        source: 'Tarifario TAR-2026 de Laboratorio Central',
+        source: 'Tarifario de ejemplo de la maqueta: Laboratorio Central no lo publicó',
       },
       distanceKm: null,
       accion: { ruta: '/laboratory-directory/u1' },
@@ -227,7 +227,7 @@ describe('CotizacionesFuentes', () => {
     expect(resultados[0]!.advertencia).toBeDefined();
     expect(resultados[1]!.price).toBeNull();
     expect(resultados[1]!.sinPrecio).toBe(
-      'El arancel de referencia no trae precio para esta prestación',
+      'El arancel de referencia no fija precio para esta prestación',
     );
   });
 
