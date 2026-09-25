@@ -3,6 +3,8 @@
 > **AVANCE: 2 / 2 — 100 %.**
 
 - Fecha: 2026-09-25 · Plan: [PLAN.md](./PLAN.md) · Rama: `pablo/fix-mis-ordenes-filtro-tabla`
+- **PR #683 → `mockup`: MERGEADO** (`gh pr view 683 --json state` → `MERGED`, commit
+  `1acac541`). El fix ya está integrado.
 - Peldaño de evidencia alcanzado: `VERIFIED_FUNCTIONAL_ONLY` — Playwright real corrido dos veces
   (antes y después del fix, contra `ng serve` limpio), más el unitario de regresión nuevo. No hay
   captura de pantalla adicional a la ya tomada como evidencia del bug (no es un cambio visual, es de
