@@ -204,13 +204,14 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'my-account/pharmacy-orders': () =>
     import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
   // «Farmacia»: el punto de entrada del menú desde el 24/09/2026 (pedido del
-  // propietario). Monta «Mis pedidos» (`PharmacyOrders`, arriba) y una
-  // «Cotizaciones» fija en Medicamentos (`Cotizaciones`, reusada) como
-  // pestañas —ver `PharmacyHub`—. «Mis pedidos» ya no tiene renglón propio
-  // (su ruta sigue viva para el detalle, el checkout y las notificaciones);
-  // «Cotizaciones» sí conserva el suyo, con las otras tres verticales.
+  // propietario). Desde el 25/09/2026 es **la tienda** (`StoreFront`, carril
+  // 43) y no el hub de pestañas: buscador de productos y farmacias, con precio
+  // y distancia reales. «Mis pedidos» conserva su ruta propia (el detalle, el
+  // checkout y las notificaciones siguen apuntando ahí) y la tienda la enlaza;
+  // «Cotizaciones» también, con sus cuatro verticales. Los `?tab=` del hub
+  // viejo los redirige `StoreFront`; el hub lo borra Pablo en la Ola 3.
   'my-account/pharmacy': () =>
-    import('./features/account/pharmacy-hub/pharmacy-hub').then((m) => m.PharmacyHub),
+    import('./features/account/pharmacy/store-front/store-front').then((m) => m.StoreFront),
   // 'my-account/loyalty' SALIÓ de acá (N-03/Q-17, 2026-09-22): la sección
   // redirige en vez de pintar una pantalla — ver `SECCIONES_REDIRIGIDAS`,
   // que `componenteDe()` consulta antes que esta tabla.
@@ -427,6 +428,20 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/medical-record/where-to-buy/where-to-buy')
         .then((m) => m.WhereToBuy)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Elegir cuál de mis recetas comprar (carril 43, H4). Hija de «Farmacia»:
+    // la tienda la enlaza con «Buscar toda una receta», y cada tarjeta lleva a
+    // `medical-record/where-to-buy/:requestId`, que ya existe. Con
+    // `seccionRolesGuard` por la misma razón que `pharmacy-orders/new`: su
+    // sección declara roles y `app.routes.spec.ts` exige cumplirlos en la hija.
+    path: 'my-account/pharmacy/prescriptions',
+    title: `${APP_TITLE} - Mis recetas`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy/prescriptions/prescriptions-page')
+        .then((m) => m.PrescriptionsPage)
         .catch(() => chunkFallido()),
   },
   {
