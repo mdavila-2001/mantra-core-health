@@ -464,16 +464,17 @@ describe('PatientChart', () => {
     expect(observacion['secundario']).toBe('78.5 kg');
   });
 
-  /* ---- la banda de contexto --------------------------------------------- */
+  /* ---- el aviso de apertura ---------------------------------------------- */
 
   /**
-   * Las alergias salen de la segunda pestaña y suben a la banda.
+   * Las alergias salen de la segunda pestaña y se dicen al entrar.
    *
    * Es el único bloque que cambia una conducta **antes** de leerlo: recetar sin
-   * haberlas visto es el error que la banda existe para evitar, y en una pestaña
-   * había que acordarse de ir a mirarlas.
+   * haberlas visto es el error que el aviso existe para evitar, y en una pestaña
+   * había que acordarse de ir a mirarlas. En una banda fija arriba también se
+   * dejaban de leer, así que ahora van en el modal que abre la pantalla.
    */
-  it('destaca las alergias fuera de las pestañas', () => {
+  it('destaca las alergias en el aviso de apertura', () => {
     responderNombre();
     responderExpediente({
       resumen: {
@@ -488,56 +489,66 @@ describe('PatientChart', () => {
         ],
       },
     });
+    harness.fixture.detectChanges();
 
     const destacadas = interno<() => readonly Record<string, unknown>[]>('alergiasDestacadas')();
     expect(destacadas).toHaveLength(1);
     expect(destacadas[0]['principal']).toBe('Diabetes tipo 2');
-  });
 
-  it('sin alergias no dibuja la banda de alergias', () => {
-    responderNombre();
-    responderExpediente();
-
-    expect(interno<() => readonly unknown[]>('alergiasDestacadas')()).toHaveLength(0);
-  });
-
-  /** Cuánto expediente hay, sin abrir pestaña por pestaña. */
-  it('cuenta los bloques en la banda de contexto', () => {
-    responderNombre();
-    responderExpediente();
-
-    const cifras = interno<() => readonly { clave: string; valor: number }[]>('cifras')();
-    expect(cifras.find((c) => c.clave === 'diagnosticos')?.valor).toBe(1);
-    expect(cifras.find((c) => c.clave === 'observaciones')?.valor).toBe(1);
-    expect(cifras.find((c) => c.clave === 'medicacion')?.valor).toBe(0);
+    expect(interno<() => boolean>('avisosVisibles')()).toBe(true);
+    const html: string = harness.fixture.nativeElement.innerHTML;
+    expect(html).toContain('expediente-avisos');
   });
 
   /**
-   * Sin encuentros no se afirma «sin atención previa»: el bloque puede venir
-   * recortado, o la atención puede constar en otra organización.
+   * Sin alergias y sin consulta abierta no hay nada que avisar: un modal vacío
+   * que hay que cerrar sería peor que la banda que reemplaza.
    */
-  it('sin encuentros no inventa una última atención', () => {
+  it('sin nada que avisar no se interpone ningún modal', () => {
     responderNombre();
     responderExpediente();
+    harness.fixture.detectChanges();
 
-    expect(interno<() => Date | null>('ultimaAtencion')()).toBeNull();
+    expect(interno<() => readonly unknown[]>('alergiasDestacadas')()).toHaveLength(0);
+    expect(interno<() => boolean>('avisosVisibles')()).toBe(false);
+    const html: string = harness.fixture.nativeElement.innerHTML;
+    expect(html).not.toContain('expediente-avisos');
   });
 
-  it('la última atención es la más reciente de los encuentros', () => {
+  /** Cerrado una vez, no vuelve: el expediente se lee sin nada encima. */
+  it('el aviso no vuelve una vez cerrado', () => {
     responderNombre();
     responderExpediente({
       resumen: {
         encounters: [
-          { id: 'e-1', classConceptId: 'st-activa', startAt: '2026-01-10T10:00:00.000Z' },
-          { id: 'e-2', classConceptId: 'st-activa', startAt: '2026-05-20T10:00:00.000Z' },
-          { id: 'e-3', classConceptId: 'st-activa', startAt: '2026-03-02T10:00:00.000Z' },
+          { id: 'e-1', classConceptId: 'st-activa', startAt: '2026-05-20T10:00:00.000Z' },
         ],
       },
     });
+    harness.fixture.detectChanges();
+    expect(interno<() => boolean>('avisosVisibles')()).toBe(true);
 
-    expect(interno<() => Date | null>('ultimaAtencion')()?.toISOString()).toBe(
-      '2026-05-20T10:00:00.000Z',
-    );
+    interno<() => void>('cerrarAvisos')();
+    harness.fixture.detectChanges();
+
+    expect(interno<() => boolean>('avisosVisibles')()).toBe(false);
+    const html: string = harness.fixture.nativeElement.innerHTML;
+    expect(html).not.toContain('expediente-avisos');
+  });
+
+  /**
+   * Las cifras de la banda —cuántos diagnósticos, cuánta medicación, la última
+   * atención— se fueron enteras: nadie las pidió y se comían la franja de
+   * arriba de las pestañas. Cada pestaña ya dice cuántos registros trae.
+   */
+  it('no dibuja la banda de cifras', () => {
+    responderNombre();
+    responderExpediente();
+    harness.fixture.detectChanges();
+
+    const html: string = harness.fixture.nativeElement.innerHTML;
+    expect(html).not.toContain('expediente__cifras');
+    expect(html).not.toContain('Última atención');
   });
 
   /* ---- el expediente dejó de ser un origen de la atención ----------------- */
@@ -792,9 +803,7 @@ describe('PatientChart', () => {
   /** El texto entero de la receta que esta pantalla genera. */
   function papelDeLaReceta(): string {
     const contexto = interno<() => ContextoDelDocumento>('contextoDelDocumento')();
-    return bloquesDeReceta(
-      recetaDesdeResumen(INDICACION_GUARDADA, contexto, (id) => id ?? ''),
-    )
+    return bloquesDeReceta(recetaDesdeResumen(INDICACION_GUARDADA, contexto, (id) => id ?? ''))
       .map((bloque) => bloque.text)
       .join('\n');
   }
@@ -946,7 +955,12 @@ describe('PatientChart', () => {
     TestBed.tick();
     responderPerfilPropio(
       perfilConMatriculas([
-        { ...MATRICULA_VIGENTE, id: 'lic-0', licenseNumber: 'MP 1', validTo: '2025-01-01T00:00:00.000Z' },
+        {
+          ...MATRICULA_VIGENTE,
+          id: 'lic-0',
+          licenseNumber: 'MP 1',
+          validTo: '2025-01-01T00:00:00.000Z',
+        },
         { ...MATRICULA_VIGENTE, id: 'lic-1', licenseNumber: 'MP 4821' },
       ]),
     );
@@ -985,9 +999,10 @@ describe('PatientChart', () => {
       responderNombre();
       responderExpediente();
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'diagnosticos',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
+          'diagnosticos',
+        )();
 
       expect(filas[0]?.vinculos).toEqual([
         { rotulo: 'Encuentro', valor: 'Sin encuentro registrado' },
@@ -1018,9 +1033,10 @@ describe('PatientChart', () => {
         },
       });
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'diagnosticos',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
+          'diagnosticos',
+        )();
 
       expect(filas[0]?.vinculos[0]?.valor).toContain('Activa');
       expect(filas[0]?.vinculos[0]?.valor).toContain('2026');
@@ -1047,9 +1063,8 @@ describe('PatientChart', () => {
         },
       });
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'medicacion',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>('medicacion')();
 
       expect(filas[0]?.vinculos[0]).toEqual({
         rotulo: 'Diagnóstico',
@@ -1072,9 +1087,8 @@ describe('PatientChart', () => {
         },
       });
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'medicacion',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>('medicacion')();
 
       expect(filas[0]?.vinculos[0]?.valor).toBe('Sin diagnóstico asociado');
     });
@@ -1099,9 +1113,8 @@ describe('PatientChart', () => {
         },
       });
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'alergias',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>('alergias')();
 
       expect(filas[0]?.vinculos[0]?.valor).toContain('no guarda encuentro ni diagnóstico');
     });
@@ -1126,9 +1139,8 @@ describe('PatientChart', () => {
         },
       });
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'encuentros',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>('encuentros')();
 
       expect(filas[0]?.vinculos[0]).toEqual({
         rotulo: 'Diagnósticos del encuentro',
@@ -1205,9 +1217,8 @@ describe('PatientChart', () => {
       interno<(c: string) => void>('abrirAlta')('documentos');
       harness.fixture.detectChanges();
 
-      const bloque = interno<() => { tieneCambiosPendientes: () => boolean } | undefined>(
-        'bloqueDelAlta',
-      )();
+      const bloque =
+        interno<() => { tieneCambiosPendientes: () => boolean } | undefined>('bloqueDelAlta')();
       expect(bloque).toBeDefined();
 
       const titulo = (bloque as unknown as Record<string, { set(v: string): void }>)['titulo'];
@@ -1223,9 +1234,8 @@ describe('PatientChart', () => {
       interno<(c: string) => void>('abrirAlta')('documentos');
       harness.fixture.detectChanges();
 
-      const bloque = interno<() => { tieneCambiosPendientes: () => boolean } | undefined>(
-        'bloqueDelAlta',
-      )();
+      const bloque =
+        interno<() => { tieneCambiosPendientes: () => boolean } | undefined>('bloqueDelAlta')();
       const titulo = (bloque as unknown as Record<string, { set(v: string): void }>)['titulo'];
       titulo.set('Laboratorio completo');
       harness.fixture.detectChanges();
@@ -1243,9 +1253,8 @@ describe('PatientChart', () => {
       interno<(c: string) => void>('abrirAlta')('documentos');
       harness.fixture.detectChanges();
 
-      const bloque = interno<() => { tieneCambiosPendientes: () => boolean } | undefined>(
-        'bloqueDelAlta',
-      )();
+      const bloque =
+        interno<() => { tieneCambiosPendientes: () => boolean } | undefined>('bloqueDelAlta')();
       const titulo = (bloque as unknown as Record<string, { set(v: string): void }>)['titulo'];
       titulo.set('Laboratorio completo');
       harness.fixture.detectChanges();
