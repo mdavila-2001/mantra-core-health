@@ -180,6 +180,50 @@ export interface BookingInsuranceClaim {
   readonly submittedAt: string | null;
 }
 
+/* ============================================================================
+    La reconsulta (C4): «volvé el jueves por esto mismo».
+
+    Una cita nueva y real —con su cupo, su estado y su lugar en las dos
+    agendas— que **recuerda de qué consulta salió**. No es un estado de la cita
+    anterior ni una nota: es una cita.
+   ========================================================================== */
+
+/**
+ * De qué consulta salió una reconsulta.
+ *
+ * `encounterId` es `null` cuando la cita de origen no tiene encuentro clínico
+ * detrás. No es un fallo: la reserva nace en la agenda y el encuentro es un
+ * registro posterior, así que se puede citar de nuevo a alguien desde una cita
+ * que todavía no abrió su consulta.
+ */
+export interface FollowUpOrigin {
+  /** La reserva de la que nace esta reconsulta. */
+  readonly bookingId: string;
+  /** El encuentro clínico de esa reserva, si lo tenía. */
+  readonly encounterId: string | null;
+}
+
+/**
+ * El origen tal como **se lee**: el mismo vínculo, con cuándo fue esa consulta
+ * ya resuelto por el servidor.
+ *
+ * `startAt` no viaja en la escritura —se manda un identificador, no una
+ * fecha—, pero sí en la lectura, y no es un adorno: lo que la fila de la
+ * agenda y la tarjeta del paciente tienen que decir es «de la cita del 12 de
+ * septiembre». Con sólo el identificador, cada pantalla tendría que pedir la
+ * cita de origen de cada reconsulta —una petición por fila— o quedarse sin
+ * poder nombrarla.
+ *
+ * Ausente o `null` es un estado corriente: la cita de origen puede haber
+ * quedado sin cupo. Ahí el sello va solo, sin la frase.
+ *
+ * Pendiente de backend **P42**: la lectura tiene que resolverlo en
+ * `BookingItemDto`. Hoy sólo lo sirve el simulador.
+ */
+export interface FollowUpOriginRef extends FollowUpOrigin {
+  readonly startAt?: Date | null;
+}
+
 export interface Booking {
   readonly id: string;
   readonly patientProfileId?: string;
@@ -270,7 +314,44 @@ export interface Booking {
    * contra, campana sin abrir) y el turno tiene que poder explicarse solo.
    */
   readonly delayNotice?: BookingDelayNotice;
+  /**
+   * De qué cita salió ésta, si es una reconsulta (C4).
+   *
+   * Ausente es una cita corriente. `null` es «se buscó y no deriva de
+   * ninguna», que el simulador distingue de la ausencia.
+   */
+  readonly followUpOf?: FollowUpOriginRef | null;
+  /** La reconsulta que salió de ésta, si ya se agendó una (C4). */
+  readonly followUpBookingId?: string | null;
   readonly createdAt: Date;
+}
+
+/**
+ * Si una cita es una reconsulta.
+ *
+ * Se pregunta por `followUpOf` y **no** por el `typeConceptId`: el origen es el
+ * dato que el servidor garantiza y el que la pantalla necesita para poder
+ * decir «de la cita del …». El tipo de cita es una clasificación del catálogo
+ * que puede llegar más tarde —o no llegar—, y una cita sin origen no es una
+ * reconsulta por más que la clasifiquen así.
+ */
+export function esReconsulta(cita: Pick<Booking, 'followUpOf'>): boolean {
+  return cita.followUpOf !== undefined && cita.followUpOf !== null;
+}
+
+/**
+ * El motivo que se propone para una reconsulta, a partir del de la cita origen.
+ *
+ * Se antepone «Reconsulta: » una sola vez: quien cita de nuevo a alguien que ya
+ * venía de una reconsulta no debería terminar con «Reconsulta: Reconsulta: …».
+ * Sin motivo de origen queda la palabra sola, que sigue diciendo algo.
+ */
+export function motivoDeReconsulta(motivoDeOrigen: string | null | undefined): string {
+  const origen = (motivoDeOrigen ?? '').trim();
+  if (origen === '') {
+    return 'Reconsulta';
+  }
+  return origen.startsWith('Reconsulta:') ? origen : `Reconsulta: ${origen}`;
 }
 
 /** Una demora informada por el profesional (P8 · registro del cliente 3.5). */
@@ -900,6 +981,14 @@ export interface NewDirectAppointment {
    * No confundir con el canal de la RESERVA, que dice cómo se pidió el turno.
    */
   readonly channel?: ModalidadDeAtencion;
+  /**
+   * De qué consulta sale esta cita (C4).
+   *
+   * **Ausente es una cita puntual corriente**, que es lo que agendan
+   * `appointment-new` y el mostrador: los rechazos propios de la reconsulta
+   * —403, 404, 422 y 409— sólo corren cuando este campo viaja.
+   */
+  readonly followUpOf?: FollowUpOrigin;
 }
 
 /**

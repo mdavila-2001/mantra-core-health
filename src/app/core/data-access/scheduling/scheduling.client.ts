@@ -61,16 +61,8 @@ import type {
   DirectAppointmentCreated,
   NewWalkInAppointment,
   WalkInAppointmentCreated,
+  FollowUpOrigin,
 } from './scheduling.types';
-// Los campos de la reconsulta (C4) viven en su propio archivo hasta que C0
-// publique los tipos congelados. Ver `follow-up.types.ts`.
-import { aOrigenDeReconsulta } from './follow-up.types';
-import type {
-  BookingConReconsulta,
-  BookingPageConReconsulta,
-  ConOrigenDeReconsulta,
-  WireConReconsulta,
-} from './follow-up.types';
 
 /**
  * Cliente de `scheduling` (M41): la lectura de la agenda y el ciclo de la
@@ -171,7 +163,7 @@ export class SchedulingClient {
    * y las ausencias quedan fuera salvo que se pidan: una agenda del día que
    * mezcla lo vigente con lo cancelado no se puede leer de un vistazo.
    */
-  searchBookings(query: BookingQuery = {}): Observable<BookingPageConReconsulta> {
+  searchBookings(query: BookingQuery = {}): Observable<BookingPage> {
     let params = new HttpParams();
     if (query.patientProfileId !== undefined) {
       params = params.set('patientProfileId', query.patientProfileId);
@@ -220,7 +212,7 @@ export class SchedulingClient {
   }
 
   /** `GET /scheduling/bookings/:id` — una cita concreta (UC-41-15). */
-  getBooking(bookingId: string): Observable<BookingConReconsulta> {
+  getBooking(bookingId: string): Observable<Booking> {
     return this.http
       .get<WireBooking>(this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}`))
       .pipe(map(toBooking));
@@ -492,7 +484,7 @@ export class SchedulingClient {
    * corre: una cita puntual se sigue creando como siempre.
    */
   createDirectAppointment(
-    cita: NewDirectAppointment & ConOrigenDeReconsulta,
+    cita: NewDirectAppointment,
   ): Observable<DirectAppointmentCreated> {
     return this.http.post<DirectAppointmentCreated>(this.url('/scheduling/appointments/direct'), {
       patientProfileId: cita.patientProfileId,
@@ -903,11 +895,12 @@ type WireBooking = Omit<
   | 'statusReason'
   | 'delayNotice'
   | 'paymentState'
-> &
+  | 'followUpOf'
+> & {
   // C4: el vínculo de la reconsulta, con el instante del origen todavía en
   // texto. `followUpBookingId` no lleva fecha y atraviesa `toBooking` dentro
   // del resto.
-  WireConReconsulta & {
+  readonly followUpOf?: (FollowUpOrigin & { readonly startAt?: string | null }) | null;
   readonly startAt?: string | null;
   readonly endAt?: string | null;
   readonly confirmedAt?: string | null;
@@ -955,6 +948,27 @@ function toSlot({ startAt, endAt, ...resto }: WireSlot): AgendaSlot {
 }
 
 /**
+ * El origen de la reconsulta con su instante convertido, o nada si no vino.
+ *
+ * Se omite en vez de normalizarse a `null`: la clave declarada pisaría, y
+ * «no es una reconsulta» tiene que poder distinguirse mirando un solo campo.
+ */
+function aOrigenDeReconsulta(
+  origen: WireBooking['followUpOf'],
+): Pick<Booking, 'followUpOf'> {
+  if (origen === undefined || origen === null) {
+    return origen === null ? { followUpOf: null } : {};
+  }
+  const { startAt, ...resto } = origen;
+  return {
+    followUpOf: {
+      ...resto,
+      ...(startAt === undefined || startAt === null ? {} : { startAt: new Date(startAt) }),
+    },
+  };
+}
+
+/**
  * Una cita con sus cinco instantes convertidos.
  *
  * `startAt` y `endAt` pueden llegar `null` —cita sin cupo— y se normalizan a
@@ -973,7 +987,7 @@ function toBooking({
   delayNotice,
   followUpOf,
   ...resto
-}: WireBooking): BookingConReconsulta {
+}: WireBooking): Booking {
   return {
     ...resto,
     // C4: el origen con su instante convertido. Se omite cuando no vino, por la

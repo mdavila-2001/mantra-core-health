@@ -1,6 +1,6 @@
 import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from './conceptos';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from './personas';
-import type { FollowUpOrigin } from '../../data-access/scheduling/follow-up.types';
+import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
 import { TENANT_CLINICA } from '../mock-session';
 import { ahora, Coleccion, fecha, iso, isoDia, masMinutos, uuid } from '../mock-store';
 
@@ -75,8 +75,8 @@ export interface ReservaSimulada {
   /**
    * De qué cita salió ésta, si es una reconsulta (C4). `null` es lo corriente.
    *
-   * // TODO C8: el contrato equivalente vive en `follow-up.types.ts` y sube a
-   * `scheduling.types.ts` cuando C0 publique los tipos congelados.
+   * El contrato equivalente es `Booking.followUpOf` de `scheduling.types.ts`;
+   * acá el instante viaja en texto, como todo lo que sirve el simulador.
    */
   readonly followUpOf: FollowUpOrigin | null;
   readonly createdAt: string;

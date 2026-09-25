@@ -13,7 +13,7 @@ import {
 } from '../fixtures/agenda';
 import { TIPO_CITA_RECONSULTA } from '../fixtures/agenda';
 import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from '../fixtures/conceptos';
-import type { FollowUpOrigin } from '../../data-access/scheduling/follow-up.types';
+import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
 import { emitirNotificacion } from './notifications.handlers';
 import { solicitudDeLaCita } from './insurance.handlers';
 import { pacientePorId } from '../fixtures/personas';

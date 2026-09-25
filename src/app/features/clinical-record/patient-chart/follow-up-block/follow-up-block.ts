@@ -14,14 +14,12 @@ import { of, type Observable } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { SchedulingClient } from '../../../../core/data-access/scheduling/scheduling.client';
 import {
   motivoDeReconsulta,
-  type BookingConReconsulta,
-} from '../../../../core/data-access/scheduling/follow-up.types';
-import { SchedulingClient } from '../../../../core/data-access/scheduling/scheduling.client';
-import type {
-  AgendaResource,
-  AgendaSlot,
+  type AgendaResource,
+  type AgendaSlot,
+  type Booking,
 } from '../../../../core/data-access/scheduling/scheduling.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
@@ -64,7 +62,7 @@ interface ConsultaDeOrigen {
   /** La agenda donde ocurrió, con su sede, o `null` si no se pudo resolver. */
   readonly recurso: AgendaResource | null;
   /** La reconsulta que ya salió de esta consulta, si alguien la agendó. */
-  readonly yaAgendada: BookingConReconsulta | null;
+  readonly yaAgendada: Booking | null;
 }
 
 /** Un cupo libre, listo para ofrecerse como opción. */
@@ -385,11 +383,11 @@ export class FollowUpBlock {
    * por no saber el nombre de un consultorio sería peor.
    */
   private conRecursoYReconsulta(
-    cita: BookingConReconsulta,
+    cita: Booking,
     tenantId: string | null,
   ): Observable<ViewState<ConsultaDeOrigen | null>> {
     const resourceId = cita.resourceId ?? '';
-    const armar = (recurso: AgendaResource | null, reconsulta: BookingConReconsulta | null) =>
+    const armar = (recurso: AgendaResource | null, reconsulta: Booking | null) =>
       ready<ConsultaDeOrigen | null>({
         bookingId: cita.id,
         patientProfileId: cita.patientProfileId ?? this.patientProfileId(),
@@ -408,7 +406,7 @@ export class FollowUpBlock {
             catchError(() => of(null)),
           );
 
-    const reconsulta$: Observable<BookingConReconsulta | null> =
+    const reconsulta$: Observable<Booking | null> =
       cita.followUpBookingId === undefined || cita.followUpBookingId === null
         ? of(null)
         : this.agenda.getBooking(cita.followUpBookingId).pipe(catchError(() => of(null)));

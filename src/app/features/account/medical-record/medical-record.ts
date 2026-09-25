@@ -19,6 +19,8 @@ import { blobToDataUrl } from '../../../core/data-access/files/blob-to-data-url'
 import { FileDownloader } from '../../../core/data-access/files/file-downloader';
 import { FormsClient } from '../../../core/data-access/forms/forms.client';
 import type { FormInstanceDetail } from '../../../core/data-access/forms/forms.types';
+import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
+import type { Booking } from '../../../core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -172,6 +174,7 @@ export class MedicalRecord {
   private readonly diagnostics = inject(DiagnosticsClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly forms = inject(FormsClient);
+  private readonly scheduling = inject(SchedulingClient);
   private readonly auth = inject(AuthService);
   private readonly contexto = inject(PatientContextService);
   private readonly toasts = inject(ToastService);
@@ -267,7 +270,7 @@ export class MedicalRecord {
   private readonly detalleCargado = computed<DetalleDeAtenciones>(() => {
     const estado = this.detalle();
     if (estado === null || (estado.status !== 'ready' && estado.status !== 'stale')) {
-      return { notas: [], ordenes: [] };
+      return { notas: [], ordenes: [], citas: [] };
     }
     return estado.data;
   });
@@ -301,25 +304,38 @@ export class MedicalRecord {
     forkJoin({
       expediente: this.clinical.getChart(perfil, TOPE),
       ordenes: this.diagnostics.getOwnOrders(TOPE),
+      // C8: las citas del titular, de donde sale la reconsulta de cada
+      // atención. Si esta lectura falla la historia no se pierde: la línea se
+      // dibuja sin el hecho de la reconsulta, que es lo único que aporta.
+      citas: this.scheduling
+        .searchBookings({ patientProfileId: perfil, limit: TOPE })
+        .pipe(catchError(() => of({ items: [] as readonly Booking[] }))),
     })
       .pipe(
-        switchMap(({ expediente, ordenes }) =>
+        switchMap(({ expediente, ordenes, citas }) =>
           forkJoin({
             expediente: of(expediente),
             ordenes: of(ordenes),
+            citas: of(citas),
             // Las órdenes traen conceptos que el resumen no tenía —el estudio,
             // su categoría, su estado—. Sin esta segunda lectura la línea
-            // mostraría «Sin registrar» donde hay un hemograma.
+            // mostraría «Sin registrar» donde hay un hemograma. Lo mismo vale
+            // para el estado de la reconsulta, que también es un concepto.
             etiquetas: this.terminology
-              .readConceptLabels(conceptosDeLasOrdenes(ordenes.items))
+              .readConceptLabels([
+                ...conceptosDeLasOrdenes(ordenes.items),
+                ...conceptosDeLasCitas(citas.items),
+              ])
               .pipe(catchError(() => of<ConceptLabels>(new Map()))),
           }),
         ),
       )
       .subscribe({
-        next: ({ expediente, ordenes, etiquetas }) => {
+        next: ({ expediente, ordenes, citas, etiquetas }) => {
           this.sumarEtiquetas(etiquetas);
-          this.detalle.set(ready({ notas: expediente.notes, ordenes: ordenes.items }));
+          this.detalle.set(
+            ready({ notas: expediente.notes, ordenes: ordenes.items, citas: citas.items }),
+          );
         },
         error: (error: unknown) => this.detalle.set(errorToViewState<DetalleDeAtenciones>(error)),
       });
@@ -639,7 +655,7 @@ export class MedicalRecord {
     if (estado === null || (estado.status !== 'ready' && estado.status !== 'stale')) {
       return;
     }
-    this.detalle.set(ready({ notas: estado.data.notas, ordenes }));
+    this.detalle.set(ready({ ...estado.data, ordenes }));
   }
 
   /**
@@ -759,6 +775,16 @@ function conceptosDeLasOrdenes(ordenes: readonly PatientOrder[]): readonly strin
     orden.statusConceptId,
   ]);
   return [...new Set(ids.filter((id): id is string => id !== undefined))];
+}
+
+/**
+ * Los conceptos que traen las citas: el estado de la reconsulta.
+ *
+ * Es uno solo por cita, pero se pide igual con los de las órdenes en la misma
+ * lectura: dos peticiones al catálogo para un despliegue serían una de más.
+ */
+function conceptosDeLasCitas(citas: readonly Booking[]): readonly string[] {
+  return [...new Set(citas.map((cita) => cita.statusConceptId))];
 }
 
 /** Los conceptos que hay que traducir para pintar la historia. */

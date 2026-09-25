@@ -206,9 +206,39 @@ const CONCEPTOS_DE_ORDENES = {
       codeSystemVersionId: 'v1',
     },
     { conceptId: 'st-cumplida', code: 'DONE', display: 'Cumplida', codeSystemVersionId: 'v1' },
+    // C8: el estado de la reconsulta también es un concepto, y viaja en la
+    // misma lectura del catálogo que los de las órdenes.
+    {
+      conceptId: 'st-confirmada',
+      code: 'BK_CONFIRMED',
+      display: 'Confirmada',
+      codeSystemVersionId: 'v1',
+    },
   ],
-  count: 3,
+  count: 4,
   limit: 200,
+};
+
+/**
+ * Las citas del titular: una reconsulta que salió de la atención `e-1` (C4).
+ *
+ * Los identificadores son cortos a propósito — ninguno se dibuja, y un uuid de
+ * adorno haría pasar por casualidad la prueba que comprueba que no sale ninguno.
+ */
+const CITAS = {
+  items: [
+    {
+      id: 'b-9',
+      statusConceptId: 'st-confirmada',
+      startAt: '2026-03-15T14:30:00.000Z',
+      endAt: '2026-03-15T15:00:00.000Z',
+      followUpOf: { bookingId: 'b-1', encounterId: 'e-1', startAt: '2026-03-01T10:00:00.000Z' },
+      createdAt: '2026-03-01T11:30:00.000Z',
+    },
+  ],
+  count: 1,
+  limit: 50,
+  truncated: false,
 };
 
 /**
@@ -411,14 +441,19 @@ describe('MedicalRecord', () => {
     harness.detectChanges();
   }
 
-  /** Resuelve las dos lecturas perezosas de la línea: expediente y órdenes. */
+  /**
+   * Resuelve las tres lecturas perezosas de la línea: expediente, órdenes y
+   * citas. La tercera la agregó C8: es de donde sale la reconsulta.
+   */
   function responderDetalle(
     expediente: object = EXPEDIENTE,
     ordenes: object = ORDENES,
     conceptos: object | null = CONCEPTOS_DE_ORDENES,
+    citas: object = CITAS,
   ): void {
     http.expectOne((r) => r.url === '/charts/patients/pp-1/chart').flush(expediente);
     http.expectOne((r) => r.url === '/diagnostic-results/me/orders').flush(ordenes);
+    http.expectOne((r) => r.url === '/scheduling/bookings').flush(citas);
     if (conceptos !== null) {
       http.expectOne((r) => r.url === '/terminology/concepts').flush(conceptos);
     }
@@ -960,9 +995,10 @@ describe('MedicalRecord', () => {
     // acaso es exactamente lo que el carril prohíbe.
     http.expectNone((r) => r.url === '/charts/patients/pp-1/chart');
     http.expectNone((r) => r.url === '/diagnostic-results/me/orders');
+    http.expectNone((r) => r.url === '/scheduling/bookings');
   });
 
-  it('el primer despliegue pide las dos lecturas, y el segundo ninguna', async () => {
+  it('el primer despliegue pide las tres lecturas, y el segundo ninguna', async () => {
     await montar();
     responder();
 
@@ -975,6 +1011,7 @@ describe('MedicalRecord', () => {
     desplegarAtencion();
     http.expectNone((r) => r.url === '/charts/patients/pp-1/chart');
     http.expectNone((r) => r.url === '/diagnostic-results/me/orders');
+    http.expectNone((r) => r.url === '/scheduling/bookings');
   });
 
   it('la línea cuenta la consulta: nota, estudio, diagnóstico y receta', async () => {
@@ -990,6 +1027,94 @@ describe('MedicalRecord', () => {
     expect(texto).toContain('Nota #a1b2');
     expect(texto).toContain('Análisis de laboratorio: Hemograma — resultado disponible');
     expect(texto).toContain('Faringitis aguda');
+  });
+
+  /* ---- C8 · la reconsulta de C4 dentro de la línea de C6 ----------------- */
+
+  it('la reconsulta que salió de esa atención se nombra en su línea', async () => {
+    await montar();
+    responder();
+    desplegarAtencion();
+    responderDetalle();
+
+    const linea = harness.routeNativeElement?.querySelector(
+      '[data-testid="historia-linea-encuentro"]',
+    );
+    const texto = (linea?.textContent ?? '').replace(/\s+/g, ' ').trim();
+    // La frase la arma el organismo con la fecha de la cita nueva, no con la
+    // de la atención de la que salió.
+    expect(texto).toContain('Reconsulta el 15/03');
+    // Y su estado sale del catálogo: sin la traducción sería un uuid o un
+    // «Sin registrar», y los dos sobran en la historia de una persona.
+    expect(texto).toContain('Confirmada');
+  });
+
+  it('una reconsulta de otra atención no se cuela en esta línea', async () => {
+    await montar();
+    responder();
+    desplegarAtencion();
+    // Mismo paciente, misma cita, pero derivada de un encuentro que no es el
+    // que se está mirando: el vínculo es por `followUpOf.encounterId`, y una
+    // reconsulta atribuida a la consulta equivocada es un dato clínico falso.
+    responderDetalle(EXPEDIENTE, ORDENES, CONCEPTOS_DE_ORDENES, {
+      ...CITAS,
+      items: [
+        {
+          ...CITAS.items[0],
+          followUpOf: { bookingId: 'b-1', encounterId: 'e-otro', startAt: null },
+        },
+      ],
+    });
+
+    const linea = harness.routeNativeElement?.querySelector(
+      '[data-testid="historia-linea-encuentro"]',
+    );
+    expect(linea?.textContent ?? '').not.toContain('Reconsulta');
+  });
+
+  it('una cita que no es reconsulta no agrega nada a la línea', async () => {
+    await montar();
+    responder();
+    desplegarAtencion();
+    // Sin `followUpOf` es una cita corriente. Se pregunta por el origen y no
+    // por el tipo de cita: una cita sin origen no es una reconsulta por más
+    // que el catálogo la clasifique así.
+    responderDetalle(EXPEDIENTE, ORDENES, CONCEPTOS_DE_ORDENES, {
+      ...CITAS,
+      items: [{ id: 'b-8', statusConceptId: 'st-confirmada', createdAt: '2026-03-01T09:00:00.000Z' }],
+    });
+
+    const linea = harness.routeNativeElement?.querySelector(
+      '[data-testid="historia-linea-encuentro"]',
+    );
+    expect(linea?.textContent ?? '').not.toContain('Reconsulta');
+    // Y lo demás sigue en pie: perder la reconsulta no puede costar la nota.
+    expect(linea?.textContent ?? '').toContain('Nota #a1b2');
+  });
+
+  it('si las citas no se pueden leer, la línea se dibuja sin la reconsulta', async () => {
+    await montar();
+    responder();
+    desplegarAtencion();
+
+    http.expectOne((r) => r.url === '/charts/patients/pp-1/chart').flush(EXPEDIENTE);
+    http.expectOne((r) => r.url === '/diagnostic-results/me/orders').flush(ORDENES);
+    http
+      .expectOne((r) => r.url === '/scheduling/bookings')
+      .flush(
+        { code: 'ERROR', message: 'Agenda caída', timestamp: '', path: '' },
+        { status: 500, statusText: 'Server Error' },
+      );
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS_DE_ORDENES);
+    harness.detectChanges();
+
+    const linea = harness.routeNativeElement?.querySelector(
+      '[data-testid="historia-linea-encuentro"]',
+    );
+    // La atención no se pierde por una lectura secundaria: se pierde el hecho
+    // que esa lectura aportaba, y nada más.
+    expect(linea?.textContent ?? '').toContain('Nota #a1b2');
+    expect(linea?.textContent ?? '').not.toContain('Reconsulta');
   });
 
   it('una nota no liberada al paciente no se dibuja', async () => {
@@ -1012,6 +1137,7 @@ describe('MedicalRecord', () => {
     // una cancela a la hermana. Al revés, `flush` reventaría con «Cannot flush a
     // cancelled request» — que es un detalle del harness, no del producto.
     http.expectOne((r) => r.url === '/diagnostic-results/me/orders').flush(ORDENES);
+    http.expectOne((r) => r.url === '/scheduling/bookings').flush(CITAS);
     http
       .expectOne((r) => r.url === '/charts/patients/pp-1/chart')
       .flush(

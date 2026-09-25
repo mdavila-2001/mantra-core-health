@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { SchedulingClient } from './scheduling.client';
+import { esReconsulta, motivoDeReconsulta } from './scheduling.types';
 import type {
   AgendaResourceCreated,
   AgendaSlot,
@@ -14,7 +15,6 @@ import type {
   SlotsGenerated,
   WaitlistPage,
 } from './scheduling.types';
-import { esReconsulta, motivoDeReconsulta, type BookingConReconsulta } from './follow-up.types';
 
 const DESDE = new Date('2026-08-08T00:00:00.000Z');
 const HASTA = new Date('2026-08-15T00:00:00.000Z');
@@ -756,7 +756,7 @@ describe('SchedulingClient · reconsulta', () => {
   });
 
   it('searchBookings devuelve followUpOf y followUpBookingId tal como llegan', () => {
-    let citas: readonly BookingConReconsulta[] = [];
+    let citas: readonly Booking[] = [];
     client.searchBookings().subscribe((p) => (citas = p.items));
 
     http.expectOne((r) => r.url === '/scheduling/bookings').flush({
@@ -788,7 +788,7 @@ describe('SchedulingClient · reconsulta', () => {
   });
 
   it('getBooking también los devuelve, y esReconsulta los interpreta', () => {
-    let cita: BookingConReconsulta | undefined;
+    let cita: Booking | undefined;
     client.getBooking('b-reconsulta').subscribe((b) => (cita = b));
 
     http.expectOne('/scheduling/bookings/b-reconsulta').flush({
@@ -804,7 +804,7 @@ describe('SchedulingClient · reconsulta', () => {
   });
 
   it('una cita sin el campo no es una reconsulta, y eso no es un dato faltante', () => {
-    let cita: BookingConReconsulta | undefined;
+    let cita: Booking | undefined;
     client.getBooking('b-comun').subscribe((b) => (cita = b));
 
     http

@@ -155,11 +155,14 @@
                     [orders]="atencion.ordenes"
                     [conditions]="atencion.diagnosticos"
                     [prescriptions]="atencion.recetas"
+                    [followUp]="atencion.reconsulta"
                     [loadingOrders]="cargandoDetalle()"
                   />
-                  <!-- TODO C4/C8: la reconsulta (`[followUp]`) no se puede
-                       resolver todavía — el contrato de la reserva no declara
-                       de qué encuentro deriva. El organismo ya la dibuja. -->
+                  <!-- C8: la reconsulta llega con el mismo despliegue que trae
+                       las notas y las órdenes. Se resuelve por
+                       `followUpOf.encounterId` (C4) contra las citas del
+                       titular; si no hay ninguna, el organismo no dibuja el
+                       hecho y la línea queda igual que antes. -->
                 </div>
               </app-accordion-panel>
             }

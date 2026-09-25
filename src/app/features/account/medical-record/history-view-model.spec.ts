@@ -13,7 +13,7 @@ import {
   CODIGO_RESUELTA,
   diagnosisStateOf,
   DIAGNOSIS_STATE_LABELS,
-} from './diagnosis-state';
+} from '../../../shared/clinical/diagnosis-state';
 import {
   atencionesDeLaHistoria,
   bloquesDeDiagnosticos,
@@ -319,7 +319,7 @@ describe('atencionesDeLaHistoria', () => {
           },
         ],
       }),
-      { notas: [NOTA_LIBERADA], ordenes: [ORDEN] },
+      { notas: [NOTA_LIBERADA], ordenes: [ORDEN], citas: [] },
       etiqueta,
       codigo,
     );
@@ -337,7 +337,7 @@ describe('atencionesDeLaHistoria', () => {
   it('una nota no liberada al paciente no entra en la línea', () => {
     const [atencion] = atencionesDeLaHistoria(
       resumen(),
-      { notas: [{ ...NOTA_LIBERADA, releasedToPatient: false }], ordenes: [] },
+      { notas: [{ ...NOTA_LIBERADA, releasedToPatient: false }], ordenes: [], citas: [] },
       etiqueta,
       codigo,
     );
@@ -349,7 +349,7 @@ describe('atencionesDeLaHistoria', () => {
   it('sin notas, sin órdenes y sin recetas la atención se arma igual', () => {
     const [atencion] = atencionesDeLaHistoria(
       resumen(),
-      { notas: [], ordenes: [] },
+      { notas: [], ordenes: [], citas: [] },
       etiqueta,
       codigo,
     );
@@ -363,7 +363,7 @@ describe('atencionesDeLaHistoria', () => {
   it('una atención sin fecha ni motivo no inventa ninguno de los dos', () => {
     const [atencion] = atencionesDeLaHistoria(
       resumen({ encounters: [{ id: 'e-9', statusConceptId: 'st-1' }] }),
-      { notas: [], ordenes: [] },
+      { notas: [], ordenes: [], citas: [] },
       etiqueta,
       codigo,
     );
@@ -388,7 +388,7 @@ describe('atencionesDeLaHistoria', () => {
           },
         ],
       }),
-      { notas: [], ordenes: [] },
+      { notas: [], ordenes: [], citas: [] },
       etiqueta,
       codigo,
     );
@@ -406,7 +406,7 @@ describe('seccionesNuevasDeLaHistoria', () => {
     const bloques = bloquesDeDiagnosticos(condiciones, etiqueta, codigo);
     const atenciones = atencionesDeLaHistoria(
       resumen({ conditions: condiciones }),
-      { notas: [NOTA_LIBERADA], ordenes: [ORDEN] },
+      { notas: [NOTA_LIBERADA], ordenes: [ORDEN], citas: [] },
       etiqueta,
       codigo,
     );
