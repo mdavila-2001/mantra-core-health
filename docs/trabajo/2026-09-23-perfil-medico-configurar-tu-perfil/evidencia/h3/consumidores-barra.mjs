@@ -88,6 +88,15 @@ async function main() {
       await barra.scrollIntoViewIfNeeded();
       await barra.locator('input').first().fill('a');
       await p.waitForTimeout(1300);
+      // Con la latencia del simulador, la lista puede seguir cargando: se espera a que no quede
+      // ningún esqueleto a la vista antes de la captura.
+      await p
+        .waitForFunction(
+          () => ![...document.querySelectorAll('app-skeleton')].some((e) => e.getBoundingClientRect().height > 0),
+          null,
+          { timeout: 20_000 },
+        )
+        .catch(() => {});
       log(`${ruta} (${cuenta}) → ${final}: barras=${total} · clave=${clave} · tras buscar «a» la URL dice ${claves(p)}`);
       await p.screenshot({ path: `${CAPS}/h3-barra-${nombre}.png` });
     } catch (e) {

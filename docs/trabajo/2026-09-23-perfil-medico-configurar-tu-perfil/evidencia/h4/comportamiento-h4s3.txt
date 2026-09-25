@@ -1,57 +1,116 @@
-preparación · títulos antes=2 · 10 títulos nuevos (PAG-48860-01…10, el 01 con diploma) · especialidad pendiente «Medicina General» · matrícula pendiente MAT-48860
+preparación · títulos antes=2 · 10 títulos nuevos (PAG-88657-01…10, el 01 con diploma) · especialidad pendiente «Medicina General» · matrícula pendiente MAT-88657
 H4.S3.M3 · títulos cargados=12 · filas en la página 1=10 · paginador «1–10 de 12»
 H4.S3.M3 · paginador a la derecha: borde derecho del paginador 1375 · de la sección 1375 · debajo de la tabla=true
 H4.S3.M3 · «Siguiente» → filas=2 · paginador «11–12 de 12»
-H4.S3.M3 · buscar «PAG-48860» desde la página 2 → vuelve a la 1: paginador «1–10 de 10» · filas=10
+H4.S3.M3 · buscar «PAG-88657» desde la página 2 → vuelve a la 1: paginador «1–10 de 10» · filas=10
 H4.S3.M3 · «20 por página» → filas=12 · paginador «1–12 de 12»
 H4.S3.M7 · título pendiente con diploma: {"disparador":1,"enFila":[],"nota":0}
 H4.S3.M7 · título pendiente sin diploma: {"disparador":0,"enFila":["Editar","Retirar"],"nota":0}
 H4.S3.M7 · título verificado: {"disparador":0,"enFila":[],"nota":1}
 H4.S3.M7 · «Acciones» abre el desplegable con: Editar · Descargar · Retirar
+H4.S3.M7 · íconos del desplegable del título con diploma: Editar: ícono=true · Descargar: ícono=true · Retirar: ícono=true
 H4.S3.M7 · «Editar» del desplegable abre «Editar Título universitario»
-H4.S3.M1 · especialidades: filtro «Estado» con Estado · Pendiente de verificación · Verificado · filas sin filtro=3
-H4.S3.M1 · especialidades: «Pendiente de verificación» → filas=1 · URL estadoEspecialidad=pendiente · «sin coincidencias»=0
-H4.S3.M1 · especialidades: «Verificado» → filas=2 · URL estadoEspecialidad=verificado · «sin coincidencias»=0
+H4.S3.M1 · especialidades: filtro «Estado» con Estado · Pendiente · Verificada · filas sin filtro=3
+H4.S3.M1 · especialidades: «Pendiente» → filas=1 · URL estadoEspecialidad=pendiente · «sin coincidencias»=0
+H4.S3.M1 · especialidades: «Verificada» → filas=2 · URL estadoEspecialidad=verificado · «sin coincidencias»=0
 H4.S3.M1 · especialidades: sin filtro otra vez → filas=3
 H4.S3.M1 · matriculas: filtro «Estado» con Estado · Activo · Pendiente · filas sin filtro=3
 H4.S3.M1 · matriculas: «Activo» → filas=2 · URL estadoMatricula=f9517e0a… · «sin coincidencias»=0
 H4.S3.M1 · matriculas: «Pendiente» → filas=1 · URL estadoMatricula=5717330b… · «sin coincidencias»=0
 H4.S3.M1 · matriculas: sin filtro otra vez → filas=3
-H4.S3.M7 · especialidad: {"disparador":0,"enFila":["Editar","Retirar"],"nota":0}
-H4.S3.M7 · matrícula con carnet: {"disparador":1,"enFila":[],"nota":0}
+H4.S3.M7 · especialidad verificada: {"disparador":0,"enFila":[],"nota":1}
+H4.S3.M7 · especialidad pendiente: {"disparador":0,"enFila":["Editar","Retirar"],"nota":0}
+H4.S3.M7 · matrícula activa con carnet: {"disparador":0,"enFila":["Descargar"],"nota":1}
+H4.S3.M7 · «Descargar» de la matrícula activa con carnet: «Descargar»: ícono=true
+H4.S3.M7 · matrícula pendiente: {"disparador":0,"enFila":["Editar","Retirar"],"nota":0}
 H4.S3.M4 · 1440 light · titulos: ancho 1070/1070 · lateral=false · alto máximo 420px · desplaza a lo alto=true · filas en la página=10 · paginador «1–10 de 12»
+H4.S3.M4 · 1440 light · titulos: estado en la fila, visible en 0 de 10 filas
 H4.S3.M3 · 1440 light · titulos: paginador hasta x=1375 · borde de la sección x=1375 · se sale=false
 H4.S3.M4 · 1440 light · especialidades: ancho 1070/1070 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 1440 light · especialidades: estado en la fila, visible en 0 de 3 filas
 H4.S3.M3 · 1440 light · especialidades: paginador hasta x=1375 · borde de la sección x=1375 · se sale=false
 H4.S3.M4 · 1440 light · matriculas: ancho 1070/1070 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 1440 light · matriculas: estado en la fila, visible en 0 de 3 filas
 H4.S3.M3 · 1440 light · matriculas: paginador hasta x=1375 · borde de la sección x=1375 · se sale=false
 H4.S3.M4 · 1440 dark · titulos: ancho 1070/1070 · lateral=false · alto máximo 420px · desplaza a lo alto=true · filas en la página=10 · paginador «1–10 de 12»
+H4.S3.M4 · 1440 dark · titulos: estado en la fila, visible en 0 de 10 filas
 H4.S3.M3 · 1440 dark · titulos: paginador hasta x=1375 · borde de la sección x=1375 · se sale=false
 H4.S3.M4 · 1440 dark · especialidades: ancho 1070/1070 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 1440 dark · especialidades: estado en la fila, visible en 0 de 3 filas
 H4.S3.M3 · 1440 dark · especialidades: paginador hasta x=1375 · borde de la sección x=1375 · se sale=false
 H4.S3.M4 · 1440 dark · matriculas: ancho 1070/1070 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 1440 dark · matriculas: estado en la fila, visible en 0 de 3 filas
 H4.S3.M3 · 1440 dark · matriculas: paginador hasta x=1375 · borde de la sección x=1375 · se sale=false
+H4.S3.M4 · 1920 light · titulos: ancho 1310/1310 · lateral=false · alto máximo 420px · desplaza a lo alto=true · filas en la página=10 · paginador «1–10 de 12»
+H4.S3.M4 · 1920 light · titulos: estado en la fila, visible en 0 de 10 filas
+H4.S3.M3 · 1920 light · titulos: paginador hasta x=1735 · borde de la sección x=1735 · se sale=false
+H4.S3.M4 · 1920 light · especialidades: ancho 1310/1310 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 1920 light · especialidades: estado en la fila, visible en 0 de 3 filas
+H4.S3.M3 · 1920 light · especialidades: paginador hasta x=1735 · borde de la sección x=1735 · se sale=false
+H4.S3.M4 · 1920 light · matriculas: ancho 1310/1310 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 1920 light · matriculas: estado en la fila, visible en 0 de 3 filas
+H4.S3.M3 · 1920 light · matriculas: paginador hasta x=1735 · borde de la sección x=1735 · se sale=false
+H4.S3.M4 · 1920 dark · titulos: ancho 1310/1310 · lateral=false · alto máximo 420px · desplaza a lo alto=true · filas en la página=10 · paginador «1–10 de 12»
+H4.S3.M4 · 1920 dark · titulos: estado en la fila, visible en 0 de 10 filas
+H4.S3.M3 · 1920 dark · titulos: paginador hasta x=1735 · borde de la sección x=1735 · se sale=false
+H4.S3.M4 · 1920 dark · especialidades: ancho 1310/1310 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 1920 dark · especialidades: estado en la fila, visible en 0 de 3 filas
+H4.S3.M3 · 1920 dark · especialidades: paginador hasta x=1735 · borde de la sección x=1735 · se sale=false
+H4.S3.M4 · 1920 dark · matriculas: ancho 1310/1310 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 1920 dark · matriculas: estado en la fila, visible en 0 de 3 filas
+H4.S3.M3 · 1920 dark · matriculas: paginador hasta x=1735 · borde de la sección x=1735 · se sale=false
+H4.S3.M4 · 1024 light · titulos: ancho 694/694 · lateral=false · alto máximo 420px · desplaza a lo alto=true · filas en la página=10 · paginador «1–10 de 12»
+H4.S3.M4 · 1024 light · titulos: estado en la fila, visible en 0 de 10 filas
+H4.S3.M3 · 1024 light · titulos: paginador hasta x=975 · borde de la sección x=975 · se sale=false
+H4.S3.M4 · 1024 light · especialidades: ancho 694/694 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 1024 light · especialidades: estado en la fila, visible en 0 de 3 filas
+H4.S3.M3 · 1024 light · especialidades: paginador hasta x=975 · borde de la sección x=975 · se sale=false
+H4.S3.M4 · 1024 light · matriculas: ancho 694/694 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 1024 light · matriculas: estado en la fila, visible en 0 de 3 filas
+H4.S3.M3 · 1024 light · matriculas: paginador hasta x=975 · borde de la sección x=975 · se sale=false
+H4.S3.M4 · 1024 dark · titulos: ancho 694/694 · lateral=false · alto máximo 420px · desplaza a lo alto=true · filas en la página=10 · paginador «1–10 de 12»
+H4.S3.M4 · 1024 dark · titulos: estado en la fila, visible en 0 de 10 filas
+H4.S3.M3 · 1024 dark · titulos: paginador hasta x=975 · borde de la sección x=975 · se sale=false
+H4.S3.M4 · 1024 dark · especialidades: ancho 694/694 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 1024 dark · especialidades: estado en la fila, visible en 0 de 3 filas
+H4.S3.M3 · 1024 dark · especialidades: paginador hasta x=975 · borde de la sección x=975 · se sale=false
+H4.S3.M4 · 1024 dark · matriculas: ancho 694/694 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 1024 dark · matriculas: estado en la fila, visible en 0 de 3 filas
+H4.S3.M3 · 1024 dark · matriculas: paginador hasta x=975 · borde de la sección x=975 · se sale=false
 H4.S3.M4 · 768 light · titulos: ancho 678/678 · lateral=false · alto máximo 420px · desplaza a lo alto=true · filas en la página=10 · paginador «1–10 de 12»
+H4.S3.M4 · 768 light · titulos: estado en la fila, visible en 10 de 10 filas («Verificado», «Pendiente»)
 H4.S3.M3 · 768 light · titulos: paginador hasta x=723 · borde de la sección x=723 · se sale=false
 H4.S3.M4 · 768 light · especialidades: ancho 678/678 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 768 light · especialidades: estado en la fila, visible en 3 de 3 filas («Verificada», «Pendiente»)
 H4.S3.M3 · 768 light · especialidades: paginador hasta x=723 · borde de la sección x=723 · se sale=false
 H4.S3.M4 · 768 light · matriculas: ancho 678/678 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 768 light · matriculas: estado en la fila, visible en 3 de 3 filas («Activo», «Pendiente»)
 H4.S3.M3 · 768 light · matriculas: paginador hasta x=723 · borde de la sección x=723 · se sale=false
 H4.S3.M4 · 768 dark · titulos: ancho 678/678 · lateral=false · alto máximo 420px · desplaza a lo alto=true · filas en la página=10 · paginador «1–10 de 12»
+H4.S3.M4 · 768 dark · titulos: estado en la fila, visible en 10 de 10 filas («Verificado», «Pendiente»)
 H4.S3.M3 · 768 dark · titulos: paginador hasta x=723 · borde de la sección x=723 · se sale=false
 H4.S3.M4 · 768 dark · especialidades: ancho 678/678 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 768 dark · especialidades: estado en la fila, visible en 3 de 3 filas («Verificada», «Pendiente»)
 H4.S3.M3 · 768 dark · especialidades: paginador hasta x=723 · borde de la sección x=723 · se sale=false
 H4.S3.M4 · 768 dark · matriculas: ancho 678/678 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 768 dark · matriculas: estado en la fila, visible en 3 de 3 filas («Activo», «Pendiente»)
 H4.S3.M3 · 768 dark · matriculas: paginador hasta x=723 · borde de la sección x=723 · se sale=false
-H4.S3.M4 · 375 light · titulos: ancho 301/301 · lateral=false · alto máximo 420px · desplaza a lo alto=true · filas en la página=10 · paginador «1–10 de 12»
-H4.S3.M3 · 375 light · titulos: paginador hasta x=338 · borde de la sección x=338 · se sale=false
-H4.S3.M4 · 375 light · especialidades: ancho 301/301 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
-H4.S3.M3 · 375 light · especialidades: paginador hasta x=338 · borde de la sección x=338 · se sale=false
-H4.S3.M4 · 375 light · matriculas: ancho 301/301 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
-H4.S3.M3 · 375 light · matriculas: paginador hasta x=338 · borde de la sección x=338 · se sale=false
-H4.S3.M4 · 375 dark · titulos: ancho 301/301 · lateral=false · alto máximo 420px · desplaza a lo alto=true · filas en la página=10 · paginador «1–10 de 12»
-H4.S3.M3 · 375 dark · titulos: paginador hasta x=338 · borde de la sección x=338 · se sale=false
-H4.S3.M4 · 375 dark · especialidades: ancho 301/301 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
-H4.S3.M3 · 375 dark · especialidades: paginador hasta x=338 · borde de la sección x=338 · se sale=false
-H4.S3.M4 · 375 dark · matriculas: ancho 301/301 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
-H4.S3.M3 · 375 dark · matriculas: paginador hasta x=338 · borde de la sección x=338 · se sale=false
+H4.S3.M4 · 390 light · titulos: ancho 316/316 · lateral=false · alto máximo 420px · desplaza a lo alto=true · filas en la página=10 · paginador «1–10 de 12»
+H4.S3.M4 · 390 light · titulos: estado en la fila, visible en 10 de 10 filas («Verificado», «Pendiente»)
+H4.S3.M3 · 390 light · titulos: paginador hasta x=353 · borde de la sección x=353 · se sale=false
+H4.S3.M4 · 390 light · especialidades: ancho 316/316 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 390 light · especialidades: estado en la fila, visible en 3 de 3 filas («Verificada», «Pendiente»)
+H4.S3.M3 · 390 light · especialidades: paginador hasta x=353 · borde de la sección x=353 · se sale=false
+H4.S3.M4 · 390 light · matriculas: ancho 316/316 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 390 light · matriculas: estado en la fila, visible en 3 de 3 filas («Activo», «Pendiente»)
+H4.S3.M3 · 390 light · matriculas: paginador hasta x=353 · borde de la sección x=353 · se sale=false
+H4.S3.M4 · 390 dark · titulos: ancho 316/316 · lateral=false · alto máximo 420px · desplaza a lo alto=true · filas en la página=10 · paginador «1–10 de 12»
+H4.S3.M4 · 390 dark · titulos: estado en la fila, visible en 10 de 10 filas («Verificado», «Pendiente»)
+H4.S3.M3 · 390 dark · titulos: paginador hasta x=353 · borde de la sección x=353 · se sale=false
+H4.S3.M4 · 390 dark · especialidades: ancho 316/316 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 390 dark · especialidades: estado en la fila, visible en 3 de 3 filas («Verificada», «Pendiente»)
+H4.S3.M3 · 390 dark · especialidades: paginador hasta x=353 · borde de la sección x=353 · se sale=false
+H4.S3.M4 · 390 dark · matriculas: ancho 316/316 · lateral=false · alto máximo 420px · desplaza a lo alto=false · filas en la página=3 · paginador «1–3 de 3»
+H4.S3.M4 · 390 dark · matriculas: estado en la fila, visible en 3 de 3 filas («Activo», «Pendiente»)
+H4.S3.M3 · 390 dark · matriculas: paginador hasta x=353 · borde de la sección x=353 · se sale=false
+H4.S3.M7 · 390 oscuro · «Acciones» del título con diploma: Editar: ícono=true · Descargar: ícono=true · Retirar: ícono=true

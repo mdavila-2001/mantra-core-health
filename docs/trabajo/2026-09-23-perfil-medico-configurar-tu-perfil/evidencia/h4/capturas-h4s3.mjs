@@ -75,10 +75,18 @@ async function abrirEditor(p, pestana) {
   await irA(p, pestana);
 }
 
+/**
+ * La pestaña de cada tabla, desde el 24/09/2026: las especialidades en «Datos personales», y
+ * los títulos en «Credenciales», debajo de las matrículas. «Trayectoria» es el historial laboral.
+ */
+const PESTANA_DE = { titulos: 'Credenciales', especialidades: 'Datos personales', matriculas: 'Credenciales' };
+
 async function irA(p, pestana) {
   await tab(p, pestana).click();
-  const tabla = pestana === 'Trayectoria' ? 'titulos' : 'matriculas';
-  await filas(p, tabla).first().waitFor({ timeout: 30_000 });
+  // Una pestaña puede tener más de una tabla: se espera a que estén todas.
+  for (const tabla of Object.keys(PESTANA_DE).filter((t) => PESTANA_DE[t] === pestana)) {
+    await filas(p, tabla).first().waitFor({ timeout: 30_000 });
+  }
   await esperar(p, 900);
 }
 
@@ -129,14 +137,22 @@ async function sembrar(p) {
   }, SELLO);
 }
 
+/** El nombre de cada ancho en las capturas: los cinco viewports del gate visual del repo. */
+const VIEWPORT = { 1920: 'escritorio-grande', 1440: 'escritorio', 1024: 'tableta-horizontal', 768: 'tableta', 390: 'movil' };
+
 async function capturarSecciones(p, ancho, tema) {
   for (const tabla of ['titulos', 'especialidades', 'matriculas']) {
-    await irA(p, tabla === 'titulos' ? 'Trayectoria' : 'Credenciales');
+    await irA(p, PESTANA_DE[tabla]);
     const seccion = p.getByTestId(SECCION[tabla]);
     await seccion.scrollIntoViewIfNeeded();
     await esperar(p, 400);
     const m = await medida(p, tabla);
     log(`H4.S3.M4 · ${ancho} ${tema} · ${tabla}: ancho ${m.ancho} · lateral=${m.lateral} · alto máximo ${m.altoMaximo} · desplaza a lo alto=${m.vertical} · filas en la página=${await filas(p, tabla).count()} · paginador «${await rango(p, tabla)}»`);
+    // Por debajo de 780 px la columna «Estado» vive en el detalle: el estado tiene que seguir a la vista en la fila.
+    const estadoEnFila = await seccion.locator('.edicion__estado-en-fila').evaluateAll((els) =>
+      els.filter((e) => e.getBoundingClientRect().height > 0).map((e) => e.textContent.trim()),
+    );
+    log(`H4.S3.M4 · ${ancho} ${tema} · ${tabla}: estado en la fila, visible en ${estadoEnFila.length} de ${await filas(p, tabla).count()} filas${estadoEnFila.length ? ` («${[...new Set(estadoEnFila)].join('», «')}»)` : ''}`);
     const paginador = await p.getByTestId(PAGINADOR[tabla]).evaluate((host) => {
       const borde = host.closest('section').getBoundingClientRect().right;
       const derecha = Math.max(...[...host.querySelectorAll('*')].map((el) => el.getBoundingClientRect().right));
@@ -146,23 +162,23 @@ async function capturarSecciones(p, ancho, tema) {
     // El encabezado de la app es fijo y taparía el comienzo de la sección en la foto: sólo para la
     // captura, se lo deja correr con la página. No cambia el diseño de nada más.
     await p.evaluate(() => document.querySelector('header[app-header]')?.style.setProperty('position', 'relative'));
-    await seccion.screenshot({ path: `${CAPS}/h4s3-${tabla}-${ancho}-${tema === 'light' ? 'claro' : 'oscuro'}.png` });
+    await seccion.screenshot({ path: `${CAPS}/h4s3-${tabla}-${VIEWPORT[ancho]}-${tema === 'light' ? 'claro' : 'oscuro'}.png` });
     await p.evaluate(() => document.querySelector('header[app-header]')?.style.removeProperty('position'));
   }
 }
 
 /** El simulador vive en cada navegador: cada contexto carga lo suyo antes de mirar. */
 async function preparar(p) {
-  await abrirEditor(p, 'Trayectoria');
+  await abrirEditor(p, 'Credenciales');
   const sembrado = await sembrar(p);
   await p.reload({ waitUntil: 'domcontentloaded' });
   await tab(p, 'Datos personales').waitFor({ timeout: 60_000 });
-  await irA(p, 'Trayectoria');
+  await irA(p, 'Credenciales');
   return sembrado;
 }
 
 async function principal(navegador) {
-  const p = await nuevaPagina(navegador, { ancho: 1440, alto: 1000, tema: 'light' });
+  const p = await nuevaPagina(navegador, { ancho: 1440, alto: 900, tema: 'light' });
   const sembrado = await preparar(p);
   log(`preparación · títulos antes=${sembrado.titulosAntes} · 10 títulos nuevos (PAG-${SELLO}-01…10, el 01 con diploma) · especialidad pendiente «${sembrado.especialidad}» · matrícula pendiente MAT-${SELLO}`);
 
@@ -205,6 +221,10 @@ async function principal(navegador) {
   await esperar(p, 400);
   const opciones = (await p.locator('app-menu-item >> visible=true').allInnerTexts()).map(plano);
   log(`H4.S3.M7 · «Acciones» abre el desplegable con: ${opciones.join(' · ')}`);
+  const iconos = await p.locator('app-menu-item >> visible=true').evaluateAll((items) =>
+    items.map((i) => `${i.textContent.replace(/\s+/g, ' ').trim()}: ícono=${i.querySelector('svg, app-nav-icon') !== null}`),
+  );
+  log(`H4.S3.M7 · íconos del desplegable del título con diploma: ${iconos.join(' · ')}`);
   await p.screenshot({ path: `${CAPS}/h4s3-titulos-menu-acciones.png` });
   await p.locator('app-menu-item[data-action="editar"] >> visible=true').first().click();
   const modal = p.locator('dialog[open]').first();
@@ -215,8 +235,8 @@ async function principal(navegador) {
   await esperar(p);
 
   // M1 · filtro «Estado» de especialidades y matrículas.
-  await irA(p, 'Credenciales');
   for (const tabla of ['especialidades', 'matriculas']) {
+    await irA(p, PESTANA_DE[tabla]);
     const selector = barra(p, tabla).locator('select').first();
     const opcionesEstado = (await selector.locator('option').allInnerTexts()).map(plano).filter(Boolean);
     const antes = await filas(p, tabla).count();
@@ -240,13 +260,39 @@ async function principal(navegador) {
     await esperar(p, 900);
     log(`H4.S3.M1 · ${tabla}: sin filtro otra vez → filas=${await filas(p, tabla).count()}`);
   }
-  const esp = p.locator(`[data-testid="${TABLA.especialidades}"] tbody tr.data-table__row`).first();
-  const mat = p.locator(`[data-testid="${TABLA.matriculas}"] tbody tr.data-table__row`).first();
-  log(`H4.S3.M7 · especialidad: ${JSON.stringify(await resumen(esp))}`);
-  log(`H4.S3.M7 · matrícula con carnet: ${JSON.stringify(await resumen(mat))}`);
+  // Cada fila se lee en su pestaña: la tabla de la otra no está dibujada. Lo ya revisado no se
+  // edita ni se retira (24/09/2026): la fila verificada lleva la nota y la pendiente, sus acciones.
+  const filaCon = (tabla, texto) =>
+    p.locator(`[data-testid="${TABLA[tabla]}"] tbody tr.data-table__row`, { hasText: texto }).first();
+  await irA(p, PESTANA_DE.especialidades);
+  log(`H4.S3.M7 · especialidad verificada: ${JSON.stringify(await resumen(filaCon('especialidades', 'Verificada')))}`);
+  log(`H4.S3.M7 · especialidad pendiente: ${JSON.stringify(await resumen(filaCon('especialidades', 'Pendiente')))}`);
+  await irA(p, PESTANA_DE.matriculas);
+  log(`H4.S3.M7 · matrícula activa con carnet: ${JSON.stringify(await resumen(filaCon('matriculas', 'Activo')))}`);
+  const descargaMatricula = await filaCon('matriculas', 'Activo')
+    .locator('[data-action="descargar"]')
+    .evaluateAll((els) => els.map((e) => `«${e.textContent.replace(/\s+/g, ' ').trim()}»: ícono=${e.querySelector('svg, app-nav-icon') !== null}`));
+  log(`H4.S3.M7 · «Descargar» de la matrícula activa con carnet: ${descargaMatricula.join(' · ') || '(sin «Descargar»)'}`);
+  log(`H4.S3.M7 · matrícula pendiente: ${JSON.stringify(await resumen(filaCon('matriculas', 'Pendiente')))}`);
 
   await capturarSecciones(p, 1440, 'light');
   await p.context().close();
+}
+
+/** El desplegable de acciones del título con diploma, también a 390 oscuro. */
+async function menuEnMovil(p) {
+  await irA(p, PESTANA_DE.titulos);
+  const fila = p.locator(`[data-testid="${TABLA.titulos}"] tbody tr.data-table__row`, { hasText: `PAG-${SELLO}-01` }).first();
+  await fila.scrollIntoViewIfNeeded();
+  await fila.getByTestId('row-actions-trigger').click();
+  await esperar(p, 500);
+  const iconos = await p.locator('app-menu-item >> visible=true').evaluateAll((items) =>
+    items.map((i) => `${i.textContent.replace(/\s+/g, ' ').trim()}: ícono=${i.querySelector('svg, app-nav-icon') !== null}`),
+  );
+  log(`H4.S3.M7 · 390 oscuro · «Acciones» del título con diploma: ${iconos.join(' · ')}`);
+  await p.screenshot({ path: `${CAPS}/h4s3-titulos-menu-acciones-movil-oscuro.png` });
+  await p.keyboard.press('Escape');
+  await esperar(p, 400);
 }
 
 async function main() {
@@ -254,15 +300,20 @@ async function main() {
   try {
     await principal(navegador);
     for (const [ancho, alto, tema] of [
-      [1440, 1000, 'dark'],
+      [1440, 900, 'dark'],
+      [1920, 1080, 'light'],
+      [1920, 1080, 'dark'],
+      [1024, 768, 'light'],
+      [1024, 768, 'dark'],
       [768, 1024, 'light'],
       [768, 1024, 'dark'],
-      [375, 812, 'light'],
-      [375, 812, 'dark'],
+      [390, 844, 'light'],
+      [390, 844, 'dark'],
     ]) {
       const p = await nuevaPagina(navegador, { ancho, alto, tema });
       await preparar(p);
       await capturarSecciones(p, ancho, tema);
+      if (ancho === 390 && tema === 'dark') await menuEnMovil(p);
       await p.context().close();
     }
   } finally {

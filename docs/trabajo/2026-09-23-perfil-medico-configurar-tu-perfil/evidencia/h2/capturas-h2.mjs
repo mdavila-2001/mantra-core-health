@@ -123,8 +123,28 @@ async function abrirEditor(p, pestana) {
   await asentar(p);
 }
 
+
+/** Los avisos que la pestaña muestra al abrirse; se espera a que se vayan antes de capturar. */
+async function sinAviso(p) {
+  const avisos = (await p.locator('.toast__title >> visible=true').allInnerTexts().catch(() => [])).map(plano);
+  // Puede haber más de uno (uno por pestaña recorrida): se espera a que no quede ninguno.
+  await p
+    .waitForFunction(() => ![...document.querySelectorAll('.toast__title')].some((t) => t.getClientRects().length > 0), null, { timeout: 12_000 })
+    .catch(() => {});
+  await asentar(p, 500);
+  return avisos;
+}
+
+/** Lo que D-03 y el #645 fijan en un texto de pestaña, dicho en una línea. */
+const contactos = (texto) =>
+  '«Correo de trabajo»=' + (texto.includes('Correo de trabajo') ? 'SÍ' : 'no') +
+  ' · teléfonos del trabajo=' + JSON.stringify(texto.match(/(Celular|Fijo|Teléfono) del trabajo/gi) ?? []) +
+  ' · «Correo de acceso»=' + (texto.includes('Correo de acceso') ? 'SÍ' : 'no');
+
 const VIEWPORTS = [
-  [1440, 1000, 'escritorio'],
+  [1440, 900, 'escritorio'],
+  [1920, 1080, 'escritorio-grande'],
+  [1024, 768, 'tableta-horizontal'],
   [768, 1024, 'tableta'],
   [390, 844, 'movil'],
 ];
@@ -132,56 +152,60 @@ const VIEWPORTS = [
 async function main() {
   const navegador = await chromium.launch();
 
-  // H2.S1.M4 · H2.S3.M4 · H2.S3.M8 — ficha: Datos personales y Contacto, 3 viewports × 2 temas
+  // H2.S1.M4 · H2.S3.M8 — ficha: las cuatro pestañas del carril, 5 viewports × 2 temas
   for (const tema of ['light', 'dark']) {
     for (const [ancho, alto, vp] of VIEWPORTS) {
       const p = await entrar(navegador, { ancho, alto, tema, cuenta: 'medica@alovida.mock' });
       const t = tema === 'light' ? 'claro' : 'oscuro';
-      await p.goto(`${BASE}/my-account`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
+      await p.goto(BASE + '/my-account', { waitUntil: 'domcontentloaded', timeout: 180_000 });
       await tab(p, /Datos personales/).waitFor({ timeout: 60_000 });
       await asentar(p, 1500);
       const dp = await textoPanel(p);
-      log(
-        `ficha · Datos personales · ${vp} ${t}: «Estado de la práctica»=${dp.includes('Estado de la práctica') ? 'SÍ' : 'no'} · «Correo de acceso»=${dp.includes('Correo de acceso') ? 'SÍ' : 'no'} · «Se cambia por su propio trámite»=${dp.includes('Se cambia por su propio trámite') ? 'SÍ' : 'no'}`,
-      );
-      await cap(p, `h2-ficha-datos-personales-${vp}-${t}`);
+      log('ficha · Datos personales · ' + vp + ' ' + t + ': «Estado de la práctica»=' + (dp.includes('Estado de la práctica') ? 'SÍ' : 'no') + ' · ' + contactos(dp));
+      await cap(p, 'h2-ficha-datos-personales-' + vp + '-' + t);
       await tab(p, /Contacto/).click();
       await asentar(p);
       const co = await textoPanel(p);
-      log(
-        `ficha · Contacto · ${vp} ${t}: «trabajo»=${/trabajo/i.test(co) ? JSON.stringify(co.match(/.{0,30}trabajo.{0,30}/gi)) : 'no'} · texto: ${co.slice(0, 400)}`,
-      );
-      await cap(p, `h2-ficha-contacto-${vp}-${t}`);
+      log('ficha · Contacto · ' + vp + ' ' + t + ': ' + contactos(co) + ' · texto: ' + co.slice(0, 300));
+      await cap(p, 'h2-ficha-contacto-' + vp + '-' + t);
+      // «Trayectoria» avisa por 3 s que los títulos están en «Credenciales» (#650): se anota el
+      // aviso y se captura cuando ya se fue, para que no tape la pestaña.
+      await tab(p, /Trayectoria/).click();
+      await asentar(p, 600);
+      log('ficha · Trayectoria · ' + vp + ' ' + t + ': aviso=' + JSON.stringify(await sinAviso(p)));
+      await cap(p, 'h2-ficha-trayectoria-' + vp + '-' + t);
+      await tab(p, /Credenciales/).click();
+      await asentar(p);
+      await asentar(p, 600);
+      log('ficha · Credenciales · ' + vp + ' ' + t + ': aviso=' + JSON.stringify(await sinAviso(p)) + ' · ' + (await textoPanel(p)).slice(0, 200));
+      await cap(p, 'h2-ficha-credenciales-' + vp + '-' + t);
       await p.context().close();
     }
   }
 
-  // H2.S3.M4 — editor: Datos personales (correo de acceso) y Contacto, escritorio claro y móvil oscuro
-  for (const [ancho, alto, vp, tema] of [
-    [1440, 1000, 'escritorio', 'light'],
-    [390, 844, 'movil', 'dark'],
-  ]) {
-    const t = tema === 'light' ? 'claro' : 'oscuro';
-    const p = await entrar(navegador, { ancho, alto, tema, cuenta: 'medica@alovida.mock' });
-    await abrirEditor(p, /Datos personales/);
-    const acceso = p.getByTestId('edicion-correo-acceso');
-    log(
-      `editor · Datos personales · ${vp} ${t}: sección del correo de acceso=${(await acceso.count()) ? `SÍ — «${plano(await acceso.innerText())}»` : 'NO'}`,
-    );
-    await cap(p, `h2-editor-datos-personales-${vp}-${t}`);
-    await tab(p, /Contacto/).click();
-    await asentar(p);
-    const co = await textoPanel(p);
-    log(
-      `editor · Contacto · ${vp} ${t}: «trabajo»=${/trabajo/i.test(co) ? JSON.stringify(co.match(/.{0,30}trabajo.{0,30}/gi)) : 'no'} · texto: ${co.slice(0, 400)}`,
-    );
-    await cap(p, `h2-editor-contacto-${vp}-${t}`);
-    await p.context().close();
+  // H2.S3 — editor: «Datos personales» y «Contacto», 5 viewports × 2 temas. Desde el #645 el
+  // correo de trabajo se corrige en Contacto y no hay «Correo de acceso» en Datos personales.
+  for (const tema of ['light', 'dark']) {
+    for (const [ancho, alto, vp] of VIEWPORTS) {
+      const t = tema === 'light' ? 'claro' : 'oscuro';
+      const p = await entrar(navegador, { ancho, alto, tema, cuenta: 'medica@alovida.mock' });
+      await abrirEditor(p, /Datos personales/);
+      const dp = await textoPanel(p);
+      log('editor · Datos personales · ' + vp + ' ' + t + ': sección del correo de acceso=' + (await p.getByTestId('edicion-correo-acceso').count()) + ' · ' + contactos(dp));
+      await cap(p, 'h2-editor-datos-personales-' + vp + '-' + t);
+      await tab(p, /Contacto/).click();
+      await asentar(p);
+      const co = await textoPanel(p);
+      const correo = p.locator('input[data-testid="edicion-correo-trabajo"]');
+      log('editor · Contacto · ' + vp + ' ' + t + ': campo del correo de trabajo=' + (await correo.count()) + ((await correo.count()) ? ' con «' + (await correo.inputValue()) + '»' : '') + ' · celular del trabajo=' + (await p.getByTestId('edicion-celular-trabajo').count()) + ' · fijo del trabajo=' + (await p.getByTestId('edicion-fijo-trabajo').count()) + ' · ' + contactos(co));
+      await cap(p, 'h2-editor-contacto-' + vp + '-' + t);
+      await p.context().close();
+    }
   }
 
   // H2.S2.M8 — insignias: ficha, editor, perfil público (médica) y guía (paciente)
   {
-    const p = await entrar(navegador, { ancho: 1440, alto: 1000, tema: 'light', cuenta: 'medica@alovida.mock' });
+    const p = await entrar(navegador, { ancho: 1440, alto: 900, tema: 'light', cuenta: 'medica@alovida.mock' });
     await p.goto(`${BASE}/my-account`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
     await tab(p, /Datos personales/).waitFor({ timeout: 60_000 });
     await asentar(p, 1500);
@@ -194,14 +218,43 @@ async function main() {
     }
     await tabs.first().click();
     await asentar(p, 600);
+    // Recorrer las pestañas deja sus avisos a la vista: se espera a que se vayan.
+    await sinAviso(p);
     await cap(p, 'h2-insignias-ficha');
 
-    await abrirEditor(p, /Credenciales/);
+    await abrirEditor(p, /Datos personales/);
     const encabezados = await p.locator('table thead th').allInnerTexts();
     log(
-      `insignias · editor · Credenciales: encabezados=${JSON.stringify(encabezados.map(plano))} · botones con «principal»=${await p.getByRole('button', { name: /principal/i }).count()} · ${informe(await insignias(p))}`,
+      `insignias · editor · Datos personales: encabezados=${JSON.stringify(encabezados.map(plano))} · botones con «principal»=${await p.getByRole('button', { name: /principal/i }).count()} · ${informe(await insignias(p))}`,
     );
-    await cap(p, 'h2-insignias-editor');
+    // La página entera de «Datos personales» ya es `h2-editor-datos-personales-escritorio-claro`:
+    // acá va sólo la sección de especialidades, donde están las insignias.
+    const especialidades = p.getByTestId('edicion-especialidades-cargadas');
+    await especialidades.scrollIntoViewIfNeeded();
+    await quieto(p);
+    await especialidades.screenshot({ path: `${CAPS}/h2-insignias-editor.png` });
+
+    // «Credenciales» tiene las matrículas y, debajo, los títulos (24/09/2026): cada fila con sus
+    // acciones, dichas como se ven, y si cada botón lleva ícono.
+    await tab(p, /Credenciales/).click();
+    await asentar(p);
+    const botonesDe = (fila) =>
+      fila.locator('button').evaluateAll((bs) =>
+        bs
+          .map((b) => ({ texto: b.textContent.replace(/\s+/g, ' ').trim(), icono: b.querySelector('svg, app-nav-icon') !== null }))
+          .map((b) => (b.icono ? `${b.texto || '(sin texto)'} [ícono]` : b.texto))
+          .filter(Boolean),
+      );
+    for (const [nombre, seccion] of [['matrícula', 'edicion-matriculas-cargadas'], ['título', 'edicion-formacion-cargada']]) {
+      const filasDe = p.locator(`[data-testid="${seccion}"] tbody tr`);
+      for (let i = 0; i < (await filasDe.count()); i++) {
+        const fila = filasDe.nth(i);
+        log(
+          `editor · Credenciales · ${nombre} ${i + 1}: «${plano(await fila.innerText()).slice(0, 120)}» · botones=${JSON.stringify(await botonesDe(fila))}`,
+        );
+      }
+    }
+    await cap(p, 'h2-editor-credenciales-escritorio-claro');
 
     await p.goto(`${BASE}/p/${SLUG_MEDICA}`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
     await asentar(p, 2500);
@@ -210,7 +263,7 @@ async function main() {
     await p.context().close();
   }
   {
-    const p = await entrar(navegador, { ancho: 1440, alto: 1000, tema: 'light', cuenta: 'paciente@alovida.mock' });
+    const p = await entrar(navegador, { ancho: 1440, alto: 900, tema: 'light', cuenta: 'paciente@alovida.mock' });
     await p.goto(`${BASE}/directory/${ID_MEDICA}`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
     await asentar(p, 3000);
     log(`insignias · guía, detalle (paciente, /directory/${ID_MEDICA}) → ${p.url().replace(BASE, '')}: ${informe(await insignias(p))}`);
@@ -224,7 +277,7 @@ async function main() {
 
   // H2.S2.M5 — el alta: especialidades sin «principal»
   {
-    const ctx = await navegador.newContext({ viewport: { width: 1440, height: 1000 } });
+    const ctx = await navegador.newContext({ viewport: { width: 1440, height: 900 } });
     const p = await ctx.newPage();
     await p.goto(`${BASE}/auth/register/practitioner`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
     await p.locator('app-paginated-form').waitFor({ timeout: 60_000 });
@@ -265,7 +318,7 @@ async function main() {
   // H2.S3.M6 — el PATCH en la Red. La maqueta lo resuelve en memoria; se deja pasar a la
   // red sólo ese envío (el interruptor del stock de componentes) y se lo retiene ahí.
   {
-    const p = await entrar(navegador, { ancho: 1440, alto: 1000, tema: 'light', cuenta: 'medica@alovida.mock' });
+    const p = await entrar(navegador, { ancho: 1440, alto: 900, tema: 'light', cuenta: 'medica@alovida.mock' });
     await p.goto(`${BASE}/design-system/stock`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
     await p.locator('app-component-stock').waitFor({ timeout: 60_000 });
     const hayInterruptor = await p.evaluate(() => {
