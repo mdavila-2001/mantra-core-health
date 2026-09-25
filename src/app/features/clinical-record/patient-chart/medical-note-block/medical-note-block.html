@@ -39,14 +39,14 @@
           </app-form-field>
 
           <app-form-field label="Valor" class="nota__valor">
-            <!-- Una línea que crece: el valor suele ser corto, y cuando no lo
-                 es, el campo se estira en vez de esconderlo. Enter agrega la
+            <!-- Una línea a la altura del campo de al lado; el tirador la
+                 estira si el valor es largo. Sin `autoResize`: dentro de un
+                 modal se mide antes de abrirse y queda en cero. Enter agrega la
                  fila siguiente; Shift+Enter deja el salto. -->
             <app-textarea
               placeholder="120/80 mmHg"
               data-testid="nota-medica-valor"
               [rows]="1"
-              [autoResize]="true"
               [value]="fila.valor"
               [disabled]="!hayEncuentro() || guardando()"
               (valueChange)="fijarValor(fila.clave, $event)"
@@ -95,7 +95,6 @@
       <app-textarea
         data-testid="nota-medica-texto"
         [rows]="3"
-        [autoResize]="true"
         [value]="textoLibre()"
         [disabled]="!hayEncuentro() || guardando()"
         (valueChange)="textoLibre.set($event)"

@@ -46,13 +46,12 @@ async function abrirLaConsulta(page: Page): Promise<void> {
     has: page.locator('.dia__estado').filter({ hasText: /confirmad/i }),
   });
   const tarjeta = (await enCurso.count()) > 0 ? enCurso.first() : confirmadas.first();
-  await tarjeta.click();
-  const iniciar = page
-    .getByRole('link', { name: /iniciar la consulta|continuar la consulta/i })
-    .first();
-  await expect(iniciar).toBeVisible();
-  await iniciar.click();
-  await expect(page).toHaveURL(/\/medical-records\/[^/]+\/consultation/);
+  // El mismo camino que C0: la tarjeta del día tiene su acceso «atender».
+  const atender = tarjeta.getByTestId('dia-ir-a-atender');
+  await atender.focus();
+  await page.keyboard.press('Enter');
+  await page.waitForURL(/\/medical-records\/[^/]+\/consultation\?/, { timeout: 30_000 });
+  await expect(page.getByTestId('consulta-rejilla')).toBeVisible();
   const abrir = page.getByTestId('consulta-abrir-encuentro');
   if (await abrir.isVisible()) await abrir.click();
   await expect(page.getByTestId('encuentros-en-curso')).toBeVisible();
@@ -77,7 +76,8 @@ test('la rejilla no ofrece Medición ni Internación y el menú no tiene Notas m
 test('escribe tres filas, sobrevive a F5 y firma', async ({ page }) => {
   await abrirLaConsulta(page);
   await page.getByTestId('consulta-casilla-notas').click();
-  const modal = page.getByTestId('consulta-modal');
+  // El host `consulta-modal` no tiene caja; lo visible es el dialog nativo.
+  const modal = page.getByRole('dialog');
   await expect(modal).toBeVisible();
   await expect(modal.getByText('Escribir una nota médica')).toBeVisible();
 
@@ -86,10 +86,12 @@ test('escribe tres filas, sobrevive a F5 y firma', async ({ page }) => {
   for (const [indice, [campo, valor]] of FILAS.entries()) {
     const fila = modal.getByTestId('nota-medica-fila').nth(indice);
     await fila.getByTestId('nota-medica-rotulo').fill(campo);
-    await fila.getByTestId('nota-medica-valor').fill(valor);
+    // `data-testid` cae en el host `app-textarea`; lo que se escribe es el nativo.
+    const valorNativo = fila.getByTestId('nota-medica-valor').locator('textarea');
+    await valorNativo.fill(valor);
     if (indice < FILAS.length - 1) {
       // Enter en el valor agrega la fila siguiente y la enfoca.
-      await fila.getByTestId('nota-medica-valor').press('Enter');
+      await valorNativo.press('Enter');
       await expect(modal.getByTestId('nota-medica-fila')).toHaveCount(indice + 2);
     }
   }
@@ -112,7 +114,7 @@ test('escribe tres filas, sobrevive a F5 y firma', async ({ page }) => {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.getByTestId('encuentros-en-curso')).toBeVisible();
   await page.getByTestId('consulta-casilla-notas').click();
-  const reabierto = page.getByTestId('consulta-modal');
+  const reabierto = page.getByRole('dialog');
   const otraVez = reabierto.getByTestId('nota-medica-item').first();
   for (const [campo, valor] of FILAS) {
     await expect(otraVez).toContainText(campo);
