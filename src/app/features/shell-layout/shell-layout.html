@@ -429,6 +429,18 @@
              ofrece con `esPacienteDelCarrito()`. Mismo bloque que Chats, con
              `name="bag"` y el contador del `CartStore`. -->
         @if (esPacienteDelCarrito()) {
+          <!-- Promociones: arriba y no en el menú lateral (cliente, 25/09/2026). -->
+          <a
+            class="app-header__ajustes"
+            routerLink="/my-account/promotions"
+            data-testid="header-promociones"
+            appTooltip="Promociones"
+            appTooltipPosition="bottom"
+            aria-label="Promociones"
+          >
+            <app-nav-icon name="tag" />
+          </a>
+
           <a
             class="app-header__ajustes"
             [routerLink]="pharmacyCartRoute"

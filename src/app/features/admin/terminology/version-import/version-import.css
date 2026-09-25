@@ -131,8 +131,22 @@
   min-inline-size: 0;
 }
 
+/* `--text-secondary`, no `--text-muted`.
+ *
+ * `axe` marcó estas notas como violación `color-contrast` de impacto `serious`:
+ * 4,27:1 con `#787b7b` sobre blanco a 12 px, contra el mínimo AA de 4,5:1. El
+ * número no es un defecto de esta pantalla — es la **excepción E1** que
+ * `styles.css:204` declara para `--text-muted` («3,86–4,27: excepción E1 — solo
+ * terciario») y que `identidad-visual.md` §8.2 acepta porque el hex lo fija el
+ * diseñador. Pero esa misma línea pone la condición: **solo terciario**.
+ *
+ * Estas notas no son terciarias. Dicen cómo armar el archivo, cuál es el tope
+ * de tamaño y qué pasó con la validación: son la instrucción del paso, y quien
+ * no las lee no puede completar la pantalla. Con `--text-secondary` (7,24 AAA
+ * en el peor caso) cumplen AA sin tocar el token compartido, que vive en 96
+ * archivos y cuyo cambio no es de este carril. */
 .carga__nota {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: var(--fs-caption);
   margin: 0;
 }

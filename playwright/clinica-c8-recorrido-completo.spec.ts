@@ -48,13 +48,22 @@ import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
  * (`medica@alovida.mock`, `paciente@alovida.mock`), personas **sintéticas**
  * declaradas en `core/mock/fixtures/personas.ts`.
  *
- * ## Lo que este archivo NO demuestra
+ * ## Qué demuestra, y qué no
  *
- * **No se ejecutó.** `scripts/pw-guard.mjs` no existe en este árbol —era
- * artefacto de C0— y el turno de C8 tenía prohibido levantar un servidor. El
- * peldaño de evidencia de este archivo es `WRITTEN`, nunca `TESTED`, y así está
- * declarado en `docs/trabajo/2026-09-25-encuentro-clinico/c8/REPORTE.md`.
- * Citarlo como verificación de cualquier cosa sería inventar evidencia.
+ * **Se ejecutó: 6 de 6, ningún salto** (commit `4de2effe`), con el servidor
+ * levantado a mano en el 4218 — `scripts/pw-guard.mjs` no existe en este árbol,
+ * era artefacto de C0, que no se entregó. El peldaño de este archivo es
+ * `TESTED`, y el resultado observable que persigue —la reconsulta apareciendo
+ * en la línea del encuentro— está `VERIFIED`.
+ *
+ * Lo que **no** demuestra: nada visual. El recorrido afirma comportamiento, no
+ * acabado; no toma capturas y por lo tanto no hubo doble revisión crítica
+ * (regla 35.1), que se hace sobre capturas. Las de la tanda se tomaron aparte,
+ * en `justin-cierre-tanda.spec.ts`.
+ *
+ * > Este bloque decía «**No se ejecutó**» hasta el cierre de la tanda: era el
+ * > texto escrito antes de correrlo, que `4de2effe` no actualizó al correrlo.
+ * > Contradecía al propio `REPORTE.md` del carril, que declara 6/6.
  */
 
 const BASE = process.env['PW_BASE_URL'] ?? 'http://localhost:4218';

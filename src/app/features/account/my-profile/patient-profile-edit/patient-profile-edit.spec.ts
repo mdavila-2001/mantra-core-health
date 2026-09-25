@@ -303,36 +303,28 @@ describe('PatientProfileEdit', () => {
   }
 
   /**
-   * N-03: «Mis puntos» es la última pestaña de la ficha. El editor la lleva
-   * en la tira, apagada, para que pulsar el lápiz no mueva de lugar a las
-   * demás; ahí no hay nada que editar. Desde el 24/09/2026, con «Seguros» y
-   * «Tutores» separadas, es la SEXTA.
+   * N-03: «Mis puntos» es la billetera del programa de fidelidad, no un dato
+   * declarado, y no hay nada que editar ahí. Desde el 25/09/2026 (pedido del
+   * propietario) el editor ya no la muestra apagada: la saca de la tira.
    */
-  it('lleva «Mis puntos» en la tira, apagada: no hay nada que editar ahí', () => {
+  it('no lleva «Mis puntos» en la tira: no hay nada que editar ahí', () => {
     montarPintadoYCargado();
 
     const pestanas = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>(
       '[role="tab"]',
     );
-    expect(pestanas.length).toBe(6);
-    expect(pestanas[5].textContent).toContain('Mis puntos');
-    expect(pestanas[5].disabled).toBe(true);
-    expect(pestanas[5].getAttribute('aria-disabled')).toBe('true');
-    // Pulsarla no abre nada: la abierta sigue siendo la primera.
-    pestanas[5].click();
-    fixture.detectChanges();
-    expect(pestanas[0].getAttribute('aria-selected')).toBe('true');
+    expect([...pestanas].map((p) => p.textContent?.trim())).not.toContain('Mis puntos');
   });
 
   /**
    * Pedido del propietario del 25/09/2026: una cobertura es el resultado de
    * una integración posterior —la aseguradora la declara, no la persona—, así
    * que nunca se corrige desde este formulario. No es el caso de «Tutores»,
-   * que sí puede cambiar y por eso sigue siendo una pestaña utilizable.
-   * «Seguros» pasa a llevar el mismo tratamiento que «Mis puntos»: apagada,
-   * con el cursor de bloqueado, sin nada que abrir.
+   * que sí puede cambiar y por eso sigue siendo una pestaña utilizable. El
+   * mismo día se corrigió: en vez de apagada, «Seguros» se saca de la tira
+   * del editor, igual que «Mis puntos».
    */
-  it('«Seguros» va apagada en el editor, igual que «Mis puntos»; «Tutores» sigue abierta', () => {
+  it('«Seguros» no está en la tira del editor; «Tutores» sigue abierta', () => {
     montarPintadoYCargado({
       coverages: [{ carrierName: 'Alianza Vida Seguros', planName: 'AFI Gold' }],
       guardians: [{ displayName: 'Carlos Mamani', phone: '+591 70055443' }],
@@ -345,21 +337,12 @@ describe('PatientProfileEdit', () => {
       'Datos personales',
       'Contacto',
       'Facturación',
-      'Seguros',
       'Tutores',
-      'Mis puntos',
     ]);
-
-    expect(pestanas[3].disabled).toBe(true);
-    expect(pestanas[3].getAttribute('aria-disabled')).toBe('true');
-    // Pulsarla no abre nada: la abierta sigue siendo la primera.
-    pestanas[3].click();
-    fixture.detectChanges();
-    expect(pestanas[0].getAttribute('aria-selected')).toBe('true');
     expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Alianza Vida Seguros');
 
-    expect(pestanas[4].disabled).toBe(false);
-    abrirPestana(4);
+    expect(pestanas[3].disabled).toBe(false);
+    abrirPestana(3);
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Carlos Mamani');
   });
 

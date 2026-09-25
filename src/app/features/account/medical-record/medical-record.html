@@ -16,9 +16,34 @@
     <!-- ─── FT-20 · la historia por pestañas ──────────────────────────────
          Antes las cuatro secciones se apilaban en una sola columna: para llegar
          a los resultados había que pasar por todas las atenciones y todas las
-         recetas. Ahora cada una es una pestaña y la descarga completa vive al
-         costado, visible desde cualquiera de ellas (FT-20-R06/R07). -->
+         recetas. Ahora cada una es una pestaña y la descarga completa vive
+         arriba, visible desde cualquiera de ellas (FT-20-R06/R07). -->
     <div class="historia">
+      <!-- FT-20-R06/R07 · «Descargar todo» ARRIBA, antes de las pestañas: es lo
+           que el registro del cliente pide («el paciente puede descargar su
+           historia») y se alcanza desde cualquier pestaña sin recorrer nada.
+           Pedido del cliente (25/09/2026): el botón arriba y la tarjeta a todo
+           el ancho, sin columna lateral que le robe espacio.
+
+           Trae órdenes y resultados al tocarse, no al abrir la pantalla: son dos
+           lecturas más que la mayoría de las visitas no necesita. -->
+      <aside class="historia__barra" aria-label="Descargar tu historia">
+        <div class="historia__descarga-total">
+          <button
+            app-button
+            variant="primary"
+            data-testid="historia-descargar-todo"
+            [isLoading]="armandoHistoria()"
+            (clicked)="descargarHistoriaCompleta()"
+          >
+            Descargar mi historia completa
+          </button>
+          <p class="historia__descarga-nota">
+            Un solo PDF con tus atenciones, recetas, órdenes y resultados.
+          </p>
+        </div>
+      </aside>
+
       <div class="historia__cuerpo">
         <!-- Un recorte silencioso se lee como «no hay nada más», y eso es afirmar
              algo que nadie comprobó. Va fuera de las pestañas: vale para todas. -->
@@ -69,30 +94,6 @@
           </app-tabs>
         </app-card>
       </div>
-
-      <!-- FT-20-R06/R07 · «Descargar todo» al costado y pegajoso en escritorio:
-           es lo que el registro del cliente pide («el paciente puede descargar
-           su historia») y tiene que poder alcanzarse desde cualquier pestaña,
-           sin recorrer la pantalla entera primero.
-
-           Trae órdenes y resultados al tocarse, no al abrir la pantalla: son dos
-           lecturas más que la mayoría de las visitas no necesita. -->
-      <aside class="historia__lateral" aria-label="Descargar tu historia">
-        <div class="historia__descarga-total">
-          <button
-            app-button
-            variant="primary"
-            data-testid="historia-descargar-todo"
-            [isLoading]="armandoHistoria()"
-            (clicked)="descargarHistoriaCompleta()"
-          >
-            Descargar mi historia completa
-          </button>
-          <p class="historia__descarga-nota">
-            Un solo PDF con tus atenciones, recetas, órdenes y resultados.
-          </p>
-        </div>
-      </aside>
     </div>
 
     <!-- ─── Los paneles ───────────────────────────────────────────────────

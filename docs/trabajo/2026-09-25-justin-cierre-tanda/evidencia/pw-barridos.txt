@@ -1,0 +1,55 @@
+
+Running 9 tests using 1 worker
+
+  ok 1 [chromium] › playwright\mockup-barrido.spec.ts:166:9 › mockup · barrido con el backend simulado › Médica (11.1s)
+  ok 2 [chromium] › playwright\mockup-barrido.spec.ts:166:9 › mockup · barrido con el backend simulado › Paciente (7.5s)
+  ok 3 [chromium] › playwright\mockup-barrido.spec.ts:166:9 › mockup · barrido con el backend simulado › Admin (8.9s)
+  ok 4 [chromium] › playwright\mockup-barrido.spec.ts:166:9 › mockup · barrido con el backend simulado › Superadmin (9.4s)
+  ok 5 [chromium] › playwright\mockup-barrido.spec.ts:166:9 › mockup · barrido con el backend simulado › Visitador (7.5s)
+  ok 6 [chromium] › playwright\mockup-click-sweep.spec.ts:195:9 › mockup · barrido de clics con el backend simulado › Médica (1.0m)
+  x  7 [chromium] › playwright\mockup-click-sweep.spec.ts:195:9 › mockup · barrido de clics con el backend simulado › Paciente (52.7s)
+  ok 8 [chromium] › playwright\mockup-click-sweep.spec.ts:195:9 › mockup · barrido de clics con el backend simulado › Admin (49.3s)
+  ok 9 [chromium] › playwright\mockup-click-sweep.spec.ts:195:9 › mockup · barrido de clics con el backend simulado › Visitador (47.3s)
+
+
+  1) [chromium] › playwright\mockup-click-sweep.spec.ts:195:9 › mockup · barrido de clics con el backend simulado › Paciente 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "/my-account/profile/edit · «Cancelar» → sin manejador GET /loyalty/me",
+    + ]
+
+      198 |       expect
+      199 |         .soft(rotos.map((c) => `${c.ruta} · «${c.boton}» → ${c.resultado} ${c.detalle}`))
+    > 200 |         .toEqual([]);
+          |          ^
+      201 |     });
+      202 |   }
+      203 |
+        at C:\Users\usuario\Documents\Sistema Salud\mantra-core-health\playwright\mockup-click-sweep.spec.ts:200:10
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\mockup-click-sweep-mockup--4b8ae-l-backend-simulado-Paciente-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\mockup-click-sweep-mockup--4b8ae-l-backend-simulado-Paciente-chromium\error-context.md
+
+    Error Context: artifacts\playwright\salida\mockup-click-sweep-mockup--4b8ae-l-backend-simulado-Paciente-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\mockup-click-sweep-mockup--4b8ae-l-backend-simulado-Paciente-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace artifacts\playwright\salida\mockup-click-sweep-mockup--4b8ae-l-backend-simulado-Paciente-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › playwright\mockup-click-sweep.spec.ts:195:9 › mockup · barrido de clics con el backend simulado › Paciente 
+  8 passed (4.6m)
+EXIT=1
