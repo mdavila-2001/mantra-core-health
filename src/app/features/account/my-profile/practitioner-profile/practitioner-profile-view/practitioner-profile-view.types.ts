@@ -248,4 +248,14 @@ export interface DatosPersonalesVisibles {
    * «Ubicación GPS» del domicilio y la ficha no la mostraba.
    */
   readonly mapaDomicilio: string | null;
+  /**
+   * Las coordenadas del domicilio, para dibujarlo en la pestaña «Contacto».
+   * `null` (o ausente) si no declaró la «Ubicación GPS» en el alta.
+   */
+  /**
+   * El `conceptId` del municipio de residencia, para mostrarlo en el mapa de
+   * departamentos y el select —bloqueados— igual que en el editor.
+   */
+  readonly municipioResidenciaId?: string | null;
+  readonly ubicacionDomicilio?: { readonly lat: number; readonly lng: number } | null;
 }

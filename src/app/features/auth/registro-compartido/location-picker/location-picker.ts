@@ -83,6 +83,13 @@ export class LocationPicker {
 
   readonly mapLabel = input('Mapa de Bolivia: elegí tu departamento');
 
+  /**
+   * Sólo para mirar: el mapa marca el departamento y el select muestra el
+   * municipio, pero ninguno de los dos se puede cambiar. Lo usa la ficha del
+   * médico para mostrar su residencia con los mismos controles del editor.
+   */
+  readonly readonly = input(false);
+
   /** Prefijo de los `data-testid` de las dos partes. */
   readonly testId = input('location');
 
@@ -146,6 +153,7 @@ export class LocationPicker {
    * otro departamento a punto de viajar.
    */
   protected elegirDepartamento(conceptId: string | null): void {
+    if (this.readonly()) return;
     this.departamentoManual.set(conceptId);
     const municipio = this.value();
     if (municipio === null) return;
@@ -155,6 +163,7 @@ export class LocationPicker {
   }
 
   protected elegirMunicipio(conceptId: string | null): void {
+    if (this.readonly()) return;
     this.value.set(conceptId);
   }
 }

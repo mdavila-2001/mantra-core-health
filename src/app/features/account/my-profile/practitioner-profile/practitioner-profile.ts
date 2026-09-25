@@ -481,6 +481,8 @@ export class PractitionerProfile {
         correoPersonal: perfil.personalEmail ?? '',
         direccion: perfil.homeAddress?.lines ?? '',
         mapaDomicilio: enlaceAlMapa(perfil.homeAddress),
+        ubicacionDomicilio: puntoDelDomicilio(perfil.homeAddress),
+        municipioResidenciaId: perfil.residenceMunicipalityConceptId ?? null,
       },
       // A nombre de quién factura. Va sólo en la ficha propia: el contenedor
       // de la guía lo deja en `null` porque el NIT de un colega no es de quien
@@ -676,6 +678,15 @@ function afiliacionesDe(perfil: OwnPractitionerProfile): {
  * meridiano de Greenwich, y un enlace al golfo de Guinea es peor que ningún
  * enlace.
  */
+/** Las coordenadas del domicilio, con el mismo criterio que {@link enlaceAlMapa}. */
+function puntoDelDomicilio(direccion: OwnAddress | undefined): { lat: number; lng: number } | null {
+  if (direccion === undefined) return null;
+  const { latitude, longitude } = direccion;
+  if (latitude == null || longitude == null) return null;
+  if (latitude === 0 && longitude === 0) return null;
+  return { lat: latitude, lng: longitude };
+}
+
 function enlaceAlMapa(direccion: OwnAddress | undefined): string | null {
   if (direccion === undefined) return null;
   const { latitude, longitude } = direccion;
