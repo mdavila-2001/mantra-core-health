@@ -280,13 +280,20 @@ export class PractitionerProfileView {
    * Se traduce por ETIQUETA y no pasando el índice tal cual, por la misma razón
    * que existe {@link pestanasVisibles}: la ficha suprime «Facturación» cuando
    * no la tiene, así que a partir de ahí sus índices y los del editor no son
-   * los mismos. Una etiqueta que el editor no tenga cae en la primera, que es
-   * el comportamiento de siempre.
+   * los mismos.
+   *
+   * `null` es «esta pestaña no se edita» y el lápiz no se dibuja: es el caso
+   * de «Actividad», que son estadísticas (pedido del cliente del 24/09/2026).
+   * Antes una etiqueta que el editor no tuviera caía en «Datos personales», y
+   * el lápiz de «Actividad» llevaba a editar otra cosa.
    */
-  protected readonly pestanaDeEdicion = computed<number>(() => {
+  protected readonly pestanaDeEdicion = computed<number | null>(() => {
     const abierta = this.pestanaVisibleSeleccionada();
-    const indice = abierta ? PESTANAS_DEL_EDITOR_MEDICO.findIndex((p) => p === abierta) : -1;
-    return indice >= 0 ? indice : PESTANA_EDITOR.personales;
+    if (abierta === undefined) {
+      return PESTANA_EDITOR.personales;
+    }
+    const indice = PESTANAS_DEL_EDITOR_MEDICO.findIndex((p) => p === abierta);
+    return indice >= 0 ? indice : null;
   });
 
   /**

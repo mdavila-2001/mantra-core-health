@@ -5,6 +5,7 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 
+import { PESTANAS_DEL_EDITOR_MEDICO } from '../pestanas-del-perfil-medico';
 import { PractitionerProfileEdit } from './practitioner-profile-edit';
 
 /**
@@ -1577,46 +1578,19 @@ describe('PractitionerProfileEdit', () => {
   });
 
   /**
-   * «Actividad»: la pestaña que existe **para** decir que no se edita.
-   *
-   * El doctor pidió que el editor tenga todas las pestañas de la ficha (C-05).
-   * Los cuatro contadores no se editan —son cuentas de lo que ya pasó, y uno
-   * escrito a mano deja de contar—, así que la respuesta no fue sacar la
-   * pestaña sino tenerla sin un solo campo y explicando por qué.
-   *
-   * Las dos mitades se fijan acá, porque cada una se puede romper sin la otra:
-   * alguien puede volver a quitar la pestaña, y alguien puede «completarla»
-   * poniéndole controles.
+   * «Actividad» no está en el editor: son estadísticas y no se editan
+   * (pedido del cliente del 24/09/2026). Entre el 20 y el 24/09/2026 estuvo,
+   * sin campos; esta prueba fija que no vuelva.
    */
-  describe('la pestaña «Actividad» del editor', () => {
-    it('está, y enumera los cuatro contadores', () => {
-      const fixture = montarConVista();
+  it('no tiene pestaña «Actividad»', () => {
+    const fixture = montarConVista();
 
-      señal<number>('pestana').set(6);
-      fixture.detectChanges();
-
-      const lista = fixture.nativeElement.querySelector('[data-testid="edicion-actividad"]');
-      expect(lista).not.toBeNull();
-      expect(lista.querySelectorAll('li')).toHaveLength(4);
-    });
-
-    it('no ofrece ni un control para escribir', () => {
-      const fixture = montarConVista();
-
-      señal<number>('pestana').set(6);
-      fixture.detectChanges();
-
-      /* El panel VISIBLE, no el primero del documento: buscar en «Datos
-         personales» —que sí tiene campos— daría rojo por mirar donde no es. */
-      expect(panelAbierto(fixture).querySelectorAll('input, select, textarea')).toHaveLength(0);
-    });
-
-    it('no muestra «Guardar cambios», porque no hay nada que guardar', () => {
-      montarConVista();
-
-      señal<number>('pestana').set(6);
-      expect(interno<() => boolean>('editandoPresentacion')()).toBe(false);
-    });
+    const pestanas = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('[role="tab"]'),
+    ).map((boton) => boton.textContent?.trim() ?? '');
+    expect(pestanas).toEqual([...PESTANAS_DEL_EDITOR_MEDICO]);
+    expect(pestanas).not.toContain('Actividad');
+    expect(fixture.nativeElement.querySelector('[data-testid="edicion-actividad"]')).toBeNull();
   });
 
   /**

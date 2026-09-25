@@ -31,21 +31,37 @@
             (keydown.enter)="elegir(departamento.conceptId)"
             (keydown.space)="elegirConBarra($event, departamento.conceptId)"
           />
-          <!-- La sigla, no el nombre: a 390 px «Santa Cruz» no entra en su
-               departamento y «Chuquisaca» tampoco. La sigla es además la que la
-               cédula imprime. Va `aria-hidden` porque el nombre completo ya
-               está en el `aria-label` del control. -->
-          <text
-            class="department-map__sigla"
-            [attr.x]="departamento.etiqueta.x"
-            [attr.y]="departamento.etiqueta.y"
-            text-anchor="middle"
-            dominant-baseline="middle"
-            aria-hidden="true"
-          >
-            {{ departamento.sigla }}
-          </text>
         </g>
+      }
+
+      <!-- Los límites de las provincias, entre los rellenos y las siglas: por
+           encima de los departamentos, para que se vean también sobre el
+           elegido, y por debajo de las siglas, para que no las tachen. No es
+           un control: `pointer-events: none` deja pasar el clic a su
+           departamento, y `aria-hidden` lo saca del árbol accesible. -->
+      <path
+        class="department-map__provincias"
+        [attr.d]="limitesDeProvincias"
+        aria-hidden="true"
+        data-testid="department-map-provincias"
+      />
+
+      @for (departamento of dibujables(); track departamento.conceptId) {
+        <!-- La sigla, no el nombre: a 390 px «Santa Cruz» no entra en su
+             departamento y «Chuquisaca» tampoco. La sigla es además la que la
+             cédula imprime. Va `aria-hidden` porque el nombre completo ya
+             está en el `aria-label` del control. -->
+        <text
+          class="department-map__sigla"
+          [class.department-map__sigla--elegida]="departamento.conceptId === value()"
+          [attr.x]="departamento.etiqueta.x"
+          [attr.y]="departamento.etiqueta.y"
+          text-anchor="middle"
+          dominant-baseline="middle"
+          aria-hidden="true"
+        >
+          {{ departamento.sigla }}
+        </text>
       }
     </svg>
 

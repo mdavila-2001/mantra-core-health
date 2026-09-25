@@ -140,22 +140,20 @@ describe('las pestañas de la ficha del médico', () => {
   });
 
   /**
-   * Esta prueba decía lo contrario hasta el 20/09/2026: exigía que el editor
-   * **no** tuviera «Actividad», porque los contadores no se editan.
+   * Esta prueba cambió dos veces. Hasta el 20/09/2026 exigía que el editor
+   * **no** tuviera «Actividad»; ese día el doctor pidió «TODAS las pestañas
+   * editables» (C-05) y pasó a exigir las mismas siete de la ficha. El
+   * 24/09/2026 el cliente pidió sacarla otra vez: «no debe poder editarse
+   * actividad, porque es solo estadísticas».
    *
-   * El doctor pidió que «TODAS las pestañas sean editables, o sea su
-   * información» (C-05), y su kill-test es contar: menos pestañas que la ficha
-   * y la corrección no está hecha. Los contadores siguen sin editarse —eso no
-   * cambió y está fijado abajo—; lo que cambió es que ya no se resuelve
-   * sacando la pestaña, sino teniéndola y diciendo en ella por qué no hay nada
-   * que escribir.
-   *
-   * Se reemplaza por la invariante FUERTE, no por ninguna: las dos listas son
-   * la misma, en el mismo orden. Con la anterior, el editor podía perder tres
-   * pestañas sin que nadie se enterara.
+   * Se conserva la invariante FUERTE: las listas son la misma, en el mismo
+   * orden, con UNA sola diferencia declarada. Así el editor no puede perder
+   * otra pestaña sin que nadie se entere.
    */
-  it('el editor tiene exactamente las mismas pestañas que la ficha, en el mismo orden', () => {
-    expect([...PESTANAS_DEL_EDITOR_MEDICO]).toEqual([...PESTANAS_DEL_PERFIL_MEDICO]);
+  it('el editor tiene las pestañas de la ficha, en el mismo orden, menos «Actividad»', () => {
+    expect([...PESTANAS_DEL_EDITOR_MEDICO]).toEqual(
+      PESTANAS_DEL_PERFIL_MEDICO.filter((pestana) => pestana !== 'Actividad'),
+    );
   });
 
   /** Y los índices con nombre no se pueden desincronizar de las dos listas. */
