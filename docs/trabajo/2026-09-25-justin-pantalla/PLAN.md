@@ -236,9 +236,9 @@ en navegador) y M7 (`BLOQUEADO`: sin navegador).
 | H6.S1.M3 | Kill-test contra la API real | — | DESCARTADO |
 | H6.S1.M4 | Diferencias doble ↔ API real | `REPORTE.md` §Contra el doble | HECHO |
 | H6.S2.M1 | Rebase sobre `origin/mockup` | `git status` | HECHO |
-| H6.S2.M2 | PR contra `mockup` | URL | TODO |
-| H6.S2.M3 | `gh pr view` → `MERGEABLE` | `evidencia/pr/view.json` | TODO |
-| H6.S2.M4 | `gh pr checks` | `evidencia/pr/checks.txt` | TODO |
+| H6.S2.M2 | PR contra `mockup` | URL | HECHO |
+| H6.S2.M3 | `gh pr view` → `MERGEABLE` | `evidencia/pr/view.json` | HECHO |
+| H6.S2.M4 | `gh pr checks` | `evidencia/pr/checks.txt` | A MEDIAS |
 | H6.S2.M5 | Procesos corriendo cerrados o declarados | lista | HECHO |
 | H6.S2.M6 | `REPORTE.md` con el avance primero | `head -3` | HECHO |
 | H6.S2.M7 | Daily | `ls` | HECHO |

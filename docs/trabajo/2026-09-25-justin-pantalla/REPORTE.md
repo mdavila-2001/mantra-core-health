@@ -1,4 +1,4 @@
-> **AVANCE: 56 / 68 — 82,4 %.**
+> **AVANCE: 55 / 68 — 80,9 %.**
 
 # Reporte — Carga masiva: pantalla, cliente y doble del simulador
 
@@ -11,9 +11,23 @@
 - **No se alcanzó `VERIFIED`** y no se dice que nada «funcione»: nadie ejercitó esta pantalla en un
   navegador. Lo que hay es comportamiento ejercitado en pruebas contra un doble declarado.
 
-Desglose de los 68: **49 HECHO** en las tablas del plan + **7** de cierre (H6.S2.M1–M7) = **56
-HECHO** · **7 BLOQUEADO** · **2 A MEDIAS** · **3 DESCARTADO**. `A MEDIAS` y `BLOQUEADO` cuentan como
-no hechas.
+Desglose de los 68: **49 HECHO** en las tablas del plan + **6** de cierre (H6.S2.M1–M3 y M5–M7) =
+**55 HECHO** · **7 BLOQUEADO** · **3 A MEDIAS** · **3 DESCARTADO**. `A MEDIAS` y `BLOQUEADO` cuentan
+como no hechas.
+
+## El PR
+
+**https://github.com/mdavila-2001/mantra-core-health/pull/673** — contra **`mockup`**, no draft.
+
+```text
+$ gh pr view 673 --json number,url,isDraft,mergeable,mergeStateStatus,reviewDecision,baseRefName,headRefName
+{"baseRefName":"mockup","headRefName":"justin/carga-masiva-pantalla-2026-09-25","isDraft":false,
+ "mergeStateStatus":"UNSTABLE","mergeable":"MERGEABLE","number":673,"reviewDecision":"",
+ "url":"https://github.com/mdavila-2001/mantra-core-health/pull/673"}
+```
+
+`mergeable = MERGEABLE`, sin conflictos y sin draft. El `UNSTABLE` es por los checks **pendientes**,
+ninguno en `fail` — ver H6.S2.M4 en §A medias.
 
 ## Completado
 
@@ -30,7 +44,7 @@ no hechas.
 | H4.S3.M1, M2, M4, M5, M6 | Nombres accesibles, región viva, foco al resultado, microcopy, **cero literales de color** y `lint`/`typecheck` sin rojos nuevos | `grep` de literales, `yarn lint`, `yarn typecheck` | PASS · `evidencia/h4/tokens.txt`, `typecheck-lint.txt` |
 | H5.S1.M6 | El diff no toca ningún archivo de otros | `git diff origin/mockup --stat` filtrado | **salida vacía** · `evidencia/h5/diff-ajeno.txt` |
 | H6.S1.M1, M4 | Se miró la rama de Itzan **una vez** y se contrastó su §1 contra el doble | `git -C ../mantra-core-health-api log` | PASS · `evidencia/h6/api.txt` |
-| H6.S2.M1–M7 | Rebase al día, PR abierto contra `mockup`, estado consultado, procesos declarados, reporte y daily | `gh pr view` / `gh pr checks` | ver §Evidencia y `evidencia/pr/` |
+| H6.S2.M1–M3, M5–M7 | Rebase al día, **PR #673 abierto contra `mockup` y `MERGEABLE`**, procesos declarados, reporte y daily | `gh pr view 673 --json …` | PASS · `evidencia/pr/view.json` |
 
 ### Los tres candados del contrato, uno por uno
 
@@ -67,6 +81,22 @@ no hechas.
   errores, éxito) y evaluar `document.documentElement.scrollWidth <= innerWidth` en cada uno.
 - **Dónde quedó:** `version-import.css`, en la rama. Es una afirmación **de lectura de código**, que
   la regla 30 no admite como verificación: por eso esta microtarea no es `HECHO`.
+
+### H6.S2.M4 — Checks del PR en verde
+- **Qué anda:** el PR está abierto contra `mockup`, **`mergeable: MERGEABLE`**, no draft, sin
+  conflictos, y sus tres checks (`verificar`, `dependencias`, `e2e`) se encolaron.
+- **Qué no anda:** **ninguno arrancó**. Veinte minutos después de abrir el PR, la corrida
+  `36115610659` sigue en `queued` con los tres trabajos en `queued` y 0 s transcurridos.
+- **Clasificación: `EXTERNAL`** (regla 80.4), con evidencia de que no es mi PR: las **cuatro**
+  corridas más recientes del repo —de cuatro ramas y dos personas distintas— están todas `queued`
+  sin arrancar. No hay runner tomando trabajos. Coincide con lo que el propio `CLAUDE.md` del repo
+  declara: «El CI propio está caído; los `check-*.mjs` se corren a mano». Por eso
+  `mergeStateStatus` dice `UNSTABLE`: los checks están **pendientes**, ninguno en `fail`.
+- **Qué falta exactamente:** que alguien levante un runner y se vuelva a consultar
+  `gh pr checks 673`. Mientras tanto, lo que sustituye al CI son los cuatro specs dirigidos que sí
+  se corrieron acá, más `typecheck` y `lint`, con sus salidas pegadas.
+- **Dónde quedó:** `evidencia/pr/checks.txt` y `evidencia/pr/view.json`. Regla 35.2.4: **no se
+  declara verde**.
 
 ## Pendiente
 
