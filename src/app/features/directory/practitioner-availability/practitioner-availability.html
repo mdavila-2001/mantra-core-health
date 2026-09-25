@@ -45,10 +45,7 @@
         @if (sedes().length === 0) {
           <!-- Coherente con F-24: no publicó horarios no es lo mismo que estar
                lleno, y decirlo mal hace que alguien deje de esperarlo. -->
-          <app-empty-state
-            title="Todavía no publicó horarios"
-            description="Este profesional aún no abrió su agenda. Volvé a mirar más adelante."
-          />
+          <app-empty-state title="Todavía no publicó horarios" [description]="sinAgenda()" />
         } @else {
           @for (sede of sedes(); track sede.recurso.id) {
             <app-card variant="outlined" padding="lg" class="disponibilidad__sede">

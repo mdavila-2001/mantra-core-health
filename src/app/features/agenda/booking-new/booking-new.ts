@@ -242,7 +242,14 @@ export class BookingNew {
   protected readonly candidatos = signal<readonly ReferenceOption[]>([]);
   protected readonly buscando = signal(false);
 
-  protected readonly motivo = new FormControl('', { nonNullable: true });
+  /**
+   * El motivo, que puede llegar escrito por query string (`motivo`): desde
+   * Cotizaciones, el estudio que se eligió. Queda editable.
+   */
+  protected readonly motivo = new FormControl(
+    (this.route.snapshot.queryParamMap.get('motivo') ?? '').slice(0, MAX_MOTIVO),
+    { nonNullable: true },
+  );
 
   /**
    * El formulario que envuelve al motivo. Un solo control, pero declarado como
