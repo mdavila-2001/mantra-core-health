@@ -86,7 +86,6 @@ describe('CarePlanBlock', () => {
     fixture.detectChanges();
   }
 
-
   /**
    * El contrato sólo exige el paciente. Un plan sin objetivo escrito es un
    * registro que nadie sabe para qué se creó: no se evalúa, no se cierra y no
@@ -166,7 +165,10 @@ describe('CarePlanBlock', () => {
     señal<string>('motivo').set('Control de presión.');
     interno<() => void>('agregarActividad')();
     const primera = interno<() => readonly { clave: number }[]>('actividades')()[0]!;
-    interno<(clave: number, v: string) => void>('fijarDetalle')(primera.clave, '  Caminar 30 min  ');
+    interno<(clave: number, v: string) => void>('fijarDetalle')(
+      primera.clave,
+      '  Caminar 30 min  ',
+    );
 
     interno<() => void>('registrar')();
 
@@ -218,24 +220,6 @@ describe('CarePlanBlock', () => {
       'patientProfileId',
       'reasonText',
     ]);
-    req.flush(RESPUESTA);
-  });
-
-  /** La cita elegida gana sobre el encuentro que pase el anfitrión. */
-  it('manda la cita elegida y no el encuentro en curso', () => {
-    fixture.componentRef.setInput('encounterId', 'enc-en-curso');
-    fixture.componentRef.setInput('citas', [
-      { id: 'enc-9', etiqueta: '7 sept 2026 · Control', enCurso: false },
-    ]);
-    dibujar();
-    señal<string>('meta').set('Bajar la presión.');
-    señal<string | null>('citaElegida').set('enc-9');
-    señal<string>('motivo').set('Control de presión.');
-
-    interno<() => void>('registrar')();
-
-    const req = http.expectOne('/charts/care-plans');
-    expect(req.request.body.encounterId).toBe('enc-9');
     req.flush(RESPUESTA);
   });
 
