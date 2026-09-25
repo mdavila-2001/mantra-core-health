@@ -36,6 +36,7 @@ import { DialogService } from '../../../shared/components/molecules/dialog/dialo
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
+import { EncounterTimeline } from '../../../shared/components/organisms/encounter-timeline/encounter-timeline';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
@@ -53,6 +54,7 @@ import {
   patientChartRoute,
 } from '../clinical-record.routes';
 import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
+import { loRegistradoEnElEncuentro, type LoRegistrado } from './lo-registrado';
 import { AdmissionBlock, type InternacionEnFicha } from '../patient-chart/admission-block/admission-block';
 import { AllergyBlock } from '../patient-chart/allergy-block/allergy-block';
 import { CarePlanBlock, type DiagnosticoDelPlan } from '../patient-chart/care-plan-block/care-plan-block';
@@ -276,6 +278,7 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
     DatePipe,
     DiagnosisBlock,
     DocumentBlock,
+    EncounterTimeline,
     FormField,
     FreeNoteBlock,
     MedicationBlock,
@@ -440,6 +443,35 @@ export class Consultation {
   protected readonly encuentroActual = computed<string | null>(
     () => this.encuentrosEnCurso()[0]?.id ?? null,
   );
+
+  /* -- C8 · «Lo registrado en este encuentro» ------------------------------- */
+
+  /**
+   * La línea del encuentro en curso, o `null` si no hay ninguno abierto.
+   *
+   * Sale de lo que la consulta **ya leyó** —el resumen y el expediente—: es
+   * la misma pantalla que acaba de registrar la nota o el diagnóstico, y
+   * releerlos para dibujarlos sería pedir dos veces lo mismo. Por eso también
+   * se actualiza sola: cada alta llama a `cargar()`, y la línea es un
+   * `computed` de esos datos.
+   *
+   * `null` cuando no hay encuentro abierto es deliberado: sin atención en
+   * curso no hay «este encuentro» del que hablar, y la sección no se dibuja.
+   */
+  protected readonly loRegistrado = computed<LoRegistrado | null>(() => {
+    const datos = this.datos();
+    const encuentro = this.encuentroActual();
+    if (datos === undefined || datos === null || encuentro === null) {
+      return null;
+    }
+    return loRegistradoEnElEncuentro(
+      encuentro,
+      datos.resumen,
+      datos.chart.notes,
+      (id) => this.label(id),
+      (id) => this.codigo(id),
+    );
+  });
 
   /* -- La rejilla ----------------------------------------------------------- */
 
@@ -789,6 +821,17 @@ export class Consultation {
   }
 
   /** La etiqueta de un concepto, o el texto de ausencia. Nunca el uuid. */
+  /**
+   * El **código** de catálogo de un concepto, que es por lo que se ramifica.
+   *
+   * La etiqueta es metadato de presentación y puede cambiar sin aviso; el
+   * código no. Es lo que `diagnosisStateOf` necesita para decidir si un
+   * diagnóstico está en estudio, activo o cerrado.
+   */
+  private codigo(conceptId: string | undefined): string | undefined {
+    return conceptId === undefined ? undefined : this.etiquetas().get(conceptId)?.code;
+  }
+
   private label(conceptId: string | undefined): string {
     if (conceptId === undefined) {
       return SIN_DATO;
@@ -814,7 +857,14 @@ export class Consultation {
 /** Los conceptos que esta pantalla traduce: los que muestra, y no más. */
 function conceptosDe({ resumen }: Consulta): readonly string[] {
   return [
-    ...resumen.conditions.map((fila) => fila.codeConceptId),
+    ...resumen.conditions.flatMap((fila) => [
+      fila.codeConceptId,
+      // C8: la línea del encuentro clasifica el diagnóstico por estos dos
+      // códigos. Sin pedirlos, `diagnosisStateOf` no tendría con qué
+      // ramificar y todo caería en «en estudio».
+      fila.verificationStatusConceptId,
+      fila.clinicalStatusConceptId,
+    ]),
     ...resumen.medicationRequests.flatMap((fila) => [
       fila.medicationConceptId,
       fila.statusConceptId,
