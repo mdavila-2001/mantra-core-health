@@ -132,6 +132,14 @@ describe('APP_SECTIONS', () => {
       // Y sigue siendo de quien es: el mostrador no tiene rol propio en el
       // token, así que se comprueba con la sesión que sí lo atiende.
       expect(isVisibleTo(seccion!, ['USER'], conOrganizacion), ruta).toBe(true);
+      // Menos «Tu organización»: es de cualquier organización, aseguradora
+      // incluida. Las tres del mostrador de farmacia sí se cierran para una
+      // sesión PAYER — `administration/pharmacy-orders` lo demuestra por
+      // las tres, ver `hiddenForTenantTypes` más abajo.
+      const esperadoParaAseguradora = ruta === 'administration/my-organization';
+      expect(isVisibleTo(seccion!, ['USER'], conOrganizacion, 'PAYER'), ruta).toBe(
+        esperadoParaAseguradora,
+      );
     }
   });
 
@@ -277,6 +285,104 @@ describe('isVisibleTo', () => {
 
   it('sin ninguno de los roles, no se ofrece la puerta', () => {
     expect(isVisibleTo(conRoles, ['PATIENT'])).toBe(false);
+  });
+});
+
+/**
+ * `hiddenForTenantTypes`: igual que `hiddenFor`, pero mirando el tipo de la
+ * organización ACTIVA en vez del rol. Nace del pedido de la aseguradora
+ * (2026-09-25): quitarle al menú y a la puerta el autoservicio del paciente
+ * y los directorios, que no son de una organización PAYER.
+ */
+describe('isVisibleTo con `hiddenForTenantTypes`', () => {
+  const seccionDelPaciente = {
+    path: 'x',
+    label: 'X',
+    group: 'Mi cuenta',
+    icon: 'shield',
+    roles: [ANY_ROLE],
+    hiddenForTenantTypes: ['PAYER'],
+    availability: 'disponible',
+    summary: 's',
+    module: 'M00',
+  } as const;
+
+  it('una organización PAYER no la ve', () => {
+    expect(isVisibleTo(seccionDelPaciente, ['USER'], ['t-1'], 'PAYER')).toBe(false);
+  });
+
+  it('ni siquiera el comodín la salva: mismo contrato que `hiddenFor`', () => {
+    expect(isVisibleTo(seccionDelPaciente, ['SUPERADMIN'], ['t-1'], 'PAYER')).toBe(false);
+  });
+
+  it('otro tipo de organización no queda afectado', () => {
+    expect(isVisibleTo(seccionDelPaciente, ['USER'], ['t-1'], 'PHARMACY')).toBe(true);
+  });
+
+  it('sin tipo de organización activa (claim ausente o sin elegir) no oculta nada', () => {
+    expect(isVisibleTo(seccionDelPaciente, ['USER'], ['t-1'], null)).toBe(true);
+    expect(isVisibleTo(seccionDelPaciente, ['USER'], ['t-1'])).toBe(true);
+  });
+
+  it('apareceEnElMenu hereda la misma regla', () => {
+    expect(apareceEnElMenu(seccionDelPaciente, ['USER'], ['t-1'], 'PAYER')).toBe(false);
+    expect(apareceEnElMenu(seccionDelPaciente, ['USER'], ['t-1'], 'PHARMACY')).toBe(true);
+  });
+});
+
+/**
+ * El registro de procesos del cliente (módulo «Aseguradora de salud») pide
+ * tres pantallas: datos legales, qué aprueba/no aprueba, y siniestralidad —
+ * «Tu organización», «Aseguradora» y «Siniestralidad y analítica», que ya
+ * existen y no llevan `hiddenForTenantTypes`. Todo lo demás que una sesión
+ * `USER` con tenant `PAYER` veía es ajeno, y esta prueba fija la lista
+ * cerrada de lo que se le cierra: agregar una décimosexta fila acá es una
+ * decisión, no un olvido.
+ */
+describe('lo que `hiddenForTenantTypes` le cierra a la aseguradora', () => {
+  it('son exactamente estas quince rutas, todas PAYER', () => {
+    const conMarca = APP_SECTIONS.filter((s) => s.hiddenForTenantTypes !== undefined);
+
+    expect(conMarca.map((s) => s.path)).toEqual([
+      'directories',
+      'directory',
+      'laboratory-directory',
+      'clinics-directory',
+      'pharmacies-directory',
+      'my-account/dependents',
+      'my-account/appointments',
+      'my-account/medical-record',
+      'my-account/diagnostic-results',
+      'my-account/diagnostic-orders',
+      'my-account/cotizaciones',
+      'my-account/questionnaires',
+      'administration/pharmacy-orders',
+      'administration/pharmacy-campaigns',
+      'administration/pharmacy-profile',
+    ]);
+    for (const seccion of conMarca) {
+      expect(seccion.hiddenForTenantTypes, seccion.path).toEqual(['PAYER']);
+    }
+  });
+
+  it('lo que el registro de procesos SÍ le pide a la aseguradora sigue visible', () => {
+    const siguenVisibles = [
+      'dashboard',
+      'tutorials',
+      'messaging',
+      'settings',
+      'my-account',
+      'notification-center',
+      'my-account/identity',
+      'administration/insurance',
+      'administration/insurance-analytics',
+      'administration/my-organization',
+    ];
+    for (const ruta of siguenVisibles) {
+      const seccion = APP_SECTIONS.find((s) => s.path === ruta);
+      expect(seccion, ruta).toBeDefined();
+      expect(isVisibleTo(seccion!, ['USER'], ['t-1'], 'PAYER'), ruta).toBe(true);
+    }
   });
 });
 

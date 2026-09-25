@@ -406,7 +406,19 @@ export class ShellLayout {
     // de UX), y una novena entrada que además es una herramienta de quien
     // construye la rompe. Quien la usa de verdad —diseño y desarrollo— entra
     // por `/design-system`, que sigue en pie.
-    if (esPaciente(roles) || roles.includes('PRACTITIONER')) {
+    //
+    // Tampoco la aseguradora (2026-09-25, pedido del propietario, junto con
+    // `navigation.map.ts`): es una sesión `USER` con tenant `PAYER`, y
+    // «Sistema de diseño» es tan ajena a su trabajo como al del médico. No se
+    // generaliza a «toda cuenta sin rol de plataforma» —eso habría sido tocar
+    // también farmacia, el visitador y cualquier `USER` sin organización, que
+    // el pedido no incluía—: se agrega sólo la condición de tipo que el
+    // registro de procesos pide cerrar.
+    if (
+      esPaciente(roles) ||
+      roles.includes('PRACTITIONER') ||
+      this.auth.activeTenantType() === 'PAYER'
+    ) {
       return menu;
     }
     const vitrina = { label: 'Sistema de diseño', route: '/design-system', icon: 'settings' } as const;

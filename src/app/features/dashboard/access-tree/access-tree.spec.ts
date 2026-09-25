@@ -23,14 +23,17 @@ import { AccessTree } from './access-tree';
 describe('AccessTree', () => {
   let fixture: ComponentFixture<AccessTree>;
 
-  /** Las secciones que un rol alcanza, tal como se las pasa el panel. */
-  function seccionesDe(roles: readonly string[]): readonly AppSection[] {
-    return APP_SECTIONS.filter((seccion) => isVisibleTo(seccion, roles, ['t-1']));
+  /** Las secciones que un rol (y, opcionalmente, un tipo de organización) alcanza, tal como se las pasa el panel. */
+  function seccionesDe(
+    roles: readonly string[],
+    tipo: string | null = null,
+  ): readonly AppSection[] {
+    return APP_SECTIONS.filter((seccion) => isVisibleTo(seccion, roles, ['t-1'], tipo));
   }
 
-  function crear(roles: readonly string[] = ['PRACTITIONER']): void {
+  function crear(roles: readonly string[] = ['PRACTITIONER'], tipo: string | null = null): void {
     fixture = TestBed.createComponent(AccessTree);
-    fixture.componentRef.setInput('sections', seccionesDe(roles));
+    fixture.componentRef.setInput('sections', seccionesDe(roles, tipo));
     fixture.detectChanges();
   }
 
@@ -261,5 +264,23 @@ describe('AccessTree', () => {
     fixture.detectChanges();
 
     expect(zonas()).toHaveLength(0);
+  });
+
+  it('la aseguradora ve exactamente dos zonas: Chats, y las tres de seguros (2026-09-25)', () => {
+    crear(['USER'], 'PAYER');
+
+    const ids = zonas().map((z) => z.dataset['zona']);
+    expect(ids).toEqual(['gente', 'organizacion']);
+
+    abrir('gente');
+    expect(accesos().map((a) => a.dataset['ruta'])).toEqual(['/messaging']);
+    volver();
+
+    abrir('organizacion');
+    expect(accesos().map((a) => a.dataset['ruta'])).toEqual([
+      '/administration/insurance-analytics',
+      '/administration/my-organization',
+      '/administration/insurance',
+    ]);
   });
 });
