@@ -13,7 +13,8 @@ import { Consultation } from './consultation';
  *
  * Lo que fijan estas pruebas:
  *
- * 1. **Están las doce posibilidades de C0**, en orden y con cantidades leídas.
+ * 1. **Están las diez posibilidades de C0** —sin Medición ni Internación,
+ *    retiradas el 25/09/2026—, en orden y con cantidades leídas.
  *    Órdenes, reconsulta y Pagos no agregan lecturas para ofrecer una cifra.
  * 2. **Cada casilla abre su formulario en modal**, y uno solo a la vez.
  * 3. **El check-in manda lo que el contrato pide y nada más.** Un motivo en
@@ -50,11 +51,11 @@ const CHART = {
 
 const CLAVES = [
   'notas', 'ordenes', 'diagnosticos', 'reconsulta', 'medicacion', 'alergias',
-  'observaciones', 'planes', 'documentos', 'formulario', 'internacion', 'pagos',
+  'planes', 'documentos', 'formulario', 'pagos',
 ];
 const TITULOS = [
   'Nota médica', 'Orden de análisis', 'Diagnóstico', 'Reconsulta', 'Receta', 'Alergia',
-  'Medición', 'Plan de cuidados', 'Documento', 'Formulario clínico', 'Internación', 'Pagos',
+  'Plan de cuidados', 'Documento', 'Formulario clínico', 'Pagos',
 ];
 
 describe('Consultation', () => {
@@ -105,7 +106,7 @@ describe('Consultation', () => {
     componente = await harness.navigateByUrl('/medical-records/p-1/consultation', Consultation);
   });
 
-  it('ofrece las doce posibilidades en la rejilla, con su cantidad', async () => {
+  it('ofrece las diez posibilidades en la rejilla, con su cantidad', async () => {
     await responderLectura();
 
     const casillas = interno<() => readonly { clave: string; titulo: string; cantidad: number | null }[]>(
@@ -126,7 +127,7 @@ describe('Consultation', () => {
     const botones = harness.routeNativeElement!.querySelectorAll(
       '[data-testid^="consulta-casilla-"]',
     );
-    expect(botones).toHaveLength(12);
+    expect(botones).toHaveLength(10);
   });
 
   /**
@@ -134,7 +135,7 @@ describe('Consultation', () => {
    * única línea que dice qué va a pasar al confirmar. Prometer que «se
    * registra» ahí sería mentir en el peor lugar posible.
    */
-  it('Nota médica recibe el encuentro y las citas sin efectuar altas', async () => {
+  it('Nota médica recibe el encuentro y las citas, y sólo lee al abrirse', async () => {
     await responderLectura({ encounters: [{ id: 'e-1', statusConceptId: 'st', startAt: '2026-03-01T10:00:00Z' }] });
     interno<(key: string) => void>('abrir').call(componente, 'notas');
     await harness.fixture.whenStable();
@@ -143,7 +144,12 @@ describe('Consultation', () => {
     expect(note.patientProfileId()).toBe('p-1');
     expect(note.encounterId()).toBe('e-1');
     expect(note.citas()).toEqual(interno<() => readonly unknown[]>('citas')());
-    expect(harness.routeNativeElement?.textContent).toContain('En construcción (C1)');
+    // El bloque relee las notas de la persona al montarse —y nada más—.
+    http
+      .expectOne((request) => request.method === 'GET' && request.url === '/charts/notes')
+      .flush({ items: [], count: 0, limit: 50, nextCursor: null });
+    await harness.fixture.whenStable();
+    expect(harness.routeNativeElement?.textContent).toContain('Escribí la primera nota');
     http.expectNone((request) => request.method === 'POST');
   });
 

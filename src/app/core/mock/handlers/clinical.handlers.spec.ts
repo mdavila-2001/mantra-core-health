@@ -256,13 +256,15 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
   registerMedicalNotes(router);
 
   function call<T>(method: MockMethod, path: string, body: unknown): T {
-    const match = router.match(method, path);
+    // C1 lista por query: el helper la separa de la ruta, como hace el router.
+    const [ruta = path, query = ''] = path.split('?');
+    const match = router.match(method, ruta);
     if (match === null) throw new Error(`No existe ${method} ${path}`);
     return match.handler({
       method,
-      path,
+      path: ruta,
       params: match.params,
-      query: new URLSearchParams(),
+      query: new URLSearchParams(query),
       body,
       headers: new HttpHeaders(),
       user: doctor,
@@ -273,13 +275,16 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
     return call<{ status: number; body: ClinicalNoteVersionRef }>('POST', '/charts/notes', body);
   }
 
-  it('las tres rutas pertenecen a notas; clínica deja de registrar notas y órdenes', () => {
+  it('las cinco rutas pertenecen a notas; clínica deja de registrar notas y órdenes', () => {
     const notesRouter = new MockRouter();
     registerMedicalNotes(notesRouter);
+    // C1 sumó la lista y la firma a las tres de C0.
     expect(notesRouter.rutas()).toEqual([
+      { method: 'GET', pattern: '/charts/notes' },
       { method: 'POST', pattern: '/charts/notes' },
       { method: 'PUT', pattern: '/charts/notes/:id/versions' },
       { method: 'POST', pattern: '/charts/notes/:id/versions' },
+      { method: 'POST', pattern: '/charts/notes/:id/versions/:versionId/sign' },
     ]);
 
     const clinicalRouter = new MockRouter();
@@ -322,24 +327,86 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
       signedAt: null,
       releasedToPatient: false,
     });
-    const restored = new Coleccion<NotaSimulada>([], 'mock.clinica.notas');
+    const restored = new Coleccion<NotaSimulada>([], 'mock.clinica.notas-medicas');
     expect(restored.get(response.body.noteId)).toMatchObject(input);
   });
 
-  it('un cuerpo vacío conserva los valores por omisión anteriores', () => {
-    const response = createNote({});
+  // C1: una nota vacía ya no se guarda. Sin paciente, o sin ninguna fila ni
+  // texto, el simulador responde 422 —lo mismo que va a responder el backend—.
+  it('un cuerpo vacío es 422: sin paciente, o sin filas ni texto, no hay nota', () => {
+    expect(createNote({}).status).toBe(422);
+    const sinContenido = call<MockReply>('POST', '/charts/notes', { patientProfileId: PACIENTE.id });
+    expect(sinContenido.status).toBe(422);
+    expect((sinContenido.body as { message: string }).message).toContain('al menos una fila o un texto');
+  });
+
+  it('con sólo texto libre conserva los valores por omisión anteriores', () => {
+    const response = createNote({ patientProfileId: PACIENTE.id, subjectiveText: 'Sólo texto' });
     expect(response.status).toBe(201);
     expect(notas.get(response.body.noteId)).toMatchObject({
-      patientProfileId: '',
+      patientProfileId: PACIENTE.id,
       authorProfileId: doctor.practitionerProfileId,
       noteTypeConceptId: NOTA_TIPO_EVOLUCION,
       lifecycleStatusConceptId: ESTADO['ST-DRAFT'],
+      entries: [],
       chiefComplaintText: '',
-      subjectiveText: '',
+      subjectiveText: 'Sólo texto',
       objectiveText: '',
       assessmentText: '',
       planText: '',
     });
+  });
+
+  it('valida cada fila: campo y valor obligatorios, sin campos repetidos', () => {
+    const repetido = call<MockReply>('POST', '/charts/notes', {
+      patientProfileId: PACIENTE.id,
+      entries: [
+        { label: 'Presión arterial', value: '120/80' },
+        { label: 'presion ARTERIAL', value: '130/85' },
+      ],
+    });
+    expect(repetido.status).toBe(422);
+    expect((repetido.body as { issues: readonly { index: number }[] }).issues[0]).toMatchObject({ index: 1, field: 'label' });
+
+    const sinValor = call<MockReply>('POST', '/charts/notes', {
+      patientProfileId: PACIENTE.id,
+      entries: [{ label: 'Peso', value: '   ' }],
+    });
+    expect(sinValor.status).toBe(422);
+
+    const bien = createNote({
+      patientProfileId: PACIENTE.id,
+      entries: [{ label: '  Peso ', value: ' 68 kg ' }],
+    });
+    expect(bien.status).toBe(201);
+    expect(notas.get(bien.body.noteId)?.entries).toEqual([{ label: 'Peso', value: '68 kg' }]);
+  });
+
+  it('lista las notas de una persona, firma la vigente y no deja pisar una firmada sin motivo', () => {
+    const creada = createNote({
+      patientProfileId: PACIENTE.id,
+      encounterId: 'c1-encounter',
+      entries: [{ label: 'Dolor', value: 'Lumbar, 6/10' }],
+    });
+    const lista = call<{ items: readonly { noteId: string; entries?: unknown }[]; count: number }>(
+      'GET', `/charts/notes?patientProfileId=${PACIENTE.id}&encounterId=c1-encounter`, undefined,
+    );
+    expect(lista.items.map((n) => n.noteId)).toEqual([creada.body.noteId]);
+    expect(lista.items[0]!.entries).toEqual([{ label: 'Dolor', value: 'Lumbar, 6/10' }]);
+
+    const firmada = call<{ noteId: string; signedAt: string | null }>(
+      'POST', `/charts/notes/${creada.body.noteId}/versions/${creada.body.versionId}/sign`, {},
+    );
+    expect(firmada.noteId).toBe(creada.body.noteId);
+    expect(firmada.signedAt).not.toBeNull();
+
+    const pisada = call<MockReply>('PUT', `/charts/notes/${creada.body.noteId}/versions`, { planText: 'x' });
+    expect(pisada.status).toBe(409);
+    const enmendada = call<{ status: number }>('PUT', `/charts/notes/${creada.body.noteId}/versions`, {
+      planText: 'x',
+      amendmentReasonText: 'Error de tipeo',
+    });
+    expect(enmendada.status).toBe(201);
   });
 
   for (const method of ['PUT', 'POST'] as const) {
@@ -357,7 +424,7 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
         },
       });
       expect(response.body.versionId).not.toBe(initial.body.versionId);
-      const restored = new Coleccion<NotaSimulada>([], 'mock.clinica.notas');
+      const restored = new Coleccion<NotaSimulada>([], 'mock.clinica.notas-medicas');
       expect(restored.get(initial.body.noteId)).toMatchObject({
         noteId: initial.body.noteId,
         patientProfileId: PACIENTE.id,

@@ -1,0 +1,30 @@
+# yarn typecheck (exit 0)
+  556 componentes · 3 otros · 312 pantallas · 138 maquetas · 23 atomos · 45 moleculas · 35 organismos
+  203 con algo que mirar
+  relaciones: 2248 template-instantiates · 5 imports-available sin instanciar · 71 type-only · 208 dynamic-loads
+  nivel: 0 declarado · 556 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 556/556 · con escenario 3/556 · verificados visualmente 3/556 · bloqueados 72/556 · montó e interactuó: se miden en el banco (runtime)
+
+# eslint archivos tocados (exit 0)
+
+# yarn test --watch=false --include=… (tanda 1: 8 archivos que ya pasaban)
+✓ src/app/features/component-stock/component-index.generated.ts
+     × reparte el registro entero: ninguna sección se queda sin bloque por descuido 13ms
+     × las tres rutas pertenecen a notas; clínica deja de registrar notas y órdenes 12ms
+     × conserva el 201, los campos de la nota, la lectura del expediente y la persistencia 5ms
+     × un cuerpo vacío conserva los valores por omisión anteriores 1ms
+     × PUT agrega una versión, conserva la nota y persiste el cambio 3ms
+     × POST agrega una versión, conserva la nota y persiste el cambio 4ms
+ FAIL   mantra-core-health  src/app/core/navigation/navigation.subgroups.spec.ts > NAV_SUBGROUPS > reparte el registro entero: ninguna sección se queda sin bloque por descuido
+ FAIL   mantra-core-health  src/app/core/mock/handlers/clinical.handlers.spec.ts > /charts/notes · contrato tras mudar el handler > las tres rutas pertenecen a notas; clínica deja de registrar notas y órdenes
+ FAIL   mantra-core-health  src/app/core/mock/handlers/clinical.handlers.spec.ts > /charts/notes · contrato tras mudar el handler > conserva el 201, los campos de la nota, la lectura del expediente y la persistencia
+ FAIL   mantra-core-health  src/app/core/mock/handlers/clinical.handlers.spec.ts > /charts/notes · contrato tras mudar el handler > un cuerpo vacío conserva los valores por omisión anteriores
+ FAIL   mantra-core-health  src/app/core/mock/handlers/clinical.handlers.spec.ts > /charts/notes · contrato tras mudar el handler > PUT agrega una versión, conserva la nota y persiste el cambio
+ FAIL   mantra-core-health  src/app/core/mock/handlers/clinical.handlers.spec.ts > /charts/notes · contrato tras mudar el handler > POST agrega una versión, conserva la nota y persiste el cambio
+ Test Files  2 failed | 8 passed (10)
+      Tests  6 failed | 220 passed (226)
+
+# tanda 2 tras corregir los specs (exit 0)
+✓ src/app/features/component-stock/component-index.generated.ts
+ Test Files  3 passed (3)
+      Tests  34 passed (34)

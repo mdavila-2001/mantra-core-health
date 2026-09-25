@@ -295,7 +295,7 @@ describe('Dashboard', () => {
       const primero = accesos()[0];
       expect(primero.querySelector('app-nav-icon svg')).not.toBeNull();
       expect(primero.getAttribute('href')).toBe(primero.dataset['ruta']);
-      expect(accesos().map((a) => a.dataset['ruta'])).toContain('/progress-notes');
+      expect(accesos().map((a) => a.dataset['ruta'])).toContain('/medical-records');
     });
 
     it('el árbol sigue saliendo del registro: no pierde ninguna sección por el camino', () => {

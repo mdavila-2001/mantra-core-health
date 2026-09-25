@@ -429,12 +429,15 @@ function reconsultaDeLaLinea(
  * // nota declara en vez de estos cinco campos fijos.
  */
 function notaDeLaLinea(nota: ChartNote): TimelineNote {
+  // C1: las filas campo/valor van primero, como las escribió quien atendió.
+  const entradas = nota.entries ?? [];
   const filas: Hecho[] = [
-    { etiqueta: 'Motivo de la consulta', valor: nota.chiefComplaintText ?? null },
-    { etiqueta: 'Lo que contaste', valor: nota.subjectiveText ?? null },
-    { etiqueta: 'Lo que se observó', valor: nota.objectiveText ?? null },
-    { etiqueta: 'Evaluación', valor: nota.assessmentText ?? null },
-    { etiqueta: 'Plan', valor: nota.planText ?? null },
+    ...entradas.map((fila) => ({ etiqueta: fila.label, valor: fila.value })),
+    { etiqueta: 'Motivo de la consulta', valor: nota.chiefComplaintText || null },
+    { etiqueta: entradas.length > 0 ? 'Lo que anotó' : 'Lo que contaste', valor: nota.subjectiveText || null },
+    { etiqueta: 'Lo que se observó', valor: nota.objectiveText || null },
+    { etiqueta: 'Evaluación', valor: nota.assessmentText || null },
+    { etiqueta: 'Plan', valor: nota.planText || null },
   ];
 
   return {

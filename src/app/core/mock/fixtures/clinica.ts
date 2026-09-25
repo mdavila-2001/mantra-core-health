@@ -125,6 +125,12 @@ export interface EncuentroSimulado {
   readonly endAt: string | null;
 }
 
+/** Una fila de la nota médica: el campo y lo que vale, como lo escribió la médica. */
+export interface FilaDeNotaSimulada {
+  readonly label: string;
+  readonly value: string;
+}
+
 export interface NotaSimulada {
   readonly id: string;
   readonly noteId: string;
@@ -135,6 +141,11 @@ export interface NotaSimulada {
   readonly currentVersionId: string;
   readonly versionNumber: number;
   readonly authorProfileId: string;
+  /**
+   * Las filas campo/valor de C1 (P39). Las notas viejas —las SOAP de antes del
+   * 25/09/2026— no las tienen y traen su texto en los cinco apartados.
+   */
+  readonly entries?: readonly FilaDeNotaSimulada[];
   readonly chiefComplaintText: string;
   readonly subjectiveText: string;
   readonly objectiveText: string;
@@ -346,6 +357,52 @@ export const episodios = new Coleccion<{ id: string; patientProfileId: string; t
   })),
 );
 
+/**
+ * Las filas que una médica anota en una consulta, campo por campo. Cinco
+ * juegos realistas de cuatro a siete filas: la semilla elige uno por paciente
+ * y por visita, así dos notas de la misma persona nunca dicen lo mismo.
+ */
+const FILAS_DE_NOTA: readonly (readonly FilaDeNotaSimulada[])[] = [
+  [
+    { label: 'Presión arterial', value: '120/80 mmHg' },
+    { label: 'Frecuencia cardíaca', value: '72 lpm' },
+    { label: 'Peso', value: '68 kg' },
+    { label: 'Exploración', value: 'Abdomen blando, depresible, no doloroso' },
+    { label: 'Conducta', value: 'Continuar tratamiento. Control en 3 meses con laboratorio.' },
+  ],
+  [
+    { label: 'Dolor', value: 'Región lumbar, 6/10' },
+    { label: 'Duración', value: '3 días' },
+    { label: 'Irradiación', value: 'No' },
+    { label: 'Desencadenante', value: 'Esfuerzo al levantar peso' },
+    { label: 'Exploración', value: 'Contractura paravertebral, Lasègue negativo' },
+    { label: 'Conducta', value: 'Reposo relativo, analgesia, control en 7 días' },
+  ],
+  [
+    { label: 'Motivo', value: 'Cansancio y dolor de cabeza' },
+    { label: 'Tiempo de evolución', value: '2 semanas' },
+    { label: 'Presión arterial', value: '134/88 mmHg' },
+    { label: 'Temperatura', value: '36,6 °C' },
+    { label: 'Impresión', value: 'Cefalea tensional probable. Descartar anemia.' },
+    { label: 'Estudios pedidos', value: 'Hemograma, perfil tiroideo' },
+    { label: 'Conducta', value: 'Paracetamol a demanda. Control en 2 semanas.' },
+  ],
+  [
+    { label: 'Glucemia en ayunas', value: '112 mg/dL' },
+    { label: 'Hemoglobina glicosilada', value: '6,8 %' },
+    { label: 'Peso', value: '81 kg' },
+    { label: 'Adherencia', value: 'Buena, sin olvidos' },
+  ],
+  [
+    { label: 'Tos', value: 'Seca, de predominio nocturno' },
+    { label: 'Duración', value: '5 días' },
+    { label: 'Fiebre', value: 'No' },
+    { label: 'Saturación', value: '97 %' },
+    { label: 'Auscultación', value: 'Murmullo vesicular conservado, sin ruidos agregados' },
+    { label: 'Conducta', value: 'Antitusivo, hidratación, control si empeora' },
+  ],
+];
+
 export const notas = new Coleccion<NotaSimulada>(
   PACIENTES.flatMap((p, k) =>
     [0, 1].map((visita) => ({
@@ -358,11 +415,14 @@ export const notas = new Coleccion<NotaSimulada>(
       currentVersionId: uuid(`note-version-${p.id}-${visita}`),
       versionNumber: visita === 0 ? 2 : 1,
       authorProfileId: MEDICA.id,
-      chiefComplaintText: ['Control de rutina', 'Cansancio y dolor de cabeza'][visita]!,
-      subjectiveText: `Paciente refiere ${['sentirse bien, sin síntomas nuevos', 'cansancio de dos semanas de evolución y cefalea vespertina'][visita]}. Cumple el tratamiento.`,
-      objectiveText: `PA ${118 + (k % 5) * 8}/${76 + (k % 4) * 4}, FC ${64 + (k % 6) * 5}, afebril. Examen cardiopulmonar sin hallazgos.`,
-      assessmentText: visita === 0 ? 'Estable. Buen control de su patología de base.' : 'Cefalea tensional probable. Descartar anemia.',
-      planText: visita === 0 ? 'Continuar tratamiento. Control en 3 meses con laboratorio.' : 'Solicitar hemograma y perfil tiroideo. Paracetamol a demanda. Control en 2 semanas.',
+      // C1: la nota es la tabla de filas. Los apartados SOAP quedan vacíos
+      // en las notas nuevas y la pantalla no los dibuja cuando están en blanco.
+      entries: FILAS_DE_NOTA[(k + visita * 2) % FILAS_DE_NOTA.length]!,
+      chiefComplaintText: '',
+      subjectiveText: visita === 0 ? '' : 'Refiere que el cuadro empezó tras un viaje largo en bus.',
+      objectiveText: '',
+      assessmentText: '',
+      planText: '',
       signedAt: visita === 0 ? iso(-47, 10) : null,
       releasedToPatient: visita === 0,
       createdAt: iso(-visita * 45 - 2, 9, 40),
@@ -509,7 +569,7 @@ recetas.persistirEn('mock.clinica.recetas');
 observaciones.persistirEn('mock.clinica.observaciones');
 encuentros.persistirEn('mock.clinica.encuentros');
 episodios.persistirEn('mock.clinica.episodios');
-notas.persistirEn('mock.clinica.notas');
+notas.persistirEn('mock.clinica.notas-medicas');
 planes.persistirEn('mock.clinica.planes');
 documentos.persistirEn('mock.clinica.documentos');
 ordenes.persistirEn('mock.clinica.ordenes');

@@ -405,29 +405,11 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Consultá la historia clínica de los pacientes que atendés.',
     module: 'M08 clinical · M15 chart',
   },
-  {
-    // §4.H del plan de UX · la sexta de las ocho. **Sección propia y no una
-    // pestaña dentro del Archivo clínico**, que era la otra lectura posible.
-    //
-    // El motivo es que la pregunta que responde es transversal: «¿qué escribí
-    // últimamente?», «¿qué quedó a medio firmar?». Dentro del archivo clínico
-    // esa pregunta no se puede hacer — ahí se entra **por persona**, y para
-    // ver las últimas cinco evoluciones habría que acordarse de las cinco
-    // personas. Es la misma razón por la que «Mis turnos» no vive dentro de
-    // cada paciente.
-    path: 'progress-notes',
-    // C7 (homogeneización de nombres, 2026-09-25): «Evoluciones» pasa a
-    // «Notas médicas» — el propietario pidió una sola palabra por concepto en
-    // toda la interfaz, y «evolución» era uno de los términos con varias
-    // formas conviviendo (nota clínica / nota de la consulta / evolución).
-    label: 'Notas médicas',
-    group: 'Atención',
-    icon: 'note',
-    roles: ['CLINICIAN', 'PRACTITIONER'],
-    availability: 'disponible',
-    summary: 'Lo último que escribiste, de todos tus pacientes y en un solo lugar.',
-    module: 'M15 chart',
-  },
+  // «Notas médicas» (`progress-notes`) vivió acá como sección propia entre el
+  // 19/09 y el 25/09/2026. Se retiró del menú y del producto a pedido del
+  // propietario: la nota médica se escribe y se lee desde la consulta y el
+  // expediente de cada persona, y una lista transversal de notas no era una
+  // pantalla que quisiera tener.
   {
     path: 'diagnostics',
     // §4.H · fuera del menú del médico: no está en la lista de ocho. La cola
