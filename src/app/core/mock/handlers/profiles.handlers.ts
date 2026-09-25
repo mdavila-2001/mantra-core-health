@@ -6,6 +6,7 @@ import {
   TIPO_VINCULO,
   displayDe,
 } from '../fixtures/conceptos';
+import { contactChannelsOfCarrier } from './insurance.handlers';
 import {
   afiliaciones,
   CATEGORIA_MEDICO,
@@ -245,6 +246,14 @@ function fichaDe(p: PacienteSimulado) {
  * segundo juego de coberturas de maqueta que se desalinee del primero.
  */
 export function perfilPropioDe(p: PacienteSimulado) {
+  // Canales reales de la aseguradora ficticia de `p` (Tarea 2), no
+  // literales fijos: antes esta tarjeta usaba el mismo WhatsApp y call
+  // center para cualquier aseguradora, y ese call center era, sin
+  // marcarlo, el real de BISA.
+  const canales =
+    p.aseguradora === undefined
+      ? { whatsapp: null, callCenter: null }
+      : contactChannelsOfCarrier(p.aseguradora);
   return {
     personId: p.personId,
     patientProfileId: p.id,
@@ -312,8 +321,8 @@ export function perfilPropioDe(p: PacienteSimulado) {
             effectiveFrom: '2026-01-01',
             effectiveTo: '2026-12-31',
             currencyCode: 'BOB',
-            carrierWhatsappNumber: '+59170011223',
-            carrierCallCenterPhone: '800-10-6060',
+            carrierWhatsappNumber: canales.whatsapp,
+            carrierCallCenterPhone: canales.callCenter,
             benefits: [
               { id: `benefit-general-${p.id}`, categoryName: 'Atención ambulatoria', coveragePercent: '80.50', copayAmount: '20.00', deductibleAmount: null, effectiveFrom: '2026-01-01', effectiveTo: '2026-12-31', validityStatus: 'CURRENT' },
               { id: `benefit-service-${p.id}`, categoryName: 'Atención ambulatoria', serviceConceptId: uuid('benefit-consultation'), serviceName: 'Consulta de seguimiento', coveragePercent: '100', copayAmount: '0.00', deductibleAmount: '150.00', effectiveFrom: '2026-01-01', effectiveTo: '2026-12-31', validityStatus: 'CURRENT' },
@@ -321,12 +330,12 @@ export function perfilPropioDe(p: PacienteSimulado) {
             { id: `coverage-expired-${p.id}`, carrierName: p.aseguradora, planName: 'Plan anterior', isPublic: false,
               policyIdentifier: `POL-ANT-${p.patientCode.slice(4)}`, verified: true, status: 'Cobertura activa',
               statusCode: 'COVERAGE_ACTIVE', validityStatus: 'EXPIRED', effectiveFrom: '2025-01-01', effectiveTo: '2025-12-31',
-              carrierWhatsappNumber: '+59170011223', benefits: [],
+              carrierWhatsappNumber: canales.whatsapp, benefits: [],
             },
             { id: `coverage-future-${p.id}`, carrierName: p.aseguradora, planName: 'Plan próxima renovación', isPublic: false,
               memberIdentifier: `DECL-${p.patientCode.slice(4)}`, verified: false, status: 'Cobertura activa',
               statusCode: 'COVERAGE_ACTIVE', validityStatus: 'UPCOMING', effectiveFrom: '2027-01-01', effectiveTo: '2027-12-31',
-              currencyCode: 'USD', carrierCallCenterPhone: '800-10-6060', benefits: [],
+              currencyCode: 'USD', carrierCallCenterPhone: canales.callCenter, benefits: [],
             }],
     guardians: personasRelacionadasDe(p).map((r) => ({
       displayName: r.displayName,

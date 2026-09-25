@@ -1,5 +1,5 @@
-import type { Type } from '@angular/core';
-import { Routes } from '@angular/router';
+import { inject, type Type } from '@angular/core';
+import { Router, type RedirectFunction, type Routes } from '@angular/router';
 import { Dashboard } from './features/dashboard/dashboard';
 import { ShellLayout } from './features/shell-layout/shell-layout';
 import { Login } from './features/auth/login/login';
@@ -1070,15 +1070,43 @@ function rutasDeSecciones(): Routes {
  * Secciones que siguen registradas (roles, menú, «Tus accesos») pero cuya
  * pantalla se retiró: la ruta redirige en vez de pintar algo.
  *
- * `my-account/loyalty` (N-03/Q-17, 2026-09-22): «Mis puntos» pasa a ser una
- * pestaña del perfil del paciente. La pestaña no llegó esta noche (Itzan,
- * regla 65 — contrato simulado y declarado en el daily de los dos), así que
- * la dirección vieja no puede quedar en un componente que ya no es el
- * destino real; redirige a «Mi cuenta» hasta que la pestaña exista.
+ * `my-account/loyalty` (N-03/Q-17, 2026-09-22): «Mis puntos» es una pestaña
+ * del perfil del paciente desde el #606 (Itzan, 24/09/2026), y la ficha la
+ * abre por URL con `?pestana=puntos` (`indiceDePestana` en
+ * `pestanas-del-perfil.ts`). La dirección vieja va directo a esa pestaña; el
+ * destino provisorio a la primera pestaña, que la regla 65 dejó mientras la
+ * pestaña no existía, quedó reemplazado.
+ *
+ * La clave viaja con nombre y no con número: reordenar las pestañas no rompe
+ * esta redirección.
  */
-export const SECCIONES_REDIRIGIDAS: Readonly<Record<string, string>> = {
-  'my-account/loyalty': '/my-account',
+export const SECCIONES_REDIRIGIDAS: Readonly<Record<string, DestinoRedirigido>> = {
+  'my-account/loyalty': { ruta: '/my-account', query: { pestana: 'puntos' } },
 };
+
+/** A dónde manda una sección redirigida: la ruta y el query que le suma. */
+export interface DestinoRedirigido {
+  readonly ruta: string;
+  readonly query?: Readonly<Record<string, string>>;
+}
+
+/**
+ * La redirección de una sección, **conservando el query que traía**.
+ *
+ * Un `redirectTo` de texto no alcanza: con texto, el router arma el query del
+ * destino sólo con el que declara el propio destino (`createQueryParams` en
+ * `@angular/router` 21), y `/my-account/loyalty?foo=bar` perdería `foo`. La
+ * función devuelve un `UrlTree` con el query entrante más el del destino; si
+ * los dos traen la misma clave gana el destino, porque es lo que la sección
+ * vieja significa —`/my-account/loyalty?pestana=contacto` sigue siendo «Mis
+ * puntos»—.
+ */
+export function redireccionConQuery(destino: DestinoRedirigido): RedirectFunction {
+  return ({ queryParams }) =>
+    inject(Router).createUrlTree([destino.ruta], {
+      queryParams: { ...queryParams, ...destino.query },
+    });
+}
 
 /**
  * El componente de una sección, o la carga diferida del placeholder.
@@ -1094,7 +1122,7 @@ function componenteDe(
 ): Pick<Routes[number], 'component' | 'loadComponent' | 'redirectTo' | 'pathMatch'> {
   const redirige = SECCIONES_REDIRIGIDAS[section.path];
   if (redirige !== undefined) {
-    return { redirectTo: redirige, pathMatch: 'full' };
+    return { redirectTo: redireccionConQuery(redirige), pathMatch: 'full' };
   }
 
   const pantalla = PANTALLAS[section.path];

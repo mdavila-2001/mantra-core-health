@@ -1394,12 +1394,12 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // así que va `billing`, el de valor acumulado. Un icono propio es del
     // dueño del sistema de iconos, no de este carril.
     path: 'my-account/loyalty',
-    // N-03/Q-17 (2026-09-22, Itzan): «Mis puntos» pasa a ser una pestaña del
-    // perfil del paciente y retira su renglón de primer nivel. La pestaña en
-    // sí no llegó esta noche (regla 65: contrato simulado — la ruta vieja
-    // redirige a `/my-account` en `app.routes.ts`, declarado en el daily de
-    // los dos). La sección se conserva registrada (roles, disponibilidad)
-    // para no perder ese contrato si alguien más la referencia.
+    // N-03/Q-17 (2026-09-22, Itzan): «Mis puntos» es una pestaña del perfil
+    // del paciente (#606, 24/09/2026) y no tiene renglón de primer nivel. La
+    // ruta vieja redirige a `/my-account?pestana=puntos` en `app.routes.ts`
+    // (`SECCIONES_REDIRIGIDAS`), conservando el query que traía. La sección se
+    // conserva registrada (roles, disponibilidad) para que esa dirección siga
+    // resolviendo si alguien la tiene guardada.
     fueraDelMenuPara: [ANY_ROLE],
     label: 'Mis puntos',
     group: 'Mi cuenta',

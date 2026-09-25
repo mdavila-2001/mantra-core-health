@@ -414,9 +414,9 @@ describe('ShellLayout', () => {
         // absorbió «Farmacia» (pestañas de `PharmacyHub`) — ver el registro.
         expect(enlaces).toContain('/my-account/pharmacy');
         expect(enlaces).not.toContain('/my-account/pharmacy-orders');
-        // «Mis puntos» YA NO es un renglón (N-03/Q-17, 2026-09-22): pasa a
-        // ser una pestaña del perfil (pendiente de Itzan) y su URL vieja
-        // redirige a `/my-account` — ver `app.routes.ts`.
+        // «Mis puntos» YA NO es un renglón (N-03/Q-17, 2026-09-22): es una
+        // pestaña del perfil (#606) y su URL vieja redirige a
+        // `/my-account?pestana=puntos` — ver `app.routes.ts`.
         expect(enlaces).not.toContain('/my-account/loyalty');
         expect(enlaces).toContain('/my-account/dependents');
         expect(enlaces).toContain('/my-account/medical-record');

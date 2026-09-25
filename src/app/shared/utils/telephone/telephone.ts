@@ -2,8 +2,11 @@
  * Utilidades para transformar un teléfono tal como lo guarda la API en un
  * destino accionable (`tel:`, `https://wa.me/…`).
  *
- * Ninguna de las tres funciones valida formato: eso ya lo hizo el servidor al
- * escribir el dato. Acá sólo se limpia lo que un enlace nativo no admite.
+ * `dialable` y `whatsappDigits` no validan formato: eso ya lo hizo el
+ * servidor al escribir el dato, y `callCenterPhone` (que usa `dialable`) ni
+ * siquiera exige E.164. `whatsappUrl` es la excepción: sí rechaza un valor
+ * que no puede ser un WhatsApp real (CA-2.4, Tarea 2), porque un enlace
+ * `wa.me/` roto es peor que no ofrecer el botón.
  */
 
 /**
@@ -37,15 +40,22 @@ export function whatsappDigits(raw: string): string {
 /**
  * Arma el enlace de WhatsApp con un mensaje pre-cargado.
  *
+ * Devuelve `null` en dos casos (CA-2.4, Tarea 2): si `raw` trae una letra
+ * —un dato mal cargado, no un teléfono— o si, ya limpio de todo lo que no
+ * sea dígito, quedan menos de 8 (el mínimo E.164 con código de país que
+ * también exige la API, `backbone.dto.ts`). Un enlace `wa.me/` sin número
+ * real abre WhatsApp sin ningún destinatario, que es peor que no ofrecer
+ * el botón. Con `text` vacío la URL no lleva `?text=`: un parámetro vacío
+ * no agrega nada y ensucia la URL que ve quien la abre.
+ *
  * @param raw - El teléfono tal como lo guarda la API.
  * @param text - El mensaje a precargar en el chat.
- * @returns La URL de `wa.me`, o `null` si el teléfono no deja dígitos
- *   suficientes para ser un número real (menos de 7): un enlace `wa.me/`
- *   sin número abre WhatsApp sin ningún destinatario, que es peor que no
- *   ofrecer el botón.
+ * @returns La URL de `wa.me`, o `null` si `raw` no puede ser un WhatsApp real.
  */
 export function whatsappUrl(raw: string, text: string): string | null {
+  if (/[a-z]/i.test(raw)) return null;
   const digits = whatsappDigits(raw);
-  if (digits.length < 7) return null;
-  return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+  if (digits.length < 8) return null;
+  const query = text ? `?text=${encodeURIComponent(text)}` : '';
+  return `https://wa.me/${digits}${query}`;
 }
