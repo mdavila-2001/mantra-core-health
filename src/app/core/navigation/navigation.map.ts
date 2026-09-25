@@ -1067,7 +1067,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // es la suya lo hace la API, que responde 403 ante la de otra organización.
     roles: ['SECURITY_ADMIN', 'ACCOUNTING_APPROVER', 'PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Cuánto entró hoy, esta semana y este mes; en qué se te va; quién te debe y a quién le debés.',
+    summary:
+      'Cuánto entró hoy, esta semana y este mes; en qué se te va; quién te debe y a quién le debés.',
     module: 'M16 accounting',
   },
 
@@ -1397,6 +1398,10 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Las promociones que las farmacias le mandaron al paciente (T-E7). Mismo
     // criterio que «Mis puntos»: rol de paciente, sin `exclusiveRoles`. Icono
     // `tag`: ningún otro de «Mi cuenta» lo usa.
+    //
+    // Fuera del menú lateral desde el 25/09/2026, a pedido del cliente: se
+    // llega por el ícono de la barra superior, junto al carrito.
+    fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/promotions',
     label: 'Promociones',
     group: 'Mi cuenta',

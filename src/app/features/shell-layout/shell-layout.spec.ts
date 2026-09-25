@@ -467,12 +467,13 @@ describe('ShellLayout', () => {
             // «Mis pedidos» salió del registro visible el 24/09/2026: la
             // absorbió «Farmacia», que queda en su lugar del orden.
             '/my-account/pharmacy',
-            // «Mis puntos» salió del registro visible (N-03/Q-17,
-            // 2026-09-22): con su renglón retirado, «Promociones» queda
-            // pegada a «Farmacia» en el orden real del registro.
-            '/my-account/promotions',
           ]),
         ).toBe(true);
+        // «Promociones» se mudó a la barra superior (25/09/2026).
+        expect(enlaces).not.toContain('/my-account/promotions');
+        expect(
+          raiz().querySelector('[data-testid="header-promociones"]')?.getAttribute('href'),
+        ).toBe('/my-account/promotions');
         expect(
           seguidas(enlaces, [
             '/my-account/medical-record',
