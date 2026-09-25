@@ -615,6 +615,16 @@ function sembrarReconsulta(): void {
     .sort((a, b) => b.startAt.localeCompare(a.startAt))[0];
   if (origen === undefined) return;
 
+  // D-2 (cierre de tanda 2026-09-25) · idempotencia. `reservas` sobrevive a F5
+  // en `sessionStorage` (`persistirEn`, arriba), pero este módulo se vuelve a
+  // evaluar en cada carga completa de página, y sin esta guarda cada carga
+  // agregaba OTRA reconsulta para el mismo origen: el sello subía solo —2, 3,
+  // 4, 5— sin que nadie agendara nada.
+  const yaSembrada = reservas
+    .todos()
+    .some((r) => r.followUpOf?.bookingId === origen.id);
+  if (yaSembrada) return;
+
   const desde = Date.now() + UN_DIA;
   const destino = cupos
     .todos()
