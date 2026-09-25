@@ -2786,4 +2786,79 @@ describe('Agenda', () => {
       ]);
     });
   });
+
+  /**
+   * El sello de reconsulta (C4).
+   *
+   * Una reconsulta es una cita como cualquier otra —mismo estado, mismo ciclo—
+   * y por eso la fila no se distingue sola. El sello y «de la cita del …» son
+   * lo único que dice de qué consulta salió, y sin eso la fila es un turno que
+   * nadie sabe explicar.
+   */
+  describe('el sello de reconsulta (C4)', () => {
+    /** Una cita que sale de otra, tal como la manda la API con `followUpOf`. */
+    const RECONSULTA = {
+      ...CITA,
+      id: 'b-reconsulta',
+      reasonText: 'Reconsulta: Control anual',
+      followUpOf: { bookingId: 'b-1', encounterId: null, startAt: '2026-08-08T13:00:00.000Z' },
+      followUpBookingId: null,
+    };
+
+    async function montarCon(citas: unknown[]): Promise<void> {
+      await montar();
+      await responderRecursos();
+      responderResto({ citas });
+      harness.detectChanges();
+    }
+
+    function fila(indice = 0): Record<string, unknown> {
+      return citas().data?.[indice] as Record<string, unknown>;
+    }
+
+    it('marca la cita como reconsulta y guarda de cuándo era la consulta de origen', async () => {
+      await montarCon([RECONSULTA]);
+
+      expect(fila()['esReconsulta']).toBe(true);
+      expect(fila()['reconsultaDe']).toEqual(new Date('2026-08-08T13:00:00.000Z'));
+    });
+
+    it('una cita común no lleva sello, y eso no es un dato faltante', async () => {
+      await montarCon([CITA]);
+
+      expect(fila()['esReconsulta']).toBe(false);
+      expect(fila()['reconsultaDe']).toBeNull();
+      expect(
+        (harness.fixture.nativeElement as HTMLElement).querySelector('[data-testid="cita-reconsulta-sello"]'),
+      ).toBeNull();
+    });
+
+    it('la fila muestra el sello junto al motivo y de qué consulta salió', async () => {
+      await montarCon([RECONSULTA]);
+
+      const sello = (harness.fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="cita-reconsulta-sello"]',
+      );
+      expect(sello).not.toBeNull();
+      expect(sello?.textContent?.trim()).toBe('Reconsulta');
+      expect((harness.fixture.nativeElement as HTMLElement).textContent).toContain('de la cita del');
+      // El motivo sigue estando: el sello lo acompaña, no lo reemplaza.
+      expect((harness.fixture.nativeElement as HTMLElement).textContent).toContain('Reconsulta: Control anual');
+    });
+
+    /**
+     * El contrato admite una cita sin cupo, así que el origen puede no tener
+     * horario. Decir «de la cita del —» sería peor que no decir nada.
+     */
+    it('sin fecha del origen el sello va solo, sin la frase', async () => {
+      await montarCon([{ ...RECONSULTA, followUpOf: { bookingId: 'b-1', encounterId: null } }]);
+
+      expect(fila()['esReconsulta']).toBe(true);
+      expect(fila()['reconsultaDe']).toBeNull();
+      expect(
+        (harness.fixture.nativeElement as HTMLElement).querySelector('[data-testid="cita-reconsulta-sello"]'),
+      ).not.toBeNull();
+      expect((harness.fixture.nativeElement as HTMLElement).textContent).not.toContain('de la cita del');
+    });
+  });
 });
