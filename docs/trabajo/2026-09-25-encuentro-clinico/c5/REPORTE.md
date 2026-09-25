@@ -6,7 +6,8 @@
 > `evidencia/c5-receta-playwright.md`)
 
 - Fecha: 2026-09-25 · Plan: [PLAN.md](./PLAN.md) · Rama: `claude/clinica-c5-receta` (mergeada, PR
-  #679) → fixes de Playwright en `pablo/fix-clinica-c5-receta-spec`
+  #679) → fixes de Playwright en `pablo/fix-clinica-c5-receta-spec` (**PR #685 → `mockup`:
+  MERGEADO**, commit `9b8bc46e`)
 - Peldaño de evidencia alcanzado: **TESTED** por área (specs dirigidos en verde: mock handler 10/10,
   `medication-block` 63/63, `clinical-pdf` 45/45) + `VERIFIED_FUNCTIONAL_ONLY` parcial en Playwright:
   `prescription-official-pdf.spec.ts` 1/2 (el fallo es ajeno y pre-existente); `clinica-c5-receta.spec.ts`
