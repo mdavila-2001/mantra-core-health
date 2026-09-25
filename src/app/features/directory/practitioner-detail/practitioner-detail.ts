@@ -221,7 +221,6 @@ function especialidadesDe(
   return perfil.specialties.map((especialidad: PractitionerSpecialty) => ({
     id: especialidad.id,
     nombre: label(etiquetas, especialidad.specialtyConceptId),
-    principal: especialidad.isPrimary,
     certificada: especialidad.boardCertified,
     alcance: especialidad.practiceScopeText ?? '',
     desde: especialidad.validFrom ?? null,
@@ -316,13 +315,12 @@ function sello(etiquetas: ConceptLabels, conceptId: string | undefined): StatusS
   return 'unknown';
 }
 
-/** La principal vigente; sin ninguna vigente, ninguna. */
+/**
+ * La primera vigente, en el orden en que llegan; sin ninguna vigente, ninguna.
+ * Hasta el 23/09/2026 era la marcada como principal (D-01).
+ */
 function especialidadPrincipal(especialidades: readonly EspecialidadVisible[]): string {
-  return (
-    especialidades.find((e) => e.principal && e.hasta === null)?.nombre ??
-    especialidades.find((e) => e.hasta === null)?.nombre ??
-    ''
-  );
+  return especialidades.find((e) => e.hasta === null)?.nombre ?? '';
 }
 
 /** Milisegundos de una fecha opcional; las ausentes van al fondo del orden. */

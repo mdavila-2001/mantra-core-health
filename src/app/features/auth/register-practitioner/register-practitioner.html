@@ -188,10 +188,15 @@
                  su archivo no, y mezclarlos haría dudar de cuál frena el paso. -->
             <ng-template appCampoPersonalizado="professionalTitleFile">
               <div class="registro-respaldo">
-                <app-file-input [files]="attachmentFiles()['professional-title'] ?? []"
-                  [accept]="formatosDeRespaldo" [maxSizeBytes]="maxAttachmentBytes"
-                  accessibleLabel="Título profesional" testId="registro-pro-respaldo-titulo" removeTestId="registro-pro-respaldo-quitar-titulo"
-                  (filesChange)="updateSupportFiles('professional-title', $event)" />
+                <app-file-input
+                  [files]="attachmentFiles()['professional-title'] ?? []"
+                  [accept]="formatosDeRespaldo"
+                  [maxSizeBytes]="maxAttachmentBytes"
+                  accessibleLabel="Título profesional"
+                  testId="registro-pro-respaldo-titulo"
+                  removeTestId="registro-pro-respaldo-quitar-titulo"
+                  (filesChange)="updateSupportFiles('professional-title', $event)"
+                />
                 <p class="registro-respaldos__ayuda">PDF, JPG o PNG. Máximo 5 MB.</p>
                 @if (errorAdjunto(); as error) {
                   <p class="registro-respaldos__error" role="alert">{{ error }}</p>
@@ -210,7 +215,11 @@
                   />
                 </div>
                 <div class="registro-foto__acciones">
-                  <label [appFileDropTarget]="inputFoto" (fileDropRejected)="errorFoto.set($event)" class="registro-foto__boton-subir">
+                  <label
+                    [appFileDropTarget]="inputFoto"
+                    (fileDropRejected)="errorFoto.set($event)"
+                    class="registro-foto__boton-subir"
+                  >
                     <input
                       #inputFoto
                       type="file"
@@ -254,11 +263,15 @@
                   <div class="registro-respaldo">
                     <p class="registro-respaldo__titulo">{{ respaldo.etiqueta }}</p>
                     <p class="registro-respaldo__dato">{{ respaldo.valor || 'Sin cargar' }}</p>
-                    <app-file-input [files]="attachmentFiles()[respaldo.clave] ?? []"
-                      [accept]="formatosDeRespaldo" [maxSizeBytes]="maxAttachmentBytes"
-                      [accessibleLabel]="respaldo.etiqueta" [testId]="'registro-pro-respaldo-' + respaldo.clave"
+                    <app-file-input
+                      [files]="attachmentFiles()[respaldo.clave] ?? []"
+                      [accept]="formatosDeRespaldo"
+                      [maxSizeBytes]="maxAttachmentBytes"
+                      [accessibleLabel]="respaldo.etiqueta"
+                      [testId]="'registro-pro-respaldo-' + respaldo.clave"
                       [removeTestId]="'registro-pro-respaldo-quitar-' + respaldo.clave"
-                      (filesChange)="updateSupportFiles(respaldo.clave, $event)" />
+                      (filesChange)="updateSupportFiles(respaldo.clave, $event)"
+                    />
                   </div>
                 }
                 <p class="registro-respaldos__ayuda">PDF, JPG o PNG. Máximo 5 MB por archivo.</p>
@@ -281,9 +294,9 @@
                      El nombre, el país y la ciudad siguen visibles pero no
                      viajan; cada PDF sí queda asociado a la credencial. -->
                 <p class="registro-titulos__ayuda" data-testid="registro-pro-titulos-alcance">
-                  En esta alta se guardan el tipo, el número, la universidad y el PDF de cada título.
-                  El nombre, el país y la ciudad que completes aquí todavía no se guardan. Si falla
-                  una carga, podés reintentar y se conservan las que ya subieron.
+                  En esta alta se guardan el tipo, el número, la universidad y el PDF de cada
+                  título. El nombre, el país y la ciudad que completes aquí todavía no se guardan.
+                  Si falla una carga, podés reintentar y se conservan las que ya subieron.
                 </p>
                 <!-- Sin catálogo de tipos, una fila con número no se puede
                      mandar: el contrato exige el concepto. Se avisa acá, donde
@@ -291,7 +304,10 @@
                      patrón que el catálogo de departamentos—. Lo ya escrito no
                      se pierde: las filas viven en su propio signal. -->
                 @if (catalogoTiposDeTituloCaido()) {
-                  <p class="registro__catalogo-caido" data-testid="registro-pro-titulos-catalogo-caido">
+                  <p
+                    class="registro__catalogo-caido"
+                    data-testid="registro-pro-titulos-catalogo-caido"
+                  >
                     No pudimos traer los tipos de título.
                     <button
                       app-button
@@ -314,7 +330,10 @@
                            campos: el id de una fila es un uuid del navegador,
                            así que una prueba no puede nombrarlo. Con esto se
                            las cuenta y se las recorre por tipo y por orden. -->
-                      <div class="registro-titulo" [attr.data-testid]="'registro-pro-fila-' + tipo.codigo">
+                      <div
+                        class="registro-titulo"
+                        [attr.data-testid]="'registro-pro-fila-' + tipo.codigo"
+                      >
                         <label class="registro-titulo__campo">
                           <span class="sr-only">Nombre de {{ tipo.singular }}</span>
                           <input
@@ -323,7 +342,9 @@
                             [placeholder]="tipo.placeholderNombre"
                             [value]="titulo.nombre"
                             [attr.data-testid]="'registro-pro-titulo-nombre-' + titulo.id"
-                            (input)="escribirDatoDeTitulo(titulo.id, 'nombre', $any($event.target).value)"
+                            (input)="
+                              escribirDatoDeTitulo(titulo.id, 'nombre', $any($event.target).value)
+                            "
                           />
                         </label>
 
@@ -340,11 +361,15 @@
                             [value]="titulo.numero"
                             [attr.aria-invalid]="tituloSinNumero(titulo) ? 'true' : null"
                             [attr.aria-describedby]="
-                              tituloSinNumero(titulo) ? 'registro-pro-titulo-numero-error-' + titulo.id : null
+                              tituloSinNumero(titulo)
+                                ? 'registro-pro-titulo-numero-error-' + titulo.id
+                                : null
                             "
                             [class.registro-titulo__dato--invalido]="tituloSinNumero(titulo)"
                             [attr.data-testid]="'registro-pro-titulo-numero-' + titulo.id"
-                            (input)="escribirDatoDeTitulo(titulo.id, 'numero', $any($event.target).value)"
+                            (input)="
+                              escribirDatoDeTitulo(titulo.id, 'numero', $any($event.target).value)
+                            "
                           />
                           <!-- El aviso vive en la fila, al lado del campo que
                                hay que corregir: el resumen de arriba dice QUÉ
@@ -388,10 +413,14 @@
                             </label>
                           }
                         </div>
-                        <app-file-input [files]="attachmentFiles()[titulo.id] ?? []"
-                          [accept]="formatosDeTitulo" [maxSizeBytes]="maxAttachmentBytes"
-                          [accessibleLabel]="tipo.singular" [testId]="'registro-pro-titulo-archivo-' + titulo.id"
-                          (filesChange)="updateTitleFiles(titulo.id, $event)" />
+                        <app-file-input
+                          [files]="attachmentFiles()[titulo.id] ?? []"
+                          [accept]="formatosDeTitulo"
+                          [maxSizeBytes]="maxAttachmentBytes"
+                          [accessibleLabel]="tipo.singular"
+                          [testId]="'registro-pro-titulo-archivo-' + titulo.id"
+                          (filesChange)="updateTitleFiles(titulo.id, $event)"
+                        />
                         <button
                           type="button"
                           app-button
@@ -437,10 +466,12 @@
                  el mismo select acotado que el alta de paciente
                  (`app-location-picker`). Acá es opcional, así que un catálogo
                  caído no frena el alta: se avisa y se sigue (AC-05-15). -->
-            <!-- El registro permite hasta tres especialidades además de la principal. -->
+            <!-- Las especialidades, todas iguales: desde el 23/09/2026 no hay
+                 desplegable de «principal» (D-01). El registro del cliente
+                 permite hasta cuatro (L0174), las mismas para cualquier profesión. -->
             <ng-template appCampoPersonalizado="especialidadesExtra">
               @for (extra of especialidadesExtra(); track $index) {
-                <app-form-field [label]="'Especialidad ' + ($index + 2)">
+                <app-form-field [label]="'Especialidad ' + ($index + 1)">
                   <div class="registro__especialidad-extra">
                     <app-select
                       [attr.data-testid]="'registro-pro-especialidad-extra-' + $index"
@@ -455,8 +486,8 @@
                       variant="ghost"
                       size="sm"
                       [iconOnly]="true"
-                      [attr.aria-label]="'Quitar la especialidad ' + ($index + 2)"
-                      [appTooltip]="'Quitar la especialidad ' + ($index + 2)"
+                      [attr.aria-label]="'Quitar la especialidad ' + ($index + 1)"
+                      [appTooltip]="'Quitar la especialidad ' + ($index + 1)"
                       [attr.data-testid]="'registro-pro-quitar-especialidad-' + $index"
                       (clicked)="quitarEspecialidad($index)"
                     >
@@ -466,7 +497,7 @@
                 </app-form-field>
               }
 
-              @if (especialidadesExtra().length < 3) {
+              @if (especialidadesExtra().length < maximoDeEspecialidades) {
                 <button
                   app-button
                   type="button"
@@ -475,7 +506,11 @@
                   data-testid="registro-pro-agregar-especialidad"
                   (clicked)="agregarEspecialidad()"
                 >
-                  + Agregar otra especialidad
+                  {{
+                    especialidadesExtra().length === 0
+                      ? '+ Agregar una especialidad'
+                      : '+ Agregar otra especialidad'
+                  }}
                 </button>
               }
             </ng-template>

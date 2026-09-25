@@ -27,23 +27,23 @@
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H2.S1.M1 | 4 tipos nuevos en `pharmacy.types.ts` calcados de `read-responses.dto.ts` | Cada campo existe en el DTO real con el mismo nombre | diff en `evidencia/h2/campos.md` | TODO |
-| H2.S1.M2 | `PharmacyClient.getPharmacy(id)` | Compila; spec | `yarn test --watch=false --include='.../pharmacy.client.spec.ts'` | TODO |
-| H2.S1.M3 | `PharmacyClient.getSitePrices(siteId, productId?)` sin clave `product` si no viene | Spec fija las dos formas | idem | TODO |
-| H2.S1.M4 | Mock `GET /pharmacy/pharmacies/:id` desde `FARMACIAS` (todas las sedes de ese id); 404 si no existe | Salida impresa trae `sites[0].latitude` | spec + `evidencia/h2/mock-pharmacies-id.json` | TODO |
-| H2.S1.M5 | Mock `GET /pharmacy/sites/:siteId/prices` desde `productos` con `stock>0` | Salida impresa trae `items[]` con precio real | spec + `evidencia/h2/mock-site-prices.json` | TODO |
-| H2.S1.M6 | PR a `mockup`, mergeado; fila PUBLICADO en el daily de equipo | Justin/Itzan lo pueden importar | `git log origin/mockup -1` | TODO |
+| H2.S1.M1 | 4 tipos nuevos en `pharmacy.types.ts` calcados de `read-responses.dto.ts` | Cada campo existe en el DTO real con el mismo nombre | diff en `evidencia/h2/campos.md` | HECHO |
+| H2.S1.M2 | `PharmacyClient.getPharmacy(id)` | Compila; spec | `yarn test --watch=false --include='.../pharmacy.client.spec.ts'` | HECHO — 10/10 |
+| H2.S1.M3 | `PharmacyClient.getSitePrices(siteId, productId?)` sin clave `product` si no viene | Spec fija las dos formas | idem | HECHO |
+| H2.S1.M4 | Mock `GET /pharmacy/pharmacies/:id` desde `FARMACIAS` (todas las sedes de ese id); 404 si no existe | Salida impresa trae `sites[0].latitude` | spec + `evidencia/h3/handlers-spec-11-11.txt` | HECHO — verificado vía pharmacy.handlers.spec.ts en vez del JSON planeado |
+| H2.S1.M5 | Mock `GET /pharmacy/sites/:siteId/prices` desde `productos` con `stock>0` | Salida impresa trae `items[]` con precio real | spec + `evidencia/h3/handlers-spec-11-11.txt` | HECHO |
+| H2.S1.M6 | PR a `mockup`, mergeado; fila PUBLICADO en el daily de equipo | Justin/Itzan lo pueden importar | PR #676, merge `963b7283` | HECHO — PR mergeado; fila del daily de equipo pendiente (no soy dueño de ese archivo, ver REPORTE) |
 
 ## H3 — Fixtures y coherencia del mock (ALTA)
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H3.S1.M1 | `FARMACIA_DETALLE`, `PRECIOS_DE_SEDE`, `SEDES_CERCANAS` en `pharmacy.fixtures.ts` | Compilan y son coherentes (misma `siteId`) | `yarn typecheck` | TODO |
-| H3.S1.M2 | Publicar los 3 nombres en el daily | Justin/Itzan los ven | lectura | TODO |
-| H3.S2.M1 | `pharmacy.handlers.spec.ts` nuevo, calcado de `pharma-lab.handlers.spec.ts` | Registra `registrarFarmacia` en `crearRouterSimulado()` | spec compila | TODO |
-| H3.S2.M2 | Precio igual en `/sites/:siteId/prices`, `/availability`, `POST /orders` → `lines[].unitPriceAmount` | 3 números iguales | `yarn test --watch=false --include='.../pharmacy.handlers.spec.ts'` | TODO |
-| H3.S2.M3 | `stock 0` no aparece en `/prices` ni `/availability`; `requiresPrescription` viaja en `/prices` | Fijado | idem | TODO |
-| H3.S2.M4 | `/pharmacy/sites` ordena por distancia/nombre; `/products?pharmacyId` filtra | Fijado | idem | TODO |
+| H3.S1.M1 | `FARMACIA_DETALLE`, `PRECIOS_DE_SEDE`, `SEDES_CERCANAS` en `pharmacy.fixtures.ts` | Compilan y son coherentes (misma `siteId`) | `yarn typecheck` | HECHO |
+| H3.S1.M2 | Publicar los 3 nombres en el daily | Justin/Itzan los ven | lectura | A MEDIAS — nombres documentados en este PLAN.md y en el PR #676; no se editó el daily de equipo (archivo de otra persona, ver REPORTE) |
+| H3.S2.M1 | `pharmacy.handlers.spec.ts` nuevo, calcado de `pharma-lab.handlers.spec.ts` | Registra `registrarFarmacia` en `crearRouterSimulado()` | spec compila | HECHO |
+| H3.S2.M2 | Precio igual en `/sites/:siteId/prices`, `/availability`, `POST /orders` → `lines[].unitPriceAmount` | 3 números iguales | `yarn test --watch=false --include='.../pharmacy.handlers.spec.ts'` | HECHO — los tres dan '30.50' |
+| H3.S2.M3 | `stock 0` no aparece en `/prices` ni `/availability`; `requiresPrescription` viaja en `/prices` | Fijado | idem | HECHO |
+| H3.S2.M4 | `/pharmacy/sites` ordena por distancia/nombre; `/products?pharmacyId` filtra | Fijado | idem | HECHO |
 
 ## H7 — Regresión y cierre (front)
 

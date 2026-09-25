@@ -80,14 +80,17 @@ const ROLES_QUE_EJERCEN_O_ADMINISTRAN = [
 export const APP_SECTIONS: readonly AppSection[] = [
   {
     path: 'dashboard',
-    // §4.H · fuera del menú del médico. La lista cerrada del cliente son ocho
-    // y el panel no es una de ellas; se sigue llegando por la marca del
-    // armazón, que ahora es un enlace a `/dashboard` justamente por esto, y es
-    // el destino del login y del cambio de organización.
+    // §4.H, generalizado (2026-09-25): nació `['PRACTITIONER']` porque la
+    // lista cerrada del médico son ocho y el panel no es una de ellas, pero
+    // el motivo real —la marca del armazón ya es un enlace a `/dashboard`,
+    // ofrecer «Panel» abajo es la pantalla en la que ya estás— vale para
+    // cualquier rol, no sólo para el médico (mismo caso que `access-tree.ts`
+    // excluye `dashboard` de su propio panel de accesos). Se sigue llegando
+    // por la marca, por el login y por el cambio de organización.
     //
     // **No se le tocan los `roles`**: el panel lo tiene que poder abrir
     // cualquiera —lo exige `navigation.map.spec`— y esto no habla de permisos.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Panel',
     group: 'General',
     icon: 'home',
@@ -260,29 +263,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Todos los médicos de la red, agrupados por especialidad.',
     module: 'M05 profiles',
-  },
-  {
-    // FT-19 (05/09/2026) · farmacias, imagenología y centros médicos cerca
-    // del paciente, a partir de su receta y de su ubicación.
-    //
-    // Sólo `PATIENT`: la pestaña de farmacias lee `medicationRequests` del
-    // propio resumen clínico y enlaza a `WhereToBuy`
-    // (`/my-account/medical-record/where-to-buy/:id`), que ya es sólo del
-    // paciente. Un profesional no tiene "mi receta" que buscar acá.
-    //
-    // Sin `exclusiveRoles`, a diferencia de la Guía de médicos: ahí lo exigió
-    // un pedido explícito del cliente ("no debe aparecer ni ser accesible
-    // para doctor u otros roles"); acá no hay un pedido equivalente, así que
-    // alcanza con `roles` — el comodín de `SUPERADMIN` sigue entrando, como
-    // en el resto del registro.
-    path: 'nearby-places',
-    label: 'Lugares cercanos',
-    group: 'General',
-    icon: 'pin',
-    roles: ['PATIENT'],
-    availability: 'disponible',
-    summary: 'Farmacias, centros de imagenología y centros médicos cerca tuyo, según tu receta.',
-    module: 'M22 pharmacy',
   },
   {
     // Grupos y foros (P7). Es la entrada **mínima** que el carril se permite en

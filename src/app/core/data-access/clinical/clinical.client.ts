@@ -336,6 +336,30 @@ export class ClinicalClient {
   }
 
   /**
+   * `POST /clinical/medication-requests/:id/edit` (C5) — liga después una
+   * receta con motivo plano a un diagnóstico confirmado, o cambia cuál.
+   *
+   * Sólo sobre un borrador: una receta emitida es un documento cerrado y
+   * responde `409`. Igual que el alta, el diagnóstico gana sobre el texto:
+   * mandar `indicationConditionId` descarta cualquier `indicationText` previo
+   * del lado del servidor.
+   *
+   * @param medicationRequestId - Receta a editar.
+   * @param indication - El diagnóstico confirmado elegido, o el motivo escrito.
+   */
+  editMedicationRequestIndication(
+    medicationRequestId: string,
+    indication: { readonly indicationConditionId: string } | { readonly indicationText: string },
+  ): Observable<MedicationRequestRegistration> {
+    return this.http
+      .post<WireMedicationRequestRegistration>(
+        this.url(`/clinical/medication-requests/${encodeURIComponent(medicationRequestId)}/edit`),
+        indication,
+      )
+      .pipe(map(toMedicationRequestRegistration));
+  }
+
+  /**
    * `GET /clinical/prescriptions/:id/pdf` — el PDF oficial de la receta
    * (subtarea B.3).
    *

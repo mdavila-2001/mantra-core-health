@@ -1,6 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { ESTUDIO } from '../fixtures/conceptos';
+import { condiciones, type CondicionSimulada } from '../fixtures/clinica';
+import { ESTUDIO, VERIFICACION_DX } from '../fixtures/conceptos';
 import { PACIENTE } from '../fixtures/personas';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
@@ -126,5 +127,120 @@ describe('POST /clinical/service-requests · antiduplicación de estudios', () =
 
     expect(respuesta.status).toBe(201);
     expect((respuesta.body as { status: string }).status).toBe('ACTIVE');
+  });
+});
+
+/**
+ * C5 — la receta siempre se liga a un diagnóstico **confirmado**, o a un
+ * motivo escrito. Pedido literal del propietario: «en todo momento se puede
+ * linkear a un diagnóstico confirmado o por motivo plano».
+ */
+describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o motivo (C5)', () => {
+  const router = new MockRouter();
+  const medica = buscarUsuario('medica')!;
+
+  registrarClinica(router);
+
+  function call<T>(method: MockMethod, path: string, body: unknown): T {
+    const match = router.match(method, path);
+    if (match === null) throw new Error(`No existe ${method} ${path}`);
+    return match.handler({
+      method,
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body,
+      headers: new HttpHeaders(),
+      user: medica as MockUser,
+    }) as T;
+  }
+
+  function condicion(overrides: Partial<CondicionSimulada> = {}): CondicionSimulada {
+    const base: CondicionSimulada = {
+      id: `cond-${Math.random().toString(36).slice(2)}`,
+      patientProfileId: PACIENTE.id,
+      codeConceptId: 'concept-faringitis',
+      categoryConceptId: 'cat-dx',
+      clinicalStatusConceptId: 'active',
+      verificationStatusConceptId: VERIFICACION_DX['DXV-CONFIRMED']!,
+      severityConceptId: 'sev-mild',
+      onsetAt: '2026-01-01T00:00:00.000Z',
+      noteText: '',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    };
+    return { ...base, ...overrides };
+  }
+
+  const CUERPO_BASE = { patientProfileId: PACIENTE.id, medicationConceptId: 'med-amoxi' };
+
+  it('sin indicationConditionId ni indicationText: 422', () => {
+    const respuesta = call<MockReply>('POST', '/clinical/medication-requests', CUERPO_BASE);
+
+    expect(respuesta.status).toBe(422);
+    expect((respuesta.body as { code: string }).code).toBe('VALIDATION_FAILED');
+  });
+
+  it('indicationConditionId de un diagnóstico presuntivo/provisional: 422', () => {
+    const presuntivo = condicion({ verificationStatusConceptId: VERIFICACION_DX['DXV-PROVISIONAL']! });
+    condiciones.agregar(presuntivo);
+
+    const respuesta = call<MockReply>('POST', '/clinical/medication-requests', {
+      ...CUERPO_BASE,
+      indicationConditionId: presuntivo.id,
+    });
+
+    expect(respuesta.status).toBe(422);
+  });
+
+  it('indicationConditionId de un diagnóstico confirmado: 201', () => {
+    const confirmado = condicion();
+    condiciones.agregar(confirmado);
+
+    const respuesta = call<MockReply>('POST', '/clinical/medication-requests', {
+      ...CUERPO_BASE,
+      indicationConditionId: confirmado.id,
+    });
+
+    expect(respuesta.status).toBe(201);
+  });
+
+  it('indicationText con un motivo escrito: 201', () => {
+    const respuesta = call<MockReply>('POST', '/clinical/medication-requests', {
+      ...CUERPO_BASE,
+      indicationText: 'Control de síntomas',
+    });
+
+    expect(respuesta.status).toBe(201);
+  });
+
+  it('con los dos, gana la condición y el texto se descarta (criterio P24)', () => {
+    const confirmado = condicion();
+    condiciones.agregar(confirmado);
+
+    const respuesta = call<MockReply>('POST', '/clinical/medication-requests', {
+      ...CUERPO_BASE,
+      indicationConditionId: confirmado.id,
+      indicationText: 'Este texto no debería guardarse',
+    });
+
+    expect(respuesta.status).toBe(201);
+  });
+
+  it('/:id/edit sobre una receta emitida: 409', () => {
+    const confirmado = condicion();
+    condiciones.agregar(confirmado);
+    const creada = call<MockReply>('POST', '/clinical/medication-requests', {
+      ...CUERPO_BASE,
+      indicationConditionId: confirmado.id,
+    });
+    const id = (creada.body as { id: string }).id;
+    call('POST', `/clinical/medication-requests/${id}/sign`, {});
+    call('POST', `/clinical/medication-requests/${id}/issue`, {});
+
+    const respuesta = call<MockReply>('POST', `/clinical/medication-requests/${id}/edit`, {
+      indicationText: 'Otro motivo',
+    });
+
+    expect(respuesta.status).toBe(409);
   });
 });

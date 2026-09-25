@@ -112,7 +112,7 @@ describe('NavigationService', () => {
       // pide rol pero sí membresía (F-31), así que sin `tenants` no aparece.
       abrirSesion([], []);
 
-      // Panel y autoservicio: lo que cualquiera puede hacer con su propia cuenta.
+      // Autoservicio: lo que cualquiera puede hacer con su propia cuenta.
       // «Mis turnos» entra acá porque su filtro real es tener perfil de
       // paciente —un dato de la cuenta, no un rol—, y eso lo resuelve la
       // pantalla, no el menú.
@@ -127,7 +127,13 @@ describe('NavigationService', () => {
         // Los dos fijos, arriba de todo y fuera de su grupo.
         '/my-account',
         '/notification-center',
-        '/dashboard',
+        // El Panel ya NO entra (2026-09-25): la marca del armazón ya es un
+        // enlace a `/dashboard` para cualquier sesión (`shell-layout.html`),
+        // así que ofrecerlo también acá era la pantalla en la que ya estás.
+        // Pasa a `fueraDelMenuPara: [ANY_ROLE]`, generalizando el §4.H que
+        // antes sólo lo sacaba del menú del médico. Sigue sin exigir rol y se
+        // sigue alcanzando por su ruta — ver la prueba dedicada más abajo.
+        //
         // Tutoriales y Chats YA NO entran acá (N-01, 2026-09-22): los dos
         // pasan a `fueraDelMenuPara: [ANY_ROLE]` — son un ícono con globo en
         // la cabecera para cualquier sesión, calcado de «Ajustes». Siguen sin
@@ -343,6 +349,26 @@ describe('NavigationService', () => {
       expect(rutasDelMenu()).not.toContain('/administration/pharmacy-campaigns');
       expect(rutasDelMenu()).not.toContain('/questionnaires');
       expect(rutasDelMenu()).not.toContain('/lab-visits');
+    });
+
+    it('el Panel sale del menú de todos, y la puerta sigue abierta', () => {
+      // 2026-09-25: la marca del armazón ya lleva a `/dashboard` para
+      // cualquier sesión (login, cambio de organización, o clic en el
+      // logotipo), así que un renglón «Panel» debajo era ofrecer la pantalla
+      // en la que uno ya está. Generaliza el §4.H que antes sólo lo sacaba
+      // del menú del médico.
+      const sesiones: [readonly string[], readonly string[]][] = [
+        [[], []],
+        [['PATIENT'], []],
+        [['PRACTITIONER'], ['t-1']],
+        [['SECURITY_ADMIN', 'CLINICIAN', 'BILLING', 'PATIENT'], ['t-1']],
+      ];
+      for (const [roles, tenants] of sesiones) {
+        abrirSesion([...roles], [...tenants]);
+        const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
+        expect(alcanzables, roles.join(',')).toContain('/dashboard');
+        expect(rutasDelMenu(), roles.join(',')).not.toContain('/dashboard');
+      }
     });
 
     it('Tutoriales y Chats salen del menú de todos, y la puerta sigue abierta', () => {

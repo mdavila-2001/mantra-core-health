@@ -1,0 +1,28 @@
+$ git grep -n estadoDePractica origin/mockup -- src/app/**/*.ts src/app/**/*.html
+origin/mockup:src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.html:231:            <dd>{{ perfil().estadoDePractica }}</dd>
+origin/mockup:src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.html:799:            <span class="profesional__sello-pie">{{ perfil().estadoDePractica }}</span>
+origin/mockup:src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.spec.ts:58:  estadoDePractica: 'En ejercicio',
+origin/mockup:src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.types.ts:171:  readonly estadoDePractica: string;
+origin/mockup:src/app/features/account/my-profile/practitioner-profile/practitioner-profile.ts:420:      estadoDePractica: label(etiquetas, perfil.practiceStatusConceptId),
+origin/mockup:src/app/features/accounting/cockpit/cockpit.ts:141:  readonly estadoDePracticas = this.practicas.asReadonly();
+origin/mockup:src/app/features/accounting/resumen/resumen.ts:240:  readonly estadoDePracticas = this.practicas.asReadonly();
+origin/mockup:src/app/features/directory/practitioner-detail/practitioner-detail.spec.ts:165:      estadoDePractica: 'En ejercicio',
+origin/mockup:src/app/features/directory/practitioner-detail/practitioner-detail.ts:191:    estadoDePractica: label(etiquetas, perfil.practiceStatusConceptId),
+exit=0
+
+$ git grep -n -i "estado de la práctica\|practiceStatus\|practice_status" origin/mockup -- src/app
+origin/mockup:src/app/core/data-access/profiles/profiles.client.spec.ts:100:      practiceStatus: 'ACTIVE',
+origin/mockup:src/app/core/data-access/profiles/profiles.client.spec.ts:519:    practiceStatusConceptId: 'st-2',
+origin/mockup:src/app/core/data-access/profiles/profiles.types.ts:129:  readonly practiceStatus: string;
+origin/mockup:src/app/core/data-access/profiles/profiles.types.ts:416:  readonly practiceStatusConceptId: string;
+origin/mockup:src/app/core/mock/handlers/profiles.handlers.ts:437:    practiceStatusConceptId: ESTADO['ST-ACTIVE']!,
+origin/mockup:src/app/core/mock/handlers/profiles.handlers.ts:1164:        practiceStatus: 'ACTIVE',
+origin/mockup:src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts:33:  practiceStatusConceptId: 'st-2',
+origin/mockup:src/app/features/account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.html:230:            <dt>Estado de la práctica</dt>
+origin/mockup:src/app/features/account/my-profile/practitioner-profile/practitioner-profile.spec.ts:48:  practiceStatusConceptId: 'st-ejerciendo',
+origin/mockup:src/app/features/account/my-profile/practitioner-profile/practitioner-profile.ts:420:      estadoDePractica: label(etiquetas, perfil.practiceStatusConceptId),
+origin/mockup:src/app/features/account/my-profile/practitioner-profile/practitioner-profile.ts:822:    perfil.practiceStatusConceptId,
+origin/mockup:src/app/features/clinical-record/patient-chart/patient-chart.spec.ts:772:      practiceStatusConceptId: 'st-activa',
+origin/mockup:src/app/features/directory/practitioner-detail/practitioner-detail.spec.ts:31:  practiceStatusConceptId: 'st-ejerciendo',
+origin/mockup:src/app/features/directory/practitioner-detail/practitioner-detail.ts:191:    estadoDePractica: label(etiquetas, perfil.practiceStatusConceptId),
+exit=0

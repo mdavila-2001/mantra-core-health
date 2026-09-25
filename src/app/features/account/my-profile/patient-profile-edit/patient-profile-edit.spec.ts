@@ -325,11 +325,14 @@ describe('PatientProfileEdit', () => {
   });
 
   /**
-   * Pedido del propietario del 24/09/2026: separar el seguro del tutor en dos
-   * categorías, también en el editor. Antes «Seguros y tutores» era una sola
-   * pestaña con dos listas; ahora son dos, y cada una lee sólo lo suyo.
+   * Pedido del propietario del 25/09/2026: una cobertura es el resultado de
+   * una integración posterior —la aseguradora la declara, no la persona—, así
+   * que nunca se corrige desde este formulario. No es el caso de «Tutores»,
+   * que sí puede cambiar y por eso sigue siendo una pestaña utilizable.
+   * «Seguros» pasa a llevar el mismo tratamiento que «Mis puntos»: apagada,
+   * con el cursor de bloqueado, sin nada que abrir.
    */
-  it('«Seguros» y «Tutores» son pestañas separadas en el editor: cada una lee sólo lo suyo', () => {
+  it('«Seguros» va apagada en el editor, igual que «Mis puntos»; «Tutores» sigue abierta', () => {
     montarPintadoYCargado({
       coverages: [{ carrierName: 'Alianza Vida Seguros', planName: 'AFI Gold' }],
       guardians: [{ displayName: 'Carlos Mamani', phone: '+591 70055443' }],
@@ -347,15 +350,17 @@ describe('PatientProfileEdit', () => {
       'Mis puntos',
     ]);
 
-    abrirPestana(3);
-    let raiz = fixture.nativeElement as HTMLElement;
-    expect(raiz.textContent).toContain('Alianza Vida Seguros');
-    expect(raiz.textContent).not.toContain('Carlos Mamani');
+    expect(pestanas[3].disabled).toBe(true);
+    expect(pestanas[3].getAttribute('aria-disabled')).toBe('true');
+    // Pulsarla no abre nada: la abierta sigue siendo la primera.
+    pestanas[3].click();
+    fixture.detectChanges();
+    expect(pestanas[0].getAttribute('aria-selected')).toBe('true');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Alianza Vida Seguros');
 
+    expect(pestanas[4].disabled).toBe(false);
     abrirPestana(4);
-    raiz = fixture.nativeElement as HTMLElement;
-    expect(raiz.textContent).toContain('Carlos Mamani');
-    expect(raiz.textContent).not.toContain('Alianza Vida Seguros');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Carlos Mamani');
   });
 
   it('siembra el formulario con lo ya guardado, en las cuatro partes del nombre', () => {

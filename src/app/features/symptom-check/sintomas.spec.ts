@@ -283,4 +283,31 @@ describe('la tabla', () => {
     const sinForma = ZONAS_DEL_CUERPO.filter((zona) => !ZONAS_CON_SILUETA.has(zona.id));
     expect(sinForma.map((zona) => zona.id)).toEqual(['piel', 'animo', 'general']);
   });
+
+  /**
+   * Los síntomas de «Salud íntima» que sólo corresponden a un sexo (P-04,
+   * 2026-09-25): `symptom-check` los filtra por el sexo del propio perfil.
+   * Este test fija la lista, para que agregar una fila nueva a la zona no la
+   * deje sin marcar por descuido.
+   */
+  it('«soloParaSexo» marca sólo lo que es exclusivo de un sexo', () => {
+    const porSexo = (sexo: 'MALE' | 'FEMALE') =>
+      SINTOMAS.filter((s) => s.soloParaSexo === sexo)
+        .map((s) => s.id)
+        .sort();
+
+    expect(porSexo('MALE')).toEqual(
+      ['dolor-de-testiculos', 'problemas-de-ereccion', 'prostata'].sort(),
+    );
+    expect(porSexo('FEMALE')).toEqual(
+      [
+        'atraso-menstrual',
+        'control-embarazo',
+        'dolor-menstrual',
+        'flujo-vaginal',
+        'menopausia',
+        'sangrado-menstrual-abundante',
+      ].sort(),
+    );
+  });
 });

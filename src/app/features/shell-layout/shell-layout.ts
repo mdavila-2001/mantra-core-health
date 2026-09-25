@@ -15,6 +15,7 @@ import { filter } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { esPaciente, etiquetasDeRoles } from '../../core/auth/role-labels';
+import { CartStore } from '../../core/data-access/pharmacy-cart/cart.store';
 import { LOGIN_ROUTE } from '../../core/http/auth.interceptor';
 import { Breakpoints } from '../../core/layout/breakpoints';
 import { NavigationService } from '../../core/navigation/navigation.service';
@@ -37,6 +38,8 @@ import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
 import { TUTORIALS } from '../../core/tutorials/definitions';
 import { AlovidaThemeToggleDirective } from '../../core/alovida/alovida-theme-toggle.directive';
 import { ChatStore } from '../../core/messaging/chat.store';
+import { PHARMACY_CART_ROUTE } from '../account/pharmacy/pharmacy.routes';
+import { PHARMACY_TESTIDS } from '../account/pharmacy/pharmacy.testids';
 
 /**
  * Si un destino de la barra queda debajo de la URL actual.
@@ -157,6 +160,27 @@ export class ShellLayout {
     const cuantos = this.chatsSinLeer();
     if (cuantos === 0) return 'Chats';
     return `Chats, ${cuantos} ${cuantos === 1 ? 'mensaje sin leer' : 'mensajes sin leer'}`;
+  });
+
+  /**
+   * El carrito de farmacia (H4.S1, carril 41/46): sólo el paciente lo ve — es
+   * su compra, no una herramienta de la médica ni del resto de los roles.
+   */
+  private readonly cart = inject(CartStore);
+  protected readonly unidadesDelCarrito = this.cart.unitCount;
+  protected readonly esPacienteDelCarrito = computed(() => esPaciente(this.auth.roles()));
+  protected readonly pharmacyCartRoute = PHARMACY_CART_ROUTE;
+  protected readonly pharmacyTestids = PHARMACY_TESTIDS;
+
+  /** El nombre accesible del carrito: el número y la farmacia, no sólo «Carrito». */
+  protected readonly etiquetaCarrito = computed(() => {
+    const unidades = this.unidadesDelCarrito();
+    const farmacia = this.cart.cart()?.site.pharmacyName;
+    if (unidades === 0 || farmacia === undefined) {
+      return 'Carrito';
+    }
+    const sustantivo = unidades === 1 ? 'unidad' : 'unidades';
+    return `Carrito, ${unidades} ${sustantivo} en ${farmacia}`;
   });
 
   constructor() {
