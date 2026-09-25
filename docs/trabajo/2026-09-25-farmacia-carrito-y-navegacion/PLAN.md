@@ -53,7 +53,18 @@
 | H2.S1.M4 | `estimatedTotal` en centavos vía `pharmacy-campaigns.money.ts` | HECHO | spec "10,50 + 2×3,25 = 17,00" en verde |
 | H2.S1.M5 | Spec del store ≥10 casos | HECHO | `npx ng test --include='src/app/core/data-access/pharmacy-cart/*.spec.ts' --watch=false` → **14 passed (14)** |
 | H2.S1.M6 | `pharmacy.routes.ts` y `pharmacy.testids.ts` | HECHO | `typecheck` exit 0; `eslint` scoped sin hallazgos |
-| H2.S1.M7 | PR chico a `mockup`, mergeado, fila publicada en el daily de equipo | EN CURSO | pendiente de abrir el PR |
+| H2.S1.M7 | PR chico a `mockup`, mergeado, fila publicada en el daily de equipo | EN CURSO | PR #671 abierto; CI en `pending` indefinido (runner propio caído, ver `[[el-ci-no-corre]]`) — checks corridos a mano abajo |
+
+**Checks corridos a mano (CI no levanta, memoria `el-ci-no-corre`):** `check-architecture`,
+`check-api-prefixes`, `check-client-prefixes` y `check-api-contract-drift` dan rojo, pero **ninguno
+de los archivos denunciados es de este carril** (day-view.ts, mock-backend.spec.ts, phone-input,
+loyalty/proxy, prescription-favorites, quotations/simulate, community reviews — todos
+preexistentes en `origin/mockup`, confirmable con `git diff origin/mockup HEAD --name-only`).
+`check-route-prefixes` y `check-tokens` en verde. `check-doc-coverage` marca este mismo `PLAN.md`
+por contener la palabra «TODO» — es un falso positivo contra el propio vocabulario de estados de
+la regla 20 (`TODO` es un estado legítimo, no un marcador provisional de documentación a medio
+escribir); no se debilita el plan para evadirlo (regla 60). Salidas en
+`evidencia/checks-a-mano/`.
 
 **Ambigüedad registrada (regla 00 §1.5, sin patrón previo):** la forma exacta del parámetro `line` de
 `add(site, line, quantity)` no está en el contrato §4.3 más que como "line". Se tomó
