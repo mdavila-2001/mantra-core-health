@@ -76,7 +76,7 @@ test.describe('C4 · la reconsulta se agenda desde la consulta', () => {
 
     await page.getByTestId('consulta-casilla-reconsulta').click();
 
-    await expect(page.getByTestId('reconsulta-fecha')).toBeVisible();
+    await expect(page.getByTestId('reconsulta-calendario')).toBeVisible();
     // El motivo llega precargado desde la consulta de origen, con su prefijo.
     await expect(page.getByTestId('reconsulta-motivo').locator('textarea')).toHaveValue(
       /^Reconsulta: .+/,
@@ -90,7 +90,7 @@ test.describe('C4 · la reconsulta se agenda desde la consulta', () => {
     await page.getByTestId('consulta-casilla-reconsulta').click();
 
     await elegirPrimerDiaConHorarios(page);
-    await page.getByTestId('reconsulta-cupo').getByRole('radio').first().check();
+    await page.getByTestId('reconsulta-cupo-opcion').first().click();
     await expect(page.getByTestId('reconsulta-guardar')).not.toHaveAttribute(
       'aria-disabled',
       'true',
@@ -108,7 +108,7 @@ test.describe('C4 · la reconsulta se agenda desde la consulta', () => {
     await page.getByTestId('consulta-casilla-reconsulta').click();
 
     await elegirPrimerDiaConHorarios(page);
-    await page.getByTestId('reconsulta-cupo').getByRole('radio').first().check();
+    await page.getByTestId('reconsulta-cupo-opcion').first().click();
     await page.getByTestId('reconsulta-guardar').click();
     await expect(page.getByTestId('reconsulta-exito')).toBeVisible();
 
@@ -175,26 +175,29 @@ test.describe('C4 · el sello se ve en las dos agendas', () => {
 });
 
 /**
- * Elige el primer día del calendario que devuelva horarios libres.
+ * Elige el primer día **verde** del calendario.
  *
- * Se recorre en vez de fijar una fecha: los cupos de la maqueta se generan
- * alrededor de hoy, así que una fecha escrita a mano funcionaría hoy y fallaría
- * la semana que viene. Se prueba día por día hasta que el grupo de horarios
- * aparezca, con un tope para no quedar girando si la agenda está llena.
+ * Ya no hace falta probar fecha por fecha: el calendario marca en verde los
+ * días con horarios libres y deshabilita los rojos, así que alcanza con tomar
+ * el primero. Si el mes a la vista no tuviera ninguno —los cupos de la maqueta
+ * se generan alrededor de hoy— se pasa al siguiente.
  */
 async function elegirPrimerDiaConHorarios(page: Page): Promise<void> {
-  const DIAS_A_PROBAR = 14;
-  for (let intento = 0; intento < DIAS_A_PROBAR; intento += 1) {
-    await page.getByTestId('reconsulta-fecha').click();
-    const dias = page.getByRole('gridcell').filter({ hasNot: page.locator('[disabled]') });
-    await dias.nth(intento).click();
+  const MESES_A_PROBAR = 3;
+  const verdes = page.locator('[data-testid="reconsulta-dia"][data-estado="libre"]');
 
-    if (await page.getByTestId('reconsulta-cupo').isVisible()) {
+  for (let intento = 0; intento < MESES_A_PROBAR; intento += 1) {
+    if ((await verdes.count()) > 0) {
+      await verdes.first().click();
+      await expect(page.getByTestId('reconsulta-cupo')).toBeVisible();
       return;
     }
+    await page.getByTestId('reconsulta-mes-siguiente').click();
+    await esperarAQueSeAsiente(page);
   }
+
   throw new Error(
-    'Ningún día de los próximos 14 tiene horarios libres en la agenda de la médica: ' +
+    'Ningún día de los próximos tres meses quedó en verde en la agenda de la médica: ' +
       'revisá el fixture de cupos antes de culpar a la pantalla.',
   );
 }

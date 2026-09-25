@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -29,10 +29,7 @@ import { Textarea } from '../../../../shared/components/atoms/textarea/textarea'
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
-import { Radio } from '../../../../shared/components/molecules/radio/radio';
-import { RadioGroup } from '../../../../shared/components/molecules/radio-group/radio-group';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
 
@@ -46,6 +43,47 @@ const MINUTOS_POR_OMISION = 30;
 
 /** Dónde se ve la cita ya agendada. */
 const RUTA_DE_CONSULTAS = '/schedule';
+
+/** El locale del producto. */
+const LOCALE = 'es-BO';
+
+/**
+ * Tope de cupos por mes.
+ *
+ * Una agenda de media hora, ocho horas por día y veintiséis días hábiles roza
+ * los cuatrocientos: con el tope por omisión (500) un mes cargado saldría
+ * cortado y el calendario pintaría de rojo días que sí tienen lugar.
+ */
+const CUPOS_POR_MES = 1500;
+
+const DIAS_DE_LA_SEMANA = 7;
+
+/** Seis filas: es lo que hace falta para que entre cualquier mes. */
+const SEMANAS_DEL_CALENDARIO = 6;
+
+/** Mediodía: evita que un cambio de huso corra la fecha al día anterior. */
+const MEDIODIA = 12;
+
+const FORMATO_DE_MES = new Intl.DateTimeFormat(LOCALE, { month: 'long', year: 'numeric' });
+
+const FORMATO_DE_DIA = new Intl.DateTimeFormat(LOCALE, {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+});
+
+/** Los encabezados de la grilla, de lunes a domingo como el calendario local. */
+const DIAS_CORTOS: readonly { readonly corto: string; readonly largo: string }[] = Array.from(
+  { length: DIAS_DE_LA_SEMANA },
+  (_, offset) => {
+    // 2024-01-01 fue lunes.
+    const dia = new Date(2024, 0, 1 + offset);
+    return {
+      corto: new Intl.DateTimeFormat(LOCALE, { weekday: 'short' }).format(dia),
+      largo: new Intl.DateTimeFormat(LOCALE, { weekday: 'long' }).format(dia),
+    };
+  },
+);
 
 /**
  * La consulta de la que sale la reconsulta, ya resuelta para la pantalla.
@@ -72,6 +110,12 @@ export interface CupoOfrecido {
   readonly hasta: Date;
   /** «08:30 – 09:00 · Clínica Los Olivos». */
   readonly etiqueta: string;
+  /** «08:30 – 09:00», para el renglón grande de la tarjeta. */
+  readonly horario: string;
+  /** La sede, o `''` si el recurso no tiene una registrada. */
+  readonly sede: string;
+  /** Cuánto dura, en minutos: «20 min» distingue dos agendas distintas. */
+  readonly minutos: number;
 }
 
 /** Los cupos de un día, partidos en las dos mitades en que se piensa la jornada. */
@@ -82,6 +126,29 @@ export interface FranjasDelDia {
 
 /** La hora a partir de la cual un cupo es «de la tarde». */
 const PRIMERA_HORA_DE_LA_TARDE = 12;
+
+/** Cómo viene un día del calendario: es lo que decide su color. */
+export type EstadoDelDia =
+  /** Quedan horarios libres. Verde, y se puede tocar. */
+  | 'libre'
+  /** Ese día no queda ninguno. Rojo, y no se puede elegir. */
+  | 'sin-cupos'
+  /** Fuera del plazo para reconsultar (antes de mañana o pasados 90 días). */
+  | 'fuera';
+
+/** Una celda del calendario: el número del día y cómo viene. */
+export interface DiaDelCalendario {
+  readonly fecha: Date;
+  readonly numero: number;
+  readonly delMes: boolean;
+  readonly esHoy: boolean;
+  /** Cuántos horarios quedan libres ese día. */
+  readonly libres: number;
+  readonly estado: EstadoDelDia;
+  readonly seleccionado: boolean;
+  /** Lo que escucha un lector de pantalla: el color solo no dice nada. */
+  readonly etiqueta: string;
+}
 
 /**
  * **Reconsulta** — «volvé el jueves a las 10», pero como una cita de verdad.
@@ -111,10 +178,17 @@ const PRIMERA_HORA_DE_LA_TARDE = 12;
  *
  * ## Los cupos salen de la agenda, no de un calendario propio
  *
- * El día se elige con `app-date-picker` —desde mañana y hasta noventa días— y
- * los horarios con los cupos **libres** que devuelve `GET /scheduling/slots`
- * para la agenda de esa consulta. Ofrecer un rato que no existe en la agenda
- * sería prometer un turno que después nadie puede honrar.
+ * El día se elige en un **calendario del mes** —desde mañana y hasta noventa
+ * días— donde cada casilla ya dice cómo viene: **verde** si quedan horarios
+ * libres, **rojo** si ese día no queda ninguno. Antes era un campo de fecha, y
+ * averiguar qué día había lugar era probar fechas de a una.
+ *
+ * Los horarios salen de los cupos **libres** que devuelve
+ * `GET /scheduling/slots` para la agenda de esa consulta, y se eligen en
+ * tarjetas como las de la agenda, no en una lista de radios. Es **una sola
+ * lectura por mes**: el color de los días y las tarjetas del día elegido salen
+ * del mismo dato, así que no pueden contradecirse. Ofrecer un rato que no
+ * existe en la agenda sería prometer un turno que después nadie puede honrar.
  */
 @Component({
   selector: 'app-follow-up-block',
@@ -122,11 +196,9 @@ const PRIMERA_HORA_DE_LA_TARDE = 12;
     Alert,
     AppButton,
     Card,
-    DatePicker,
     DatePipe,
     FormField,
-    Radio,
-    RadioGroup,
+    NgTemplateOutlet,
     RouterLink,
     Textarea,
     ViewStateHost,
@@ -228,40 +300,158 @@ export class FollowUpBlock {
     this.motivoEscrito.set(texto);
   }
 
-  /** Los cupos libres del día elegido, ya partidos en mañana y tarde. */
+  /** Los encabezados de la grilla, de lunes a domingo. */
+  protected readonly encabezados = DIAS_CORTOS;
+
+  /** El mes que está pintando el calendario. Arranca en el del primer día. */
+  protected readonly mesVisible = signal<Date>(comienzoDelMes(this.primerDia));
+
+  /**
+   * Los cupos libres de **todo el mes a la vista**, en una sola lectura.
+   *
+   * El calendario tiene que saber, para cada día, si queda algo: pedirlo día
+   * por día pintaría el mes con treinta peticiones y, mientras tanto, con
+   * treinta días de color indefinido. Con la ventana del mes, el verde y el
+   * rojo salen del mismo dato que después llena las tarjetas de horario, así
+   * que nunca pueden contradecirse.
+   */
   protected readonly cupos = toSignal(
     toObservable(
       computed(() => ({
-        dia: this.dia(),
+        mes: this.mesVisible(),
         resourceId: this.consulta()?.resourceId ?? null,
-        recurso: this.consulta()?.recurso ?? null,
         yaAgendada: this.yaAgendada(),
       })),
     ).pipe(
-      switchMap(({ dia, resourceId, recurso, yaAgendada }): Observable<ViewState<FranjasDelDia>> => {
-        // Con la reconsulta ya agendada no hay formulario que llenar: pedir los
-        // cupos igual sería una petición cuyo resultado nadie va a ver.
-        if (dia === null || resourceId === null || yaAgendada !== null) {
-          return of(ready(SIN_FRANJAS));
+      switchMap(({ mes, resourceId, yaAgendada }): Observable<ViewState<readonly AgendaSlot[]>> => {
+        // Con la reconsulta ya agendada no hay formulario que llenar: pedir
+        // los cupos igual sería una petición cuyo resultado nadie va a ver.
+        if (resourceId === null || yaAgendada !== null) {
+          return of(ready<readonly AgendaSlot[]>([]));
         }
         return this.agenda
           .listSlots({
             resourceId,
-            from: comienzoDelDia(dia),
-            to: comienzoDelDia(new Date(dia.getTime() + UN_DIA_MS)),
+            from: mes,
+            to: mesSiguiente(mes),
             onlyAvailable: true,
+            limit: CUPOS_POR_MES,
           })
           .pipe(
-            map((pagina) => ready(enFranjas(pagina.items, recurso))),
+            map((pagina) => ready<readonly AgendaSlot[]>(pagina.items)),
             startWith(loading()),
-            catchError((error: unknown) => of(errorToViewState<FranjasDelDia>(error))),
+            catchError((error: unknown) => of(errorToViewState<readonly AgendaSlot[]>(error))),
           );
       }),
     ),
-    { initialValue: ready(SIN_FRANJAS) as ViewState<FranjasDelDia> },
+    { initialValue: ready<readonly AgendaSlot[]>([]) as ViewState<readonly AgendaSlot[]> },
   );
 
-  protected readonly franjas = computed(() => dataOf(this.cupos()) ?? SIN_FRANJAS);
+  protected readonly cargandoCupos = computed(() => this.cupos().status === 'loading');
+
+  /** Cuántos cupos ofrecibles quedan en cada día del mes, por clave de día. */
+  private readonly libresPorDia = computed<ReadonlyMap<string, number>>(() => {
+    const cuenta = new Map<string, number>();
+    for (const cupo of dataOf(this.cupos()) ?? []) {
+      if (cupo.remainingCapacity <= 0 || cupo.startAt.getTime() <= Date.now()) {
+        continue;
+      }
+      const clave = claveDeDia(cupo.startAt);
+      cuenta.set(clave, (cuenta.get(clave) ?? 0) + 1);
+    }
+    return cuenta;
+  });
+
+  /**
+   * El mes en celdas, de lunes a domingo, con el estado de cada día.
+   *
+   * Verde es «te queda lugar», rojo es «ese día no»: es la pregunta que se
+   * hace quien está por citar a alguien de nuevo, y hasta ahora había que
+   * responderla probando fecha por fecha en un campo de texto.
+   */
+  protected readonly semanas = computed<readonly (readonly DiaDelCalendario[])[]>(() => {
+    const mes = this.mesVisible();
+    const libres = this.libresPorDia();
+    const elegido = this.dia();
+    const desde = lunesDeLaSemana(mes);
+    const semanas: DiaDelCalendario[][] = [];
+
+    for (let fila = 0; fila < SEMANAS_DEL_CALENDARIO; fila++) {
+      const semana: DiaDelCalendario[] = [];
+      for (let columna = 0; columna < DIAS_DE_LA_SEMANA; columna++) {
+        const fecha = new Date(desde);
+        fecha.setDate(desde.getDate() + fila * DIAS_DE_LA_SEMANA + columna);
+        fecha.setHours(MEDIODIA, 0, 0, 0);
+        const cuenta = libres.get(claveDeDia(fecha)) ?? 0;
+        const enRango =
+          fecha.getTime() >= comienzoDelDia(this.primerDia).getTime() &&
+          fecha.getTime() <= this.ultimoDia.getTime();
+        semana.push({
+          fecha,
+          numero: fecha.getDate(),
+          delMes: fecha.getMonth() === mes.getMonth(),
+          esHoy: claveDeDia(fecha) === claveDeDia(new Date()),
+          libres: cuenta,
+          estado: !enRango ? 'fuera' : cuenta > 0 ? 'libre' : 'sin-cupos',
+          seleccionado: elegido !== null && claveDeDia(fecha) === claveDeDia(elegido),
+          etiqueta: `${FORMATO_DE_DIA.format(fecha)}: ${
+            !enRango
+              ? 'fuera del plazo para reconsultar'
+              : cuenta === 0
+                ? 'sin horarios libres'
+                : cuenta === 1
+                  ? '1 horario libre'
+                  : `${cuenta} horarios libres`
+          }`,
+        });
+      }
+      semanas.push(semana);
+    }
+    return semanas;
+  });
+
+  protected readonly tituloDelMes = computed(() => FORMATO_DE_MES.format(this.mesVisible()));
+
+  protected readonly puedeRetroceder = computed(
+    () => this.mesVisible().getTime() > comienzoDelMes(this.primerDia).getTime(),
+  );
+
+  protected readonly puedeAvanzar = computed(
+    () => this.mesVisible().getTime() < comienzoDelMes(this.ultimoDia).getTime(),
+  );
+
+  protected mesAnterior(): void {
+    if (this.puedeRetroceder()) {
+      this.mesVisible.update((mes) => mesAnterior(mes));
+    }
+  }
+
+  protected mesSiguiente(): void {
+    if (this.puedeAvanzar()) {
+      this.mesVisible.update((mes) => mesSiguiente(mes));
+    }
+  }
+
+  /** Elegir un día del calendario. Los rojos no se pueden elegir. */
+  protected elegirDia(celda: DiaDelCalendario): void {
+    if (celda.estado !== 'libre') {
+      return;
+    }
+    this.dia.set(celda.fecha);
+    this.cupoElegido.set(null);
+  }
+
+  /** Los cupos del día elegido, ya partidos en mañana y tarde. */
+  protected readonly franjas = computed<FranjasDelDia>(() => {
+    const dia = this.dia();
+    if (dia === null) {
+      return SIN_FRANJAS;
+    }
+    const delDia = (dataOf(this.cupos()) ?? []).filter(
+      (cupo) => claveDeDia(cupo.startAt) === claveDeDia(dia),
+    );
+    return enFranjas(delDia, this.consulta()?.recurso ?? null);
+  });
 
   protected readonly sinCupos = computed(
     () =>
@@ -279,6 +469,11 @@ export class FollowUpBlock {
   protected readonly cupo = computed<CupoOfrecido | null>(
     () => this.todosLosCupos().find((c) => c.id === this.cupoElegido()) ?? null,
   );
+
+  /** Tocar una tarjeta de horario. Volver a tocarla no lo deselecciona. */
+  protected elegirCupo(cupo: CupoOfrecido): void {
+    this.cupoElegido.set(cupo.id);
+  }
 
   /* -- La escritura -------------------------------------------------------- */
 
@@ -427,6 +622,40 @@ function comienzoDelDia(dia: Date): Date {
 }
 
 /**
+ * La clave con la que se agrupan los cupos por día.
+ *
+ * Es la fecha **local**, no el ISO: un cupo de las 21:00 en La Paz cae al día
+ * siguiente en UTC, y agruparlo por el texto del ISO lo pintaría en la casilla
+ * equivocada del calendario.
+ */
+function claveDeDia(instante: Date): string {
+  return `${instante.getFullYear()}-${instante.getMonth()}-${instante.getDate()}`;
+}
+
+/** El primer día del mes de una fecha, a mediodía. */
+function comienzoDelMes(fecha: Date): Date {
+  return new Date(fecha.getFullYear(), fecha.getMonth(), 1, MEDIODIA, 0, 0, 0);
+}
+
+function mesSiguiente(mes: Date): Date {
+  return new Date(mes.getFullYear(), mes.getMonth() + 1, 1, MEDIODIA, 0, 0, 0);
+}
+
+function mesAnterior(mes: Date): Date {
+  return new Date(mes.getFullYear(), mes.getMonth() - 1, 1, MEDIODIA, 0, 0, 0);
+}
+
+/** El lunes de la semana en que cae una fecha: así arranca la grilla. */
+function lunesDeLaSemana(fecha: Date): Date {
+  const lunes = new Date(fecha);
+  // `getDay()` devuelve 0 para el domingo: acá el domingo cierra la semana.
+  const desdeElLunes = (lunes.getDay() + 6) % DIAS_DE_LA_SEMANA;
+  lunes.setDate(lunes.getDate() - desdeElLunes);
+  lunes.setHours(MEDIODIA, 0, 0, 0);
+  return lunes;
+}
+
+/**
  * Cuánto dura el cupo elegido, en minutos.
  *
  * Sale del propio cupo y no de una constante: una agenda de veinte minutos y
@@ -454,14 +683,18 @@ export function enFranjas(
     .filter((cupo) => cupo.remainingCapacity > 0)
     .filter((cupo) => cupo.startAt.getTime() > Date.now())
     .sort((a, b) => a.startAt.getTime() - b.startAt.getTime())
-    .map(
-      (cupo): CupoOfrecido => ({
+    .map((cupo): CupoOfrecido => {
+      const horario = `${hora(cupo.startAt)} – ${hora(cupo.endAt)}`;
+      return {
         id: cupo.id,
         desde: cupo.startAt,
         hasta: cupo.endAt,
-        etiqueta: `${hora(cupo.startAt)} – ${hora(cupo.endAt)}${sede === '' ? '' : ` · ${sede}`}`,
-      }),
-    );
+        etiqueta: `${horario}${sede === '' ? '' : ` · ${sede}`}`,
+        horario,
+        sede,
+        minutos: Math.max(1, Math.round((cupo.endAt.getTime() - cupo.startAt.getTime()) / 60_000)),
+      };
+    });
 
   return {
     manana: ofrecidos.filter((cupo) => cupo.desde.getHours() < PRIMERA_HORA_DE_LA_TARDE),
