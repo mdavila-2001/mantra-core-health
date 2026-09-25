@@ -5,6 +5,7 @@ import {
   NOMBRE_DE_CATEGORIA,
   pruebaDelCorpus,
 } from '../fixtures/bolivia-eje-central';
+import { abrirAgendaDeCentro, ZONA_HORARIA_POR_OMISION } from '../fixtures/agenda';
 import { patientSettlementFixture } from '../fixtures/patient-settlements';
 import { PHARMACIES_AND_LABS } from '../fixtures/markdown-institutions.generated';
 import { ordenes } from '../fixtures/clinica';
@@ -553,6 +554,26 @@ export function estudioPrevio(
 }
 
 export function registrarDiagnostico(router: MockRouter): void {
+  // Cada centro publicado tiene agenda: desde Cotizaciones un análisis se
+  // reserva como una cita, eligiendo un cupo del centro (25/09/2026).
+  for (const u of UNIDADES) {
+    if (!u.publiclyListed) continue;
+    const sede = sitioDe(u);
+    abrirAgendaDeCentro({
+      id: u.id,
+      name: u.name,
+      tenantId: u.tenantId,
+      kind: u.kind,
+      site: {
+        id: sede.id,
+        name: sede.name,
+        code: sede.code,
+        addressText: 'addressText' in sede ? (sede.addressText ?? null) : null,
+        timeZone: ZONA_HORARIA_POR_OMISION,
+      },
+    });
+  }
+
   /*
    * `POST /clinical/service-requests/duplicate-check` — vive acá y no en
    * `clinical.handlers.ts` porque necesita cruzar `informes`, que es de este

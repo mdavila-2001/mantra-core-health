@@ -103,8 +103,53 @@ describe('CotizacionesFuentes', () => {
       },
       distanceKm: 1.2,
     });
+    // Con precio y sin receta: se agrega al carrito de esa sede, no se manda
+    // al directorio de farmacias.
+    expect(resultados[0]!.accion).toBeUndefined();
+    expect(resultados[0]!.carrito).toEqual({
+      sede: {
+        pharmacyId: 'ph-s1',
+        pharmacyName: 'Farmacia s1',
+        siteId: 's1',
+        siteName: 'Sede s1',
+        addressText: null,
+      },
+      linea: {
+        productId: 'p1',
+        name: 'Paracetamol',
+        presentation: '500 mg',
+        unitAmount: '12.50',
+        currency: 'BOB',
+        requiresPrescription: false,
+        medicationConceptId: null,
+      },
+    });
     expect(resultados[1]!.price).toBeNull();
     expect(resultados[1]!.sinPrecio).toBe('La farmacia no publicó este precio');
+    // Sin precio publicado no se agrega a ciegas.
+    expect(resultados[1]!.carrito).toBeUndefined();
+  });
+
+  it('medicamentos con receta: sin carrito, con el camino de la receta', async () => {
+    const resultado = firstValueFrom(fuentes.buscar('amoxicilina', 'MEDICAMENTOS', null));
+    http
+      .expectOne((r) => r.url === '/pharmacy/products')
+      .flush({ items: [{ id: 'p1', requiresPrescription: true }], limit: 20, truncated: false });
+    http
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
+      .flush({
+        requestedProductIds: ['p1'],
+        items: [sede('s1', null, [producto('p1', '40.00')])],
+        count: 1,
+      });
+
+    const [fila] = (await resultado).resultados;
+    expect(fila!.carrito).toBeUndefined();
+    expect(fila!.advertencia).toBe('Requiere receta');
+    expect(fila!.accion).toEqual({
+      etiqueta: 'Buscá tu receta para comprarlo',
+      ruta: '/my-account/pharmacy/prescriptions',
+    });
   });
 
   it('medicamentos sin productos no pide disponibilidad', async () => {
@@ -180,8 +225,10 @@ describe('CotizacionesFuentes', () => {
         source: 'Tarifario de ejemplo de la maqueta: Laboratorio Central no lo publicó',
       },
       distanceKm: null,
-      accion: { ruta: '/laboratory-directory/u1' },
+      // Se reserva un horario en el centro, no se manda a su ficha.
+      reserva: { centroId: 'u1', centro: 'Laboratorio Central', estudio: 'Hemograma completo' },
     });
+    expect(resultados[0]!.accion).toBeUndefined();
   });
 
   it('servicios médicos: el arancel de referencia en su unidad, sin convertir', async () => {

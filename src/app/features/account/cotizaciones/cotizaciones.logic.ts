@@ -1,3 +1,8 @@
+import type {
+  CartLine,
+  CartSite,
+} from '../../../core/data-access/pharmacy-cart/pharmacy-cart.types';
+
 /** Las cuatro verticales explícitas de Cotizaciones del paciente. */
 export type VerticalCotizacion =
   'TODAS' | 'MEDICAMENTOS' | 'ANALISIS' | 'IMAGENOLOGIA' | 'SERVICIOS_MEDICOS';
@@ -23,6 +28,26 @@ export interface AccionDeCotizacion {
   readonly ruta: string;
 }
 
+/**
+ * Lo que hace falta para poner un medicamento en el carrito desde la fila: la
+ * sede a la que queda atado y la línea sin cantidad, con la misma forma que
+ * arma «Agregar» en la búsqueda de Farmacia (`product-results.ts`).
+ */
+export interface CarritoDeCotizacion {
+  readonly sede: CartSite;
+  readonly linea: Omit<CartLine, 'quantity'>;
+}
+
+/**
+ * Lo que hace falta para pedir un horario para un estudio: el centro (cuya
+ * agenda se abre) y el estudio, que viaja como motivo de la reserva.
+ */
+export interface ReservaDeCotizacion {
+  readonly centroId: string;
+  readonly centro: string;
+  readonly estudio: string;
+}
+
 /** La fila normalizada que una fuente existente entrega a la pantalla. */
 export interface CotizacionResultado {
   readonly id: string;
@@ -38,6 +63,10 @@ export interface CotizacionResultado {
   /** Aviso sobre la fila misma (p. ej. texto de un escaneo por revisar). */
   readonly advertencia?: string;
   readonly accion?: AccionDeCotizacion;
+  /** Medicamento de venta libre con precio: se agrega al carrito ahí mismo. */
+  readonly carrito?: CarritoDeCotizacion;
+  /** Análisis o imagen: se reserva un horario en la agenda del centro. */
+  readonly reserva?: ReservaDeCotizacion;
 }
 
 /** Quita tildes, espacios laterales y diferencias de mayúscula antes de comparar. */

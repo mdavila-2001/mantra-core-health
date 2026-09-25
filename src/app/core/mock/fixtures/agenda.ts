@@ -286,41 +286,110 @@ export const plantillas = new Coleccion<PlantillaSimulada>([
 /* ---- cupos: se generan a partir de las plantillas, ±21 días ---------------- */
 
 function generarCupos(): CupoSimulado[] {
+  return plantillas.todos().flatMap((plantilla) => (plantilla.retired ? [] : cuposDePlantilla(plantilla)));
+}
+
+/** Los cupos de ±21 días que abre una plantilla, con la actividad que atiende. */
+function cuposDePlantilla(plantilla: PlantillaSimulada, servicio: string = ACTIVIDAD['ACT-CONSULTA']!): CupoSimulado[] {
   const cupos: CupoSimulado[] = [];
-  for (const plantilla of plantillas.todos()) {
-    if (plantilla.retired) continue;
-    for (let dia = -21; dia <= 21; dia++) {
-      const d = fecha(dia, 0);
-      const regla = plantilla.rules.find((r) => r.dayOfWeek === d.getDay());
-      if (regla === undefined) continue;
-      const [hi, mi] = regla.startTime.split(':').map(Number) as [number, number];
-      const [hf, mf] = regla.endTime.split(':').map(Number) as [number, number];
-      const paso = (regla.slotMinutes ?? plantilla.slotMinutes) + (regla.gapMinutes ?? 0);
-      for (let m = hi * 60 + mi; m + (regla.slotMinutes ?? plantilla.slotMinutes) <= hf * 60 + mf; m += paso) {
-        const inicio = fecha(dia, Math.floor(m / 60), m % 60);
-        const fin = new Date(inicio.getTime() + (regla.slotMinutes ?? plantilla.slotMinutes) * 60_000);
-        cupos.push({
-          // Por FECHA, no por distancia a hoy: las reservas sobreviven a F5 en
-          // `sessionStorage` y los cupos se regeneran; con `dia` relativo, al
-          // día siguiente cada id apuntaba a otro día y ninguna reserva guardada
-          // casaba con su cupo — el día entero salía «No disponible».
-          id: uuid(`slot-${plantilla.id}-${isoDia(dia)}-${m}`),
-          resourceId: plantilla.resourceId,
-          scheduleTemplateId: plantilla.id,
-          startAt: inicio.toISOString(),
-          endAt: fin.toISOString(),
-          capacity: regla.capacityPerSlot ?? 1,
-          remainingCapacity: regla.capacityPerSlot ?? 1,
-          statusConceptId: ESTADO['ST-ACTIVE']!,
-          serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
-        });
-      }
+  for (let dia = -21; dia <= 21; dia++) {
+    const d = fecha(dia, 0);
+    const regla = plantilla.rules.find((r) => r.dayOfWeek === d.getDay());
+    if (regla === undefined) continue;
+    const [hi, mi] = regla.startTime.split(':').map(Number) as [number, number];
+    const [hf, mf] = regla.endTime.split(':').map(Number) as [number, number];
+    const paso = (regla.slotMinutes ?? plantilla.slotMinutes) + (regla.gapMinutes ?? 0);
+    for (let m = hi * 60 + mi; m + (regla.slotMinutes ?? plantilla.slotMinutes) <= hf * 60 + mf; m += paso) {
+      const inicio = fecha(dia, Math.floor(m / 60), m % 60);
+      const fin = new Date(inicio.getTime() + (regla.slotMinutes ?? plantilla.slotMinutes) * 60_000);
+      cupos.push({
+        // Por FECHA, no por distancia a hoy: las reservas sobreviven a F5 en
+        // `sessionStorage` y los cupos se regeneran; con `dia` relativo, al
+        // día siguiente cada id apuntaba a otro día y ninguna reserva guardada
+        // casaba con su cupo — el día entero salía «No disponible».
+        id: uuid(`slot-${plantilla.id}-${isoDia(dia)}-${m}`),
+        resourceId: plantilla.resourceId,
+        scheduleTemplateId: plantilla.id,
+        startAt: inicio.toISOString(),
+        endAt: fin.toISOString(),
+        capacity: regla.capacityPerSlot ?? 1,
+        remainingCapacity: regla.capacityPerSlot ?? 1,
+        statusConceptId: ESTADO['ST-ACTIVE']!,
+        serviceConceptId: servicio,
+      });
     }
   }
   return cupos;
 }
 
 export const cupos = new Coleccion<CupoSimulado>(generarCupos());
+
+/** La tabla a la que apunta la agenda de un centro de diagnóstico. */
+export const TABLA_DE_CENTRO_DIAGNOSTICO = 'diagnostic_units';
+
+/** Lo que la agenda de un centro de diagnóstico necesita saber de él. */
+export interface CentroConAgenda {
+  readonly id: string;
+  readonly name: string;
+  readonly tenantId: string;
+  readonly kind: 'LABORATORY' | 'IMAGING';
+  readonly site: RecursoSimulado['site'];
+}
+
+/**
+ * La agenda **simulada** de un laboratorio o centro de imagen (25/09/2026).
+ *
+ * Desde Cotizaciones, un análisis se reserva como una cita con un profesional:
+ * se elige un cupo de la agenda del centro y se confirma en la misma pantalla
+ * de reserva. Para eso el centro necesita un recurso agendable —apunta a
+ * `diagnostic_units`, no a un perfil profesional— con su plantilla y sus cupos.
+ *
+ * El horario es de maqueta y lo dice el nombre del recurso: ningún centro
+ * publicó el suyo. Laboratorio, toma de muestras de lunes a sábado a la
+ * mañana; imagen, de lunes a viernes en horario corrido. Idempotente: llamarla
+ * dos veces con el mismo centro no duplica nada.
+ *
+ * **Cada parte se completa por separado, y los cupos siempre.** El recurso y la
+ * plantilla sobreviven a F5 en `sessionStorage` (`persistirEn`, al pie del
+ * archivo) pero los cupos no: se regeneran en cada carga. Cortar en «el recurso
+ * ya existe» dejaba, después de la primera recarga, la agenda del centro sin un
+ * solo cupo — «No tiene turnos disponibles en los próximos dos meses».
+ */
+export function abrirAgendaDeCentro(centro: CentroConAgenda): void {
+  const id = uuid(`resource-diagnostic-${centro.id}`);
+  const esLaboratorio = centro.kind === 'LABORATORY';
+  if (!recursos.has(id)) recursos.agregar({
+    id,
+    name: esLaboratorio ? `Toma de muestras (horario simulado) · ${centro.name}` : `Estudios de imagen (horario simulado) · ${centro.name}`,
+    resourceTypeConceptId: uuid('concept-resource-diagnostic'),
+    resourceRefType: TABLA_DE_CENTRO_DIAGNOSTICO,
+    resourceRefId: centro.id,
+    practitionerName: null,
+    practiceId: null,
+    tenantId: centro.tenantId,
+    timeZone: centro.site?.timeZone ?? ZONA_HORARIA_POR_OMISION,
+    capacity: esLaboratorio ? 3 : 1,
+    stateConceptId: ESTADO['ST-ACTIVE']!,
+    site: centro.site,
+  });
+  const plantilla: PlantillaSimulada = {
+    id: uuid(`template-${id}`),
+    resourceId: id,
+    retired: false,
+    name: esLaboratorio ? 'Toma de muestras' : 'Estudios de imagen',
+    rules: esLaboratorio
+      ? [1, 2, 3, 4, 5, 6].map((dayOfWeek) => ({ dayOfWeek, startTime: '07:00', endTime: '10:00', slotMinutes: 15, capacityPerSlot: 3 }))
+      : [1, 2, 3, 4, 5].map((dayOfWeek) => ({ dayOfWeek, startTime: '08:00', endTime: '17:00', slotMinutes: 30, capacityPerSlot: 1 })),
+    slotMinutes: esLaboratorio ? 15 : 30,
+    validFrom: isoDia(-90),
+    bookingPolicyId: POLITICA_ESTANDAR,
+    statusConceptId: ESTADO['ST-PUBLISHED']!,
+  };
+  if (!plantillas.has(plantilla.id)) plantillas.agregar(plantilla);
+  for (const cupo of cuposDePlantilla(plantilla, ACTIVIDAD['ACT-EXAMEN']!)) {
+    if (!cupos.has(cupo.id)) cupos.agregar(cupo);
+  }
+}
 
 /* ---- reservas: pasado y futuro de la médica, con todos los estados --------- */
 
