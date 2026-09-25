@@ -436,7 +436,11 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // personas. Es la misma razón por la que «Mis turnos» no vive dentro de
     // cada paciente.
     path: 'progress-notes',
-    label: 'Evoluciones',
+    // C7 (homogeneización de nombres, 2026-09-25): «Evoluciones» pasa a
+    // «Notas médicas» — el propietario pidió una sola palabra por concepto en
+    // toda la interfaz, y «evolución» era uno de los términos con varias
+    // formas conviviendo (nota clínica / nota de la consulta / evolución).
+    label: 'Notas médicas',
     group: 'Atención',
     icon: 'note',
     roles: ['CLINICIAN', 'PRACTITIONER'],
