@@ -225,23 +225,23 @@ en navegador) y M7 (`BLOQUEADO`: sin navegador).
 | H5.S1.M3 | Sin scroll horizontal a 375 | — | A MEDIAS (verificado por lectura del CSS mobile-first, no observado) |
 | H5.S1.M4 | Contraste en oscuro | — | BLOQUEADO |
 | H5.S1.M5 | `yarn test` completo | — | DESCARTADO: la corrida prohíbe la suite entera; la corre el operador, centralizada |
-| H5.S1.M6 | Diff no toca archivos de otros | `git diff origin/mockup --stat \| grep -E "file-input\|app.routes\|navigation\|playwright\|alovida/terminologia"` vacío | TODO |
+| H5.S1.M6 | Diff no toca archivos de otros | `git diff origin/mockup --stat \| grep -E "file-input\|app.routes\|navigation\|playwright\|alovida/terminologia"` vacío | HECHO |
 
 ## H6 — API real, PR y cierre
 
 | ID | Microtarea | DoD | Estado |
 |---|---|---|---|
-| H6.S1.M1 | ¿Está la rama de Itzan? | salida de `git log` | TODO |
-| H6.S1.M2 | Levantar la API | — | TODO (depende de M1) |
-| H6.S1.M3 | Kill-test contra la API real | — | TODO (depende de M1) |
-| H6.S1.M4 | Diferencias doble ↔ API real | `REPORTE.md` §Contra el doble | TODO |
-| H6.S2.M1 | Rebase sobre `origin/mockup` | `git status` | TODO |
+| H6.S1.M1 | ¿Está la rama de Itzan? | salida de `git log` | HECHO |
+| H6.S1.M2 | Levantar la API | — | DESCARTADO |
+| H6.S1.M3 | Kill-test contra la API real | — | DESCARTADO |
+| H6.S1.M4 | Diferencias doble ↔ API real | `REPORTE.md` §Contra el doble | HECHO |
+| H6.S2.M1 | Rebase sobre `origin/mockup` | `git status` | HECHO |
 | H6.S2.M2 | PR contra `mockup` | URL | TODO |
 | H6.S2.M3 | `gh pr view` → `MERGEABLE` | `evidencia/pr/view.json` | TODO |
 | H6.S2.M4 | `gh pr checks` | `evidencia/pr/checks.txt` | TODO |
-| H6.S2.M5 | Procesos corriendo cerrados o declarados | lista | TODO |
-| H6.S2.M6 | `REPORTE.md` con el avance primero | `head -3` | TODO |
-| H6.S2.M7 | Daily | `ls` | TODO |
+| H6.S2.M5 | Procesos corriendo cerrados o declarados | lista | HECHO |
+| H6.S2.M6 | `REPORTE.md` con el avance primero | `head -3` | HECHO |
+| H6.S2.M7 | Daily | `ls` | HECHO |
 
 ## Microcopy (H4.S3.M4)
 
