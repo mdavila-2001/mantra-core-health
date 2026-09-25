@@ -18,6 +18,10 @@ import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PatientContextService } from '../../../core/patient-context/patient-context.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
+// El sello de reconsulta (C4): los campos viven en su propio archivo hasta que
+// C0 publique los tipos congelados.
+import { esReconsulta } from '../../../core/data-access/scheduling/follow-up.types';
+import type { BookingConReconsulta } from '../../../core/data-access/scheduling/follow-up.types';
 import type {
   AgendaResource,
   AgendaSlot,
@@ -224,6 +228,25 @@ interface TurnoVisible {
    * uno nuevo que no reconoce.
    */
   readonly reprogramadoDesde: Date | null;
+  /**
+   * Si este turno es una reconsulta: tu médico te citó de nuevo por una
+   * consulta anterior (C4).
+   *
+   * Importa que se vea: un turno que la persona no pidió se lee como un error
+   * de la aplicación —o como el turno de otro— si nada explica de dónde salió.
+   */
+  readonly esReconsulta: boolean;
+  /**
+   * De cuándo era la consulta de la que salió, o `null` si aquélla quedó sin
+   * horario.
+   *
+   * Va como **fecha y no como frase armada**: el resto de este archivo redacta
+   * en TypeScript sólo lo que cambia de forma —quién canceló, si hubo mensaje—,
+   * y una fecha se escribe con el `date` del idioma de la aplicación. Armarla
+   * acá obligaría a clavar `'es-BO'` en el código, que es exactamente lo que
+   * hace estallar `formatDate` donde nadie registró ese idioma.
+   */
+  readonly reconsultaDe: Date | null;
 }
 
 /** Una espera activa, ya lista para mostrarse (P8). */
@@ -1539,7 +1562,7 @@ export class Appointments {
 
   /* ---- mapeos ------------------------------------------------------------- */
 
-  private aTurnoVisible(cita: Booking): TurnoVisible {
+  private aTurnoVisible(cita: BookingConReconsulta): TurnoVisible {
     const estado = this.presentacionDelEstado(cita.statusConceptId);
     const resourceId = cita.resourceId ?? '';
     return {
@@ -1559,6 +1582,8 @@ export class Appointments {
       cambioCuando: cita.statusReason?.changedAt ?? null,
       avisoDeDemora: avisoDeDemora(cita),
       demoraCuando: cita.delayNotice?.announcedAt ?? null,
+      esReconsulta: esReconsulta(cita),
+      reconsultaDe: cita.followUpOf?.startAt ?? null,
     };
   }
 
