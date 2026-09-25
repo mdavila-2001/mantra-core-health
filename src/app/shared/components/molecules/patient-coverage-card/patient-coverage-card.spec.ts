@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 import type { OwnCoverage } from '../../../../core/data-access/profiles/profiles.types';
 import { PatientCoverageCard } from './patient-coverage-card';
 
@@ -72,7 +73,9 @@ describe('PatientCoverageCard', () => {
       memberIdentifier: 'TEMP-12',
       carrierCallCenterPhone: '800-10-6060',
     });
-    expect(element.querySelector('a')?.getAttribute('href')).toBe('tel:800106060');
+    const callCenter = element.querySelector('[data-testid="btn-call-center-coverage"]');
+    expect(callCenter?.getAttribute('href')).toBe('tel:800106060');
+    expect(element.querySelector('[data-testid="btn-whatsapp-coverage"]')).toBeNull();
     expect(element.textContent).toContain('Identificador declarado');
     expect(element.textContent).toContain('provisional');
     expect(element.textContent).toContain('WhatsApp: No informado');
@@ -85,7 +88,11 @@ describe('PatientCoverageCard', () => {
       memberIdentifier: 'TEMP-12',
       carrierWhatsappNumber: '+59170011223',
     });
-    const link = element.querySelector('a')!;
+    const link = element.querySelector(
+      '[data-testid="btn-whatsapp-coverage"]',
+    ) as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(element.querySelector('[data-testid="btn-call-center-coverage"]')).toBeNull();
     const url = new URL(link.href);
     expect(url.hostname).toBe('wa.me');
     expect(url.searchParams.get('text')).toContain('Ana Rojas');
@@ -94,6 +101,23 @@ describe('PatientCoverageCard', () => {
     expect(link.rel).toContain('noopener');
     expect(link.target).toBe('_blank');
     expect(link.textContent).toContain('pestaña nueva');
+  });
+
+  it('la tecla Espacio activa el enlace de WhatsApp igual que un clic (CA-2.1)', () => {
+    const element = mount({
+      ...coverage,
+      carrierWhatsappNumber: '+59170011223',
+    });
+    const link = element.querySelector(
+      '[data-testid="btn-whatsapp-coverage"]',
+    ) as HTMLAnchorElement;
+    const clickSpy = vi.spyOn(link, 'click').mockImplementation(() => {});
+
+    const event = new KeyboardEvent('keydown', { key: ' ', cancelable: true });
+    link.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(clickSpy).toHaveBeenCalledTimes(1);
   });
 
   it.each([

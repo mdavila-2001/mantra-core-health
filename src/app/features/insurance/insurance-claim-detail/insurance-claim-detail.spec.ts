@@ -265,7 +265,7 @@ describe('InsuranceClaimDetail · canales de contacto de la aseguradora', () => 
     responder(detalle);
 
     expect(fixture.nativeElement.querySelector('[data-testid="btn-whatsapp-claim"]')).toBeNull();
-    expect(fixture.nativeElement.querySelector('[data-testid="btn-callcenter-claim"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="btn-call-center-phone"]')).not.toBeNull();
   });
 });
 

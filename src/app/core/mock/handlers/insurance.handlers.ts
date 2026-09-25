@@ -190,6 +190,33 @@ const PRIMAS: Readonly<Record<string, string>> = {
   'CPS-GEN': '150.00',
 };
 
+/**
+ * Canales de contacto de una aseguradora sembrada, por nombre (Tarea 2).
+ *
+ * `/my-account` › «Seguros y tutores» usaba números fijos —el call center
+ * el call center fijo que usaba esta tarjeta era, sin marcarlo, el real
+ * de una aseguradora sembrada (BISA; patch
+ * `2026-09-13_v4210_insurance_carriers_contact_channels.sql`)— en vez de
+ * los ficticios ya declarados en `ASEGURADORAS`. Esta función es el único
+ * puente entre las dos fuentes: si el nombre no coincide con ninguna
+ * aseguradora sembrada (el caso de los 107 pacientes generados con
+ * `fk.ASEGURADORAS`, cuyo nombre puede no calzar), devuelve `null` en los
+ * dos canales en vez de inventar un número.
+ *
+ * @param nombre - El nombre corto de la aseguradora (`ASEGURADORAS[].name`).
+ * @returns El WhatsApp y el call center ficticios de esa aseguradora, o
+ *   `null` en ambos si no se la encuentra.
+ */
+export function contactChannelsOfCarrier(
+  nombre: string,
+): { whatsapp: string | null; callCenter: string | null } {
+  const aseguradora = ASEGURADORAS.find((a) => a.name === nombre);
+  return {
+    whatsapp: aseguradora?.whatsapp ?? null,
+    callCenter: aseguradora?.callCenter ?? null,
+  };
+}
+
 function resumenDeAseguradora(a: (typeof ASEGURADORAS)[number], i: number, canAdminister = false) {
   return {
     id: a.id,
@@ -546,6 +573,20 @@ const solicitudes = new Coleccion<SolicitudSimulada>(
         ['ECG', '120.00', null, 'PENDING'],
       ],
     ],
+    // Escenario "ningún canal registrado" (CA-2.3, Tarea 2): la aseguradora
+    // de este reclamo es Caja Petrolera de Salud (carrierIndex 4), la única
+    // de `ASEGURADORAS` sin WhatsApp, call center ni correo.
+    [
+      'CLM-2026-0185',
+      4,
+      '320.00',
+      null,
+      -3,
+      'SUBMITTED',
+      'Enviada',
+      false,
+      [['Consulta general', '320.00', null, 'PENDING']],
+    ],
   ].map(
     (
       [claimIdentifier, carrierIndex, billed, approved, dias, code, display, disputa, lineas],
@@ -553,7 +594,12 @@ const solicitudes = new Coleccion<SolicitudSimulada>(
     ) => ({
       id: uuid(`claim-${claimIdentifier}`),
       claimIdentifier: claimIdentifier as string,
-      patientProfileId: PACIENTES[[0, 5, 2, 0, 8, 0][i]!]!.id,
+      // El índice 3 (`p-rocha`) no tiene aseguradora propia ni otro
+      // reclamo, y a diferencia del 1 (`p-mamani`) ningún spec lo usa como
+      // "titular sin coberturas" con recordCount === 0 esperado
+      // (insurance-portability.handlers.spec.ts:16) — usar el 1 rompía
+      // exactamente esa aserción.
+      patientProfileId: PACIENTES[[0, 5, 2, 0, 8, 0, 3][i]!]!.id,
       carrierIndex: carrierIndex as number,
       policyIdentifier: `POL-${100200 + i * 17}`,
       billed: billed as string,
