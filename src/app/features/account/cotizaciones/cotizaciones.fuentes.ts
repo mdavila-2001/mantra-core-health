@@ -217,10 +217,11 @@ function filasDeSede(sede: AvailabilitySite): CotizacionResultado[] {
     id: `farmacia:${sede.siteId}:${producto.productId}`,
     vertical: 'MEDICAMENTOS',
     que: nombreDeProducto(producto),
-    donde:
-      sede.siteName === sede.pharmacyName
-        ? sede.pharmacyName
-        : `${sede.pharmacyName} · ${sede.siteName}`,
+    // El nombre de la farmacia puede traer ya la sucursal («Farmacorp ·
+    // Grigotá»): no se repite («Farmacorp · Grigotá · Grigotá»).
+    donde: sede.pharmacyName.includes(sede.siteName)
+      ? sede.pharmacyName
+      : `${sede.pharmacyName} · ${sede.siteName}`,
     price: precioDeProducto(producto, sede),
     distanceKm: sede.distanceKm,
     sinPrecio: 'La farmacia no publicó este precio',
