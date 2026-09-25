@@ -136,9 +136,9 @@ describe('Cotizaciones', () => {
     await asentar();
 
     expect(buscar).toHaveBeenCalledWith('para', 'TODAS', null);
-    expect(texto()).toContain('12.5 BOB');
+    expect(texto()).toContain('12,5 BOB');
     expect(texto()).toContain('Lista PUBLICO de Farmacia Central');
-    expect(texto()).toContain('2,4 km en línea recta');
+    expect(texto()).toContain('2,4 km');
   });
 
   it('el precio no publicado se dice, con la procedencia en el title', async () => {
@@ -208,6 +208,15 @@ describe('Cotizaciones', () => {
     await asentar();
 
     expect(buscar).toHaveBeenLastCalledWith('para', 'TODAS', origen);
+  });
+
+  it('sin origen, la distancia de las farmacias pide elegir desde dónde medir', async () => {
+    buscar.mockReturnValue(respuesta([{ ...FARMACIA, distanceKm: null }]));
+    await montar();
+    componente().buscar('para');
+    await asentar();
+
+    expect(texto()).toContain('Elegí desde dónde medir');
   });
 
   it('cambiar la vertical consulta sólo esa', async () => {

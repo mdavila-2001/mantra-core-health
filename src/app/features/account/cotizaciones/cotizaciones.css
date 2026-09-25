@@ -38,6 +38,7 @@
 }
 
 .cotizaciones__buscando,
+.cotizaciones__donde,
 .cotizaciones__vertical,
 .cotizaciones__procedencia,
 .cotizaciones__advertencia {
@@ -64,6 +65,19 @@
 
 .cotizaciones__distancia {
   font-variant-numeric: tabular-nums;
+}
+
+/* El color del enlace vuelve al token de marca, como en `login.css`:
+   `styles/alovida.css` trae un `a[app-link] { color: var(--petroleo) }` global
+   que le gana al `:host` del átomo, y en oscuro `--petroleo` (#12719F) queda en
+   3,4:1 sobre el fondo. `--brand-primary` es aguamarina en oscuro. El defecto
+   global queda anotado para el barrido del puerto ALOVIDA. */
+a[app-link].cotizaciones__accion {
+  color: var(--brand-primary);
+}
+
+a[app-link].cotizaciones__accion:hover {
+  color: var(--brand-primary-hover);
 }
 
 .cotizaciones__accion {
