@@ -176,9 +176,11 @@ describe('NavigationService', () => {
         // es tener perfil de paciente, que la pantalla resuelve.
         '/my-account/diagnostic-orders',
         '/my-account/cotizaciones',
-        // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
-        // perfil de paciente, que es un dato de la cuenta y no un rol.
-        '/my-account/questionnaires',
+        // «Mis cuestionarios» ya NO entra (2026-09-25): pedido del propietario
+        // mientras se decide qué hacer con la sección — declara
+        // `fueraDelMenuPara: [ANY_ROLE]`, no una restricción de rol. Sigue sin
+        // exigir rol y se sigue alcanzando por su ruta y por «Tus accesos»;
+        // ver `docs/pendiente-decision-cuestionarios.md`.
         // «Notificaciones» tampoco: es el otro destino fijo, y encabeza la
         // lista junto a «Mi perfil». La bandeja sigue sin exigir rol —es de la
         // persona y el backend sólo devuelve la propia—; lo que cambió es

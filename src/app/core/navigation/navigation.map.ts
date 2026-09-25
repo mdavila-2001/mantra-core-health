@@ -1225,6 +1225,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
+    // Pedido del propietario (2026-09-25): sacar el renglón de la vista del
+    // paciente mientras se decide qué hacer con la sección — todavía no está
+    // definido. `fueraDelMenuPara` es lo que "apaga una sección de momento
+    // sin perder el código" (mismo mecanismo que «Ajustes»/«Chats» más abajo):
+    // la ruta, el guard y la pantalla siguen enteros, sólo deja de ocupar
+    // renglón. Ver docs/pendiente-decision-cuestionarios.md.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Mis cuestionarios',
     group: 'Mi cuenta',
     icon: 'survey',
