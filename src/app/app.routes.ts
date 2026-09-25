@@ -433,6 +433,18 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // El carrito de farmacia (Ola 0, plan `04-farmacia-ecommerce-2026-09-25`
+    // §4.1). Hija de «Farmacia» (`my-account/pharmacy`), con `seccionRolesGuard`
+    // porque esa sección declara `roles: ['PATIENT']`.
+    path: 'my-account/pharmacy/cart',
+    title: `${APP_TITLE} - Tu carrito`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy/cart/cart-page')
+        .then((m) => m.CartPage)
+        .catch(() => chunkFallido()),
+  },
+  {
     // La confirmación del pedido de farmacia (carril FAR-I2). Cuelga de «Mis
     // pedidos»; se llega desde «dónde comprar mi receta», que deja el borrador
     // en el cliente — nada viaja por la URL. Con `seccionRolesGuard` porque su
