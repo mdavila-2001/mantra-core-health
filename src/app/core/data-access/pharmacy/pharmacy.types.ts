@@ -187,3 +187,70 @@ export interface AvailabilityQuery {
   readonly origin?: GeoPoint;
   readonly limit?: number;
 }
+
+/**
+ * Una sede dispensadora del perfil de una farmacia, tal como la lista `GET
+ * /pharmacy/pharmacies/:id`.
+ *
+ * Sin `distanceKm`: acá no hay origen contra el que medir — a diferencia de
+ * {@link PharmacySite}, que sí lo lleva porque nace de una lista suelta con
+ * posible origen. Espeja `PharmacySiteReadDto` del backend campo por campo.
+ */
+export interface PharmacySiteRead {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly addressText: string | null;
+  readonly latitude: number | null;
+  readonly longitude: number | null;
+}
+
+/**
+ * El perfil de una farmacia, tal como lo trae `GET /pharmacy/pharmacies/:id`
+ * (carril A, Ola 0). Extiende el ítem del directorio con lo que sólo aparece
+ * al entrar a UNA farmacia: razón social, tipo resuelto, y sus sedes.
+ */
+export interface PharmacyDetail extends PharmacyDirectoryItem {
+  readonly legalName: string;
+  readonly type: PharmacyConcept | null;
+  readonly homeDeliveryAvailable: boolean | null;
+  readonly pickupAvailable: boolean | null;
+  readonly sites: readonly PharmacySiteRead[];
+}
+
+/**
+ * Un precio publicado de una sede, tal como lo trae `GET
+ * /pharmacy/sites/:siteId/prices` (carril A, Ola 0).
+ *
+ * A diferencia de {@link AvailabilityPrice} (que sólo lleva el precio, sin el
+ * producto — vive anidado en `AvailabilityProduct`), acá el precio y el
+ * producto viajan en el mismo objeto: es la lectura del catálogo de una sede,
+ * no una evaluación de disponibilidad contra productos concretos.
+ */
+export interface PharmacySitePriceItem {
+  readonly productId: string;
+  readonly productCode: string;
+  readonly brandName: string | null;
+  readonly genericName: string | null;
+  readonly strengthText: string | null;
+  readonly packageSizeText: string | null;
+  /** El medicamento del vademécum al que responde, resuelto. */
+  readonly medication: PharmacyConcept | null;
+  readonly requiresPrescription: boolean | null;
+  /** Precio unitario, como texto exacto. */
+  readonly unitAmount: string;
+  /** Lo que paga el paciente, si difiere del unitario. */
+  readonly patientAmount: string | null;
+  readonly currency: PharmacyConcept | null;
+  readonly priceListCode: string;
+}
+
+/** Los precios públicos vigentes de una sede, tal como los sirve la API. */
+export interface PharmacySitePrices {
+  readonly siteId: string;
+  readonly siteName: string;
+  readonly pharmacyId: string;
+  readonly pharmacyName: string;
+  readonly items: readonly PharmacySitePriceItem[];
+  readonly count: number;
+}
