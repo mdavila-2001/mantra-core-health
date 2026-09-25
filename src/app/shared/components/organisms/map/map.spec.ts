@@ -437,9 +437,13 @@ describe('AppMap · provincias', () => {
     const lienzo = (fixture.nativeElement as HTMLElement).querySelector('.mapa__lienzo');
 
     expect(lienzo?.classList).toContain('mapa__lienzo--con-nombres');
-    provincias.zoom = 6;
+    // En 8 ya se encima el valle de Cochabamba: los nombres empiezan en 9.
+    provincias.zoom = 8;
     provincias.alMoverse?.();
     expect(lienzo?.classList).not.toContain('mapa__lienzo--con-nombres');
+    provincias.zoom = 9;
+    provincias.alMoverse?.();
+    expect(lienzo?.classList).toContain('mapa__lienzo--con-nombres');
   });
 
   it('sin el archivo, el mapa queda como era', async () => {

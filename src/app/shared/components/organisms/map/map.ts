@@ -70,10 +70,11 @@ const ZOOM_POR_DEFECTO = 12;
 
 /**
  * Desde qué zoom se escriben los nombres de las provincias sobre el mapa. Más
- * lejos, las 112 se pisan unas con otras y el plano se vuelve ilegible; los
+ * lejos se pisan unas con otras —en 8 ya se encima el valle de Cochabamba,
+ * medido en pantalla el 24/09/2026— y el plano se vuelve ilegible; los
  * límites se dibujan siempre, y la provincia del centro la dice el rótulo fijo.
  */
-const ZOOM_DE_NOMBRES_DE_PROVINCIA = 8;
+const ZOOM_DE_NOMBRES_DE_PROVINCIA = 9;
 
 /**
  * El panel propio de las provincias: por encima de los mosaicos (200) y por
