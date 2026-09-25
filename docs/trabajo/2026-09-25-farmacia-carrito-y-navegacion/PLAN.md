@@ -138,7 +138,44 @@ Justin exista, esto se reconcilia (regla 65: se simuló el contrato, no se bloqu
 | ID | Microtarea | Estado | DoD ejecutado |
 |---|---|---|---|
 | H5.S2.M1 | `pharmacy-orders.client.ts` `enviar()`: `tap` agrega `this.cart.clear()` | HECHO | `npx ng test --include='src/app/core/data-access/pharmacy-orders/pharmacy-orders.client.spec.ts' --watch=false` → **33 passed (33)** (32 preexistentes + 1 nuevo) |
-## H6 — «Lugares cercanos» desaparece, con redirección — TODO
+## H6 — «Lugares cercanos» desaparece, con redirección
+**CA:** Sin «Lugares cercanos» en el menú ni en el registro; `/nearby-places` redirige a `/my-account/pharmacy`; `grep -rn nearby-places src/app/core` = 0; specs en verde con las listas corregidas, sin `skip`.
+**Estado:** HECHO (H6.S3 con desvío registrado abajo)
+
+### H6.S1 — Inventario y registro
+**Estado:** HECHO
+
+| ID | Microtarea | Estado | DoD ejecutado |
+|---|---|---|---|
+| H6.S1.M1 | Grep clasificado (41 hits) | HECHO | `evidencia/h6/INVENTARIO.md` |
+| H6.S1.M2 | Borrar de `navigation.map.ts` y `navigation.subgroups.ts` | HECHO | `grep -n nearby-places src/app/core` = **0** |
+| H6.S1.M3 | Corregir listas cerradas sin `skip` | HECHO | `shell-layout.spec.ts` línea 431→433 (`toContain` → `not.toContain`, con nota); `npx ng test --include='src/app/core/navigation/*.spec.ts' --include='src/app/features/shell-layout/*.spec.ts' --include='src/app/features/directories-overview/*.spec.ts' --watch=false` → **203 passed / 1 failed** (el mismo preexistente de íconos) |
+
+### H6.S2 — Borrar la pantalla y redirigir
+**Estado:** HECHO
+
+| ID | Microtarea | Estado | DoD ejecutado |
+|---|---|---|---|
+| H6.S2.M1 | `git rm` de los 4 archivos de la pantalla; sacar de `PANTALLAS_DIFERIDAS` | HECHO | `ls src/app/features/nearby-places` = sólo `search-origin-picker/`; `corepack yarn typecheck` exit 0 |
+| H6.S2.M2 | `RUTAS_HEREDADAS['nearby-places'] → '/my-account/pharmacy'` | HECHO | `corepack yarn build` exit 0; `app.routes.spec.ts` → 53 passed |
+| H6.S2.M3 | Regenerar el índice | HECHO | Se regenera solo al correr `typecheck`/`build`; `grep -c NearbyPlaces component-index.generated.ts` = **0** |
+
+### H6.S3 — El carril 19 queda superado y la decisión registrada
+**Estado:** DESCARTADO para las rutas literales del prompt · intención cumplida por otra vía
+
+**Desvío del plan (regla 00 §1.1, verificado por código):** el prompt pide anotar esto en
+`docs/progress/STATUS.md`, `docs/progress/DECISIONS.md` y `docs/source-of-truth/tareas-index.json`.
+**Ninguno de los tres existe en este repo** — `find docs -iname "STATUS.md" -o -iname "DECISIONS.md"
+-o -iname "tareas-index.json"` no encuentra nada bajo `docs/progress/` ni `docs/source-of-truth/`
+(sí existe un `DECISIONS.md` en `docs/work/02-medical-module-plan-.../`, de otro trabajo, no de un
+sistema de "carriles" numerados). Un `grep -rln "carril 19"` en todo `docs/` sólo encuentra este mismo
+`PLAN.md`. Crear esos tres archivos con esa estructura sería inventar un sistema de seguimiento
+paralelo sin verificar que sea el real (prohibido, regla 00 §1.1 y 97.4.6). En su lugar, la decisión
+queda registrada acá y en el `REPORTE.md` de este trabajo, que es el mecanismo de seguimiento que
+esta regla 20 sí exige y que sí existe: **el carril 19 (imagenología y centros médicos cercanos, vía
+"Lugares cercanos") queda superado por los carriles 41/46 de este plan; imagenología y centros
+cercanos pierden su pantalla propia; «Cómo llegar» de la vitrina pública (fuera de "Mi cuenta") sigue
+existiendo sin cambios.**
 ## H7 — Borrar el hub viejo (Ola 3, condicionado a que Justin e Itzan mergeen) — TODO
 ## H8 — Regresión y cierre — TODO
 

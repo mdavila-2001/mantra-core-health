@@ -428,7 +428,9 @@ describe('ShellLayout', () => {
         expect(enlaces).not.toContain('/messaging');
         expect(raiz().querySelector('[data-testid="header-chats"]')?.getAttribute('href')).toBe('/messaging');
         expect(enlaces).toContain('/directories');
-        expect(enlaces).toContain('/nearby-places');
+        // «Lugares cercanos» salió del registro (H6, 2026-09-25): la sede se
+        // agrega desde el carrito de farmacia, no desde un destino aparte.
+        expect(enlaces).not.toContain('/nearby-places');
         // Los fijos de arriba no se movieron: siguen siendo los primeros.
         expect(enlaces.slice(0, 2)).toEqual(['/my-account', '/notification-center']);
       });

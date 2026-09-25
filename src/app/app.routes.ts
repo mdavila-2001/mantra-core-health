@@ -92,9 +92,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
       (m) => m.PractitionersDirectory,
     ),
-  // FT-19 · farmacias, imagenología y centros médicos cerca del paciente.
-  'nearby-places': () =>
-    import('./features/nearby-places/nearby-places').then((m) => m.NearbyPlaces),
   'laboratory-directory': () =>
     import('./features/laboratory-directory/laboratory-directory').then(
       (m) => m.LaboratoryDirectory,
@@ -1213,6 +1210,10 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   'administracion/proveedores-identidad': '/administration/identity-providers',
   'administracion/verificacion-identidad': '/administration/identity-assurance',
   'administracion/terminologia': '/administration/terminology',
+  // «Lugares cercanos» (FT-19) salió del registro (H6, 2026-09-25): la
+  // farmacia se elige ahora desde la tienda y el carrito, no desde una
+  // pantalla de "cerca de mí" aparte. Sigue en historiales y en favoritos.
+  'nearby-places': '/my-account/pharmacy',
 };
 
 /**

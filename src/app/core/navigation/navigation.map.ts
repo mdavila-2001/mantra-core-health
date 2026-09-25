@@ -262,29 +262,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M05 profiles',
   },
   {
-    // FT-19 (05/09/2026) · farmacias, imagenología y centros médicos cerca
-    // del paciente, a partir de su receta y de su ubicación.
-    //
-    // Sólo `PATIENT`: la pestaña de farmacias lee `medicationRequests` del
-    // propio resumen clínico y enlaza a `WhereToBuy`
-    // (`/my-account/medical-record/where-to-buy/:id`), que ya es sólo del
-    // paciente. Un profesional no tiene "mi receta" que buscar acá.
-    //
-    // Sin `exclusiveRoles`, a diferencia de la Guía de médicos: ahí lo exigió
-    // un pedido explícito del cliente ("no debe aparecer ni ser accesible
-    // para doctor u otros roles"); acá no hay un pedido equivalente, así que
-    // alcanza con `roles` — el comodín de `SUPERADMIN` sigue entrando, como
-    // en el resto del registro.
-    path: 'nearby-places',
-    label: 'Lugares cercanos',
-    group: 'General',
-    icon: 'pin',
-    roles: ['PATIENT'],
-    availability: 'disponible',
-    summary: 'Farmacias, centros de imagenología y centros médicos cerca tuyo, según tu receta.',
-    module: 'M22 pharmacy',
-  },
-  {
     // Grupos y foros (P7). Es la entrada **mínima** que el carril se permite en
     // este archivo: sin ella la pantalla queda huérfana —el invariante de
     // `app.routes.spec` exige que toda pantalla cuelgue de una sección— y
