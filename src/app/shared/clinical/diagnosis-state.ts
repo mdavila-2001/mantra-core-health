@@ -1,15 +1,15 @@
-import type { Condition } from '../../../core/data-access/clinical/clinical.types';
+import type { Condition } from '../../core/data-access/clinical/clinical.types';
 
 /* ============================================================================
     En qué bloque de la historia entra un diagnóstico: **en estudio**,
     **enfermedad activa** o **histórico**.
 
-    // TODO C8: unificar con `shared/clinical/diagnosis-state.ts` de C0 cuando
-    // llegue. C0 no está publicado —no existe `src/app/shared/clinical/`— y
-    // este carril no puede esperarlo. Vive acá y no en `shared/` a propósito:
-    // crear la carpeta que C0 va a crear garantizaría el conflicto de merge que
-    // C8 tendría que resolver a mano. Cuando C0 aterrice, esto se muda entero y
-    // la pantalla sólo cambia de import.
+    Vive en `shared/clinical/` y no en la carpeta de una pantalla porque la
+    clasificación es la misma para quien lee su historia y para quien la
+    escribe: dos copias serían dos criterios, y el día que uno cambie una
+    enfermedad descartada aparecería como activa en una de las dos superficies.
+    C6 la escribió dentro de su carril para no chocar con C0; C8 la subió acá,
+    que es el destino que el contrato del paquete le había nombrado.
 
     ## La decisión es por **código de catálogo**, nunca por etiqueta
 

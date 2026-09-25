@@ -18,10 +18,9 @@ import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PatientContextService } from '../../../core/patient-context/patient-context.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
-// El sello de reconsulta (C4): los campos viven en su propio archivo hasta que
-// C0 publique los tipos congelados.
-import { esReconsulta } from '../../../core/data-access/scheduling/follow-up.types';
-import type { BookingConReconsulta } from '../../../core/data-access/scheduling/follow-up.types';
+// El sello de reconsulta (C4): los dos campos y su predicado viven en los
+// tipos congelados de `scheduling`.
+import { esReconsulta } from '../../../core/data-access/scheduling/scheduling.types';
 import type {
   AgendaResource,
   AgendaSlot,
@@ -1562,7 +1561,7 @@ export class Appointments {
 
   /* ---- mapeos ------------------------------------------------------------- */
 
-  private aTurnoVisible(cita: BookingConReconsulta): TurnoVisible {
+  private aTurnoVisible(cita: Booking): TurnoVisible {
     const estado = this.presentacionDelEstado(cita.statusConceptId);
     const resourceId = cita.resourceId ?? '';
     return {

@@ -6,10 +6,15 @@ import type {
   MedicationRequest,
 } from '../../../core/data-access/clinical/clinical.types';
 import type { PatientOrder } from '../../../core/data-access/diagnostics/diagnostics.types';
+import {
+  esReconsulta,
+  type Booking,
+} from '../../../core/data-access/scheduling/scheduling.types';
 import type { Hecho } from '../../../shared/components/molecules/fact-list/fact-list.types';
 import type {
   EncounterHeader,
   TimelineCondition,
+  TimelineFollowUp,
   TimelineNote,
   TimelineOrder,
   TimelinePrescription,
@@ -25,7 +30,7 @@ import {
   esCronica,
   type DiagnosisState,
   type ResolverCodigo,
-} from './diagnosis-state';
+} from '../../../shared/clinical/diagnosis-state';
 
 /* ============================================================================
     De lo que devolvió la API a lo que el paciente lee.
@@ -92,6 +97,8 @@ export interface EncounterInHistory {
   readonly ordenes: readonly TimelineOrder[];
   readonly diagnosticos: readonly TimelineCondition[];
   readonly recetas: readonly TimelinePrescription[];
+  /** La reconsulta que salió de esta atención (C4), o `null` si no hubo. */
+  readonly reconsulta: TimelineFollowUp | null;
 }
 
 /** Un diagnóstico de la pestaña «Diagnósticos». */
@@ -257,6 +264,14 @@ function razonDelHistorico(condicion: Condition, etiqueta: ResolverEtiqueta): st
 export interface DetalleDeAtenciones {
   readonly notas: readonly ChartNote[];
   readonly ordenes: readonly PatientOrder[];
+  /**
+   * Las citas del titular, de donde sale la reconsulta de cada atención (C8).
+   *
+   * Viene con las otras dos y no por separado porque se pide en la misma
+   * lectura perezosa: el vínculo sólo se puede resolver cuando alguien despliega
+   * una atención, y hasta entonces no hay nada que atar.
+   */
+  readonly citas: readonly Booking[];
 }
 
 /**
@@ -308,6 +323,52 @@ function atencionDeLaHistoria(
     recetas: resumen.medicationRequests
       .filter((receta) => receta.encounterId === encuentro.id)
       .map((receta) => recetaDeLaLinea(receta, resumen, etiqueta)),
+    reconsulta: reconsultaDeLaLinea(detalle.citas, encuentro.id, etiqueta),
+  };
+}
+
+/**
+ * La reconsulta que salió de esta atención, si se agendó alguna (C4 → C8).
+ *
+ * Se resuelve por `followUpOf.encounterId` —el vínculo que estrena C4— y no por
+ * el tipo de cita: una cita sin origen no es una reconsulta por más que el
+ * catálogo la clasifique así.
+ *
+ * Si hubiera más de una, gana **la más próxima**. El organismo declara un solo
+ * hecho, y de dos fechas la que importa es la que todavía está por venir; una
+ * sin fecha pierde contra cualquiera que la tenga en vez de colarse primera.
+ *
+ * `profesional` va en `null` a propósito: la reserva no nombra a quien atiende
+ * —trae `resourceId`, que es un identificador— y esta pantalla tiene prohibido
+ * mostrarlos. `null` no es «con nadie»: es «la reserva no lo dice».
+ *
+ * El estado sale del catálogo, y si el catálogo no lo nombró va **vacío** en vez
+ * de «Sin registrar»: el organismo omite el sello, que es más honesto que un
+ * sello que declara ignorancia.
+ */
+function reconsultaDeLaLinea(
+  citas: readonly Booking[],
+  encounterId: string,
+  etiqueta: ResolverEtiqueta,
+): TimelineFollowUp | null {
+  const cita = [...citas]
+    .filter((fila) => esReconsulta(fila) && fila.followUpOf?.encounterId === encounterId)
+    .sort(
+      (a, b) =>
+        (a.startAt?.getTime() ?? Number.POSITIVE_INFINITY) -
+        (b.startAt?.getTime() ?? Number.POSITIVE_INFINITY),
+    )[0];
+
+  if (cita === undefined) {
+    return null;
+  }
+
+  const estado = etiqueta(cita.statusConceptId);
+  return {
+    id: cita.id,
+    cuando: cita.startAt ?? null,
+    profesional: null,
+    estado: estado === SIN_DATO ? '' : estado,
   };
 }
 

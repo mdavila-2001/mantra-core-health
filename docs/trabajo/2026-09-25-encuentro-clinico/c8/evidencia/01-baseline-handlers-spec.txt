@@ -1,0 +1,7 @@
+$ git checkout f7e475c0 (merge base) && corepack yarn test --include=scheduling.handlers.spec.ts
+ Test Files  1 failed (1)
+      Tests  2 failed | 22 passed (24)
+
+Los 2 fallos son PREEXISTENTES en la base del merge: `followUpOf` del handler
+resuelve `startAt` desde la cita de origen (linea 116-119) y el spec de C4
+sigue esperando `{ bookingId, encounterId }` a secas. Clase: TEST_BUG.

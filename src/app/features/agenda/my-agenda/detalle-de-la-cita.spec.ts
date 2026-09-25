@@ -1,7 +1,7 @@
 import { registerLocaleData } from '@angular/common';
 import localeEsBo from '@angular/common/locales/es-BO';
 
-import type { BookingConReconsulta } from '../../../core/data-access/scheduling/follow-up.types';
+import type { Booking } from '../../../core/data-access/scheduling/scheduling.types';
 import {
   detalleDeLaCita,
   pacienteDeLaCita,
@@ -23,7 +23,7 @@ registerLocaleData(localeEsBo);
 
 const IDIOMA = 'es-BO';
 
-function cita(extra: Partial<BookingConReconsulta> = {}): BookingConReconsulta {
+function cita(extra: Partial<Booking> = {}): Booking {
   return {
     id: 'b-1',
     statusConceptId: 'c-confirmada',

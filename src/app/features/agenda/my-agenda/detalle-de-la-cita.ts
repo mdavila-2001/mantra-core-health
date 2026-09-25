@@ -1,8 +1,9 @@
 import { formatDate } from '@angular/common';
 
-import { esReconsulta } from '../../../core/data-access/scheduling/follow-up.types';
-import type { BookingConReconsulta } from '../../../core/data-access/scheduling/follow-up.types';
-import type { Booking } from '../../../core/data-access/scheduling/scheduling.types';
+import {
+  esReconsulta,
+  type Booking,
+} from '../../../core/data-access/scheduling/scheduling.types';
 
 /**
  * El detalle de una cita, en pares rótulo/valor.
@@ -53,7 +54,7 @@ export function pacienteDeLaCita(cita: Booking): string {
  * terminología, y quien tiene el mapa es la pantalla, no esta función.
  */
 export function detalleDeLaCita(
-  cita: BookingConReconsulta,
+  cita: Booking,
   estado: string,
   idioma: string,
   franja?: { readonly desde: Date; readonly hasta: Date },

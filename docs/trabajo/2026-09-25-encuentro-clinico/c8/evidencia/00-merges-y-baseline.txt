@@ -1,0 +1,10 @@
+$ git log --merges --oneline -3
+f7e475c0 Merge remote-tracking branch 'origin/claude/clinica-c6-historia-paciente' into claude/clinica-c8-integracion
+bf2c3545 Merge pull request #660 from mdavila-2001/justin/citas-toggle-tus-citas
+1b6c5d67 Merge pull request #659 from mdavila-2001/justin/farmacia-nav-absorbe-pedidos-cotizaciones
+
+$ git log --oneline -1
+f7e475c0 Merge remote-tracking branch 'origin/claude/clinica-c6-historia-paciente' into claude/clinica-c8-integracion
+
+$ grep -rn "TODO C8" src/ | wc -l  (antes)
+16

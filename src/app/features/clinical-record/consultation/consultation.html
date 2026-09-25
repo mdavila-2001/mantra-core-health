@@ -164,6 +164,34 @@
         }
       </ul>
     </section>
+
+    <!-- ─── Lo registrado en este encuentro (C8) ───────────────────────────
+         La misma línea que el paciente lee en su historia, montada del lado
+         de quien la escribe. Va DEBAJO de la rejilla a propósito: primero
+         está lo que se puede registrar, después lo que ya quedó registrado.
+
+         Sin encuentro abierto no se dibuja: no habría «este encuentro» del
+         que hablar, y una línea vacía se leería como una consulta sin nada
+         anotado. -->
+    @if (loRegistrado(); as registrado) {
+      <section
+        class="consulta__registro"
+        aria-labelledby="consulta-linea-titulo"
+        data-testid="consulta-lo-registrado"
+      >
+        <h2 id="consulta-linea-titulo" class="consulta__titulo">
+          Lo registrado en este encuentro
+        </h2>
+
+        <app-encounter-timeline
+          data-testid="consulta-linea-encuentro"
+          [encounter]="registrado.encabezado"
+          [notes]="registrado.notas"
+          [conditions]="registrado.diagnosticos"
+          [prescriptions]="registrado.recetas"
+        />
+      </section>
+    }
   </div>
 </app-view-state-host>
 

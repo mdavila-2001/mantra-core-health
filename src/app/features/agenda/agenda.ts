@@ -27,6 +27,8 @@ import {
 } from '../clinical-record/clinical-record.routes';
 import { ClinicalClient } from '../../core/data-access/clinical/clinical.client';
 import { SchedulingClient } from '../../core/data-access/scheduling/scheduling.client';
+// El sello de reconsulta (C4).
+import { esReconsulta } from '../../core/data-access/scheduling/scheduling.types';
 import type {
   AgendaResource,
   AgendaSlot,
@@ -35,10 +37,7 @@ import type {
   PaymentStateCode,
   PaymentStateInfo,
 } from '../../core/data-access/scheduling/scheduling.types';
-// El sello de reconsulta (C4). Los dos campos viven en `follow-up.types.ts`
 // hasta que C0 publique los tipos congelados.
-import { esReconsulta } from '../../core/data-access/scheduling/follow-up.types';
-import type { BookingConReconsulta } from '../../core/data-access/scheduling/follow-up.types';
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
@@ -2757,7 +2756,7 @@ export class Agenda {
   private aplicarCitas(
     resultado:
       | { error: unknown }
-      | { items: readonly BookingConReconsulta[]; truncated: boolean },
+      | { items: readonly Booking[]; truncated: boolean },
   ): void {
     if ('error' in resultado) {
       this.citas.set(errorToViewState<readonly CitaVisible[]>(resultado.error));
@@ -2804,7 +2803,7 @@ export class Agenda {
 
   /* -- Traducciones -------------------------------------------------------- */
 
-  private aCitaVisible(cita: BookingConReconsulta): CitaVisible {
+  private aCitaVisible(cita: Booking): CitaVisible {
     const paciente = cita.patientProfileId ?? null;
     const estado = toBookingStatusPresentation(
       cita.statusConceptId === undefined
