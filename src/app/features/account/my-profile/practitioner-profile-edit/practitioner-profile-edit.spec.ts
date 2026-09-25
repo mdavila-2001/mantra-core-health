@@ -1202,6 +1202,31 @@ describe('PractitionerProfileEdit', () => {
       dialogos.confirm = () => Promise.resolve(true);
     }
 
+    it('editar una especialidad no ofrece el seleccionable de certificación de junta', () => {
+      const fixture = montarConVista({
+        ...PERFIL_CON_FILAS,
+        specialties: [{ ...PERFIL_CON_FILAS.specialties[0], boardCertified: true }],
+      });
+      const fila = interno<() => readonly { id: string }[]>('filasEspecialidades')()[0]!;
+      interno<(f: unknown) => void>('editarEspecialidad')(fila);
+      fixture.detectChanges();
+
+      const dialogo = fixture.nativeElement.querySelector('[data-testid="edicion-dialogo"]');
+      expect(dialogo).not.toBeNull();
+      expect(dialogo.textContent).not.toContain('Certificada por el colegio o consejo');
+      expect(dialogo.querySelector('app-switch')).toBeNull();
+
+      señal<string | null>('edicionEspecialidad').set('esp-pediatria');
+      interno<() => void>('guardarEdicion')();
+      const request = http.expectOne('/profiles/practitioners/me/specialties/spec-9');
+      expect(request.request.method).toBe('PATCH');
+      expect(request.request.body).toEqual({ specialtyConceptId: 'esp-pediatria' });
+      request.flush(null);
+      http
+        .expectOne('/profiles/practitioners/me/summary')
+        .flush({ ...PERFIL_BASE, ...PERFIL_CON_FILAS });
+    });
+
     it('la fila pendiente se puede corregir y retirar; la verificada no', () => {
       montarYCargar(PERFIL_CON_FILAS);
 
