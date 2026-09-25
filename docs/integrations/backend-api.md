@@ -1071,6 +1071,19 @@ comercial: ni el corredor ni la aseguradora ven historial médico.
 > sí (FT-32-R02); lo consume `InsuranceClaimDetail` (badge «Posible
 > duplicado» · `BILLING_OPERATOR`/`SECURITY_ADMIN`).
 
+> **`GET /insurance-claims/:id` gana `settlement` y `eob` (Tarea 3 · H8, CA-3.1/CA-3.3).**
+> `settlement: { availability, totalBilledAmount, totalApprovedAmount,
+> totalPatientAmount, totalDeniedAmount, reconciled, exclusions }` —
+> `totalBilledAmount = totalApprovedAmount + totalPatientAmount +
+> totalDeniedAmount`; `reconciled` es `true` sólo cuando esa ecuación cuadra
+> al centavo. `eob: { id, publishedAt } | null`. Una exclusión sin
+> `policyClauseReference`, una línea sin adjudicar o un descuadre degradan
+> `availability` a `UNDER_REVIEW` en vez de publicarse como liquidación
+> firme; sin dictamen o sin EOB publicada es `PENDING_PUBLICATION`. Lo
+> consume la nueva sección «Liquidación» de `InsuranceClaimDetail` y, del
+> lado del paciente, `PatientInsuranceSettlement` (misma semántica, otro
+> endpoint).
+
 ### `InsuranceAnalyticsClient` — 1 operación · subtarea 3.1, v4.2.14
 
 El tablero de siniestralidad, gasto per cápita y morbilidad de la

@@ -587,6 +587,23 @@ const solicitudes = new Coleccion<SolicitudSimulada>(
       false,
       [['Consulta general', '320.00', null, 'PENDING']],
     ],
+    // Tarea 3 · H8 (CA-3.3): una exclusión sin cláusula contractual degrada
+    // la liquidación a UNDER_REVIEW — nunca se publica un rechazo sin
+    // respaldo de póliza. Nivel inválido de la maqueta (`insurance.handlers.spec.ts`).
+    [
+      'CLM-2026-0183',
+      0,
+      '200.00',
+      '80.00',
+      -4,
+      'PARTIAL',
+      'Aprobada parcialmente',
+      false,
+      [
+        ['Consulta cardiológica', '120.00', '80.00', 'APPROVED'],
+        ['Radiografía de tórax', '80.00', '0.00', 'DENIED'],
+      ],
+    ],
   ].map(
     (
       [claimIdentifier, carrierIndex, billed, approved, dias, code, display, disputa, lineas],
@@ -599,7 +616,7 @@ const solicitudes = new Coleccion<SolicitudSimulada>(
       // "titular sin coberturas" con recordCount === 0 esperado
       // (insurance-portability.handlers.spec.ts:16) — usar el 1 rompía
       // exactamente esa aserción.
-      patientProfileId: PACIENTES[[0, 5, 2, 0, 8, 0, 3][i]!]!.id,
+      patientProfileId: PACIENTES[[0, 5, 2, 0, 8, 0, 3, 0][i]!]!.id,
       carrierIndex: carrierIndex as number,
       policyIdentifier: `POL-${100200 + i * 17}`,
       billed: billed as string,
@@ -976,6 +993,54 @@ export function registrarSeguros(router: MockRouter): void {
     const s = solicitudes.get(params['id']!);
     if (s === undefined) return notFound('Solicitud no encontrada');
     const adjudicada = s.approved !== null;
+    const items = s.lineas.map((l, i) => ({
+      id: uuid(`line-${s.id}-${i}`),
+      linea: l,
+    }));
+    // El copago del paciente es SOLO lo que queda a su cargo en las líneas
+    // APROBADAS (facturado − aprobado de esa línea). Una línea DENIED no le
+    // agrega copago al paciente: su importe entero va a "rechazado". Sumar
+    // `billed − approved` a nivel de cabecera (como antes) contaba el
+    // rechazado dos veces — CLM-2026-0177 daba 150+150+120=420 sobre 300
+    // facturados.
+    const totalPatientAmount = s.lineas
+      .filter((l) => l.decision === 'APPROVED')
+      .reduce((t, l) => t + (Number(l.billed) - Number(l.approved ?? '0')), 0)
+      .toFixed(2);
+    const totalDeniedAmount = s.lineas
+      .filter((l) => l.decision === 'DENIED')
+      .reduce((t, l) => t + Number(l.billed), 0)
+      .toFixed(2);
+    // CA-3.3: una exclusión sin cláusula contractual nunca se publica como
+    // liquidación firme.
+    const exclusionSinClausula = s.lineas.some(
+      (l) => l.decision === 'DENIED' && (l.clause === null || l.clause.trim() === ''),
+    );
+    const settlementAvailability = !adjudicada
+      ? 'PENDING_PUBLICATION'
+      : exclusionSinClausula
+        ? 'UNDER_REVIEW'
+        : 'AVAILABLE';
+    const settlement = {
+      availability: settlementAvailability,
+      totalBilledAmount: settlementAvailability === 'AVAILABLE' ? s.billed : null,
+      totalApprovedAmount: settlementAvailability === 'AVAILABLE' ? s.approved : null,
+      totalPatientAmount: settlementAvailability === 'AVAILABLE' ? totalPatientAmount : null,
+      totalDeniedAmount: settlementAvailability === 'AVAILABLE' ? totalDeniedAmount : null,
+      reconciled: settlementAvailability === 'AVAILABLE',
+      exclusions:
+        settlementAvailability === 'AVAILABLE'
+          ? items
+              .filter(({ linea }) => linea.decision === 'DENIED')
+              .map(({ id, linea }) => ({
+                claimLineId: id,
+                itemName: linea.service,
+                amount: linea.billed,
+                policyClauseReference: linea.clause!,
+                denialRationale: linea.rationale,
+              }))
+          : [],
+    };
     const adjudicacion = adjudicada
       ? {
           id: uuid(`adj-${s.id}`),
@@ -988,20 +1053,15 @@ export function registrarSeguros(router: MockRouter): void {
                 ? 'El electrocardiograma requiere autorización previa.'
                 : 'Aprobada según tarifario vigente.',
           totalApprovedAmount: money(s.approved!),
-          totalPatientAmount: money((Number(s.billed) - Number(s.approved)).toFixed(2)),
-          totalDeniedAmount: money(
-            s.lineas
-              .filter((l) => l.decision === 'DENIED')
-              .reduce((t, l) => t + Number(l.billed), 0)
-              .toFixed(2),
-          ),
+          totalPatientAmount: money(totalPatientAmount),
+          totalDeniedAmount: money(totalDeniedAmount),
           adjudicatedAt: iso(-1),
         }
       : null;
     return {
       header: itemDeSolicitud(s),
-      lines: s.lineas.map((l, i) => ({
-        id: uuid(`line-${s.id}-${i}`),
+      lines: items.map(({ id, linea: l }, i) => ({
+        id,
         lineSequence: i + 1,
         service: c(`SVC-${i}`, l.service),
         billedAmount: money(l.billed),
@@ -1026,6 +1086,8 @@ export function registrarSeguros(router: MockRouter): void {
       })),
       lineBilledTotal: money(s.billed),
       lineApprovedTotal: s.approved === null ? null : money(s.approved),
+      settlement,
+      eob: adjudicada ? { id: uuid(`eob-${s.id}`), publishedAt: iso(-1) } : null,
       adjudication: adjudicacion,
       adjudicationHistory: adjudicacion === null ? [] : [adjudicacion],
       disputes: s.hasOpenDispute

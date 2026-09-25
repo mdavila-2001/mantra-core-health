@@ -4,10 +4,18 @@
 .claim__header,
 .claim__contact,
 .claim__adjudication,
+.claim__settlement,
 .claim__lines,
 .claim__actions,
 .claim__history {
     margin-block-end: var(--sp-8);
+}
+
+.claim__settlement-subtitle {
+    margin-block: var(--sp-5) var(--sp-3);
+    font-size: var(--fs-body);
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
 .claim__section-title {
