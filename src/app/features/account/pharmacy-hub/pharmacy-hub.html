@@ -1,0 +1,31 @@
+<app-page-header
+  title="Farmacia"
+  subtitle="Tus pedidos de farmacia y cuánto cuesta comprar, en un solo lugar."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<!-- UNA tarjeta con pestañas, a lo ancho y centrada: la regla de la casa
+     (`docs/components/composition-rules.md` §5). -->
+<app-card padding="lg" class="farmacia__tarjeta">
+  <app-tabs
+    [selectedIndex]="pestana()"
+    (selectedIndexChange)="elegirPestana($event)"
+    data-testid="farmacia-pestanas"
+  >
+    <app-tab [label]="pestanas[0]">
+      <app-pharmacy-orders [embedded]="true" />
+    </app-tab>
+    <app-tab [label]="pestanas[1]">
+      <!-- **Diferida**, como la segunda pestaña de `IdentityHub`: arrastra la
+           tabla de datos, la paginación y el selector de origen, y no es la
+           primera pestaña de nadie. -->
+      @defer (when pestana() === 1) {
+        <app-cotizaciones [embedded]="true" fixedVertical="MEDICAMENTOS" />
+      } @placeholder {
+        <p class="farmacia__cargando">Abrí esta pestaña para comparar precios de farmacia.</p>
+      } @loading {
+        <app-spinner label="Cargando cotizaciones" />
+      }
+    </app-tab>
+  </app-tabs>
+</app-card>
