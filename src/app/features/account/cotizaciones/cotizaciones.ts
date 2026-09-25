@@ -11,6 +11,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { catchError, map, of, startWith, switchMap, type Observable } from 'rxjs';
 
+import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import {
@@ -108,6 +109,12 @@ export class Cotizaciones {
   private readonly auth = inject(AuthService);
   private readonly profiles = inject(ProfilesClient);
 
+  /**
+   * Con el backend simulado los precios de farmacia y de estudios son de
+   * ejemplo: se dice arriba de todo, no sólo fila por fila (R2-02).
+   */
+  protected readonly esMaqueta = environment.mockBackend;
+
   protected readonly termino = signal('');
   protected readonly vertical = signal<VerticalCotizacion>('TODAS');
   protected readonly orden = signal<OrdenCotizacion>('PRECIO');
@@ -196,6 +203,16 @@ export class Cotizaciones {
     );
   });
 
+  /** Hay filas para mostrar: en angosto se pintan como tarjetas. */
+  protected readonly hayFilas = computed(
+    () => this.busqueda().status === 'ready' && this.resultados().length > 0,
+  );
+
+  /** La búsqueda volvió bien y no encontró nada: S2, con su propio vacío. */
+  protected readonly sinResultados = computed(
+    () => this.busqueda().status === 'ready' && this.resultados().length === 0,
+  );
+
   protected readonly fuentesCaidas = computed<string>(() => {
     const actual = this.busqueda();
     return actual.status === 'ready'
@@ -214,11 +231,11 @@ export class Cotizaciones {
     if (actual.status !== 'ready') {
       return actual as ViewState<readonly CotizacionResultado[]>;
     }
+    // Sin resultados no es «colección vacía» (S1) sino «la búsqueda no
+    // encontró» (S2, ADR-0005): lo pinta la pantalla con su propio vacío, no
+    // el genérico del host («Todavía no hay nada acá»).
     return this.resultados().length === 0
-      ? empty(
-          { label: 'Probá con otra palabra o con «Todas» las verticales' },
-          'No encontramos cotizaciones para esa búsqueda.',
-        )
+      ? empty({ label: 'Probá con otra palabra' }, 'No encontramos cotizaciones.')
       : ready(this.resultadosPaginados());
   });
 
@@ -231,15 +248,21 @@ export class Cotizaciones {
   private readonly celdaAccion =
     viewChild.required<TemplateRef<{ $implicit: CotizacionResultado }>>('celdaAccion');
 
-  /** Qué, dónde, precio, distancia y acción (H3.S2.M3). */
+  /**
+   * Qué (y dónde), precio, distancia y acción (H3.S2.M3).
+   *
+   * Todas con prioridad 1: el dónde y la distancia son la mitad de la
+   * decisión, y con prioridad 2 la tabla los escondía en móvil detrás de un
+   * «▼» sin rótulo. El dónde va dentro de la celda del qué para que en 390 px
+   * entren las cuatro columnas.
+   */
   protected readonly columnas = computed<readonly ColumnDef<CotizacionResultado>[]>(() => [
-    { key: 'que', header: 'Qué', priority: 1, cell: this.celdaQue() },
-    { key: 'donde', header: 'Dónde', priority: 2 },
+    { key: 'que', header: 'Qué y dónde', priority: 1, cell: this.celdaQue() },
     { key: 'price', header: 'Precio', priority: 1, align: 'end', cell: this.celdaPrecio() },
     {
       key: 'distanceKm',
-      header: 'Distancia',
-      priority: 2,
+      header: 'Distancia (línea recta)',
+      priority: 1,
       align: 'end',
       cell: this.celdaDistancia(),
     },
@@ -255,9 +278,18 @@ export class Cotizaciones {
   }
 
   protected precioDe(fila: CotizacionResultado): string {
-    return fila.price === null
-      ? 'Precio no publicado'
-      : `${fila.price.amount} ${fila.price.currency}`;
+    if (fila.price === null) {
+      return 'Precio no publicado';
+    }
+    // Dinero con dos decimales fijos («35,00 BOB», «30,50 BOB»); la UMA es una
+    // unidad de arancel, no dinero, y va como la publica el Colegio («4 UMA»).
+    const decimales = fila.price.currency === 'UMA' ? 0 : 2;
+    const importe = fila.price.amount.toLocaleString('es-BO', {
+      minimumFractionDigits: decimales,
+      maximumFractionDigits: 2,
+    });
+    // Espacio duro: el importe no se separa de su unidad al partir el renglón.
+    return `${importe}\u00A0${fila.price.currency}`;
   }
 
   protected procedenciaDe(fila: CotizacionResultado): string {
@@ -267,9 +299,14 @@ export class Cotizaciones {
   }
 
   protected distanciaDe(fila: CotizacionResultado): string {
+    // Sin origen la API de farmacias no calcula distancia: la falta es del
+    // origen, no de la sede, y decirlo así es lo que deja saber qué hacer.
+    if (fila.distanceKm === null && fila.vertical === 'MEDICAMENTOS' && this.origen() === null) {
+      return 'Elegí desde dónde medir';
+    }
     return fila.distanceKm === null
       ? (fila.sinDistancia ?? 'Sin distancia publicada')
-      : `${fila.distanceKm.toLocaleString('es-BO', { maximumFractionDigits: 1 })} km en línea recta`;
+      : `${fila.distanceKm.toLocaleString('es-BO', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
   }
 
   protected buscar(termino: string): void {
@@ -289,6 +326,10 @@ export class Cotizaciones {
 
   protected ordenarPorPrecio(): void {
     this.cambiarOrden('PRECIO');
+  }
+
+  protected limpiarBusqueda(): void {
+    this.buscar('');
   }
 
   protected reintentar(): void {

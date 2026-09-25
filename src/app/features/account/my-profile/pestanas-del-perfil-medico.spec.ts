@@ -55,17 +55,17 @@ describe('las pestañas de la ficha del médico', () => {
    * Eran una y pasaron a dos el 21/09/2026: se sumó `sexAtBirth`, que estaba
    * declarado como si viviera en «Datos personales» y ahí no está —la lectura
    * del perfil médico no devuelve el dato, así que no hay nada que mostrar—.
-   * Son cinco desde el 23/09/2026: los tres contactos del trabajo, que el
-   * médico pidió sacar de «Contacto» (D-03). Y siete desde que el alta suma la
-   * dirección laboral y su punto en el mapa, que la ficha todavía no lee.
+   * Fueron cinco el 23/09/2026: los tres contactos del trabajo, que el médico
+   * pidió sacar de «Contacto» (D-03). Siete cuando el alta sumó la dirección
+   * laboral y su punto en el mapa, que la ficha todavía no lee. Y seis desde
+   * el 24/09/2026, cuando el correo de trabajo volvió a «Contacto» (#645).
    *
    * La lista se sigue fijando entera a propósito. Es el freno a que ausentarse
    * de la ficha sea la salida fácil: sumar un campo acá exige tocar esta
    * prueba y escribir el motivo, que es exactamente la fricción que se quiere.
    */
-  it('las siete ausencias son las declaradas, y las siete dicen por qué', () => {
+  it('las seis ausencias son las declaradas, y las seis dicen por qué', () => {
     expect(Object.keys(CAMPOS_DEL_ALTA_SIN_PESTANA).sort()).toEqual([
-      'email',
       'gpsTrabajo',
       'password',
       'sexAtBirth',
@@ -75,12 +75,12 @@ describe('las pestañas de la ficha del médico', () => {
     ]);
     expect(CAMPOS_DEL_ALTA_SIN_PESTANA['password']).toContain('Cambiar contraseña');
     expect(CAMPOS_DEL_ALTA_SIN_PESTANA['sexAtBirth']).toContain('no lo devuelve');
-    for (const campo of ['workMobilePhone', 'workLandline', 'email']) {
+    for (const campo of ['workMobilePhone', 'workLandline']) {
       expect(CAMPOS_DEL_ALTA_SIN_PESTANA[campo], campo).toContain('(D-03)');
       expect(CAMPOS_DEL_ALTA_SIN_PESTANA[campo], campo).toContain('«Contacto»');
     }
-    // El correo de trabajo se va de «Contacto», pero el de acceso no se pierde.
-    expect(CAMPOS_DEL_ALTA_SIN_PESTANA['email']).toContain('correo de acceso');
+    // El correo de trabajo es un contacto y se corrige en «Contacto» (#645).
+    expect(CAMPO_DEL_ALTA_EN_PESTANA['email']).toBe(PESTANA_MEDICO.contacto);
     expect(CAMPOS_DEL_ALTA_SIN_PESTANA['workAddressLines']).toContain('dirección laboral');
     expect(CAMPOS_DEL_ALTA_SIN_PESTANA['gpsTrabajo']).toContain('lugar de trabajo');
   });
@@ -153,22 +153,20 @@ describe('las pestañas de la ficha del médico', () => {
   });
 
   /**
-   * Esta prueba decía lo contrario hasta el 20/09/2026: exigía que el editor
-   * **no** tuviera «Actividad», porque los contadores no se editan.
+   * Esta prueba cambió dos veces. Hasta el 20/09/2026 exigía que el editor
+   * **no** tuviera «Actividad»; ese día el doctor pidió «TODAS las pestañas
+   * editables» (C-05) y pasó a exigir las mismas siete de la ficha. El
+   * 24/09/2026 el cliente pidió sacarla otra vez: «no debe poder editarse
+   * actividad, porque es solo estadísticas».
    *
-   * El doctor pidió que «TODAS las pestañas sean editables, o sea su
-   * información» (C-05), y su kill-test es contar: menos pestañas que la ficha
-   * y la corrección no está hecha. Los contadores siguen sin editarse —eso no
-   * cambió y está fijado abajo—; lo que cambió es que ya no se resuelve
-   * sacando la pestaña, sino teniéndola y diciendo en ella por qué no hay nada
-   * que escribir.
-   *
-   * Se reemplaza por la invariante FUERTE, no por ninguna: las dos listas son
-   * la misma, en el mismo orden. Con la anterior, el editor podía perder tres
-   * pestañas sin que nadie se enterara.
+   * Se conserva la invariante FUERTE: las listas son la misma, en el mismo
+   * orden, con UNA sola diferencia declarada. Así el editor no puede perder
+   * otra pestaña sin que nadie se entere.
    */
-  it('el editor tiene exactamente las mismas pestañas que la ficha, en el mismo orden', () => {
-    expect([...PESTANAS_DEL_EDITOR_MEDICO]).toEqual([...PESTANAS_DEL_PERFIL_MEDICO]);
+  it('el editor tiene las pestañas de la ficha, en el mismo orden, menos «Actividad»', () => {
+    expect([...PESTANAS_DEL_EDITOR_MEDICO]).toEqual(
+      PESTANAS_DEL_PERFIL_MEDICO.filter((pestana) => pestana !== 'Actividad'),
+    );
   });
 
   /** Y los índices con nombre no se pueden desincronizar de las dos listas. */

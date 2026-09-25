@@ -84,6 +84,18 @@ const AVISO_DE_CREDENCIALES =
   'Acá se separa lo que declaraste de lo que ya fue verificado contra una fuente ' +
   '—el colegio médico, el registro de matrículas—. Declarar no exige verificación previa.';
 
+/**
+ * «Trayectoria» también dejó de ser una caja arriba de la pestaña (24/09/2026),
+ * pero su aviso sale **cada vez** que se abre y dura 3 s: orienta sin tapar la
+ * línea de tiempo. No reusa la clave del bloque cerrado, porque quien lo había
+ * cerrado no lo vería nunca.
+ */
+const ETIQUETA_DE_TRAYECTORIA = PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.trayectoria];
+
+const AVISO_DE_TRAYECTORIA =
+  'Dónde ejerciste antes y dónde ejercés hoy. Es lo que un paciente ve en el ' +
+  'Directorio de médicos antes de pedir una cita. Tus títulos están en «Credenciales».';
+
 /** Lo que se dice cuando la cuenta no tiene dónde guardar la foto. */
 const SIN_PERFIL_PARA_LA_FOTO =
   'Tu cuenta todavía no está asociada a un perfil profesional, así que no hay ' +
@@ -337,6 +349,15 @@ export class PractitionerProfile {
    * nada que evitar.
    */
   protected alVerPestana(etiqueta: string): void {
+    if (etiqueta === ETIQUETA_DE_TRAYECTORIA) {
+      this.toasts.show({
+        type: 'info',
+        title: 'Trayectoria',
+        message: AVISO_DE_TRAYECTORIA,
+        durationMs: 3000,
+      });
+      return;
+    }
     if (etiqueta !== ETIQUETA_DE_CREDENCIALES) {
       return;
     }

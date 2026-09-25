@@ -392,8 +392,8 @@ describe('PractitionerProfileView', () => {
     for (const esPropio of [true, false]) {
       TestBed.resetTestingModule();
       const host = montar(PERFIL, esPropio);
-      const pestanas = [...host.querySelectorAll('[role="tab"]')].map(
-        (t) => (t.textContent ?? '').trim(),
+      const pestanas = [...host.querySelectorAll('[role="tab"]')].map((t) =>
+        (t.textContent ?? '').trim(),
       );
       expect(pestanas.length).toBeGreaterThan(0);
 
@@ -562,11 +562,12 @@ describe('PractitionerProfileView', () => {
 
   /* -- I-D (F-31): la ayuda es de quien arma su perfil, no de quien lo mira -- */
 
-  it('el dueño ve la ayuda de cada pestaña', () => {
+  it('el dueño ya no ve la ayuda como bloque: salió a un toast', () => {
     const host = montar(PERFIL, true);
 
+    // «Trayectoria» pasó a toast el 24/09/2026 (lo lanza practitioner-profile).
     seleccionarPestana(host, 'Trayectoria');
-    expect(host.querySelector('app-tab-help-block')).not.toBeNull();
+    expect(host.querySelector('app-tab-help-block')).toBeNull();
     // En «Credenciales» la explicación dejó de ser una caja arriba de todo y
     // pasó a un toast (19/09/2026): lo que se comprueba acá es que la pestaña
     // ya no la dibuja como bloque.
@@ -745,6 +746,24 @@ describe('PractitionerProfileView', () => {
     expect(host.textContent).toContain('Son los registros que dejaste asentados con esta cuenta');
   });
 
+  /**
+   * «En el perfil del doctor no debe poder editarse actividad, porque es solo
+   * estadísticas» —cliente, 24/09/2026—. Hasta ese día el lápiz de esta
+   * pestaña abría el editor en una pestaña «Actividad» sin campos.
+   */
+  it('en «Actividad» no hay lápiz: son estadísticas, no se editan', () => {
+    const host = montar(PERFIL, true);
+    expect(host.querySelector('[data-testid="mi-perfil-editar"]')).not.toBeNull();
+
+    seleccionarPestana(host, 'Actividad');
+    expect(host.querySelector('[data-testid="mi-perfil-editar"]')).toBeNull();
+
+    // Y vuelve en cuanto se sale de ahí, apuntando a la pestaña que se mira.
+    seleccionarPestana(host, 'Credenciales');
+    const lapiz = host.querySelector('[data-testid="mi-perfil-editar"]');
+    expect(lapiz?.getAttribute('href')).toContain('pestana=5');
+  });
+
   it('un visitante ve la actividad en tercera persona', () => {
     const host = montar(PERFIL, false);
     expect(host.textContent).toContain('Actividad en la plataforma');
@@ -791,17 +810,21 @@ describe('PractitionerProfileView', () => {
       mapaDomicilio: null,
     };
 
-    it('la ficha muestra los contactos personales del registro, y ninguno del trabajo (D-03)', () => {
+    it('la ficha muestra los contactos personales y el correo de trabajo, y ningún teléfono del trabajo (D-03)', () => {
       // Pedido del propietario: la ficha del médico tiene que mostrar los
-      // mismos campos que su registro. Desde el 23/09/2026, sin los del
-      // trabajo: el médico pidió que «Contacto» no los tuviera.
+      // mismos campos que su registro. Desde el 23/09/2026, sin los teléfonos
+      // del trabajo: el médico pidió que «Contacto» no los tuviera. El correo
+      // de trabajo es un contacto y se corrige en el editor (#645, 24/09/2026).
       const host = montar({ ...PERFIL, datosPersonales: DATOS });
-      const texto = host.textContent ?? '';
+      const texto = (host.textContent ?? '').replace(/\s+/g, ' ');
 
       expect(texto).toContain('+591 70099999');
       expect(texto).toContain('elena.personal@example.test');
       expect(texto).toContain('Av. Banzer 3er anillo');
-      expect(texto).not.toMatch(/del trabajo|de trabajo/i);
+      expect(texto).toContain('Correo de trabajo');
+      expect(texto).not.toContain('Correo de acceso');
+      // Los rótulos exactos: `textContent` pega los renglones sin espacio.
+      expect(texto).not.toMatch(/(Celular|Fijo|Teléfono) del trabajo/i);
     });
 
     it('un contacto no declarado no dibuja su renglón', () => {
@@ -894,19 +917,18 @@ describe('PractitionerProfileView', () => {
       expect(host.textContent).toContain('8812345');
     });
 
-    it('el correo de acceso se lee en «Datos personales», y «Contacto» no tiene nada del trabajo (D-03)', () => {
+    it('«Contacto» lleva el correo de trabajo (#645) y ningún teléfono del trabajo (D-03)', () => {
       const host = montar({ ...PERFIL, datosPersonales: DATOS }, true);
 
       const personales = (host.textContent ?? '').replace(/\s+/g, ' ');
-      expect(personales).toContain('Correo de acceso');
-      expect(personales).toContain('elena@example.test');
-      expect(personales).toContain('Se cambia por su propio trámite');
+      expect(personales).not.toContain('Correo de acceso');
+      expect(personales).not.toContain('Se cambia por su propio trámite');
 
       seleccionarPestana(host, 'Contacto');
       const contacto = (host.textContent ?? '').replace(/\s+/g, ' ');
       expect(contacto).toContain('Celular personal');
-      expect(contacto).not.toMatch(/del trabajo|de trabajo/i);
-      expect(contacto).not.toContain('elena@example.test');
+      expect(contacto).toContain('Correo de trabajo elena@example.test');
+      expect(contacto).not.toMatch(/(celular|fijo|tel[eé]fono)[^.]{0,20}\b(del|de) trabajo/i);
     });
 
     it('todo cuelga de UNA tarjeta: ni portada ni bloques sueltos alrededor', () => {

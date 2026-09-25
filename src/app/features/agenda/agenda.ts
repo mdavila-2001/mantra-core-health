@@ -1262,9 +1262,14 @@ export class Agenda {
    * —`SCHEDULING_ADMIN`, `SCHEDULING_AGENT`, `PRACTITIONER`—, que es
    * exactamente {@link ROLES_QUE_ATIENDEN} salvo el comodín `SUPERADMIN`, al
    * que el `RolesGuard` le responde igual.
+   *
+   * **Al médico no se le ofrece** (pedido del propietario, 24/09): el ingreso
+   * por mostrador es trabajo de quien reparte turnos, y en la agenda del
+   * médico competía con agendar la cita. La API se lo sigue permitiendo; lo
+   * que se quita es el botón.
    */
   protected readonly puedeIngresarPorMostrador = computed(
-    () => this.puedeAtender() && this.recursoElegido() !== null,
+    () => this.puedeAtender() && !this.esQuienAtiende() && this.recursoElegido() !== null,
   );
 
   protected abrirMostrador(): void {

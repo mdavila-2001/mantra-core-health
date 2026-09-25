@@ -85,7 +85,6 @@ import { DatePicker } from '../../../../shared/components/organisms/date-picker/
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { CONTADORES_DE_ACTIVIDAD } from '../contadores-de-actividad';
 import { PESTANA_EDITOR, PESTANAS_DEL_EDITOR_MEDICO } from '../pestanas-del-perfil-medico';
 import { WorkHistory } from '../work-history/work-history';
 import {
@@ -211,6 +210,21 @@ function marcaDeTiempo(fecha: Date | string | undefined): number {
 /** Un teléfono vacío es válido (en el editor los tres son opcionales); uno a medias, no. */
 function telefonoOpcional(control: AbstractControl): ValidationErrors | null {
   return control.value === '' ? null : telefonoCompleto(control);
+}
+
+/**
+ * Lo mínimo para que el correo de trabajo llegue al servidor: algo, una @ y un
+ * dominio con punto. `Validators.email` deja pasar `ana@clinica`, que el
+ * `@IsEmail` del API rechaza.
+ */
+const PATRON_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * El correo de trabajo guardado. Un perfil anterior a los contactos separados
+ * no trae `workEmail`: ahí el de trabajo era el único correo, `email`.
+ */
+function correoDeTrabajoDe(perfil: OwnPractitionerProfile): string {
+  return perfil.workEmail ?? perfil.email ?? '';
 }
 
 /**
@@ -370,16 +384,6 @@ export class PractitionerProfileEdit {
   protected readonly pestanaEditor = PESTANA_EDITOR;
 
   /**
-   * Los cuatro contadores de «Actividad», sin sus valores.
-   *
-   * La pestaña existe para decir que **ninguno** se edita, y el porqué de cada
-   * uno ({@link CONTADORES_DE_ACTIVIDAD}). Los números se leen en la ficha:
-   * duplicar acá el tablero sería mostrar dos veces lo mismo y prometer que
-   * desde el editor se tocan.
-   */
-  protected readonly contadores = CONTADORES_DE_ACTIVIDAD;
-
-  /**
    * Si la pestaña abierta es de las que se corrigen.
    *
    * «Datos personales», «Contacto» y «Facturación» son un solo formulario
@@ -461,6 +465,12 @@ export class PractitionerProfileEdit {
   /** El mismo texto que el alta pone bajo un teléfono incompleto. */
   protected readonly mensajeTelefonoIncompleto = 'El número está incompleto para el país elegido.';
   protected readonly correoPersonal = signal('');
+  protected readonly correoTrabajo = signal('');
+  /**
+   * Por qué no se guardó el correo de trabajo. Es obligatorio desde el alta,
+   * así que a diferencia de los otros contactos no se puede vaciar.
+   */
+  protected readonly errorCorreoTrabajo = signal('');
 
   /* -- Facturación: a nombre de quién salen los comprobantes que emite ------
      El alta de médico no los pregunta, así que acá es donde se cargan por
@@ -1202,10 +1212,9 @@ export class PractitionerProfileEdit {
    * Los datos del alta que el editor **muestra y no deja tocar**.
    *
    * El doctor pidió que editar muestre todos los campos (C-05). Éstos no se
-   * pueden escribir —el contrato de corrección del perfil no los acepta, y en
-   * el caso del correo de acceso está excluido a propósito porque es la
-   * identidad con la que se entra—, pero eso no es razón para que no aparezcan: quien
-   * entra a corregir su documento hoy no encuentra ni el dato ni el motivo.
+   * pueden escribir —el contrato de corrección del perfil no los acepta—, pero
+   * eso no es razón para que no aparezcan: quien entra a corregir su documento
+   * hoy no encuentra ni el dato ni el motivo.
    *
    * Se dibujan como renglones de ficha y **no como campos deshabilitados**: un
    * control apagado invita a buscar cómo encenderlo, y acá no hay forma.
@@ -1219,7 +1228,6 @@ export class PractitionerProfileEdit {
     return {
       documento: perfil.nationalId ?? '',
       departamento: this.etiqueta(perfil.issuerAdministrativeAreaConceptId, ''),
-      correoDeAcceso: perfil.email ?? '',
     };
   });
 
@@ -1334,6 +1342,8 @@ export class PractitionerProfileEdit {
     this.apellidoMaterno.set(perfil.motherLastName ?? '');
     this.celularPersonal.reset(perfil.mobilePhone ?? '');
     this.correoPersonal.set(perfil.personalEmail ?? '');
+    this.correoTrabajo.set(correoDeTrabajoDe(perfil));
+    this.errorCorreoTrabajo.set('');
     this.nit.set(perfil.taxId ?? '');
     this.razonSocial.set(perfil.taxHolderName ?? '');
     this.telemedicina.set(perfil.telehealthAvailable);
@@ -1440,6 +1450,24 @@ export class PractitionerProfileEdit {
       return;
     }
 
+    // El correo de trabajo, igual: uno vacío o mal escrito no viaja.
+    const correoTrabajo = this.correoTrabajo().trim();
+    const correoTrabajoCambio = correoTrabajo !== correoDeTrabajoDe(original);
+    this.errorCorreoTrabajo.set(
+      !correoTrabajoCambio
+        ? ''
+        : correoTrabajo === ''
+          ? 'Escribí tu correo de trabajo.'
+          : PATRON_CORREO.test(correoTrabajo)
+            ? ''
+            : 'Revisá el correo: le falta algo, como la @ o el dominio.',
+    );
+    if (this.errorCorreoTrabajo()) {
+      this.pestana.set(PESTANA_EDITOR.contacto);
+      this.toasts.error('El correo de trabajo no es válido. Revisalo en «Contacto».', 'Perfil');
+      return;
+    }
+
     const cambios: Partial<{
       professionalTitle: string;
       professionalBio: string;
@@ -1451,6 +1479,7 @@ export class PractitionerProfileEdit {
       motherLastName: string;
       mobilePhone: string;
       personalEmail: string;
+      workEmail: string;
       birthDate: string;
       residenceMunicipalityConceptId: string;
       homeAddressLines: string;
@@ -1535,6 +1564,9 @@ export class PractitionerProfileEdit {
     }
     if (this.correoPersonal() !== (original.personalEmail ?? '')) {
       cambios.personalEmail = this.correoPersonal();
+    }
+    if (correoTrabajoCambio) {
+      cambios.workEmail = correoTrabajo;
     }
     // Facturación. Se comparan contra el original y no se descartan los
     // vacíos: `''` es cómo se saca un NIT cargado mal, igual que en el editor

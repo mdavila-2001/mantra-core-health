@@ -10,6 +10,7 @@ import { of } from 'rxjs';
 import { FilterBar } from '../../../../shared/components/organisms/filter-bar/filter-bar';
 import { WorkHistory } from '../work-history/work-history';
 
+import { PESTANAS_DEL_EDITOR_MEDICO } from '../pestanas-del-perfil-medico';
 import { PractitionerProfileEdit } from './practitioner-profile-edit';
 
 /**
@@ -2210,24 +2211,6 @@ describe('PractitionerProfileEdit', () => {
     });
   });
 
-  /**
-   * Disciplina de tablas: buscador y paginación (pedido del propietario,
-   * 24/09/2026). Las tres tablas —Formación, Especialidades y Matrículas—
-   * comparten la misma implementación, así que se prueba a fondo en una y se
-   * repite el filtro en las otras dos.
-   */
-  /**
-   * «Actividad»: la pestaña que existe **para** decir que no se edita.
-   *
-   * El doctor pidió que el editor tenga todas las pestañas de la ficha (C-05).
-   * Los cuatro contadores no se editan —son cuentas de lo que ya pasó, y uno
-   * escrito a mano deja de contar—, así que la respuesta no fue sacar la
-   * pestaña sino tenerla sin un solo campo y explicando por qué.
-   *
-   * Las dos mitades se fijan acá, porque cada una se puede romper sin la otra:
-   * alguien puede volver a quitar la pestaña, y alguien puede «completarla»
-   * poniéndole controles.
-   */
   describe('las tres tablas: paginación, filtro «Estado» y acciones de fila (H4.S3)', () => {
     /** Doce títulos pendientes, del 2020 hacia atrás: la tabla los ordena del más reciente al más antiguo. */
     const DOCE_TITULOS = {
@@ -2630,49 +2613,33 @@ describe('PractitionerProfileEdit', () => {
     });
   });
 
-  describe('la pestaña «Actividad» del editor', () => {
-    it('está, y enumera los cuatro contadores', () => {
-      const fixture = montarConVista();
+  /**
+   * «Actividad» no está en el editor: son estadísticas y no se editan
+   * (pedido del cliente del 24/09/2026). Entre el 20 y el 24/09/2026 estuvo,
+   * sin campos; esta prueba fija que no vuelva.
+   */
+  it('no tiene pestaña «Actividad»', () => {
+    const fixture = montarConVista();
 
-      señal<number>('pestana').set(6);
-      fixture.detectChanges();
-
-      const lista = fixture.nativeElement.querySelector('[data-testid="edicion-actividad"]');
-      expect(lista).not.toBeNull();
-      expect(lista.querySelectorAll('li')).toHaveLength(4);
-    });
-
-    it('no ofrece ni un control para escribir', () => {
-      const fixture = montarConVista();
-
-      señal<number>('pestana').set(6);
-      fixture.detectChanges();
-
-      /* El panel VISIBLE, no el primero del documento: buscar en «Datos
-         personales» —que sí tiene campos— daría rojo por mirar donde no es. */
-      expect(panelAbierto(fixture).querySelectorAll('input, select, textarea')).toHaveLength(0);
-    });
-
-    it('no muestra «Guardar cambios», porque no hay nada que guardar', () => {
-      montarConVista();
-
-      señal<number>('pestana').set(6);
-      expect(interno<() => boolean>('editandoPresentacion')()).toBe(false);
-    });
+    const pestanas = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('[role="tab"]'),
+    ).map((boton) => boton.textContent?.trim() ?? '');
+    expect(pestanas).toEqual([...PESTANAS_DEL_EDITOR_MEDICO]);
+    expect(pestanas).not.toContain('Actividad');
+    expect(fixture.nativeElement.querySelector('[data-testid="edicion-actividad"]')).toBeNull();
   });
 
   /**
    * Lo que el alta pregunta, el editor muestra y nadie puede corregir acá.
    *
-   * «Editar muestre TODOS los campos» (C-05). Estos tres no se pueden escribir
-   * —el contrato del perfil no los acepta, y el correo de trabajo está
-   * excluido a propósito porque es la identidad de acceso—, y hasta el
+   * «Editar muestre TODOS los campos» (C-05). El documento y su departamento no
+   * se pueden escribir —el contrato del perfil no los acepta—, y hasta el
    * 21/09/2026 el editor sencillamente no los mostraba: quien venía a
    * corregirlos no encontraba ni el dato ni el motivo.
    *
-   * Las tres pruebas cubren las tres formas de romperlo: que el dato
-   * desaparezca, que alguien le ponga un control, y que alguien lo mande en el
-   * `PATCH` creyendo que ahí se guarda.
+   * Las pruebas cubren las formas de romperlo: que el dato desaparezca, que
+   * alguien le ponga un control, y que alguien lo mande en el `PATCH` creyendo
+   * que ahí se guarda.
    */
   describe('lo que se muestra y no se corrige', () => {
     const CON_IDENTIDAD = {
@@ -2690,37 +2657,26 @@ describe('PractitionerProfileEdit', () => {
       expect(bloque?.querySelectorAll('input, select, textarea')).toHaveLength(0);
     });
 
-    it('«Datos personales» muestra el correo de acceso, sin control para escribirlo (D-03)', () => {
-      const fixture = montarConVista(CON_IDENTIDAD);
-
-      const bloque = panelAbierto(fixture).querySelector('[data-testid="edicion-correo-acceso"]');
-      expect(bloque).not.toBeNull();
-      expect(bloque?.textContent).toContain('dra.salas@alovida.mock');
-      expect(bloque?.querySelectorAll('input, select, textarea')).toHaveLength(0);
-    });
-
-    it('«Contacto» no ofrece celular, fijo ni correo del trabajo (D-03); la dirección del trabajo sí', () => {
+    it('«Contacto» no ofrece celular ni fijo del trabajo (D-03); el correo y la dirección del trabajo sí', () => {
       const fixture = montarConVista(CON_IDENTIDAD);
 
       señal<number>('pestana').set(1);
       fixture.detectChanges();
 
       const panel = panelAbierto(fixture);
-      for (const testId of [
-        'edicion-celular-trabajo',
-        'edicion-fijo-trabajo',
-        'edicion-correo-trabajo',
-      ]) {
+      for (const testId of ['edicion-celular-trabajo', 'edicion-fijo-trabajo']) {
         expect(panel.querySelector(`[data-testid="${testId}"]`), testId).toBeNull();
       }
       const texto = (panel.textContent ?? '').replace(/\s+/g, ' ');
-      expect(texto).not.toMatch(/(celular|fijo|tel[eé]fono|correo)[^.]{0,20}\b(del|de) trabajo/i);
-      expect(panel.textContent).not.toContain('dra.salas@alovida.mock');
-      // D-03 cubre teléfonos y correo; la dirección donde atiende se queda (24/09/2026).
+      expect(texto).not.toMatch(/(celular|fijo|tel[eé]fono)[^.]{0,20}\b(del|de) trabajo/i);
+      // D-03 cubre los dos teléfonos. El correo de trabajo se corrige acá (#645) y la
+      // dirección donde atiende también se queda (24/09/2026).
+      expect(panel.querySelector('input[data-testid="edicion-correo-trabajo"]')).not.toBeNull();
       expect(panel.querySelector('[data-testid="edicion-direccion-trabajo"]')).not.toBeNull();
+      expect(panel.querySelector('[data-testid="edicion-correo-acceso"]')).toBeNull();
     });
 
-    it('guardar no manda los contactos del trabajo: lo guardado no se borra (D-03)', () => {
+    it('guardar no manda los teléfonos del trabajo ni el correo que nadie tocó: lo guardado no se borra (D-03)', () => {
       montarYCargar({
         ...CON_IDENTIDAD,
         workMobilePhone: '+591 70088888',
@@ -2736,7 +2692,7 @@ describe('PractitionerProfileEdit', () => {
       req.flush(PERFIL_BASE);
     });
 
-    it('guardar no manda ninguno de los tres', () => {
+    it('guardar no manda el documento ni el correo que nadie tocó', () => {
       montarYCargar(CON_IDENTIDAD);
 
       señal<string>('titulo').set('Cardióloga intervencionista');
@@ -2745,6 +2701,75 @@ describe('PractitionerProfileEdit', () => {
       const req = http.expectOne('/profiles/practitioners/me');
       expect(req.request.body).toEqual({ professionalTitle: 'Cardióloga intervencionista' });
       req.flush(PERFIL_BASE);
+    });
+  });
+
+  /**
+   * El correo de trabajo se corrige acá.
+   *
+   * Hasta el 24/09/2026 se mostraba como dato fijo con el argumento de que era
+   * la identidad de acceso. No lo es: el alta lo siembra con el mismo valor que
+   * el login, pero es una fila de contactos (correo × trabajo) y la cuenta no la
+   * lee. Lo que sí lo distingue de los otros contactos es que es obligatorio.
+   */
+  describe('el correo de trabajo', () => {
+    const CON_CORREO = { email: 'dra.salas@alovida.mock' };
+
+    function campo(fixture: ComponentFixture<PractitionerProfileEdit>): HTMLInputElement | null {
+      señal<number>('pestana').set(1);
+      fixture.detectChanges();
+      return panelAbierto(fixture).querySelector('input[data-testid="edicion-correo-trabajo"]');
+    }
+
+    it('«Contacto» lo ofrece en un campo, cargado con el guardado', async () => {
+      const fixture = montarConVista(CON_CORREO);
+
+      const input = campo(fixture);
+      await fixture.whenStable();
+      expect(input).not.toBeNull();
+      expect(input?.value).toBe('dra.salas@alovida.mock');
+    });
+
+    it('prefiere workEmail cuando el correo de acceso es otro', async () => {
+      const fixture = montarConVista({
+        email: 'dra.salas.personal@alovida.mock',
+        workEmail: 'dra.salas@hospital.mock',
+      });
+
+      const input = campo(fixture);
+      await fixture.whenStable();
+      expect(input?.value).toBe('dra.salas@hospital.mock');
+    });
+
+    it('corregido, viaja como workEmail y sin espacios', () => {
+      montarYCargar(CON_CORREO);
+
+      señal<string>('correoTrabajo').set('  dra.salas@clinica.bo ');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ workEmail: 'dra.salas@clinica.bo' });
+      req.flush({ ...PERFIL_BASE, workEmail: 'dra.salas@clinica.bo' });
+    });
+
+    it.each([
+      ['vacío', '   ', 'Escribí tu correo de trabajo.'],
+      [
+        'sin dominio con punto',
+        'dra.salas@clinica',
+        'Revisá el correo: le falta algo, como la @ o el dominio.',
+      ],
+      ['sin @', 'dra.salas.clinica.bo', 'Revisá el correo: le falta algo, como la @ o el dominio.'],
+    ])('%s no viaja: se marca y lleva a «Contacto»', (_caso, valor, mensaje) => {
+      montarYCargar(CON_CORREO);
+      señal<number>('pestana').set(0);
+
+      señal<string>('correoTrabajo').set(valor);
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(señal<string>('errorCorreoTrabajo')()).toBe(mensaje);
+      expect(señal<number>('pestana')()).toBe(1);
     });
   });
 

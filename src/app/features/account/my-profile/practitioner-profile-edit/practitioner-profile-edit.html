@@ -13,9 +13,9 @@
            de 44rem pegada a la izquierda. Es lo que el cliente rechazó dos
            veces y lo que `composition-rules.md` §5 prohíbe desde el 09/09.
 
-           Las pestañas son las de la ficha de lectura
-           (`PESTANAS_DEL_EDITOR_MEDICO`): quien pulsa el lápiz en «Contacto»
-           llega acá y encuentra «Contacto». Los valores viven en señales del
+           Las pestañas son las de la ficha de lectura menos «Actividad», que
+           son estadísticas y no se editan (`PESTANAS_DEL_EDITOR_MEDICO`):
+           quien pulsa el lápiz en «Contacto» llega acá y encuentra «Contacto». Los valores viven en señales del
            componente y no en los controles, así que cambiar de pestaña no
            pierde lo tecleado aunque `app-tab` desmonte el panel que se va. -->
       <app-card variant="outlined" padding="lg" class="edicion__bloque">
@@ -190,23 +190,6 @@
                       <span class="edicion__fijo-sufijo">{{ fijos.departamento }}</span>
                     }
                   </dd>
-                </dl>
-              </section>
-
-              <!-- Se muestra y no se edita, y esto sí es una decisión y no un
-                   hueco: es la identidad con la que se entra, y cambiarla desde
-                   un formulario de perfil dejaría a cualquiera que tome la
-                   sesión un minuto quedándose con la cuenta. El contrato lo
-                   excluye con esa misma razón escrita. Vivía en «Contacto» como
-                   «Tu correo de trabajo»; pasó acá el 23/09/2026 (D-03). -->
-              <section class="edicion__fijos" data-testid="edicion-correo-acceso">
-                <h3 class="edicion__subtitulo">Tu correo de acceso</h3>
-                <p class="edicion__nota">
-                  Es con el que entrás. Se cambia por su propio trámite, no desde acá.
-                </p>
-                <dl class="edicion__fijo">
-                  <dt>Correo de acceso</dt>
-                  <dd>{{ fijos.correoDeAcceso || 'Sin registrar' }}</dd>
                 </dl>
               </section>
             }
@@ -418,15 +401,32 @@
                 <app-form-field
                   label="Correo personal"
                   [errorMessage]="errorDelServidor('personalEmail')"
-                  hint="Distinto del correo de acceso. No se publica en tu ficha."
+                  hint="Distinto del de trabajo. No se publica en tu ficha."
                 >
                   <app-input [(value)]="correoPersonal" placeholder="tu.correo@ejemplo.com" />
                 </app-form-field>
+                <!-- El correo de trabajo es un contacto, no la cuenta: el alta lo
+                     siembra con el mismo valor que el login, pero cambiarlo acá
+                     no cambia con qué correo se entra. -->
+                <app-form-field
+                  label="Correo de trabajo"
+                  hint="El que se muestra en tu perfil. No cambia el correo con el que entrás."
+                  [errorMessage]="errorCorreoTrabajo() || errorDelServidor('workEmail')"
+                >
+                  <app-input
+                    type="email"
+                    autocomplete="work email"
+                    [(value)]="correoTrabajo"
+                    [hasError]="!!(errorCorreoTrabajo() || errorDelServidor('workEmail'))"
+                    placeholder="tu.nombre@consultorio.com"
+                    testId="edicion-correo-trabajo"
+                  />
+                </app-form-field>
               </form>
-              <!-- Sin celular, fijo ni correo del trabajo desde el 23/09/2026:
-                   el médico pidió que «Contacto» no tenga datos del trabajo
-                   (D-03). No se mandan en el PATCH, así que lo guardado no se
-                   borra. El correo de acceso pasó a «Datos personales». -->
+              <!-- Sin celular ni fijo del trabajo desde el 23/09/2026: el médico pidió
+                   que «Contacto» no tuviera teléfonos laborales (D-03). No se mandan
+                   en el PATCH, así que lo guardado no se borra. El correo de trabajo
+                   sí: es un contacto y se corrige acá desde el 24/09/2026 (#645). -->
             }
           </app-tab>
 
@@ -651,40 +651,6 @@
                 />
               }
             </section>
-          </app-tab>
-
-          <!-- ─── Actividad ─────────────────────────────────────────────────
-               «Necesito que TODAS las pestañas sean editables, o sea su
-               información» —doctor, 20/09/2026 (C-05)—. Ésta es la única que
-               no tiene ni un campo, y estaba directamente ausente del editor:
-               quien la buscaba no la encontraba y tampoco sabía por qué.
-
-               No se hizo editable porque los cuatro son CUENTAS de lo que ya
-               pasó, no datos declarados: un contador que se escribe a mano
-               deja de contar y pasa a ser una afirmación sin respaldo sobre
-               actos clínicos. Lo que sí se puede hacer es contestar la
-               pregunta en la pantalla en vez de en un informe: acá está cada
-               contador, qué cuenta y qué hay que hacer para que se mueva. -->
-          <app-tab [label]="pestanas[6]">
-            <p class="edicion__nota">
-              Acá no hay nada que escribir, y es a propósito: estas cuatro cifras las lleva la
-              plataforma a partir de lo que vas registrando.
-            </p>
-
-            <ul class="edicion__contadores" data-testid="edicion-actividad">
-              @for (contador of contadores; track contador.clave) {
-                <li class="edicion__contador">
-                  <p class="edicion__contador-rotulo">{{ contador.rotulo }}</p>
-                  <p class="edicion__contador-pie">{{ contador.pie }}</p>
-                  <p class="edicion__contador-pie">{{ contador.seMueveCon }}</p>
-                </li>
-              }
-            </ul>
-
-            <p class="edicion__nota">
-              Los números, su evolución mes a mes y los indicadores de calidad se leen en
-              <a routerLink="/my-account">tu perfil</a>, en esta misma pestaña.
-            </p>
           </app-tab>
         </app-tabs>
 

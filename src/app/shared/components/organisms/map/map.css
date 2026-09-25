@@ -46,6 +46,61 @@ app-map {
   color: var(--text-secondary);
 }
 
+/* --- Provincias ----------------------------------------------------------- *
+   El trazo lo pone el CSS y no Leaflet: un atributo `stroke` no lee tokens. */
+
+/* `alovida.css` pone `svg { max-width: 100% }` y Leaflet sólo exime de eso a
+   su `overlay-pane`: en un panel propio el SVG se encoge al ancho del panel
+   —cero— y no se pinta ningún límite. */
+.mapa .leaflet-provincias-pane svg {
+  max-width: none;
+  max-height: none;
+}
+
+.mapa .mapa__provincia {
+  stroke: var(--brand-primary);
+  stroke-opacity: 0.55;
+  stroke-dasharray: 6 4;
+}
+
+/* Con `.mapa` delante: `leaflet.css` se engancha después y su
+   `.leaflet-marker-icon { display: block }` ganaría con la misma
+   especificidad, dejando los 112 nombres encimados a cualquier zoom. */
+.mapa .mapa__provincia-rotulo {
+  display: none;
+}
+
+.mapa .mapa__lienzo--con-nombres .mapa__provincia-rotulo {
+  display: block;
+}
+
+.mapa__provincia-nombre {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-shadow: 0 0 3px var(--bg-surface), 0 0 3px var(--bg-surface);
+}
+
+.mapa__provincia-actual {
+  position: absolute;
+  inset-block-start: var(--sp-2);
+  inset-inline-end: var(--sp-2);
+  z-index: 1;
+  max-inline-size: calc(100% - 4rem);
+  margin: 0;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-primary);
+  pointer-events: none;
+}
+
 /* --- Pines ---------------------------------------------------------------- *
    La receta de tono es la de Badge/Chip: fondo claro + texto oscuro del
    mismo trío `--st-*`. `tone.css` no sirve acá porque sus reglas son

@@ -68,28 +68,29 @@ export const PESTANA_MEDICO = {
 } as const;
 
 /**
- * Las pestañas del **editor** del perfil médico: **las mismas de la ficha**.
+ * Las pestañas del **editor** del perfil médico: **las de la ficha menos
+ * «Actividad»**.
  *
  * Pedido del cliente, repetido el 2026-09-11: editar el perfil tiene que ser
  * «en varias pestañas». Hasta hoy el editor eran cuatro tarjetas apiladas con
  * cuatro botones de guardar, que es justo lo que prohíbe
  * `docs/components/composition-rules.md` §5.
  *
- * Son las de {@link PESTANAS_DEL_PERFIL_MEDICO}, las siete, en el mismo orden.
+ * Son las de {@link PESTANAS_DEL_PERFIL_MEDICO} en el mismo orden, salvo la
+ * última.
  *
- * ## «Actividad» está, y no tiene ni un campo
+ * ## «Actividad» no está, y en la ficha no tiene lápiz
  *
- * El doctor pidió el 20/09/2026 que «TODAS las pestañas sean editables, o sea
- * su información» (C-05). «Actividad» son cuatro contadores de lo que la
- * persona ya hizo, y un contador que se escribe a mano deja de contar: pasa a
- * ser una afirmación sin respaldo sobre actos clínicos. Así que no se hizo
- * editable **ni se dejó afuera**: la pestaña existe, enumera los cuatro con lo
- * que cuenta cada uno y dice qué hay que hacer para que el número se mueva
- * ({@link CONTADORES_DE_ACTIVIDAD}).
+ * Son cuatro contadores de lo que la persona ya hizo —encuentros, recetas,
+ * notas, documentos—, y un contador que se escribe a mano deja de contar.
  *
- * El desvío es deliberado y esta es la diferencia que importa: antes faltaba
- * la pestaña y quien la buscaba no encontraba nada ni sabía por qué; ahora la
- * encuentra y lee el motivo en la pantalla, no en un informe.
+ * Entre el 20/09/2026 y el 24/09/2026 el editor la tuvo, sin un solo campo y
+ * explicando por qué, porque el doctor había pedido que «TODAS las pestañas
+ * sean editables» (C-05). El cliente pidió el 24/09/2026 sacarla: «en el
+ * perfil del doctor no debe poder editarse actividad, porque es solo
+ * estadísticas». Una pestaña de edición donde no se edita nada seguía
+ * prometiendo que ahí algo se cambia. Ahora la ficha no ofrece el lápiz en
+ * «Actividad» (`pestanaDeEdicion` da `null`) y el editor no la tiene.
  *
  * ## «Dónde atiendo» volvió, y por qué
  *
@@ -128,13 +129,12 @@ export const PESTANAS_DEL_EDITOR_MEDICO = [
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.dondeAtiendo],
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.trayectoria],
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.credenciales],
-  PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.actividad],
 ] as const;
 
 /**
  * Los índices con nombre del editor. Desde el 20/09/2026 **son los mismos que
- * los de la ficha**: quien pulsa el lápiz en una pestaña llega a esa pestaña, y
- * el índice no hay que traducirlo. Se conservan como constante propia porque
+ * los de la ficha** para las seis que tiene: quien pulsa el lápiz en una
+ * pestaña llega a esa pestaña, y el índice no hay que traducirlo. Se conservan como constante propia porque
  * eso puede volver a dejar de ser cierto, y entonces el lugar donde arreglarlo
  * es uno solo.
  */
@@ -145,7 +145,6 @@ export const PESTANA_EDITOR = {
   dondeAtiendo: 3,
   trayectoria: 4,
   credenciales: 5,
-  actividad: 6,
 } as const;
 
 /**
@@ -181,7 +180,9 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
   personalEmail: PESTANA_MEDICO.contacto,
 
   /* 5 · El contacto de tu trabajo.
-     Los tres pasaron a `CAMPOS_DEL_ALTA_SIN_PESTANA` el 23/09/2026 (D-03). */
+     El celular y el fijo pasaron a `CAMPOS_DEL_ALTA_SIN_PESTANA` el 23/09/2026
+     (D-03). El correo de trabajo se corrige en «Contacto» desde el 24/09/2026. */
+  email: PESTANA_MEDICO.contacto,
 
   /* 6 · ¿Dónde vivís? */
   municipio: PESTANA_MEDICO.contacto,
@@ -262,10 +263,6 @@ export const CAMPOS_DEL_ALTA_SIN_PESTANA: Readonly<Record<string, string>> = {
     'Fijo del trabajo. Mismo pedido del médico del 23/09/2026 (D-03): fuera de «Contacto», ' +
     'en la ficha y en el editor. El alta lo sigue preguntando y el dato se guarda; guardar ' +
     'el perfil no lo borra.',
-  email:
-    'Correo de trabajo. Mismo pedido del médico del 23/09/2026 (D-03): fuera de «Contacto». ' +
-    'El correo de acceso no se va: se lee en «Datos personales», sólo lectura, con su ' +
-    'propio trámite para cambiarlo.',
   workAddressLines:
     'El alta la guarda como dirección laboral, separada del domicilio y del consultorio ' +
     'propio, pero la ficha del médico todavía no la lee ni la muestra en ninguna pestaña.',

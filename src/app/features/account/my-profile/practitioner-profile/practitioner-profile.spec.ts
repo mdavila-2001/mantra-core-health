@@ -838,4 +838,18 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
 
     expect(avisos()).toHaveLength(1);
   });
+
+  /* -- El aviso de «Trayectoria» (24/09/2026) ----------------------------- */
+
+  it('«Trayectoria» avisa cada vez que se abre, y dura 3 s', () => {
+    montar();
+
+    operacion<(pestana: string) => void>('alVerPestana')('Trayectoria');
+    operacion<(pestana: string) => void>('alVerPestana')('Actividad');
+    operacion<(pestana: string) => void>('alVerPestana')('Trayectoria');
+
+    expect(avisos()).toHaveLength(2);
+    expect(avisos()[0]?.title).toBe('Trayectoria');
+    expect(TestBed.inject(ToastService).toasts()[0]?.durationMs).toBe(3000);
+  });
 });
