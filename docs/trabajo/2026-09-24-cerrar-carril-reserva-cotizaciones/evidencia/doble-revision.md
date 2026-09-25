@@ -93,6 +93,22 @@ componente nuevo. Además marcó que el anillo de foco (medido en la ronda 3: 1,
 | — | Fila resaltada por hover en varias capturas | MENOR | **Cierto.** `foto()` mueve el mouse a `(0, 0)` antes de cada captura |
 | — | Foco del cupo sin medir en oscuro | MENOR | **Cierto.** `teclado-foco-cupo-1440-dark.png` + medición |
 
-## Ronda 5 — sobre el set final (55 capturas)
+## Ronda 5 — sobre el set final (55 capturas) · veredicto: **RECHAZADA**
+
+Quinto revisor, de solo lectura. Confirmó R4-01 a R4-06 genuinamente resueltos, cruzando cada uno
+contra el código (no sólo contra la captura). Encontró **un solo defecto nuevo, MAYOR**:
+
+| ID | Hallazgo | Severidad | Respuesta |
+|---|---|---|---|
+| R5-01 | `cotizaciones-sin-ubicacion-390-{light,dark}`: un renglón del subtítulo de la página quedaba cortado a la mitad, justo bajo la barra fija — la reaparición puntual del síntoma que R4-04 había cerrado, en una pantalla que la ronda 4 no había capturado con ese ancho | MAYOR | **Cierto.** Causa: `encuadrar()` calculaba la posición con `window.scrollTo`/`scrollBy` a mano, y el contenedor que de verdad scrollea no siempre es `window`. Reescrito con `elemento.scrollIntoViewIfNeeded()` (Playwright encuentra el contenedor real) + `page.mouse.wheel()` para retroceder el alto de la barra — el mismo mecanismo con el que un usuario scrollea, sin adivinar el contenedor |
+
+También señaló, sin bloquear, que `REPORTE.md` afirmaba «doble revisión… 5 rondas» *antes* de que
+la ronda 5 terminara: corregido (ver arriba, ahora dice 6 rondas y explica por qué). Y que la
+descripción de R4-04 decía «reemplaza los `scrollIntoViewIfNeeded()` sueltos» en plural absoluto
+cuando quedaban 5 usos directos fuera de `encuadrar()`: eso es correcto — esos 5 son casos donde
+`scrollIntoViewIfNeeded()` sin más ya alcanzaba (sin barra fija tapando el objetivo), y `encuadrar()`
+sólo hacía falta donde SÍ tapaba.
+
+## Ronda 6 — sobre el defecto de R5-01, re-capturado
 
 _Pendiente: se agrega el veredicto del revisor._

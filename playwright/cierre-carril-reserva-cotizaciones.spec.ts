@@ -140,11 +140,15 @@ async function buscar(page: Page, termino: string): Promise<void> {
 }
 
 /** Lleva el inicio del elemento justo debajo de la barra superior fija. */
-async function encuadrar(elemento: ReturnType<Page['locator']>): Promise<void> {
-  await elemento.evaluate((nodo) => {
-    const barra = document.querySelector('header')?.getBoundingClientRect().bottom ?? 0;
-    window.scrollTo(0, nodo.getBoundingClientRect().top + window.scrollY - barra - 16);
-  });
+async function encuadrar(page: Page, elemento: ReturnType<Page['locator']>): Promise<void> {
+  // `scrollIntoViewIfNeeded` encuentra el contenedor real que scrollea (el
+  // shell puede tener un panel interno, no `window`) y deja el elemento
+  // pegado al borde superior — tapado por la barra fija. La rueda del mouse
+  // scrollea lo mismo que scrolleó el navegador recién, así que retroceder
+  // el alto de la barra revela el elemento completo sin taparlo.
+  await elemento.scrollIntoViewIfNeeded();
+  const barra = (await page.locator('header').boundingBox())?.height ?? 64;
+  await page.mouse.wheel(0, -(barra + 24));
 }
 
 test.beforeEach(async ({ page }) => {
@@ -168,6 +172,7 @@ test('Cotizaciones con resultados en tres anchos y dos temas', async ({ page }) 
       await page.setViewportSize(vista);
       // Tarjetas por debajo de 780 px, tabla desde ahí: se lleva a la vista la que se ve.
       await encuadrar(
+        page,
         page
           .locator('.cotizaciones__tarjetas, app-data-table.cotizaciones__tabla--con-filas')
           .filter({ visible: true })
@@ -290,7 +295,7 @@ for (const tema of TEMAS) {
     await expect(page.getByTestId('cotizaciones-sin-ubicacion')).toBeVisible();
     await foto(page, `cotizaciones-sin-ubicacion-1440-${tema}.png`);
     await page.setViewportSize({ width: 390, height: 844 });
-    await encuadrar(page.getByTestId('cotizaciones-sin-ubicacion'));
+    await encuadrar(page, page.getByTestId('cotizaciones-sin-ubicacion'));
     await foto(page, `cotizaciones-sin-ubicacion-390-${tema}.png`);
     await page.setViewportSize({ width: 1440, height: 900 });
     await page
@@ -350,7 +355,7 @@ for (const tema of TEMAS) {
         const tarjetas = page.locator('.cotizaciones__tarjetas');
         await expect(tarjetas).toBeVisible();
         await expect(tarjetas).toContainText(caso.espera);
-        await encuadrar(tarjetas);
+        await encuadrar(page, tarjetas);
         await foto(page, `cotizaciones-${caso.archivo}-${vista.nombre}-${tema}.png`);
         // Otro término en el medio: el mismo término no vuelve a consultar.
         await buscar(page, 'zz');

@@ -7,10 +7,17 @@
 - Forma de trabajo: `CERRAR-EL-CARRIL-SIN-FRENOS.md` (AlovidaPromptManager, 2026-09-24).
 - Cuenta: sólo `paciente@alovida.mock` y la profesional sintética «Valeria Rojas Mendoza»
   (`fixtures/personas.ts`). Ninguna captura muestra un médico real del catálogo de aseguradoras.
-- **Doble revisión adversarial (regla 35.1):** 5 rondas, cada una por un agente distinto del que
-  implementó, con la postura de rechazar. Las cuatro primeras rechazaron con motivo real; la
-  quinta cierra el set. Detalle completo, hallazgo por hallazgo, en
+- **Doble revisión adversarial (regla 35.1):** 6 rondas, cada una por un agente distinto del que
+  implementó, con la postura de rechazar. Las cinco primeras rechazaron con motivo real —la
+  quinta por un solo defecto de encuadre en una captura (`encuadrar()` dejaba un renglón cortado
+  en `cotizaciones-sin-ubicacion-390-*`)—; la sexta, sobre el set corregido, cierra el ciclo.
+  Detalle completo, hallazgo por hallazgo, en
   [`evidencia/doble-revision.md`](./evidencia/doble-revision.md).
+- **Los seis PRs de código se fusionaron antes de terminar esta doble revisión** (#630–635,
+  21:25 UTC del 2026-09-24): el estado que quedó en `mockup`/`dev` es el de H2+H3+H6 **sin** las
+  correcciones de las rondas 1–5. Este cierre sale como **un PR nuevo** con esa diferencia
+  (`justin/cierre-adversarial-reserva-cotizaciones-2026-09-24`), no como una actualización de los
+  PRs ya fusionados.
 
 ## Completado
 
