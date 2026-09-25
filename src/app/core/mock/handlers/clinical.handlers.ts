@@ -555,7 +555,7 @@ export function registrarClinica(router: MockRouter): void {
      que falló. */
 
   router.post('/charts/care-plans', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; conditionId?: string; encounterId?: string; intentConceptId?: string; goalText?: string; startDate?: string; endDate?: string; activities?: { activityConceptId?: string; scheduledAt?: string; detailText?: string }[] }>(request);
+    const datos = cuerpo<{ patientProfileId: string; conditionId?: string; reasonText?: string; encounterId?: string; intentConceptId?: string; goalText?: string; startDate?: string; endDate?: string; activities?: { activityConceptId?: string; scheduledAt?: string; detailText?: string }[] }>(request);
     const actividades = (datos.activities ?? []).map((actividad) => ({
       id: nuevoId('cp-act'),
       statusConceptId: ESTADO['ST-PENDING']!,
@@ -573,6 +573,7 @@ export function registrarClinica(router: MockRouter): void {
       endDate: datos.endDate ?? null,
       ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
       ...(datos.conditionId === undefined ? {} : { conditionId: datos.conditionId }),
+      ...(datos.reasonText === undefined ? {} : { reasonText: datos.reasonText }),
       activities: actividades,
       createdAt: ahora(),
     });

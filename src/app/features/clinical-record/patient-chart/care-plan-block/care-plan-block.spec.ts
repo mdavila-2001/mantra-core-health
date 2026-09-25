@@ -4,7 +4,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { signal, type WritableSignal } from '@angular/core';
 
 import { AuthService } from '../../../../core/auth/auth.service';
-import { CarePlanBlock, TARGET_INTENCION } from './care-plan-block';
+import { CarePlanBlock } from './care-plan-block';
 
 /** Una expansión de catálogo con la forma que sirve `system-context`. */
 const CATALOGO = {
@@ -86,12 +86,6 @@ describe('CarePlanBlock', () => {
     fixture.detectChanges();
   }
 
-  it('pide el catálogo de intenciones por su target', () => {
-    fixture.detectChanges();
-    const req = http.expectOne((r) => r.params.get('target') === TARGET_INTENCION);
-    req.flush(CATALOGO);
-    fixture.detectChanges();
-  });
 
   /**
    * El contrato sólo exige el paciente. Un plan sin objetivo escrito es un
@@ -100,15 +94,61 @@ describe('CarePlanBlock', () => {
    */
   it('la meta se exige aunque el contrato la acepte vacía', () => {
     dibujar();
+    señal<string>('motivo').set('Hipertensión sin diagnóstico cerrado.');
     expect(interno<() => boolean>('puedeRegistrar')()).toBe(false);
 
     señal<string>('meta').set('Presión por debajo de 130/80 en seis meses.');
     expect(interno<() => boolean>('puedeRegistrar')()).toBe(true);
   });
 
+  /**
+   * Un plan de cuidados sin decir por qué se abre no se puede evaluar ni
+   * cerrar. Vale el diagnóstico ya registrado o el motivo escrito a mano.
+   */
+  it('el motivo se exige: un diagnóstico elegido o uno escrito', () => {
+    dibujar();
+    señal<string>('meta').set('Bajar la presión.');
+    expect(interno<() => boolean>('puedeRegistrar')()).toBe(false);
+
+    señal<string>('motivo').set('  Control de presión  ');
+    expect(interno<() => boolean>('puedeRegistrar')()).toBe(true);
+
+    señal<string>('motivo').set('');
+    señal<string | null>('diagnosticoElegido').set('cond-1');
+    expect(interno<() => boolean>('puedeRegistrar')()).toBe(true);
+  });
+
+  it('el motivo escrito viaja como `reasonText`', () => {
+    dibujar();
+    señal<string>('meta').set('Bajar la presión.');
+    señal<string>('motivo').set('  Control de presión  ');
+
+    interno<() => void>('registrar')();
+
+    const req = http.expectOne('/charts/care-plans');
+    expect(req.request.body.reasonText).toBe('Control de presión');
+    req.flush(RESPUESTA);
+  });
+
+  /** El diagnóstico ya **es** el motivo: mandar los dos duplicaría el dato. */
+  it('con un diagnóstico elegido, el motivo escrito no viaja', () => {
+    dibujar();
+    señal<string>('meta').set('Bajar la presión.');
+    señal<string>('motivo').set('Algo escrito antes de elegir');
+    señal<string | null>('diagnosticoElegido').set('cond-1');
+
+    interno<() => void>('registrar')();
+
+    const req = http.expectOne('/charts/care-plans');
+    expect('reasonText' in (req.request.body as object)).toBe(false);
+    expect(req.request.body.conditionId).toBe('cond-1');
+    req.flush(RESPUESTA);
+  });
+
   it('el fin no puede caer antes del inicio', () => {
     dibujar();
     señal<string>('meta').set('Bajar la presión.');
+    señal<string>('motivo').set('Control de presión.');
     señal<Date | null>('desde').set(new Date(2026, 8, 10));
     señal<Date | null>('hasta').set(new Date(2026, 8, 1));
 
@@ -123,6 +163,7 @@ describe('CarePlanBlock', () => {
   it('los pasos sin detalle no viajan', () => {
     dibujar();
     señal<string>('meta').set('Bajar la presión.');
+    señal<string>('motivo').set('Control de presión.');
     interno<() => void>('agregarActividad')();
     const primera = interno<() => readonly { clave: number }[]>('actividades')()[0]!;
     interno<(clave: number, v: string) => void>('fijarDetalle')(primera.clave, '  Caminar 30 min  ');
@@ -137,6 +178,7 @@ describe('CarePlanBlock', () => {
   it('sin ningún paso con detalle, `activities` se omite', () => {
     dibujar();
     señal<string>('meta').set('Bajar la presión.');
+    señal<string>('motivo').set('Control de presión.');
 
     interno<() => void>('registrar')();
 
@@ -152,6 +194,7 @@ describe('CarePlanBlock', () => {
   it('las fechas viajan como día local, no como instante UTC', () => {
     dibujar();
     señal<string>('meta').set('Bajar la presión.');
+    señal<string>('motivo').set('Control de presión.');
     señal<Date | null>('desde').set(new Date(2026, 8, 10, 22, 30));
 
     interno<() => void>('registrar')();
@@ -164,6 +207,7 @@ describe('CarePlanBlock', () => {
   it('los opcionales sin elegir se omiten, no viajan en null', () => {
     dibujar();
     señal<string>('meta').set('Bajar la presión.');
+    señal<string>('motivo').set('Control de presión.');
 
     interno<() => void>('registrar')();
 
@@ -172,6 +216,7 @@ describe('CarePlanBlock', () => {
       'authorProfileId',
       'goalText',
       'patientProfileId',
+      'reasonText',
     ]);
     req.flush(RESPUESTA);
   });
@@ -185,6 +230,7 @@ describe('CarePlanBlock', () => {
     dibujar();
     señal<string>('meta').set('Bajar la presión.');
     señal<string | null>('citaElegida').set('enc-9');
+    señal<string>('motivo').set('Control de presión.');
 
     interno<() => void>('registrar')();
 
@@ -196,12 +242,14 @@ describe('CarePlanBlock', () => {
   it('tras abrir el plan, el formulario queda vacío', () => {
     dibujar();
     señal<string>('meta').set('Bajar la presión.');
+    señal<string>('motivo').set('Control de presión.');
 
     interno<() => void>('registrar')();
     http.expectOne('/charts/care-plans').flush(RESPUESTA);
     fixture.detectChanges();
 
     expect(señal<string>('meta')()).toBe('');
+    expect(señal<string>('motivo')()).toBe('');
     expect(interno<() => readonly unknown[]>('actividades')().length).toBe(1);
   });
 

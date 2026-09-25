@@ -449,6 +449,8 @@ export interface PlanSimulado {
   readonly endDate: string | null;
   readonly encounterId?: string;
   readonly conditionId?: string;
+  /** El motivo escrito a mano, cuando el plan no cuelga de un diagnóstico. */
+  readonly reasonText?: string;
   readonly activities: readonly { readonly id: string; readonly statusConceptId: string; readonly detailText: string; readonly scheduledAt: string | null; readonly activityConceptId?: string }[];
   readonly createdAt: string;
 }

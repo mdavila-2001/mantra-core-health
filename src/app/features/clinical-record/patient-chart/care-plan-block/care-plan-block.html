@@ -23,29 +23,36 @@
       />
     </app-form-field>
 
-    <app-form-field
-      label="Clase de plan"
-      hint="Opcional. Una propuesta se conversa; una indicación se cumple."
-    >
-      <app-concept-select
-        data-testid="plan-intencion"
-        [target]="targetIntencion"
-        [(value)]="intencion"
-        placeholder="Sin especificar"
-      />
-    </app-form-field>
-
-    @if (opcionesDeDiagnostico().length > 1) {
+    <!-- El motivo es obligatorio: un plan sin decir por qué se abre no se
+         puede evaluar. Se elige un diagnóstico ya registrado, o se escribe. -->
+    @if (hayDiagnosticos()) {
       <app-form-field
         icon="stethoscope"
-        label="¿De qué diagnóstico cuelga?"
-        hint="Opcional. El problema que el plan viene a tratar."
+        label="Motivo"
+        hint="Por qué se abre el plan. Elegí un diagnóstico ya registrado, o escribilo a mano."
+        [required]="true"
       >
         <app-select
           data-testid="plan-diagnostico"
           [value]="diagnosticoElegido()"
           (valueChange)="diagnosticoElegido.set($event)"
           [options]="opcionesDeDiagnostico()"
+        />
+      </app-form-field>
+    }
+
+    @if (diagnosticoElegido() === null) {
+      <app-form-field
+        icon="stethoscope"
+        [label]="hayDiagnosticos() ? 'Motivo escrito' : 'Motivo'"
+        hint="Por qué se abre el plan, en una frase. Se pide aunque no haya un diagnóstico previo."
+        [required]="true"
+      >
+        <app-input
+          type="text"
+          testId="plan-motivo"
+          [(value)]="motivo"
+          placeholder="Por ejemplo: control de presión sin diagnóstico cerrado"
         />
       </app-form-field>
     }
