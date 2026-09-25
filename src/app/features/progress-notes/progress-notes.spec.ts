@@ -3,12 +3,12 @@ import type { Booking } from '@core/data-access/scheduling/scheduling.types';
 import { aAtenciones, ETIQUETA_DE_ESTADO, mismoDia } from './progress-notes';
 
 /**
- * «Evoluciones» — la sexta de las ocho opciones del panel del médico.
+ * «Notas médicas» — la sexta de las ocho opciones del panel del médico.
  *
  * Lo que se fija acá es el criterio de qué entra y en qué quedó cada atención:
- * una que no ocurrió listada como si hubiera ocurrido diría que hay una
- * evolución escrita donde no la hay, y eso en una historia clínica no es un
- * detalle de listado.
+ * una que no ocurrió listada como si hubiera ocurrido diría que hay una nota
+ * escrita donde no la hay, y eso en una historia clínica no es un detalle de
+ * listado.
  */
 describe('aAtenciones', () => {
   const ANTES = new Date(Date.now() - 3 * 60 * 60 * 1000);
