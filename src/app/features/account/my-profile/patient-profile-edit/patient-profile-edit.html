@@ -396,34 +396,16 @@
         </app-tab>
 
         <!-- ─── Seguros ─────────────────────────────────────────────────── -->
-        <!-- Se leen, no se escriben: el `PATCH` de datos propios no los acepta
-             —cada seguro tiene su propio circuito—. La pestaña está igual para
-             que el formulario tenga las mismas que la ficha, y para que quien
-             las busque no crea que se perdieron. Separada de «Tutores» el
-             24/09/2026: eran una sola pestaña con dos listas adentro. -->
-        <app-tab [label]="pestanas[3]">
-          <section class="datos__seccion">
-            <h3 class="datos__titulo">Seguros</h3>
-            <p class="datos__nota">Lo que declaraste al registrarte. Todavía no se corrige desde acá.</p>
-
-            @if (datos(); as p) {
-              @if (p.coverages.length > 0) {
-                <ul class="datos__lista" data-testid="perfil-seguros">
-                  @for (seguro of p.coverages; track seguro.carrierName + (seguro.planName ?? '')) {
-                    <li class="datos__item">
-                      <span class="datos__item-nombre">{{ seguro.carrierName }}</span>
-                      @if (seguro.planName) {
-                        <span class="datos__item-detalle">{{ seguro.planName }}</span>
-                      }
-                    </li>
-                  }
-                </ul>
-              } @else {
-                <p class="datos__nota">No declaraste ningún seguro.</p>
-              }
-            }
-          </section>
-        </app-tab>
+        <!-- Bloqueada en el editor desde el 25/09/2026 (pedido del
+             propietario): no se leen ni se escriben acá. No es que el `PATCH`
+             no las acepte hoy y algún día las acepte —como pasa con «Tutores»,
+             que sí puede cambiar—; una cobertura es el resultado de una
+             integración posterior (la aseguradora, no la persona, la declara),
+             así que nunca se corrige desde este formulario. Mismo tratamiento
+             que «Mis puntos»: apagada, con el cursor de bloqueado, para que
+             quien la vea no la confunda con un campo editable. La ficha de
+             lectura (`my-profile.html`) sigue mostrando el detalle completo. -->
+        <app-tab [label]="pestanas[3]" disabled />
 
         <!-- ─── Tutores ─────────────────────────────────────────────────── -->
         <app-tab [label]="pestanas[4]">
