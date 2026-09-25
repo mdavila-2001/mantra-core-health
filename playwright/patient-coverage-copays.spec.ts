@@ -44,7 +44,11 @@ for (const viewport of [
       await page.keyboard.press('Tab');
       const phone = card.getByRole('link', { name: /Call center/ });
       await expect(phone).toBeFocused();
-      await expect(phone).toHaveAttribute('href', 'tel:800106060');
+      // Antes de la Tarea 2 la maqueta usaba un número fijo (el call
+      // center real de una aseguradora sembrada, sin marcarlo). Ahora
+      // sale de la aseguradora ficticia de la titular ('Seguros Andina',
+      // '800-10-0101' en insurance.handlers.ts).
+      await expect(phone).toHaveAttribute('href', 'tel:800100101');
       expect((await phone.boundingBox())!.height).toBeGreaterThanOrEqual(44);
       const focusVisible = await phone.evaluate((element) => {
         const style = getComputedStyle(element);

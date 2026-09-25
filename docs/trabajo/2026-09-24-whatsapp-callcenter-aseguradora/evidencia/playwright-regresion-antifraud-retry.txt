@@ -1,0 +1,116 @@
+
+Running 7 tests using 1 worker
+
+  x  1 [chromium] › playwright\carril-insurance-antifraud-duplicates.spec.ts:123:7 › la alerta de estudio duplicado (maqueta) › un estudio cruzado ofrece reutilizar y avisa que el informe es de otra organización (3.0m)
+  x  2 [chromium] › playwright\carril-insurance-antifraud-duplicates.spec.ts:164:7 › la alerta de estudio duplicado (maqueta) › un estudio intra-organización trae la conclusión y admite repetirse con justificación (3.0m)
+  x  3 [chromium] › playwright\carril-insurance-antifraud-duplicates.spec.ts:204:7 › la alerta de estudio duplicado (maqueta) › en 390×844 el diálogo no desborda y sus botones alcanzan el objetivo táctil (3.0m)
+  ok 4 [chromium] › playwright\carril-insurance-antifraud-duplicates.spec.ts:246:7 › el badge de estudio duplicado en el detalle del reclamo (maqueta) › CLM-2026-0142 muestra "Posible duplicado" con su justificación en el globo (5.7s)
+  ok 5 [chromium] › playwright\carril-insurance-antifraud-duplicates.spec.ts:279:7 › auditoría del reclamo: globo, cláusula y canales (maqueta) › el globo del duplicado también se abre con el ratón, no sólo con el teclado (7.2s)
+  ok 6 [chromium] › playwright\carril-insurance-antifraud-duplicates.spec.ts:307:7 › auditoría del reclamo: globo, cláusula y canales (maqueta) › una solicitud rechazada cita textualmente la cláusula de la póliza (5.3s)
+  ok 7 [chromium] › playwright\carril-insurance-antifraud-duplicates.spec.ts:322:7 › auditoría del reclamo: globo, cláusula y canales (maqueta) › los canales de contacto apuntan a WhatsApp y al call center de la aseguradora (5.9s)
+
+
+  1) [chromium] › playwright\carril-insurance-antifraud-duplicates.spec.ts:123:7 › la alerta de estudio duplicado (maqueta) › un estudio cruzado ofrece reutilizar y avisa que el informe es de otra organización 
+
+    Test timeout of 180000ms exceeded.
+
+    Error: locator.click: Test ended.
+    Call log:
+      - waiting for getByRole('link', { name: 'Ver expediente' }).first()
+
+
+      50 |   await estable(page);
+      51 |
+    > 52 |   await page.getByRole('link', { name: 'Ver expediente' }).first().click();
+         |                                                                    ^
+      53 |   await page.waitForURL(/\/medical-records\/[^/]+$/, { timeout: 60_000 });
+      54 |
+      55 |   const urlExpediente = page.url();
+        at abrirEncuentroDelPaciente (D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\playwright\carril-insurance-antifraud-duplicates.spec.ts:52:68)
+        at D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\playwright\carril-insurance-antifraud-duplicates.spec.ts:130:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\carril-insurance-antifraud-c3622-rme-es-de-otra-organización-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\carril-insurance-antifraud-c3622-rme-es-de-otra-organización-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\carril-insurance-antifraud-c3622-rme-es-de-otra-organización-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace artifacts\playwright\salida\carril-insurance-antifraud-c3622-rme-es-de-otra-organización-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › playwright\carril-insurance-antifraud-duplicates.spec.ts:164:7 › la alerta de estudio duplicado (maqueta) › un estudio intra-organización trae la conclusión y admite repetirse con justificación 
+
+    Test timeout of 180000ms exceeded.
+
+    Error: locator.click: Test ended.
+    Call log:
+      - waiting for getByRole('link', { name: 'Ver expediente' }).first()
+
+
+      50 |   await estable(page);
+      51 |
+    > 52 |   await page.getByRole('link', { name: 'Ver expediente' }).first().click();
+         |                                                                    ^
+      53 |   await page.waitForURL(/\/medical-records\/[^/]+$/, { timeout: 60_000 });
+      54 |
+      55 |   const urlExpediente = page.url();
+        at abrirEncuentroDelPaciente (D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\playwright\carril-insurance-antifraud-duplicates.spec.ts:52:68)
+        at D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\playwright\carril-insurance-antifraud-duplicates.spec.ts:171:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\carril-insurance-antifraud-7e9c5-repetirse-con-justificación-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\carril-insurance-antifraud-7e9c5-repetirse-con-justificación-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\carril-insurance-antifraud-7e9c5-repetirse-con-justificación-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace artifacts\playwright\salida\carril-insurance-antifraud-7e9c5-repetirse-con-justificación-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › playwright\carril-insurance-antifraud-duplicates.spec.ts:204:7 › la alerta de estudio duplicado (maqueta) › en 390×844 el diálogo no desborda y sus botones alcanzan el objetivo táctil 
+
+    Test timeout of 180000ms exceeded.
+
+    Error: locator.click: Test ended.
+    Call log:
+      - waiting for getByRole('link', { name: 'Ver expediente' }).first()
+
+
+      50 |   await estable(page);
+      51 |
+    > 52 |   await page.getByRole('link', { name: 'Ver expediente' }).first().click();
+         |                                                                    ^
+      53 |   await page.waitForURL(/\/medical-records\/[^/]+$/, { timeout: 60_000 });
+      54 |
+      55 |   const urlExpediente = page.url();
+        at abrirEncuentroDelPaciente (D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\playwright\carril-insurance-antifraud-duplicates.spec.ts:52:68)
+        at D:\Trabajos Secundarios\Mantra Core Technologies\mantra-core-health\playwright\carril-insurance-antifraud-duplicates.spec.ts:211:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\carril-insurance-antifraud-fbcb8-alcanzan-el-objetivo-táctil-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\carril-insurance-antifraud-fbcb8-alcanzan-el-objetivo-táctil-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\carril-insurance-antifraud-fbcb8-alcanzan-el-objetivo-táctil-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace artifacts\playwright\salida\carril-insurance-antifraud-fbcb8-alcanzan-el-objetivo-táctil-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    [chromium] › playwright\carril-insurance-antifraud-duplicates.spec.ts:123:7 › la alerta de estudio duplicado (maqueta) › un estudio cruzado ofrece reutilizar y avisa que el informe es de otra organización 
+    [chromium] › playwright\carril-insurance-antifraud-duplicates.spec.ts:164:7 › la alerta de estudio duplicado (maqueta) › un estudio intra-organización trae la conclusión y admite repetirse con justificación 
+    [chromium] › playwright\carril-insurance-antifraud-duplicates.spec.ts:204:7 › la alerta de estudio duplicado (maqueta) › en 390×844 el diálogo no desborda y sus botones alcanzan el objetivo táctil 
+  4 passed (9.7m)

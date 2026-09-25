@@ -1,0 +1,17 @@
+
+Running 12 tests using 1 worker
+
+  ok  1 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:97:7 › el detalle de reclamo en la pantalla (maqueta) › CA-2.1: WhatsApp abre en pestaña nueva con clic, Enter y Espacio, sin datos clínicos (11.7s)
+  ok  2 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:143:7 › el detalle de reclamo en la pantalla (maqueta) › CA-2.2: sin WhatsApp registrado, sólo call center con el testid del CA (7.3s)
+  ok  3 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:160:7 › el detalle de reclamo en la pantalla (maqueta) › CA-2.3: sin ningún canal registrado, la nota de ausencia y ningún enlace (7.4s)
+  ok  4 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:179:9 › el detalle de reclamo en la pantalla (maqueta) › CA-2.5: objetivos táctiles y sin desborde en 390 px (7.9s)
+  ok  5 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:179:9 › el detalle de reclamo en la pantalla (maqueta) › CA-2.5: objetivos táctiles y sin desborde en 768 px (8.2s)
+  ok  6 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:179:9 › el detalle de reclamo en la pantalla (maqueta) › CA-2.5: objetivos táctiles y sin desborde en 1440 px (7.8s)
+  ok  7 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:216:9 › la tarjeta de cobertura en /my-account (maqueta) › CA-2.1/2.5: la tarjeta ofrece los mismos canales, medibles, en 390 px (12.0s)
+  ok  8 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:216:9 › la tarjeta de cobertura en /my-account (maqueta) › CA-2.1/2.5: la tarjeta ofrece los mismos canales, medibles, en 1440 px (10.6s)
+  ok  9 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:267:7 › la configuración y la lectura de canales (API · Neon) › DENIED sin + responde 400 nombrando el campo y E.164 (2.5s)
+  ok 10 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:292:7 › la configuración y la lectura de canales (API · Neon) › valores válidos persisten normalizados y se leen en la ficha y en el listado (5.3s)
+  ok 11 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:337:7 › la configuración y la lectura de canales (API · Neon) › rechaza un WhatsApp de menos de 8 dígitos (Tarea 2, CA-2.4) (2.4s)
+  ok 12 [chromium] › playwright\carril-insurance-whatsapp.spec.ts:360:7 › la configuración y la lectura de canales (API · Neon) › :id ajeno al carrier del tenant activo responde 404 (1.6s)
+
+  12 passed (1.4m)
