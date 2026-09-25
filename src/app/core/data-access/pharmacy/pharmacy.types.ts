@@ -187,3 +187,54 @@ export interface AvailabilityQuery {
   readonly origin?: GeoPoint;
   readonly limit?: number;
 }
+
+/**
+ * Una sede de {@link PharmacyDetail}, tal como viaja anidada en `GET
+ * /pharmacy/pharmacies/:id`. A diferencia de {@link PharmacySite} (que se
+ * lista suelta, con `pharmacyId`/`pharmacyName` porque puede venir de
+ * cualquier farmacia), ésta ya está dentro del perfil de una farmacia
+ * concreta: no repite ese dato.
+ */
+export interface PharmacySiteRead {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly addressText: string | null;
+  readonly latitude: number | null;
+  readonly longitude: number | null;
+}
+
+/** El perfil de una farmacia: su ficha y sus sedes con dirección. */
+export interface PharmacyDetail extends PharmacyDirectoryItem {
+  readonly legalName: string;
+  readonly type: PharmacyConcept | null;
+  readonly homeDeliveryAvailable: boolean | null;
+  readonly pickupAvailable: boolean | null;
+  readonly sites: readonly PharmacySiteRead[];
+}
+
+/**
+ * Un precio vigente de un producto en una sede, tal como lo lista `GET
+ * /pharmacy/sites/:siteId/prices`.
+ */
+export interface PharmacySitePriceItem {
+  readonly productId: string;
+  readonly productCode: string;
+  readonly brandName: string | null;
+  readonly genericName: string | null;
+  readonly strengthText: string | null;
+  readonly packageSizeText: string | null;
+  readonly medication: PharmacyConcept | null;
+  readonly requiresPrescription: boolean | null;
+  readonly unitAmount: string;
+  readonly patientAmount: string | null;
+  readonly currency: PharmacyConcept | null;
+  readonly priceListCode: string;
+}
+
+/** Los precios públicos vigentes de una sede. */
+export interface PharmacySitePrices {
+  readonly siteId: string;
+  readonly siteName: string;
+  readonly items: readonly PharmacySitePriceItem[];
+}

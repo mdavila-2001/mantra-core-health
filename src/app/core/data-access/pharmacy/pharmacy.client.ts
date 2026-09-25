@@ -6,10 +6,12 @@ import { API_BASE_URL, apiUrl } from '../api';
 import type {
   AvailabilityQuery,
   AvailabilityResult,
+  PharmacyDetail,
   PharmacyDirectoryPage,
   PharmacyProductSearchPage,
   PharmacyProductSearchQuery,
   PharmacySitePage,
+  PharmacySitePrices,
   PharmacySiteQuery,
 } from './pharmacy.types';
 
@@ -37,6 +39,13 @@ export class PharmacyClient {
    */
   listPharmacies(): Observable<PharmacyDirectoryPage> {
     return this.http.get<PharmacyDirectoryPage>(this.url('/pharmacy/pharmacies'));
+  }
+
+  /**
+   * `GET /pharmacy/pharmacies/:id` — el perfil de una farmacia, con sus sedes.
+   */
+  getPharmacy(id: string): Observable<PharmacyDetail> {
+    return this.http.get<PharmacyDetail>(this.url(`/pharmacy/pharmacies/${id}`));
   }
 
   /**
@@ -100,6 +109,23 @@ export class PharmacyClient {
       params = params.set('limit', String(query.limit));
     }
     return this.http.get<AvailabilityResult>(this.url('/pharmacy-inventory/availability'), {
+      params,
+    });
+  }
+
+  /**
+   * `GET /pharmacy/sites/:siteId/prices` — precios públicos vigentes de una sede.
+   *
+   * `productId` acota a un producto puntual; sin él, viene el listado entero
+   * de la sede. Igual que en {@link availability}, el opcional no viaja como
+   * clave con valor `undefined`.
+   */
+  getSitePrices(siteId: string, productId?: string): Observable<PharmacySitePrices> {
+    let params = new HttpParams();
+    if (productId !== undefined) {
+      params = params.set('product', productId);
+    }
+    return this.http.get<PharmacySitePrices>(this.url(`/pharmacy/sites/${siteId}/prices`), {
       params,
     });
   }

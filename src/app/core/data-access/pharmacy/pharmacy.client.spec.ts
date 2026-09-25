@@ -111,4 +111,44 @@ describe('PharmacyClient', () => {
     expect(req.request.params.get('lng')).toBe('-63.1821');
     req.flush({ items: [], count: 0 });
   });
+
+  it('consulta el perfil de una farmacia por id', () => {
+    let latitude: number | null = null;
+    client.getPharmacy(FIXTURE_IDS.productoAmoxicilina).subscribe((detail) => (latitude = detail.sites[0]!.latitude));
+
+    const req = http.expectOne((r) => r.url === `/pharmacy/pharmacies/${FIXTURE_IDS.productoAmoxicilina}`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      id: FIXTURE_IDS.productoAmoxicilina,
+      code: 'FARM_1',
+      name: 'Farmacia Uno',
+      legalName: 'Farmacia Uno S.R.L.',
+      type: null,
+      siteCount: 1,
+      productCount: 10,
+      homeDeliveryAvailable: true,
+      pickupAvailable: true,
+      sites: [{ id: 's-1', code: 'FARM_1_S1', name: 'Sucursal Central', addressText: 'Av. Siempre Viva', latitude: -17.78, longitude: -63.18 }],
+    });
+
+    expect(latitude).toBe(-17.78);
+  });
+
+  it('consulta precios de sede sin declarar `product` cuando no viene', () => {
+    client.getSitePrices('site-1').subscribe();
+
+    const req = http.expectOne((r) => r.url === '/pharmacy/sites/site-1/prices');
+    expect(req.request.method).toBe('GET');
+    // Un opcional en `undefined` que viaja como clave declarada vuelve 400.
+    expect(req.request.params.has('product')).toBe(false);
+    req.flush({ siteId: 'site-1', siteName: 'Sucursal Central', items: [] });
+  });
+
+  it('acota precios de sede a un producto puntual con `?product=`', () => {
+    client.getSitePrices('site-1', FIXTURE_IDS.productoAmoxicilina).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/pharmacy/sites/site-1/prices');
+    expect(req.request.params.get('product')).toBe(FIXTURE_IDS.productoAmoxicilina);
+    req.flush({ siteId: 'site-1', siteName: 'Sucursal Central', items: [] });
+  });
 });

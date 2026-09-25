@@ -271,6 +271,62 @@ export function registrarFarmacia(router: MockRouter): void {
     count: FARMACIAS.length,
   }));
 
+  // Ola 0 (25/09/2026): el perfil de una farmacia, con sus sedes. `FARMACIAS`
+  // sólo modela una sede por farmacia (límite declarado del doble, Q-M3): el
+  // real puede traer varias.
+  router.get('/pharmacy/pharmacies/:id', (request) => {
+    const f = FARMACIAS.find((x) => x.id === request.params['id']);
+    if (f === undefined) return notFound('Farmacia no encontrada');
+    return {
+      id: f.id,
+      code: f.code,
+      name: f.name,
+      legalName: f.name,
+      type: null,
+      siteCount: 1,
+      productCount: productos.filtrar((p) => p.pharmacyId === f.id).length,
+      homeDeliveryAvailable: f.homeDelivery,
+      pickupAvailable: true,
+      sites: [
+        {
+          id: f.siteId,
+          code: `${f.code}_S1`,
+          name: f.siteName,
+          addressText: f.addressText,
+          latitude: f.lat,
+          longitude: f.lng,
+        },
+      ],
+    };
+  });
+
+  // Ola 0 (25/09/2026): precios públicos vigentes de una sede. Mismo `price`,
+  // `stock` y `requiresPrescription` que `productos` — coherencia verificada
+  // en `pharmacy.handlers.spec.ts` (H3.S2) contra `/availability` y `/orders`.
+  router.get('/pharmacy/sites/:siteId/prices', (request) => {
+    const f = FARMACIAS.find((x) => x.siteId === request.params['siteId']);
+    if (f === undefined) return notFound('Sede de farmacia no encontrada');
+    const productId = texto(request.query, 'product');
+    const items = productos
+      .filtrar((p) => p.pharmacyId === f.id && p.stock > 0)
+      .filter((p) => productId === null || p.id === productId)
+      .map((p) => ({
+        productId: p.id,
+        productCode: p.productCode,
+        brandName: p.brandName,
+        genericName: p.genericName,
+        strengthText: p.strengthText,
+        packageSizeText: p.packageSizeText,
+        medication: p.medication,
+        requiresPrescription: p.requiresPrescription,
+        unitAmount: p.price,
+        patientAmount: p.price,
+        currency: BOB,
+        priceListCode: 'PUBLICO',
+      }));
+    return { siteId: f.siteId, siteName: f.siteName, items };
+  });
+
   router.get('/pharmacy/products', ({ query }) => {
     const q = texto(query, 'search');
     const conceptId = texto(query, 'conceptId');
