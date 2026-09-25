@@ -1,0 +1,137 @@
+<app-card variant="outlined" padding="lg" class="reconsulta">
+  <h2 class="reconsulta__titulo">Reconsulta</h2>
+
+  <app-view-state-host [state]="origen()" (retry)="recargar()">
+    <!-- ─── Sin cita de origen ────────────────────────────────────────────
+         No es un error ni una lista vacía: es que se entró por el expediente.
+         Se dice de dónde sale una reconsulta en vez de ofrecer un formulario
+         que el servidor va a rechazar. -->
+    @if (sinCitaDeOrigen()) {
+      <app-alert tone="info" title="La reconsulta se agenda desde una cita" data-testid="reconsulta-sin-cita">
+        Abrí la consulta desde «Mis citas» —o desde tu agenda, con «Iniciar la consulta»— y acá vas
+        a poder citar de nuevo a la persona por este mismo motivo.
+      </app-alert>
+    } @else if (consulta(); as origen) {
+      <!-- ─── Ya agendada ─────────────────────────────────────────────────
+           Una consulta tiene una reconsulta, no dos. En vez de ofrecer un
+           formulario que responde 409, se muestra la que está y el camino
+           para moverla. -->
+      @if (yaAgendada(); as reconsulta) {
+        <div class="reconsulta__agendada" data-testid="reconsulta-ya-agendada">
+          <p class="reconsulta__agendada-titulo">Ya la citaste de nuevo</p>
+          <p class="reconsulta__agendada-cuando">
+            @if (reconsulta.startAt) {
+              {{ reconsulta.startAt | date: "EEEE d 'de' MMMM 'a las' HH:mm" }}
+            } @else {
+              La reconsulta quedó sin horario asignado.
+            }
+          </p>
+          @if (reconsulta.reasonText) {
+            <p class="reconsulta__agendada-motivo">{{ reconsulta.reasonText }}</p>
+          }
+          <!-- «Reprogramar» lleva a la agenda y no mueve nada desde acá: mover
+               un turno es la operación de la agenda, con su motivo y su aviso
+               al paciente. -->
+          <a app-button variant="outline" size="sm" [routerLink]="rutaDeConsultas">
+            Reprogramar en Consultas médicas
+          </a>
+        </div>
+      } @else {
+        <!-- ─── Éxito ─────────────────────────────────────────────────────
+             Con la fecha y la hora: «listo» sin decir para cuándo obliga a ir
+             a buscarlo a otra pantalla. -->
+        @if (agendadaAhora(); as recienAgendada) {
+          <app-alert tone="success" title="Reconsulta agendada" data-testid="reconsulta-exito">
+            {{ recienAgendada.desde | date: "EEEE d 'de' MMMM 'a las' HH:mm" }}. La persona ya la ve
+            en «Mis citas».
+            <a app-button alert-actions variant="ghost" size="sm" [routerLink]="rutaDeConsultas">
+              Ver en Consultas médicas
+            </a>
+          </app-alert>
+        }
+
+        @if (avisoDeDuplicado(); as aviso) {
+          <app-alert tone="warning" title="Ya hay una reconsulta" data-testid="reconsulta-duplicada">
+            {{ aviso }}
+          </app-alert>
+        }
+
+        @if (errorDelRegistro(); as mensaje) {
+          <app-alert tone="error" data-testid="reconsulta-error">{{ mensaje }}</app-alert>
+        }
+
+        <p class="reconsulta__de-la-cita">
+          @if (origen.cuando) {
+            De la consulta del {{ origen.cuando | date: "d 'de' MMMM 'de' y" }}.
+          }
+          Elegí el día y el horario que acordaste con la persona.
+        </p>
+
+        <form class="reconsulta__formulario" (submit)="$event.preventDefault()">
+          <app-form-field icon="calendar"
+            label="Día de la reconsulta"
+            hint="Desde mañana y hasta noventa días. Al elegirlo aparecen los horarios que te quedan libres."
+          >
+            <app-date-picker
+              data-testid="reconsulta-fecha"
+              [(value)]="dia"
+              [minDate]="primerDia"
+              [maxDate]="ultimoDia"
+            />
+          </app-form-field>
+
+          @if (dia()) {
+            @if (sinCupos()) {
+              <app-alert tone="info" title="Ese día no te queda ningún horario" data-testid="reconsulta-sin-cupos">
+                Probá con otro día: sólo se ofrecen los ratos que siguen libres en tu agenda.
+              </app-alert>
+            } @else {
+              <!-- Mañana y tarde: es como se piensa una jornada de consultorio,
+                   y una lista corrida de veinte radios obliga a leerlos todos
+                   para encontrar «a la tarde». -->
+              <app-form-field label="Horario" hint="Sólo los que te quedan libres.">
+                <app-radio-group data-testid="reconsulta-cupo" [(value)]="cupoElegido">
+                  @if (franjas().manana.length > 0) {
+                    <p class="reconsulta__franja">Mañana</p>
+                    @for (cupo of franjas().manana; track cupo.id) {
+                      <app-radio [value]="cupo.id" [label]="cupo.etiqueta" />
+                    }
+                  }
+                  @if (franjas().tarde.length > 0) {
+                    <p class="reconsulta__franja">Tarde</p>
+                    @for (cupo of franjas().tarde; track cupo.id) {
+                      <app-radio [value]="cupo.id" [label]="cupo.etiqueta" />
+                    }
+                  }
+                </app-radio-group>
+              </app-form-field>
+            }
+          }
+
+          <app-form-field
+            label="Motivo de la reconsulta"
+            hint="Viene del motivo de esta consulta. Cambialo si van a ver otra cosa."
+          >
+            <app-textarea
+              data-testid="reconsulta-motivo"
+              [rows]="2"
+              [value]="motivo()"
+              (valueChange)="escribirMotivo($event)"
+            />
+          </app-form-field>
+
+          <button
+            app-button
+            variant="primary"
+            data-testid="reconsulta-guardar"
+            [isLoading]="agendando()"
+            [disabled]="!puedeAgendar()"
+            (clicked)="agendar()"
+          >
+            Agendar la reconsulta
+          </button>
+        </form>
+      }
+    }
+  </app-view-state-host>
+</app-card>
