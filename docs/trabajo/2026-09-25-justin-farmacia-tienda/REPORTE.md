@@ -1,4 +1,4 @@
-> **AVANCE: 32 / 41 — 78,0 %.**
+> **AVANCE: 34 / 41 — 82,9 %.**
 
 # Reporte — La tienda: buscador por precio y distancia, y la receta completa al carrito
 
@@ -14,15 +14,13 @@
 
 | ID | Qué se logró (observable) | Comando de verificación | Resultado |
 |---|---|---|---|
-| H1.S1.M1 | Corte y rama fijados | `git rev-parse HEAD` → `4ba17b1a…` | PASS |
-| H1.S1.M2 | Baseline de `lint` y `typecheck` con exit code | `corepack yarn lint` · `typecheck` | PASS · `evidencia/antes/` |
 | H1.S1.M3 | Los 6 rojos previos clasificados, ninguno de mi alcance | tabla en `PLAN.md` | PASS |
 | H2.S1.M1–M6 | `PharmacySearchService`: dos modos, dos órdenes, funciones puras, sin origen no reordena, menos de 2 letras no consulta | `--include=…/pharmacy-search.service.spec.ts` | PASS · **22/22** · `evidencia/h2/` |
 | H3.S1.M1–M5 | La home: sin pestañas, los 4 controles con sus ids congelados, los seis estados, sin perfil no consulta | `--include=…/store-front.spec.ts` | PASS · **12/12** · `evidencia/h3/` |
 | H3.S2.M1–M4 | Resultados por producto: 4 partes, «Agregar» + conflicto + cancelar, receta = insignia sin botón, «Ver tienda» | `--include=…/product-results.spec.ts` | PASS · **9/9** |
 | H3.S3.M1–M3 | Resultados por farmacia: tarjeta, orden respetado, `productCount === 0` filtrado en el servicio | `--include=…/store-results.spec.ts` + spec del servicio | PASS · **5/5** |
 | H3.S4.M1–M2 | Últimos pedidos: tope 3, estado en palabras, vacío accionable, sin perfil no consulta | `--include=…/recent-orders.spec.ts` | PASS · **5/5** |
-| H3.S5.M1–M2 | `my-account/pharmacy` → `StoreFront`; `?tab=cotizaciones` y `?tab=comprar` redirigen | `corepack yarn typecheck` + spec (2 casos) | PASS |
+| H3.S5.M1–M2 | `my-account/pharmacy` → `StoreFront`; la hija `/prescriptions`; `?tab=cotizaciones` y `?tab=comprar` redirigen | `--include=src/app/app.routes.spec.ts` + spec (2 casos) | PASS · **53/53** · `evidencia/h3/app-routes.txt` |
 | H4.S1.M1–M4 | Mis recetas: agrupadas por consulta, nombres por terminología, enlace con el id, 4 estados | `--include=…/prescriptions-page.spec.ts` | PASS · **9/9** · `evidencia/h4/` |
 | H5.S1.M1–M4 | `cartLinesFromDraft` pura, botón `where-to-buy-add-to-cart`, aviso de lo omitido, los 36 casos previos intactos | `--include=…/where-to-buy.spec.ts` | PASS · **46/46** (36 previos + 10 nuevos) · `evidencia/h5/` |
 | H5.S2.M1 | `createOrderRequest(...).medicationRequestId === requestId` | mismo spec | PASS |
@@ -30,6 +28,21 @@
 | H6.S1.M3 | `PLAN.md` y este reporte en disco; nada corriendo | `git status` | PASS |
 
 ## A medias
+
+### H1.S1.M1 — Corte y rama
+- **Qué anda:** hay SHA fijado (`4ba17b1a`) y la rama sale de `origin/mockup` @ `bf2c3545`.
+- **Qué no anda:** el CA pedía un SHA **posterior a los dos merges de la Ola 0**, y no lo es.
+- **Qué falta exactamente:** que mergeen el PR #671 de Pablo y que Marcelo publique su Ola 0;
+  después, rebasar esta rama sobre ese `origin/mockup` y el cherry-pick se disuelve solo.
+- **Dónde quedó:** rama `justin/farmacia-tienda-y-receta-2026-09-25`, PR #675 abierto.
+
+### H1.S1.M2 — Baseline
+- **Qué anda:** `lint` (6 errores preexistentes) y `typecheck` (exit 0) con su salida y su exit
+  code en `evidencia/antes/`.
+- **Qué no anda:** el baseline de `corepack yarn test --watch=false` completo no existe.
+- **Qué falta exactamente:** correr la suite entera antes y después y comparar los conteos.
+- **Dónde quedó:** `evidencia/antes/`. No se corrió por el límite de recursos de la sesión
+  (otros tres agentes en paralelo); mitigado corriendo specs dirigidos de cada área tocada.
 
 ### H3.S5.M3 — Publicar la fila **PUBLICADO** en el daily de equipo
 - **Qué anda:** la ruta `my-account/pharmacy` ya apunta a `StoreFront` y está en el PR, que es
@@ -42,7 +55,8 @@
 
 ### H4.S1.M5 — Entrada hija en `app.routes.ts` + capturas 375/1440
 - **Qué anda:** la entrada hija `my-account/pharmacy/prescriptions` está declarada con
-  `seccionRolesGuard` y `loadComponent`, y `corepack yarn typecheck` sale en 0.
+  `seccionRolesGuard` y `loadComponent`, y `app.routes.spec.ts` pasa **53/53** —incluidas sus
+  reglas sobre las hijas de una sección con roles—.
 - **Qué no anda:** las dos capturas no existen.
 - **Qué falta exactamente:** levantar `yarn start`, entrar como `paciente@alovida.mock`, abrir
   `/my-account/pharmacy/prescriptions` en 375 y 1440, capturar y **mirar** las dos capturas, con
@@ -76,6 +90,7 @@
 - `h2/spec-servicio.txt` — 22/22 del servicio de búsqueda.
 - `h3/pharmacy-search.service.txt` · `h3/product-results.txt` · `h3/store-results.txt` ·
   `h3/store-front.txt` · `h3/recent-orders.txt`.
+- `h3/app-routes.txt` — 53/53 de la tabla de rutas.
 - `h4/prescriptions-page.txt` — 9/9.
 - `h5/where-to-buy-baseline.txt` (36/36 **antes** de tocar nada) ·
   `h5/where-to-buy-ampliado.txt` (46/46 después).

@@ -73,8 +73,8 @@ rojo antes, entonces hay SHA, salidas y una tabla de rojos clasificados.
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H1.S1.M1 | Fijar corte y rama | Hay SHA | `git rev-parse HEAD` | HECHO (con desvío: Ola 0 por cherry-pick, no por merge) |
-| H1.S1.M2 | Baseline de `lint` y `typecheck` | Hay salidas y exit codes | `evidencia/antes/` | HECHO (`test` completo: prohibido por límite de recursos) |
+| H1.S1.M1 | Fijar corte y rama | Hay SHA | `git rev-parse HEAD` | A MEDIAS — hay SHA, pero NO es posterior a los merges: la Ola 0 entró por cherry-pick de `84a587d8` (PR #671 abierto) y Marcelo no publicó |
+| H1.S1.M2 | Baseline de `lint` y `typecheck` | Hay salidas y exit codes | `evidencia/antes/` | A MEDIAS — `lint` y `typecheck` con exit code pegados; el baseline de `test` completo NO se corrió (prohibido por límite de recursos) |
 | H1.S1.M3 | Clasificar cada rojo previo | Cada uno con su clase | tabla en `PLAN.md` | HECHO |
 
 ## H2 — El servicio de búsqueda
@@ -104,7 +104,7 @@ sede trae `distanceKm` y, con término, `fromAmount`.
 orden, origen, «Buscar toda una receta», «Mis pedidos» y «Tus últimos pedidos»; sin pestañas.
 **DoD:** specs de home, resultados por producto, por farmacia y últimos pedidos (≥ 22 casos);
 capturas 375 · 768 · 1440 claro + 1440 oscuro; `?tab=` redirigen.
-**Estado:** TODO
+**Estado:** A MEDIAS — specs 31/31 en verde; capturas BLOQUEADAS (navegador prohibido)
 
 ### H3.S1 — La pantalla
 
@@ -145,7 +145,7 @@ capturas 375 · 768 · 1440 claro + 1440 oscuro; `?tab=` redirigen.
 
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H3.S5.M1 | `'my-account/pharmacy'` → `StoreFront` en `PANTALLAS_DIFERIDAS` | La ruta abre la home | `corepack yarn typecheck` (desvío de `build`) | HECHO |
+| H3.S5.M1 | `'my-account/pharmacy'` → `StoreFront` en `PANTALLAS_DIFERIDAS` | La ruta abre la home | `corepack yarn typecheck` (desvío de `build`) | HECHO — `app.routes.spec.ts` 53/53 + `typecheck` 0 |
 | H3.S5.M2 | Redirecciones de `?tab=` en `StoreFront` (`replaceUrl`) | Las dos redirigen | spec (2 casos) | HECHO |
 | H3.S5.M3 | Fila **PUBLICADO** en §4-bis del daily de equipo | Pablo puede leerla | lectura | A MEDIAS (se publica en el cuerpo del PR; no hay daily en este worktree) |
 
@@ -165,7 +165,7 @@ aviso.
 | H4.S1.M2 | Nombres con `TerminologyClient` (mismo camino que `where-to-buy.ts`) | Se ve el nombre, no el uuid | spec | HECHO |
 | H4.S1.M3 | «Buscar dónde comprarla» → `/my-account/medical-record/where-to-buy/<id>` | `href` con el id | spec | HECHO |
 | H4.S1.M4 | Estados: loading, S3 sin recetas, error con reintento, sin perfil | Los cuatro | spec | HECHO |
-| H4.S1.M5 | Entrada hija en `app.routes.ts`; capturas 375/1440 | La ruta abre; dos capturas | `typecheck`; `evidencia/h4/capturas/` | A MEDIAS (ruta HECHA; capturas bloqueadas) |
+| H4.S1.M5 | Entrada hija en `app.routes.ts`; capturas 375/1440 | La ruta abre; dos capturas | `typecheck`; `evidencia/h4/capturas/` | A MEDIAS — ruta verificada con `app.routes.spec.ts` 53/53; las dos capturas NO existen |
 
 ## H5 — La receta entra al carrito
 
@@ -205,8 +205,8 @@ primera línea.
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
 | H6.S1.M1 | Regresión + e2e del área | Sin rojos nuevos | `typecheck`, `lint`, specs dirigidos | A MEDIAS (suite completa, build y Playwright prohibidos en esta sesión) |
-| H6.S1.M2 | PR a `mockup` mergeable | `gh pr view` sin conflictos | `gh pr view --json mergeable,mergeStateStatus` | TODO |
-| H6.S1.M3 | `REPORTE.md` al día; nada corriendo | Existe y cumple | `git status` | TODO |
+| H6.S1.M2 | PR a `mockup` mergeable | `gh pr view` sin conflictos | `gh pr view --json mergeable,mergeStateStatus` | HECHO — PR #675, mergeable=MERGEABLE (checks en curso al cierre) |
+| H6.S1.M3 | `REPORTE.md` al día; nada corriendo | Existe y cumple | `git status` | HECHO |
 
 ## Riesgos y bloqueos previstos
 
