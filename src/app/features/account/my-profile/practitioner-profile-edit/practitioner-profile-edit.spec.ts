@@ -1389,6 +1389,134 @@ describe('PractitionerProfileEdit', () => {
   });
 
   /**
+   * Disciplina de tablas: buscador y paginación (pedido del propietario,
+   * 24/09/2026). Las tres tablas —Formación, Especialidades y Matrículas—
+   * comparten la misma implementación, así que se prueba a fondo en una y se
+   * repite el filtro en las otras dos.
+   */
+  describe('buscador y paginación de las tres tablas', () => {
+    /** Siete títulos: más que una página (5), para poder probar el corte. */
+    const SIETE_TITULOS = Array.from({ length: 7 }, (_, i) => ({
+      id: `cred-${i}`,
+      credentialTypeConceptId: 'cred-titulo',
+      number: `TIT-${i}`,
+      issuingInstitutionText:
+        i === 0 ? 'Universidad Mayor de San Andrés' : 'Universidad Católica Boliviana',
+      issueDate: `2016-0${(i % 9) + 1}-01T12:00:00.000Z`,
+      stateConceptId: 'st-pending',
+    }));
+
+    it('arranca mostrando la primera página, sin recortar por búsqueda', () => {
+      montarYCargar({ credentials: SIETE_TITULOS });
+
+      expect(interno<() => number>('totalFormacion')()).toBe(7);
+      expect(interno<() => number>('totalFormacionFiltrada')()).toBe(7);
+      expect(interno<() => readonly unknown[]>('formacionEnPagina')()).toHaveLength(5);
+      expect(interno<() => number>('paginaActualFormacion')()).toBe(1);
+    });
+
+    it('el buscador filtra por tipo, número o institución, sin tildes ni mayúsculas', () => {
+      montarYCargar({ credentials: SIETE_TITULOS });
+
+      interno<(texto: string) => void>('buscarEnFormacion')('andres');
+
+      expect(interno<() => number>('totalFormacionFiltrada')()).toBe(1);
+      expect(
+        interno<() => readonly { numero: string }[]>('formacionEnPagina')().map((f) => f.numero),
+      ).toEqual(['TIT-0']);
+      // El total sin filtrar no cambia: el buscador recorta la VISTA, no borra nada.
+      expect(interno<() => number>('totalFormacion')()).toBe(7);
+    });
+
+    it('paginar corta el resultado, y buscar vuelve a la página 1', () => {
+      montarYCargar({ credentials: SIETE_TITULOS });
+
+      interno<(pagina: number) => void>('irAPaginaDeFormacion')(2);
+      expect(interno<() => readonly unknown[]>('formacionEnPagina')()).toHaveLength(2);
+      expect(interno<() => number>('paginaActualFormacion')()).toBe(2);
+
+      // Buscar algo que da una sola página: quedarse en la 2 mostraría una
+      // tabla vacía con el paginador diciendo que hay más.
+      interno<(texto: string) => void>('buscarEnFormacion')('catolica');
+      expect(interno<() => number>('paginaActualFormacion')()).toBe(1);
+      expect(interno<() => number>('totalFormacionFiltrada')()).toBe(6);
+    });
+
+    it('sin coincidencias, lo dice sin tocar la lectura completa', () => {
+      montarYCargar({ credentials: SIETE_TITULOS });
+
+      interno<(texto: string) => void>('buscarEnFormacion')('inexistente');
+
+      expect(interno<() => boolean>('sinCoincidenciasFormacion')()).toBe(true);
+      expect(interno<() => readonly unknown[]>('formacionEnPagina')()).toHaveLength(0);
+      expect(interno<() => number>('totalFormacion')()).toBe(7);
+    });
+
+    it('sin nada cargado no hay «sin coincidencias»: es el vacío de siempre', () => {
+      montarYCargar({ credentials: [] });
+
+      expect(interno<() => boolean>('sinCoincidenciasFormacion')()).toBe(false);
+      expect(interno<() => number>('totalFormacion')()).toBe(0);
+    });
+
+    it('la misma disciplina en Especialidades: buscador y «sin coincidencias»', () => {
+      montarYCargar({
+        specialties: [
+          {
+            id: 'spec-1',
+            specialtyConceptId: 'esp-cardio',
+            isPrimary: true,
+            boardCertified: false,
+            verificationStatusConceptId: 'st-pending',
+            verified: false,
+          },
+          {
+            id: 'spec-2',
+            specialtyConceptId: 'esp-pediatria',
+            isPrimary: false,
+            boardCertified: false,
+            verificationStatusConceptId: 'st-pending',
+            verified: false,
+          },
+        ],
+      });
+
+      interno<(texto: string) => void>('buscarEnEspecialidades')('cardio');
+      expect(interno<() => number>('totalEspecialidadesFiltrada')()).toBe(1);
+
+      interno<(texto: string) => void>('buscarEnEspecialidades')('no existe');
+      expect(interno<() => boolean>('sinCoincidenciasEspecialidades')()).toBe(true);
+    });
+
+    it('la misma disciplina en Matrículas: buscador y «sin coincidencias»', () => {
+      montarYCargar({
+        licenses: [
+          {
+            id: 'lic-1',
+            jurisdictionConceptId: 'jur-bo',
+            licenseNumber: 'MP-123',
+            regulatoryAuthority: 'SEDES Santa Cruz',
+            stateConceptId: 'st-ok',
+          },
+          {
+            id: 'lic-2',
+            jurisdictionConceptId: 'jur-bo',
+            licenseNumber: 'MP-456',
+            regulatoryAuthority: 'Ministerio de Salud',
+            stateConceptId: 'st-ok',
+          },
+        ],
+      });
+
+      interno<(texto: string) => void>('buscarEnMatriculas')('sedes');
+      expect(interno<() => number>('totalMatriculasFiltrada')()).toBe(1);
+
+      interno<(texto: string) => void>('buscarEnMatriculas')('no existe');
+      expect(interno<() => boolean>('sinCoincidenciasMatriculas')()).toBe(true);
+    });
+  });
+
+  /**
    * «Actividad» no está en el editor: son estadísticas y no se editan
    * (pedido del cliente del 24/09/2026). Entre el 20 y el 24/09/2026 estuvo,
    * sin campos; esta prueba fija que no vuelva.

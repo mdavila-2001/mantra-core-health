@@ -145,9 +145,25 @@
   font-weight: 600;
 }
 
+/* El buscador va ARRIBA de la tabla, no al lado: en el teléfono un renglón
+   con los dos no entra sin apretar el campo de texto a un ancho inútil. */
+.edicion__buscador {
+  display: block;
+  max-width: 28rem;
+  margin-block-start: var(--sp-3);
+}
+
 .edicion__tabla {
   display: block;
   margin-block-start: var(--sp-3);
+}
+
+/* Misma regla que `glosario__paginacion`: una línea separa el paginador de
+   la tabla, así no se lee como una fila más. */
+.edicion__paginacion {
+  margin-block-start: var(--sp-3);
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-default);
 }
 
 .edicion__vacio {
