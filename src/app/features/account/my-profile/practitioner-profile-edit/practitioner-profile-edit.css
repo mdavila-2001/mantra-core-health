@@ -32,9 +32,12 @@
   margin-inline: auto;
 }
 
-/* Dentro de «Credenciales» viven dos trámites —especialidades y matrículas—
-   separados por aire, no por otra tarjeta. */
-.edicion__seccion + .edicion__seccion {
+/* Dos trámites de una misma pestaña van separados por aire y una línea, no por
+   otra tarjeta. Las especialidades siguen a los datos fijos de «Datos
+   personales» desde el 24/09/2026: sin el mismo corte se leían como parte del
+   bloque del correo de acceso. */
+.edicion__seccion + .edicion__seccion,
+.edicion__fijos + .edicion__seccion {
   border-block-start: 1px solid var(--border-subtle);
   margin-block-start: var(--sp-6);
   padding-block-start: var(--sp-5);
