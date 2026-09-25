@@ -61,4 +61,21 @@ prompt: nada de "hoja en blanco" ni "nota clínica" **visible**) sí se cumple.
 | C7.H3.M2 | Capturas de «Notas médicas», cinco viewports, claro/oscuro; doble revisión crítica | TODO — diferido al pase final consolidado |
 
 ## H4 — Cierre
-**Estado:** EN CURSO
+**Estado:** HECHO — commits por carpeta/archivo, push a `claude/clinica-c7-nombres`, PR #682 a
+`mockup` (reviewers `jsaldias39`, `PabloArauzCaballero`), `REPORTE.md` escrito.
+`mergeable: MERGEABLE` / `mergeStateStatus: UNSTABLE` (checks del runner propio en `pending`, caído
+— ver `evidencia/h4-pr-checks.txt` y `REPORTE.md` §"Entrega").
+
+**Reconsulta post-PR:** mientras esto se cerraba, PR #677 (C9) y PR #679 (C5) se mergearon a
+`mockup` (`963b7283` → `9fa933be`), y Farmacia tocó `navigation.{map,subgroups}.ts` y
+`navigation.service.spec.ts` — los mismos archivos donde C7 cambió una línea. Se hizo
+`git merge origin/mockup` (regla 35.2.6: "tras mergear la base, el estado se vuelve a consultar"):
+sin conflictos. `component-index.generated.ts` quedó con un `TS2307` esperado tras el merge
+(memoria conocida: el índice generado queda viejo) — resuelto con
+`node scripts/generate-component-index.mjs` (gitignorado, no se commitea). Re-verificado completo:
+`yarn typecheck` exit 0, `yarn build` sin errores, `ng test` (9 `--include`) → 15 files / 235 tests
+OK (`evidencia/h4-regresion-post-merge.txt`, un test más que antes del merge: la fila del carrito de
+Farmacia en `navigation.service.spec.ts`).
+
+Daily de equipo (`Pablo-Daily-Noche-2026-09-25.md`, sección «Carril C») actualizado y pusheado a
+`main` del repo `AlovidaPromptManager` — ver commit ahí.
