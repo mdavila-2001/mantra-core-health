@@ -111,6 +111,49 @@
                 (diaElegido)="openDay($event)"
                 (citaElegida)="verDetalleDeLaSemana($event)"
               />
+
+              <!-- El detalle de una cita de la semana con las MISMAS acciones que
+                   su tarjeta del día (la plantilla que pasa `/schedule`), todas a
+                   la vista: el desplegable no funciona dentro de un modal. -->
+              @if (detalleDeLaSemana(); as abierto) {
+                @if (appointmentActions(); as acciones) {
+                  <app-content-dialog
+                    heading="Detalle de la cita"
+                    [description]="abierto.fecha"
+                    (closed)="cerrarDetalleDeLaSemana()"
+                  >
+                    <app-fact-list [hechos]="abierto.hechos" etiqueta="Detalle de la cita" />
+                    <div
+                      dialog-actions
+                      class="mi-agenda__detalle-acciones"
+                      data-testid="semana-detalle-acciones"
+                    >
+                      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- delegación: los botones de adentro ya son operables por teclado; esto sólo cierra el modal después -->
+                      <div
+                        class="mi-agenda__detalle-operaciones"
+                        (click)="accionDelDetalleDeLaSemana($event, abierto.cita)"
+                      >
+                        <ng-container
+                          [ngTemplateOutlet]="acciones"
+                          [ngTemplateOutletContext]="{ $implicit: abierto.cita, inline: true }"
+                        />
+                      </div>
+                      @if (abierto.cita.patientProfileId !== undefined) {
+                        <button
+                          app-button
+                          variant="primary"
+                          size="sm"
+                          type="button"
+                          data-testid="semana-detalle-expediente"
+                          (clicked)="abrirExpedienteDelDetalle(abierto.cita)"
+                        >
+                          Abrir expediente
+                        </button>
+                      }
+                    </div>
+                  </app-content-dialog>
+                }
+              }
             }
             @case ('month') {
               <app-month-view
