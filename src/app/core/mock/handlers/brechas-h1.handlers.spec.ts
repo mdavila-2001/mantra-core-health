@@ -172,7 +172,9 @@ describe('simulador · H1 sesión, cuenta y archivos', () => {
   describe('cuenta propia (ID-24)', () => {
     it('cambiar la contraseña: la actual tiene que ser la vigente (422) y cierra las otras sesiones', () => {
       // Una cuenta que ningún otro spec toca: el estado del simulador es del módulo.
-      const cuenta = buscarUsuario('visitador')!;
+      const base = buscarUsuario('visitador')!;
+      // Id nuevo: el simulador siembra las sesiones por id la primera vez que lo ve.
+      const cuenta: MockUser = { ...base, id: `m7-h1-${Date.now()}`, key: 'm7-h1' };
       call('POST', '/iam/auth/login', { email: cuenta.email, password: 'clave-original' }, null);
       const sesiones = call<{ id: string; current: boolean }[]>('GET', '/iam/me/sessions', null, cuenta) as {
         id: string;
