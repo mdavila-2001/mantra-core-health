@@ -15,6 +15,21 @@
     <app-alert tone="error" data-testid="formulario-especialidad-error">{{ mensaje }}</app-alert>
   }
 
+  <!-- Lo que el cierre no pudo registrar después de guardar la ficha. En ámbar
+       y no en rojo: la ficha sí quedó guardada, y lo que faltó se registra
+       desde su casilla. Persiste más que el toast a propósito. -->
+  @if (fallosDelCierre().length > 0) {
+    <app-alert
+      tone="warning"
+      title="La ficha quedó guardada, pero no todo el cierre"
+      data-testid="formulario-cierre-fallos"
+    >
+      @for (fallo of fallosDelCierre(); track fallo) {
+        <p class="formulario-especialidad__fallo">{{ fallo }}</p>
+      }
+    </app-alert>
+  }
+
   <!-- El selector, arriba de todo y siempre.
 
        Estaba dentro del `<form>`, es decir, detrás de la cadena de estados del
@@ -253,6 +268,16 @@
             </app-form-field>
           }
         }
+
+        <!-- D4: la ficha termina en el cierre. Sólo con una plantilla de
+             `forms` elegida —los bloques propios y la hoja libre no pasan por
+             acá—. Lo que se elija se registra al completar, en orden, después
+             de cerrar la instancia. -->
+        <app-form-conclusion-block
+          [respuestas]="respuestasParaLaIa()"
+          [nombreDeFicha]="plantilla.name"
+          (cierre)="cierre.set($event)"
+        />
       }
 
       @if (!hojaLibre()) {
