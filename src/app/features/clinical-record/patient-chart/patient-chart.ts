@@ -47,6 +47,7 @@ import { DialogService } from '../../../shared/components/molecules/dialog/dialo
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { AuthzClient } from '../../../core/data-access/authz/authz.client';
 import { ChartDocumentsClient } from '../../../core/data-access/chart-documents/chart-documents.client';
 import { isScanPending } from '../../../core/data-access/files/scan-status';
 import { FileDownloadService } from '../../../shared/utils/file-download/file-download.service';
@@ -374,6 +375,7 @@ export class PatientChart {
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
   private readonly documentsClient = inject(ChartDocumentsClient);
+  private readonly authz = inject(AuthzClient);
   private readonly downloads = inject(FileDownloadService);
   private readonly route = inject(ActivatedRoute);
 
@@ -643,6 +645,73 @@ export class PatientChart {
         })),
     })),
   );
+
+  /* -- Acceso de emergencia (BR-20 · CV-19) --------------------------------
+     Cuando la lectura da 403 y quien mira tiene el rol que la API deja usar
+     `break-the-glass` (`CLINICAL_APPROVER`, o `SECURITY_ADMIN`), se le ofrece la
+     acción de emergencia. No se «oculta» el 403: se ofrece una salida a quien
+     puede tomarla, con justificación obligatoria y una ventana acotada. La
+     autoridad sigue siendo la API; a quien no tiene el rol no se le ofrece. */
+
+  /** Si esta sesión puede pedir un acceso de emergencia. */
+  protected readonly puedeEmergencia = computed(() => {
+    const roles = this.auth.roles();
+    return roles.includes('CLINICAL_APPROVER') || roles.includes('SECURITY_ADMIN');
+  });
+
+  /** Mientras se pide el acceso, para no doblar el clic. */
+  protected readonly pidiendoEmergencia = signal(false);
+
+  /** El motivo escrito de una emergencia: la API exige al menos 10 caracteres. */
+  private static readonly MINIMO_DE_JUSTIFICACION = 10;
+
+  /**
+   * Pide el acceso de emergencia con la justificación, y **relee** el expediente.
+   *
+   * `POST /authz/patients/:id/break-the-glass`: la ventana es corta (60 minutos
+   * por defecto), queda auditado y el paciente lo ve en «Quién ve mi historia».
+   */
+  protected async pedirAccesoDeEmergencia(): Promise<void> {
+    const tenantId = this.auth.activeTenantId();
+    if (tenantId === null || this.pidiendoEmergencia()) {
+      this.toasts.warning('Elegí una organización antes de pedir el acceso de emergencia.', 'Acceso de emergencia');
+      return;
+    }
+    const justificacion = await this.dialogs.confirmWithReason(
+      {
+        title: 'Acceso de emergencia',
+        message:
+          'Vas a ver esta historia sin un vínculo ni un turno. Queda auditado, el acceso dura una hora y la persona lo ve en «Quién ve mi historia».',
+        confirmLabel: 'Pedir acceso',
+        destructive: true,
+      },
+      {
+        label: 'Justificación',
+        placeholder: 'Por qué necesitás ver esta historia ahora',
+        hint: 'Obligatoria: al menos 10 caracteres.',
+        minLength: PatientChart.MINIMO_DE_JUSTIFICACION,
+        maxLength: 1000,
+      },
+    );
+    if (justificacion === null) {
+      return;
+    }
+
+    this.pidiendoEmergencia.set(true);
+    this.authz
+      .breakTheGlass(this.pacienteDeLaFicha(), { tenantId, justification: justificacion })
+      .subscribe({
+        next: () => {
+          this.pidiendoEmergencia.set(false);
+          this.toasts.success('Acceso de emergencia concedido por una hora. Queda auditado.', 'Acceso de emergencia');
+          this.recargar();
+        },
+        error: () => {
+          this.pidiendoEmergencia.set(false);
+          this.toasts.warning('No pudimos conceder el acceso de emergencia.', 'Acceso de emergencia');
+        },
+      });
+  }
 
   /** Qué archivo se está bajando ahora (para el spinner y para no doblar el clic). */
   protected readonly bajando = signal<string | null>(null);

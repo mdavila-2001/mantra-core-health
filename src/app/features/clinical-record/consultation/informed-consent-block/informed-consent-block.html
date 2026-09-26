@@ -1,0 +1,65 @@
+<app-card class="consentimiento">
+  <h3 class="consentimiento__titulo">Consentimiento informado</h3>
+  <p class="consentimiento__ayuda">
+    Dejá constancia de la decisión de la persona sobre el tratamiento. Se guarda ligado a esta
+    consulta y ella lo ve en «Mi privacidad».
+  </p>
+
+  @if (encounterId() === null) {
+    <app-alert tone="info" data-testid="consentimiento-sin-encuentro">
+      Abrí la consulta para registrar el consentimiento informado: se liga al encuentro en curso.
+    </app-alert>
+  } @else {
+    @if (registrados().length > 0) {
+      <ul class="consentimiento__registrados" data-testid="consentimiento-registrados">
+        @for (item of registrados(); track item.id) {
+          <li>
+            <strong>{{ decisionDe(item.decision) }}</strong>
+            @if (item.signedAt) {
+              <span class="consentimiento__detalle">
+                · {{ item.signedAt | date: 'dd/MM/yyyy HH:mm' }}
+              </span>
+            }
+            @if (item.informationVersion) {
+              <span class="consentimiento__detalle">· Versión {{ item.informationVersion }}</span>
+            }
+          </li>
+        }
+      </ul>
+    }
+
+    @if (error(); as mensaje) {
+      <app-alert tone="error" data-testid="consentimiento-error">{{ mensaje }}</app-alert>
+    }
+
+    <form class="consentimiento__form" (submit)="$event.preventDefault(); registrar()" novalidate>
+      <app-form-field label="Decisión de la persona" [required]="true">
+        <app-select
+          data-testid="consentimiento-decision"
+          placeholder="Elegí una decisión"
+          [value]="decision()"
+          (valueChange)="decision.set($event)"
+          [options]="opciones"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Versión del material informativo"
+        hint="Opcional. La versión del texto que se le entregó."
+      >
+        <app-input
+          [value]="versionDeInformacion()"
+          (valueChange)="versionDeInformacion.set($event)"
+          testId="consentimiento-version"
+        />
+      </app-form-field>
+
+      <app-form-actions
+        submitLabel="Registrar consentimiento"
+        [pending]="guardando()"
+        [disabled]="!puedeRegistrar()"
+        (submitted)="registrar()"
+      />
+    </form>
+  }
+</app-card>

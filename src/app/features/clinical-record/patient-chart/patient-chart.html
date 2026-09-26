@@ -97,6 +97,28 @@
   </div>
 </app-view-state-host>
 
+<!-- 403: sin vínculo ni turno. A quien tiene el rol de emergencia se le ofrece la
+     salida —con justificación obligatoria—; a los demás, sólo el muro de arriba. -->
+@if (expediente().status === 'forbidden' && puedeEmergencia()) {
+  <app-alert tone="warning" title="Acceso de emergencia" data-testid="expediente-emergencia">
+    Si es una urgencia, podés pedir acceso a esta historia sin vínculo ni turno. Queda auditado y
+    la persona lo ve en «Quién ve mi historia».
+    <div alert-actions>
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        type="button"
+        data-testid="expediente-acceso-emergencia"
+        [isLoading]="pidiendoEmergencia()"
+        (clicked)="pedirAccesoDeEmergencia()"
+      >
+        Acceso de emergencia
+      </button>
+    </div>
+  </app-alert>
+}
+
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 <ng-template #celdaPrincipal let-fila>
   <span class="expediente__principal">{{ fila.principal }}</span>

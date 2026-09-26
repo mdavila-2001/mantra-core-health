@@ -71,6 +71,7 @@ import {
 } from '../patient-chart/medication-block/medication-block';
 import { PaymentsBlock } from '../patient-chart/payments-block/payments-block';
 import { SpecialtyFormBlock } from '../patient-chart/specialty-form-block/specialty-form-block';
+import { InformedConsentBlock } from './informed-consent-block/informed-consent-block';
 import {
   QUOTATION_NEW_ROUTE,
   QUOTATION_PATIENT_QUERY_PARAM,
@@ -290,6 +291,7 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
     PaymentPlanPanel,
     RouterLink,
     SpecialtyFormBlock,
+    InformedConsentBlock,
     StatusSeal,
     Textarea,
     TutorialTarget,
