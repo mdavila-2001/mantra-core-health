@@ -104,6 +104,8 @@ services:
       # abierto a internet, sin TLS y saltándose el proxy, creyendo que está
       # cerrado.
       #
+      # Traefik corre en esta misma máquina y alcanza el bucle local igual de
+      # bien, así que no se pierde nada.
       #
       # Si Coolify tiene activado el despliegue sin cortes —levanta el
       # contenedor nuevo antes de bajar el viejo—, este bloque sobra entero:
