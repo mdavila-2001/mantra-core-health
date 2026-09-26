@@ -2,7 +2,7 @@
    Portada de V65-buscador/publico/V65-08-perfil-organizacion-detalle.html en la bóveda. El marcado lo
    genera scripts/port-vistas-alovida.mjs; la lógica va acá, no en el generador. */
 
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 
@@ -10,5 +10,6 @@ import { RouterLink } from '@angular/router';
   selector: 'app-alovida-buscar-perfil-organizacion-detalle',
   imports: [RouterLink],
   templateUrl: './perfil-organizacion-detalle.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BuscarPerfilOrganizacionDetalle {}
