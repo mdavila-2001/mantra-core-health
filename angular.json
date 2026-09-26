@@ -126,6 +126,44 @@
                   "with": "src/environments/environment.real-api.ts"
                 }
               ]
+            },
+            "production-api": {
+              "optimization": {
+                "scripts": true,
+                "fonts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                }
+              },
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "620kB",
+                  "maximumError": "1.3MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "12kB"
+                }
+              ],
+              "outputHashing": "all",
+              "prerender": false,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.production-api.ts"
+                }
+              ],
+              "security": {
+                "allowedHosts": [
+                  "localhost",
+                  "127.0.0.1",
+                  "mantra-core-health.local",
+                  "frontend"
+                ]
+              }
             }
           },
           "defaultConfiguration": "production"
