@@ -178,6 +178,19 @@ describe('DocumentBlock', () => {
     req.flush(RESPUESTA);
   });
 
+  /** BR-16 (CL-36): el selector manda el uuid real del catálogo, no un booleano inventado. */
+  it('manda patientVisibilityConceptId cuando se elige visibilidad', () => {
+    dibujar();
+    señal<string | number | null>('titulo').set('Laboratorio completo');
+    señal<string | null>('visibilidad').set('vis-patient');
+
+    interno<() => void>('registrar')();
+
+    const req = http.expectOne('/charts/documents');
+    expect(req.request.body.patientVisibilityConceptId).toBe('vis-patient');
+    req.flush(RESPUESTA);
+  });
+
   it('el rótulo del botón dice cuántos archivos van', () => {
     dibujar();
     expect(interno<() => string>('rotuloDeEnvio')()).toBe('Registrar documento');

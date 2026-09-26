@@ -43,6 +43,18 @@
       </app-form-field>
 
       <app-form-field
+        label="Visible para el paciente"
+        hint="Opcional. Sin elegir, sólo lo ve el profesional."
+      >
+        <app-concept-select
+          data-testid="documento-visibilidad"
+          [target]="targetVisibilidad"
+          [(value)]="visibilidad"
+          placeholder="Sólo para el profesional"
+        />
+      </app-form-field>
+
+      <app-form-field
         label="Autor"
         hint="Opcional. Quién lo firma. Para lo que viene de afuera, el nombre del centro."
       >

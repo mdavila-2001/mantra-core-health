@@ -47,6 +47,17 @@ import { mensajeDeEscritura } from '../../mensaje-de-escritura';
 export const TARGET_CATEGORIA_DOCUMENTAL = 'chart.document_records.category_concept_id';
 
 /**
+ * Si el titular puede ver este documento en su propia historia (BR-16/CL-36).
+ *
+ * La API ya aceptaba y persistía `patientVisibilityConceptId` desde antes de
+ * este cambio (default «sólo para el profesional»); lo que faltaba era un
+ * catálogo publicado del que este selector pudiera sacar sus dos opciones sin
+ * adivinar el uuid.
+ */
+export const TARGET_VISIBILIDAD_DOCUMENTAL =
+  'chart.document_records.patient_visibility_concept_id';
+
+/**
  * **Registrar un documento** en el expediente — UC-15-09.
  *
  * ```html
@@ -121,6 +132,7 @@ export class DocumentBlock implements DraftBlock {
   readonly cambio = output<void>();
 
   protected readonly targetCategoria = TARGET_CATEGORIA_DOCUMENTAL;
+  protected readonly targetVisibilidad = TARGET_VISIBILIDAD_DOCUMENTAL;
 
   /** Lo que el almacenamiento acepta de verdad, no lo que suena razonable. */
   protected readonly formatosAceptados = UPLOAD_ACCEPT;
@@ -134,6 +146,8 @@ export class DocumentBlock implements DraftBlock {
 
   protected readonly titulo = signal<string | number | null>('');
   protected readonly categoria = signal<string | null>(null);
+  /** Sin elegir = el default de la API («sólo para el profesional»). BR-16/CL-36. */
+  protected readonly visibilidad = signal<string | null>(null);
   protected readonly autor = signal<string | number | null>('');
   protected readonly esExterno = signal(false);
   protected readonly citaElegida = signal<string | null>(null);
@@ -147,6 +161,7 @@ export class DocumentBlock implements DraftBlock {
     () =>
       String(this.titulo() ?? '').trim() !== '' ||
       this.categoria() !== null ||
+      this.visibilidad() !== null ||
       String(this.autor() ?? '').trim() !== '' ||
       this.esExterno() ||
       this.citaElegida() !== null ||
@@ -223,6 +238,7 @@ export class DocumentBlock implements DraftBlock {
     }
 
     const categoria = this.categoria();
+    const visibilidad = this.visibilidad();
     const autor = String(this.autor() ?? '').trim();
     const encuentro = this.citaElegida() ?? this.encounterId();
     const externo = this.esExterno();
@@ -241,6 +257,9 @@ export class DocumentBlock implements DraftBlock {
             // Los opcionales sin elegir se **omiten**: el backend valida con
             // `forbidNonWhitelisted`, y una clave en null no es «sin especificar».
             ...(categoria === null ? {} : { categoryConceptId: categoria }),
+            // BR-16 (CL-36): sin elegir, la API ya default a «sólo para el
+            // profesional» — no se manda un valor que sea el mismo default.
+            ...(visibilidad === null ? {} : { patientVisibilityConceptId: visibilidad }),
             ...(autor === '' ? {} : { authorText: autor }),
             ...(encuentro === null ? {} : { encounterId: encuentro }),
             ...(externo ? { isExternal: true } : {}),
@@ -316,6 +335,7 @@ export class DocumentBlock implements DraftBlock {
   private limpiar(): void {
     this.titulo.set('');
     this.categoria.set(null);
+    this.visibilidad.set(null);
     this.autor.set('');
     this.esExterno.set(false);
     this.citaElegida.set(null);
