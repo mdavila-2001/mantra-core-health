@@ -171,14 +171,16 @@ describe('simulador · H1 sesión, cuenta y archivos', () => {
 
   describe('cuenta propia (ID-24)', () => {
     it('cambiar la contraseña: la actual tiene que ser la vigente (422) y cierra las otras sesiones', () => {
-      call('POST', '/iam/auth/login', { email: 'paciente@alovida.mock', password: 'clave-original' }, null);
-      const sesiones = call<{ id: string; current: boolean }[]>('GET', '/iam/me/sessions', null, paciente) as {
+      // Una cuenta que ningún otro spec toca: el estado del simulador es del módulo.
+      const cuenta = buscarUsuario('visitador')!;
+      call('POST', '/iam/auth/login', { email: cuenta.email, password: 'clave-original' }, null);
+      const sesiones = call<{ id: string; current: boolean }[]>('GET', '/iam/me/sessions', null, cuenta) as {
         id: string;
         current: boolean;
       }[];
       expect(sesiones.some((s) => !s.current)).toBe(true);
 
-      const mala = call('POST', '/iam/auth/change-password', { currentPassword: 'otra', newPassword: 'nueva-1234' }, paciente);
+      const mala = call('POST', '/iam/auth/change-password', { currentPassword: 'otra', newPassword: 'nueva-1234' }, cuenta);
       expect(estado(mala)).toBe(422);
       expect((mala as MockReply).body).toMatchObject({ details: { reason: 'CURRENT_PASSWORD_INVALID' } });
 
@@ -186,10 +188,10 @@ describe('simulador · H1 sesión, cuenta y archivos', () => {
         'POST',
         '/iam/auth/change-password',
         { currentPassword: 'clave-original', newPassword: 'nueva-1234' },
-        paciente,
+        cuenta,
       );
-      expect(ok).toEqual({ revokedSessions: 1 });
-      const despues = call<{ current: boolean }[]>('GET', '/iam/me/sessions', null, paciente) as { current: boolean }[];
+      expect((ok as { revokedSessions: number }).revokedSessions).toBeGreaterThanOrEqual(1);
+      const despues = call<{ current: boolean }[]>('GET', '/iam/me/sessions', null, cuenta) as { current: boolean }[];
       expect(despues.every((s) => s.current)).toBe(true);
     });
   });

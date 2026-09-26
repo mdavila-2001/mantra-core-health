@@ -208,13 +208,8 @@ export function effectiveRoles(
   }
 
   return roles.filter((role) => {
-    const tenantsWithRole = Object.entries(scopedRoles)
-      .filter(([, codes]) => codes.includes(role))
-      .map(([tenantId]) => tenantId);
+    const owners = Object.keys(scopedRoles).filter((tenantId) => scopedRoles[tenantId]?.includes(role));
     // No aparece con ámbito: excepción global, vale siempre.
-    if (tenantsWithRole.length === 0) {
-      return true;
-    }
-    return activeTenantId !== null && tenantsWithRole.includes(activeTenantId);
+    return owners.length === 0 || (activeTenantId !== null && owners.includes(activeTenantId));
   });
 }

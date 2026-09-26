@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
+import { AuthService } from '../../../core/auth/auth.service';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { AccountSecurity } from './security';
@@ -126,6 +127,8 @@ describe('AccountSecurity (ID-24)', () => {
     http.expectOne('/iam/auth/logout-all').flush({ revokedSessions: 2 });
 
     expect(navegar).toHaveBeenCalledWith('/auth');
+    // Y descarta lo local: el servidor ya revocó todas las sesiones, ésta incluida.
+    expect(TestBed.inject(AuthService).isAuthenticated()).toBe(false);
   });
 
   it('si se cancela la confirmación, no se cierra nada', async () => {

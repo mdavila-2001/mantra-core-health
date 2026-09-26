@@ -293,54 +293,23 @@ describe('AuthService · cerrar sesión (TX-10, TX-31, ID-24)', () => {
     http.verify();
   });
 
-  it('«cerrar sesión en todos lados» llama a logout-all y limpia lo local', () => {
+  it('descartar la sesión local limpia el store, lo guardado y lo sensible', () => {
     const almacen = new AlmacenFalso();
-    const { auth, http } = montar(false, almacen);
+    let corrio = 0;
+    const { auth, http } = montar(false, almacen, [
+      () => {
+        corrio += 1;
+      },
+    ]);
     auth.login({ kind: 'email', email: 'a@b.test', password: 'p' }).subscribe();
     http.expectOne('/iam/auth/login').flush(RESPUESTA_CUERPO);
 
-    let cerradas: number | undefined;
-    auth.logoutEverywhere().subscribe((n) => (cerradas = n));
-    http.expectOne('/iam/auth/logout-all').flush({ revokedSessions: 2 });
+    auth.discardLocalSession();
 
-    expect(cerradas).toBe(2);
     expect(auth.isAuthenticated()).toBe(false);
     expect(almacen.token).toBeNull();
-    http.verify();
-  });
-
-  it('si logout-all falla, la sesión local sigue abierta', () => {
-    const almacen = new AlmacenFalso();
-    const { auth, http } = montar(false, almacen);
-    auth.login({ kind: 'email', email: 'a@b.test', password: 'p' }).subscribe();
-    http.expectOne('/iam/auth/login').flush(RESPUESTA_CUERPO);
-
-    let fallo = false;
-    auth.logoutEverywhere().subscribe({ error: () => (fallo = true) });
-    http.expectOne('/iam/auth/logout-all').flush(null, { status: 500, statusText: 'x' });
-
-    expect(fallo).toBe(true);
-    expect(auth.isAuthenticated()).toBe(true);
-    http.verify();
-  });
-
-  it('cambiar la contraseña manda actual y nueva; un 422 no cierra la sesión', () => {
-    const almacen = new AlmacenFalso();
-    const { auth, http } = montar(false, almacen);
-    auth.login({ kind: 'email', email: 'a@b.test', password: 'p' }).subscribe();
-    http.expectOne('/iam/auth/login').flush(RESPUESTA_CUERPO);
-
-    let fallo = false;
-    auth.changePassword('actual', 'nueva-1234').subscribe({ error: () => (fallo = true) });
-    const req = http.expectOne('/iam/auth/change-password');
-    expect(req.request.body).toEqual({ currentPassword: 'actual', newPassword: 'nueva-1234' });
-    req.flush(
-      { code: 'PRECONDITION_FAILED', details: { reason: 'CURRENT_PASSWORD_INVALID' } },
-      { status: 422, statusText: 'Unprocessable Entity' },
-    );
-
-    expect(fallo).toBe(true);
-    expect(auth.isAuthenticated()).toBe(true);
+    expect(corrio).toBe(1);
+    // Sin llamada al servidor: eso lo hace `AccountSecurityClient.logoutAll`.
     http.verify();
   });
 });

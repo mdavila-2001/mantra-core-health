@@ -85,14 +85,9 @@ export class RefreshTokenStorage {
    * evita el selector en el segundo inicio de sesión (TX-11).
    */
   clear(): void {
-    const storage = this.storage();
-    if (storage === null) {
-      return;
-    }
-
     try {
-      storage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
-      storage.removeItem(SESSION_HINT_STORAGE_KEY);
+      this.storage()?.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+      this.storage()?.removeItem(SESSION_HINT_STORAGE_KEY);
     } catch {
       // Ídem: que no se pueda borrar no debe impedir cerrar sesión.
     }
@@ -100,16 +95,11 @@ export class RefreshTokenStorage {
 
   /** Anota que hay una sesión abierta en modo cookie. No es un secreto. */
   writeSessionHint(): void {
-    const storage = this.storage();
-    if (storage === null) {
-      return;
-    }
-
     try {
-      storage.setItem(SESSION_HINT_STORAGE_KEY, '1');
+      this.storage()?.setItem(SESSION_HINT_STORAGE_KEY, '1');
       // Un refresh token que quedó de antes de encender la cookie ya no
       // corresponde: en este modo no puede haber ninguno al alcance de scripts.
-      storage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+      this.storage()?.removeItem(REFRESH_TOKEN_STORAGE_KEY);
     } catch {
       // Degradar: sin la marca la sesión vive en la pestaña y se pide de nuevo.
     }
@@ -117,13 +107,8 @@ export class RefreshTokenStorage {
 
   /** Si esta sesión quedó abierta en modo cookie. */
   hasSessionHint(): boolean {
-    const storage = this.storage();
-    if (storage === null) {
-      return false;
-    }
-
     try {
-      return storage.getItem(SESSION_HINT_STORAGE_KEY) === '1';
+      return this.storage()?.getItem(SESSION_HINT_STORAGE_KEY) === '1';
     } catch {
       return false;
     }
@@ -136,26 +121,11 @@ export class RefreshTokenStorage {
    *   ignora. Sin él, se devuelve lo guardado (compatibilidad).
    */
   readSelectedTenant(userId?: string | null): string | null {
-    const storage = this.storage();
-    if (storage === null) {
-      return null;
-    }
-
     try {
-      const value = storage.getItem(SELECTED_TENANT_STORAGE_KEY);
-      if (value === null || value === '') {
-        return null;
-      }
-      const separator = value.indexOf('|');
-      if (separator === -1) {
-        return value;
-      }
-      const owner = value.slice(0, separator);
-      const tenantId = value.slice(separator + 1);
-      if (tenantId === '') {
-        return null;
-      }
-      return userId === undefined || userId === null || owner === userId ? tenantId : null;
+      const value = this.storage()?.getItem(SELECTED_TENANT_STORAGE_KEY) ?? '';
+      // `<persona>|<organización>`; sin barra es el formato anterior, sin dueño.
+      const [owner, tenantId = ''] = value.includes('|') ? value.split('|') : ['', value];
+      return tenantId !== '' && (!userId || owner === '' || owner === userId) ? tenantId : null;
     } catch {
       return null;
     }
@@ -168,16 +138,8 @@ export class RefreshTokenStorage {
    * @param userId - Quién la eligió.
    */
   writeSelectedTenant(tenantId: string, userId?: string | null): void {
-    const storage = this.storage();
-    if (storage === null) {
-      return;
-    }
-
     try {
-      storage.setItem(
-        SELECTED_TENANT_STORAGE_KEY,
-        userId === undefined || userId === null ? tenantId : `${userId}|${tenantId}`,
-      );
+      this.storage()?.setItem(SELECTED_TENANT_STORAGE_KEY, userId ? `${userId}|${tenantId}` : tenantId);
     } catch {
       // Degradar: se vuelve a preguntar en la próxima recarga, nada más.
     }
@@ -202,8 +164,9 @@ export class RefreshTokenStorage {
     const listener = (event: StorageEvent): void => {
       // `newValue === null` es un borrado. Se ignora el `key === null` que
       // emite un `localStorage.clear()` ajeno: no es nuestro cierre de sesión.
-      const esDeSesion =
-        event.key === REFRESH_TOKEN_STORAGE_KEY || event.key === SESSION_HINT_STORAGE_KEY;
+      const esDeSesion = [REFRESH_TOKEN_STORAGE_KEY, SESSION_HINT_STORAGE_KEY].includes(
+        event.key ?? '',
+      );
       if (esDeSesion && event.newValue === null) {
         onCleared();
       }

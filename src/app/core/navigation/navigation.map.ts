@@ -1147,7 +1147,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'shield',
     roles: ['PATIENT'],
     availability: 'disponible',
-    summary: 'Mirá tus consentimientos y retiralos cuando quieras.',
+    summary: 'Tus consentimientos, y retiralos cuando quieras.',
     module: 'M07 consent',
   },
   {
@@ -1160,7 +1160,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'results',
     roles: ['PATIENT'],
     availability: 'disponible',
-    summary: 'Los profesionales que ven tu historia clínica. Revocá los accesos que quieras.',
+    summary: 'Quién ve tu historia clínica, y revocalo.',
     module: 'M06 authz',
   },
   {
@@ -1176,7 +1176,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'lock',
     roles: [ANY_ROLE],
     availability: 'disponible',
-    summary: 'Cambiá tu contraseña y cerrá las sesiones que tengas abiertas en otros dispositivos.',
+    summary: 'Cambiá tu contraseña y cerrá sesiones abiertas.',
     module: 'M01 iam',
   },
   {

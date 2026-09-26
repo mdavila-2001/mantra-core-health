@@ -1438,10 +1438,9 @@ describe('PatientChart', () => {
         });
 
       // El cuerpo del error llega como Blob y se relee de forma asincronica.
-      await new Promise((resolver) => setTimeout(resolver, 20));
+      await vi.waitFor(() => expect(interno<() => string | null>('bajando')()).toBeNull());
 
       expect(guardar).not.toHaveBeenCalled();
-      expect(interno<() => string | null>('bajando')()).toBeNull();
       guardar.mockRestore();
     });
   });

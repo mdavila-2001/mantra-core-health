@@ -22,8 +22,6 @@ import type {
   RegisteredOrganization,
   RegisteredPatient,
   RegisteredPractitioner,
-  MySession,
-  PasswordChanged,
   Session,
   UploadedRegistrationDocument,
   UserListItem,
@@ -432,51 +430,6 @@ export class IamClient {
     return this.http.post(this.url('/iam/auth/logout'), {});
   }
 
-  /** `POST /iam/auth/logout-all`. Cierra las sesiones de **todos** los dispositivos. */
-  logoutAll(): Observable<{ readonly revokedSessions: number }> {
-    return this.http.post<{ readonly revokedSessions: number }>(
-      this.url('/iam/auth/logout-all'),
-      {},
-    );
-  }
-
-  /**
-   * `POST /iam/auth/change-password`. La contraseña actual y la nueva; la API
-   * cierra las **otras** sesiones. Un error de contraseña es 422 (no 401): la
-   * sesión sigue siendo válida.
-   */
-  changePassword(currentPassword: string, newPassword: string): Observable<PasswordChanged> {
-    return this.http.post<PasswordChanged>(this.url('/iam/auth/change-password'), {
-      currentPassword,
-      newPassword,
-    });
-  }
-
-  /** `GET /iam/me/sessions`. Las sesiones abiertas de la propia cuenta. */
-  listMySessions(): Observable<readonly MySession[]> {
-    return this.http
-      .get<readonly WireMySession[]>(this.url('/iam/me/sessions'))
-      .pipe(
-        map((rows) =>
-          rows.map((row) => ({
-            id: row.id,
-            createdAt: new Date(row.createdAt),
-            expiresAt: new Date(row.expiresAt),
-            ...(row.ip === undefined || row.ip === null ? {} : { ip: row.ip }),
-            current: row.current,
-          })),
-        ),
-      );
-  }
-
-  /** `POST /iam/me/sessions/:id/revoke`. Cierra una sesión propia. */
-  revokeMySession(sessionId: string): Observable<{ readonly revoked: boolean }> {
-    return this.http.post<{ readonly revoked: boolean }>(
-      this.url(`/iam/me/sessions/${encodeURIComponent(sessionId)}/revoke`),
-      {},
-    );
-  }
-
   /**
    * `POST /iam/auth/forgot-password`. El identificador es correo **o**
    * documento, igual que en el login.
@@ -601,14 +554,6 @@ export class IamClient {
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
-}
-
-interface WireMySession {
-  readonly id: string;
-  readonly createdAt: string;
-  readonly expiresAt: string;
-  readonly ip?: string | null;
-  readonly current: boolean;
 }
 
 /* ---- transporte del listado de usuarios ---------------------------------- */

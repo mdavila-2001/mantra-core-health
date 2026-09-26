@@ -13,6 +13,7 @@ import { SessionStore } from '../auth/session.store';
 import { TENANT_SELECTION_ROUTE } from '../auth/tenant-selection-route';
 import { readApiError } from './api-error';
 import { TokenRefreshService } from './token-refresh.service';
+import { isTransientFailure } from './transient-failure';
 
 /** Ruta a la que se manda a quien se quedó sin sesión. */
 export const LOGIN_ROUTE = '/auth';
@@ -223,22 +224,15 @@ function failedRefresh(
   router: Router,
   error: unknown,
 ) {
-  if (isTransient(error)) {
+  if (isTransientFailure(error)) {
     return throwError(() => error);
   }
   return endSession(session, storage, router, error);
 }
 
-function isTransient(error: unknown): boolean {
-  return (
-    error instanceof HttpErrorResponse &&
-    (error.status === 0 || error.status === 429 || error.status >= 500)
-  );
-}
-
 /** `details.reason` de la API cuando hay que elegir organización. */
 function isTenantRequired(error: unknown): boolean {
-  if (!(error instanceof HttpErrorResponse) || (error.status !== 403 && error.status !== 422)) {
+  if (!(error instanceof HttpErrorResponse) || ![403, 422].includes(error.status)) {
     return false;
   }
   const reason = readApiError(error)?.details?.['reason'];

@@ -6,13 +6,12 @@ import { REFRESH_COOKIE_MODE } from '../data-access/api';
 import { IamClient } from '../data-access/iam/iam.client';
 import type {
   LoginCredentials,
-  MySession,
-  PasswordChanged,
   PatientRegistration,
   RegisteredPatient,
   Session,
 } from '../data-access/iam/iam.types';
 import { authMethodOf, loginFailureCategory } from '../observability/business/auth-tracing';
+import { isTransientFailure } from '../http/transient-failure';
 import { TracingService } from '../observability/tracing/tracing.service';
 import { RefreshTokenStorage } from './refresh-token.storage';
 import { SESSION_CLEANERS } from './session-cleanup';
@@ -21,17 +20,6 @@ import { SessionStore } from './session.store';
 /** Cuántas veces se reintenta restaurar la sesión si no hay red, y cada cuánto. */
 const RESTORE_RETRIES = 1;
 const RESTORE_RETRY_MS = 800;
-
-/**
- * El fallo del refresco es **transitorio** —sin red, límite de tasa, servidor
- * caído— y por lo tanto no dice nada de la sesión (TX-30).
- */
-function isTransientFailure(error: unknown): boolean {
-  return (
-    error instanceof HttpErrorResponse &&
-    (error.status === 0 || error.status === 429 || error.status >= 500)
-  );
-}
 
 /** El servidor dijo que el token no sirve: ahí sí se descarta (400/401). */
 function isDefinitiveRejection(error: unknown): boolean {
@@ -168,50 +156,26 @@ export class AuthService {
     // Un error acá no cambia nada de lo que sigue: el aviso es cortesía hacia
     // el servidor, no la condición para salir.
     this.iam.logout().subscribe({ error: () => undefined });
-    this.clearLocal();
+    this.discardLocalSession();
   }
 
   /**
-   * «Cerrar sesión en todos lados» (ID-24): revoca las sesiones de **todos** los
-   * dispositivos, incluida ésta. Si la API contesta, se limpia lo local; si
-   * falla, la sesión sigue abierta y el error sube para que la pantalla lo diga.
+   * Descarta la sesión **local**: memoria, lo que se guardó de ella y todo lo
+   * sensible que otras piezas dejaron en el navegador (TX-31). También la llama la
+   * pantalla de Seguridad tras «cerrar sesión en todos lados», cuando el servidor
+   * ya revocó todo (`AccountSecurityClient.logoutAll`).
    */
-  logoutEverywhere(): Observable<number> {
-    return this.iam.logoutAll().pipe(
-      tap(() => this.clearLocal()),
-      map((result) => result.revokedSessions),
-    );
-  }
-
-  /** Cambia la contraseña de la propia cuenta; la API cierra las otras sesiones. */
-  changePassword(currentPassword: string, newPassword: string): Observable<PasswordChanged> {
-    return this.iam.changePassword(currentPassword, newPassword);
-  }
-
-  /** Las sesiones abiertas de la propia cuenta. */
-  mySessions(): Observable<readonly MySession[]> {
-    return this.iam.listMySessions();
-  }
-
-  /** Cierra otra de las sesiones propias. */
-  revokeSession(sessionId: string): Observable<{ readonly revoked: boolean }> {
-    return this.iam.revokeMySession(sessionId);
-  }
-
-  /**
-   * Limpia lo local: la sesión en memoria, lo que se guardó de ella y todo lo
-   * sensible que otras piezas dejaron en el navegador (TX-31).
-   */
-  private clearLocal(): void {
+  discardLocalSession(): void {
     this.session.clear();
     this.storage.clear();
-    for (const cleaner of this.cleaners) {
+    // Un limpiador roto no puede impedir cerrar sesión ni frenar a los demás.
+    this.cleaners.forEach((cleaner) => {
       try {
         cleaner();
       } catch {
-        // Un limpiador roto no puede impedir cerrar sesión ni frenar a los demás.
+        /* se ignora a propósito */
       }
-    }
+    });
   }
 
   /**
@@ -273,7 +237,7 @@ export class AuthService {
         delay: (error: unknown) =>
           isTransientFailure(error) ? timer(RESTORE_RETRY_MS) : throwError(() => error),
       }),
-      tap((session) => this.reopen(session)),
+      tap((session) => this.open(session)),
       map(() => true),
       catchError((error: unknown) => {
         if (isDefinitiveRejection(error)) {
@@ -295,11 +259,9 @@ export class AuthService {
    * guardada intacta. Si no hay ventana (servidor) no hace nada.
    */
   private restoreWhenOnline(): void {
-    const view = this.document.defaultView;
-    if (view === null || view === undefined) {
-      return;
-    }
-    view.addEventListener('online', () => this.restoreSession().subscribe(), { once: true });
+    this.document.defaultView?.addEventListener('online', () => this.restoreSession().subscribe(), {
+      once: true,
+    });
   }
 
   private open(session: Session): void {
@@ -323,10 +285,5 @@ export class AuthService {
     if (guardada !== null) {
       this.session.selectTenant(guardada);
     }
-  }
-
-  /** Abre la sesión recuperada; la organización la restaura {@link open}. */
-  private reopen(session: Session): void {
-    this.open(session);
   }
 }

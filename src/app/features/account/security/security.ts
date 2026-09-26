@@ -5,6 +5,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { AccountSecurityClient } from '../../../core/data-access/iam/account-security.client';
 import type { MySession } from '../../../core/data-access/iam/iam.types';
 import { LOGIN_ROUTE } from '../../../core/http/auth.interceptor';
 import { readApiError } from '../../../core/http/api-error';
@@ -60,6 +61,7 @@ type EstadoDeSesiones = 'cargando' | 'listo' | 'error';
 })
 export class AccountSecurity {
   private readonly auth = inject(AuthService);
+  private readonly security = inject(AccountSecurityClient);
   private readonly router = inject(Router);
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
@@ -102,7 +104,7 @@ export class AccountSecurity {
 
     const { currentPassword, newPassword } = this.form.getRawValue();
     this.guardando.set(true);
-    this.auth.changePassword(currentPassword, newPassword).subscribe({
+    this.security.changePassword(currentPassword, newPassword).subscribe({
       next: (resultado) => {
         this.guardando.set(false);
         this.form.reset();
@@ -122,7 +124,7 @@ export class AccountSecurity {
 
   protected cargarSesiones(): void {
     this.estado.set('cargando');
-    this.auth.mySessions().subscribe({
+    this.security.listMySessions().subscribe({
       next: (lista) => {
         this.sesiones.set(lista);
         this.estado.set('listo');
@@ -133,7 +135,7 @@ export class AccountSecurity {
 
   protected cerrarSesion(sesion: MySession): void {
     this.cerrando.set(sesion.id);
-    this.auth.revokeSession(sesion.id).subscribe({
+    this.security.revokeMySession(sesion.id).subscribe({
       next: () => {
         this.cerrando.set(null);
         this.toasts.success('Cerramos esa sesión.');
@@ -159,8 +161,10 @@ export class AccountSecurity {
     }
 
     this.cerrandoTodas.set(true);
-    this.auth.logoutEverywhere().subscribe({
+    this.security.logoutAll().subscribe({
       next: () => {
+        // El servidor ya revocó todas las sesiones, ésta incluida: se descarta lo local.
+        this.auth.discardLocalSession();
         this.cerrandoTodas.set(false);
         void this.router.navigateByUrl(LOGIN_ROUTE);
       },
