@@ -88,3 +88,54 @@ decide el front:
 - **Test reescrito con causa:** `asks for the signed url only when the file is actually opened` exigía la URL firmada
   y `window.open`; el requisito cambió (CL-40), así que ahora exige la lectura por la ruta del resultado y que **no**
   se pida ninguna URL firmada.
+
+# Decisiones — H4 front (BR-17)
+
+D-E ya venía decidida por el reparto (Q-02): el camino canónico es
+`diagnostics/reports/:reportId/versions/:versionId/release` — ver
+`mantra-core-health-api/docs/progress/DECISIONS.md` para el porqué completo del lado del backend. Acá, lo que decide
+el front:
+
+- **CL-48 — compartir por perfil, nunca por un id tipeado:** `NewDiagnosticResultShare.practitionerUserId` pasa a
+  `practitionerProfileId`, y `reason` se retira (CL-50: el backend no tiene columna para guardarlo). La pantalla de
+  «Mis resultados» ya no ofrece un `<input>` de texto: reutiliza `AuthzClient.getMyClinicalAccess()` (BR-20,
+  `GET /authz/me/access`) para poblar un `app-select` con las relaciones asistenciales `ACTIVE` del paciente, por
+  nombre. **No se creó ningún cliente ni endpoint nuevo para esto**: la lista de «mis profesionales» ya existía para
+  «Quién ve mi historia», y es exactamente la misma lista que el hallazgo pedía. `DiagnosticResultShare` suma
+  `practitionerName?` (lo que ya devuelve el backend) para que «Compartido con» muestre el nombre y no el uuid de la
+  cuenta.
+- **CL-45/CL-51 — moneda y ciudades reales:** `DiagnosticUnitSearchItem.cities` deja de ser opcional (la búsqueda de
+  la API ya lo devuelve) y suma `minAmountCurrency: string | null`. `laboratory-directory`'s `precioDesde` usa esa
+  moneda («desde USD 120») en vez del `Bs` literal hardcodeado; si algún día llega un importe sin moneda (dato
+  incompleto), cae a `Bs` como piso conocido en vez de romper.
+- **D-E, lado del cliente:** `ClinicalClient.releaseDiagnosticReport` se marca `@deprecated` en su JSDoc (no se
+  borra: nada más en el front lo usaba, así que no hay pantalla que migrar) y su handler mock ahora responde 422 con
+  el endpoint canónico, igual que el backend real. El mock de `diagnostics.handlers.ts` gana el único camino de
+  liberación (`POST .../reports/:reportId/versions` y `.../release`) que muta la colección `informes`: liberar en
+  `mockup` ahora sí hace aparecer (o no, si `patientVisibility: 'HIDDEN'`) el resultado en «Mis resultados». Se
+  simplifica el modelo de versiones del backend a una versión por informe: ningún consumidor del simulador necesita
+  todavía enmendar una versión anterior, y modelarlo entero hubiera sido inventar complejidad sin consumidor.
+- **CL-56 — sin imagen ni preparación inventada en el mock:**
+  `GET /diagnostics/patients/:id/imaging-studies` ahora exige `statusConceptId === 'ST-COMPLETED'`: antes fabricaba
+  un `studyInstanceUid` para toda orden de RX/ECO/TAC/RMN, pendiente o no. La preparación de «Mis órdenes» deja de
+  tener dos casos hardcodeados (glucosa, perfil lipídico) y busca la oferta real publicada por algún centro para ese
+  mismo concepto (`estudiosDe`); un estudio sin preparación publicada por ningún centro ahora no dice nada, en vez de
+  inventar un texto. Efecto colateral aceptado: «Perfil lipídico» pierde la preparación que tenía porque ningún
+  centro de la maqueta la publica para ese estudio — es exactamente lo que CL-56 pide (no mostrar lo que no está
+  respaldado), no una regresión.
+- **CV-02/CL-47 — `DiagnosticsLabClient`, sin pantalla todavía:** el contrato completo del circuito de laboratorio
+  (acesionar, espécimen, rechazo, contenedor, custodia y las dos lecturas nuevas — `GET .../accessions/:id` y
+  `GET .../specimens/:id`) se escribió en `core/data-access/diagnostics/diagnostics-lab.client.ts`, con sus tipos y
+  sus pruebas unitarias. **La consola del laboratorio (pantallas, rutas, navegación) queda fuera de este pase**:
+  necesita el rol de BR-06 (quién es «el laboratorio» para el sistema de roles) para no construir una pantalla que
+  nadie puede abrir, y el tamaño de una feature nueva con `composition-rules.md` §5 (una tarjeta con pestañas)
+  verificada visualmente no entraba en el mismo carril que D-E sin exceder `NO_EVIDENCE_NO_DONE`. Las 7 operaciones
+  sin pantalla (todo menos crear/liberar versión, que sí tienen consumidor de mock) quedan registradas en
+  `scripts/check-mock-vs-client.mjs` (`CONOCIDAS`) y documentadas en `docs/integrations/backend-api.md`, con los
+  cuatro prefijos nuevos (`/diagnostics/accessions`, `/specimens`, `/containers`, `/reports`) agregados a las tres
+  declaraciones del proxy (`proxy.conf.json`, `proxy.conf.docker.json`, `deploy/api-locations.conf`) para que
+  `check-client-prefixes.mjs` no los deje sin rutear el día que la pantalla exista.
+- **`check-api-contract-drift.mjs` sigue en rojo, y no por este cambio:** el repo ya tenía ~109 endpoints sin
+  documentar antes de este carril (medido: 116 antes de sumar mis 9, 107 después de documentarlos). No se tocó esa
+  deuda preexistente — hubiera sido un diff de cientos de líneas ajeno a BR-17 — pero las 9 operaciones que este
+  carril agregó (`DiagnosticsLabClient`) sí quedaron documentadas, así que el carril no la empeora.
