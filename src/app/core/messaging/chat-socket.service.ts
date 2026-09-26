@@ -139,10 +139,22 @@ export class ChatSocketService {
     // exige `accessToken() !== null` para abrir uno nuevo; esto cierra el que
     // ya estaba abierto en el momento en que la sesión termina.
     effect(() => {
-      if (!this.session.isAuthenticated() && this.socket) {
+      if (!this.haySesion() && this.socket) {
         this.disconnect();
       }
     });
+  }
+
+  /**
+   * `session.isAuthenticated()`, tolerando un doble de prueba incompleto
+   * (misma causa que `CartStore`/`IdleLogout` — carril M6 H2, 2026-09-26):
+   * este `effect()` corre en cualquier tick, y una prueba que reemplaza
+   * `SessionStore`/`AuthService` sin `isAuthenticated` lo revienta de forma
+   * asíncrona, envenenando al archivo que esté corriendo en ese momento en
+   * el mismo worker.
+   */
+  private haySesion(): boolean {
+    return typeof this.session.isAuthenticated === 'function' && this.session.isAuthenticated();
   }
 
   /**

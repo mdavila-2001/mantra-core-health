@@ -1,6 +1,8 @@
 # M6 · Acer Aspire 3 — evidencia H2 (suite determinista, A MEDIAS) y H3 (lint, cerrado)
 
-Rama `marcelo/test-m6-suite-lint` sobre `origin/test` @ `ec7037f7`.
+Rama `marcelo/test-m6-suite-lint` sobre `origin/test` @ `ec7037f7` (primer round, mergeado en
+PR #720) y rama `marcelo/test-m6-h2-determinismo` sobre `origin/test` @ `b7fab847` (segundo
+round, retomando el carril tras el merge — ver «Segundo round» más abajo).
 
 ## H2 — A MEDIAS (no se llegó a REGRESSION_VERIFIED)
 
@@ -80,6 +82,68 @@ Estos SON estables entre corridas — son bugs de producto/contenido preexistent
 | `patient-home.spec.ts` | Los 10 tests fallan con `Expected no open requests, found 1: GET /profiles/patients/me` — el componente hace una petición que ningún test del archivo flushea; bug real, no cascada (se repite igual con 1 archivo en el worker). |
 | `mock-backend-latencia.spec.ts` | Mide tiempos reales (`dos corridas de la misma ruta tardan lo mismo`); sensible a contención incluso con `maxThreads: 4`. |
 | `reconsulta-idempotente.spec.ts` | `Hook timed out in 10000ms` — no usa Angular TestBed (`await import('./agenda')` a secas); posible carga pesada del módulo bajo contención. |
+
+### Segundo round (retomando el carril, 2026-09-26 más tarde)
+
+Entre el merge del PR #720 y este round, `test` recibió commits de varios carriles en paralelo
+(`glossary`, `form-builder`, `symptom-check`, `triage-ia`, `register-imaging-center`,
+`register-laboratory`, `medical-laboratory`…). El diagnóstico se retomó con un método más
+preciso: un hook temporal en `test-setup.ts` (no commiteado, revertido antes de cerrar) que
+registra, por PID de worker, el archivo de cada test en un log — así se puede ver exactamente
+qué archivo corrió justo antes de una víctima envenenada, en vez de inferirlo.
+
+**Encontradas y corregidas dos causas más, de dos clases distintas:**
+
+4. **`ChatSocketService`** (nuevo, llegado con otro carril): mismo patrón que los 6 servicios
+   ya corregidos — `effect(() => { if (!this.session.isAuthenticated() && this.socket) {...} })`
+   sin guarda. `my-services.spec.ts` mockea `AuthService` sin `isAuthenticated` (sólo
+   `practitionerProfileId`/`activeTenantId`/`roles`), y si algo en su árbol construye
+   `ChatSocketService`, revienta igual que los casos anteriores. Fix: `haySesion()` tolerante,
+   mismo criterio.
+5. **`paginated-form.spec.ts` — NG0912, una causa DISTINTA, no de auth.** El archivo declara
+   `HostDeCasillas` y `HostDeSiNo`, dos componentes de prueba con el **mismo template exacto**
+   (`<app-paginated-form [paginas]="paginas" [form]="form" label="Antecedentes" />`) y sin
+   `selector` explícito. Angular deriva el ID interno del componente del hash del template
+   compilado; sin selector y con el mismo template, los dos colisionan
+   (`NG0912: Component ID generation collision detected`), visible en el `stderr` de esa
+   corrida — y esa colisión deja el `TestBed` en un estado que también envenena al worker,
+   aunque el mecanismo es otro (no es el `effect()` de auth). Fix: `selector` explícito y
+   distinto en cada uno (`app-host-de-casillas` / `app-host-de-si-no`).
+
+**Resultado, con las dos causas corregidas:** dos corridas dieron **22 tests / 9 archivos**
+rojos (el «piso» de bugs reales de la tabla de arriba, sin ninguna cascada) — pero una tercera
+corrida volvió a dar **211 tests / 10 archivos**, con `paginated-form.spec.ts` de nuevo entre
+las víctimas (esta vez SIN `NG0912` en el log: es decir, esa causa puntual está cerrada, pero el
+archivo sigue siendo vulnerable como víctima de OTRA fuente sin identificar). Confirma que
+**queda al menos una instancia más** del patrón de doble de `AuthService`/`SessionStore`
+incompleto, en algún punto de la suite.
+
+**Por qué no se siguió cazando instancia por instancia:** cada ronda de búsqueda encontró una
+causa nueva real (son 5 en total ahora, dos clases distintas), pero el ritmo al que otros
+carriles agregan código nuevo a `test` —con el mismo patrón arquitectónico repetido, porque
+nadie lo sabe evitar todavía— iguala o supera el ritmo al que se pueden encontrar y corregir una
+por una. La búsqueda del archivo exacto que antecede a una víctima tampoco es concluyente: el
+`effect()` filtrado puede quedar pendiente varios archivos antes de que el scheduler lo
+flushee, no necesariamente en el archivo inmediatamente anterior.
+
+**Recomendación para cerrar esto de verdad** (no ejecutada, por alcance y tiempo):
+
+- **Opción sistémica A — una regla de lint propia**: prohibir `effect(() => { … this.algo.metodo() … })`
+  dentro de un `constructor()` de una clase `providedIn: 'root'` cuando `algo` viene de
+  `inject(AuthService)`/`inject(SessionStore)`, a menos que el acceso esté protegido por un
+  `typeof … === 'function'` (o pase por un método `private` dedicado, como los seis ya
+  corregidos). Encontraría las cinco instancias de este carril automáticamente, y cualquier
+  instancia futura en el momento en que se escribe, no cuando alguien la pisa por casualidad en
+  un worker.
+- **Opción sistémica B — un doble canónico**: una función compartida (`dobleDeSesion(overrides)`)
+  en `src/testing/` que devuelva un `SessionStore`/`AuthService` COMPLETO por defecto (con
+  `isAuthenticated`, `userId`, `roles`, `activeTenantId`, `patientProfileId`,
+  `practitionerProfileId`, `displayName` en `null`/vacío), y que las ~45 specs que hoy arman su
+  propio `useValue` parcial la usen en vez de un objeto ad-hoc. Un lint que prohíba
+  `{ provide: AuthService, useValue: { ... } }` directo (fuera de esa función) haría cumplir el
+  uso.
+- Cualquiera de las dos cierra la clase de bug entera de una vez, en vez de seguir encontrando
+  una instancia nueva cada vez que otro carril agrega una pantalla.
 
 ## H3 — Cerrado, `REGRESSION_VERIFIED`
 
