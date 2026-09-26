@@ -2035,8 +2035,9 @@ export const routes: Routes = [
   },
   {
     // El alta del laboratorio de sangre: los dieciocho puntos de datos legales
-    // del proceso 4.1 del stakeholder. Todavía sin endpoint —cierra con una
-    // solicitud, no con una cuenta—; ver el JSDoc de `RegisterLaboratory`.
+    // del proceso 4.1 del stakeholder. Sale a `POST /iam/auth/register-organization`
+    // con `tenantType: 'DIAGNOSTIC_CENTER'`: crea la cuenta del dueño y la unidad,
+    // pendientes de verificación; ver el JSDoc de `RegisterLaboratory`.
     path: 'auth/register/laboratory',
     // Diferida por lo mismo que las otras dos altas largas: arrastra el mapa,
     // que no tiene por qué viajar en el paquete inicial de toda visita.
@@ -2051,8 +2052,8 @@ export const routes: Routes = [
     // RESONANCIA, ETC.)» del registro del stakeholder. Los dieciocho puntos de
     // datos legales son los mismos que los del laboratorio de sangre —la fuente
     // los repite enteros—, y lo que cambia es qué estudios hace el centro; ver
-    // el JSDoc de `RegisterImagingCenter`. Tampoco tiene endpoint todavía:
-    // cierra con una solicitud, no con una cuenta.
+    // el JSDoc de `RegisterImagingCenter`. Sale al mismo endpoint que el
+    // laboratorio, con las modalidades como conceptos.
     //
     // La ruta dice `imaging-center` y no `imaging` a secas para no chocar con
     // `?kind=IMAGING`, que es la **categoría** del directorio de laboratorios:

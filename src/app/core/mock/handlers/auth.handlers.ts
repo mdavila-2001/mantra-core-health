@@ -1,6 +1,6 @@
 import { ESTADO, TIPO_SOCIETARIO } from '../fixtures/conceptos';
 import { pacientes, type PacienteSimulado } from '../fixtures/personas';
-import { conflict, notFound, reply, unauthorized, type MockRouter } from '../mock-router';
+import { conflict, notFound, preconditionFailed, reply, unauthorized, type MockRouter } from '../mock-router';
 import {
   buscarUsuario,
   emitirAccessToken,
@@ -167,7 +167,11 @@ export function registrarAuth(router: MockRouter): void {
       organization?: {
         code?: string;
         legalEntityType?: string;
-        legalDocuments?: Record<(typeof LEGAL_DOCUMENT_FIELDS)[number], string | undefined>;
+        tenantType?: string;
+        countryConceptId?: string;
+        jurisdictionConceptId?: string;
+        diagnosticUnit?: { diagnosticUnitTypeConceptId?: string; modalityConceptIds?: readonly string[] };
+        legalDocuments?: Partial<Record<(typeof LEGAL_DOCUMENT_FIELDS)[number], string | undefined>>;
         payer?: { latitude?: number; longitude?: number };
         // Representante legal y gerencias (subtarea 1.4). El mock NO prueba
         // que la API real acepte estas claves: eso lo hace el int-spec de la
@@ -229,9 +233,33 @@ export function registrarAuth(router: MockRouter): void {
       }
     }
 
+    // La constitución y el poder del representante son opcionales en el DTO y
+    // la regla vive en el servicio: sólo una UNIPERSONAL puede omitirlos, y
+    // el resto responde 422 nombrando el documento (CL-43). Es lo que hace la
+    // API, y el simulador no puede exigir más ni menos que ella.
+    const esUnipersonal = legalEntityType === 'UNIPERSONAL';
     const legalDocuments = datos.organization?.legalDocuments;
+    const tipoDeOrganizacion = datos.organization?.tenantType ?? 'PAYER';
+    if (tipoDeOrganizacion !== 'PAYER' && tipoDeOrganizacion !== 'DIAGNOSTIC_CENTER' && tipoDeOrganizacion !== 'HOSPITAL') {
+      return preconditionFailed('El tipo de organización no admite alta pública', {
+        tenantType: tipoDeOrganizacion,
+      });
+    }
+    if (tipoDeOrganizacion !== 'PAYER') {
+      // Los tipos territoriales exigen país y jurisdicción: 422 `missing`.
+      const faltantesTerritoriales = [
+        ...(datos.organization?.countryConceptId ? [] : ['countryConceptId']),
+        ...(datos.organization?.jurisdictionConceptId ? [] : ['jurisdictionConceptId']),
+      ];
+      if (faltantesTerritoriales.length > 0) {
+        return preconditionFailed('Faltan datos territoriales de la organización', {
+          missing: faltantesTerritoriales,
+        });
+      }
+    }
     if (legalDocuments !== undefined) {
-      const faltantes = LEGAL_DOCUMENT_FIELDS.filter((campo) => !legalDocuments[campo]);
+      const obligatorios = LEGAL_DOCUMENT_FIELDS.filter((campo) => campo !== 'constitutionFileId');
+      const faltantes = obligatorios.filter((campo) => !legalDocuments[campo]);
       if (faltantes.length > 0) {
         // Mismo contrato que el `ValidationPipe` real: el bloque es todo o
         // nada (subtarea 1.2).
@@ -266,13 +294,22 @@ export function registrarAuth(router: MockRouter): void {
       if (!legalRepresentative.email || !legalRepresentative.email.includes('@')) {
         mensajesRepresentacion.push('organization.legalRepresentative.email must be an email');
       }
-      if (!legalRepresentative.powerOfAttorneyFileId) {
-        mensajesRepresentacion.push(
-          'organization.legalRepresentative.powerOfAttorneyFileId must be a UUID',
+    }
+    const executives = datos.organization?.executives;
+    if (!esUnipersonal) {
+      if (legalDocuments !== undefined && !legalDocuments.constitutionFileId) {
+        return preconditionFailed(
+          'Falta la escritura de constitución: sólo una empresa unipersonal puede omitirla',
+          { document: 'constitutionFileId' },
+        );
+      }
+      if (legalRepresentative !== undefined && !legalRepresentative.powerOfAttorneyFileId) {
+        return preconditionFailed(
+          'Falta el poder notariado del representante legal: sólo una empresa unipersonal puede omitirlo',
+          { document: 'powerOfAttorneyFileId' },
         );
       }
     }
-    const executives = datos.organization?.executives;
     if (executives !== undefined) {
       for (const rol of ['generalManager', 'commercialManager', 'marketingManager'] as const) {
         const gerencia = executives[rol];
@@ -314,7 +351,10 @@ export function registrarAuth(router: MockRouter): void {
       status: 'PENDING_VERIFICATION',
       verificationStatus: 'PENDING',
       emailVerificationSent: true,
-      ...(legalDocuments === undefined ? {} : { legalDocumentsRegistered: 5 }),
+      ...(tipoDeOrganizacion === 'DIAGNOSTIC_CENTER' ? { diagnosticUnitId: nuevoId('unidad-diagnostica') } : {}),
+      ...(legalDocuments === undefined
+        ? {}
+        : { legalDocumentsRegistered: Object.values(legalDocuments).filter(Boolean).length }),
       ...(representativesRegistered === undefined ? {} : { representativesRegistered }),
     };
   });

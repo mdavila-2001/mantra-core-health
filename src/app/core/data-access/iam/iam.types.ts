@@ -51,9 +51,9 @@ export interface PatientRegistration {
   /** Apellido materno. Opcional: no todas las jurisdicciones lo emiten. */
   readonly motherLastName?: string;
   /** Opcional y no condiciona el acceso: la cuenta queda usable igual. */
-  readonly email?: string;
+  readonly email: string;
   /** Fecha en formato ISO `YYYY-MM-DD`, tal como la valida el backend. */
-  readonly birthDate?: string;
+  readonly birthDate: string;
   /**
    * Departamento boliviano que emitió el documento (catálogo VS_BO_DEPARTMENT).
    *
@@ -61,7 +61,7 @@ export interface PatientRegistration {
    * cédula, lo que distingue dos documentos homónimos de departamentos
    * distintos. Sin `nationalId` no tiene a qué atarse.
    */
-  readonly issuerAdministrativeAreaConceptId?: string;
+  readonly issuerAdministrativeAreaConceptId: string;
   /**
    * Municipio de residencia (catálogo `VS_BO_MUNICIPALITY`).
    *
@@ -78,11 +78,11 @@ export interface PatientRegistration {
    */
   readonly residenceMunicipalityConceptId: string;
   /** Teléfono de contacto, en E.164 o formato nacional. */
-  readonly phone?: string;
+  readonly phone: string;
   /** Género administrativo (HL7 AdministrativeGender). */
   readonly gender?: AdministrativeGenderCode;
   /** Sexo asignado al nacer. Es dato clínico, distinto del género. */
-  readonly sexAtBirth?: BirthSexCode;
+  readonly sexAtBirth: BirthSexCode;
   /**
    * Ocupación, como concepto de `VS_BO_OCCUPATION`.
    *
@@ -353,11 +353,9 @@ export interface PractitionerRegistration {
   /** Fijo del trabajo, la línea del consultorio. */
   readonly workLandline?: string;
   /**
-   * Correo personal, en su rol de dato de contacto suelto.
-   *
-   * Ojo: el alta de profesional **ya no lo usa** — desde el cambio de identidad
-   * de acceso, el correo personal ES el de acceso y por eso viaja en
-   * {@link email}. Queda declarado para los llamadores que separen ambos.
+   * Correo personal. El de acceso ES el personal y viaja en {@link email}; este
+   * campo lo repite para que la API sepa que es personal: sin `workEmail`, un
+   * `personalEmail` igual a `email` evita que se guarde además como institucional.
    */
   readonly personalEmail?: string;
   /**
@@ -432,7 +430,13 @@ export interface RegisteredPractitioner {
  * misma regla que el alta administrativa (`NewTenant.payer`)—, y acá no hay
  * otro tipo posible: esta pantalla sólo da de alta aseguradoras.
  */
-export interface OrganizationRegistration {
+export interface PayerOrganizationRegistration {
+  /**
+   * Discriminante de la unión {@link OrganizationRegistration}. Ausente en la
+   * aseguradora, que es lo que el alta pública hace desde siempre: el cliente
+   * manda `'PAYER'` cuando falta.
+   */
+  readonly tenantType?: 'PAYER';
   readonly code: string;
   readonly legalName: string;
   /**
@@ -489,6 +493,79 @@ export interface OrganizationRegistration {
   readonly executives?: OrganizationExecutives;
 }
 
+/**
+ * Alta pública de un laboratorio o un centro de imagenología
+ * (`POST /iam/auth/register-organization` con `tenantType: 'DIAGNOSTIC_CENTER'`).
+ *
+ * Es otra rama de la unión y no una aseguradora con campos de más: **no lleva
+ * `payer`** (el cuerpo de una aseguradora no lleva `diagnosticUnit` ni al revés),
+ * y sus documentos legales distinguen lo que una unipersonal no tiene: la
+ * constitución y el poder del representante son opcionales acá y la API decide
+ * por el tipo societario (422 si falta donde se exige).
+ */
+export interface DiagnosticCenterRegistration {
+  readonly tenantType: 'DIAGNOSTIC_CENTER';
+  readonly code: string;
+  readonly legalName: string;
+  readonly legalEntityType: string;
+  readonly tradeName?: string;
+  readonly timeZone?: string;
+  /** Los tipos territoriales exigen país y jurisdicción (422 `missing` si faltan). */
+  readonly countryConceptId: string;
+  readonly jurisdictionConceptId: string;
+  readonly diagnosticUnit: DiagnosticUnitProfile;
+  /**
+   * La cuenta dueña. El formulario pide un solo nombre completo, y la API acepta
+   * `displayName` como la forma sin partes: no se inventa dónde cortarlo.
+   */
+  readonly owner: {
+    readonly email: string;
+    readonly password: string;
+    readonly displayName: string;
+  };
+  readonly legalDocuments: DiagnosticCenterLegalDocuments;
+  /**
+   * Sólo si el formulario recogió todo lo que la API exige del representante
+   * (incluido su número de documento). Ver `powerOfAttorneyFileId`.
+   */
+  readonly legalRepresentative?: Omit<OrganizationLegalRepresentative, 'powerOfAttorneyFileId'> & {
+    readonly powerOfAttorneyFileId?: string;
+  };
+  readonly executives?: OrganizationExecutives;
+}
+
+/** Los cinco documentos, con la constitución opcional (una unipersonal no la tiene). */
+export type DiagnosticCenterLegalDocuments = Omit<OrganizationLegalDocuments, 'constitutionFileId'> & {
+  readonly constitutionFileId?: string;
+};
+
+/** La unidad diagnóstica que nace con el alta: tipo, modalidades y sede primaria. */
+export interface DiagnosticUnitProfile {
+  /** Concepto de `diagnostic-unit-type`: laboratorio o imágenes. */
+  readonly diagnosticUnitTypeConceptId: string;
+  /** Conceptos de `diagnostic-modality`. Una fuera de la lista responde 422. */
+  readonly modalityConceptIds: readonly string[];
+  readonly primarySite: {
+    readonly name: string;
+    readonly timeZone?: string;
+    readonly address: {
+      readonly lines: readonly string[];
+      /** Sólo si se confirmó sobre el mapa; ambas o ninguna. */
+      readonly latitude?: number;
+      readonly longitude?: number;
+    };
+  };
+}
+
+/**
+ * Lo que `register-organization` acepta, por tipo de organización.
+ *
+ * Se discrimina por `tenantType`: `PAYER` (o ausente) lleva `payer`;
+ * `DIAGNOSTIC_CENTER` lleva `diagnosticUnit` y el territorio. Sin `any`: el
+ * compilador impide mezclar los dos cuerpos.
+ */
+export type OrganizationRegistration = PayerOrganizationRegistration | DiagnosticCenterRegistration;
+
 /** Nombre, celular y correo de una gerencia de contacto (subtarea 1.4). */
 export interface OrganizationContactPerson {
   readonly fullName: string;
@@ -541,6 +618,8 @@ export interface RegisteredOrganization {
   readonly ownerUserId: string;
   /** Concept id del estado del tenant, p. ej. `pending`. */
   readonly status: string;
+  /** Sólo para `DIAGNOSTIC_CENTER`: la unidad que nació con el alta. */
+  readonly diagnosticUnitId?: string;
   /** `false` cuando el owner no tiene correo pendiente de verificar: no es un fallo. */
   readonly emailVerificationSent: boolean;
   /**

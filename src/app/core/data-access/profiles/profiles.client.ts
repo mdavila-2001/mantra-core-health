@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import type { BirthSexCode } from '../iam/iam.types';
 import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
   AccountLink,
@@ -529,6 +530,10 @@ export class ProfilesClient {
       readonly lastName: string;
       readonly motherLastName: string;
       readonly birthDate: string;
+      /* P28: el sexo al nacer y el departamento emisor se corrigen; el número
+         del documento no (tiene su circuito de verificación). */
+      readonly sexAtBirth: BirthSexCode;
+      readonly issuerAdministrativeAreaConceptId: string;
       readonly phone: string;
       /* Los cinco contactos que el alta declara por separado. El correo de
          trabajo es un contacto más: cambiarlo no cambia el correo de acceso,

@@ -194,6 +194,32 @@
               </section>
             }
 
+            <!-- Lo que del documento SÍ se corrige (P28): el departamento que lo
+                 emitió y el sexo al nacer. El número queda arriba, de solo
+                 lectura. Sección aparte a propósito: «Tu documento» no lleva
+                 ningún control. -->
+            @if (soloLectura()) {
+              <section class="edicion__fijos" data-testid="edicion-datos-del-documento">
+                <h3 class="edicion__subtitulo">Datos que sí podés corregir</h3>
+                <app-form-field label="Departamento que emitió el documento">
+                  <app-select
+                    data-testid="edicion-departamento-emisor"
+                    [options]="opcionesDepartamento()"
+                    [(value)]="departamentoEmisor"
+                    placeholder="Elegí un departamento"
+                  />
+                </app-form-field>
+                <app-form-field label="Sexo al nacer">
+                  <app-select
+                    data-testid="edicion-sexo-al-nacer"
+                    [options]="opcionesSexoAlNacer"
+                    [(value)]="sexoAlNacer"
+                    placeholder="Elegí una opción"
+                  />
+                </app-form-field>
+              </section>
+            }
+
             <!-- ─── Especialidades ───────────────────────────────────────
                  Mudadas de «Credenciales» (pedido del propietario,
                  24/09/2026): contestan «¿de qué es médico?», la misma

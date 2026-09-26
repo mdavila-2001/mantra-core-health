@@ -31,9 +31,9 @@
             Recibimos la solicitud de tu laboratorio
           </h1>
           <p class="registro__subtitle">
-            Vamos a revisar los papeles que adjuntaste y te escribimos al correo del representante
-            legal. Hasta que la solicitud se apruebe, el laboratorio no aparece en las búsquedas de
-            pacientes.
+            Creamos la cuenta con el correo del representante legal y ya podés iniciar sesión. Vamos
+            a revisar los papeles que adjuntaste; hasta que la solicitud se apruebe, el laboratorio
+            no aparece en las búsquedas de pacientes.
           </p>
         </div>
         <button
@@ -57,6 +57,12 @@
           </p>
         </div>
 
+        @if (mensajeDeError(); as mensaje) {
+          <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-error">{{
+            mensaje
+          }}</app-alert>
+        }
+
         <div class="registro__body">
           <app-paginated-form
             data-testid="registro-form-laboratorio"
@@ -64,6 +70,7 @@
             [form]="form"
             label="Registrar laboratorio"
             submitLabel="Enviar solicitud"
+            [pending]="enviando()"
             [iconOnlyNav]="true"
             (pasoVisible)="recordarPaso($event)"
             (enviado)="submit()"

@@ -668,19 +668,55 @@ export class RegisterPractitioner {
     );
   }
 
+  /** La universidad escrita en el bloque del título con el que ejerce. */
+  private universidadPrincipal(): string {
+    return this.formProfesional.controls.professionalTitleUniversity.value.trim();
+  }
+
+  /**
+   * La fila de «Tus títulos» que lleva la universidad del título principal.
+   *
+   * Esa universidad no tiene columna propia: el modelo la guarda como
+   * `issuing_institution_text` de una credencial, y una credencial exige número
+   * (NOT NULL). Por eso se une a la primera fila de título universitario que ya
+   * tiene número y que o bien no declaró universidad o declaró la misma. `null`
+   * si no hay ninguna: en ese caso el alta se frena y lo dice, en vez de
+   * descartarla en silencio.
+   */
+  private filaDeLaUniversidadPrincipal(): TituloDeclarado | null {
+    const principal = this.universidadPrincipal().toLowerCase();
+    return (
+      this.titulos().find(
+        (titulo) =>
+          titulo.tipo === 'UNIVERSITARIO' &&
+          titulo.numero.trim() !== '' &&
+          (titulo.universidad.trim() === '' || titulo.universidad.trim().toLowerCase() === principal),
+      ) ?? null
+    );
+  }
+
+  /** Si escribió la universidad de su título principal y ninguna fila puede llevarla. */
+  protected hayUniversidadPrincipalSinTitulo(): boolean {
+    return this.universidadPrincipal() !== '' && this.filaDeLaUniversidadPrincipal() === null;
+  }
+
   /**
    * Los títulos que viajan en el alta. El PDF va como fileId, asociado a la
    * misma fila que su tipo, número e institución.
    */
   private credencialesDeclaradas(): readonly NewRegistrationCredential[] {
     const conceptos = this.conceptoPorCodigo();
+    const filaPrincipal = this.filaDeLaUniversidadPrincipal();
     return this.titulos().flatMap((titulo) => {
       const numero = titulo.numero.trim();
       const conceptId = conceptos.get(this.codigoDeConceptoPorTipo[titulo.tipo]);
       if (numero === '' || conceptId === undefined) {
         return [];
       }
-      const universidad = titulo.universidad.trim();
+      const universidad =
+        titulo.universidad.trim() === '' && titulo === filaPrincipal
+          ? this.universidadPrincipal()
+          : titulo.universidad.trim();
       return [
         {
           credentialTypeConceptId: conceptId,
@@ -2289,6 +2325,21 @@ export class RegisterPractitioner {
       );
       return;
     }
+    // La universidad del título principal se guarda en una credencial, y una
+    // credencial necesita número: sin una fila de título universitario que la
+    // lleve, no se manda como si se fuera a guardar.
+    if (this.hayUniversidadPrincipalSinTitulo()) {
+      this.state.set(
+        validation([
+          {
+            field: 'professionalTitleUniversity',
+            message:
+              'La universidad de tu título principal se guarda junto con un título. Cargalo en el paso «Tus títulos» como «Universitario», con su número, o borrá la universidad.',
+          },
+        ]),
+      );
+      return;
+    }
     // Y tampoco se manda si el catálogo de tipos no cargó: la fila viajaría sin
     // tipo, que el contrato exige, o se perdería en silencio.
     //
@@ -2400,6 +2451,10 @@ export class RegisterPractitioner {
       // login es el correo personal: es el que el profesional conserva aunque
       // cambie de hospital. El institucional viaja aparte, en `workEmail`.
       email: correoPersonal,
+      // El correo de acceso también viaja como personal: sin `workEmail` la API
+      // lo tomaba por institucional. Con `personalEmail === email` y sin
+      // `workEmail` sabe que es el único y no inventa un contacto de trabajo.
+      personalEmail: correoPersonal,
       password: raw.password,
       name: raw.name.trim(),
       lastName: raw.lastName.trim(),
@@ -2447,8 +2502,9 @@ export class RegisterPractitioner {
         ? {}
         : { specialtyConceptIds: this.especialidadesElegidas() }),
       // Los títulos declarados (subtarea 1.6). El PDF ya está precargado y su
-      // fileId viaja con la credencial correspondiente. Nombre, país y ciudad
-      // permanecen locales porque este contrato no los recibe.
+      // fileId viaja con la credencial correspondiente, y la universidad del
+      // título principal se une a la fila universitaria (`credencialesDeclaradas`).
+      // Nombre, país y ciudad permanecen locales porque este contrato no los recibe.
       ...(this.credencialesDeclaradas().length === 0
         ? {}
         : { credentials: this.credencialesDeclaradas() }),

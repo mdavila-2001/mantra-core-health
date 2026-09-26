@@ -3,28 +3,19 @@
 import type { BirthSexCode } from '../iam/iam.types';
 
 /**
- * Alta de un perfil de paciente hecha por personal (no auto-registro).
+ * Alta de un perfil de paciente hecha por personal (no auto-registro):
+ * `POST /profiles/patients`.
  *
- * ## El código de paciente es opcional acá, y no en el DTO
- *
- * Porque en el mostrador nadie lo sabe. `patient_code` es único en toda la
- * instalación y el servidor ya lo acuña él mismo en el alta que la persona hace
- * de sí misma (`PAT-<uuid>`); pedirle uno al navegador es pedirle que garantice
- * una unicidad que no puede ver. La pantalla de administración —que lo tiene
- * porque viene de una historia clínica en papel— lo sigue mandando.
- *
- * ## El bloque de filiación
- *
- * Los campos desde `name` para abajo son los que el registro de procesos del
- * cliente exige en la recepción del paciente (módulo Paciente §1.1) y que hoy
- * **sólo acepta el alta que la propia persona hace de sí misma**
- * (`RegisterPatientDto`). Están declarados acá porque son los que la pantalla
- * necesita; contra la API de hoy los rechaza `forbidNonWhitelisted` con un 400.
- * Ver `PENDIENTES-BACKEND.md` (P22): el destino no es este endpoint sino el
- * registro asistido, extendido con este mismo bloque.
+ * Es exactamente `CreatePatientDto`: la API valida con `forbidNonWhitelisted`, así
+ * que un campo que no esté acá y allá es un 400. La filiación completa del
+ * mostrador (nombre, documento, ocupación, tutor…) **no** la acepta este
+ * endpoint —sólo el alta que la persona hace de sí misma— y por eso no está
+ * declarada: el tipo tiene que impedir construir un cuerpo que la API rechaza
+ * (ID-23). Su destino es el registro asistido (`PENDIENTES-BACKEND.md`, P22).
  */
 export interface NewPatientProfile {
-  readonly patientCode?: string;
+  /** Único en toda la instalación; el DTO lo exige. */
+  readonly patientCode: string;
   readonly displayName?: string;
   /** ISO `YYYY-MM-DD`. */
   readonly birthDate?: string;
@@ -36,27 +27,6 @@ export interface NewPatientProfile {
   readonly sexAtBirthConceptId?: string;
   /** Código del índice maestro de pacientes. Único en toda la instalación. */
   readonly masterPatientIndexCode?: string;
-
-  /* -- filiación de mostrador (§1.1) — pendiente en el backend, P22 --------- */
-
-  /** Nombre de pila. */
-  readonly name?: string;
-  /** Los nombres que no son el primero, ya unidos en uno solo. */
-  readonly middleName?: string;
-  readonly lastName?: string;
-  readonly motherLastName?: string;
-  /** Cédula de identidad. Va a `common.identifiers` como identificador oficial. */
-  readonly nationalId?: string;
-  /** Departamento que expidió la cédula (`VS_BO_DEPARTMENT`). */
-  readonly issuerAdministrativeAreaConceptId?: string;
-  readonly phone?: string;
-  /** Ocupación del catálogo `VS_BO_OCCUPATION`. */
-  readonly occupationConceptId?: string;
-  /** El oficio escrito a mano, sólo cuando se eligió «Otra ocupación». */
-  readonly occupationFreeText?: string;
-  /** Tutor o persona autorizada, para quien no puede responder por sí mismo. */
-  readonly guardianName?: string;
-  readonly guardianPhone?: string;
 }
 
 export interface PatientProfile {
@@ -403,6 +373,8 @@ export interface OwnPractitionerProfile {
   readonly lastName?: string;
   readonly motherLastName?: string;
   readonly birthDate?: Date;
+  /** Sexo asignado al nacer. Sólo en la lectura propia (ID-13). */
+  readonly sexAtBirth?: BirthSexCode;
   /** Su documento. No editable desde el perfil: tiene su circuito propio. */
   readonly nationalId?: string;
   readonly issuerAdministrativeAreaConceptId?: string;
@@ -665,6 +637,12 @@ export interface NewPractitionerAffiliation {
   readonly organizationName: string;
   /** Opcional desde ALV-007: un consultorio propio no tiene cargo. */
   readonly roleTitle?: string;
+  /**
+   * Establecimiento del padrón (`VS_BO_HEALTH_FACILITY`), si se eligió de la
+   * lista. Fuera del padrón la API responde 422; el mismo establecimiento con el
+   * mismo cargo e inicio, 409.
+   */
+  readonly healthFacilityConceptId?: string;
   readonly practiceSiteId?: string;
   readonly affiliationTypeConceptId?: string;
   /** ISO `YYYY-MM-DD`. */
@@ -681,8 +659,6 @@ export interface NewPractitionerAffiliation {
 export interface UpdatePractitionerAffiliation {
   readonly organizationName?: string;
   readonly roleTitle?: string;
-  /** `''` lo borra. */
-  readonly departmentText?: string;
   readonly affiliationTypeConceptId?: string;
   /** ISO `YYYY-MM-DD`. */
   readonly startDate?: string;
@@ -914,6 +890,13 @@ export interface OwnPatientProfile {
   readonly nationalId?: string;
   /** Departamento que lo emitió (VS_BO_DEPARTMENT). */
   readonly issuerAdministrativeAreaConceptId?: string;
+  /**
+   * La empresa donde trabaja: del catálogo (`workEmployerConceptId`) o escrita a
+   * mano (`workEmployerFreeText`), nunca las dos. La API ya las devolvía y el
+   * tipo no las declaraba (ID-22).
+   */
+  readonly workEmployerConceptId?: string;
+  readonly workEmployerFreeText?: string;
   /** NIT para facturación. */
   readonly taxId?: string;
   /** A nombre de quién sale el comprobante — la razón social del NIT. */
@@ -968,6 +951,23 @@ export interface OwnPatientProfileChanges {
   readonly occupationConceptId?: string;
   readonly phone?: string;
   readonly residenceMunicipalityConceptId?: string;
+  /**
+   * Departamento que emitió el documento (`VS_BO_DEPARTMENT`). Se corrige el
+   * departamento, no el número (ID-22).
+   */
+  readonly issuerAdministrativeAreaConceptId?: string;
+  /**
+   * La empresa: un concepto del catálogo **o** un texto, y el catálogo gana
+   * (`''` la vacía). Con la opción «Otra» va el texto y no el concepto.
+   */
+  readonly workEmployerConceptId?: string;
+  readonly workEmployerFreeText?: string;
+  /** Municipio del lugar de trabajo (`VS_BO_MUNICIPALITY`). */
+  readonly workMunicipalityConceptId?: string;
+  /** Tutor o persona autorizada: declara o corrige, nunca quita. */
+  readonly guardianName?: string;
+  readonly guardianPhone?: string;
+  readonly guardianRelationshipConceptId?: string;
   /**
    * NIT de facturación (registro · PACIENTE §1.15.2). `''` lo quita.
    *

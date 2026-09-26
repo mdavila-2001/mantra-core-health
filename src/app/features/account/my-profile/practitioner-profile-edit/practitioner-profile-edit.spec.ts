@@ -2693,6 +2693,48 @@ describe('PractitionerProfileEdit', () => {
       req.flush(PERFIL_BASE);
     });
 
+    /* P28 (ID-13): del documento se corrigen el departamento emisor y el sexo al
+       nacer; el número, no. */
+    it('«Datos personales» ofrece corregir el departamento emisor y el sexo al nacer, fuera del bloque de solo lectura', () => {
+      const fixture = montarConVista({ ...CON_IDENTIDAD, sexAtBirth: 'FEMALE' });
+
+      const panel = panelAbierto(fixture);
+      expect(panel.querySelector('[data-testid="edicion-datos-del-documento"]')).not.toBeNull();
+      expect(panel.querySelector('[data-testid="edicion-departamento-emisor"]')).not.toBeNull();
+      expect(panel.querySelector('[data-testid="edicion-sexo-al-nacer"]')).not.toBeNull();
+      // El bloque del número sigue sin un solo control.
+      expect(
+        panel.querySelector('[data-testid="edicion-documento"]')?.querySelectorAll('input, select, textarea'),
+      ).toHaveLength(0);
+    });
+
+    it('guardar manda sexAtBirth y el departamento sólo si cambiaron, y nunca el número', () => {
+      montarYCargar({ ...CON_IDENTIDAD, sexAtBirth: 'FEMALE' });
+
+      señal<string | null>('sexoAlNacer').set('MALE');
+      señal<string | null>('departamentoEmisor').set('dep-lpz');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({
+        sexAtBirth: 'MALE',
+        issuerAdministrativeAreaConceptId: 'dep-lpz',
+      });
+      expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain('nationalId');
+      req.flush(PERFIL_BASE);
+    });
+
+    it('sin tocar el sexo ni el departamento, no viajan', () => {
+      montarYCargar({ ...CON_IDENTIDAD, sexAtBirth: 'FEMALE' });
+
+      señal<string>('titulo').set('Cardióloga intervencionista');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ professionalTitle: 'Cardióloga intervencionista' });
+      req.flush(PERFIL_BASE);
+    });
+
     it('guardar no manda el documento ni el correo que nadie tocó', () => {
       montarYCargar(CON_IDENTIDAD);
 

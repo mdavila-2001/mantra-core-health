@@ -1528,7 +1528,7 @@ describe('RegisterPatient', () => {
    * concepto que la representa: con cualquier otra empresa elegida sería un
    * nombre que contradice al catálogo.
    */
-  it('«Otra empresa» habilita el nombre escrito a mano y lo manda', () => {
+  it('«Otra empresa» habilita el nombre escrito a mano y manda el texto SIN el concepto (ID-11)', () => {
     responderEmpresas();
     completar({ workEmployerFreeText: '  Ferretería San Martín  ' });
     component.elegirEmpresa({ value: EMPRESA_OTRA, label: 'Otra empresa (la escribo)' });
@@ -1536,7 +1536,9 @@ describe('RegisterPatient', () => {
 
     component.submit();
     const req = http.expectOne('/iam/auth/register-patient');
-    expect(req.request.body.workEmployerConceptId).toBe(EMPRESA_OTRA);
+    // La API descarta el texto libre en cuanto recibe un concepto: con «Otra»
+    // viaja el texto y NO el concepto, igual que la ocupación (ID-11).
+    expect(req.request.body.workEmployerConceptId).toBeUndefined();
     // Recortado, como la calle y el NIT.
     expect(req.request.body.workEmployerFreeText).toBe('Ferretería San Martín');
 

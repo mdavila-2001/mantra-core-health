@@ -26,7 +26,17 @@ import {
   type PacienteSimulado,
   type ProfesionalSimulado,
 } from '../fixtures/personas';
-import { conflict, forbidden, noContent, notFound, reply, type MockRequest, type MockRouter } from '../mock-router';
+import {
+  conflict,
+  forbidden,
+  noContent,
+  notFound,
+  preconditionFailed,
+  reply,
+  validation,
+  type MockRequest,
+  type MockRouter,
+} from '../mock-router';
 import { emitirNotificacion } from './notifications.handlers';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
 
@@ -150,6 +160,21 @@ function corregirDelPerfil(id: string, cambios: Record<string, unknown>): void {
  */
 function existeEnElPerfil(filas: readonly { readonly id: string }[], id: string): boolean {
   return !retiradasDelPerfil.has(id) && filas.some((fila) => fila.id === id);
+}
+
+/** Las claves del cuerpo que el DTO de la API no declara: con la lista blanca estricta, un 400. */
+function clavesFueraDeLaLista(cambios: Record<string, unknown>, permitidas: readonly string[]): string[] {
+  return Object.keys(cambios).filter((clave) => !permitidas.includes(clave));
+}
+
+/** La violación con la forma que `class-validator` da a una clave que sobra. */
+function propiedadSobrante(clave: string): { readonly field: string; readonly message: string } {
+  return { field: clave, message: 'should not exist' };
+}
+
+/** Si el estado de verificación de una fila del perfil es «pendiente»: lo único corregible o retirable. */
+function estaPendiente(estadoConceptId: string | undefined): boolean {
+  return estadoConceptId === ESTADO['ST-PENDING'];
 }
 
 /** La fila tal como la devuelve el perfil: sin el dueño, que es de la maqueta. */
@@ -348,42 +373,6 @@ export function perfilPropioDe(p: PacienteSimulado) {
   };
 }
 
-/**
- * Las doce cifras mensuales de la maqueta. Suman 312, que es el total de
- * `encounters`: dos cifras que hablan de lo mismo y no coinciden se leen como
- * un error del producto, no de los datos de ejemplo.
- */
-const ENCUENTROS_POR_MES = [18, 21, 24, 19, 26, 28, 23, 27, 31, 29, 30, 36] as const;
-
-/** La serie, anclada al mes en curso: el último punto es siempre «hoy». */
-function serieMensualDemo(): readonly { month: string; count: number }[] {
-  const hoy = new Date();
-  return ENCUENTROS_POR_MES.map((count, indice) => {
-    const mes = new Date(hoy.getFullYear(), hoy.getMonth() - (ENCUENTROS_POR_MES.length - 1 - indice), 1);
-    return { month: `${mes.getFullYear()}-${String(mes.getMonth() + 1).padStart(2, '0')}`, count };
-  });
-}
-
-/**
- * Los indicadores de calidad de la maqueta.
- *
- * Coherentes entre sí a propósito: las 312 citas atendidas son los 312
- * encuentros, y las 275 notas dentro de 24 h son las 275 notas clínicas. Un
- * juego de cifras que no cierra convierte la pantalla en un rompecabezas.
- */
-const CALIDAD_DEMO = {
-  uniquePatients: 187,
-  returningPatients: 96,
-  scheduledAppointments: 341,
-  attendedAppointments: 312,
-  onTimeAppointments: 268,
-  closedEncounters: 312,
-  notesWithin24h: 275,
-  averageDurationMinutes: 27,
-  ratingAverage: 4.7,
-  ratingCount: 128,
-} as const;
-
 /** Una corrección guardada del perfil profesional: su id y lo que se cambió. */
 type EdicionDeProfesional = { readonly id: string } & Record<string, string | boolean>;
 
@@ -464,8 +453,9 @@ function perfilProfesionalBase(p: ProfesionalSimulado) {
             medicationRequests: 208,
             clinicalNotes: 275,
             documents: 41,
-            monthlyEncounters: serieMensualDemo(),
-            quality: CALIDAD_DEMO,
+            // Sin `monthlyEncounters` ni `quality`: la API real no los envía, y el
+            // simulador no fabrica métricas que ella no calcula (ID-14). La
+            // ficha muestra entonces su estado vacío explícito.
           },
     createdAt: iso(-500),
   };
@@ -1172,14 +1162,12 @@ export function registrarPerfiles(router: MockRouter): void {
     return { status: 201, body: { id: nueva.id } };
   });
   /* ---- corregir y retirar lo cargado (propietario, 13/09/2026) ------------
-     De las seis rutas de acá abajo, **sólo el `DELETE` del título existe en la
-     API**. Las otras las sirve este simulador con la forma REST que le toca a
-     cada recurso, para que publicarlas del lado del servidor no obligue a tocar
-     la pantalla. El detalle de lo que falta está en
-     `docs/pendientes-backend-perfil-profesional.md`.
-
-     Todas responden `404` a la fila que no existe o no es propia —el mismo par
-     indistinguible que usa el resto del módulo— y `204` cuando aplicaron. */
+     Las seis rutas existen en la API (título, especialidad y matrícula propias)
+     y el simulador las sirve **con las mismas reglas**: `404` a la fila que no
+     existe o no es propia —el mismo par indistinguible del resto del módulo—,
+     `400` ante una clave que el DTO no declara (con la lista blanca estricta,
+     `isPrimary` incluido), `422` si la fila ya no está pendiente y `204` cuando
+     aplicó. Un recorrido en el simulador tiene que fallar donde falla la API. */
 
   router.patch('/profiles/practitioners/me/credentials/:id', (request) => {
     const p = profesionalDeSesion(request);
@@ -1207,7 +1195,13 @@ export function registrarPerfiles(router: MockRouter): void {
     if (p === undefined) return notFound();
     const id = request.params['id']!;
     if (!existeEnElPerfil(especialidadesPropiasDe(p), id)) return notFound();
-    corregirDelPerfil(id, cuerpo<Record<string, unknown>>(request));
+    const cambios = cuerpo<Record<string, unknown>>(request);
+    const sobrantes = clavesFueraDeLaLista(cambios, ['specialtyConceptId', 'boardCertified']);
+    if (sobrantes.length > 0) return validation('Cuerpo inválido', sobrantes.map(propiedadSobrante));
+    if (!estaPendiente(especialidadesPropiasDe(p).find((e) => e.id === id)?.verificationStatusConceptId)) {
+      return preconditionFailed('Esa especialidad ya no está pendiente de verificación; no se puede corregir');
+    }
+    corregirDelPerfil(id, cambios);
     return noContent();
   });
 
@@ -1216,6 +1210,9 @@ export function registrarPerfiles(router: MockRouter): void {
     if (p === undefined) return notFound();
     const id = request.params['id']!;
     if (!existeEnElPerfil(especialidadesPropiasDe(p), id)) return notFound();
+    if (!estaPendiente(especialidadesPropiasDe(p).find((e) => e.id === id)?.verificationStatusConceptId)) {
+      return preconditionFailed('Esa especialidad ya no está pendiente de verificación; no se puede retirar');
+    }
     especialidadesAgregadas.borrar(id);
     retiradasDelPerfil.agregar({ id });
     // Si la que se va era la principal, la elección deja de tener sujeto: se
@@ -1231,7 +1228,13 @@ export function registrarPerfiles(router: MockRouter): void {
     if (p === undefined) return notFound();
     const id = request.params['id']!;
     if (!existeEnElPerfil(matriculasPropiasDe(p), id)) return notFound();
-    corregirDelPerfil(id, cuerpo<Record<string, unknown>>(request));
+    const cambios = cuerpo<Record<string, unknown>>(request);
+    const sobrantes = clavesFueraDeLaLista(cambios, ['licenseNumber', 'regulatoryAuthority', 'validFrom', 'fileId']);
+    if (sobrantes.length > 0) return validation('Cuerpo inválido', sobrantes.map(propiedadSobrante));
+    if (!estaPendiente(matriculasPropiasDe(p).find((m) => m.id === id)?.stateConceptId)) {
+      return preconditionFailed('Esa matrícula ya no está pendiente; no se puede corregir');
+    }
+    corregirDelPerfil(id, cambios);
     return noContent();
   });
 
@@ -1240,6 +1243,9 @@ export function registrarPerfiles(router: MockRouter): void {
     if (p === undefined) return notFound();
     const id = request.params['id']!;
     if (!existeEnElPerfil(matriculasPropiasDe(p), id)) return notFound();
+    if (!estaPendiente(matriculasPropiasDe(p).find((m) => m.id === id)?.stateConceptId)) {
+      return preconditionFailed('Esa matrícula ya no está pendiente; no se puede retirar');
+    }
     matriculasAgregadas.borrar(id);
     retiradasDelPerfil.agregar({ id });
     return noContent();

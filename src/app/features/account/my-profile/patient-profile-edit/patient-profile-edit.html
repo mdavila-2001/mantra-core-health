@@ -171,6 +171,17 @@
                 />
               </app-form-field>
 
+              <!-- El departamento que emitió el documento: se corrige, el número no
+                   (ID-22). -->
+              <app-form-field label="Departamento que emitió tu documento">
+                <app-select
+                  data-testid="perfil-departamento-emisor"
+                  [options]="opcionesDepartamento()"
+                  [(value)]="departamentoEmisor"
+                  placeholder="Elegí un departamento"
+                />
+              </app-form-field>
+
               @if (catalogoOcupacionesCaido()) {
                 <app-form-field label="Ocupación (opcional)">
                   <p class="datos__aviso" data-testid="perfil-ocupaciones-caido">
