@@ -93,7 +93,7 @@
                         resultado.titulo
                       "
                       [isLoading]="operando() === archivo.id"
-                      (clicked)="descargar(archivo)"
+                      (clicked)="descargar(resultado, archivo)"
                     >
                       <span class="resultados__descargar-icono" aria-hidden="true">
                         <app-nav-icon name="results" />

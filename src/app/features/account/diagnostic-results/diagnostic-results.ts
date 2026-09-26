@@ -8,6 +8,7 @@ import {
   PLATFORM_ID,
   signal,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -19,7 +20,7 @@ import type {
   DiagnosticResultShare,
   PatientDiagnosticResult,
 } from '../../../core/data-access/diagnostics/diagnostics.types';
-import { FilesClient } from '../../../core/data-access/files/files.client';
+import { isScanPending } from '../../../core/data-access/files/scan-status';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type {
   ConceptLabels,
@@ -38,6 +39,7 @@ import { FormField } from '../../../shared/components/molecules/form-field/form-
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { FileDownloadService } from '../../../shared/utils/file-download/file-download.service';
 
 /** Tope de resultados que se traen. Nadie tiene cien estudios liberados a la vez. */
 const TOPE_DE_RESULTADOS = 50;
@@ -150,7 +152,7 @@ interface ArchivoVisible {
 export class DiagnosticResults {
   private readonly diagnostics = inject(DiagnosticsClient);
   private readonly terminology = inject(TerminologyClient);
-  private readonly files = inject(FilesClient);
+  private readonly downloads = inject(FileDownloadService);
   private readonly auth = inject(AuthService);
   private readonly ruta = inject(ActivatedRoute);
   private readonly documento = inject(DOCUMENT);
@@ -260,33 +262,42 @@ export class DiagnosticResults {
   /* ---- descarga ------------------------------------------------------------ */
 
   /**
-   * Abre un archivo del informe pidiendo su URL firmada en el momento.
+   * Baja un archivo del informe por la ruta del **propio resultado** (CL-40).
    *
-   * Es el mismo camino que usan los adjuntos de la ficha clínica, y por la misma
-   * razón: la URL vence, y emitir una por archivo al pintar la lista dejaría
-   * varios enlaces vivos a datos clínicos que nadie llegó a usar. La
-   * autorización de la descarga la sigue decidiendo el backend.
+   * Antes pedía una URL firmada y la abría en otra pestaña con `window.open`: esa
+   * pestaña sale **sin `Authorization`**, y aunque llevara token la API le negaba
+   * el archivo al paciente porque lo subió el laboratorio. Ahora se bajan los
+   * bytes por `HttpClient` —con la credencial— desde
+   * `GET /diagnostic-results/me/:reportId/files/:fileId/content`, que autoriza
+   * por titularidad y versión liberada, y se entregan con un enlace temporal.
+   * Ninguna pestaña queda abierta sobre una URL de `/common/files/...`.
    */
-  protected descargar(archivo: ArchivoVisible): void {
+  protected descargar(resultado: ResultadoVisible, archivo: ArchivoVisible): void {
     if (this.operando() !== null) {
       return;
     }
     this.operando.set(archivo.id);
-    this.files.downloadUrl(archivo.fileId).subscribe({
-      next: ({ url }) => {
+    this.diagnostics.downloadOwnResultFile(resultado.reportId, archivo.fileId).subscribe({
+      next: ({ blob, fileName }) => {
         this.operando.set(null);
-        window.open(url, '_blank', 'noopener');
+        this.downloads.save(blob, fileName ?? `${resultado.titulo} - ${archivo.rotulo}.pdf`);
       },
       error: (error: unknown) => {
         this.operando.set(null);
+        if (isScanPending(error)) {
+          this.toast.info('El archivo todavía está en análisis. Probá de nuevo en un momento.', 'Resultado');
+          return;
+        }
         const estado = errorToViewState<null>(error);
         if (estado.status === 'forbidden') {
-          // Un 403 acá no es un fallo de la aplicación: el archivo puede estar
-          // marcado como PHI con una política que esta cuenta no cumple.
           this.toast.info('No tenés permiso para descargar este archivo.', 'Resultado');
           return;
         }
-        this.toast.error('No pudimos abrir el archivo. Reintentá en un momento.', 'Resultado');
+        if (error instanceof HttpErrorResponse && error.status === 404) {
+          this.toast.info('Este archivo todavía no está disponible para vos.', 'Resultado');
+          return;
+        }
+        this.toast.error('No pudimos bajar el archivo. Reintentá en un momento.', 'Resultado');
       },
     });
   }

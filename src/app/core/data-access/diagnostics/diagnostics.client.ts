@@ -4,6 +4,9 @@ import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import { normalizePatientSettlement } from '../insurance/patient-insurance-settlement.types';
+import { parseBlobError } from '../files/blob-error';
+import { nombreDeContentDisposition } from '../files/content-disposition';
+import type { DownloadedFile } from '../files/files.types';
 import { sinNulos, type ConNulos } from '../wire';
 import type {
   DiagnosticOrder,
@@ -232,6 +235,39 @@ export class DiagnosticsClient {
         this.url(`/diagnostic-results/me/${encodeURIComponent(reportId)}`),
       )
       .pipe(map(toPatientResult));
+  }
+
+  /**
+   * `GET /diagnostic-results/me/:reportId/files/:fileId/content` — un archivo de
+   * un resultado **propio** (CL-40).
+   *
+   * Baja los bytes por `HttpClient` (con `Authorization`) y **no** pide una URL
+   * firmada para abrirla en otra pestaña: esa pestaña sale sin credencial. La
+   * ruta autoriza por titularidad y versión liberada —no por quién subió el
+   * archivo, que fue el laboratorio— y todo lo que no cumpla responde 404, sin
+   * revelar si el archivo existe.
+   *
+   * @param reportId - Informe del titular.
+   * @param fileId - Archivo que cuelga de ese informe.
+   */
+  downloadOwnResultFile(reportId: string, fileId: string): Observable<DownloadedFile> {
+    return this.http
+      .get(
+        this.url(
+          `/diagnostic-results/me/${encodeURIComponent(reportId)}/files/${encodeURIComponent(fileId)}/content`,
+        ),
+        { responseType: 'blob', observe: 'response' },
+      )
+      .pipe(
+        map((respuesta) => {
+          const fileName = nombreDeContentDisposition(respuesta.headers.get('Content-Disposition'));
+          return {
+            blob: respuesta.body ?? new Blob([]),
+            ...(fileName === undefined ? {} : { fileName }),
+          };
+        }),
+        parseBlobError(),
+      );
   }
 
   /**

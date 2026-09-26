@@ -187,23 +187,26 @@ describe('DiagnosticResults', () => {
     expect(texto).not.toContain(FILE_ID);
   });
 
-  it('asks for the signed url only when the file is actually opened', () => {
+  it('asks for the file bytes only when the file is actually opened (CL-40)', () => {
     configurar(PROFILE_ID);
     mount();
     responderResultados([RESULTADO]);
     fixture.detectChanges();
 
-    // Nada pedido al pintar: emitir una url por archivo dejaría enlaces vivos a
-    // datos clínicos que nadie usó.
-    http.expectNone((request) => request.url.includes('/download-url'));
+    // Nada pedido al pintar: bajar veinte archivos al abrir la lista serían veinte
+    // lecturas de datos clínicos que nadie pidió.
+    http.expectNone((request) => request.url.includes('/content'));
 
     const boton: HTMLButtonElement = fixture.nativeElement.querySelector('button');
     boton.click();
     fixture.detectChanges();
 
+    // Los bytes salen de la ruta del propio resultado, con la credencial; ya no
+    // se pide una URL firmada para abrirla en otra pestaña (salía sin token).
+    http.expectNone(`/common/files/${FILE_ID}/download-url`);
     http
-      .expectOne(`/common/files/${FILE_ID}/download-url`)
-      .flush({ url: 'https://archivos/x', expiresAt: '2026-08-10T13:00:00.000Z' });
+      .expectOne(`/diagnostic-results/me/${REPORT_ID}/files/${FILE_ID}/content`)
+      .flush(new Blob(['%PDF'], { type: 'application/pdf' }));
   });
 
   it('reads the shares of a result when the panel opens', () => {
