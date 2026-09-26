@@ -47,6 +47,9 @@ import { DialogService } from '../../../shared/components/molecules/dialog/dialo
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { ChartDocumentsClient } from '../../../core/data-access/chart-documents/chart-documents.client';
+import { isScanPending } from '../../../core/data-access/files/scan-status';
+import { FileDownloadService } from '../../../shared/utils/file-download/file-download.service';
 import {
   downloadPrescriptionPdf,
   downloadVisitPdf,
@@ -238,6 +241,20 @@ export interface FilaClinica {
    * nota de P24.
    */
   readonly cita?: string;
+
+  /**
+   * Los archivos del registro (hoy sólo los documentos, CL-27): uno por
+   * archivo, con el `fileId` que se baja desde
+   * `GET /charts/documents/:id/files/:fileId/content`.
+   */
+  readonly archivos?: readonly ArchivoDeFila[];
+}
+
+/** Un archivo de una fila del expediente, listo para ofrecer su descarga. */
+export interface ArchivoDeFila {
+  readonly fileId: string;
+  /** «Archivo 1 · Principal», nunca el uuid. */
+  readonly rotulo: string;
 }
 
 /** Un vínculo clínico, ya resuelto a palabras. */
@@ -356,6 +373,8 @@ export class PatientChart {
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
+  private readonly documentsClient = inject(ChartDocumentsClient);
+  private readonly downloads = inject(FileDownloadService);
   private readonly route = inject(ActivatedRoute);
 
   private readonly celdaPrincipal =
@@ -616,8 +635,52 @@ export class PatientChart {
           valor: 'El documento del expediente no guarda encuentro ni diagnóstico.',
         },
       ],
+      archivos: [...(fila.files ?? [])]
+        .sort((a, b) => (a.ordinal ?? 0) - (b.ordinal ?? 0))
+        .map((archivo, indice) => ({
+          fileId: archivo.fileId,
+          rotulo: `Archivo ${indice + 1}${archivo.contentRole === 'PRIMARY' ? ' · Principal' : ''}`,
+        })),
     })),
   );
+
+  /** Qué archivo se está bajando ahora (para el spinner y para no doblar el clic). */
+  protected readonly bajando = signal<string | null>(null);
+
+  /**
+   * Baja un archivo de un documento del expediente (CL-27).
+   *
+   * Por `GET /charts/documents/:id/files/:fileId/content`, que autoriza por
+   * lectura de la historia del paciente y no por autoría: quien abre el
+   * expediente no es quien subió el papel. Sin `window.open`: los bytes vienen
+   * con la credencial y se entregan con un enlace temporal.
+   */
+  protected descargarArchivo(fila: FilaClinica, archivo: ArchivoDeFila): void {
+    if (this.bajando() !== null) {
+      return;
+    }
+    this.bajando.set(archivo.fileId);
+    this.documentsClient.downloadFile(fila.id, archivo.fileId).subscribe({
+      next: ({ blob, fileName }) => {
+        this.bajando.set(null);
+        this.downloads.save(blob, fileName ?? `${fila.principal} - ${archivo.rotulo}.pdf`);
+      },
+      error: (error: unknown) => {
+        this.bajando.set(null);
+        if (isScanPending(error)) {
+          this.toasts.info('El archivo todavía está en análisis. Probá de nuevo en un momento.', 'Documento');
+          return;
+        }
+        const estado = errorToViewState<null>(error);
+        this.toasts.warning(
+          estado.status === 'forbidden'
+            ? 'No tenés permiso para abrir este archivo.'
+            : 'No pudimos bajar el archivo. Reintentá en un momento.',
+          'Documento',
+        );
+      },
+    });
+  }
 
   /**
    * Los ocho bloques con su rótulo, para dibujar las pestañas de una pasada.

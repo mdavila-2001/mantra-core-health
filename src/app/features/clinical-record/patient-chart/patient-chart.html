@@ -292,6 +292,34 @@
           <dd>{{ vinculo.valor }}</dd>
         </div>
       }
+      <!-- Un enlace por archivo (CL-27). Baja por la ruta del documento, con la
+           credencial: sin pestañas nuevas sobre URLs de `/common/files`. -->
+      @if (abierta.fila.archivos; as archivos) {
+        @if (archivos.length > 0) {
+          <div class="expediente__detalle-fila">
+            <dt>Archivos</dt>
+            <dd>
+              <ul class="expediente__archivos" data-testid="expediente-archivos">
+                @for (archivo of archivos; track archivo.fileId) {
+                  <li>
+                    <button
+                      app-button
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      [attr.data-testid]="'expediente-archivo-' + archivo.fileId"
+                      [isLoading]="bajando() === archivo.fileId"
+                      (clicked)="descargarArchivo(abierta.fila, archivo)"
+                    >
+                      Ver / descargar {{ archivo.rotulo }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            </dd>
+          </div>
+        }
+      }
     </dl>
   </app-content-dialog>
 }

@@ -154,3 +154,12 @@
   justify-content: flex-end;
   margin-block-end: var(--sp-3);
 }
+
+/* Los archivos de un documento, uno por renglón, debajo del detalle. */
+.expediente__archivos {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

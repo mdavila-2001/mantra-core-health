@@ -8,6 +8,7 @@ import { SessionStore } from '../../../core/auth/session.store';
 import type { ClinicalSummary } from '../../../core/data-access/clinical/clinical.types';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { FileDownloadService } from '../../../shared/utils/file-download/file-download.service';
 import {
   bloquesDeAtencion,
   bloquesDeReceta,
@@ -1360,6 +1361,88 @@ describe('PatientChart', () => {
       interno<() => void>('cerrarCambioDeEstado')();
 
       expect(interno<(id: string) => string | null>('destinoEstadoDe')(fila.id)).toBeNull();
+    });
+  });
+
+  /**
+   * CL-27: `toDocument` descartaba `files` y el expediente no podía volver a
+   * abrir lo que se subió. Ahora cada archivo es un enlace que baja por
+   * `GET /charts/documents/:id/files/:fileId/content`, con la credencial.
+   */
+  describe('los archivos de un documento del expediente (CL-27)', () => {
+    const DOCUMENTO = {
+      id: 'd-1',
+      title: 'Laboratorio completo',
+      statusConceptId: 'st-final',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      files: [
+        { fileId: 'f-2', contentRole: 'ATTACHMENT', ordinal: 1 },
+        { fileId: 'f-1', contentRole: 'PRIMARY', ordinal: 0 },
+      ],
+    };
+
+    type FilaConArchivos = {
+      id: string;
+      archivos: readonly { fileId: string; rotulo: string }[];
+    };
+
+    it('la fila trae un archivo por cada uno, en orden y con rotulo legible', () => {
+      responderNombre();
+      responderExpediente({ chart: { documents: [DOCUMENTO] } });
+
+      const fila = interno<() => readonly FilaConArchivos[]>('documentos')()[0];
+
+      expect(fila?.archivos).toEqual([
+        { fileId: 'f-1', rotulo: 'Archivo 1 · Principal' },
+        { fileId: 'f-2', rotulo: 'Archivo 2' },
+      ]);
+    });
+
+    it('descargar pide los bytes a la ruta del documento y los entrega, sin window.open', () => {
+      responderNombre();
+      responderExpediente({ chart: { documents: [DOCUMENTO] } });
+      const guardar = vi
+        .spyOn(TestBed.inject(FileDownloadService), 'save')
+        .mockImplementation(() => undefined);
+      const abrir = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+      const fila = interno<() => readonly FilaConArchivos[]>('documentos')()[0]!;
+      interno<(f: unknown, a: unknown) => void>('descargarArchivo')(fila, fila.archivos[0]);
+
+      const pedido = http.expectOne('/charts/documents/d-1/files/f-1/content');
+      expect(pedido.request.responseType).toBe('blob');
+      pedido.flush(new Blob(['%PDF'], { type: 'application/pdf' }), {
+        headers: { 'Content-Disposition': "attachment; filename*=UTF-8''laboratorio.pdf" },
+      });
+
+      expect(guardar).toHaveBeenCalledWith(expect.any(Blob), 'laboratorio.pdf');
+      expect(abrir).not.toHaveBeenCalled();
+      abrir.mockRestore();
+      guardar.mockRestore();
+    });
+
+    it('un 403 (sin vinculo asistencial con el paciente) no entrega nada', async () => {
+      responderNombre();
+      responderExpediente({ chart: { documents: [DOCUMENTO] } });
+      const guardar = vi
+        .spyOn(TestBed.inject(FileDownloadService), 'save')
+        .mockImplementation(() => undefined);
+
+      const fila = interno<() => readonly FilaConArchivos[]>('documentos')()[0]!;
+      interno<(f: unknown, a: unknown) => void>('descargarArchivo')(fila, fila.archivos[0]);
+      http
+        .expectOne('/charts/documents/d-1/files/f-1/content')
+        .flush(new Blob([JSON.stringify({ code: 'FORBIDDEN', message: 'x' })]), {
+          status: 403,
+          statusText: 'Forbidden',
+        });
+
+      // El cuerpo del error llega como Blob y se relee de forma asincronica.
+      await new Promise((resolver) => setTimeout(resolver, 20));
+
+      expect(guardar).not.toHaveBeenCalled();
+      expect(interno<() => string | null>('bajando')()).toBeNull();
+      guardar.mockRestore();
     });
   });
 });
