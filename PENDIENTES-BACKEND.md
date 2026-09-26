@@ -1673,3 +1673,49 @@ porque el endpoint no ofrece `sort`.
 
 No es un sustituto permanente: responde «alrededor de qué se organizó la gente», no «de qué
 se está hablando esta semana», que es la pregunta del pedido.
+
+---
+
+## P43 · Lo que se emite en la cita cuelga de la respuesta del formulario médico — 26/09/2026
+
+> **P43 · Receta, orden de análisis y plan de cuidados asociados a la respuesta del formulario
+> médico.** Origen: pedido del propietario del 26/09/2026. Hoy todo esto vive **sólo en el
+> frontend y su simulador**; la API real no conoce el campo.
+>
+> **1. Qué cambió en la pantalla**
+> En la cita, «Nota clínica» y «Documento» dejaron de ser casillas: viven al final del
+> «Formulario médico» como **campos adicionales del doctor**, opcionales, con texto, varios
+> archivos o las dos cosas por fila. Al completar el formulario se registran como una nota
+> médica del encuentro y un documento del expediente por fila con archivos. Eso **no pide nada
+> nuevo** a la API: usa `POST /charts/notes` y `POST /charts/documents` tal como están.
+>
+> **2. Contrato — `formInstanceId`**
+> Campo nuevo, `uuid` opcional, en tres altas:
+> - `POST /clinical/medication-requests`
+> - `POST /clinical/service-requests`
+> - `POST /charts/care-plans`
+>
+> Es el id de la instancia de `forms` (la respuesta cerrada del formulario médico) de la que sale
+> el registro. Mientras la API valide con `forbidNonWhitelisted`, **mandarlo hoy es un 400**: el
+> frontend lo manda sólo desde la cita, que en la rama `mockup` corre contra el simulador.
+>
+> La versión original de este pedido (PR #725) incluía una cuarta alta, la reconsulta
+> (`POST /scheduling/appointments/direct` dentro de `followUpOf`). La reconsulta no existe en
+> esta base de `test`, así que ese punto queda fuera hasta que vuelva.
+>
+> **3. Esquema**
+> Una columna `form_instance_id uuid NULL` con FK a la tabla de instancias de `forms` en cada una
+> de las tablas. Nula porque desde el expediente se sigue pudiendo emitir sin formulario.
+>
+> **4. Regla de negocio**
+> Con el campo presente la API rechaza con **422** si la instancia no existe, no está cerrada o
+> es de otro encuentro que el del registro. La obligatoriedad en la cita la aplica hoy la
+> pantalla; si el negocio la quiere garantizada, la regla es «con `encounterId` presente,
+> `formInstanceId` es obligatorio».
+>
+> **5. Lo que el frontend ya tiene**
+> `app-form-response-picker` carga las respuestas cerradas del encuentro con
+> `GET /forms/instances?encounter=`, elige la más reciente y queda deshabilitado cuando hay una
+> sola. El simulador guarda el campo en las altas. De paso se corrigió el simulador de
+> `GET /forms/instances`, que leía `encounterId` cuando el cliente manda `encounter` y por eso
+> nunca encontraba un formulario ya respondido.

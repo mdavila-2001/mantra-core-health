@@ -1,9 +1,12 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
+import { CarePlanBlock } from '../patient-chart/care-plan-block/care-plan-block';
+import { FormResponsePicker } from '../patient-chart/form-response-picker/form-response-picker';
 import { Consultation } from './consultation';
 
 /**
@@ -11,9 +14,10 @@ import { Consultation } from './consultation';
  *
  * Lo que fijan estas pruebas:
  *
- * 1. **Están todas las posibilidades.** Las siete altas del expediente, el
- *    formulario clínico y la internación —cada una con su cantidad leída— y
- *    «Pagos», que no da de alta nada y por eso no lleva cifra.
+ * 1. **Están todas las posibilidades.** El formulario médico —que absorbió la
+ *    nota y los documentos el 26/09/2026—, las altas del expediente y la
+ *    internación —cada una con su cantidad leída— y «Pagos», que no da de
+ *    alta nada y por eso no lleva cifra.
  * 2. **Cada casilla abre su formulario en modal**, y uno solo a la vez.
  * 3. **El check-in manda lo que el contrato pide y nada más.** Un motivo en
  *    blanco no viaja, y el turno de origen viaja sólo si existe.
@@ -45,16 +49,14 @@ const CHART = {
 };
 
 const CLAVES = [
+  'formulario',
   'diagnosticos',
   'alergias',
   'medicacion',
   'observaciones',
-  'notas',
   'planes',
-  'documentos',
-  'formulario',
   'internacion',
-  // La décima, y la única de sólo lectura: lo que la persona ya pagó.
+  // La octava, y la única de sólo lectura: lo que la persona ya pagó.
   'pagos',
 ];
 
@@ -99,7 +101,7 @@ describe('Consultation', () => {
     componente = await harness.navigateByUrl('/medical-records/p-1/consultation', Consultation);
   });
 
-  it('ofrece las diez posibilidades en la rejilla, con su cantidad', async () => {
+  it('ofrece las ocho posibilidades en la rejilla, con su cantidad', async () => {
     await responderLectura();
 
     const casillas = interno<() => readonly { clave: string; cantidad: number | null }[]>(
@@ -107,7 +109,6 @@ describe('Consultation', () => {
     )();
     expect(casillas.map((c) => c.clave)).toEqual(CLAVES);
     expect(casillas.find((c) => c.clave === 'diagnosticos')?.cantidad).toBe(2);
-    expect(casillas.find((c) => c.clave === 'documentos')?.cantidad).toBe(1);
     expect(casillas.find((c) => c.clave === 'formulario')?.cantidad).toBeNull();
     // Pagos no lleva cifra: son de la caja y no de las dos lecturas del
     // expediente, y un número pedido acá podría discrepar del que muestra el
@@ -117,7 +118,55 @@ describe('Consultation', () => {
     const botones = harness.routeNativeElement!.querySelectorAll(
       '[data-testid^="consulta-casilla-"]',
     );
-    expect(botones).toHaveLength(10);
+    expect(botones).toHaveLength(8);
+  });
+
+  /**
+   * En la cita, lo emitido cuelga de la respuesta del formulario médico: el
+   * bloque la pide y viene cargada con la más reciente.
+   */
+  it('el plan de cuidados exige la respuesta del formulario médico, y viene cargada', async () => {
+    await responderLectura({
+      encounters: [{ id: 'e-1', statusConceptId: 'st', startAt: '2026-03-01T10:00:00Z' }],
+    });
+    interno<(key: string) => void>('abrir').call(componente, 'planes');
+    harness.fixture.detectChanges();
+
+    const plan = harness.fixture.debugElement.query(By.directive(CarePlanBlock))
+      .componentInstance as CarePlanBlock;
+    expect(plan.exigeRespuesta()).toBe(true);
+
+    http
+      .expectOne(
+        (r) =>
+          r.method === 'GET' && r.url === '/forms/instances' && r.params.get('encounter') === 'e-1',
+      )
+      .flush({
+        encounterId: 'e-1',
+        items: [
+          {
+            id: 'inst-1',
+            resourceId: 'e-1',
+            resourceTypeConceptId: 'rt',
+            schemaVersion: 1,
+            closedAt: '2026-03-01T10:30:00Z',
+            createdAt: '2026-03-01T10:05:00Z',
+          },
+        ],
+        limit: 50,
+        truncated: false,
+      });
+    harness.fixture.detectChanges();
+
+    const picker = harness.fixture.debugElement.query(By.directive(FormResponsePicker))
+      .componentInstance as FormResponsePicker;
+    // Una sola respuesta: elegida sola, y el selector no se puede tocar.
+    expect(picker.seleccionada()).toBe('inst-1');
+    const selector = harness.routeNativeElement!.querySelector(
+      '[data-testid="respuesta-del-formulario"]',
+    );
+    expect(selector).not.toBeNull();
+    expect(selector!.querySelector('[disabled], [aria-disabled="true"]')).not.toBeNull();
   });
 
   /**

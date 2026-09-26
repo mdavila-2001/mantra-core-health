@@ -40,6 +40,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
 import { DuplicateStudyWarningDialog } from './duplicate-study-warning-dialog/duplicate-study-warning-dialog';
+import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 
 /**
  * La columna que gobierna qué se pide.
@@ -165,7 +166,16 @@ export interface EstudioEnFicha {
  */
 @Component({
   selector: 'app-diagnostics-block',
-  imports: [Alert, Card, ConceptSelect, DatePipe, DuplicateStudyWarningDialog, FormActions, FormField],
+  imports: [
+    FormResponsePicker,
+    Alert,
+    Card,
+    ConceptSelect,
+    DatePipe,
+    DuplicateStudyWarningDialog,
+    FormActions,
+    FormField,
+  ],
   templateUrl: './diagnostics-block.html',
   styleUrl: './diagnostics-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -187,6 +197,19 @@ export class DiagnosticsBlock {
    * el bloque no vuelve a preguntarlo para que no puedan discrepar.
    */
   readonly encounterId = input<string | null>(null);
+
+  /**
+   * En la cita, lo que se emite cuelga sí o sí de una respuesta del formulario
+   * médico: sin ella el botón no se habilita. En el expediente no se exige.
+   */
+  readonly exigeRespuesta = input(false);
+
+  /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
+  protected readonly respuestaDelFormulario = signal<string | null>(null);
+
+  protected readonly faltaRespuesta = computed(
+    () => this.exigeRespuesta() && this.respuestaDelFormulario() === null,
+  );
 
   protected readonly targetEstudio = TARGET_ESTUDIO;
   protected readonly targetCategoria = TARGET_CATEGORIA;
@@ -321,6 +344,7 @@ export class DiagnosticsBlock {
    */
   protected readonly puedePedir = computed(
     () =>
+      !this.faltaRespuesta() &&
       this.hayEncuentro() &&
       !this.sinOrganizacion() &&
       this.estudio() !== null &&
@@ -471,6 +495,9 @@ export class DiagnosticsBlock {
       codeConceptId,
       categoryConceptId,
       encounterId,
+      ...(this.respuestaDelFormulario() === null
+        ? {}
+        : { formInstanceId: this.respuestaDelFormulario() ?? '' }),
       // Los opcionales sin elegir se **omiten**: el backend valida con
       // `forbidNonWhitelisted`, y una clave en null no es «sin especificar».
       ...(prioridad === null ? {} : { priorityConceptId: prioridad }),

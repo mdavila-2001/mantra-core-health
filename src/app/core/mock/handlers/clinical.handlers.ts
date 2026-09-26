@@ -297,7 +297,7 @@ export function registrarClinica(router: MockRouter): void {
   });
 
   router.post('/clinical/medication-requests', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; medicationConceptId: string; encounterId?: string; indicationConditionId?: string; indicationText?: string; doseText?: string; frequencyText?: string; validFrom?: string; validTo?: string; patientInstructionsText?: string; prescriberProfileId?: string }>(request);
+    const datos = cuerpo<{ patientProfileId: string; medicationConceptId: string; encounterId?: string; indicationConditionId?: string; indicationText?: string; formInstanceId?: string; doseText?: string; frequencyText?: string; validFrom?: string; validTo?: string; patientInstructionsText?: string; prescriberProfileId?: string }>(request);
     const nueva: RecetaSimulada = {
       id: nuevoId('rx'),
       patientProfileId: datos.patientProfileId ?? '',
@@ -313,6 +313,7 @@ export function registrarClinica(router: MockRouter): void {
       // igual que la ocupación del alta de paciente: el texto sólo tenía
       // sentido para quien no encontró un diagnóstico registrado.
       ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
+      ...(datos.formInstanceId === undefined ? {} : { formInstanceId: datos.formInstanceId }),
       ...(datos.indicationConditionId === undefined
         ? {}
         : { indicationConditionId: datos.indicationConditionId }),
@@ -526,6 +527,7 @@ export function registrarClinica(router: MockRouter): void {
       priorityConceptId?: string;
       reasonText?: string;
       encounterId?: string;
+      formInstanceId?: string;
       // Antiduplicación de estudios (v4.2.17, T-26, subtarea 3.2).
       previousDiagnosticReportId?: string;
       reusePreviousReport?: boolean;
@@ -561,6 +563,7 @@ export function registrarClinica(router: MockRouter): void {
       statusConceptId: reutilizada ? ESTADO['ST-SATISFIED-BY-PRIOR']! : ESTADO['ST-PENDING']!,
       requesterProfileId: request.user?.practitionerProfileId ?? MEDICA.id,
       ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
+      ...(datos.formInstanceId === undefined ? {} : { formInstanceId: datos.formInstanceId }),
       reasonText: datos.reasonText ?? '',
       createdAt: ahora(),
       ...(datos.previousDiagnosticReportId === undefined
@@ -652,7 +655,7 @@ export function registrarClinica(router: MockRouter): void {
      que falló. */
 
   router.post('/charts/care-plans', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; conditionId?: string; encounterId?: string; intentConceptId?: string; goalText?: string; startDate?: string; endDate?: string; activities?: { activityConceptId?: string; scheduledAt?: string; detailText?: string }[] }>(request);
+    const datos = cuerpo<{ patientProfileId: string; conditionId?: string; encounterId?: string; formInstanceId?: string; intentConceptId?: string; goalText?: string; startDate?: string; endDate?: string; activities?: { activityConceptId?: string; scheduledAt?: string; detailText?: string }[] }>(request);
     const actividades = (datos.activities ?? []).map((actividad) => ({
       id: nuevoId('cp-act'),
       statusConceptId: ESTADO['ST-PENDING']!,
@@ -669,6 +672,7 @@ export function registrarClinica(router: MockRouter): void {
       startDate: datos.startDate ?? isoDia(0),
       endDate: datos.endDate ?? null,
       ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
+      ...(datos.formInstanceId === undefined ? {} : { formInstanceId: datos.formInstanceId }),
       ...(datos.conditionId === undefined ? {} : { conditionId: datos.conditionId }),
       activities: actividades,
       createdAt: ahora(),
