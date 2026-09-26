@@ -1138,6 +1138,20 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M05 profiles',
   },
   {
+    // ID-24 / CV-22: cambiar la contraseña y ver o cerrar las sesiones. De
+    // cualquier persona con sesión (`ANY_ROLE`); la API no exige rol y resuelve
+    // todo por el `id` del token. Fuera del menú lateral no: es donde la gente
+    // busca «cambiar mi contraseña».
+    path: 'my-account/security',
+    label: 'Seguridad',
+    group: 'Mi cuenta',
+    icon: 'lock',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Cambiá tu contraseña y cerrá las sesiones que tengas abiertas en otros dispositivos.',
+    module: 'M01 iam',
+  },
+  {
     // Las vistas `PATIENT` de M41. Es la contracara de la sección «Agenda»:
     // aquélla mira los turnos de un recurso y exige roles de agenda; ésta mira
     // los de una persona y no exige ninguno, porque el backend ya acota la

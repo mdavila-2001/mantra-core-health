@@ -1,0 +1,148 @@
+<app-page-header
+  title="Seguridad de la cuenta"
+  subtitle="Cambiá tu contraseña y revisá en qué dispositivos tenés la sesión abierta."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="seguridad">
+  <app-card class="seguridad__tarjeta">
+    <h2 class="seguridad__titulo">Cambiar la contraseña</h2>
+    <p class="seguridad__ayuda">
+      Al cambiarla cerramos tus sesiones en los otros dispositivos. Esta sigue abierta.
+    </p>
+
+    @if (errorDeContrasena(); as mensaje) {
+      <app-alert tone="error" data-testid="seguridad-error">{{ mensaje }}</app-alert>
+    }
+
+    <form
+      class="seguridad__form"
+      [formGroup]="form"
+      (ngSubmit)="cambiarContrasena()"
+      novalidate
+      data-testid="seguridad-form"
+    >
+      <app-form-field
+        label="Contraseña actual"
+        [required]="true"
+        [errorMessage]="
+          form.controls.currentPassword.touched && form.controls.currentPassword.invalid
+            ? 'Ingresá tu contraseña actual.'
+            : ''
+        "
+      >
+        <app-input
+          formControlName="currentPassword"
+          type="password"
+          autocomplete="current-password"
+          testId="seguridad-actual"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Contraseña nueva"
+        [required]="true"
+        hint="Al menos 8 caracteres."
+        [errorMessage]="
+          form.controls.newPassword.touched && form.controls.newPassword.invalid
+            ? 'La contraseña nueva tiene que tener al menos 8 caracteres.'
+            : ''
+        "
+      >
+        <app-input
+          formControlName="newPassword"
+          type="password"
+          autocomplete="new-password"
+          testId="seguridad-nueva"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Repetí la contraseña nueva"
+        [required]="true"
+        [errorMessage]="noCoincide() ? 'Las dos contraseñas no coinciden.' : ''"
+      >
+        <app-input
+          formControlName="confirmation"
+          type="password"
+          autocomplete="new-password"
+          testId="seguridad-confirmacion"
+        />
+      </app-form-field>
+
+      <div class="seguridad__acciones">
+        <button app-button type="submit" [isLoading]="guardando()" data-testid="seguridad-guardar">
+          Cambiar la contraseña
+        </button>
+      </div>
+    </form>
+  </app-card>
+
+  <app-card class="seguridad__tarjeta">
+    <h2 class="seguridad__titulo">Sesiones abiertas</h2>
+    <p class="seguridad__ayuda">Si no reconocés alguna, cerrala y cambiá tu contraseña.</p>
+
+    @switch (estado()) {
+      @case ('cargando') {
+        <p class="seguridad__estado" role="status">Cargando tus sesiones…</p>
+      }
+      @case ('error') {
+        <app-alert tone="error" data-testid="seguridad-sesiones-error">
+          No pudimos traer tus sesiones.
+          <button app-button variant="secondary" size="sm" type="button" (click)="cargarSesiones()">
+            Reintentar
+          </button>
+        </app-alert>
+      }
+      @default {
+        @if (sesiones().length === 0) {
+          <app-empty-state
+            title="No hay sesiones abiertas"
+            description="Cuando inicies sesión en un dispositivo, la vas a ver acá."
+          />
+        } @else {
+          <ul class="seguridad__sesiones" data-testid="seguridad-sesiones">
+            @for (sesion of sesiones(); track sesion.id) {
+              <li class="sesion">
+                <div class="sesion__datos">
+                  <strong>{{ sesion.current ? 'Este dispositivo' : 'Otro dispositivo' }}</strong>
+                  <span class="sesion__detalle">
+                    Iniciada el {{ sesion.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                    @if (sesion.ip) {
+                      · IP {{ sesion.ip }}
+                    }
+                  </span>
+                </div>
+                @if (!sesion.current) {
+                  <button
+                    app-button
+                    variant="secondary"
+                    size="sm"
+                    type="button"
+                    [disabled]="cerrando() === sesion.id"
+                    (click)="cerrarSesion(sesion)"
+                  >
+                    Cerrar
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        }
+      }
+    }
+
+    <div class="seguridad__acciones">
+      <button
+        app-button
+        variant="secondary"
+        type="button"
+        [isLoading]="cerrandoTodas()"
+        (click)="cerrarTodas()"
+        data-testid="seguridad-cerrar-todas"
+      >
+        Cerrar sesión en todos lados
+      </button>
+    </div>
+  </app-card>
+</div>
