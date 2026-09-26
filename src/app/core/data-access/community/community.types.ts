@@ -1148,6 +1148,32 @@ export interface ModerationDecisionPage {
   readonly nextCursor: string | null;
 }
 
+/**
+ * Una decisión propia, vista por quien la sufrió (AG-18, «Mis sanciones»).
+ *
+ * Deliberadamente más chica que {@link ModerationDecisionItem}: no trae
+ * `decidedByUserId` (el moderador) porque `GET .../decisions/mine` no lo
+ * expone — el autor tiene derecho a saber qué política se le aplicó y con qué
+ * motivo, no a leer el expediente de moderación entero.
+ */
+export interface MyModerationDecisionItem {
+  readonly decisionId: string;
+  readonly policyConceptId: string;
+  readonly decisionConceptId: string;
+  readonly rationaleText?: string;
+  readonly decidedAt?: Date;
+  /** `false` si ya hay una apelación abierta para esta decisión. */
+  readonly appealable: boolean;
+}
+
+/** Una página de decisiones propias. */
+export interface MyModerationDecisionPage {
+  readonly items: readonly MyModerationDecisionItem[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
 /** Una apelación, con la decisión que impugna resuelta. */
 export interface ModerationAppealItem {
   readonly id: string;

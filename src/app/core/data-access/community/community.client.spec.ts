@@ -499,6 +499,41 @@ describe('CommunityClient', () => {
     expect('deletedAt' in vivo!).toBe(false);
   });
 
+  it('AG-18: listMyModerationDecisions manda profileId y convierte decidedAt', () => {
+    let pagina: import('./community.types').MyModerationDecisionPage | undefined;
+    client
+      .listMyModerationDecisions('pp-1', { cursor: 'c-1', limit: 10 })
+      .subscribe((p) => (pagina = p));
+
+    const req = http.expectOne(
+      (r) => r.url === '/community/moderation/decisions/mine',
+    );
+    expect(req.request.params.get('profileId')).toBe('pp-1');
+    expect(req.request.params.get('cursor')).toBe('c-1');
+    expect(req.request.params.get('limit')).toBe('10');
+
+    req.flush({
+      items: [
+        {
+          decisionId: 'dec-1',
+          policyConceptId: 'c-policy',
+          decisionConceptId: 'c-removed',
+          rationaleText: 'Viola las normas',
+          decidedAt: '2026-08-12T15:00:00.000Z',
+          appealable: true,
+        },
+      ],
+      count: 1,
+      limit: 10,
+      nextCursor: null,
+    });
+
+    expect(pagina!.items[0]!.decidedAt).toEqual(
+      new Date('2026-08-12T15:00:00.000Z'),
+    );
+    expect(pagina!.items[0]!.appealable).toBe(true);
+  });
+
   it('listReviews conserva las dimensiones y las respuestas', () => {
     let resenas: ServiceReviewPage | undefined;
     client.listReviews('p-1').subscribe((r) => (resenas = r));
