@@ -38,6 +38,19 @@
   }
 </app-card>
 
+<!-- Tarea 4 · M-06: beneficios preventivos de la aseguradora del paciente. En
+     `@defer` por la misma razón que la tarjeta de arriba: este panel viaja en el
+     bundle **inicial**. Sin campañas vigentes el widget no dibuja nada, así que
+     quien no tiene seguro, o no tiene beneficios hoy, no ve ni un renglón nuevo. -->
+@if (profileId(); as patientId) {
+  @defer (on immediate) {
+    <app-patient-campaigns-widget
+      class="mi-salud__benefits"
+      [patientProfileId]="patientId"
+    />
+  }
+}
+
 @switch (estado().status) {
   @case ('loading') {
     <p class="mi-salud__estado" role="status">Cargando lo tuyo…</p>
