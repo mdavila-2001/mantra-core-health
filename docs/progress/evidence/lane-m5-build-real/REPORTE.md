@@ -171,6 +171,28 @@ Capturas: `fotos/auth-{375,768,1440}-{light,dark}.png` (producción real) +
   comentarios, mostrador sin decisión D-G): documentadas en `check-mock-vs-client.mjs`, no se
   implementaron (fuera de alcance — `core/mock/handlers/**` con lógica de negocio no es H2.S1.M4).
 
+## PR
+
+**#711**, `justin/test-m5-build-real` → `test`: https://github.com/mdavila-2001/mantra-core-health/pull/711
+
+```text
+$ gh pr view 711 --json number,url,isDraft,mergeable,mergeStateStatus,reviewDecision,baseRefName,headRefName
+{"baseRefName":"test","headRefName":"justin/test-m5-build-real","isDraft":false,
+ "mergeable":"MERGEABLE","mergeStateStatus":"UNSTABLE","number":711,"reviewDecision":""}
+
+$ gh pr checks 711
+dependencias  pending
+e2e           pending
+verificar     pending
+```
+
+`mergeable: MERGEABLE` — sin conflictos, no es draft. `mergeStateStatus: UNSTABLE` es por los tres
+checks todavía `pending` a los 90 s de esperar, no por ninguno en rojo: el propio `CLAUDE.md` del
+repo ya declara «El CI propio está caído; los `check-*.mjs` se corren a mano» — que es exactamente
+lo que este reporte hizo (todas las salidas de arriba). No se fuerza el merge ni se usan
+privilegios de admin. Queda como la única condición de la regla 35.2 sin cerrar del todo, por una
+causa externa y documentada, no por el contenido del PR.
+
 ## Decisiones y ambigüedades
 
 - **D-C (triage IA):** resuelta con la Opción C del propio prompt de enrutado («apagado hasta
