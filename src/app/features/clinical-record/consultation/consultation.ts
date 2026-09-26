@@ -60,10 +60,8 @@ import { loRegistradoEnElEncuentro, type LoRegistrado } from './lo-registrado';
 import { AllergyBlock } from '../patient-chart/allergy-block/allergy-block';
 import { CarePlanBlock, type DiagnosticoDelPlan } from '../patient-chart/care-plan-block/care-plan-block';
 import { DiagnosisBlock, type CitaDelPaciente } from '../patient-chart/diagnosis-block/diagnosis-block';
-import { DocumentBlock } from '../patient-chart/document-block/document-block';
 import { AnalysisOrderBlock } from '../patient-chart/analysis-order-block/analysis-order-block';
 import { FollowUpBlock } from '../patient-chart/follow-up-block/follow-up-block';
-import { MedicalNoteBlock } from '../patient-chart/medical-note-block/medical-note-block';
 import {
   MedicationBlock,
   type DiagnosticoEnFicha,
@@ -96,6 +94,8 @@ const TOPE_DEL_MOTIVO = 500;
  * «Medición» no existe más —un signo vital es una fila de la nota médica, no
  * un registro aparte— e «Internación» sale de la consulta por ahora; el bloque
  * sigue vivo en el expediente, que es donde se abre y se cierra un episodio.
+ * Al día siguiente salieron dos más, «Nota médica» y «Documento»: las absorbe
+ * el formulario médico (ver CASILLAS).
  *
  * Y una casilla que no registra nada, «Pagos»: la respuesta a «¿esto ya está
  * pagado?», que se necesita en la consulta misma cuando quien atiende también
@@ -105,11 +105,9 @@ export type CasillaDeConsulta =
   | 'diagnosticos'
   | 'alergias'
   | 'medicacion'
-  | 'notas'
   | 'ordenes'
   | 'reconsulta'
   | 'planes'
-  | 'documentos'
   | 'formulario'
   | 'pagos';
 
@@ -151,9 +149,12 @@ interface DefinicionDeCasilla {
 }
 
 /**
- * Contrato C0 de las casillas, ya sin Medición ni Internación. El orden
- * visible se declara abajo en ORDEN_DE_CASILLAS y comienza por Nota médica,
- * Orden de análisis y Diagnóstico.
+ * Contrato C0 de las casillas, ya sin Medición ni Internación, y sin «Nota
+ * médica» ni «Documento» (pedido del propietario, 26/09/2026): las dos viven
+ * ahora al final del formulario médico, como campos adicionales con texto y
+ * archivos. El orden visible se declara abajo en ORDEN_DE_CASILLAS y empieza
+ * por el formulario médico, porque receta, orden de análisis, plan de
+ * cuidados y reconsulta cuelgan de su respuesta.
  */
 const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
   diagnosticos: {
@@ -177,13 +178,6 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
     icono: 'M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm2 8h6M9 15h4',
     testId: 'consulta-casilla-medicacion',
   },
-  notas: {
-    titulo: 'Nota médica',
-    descripcion: 'El registro clínico de este encuentro.',
-    tituloDelModal: 'Escribir una nota médica',
-    icono: 'M6 3h9l5 5v13H6V3Zm9 0v5h5M9 13h6M9 17h6',
-    testId: 'consulta-casilla-notas',
-  },
   ordenes: {
     titulo: 'Orden de análisis',
     descripcion: 'Un estudio solicitado durante la consulta.',
@@ -205,17 +199,10 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
     icono: 'M4 6h16M4 12h10M4 18h7m6-1 2 2 4-4',
     testId: 'consulta-casilla-planes',
   },
-  documentos: {
-    titulo: 'Documento',
-    descripcion: 'Un estudio, un informe o un papel que la persona trajo.',
-    tituloDelModal: 'Registrar un documento',
-    icono: 'M16.5 8.5 9.7 15.3a2.1 2.1 0 0 0 3 3l6.8-6.8a4.2 4.2 0 0 0-5.9-6L6.8 12.3a6.2 6.2 0 0 0 8.8 8.8l5.4-5.4',
-    testId: 'consulta-casilla-documentos',
-  },
   formulario: {
-    titulo: 'Formulario clínico',
-    descripcion: 'La ficha de la especialidad, el odontograma o un procedimiento.',
-    tituloDelModal: 'Llenar un formulario clínico',
+    titulo: 'Formulario médico',
+    descripcion: 'La ficha de la especialidad, con tus campos, notas y archivos.',
+    tituloDelModal: 'Llenar el formulario médico',
     icono: 'M4 4h16v16H4V4Zm4 5h8M8 12h8M8 15h5',
     testId: 'consulta-casilla-formulario',
   },
@@ -229,15 +216,13 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
 };
 
 const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
-  'notas',
+  'formulario',
   'ordenes',
   'diagnosticos',
-  'reconsulta',
   'medicacion',
-  'alergias',
   'planes',
-  'documentos',
-  'formulario',
+  'reconsulta',
+  'alergias',
   'pagos',
 ];
 
@@ -248,7 +233,7 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
  *
  * Reemplaza a la pantalla de atención anterior, que abría con un formulario
  * de una pregunta y escondía el resto detrás de tres pestañas. Acá lo que se
- * puede registrar está a la vista en diez casillas. Cada una abre su bloque
+ * puede registrar está a la vista en ocho casillas. Cada una abre su bloque
  * en un modal. Nota médica es la tabla de filas campo/valor de C1; órdenes y
  * reconsulta reutilizan sus bloques funcionales. Pagos consulta lo que ya
  * está cobrado.
@@ -279,11 +264,9 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
     ContentDialog,
     DatePipe,
     DiagnosisBlock,
-    DocumentBlock,
     EncounterTimeline,
     FormField,
     FollowUpBlock,
-    MedicalNoteBlock,
     MedicationBlock,
     PaymentsBlock,
     PageHeader,
@@ -485,7 +468,7 @@ export class Consultation {
   /* -- La rejilla ----------------------------------------------------------- */
 
   /**
-   * Las diez casillas con su cantidad. La cantidad sale de lo ya leído y no
+   * Las ocho casillas con su cantidad. La cantidad sale de lo ya leído y no
    * de una petición por casilla: dos lecturas de la misma lista pueden
    * discrepar.
    */
@@ -495,13 +478,11 @@ export class Consultation {
       diagnosticos: datos?.resumen.conditions.length ?? 0,
       alergias: datos?.resumen.allergies.length ?? 0,
       medicacion: datos?.resumen.medicationRequests.length ?? 0,
-      notas: datos?.chart.notes.length ?? 0,
       ordenes: null,
       reconsulta: null,
       planes: datos?.chart.carePlans.length ?? 0,
-      documentos: datos?.chart.documents.length ?? 0,
       // El formulario no deja una fila propia en la historia: lo que guarda
-      // termina en diagnósticos, procedimientos o laboratorio.
+      // termina en diagnósticos, notas, documentos o laboratorio.
       formulario: null,
       // Los pagos no están en las dos lecturas del expediente —son de la caja,
       // no de la historia— y pedirlos acá sería una tercera petición cuyo
@@ -516,7 +497,7 @@ export class Consultation {
   });
 
   /**
-   * La casilla cuyo modal está abierto, o `null`. Una señal para las diez:
+   * La casilla cuyo modal está abierto, o `null`. Una señal para las ocho:
    * sólo puede haber un modal a la vez.
    */
   protected readonly casillaAbierta = signal<CasillaDeConsulta | null>(null);

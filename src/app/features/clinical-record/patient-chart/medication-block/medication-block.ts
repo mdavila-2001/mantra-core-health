@@ -47,6 +47,7 @@ import { Textarea } from '../../../../shared/components/atoms/textarea/textarea'
 import type { DynamicEnumOption } from '../../../../core/data-access/system-context/system-context.types';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
 import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
 
 /**
@@ -236,6 +237,7 @@ export type RecetaEnFicha = PrescriptionInChart;
 @Component({
   selector: 'app-medication-block',
   imports: [
+    FormResponsePicker,
     Alert,
     Badge,
     ContentDialog,
@@ -279,6 +281,19 @@ export class MedicationBlock implements DraftBlock {
    * el bloque no vuelve a preguntarlo para que no puedan discrepar.
    */
   readonly encounterId = input<string | null>(null);
+
+  /**
+   * En la cita, lo que se emite cuelga sí o sí de una respuesta del formulario
+   * médico: sin ella el botón no se habilita. En el expediente no se exige.
+   */
+  readonly exigeRespuesta = input(false);
+
+  /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
+  protected readonly respuestaDelFormulario = signal<string | null>(null);
+
+  protected readonly faltaRespuesta = computed(
+    () => this.exigeRespuesta() && this.respuestaDelFormulario() === null,
+  );
 
   /** Las recetas de la persona, ya traducidas por el expediente. */
   readonly recetas = input.required<readonly PrescriptionInChart[]>();
@@ -652,6 +667,7 @@ export class MedicationBlock implements DraftBlock {
    */
   protected readonly puedeRecetar = computed(
     () =>
+      !this.faltaRespuesta() &&
       (this.hayEncuentro() || this.sinExigirEncuentro()) &&
       !this.sinOrganizacion() &&
       this.medicamento() !== null &&
@@ -984,6 +1000,9 @@ export class MedicationBlock implements DraftBlock {
         patientProfileId,
         medicationConceptId,
         ...(encounterId === null ? {} : { encounterId }),
+        ...(this.respuestaDelFormulario() === null
+          ? {}
+          : { formInstanceId: this.respuestaDelFormulario() ?? '' }),
         // Los opcionales vacíos se **omiten**: una dosis en blanco es una
         // indicación registrada que no dice nada, y se lee peor que su ausencia.
         ...(dosis === '' ? {} : { doseText: dosis }),

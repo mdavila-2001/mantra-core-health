@@ -582,6 +582,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       priorityConceptId?: string;
       reasonText?: string;
       encounterId?: string;
+      formInstanceId?: string;
       // Antiduplicación de estudios (v4.2.17, T-26, subtarea 3.2).
       previousDiagnosticReportId?: string;
       reusePreviousReport?: boolean;
@@ -617,6 +618,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       statusConceptId: reutilizada ? ESTADO['ST-SATISFIED-BY-PRIOR']! : ESTADO['ST-PENDING']!,
       requesterProfileId: request.user?.practitionerProfileId ?? MEDICA.id,
       ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
+      ...(datos.formInstanceId === undefined ? {} : { formInstanceId: datos.formInstanceId }),
       reasonText: datos.reasonText ?? '',
       createdAt: ahora(),
       ...(datos.previousDiagnosticReportId === undefined

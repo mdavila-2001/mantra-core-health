@@ -514,7 +514,13 @@ export function registrarAgenda(router: MockRouter): void {
       followUpOf:
         origen === undefined || origenPedido === null
           ? null
-          : { bookingId: origen.id, encounterId: origenPedido.encounterId ?? null },
+          : {
+              bookingId: origen.id,
+              encounterId: origenPedido.encounterId ?? null,
+              ...(origenPedido.formInstanceId === undefined
+                ? {}
+                : { formInstanceId: origenPedido.formInstanceId }),
+            },
       createdAt: ahora(),
     };
     reservas.agregar(nueva);

@@ -1,0 +1,115 @@
+<section class="adicionales" aria-labelledby="adicionales-titulo" data-testid="campos-adicionales">
+  <div class="adicionales__encabezado">
+    <div>
+      <h3 id="adicionales-titulo" class="adicionales__titulo">Campos adicionales del doctor</h3>
+      <p class="adicionales__ayuda">
+        Opcional. Lo que no está en la plantilla: cada fila lleva texto, archivos o las dos cosas.
+        Se aceptan {{ formatosEnPalabras }}, hasta 10 MB cada uno.
+      </p>
+    </div>
+    @if (filas().length > 0) {
+      <span class="adicionales__contador" data-testid="adicionales-contador">
+        {{ filasConContenido().length }} de {{ tope }}
+      </span>
+    }
+  </div>
+
+  @if (descartados().length > 0) {
+    <app-alert tone="warning" title="Quedaron fuera algunos archivos">
+      {{ descartados().join(', ') }}. Se aceptan {{ formatosEnPalabras }}, hasta 10 MB cada uno.
+    </app-alert>
+  }
+
+  @if (filas().length > 0) {
+    <ul class="adicionales__filas">
+      @for (fila of filas(); track fila.clave) {
+        <li class="adicionales__fila" data-testid="adicional-fila" [attr.data-fila]="fila.clave">
+          <app-form-field
+            icon="labels"
+            label="Campo"
+            class="adicionales__campo"
+            [errorMessage]="problemaDe(fila.clave)"
+          >
+            <app-input
+              placeholder="Análisis clínico con el que vino"
+              testId="adicional-rotulo"
+              [value]="fila.rotulo"
+              [hasError]="problemaDe(fila.clave) !== ''"
+              [disabled]="disabled()"
+              (valueChange)="fijarRotulo(fila.clave, $event)"
+            />
+          </app-form-field>
+
+          <app-form-field icon="note" label="Valor" class="adicionales__valor">
+            <app-textarea
+              placeholder="Hemograma normal, glucosa 98 mg/dL"
+              data-testid="adicional-valor"
+              [rows]="1"
+              [value]="fila.valor"
+              [disabled]="disabled()"
+              (valueChange)="fijarValor(fila.clave, $event)"
+            />
+          </app-form-field>
+
+          <app-form-field icon="paperclip" label="Archivos" class="adicionales__archivos">
+            <app-file-input
+              [files]="fila.archivos"
+              (filesChange)="fijarArchivos(fila.clave, $event)"
+              [multiple]="true"
+              [maxFiles]="topeDeArchivos"
+              [accept]="formatosAceptados"
+              [maxSizeBytes]="tamanoMaximo"
+              [disabled]="disabled()"
+              label="Adjuntar"
+              accessibleLabel="Adjuntar archivos a esta fila"
+              testId="adicional-archivos"
+              (rejected)="alDescartar($event)"
+            />
+          </app-form-field>
+
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            type="button"
+            class="adicionales__quitar"
+            data-testid="adicional-quitar"
+            [disabled]="disabled()"
+            (clicked)="quitarFila(fila.clave)"
+          >
+            Quitar
+          </button>
+        </li>
+      }
+    </ul>
+  }
+
+  <div class="adicionales__acciones">
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      type="button"
+      data-testid="adicional-agregar-fila"
+      [disabled]="disabled() || filas().length >= tope"
+      (clicked)="agregarFila()"
+    >
+      Agregar campo
+    </button>
+  </div>
+
+  <app-form-field icon="note" label="Texto libre" hint="Opcional. Lo que no entra en una fila.">
+    <app-textarea
+      data-testid="adicional-texto"
+      [rows]="3"
+      [value]="textoLibre()"
+      [disabled]="disabled()"
+      (valueChange)="textoLibre.set($event)"
+      placeholder="Refiere que el cuadro empezó tras un viaje largo."
+    />
+  </app-form-field>
+
+  @if (impedimento(); as motivo) {
+    <app-alert tone="warning" data-testid="adicionales-impedimento">{{ motivo }}</app-alert>
+  }
+</section>

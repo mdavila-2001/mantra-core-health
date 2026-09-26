@@ -32,6 +32,7 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 
 /** Cuántos días adelante se puede citar de nuevo a alguien. */
 const DIAS_DE_HORIZONTE = 90;
@@ -193,6 +194,7 @@ export interface DiaDelCalendario {
 @Component({
   selector: 'app-follow-up-block',
   imports: [
+    FormResponsePicker,
     Alert,
     AppButton,
     Card,
@@ -232,6 +234,19 @@ export class FollowUpBlock {
    * abrió su encuentro.
    */
   readonly encounterId = input<string | null>(null);
+
+  /**
+   * En la cita, lo que se emite cuelga sí o sí de una respuesta del formulario
+   * médico: sin ella el botón no se habilita. En el expediente no se exige.
+   */
+  readonly exigeRespuesta = input(false);
+
+  /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
+  protected readonly respuestaDelFormulario = signal<string | null>(null);
+
+  protected readonly faltaRespuesta = computed(
+    () => this.exigeRespuesta() && this.respuestaDelFormulario() === null,
+  );
 
   /** Se agendó algo y el expediente tiene que releerse. */
   readonly cambio = output<void>();
@@ -486,6 +501,7 @@ export class FollowUpBlock {
 
   protected readonly puedeAgendar = computed(
     () =>
+      !this.faltaRespuesta() &&
       this.consulta() !== null &&
       this.yaAgendada() === null &&
       this.cupo() !== null &&
@@ -545,7 +561,13 @@ export class FollowUpBlock {
         startAt: cupo.desde.toISOString(),
         durationMinutes: duracionEnMinutos(cupo),
         reasonText: this.motivo().trim(),
-        followUpOf: { bookingId: consulta.bookingId, encounterId: this.encounterId() },
+        followUpOf: {
+          bookingId: consulta.bookingId,
+          encounterId: this.encounterId(),
+          ...(this.respuestaDelFormulario() === null
+            ? {}
+            : { formInstanceId: this.respuestaDelFormulario() ?? '' }),
+        },
       })
       .subscribe({
         next: () => {

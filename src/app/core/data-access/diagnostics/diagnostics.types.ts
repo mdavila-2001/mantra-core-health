@@ -112,6 +112,11 @@ export interface NewDiagnosticOrder {
   readonly category?: AnalysisCategory;
   /** Notas médicas que motivan la orden de C2; pendiente de backend P40. */
   readonly basedOnNoteIds?: readonly string[];
+  /**
+   * La respuesta del formulario médico de la que sale (instancia de `forms`).
+   * En la cita es obligatoria; pendiente de backend (P43).
+   */
+  readonly formInstanceId?: string;
   readonly priorityConceptId?: string;
   readonly requesterProfileId?: string;
   readonly performerTenantId?: string;

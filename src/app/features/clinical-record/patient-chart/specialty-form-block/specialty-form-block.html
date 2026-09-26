@@ -130,6 +130,19 @@
           </div>
         }
       </dl>
+      @if (adicionalesGuardados().length > 0) {
+        <p class="formulario-especialidad__completado" data-testid="adicionales-guardados-titulo">
+          Campos adicionales del doctor
+        </p>
+        <dl class="formulario-especialidad__respuestas" data-testid="adicionales-guardados">
+          @for (fila of adicionalesGuardados(); track $index) {
+            <div class="formulario-especialidad__respuesta">
+              <dt>{{ fila.label }}</dt>
+              <dd>{{ fila.value }}</dd>
+            </div>
+          }
+        </dl>
+      }
       <button
         app-button
         variant="outline"
@@ -268,6 +281,11 @@
             </app-form-field>
           }
         }
+
+        <!-- La nota médica y los documentos, al final de la ficha: filas propias
+             del doctor con texto, archivos o las dos cosas. Opcionales; se
+             registran al completar, contra el mismo encuentro. -->
+        <app-additional-fields [patientProfileId]="patientProfileId()" [disabled]="enviando()" />
 
         <!-- D4: la ficha termina en el cierre. Sólo con una plantilla de
              `forms` elegida —los bloques propios y la hoja libre no pasan por

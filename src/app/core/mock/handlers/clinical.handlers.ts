@@ -289,7 +289,7 @@ export function registrarClinica(router: MockRouter): void {
   });
 
   router.post('/clinical/medication-requests', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; medicationConceptId: string; encounterId?: string; indicationConditionId?: string; indicationText?: string; doseText?: string; frequencyText?: string; validFrom?: string; validTo?: string; patientInstructionsText?: string; prescriberProfileId?: string }>(request);
+    const datos = cuerpo<{ patientProfileId: string; medicationConceptId: string; encounterId?: string; indicationConditionId?: string; indicationText?: string; formInstanceId?: string; doseText?: string; frequencyText?: string; validFrom?: string; validTo?: string; patientInstructionsText?: string; prescriberProfileId?: string }>(request);
     const fallo = falloDeIndicacion(datos.indicationConditionId, datos.indicationText);
     if (fallo !== null) return fallo;
 
@@ -308,6 +308,7 @@ export function registrarClinica(router: MockRouter): void {
       // igual que la ocupación del alta de paciente: el texto sólo tenía
       // sentido para quien no encontró un diagnóstico registrado.
       ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
+      ...(datos.formInstanceId === undefined ? {} : { formInstanceId: datos.formInstanceId }),
       ...(datos.indicationConditionId === undefined
         ? {}
         : { indicationConditionId: datos.indicationConditionId }),
@@ -555,7 +556,7 @@ export function registrarClinica(router: MockRouter): void {
      que falló. */
 
   router.post('/charts/care-plans', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; conditionId?: string; reasonText?: string; encounterId?: string; intentConceptId?: string; goalText?: string; startDate?: string; endDate?: string; activities?: { activityConceptId?: string; scheduledAt?: string; detailText?: string }[] }>(request);
+    const datos = cuerpo<{ patientProfileId: string; conditionId?: string; reasonText?: string; encounterId?: string; formInstanceId?: string; intentConceptId?: string; goalText?: string; startDate?: string; endDate?: string; activities?: { activityConceptId?: string; scheduledAt?: string; detailText?: string }[] }>(request);
     const actividades = (datos.activities ?? []).map((actividad) => ({
       id: nuevoId('cp-act'),
       statusConceptId: ESTADO['ST-PENDING']!,
@@ -574,6 +575,7 @@ export function registrarClinica(router: MockRouter): void {
       ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
       ...(datos.conditionId === undefined ? {} : { conditionId: datos.conditionId }),
       ...(datos.reasonText === undefined ? {} : { reasonText: datos.reasonText }),
+      ...(datos.formInstanceId === undefined ? {} : { formInstanceId: datos.formInstanceId }),
       activities: actividades,
       createdAt: ahora(),
     });
