@@ -23,6 +23,31 @@
       </app-alert>
     }
 
+    <!-- «Enfermedades activas» (C3): lo primero que se ve del historial
+         estructurado. Sólo aparece con al menos una activa; un expediente sin
+         diagnósticos activos no necesita esta tarjeta vacía. -->
+    @if (enfermedadesActivas().length > 0) {
+      <app-card
+        variant="outlined"
+        padding="lg"
+        class="expediente__activas"
+        data-testid="expediente-enfermedades-activas"
+      >
+        <h2 class="expediente__activas-titulo">Enfermedades activas</h2>
+        <ul class="expediente__activas-lista">
+          @for (enfermedad of enfermedadesActivas(); track enfermedad.id) {
+            <li class="expediente__activas-item">
+              <p class="expediente__activas-nombre">{{ enfermedad.nombre }}</p>
+              <app-fact-list [hechos]="enfermedad.hechos" />
+              @if (!enfermedad.cronica && enfermedad.progreso !== null) {
+                <app-progress [value]="enfermedad.progreso" label="Tiempo transcurrido" tone="primary" />
+              }
+            </li>
+          }
+        </ul>
+      </app-card>
+    }
+
     <!-- ─── La historia ───────────────────────────────────────────────────
          Se lleva el ancho entero: es lo único que hace esta pantalla. Antes
          cedía una columna de 24rem a la tarjeta del encuentro, y una tabla de
@@ -106,8 +131,10 @@
 </ng-template>
 
 <ng-template #celdaEstado let-fila>
-  <!-- El estado nunca viaja sólo en el color: el badge trae su texto. -->
-  <app-badge variant="info" [value]="fila.estado" />
+  <!-- El estado nunca viaja sólo en el color: el badge trae su texto. El tono
+       lo fija cada bloque (C3 distingue En estudio/Activa/Rechazado/
+       Histórico); sin `estadoTono`, el `info` de siempre. -->
+  <app-badge [variant]="fila.estadoTono ?? 'info'" [value]="fila.estado" />
 </ng-template>
 
 <ng-template #celdaCuando let-fila>
@@ -170,6 +197,19 @@
     Acciones
   </button>
   <app-menu #menuDeAcciones>
+    <!-- C3: sólo un presuntivo puede confirmarse o rechazarse. Un
+         diagnóstico ya decidido no vuelve a ofrecerlo — el servidor lo
+         rechazaría con 409, y ofrecerlo igual sería mentir en la UI. -->
+    @if (fila.presuntivo) {
+      <app-menu-item data-testid="diagnostico-confirmar" (selected)="abrirVerificacion(fila, 'CONFIRMED')">
+        <app-nav-icon slot="icon" name="check" />
+        Confirmar…
+      </app-menu-item>
+      <app-menu-item data-testid="diagnostico-rechazar" destructive (selected)="abrirVerificacion(fila, 'REFUTED')">
+        <app-nav-icon slot="icon" name="close" />
+        Rechazar…
+      </app-menu-item>
+    }
     <app-menu-item (selected)="abrirCambioDeEstado(fila)">
       <app-nav-icon slot="icon" name="refresh" />
       Cambiar estado clínico…
@@ -180,6 +220,20 @@
     </app-menu-item>
   </app-menu>
 </ng-template>
+
+<!-- C3: confirmar o rechazar un diagnóstico presuntivo. Mismo componente que
+     usa la casilla «Diagnóstico» de la consulta (ya mergeado en `mockup`),
+     reusado acá para que el expediente también pueda decidir. -->
+@if (verificando(); as decision) {
+  <app-diagnosis-verify-dialog
+    [condition]="decision.condicion"
+    [patientProfileId]="pacienteDeLaFicha()"
+    [outcome]="decision.outcome"
+    [nombre]="decision.nombre"
+    (verified)="verificacionCompletada()"
+    (closed)="verificando.set(null)"
+  />
+}
 
 <!-- Cambiar el estado clínico de un diagnóstico ya registrado. El backend
      sigue validando la transición: esto sólo deja de deformar la tabla. -->

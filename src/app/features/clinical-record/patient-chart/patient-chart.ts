@@ -21,6 +21,8 @@ import { ClinicalClient } from '../../../core/data-access/clinical/clinical.clie
 import type {
   CarePlan,
   ClinicalSummary,
+  Condition,
+  DiagnosisOutcome,
   PatientChart as ExpedienteDePaciente,
 } from '../../../core/data-access/clinical/clinical.types';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
@@ -34,6 +36,20 @@ import { dataOf, empty, loading, notFound, ready } from '../../../core/view-stat
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { FactList } from '../../../shared/components/molecules/fact-list/fact-list';
+import type { Hecho } from '../../../shared/components/molecules/fact-list/fact-list.types';
+import { Progress } from '../../../shared/components/atoms/progress/progress';
+import { Card } from '../../../shared/components/molecules/card/card';
+import type { Tone } from '../../../shared/components/tone/tone.types';
+import {
+  CODIGO_ACTIVA,
+  CODIGO_CONFIRMADO,
+  CODIGO_DESCARTADO,
+  DIAGNOSIS_STATE_LABELS,
+  diagnosisStateOf,
+  type DiagnosisState,
+} from '../../../shared/clinical/diagnosis-state';
+import { DiagnosisVerifyDialog } from './diagnosis-verify-dialog/diagnosis-verify-dialog';
 import type { BreadcrumbItem } from '../../../shared/components/molecules/breadcrumb/breadcrumb.types';
 import { Menu } from '../../../shared/components/molecules/menu/menu';
 import { MenuItem } from '../../../shared/components/molecules/menu/menu-item/menu-item';
@@ -199,6 +215,18 @@ export interface FilaClinica {
   readonly cuando: Date | null;
   readonly detalle: string;
 
+  /** El tono del sello de estado (C3, sólo Diagnósticos) — ausente, `celdaEstado` usa `info`. */
+  readonly estadoTono?: Tone;
+
+  /** Por qué se confirmó o rechazó (C3) — ausente o vacío fuera de Diagnósticos. */
+  readonly decision?: string;
+
+  /** Si sigue `DXV-PROVISIONAL` (C3) — sólo entonces el menú ofrece confirmar/rechazar. */
+  readonly presuntivo?: boolean;
+
+  /** La condición cruda (C3), para pasársela a `app-diagnosis-verify-dialog`. */
+  readonly condicionOriginal?: Condition;
+
   /**
    * Los vínculos clínicos del registro, en pares rótulo/valor y ya en palabras.
    *
@@ -309,13 +337,16 @@ interface Expediente {
     AllergyBlock,
     AttachmentDialog,
     Badge,
+    Card,
     CarePlanBlock,
     ConceptSelect,
     ContentDialog,
     DiagnosisBlock,
+    DiagnosisVerifyDialog,
     DataTable,
     DatePipe,
     DocumentBlock,
+    FactList,
     FreeNoteBlock,
     MedicationBlock,
     Menu,
@@ -325,6 +356,7 @@ interface Expediente {
     ObservationBlock,
     PdfExportButton,
     PageHeader,
+    Progress,
     Tab,
     Tabs,
     TutorialTarget,
@@ -456,17 +488,115 @@ export class PatientChart {
 
   /* -- Los bloques, ya traducidos ----------------------------------------- */
 
-  protected readonly diagnosticos = computed<readonly FilaClinica[]>(() =>
-    (this.datos()?.resumen.conditions ?? []).map((fila) => ({
-      id: fila.id,
-      principal: this.label(fila.codeConceptId),
-      secundario: this.label(fila.categoryConceptId),
-      estado: this.label(fila.clinicalStatusConceptId),
-      cuando: fila.onsetAt ?? fila.createdAt,
-      detalle: fila.resolvedAt === undefined ? '' : 'Resuelto',
-      vinculos: [{ rotulo: 'Encuentro', valor: this.describirEncuentro(fila.encounterId) }],
-    })),
-  );
+  /**
+   * Los diagnósticos, con el estado de C3 ya resuelto y ordenados en los tres
+   * grupos del carril (en estudio, activas, históricas — rechazadas junto a
+   * las históricas). El estado se deriva con `diagnosisStateOf`, el ayudante
+   * compartido de C0: no se reimplementa acá.
+   */
+  private readonly ORDEN_DEL_GRUPO: Readonly<Record<DiagnosisState, number>> = {
+    IN_STUDY: 0,
+    ACTIVE: 1,
+    HISTORIC: 2,
+    REFUTED: 2,
+  };
+
+  /**
+   * El tono del sello de «Diagnósticos» (C3), por estado.
+   *
+   * `celdaEstado` es la columna «Estado» compartida por TODOS los bloques
+   * (`columnasPara()`), y su `<app-badge variant="info">` fijo no distinguía
+   * En estudio, Activa, Rechazado e Histórico — los cuatro se veían del mismo
+   * color, pese a ser estados clínicos opuestos (hallazgo de una revisión
+   * visual adversarial). El resto de bloques no fija `estadoTono` y sigue con
+   * el `info` de siempre; sólo diagnósticos lo diferencia.
+   */
+  private readonly TONO_POR_ESTADO: Readonly<Record<DiagnosisState, Tone>> = {
+    IN_STUDY: 'warning',
+    ACTIVE: 'success',
+    REFUTED: 'error',
+    HISTORIC: 'secondary',
+  };
+
+  protected readonly diagnosticos = computed<readonly FilaClinica[]>(() => {
+    const conEstado = (this.datos()?.resumen.conditions ?? []).map((fila) => ({
+      fila,
+      estadoDx: diagnosisStateOf(
+        {
+          ...fila,
+          verificationStatusConceptId: this.codigo(fila.verificationStatusConceptId),
+          clinicalStatusConceptId: this.codigo(fila.clinicalStatusConceptId),
+        },
+        { confirmed: CODIGO_CONFIRMADO, refuted: CODIGO_DESCARTADO, active: CODIGO_ACTIVA },
+      ),
+    }));
+    return [...conEstado]
+      .sort(
+        (a, b) =>
+          this.ORDEN_DEL_GRUPO[a.estadoDx] - this.ORDEN_DEL_GRUPO[b.estadoDx] ||
+          (b.fila.onsetAt ?? b.fila.createdAt).getTime() -
+            (a.fila.onsetAt ?? a.fila.createdAt).getTime(),
+      )
+      .map(({ fila, estadoDx }) => ({
+        id: fila.id,
+        principal: this.label(fila.codeConceptId),
+        secundario: this.label(fila.categoryConceptId),
+        estado: DIAGNOSIS_STATE_LABELS[estadoDx],
+        estadoTono: this.TONO_POR_ESTADO[estadoDx],
+        cuando: fila.onsetAt ?? fila.createdAt,
+        detalle: fila.resolvedAt === undefined ? '' : 'Resuelto',
+        vinculos: [{ rotulo: 'Encuentro', valor: this.describirEncuentro(fila.encounterId) }],
+        decision: fila.verification?.reasonText ?? '',
+        presuntivo: estadoDx === 'IN_STUDY',
+        condicionOriginal: fila,
+      }));
+  });
+
+  /**
+   * Las enfermedades activas (C3): lo primero que se lee del historial
+   * estructurado. `expectedResolutionAt` da el progreso; sin él, la condición
+   * es crónica y no se promete una fecha de cierre.
+   */
+  protected readonly enfermedadesActivas = computed(() => {
+    const hoy = Date.now();
+    return this.diagnosticos()
+      .filter((fila) => fila.condicionOriginal !== undefined && fila.estadoTono === 'success')
+      .map((fila) => {
+        const condicion = fila.condicionOriginal!;
+        const desde = condicion.onsetAt ?? condicion.createdAt;
+        const cronica = condicion.expectedResolutionAt === undefined;
+        const hechos: Hecho[] = [
+          { etiqueta: 'Desde', valor: this.formateador.format(desde) },
+          {
+            etiqueta: cronica ? 'Duración' : 'Hasta',
+            valor: cronica
+              ? 'Crónica · seguimiento continuo'
+              : this.formateador.format(condicion.expectedResolutionAt!),
+          },
+        ];
+        let progreso: number | null = null;
+        if (!cronica) {
+          const fin = condicion.expectedResolutionAt!.getTime();
+          const total = fin - desde.getTime();
+          progreso =
+            total <= 0 ? 100 : Math.min(100, Math.max(0, Math.round(((hoy - desde.getTime()) / total) * 100)));
+          hechos.push({ etiqueta: 'Días restantes', valor: this.diasRestantes(fin, hoy) });
+        }
+        return { id: fila.id, nombre: fila.principal, hechos, cronica, progreso };
+      });
+  });
+
+  private diasRestantes(finMs: number, hoyMs: number): string {
+    const dias = Math.ceil((finMs - hoyMs) / 86_400_000);
+    if (dias <= 0) return 'Venció';
+    return dias === 1 ? '1 día' : `${dias} días`;
+  }
+
+  private readonly formateador = new Intl.DateTimeFormat('es-BO', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 
   protected readonly alergias = computed<readonly FilaClinica[]>(() =>
     (this.datos()?.resumen.allergies ?? []).map((fila) => ({
@@ -1106,6 +1236,27 @@ export class PatientChart {
     this.cambiandoEstadoDe.set(fila);
   }
 
+  /** La condición que se está confirmando o rechazando (C3), o `null`. */
+  protected readonly verificando = signal<{
+    readonly condicion: Condition;
+    readonly nombre: string;
+    readonly outcome: DiagnosisOutcome;
+  } | null>(null);
+
+  /** Abre `app-diagnosis-verify-dialog` sobre una fila presuntiva. */
+  protected abrirVerificacion(fila: FilaClinica, outcome: DiagnosisOutcome): void {
+    if (fila.condicionOriginal === undefined) {
+      return;
+    }
+    this.verificando.set({ condicion: fila.condicionOriginal, nombre: fila.principal, outcome });
+  }
+
+  /** El servidor ya decidió: se cierra el diálogo y se relee el expediente. */
+  protected verificacionCompletada(): void {
+    this.verificando.set(null);
+    this.recargar();
+  }
+
   protected cerrarCambioDeEstado(): void {
     const fila = this.cambiandoEstadoDe();
     if (fila !== null) {
@@ -1298,6 +1449,11 @@ export class PatientChart {
         : []),
       ...(clave === 'medicacion' && filas.some((fila) => (fila.cita ?? '') !== '')
         ? [{ key: 'cita', header: 'Receta de', priority: 3 } satisfies ColumnDef<FilaClinica>]
+        : []),
+      // C3: por qué se confirmó o rechazó. Sólo se dibuja si alguna fila la
+      // llena — la mayoría de los diagnósticos siguen presuntivos.
+      ...(clave === 'diagnosticos' && filas.some((fila) => (fila.decision ?? '') !== '')
+        ? [{ key: 'decision', header: 'Decisión', priority: 3 } satisfies ColumnDef<FilaClinica>]
         : []),
       // Patch v4.0.8: sólo `diagnosticos` transiciona de estado. Antes del
       // patch ninguna fila clínica tenía una acción de escritura propia —el
@@ -1625,6 +1781,14 @@ export class PatientChart {
       return SIN_DATO;
     }
     return this.etiquetas().get(conceptId)?.display ?? SIN_DATO;
+  }
+
+  /**
+   * El código estable de un concepto (C3): `diagnosisStateOf` compara contra
+   * códigos como `DXV-CONFIRMED`, nunca contra el uuid del concepto.
+   */
+  private codigo(conceptId: string | undefined): string | undefined {
+    return conceptId === undefined ? undefined : this.etiquetas().get(conceptId)?.code;
   }
 
   /**

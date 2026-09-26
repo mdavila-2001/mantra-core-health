@@ -321,7 +321,120 @@ describe('PatientChart', () => {
 
     const diagnostico = interno<() => readonly Record<string, unknown>[]>('diagnosticos')()[0];
     expect(diagnostico['principal']).toBe('Diabetes tipo 2');
-    expect(diagnostico['estado']).toBe('Activa');
+    // C3: el estado ya no es el estado clínico crudo, se deriva con
+    // `diagnosisStateOf` a partir de la verificación — sin ella, presuntivo.
+    expect(diagnostico['estado']).toBe('En estudio');
+  });
+
+  /**
+   * Enfermedades activas (C3): la tarjeta que resume qué diagnósticos
+   * confirmados siguen activos, con días restantes o «crónica», y el sello de
+   * la pestaña Diagnósticos coloreado por estado (no un `info` fijo para los
+   * cuatro). El diálogo de confirmar/rechazar es el `app-diagnosis-verify-dialog`
+   * ya mergeado por otro carril; acá sólo se fija cuándo el menú lo ofrece.
+   */
+  describe('Enfermedades activas (C3)', () => {
+    const CONCEPTOS_C3 = {
+      items: [
+        ...CONCEPTOS.items,
+        { conceptId: 'vs-confirmed', code: 'DXV-CONFIRMED', display: 'Confirmado', codeSystemVersionId: 'v1' },
+        {
+          conceptId: 'con-hipertension',
+          code: 'I10',
+          display: 'Hipertensión arterial esencial',
+          codeSystemVersionId: 'v1',
+        },
+        // `st-activa` (arriba) tiene código `ACTIVE`, no `COND-ACTIVE`
+        // (`CODIGO_ACTIVA`): sirve para el resto de los tests, que sólo miran
+        // el texto, pero `diagnosisStateOf` compara por código — necesita el
+        // suyo propio para clasificar de verdad como `ACTIVE`.
+        { conceptId: 'st-activa-cond', code: 'COND-ACTIVE', display: 'Activa', codeSystemVersionId: 'v1' },
+      ],
+      count: CONCEPTOS.count + 3,
+      limit: 200,
+    };
+
+    const ACTIVA_CON_FIN = {
+      id: 'c-act',
+      codeConceptId: 'con-hipertension',
+      verificationStatusConceptId: 'vs-confirmed',
+      clinicalStatusConceptId: 'st-activa-cond',
+      onsetAt: '2026-02-01T00:00:00.000Z',
+      expectedResolutionAt: '2099-01-01T00:00:00.000Z',
+      createdAt: '2026-02-01T00:00:00.000Z',
+    };
+
+    const ACTIVA_CRONICA = {
+      id: 'c-cronica',
+      codeConceptId: 'con-hipertension',
+      verificationStatusConceptId: 'vs-confirmed',
+      clinicalStatusConceptId: 'st-activa-cond',
+      onsetAt: '2025-01-01T00:00:00.000Z',
+      createdAt: '2025-01-01T00:00:00.000Z',
+    };
+
+    function enfermedadesActivas(): readonly Record<string, unknown>[] {
+      return interno<() => readonly Record<string, unknown>[]>('enfermedadesActivas')();
+    }
+
+    it('sin diagnósticos confirmados activos, la tarjeta no tiene filas', () => {
+      responderNombre();
+      responderExpediente();
+
+      expect(enfermedadesActivas()).toEqual([]);
+    });
+
+    it('una activa con fin esperado trae días restantes y progreso', () => {
+      responderNombre();
+      responderExpediente({ resumen: { conditions: [ACTIVA_CON_FIN] }, conceptos: CONCEPTOS_C3 });
+
+      const activas = enfermedadesActivas();
+      expect(activas.length).toBe(1);
+      expect(activas[0]['nombre']).toBe('Hipertensión arterial esencial');
+      expect(activas[0]['cronica']).toBe(false);
+      expect(activas[0]['progreso']).not.toBeNull();
+      expect(
+        (activas[0]['hechos'] as readonly { etiqueta: string }[]).some((h) => h.etiqueta === 'Días restantes'),
+      ).toBe(true);
+    });
+
+    it('una crónica no lleva barra de progreso', () => {
+      responderNombre();
+      responderExpediente({ resumen: { conditions: [ACTIVA_CRONICA] }, conceptos: CONCEPTOS_C3 });
+
+      const activas = enfermedadesActivas();
+      expect(activas.length).toBe(1);
+      expect(activas[0]['cronica']).toBe(true);
+      expect(activas[0]['progreso']).toBeNull();
+    });
+
+    it('el sello usa un tono distinto por estado, no un `info` fijo', () => {
+      responderNombre();
+      responderExpediente({
+        resumen: { conditions: [RESUMEN.conditions[0], ACTIVA_CON_FIN] },
+        conceptos: CONCEPTOS_C3,
+      });
+
+      const filas = interno<() => readonly Record<string, unknown>[]>('diagnosticos')();
+      const enEstudio = filas.find((fila) => fila['id'] === 'c-1')!;
+      const activa = filas.find((fila) => fila['id'] === 'c-act')!;
+      expect(enEstudio['estadoTono']).toBe('warning');
+      expect(activa['estadoTono']).toBe('success');
+    });
+
+    it('sólo un presuntivo se ofrece para confirmar o rechazar', () => {
+      responderNombre();
+      responderExpediente({
+        resumen: { conditions: [RESUMEN.conditions[0], ACTIVA_CON_FIN] },
+        conceptos: CONCEPTOS_C3,
+      });
+
+      const filas = interno<() => readonly Record<string, unknown>[]>('diagnosticos')();
+      const enEstudio = filas.find((fila) => fila['id'] === 'c-1')!;
+      const activa = filas.find((fila) => fila['id'] === 'c-act')!;
+      expect(enEstudio['presuntivo']).toBe(true);
+      expect(activa['presuntivo']).toBe(false);
+    });
   });
 
   /**
