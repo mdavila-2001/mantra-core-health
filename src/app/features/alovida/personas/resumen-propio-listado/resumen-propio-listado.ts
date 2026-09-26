@@ -2,7 +2,7 @@
    Portada de V05-profiles/sesion-autenticada/V05-03-resumen-propio-listado.html en la bóveda. El marcado lo
    genera scripts/port-vistas-alovida.mjs; la lógica va acá, no en el generador. */
 
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 
@@ -10,5 +10,6 @@ import { RouterLink } from '@angular/router';
   selector: 'app-alovida-personas-resumen-propio-listado',
   imports: [RouterLink],
   templateUrl: './resumen-propio-listado.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PersonasResumenPropioListado {}

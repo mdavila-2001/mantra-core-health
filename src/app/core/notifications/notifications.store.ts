@@ -18,7 +18,7 @@ import type {
 import { rutaDeNotificacion } from './notification-routes';
 
 /** Cada cuánto se vuelve a preguntar, en milisegundos. */
-const INTERVALO_MS = 45_000;
+export const INTERVALO_MS = 45_000;
 
 /** Cuántas trae el panel de la campana. El centro pide su propia página. */
 const TOPE_PANEL = 8;
@@ -226,10 +226,22 @@ export class NotificationsStore {
     });
   }
 
-  /** Encadena el próximo tic. Nunca hay dos vivos a la vez. */
+  /**
+   * Encadena el próximo tic. Nunca hay dos vivos a la vez.
+   *
+   * TX-18: con la pestaña oculta (`document.hidden`) el tic se saltea la
+   * llamada de red y sólo se reagenda — preguntarle a la API cada 45 s por una
+   * pantalla que nadie está mirando es gasto puro, y con muchas pestañas
+   * abiertas es gasto multiplicado. La cadena sigue viva a propósito: en
+   * cuanto la pestaña vuelve a estar visible, el próximo tic (o
+   * `refrescarSiVisible`, más abajo) retoma sin que nadie tenga que
+   * reiniciar nada.
+   */
   private agendar(): void {
     this.temporizador = setTimeout(() => {
-      this.refrescar();
+      if (typeof document === 'undefined' || !document.hidden) {
+        this.refrescar();
+      }
       this.agendar();
     }, INTERVALO_MS);
   }

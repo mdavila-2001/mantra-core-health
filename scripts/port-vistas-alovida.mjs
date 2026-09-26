@@ -385,11 +385,12 @@ for (const vista of vistas) {
    Portada de ${relative(VAULT, vista.archivo)} en la bóveda. El marcado lo
    genera scripts/port-vistas-alovida.mjs; la lógica va acá, no en el generador. */
 
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 ${lineasImport}
 @Component({
   selector: '${selector}',${imports}
   templateUrl: './${vista.slug}.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ${nombre} {}
 `,

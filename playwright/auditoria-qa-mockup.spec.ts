@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -14,8 +14,8 @@ if (!fs.existsSync(EVIDENCE_DIR)) {
 }
 
 test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
-  let consoleLogs: Array<{ type: string; text: string }> = [];
-  let networkCalls: Array<{ url: string; status: number; method: string }> = [];
+  let consoleLogs: { type: string; text: string }[] = [];
+  let networkCalls: { url: string; status: number; method: string }[] = [];
 
   test.beforeEach(async ({ page }) => {
     consoleLogs = [];

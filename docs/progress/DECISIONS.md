@@ -107,6 +107,95 @@ decide el front:
 
 ---
 
+## H6 (BR-28/BR-29/BR-30) — organización, clínica extendida y contrato de calidad
+
+- **Alcance recortado a capa de datos + config:** construir la UI completa de los 6 hubs de administración
+  (`DataTable` + los 9 estados M34 + `visual-quality-gate` con capturas) y de las 4 franjas clínicas de BR-29 es
+  más trabajo del que sostiene una sesión que también cubre el backend de dos repos, request-id y regenerar
+  OpenAPI. Se priorizó dejar el contrato de datos de la API ya probado (H6 del lado API) y hacer los cambios de
+  front de menor riesgo y mayor certeza, en vez de maquetar pantallas nuevas sin pasar el gate de calidad visual
+  del repo. **NO CUBIERTO** en esta sesión: pantallas de `delegated-access`, `auth-providers`, `identity-assurance`
+  (cola de credenciales), `health-context`, «Mis derivaciones», «Mi cobertura», `/billing` real y la bandeja de
+  aprobación de organización en `organization-panel.ts`. Los 6 endpoints nuevos de la API (documentados en
+  `mantra-core-health-api/docs/progress/DECISIONS.md`, sección H6) quedan listos para que el próximo carril arme
+  la pantalla sin tener que tocar el backend.
+- **CV-21 (documento de estado):** `ESTADO-FRONTEND.md` decía "nada está simulado" sin aclarar que eso es cierto
+  sólo bajo `production-api`/`real-api` (`mockBackend: false`); la configuración por defecto de `ng serve`
+  (`environment.development.ts`) sigue en `mockBackend: true`. Se corrigió la línea para que declare las dos
+  cosas, sin reescribir el resto del documento (es una foto fechada del 2026-08-01, no una fuente viva).
+- **AG-44 (catálogo de datos):** `processSupported`, `sourceOfTruth` y `producers` ya los acepta
+  `UpsertAnnotationDto` del lado de la API (sin tocar el modelo); sólo faltaban en `AnnotationPatch` (tipo) y en
+  `annotation-dialog.ts` (formulario). Se agregó una página "Procedencia" al formulario paginado existente;
+  `producers` (lista en el contrato) se edita como texto separado por comas y se parte/junta al guardar y al
+  cargar, mismo criterio liviano que el resto de listas cortas de nombres libres de la casa. El residuo 2 de
+  AG-44 (`.puml` de `data_catalog`/`qa_execution` en `mantra-core-health-model`, DDL) es pedido a M1: sin DDL en
+  este repo ni en la API.
+- **CV-25 (geolocalización) — NO CUBIERTO, investigado:** se buscó ocultar `administration/geolocation` del menú
+  de administración manteniendo la ruta activa (D-BR28-3 opción A). Se encontró que
+  `rutasDeSecciones()` (`src/app/app.routes.ts`) genera las rutas del armazón **desde el mismo array** de
+  secciones de `src/app/core/navigation/navigation.map.ts`: sacar la entrada de ese registro borra la ruta
+  entera, no sólo el ítem de menú. El mecanismo existente para ocultar sin borrar
+  (`SECCIONES_FUERA_DEL_ARBOL` en `access-tree.ts`) sólo aplica al panel de "zonas" del dashboard, no al menú
+  lateral real (`navigation.service.ts`). Agregar un `canMatch` + una marca de "fuera del menú de lanzamiento"
+  que conviva con ese acoplamiento es un cambio de arquitectura de navegación, con riesgo real sobre
+  `navigation.service.spec.ts`/`access-tree.spec.ts` (parte de las ~4985 pruebas del repo) que esta sesión no
+  tuvo presupuesto para hacer con el `visual-quality-gate` correspondiente. Se documenta completo para el
+  próximo carril; no se tocó `navigation.map.ts` ni `app.routes.ts`.
+- **TX-14 (request-id, infra):** `deploy/api-proxy.conf` ahora fija `X-Request-Id: $request_id` hacia la API, para
+  que el `genReqId` de la API (ver DECISIONS.md de `mantra-core-health-api`) tenga un id de nginx que respetar
+  detrás de `TRUST_PROXY_HOPS`. No se tocó `deploy/nginx.conf` (`log_format`): el archivo no declara ninguno
+  propio —hereda el del `http {}` que lo incluye, fuera de este repo— y agregar uno nuevo ahí sin ver ese
+  contexto real es inventar una convención de logging que Coolify/el operador ya tiene resuelta en otro lado.
+  Queda anotado para quien administre esa capa.
+
+---
+
+# Decisiones de producto y de diseño — H5 (BR-22, BR-27, BR-26)
+
+Carril M7 · Lenovo Legion · 2026-09-26. Ver el DECISIONS.md de `mantra-core-health-api` para el
+detalle de las decisiones D-Notif-1..4, D-Comunidad-1, D-PharmaLab-1/2 (compartidas entre los dos
+repos). Acá sólo lo que es específico del front.
+
+- **Vocabulario de la campana (D-Notif-1):** `notification-routes.ts` y `notifications.types.ts`
+  mapean `scheduling.appointment_bookings`/`scheduling.bookable_slots` (lo real) además de
+  `APPOINTMENT` (se deja, nadie lo emite hoy pero retirarlo es más diff del necesario) y suman
+  `SERVICE_REQUEST` (MCH-027). El mock (`scheduling.handlers.ts`, `horario-liberado.ts`) usa los
+  mismos literales que la API en vez de inventar `'APPOINTMENT'`.
+- **AG-07 (regla de horario liberado):** **no se tocó** la heurística de 10 minutos del mock.
+  Alinearla a la regla real (sólo lista de espera) queda pendiente — ver D-Notif-3 en el
+  DECISIONS.md de la API.
+- **TX-18 (sondeo sin pestaña visible):** `notifications.store.ts` saltea la llamada de red con
+  `document.hidden` y sigue agendando el próximo tic solo; no se agregó un listener de
+  `visibilitychange` para refrescar al instante al volver — se prefirió el cambio mínimo (menos
+  superficie, un solo `if` en `agendar()`) sobre la mejora de UX de traer el aviso apenas se
+  vuelve a la pestaña.
+- **TX-17 (token del socket):** `chat-socket.service.ts` pasa `auth` de objeto a **función** que
+  lee `session.accessToken()` en cada intento de reconexión, y desconecta solo cuando
+  `session.isAuthenticated()` pasa a `false` (con un `effect()` en el constructor del servicio).
+- **AG-19/AG-20 (F4 del chat):** se adoptó sólo la capa de **socket** — `chat-socket.service.ts`
+  ahora escucha `conversation:typing`, `profile:presence` y `conversation:message:deleted` (el
+  gateway ya los emite) y expone `typing()`/`presencePing()` para emitirlos — y el **dato**
+  (`DirectMessage.deletedAt` en `community.types.ts`/`community.client.ts`). **No** se tocó la UI
+  del hilo: `chat.store.ts` no consume todavía estos tres observables ni pinta «Se eliminó este
+  mensaje», y favoritos/archivados/fijado siguen en `localStorage` (`chat-preferencias.ts`) en vez
+  de `PATCH .../participant`. Se priorizó que el dato llegue correctamente convertido (mismo
+  patrón que ya existía para `sentAt`) sobre construir la UI que lo consume, dado el tiempo
+  disponible del carril.
+- **AG-18/BR-27 («Mis sanciones»):** sólo se agregó el cliente HTTP
+  (`listMyModerationDecisions`) contra la lectura nueva de la API. No hay pantalla «Mis
+  sanciones» con botón «Apelar», ni «Seguir» en la ficha pública, ni «Responder reseña» bajo la
+  reseña del profesional — las tres son trabajo de UI nuevo (componente, ruta,
+  `navigation.map.ts`, estados M34, prueba visual) que no entró en el tiempo de este carril. Ver
+  D-Comunidad-1 en el DECISIONS.md de la API para el porqué de priorizar la corrección de
+  seguridad de `appeal()` sobre estas pantallas.
+- **BR-26 (visitadores):** sin cambios de front en este carril. `pharma_lab.client.ts` sigue sin
+  las 54/76 rutas que el anexo cuenta sin UI (AG-43/CV-17); construirlas contra el mock tiene poco
+  sentido antes de que el modelo exista (D-PharmaLab-2, pedido a M1) porque habría que volver a
+  tocarlas cuando la forma real de la API se confirme contra una base con el schema
+  `pharma_lab`.
+
+---
+
 # Decisiones — H4 front (BR-17)
 
 D-E ya venía decidida por el reparto (Q-02): el camino canónico es

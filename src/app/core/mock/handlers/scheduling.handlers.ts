@@ -163,7 +163,10 @@ function avisarDemoraAlPaciente(
     // El nombre sale del RECURSO, que es donde vive: la reserva guarda el del
     // paciente, no el de quien atiende.
     bodyText: `${recursos.get(reserva.resourceId)?.practitionerName ?? 'Tu profesional'} avisó una demora de ${minutos} minutos en tu cita de las ${hora}.${explicacion}`,
-    destination: { type: 'APPOINTMENT', id: reserva.id },
+    // Mismo literal que emite `RECURSO_CITA` en la API real
+    // (`scheduling/notices/agenda-notices.ts`): el mock honesto no inventa
+    // vocabulario (AG-06).
+    destination: { type: 'scheduling.appointment_bookings', id: reserva.id },
     payloadJson: { bookingId: reserva.id, delayMinutes: minutos },
   });
   return true;
