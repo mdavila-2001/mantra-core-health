@@ -4,14 +4,10 @@ import { Router, type CanActivateFn } from '@angular/router';
 import { LOGIN_ROUTE } from '../http/auth.interceptor';
 import { tracedGuard } from '../observability/routing/guard-tracing';
 import { SessionStore } from './session.store';
+import { TENANT_SELECTION_ROUTE } from './tenant-selection-route';
 
-/**
- * Ruta donde se elige organización cuando el token trae más de una.
- *
- * La pantalla la aporta J9; la constante vive acá porque es el guard quien
- * decide cuándo hace falta.
- */
-export const TENANT_SELECTION_ROUTE = '/auth/organization';
+// La ruta del selector se declara en su propio archivo (la comparte el interceptor).
+export { TENANT_SELECTION_ROUTE };
 
 /**
  * Autorización de ruta — el estado **S1** del contrato del M34.

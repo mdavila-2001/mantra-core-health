@@ -8,7 +8,10 @@ import { Router } from '@angular/router';
 import { catchError, switchMap, throwError } from 'rxjs';
 
 import { isAccessTokenExpired } from '../auth/access-token';
+import { RefreshTokenStorage } from '../auth/refresh-token.storage';
 import { SessionStore } from '../auth/session.store';
+import { TENANT_SELECTION_ROUTE } from '../auth/tenant-selection-route';
+import { readApiError } from './api-error';
 import { TokenRefreshService } from './token-refresh.service';
 
 /** Ruta a la que se manda a quien se quedó sin sesión. */
@@ -89,6 +92,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const session = inject(SessionStore);
   const refresher = inject(TokenRefreshService);
   const router = inject(Router);
+  const storage = inject(RefreshTokenStorage);
 
   /**
    * Refresco **proactivo**: si el token ya venció, se renueva antes de mandar.
@@ -102,15 +106,25 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
    * revocado del lado del servidor, que `exp` no puede anticipar.
    */
   const claims = session.claims();
-  if (claims !== null && isAccessTokenExpired(claims) && session.refreshToken() !== null) {
+  if (claims !== null && isAccessTokenExpired(claims) && session.canRefresh()) {
     return refresher.refresh().pipe(
       switchMap(() => next(withCredentials(request, session))),
-      catchError((refreshError: unknown) => endSession(session, router, refreshError)),
+      catchError((refreshError: unknown) =>
+        failedRefresh(session, storage, router, refreshError),
+      ),
     );
   }
 
   return next(withCredentials(request, session)).pipe(
     catchError((error: unknown) => {
+      // Falta elegir organización: no es un muro, es una puerta. La API lo dice
+      // con `details.reason` sin cambiar el status (403 o 422), y la respuesta es
+      // abrir el selector, no pintar «sin permiso».
+      if (isTenantRequired(error) && session.tenants().length > 1) {
+        void router.navigateByUrl(TENANT_SELECTION_ROUTE);
+        return throwError(() => error);
+      }
+
       if (!isUnauthorized(error)) {
         return throwError(() => error);
       }
@@ -130,19 +144,21 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
       // cuenta—, el 401 disparaba esto, y al visitante lo mandaba al login
       // antes de que pudiera escribir su nombre. El error se propaga igual y
       // cada pantalla decide qué hacer con él.
-      if (session.accessToken() === null && session.refreshToken() === null) {
+      if (session.accessToken() === null && !session.canRefresh()) {
         return throwError(() => error);
       }
 
       // Sin refresh token no hay nada que renovar: se corta acá en vez de
       // gastar una petición que ya sabemos que va a fallar.
-      if (session.refreshToken() === null) {
-        return endSession(session, router, error);
+      if (!session.canRefresh()) {
+        return endSession(session, storage, router, error);
       }
 
       return refresher.refresh().pipe(
         switchMap(() => next(withCredentials(request, session))),
-        catchError((refreshError: unknown) => endSession(session, router, refreshError)),
+        catchError((refreshError: unknown) =>
+          failedRefresh(session, storage, router, refreshError),
+        ),
       );
     }),
   );
@@ -181,12 +197,52 @@ function isUnauthorized(error: unknown): boolean {
   return error instanceof HttpErrorResponse && error.status === 401;
 }
 
-/** Cierra la sesión y manda al login, propagando el error original. */
-function endSession(session: SessionStore, router: Router, error: unknown) {
+/**
+ * Cierra la sesión y manda al login, propagando el error original.
+ *
+ * Limpia también lo guardado: antes sólo se vaciaba el store y el refresh token
+ * quedaba en `localStorage`, así que la siguiente recarga **restauraba la sesión
+ * que acababa de terminar** (TX-10).
+ */
+function endSession(session: SessionStore, storage: RefreshTokenStorage, router: Router, error: unknown) {
   session.clear();
+  storage.clear();
   void router.navigateByUrl(LOGIN_ROUTE);
 
   return throwError(() => error);
+}
+
+/**
+ * Qué hacer cuando el **refresco** falla. Sólo 400/401 dicen que la sesión murió;
+ * un corte de red, un 429 o un 5xx no dicen nada de ella (TX-30): el error
+ * sube, la persona reintenta y la sesión sigue en pie.
+ */
+function failedRefresh(
+  session: SessionStore,
+  storage: RefreshTokenStorage,
+  router: Router,
+  error: unknown,
+) {
+  if (isTransient(error)) {
+    return throwError(() => error);
+  }
+  return endSession(session, storage, router, error);
+}
+
+function isTransient(error: unknown): boolean {
+  return (
+    error instanceof HttpErrorResponse &&
+    (error.status === 0 || error.status === 429 || error.status >= 500)
+  );
+}
+
+/** `details.reason` de la API cuando hay que elegir organización. */
+function isTenantRequired(error: unknown): boolean {
+  if (!(error instanceof HttpErrorResponse) || (error.status !== 403 && error.status !== 422)) {
+    return false;
+  }
+  const reason = readApiError(error)?.details?.['reason'];
+  return reason === 'TENANT_REQUIRED' || reason === 'TENANT_AMBIGUOUS';
 }
 
 /**

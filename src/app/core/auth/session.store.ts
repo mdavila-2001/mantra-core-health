@@ -1,5 +1,6 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 
+import { REFRESH_COOKIE_MODE } from '../data-access/api';
 import { decodeAccessToken, type AccessTokenClaims } from './access-token';
 
 /** Sesión abierta, tal como la necesita el interceptor. */
@@ -25,6 +26,9 @@ export interface SessionTokens {
 export class SessionStore {
   private readonly tokens = signal<SessionTokens | null>(null);
 
+  /** Con la cookie httpOnly el refresh token no pasa por acá: lo guarda el navegador. */
+  private readonly refreshCookie = inject(REFRESH_COOKIE_MODE);
+
   /** Tenant elegido cuando el token trae más de uno. */
   private readonly selectedTenantId = signal<string | null>(null);
 
@@ -45,7 +49,22 @@ export class SessionStore {
 
   readonly isAuthenticated = computed(() => this.claims() !== null);
   readonly userId = computed(() => this.claims()?.sub ?? null);
-  readonly roles = computed<readonly string[]>(() => this.claims()?.roles ?? []);
+  /**
+   * Roles **efectivos** en la organización activa, con la misma regla que
+   * `RolesGuard` de la API (TX-15):
+   *
+   * - `SUPERADMIN` es comodín: conserva todos.
+   * - Un código que **no** figura en `scopedRoles` es global: vale siempre.
+   * - Uno que figura con ámbito sólo vale en los tenants donde se concedió; sin
+   *   organización activa no vale.
+   *
+   * Es lo que decide qué se **muestra** (menús, guards de ruta, botones). Nunca
+   * reemplaza al 403: la autoridad es la API. Con un token sin `scopedRoles` es
+   * exactamente la lista `roles` del token.
+   */
+  readonly roles = computed<readonly string[]>(() =>
+    effectiveRoles(this.claims(), this.activeTenantId()),
+  );
   readonly tenants = computed<readonly string[]>(() => this.claims()?.tenants ?? []);
 
   /** Nombre para mostrar, si el token lo trae. */
@@ -85,22 +104,17 @@ export class SessionStore {
   }
 
   /**
-   * La organización propia del titular («Mi consultorio»), si el token la
-   * declara **y** está entre sus tenants. Un claim que apunte afuera se ignora.
-   */
-  readonly ownTenantId = computed<string | null>(() => {
-    const own = this.claims()?.ownTenantId;
-    return own !== undefined && this.tenants().includes(own) ? own : null;
-  });
-
-  /**
    * Tenant que viaja en `X-Tenant-Id`.
    *
-   * Con uno solo se resuelve solo. Con varios manda la elección de la persona;
-   * si todavía no eligió, se usa **su propia** organización —«Mi consultorio»
-   * de quien atiende—, que no es adivinar: es la suya. Sin organización propia
-   * **no se adivina**: hasta que elija, el encabezado no se manda. Elegir una
-   * clínica por ella podría mostrarle datos de la organización equivocada.
+   * Con uno solo se resuelve solo. Con varios manda la elección de la persona
+   * —o la última que hizo en este dispositivo, que `AuthService` restaura al
+   * abrir la sesión (TX-11)—. Si todavía no eligió, **no se adivina**: el
+   * encabezado no se manda, porque elegir una clínica por ella podría mostrarle
+   * datos de la organización equivocada.
+   *
+   * Antes se usaba un claim `ownTenantId` que sólo firmaba el simulador: la API
+   * no lo emite, así que en producción la médica con dos organizaciones veía el
+   * selector en cada sesión.
    */
   readonly activeTenantId = computed<string | null>(() => {
     const chosen = this.selectedTenantId();
@@ -108,7 +122,7 @@ export class SessionStore {
       return chosen;
     }
     const tenants = this.tenants();
-    return tenants.length === 1 ? (tenants[0] ?? null) : this.ownTenantId();
+    return tenants.length === 1 ? (tenants[0] ?? null) : null;
   });
 
   /**
@@ -133,8 +147,16 @@ export class SessionStore {
 
   /** Si hay que pedirle a la persona que elija organización. */
   readonly needsTenantSelection = computed(
-    () =>
-      this.tenants().length > 1 && this.selectedTenantId() === null && this.ownTenantId() === null,
+    () => this.tenants().length > 1 && this.selectedTenantId() === null,
+  );
+
+  /**
+   * Si hay con qué renovar la sesión: un refresh token guardado o, en modo
+   * cookie, una sesión abierta (el navegador manda la cookie). Sin sesión no hay
+   * nada que renovar, tampoco en modo cookie.
+   */
+  readonly canRefresh = computed(
+    () => this.refreshToken() !== null || (this.refreshCookie && this.accessToken() !== null),
   );
 
   /** Abre la sesión. Descarta la elección de tenant anterior, si la había. */
@@ -167,4 +189,32 @@ export class SessionStore {
 
 function emptyToNull(token: string | undefined): string | null {
   return token === undefined || token === '' ? null : token;
+}
+
+/**
+ * Roles vigentes en la organización activa. Misma regla que `RolesGuard`
+ * (`roles.guard.ts` de la API); ver {@link SessionStore.roles}.
+ */
+export function effectiveRoles(
+  claims: AccessTokenClaims | null,
+  activeTenantId: string | null,
+): readonly string[] {
+  if (claims === null) {
+    return [];
+  }
+  const { roles, scopedRoles } = claims;
+  if (scopedRoles === undefined || roles.includes('SUPERADMIN')) {
+    return roles;
+  }
+
+  return roles.filter((role) => {
+    const tenantsWithRole = Object.entries(scopedRoles)
+      .filter(([, codes]) => codes.includes(role))
+      .map(([tenantId]) => tenantId);
+    // No aparece con ámbito: excepción global, vale siempre.
+    if (tenantsWithRole.length === 0) {
+      return true;
+    }
+    return activeTenantId !== null && tenantsWithRole.includes(activeTenantId);
+  });
 }

@@ -1,9 +1,13 @@
-import { inject, Injectable } from '@angular/core';
-import { catchError, map, of, tap, type Observable } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { DOCUMENT, inject, Injectable } from '@angular/core';
+import { catchError, map, of, retry, tap, throwError, timer, type Observable } from 'rxjs';
 
+import { REFRESH_COOKIE_MODE } from '../data-access/api';
 import { IamClient } from '../data-access/iam/iam.client';
 import type {
   LoginCredentials,
+  MySession,
+  PasswordChanged,
   PatientRegistration,
   RegisteredPatient,
   Session,
@@ -11,7 +15,28 @@ import type {
 import { authMethodOf, loginFailureCategory } from '../observability/business/auth-tracing';
 import { TracingService } from '../observability/tracing/tracing.service';
 import { RefreshTokenStorage } from './refresh-token.storage';
+import { SESSION_CLEANERS } from './session-cleanup';
 import { SessionStore } from './session.store';
+
+/** Cuántas veces se reintenta restaurar la sesión si no hay red, y cada cuánto. */
+const RESTORE_RETRIES = 1;
+const RESTORE_RETRY_MS = 800;
+
+/**
+ * El fallo del refresco es **transitorio** —sin red, límite de tasa, servidor
+ * caído— y por lo tanto no dice nada de la sesión (TX-30).
+ */
+function isTransientFailure(error: unknown): boolean {
+  return (
+    error instanceof HttpErrorResponse &&
+    (error.status === 0 || error.status === 429 || error.status >= 500)
+  );
+}
+
+/** El servidor dijo que el token no sirve: ahí sí se descarta (400/401). */
+function isDefinitiveRejection(error: unknown): boolean {
+  return error instanceof HttpErrorResponse && (error.status === 400 || error.status === 401);
+}
 
 /**
  * Caso de uso de la sesión: abrirla, cerrarla y recuperarla.
@@ -33,6 +58,9 @@ export class AuthService {
   private readonly session = inject(SessionStore);
   private readonly storage = inject(RefreshTokenStorage);
   private readonly tracing = inject(TracingService);
+  private readonly cookieMode = inject(REFRESH_COOKIE_MODE);
+  private readonly cleaners = inject(SESSION_CLEANERS, { optional: true }) ?? [];
+  private readonly document = inject(DOCUMENT);
 
   /** Lo que la interfaz necesita saber de quién está adentro. */
   readonly isAuthenticated = this.session.isAuthenticated;
@@ -143,9 +171,47 @@ export class AuthService {
     this.clearLocal();
   }
 
+  /**
+   * «Cerrar sesión en todos lados» (ID-24): revoca las sesiones de **todos** los
+   * dispositivos, incluida ésta. Si la API contesta, se limpia lo local; si
+   * falla, la sesión sigue abierta y el error sube para que la pantalla lo diga.
+   */
+  logoutEverywhere(): Observable<number> {
+    return this.iam.logoutAll().pipe(
+      tap(() => this.clearLocal()),
+      map((result) => result.revokedSessions),
+    );
+  }
+
+  /** Cambia la contraseña de la propia cuenta; la API cierra las otras sesiones. */
+  changePassword(currentPassword: string, newPassword: string): Observable<PasswordChanged> {
+    return this.iam.changePassword(currentPassword, newPassword);
+  }
+
+  /** Las sesiones abiertas de la propia cuenta. */
+  mySessions(): Observable<readonly MySession[]> {
+    return this.iam.listMySessions();
+  }
+
+  /** Cierra otra de las sesiones propias. */
+  revokeSession(sessionId: string): Observable<{ readonly revoked: boolean }> {
+    return this.iam.revokeMySession(sessionId);
+  }
+
+  /**
+   * Limpia lo local: la sesión en memoria, lo que se guardó de ella y todo lo
+   * sensible que otras piezas dejaron en el navegador (TX-31).
+   */
   private clearLocal(): void {
     this.session.clear();
     this.storage.clear();
+    for (const cleaner of this.cleaners) {
+      try {
+        cleaner();
+      } catch {
+        // Un limpiador roto no puede impedir cerrar sesión ni frenar a los demás.
+      }
+    }
   }
 
   /**
@@ -164,7 +230,7 @@ export class AuthService {
     // identificador que no esté en el token, y persistir uno rechazado dejaría
     // basura que la próxima sesión tendría que volver a descartar.
     if (this.session.activeTenantId() === tenantId) {
-      this.storage.writeSelectedTenant(tenantId);
+      this.storage.writeSelectedTenant(tenantId, this.session.userId());
     }
   }
 
@@ -183,53 +249,84 @@ export class AuthService {
 
   /**
    * Recupera la sesión al abrir la aplicación, canjeando el refresh token
-   * guardado por un par nuevo.
+   * guardado —o, en modo cookie, la cookie `httpOnly`— por un par nuevo.
    *
-   * Devuelve `false` sin pedir nada cuando no hay token guardado —que es el caso
-   * normal de quien entra por primera vez— y también cuando el canje falla: un
-   * refresh token vencido o revocado no es un error que mostrar, es simplemente
-   * no haber iniciado sesión.
+   * Devuelve `false` sin pedir nada cuando no hay con qué recuperarla —que es el
+   * caso normal de quien entra por primera vez—.
+   *
+   * **Sólo se descarta lo guardado si el servidor lo rechazó (400/401)** (TX-30).
+   * Un corte de red al arrancar, un 429 o un 5xx no dicen nada del token: se
+   * reintenta una vez, se conserva la sesión guardada y, si volvió la red, se
+   * restaura sola en cuanto el navegador avisa `online`. Antes cualquier error
+   * borraba el token y una clínica con la red caída al abrir quedaba deslogueada.
    */
   restoreSession(): Observable<boolean> {
-    const stored = this.storage.read();
-    if (stored === null) {
+    const stored = this.cookieMode ? null : this.storage.read();
+    const hayConQueRestaurar = this.cookieMode ? this.storage.hasSessionHint() : stored !== null;
+    if (!hayConQueRestaurar) {
       return of(false);
     }
 
     return this.iam.refresh(stored).pipe(
+      retry({
+        count: RESTORE_RETRIES,
+        delay: (error: unknown) =>
+          isTransientFailure(error) ? timer(RESTORE_RETRY_MS) : throwError(() => error),
+      }),
       tap((session) => this.reopen(session)),
       map(() => true),
-      catchError(() => {
-        // El token guardado ya no sirve: se descarta para no reintentar en cada
-        // arranque contra el límite de la API.
-        this.storage.clear();
+      catchError((error: unknown) => {
+        if (isDefinitiveRejection(error)) {
+          // El token guardado ya no sirve: se descarta para no reintentar en
+          // cada arranque contra el límite de la API.
+          this.storage.clear();
+        } else if (isTransientFailure(error)) {
+          this.restoreWhenOnline();
+        }
         return of(false);
       }),
     );
   }
 
+  /**
+   * Reintenta restaurar **una vez** cuando el navegador recupera la red.
+   *
+   * Sólo se llama tras un fallo transitorio en el arranque, con la sesión
+   * guardada intacta. Si no hay ventana (servidor) no hace nada.
+   */
+  private restoreWhenOnline(): void {
+    const view = this.document.defaultView;
+    if (view === null || view === undefined) {
+      return;
+    }
+    view.addEventListener('online', () => this.restoreSession().subscribe(), { once: true });
+  }
+
   private open(session: Session): void {
     this.session.start(session);
-    this.storage.write(session.refreshToken);
+    if (this.cookieMode) {
+      // El refresh token no llega al cuerpo ni se guarda: sólo la marca.
+      this.storage.writeSessionHint();
+    } else {
+      this.storage.write(session.refreshToken);
+    }
+    this.applyRememberedTenant();
   }
 
   /**
-   * Abre la sesión recuperada y le devuelve su organización.
-   *
-   * Se separa de {@link open} a propósito: al **iniciar sesión** la elección
-   * anterior no vale —puede ser de otra persona en el mismo dispositivo— y por
-   * eso `SessionStore.start` la descarta. Al **recuperar** la sesión sí vale:
-   * es la misma persona volviendo.
-   *
-   * `selectTenant` valida contra el token, así que una organización que ya no
-   * le corresponda se descarta sola y se vuelve a preguntar.
+   * Devuelve la última organización que eligió **esta** persona en este
+   * dispositivo, si sigue entre las del token (TX-11). `selectTenant` valida
+   * contra el token, así que una que ya no le corresponda se descarta sola.
    */
-  private reopen(session: Session): void {
-    this.open(session);
-
-    const guardada = this.storage.readSelectedTenant();
+  private applyRememberedTenant(): void {
+    const guardada = this.storage.readSelectedTenant(this.session.userId());
     if (guardada !== null) {
       this.session.selectTenant(guardada);
     }
+  }
+
+  /** Abre la sesión recuperada; la organización la restaura {@link open}. */
+  private reopen(session: Session): void {
+    this.open(session);
   }
 }

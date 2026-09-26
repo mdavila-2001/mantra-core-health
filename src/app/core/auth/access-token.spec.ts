@@ -145,9 +145,27 @@ describe('decodeAccessToken', () => {
     expect(claims?.hpid).toBeUndefined();
   });
 
-  it('lee `ownTenantId` y descarta uno vacío', () => {
-    expect(decodeAccessToken(makeToken({ sub: 'u-1', ownTenantId: 't-9' }))?.ownTenantId).toBe('t-9');
-    expect(decodeAccessToken(makeToken({ sub: 'u-1', ownTenantId: '' }))?.ownTenantId).toBeUndefined();
+  it('ya no lee `ownTenantId`: la API no lo firma (TX-11)', () => {
+    const claims = decodeAccessToken(makeToken({ sub: 'u-1', ownTenantId: 't-9' }));
+
+    expect(claims).not.toBeNull();
+    expect(claims).not.toHaveProperty('ownTenantId');
+  });
+
+  it('lee `scopedRoles` (tenant -> códigos) y descarta lo que no es lista', () => {
+    const claims = decodeAccessToken(
+      makeToken({
+        sub: 'u-1',
+        scopedRoles: { 't-1': ['RECEPTIONIST'], 't-2': 'no-es-lista', 't-3': [] },
+      }),
+    );
+
+    expect(claims?.scopedRoles).toEqual({ 't-1': ['RECEPTIONIST'] });
+  });
+
+  it('un `scopedRoles` que no es un mapa, o queda vacío, es ausente', () => {
+    expect(decodeAccessToken(makeToken({ sub: 'u-1', scopedRoles: ['x'] }))?.scopedRoles).toBeUndefined();
+    expect(decodeAccessToken(makeToken({ sub: 'u-1', scopedRoles: {} }))?.scopedRoles).toBeUndefined();
   });
 
   it('descarta un `tenantNames` que no sea un mapa de textos', () => {

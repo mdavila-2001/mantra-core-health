@@ -68,14 +68,14 @@ export interface AccessTokenClaims {
    */
   readonly hpid?: string;
   /**
-   * La organización propia del titular —«Mi consultorio» de quien atiende—, si
-   * la tiene.
+   * Roles con ámbito de organización, indexados por el tenant en el que se
+   * concedieron (`scopedRoles` de `jwt-payload.interface.ts` de la API).
    *
-   * Es la que se activa por defecto cuando el token trae varias: no es adivinar
-   * en nombre de la persona, es su propio consultorio. Una clínica ajena sigue
-   * exigiendo que la elija.
+   * Es dato para **mostrar**: la regla es la de `RolesGuard` —un código que
+   * aparece acá sólo vale en esos tenants; uno que no aparece es global— y la
+   * autoridad sigue siendo la API. Ver `SessionStore.roles`.
    */
-  readonly ownTenantId?: string;
+  readonly scopedRoles?: Readonly<Record<string, readonly string[]>>;
   /** Expiración en segundos desde epoch, si el token la declara. */
   readonly exp?: number;
 }
@@ -165,7 +165,6 @@ function toClaims(payload: unknown): AccessTokenClaims | null {
   const name = source['name'];
   const pid = source['pid'];
   const hpid = source['hpid'];
-  const ownTenantId = source['ownTenantId'];
   const exp = source['exp'];
 
   return {
@@ -176,10 +175,10 @@ function toClaims(payload: unknown): AccessTokenClaims | null {
     ...(typeof name === 'string' ? { name } : {}),
     ...(typeof pid === 'string' && pid !== '' ? { pid } : {}),
     ...(typeof hpid === 'string' && hpid !== '' ? { hpid } : {}),
-    ...(typeof ownTenantId === 'string' && ownTenantId !== '' ? { ownTenantId } : {}),
     ...(typeof exp === 'number' ? { exp } : {}),
     ...(toStringMapClaim('tenantNames', source['tenantNames']) ?? {}),
     ...(toStringMapClaim('tenantTypes', source['tenantTypes']) ?? {}),
+    ...(toScopedRolesClaim(source['scopedRoles']) ?? {}),
   };
 }
 
@@ -203,6 +202,26 @@ function toStringMapClaim<K extends string>(
   );
 
   return entries.length === 0 ? null : ({ [key]: Object.fromEntries(entries) } as Record<K, Record<string, string>>);
+}
+
+/**
+ * Lee `scopedRoles`: un mapa de tenant a lista de códigos. Se descartan las
+ * entradas que no son lista y las listas vacías; sin entradas, el claim es
+ * ausente (todos los roles son globales).
+ */
+function toScopedRolesClaim(
+  value: unknown,
+): { scopedRoles: Record<string, readonly string[]> } | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return null;
+  }
+
+  const entries = Object.entries(value as Record<string, unknown>).flatMap(([tenantId, codes]) => {
+    const list = toStringArray(codes);
+    return list.length === 0 ? [] : [[tenantId, list] as const];
+  });
+
+  return entries.length === 0 ? null : { scopedRoles: Object.fromEntries(entries) };
 }
 
 /** Un claim de lista ausente equivale a lista vacía, no a error. */

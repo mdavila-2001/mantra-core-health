@@ -38,6 +38,23 @@ export interface Session {
   readonly expiresAt: Date;
 }
 
+/** Una sesión abierta de la propia cuenta (`GET /iam/me/sessions`). */
+export interface MySession {
+  readonly id: string;
+  readonly createdAt: Date;
+  readonly expiresAt: Date;
+  /** Dirección IP con la que se abrió, si la API la trae. */
+  readonly ip?: string;
+  /** Si es la sesión desde la que se mira. */
+  readonly current: boolean;
+}
+
+/** Resultado de `POST /iam/auth/change-password`. */
+export interface PasswordChanged {
+  /** Cuántas de las otras sesiones se cerraron. */
+  readonly revokedSessions: number;
+}
+
 /** Alta de un paciente por sí mismo. El identificador de acceso es el documento. */
 export interface PatientRegistration {
   readonly nationalId: string;
