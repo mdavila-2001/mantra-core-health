@@ -187,6 +187,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/dependents/dependents').then((m) => m.Dependents),
   'my-account/security': () =>
     import('./features/account/security/security').then((m) => m.AccountSecurity),
+  'my-account/privacy': () =>
+    import('./features/account/privacy/privacy').then((m) => m.AccountPrivacy),
+  'my-account/clinical-access': () =>
+    import('./features/account/clinical-access/clinical-access').then(
+      (m) => m.AccountClinicalAccess,
+    ),
   'my-account/appointments': () =>
     import('./features/account/appointments/appointments').then((m) => m.Appointments),
   'my-account/medical-record': () =>
