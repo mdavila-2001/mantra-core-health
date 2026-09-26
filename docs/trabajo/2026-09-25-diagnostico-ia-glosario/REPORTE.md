@@ -1,11 +1,11 @@
 # Reporte — D1: corpus masivo del glosario (front)
 
-> **AVANCE: 9 / 11 microtareas — 81,8 %.** Faltan H1.S3.M2 (build con presupuesto) y H1.S3.M3
-> (capturas de `/glossary` con doble revisión): las dos van en una corrida aparte con la máquina
-> libre, por decisión del usuario del 2026-09-25. Peldaño: `TESTED` · visual `UNKNOWN`.
-> D3 y D4 quedaron para otra tanda (misma decisión). D2 vive en el AI service: PR #2.
+> **AVANCE: 10 / 11 microtareas — 90,9 %.** Falta sólo H1.S3.M3 (capturas de `/glossary` con doble
+> revisión), que exige navegador. H1.S3.M2 (build) se cerró el 2026-09-26 con la máquina libre.
+> Peldaño: `TESTED` · visual `UNKNOWN`. D3 y D4 quedaron para otra tanda (decisión del usuario del
+> 2026-09-25). D2 vive en el AI service: PR #2, mergeado.
 
-- Rama: `justin/diagnostico-ia-glosario-2026-09-25` desde `origin/mockup` @ `381ce773` · commit `dec04cff` · PR [#704](https://github.com/mdavila-2001/mantra-core-health/pull/704) a `mockup` (`MERGEABLE`; `UNSTABLE` sólo por checks en cola: el CI está caído y ninguno falló).
+- Rama: `justin/diagnostico-ia-glosario-2026-09-25` desde `origin/mockup` @ `381ce773` · commit `dec04cff` · PR [#704](https://github.com/mdavila-2001/mantra-core-health/pull/704) a `mockup`, **mergeado el 2026-09-26 01:16 UTC** (`2862369d`; los checks nunca corrieron: el CI está caído).
 - Plan con estados por microtarea: [`PLAN.md`](PLAN.md). Plan del paquete: `AlovidaPromptManager/docs/trabajo/2026-09-25-diagnostico-ia-glosario/PLAN.md`.
 
 ## Qué se entregó
@@ -32,7 +32,7 @@ Tres defectos encontrados y corregidos antes del PR: el generador escribía mal 
 
 ## Lo que NO cubre, y hay que saberlo
 
-- **Bundle:** `glosario.generated.ts` pasa de 58 KB a ~1,08 MB. El simulador se carga con `import()` diferido en `mock-backend.interceptor.ts`, así que probablemente no toca el bundle inicial, **pero no se midió**: se mide con `corepack yarn build` en la corrida aparte. Si excede, la capa ICD pasa a carga diferida en el handler.
+- **Bundle: medido el 2026-09-26.** `corepack yarn build` → exit 0, **bundle inicial 1,29 MB**, el mismo valor que `mockup` antes de esta rama: el fixture de ~1,08 MB no entra al bundle inicial porque el simulador se carga con `import()` diferido en `mock-backend.interceptor.ts`. El aviso «bundle initial exceeded maximum budget (620 kB)» es el umbral de advertencia y ya existía; el umbral de error (1,3 MB) no se toca. No hizo falta diferir la capa ICD.
 - **Pantalla:** ni capturas ni doble revisión de `/glossary`. La lista y la ficha de un término en inglés se afirman por spec, no por navegador.
 - **Revisión médica:** definiciones, síntomas por enfermedad y pruebas relacionadas están `pending-medical-review`; no entran a producción sin revisión.
 - **Archivos sobrantes en disco, fuera del commit:** `data/glossary/enfermedades-atencion-primaria.part2.ndjson` y `.part3.ndjson`, ya fusionados en el archivo principal. Borrarlos a mano.
