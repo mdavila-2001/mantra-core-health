@@ -32,7 +32,11 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([{ path: 'administration/pharmacy-orders/:orderId', component: InboxOrder }]),
-        { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez' } },
+        // Ver el mismo comentario en `../pharmacy-inbox.spec.ts`: sin
+        // `userId`, el `effect()` de `CartStore` (construido igual por
+        // `PharmacyOrdersClient`, aunque esta pantalla no tenga carrito)
+        // revienta en un tick asíncrono y envenena al resto del worker.
+        { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez', userId: () => null } },
         {
           provide: DialogService,
           useValue: { confirm: vi.fn().mockResolvedValue(true), confirmWithReason },

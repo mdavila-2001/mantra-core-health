@@ -84,6 +84,21 @@ module.exports = tseslint.config(
     },
   },
 
+  /* OnPush es una decisión de rendimiento de producción: le importa a un
+     componente que un usuario real va a montar, no a los dobles ad-hoc que
+     una prueba declara para ejercer un `ControlValueAccessor` o un host
+     mínimo. `fixture.detectChanges()` los dibuja explícito de todos modos,
+     así que la estrategia no cambia nada de lo que la prueba observa —y
+     forzarla ahí no es "todo componente nuevo", es ruido sobre un artefacto
+     de prueba. Mismo criterio que ya usan los overrides de `atoms/` y
+     `molecules/` de más abajo para otras reglas. */
+  {
+    files: ['**/*.spec.ts', 'playwright/**/*.ts'],
+    rules: {
+      '@angular-eslint/prefer-on-push-component-change-detection': 'off',
+    },
+  },
+
   /* ---- fronteras de la arquitectura ------------------------------------- */
   {
     files: ['src/app/shared/**/*.ts', 'src/app/core/**/*.ts'],
