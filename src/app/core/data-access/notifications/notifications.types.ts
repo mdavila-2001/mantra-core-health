@@ -33,7 +33,14 @@ export type NotificationDestinationType =
   | 'APPOINTMENT'
   | 'POST'
   | 'DIAGNOSTIC_REPORT'
-  | 'DEPENDENT_LINK_REQUEST';
+  | 'DEPENDENT_LINK_REQUEST'
+  | 'PHARMACY_ORDER'
+  | 'CARE_RELATIONSHIP_REQUEST'
+  /** MCH-027 (AG-06): una orden de estudios que el médico dejó al paciente. */
+  | 'SERVICE_REQUEST'
+  /** AG-06/AG-07: lo que la agenda emite de verdad (ver `notification-routes.ts`). */
+  | 'scheduling.appointment_bookings'
+  | 'scheduling.bookable_slots';
 
 /**
  * A dónde lleva una notificación.

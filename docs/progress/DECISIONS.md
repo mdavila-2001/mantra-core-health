@@ -147,3 +147,49 @@ decide el front:
   propio —hereda el del `http {}` que lo incluye, fuera de este repo— y agregar uno nuevo ahí sin ver ese
   contexto real es inventar una convención de logging que Coolify/el operador ya tiene resuelta en otro lado.
   Queda anotado para quien administre esa capa.
+
+---
+
+# Decisiones de producto y de diseño — H5 (BR-22, BR-27, BR-26)
+
+Carril M7 · Lenovo Legion · 2026-09-26. Ver el DECISIONS.md de `mantra-core-health-api` para el
+detalle de las decisiones D-Notif-1..4, D-Comunidad-1, D-PharmaLab-1/2 (compartidas entre los dos
+repos). Acá sólo lo que es específico del front.
+
+- **Vocabulario de la campana (D-Notif-1):** `notification-routes.ts` y `notifications.types.ts`
+  mapean `scheduling.appointment_bookings`/`scheduling.bookable_slots` (lo real) además de
+  `APPOINTMENT` (se deja, nadie lo emite hoy pero retirarlo es más diff del necesario) y suman
+  `SERVICE_REQUEST` (MCH-027). El mock (`scheduling.handlers.ts`, `horario-liberado.ts`) usa los
+  mismos literales que la API en vez de inventar `'APPOINTMENT'`.
+- **AG-07 (regla de horario liberado):** **no se tocó** la heurística de 10 minutos del mock.
+  Alinearla a la regla real (sólo lista de espera) queda pendiente — ver D-Notif-3 en el
+  DECISIONS.md de la API.
+- **TX-18 (sondeo sin pestaña visible):** `notifications.store.ts` saltea la llamada de red con
+  `document.hidden` y sigue agendando el próximo tic solo; no se agregó un listener de
+  `visibilitychange` para refrescar al instante al volver — se prefirió el cambio mínimo (menos
+  superficie, un solo `if` en `agendar()`) sobre la mejora de UX de traer el aviso apenas se
+  vuelve a la pestaña.
+- **TX-17 (token del socket):** `chat-socket.service.ts` pasa `auth` de objeto a **función** que
+  lee `session.accessToken()` en cada intento de reconexión, y desconecta solo cuando
+  `session.isAuthenticated()` pasa a `false` (con un `effect()` en el constructor del servicio).
+- **AG-19/AG-20 (F4 del chat):** se adoptó sólo la capa de **socket** — `chat-socket.service.ts`
+  ahora escucha `conversation:typing`, `profile:presence` y `conversation:message:deleted` (el
+  gateway ya los emite) y expone `typing()`/`presencePing()` para emitirlos — y el **dato**
+  (`DirectMessage.deletedAt` en `community.types.ts`/`community.client.ts`). **No** se tocó la UI
+  del hilo: `chat.store.ts` no consume todavía estos tres observables ni pinta «Se eliminó este
+  mensaje», y favoritos/archivados/fijado siguen en `localStorage` (`chat-preferencias.ts`) en vez
+  de `PATCH .../participant`. Se priorizó que el dato llegue correctamente convertido (mismo
+  patrón que ya existía para `sentAt`) sobre construir la UI que lo consume, dado el tiempo
+  disponible del carril.
+- **AG-18/BR-27 («Mis sanciones»):** sólo se agregó el cliente HTTP
+  (`listMyModerationDecisions`) contra la lectura nueva de la API. No hay pantalla «Mis
+  sanciones» con botón «Apelar», ni «Seguir» en la ficha pública, ni «Responder reseña» bajo la
+  reseña del profesional — las tres son trabajo de UI nuevo (componente, ruta,
+  `navigation.map.ts`, estados M34, prueba visual) que no entró en el tiempo de este carril. Ver
+  D-Comunidad-1 en el DECISIONS.md de la API para el porqué de priorizar la corrección de
+  seguridad de `appeal()` sobre estas pantallas.
+- **BR-26 (visitadores):** sin cambios de front en este carril. `pharma_lab.client.ts` sigue sin
+  las 54/76 rutas que el anexo cuenta sin UI (AG-43/CV-17); construirlas contra el mock tiene poco
+  sentido antes de que el modelo exista (D-PharmaLab-2, pedido a M1) porque habría que volver a
+  tocarlas cuando la forma real de la API se confirme contra una base con el schema
+  `pharma_lab`.
