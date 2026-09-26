@@ -2417,14 +2417,18 @@ export class RegisterPatient {
       ...(nombresAdicionales === '' ? {} : { middleName: nombresAdicionales }),
       ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
       password: raw.password,
-      // Ausente si no se completó: `forbidNonWhitelisted` rechaza lo que sobra,
-      // y una cadena vacía no es lo mismo que la ausencia del campo.
-      ...(correo === '' ? {} : { email: correo }),
+      // Los cinco campos que la API exige (correo, nacimiento, teléfono, sexo al
+      // nacer y departamento emisor) van siempre y el tipo lo impone: el control
+      // los valida, así que `submit()` no llega acá sin ellos. El vacío es la
+      // red por si alguien llamara a este método sin esa comprobación: hace que
+      // la API conteste 400 nombrando el campo, en vez de un cuerpo al que le
+      // falta una propiedad obligatoria (mismo criterio que el municipio).
+      email: correo,
       // El departamento emisor viaja atado al documento: sin CI no hay
       // identificador al que atarlo, y el backend lo escribe en la fila del
       // identificador, no en la persona. Acá el documento es obligatorio, así
       // que la única condición real es haber elegido departamento.
-      ...(departamento === null ? {} : { issuerAdministrativeAreaConceptId: departamento }),
+      issuerAdministrativeAreaConceptId: departamento ?? '',
       // Sólo el municipio: el departamento de residencia lo deriva el backend
       // del código del INE, para que el par no pueda llegar incoherente.
       //
@@ -2435,9 +2439,10 @@ export class RegisterPatient {
       // conteste 400 nombrando el campo, en vez de un cuerpo al que le falta
       // una propiedad obligatoria.
       residenceMunicipalityConceptId: municipio ?? '',
-      ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
-      ...(telefono === '' ? {} : { phone: telefono }),
-      ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
+      birthDate: fechaNacimiento === null ? '' : fechaIso(fechaNacimiento),
+      phone: telefono,
+      // `''` no es un código válido: la API responde 400 nombrando el campo.
+      sexAtBirth: sexoAlNacer ?? ('' as BirthSexCode),
       // Con «Otra ocupación» viaja el oficio escrito y NO el concepto: el
       // backend descarta el texto libre en cuanto recibe un concepto
       // (`occupationFreeText: dto.occupationConceptId ? undefined : …`), y de
@@ -2453,7 +2458,10 @@ export class RegisterPatient {
       // Trabajo: la empresa **y** dónde queda. Los cuatro campos de ubicación
       // vuelven al alta por AC-03-1; el DTO nunca dejó de aceptarlos. Ver el
       // JSDoc de `workMunicipalityConceptId` en el `FormGroup`.
-      ...(empresa === null ? {} : { workEmployerConceptId: empresa }),
+      // Con «Otra empresa» viaja el texto escrito y NO el concepto, igual que la
+      // ocupación: el backend descarta el texto libre en cuanto recibe un
+      // concepto, y «Otra» no nombra a ninguna empresa (ID-11).
+      ...(empresa === null || this.empresaEsOtra() ? {} : { workEmployerConceptId: empresa }),
       ...(municipioTrabajo === null ? {} : { workMunicipalityConceptId: municipioTrabajo }),
       ...(calleTrabajo === '' ? {} : { workAddressLines: calleTrabajo }),
       ...(gpsTrabajo === null

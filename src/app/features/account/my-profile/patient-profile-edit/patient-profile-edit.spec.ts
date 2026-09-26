@@ -996,4 +996,29 @@ describe('PatientProfileEdit', () => {
     expect(interno<() => boolean>('puedeGuardar')()).toBe(false);
     http.expectNone('/profiles/patients/me');
   });
+
+  /* ---- el departamento que emitió el documento (ID-22) -------------------- */
+
+  it('el departamento emisor se corrige y viaja sólo si cambió; el número nunca', () => {
+    montarYCargar({ nationalId: '5414404', issuerAdministrativeAreaConceptId: 'dep-scz' });
+
+    señal<string | null>('departamentoEmisor').set('dep-lpz');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ issuerAdministrativeAreaConceptId: 'dep-lpz' });
+    expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain('nationalId');
+    req.flush({ ...PERFIL_BASE, issuerAdministrativeAreaConceptId: 'dep-lpz' });
+  });
+
+  it('sin tocar el departamento emisor, no viaja', () => {
+    montarYCargar({ issuerAdministrativeAreaConceptId: 'dep-scz' });
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ name: 'Ana María' });
+    req.flush({ ...PERFIL_BASE, name: 'Ana María' });
+  });
 });

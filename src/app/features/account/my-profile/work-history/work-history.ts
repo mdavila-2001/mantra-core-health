@@ -712,6 +712,11 @@ export class WorkHistory implements OnInit {
     const hasta = this.hasta();
     const cargo = this.cargo().trim();
     const sede = this.sede();
+    // El id del establecimiento elegido del padrón viaja con el nombre: sin él
+    // el vínculo queda como texto y la API no puede protegerlo del duplicado
+    // ni asociarlo al padrón (ID-16). Escrito a mano, no hay concepto.
+    const establecimientoElegido =
+      this.modoDeInstitucion() === 'padron' ? this.establecimiento() : null;
 
     this.registrando.set(true);
     this.registro.set(loading());
@@ -722,6 +727,9 @@ export class WorkHistory implements OnInit {
         startDate: soloFecha(desde),
         // Los opcionales sin valor se **omiten**: el backend valida con
         // `forbidNonWhitelisted`, y una clave vacía no es «sin especificar».
+        ...(establecimientoElegido === null
+          ? {}
+          : { healthFacilityConceptId: establecimientoElegido.value }),
         ...(cargo === '' ? {} : { roleTitle: cargo }),
         ...(hasta === null ? {} : { endDate: soloFecha(hasta) }),
         ...(sede === null || sede === '' ? {} : { practiceSiteId: sede }),
@@ -1063,7 +1071,11 @@ export class WorkHistory implements OnInit {
     this.vinculandoLugar.set(true);
     this.registroDeSede.set(loading());
     this.profiles
-      .addAffiliation({ organizationName: lugar.label, startDate: soloFecha(new Date()) })
+      .addAffiliation({
+        organizationName: lugar.label,
+        healthFacilityConceptId: lugar.value,
+        startDate: soloFecha(new Date()),
+      })
       .subscribe({
         next: () => {
           this.vinculandoLugar.set(false);
