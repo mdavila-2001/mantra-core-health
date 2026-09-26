@@ -1,12 +1,13 @@
 # Reporte — M5 · Build real, mock honesto y enrutado (2026-09-26)
 
-> **AVANCE: 14 / 15 microtareas — 93,3 %.**
+> **AVANCE: 15 / 15 microtareas — 100 %.**
 
 - Fecha: 2026-09-26 · Plan: [PLAN.md](./PLAN.md) · Rama: `justin/test-m5-build-real`
   (worktree `wt-m5-build-real`, sobre `origin/test` @ `ec7037f7`)
-- Peldaño de evidencia alcanzado: **`VERIFIED`** en H1 y H2 (runtime real observado con
-  Playwright + servidor levantado; ver evidencia). H3 en `RUNS`/`TESTED` (los verificadores
-  estáticos pasan; falta el runtime contra nginx real).
+- Peldaño de evidencia alcanzado: **`VERIFIED`** en H1, H2 y H3 (runtime real observado con
+  Playwright + servidor levantado, y con nginx + el stack `mantra-redesa` real levantados en
+  esta misma máquina — Docker Desktop no estaba corriendo al escribir el reporte original; una
+  vez arriba, se pudo cerrar H3.S1.M2).
 - Encargo fuente: `AlovidaPromptManager/repartos/2026-09-26/PromptMaquinas/M5-LaptopJustin/
   Preproduccion.FrontSalidaDelSimulador/BuildRealMockHonestoYEnrutado.md`
 
@@ -26,30 +27,54 @@
 | H2.S1.M3 | Roles de la médica demo → sólo `PRACTITIONER` | ídem | PASS |
 | H2.S1.M4 | `check-mock-vs-client.mjs`: 515 operaciones · 550 manejadores · 6 sin manejador, las 6 conocidas | `node scripts/check-mock-vs-client.mjs` (roto a propósito 2 veces y restaurado) | PASS |
 | H3.S1.M1 | `/loyalty`, `/patients/me/reviews`, `/ai` en las tres declaraciones | `node scripts/check-api-prefixes.mjs && node scripts/check-client-prefixes.mjs` | PASS — 66 y 65 prefijos |
+| H3.S1.M2 | Comprobar cada prefijo contra el artefacto levantado | nginx real (`nginx:1.27-alpine`) + el stack `mantra-redesa` (Postgres/Mongo/Redis/OpenSearch/MinIO/API) + `server.mjs` de `production-api`, los tres arriba a la vez | PASS — ver detalle abajo. **Encontró y corrigió un bug real** que los verificadores estáticos no ven |
 | H3.S2.M1 | D-C registrada en `docs/progress/DECISIONS.md` | lectura del archivo | PASS |
 | H3.S2.M2 | IP `173.249.39.237` fuera de `proxy.conf.mjs` (sin default) | `git grep -n '173.249.39.237'` | PASS — sólo quedan 4 menciones históricas/de comentario, ver «No cubierto» |
 
-## A medias
+### H3.S1.M2, en detalle
 
-### H3.S1.M2 — Comprobar cada prefijo contra el artefacto levantado
-- **Qué anda:** `check-api-prefixes.mjs` y `check-client-prefixes.mjs` pasan; `deploy/api-locations.conf`
-  tiene los 3 `location` nuevos con la sintaxis de nginx que usa el resto del archivo (mismo patrón
-  `^~`, mismo `include api-proxy.conf` salvo `/ai/`, que responde 503 JSON directo).
-- **Qué no anda:** no se ejercitó contra un nginx real — no se levantó `deploy/docker-compose*.yml`
-  ni la API (`mantra-redesa`) en esta máquina: harían falta ~15 GB adicionales de imágenes Docker
-  y esta máquina tiene 15 GB libres en disco, la mitad de lo que el propio reparto reserva para
-  M1 (que sí tiene el stack). Por diseño de reparto, M1 es la única con Docker.
-- **Qué falta exactamente:** `docker compose -f deploy/docker-compose.prod.yml up`, después
-  `curl -si http://localhost/loyalty/me`, `curl -si -X POST http://localhost/patients/me/reviews`
-  y `curl -si -X POST http://localhost/ai/v1/triage/analyze` — los tres tienen que dar JSON
-  (o el 503 explícito en `/ai`), nunca el `index.html`.
-- **Dónde quedó:** `deploy/api-locations.conf`, compila y typechecka; no se tocó nada más de
-  `deploy/`.
+Docker Desktop no estaba corriendo cuando se escribió la primera versión de este reporte; al
+arrancarlo, el stack `mantra-redesa` completo subió solo (tenía política de reinicio). Con eso
+arriba, se armó la topología real: `server.mjs` de `production-api` local (`:4126`) + un
+contenedor `nginx:1.27-alpine` con `deploy/nginx.conf` + `api-locations.conf` + `api-proxy.conf`
+montados (los `upstream` se apuntaron a `host.docker.internal`, que en Docker Desktop resuelve al
+host — la única diferencia con el despliegue real, donde todo comparte una red de Docker) + la API
+real en `:3000`.
+
+```text
+$ curl -si -H "Host: localhost" http://127.0.0.1:8099/terminology/value-sets       # control
+HTTP/1.1 401 Unauthorized · application/json                                       # OK, llega a la API
+
+$ curl -si -H "Host: localhost" http://127.0.0.1:8099/loyalty/me
+HTTP/1.1 404 Not Found · application/json
+{"code":"NOT_FOUND","message":"Cannot GET /loyalty/me", ...}                       # JSON real de la API
+
+$ curl -si -H "Host: localhost" -X POST http://127.0.0.1:8099/patients/me/reviews
+HTTP/1.1 404 Not Found · application/json                                          # JSON real de la API
+
+$ curl -si -H "Host: localhost" -X POST http://127.0.0.1:8099/ai/v1/triage/analyze
+HTTP/1.1 503 Service Temporarily Unavailable · application/json
+{"statusCode":503,"code":"DEPENDENCY_UNAVAILABLE","message":"El triage por IA no está disponible en este despliegue.", ...}
+```
+
+Los tres dan JSON — **nunca** el `index.html` del SSR. El 404 de `/loyalty/me` y de
+`/patients/me/reviews` es la API diciendo que esa ruta puntual no está implementada de su lado
+(gap ya conocido, ver «Riesgos residuales»); lo que este microtarea garantiza —que nginx los
+enruta y no se los come el SSR— **sí quedó demostrado**.
+
+**Bug real encontrado y corregido en el camino:** `deploy/api-locations.conf` tenía
+`location ^~ /patients/me/reviews/` **con barra final**, copiando el patrón de otros prefijos de
+la misma tabla. El cliente (`community.client.ts:802`) llama la ruta **sin** barra
+(`POST /patients/me/reviews`), así que nginx nunca la hacía matchear — caía al `location /` y el
+SSR devolvía HTML con 200 (o, en una prueba con `curl` que fuerza la barra, nginx devolvía un 301
+a sí mismo). **`check-api-prefixes.mjs` no lo detecta** porque normaliza la barra final antes de
+comparar (`p.endsWith('/') ? p.slice(0,-1) : p`), así que el verificador estático veía los
+prefijos «iguales» mientras nginx los trataba distinto. Se sacó la barra; commit aparte, con el
+`curl` de antes y de después pegado.
 
 ## Pendiente
 
-Ninguna microtarea del encargo quedó en `TODO` sin intentar. La única brecha es la de arriba
-(A MEDIAS), que depende de infraestructura que este carril no tiene asignada.
+Ninguna microtarea del encargo quedó sin cerrar.
 
 ## Evidencia
 
@@ -109,12 +134,11 @@ Capturas: `fotos/auth-{375,768,1440}-{light,dark}.png` (producción real) +
 
 ## No cubierto
 
-- **El SSR contra una API real levantada de verdad.** Todo lo de arriba se verificó con el
-  servidor `production-api` solo (sin nginx, sin `mantra-redesa`), que es lo que esta máquina
-  puede levantar sin el stack de M1. Por eso el `fetch` de ejemplo da 200 con HTML en vez de un
-  error de red o un JSON: no hay nadie enrutando `/iam/*` en esta prueba manual. La prueba de
-  integración completa (BR-01 §8.B, BR-03 §8.B) exige la API arriba y nginx con
-  `deploy/api-locations.conf` — es exactamente H3.S1.M2 en «A medias».
+- **El `fetch('/iam/auth/login')` de la evidencia de H1.S2** se hizo contra el server solo, sin
+  nginx ni API real detrás (por eso da 200 con HTML): en ese momento Docker todavía no estaba
+  arriba. Queda como estaba escrito, y no hacía falta repetirlo — lo que probaba (que el
+  interceptor del mock no responde) no depende de que haya un backend real detrás; H3.S1.M2 sí
+  se repitió con todo arriba y quedó en «Completado».
 - **El grep de la IP en documentación histórica.** `git grep 173.249.39.237` sigue encontrando 4
   menciones: 3 en `docs/brechas-front-back-2026-09-24/` (el informe que documentó el hallazgo,
   fecha pasada) y 1 en un comentario de `triage-ia.client.spec.ts` (referencia documental, no un
@@ -156,11 +180,17 @@ Capturas: `fotos/auth-{375,768,1440}-{light,dark}.png` (producción real) +
    debilitó; el detalle está en el `git diff` de cada `*.spec.ts`.
 5. **H2.S1.M4 se acotó a mock↔cliente**, no mock↔API real (registrado en `PLAN.md` antes de
    escribir el script, no después de encontrarle el límite).
+6. **`/patients/me/reviews` perdió la barra final** en `deploy/api-locations.conf` (ver el
+   detalle de H3.S1.M2 arriba): el `curl` real contra nginx encontró que, con barra, nginx nunca
+   la hacía matchear contra lo que el cliente llama. Verificado con la API real levantada, no
+   sólo con el verificador estático (que no lo hubiera visto).
 
 ## Riesgos residuales y deuda
 
-- **H3.S1.M2 sin verificar contra nginx real** (arriba, «A medias»): asignable a quien tenga el
-  stack Docker (M1 en el reparto).
+- **`/loyalty/me` y `/patients/me/reviews` responden 404 de la API**, no un éxito: el enrutado ya
+  llega, pero esas rutas no están implementadas del lado de la API todavía (gap ya documentado en
+  `check-mock-vs-client.mjs` y en la brecha «sin asignar» de `/loyalty`). No es de este carril
+  cerrarlo — es la API, no el front.
 - **`Dockerfile.dev` con `/ai` sin cablear** (arriba, «No cubierto»): inocuo hoy, pendiente si
   alguna vez se resuelve D-C y hace falta developear contra un triage real en el contenedor de dev.
 - **Hallazgo pre-existente, no de este carril:** el formulario de `/auth` tarda en hidratar el
@@ -174,6 +204,9 @@ Capturas: `fotos/auth-{375,768,1440}-{light,dark}.png` (producción real) +
 ## PR
 
 **#711**, `justin/test-m5-build-real` → `test`: https://github.com/mdavila-2001/mantra-core-health/pull/711
+— **mergeado** el 2026-09-26 07:05 UTC. El fix del bug de H3.S1.M2 (la barra final) y este
+reporte actualizado se entregan en un PR aparte, ya que #711 se cerró antes de encontrarlo:
+ver `docs/progress/STATUS_LOG.md` de `AlovidaPromptManager` por el enlace.
 
 ```text
 $ gh pr view 711 --json number,url,isDraft,mergeable,mergeStateStatus,reviewDecision,baseRefName,headRefName

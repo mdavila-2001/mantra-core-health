@@ -89,6 +89,24 @@ decide el front:
   y `window.open`; el requisito cambió (CL-40), así que ahora exige la lectura por la ruta del resultado y que **no**
   se pida ninguna URL firmada.
 
+## D-BR16-03 — Visibilidad del documento: selector, no interruptor (H3, M7-Legion)
+
+- **Registrada:** 2026-09-26, carril M7-Legion (H3, BR-16/CL-36).
+- **Pregunta concreta:** el prompt BR-16 pedía un «interruptor" (`app-switch`, como ya existe para
+  `esExterno` en `document-block.ts`) para «Visible para el paciente». Un `Switch` es binario, pero
+  no trae de dónde sacar los dos `concept_id` reales sin escribirlos a mano en el código.
+- **Decisión tomada (más segura, no requiere confirmación del propietario):** `app-concept-select`,
+  el mismo componente que ya usa `categoria` en el mismo formulario, apuntado al catálogo que la API
+  publicó en este mismo carril (`chart.document_records.patient_visibility_concept_id`,
+  `mantra-core-health-api` PR #478, commit `a3bff4d9`). Sin elegir, la API sigue defaulteando a
+  «sólo para el profesional» — no cambia el comportamiento de nadie que no toque el campo nuevo.
+  Se prefirió sobre hardcodear los uuid de `VISIBILITY_PATIENT_VISIBLE`/`VISIBILITY_PROVIDER_ONLY`
+  en el front, que hubiera sido inventar un valor sin haberlo leído de ningún lado (regla 00 §1).
+- **Qué queda apagado mientras tanto:** nada — el catálogo tiene exactamente dos opciones y ya está
+  publicado; no depende de una decisión de producto pendiente.
+
+---
+
 # Decisiones de producto y de diseño — H5 (BR-22, BR-27, BR-26)
 
 Carril M7 · Lenovo Legion · 2026-09-26. Ver el DECISIONS.md de `mantra-core-health-api` para el
