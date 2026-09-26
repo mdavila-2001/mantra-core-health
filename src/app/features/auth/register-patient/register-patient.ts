@@ -932,32 +932,6 @@ export class RegisterPatient {
   );
   protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
 
-  /**
-   * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
-   *
-   * Es la misma regla que `app-ubicacion-picker` avisa con `puntoElegido`,
-   * aplicada a las dos copias en línea de esta pantalla: tocar el mapa deja
-   * «Línea de dirección 1» en blanco y lo dice al lado. El aviso acompaña al
-   * campo vacío, no a la persona: en cuanto vuelve a escribir, se va solo.
-   */
-  private readonly domicilioVaciadoPorElMapa = signal(false);
-  private readonly trabajoVaciadoPorElMapa = signal(false);
-  private readonly domicilioEscrito = toSignal(
-    this.formPaciente.controls.homeAddressLines.valueChanges,
-    { initialValue: '' },
-  );
-  private readonly trabajoEscrito = toSignal(
-    this.formPaciente.controls.workAddressLines.valueChanges,
-    { initialValue: '' },
-  );
-  readonly domicilioPorReescribir = computed(
-    () => this.domicilioVaciadoPorElMapa() && this.domicilioEscrito().trim() === '',
-  );
-  readonly trabajoPorReescribir = computed(
-    () => this.trabajoVaciadoPorElMapa() && this.trabajoEscrito().trim() === '',
-  );
-  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
-
   /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
   private readonly departamentos = inject(BoDepartmentsCatalog);
   readonly opcionesDepartamento = signal<readonly SelectOption<string>[]>([]);
