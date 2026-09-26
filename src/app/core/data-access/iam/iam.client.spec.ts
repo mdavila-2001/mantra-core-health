@@ -90,6 +90,15 @@ describe('IamClient', () => {
    */
   const MUNICIPIO = 'ee4f2681-6c58-5f4c-8f83-8d19de56099a';
 
+  /** Los cinco campos que la API exige además del documento (ID-21). */
+  const EXIGIDOS = {
+    email: 'ana@mantra.test',
+    birthDate: '1990-04-12',
+    phone: '+591 70012345',
+    sexAtBirth: 'FEMALE',
+    issuerAdministrativeAreaConceptId: 'c0a80101-0000-4000-8000-000000000001',
+  } as const;
+
   describe('registerPatient', () => {
     it('manda solo los campos obligatorios cuando no hay opcionales', () => {
       client
@@ -98,6 +107,7 @@ describe('IamClient', () => {
           password: 'secreto12',
           name: 'Ana',
           lastName: 'Paz',
+          ...EXIGIDOS,
           residenceMunicipalityConceptId: MUNICIPIO,
         })
         .subscribe();
@@ -111,6 +121,7 @@ describe('IamClient', () => {
         password: 'secreto12',
         name: 'Ana',
         lastName: 'Paz',
+        ...EXIGIDOS,
         residenceMunicipalityConceptId: MUNICIPIO,
       });
 
@@ -132,8 +143,7 @@ describe('IamClient', () => {
           middleName: 'María',
           lastName: 'Paz',
           motherLastName: 'Quiroga',
-          email: 'ana@mantra.test',
-          birthDate: '1990-04-12',
+          ...EXIGIDOS,
           residenceMunicipalityConceptId: MUNICIPIO,
           guardianName: 'Rosa Quispe',
           guardianRelationshipConceptId: 'd7c1a94e-5b32-5d68-9f11-3ac52e8b6d40',
@@ -354,6 +364,116 @@ describe('IamClient', () => {
       expect(req.request.body.organization.payer).toEqual(PAYER_SIN_UBICACION);
       expect('latitude' in req.request.body.organization.payer).toBe(false);
       expect('longitude' in req.request.body.organization.payer).toBe(false);
+
+      req.flush(RESPUESTA);
+    });
+
+    it('la aseguradora sigue mandando tenantType PAYER y su bloque payer, sin diagnosticUnit', () => {
+      client
+        .registerOrganization({
+          code: 'ANDINA-SALUD',
+          legalName: 'Andina Salud S.A.',
+          legalEntityType: 'SRL',
+          payer: PAYER_SIN_UBICACION,
+          owner: { email: 'a@m.test', password: 'secreto12', name: 'Ana', lastName: 'Paz' },
+        })
+        .subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.tenantType).toBe('PAYER');
+      expect(req.request.body.organization.diagnosticUnit).toBeUndefined();
+      expect(req.request.body.organization.countryConceptId).toBeUndefined();
+
+      req.flush(RESPUESTA);
+    });
+
+    it('un centro diagnóstico manda su unidad y su territorio, sin payer y sin claves de más', () => {
+      client
+        .registerOrganization({
+          tenantType: 'DIAGNOSTIC_CENTER',
+          code: 'LAB_SUR_ABCDE',
+          legalName: 'Laboratorio del Sur',
+          legalEntityType: 'UNIPERSONAL',
+          timeZone: 'America/La_Paz',
+          countryConceptId: 'c-bo',
+          jurisdictionConceptId: 'j-nac',
+          diagnosticUnit: {
+            diagnosticUnitTypeConceptId: 'u-lab',
+            modalityConceptIds: ['m-lab'],
+            primarySite: {
+              name: 'Central',
+              timeZone: 'America/La_Paz',
+              address: { lines: ['Av. Cañoto 234'], latitude: -17.78, longitude: -63.18 },
+            },
+          },
+          owner: { email: 'a@m.test', password: 'secreto12', displayName: 'Ana Paz' },
+          legalDocuments: {
+            taxIdentifierFileId: 'f1',
+            commerceRegistryFileId: 'f2',
+            operatingLicenseFileId: 'f3',
+            healthAuthorityCertificateFileId: 'f4',
+          },
+        })
+        .subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body).toEqual({
+        organization: {
+          code: 'LAB_SUR_ABCDE',
+          legalName: 'Laboratorio del Sur',
+          legalEntityType: 'UNIPERSONAL',
+          tenantType: 'DIAGNOSTIC_CENTER',
+          timeZone: 'America/La_Paz',
+          countryConceptId: 'c-bo',
+          jurisdictionConceptId: 'j-nac',
+          diagnosticUnit: {
+            diagnosticUnitTypeConceptId: 'u-lab',
+            modalityConceptIds: ['m-lab'],
+            primarySite: {
+              name: 'Central',
+              timeZone: 'America/La_Paz',
+              address: { lines: ['Av. Cañoto 234'], latitude: -17.78, longitude: -63.18 },
+            },
+          },
+          legalDocuments: {
+            taxIdentifierFileId: 'f1',
+            commerceRegistryFileId: 'f2',
+            operatingLicenseFileId: 'f3',
+            healthAuthorityCertificateFileId: 'f4',
+          },
+        },
+        owner: { email: 'a@m.test', password: 'secreto12', displayName: 'Ana Paz' },
+      });
+
+      req.flush({ ...RESPUESTA, diagnosticUnitId: 'du-1' });
+    });
+
+    it('el punto de la sede sólo viaja completo: sin longitud no manda ninguno', () => {
+      client
+        .registerOrganization({
+          tenantType: 'DIAGNOSTIC_CENTER',
+          code: 'LAB_SUR_ABCDE',
+          legalName: 'Laboratorio del Sur',
+          legalEntityType: 'UNIPERSONAL',
+          countryConceptId: 'c-bo',
+          jurisdictionConceptId: 'j-nac',
+          diagnosticUnit: {
+            diagnosticUnitTypeConceptId: 'u-lab',
+            modalityConceptIds: [],
+            primarySite: { name: 'Central', address: { lines: ['x'], latitude: -17.78 } },
+          },
+          owner: { email: 'a@m.test', password: 'secreto12', displayName: 'Ana Paz' },
+          legalDocuments: {
+            taxIdentifierFileId: 'f1',
+            commerceRegistryFileId: 'f2',
+            operatingLicenseFileId: 'f3',
+            healthAuthorityCertificateFileId: 'f4',
+          },
+        })
+        .subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.diagnosticUnit.primarySite.address).toEqual({ lines: ['x'] });
 
       req.flush(RESPUESTA);
     });
