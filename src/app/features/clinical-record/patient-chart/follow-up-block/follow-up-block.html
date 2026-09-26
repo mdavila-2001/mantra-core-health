@@ -68,6 +68,15 @@
         </p>
 
         <form class="reconsulta__formulario" (submit)="$event.preventDefault()">
+          <!-- En la cita, primero de qué respuesta del formulario médico sale. Viene
+               cargada; con una sola respuesta el selector queda deshabilitado. -->
+          @if (exigeRespuesta()) {
+            <app-form-response-picker
+              class="app-form-grid__ancho"
+              [encounterId]="encounterId()"
+              [(seleccionada)]="respuestaDelFormulario"
+            />
+          }
           <!-- El día se elige en el calendario del mes y no en un campo de
                fecha: la pregunta real no es «qué día quiero» sino «qué día
                tengo lugar», y eso lo contesta el color de la casilla. Verde,

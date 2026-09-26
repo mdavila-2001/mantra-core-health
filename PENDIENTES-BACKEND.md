@@ -1763,3 +1763,46 @@ literal del plan maestro (§10), no un contrato ampliado acá.
 | **P40** | C2 · órdenes de análisis | `based_on_note_ids` (o `clinical.service_request_notes`) y `category` textual en `POST /clinical/service-requests`; lectura en `GET /diagnostics/patients/:id/orders` y `GET /diagnostic-results/me/orders`; concepto `SR_OTHER` | **Nada.** La línea del encuentro deriva la categoría de la orden con una heurística, anotada en el `TODO C8` de `history-view-model.ts:408` |
 | **P41** | C3 · diagnóstico presuntivo | Estados `COND_PROVISIONAL` y `COND_REFUTED` (hoy sólo `COND_CONFIRMED`), `POST /clinical/conditions/:id/verification` con motivo y evidencia (`note_id` / `service_request_id` / `diagnostic_report_id`), y la regla «al confirmar exige fin esperado o curso crónico y pasa a `COND_ACTIVE`». Camino `.puml` → `gen_ddl.py` → `SQL/` → patch → `gen_entities.py` (ADR-0021) | **Parcial, y del lado del simulador.** C6 reparte los diagnósticos en «en estudio / activas / históricos` resolviendo el estado por **código de catálogo**, así que la pantalla ya sabe leer los tres. Lo que no existe es escribirlos: «quién confirmó» y el motivo escrito quedan en los `TODO C8` de `history-view-model.ts:207` y `:247` |
 
+
+---
+
+## P43 · Lo que se emite en la cita cuelga de la respuesta del formulario médico — 26/09/2026
+
+> **P43 · Receta, orden de análisis, plan de cuidados y reconsulta asociadas a la respuesta del
+> formulario médico.** Origen: pedido del propietario del 26/09/2026. Hoy todo esto vive **sólo
+> en el frontend y su simulador**; la API real no conoce el campo.
+>
+> **1. Qué cambió en la pantalla**
+> En la cita, «Nota médica» y «Documento» dejaron de ser casillas: viven al final del
+> «Formulario médico» como **campos adicionales del doctor**, opcionales, con texto, varios
+> archivos o las dos cosas por fila. Al completar el formulario se registran como una nota
+> médica del encuentro (P39) y un documento del expediente por fila con archivos. Eso **no pide
+> nada nuevo** a la API: usa `POST /charts/notes` y `POST /charts/documents` tal como están.
+>
+> **2. Contrato — `formInstanceId`**
+> Campo nuevo, `uuid` opcional, en cuatro altas:
+> - `POST /clinical/medication-requests`
+> - `POST /clinical/service-requests`
+> - `POST /charts/care-plans`
+> - `POST /scheduling/appointments/direct`, **dentro de `followUpOf`**
+>
+> Es el id de la instancia de `forms` (la respuesta cerrada del formulario médico) de la que sale
+> el registro. Mientras la API valide con `forbidNonWhitelisted`, **mandarlo hoy es un 400**: el
+> frontend lo manda sólo desde la cita, que en la rama `mockup` corre contra el simulador.
+>
+> **3. Esquema**
+> Una columna `form_instance_id uuid NULL` con FK a la tabla de instancias de `forms` en cada una
+> de las cuatro tablas. Nula porque desde el expediente se sigue pudiendo emitir sin formulario.
+>
+> **4. Regla de negocio**
+> Con el campo presente la API rechaza con **422** si la instancia no existe, no está cerrada o
+> es de otro encuentro que el del registro (o, en la reconsulta, que el de `followUpOf`). La
+> obligatoriedad en la cita la aplica hoy la pantalla; si el negocio la quiere garantizada, la
+> regla es «con `encounterId` presente, `formInstanceId` es obligatorio».
+>
+> **5. Lo que el frontend ya tiene**
+> `app-form-response-picker` carga las respuestas cerradas del encuentro con
+> `GET /forms/instances?encounter=`, elige la más reciente y queda deshabilitado cuando hay una
+> sola. El simulador guarda el campo en las cuatro altas. De paso se corrigió el simulador de
+> `GET /forms/instances`, que leía `encounterId` cuando el cliente manda `encounter` y por eso
+> nunca encontraba un formulario ya respondido.

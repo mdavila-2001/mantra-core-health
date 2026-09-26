@@ -402,7 +402,10 @@ export function registrarEncuestas(router: MockRouter): void {
   });
 
   router.get('/forms/instances', ({ query }) => {
-    const encounterId = query.get('encounterId') ?? '';
+    // El cliente manda `encounter`; `encounterId` queda por compatibilidad.
+    // Sólo con el segundo, la consulta nunca encontraba el formulario ya
+    // respondido y ofrecía llenarlo de nuevo.
+    const encounterId = query.get('encounter') ?? query.get('encounterId') ?? '';
     const items = instancias.filtrar((i) => i.resourceId === encounterId).map(item);
     return { encounterId, items, limit: 50, truncated: false };
   });

@@ -1,0 +1,95 @@
+.adicionales {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--border-default);
+  container-type: inline-size;
+}
+
+.adicionales__encabezado {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.adicionales__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.adicionales__ayuda {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+}
+
+.adicionales__contador {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.adicionales__filas {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Campo, valor y archivos lado a lado; el valor lleva la frase y es el más
+   ancho. Se mide la sección y no la ventana, porque vive dentro de un modal:
+   angosta, los archivos bajan a su propia línea a todo lo ancho, y
+   en teléfono todo se apila. */
+.adicionales__fila {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) minmax(0, 1.5fr) minmax(12rem, 1.2fr) auto;
+  gap: var(--sp-3);
+  align-items: start;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.adicionales__campo,
+.adicionales__valor,
+.adicionales__archivos {
+  min-inline-size: 0;
+}
+
+.adicionales__quitar {
+  align-self: end;
+}
+
+@container (max-width: 56rem) {
+  .adicionales__fila {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  }
+
+  .adicionales__archivos {
+    grid-column: 1 / -1;
+  }
+
+  .adicionales__quitar {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+}
+
+@container (max-width: 36rem) {
+  .adicionales__fila {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.adicionales__acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}

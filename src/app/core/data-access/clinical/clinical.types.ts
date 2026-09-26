@@ -443,6 +443,11 @@ export interface PatientChart {
 export interface NewMedicationRequest {
   readonly custodianTenantId: string;
   readonly patientProfileId: string;
+  /**
+   * La respuesta del formulario médico de la que sale (instancia de `forms`).
+   * En la cita es obligatoria; pendiente de backend (P43).
+   */
+  readonly formInstanceId?: string;
   /** El medicamento, como uuid de concepto. Nunca texto tecleado. */
   readonly medicationConceptId: string;
   readonly encounterId?: string;

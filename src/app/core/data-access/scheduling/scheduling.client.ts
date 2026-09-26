@@ -507,6 +507,9 @@ export class SchedulingClient {
             followUpOf: {
               bookingId: cita.followUpOf.bookingId,
               encounterId: cita.followUpOf.encounterId,
+              ...(cita.followUpOf.formInstanceId === undefined
+                ? {}
+                : { formInstanceId: cita.followUpOf.formInstanceId }),
             },
           }),
     });
