@@ -23,3 +23,12 @@
 @if (calidad().length > 0) {
   <app-quality-indicators [indicadores]="calidad()" />
 }
+
+<!-- Sin serie mensual ni indicadores (la API real todavía no los calcula) se
+     dice, en vez de dejar un hueco que parezca un error o una cifra en cero. No
+     se inventa ninguna métrica: sin datos, sin números. -->
+@if (mensual().length === 0 && calidad().length === 0) {
+  <p class="actividad__pie" data-testid="actividad-sin-metricas">
+    Todavía no hay indicadores de calidad ni evolución mensual para mostrar.
+  </p>
+}
