@@ -5,6 +5,7 @@ import {
   NOMBRE_DE_CATEGORIA,
   pruebaDelCorpus,
 } from '../fixtures/bolivia-eje-central';
+import { pdfMinimo } from './files.handlers';
 import { abrirAgendaDeCentro, ZONA_HORARIA_POR_OMISION } from '../fixtures/agenda';
 import { patientSettlementFixture } from '../fixtures/patient-settlements';
 import { PHARMACIES_AND_LABS } from '../fixtures/markdown-institutions.generated';
@@ -742,6 +743,30 @@ export function registrarDiagnostico(router: MockRouter): void {
     if (r === undefined || !r.released) return notFound('Resultado no encontrado');
     if (r.patientProfileId !== pacienteDeSesion(request) && request.user?.practitionerProfileId === undefined) return forbidden();
     return resultadoPropio(r);
+  });
+
+  /**
+   * `GET /diagnostic-results/me/:reportId/files/:fileId/content` (CL-40).
+   *
+   * Titular + versión liberada + `fileId` del informe; todo lo demás es **404**
+   * (no se revela si existe). Devuelve los bytes con `Cache-Control: private,
+   * no-store`, como la API.
+   */
+  router.get('/diagnostic-results/me/:id/files/:fileId/content', (request) => {
+    const r = informes.get(request.params['id']!);
+    if (r === undefined || !r.released || r.patientProfileId !== pacienteDeSesion(request)) {
+      return notFound('Archivo no encontrado');
+    }
+    if (!resultadoPropio(r).files.some((f) => f.fileId === request.params['fileId'])) {
+      return notFound('Archivo no encontrado');
+    }
+    return {
+      body: new Blob([pdfMinimo('Laboratorio completo')], { type: 'application/pdf' }),
+      headers: {
+        'Cache-Control': 'private, no-store',
+        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent('laboratorio-completo.pdf')}`,
+      },
+    };
   });
 
   router.get('/diagnostic-results/me/:id/shares', ({ params }) => compartidos.filtrar((s) => s.reportId === params['id']));

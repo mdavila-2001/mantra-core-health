@@ -569,6 +569,12 @@ export interface DocumentoSimulado {
   readonly isExternal: boolean;
   readonly documentDate: string;
   readonly encounterId?: string;
+  /**
+   * Los archivos gobernados del documento (`ChartDocumentFileItemDto` de la
+   * API): la lectura del expediente los devuelve y la ruta de contenido los
+   * valida (CL-27). Sin esto el documento no podía volver a abrirse.
+   */
+  readonly files?: readonly { readonly fileId: string; readonly contentRole: 'PRIMARY' | 'ATTACHMENT'; readonly ordinal: number }[];
   readonly createdAt: string;
 }
 
@@ -630,6 +636,8 @@ function documentosSemilla(p: PacienteSimulado): readonly DocumentoSimulado[] {
       authorText: 'Laboratorio Central',
       isExternal: true,
       documentDate: iso(-48),
+      // El PDF del laboratorio que `files.handlers.ts` siembra para cada paciente.
+      files: [{ fileId: uuid(`file-lab-${p.id}`), contentRole: 'PRIMARY', ordinal: 0 }],
       createdAt: iso(-47),
     },
     {
@@ -641,6 +649,7 @@ function documentosSemilla(p: PacienteSimulado): readonly DocumentoSimulado[] {
       authorText: MEDICA.displayName,
       isExternal: false,
       documentDate: iso(-2),
+      files: [{ fileId: uuid(`file-ecg-${p.id}`), contentRole: 'PRIMARY', ordinal: 0 }],
       createdAt: iso(-2),
     },
     {
