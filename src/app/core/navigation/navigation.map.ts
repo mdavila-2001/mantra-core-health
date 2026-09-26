@@ -1251,20 +1251,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M20 diagnostics',
   },
   {
-    path: 'my-account/cotizaciones',
-    // Aseguradora: no es de una organización PAYER. Ver la nota completa en
-    // `directories`, la primera fila que lleva esta marca.
-    hiddenForTenantTypes: ['PAYER'],
-    hiddenFor: ['PRACTITIONER'],
-    label: 'Cotizaciones',
-    group: 'Mi cuenta',
-    icon: 'billing',
-    roles: [ANY_ROLE],
-    availability: 'disponible',
-    summary: 'Compará referencias de precio y cercanía con su procedencia visible.',
-    module: 'M-cotizaciones',
-  },
-  {
     // Carril 10, lado paciente. Sin `roles` a propósito, por el mismo motivo
     // que «Mis turnos»: el filtro real es tener perfil de paciente, que no es
     // un rol sino un dato de la cuenta —el claim `pid` del token—, y la
@@ -1418,6 +1404,22 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Las promociones que te mandaron las farmacias.',
     module: 'M51 promotions',
+  },
+  {
+    // Detrás de «Promociones»: en el bloque «Mis gestiones» el orden es el del
+    // registro, y así no se mete entre citas, pedidos y puntos.
+    path: 'my-account/cotizaciones',
+    // Aseguradora: no es de una organización PAYER. Ver la nota completa en
+    // `directories`, la primera fila que lleva esta marca.
+    hiddenForTenantTypes: ['PAYER'],
+    hiddenFor: ['PRACTITIONER'],
+    label: 'Cotizaciones',
+    group: 'Mi cuenta',
+    icon: 'billing',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Compará referencias de precio y cercanía con su procedencia visible.',
+    module: 'M-cotizaciones',
   },
   {
     // **«Mis organizaciones»** (propietario, 2026-09-10), en el lugar que

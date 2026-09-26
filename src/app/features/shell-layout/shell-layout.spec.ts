@@ -200,6 +200,11 @@ describe('ShellLayout', () => {
       //
       // La verificación de identidad y su historial salieron del menú mientras
       // el producto no la ofrezca: ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
+      //
+      // Las cotizaciones (b3af9887) tampoco exigen rol, como el resto del
+      // autoservicio. Van al final porque su entrada del registro está detrás
+      // de «Promociones», para no partir el bloque «Mis gestiones».
+      '/my-account/cotizaciones',
       '/design-system',
     ]);
   });

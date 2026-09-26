@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -13,7 +13,7 @@ import { NavigationService } from './navigation.service';
  * del mismo registro, así que una prueba que las viera divergir es la señal de
  * que alguien duplicó la lista.
  */
-@Component({ template: '' })
+@Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
 class Vacio {}
 
 function jwt(payload: Record<string, unknown>): string {
@@ -182,10 +182,12 @@ describe('NavigationService', () => {
         // dos mitades del mismo circuito y ninguna exige rol — el filtro real
         // es tener perfil de paciente, que la pantalla resuelve.
         '/my-account/diagnostic-orders',
-        '/my-account/cotizaciones',
         // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
         // perfil de paciente, que es un dato de la cuenta y no un rol.
         '/my-account/questionnaires',
+        // Las cotizaciones, detrás de «Promociones» en el registro para no
+        // partir el bloque «Mis gestiones».
+        '/my-account/cotizaciones',
         // «Notificaciones» tampoco: es el otro destino fijo, y encabeza la
         // lista junto a «Mi perfil». La bandeja sigue sin exigir rol —es de la
         // persona y el backend sólo devuelve la propia—; lo que cambió es

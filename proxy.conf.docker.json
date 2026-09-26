@@ -40,6 +40,8 @@
       "/pharma-labs",
       "/pharmacy",
       "/pharmacy-inventory",
+      "/loyalty",
+      "/patients/me",
       "/visit-agenda",
       "/visit-requests",
       "/visit-records",
