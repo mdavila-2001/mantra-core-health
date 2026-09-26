@@ -30,6 +30,27 @@ import { Coleccion, iso, isoDia, uuid } from '../mock-store';
     siempre se ve igual entre recargas.
     ========================================================================== */
 
+/**
+ * La evidencia que respalda una decisión sobre un presuntivo (C3, P41): una
+ * nota del expediente o un análisis —la orden y, si existe, su informe—.
+ */
+export interface EvidenciaSimulada {
+  readonly kind: 'NOTE' | 'ANALYSIS';
+  readonly noteId?: string;
+  readonly encounterId?: string;
+  readonly serviceRequestId?: string;
+  readonly diagnosticReportId?: string;
+}
+
+/** La decisión de C3 sobre un presuntivo, con sus instantes en ISO. */
+export interface VerificacionSimulada {
+  readonly outcome: 'CONFIRMED' | 'REFUTED';
+  readonly decidedAt: string;
+  readonly decidedByProfileId: string;
+  readonly reasonText: string | null;
+  readonly basedOn: EvidenciaSimulada | null;
+}
+
 export interface CondicionSimulada {
   readonly id: string;
   readonly patientProfileId: string;
@@ -37,6 +58,8 @@ export interface CondicionSimulada {
   readonly categoryConceptId: string;
   readonly clinicalStatusConceptId: string;
   readonly verificationStatusConceptId: string;
+  /** Sólo después de confirmar o rechazar (C3). Un presuntivo no la tiene. */
+  readonly verification?: VerificacionSimulada;
   readonly severityConceptId: string;
   readonly lateralityConceptId?: string;
   /** Curso clínico: agudo, crónico, subagudo, recurrente (Patch v4.0.8). */
@@ -171,24 +194,60 @@ export const TIPO_EPISODIO = uuid('concept-episode-type-inpatient');
 export const CATEGORIA_DOCUMENTO = CATEGORIA_DOCUMENTAL['DOC-CAT-REPORT']!;
 
 const PERFILES_CLINICOS: readonly {
-  readonly dx: readonly (readonly [keyof typeof DIAGNOSTICO, 'COND-ACTIVE' | 'COND-RESOLVED' | 'COND-REMISSION', string])[];
-  readonly alergias: readonly (readonly [keyof typeof MEDICAMENTO | 'ALIMENTO-MANI' | 'POLVO', 'CRIT-LOW' | 'CRIT-HIGH'])[];
-  readonly recetas: readonly (readonly [keyof typeof MEDICAMENTO, string, string, 'RX-ACTIVE' | 'RX-COMPLETED'])[];
+  readonly dx: readonly (readonly [
+    keyof typeof DIAGNOSTICO,
+    'COND-ACTIVE' | 'COND-RESOLVED' | 'COND-REMISSION',
+    string,
+  ])[];
+  readonly alergias: readonly (readonly [
+    keyof typeof MEDICAMENTO | 'ALIMENTO-MANI' | 'POLVO',
+    'CRIT-LOW' | 'CRIT-HIGH',
+  ])[];
+  readonly recetas: readonly (readonly [
+    keyof typeof MEDICAMENTO,
+    string,
+    string,
+    'RX-ACTIVE' | 'RX-COMPLETED',
+  ])[];
 }[] = [
   {
-    dx: [['I10', 'COND-ACTIVE', 'Diagnosticada hace 3 años. Buen control con enalapril.'], ['E78.5', 'COND-ACTIVE', 'LDL 165 en el último control.'], ['J06.9', 'COND-RESOLVED', 'Cuadro viral autolimitado.']],
-    alergias: [['MED-AMOXICILINA', 'CRIT-HIGH'], ['POLVO', 'CRIT-LOW']],
-    recetas: [['MED-ENALAPRIL', '10 mg', 'Una vez al día por la mañana', 'RX-ACTIVE'], ['MED-ATORVASTATINA', '20 mg', 'Una vez al día por la noche', 'RX-ACTIVE'], ['MED-PARACETAMOL', '500 mg', 'Cada 8 horas si hay dolor, máximo 3 días', 'RX-COMPLETED']],
+    dx: [
+      ['I10', 'COND-ACTIVE', 'Diagnosticada hace 3 años. Buen control con enalapril.'],
+      ['E78.5', 'COND-ACTIVE', 'LDL 165 en el último control.'],
+      ['J06.9', 'COND-RESOLVED', 'Cuadro viral autolimitado.'],
+    ],
+    alergias: [
+      ['MED-AMOXICILINA', 'CRIT-HIGH'],
+      ['POLVO', 'CRIT-LOW'],
+    ],
+    recetas: [
+      ['MED-ENALAPRIL', '10 mg', 'Una vez al día por la mañana', 'RX-ACTIVE'],
+      ['MED-ATORVASTATINA', '20 mg', 'Una vez al día por la noche', 'RX-ACTIVE'],
+      ['MED-PARACETAMOL', '500 mg', 'Cada 8 horas si hay dolor, máximo 3 días', 'RX-COMPLETED'],
+    ],
   },
   {
-    dx: [['E11', 'COND-ACTIVE', 'HbA1c 7,8 %. Se ajusta metformina.'], ['I10', 'COND-ACTIVE', 'Asociada a la diabetes.'], ['E66', 'COND-ACTIVE', 'IMC 31.']],
+    dx: [
+      ['E11', 'COND-ACTIVE', 'HbA1c 7,8 %. Se ajusta metformina.'],
+      ['I10', 'COND-ACTIVE', 'Asociada a la diabetes.'],
+      ['E66', 'COND-ACTIVE', 'IMC 31.'],
+    ],
     alergias: [],
-    recetas: [['MED-METFORMINA', '850 mg', 'Con el desayuno y la cena', 'RX-ACTIVE'], ['MED-LOSARTAN', '50 mg', 'Una vez al día', 'RX-ACTIVE']],
+    recetas: [
+      ['MED-METFORMINA', '850 mg', 'Con el desayuno y la cena', 'RX-ACTIVE'],
+      ['MED-LOSARTAN', '50 mg', 'Una vez al día', 'RX-ACTIVE'],
+    ],
   },
   {
-    dx: [['J45', 'COND-ACTIVE', 'Asma leve persistente, controlada.'], ['L20', 'COND-REMISSION', 'Brotes en invierno.']],
+    dx: [
+      ['J45', 'COND-ACTIVE', 'Asma leve persistente, controlada.'],
+      ['L20', 'COND-REMISSION', 'Brotes en invierno.'],
+    ],
     alergias: [['ALIMENTO-MANI', 'CRIT-HIGH']],
-    recetas: [['MED-SALBUTAMOL', '100 mcg', 'Dos inhalaciones a demanda', 'RX-ACTIVE'], ['MED-LORATADINA', '10 mg', 'Una vez al día en época de polen', 'RX-COMPLETED']],
+    recetas: [
+      ['MED-SALBUTAMOL', '100 mcg', 'Dos inhalaciones a demanda', 'RX-ACTIVE'],
+      ['MED-LORATADINA', '10 mg', 'Una vez al día en época de polen', 'RX-COMPLETED'],
+    ],
   },
   {
     dx: [['J06.9', 'COND-RESOLVED', 'Resfrío común.']],
@@ -196,12 +255,21 @@ const PERFILES_CLINICOS: readonly {
     recetas: [['MED-PARACETAMOL', '250 mg', 'Cada 8 horas por 3 días', 'RX-COMPLETED']],
   },
   {
-    dx: [['E03.9', 'COND-ACTIVE', 'TSH 8,2. Inicia levotiroxina.'], ['D50', 'COND-ACTIVE', 'Hemoglobina 10,4.']],
+    dx: [
+      ['E03.9', 'COND-ACTIVE', 'TSH 8,2. Inicia levotiroxina.'],
+      ['D50', 'COND-ACTIVE', 'Hemoglobina 10,4.'],
+    ],
     alergias: [['MED-IBUPROFENO', 'CRIT-LOW']],
-    recetas: [['MED-LEVOTIROXINA', '50 mcg', 'En ayunas, 30 minutos antes del desayuno', 'RX-ACTIVE'], ['MED-SULFATO-FERROSO', '300 mg', 'Una vez al día con jugo de naranja', 'RX-ACTIVE']],
+    recetas: [
+      ['MED-LEVOTIROXINA', '50 mcg', 'En ayunas, 30 minutos antes del desayuno', 'RX-ACTIVE'],
+      ['MED-SULFATO-FERROSO', '300 mg', 'Una vez al día con jugo de naranja', 'RX-ACTIVE'],
+    ],
   },
   {
-    dx: [['M54.5', 'COND-ACTIVE', 'Lumbalgia mecánica por postura laboral.'], ['G43', 'COND-ACTIVE', 'Migraña sin aura, 2 episodios al mes.']],
+    dx: [
+      ['M54.5', 'COND-ACTIVE', 'Lumbalgia mecánica por postura laboral.'],
+      ['G43', 'COND-ACTIVE', 'Migraña sin aura, 2 episodios al mes.'],
+    ],
     alergias: [],
     recetas: [['MED-IBUPROFENO', '400 mg', 'Cada 8 horas con comida, 5 días', 'RX-ACTIVE']],
   },
@@ -211,9 +279,17 @@ const PERFILES_CLINICOS: readonly {
     recetas: [['MED-SERTRALINA', '50 mg', 'Una vez al día por la mañana', 'RX-ACTIVE']],
   },
   {
-    dx: [['I10', 'COND-ACTIVE', 'Hipertensión de larga data.'], ['M17', 'COND-ACTIVE', 'Gonartrosis bilateral, grado II.'], ['E11', 'COND-ACTIVE', 'Diabetes tipo 2 con buen control.']],
+    dx: [
+      ['I10', 'COND-ACTIVE', 'Hipertensión de larga data.'],
+      ['M17', 'COND-ACTIVE', 'Gonartrosis bilateral, grado II.'],
+      ['E11', 'COND-ACTIVE', 'Diabetes tipo 2 con buen control.'],
+    ],
     alergias: [['MED-CIPROFLOXACINO', 'CRIT-HIGH']],
-    recetas: [['MED-ENALAPRIL', '10 mg', 'Dos veces al día', 'RX-ACTIVE'], ['MED-METFORMINA', '850 mg', 'Con las comidas', 'RX-ACTIVE'], ['MED-INSULINA-NPH', '12 UI', 'Por la noche, subcutánea', 'RX-ACTIVE']],
+    recetas: [
+      ['MED-ENALAPRIL', '10 mg', 'Dos veces al día', 'RX-ACTIVE'],
+      ['MED-METFORMINA', '850 mg', 'Con las comidas', 'RX-ACTIVE'],
+      ['MED-INSULINA-NPH', '12 UI', 'Por la noche, subcutánea', 'RX-ACTIVE'],
+    ],
   },
   {
     dx: [['K21.0', 'COND-ACTIVE', 'Reflujo con pirosis nocturna.']],
@@ -243,7 +319,8 @@ export const condiciones = new Coleccion<CondicionSimulada>(
       codeConceptId: DIAGNOSTICO[code]!,
       categoryConceptId: CATEGORIA_DX,
       clinicalStatusConceptId: ESTADO_CONDICION[estado]!,
-      verificationStatusConceptId: i === 0 ? VERIFICACION_DX['DXV-CONFIRMED']! : VERIFICACION_DX['DXV-PROVISIONAL']!,
+      verificationStatusConceptId:
+        i === 0 ? VERIFICACION_DX['DXV-CONFIRMED']! : VERIFICACION_DX['DXV-PROVISIONAL']!,
       severityConceptId: i === 0 ? SEVERIDAD['SEV-MODERATE']! : SEVERIDAD['SEV-MILD']!,
       encounterId: uuid(`encounter-${p.id}-0`),
       onsetAt: iso(-400 + i * 90),
@@ -259,9 +336,19 @@ export const alergias = new Coleccion<AlergiaSimulada>(
     perfilClinicoDe(p).alergias.map(([sustancia, criticidad]) => ({
       id: uuid(`allergy-${p.id}-${sustancia}`),
       patientProfileId: p.id,
-      substanceConceptId: sustancia === 'ALIMENTO-MANI' ? SUSTANCIA_MANI : sustancia === 'POLVO' ? SUSTANCIA_POLVO : MEDICAMENTO[sustancia]!,
+      substanceConceptId:
+        sustancia === 'ALIMENTO-MANI'
+          ? SUSTANCIA_MANI
+          : sustancia === 'POLVO'
+            ? SUSTANCIA_POLVO
+            : MEDICAMENTO[sustancia]!,
       typeConceptId: TIPO_ALERGIA,
-      categoryConceptId: sustancia === 'ALIMENTO-MANI' ? CATEGORIA_ALERGIA['ALG-FOOD']! : sustancia === 'POLVO' ? CATEGORIA_ALERGIA['ALG-ENVIRONMENT']! : CATEGORIA_ALERGIA['ALG-MEDICATION']!,
+      categoryConceptId:
+        sustancia === 'ALIMENTO-MANI'
+          ? CATEGORIA_ALERGIA['ALG-FOOD']!
+          : sustancia === 'POLVO'
+            ? CATEGORIA_ALERGIA['ALG-ENVIRONMENT']!
+            : CATEGORIA_ALERGIA['ALG-MEDICATION']!,
       criticalityConceptId: CRITICIDAD[criticidad]!,
       clinicalStatusConceptId: ESTADO_CONDICION['COND-ACTIVE']!,
       createdAt: iso(-500),
@@ -343,7 +430,17 @@ export const encuentros = new Coleccion<EncuentroSimulado>(
   ),
 );
 
-export const episodios = new Coleccion<{ id: string; patientProfileId: string; tenantId: string; typeConceptId: string; statusConceptId: string; responsiblePractitionerId: string; startAt: string; endAt: string | null; createdAt: string }>(
+export const episodios = new Coleccion<{
+  id: string;
+  patientProfileId: string;
+  tenantId: string;
+  typeConceptId: string;
+  statusConceptId: string;
+  responsiblePractitionerId: string;
+  startAt: string;
+  endAt: string | null;
+  createdAt: string;
+}>(
   PACIENTES.filter((_, k) => k % 4 === 3).map((p) => ({
     id: uuid(`episode-${p.id}`),
     patientProfileId: p.id,
@@ -419,7 +516,8 @@ export const notas = new Coleccion<NotaSimulada>(
       // en las notas nuevas y la pantalla no los dibuja cuando están en blanco.
       entries: FILAS_DE_NOTA[(k + visita * 2) % FILAS_DE_NOTA.length]!,
       chiefComplaintText: '',
-      subjectiveText: visita === 0 ? '' : 'Refiere que el cuadro empezó tras un viaje largo en bus.',
+      subjectiveText:
+        visita === 0 ? '' : 'Refiere que el cuadro empezó tras un viaje largo en bus.',
       objectiveText: '',
       assessmentText: '',
       planText: '',
@@ -451,7 +549,13 @@ export interface PlanSimulado {
   readonly conditionId?: string;
   /** El motivo escrito a mano, cuando el plan no cuelga de un diagnóstico. */
   readonly reasonText?: string;
-  readonly activities: readonly { readonly id: string; readonly statusConceptId: string; readonly detailText: string; readonly scheduledAt: string | null; readonly activityConceptId?: string }[];
+  readonly activities: readonly {
+    readonly id: string;
+    readonly statusConceptId: string;
+    readonly detailText: string;
+    readonly scheduledAt: string | null;
+    readonly activityConceptId?: string;
+  }[];
   readonly createdAt: string;
 }
 
@@ -481,10 +585,34 @@ function planesSemilla(p: PacienteSimulado): readonly PlanSimulado[] {
       startDate: isoDia(-60),
       endDate: isoDia(120),
       activities: [
-        { id: uuid(`cp-act-1-${p.id}`), statusConceptId: ESTADO['ST-COMPLETED']!, detailText: 'Perfil lipídico basal', scheduledAt: iso(-55), activityConceptId: ACTIVIDAD_DEL_PLAN['CP-ACT-STUDY']! },
-        { id: uuid(`cp-act-2-${p.id}`), statusConceptId: ESTADO['ST-IN-PROGRESS']!, detailText: 'Caminata 30 minutos, 5 veces por semana', scheduledAt: iso(-50), activityConceptId: ACTIVIDAD_DEL_PLAN['CP-ACT-TREATMENT']! },
-        { id: uuid(`cp-act-3-${p.id}`), statusConceptId: ESTADO['ST-PENDING']!, detailText: 'Control con nutrición', scheduledAt: iso(12), activityConceptId: ACTIVIDAD_DEL_PLAN['CP-ACT-CONTROL']! },
-        { id: uuid(`cp-act-4-${p.id}`), statusConceptId: ESTADO['ST-PENDING']!, detailText: 'Ecocardiograma de control', scheduledAt: iso(40), activityConceptId: ACTIVIDAD_DEL_PLAN['CP-ACT-STUDY']! },
+        {
+          id: uuid(`cp-act-1-${p.id}`),
+          statusConceptId: ESTADO['ST-COMPLETED']!,
+          detailText: 'Perfil lipídico basal',
+          scheduledAt: iso(-55),
+          activityConceptId: ACTIVIDAD_DEL_PLAN['CP-ACT-STUDY']!,
+        },
+        {
+          id: uuid(`cp-act-2-${p.id}`),
+          statusConceptId: ESTADO['ST-IN-PROGRESS']!,
+          detailText: 'Caminata 30 minutos, 5 veces por semana',
+          scheduledAt: iso(-50),
+          activityConceptId: ACTIVIDAD_DEL_PLAN['CP-ACT-TREATMENT']!,
+        },
+        {
+          id: uuid(`cp-act-3-${p.id}`),
+          statusConceptId: ESTADO['ST-PENDING']!,
+          detailText: 'Control con nutrición',
+          scheduledAt: iso(12),
+          activityConceptId: ACTIVIDAD_DEL_PLAN['CP-ACT-CONTROL']!,
+        },
+        {
+          id: uuid(`cp-act-4-${p.id}`),
+          statusConceptId: ESTADO['ST-PENDING']!,
+          detailText: 'Ecocardiograma de control',
+          scheduledAt: iso(40),
+          activityConceptId: ACTIVIDAD_DEL_PLAN['CP-ACT-STUDY']!,
+        },
       ],
       createdAt: iso(-60),
     },
@@ -493,9 +621,39 @@ function planesSemilla(p: PacienteSimulado): readonly PlanSimulado[] {
 
 function documentosSemilla(p: PacienteSimulado): readonly DocumentoSimulado[] {
   return [
-    { id: uuid(`doc-lab-${p.id}`), patientProfileId: p.id, title: 'Laboratorio completo', categoryConceptId: CATEGORIA_DOCUMENTAL['DOC-CAT-LAB']!, statusConceptId: ESTADO['ST-PUBLISHED']!, authorText: 'Laboratorio Central', isExternal: true, documentDate: iso(-48), createdAt: iso(-47) },
-    { id: uuid(`doc-ecg-${p.id}`), patientProfileId: p.id, title: 'Electrocardiograma de reposo', categoryConceptId: CATEGORIA_DOCUMENTAL['DOC-CAT-REPORT']!, statusConceptId: ESTADO['ST-PUBLISHED']!, authorText: MEDICA.displayName, isExternal: false, documentDate: iso(-2), createdAt: iso(-2) },
-    { id: uuid(`doc-rx-${p.id}`), patientProfileId: p.id, title: 'Radiografía de tórax — informe', categoryConceptId: CATEGORIA_DOCUMENTAL['DOC-CAT-IMAGING']!, statusConceptId: ESTADO['ST-DRAFT']!, authorText: 'Centro de Imagen Sur', isExternal: true, documentDate: iso(-100), createdAt: iso(-99) },
+    {
+      id: uuid(`doc-lab-${p.id}`),
+      patientProfileId: p.id,
+      title: 'Laboratorio completo',
+      categoryConceptId: CATEGORIA_DOCUMENTAL['DOC-CAT-LAB']!,
+      statusConceptId: ESTADO['ST-PUBLISHED']!,
+      authorText: 'Laboratorio Central',
+      isExternal: true,
+      documentDate: iso(-48),
+      createdAt: iso(-47),
+    },
+    {
+      id: uuid(`doc-ecg-${p.id}`),
+      patientProfileId: p.id,
+      title: 'Electrocardiograma de reposo',
+      categoryConceptId: CATEGORIA_DOCUMENTAL['DOC-CAT-REPORT']!,
+      statusConceptId: ESTADO['ST-PUBLISHED']!,
+      authorText: MEDICA.displayName,
+      isExternal: false,
+      documentDate: iso(-2),
+      createdAt: iso(-2),
+    },
+    {
+      id: uuid(`doc-rx-${p.id}`),
+      patientProfileId: p.id,
+      title: 'Radiografía de tórax — informe',
+      categoryConceptId: CATEGORIA_DOCUMENTAL['DOC-CAT-IMAGING']!,
+      statusConceptId: ESTADO['ST-DRAFT']!,
+      authorText: 'Centro de Imagen Sur',
+      isExternal: true,
+      documentDate: iso(-100),
+      createdAt: iso(-99),
+    },
   ];
 }
 
@@ -548,7 +706,9 @@ export const ordenes = new Coleccion<OrdenSimulada>(
       ['STUDY-HEMOGRAMA', 'SRQ-LAB', 'ST-COMPLETED'],
       ['STUDY-PERFIL-LIPIDICO', 'SRQ-LAB', 'ST-COMPLETED'],
       ['STUDY-ECG', 'SRQ-PROCEDURE', 'ST-COMPLETED'],
-      ...(k % 2 === 0 ? [['STUDY-ECO-ABD', 'SRQ-IMAGING', 'ST-PENDING']] : [['STUDY-TSH', 'SRQ-LAB', 'ST-IN-PROGRESS']]),
+      ...(k % 2 === 0
+        ? [['STUDY-ECO-ABD', 'SRQ-IMAGING', 'ST-PENDING']]
+        : [['STUDY-TSH', 'SRQ-LAB', 'ST-IN-PROGRESS']]),
     ].map(([estudio, categoria, estado], i) => ({
       id: uuid(`order-${p.id}-${estudio}`),
       patientProfileId: p.id,
@@ -558,7 +718,12 @@ export const ordenes = new Coleccion<OrdenSimulada>(
       statusConceptId: ESTADO[estado as keyof typeof ESTADO]!,
       requesterProfileId: MEDICA.id,
       encounterId: uuid(`encounter-${p.id}-${i % 3}`),
-      reasonText: ['Control anual', 'Seguimiento de dislipidemia', 'Palpitaciones', 'Dolor abdominal / control tiroideo'][i]!,
+      reasonText: [
+        'Control anual',
+        'Seguimiento de dislipidemia',
+        'Palpitaciones',
+        'Dolor abdominal / control tiroideo',
+      ][i]!,
       createdAt: iso(-50 + i * 12),
     })),
   ),
