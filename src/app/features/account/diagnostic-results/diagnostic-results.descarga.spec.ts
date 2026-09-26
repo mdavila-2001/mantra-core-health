@@ -121,7 +121,7 @@ describe('DiagnosticResults · descarga por blob (CL-40)', () => {
         statusText: 'Not Found',
       });
     // El cuerpo del error llega como Blob y se relee de forma asincronica.
-    await new Promise((resolver) => setTimeout(resolver, 20));
+    await vi.waitFor(() => expect(avisos.length).toBeGreaterThan(0));
 
     expect(guardados).toHaveLength(0);
     expect(avisos[0]?.texto).toContain('todavía no está disponible');
@@ -134,8 +134,7 @@ describe('DiagnosticResults · descarga por blob (CL-40)', () => {
       { status: 422, statusText: 'Unprocessable Entity' },
     );
     // El cuerpo del error llega como Blob y se relee de forma asincrónica.
-    await fixture.whenStable();
-    await new Promise((resolver) => setTimeout(resolver, 20));
+    await vi.waitFor(() => expect(avisos.length).toBeGreaterThan(0));
 
     expect(guardados).toHaveLength(0);
     expect(avisos[0]?.texto).toContain('en análisis');
