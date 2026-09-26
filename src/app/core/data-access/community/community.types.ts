@@ -761,6 +761,15 @@ export interface DirectMessage {
   readonly attachmentFileId?: string;
   readonly isEdited?: boolean;
   readonly sentAt?: Date;
+  /**
+   * Cuándo se borró (F4.5/AG-20), o `undefined` si sigue vivo.
+   *
+   * La API ya lo declara (`dto/read-messaging.dto.ts`) y el gateway emite
+   * `conversation:message:deleted`; sin este campo el front no podía saber
+   * que un mensaje se borró y la burbuja quedaba vacía en vez de decir «Se
+   * eliminó este mensaje».
+   */
+  readonly deletedAt?: Date;
 }
 
 /** Una página de mensajes de una conversación. */

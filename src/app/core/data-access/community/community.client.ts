@@ -1467,8 +1467,9 @@ interface WireConversationPage extends Omit<ConversationPage, 'items'> {
   readonly items: readonly WireConversation[];
 }
 
-type WireMessage = Omit<ConNulos<DirectMessage>, 'sentAt'> & {
+type WireMessage = Omit<ConNulos<DirectMessage>, 'sentAt' | 'deletedAt'> & {
   readonly sentAt: string | null;
+  readonly deletedAt?: string | null;
 };
 
 interface WireMessagePage extends Omit<DirectMessagePage, 'items' | 'peerReadUpTo'> {
@@ -1843,8 +1844,12 @@ function toConversationPage(body: WireConversationPage): ConversationPage {
   return { ...body, items: body.items.map(toConversation) };
 }
 
-function toMessage({ sentAt, ...resto }: WireMessage): DirectMessage {
-  return { ...sinNulos(resto), ...fecha('sentAt', sentAt) };
+function toMessage({ sentAt, deletedAt, ...resto }: WireMessage): DirectMessage {
+  return {
+    ...sinNulos(resto),
+    ...fecha('sentAt', sentAt),
+    ...fecha('deletedAt', deletedAt ?? null),
+  };
 }
 
 function toMessagePage({
