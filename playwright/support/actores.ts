@@ -206,7 +206,7 @@ async function firstMunicipalityConceptId(api: APIRequestContext): Promise<strin
  * {@link firstMunicipalityConceptId}: se obtiene de la API, no se hardcodea
  * un uuid.
  */
-async function firstDepartmentConceptId(api: APIRequestContext): Promise<string> {
+export async function firstDepartmentConceptId(api: APIRequestContext): Promise<string> {
   return firstConceptIdOfValueSet(api, DEPARTMENT_VALUE_SET);
 }
 

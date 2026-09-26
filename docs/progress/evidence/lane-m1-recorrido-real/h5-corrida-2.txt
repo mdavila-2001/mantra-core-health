@@ -1,0 +1,52 @@
+
+Running 10 tests using 1 worker
+
+  ✓   1 [chromium] › playwright/carril-m1-recorrido-real-vps.spec.ts:64:7 › M1 · recorrido real contra el VPS de preproducción › la API responde por el proxy del mismo origen (no 503, no HTML) (1.2s)
+  ✓   2 [chromium] › playwright/carril-m1-recorrido-real-vps.spec.ts:79:7 › M1 · recorrido real contra el VPS de preproducción › el médico se registra y entra contra la API real (login por rol: doctora) (2.3s)
+  ✓   3 [chromium] › playwright/carril-m1-recorrido-real-vps.spec.ts:90:7 › M1 · recorrido real contra el VPS de preproducción › el paciente se registra y entra contra la API real (login por rol: paciente) (2.6s)
+  ✓   4 [chromium] › playwright/carril-m1-recorrido-real-vps.spec.ts:107:11 › M1 · recorrido real contra el VPS de preproducción › la vitrina pública del directorio carga en 200, consola limpia — 375×812 (móvil), tema light (4.4s)
+  ✓   5 [chromium] › playwright/carril-m1-recorrido-real-vps.spec.ts:107:11 › M1 · recorrido real contra el VPS de preproducción › la vitrina pública del directorio carga en 200, consola limpia — 375×812 (móvil), tema dark (4.6s)
+  ✓   6 [chromium] › playwright/carril-m1-recorrido-real-vps.spec.ts:107:11 › M1 · recorrido real contra el VPS de preproducción › la vitrina pública del directorio carga en 200, consola limpia — 768×1024 (tablet), tema light (5.2s)
+  ✓   7 [chromium] › playwright/carril-m1-recorrido-real-vps.spec.ts:107:11 › M1 · recorrido real contra el VPS de preproducción › la vitrina pública del directorio carga en 200, consola limpia — 768×1024 (tablet), tema dark (4.4s)
+  ✓   8 [chromium] › playwright/carril-m1-recorrido-real-vps.spec.ts:107:11 › M1 · recorrido real contra el VPS de preproducción › la vitrina pública del directorio carga en 200, consola limpia — 1440×900 (escritorio), tema light (5.2s)
+  ✓   9 [chromium] › playwright/carril-m1-recorrido-real-vps.spec.ts:107:11 › M1 · recorrido real contra el VPS de preproducción › la vitrina pública del directorio carga en 200, consola limpia — 1440×900 (escritorio), tema dark (4.6s)
+  ✘  10 [chromium] › playwright/carril-m1-recorrido-real-vps.spec.ts:146:7 › M1 · recorrido real contra el VPS de preproducción › la sesión real navega al panel sin que el simulador la intercepte (1.2m)
+
+
+  1) [chromium] › playwright/carril-m1-recorrido-real-vps.spec.ts:146:7 › M1 · recorrido real contra el VPS de preproducción › la sesión real navega al panel sin que el simulador la intercepte 
+
+    TimeoutError: page.waitForURL: Timeout 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at support/sesion.ts:105
+
+      103 |   // sesión pertenece a más de una. Esperar sólo el panel dejaría la suite roja
+      104 |   // para cualquiera con dos organizaciones, que es normal.
+    > 105 |   await page.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+          |              ^
+      106 |
+      107 |   if (page.url().includes('/auth/organization')) {
+      108 |     await page.getByTestId('tenant-opcion').first().click();
+        at intentarIngreso (/Users/josejeremias/Desktop/Mantra Core Technologies/Mantra Core Health/wt-test-integration/playwright/support/sesion.ts:105:14)
+        at entrar (/Users/josejeremias/Desktop/Mantra Core Technologies/Mantra Core Health/wt-test-integration/playwright/support/sesion.ts:80:5)
+        at /Users/josejeremias/Desktop/Mantra Core Technologies/Mantra Core Health/wt-test-integration/playwright/carril-m1-recorrido-real-vps.spec.ts:166:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts/playwright/salida/carril-m1-recorrido-real-v-9a5ba--el-simulador-la-intercepte-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts/playwright/salida/carril-m1-recorrido-real-v-9a5ba--el-simulador-la-intercepte-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts/playwright/salida/carril-m1-recorrido-real-v-9a5ba--el-simulador-la-intercepte-chromium/trace.zip
+    Usage:
+
+        yarn playwright show-trace artifacts/playwright/salida/carril-m1-recorrido-real-v-9a5ba--el-simulador-la-intercepte-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › playwright/carril-m1-recorrido-real-vps.spec.ts:146:7 › M1 · recorrido real contra el VPS de preproducción › la sesión real navega al panel sin que el simulador la intercepte 
+  9 passed (1.7m)
