@@ -55,6 +55,20 @@ propio VPS, pero el acceso por SSH está cerrado para esta sesión.
 **No redespliega en vano.** Guarda el sha que desplegó y compara; con la rama
 quieta sale en silencio y el coste de una pasada es un `git ls-remote`.
 
+**Espera a que la rama se aquiete antes de desplegar.** Un despliegue reemplaza
+el contenedor y tarda entre 8 y 17 minutos, con una ventana en la que el sitio
+devuelve 502. El 26/09/2026, desplegando en el acto, `test` acumuló **ocho
+despliegues de la API en un día** y se caía a ratos toda la jornada — eran los
+«no available server» que reportó el propietario, no un fallo de la aplicación.
+Ahora el sha queda como candidato y sólo se despliega si sigue siendo el mismo
+`AUTODEPLOY_REPOSO` segundos después (15 min por defecto), así que una ráfaga de
+merges se junta en un despliegue. `AUTODEPLOY_ESPERA_MAX` (45 min) es el tope:
+en una rama con merges todo el día el reposo no llegaría nunca, y sin tope
+«esperar a que se aquiete» se volvería «no desplegar más».
+
+`--estado` dice si hay un candidato esperando y cuánto le falta. `--forzar`
+despliega ya, sin esperar el reposo.
+
 **Un despliegue fallido no se da por hecho.** Si Coolify no responde 200, el
 sha **no** se anota, así que la pasada siguiente vuelve a intentarlo en vez de
 creer que ya está.
@@ -80,3 +94,20 @@ Todo por entorno, con estos valores por defecto:
 | `AUTODEPLOY_APP` | `miwmlirpzpz9p5hdvbx1urjo` (`mockup-frontend`) |
 | `AUTODEPLOY_COOLIFY` | `http://173.249.39.237:8000` |
 | `AUTODEPLOY_ENV` | `~/.config/alovida/coolify.env` |
+| `AUTODEPLOY_REPOSO` | `900` (segundos de rama quieta antes de desplegar) |
+| `AUTODEPLOY_ESPERA_MAX` | `2700` (tope: se despliega igual pasado este tiempo) |
+
+## La rama `test`: dos apps
+
+`vps-autodeploy-test.sh` es el envoltorio que vigila `origin/test` en los **dos**
+repositorios y redespliega las dos apps, llamando al guion de arriba una vez por
+app con su propio directorio de estado (`~/.local/state/alovida-autodeploy-test/
+{front,api}`):
+
+| App | uuid | Repositorio |
+|---|---|---|
+| `alovida-frontend` | `zslh6pytstjjgf5mexeopvkz` | `mantra-core-health` |
+| `alovida-backend-central` | `33sxkfqwp1axlkrishtgildb` | `mantra-core-health-api` |
+
+Lo instala `bo.alovida.autodeploy-test.plist`, con el mismo intervalo de 180 s
+que el de `mockup`.
