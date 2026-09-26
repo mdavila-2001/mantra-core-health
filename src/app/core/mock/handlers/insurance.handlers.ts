@@ -347,7 +347,8 @@ export const catalogoAdministrable = new Coleccion<DetalleAseguradoraSimulado>(
   'mock-insurance-administration',
 );
 
-function administraCatalogo(request: MockRequest): boolean {
+/** Exportado: es también la guarda de escritura de `insurance-campaigns.handlers.ts`. */
+export function administraCatalogo(request: MockRequest): boolean {
   const user = request.user;
   return (
     user !== null &&

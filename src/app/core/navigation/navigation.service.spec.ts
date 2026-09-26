@@ -728,7 +728,7 @@ describe('NavigationService', () => {
     // señal es el tipo de la organización activa (`tenantTypes` del token,
     // claim nuevo de este mismo carril), no un rol: la cuenta sigue siendo
     // `USER` a secas.
-    it('sólo ve lo que el registro de procesos le pide: dos renglones fijos y tres de Administración', () => {
+    it('sólo ve lo que el registro de procesos le pide: dos renglones fijos y cuatro de Administración', () => {
       abrirSesion(['USER'], ['t-1'], { 't-1': 'PAYER' });
 
       expect(rutasDelMenu()).toEqual([
@@ -736,6 +736,8 @@ describe('NavigationService', () => {
         '/notification-center',
         '/administration/insurance',
         '/administration/insurance-analytics',
+        // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
+        '/administration/insurance-campaigns',
         '/administration/my-organization',
       ]);
       // Un solo dominio: sin «General» (Directorios, Chats) ni «Mi cuenta»
