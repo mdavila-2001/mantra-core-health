@@ -728,13 +728,14 @@ describe('NavigationService', () => {
     // señal es el tipo de la organización activa (`tenantTypes` del token,
     // claim nuevo de este mismo carril), no un rol: la cuenta sigue siendo
     // `USER` a secas.
-    it('sólo ve lo que el registro de procesos le pide: dos renglones fijos y tres de Administración', () => {
+    it('sólo ve lo que el registro de procesos le pide: dos renglones fijos y cuatro de Administración', () => {
       abrirSesion(['USER'], ['t-1'], { 't-1': 'PAYER' });
 
       expect(rutasDelMenu()).toEqual([
         '/my-account',
         '/notification-center',
         '/administration/insurance',
+        '/administration/insurance-approvals',
         '/administration/insurance-analytics',
         '/administration/my-organization',
       ]);
@@ -768,6 +769,7 @@ describe('NavigationService', () => {
         '/tutorials',
         '/messaging',
         '/administration/insurance',
+        '/administration/insurance-approvals',
         '/administration/insurance-analytics',
         '/administration/my-organization',
       ]) {

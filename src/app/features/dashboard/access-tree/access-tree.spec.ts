@@ -270,7 +270,7 @@ describe('AccessTree', () => {
     expect(zonas()).toHaveLength(0);
   });
 
-  it('la aseguradora ve exactamente dos zonas: Chats, y las tres de seguros (2026-09-25)', () => {
+  it('la aseguradora ve exactamente dos zonas: Chats, y las de seguros con su bandeja de aprobación', () => {
     crear(['USER'], 'PAYER');
 
     const ids = zonas().map((z) => z.dataset['zona']);
@@ -283,6 +283,7 @@ describe('AccessTree', () => {
     abrir('organizacion');
     expect(accesos().map((a) => a.dataset['ruta'])).toEqual([
       '/administration/insurance-analytics',
+      '/administration/insurance-approvals',
       '/administration/my-organization',
       '/administration/insurance',
     ]);

@@ -250,6 +250,8 @@ describe('seccionRolesGuard', () => {
     const tenantTypes = { 't-1': 'PAYER' };
     for (const url of [
       '/administration/insurance',
+      '/administration/insurance-approvals',
+      '/administration/insurance-approvals/solicitud-1',
       '/administration/insurance-analytics',
       '/administration/my-organization',
       '/my-account',

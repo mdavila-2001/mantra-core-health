@@ -1,0 +1,67 @@
+<app-page-header
+  title="Solicitudes de aprobación"
+  subtitle="Lo que médicos, farmacias y laboratorios mandan a aprobar. Respondé ítem por ítem."
+/>
+
+<div class="approvals__filters">
+  <app-segmented-control
+    ariaLabel="Qué solicitudes mostrar"
+    data-testid="approvals-filter"
+    [options]="filterOptions"
+    [value]="filter()"
+    (valueChange)="changeFilter($event)"
+  />
+</div>
+
+<app-data-table
+  [state]="results()"
+  [columns]="columns()"
+  [trackBy]="byId"
+  [rowLabel]="rowLabel"
+  rowNavigable
+  caption="Solicitudes de aprobación recibidas"
+  (rowActivated)="open($event)"
+  (retry)="retry()"
+/>
+
+<!-- El nombre es un enlace real: entra en el orden de tabulación y anuncia
+     adónde lleva. La fila entera también navega, pero eso es comodidad de
+     puntero. -->
+<ng-template #patientCell let-row>
+  <a
+    class="approvals__link"
+    data-testid="approval-link"
+    [routerLink]="['/administration/insurance-approvals', row.id]"
+  >
+    {{ patientName(row.patient) }}
+  </a>
+  @if (row.patient.memberIdentifier) {
+    <span class="approvals__secondary">Afiliado {{ row.patient.memberIdentifier }}</span>
+  }
+</ng-template>
+
+<ng-template #originCell let-row>
+  {{ originLabel(row.origin) }}
+  <span class="approvals__secondary">
+    {{ row.itemCount }} {{ row.itemCount === 1 ? 'ítem' : 'ítems' }}
+  </span>
+</ng-template>
+
+<ng-template #amountCell let-row>
+  <span class="approvals__money">{{ amountText(row.totalRequestedAmount, row.currencyCode) }}</span>
+</ng-template>
+
+<ng-template #submittedCell let-row>
+  @if (row.submittedAt) {
+    <time [attr.datetime]="row.submittedAt.toISOString()">
+      {{ row.submittedAt.toLocaleString('es-BO', { dateStyle: 'short', timeStyle: 'short' }) }}
+    </time>
+  } @else {
+    <span class="approvals__secondary">Sin fecha</span>
+  }
+</ng-template>
+
+<ng-template #statusCell let-row>
+  @let badge = statusBadge(row.status, row.decision);
+  <app-badge [variant]="badge.tone" size="sm" data-testid="approval-status">{{ badge.label }}</app-badge>
+</ng-template>

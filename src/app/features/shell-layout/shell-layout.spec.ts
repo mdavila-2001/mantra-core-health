@@ -862,7 +862,7 @@ describe('ShellLayout', () => {
       expect(destinos).toContain('/design-system');
     });
 
-    it('la barra de la aseguradora: cinco renglones, un solo dominio plegable (2026-09-25)', () => {
+    it('la barra de la aseguradora: seis renglones, un solo dominio plegable (2026-09-25)', () => {
       abrirSesion({
         sub: 'u-3',
         roles: ['USER'],
@@ -877,6 +877,7 @@ describe('ShellLayout', () => {
         '/my-account',
         '/notification-center',
         '/administration/insurance',
+        '/administration/insurance-approvals',
         '/administration/insurance-analytics',
         '/administration/my-organization',
       ]);

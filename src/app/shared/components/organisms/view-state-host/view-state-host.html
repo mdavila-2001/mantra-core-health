@@ -31,7 +31,12 @@
           [description]="vacio.message ?? ''"
         >
           @if (vacio.nextAction.route) {
-            <a app-link empty-actions [routerLink]="vacio.nextAction.route">
+            <a
+              app-link
+              empty-actions
+              [routerLink]="vacio.nextAction.route"
+              [queryParams]="vacio.nextAction.queryParams ?? null"
+            >
               {{ vacio.nextAction.label }}
             </a>
           } @else {

@@ -151,6 +151,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/insurance/insurance-claims/insurance-claims').then(
       (m) => m.InsuranceClaims,
     ),
+  'administration/insurance-approvals': () =>
+    import('./features/insurance/insurance-approvals/insurance-approvals').then(
+      (m) => m.InsuranceApprovals,
+    ),
   'administration/insurance-analytics': () =>
     import('./features/insurance/insurance-analytics/insurance-analytics').then(
       (m) => m.InsuranceAnalytics,
@@ -697,6 +701,20 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/public-directories/pharmacy-detail/pharmacy-detail')
         .then((m) => m.PharmacyDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El detalle de una solicitud de aprobación, del lado de la aseguradora:
+    // se llega desde la bandeja, nunca desde el menú. Mismo guard de sección
+    // que su listado; la barrera real es el alcance por aseguradora del
+    // servidor, que responde el mismo 403 para una solicitud ajena que para
+    // una inexistente.
+    path: 'administration/insurance-approvals/:requestId',
+    title: `${APP_TITLE} - Solicitud de aprobación`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/insurance/insurance-approval-detail/insurance-approval-detail')
+        .then((m) => m.InsuranceApprovalDetail)
         .catch(() => chunkFallido()),
   },
   {

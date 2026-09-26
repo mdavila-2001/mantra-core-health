@@ -1,0 +1,224 @@
+<app-page-header
+  title="Solicitud de aprobación"
+  subtitle="Aprobá o no aprobá cada ítem. En lo que no apruebes, indicá la cláusula del contrato."
+>
+  <a page-actions [routerLink]="['/administration/insurance-approvals']">Volver a la bandeja</a>
+</app-page-header>
+
+<app-view-state-host [state]="state()" (retry)="retry()">
+  @if (request(); as detail) {
+    <app-card class="approval" padding="lg">
+      <!-- ---- datos de la solicitud (sólo lectura) ------------------------ -->
+      <section aria-labelledby="approval-general">
+        <h2 id="approval-general" class="approval__title" tabindex="-1">Datos de la solicitud</h2>
+        <dl class="approval__facts" data-testid="approval-header">
+          <div>
+            <dt>Paciente</dt>
+            <dd>{{ patientName(detail.patient) }}</dd>
+          </div>
+          <div>
+            <dt>Afiliado</dt>
+            <dd>{{ detail.patient.memberIdentifier ?? 'Sin registrar' }}</dd>
+          </div>
+          <div>
+            <dt>Plan</dt>
+            <dd>{{ detail.planName ?? 'Sin registrar' }}</dd>
+          </div>
+          <div>
+            <dt>Solicitud</dt>
+            <dd>{{ originLabel(detail.origin) }}</dd>
+          </div>
+          <div>
+            <dt>Recibida</dt>
+            <dd>
+              @if (detail.submittedAt) {
+                <time [attr.datetime]="detail.submittedAt.toISOString()">
+                  {{ detail.submittedAt.toLocaleString('es-BO', { dateStyle: 'medium', timeStyle: 'short' }) }}
+                </time>
+              } @else {
+                Sin fecha
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Monto solicitado</dt>
+            <dd class="approval__money">
+              {{ amountText(detail.totalRequestedAmount, detail.currencyCode) }}
+            </dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>
+              @let badge = statusBadge(detail.status, detail.decision);
+              <app-badge [variant]="badge.tone" size="sm" data-testid="approval-status">
+                {{ badge.label }}
+              </app-badge>
+            </dd>
+          </div>
+          @if (detail.decidedAt) {
+            <div>
+              <dt>Respondida</dt>
+              <dd>
+                <time [attr.datetime]="detail.decidedAt.toISOString()">
+                  {{ detail.decidedAt.toLocaleString('es-BO', { dateStyle: 'medium', timeStyle: 'short' }) }}
+                </time>
+              </dd>
+            </div>
+          }
+        </dl>
+      </section>
+
+      <!-- ---- ítems ------------------------------------------------------- -->
+      <section aria-labelledby="approval-items" class="approval__items">
+        <div class="approval__items-head">
+          <h2 id="approval-items" class="approval__title">
+            Ítems solicitados ({{ detail.items.length }})
+          </h2>
+          @if (pending() && tally().missing > 0) {
+            <button
+              app-button
+              type="button"
+              variant="outline"
+              size="sm"
+              data-testid="approve-remaining"
+              (clicked)="approveRemaining()"
+            >
+              Aprobar los que faltan
+            </button>
+          }
+        </div>
+
+        <div class="approval__table-scroll">
+          <table class="approval__table" data-testid="approval-items">
+            <caption class="sr-only">Ítems de la solicitud y su decisión</caption>
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Ítem</th>
+                <th scope="col" class="approval__col-num">Cantidad</th>
+                <th scope="col" class="approval__col-num">Monto</th>
+                <th scope="col">Decisión</th>
+                <th scope="col">Motivo</th>
+                @if (pending()) {
+                  <th scope="col"><span class="sr-only">Acciones</span></th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of detail.items; track item.id) {
+                <tr data-testid="approval-item">
+                  <td>{{ item.sequence }}</td>
+                  <td>{{ item.description }}</td>
+                  <td class="approval__col-num approval__money">
+                    {{ item.requestedQuantity ?? '—' }}
+                  </td>
+                  <td class="approval__col-num approval__money">
+                    {{ amountText(item.requestedAmount, detail.currencyCode) }}
+                  </td>
+
+                  @if (pending()) {
+                    <!-- Borrador: lo elegido y todavía no enviado. Se dice
+                         con palabras además del tono. -->
+                    @let draft = draftOf(item);
+                    <td data-testid="approval-item-decision">
+                      @if (draft?.decision === 'APPROVED') {
+                        <app-badge variant="success" size="sm">Se aprueba</app-badge>
+                      } @else if (draft?.decision === 'DENIED') {
+                        <app-badge variant="error" size="sm">No se aprueba</app-badge>
+                      } @else {
+                        <span class="approval__absent">Sin decidir</span>
+                      }
+                    </td>
+                    <td>
+                      @if (draft && draft.decision === 'DENIED') {
+                        <div class="approval__reason">
+                          <app-badge variant="error" size="sm" class="approval__clause">
+                            {{ draft.policyClauseReference }}
+                          </app-badge>
+                          @if (draft.denialRationale) {
+                            <p class="approval__rationale">{{ draft.denialRationale }}</p>
+                          }
+                        </div>
+                      } @else {
+                        <span class="approval__absent">—</span>
+                      }
+                    </td>
+                    <td class="approval__actions">
+                      <app-row-actions
+                        [actions]="rowActions"
+                        [fila]="rowName(item)"
+                        (actionSelected)="onRowAction($event, item)"
+                      />
+                    </td>
+                  } @else {
+                    <td data-testid="approval-item-decision">
+                      @if (item.decision?.decision === 'APPROVED') {
+                        <app-badge variant="success" size="sm">Aprobado</app-badge>
+                      } @else if (item.decision?.decision === 'DENIED') {
+                        <app-badge variant="error" size="sm">No aprobado</app-badge>
+                      } @else {
+                        <!-- Determinación global sin detalle por ítem (forma
+                             histórica de la API): no se inventa uno. -->
+                        <span class="approval__absent">Sin detalle por ítem</span>
+                      }
+                    </td>
+                    <td data-testid="approval-item-reason">
+                      @if (item.decision?.policyClauseReference || item.decision?.denialRationale) {
+                        <div class="approval__reason">
+                          @if (item.decision?.policyClauseReference) {
+                            <app-badge variant="error" size="sm" class="approval__clause">
+                              {{ item.decision?.policyClauseReference }}
+                            </app-badge>
+                          }
+                          @if (item.decision?.denialRationale) {
+                            <p class="approval__rationale">{{ item.decision?.denialRationale }}</p>
+                          }
+                        </div>
+                      } @else if (item.decision?.decision === 'DENIED') {
+                        <span class="approval__absent">Sin cláusula registrada</span>
+                      } @else {
+                        <span class="approval__absent">—</span>
+                      }
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---- envío ------------------------------------------------------- -->
+      @if (pending()) {
+        <footer class="approval__footer">
+          @if (sendError(); as message) {
+            <app-alert appAnuncio tone="error" data-testid="approval-send-error">
+              {{ message }}
+            </app-alert>
+          }
+          <p class="approval__outcome" aria-live="polite" data-testid="approval-outcome">
+            {{ outcomeText() }}
+          </p>
+          <button
+            app-button
+            type="button"
+            data-testid="approval-send"
+            [isLoading]="sending()"
+            [disabled]="sending() || tally().missing > 0"
+            (clicked)="send()"
+          >
+            Enviar respuesta
+          </button>
+        </footer>
+      }
+    </app-card>
+
+    @if (denying(); as item) {
+      <app-deny-item-dialog
+        [itemName]="'Ítem ' + item.sequence + ' · ' + item.description"
+        (confirmed)="onDenied(item, $event)"
+        (closed)="denying.set(null)"
+      />
+    }
+  }
+</app-view-state-host>

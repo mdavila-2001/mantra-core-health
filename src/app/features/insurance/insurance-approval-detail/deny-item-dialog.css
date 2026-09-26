@@ -1,0 +1,8 @@
+:host {
+    display: contents;
+}
+
+.deny-form {
+    display: grid;
+    gap: var(--sp-4);
+}

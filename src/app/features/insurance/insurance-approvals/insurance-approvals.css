@@ -1,0 +1,28 @@
+/* El filtro va arriba de la tabla, a la izquierda: es un filtro, no un campo. */
+.approvals__filters {
+    margin-block-end: var(--sp-4);
+}
+
+.approvals__link {
+    color: var(--text-link);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.approvals__link:hover,
+.approvals__link:focus-visible {
+    text-decoration: underline;
+}
+
+/* El dato secundario (afiliado, cantidad de ítems) baja a su renglón y en
+   tono secundario: se lee después del principal, no compite con él. */
+.approvals__secondary {
+    display: block;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
+
+.approvals__money {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}

@@ -756,6 +756,27 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M26 insurance',
   },
   {
+    // Registro de procesos · MÓDULO ASEGURADORA · «Recepción de solicitudes de
+    // órdenes de Aprobación»: la bandeja donde la aseguradora responde
+    // APROBADO / NO APROBADO por ítem —receta, laboratorio, imagen— con la
+    // cláusula del contrato en lo que no aprueba.
+    //
+    // Mismo patrón de acceso que «Siniestralidad y analítica» (abajo): quien
+    // decide es owner/admin del tenant de la aseguradora, y eso no viaja como
+    // rol en el token. La API es la barrera (`assertInsurer`): un tenant que
+    // no es aseguradora recibe 403 y la pantalla lo dice.
+    path: 'administration/insurance-approvals',
+    label: 'Solicitudes de aprobación',
+    group: 'Administración',
+    icon: 'clipboard',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
+    availability: 'disponible',
+    summary: 'Aprobá o rechazá, ítem por ítem, lo que piden médicos, farmacias y laboratorios.',
+    module: 'M26 insurance',
+  },
+  {
     // Subtarea 3.1 (M26, v4.2.14): el tablero de siniestralidad, gasto per
     // cápita y epidemiología — cara de LA ASEGURADORA, no del prestador.
     //

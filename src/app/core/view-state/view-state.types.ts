@@ -56,6 +56,12 @@ export interface ViewStateNextAction {
   readonly label: string;
   /** Ruta interna de Angular. Se omite cuando la acción abre un diálogo. */
   readonly route?: string;
+  /**
+   * Parámetros de consulta de `route`. Van aparte porque `routerLink` con una
+   * cadena no interpreta el `?`: lo codifica dentro del segmento
+   * (`%3Festado%3D…`) y el enlace cae en la ruta comodín.
+   */
+  readonly queryParams?: Readonly<Record<string, string>>;
 }
 
 /** Un problema puntual devuelto por la API, ya traducido a lenguaje de la vista. */

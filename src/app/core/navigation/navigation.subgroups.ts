@@ -189,6 +189,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // Quién paga, quién intermedia, qué se le presentó y qué dice el agregado.
     paths: [
       'administration/insurance',
+      'administration/insurance-approvals',
       'administration/brokers',
       'administration/insurance-claims',
       'administration/insurance-analytics',

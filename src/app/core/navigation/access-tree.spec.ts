@@ -314,6 +314,7 @@ describe('buildAccessTree', () => {
     const organizacion = arbol.find((zona) => zona.area.id === 'organizacion');
     expect(organizacion?.sections.map((s) => s.path)).toEqual([
       'administration/insurance-analytics',
+      'administration/insurance-approvals',
       'administration/my-organization',
       'administration/insurance',
     ]);

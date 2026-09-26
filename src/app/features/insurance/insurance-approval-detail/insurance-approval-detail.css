@@ -1,0 +1,163 @@
+/* UNA tarjeta, centrada y a lo ancho (composition-rules §5): datos, ítems y
+   envío son una sola ficha que se lee de arriba abajo. */
+.approval {
+    display: block;
+    inline-size: 100%;
+    margin-inline: auto;
+}
+
+.approval__title {
+    margin-block: 0 var(--sp-4);
+    font-size: var(--fs-h3);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Aire de formulario sin ser un formulario: pares etiqueta+valor que se
+   acomodan solos en columnas (1 en móvil, más en ancho). */
+.approval__facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: var(--sp-4) var(--sp-6);
+    margin: 0;
+}
+
+.approval__facts dt {
+    margin-block-end: var(--sp-1);
+    font-size: var(--fs-overline);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.approval__facts dd {
+    margin: 0;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+}
+
+.approval__items {
+    margin-block-start: var(--sp-8);
+}
+
+.approval__items-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-2) var(--sp-4);
+}
+
+/* La tabla desplaza dentro de su contenedor: sin esto, en 390 px la barra
+   horizontal le toca al `<body>` y se corre toda la página. `position:
+   relative` es parte del arreglo: los textos `sr-only` de la tabla (el
+   `caption`, los nombres de los botones de fila) son `position: absolute`, y
+   sin un ancestro posicionado escapan del recorte y le dan 566 px de ancho al
+   documento en un viewport de 390 (medido). */
+.approval__table-scroll {
+    position: relative;
+    overflow-x: auto;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+}
+
+.approval__table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    min-inline-size: 56rem;
+}
+
+.approval__table th,
+.approval__table td {
+    padding: var(--sp-3) var(--sp-4);
+    text-align: start;
+    vertical-align: top;
+    border-block-end: 1px solid var(--border-subtle);
+}
+
+.approval__table thead th {
+    font-size: var(--fs-overline);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    background: var(--bg-inset);
+}
+
+.approval__table tbody tr:last-child td {
+    border-block-end: none;
+}
+
+.approval__col-num {
+    text-align: end;
+}
+
+.approval__table th.approval__col-num {
+    text-align: end;
+}
+
+.approval__money {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.approval__absent {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Las dos acciones van en una línea. `app-row-actions` envuelve cuando no
+   le alcanza, y en una celda de tabla con ancho automático el algoritmo de
+   tabla le da su ancho mínimo (un botón): cada fila quedaba con los dos
+   botones apilados y 113 px de alto (medido a 1440). `min-width` en un `<td>`
+   no lo arregla —el algoritmo de tabla lo ignora—; lo que sí es no dejarlo
+   envolver acá. En móvil la tabla ya desplaza dentro de su contenedor. */
+.approval__actions app-row-actions {
+    flex-wrap: nowrap;
+    inline-size: max-content;
+}
+
+/* La cláusula y la justificación apiladas: una cláusula real es larga y en
+   línea partiría la fila. */
+.approval__reason {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    max-inline-size: 22rem;
+}
+
+.approval__clause {
+    white-space: normal;
+    text-align: start;
+    line-height: 1.25;
+}
+
+.approval__rationale {
+    margin: 0;
+    font-size: var(--fs-caption);
+    color: var(--text-secondary);
+    line-height: 1.35;
+}
+
+.approval__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--sp-3) var(--sp-4);
+    margin-block-start: var(--sp-6);
+    padding-block-start: var(--sp-4);
+    border-block-start: 1px solid var(--border-subtle);
+}
+
+.approval__footer app-alert {
+    flex-basis: 100%;
+}
+
+.approval__outcome {
+    margin: 0;
+    margin-inline-end: auto;
+    color: var(--text-primary);
+}
