@@ -12,8 +12,8 @@ import { PHARMACIES_AND_LABS } from '../fixtures/markdown-institutions.generated
 import { ordenes } from '../fixtures/clinica';
 import { vitrinas } from '../fixtures/comunidad';
 import { ESTADO, ESTUDIO, PRIORIDAD, displayDe } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES } from '../fixtures/personas';
-import { forbidden, notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
+import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
+import { conflict, forbidden, notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA, TENANT_LABORATORIO, TENANT_NAMES, type MockUser } from '../mock-session';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
 
@@ -39,11 +39,22 @@ export interface InformeSimulado {
   readonly lifecycleStatusConceptId: string;
   readonly currentVersionId: string;
   readonly released: boolean;
+  /**
+   * D-E: liberar con `patientVisibility: 'HIDDEN'` marca `released` igual
+   * (el laboratorio ya validó y cerró la versión) pero el paciente no la ve.
+   * `true` por defecto para todo lo sembrado, que siempre se liberó visible.
+   */
+  readonly patientVisible: boolean;
   readonly conclusionText: string;
   readonly issuedAt: string;
   readonly releasedAt: string | null;
   readonly createdAt: string;
   readonly custodianTenantId: string;
+}
+
+/** D-E: un informe cuenta para el paciente sólo si está liberado Y visible. */
+function esVisibleParaPaciente(r: InformeSimulado): boolean {
+  return r.released && r.patientVisible;
 }
 
 const CONCLUSIONES: Readonly<Record<string, string>> = {
@@ -67,6 +78,7 @@ export const informes = new Coleccion<InformeSimulado>(
       lifecycleStatusConceptId: ESTADO['ST-COMPLETED']!,
       currentVersionId: uuid(`report-version-${o.id}`),
       released: i % 4 !== 3,
+      patientVisible: true,
       conclusionText: CONCLUSIONES[displayDe(o.codeConceptId)] ?? 'Sin hallazgos de significación clínica.',
       issuedAt: iso(-3 - (i % 5), 14),
       releasedAt: i % 4 !== 3 ? iso(-2 - (i % 5), 9) : null,
@@ -79,13 +91,14 @@ interface CompartidoSimulado {
   readonly id: string;
   readonly reportId: string;
   readonly practitionerUserId: string;
+  readonly practitionerName?: string;
   readonly validFrom: string;
   readonly validTo: string | null;
   readonly active: boolean;
 }
 
 const compartidos = new Coleccion<CompartidoSimulado>(
-  informes.filtrar((r) => r.patientProfileId === PACIENTE.id && r.released).slice(0, 1).map((r) => ({ id: uuid(`share-${r.id}`), reportId: r.id, practitionerUserId: MEDICA.userId, validFrom: iso(-2), validTo: iso(28), active: true })),
+  informes.filtrar((r) => r.patientProfileId === PACIENTE.id && r.released).slice(0, 1).map((r) => ({ id: uuid(`share-${r.id}`), reportId: r.id, practitionerUserId: MEDICA.userId, practitionerName: MEDICA.displayName, validFrom: iso(-2), validTo: iso(28), active: true })),
 );
 
 const ordenesDeTrabajo = new Coleccion<{ id: string; workOrderNumber: string; laboratoryAccessionId: string; statusConceptId: string; priorityConceptId: string; assignedProfileId: string | null; scheduledAt: string; completedAt: string | null }>(
@@ -393,6 +406,25 @@ function construirEstudios(u: UnidadSimulada) {
   });
 }
 
+/**
+ * La preparación real que algún centro publicó para este estudio (CL-56).
+ *
+ * Antes «Mis órdenes» hardcodeaba dos casos (glucosa, perfil lipídico) con un
+ * texto propio, desconectado de lo que la ficha del centro (`estudiosDe`)
+ * publica para ese mismo estudio. Ahora busca la oferta real por concepto y
+ * usa su `preparationInstructions`; si ningún centro la publicó, no inventa
+ * una — ausencia de preparación no es lo mismo que «no hay que prepararse».
+ */
+function preparacionDelEstudio(codeConceptId: string): string | undefined {
+  for (const u of UNIDADES) {
+    const oferta = estudiosDe(u).find((e) => e.conceptId === codeConceptId);
+    if (typeof oferta?.preparationInstructions === 'string' && oferta.preparationInstructions !== '') {
+      return oferta.preparationInstructions;
+    }
+  }
+  return undefined;
+}
+
 function itemDeDirectorio(u: UnidadSimulada) {
   return {
     id: u.id,
@@ -691,9 +723,21 @@ export function registrarDiagnostico(router: MockRouter): void {
     };
   });
 
+  /**
+   * CL-56: una orden pendiente no tiene ningún estudio DICOM que mostrar —el
+   * `studyInstanceUid` sólo existe una vez que el equipo produjo la imagen
+   * (STOW-RS), y una orden RX/ECO/TAC/RMN sin completar no llegó a esa etapa.
+   * Antes se fabricaba un `studyInstanceUid` para toda orden que pidiera uno
+   * de estos cuatro estudios, estuviera o no completada.
+   */
   router.get('/diagnostics/patients/:id/imaging-studies', ({ params }) =>
     ordenes
-      .filtrar((o) => o.patientProfileId === params['id'] && [ESTUDIO['STUDY-ECO-ABD'], ESTUDIO['STUDY-RX-TORAX'], ESTUDIO['STUDY-TAC-CRANEO'], ESTUDIO['STUDY-RMN-RODILLA']].includes(o.codeConceptId))
+      .filtrar(
+        (o) =>
+          o.patientProfileId === params['id'] &&
+          o.statusConceptId === ESTADO['ST-COMPLETED'] &&
+          [ESTUDIO['STUDY-ECO-ABD'], ESTUDIO['STUDY-RX-TORAX'], ESTUDIO['STUDY-TAC-CRANEO'], ESTUDIO['STUDY-RMN-RODILLA']].includes(o.codeConceptId),
+      )
       .map((o) => ({ id: uuid(`imaging-${o.id}`), patientProfileId: o.patientProfileId, serviceRequestId: o.id, statusConceptId: o.statusConceptId, studyInstanceUid: `1.2.826.0.1.${Math.abs(o.id.charCodeAt(0) * 7919)}` })),
   );
 
@@ -707,11 +751,47 @@ export function registrarDiagnostico(router: MockRouter): void {
       .slice(Number(query.get('offset') ?? 0), Number(query.get('offset') ?? 0) + (Number(query.get('limit') ?? 50) || 50));
   });
 
+  /**
+   * D-E (BR-17/CV-02): el **único** camino de liberación en el mock, igual que
+   * en el backend real. Antes no había ningún `POST .../versions` ni
+   * `.../release`: la cola se acesionaba y ahí se cortaba, así que liberar en
+   * mockup no hacía aparecer nada en «Mis resultados» — el mismo síntoma que
+   * CV-02 describe contra la API real. El mock simplifica el modelo de
+   * versiones del backend (una versión por informe, no varias) porque ningún
+   * consumidor del simulador necesita todavía enmendar una versión anterior.
+   */
+  router.post('/diagnostics/reports/:reportId/versions', (request) => {
+    const informe = informes.get(request.params['reportId']!);
+    if (informe === undefined) return notFound('Informe no encontrado');
+    const datos = cuerpo<{ conclusionText?: string }>(request);
+    const actualizado = informes.actualizar(informe.id, {
+      conclusionText: datos.conclusionText ?? informe.conclusionText,
+    })!;
+    return { status: 201, body: { id: actualizado.currentVersionId, status: ESTADO['ST-PENDING']! } };
+  });
+
+  router.post('/diagnostics/reports/:reportId/versions/:versionId/release', (request) => {
+    const informe = informes.get(request.params['reportId']!);
+    if (informe === undefined || informe.currentVersionId !== request.params['versionId']) {
+      return notFound('Versión de informe no encontrada');
+    }
+    if (informe.released) {
+      return conflict('La versión ya fue liberada', { versionId: informe.currentVersionId });
+    }
+    const datos = cuerpo<{ patientVisibility?: 'VISIBLE' | 'HIDDEN' }>(request);
+    const actualizado = informes.actualizar(informe.id, {
+      released: true,
+      releasedAt: ahora(),
+      patientVisible: datos.patientVisibility !== 'HIDDEN',
+    })!;
+    return { status: 200, body: { id: actualizado.currentVersionId, status: ESTADO['ST-PUBLISHED']! } };
+  });
+
   /* ---- resultados de la persona ------------------------------------------- */
 
   router.get('/diagnostic-results/me', (request) => {
     const id = pacienteDeSesion(request);
-    const items = informes.filtrar((r) => r.patientProfileId === id && r.released).map(resultadoPropio);
+    const items = informes.filtrar((r) => r.patientProfileId === id && esVisibleParaPaciente(r)).map(resultadoPropio);
     return { patientProfileId: id, items, limit: Number(request.query.get('limit') ?? 50) || 50, truncated: false };
   });
 
@@ -730,9 +810,9 @@ export function registrarDiagnostico(router: MockRouter): void {
         statusConceptId: o.statusConceptId,
         priorityConceptId: o.priorityConceptId,
         createdAt: o.createdAt,
-        preparationInstructions: o.codeConceptId === ESTUDIO['STUDY-GLUCOSA'] || o.codeConceptId === ESTUDIO['STUDY-PERFIL-LIPIDICO'] ? 'Ayuno de 8 a 12 horas. Podés tomar agua.' : undefined,
-        hasReleasedResult: informe?.released ?? false,
-        reportId: informe?.released ? informe.id : undefined,
+        preparationInstructions: preparacionDelEstudio(o.codeConceptId),
+        hasReleasedResult: informe !== undefined && esVisibleParaPaciente(informe),
+        reportId: informe !== undefined && esVisibleParaPaciente(informe) ? informe.id : undefined,
       };
     });
     return { patientProfileId: id, items, limit: 50, truncated: false };
@@ -740,7 +820,7 @@ export function registrarDiagnostico(router: MockRouter): void {
 
   router.get('/diagnostic-results/me/:id', (request) => {
     const r = informes.get(request.params['id']!);
-    if (r === undefined || !r.released) return notFound('Resultado no encontrado');
+    if (r === undefined || !esVisibleParaPaciente(r)) return notFound('Resultado no encontrado');
     if (r.patientProfileId !== pacienteDeSesion(request) && request.user?.practitionerProfileId === undefined) return forbidden();
     return resultadoPropio(r);
   });
@@ -754,7 +834,7 @@ export function registrarDiagnostico(router: MockRouter): void {
    */
   router.get('/diagnostic-results/me/:id/files/:fileId/content', (request) => {
     const r = informes.get(request.params['id']!);
-    if (r === undefined || !r.released || r.patientProfileId !== pacienteDeSesion(request)) {
+    if (r === undefined || !esVisibleParaPaciente(r) || r.patientProfileId !== pacienteDeSesion(request)) {
       return notFound('Archivo no encontrado');
     }
     if (!resultadoPropio(r).files.some((f) => f.fileId === request.params['fileId'])) {
@@ -771,9 +851,25 @@ export function registrarDiagnostico(router: MockRouter): void {
 
   router.get('/diagnostic-results/me/:id/shares', ({ params }) => compartidos.filtrar((s) => s.reportId === params['id']));
 
+  /**
+   * CL-48/CL-50: el cuerpo trae `practitionerProfileId` (el mismo id que ya
+   * expone `GET /authz/me/access`), nunca una cuenta tipeada a mano. El mock
+   * resuelve el nombre por el mismo camino que esa lectura
+   * (`profesionalPorId`), así que «Compartido con» muestra el nombre y no un
+   * uuid. `reason` se ignora si llega: el contrato real ya no lo acepta.
+   */
   router.post('/diagnostic-results/me/:id/shares', (request) => {
-    const datos = cuerpo<{ practitionerUserId: string; validUntil: string }>(request);
-    const nuevo = compartidos.agregar({ id: nuevoId('share'), reportId: request.params['id']!, practitionerUserId: datos.practitionerUserId ?? MEDICA.userId, validFrom: ahora(), validTo: datos.validUntil ?? iso(30), active: true });
+    const datos = cuerpo<{ practitionerProfileId?: string; validUntil: string }>(request);
+    const profesional = datos.practitionerProfileId === undefined ? undefined : profesionalPorId(datos.practitionerProfileId);
+    const nuevo = compartidos.agregar({
+      id: nuevoId('share'),
+      reportId: request.params['id']!,
+      practitionerUserId: profesional?.userId ?? MEDICA.userId,
+      practitionerName: profesional?.displayName ?? MEDICA.displayName,
+      validFrom: ahora(),
+      validTo: datos.validUntil ?? iso(30),
+      active: true,
+    });
     return { status: 201, body: nuevo };
   });
 
@@ -812,7 +908,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       .filter((u) => studyCode === null || estudiosDe(u).some((e) => e.code === studyCode || contiene(e.name, studyCode)))
       .filter((u) => (!home || u.home) && (!walkIn || u.walkIn) && (!external || u.external))
       .filter((u) => u.rating >= minRating)
-      .map((u) => ({ ...itemDeDirectorio(u), tenantId: u.tenantId, rating: u.ratingCount === 0 ? null : u.rating, ratingCount: u.ratingCount, minAmount: Math.min(...estudiosDe(u).map((e) => Number(e.prices[0]!.amount))), cities: ciudadesDe(u) }))
+      .map((u) => ({ ...itemDeDirectorio(u), tenantId: u.tenantId, rating: u.ratingCount === 0 ? null : u.rating, ratingCount: u.ratingCount, minAmount: Math.min(...estudiosDe(u).map((e) => Number(e.prices[0]!.amount))), minAmountCurrency: estudiosDe(u)[0]?.prices[0]?.currency.code ?? null, cities: ciudadesDe(u) }))
       .filter((u) => u.minAmount === null || u.minAmount <= maxAmount);
     return { items: todos.slice(offset, offset + limit), total: todos.length, limit, offset };
   });
