@@ -154,3 +154,39 @@
   justify-content: flex-end;
   margin-block-end: var(--sp-3);
 }
+
+/* «Enfermedades activas» (C3): una tarjeta por enfermedad, dos columnas desde
+   tablet para no dejar la lista angosta y larga en pantallas anchas. */
+.expediente__activas-titulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.expediente__activas-lista {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.expediente__activas-item {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background-color: var(--bg-surface-alt);
+  border-radius: var(--r-md);
+}
+
+.expediente__activas-nombre {
+  margin: 0;
+  font-weight: 600;
+}
+
+@media (min-width: 48rem) {
+  .expediente__activas-lista {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
