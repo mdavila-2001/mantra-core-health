@@ -1166,8 +1166,10 @@ export const APP_SECTIONS: readonly AppSection[] = [
   {
     // ID-24 / CV-22: cambiar la contraseña y ver o cerrar las sesiones. De
     // cualquier persona con sesión (`ANY_ROLE`); la API no exige rol y resuelve
-    // todo por el `id` del token. Fuera del menú lateral no: es donde la gente
-    // busca «cambiar mi contraseña».
+    // todo por el `id` del token. Fuera del menú lateral —al médico le
+    // desaparece «Mi cuenta» a propósito, y una entrada más lo traería de
+    // vuelta—: se entra por el menú de la cuenta, en el encabezado.
+    fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/security',
     label: 'Seguridad',
     group: 'Mi cuenta',

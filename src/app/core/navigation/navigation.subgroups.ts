@@ -282,7 +282,15 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     group: 'Mi cuenta',
     icon: 'patients',
     // Quién soy para la plataforma, y cómo lo demuestro.
-    paths: ['my-account', 'my-account/identity', 'my-account/dependents'],
+    paths: [
+      'my-account',
+      'my-account/identity',
+      'my-account/dependents',
+      'my-account/security',
+      // Quién ve mi historia y qué consentí: también es «quién soy» para la plataforma.
+      'my-account/privacy',
+      'my-account/clinical-access',
+    ],
   },
   {
     label: 'Mis gestiones',

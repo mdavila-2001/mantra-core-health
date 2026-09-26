@@ -514,6 +514,16 @@
                   <span class="caption">{{ rolesLegibles() }}</span>
                 }
               </p>
+              <!-- ID-24: cambiar la contraseña y cerrar sesiones. Es de cualquier
+                   persona con sesión; vive acá y no en el menú lateral. -->
+              <a
+                class="app-menu-item"
+                role="menuitem"
+                routerLink="/my-account/security"
+                data-testid="header-seguridad"
+              >
+                Seguridad de la cuenta
+              </a>
               <button
                 class="app-menu-item"
                 type="button"
