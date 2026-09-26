@@ -1,6 +1,7 @@
 import { ESTADO, TIPO_SOCIETARIO } from '../fixtures/conceptos';
 import { pacientes, type PacienteSimulado } from '../fixtures/personas';
 import { conflict, notFound, reply, unauthorized, type MockRouter } from '../mock-router';
+import type { MockUser as CuentaSimulada } from '../mock-session';
 import {
   buscarUsuario,
   emitirAccessToken,
@@ -111,7 +112,87 @@ resolverCuentasDePacientes(({ identificador, id, key }) => {
   return p === undefined ? undefined : cuentaDe(p);
 });
 
+/* ---- seguridad de la propia cuenta (ID-24) --------------------------------- */
+
+interface SesionSimulada {
+  readonly id: string;
+  readonly createdAt: string;
+  readonly expiresAt: string;
+  readonly ip: string;
+  current: boolean;
+}
+
+/**
+ * Con qué contraseña entró cada cuenta en esta sesión del simulador: el login
+ * acepta cualquiera, así que «la actual» es la última con la que se entró. Sin
+ * registro (sesión restaurada por refresh) se acepta la que se escriba.
+ */
+const contrasenaVigente = new Map<string, string>();
+
+const sesionesPorUsuario = new Map<string, SesionSimulada[]>();
+
+/** Las sesiones abiertas de una cuenta: la actual y otra desde otro equipo. */
+function sesionesDe(user: CuentaSimulada): SesionSimulada[] {
+  const existentes = sesionesPorUsuario.get(user.id);
+  if (existentes !== undefined) return existentes;
+  const nuevas: SesionSimulada[] = [
+    { id: uuid(`sesion-${user.key}-actual`), createdAt: iso(0, 9), expiresAt: iso(30, 9), ip: '190.129.10.4', current: true },
+    { id: uuid(`sesion-${user.key}-otra`), createdAt: iso(-2, 18), expiresAt: iso(28, 18), ip: '181.115.22.87', current: false },
+  ];
+  sesionesPorUsuario.set(user.id, nuevas);
+  return nuevas;
+}
+
+function unprocessable(message: string, reason: string) {
+  return reply(422, {
+    statusCode: 422,
+    code: 'PRECONDITION_FAILED',
+    message,
+    error: 'Unprocessable Entity',
+    details: { reason },
+  });
+}
+
 export function registrarAuth(router: MockRouter): void {
+  router.post('/iam/auth/change-password', ({ body, user }) => {
+    if (user === null) return unauthorized('Sesión vencida');
+    const datos = cuerpo<{ currentPassword?: string; newPassword?: string }>({ body });
+    const vigente = contrasenaVigente.get(user.id);
+    if ((datos.currentPassword ?? '') === '' || (vigente !== undefined && datos.currentPassword !== vigente)) {
+      return unprocessable('La contraseña actual no coincide', 'CURRENT_PASSWORD_INVALID');
+    }
+    if (datos.currentPassword === datos.newPassword) {
+      return unprocessable('La contraseña nueva tiene que ser distinta de la actual', 'PASSWORD_UNCHANGED');
+    }
+    const sesiones = sesionesDe(user);
+    const otras = sesiones.filter((s) => !s.current);
+    sesionesPorUsuario.set(user.id, sesiones.filter((s) => s.current));
+    contrasenaVigente.set(user.id, datos.newPassword ?? '');
+    return { revokedSessions: otras.length };
+  });
+
+  router.get('/iam/me/sessions', ({ user }) => {
+    if (user === null) return unauthorized('Sesión vencida');
+    return sesionesDe(user);
+  });
+
+  router.post('/iam/me/sessions/:id/revoke', ({ params, user }) => {
+    if (user === null) return unauthorized('Sesión vencida');
+    const sesiones = sesionesDe(user);
+    if (!sesiones.some((s) => s.id === params['id'])) {
+      return notFound('Sesión no encontrada');
+    }
+    sesionesPorUsuario.set(user.id, sesiones.filter((s) => s.id !== params['id']));
+    return { revoked: true };
+  });
+
+  router.post('/iam/auth/logout-all', ({ user }) => {
+    if (user === null) return unauthorized('Sesión vencida');
+    const cantidad = sesionesDe(user).length;
+    sesionesPorUsuario.set(user.id, []);
+    return { revokedSessions: cantidad };
+  });
+
   router.post('/iam/auth/login', ({ body }) => {
     const datos = cuerpo<LoginBody>({ body });
     const identificador = datos.email ?? datos.nationalId ?? '';
@@ -119,6 +200,7 @@ export function registrarAuth(router: MockRouter): void {
     if (user === undefined || (datos.password ?? '') === '') {
       return unauthorized('Credenciales inválidas. Probá con una de las cuentas de prueba.');
     }
+    contrasenaVigente.set(user.id, datos.password ?? '');
     return sesionDe(user);
   });
 

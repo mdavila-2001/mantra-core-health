@@ -6,7 +6,7 @@ import type { TenantTypeCode } from '../data-access/directory/directory.types';
 
     El token de acceso es un JWT «de utilería»: tres segmentos, con un payload
     real que `decodeAccessToken` lee tal cual (sub, roles, tenants, name,
-    tenantNames, tenantTypes, ownTenantId, pid, hpid, exp). La firma es
+    tenantNames, tenantTypes, scopedRoles, pid, hpid, exp). La firma es
     decorativa: nadie la verifica en esta rama.
     ========================================================================== */
 
@@ -20,8 +20,13 @@ export interface MockUser {
   readonly roles: readonly string[];
   readonly tenants: readonly string[];
   readonly tenantNames: Readonly<Record<string, string>>;
-  /** Su organización propia, la que se activa por defecto («Mi consultorio»). */
-  readonly ownTenantId?: string;
+  /**
+   * Roles con ámbito de organización, por tenant: el claim `scopedRoles` que firma
+   * la API (un código que figura acá sólo vale en esos tenants; uno que no, es
+   * global). El simulador firma exactamente las claves de la API: no hay
+   * `ownTenantId`.
+   */
+  readonly scopedRoles?: Readonly<Record<string, readonly string[]>>;
   readonly patientProfileId?: string;
   readonly practitionerProfileId?: string;
   readonly personId: string;
@@ -118,11 +123,13 @@ export const MOCK_USERS: readonly MockUser[] = [
     nationalId: '4567890',
     displayName: 'Dra. Valeria Rojas Mendoza',
     roles: ['PRACTITIONER', 'CLINICIAN', 'SCHEDULING_ADMIN'],
-    // «Mi consultorio» primero y como organización propia: entra ahí sin pasar
-    // por el selector, y las clínicas quedan a un cambio de distancia.
+    // Tres organizaciones: elige la primera vez y el dispositivo la recuerda
+    // (`AuthService`), como con la API real, que no firma ninguna «propia».
     tenants: [TENANT_CONSULTORIO, TENANT_CLINICA, TENANT_HOSPITAL],
     tenantNames: { ...TENANT_NAMES, [TENANT_CONSULTORIO]: 'Mi consultorio' },
-    ownTenantId: TENANT_CONSULTORIO,
+    // La administración de agenda se la dio la clínica, no su consultorio: en
+    // las otras organizaciones ese rol no vale (misma regla que `RolesGuard`).
+    scopedRoles: { [TENANT_CLINICA]: ['SCHEDULING_ADMIN'] },
     practitionerProfileId: IDS.medica.practitionerProfileId,
     personId: IDS.medica.personId,
   },
@@ -270,7 +277,7 @@ export function emitirAccessToken(user: MockUser, ahora = Date.now()): string {
       tenants: user.tenants,
       tenantNames: user.tenantNames,
       ...(Object.keys(tenantTypes).length === 0 ? {} : { tenantTypes }),
-      ...(user.ownTenantId === undefined ? {} : { ownTenantId: user.ownTenantId }),
+      ...(user.scopedRoles === undefined ? {} : { scopedRoles: user.scopedRoles }),
       ...(user.patientProfileId === undefined ? {} : { pid: user.patientProfileId }),
       ...(user.practitionerProfileId === undefined ? {} : { hpid: user.practitionerProfileId }),
       iat: Math.floor(ahora / 1000),
