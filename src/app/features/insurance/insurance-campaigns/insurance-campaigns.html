@@ -1,0 +1,318 @@
+<app-page-header
+  title="Campañas preventivas"
+  subtitle="Prevención junto a laboratorios e importadoras: tus afiliados se cuidan a tiempo y el seguro no eroga por lo evitable."
+  [breadcrumbs]="breadcrumbs()"
+>
+  <button
+    app-button
+    page-actions
+    variant="primary"
+    type="button"
+    data-testid="campaign-new"
+    (clicked)="openForm()"
+  >
+    Nueva campaña
+  </button>
+</app-page-header>
+
+<div class="campaigns">
+  @if (showForm()) {
+    <!-- Un solo formulario, en una tarjeta centrada y de ancho completo. -->
+    <app-card variant="outlined" padding="lg" class="campaigns__form">
+    <form
+      class="campaigns__form-body"
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      novalidate
+      data-testid="campaign-form"
+    >
+      @if (formError(); as message) {
+        <app-alert appAnuncio tone="error" data-testid="campaign-form-error">{{ message }}</app-alert>
+      }
+
+      <app-form-section
+        legend="Nueva campaña preventiva"
+        description="Aparece en el panel de todos tus afiliados con cobertura vigente. La patología que elijas describe la campaña: no filtra afiliados por su historia clínica."
+      >
+        <app-form-field
+          label="Código"
+          hint="Único en tu aseguradora. Mayúsculas, números y guiones, por ejemplo CMP-CARDIO-2026."
+          [required]="true"
+          [errorMessage]="
+            codeConflict()
+              ? 'Ya tenés una campaña con este código. Probá con otro.'
+              : showError(form.controls.code)
+                ? 'Usá de 3 a 40 caracteres: mayúsculas, números y guiones (por ejemplo CMP-CARDIO-2026).'
+                : ''
+          "
+        >
+          <app-input formControlName="code" type="text" testId="campaign-form-code" />
+        </app-form-field>
+
+        <app-form-field
+          label="Título"
+          [required]="true"
+          [errorMessage]="
+            showError(form.controls.title) ? 'Escribí el título, de 3 a 200 caracteres.' : ''
+          "
+        >
+          <app-input formControlName="title" type="text" testId="campaign-form-title" />
+        </app-form-field>
+
+        <app-form-field
+          label="Descripción"
+          hint="Qué incluye el chequeo y a quién le conviene. Opcional."
+          [errorMessage]="
+            showError(form.controls.description) ? 'La descripción admite hasta 2000 caracteres.' : ''
+          "
+        >
+          <app-input formControlName="description" type="text" testId="campaign-form-description" />
+        </app-form-field>
+
+        <app-form-field label="Tipo de campaña" [required]="true">
+          <app-select
+            formControlName="campaignType"
+            [options]="formTypeOptions"
+            ariaLabel="Tipo de campaña"
+            data-testid="campaign-form-type"
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="Patología que previene (CIE-10)"
+          hint="Opcional, por ejemplo I10 para hipertensión. Sólo describe la campaña."
+          [errorMessage]="
+            showError(form.controls.targetConditionCode) ? 'El código admite hasta 16 caracteres.' : ''
+          "
+        >
+          <app-input
+            formControlName="targetConditionCode"
+            type="text"
+            testId="campaign-form-icd10"
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="Copago bonificado (%)"
+          hint="100 significa copago Bs. 0: el afiliado no paga nada."
+          [required]="true"
+          [errorMessage]="
+            showError(form.controls.copayBonusPercentage)
+              ? 'Escribí un porcentaje entre 0 y 100, con hasta dos decimales.'
+              : ''
+          "
+        >
+          <app-input
+            formControlName="copayBonusPercentage"
+            type="number"
+            testId="campaign-form-bonus"
+          />
+        </app-form-field>
+
+        <app-form-field label="Vigente desde" [required]="true">
+          <app-input formControlName="validFrom" type="date" testId="campaign-form-valid-from" />
+        </app-form-field>
+
+        <app-form-field
+          label="Vigente hasta"
+          [required]="true"
+          [errorMessage]="
+            form.hasError('dateOrder') &&
+            (form.controls.validTo.touched || form.controls.validTo.dirty ||
+              form.controls.validFrom.touched || form.controls.validFrom.dirty)
+              ? 'La fecha final no puede ser anterior a la inicial.'
+              : ''
+          "
+        >
+          <app-input formControlName="validTo" type="date" testId="campaign-form-valid-to" />
+        </app-form-field>
+      </app-form-section>
+
+      <app-form-section
+        legend="Aliados"
+        description="Quién financia la campaña (importadora o fabricante) y dónde se atiende el afiliado (laboratorio, farmacia o centro)."
+      >
+        <div formArrayName="partners" class="campaigns__partners">
+          @for (group of partners.controls; track group; let i = $index) {
+            <div class="campaigns__partner" [formGroupName]="i" data-testid="campaign-form-partner">
+              <app-form-field label="Rol">
+                <app-select
+                  formControlName="role"
+                  [options]="partnerRoleOptions"
+                  ariaLabel="Rol del aliado"
+                  [attr.data-testid]="'campaign-form-partner-role-' + i"
+                />
+              </app-form-field>
+
+              <app-form-field label="Tipo">
+                <app-select
+                  formControlName="type"
+                  [options]="partnerTypeOptions"
+                  ariaLabel="Tipo de aliado"
+                  [attr.data-testid]="'campaign-form-partner-type-' + i"
+                />
+              </app-form-field>
+
+              <app-form-field
+                label="Nombre"
+                [required]="true"
+                [errorMessage]="
+                  showError(group.controls.name) ? 'Escribí el nombre del aliado.' : ''
+                "
+              >
+                <app-input
+                  formControlName="name"
+                  type="text"
+                  [testId]="'campaign-form-partner-name-' + i"
+                />
+              </app-form-field>
+
+              <button
+                app-button
+                type="button"
+                variant="secondary"
+                class="campaigns__partner-remove"
+                [disabled]="partners.length === 1"
+                [attr.data-testid]="'campaign-form-partner-remove-' + i"
+                (clicked)="removePartner(i)"
+              >
+                Quitar
+              </button>
+            </div>
+          }
+        </div>
+
+        <button
+          app-button
+          type="button"
+          variant="secondary"
+          data-testid="campaign-form-add-partner"
+          (clicked)="addPartner()"
+        >
+          Sumar otro aliado
+        </button>
+      </app-form-section>
+
+      <app-checkbox
+        formControlName="activate"
+        label="Activar al crear: tus afiliados la ven desde ya"
+        data-testid="campaign-form-activate"
+      />
+
+      <app-form-actions
+        data-testid="campaign-form-actions"
+        submitLabel="Guardar campaña"
+        cancelLabel="Cancelar"
+        [pending]="submitting()"
+        (submitted)="submit()"
+        (cancelled)="cancelForm()"
+      />
+    </form>
+    </app-card>
+  }
+
+  <div class="campaigns__filters">
+    <app-form-field label="Tipo">
+      <app-select
+        [value]="typeFilter()"
+        (valueChange)="setFilter('type', $event)"
+        [options]="typeOptions"
+        ariaLabel="Filtrar por tipo de campaña"
+        data-testid="campaign-filter-type"
+      />
+    </app-form-field>
+
+    <app-form-field label="Estado">
+      <app-select
+        [value]="statusFilter()"
+        (valueChange)="setFilter('status', $event)"
+        [options]="statusOptions"
+        ariaLabel="Filtrar por estado de campaña"
+        data-testid="campaign-filter-status"
+      />
+    </app-form-field>
+  </div>
+
+  <app-data-table
+    data-testid="campaigns-table"
+    [state]="results()"
+    [columns]="columns()"
+    [trackBy]="trackById"
+    [rowLabel]="rowName"
+    caption="Campañas preventivas de tu aseguradora"
+    [cursor]="cursor()"
+    (cursorChanged)="move($event)"
+    (retry)="reload()"
+  />
+</div>
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+<ng-template #titleCell let-campaign>
+  <span class="campaigns__title" [attr.data-testid]="'campaign-row-' + campaign.code">
+    <!-- El estado va en texto, no sólo en color: el `Badge` nunca es la única señal. -->
+    <app-badge
+      class="campaigns__state"
+      [variant]="statusTone(campaign)"
+      [value]="statusLabel(campaign)"
+      [attr.data-testid]="'campaign-status-' + campaign.code"
+    />
+    <strong>{{ campaign.title }}</strong>
+    <span class="campaigns__code">{{ campaign.code }}</span>
+    @if (campaign.targetCondition; as condition) {
+      <span class="campaigns__condition">Previene: {{ condition.display ?? condition.code }}</span>
+    }
+    <!-- La columna «Vigencia» se oculta en pantallas angostas: la fecha final
+         no puede perderse con ella. -->
+    <span class="campaigns__meta">
+      {{ typeLabel(campaign.campaignType) }} · Copago bonificado {{ bonusText(campaign.copayBonusPercentage) }}
+    </span>
+    <span class="campaigns__until">Hasta {{ campaign.validTo | date: 'dd/MM/yyyy' }}</span>
+  </span>
+</ng-template>
+
+<ng-template #typeCell let-campaign>
+  <span>{{ typeLabel(campaign.campaignType) }}</span>
+</ng-template>
+
+<ng-template #bonusCell let-campaign>
+  <span class="campaigns__bonus">{{ bonusText(campaign.copayBonusPercentage) }}</span>
+</ng-template>
+
+<ng-template #validityCell let-campaign>
+  <span class="campaigns__validity">
+    {{ campaign.validFrom | date: 'dd/MM/yyyy' }} al {{ campaign.validTo | date: 'dd/MM/yyyy' }}
+  </span>
+</ng-template>
+
+<ng-template #actionsCell let-campaign>
+  @if (confirmingId() === campaign.id) {
+    <span class="campaigns__confirm" role="group" [attr.aria-label]="'Finalizar ' + campaign.code">
+      <span>¿Finalizar? No se puede reabrir.</span>
+      <button
+        app-button
+        type="button"
+        variant="primary"
+        [attr.data-testid]="'campaign-confirm-' + campaign.code"
+        (clicked)="changeStatus(campaign, 'EXPIRED')"
+      >
+        Sí, finalizar
+      </button>
+      <button app-button type="button" variant="ghost" (clicked)="cancelConfirmation()">No</button>
+    </span>
+  } @else {
+    <span class="campaigns__actions">
+      @for (action of actionsFor(campaign); track action.target) {
+        <button
+          app-button
+          type="button"
+          variant="secondary"
+          [disabled]="busyId() !== null"
+          [attr.data-testid]="'campaign-action-' + action.target.toLowerCase() + '-' + campaign.code"
+          (clicked)="requestAction(campaign, action.target)"
+        >
+          {{ action.label }}
+        </button>
+      }
+    </span>
+  }
+</ng-template>

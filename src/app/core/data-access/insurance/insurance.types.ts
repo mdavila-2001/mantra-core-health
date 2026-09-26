@@ -484,3 +484,134 @@ export interface ClaimDetail {
   readonly settlement: ClaimSettlementBreakdown;
   readonly eob: ClaimEob | null;
 }
+
+/* ============================================================================
+   Campañas preventivas de la aseguradora (Tarea 4 · M-06)
+
+   Proceso 4 del cliente, «Módulo de promociones»: la aseguradora publica
+   campañas de prevención junto a laboratorios e importadoras y el afiliado las
+   ve en su portal. Contrato de la API:
+   `docs/contracts/insurer-preventive-campaigns.md`.
+
+   La patología (CIE-10) sólo DESCRIBE lo que la campaña previene: nunca segmenta
+   afiliados por su historia clínica (decisión D4).
+   ========================================================================== */
+
+export type CampaignType =
+  | 'LABORATORY'
+  | 'PHARMACY'
+  | 'DIAGNOSTIC_IMAGING'
+  | 'VACCINATION';
+
+export type CampaignStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'EXPIRED';
+
+/** A qué estados puede llevar un operador una campaña (nunca `DRAFT`). */
+export type CampaignTargetStatus = Exclude<CampaignStatus, 'DRAFT'>;
+
+/** `SPONSOR`: importadora o fabricante que financia. `PROVIDER`: dónde se atiende. */
+export type CampaignPartnerRole = 'SPONSOR' | 'PROVIDER';
+
+export type CampaignPartnerType =
+  | 'IMPORTER'
+  | 'MANUFACTURER'
+  | 'LABORATORY'
+  | 'PHARMACY'
+  | 'MEDICAL_CENTER';
+
+/** La patología que la campaña previene, resuelta desde el catálogo CIE-10. */
+export interface CampaignCondition {
+  readonly code: string;
+  readonly display: string | null;
+}
+
+/** Un aliado tal como lo ve la aseguradora. */
+export interface CampaignPartner {
+  readonly id: string;
+  readonly role: CampaignPartnerRole;
+  readonly type: CampaignPartnerType;
+  readonly name: string;
+  readonly networkProviderMembershipId: string | null;
+}
+
+/** Una campaña tal como la ve la aseguradora que la creó. */
+export interface InsuranceCampaign {
+  readonly id: string;
+  readonly code: string;
+  readonly title: string;
+  readonly description: string | null;
+  readonly campaignType: CampaignType;
+  readonly status: CampaignStatus;
+  readonly targetCondition: CampaignCondition | null;
+  /** 0..100. `100` significa copago Bs. 0. */
+  readonly copayBonusPercentage: number;
+  /** Día civil, a medianoche local (ver `maybeDateOnly`). */
+  readonly validFrom: Date;
+  readonly validTo: Date;
+  readonly activatedAt: Date | null;
+  readonly partners: readonly CampaignPartner[];
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+}
+
+/** Filtros y paginación del listado administrativo. */
+export interface CampaignQuery {
+  readonly type?: CampaignType;
+  readonly status?: CampaignStatus;
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+/** Página del listado, paginada por cursor opaco. */
+export interface CampaignPage {
+  readonly items: readonly InsuranceCampaign[];
+  /** Se reenvía tal cual; no se interpreta. */
+  readonly nextCursor: string | null;
+}
+
+/** Un aliado al crear la campaña. */
+export interface CreateCampaignPartnerInput {
+  readonly role: CampaignPartnerRole;
+  readonly type: CampaignPartnerType;
+  readonly name: string;
+}
+
+/** Cuerpo de `POST /insurance-campaigns`. Las fechas viajan como `AAAA-MM-DD`. */
+export interface CreateCampaignInput {
+  readonly code: string;
+  readonly title: string;
+  readonly description?: string;
+  readonly campaignType: CampaignType;
+  /** Código CIE-10, p. ej. `I10`. Sólo descriptivo. */
+  readonly targetConditionCode?: string;
+  readonly copayBonusPercentage: number;
+  readonly validFrom: string;
+  readonly validTo: string;
+  readonly partners: readonly CreateCampaignPartnerInput[];
+  /** Si es `true`, la campaña nace activa en vez de en borrador. */
+  readonly activate?: boolean;
+}
+
+/** Aliado tal como lo ve el afiliado: sin ningún identificador interno. */
+export interface PatientCampaignPartner {
+  readonly role: CampaignPartnerRole;
+  readonly type: CampaignPartnerType;
+  readonly name: string;
+}
+
+/**
+ * Una campaña vigente para el afiliado. Sólo llegan campañas activas, dentro de
+ * su vigencia y de la aseguradora de una cobertura vigente propia.
+ */
+export interface PatientCampaign {
+  readonly id: string;
+  readonly code: string;
+  readonly title: string;
+  readonly description: string | null;
+  readonly campaignType: CampaignType;
+  readonly targetCondition: CampaignCondition | null;
+  readonly copayBonusPercentage: number;
+  readonly validFrom: Date;
+  readonly validTo: Date;
+  readonly carrierName: string;
+  readonly partners: readonly PatientCampaignPartner[];
+}

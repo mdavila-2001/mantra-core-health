@@ -208,6 +208,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'administration/brokers',
       'administration/insurance-claims',
       'administration/insurance-analytics',
+      'administration/insurance-campaigns',
     ],
   },
   {

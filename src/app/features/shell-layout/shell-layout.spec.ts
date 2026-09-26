@@ -852,6 +852,8 @@ describe('ShellLayout', () => {
         '/messaging',
         '/administration/insurance',
         '/administration/insurance-analytics',
+        // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
+        '/administration/insurance-campaigns',
         '/administration/my-organization',
       ]);
       // Un solo dominio PLEGABLE («Administración»): «General» tiene

@@ -664,11 +664,13 @@ describe('NavigationService', () => {
         '/messaging',
         '/administration/insurance',
         '/administration/insurance-analytics',
+        // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
+        '/administration/insurance-campaigns',
         '/administration/my-organization',
       ]);
       // Dos dominios en dev (uno en mockup, donde General ya no tiene nada
       // que ofrecerle): «General» sólo con lo que ningún carril apagó
-      // todavía, y «Administración» con las tres de seguros. Sin «Mi
+      // todavía, y «Administración» con las cuatro de seguros. Sin «Mi
       // cuenta» (el autoservicio del paciente), que es lo que el pedido
       // señalaba.
       expect(service.menu().map((grupo) => grupo.label)).toEqual(['General', 'Administración']);

@@ -247,6 +247,7 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
       // la aparta `hiddenFor: ['PATIENT', 'PRACTITIONER']` en el registro de
       // navegación, no este archivo.
       'administration/insurance-analytics',
+      'administration/insurance-campaigns',
       'administration/my-organization',
       'administration/medical-organization',
       'administration/accounting',

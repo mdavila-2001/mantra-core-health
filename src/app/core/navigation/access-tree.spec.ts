@@ -318,6 +318,8 @@ describe('buildAccessTree', () => {
     const organizacion = arbol.find((zona) => zona.area.id === 'organizacion');
     expect(organizacion?.sections.map((s) => s.path)).toEqual([
       'administration/insurance-analytics',
+      // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
+      'administration/insurance-campaigns',
       'administration/my-organization',
       'administration/insurance',
     ]);

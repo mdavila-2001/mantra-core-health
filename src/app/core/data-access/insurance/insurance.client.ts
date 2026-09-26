@@ -33,6 +33,13 @@ import type {
   UpdatePlanBenefitInput,
   UpdatePlanBenefitRulesInput,
   UpdatePlanPremiumInput,
+  CampaignCondition,
+  CampaignPage,
+  CampaignQuery,
+  CampaignTargetStatus,
+  CreateCampaignInput,
+  InsuranceCampaign,
+  PatientCampaign,
 } from './insurance.types';
 
 /* ---- formas de transporte -------------------------------------------------
@@ -355,6 +362,91 @@ export class InsuranceClient {
     );
   }
 
+  /**
+   * `GET /insurance-campaigns` — las campañas preventivas de la aseguradora
+   * activa, de la más nueva a la más vieja, con cursor opaco.
+   *
+   * Los filtros vacíos se descartan: un `status=''` llegaría al servidor como
+   * cadena vacía y reventaría su `@IsIn()` con un 400 que la pantalla no
+   * provocó a propósito.
+   *
+   * @param query - Filtros por tipo y estado, y cursor de continuación.
+   * @returns La página, con el cursor de la siguiente.
+   */
+  listCampaigns(query: CampaignQuery = {}): Observable<CampaignPage> {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value === undefined || value === null || value === '') continue;
+      params = params.set(key, String(value));
+    }
+    return this.http
+      .get<{
+        readonly items: readonly WireCampaign[];
+        readonly nextCursor: string | null;
+      }>(this.url('/insurance-campaigns'), { params })
+      .pipe(
+        map((body) => ({
+          items: body.items.map(toCampaign),
+          nextCursor: body.nextCursor,
+        })),
+      );
+  }
+
+  /**
+   * `POST /insurance-campaigns` — crea una campaña; nace en borrador, o activa
+   * si `activate` es `true`.
+   *
+   * Responde 400 con fechas invertidas o porcentaje fuera de 0..100, 409 con un
+   * código repetido en la aseguradora y 403 a quien no administra una.
+   *
+   * @param input - La campaña, con sus aliados.
+   * @returns La campaña creada.
+   */
+  createCampaign(input: CreateCampaignInput): Observable<InsuranceCampaign> {
+    return this.http
+      .post<WireCampaign>(this.url('/insurance-campaigns'), input)
+      .pipe(map(toCampaign));
+  }
+
+  /**
+   * `PATCH /insurance-campaigns/:id/status` — activa, pausa o finaliza.
+   *
+   * Una transición fuera de la tabla responde 422; repetir el estado actual es
+   * idempotente.
+   *
+   * @param id - Campaña a mover.
+   * @param status - Estado destino.
+   * @returns La campaña ya en su nuevo estado.
+   */
+  updateCampaignStatus(
+    id: string,
+    status: CampaignTargetStatus,
+  ): Observable<InsuranceCampaign> {
+    return this.http
+      .patch<WireCampaign>(this.url(`/insurance-campaigns/${encodeURIComponent(id)}/status`), {
+        status,
+      })
+      .pipe(map(toCampaign));
+  }
+
+  /**
+   * `GET /insurance-campaigns/patient/:patientProfileId` — las campañas
+   * vigentes para el afiliado.
+   *
+   * El id del perfil viaja en la URL a propósito: la API exige que sea el del
+   * titular y un intento sobre el de otro responde 403 y queda auditado.
+   *
+   * @param patientProfileId - Perfil del afiliado (claim `pid`).
+   * @returns Sólo campañas activas, dentro de su vigencia y de su aseguradora.
+   */
+  getActivePatientCampaigns(patientProfileId: string): Observable<readonly PatientCampaign[]> {
+    return this.http
+      .get<readonly WirePatientCampaign[]>(
+        this.url(`/insurance-campaigns/patient/${encodeURIComponent(patientProfileId)}`),
+      )
+      .pipe(map((body) => body.map(toPatientCampaign)));
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
@@ -452,5 +544,70 @@ function toBrokerClient(body: WireBrokerClient): BrokerClient {
     ...body,
     effectiveFrom: maybeDateOnly(body.effectiveFrom) ?? null,
     effectiveTo: maybeDateOnly(body.effectiveTo) ?? null,
+  };
+}
+
+/* ---- campañas preventivas (Tarea 4) --------------------------------------- */
+
+interface WireCampaignPartner {
+  readonly id: string;
+  readonly role: InsuranceCampaign['partners'][number]['role'];
+  readonly type: InsuranceCampaign['partners'][number]['type'];
+  readonly name: string;
+  readonly networkProviderMembershipId: string | null;
+}
+
+interface WireCampaign {
+  readonly id: string;
+  readonly code: string;
+  readonly title: string;
+  readonly description: string | null;
+  readonly campaignType: InsuranceCampaign['campaignType'];
+  readonly status: InsuranceCampaign['status'];
+  readonly targetCondition: CampaignCondition | null;
+  readonly copayBonusPercentage: number;
+  readonly validFrom: string;
+  readonly validTo: string;
+  readonly activatedAt: string | null;
+  readonly partners: readonly WireCampaignPartner[];
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+interface WirePatientCampaign {
+  readonly id: string;
+  readonly code: string;
+  readonly title: string;
+  readonly description: string | null;
+  readonly campaignType: PatientCampaign['campaignType'];
+  readonly targetCondition: CampaignCondition | null;
+  readonly copayBonusPercentage: number;
+  readonly validFrom: string;
+  readonly validTo: string;
+  readonly carrierName: string;
+  readonly partners: PatientCampaign['partners'];
+}
+
+/** Una fecha `AAAA-MM-DD` a medianoche local: sin correr un día al pintarla. */
+function civilDate(value: string): Date {
+  return maybeDateOnly(value) ?? new Date(value);
+}
+
+function toCampaign(body: WireCampaign): InsuranceCampaign {
+  return {
+    ...body,
+    validFrom: civilDate(body.validFrom),
+    validTo: civilDate(body.validTo),
+    activatedAt: maybeDate(body.activatedAt) ?? null,
+    createdAt: new Date(body.createdAt),
+    updatedAt: new Date(body.updatedAt),
+  };
+}
+
+function toPatientCampaign(body: WirePatientCampaign): PatientCampaign {
+  return {
+    ...body,
+    validFrom: civilDate(body.validFrom),
+    validTo: civilDate(body.validTo),
   };
 }

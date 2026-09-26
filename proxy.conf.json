@@ -89,6 +89,7 @@
       "/insurance-carriers",
       "/insurance-brokers",
       "/insurance-claims",
+      "/insurance-campaigns",
       "/cds",
       "/billing/service-catalog",
       "/diagnostics/patients",

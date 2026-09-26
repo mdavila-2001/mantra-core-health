@@ -800,6 +800,25 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M26 insurance',
   },
   {
+    // Tarea 4 · M-06 — Proceso 4 del registro del cliente, «Módulo de
+    // promociones»: la aseguradora publica campañas de prevención junto a
+    // laboratorios e importadoras para que el seguro no erogue por
+    // enfermedades evitables. Mismo criterio de acceso que «Siniestralidad»:
+    // la autoridad es la membresía en la aseguradora, que resuelve la API, y
+    // el médico y el paciente quedan fuera con `hiddenFor`.
+    path: 'administration/insurance-campaigns',
+    label: 'Campañas preventivas',
+    group: 'Administración',
+    icon: 'megaphone',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
+    availability: 'disponible',
+    summary:
+      'Campañas de prevención con laboratorios e importadoras, con copago bonificado para tus afiliados.',
+    module: 'M26 insurance',
+  },
+  {
     // W2/F3 (M29): el backend del módulo es solo de comando —sin GET—, así
     // que la sección entra como panel de operaciones; los listados llegan
     // con sus endpoints de consulta.
