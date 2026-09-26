@@ -784,4 +784,18 @@ describe('NavigationService', () => {
       expect(rutasDelMenu()).toContain('/my-account/appointments');
     });
   });
+
+  describe('geolocalización congelada (CV-25)', () => {
+    it('no ocupa renglón para el administrador, pero sigue registrada y alcanzable', () => {
+      abrirSesion(['SECURITY_ADMIN'], ['t-1']);
+
+      expect(rutasDelMenu()).not.toContain('/administration/geolocation');
+      expect(rutasDelMenu()).toContain('/administration/patients');
+      // `visibleSections` es lo que fija qué se alcanza: la sección sigue ahí,
+      // con su ruta, sus roles y su guard. Sólo perdió el renglón.
+      expect(service.visibleSections().map((seccion) => `/${seccion.path}`)).toContain(
+        '/administration/geolocation',
+      );
+    });
+  });
 });

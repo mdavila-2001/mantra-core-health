@@ -948,6 +948,14 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // segmento. Una sección llamada `geolocation` a nivel raíz se iría entera a
     // la API. Lo verifica `scripts/check-route-prefixes.mjs`.
     path: 'administration/geolocation',
+    // CV-25 (BR-30): el módulo se construyó para el rastreo de entregas, y la
+    // entrega está fuera del alcance de la demo. Se **congela**, no se borra:
+    // sale del menú y de «Tus accesos» por `fueraDelMenuPara`, pero la ruta, los
+    // roles y el guard siguen armados desde este mismo registro
+    // (`rutasDeSecciones()`), así que las once pantallas de rastreo, geocercas
+    // y viajes se siguen alcanzando por enlace directo. Volver a ofrecerlo es
+    // borrar esta línea.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Geolocalización',
     group: 'Administración',
     icon: 'pin',
