@@ -26,32 +26,6 @@
   margin-block-start: var(--sp-6);
 }
 
-/* ── El aviso de apertura ──────────────────────────────────────────────────
-   Las alergias y la consulta abierta, en el modal que se abre al entrar. La
-   lista de alergias va en línea: son pocas y una lista con viñetas dentro de
-   un aviso lo convierte en un bloque de texto que se saltea. */
-
-.expediente__avisos {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-}
-
-.expediente__alergias-lista {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2) var(--sp-5);
-  margin: var(--sp-2) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.expediente__alergias-item {
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-2);
-}
-
 /* ── La historia ───────────────────────────────────────────────────────────
    `min-inline-size: 0` es obligatorio: sin él, una tabla ancha estira la celda
    de la rejilla en vez de desplazarse dentro de ella, y se lleva puesta la

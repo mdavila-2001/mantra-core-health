@@ -7,6 +7,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { SessionStore } from '../../../core/auth/session.store';
 import type { ClinicalSummary } from '../../../core/data-access/clinical/clinical.types';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import {
   bloquesDeAtencion,
   bloquesDeReceta,
@@ -464,17 +465,21 @@ describe('PatientChart', () => {
     expect(observacion['secundario']).toBe('78.5 kg');
   });
 
-  /* ---- el aviso de apertura ---------------------------------------------- */
+  /* ---- el aviso de apertura ------------------------------------------------
+     Desde el 2026-09-25 se dice por toast y no por modal (ver el constructor
+     de patient-chart.ts): el toast es sólo texto, así que no hay más link
+     clicable para «Volver a la consulta» dentro del aviso — se avisa que hay
+     una consulta en curso y la persona navega por su cuenta. */
 
   /**
    * Las alergias salen de la segunda pestaña y se dicen al entrar.
    *
    * Es el único bloque que cambia una conducta **antes** de leerlo: recetar sin
    * haberlas visto es el error que el aviso existe para evitar, y en una pestaña
-   * había que acordarse de ir a mirarlas. En una banda fija arriba también se
-   * dejaban de leer, así que ahora van en el modal que abre la pantalla.
+   * había que acordarse de ir a mirarlas.
    */
   it('destaca las alergias en el aviso de apertura', () => {
+    const avisoDeAlergias = vi.spyOn(TestBed.inject(ToastService), 'warning');
     responderNombre();
     responderExpediente({
       resumen: {
@@ -495,45 +500,46 @@ describe('PatientChart', () => {
     expect(destacadas).toHaveLength(1);
     expect(destacadas[0]['principal']).toBe('Diabetes tipo 2');
 
-    expect(interno<() => boolean>('avisosVisibles')()).toBe(true);
-    const html: string = harness.fixture.nativeElement.innerHTML;
-    expect(html).toContain('expediente-avisos');
+    expect(avisoDeAlergias).toHaveBeenCalledTimes(1);
+    expect(avisoDeAlergias.mock.calls[0]?.[0]).toContain('Diabetes tipo 2');
+    expect(avisoDeAlergias.mock.calls[0]?.[1]).toBe('Alergias');
   });
 
-  /**
-   * Sin alergias y sin consulta abierta no hay nada que avisar: un modal vacío
-   * que hay que cerrar sería peor que la banda que reemplaza.
-   */
-  it('sin nada que avisar no se interpone ningún modal', () => {
+  /** Sin alergias y sin consulta abierta no hay nada que avisar. */
+  it('sin nada que avisar no se muestra ningún toast', () => {
+    const avisoDeAlergias = vi.spyOn(TestBed.inject(ToastService), 'warning');
+    const avisoDeConsulta = vi.spyOn(TestBed.inject(ToastService), 'info');
     responderNombre();
     responderExpediente();
     harness.fixture.detectChanges();
 
     expect(interno<() => readonly unknown[]>('alergiasDestacadas')()).toHaveLength(0);
-    expect(interno<() => boolean>('avisosVisibles')()).toBe(false);
-    const html: string = harness.fixture.nativeElement.innerHTML;
-    expect(html).not.toContain('expediente-avisos');
+    expect(avisoDeAlergias).not.toHaveBeenCalled();
+    expect(avisoDeConsulta).not.toHaveBeenCalled();
   });
 
-  /** Cerrado una vez, no vuelve: el expediente se lee sin nada encima. */
-  it('el aviso no vuelve una vez cerrado', () => {
+  /** Dicho una vez, no se repite: releer la pantalla no duplica el toast. */
+  it('el aviso no se repite en la misma visita', () => {
+    const avisoDeAlergias = vi.spyOn(TestBed.inject(ToastService), 'warning');
     responderNombre();
     responderExpediente({
       resumen: {
-        encounters: [
-          { id: 'e-1', classConceptId: 'st-activa', startAt: '2026-05-20T10:00:00.000Z' },
+        allergies: [
+          {
+            id: 'a-1',
+            substanceConceptId: 'con-diabetes',
+            clinicalStatusConceptId: 'st-activa',
+            criticalityConceptId: 'st-final',
+            createdAt: '2026-02-01T00:00:00.000Z',
+          },
         ],
       },
     });
     harness.fixture.detectChanges();
-    expect(interno<() => boolean>('avisosVisibles')()).toBe(true);
-
-    interno<() => void>('cerrarAvisos')();
+    harness.fixture.detectChanges();
     harness.fixture.detectChanges();
 
-    expect(interno<() => boolean>('avisosVisibles')()).toBe(false);
-    const html: string = harness.fixture.nativeElement.innerHTML;
-    expect(html).not.toContain('expediente-avisos');
+    expect(avisoDeAlergias).toHaveBeenCalledTimes(1);
   });
 
   /**
@@ -568,10 +574,11 @@ describe('PatientChart', () => {
   });
 
   /**
-   * Lo que sí corresponde es la continuación: un encuentro sin `endAt` está
-   * abierto, y quien vino a consultar un antecedente tiene por dónde volver.
+   * Lo que sí corresponde es el aviso: un encuentro sin `endAt` está abierto, y
+   * quien vino a consultar un antecedente se entera por el toast de apertura.
    */
-  it('con un encuentro abierto ofrece volver a la consulta', () => {
+  it('con un encuentro abierto avisa que hay una consulta en curso', () => {
+    const avisoDeConsulta = vi.spyOn(TestBed.inject(ToastService), 'info');
     responderNombre();
     responderExpediente({
       resumen: {
@@ -583,11 +590,11 @@ describe('PatientChart', () => {
     harness.fixture.detectChanges();
 
     expect(interno<() => boolean>('atencionEnCurso')()).toBe(true);
-    const html: string = harness.fixture.nativeElement.innerHTML;
-    expect(html).toContain('expediente-volver-atencion');
+    expect(avisoDeConsulta).toHaveBeenCalledTimes(1);
   });
 
-  it('con todos los encuentros cerrados no ofrece volver a ninguna consulta', () => {
+  it('con todos los encuentros cerrados no avisa ninguna consulta en curso', () => {
+    const avisoDeConsulta = vi.spyOn(TestBed.inject(ToastService), 'info');
     responderNombre();
     responderExpediente({
       resumen: {
@@ -604,8 +611,7 @@ describe('PatientChart', () => {
     harness.fixture.detectChanges();
 
     expect(interno<() => boolean>('atencionEnCurso')()).toBe(false);
-    const html: string = harness.fixture.nativeElement.innerHTML;
-    expect(html).not.toContain('expediente-volver-atencion');
+    expect(avisoDeConsulta).not.toHaveBeenCalled();
   });
 
   /** Fase 3.1: era texto de arquitectura interna en la pantalla del médico. */
