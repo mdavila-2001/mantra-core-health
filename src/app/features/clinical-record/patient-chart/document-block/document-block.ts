@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { forkJoin, of, type Observable } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { map, switchMap, tap } from 'rxjs/operators';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ChartDocumentsClient } from '../../../../core/data-access/chart-documents/chart-documents.client';
@@ -175,8 +175,23 @@ export class DocumentBlock implements DraftBlock {
   /** Cuántos archivos van con el documento, para decirlo en el botón. */
   protected readonly cuantosArchivos = computed(() => this.archivos().length);
 
+  /**
+   * Los archivos que **ya se subieron** en esta pasada, por identidad de `File`
+   * (CL-28). La subida y el vínculo son dos casos de uso por diseño de
+   * `common/files`: si `POST /charts/documents` falla después de subir, el
+   * reintento no vuelve a subir lo que ya está —quedaba huérfano y duplicado— y
+   * reenvía los mismos `fileId`. Se vacía cuando el alta sale bien.
+   */
+  private readonly subidos = new Map<File, string>();
+
+  /** Si el próximo envío es un reintento con archivos ya subidos. */
+  protected readonly esReintento = signal(false);
+
   protected readonly rotuloDeEnvio = computed(() => {
     const cuantos = this.cuantosArchivos();
+    if (this.esReintento()) {
+      return 'Reintentar (los archivos ya están subidos)';
+    }
     if (cuantos === 0) {
       return 'Registrar documento';
     }
@@ -237,6 +252,8 @@ export class DocumentBlock implements DraftBlock {
         next: (registrado) => {
           this.registrando.set(false);
           this.registro.set(ready(null));
+          this.subidos.clear();
+          this.esReintento.set(false);
           this.limpiar();
           this.toasts.success(
             registrado.fileCount === 0
@@ -249,6 +266,9 @@ export class DocumentBlock implements DraftBlock {
         error: (error: unknown) => {
           this.registrando.set(false);
           this.registro.set(errorToViewState<null>(error));
+          // Lo que ya se subió queda anotado: «Reintentar» reenvía los mismos
+          // `fileId` y no vuelve a subirlo.
+          this.esReintento.set(this.subidos.size > 0);
         },
       });
   }
@@ -271,11 +291,17 @@ export class DocumentBlock implements DraftBlock {
       return of([]);
     }
     return forkJoin(
-      elegidos.map((file) =>
-        this.files
-          .upload(file, categoryForFile(file), CLINICAL_UPLOAD_SENSITIVITY)
-          .pipe(map(({ id }) => id)),
-      ),
+      elegidos.map((file) => {
+        const yaSubido = this.subidos.get(file);
+        if (yaSubido !== undefined) {
+          return of(yaSubido);
+        }
+        return this.files.upload(file, categoryForFile(file), CLINICAL_UPLOAD_SENSITIVITY).pipe(
+          map(({ id }) => id),
+          // Se anota apenas sube, antes de que otro archivo del lote falle.
+          tap((id) => this.subidos.set(file, id)),
+        );
+      }),
     ).pipe(
       map((ids) =>
         ids.map((fileId, indice) => ({
