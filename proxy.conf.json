@@ -100,9 +100,26 @@
       "/insurance-plans",
       "/insurance-products",
       "/insurance/analytics",
-      "/insurance/portability"
+      "/insurance/portability",
+      "/patients/me/reviews"
     ],
     "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true
+  },
+  {
+    "_comentario": [
+      "`/ai` va al servicio de triage. Declarado acá SOLO para que",
+      "check-api-prefixes.mjs vea el mismo prefijo en las tres fuentes (H3.S1);",
+      "en `yarn start` real lo resuelve `proxy.conf.mjs`, que antepone su propia",
+      "entrada con `ALOVIDA_AI_TARGET` y por eso ésta nunca se alcanza. D-C",
+      "(qué servicio, con qué base legal y dónde corre) sigue sin resolver:",
+      "docs/progress/DECISIONS.md."
+    ],
+    "context": [
+      "/ai"
+    ],
+    "target": "http://localhost:3106",
     "secure": false,
     "changeOrigin": true
   },

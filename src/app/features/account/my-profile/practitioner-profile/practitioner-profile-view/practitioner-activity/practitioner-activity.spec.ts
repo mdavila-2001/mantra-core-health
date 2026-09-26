@@ -61,6 +61,28 @@ describe('PractitionerActivity', () => {
     expect(raiz.querySelector('app-quality-indicators')).toBeNull();
   });
 
+  it('sin serie ni indicadores lo dice con palabras y no muestra ninguna cifra inventada (ID-14)', () => {
+    const raiz = montar(ACTIVIDAD);
+
+    expect(raiz.querySelector('[data-testid="actividad-sin-metricas"]')?.textContent?.trim()).toBe(
+      'Todavía no hay indicadores de calidad ni evolución mensual para mostrar.',
+    );
+  });
+
+  it('con serie el aviso de «sin métricas» no aparece', () => {
+    TestBed.configureTestingModule({ imports: [PractitionerActivity] });
+    const fixture = TestBed.createComponent(PractitionerActivity);
+    fixture.componentRef.setInput('actividad', ACTIVIDAD);
+    fixture.componentRef.setInput('mensual', [
+      { clave: '2026-09', etiqueta: 'sep', etiquetaLarga: 'septiembre de 2026', valor: 33 },
+    ]);
+    fixture.detectChanges();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="actividad-sin-metricas"]'),
+    ).toBeNull();
+  });
+
   it('con serie e indicadores los monta, y el pie dice qué cuenta cada cifra', () => {
     TestBed.configureTestingModule({ imports: [PractitionerActivity] });
     const fixture = TestBed.createComponent(PractitionerActivity);

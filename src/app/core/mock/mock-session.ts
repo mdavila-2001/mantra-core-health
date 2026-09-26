@@ -122,9 +122,11 @@ export const MOCK_USERS: readonly MockUser[] = [
     email: 'medica@alovida.mock',
     nationalId: '4567890',
     displayName: 'Dra. Valeria Rojas Mendoza',
-    roles: ['PRACTITIONER', 'CLINICIAN', 'SCHEDULING_ADMIN'],
+    roles: ['PRACTITIONER'],
     // Tres organizaciones: elige la primera vez y el dispositivo la recuerda
     // (`AuthService`), como con la API real, que no firma ninguna «propia».
+    // Sólo PRACTITIONER (H2.S1.M3, 2026-09-26): es lo único que la API le da a
+    // un médico autorregistrado; el rol de agenda es de la clínica (`scopedRoles`).
     tenants: [TENANT_CONSULTORIO, TENANT_CLINICA, TENANT_HOSPITAL],
     tenantNames: { ...TENANT_NAMES, [TENANT_CONSULTORIO]: 'Mi consultorio' },
     // La administración de agenda se la dio la clínica, no su consultorio: en

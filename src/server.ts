@@ -7,6 +7,7 @@ import {
 import express from 'express';
 import { join } from 'node:path';
 
+import { environment } from './environments/environment';
 import { allowedHostsFromEnv } from './server/allowed-hosts';
 import { artefactosInexistentesDan404 } from './server/build-assets';
 import {
@@ -155,9 +156,14 @@ if (telemetryHandle !== null) {
  * resuelve esta ruta con el mismo archivo. Sin ella la petición caía en el
  * renderizador de Angular, que devolvía HTML con 200, y la imagen se rompía.
  */
-app.get('/public/media/:id', (_request, response) => {
-  response.redirect(302, '/mock-media.svg');
-});
+// Sólo con el simulador encendido (H1.S2.M2): contra la API real,
+// `/public/media/:id` es una ruta de verdad y este atajo la desviaría a un
+// SVG de maqueta.
+if (environment.mockBackend) {
+  app.get('/public/media/:id', (_request, response) => {
+    response.redirect(302, '/mock-media.svg');
+  });
+}
 
 app.use(
   express.static(browserDistFolder, {

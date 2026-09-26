@@ -68,6 +68,19 @@ services:
       PORT: '4000'
       NODE_ENV: production
       PUBLIC_API_BASE_URL: ''
+      # El montón de V8 por debajo del techo del contenedor (768M abajo),
+      # mismo criterio que ya usa el Dockerfile para las dos etapas de build
+      # (`NODE_OPTIONS=--max-old-space-size=…`, ver ahí el porqué completo).
+      # Sin esto, V8 puede autoajustar su techo por encima de lo que el
+      # `deploy.resources.limits.memory` del compose permite: el recolector
+      # nunca llega a actuar y el kernel mata el proceso por OOM en vez de que
+      # el propio Node libere memoria. Hallazgo del carril M1 (2026-09-26):
+      # el contenedor entraba en `restarting`/`running:unhealthy` en ciclo tras
+      # el primer despliegue de esta rama, sin acceso a `docker logs` para
+      # confirmar la causa exacta — éste es el mismo patrón ya documentado y
+      # corregido en el propio Dockerfile para el build, aplicado acá al
+      # proceso en ejecución, que hasta ahora quedaba sin acotar.
+      NODE_OPTIONS: '--max-old-space-size=512'
       # EL DOMINIO PÚBLICO, Y ES OBLIGATORIO.
       #
       # `AngularNodeAppEngine` compara el `Host` de cada petición contra su

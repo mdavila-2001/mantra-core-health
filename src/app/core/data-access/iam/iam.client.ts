@@ -28,6 +28,7 @@ import type {
   UserPage,
   UserSearchQuery,
   VerifiedEmail,
+  DiagnosticCenterRegistration,
 } from './iam.types';
 
 /** Respuestas de la API tal como viajan: las fechas son texto. */
@@ -326,6 +327,14 @@ export class IamClient {
    * tipos y por eso sí lo pide.
    */
   registerOrganization(registration: OrganizationRegistration): Observable<RegisteredOrganization> {
+    // El laboratorio y el centro de imagenología viajan con su propio cuerpo:
+    // sin `payer` y con la unidad diagnóstica. El de la aseguradora no cambia.
+    if (registration.tenantType === 'DIAGNOSTIC_CENTER') {
+      return this.http.post<RegisteredOrganization>(
+        this.url('/iam/auth/register-organization'),
+        cuerpoDeCentroDiagnostico(registration),
+      );
+    }
     return this.http.post<RegisteredOrganization>(this.url('/iam/auth/register-organization'), {
       organization: {
         code: registration.code,
@@ -610,5 +619,54 @@ function toAssistedResult(body: AssistedRegistrationBody): AssistedRegistrationR
     activationToken: body.activationToken,
     activationExpiresAt: new Date(body.activationExpiresAt),
     status: body.status,
+  };
+}
+
+/**
+ * El cuerpo del alta de un laboratorio o centro de imagenología.
+ *
+ * Campo por campo y no con un `...registration`, por lo mismo que el resto del
+ * cliente: `forbidNonWhitelisted` rechaza toda clave que el DTO no declare.
+ */
+function cuerpoDeCentroDiagnostico(registration: DiagnosticCenterRegistration): unknown {
+  const { diagnosticUnit } = registration;
+  const { address } = diagnosticUnit.primarySite;
+  return {
+    organization: {
+      code: registration.code,
+      legalName: registration.legalName,
+      legalEntityType: registration.legalEntityType,
+      ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
+      tenantType: 'DIAGNOSTIC_CENTER',
+      ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),
+      countryConceptId: registration.countryConceptId,
+      jurisdictionConceptId: registration.jurisdictionConceptId,
+      diagnosticUnit: {
+        diagnosticUnitTypeConceptId: diagnosticUnit.diagnosticUnitTypeConceptId,
+        modalityConceptIds: [...diagnosticUnit.modalityConceptIds],
+        primarySite: {
+          name: diagnosticUnit.primarySite.name,
+          ...(diagnosticUnit.primarySite.timeZone === undefined
+            ? {}
+            : { timeZone: diagnosticUnit.primarySite.timeZone }),
+          address: {
+            lines: [...address.lines],
+            ...(address.latitude === undefined || address.longitude === undefined
+              ? {}
+              : { latitude: address.latitude, longitude: address.longitude }),
+          },
+        },
+      },
+      legalDocuments: registration.legalDocuments,
+      ...(registration.legalRepresentative === undefined
+        ? {}
+        : { legalRepresentative: registration.legalRepresentative }),
+      ...(registration.executives === undefined ? {} : { executives: registration.executives }),
+    },
+    owner: {
+      email: registration.owner.email,
+      password: registration.owner.password,
+      displayName: registration.owner.displayName,
+    },
   };
 }

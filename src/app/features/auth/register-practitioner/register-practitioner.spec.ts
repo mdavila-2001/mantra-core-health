@@ -846,6 +846,9 @@ describe('RegisterPractitioner', () => {
       lastName: 'Paz',
       nationalId: '1234567',
       email: 'ana.paz@gmail.test',
+      // Sin correo institucional, `personalEmail === email`: le dice a la API que
+      // es el único y que no lo guarde también como de trabajo (ID-12).
+      personalEmail: 'ana.paz@gmail.test',
       password: 'secreto12',
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
@@ -857,8 +860,7 @@ describe('RegisterPractitioner', () => {
       // acá es la prueba de que ese automatismo sigue vivo.
       regulatoryAuthority: 'Colegio Médico de Bolivia',
       // Los dos que pasaron a obligatorios con el documento y el contacto
-      // privado. `personalEmail` NO está: desde que es la identidad de acceso
-      // viaja en `email`, que es el campo de login del DTO.
+      // privado.
       issuerAdministrativeAreaConceptId: 'dep-1',
       mobilePhone: '+591 70011111',
     });
@@ -989,7 +991,10 @@ describe('RegisterPractitioner', () => {
     // el campo de login. El institucional viaja aparte, en `workEmail`.
     expect(req.request.body.email).toBe('ana.paz@gmail.test');
     expect(req.request.body.workEmail).toBe('ana@hospital.test');
-    expect(req.request.body.personalEmail).toBeUndefined();
+    // El personal viaja también como `personalEmail`: con `workEmail` la API ya
+    // sabe cuál es cuál, y sin él lo necesita para no inventar un correo de
+    // trabajo (ID-12).
+    expect(req.request.body.personalEmail).toBe('ana.paz@gmail.test');
 
     req.flush(RESPUESTA_PRO);
   });
@@ -1279,6 +1284,47 @@ describe('RegisterPractitioner', () => {
         { credentialTypeConceptId: 'c-master', number: 'MAE-9' },
       ]);
       req.flush(RESPUESTA_PRO);
+    });
+
+    it('la universidad del título principal viaja en la fila universitaria que ya tiene número (ID-10)', () => {
+      catalogoDeTiposDeTitulo();
+      component.agregarTitulo('UNIVERSITARIO');
+      const [profesion] = component.titulosDe('UNIVERSITARIO');
+      component.escribirDatoDeTitulo(profesion.id, 'numero', 'TIT-1');
+      completarProfesional({ professionalTitleUniversity: 'Universidad Mayor de San Andrés' });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.credentials).toEqual([
+        {
+          credentialTypeConceptId: 'c-degree',
+          number: 'TIT-1',
+          issuingInstitutionText: 'Universidad Mayor de San Andrés',
+        },
+      ]);
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('con la universidad del título principal y ninguna fila que la lleve, el alta se frena y lo dice', () => {
+      catalogoDeTiposDeTitulo();
+      completarProfesional({ professionalTitleUniversity: 'Universidad Mayor de San Andrés' });
+      component.submit();
+
+      http.expectNone('/iam/auth/register-practitioner');
+      expect(component.errorMessage()).toContain('La universidad de tu título principal');
+    });
+
+    it('una universidad distinta en la fila no se pisa: la del título principal necesita su propia fila', () => {
+      catalogoDeTiposDeTitulo();
+      component.agregarTitulo('UNIVERSITARIO');
+      const [profesion] = component.titulosDe('UNIVERSITARIO');
+      component.escribirDatoDeTitulo(profesion.id, 'numero', 'TIT-1');
+      component.escribirDatoDeTitulo(profesion.id, 'universidad', 'Universidad Privada Boliviana');
+      completarProfesional({ professionalTitleUniversity: 'Universidad Mayor de San Andrés' });
+      component.submit();
+
+      http.expectNone('/iam/auth/register-practitioner');
+      expect(component.errorMessage()).toContain('La universidad de tu título principal');
     });
 
     it('dos filas del mismo tipo viajan como dos credenciales', () => {

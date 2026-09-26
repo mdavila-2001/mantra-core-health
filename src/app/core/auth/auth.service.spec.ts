@@ -201,7 +201,12 @@ describe('AuthService', () => {
         password: 'secreto12',
         name: 'Ana',
         lastName: 'Paz',
-        // Obligatorio en el contrato, igual que en el DTO del servidor.
+        // Obligatorios en el contrato, igual que en el DTO del servidor.
+        email: 'ana@mantra.test',
+        birthDate: '1990-04-12',
+        phone: '+591 70012345',
+        sexAtBirth: 'FEMALE',
+        issuerAdministrativeAreaConceptId: 'c0a80101-0000-4000-8000-000000000001',
         residenceMunicipalityConceptId: 'ee4f2681-6c58-5f4c-8f83-8d19de56099a',
       })
       .subscribe();
