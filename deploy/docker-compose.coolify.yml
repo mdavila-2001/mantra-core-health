@@ -63,6 +63,10 @@ services:
         # CSP en `connect-src 'self'`. Quien hace que eso sea verdad es el
         # `proxy` de abajo.
         PUBLIC_API_BASE_URL: ''
+        # Sin esto el Dockerfile construye `production`, que es la maqueta
+        # (`mockBackend: true`): el front de `test` salía sin una sola llamada
+        # a la API aunque el proxy la tuviera en pie.
+        BUILD_CONFIGURATION: production-api
     restart: always
     environment:
       PORT: '4000'
