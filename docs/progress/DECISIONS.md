@@ -104,3 +104,46 @@ decide el front:
   en el front, que hubiera sido inventar un valor sin haberlo leído de ningún lado (regla 00 §1).
 - **Qué queda apagado mientras tanto:** nada — el catálogo tiene exactamente dos opciones y ya está
   publicado; no depende de una decisión de producto pendiente.
+
+---
+
+## H6 (BR-28/BR-29/BR-30) — organización, clínica extendida y contrato de calidad
+
+- **Alcance recortado a capa de datos + config:** construir la UI completa de los 6 hubs de administración
+  (`DataTable` + los 9 estados M34 + `visual-quality-gate` con capturas) y de las 4 franjas clínicas de BR-29 es
+  más trabajo del que sostiene una sesión que también cubre el backend de dos repos, request-id y regenerar
+  OpenAPI. Se priorizó dejar el contrato de datos de la API ya probado (H6 del lado API) y hacer los cambios de
+  front de menor riesgo y mayor certeza, en vez de maquetar pantallas nuevas sin pasar el gate de calidad visual
+  del repo. **NO CUBIERTO** en esta sesión: pantallas de `delegated-access`, `auth-providers`, `identity-assurance`
+  (cola de credenciales), `health-context`, «Mis derivaciones», «Mi cobertura», `/billing` real y la bandeja de
+  aprobación de organización en `organization-panel.ts`. Los 6 endpoints nuevos de la API (documentados en
+  `mantra-core-health-api/docs/progress/DECISIONS.md`, sección H6) quedan listos para que el próximo carril arme
+  la pantalla sin tener que tocar el backend.
+- **CV-21 (documento de estado):** `ESTADO-FRONTEND.md` decía "nada está simulado" sin aclarar que eso es cierto
+  sólo bajo `production-api`/`real-api` (`mockBackend: false`); la configuración por defecto de `ng serve`
+  (`environment.development.ts`) sigue en `mockBackend: true`. Se corrigió la línea para que declare las dos
+  cosas, sin reescribir el resto del documento (es una foto fechada del 2026-08-01, no una fuente viva).
+- **AG-44 (catálogo de datos):** `processSupported`, `sourceOfTruth` y `producers` ya los acepta
+  `UpsertAnnotationDto` del lado de la API (sin tocar el modelo); sólo faltaban en `AnnotationPatch` (tipo) y en
+  `annotation-dialog.ts` (formulario). Se agregó una página "Procedencia" al formulario paginado existente;
+  `producers` (lista en el contrato) se edita como texto separado por comas y se parte/junta al guardar y al
+  cargar, mismo criterio liviano que el resto de listas cortas de nombres libres de la casa. El residuo 2 de
+  AG-44 (`.puml` de `data_catalog`/`qa_execution` en `mantra-core-health-model`, DDL) es pedido a M1: sin DDL en
+  este repo ni en la API.
+- **CV-25 (geolocalización) — NO CUBIERTO, investigado:** se buscó ocultar `administration/geolocation` del menú
+  de administración manteniendo la ruta activa (D-BR28-3 opción A). Se encontró que
+  `rutasDeSecciones()` (`src/app/app.routes.ts`) genera las rutas del armazón **desde el mismo array** de
+  secciones de `src/app/core/navigation/navigation.map.ts`: sacar la entrada de ese registro borra la ruta
+  entera, no sólo el ítem de menú. El mecanismo existente para ocultar sin borrar
+  (`SECCIONES_FUERA_DEL_ARBOL` en `access-tree.ts`) sólo aplica al panel de "zonas" del dashboard, no al menú
+  lateral real (`navigation.service.ts`). Agregar un `canMatch` + una marca de "fuera del menú de lanzamiento"
+  que conviva con ese acoplamiento es un cambio de arquitectura de navegación, con riesgo real sobre
+  `navigation.service.spec.ts`/`access-tree.spec.ts` (parte de las ~4985 pruebas del repo) que esta sesión no
+  tuvo presupuesto para hacer con el `visual-quality-gate` correspondiente. Se documenta completo para el
+  próximo carril; no se tocó `navigation.map.ts` ni `app.routes.ts`.
+- **TX-14 (request-id, infra):** `deploy/api-proxy.conf` ahora fija `X-Request-Id: $request_id` hacia la API, para
+  que el `genReqId` de la API (ver DECISIONS.md de `mantra-core-health-api`) tenga un id de nginx que respetar
+  detrás de `TRUST_PROXY_HOPS`. No se tocó `deploy/nginx.conf` (`log_format`): el archivo no declara ninguno
+  propio —hereda el del `http {}` que lo incluye, fuera de este repo— y agregar uno nuevo ahí sin ver ese
+  contexto real es inventar una convención de logging que Coolify/el operador ya tiene resuelta en otro lado.
+  Queda anotado para quien administre esa capa.
