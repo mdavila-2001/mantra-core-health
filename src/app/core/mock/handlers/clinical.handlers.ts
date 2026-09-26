@@ -26,6 +26,7 @@ import { emitirNotificacion } from './notifications.handlers';
 import { enlazarArchivo, pdfMinimo } from './files.handlers';
 import { FICHAS_ESTANDAR } from '../fixtures/fichas-estandar.generated';
 import { representaA } from './profiles.handlers';
+import { accesoDeEmergenciaVigente, relacionDelProfesional } from './misc.handlers';
 
 /* ============================================================================
     Expediente clínico: resumen, gráfico (notas, planes, documentos), y las
@@ -39,7 +40,16 @@ function puedeLeer(request: MockRequest, patientProfileId: string): boolean {
   if (user.patientProfileId === patientProfileId) return true;
   // Y quien lo representa (B.1): la historia de un menor la lee su tutor.
   if (representaA(user.patientProfileId, patientProfileId)) return true;
-  return user.practitionerProfileId !== undefined || user.roles.includes('SECURITY_ADMIN');
+  // BR-20: el titular revocó el vínculo de este profesional. Sin turno de hoy ni
+  // un acceso de emergencia vigente, la historia responde 403.
+  if (
+    user.practitionerProfileId !== undefined &&
+    relacionDelProfesional(user.practitionerProfileId, patientProfileId) === 'REVOCADA' &&
+    !accesoDeEmergenciaVigente(user.id, patientProfileId)
+  ) {
+    return false;
+  }
+  return user.practitionerProfileId !== undefined || user.roles.includes('SECURITY_ADMIN') || accesoDeEmergenciaVigente(user.id, patientProfileId);
 }
 
 /* ---- el aviso de la ficha (proceso 2.6) ---------------------------------- */
