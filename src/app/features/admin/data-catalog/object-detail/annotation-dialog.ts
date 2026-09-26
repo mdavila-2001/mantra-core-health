@@ -33,6 +33,10 @@ const CAMPOS = [
   'businessOwner',
   'dataSteward',
   'technicalOwner',
+  // AG-44: el backend ya los acepta (`UpsertAnnotationDto`); la UI no los
+  // dejaba tocar y no daba 400, sencillamente no existían en el formulario.
+  'processSupported',
+  'sourceOfTruth',
 ] as const;
 type Campo = (typeof CAMPOS)[number];
 
@@ -46,6 +50,8 @@ const ETIQUETA: Readonly<Record<Campo, string>> = {
   businessOwner: 'Dueño de negocio',
   dataSteward: 'Steward',
   technicalOwner: 'Responsable técnico',
+  processSupported: 'Proceso que sostiene',
+  sourceOfTruth: 'Fuente de verdad',
 };
 
 /**
@@ -109,6 +115,12 @@ export class AnnotationDialog implements OnInit {
     businessOwner: this.fb.control(''),
     dataSteward: this.fb.control(''),
     technicalOwner: this.fb.control(''),
+    processSupported: this.fb.control(''),
+    sourceOfTruth: this.fb.control(''),
+    // AG-44: `producers` es una lista en el contrato; se edita como texto
+    // separado por comas, como el resto de la casa hace con listas cortas de
+    // nombres libres, y se parte/junta al guardar y al cargar.
+    producers: this.fb.control(''),
     sensitivity: this.fb.control('UNKNOWN'),
     changeReason: this.fb.control(''),
     submit: this.fb.control(true),
@@ -154,6 +166,33 @@ export class AnnotationDialog implements OnInit {
         ],
       },
       {
+        titulo: 'Procedencia',
+        hint: 'AG-44: de dónde sale el dato y qué lo sostiene.',
+        campos: [
+          {
+            key: 'processSupported',
+            label: ETIQUETA.processSupported,
+            hint: 'Qué proceso de negocio se cae si esto falta.',
+            control: 'textarea' as const,
+            mensajeDeError: e.processSupported,
+          },
+          {
+            key: 'sourceOfTruth',
+            label: ETIQUETA.sourceOfTruth,
+            hint: 'El sistema o proceso que origina el dato, no quien lo repite.',
+            control: 'text' as const,
+            testId: 'annotation-source-of-truth',
+            mensajeDeError: e.sourceOfTruth,
+          },
+          {
+            key: 'producers',
+            label: 'Quién lo produce',
+            hint: 'Sistemas o equipos que escriben este objeto, separados por coma.',
+            control: 'text' as const,
+          },
+        ],
+      },
+      {
         titulo: 'Cierre',
         campos: [
           { key: 'technicalOwner', label: ETIQUETA.technicalOwner, control: 'text' as const },
@@ -177,6 +216,7 @@ export class AnnotationDialog implements OnInit {
         this.form.controls[campo].setValue((contenido[campo as keyof AnnotationContent] as string | null) ?? '');
       }
       this.form.controls.sensitivity.setValue(contenido.sensitivity);
+      this.form.controls.producers.setValue(contenido.producers.join(', '));
     }
   }
 
@@ -195,6 +235,13 @@ export class AnnotationDialog implements OnInit {
       // `null` borra en el servidor; una cadena vacía también es ausencia.
       patch[campo] = valor === '' ? null : valor;
     }
+    // AG-44: `producers` viaja como lista; una cadena vacía es "sin productores
+    // declarados", no una lista con un elemento vacío.
+    const productores = valores.producers
+      .split(',')
+      .map((p) => p.trim())
+      .filter((p) => p !== '');
+    patch['producers'] = productores;
     if (valores.changeReason.trim()) patch['changeReason'] = valores.changeReason.trim();
 
     this.catalog.saveObjectAnnotation(this.objectId(), patch as unknown as AnnotationPatch).subscribe({
