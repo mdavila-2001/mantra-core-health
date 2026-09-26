@@ -57,9 +57,17 @@ export class TutorialProgressStore {
     // avance del anterior. Se lee de nuevo, no se limpia — volver a entrar con
     // la cuenta de antes tiene que recuperar lo suyo.
     effect(() => {
-      const usuario = this.auth.userId();
-      this.progreso.set(this.storage.read(claveDe(usuario)));
+      this.progreso.set(this.storage.read(claveDe(this.idDeUsuario())));
     });
+  }
+
+  /**
+   * `auth.userId()`, tolerando un doble de prueba incompleto (ver el mismo
+   * método en `CartStore` — es la misma causa, destapada en el carril M6
+   * H2 del 2026-09-26).
+   */
+  private idDeUsuario(): string | null {
+    return typeof this.auth.userId === 'function' ? this.auth.userId() : null;
   }
 
   /** El progreso de un tutorial. Nunca `null`: sin registro, está pendiente. */
@@ -173,7 +181,7 @@ export class TutorialProgressStore {
     this.progreso.set(siguiente);
 
     try {
-      this.storage.write(claveDe(this.auth.userId()), siguiente);
+      this.storage.write(claveDe(this.idDeUsuario()), siguiente);
     } catch (error) {
       console.warn('No se pudo guardar el progreso de tutoriales.', error);
     }
