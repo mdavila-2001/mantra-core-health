@@ -447,3 +447,41 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
     });
   }
 });
+
+/**
+ * `POST /clinical/diagnostic-reports/:id/release` (D-E, BR-17/CL-46).
+ *
+ * Este camino ya no libera nada: no alimenta `informes` de
+ * `diagnostics.handlers.ts`, así que "liberar" por acá nunca hacía aparecer
+ * el resultado en «Mis resultados». El mock imita ahora el mismo contrato que
+ * el backend real desde D-E: 422 siempre, con el endpoint canónico en el
+ * mensaje.
+ */
+describe('POST /clinical/diagnostic-reports/:id/release (D-E, deprecado)', () => {
+  const router = new MockRouter();
+  const medica = buscarUsuario('medica')!;
+  registrarClinica(router);
+
+  function call<T>(): T {
+    const match = router.match('POST', '/clinical/diagnostic-reports/report-1/release');
+    if (match === null) throw new Error('No existe la ruta de liberación clínica');
+    return match.handler({
+      method: 'POST',
+      path: '/clinical/diagnostic-reports/report-1/release',
+      params: { id: 'report-1' },
+      query: new URLSearchParams(),
+      body: {},
+      headers: new HttpHeaders(),
+      user: medica,
+    }) as T;
+  }
+
+  it('inválido: cualquier intento de liberar por acá da 422, nunca 200', () => {
+    const respuesta = call<MockReply>();
+    expect(respuesta.status).toBe(422);
+    expect((respuesta.body as { code: string }).code).toBe('PRECONDITION_FAILED');
+    expect((respuesta.body as { details: { canonicalEndpoint: string } }).details.canonicalEndpoint).toContain(
+      'versions/:versionId/release',
+    );
+  });
+});

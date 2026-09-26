@@ -20,7 +20,7 @@ import {
 } from '../fixtures/clinica';
 import { CLASE_ENCUENTRO, ESPECIALIDAD, ESTADO, ESTADO_CONDICION, ESTADO_ENCUENTRO, ESTADO_RECETA, INTENCION_DEL_PLAN, SEVERIDAD, VERIFICACION_DX } from '../fixtures/conceptos';
 import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/personas';
-import { conflict, forbidden, notFound, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, notFound, preconditionFailed, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, isoDia, nuevoId, uuid } from '../mock-store';
 import { emitirNotificacion } from './notifications.handlers';
 import { enlazarArchivo, pdfMinimo } from './files.handlers';
@@ -545,7 +545,19 @@ export function registrarClinica(router: MockRouter): void {
     return { status: 201, body: { id: nuevoId('report'), patientProfileId: datos.patientProfileId ?? '', lifecycleStatus: 'PRELIMINARY', resultReleaseStatus: null, serviceRequestId: datos.serviceRequestId ?? null, createdAt: ahora() } };
   });
 
-  router.post('/clinical/diagnostic-reports/:id/release', ({ params }) => ({ id: params['id'], patientProfileId: '', lifecycleStatus: 'FINAL', resultReleaseStatus: 'RELEASED', serviceRequestId: null, createdAt: ahora() }));
+  /**
+   * D-E (BR-17/CL-46): este camino **no** alimenta `informes` de
+   * `diagnostics.handlers.ts` — lo liberado por acá nunca aparecía en «Mis
+   * resultados», exactamente el bug que D-E cierra del lado real. El mock
+   * imita ahora el mismo contrato: 422 con el endpoint canónico, en vez de
+   * simular una liberación que no existe.
+   */
+  router.post('/clinical/diagnostic-reports/:id/release', () =>
+    preconditionFailed(
+      'Esta ruta ya no libera informes. Usá diagnostics/reports/:reportId/versions/:versionId/release.',
+      { canonicalEndpoint: 'diagnostics/reports/:reportId/versions/:versionId/release' },
+    ),
+  );
 
   router.post('/cds/check-interactions', (request) => {
     const datos = cuerpo<{ substanceConceptIds?: string[] }>(request);

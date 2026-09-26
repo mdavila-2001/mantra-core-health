@@ -35,7 +35,14 @@
       "y el cierre de la cosa misma, no de la unidad. Sin estos tres prefijos el",
       "POST se lo quedaba el dev-server y devolvía el index en HTML con un 200, que",
       "la pantalla sólo puede leer como «no pudimos guardar el precio». Ninguna",
-      "ruta de la aplicación empieza con ellos."
+      "ruta de la aplicación empieza con ellos.",
+      "",
+      "BR-17 (`DiagnosticsLabClient`): `/diagnostics/accessions`, `/diagnostics/",
+      "specimens`, `/diagnostics/containers` y `/diagnostics/reports` — acesión,",
+      "espécimen, cadena de custodia y versión/liberación del informe. Ninguna",
+      "pantalla los llama todavía (la consola del laboratorio queda para un",
+      "carril propio), pero el cliente ya existe y `check-client-prefixes.mjs`",
+      "los exige igual: sin ruta no distingue código sin pantalla de código roto."
     ],
     "context": [
       "/iam",
@@ -93,6 +100,10 @@
       "/billing/service-catalog",
       "/diagnostics/patients",
       "/diagnostics/work-orders",
+      "/diagnostics/accessions",
+      "/diagnostics/specimens",
+      "/diagnostics/containers",
+      "/diagnostics/reports",
       "/quotations",
       "/prescription-favorites",
       "/insurance-carrier-catalog",

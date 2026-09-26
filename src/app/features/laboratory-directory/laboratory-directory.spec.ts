@@ -49,6 +49,8 @@ const LAB = {
   rating: 4.5,
   ratingCount: 12,
   minAmount: 90,
+  minAmountCurrency: 'USD',
+  cities: [],
 };
 const IMAGING = {
   ...LAB,
@@ -63,6 +65,7 @@ const IMAGING = {
   rating: null,
   ratingCount: 0,
   minAmount: null,
+  minAmountCurrency: null,
 };
 
 /** La ruta del buscador. El directorio del tenant es otra y no la usa esta pantalla. */
@@ -192,7 +195,7 @@ describe('LaboratoryDirectory', () => {
     });
 
     it('does not draw a map that could not filter anything', () => {
-      // La búsqueda de la API todavía no manda `cities`.
+      // cities vacío: ninguna sede activa tenía dirección con ciudad cargada.
       mount();
       responder([LAB, IMAGING]);
       fixture.detectChanges();
@@ -284,7 +287,7 @@ describe('LaboratoryDirectory', () => {
     expect(textos).toContain('4,5 · 12 reseñas');
   });
 
-  it('shows the entry price as "desde" when the centre publishes one', () => {
+  it('shows the entry price as "desde" with the real currency (CL-45/CL-51)', () => {
     mountEnCategoria();
     responder([LAB]);
     fixture.detectChanges();
@@ -294,6 +297,15 @@ describe('LaboratoryDirectory', () => {
     // entrada que el mapper produce al final nunca llega a la pantalla.
     // «Desde» y no el importe a secas: es el menor de la tarifa pública, y sin
     // esa palabra prometería que cualquier estudio del centro cuesta eso.
+    // La moneda es la que trae `minAmountCurrency` (USD acá), nunca "Bs" literal.
+    expect(lineasDibujadas()).toContain('desde USD 90');
+  });
+
+  it('límite: sin minAmountCurrency, usa Bs como piso conocido', () => {
+    mountEnCategoria();
+    responder([{ ...LAB, minAmountCurrency: null }]);
+    fixture.detectChanges();
+
     expect(lineasDibujadas()).toContain('desde Bs 90');
   });
 

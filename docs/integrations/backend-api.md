@@ -792,6 +792,26 @@ Laboratorios e imagenología (M52).
 > distingue «lo agregó otro» de «lo agregué yo». Si algún consumidor de arriba
 > quedó mal atribuido, corregilo — se dedujo de quién importa cada cliente.
 
+### `DiagnosticsLabClient` — 9 operaciones
+
+BR-17 (CV-02, CL-47): el circuito del laboratorio propio — acesión, espécimen,
+versión de informe y liberación. `createReportVersion`/`releaseReportVersion`
+son D-E: el único camino que hace aparecer un resultado en «Mis resultados».
+El resto (acesionar, especímenes, contenedores, custodia y sus dos lecturas)
+todavía no tiene pantalla — ver `scripts/check-mock-vs-client.mjs` (CONOCIDAS).
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/diagnostics/specimens` | sin pantalla todavía (consola del laboratorio) |
+| `POST` | `/diagnostics/accessions` | sin pantalla todavía (consola del laboratorio) |
+| `GET` | `/diagnostics/accessions/:accessionId` | sin pantalla todavía (consola del laboratorio) |
+| `GET` | `/diagnostics/specimens/:specimenId` | sin pantalla todavía (consola del laboratorio) |
+| `POST` | `/diagnostics/specimens/:specimenId/rejection` | sin pantalla todavía (consola del laboratorio) |
+| `POST` | `/diagnostics/specimens/:specimenId/containers` | sin pantalla todavía (consola del laboratorio) |
+| `POST` | `/diagnostics/containers/:containerId/custody-events` | sin pantalla todavía (consola del laboratorio) |
+| `POST` | `/diagnostics/reports/:reportId/versions` | sin pantalla todavía (consola del laboratorio) |
+| `POST` | `/diagnostics/reports/:reportId/versions/:versionId/release` | sin pantalla todavía (consola del laboratorio) |
+
 ### `FilesClient` — 6 operaciones
 
 | Método | Ruta | Consumidor |

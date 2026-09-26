@@ -567,7 +567,7 @@ function toSearchResult(unit: DiagnosticUnitSearchItem): SearchResultItem {
   if (unit.acceptsExternalOrders) {
     seals.push({ label: 'Recibe órdenes externas', tone: 'neutro' as const });
   }
-  const desde = precioDesde(unit.minAmount);
+  const desde = precioDesde(unit.minAmount, unit.minAmountCurrency);
   return {
     id: unit.id,
     title: unit.name,
@@ -604,22 +604,24 @@ function toSearchResult(unit: DiagnosticUnitSearchItem): SearchResultItem {
  * publicó tarifa no es un centro gratis, y rellenar el hueco con una frase
  * amable haría que dos situaciones distintas se vean iguales.
  *
- * La moneda va literal porque la búsqueda **no la devuelve** —`minAmount` viaja
- * como número suelto—, y el directorio hoy es de un solo país. El día que la
- * respuesta traiga su concepto de moneda, se lee de ahí.
+ * CL-45/CL-51: la moneda ya no va literal — la búsqueda la devuelve
+ * (`minAmountCurrency`, el código del concepto de `price_schedules`). Un
+ * centro sin tarifa publicada tampoco tiene moneda, así que ambos faltan
+ * juntos; si algún día llegara un importe sin moneda (dato incompleto del
+ * centro), se dice «Bs» como piso conocido antes que inventar un símbolo.
  */
-function precioDesde(minAmount: number | null): string | null {
+function precioDesde(minAmount: number | null, minAmountCurrency: string | null): string | null {
   if (minAmount === null) {
     return null;
   }
-  // Sin decimales cuando no los hay: «Bs 120,00» en una línea de contexto pesa
+  // Sin decimales cuando no los hay: «USD 120,00» en una línea de contexto pesa
   // más de lo que informa.
   const decimales = Number.isInteger(minAmount) ? 0 : 2;
   const cifra = minAmount.toLocaleString('es-BO', {
     minimumFractionDigits: decimales,
     maximumFractionDigits: decimales,
   });
-  return `desde Bs ${cifra}`;
+  return `desde ${minAmountCurrency ?? 'Bs'} ${cifra}`;
 }
 
 /**

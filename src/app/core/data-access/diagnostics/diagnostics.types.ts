@@ -326,15 +326,30 @@ export interface DiagnosticResultShare {
   readonly id: string;
   readonly reportId: string;
   readonly practitionerUserId: string;
+  /**
+   * El nombre del profesional, para que «Compartido con» no muestre un uuid.
+   * Ausente si la cuenta perdió su vínculo con la persona (caso raro).
+   */
+  readonly practitionerName?: string;
   readonly validFrom: Date;
   readonly validTo?: Date;
   readonly active: boolean;
 }
 
-/** Compartir un resultado: con quién y hasta cuándo. */
+/**
+ * Compartir un resultado: con quién y hasta cuándo.
+ *
+ * `practitionerProfileId` (CL-48), no una cuenta: es el mismo id que ya trae
+ * `MyCareRelationship.practitionerProfileId` (`GET /authz/me/access`, BR-20).
+ * El paciente elige de esa lista —sus relaciones asistenciales reales—, nunca
+ * tipea un identificador. El servidor exige que la relación esté vigente antes
+ * de resolver la cuenta y crear el acceso.
+ *
+ * `reason` se retiró (CL-50): `authz.resource_scope_grants` no tiene columna
+ * para guardarlo y el backend ya lo ignoraba en silencio.
+ */
 export interface NewDiagnosticResultShare {
-  readonly practitionerUserId: string;
+  readonly practitionerProfileId: string;
   /** Obligatorio: no existe compartir sin plazo. */
   readonly validUntil: Date;
-  readonly reason?: string;
 }

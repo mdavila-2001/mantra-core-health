@@ -209,7 +209,29 @@ describe('DiagnosticResults', () => {
       .flush(new Blob(['%PDF'], { type: 'application/pdf' }));
   });
 
-  it('reads the shares of a result when the panel opens', () => {
+  /** Abre el panel de compartir y responde las dos lecturas que dispara. */
+  function abrirCompartir(profesionales: readonly unknown[]): void {
+    const botones: HTMLButtonElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('button'),
+    );
+    const compartir = botones.find((boton) =>
+      (boton.textContent ?? '').includes('Compartir con un profesional'),
+    );
+    compartir?.click();
+    fixture.detectChanges();
+
+    http.expectOne(`/diagnostic-results/me/${REPORT_ID}/shares`).flush({
+      reportId: REPORT_ID,
+      items: [],
+    });
+    http.expectOne('/authz/me/access').flush({
+      careRelationships: profesionales,
+      grants: [],
+    });
+    fixture.detectChanges();
+  }
+
+  it('reads the shares of a result when the panel opens, and shows the name (CL-48)', () => {
     configurar(PROFILE_ID);
     mount();
     responderResultados([RESULTADO]);
@@ -233,16 +255,65 @@ describe('DiagnosticResults', () => {
             id: SHARE_ID,
             reportId: REPORT_ID,
             practitionerUserId: 'user-9',
+            practitionerName: 'Dra. Marta Rivas',
             validFrom: '2026-08-10T12:00:00.000Z',
             validTo: '2026-08-17T12:00:00.000Z',
             active: true,
           },
         ],
       });
+    http.expectOne('/authz/me/access').flush({ careRelationships: [], grants: [] });
     fixture.detectChanges();
 
     const texto = fixture.nativeElement.textContent as string;
-    expect(texto).toContain('user-9');
+    // El nombre, nunca el uuid de la cuenta (CL-48: antes se pintaba crudo).
+    expect(texto).toContain('Dra. Marta Rivas');
+    expect(texto).not.toContain('user-9');
     expect(texto).toContain('Vigente');
+  });
+
+  it('aceptado: ofrece elegir por nombre entre las relaciones asistenciales vigentes', () => {
+    configurar(PROFILE_ID);
+    mount();
+    responderResultados([RESULTADO]);
+    fixture.detectChanges();
+
+    abrirCompartir([
+      {
+        id: 'rel-1',
+        tenantId: 'tenant-1',
+        practitionerProfileId: 'prof-1',
+        practitionerName: 'Marta Rivas',
+        state: 'ACTIVE',
+        validFrom: '2026-01-01T00:00:00.000Z',
+      },
+      {
+        // Una relación vencida no se ofrece: no es un profesional vigente.
+        id: 'rel-2',
+        tenantId: 'tenant-1',
+        practitionerProfileId: 'prof-2',
+        practitionerName: 'Juan Paz',
+        state: 'EXPIRED',
+        validFrom: '2025-01-01T00:00:00.000Z',
+      },
+    ]);
+
+    const select = fixture.nativeElement.querySelector('#destinatario');
+    expect(select).not.toBeNull();
+    const texto = fixture.nativeElement.textContent as string;
+    expect(texto).toContain('Marta Rivas');
+    expect(texto).not.toContain('Juan Paz');
+  });
+
+  it('límite: sin relaciones vigentes, no ofrece ningún selector', () => {
+    configurar(PROFILE_ID);
+    mount();
+    responderResultados([RESULTADO]);
+    fixture.detectChanges();
+
+    abrirCompartir([]);
+
+    const texto = fixture.nativeElement.textContent as string;
+    expect(texto).toContain('Todavía no tenés ningún profesional vinculado');
   });
 });

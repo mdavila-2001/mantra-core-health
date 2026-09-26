@@ -146,13 +146,21 @@
                   quieras.
                 </p>
 
-                <app-form-field label="Cuenta del profesional" for="destinatario">
-                  <app-input
-                    id="destinatario"
-                    placeholder="Identificador de la cuenta"
-                    [value]="destinatario()"
-                    (valueChange)="destinatario.set($any($event))"
-                  />
+                <app-form-field label="Profesional" for="destinatario">
+                  @if (profesionales().length > 0) {
+                    <app-select
+                      id="destinatario"
+                      placeholder="Elegí un profesional"
+                      [options]="profesionales()"
+                      [value]="destinatario()"
+                      (valueChange)="destinatario.set($event)"
+                    />
+                  } @else {
+                    <p class="resultados__ayuda">
+                      Todavía no tenés ningún profesional vinculado. Un profesional
+                      aparece acá cuando establece una relación asistencial con vos.
+                    </p>
+                  }
                 </app-form-field>
 
                 <app-form-field label="Hasta" for="vence">
@@ -175,7 +183,9 @@
                   <ul class="resultados__compartidos">
                     @for (share of compartidos(); track share.id) {
                       <li class="resultados__compartido">
-                        <span class="resultados__cuenta">{{ share.practitionerUserId }}</span>
+                        <span class="resultados__cuenta">{{
+                          share.practitionerName ?? 'Profesional'
+                        }}</span>
                         <span class="resultados__vigencia">
                           @if (share.validTo !== undefined) {
                             hasta el {{ share.validTo | date: 'd MMM y' }}

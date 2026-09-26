@@ -605,9 +605,15 @@ export class ClinicalClient {
    * `POST /clinical/diagnostic-reports/:id/release` — libera el resultado
    * (UC-08-07).
    *
-   * Liberar es lo que hace visible el resultado para la persona, así que es un
-   * acto aparte de emitir: un informe final puede seguir retenido a propósito
-   * mientras se lo comunica en consulta.
+   * @deprecated (D-E, BR-17/CL-46) Esta ruta **no** escribe el evento de
+   * liberación que lee «Mis resultados»: el backend la mantiene montada, sin
+   * borrarla, pero desde D-E siempre responde `422` con el endpoint canónico
+   * en el mensaje. El único camino que el paciente ve es
+   * `POST /diagnostics/reports/:reportId/versions/:versionId/release`
+   * (todavía sin cliente en el front: es del laboratorio, no de esta
+   * pantalla — ver `DiagnosticsClient`). Se conserva este método sin borrar
+   * porque nada más en este carril lo usaba (ninguna pantalla), así que
+   * borrarlo no libera a nadie de una migración que no existía.
    *
    * @param diagnosticReportId - Informe a liberar.
    * @param expectedRowVersion - Versión esperada, para el bloqueo optimista.
