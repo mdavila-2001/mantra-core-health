@@ -46,7 +46,7 @@
 |---|---|---|
 | H1 | Artefacto de producción que habla con la API real | HECHO |
 | H2 | El simulador deja de esconder las brechas | HECHO |
-| H3 | El enrutado de producción no miente con 200 | A MEDIAS (H3.S1.M2 sin verificar contra nginx real) |
+| H3 | El enrutado de producción no miente con 200 | HECHO |
 
 ## H1 — cerrado
 
@@ -77,12 +77,15 @@ dos veces (agregando y quitando entradas de `CONOCIDAS`): falla como corresponde
 380/381 specs verdes en el barrido dirigido (el 1 rojo es preexistente — `mock-backend.spec.ts`
 "C3", falla igual en `origin/test` sin tocar nada, confirmado con `git stash`).
 
-## H3 — a medias
+## H3 — cerrado
 
-H3.S1 cerrado: `/loyalty`, `/patients/me/reviews`, `/ai` en las tres declaraciones;
+H3.S1: `/loyalty`, `/patients/me/reviews`, `/ai` en las tres declaraciones;
 `check-api-prefixes` y `check-client-prefixes` en verde (66 y 65 prefijos respectivamente).
 `/ai` resuelve en Opción C (503 JSON, D-C sin decidir — `docs/progress/DECISIONS.md`); la IP
 `173.249.39.237` salió de `proxy.conf.mjs` (sin default; `git grep` limpio salvo docs históricos
-y un comentario de spec, ver REPORTE). **H3.S1.M2 no se verificó contra un nginx real** — no se
-levantó el compose completo (fuera de alcance de máquina/tiempo de este carril); sólo se validó
-la sintaxis de los tres archivos y que los verificadores estáticos pasan.
+y un comentario de spec, ver REPORTE). **H3.S1.M2 verificado contra nginx real**: Docker Desktop
+arrancó (estaba apagado), el stack `mantra-redesa` subió solo, y se armó nginx real +
+`server.mjs` de `production-api` + la API real. Encontró y corrigió un bug real: `/patients/me/reviews`
+tenía barra final en `api-locations.conf` y el cliente la llama sin barra — nginx nunca la hacía
+matchear, y el verificador estático no lo detecta porque normaliza la barra antes de comparar.
+Detalle completo en `REPORTE.md`.
