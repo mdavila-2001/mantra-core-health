@@ -59,11 +59,11 @@ import type {
  * una decisión de alcance: se ofrece la escritura que **esta misma pantalla
  * vuelve a leer**. La orden aparece en el circuito del paciente apenas se crea.
  *
- * Acesionar un espécimen, abrir una corrida de analizador, ingerir un mensaje
- * del LIS o liberar una versión del informe tienen endpoint y no están acá: son
- * actos del laboratorio sobre su propio instrumental, sin lectura que los
- * refleje del lado de quien pide el estudio. Construirlos sería ofrecer un
- * formulario que traga el dato y no lo muestra.
+ * Acesionar un espécimen, cargar una versión del informe o liberarla son actos
+ * del laboratorio sobre su propio instrumental: viven en {@link
+ * DiagnosticsLabClient} (BR-17, CV-02/CL-47), no acá. Abrir una corrida de
+ * analizador o ingerir un mensaje del LIS siguen sin cliente: son del
+ * instrumento, no de una persona con un formulario delante.
  */
 @Injectable({
   providedIn: 'root',
@@ -303,9 +303,8 @@ export class DiagnosticsClient {
       .post<WireShare>(
         this.url(`/diagnostic-results/me/${encodeURIComponent(reportId)}/shares`),
         {
-          practitionerUserId: compartir.practitionerUserId,
+          practitionerProfileId: compartir.practitionerProfileId,
           validUntil: compartir.validUntil.toISOString(),
-          ...(compartir.reason === undefined ? {} : { reason: compartir.reason }),
         },
       )
       .pipe(map(toShare));
