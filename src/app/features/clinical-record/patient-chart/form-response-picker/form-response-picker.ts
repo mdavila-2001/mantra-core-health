@@ -149,7 +149,7 @@ export class FormResponsePicker {
       next: (listado) => {
         if (this.encounterId() !== encuentro) return;
         const cerradas = listado.items
-          .filter((item) => item.closedAt !== undefined)
+          .filter((item) => item.closedAt != null)
           .slice()
           .sort((a, b) => (b.closedAt ?? '').localeCompare(a.closedAt ?? ''));
         this.respuestas.set(cerradas);
