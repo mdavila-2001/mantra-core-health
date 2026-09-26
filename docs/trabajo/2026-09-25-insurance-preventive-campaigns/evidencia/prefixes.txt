@@ -1,0 +1,5 @@
+# verificadores de prefijos
+✓ check-api-prefixes
+  66 prefijos, iguales en las 3 fuentes
+✓ check-client-prefixes
+  507 operaciones de core/data-access, todas cubiertas por los 65 prefijos

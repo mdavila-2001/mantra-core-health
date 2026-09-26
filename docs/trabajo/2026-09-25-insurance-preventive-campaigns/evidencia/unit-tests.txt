@@ -1,0 +1,5 @@
+# npx ng test --watch=false (suite completa del front)
+ Test Files  586 passed (586)
+      Tests  7603 passed (7603)
+   Duration  124.67s (transform 93.00s, setup 20.56s, import 145.72s, tests 656.42s, environment 2495.93s)
+FULLTEST_EXIT=0

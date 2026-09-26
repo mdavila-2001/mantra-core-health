@@ -160,6 +160,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/insurance/insurance-analytics/insurance-analytics').then(
       (m) => m.InsuranceAnalytics,
     ),
+  'administration/insurance-campaigns': () =>
+    import('./features/insurance/insurance-campaigns/insurance-campaigns').then(
+      (m) => m.InsuranceCampaigns,
+    ),
   // Contabilidad abre en el **resumen llano**: cuánto entró hoy, esta semana y
   // este mes; en qué se va la plata; quién te debe y a quién le debés. Es lo
   // que el propietario pidió el 2026-09-19 —«se supone que es contabilidad

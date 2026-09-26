@@ -208,6 +208,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'administration/brokers',
       'administration/insurance-claims',
       'administration/insurance-analytics',
+      'administration/insurance-campaigns',
     ],
   },
   {
@@ -304,12 +305,15 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     label: 'Mis gestiones',
     group: 'Mi cuenta',
     icon: 'calendar',
-    // Lo que tengo en curso: un turno, un pedido, mis puntos.
+    // Lo que tengo en curso: un turno, un pedido, mis puntos. Las cotizaciones
+    // van acá y no en «Mi salud»: comparar precios es una gestión, no un dato
+    // clínico, y en medio de las pantallas clínicas partía ese bloque.
     paths: [
       'my-account/appointments',
       'my-account/pharmacy-orders',
       'my-account/loyalty',
       'my-account/promotions',
+      'my-account/cotizaciones',
     ],
   },
   {
@@ -323,7 +327,6 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'my-account/medical-record',
       'my-account/diagnostic-results',
       'my-account/diagnostic-orders',
-      'my-account/cotizaciones',
       'my-account/questionnaires',
     ],
   },

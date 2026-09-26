@@ -800,6 +800,25 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M26 insurance',
   },
   {
+    // Tarea 4 · M-06 — Proceso 4 del registro del cliente, «Módulo de
+    // promociones»: la aseguradora publica campañas de prevención junto a
+    // laboratorios e importadoras para que el seguro no erogue por
+    // enfermedades evitables. Mismo criterio de acceso que «Siniestralidad»:
+    // la autoridad es la membresía en la aseguradora, que resuelve la API, y
+    // el médico y el paciente quedan fuera con `hiddenFor`.
+    path: 'administration/insurance-campaigns',
+    label: 'Campañas preventivas',
+    group: 'Administración',
+    icon: 'megaphone',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
+    availability: 'disponible',
+    summary:
+      'Campañas de prevención con laboratorios e importadoras, con copago bonificado para tus afiliados.',
+    module: 'M26 insurance',
+  },
+  {
     // W2/F3 (M29): el backend del módulo es solo de comando —sin GET—, así
     // que la sección entra como panel de operaciones; los listados llegan
     // con sus endpoints de consulta.
@@ -1251,20 +1270,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M20 diagnostics',
   },
   {
-    path: 'my-account/cotizaciones',
-    // Aseguradora: no es de una organización PAYER. Ver la nota completa en
-    // `directories`, la primera fila que lleva esta marca.
-    hiddenForTenantTypes: ['PAYER'],
-    hiddenFor: ['PRACTITIONER'],
-    label: 'Cotizaciones',
-    group: 'Mi cuenta',
-    icon: 'billing',
-    roles: [ANY_ROLE],
-    availability: 'disponible',
-    summary: 'Compará referencias de precio y cercanía con su procedencia visible.',
-    module: 'M-cotizaciones',
-  },
-  {
     // Carril 10, lado paciente. Sin `roles` a propósito, por el mismo motivo
     // que «Mis turnos»: el filtro real es tener perfil de paciente, que no es
     // un rol sino un dato de la cuenta —el claim `pid` del token—, y la
@@ -1418,6 +1423,22 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Las promociones que te mandaron las farmacias.',
     module: 'M51 promotions',
+  },
+  {
+    // Detrás de «Promociones»: en el bloque «Mis gestiones» el orden es el del
+    // registro, y así no se mete entre citas, pedidos y puntos.
+    path: 'my-account/cotizaciones',
+    // Aseguradora: no es de una organización PAYER. Ver la nota completa en
+    // `directories`, la primera fila que lleva esta marca.
+    hiddenForTenantTypes: ['PAYER'],
+    hiddenFor: ['PRACTITIONER'],
+    label: 'Cotizaciones',
+    group: 'Mi cuenta',
+    icon: 'billing',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Compará referencias de precio y cercanía con su procedencia visible.',
+    module: 'M-cotizaciones',
   },
   {
     // **«Mis organizaciones»** (propietario, 2026-09-10), en el lugar que

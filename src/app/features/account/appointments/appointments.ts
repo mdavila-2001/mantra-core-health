@@ -52,7 +52,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { AGENDA_ROUTE } from '../../agenda/agenda.routes';
 import { AppointmentCalendar } from './appointment-calendar/appointment-calendar';
 import type { CalendarAppointment } from './appointment-calendar/appointment-calendar.types';
-import { reservaDelPortalRoute } from './appointments.routes';
+import { CAMPAIGN_PARAM, CAMPAIGN_TITLE_PARAM, reservaDelPortalRoute } from './appointments.routes';
 import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
 import { splitUpcomingAndPast } from './upcoming-and-past';
 
@@ -378,6 +378,22 @@ export class Appointments {
   /* ---- lista o calendario, y en la URL (corrección #10) ------------------- */
 
   private readonly params = toSignal(this.route.queryParamMap, { initialValue: null });
+
+  /**
+   * Código de la campaña preventiva del seguro desde la que se llegó, si se llegó
+   * desde una (Tarea 4). Sólo se usa para decir por qué se está agendando: no
+   * cambia ningún horario ni ningún precio.
+   */
+  protected readonly campaignCode = computed(() => {
+    const code = this.params()?.get(CAMPAIGN_PARAM)?.trim() ?? '';
+    return code === '' ? null : code.slice(0, 40);
+  });
+
+  /** Cómo se nombra la campaña al afiliado: su título si viajó, si no el código. */
+  protected readonly campaignName = computed(() => {
+    const title = this.params()?.get(CAMPAIGN_TITLE_PARAM)?.trim() ?? '';
+    return title === '' ? this.campaignCode() : title.slice(0, 120);
+  });
 
   /**
    * Qué vista se está mirando.

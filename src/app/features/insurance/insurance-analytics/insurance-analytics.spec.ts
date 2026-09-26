@@ -276,5 +276,9 @@ describe('InsuranceAnalytics', () => {
     fixture.detectChanges();
 
     await esperarSinViolaciones(fixture.nativeElement as HTMLElement);
-  });
+    // Mismo margen y mismo motivo que `shared/components/a11y.spec.ts`: axe
+    // sobre el tablero completo tarda ~2,2 s sola (medido el 2026-09-25), y con
+    // la suite entera en paralelo pasaba los 5 s por defecto y daba un rojo por
+    // tiempo que no dice nada. En verde este margen no se gasta nunca.
+  }, 30_000);
 });
