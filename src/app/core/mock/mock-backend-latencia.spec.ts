@@ -28,8 +28,15 @@ describe('latencia del interceptor — tabla por prefijo, sin azar', () => {
     const request = new HttpRequest('GET', '/terminology/calentar', undefined).clone({
       setHeaders: { Authorization: `Bearer ${token}` },
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await firstValueFrom(mockBackendInterceptor(request, siguiente as any));
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await firstValueFrom(mockBackendInterceptor(request, siguiente as any));
+    } catch {
+      // Lo único que importa acá es forzar la carga perezosa del módulo de
+      // manejadores antes de medir (ver el comentario de arriba). Desde
+      // H2.S1.M1 una ruta sin manejador es un 501, no un 200 — el mismo
+      // criterio que ya documenta `medir()` más abajo.
+    }
   });
 
   async function medir(method: 'GET' | 'POST', path: string): Promise<number> {

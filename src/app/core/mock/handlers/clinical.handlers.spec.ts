@@ -71,7 +71,9 @@ describe('POST /clinical/service-requests · antiduplicación de estudios', () =
       encounterId: 'enc-1',
     });
 
-    expect(respuesta.status).toBe(412);
+    // 422, no 412 (H2.S1.M2, 2026-09-26): la API responde las precondiciones
+    // de negocio con `PreconditionFailedException`, que es 422.
+    expect(respuesta.status).toBe(422);
     const body = respuesta.body as {
       code: string;
       details: { reason: string; previousStudy: { studyName: string } };
@@ -176,14 +178,14 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
 
   const CUERPO_BASE = { patientProfileId: PACIENTE.id, medicationConceptId: 'med-amoxi' };
 
-  it('sin indicationConditionId ni indicationText: 422', () => {
+  it('sin indicationConditionId ni indicationText: 400', () => {
     const respuesta = call<MockReply>('POST', '/clinical/medication-requests', CUERPO_BASE);
 
-    expect(respuesta.status).toBe(422);
+    expect(respuesta.status).toBe(400);
     expect((respuesta.body as { code: string }).code).toBe('VALIDATION_FAILED');
   });
 
-  it('indicationConditionId de un diagnóstico presuntivo/provisional: 422', () => {
+  it('indicationConditionId de un diagnóstico presuntivo/provisional: 400', () => {
     const presuntivo = condicion({ verificationStatusConceptId: VERIFICACION_DX['DXV-PROVISIONAL']! });
     condiciones.agregar(presuntivo);
 
@@ -192,7 +194,7 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
       indicationConditionId: presuntivo.id,
     });
 
-    expect(respuesta.status).toBe(422);
+    expect(respuesta.status).toBe(400);
   });
 
   it('indicationConditionId de un diagnóstico confirmado: 201', () => {
@@ -333,10 +335,10 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
 
   // C1: una nota vacía ya no se guarda. Sin paciente, o sin ninguna fila ni
   // texto, el simulador responde 422 —lo mismo que va a responder el backend—.
-  it('un cuerpo vacío es 422: sin paciente, o sin filas ni texto, no hay nota', () => {
-    expect(createNote({}).status).toBe(422);
+  it('un cuerpo vacío es 400: sin paciente, o sin filas ni texto, no hay nota', () => {
+    expect(createNote({}).status).toBe(400);
     const sinContenido = call<MockReply>('POST', '/charts/notes', { patientProfileId: PACIENTE.id });
-    expect(sinContenido.status).toBe(422);
+    expect(sinContenido.status).toBe(400);
     expect((sinContenido.body as { message: string }).message).toContain('al menos una fila o un texto');
   });
 
@@ -365,14 +367,16 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
         { label: 'presion ARTERIAL', value: '130/85' },
       ],
     });
-    expect(repetido.status).toBe(422);
-    expect((repetido.body as { issues: readonly { index: number }[] }).issues[0]).toMatchObject({ index: 1, field: 'label' });
+    expect(repetido.status).toBe(400);
+    expect(
+      (repetido.body as { details: { violations: readonly string[] } }).details.violations[0],
+    ).toMatch(/^label\b/);
 
     const sinValor = call<MockReply>('POST', '/charts/notes', {
       patientProfileId: PACIENTE.id,
       entries: [{ label: 'Peso', value: '   ' }],
     });
-    expect(sinValor.status).toBe(422);
+    expect(sinValor.status).toBe(400);
 
     const bien = createNote({
       patientProfileId: PACIENTE.id,

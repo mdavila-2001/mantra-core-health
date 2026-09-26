@@ -315,11 +315,13 @@ describe('doble de la carga masiva de terminología', () => {
     expect(codigoDeError(body)).toBe('IMPORT_PROFILE_UNKNOWN');
   });
 
-  it('sin archivo da 412, no un 500', () => {
-    // El contrato es explícito: ningún camino devuelve 500.
+  it('sin archivo da 422, no un 500', () => {
+    // El contrato es explícito: ningún camino devuelve 500. 422, no 412
+    // (H2.S1.M2, 2026-09-26): la API responde las precondiciones de negocio
+    // con `PreconditionFailedException`, que es 422.
     const { status, body } = llamar('POST', RUTA, { body: null });
 
-    expect(status).toBe(412);
+    expect(status).toBe(422);
     expect(codigoDeError(body)).toBe('PRECONDITION_FAILED');
   });
 

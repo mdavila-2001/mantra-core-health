@@ -117,7 +117,11 @@ export const MOCK_USERS: readonly MockUser[] = [
     email: 'medica@alovida.mock',
     nationalId: '4567890',
     displayName: 'Dra. Valeria Rojas Mendoza',
-    roles: ['PRACTITIONER', 'CLINICIAN', 'SCHEDULING_ADMIN'],
+    // Sólo PRACTITIONER (H2.S1.M3, 2026-09-26): es lo único que la API le da a
+    // un médico autorregistrado (`iam-practitioner-self-registration.service.ts`).
+    // Con CLINICIAN + SCHEDULING_ADMIN de más, la médica demo pasaba controles
+    // de rol que la API real le niega — el check-in y el hold entre ellos.
+    roles: ['PRACTITIONER'],
     // «Mi consultorio» primero y como organización propia: entra ahí sin pasar
     // por el selector, y las clínicas quedan a un cambio de distancia.
     tenants: [TENANT_CONSULTORIO, TENANT_CLINICA, TENANT_HOSPITAL],

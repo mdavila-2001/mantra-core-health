@@ -24,6 +24,7 @@ import { AppErrorHandler } from './core/errors/app-error-handler';
 import { tracingInterceptor } from './core/observability/http/tracing.interceptor';
 import { provideObservability } from './core/observability/observability.providers';
 import { mockBackendInterceptor } from './core/mock/mock-backend.interceptor';
+import { environment } from '../environments/environment';
 
 /**
  * Datos de formato del idioma de la aplicación.
@@ -85,8 +86,16 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withFetch(),
       // El simulado va último: la petición ya lleva trazas, tiempo de espera y
-      // credenciales cuando llega a él, igual que si fuera la red.
-      withInterceptors([tracingInterceptor, timeoutInterceptor, authInterceptor, mockBackendInterceptor]),
+      // credenciales cuando llega a él, igual que si fuera la red. Con la
+      // configuración real (`production-api`, `real-api`, `e2e-real`) no se
+      // registra: la petición sale a la red desde el interceptor anterior, sin
+      // pasar por un interceptor que existe sólo para la maqueta (H1.S2.M2).
+      withInterceptors([
+        tracingInterceptor,
+        timeoutInterceptor,
+        authInterceptor,
+        ...(environment.mockBackend ? [mockBackendInterceptor] : []),
+      ]),
     ),
     // Trazas del Router y de la estabilidad de la aplicación. No bloquea el
     // arranque y, con la telemetría apagada, no engancha nada.

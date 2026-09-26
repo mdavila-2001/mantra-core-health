@@ -5,6 +5,7 @@ import { filter } from 'rxjs';
 
 import { AlovidaRuntimeService } from '@core/alovida/alovida-runtime.service';
 import { ToastContainer } from '@shared/components/organisms/toast-container/toast-container';
+import { environment } from '../environments/environment';
 import { MockBanner } from './core/mock/mock-banner';
 import { AvisoDeHuecoLibre } from './features/notifications/aviso-de-hueco-libre';
 
@@ -19,6 +20,14 @@ export class App {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly huecosLibres = inject(AvisoDeHuecoLibre);
+
+  /**
+   * Sólo con el simulador encendido (H1.S2.M1). Contra la API real el cartel
+   * de cuentas de prueba no tiene nada que anunciar, y `@defer` en `app.html`
+   * lo saca del paquete inicial: con `mockBackend: false` nunca se llega a
+   * pedir su fragmento.
+   */
+  protected readonly mockBackend = environment.mockBackend;
 
   constructor() {
     /* Los comportamientos del marco ALOVIDA (menús, diálogo, cajón de
