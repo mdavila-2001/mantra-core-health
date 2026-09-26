@@ -22,16 +22,12 @@ import type { SelectOption } from '../../../../shared/components/atoms/select/se
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
-import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
 import { mensajeDeEscritura } from '../../mensaje-de-escritura';
-
-/** Qué clase de paso es cada actividad. */
-export const TARGET_ACTIVIDAD = 'chart.care_plan_activities.activity_concept_id';
 
 /** Un diagnóstico del expediente, para colgar el plan de él. */
 export interface DiagnosticoDelPlan {
@@ -42,7 +38,6 @@ export interface DiagnosticoDelPlan {
 /** Una actividad a medio cargar, tal como la sostiene el formulario. */
 interface ActividadEnCurso {
   readonly clave: number;
-  tipo: string | null;
   detalle: string;
   cuando: Date | null;
 }
@@ -91,18 +86,7 @@ interface ActividadEnCurso {
  */
 @Component({
   selector: 'app-care-plan-block',
-  imports: [
-    Alert,
-    AppButton,
-    Card,
-    ConceptSelect,
-    AppInput,
-    DatePicker,
-    FormActions,
-    FormField,
-    Select,
-    Textarea,
-  ],
+  imports: [Alert, AppButton, Card, AppInput, DatePicker, FormActions, FormField, Select, Textarea],
   providers: [{ provide: DRAFT_BLOCK, useExisting: forwardRef(() => CarePlanBlock) }],
   templateUrl: './care-plan-block.html',
   styleUrl: './care-plan-block.css',
@@ -130,8 +114,6 @@ export class CarePlanBlock implements DraftBlock {
   /** El plan quedó abierto y el expediente tiene que releerse. */
   readonly cambio = output<void>();
 
-  protected readonly targetActividad = TARGET_ACTIVIDAD;
-
   /* -- El formulario ------------------------------------------------------- */
 
   protected readonly meta = signal('');
@@ -147,7 +129,7 @@ export class CarePlanBlock implements DraftBlock {
    * antes de poder escribir nada.
    */
   protected readonly actividades = signal<readonly ActividadEnCurso[]>([
-    { clave: 0, tipo: null, detalle: '', cuando: null },
+    { clave: 0, detalle: '', cuando: null },
   ]);
 
   /** Contrato de `DraftBlock`. La fila inicial vacía no cuenta sola. */
@@ -158,9 +140,7 @@ export class CarePlanBlock implements DraftBlock {
       this.desde() !== null ||
       this.hasta() !== null ||
       this.diagnosticoElegido() !== null ||
-      this.actividades().some(
-        (a) => a.tipo !== null || a.detalle.trim() !== '' || a.cuando !== null,
-      ),
+      this.actividades().some((a) => a.detalle.trim() !== '' || a.cuando !== null),
   );
 
   private siguienteClave = 1;
@@ -181,16 +161,12 @@ export class CarePlanBlock implements DraftBlock {
   protected agregarActividad(): void {
     this.actividades.update((actuales) => [
       ...actuales,
-      { clave: this.siguienteClave++, tipo: null, detalle: '', cuando: null },
+      { clave: this.siguienteClave++, detalle: '', cuando: null },
     ]);
   }
 
   protected quitarActividad(clave: number): void {
     this.actividades.update((actuales) => actuales.filter((a) => a.clave !== clave));
-  }
-
-  protected fijarTipo(clave: number, valor: string | null): void {
-    this.actualizar(clave, (a) => ({ ...a, tipo: valor }));
   }
 
   protected fijarDetalle(clave: number, valor: string): void {
@@ -260,7 +236,6 @@ export class CarePlanBlock implements DraftBlock {
       .filter((a) => a.detalle.trim() !== '')
       .map((a) => ({
         detailText: a.detalle.trim(),
-        ...(a.tipo === null ? {} : { activityConceptId: a.tipo }),
         ...(a.cuando === null ? {} : { scheduledAt: a.cuando }),
       }));
 
@@ -316,6 +291,6 @@ export class CarePlanBlock implements DraftBlock {
     this.desde.set(null);
     this.hasta.set(null);
     this.diagnosticoElegido.set(null);
-    this.actividades.set([{ clave: this.siguienteClave++, tipo: null, detalle: '', cuando: null }]);
+    this.actividades.set([{ clave: this.siguienteClave++, detalle: '', cuando: null }]);
   }
 }

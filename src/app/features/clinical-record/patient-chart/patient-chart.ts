@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { forkJoin, map, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
@@ -35,7 +35,6 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import type { BreadcrumbItem } from '../../../shared/components/molecules/breadcrumb/breadcrumb.types';
-import { Link } from '../../../shared/components/atoms/link/link';
 import { Menu } from '../../../shared/components/molecules/menu/menu';
 import { MenuItem } from '../../../shared/components/molecules/menu/menu-item/menu-item';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
@@ -64,7 +63,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
-import { CLINICAL_RECORD_ROUTE, consultationRoute } from '../clinical-record.routes';
+import { CLINICAL_RECORD_ROUTE } from '../clinical-record.routes';
 import { AllergyBlock } from './allergy-block/allergy-block';
 import { CarePlanBlock } from './care-plan-block/care-plan-block';
 import type { DiagnosticoDelPlan } from './care-plan-block/care-plan-block';
@@ -318,7 +317,6 @@ interface Expediente {
     DatePipe,
     DocumentBlock,
     FreeNoteBlock,
-    Link,
     MedicationBlock,
     Menu,
     MenuItem,
@@ -327,7 +325,6 @@ interface Expediente {
     ObservationBlock,
     PdfExportButton,
     PageHeader,
-    RouterLink,
     Tab,
     Tabs,
     TutorialTarget,
@@ -437,9 +434,6 @@ export class PatientChart {
   protected readonly atencionEnCurso = computed(() =>
     (this.datos()?.resumen.encounters ?? []).some((fila) => fila.endAt === undefined),
   );
-
-  /** A dónde vuelve «Volver a la consulta». */
-  protected readonly rutaDeLaAtencion = computed(() => consultationRoute(this.profileId()));
 
   /**
    * La ruta de navegación, con el paciente como último escalón.
@@ -1002,7 +996,12 @@ export class PatientChart {
      Lo que hay que saber ANTES de abrir una pestaña. Vivía en una banda fija
      arriba de la página, y una banda que está siempre se deja de leer: ocupaba
      media pantalla en cada visita y empujaba las pestañas abajo del pliegue.
-     Ahora se dice una vez, en un modal, al abrir el expediente. */
+     Un modal tampoco: un cuadro que hay que cerrar con un clic para poder
+     seguir es la misma interrupción con otra forma. Ahora se dice una vez, por
+     toast, al abrir el expediente (2026-09-25). El toast es sólo texto: el
+     link «Volver a la consulta» que el modal tenía no tiene dónde ir en un
+     toast y se sacó — quien tiene una consulta en curso lo sabe por el aviso,
+     y navega por su cuenta. */
 
   /**
    * Las alergias, de frente al entrar, no en la segunda pestaña.
@@ -1014,23 +1013,23 @@ export class PatientChart {
    */
   protected readonly alergiasDestacadas = this.alergias;
 
-  /** Cerrado a mano: el modal de apertura no vuelve mientras se lea la ficha. */
-  private readonly avisosCerrados = signal(false);
+  /** Ya se avisó una vez en esta visita del expediente: no se repite. */
+  private readonly avisosMostrados = signal(false);
 
-  /**
-   * El modal de apertura, sólo si hay algo que avisar.
-   *
-   * Sin alergias y sin consulta abierta no se interpone nada entre quien entra
-   * y el expediente: un modal vacío que hay que cerrar sería peor que la banda
-   * que reemplaza.
-   */
-  protected readonly avisosVisibles = computed(
-    () =>
-      !this.avisosCerrados() && (this.alergiasDestacadas().length > 0 || this.atencionEnCurso()),
-  );
-
-  protected cerrarAvisos(): void {
-    this.avisosCerrados.set(true);
+  /** Junta alergias y consulta en curso en, como mucho, dos toasts. */
+  private avisarAlAbrir(alergias: readonly FilaClinica[], enCurso: boolean): void {
+    this.avisosMostrados.set(true);
+    if (alergias.length > 0) {
+      this.toasts.warning(
+        alergias
+          .map((alergia) => (alergia.detalle === '' ? alergia.principal : `${alergia.principal} (${alergia.detalle})`))
+          .join(' · '),
+        'Alergias',
+      );
+    }
+    if (enCurso) {
+      this.toasts.info('Tenés una consulta en curso con esta persona.', 'Consulta en curso');
+    }
   }
 
   /**
@@ -1379,6 +1378,17 @@ export class PatientChart {
     effect(() => {
       const perfilId = this.auth.practitionerProfileId();
       untracked(() => this.resolverPerfilPropio(perfilId));
+    });
+
+    // El aviso de apertura: alergias y consulta en curso, por toast, una sola
+    // vez por visita. Ver el comentario de `avisosMostrados` arriba.
+    effect(() => {
+      const alergias = this.alergiasDestacadas();
+      const enCurso = this.atencionEnCurso();
+      if (this.avisosMostrados() || (alergias.length === 0 && !enCurso)) {
+        return;
+      }
+      untracked(() => this.avisarAlAbrir(alergias, enCurso));
     });
   }
 

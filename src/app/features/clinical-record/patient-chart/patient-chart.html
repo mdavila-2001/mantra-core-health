@@ -438,41 +438,10 @@
 <!-- ─── Lo que hay que saber antes de leer ────────────────────────────────
      Las alergias y la consulta abierta iban en avisos fijos arriba de la
      página: ocupaban media pantalla en cada visita, empujaban las pestañas
-     abajo del pliegue y, al estar siempre, se dejaban de leer. Acá aparecen
-     una vez, al abrir el expediente, y se cierran. Lo mismo que dicen sigue
-     estando en su pestaña —«Alergias», «Encuentros»—: el modal avisa, no es
-     el único lugar donde consta. -->
-@if (avisosVisibles()) {
-  <app-content-dialog
-    heading="Antes de leer el expediente"
-    [description]="contextoDelPaciente()"
-    size="sm"
-    closeLabel="Entendido"
-    (closed)="cerrarAvisos()"
-  >
-    <div class="expediente__avisos" data-testid="expediente-avisos">
-      @if (alergiasDestacadas().length > 0) {
-        <app-alert tone="warning" title="Alergias">
-          <ul class="expediente__alergias-lista">
-            @for (alergia of alergiasDestacadas(); track alergia.id) {
-              <li class="expediente__alergias-item">
-                <span>{{ alergia.principal }}</span>
-                @if (alergia.detalle !== '') {
-                  <app-badge variant="warning">{{ alergia.detalle }}</app-badge>
-                }
-              </li>
-            }
-          </ul>
-        </app-alert>
-      }
+     abajo del pliegue y, al estar siempre, se dejaban de leer. Un modal
+     tampoco: hay que cerrarlo con un clic para poder seguir, que es la misma
+     interrupción con otra forma. Ahora se dicen una vez, por toast, al abrir
+     el expediente (ver el constructor en patient-chart.ts). Lo mismo que
+     dicen sigue estando en su pestaña —«Alergias», «Encuentros»—: el toast
+     avisa, no es el único lugar donde consta. -->
 
-      @if (atencionEnCurso()) {
-        <app-alert tone="info" title="Tenés una consulta en curso con esta persona">
-          <a app-link [routerLink]="rutaDeLaAtencion()" data-testid="expediente-volver-atencion">
-            Volver a la consulta
-          </a>
-        </app-alert>
-      }
-    </div>
-  </app-content-dialog>
-}

@@ -26,12 +26,7 @@
     <!-- El motivo es obligatorio: un plan sin decir por qué se abre no se
          puede evaluar. Se elige un diagnóstico ya registrado, o se escribe. -->
     @if (hayDiagnosticos()) {
-      <app-form-field
-        icon="stethoscope"
-        label="Motivo"
-        hint="Por qué se abre el plan. Elegí un diagnóstico ya registrado, o escribilo a mano."
-        [required]="true"
-      >
+      <app-form-field icon="stethoscope" label="Diagnóstico" [required]="true">
         <app-select
           data-testid="plan-diagnostico"
           [value]="diagnosticoElegido()"
@@ -45,7 +40,6 @@
       <app-form-field
         icon="stethoscope"
         [label]="hayDiagnosticos() ? 'Motivo escrito' : 'Motivo'"
-        hint="Por qué se abre el plan, en una frase. Se pide aunque no haya un diagnóstico previo."
         [required]="true"
       >
         <app-input
@@ -76,15 +70,6 @@
 
       @for (actividad of actividades(); track actividad.clave) {
         <div class="plan__actividad" data-testid="plan-actividad">
-          <app-form-field label="Clase de paso">
-            <app-concept-select
-              [target]="targetActividad"
-              [value]="actividad.tipo"
-              (valueChange)="fijarTipo(actividad.clave, $event)"
-              placeholder="Sin especificar"
-            />
-          </app-form-field>
-
           <app-form-field label="Cuándo">
             <app-date-picker
               [value]="actividad.cuando"
