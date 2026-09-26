@@ -2,7 +2,7 @@ import { HttpHeaders } from '@angular/common/http';
 
 import type { ClinicalNoteVersionRef } from '../../data-access/chart-notes/chart-notes.types';
 import { condiciones, notas, NOTA_TIPO_EVOLUCION, type CondicionSimulada, type NotaSimulada } from '../fixtures/clinica';
-import { ESTADO, ESTUDIO, VERIFICACION_DX } from '../fixtures/conceptos';
+import { ESTADO, ESTUDIO, MEDICAMENTO, VERIFICACION_DX } from '../fixtures/conceptos';
 import { PACIENTE } from '../fixtures/personas';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
@@ -483,5 +483,76 @@ describe('POST /clinical/diagnostic-reports/:id/release (D-E, deprecado)', () =>
     expect((respuesta.body as { details: { canonicalEndpoint: string } }).details.canonicalEndpoint).toContain(
       'versions/:versionId/release',
     );
+  });
+});
+
+
+/**
+ * BR-14 en el simulador: el CDS respeta `@Roles` + guard de acceso de la API,
+ * el cierre compara `expectedRowVersion` y la enmienda exige su nota.
+ */
+describe('BR-14 · seguridad clínica en el simulador', () => {
+  const router = new MockRouter();
+  const medica = buscarUsuario('medica')!;
+  const paciente = buscarUsuario('paciente')!;
+
+  registrarClinica(router);
+
+  function call(method: MockMethod, path: string, body: unknown, user: MockUser): MockReply {
+    const match = router.match(method, path);
+    if (match === null) throw new Error(`No existe ${method} ${path}`);
+    return match.handler({
+      method,
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body,
+      headers: new HttpHeaders(),
+      user,
+    }) as MockReply;
+  }
+
+  const cuerpoDe = (r: MockReply): Record<string, unknown> => r.body as Record<string, unknown>;
+
+  it('un paciente recibe 403 al chequear interacciones', () => {
+    const r = call('POST', '/cds/check-interactions', { patientProfileId: PACIENTE.id, substanceConceptIds: ['a', 'b'] }, paciente as MockUser);
+    expect(r.status).toBe(403);
+  });
+
+  it('sin patientProfileId el chequeo falla la validación', () => {
+    const r = call('POST', '/cds/check-interactions', { substanceConceptIds: ['a', 'b'] }, medica as MockUser);
+    expect(r.status).toBe(400);
+  });
+
+  it('un par sin regla declarada no genera alerta; uno declarado sí', () => {
+    const sin = call('POST', '/cds/check-interactions', { patientProfileId: PACIENTE.id, substanceConceptIds: ['x', 'y'] }, medica as MockUser);
+    expect(cuerpoDe(sin)['count']).toBe(0);
+
+    const con = call('POST', '/cds/check-interactions', { patientProfileId: PACIENTE.id, substanceConceptIds: [MEDICAMENTO['MED-ENALAPRIL'], MEDICAMENTO['MED-LOSARTAN']] }, medica as MockUser);
+    expect(cuerpoDe(con)['count']).toBe(1);
+  });
+
+  it('cerrar con una versión vieja responde 409 y con la vigente cierra', () => {
+    const abierto = call('POST', '/clinical/encounters/check-in', { patientProfileId: PACIENTE.id, reasonText: 'Control' }, medica as MockUser);
+    const id = cuerpoDe(abierto)['id'] as string;
+
+    const viejo = call('POST', `/clinical/encounters/${id}/close`, { expectedRowVersion: 9 }, medica as MockUser);
+    expect(viejo.status).toBe(409);
+
+    const bueno = call('POST', `/clinical/encounters/${id}/close`, { expectedRowVersion: 1 }, medica as MockUser);
+    expect(bueno.status ?? 200).toBe(200);
+  });
+
+  it('enmendar sin nota falla; con nota sube la versión', () => {
+    const creada = call('POST', '/clinical/observations', { patientProfileId: PACIENTE.id, codeConceptId: 'obs', quantityValue: 100 }, medica as MockUser);
+    const id = cuerpoDe(creada)['id'] as string;
+
+    expect(call('PATCH', `/clinical/observations/${id}/amend`, { quantityValue: 110 }, medica as MockUser).status).toBe(400);
+
+    const ok = call('PATCH', `/clinical/observations/${id}/amend`, { quantityValue: 110, note: 'Error de tipeo' }, medica as MockUser);
+    expect(cuerpoDe(ok)['rowVersion']).toBe(2);
+
+    const choque = call('PATCH', `/clinical/observations/${id}/amend`, { quantityValue: 111, note: 'Otra', expectedRowVersion: 1 }, medica as MockUser);
+    expect(choque.status).toBe(409);
   });
 });

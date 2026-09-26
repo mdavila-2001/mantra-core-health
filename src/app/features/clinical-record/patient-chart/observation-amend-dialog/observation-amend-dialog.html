@@ -1,0 +1,95 @@
+<app-content-dialog
+  heading="Enmendar la medición"
+  [description]="nombre()"
+  size="md"
+  [closeGuard]="guardia"
+  (closed)="closed.emit()"
+>
+  <form class="enmienda" data-testid="enmienda-formulario" (submit)="$event.preventDefault()">
+    @if (errorDelServidor(); as mensaje) {
+      <app-alert tone="error" data-testid="enmienda-error">{{ mensaje }}</app-alert>
+    }
+
+    @if (valorActual() !== '') {
+      <p class="enmienda__actual">
+        Valor registrado: <strong>{{ valorActual() }}</strong>
+      </p>
+    }
+
+    <app-form-field
+      label="Valor corregido"
+      hint="El número correcto. Si la medición no tiene número, dejalo vacío y escribila abajo."
+      [errorMessage]="errorDeValor()"
+    >
+      <app-input
+        type="text"
+        inputmode="decimal"
+        testId="enmienda-valor"
+        [(value)]="valorNumerico"
+        [hasError]="errorDeValor() !== ''"
+        placeholder="128"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Unidad"
+      hint="La del valor de arriba. Sin número, no corresponde ninguna."
+    >
+      <app-concept-select
+        data-testid="enmienda-unidad"
+        [target]="targetUnidad"
+        [(value)]="unidad"
+        [disabled]="numero() === null"
+        placeholder="Sin unidad"
+      />
+    </app-form-field>
+
+    <app-form-field label="La medición en palabras" hint="Sólo para lo que no tiene número.">
+      <app-textarea
+        data-testid="enmienda-texto"
+        [(value)]="valorEnPalabras"
+        [rows]="2"
+        placeholder="Lo observado, con tus palabras"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Motivo de la enmienda"
+      [required]="true"
+      [hint]="nota().length + ' / ' + maxNota + ' caracteres. Queda en la historia clínica.'"
+      [errorMessage]="errorDeNota()"
+    >
+      <app-textarea
+        data-testid="enmienda-nota"
+        [(value)]="nota"
+        [rows]="3"
+        [maxLength]="maxNota"
+        [hasError]="errorDeNota() !== ''"
+        placeholder="Error de tipeo, equipo mal calibrado, valor confirmado por repetición…"
+      />
+    </app-form-field>
+  </form>
+
+  <ng-container dialog-actions>
+    <button
+      app-button
+      type="button"
+      variant="ghost"
+      data-testid="enmienda-cancelar"
+      [disabled]="enviando()"
+      (clicked)="cancelar()"
+    >
+      Cancelar
+    </button>
+    <button
+      app-button
+      type="button"
+      variant="primary"
+      data-testid="enmienda-enviar"
+      [isLoading]="enviando()"
+      (clicked)="enviar()"
+    >
+      Enmendar medición
+    </button>
+  </ng-container>
+</app-content-dialog>

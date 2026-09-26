@@ -379,6 +379,32 @@
   </button>
 </ng-template>
 
+<!-- BR-14/CL-16: una medición registrada se corrige con una enmienda que lleva su
+     nota; no hay «editar» ni «borrar» sobre la historia. -->
+<ng-template #celdaEnmienda let-fila>
+  <button
+    app-button
+    variant="ghost"
+    size="sm"
+    type="button"
+    data-testid="expediente-enmendar"
+    [attr.aria-label]="'Enmendar la medición: ' + fila.principal"
+    (clicked)="abrirEnmienda(fila)"
+  >
+    Enmendar
+  </button>
+</ng-template>
+
+@if (enmendando(); as fila) {
+  <app-observation-amend-dialog
+    [observationId]="fila.id"
+    [nombre]="fila.principal"
+    [valorActual]="fila.secundario"
+    (amended)="alEnmendar()"
+    (closed)="enmendando.set(null)"
+  />
+}
+
 @if (adjuntandoA(); as destino) {
   <app-attachment-dialog
     [ownerType]="duenoDelAdjunto()"

@@ -18,7 +18,7 @@ import {
   type EncuentroSimulado,
   type RecetaSimulada,
 } from '../fixtures/clinica';
-import { CLASE_ENCUENTRO, ESPECIALIDAD, ESTADO, ESTADO_CONDICION, ESTADO_ENCUENTRO, ESTADO_RECETA, INTENCION_DEL_PLAN, SEVERIDAD, VERIFICACION_DX } from '../fixtures/conceptos';
+import { CLASE_ENCUENTRO, ESPECIALIDAD, ESTADO, ESTADO_CONDICION, ESTADO_ENCUENTRO, ESTADO_RECETA, INTENCION_DEL_PLAN, MEDICAMENTO, SEVERIDAD, VERIFICACION_DX } from '../fixtures/conceptos';
 import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/personas';
 import { conflict, forbidden, notFound, preconditionFailed, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, isoDia, nuevoId, uuid } from '../mock-store';
@@ -51,6 +51,14 @@ function puedeLeer(request: MockRequest, patientProfileId: string): boolean {
   }
   return user.practitionerProfileId !== undefined || user.roles.includes('SECURITY_ADMIN') || accesoDeEmergenciaVigente(user.id, patientProfileId);
 }
+
+/** Pares del vademécum del simulador con una regla de interacción declarada. */
+const PARES_CON_INTERACCION: readonly (readonly [string, string, string])[] = [
+  [MEDICAMENTO['MED-ENALAPRIL']!, MEDICAMENTO['MED-LOSARTAN']!, 'DDI-0042'],
+  [MEDICAMENTO['MED-IBUPROFENO']!, MEDICAMENTO['MED-ENALAPRIL']!, 'DDI-0107'],
+  [MEDICAMENTO['MED-IBUPROFENO']!, MEDICAMENTO['MED-LOSARTAN']!, 'DDI-0108'],
+  [MEDICAMENTO['MED-SERTRALINA']!, MEDICAMENTO['MED-IBUPROFENO']!, 'DDI-0215'],
+];
 
 /* ---- el aviso de la ficha (proceso 2.6) ---------------------------------- */
 
@@ -232,7 +240,7 @@ export function registrarClinica(router: MockRouter): void {
       allergies: alergias.filtrar((a) => a.patientProfileId === id).map(sinPaciente),
       medicationRequests: recetas.filtrar((r) => r.patientProfileId === id).map(sinPaciente),
       observations: observaciones.filtrar((o) => o.patientProfileId === id).sort((a, b) => b.effectiveStartAt.localeCompare(a.effectiveStartAt)).map(sinPaciente),
-      encounters: encuentros.filtrar((e) => e.patientProfileId === id).sort((a, b) => b.startAt.localeCompare(a.startAt)).map(sinPaciente),
+      encounters: encuentros.filtrar((e) => e.patientProfileId === id).sort((a, b) => b.startAt.localeCompare(a.startAt)).map(sinPaciente).map((e) => ({ ...e, rowVersion: e.rowVersion ?? 1 })),
       careEpisodes: episodios.filtrar((e) => e.patientProfileId === id).map(sinPaciente),
       limit,
       truncated: [],
@@ -290,11 +298,17 @@ export function registrarClinica(router: MockRouter): void {
     return { status: 201, body: { id: nuevo.id, patientProfileId: nuevo.patientProfileId, episodeId: nuevo.episodeId ?? null, status: 'IN_PROGRESS', participantIds: [nuevo.primaryPractitionerId], locationIds: [], startAt: nuevo.startAt, endAt: null, createdAt: nuevo.startAt } };
   });
 
-  router.post('/clinical/encounters/:id/close', ({ params }) => {
+  router.post('/clinical/encounters/:id/close', (request) => {
+    const { params } = request;
     const e = encuentros.get(params['id']!);
     if (e === undefined) return notFound('Encuentro no encontrado');
+    // BR-14/CL-16: igual que la API, sólo compara si el cuerpo trae la versión.
+    const esperada = cuerpo<{ expectedRowVersion?: number }>(request).expectedRowVersion;
+    if (esperada !== undefined && esperada !== (e.rowVersion ?? 1)) {
+      return conflict('El encuentro fue modificado por otra sesión.', { expected: esperada, actual: e.rowVersion ?? 1 });
+    }
     const endAt = ahora();
-    encuentros.actualizar(e.id, { statusConceptId: ESTADO_ENCUENTRO['ENCST-FINISHED']!, endAt });
+    encuentros.actualizar(e.id, { statusConceptId: ESTADO_ENCUENTRO['ENCST-FINISHED']!, endAt, rowVersion: (e.rowVersion ?? 1) + 1 });
     return { id: e.id, patientProfileId: e.patientProfileId, episodeId: e.episodeId ?? null, status: 'FINISHED', participantIds: [e.primaryPractitionerId], locationIds: [], startAt: e.startAt, endAt, createdAt: e.startAt };
   });
 
@@ -559,13 +573,64 @@ export function registrarClinica(router: MockRouter): void {
     ),
   );
 
+  /**
+   * BR-14/CL-09: igual que `CdsController` —`@Roles('CLINICIAN', 'PRACTITIONER')`
+   * más `ClinicalRecordAccessGuard`—: un paciente o una sesión sin acceso a ese
+   * paciente recibe 403, y sin `patientProfileId` en el cuerpo la validación
+   * falla. Antes cualquier sesión chequeaba cualquier paciente.
+   *
+   * Las alertas ya no salen de «cualquier par»: la API real las decide con las
+   * reglas de `drug_interactions`, y una demo que alerta siempre muestra lo que
+   * la API no daría. Acá sólo alertan los pares declarados en `PARES_CON_INTERACCION`.
+   */
   router.post('/cds/check-interactions', (request) => {
-    const datos = cuerpo<{ substanceConceptIds?: string[] }>(request);
-    const sustancias = datos.substanceConceptIds ?? [];
-    const alertas = sustancias.length >= 2
-      ? [{ id: uuid(`alert-${sustancias.join('-')}`), alertTypeConceptId: uuid('concept-alert-interaction'), severityConceptId: SEVERIDAD['SEV-MODERATE']!, ruleId: 'DDI-0042' }]
-      : [];
+    const user = request.user;
+    if (user === null || !user.roles.some((rol) => ['CLINICIAN', 'PRACTITIONER'].includes(rol))) {
+      return forbidden('Tu rol no permite chequear interacciones.');
+    }
+    const datos = cuerpo<{ patientProfileId?: string; substanceConceptIds?: string[] }>(request);
+    if (datos.patientProfileId === undefined || datos.patientProfileId === '') {
+      return validation('El chequeo necesita a qué paciente corresponde.', [{ field: 'patientProfileId', message: 'Es obligatorio.' }]);
+    }
+    if (!puedeLeer(request, datos.patientProfileId)) return forbidden('No tenés acceso a este paciente.');
+    const sustancias = new Set(datos.substanceConceptIds ?? []);
+    const alertas = PARES_CON_INTERACCION.filter(([a, b]) => sustancias.has(a) && sustancias.has(b)).map(([a, b, regla]) => ({
+      id: uuid(`alert-${a}-${b}`),
+      alertTypeConceptId: uuid('concept-alert-interaction'),
+      severityConceptId: SEVERIDAD['SEV-MODERATE']!,
+      ruleId: regla,
+    }));
     return { alerts: alertas, count: alertas.length };
+  });
+
+  /**
+   * UC-08-04: enmienda de una observación. `note` es obligatoria en la API (400
+   * sin ella) y la versión esperada, si viaja, se compara: 409 si no coincide.
+   * Sólo se corrige el valor; la observación conserva su encuentro.
+   */
+  router.patch('/clinical/observations/:id/amend', (request) => {
+    const user = request.user;
+    if (user === null || user.practitionerProfileId === undefined) return forbidden('Tu rol no permite enmendar observaciones.');
+    const actual = observaciones.get(request.params['id']!);
+    if (actual === undefined) return notFound('Observación no encontrada');
+    if (!puedeLeer(request, actual.patientProfileId)) return forbidden('No tenés acceso a este paciente.');
+    const datos = cuerpo<{ note?: string; expectedRowVersion?: number; quantityValue?: number; valueDecimal?: number; valueText?: string; quantityUnitConceptId?: string; interpretationConceptId?: string }>(request);
+    if (typeof datos.note !== 'string' || datos.note.trim() === '') {
+      return validation('La enmienda necesita la nota que la justifica.', [{ field: 'note', message: 'Es obligatoria.' }]);
+    }
+    const version = actual.rowVersion ?? 1;
+    if (datos.expectedRowVersion !== undefined && datos.expectedRowVersion !== version) {
+      return conflict('La observación fue modificada por otra sesión.', { expected: datos.expectedRowVersion, actual: version });
+    }
+    const valor = String(datos.quantityValue ?? datos.valueDecimal ?? datos.valueText ?? actual.quantityValue);
+    observaciones.actualizar(actual.id, {
+      valueDecimal: valor,
+      quantityValue: valor,
+      ...(datos.quantityUnitConceptId === undefined ? {} : { quantityUnitConceptId: datos.quantityUnitConceptId }),
+      ...(datos.interpretationConceptId === undefined ? {} : { interpretationConceptId: datos.interpretationConceptId }),
+      rowVersion: version + 1,
+    });
+    return { id: actual.id, patientProfileId: actual.patientProfileId, status: 'AMENDED', componentIds: [], rowVersion: version + 1, createdAt: ahora() };
   });
 
   /* ---- planes de cuidados y documentos -------------------------------------

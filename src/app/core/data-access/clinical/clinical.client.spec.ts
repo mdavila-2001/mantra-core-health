@@ -706,6 +706,17 @@ describe('ClinicalClient', () => {
     conVersion.flush({ ...INFORME_EMITIDO, resultReleaseStatus: 'st-liberado' });
   });
 
+  it('amendObservation hace PATCH con la nota y omite lo ausente', () => {
+    client
+      .amendObservation('obs-1', { note: 'Error de tipeo', quantityValue: 120, expectedRowVersion: undefined })
+      .subscribe();
+
+    const req = http.expectOne('/clinical/observations/obs-1/amend');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ note: 'Error de tipeo', quantityValue: 120 });
+    req.flush({ ...OBSERVACION_REGISTRADA, rowVersion: 2 });
+  });
+
   /* -- la internación (UC-08-01) ------------------------------------------ */
 
   it('getSummary trae las internaciones con sus instantes convertidos', () => {

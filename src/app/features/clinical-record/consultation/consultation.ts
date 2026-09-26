@@ -9,6 +9,7 @@ import {
   untracked,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
@@ -135,6 +136,8 @@ export interface EncuentroEnCurso {
   readonly clase: string;
   readonly motivo: string;
   readonly desde: Date | null;
+  /** Versión leída del resumen: el cierre la devuelve como `expectedRowVersion`. */
+  readonly version: number | undefined;
 }
 
 /** Lo que la pantalla necesita de las dos lecturas, ya unido. */
@@ -438,6 +441,7 @@ export class Consultation {
         clase: this.label(encuentro.classConceptId),
         motivo: encuentro.reasonText ?? 'Sin motivo registrado',
         desde: encuentro.startAt ?? null,
+        version: encuentro.rowVersion,
       })),
   );
 
@@ -741,7 +745,7 @@ export class Consultation {
     this.cerrando.set(encuentro.id);
     this.registro.set(loading());
 
-    this.clinical.closeEncounter(encuentro.id).subscribe({
+    this.clinical.closeEncounter(encuentro.id, encuentro.version).subscribe({
       next: () => {
         this.cerrando.set(null);
         this.registro.set(ready(null));
@@ -750,6 +754,17 @@ export class Consultation {
       },
       error: (error: unknown) => {
         this.cerrando.set(null);
+        // BR-14/CL-16: 409 = otra sesión modificó la atención. Se avisa y se
+        // relee (`cargar` limpia el estado), para que el próximo cierre lleve
+        // la versión vigente en vez de repetir el mismo choque.
+        if (error instanceof HttpErrorResponse && error.status === 409) {
+          this.toasts.error(
+            'Otra sesión modificó esta atención. Recargamos los datos: revisala y volvé a cerrarla.',
+            'No se cerró la atención',
+          );
+          this.cargar();
+          return;
+        }
         this.registro.set(errorToViewState<null>(error));
       },
     });

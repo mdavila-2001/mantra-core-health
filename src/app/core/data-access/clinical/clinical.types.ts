@@ -174,6 +174,12 @@ export interface Encounter {
   readonly reasonText?: string;
   readonly startAt?: Date;
   readonly endAt?: Date;
+  /**
+   * Versión de fila para el bloqueo optimista (BR-14/CL-16). El resumen la
+   * publica para que el cierre mande `expectedRowVersion`; opcional en el tipo
+   * porque frontend y API se despliegan por separado.
+   */
+  readonly rowVersion?: number;
 }
 
 /**
@@ -699,6 +705,20 @@ export interface NewObservation extends ObservationValue {
   readonly components?: readonly NewObservationComponent[];
   readonly referenceRanges?: readonly NewObservationReferenceRange[];
   readonly notes?: readonly string[];
+}
+
+/**
+ * Enmendar una observación ya registrada (UC-08-04, BR-14).
+ *
+ * Una observación no se pisa en silencio: la enmienda lleva **la nota que la
+ * justifica** (obligatoria en el contrato) y, si quien enmienda conoce la
+ * versión de fila que leyó, `expectedRowVersion` para el bloqueo optimista. El
+ * valor viaja por uno de los caminos excluyentes de {@link ObservationValue}.
+ */
+export interface AmendObservation extends ObservationValue {
+  readonly note: string;
+  readonly expectedRowVersion?: number;
+  readonly interpretationConceptId?: string;
 }
 
 /**

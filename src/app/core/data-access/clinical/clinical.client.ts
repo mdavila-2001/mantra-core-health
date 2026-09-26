@@ -5,6 +5,7 @@ import { map, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import { nombreDeContentDisposition } from '../files/content-disposition';
 import type {
+  AmendObservation,
   Allergy,
   AllergyIntoleranceRegistration,
   CareEpisode,
@@ -575,6 +576,30 @@ export class ClinicalClient {
           components: observacion.components?.map((componente) => sinAusentes(componente)),
           referenceRanges: observacion.referenceRanges?.map((rango) => sinAusentes(rango)),
         }),
+      )
+      .pipe(map(toObservationRegistration));
+  }
+
+  /**
+   * `PATCH /clinical/observations/:id/amend` — enmienda una observación
+   * (UC-08-04, BR-14).
+   *
+   * Sin `expectedRowVersion` el servidor no compara: el resumen todavía no
+   * publica la versión de cada observación, así que la enmienda desde el
+   * expediente viaja sin ella. Con ella, un `409` significa que otra sesión ya
+   * la corrigió.
+   *
+   * @param observationId - La observación a corregir.
+   * @param enmienda - La nota que la justifica y el valor corregido.
+   */
+  amendObservation(
+    observationId: string,
+    enmienda: AmendObservation,
+  ): Observable<ObservationRegistration> {
+    return this.http
+      .patch<WireObservationRegistration>(
+        this.url(`/clinical/observations/${encodeURIComponent(observationId)}/amend`),
+        sinAusentes({ ...enmienda }),
       )
       .pipe(map(toObservationRegistration));
   }

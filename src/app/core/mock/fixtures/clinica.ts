@@ -134,6 +134,8 @@ export interface ObservacionSimulada {
   readonly interpretationConceptId?: string;
   /** De dónde sale la medición: signos vitales, laboratorio, examen físico. */
   readonly categoryConceptId?: string;
+  /** UC-08-04: sube con cada enmienda; los sembrados nacen en 1. */
+  readonly rowVersion?: number;
 }
 
 export interface EncuentroSimulado {
@@ -146,6 +148,8 @@ export interface EncuentroSimulado {
   readonly reasonText: string;
   readonly startAt: string;
   readonly endAt: string | null;
+  /** BR-14/CL-16: bloqueo optimista; los sembrados nacen en 1. */
+  readonly rowVersion?: number;
 }
 
 /** Una fila de la nota médica: el campo y lo que vale, como lo escribió la médica. */

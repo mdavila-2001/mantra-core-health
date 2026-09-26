@@ -78,6 +78,7 @@ import { DRAFT_BLOCK } from './draft-block';
 import { FreeNoteBlock } from './free-note-block/free-note-block';
 import { MedicationBlock } from './medication-block/medication-block';
 import type { DiagnosticoEnFicha, RecetaEnFicha } from './medication-block/medication-block';
+import { ObservationAmendDialog } from './observation-amend-dialog/observation-amend-dialog';
 import { ObservationBlock } from './observation-block/observation-block';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
 
@@ -340,6 +341,7 @@ interface Expediente {
     MenuItem,
     MenuTrigger,
     NavIcon,
+    ObservationAmendDialog,
     ObservationBlock,
     PdfExportButton,
     PageHeader,
@@ -390,6 +392,9 @@ export class PatientChart {
   /** Patch v4.0.8: sólo la usa el bloque `diagnosticos`, ver {@link columnasPara}. */
   private readonly celdaAcciones =
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaAcciones');
+  /** BR-14: «Enmendar» de las observaciones, ver {@link columnasPara}. */
+  private readonly celdaEnmienda =
+    viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaEnmienda');
   /** El botón que abre el detalle en modal. La lleva **todo** bloque. */
   private readonly celdaVer =
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaVer');
@@ -956,15 +961,21 @@ export class PatientChart {
   );
 
   /**
-   * Las citas del paciente, para «¿en qué cita se detectó?».
+   * Las citas del paciente donde todavía se puede escribir, para «¿en qué cita
+   * se detectó?».
    *
-   * **Todas**, no sólo las abiertas: el cliente pidió poder atarlo a «una cita
-   * ya existente y/o finalizada», y el caso corriente es justamente registrar
-   * después lo que se vio en una consulta que ya cerró. De la más reciente a la
-   * más vieja, que es el orden en que se busca una.
+   * **Sólo las abiertas** (BR-14/CL-07). Antes se ofrecían todas, por el pedido
+   * de atar el registro a «una cita ya existente y/o finalizada»; pero cerrar un
+   * encuentro lo sella y la API rechaza cualquier escritura posterior sobre él.
+   * De la más reciente a la más vieja, que es el orden en que se busca una.
    */
   protected readonly citasParaElDiagnostico = computed<readonly CitaDelPaciente[]>(() =>
     [...(this.datos()?.resumen.encounters ?? [])]
+      // BR-14/CL-07: un encuentro cerrado queda sellado (SHA-256 del contenido) y
+      // la API rechaza toda escritura nueva sobre él con 422. No se ofrece como
+      // destino una puerta que va a estar cerrada; lo que se registra después
+      // de cerrar cuelga de un encuentro nuevo o de ninguno.
+      .filter((encuentro) => encuentro.endAt === undefined)
       .sort((a, b) => (b.startAt?.getTime() ?? 0) - (a.startAt?.getTime() ?? 0))
       .map((encuentro) => ({
         id: encuentro.id,
@@ -1234,6 +1245,18 @@ export class PatientChart {
     }
   }
 
+  /** La observación que se está enmendando, o `null`. */
+  protected readonly enmendando = signal<FilaClinica | null>(null);
+
+  protected abrirEnmienda(fila: FilaClinica): void {
+    this.enmendando.set(fila);
+  }
+
+  protected alEnmendar(): void {
+    this.toasts.success('Queda registrada con su nota en la historia clínica.', 'Medición enmendada');
+    this.cargar();
+  }
+
   protected abrirCambioDeEstado(fila: FilaClinica): void {
     this.cambiandoEstadoDe.set(fila);
   }
@@ -1441,6 +1464,18 @@ export class PatientChart {
               header: 'Cambiar estado',
               priority: 2,
               cell: this.celdaAcciones(),
+            } satisfies ColumnDef<FilaClinica>,
+          ]
+        : []),
+      // BR-14/CL-16: una medición ya registrada se enmienda con nota, no se
+      // borra ni se pisa. Sólo quien puede escribir la historia ve la acción.
+      ...(clave === 'observaciones' && this.puedeEscribir()
+        ? [
+            {
+              key: 'enmienda',
+              header: 'Corregir',
+              priority: 2,
+              cell: this.celdaEnmienda(),
             } satisfies ColumnDef<FilaClinica>,
           ]
         : []),

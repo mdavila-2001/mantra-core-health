@@ -1,0 +1,21 @@
+/* El formulario de la enmienda, dentro del modal: una columna a lo ancho del
+   panel. La tarjeta, el fondo y el pie los pone `content-dialog`. */
+
+:host {
+  display: contents;
+}
+
+.enmienda {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.enmienda__actual {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.enmienda__actual strong {
+  color: var(--text-primary);
+}
