@@ -20,6 +20,11 @@ import {
   aTexto,
 } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.money';
 import type { CampanaDeFarmacia } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.types';
+import { CartStore } from '../../../../core/data-access/pharmacy-cart/cart.store';
+import type {
+  CartLine,
+  CartSite,
+} from '../../../../core/data-access/pharmacy-cart/pharmacy-cart.types';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type {
   BorradorDePedido,
@@ -51,6 +56,8 @@ import type {
 } from '../../../../shared/components/organisms/map/pin-mapa.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
+import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
+import { PHARMACY_CART_ROUTE } from '../../pharmacy/pharmacy.routes';
 import { MI_HISTORIA_ROUTE } from '../medical-record.routes';
 import { aprobadosPorElSeguroDeEjemplo, NOTA_DE_DEMOSTRACION } from './where-to-buy.fixtures';
 import { withDisplayCurrency } from '../../../../core/money/display-currency';
@@ -275,6 +282,8 @@ export class WhereToBuy {
   private readonly profiles = inject(ProfilesClient);
   private readonly campaigns = inject(PharmacyCampaignsClient);
   private readonly ordersClient = inject(PharmacyOrdersClient);
+  private readonly cart = inject(CartStore);
+  private readonly dialogs = inject(DialogService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly documento = inject(DOCUMENT);
@@ -317,6 +326,14 @@ export class WhereToBuy {
 
   /** Qué medicamentos entran en la consulta, por concepto. */
   private readonly incluidos = signal<ReadonlySet<string>>(new Set());
+
+  /**
+   * Lo que no entró al carrito, dicho por su nombre (carril 43 · H5).
+   *
+   * `null` es «no hay nada que avisar», no «no se intentó»: sólo se llena
+   * después de volcar una receta que dejó medicamentos afuera.
+   */
+  protected readonly avisoDelCarrito = signal<string | null>(null);
 
   /** Desde dónde se miden las distancias; `null` = sin origen, sin permiso pedido. */
   protected readonly origen = signal<PuntoDeReferencia | null>(null);
@@ -644,6 +661,59 @@ export class WhereToBuy {
     void this.router.navigate(['/my-account/pharmacy-orders/new']);
   }
 
+  /* ---- la receta al carrito (carril 43 · H5) ------------------------------ */
+
+  /**
+   * Vuelca la receta entera al carrito de esta sede y lleva al carrito.
+   *
+   * Un carrito es de una sola sede, así que esto **reemplaza** lo que hubiera:
+   * si ya había uno de otra sede se pregunta primero, y cancelar no cambia
+   * nada. Al carrito entra sólo lo que esta sede puede confirmar (ver
+   * {@link cartLinesFromDraft}); lo demás se avisa por su nombre — mandar una
+   * línea sin producto haría explotar `createOrderRequest` más adelante.
+   *
+   * No reemplaza a «Enviar pedido»: son dos salidas distintas de la misma
+   * decisión. Ahí el pedido se arma de una; acá la receta queda en el carrito
+   * y se puede seguir agregando antes de confirmar.
+   */
+  protected async agregarRecetaAlCarrito(sede: SedeVisible): Promise<void> {
+    const consulta = this.ultimaConsulta;
+    const sitio = consulta?.respuesta.items.find((item) => item.siteId === sede.siteId);
+    if (consulta === null || sitio === undefined) {
+      return;
+    }
+
+    const { lines, omitted } = cartLinesFromDraft(
+      borradorDePedido(this.requestId, sitio, consulta.consultables, consulta.sinProducto),
+    );
+    if (lines.length === 0) {
+      this.avisoDelCarrito.set('Esta sede no puede confirmar ninguno de los medicamentos.');
+      return;
+    }
+
+    const carrito = this.cart.cart();
+    if (carrito !== null && carrito.site.siteId !== sitio.siteId) {
+      const confirmado = await this.dialogs.confirm({
+        title: 'Vaciar y cambiar de farmacia',
+        message: `Tu carrito es de otra farmacia. Si seguís, se vacía y queda la receta de ${sede.farmacia} · ${sede.sede}.`,
+        confirmLabel: 'Vaciar y cambiar',
+        cancelLabel: 'Dejarlo como está',
+        destructive: true,
+      });
+      if (!confirmado) {
+        return;
+      }
+    }
+
+    this.cart.replaceWith(sedeDelCarrito(sitio), lines, this.requestId);
+    this.avisoDelCarrito.set(
+      omitted.length === 0
+        ? null
+        : `${omitted.length} ${omitted.length === 1 ? 'medicamento' : 'medicamentos'} no se pudieron agregar: ${omitted.join(', ')}.`,
+    );
+    void this.router.navigateByUrl(PHARMACY_CART_ROUTE);
+  }
+
   /* ---- la ubicación: se pide, no se toma ---------------------------------- */
 
   /**
@@ -881,6 +951,69 @@ export function borradorDePedido(
     lineas,
     totalEstimado: sitio.totalAmount,
     moneda: sitio.currency?.code ?? null,
+  };
+}
+
+/**
+ * El borrador, convertido en las líneas que el carrito acepta (carril 43 · H5).
+ *
+ * ## Qué entra y qué no
+ *
+ * Sólo las líneas con `productId` **y** `disponible`. Las otras dos clases se
+ * quedan afuera a propósito y vuelven en `omitted` con su nombre:
+ *
+ * - **sin producto publicado** (`productId === null`): no existe nada que
+ *   agregar, y `createOrderRequest` rechaza esa línea con
+ *   `UnsupportedPharmacyOrderLineError`;
+ * - **sin stock en esta sede** (`disponible === false`): existe el producto,
+ *   pero esta sede no lo puede confirmar hoy.
+ *
+ * Es la decisión Q-J3 del plan: al carrito va sólo lo disponible, lo faltante
+ * se avisa. Meterlo igual sería armar un pedido que la farmacia no puede
+ * cumplir y que el backend rechaza.
+ *
+ * ## Toda línea de una receta exige receta
+ *
+ * `requiresPrescription: true` sin excepción: el borrador nace de una
+ * `medicationRequest`, no del catálogo libre. El carrito lo acepta porque
+ * `replaceWith` lo arma **con** `requestId` — que es justamente lo que
+ * distingue este camino del «Agregar» suelto de la tienda.
+ *
+ * Exportada porque es pura y el spec la ejercita directo.
+ */
+export function cartLinesFromDraft(borrador: BorradorDePedido): {
+  lines: CartLine[];
+  omitted: string[];
+} {
+  const lines: CartLine[] = [];
+  const omitted: string[] = [];
+  for (const linea of borrador.lineas) {
+    if (linea.productId === null || !linea.disponible) {
+      omitted.push(linea.medicamento);
+      continue;
+    }
+    lines.push({
+      productId: linea.productId,
+      name: linea.medicamento,
+      presentation: linea.presentacion,
+      quantity: linea.cantidad,
+      unitAmount: linea.precio,
+      currency: linea.moneda,
+      requiresPrescription: true,
+      medicationConceptId: linea.conceptId ?? null,
+    });
+  }
+  return { lines, omitted };
+}
+
+/** La sede del carrito, tal como la publica la disponibilidad. */
+function sedeDelCarrito(sitio: AvailabilitySite): CartSite {
+  return {
+    pharmacyId: sitio.pharmacyId,
+    pharmacyName: sitio.pharmacyName,
+    siteId: sitio.siteId,
+    siteName: sitio.siteName,
+    addressText: sitio.addressText,
   };
 }
 

@@ -457,20 +457,106 @@ export interface CodeSystemVersionListItem {
 
 /** Una línea del archivo que el importador no pudo usar. */
 export interface ImportFileIssue {
-  /** Línea del archivo, empezando en 1. */
+  /** Línea del archivo, empezando en 1. El encabezado es la línea 1. */
   readonly line: number;
+  /**
+   * La columna del problema, cuando el problema es de una columna.
+   *
+   * Ausente cuando el problema es de la fila entera o del encabezado —una
+   * columna desconocida, un archivo sin encabezado reconocible—, que es la
+   * distinción que hace `ProblemaDeFila` en §1 del contrato. Sin esto, «fila 5:
+   * está vacía» no dice **qué** está vacío, y corregir el archivo es adivinar.
+   */
+  readonly column?: string;
   readonly message: string;
 }
 
-/** Lo que dejó importar un archivo de conceptos. */
+/**
+ * Una fila válida de la vista previa que devuelve el dry-run.
+ *
+ * La arma el servidor, no el navegador (Q-5): el front no parsea CSV ni XLSX —
+ * hacerlo exigiría una dependencia y, peor, daría una vista previa que puede no
+ * coincidir con lo que el importador va a leer de verdad.
+ */
+export interface ImportPreviewRow {
+  readonly line: number;
+  readonly code: string;
+  readonly display: string;
+  readonly definition?: string;
+}
+
+/**
+ * Qué se está cargando. Es lo que fija qué columnas se esperan en el archivo.
+ *
+ * `designaciones` está en el contrato (§1) pero todavía no se ofrece en la
+ * pantalla: depende de que existan su entidad, su DTO y su repositorio (Q-9).
+ */
+export const IMPORT_PROFILES = ['conceptos', 'designaciones'] as const;
+export type ImportProfile = (typeof IMPORT_PROFILES)[number];
+
+/** En qué formato se baja la plantilla del perfil. */
+export type ImportTemplateFormat = 'csv' | 'xlsx';
+
+/**
+ * La plantilla descargada, con el nombre que sugirió el servidor si vino.
+ *
+ * Misma forma que `BinaryDownload` de `insurance-portability.types`, y a
+ * propósito **no** se importa de allá: es el tipo de otro dominio y traerlo
+ * ataría terminología a seguros por una coincidencia de dos campos. El día que
+ * alguien lo suba a un lugar común, los dos se reemplazan por ese.
+ */
+export interface ImportTemplateDownload {
+  readonly blob: Blob;
+  /** Ausente cuando la respuesta no trae `Content-Disposition`. */
+  readonly fileName?: string;
+}
+
+/** El formato que el servidor detectó en el archivo, por su contenido. */
+export type ImportedFileFormat = 'ndjson' | 'csv' | 'xlsx';
+
+/** Opciones de una llamada al importador. */
+export interface ConceptImportOptions {
+  /**
+   * `true` lee y valida el archivo **sin escribir nada**. Es el único modo con
+   * el que la pantalla arranca: desde la interfaz no se importa sin validar
+   * antes (Q-8).
+   */
+  readonly dryRun?: boolean;
+  readonly profile?: ImportProfile;
+}
+
+/**
+ * Lo que dejó importar un archivo de conceptos.
+ *
+ * Los campos que ya existían —`batchId`, `totalRead`, `inserted`, `skipped`,
+ * `errors` y `errorSamples`— **no cambiaron de nombre ni de tipo**: el contrato
+ * (§2) lo exige y hay un consumidor vivo. Los seis que agrega la carga masiva
+ * van **opcionales** por la misma razón: una respuesta del importador viejo, que
+ * no los trae, sigue tipando.
+ */
 export interface ConceptImportResult {
-  /** El lote registrado, para poder auditarlo después. */
-  readonly batchId: string;
+  /**
+   * El lote registrado, para poder auditarlo después.
+   *
+   * `null` en dry-run —no se registra lote (Q-4)— y cuando la carga abortó.
+   */
+  readonly batchId: string | null;
   readonly totalRead: number;
   readonly inserted: number;
-  /** Códigos que ya estaban en la versión y se dejaron como estaban. */
+  /** Códigos que ya estaban en la versión y se dejaron como estaban (Q-7). */
   readonly skipped: number;
   readonly errors: number;
-  /** Una muestra de los errores, no todos. */
+  /** Una muestra de los errores, no todos: los **primeros 20**. */
   readonly errorSamples: readonly ImportFileIssue[];
+  /** El formato que el servidor detectó. Ausente en el importador viejo. */
+  readonly format?: ImportedFileFormat;
+  readonly profile?: ImportProfile;
+  readonly dryRun?: boolean;
+  /**
+   * La carga se deshizo entera. `aborted: true ⇔ errors > 0 ⇔ inserted = 0`
+   * (Q-2, todo o nada): no hay importación parcial que dejar a medias.
+   */
+  readonly aborted?: boolean;
+  /** Las **primeras 20** filas válidas, para mirarlas antes de confirmar. */
+  readonly preview?: readonly ImportPreviewRow[];
 }

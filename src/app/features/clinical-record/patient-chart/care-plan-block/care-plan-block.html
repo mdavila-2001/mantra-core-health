@@ -23,24 +23,10 @@
       />
     </app-form-field>
 
-    <app-form-field
-      label="Clase de plan"
-      hint="Opcional. Una propuesta se conversa; una indicación se cumple."
-    >
-      <app-concept-select
-        data-testid="plan-intencion"
-        [target]="targetIntencion"
-        [(value)]="intencion"
-        placeholder="Sin especificar"
-      />
-    </app-form-field>
-
-    @if (opcionesDeDiagnostico().length > 1) {
-      <app-form-field
-        icon="stethoscope"
-        label="¿De qué diagnóstico cuelga?"
-        hint="Opcional. El problema que el plan viene a tratar."
-      >
+    <!-- El motivo es obligatorio: un plan sin decir por qué se abre no se
+         puede evaluar. Se elige un diagnóstico ya registrado, o se escribe. -->
+    @if (hayDiagnosticos()) {
+      <app-form-field icon="stethoscope" label="Diagnóstico" [required]="true">
         <app-select
           data-testid="plan-diagnostico"
           [value]="diagnosticoElegido()"
@@ -50,17 +36,17 @@
       </app-form-field>
     }
 
-    @if (opcionesDeCita().length > 1) {
+    @if (diagnosticoElegido() === null) {
       <app-form-field
-        icon="calendar"
-        label="¿En qué cita se acordó?"
-        hint="Opcional. La consulta donde se decidió, incluidas las ya finalizadas."
+        icon="stethoscope"
+        [label]="hayDiagnosticos() ? 'Motivo escrito' : 'Motivo'"
+        [required]="true"
       >
-        <app-select
-          data-testid="plan-cita"
-          [value]="citaElegida()"
-          (valueChange)="citaElegida.set($event)"
-          [options]="opcionesDeCita()"
+        <app-input
+          type="text"
+          testId="plan-motivo"
+          [(value)]="motivo"
+          placeholder="Por ejemplo: control de presión sin diagnóstico cerrado"
         />
       </app-form-field>
     }
@@ -74,29 +60,16 @@
       hint="Opcional. Cuándo se lo vuelve a evaluar."
       [errorMessage]="vigenciaInvalida() ? 'El fin no puede caer antes del inicio.' : ''"
     >
-      <app-date-picker
-        [(value)]="hasta"
-        mode="date-only"
-        [hasError]="vigenciaInvalida()"
-      />
+      <app-date-picker [(value)]="hasta" mode="date-only" [hasError]="vigenciaInvalida()" />
     </app-form-field>
 
-    <!-- Los pasos, cada uno en su caja: sin el marco, tres campos repetidos se
-         leen como un formulario que se repite por error. -->
+    <!-- Los pasos, en líneas sueltas: el marco hacía leer una tabla dentro del
+         formulario, y son tres campos más, no otro formulario. -->
     <fieldset class="plan__actividades">
       <legend class="plan__actividades-titulo">¿Qué hay que hacer?</legend>
 
       @for (actividad of actividades(); track actividad.clave) {
         <div class="plan__actividad" data-testid="plan-actividad">
-          <app-form-field label="Clase de paso">
-            <app-concept-select
-              [target]="targetActividad"
-              [value]="actividad.tipo"
-              (valueChange)="fijarTipo(actividad.clave, $event)"
-              placeholder="Sin especificar"
-            />
-          </app-form-field>
-
           <app-form-field label="Cuándo">
             <app-date-picker
               [value]="actividad.cuando"

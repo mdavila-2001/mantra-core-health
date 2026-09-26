@@ -18,6 +18,9 @@ import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PatientContextService } from '../../../core/patient-context/patient-context.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
+// El sello de reconsulta (C4): los dos campos y su predicado viven en los
+// tipos congelados de `scheduling`.
+import { esReconsulta } from '../../../core/data-access/scheduling/scheduling.types';
 import type {
   AgendaResource,
   AgendaSlot,
@@ -224,6 +227,25 @@ interface TurnoVisible {
    * uno nuevo que no reconoce.
    */
   readonly reprogramadoDesde: Date | null;
+  /**
+   * Si este turno es una reconsulta: tu médico te citó de nuevo por una
+   * consulta anterior (C4).
+   *
+   * Importa que se vea: un turno que la persona no pidió se lee como un error
+   * de la aplicación —o como el turno de otro— si nada explica de dónde salió.
+   */
+  readonly esReconsulta: boolean;
+  /**
+   * De cuándo era la consulta de la que salió, o `null` si aquélla quedó sin
+   * horario.
+   *
+   * Va como **fecha y no como frase armada**: el resto de este archivo redacta
+   * en TypeScript sólo lo que cambia de forma —quién canceló, si hubo mensaje—,
+   * y una fecha se escribe con el `date` del idioma de la aplicación. Armarla
+   * acá obligaría a clavar `'es-BO'` en el código, que es exactamente lo que
+   * hace estallar `formatDate` donde nadie registró ese idioma.
+   */
+  readonly reconsultaDe: Date | null;
 }
 
 /** Una espera activa, ya lista para mostrarse (P8). */
@@ -436,45 +458,70 @@ export class Appointments {
   protected readonly enPedirTurno = computed(() => this.seccion() === 'pedir');
 
   /**
-   * Las dos tareas de la pantalla, arriba de todo.
+   * El botón único del encabezado: pide una hora nueva o vuelve a las citas
+   * propias, sin scrollear.
    *
-   * Sin íconos a propósito: el conmutador de lista/calendario que vive dentro
-   * de «Mis citas» ya usa `calendar`, y repetir ese dibujo acá con otro
-   * significado rompe lo único que un ícono aporta, que es reconocer de un
-   * vistazo. Dos rótulos cortos se leen igual de rápido.
+   * Antes «Pedir una cita» bajaba con `scrollIntoView` hasta la sección de
+   * abajo (R-01): con varios turnos y la lista de espera de por medio, esa
+   * sección podía quedar a miles de píxeles y bajar hasta ahí seguía siendo
+   * incómodo (medido: y=3302 a 375 px). Ahora el mismo botón cambia cuál de las
+   * dos secciones se muestra —nunca las dos juntas— y el rótulo dice adónde
+   * lleva ir, no dónde ya se está.
    */
-  protected readonly seccionesDisponibles: readonly SegmentedOption<SeccionDeTurnos>[] = [
-    { value: 'citas', label: 'Mis citas', description: 'Ver las citas que ya pediste' },
-    {
-      value: 'pedir',
-      label: 'Agendar una cita',
-      description: 'Buscar un horario libre y agendar una cita nueva',
-    },
-  ];
+  protected alternarSeccion(): void {
+    const destino: SeccionDeTurnos = this.enPedirTurno() ? SECCION_POR_DEFECTO : 'pedir';
+    // `afterNextRender` y no directo en el `.then()`: la promesa de
+    // `router.navigate` resuelve apenas la navegación termina, no cuando el
+    // `@if` de la plantilla ya redibujó la sección nueva — enfocar ahí mismo
+    // encontraba el título todavía ausente del DOM.
+    void this.irASeccion(destino).then(() => {
+      afterNextRender(() => this.enfocarSeccion(destino), { injector: this.injector });
+    });
+  }
 
+  /** El botón de «Todavía no tenés citas»: abre la otra sección por su nombre. */
   protected elegirSeccion(seccion: SeccionDeTurnos): void {
-    this.irASeccion(seccion);
+    void this.irASeccion(seccion);
   }
 
   /**
-   * Abre una sección, venga del conmutador o de una acción que necesita la otra
-   * —elegir un día en el calendario termina en «Agendar una cita»—.
+   * Abre una sección —del botón del encabezado, del vacío de «Tus citas» o de
+   * señalar un día en el calendario, que termina en «Agendar una cita»—.
    *
    * `replaceUrl` como el resto de la pantalla: cambiar de sección no puede
    * dejar una entrada de historial por clic, o «atrás» obligaría a deshacer
-   * cada ida y vuelta antes de salir de la pantalla. Y se corta temprano si ya
-   * se está ahí: navegar a lo mismo vuelve a correr los guards para nada.
+   * cada ida y vuelta antes de salir de la pantalla. Se corta temprano si ya
+   * se está ahí, con una promesa ya resuelta: quien encadena un foco después
+   * no se queda esperando una navegación que no va a pasar.
    */
-  private irASeccion(seccion: SeccionDeTurnos): void {
+  private irASeccion(seccion: SeccionDeTurnos): Promise<boolean> {
     if (this.seccion() === seccion) {
-      return;
+      return Promise.resolve(true);
     }
-    void this.router.navigate([], {
+    return this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { [PARAM_DE_SECCION]: seccion === SECCION_POR_DEFECTO ? null : seccion },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
+  }
+
+  /**
+   * Lleva el foco al título de la sección recién abierta, para que el lector de
+   * pantalla anuncie dónde quedó y el teclado siga desde ahí (misma idea que
+   * R-01, generalizada a las dos direcciones). Sin animación cuando la persona
+   * pidió reducir movimiento.
+   */
+  private enfocarSeccion(seccion: SeccionDeTurnos): void {
+    const id = seccion === 'pedir' ? 'pedir-turno' : 'turnos-propios';
+    const titulo = this.document.getElementById(id);
+    if (titulo === null) {
+      return;
+    }
+    const reducir =
+      this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? true;
+    titulo.scrollIntoView?.({ behavior: reducir ? 'auto' : 'smooth', block: 'start' });
+    titulo.focus({ preventScroll: true });
   }
 
   /* ---- FT-05 · buscar y filtrar tus citas --------------------------------- */
@@ -624,11 +671,11 @@ export class Appointments {
    * ahora viven en «Agendar una cita», así que el gesto abre esa sección con el
    * día ya puesto. Sigue sin ser un viaje de ida: el aviso de arriba de la
    * grilla dice qué día se está mirando y ofrece volver a verlos todos, y el
-   * conmutador devuelve al calendario en un clic.
+   * botón del encabezado vuelve a «Tus citas» —calendario incluido— en un clic.
    */
   protected elegirDiaDeHorarios(dia: Date): void {
     this.diaDeHorarios.set(dia);
-    this.irASeccion('pedir');
+    void this.irASeccion('pedir');
   }
 
   /** Vuelve a ofrecer los horarios de toda la ventana. */
@@ -950,23 +997,6 @@ export class Appointments {
   });
 
   /**
-   * «Pedir una cita» del encabezado: lleva a la sección que ya existe al pie y
-   * deja el foco en su título, para que el lector de pantalla anuncie dónde
-   * quedó y el teclado siga desde ahí (R-01 del mapa UX). Sin animación cuando
-   * la persona pidió reducir movimiento.
-   */
-  protected irAPedirTurno(): void {
-    const titulo = this.document.getElementById('pedir-turno');
-    if (titulo === null) {
-      return;
-    }
-    const reducir =
-      this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? true;
-    titulo.scrollIntoView?.({ behavior: reducir ? 'auto' : 'smooth', block: 'start' });
-    titulo.focus({ preventScroll: true });
-  }
-
-  /**
    * Los mismos turnos, en la forma que el calendario entiende.
    *
    * **Los mismos**, no otra lectura: las dos vistas tienen que decir lo mismo o
@@ -1049,18 +1079,19 @@ export class Appointments {
   }
 
   /**
-   * Con `?resource=lab` se llega a reservar, no a mirar la lista: el foco va a
-   * «Agendar una cita» una sola vez, cuando la lista de citas ya se pintó. Antes
-   * de eso, lo que carga arriba empujaría la sección fuera de la vista.
+   * Con `?resource=lab` se llega a reservar, no a mirar la lista: abre
+   * «Agendar una cita» directo y deja el foco en su título. Ya no hace falta
+   * esperar a que la lista de turnos termine de cargar —eso importaba cuando
+   * el destino era un `scrollIntoView` que el layout podía correr; ahora es la
+   * sección que se muestra desde el arranque, así que cambia sola sin esperar
+   * nada.
    */
   private llevarAPedirSiVieneDeUnaOrden(): void {
     if (this.route.snapshot.queryParamMap.get(RESOURCE_PARAM) !== LAB_RESOURCE) {
       return;
     }
-    const alTerminarDeCargar = effect(() => {
-      if (this.turnos().status === 'loading') return;
-      alTerminarDeCargar.destroy();
-      afterNextRender(() => this.irAPedirTurno(), { injector: this.injector });
+    void this.irASeccion('pedir').then(() => {
+      afterNextRender(() => this.enfocarSeccion('pedir'), { injector: this.injector });
     });
   }
 
@@ -1550,6 +1581,8 @@ export class Appointments {
       cambioCuando: cita.statusReason?.changedAt ?? null,
       avisoDeDemora: avisoDeDemora(cita),
       demoraCuando: cita.delayNotice?.announcedAt ?? null,
+      esReconsulta: esReconsulta(cita),
+      reconsultaDe: cita.followUpOf?.startAt ?? null,
     };
   }
 

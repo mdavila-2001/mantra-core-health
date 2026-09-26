@@ -5,13 +5,14 @@ import {
   NOMBRE_DE_CATEGORIA,
   pruebaDelCorpus,
 } from '../fixtures/bolivia-eje-central';
+import { abrirAgendaDeCentro, ZONA_HORARIA_POR_OMISION } from '../fixtures/agenda';
 import { patientSettlementFixture } from '../fixtures/patient-settlements';
 import { PHARMACIES_AND_LABS } from '../fixtures/markdown-institutions.generated';
 import { ordenes } from '../fixtures/clinica';
 import { vitrinas } from '../fixtures/comunidad';
 import { ESTADO, ESTUDIO, PRIORIDAD, displayDe } from '../fixtures/conceptos';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES } from '../fixtures/personas';
-import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
+import { forbidden, notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA, TENANT_LABORATORIO, TENANT_NAMES, type MockUser } from '../mock-session';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
 
@@ -553,6 +554,89 @@ export function estudioPrevio(
 }
 
 export function registrarDiagnostico(router: MockRouter): void {
+  // Cada centro publicado tiene agenda: desde Cotizaciones un análisis se
+  // reserva como una cita, eligiendo un cupo del centro (25/09/2026).
+  for (const u of UNIDADES) {
+    if (!u.publiclyListed) continue;
+    const sede = sitioDe(u);
+    abrirAgendaDeCentro({
+      id: u.id,
+      name: u.name,
+      tenantId: u.tenantId,
+      kind: u.kind,
+      site: {
+        id: sede.id,
+        name: sede.name,
+        code: sede.code,
+        addressText: 'addressText' in sede ? (sede.addressText ?? null) : null,
+        timeZone: ZONA_HORARIA_POR_OMISION,
+      },
+    });
+  }
+
+  router.post('/clinical/service-requests', (request) => {
+    const datos = cuerpo<{
+      patientProfileId: string;
+      codeConceptId: string;
+      categoryConceptId?: string;
+      priorityConceptId?: string;
+      reasonText?: string;
+      encounterId?: string;
+      // Antiduplicación de estudios (v4.2.17, T-26, subtarea 3.2).
+      previousDiagnosticReportId?: string;
+      reusePreviousReport?: boolean;
+      duplicateOverrideReason?: string;
+    }>(request);
+
+    const patientProfileId = datos.patientProfileId ?? '';
+    const codeConceptId = datos.codeConceptId ?? '';
+    const conDecision = datos.previousDiagnosticReportId !== undefined;
+
+    // Sin decisión, el alta vuelve a correr el mismo detector que el
+    // chequeo: la UI no es la barrera. Con decisión, se confía en lo que el
+    // diálogo ya mostró — el mock no reproduce la carrera check→alta del
+    // servidor (`DUPLICATE_STUDY_MISMATCH`).
+    if (!conDecision) {
+      const duplicado = estudioDuplicado(patientProfileId, codeConceptId, DUPLICATE_STUDY_WINDOW_DAYS);
+      if (duplicado !== null) {
+        const previousStudy = estudioPrevio(duplicado.informe, duplicado.performedAt, request.user);
+        return preconditionFailed('Ya existe un estudio igual reciente.', {
+          reason: 'DUPLICATE_STUDY_DETECTED',
+          previousStudy,
+        });
+      }
+    }
+
+    const reutilizada = conDecision && datos.reusePreviousReport === true;
+    const nueva = ordenes.agregar({
+      id: nuevoId('order'),
+      patientProfileId,
+      codeConceptId,
+      categoryConceptId: datos.categoryConceptId ?? '',
+      priorityConceptId: datos.priorityConceptId ?? '',
+      statusConceptId: reutilizada ? ESTADO['ST-SATISFIED-BY-PRIOR']! : ESTADO['ST-PENDING']!,
+      requesterProfileId: request.user?.practitionerProfileId ?? MEDICA.id,
+      ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
+      reasonText: datos.reasonText ?? '',
+      createdAt: ahora(),
+      ...(datos.previousDiagnosticReportId === undefined
+        ? {}
+        : { previousDiagnosticReportId: datos.previousDiagnosticReportId }),
+      ...(datos.duplicateOverrideReason === undefined
+        ? {}
+        : { duplicateOverrideReason: datos.duplicateOverrideReason }),
+    });
+    return {
+      status: 201,
+      body: {
+        id: nueva.id,
+        patientProfileId: nueva.patientProfileId,
+        status: reutilizada ? 'SATISFIED_BY_PRIOR' : 'ACTIVE',
+        createdAt: nueva.createdAt,
+      },
+    };
+  });
+
   /*
    * `POST /clinical/service-requests/duplicate-check` — vive acá y no en
    * `clinical.handlers.ts` porque necesita cruzar `informes`, que es de este

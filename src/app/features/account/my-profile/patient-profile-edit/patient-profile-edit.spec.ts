@@ -303,24 +303,47 @@ describe('PatientProfileEdit', () => {
   }
 
   /**
-   * N-03: «Mis puntos» es la quinta pestaña de la ficha. El editor la lleva
-   * en la tira, apagada, para que pulsar el lápiz no mueva de lugar a las
-   * demás; ahí no hay nada que editar.
+   * N-03: «Mis puntos» es la billetera del programa de fidelidad, no un dato
+   * declarado, y no hay nada que editar ahí. Desde el 25/09/2026 (pedido del
+   * propietario) el editor ya no la muestra apagada: la saca de la tira.
    */
-  it('lleva «Mis puntos» en la tira, apagada: no hay nada que editar ahí', () => {
+  it('no lleva «Mis puntos» en la tira: no hay nada que editar ahí', () => {
     montarPintadoYCargado();
 
     const pestanas = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>(
       '[role="tab"]',
     );
-    expect(pestanas.length).toBe(5);
-    expect(pestanas[4].textContent).toContain('Mis puntos');
-    expect(pestanas[4].disabled).toBe(true);
-    expect(pestanas[4].getAttribute('aria-disabled')).toBe('true');
-    // Pulsarla no abre nada: la abierta sigue siendo la primera.
-    pestanas[4].click();
-    fixture.detectChanges();
-    expect(pestanas[0].getAttribute('aria-selected')).toBe('true');
+    expect([...pestanas].map((p) => p.textContent?.trim())).not.toContain('Mis puntos');
+  });
+
+  /**
+   * Pedido del propietario del 25/09/2026: una cobertura es el resultado de
+   * una integración posterior —la aseguradora la declara, no la persona—, así
+   * que nunca se corrige desde este formulario. No es el caso de «Tutores»,
+   * que sí puede cambiar y por eso sigue siendo una pestaña utilizable. El
+   * mismo día se corrigió: en vez de apagada, «Seguros» se saca de la tira
+   * del editor, igual que «Mis puntos».
+   */
+  it('«Seguros» no está en la tira del editor; «Tutores» sigue abierta', () => {
+    montarPintadoYCargado({
+      coverages: [{ carrierName: 'Alianza Vida Seguros', planName: 'AFI Gold' }],
+      guardians: [{ displayName: 'Carlos Mamani', phone: '+591 70055443' }],
+    });
+
+    const pestanas = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+    ];
+    expect(pestanas.map((p) => p.textContent?.trim())).toEqual([
+      'Datos personales',
+      'Contacto',
+      'Facturación',
+      'Tutores',
+    ]);
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Alianza Vida Seguros');
+
+    expect(pestanas[3].disabled).toBe(false);
+    abrirPestana(3);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Carlos Mamani');
   });
 
   it('siembra el formulario con lo ya guardado, en las cuatro partes del nombre', () => {

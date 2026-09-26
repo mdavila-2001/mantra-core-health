@@ -179,9 +179,9 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
   mobilePhone: PESTANA_MEDICO.contacto,
   personalEmail: PESTANA_MEDICO.contacto,
 
-  /* 5 · El contacto de tu trabajo */
-  workMobilePhone: PESTANA_MEDICO.contacto,
-  workLandline: PESTANA_MEDICO.contacto,
+  /* 5 · El contacto de tu trabajo.
+     El celular y el fijo pasaron a `CAMPOS_DEL_ALTA_SIN_PESTANA` el 23/09/2026
+     (D-03). El correo de trabajo se corrige en «Contacto» desde el 24/09/2026. */
   email: PESTANA_MEDICO.contacto,
 
   /* 6 · ¿Dónde vivís? */
@@ -235,7 +235,6 @@ export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
    * lectura ya las mostraba junto a la identidad desde el 19/09/2026 (C-09);
    * el editor era el único lugar donde seguían separadas de eso mismo.
    */
-  specialtyPrimary: PESTANA_MEDICO.personales,
   especialidadesExtra: PESTANA_MEDICO.personales,
 };
 
@@ -256,6 +255,14 @@ export const CAMPOS_DEL_ALTA_SIN_PESTANA: Readonly<Record<string, string>> = {
     'ofrecer. Estuvo declarado como si viviera en «Datos personales» hasta el 21/09/2026, ' +
     'y ahí no estaba. Que la persona no pueda ver ni corregir lo que declaró en el alta es ' +
     'un hueco del contrato, no una decisión de diseño: queda registrado como Q-I5.',
+  workMobilePhone:
+    'Celular del trabajo. El médico pidió el 23/09/2026 que «Contacto» no tuviera datos ' +
+    'del trabajo (D-03): la ficha no lo muestra y el editor no lo ofrece. El alta lo sigue ' +
+    'preguntando y el dato se guarda; guardar el perfil no lo borra.',
+  workLandline:
+    'Fijo del trabajo. Mismo pedido del médico del 23/09/2026 (D-03): fuera de «Contacto», ' +
+    'en la ficha y en el editor. El alta lo sigue preguntando y el dato se guarda; guardar ' +
+    'el perfil no lo borra.',
   workAddressLines:
     'El alta la guarda como dirección laboral, separada del domicilio y del consultorio ' +
     'propio, pero la ficha del médico todavía no la lee ni la muestra en ninguna pestaña.',

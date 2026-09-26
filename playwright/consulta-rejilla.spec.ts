@@ -4,114 +4,183 @@ import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 
 import type { Actor } from './support/actores';
-import { entrar, estable, irA } from './support/sesion';
+import { entrar, irA } from './support/sesion';
 
-/**
- * La consulta: una rejilla con todo lo que se puede registrar.
- *
- * Lo que sólo un navegador puede afirmar:
- *
- * 1. **Las nueve casillas están a la vista**, sin pestañas que abrir.
- * 2. **El encuentro se abre desde la misma pantalla** y queda «en curso».
- * 3. **Cada casilla abre su formulario en modal** y el modal se cierra.
- * 4. **La página no scrollea de costado**, ni a 1440 ni a 390 px.
- */
+// C0: solo simulador y cuentas sintéticas declaradas; no API externa ni rutas interceptadas.
+const OUTPUT = join('docs', 'trabajo', '2026-09-25-encuentro-clinico', 'c0', 'evidencia', 'visual');
+const DOCTOR: Actor = { rol: 'doctora', identificador: 'medica@alovida.mock', clave: 'mock', nombre: 'Médica' };
+const PATIENT: Actor = { rol: 'paciente', identificador: 'paciente@alovida.mock', clave: 'mock', nombre: 'Paciente' };
+const TILES = [
+  { key: 'notas', title: 'Nota médica', modal: 'Escribir una nota médica' },
+  { key: 'ordenes', title: 'Orden de análisis', modal: 'Pedir un análisis' },
+  { key: 'diagnosticos', title: 'Diagnóstico', modal: 'Nuevo diagnóstico' },
+  { key: 'reconsulta', title: 'Reconsulta', modal: 'Agendar la reconsulta' },
+  { key: 'medicacion', title: 'Receta', modal: 'Prescribir medicación' },
+  { key: 'alergias', title: 'Alergia', modal: 'Nueva alergia' },
+  { key: 'planes', title: 'Plan de cuidados', modal: 'Abrir un plan de cuidados' },
+  { key: 'documentos', title: 'Documento', modal: 'Registrar un documento' },
+  { key: 'formulario', title: 'Formulario clínico', modal: 'Llenar un formulario clínico' },
+  { key: 'pagos', title: 'Pagos', modal: 'Pagos de la persona' },
+] as const;
+const VIEWPORTS = [
+  { width: 390, height: 844 }, { width: 768, height: 1024 },
+  { width: 1024, height: 768 }, { width: 1440, height: 900 }, { width: 1920, height: 1080 },
+] as const;
 
-const SALIDA = join('docs', 'frontend', 'evidence', 'consulta-rejilla');
-
-const MEDICA: Actor = {
-  rol: 'doctora',
-  identificador: 'medica@alovida.mock',
-  clave: 'mock',
-  nombre: 'Médica',
-};
-
-const CASILLAS: readonly { readonly clave: string; readonly modal: string }[] = [
-  { clave: 'diagnosticos', modal: 'Nuevo diagnóstico' },
-  { clave: 'alergias', modal: 'Nueva alergia' },
-  { clave: 'medicacion', modal: 'Prescribir medicación' },
-  { clave: 'observaciones', modal: 'Registrar una observación' },
-  { clave: 'notas', modal: 'Escribir una nota clínica' },
-  { clave: 'planes', modal: 'Abrir un plan de cuidados' },
-  { clave: 'documentos', modal: 'Registrar un documento' },
-  { clave: 'formulario', modal: 'Llenar un formulario clínico' },
-  { clave: 'internacion', modal: 'Registrar una internación' },
-];
-
-async function desbordeHorizontal(page: Page): Promise<number> {
-  return page.evaluate(() => {
-    const d = document.documentElement;
-    return Math.max(0, d.scrollWidth - d.clientWidth);
+test.beforeEach(async ({ page }) => {
+  test.setTimeout(90_000);
+  mkdirSync(OUTPUT, { recursive: true });
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+  page.on('response', (response) => {
+    if (response.status() >= 400) errors.push(`${response.status()} ${new URL(response.url()).pathname}`);
   });
+  page.on('requestfailed', (request) => {
+    if (request.failure()?.errorText !== 'net::ERR_ABORTED') {
+      errors.push(`${request.failure()?.errorText} ${new URL(request.url()).pathname}`);
+    }
+  });
+  await page.exposeFunction('c0RuntimeErrors', () => [...errors]);
+});
+
+test.afterEach(async ({ page }) => {
+  const errors = await page.evaluate(() => (window as unknown as { c0RuntimeErrors: () => Promise<string[]> }).c0RuntimeErrors());
+  expect(errors, 'Consola y red del simulador').toEqual([]);
+});
+
+async function openConsultation(page: Page): Promise<void> {
+  await entrar(page, DOCTOR);
+  await irA(page, '/schedule');
+  const cards = page.locator('.dia__bloque[data-tipo="cita"]');
+  await expect(cards.first()).toBeVisible();
+  const ongoing = cards.filter({ has: page.locator('.dia__estado').filter({ hasText: /en (curso|consulta)/i }) });
+  const confirmed = cards.filter({ has: page.locator('.dia__estado').filter({ hasText: /confirmad/i }) });
+  const card = (await ongoing.count()) > 0 ? ongoing.first() : confirmed.first();
+  const attend = card.getByTestId('dia-ir-a-atender');
+  await attend.focus();
+  await page.keyboard.press('Enter');
+  await page.waitForURL(/\/medical-records\/[^/]+\/consultation\?/, { timeout: 30_000 });
+  await expect(page.getByTestId('consulta-rejilla')).toBeVisible();
+  const open = page.getByTestId('consulta-abrir-encuentro');
+  if (await open.isVisible()) await open.click();
+  await expect(page.getByTestId('encuentros-en-curso')).toBeVisible();
 }
 
-test.describe('Consulta · rejilla de registro', () => {
-  test('todo lo que se registra está en la rejilla y abre en modal', async ({ page }) => {
-    test.setTimeout(5 * 60_000);
-    mkdirSync(SALIDA, { recursive: true });
+async function assertNoOverflow(page: Page): Promise<void> {
+  expect(await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth))).toBe(0);
+}
 
-    await entrar(page, MEDICA);
-    await irA(page, '/medical-records');
-    await estable(page);
+async function setTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
+  await page.addInitScript((value) => localStorage.setItem('mantra-core-health.theme', value), theme);
+}
 
-    // El archivo no lista a nadie hasta que se busca: Enter dispara la búsqueda
-    // sin esperar la demora del tipeo.
-    const buscador = page.getByRole('textbox', { name: 'Buscar por nombre o código' });
-    await buscador.fill('Ana');
-    await buscador.press('Enter');
-    await page.getByRole('link', { name: 'Ver expediente' }).first().click();
-    await page.waitForURL(/\/medical-records\/[^/]+$/, { timeout: 60_000 });
-    await estable(page);
+async function checkTile(page: Page, tile: (typeof TILES)[number], capture?: string): Promise<void> {
+  const button = page.getByTestId(`consulta-casilla-${tile.key}`);
+  await button.focus();
+  await page.keyboard.press('Enter');
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByTestId('content-dialog-title')).toHaveText(tile.modal);
+  await expect(dialog.getByTestId('content-dialog-title')).toBeVisible();
+  if (tile.key === 'notas') await expect(dialog.getByText('En construcción (C1)', { exact: true })).toBeVisible();
+  if (tile.key === 'ordenes') {
+    await expect(dialog.locator('app-analysis-order-block')).toBeVisible();
+    await expect(dialog.locator('.estudios__formulario')).toBeVisible();
+    await expect(dialog.locator('[data-testid="estudios-lista"], [data-testid="estudios-vacio"]')).toBeVisible();
+    await expect(dialog.getByTestId('estudios-error')).toHaveCount(0);
+    await expect(dialog.getByTestId('estudios-historico-error')).toHaveCount(0);
+  }
+  if (tile.key === 'reconsulta') {
+    await expect(dialog.locator('app-follow-up-block')).toBeVisible();
+    await expect(dialog.locator('[data-testid="reconsulta-calendario"], [data-testid="reconsulta-ya-agendada"]')).toBeVisible();
+    await expect(dialog.getByTestId('reconsulta-sin-cita')).toHaveCount(0);
+  }
+  const box = await dialog.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.x).toBeGreaterThanOrEqual(0);
+  expect(box!.x + box!.width).toBeLessThanOrEqual(page.viewportSize()!.width + 1);
+  await page.keyboard.press('Tab');
+  expect(await dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true);
+  if (capture) await page.screenshot({ path: join(OUTPUT, `${capture}.png`), animations: 'disabled' });
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  // El dialog nativo se cierra antes de que Angular retire su host.
+  await expect(page.getByTestId('consulta-modal')).toHaveCount(0);
+  await expect(button).toBeFocused();
+}
 
-    await page.goto(`${page.url()}/consultation`, { waitUntil: 'commit' });
-    await page.waitForURL(/\/medical-records\/[^/]+\/consultation$/, { timeout: 60_000 });
-    await estable(page);
-
-    /* ---- 1. las nueve casillas ------------------------------------------- */
-
-    await expect(page.getByTestId('consulta-rejilla')).toBeVisible();
-    await expect(page.locator('[data-testid^="consulta-casilla-"]')).toHaveCount(9);
-    expect(await desbordeHorizontal(page)).toBe(0);
-    // Del tamaño de la ventana y no `fullPage`: la captura cosida dibuja el menú
-    // lateral fijo encima del contenido, que no es lo que ve una persona.
-    await page.screenshot({ path: join(SALIDA, 'consulta-1440.png') });
-
-    /* ---- 2. el encuentro se abre acá ------------------------------------- */
-
-    const abrir = page.getByTestId('consulta-abrir-encuentro');
-    if ((await abrir.count()) > 0) {
-      await abrir.click();
-    }
-    await expect(page.getByTestId('encuentros-en-curso')).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByTestId('consulta-cerrar-encuentro').first()).toBeVisible();
-    await page.screenshot({ path: join(SALIDA, 'consulta-en-curso-1440.png') });
-
-    /* ---- 3. cada casilla abre su modal ----------------------------------- */
-
-    for (const casilla of CASILLAS) {
-      await page.getByTestId(`consulta-casilla-${casilla.clave}`).click();
-      const modal = page.getByRole('dialog');
-      await expect(modal).toBeVisible();
-      await expect(modal.getByRole('heading', { name: casilla.modal, exact: true })).toBeVisible();
-      if (casilla.clave === 'diagnosticos') {
-        await page.screenshot({ path: join(SALIDA, 'consulta-modal-diagnostico.png') });
-      }
-      await page.keyboard.press('Escape');
-      await expect(modal).toHaveCount(0);
-    }
-
-    /* ---- 4. angosto ------------------------------------------------------ */
-
-    await page.setViewportSize({ width: 390, height: 844 });
-    await estable(page);
-    // El recorrido de los modales dejó la página scrolleada, y el menú lateral
-    // tarda en salir de pantalla al achicar: sin esperar las dos cosas la
-    // captura muestra la transición, no la pantalla.
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(
-      page.getByRole('navigation', { name: 'Navegación principal' }),
-    ).not.toBeInViewport();
-    expect(await desbordeHorizontal(page)).toBe(0);
-    await page.screenshot({ path: join(SALIDA, 'consulta-390.png') });
+test.describe('C0 · contrato de la consulta', () => {
+  test('diez acciones, modales y encuentro persistente al recargar', async ({ page }) => {
+    await openConsultation(page);
+    await expect(page.locator('.consulta__casilla-titulo')).toHaveText(TILES.map((tile) => tile.title));
+    await expect(page.locator('[data-testid^="consulta-casilla-"]')).toHaveCount(10);
+    const open = page.getByTestId('consulta-abrir-encuentro');
+    if (await open.isVisible()) await open.click();
+    await expect(page.getByTestId('encuentros-en-curso')).toBeVisible();
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('encuentros-en-curso')).toBeVisible();
+    for (const tile of TILES) await test.step(tile.title, () => checkTile(page, tile));
+    await assertNoOverflow(page);
   });
+
+  for (const viewport of VIEWPORTS) {
+    for (const theme of ['light', 'dark'] as const) {
+      test(`rejilla y tres modales ${viewport.width} ${theme}`, async ({ page }) => {
+        await page.setViewportSize(viewport);
+        await setTheme(page, theme);
+        await openConsultation(page);
+        await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+        await expect(page.locator('.consulta__casilla-titulo')).toHaveText(TILES.map((tile) => tile.title));
+        await assertNoOverflow(page);
+        for (const close of await page.getByTestId('toast-cerrar').all()) await close.click();
+        await page.screenshot({ path: join(OUTPUT, `grid-${viewport.width}-${theme}.png`), fullPage: true, animations: 'disabled' });
+        for (const key of ['notas', 'ordenes', 'reconsulta']) {
+          const tile = TILES.find((candidate) => candidate.key === key)!;
+          await checkTile(page, tile, `${key}-${viewport.width}-${theme}`);
+        }
+      });
+
+      test(`historia conserva tres grupos ${viewport.width} ${theme}`, async ({ page }) => {
+        await page.setViewportSize(viewport);
+        await setTheme(page, theme);
+        await entrar(page, PATIENT);
+        await irA(page, '/my-account/medical-record');
+        await page.getByRole('tab', { name: /Diagnósticos/ }).click();
+        for (const id of ['historia-en-estudio', 'historia-activas', 'historia-historicos']) {
+          await expect(page.getByTestId(id)).toBeVisible();
+        }
+        for (const close of await page.getByTestId('toast-cerrar').all()) await close.click();
+        await page.screenshot({ path: join(OUTPUT, `history-${viewport.width}-${theme}.png`), fullPage: true, animations: 'disabled' });
+        await assertNoOverflow(page);
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await expect(page.getByRole('tab', { name: /Diagnósticos/ })).toHaveAttribute('aria-selected', 'true');
+      });
+    }
+  }
+
+  for (const viewport of VIEWPORTS) {
+    for (const theme of ['light', 'dark'] as const) {
+      test(`stock registra Nota médica, órdenes y reconsulta ${viewport.width} ${theme}`, async ({ page }) => {
+        await page.setViewportSize(viewport);
+        await setTheme(page, theme);
+        await entrar(page, DOCTOR);
+        await irA(page, '/design-system/stock');
+        await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+        const search = page.getByPlaceholder('Buscar componente…');
+        for (const name of ['MedicalNoteBlock', 'AnalysisOrderBlock', 'FollowUpBlock']) {
+          await search.fill(name);
+          await expect(page.locator('a').filter({ has: page.locator('.lista__clase').getByText(name, { exact: true }) })).toBeVisible();
+        }
+        await search.fill('MedicalNoteBlock');
+        await page.getByRole('link', { name: 'MedicalNoteBlock', exact: true }).click();
+        await expect(page.getByRole('heading', { name: 'MedicalNoteBlock', exact: true })).toBeVisible();
+        const preview = page.frameLocator('iframe[title="Vista del componente"]');
+        await expect(preview.locator('html')).toHaveAttribute('data-theme', theme);
+        await expect(preview.getByText('En construcción (C1)', { exact: true })).toBeVisible();
+        await page.locator('.marco-zona__caja').evaluate((element) => element.scrollIntoView({ block: 'start' }));
+        await page.screenshot({ path: join(OUTPUT, `stock-medical-note-${viewport.width}-${theme}.png`), fullPage: true, animations: 'disabled' });
+      });
+    }
+  }
 });

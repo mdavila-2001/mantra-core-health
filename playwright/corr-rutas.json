@@ -290,11 +290,11 @@
   ],
   "39": [
     {
-      "ruta": "/my-account/edit",
+      "ruta": "/my-account/edit?pestana=5",
       "nombre": "credenciales-edicion"
     },
     {
-      "ruta": "/my-account/edit?with-file=1",
+      "ruta": "/my-account/edit?pestana=5&with-file=1",
       "nombre": "credenciales-con-adjunto"
     }
   ],

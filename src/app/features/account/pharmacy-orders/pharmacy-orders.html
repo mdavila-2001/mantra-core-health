@@ -1,8 +1,10 @@
-<app-page-header
-  title="Mis pedidos"
-  subtitle="Tus pedidos de farmacia, del envío al retiro, con su estado en palabras."
-  [breadcrumbs]="breadcrumbs()"
-/>
+@if (!embedded()) {
+  <app-page-header
+    title="Mis pedidos"
+    subtitle="Tus pedidos de farmacia, del envío al retiro, con su estado en palabras."
+    [breadcrumbs]="breadcrumbs()"
+  />
+}
 
 @if (sinPerfilDePaciente) {
   <!-- Sesión válida de una cuenta que no es de un paciente: la pantalla no le

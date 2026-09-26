@@ -10,7 +10,7 @@ import { buildBlocksPdf, campoDeBloque, type PdfBlock } from '../pdf-export/pdf-
 /* ============================================================================
     El PDF de un formulario: el formulario **en blanco**, para imprimirlo.
 
-    Mismo patrón que `progress-notes-pdf.ts` y `quotation-pdf.ts`: se arman los
+    Mismo patrón que `quotation-pdf.ts`: se arman los
     bloques a mano y los maqueta `buildBlocksPdf`, que es el único maquetador
     del repo y el que pone el membrete con el logo. Así este papel sale con la
     misma identidad que la receta y la historia clínica, que es lo que se pidió:

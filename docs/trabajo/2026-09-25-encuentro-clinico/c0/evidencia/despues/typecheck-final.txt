@@ -1,0 +1,9 @@
+COMMAND: corepack yarn typecheck
+✓ src/app/features/component-stock/component-index.generated.ts
+  557 componentes · 3 otros · 313 pantallas · 138 maquetas · 23 atomos · 45 moleculas · 35 organismos
+  203 con algo que mirar
+  relaciones: 2247 template-instantiates · 5 imports-available sin instanciar · 71 type-only · 209 dynamic-loads
+  nivel: 0 declarado · 557 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 557/557 · con escenario 3/557 · verificados visualmente 3/557 · bloqueados 73/557 · montó e interactuó: se miden en el banco (runtime)
+
+EXIT_CODE: 0

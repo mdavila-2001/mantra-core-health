@@ -6,18 +6,6 @@
     escritorio, y una tabla de agenda en 360 px no se lee.
     ========================================================================== */
 
-/* ─── Las dos tareas de la pantalla ─────────────────────────────────────────
-   El conmutador encabeza la vista, así que va pegado al encabezado de página y
-   separado del contenido de la sección que abre: es lo que hace leerlo como
-   «qué estoy haciendo» y no como un control más del bloque de abajo.
-
-   `display: block` porque es un componente y por omisión es `display: inline`,
-   que ignoraría el margen de abajo. */
-.turnos__secciones {
-  display: block;
-  margin-block: var(--sp-2) var(--sp-5);
-}
-
 .turnos__bloque {
   margin-block-end: var(--sp-6);
   /* Contenedor de la rejilla de filtros (ver FT-05 más abajo). */
@@ -341,6 +329,17 @@
    alerta, es parte de la identidad del turno — sin esto, el turno movido se lee
    como uno ajeno. */
 .turnos__reprogramado {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+/* ---- la reconsulta (C4) ---------------------------------------------------
+   La frase que explica un turno que la persona no pidió. Ocupa el renglón
+   entero, igual que el motivo: es prosa, y partida en dos columnas no se lee.
+   Sin color de alerta: no pasó nada malo, la citaron de nuevo. */
+.turnos__reconsulta {
+  grid-column: 1 / -1;
+  margin: 0;
   color: var(--text-muted);
   font-size: var(--fs-caption);
 }

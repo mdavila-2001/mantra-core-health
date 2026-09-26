@@ -7,29 +7,21 @@ import {
   episodios,
   notas,
   observaciones,
-  ordenes,
   planes,
   planesDe,
   recetas,
   CATEGORIA_DOCUMENTO,
-  NOTA_TIPO_EVOLUCION,
   TIPO_ALERGIA,
   TIPO_EPISODIO,
   CATEGORIA_DX,
   type CondicionSimulada,
   type EncuentroSimulado,
-  type NotaSimulada,
   type RecetaSimulada,
 } from '../fixtures/clinica';
 import { CLASE_ENCUENTRO, ESPECIALIDAD, ESTADO, ESTADO_CONDICION, ESTADO_ENCUENTRO, ESTADO_RECETA, INTENCION_DEL_PLAN, SEVERIDAD, VERIFICACION_DX } from '../fixtures/conceptos';
 import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/personas';
-import { forbidden, notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, notFound, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, isoDia, nuevoId, uuid } from '../mock-store';
-import {
-  DUPLICATE_STUDY_WINDOW_DAYS,
-  estudioDuplicado,
-  estudioPrevio,
-} from './diagnostics.handlers';
 import { emitirNotificacion } from './notifications.handlers';
 import { enlazarArchivo, pdfMinimo } from './files.handlers';
 import { FICHAS_ESTANDAR } from '../fixtures/fichas-estandar.generated';
@@ -85,7 +77,7 @@ const fichasAvisadas = new Set<string>();
  * es una corrección del expediente, no «la ficha de tu consulta»: avisarlo con
  * ese texto sería contar algo que no pasó.
  */
-function avisarFichaAlPaciente(datos: {
+export function avisarFichaAlPaciente(datos: {
   readonly patientProfileId: string;
   readonly encounterId: string | undefined;
   readonly autorProfileId: string;
@@ -298,6 +290,9 @@ export function registrarClinica(router: MockRouter): void {
 
   router.post('/clinical/medication-requests', (request) => {
     const datos = cuerpo<{ patientProfileId: string; medicationConceptId: string; encounterId?: string; indicationConditionId?: string; indicationText?: string; doseText?: string; frequencyText?: string; validFrom?: string; validTo?: string; patientInstructionsText?: string; prescriberProfileId?: string }>(request);
+    const fallo = falloDeIndicacion(datos.indicationConditionId, datos.indicationText);
+    if (fallo !== null) return fallo;
+
     const nueva: RecetaSimulada = {
       id: nuevoId('rx'),
       patientProfileId: datos.patientProfileId ?? '',
@@ -325,6 +320,30 @@ export function registrarClinica(router: MockRouter): void {
     };
     recetas.agregar(nueva);
     return { status: 201, body: registroReceta(nueva) };
+  });
+
+  /**
+   * `POST /clinical/medication-requests/:id/edit` (C5) — vincular después una
+   * receta con motivo plano a un diagnóstico confirmado, o cambiarlo. Existe
+   * en la API real (`clinical-records.controller.ts`) y no existía en el
+   * mock: se agrega acá, mismas reglas de indicación que el alta, sólo sobre
+   * un borrador — una receta emitida es un documento cerrado.
+   */
+  router.post('/clinical/medication-requests/:id/edit', (request) => {
+    const r = recetas.get(request.params['id']!);
+    if (r === undefined) return notFound();
+    if (r.issuedAt !== null) {
+      return conflict('La receta ya fue emitida: no se puede editar su indicación.');
+    }
+    const datos = cuerpo<{ indicationConditionId?: string; indicationText?: string }>(request);
+    const fallo = falloDeIndicacion(datos.indicationConditionId, datos.indicationText);
+    if (fallo !== null) return fallo;
+
+    const actualizada = recetas.actualizar(r.id, {
+      indicationConditionId: datos.indicationConditionId,
+      indicationText: datos.indicationConditionId === undefined ? datos.indicationText : undefined,
+    })!;
+    return registroReceta(actualizada);
   });
 
   router.post('/clinical/medication-requests/:id/sign', ({ params }) => {
@@ -518,69 +537,6 @@ export function registrarClinica(router: MockRouter): void {
 
   router.post('/clinical/diagnostic-reports/:id/release', ({ params }) => ({ id: params['id'], patientProfileId: '', lifecycleStatus: 'FINAL', resultReleaseStatus: 'RELEASED', serviceRequestId: null, createdAt: ahora() }));
 
-  router.post('/clinical/service-requests', (request) => {
-    const datos = cuerpo<{
-      patientProfileId: string;
-      codeConceptId: string;
-      categoryConceptId?: string;
-      priorityConceptId?: string;
-      reasonText?: string;
-      encounterId?: string;
-      // Antiduplicación de estudios (v4.2.17, T-26, subtarea 3.2).
-      previousDiagnosticReportId?: string;
-      reusePreviousReport?: boolean;
-      duplicateOverrideReason?: string;
-    }>(request);
-
-    const patientProfileId = datos.patientProfileId ?? '';
-    const codeConceptId = datos.codeConceptId ?? '';
-    const conDecision = datos.previousDiagnosticReportId !== undefined;
-
-    // Sin decisión, el alta vuelve a correr el mismo detector que el
-    // chequeo: la UI no es la barrera. Con decisión, se confía en lo que el
-    // diálogo ya mostró — el mock no reproduce la carrera check→alta del
-    // servidor (`DUPLICATE_STUDY_MISMATCH`).
-    if (!conDecision) {
-      const duplicado = estudioDuplicado(patientProfileId, codeConceptId, DUPLICATE_STUDY_WINDOW_DAYS);
-      if (duplicado !== null) {
-        const previousStudy = estudioPrevio(duplicado.informe, duplicado.performedAt, request.user);
-        return preconditionFailed('Ya existe un estudio igual reciente.', {
-          reason: 'DUPLICATE_STUDY_DETECTED',
-          previousStudy,
-        });
-      }
-    }
-
-    const reutilizada = conDecision && datos.reusePreviousReport === true;
-    const nueva = ordenes.agregar({
-      id: nuevoId('order'),
-      patientProfileId,
-      codeConceptId,
-      categoryConceptId: datos.categoryConceptId ?? '',
-      priorityConceptId: datos.priorityConceptId ?? '',
-      statusConceptId: reutilizada ? ESTADO['ST-SATISFIED-BY-PRIOR']! : ESTADO['ST-PENDING']!,
-      requesterProfileId: request.user?.practitionerProfileId ?? MEDICA.id,
-      ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
-      reasonText: datos.reasonText ?? '',
-      createdAt: ahora(),
-      ...(datos.previousDiagnosticReportId === undefined
-        ? {}
-        : { previousDiagnosticReportId: datos.previousDiagnosticReportId }),
-      ...(datos.duplicateOverrideReason === undefined
-        ? {}
-        : { duplicateOverrideReason: datos.duplicateOverrideReason }),
-    });
-    return {
-      status: 201,
-      body: {
-        id: nueva.id,
-        patientProfileId: nueva.patientProfileId,
-        status: reutilizada ? 'SATISFIED_BY_PRIOR' : 'ACTIVE',
-        createdAt: nueva.createdAt,
-      },
-    };
-  });
-
   router.post('/cds/check-interactions', (request) => {
     const datos = cuerpo<{ substanceConceptIds?: string[] }>(request);
     const sustancias = datos.substanceConceptIds ?? [];
@@ -589,59 +545,6 @@ export function registrarClinica(router: MockRouter): void {
       : [];
     return { alerts: alertas, count: alertas.length };
   });
-
-  /* ---- notas clínicas ------------------------------------------------------ */
-
-  router.post('/charts/notes', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; authorProfileId: string; encounterId?: string; noteTypeConceptId?: string; chiefComplaintText?: string; subjectiveText?: string; objectiveText?: string; assessmentText?: string; planText?: string }>(request);
-    const noteId = nuevoId('note');
-    const nueva: NotaSimulada & { id: string } = {
-      noteId,
-      id: noteId,
-      patientProfileId: datos.patientProfileId ?? '',
-      ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
-      noteTypeConceptId: datos.noteTypeConceptId ?? NOTA_TIPO_EVOLUCION,
-      lifecycleStatusConceptId: ESTADO['ST-DRAFT']!,
-      currentVersionId: nuevoId('note-version'),
-      versionNumber: 1,
-      authorProfileId: datos.authorProfileId ?? request.user?.practitionerProfileId ?? MEDICA.id,
-      chiefComplaintText: datos.chiefComplaintText ?? '',
-      subjectiveText: datos.subjectiveText ?? '',
-      objectiveText: datos.objectiveText ?? '',
-      assessmentText: datos.assessmentText ?? '',
-      planText: datos.planText ?? '',
-      signedAt: null,
-      releasedToPatient: false,
-      createdAt: ahora(),
-    };
-    notas.agregar(nueva);
-    // La nota de evolución es la otra mitad de la ficha: si el médico empezó
-    // por acá y no por el diagnóstico, el aviso sale igual. Y si ya salió por
-    // el diagnóstico, no sale dos veces.
-    avisarFichaAlPaciente({
-      patientProfileId: nueva.patientProfileId,
-      encounterId: nueva.encounterId,
-      autorProfileId: nueva.authorProfileId,
-    });
-    return { status: 201, body: { noteId, versionId: nueva.currentVersionId, versionNumber: 1, lifecycleStatusConceptId: nueva.lifecycleStatusConceptId, versionStatusConceptId: ESTADO['ST-DRAFT']! } };
-  });
-
-  // `ChartNotesClient.appendVersion` hace `PUT` (UC-15-02); se acepta también
-  // `POST` por si alguna pantalla vieja lo usa.
-  const agregarVersion = (request: MockRequest) => {
-    const n = notas.get(request.params['id']!);
-    if (n === undefined) return notFound('Nota no encontrada');
-    const datos = cuerpo<Partial<NotaSimulada>>(request);
-    const versionId = nuevoId('note-version');
-    notas.actualizar(n.noteId, {
-      ...datos,
-      currentVersionId: versionId,
-      versionNumber: n.versionNumber + 1,
-    });
-    return { status: 201, body: { noteId: n.noteId, versionId, versionNumber: n.versionNumber + 1, lifecycleStatusConceptId: n.lifecycleStatusConceptId, versionStatusConceptId: ESTADO['ST-DRAFT']! } };
-  };
-  router.put('/charts/notes/:id/versions', agregarVersion);
-  router.post('/charts/notes/:id/versions', agregarVersion);
 
   /* ---- planes de cuidados y documentos -------------------------------------
      Las dos rutas existían en el backend desde UC-15-09/10 y la maqueta no las
@@ -652,7 +555,7 @@ export function registrarClinica(router: MockRouter): void {
      que falló. */
 
   router.post('/charts/care-plans', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; conditionId?: string; encounterId?: string; intentConceptId?: string; goalText?: string; startDate?: string; endDate?: string; activities?: { activityConceptId?: string; scheduledAt?: string; detailText?: string }[] }>(request);
+    const datos = cuerpo<{ patientProfileId: string; conditionId?: string; reasonText?: string; encounterId?: string; intentConceptId?: string; goalText?: string; startDate?: string; endDate?: string; activities?: { activityConceptId?: string; scheduledAt?: string; detailText?: string }[] }>(request);
     const actividades = (datos.activities ?? []).map((actividad) => ({
       id: nuevoId('cp-act'),
       statusConceptId: ESTADO['ST-PENDING']!,
@@ -670,6 +573,7 @@ export function registrarClinica(router: MockRouter): void {
       endDate: datos.endDate ?? null,
       ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
       ...(datos.conditionId === undefined ? {} : { conditionId: datos.conditionId }),
+      ...(datos.reasonText === undefined ? {} : { reasonText: datos.reasonText }),
       activities: actividades,
       createdAt: ahora(),
     });
@@ -785,6 +689,33 @@ const PLANTILLAS_CREADAS: ReturnType<typeof plantilla>[] = [];
  */
 export function plantillasVigentes(): readonly ReturnType<typeof plantilla>[] {
   return [...PLANTILLAS_DE_EXPEDIENTE, ...PLANTILLAS_CREADAS];
+}
+
+/**
+ * Las reglas de "¿para qué es esta receta?" (C5, pedido literal del
+ * propietario): siempre un diagnóstico **confirmado**, o un motivo escrito.
+ * Nunca los dos vacíos, y un `indicationConditionId` que no apunte a un
+ * `DXV-CONFIRMED` real es tan inválido como no mandar nada — se comparte
+ * entre el alta y `/:id/edit` para que las dos rutas exijan lo mismo.
+ */
+function falloDeIndicacion(
+  indicationConditionId: string | undefined,
+  indicationText: string | undefined,
+): MockReply | null {
+  if (indicationConditionId === undefined && (indicationText ?? '').trim() === '') {
+    return validation('La receta necesita un diagnóstico confirmado o un motivo.', [
+      { field: 'indicationConditionId', message: 'Falta indicationConditionId o indicationText.' },
+    ]);
+  }
+  if (indicationConditionId !== undefined) {
+    const condicion = condiciones.get(indicationConditionId);
+    if (condicion === undefined || condicion.verificationStatusConceptId !== VERIFICACION_DX['DXV-CONFIRMED']) {
+      return validation('La receta sólo se liga a un diagnóstico confirmado.', [
+        { field: 'indicationConditionId', message: 'El diagnóstico no está confirmado.' },
+      ]);
+    }
+  }
+  return null;
 }
 
 function registroReceta(r: RecetaSimulada) {

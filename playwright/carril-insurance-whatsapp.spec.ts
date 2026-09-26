@@ -221,7 +221,8 @@ test.describe('la tarjeta de cobertura en /my-account (maqueta)', () => {
       await interceptarWaMe(context);
       await entrarAlSimulador(page, 'paciente', '');
       await page.goto('/my-account');
-      await page.getByRole('tab', { name: 'Seguros y tutores' }).click();
+      // En `mockup` la pestaña se separo de "Seguros y tutores" (justin/perfil-seguro-tutor-separados):
+      await page.getByRole('tab', { name: 'Seguros', exact: true }).click();
 
       const whatsapp = page.getByTestId('btn-whatsapp-coverage').first();
       await expect(whatsapp).toBeVisible();

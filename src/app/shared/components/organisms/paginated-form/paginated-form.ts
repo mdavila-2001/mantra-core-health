@@ -453,6 +453,14 @@ export class PaginatedForm {
     // El foco sigue a la página. No en el primer render: robarle el foco a quien
     // acaba de entrar es exactamente lo que la directiva `appAnuncio` evita
     // cuando el elemento ya estaba en pantalla.
+    //
+    // `preventScroll: true` (2026-09-26): este formulario suele vivir dentro de
+    // un modal con su propio scroll interno. Con `preventScroll: false` el
+    // navegador reencuadra el `<body>` scrolleable para que el título quede
+    // visible, y eso tira a la persona de vuelta arriba del todo aunque ya
+    // estuviera viendo el título de esa misma página — el efecto es un salto de
+    // scroll cada vez que cambia la página. El foco se sigue moviendo (un lector
+    // de pantalla lo sigue anunciando); lo único que se saca es el salto visual.
     let primera = true;
     effect(() => {
       this.indice();
@@ -461,7 +469,7 @@ export class PaginatedForm {
         return;
       }
       if (isPlatformBrowser(this.platformId)) {
-        this.titulo()?.nativeElement.focus({ preventScroll: false });
+        this.titulo()?.nativeElement.focus({ preventScroll: true });
       }
     });
   }

@@ -19,7 +19,7 @@ for (const viewport of [
     test('policy, benefits, independent channels and keyboard access', async ({ page }, info) => {
       await entrarAlSimulador(page, 'paciente', '');
       await page.goto('/my-account');
-      await page.getByRole('tab', { name: 'Seguros y tutores' }).click();
+      await page.getByRole('tab', { name: 'Seguros', exact: true }).click();
       const card = page.getByTestId('patient-coverage-card').first();
       await expect(card).toBeVisible();
       await expect(page.getByTestId('patient-coverage-card')).toHaveCount(3);

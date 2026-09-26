@@ -154,4 +154,28 @@ describe('ResultCard', () => {
 
     expect(link.getAttribute('aria-busy')).toBeNull();
   });
+
+  it('muestra la acción distinta y tampoco la navega dos veces', () => {
+    anfitrion.dato.update((dato) => ({
+      ...dato,
+      action: {
+        label: 'Revisar disponibilidad',
+        link: '/buscar/perfil-profesional-detalle',
+        fragment: 'horarios',
+      },
+    }));
+    anfitrion.impedirDuplicado.set(true);
+    fixture.detectChanges();
+    const navegar = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+    const accion = elemento('.tarjeta-resultado__accion') as HTMLAnchorElement;
+    expect(accion.textContent?.trim()).toBe('Revisar disponibilidad');
+    expect(accion.getAttribute('href')).toBe('/buscar/perfil-profesional-detalle#horarios');
+
+    accion.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    accion.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+    expect(navegar).toHaveBeenCalledTimes(1);
+    expect(navegar).toHaveBeenCalledWith('/buscar/perfil-profesional-detalle#horarios');
+  });
 });

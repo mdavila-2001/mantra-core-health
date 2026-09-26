@@ -80,14 +80,17 @@ const ROLES_QUE_EJERCEN_O_ADMINISTRAN = [
 export const APP_SECTIONS: readonly AppSection[] = [
   {
     path: 'dashboard',
-    // §4.H · fuera del menú del médico. La lista cerrada del cliente son ocho
-    // y el panel no es una de ellas; se sigue llegando por la marca del
-    // armazón, que ahora es un enlace a `/dashboard` justamente por esto, y es
-    // el destino del login y del cambio de organización.
+    // §4.H, generalizado (2026-09-25): nació `['PRACTITIONER']` porque la
+    // lista cerrada del médico son ocho y el panel no es una de ellas, pero
+    // el motivo real —la marca del armazón ya es un enlace a `/dashboard`,
+    // ofrecer «Panel» abajo es la pantalla en la que ya estás— vale para
+    // cualquier rol, no sólo para el médico (mismo caso que `access-tree.ts`
+    // excluye `dashboard` de su propio panel de accesos). Se sigue llegando
+    // por la marca, por el login y por el cambio de organización.
     //
     // **No se le tocan los `roles`**: el panel lo tiene que poder abrir
     // cualquiera —lo exige `navigation.map.spec`— y esto no habla de permisos.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Panel',
     group: 'General',
     icon: 'home',
@@ -107,11 +110,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // aprender, y el catálogo ya se filtra por rol tutorial por tutorial. Poner
     // roles acá escondería el centro entero a quien tiene pocos.
     path: 'tutorials',
-    // §4.H · fuera del menú del médico. Los recorridos guiados se disparan
-    // **desde la pantalla que explican**, que es donde sirven; un renglón fijo
-    // en el menú para «aprender a usar esto» era además la confesión del
-    // síntoma 1 del plan.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    // N-01 (2026-09-22): pasa de `['PRACTITIONER']` a `[ANY_ROLE]` — ahora es
+    // un ícono con globo en la cabecera (`shell-layout.html`), calcado de
+    // «Ajustes», para los dos roles. La ruta sigue existiendo y funcionando
+    // igual; lo único que cambia es que ya no ocupa un renglón para nadie.
+    // §4.H (el motivo original, para el médico) sigue valiendo: acá se
+    // generaliza al paciente.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Tutoriales',
     group: 'General',
     icon: 'teach',
@@ -133,6 +138,10 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // turnos» tampoco los declara—. La pantalla lo dice cuando falta, en vez
     // de esconderse del menú.
     path: 'messaging',
+    // N-01 (2026-09-22): ícono con globo y contador de no leídos en la
+    // cabecera, calcado de «Ajustes» — la ruta sigue existiendo y
+    // funcionando; sólo deja de ocupar un renglón de primer nivel.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Chats',
     group: 'General',
     icon: 'chat',
@@ -158,9 +167,10 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // que un texto no puede desincronizarse del otro.
     //
     // `roles: [ANY_ROLE]` porque la portada en sí no oculta nada: quien entra
-    // ve los nodos que sus propios roles ya le abren — p. ej. quien ejerce no
-    // ve el nodo de la guía de médicos, que sigue siendo exclusiva del
-    // paciente (corrección #2). El filtro real vive en cada sección, no acá.
+    // ve los nodos que sus propios roles ya le abren — p. ej. quien administra
+    // no ve el nodo de la guía de médicos, que es del paciente y del médico
+    // (corrección #2, ampliada el 24/09/2026). El filtro real vive en cada
+    // sección, no acá.
     //
     // Va **antes** que los cuatro en este registro a propósito: el orden de
     // dibujo del menú sale de acá (`navigation.subgroups.ts` sólo agrupa).
@@ -257,40 +267,22 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // «Directorios», que es la que ahora ocupa el renglón. Ver el motivo
     // entero en la sección `directories`. Esto **no** toca la corrección #2:
     // `roles` + `exclusiveRoles` siguen siendo quienes cierran la puerta, y
-    // esta línea sólo decide dónde se ofrece — al médico se le sigue negando
-    // la pantalla, no se le esconde un renglón que igual podría abrir.
+    // esta línea sólo decide dónde se ofrece — a quien administra se le sigue
+    // negando la pantalla, no se le esconde un renglón que igual podría abrir.
     fueraDelMenuPara: [ANY_ROLE],
     label: 'Directorio de médicos',
     group: 'General',
     icon: 'directory',
-    roles: ['PATIENT'],
+    // **El médico vuelve a entrar** (pedido del cliente, 24/09/2026): «añadamos
+    // doctores al directorio en el perfil de doctores también». Buscar a un
+    // colega para derivar es parte de atender, igual que saber dónde queda una
+    // farmacia. `exclusiveRoles` se queda: el resto de la corrección #2 —que
+    // no lo vean los roles de administración ni el comodín— no cambió.
+    roles: ['PATIENT', 'PRACTITIONER'],
     exclusiveRoles: true,
     availability: 'disponible',
     summary: 'Todos los médicos de la red, agrupados por especialidad.',
     module: 'M05 profiles',
-  },
-  {
-    // FT-19 (05/09/2026) · farmacias, imagenología y centros médicos cerca
-    // del paciente, a partir de su receta y de su ubicación.
-    //
-    // Sólo `PATIENT`: la pestaña de farmacias lee `medicationRequests` del
-    // propio resumen clínico y enlaza a `WhereToBuy`
-    // (`/my-account/medical-record/where-to-buy/:id`), que ya es sólo del
-    // paciente. Un profesional no tiene "mi receta" que buscar acá.
-    //
-    // Sin `exclusiveRoles`, a diferencia de la Guía de médicos: ahí lo exigió
-    // un pedido explícito del cliente ("no debe aparecer ni ser accesible
-    // para doctor u otros roles"); acá no hay un pedido equivalente, así que
-    // alcanza con `roles` — el comodín de `SUPERADMIN` sigue entrando, como
-    // en el resto del registro.
-    path: 'nearby-places',
-    label: 'Lugares cercanos',
-    group: 'General',
-    icon: 'pin',
-    roles: ['PATIENT'],
-    availability: 'disponible',
-    summary: 'Farmacias, centros de imagenología y centros médicos cerca tuyo, según tu receta.',
-    module: 'M22 pharmacy',
   },
   {
     // Grupos y foros (P7). Es la entrada **mínima** que el carril se permite en
@@ -370,8 +362,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // (§4.H, 22/08) se lo quitara, y lo sigue teniendo: la sección es suya
     // —`roles: [ANY_ROLE]`, sin `hiddenFor`—, aparece en su portada de
     // directorios y en «Tus accesos». Lo único que cambia es por dónde entra.
-    // «Directorio de médicos» (`directory`) sigue siendo exclusivo del
-    // paciente por la corrección #2, que esta decisión tampoco toca.
+    // «Directorio de médicos» (`directory`) se le abrió aparte, el 24/09/2026
+    // (ver su fila).
     fueraDelMenuPara: [ANY_ROLE],
     label: 'Directorio de clínicas',
     group: 'General',
@@ -442,25 +434,11 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Consultá la historia clínica de los pacientes que atendés.',
     module: 'M08 clinical · M15 chart',
   },
-  {
-    // §4.H del plan de UX · la sexta de las ocho. **Sección propia y no una
-    // pestaña dentro del Archivo clínico**, que era la otra lectura posible.
-    //
-    // El motivo es que la pregunta que responde es transversal: «¿qué escribí
-    // últimamente?», «¿qué quedó a medio firmar?». Dentro del archivo clínico
-    // esa pregunta no se puede hacer — ahí se entra **por persona**, y para
-    // ver las últimas cinco evoluciones habría que acordarse de las cinco
-    // personas. Es la misma razón por la que «Mis turnos» no vive dentro de
-    // cada paciente.
-    path: 'progress-notes',
-    label: 'Evoluciones',
-    group: 'Atención',
-    icon: 'note',
-    roles: ['CLINICIAN', 'PRACTITIONER'],
-    availability: 'disponible',
-    summary: 'Lo último que escribiste, de todos tus pacientes y en un solo lugar.',
-    module: 'M15 chart',
-  },
+  // «Notas médicas» (`progress-notes`) vivió acá como sección propia entre el
+  // 19/09 y el 25/09/2026. Se retiró del menú y del producto a pedido del
+  // propietario: la nota médica se escribe y se lee desde la consulta y el
+  // expediente de cada persona, y una lista transversal de notas no era una
+  // pantalla que quisiera tener.
   {
     path: 'diagnostics',
     // §4.H · fuera del menú del médico: no está en la lista de ocho. La cola
@@ -1100,7 +1078,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // es la suya lo hace la API, que responde 403 ante la de otra organización.
     roles: ['SECURITY_ADMIN', 'ACCOUNTING_APPROVER', 'PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Cuánto entró hoy, esta semana y este mes; en qué se te va; quién te debe y a quién le debés.',
+    summary:
+      'Cuánto entró hoy, esta semana y este mes; en qué se te va; quién te debe y a quién le debés.',
     module: 'M16 accounting',
   },
 
@@ -1278,6 +1257,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
+    // Pedido del propietario (2026-09-25): sacar el renglón de la vista del
+    // paciente mientras se decide qué hacer con la sección — todavía no está
+    // definido. `fueraDelMenuPara` es lo que "apaga una sección de momento
+    // sin perder el código" (mismo mecanismo que «Ajustes»/«Chats» más abajo):
+    // la ruta, el guard y la pantalla siguen enteros, sólo deja de ocupar
+    // renglón. Ver docs/pendiente-decision-cuestionarios.md.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Mis cuestionarios',
     group: 'Mi cuenta',
     icon: 'survey',
@@ -1368,8 +1354,41 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M27 identity_assurance',
   },
   {
+    // «Farmacia» — pedido del propietario, 24/09/2026: «mis pedidos y
+    // cotizaciones deben estar dentro de farmacia». Monta «Mis pedidos»
+    // (de abajo) y una «Cotizaciones» fija en Medicamentos (reusando la
+    // sección de más adelante, sin su selector) como pestañas
+    // (`PharmacyHub`). Sólo «Mis pedidos» pierde su fila propia acá: sigue
+    // registrada —ruta, roles, guard—, pero ya no ocupa renglón. La sección
+    // «Cotizaciones» de «Mi cuenta» **conserva la suya**, con las otras tres
+    // verticales (Análisis, Imagenología, Servicios médicos) — no se movió.
+    //
+    // **No es «Directorios · Farmacias»** (`pharmacies-directory`): esa es
+    // la vitrina pública de sedes, y ésta es lo propio de la cuenta del
+    // paciente. Las dos siguen en pie, sin tocarse.
+    //
+    // Mismos roles que «Mis pedidos», que hereda al montarla como pestaña:
+    // su contenido nace de una receta propia.
+    path: 'my-account/pharmacy',
+    label: 'Farmacia',
+    group: 'Mi cuenta',
+    icon: 'bag',
+    roles: ['PATIENT'],
+    availability: 'disponible',
+    summary: 'Tus pedidos de farmacia y cuánto cuesta comprar, en un solo lugar.',
+    module: 'M24 pharmacy',
+  },
+  {
     // Carril FAR-I2 · los pedidos de farmacia de la persona: del envío al
     // retiro, con la decisión de sustitución en el medio.
+    //
+    // **Sin renglón propio desde el 24/09/2026** (`fueraDelMenuPara`): el
+    // punto de entrada del menú es «Farmacia», que la monta como su primera
+    // pestaña. La sección sigue entera —ruta, roles, guard— porque el
+    // detalle de un pedido, el checkout, el recibo y los enlaces de
+    // notificación (`notification-routes.ts`) navegan de vuelta acá con
+    // `/my-account/pharmacy-orders`: sacarle la ruta habría roto esos cuatro
+    // caminos, no sólo el menú.
     //
     // **Con `roles: ['PATIENT']`, a diferencia del resto de «Mi cuenta».** El
     // pedido nace de una receta propia y la guardia del carril lo exige
@@ -1381,6 +1400,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'Mi cuenta',
     icon: 'bag',
     roles: ['PATIENT'],
+    fueraDelMenuPara: [ANY_ROLE],
     availability: 'disponible',
     summary: 'Seguí tus pedidos de farmacia: del envío al retiro.',
     module: 'M24 pharmacy',
@@ -1398,6 +1418,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // así que va `billing`, el de valor acumulado. Un icono propio es del
     // dueño del sistema de iconos, no de este carril.
     path: 'my-account/loyalty',
+    // N-03/Q-17 (2026-09-22, Itzan): «Mis puntos» es una pestaña del perfil
+    // del paciente (#606, 24/09/2026) y no tiene renglón de primer nivel. La
+    // ruta vieja redirige a `/my-account?pestana=puntos` en `app.routes.ts`
+    // (`SECCIONES_REDIRIGIDAS`), conservando el query que traía. La sección se
+    // conserva registrada (roles, disponibilidad) para que esa dirección siga
+    // resolviendo si alguien la tiene guardada.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Mis puntos',
     group: 'Mi cuenta',
     icon: 'star',
@@ -1410,6 +1437,10 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Las promociones que las farmacias le mandaron al paciente (T-E7). Mismo
     // criterio que «Mis puntos»: rol de paciente, sin `exclusiveRoles`. Icono
     // `tag`: ningún otro de «Mi cuenta» lo usa.
+    //
+    // Fuera del menú lateral desde el 25/09/2026, a pedido del cliente: se
+    // llega por el ícono de la barra superior, junto al carrito.
+    fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/promotions',
     label: 'Promociones',
     group: 'Mi cuenta',

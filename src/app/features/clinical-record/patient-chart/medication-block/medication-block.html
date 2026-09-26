@@ -54,6 +54,16 @@
             @if (receta.indicacion) {
               <span class="receta__secundario">{{ receta.indicacion }}</span>
             }
+            <!-- C5: el vínculo de la receta. Ausente = pendiente de que
+                 patient-chart.ts (fuera de mi alcance) lo empiece a mandar. -->
+            @if (receta.vinculo) {
+              <app-badge
+                [variant]="receta.vinculoEsDiagnostico ? 'info' : 'secondary'"
+                data-testid="receta-vinculo"
+              >
+                {{ receta.vinculoEsDiagnostico ? 'Diagnóstico: ' : 'Motivo: ' }}{{ receta.vinculo }}
+              </app-badge>
+            }
           </div>
 
           <!-- Una receta emitida no ofrece nada más: es inmutable, y un botón
@@ -79,10 +89,7 @@
                     [disabled]="accionEnCurso() !== null"
                     (selected)="firmar(receta)"
                   >
-                    <svg slot="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                      stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M5 12l4 4L19 6" />
-                    </svg>
+                    <app-nav-icon slot="icon" name="check" />
                     Firmar
                   </app-menu-item>
                 }
@@ -90,12 +97,22 @@
                   [disabled]="accionEnCurso() !== null"
                   (selected)="emitir(receta)"
                 >
-                  <svg slot="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M6 2h12v20l-6-4-6 4z" />
-                  </svg>
+                  <app-nav-icon slot="icon" name="check-circle" />
                   Emitir
                 </app-menu-item>
+                <!-- C5: sólo si todavía no está ligada a un diagnóstico
+                     confirmado (un motivo puede pasar a diagnóstico; un
+                     diagnóstico ya confirmado no se "reemplaza" desde acá). -->
+                @if (!receta.vinculoEsDiagnostico) {
+                  <app-menu-item
+                    data-testid="receta-vincular"
+                    [disabled]="accionEnCurso() !== null"
+                    (selected)="abrirVincular(receta)"
+                  >
+                    <app-nav-icon slot="icon" name="heart" />
+                    Vincular a un diagnóstico…
+                  </app-menu-item>
+                }
               </app-menu>
             </div>
           }
@@ -277,39 +294,46 @@
         />
       </app-form-field>
 
-      <!-- Para qué es la receta (v4.1.6). Opcional de verdad: una prescripción
-           sintomática o profiláctica no tiene diagnóstico detrás, y por eso la
-           opción vacía es la primera y la de por omisión. -->
+      <!-- Para qué es la receta (C5, pedido literal del propietario): en todo
+           momento se liga a un diagnóstico confirmado o a un motivo escrito.
+           Ya no hay opción vacía. -->
       <app-form-field icon="heart"
         label="¿Para qué es esta receta?"
-        hint="Opcional. Elegí un diagnóstico o escribí el motivo libremente."
+        hint="Elegí un diagnóstico confirmado o «Otro motivo» para escribirlo."
       >
         <app-select
-          data-testid="receta-indicacion"
+          data-testid="receta-diagnostico"
           [value]="indicacion()"
           (valueChange)="elegirIndicacion($event)"
           [options]="opcionesDeIndicacion()"
+          placeholder="Elegí un diagnóstico o un motivo"
         />
       </app-form-field>
 
-      <!-- El motivo escrito, para cuando no hay diagnóstico registrado detrás:
-           «sólo se fue a hacer recetar», que en psiquiatría es lo corriente.
-           Entra y sale del DOM en vez de esconderse: un campo escondido igual
-           se tabula. -->
+      <!-- El motivo escrito, para cuando no hay diagnóstico confirmado
+           detrás: «sólo se fue a hacer recetar», que en psiquiatría es lo
+           corriente. Entra y sale del DOM en vez de esconderse: un campo
+           escondido igual se tabula. Obligatorio y con tope de 200
+           caracteres (C5 §4). -->
       @if (motivoEsLibre()) {
         <app-form-field
           icon="note"
           label="¿Cuál es el motivo?"
-          hint="Opcional. Se imprime en la receta junto al diagnóstico, si lo elegiste."
+          hint="Obligatorio. Se imprime en la receta."
         >
-          <app-input
-            data-testid="receta-motivo-libre"
+          <app-textarea
+            data-testid="receta-motivo"
             [(value)]="motivoLibre"
+            [maxLength]="200"
+            [rows]="2"
             placeholder="Trastorno de ansiedad generalizada"
           />
         </app-form-field>
       }
 
+      <!-- `app-form-actions` no tiene forma de recibir un testid en su botón
+           (pieza de la casa, no se toca — PLAN.md). El E2E ubica el envío
+           por rol + nombre accesible («Prescribir»), no por testid. -->
       <app-form-actions
         submitLabel="Prescribir"
         [pending]="registrando()"
@@ -319,3 +343,40 @@
     </form>
   }
 </app-card>
+
+<!-- C5: vincular después una receta con motivo plano a un diagnóstico
+     confirmado. Mismo selector que el alta, dentro de un diálogo propio. -->
+@if (vinculando(); as receta) {
+  <app-content-dialog
+    heading="Vincular a un diagnóstico"
+    [description]="receta.medicamento"
+    data-testid="receta-vincular-dialog"
+    [dismissible]="!vinculandoEnCurso()"
+    (dismissAttempt)="cerrarVincular()"
+    (closed)="cerrarVincular()"
+  >
+    @if (errorDeVincular(); as mensaje) {
+      <app-alert tone="error">{{ mensaje }}</app-alert>
+    }
+    <app-form-field icon="heart" label="¿Para qué es esta receta?">
+      <app-select
+        [value]="indicacionDeVinculo()"
+        (valueChange)="indicacionDeVinculo.set($event)"
+        [options]="opcionesDeIndicacion()"
+      />
+    </app-form-field>
+    @if (indicacionDeVinculo() === '__otro_motivo__') {
+      <app-form-field icon="note" label="¿Cuál es el motivo?">
+        <app-textarea [(value)]="motivoDeVinculo" [maxLength]="200" [rows]="2" />
+      </app-form-field>
+    }
+    <app-form-actions
+      submitLabel="Vincular"
+      cancelLabel="Cancelar"
+      [pending]="vinculandoEnCurso()"
+      [disabled]="!puedeVincular()"
+      (submitted)="confirmarVincular()"
+      (cancelled)="cerrarVincular()"
+    />
+  </app-content-dialog>
+}

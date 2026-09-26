@@ -660,6 +660,113 @@ describe('ChatStore', () => {
     });
   });
 
+  /**
+   * N-01 (23/09/2026) · el número de Chats de la cabecera, desde cualquier
+   * pantalla. `prepararContador()` lee la bandeja una vez y se une al socket;
+   * no sondea y no cuenta como «estar en Chats» —eso es de `iniciar()`—.
+   */
+  describe('el contador fuera de Chats', () => {
+    const SONDEO_BANDEJA_MS = 60_000;
+
+    const bandeja = (conversaciones: unknown[]) => ({
+      items: conversaciones,
+      count: conversaciones.length,
+      limit: 50,
+      nextCursor: null,
+    });
+
+    const pedidosDeBandeja = () => http.match((r) => r.url === '/community/conversations');
+
+    afterEach(() => vi.useRealTimers());
+
+    it('resuelve el perfil, lee la bandeja y suma los no leídos, sin marcar actividad ni sondear', () => {
+      vi.useFakeTimers();
+      const actividad = vi.spyOn(TestBed.inject(ChatAutoReply), 'marcarActividad');
+      const unirse = vi.spyOn(TestBed.inject(ChatSocketService), 'joinInbox');
+
+      store.prepararContador();
+      http.expectOne('/community/profiles/me').flush(perfilPropio);
+      const lecturas = pedidosDeBandeja();
+      expect(lecturas.length).toBe(1);
+      lecturas[0]!.flush(bandeja([conversacion('c-1', 1), conversacion('c-2', 1)]));
+
+      expect(store.sinLeer()).toBe(2);
+      expect(unirse).toHaveBeenCalledWith('pp-1');
+      expect(actividad).not.toHaveBeenCalled();
+
+      // Pasa más de un minuto: nadie vuelve a pedir la bandeja.
+      vi.advanceTimersByTime(SONDEO_BANDEJA_MS * 2);
+      expect(pedidosDeBandeja().length).toBe(0);
+    });
+
+    it('llamarlo dos veces no vuelve a pedir nada', () => {
+      store.prepararContador();
+      store.prepararContador();
+      http.expectOne('/community/profiles/me').flush(perfilPropio);
+      pedidosDeBandeja().forEach((pedido) => pedido.flush(bandeja([conversacion('c-1', 1)])));
+
+      store.prepararContador();
+      http.expectNone('/community/profiles/me');
+      expect(pedidosDeBandeja().length).toBe(0);
+    });
+
+    it('si Chats monta mientras el perfil viaja, se pregunta una sola vez y hay una sola lectura y un solo sondeo', () => {
+      vi.useFakeTimers();
+      const actividad = vi.spyOn(TestBed.inject(ChatAutoReply), 'marcarActividad');
+      const unirse = vi.spyOn(TestBed.inject(ChatSocketService), 'joinInbox');
+
+      // El armazón primero, `Messaging` enseguida, antes de la respuesta.
+      store.prepararContador();
+      store.iniciar();
+      http.expectOne('/community/profiles/me').flush(perfilPropio);
+
+      const lecturas = pedidosDeBandeja();
+      expect(lecturas.length).toBe(1);
+      lecturas[0]!.flush(bandeja([conversacion('c-1', 2)]));
+      expect(unirse).toHaveBeenCalledTimes(1);
+      expect(actividad).toHaveBeenCalledTimes(1);
+      expect(store.sinLeer()).toBe(2);
+
+      // El sondeo de Chats es uno: un tic, una lectura.
+      vi.advanceTimersByTime(SONDEO_BANDEJA_MS);
+      const tic = pedidosDeBandeja();
+      expect(tic.length).toBe(1);
+      tic[0]!.flush(bandeja([conversacion('c-1', 2)]));
+    });
+
+    it('entrar a Chats después enciende todo lo de Chats sin volver a preguntar el perfil, y conserva el número', () => {
+      const actividad = vi.spyOn(TestBed.inject(ChatAutoReply), 'marcarActividad');
+      store.prepararContador();
+      http.expectOne('/community/profiles/me').flush(perfilPropio);
+      pedidosDeBandeja().forEach((pedido) => pedido.flush(bandeja([conversacion('c-1', 1), conversacion('c-2', 1)])));
+      expect(store.sinLeer()).toBe(2);
+
+      store.iniciar();
+      http.expectNone('/community/profiles/me');
+      expect(actividad).toHaveBeenCalledTimes(1);
+      expect(store.sinLeer()).toBe(2);
+      pedidosDeBandeja().forEach((pedido) => pedido.flush(bandeja([conversacion('c-1', 1), conversacion('c-2', 1)])));
+      expect(store.sinLeer()).toBe(2);
+    });
+
+    it('un mensaje por el socket sube el número sin pasar por Chats', () => {
+      store.prepararContador();
+      http.expectOne('/community/profiles/me').flush(perfilPropio);
+      pedidosDeBandeja().forEach((pedido) => pedido.flush(bandeja([conversacion('c-1', 1), conversacion('c-2', 1)])));
+
+      TestBed.inject(ChatSocketService)['messages$'].next({
+        id: 'm-nuevo',
+        conversationId: 'c-2',
+        senderProfileId: 'pp-2',
+        contentTypeConceptId: 'c-text',
+        bodyText: 'Otro',
+        sentAt: new Date(),
+      });
+
+      expect(store.sinLeer()).toBe(3);
+    });
+  });
+
   it('un tic fallido no vacía la bandeja que estabas mirando', () => {
     encender();
     expect(store.conversaciones().length).toBe(1);

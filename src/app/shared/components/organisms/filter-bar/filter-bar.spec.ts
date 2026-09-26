@@ -1,10 +1,16 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 
+import { SearchField } from '../../molecules/search-field/search-field';
 import { FilterBar, SEARCH_PARAM, type FilterDef } from './filter-bar';
 
-@Component({ selector: 'app-listado-prueba', template: '' })
+@Component({
+  selector: 'app-listado-prueba',
+  template: '',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
 class VistaListado {}
 
 const FILTROS: readonly FilterDef[] = [
@@ -33,6 +39,7 @@ const FILTRO_SIN_VALUE_SET: FilterDef = {
 
 @Component({
   imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-filter-bar [filters]="filtros()" (filtersChanged)="emisiones.push($event)" />
   `,
@@ -44,6 +51,7 @@ class HostComponent {
 
 @Component({
   imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-filter-bar [filters]="filtros()">
       <button filter-bar-action type="button">Agregar</button>
@@ -56,6 +64,7 @@ class HostComponentConProyeccion {
 
 @Component({
   imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-filter-bar [filters]="filtros()">
       <button filter-bar-action type="button">Primero</button>
@@ -65,6 +74,20 @@ class HostComponentConProyeccion {
 })
 class HostComponentConDosProyecciones {
   readonly filtros = signal<readonly FilterDef[]>(FILTROS);
+}
+
+/** Dos tablas en la misma pantalla, cada una con su barra y su clave de búsqueda. */
+@Component({
+  imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <app-filter-bar searchParam="qTitulos" (filtersChanged)="titulos.push($event)" />
+    <app-filter-bar searchParam="qMatriculas" (filtersChanged)="matriculas.push($event)" />
+  `,
+})
+class HostComponentConDosBarras {
+  readonly titulos: Readonly<Record<string, string>>[] = [];
+  readonly matriculas: Readonly<Record<string, string>>[] = [];
 }
 
 describe('FilterBar', () => {
@@ -91,7 +114,12 @@ describe('FilterBar', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [HostComponent, HostComponentConProyeccion, HostComponentConDosProyecciones],
+      imports: [
+        HostComponent,
+        HostComponentConProyeccion,
+        HostComponentConDosProyecciones,
+        HostComponentConDosBarras,
+      ],
       providers: [provideRouter([{ path: 'listado', component: VistaListado }])],
     }).compileComponents();
     fixture = TestBed.createComponent(HostComponent);
@@ -230,6 +258,70 @@ describe('FilterBar', () => {
       );
       const botones = [...(hueco?.querySelectorAll('button') ?? [])];
       expect(botones.map((boton) => boton.textContent?.trim())).toEqual(['Primero', 'Segundo']);
+    });
+  });
+
+  describe('clave de búsqueda propia (searchParam)', () => {
+    function buscadores(de: ComponentFixture<unknown>): SearchField[] {
+      return de.debugElement
+        .queryAll(By.directive(SearchField))
+        .map((nodo) => nodo.componentInstance as SearchField);
+    }
+
+    function parametros() {
+      return router.parseUrl(router.url).queryParamMap;
+    }
+
+    async function montarDosBarras(): Promise<ComponentFixture<HostComponentConDosBarras>> {
+      const dos = TestBed.createComponent(HostComponentConDosBarras);
+      await dos.whenStable();
+      return dos;
+    }
+
+    it('sin la entrada, escribe y emite bajo `q`, como siempre', async () => {
+      buscadores(fixture)[0].searched.emit('peña');
+      await fixture.whenStable();
+
+      expect(parametros().get(SEARCH_PARAM)).toBe('peña');
+      expect(host.emisiones.at(-1)).toEqual({ [SEARCH_PARAM]: 'peña' });
+    });
+
+    it('buscar en una barra no toca la clave ni el campo de la otra', async () => {
+      const dos = await montarDosBarras();
+
+      buscadores(dos)[0].searched.emit('umsa');
+      await dos.whenStable();
+
+      expect(parametros().get('qTitulos')).toBe('umsa');
+      expect(parametros().has('qMatriculas')).toBe(false);
+      expect(parametros().has(SEARCH_PARAM)).toBe(false);
+      expect(dos.componentInstance.titulos.at(-1)).toEqual({ qTitulos: 'umsa' });
+      expect(dos.componentInstance.matriculas).toHaveLength(0);
+      expect(buscadores(dos)[1].value()).toBe('');
+      dos.destroy();
+    });
+
+    it('al entrar, cada barra muestra el término de su clave', async () => {
+      await irA({ qTitulos: 'umsa', qMatriculas: 'lp-12' });
+      const dos = await montarDosBarras();
+
+      expect(buscadores(dos).map((buscador) => buscador.value())).toEqual(['umsa', 'lp-12']);
+      dos.destroy();
+    });
+
+    it('«limpiar todo» de una barra deja la búsqueda de la otra', async () => {
+      await irA({ qTitulos: 'umsa', qMatriculas: 'lp-12' });
+      const dos = await montarDosBarras();
+      const primera = (dos.nativeElement as HTMLElement).querySelector('app-filter-bar');
+
+      [...(primera?.querySelectorAll('button') ?? [])]
+        .find((boton) => boton.textContent?.trim() === 'Limpiar todo')
+        ?.click();
+      await dos.whenStable();
+
+      expect(parametros().has('qTitulos')).toBe(false);
+      expect(parametros().get('qMatriculas')).toBe('lp-12');
+      dos.destroy();
     });
   });
 });

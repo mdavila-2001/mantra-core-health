@@ -1,118 +1,154 @@
 <app-page-header
   title="Mis órdenes"
-  subtitle="Los estudios de laboratorio e imagen que te pidió un médico, con las indicaciones para hacértelos."
+  subtitle="Los análisis que te pidieron y qué tenés que hacer con cada uno."
 />
 
 @if (sinPerfilDePaciente) {
-  <!-- Sesión válida de una cuenta que no es de un paciente. No es un 403: es
-       que esta pantalla no le corresponde. -->
   <app-alert tone="info" title="Esta sección es para pacientes">
     Tu cuenta no tiene un perfil de paciente. Si emitís órdenes, entrá por la ficha del paciente.
   </app-alert>
 } @else {
-  @switch (ordenes().status) {
-    @case ('loading') {
-      <p class="ordenes__estado" role="status">Buscando tus órdenes…</p>
-    }
+  <!-- Regla 8: una sola tarjeta centrada a lo ancho, con las cuatro pestañas dentro. -->
+  <app-card class="ordenes" variant="outlined" padding="lg" data-testid="mis-ordenes-card">
+    <!-- `data-testid` acá cae en el panel (`app-tab` ES el panel), no en el
+         botón visible de la pestaña: ese lo dibuja `Tabs` internamente y no
+         tiene forma de recibir un id desde afuera (pieza de la casa, no se
+         toca — PLAN.md, riesgo residual). El E2E y los specs ubican el botón
+         por `role="tab"` + texto, no por testid. Se deja igual para quien
+         lea el DOM del panel activo. -->
+    <app-tabs [selectedIndex]="indiceDePestana()" (selectedIndexChange)="cambiarPestana($event)">
+      <app-tab [label]="'Todas (' + conteos().TODAS + ')'" data-testid="mis-ordenes-tab-TODAS" />
+      <app-tab [label]="'Laboratorio (' + conteos().LAB + ')'" data-testid="mis-ordenes-tab-LAB" />
+      <app-tab [label]="'Imagenología (' + conteos().IMAGING + ')'" data-testid="mis-ordenes-tab-IMAGING" />
+      <app-tab [label]="'Otros (' + conteos().OTHER + ')'" data-testid="mis-ordenes-tab-OTHER" />
+    </app-tabs>
 
-    @case ('empty') {
-      <app-alert tone="info" title="No tenés órdenes pendientes">
-        {{ mensajeDeVacio() }}
-        <!-- El estado vacío ofrece su salida (contrato S3 del M34): un vacío sin
-             camino deja a la persona sin saber qué hacer con la pantalla. -->
-        @if (salidaDelVacio(); as salida) {
-          <a app-link [routerLink]="salida.route">{{ salida.label }}</a>
-        }
-      </app-alert>
-    }
+    <app-view-state-host [state]="estado()" (retry)="cargar()">
+      <div vsh-skeleton class="ordenes__skeleton" data-testid="mis-ordenes-cargando">
+        <app-skeleton variant="rect" height="var(--sp-10)" />
+        <app-skeleton variant="rect" height="var(--sp-20)" />
+        <app-skeleton variant="rect" height="var(--sp-20)" />
+      </div>
 
-    @case ('ready') {
-      <!-- Agrupadas por atención: tres estudios pedidos en la misma consulta
-           son un pedido, no tres trámites. -->
-      @for (grupo of grupos(); track grupo.clave) {
-        <section class="ordenes__grupo">
-          <h2 class="ordenes__grupo-titulo">{{ grupo.titulo }}</h2>
+      @if (estado(); as e) {
+        @if (e.status === 'ready') {
+          <p class="ordenes__resumen" aria-live="polite">
+            {{ totalFiltrado() }} {{ totalFiltrado() === 1 ? 'orden' : 'órdenes' }}
+          </p>
 
-          <ul class="ordenes__lista">
-            @for (orden of grupo.ordenes; track orden.id) {
-              <li class="ordenes__item" data-testid="diagnostic-order" [attr.data-order-id]="orden.id">
-                <header class="ordenes__encabezado">
-                  <div>
-                    <h3 class="ordenes__titulo">{{ orden.estudio }}</h3>
-                    <p class="ordenes__fecha">
-                      Pedida el {{ orden.pedida | date: "d 'de' MMMM 'de' y" }}
-                    </p>
-                  </div>
-                  <div class="ordenes__etiquetas">
-                    <app-badge variant="info">{{ orden.categoria }}</app-badge>
-                    <!-- El estado de la orden: una que el médico anuló sigue en
-                         la lista y la persona tiene que poder verlo. -->
-                    <app-badge variant="secondary">{{ orden.estado }}</app-badge>
-                    @if (orden.tieneResultado) {
-                      <app-badge variant="success">Con resultado</app-badge>
-                    }
-                  </div>
-                </header>
+          @if (truncado()) {
+            <app-alert tone="info" data-testid="mis-ordenes-truncado">
+              Mostramos las últimas {{ e.data.length }}.
+            </app-alert>
+          }
 
-                <!-- La preparación va en un aviso y no en letra chica: es lo
-                     único de esta pantalla que cambia lo que la persona hace
-                     mañana a la mañana. Cuando no hay, no se dice nada —
-                     inventar un «no requiere preparación» sería afirmar lo que
-                     el catálogo no dice. -->
-                @if (orden.preparacion !== '') {
-                  <app-alert tone="warning" title="Cómo prepararte">
-                    {{ orden.preparacion }}
-                  </app-alert>
-                }
-
-                <app-patient-insurance-settlement
-                  [settlement]="orden.insuranceSettlement ?? null"
-                  [availability]="orden.insuranceSettlementAvailability ?? 'NOT_AVAILABLE'"
-                />
-
-                <footer class="ordenes__acciones">
-                  @if (orden.tieneResultado) {
-                    <a
-                      app-link
-                      class="ordenes__resultado"
-                      [routerLink]="['/my-account/diagnostic-results']"
-                      [fragment]="orden.reportId"
-                      [attr.aria-label]="'Ver resultado: ' + orden.estudio"
-                    >
-                      Ver resultado
-                    </a>
-                  }
-
-                  <!-- Reservar hora en un laboratorio (J2) ya existe en «Mis citas»:
-                       este botón estaba deshabilitado con «Próximamente» y mandaba
-                       a la persona a buscar el camino sola. Ahora lleva allí con
-                       «En un laboratorio» elegido (`?resource=lab`, refactor UX).
-                       El nombre accesible dice de qué estudio es: el botón se
-                       repite en cada orden. -->
-                  <a
-                    app-button
-                    variant="secondary"
-                    size="sm"
-                    data-testid="orden-reservar"
-                    [routerLink]="['/my-account/appointments']"
-                    [queryParams]="{ resource: 'lab' }"
-                    [attr.aria-label]="'Reservar hora en un laboratorio: ' + orden.estudio"
-                  >
-                    Reservar hora en un laboratorio
-                  </a>
-                </footer>
-              </li>
+          <app-filter-bar
+            searchLabel="Buscar en tus órdenes"
+            searchPlaceholder="Estudio, estado o consulta"
+            [filters]="filtros()"
+            (filtersChanged)="onFiltrosCambiaron($event)"
+          >
+            @if (hayFiltrosActivos()) {
+              <button
+                filter-bar-action
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                data-testid="mis-ordenes-limpiar-filtros"
+                (clicked)="limpiarFiltros()"
+              >
+                Limpiar filtros
+              </button>
             }
-          </ul>
-        </section>
-      }
-    }
+          </app-filter-bar>
 
-    @default {
-      <app-alert tone="error" title="No pudimos traer tus órdenes">
-        Reintentá en un momento.
-        <button app-button variant="secondary" size="sm" (clicked)="cargar()">Reintentar</button>
-      </app-alert>
-    }
+          @if (filasFiltradas().length === 0) {
+            <p class="ordenes__vacio" data-testid="mis-ordenes-sin-resultados">
+              Ninguna orden coincide con la búsqueda o el filtro.
+            </p>
+          } @else {
+            <app-data-table
+              [state]="filasDeTabla()"
+              [columns]="columnas()"
+              [trackBy]="porId"
+              [rowLabel]="nombreDeFila"
+              caption="Tus órdenes de laboratorio e imagen"
+              maxHeight="480px"
+              data-testid="mis-ordenes-tabla"
+            />
+
+            <app-pagination
+              [totalItems]="totalFiltrado()"
+              [(page)]="pagina"
+              [(pageSize)]="tamano"
+              data-testid="mis-ordenes-paginacion"
+            />
+          }
+        }
+      }
+    </app-view-state-host>
+  </app-card>
+}
+
+<!-- ─── Plantillas de celda (C9 §4) ────────────────────────────────────────── -->
+
+<ng-template #celdaPedida let-fila>{{ fila.requestedAt | date: 'dd/MM/yyyy' }}</ng-template>
+
+<ng-template #celdaEstudio let-fila>{{ fila.studyLabel }}</ng-template>
+
+<ng-template #celdaTipo let-fila>
+  <app-badge variant="info">{{ fila.typeLabel }}</app-badge>
+</ng-template>
+
+<ng-template #celdaEstado let-fila>
+  <app-status-seal [variant]="varianteDeEstado(fila)" [label]="fila.stateLabel" />
+</ng-template>
+
+<ng-template #celdaResultado let-fila>
+  @if (fila.hasResult) {
+    Disponible
+  } @else {
+    Pendiente
   }
+</ng-template>
+
+<ng-template #celdaConsulta let-fila>{{ fila.consultationLabel }}</ng-template>
+
+<ng-template #celdaAcciones let-fila>
+  <app-row-actions
+    [actions]="accionesDe(fila)"
+    [fila]="fila.studyLabel"
+    (actionSelected)="ejecutarAccion($event, fila)"
+  />
+</ng-template>
+
+<!-- ─── Diálogos de las acciones ───────────────────────────────────────────── -->
+
+@if (preparacionAbierta(); as fila) {
+  <app-content-dialog
+    heading="Cómo prepararte"
+    [description]="fila.studyLabel"
+    data-testid="mis-ordenes-preparacion-dialog"
+    (dismissAttempt)="preparacionAbierta.set(null)"
+    (closed)="preparacionAbierta.set(null)"
+  >
+    <p>{{ fila.preparation }}</p>
+  </app-content-dialog>
+}
+
+@if (liquidacionAbierta(); as fila) {
+  <app-content-dialog
+    heading="Liquidación del seguro"
+    [description]="fila.studyLabel"
+    size="lg"
+    data-testid="mis-ordenes-liquidacion-dialog"
+    (dismissAttempt)="liquidacionAbierta.set(null)"
+    (closed)="liquidacionAbierta.set(null)"
+  >
+    <app-patient-insurance-settlement
+      [settlement]="fila.insuranceSettlement ?? null"
+      [availability]="fila.insuranceSettlementAvailability ?? 'NOT_AVAILABLE'"
+    />
+  </app-content-dialog>
 }

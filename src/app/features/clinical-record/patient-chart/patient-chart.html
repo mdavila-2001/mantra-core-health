@@ -15,16 +15,6 @@
      mientras el expediente no esté, no hay pestañas que dibujar. -->
 <app-view-state-host [state]="expediente()" (retry)="recargar()">
   <div class="expediente" data-pdf-root #raizPdf>
-    <!-- Continuación, no un origen: atender nace sólo de «Mis citas». Esto
-         aparece únicamente si ya hay un encuentro abierto con esta persona. -->
-    @if (atencionEnCurso()) {
-      <app-alert tone="info" title="Tenés una consulta en curso con esta persona">
-        <a app-link [routerLink]="rutaDeLaAtencion()" data-testid="expediente-volver-atencion">
-          Volver a la consulta
-        </a>
-      </app-alert>
-    }
-
     <!-- Un recorte silencioso en clínica se lee como «no hay antecedentes». -->
     @if (recorte()) {
       <app-alert tone="warning" title="Expediente recortado">
@@ -32,47 +22,6 @@
         {{ recorte() }}.
       </app-alert>
     }
-
-    <!-- ─── La banda de contexto ──────────────────────────────────────────
-         Las alergias, arriba y fuera de las pestañas: es el único bloque que
-         cambia una conducta antes de leerlo. Debajo, las cifras que dimensionan
-         el expediente sin abrir pestaña por pestaña. -->
-    @if (alergiasDestacadas().length > 0) {
-      <app-alert
-        tone="warning"
-        title="Alergias"
-        class="expediente__alergias"
-        appTutorialTarget="expediente-alergias"
-      >
-        <ul class="expediente__alergias-lista">
-          @for (alergia of alergiasDestacadas(); track alergia.id) {
-            <li class="expediente__alergias-item">
-              <span>{{ alergia.principal }}</span>
-              @if (alergia.detalle !== '') {
-                <app-badge variant="warning">{{ alergia.detalle }}</app-badge>
-              }
-            </li>
-          }
-        </ul>
-      </app-alert>
-    }
-
-    <div class="expediente__contexto" appTutorialTarget="expediente-contexto">
-      <ul class="expediente__cifras">
-        @for (cifra of cifras(); track cifra.clave) {
-          <li>
-            <p class="expediente__cifra-rotulo">{{ cifra.rotulo }}</p>
-            <p class="expediente__cifra-valor">{{ cifra.valor }}</p>
-          </li>
-        }
-        <li>
-          <p class="expediente__cifra-rotulo">Última atención</p>
-          <p class="expediente__cifra-valor expediente__cifra-valor--fecha">
-            {{ ultimaAtencion() ? (ultimaAtencion() | date: 'd MMM y') : 'Sin atención previa' }}
-          </p>
-        </li>
-      </ul>
-    </div>
 
     <!-- ─── La historia ───────────────────────────────────────────────────
          Se lleva el ancho entero: es lo único que hace esta pantalla. Antes
@@ -145,7 +94,6 @@
         }
       </app-tabs>
     </section>
-
   </div>
 </app-view-state-host>
 
@@ -222,8 +170,12 @@
     Acciones
   </button>
   <app-menu #menuDeAcciones>
-    <app-menu-item (selected)="abrirCambioDeEstado(fila)">Cambiar estado clínico…</app-menu-item>
+    <app-menu-item (selected)="abrirCambioDeEstado(fila)">
+      <app-nav-icon slot="icon" name="refresh" />
+      Cambiar estado clínico…
+    </app-menu-item>
     <app-menu-item (selected)="abrirAdjuntos(fila, 'diagnosticos')">
+      <app-nav-icon slot="icon" name="paperclip" />
       Adjuntar archivos…
     </app-menu-item>
   </app-menu>
@@ -369,7 +321,9 @@
       aria-hidden="true"
       focusable="false"
     >
-      <path d="M16.5 8.5 9.7 15.3a2.1 2.1 0 0 0 3 3l6.8-6.8a4.2 4.2 0 0 0-5.9-6L6.8 12.3a6.2 6.2 0 0 0 8.8 8.8l5.4-5.4" />
+      <path
+        d="M16.5 8.5 9.7 15.3a2.1 2.1 0 0 0 3 3l6.8-6.8a4.2 4.2 0 0 0-5.9-6L6.8 12.3a6.2 6.2 0 0 0 8.8 8.8l5.4-5.4"
+      />
     </svg>
     Adjuntar
   </button>
@@ -465,7 +419,6 @@
         <app-care-plan-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="null"
-          [citas]="citasParaElDiagnostico()"
           [diagnosticos]="diagnosticosParaElPlan()"
           (cambio)="altaRegistrada()"
         />
@@ -481,3 +434,14 @@
     }
   </app-content-dialog>
 }
+
+<!-- ─── Lo que hay que saber antes de leer ────────────────────────────────
+     Las alergias y la consulta abierta iban en avisos fijos arriba de la
+     página: ocupaban media pantalla en cada visita, empujaban las pestañas
+     abajo del pliegue y, al estar siempre, se dejaban de leer. Un modal
+     tampoco: hay que cerrarlo con un clic para poder seguir, que es la misma
+     interrupción con otra forma. Ahora se dicen una vez, por toast, al abrir
+     el expediente (ver el constructor en patient-chart.ts). Lo mismo que
+     dicen sigue estando en su pestaña —«Alergias», «Encuentros»—: el toast
+     avisa, no es el único lugar donde consta. -->
+

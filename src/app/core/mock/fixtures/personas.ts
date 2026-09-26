@@ -65,8 +65,12 @@ export interface ProfesionalSimulado {
    * `RED_ASEGURADORA`: un médico real del listado de una aseguradora, no una
    * cuenta de la maqueta. No tiene agenda, puntuación ni verificación, porque
    * inventárselas sería afirmar algo sobre alguien que existe.
+   *
+   * `DEMO`: un actor de demostración que no es nadie (ver
+   * `PROFESIONALES_DEMO_REGISTRADOS`). Tiene agenda simulada y, como los de la
+   * red, ni credenciales ni matrícula: no hay título que fingir.
    */
-  readonly origen?: 'RED_ASEGURADORA' | 'USUARIO_PROPIETARIO';
+  readonly origen?: 'RED_ASEGURADORA' | 'USUARIO_PROPIETARIO' | 'DEMO';
   /**
    * Los registros que declara la planilla de usuarios médicos, tal cual.
    * Sólo `USUARIO_PROPIETARIO`.
@@ -259,11 +263,87 @@ const PROFESIONALES_ESCRITOS: readonly ProfesionalSimulado[] = [
    escritos, así que `PROFESIONALES[6]` y `.slice(1, 5)` siguen siendo la misma
    gente en `agenda.ts` y en `clinica.ts`. */
 
+/* ---- y los 13 profesionales de demostración --------------------------------
+   R-03 (22/09/2026) pide médicos con agenda para recorrer una reserva completa.
+   Las 13 personas de la planilla del propietario son reales y la planilla no
+   dice dónde atienden, así que no se les inventa agenda (D-H3-PROV-01,
+   23/09/2026). En su lugar, 13 actores que no son nadie:
+
+   - nombre «Profesional demo NN» y semilla `demo-registered-practitioner-NN`,
+     sin nada tomado de la planilla;
+   - especialidad del catálogo, repartida por índice;
+   - sede en una de las dos instituciones inventadas de la maqueta (Clínica Los
+     Olivos, Hospital San Lucas: ver `instituciones.spec.ts`), alternada;
+   - sin verificar, sin puntuación, sin matrícula ni credenciales
+     (`origen: 'DEMO'`, ver `credencialesDe` y `licenciasDe`).
+
+   Van al **final** del padrón: los índices de los demás no se mueven. */
+
+const ESPECIALIDADES_DEMO = [
+  'MEDICINA_GENERAL',
+  'PEDIATRIA',
+  'CARDIOLOGIA',
+  'DERMATOLOGIA',
+  'TRAUMATOLOGIA',
+  'NEUROLOGIA',
+  'OFTALMOLOGIA',
+  'ODONTOLOGIA',
+  'ENDOCRINOLOGIA',
+  'GASTROENTEROLOGIA',
+  'NUTRICION',
+  'NEUMOLOGIA',
+  'PSIQUIATRIA',
+] as const;
+
+function profesionalDemo(indice: number): ProfesionalSimulado {
+  const numero = String(indice + 1).padStart(2, '0');
+  const clave = `demo-registered-practitioner-${numero}`;
+  const enHospital = indice % 2 === 1;
+  const lugar = CIUDADES[0]!;
+  return {
+    id: uuid(`hpid-${clave}`),
+    personId: uuid(`person-${clave}`),
+    userId: uuid(`user-${clave}`),
+    practitionerCode: `DEMO-${numero}`,
+    displayName: `Profesional demo ${numero}`,
+    name: 'Profesional',
+    lastName: `demo ${numero}`,
+    motherLastName: '',
+    professionalTitle: 'Profesional de demostración',
+    professionalBio: 'Actor de demostración de la maqueta. No es una persona real: su sede, su agenda y sus cupos son simulados.',
+    slug: `profesional-demo-${numero}`,
+    email: `profesional-demo-${numero}@demo.alovida.mock`,
+    phone: '',
+    especialidades: [ESPECIALIDAD[ESPECIALIDADES_DEMO[indice % ESPECIALIDADES_DEMO.length]!]!],
+    ciudad: lugar.ciudad,
+    municipioId: lugar.municipio,
+    departamentoId: lugar.departamento,
+    tenantId: enHospital ? TENANT_HOSPITAL : TENANT_CLINICA,
+    organizacion: enHospital ? 'Hospital San Lucas' : 'Clínica Los Olivos',
+    verified: false,
+    acceptsNewPatients: true,
+    telehealthAvailable: false,
+    ratingAverage: 0,
+    ratingCount: 0,
+    photoFileId: uuid(`photo-${clave}`),
+    matricula: '',
+    birthDate: '',
+    nationalId: '',
+    lat: lugar.lat,
+    lng: lugar.lng,
+    direccion: '',
+    origen: 'DEMO',
+  };
+}
+
+export const PROFESIONALES_DEMO_REGISTRADOS: readonly ProfesionalSimulado[] = Array.from({ length: 13 }, (_, i) => profesionalDemo(i));
+
 export const PROFESIONALES: readonly ProfesionalSimulado[] = [
   ...PROFESIONALES_ESCRITOS,
   ...profesionalesDeLaRed(PROFESIONALES_ESCRITOS.length),
   // Y las 13 personas de `USUARIO_MEDICOS_1.md` (ver `registered-people.ts`).
   ...profesionalesRegistrados(),
+  ...PROFESIONALES_DEMO_REGISTRADOS,
 ];
 
 export const MEDICA = PROFESIONALES[0]!;

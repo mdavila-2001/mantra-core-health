@@ -1,9 +1,15 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
+import type { ConversationListItem } from '../../core/data-access/community/community.types';
+import { CartStore, type NuevaLineaDeCarrito } from '../../core/data-access/pharmacy-cart/cart.store';
+import type { CartSite } from '../../core/data-access/pharmacy-cart/pharmacy-cart.types';
+import { ChatStore } from '../../core/messaging/chat.store';
+import { ChatSocketService } from '../../core/messaging/chat-socket.service';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import { NAV_ICON_NAMES } from '../../core/navigation/navigation.types';
 import {
@@ -11,6 +17,7 @@ import {
   type NavSection,
 } from '../../shared/components/organisms/side-nav/side-nav.types';
 import { NAV_STORAGE_KEY } from '../../shared/components/organisms/shell/shell-service';
+import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
 import { ShellLayout } from './shell-layout';
 
 /**
@@ -58,6 +65,9 @@ describe('ShellLayout', () => {
           { path: 'my-account/questionnaires', children: [] },
           { path: 'my-account/appointments/book/:id', children: [] },
           { path: 'settings', children: [] },
+          // N-01: los dos destinos que se mudaron a la cabecera.
+          { path: 'tutorials', children: [] },
+          { path: 'messaging', children: [] },
           // Dos de los cuatro directorios y una ficha: no ocupan renglón desde
           // el 08/09/2026, y son con lo que se comprueba que la portada se
           // marca por ellos.
@@ -142,18 +152,23 @@ describe('ShellLayout', () => {
     // «un ítem que lleva a una ruta vacía es peor que no tenerlo».
     //
     // Sin sesión los roles son `[]`, así que solo quedan las secciones que no
-    // exigen ninguno: el panel y el autoservicio. La vitrina la agrega el
-    // armazón porque no es una sección del producto.
+    // exigen ninguno: el autoservicio. La vitrina la agrega el armazón porque
+    // no es una sección del producto.
     expect(rutasDelMenu()).toEqual([
       // Los dos destinos fijos, sueltos y arriba de todo.
       '/my-account',
       '/notification-center',
-      '/dashboard',
-      // Los tutoriales tampoco exigen rol.
-      '/tutorials',
-      // Carril P2: la mensajería tampoco exige rol. El filtro real es tener
-      // perfil público de `community`, que es un dato de la cuenta.
-      '/messaging',
+      // El Panel ya NO está (2026-09-25): la marca del armazón ya es un
+      // enlace a `/dashboard` para cualquier sesión, así que un renglón acá
+      // era la pantalla en la que ya estás. Sigue sin exigir rol y se sigue
+      // alcanzando por su ruta — `navigation.service.spec` lo prueba.
+      //
+      // Tutoriales y Chats YA NO están acá (N-01, 2026-09-22): los dos pasan
+      // a un ícono con globo en la cabecera para cualquier sesión
+      // (`fueraDelMenuPara: [ANY_ROLE]`), calcado de «Ajustes». Ninguno de
+      // los dos exigía rol antes tampoco; lo que cambió es que ya no ocupan
+      // un renglón de primer nivel para nadie.
+      //
       // La portada de directorios (FT-18, `roles: [ANY_ROLE]`) tampoco exige
       // rol: no es un directorio en sí, es su índice.
       //
@@ -187,6 +202,9 @@ describe('ShellLayout', () => {
       // Las órdenes propias, la otra mitad del mismo circuito. Tampoco exigen
       // rol: el filtro real es tener perfil de paciente.
       '/my-account/diagnostic-orders',
+      // Cotizaciones comparte el bloque de datos clínicos del paciente: se
+      // consulta después de ver las órdenes y antes de los cuestionarios.
+      '/my-account/cotizaciones',
       // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
       // perfil de paciente, que es un dato de la cuenta y no un rol.
       '/my-account/questionnaires',
@@ -409,14 +427,25 @@ describe('ShellLayout', () => {
           a.getAttribute('data-route'),
         );
         expect(enlaces).toContain('/my-account/appointments');
-        expect(enlaces).toContain('/my-account/pharmacy-orders');
-        expect(enlaces).toContain('/my-account/loyalty');
+        // «Mis pedidos» dejó de tener renglón propio el 24/09/2026: lo
+        // absorbió «Farmacia» (pestañas de `PharmacyHub`) — ver el registro.
+        expect(enlaces).toContain('/my-account/pharmacy');
+        expect(enlaces).not.toContain('/my-account/pharmacy-orders');
+        // «Mis puntos» YA NO es un renglón (N-03/Q-17, 2026-09-22): es una
+        // pestaña del perfil (#606) y su URL vieja redirige a
+        // `/my-account?pestana=puntos` — ver `app.routes.ts`.
+        expect(enlaces).not.toContain('/my-account/loyalty');
         expect(enlaces).toContain('/my-account/dependents');
         expect(enlaces).toContain('/my-account/medical-record');
         expect(enlaces).toContain('/my-account/questionnaires');
-        expect(enlaces).toContain('/messaging');
+        // Chats no se perdió: desde N-01 (23/09/2026) está a un clic desde la
+        // cabecera, no desde la barra.
+        expect(enlaces).not.toContain('/messaging');
+        expect(raiz().querySelector('[data-testid="header-chats"]')?.getAttribute('href')).toBe('/messaging');
         expect(enlaces).toContain('/directories');
-        expect(enlaces).toContain('/nearby-places');
+        // «Lugares cercanos» salió del registro (H6, 2026-09-25): la sede se
+        // agrega desde el carrito de farmacia, no desde un destino aparte.
+        expect(enlaces).not.toContain('/nearby-places');
         // Los fijos de arriba no se movieron: siguen siendo los primeros.
         expect(enlaces.slice(0, 2)).toEqual(['/my-account', '/notification-center']);
       });
@@ -436,7 +465,7 @@ describe('ShellLayout', () => {
 
       it('sin rótulo que las agrupe, las cosas parecidas siguen saliendo seguidas', () => {
         // Sin el rótulo, el orden es lo único que queda diciendo que «Mis
-        // citas», «Mis pedidos» y «Mis puntos» son la misma clase de cosa. Por
+        // citas», «Farmacia» y «Mis puntos» son la misma clase de cosa. Por
         // eso la barra recorre los bloques y no la lista plana del grupo: por
         // `items` el orden es el del registro, y ahí las cuatro pantallas
         // clínicas se meten entre las gestiones.
@@ -446,15 +475,22 @@ describe('ShellLayout', () => {
         expect(
           seguidas(enlaces, [
             '/my-account/appointments',
-            '/my-account/pharmacy-orders',
-            '/my-account/loyalty',
+            // «Mis pedidos» salió del registro visible el 24/09/2026: la
+            // absorbió «Farmacia», que queda en su lugar del orden.
+            '/my-account/pharmacy',
           ]),
         ).toBe(true);
+        // «Promociones» se mudó a la barra superior (25/09/2026).
+        expect(enlaces).not.toContain('/my-account/promotions');
+        expect(
+          raiz().querySelector('[data-testid="header-promociones"]')?.getAttribute('href'),
+        ).toBe('/my-account/promotions');
         expect(
           seguidas(enlaces, [
             '/my-account/medical-record',
             '/my-account/diagnostic-results',
             '/my-account/diagnostic-orders',
+            '/my-account/cotizaciones',
             '/my-account/questionnaires',
           ]),
         ).toBe(true);
@@ -819,16 +855,14 @@ describe('ShellLayout', () => {
       const destinos = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
         a.getAttribute('data-route'),
       );
-      expect(destinos).toContain('/dashboard');
+      // El Panel no ocupa renglón para nadie desde el 2026-09-25 (la marca
+      // del armazón ya lleva a `/dashboard`): no está entre los destinos
+      // pintados, aunque la ruta sigue existiendo y siendo alcanzable.
+      expect(destinos).not.toContain('/dashboard');
       expect(destinos).toContain('/design-system');
     });
 
-    it('la barra de la aseguradora: lo que pide el registro, más lo que dev todavía no apagó (2026-09-25)', () => {
-      // Sync a `dev`: acá dashboard/tutorials/messaging siguen siendo
-      // renglones del grupo «General» aplanado (N-01 no llegó a esta rama),
-      // así que la aseguradora los sigue viendo igual que cualquier sesión.
-      // Este carril no los toca — no son del registro de procesos, pero
-      // tampoco están en su lista de lo que se le cierra.
+    it('la barra de la aseguradora: cinco renglones, un solo dominio plegable (2026-09-25)', () => {
       abrirSesion({
         sub: 'u-3',
         roles: ['USER'],
@@ -842,18 +876,12 @@ describe('ShellLayout', () => {
       expect(destinos).toEqual([
         '/my-account',
         '/notification-center',
-        '/dashboard',
-        '/tutorials',
-        '/messaging',
         '/administration/insurance',
         '/administration/insurance-analytics',
         '/administration/my-organization',
       ]);
-      // Un solo dominio PLEGABLE («Administración»): «General» tiene
-      // contenido para esta sesión, pero está aplanado y se dibuja suelto,
-      // no como `<details>`.
       expect(raiz().querySelectorAll('.app-side-nav__group').length).toBe(1);
-      expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(1);
+      expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(0);
     });
 
     /**
@@ -979,6 +1007,217 @@ describe('ShellLayout', () => {
       expect(ajustes?.tagName).toBe('A');
       expect(ajustes?.getAttribute('href')).toBe('/settings');
       expect(ajustes?.getAttribute('aria-label')).toBe('Ajustes');
+    });
+
+    it('el encabezado ofrece Tutoriales y Chats como enlaces, con globo y no como botón (N-01)', () => {
+      // Calcados de «Ajustes»: `<a routerLink>`, `aria-label` y `appTooltip`
+      // (ADR-0012 §3) — nunca un `<button>`, porque los dos llevan a una
+      // pantalla. Para ambos roles porque ninguno de los dos exige rol
+      // (`roles: [ANY_ROLE]` en `navigation.map.ts`).
+      const tutoriales = raiz().querySelector<HTMLAnchorElement>('[data-testid="header-tutoriales"]');
+      const chats = raiz().querySelector<HTMLAnchorElement>('[data-testid="header-chats"]');
+
+      expect(tutoriales?.tagName).toBe('A');
+      expect(tutoriales?.getAttribute('href')).toBe('/tutorials');
+      expect(tutoriales?.getAttribute('aria-label')).toBe('Tutoriales');
+
+      expect(chats?.tagName).toBe('A');
+      expect(chats?.getAttribute('href')).toBe('/messaging');
+      expect(chats?.getAttribute('aria-label')).toBe('Chats');
+    });
+
+    /**
+     * N-01 · 2026-09-23 · Tutoriales y Chats en la cabecera, para quien ejerce
+     * y para el paciente.
+     *
+     * Son íconos solos, así que siguen la excepción de ADR-0012 §3 que ya usan
+     * la campana y Ajustes: enlace con `aria-label` **y** globo. El número de
+     * Chats no se cuenta acá: sale de `ChatStore.sinLeer`, la misma fuente del
+     * título de la pestaña de `Messaging`.
+     */
+    describe('N-01 · Tutoriales y Chats en la cabecera', () => {
+      function conversacion(id: string, unreadCount: number): ConversationListItem {
+        return { id, conversationTypeConceptId: 'direct', unreadCount, peers: [] };
+      }
+
+      /** Una fila de la bandeja como la manda la API (fechas en texto). */
+      function enElCable(id: string, unreadCount: number) {
+        return {
+          id,
+          conversationTypeConceptId: 'direct',
+          groupId: null,
+          lastMessageAt: '2026-09-23T10:00:00.000Z',
+          messageCount: 1,
+          lastMessage: { id: `m-${id}`, senderProfileId: 'pp-2', bodyText: 'Hola', sentAt: '2026-09-23T10:00:00.000Z' },
+          unreadCount,
+          peers: [{ profileId: 'pp-2', displayName: 'Otra persona' }],
+        };
+      }
+
+      function enlace(testId: string): HTMLAnchorElement | null {
+        return raiz().querySelector<HTMLAnchorElement>(`[data-testid="${testId}"]`);
+      }
+
+      function globo(testId: string): { texto: string; posicion: string } {
+        const tooltip = fixture.debugElement.query(By.css(`[data-testid="${testId}"]`)).injector.get(Tooltip);
+        return { texto: tooltip.appTooltip(), posicion: tooltip.appTooltipPosition() };
+      }
+
+      for (const roles of [['PRACTITIONER'], ['PATIENT']]) {
+        describe(roles[0]!, () => {
+          beforeEach(() => {
+            abrirSesion({ sub: 'u-1', roles, tenants: ['t-1'] });
+          });
+
+          it('Tutoriales es un enlace a /tutorials con nombre accesible y globo', () => {
+            const tutoriales = enlace('header-tutoriales');
+            expect(tutoriales?.tagName).toBe('A');
+            expect(tutoriales?.getAttribute('href')).toBe('/tutorials');
+            expect(tutoriales?.getAttribute('aria-label')).toBe('Tutoriales');
+            expect(globo('header-tutoriales')).toEqual({ texto: 'Tutoriales', posicion: 'bottom' });
+            expect(tutoriales?.querySelector('app-nav-icon')).not.toBeNull();
+          });
+
+          it('Chats es un enlace a /messaging con nombre accesible y globo', () => {
+            const chats = enlace('header-chats');
+            expect(chats?.tagName).toBe('A');
+            expect(chats?.getAttribute('href')).toBe('/messaging');
+            expect(chats?.getAttribute('aria-label')).toBe('Chats');
+            expect(globo('header-chats')).toEqual({ texto: 'Chats', posicion: 'bottom' });
+            expect(chats?.querySelector('app-nav-icon')).not.toBeNull();
+          });
+
+          it('los dos salieron de la barra pero siguen en la cabecera', () => {
+            const enBarra = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) => a.getAttribute('data-route'));
+            expect(enBarra).not.toContain('/tutorials');
+            expect(enBarra).not.toContain('/messaging');
+            expect(enlace('header-tutoriales')).not.toBeNull();
+            expect(enlace('header-chats')).not.toBeNull();
+          });
+
+          it('sin chats sin leer no hay número, y el nombre no inventa uno', () => {
+            TestBed.inject(ChatStore).conversaciones.set([conversacion('c-1', 0)]);
+            expect(raiz().querySelector('[data-testid="header-chats-badge"]')).toBeNull();
+            expect(enlace('header-chats')?.getAttribute('aria-label')).toBe('Chats');
+          });
+
+          it('con sesión nueva y sin pasar por Chats, el ícono ya dice cuántos hay sin leer, y el socket lo actualiza', () => {
+            // La fuente es la de siempre, `ChatStore.sinLeer`: el armazón pide
+            // `prepararContador()` al tener sesión, y eso lee la bandeja una vez.
+            const http = TestBed.inject(HttpTestingController);
+            raiz();
+            // La campana resuelve el suyo por su lado (`NotificationsStore`, de
+            // antes de N-01); el de Chats es uno solo —lo fija `chat.store.spec`—.
+            http
+              .match((pedido) => pedido.url === '/community/profiles/me')
+              .forEach((pedido) => pedido.flush({ id: 'pp-1', displayName: 'Yo' }));
+            http
+              .match((pedido) => pedido.url === '/community/conversations')
+              .forEach((pedido) =>
+                pedido.flush({
+                  items: [enElCable('c-1', 1), enElCable('c-2', 1)],
+                  count: 2,
+                  limit: 50,
+                  nextCursor: null,
+                }),
+              );
+
+            expect(raiz().querySelector('[data-testid="header-chats-badge"]')?.textContent?.trim()).toBe('2');
+            expect(enlace('header-chats')?.getAttribute('aria-label')).toBe('Chats, 2 mensajes sin leer');
+
+            // Llega un mensaje nuevo por el socket, en otra pantalla: sube a 3.
+            TestBed.inject(ChatSocketService)['messages$'].next({
+              id: 'm-nuevo',
+              conversationId: 'c-2',
+              senderProfileId: 'pp-2',
+              contentTypeConceptId: 'c-text',
+              bodyText: 'Hola',
+              sentAt: new Date(),
+            });
+            expect(raiz().querySelector('[data-testid="header-chats-badge"]')?.textContent?.trim()).toBe('3');
+            expect(enlace('header-chats')?.getAttribute('aria-label')).toBe('Chats, 3 mensajes sin leer');
+          });
+
+          it('con dos chats sin leer el ícono muestra «2» y el nombre accesible lo dice', () => {
+            const store = TestBed.inject(ChatStore);
+            store.conversaciones.set([conversacion('c-1', 1), conversacion('c-2', 1)]);
+            expect(store.sinLeer()).toBe(2);
+
+            const badge = raiz().querySelector('[data-testid="header-chats-badge"]');
+            expect(badge?.textContent?.trim()).toBe('2');
+            expect(badge?.getAttribute('aria-hidden')).toBe('true');
+            expect(enlace('header-chats')?.getAttribute('aria-label')).toBe('Chats, 2 mensajes sin leer');
+          });
+        });
+      }
+    });
+
+    /**
+     * H4.S1 · 2026-09-25 · El carrito de farmacia en la cabecera, sólo para el
+     * paciente: es su compra, no una herramienta de la médica ni de otro rol.
+     */
+    describe('H4 · Carrito en la cabecera', () => {
+      function enlace(testId: string): HTMLAnchorElement | null {
+        return raiz().querySelector<HTMLAnchorElement>(`[data-testid="${testId}"]`);
+      }
+
+      const SEDE: CartSite = {
+        pharmacyId: 'ph-1',
+        pharmacyName: 'Farmacia Uno',
+        siteId: 'site-a',
+        siteName: 'Sede A',
+        addressText: null,
+      };
+
+      function linea(overrides: Partial<NuevaLineaDeCarrito> = {}): NuevaLineaDeCarrito {
+        return {
+          productId: 'prod-1',
+          name: 'Paracetamol 500mg',
+          presentation: null,
+          unitAmount: '10.00',
+          currency: 'BOB',
+          requiresPrescription: false,
+          medicationConceptId: null,
+          ...overrides,
+        };
+      }
+
+      it('el paciente ve el carrito; la médica, no', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        expect(enlace('header-cart')).not.toBeNull();
+
+        abrirSesion({ sub: 'u-2', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+        expect(enlace('header-cart')).toBeNull();
+      });
+
+      it('el ícono es un enlace a /my-account/pharmacy/cart con nombre accesible y globo', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+
+        const carrito = enlace('header-cart');
+        expect(carrito?.tagName).toBe('A');
+        expect(carrito?.getAttribute('href')).toBe('/my-account/pharmacy/cart');
+        expect(carrito?.getAttribute('aria-label')).toBe('Carrito');
+        expect(carrito?.querySelector('app-nav-icon')).not.toBeNull();
+      });
+
+      it('sin unidades no hay badge, y el nombre no inventa un número', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+
+        expect(raiz().querySelector('[data-testid="header-cart-badge"]')).toBeNull();
+        expect(enlace('header-cart')?.getAttribute('aria-label')).toBe('Carrito');
+      });
+
+      it('con 3 unidades el ícono muestra «3» y el nombre dice cuántas y en qué farmacia', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        TestBed.inject(CartStore).add(SEDE, linea(), 3);
+
+        const badge = raiz().querySelector('[data-testid="header-cart-badge"]');
+        expect(badge?.textContent?.trim()).toBe('3');
+        expect(badge?.getAttribute('aria-hidden')).toBe('true');
+        expect(enlace('header-cart')?.getAttribute('aria-label')).toBe(
+          'Carrito, 3 unidades en Farmacia Uno',
+        );
+      });
     });
 
     it('el encabezado ofrece el interruptor de tema junto a Ajustes', () => {

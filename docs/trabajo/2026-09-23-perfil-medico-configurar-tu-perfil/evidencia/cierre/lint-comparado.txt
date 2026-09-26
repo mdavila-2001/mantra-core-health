@@ -1,0 +1,6 @@
+# Lint por archivo: rama (ba9af922, con mockup @ d6becdd0 integrado) contra mockup (fae0efc2), con la versión del lock — 2026-09-25
+rama: 194 archivos, 242 errores · mockup: 195 archivos, 246 errores
+sólo en la rama: []
+sólo en mockup: [ 'src/app/shared/components/organisms/filter-bar/filter-bar.spec.ts' ]
+distinta cuenta: []
+archivos del diff con errores: []

@@ -84,6 +84,18 @@ const AVISO_DE_CREDENCIALES =
   'Acá se separa lo que declaraste de lo que ya fue verificado contra una fuente ' +
   '—el colegio médico, el registro de matrículas—. Declarar no exige verificación previa.';
 
+/**
+ * «Trayectoria» también dejó de ser una caja arriba de la pestaña (24/09/2026),
+ * pero su aviso sale **cada vez** que se abre y dura 3 s: orienta sin tapar la
+ * línea de tiempo. No reusa la clave del bloque cerrado, porque quien lo había
+ * cerrado no lo vería nunca.
+ */
+const ETIQUETA_DE_TRAYECTORIA = PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.trayectoria];
+
+const AVISO_DE_TRAYECTORIA =
+  'Dónde ejerciste antes y dónde ejercés hoy. Es lo que un paciente ve en el ' +
+  'Directorio de médicos antes de pedir una cita. Tus títulos están en «Credenciales».';
+
 /** Lo que se dice cuando la cuenta no tiene dónde guardar la foto. */
 const SIN_PERFIL_PARA_LA_FOTO =
   'Tu cuenta todavía no está asociada a un perfil profesional, así que no hay ' +
@@ -337,6 +349,15 @@ export class PractitionerProfile {
    * nada que evitar.
    */
   protected alVerPestana(etiqueta: string): void {
+    if (etiqueta === ETIQUETA_DE_TRAYECTORIA) {
+      this.toasts.show({
+        type: 'info',
+        title: 'Trayectoria',
+        message: AVISO_DE_TRAYECTORIA,
+        durationMs: 3000,
+      });
+      return;
+    }
     if (etiqueta !== ETIQUETA_DE_CREDENCIALES) {
       return;
     }
@@ -457,11 +478,11 @@ export class PractitionerProfile {
         // Los cuatro contactos del alta y la calle: la API ya los devolvía y la
         // ficha mostraba sólo uno de cada clase.
         celularPersonal: perfil.mobilePhone ?? '',
-        celularTrabajo: perfil.workMobilePhone ?? '',
-        fijoTrabajo: perfil.workLandline ?? '',
         correoPersonal: perfil.personalEmail ?? '',
         direccion: perfil.homeAddress?.lines ?? '',
         mapaDomicilio: enlaceAlMapa(perfil.homeAddress),
+        ubicacionDomicilio: puntoDelDomicilio(perfil.homeAddress),
+        municipioResidenciaId: perfil.residenceMunicipalityConceptId ?? null,
       },
       // A nombre de quién factura. Va sólo en la ficha propia: el contenedor
       // de la guía lo deja en `null` porque el NIT de un colega no es de quien
@@ -483,7 +504,6 @@ export class PractitionerProfile {
     return perfil.specialties.map((especialidad: PractitionerSpecialty) => ({
       id: especialidad.id,
       nombre: label(etiquetas, especialidad.specialtyConceptId),
-      principal: especialidad.isPrimary,
       certificada: especialidad.boardCertified,
       alcance: especialidad.practiceScopeText ?? '',
       desde: especialidad.validFrom ?? null,
@@ -608,17 +628,13 @@ function sello(etiquetas: ConceptLabels, conceptId: string | undefined): StatusS
 /**
  * La especialidad con la que se presenta.
  *
- * La marcada como principal; si ninguna lo está, la primera vigente. Sin
- * ninguna vigente no se cae a una pasada: presentar a alguien con una
+ * La primera vigente, en el orden en que llegan. Hasta el 23/09/2026 era la
+ * marcada como principal; el médico pidió que ninguna se distinguiera (D-01).
+ * Sin ninguna vigente no se cae a una pasada: presentar a alguien con una
  * especialidad que dejó de ejercer es decir algo falso.
  */
 function especialidadPrincipal(especialidades: readonly EspecialidadVisible[]): string {
-  return (
-    especialidades.find((especialidad) => especialidad.principal && especialidad.hasta === null)
-      ?.nombre ??
-    especialidades.find((especialidad) => especialidad.hasta === null)?.nombre ??
-    ''
-  );
+  return especialidades.find((especialidad) => especialidad.hasta === null)?.nombre ?? '';
 }
 
 /** Milisegundos de una fecha opcional; las ausentes van al fondo del orden. */
@@ -662,6 +678,15 @@ function afiliacionesDe(perfil: OwnPractitionerProfile): {
  * meridiano de Greenwich, y un enlace al golfo de Guinea es peor que ningún
  * enlace.
  */
+/** Las coordenadas del domicilio, con el mismo criterio que {@link enlaceAlMapa}. */
+function puntoDelDomicilio(direccion: OwnAddress | undefined): { lat: number; lng: number } | null {
+  if (direccion === undefined) return null;
+  const { latitude, longitude } = direccion;
+  if (latitude == null || longitude == null) return null;
+  if (latitude === 0 && longitude === 0) return null;
+  return { lat: latitude, lng: longitude };
+}
+
 function enlaceAlMapa(direccion: OwnAddress | undefined): string | null {
   if (direccion === undefined) return null;
   const { latitude, longitude } = direccion;

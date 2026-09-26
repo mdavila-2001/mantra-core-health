@@ -159,6 +159,10 @@
 .profesional__disponibilidad {
   display: flex;
   flex-wrap: wrap;
+  /* Cada pieza con su alto: estiradas a la altura de la rejilla de
+     especialidades, las pastillas de telemedicina e idiomas quedaban como
+     óvalos de más de 100 px. */
+  align-items: flex-start;
   gap: var(--sp-2);
   margin-block-start: var(--sp-4);
   padding-block-start: var(--sp-4);
@@ -644,6 +648,27 @@
    Es un dato del hito, no otro hito. */
 .trayecto__cargo {
   color: var(--text-secondary);
+  /* En «Actividad actual» va dentro de las fechas, que capitalizan los meses;
+     el cargo es texto libre y no. */
+  text-transform: none;
+}
+
+/* ── Actividad actual: el tramo vivo ──────────────────────────────────────
+   Nombre arriba y más grande, cargo · fecha debajo, el estado al filo
+   derecho: nombre y fechas van en un `trayecto__cuerpo` anidado, que es la
+   primera columna, y el sello la segunda. El anillo va lleno y con halo: es lo único de la
+   historia que todavía está pasando. Este archivo y `ficha-de-perfil.css`
+   rozan el presupuesto de 12 kB del build: cada selector nuevo cuenta. */
+.trayecto__cuerpo--curso {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  /* Lo hereda el nombre; las fechas y el sello traen su propio tamaño. */
+  font-size: var(--fs-body-lg);
+}
+
+.trayecto--curso .trayecto__marca {
+  background: var(--trayecto-color);
+  box-shadow: 0 0 0 4px var(--st-success-bg);
 }
 
 /* ─── El chip de telemedicina en la cabecera de la ficha propia ────────────
@@ -656,4 +681,11 @@
    etiqueta. */
 .mi-perfil__modalidad {
   justify-self: start;
+}
+
+/* El mapa del domicilio, debajo de los datos de contacto. */
+.mi-perfil__domicilio {
+  display: grid;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-4);
 }

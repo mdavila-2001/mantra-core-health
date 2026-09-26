@@ -27,6 +27,7 @@ import type {
   NewAllergyIntolerance,
   NewCareEpisode,
   NewCondition,
+  NewDiagnosisVerification,
   NewDiagnosticReport,
   NewEncounter,
   NewMedicationRequest,
@@ -269,9 +270,7 @@ export class ClinicalClient {
    * @param receta - El medicamento y su indicación. Lo ausente no viaja.
    * @returns La receta en borrador, con `signedAt` en `null`.
    */
-  createMedicationRequest(
-    receta: NewMedicationRequest,
-  ): Observable<MedicationRequestRegistration> {
+  createMedicationRequest(receta: NewMedicationRequest): Observable<MedicationRequestRegistration> {
     return this.http
       .post<WireMedicationRequestRegistration>(
         this.url('/clinical/medication-requests'),
@@ -298,9 +297,7 @@ export class ClinicalClient {
   signMedicationRequest(medicationRequestId: string): Observable<MedicationRequestRegistration> {
     return this.http
       .post<WireMedicationRequestRegistration>(
-        this.url(
-          `/clinical/medication-requests/${encodeURIComponent(medicationRequestId)}/sign`,
-        ),
+        this.url(`/clinical/medication-requests/${encodeURIComponent(medicationRequestId)}/sign`),
         {},
       )
       .pipe(map(toMedicationRequestRegistration));
@@ -327,10 +324,32 @@ export class ClinicalClient {
   issueMedicationRequest(medicationRequestId: string): Observable<MedicationRequestRegistration> {
     return this.http
       .post<WireMedicationRequestRegistration>(
-        this.url(
-          `/clinical/medication-requests/${encodeURIComponent(medicationRequestId)}/issue`,
-        ),
+        this.url(`/clinical/medication-requests/${encodeURIComponent(medicationRequestId)}/issue`),
         {},
+      )
+      .pipe(map(toMedicationRequestRegistration));
+  }
+
+  /**
+   * `POST /clinical/medication-requests/:id/edit` (C5) — liga después una
+   * receta con motivo plano a un diagnóstico confirmado, o cambia cuál.
+   *
+   * Sólo sobre un borrador: una receta emitida es un documento cerrado y
+   * responde `409`. Igual que el alta, el diagnóstico gana sobre el texto:
+   * mandar `indicationConditionId` descarta cualquier `indicationText` previo
+   * del lado del servidor.
+   *
+   * @param medicationRequestId - Receta a editar.
+   * @param indication - El diagnóstico confirmado elegido, o el motivo escrito.
+   */
+  editMedicationRequestIndication(
+    medicationRequestId: string,
+    indication: { readonly indicationConditionId: string } | { readonly indicationText: string },
+  ): Observable<MedicationRequestRegistration> {
+    return this.http
+      .post<WireMedicationRequestRegistration>(
+        this.url(`/clinical/medication-requests/${encodeURIComponent(medicationRequestId)}/edit`),
+        indication,
       )
       .pipe(map(toMedicationRequestRegistration));
   }
@@ -356,18 +375,14 @@ export class ClinicalClient {
     medicationRequestId: string,
   ): Observable<{ readonly blob: Blob; readonly fileName?: string }> {
     return this.http
-      .get(
-        this.url(
-          `/clinical/prescriptions/${encodeURIComponent(medicationRequestId)}/pdf`,
-        ),
-        { responseType: 'blob', observe: 'response' },
-      )
+      .get(this.url(`/clinical/prescriptions/${encodeURIComponent(medicationRequestId)}/pdf`), {
+        responseType: 'blob',
+        observe: 'response',
+      })
       .pipe(
         map((respuesta) => ({
           blob: respuesta.body ?? new Blob([]),
-          fileName: nombreDeContentDisposition(
-            respuesta.headers.get('Content-Disposition'),
-          ),
+          fileName: nombreDeContentDisposition(respuesta.headers.get('Content-Disposition')),
         })),
       );
   }
@@ -420,6 +435,26 @@ export class ClinicalClient {
         cambio,
       )
       .pipe(map(toConditionRegistration));
+  }
+
+  /**
+   * `POST /clinical/conditions/:id/verification` — confirma o rechaza un
+   * diagnóstico presuntivo (C3; pendiente de backend P41).
+   *
+   * Vuelve la condición entera, no un recibo: la decisión cambia el estado
+   * clínico, el de verificación y las fechas, y la fila de la tabla se
+   * reemplaza con lo que el servidor dice, no con lo que se mandó.
+   *
+   * @param conditionId - El presuntivo a decidir.
+   * @param decision - El resultado, con motivo y/o evidencia.
+   */
+  verifyCondition(conditionId: string, decision: NewDiagnosisVerification): Observable<Condition> {
+    return this.http
+      .post<WireCondition>(
+        this.url(`/clinical/conditions/${encodeURIComponent(conditionId)}/verification`),
+        sinAusentes(decision),
+      )
+      .pipe(map(toCondition));
   }
 
   /**
@@ -557,9 +592,7 @@ export class ClinicalClient {
    *
    * @param informe - El estudio y su contexto.
    */
-  createDiagnosticReport(
-    informe: NewDiagnosticReport,
-  ): Observable<DiagnosticReportRegistration> {
+  createDiagnosticReport(informe: NewDiagnosticReport): Observable<DiagnosticReportRegistration> {
     return this.http
       .post<WireDiagnosticReportRegistration>(
         this.url('/clinical/diagnostic-reports'),
@@ -585,9 +618,7 @@ export class ClinicalClient {
   ): Observable<DiagnosticReportRegistration> {
     return this.http
       .post<WireDiagnosticReportRegistration>(
-        this.url(
-          `/clinical/diagnostic-reports/${encodeURIComponent(diagnosticReportId)}/release`,
-        ),
+        this.url(`/clinical/diagnostic-reports/${encodeURIComponent(diagnosticReportId)}/release`),
         expectedRowVersion === undefined ? {} : { expectedRowVersion },
       )
       .pipe(map(toDiagnosticReportRegistration));
@@ -625,9 +656,7 @@ export class ClinicalClient {
  * `forbidNonWhitelisted` del backend está mirando.
  */
 function sinAusentes<T extends object>(valor: T): Partial<T> {
-  return Object.fromEntries(
-    Object.entries(valor).filter(([, v]) => v !== undefined),
-  ) as Partial<T>;
+  return Object.fromEntries(Object.entries(valor).filter(([, v]) => v !== undefined)) as Partial<T>;
 }
 
 /**
@@ -683,12 +712,7 @@ type WireCareEpisode = Omit<Fechas<CareEpisode, 'startAt' | 'endAt'>, 'createdAt
 
 interface WireSummary extends Omit<
   ClinicalSummary,
-  | 'conditions'
-  | 'allergies'
-  | 'medicationRequests'
-  | 'observations'
-  | 'encounters'
-  | 'careEpisodes'
+  'conditions' | 'allergies' | 'medicationRequests' | 'observations' | 'encounters' | 'careEpisodes'
 > {
   readonly conditions: readonly WireCondition[];
   readonly allergies: readonly WireAllergy[];
@@ -725,10 +749,7 @@ interface WireChart extends Omit<PatientChart, 'notes' | 'carePlans' | 'document
  * los declara así: un encuentro recién abierto tiene `endAt: null`, que no es lo
  * mismo que no traer el campo.
  */
-type WireEncounterRegistration = Omit<
-  EncounterRegistration,
-  'startAt' | 'endAt' | 'createdAt'
-> & {
+type WireEncounterRegistration = Omit<EncounterRegistration, 'startAt' | 'endAt' | 'createdAt'> & {
   readonly startAt: string | null;
   readonly endAt: string | null;
   readonly createdAt: string;
@@ -881,10 +902,7 @@ function toCareEpisode({ startAt, endAt, createdAt, ...resto }: WireCareEpisode)
  * encuentro: se conserva el `null` en vez de borrarlo porque significa «el
  * backend no fijó el inicio», que no es lo mismo que «no vino el campo».
  */
-type WireCareEpisodeRegistration = Omit<
-  CareEpisodeRegistration,
-  'startAt' | 'createdAt'
-> & {
+type WireCareEpisodeRegistration = Omit<CareEpisodeRegistration, 'startAt' | 'createdAt'> & {
   readonly startAt: string | null;
   readonly createdAt: string;
 };

@@ -1,5 +1,6 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   computed,
   effect,
@@ -36,6 +37,7 @@ import { DialogService } from '../../../shared/components/molecules/dialog/dialo
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
+import { EncounterTimeline } from '../../../shared/components/organisms/encounter-timeline/encounter-timeline';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
@@ -47,24 +49,26 @@ import {
   type ContextoDelDocumento,
 } from '../../../shared/utils/clinical-pdf/from-summary';
 import {
+  BOOKING_QUERY_PARAM,
   CITA_QUERY_PARAM,
   CLINICAL_RECORD_ROUTE,
   MOTIVO_QUERY_PARAM,
   patientChartRoute,
 } from '../clinical-record.routes';
 import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
-import { AdmissionBlock, type InternacionEnFicha } from '../patient-chart/admission-block/admission-block';
+import { loRegistradoEnElEncuentro, type LoRegistrado } from './lo-registrado';
 import { AllergyBlock } from '../patient-chart/allergy-block/allergy-block';
 import { CarePlanBlock, type DiagnosticoDelPlan } from '../patient-chart/care-plan-block/care-plan-block';
 import { DiagnosisBlock, type CitaDelPaciente } from '../patient-chart/diagnosis-block/diagnosis-block';
 import { DocumentBlock } from '../patient-chart/document-block/document-block';
-import { FreeNoteBlock } from '../patient-chart/free-note-block/free-note-block';
+import { AnalysisOrderBlock } from '../patient-chart/analysis-order-block/analysis-order-block';
+import { FollowUpBlock } from '../patient-chart/follow-up-block/follow-up-block';
+import { MedicalNoteBlock } from '../patient-chart/medical-note-block/medical-note-block';
 import {
   MedicationBlock,
   type DiagnosticoEnFicha,
   type RecetaEnFicha,
 } from '../patient-chart/medication-block/medication-block';
-import { ObservationBlock } from '../patient-chart/observation-block/observation-block';
 import { PaymentsBlock } from '../patient-chart/payments-block/payments-block';
 import { SpecialtyFormBlock } from '../patient-chart/specialty-form-block/specialty-form-block';
 import {
@@ -83,11 +87,17 @@ const SIN_DATO = 'Sin registrar';
 const TOPE_DEL_MOTIVO = 500;
 
 /**
- * Las casillas de la rejilla. Son **todas** las posibilidades del expediente
- * —una por pestaña de la historia que admite alta— más las dos que sólo tienen
- * sentido atendiendo: el formulario clínico de la especialidad y la internación.
+ * Las casillas de la rejilla. Las posibilidades del expediente que se
+ * registran atendiendo —una por pestaña de la historia que admite alta— más la
+ * que sólo tiene sentido con la persona delante: el formulario clínico de la
+ * especialidad.
  *
- * Y una décima que no registra nada, «Pagos»: la respuesta a «¿esto ya está
+ * Dos que estaban dejaron de estar (pedido del propietario, 25/09/2026):
+ * «Medición» no existe más —un signo vital es una fila de la nota médica, no
+ * un registro aparte— e «Internación» sale de la consulta por ahora; el bloque
+ * sigue vivo en el expediente, que es donde se abre y se cierra un episodio.
+ *
+ * Y una casilla que no registra nada, «Pagos»: la respuesta a «¿esto ya está
  * pagado?», que se necesita en la consulta misma cuando quien atiende también
  * ejecuta el tratamiento.
  */
@@ -95,12 +105,12 @@ export type CasillaDeConsulta =
   | 'diagnosticos'
   | 'alergias'
   | 'medicacion'
-  | 'observaciones'
   | 'notas'
+  | 'ordenes'
+  | 'reconsulta'
   | 'planes'
   | 'documentos'
   | 'formulario'
-  | 'internacion'
   | 'pagos';
 
 /** Lo que dice cada casilla antes de abrirse. */
@@ -141,10 +151,9 @@ interface DefinicionDeCasilla {
 }
 
 /**
- * Las diez casillas, en el orden en que se atiende: primero lo que se
- * diagnostica, después lo que se indica, y al final lo que sólo pasa en una
- * consulta con cama o con una ficha de especialidad. Cierra «Pagos», que es lo
- * único que se mira en vez de escribirse.
+ * Contrato C0 de las casillas, ya sin Medición ni Internación. El orden
+ * visible se declara abajo en ORDEN_DE_CASILLAS y comienza por Nota médica,
+ * Orden de análisis y Diagnóstico.
  */
 const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
   diagnosticos: {
@@ -168,19 +177,26 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
     icono: 'M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm2 8h6M9 15h4',
     testId: 'consulta-casilla-medicacion',
   },
-  observaciones: {
-    titulo: 'Observación',
-    descripcion: 'Un signo vital, una medida o un hallazgo.',
-    tituloDelModal: 'Registrar una observación',
-    icono: 'M3 12h4l2-6 4 12 2-6h6',
-    testId: 'consulta-casilla-observaciones',
-  },
   notas: {
-    titulo: 'Nota clínica',
-    descripcion: 'La hoja en blanco: motivo, evaluación y plan en texto.',
-    tituloDelModal: 'Escribir una nota clínica',
+    titulo: 'Nota médica',
+    descripcion: 'El registro clínico de este encuentro.',
+    tituloDelModal: 'Escribir una nota médica',
     icono: 'M6 3h9l5 5v13H6V3Zm9 0v5h5M9 13h6M9 17h6',
     testId: 'consulta-casilla-notas',
+  },
+  ordenes: {
+    titulo: 'Orden de análisis',
+    descripcion: 'Un estudio solicitado durante la consulta.',
+    tituloDelModal: 'Pedir un análisis',
+    icono: 'M9 3h6v5l4 10a2 2 0 0 1-2 3H7a2 2 0 0 1-2-3l4-10V3Zm-2 12h10',
+    testId: 'consulta-casilla-ordenes',
+  },
+  reconsulta: {
+    titulo: 'Reconsulta',
+    descripcion: 'La próxima cita, con fecha acordada.',
+    tituloDelModal: 'Agendar la reconsulta',
+    icono: 'M4 5h16v16H4V5Zm4-2v4m8-4v4M4 10h16m-8 3v5m-2-2 2 2 2-2',
+    testId: 'consulta-casilla-reconsulta',
   },
   planes: {
     titulo: 'Plan de cuidados',
@@ -203,13 +219,6 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
     icono: 'M4 4h16v16H4V4Zm4 5h8M8 12h8M8 15h5',
     testId: 'consulta-casilla-formulario',
   },
-  internacion: {
-    titulo: 'Internación',
-    descripcion: 'Abrir o cerrar un episodio con cama.',
-    tituloDelModal: 'Registrar una internación',
-    icono: 'M3 18V9h18v9M3 13h18M7 9V6h4v3',
-    testId: 'consulta-casilla-internacion',
-  },
   pagos: {
     titulo: 'Pagos',
     descripcion: 'Lo que ya pagó: comprobantes, fechas e importes.',
@@ -220,19 +229,15 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
 };
 
 const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
-  'diagnosticos',
-  'alergias',
-  'medicacion',
-  'observaciones',
   'notas',
+  'ordenes',
+  'diagnosticos',
+  'reconsulta',
+  'medicacion',
+  'alergias',
   'planes',
   'documentos',
   'formulario',
-  'internacion',
-  // Última y a propósito: es la única que **no** registra nada. Quien ejecuta
-  // el tratamiento en el mismo acto —odontología, dermatología— decide la
-  // sesión siguiente con esto a la vista, y hasta ahora la respuesta sólo
-  // estaba en Contabilidad, con el paciente sentado enfrente.
   'pagos',
 ];
 
@@ -243,11 +248,10 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
  *
  * Reemplaza a la pantalla de atención anterior, que abría con un formulario
  * de una pregunta y escondía el resto detrás de tres pestañas. Acá lo que se
- * puede registrar está **todo a la vista**, una casilla por posibilidad —las
- * mismas ocho de la historia clínica más el formulario de especialidad y la
- * internación—, y cada una abre su propio formulario en modal, que es lo que la
- * regla de la casa pide para toda edición que pida datos. La décima, «Pagos»,
- * no registra: contesta si lo hecho ya está cobrado.
+ * puede registrar está a la vista en diez casillas. Cada una abre su bloque
+ * en un modal. Nota médica es la tabla de filas campo/valor de C1; órdenes y
+ * reconsulta reutilizan sus bloques funcionales. Pagos consulta lo que ya
+ * está cobrado.
  *
  * ## El encuentro sigue mandando
  *
@@ -266,7 +270,7 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
 @Component({
   selector: 'app-consultation',
   imports: [
-    AdmissionBlock,
+    AnalysisOrderBlock,
     Alert,
     AllergyBlock,
     AppButton,
@@ -276,10 +280,11 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
     DatePipe,
     DiagnosisBlock,
     DocumentBlock,
+    EncounterTimeline,
     FormField,
-    FreeNoteBlock,
+    FollowUpBlock,
+    MedicalNoteBlock,
     MedicationBlock,
-    ObservationBlock,
     PaymentsBlock,
     PageHeader,
     PaymentPlanPanel,
@@ -295,6 +300,7 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Consultation {
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly clinical = inject(ClinicalClient);
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
@@ -333,6 +339,12 @@ export class Consultation {
    */
   protected readonly citaDeOrigen = toSignal(
     this.route.queryParamMap.pipe(map((params) => params.get(CITA_QUERY_PARAM))),
+    { initialValue: null },
+  );
+
+  /** Reserva de origen: nunca reutilizar el appointmentId del check-in. */
+  protected readonly originBookingId = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get(BOOKING_QUERY_PARAM))),
     { initialValue: null },
   );
 
@@ -441,6 +453,35 @@ export class Consultation {
     () => this.encuentrosEnCurso()[0]?.id ?? null,
   );
 
+  /* -- C8 · «Lo registrado en este encuentro» ------------------------------- */
+
+  /**
+   * La línea del encuentro en curso, o `null` si no hay ninguno abierto.
+   *
+   * Sale de lo que la consulta **ya leyó** —el resumen y el expediente—: es
+   * la misma pantalla que acaba de registrar la nota o el diagnóstico, y
+   * releerlos para dibujarlos sería pedir dos veces lo mismo. Por eso también
+   * se actualiza sola: cada alta llama a `cargar()`, y la línea es un
+   * `computed` de esos datos.
+   *
+   * `null` cuando no hay encuentro abierto es deliberado: sin atención en
+   * curso no hay «este encuentro» del que hablar, y la sección no se dibuja.
+   */
+  protected readonly loRegistrado = computed<LoRegistrado | null>(() => {
+    const datos = this.datos();
+    const encuentro = this.encuentroActual();
+    if (datos === undefined || datos === null || encuentro === null) {
+      return null;
+    }
+    return loRegistradoEnElEncuentro(
+      encuentro,
+      datos.resumen,
+      datos.chart.notes,
+      (id) => this.label(id),
+      (id) => this.codigo(id),
+    );
+  });
+
   /* -- La rejilla ----------------------------------------------------------- */
 
   /**
@@ -454,14 +495,14 @@ export class Consultation {
       diagnosticos: datos?.resumen.conditions.length ?? 0,
       alergias: datos?.resumen.allergies.length ?? 0,
       medicacion: datos?.resumen.medicationRequests.length ?? 0,
-      observaciones: datos?.resumen.observations.length ?? 0,
       notas: datos?.chart.notes.length ?? 0,
+      ordenes: null,
+      reconsulta: null,
       planes: datos?.chart.carePlans.length ?? 0,
       documentos: datos?.chart.documents.length ?? 0,
       // El formulario no deja una fila propia en la historia: lo que guarda
       // termina en diagnósticos, procedimientos o laboratorio.
       formulario: null,
-      internacion: datos?.resumen.careEpisodes.length ?? 0,
       // Los pagos no están en las dos lecturas del expediente —son de la caja,
       // no de la historia— y pedirlos acá sería una tercera petición cuyo
       // número podría discrepar del que muestra el propio bloque al abrirse.
@@ -484,8 +525,29 @@ export class Consultation {
     this.casillaAbierta.set(clave);
   }
 
+  /** Mantiene Tab dentro de la consulta, incluso cuando el stub solo ofrece Cerrar. */
+  protected keepModalFocus(event: Event): void {
+    if (!(event instanceof KeyboardEvent) || !(event.currentTarget instanceof HTMLElement)) return;
+    const dialog = event.currentTarget.querySelector('dialog');
+    if (dialog === null) return;
+    if (event.target instanceof Element && event.target.closest('dialog') !== dialog) return;
+    const controls = Array.from(dialog.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    )).filter((control) => control.getClientRects().length > 0 && control.tabIndex >= 0);
+    const first = controls.at(0);
+    const last = controls.at(-1);
+    const boundary = event.shiftKey ? first : last;
+    const destination = event.shiftKey ? last : first;
+    if (destination !== undefined && event.target === boundary) {
+      event.preventDefault();
+      destination.focus();
+    }
+  }
+
   protected cerrarCasilla(): void {
     this.casillaAbierta.set(null);
+    // Retirar el dialog cerrado antes de que otro clic pueda reutilizarlo.
+    this.changeDetector.detectChanges();
   }
 
   protected readonly tituloDelModal = computed(() => {
@@ -517,32 +579,6 @@ export class Consultation {
   }
 
   /* -- Lo que los bloques necesitan de la consulta ------------------------- */
-
-  /**
-   * Las internaciones, con todo lo que la lectura devuelve (C-23).
-   *
-   * Hasta acá se proyectaban cuatro campos de ocho: el estado del catálogo, el
-   * tipo de episodio, el profesional a cargo y la fecha de registro llegaban en
-   * la misma respuesta y se tiraban. El bloque no pedía poco porque el contrato
-   * diera poco.
-   *
-   * El responsable se resuelve a **«tuya» o «de otro»** en vez de mostrarse: es
-   * un `practitionerProfileId`, y un uuid en pantalla no es un nombre. Ponerle
-   * nombre exigiría una lectura de perfiles que esta pantalla no hace.
-   */
-  protected readonly internaciones = computed<readonly InternacionEnFicha[]>(() => {
-    const propio = this.auth.practitionerProfileId();
-    return (this.datos()?.resumen.careEpisodes ?? []).map((episodio) => ({
-      id: episodio.id,
-      abierta: episodio.endAt === undefined,
-      desde: episodio.startAt ?? null,
-      hasta: episodio.endAt ?? null,
-      tipo: this.labelOpcional(episodio.typeConceptId),
-      conResponsable: episodio.responsiblePractitionerId !== undefined,
-      aMiCargo: propio !== null && episodio.responsiblePractitionerId === propio,
-      registradaEl: episodio.createdAt,
-    }));
-  });
 
   protected readonly recetas = computed<readonly RecetaEnFicha[]>(() =>
     (this.datos()?.resumen.medicationRequests ?? []).map((receta) => ({
@@ -789,32 +825,36 @@ export class Consultation {
   }
 
   /** La etiqueta de un concepto, o el texto de ausencia. Nunca el uuid. */
+  /**
+   * El **código** de catálogo de un concepto, que es por lo que se ramifica.
+   *
+   * La etiqueta es metadato de presentación y puede cambiar sin aviso; el
+   * código no. Es lo que `diagnosisStateOf` necesita para decidir si un
+   * diagnóstico está en estudio, activo o cerrado.
+   */
+  private codigo(conceptId: string | undefined): string | undefined {
+    return conceptId === undefined ? undefined : this.etiquetas().get(conceptId)?.code;
+  }
+
   private label(conceptId: string | undefined): string {
     if (conceptId === undefined) {
       return SIN_DATO;
     }
     return this.etiquetas().get(conceptId)?.display ?? SIN_DATO;
   }
-
-  /**
-   * La etiqueta de un concepto, o **nada**.
-   *
-   * Distinta de `label` a propósito: donde el consumidor tiene su propio texto
-   * de reserva —el bloque de internación deriva «En curso» de la fecha de
-   * cierre— devolver «Sin registrar» pisaría algo mejor con algo peor.
-   */
-  private labelOpcional(conceptId: string | undefined): string | undefined {
-    if (conceptId === undefined) {
-      return undefined;
-    }
-    return this.etiquetas().get(conceptId)?.display;
-  }
 }
 
 /** Los conceptos que esta pantalla traduce: los que muestra, y no más. */
 function conceptosDe({ resumen }: Consulta): readonly string[] {
   return [
-    ...resumen.conditions.map((fila) => fila.codeConceptId),
+    ...resumen.conditions.flatMap((fila) => [
+      fila.codeConceptId,
+      // C8: la línea del encuentro clasifica el diagnóstico por estos dos
+      // códigos. Sin pedirlos, `diagnosisStateOf` no tendría con qué
+      // ramificar y todo caería en «en estudio».
+      fila.verificationStatusConceptId,
+      fila.clinicalStatusConceptId,
+    ]),
     ...resumen.medicationRequests.flatMap((fila) => [
       fila.medicationConceptId,
       fila.statusConceptId,

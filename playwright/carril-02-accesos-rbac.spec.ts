@@ -16,7 +16,8 @@ import { entrar, estable, irA } from './support/sesion';
  * Las pruebas unitarias ya fijan las reglas (`navigation.map.spec.ts`,
  * `section-roles.guard.spec.ts`, `dashboard.spec.ts`). Esto comprueba lo que
  * ninguna de ellas puede: que **en la aplicación de verdad**, con la sesión de
- * verdad y el router de verdad, el paciente entra y la doctora rebota.
+ * verdad y el router de verdad, el paciente y la doctora entran (esta última
+ * desde el 24/09/2026) y quien administra no.
  *
  * ## Una prueba por actor, no una por afirmación
  *
@@ -113,28 +114,20 @@ test.describe('Carril 02 · accesos, Guía de profesionales y RBAC', () => {
     await expect(page.locator('app-root')).not.toBeEmpty();
   });
 
-  test('doctora: no la ve ofrecida, el enlace directo no entra, y sus accesos no rebotan', async ({
-    page,
-  }) => {
+  test('doctora: la Guía se le ofrece y entra, y sus accesos no rebotan', async ({ page }) => {
     await abrirPanel(page, doctora());
 
-    /* -- 1 · no está ofrecida por ningún lado ------------------------------ */
+    /* -- 1 · se le ofrece en el panel (24/09/2026) -------------------------- */
 
-    expect(await rutasDelMenu(page)).not.toContain(RUTA_GUIA);
-    expect(await rutasDeAccesos(page)).not.toContain(RUTA_GUIA);
+    // La corrección #2 se la había quitado; el cliente pidió devolvérsela:
+    // «añadamos doctores al directorio en el perfil de doctores también».
+    expect(await rutasDeAccesos(page)).toContain(RUTA_GUIA);
 
-    /* -- 2 · esconder el enlace no era la protección ------------------------ */
+    /* -- 2 · el enlace directo entra ---------------------------------------- */
 
-    // El enlace guardado, el correo con la dirección y el historial del
-    // navegador llegan igual: eso es lo que cierra `seccionRolesGuard`.
     await irA(page, RUTA_GUIA);
     await estable(page);
-    expect(new URL(page.url()).pathname).toBe('/dashboard');
-
-    // La ficha de un profesional es parte de la Guía y cae con ella.
-    await irA(page, '/directory/00000000-0000-0000-0000-000000000000');
-    await estable(page);
-    expect(new URL(page.url()).pathname).toBe('/dashboard');
+    expect(new URL(page.url()).pathname).toBe(RUTA_GUIA);
 
     /* -- 3 · corrección #1: íconos con ayuda al enfocar --------------------- */
 

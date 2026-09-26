@@ -11,12 +11,14 @@ import {
   type PlantillaSimulada,
   type ReservaSimulada,
 } from '../fixtures/agenda';
+import { TIPO_CITA_RECONSULTA } from '../fixtures/agenda';
 import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from '../fixtures/conceptos';
+import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
 import { emitirNotificacion } from './notifications.handlers';
 import { solicitudDeLaCita } from './insurance.handlers';
 import { pacientePorId } from '../fixtures/personas';
 import { representaA } from './profiles.handlers';
-import { conflict, noContent, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, noContent, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -69,6 +71,54 @@ function reservaVisible(request: MockRequest, r: ReservaSimulada): boolean {
     );
   }
   return true;
+}
+
+/* ---- la reconsulta (C4) ---------------------------------------------------
+
+   El vínculo se guarda en UN solo lado —la reconsulta apunta a su origen— y el
+   sentido inverso (`followUpBookingId`) se **deriva al leer**, igual que
+   `insuranceClaim`. Guardarlo en los dos lados dejaría dos verdades que se
+   pueden contradecir: una cancelación que actualizara un lado y no el otro
+   bastaría para que la cita origen siguiera diciendo que ya tiene reconsulta. */
+
+/** La reconsulta viva de una cita, si alguien la agendó. */
+function reconsultaDe(bookingId: string): ReservaSimulada | undefined {
+  return reservas
+    .todos()
+    .find((r) => r.followUpOf?.bookingId === bookingId && !estadoEs(r, 'BK-CANCELLED', 'BK-REJECTED'));
+}
+
+/**
+ * La reconsulta **por venir** de una cita, que es la que impide agendar otra.
+ *
+ * Una reconsulta ya pasada no bloquea: si a la persona se la citó de nuevo en
+ * marzo y ya vino, citarla otra vez por la misma consulta es legítimo. Lo que
+ * la regla prohíbe es tener dos turnos futuros colgando de la misma consulta.
+ */
+function reconsultaVigenteDe(bookingId: string): ReservaSimulada | undefined {
+  const candidata = reconsultaDe(bookingId);
+  if (candidata === undefined) return undefined;
+  return new Date(candidata.startAt).getTime() > Date.now() ? candidata : undefined;
+}
+
+/**
+ * La reserva con los dos campos de reconsulta resueltos, como la ve la API.
+ *
+ * Al origen se le agrega **cuándo fue**: es lo que la agenda y «Mis citas»
+ * necesitan para decir «de la cita del 12 de septiembre», y resolverlo acá
+ * evita una petición por fila. Si el origen ya no existe, el vínculo viaja como
+ * vino: la reconsulta sigue siendo una reconsulta.
+ */
+function conReconsulta(r: ReservaSimulada) {
+  const origen = r.followUpOf === null ? undefined : reservas.get(r.followUpOf.bookingId);
+  return {
+    ...r,
+    followUpOf:
+      r.followUpOf === null || origen === undefined
+        ? r.followUpOf
+        : { ...r.followUpOf, startAt: origen.startAt },
+    followUpBookingId: reconsultaDe(r.id)?.id ?? null,
+  };
 }
 
 function cambiarEstado(id: string, estado: keyof typeof ESTADO_RESERVA, extra: Partial<ReservaSimulada> = {}) {
@@ -212,6 +262,9 @@ export function registrarAgenda(router: MockRouter): void {
       statusReason: null,
       delayNotice: null,
       paymentState: null,
+      // Un turno que el paciente pidió por su cuenta no sale de ninguna
+      // consulta: la reconsulta la agenda el profesional (C4).
+      followUpOf: null,
       createdAt: ahora(),
     };
     reservas.agregar(nueva);
@@ -239,11 +292,16 @@ export function registrarAgenda(router: MockRouter): void {
       .sort((a, b) => a.startAt.localeCompare(b.startAt));
     // `insuranceClaim` se resuelve al leer, como en la API: la solicitud cambia de
     // estado sin que la cita se entere.
-    const items = todos.slice(0, limit).map((r) => ({ ...r, insuranceClaim: solicitudDeLaCita(r) }));
+    const items = todos
+      .slice(0, limit)
+      .map((r) => ({ ...conReconsulta(r), insuranceClaim: solicitudDeLaCita(r) }));
     return { items, count: Math.min(todos.length, limit), limit, truncated: todos.length > limit };
   });
 
-  router.get('/scheduling/bookings/:id', ({ params }) => reservas.get(params['id']!) ?? notFound('Reserva no encontrada'));
+  router.get('/scheduling/bookings/:id', ({ params }) => {
+    const r = reservas.get(params['id']!);
+    return r === undefined ? notFound('Reserva no encontrada') : conReconsulta(r);
+  });
 
   /* El cliente hace `PUT` (es idempotente) y devuelve `PaymentStateInfo`, no
      la reserva: la agenda lee `estado.label` para el aviso. Con `POST` y la
@@ -354,10 +412,66 @@ export function registrarAgenda(router: MockRouter): void {
     return { notified: avisados, affected: afectadas.length, bookingIds: afectadas.map((r) => r.id), detail: `${avisados} de ${afectadas.length} pacientes avisados.` };
   });
 
+  /**
+   * La cita puntual (AG-2) y, desde C4, **la reconsulta**.
+   *
+   * Es el mismo endpoint a propósito: una reconsulta no es otra cosa que una
+   * cita directa que recuerda de qué consulta salió. Lo único que agrega es
+   * `followUpOf`, y con él cuatro rechazos que **sólo corren cuando ese campo
+   * viene**: una cita puntual sin reconsulta se sigue creando exactamente como
+   * antes, que es lo que `appointment-new` y el mostrador esperan.
+   *
+   * Orden de los rechazos, y por qué:
+   *
+   * 1. **403** — la agenda no es del profesional de la sesión. Va primero
+   *    porque es lo único que se decide sin mirar nada ajeno: citar de nuevo a
+   *    alguien en la agenda de un colega no es un error de datos, es no tener
+   *    permiso.
+   * 2. **404** — la cita de origen no existe.
+   * 3. **422** — el paciente no es el de esa cita, o el horario no es futuro.
+   * 4. **409** — esa consulta ya tiene una reconsulta por venir.
+   */
   router.post('/scheduling/appointments/direct', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; resourceId: string; startAt: string; durationMinutes: number; reasonText?: string; channel?: string }>(request);
+    const datos = cuerpo<{ patientProfileId: string; resourceId: string; startAt: string; durationMinutes: number; reasonText?: string; channel?: string; followUpOf?: FollowUpOrigin }>(request);
     const paciente = pacientePorId(datos.patientProfileId ?? '');
     const startAt = datos.startAt ?? ahora();
+    const origenPedido = datos.followUpOf ?? null;
+
+    let origen: ReservaSimulada | undefined;
+    if (origenPedido !== null) {
+      const hpid = request.user?.practitionerProfileId;
+      const propias = new Set(
+        recursos
+          .filtrar((r) => hpid !== undefined && r.resourceRefId === hpid)
+          .map((r) => r.id),
+      );
+      if (!propias.has(datos.resourceId ?? '')) {
+        return forbidden('La reconsulta se agenda en tu propia agenda, no en la de otro profesional');
+      }
+
+      origen = reservas.get(origenPedido.bookingId ?? '');
+      if (origen === undefined) {
+        return notFound('La cita de la que sale esta reconsulta no existe');
+      }
+      if (origen.patientProfileId !== (datos.patientProfileId ?? '')) {
+        return validation('La reconsulta es para el paciente de la cita de origen', [
+          { field: 'patientProfileId', code: 'FOLLOW_UP_PATIENT_MISMATCH', message: 'El paciente no es el de la cita de origen.' },
+        ]);
+      }
+      if (new Date(startAt).getTime() <= Date.now()) {
+        return validation('Una reconsulta se agenda para más adelante', [
+          { field: 'startAt', code: 'FOLLOW_UP_NOT_FUTURE', message: 'La fecha de la reconsulta tiene que ser futura.' },
+        ]);
+      }
+      const yaAgendada = reconsultaVigenteDe(origen.id);
+      if (yaAgendada !== undefined) {
+        return conflict('Esta consulta ya tiene una reconsulta agendada', {
+          bookingId: yaAgendada.id,
+          startAt: yaAgendada.startAt,
+        });
+      }
+    }
+
     const endAt = masMinutos(startAt, datos.durationMinutes ?? 30);
     const pisados = cupos.filtrar((c) => c.resourceId === datos.resourceId && c.startAt < endAt && c.endAt > startAt);
     for (const c of pisados) cupos.actualizar(c.id, { remainingCapacity: 0, statusConceptId: ESTADO['ST-CLOSED']! });
@@ -379,7 +493,7 @@ export function registrarAgenda(router: MockRouter): void {
       resourceId: cupo.resourceId,
       bookableSlotId: cupo.id,
       appointmentId: nuevoId('appointment'),
-      typeConceptId: TIPO_CITA['APT-CONTROL']!,
+      typeConceptId: origen === undefined ? TIPO_CITA['APT-CONTROL']! : TIPO_CITA_RECONSULTA,
       startAt,
       endAt,
       statusConceptId: ESTADO_RESERVA['BK-CONFIRMED']!,
@@ -387,13 +501,20 @@ export function registrarAgenda(router: MockRouter): void {
       bookingChannelConceptId: datos.channel === 'TELECONSULTA' ? CANAL['CH-TELECONSULTA']! : datos.channel === 'DOMICILIO' ? CANAL['CH-DOMICILIO']! : CANAL['CH-PRESENCIAL']!,
       confirmedAt: ahora(),
       checkedInAt: null,
-      reasonText: datos.reasonText ?? 'Cita creada por el profesional',
+      // El motivo que mandaron; si no mandaron ninguno y esto es una
+      // reconsulta, el de la consulta de origen con su prefijo. Una reconsulta
+      // sin motivo es una cita que después nadie sabe explicar.
+      reasonText: datos.reasonText ?? (origen === undefined ? 'Cita creada por el profesional' : `Reconsulta: ${origen.reasonText}`),
       patientName: paciente?.displayName ?? 'Paciente',
       insuranceCarrierName: paciente?.aseguradora ?? null,
       rescheduledFrom: null,
       statusReason: null,
       delayNotice: null,
       paymentState: null,
+      followUpOf:
+        origen === undefined || origenPedido === null
+          ? null
+          : { bookingId: origen.id, encounterId: origenPedido.encounterId ?? null },
       createdAt: ahora(),
     };
     reservas.agregar(nueva);

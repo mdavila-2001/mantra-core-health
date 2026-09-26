@@ -79,6 +79,78 @@ Sólo se escribe la tabla que se tocó, así que el almacenamiento no se llena
 con catálogos. Si cambiás un fixture y la pantalla sigue mostrando lo viejo,
 es esto: vaciá `sessionStorage` (o cerrá la pestaña).
 
+## Escenarios de flujo completo
+
+Dos recorridos de punta a punta —paciente elige, reserva, y del otro lado se
+ve— con datos que el simulador ya trae. Los cupos se generan alrededor de
+**hoy** (±21 días, `fixtures/agenda.ts`), así que acá no hay fechas fijas: el
+criterio de elección da el mismo resultado cualquier día que se corra.
+
+Todo lo que aparece es **sintético**: la médica y la paciente de prueba, y los
+13 «Profesional demo NN» (`PROFESIONALES_DEMO_REGISTRADOS`, `origen: 'DEMO'`).
+Las personas de las planillas del propietario no tienen agenda (D-H3-PROV-01)
+y no se usan en ningún escenario.
+
+**Qué estado queda.** Cuando la reserva la hace el paciente desde el portal,
+la reserva es una **solicitud**: la pantalla llama a `requestHold`, no a
+`confirmHold` (`features/agenda/booking-new/booking-new.ts`, «el paciente
+solicita; el mostrador confirma», corrección #11), y el simulador la crea con
+`BK-REQUESTED` (`handlers/scheduling.handlers.ts`). El paciente la ve como
+«Pedido» en «Mis citas», y la médica como «Solicitada» en «Consultas». Aunque
+el botón del segundo paso dice «Confirmar la reserva», lo que se envía es la
+solicitud.
+
+**Cambio de cuenta.** Las reservas se guardan en `sessionStorage`
+(`mock.agenda.reservas`), que es de la pestaña. Para que la médica vea lo que
+reservó la paciente hay que cerrar sesión y entrar en **la misma pestaña**. Una
+pestaña o un navegador nuevos empiezan con la maqueta limpia. Los cupos no se
+guardan: se regeneran en cada carga con un id por **fecha** (no por distancia a
+hoy, que al día siguiente los desenganchaba de sus reservas) y su capacidad
+libre se recalcula desde las reservas guardadas.
+
+### Escenario A — la paciente pide turno con la médica, y la médica lo ve
+
+| Paso | Cuenta | Qué se hace | Qué se ve |
+|---|---|---|---|
+| 1 | `paciente@alovida.mock` | `/directory` → «Cardiología» → buscar «Valeria» → abrir la tarjeta | Ficha de Valeria Rojas Mendoza con «Sedes y horarios» |
+| 2 | paciente | En «Agenda de Valeria Rojas Mendoza» (Clínica Los Olivos · Sede Central), elegir el **primer cupo libre de mañana antes de las 12:00**. De lunes a sábado es de la clínica; si mañana es domingo, el de la mañana es de la guardia del consultorio | La pantalla «Reservar un turno» con quién, cuándo y dónde |
+| 3 | paciente | Escribir un motivo → «Retener el cupo» → «Confirmar la reserva» | Aviso «Turno solicitado». En «Mis citas» aparece el turno como «Pedido» |
+| 4 | paciente → médica | Cerrar sesión y entrar como `medica@alovida.mock` **en la misma pestaña** | — |
+| 5 | `medica@alovida.mock` | «Consultas médicas» (`/schedule`) → vista «Día» → «Mañana» | Fila con la hora del cupo, «Ana Lucía Pérez Quiroga», **«Solicitada»** y el motivo |
+
+La médica tiene dos agendas: la de la clínica (mañanas, de lunes a sábado) y la
+de su consultorio (tardes de lunes, miércoles y viernes, y guardia el domingo).
+De lunes a sábado, la franja de la mañana es la de la clínica.
+
+### Escenario B — la paciente pide turno con un profesional de demostración
+
+| Paso | Cuenta | Qué se hace | Qué se ve |
+|---|---|---|---|
+| 1 | `paciente@alovida.mock` | `/directory` → «Medicina General» → buscar «Profesional demo 01» → abrir la tarjeta | Tarjeta «Profesional demo 01», «Profesional de demostración», «Clínica Los Olivos». En la ficha, «Agenda simulada · Profesional demo 01» |
+| 2 | paciente | Elegir el **primer cupo libre** de la semana que se muestra | «Reservar un turno» con «Profesional demo 01» y «Clínica Los Olivos · Sede Central» |
+| 3 | paciente | Motivo → «Retener el cupo» → «Confirmar la reserva» | «Turno solicitado». En «Mis citas»: «Agenda simulada · Profesional demo 01», **«Pedido»** |
+
+Los 13 de demostración no tienen cuenta propia, así que este escenario termina
+del lado de la paciente. Cualquier otro «Profesional demo NN» sirve: los
+impares atienden en Clínica Los Olivos y los pares en Hospital San Lucas, las
+dos instituciones inventadas de la maqueta; la especialidad de cada uno está en
+`ESPECIALIDADES_DEMO` (`fixtures/personas.ts`).
+
+### Cómo se verifican
+
+```bash
+# Los datos: 13 demos con recurso, plantilla L-V y cupos ±21 días; la médica y la
+# planilla del propietario como deben estar
+yarn test --include=src/app/core/mock/mock-backend.spec.ts --watch=false
+
+# Las pantallas del recorrido abren sin error con las dos cuentas
+yarn start:dev
+E2E_BASE_URL=http://localhost:4200 yarn playwright test playwright/mockup-barrido.spec.ts --workers=1 --grep "Médica|Paciente"
+```
+
+El recorrido completo (reservar y mirarlo del otro lado) **no tiene todavía un
+E2E versionado**: se recorre a mano con las tablas de arriba.
+
 ## Cómo se verifica
 
 ```bash

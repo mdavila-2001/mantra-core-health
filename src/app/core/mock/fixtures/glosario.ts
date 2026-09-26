@@ -12,10 +12,13 @@ import {
 /* ============================================================================
     El glosario médico del backend simulado.
 
-    Indexa el catálogo curado que porta `glosario.generated.ts` —12 categorías,
-    15 etiquetas y 69 términos con definición clínica, resumen llano, sinónimos
-    y relaciones tipadas— y le da la forma con la que viaja por la API real
-    (`GET /terminology/value-sets` y `GET /terminology/concepts`).
+    Indexa el catálogo que porta `glosario.generated.ts` —12 categorías, 15
+    etiquetas, los 69 términos curados con definición clínica, resumen llano,
+    sinónimos y relaciones tipadas, **y las capas de `data/glossary/`**:
+    enfermedades y análisis en castellano con código ICD-10-CM/LOINC, y las
+    categorías ICD-10-CM completas en inglés— y le da la forma con la que
+    viaja por la API real (`GET /terminology/value-sets` y
+    `GET /terminology/concepts`).
 
     Los identificadores se derivan con `uuid()` a partir del código, igual que
     en `conceptos.ts`: son estables entre recargas, así que un enlace a un
@@ -78,10 +81,11 @@ export const PARAGUAS: ConjuntoDeGlosario = conConjunto(GLOSARIO_TODOS_LOS_TERMI
  * Los términos del glosario, ordenados alfabéticamente por su nombre en
  * castellano — el mismo orden que el backend aplica cuando se pide `lang`.
  *
- * Son los 69 curados **más las 548 láminas** del atlas anatómico, que entran
- * como términos de la categoría Anatomía. Comparten tipo y orden: para el
- * glosario no hay dos clases de término, y por eso la búsqueda, la ficha y el
- * filtro por etiqueta funcionan igual para los dos sin una línea de más.
+ * Son los curados y las capas de `data/glossary/` (ver `CONTEO_DE_CAPAS`)
+ * **más las 548 láminas** del atlas anatómico, que entran como términos de la
+ * categoría Anatomía. Comparten tipo y orden: para el glosario no hay dos
+ * clases de término, y por eso la búsqueda, la ficha y el filtro por etiqueta
+ * funcionan igual para todos sin una línea de más.
  */
 export const TERMINOS: readonly ConceptoDeGlosario[] = [
   ...TERMINOS_DE_GLOSARIO,
@@ -124,9 +128,7 @@ export function conjuntoDeGlosarioPorId(id: string): ConjuntoDeGlosario | undefi
 }
 
 /** Un value set del glosario por su código interno, o `undefined`. */
-export function conjuntoDeGlosarioPorCodigo(
-  internalCode: string,
-): ConjuntoDeGlosario | undefined {
+export function conjuntoDeGlosarioPorCodigo(internalCode: string): ConjuntoDeGlosario | undefined {
   return conjuntoPorCodigoInterno.get(internalCode);
 }
 
@@ -147,14 +149,98 @@ export function etiquetasDeTermino(termino: ConceptoDeGlosario): readonly Conjun
 }
 
 /** Los términos que pertenecen a un value set del glosario. */
-export function miembrosDeConjunto(
-  conjunto: ConjuntoDeGlosario,
-): readonly ConceptoDeGlosario[] {
+export function miembrosDeConjunto(conjunto: ConjuntoDeGlosario): readonly ConceptoDeGlosario[] {
   if (conjunto.internalCode === PARAGUAS.internalCode) return TERMINOS;
   if (conjunto.internalCode.startsWith('glossary-category-')) {
     return TERMINOS.filter((t) => t.categoryKey === conjunto.key);
   }
   return TERMINOS.filter((t) => t.tagKeys.includes(conjunto.key));
+}
+
+/**
+ * Un término está traducido salvo que su capa lo declare en inglés.
+ *
+ * Los curados y las capas en castellano no llevan `lang` o llevan `es`; la
+ * capa ancha de ICD-10-CM llega en inglés (`en`) y la pantalla lo dice en vez
+ * de disimularlo.
+ */
+function estaTraducido(termino: ConceptoDeGlosario): boolean {
+  return termino.lang !== 'en';
+}
+
+/** Cómo se llama en la ficha el sistema de codificación de un término. */
+const NOMBRE_DE_SISTEMA: Readonly<Record<string, string>> = {
+  icd10cm: 'ICD-10-CM',
+  loinc: 'LOINC',
+};
+
+/**
+ * La definición y el resumen de un término, como los muestra la ficha.
+ *
+ * Un término en inglés no trae definición ni resumen: su fuente publica sólo
+ * el código y el nombre oficial, y acá no se fabrica ninguna (regla 97.4). La
+ * ficha lo dice con todas las letras en vez de mostrar un párrafo vacío o,
+ * peor, uno inventado. Los dos textos son metadatos, no contenido clínico.
+ */
+function textosDe(termino: ConceptoDeGlosario): {
+  clinicalDefinition: { text: string; translated: boolean };
+  plainSummary: { text: string; translated: boolean };
+} {
+  if (estaTraducido(termino)) {
+    return {
+      clinicalDefinition: { text: termino.clinicalDefinitionEs, translated: true },
+      plainSummary: { text: termino.plainSummaryEs, translated: true },
+    };
+  }
+  const sistema =
+    termino.externalCode === undefined
+      ? 'su sistema de codificación'
+      : (NOMBRE_DE_SISTEMA[termino.externalCode.system] ?? termino.externalCode.system);
+  const codigo = termino.externalCode === undefined ? '' : ` «${termino.externalCode.code}»`;
+  return {
+    clinicalDefinition: {
+      text:
+        `Sin definición cargada. La fuente de ${sistema} publica sólo el código${codigo} y el ` +
+        'nombre oficial en inglés; no se escribe una definición sin fuente.',
+      translated: true,
+    },
+    plainSummary: {
+      text: `Categoría${codigo} de ${sistema}, con su nombre original: ${termino.enDisplay}.`,
+      translated: true,
+    },
+  };
+}
+
+/**
+ * Las propiedades extendidas de un término: lo que el contrato publica como
+ * `properties` (`Record<string, unknown>`), con nombres en snake_case como
+ * las cuatro del NDC. Sólo viajan las que el término tiene — una propiedad
+ * ausente es correcta; una vacía confunde a quien la lee.
+ */
+function propiedadesDe(termino: ConceptoDeGlosario): Record<string, unknown> {
+  const propiedades: Record<string, unknown> = {};
+  if (termino.drugFacts !== undefined) {
+    // Las cuatro propiedades del NDC, sólo en los términos de farmacología:
+    // es de donde `drugFactsFrom()` arma la ficha de medicamento.
+    propiedades['active_ingredients'] = termino.drugFacts.activeIngredients;
+    propiedades['dosage_form'] = termino.drugFacts.dosageForm;
+    propiedades['route'] = termino.drugFacts.route;
+    propiedades['manufacturer'] = termino.drugFacts.manufacturer;
+  }
+  if (termino.externalCode !== undefined) {
+    propiedades['external_code'] = termino.externalCode.code;
+    propiedades['code_system'] = termino.externalCode.system;
+  }
+  if (termino.lang !== undefined) propiedades['lang'] = termino.lang;
+  if (termino.reviewStatus !== undefined) propiedades['review_status'] = termino.reviewStatus;
+  if (termino.source !== undefined) propiedades['source'] = termino.source;
+  if (termino.symptomIds !== undefined && termino.symptomIds.length > 0) {
+    propiedades['symptom_ids'] = [...termino.symptomIds];
+  }
+  if (termino.analysisCategory !== undefined) {
+    propiedades['analysis_category'] = termino.analysisCategory;
+  }
+  return propiedades;
 }
 
 /* ---- las tres formas con las que el glosario viaja por la API ------------- */
@@ -179,10 +265,9 @@ export function terminoEnLinea(termino: ConceptoDeGlosario) {
     code: termino.code,
     display: termino.esName,
     slug: termino.slug,
-    // El catálogo curado siembra el castellano como obligatorio: no hay
-    // término sin traducir. La bandera viaja igual porque el contrato la
-    // declara y la pantalla la lee.
-    translated: true,
+    // Los curados y las capas en castellano vienen traducidos; la capa ancha
+    // de ICD-10-CM llega en inglés y la lista lo marca.
+    translated: estaTraducido(termino),
     category: { internalCode: categoria.internalCode, name: categoria.name },
     // Lo mismo que el backend: la definición breve es el resumen llano.
     shortDefinition: termino.plainSummaryEs,
@@ -212,7 +297,7 @@ export function fichaEnLinea(termino: ConceptoDeGlosario) {
     code: termino.code,
     display: termino.esName,
     slug: termino.slug,
-    translated: true,
+    translated: estaTraducido(termino),
     codeSystemVersionId: GLOSARIO_CODE_SYSTEM_VERSION_ID,
     valueSets: [PARAGUAS, categoria, ...etiquetas].map((conjunto) => ({
       id: conjunto.id,
@@ -221,19 +306,21 @@ export function fichaEnLinea(termino: ConceptoDeGlosario) {
     })),
     // El nombre en inglés del catálogo es una denominación más del término, no
     // un sinónimo en castellano: viaja con su idioma declarado, que es lo que
-    // la ficha muestra entre paréntesis.
+    // la ficha muestra entre paréntesis. Si el nombre ya es el inglés (capa
+    // sin traducir), repetirlo como sinónimo no informa.
     synonyms: [
       ...(termino.esSynonyms ?? []).map((valor) => ({
         value: valor,
         language: 'ES',
         preferred: false,
       })),
-      { value: termino.enDisplay, language: 'EN', preferred: false },
+      ...(termino.enDisplay === termino.esName
+        ? []
+        : [{ value: termino.enDisplay, language: 'EN', preferred: false }]),
     ],
     category: referencia(categoria),
     tags: etiquetas.map(referencia),
-    clinicalDefinition: { text: termino.clinicalDefinitionEs, translated: true },
-    plainSummary: { text: termino.plainSummaryEs, translated: true },
+    ...textosDe(termino),
     relations: termino.relations.flatMap((relacion) => {
       const destino = porSlug.get(relacion.targetSlug);
       // El generador ya descarta las huérfanas; esto es la segunda barrera.
@@ -248,16 +335,6 @@ export function fichaEnLinea(termino: ConceptoDeGlosario) {
             },
           ];
     }),
-    // Las cuatro propiedades del NDC, sólo en los términos de farmacología:
-    // es de donde `drugFactsFrom()` arma la ficha de medicamento.
-    properties:
-      termino.drugFacts === undefined
-        ? {}
-        : {
-            active_ingredients: termino.drugFacts.activeIngredients,
-            dosage_form: termino.drugFacts.dosageForm,
-            route: termino.drugFacts.route,
-            manufacturer: termino.drugFacts.manufacturer,
-          },
+    properties: propiedadesDe(termino),
   };
 }

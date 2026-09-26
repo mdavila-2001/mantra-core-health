@@ -1,12 +1,14 @@
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, type HttpErrorResponse } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
 import { TerminologyClient } from './terminology.client';
 import type {
   ConceptDetail,
+  ConceptImportResult,
   GlossaryTermDetail,
   GlossaryTermPage,
+  ImportTemplateDownload,
   ValueSetExpansionPage,
   ValueSetOption,
 } from './terminology.types';
@@ -477,5 +479,210 @@ describe('TerminologyClient', () => {
         codeSystemVersionId: 'csv-1',
         properties: {},
       });
+  });
+
+  /* -- Carga masiva: `import-file` e `import-template` (§2 del contrato) ---- */
+
+  /** Un archivo cualquiera, con el nombre que el doble usa para decidir. */
+  function archivo(nombre = 'ok-50.csv'): File {
+    return new File(['code,display\nZZ-001,Uno\n'], nombre, { type: 'text/csv' });
+  }
+
+  it('importConceptsFile manda el archivo como multipart a la ruta de la versión', () => {
+    client.importConceptsFile('v-borrador', archivo()).subscribe();
+
+    const req = http.expectOne('/terminology/versions/v-borrador/import-file');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toBeInstanceOf(FormData);
+    expect((req.request.body as FormData).get('file')).toBeInstanceOf(File);
+    req.flush({
+      batchId: 'b-1',
+      totalRead: 1,
+      inserted: 1,
+      skipped: 0,
+      errors: 0,
+      errorSamples: [],
+    });
+  });
+
+  it('sin opciones NO manda `dryRun` ni `profile`: el servidor aplica sus omisiones', () => {
+    // El consumidor anterior llamaba con el archivo a secas y tiene que seguir
+    // enviando exactamente lo mismo: agregar claves cambiaría su petición.
+    client.importConceptsFile('v-borrador', archivo()).subscribe();
+
+    const peticion = http.expectOne('/terminology/versions/v-borrador/import-file');
+    const form = peticion.request.body as FormData;
+    expect(form.get('dryRun')).toBeNull();
+    expect(form.get('profile')).toBeNull();
+
+    peticion.flush({
+      batchId: 'b-1',
+      totalRead: 1,
+      inserted: 1,
+      skipped: 0,
+      errors: 0,
+      errorSamples: [],
+    });
+  });
+
+  it('validar sin guardar manda `dryRun=true` y el perfil, como texto', () => {
+    client
+      .importConceptsFile('v-borrador', archivo(), { dryRun: true, profile: 'conceptos' })
+      .subscribe();
+
+    const peticion = http.expectOne('/terminology/versions/v-borrador/import-file');
+    const form = peticion.request.body as FormData;
+    // `multipart` no transporta tipos: el DTO del otro lado espera las cadenas.
+    expect(form.get('dryRun')).toBe('true');
+    expect(form.get('profile')).toBe('conceptos');
+
+    peticion.flush({
+      batchId: null,
+      totalRead: 1,
+      inserted: 0,
+      skipped: 0,
+      errors: 0,
+      errorSamples: [],
+    });
+  });
+
+  it('importar de verdad manda `dryRun=false`, no omite la clave', () => {
+    // Omitirla dejaría al servidor aplicar su omisión, que hoy también es
+    // `false` — pero eso es una coincidencia, no el pedido de la pantalla.
+    client.importConceptsFile('v-borrador', archivo(), { dryRun: false }).subscribe();
+
+    const peticion = http.expectOne('/terminology/versions/v-borrador/import-file');
+    expect((peticion.request.body as FormData).get('dryRun')).toBe('false');
+
+    peticion.flush({
+      batchId: 'b-1',
+      totalRead: 1,
+      inserted: 1,
+      skipped: 0,
+      errors: 0,
+      errorSamples: [],
+    });
+  });
+
+  it('el informe del dry-run llega tipado: sin lote, con vista previa y sin insertar', () => {
+    let informe: ConceptImportResult | undefined;
+    client
+      .importConceptsFile('v-borrador', archivo(), { dryRun: true })
+      .subscribe((r) => (informe = r));
+
+    // 200 y no 201: el dry-run no crea nada (Q-J1). El cliente no ramifica por
+    // el estado, así que la carga real puede responder 201 sin cambiar nada.
+    http.expectOne('/terminology/versions/v-borrador/import-file').flush({
+      batchId: null,
+      format: 'csv',
+      profile: 'conceptos',
+      dryRun: true,
+      aborted: false,
+      totalRead: 50,
+      inserted: 0,
+      skipped: 0,
+      errors: 0,
+      errorSamples: [],
+      preview: [{ line: 2, code: 'ZZ-001', display: 'Concepto sintético ZZ-001' }],
+    });
+
+    expect(informe?.batchId).toBeNull();
+    expect(informe?.dryRun).toBe(true);
+    expect(informe?.format).toBe('csv');
+    expect(informe?.preview?.[0]?.code).toBe('ZZ-001');
+  });
+
+  it('un problema con columna llega con su columna, y uno sin ella también', () => {
+    let informe: ConceptImportResult | undefined;
+    client
+      .importConceptsFile('v-borrador', archivo('con-errores.csv'))
+      .subscribe((r) => (informe = r));
+
+    http.expectOne('/terminology/versions/v-borrador/import-file').flush({
+      batchId: null,
+      aborted: true,
+      totalRead: 50,
+      inserted: 0,
+      skipped: 0,
+      errors: 2,
+      errorSamples: [
+        { line: 5, column: 'display', message: 'está vacía' },
+        { line: 1, message: 'columna extra no reconocida' },
+      ],
+      preview: [],
+    });
+
+    expect(informe?.aborted).toBe(true);
+    expect(informe?.errorSamples[0]?.column).toBe('display');
+    // Sin `column` cuando el problema es de la fila entera o del encabezado.
+    expect(informe?.errorSamples[1]?.column).toBeUndefined();
+  });
+
+  it('importConceptsFile escapa el identificador de la versión en la ruta', () => {
+    client.importConceptsFile('v/rara?', archivo()).subscribe();
+
+    http.expectOne('/terminology/versions/v%2Frara%3F/import-file').flush({
+      batchId: null,
+      totalRead: 0,
+      inserted: 0,
+      skipped: 0,
+      errors: 0,
+      errorSamples: [],
+    });
+  });
+
+  it('un 422 de import llega al consumidor con su código y su estado', () => {
+    // `IMPORT_*` no está en `API_ERROR_CODES`, así que `errorToViewState` lo
+    // devuelve como error genérico: quien necesite el motivo lo lee del cuerpo
+    // crudo, que es lo que hace la pantalla. Ver Q-J4 del plan.
+    let fallo: HttpErrorResponse | undefined;
+    client.importConceptsFile('v-borrador', archivo('no-es-nada.pdf')).subscribe({
+      error: (error: HttpErrorResponse) => (fallo = error),
+    });
+
+    http.expectOne('/terminology/versions/v-borrador/import-file').flush(
+      {
+        statusCode: 422,
+        code: 'IMPORT_FORMAT_UNSUPPORTED',
+        message: 'El archivo no es NDJSON, CSV ni XLSX.',
+      },
+      { status: 422, statusText: 'Unprocessable Entity' },
+    );
+
+    expect(fallo?.status).toBe(422);
+    expect((fallo?.error as { code: string }).code).toBe('IMPORT_FORMAT_UNSUPPORTED');
+  });
+
+  it('la plantilla se pide como blob, con perfil y formato en la consulta', () => {
+    client.downloadImportTemplate('conceptos', 'csv').subscribe();
+
+    const req = http.expectOne((r) => r.url === '/terminology/import-template');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+    expect(req.request.params.get('profile')).toBe('conceptos');
+    expect(req.request.params.get('format')).toBe('csv');
+
+    req.flush(new Blob(['code,display,definition']));
+  });
+
+  it('el nombre de la plantilla sale del `Content-Disposition`', () => {
+    let descarga: ImportTemplateDownload | undefined;
+    client.downloadImportTemplate('conceptos', 'xlsx').subscribe((d) => (descarga = d));
+
+    http.expectOne((r) => r.url === '/terminology/import-template').flush(new Blob(['x']), {
+      headers: { 'Content-Disposition': 'attachment; filename="plantilla-conceptos.xlsx"' },
+    });
+
+    expect(descarga?.fileName).toBe('plantilla-conceptos.xlsx');
+    expect(descarga?.blob).toBeInstanceOf(Blob);
+  });
+
+  it('sin `Content-Disposition` el nombre queda sin definir, para que decida quien llama', () => {
+    let descarga: ImportTemplateDownload | undefined;
+    client.downloadImportTemplate('conceptos', 'csv').subscribe((d) => (descarga = d));
+
+    http.expectOne((r) => r.url === '/terminology/import-template').flush(new Blob(['x']));
+
+    expect(descarga?.fileName).toBeUndefined();
   });
 });

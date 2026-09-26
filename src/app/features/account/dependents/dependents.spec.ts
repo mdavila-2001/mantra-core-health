@@ -75,8 +75,13 @@ describe('Dependents', () => {
 
   afterEach(() => http.verify());
 
-  /** Abre sesión y monta la pantalla. */
-  function montar({ pid = 'pp-titular' }: { pid?: string | null } = {}): void {
+  const INCOMING = '/profiles/patients/me/dependent-requests/incoming';
+
+  /** Abre sesión, monta la pantalla y responde la bandeja de solicitudes recibidas. */
+  function montar({
+    pid = 'pp-titular',
+    solicitudes = [],
+  }: { pid?: string | null; solicitudes?: readonly Record<string, unknown>[] } = {}): void {
     sesion.start({
       accessToken: jwt({
         sub: 'user-1',
@@ -89,6 +94,10 @@ describe('Dependents', () => {
     });
     fixture = TestBed.createComponent(Dependents);
     fixture.detectChanges();
+    if (pid !== null) {
+      http.expectOne((r) => r.url === INCOMING).flush(solicitudes);
+      fixture.detectChanges();
+    }
   }
 
   /** Responde la carga de dependientes con cuerpos del cable. */
@@ -169,10 +178,58 @@ describe('Dependents', () => {
     expect(contexto.activePatientProfileId()).toBe('pp-titular');
   });
 
+  it('muestra las solicitudes recibidas y aceptar las responde', () => {
+    montar({
+      solicitudes: [
+        { id: 'sol-1', requesterDisplayName: 'Rosa Choque', createdAt: '2026-09-25T10:00:00.000Z' },
+      ],
+    });
+    responder([]);
+
+    expect(texto()).toContain('Te quieren registrar como dependiente');
+    expect(texto()).toContain('Rosa Choque');
+
+    const aceptar = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      'button[aria-label="Aceptar la solicitud de Rosa Choque"]',
+    );
+    aceptar!.click();
+
+    const peticion = http.expectOne(
+      (r) => r.method === 'POST' && r.url === '/profiles/patients/me/dependent-requests/sol-1/accept',
+    );
+    peticion.flush({ id: 'sol-1', status: 'ACCEPTED' });
+    fixture.detectChanges();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="dependents-solicitudes"]'),
+    ).toBeNull();
+  });
+
+  it('rechazar llama al rechazo, no a la aceptación', () => {
+    montar({
+      solicitudes: [
+        { id: 'sol-2', requesterDisplayName: 'Rosa Choque', createdAt: '2026-09-25T10:00:00.000Z' },
+      ],
+    });
+    responder([]);
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('button[aria-label="Rechazar la solicitud de Rosa Choque"]')!
+      .click();
+
+    http
+      .expectOne(
+        (r) => r.method === 'POST' && r.url === '/profiles/patients/me/dependent-requests/sol-2/reject',
+      )
+      .flush({ id: 'sol-2', status: 'REJECTED' });
+    http.expectNone((r) => r.url.endsWith('/accept'));
+  });
+
   it('una cuenta sin perfil de paciente no pide nada y lo explica', () => {
     montar({ pid: null });
 
     http.expectNone((r) => r.url === '/profiles/patients/me/dependents');
+    http.expectNone((r) => r.url === INCOMING);
     expect(texto()).toContain('no tiene perfil de paciente');
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('[data-testid="dependents-nuevo"]'),

@@ -338,11 +338,28 @@ describe('PractitionerProfile', () => {
     expect(visible().idiomas[0].nombre).toBe('Español');
   });
 
-  it('presenta con la especialidad principal vigente', () => {
+  it('presenta con la primera especialidad vigente, sin mirar cuál es la principal (D-01)', () => {
     montar();
-    responder();
+    responder(
+      {
+        specialties: [
+          { ...PERFIL.specialties[0], id: 'sp-0', specialtyConceptId: 'esp-pedia', isPrimary: false },
+          { ...PERFIL.specialties[0], isPrimary: true },
+        ],
+      },
+      {
+        items: [
+          ...CONCEPTOS.items,
+          { conceptId: 'esp-pedia', code: 'PEDIATRICS', display: 'Pediatría', codeSystemVersionId: 'csv-1' },
+        ],
+      },
+    );
 
-    expect(visible().especialidadPrincipal).toBe('Cardiología');
+    expect(visible().especialidadPrincipal).toBe('Pediatría');
+    expect(visible().especialidades.map((e) => e.nombre)).toEqual(['Pediatría', 'Cardiología']);
+    for (const especialidad of visible().especialidades) {
+      expect(especialidad).not.toHaveProperty('principal');
+    }
   });
 
   /**
@@ -820,5 +837,19 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
     operacion<(pestana: string) => void>('alVerPestana')('Credenciales');
 
     expect(avisos()).toHaveLength(1);
+  });
+
+  /* -- El aviso de «Trayectoria» (24/09/2026) ----------------------------- */
+
+  it('«Trayectoria» avisa cada vez que se abre, y dura 3 s', () => {
+    montar();
+
+    operacion<(pestana: string) => void>('alVerPestana')('Trayectoria');
+    operacion<(pestana: string) => void>('alVerPestana')('Actividad');
+    operacion<(pestana: string) => void>('alVerPestana')('Trayectoria');
+
+    expect(avisos()).toHaveLength(2);
+    expect(avisos()[0]?.title).toBe('Trayectoria');
+    expect(TestBed.inject(ToastService).toasts()[0]?.durationMs).toBe(3000);
   });
 });

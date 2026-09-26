@@ -191,19 +191,19 @@ describe('APP_SECTIONS', () => {
 
   /* -- Carril 02 · corrección #2 ------------------------------------------- */
 
-  it('la Guía de profesionales es solo del paciente', () => {
+  it('el Directorio de médicos es del paciente y del médico', () => {
     const guia = APP_SECTIONS.find((s) => s.path === 'directory');
 
-    // Corrección #2 del 15/08/2026. Nació sin `roles` —«la usa sobre todo quien
-    // busca médico»— y en la práctica la veían la doctora y todo el resto. Es
-    // una guía para elegir a quién consultar; a quien atiende no le toca.
-    expect(guia?.roles).toEqual(['PATIENT']);
+    // Corrección #2 del 15/08/2026: sólo el paciente. El 24/09/2026 el cliente
+    // pidió sumar al médico —«añadamos doctores al directorio en el perfil de
+    // doctores también»—: buscar a un colega para derivar es parte de atender.
+    expect(guia?.roles).toEqual(['PATIENT', 'PRACTITIONER']);
   });
 
-  it('ni la doctora ni quien administra ven la Guía de profesionales', () => {
+  it('la doctora ve el Directorio de médicos; quien administra, no', () => {
     const guia = APP_SECTIONS.find((s) => s.path === 'directory')!;
 
-    expect(isVisibleTo(guia, ['USER', 'PRACTITIONER', 'CLINICIAN'])).toBe(false);
+    expect(isVisibleTo(guia, ['USER', 'PRACTITIONER', 'CLINICIAN'])).toBe(true);
     expect(isVisibleTo(guia, ['SECURITY_ADMIN'])).toBe(false);
     expect(isVisibleTo(guia, ['PATIENT'])).toBe(true);
   });

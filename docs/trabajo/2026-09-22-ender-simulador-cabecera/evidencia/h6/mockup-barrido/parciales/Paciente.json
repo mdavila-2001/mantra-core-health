@@ -1,0 +1,306 @@
+[
+  {
+    "cuenta": "Paciente",
+    "ruta": "/dashboard",
+    "componente": "Dashboard",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/tutorials",
+    "componente": "TutorialsCenter",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/messaging",
+    "componente": "Messaging",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/directories",
+    "componente": "DirectoriesOverview",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/groups",
+    "componente": "Groups",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/laboratory-directory",
+    "componente": "LaboratoryDirectory",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/clinics-directory",
+    "componente": "ClinicsDirectory",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/pharmacies-directory",
+    "componente": "PharmaciesDirectory",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/glossary",
+    "componente": "Glossary",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/my-services",
+    "componente": "MyServices",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/my-quotations",
+    "componente": "QuotationList",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/administration/insurance",
+    "componente": "InsuranceCatalog",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/administration/insurance-analytics",
+    "componente": "InsuranceAnalytics",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/my-account/dependents",
+    "componente": "Dependents",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/my-account",
+    "componente": "MyProfile",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/my-account/appointments",
+    "componente": "Appointments",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/my-account/medical-record",
+    "componente": "MedicalRecord",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/my-account/diagnostic-results",
+    "componente": "DiagnosticResults",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/my-account/diagnostic-orders",
+    "componente": "DiagnosticOrders",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/my-account/questionnaires",
+    "componente": "Questionnaires",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/settings",
+    "componente": "Settings",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/notification-center",
+    "componente": "NotificationCenter",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/my-account/identity",
+    "componente": "IdentityHub",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/administration/my-organization",
+    "componente": "OrganizationPanel",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/administration/pharmacy-orders",
+    "componente": "PharmacyInbox",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/administration/pharmacy-campaigns",
+    "componente": "PharmacyCampaigns",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/administration/pharmacy-profile",
+    "componente": "PharmacyProfile",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/administration/getting-started",
+    "componente": "GettingStarted",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/my-account/access-requests",
+    "componente": "AccessRequests",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/my-account/articles",
+    "componente": "MedicalArticles",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/my-account/edit",
+    "componente": "PractitionerProfileEdit",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/my-account/profile/edit",
+    "componente": "PatientProfileEdit",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/my-quotations/new",
+    "componente": "QuotationForm",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/onboarding",
+    "componente": "OnboardingPractitioner",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/directory/be0f3a66-c03e-4eac-a416-c1068238d3d2",
+    "componente": "PractitionerDetail",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/my-account/identity/cases/cfb3e65c-385e-4eb0-af27-63d48dfa500c",
+    "componente": "VerificationCaseDetail",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/glossary/4062daeb-3963-42c3-a55c-65381004e9de",
+    "componente": "GlossaryTerm",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Paciente",
+    "ruta": "/laboratory-directory/bbfe6c31-0c32-4b3d-a001-752c8b567b3e",
+    "componente": "LaboratoryDetail",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  }
+]

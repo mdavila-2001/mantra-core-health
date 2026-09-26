@@ -1,8 +1,12 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import type { WritableSignal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { SessionStore } from '../../../../core/auth/session.store';
+import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import type { CierreDelFormulario } from '../form-conclusion-block/form-conclusion-block';
 import {
   BLOQUE_CIRUGIA,
   BLOQUE_ALERGIA,
@@ -103,6 +107,14 @@ describe('SpecialtyFormBlock', () => {
           limit: 50,
           truncated: [],
         });
+      }
+    }
+    // Desde D4, con una plantilla elegida se dibuja el cierre de la ficha, y
+    // sus selectores piden sus catálogos. Se drenan con lista vacía: lo que
+    // gobierna el cierre lo cubren sus propias pruebas y las de abajo.
+    for (const catalogo of http.match((r) => r.url === '/system-context/dynamic-enums')) {
+      if (!catalogo.cancelled) {
+        catalogo.flush({ code: 'x', name: 'x', definitionId: 'd', valueSetId: 'v', options: [] });
       }
     }
     http.verify();
@@ -867,18 +879,18 @@ describe('SpecialtyFormBlock', () => {
     elegir(BLOQUE_CIRUGIA);
     fixture.detectChanges();
     expect(html.querySelector('app-procedures-block')).not.toBeNull();
-    expect(html.querySelector('app-diagnostics-block')).toBeNull();
+    expect(html.querySelector('app-analysis-order-block')).toBeNull();
     drenarLecturasDelBloque();
 
     elegir(BLOQUE_ODONTOLOGIA);
     fixture.detectChanges();
     expect(html.querySelector('app-procedures-block')).not.toBeNull();
-    expect(html.querySelector('app-diagnostics-block')).toBeNull();
+    expect(html.querySelector('app-analysis-order-block')).toBeNull();
     drenarLecturasDelBloque();
 
     elegir(BLOQUE_LABORATORIO);
     fixture.detectChanges();
-    expect(html.querySelector('app-diagnostics-block')).not.toBeNull();
+    expect(html.querySelector('app-analysis-order-block')).not.toBeNull();
     expect(html.querySelector('app-procedures-block')).toBeNull();
     drenarLecturasDelBloque();
   });
@@ -1066,5 +1078,220 @@ describe('SpecialtyFormBlock', () => {
     http.expectOne((r) => r.url === '/forms/instances/inst-9/close').flush({});
     // Tras guardar, el bloque relee para pasar a modo lectura.
     peticionDeRespuesta().flush(LISTADO_VACIO);
+  });
+
+  /* ── D4: la ficha termina en el cierre ─────────────────────────────────────
+     Lo que estas pruebas fijan: el cierre se dibuja sólo con una plantilla de
+     `forms`; las respuestas viajan a la IA en palabras y sin el odontograma;
+     completar encadena cerrar → diagnóstico → orden en ese orden, cada paso
+     con su aviso; y un fallo frena lo que sigue sin deshacer lo hecho ni
+     contar la ficha como fallida. */
+
+  /** base64url sobre UTF-8, como el token real. */
+  function jwt(payload: Record<string, unknown>): string {
+    const b64 = (o: unknown) => {
+      const bytes = new TextEncoder().encode(JSON.stringify(o));
+      return btoa(String.fromCharCode(...bytes))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    };
+    return `${b64({ alg: 'HS256' })}.${b64(payload)}.firma`;
+  }
+
+  describe('el cierre de la ficha (D4)', () => {
+    const CIERRE: CierreDelFormulario = {
+      diagnostico: 'dx-1',
+      orden: { codeConceptId: 'st-1', category: 'LAB', categoryConceptId: 'cat-lab' },
+    };
+
+    beforeEach(() => {
+      // Las dos altas del cierre exigen la organización de la sesión.
+      TestBed.inject(SessionStore).start({
+        accessToken: jwt({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] }),
+        refreshToken: 'r-1',
+      });
+    });
+
+    /** La señal, sin pasar por `interno`: éste ata las funciones y una señal lo es. */
+    function fijarCierre(cierre: CierreDelFormulario): void {
+      (componente as unknown as Record<string, WritableSignal<CierreDelFormulario>>)['cierre'].set(
+        cierre,
+      );
+    }
+
+    /** Abre, captura y cierra la instancia de la ficha, como el motor de `forms`. */
+    function guardarLaFicha(): void {
+      http
+        .expectOne((r) => r.url === '/forms/instances' && r.method === 'POST')
+        .flush({ id: 'inst-1', schemaVersion: 1, state: 'open' });
+      http.expectOne('/forms/instances/inst-1/values').flush({ ids: ['v-1'] });
+      // Nada del cierre se pide antes de que la ficha esté cerrada.
+      http.expectNone('/clinical/conditions');
+      http.expectOne('/forms/instances/inst-1/close').flush({ ok: true });
+    }
+
+    it('se dibuja sólo con una plantilla de forms elegida, antes de las acciones', () => {
+      peticionDePlantillas().flush([PLANTILLA]);
+      fixture.detectChanges();
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+      fixture.detectChanges();
+
+      const html = fixture.nativeElement as HTMLElement;
+      const cierre = html.querySelector('app-form-conclusion-block');
+      const acciones = html.querySelector('app-form-actions');
+      expect(cierre).not.toBeNull();
+      expect(acciones).not.toBeNull();
+      expect(cierre!.compareDocumentPosition(acciones!) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+      drenarLecturasDelBloque();
+
+      interno<(id: string | null) => void>('elegirPlantilla')(PLANTILLA_HOJA_LIBRE);
+      fixture.detectChanges();
+      expect(html.querySelector('app-form-conclusion-block')).toBeNull();
+      drenarLecturasDelBloque();
+
+      interno<(id: string | null) => void>('elegirPlantilla')(BLOQUE_DIAGNOSTICO);
+      fixture.detectChanges();
+      expect(html.querySelector('app-form-conclusion-block')).toBeNull();
+      drenarLecturasDelBloque();
+    });
+
+    it('las respuestas viajan a la IA en palabras: pregunta = campo, respuesta = valor', () => {
+      peticionDePlantillas().flush([PLANTILLA]);
+      const actualizar = interno<(fieldId: string, valor: unknown) => void>('actualizarValor');
+
+      expect(interno<() => unknown[]>('respuestasParaLaIa')()).toEqual([]);
+      actualizar('f-1', 'Buena');
+      actualizar('f-2', true);
+
+      expect(interno<() => unknown[]>('respuestasParaLaIa')()).toEqual([
+        { question: 'Tolerancia al ejercicio', answer: 'Buena' },
+        { question: 'Edema', answer: 'Sí' },
+      ]);
+    });
+
+    it('el odontograma no viaja a la IA: es un mapa de piezas, no una respuesta', () => {
+      peticionDePlantillas().flush([PLANTILLA_ODONTO]);
+      interno<(fdi: string) => void>('abrirPieza')('16');
+      interno<(fieldId: string, codigo: string) => void>('fijarEstado')('f-odo', '1');
+
+      const respuestas = interno<() => { question: string }[]>('respuestasParaLaIa')();
+      expect(respuestas.some((r) => r.question === 'Odontograma')).toBe(false);
+    });
+
+    it('completar encadena cerrar la ficha → diagnóstico tentativo → orden, en ese orden y con sus avisos', () => {
+      const exito = vi.spyOn(TestBed.inject(ToastService), 'success');
+      peticionDePlantillas().flush([PLANTILLA]);
+      interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-1', 'Buena');
+      fijarCierre(CIERRE);
+      let releido = 0;
+      componente.cambio.subscribe(() => (releido += 1));
+
+      interno<() => void>('completar')();
+      guardarLaFicha();
+
+      const alta = http.expectOne((r) => r.url === '/clinical/conditions' && r.method === 'POST');
+      expect(alta.request.body).toEqual({
+        custodianTenantId: 't-1',
+        patientProfileId: 'pac-1',
+        codeConceptId: 'dx-1',
+        encounterId: 'enc-1',
+        noteText: 'Del formulario «Ficha de cardiología»',
+      });
+      // La orden espera al diagnóstico: en serie, no en paralelo.
+      http.expectNone('/clinical/service-requests');
+      alta.flush({
+        id: 'cond-1',
+        patientProfileId: 'pac-1',
+        clinicalStatus: 'ACTIVE',
+        verificationStatus: 'PROVISIONAL',
+        clinicalCourse: null,
+        createdAt: '2026-09-26T10:00:00.000Z',
+      });
+
+      const orden = http.expectOne(
+        (r) => r.url === '/clinical/service-requests' && r.method === 'POST',
+      );
+      expect(orden.request.body).toEqual({
+        custodianTenantId: 't-1',
+        patientProfileId: 'pac-1',
+        codeConceptId: 'st-1',
+        encounterId: 'enc-1',
+        category: 'LAB',
+        categoryConceptId: 'cat-lab',
+      });
+      orden.flush({
+        id: 'ord-1',
+        status: 'st-pending',
+        intent: 'order',
+        createdAt: '2026-09-26T10:00:01.000Z',
+      });
+
+      // Recién ahora el expediente se relee y el bloque pasa a lectura.
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+      expect(releido).toBe(1);
+      expect(exito.mock.calls.map(([, titulo]) => titulo)).toEqual([
+        'Formulario completado',
+        'Diagnóstico tentativo registrado',
+        'Orden de análisis pedida',
+      ]);
+      expect(interno<() => CierreDelFormulario>('cierre')()).toEqual({
+        diagnostico: null,
+        orden: null,
+      });
+      expect(interno<() => readonly string[]>('fallosDelCierre')()).toEqual([]);
+    });
+
+    it('si falla el diagnóstico, la orden no se pide; la ficha queda guardada y se dice qué faltó', () => {
+      const error = vi.spyOn(TestBed.inject(ToastService), 'error');
+      peticionDePlantillas().flush([PLANTILLA]);
+      interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-1', 'Buena');
+      fijarCierre(CIERRE);
+      let releido = 0;
+      componente.cambio.subscribe(() => (releido += 1));
+
+      interno<() => void>('completar')();
+      guardarLaFicha();
+
+      http
+        .expectOne((r) => r.url === '/clinical/conditions' && r.method === 'POST')
+        .flush({ message: 'Se cayó' }, { status: 500, statusText: 'Server Error' });
+      // Se frena: pedir la orden de un diagnóstico que no se registró es escribir a medias.
+      http.expectNone('/clinical/service-requests');
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+
+      expect(releido).toBe(1);
+      expect(error).toHaveBeenCalledTimes(1);
+      const fallos = interno<() => readonly string[]>('fallosDelCierre')();
+      expect(fallos).toHaveLength(2);
+      expect(fallos[0]).toContain('No se registró el diagnóstico tentativo');
+      expect(fallos[1]).toContain('la orden de análisis');
+      // La ficha no falló: el aviso es ámbar y el rojo no aparece.
+      expect(interno<() => string | null>('errorDeCompletado')()).toBeNull();
+      fixture.detectChanges();
+      const html = fixture.nativeElement as HTMLElement;
+      expect(html.querySelector('[data-testid="formulario-cierre-fallos"]')).not.toBeNull();
+      expect(html.querySelector('[data-testid="formulario-especialidad-error"]')).toBeNull();
+      drenarLecturasDelBloque();
+    });
+
+    it('sin organización en la sesión no se registra nada del cierre, y se dice', () => {
+      TestBed.inject(SessionStore).clear();
+      const error = vi.spyOn(TestBed.inject(ToastService), 'error');
+      peticionDePlantillas().flush([PLANTILLA]);
+      interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-1', 'Buena');
+      fijarCierre(CIERRE);
+
+      interno<() => void>('completar')();
+      guardarLaFicha();
+      http.expectNone('/clinical/conditions');
+      http.expectNone('/clinical/service-requests');
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+
+      expect(error).toHaveBeenCalledTimes(1);
+      expect(interno<() => readonly string[]>('fallosDelCierre')()[0]).toContain('organización');
+    });
   });
 });

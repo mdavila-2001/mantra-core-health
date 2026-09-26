@@ -1,0 +1,18 @@
+/*
+ * Lo propio del armazón que la hoja global (`styles/alovida.css`) no trae.
+ *
+ * N-01 · a 375 px el encabezado lleva la hamburguesa, la flecha de «Volver»
+ * (en toda pantalla que no es el panel) y seis o siete acciones: campana,
+ * tema, Tutoriales, Chats, Ajustes, cuenta y, si hay, el selector de persona.
+ * La hoja global ya junta las acciones entre sí (`.app-header__derecha`, gap
+ * de 4 px a ≤ 400 px); con la flecha el avatar igual se salía 1 px de la
+ * pantalla y la página se podía correr de costado. Se achican **sólo los
+ * espacios** del encabezado —entre sus tres bloques y su margen lateral—:
+ * ninguna acción se esconde y ninguna pierde su área táctil.
+ */
+@media (max-width: 400px) {
+  .app-header {
+    gap: var(--e1);
+    padding-inline: var(--e2);
+  }
+}

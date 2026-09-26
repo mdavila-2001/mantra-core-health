@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { SchedulingClient } from './scheduling.client';
+import { esReconsulta, motivoDeReconsulta } from './scheduling.types';
 import type {
   AgendaResourceCreated,
   AgendaSlot,
@@ -661,5 +662,175 @@ describe('SchedulingClient', () => {
     });
 
     expect(recibida?.delayNotice).toBeUndefined();
+  });
+});
+
+/**
+ * `createDirectAppointment` con `followUpOf` (C4).
+ *
+ * El cuerpo de este cliente se arma **campo por campo**, así que lo que el
+ * contrato declare y la lista no repita se descarta en silencio: la petición
+ * sale sin el campo y nada falla. Es el defecto que ya dejó la modalidad sin
+ * escribir, y por eso acá se afirma el cuerpo completo con `toEqual` y no la
+ * presencia de una clave.
+ */
+describe('SchedulingClient · reconsulta', () => {
+  let client: SchedulingClient;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    client = TestBed.inject(SchedulingClient);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  const CITA = {
+    patientProfileId: 'pp-1',
+    resourceId: 'r-1',
+    startAt: '2026-10-08T13:00:00.000Z',
+    durationMinutes: 30,
+    reasonText: 'Reconsulta: control de presión',
+  } as const;
+
+  it('manda followUpOf con sus dos campos y nada más', () => {
+    client
+      .createDirectAppointment({
+        ...CITA,
+        followUpOf: { bookingId: 'b-origen', encounterId: 'enc-1' },
+      })
+      .subscribe();
+
+    const req = http.expectOne('/scheduling/appointments/direct');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      patientProfileId: 'pp-1',
+      resourceId: 'r-1',
+      startAt: '2026-10-08T13:00:00.000Z',
+      durationMinutes: 30,
+      reasonText: 'Reconsulta: control de presión',
+      followUpOf: { bookingId: 'b-origen', encounterId: 'enc-1' },
+    });
+
+    req.flush({
+      bookingId: 'b-nueva',
+      bookableSlotId: 's-nuevo',
+      statusConceptId: 'c-conf',
+      retractedSlots: 0,
+    });
+  });
+
+  it('un encuentro ausente viaja como null explícito, que es lo que el contrato declara', () => {
+    client
+      .createDirectAppointment({ ...CITA, followUpOf: { bookingId: 'b-origen', encounterId: null } })
+      .subscribe();
+
+    const req = http.expectOne('/scheduling/appointments/direct');
+    expect(req.request.body).toMatchObject({
+      followUpOf: { bookingId: 'b-origen', encounterId: null },
+    });
+
+    req.flush({
+      bookingId: 'b-nueva',
+      bookableSlotId: 's-nuevo',
+      statusConceptId: 'c-conf',
+      retractedSlots: 0,
+    });
+  });
+
+  it('sin followUpOf la clave NO se declara: una cita puntual sigue siendo la de antes', () => {
+    client.createDirectAppointment(CITA).subscribe();
+
+    const req = http.expectOne('/scheduling/appointments/direct');
+    expect('followUpOf' in (req.request.body as object)).toBe(false);
+
+    req.flush({
+      bookingId: 'b-nueva',
+      bookableSlotId: 's-nuevo',
+      statusConceptId: 'c-conf',
+      retractedSlots: 0,
+    });
+  });
+
+  it('searchBookings devuelve followUpOf y followUpBookingId tal como llegan', () => {
+    let citas: readonly Booking[] = [];
+    client.searchBookings().subscribe((p) => (citas = p.items));
+
+    http.expectOne((r) => r.url === '/scheduling/bookings').flush({
+      items: [
+        {
+          id: 'b-reconsulta',
+          statusConceptId: 'c-conf',
+          createdAt: '2026-09-25T10:00:00.000Z',
+          followUpOf: { bookingId: 'b-origen', encounterId: null },
+          followUpBookingId: null,
+        },
+        {
+          id: 'b-origen',
+          statusConceptId: 'c-done',
+          createdAt: '2026-09-01T10:00:00.000Z',
+          followUpOf: null,
+          followUpBookingId: 'b-reconsulta',
+        },
+      ],
+      count: 2,
+      limit: 100,
+      truncated: false,
+    });
+
+    expect(citas[0].followUpOf).toEqual({ bookingId: 'b-origen', encounterId: null });
+    expect(citas[1].followUpBookingId).toBe('b-reconsulta');
+    // Y las fechas siguen convirtiéndose: los campos nuevos no atropellan nada.
+    expect(citas[0].createdAt).toBeInstanceOf(Date);
+  });
+
+  it('getBooking también los devuelve, y esReconsulta los interpreta', () => {
+    let cita: Booking | undefined;
+    client.getBooking('b-reconsulta').subscribe((b) => (cita = b));
+
+    http.expectOne('/scheduling/bookings/b-reconsulta').flush({
+      id: 'b-reconsulta',
+      statusConceptId: 'c-conf',
+      createdAt: '2026-09-25T10:00:00.000Z',
+      followUpOf: { bookingId: 'b-origen', encounterId: 'enc-1' },
+      followUpBookingId: null,
+    });
+
+    expect(esReconsulta(cita!)).toBe(true);
+    expect(cita!.followUpOf?.encounterId).toBe('enc-1');
+  });
+
+  it('una cita sin el campo no es una reconsulta, y eso no es un dato faltante', () => {
+    let cita: Booking | undefined;
+    client.getBooking('b-comun').subscribe((b) => (cita = b));
+
+    http
+      .expectOne('/scheduling/bookings/b-comun')
+      .flush({ id: 'b-comun', statusConceptId: 'c-conf', createdAt: '2026-09-25T10:00:00.000Z' });
+
+    expect(esReconsulta(cita!)).toBe(false);
+  });
+});
+
+describe('motivoDeReconsulta', () => {
+  it('antepone «Reconsulta: » al motivo de la consulta de origen', () => {
+    expect(motivoDeReconsulta('Control de presión arterial')).toBe(
+      'Reconsulta: Control de presión arterial',
+    );
+  });
+
+  it('no duplica el prefijo cuando el origen ya era una reconsulta', () => {
+    expect(motivoDeReconsulta('Reconsulta: Control de presión arterial')).toBe(
+      'Reconsulta: Control de presión arterial',
+    );
+  });
+
+  it('sin motivo de origen deja la palabra sola, que igual dice algo', () => {
+    expect(motivoDeReconsulta(null)).toBe('Reconsulta');
+    expect(motivoDeReconsulta(undefined)).toBe('Reconsulta');
+    expect(motivoDeReconsulta('   ')).toBe('Reconsulta');
   });
 });

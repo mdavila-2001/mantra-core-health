@@ -1,0 +1,270 @@
+<app-card variant="outlined" padding="lg" class="reconsulta">
+  <h2 class="reconsulta__titulo">Reconsulta</h2>
+
+  <app-view-state-host [state]="origen()" (retry)="recargar()">
+    <!-- ─── Sin cita de origen ────────────────────────────────────────────
+         No es un error ni una lista vacía: es que se entró por el expediente.
+         Se dice de dónde sale una reconsulta en vez de ofrecer un formulario
+         que el servidor va a rechazar. -->
+    @if (sinCitaDeOrigen()) {
+      <app-alert tone="info" title="La reconsulta se agenda desde una cita" data-testid="reconsulta-sin-cita">
+        Abrí la consulta desde «Mis citas» —o desde tu agenda, con «Iniciar la consulta»— y acá vas
+        a poder citar de nuevo a la persona por este mismo motivo.
+      </app-alert>
+    } @else if (consulta(); as origen) {
+      <!-- ─── Ya agendada ─────────────────────────────────────────────────
+           Una consulta tiene una reconsulta, no dos. En vez de ofrecer un
+           formulario que responde 409, se muestra la que está y el camino
+           para moverla. -->
+      @if (yaAgendada(); as reconsulta) {
+        <div class="reconsulta__agendada" data-testid="reconsulta-ya-agendada">
+          <p class="reconsulta__agendada-titulo">Ya la citaste de nuevo</p>
+          <p class="reconsulta__agendada-cuando">
+            @if (reconsulta.startAt) {
+              {{ reconsulta.startAt | date: "EEEE d 'de' MMMM 'a las' HH:mm" }}
+            } @else {
+              La reconsulta quedó sin horario asignado.
+            }
+          </p>
+          @if (reconsulta.reasonText) {
+            <p class="reconsulta__agendada-motivo">{{ reconsulta.reasonText }}</p>
+          }
+          <!-- «Reprogramar» lleva a la agenda y no mueve nada desde acá: mover
+               un turno es la operación de la agenda, con su motivo y su aviso
+               al paciente. -->
+          <a app-button variant="outline" size="sm" [routerLink]="rutaDeConsultas">
+            Reprogramar en Consultas médicas
+          </a>
+        </div>
+      } @else {
+        <!-- ─── Éxito ─────────────────────────────────────────────────────
+             Con la fecha y la hora: «listo» sin decir para cuándo obliga a ir
+             a buscarlo a otra pantalla. -->
+        @if (agendadaAhora(); as recienAgendada) {
+          <app-alert tone="success" title="Reconsulta agendada" data-testid="reconsulta-exito">
+            {{ recienAgendada.desde | date: "EEEE d 'de' MMMM 'a las' HH:mm" }}. La persona ya la ve
+            en «Mis citas».
+            <a app-button alert-actions variant="ghost" size="sm" [routerLink]="rutaDeConsultas">
+              Ver en Consultas médicas
+            </a>
+          </app-alert>
+        }
+
+        @if (avisoDeDuplicado(); as aviso) {
+          <app-alert tone="warning" title="Ya hay una reconsulta" data-testid="reconsulta-duplicada">
+            {{ aviso }}
+          </app-alert>
+        }
+
+        @if (errorDelRegistro(); as mensaje) {
+          <app-alert tone="error" data-testid="reconsulta-error">{{ mensaje }}</app-alert>
+        }
+
+        <p class="reconsulta__de-la-cita">
+          @if (origen.cuando) {
+            De la consulta del {{ origen.cuando | date: "d 'de' MMMM 'de' y" }}.
+          }
+          Elegí el día y el horario que acordaste con la persona.
+        </p>
+
+        <form class="reconsulta__formulario" (submit)="$event.preventDefault()">
+          <!-- El día se elige en el calendario del mes y no en un campo de
+               fecha: la pregunta real no es «qué día quiero» sino «qué día
+               tengo lugar», y eso lo contesta el color de la casilla. Verde,
+               quedan horarios; rojo, ese día ya no. -->
+          <app-form-field
+            label="Día de la reconsulta"
+            hint="Desde mañana y hasta noventa días. En verde los días con horarios libres; en rojo, los que ya no tienen."
+          >
+            <div class="reconsulta__calendario" data-testid="reconsulta-calendario">
+              <header class="reconsulta__mes">
+                <button
+                  app-button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  data-testid="reconsulta-mes-anterior"
+                  [disabled]="!puedeRetroceder()"
+                  (clicked)="mesAnterior()"
+                >
+                  ← Mes anterior
+                </button>
+                <p class="reconsulta__mes-titulo" aria-live="polite">{{ tituloDelMes() }}</p>
+                <button
+                  app-button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  data-testid="reconsulta-mes-siguiente"
+                  [disabled]="!puedeAvanzar()"
+                  (clicked)="mesSiguiente()"
+                >
+                  Mes siguiente →
+                </button>
+              </header>
+
+              <table class="reconsulta__grilla">
+                <caption class="sr-only">
+                  Días del mes con los horarios que te quedan libres.
+                </caption>
+                <thead>
+                  <tr>
+                    @for (dia of encabezados; track dia.corto) {
+                      <th scope="col">
+                        <abbr [title]="dia.largo">{{ dia.corto }}</abbr>
+                      </th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (semana of semanas(); track $index) {
+                    <tr>
+                      @for (celda of semana; track celda.fecha.getTime()) {
+                        <td class="reconsulta__celda">
+                          @if (celda.delMes) {
+                            <!-- Los días en rojo quedan deshabilitados: tocarlos
+                                 sólo podría llevar a una lista vacía. -->
+                            <button
+                              type="button"
+                              class="reconsulta__dia"
+                              data-testid="reconsulta-dia"
+                              [attr.data-estado]="celda.estado"
+                              [class.reconsulta__dia--elegido]="celda.seleccionado"
+                              [class.reconsulta__dia--hoy]="celda.esHoy"
+                              [attr.aria-pressed]="celda.seleccionado"
+                              [attr.aria-label]="celda.etiqueta"
+                              [disabled]="celda.estado !== 'libre'"
+                              (click)="elegirDia(celda)"
+                            >
+                              <span class="reconsulta__dia-numero" aria-hidden="true">{{
+                                celda.numero
+                              }}</span>
+                              <!-- El número de horarios, en palabras y siempre
+                                   visible: el color solo no alcanza. -->
+                              <span class="reconsulta__dia-cuenta" aria-hidden="true">
+                                @if (celda.estado === 'fuera') {
+                                  —
+                                } @else if (celda.libres === 0) {
+                                  Sin lugar
+                                } @else if (celda.libres === 1) {
+                                  1 horario
+                                } @else {
+                                  {{ celda.libres }} horarios
+                                }
+                              </span>
+                            </button>
+                          } @else {
+                            <span class="reconsulta__dia-fuera" aria-hidden="true">{{
+                              celda.numero
+                            }}</span>
+                          }
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+
+              @if (cargandoCupos()) {
+                <p class="reconsulta__buscando" role="status">Buscando los horarios del mes…</p>
+              }
+
+              <p class="reconsulta__leyenda">
+                <span class="reconsulta__marca" data-estado="libre"></span> Con horarios libres
+                <span class="reconsulta__marca" data-estado="sin-cupos"></span> Sin lugar ese día
+              </p>
+            </div>
+          </app-form-field>
+
+          @if (dia()) {
+            @if (sinCupos()) {
+              <app-alert tone="info" title="Ese día no te queda ningún horario" data-testid="reconsulta-sin-cupos">
+                Probá con otro día: sólo se ofrecen los ratos que siguen libres en tu agenda.
+              </app-alert>
+            } @else {
+              <!-- Mañana y tarde: es como se piensa una jornada de consultorio,
+                   y una lista corrida de veinte horarios obliga a leerlos todos
+                   para encontrar «a la tarde». Van en tarjetas como las de la
+                   agenda, no en radios: es la misma decisión —«a qué hora lo
+                   atiendo»— y se toma mirando los ratos. -->
+              <app-form-field label="Horario" hint="Sólo los que te quedan libres.">
+                <div data-testid="reconsulta-cupo">
+                  @if (franjas().manana.length > 0) {
+                    <p class="reconsulta__franja">Mañana</p>
+                    <ul class="reconsulta__cupos">
+                      @for (cupo of franjas().manana; track cupo.id) {
+                        <li>
+                          <ng-container
+                            [ngTemplateOutlet]="tarjetaDeCupo"
+                            [ngTemplateOutletContext]="{ $implicit: cupo }"
+                          />
+                        </li>
+                      }
+                    </ul>
+                  }
+                  @if (franjas().tarde.length > 0) {
+                    <p class="reconsulta__franja">Tarde</p>
+                    <ul class="reconsulta__cupos">
+                      @for (cupo of franjas().tarde; track cupo.id) {
+                        <li>
+                          <ng-container
+                            [ngTemplateOutlet]="tarjetaDeCupo"
+                            [ngTemplateOutletContext]="{ $implicit: cupo }"
+                          />
+                        </li>
+                      }
+                    </ul>
+                  }
+                </div>
+              </app-form-field>
+            }
+          }
+
+          <app-form-field
+            label="Motivo de la reconsulta"
+            hint="Viene del motivo de esta consulta. Cambialo si van a ver otra cosa."
+          >
+            <app-textarea
+              data-testid="reconsulta-motivo"
+              [rows]="2"
+              [value]="motivo()"
+              (valueChange)="escribirMotivo($event)"
+            />
+          </app-form-field>
+
+          <button
+            app-button
+            variant="primary"
+            data-testid="reconsulta-guardar"
+            [isLoading]="agendando()"
+            [disabled]="!puedeAgendar()"
+            (clicked)="agendar()"
+          >
+            Agendar la reconsulta
+          </button>
+        </form>
+      }
+    }
+  </app-view-state-host>
+</app-card>
+
+<!-- Una tarjeta de horario. Es un botón y no un radio dibujado: se toca toda,
+     dice con `aria-pressed` si es la elegida, y se llega con Tab como a
+     cualquier otro control del formulario. -->
+<ng-template #tarjetaDeCupo let-cupo>
+  <button
+    type="button"
+    class="reconsulta__cupo"
+    data-testid="reconsulta-cupo-opcion"
+    [class.reconsulta__cupo--elegido]="cupoElegido() === cupo.id"
+    [attr.aria-pressed]="cupoElegido() === cupo.id"
+    [attr.aria-label]="'Elegir las ' + cupo.etiqueta"
+    (click)="elegirCupo(cupo)"
+  >
+    <span class="reconsulta__cupo-hora">{{ cupo.horario }}</span>
+    <span class="reconsulta__cupo-duracion">{{ cupo.minutos }} min</span>
+    @if (cupo.sede) {
+      <span class="reconsulta__cupo-sede">{{ cupo.sede }}</span>
+    }
+  </button>
+</ng-template>
