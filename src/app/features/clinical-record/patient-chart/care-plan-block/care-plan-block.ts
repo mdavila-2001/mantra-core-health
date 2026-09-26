@@ -26,6 +26,7 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
+import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
 import { mensajeDeEscritura } from '../../mensaje-de-escritura';
 
@@ -86,7 +87,18 @@ interface ActividadEnCurso {
  */
 @Component({
   selector: 'app-care-plan-block',
-  imports: [Alert, AppButton, Card, AppInput, DatePicker, FormActions, FormField, Select, Textarea],
+  imports: [
+    FormResponsePicker,
+    Alert,
+    AppButton,
+    Card,
+    AppInput,
+    DatePicker,
+    FormActions,
+    FormField,
+    Select,
+    Textarea,
+  ],
   providers: [{ provide: DRAFT_BLOCK, useExisting: forwardRef(() => CarePlanBlock) }],
   templateUrl: './care-plan-block.html',
   styleUrl: './care-plan-block.css',
@@ -102,6 +114,19 @@ export class CarePlanBlock implements DraftBlock {
 
   /** El encuentro en curso, cuando el bloque vive dentro de la atención. */
   readonly encounterId = input<string | null>(null);
+
+  /**
+   * En la cita, lo que se emite cuelga sí o sí de una respuesta del formulario
+   * médico: sin ella el botón no se habilita. En el expediente no se exige.
+   */
+  readonly exigeRespuesta = input(false);
+
+  /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
+  protected readonly respuestaDelFormulario = signal<string | null>(null);
+
+  protected readonly faltaRespuesta = computed(
+    () => this.exigeRespuesta() && this.respuestaDelFormulario() === null,
+  );
 
   /**
    * Los diagnósticos de la persona, ya traducidos por el expediente.
@@ -208,6 +233,7 @@ export class CarePlanBlock implements DraftBlock {
   /** La meta y el motivo son lo que esta pantalla exige; el contrato sólo pide el paciente. */
   protected readonly puedeRegistrar = computed(
     () =>
+      !this.faltaRespuesta() &&
       this.meta().trim() !== '' &&
       this.hayMotivo() &&
       !this.vigenciaInvalida() &&
@@ -260,6 +286,9 @@ export class CarePlanBlock implements DraftBlock {
         ...(desde === null ? {} : { startDate: desde }),
         ...(hasta === null ? {} : { endDate: hasta }),
         ...(encuentro === null ? {} : { encounterId: encuentro }),
+        ...(this.respuestaDelFormulario() === null
+          ? {}
+          : { formInstanceId: this.respuestaDelFormulario() ?? '' }),
         ...(diagnostico === null ? {} : { conditionId: diagnostico }),
         ...(motivo === '' ? {} : { reasonText: motivo }),
         ...(autor === null ? {} : { authorProfileId: autor }),

@@ -192,7 +192,7 @@
 </app-view-state-host>
 
 <!-- ─── El formulario de la casilla elegida ──────────────────────────────
-     Un solo modal para las diez, con el bloque elegido adentro. Cada bloque
+     Un solo modal para las ocho, con el bloque elegido adentro. Cada bloque
      es EL MISMO que usa el expediente, atado al encuentro en curso cuando lo
      hay y a una cita ya existente cuando no. La última —Pagos— no escribe:
      muestra lo cobrado. -->
@@ -231,6 +231,7 @@
         <app-medication-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
+          [exigeRespuesta]="true"
           [exigeEncuentro]="false"
           [citas]="citas()"
           [recetas]="recetas()"
@@ -240,18 +241,11 @@
           (descargar)="descargarReceta($event)"
         />
       }
-      @case ('notas') {
-        <app-medical-note-block
-          [patientProfileId]="pacienteDeLaFicha()"
-          [encounterId]="encuentroActual()"
-          [citas]="citas()"
-          (guardada)="recargar()"
-        />
-      }
       @case ('ordenes') {
         <app-analysis-order-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
+          [exigeRespuesta]="true"
           (cambio)="altaRegistrada()"
         />
       }
@@ -259,6 +253,7 @@
         <app-follow-up-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
+          [exigeRespuesta]="true"
           [bookingId]="originBookingId()"
           (cambio)="altaRegistrada()"
         />
@@ -267,15 +262,8 @@
         <app-care-plan-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
+          [exigeRespuesta]="true"
           [diagnosticos]="diagnosticosParaElPlan()"
-          (cambio)="altaRegistrada()"
-        />
-      }
-      @case ('documentos') {
-        <app-document-block
-          [patientProfileId]="pacienteDeLaFicha()"
-          [encounterId]="encuentroActual()"
-          [citas]="citas()"
           (cambio)="altaRegistrada()"
         />
       }
