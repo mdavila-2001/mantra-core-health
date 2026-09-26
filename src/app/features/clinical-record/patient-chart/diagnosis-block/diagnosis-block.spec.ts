@@ -36,9 +36,7 @@ const CATALOGO = {
   definitionId: 'def-1',
   valueSetId: 'vs-1',
   allowCustomValue: false,
-  options: [
-    { conceptId: 'dx-hta', code: 'I10', display: 'Hipertensión esencial', ordinal: 1 },
-  ],
+  options: [{ conceptId: 'dx-hta', code: 'I10', display: 'Hipertensión esencial', ordinal: 1 }],
 };
 
 /** Categoría, severidad y lateralidad: los tres catálogos opcionales. */
@@ -72,6 +70,19 @@ const RESPUESTA = {
   verificationStatus: 'st-confirmada',
   clinicalCourse: null,
   createdAt: '2026-08-13T12:00:00.000Z',
+};
+
+/** El resumen clínico sin diagnósticos: lo que la tabla de C3 lee por omisión. */
+const RESUMEN_VACIO = {
+  patientProfileId: 'p-1',
+  conditions: [],
+  allergies: [],
+  medicationRequests: [],
+  observations: [],
+  encounters: [],
+  careEpisodes: [],
+  limit: 50,
+  truncated: [],
 };
 
 /** base64url **sobre UTF-8**, como el token real. */
@@ -115,6 +126,11 @@ describe('DiagnosisBlock', () => {
    * pruebas de arriba.
    */
   afterEach(() => {
+    // La tabla de presuntivos (C3) lee el resumen al pintarse; estas pruebas
+    // son del alta y la responden vacía para que `verify()` no tropiece.
+    for (const resumen of http.match((r) => r.url === '/clinical/patients/p-1/summary')) {
+      resumen.flush(RESUMEN_VACIO);
+    }
     for (const opcional of http.match((r) => r.url === '/system-context/dynamic-enums')) {
       opcional.flush(
         opcional.request.params.get('target')?.includes('clinical_course') === true
@@ -338,10 +354,9 @@ describe('DiagnosisBlock', () => {
       http.expectOne('/clinical/conditions').flush(RESPUESTA);
       fixture.detectChanges();
 
-      const enlazar =
-        interno<(fileId: string, conditionId: string) => { subscribe: (o: unknown) => void }>(
-          'enlazarAdjuntoAlDiagnostico',
-        );
+      const enlazar = interno<
+        (fileId: string, conditionId: string) => { subscribe: (o: unknown) => void }
+      >('enlazarAdjuntoAlDiagnostico');
       enlazar('file-1', 'c-1').subscribe({ next: () => undefined });
 
       http
@@ -457,10 +472,12 @@ describe('DiagnosisBlock', () => {
     señal<string>('diagnostico').set('dx-hta');
     interno<() => void>('registrar')();
 
-    http.expectOne('/clinical/conditions').flush(
-      { code: 'INTERNAL', message: 'Error interno del servidor', timestamp: '', path: '' },
-      { status: 500, statusText: 'Internal Server Error' },
-    );
+    http
+      .expectOne('/clinical/conditions')
+      .flush(
+        { code: 'INTERNAL', message: 'Error interno del servidor', timestamp: '', path: '' },
+        { status: 500, statusText: 'Internal Server Error' },
+      );
     fixture.detectChanges();
 
     expect(interno<() => string | null>('avisoDeDuplicado')()).toBeNull();
@@ -563,9 +580,7 @@ describe('DiagnosisBlock', () => {
     it('sin citas que ofrecer, el campo no se dibuja', () => {
       responderCatalogo();
 
-      expect(
-        fixture.nativeElement.querySelector('[data-testid="diagnostico-cita"]'),
-      ).toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="diagnostico-cita"]')).toBeNull();
     });
 
     it('con citas, las ofrece y marca cuál sigue en curso', () => {
@@ -575,9 +590,8 @@ describe('DiagnosisBlock', () => {
       ]);
       responderCatalogo();
 
-      const opciones = interno<() => readonly { value: string | null; label: string }[]>(
-        'opcionesDeCita',
-      )();
+      const opciones =
+        interno<() => readonly { value: string | null; label: string }[]>('opcionesDeCita')();
       expect(opciones[0]).toEqual({ value: null, label: 'Sin cita asociada' });
       expect(opciones[1]?.label).toBe('7 sept 2026, 09:00 · Control');
       expect(opciones[2]?.label).toContain('en curso');
@@ -650,5 +664,214 @@ describe('DiagnosisBlock', () => {
       señal<string>('notasClinicas').set('Paciente refiere mejoría parcial.');
       expect(componente.tieneCambiosPendientes()).toBe(true);
     });
+  });
+});
+
+/**
+ * La tabla de presuntivos (C3, 2026-09-26). Aparte del alta a propósito: el
+ * `describe` de arriba fija el formulario y responde el resumen vacío; acá el
+ * resumen trae diagnósticos y lo que se fija es cómo se leen y se deciden.
+ */
+describe('DiagnosisBlock · la tabla de presuntivos (C3)', () => {
+  const RESUMEN = {
+    ...RESUMEN_VACIO,
+    conditions: [
+      {
+        id: 'c-1',
+        codeConceptId: 'dx-hta',
+        clinicalStatusConceptId: 'st-activa',
+        verificationStatusConceptId: 'st-provisional',
+        onsetAt: '2026-09-01T00:00:00.000Z',
+        createdAt: '2026-09-20T10:00:00.000Z',
+      },
+      {
+        id: 'c-2',
+        codeConceptId: 'dx-hta',
+        clinicalStatusConceptId: 'st-activa',
+        verificationStatusConceptId: 'st-confirmada',
+        createdAt: '2026-09-10T10:00:00.000Z',
+        verification: {
+          outcome: 'CONFIRMED',
+          decidedAt: '2026-09-12T10:00:00.000Z',
+          decidedByProfileId: 'pr-1',
+          reasonText: 'Por el informe',
+          basedOn: { kind: 'ANALYSIS', serviceRequestId: 'o-1' },
+        },
+      },
+    ],
+  };
+
+  /** Los códigos que `diagnosisStateOf` necesita, con sus etiquetas. */
+  const ETIQUETAS = {
+    items: [
+      {
+        conceptId: 'dx-hta',
+        code: 'I10',
+        display: 'Hipertensión esencial',
+        codeSystemVersionId: 'v',
+      },
+      { conceptId: 'st-activa', code: 'COND-ACTIVE', display: 'Activa', codeSystemVersionId: 'v' },
+      {
+        conceptId: 'st-provisional',
+        code: 'DXV-PROVISIONAL',
+        display: 'Provisional',
+        codeSystemVersionId: 'v',
+      },
+      {
+        conceptId: 'st-confirmada',
+        code: 'DXV-CONFIRMED',
+        display: 'Confirmado',
+        codeSystemVersionId: 'v',
+      },
+    ],
+    count: 4,
+    limit: 200,
+  };
+
+  let fixture: ComponentFixture<DiagnosisBlock>;
+  let componente: DiagnosisBlock;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    http = TestBed.inject(HttpTestingController);
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] }),
+      refreshToken: 'r-1',
+    });
+    fixture = TestBed.createComponent(DiagnosisBlock);
+    componente = fixture.componentInstance;
+    fixture.componentRef.setInput('patientProfileId', 'p-1');
+    fixture.componentRef.setInput('encounterId', 'enc-1');
+  });
+
+  afterEach(() => {
+    for (const opcional of http.match((r) => r.url === '/system-context/dynamic-enums')) {
+      opcional.flush(
+        opcional.request.params.get('target')?.includes('clinical_course') === true
+          ? CATALOGO_DE_CURSO
+          : CATALOGO_OPCIONAL,
+      );
+    }
+    http.verify();
+  });
+
+  function interno<T>(nombre: string): T {
+    const valor = (componente as unknown as Record<string, unknown>)[nombre];
+    return (typeof valor === 'function' ? valor.bind(componente) : valor) as T;
+  }
+
+  function elemento(): HTMLElement {
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  function porTestId(id: string): HTMLElement | null {
+    return elemento().querySelector(`[data-testid="${id}"]`);
+  }
+
+  /** Pinta el bloque: catálogo del alta, resumen y etiquetas de la tabla. */
+  function cargar(resumen: unknown = RESUMEN): void {
+    fixture.detectChanges();
+    http.expectOne((r) => r.params.get('target') === TARGET_DIAGNOSTICO).flush(CATALOGO);
+    http.expectOne((r) => r.url === '/clinical/patients/p-1/summary').flush(resumen as object);
+    fixture.detectChanges();
+    for (const etiquetas of http.match((r) => r.url === '/terminology/concepts')) {
+      etiquetas.flush(ETIQUETAS);
+    }
+    fixture.detectChanges();
+  }
+
+  it('lista los diagnósticos con su estado, y sólo el presuntivo se puede confirmar o rechazar', () => {
+    cargar();
+
+    expect(porTestId('diagnostico-tabla')).not.toBeNull();
+    expect(porTestId('diagnostico-fila-c-1')?.textContent).toContain('Hipertensión esencial');
+    expect(elemento().textContent).toContain('En estudio');
+    expect(elemento().textContent).toContain('Enfermedad activa');
+    // La evidencia de la decisión ya tomada, en dos palabras.
+    expect(elemento().textContent).toContain('Orden · Por el informe');
+    expect(porTestId('diagnostico-confirmar-c-1')).not.toBeNull();
+    expect(porTestId('diagnostico-rechazar-c-1')).not.toBeNull();
+    expect(porTestId('diagnostico-confirmar-c-2')).toBeNull();
+    expect(porTestId('diagnostico-rechazar-c-2')).toBeNull();
+  });
+
+  it('sin diagnósticos lo dice, y el alta sigue disponible', () => {
+    cargar(RESUMEN_VACIO);
+
+    expect(elemento().textContent).toContain('todavía no tiene diagnósticos registrados');
+    expect(elemento().querySelector('form')).not.toBeNull();
+  });
+
+  it('si la lectura del resumen falla, la tabla lo cuenta y el alta sigue disponible', () => {
+    fixture.detectChanges();
+    http.expectOne((r) => r.params.get('target') === TARGET_DIAGNOSTICO).flush(CATALOGO);
+    http
+      .expectOne((r) => r.url === '/clinical/patients/p-1/summary')
+      .flush(
+        {
+          statusCode: 500,
+          code: 'INTERNAL',
+          message: 'Se rompió',
+          error: 'Error',
+          requestId: 'req-9',
+        },
+        { status: 500, statusText: 'Internal Server Error' },
+      );
+    fixture.detectChanges();
+
+    expect(interno<() => { status: string }>('filas')().status).not.toBe('ready');
+    expect(interno<() => { status: string }>('filas')().status).not.toBe('loading');
+    expect(elemento().querySelector('form')).not.toBeNull();
+  });
+
+  it('confirmar abre el diálogo y, decidido, relee la lista y avisa al expediente', () => {
+    cargar();
+    let avisos = 0;
+    componente.cambio.subscribe(() => (avisos += 1));
+
+    porTestId('diagnostico-confirmar-c-1')!.click();
+    fixture.detectChanges();
+
+    expect(elemento().querySelector('app-diagnosis-verify-dialog')).not.toBeNull();
+    // El diálogo lee el circuito y las notas de la persona; acá se responden vacíos.
+    for (const lectura of http.match((r) => r.url === '/diagnostics/patients/p-1/orders')) {
+      lectura.flush({ patientProfileId: 'p-1', orders: [], reports: [], limit: 50, truncated: [] });
+    }
+    for (const lectura of http.match((r) => r.url === '/charts/notes')) {
+      lectura.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+    }
+    fixture.detectChanges();
+
+    const decidida = {
+      ...RESUMEN.conditions[0]!,
+      verificationStatusConceptId: 'st-confirmada',
+      onsetAt: new Date('2026-09-01T00:00:00.000Z'),
+      createdAt: new Date('2026-09-20T10:00:00.000Z'),
+      verification: {
+        outcome: 'CONFIRMED' as const,
+        decidedAt: '2026-09-26T10:00:00.000Z',
+        decidedByProfileId: 'pr-1',
+        reasonText: 'Cuadro compatible',
+        basedOn: null,
+      },
+    };
+    interno<(c: unknown) => void>('alVerificar')(decidida);
+    fixture.detectChanges();
+
+    expect(elemento().querySelector('app-diagnosis-verify-dialog')).toBeNull();
+    http
+      .expectOne((r) => r.url === '/clinical/patients/p-1/summary')
+      .flush({ ...RESUMEN, conditions: [decidida, RESUMEN.conditions[1]!] });
+    fixture.detectChanges();
+    for (const etiquetas of http.match((r) => r.url === '/terminology/concepts')) {
+      etiquetas.flush(ETIQUETAS);
+    }
+    fixture.detectChanges();
+
+    expect(avisos).toBe(1);
+    expect(porTestId('diagnostico-confirmar-c-1')).toBeNull();
   });
 });

@@ -67,37 +67,37 @@
 
 **CA:** Dado un paciente con un diagnóstico presuntivo, cuando quien atiende abre la casilla «Diagnóstico», entonces ve una tabla con estado «En estudio», abre «Confirmar»/«Rechazar», elige una orden, un informe o una nota como evidencia y/o escribe el motivo, completa inicio y fin esperado (o crónico) al confirmar, y la fila pasa a «Enfermedad activa» o «Rechazado»; el simulador responde 404/409/422 como el contrato.
 **DoD:** specs del handler, cliente, bloque y diálogo verdes · `corepack yarn typecheck` 0 · recorrido en navegador con capturas y doble revisión.
-**Estado:** OTRA TANDA — decisión del usuario (2026-09-25): necesita navegador y competiría por la máquina con D1
+**Estado:** HECHO — 8/8 (2026-09-26): handler, cliente, tabla y diálogo probados; recorrido en navegador real con 9 capturas en `evidencia/d3/`. Falta sólo la **doble revisión** de las capturas, que no puede ser propia (regla 35.1.6). PR a `mockup` desde `justin/diagnostico-d3-2026-09-26`
 
 ### H3.S1 — Simulador y cliente
 
 **CA:** Dado `POST /clinical/conditions/:id/verification`, cuando llega un cuerpo válido, entonces responde 200 con `verification`, `verificationStatusConceptId` y estado clínico según el resultado; e inválido responde 404 / 409 (no provisional) / 422 (sin motivo ni evidencia · evidencia ajena o inexistente · confirmar sin fin ni curso crónico).
 **DoD:** `npx ng test --include=src/app/core/mock/handlers/diagnosis-verification.handlers.spec.ts --include=src/app/core/data-access/clinical/clinical.client.spec.ts --watch=false` verde.
-**Estado:** OTRA TANDA
+**Estado:** HECHO — handler 9 passed · cliente 38 passed
 
-| ID       | Microtarea                                       | CA (binario)                                                                                          | DoD (comando de verificación)                                                                    | Estado     |
-| -------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ---------- |
-| H3.S1.M1 | `diagnosis-verification.handlers.ts` real + spec | Los 6 caminos del contrato (200 confirmar, 200 rechazar, 404, 409, 422×3)                             | spec verde                                                                                       | OTRA TANDA |
-| H3.S1.M2 | `fixtures/clinica.ts` región condiciones         | `CondicionSimulada.verification` y un presuntivo sembrado por paciente; el resto de la región intacta | `npx ng test --include=src/app/core/mock/handlers/clinical.handlers.spec.ts --watch=false` verde | OTRA TANDA |
-| H3.S1.M3 | `ClinicalClient.verifyCondition` + spec          | Mapea `NewDiagnosisVerification` → `POST …/verification` y devuelve `Condition` con fechas            | spec verde                                                                                       | OTRA TANDA |
+| ID       | Microtarea                                       | CA (binario)                                                                                          | DoD (comando de verificación)                                                                                    | Estado |
+| -------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------ |
+| H3.S1.M1 | `diagnosis-verification.handlers.ts` real + spec | Los 6 caminos del contrato (200 confirmar, 200 rechazar, 404, 409, 422×3)                             | HECHO — 9 passed: 200×3 (confirmar, crónica, rechazar), 404, 409, 422×5                                          | HECHO  |
+| H3.S1.M2 | `fixtures/clinica.ts` región condiciones         | `CondicionSimulada.verification` y un presuntivo sembrado por paciente; el resto de la región intacta | HECHO — `verification?` en `CondicionSimulada`; el seed ya trae un presuntivo por paciente (`i > 0`), no se tocó | HECHO  |
+| H3.S1.M3 | `ClinicalClient.verifyCondition` + spec          | Mapea `NewDiagnosisVerification` → `POST …/verification` y devuelve `Condition` con fechas            | HECHO — 38 passed (2 nuevas: cuerpo del contrato, fechas como `Date`)                                            | HECHO  |
 
 ### H3.S2 — Interfaz
 
 **CA:** Dado el bloque, cuando lista los diagnósticos, entonces muestra tabla con Diagnóstico · Estado (`diagnosisStateOf`) · Evidencia · Acciones; y el diálogo impide enviar sin motivo ni evidencia y sin fin/crónico al confirmar (espejo del 422).
 **DoD:** `npx ng test --include=src/app/features/clinical-record/patient-chart/diagnosis-block/**/*.spec.ts --include=src/app/features/clinical-record/patient-chart/diagnosis-verify-dialog/**/*.spec.ts --watch=false` verde.
-**Estado:** OTRA TANDA
+**Estado:** HECHO — bloque 39 passed (4 nuevas) · diálogo 7 passed
 
-| ID       | Microtarea                              | CA (binario)                                                                                                                                                     | DoD (comando de verificación) | Estado     |
-| -------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | ---------- |
-| H3.S2.M1 | `diagnosis-block`: tabla de presuntivos | `app-data-table` con las 4 columnas; estados cargando/vacío/error; el alta sigue naciendo presuntiva                                                             | spec verde                    | OTRA TANDA |
-| H3.S2.M2 | `diagnosis-verify-dialog` (nuevo)       | Confirmar/Rechazar; motivo ≤ 500; evidencia = orden o informe (`getPatientDiagnostics`) o nota; al confirmar: inicio + fin esperado o crónico; errores por campo | spec verde (3 niveles)        | OTRA TANDA |
-| H3.S2.M3 | acción → diálogo → fila actualizada     | Tras 200, la fila cambia de estado y `cambio` emite; tras 409/422 el diálogo muestra el error accionable sin perder lo escrito                                   | spec del bloque verde         | OTRA TANDA |
+| ID       | Microtarea                              | CA (binario)                                                                                                                                                     | DoD (comando de verificación)                                                                       | Estado |
+| -------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------ |
+| H3.S2.M1 | `diagnosis-block`: tabla de presuntivos | `app-data-table` con las 4 columnas; estados cargando/vacío/error; el alta sigue naciendo presuntiva                                                             | HECHO — tabla arriba del alta; vacío y error con `ViewState`; relee tras el alta                    | HECHO  |
+| H3.S2.M2 | `diagnosis-verify-dialog` (nuevo)       | Confirmar/Rechazar; motivo ≤ 500; evidencia = orden o informe (`getPatientDiagnostics`) o nota; al confirmar: inicio + fin esperado o crónico; errores por campo | HECHO — 7 passed en 3 niveles; evidencia de la persona por `getPatientDiagnostics` + `listNotes`    | HECHO  |
+| H3.S2.M3 | acción → diálogo → fila actualizada     | Tras 200, la fila cambia de estado y `cambio` emite; tras 409/422 el diálogo muestra el error accionable sin perder lo escrito                                   | HECHO — clic → diálogo → `alVerificar` → relee y emite `cambio`; 409 mostrado sin perder lo escrito | HECHO  |
 
 ### H3.S3 — Verificación
 
-| ID       | Microtarea                         | CA (binario)                                                                                                                                | DoD (comando de verificación)                           | Estado     |
-| -------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ---------- |
-| H3.S3.M1 | typecheck + recorrido en navegador | Registrar presuntivo → «En estudio» → Confirmar con informe → «Enfermedad activa»; Rechazar → «Rechazado»; consola y red sin errores nuevos | `corepack yarn typecheck` 0 · capturas + doble revisión | OTRA TANDA |
+| ID       | Microtarea                         | CA (binario)                                                                                                                                | DoD (comando de verificación)                                                                                                                                                                                                                     | Estado |
+| -------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| H3.S3.M1 | typecheck + recorrido en navegador | Registrar presuntivo → «En estudio» → Confirmar con informe → «Enfermedad activa»; Rechazar → «Rechazado»; consola y red sin errores nuevos | typecheck 0 · recorrido real en el 4220 (`evidencia/d3/recorrido-c3.mjs`): En estudio → Confirmar (crónica) → Enfermedad activa; Rechazar → Rechazado; 0 fallos en `/verification`; sin desborde a 375. Doble revisión: pendiente de otra persona | HECHO  |
 
 ## H4 — El Formulario clínico termina en orden + diagnóstico tentativo, sugeridos por IA (D4)
 

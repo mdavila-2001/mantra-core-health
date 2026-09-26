@@ -2,20 +2,42 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   forwardRef,
   inject,
   input,
   output,
   signal,
+  untracked,
+  viewChild,
 } from '@angular/core';
-import type { WritableSignal } from '@angular/core';
+import type { TemplateRef, WritableSignal } from '@angular/core';
+import { catchError, map, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
+import type {
+  Condition,
+  DiagnosisOutcome,
+} from '../../../../core/data-access/clinical/clinical.types';
 import { SystemContextClient } from '../../../../core/data-access/system-context/system-context.client';
+import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
+import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { loading, ready } from '../../../../core/view-state/view-state';
+import { empty, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
+import {
+  CODIGO_ACTIVA,
+  CODIGO_CONFIRMADO,
+  CODIGO_DESCARTADO,
+  DIAGNOSIS_STATE_LABELS,
+  diagnosisStateOf,
+  type DiagnosisState,
+} from '../../../../shared/clinical/diagnosis-state';
+import type { Tone } from '../../../../shared/components/tone/tone.types';
+import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
+import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
+import { DiagnosisVerifyDialog } from '../diagnosis-verify-dialog/diagnosis-verify-dialog';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
@@ -164,6 +186,96 @@ function enDias(dias: number): Date {
   return fecha;
 }
 
+/* ---- la tabla de presuntivos (C3) ----------------------------------------- */
+
+/**
+ * Una fila de la tabla: la condición y lo que la pantalla ya resolvió de ella.
+ *
+ * El estado sale de `diagnosisStateOf` sobre **códigos** de catálogo, nunca de
+ * etiquetas: la etiqueta es presentación y puede cambiar sin aviso.
+ */
+export interface FilaDeDiagnostico {
+  readonly condition: Condition;
+  readonly nombre: string;
+  readonly estado: DiagnosisState;
+  readonly etiquetaDeEstado: string;
+  readonly tono: Tone;
+  /** «Informe · Cuadro compatible», o «—» mientras no se decidió. */
+  readonly evidencia: string;
+  /** Sólo un presuntivo se confirma o se rechaza. */
+  readonly enEstudio: boolean;
+}
+
+/** Mismo reparto de color que la línea de tiempo de la consulta. */
+const TONO_DEL_ESTADO: Readonly<Record<DiagnosisState, Tone>> = Object.freeze({
+  IN_STUDY: 'warning',
+  ACTIVE: 'success',
+  HISTORIC: 'info',
+  REFUTED: 'info',
+});
+
+const SIN_ETIQUETA = 'Diagnóstico sin etiqueta en el catálogo';
+const LARGO_DEL_MOTIVO = 60;
+
+/** Qué respaldó la decisión, en dos palabras, y el motivo recortado. */
+function evidenciaDe(condicion: Condition): string {
+  const decision = condicion.verification;
+  if (decision === undefined || decision === null) return '—';
+  const tipo =
+    decision.basedOn === null
+      ? null
+      : decision.basedOn.kind === 'NOTE'
+        ? 'Nota'
+        : decision.basedOn.diagnosticReportId === undefined
+          ? 'Orden'
+          : 'Informe';
+  const motivo =
+    decision.reasonText === null
+      ? null
+      : decision.reasonText.length > LARGO_DEL_MOTIVO
+        ? `${decision.reasonText.slice(0, LARGO_DEL_MOTIVO - 1)}…`
+        : decision.reasonText;
+  return [tipo, motivo].filter((parte): parte is string => parte !== null).join(' · ') || '—';
+}
+
+/** Las condiciones como filas, de la más nueva a la más vieja. */
+function filasDe(conditions: readonly Condition[], etiquetas: ConceptLabels): FilaDeDiagnostico[] {
+  const codigo = (conceptId: string | undefined) =>
+    conceptId === undefined ? undefined : etiquetas.get(conceptId)?.code;
+  return [...conditions]
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .map((condition) => {
+      const estado = diagnosisStateOf(
+        {
+          ...condition,
+          verificationStatusConceptId: codigo(condition.verificationStatusConceptId),
+          clinicalStatusConceptId: codigo(condition.clinicalStatusConceptId),
+        },
+        { confirmed: CODIGO_CONFIRMADO, refuted: CODIGO_DESCARTADO, active: CODIGO_ACTIVA },
+      );
+      return {
+        condition,
+        nombre: etiquetas.get(condition.codeConceptId)?.display ?? SIN_ETIQUETA,
+        estado,
+        etiquetaDeEstado: DIAGNOSIS_STATE_LABELS[estado],
+        tono: TONO_DEL_ESTADO[estado],
+        evidencia: evidenciaDe(condition),
+        enEstudio: estado === 'IN_STUDY',
+      };
+    });
+}
+
+/** Los conceptos que la tabla traduce: el diagnóstico y sus dos estados. */
+function conceptosDe(conditions: readonly Condition[]): string[] {
+  return conditions.flatMap((condition) =>
+    [
+      condition.codeConceptId,
+      condition.verificationStatusConceptId,
+      condition.clinicalStatusConceptId,
+    ].filter((id): id is string => id !== undefined),
+  );
+}
+
 /**
  * **Diagnóstico** del expediente: registrar la condición — V08-08.
  *
@@ -206,6 +318,17 @@ function enDias(dias: number): Date {
  * que vuelva a leer. Un diagnóstico que aparece porque lo pintamos nosotros y
  * no porque el servidor lo tenga es exactamente la clase de mentira que el
  * expediente no puede permitirse.
+ *
+ * ## La tabla de presuntivos (C3, 2026-09-26)
+ *
+ * El propietario pidió que el diagnóstico deje de ser sólo un alta: «en
+ * Diagnóstico sale una tabla de diagnósticos tentativos para linkear
+ * resultados médicos, determinar una conclusión y cerrar el mismo». Arriba
+ * del formulario va esa tabla: Diagnóstico · Estado · Evidencia · Acciones.
+ * El estado lo decide `diagnosisStateOf` sobre los códigos del catálogo; los
+ * de «En estudio» ofrecen **Confirmar** y **Rechazar**, que abren el diálogo
+ * de verificación. Tras el 200 se relee la lista y se avisa al expediente.
+ * El alta sigue igual: nace presuntivo, y es la tabla la que lo cierra.
  */
 @Component({
   selector: 'app-diagnosis-block',
@@ -217,6 +340,8 @@ function enDias(dias: number): Date {
     Card,
     Chip,
     ConceptSelect,
+    DataTable,
+    DiagnosisVerifyDialog,
     Select,
     DatePicker,
     FormActions,
@@ -231,6 +356,7 @@ function enDias(dias: number): Date {
 export class DiagnosisBlock implements DraftBlock {
   private readonly clinical = inject(ClinicalClient);
   private readonly systemContext = inject(SystemContextClient);
+  private readonly terminology = inject(TerminologyClient);
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
 
@@ -279,6 +405,106 @@ export class DiagnosisBlock implements DraftBlock {
   protected readonly etiquetasDeSeveridad = ETIQUETAS_DE_SEVERIDAD;
   protected readonly etiquetasDeLateralidad = ETIQUETAS_DE_LATERALIDAD;
   protected readonly etiquetasDeCurso = ETIQUETAS_DE_CURSO;
+
+  /* -- La tabla de presuntivos (C3) ----------------------------------------- */
+
+  /** Las condiciones de la persona, ya resueltas a filas. */
+  protected readonly filas = signal<ViewState<readonly FilaDeDiagnostico[]>>(loading());
+
+  /** La decisión en curso: qué presuntivo y en qué sentido. `null` sin diálogo. */
+  protected readonly verificando = signal<{
+    readonly fila: FilaDeDiagnostico;
+    readonly outcome: DiagnosisOutcome;
+  } | null>(null);
+
+  private readonly celdaDiagnostico =
+    viewChild.required<TemplateRef<{ $implicit: FilaDeDiagnostico }>>('celdaDiagnostico');
+  private readonly celdaEstado =
+    viewChild.required<TemplateRef<{ $implicit: FilaDeDiagnostico }>>('celdaEstado');
+  private readonly celdaEvidencia =
+    viewChild.required<TemplateRef<{ $implicit: FilaDeDiagnostico }>>('celdaEvidencia');
+  private readonly celdaAcciones =
+    viewChild.required<TemplateRef<{ $implicit: FilaDeDiagnostico }>>('celdaAcciones');
+
+  /**
+   * Diagnóstico · Estado · Evidencia · Acciones, en ese orden.
+   *
+   * Diagnóstico y acciones con prioridad 1: son la decisión. El estado y la
+   * evidencia se pliegan al detalle en móvil; las acciones no, porque son la
+   * razón de la tabla.
+   */
+  protected readonly columnas = computed<readonly ColumnDef<FilaDeDiagnostico>[]>(() => [
+    { key: 'nombre', header: 'Diagnóstico', priority: 1, cell: this.celdaDiagnostico() },
+    // A 375 px la tabla vive dentro del modal de la casilla y no hay lugar para
+    // cuatro columnas: el estado y la evidencia se pliegan al detalle (un toque),
+    // y quedan a la vista el diagnóstico y sus acciones, que son la decisión.
+    // Sin esto la columna de acciones quedaba cortada detrás de un scroll lateral.
+    { key: 'estado', header: 'Estado', priority: 2, cell: this.celdaEstado() },
+    { key: 'evidencia', header: 'Evidencia', priority: 3, cell: this.celdaEvidencia() },
+    { key: 'acciones', header: 'Acciones', priority: 1, cell: this.celdaAcciones() },
+  ]);
+
+  protected readonly porId = (fila: FilaDeDiagnostico): string => fila.condition.id;
+  protected readonly nombreDeFila = (fila: FilaDeDiagnostico): string => fila.nombre;
+
+  /** Relee la lista de la persona. Lo que se muestra es lo que el servidor tiene. */
+  protected recargar(): void {
+    this.cargarTabla(this.patientProfileId());
+  }
+
+  private cargarTabla(patientProfileId: string): void {
+    this.filas.set(loading());
+    this.clinical
+      .getSummary(patientProfileId)
+      .pipe(
+        switchMap((resumen) =>
+          this.terminology.readConceptLabels(conceptosDe(resumen.conditions)).pipe(
+            // Sin etiquetas la tabla igual se muestra: el estado no se puede
+            // resolver y queda «En estudio», que es lo que menos afirma.
+            catchError(() => of<ConceptLabels>(new Map())),
+            map((etiquetas) => filasDe(resumen.conditions, etiquetas)),
+          ),
+        ),
+      )
+      .subscribe({
+        next: (filas) =>
+          this.filas.set(
+            filas.length === 0
+              ? empty(
+                  { label: 'Registrá el primero con el formulario de abajo' },
+                  'Esta persona todavía no tiene diagnósticos registrados.',
+                )
+              : ready(filas),
+          ),
+        error: (error: unknown) =>
+          this.filas.set(errorToViewState<readonly FilaDeDiagnostico[]>(error)),
+      });
+  }
+
+  /** Abre el diálogo para confirmar o rechazar un presuntivo. */
+  protected abrirVerificacion(fila: FilaDeDiagnostico, outcome: DiagnosisOutcome): void {
+    if (!fila.enEstudio) return;
+    this.verificando.set({ fila, outcome });
+  }
+
+  /**
+   * El servidor decidió: se cierra el diálogo, se relee la lista y se avisa.
+   *
+   * La fila no se reemplaza con la respuesta a mano: la lista es la del
+   * servidor, y releerla es lo que garantiza que lo que se ve es lo que hay.
+   */
+  protected alVerificar(condicion: Condition): void {
+    const decision = this.verificando();
+    this.verificando.set(null);
+    this.toasts.success(
+      condicion.verification?.outcome === 'REFUTED'
+        ? 'Quedó como rechazado en la historia.'
+        : 'Quedó como enfermedad activa en la historia.',
+      decision === null ? 'Diagnóstico decidido' : `${decision.fila.nombre}: decidido`,
+    );
+    this.recargar();
+    this.cambio.emit();
+  }
 
   /* -- Casos de demostración ------------------------------------------------ */
 
@@ -520,10 +746,7 @@ export class DiagnosisBlock implements DraftBlock {
    */
   protected readonly avisoDeDuplicado = computed<string | null>(() => {
     const state = this.registro();
-    if (
-      state.status === 'validation' &&
-      state.issues.some((issue) => issue.code === 'CONFLICT')
-    ) {
+    if (state.status === 'validation' && state.issues.some((issue) => issue.code === 'CONFLICT')) {
       return 'Esta persona ya tiene ese diagnóstico activo: está en la pestaña «Diagnósticos». No hace falta registrarlo de nuevo.';
     }
     return null;
@@ -544,10 +767,18 @@ export class DiagnosisBlock implements DraftBlock {
     if (state.status === 'validation') {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    return mensajeDeFalloDeEscritura(state, { accion: 'registrar diagnósticos', sinPermiso: 'Tu rol no permite registrar diagnósticos.' });
+    return mensajeDeFalloDeEscritura(state, {
+      accion: 'registrar diagnósticos',
+      sinPermiso: 'Tu rol no permite registrar diagnósticos.',
+    });
   });
 
   constructor() {
+    // La tabla sigue a la persona: cambia el paciente, cambia la lista.
+    effect(() => {
+      const patientProfileId = this.patientProfileId();
+      untracked(() => this.cargarTabla(patientProfileId));
+    });
     // El catálogo se pregunta una sola vez: el cliente memoiza por target, así
     // que esta llamada y la del selector son la misma petición.
     this.systemContext.dynamicEnum(TARGET_DIAGNOSTICO).subscribe({
@@ -610,9 +841,7 @@ export class DiagnosisBlock implements DraftBlock {
     );
     this.cursoClinico.set(resolver(this.opcionesCurso(), caso.cursoClinico, 'curso clínico'));
     this.inicio.set(new Date());
-    this.fechaEsperada.set(
-      caso.diasResolucion === undefined ? null : enDias(caso.diasResolucion),
-    );
+    this.fechaEsperada.set(caso.diasResolucion === undefined ? null : enDias(caso.diasResolucion));
     this.notasClinicas.set(caso.notas);
 
     if (faltantes.length > 0) {
@@ -683,6 +912,8 @@ export class DiagnosisBlock implements DraftBlock {
           this.registro.set(ready(null));
           this.diagnosticoRecienRegistrado.set(registrado.id);
           this.limpiar();
+          // El presuntivo recién nacido tiene que aparecer en la tabla de arriba.
+          this.cargarTabla(patientProfileId);
           // Se dice que el paciente ya tiene el aviso —y no que «se le acaba de
           // enviar»— porque el aviso es uno por consulta: si el médico ya
           // guardó antes la nota de evolución, salió entonces. Como estado es

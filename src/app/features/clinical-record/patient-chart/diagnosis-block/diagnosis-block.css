@@ -11,9 +11,6 @@
   /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
   --card-body-display: grid;
   --card-body-gap: var(--sp-4);
-  /* Cinco campos cortos: a lo ancho de la tabla, la línea del selector quedaría
-     del largo de la pantalla y sería ilegible. */
-  max-inline-size: 68ch;
 }
 
 .diagnostico__titulo {
@@ -26,8 +23,40 @@
 .diagnostico__formulario {
   display: grid;
   gap: var(--sp-4);
+  /* Cinco campos cortos: a lo ancho de la tabla, la línea del selector quedaría
+     del largo de la pantalla y sería ilegible. La tabla de arriba sí va a lo
+     ancho: cuatro columnas no entran en 68ch. */
+  max-inline-size: 68ch;
 }
 
+/* ---- la tabla de presuntivos (C3) ----------------------------------------- */
+
+.diagnostico__tabla {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.diagnostico__subtitulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+}
+
+.diagnostico__nombre {
+  font-weight: 600;
+}
+
+.diagnostico__evidencia,
+.diagnostico__sin-accion {
+  color: var(--text-muted);
+}
+
+.diagnostico__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
 
 /* Borde discontinuo a propósito: la barra es utilería de demostración, no un
    control clínico, y tiene que leerse distinta del formulario de al lado. */
@@ -58,7 +87,6 @@
   flex-wrap: wrap;
   gap: var(--sp-2);
 }
-
 
 /* Los chips de duración estimada, en fila. Mismo tratamiento que la pauta de la
    receta: son atajos de una sola decisión y se leen de un vistazo. */

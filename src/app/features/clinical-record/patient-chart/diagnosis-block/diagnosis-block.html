@@ -28,6 +28,34 @@
     />
   }
 
+  <!-- ─── La tabla de presuntivos (C3) ─────────────────────────────────
+       Lo que la persona ya tiene registrado, con su estado. Un presuntivo se
+       confirma o se rechaza desde acá; el resto se lee. La lista es la del
+       servidor: tras cada decisión se relee, nunca se pinta a mano. -->
+  <section class="diagnostico__tabla" data-testid="diagnostico-tabla">
+    <h3 class="diagnostico__subtitulo">Diagnósticos de esta persona</h3>
+    <app-data-table
+      [state]="filas()"
+      [columns]="columnas()"
+      [trackBy]="porId"
+      [rowLabel]="nombreDeFila"
+      caption="Diagnósticos registrados, con su estado y la evidencia de la decisión"
+      (retry)="recargar()"
+      (refresh)="recargar()"
+    />
+  </section>
+
+  @if (verificando(); as decision) {
+    <app-diagnosis-verify-dialog
+      [condition]="decision.fila.condition"
+      [patientProfileId]="patientProfileId()"
+      [outcome]="decision.outcome"
+      [nombre]="decision.fila.nombre"
+      (verified)="alVerificar($event)"
+      (closed)="verificando.set(null)"
+    />
+  }
+
   <!-- ─── Registrar ────────────────────────────────────────────────────
        Tres condiciones antes del formulario, y cada una se dice con su propia
        explicación: «no se puede» sin decir qué falta obliga a adivinar. -->
@@ -221,3 +249,48 @@
     </form>
   }
 </app-card>
+
+<!-- Las celdas de la tabla de presuntivos. Los `data-testid` por fila llevan el
+     id de la condición: es lo que el recorrido de C3 busca. -->
+<ng-template #celdaDiagnostico let-fila>
+  <span class="diagnostico__nombre" [attr.data-testid]="'diagnostico-fila-' + fila.condition.id">
+    {{ fila.nombre }}
+  </span>
+</ng-template>
+
+<ng-template #celdaEstado let-fila>
+  <app-badge [variant]="fila.tono" size="sm">{{ fila.etiquetaDeEstado }}</app-badge>
+</ng-template>
+
+<ng-template #celdaEvidencia let-fila>
+  <span class="diagnostico__evidencia">{{ fila.evidencia }}</span>
+</ng-template>
+
+<ng-template #celdaAcciones let-fila>
+  @if (fila.enEstudio) {
+    <div class="diagnostico__acciones">
+      <button
+        app-button
+        type="button"
+        variant="primary"
+        size="sm"
+        [attr.data-testid]="'diagnostico-confirmar-' + fila.condition.id"
+        (clicked)="abrirVerificacion(fila, 'CONFIRMED')"
+      >
+        Confirmar
+      </button>
+      <button
+        app-button
+        type="button"
+        variant="outline"
+        size="sm"
+        [attr.data-testid]="'diagnostico-rechazar-' + fila.condition.id"
+        (clicked)="abrirVerificacion(fila, 'REFUTED')"
+      >
+        Rechazar
+      </button>
+    </div>
+  } @else {
+    <span class="diagnostico__sin-accion">Decidido</span>
+  }
+</ng-template>
