@@ -1381,10 +1381,10 @@ describe('PatientChart', () => {
       ],
     };
 
-    type FilaConArchivos = {
+    interface FilaConArchivos {
       id: string;
       archivos: readonly { fileId: string; rotulo: string }[];
-    };
+    }
 
     it('la fila trae un archivo por cada uno, en orden y con rotulo legible', () => {
       responderNombre();
