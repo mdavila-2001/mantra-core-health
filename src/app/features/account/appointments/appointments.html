@@ -1,3 +1,17 @@
+<!-- Tarea 4 · M-06: se llegó desde un beneficio preventivo del seguro. Va arriba de
+     todo: al final de la página, tras las citas, nadie lo vería al llegar. -->
+@if (campaignName(); as campaign) {
+  <app-alert
+    class="turnos__campana"
+    tone="info"
+    title="Chequeo preventivo de tu seguro"
+    data-testid="turnos-campana"
+  >
+    Estás agendando por la campaña <strong>{{ campaign }}</strong> de tu seguro. Elegí el
+    laboratorio y el horario que mejor te quede.
+  </app-alert>
+}
+
 <app-page-header title="Mis citas" subtitle="Las citas que pediste y los horarios que podés pedir.">
   <!-- R-01 del refactor UX · la acción principal de la vista, arriba y en todos
        los anchos. La sección «Agendar una cita» no se mueve: este botón lleva a

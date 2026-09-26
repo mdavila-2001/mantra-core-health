@@ -435,6 +435,19 @@
                     <p class="mi-perfil__nota mi-perfil__nota--primera">No declaraste ningún seguro.</p>
                   }
 
+                  <!-- Tarea 4 · M-06: beneficios preventivos de la aseguradora. Sólo
+                       para quien declaró un seguro: a quien no tiene ninguno no se le
+                       dice que «su seguro» no tiene campañas. -->
+                  @if (p.coverages.length > 0) {
+                    @if (patientProfileId(); as patientId) {
+                      <app-patient-campaigns-widget
+                        class="mi-perfil__campaigns"
+                        [patientProfileId]="patientId"
+                        emptyMessage="Tu seguro no tiene campañas preventivas activas hoy."
+                      />
+                    }
+                  }
+
                   @if (p.guardians.length > 0) {
                     <h3 class="mi-perfil__subtitulo">Contactos y tutores</h3>
                     <ul class="mi-perfil__lista">

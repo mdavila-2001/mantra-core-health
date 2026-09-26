@@ -351,6 +351,60 @@ describe('Appointments', () => {
       expect(interno<() => boolean>('esLaboratorio')()).toBe(true);
     });
 
+    /**
+     * Tarea 4 · M-06: el widget de beneficios del seguro lleva acá con
+     * `?campaign=<código>`. La pantalla sólo dice por qué se está agendando; no
+     * cambia horarios ni precios.
+     */
+    it('con ?campaign=<código> avisa que se agenda por una campaña del seguro', async () => {
+      await TestBed.inject(Router).navigateByUrl(
+        '/?seccion=pedir&resource=lab&campaign=CMP-CARDIO-2026&campaignTitle=Chequeo%20Cardiovascular',
+      );
+      montar();
+      http
+        .expectOne((r) => r.url === '/scheduling/bookings')
+        .flush({ items: [], count: 0, limit: 50, truncated: false });
+      http.expectOne((r) => r.url === '/scheduling/resources').flush({ items: [], count: 0 });
+      fixture.detectChanges();
+
+      const aviso = (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="turnos-campana"]',
+      );
+      // Se nombra por su título, no por el código, que no le dice nada a quien agenda.
+      expect(aviso?.textContent).toContain('Chequeo Cardiovascular');
+      expect(aviso?.textContent).not.toContain('CMP-CARDIO-2026');
+    });
+
+    it('sin título en la dirección, el aviso cae al código de la campaña', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?campaign=CMP-CARDIO-2026');
+      montar();
+      responderArranque([]);
+
+      const aviso = (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="turnos-campana"]',
+      );
+      expect(aviso?.textContent).toContain('CMP-CARDIO-2026');
+    });
+
+    it('sin ?campaign no hay aviso de campaña', () => {
+      montar();
+      responderArranque([]);
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('[data-testid="turnos-campana"]'),
+      ).toBeNull();
+    });
+
+    it('un ?campaign vacío o sólo con espacios tampoco muestra aviso', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?campaign=%20%20');
+      montar();
+      responderArranque([]);
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('[data-testid="turnos-campana"]'),
+      ).toBeNull();
+    });
+
     it('al cambiar a laboratorio, vuelve a preguntar por recursos de tipo ROOM', () => {
       montar();
       responderArranque([]);

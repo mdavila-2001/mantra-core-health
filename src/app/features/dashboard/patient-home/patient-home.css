@@ -214,3 +214,13 @@
   display: block;
   margin-block-end: var(--sp-6);
 }
+
+/* El widget de beneficios sólo separa de lo que sigue cuando dibuja algo: sin
+   campañas su host queda vacío y no deja un hueco. */
+.mi-salud__benefits {
+  display: block;
+}
+
+.mi-salud__benefits:not(:empty) {
+  margin-block-end: var(--sp-6);
+}

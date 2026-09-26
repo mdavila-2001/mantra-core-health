@@ -344,3 +344,9 @@
   color: var(--text-muted);
   font-size: var(--fs-caption);
 }
+
+/* Aviso de campaña preventiva: separado del encabezado que le sigue. */
+.turnos__campana {
+  display: block;
+  margin-block: var(--sp-4);
+}

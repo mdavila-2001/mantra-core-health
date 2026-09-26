@@ -1,3 +1,4 @@
+import { PatientCampaignsWidget } from '../../insurance/patient-campaigns/patient-campaigns-widget';
 import { InsurancePortabilityCard } from './insurance-portability-card/insurance-portability-card';
 import { PatientCoverageCard } from '../../../shared/components/molecules/patient-coverage-card/patient-coverage-card';
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
@@ -117,6 +118,7 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
     Card,
     DatePipe,
     InsurancePortabilityCard,
+    PatientCampaignsWidget,
     Link,
     Loyalty,
     NavIcon,
@@ -144,6 +146,9 @@ export class MyProfile {
   private readonly estadosDeCaso = inject(CaseStatusCatalog);
   private readonly navigation = inject(NavigationService);
   private readonly auth = inject(AuthService);
+
+  /** Perfil de paciente en sesión (claim `pid`): lo necesita el widget de beneficios del seguro. */
+  protected readonly patientProfileId = this.auth.patientProfileId;
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
