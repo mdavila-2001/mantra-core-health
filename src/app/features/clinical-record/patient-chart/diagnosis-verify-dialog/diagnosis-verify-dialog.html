@@ -1,0 +1,125 @@
+<app-content-dialog
+  [heading]="titulo()"
+  [description]="bajada()"
+  size="md"
+  [closeGuard]="guardia"
+  (closed)="closed.emit()"
+>
+  <form class="verificar" data-testid="verificar-formulario" (submit)="$event.preventDefault()">
+    @if (errorDelServidor(); as mensaje) {
+      <app-alert tone="error" data-testid="verificar-error">{{ mensaje }}</app-alert>
+    }
+
+    <!-- La evidencia primero: es lo que respalda la decisión. Sale del circuito
+         y de las notas de esta persona; no hay dónde pegar un identificador. -->
+    <app-form-field
+      label="En qué te basás"
+      [hint]="
+        cargandoEvidencia()
+          ? 'Buscando las órdenes, los informes y las notas de esta persona…'
+          : 'Una orden, un informe o una nota de esta persona. Opcional si escribís el motivo.'
+      "
+    >
+      <app-select
+        data-testid="verificar-evidencia"
+        [value]="evidencia()"
+        (valueChange)="evidencia.set($event)"
+        [options]="opcionesDeEvidencia()"
+        [disabled]="cargandoEvidencia()"
+        placeholder="Sin evidencia"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Motivo o conclusión"
+      [hint]="
+        motivo().length + ' / ' + maxMotivo + ' caracteres. Obligatorio si no elegís una evidencia.'
+      "
+      [errorMessage]="errorDeMotivo()"
+    >
+      <app-textarea
+        data-testid="verificar-motivo"
+        [(value)]="motivo"
+        [rows]="3"
+        [maxLength]="maxMotivo"
+        [hasError]="errorDeMotivo() !== ''"
+        placeholder="Cuadro clínico compatible, informe que lo confirma, evolución…"
+      />
+    </app-form-field>
+
+    @if (confirma()) {
+      <app-form-field
+        label="Desde cuándo"
+        hint="El inicio de la condición. Precargado con lo que el presuntivo declaraba."
+        [required]="true"
+        [errorMessage]="errorDeInicio()"
+      >
+        <app-date-picker
+          data-testid="verificar-inicio"
+          [value]="inicio()"
+          (valueChange)="elegirInicio($event)"
+          [hasError]="errorDeInicio() !== ''"
+        />
+      </app-form-field>
+
+      <!-- Con curso crónico no se pregunta: una condición de seguimiento
+           continuo no resuelve, y dejar el campo invita a inventar una fecha. -->
+      @if (!cronica()) {
+        <app-form-field
+          label="Hasta cuándo se espera"
+          hint="La fecha esperada de resolución, salvo que sea crónica."
+          [required]="true"
+          [errorMessage]="errorDeFin()"
+        >
+          <app-date-picker
+            data-testid="verificar-fin"
+            [value]="fin()"
+            (valueChange)="fin.set($event)"
+            [hasError]="errorDeFin() !== ''"
+          />
+        </app-form-field>
+      }
+
+      <app-form-field
+        [hint]="
+          cursoCronico() === null
+            ? 'El catálogo de cursos clínicos no está publicado: no se puede marcar como crónica desde acá.'
+            : 'Una crónica se confirma sin fin esperado.'
+        "
+      >
+        <app-checkbox
+          data-testid="verificar-cronica"
+          label="Crónica — seguimiento continuo"
+          [checked]="cronica()"
+          (checkedChange)="marcarCronica($event)"
+          [disabled]="cursoCronico() === null"
+        />
+      </app-form-field>
+    }
+  </form>
+
+  <!-- Un `<ng-container>` y no los dos botones sueltos: con más de un nodo en la
+       raíz, Angular no los proyecta al slot del pie (NG8011). -->
+  <ng-container dialog-actions>
+    <button
+      app-button
+      type="button"
+      variant="ghost"
+      data-testid="verificar-cancelar"
+      [disabled]="enviando()"
+      (clicked)="cancelar()"
+    >
+      Cancelar
+    </button>
+    <button
+      app-button
+      type="button"
+      [variant]="confirma() ? 'primary' : 'danger'"
+      data-testid="verificar-enviar"
+      [isLoading]="enviando()"
+      (clicked)="enviar()"
+    >
+      {{ confirma() ? 'Confirmar diagnóstico' : 'Rechazar diagnóstico' }}
+    </button>
+  </ng-container>
+</app-content-dialog>
