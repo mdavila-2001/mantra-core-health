@@ -15,6 +15,7 @@ import { catchError } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { AuthzClient } from '../../../core/data-access/authz/authz.client';
 import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnostics.client';
 import type {
   DiagnosticResultShare,
@@ -32,13 +33,14 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { Select } from '../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { FileDownloadService } from '../../../shared/utils/file-download/file-download.service';
 
 /** Tope de resultados que se traen. Nadie tiene cien estudios liberados a la vez. */
@@ -140,9 +142,9 @@ interface ArchivoVisible {
     DatePicker,
     DatePipe,
     FormField,
-    Input,
     NavIcon,
     PageHeader,
+    Select,
   ],
   templateUrl: './diagnostic-results.html',
   styleUrl: './diagnostic-results.css',
@@ -151,6 +153,7 @@ interface ArchivoVisible {
 })
 export class DiagnosticResults {
   private readonly diagnostics = inject(DiagnosticsClient);
+  private readonly authz = inject(AuthzClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly downloads = inject(FileDownloadService);
   private readonly auth = inject(AuthService);
@@ -179,8 +182,16 @@ export class DiagnosticResults {
   /** Los compartidos del resultado abierto. */
   protected readonly compartidos = signal<readonly DiagnosticResultShare[]>([]);
 
-  /** Con quién se está por compartir: la cuenta del profesional. */
-  protected readonly destinatario = signal('');
+  /**
+   * Los profesionales con los que se puede compartir: las relaciones
+   * asistenciales vigentes del titular (CL-48). Nunca un buscador global — la
+   * lista sale de `GET /authz/me/access` (BR-20), la misma que ya usa «Quién
+   * ve mi historia».
+   */
+  protected readonly profesionales = signal<readonly SelectOption<string>[]>([]);
+
+  /** Con quién se está por compartir: el perfil del profesional elegido. */
+  protected readonly destinatario = signal<string | null>(null);
 
   /** Hasta cuándo vale el acceso que se está por dar. */
   protected readonly vence = signal<Date | null>(this.porDefectoVence());
@@ -313,7 +324,7 @@ export class DiagnosticResults {
     }
     this.abierto.set(resultado.reportId);
     this.compartidos.set([]);
-    this.destinatario.set('');
+    this.destinatario.set(null);
     this.vence.set(this.porDefectoVence());
     this.diagnostics.listResultShares(resultado.reportId).subscribe({
       next: (items) => this.compartidos.set(items),
@@ -321,28 +332,55 @@ export class DiagnosticResults {
       // sigue siendo cierta aunque el panel no haya podido abrirse.
       error: () => this.toast.info('No pudimos leer con quién está compartido.', 'Resultado'),
     });
+    this.cargarProfesionales();
+  }
+
+  /**
+   * Trae la lista de profesionales con relación asistencial vigente.
+   *
+   * Se pide cada vez que se abre el panel: es una lectura barata y así la
+   * lista nunca queda vieja si el paciente aceptó una relación nueva desde
+   * otra pestaña.
+   */
+  private cargarProfesionales(): void {
+    this.authz.getMyClinicalAccess().subscribe({
+      next: (acceso) => {
+        this.profesionales.set(
+          acceso.careRelationships
+            .filter((relacion) => relacion.state === 'ACTIVE')
+            .map((relacion) => ({
+              value: relacion.practitionerProfileId,
+              label: relacion.practitionerName ?? relacion.practitionerProfileId,
+            })),
+        );
+      },
+      // Sin relaciones vigentes el select queda vacío: la persona no puede
+      // compartir con nadie hasta que un profesional la vincule, y eso no es
+      // un error de esta pantalla.
+      error: () => this.profesionales.set([]),
+    });
   }
 
   /** Si el formulario de compartir está completo. */
   protected readonly puedeCompartir = computed(
-    () => this.destinatario().trim() !== '' && this.vence() !== null,
+    () => this.destinatario() !== null && this.vence() !== null,
   );
 
-  /** Comparte el resultado abierto con el profesional cargado. */
+  /** Comparte el resultado abierto con el profesional elegido. */
   protected compartir(reportId: string): void {
-    const destinatario = this.destinatario().trim();
+    const practitionerProfileId = this.destinatario();
     const hasta = finDelDia(this.vence());
-    if (destinatario === '' || hasta === null) {
+    if (practitionerProfileId === null || hasta === null) {
       return;
     }
 
     this.operando.set(reportId);
     this.diagnostics
-      .shareResult(reportId, { practitionerUserId: destinatario, validUntil: hasta })
+      .shareResult(reportId, { practitionerProfileId, validUntil: hasta })
       .subscribe({
         next: (share) => {
           this.operando.set(null);
-          this.destinatario.set('');
+          this.destinatario.set(null);
           this.compartidos.set([
             share,
             ...this.compartidos().filter((previo) => previo.id !== share.id),
