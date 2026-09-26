@@ -5,6 +5,7 @@ import {
   DestroyRef,
   ErrorHandler,
   inject,
+  Injector,
   LOCALE_ID,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
@@ -18,6 +19,10 @@ import { ThemeService } from './core/tokens/theme.service';
 import { authInterceptor } from './core/http/auth.interceptor';
 import { timeoutInterceptor } from './core/http/timeout.interceptor';
 import { AuthService } from './core/auth/auth.service';
+import { SESSION_CLEANERS } from './core/auth/session-cleanup';
+import { ChatAutoReply } from './core/messaging/chat-auto-reply';
+import { MessageTemplates } from './core/messaging/message-templates';
+import { TarifariosRecordados } from './features/admin/medical-laboratory/tarifarios-recordados';
 import { IdleLogout } from './core/auth/idle-logout';
 import { SessionEndedRedirect } from './core/auth/session-ended-redirect';
 import { AppErrorHandler } from './core/errors/app-error-handler';
@@ -95,6 +100,35 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       inject(ThemeService);
     }),
+    // Lo sensible que otras piezas dejan en el navegador se olvida al cerrar
+    // sesión (TX-31): plantillas de mensajes, copia local de la respuesta
+    // automática y tarifarios recordados. Se registran acá, y no dentro de
+    // `core/auth`, para que la sesión no dependa de las pantallas. Se resuelven
+    // recién al cerrar sesión: no cuestan nada al arrancar.
+    {
+      provide: SESSION_CLEANERS,
+      multi: true,
+      useFactory: () => {
+        const injector = inject(Injector);
+        return () => injector.get(MessageTemplates).olvidar();
+      },
+    },
+    {
+      provide: SESSION_CLEANERS,
+      multi: true,
+      useFactory: () => {
+        const injector = inject(Injector);
+        return () => injector.get(ChatAutoReply).olvidar();
+      },
+    },
+    {
+      provide: SESSION_CLEANERS,
+      multi: true,
+      useFactory: () => {
+        const injector = inject(Injector);
+        return () => injector.get(TarifariosRecordados).olvidar();
+      },
+    },
     // Se recupera la sesión ANTES de que el router evalúe el guard. Si no se
     // esperara, alguien con sesión válida vería un parpadeo al login mientras
     // el canje del refresh token está en vuelo. En el servidor no hay
