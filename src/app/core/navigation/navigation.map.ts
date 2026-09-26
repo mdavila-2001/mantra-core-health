@@ -1138,6 +1138,48 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M05 profiles',
   },
   {
+    // BR-20 · CL-78: los consentimientos, las autorizaciones de divulgación y las
+    // objeciones del titular, con el retiro. Es del paciente: sin perfil de
+    // paciente la pantalla lo dice.
+    path: 'my-account/privacy',
+    label: 'Mi privacidad',
+    group: 'Mi cuenta',
+    icon: 'shield',
+    roles: ['PATIENT'],
+    availability: 'disponible',
+    summary: 'Tus consentimientos, y retiralos cuando quieras.',
+    module: 'M07 consent',
+  },
+  {
+    // BR-20 · CV-19: quién ve la historia del paciente y la revocación. Reemplaza
+    // a las maquetas estáticas de `features/alovida/accesos`, que quedan fuera de
+    // este menú (DECISIONES.md, BR-20).
+    path: 'my-account/clinical-access',
+    label: 'Quién ve mi historia',
+    group: 'Mi cuenta',
+    icon: 'results',
+    roles: ['PATIENT'],
+    availability: 'disponible',
+    summary: 'Quién ve tu historia clínica, y revocalo.',
+    module: 'M06 authz',
+  },
+  {
+    // ID-24 / CV-22: cambiar la contraseña y ver o cerrar las sesiones. De
+    // cualquier persona con sesión (`ANY_ROLE`); la API no exige rol y resuelve
+    // todo por el `id` del token. Fuera del menú lateral —al médico le
+    // desaparece «Mi cuenta» a propósito, y una entrada más lo traería de
+    // vuelta—: se entra por el menú de la cuenta, en el encabezado.
+    fueraDelMenuPara: [ANY_ROLE],
+    path: 'my-account/security',
+    label: 'Seguridad',
+    group: 'Mi cuenta',
+    icon: 'lock',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Cambiá tu contraseña y cerrá sesiones abiertas.',
+    module: 'M01 iam',
+  },
+  {
     // Las vistas `PATIENT` de M41. Es la contracara de la sección «Agenda»:
     // aquélla mira los turnos de un recurso y exige roles de agenda; ésta mira
     // los de una persona y no exige ninguno, porque el backend ya acota la

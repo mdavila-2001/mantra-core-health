@@ -17,7 +17,7 @@ import {
   pacientePorId,
   profesionalPorId,
 } from '../fixtures/personas';
-import { conflict, noContent, notFound, preconditionFailed, type MockRouter } from '../mock-router';
+import { conflict, forbidden, noContent, notFound, preconditionFailed, reply, unauthorized, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA } from '../mock-session';
 import { ahora, Coleccion, cuerpo, iso, nuevoId, uuid } from '../mock-store';
 
@@ -290,6 +290,77 @@ const representaciones = new Coleccion<{
   },
 ]);
 
+/* ---- BR-20 · accesos clínicos a la historia del paciente --------------------- */
+
+interface AccesoClinicoSimulado {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly patientProfileId: string;
+  readonly grantedUserId: string;
+  readonly isEmergency: boolean;
+  readonly stateConceptId: string;
+  readonly validFrom: string;
+  readonly validTo: string;
+}
+
+const accesosClinicos = new Coleccion<AccesoClinicoSimulado>([
+  {
+    id: uuid('clinical-grant-1'),
+    tenantId: TENANT_CLINICA,
+    patientProfileId: PACIENTE.id,
+    grantedUserId: MEDICA.userId,
+    isEmergency: false,
+    stateConceptId: ESTADO['ST-ACTIVE']!,
+    validFrom: iso(-30),
+    validTo: iso(60),
+  },
+  {
+    // Una emergencia que ya venció: el titular ve que existió y quién la pidió.
+    id: uuid('clinical-grant-emergencia-vencida'),
+    tenantId: TENANT_CLINICA,
+    patientProfileId: PACIENTE.id,
+    grantedUserId: PROFESIONALES[3]!.userId,
+    isEmergency: true,
+    stateConceptId: ESTADO['ST-ACTIVE']!,
+    validFrom: iso(-40, 3, 10),
+    validTo: iso(-40, 4, 10),
+  },
+]);
+
+/**
+ * Cómo está el vínculo de un profesional con un paciente: `REVOCADA` si el
+ * titular lo revocó y no queda ninguno activo. Lo consulta la lectura del
+ * expediente del simulador para responder 403 tras la revocación (BR-20).
+ */
+export function relacionDelProfesional(
+  practitionerProfileId: string | undefined,
+  patientProfileId: string,
+): 'ACTIVA' | 'REVOCADA' | 'NINGUNA' {
+  if (practitionerProfileId === undefined) return 'NINGUNA';
+  const suyas = relaciones.filtrar(
+    (r) => r.patientProfileId === patientProfileId && r.practitionerProfileId === practitionerProfileId,
+  );
+  if (suyas.some((r) => r.statusConceptId === ESTADO['ST-ACTIVE'])) return 'ACTIVA';
+  return suyas.some((r) => r.statusConceptId === ESTADO['ST-REVOKED']) ? 'REVOCADA' : 'NINGUNA';
+}
+
+/** Si el usuario tiene un acceso de emergencia vigente sobre el paciente. */
+export function accesoDeEmergenciaVigente(userId: string, patientProfileId: string): boolean {
+  const ahoraMs = Date.now();
+  return accesosClinicos
+    .filtrar((a) => a.patientProfileId === patientProfileId && a.grantedUserId === userId && a.isEmergency)
+    .some((a) => a.stateConceptId === ESTADO['ST-ACTIVE'] && Date.parse(a.validTo) > ahoraMs);
+}
+
+function estadoLegible(estadoConceptId: string, validTo: string | null): 'ACTIVE' | 'REVOKED' | 'EXPIRED' | 'OTHER' {
+  if (estadoConceptId === ESTADO['ST-REVOKED']) return 'REVOKED';
+  if (estadoConceptId === ESTADO['ST-EXPIRED']) return 'EXPIRED';
+  if (estadoConceptId === ESTADO['ST-ACTIVE']) {
+    return validTo !== null && Date.parse(validTo) <= Date.now() ? 'EXPIRED' : 'ACTIVE';
+  }
+  return 'OTHER';
+}
+
 function vistaRelacion(r: RelacionSimulada) {
   return {
     id: r.id,
@@ -440,6 +511,100 @@ export function registrarVarios(router: MockRouter): void {
   });
 
   /* ---- authz ------------------------------------------------------------------ */
+
+  /* ---- «Quién ve mi historia» (BR-20): sólo el titular, por su sesión ------- */
+
+  const pacienteDeSesion = (user: { patientProfileId?: string; key: string } | null): string =>
+    user?.patientProfileId ?? (user?.key === 'medica' ? PACIENTE.id : '');
+
+  router.get('/authz/me/access', ({ user }) => {
+    if (user === null) return unauthorized('Sesión vencida');
+    const pid = pacienteDeSesion(user);
+    if (pid === '') return forbidden('Esta sección es para pacientes');
+    return {
+      careRelationships: relaciones
+        .filtrar((r) => r.patientProfileId === pid && r.statusConceptId !== ESTADO['ST-PENDING'])
+        .map((r) => ({
+          id: r.id,
+          tenantId: r.tenantId,
+          practitionerProfileId: r.practitionerProfileId,
+          practitionerName: profesionalPorId(r.practitionerProfileId)?.displayName,
+          state: estadoLegible(r.statusConceptId, r.validTo),
+          validFrom: r.validFrom,
+          validTo: r.validTo ?? undefined,
+        })),
+      grants: accesosClinicos
+        .filtrar((a) => a.patientProfileId === pid)
+        .map((a) => ({
+          id: a.id,
+          tenantId: a.tenantId,
+          grantedUserId: a.grantedUserId,
+          grantedName: PROFESIONALES.find((p) => p.userId === a.grantedUserId)?.displayName,
+          isEmergency: a.isEmergency,
+          state: estadoLegible(a.stateConceptId, a.validTo),
+          validFrom: a.validFrom,
+          validTo: a.validTo,
+          reasonConceptId: uuid('concept-reason'),
+          accessLevelConceptId: uuid('concept-access-level'),
+        })),
+    };
+  });
+
+  router.post('/authz/me/care-relationships/:id/revoke', ({ params, user }) => {
+    if (user === null) return unauthorized('Sesión vencida');
+    const r = relaciones.get(params['id']!);
+    // Lo ajeno o inexistente es 404: no se revela que existe.
+    if (r === undefined || r.patientProfileId !== pacienteDeSesion(user)) return notFound('Relación asistencial no encontrada');
+    if (r.statusConceptId === ESTADO['ST-PENDING']) {
+      return preconditionFailed('La solicitud sigue pendiente: respóndala en lugar de revocarla');
+    }
+    if (r.statusConceptId !== ESTADO['ST-ACTIVE']) return preconditionFailed('La relación asistencial no está activa');
+    relaciones.actualizar(r.id, { statusConceptId: ESTADO['ST-REVOKED']!, validTo: ahora() });
+    return { ok: true, affected: 1 };
+  });
+
+  router.post('/authz/me/clinical-access-grants/:grantId/revoke', ({ params, user }) => {
+    if (user === null) return unauthorized('Sesión vencida');
+    const a = accesosClinicos.get(params['grantId']!);
+    if (a === undefined || a.patientProfileId !== pacienteDeSesion(user)) return notFound('Acceso clínico no encontrado');
+    if (a.stateConceptId !== ESTADO['ST-ACTIVE']) return preconditionFailed('El acceso clínico no está activo');
+    accesosClinicos.actualizar(a.id, { stateConceptId: ESTADO['ST-REVOKED']!, validTo: ahora() });
+    return { ok: true, affected: 1 };
+  });
+
+  /**
+   * `POST /authz/patients/:id/break-the-glass`: sólo `CLINICAL_APPROVER` o
+   * `SECURITY_ADMIN`; sin justificación de 10 caracteres, 400 y no se crea nada.
+   */
+  router.post('/authz/patients/:patientProfileId/break-the-glass', (request) => {
+    const user = request.user;
+    if (user === null) return unauthorized('Sesión vencida');
+    if (!['CLINICAL_APPROVER', 'SECURITY_ADMIN', 'SUPERADMIN'].some((rol) => user.roles.includes(rol))) {
+      return forbidden('Rol insuficiente para la operación');
+    }
+    const datos = cuerpo<{ tenantId?: string; justification?: string; windowMinutes?: number }>(request);
+    if ((datos.justification ?? '').trim().length < 10) {
+      // Como la API: el DTO falla en la validación y responde 400, sin crear nada.
+      return reply(400, {
+        statusCode: 400,
+        code: 'VALIDATION_FAILED',
+        message: 'La justificación es obligatoria (al menos 10 caracteres)',
+        error: 'Bad Request',
+        details: { issues: [{ field: 'justification', message: 'La justificación debe tener al menos 10 caracteres' }] },
+      });
+    }
+    const creado = accesosClinicos.agregar({
+      id: nuevoId('clinical-grant-emergencia'),
+      tenantId: datos.tenantId ?? TENANT_CLINICA,
+      patientProfileId: request.params['patientProfileId']!,
+      grantedUserId: user.id,
+      isEmergency: true,
+      stateConceptId: ESTADO['ST-ACTIVE']!,
+      validFrom: ahora(),
+      validTo: new Date(Date.now() + (datos.windowMinutes ?? 60) * 60_000).toISOString(),
+    });
+    return { status: 201, body: { id: creado.id, status: 'ACTIVE', createdAt: creado.validFrom } };
+  });
 
   router.get('/authz/care-relationships', ({ query }) => {
     const patient = query.get('patientProfileId');

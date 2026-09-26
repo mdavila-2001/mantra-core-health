@@ -1,0 +1,161 @@
+<app-page-header
+  title="Mi privacidad"
+  subtitle="Los consentimientos que diste, las autorizaciones de divulgación y lo que firmaste en tus consultas."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="privacidad">
+  @switch (estado().status) {
+    @case ('cargando') {
+      <p class="privacidad__estado" role="status" data-testid="privacidad-cargando">
+        Cargando tu información de privacidad…
+      </p>
+    }
+    @case ('error') {
+      <app-alert tone="error" data-testid="privacidad-error">
+        @if (sinPermiso()) {
+          Esta sección es para pacientes. Tu cuenta no tiene un perfil de paciente.
+        } @else {
+          {{ errorMensaje() }}
+          @if (errorRequestId(); as id) {
+            <span class="privacidad__id">(ID de la petición: {{ id }})</span>
+          }
+          <button app-button variant="secondary" size="sm" type="button" (click)="cargar()">
+            Reintentar
+          </button>
+        }
+      </app-alert>
+    }
+    @default {
+      <app-card class="privacidad__tarjeta">
+        <app-tabs appearance="browser">
+          <app-tab [label]="'Consentimientos (' + consentimientos().length + ')'">
+            @if (consentimientos().length === 0) {
+              <app-empty-state
+                title="Todavía no diste ningún consentimiento"
+                description="Cuando una organización te pida tu consentimiento para tratar tus datos, lo vas a ver acá."
+              />
+            } @else {
+              <ul class="privacidad__lista" data-testid="privacidad-consentimientos">
+                @for (item of consentimientos(); track item.id) {
+                  <li class="registro" [attr.data-testid]="'consentimiento-' + item.id">
+                    <div class="registro__datos">
+                      <strong>{{ propositoDe(item.purpose) }}</strong>
+                      <span class="registro__detalle">
+                        @if (item.validFrom) {
+                          Desde el {{ item.validFrom | date: 'dd/MM/yyyy' }}
+                        }
+                        @if (item.withdrawnAt) {
+                          · Retirado el {{ item.withdrawnAt | date: 'dd/MM/yyyy' }}
+                        }
+                      </span>
+                    </div>
+                    <app-badge
+                      [variant]="item.state === 'ACTIVE' ? 'success' : 'secondary'"
+                      [value]="rotulo(item.state)"
+                    />
+                    @if (item.state === 'ACTIVE') {
+                      <button
+                        app-button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        [isLoading]="retirando() === item.id"
+                        [attr.data-testid]="'consentimiento-retirar-' + item.id"
+                        (click)="retirar(item)"
+                      >
+                        Retirar
+                      </button>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+          </app-tab>
+
+          <app-tab [label]="'Autorizaciones (' + autorizaciones().length + ')'">
+            @if (autorizaciones().length === 0) {
+              <app-empty-state
+                title="No tenés autorizaciones de divulgación"
+                description="Acá vas a ver a quién autorizaste a recibir información tuya y hasta cuándo."
+              />
+            } @else {
+              <ul class="privacidad__lista" data-testid="privacidad-autorizaciones">
+                @for (item of autorizaciones(); track item.id) {
+                  <li class="registro">
+                    <div class="registro__datos">
+                      <strong>{{ item.recipientDescription }}</strong>
+                      <span class="registro__detalle">
+                        {{ item.informationDescription }} · {{ propositoDe(item.purpose) }}
+                        @if (item.expiresAt) {
+                          · Vence el {{ item.expiresAt | date: 'dd/MM/yyyy' }}
+                        }
+                      </span>
+                    </div>
+                    <app-badge
+                      [variant]="item.state === 'ACTIVE' ? 'success' : 'secondary'"
+                      [value]="rotulo(item.state)"
+                    />
+                  </li>
+                }
+              </ul>
+            }
+          </app-tab>
+
+          <app-tab [label]="'Objeciones (' + objeciones().length + ')'">
+            @if (objeciones().length === 0) {
+              <app-empty-state
+                title="No planteaste ninguna objeción"
+                description="Si te oponés a que traten tus datos para un propósito, se registra acá."
+              />
+            } @else {
+              <ul class="privacidad__lista" data-testid="privacidad-objeciones">
+                @for (item of objeciones(); track item.id) {
+                  <li class="registro">
+                    <div class="registro__datos">
+                      <strong>{{ propositoDe(item.purpose) }}</strong>
+                      @if (item.reasonText) {
+                        <span class="registro__detalle">{{ item.reasonText }}</span>
+                      }
+                    </div>
+                    <app-badge
+                      [variant]="item.state === 'RESOLVED' ? 'secondary' : 'warning'"
+                      [value]="item.state === 'RESOLVED' ? 'Resuelta' : 'Abierta'"
+                    />
+                  </li>
+                }
+              </ul>
+            }
+          </app-tab>
+
+          <app-tab [label]="'Consentimientos informados (' + informados().length + ')'">
+            @if (informados().length === 0) {
+              <app-empty-state
+                title="Todavía no firmaste ningún consentimiento informado"
+                description="El que firmes en una consulta antes de un tratamiento queda registrado acá."
+              />
+            } @else {
+              <ul class="privacidad__lista" data-testid="privacidad-informados">
+                @for (item of informados(); track item.id) {
+                  <li class="registro">
+                    <div class="registro__datos">
+                      <strong>{{ decisionDe(item.decision) }}</strong>
+                      <span class="registro__detalle">
+                        @if (item.signedAt) {
+                          Firmado el {{ item.signedAt | date: 'dd/MM/yyyy HH:mm' }}
+                        }
+                        @if (item.informationVersion) {
+                          · Versión {{ item.informationVersion }}
+                        }
+                      </span>
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </app-tab>
+        </app-tabs>
+      </app-card>
+    }
+  }
+</div>

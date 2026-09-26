@@ -68,12 +68,24 @@
         </app-input>
       </app-form-field>
 
-      <!-- El código de segundo factor **no se pregunta acá**. Estaba siempre a
-           la vista y rotulado «opcional», que es pedirle a todo el mundo un
-           dato que casi nadie tiene: tres de cada tres personas leían un campo
-           que no les tocaba. Vuelve cuando el backend diga que hace falta —el
-           control sigue en el formulario, ver `Login.form`—, y entonces se
-           muestra pedido, no ofrecido. -->
+      <!-- El código de segundo factor se pide sólo cuando la API lo exige
+           (`MFA_REQUIRED`): tres de cada tres personas no tienen uno, y un campo
+           que no te toca es el que te hace dudar de los otros dos. -->
+      @if (mfaRequired()) {
+        <app-form-field
+          label="Código de verificación"
+          [required]="true"
+          hint="Los seis dígitos que muestra tu aplicación de autenticación."
+        >
+          <app-input
+            formControlName="mfaCode"
+            type="text"
+            autocomplete="one-time-code"
+            placeholder="123456"
+            testId="login-mfa-code"
+          />
+        </app-form-field>
+      }
 
       <button
         app-button

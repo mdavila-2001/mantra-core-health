@@ -38,6 +38,7 @@ import { envFromProcess } from './env.generated';
  */
 export const environment: Environment = {
   apiBaseUrl: envFromProcess.apiBaseUrl ?? '',
+  refreshCookie: envFromProcess.refreshCookie ?? false,
   aiBaseUrl: envFromProcess.aiBaseUrl ?? '/ai',
   demoPresets: false,
   paymentDemo: false,

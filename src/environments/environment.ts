@@ -58,6 +58,13 @@ export const environment: Environment = {
   campaignsDemo: envFromProcess.campaignsDemo ?? true,
 
   /**
+   * Apagada por defecto: el refresh token sigue en el cuerpo y en `localStorage`
+   * hasta que el despliegue encienda **las dos puntas** —`PUBLIC_REFRESH_COOKIE`
+   * acá y `AUTH_REFRESH_COOKIE_ENABLED` en la API—. Ver `environment.types.ts`.
+   */
+  refreshCookie: envFromProcess.refreshCookie ?? false,
+
+  /**
    * Siempre encendido en la rama `mockup`: es lo que la define. No lee el
    * entorno del proceso a propósito, para que no haya forma de apuntar esta
    * rama a una API real por accidente.

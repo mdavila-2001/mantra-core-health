@@ -179,6 +179,18 @@ export interface Environment {
   readonly campaignsDemo: boolean;
 
   /**
+   * El refresh token viaja en una cookie `httpOnly` que pone y lee la API, y no
+   * en el cuerpo de las respuestas ni en `localStorage` (TX-10, decisión D-I).
+   *
+   * Es un **interruptor de despliegue que tiene que coincidir con el de la API**
+   * (`AUTH_REFRESH_COOKIE_ENABLED`): con uno solo encendido la sesión se pierde
+   * al recargar. Por eso vale `false` salvo que el despliegue lo pida con
+   * `PUBLIC_REFRESH_COOKIE=true`. No es un secreto: sólo dice cómo se pide el
+   * refresco. Exige mismo origen entre el front y la API (`apiBaseUrl` vacío).
+   */
+  readonly refreshCookie: boolean;
+
+  /**
    * Rama `mockup`: la aplicación no habla con ninguna API. Un interceptor
    * responde cada petición desde datos de prueba en memoria, con todas las
    * pantallas pobladas. Ver `src/app/core/mock/`.
@@ -202,5 +214,6 @@ export interface EnvironmentOverrides {
   readonly paymentDemo?: boolean;
   readonly loyaltyDemo?: boolean;
   readonly campaignsDemo?: boolean;
+  readonly refreshCookie?: boolean;
   readonly mockBackend?: boolean;
 }

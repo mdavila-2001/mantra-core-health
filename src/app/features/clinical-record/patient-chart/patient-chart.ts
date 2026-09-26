@@ -47,6 +47,10 @@ import { DialogService } from '../../../shared/components/molecules/dialog/dialo
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { AuthzClient } from '../../../core/data-access/authz/authz.client';
+import { ChartDocumentsClient } from '../../../core/data-access/chart-documents/chart-documents.client';
+import { isScanPending } from '../../../core/data-access/files/scan-status';
+import { FileDownloadService } from '../../../shared/utils/file-download/file-download.service';
 import {
   downloadPrescriptionPdf,
   downloadVisitPdf,
@@ -238,6 +242,20 @@ export interface FilaClinica {
    * nota de P24.
    */
   readonly cita?: string;
+
+  /**
+   * Los archivos del registro (hoy sólo los documentos, CL-27): uno por
+   * archivo, con el `fileId` que se baja desde
+   * `GET /charts/documents/:id/files/:fileId/content`.
+   */
+  readonly archivos?: readonly ArchivoDeFila[];
+}
+
+/** Un archivo de una fila del expediente, listo para ofrecer su descarga. */
+export interface ArchivoDeFila {
+  readonly fileId: string;
+  /** «Archivo 1 · Principal», nunca el uuid. */
+  readonly rotulo: string;
 }
 
 /** Un vínculo clínico, ya resuelto a palabras. */
@@ -356,6 +374,9 @@ export class PatientChart {
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
+  private readonly documentsClient = inject(ChartDocumentsClient);
+  private readonly authz = inject(AuthzClient);
+  private readonly downloads = inject(FileDownloadService);
   private readonly route = inject(ActivatedRoute);
 
   private readonly celdaPrincipal =
@@ -616,8 +637,119 @@ export class PatientChart {
           valor: 'El documento del expediente no guarda encuentro ni diagnóstico.',
         },
       ],
+      archivos: [...(fila.files ?? [])]
+        .sort((a, b) => (a.ordinal ?? 0) - (b.ordinal ?? 0))
+        .map((archivo, indice) => ({
+          fileId: archivo.fileId,
+          rotulo: `Archivo ${indice + 1}${archivo.contentRole === 'PRIMARY' ? ' · Principal' : ''}`,
+        })),
     })),
   );
+
+  /* -- Acceso de emergencia (BR-20 · CV-19) --------------------------------
+     Cuando la lectura da 403 y quien mira tiene el rol que la API deja usar
+     `break-the-glass` (`CLINICAL_APPROVER`, o `SECURITY_ADMIN`), se le ofrece la
+     acción de emergencia. No se «oculta» el 403: se ofrece una salida a quien
+     puede tomarla, con justificación obligatoria y una ventana acotada. La
+     autoridad sigue siendo la API; a quien no tiene el rol no se le ofrece. */
+
+  /** Si esta sesión puede pedir un acceso de emergencia. */
+  protected readonly puedeEmergencia = computed(() => {
+    const roles = this.auth.roles();
+    return roles.includes('CLINICAL_APPROVER') || roles.includes('SECURITY_ADMIN');
+  });
+
+  /** Mientras se pide el acceso, para no doblar el clic. */
+  protected readonly pidiendoEmergencia = signal(false);
+
+  /** El motivo escrito de una emergencia: la API exige al menos 10 caracteres. */
+  private static readonly MINIMO_DE_JUSTIFICACION = 10;
+
+  /**
+   * Pide el acceso de emergencia con la justificación, y **relee** el expediente.
+   *
+   * `POST /authz/patients/:id/break-the-glass`: la ventana es corta (60 minutos
+   * por defecto), queda auditado y el paciente lo ve en «Quién ve mi historia».
+   */
+  protected async pedirAccesoDeEmergencia(): Promise<void> {
+    const tenantId = this.auth.activeTenantId();
+    if (tenantId === null || this.pidiendoEmergencia()) {
+      this.toasts.warning('Elegí una organización antes de pedir el acceso de emergencia.', 'Acceso de emergencia');
+      return;
+    }
+    const justificacion = await this.dialogs.confirmWithReason(
+      {
+        title: 'Acceso de emergencia',
+        message:
+          'Vas a ver esta historia sin un vínculo ni un turno. Queda auditado, el acceso dura una hora y la persona lo ve en «Quién ve mi historia».',
+        confirmLabel: 'Pedir acceso',
+        destructive: true,
+      },
+      {
+        label: 'Justificación',
+        placeholder: 'Por qué necesitás ver esta historia ahora',
+        hint: 'Obligatoria: al menos 10 caracteres.',
+        minLength: PatientChart.MINIMO_DE_JUSTIFICACION,
+        maxLength: 1000,
+      },
+    );
+    if (justificacion === null) {
+      return;
+    }
+
+    this.pidiendoEmergencia.set(true);
+    this.authz
+      .breakTheGlass(this.pacienteDeLaFicha(), { tenantId, justification: justificacion })
+      .subscribe({
+        next: () => {
+          this.pidiendoEmergencia.set(false);
+          this.toasts.success('Acceso de emergencia concedido por una hora. Queda auditado.', 'Acceso de emergencia');
+          this.recargar();
+        },
+        error: () => {
+          this.pidiendoEmergencia.set(false);
+          this.toasts.warning('No pudimos conceder el acceso de emergencia.', 'Acceso de emergencia');
+        },
+      });
+  }
+
+  /** Qué archivo se está bajando ahora (para el spinner y para no doblar el clic). */
+  protected readonly bajando = signal<string | null>(null);
+
+  /**
+   * Baja un archivo de un documento del expediente (CL-27).
+   *
+   * Por `GET /charts/documents/:id/files/:fileId/content`, que autoriza por
+   * lectura de la historia del paciente y no por autoría: quien abre el
+   * expediente no es quien subió el papel. Sin `window.open`: los bytes vienen
+   * con la credencial y se entregan con un enlace temporal.
+   */
+  protected descargarArchivo(fila: FilaClinica, archivo: ArchivoDeFila): void {
+    if (this.bajando() !== null) {
+      return;
+    }
+    this.bajando.set(archivo.fileId);
+    this.documentsClient.downloadFile(fila.id, archivo.fileId).subscribe({
+      next: ({ blob, fileName }) => {
+        this.bajando.set(null);
+        this.downloads.save(blob, fileName ?? `${fila.principal} - ${archivo.rotulo}.pdf`);
+      },
+      error: (error: unknown) => {
+        this.bajando.set(null);
+        if (isScanPending(error)) {
+          this.toasts.info('El archivo todavía está en análisis. Probá de nuevo en un momento.', 'Documento');
+          return;
+        }
+        const estado = errorToViewState<null>(error);
+        this.toasts.warning(
+          estado.status === 'forbidden'
+            ? 'No tenés permiso para abrir este archivo.'
+            : 'No pudimos bajar el archivo. Reintentá en un momento.',
+          'Documento',
+        );
+      },
+    });
+  }
 
   /**
    * Los ocho bloques con su rótulo, para dibujar las pestañas de una pasada.

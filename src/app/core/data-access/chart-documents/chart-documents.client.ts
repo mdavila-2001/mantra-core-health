@@ -3,6 +3,9 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { parseBlobError } from '../files/blob-error';
+import { nombreDeContentDisposition } from '../files/content-disposition';
+import type { DownloadedFile } from '../files/files.types';
 import type { ChartDocumentRegistration, NewChartDocument } from './chart-documents.types';
 
 /** Lo que viaja por el cable: el instante llega como texto ISO. */
@@ -39,6 +42,37 @@ export class ChartDocumentsClient {
     return this.http
       .post<WireDocumentRegistration>(this.url('/charts/documents'), sinAusentes({ ...documento }))
       .pipe(map((body) => ({ ...body, createdAt: new Date(body.createdAt) })));
+  }
+
+  /**
+   * `GET /charts/documents/:documentId/files/:fileId/content` — un archivo de un
+   * documento del expediente (CL-27).
+   *
+   * La API autoriza por **lectura de la historia del paciente dueño**, no por
+   * autoría: el médico que abre el expediente no es quien subió el papel. Baja
+   * los bytes con la credencial; nada de URLs firmadas sueltas.
+   *
+   * @param documentId - Documento del expediente.
+   * @param fileId - Archivo que cuelga de ese documento.
+   */
+  downloadFile(documentId: string, fileId: string): Observable<DownloadedFile> {
+    return this.http
+      .get(
+        this.url(
+          `/charts/documents/${encodeURIComponent(documentId)}/files/${encodeURIComponent(fileId)}/content`,
+        ),
+        { responseType: 'blob', observe: 'response' },
+      )
+      .pipe(
+        map((respuesta) => {
+          const fileName = nombreDeContentDisposition(respuesta.headers.get('Content-Disposition'));
+          return {
+            blob: respuesta.body ?? new Blob([]),
+            ...(fileName === undefined ? {} : { fileName }),
+          };
+        }),
+        parseBlobError(),
+      );
   }
 
   private url(path: string): string {

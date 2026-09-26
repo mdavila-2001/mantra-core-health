@@ -50,6 +50,7 @@
       "/surveys",
       "/clinical",
       "/authz",
+      "/consent",
       "/practitioners",
       "/practitioner-delegates",
       "/access-requests",

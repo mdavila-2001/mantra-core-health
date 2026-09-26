@@ -86,10 +86,19 @@ export class IamClient {
       .pipe(map(toSession));
   }
 
-  /** `POST /iam/auth/token/refresh`. Rota el par completo: el viejo deja de servir. */
-  refresh(refreshToken: string): Observable<Session> {
+  /**
+   * `POST /iam/auth/token/refresh`. Rota el par completo: el viejo deja de servir.
+   *
+   * Con `null` el cuerpo va **vacío**: es el modo cookie (TX-10), donde el
+   * refresh token lo manda el navegador en la cookie `httpOnly` y JavaScript
+   * nunca lo ve.
+   */
+  refresh(refreshToken: string | null): Observable<Session> {
     return this.http
-      .post<TokenResponseBody>(this.url('/iam/auth/token/refresh'), { refreshToken })
+      .post<TokenResponseBody>(
+        this.url('/iam/auth/token/refresh'),
+        refreshToken === null ? {} : { refreshToken },
+      )
       .pipe(map(toSession));
   }
 
