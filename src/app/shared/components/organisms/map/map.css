@@ -36,6 +36,20 @@ app-map {
   cursor: crosshair;
 }
 
+/* El plano y los pines se recorren con el teclado: el anillo tiene que verse
+   sobre cualquier mosaico. `.mapa` delante para ganarle a `leaflet.css`, que
+   se engancha después. */
+.mapa .mapa__lienzo:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: -3px;
+}
+
+.mapa .mapa__marcador:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
 .mapa__espera {
   position: absolute;
   inset: 0;
