@@ -10,9 +10,18 @@ import {
   SPECIMEN_TYPE,
 } from '../fixtures/conceptos';
 import { PACIENTE } from '../fixtures/personas';
-import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
+import { MockRouter, isMockReply, preconditionFailed, validation, type MockMethod } from '../mock-router';
 import { TENANT_CLINICA, TENANT_LABORATORIO, buscarUsuario } from '../mock-session';
 import { registrarDiagnostico } from './diagnostics.handlers';
+
+/**
+ * El estado HTTP de cada familia de rechazo sale de los ayudantes del
+ * simulador y no se escribe a mano: `mockup` todavía responde las
+ * precondiciones con 412 y la validación con 422, y `test` ya con 422 y 400
+ * (H2.S1.M2). La prueba fija la familia, no el número de una rama.
+ */
+const PRECONDITION = preconditionFailed('').status;
+const INVALID = validation('').status;
 
 /**
  * El circuito de especímenes del laboratorio (BR-17, CL-47): alta del
@@ -155,7 +164,7 @@ describe('circuito de especímenes del laboratorio (diagnostics-lab)', () => {
     expect(call('GET', path, {}, new HttpHeaders({ 'X-Tenant-Id': TENANT_LABORATORIO })).status).toBe(404);
   });
 
-  it('inválido — 422 al acesionar un espécimen rechazado, y 422 al rechazarlo dos veces', () => {
+  it('inválido — precondición al acesionar un espécimen rechazado, y 422 al rechazarlo dos veces', () => {
     const specimenId = newSpecimen();
     const rejection = { rejectionReasonConceptId: SPECIMEN_REJECTION_REASON['REJECTION_QUALITY'], recollectionRequired: true };
 
@@ -163,18 +172,18 @@ describe('circuito de especímenes del laboratorio (diagnostics-lab)', () => {
     expect(first.status).toBe(201);
     expect(first.body.status).toBe(SPECIMEN_STATUS['SPEC_REJECTED']);
 
-    expect(call('POST', `/diagnostics/specimens/${specimenId}/rejection`, rejection).status).toBe(422);
-    expect(call('POST', '/diagnostics/accessions', { patientProfileId: PACIENTE.id, specimenIds: [specimenId] }).status).toBe(422);
+    expect(call('POST', `/diagnostics/specimens/${specimenId}/rejection`, rejection).status).toBe(PRECONDITION);
+    expect(call('POST', '/diagnostics/accessions', { patientProfileId: PACIENTE.id, specimenIds: [specimenId] }).status).toBe(PRECONDITION);
     expect(call<SpecimenWire>('GET', `/diagnostics/specimens/${specimenId}`).body.statusConceptId).toBe(SPECIMEN_STATUS['SPEC_REJECTED']);
   });
 
-  it('inválido — 400 por datos faltantes en cada escritura', () => {
+  it('inválido — validación por datos faltantes en cada escritura', () => {
     const specimenId = newSpecimen();
 
-    expect(call('POST', '/diagnostics/specimens', { patientProfileId: PACIENTE.id }).status).toBe(400);
-    expect(call('POST', '/diagnostics/accessions', { patientProfileId: PACIENTE.id, specimenIds: [] }).status).toBe(400);
-    expect(call('POST', `/diagnostics/specimens/${specimenId}/rejection`, {}).status).toBe(400);
-    expect(call('POST', `/diagnostics/specimens/${specimenId}/containers`, { containerIdentifier: '  ' }).status).toBe(400);
+    expect(call('POST', '/diagnostics/specimens', { patientProfileId: PACIENTE.id }).status).toBe(INVALID);
+    expect(call('POST', '/diagnostics/accessions', { patientProfileId: PACIENTE.id, specimenIds: [] }).status).toBe(INVALID);
+    expect(call('POST', `/diagnostics/specimens/${specimenId}/rejection`, {}).status).toBe(INVALID);
+    expect(call('POST', `/diagnostics/specimens/${specimenId}/containers`, { containerIdentifier: '  ' }).status).toBe(INVALID);
   });
 
   it('inválido — 404 por espécimen, acesión o contenedor inexistentes', () => {

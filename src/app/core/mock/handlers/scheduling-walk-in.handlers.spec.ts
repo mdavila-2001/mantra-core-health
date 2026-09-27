@@ -5,8 +5,23 @@ import { RECURSO_MEDICA, reservas } from '../fixtures/agenda';
 import { encuentros } from '../fixtures/clinica';
 import { ESTADO_ENCUENTRO, ESTADO_RESERVA } from '../fixtures/conceptos';
 import { PACIENTE, pacientePorId } from '../fixtures/personas';
-import { MockRouter, isMockReply, type MockReply } from '../mock-router';
+import { MockRouter, isMockReply, preconditionFailed, validation, type MockReply } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
+
+/**
+ * El estado HTTP de cada familia de rechazo sale de los ayudantes del
+ * simulador y no se escribe a mano: `mockup` todavía responde las
+ * precondiciones con 412 y la validación con 422, y `test` ya con 422 y 400
+ * (H2.S1.M2). La prueba fija la familia, no el número de una rama.
+ */
+const PRECONDITION = preconditionFailed('').status;
+const INVALID = validation('').status;
+
+/** Los textos de validación, en la forma de cada rama: `details.violations` o `issues`. */
+function messagesOf(body: unknown): readonly string[] {
+  const wire = body as { details?: { violations?: string[] }; issues?: { field?: string; message: string }[] };
+  return wire.details?.violations ?? (wire.issues ?? []).map((issue) => `${issue.field} ${issue.message}`);
+}
 
 /**
  * `POST /scheduling/appointments/walk-in` — el turno de mostrador (AC-3.3).
@@ -124,20 +139,20 @@ describe('POST /scheduling/appointments/walk-in', () => {
     expect(post(body('9100006'), headers).status).toBe(201);
   });
 
-  it('inválido — 400 si falta la cédula o el teléfono del paciente', () => {
+  it('inválido — validación si falta la cédula o el teléfono del paciente', () => {
     const result = post({ ...body('x'), patient: { name: 'Rosa', lastName: 'Vaca', nationalId: '', phone: '' } });
 
-    expect(result.status).toBe(400);
-    const violations = (result.body as { details: { violations: string[] } }).details.violations;
+    expect(result.status).toBe(INVALID);
+    const violations = messagesOf(result.body);
     expect(violations).toContain('patient.nationalId should not be empty');
     expect(violations).toContain('patient.phone should not be empty');
   });
 
-  it('inválido — 400 si viene el teléfono del tutor sin su nombre', () => {
+  it('inválido — validación si viene el teléfono del tutor sin su nombre', () => {
     const request = body('9100007');
     const result = post({ ...request, patient: { ...request.patient, guardianPhone: '+591 71111111' } });
 
-    expect(result.status).toBe(400);
+    expect(result.status).toBe(INVALID);
   });
 
   it('inválido — 404 si la agenda no existe', () => {
@@ -154,13 +169,13 @@ describe('POST /scheduling/appointments/walk-in', () => {
     expect(reservas.todos()).toHaveLength(before);
   });
 
-  it('inválido — 422 si el horario pisa otro turno vivo de la misma agenda', () => {
+  it('inválido — precondición si el horario pisa otro turno vivo de la misma agenda', () => {
     const first = body('9100009');
     expect(post(first).status).toBe(201);
 
     const clash = post({ ...body('9100010'), startAt: first.startAt });
 
-    expect(clash.status).toBe(422);
+    expect(clash.status).toBe(PRECONDITION);
     expect((clash.body as { code: string; message: string }).message).toContain('Rosa Vaca');
   });
 });

@@ -1,8 +1,16 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
+import { MockRouter, isMockReply, preconditionFailed, type MockMethod } from '../mock-router';
 import { registrarAuth } from './auth.handlers';
 import { registrarVarios } from './misc.handlers';
+
+/**
+ * El estado HTTP de cada familia de rechazo sale de los ayudantes del
+ * simulador y no se escribe a mano: `mockup` todavía responde las
+ * precondiciones con 412 y la validación con 422, y `test` ya con 422 y 400
+ * (H2.S1.M2). La prueba fija la familia, no el número de una rama.
+ */
+const PRECONDITION = preconditionFailed('').status;
 
 /**
  * El alta pública de laboratorio y de centro de imagenología (BR-09) contra el
@@ -115,7 +123,7 @@ describe('alta de laboratorio y centro de imagenología en el simulador', () => 
     );
   });
 
-  it('inválido — sin jurisdicción el centro responde 422 nombrando lo que falta', () => {
+  it('inválido — sin jurisdicción el centro responde una precondición nombrando lo que falta', () => {
     const result = call('POST', '/iam/auth/register-organization', {
       body: {
         organization: {
@@ -129,7 +137,7 @@ describe('alta de laboratorio y centro de imagenología en el simulador', () => 
       },
     });
 
-    expect(result.status).toBe(422);
+    expect(result.status).toBe(PRECONDITION);
     expect(JSON.stringify(result.body)).toContain('jurisdictionConceptId');
   });
 });
