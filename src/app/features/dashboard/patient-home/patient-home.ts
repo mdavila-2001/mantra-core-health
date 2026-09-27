@@ -19,6 +19,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { MIS_TURNOS_ROUTE } from '../../account/appointments/appointments.routes';
 import { MI_HISTORIA_ROUTE } from '../../account/medical-record/medical-record.routes';
 import { SymptomCheck } from '../../symptom-check/symptom-check';
+import { PatientCampaignsWidget } from '../../insurance/patient-campaigns/patient-campaigns-widget';
 
 /** Cuántas filas se piden de la historia: acá sólo se muestra lo último. */
 const TOPE = 20;
@@ -90,7 +91,16 @@ const SIN_AGENDA: DondeYConQuien = { profesional: '', lugar: '' };
  */
 @Component({
   selector: 'app-patient-home',
-  imports: [AppButtonLink, Card, DatePipe, NavIcon, PageHeader, RouterLink, SymptomCheck],
+  imports: [
+    AppButtonLink,
+    Card,
+    DatePipe,
+    NavIcon,
+    PageHeader,
+    PatientCampaignsWidget,
+    RouterLink,
+    SymptomCheck,
+  ],
   templateUrl: './patient-home.html',
   styleUrl: './patient-home.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -105,6 +115,9 @@ export class PatientHome {
 
   /** El nombre con el que saludar. Vacío si el token no lo trae. */
   protected readonly nombre = computed(() => this.auth.displayName() ?? '');
+
+  /** Perfil del paciente en sesión: lo necesita el widget de beneficios del seguro. */
+  protected readonly profileId = this.auth.patientProfileId;
 
   protected readonly estado = signal<ViewState<Resumen>>(loading());
 
