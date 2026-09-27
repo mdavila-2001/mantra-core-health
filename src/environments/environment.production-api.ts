@@ -21,7 +21,11 @@ import { envFromProcess } from './env.generated';
  * inicialización. Por eso se repiten acá los mismos respaldos de
  * `envFromProcess` que `environment.ts`, en vez de heredarlos.
  *
- * Apaga el backend simulado y **las cuatro** demostraciones, no sólo dos.
+ * Apaga el backend simulado, **las cuatro** demostraciones —no sólo dos— y
+ * las pantallas de la bóveda con datos de ejemplo (`designMockups`, ver
+ * `features/alovida/design-mockup-gate.ts`).
+ *
+ * Sobre las demostraciones:
  * `environment.real-api.ts` sólo apaga `campaignsDemo` y `paymentDemo`: contra
  * la API real, la barra de casos de demostración de la ficha clínica
  * (`demoPresets`) y la billetera sembrada (`loyaltyDemo`) seguirían apareciendo
@@ -44,6 +48,7 @@ export const environment: Environment = {
   paymentDemo: false,
   loyaltyDemo: false,
   campaignsDemo: false,
+  designMockups: false,
   mockBackend: false,
   telemetry: {
     enabled: envFromProcess.telemetry?.enabled ?? false,

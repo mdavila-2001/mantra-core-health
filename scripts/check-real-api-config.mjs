@@ -25,7 +25,9 @@
  *   - `yarn start:real-api` arranca esa configuración;
  *   - `real-api` declara `mockBackend: false` y los otros dos entornos `true`;
  *   - `real-api` declara `campaignsDemo: false` y `paymentDemo: false`: con la
- *     API real ninguna demo fabrica campañas ni pagos (MOCKS OFF).
+ *     API real ninguna demo fabrica campañas ni pagos (MOCKS OFF);
+ *   - `real-api` y `production-api` declaran `designMockups: false`: las
+ *     pantallas de la bóveda con datos de ejemplo no se registran.
  *
  * Uso: node scripts/check-real-api-config.mjs
  */
@@ -82,7 +84,7 @@ exigir(
   /mockBackend:\s*false/.test(leer('src/environments/environment.real-api.ts')),
   'environment.real-api.ts tiene que declarar mockBackend: false',
 );
-for (const demo of ['campaignsDemo', 'paymentDemo']) {
+for (const demo of ['campaignsDemo', 'paymentDemo', 'designMockups']) {
   exigir(
     new RegExp(`\\b${demo}:\\s*false\\b`).test(leer('src/environments/environment.real-api.ts')),
     `environment.real-api.ts tiene que declarar ${demo}: false`,
@@ -124,7 +126,7 @@ exigir(
   /mockBackend:\s*false/.test(produccionApiEnv),
   'environment.production-api.ts tiene que declarar mockBackend: false',
 );
-for (const demo of ['demoPresets', 'paymentDemo', 'loyaltyDemo', 'campaignsDemo']) {
+for (const demo of ['demoPresets', 'paymentDemo', 'loyaltyDemo', 'campaignsDemo', 'designMockups']) {
   exigir(
     new RegExp(`\\b${demo}:\\s*false\\b`).test(produccionApiEnv),
     `environment.production-api.ts tiene que declarar ${demo}: false`,

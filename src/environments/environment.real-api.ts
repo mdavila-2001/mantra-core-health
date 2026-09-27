@@ -44,4 +44,7 @@ export const environment: Environment = {
   mockBackend: false,
   campaignsDemo: false,
   paymentDemo: false,
+  // Las pantallas de la bóveda pintan filas escritas a mano: contra la API
+  // real no se registran. Ver `features/alovida/design-mockup-gate.ts`.
+  designMockups: false,
 };

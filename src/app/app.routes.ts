@@ -12,7 +12,7 @@ import { ActivateAccount } from './features/auth/activate-account/activate-accou
 import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { NotFound } from './features/not-found/not-found';
-import { ALOVIDA_ROUTES } from './features/alovida/alovida.routes';
+import { designMockupRoutes, profileSlugRedirects } from './features/alovida/design-mockup-gate';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { environment } from '../environments/environment';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
@@ -1527,7 +1527,12 @@ export const routes: Routes = [
   // primero y con segmento propio: no compiten con el armazón de abajo, que
   // vive en `path: ''`, así que ninguna de las dos depende de que el router
   // retroceda para encontrar a la otra.
-  ...ALOVIDA_ROUTES,
+  //
+  // Pasan por el gate `designMockups`: contra la API real (`production-api`,
+  // `real-api`) las maquetas con datos de ejemplo no se registran y sólo
+  // quedan redirecciones a la pantalla real equivalente. Ver
+  // `features/alovida/design-mockup-gate.ts`.
+  ...designMockupRoutes(environment.designMockups),
   // Las fichas públicas por slug. Van con el marco público y **sin guard**:
   // son la superficie anónima, y el enlace que alguien pega en un mensaje.
   //
@@ -2128,6 +2133,9 @@ export const routes: Routes = [
   // secas existe en las dos partes, y acá gana la que redirige sólo cuando
   // ninguna pantalla real coincidió.
   ...rutasHeredadas(RUTAS_HEREDADAS_DEL_BUSCADOR),
+  // Las fichas de la bóveda con slug abren la ficha pública real, con o sin
+  // maquetas. Ver `features/alovida/design-mockup-gate.ts`.
+  ...profileSlugRedirects(),
   {
     // Antes esto redirigía a `/`, que mandaba al panel —o al login, vía el
     // guard— a quien escribiera mal una dirección, sin decirle que se había

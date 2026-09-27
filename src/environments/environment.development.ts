@@ -54,6 +54,14 @@ export const environment: Environment = {
   campaignsDemo: envFromProcess.campaignsDemo ?? true,
 
   /**
+   * Encendidas por defecto: en desarrollo se trabaja contra la maqueta y las
+   * pantallas de la bóveda son la referencia. Se apagan con
+   * `PUBLIC_DESIGN_MOCKUPS=false` — y ese apagado es la prueba de que ningún
+   * enlace visible lleva a una de ellas.
+   */
+  designMockups: envFromProcess.designMockups ?? true,
+
+  /**
    * Apagada por defecto: el refresh token sigue en el cuerpo y en `localStorage`
    * hasta que el despliegue encienda **las dos puntas** —`PUBLIC_REFRESH_COOKIE`
    * acá y `AUTH_REFRESH_COOKIE_ENABLED` en la API—. Ver `environment.types.ts`.
