@@ -5,7 +5,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
-import { MedicalNoteBlock } from '../patient-chart/medical-note-block/medical-note-block';
+import { CarePlanBlock } from '../patient-chart/care-plan-block/care-plan-block';
+import { FormResponsePicker } from '../patient-chart/form-response-picker/form-response-picker';
 import { Consultation } from './consultation';
 
 /**
@@ -13,8 +14,9 @@ import { Consultation } from './consultation';
  *
  * Lo que fijan estas pruebas:
  *
- * 1. **Están las diez posibilidades de C0** —sin Medición ni Internación,
- *    retiradas el 25/09/2026—, en orden y con cantidades leídas.
+ * 1. **Están las ocho posibilidades** —sin Medición ni Internación,
+ *    retiradas el 25/09/2026, ni Nota médica ni Documento, que absorbió el
+ *    formulario médico el 26/09/2026—, en orden y con cantidades leídas.
  *    Órdenes, reconsulta y Pagos no agregan lecturas para ofrecer una cifra.
  * 2. **Cada casilla abre su formulario en modal**, y uno solo a la vez.
  * 3. **El check-in manda lo que el contrato pide y nada más.** Un motivo en
@@ -50,12 +52,24 @@ const CHART = {
 };
 
 const CLAVES = [
-  'notas', 'ordenes', 'diagnosticos', 'reconsulta', 'medicacion', 'alergias',
-  'planes', 'documentos', 'formulario', 'pagos',
+  'formulario',
+  'ordenes',
+  'diagnosticos',
+  'medicacion',
+  'planes',
+  'reconsulta',
+  'alergias',
+  'pagos',
 ];
 const TITULOS = [
-  'Nota médica', 'Orden de análisis', 'Diagnóstico', 'Reconsulta', 'Receta', 'Alergia',
-  'Plan de cuidados', 'Documento', 'Formulario clínico', 'Pagos',
+  'Formulario médico',
+  'Orden de análisis',
+  'Diagnóstico',
+  'Receta',
+  'Plan de cuidados',
+  'Reconsulta',
+  'Alergia',
+  'Pagos',
 ];
 
 describe('Consultation', () => {
@@ -106,7 +120,7 @@ describe('Consultation', () => {
     componente = await harness.navigateByUrl('/medical-records/p-1/consultation', Consultation);
   });
 
-  it('ofrece las diez posibilidades en la rejilla, con su cantidad', async () => {
+  it('ofrece las ocho posibilidades en la rejilla, con su cantidad', async () => {
     await responderLectura();
 
     const casillas = interno<() => readonly { clave: string; titulo: string; cantidad: number | null }[]>(
@@ -117,7 +131,6 @@ describe('Consultation', () => {
     expect(casillas.find((c) => c.clave === 'ordenes')?.cantidad).toBeNull();
     expect(casillas.find((c) => c.clave === 'reconsulta')?.cantidad).toBeNull();
     expect(casillas.find((c) => c.clave === 'diagnosticos')?.cantidad).toBe(2);
-    expect(casillas.find((c) => c.clave === 'documentos')?.cantidad).toBe(1);
     expect(casillas.find((c) => c.clave === 'formulario')?.cantidad).toBeNull();
     // Pagos no lleva cifra: son de la caja y no de las dos lecturas del
     // expediente, y un número pedido acá podría discrepar del que muestra el
@@ -127,7 +140,7 @@ describe('Consultation', () => {
     const botones = harness.routeNativeElement!.querySelectorAll(
       '[data-testid^="consulta-casilla-"]',
     );
-    expect(botones).toHaveLength(10);
+    expect(botones).toHaveLength(8);
   });
 
   /**
@@ -135,27 +148,54 @@ describe('Consultation', () => {
    * única línea que dice qué va a pasar al confirmar. Prometer que «se
    * registra» ahí sería mentir en el peor lugar posible.
    */
-  it('Nota médica recibe el encuentro y las citas, y sólo lee al abrirse', async () => {
-    await responderLectura({ encounters: [{ id: 'e-1', statusConceptId: 'st', startAt: '2026-03-01T10:00:00Z' }] });
-    interno<(key: string) => void>('abrir').call(componente, 'notas');
+  it('el plan de cuidados exige la respuesta del formulario médico, y viene cargada', async () => {
+    await responderLectura({
+      encounters: [{ id: 'e-1', statusConceptId: 'st', startAt: '2026-03-01T10:00:00Z' }],
+    });
+    interno<(key: string) => void>('abrir').call(componente, 'planes');
     await harness.fixture.whenStable();
-    const note = harness.fixture.debugElement.query(By.directive(MedicalNoteBlock))
-      .componentInstance as MedicalNoteBlock;
-    expect(note.patientProfileId()).toBe('p-1');
-    expect(note.encounterId()).toBe('e-1');
-    expect(note.citas()).toEqual(interno<() => readonly unknown[]>('citas')());
-    // El bloque relee las notas de la persona al montarse —y nada más—.
-    http
-      .expectOne((request) => request.method === 'GET' && request.url === '/charts/notes')
-      .flush({ items: [], count: 0, limit: 50, nextCursor: null });
+
+    const plan = harness.fixture.debugElement.query(By.directive(CarePlanBlock))
+      .componentInstance as CarePlanBlock;
+    expect(plan.exigeRespuesta()).toBe(true);
+
+    const pedido = http.expectOne(
+      (r) =>
+        r.method === 'GET' && r.url === '/forms/instances' && r.params.get('encounter') === 'e-1',
+    );
+    pedido.flush({
+      encounterId: 'e-1',
+      items: [
+        {
+          id: 'inst-1',
+          resourceId: 'e-1',
+          resourceTypeConceptId: 'rt',
+          schemaVersion: 1,
+          closedAt: '2026-03-01T10:30:00Z',
+          createdAt: '2026-03-01T10:05:00Z',
+        },
+      ],
+      limit: 50,
+      truncated: false,
+    });
     await harness.fixture.whenStable();
-    expect(harness.routeNativeElement?.textContent).toContain('Escribí la primera nota');
-    http.expectNone((request) => request.method === 'POST');
+
+    const picker = harness.fixture.debugElement.query(By.directive(FormResponsePicker))
+      .componentInstance as FormResponsePicker;
+    // Una sola respuesta: elegida sola, y el selector no se puede tocar.
+    expect(picker.seleccionada()).toBe('inst-1');
+    const selector = harness.routeNativeElement!.querySelector(
+      '[data-testid="respuesta-del-formulario"]',
+    );
+    expect(selector).not.toBeNull();
+    expect(selector!.querySelector('[disabled], [aria-disabled="true"]')).not.toBeNull();
   });
 
   it('destruye el modal al cerrar y permite reabrir la misma casilla de inmediato', async () => {
     await responderLectura();
-    const tile = harness.routeNativeElement!.querySelector<HTMLButtonElement>('[data-testid="consulta-casilla-notas"]')!;
+    const tile = harness.routeNativeElement!.querySelector<HTMLButtonElement>(
+      '[data-testid="consulta-casilla-alergias"]',
+    )!;
     tile.click();
     await harness.fixture.whenStable();
     const previous = harness.routeNativeElement!.querySelector('dialog')!;

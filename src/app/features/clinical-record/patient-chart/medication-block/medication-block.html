@@ -146,6 +146,15 @@
     </app-alert>
   } @else {
     <form class="receta__formulario app-form-grid" (submit)="$event.preventDefault()">
+      <!-- En la cita, primero de qué respuesta del formulario médico sale. Viene
+           cargada; con una sola respuesta el selector queda deshabilitado. -->
+      @if (exigeRespuesta()) {
+        <app-form-response-picker
+          class="app-form-grid__ancho"
+          [encounterId]="encounterId()"
+          [(seleccionada)]="respuestaDelFormulario"
+        />
+      }
       <!-- «Una cita ya existente y/o finalizada», textual del cliente. Sólo se
            dibuja si hay citas que ofrecer: un desplegable con una única opción
            vacía es una pregunta que no existe. En «Atención» no aparece —el
