@@ -897,16 +897,19 @@
                 </button>
                 <app-menu #accionesOrden>
                     <app-menu-item (selected)="registrarAccion('Imprimir receta')">
-                        <svg slot="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                             stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <polyline points="6 9 6 2 18 2 18 9" />
-                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                        </svg>
+                        <app-nav-icon slot="icon" name="print" />
                         Imprimir receta
                     </app-menu-item>
-                    <app-menu-item (selected)="registrarAccion('Duplicar orden')">Duplicar orden</app-menu-item>
-                    <app-menu-item [disabled]="true">Firmar digitalmente</app-menu-item>
+                    <app-menu-item (selected)="registrarAccion('Duplicar orden')">
+                        <app-nav-icon slot="icon" name="clipboard" />
+                        Duplicar orden
+                    </app-menu-item>
+                    <app-menu-item [disabled]="true">
+                        <app-nav-icon slot="icon" name="check" />
+                        Firmar digitalmente
+                    </app-menu-item>
                     <app-menu-item [destructive]="true" (selected)="registrarAccion('Anular orden')">
+                        <app-nav-icon slot="icon" name="close" />
                         Anular orden
                     </app-menu-item>
                 </app-menu>
@@ -919,8 +922,14 @@
                     </svg>
                 </button>
                 <app-menu #accionesFila>
-                    <app-menu-item (selected)="registrarAccion('Ver ficha')">Ver ficha</app-menu-item>
-                    <app-menu-item (selected)="registrarAccion('Editar')">Editar</app-menu-item>
+                    <app-menu-item (selected)="registrarAccion('Ver ficha')">
+                        <app-nav-icon slot="icon" name="eye" />
+                        Ver ficha
+                    </app-menu-item>
+                    <app-menu-item (selected)="registrarAccion('Editar')">
+                        <app-nav-icon slot="icon" name="edit" />
+                        Editar
+                    </app-menu-item>
                 </app-menu>
 
                 <span class="sandbox-note">Última acción: <strong>{{ ultimaAccion() }}</strong></span>

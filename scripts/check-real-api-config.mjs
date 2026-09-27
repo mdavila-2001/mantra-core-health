@@ -92,6 +92,45 @@ for (const archivo of [ENTORNO, 'src/environments/environment.development.ts']) 
   exigir(/mockBackend:\s*true/.test(leer(archivo)), `${archivo} tiene que seguir con mockBackend: true`);
 }
 
+/**
+ * `production-api` (H1.S1, 2026-09-26): el build real, con SSR encendido.
+ *
+ * A diferencia de `real-api` —pensado para `ng serve` sin SSR—, esta
+ * configuración tiene que mantener el renderizado en servidor y apagar, además
+ * del mock, **las cuatro** demostraciones: contra la API real ninguna puede
+ * fabricar datos que ningún backend respalda.
+ */
+const PRODUCTION_API = 'production-api';
+const produccionApi = build.configurations?.[PRODUCTION_API] ?? {};
+exigir(
+  reemplazoDe(PRODUCTION_API) === 'src/environments/environment.production-api.ts',
+  `build «${PRODUCTION_API}» tiene que reemplazar environment.ts por environment.production-api.ts`,
+);
+exigir(
+  produccionApi.server !== false && produccionApi.ssr !== false,
+  `build «${PRODUCTION_API}» tiene que mantener el SSR encendido (server/ssr distintos de false)`,
+);
+exigir(
+  produccionApi.outputMode !== 'static',
+  `build «${PRODUCTION_API}» no puede degradar a outputMode: static`,
+);
+const tunelesEnAllowedHosts = (host) => /\.(devtunnels\.ms|trycloudflare\.com|ngrok-free\.app|loca\.lt)$/.test(host);
+exigir(
+  !(produccionApi.security?.allowedHosts ?? []).some(tunelesEnAllowedHosts),
+  `build «${PRODUCTION_API}» no puede declarar dominios de túneles en security.allowedHosts`,
+);
+const produccionApiEnv = leer('src/environments/environment.production-api.ts');
+exigir(
+  /mockBackend:\s*false/.test(produccionApiEnv),
+  'environment.production-api.ts tiene que declarar mockBackend: false',
+);
+for (const demo of ['demoPresets', 'paymentDemo', 'loyaltyDemo', 'campaignsDemo']) {
+  exigir(
+    new RegExp(`\\b${demo}:\\s*false\\b`).test(produccionApiEnv),
+    `environment.production-api.ts tiene que declarar ${demo}: false`,
+  );
+}
+
 if (errores.length > 0) {
   console.error('[check-real-api-config] Configuración real-api inválida:');
   for (const error of errores) console.error(`  ✗ ${error}`);

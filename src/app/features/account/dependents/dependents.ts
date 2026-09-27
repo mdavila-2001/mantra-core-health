@@ -3,7 +3,11 @@ import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { PatientContextService } from '../../../core/patient-context/patient-context.service';
-import type { Dependent } from '../../../core/data-access/profiles/profiles.types';
+import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
+import type {
+  Dependent,
+  IncomingDependentLinkRequest,
+} from '../../../core/data-access/profiles/profiles.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -68,8 +72,61 @@ export class Dependents {
     () => this.auth.patientProfileId() === null,
   );
 
+  private readonly profiles = inject(ProfilesClient);
+
+  /** Lo que otras personas le pidieron a esta cuenta: ser su dependiente. */
+  protected readonly solicitudes = signal<readonly IncomingDependentLinkRequest[]>([]);
+  /** La solicitud que se está respondiendo, para bloquear el doble clic. */
+  protected readonly respondiendo = signal<string | null>(null);
+
   constructor() {
+    if (this.sinPerfilDePaciente()) return;
     this.contexto.loadDependents();
+    this.cargarSolicitudes();
+  }
+
+  private cargarSolicitudes(): void {
+    this.profiles.listIncomingDependentLinkRequests().subscribe({
+      next: (filas) => this.solicitudes.set(filas),
+      error: () => this.solicitudes.set([]),
+    });
+  }
+
+  /** Se envió la solicitud; el vínculo nace cuando la otra persona acepte. */
+  protected enviada(documento: string): void {
+    this.registrando.set(false);
+    this.toast.show({
+      type: 'success',
+      message: `Enviamos la solicitud a la cuenta con CI ${documento}. Cuando la acepte, va a aparecer en tu lista.`,
+    });
+  }
+
+  protected responder(solicitud: IncomingDependentLinkRequest, aceptar: boolean): void {
+    if (this.respondiendo() !== null) return;
+    this.respondiendo.set(solicitud.id);
+    const operacion = aceptar
+      ? this.profiles.acceptDependentLinkRequest(solicitud.id)
+      : this.profiles.rejectDependentLinkRequest(solicitud.id);
+    operacion.subscribe({
+      next: () => {
+        this.respondiendo.set(null);
+        this.solicitudes.update((filas) => filas.filter((f) => f.id !== solicitud.id));
+        this.toast.show({
+          type: aceptar ? 'success' : 'info',
+          message: aceptar
+            ? `Aceptaste: ${solicitud.requesterDisplayName} ahora puede actuar por vos.`
+            : `Rechazaste la solicitud de ${solicitud.requesterDisplayName}.`,
+        });
+      },
+      error: () => {
+        this.respondiendo.set(null);
+        this.toast.show({
+          type: 'error',
+          message: 'No se pudo responder la solicitud. Intentá de nuevo.',
+        });
+        this.cargarSolicitudes();
+      },
+    });
   }
 
   /** Pasa a operar por ese dependiente. */
@@ -85,17 +142,6 @@ export class Dependents {
   protected volverAMi(): void {
     this.contexto.resetToSelf();
     this.toast.show({ type: 'info', message: 'Volviste a tu propio perfil.' });
-  }
-
-  /** Suma el recién registrado y pasa a operar por él. */
-  protected registrado(dependiente: Dependent): void {
-    this.registrando.set(false);
-    this.contexto.addDependent(dependiente);
-    this.contexto.selectPatient(dependiente.patientProfileId);
-    this.toast.show({
-      type: 'success',
-      message: `${dependiente.fullName} quedó registrado.`,
-    });
   }
 
   /** Cómo se dice la edad de alguien en la tarjeta. */

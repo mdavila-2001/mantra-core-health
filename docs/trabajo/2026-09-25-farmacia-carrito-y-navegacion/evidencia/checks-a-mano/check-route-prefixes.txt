@@ -1,0 +1,3 @@
+✓ check-route-prefixes
+  241 rutas del router, ninguna colisiona con los 63 prefijos de la API
+  excepción declarada: 'practitioners' — cuelga de 'search': la URL real es /search/practitioners

@@ -10,8 +10,13 @@ import {
   restringePorRol,
   titleOf,
 } from './core/navigation/navigation.types';
+import {
+  indiceDePestana,
+  PESTANA,
+  PESTANAS_DEL_PERFIL,
+} from './features/account/my-profile/pestanas-del-perfil';
 import { SectionPlaceholder } from './features/section-placeholder/section-placeholder';
-import { routes } from './app.routes';
+import { routes, SECCIONES_REDIRIGIDAS } from './app.routes';
 
 /**
  * La promesa del armazón: **el menú nunca ofrece un destino que el router no
@@ -232,6 +237,8 @@ describe('rutas del armazón', () => {
 
     // `redirectTo` admite además una función desde Angular 19; las tablas de
     // direcciones viejas son todas de texto, y el estrechamiento lo deja dicho.
+    // Las de `SECCIONES_REDIRIGIDAS` sí son función —conservan el query que
+    // traían— y se comprueban abajo contra su destino declarado.
     const redirecciones = [...hijas, ...routes].filter(
       (r): r is typeof r & { redirectTo: string } =>
         typeof r.redirectTo === 'string' && (r.path ?? '') !== '',
@@ -244,6 +251,17 @@ describe('rutas del armazón', () => {
     for (const redireccion of redirecciones) {
       expect(redireccion.pathMatch, redireccion.path).toBe('full');
       expect(destinos, redireccion.path).toContain(redireccion.redirectTo);
+    }
+
+    const seccionesRedirigidas = Object.entries(SECCIONES_REDIRIGIDAS);
+    expect(seccionesRedirigidas.length).toBeGreaterThan(0);
+
+    for (const [path, destino] of seccionesRedirigidas) {
+      const ruta = hijas.find((r) => r.path === path);
+
+      expect(typeof ruta?.redirectTo, path).toBe('function');
+      expect(ruta?.pathMatch, path).toBe('full');
+      expect(destinos, path).toContain(destino.ruta);
     }
   });
 
@@ -261,13 +279,23 @@ describe('rutas del armazón', () => {
    * error opuesto y el que de verdad rompería los favoritos.
    */
   it('las direcciones viejas se declaran después de toda pantalla y antes del comodín', () => {
+    // Una sección de `SECCIONES_REDIRIGIDAS` (N-03/Q-17, 2026-09-22:
+    // «my-account/loyalty» retiró su pantalla) no es una dirección vieja en
+    // castellano: sigue en su lugar natural del registro, con su rol y su
+    // título, y sólo cambia lo que pinta. Esta prueba es sobre las alias
+    // heredadas del final de la lista; esas quedan afuera del conteo.
     for (const lista of [hijas, routes]) {
       const pantallas = lista
         .map((r, indice) => ({ r, indice }))
-        .filter(({ r }) => typeof r.redirectTo !== 'string' && r.path !== '**');
+        .filter(({ r }) => r.redirectTo === undefined && r.path !== '**');
       const viejas = lista
         .map((r, indice) => ({ r, indice }))
-        .filter(({ r }) => typeof r.redirectTo === 'string' && (r.path ?? '') !== '');
+        .filter(
+          ({ r }) =>
+            typeof r.redirectTo === 'string' &&
+            (r.path ?? '') !== '' &&
+            SECCIONES_REDIRIGIDAS[r.path ?? ''] === undefined,
+        );
 
       if (pantallas.length === 0 || viejas.length === 0) {
         continue;
@@ -321,6 +349,14 @@ describe('rutas del armazón', () => {
 
   it('cada sección tiene con qué pintarse, directa o diferida', () => {
     for (const section of APP_SECTIONS) {
+      // Una sección de `SECCIONES_REDIRIGIDAS` no pinta nada a propósito: su
+      // ruta es `redirectTo`, no `component`/`loadComponent` — Angular
+      // rechaza (`NG04014`) combinar un redirect con el guard que esta misma
+      // función le pone a toda sección, así que ni siquiera podría tener
+      // las dos cosas.
+      if (SECCIONES_REDIRIGIDAS[section.path] !== undefined) {
+        continue;
+      }
       const ruta = hijas.find((route) => route.path === section.path);
 
       expect(ruta?.component ?? ruta?.loadComponent, section.path).toBeDefined();
@@ -342,7 +378,9 @@ describe('rutas del armazón', () => {
    * ningún defecto: no hay aserción que dependa de cuánto tarde.
    */
   it('una sección disponible NO cae en el placeholder', async () => {
-    for (const section of APP_SECTIONS.filter((s) => s.availability === 'disponible')) {
+    for (const section of APP_SECTIONS.filter(
+      (s) => s.availability === 'disponible' && SECCIONES_REDIRIGIDAS[s.path] === undefined,
+    )) {
       const ruta = hijas.find((route) => route.path === section.path);
       const componente = ruta?.component ?? (await ruta?.loadComponent?.());
 
@@ -558,6 +596,77 @@ describe('la ruta de Ajustes (TAREA-17 · TAREA-29)', () => {
     await router.navigateByUrl(oldUrl);
 
     expect(location.path()).toBe(newUrl);
+  });
+});
+
+/**
+ * «Mis puntos» es una pestaña de «Mi perfil» (#606) y la dirección vieja abre
+ * esa pestaña (H4.S2.M2, N-03/Q-17). La ficha elige pestaña con `?pestana=`
+ * (`my-profile.spec.ts` fija que `puntos` abre la billetera); acá se fija que
+ * la ruta vieja llega a esa URL y no se lleva puesto el query que traía. Sin
+ * guards, por lo mismo que los bloques de arriba: `redirectTo` se resuelve
+ * antes que cualquier guard, y qué ve cada rol lo decide `/my-account`.
+ */
+describe('la ruta vieja de «Mis puntos» (H4.S2.M2)', () => {
+  let router: Router;
+  let location: Location;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(withoutGuards(routes))] });
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+  });
+
+  /** Navega y devuelve la ruta y el query donde terminó. */
+  async function terminaEn(url: string): Promise<{ ruta: string; query: Record<string, unknown> }> {
+    const ok = await router.navigateByUrl(url);
+    expect(ok, url).not.toBe(false);
+    return {
+      ruta: location.path().split('?')[0] ?? '',
+      query: { ...router.parseUrl(location.path()).queryParams },
+    };
+  }
+
+  it('la clave de la redirección es la pestaña «Mis puntos» de la ficha', () => {
+    const indice = indiceDePestana(SECCIONES_REDIRIGIDAS['my-account/loyalty']?.query?.['pestana'] ?? null);
+
+    expect(indice).toBe(PESTANA.puntos);
+    expect(PESTANAS_DEL_PERFIL[indice ?? -1]).toBe('Mis puntos');
+  });
+
+  it('`/my-account/loyalty` termina en `/my-account?pestana=puntos`', async () => {
+    expect(await terminaEn('/my-account/loyalty')).toEqual({
+      ruta: '/my-account',
+      query: { pestana: 'puntos' },
+    });
+  });
+
+  it('el query que traía sobrevive a la redirección', async () => {
+    expect(await terminaEn('/my-account/loyalty?foo=bar')).toEqual({
+      ruta: '/my-account',
+      query: { pestana: 'puntos', foo: 'bar' },
+    });
+  });
+
+  it('sobreviven también los valores repetidos y los codificados', async () => {
+    expect(await terminaEn('/my-account/loyalty?foo=bar&foo=baz&q=cardiolog%C3%ADa')).toEqual({
+      ruta: '/my-account',
+      query: { pestana: 'puntos', foo: ['bar', 'baz'], q: 'cardiología' },
+    });
+  });
+
+  it('una `pestana` entrante no le gana: la dirección vieja sigue siendo «Mis puntos»', async () => {
+    expect(await terminaEn('/my-account/loyalty?pestana=contacto&foo=bar')).toEqual({
+      ruta: '/my-account',
+      query: { pestana: 'puntos', foo: 'bar' },
+    });
+  });
+
+  it('Cotizaciones sigue resolviendo en su propia ruta', async () => {
+    expect(await terminaEn('/my-account/cotizaciones')).toEqual({
+      ruta: '/my-account/cotizaciones',
+      query: {},
+    });
   });
 });
 

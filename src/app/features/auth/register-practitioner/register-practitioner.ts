@@ -92,8 +92,12 @@ function fechaIso(fecha: Date): string {
 /** Sólo letras, dígitos, punto y guion — el mismo `@Matches` del backend. */
 const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;
 
-/** El registro del cliente permite tres especialidades además de la principal. */
-const MAX_ADDITIONAL_SPECIALTIES = 3;
+/**
+ * El registro del cliente permite cuatro especialidades (L0174): eran la
+ * principal y tres más. Desde D-01 (23/09/2026) no se elige una principal, así
+ * que el techo es de la lista entera.
+ */
+const MAXIMO_DE_ESPECIALIDADES = 4;
 
 /**
  * Códigos odontológicos mantenidos para comprobar la cobertura del catálogo.
@@ -664,19 +668,55 @@ export class RegisterPractitioner {
     );
   }
 
+  /** La universidad escrita en el bloque del título con el que ejerce. */
+  private universidadPrincipal(): string {
+    return this.formProfesional.controls.professionalTitleUniversity.value.trim();
+  }
+
+  /**
+   * La fila de «Tus títulos» que lleva la universidad del título principal.
+   *
+   * Esa universidad no tiene columna propia: el modelo la guarda como
+   * `issuing_institution_text` de una credencial, y una credencial exige número
+   * (NOT NULL). Por eso se une a la primera fila de título universitario que ya
+   * tiene número y que o bien no declaró universidad o declaró la misma. `null`
+   * si no hay ninguna: en ese caso el alta se frena y lo dice, en vez de
+   * descartarla en silencio.
+   */
+  private filaDeLaUniversidadPrincipal(): TituloDeclarado | null {
+    const principal = this.universidadPrincipal().toLowerCase();
+    return (
+      this.titulos().find(
+        (titulo) =>
+          titulo.tipo === 'UNIVERSITARIO' &&
+          titulo.numero.trim() !== '' &&
+          (titulo.universidad.trim() === '' || titulo.universidad.trim().toLowerCase() === principal),
+      ) ?? null
+    );
+  }
+
+  /** Si escribió la universidad de su título principal y ninguna fila puede llevarla. */
+  protected hayUniversidadPrincipalSinTitulo(): boolean {
+    return this.universidadPrincipal() !== '' && this.filaDeLaUniversidadPrincipal() === null;
+  }
+
   /**
    * Los títulos que viajan en el alta. El PDF va como fileId, asociado a la
    * misma fila que su tipo, número e institución.
    */
   private credencialesDeclaradas(): readonly NewRegistrationCredential[] {
     const conceptos = this.conceptoPorCodigo();
+    const filaPrincipal = this.filaDeLaUniversidadPrincipal();
     return this.titulos().flatMap((titulo) => {
       const numero = titulo.numero.trim();
       const conceptId = conceptos.get(this.codigoDeConceptoPorTipo[titulo.tipo]);
       if (numero === '' || conceptId === undefined) {
         return [];
       }
-      const universidad = titulo.universidad.trim();
+      const universidad =
+        titulo.universidad.trim() === '' && titulo === filaPrincipal
+          ? this.universidadPrincipal()
+          : titulo.universidad.trim();
       return [
         {
           credentialTypeConceptId: conceptId,
@@ -846,10 +886,6 @@ export class RegisterPractitioner {
     issuerAdministrativeAreaConceptId: new FormControl<string | null>(null, {
       validators: [Validators.required],
     }),
-    // La principal es un control porque tiene semántica propia: es la que
-    // responde «¿de qué sos?» y la que el backend guarda como principal. Las
-    // demás no se distinguen entre sí, así que viven en `especialidadesExtra` y
-    // se agregan las que hagan falta: hay profesionales con más de tres.
     // La calle del domicilio. Opcional, como en el alta de paciente: la
     // localidad es la que ubica, y esto es lo que hace falta para llegar a la
     // puerta.
@@ -861,7 +897,6 @@ export class RegisterPractitioner {
     // «Tu consultorio propio» y el JSDoc de `datosProfesional`.
     officeName: new FormControl('', { nonNullable: true }),
     officeAddressLines: new FormControl('', { nonNullable: true }),
-    specialtyPrimary: new FormControl('', { nonNullable: true }),
     profilePhotoBase64: new FormControl<string | null>(null),
   });
 
@@ -969,7 +1004,9 @@ export class RegisterPractitioner {
 
   /** Quita una fila entera, con su adjunto. */
   quitarTitulo(id: string): void {
-    this.attachmentFiles.update(files => Object.fromEntries(Object.entries(files).filter(([key]) => key !== id)));
+    this.attachmentFiles.update((files) =>
+      Object.fromEntries(Object.entries(files).filter(([key]) => key !== id)),
+    );
     this.titulos.update((titulos) => titulos.filter((titulo) => titulo.id !== id));
     this.limpiarAvisoDeTitulos();
   }
@@ -1019,17 +1056,22 @@ export class RegisterPractitioner {
   protected readonly maxAttachmentBytes = MAX_BYTES_ADJUNTO;
 
   updateSupportFiles(key: ClaveDeRespaldo, files: readonly File[]): void {
-    this.attachmentFiles.update(current => ({ ...current, [key]: files }));
+    this.attachmentFiles.update((current) => ({ ...current, [key]: files }));
     const file = files[0];
     this.destinoDelRespaldo(key).set(file ? { archivo: file.name, pesoBytes: file.size } : null);
     this.errorAdjunto.set(null);
   }
 
   updateTitleFiles(id: string, files: readonly File[]): void {
-    this.attachmentFiles.update(current => ({ ...current, [id]: files }));
+    this.attachmentFiles.update((current) => ({ ...current, [id]: files }));
     const file = files[0];
-    this.titulos.update(titles => titles.map(title => title.id === id
-      ? { ...title, archivo: file?.name ?? null, pesoBytes: file?.size ?? null, fileId: null } : title));
+    this.titulos.update((titles) =>
+      titles.map((title) =>
+        title.id === id
+          ? { ...title, archivo: file?.name ?? null, pesoBytes: file?.size ?? null, fileId: null }
+          : title,
+      ),
+    );
     this.errorAdjunto.set(null);
   }
 
@@ -1038,7 +1080,6 @@ export class RegisterPractitioner {
     if (cual === 'professional-title') return this.respaldoTituloProfesional;
     return cual === 'license' ? this.respaldoMatricula : this.respaldoSedes;
   }
-
 
   /**
    * Foto de perfil en base64 para previsualizar y enviar en el alta.
@@ -1135,7 +1176,6 @@ export class RegisterPractitioner {
     confirmada: 'registration-practitioner-office-location-confirmed',
     avisoGeocodificacion: 'registration-practitioner-office-geocoding-notice',
     quitar: 'registration-practitioner-office-location-remove',
-    sinConfirmar: 'registration-practitioner-office-location-unconfirmed',
     confirmar: 'registration-practitioner-office-location-confirm',
     usarUbicacion: 'registration-practitioner-office-location-use',
     marcarEnMapa: 'registration-practitioner-office-location-pick',
@@ -1147,7 +1187,6 @@ export class RegisterPractitioner {
     confirmada: 'registration-practitioner-home-location-confirmed',
     avisoGeocodificacion: 'registration-practitioner-home-geocoding-notice',
     quitar: 'registration-practitioner-home-location-remove',
-    sinConfirmar: 'registration-practitioner-home-location-unconfirmed',
     confirmar: 'registration-practitioner-home-location-confirm',
     usarUbicacion: 'registration-practitioner-home-location-use',
     marcarEnMapa: 'registration-practitioner-home-location-pick',
@@ -1159,7 +1198,6 @@ export class RegisterPractitioner {
     confirmada: 'registration-practitioner-work-location-confirmed',
     avisoGeocodificacion: 'registration-practitioner-work-geocoding-notice',
     quitar: 'registration-practitioner-work-location-remove',
-    sinConfirmar: 'registration-practitioner-work-location-unconfirmed',
     confirmar: 'registration-practitioner-work-location-confirm',
     usarUbicacion: 'registration-practitioner-work-location-use',
     marcarEnMapa: 'registration-practitioner-work-location-pick',
@@ -1171,16 +1209,21 @@ export class RegisterPractitioner {
   readonly nombresExtra = signal<readonly string[]>([]);
 
   /**
-   * Especialidades agregadas además de la principal.
+   * Las especialidades del alta, todas iguales.
    *
-   * Hasta tres especialidades además de la principal, como pide el registro del
-   * cliente. La cadena vacía es «esta casilla todavía no eligió nada».
+   * Hasta el 23/09/2026 había además un desplegable «Especialidad principal»;
+   * el médico pidió que ninguna se distinguiera (D-01) y se retiró. Ahora son
+   * sólo estas casillas, hasta cuatro ({@link MAXIMO_DE_ESPECIALIDADES}). La
+   * cadena vacía es «esta casilla todavía no eligió nada».
    */
   readonly especialidadesExtra = signal<readonly string[]>([]);
 
+  /** Para que la plantilla deje de ofrecer «Agregar» al llegar al techo. */
+  protected readonly maximoDeEspecialidades = MAXIMO_DE_ESPECIALIDADES;
+
   /** Suma una casilla vacía de especialidad. */
   agregarEspecialidad(): void {
-    if (this.especialidadesExtra().length >= MAX_ADDITIONAL_SPECIALTIES) return;
+    if (this.especialidadesExtra().length >= MAXIMO_DE_ESPECIALIDADES) return;
     this.especialidadesExtra.update((actuales) => [...actuales, '']);
   }
 
@@ -1905,18 +1948,8 @@ export class RegisterPractitioner {
         titulo: 'Tus especialidades',
         clave: 'specialties',
         icon: 'directory',
-        hint: 'Hasta tres además de la principal. La lista completa está disponible para cualquier profesión.',
+        hint: 'Hasta cuatro. La lista completa está disponible para cualquier profesión.',
         campos: [
-          {
-            key: 'specialtyPrimary',
-            label: 'Especialidad principal (opcional)',
-            hint: 'La que responde «¿de qué sos?».',
-            control: 'select',
-            options: this.allSpecialtyOptions(),
-            placeholder: 'Sin especialidad',
-            testId: 'registro-pro-especialidad-1',
-            icono: 'stethoscope',
-          },
           // Sin control propio: es una ranura que la plantilla llena con las
           // casillas agregadas y su botón. Mismo mecanismo que `municipio`.
           {
@@ -2086,15 +2119,13 @@ export class RegisterPractitioner {
       const colegio = colegioDelTitulo(valor);
       const actual = autoridad.value;
       const cambiar =
-        actual === '' ? colegio !== COLEGIO_DE_LA_PROFESION : esColegio(actual) && actual !== colegio;
+        actual === ''
+          ? colegio !== COLEGIO_DE_LA_PROFESION
+          : esColegio(actual) && actual !== colegio;
       if (cambiar) {
         autoridad.setValue(colegio);
       }
     });
-  }
-
-  private controlesDeEspecialidad() {
-    return [this.formProfesional.controls.specialtyPrimary] as const;
   }
 
   /** El catálogo completo está disponible cualquiera sea la profesión elegida. */
@@ -2252,8 +2283,6 @@ export class RegisterPractitioner {
     this.cargarDepartamentos();
   }
 
-
-
   /* ---- Envío ------------------------------------------------------------- */
 
   /**
@@ -2296,6 +2325,21 @@ export class RegisterPractitioner {
       );
       return;
     }
+    // La universidad del título principal se guarda en una credencial, y una
+    // credencial necesita número: sin una fila de título universitario que la
+    // lleve, no se manda como si se fuera a guardar.
+    if (this.hayUniversidadPrincipalSinTitulo()) {
+      this.state.set(
+        validation([
+          {
+            field: 'professionalTitleUniversity',
+            message:
+              'La universidad de tu título principal se guarda junto con un título. Cargalo en el paso «Tus títulos» como «Universitario», con su número, o borrá la universidad.',
+          },
+        ]),
+      );
+      return;
+    }
     // Y tampoco se manda si el catálogo de tipos no cargó: la fila viajaría sin
     // tipo, que el contrato exige, o se perdería en silencio.
     //
@@ -2304,9 +2348,7 @@ export class RegisterPractitioner {
     // catálogo se leía una sola vez en el constructor, así que quien caía acá
     // no tenía salida sin recargar la página.
     if (this.hayTitulosSinTipo()) {
-      this.state.set(
-        validation([{ field: 'academicTitles', message: this.avisoCatalogoDeTipos }]),
-      );
+      this.state.set(validation([{ field: 'academicTitles', message: this.avisoCatalogoDeTipos }]));
       return;
     }
 
@@ -2352,7 +2394,9 @@ export class RegisterPractitioner {
             this.recordarFileIdDelTitulo(titulo.id, documento.fileId);
             return undefined;
           }),
-          throwIfEmpty(() => new Error('No pudimos confirmar la carga del PDF. Volvé a intentarlo.')),
+          throwIfEmpty(
+            () => new Error('No pudimos confirmar la carga del PDF. Volvé a intentarlo.'),
+          ),
         );
       }),
       toArray(),
@@ -2407,6 +2451,10 @@ export class RegisterPractitioner {
       // login es el correo personal: es el que el profesional conserva aunque
       // cambie de hospital. El institucional viaja aparte, en `workEmail`.
       email: correoPersonal,
+      // El correo de acceso también viaja como personal: sin `workEmail` la API
+      // lo tomaba por institucional. Con `personalEmail === email` y sin
+      // `workEmail` sabe que es el único y no inventa un contacto de trabajo.
+      personalEmail: correoPersonal,
       password: raw.password,
       name: raw.name.trim(),
       lastName: raw.lastName.trim(),
@@ -2454,8 +2502,9 @@ export class RegisterPractitioner {
         ? {}
         : { specialtyConceptIds: this.especialidadesElegidas() }),
       // Los títulos declarados (subtarea 1.6). El PDF ya está precargado y su
-      // fileId viaja con la credencial correspondiente. Nombre, país y ciudad
-      // permanecen locales porque este contrato no los recibe.
+      // fileId viaja con la credencial correspondiente, y la universidad del
+      // título principal se une a la fila universitaria (`credencialesDeclaradas`).
+      // Nombre, país y ciudad permanecen locales porque este contrato no los recibe.
       ...(this.credencialesDeclaradas().length === 0
         ? {}
         : { credentials: this.credencialesDeclaradas() }),
@@ -2463,16 +2512,15 @@ export class RegisterPractitioner {
   }
 
   /**
-   * Las especialidades elegidas, en orden y sin repetidos: la primera del
-   * formulario es la principal, y elegir la misma dos veces declara una.
+   * Las especialidades elegidas, en orden y sin repetidos: elegir la misma
+   * dos veces declara una.
+   *
+   * El backend guarda la primera del arreglo como principal —el contrato no
+   * cambió (D-01, 23/09/2026)—, así que queda como principal la primera
+   * casilla con valor, sin que nadie la elija. Ninguna pantalla lo muestra.
    */
   private especialidadesElegidas(): readonly string[] {
-    // El orden importa: la primera del arreglo es la que el backend guarda
-    // como principal, así que la del control va siempre adelante.
-    const elegidas = [
-      ...this.controlesDeEspecialidad().map((control) => control.value),
-      ...this.especialidadesExtra(),
-    ].filter((valor) => valor !== '');
+    const elegidas = this.especialidadesExtra().filter((valor) => valor !== '');
     return [...new Set(elegidas)];
   }
 }

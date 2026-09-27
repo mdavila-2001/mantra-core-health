@@ -6,6 +6,9 @@ import { RouterLink } from '@angular/router';
 import { WorkHistory } from '../../work-history/work-history';
 import { PractitionerActivity } from './practitioner-activity/practitioner-activity';
 import { PracticeSitesMap } from './practice-sites-map/practice-sites-map';
+import { ResidenceReadonly } from './residence-readonly/residence-readonly';
+import { AppMap } from '../../../../../shared/components/organisms/map/map';
+import type { PinMapa } from '../../../../../shared/components/organisms/map/pin-mapa.types';
 import { CredentialsPanel } from './credentials-panel/credentials-panel';
 import {
   PESTANAS_DEL_EDITOR_MEDICO,
@@ -85,6 +88,8 @@ interface FilaCredencial {
 @Component({
   selector: 'app-practitioner-profile-view',
   imports: [
+    AppMap,
+    ResidenceReadonly,
     FileDropTarget,
     Avatar,
     Badge,
@@ -115,6 +120,27 @@ interface FilaCredencial {
 export class PractitionerProfileView {
   /** El perfil, ya resuelto por el contenedor. */
   readonly perfil = input.required<PerfilProfesionalVisible>();
+
+  /**
+   * El pin del domicilio en «Contacto», o ninguno si no declaró coordenadas.
+   * Es un `computed` y no un arreglo literal en la plantilla: uno nuevo en
+   * cada detección de cambios haría redibujar el mapa.
+   */
+  protected readonly pinesDomicilio = computed<readonly PinMapa[]>(() => {
+    const datos = this.perfil().datosPersonales;
+    const punto = datos?.ubicacionDomicilio;
+    if (!datos || !punto) return [];
+    return [
+      {
+        id: 'domicilio',
+        codigo: 'D',
+        titulo: 'Domicilio',
+        ...(datos.direccion ? { subtitulo: datos.direccion } : {}),
+        lat: punto.lat,
+        lng: punto.lng,
+      },
+    ];
+  });
 
   /** Si es el perfil de quien mira: habilita las acciones de dueño. */
   readonly esPropio = input(false);
@@ -306,8 +332,9 @@ export class PractitionerProfileView {
 
   /* Las especialidades ya no se preparan aca: `app-specialty-badge-grid`
      recibe `perfil().especialidades` tal cual —`EspecialidadVisible` tiene los
-     campos que la insignia pide—, ordena la principal primero y dice en
-     palabras lo que antes iba en el `aria-label` del chip. Suben de
+     campos que la insignia pide—, las deja en el orden en que llegaron (sin
+     principal desde el 23/09/2026, D-01) y dice en palabras lo que antes iba
+     en el `aria-label` del chip. Suben de
      «Credenciales» a la primera pestania por pedido del cliente (19/09/2026);
      en «Credenciales» siguen, con su vigencia y su sello, que es otra
      pregunta. */

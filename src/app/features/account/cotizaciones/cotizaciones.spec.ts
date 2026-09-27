@@ -1,12 +1,17 @@
-import { signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Subject, of, throwError, type Observable } from 'rxjs';
 import { vi } from 'vitest';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { CartStore } from '../../../core/data-access/pharmacy-cart/cart.store';
+import type { CartState } from '../../../core/data-access/pharmacy-cart/pharmacy-cart.types';
 import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnostics.client';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { PractitionerAvailability } from '../../directory/practitioner-availability/practitioner-availability';
 import type { SearchOrigin } from '../../nearby-places/search-origin-picker/search-origin-picker.types';
 import { Cotizaciones } from './cotizaciones';
 import { CotizacionesFuentes, type BusquedaDeCotizaciones } from './cotizaciones.fuentes';
@@ -18,6 +23,20 @@ import type { CotizacionResultado, VerticalCotizacion } from './cotizaciones.log
  * La fuente es un doble ({@link CotizacionesFuentes} tiene su propio spec con
  * las peticiones HTTP): acá se fijan la pantalla y sus estados.
  */
+/** La grilla de horarios tiene su propio spec: acá sólo importa qué recibe. */
+@Component({
+  selector: 'app-practitioner-availability',
+  template: '',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+class AgendaDoble {
+  readonly practitionerProfileId = input.required<string>();
+  readonly tenantId = input.required<string | null>();
+  readonly resourceRefTypes = input<readonly string[]>([]);
+  readonly motivo = input<string | null>(null);
+  readonly sinAgenda = input('');
+}
+
 describe('Cotizaciones', () => {
   let fixture: ComponentFixture<Cotizaciones>;
   let buscar: ReturnType<
@@ -30,6 +49,11 @@ describe('Cotizaciones', () => {
     >
   >;
   const getOwnOrders = vi.fn();
+  const carrito = signal<CartState | null>(null);
+  const agregar = vi.fn();
+  const reemplazar = vi.fn();
+  const confirmar = vi.fn();
+  const exito = vi.fn();
 
   const FARMACIA: CotizacionResultado = {
     id: 'farmacia:1',
@@ -42,7 +66,33 @@ describe('Cotizaciones', () => {
       source: 'Lista PUBLICO de Farmacia Central',
     },
     distanceKm: 2.4,
-    accion: { etiqueta: 'Directorio de farmacias', ruta: '/pharmacies-directory' },
+    carrito: {
+      sede: {
+        pharmacyId: 'ph1',
+        pharmacyName: 'Farmacia Central',
+        siteId: 's1',
+        siteName: 'Central',
+        addressText: null,
+      },
+      linea: {
+        productId: 'p1',
+        name: 'Paracetamol',
+        presentation: '500 mg',
+        unitAmount: '12.50',
+        currency: 'BOB',
+        requiresPrescription: false,
+        medicationConceptId: null,
+      },
+    },
+  };
+  const HEMOGRAMA: CotizacionResultado = {
+    id: 'estudio:u1:e1',
+    vertical: 'ANALISIS',
+    que: 'Hemograma completo',
+    donde: 'Laboratorio Central',
+    price: { amount: 80, currency: 'BOB', source: 'Tarifario de ejemplo' },
+    distanceKm: null,
+    reserva: { centroId: 'u1', centro: 'Laboratorio Central', estudio: 'Hemograma completo' },
   };
   const SIN_PRECIO: CotizacionResultado = {
     id: 'estudio:1',
@@ -66,6 +116,7 @@ describe('Cotizaciones', () => {
     },
     distanceKm: null,
     sinDistancia: 'No aplica: es un arancel de referencia, no una sede',
+    accion: { etiqueta: 'Buscar un profesional', ruta: '/directory' },
   };
 
   function respuesta(
@@ -81,10 +132,26 @@ describe('Cotizaciones', () => {
       providers: [
         provideRouter([]),
         { provide: CotizacionesFuentes, useValue: { buscar } },
-        { provide: AuthService, useValue: { patientProfileId: signal<string | null>(null) } },
+        {
+          provide: AuthService,
+          useValue: {
+            patientProfileId: signal<string | null>(null),
+            activeTenantId: signal<string | null>('t1'),
+          },
+        },
         { provide: ProfilesClient, useValue: {} },
         { provide: DiagnosticsClient, useValue: { getOwnOrders } },
+        {
+          provide: CartStore,
+          useValue: { cart: carrito.asReadonly(), add: agregar, replaceWith: reemplazar },
+        },
+        { provide: DialogService, useValue: { confirm: confirmar } },
+        { provide: ToastService, useValue: { success: exito } },
       ],
+    });
+    TestBed.overrideComponent(Cotizaciones, {
+      remove: { imports: [PractitionerAvailability] },
+      add: { imports: [AgendaDoble] },
     });
     fixture = TestBed.createComponent(Cotizaciones);
     fixture.detectChanges();
@@ -119,6 +186,11 @@ describe('Cotizaciones', () => {
   beforeEach(() => {
     buscar = vi.fn();
     getOwnOrders.mockClear();
+    carrito.set(null);
+    agregar.mockReset();
+    reemplazar.mockReset();
+    confirmar.mockReset();
+    exito.mockReset();
   });
 
   it('sin término pide qué cotizar y no consulta ninguna fuente', async () => {
@@ -293,16 +365,119 @@ describe('Cotizaciones', () => {
     );
   });
 
-  it('cada fila lleva a una pantalla existente con ícono + texto', async () => {
+  it('una fila sin carrito ni reserva lleva a una pantalla existente con ícono + texto', async () => {
+    buscar.mockReturnValue(respuesta([ARANCEL]));
+    await montar();
+    componente().buscar('cons');
+    await asentar();
+
+    const accion = raiz().querySelector('a.cotizaciones__accion');
+    expect(accion?.textContent).toContain('Buscar un profesional');
+    expect(accion?.querySelector('svg')).not.toBeNull();
+    expect(accion?.getAttribute('href')).toBe('/directory');
+  });
+
+  /** El botón nativo, esté el `data-testid` en él o en su host. */
+  function botones(testid: string): HTMLButtonElement[] {
+    return [
+      ...raiz().querySelectorAll<HTMLButtonElement>(
+        `[data-testid="${testid}"] button, button[data-testid="${testid}"]`,
+      ),
+    ];
+  }
+
+  it('un medicamento se agrega al carrito de su sede, no manda al directorio', async () => {
+    agregar.mockReturnValue('added');
     buscar.mockReturnValue(respuesta([FARMACIA]));
     await montar();
     componente().buscar('para');
     await asentar();
 
-    const accion = raiz().querySelector('a.cotizaciones__accion');
-    expect(accion?.textContent).toContain('Directorio de farmacias');
-    expect(accion?.querySelector('svg')).not.toBeNull();
-    expect(accion?.getAttribute('href')).toBe('/pharmacies-directory');
+    expect(texto()).not.toContain('Directorio de farmacias');
+    const [boton] = botones('cotizaciones-agregar-carrito');
+    expect(boton?.textContent).toContain('Agregar al carrito');
+    boton!.click();
+    await asentar();
+
+    expect(agregar).toHaveBeenCalledWith(FARMACIA.carrito!.sede, FARMACIA.carrito!.linea);
+    expect(exito).toHaveBeenCalledWith(
+      'Paracetamol quedó en tu carrito de Farmacia Central.',
+      'Agregado al carrito',
+    );
+  });
+
+  it('ya en el carrito, la fila ofrece verlo', async () => {
+    carrito.set({
+      site: FARMACIA.carrito!.sede,
+      requestId: null,
+      lines: [{ ...FARMACIA.carrito!.linea, quantity: 1 }],
+      updatedAt: '2026-09-25T00:00:00.000Z',
+    });
+    buscar.mockReturnValue(respuesta([FARMACIA]));
+    await montar();
+    componente().buscar('para');
+    await asentar();
+
+    const ver = raiz().querySelector('[data-testid="cotizaciones-ver-carrito"]');
+    expect(ver?.getAttribute('href')).toBe('/my-account/pharmacy/cart');
+  });
+
+  it('carrito de otra farmacia: pregunta, y cancelar no cambia nada', async () => {
+    agregar.mockReturnValue('conflict');
+    confirmar.mockResolvedValue(false);
+    buscar.mockReturnValue(respuesta([FARMACIA]));
+    await montar();
+    componente().buscar('para');
+    await asentar();
+
+    botones('cotizaciones-agregar-carrito')[0]!.click();
+    await asentar();
+
+    expect(confirmar).toHaveBeenCalled();
+    expect(reemplazar).not.toHaveBeenCalled();
+    expect(exito).not.toHaveBeenCalled();
+  });
+
+  it('carrito de otra farmacia: confirmar lo reemplaza por esta línea', async () => {
+    agregar.mockReturnValue('conflict');
+    confirmar.mockResolvedValue(true);
+    buscar.mockReturnValue(respuesta([FARMACIA]));
+    await montar();
+    componente().buscar('para');
+    await asentar();
+
+    botones('cotizaciones-agregar-carrito')[0]!.click();
+    await asentar();
+
+    expect(reemplazar).toHaveBeenCalledWith(
+      FARMACIA.carrito!.sede,
+      [{ ...FARMACIA.carrito!.linea, quantity: 1 }],
+      null,
+    );
+    expect(exito).toHaveBeenCalled();
+  });
+
+  it('un análisis abre la agenda del centro para reservar, no su ficha', async () => {
+    buscar.mockReturnValue(respuesta([HEMOGRAMA]));
+    await montar();
+    componente().buscar('hemo');
+    await asentar();
+
+    expect(raiz().querySelector('a[href^="/laboratory-directory"]')).toBeNull();
+    expect(raiz().querySelector('[data-testid="cotizaciones-agenda-centro"]')).toBeNull();
+    const [boton] = botones('cotizaciones-reservar');
+    expect(boton?.textContent).toContain('Reservar horario');
+    boton!.click();
+    await asentar();
+
+    expect(raiz().querySelector('[data-testid="cotizaciones-agenda-centro"]')).not.toBeNull();
+    const agenda = fixture.debugElement.query(
+      (nodo) => nodo.componentInstance instanceof AgendaDoble,
+    ).componentInstance as AgendaDoble;
+    expect(agenda.practitionerProfileId()).toBe('u1');
+    expect(agenda.tenantId()).toBe('t1');
+    expect(agenda.resourceRefTypes()).toEqual(['diagnostic_units']);
+    expect(agenda.motivo()).toBe('Estudio: Hemograma completo');
   });
 
   it('no carga estudios personales dentro del comparador', async () => {

@@ -347,9 +347,9 @@
 
     <!-- ─── Historial como tabla (H4.S3, ADR-0015, D-09) ────────────────────
          Mismas cinco piezas que «Dónde atiendo»: barra, tabla con alto
-         máximo, paginación en cliente. Editar/retirar/adjunto persisten sólo
-         en este componente — declarado en el encabezado de la sección TS y
-         en el `REPORTE.md` (regla 65: no hay PATCH/DELETE/fileId reales). -->
+         máximo, paginación en cliente. Corregir el cargo y retirar van al
+         servidor. Sin adjunto: un vínculo laboral no tiene dónde guardar un
+         archivo (encabezado de la sección TS). -->
     @if (layout() === 'tabla') {
       <app-filter-bar
         searchLabel="Buscar por institución o cargo"
@@ -366,7 +366,7 @@
         maxHeight="420px"
       />
 
-      @if (afiliacionesEnTabla().length === 0) {
+      @if (afiliaciones().length === 0) {
         <p class="historial__vacio" data-testid="historial-tabla-vacio">
           Todavía no cargaste ningún vínculo laboral. Es lo que le dice a un paciente dónde
           ejerciste antes de llegar acá.
@@ -601,8 +601,12 @@
                los controles a un mismo grupo. El botón proyectado queda fuera,
                así que llama a `registrar()` directo en vez de ser un submit. -->
         <form class="historial__formulario" (submit)="$event.preventDefault(); guardarVinculo()">
-          <!-- Dos formas de nombrar la institución, nunca las dos a la vez: elegirla
-               del padrón y además escribirla serían dos respuestas a una pregunta. -->
+          <!-- La institución se elige SIEMPRE del padrón: escribirla a mano
+               permitía inventar un hospital que no existe. El modo «libre»
+               sigue existiendo para corregir un vínculo YA guardado —lo pone
+               `abrirEdicionDeVinculo`, nunca esta pantalla de alta— porque lo
+               que se guardó es el nombre canónico y no un id contra el que
+               volver a buscar; dar de alta uno nuevo no tiene escape a mano. -->
           @if (modoDeInstitucion() === 'padron') {
             <app-form-field
               label="Institución"
@@ -619,16 +623,6 @@
                 (selectionChange)="establecimiento.set($event)"
               />
             </app-form-field>
-
-            <p class="historial__escape">
-              <!-- El padrón cubre sólo Santa Cruz: quien trabajó en otro
-                   departamento necesita esta salida, y decirlo evita que la busque
-                   como si fuera una falla. -->
-              ¿Trabajaste fuera de Santa Cruz o no la encontrás?
-              <button app-button variant="ghost" size="sm" type="button" (click)="escribirAMano()">
-                Escribir el nombre a mano
-              </button>
-            </p>
           } @else {
             <app-form-field
               label="Institución"
@@ -701,8 +695,7 @@
       </app-content-dialog>
     }
 
-    <!-- Editar un vínculo del historial: cargo y adjunto (H4.S3, doble local —
-         ver el comentario de cabecera de la sección TS). Mismo patrón de
+    <!-- Corregir el cargo de un vínculo del historial. Mismo patrón de
          guardar-por-cambios y confirmación que el modal de sedes. -->
     @if (edicionAfiliacionAbierta()) {
       <app-content-dialog
@@ -714,8 +707,8 @@
         (dismissAttempt)="intentarCerrarEdicionDeAfiliacion()"
         (closed)="intentarCerrarEdicionDeAfiliacion()"
       >
-        @if (errorDeAdjunto(); as mensaje) {
-          <app-alert tone="error">{{ mensaje }}</app-alert>
+        @if (errorDeEdicionDeAfiliacion(); as mensaje) {
+          <app-alert tone="error" data-testid="afiliacion-edicion-error">{{ mensaje }}</app-alert>
         }
         <form
           class="historial__formulario"
@@ -723,18 +716,6 @@
         >
           <app-form-field label="Cargo" hint="Opcional. El puesto que ejerciste ahí, si aplica.">
             <app-input [(value)]="cargoEnEdicion" placeholder="Médico de planta" />
-          </app-form-field>
-
-          <app-form-field
-            label="Adjunto"
-            hint="Opcional. Un certificado o constancia de ese vínculo (PDF, JPG o PNG)."
-          >
-            <app-file-input
-              [(files)]="archivoAdjunto"
-              accept=".pdf,.jpg,.jpeg,.png"
-              [maxFiles]="1"
-              label="Adjuntar archivo"
-            />
           </app-form-field>
         </form>
 
@@ -744,7 +725,7 @@
           type="button"
           variant="primary"
           data-testid="afiliacion-guardar"
-          [isLoading]="subiendoAdjunto()"
+          [isLoading]="guardandoAfiliacion()"
           [disabled]="!hayCambiosEnAfiliacion()"
           (clicked)="guardarEdicionDeAfiliacion()"
         >
@@ -773,16 +754,6 @@
     {{ afiliacion.endDate | date: 'MM/yyyy' }}
   } @else {
     actualidad
-  }
-</ng-template>
-
-<ng-template #celdaAdjuntoHistorial let-afiliacion>
-  @if (afiliacion.fileId) {
-    <a [href]="'/common/files/' + afiliacion.fileId + '/content'" target="_blank" rel="noopener">
-      Ver adjunto
-    </a>
-  } @else {
-    <span class="historial__vacio">Sin adjunto</span>
   }
 </ng-template>
 

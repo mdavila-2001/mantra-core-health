@@ -11,11 +11,13 @@ import { PharmacyClient } from '../../../core/data-access/pharmacy/pharmacy.clie
 import type {
   AvailabilityProduct,
   AvailabilitySite,
+  PharmacyProduct,
 } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { ServicesCatalogClient } from '../../../core/data-access/services-catalog/services-catalog.client';
 import type { ProcedureNomenclatureItem } from '../../../core/data-access/services-catalog/services-catalog.types';
 import { environment } from '../../../../environments/environment';
 import type { SearchOrigin } from '../../nearby-places/search-origin-picker/search-origin-picker.types';
+import { PHARMACY_PRESCRIPTIONS_ROUTE } from '../pharmacy/pharmacy.routes';
 import {
   normalizarCotizacion,
   type CotizacionResultado,
@@ -162,7 +164,17 @@ export class CotizacionesFuentes {
             origin: origen === null ? undefined : { lat: origen.lat, lng: origen.lng },
             limit: TOPE_DE_FARMACIAS,
           })
-          .pipe(map((disponibilidad) => sinRepetir(disponibilidad.items.flatMap(filasDeSede))));
+          .pipe(
+            map((disponibilidad) => {
+              // El catálogo es el que dice si el producto exige receta: sin él
+              // no se sabe si la fila lleva «Agregar al carrito» o el camino
+              // de la receta.
+              const catalogo = new Map(pagina.items.map((producto) => [producto.id, producto]));
+              return sinRepetir(
+                disponibilidad.items.flatMap((sede) => filasDeSede(sede, catalogo)),
+              );
+            }),
+          );
       }),
     );
   }
@@ -212,22 +224,78 @@ function sinRepetir(filas: readonly CotizacionResultado[]): CotizacionResultado[
   return [...new Map(filas.map((fila) => [fila.id, fila])).values()];
 }
 
-function filasDeSede(sede: AvailabilitySite): CotizacionResultado[] {
-  return sede.products.map((producto) => ({
-    id: `farmacia:${sede.siteId}:${producto.productId}`,
-    vertical: 'MEDICAMENTOS',
-    que: nombreDeProducto(producto),
-    // El nombre de la farmacia puede traer ya la sucursal («Farmacorp ·
-    // Grigotá»): no se repite («Farmacorp · Grigotá · Grigotá»).
-    donde: sede.pharmacyName.includes(sede.siteName)
-      ? sede.pharmacyName
-      : `${sede.pharmacyName} · ${sede.siteName}`,
-    price: precioDeProducto(producto, sede),
-    distanceKm: sede.distanceKm,
-    sinPrecio: 'La farmacia no publicó este precio',
-    sinDistancia: 'Sin ubicación publicada',
-    accion: { etiqueta: 'Directorio de farmacias', ruta: '/pharmacies-directory' },
-  }));
+/**
+ * Una fila por producto que la sede tiene.
+ *
+ * La acción es la de la tienda de Farmacia: **agregar al carrito** de esa sede.
+ * Mandar al directorio de farmacias obligaba a buscar de nuevo lo que ya se
+ * había encontrado. Dos excepciones, las mismas que en `product-results.ts`:
+ * lo que exige receta no entra al carrito libre (se ofrece el camino de la
+ * receta), y lo que no tiene precio publicado no se agrega a ciegas.
+ */
+function filasDeSede(
+  sede: AvailabilitySite,
+  catalogo: ReadonlyMap<string, PharmacyProduct>,
+): CotizacionResultado[] {
+  return sede.products.map((producto) => {
+    const precio = precioDeProducto(producto, sede);
+    const exigeReceta = catalogo.get(producto.productId)?.requiresPrescription === true;
+    const fila: CotizacionResultado = {
+      id: `farmacia:${sede.siteId}:${producto.productId}`,
+      vertical: 'MEDICAMENTOS',
+      que: nombreDeProducto(producto),
+      // El nombre de la farmacia puede traer ya la sucursal («Farmacorp ·
+      // Grigotá»): no se repite («Farmacorp · Grigotá · Grigotá»).
+      donde: sede.pharmacyName.includes(sede.siteName)
+        ? sede.pharmacyName
+        : `${sede.pharmacyName} · ${sede.siteName}`,
+      price: precio,
+      distanceKm: sede.distanceKm,
+      sinPrecio: 'La farmacia no publicó este precio',
+      sinDistancia: 'Sin ubicación publicada',
+    };
+    if (exigeReceta) {
+      return {
+        ...fila,
+        advertencia: 'Requiere receta',
+        accion: { etiqueta: 'Buscá tu receta para comprarlo', ruta: PHARMACY_PRESCRIPTIONS_ROUTE },
+      };
+    }
+    if (precio === null) {
+      return fila;
+    }
+    return {
+      ...fila,
+      carrito: {
+        sede: {
+          pharmacyId: sede.pharmacyId,
+          pharmacyName: sede.pharmacyName,
+          siteId: sede.siteId,
+          siteName: sede.siteName,
+          addressText: sede.addressText,
+        },
+        linea: {
+          productId: producto.productId,
+          name: producto.brandName ?? producto.genericName ?? producto.productCode,
+          presentation: presentacionDe(producto),
+          // El texto exacto de la lista, no el número ya convertido: el
+          // carrito suma en centavos a partir de él.
+          unitAmount:
+            producto.price?.patientAmount ?? producto.price?.unitAmount ?? String(precio.amount),
+          currency: precio.currency,
+          requiresPrescription: false,
+          medicationConceptId: null,
+        },
+      },
+    };
+  });
+}
+
+function presentacionDe(producto: AvailabilityProduct): string | null {
+  const partes = [producto.strengthText, producto.packageSizeText].filter(
+    (parte): parte is string => parte !== null && parte !== '',
+  );
+  return partes.length === 0 ? null : partes.join(' · ');
 }
 
 function nombreDeProducto(producto: AvailabilityProduct): string {
@@ -286,7 +354,9 @@ function filaDeEstudio(
     distanceKm: null,
     sinPrecio: 'El centro no publicó el precio de este estudio',
     sinDistancia: 'No disponible: el directorio de centros no trae su ubicación',
-    accion: { etiqueta: 'Ver el centro', ruta: `/laboratory-directory/${centro.id}` },
+    // Lo que se quiere de un estudio es hacérselo: se pide un horario en la
+    // agenda del centro, igual que una cita con un profesional.
+    reserva: { centroId: centro.id, centro: centro.name, estudio: estudio.name },
   };
 }
 

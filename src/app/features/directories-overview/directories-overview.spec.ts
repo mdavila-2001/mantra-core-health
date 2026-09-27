@@ -66,13 +66,21 @@ describe('DirectoriesOverview', () => {
     expect(medicos?.textContent).toContain('agrupados por especialidad');
   });
 
-  it('quien ejerce no ve el nodo de la guía de médicos, exclusiva del paciente', () => {
+  it('quien ejerce también ve el nodo del directorio de médicos (24/09/2026)', () => {
     abrirSesion(['PRACTITIONER']);
     crear();
 
     const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
+    expect(enlaces.some((enlace) => enlace.getAttribute('href') === '/directory')).toBe(true);
+    expect(enlaces.length).toBe(4);
+  });
+
+  it('quien sólo administra no ve el nodo del directorio de médicos', () => {
+    abrirSesion(['SECURITY_ADMIN']);
+    crear();
+
+    const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
     expect(enlaces.some((enlace) => enlace.getAttribute('href') === '/directory')).toBe(false);
-    expect(enlaces.length).toBe(3);
   });
 
   it('el nodo central es decorativo: no es un enlace ni compite con los cuatro', () => {
@@ -91,16 +99,19 @@ describe('DirectoriesOverview', () => {
 
       const barra = root().querySelector('app-filter-bar app-search-field');
       expect(barra).not.toBeNull();
-      expect(barra?.textContent).toContain('laboratorios, clínicas y farmacias');
+      expect(barra?.textContent).toContain('médicos, laboratorios, clínicas y farmacias');
       expect(root().querySelector('.mapa__nodos')).not.toBeNull();
     });
 
-    it('un término busca en los tres directorios y agrupa lo encontrado por directorio', async () => {
+    it('un término busca en los cuatro directorios y agrupa lo encontrado por directorio', async () => {
       abrirSesion(['PRACTITIONER']);
       await TestBed.inject(Router).navigateByUrl('/directories?q=central');
       crear();
 
       const http = TestBed.inject(HttpTestingController);
+      http
+        .expectOne((pedido) => pedido.url.endsWith('/public/search/practitioners'))
+        .flush(PAGINA_VACIA);
       http
         .expectOne((pedido) => pedido.url.endsWith('/diagnostic-units/search'))
         .flush({ items: [], total: 0, limit: 50, offset: 0 });
@@ -146,4 +157,74 @@ describe('DirectoriesOverview', () => {
       expect(tarjeta?.getAttribute('href')).toBe('/pharmacies-directory/farmacia-central');
     });
   });
+
+  describe('el desplegable de directorio (24/09/2026)', () => {
+    function opciones(): string[] {
+      const select = root().querySelector<HTMLSelectElement>('app-filter-bar select');
+      return [...(select?.options ?? [])]
+        .filter((opcion) => !opcion.hidden)
+        .map((opcion) => opcion.textContent?.trim() ?? '');
+    }
+
+    it('va en la misma fila que el buscador, con «Todos» y los cuatro directorios', () => {
+      abrirSesion(['PRACTITIONER']);
+      crear();
+
+      const controles = root().querySelector('app-filter-bar .filter-bar__controls');
+      expect(controles?.querySelector('app-search-field')).not.toBeNull();
+      expect(controles?.querySelector('select')).not.toBeNull();
+      expect(opciones()).toEqual([
+        'Todos los directorios',
+        'Médicos',
+        'Laboratorios',
+        'Clínicas',
+        'Farmacias',
+      ]);
+    });
+
+    it('con un directorio elegido, el término busca sólo en ése', async () => {
+      abrirSesion(['PRACTITIONER']);
+      await TestBed.inject(Router).navigateByUrl(
+        '/directories?q=central&directorio=laboratory-directory',
+      );
+      crear();
+
+      const http = TestBed.inject(HttpTestingController);
+      http
+        .expectOne((pedido) => pedido.url.endsWith('/diagnostic-units/search'))
+        .flush({ items: [], total: 0, limit: 50, offset: 0 });
+      http.expectNone((pedido) => pedido.url.includes('/public/search/'));
+      http.verify();
+
+      expect(root().querySelector('app-search-field')?.textContent).toContain(
+        'Buscar laboratorios por nombre',
+      );
+    });
+
+    it('sin término, el directorio elegido deja sólo su nodo', async () => {
+      abrirSesion(['PATIENT']);
+      await TestBed.inject(Router).navigateByUrl('/directories?directorio=pharmacies-directory');
+      crear();
+
+      const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
+      expect(enlaces.map((enlace) => enlace.getAttribute('href'))).toEqual([
+        '/pharmacies-directory',
+      ]);
+    });
+
+    it('un valor que no es un directorio de la sesión se lee como «todos»', async () => {
+      abrirSesion(['PATIENT']);
+      await TestBed.inject(Router).navigateByUrl('/directories?directorio=no-existe');
+      crear();
+
+      expect(root().querySelectorAll('.rejilla__tarjeta').length).toBe(4);
+    });
+  });
 });
+
+const PAGINA_VACIA = {
+  items: [],
+  nextCursor: null,
+  totalHint: 0,
+  generatedAt: '2026-09-19T00:00:00Z',
+};

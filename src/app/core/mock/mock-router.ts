@@ -58,12 +58,20 @@ export function conflict(message: string, details: unknown = {}): MockReply {
   return reply(409, { statusCode: 409, code: 'CONFLICT', message, error: 'Conflict', details });
 }
 
+/**
+ * **422, no 412** (H2.S1.M2, 2026-09-26). La API responde las precondiciones
+ * de negocio con `PreconditionFailedException`, que es 422 —
+ * `api/src/common/errors/domain.exception.ts`—, nunca 412. El mock lo tenía
+ * mal desde siempre; `errorToViewState` ya ramifica por `code`, no por el
+ * estado HTTP, así que este cambio no le toca nada, pero el único consumidor
+ * que sí miraba el status a mano (`request-access.ts`) se corrigió a la vez.
+ */
 export function preconditionFailed(message: string, details: unknown = {}): MockReply {
-  return reply(412, {
-    statusCode: 412,
+  return reply(422, {
+    statusCode: 422,
     code: 'PRECONDITION_FAILED',
     message,
-    error: 'Precondition Failed',
+    error: 'Unprocessable Entity',
     details,
   });
 }
@@ -81,13 +89,34 @@ export function unauthorized(message = 'Credenciales inválidas'): MockReply {
   });
 }
 
-export function validation(message: string, issues: readonly unknown[] = []): MockReply {
-  return reply(422, {
-    statusCode: 422,
+/** Un problema puntual de validación, como lo siguen pasando los manejadores. */
+export interface ValidationIssue {
+  readonly field?: string;
+  readonly code?: string;
+  readonly message: string;
+}
+
+/**
+ * **400 + `details.violations`, no 422 + `issues`** (H2.S1.M2, 2026-09-26). La
+ * API responde el `ValidationPipe` con 400 y las violaciones bajo
+ * `details.violations`, como un arreglo de **strings** —cada uno con el campo
+ * al principio cuando `class-validator` lo sabe («email must be an email»)—;
+ * `error-to-view-state.ts:160,199` ya las lee así y hasta re-deriva el campo
+ * con la misma heurística. El mock traía su propia forma (`issues` en el
+ * nivel superior de un 422, con `field` como clave aparte), que ninguna
+ * pantalla real recibe nunca. Se reescribe el contrato **sin tocar a quien
+ * llama**: los manejadores siguen pasando `{ field?, code?, message }` y acá
+ * se aplana a la forma de cable. No había ningún spec fijando la forma vieja.
+ */
+export function validation(message: string, issues: readonly ValidationIssue[] = []): MockReply {
+  const violations =
+    issues.length > 0 ? issues.map((i) => (i.field === undefined ? i.message : `${i.field} ${i.message}`)) : [message];
+  return reply(400, {
+    statusCode: 400,
     code: 'VALIDATION_FAILED',
     message,
-    error: 'Unprocessable Entity',
-    issues,
+    error: 'Bad Request',
+    details: { violations },
   });
 }
 

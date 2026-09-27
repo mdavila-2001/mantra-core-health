@@ -50,6 +50,8 @@ import type {
   ModerationQueueItem,
   ModerationQueuePage,
   ModerationQueueQuery,
+  MyModerationDecisionItem,
+  MyModerationDecisionPage,
   NewAppeal,
   NewBlock,
   NewBookmark,
@@ -684,6 +686,33 @@ export class CommunityClient {
         { params },
       )
       .pipe(map(toModerationAppealPage));
+  }
+
+  /**
+   * `GET /community/moderation/decisions/mine` — «Mis sanciones» (AG-18).
+   *
+   * Sin rol especial: es la lectura que le falta a cualquier cuenta para
+   * apelar. El servidor comprueba que `profileId` sea del actor; un perfil
+   * ajeno responde 403.
+   *
+   * @param profileId - El propio perfil.
+   * @param query - Cursor y tope.
+   * @returns Página de decisiones propias, con si cada una admite apelación.
+   */
+  listMyModerationDecisions(
+    profileId: string,
+    query: { readonly cursor?: string; readonly limit?: number } = {},
+  ): Observable<MyModerationDecisionPage> {
+    const params = this.cursorParams(query, new HttpParams()).set(
+      'profileId',
+      profileId,
+    );
+    return this.http
+      .get<WireMyModerationDecisionPage>(
+        this.url('/community/moderation/decisions/mine'),
+        { params },
+      )
+      .pipe(map(toMyModerationDecisionPage));
   }
 
   /**
@@ -1467,8 +1496,9 @@ interface WireConversationPage extends Omit<ConversationPage, 'items'> {
   readonly items: readonly WireConversation[];
 }
 
-type WireMessage = Omit<ConNulos<DirectMessage>, 'sentAt'> & {
+type WireMessage = Omit<ConNulos<DirectMessage>, 'sentAt' | 'deletedAt'> & {
   readonly sentAt: string | null;
+  readonly deletedAt?: string | null;
 };
 
 interface WireMessagePage extends Omit<DirectMessagePage, 'items' | 'peerReadUpTo'> {
@@ -1570,6 +1600,16 @@ interface WireModerationDecisionPage
   readonly items: readonly WireDecisionItem[];
 }
 
+type WireMyDecisionItem = Omit<
+  ConNulos<MyModerationDecisionItem>,
+  'decidedAt'
+> & { readonly decidedAt: string | null };
+
+interface WireMyModerationDecisionPage
+  extends Omit<MyModerationDecisionPage, 'items'> {
+  readonly items: readonly WireMyDecisionItem[];
+}
+
 type WireAppealItem = Omit<
   ConNulos<ModerationAppealItem>,
   'createdAt' | 'resolvedAt' | 'decision'
@@ -1626,6 +1666,19 @@ function toModerationDecisionPage(
   body: WireModerationDecisionPage,
 ): ModerationDecisionPage {
   return { ...body, items: body.items.map(toDecisionItem) };
+}
+
+function toMyDecisionItem({
+  decidedAt,
+  ...resto
+}: WireMyDecisionItem): MyModerationDecisionItem {
+  return { ...sinNulos(resto), ...fecha('decidedAt', decidedAt) };
+}
+
+function toMyModerationDecisionPage(
+  body: WireMyModerationDecisionPage,
+): MyModerationDecisionPage {
+  return { ...body, items: body.items.map(toMyDecisionItem) };
 }
 
 function toAppealItem({
@@ -1843,8 +1896,12 @@ function toConversationPage(body: WireConversationPage): ConversationPage {
   return { ...body, items: body.items.map(toConversation) };
 }
 
-function toMessage({ sentAt, ...resto }: WireMessage): DirectMessage {
-  return { ...sinNulos(resto), ...fecha('sentAt', sentAt) };
+function toMessage({ sentAt, deletedAt, ...resto }: WireMessage): DirectMessage {
+  return {
+    ...sinNulos(resto),
+    ...fecha('sentAt', sentAt),
+    ...fecha('deletedAt', deletedAt ?? null),
+  };
 }
 
 function toMessagePage({

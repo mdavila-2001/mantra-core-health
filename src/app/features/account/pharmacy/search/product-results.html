@@ -1,0 +1,76 @@
+<ul class="resultados" [attr.data-testid]="testids.searchResults">
+  @for (fila of items(); track porId(fila)) {
+    <li class="resultado">
+      <div class="resultado__que">
+        <p class="resultado__nombre">{{ fila.name }}</p>
+        @if (fila.presentation) {
+          <p class="resultado__presentacion">{{ fila.presentation }}</p>
+        }
+        @if (fila.requiresPrescription) {
+          <app-badge variant="warning" size="sm">Requiere receta</app-badge>
+        }
+      </div>
+
+      <div class="resultado__donde">
+        <p class="resultado__farmacia">{{ fila.pharmacyName }}</p>
+        <p class="resultado__sede">{{ fila.siteName }}</p>
+        @if (fila.addressText) {
+          <p class="resultado__direccion">{{ fila.addressText }}</p>
+        }
+      </div>
+
+      <p
+        class="resultado__precio"
+        [class.resultado__precio--ausente]="fila.unitAmount === null"
+        [title]="
+          fila.unitAmount === null
+            ? 'Esta sede no publica el precio de este producto.'
+            : 'Precio publicado por la sede.'
+        "
+      >
+        {{ precioDe(fila) }}
+      </p>
+
+      <p
+        class="resultado__distancia"
+        [class.resultado__distancia--ausente]="fila.distanceKm === null"
+      >
+        {{ distanciaDe(fila) }}
+      </p>
+
+      <div class="resultado__acciones">
+        @if (fila.requiresPrescription) {
+          <a app-link class="resultado__receta" [routerLink]="rutaDeRecetas">
+            Buscá tu receta para comprarlo
+          </a>
+        } @else {
+          <button
+            app-button
+            variant="primary"
+            size="sm"
+            type="button"
+            [attr.data-testid]="testids.resultAdd"
+            [attr.aria-label]="'Agregar al carrito: ' + fila.name + ' en ' + fila.pharmacyName"
+            (clicked)="agregar(fila)"
+          >
+            Agregar
+          </button>
+        }
+        <a
+          app-link
+          [attr.data-testid]="testids.resultStore"
+          [routerLink]="rutaDeTienda(fila)"
+          [queryParams]="parametrosDeTienda(fila)"
+        >
+          Ver tienda
+        </a>
+      </div>
+    </li>
+  }
+</ul>
+
+@if (sinOrigen()) {
+  <p class="resultados__aviso" role="status">
+    Estos resultados no están ordenados por cercanía: falta elegir desde dónde medir.
+  </p>
+}

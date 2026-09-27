@@ -4,141 +4,321 @@
 />
 
 <app-view-state-host [state]="estado()" (retry)="cargar()">
-  <div class="importar__pasos">
-    <section class="importar__paso" aria-labelledby="paso-destino">
-      <h2 class="importar__titulo" id="paso-destino">1 · A dónde</h2>
+  <!-- Una sola tarjeta, centrada y a lo ancho del área de contenido: la regla
+       del cliente del 09/09. Tres secciones en vez de tres pestañas porque
+       esto es un flujo en orden, no tres vistas equivalentes — la 3 no tiene
+       nada que mostrar hasta que la 1 y la 2 están resueltas, y una pestaña
+       que se puede abrir vacía invita a empezar por el final. -->
+  <app-card class="carga">
+    <h2 class="carga__paso-titulo" id="carga-paso-1">1 · Qué vas a cargar</h2>
 
-      <app-form-field label="Sistema de codificación">
-        <app-select
-          [value]="sistema()"
-          (valueChange)="cambiarSistema($event)"
-          [options]="opcionesDeSistema()"
-          placeholder="Elegí un sistema"
-        />
-      </app-form-field>
-
-      @if (sinVersionesAbiertas()) {
-        <!-- Ofrecer una versión publicada sería preparar un 422 que la persona
-             descubre recién al enviar. -->
-        <app-alert tone="warning">
-          Este sistema no tiene ninguna versión que admita conceptos: las publicadas ya no los
-          aceptan. Creá una versión nueva en borrador antes de importar.
-        </app-alert>
-      } @else {
+    <section class="carga__paso" aria-labelledby="carga-paso-1">
+      <div class="carga__campos">
         <app-form-field
-          label="Versión"
-          hint="Sólo se ofrecen las que todavía admiten conceptos."
+          label="Qué vas a cargar"
+          hint="Fija qué columnas se esperan en el archivo."
         >
           <app-select
-            [value]="version()"
-            (valueChange)="cambiarVersion($event)"
-            [options]="opcionesDeVersion()"
-            [disabled]="sistema() === null || cargandoVersiones()"
-            placeholder="Elegí una versión"
+            data-testid="carga-perfil"
+            [value]="perfil()"
+            (valueChange)="cambiarPerfil($event)"
+            [options]="opcionesDePerfil"
+            placeholder="Elegí qué vas a cargar"
           />
         </app-form-field>
-      }
-    </section>
 
-    <section class="importar__paso" aria-labelledby="paso-archivo">
-      <h2 class="importar__titulo" id="paso-archivo">2 · El archivo</h2>
+        <app-form-field label="Sistema de codificación">
+          <app-select
+            data-testid="carga-sistema"
+            [value]="sistema()"
+            (valueChange)="cambiarSistema($event)"
+            [options]="opcionesDeSistema()"
+            placeholder="Elegí un sistema"
+          />
+        </app-form-field>
 
-      <app-alert tone="info">
-        Un objeto JSON por línea (NDJSON), con <code>code</code> y <code>display</code>
-        obligatorios y <code>definition</code> opcional. Por ejemplo:
-        <code>&#123;"code":"A00","display":"Cólera"&#125;</code>. Una línea con problemas no
-        detiene al resto: se informa con su número.
-      </app-alert>
+        @if (sinVersionesAbiertas()) {
+          <!-- Ofrecer una versión publicada sería preparar un 422 que la persona
+               descubre recién al enviar. -->
+          <app-alert tone="warning">
+            Este sistema no tiene ninguna versión que admita conceptos: las publicadas ya no los
+            aceptan. Creá una versión nueva en borrador antes de importar.
+          </app-alert>
+        } @else {
+          <app-form-field label="Versión" hint="Sólo se ofrecen las que todavía admiten conceptos.">
+            <app-select
+              data-testid="carga-version"
+              [value]="version()"
+              (valueChange)="cambiarVersion($event)"
+              [options]="opcionesDeVersion()"
+              [disabled]="sistema() === null || cargandoVersiones()"
+              placeholder="Elegí una versión"
+            />
+          </app-form-field>
+        }
+      </div>
 
-      <app-file-input
-        [(files)]="archivos"
-        accept=".ndjson,.jsonl,.json,application/json,text/plain"
-        [maxSizeBytes]="maxBytes"
-        [maxFiles]="1"
-        [disabled]="importando()"
-        (rejected)="avisarRechazos($event)"
-      />
-
-      <p class="importar__nota" data-testid="importar-tope">
-        Un archivo por vez, de hasta {{ maxMib }} MB — el mismo tope que aplica el servidor.
+      <p class="carga__nota">
+        ¿No sabés cómo armar el archivo? Bajá la plantilla: trae los nombres de las columnas y una
+        fila de ejemplo.
       </p>
 
-      <div class="importar__acciones">
+      <div class="carga__acciones">
         <button
           app-button
           type="button"
-          variant="primary"
-          [disabled]="!puedeImportar()"
-          [isLoading]="importando()"
-          (clicked)="importar()"
+          variant="outline"
+          size="sm"
+          data-testid="carga-plantilla-csv"
+          [disabled]="perfil() === null || descargandoPlantilla()"
+          (clicked)="descargarPlantilla('csv')"
         >
-          Importar
+          Descargar plantilla (CSV)
+        </button>
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="carga-plantilla-xlsx"
+          [disabled]="perfil() === null || descargandoPlantilla()"
+          (clicked)="descargarPlantilla('xlsx')"
+        >
+          Descargar plantilla (XLSX)
         </button>
       </div>
     </section>
 
-    @if (resultado(); as informe) {
-      <section class="importar__paso" aria-labelledby="paso-resultado">
-        <h2 class="importar__titulo" id="paso-resultado">3 · Qué entró</h2>
+    <h2 class="carga__paso-titulo" id="carga-paso-2">2 · El archivo</h2>
 
-        <dl class="importar__resultado" data-testid="importar-resultado">
-          <div>
-            <dt>Líneas leídas</dt>
-            <dd>{{ informe.totalRead }}</dd>
-          </div>
-          <div>
-            <dt>Conceptos nuevos</dt>
-            <dd>{{ informe.inserted }}</dd>
-          </div>
-          <div>
-            <dt>Ya estaban</dt>
-            <dd>{{ informe.skipped }}</dd>
-          </div>
-          <div>
-            <dt>Con problemas</dt>
-            <dd>{{ informe.errors }}</dd>
-          </div>
-        </dl>
+    <section class="carga__paso" aria-labelledby="carga-paso-2">
+      <app-alert tone="info">
+        {{ ayudaDeColumnas() }} Se acepta CSV y XLSX; también NDJSON, un objeto JSON por línea.
+      </app-alert>
 
-        @if (informe.errorSamples.length > 0) {
-          <details class="importar__errores">
-            <summary>Ver las líneas que quedaron afuera</summary>
-            <ul>
-              @for (problema of informe.errorSamples; track problema.line) {
-                <li>
-                  <span class="importar__linea">Línea {{ problema.line }}</span>
-                  {{ problema.message }}
-                </li>
-              }
-            </ul>
-            @if (informe.errors > informe.errorSamples.length) {
-              <p class="importar__nota">
-                Se muestran las primeras {{ informe.errorSamples.length }} de
-                {{ informe.errors }}.
-              </p>
-            }
-          </details>
+      <div data-testid="carga-archivo">
+        <app-file-input
+          label="Elegir archivo"
+          [files]="archivos()"
+          (filesChange)="cambiarArchivo($event)"
+          [accept]="accept"
+          [maxSizeBytes]="maxBytes"
+          [maxFiles]="1"
+          [disabled]="cargando()"
+          (rejected)="avisarRechazos($event)"
+        />
+      </div>
+
+      <p class="carga__nota" data-testid="importar-tope">
+        Un archivo por vez, de hasta {{ maxMib }} MB — el mismo tope que aplica el servidor.
+      </p>
+
+      <div class="carga__acciones">
+        <button
+          app-button
+          type="button"
+          [variant]="informe() === null ? 'primary' : 'secondary'"
+          data-testid="carga-validar"
+          [disabled]="!puedeValidar()"
+          [isLoading]="validando()"
+          (clicked)="validar()"
+        >
+          Validar sin guardar
+        </button>
+
+        <button
+          app-button
+          type="button"
+          variant="primary"
+          data-testid="carga-importar"
+          [disabled]="!puedeImportar()"
+          [isLoading]="importando()"
+          (clicked)="importar()"
+        >
+          {{ textoDeImportar() }}
+        </button>
+      </div>
+
+      @if (informe() === null && resumen() === null) {
+        <p class="carga__nota">
+          «Importar» se habilita recién después de una validación sin errores: nada se guarda hasta
+          entonces.
+        </p>
+      }
+    </section>
+
+    <h2 class="carga__paso-titulo" id="carga-paso-3">3 · Resultado</h2>
+
+    <section class="carga__paso" aria-labelledby="carga-paso-3">
+      <!-- La región viva anuncia el informe sin robar el foco; el foco lo lleva
+           el componente al ancla de abajo, que es lo que hace que quien navega
+           con teclado llegue al resultado sin tabular a ciegas. -->
+      <div aria-live="polite" class="carga__resultado">
+        @if (validando()) {
+          <p class="carga__nota" data-testid="carga-validando">
+            Leyendo y validando el archivo… no se está guardando nada.
+          </p>
         }
 
-        <!-- El paso que más se olvida: sin publicar, los conceptos importados
-             son invisibles a toda expansión y no da ningún error. -->
-        <app-alert tone="warning">
-          Los conceptos quedaron en borrador. Hasta que publiques la versión, no aparecen en
-          ningún desplegable ni búsqueda de catálogo — y no da error, sale vacío.
-        </app-alert>
+        @if (fallo(); as problema) {
+          <app-alert tone="error" title="No se pudo completar">
+            {{ mensajeDe(problema) }}
+            <span class="carga__preservado">
+              Lo que elegiste sigue acá: no hace falta volver a cargar el archivo.
+            </span>
+          </app-alert>
+        }
 
-        <div class="importar__acciones">
-          <button
-            app-button
-            type="button"
-            variant="primary"
-            [isLoading]="publicando()"
-            (clicked)="publicar()"
+        @if (resumen(); as final) {
+          <div
+            #resumenAncla
+            class="carga__informe"
+            data-testid="carga-resumen"
+            tabindex="-1"
+            role="group"
+            aria-labelledby="carga-resumen-titulo"
           >
-            Publicar la versión
-          </button>
-        </div>
-      </section>
-    }
-  </div>
+            <h3 class="carga__informe-titulo" id="carga-resumen-titulo">Qué entró</h3>
+            <dl class="carga__cifras">
+              <div>
+                <dt>Leídas</dt>
+                <dd>{{ final.totalRead }}</dd>
+              </div>
+              <div>
+                <dt>Insertadas</dt>
+                <dd>{{ final.inserted }}</dd>
+              </div>
+              <div>
+                <dt>Omitidas</dt>
+                <dd>{{ final.skipped }}</dd>
+              </div>
+              <div>
+                <dt>Errores</dt>
+                <dd>{{ final.errors }}</dd>
+              </div>
+            </dl>
+            <p class="carga__nota">
+              «Omitidas» son las filas cuyo código ya existía en esta versión: se dejaron como
+              estaban, no se actualizaron.
+            </p>
+            @if (final.batchId !== null) {
+              <p class="carga__nota">Lote <code>{{ final.batchId }}</code>.</p>
+            }
+          </div>
+
+          <!-- Sin publicar, los conceptos importados son invisibles a toda
+               expansión y no da ningún error: el paso que más se olvida. -->
+          <app-alert tone="warning">
+            Los conceptos quedaron en borrador. Hasta que publiques la versión, no aparecen en
+            ningún desplegable ni búsqueda de catálogo — y no da error, sale vacío.
+          </app-alert>
+
+          <div class="carga__acciones">
+            <button
+              app-button
+              type="button"
+              variant="primary"
+              [isLoading]="publicando()"
+              (clicked)="publicar()"
+            >
+              Publicar la versión
+            </button>
+            <button
+              app-button
+              type="button"
+              variant="secondary"
+              data-testid="carga-otro"
+              (clicked)="cargarOtro()"
+            >
+              Cargar otro archivo
+            </button>
+          </div>
+        } @else if (informe(); as validacion) {
+          <div
+            #informeAncla
+            class="carga__informe"
+            data-testid="carga-informe"
+            tabindex="-1"
+            role="group"
+            aria-labelledby="carga-informe-titulo"
+          >
+            <h3 class="carga__informe-titulo" id="carga-informe-titulo">Lo que dice el archivo</h3>
+            <dl class="carga__cifras">
+              <div>
+                <dt>Leídas</dt>
+                <dd>{{ validacion.totalRead }}</dd>
+              </div>
+              <div>
+                <dt>Con error</dt>
+                <dd>{{ validacion.errors }}</dd>
+              </div>
+              <div>
+                <dt>Formato</dt>
+                <dd>{{ rotuloDeFormato(validacion.format) }}</dd>
+              </div>
+              <div>
+                <dt>Perfil</dt>
+                <dd>{{ validacion.profile === 'designaciones' ? 'Designaciones' : 'Conceptos' }}</dd>
+              </div>
+            </dl>
+          </div>
+
+          @if (validacion.aborted || validacion.errors > 0) {
+            <app-alert tone="warning" title="No se guardó nada">
+              Corregí las filas de abajo en tu archivo y volvé a validar. La importación es todo o
+              nada: con un solo error no entra ninguna fila.
+            </app-alert>
+          }
+
+          <!-- La tabla de errores sólo existe si hay errores: una tabla vacía
+               titulada «problemas» se lee como que algo salió mal. La de vista
+               previa, en cambio, se muestra siempre después de validar —con su
+               estado vacío cuando el archivo no trajo ninguna fila usable—,
+               porque «no hay nada que previsualizar» es información. -->
+          @if (validacion.errors > 0) {
+            <div class="carga__tabla" data-testid="carga-errores">
+              <app-data-table
+                [state]="estadoDeErrores()"
+                [columns]="columnasDeErrores"
+                [trackBy]="filaDeError"
+                caption="Filas con problemas, con su fila y su columna"
+              />
+              @if (leyendaDeErrores(); as leyenda) {
+                <p class="carga__nota">{{ leyenda }}</p>
+              }
+              <div class="carga__acciones">
+                <button
+                  app-button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  data-testid="carga-descargar-errores"
+                  (clicked)="descargarErrores()"
+                >
+                  Descargar los errores (CSV)
+                </button>
+              </div>
+            </div>
+          }
+
+          <div class="carga__tabla" data-testid="carga-preview">
+            <app-data-table
+              [state]="estadoDeVistaPrevia()"
+              [columns]="columnasDeVistaPrevia"
+              [trackBy]="filaDeVistaPrevia"
+              caption="Vista previa de las primeras filas válidas"
+            />
+            <p class="carga__nota">
+              Se muestran las primeras {{ topeDeMuestra }} filas válidas. Todavía no se guardó nada.
+            </p>
+          </div>
+        } @else if (!validando() && fallo() === null) {
+          <p class="carga__nota" data-testid="carga-sin-resultado">
+            Acá van a aparecer las filas leídas, la vista previa y los problemas en cuanto valides el
+            archivo.
+          </p>
+        }
+      </div>
+    </section>
+  </app-card>
 </app-view-state-host>

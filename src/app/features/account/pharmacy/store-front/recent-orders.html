@@ -1,0 +1,34 @@
+@if (sinPerfilDePaciente) {
+  <p class="pedidos__sin-perfil">
+    Tus pedidos de farmacia aparecen acá cuando entrás con tu cuenta de paciente.
+  </p>
+} @else {
+  <section class="pedidos" aria-labelledby="pedidos-recientes-titulo">
+    <div class="pedidos__encabezado">
+      <h2 class="pedidos__titulo" id="pedidos-recientes-titulo">Tus últimos pedidos</h2>
+      <a app-link [routerLink]="rutaDePedidos">Ver todos</a>
+    </div>
+
+    <app-view-state-host [state]="estado()" (retry)="cargar()">
+      @if (sinPedidos()) {
+        <p class="pedidos__vacio">
+          Todavía no pediste nada.
+          <a app-link [routerLink]="rutaDeLaTienda">Buscá un medicamento para empezar</a>.
+        </p>
+      } @else if (estado().status === 'ready') {
+        <ul class="pedidos__lista" data-testid="pharmacy-recent-orders">
+          @for (pedido of filas(); track porId(pedido)) {
+            <li class="pedido">
+              <div class="pedido__quien">
+                <p class="pedido__farmacia">{{ pedido.farmacia }}</p>
+                <p class="pedido__sede">{{ pedido.sede }}</p>
+              </div>
+              <p class="pedido__cuando">{{ pedido.cuando | date: 'd MMM y' }}</p>
+              <app-badge [variant]="pedido.tono" size="sm">{{ pedido.estado }}</app-badge>
+            </li>
+          }
+        </ul>
+      }
+    </app-view-state-host>
+  </section>
+}

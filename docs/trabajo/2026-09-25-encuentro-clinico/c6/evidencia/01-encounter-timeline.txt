@@ -1,0 +1,17 @@
+$ corepack yarn test --watch=false --include='src/app/shared/components/organisms/encounter-timeline/encounter-timeline.spec.ts'
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+
+$ corepack yarn stock:generate
+✓ src/app/features/component-stock/component-index.generated.ts
+  550 componentes · 3 otros · 306 pantallas · 138 maquetas · 23 atomos · 45 moleculas · 35 organismos
+
+$ grep -n "encounter-timeline" src/app/features/component-stock/component-index.generated.ts
+36481:    "clave": "shared/components/organisms/encounter-timeline/encounter-timeline",
+36487:    "selector": "app-encounter-timeline",
+36488:    "path": "src/app/shared/components/organisms/encounter-timeline/encounter-timeline.ts",
+36572:    cargar: () => import('../../shared/components/organisms/encounter-timeline/encounter-timeline')...
+
+NOTA: `component-index.generated.ts` está en .gitignore (línea 160): se genera en cada
+máquina, no viaja en el commit. El DoD del stock se demuestra con esta salida.

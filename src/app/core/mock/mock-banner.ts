@@ -12,7 +12,6 @@ import { environment } from '../../../environments/environment';
   selector: 'app-mock-banner',
   imports: [RouterLink],
   template: ``,
-
   styles: ``,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

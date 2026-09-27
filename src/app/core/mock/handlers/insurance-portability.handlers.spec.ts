@@ -70,7 +70,7 @@ describe('handlers de portabilidad de póliza y siniestralidad (subtarea 3.3)', 
     return typeof valor === 'object' && valor !== null && 'status' in valor && 'body' in valor;
   }
 
-  it('el titular exporta su propio historial: 14 reclamos por Bs 12 450 cubiertos', () => {
+  it('el titular exporta su propio historial: 15 reclamos por Bs 12 530 cubiertos', () => {
     const respuesta = call<ExportWire>(
       'POST',
       '/insurance/portability/export',
@@ -81,8 +81,16 @@ describe('handlers de portabilidad de póliza y siniestralidad (subtarea 3.3)', 
     const wire = respuesta as ExportWire;
 
     expect(wire.manifestHash).toMatch(/^[0-9a-f]{64}$/);
-    expect(wire.recordCount).toBe(14);
-    expect(wire.summary.allTime.coveredAmount).toBe('12450.00');
+    // Eran 14 por Bs 12 450 hasta que `insurance.handlers.ts` sumó
+    // `CLM-2026-0183` (36b5efb9, CA-3.3: la exclusión sin cláusula contractual
+    // degrada la liquidación a UNDER_REVIEW). Ese reclamo es del titular
+    // —índice 0 del mapeo de perfiles— y aporta Bs 80 aprobados sobre Bs 200
+    // facturados, así que el acumulado pasa a 15 registros y Bs 12 530.
+    // La cifra sigue siendo exacta: el contrato es que el export cuente TODO
+    // lo del titular, y por eso agregar un reclamo tiene que moverlo.
+    expect(wire.recordCount).toBe(15);
+    expect(wire.summary.allTime.coveredAmount).toBe('12530.00');
+    expect(wire.summary.allTime.billedAmount).toBe('13500.00');
   });
 
   it('otro usuario no puede exportar el historial de PACIENTE: 403', () => {

@@ -4,7 +4,10 @@ import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
 import { registrarClinica } from './clinical.handlers';
 import { registrarComunidad } from './community.handlers';
+import { registrarConsentimientos } from './consent.handlers';
 import { registrarDiagnostico } from './diagnostics.handlers';
+import { registerDiagnosisVerification } from './diagnosis-verification.handlers';
+import { registerMedicalNotes } from './medical-notes.handlers';
 import { registrarDirectorio } from './directory.handlers';
 import { registrarEncuestas } from './surveys-forms.handlers';
 import { registrarFarmacia } from './pharmacy.handlers';
@@ -27,8 +30,8 @@ import { registrarPortalAdministrativo } from './admin-portal.handlers';
 
 /**
  * Arma la tabla de rutas del backend simulado. Cada dominio registra las
- * suyas; ante dos patrones equivalentes gana el registrado **después**, así
- * que los dominios más específicos van al final.
+ * suyas; gana el patrón más específico y, ante dos patrones equivalentes,
+ * el registrado primero. Cada ruta debe tener un único dueño.
  */
 export function crearRouterSimulado(): MockRouter {
   const router = new MockRouter();
@@ -38,6 +41,8 @@ export function crearRouterSimulado(): MockRouter {
   registrarAgenda(router);
   registrarPracticas(router);
   registrarClinica(router);
+  registerMedicalNotes(router);
+  registerDiagnosisVerification(router);
   registrarComunidad(router);
   registrarPublico(router);
   registrarArchivos(router);
@@ -56,6 +61,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarProcedimientos(router);
   registrarLaboratorioFarmaceutico(router);
   registrarVarios(router);
+  registrarConsentimientos(router);
   registrarPortalAdministrativo(router);
   return router;
 }

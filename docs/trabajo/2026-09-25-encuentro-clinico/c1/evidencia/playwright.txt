@@ -1,0 +1,6 @@
+# node scripts/pw-guard.mjs --port 4211 --serve --spec playwright/clinica-c1-nota-medica.spec.ts
+  ✓  1 [chromium] › playwright\clinica-c1-nota-medica.spec.ts:60:5 › la rejilla no ofrece Medición ni Internación y el menú no tiene Notas médicas (8.4s)
+  ✓  2 [chromium] › playwright\clinica-c1-nota-medica.spec.ts:76:5 › escribe tres filas, sobrevive a F5 y firma (12.7s)
+  2 passed (22.5s)
+RESUMEN: outcome=PASSED intentos=1 duracion=104.1s
+exit=0

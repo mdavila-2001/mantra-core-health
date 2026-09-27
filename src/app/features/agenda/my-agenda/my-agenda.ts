@@ -13,7 +13,7 @@ import {
   untracked,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { formatDate } from '@angular/common';
+import { formatDate, NgTemplateOutlet } from '@angular/common';
 import { calcularTurnos } from '../agenda-create/agenda-turnos';
 import { forkJoin } from 'rxjs';
 
@@ -49,6 +49,10 @@ import type { DialogDetail } from '../../../shared/components/molecules/dialog/d
 import { patientChartRoute } from '../../clinical-record/clinical-record.routes';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
+import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
+import { FactList } from '../../../shared/components/molecules/fact-list/fact-list';
+import type { Hecho } from '../../../shared/components/molecules/fact-list/fact-list.types';
+import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { primerDiaDelMes, sumarMeses } from '../../../shared/date/calendario-mes';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
@@ -204,7 +208,10 @@ const VISITAS_QUE_NO_OCUPAN: ReadonlySet<string> = new Set([
     WeekView,
     ScheduleGrid,
     ContentDialog,
+    FactList,
+    NgTemplateOutlet,
     RouterLink,
+    RowActions,
     ViewStateHost,
   ],
   templateUrl: './my-agenda.html',
@@ -234,8 +241,14 @@ export class MyAgenda implements OnInit {
    * agenda. `/schedule` le pasa la MISMA celda de su tabla de Consultas
    * (propietario, 18/09): las dos vistas ofrecen los mismos botones y no hay
    * una segunda copia que se desfase. Sin ella, el día ofrece las suyas.
+   *
+   * `inline` llega en `true` desde el detalle de la semana: dentro de un modal
+   * las acciones van todas a la vista, sin desplegable.
    */
-  readonly appointmentActions = input<TemplateRef<{ $implicit: Booking }> | null>(null);
+  readonly appointmentActions = input<TemplateRef<{
+    $implicit: Booking;
+    inline?: boolean;
+  }> | null>(null);
 
   /**
    * Cambia cuando quien contiene la agenda operó una cita: las acciones son
@@ -285,6 +298,7 @@ export class MyAgenda implements OnInit {
     untracked(() => {
       const dia = this.diaAbierto();
       if (dia !== null) this.cargarDia(dia);
+      if (this.calendarView() === 'week') this.cargarSemana(this.semanaVisible());
       this.cargarMes();
     });
   });
@@ -329,6 +343,32 @@ export class MyAgenda implements OnInit {
    * releerla: la lista de históricos ya la trae completa, reglas incluidas.
    */
   protected readonly historicoAVer = signal<PublishedTemplate | null>(null);
+
+  /**
+   * La cita de la semana cuyo detalle está abierto, con sus acciones. `null`
+   * es «cerrado».
+   */
+  protected readonly detalleDeLaSemana = signal<{
+    readonly cita: Booking;
+    readonly fecha: string;
+    readonly hechos: readonly Hecho[];
+  } | null>(null);
+
+  /**
+   * La cita que se eligió mover desde el detalle de la semana. Los destinos
+   * libres se marcan en el día, así que al empezar a moverla se abre su día.
+   */
+  private citaAMoverDesdeLaSemana: Booking | null = null;
+
+  private readonly abrirDiaAlMover = effect(() => {
+    if (!this.moviendoCita()) return;
+    untracked(() => {
+      const cita = this.citaAMoverDesdeLaSemana;
+      this.citaAMoverDesdeLaSemana = null;
+      if (cita === null || this.calendarView() !== 'week' || cita.startAt === undefined) return;
+      this.openDay(aMedianoche(cita.startAt));
+    });
+  });
 
   /** El horario que se está retirando, para el `[isLoading]` del botón. */
   protected readonly retirando = signal(false);
@@ -1158,7 +1198,12 @@ export class MyAgenda implements OnInit {
     // Una llamada para todo el mes, igual que la semana. Si falla, el globo
     // del día dice que no pudo traer las citas; la ocupación sigue en pie.
     this.scheduling
-      .searchBookings({ resourceId: recurso.id, from: desde, to: hasta, limit: MONTH_BOOKINGS_LIMIT })
+      .searchBookings({
+        resourceId: recurso.id,
+        from: desde,
+        to: hasta,
+        limit: MONTH_BOOKINGS_LIMIT,
+      })
       .subscribe({
         next: (pagina: { items: readonly Booking[] }) => {
           this.citasDelMes.set(pagina.items);
@@ -1335,9 +1380,7 @@ export class MyAgenda implements OnInit {
     const ir = await this.dialogs.confirm({
       title: 'Detalle de la cita',
       message:
-        cuando === undefined
-          ? SIN_DATO
-          : formatDate(cuando, "EEEE d 'de' MMMM", this.idioma),
+        cuando === undefined ? SIN_DATO : formatDate(cuando, "EEEE d 'de' MMMM", this.idioma),
       details: [...detalleDeLaCita(cita, estado, this.idioma, franja)],
       confirmLabel: puedeAbrirExpediente ? 'Abrir expediente' : 'Cerrar',
       cancelLabel: puedeAbrirExpediente ? 'Cerrar' : 'Volver',
@@ -1348,10 +1391,54 @@ export class MyAgenda implements OnInit {
     }
   }
 
-  /** Activaron una cita desde la semana: el mismo detalle que desde el día. */
+  /**
+   * Activaron una cita desde la semana: el mismo detalle que desde el día.
+   *
+   * Si quien contiene la agenda aporta acciones (`/schedule`), el detalle las
+   * lleva todas —las mismas que la tarjeta del día—; si no, queda el diálogo
+   * de sólo lectura con «Abrir expediente».
+   */
   protected verDetalleDeLaSemana(cita: Booking): void {
     const estado = this.estadosResueltos().get(cita.statusConceptId)?.display ?? 'Reservado';
-    void this.verDetalleDeLaCita(cita, estado);
+    if (this.appointmentActions() === null) {
+      void this.verDetalleDeLaCita(cita, estado);
+      return;
+    }
+    this.detalleDeLaSemana.set({
+      cita,
+      fecha:
+        cita.startAt === undefined
+          ? SIN_DATO
+          : formatDate(cita.startAt, "EEEE d 'de' MMMM", this.idioma),
+      hechos: detalleDeLaCita(cita, estado, this.idioma).map((par) => ({
+        etiqueta: par.label,
+        valor: par.value,
+      })),
+    });
+  }
+
+  protected cerrarDetalleDeLaSemana(): void {
+    this.detalleDeLaSemana.set(null);
+  }
+
+  /**
+   * Una acción elegida dentro del detalle: la ejecuta quien la dibujó y el
+   * detalle se cierra, porque lo que sigue —confirmar, escribir un motivo,
+   * elegir destino— pasa en otro modal o en el día.
+   */
+  protected accionDelDetalleDeLaSemana(evento: Event, cita: Booking): void {
+    const boton = (evento.target as Element | null)?.closest?.('button');
+    if (boton === null || boton === undefined || boton.disabled) return;
+    if (boton.getAttribute('data-action') === 'agenda-reprogramar') {
+      this.citaAMoverDesdeLaSemana = cita;
+    }
+    this.cerrarDetalleDeLaSemana();
+  }
+
+  protected abrirExpedienteDelDetalle(cita: Booking): void {
+    if (cita.patientProfileId === undefined) return;
+    this.cerrarDetalleDeLaSemana();
+    void this.router.navigate([patientChartRoute(cita.patientProfileId)]);
   }
 
   /**
@@ -1474,6 +1561,45 @@ export class MyAgenda implements OnInit {
    * era encontrar el día, tocar el rato y abrir la tarjeta.
    */
   protected readonly rutaAgendarCita = APPOINTMENT_NEW_ROUTE;
+
+  /**
+   * Las acciones del horario, en un desplegable (ADR-0012: con tres o más la
+   * barra no las aguanta). Eran cuatro recuadros de color de 44 px con su
+   * texto, que en un escritorio se comían el renglón y en un teléfono lo
+   * partían en tres. Cada una sigue llevando ícono y texto, ahora dentro del
+   * menú; el disparador también.
+   */
+  protected readonly accionesDelHorario = computed<readonly RowAction[]>(() => [
+    { code: 'editar', label: 'Cambiar mi horario', icon: 'edit' },
+    { code: 'bloqueos', label: 'Mis bloqueos', icon: 'lock' },
+    { code: 'agendar', label: 'Agendar una cita', icon: 'calendar' },
+    // Retirar y no borrar: la plantilla no se borra nunca (ver `retirarHorario`).
+    // Va última, lejos del dedo que busca «Cambiar».
+    {
+      code: 'retirar',
+      label: 'Retirar horario',
+      icon: 'remove',
+      destructive: true,
+      disabled: this.retirando(),
+    },
+  ]);
+
+  protected ejecutarAccionDelHorario(code: string): void {
+    switch (code) {
+      case 'editar':
+        void this.router.navigateByUrl(this.rutaEditarHorario);
+        return;
+      case 'bloqueos':
+        void this.router.navigateByUrl(this.rutaBloqueos);
+        return;
+      case 'agendar':
+        void this.router.navigateByUrl(this.rutaAgendarCita);
+        return;
+      case 'retirar':
+        void this.retirarHorario();
+        return;
+    }
+  }
 
   /** El horario sobre el que hay una operación en vuelo. */
   protected readonly operandoHorario = signal<string | null>(null);

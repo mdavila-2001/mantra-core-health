@@ -33,60 +33,95 @@
         [attr.data-testid]="testId() + '-vista-' + actual.vista.id"
         focusable="false"
       >
-        <!-- El volumen: más oscuro en los costados que al centro, como un
-             cilindro iluminado de frente. Los colores salen de tokens (ver la
-             hoja); el `id` es por instancia para que dos siluetas en la misma
-             página no se pisen el degradado. -->
+        <!-- Tres degradados, por instancia (dos siluetas en la misma página no
+             se pisan): el volumen —costados más oscuros que el centro, como un
+             cilindro iluminado de frente—, la luz que cae de arriba a la
+             izquierda, y el relleno de la zona elegida. Los colores salen de
+             tokens: ver la hoja. -->
         <defs>
           <linearGradient [attr.id]="idDelVolumen" x1="0" y1="0" x2="1" y2="0">
             <stop class="body-map__volumen-borde" offset="0" />
-            <stop class="body-map__volumen-centro" offset="0.5" />
+            <stop class="body-map__volumen-centro" offset="0.42" />
+            <stop class="body-map__volumen-centro" offset="0.58" />
             <stop class="body-map__volumen-borde" offset="1" />
+          </linearGradient>
+          <radialGradient [attr.id]="idDeLaLuz" cx="0.34" cy="0.18" r="0.9">
+            <stop class="body-map__luz-fuerte" offset="0" />
+            <stop class="body-map__luz-nula" offset="0.7" />
+          </radialGradient>
+          <linearGradient [attr.id]="idDeLaElegida" x1="0" y1="0" x2="0" y2="1">
+            <stop class="body-map__elegida-arriba" offset="0" />
+            <stop class="body-map__elegida-abajo" offset="1" />
           </linearGradient>
         </defs>
 
         <!-- El contorno entero va debajo: es lo que hace que la figura se lea
              como una persona aunque falte alguna zona, y le da el borde exterior
-             parejo que las zonas, cortadas entre sí, no tienen. -->
+             parejo que las zonas, cortadas entre sí, no tienen. Encima, la luz. -->
         <path
           class="body-map__contorno"
           [attr.d]="actual.vista.contorno"
           [attr.fill]="'url(#' + idDelVolumen + ')'"
           aria-hidden="true"
         />
+        <path
+          class="body-map__luz"
+          [attr.d]="actual.vista.contorno"
+          [attr.fill]="'url(#' + idDeLaLuz + ')'"
+          aria-hidden="true"
+        />
 
-        @for (zona of actual.zonas; track zona.id) {
+        <g [style.--body-map-relleno-elegida]="'url(#' + idDeLaElegida + ')'">
+          @for (zona of actual.zonas; track zona.id) {
+            <g
+              class="body-map__zona"
+              [class.body-map__zona--elegida]="zona.id === value()"
+              [class.body-map__zona--marcada]="estaMarcada(zona.id)"
+            >
+              <!-- El `role="button"` y el `tabindex` son lo que convierte un dibujo
+                   en un control: sin ellos la silueta sería un adorno que sólo
+                   funciona con el dedo. El nombre accesible es el completo
+                   («Pecho y respiración»), y si lo contado la nombra, lo dice. -->
+              <path
+                class="body-map__forma"
+                role="button"
+                tabindex="0"
+                [attr.d]="zona.d"
+                [attr.aria-pressed]="zona.id === value()"
+                [attr.aria-label]="nombreAccesible(zona)"
+                [attr.data-testid]="testId() + '-' + zona.id"
+                (click)="elegir(zona)"
+                (keydown.enter)="elegir(zona)"
+                (keydown.space)="elegirConBarra($event, zona)"
+                (pointerenter)="apuntar(zona.id)"
+                (pointerleave)="apuntar(null)"
+                (focus)="apuntar(zona.id)"
+                (blur)="apuntar(null)"
+              />
+            </g>
+          }
+        </g>
+
+        <!-- Pelo, cejas, labios, iris, y las líneas de dibujo (clavículas,
+             columna, rótulas). Ayudan a leer la figura y no se pulsan: el clic
+             pasa a la zona de abajo. -->
+        <path class="body-map__rellenos" [attr.d]="actual.vista.rellenos" aria-hidden="true" />
+        <path class="body-map__acentos" [attr.d]="actual.vista.acentos" aria-hidden="true" />
+        <path class="body-map__detalles" [attr.d]="actual.vista.detalles" aria-hidden="true" />
+
+        <!-- El marcador de la elegida: un punto con un anillo que late, sobre
+             cada parte de la zona. Es la señal que se ve de lejos. -->
+        @for (centro of centrosDeLaElegida(); track $index) {
           <g
-            class="body-map__zona"
-            [class.body-map__zona--elegida]="zona.id === value()"
-            [class.body-map__zona--marcada]="estaMarcada(zona.id)"
+            class="body-map__marcador"
+            [attr.transform]="'translate(' + centro[0] + ' ' + centro[1] + ')'"
+            aria-hidden="true"
           >
-            <!-- El `role="button"` y el `tabindex` son lo que convierte un dibujo
-                 en un control: sin ellos la silueta sería un adorno que sólo
-                 funciona con el dedo. El nombre accesible es el completo
-                 («Pecho y respiración»), y si lo contado la nombra, lo dice. -->
-            <path
-              class="body-map__forma"
-              role="button"
-              tabindex="0"
-              [attr.d]="zona.d"
-              [attr.aria-pressed]="zona.id === value()"
-              [attr.aria-label]="nombreAccesible(zona)"
-              [attr.data-testid]="testId() + '-' + zona.id"
-              (click)="elegir(zona)"
-              (keydown.enter)="elegir(zona)"
-              (keydown.space)="elegirConBarra($event, zona)"
-              (pointerenter)="apuntar(zona.id)"
-              (pointerleave)="apuntar(null)"
-              (focus)="apuntar(zona.id)"
-              (blur)="apuntar(null)"
-            />
+            <circle class="body-map__marcador-onda" r="6" />
+            <circle class="body-map__marcador-halo" r="5" />
+            <circle class="body-map__marcador-punto" r="2.6" />
           </g>
         }
-
-        <!-- Clavículas, columna, rasgos de la cara: ayudan a leer la figura y
-             no se pulsan (el clic pasa a la zona de abajo). -->
-        <path class="body-map__detalles" [attr.d]="actual.vista.detalles" aria-hidden="true" />
       </svg>
     </div>
 

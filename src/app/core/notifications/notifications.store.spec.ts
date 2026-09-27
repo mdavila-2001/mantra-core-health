@@ -7,7 +7,7 @@ import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 
 import { AuthService } from '../auth/auth.service';
-import { NotificationsStore } from './notifications.store';
+import { INTERVALO_MS, NotificationsStore } from './notifications.store';
 
 /**
  * Lo que estas pruebas fijan.
@@ -233,5 +233,31 @@ describe('NotificationsStore', () => {
     resolver({ messaging: VACIA });
 
     expect(store.sinLeer()).toBe(0);
+  });
+
+  it('TX-18: con la pestaña oculta, el tic se saltea la lectura pero sigue agendando', () => {
+    const oculta = vi.spyOn(document, 'hidden', 'get');
+    try {
+      vi.useFakeTimers();
+      store.iniciar();
+      resolver({ perfil: null, messaging: paginaMessaging(1) });
+      expect(store.sinLeer()).toBe(1);
+
+      oculta.mockReturnValue(true);
+      vi.advanceTimersByTime(INTERVALO_MS);
+      // Pestaña oculta: ni una llamada a `/notifications/me` en este tic.
+      expect(http.match((r) => r.url === '/notifications/me')).toHaveLength(0);
+
+      oculta.mockReturnValue(false);
+      vi.advanceTimersByTime(INTERVALO_MS);
+      // Visible de nuevo: el sondeo retomó solo, sin que nadie llame a nada.
+      const pedidos = http.match((r) => r.url === '/notifications/me');
+      expect(pedidos).toHaveLength(1);
+      pedidos[0]!.flush(paginaMessaging(2));
+      expect(store.sinLeer()).toBe(2);
+    } finally {
+      oculta.mockRestore();
+      vi.useRealTimers();
+    }
   });
 });

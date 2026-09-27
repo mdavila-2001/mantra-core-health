@@ -1,0 +1,41 @@
+$ git -C ../mantra-core-health-api fetch && git -C ../mantra-core-health-api log origin/itzan/carga-masiva-motor-2026-09-25 -1
+2026-09-25 03:45:12 -0400 e57c0126 feat(terminology/import): contrato de fila del importador de terminología
+exit=0
+
+$ git -C ../mantra-core-health-api branch -r | grep -i carga-masiva
+  origin/itzan/carga-masiva-motor-2026-09-25
+
+$ git -C ../mantra-core-health-api show --stat origin/itzan/carga-masiva-motor-2026-09-25
+e57c0126 feat(terminology/import): contrato de fila del importador de terminología
+
+ docs/trabajo/2026-09-25-itzan-motor/PLAN.md        | 420 +++++++++++++++++++++
+ docs/trabajo/2026-09-25-itzan-motor/REPORTE.md     |  83 ++++
+ .../2026-09-25-itzan-motor/decision-todo-o-nada.md |  54 +++
+ .../evidencia/antes/baseline.txt                   |   6 +
+ .../evidencia/antes/install.txt                    |  18 +
+ .../evidencia/antes/test-terminology.txt           |  18 +
+ src/modules/terminology/import/index.ts            |  21 ++
+ .../terminology/import/row-contract.spec.ts        |  89 +++++
+ src/modules/terminology/import/row-contract.ts     | 128 +++++++
+ 9 files changed, 837 insertions(+)
+
+$ ¿existe ya el endpoint de §2 (dryRun / profile / import-template) en esa rama?
+  dryRun → 0 archivos
+  import-template → 0 archivos
+  IMPORT_FORMAT_UNSUPPORTED → 0 archivos
+
+=== VEREDICTO H6.S1 ===
+La rama de Itzan EXISTE (e57c0126, 03:45:12) pero trae SÓLO el contrato de fila (§1):
+row-contract.ts + su spec + index.ts. Cero aparición de 'dryRun', 'import-template' e
+'IMPORT_FORMAT_UNSUPPORTED' en toda la rama: el endpoint HTTP de §2, que es lo único que
+esta pantalla consume, TODAVÍA NO EXISTE. Levantar Postgres y la API no habría dado nada
+que recorrer, así que H6.S1.M2/M3 quedan DESCARTADOS con esta salida como evidencia.
+
+Contraste del contrato §1 publicado contra mi doble (lo que SÍ se pudo comparar):
+ - FormatoDeArchivo = 'ndjson' | 'csv' | 'xlsx' → coincide con mi formatoDeNombre().
+ - PerfilDeImportacion.id = 'conceptos' | 'designaciones' → coincide con PERFILES_DE_IMPORTACION.
+ - ProblemaDeFila declara 'columna' OPCIONAL → coincide con ImportFileIssue.column?.
+
+Diferencia de nombres, esperada y NO un defecto: el contrato de fila de la API está en
+castellano (fila/columna/motivo) y el contrato HTTP de §2 en inglés (line/column/message).
+La pantalla consume §2, que es el que cruza el cable.

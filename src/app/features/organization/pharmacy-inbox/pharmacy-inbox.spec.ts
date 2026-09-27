@@ -38,7 +38,14 @@ describe('PharmacyInbox with the tenant API list', () => {
         // El detalle existe como ruta para que abrir una tarjeta sea un clic
         // de verdad y no una llamada directa al método de la clase.
         provideRouter([{ path: 'administration/pharmacy-orders/:orderId', children: [] }]),
-        { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez' } },
+        // `userId` no es cosmético: sin él, `AuthService.userId` queda
+        // `undefined` (se alia por asignación, no por getter) y el
+        // `effect()` de `CartStore` —que `PharmacyOrdersClient` construye
+        // igual, aunque esta pantalla no muestre carrito— revienta con
+        // `this.auth.userId is not a function` en un tick asíncrono
+        // posterior, envenenando cualquier archivo que corra después en el
+        // mismo worker.
+        { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez', userId: () => null } },
       ],
     });
     TestBed.overrideComponent(PharmacyInbox, {

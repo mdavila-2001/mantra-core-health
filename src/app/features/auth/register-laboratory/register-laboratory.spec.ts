@@ -6,6 +6,13 @@ import { By } from '@angular/platform-browser';
 
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
 import { UbicacionPicker } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+import { CODIGOS_DE_DIAGNOSTICO } from '../registro-compartido/alta-de-centro-diagnostico';
+import {
+  altaPendiente,
+  atenderSubida,
+  idDeConcepto,
+  responderCatalogos,
+} from '../../../../testing/alta-de-centro-diagnostico';
 import { RegisterLaboratory, TIPOS_DE_SOCIEDAD } from './register-laboratory';
 
 /* ============================================================================
@@ -14,15 +21,17 @@ import { RegisterLaboratory, TIPOS_DE_SOCIEDAD } from './register-laboratory';
     1. Que pregunta los dieciocho puntos del proceso 4.1 y ninguno inventado.
     2. Que frena lo que sin ello no hay laboratorio publicable, y NO frena el
        resto — sobre todo los cargos, que el propietario pidió opcionales.
-    3. Que es la maqueta: no sale una sola petición a la red.
+    3. Que el envío es real: lee el catálogo, sube los PDF en serie y llama a
+       `register-organization` con `tenantType: 'DIAGNOSTIC_CENTER'`, y que
+       una subida fallida no manda el alta ni pierde las que ya salieron.
 
     Los tres son afirmaciones que se rompen solas si alguien cambia una regla
     sin darse cuenta, que es para lo que sirve una prueba.
     ========================================================================== */
 
-/** Un archivo, con lo único que el componente le mira. */
+/** Un archivo de verdad: la subida lo mete en un `FormData`, que no acepta un doble. */
 function archivo(nombre: string, tipo: string, bytes: number): File {
-  return { name: nombre, type: tipo, size: bytes } as unknown as File;
+  return new File([new Uint8Array(bytes)], nombre, { type: tipo });
 }
 
 const PDF = () => archivo('sedes.pdf', 'application/pdf', 120_000);
@@ -50,26 +59,41 @@ describe('RegisterLaboratory', () => {
   });
 
   afterEach(() => {
-    // La afirmación central de la maqueta: NINGUNA petición salió. Está en el
-    // `afterEach` a propósito, así vale para todas las pruebas de este archivo
-    // y no sólo para la que se acuerde de escribirla.
+    // Ninguna petición queda sin atender. Está en el `afterEach` a propósito, así
+    // vale para todas las pruebas de este archivo y no sólo para la que se
+    // acuerde de escribirla: un alta que sale sin que la prueba la mire es un
+    // alta que nadie verificó.
     http.verify();
   });
 
   /** Deja el formulario en el mínimo con el que se puede enviar. */
-  function completarLoObligatorio(): void {
+  function completarLoObligatorio(tipo = 'UNIPERSONAL'): void {
     component.form.patchValue({
       legalName: 'Laboratorio Clínico del Sur S.R.L.',
-      companyType: 'SRL',
+      companyType: tipo,
       taxId: '1023456789',
       addressLines: 'Av. Cañoto esq. Ballivián 234',
       legalRepName: 'Ana Paz Rojas',
       legalRepEmail: 'ana.paz@labsur.test',
+      legalRepIdNumber: '4872190',
       password: 'secreto12',
     });
-    component.form.controls.seprecFile.setValue({ archivo: 'seprec.pdf', pesoBytes: 1000 });
-    component.form.controls.licenciaFile.setValue({ archivo: 'licencia.pdf', pesoBytes: 1000 });
-    component.form.controls.sedesFile.setValue({ archivo: 'sedes.pdf', pesoBytes: 1000 });
+    component.updateAttachment('nitFile', [archivo('nit.pdf', 'application/pdf', 10)]);
+    component.updateAttachment('seprecFile', [archivo('seprec.pdf', 'application/pdf', 10)]);
+    component.updateAttachment('licenciaFile', [archivo('licencia.pdf', 'application/pdf', 10)]);
+    component.updateAttachment('sedesFile', [archivo('sedes.pdf', 'application/pdf', 10)]);
+  }
+
+  /** Atiende el envío completo: catálogo, una subida por papel y el alta. */
+  function atenderElEnvio(papeles: number, respuesta: object = { tenantId: 't', code: 'c' }) {
+    responderCatalogos(http);
+    const subidos: string[] = [];
+    for (let i = 0; i < papeles; i += 1) {
+      subidos.push(atenderSubida(http));
+    }
+    const alta = altaPendiente(http);
+    alta.flush({ ownerUserId: 'u', status: 's', emailVerificationSent: true, ...respuesta });
+    return { subidos, cuerpo: alta.request.body };
   }
 
   /* --- lo que pregunta --------------------------------------------------- */
@@ -125,9 +149,214 @@ describe('RegisterLaboratory', () => {
     completarLoObligatorio();
 
     component.submit();
+    atenderElEnvio(4);
 
     expect(component.form.valid).toBe(true);
     expect(component.enviada()).toBe(true);
+  });
+
+  /* --- el envío real ----------------------------------------------------- */
+
+  it('sube los PDF en serie, antes del alta, y manda DIAGNOSTIC_CENTER sin `payer`', () => {
+    completarLoObligatorio();
+
+    component.submit();
+    const { subidos, cuerpo } = atenderElEnvio(4);
+
+    expect(subidos).toEqual(['nit.pdf', 'seprec.pdf', 'licencia.pdf', 'sedes.pdf']);
+    expect(cuerpo.organization).toMatchObject({
+      tenantType: 'DIAGNOSTIC_CENTER',
+      legalName: 'Laboratorio Clínico del Sur S.R.L.',
+      legalEntityType: 'UNIPERSONAL',
+      countryConceptId: idDeConcepto(CODIGOS_DE_DIAGNOSTICO.pais),
+      jurisdictionConceptId: idDeConcepto(CODIGOS_DE_DIAGNOSTICO.jurisdiccionNacional),
+      diagnosticUnit: {
+        diagnosticUnitTypeConceptId: idDeConcepto(CODIGOS_DE_DIAGNOSTICO.laboratorio),
+        modalityConceptIds: [idDeConcepto(CODIGOS_DE_DIAGNOSTICO.modalidades.laboratorio)],
+        primarySite: { name: 'Central', address: { lines: ['Av. Cañoto esq. Ballivián 234'] } },
+      },
+      legalDocuments: {
+        taxIdentifierFileId: 'file-nit.pdf',
+        commerceRegistryFileId: 'file-seprec.pdf',
+        operatingLicenseFileId: 'file-licencia.pdf',
+        healthAuthorityCertificateFileId: 'file-sedes.pdf',
+      },
+      legalRepresentative: { fullName: 'Ana Paz Rojas', idNumber: '4872190' },
+    });
+    // Una unipersonal no manda constitución ni poder, y una aseguradora no es esto.
+    expect(cuerpo.organization.legalDocuments.constitutionFileId).toBeUndefined();
+    expect(cuerpo.organization.legalRepresentative.powerOfAttorneyFileId).toBeUndefined();
+    expect(cuerpo.organization.payer).toBeUndefined();
+    expect(cuerpo.owner).toEqual({
+      email: 'ana.paz@labsur.test',
+      password: 'secreto12',
+      displayName: 'Ana Paz Rojas',
+    });
+  });
+
+  it('el punto del mapa viaja sólo si se confirmó', () => {
+    completarLoObligatorio();
+    component.gpsCentral.set({ lat: -17.78, lng: -63.18 });
+
+    component.submit();
+    const { cuerpo } = atenderElEnvio(4);
+
+    expect(cuerpo.organization.diagnosticUnit.primarySite.address).toEqual({
+      lines: ['Av. Cañoto esq. Ballivián 234'],
+      latitude: -17.78,
+      longitude: -63.18,
+    });
+  });
+
+  it('una SRL sin constitución ni poder no sale: la API lo rechazaría', () => {
+    completarLoObligatorio('SRL');
+
+    component.submit();
+
+    expect(component.form.controls.constitucionFile.invalid).toBe(true);
+    expect(component.form.controls.poderFile.invalid).toBe(true);
+    expect(component.enviada()).toBe(false);
+  });
+
+  it('una SRL con los seis papeles manda la constitución y el poder', () => {
+    completarLoObligatorio('SRL');
+    component.updateAttachment('constitucionFile', [archivo('constitucion.pdf', 'application/pdf', 10)]);
+    component.updateAttachment('poderFile', [archivo('poder.pdf', 'application/pdf', 10)]);
+
+    component.submit();
+    const { cuerpo } = atenderElEnvio(6);
+
+    expect(cuerpo.organization.legalDocuments.constitutionFileId).toBe('file-constitucion.pdf');
+    expect(cuerpo.organization.legalRepresentative.powerOfAttorneyFileId).toBe('file-poder.pdf');
+    expect(component.enviada()).toBe(true);
+  });
+
+  it('elegir «Unipersonal» después de una SRL vuelve opcionales la constitución y el poder', () => {
+    completarLoObligatorio('SRL');
+    expect(component.form.controls.constitucionFile.invalid).toBe(true);
+
+    component.form.controls.companyType.setValue('UNIPERSONAL');
+
+    expect(component.form.controls.constitucionFile.valid).toBe(true);
+    expect(component.form.controls.poderFile.valid).toBe(true);
+  });
+
+  it('si una subida no se confirma, el alta no sale y dice por qué', () => {
+    completarLoObligatorio();
+
+    component.submit();
+    responderCatalogos(http);
+    atenderSubida(http, true);
+
+    http.expectNone((p) => p.url.endsWith('/iam/auth/register-organization'));
+    expect(component.enviada()).toBe(false);
+    expect(component.mensajeDeError()).toContain('No pudimos confirmar la carga del PDF');
+  });
+
+  it('en el reintento no repite las subidas que ya salieron', () => {
+    completarLoObligatorio();
+    component.submit();
+    responderCatalogos(http);
+    atenderSubida(http); // nit.pdf, confirmada
+    atenderSubida(http, true); // seprec.pdf, sin confirmar: corta acá
+
+    // El catálogo ya quedó memoizado: el reintento no lo vuelve a pedir.
+    component.submit();
+    // Sólo las tres que faltan: `nit.pdf` ya tiene su `fileId`.
+    expect([atenderSubida(http), atenderSubida(http), atenderSubida(http)]).toEqual([
+      'seprec.pdf',
+      'licencia.pdf',
+      'sedes.pdf',
+    ]);
+    altaPendiente(http).flush({ ownerUserId: 'u', status: 's', emailVerificationSent: true });
+
+    expect(component.enviada()).toBe(true);
+  });
+
+  it('si el catálogo no trae un código que el alta necesita, no sube ni manda nada', () => {
+    completarLoObligatorio();
+
+    component.submit();
+    responderCatalogos(http, [CODIGOS_DE_DIAGNOSTICO.modalidades.laboratorio]);
+
+    http.expectNone((p) => p.url.endsWith('/iam/auth/upload-registration-document'));
+    http.expectNone((p) => p.url.endsWith('/iam/auth/register-organization'));
+    expect(component.enviada()).toBe(false);
+    expect(component.mensajeDeError()).toContain('No pudimos cargar los catálogos');
+  });
+
+  it('un rechazo de la API se muestra y deja reintentar', () => {
+    completarLoObligatorio();
+
+    component.submit();
+    responderCatalogos(http);
+    for (let i = 0; i < 4; i += 1) {
+      atenderSubida(http);
+    }
+    altaPendiente(http).flush(
+      { statusCode: 422, code: 'PRECONDITION_FAILED', message: 'Falta la escritura de constitución' },
+      { status: 422, statusText: 'Unprocessable Entity' },
+    );
+
+    expect(component.enviada()).toBe(false);
+    expect(component.mensajeDeError()).not.toBeNull();
+    expect(component.enviando()).toBe(false);
+  });
+
+  it('las gerencias viajan sólo si están las tres completas', () => {
+    completarLoObligatorio();
+    component.form.patchValue({
+      generalManagerName: 'Luis Vaca',
+      generalManagerPhone: '+591 70011111',
+      generalManagerEmail: 'luis@labsur.test',
+    });
+
+    component.submit();
+    const { cuerpo } = atenderElEnvio(4);
+
+    expect(cuerpo.organization.executives).toBeUndefined();
+  });
+
+  it('con las tres gerencias completas viajan en el alta', () => {
+    completarLoObligatorio();
+    component.form.patchValue({
+      generalManagerName: 'Luis Vaca',
+      generalManagerPhone: '+591 70011111',
+      generalManagerEmail: 'luis@labsur.test',
+      salesManagerName: 'Rosa Cruz',
+      salesManagerPhone: '+591 70022222',
+      salesManagerEmail: 'rosa@labsur.test',
+      marketingManagerName: 'Pedro Roca',
+      marketingManagerPhone: '+591 70033333',
+      marketingManagerEmail: 'pedro@labsur.test',
+    });
+
+    component.submit();
+    const { cuerpo } = atenderElEnvio(4);
+
+    expect(Object.keys(cuerpo.organization.executives)).toEqual([
+      'generalManager',
+      'commercialManager',
+      'marketingManager',
+    ]);
+  });
+
+  it('el documento del representante es obligatorio: la API lo exige', () => {
+    completarLoObligatorio();
+    component.form.controls.legalRepIdNumber.setValue('');
+
+    component.submit();
+
+    expect(component.enviada()).toBe(false);
+  });
+
+  it('el NIT en PDF frena el alta: viaja junto con los otros papeles', () => {
+    completarLoObligatorio();
+    component.updateAttachment('nitFile', []);
+
+    component.submit();
+
+    expect(component.enviada()).toBe(false);
   });
 
   it.each(['seprecFile', 'licenciaFile', 'sedesFile'] as const)(
@@ -142,13 +371,14 @@ describe('RegisterLaboratory', () => {
     },
   );
 
-  it.each(['constitucionFile', 'nitFile', 'poderFile'] as const)(
+  it.each(['constitucionFile', 'poderFile'] as const)(
     '%s no frena: una unipersonal no tiene constitución ni poder',
     (clave) => {
       completarLoObligatorio();
       component.form.controls[clave].setValue(null);
 
       component.submit();
+      atenderElEnvio(4);
 
       expect(component.enviada()).toBe(true);
     },
@@ -158,6 +388,7 @@ describe('RegisterLaboratory', () => {
     completarLoObligatorio();
 
     component.submit();
+    atenderElEnvio(4);
 
     // Ninguno de los nueve campos de gerencia se tocó, y el alta sale igual.
     expect(component.form.controls.generalManagerName.value).toBe('');
@@ -260,15 +491,18 @@ describe('RegisterLaboratory', () => {
 
   /* --- la pantalla ------------------------------------------------------- */
 
-  it('al enviarse muestra que quedó una solicitud, no una cuenta creada', async () => {
+  it('al enviarse muestra que quedó una solicitud pendiente de aprobación', async () => {
     completarLoObligatorio();
 
     component.submit();
+    atenderElEnvio(4);
     await fixture.whenStable();
+    fixture.detectChanges();
 
     const exito = fixture.debugElement.query(By.css('[data-testid="registro-lab-exito"]'));
     expect(exito).not.toBeNull();
-    // El texto no puede prometer una cuenta: todavía no hay backend que la cree.
+    // Dice «solicitud» porque la cuenta queda pendiente de verificación: ya existe
+    // —el dueño puede entrar— pero el laboratorio no se publica hasta aprobarla.
     expect((exito.nativeElement as HTMLElement).textContent).toContain('solicitud');
   });
 

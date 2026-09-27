@@ -13,7 +13,7 @@
     ========================================================================== */
 
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, ElementRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
@@ -53,6 +53,7 @@ const SIN_SECCIONES: readonly SeccionAlovida[] = [];
     '(document:click)': 'alCerrarFuera($event)',
     '(document:keydown.escape)': 'cerrarDesplegables()',
   },
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AlovidaShell {
   private readonly router = inject(Router);

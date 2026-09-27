@@ -118,16 +118,6 @@ interface DestinoDeUbicacion {
 }
 
 /**
- * Lo que se le dice a quien ya tiene un pin y quiere correrlo.
- *
- * Es la otra mitad del selector: el GPS acierta la manzana, no la puerta, y
- * hasta ahora la única salida era «Volver a ubicarme», que devolvía la misma
- * manzana. Tocar el plano corre el pin al punto exacto.
- */
-const AVISO_MOVER_PIN =
-  'Si el pin no cayó justo, tocá el mapa en el lugar correcto y lo movemos.';
-
-/**
  * El identificador del pin del domicilio en el mapa.
  *
  * `app-map` habla de sus pines por `id` y exige uno; acá hay un solo pin, así
@@ -159,23 +149,6 @@ const PIN_TRABAJO = 'trabajo';
  */
 const AVISO_SIN_GEOCODIFICACION =
   'El punto del mapa se guarda tal cual, pero no podemos convertirlo en el nombre de la calle: escribila vos arriba.';
-
-/**
- * Lo que se le dice a quien capturó un punto y no lo confirmó.
- *
- * **El dato se perdía en silencio.** Sólo viaja al alta lo confirmado sobre el
- * mapa (`datosPaciente`), y eso está bien —el GPS acierta la manzana, no la
- * puerta, y entre «esto es lo que encontramos» y «esta es mi dirección» tiene
- * que haber alguien mirando el plano—; lo que estaba mal es que quien se
- * quedaba a medias avanzaba de página creyendo que su ubicación ya estaba
- * guardada, y nadie se lo decía.
- *
- * El aviso **no bloquea ni confirma por su cuenta**: la confirmación sigue
- * siendo un acto de la persona. Sólo deja de ser silenciosa la consecuencia de
- * no hacerla.
- */
-const AVISO_UBICACION_SIN_CONFIRMAR =
-  'Todavía no confirmaste este punto, así que no se va a guardar. Pulsá el botón de confirmar si es el lugar correcto.';
 
 /**
  * Cuánto se espera al navegador antes de dar la ubicación por perdida.
@@ -932,12 +905,6 @@ export class RegisterPatient {
 
   /** El aviso de AC-03-9, expuesto a la plantilla. Ver la constante. */
   protected readonly avisoSinGeocodificacion = AVISO_SIN_GEOCODIFICACION;
-
-  /** El aviso del punto capturado sin confirmar. Ver la constante. */
-  protected readonly avisoUbicacionSinConfirmar = AVISO_UBICACION_SIN_CONFIRMAR;
-
-  /** La pista de que tocar el mapa corre el pin. Ver la constante. */
-  protected readonly avisoMoverPin = AVISO_MOVER_PIN;
 
   /**
    * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
@@ -2450,14 +2417,18 @@ export class RegisterPatient {
       ...(nombresAdicionales === '' ? {} : { middleName: nombresAdicionales }),
       ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
       password: raw.password,
-      // Ausente si no se completó: `forbidNonWhitelisted` rechaza lo que sobra,
-      // y una cadena vacía no es lo mismo que la ausencia del campo.
-      ...(correo === '' ? {} : { email: correo }),
+      // Los cinco campos que la API exige (correo, nacimiento, teléfono, sexo al
+      // nacer y departamento emisor) van siempre y el tipo lo impone: el control
+      // los valida, así que `submit()` no llega acá sin ellos. El vacío es la
+      // red por si alguien llamara a este método sin esa comprobación: hace que
+      // la API conteste 400 nombrando el campo, en vez de un cuerpo al que le
+      // falta una propiedad obligatoria (mismo criterio que el municipio).
+      email: correo,
       // El departamento emisor viaja atado al documento: sin CI no hay
       // identificador al que atarlo, y el backend lo escribe en la fila del
       // identificador, no en la persona. Acá el documento es obligatorio, así
       // que la única condición real es haber elegido departamento.
-      ...(departamento === null ? {} : { issuerAdministrativeAreaConceptId: departamento }),
+      issuerAdministrativeAreaConceptId: departamento ?? '',
       // Sólo el municipio: el departamento de residencia lo deriva el backend
       // del código del INE, para que el par no pueda llegar incoherente.
       //
@@ -2468,9 +2439,10 @@ export class RegisterPatient {
       // conteste 400 nombrando el campo, en vez de un cuerpo al que le falta
       // una propiedad obligatoria.
       residenceMunicipalityConceptId: municipio ?? '',
-      ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
-      ...(telefono === '' ? {} : { phone: telefono }),
-      ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
+      birthDate: fechaNacimiento === null ? '' : fechaIso(fechaNacimiento),
+      phone: telefono,
+      // `''` no es un código válido: la API responde 400 nombrando el campo.
+      sexAtBirth: sexoAlNacer ?? ('' as BirthSexCode),
       // Con «Otra ocupación» viaja el oficio escrito y NO el concepto: el
       // backend descarta el texto libre en cuanto recibe un concepto
       // (`occupationFreeText: dto.occupationConceptId ? undefined : …`), y de
@@ -2486,7 +2458,10 @@ export class RegisterPatient {
       // Trabajo: la empresa **y** dónde queda. Los cuatro campos de ubicación
       // vuelven al alta por AC-03-1; el DTO nunca dejó de aceptarlos. Ver el
       // JSDoc de `workMunicipalityConceptId` en el `FormGroup`.
-      ...(empresa === null ? {} : { workEmployerConceptId: empresa }),
+      // Con «Otra empresa» viaja el texto escrito y NO el concepto, igual que la
+      // ocupación: el backend descarta el texto libre en cuanto recibe un
+      // concepto, y «Otra» no nombra a ninguna empresa (ID-11).
+      ...(empresa === null || this.empresaEsOtra() ? {} : { workEmployerConceptId: empresa }),
       ...(municipioTrabajo === null ? {} : { workMunicipalityConceptId: municipioTrabajo }),
       ...(calleTrabajo === '' ? {} : { workAddressLines: calleTrabajo }),
       ...(gpsTrabajo === null

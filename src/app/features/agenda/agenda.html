@@ -9,6 +9,8 @@
        está mirando y el ingreso por mostrador ocurre con alguien parado
        enfrente, mirando ese día. Viajan por `[puedeIngresarPorMostrador]` /
        `[puedeAvisarDemora]` y vuelven por `(mostradorPedido)` / `(demoraPedida)`.
+       Desde el 24/09 el médico ya no recibe «Ingreso Mostrador» en ningún
+       lado: `puedeIngresarPorMostrador()` lo reserva a quien reparte turnos.
      - «Visitas de laboratorio» pasa a ser la tarjeta de visitador dentro de la
        propia solapa de Consultas (C-13, H5.S2), que es lo que el doctor pidió:
        verla en la misma pestaña. La bandeja `/lab-visits` no se borra y sigue
@@ -465,6 +467,32 @@
   }
 </ng-template>
 
+<!-- C4 · el motivo, y el sello cuando la cita es una reconsulta.
+
+     El sello va JUNTO AL MOTIVO y no en la columna de estado: una reconsulta
+     confirmada sigue estando confirmada, y pisar ese sello borraría el estado
+     del ciclo. Lo que agrega es de dónde salió, que es información del motivo.
+
+     «De la cita del …» se omite cuando el origen quedó sin horario: decir «de
+     la cita del —» sería peor que no decir nada. -->
+<ng-template #celdaMotivo let-cita>
+  <span class="agenda__motivo">{{ cita.motivo }}</span>
+  @if (cita.esReconsulta) {
+    <app-badge
+      class="agenda__reconsulta-sello"
+      variant="secondary"
+      size="sm"
+      data-testid="cita-reconsulta-sello"
+      >Reconsulta</app-badge
+    >
+    @if (cita.reconsultaDe) {
+      <span class="agenda__reconsulta-origen">
+        de la cita del {{ cita.reconsultaDe | date: "d 'de' MMMM" }}
+      </span>
+    }
+  }
+</ng-template>
+
 <ng-template #celdaFranja let-cupo>
   <span class="agenda__cuando">{{ cupo.desde | date: 'EEEE d MMM, HH:mm' }}</span>
   <span class="agenda__hasta">hasta {{ cupo.hasta | date: 'HH:mm' }}</span>
@@ -551,6 +579,7 @@
             [disabled]="cita.pago?.state === opcion.code"
             (selected)="marcarPago(cita, opcion.code)"
           >
+            <app-nav-icon slot="icon" [name]="opcion.icon" />
             {{ opcion.label }}
           </app-menu-item>
         }
@@ -558,6 +587,7 @@
           <!-- El seguro es una marca SEPARADA del estado, por decisión del
                propietario: se alterna sola y no cambia en qué estado está. -->
           <app-menu-item (selected)="alternarSeguro(cita)">
+            <app-nav-icon slot="icon" name="umbrella" />
             {{ cita.pago.insuranceUsed ? 'Quitar «con seguro»' : 'Marcar «con seguro»' }}
           </app-menu-item>
         }
@@ -566,7 +596,7 @@
   </div>
 </ng-template>
 
-<ng-template #celdaAccionesCita let-cita>
+<ng-template #celdaAccionesCita let-cita let-inline="inline">
   <!-- C-06 (2026-09-20) · «botón = icono + texto; las acciones de una tabla, en
        un desplegable».
 
@@ -582,7 +612,9 @@
        vivir en la fila y dentro del menú, y los datos sí. -->
   <app-row-actions
     class="agenda__acciones"
-    [actions]="accionesDe(cita)"
+    [class.agenda__acciones--detalle]="inline ?? false"
+    [actions]="inline ? accionesDelDetalle(cita) : accionesDe(cita)"
+    [inline]="inline ?? false"
     [fila]="filaDe(cita)"
     (actionSelected)="ejecutarAccionDeFila(cita, $event)"
   />
@@ -592,10 +624,10 @@
      Consultas, sobre la cita traducida igual que una fila. Así Ver detalle,
      Aceptar, Iniciar, Llegó, Demora, Mover y Cancelar son idénticos en las dos
      vistas y no hay una segunda copia que se desfase (propietario, 18/09). -->
-<ng-template #accionesDeLaCitaDelDia let-booking>
+<ng-template #accionesDeLaCitaDelDia let-booking let-inline="inline">
   <ng-container
     [ngTemplateOutlet]="celdaAccionesCita"
-    [ngTemplateOutletContext]="{ $implicit: citaDelDia(booking) }"
+    [ngTemplateOutletContext]="{ $implicit: citaDelDia(booking), inline: inline ?? false }"
   />
 </ng-template>
 

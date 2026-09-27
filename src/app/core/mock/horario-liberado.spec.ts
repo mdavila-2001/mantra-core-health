@@ -131,7 +131,7 @@ describe('horariosLiberados', () => {
     expect(aviso.bodyText).toContain('Rojas');
     expect(aviso.category).toBe('SCHEDULING');
     // El destino es el cupo: es lo que hay que poder abrir desde la campana.
-    expect(aviso.destination).toEqual({ type: 'APPOINTMENT', id: cupo });
+    expect(aviso.destination).toEqual({ type: 'scheduling.bookable_slots', id: cupo });
   });
 
   it('el aviso se distingue por su `kind`, no por su texto', () => {

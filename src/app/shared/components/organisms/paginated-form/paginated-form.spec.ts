@@ -709,6 +709,7 @@ const PAGINA_DE_CASILLAS: readonly PaginaDeFormulario[] = [
 ];
 
 @Component({
+  selector: 'app-host-de-casillas',
   imports: [PaginatedForm],
   template: `
     <app-paginated-form [paginas]="paginas" [form]="form" label="Antecedentes" />
@@ -829,6 +830,7 @@ const PAGINAS_DE_SI_NO: readonly PaginaDeFormulario[] = [
 ];
 
 @Component({
+  selector: 'app-host-de-si-no',
   imports: [PaginatedForm],
   template: `
     <app-paginated-form [paginas]="paginas" [form]="form" label="Antecedentes" />

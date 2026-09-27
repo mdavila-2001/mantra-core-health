@@ -25,6 +25,9 @@ import { envFromProcess } from './env.generated';
 export const environment: Environment = {
   apiBaseUrl: envFromProcess.apiBaseUrl ?? '',
 
+  /** Mismo origen: ver `aiBaseUrl` en `environment.types.ts`. */
+  aiBaseUrl: envFromProcess.aiBaseUrl ?? '/ai',
+
   /**
    * Apagada por defecto: en producción la barra de demostración no existe
    * salvo que el despliegue la pida (`PUBLIC_DEMO_PRESETS=true`, pensado para
@@ -53,6 +56,13 @@ export const environment: Environment = {
    * staging de una demo la enciende con `PUBLIC_CAMPAIGNS_DEMO=true`.
    */
   campaignsDemo: envFromProcess.campaignsDemo ?? false,
+
+  /**
+   * Apagada por defecto: el refresh token sigue en el cuerpo y en `localStorage`
+   * hasta que el despliegue encienda **las dos puntas** —`PUBLIC_REFRESH_COOKIE`
+   * acá y `AUTH_REFRESH_COOKIE_ENABLED` en la API—. Ver `environment.types.ts`.
+   */
+  refreshCookie: envFromProcess.refreshCookie ?? false,
 
   /**
    * Apagado para trabajar directamente contra el backend real.

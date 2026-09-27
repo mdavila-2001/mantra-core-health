@@ -29,6 +29,10 @@
             [routerLink]="[]"
             [queryParams]="{ especialidad: tarjeta.conceptId }"
             queryParamsHandling="merge"
+            [attr.aria-busy]="navegandoEspecialidad() === tarjeta.conceptId ? 'true' : null"
+            [attr.aria-disabled]="navegandoEspecialidad() === tarjeta.conceptId ? 'true' : null"
+            [style.pointer-events]="navegandoEspecialidad() === tarjeta.conceptId ? 'none' : null"
+            (click)="abrirEspecialidad($event, tarjeta.conceptId)"
           >
             <!-- El ícono va **dentro** del enlace y `aria-hidden`: la
                  tarjeta ya se llama por su especialidad, y anunciarlo lo
@@ -37,7 +41,7 @@
                  entera, que es justo lo que una portada de dieciocho tarjetas
                  iguales no dejaba hacer. -->
             <app-specialty-icon class="rejilla__icono" [especialidad]="tarjeta.nombre" />
-            <span class="rejilla__nombre">{{ tarjeta.nombre }}</span>
+            <span class="rejilla__nombre">{{ navegandoEspecialidad() === tarjeta.conceptId ? 'Abriendo…' : tarjeta.nombre }}</span>
             <span class="rejilla__dato">
               {{ tarjeta.cantidad }}
               {{ tarjeta.cantidad === 1 ? 'médico' : 'médicos' }}

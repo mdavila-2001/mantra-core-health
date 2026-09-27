@@ -82,10 +82,18 @@ COPY . .
 ARG PUBLIC_API_BASE_URL=""
 ENV PUBLIC_API_BASE_URL=$PUBLIC_API_BASE_URL
 
+# `production` (el valor por omisión de `ng build`) es la maqueta: sin este ARG
+# el contenedor sale SIEMPRE con el backend simulado encendido, sin importar
+# qué variables de entorno se le pasen. Un despliegue real pide
+# `--build-arg BUILD_CONFIGURATION=production-api` (H1.S1): SSR encendido,
+# simulador y las cuatro demostraciones apagadas. La maqueta sigue viva sin
+# tocar nada: no pasar el ARG construye exactamente lo mismo que antes.
+ARG BUILD_CONFIGURATION="production"
+
 # `yarn build` encadena `env:generate`, que además estampa versión y commit en
 # el paquete. El commit sale de Git, y por eso `.git` tiene que estar en el
 # contexto: sin él queda `desconocido` y se pierde la trazabilidad del artefacto.
-RUN yarn build
+RUN yarn build --configuration=$BUILD_CONFIGURATION
 
 # ─── Etapa 2 · ejecución ─────────────────────────────────────────────────────
 FROM node:24-bookworm-slim AS runtime

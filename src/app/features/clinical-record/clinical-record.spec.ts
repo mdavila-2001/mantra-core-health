@@ -16,9 +16,6 @@ import { ClinicalRecord } from './clinical-record';
 @Component({ selector: 'app-expediente-doble', template: '' })
 class ExpedienteDoble {}
 
-/** La petición del catálogo de departamentos que dispara el constructor. */
-const CATALOGO_DEPARTAMENTOS = '/terminology/value-sets?code=VS_BO_DEPARTMENT';
-
 /**
  * La puerta al expediente. Lo que estas pruebas fijan (TAREA-07, P-07-10,
  * 2026-09-02):
@@ -84,16 +81,7 @@ describe('ClinicalRecord', () => {
     return interno<() => { status: string; message?: string }>('resultados')();
   }
 
-  /**
-   * El catálogo de departamentos se pide en paralelo, en la misma tanda del
-   * constructor, sin importar si hay criterio de búsqueda o no.
-   */
-  function resolverCatalogoDeDepartamentosVacio() {
-    http.expectOne(CATALOGO_DEPARTAMENTOS).flush({ items: [] });
-  }
-
   it('al montar sin criterio no pide el padrón: muestra un vacío que invita a buscar', () => {
-    resolverCatalogoDeDepartamentosVacio();
     http.verify();
 
     const actual = estado();
@@ -102,8 +90,6 @@ describe('ClinicalRecord', () => {
   });
 
   it('el buscador por nombre y el de documento están siempre disponibles, aun sin criterio', () => {
-    resolverCatalogoDeDepartamentosVacio();
-
     const html = harness.fixture.nativeElement as HTMLElement;
     expect(html.querySelector('app-search-field')).not.toBeNull();
     expect(html.querySelector('app-data-table')).not.toBeNull();
@@ -117,8 +103,6 @@ describe('ClinicalRecord', () => {
    * el código interno. En su lugar, el carnet y el celular.
    */
   it('la tabla muestra documento y teléfono, no el código ni el uuid del perfil', async () => {
-    resolverCatalogoDeDepartamentosVacio();
-
     interno<(texto: string) => void>('buscar')('peña');
     await harness.fixture.whenStable();
     peticion().flush({
@@ -140,8 +124,6 @@ describe('ClinicalRecord', () => {
   });
 
   it('dice con palabras cuando falta el documento o el teléfono', async () => {
-    resolverCatalogoDeDepartamentosVacio();
-
     interno<(texto: string) => void>('buscar')('peña');
     await harness.fixture.whenStable();
     peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
@@ -153,8 +135,6 @@ describe('ClinicalRecord', () => {
   });
 
   it('buscar publica el texto en la URL y pide con `q`', async () => {
-    resolverCatalogoDeDepartamentosVacio();
-
     interno<(texto: string) => void>('buscar')('peña');
     await harness.fixture.whenStable();
 
@@ -176,8 +156,6 @@ describe('ClinicalRecord', () => {
    * como cualquier otra lectura de la aplicación.
    */
   it('un 403 (ya excepcional) lo pinta `app-data-table` con su estado `forbidden`', async () => {
-    resolverCatalogoDeDepartamentosVacio();
-
     interno<(texto: string) => void>('buscar')('peña');
     await harness.fixture.whenStable();
     peticion().flush(
@@ -195,8 +173,6 @@ describe('ClinicalRecord', () => {
 
   /** AC-07-1: encuentra por documento exacto, aunque el nombre no coincida. */
   it('buscar por documento publica `nationalId` en la URL y en la petición', async () => {
-    resolverCatalogoDeDepartamentosVacio();
-
     const router = TestBed.inject(Router);
     interno<(valor: string) => void>('fijarDocumento')('  1234567  ');
     interno<() => void>('buscarPorDocumento')();
@@ -207,30 +183,10 @@ describe('ClinicalRecord', () => {
     const req = peticion();
     expect(req.request.params.get('nationalId')).toBe('1234567');
     expect(req.request.params.has('q')).toBe(false);
+    // P-07-3, cerrada: SEGIP no reemite un carnet ya expedido, así que no hay
+    // departamento que desempate.
+    expect(req.request.params.has('issuerAdministrativeAreaConceptId')).toBe(false);
     req.flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
-  });
-
-  /**
-   * AC-07-2: un mismo número expedido en otro departamento no es la misma
-   * persona. El select del departamento viaja como
-   * `issuerAdministrativeAreaConceptId`.
-   */
-  it('el departamento elegido viaja junto al documento', async () => {
-    resolverCatalogoDeDepartamentosVacio();
-
-    interno<(valor: string) => void>('fijarDocumento')('1234567');
-    // `interno()` liga la señal a `componente` para los casos de función; una
-    // señal escribible pierde su `.set` al ligarse, así que este acceso va
-    // directo, sin pasar por ese helper.
-    (
-      componente as unknown as { departamentoElegido: { set(valor: string | null): void } }
-    ).departamentoElegido.set('area-sc');
-    interno<() => void>('buscarPorDocumento')();
-    await harness.fixture.whenStable();
-
-    const req = peticion();
-    expect(req.request.params.get('issuerAdministrativeAreaConceptId')).toBe('area-sc');
-    req.flush({ items: [], count: 0, limit: 25, nextCursor: null });
   });
 
   /**
@@ -238,8 +194,6 @@ describe('ClinicalRecord', () => {
    * filtros que se combinan: buscar por documento limpia `q` de la URL.
    */
   it('buscar por documento limpia el filtro por nombre', async () => {
-    resolverCatalogoDeDepartamentosVacio();
-
     interno<(texto: string) => void>('buscar')('peña');
     await harness.fixture.whenStable();
     peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
@@ -266,8 +220,6 @@ describe('ClinicalRecord', () => {
    * nada: la URL quedaba pelada y la tabla volvía al vacío inicial.
    */
   it('el rebote del buscador por nombre al vaciarse no borra el documento', async () => {
-    resolverCatalogoDeDepartamentosVacio();
-
     interno<(texto: string) => void>('buscar')('peña');
     await harness.fixture.whenStable();
     peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
@@ -289,8 +241,6 @@ describe('ClinicalRecord', () => {
 
   /** Y al revés: escribir un nombre sí deja sin efecto al documento. */
   it('buscar por nombre limpia el documento de la URL', async () => {
-    resolverCatalogoDeDepartamentosVacio();
-
     interno<(valor: string) => void>('fijarDocumento')('1234567');
     interno<() => void>('buscarPorDocumento')();
     await harness.fixture.whenStable();
@@ -308,8 +258,6 @@ describe('ClinicalRecord', () => {
   });
 
   it('buscar por documento con el campo vacío no navega ni pide nada', async () => {
-    resolverCatalogoDeDepartamentosVacio();
-
     const router = TestBed.inject(Router);
     interno<() => void>('buscarPorDocumento')();
     await harness.fixture.whenStable();
@@ -319,8 +267,6 @@ describe('ClinicalRecord', () => {
   });
 
   it('con filtro por nombre, el vacío nombra el texto que no encontró', async () => {
-    resolverCatalogoDeDepartamentosVacio();
-
     interno<(texto: string) => void>('buscar')('inexistente');
     await harness.fixture.whenStable();
     peticion().flush({ items: [], count: 0, limit: 25, nextCursor: null });
@@ -334,8 +280,6 @@ describe('ClinicalRecord', () => {
   });
 
   it('con filtro por documento, el vacío nombra el documento buscado', async () => {
-    resolverCatalogoDeDepartamentosVacio();
-
     interno<(valor: string) => void>('fijarDocumento')('0000000');
     interno<() => void>('buscarPorDocumento')();
     await harness.fixture.whenStable();

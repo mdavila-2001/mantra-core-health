@@ -70,6 +70,15 @@ const MANIFEST = [
     legacyKey: 'API_BASE_URL',
   },
 
+  // Servicio de triage por IA. Relativo (`/ai`) o absoluto, con las mismas
+  // reglas que el endpoint de trazas: sin credenciales y sin query. El servicio
+  // es público, así que no hay secreto que pueda viajar en esta variable.
+  {
+    key: 'PUBLIC_AI_BASE_URL',
+    field: 'aiBaseUrl',
+    validate: validateTracesEndpoint,
+  },
+
   // --- Telemetría ----------------------------------------------------------
   //
   // Ninguna de estas seis es un secreto, y no puede serlo: el endpoint de
@@ -157,6 +166,18 @@ const MANIFEST = [
     literal: true,
     validate: validateBoolean,
   },
+
+  // Cómo se pide el refresco de sesión: con la cookie `httpOnly` de la API
+  // (`true`) o con el token en el cuerpo (`false`, por defecto). Es un booleano
+  // de despliegue, no un secreto: el nombre lleva «COOKIE» y por eso figura en
+  // `PUBLIC_NAME_EXEMPTIONS`. Tiene que coincidir con `AUTH_REFRESH_COOKIE_ENABLED`
+  // de la API o la sesión se pierde al recargar.
+  {
+    key: 'PUBLIC_REFRESH_COOKIE',
+    field: 'refreshCookie',
+    literal: true,
+    validate: validateBoolean,
+  },
 ];
 
 /**
@@ -209,9 +230,15 @@ function parseDotEnv(text) {
   return values;
 }
 
+/**
+ * Claves cuyo nombre se parece a un secreto pero no lo es. Cada una tiene que
+ * ser un booleano validado y estar justificada en el manifiesto.
+ */
+const PUBLIC_NAME_EXEMPTIONS = new Set(['PUBLIC_REFRESH_COOKIE']);
+
 /** Falla si el nombre de una clave del manifiesto promete un secreto. */
 function assertPublicName(key) {
-  if (SECRET_LOOKING_NAME.test(key)) {
+  if (!PUBLIC_NAME_EXEMPTIONS.has(key) && SECRET_LOOKING_NAME.test(key)) {
     fail(
       `«${key}» no puede estar en el MANIFIESTO de scripts/generate-env.mjs.\n` +
         `El nombre indica un secreto, y todo lo que pasa por acá se empaqueta en\n` +

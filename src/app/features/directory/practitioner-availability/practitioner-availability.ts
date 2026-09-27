@@ -134,6 +134,27 @@ export class PractitionerAvailability {
   /** La organización en cuyo contexto se mira. */
   readonly tenantId = input.required<string | null>();
 
+  /**
+   * A qué tablas apunta un recurso «de este dueño». Por omisión, las del perfil
+   * profesional; Cotizaciones la usa con `diagnostic_units` para abrir la agenda
+   * de un laboratorio o centro de imagen con **la misma** grilla y la misma
+   * reserva que una cita con un profesional, y entonces `practitionerProfileId`
+   * lleva el id del centro.
+   */
+  readonly resourceRefTypes = input<readonly string[]>(TABLAS_DE_PERFIL_PROFESIONAL);
+
+  /**
+   * El motivo con el que la reserva arranca escrito (p. ej. el estudio que se
+   * cotizó). Viaja por query string, como el resto del contexto del cupo, y la
+   * persona lo puede cambiar antes de confirmar.
+   */
+  readonly motivo = input<string | null>(null);
+
+  /** Qué decir cuando no hay agenda publicada. Cambia según de quién sea. */
+  readonly sinAgenda = input(
+    'Este profesional aún no abrió su agenda. Volvé a mirar más adelante.',
+  );
+
   protected readonly estado = signal<ViewState<readonly SedeConCupos[]>>(loading());
 
   /** Cuántas semanas hacia adelante respecto de la actual. */
@@ -232,6 +253,7 @@ export class PractitionerAvailability {
           recurso: sede.recurso.id,
           desde: cupo.startAt.toISOString(),
           hasta: cupo.endAt.toISOString(),
+          ...(this.motivo() ? { motivo: this.motivo() } : {}),
         },
       })
       .finally(() => this.reservaPendienteId.set(null));
@@ -249,10 +271,10 @@ export class PractitionerAvailability {
       // `resourceRefId`: pedirlo sería agregar un parámetro a la API para
       // ahorrarse un `filter` sobre una lista que ya es del tamaño de una
       // organización.
+      const tablas = this.resourceRefTypes();
       suyos = pagina.items.filter(
         (recurso) =>
-          TABLAS_DE_PERFIL_PROFESIONAL.includes(recurso.resourceRefType) &&
-          recurso.resourceRefId === profileId,
+          tablas.includes(recurso.resourceRefType) && recurso.resourceRefId === profileId,
       );
     } catch (error) {
       if (carga === this.cargaVigente) {

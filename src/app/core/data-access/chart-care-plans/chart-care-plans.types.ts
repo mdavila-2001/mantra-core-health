@@ -32,8 +32,22 @@ export interface NewCarePlanActivity {
  */
 export interface NewCarePlan {
   readonly patientProfileId: string;
+  /**
+   * La respuesta del formulario médico de la que sale (instancia de `forms`).
+   * En la cita es obligatoria; pendiente de backend (P43).
+   */
+  readonly formInstanceId?: string;
   /** El diagnóstico que motiva el plan, si cuelga de uno. */
   readonly conditionId?: string;
+  /**
+   * El motivo escrito a mano, cuando el plan no cuelga de un diagnóstico ya
+   * registrado. La pantalla exige uno de los dos.
+   *
+   * **Todavía no existe en la API real**: el DTO de `POST /charts/care-plans`
+   * no lo declara y valida con `forbidNonWhitelisted`. Por ahora vive sólo en
+   * la maqueta (`mock/handlers/clinical.handlers.ts`).
+   */
+  readonly reasonText?: string;
   /** La consulta en la que se acordó, si nace dentro de una. */
   readonly encounterId?: string;
   /** La intención del plan —propuesta, plan, orden— como concepto. */

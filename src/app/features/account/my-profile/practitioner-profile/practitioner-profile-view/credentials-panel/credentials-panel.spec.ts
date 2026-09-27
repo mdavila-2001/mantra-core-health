@@ -21,7 +21,6 @@ const MATRICULA: MatriculaVisible = {
 const ESPECIALIDAD: EspecialidadVisible = {
   id: 'esp-1',
   nombre: 'Cardiología',
-  principal: true,
   certificada: true,
   alcance: '',
   desde: new Date(2015, 1, 1),
@@ -94,6 +93,18 @@ describe('CredentialsPanel', () => {
     expect(tarjetas(fixture)).toEqual(['license', 'specialty', 'education', 'language']);
     const texto = ((fixture.nativeElement as HTMLElement).textContent ?? '').replace(/\s+/g, ' ');
     expect(texto.match(/Matrícula N\.º LIC-3/g) ?? []).toHaveLength(1);
+  });
+
+  it('la tarjeta de una especialidad no dice si es la principal (D-01)', () => {
+    const fixture = montar({ matriculas: [], formacion: [], idiomas: [] });
+
+    const tarjeta = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="credencial"][data-kind="specialty"]',
+    );
+    const texto = (tarjeta?.textContent ?? '').replace(/\s+/g, ' ');
+    expect(texto).toContain('Cardiología');
+    expect(texto).toContain('Certificada por el consejo');
+    expect(texto).not.toMatch(/principal/i);
   });
 
   it('el filtro corta el mismo conjunto, no repite la lista', () => {

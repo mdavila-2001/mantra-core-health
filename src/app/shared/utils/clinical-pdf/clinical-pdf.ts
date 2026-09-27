@@ -191,6 +191,20 @@ export function bloquesDeReceta(receta: DocumentoDeReceta): readonly PdfBlock[] 
     bloques.push(campoDeBloque('Firmada el', FORMATO_FECHA.format(receta.firmadaEl)));
   }
 
+  // C5, pedido literal del propietario: la receta siempre dice para qué es —
+  // un diagnóstico confirmado, o el motivo escrito — y nunca queda vacía.
+  bloques.push(seccion('Diagnóstico'));
+  if (receta.porQueEs === undefined) {
+    // No es "sin diagnóstico": es que quien armó este documento (fuera de mi
+    // alcance esta noche) todavía no resolvió el campo. Se dice tal cual, sin
+    // fingir un dato que no se tiene.
+    bloques.push(parrafo('Sin indicación registrada.'));
+  } else if (receta.porQueEs.tipo === 'diagnostico') {
+    bloques.push(campoDeBloque('Diagnóstico', receta.porQueEs.texto));
+  } else {
+    bloques.push(campoDeBloque('Motivo', receta.porQueEs.texto));
+  }
+
   bloques.push(seccion('Medicamentos indicados'));
   if (receta.medicamentos.length === 0) {
     bloques.push(parrafo('Sin medicamentos indicados.'));

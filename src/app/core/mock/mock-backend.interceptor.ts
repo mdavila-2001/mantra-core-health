@@ -247,44 +247,79 @@ function usuarioDe(request: HttpRequest<unknown>) {
   return token === null ? null : (usuarioDeAccessToken(token) ?? null);
 }
 
-/** Un poco de espera, para que los estados de carga existan. */
+/**
+ * Una tabla por prefijo, no un azar (H2.S1.M1, 2026-09-22 — R-02).
+ *
+ * El generador aleatorio anterior (120 a 299 ms según la tirada) hacía que
+ * la misma petición tardara distinto en cada corrida: ninguna medición era
+ * repetible, y un E2E veía tiempos distintos cada vez que se ejecutaba. Los
+ * estados de carga
+ * siguen existiendo —el comentario original tenía razón en eso—, pero ahora
+ * con un valor fijo y justificado por prefijo, no con una tirada de dados.
+ *
+ * **Mínimo elegido (Q-E1): 40 ms.** Es el valor que ya usaba `/terminology`
+ * y que la maqueta viene mostrando como espera visible desde antes de esta
+ * corrección; bajar de ahí no deja ver nada, así que ningún prefijo queda
+ * por debajo. `/scheduling/slots` es la ruta caliente de «elegir médico»
+ * (`practitioner-availability.ts`, hasta 2 llamadas por sede): se la deja en
+ * el mínimo para no multiplicar la espera por la cantidad de sedes. El resto
+ * de las lecturas va un escalón arriba porque trae más forma (perfiles,
+ * catálogos), y la escritura genérica un escalón más porque simula ida y
+ * vuelta con persistencia.
+ */
+const LATENCIA_POR_PREFIJO: readonly (readonly [string, number])[] = [
+  ['/terminology', 40],
+  ['/scheduling/slots', 40],
+  ['/profiles', 90],
+];
+
+/** La subida de documentos legales necesita quedarse el tiempo suficiente en
+ * «subiendo» para que el estado se vea: el simulador no emite
+ * `UploadProgress`, sólo la respuesta final, así que sin esto la barra
+ * pasaría de vacía a lista sin que nadie llegara a verla. */
+const LATENCIA_SUBIDA_DOCUMENTO = 600;
+
+/** El resto: ni tan rápido que no se note, ni tan lento como el azar viejo
+ * llegaba a ser (hasta 299 ms). */
+const LATENCIA_POR_OMISION = 120;
+
 function latencia(path: string): number {
-  if (path.startsWith('/terminology')) return 40;
-  // La pre-carga de documentos legales (subtarea 1.2) necesita quedarse el
-  // tiempo suficiente en «subiendo» para que el estado se vea: el simulador
-  // no emite `UploadProgress`, sólo la respuesta final, así que sin esto la
-  // barra pasaría de vacía a lista sin que nadie llegara a verla.
-  if (path === '/iam/auth/upload-registration-document') return 600;
-  return 120 + Math.floor(Math.random() * 180);
+  if (path === '/iam/auth/upload-registration-document') return LATENCIA_SUBIDA_DOCUMENTO;
+  const prefijo = LATENCIA_POR_PREFIJO.find(([p]) => path.startsWith(p));
+  return prefijo === undefined ? LATENCIA_POR_OMISION : prefijo[1];
 }
 
 /**
- * Para lo que ninguna ruta cubre. Adivina la forma por el método y la
- * consulta: una lectura con `limit`/`cursor` es una página vacía; una
- * lectura suelta, un objeto vacío; una escritura, un eco con id.
+ * Para lo que ninguna ruta cubre (H2.S1.M1, 2026-09-26).
+ *
+ * **Ya no inventa un éxito.** Hasta acá, una lectura sin manejador devolvía
+ * una página vacía y una escritura devolvía un eco con `status: 'ACTIVE'`:
+ * cualquier recorrido de la maqueta salía verde aunque la API real rechazara
+ * esa misma ruta con un 404. El 501 es la forma honesta — «esto no está
+ * implementado en el simulador», no «esto funcionó» — y trae el mismo `code`
+ * que ramifica `errorToViewState` (S9, con el path como identificador de
+ * petición) en vez de uno que la aplicación no sepa interpretar.
+ *
+ * La ruta faltante queda anotada en `window.__mockGaps` (cuando existe
+ * `window`, es decir, en el navegador) para poder recorrer la maqueta y juntar
+ * de una sola vez todo lo que el simulador todavía no cubre.
  */
 function respuestaGenerica(peticion: MockRequest): MockReply {
-  console.warn(`[mock] sin manejador para ${peticion.method} ${peticion.path} — respuesta genérica`);
-  if (peticion.method === 'GET') {
-    const paginada = peticion.query.has('limit') || peticion.query.has('cursor');
-    return {
-      status: 200,
-      body: paginada
-        ? { items: [], count: 0, limit: Number(peticion.query.get('limit') ?? 20), nextCursor: null }
-        : { items: [], count: 0 },
-    };
+  const ruta = `${peticion.method} ${peticion.path}`;
+  console.warn(`[mock] sin manejador para ${ruta} — 501`);
+  if (typeof window !== 'undefined') {
+    const global = window as unknown as { __mockGaps?: Set<string> };
+    global.__mockGaps ??= new Set();
+    global.__mockGaps.add(ruta);
   }
-  if (peticion.method === 'DELETE') {
-    return { status: 204, body: null };
-  }
-  const base = typeof peticion.body === 'object' && peticion.body !== null ? peticion.body : {};
   return {
-    status: peticion.method === 'POST' ? 201 : 200,
+    status: 501,
     body: {
-      id: `mock-${Date.now().toString(36)}`,
-      ...base,
-      createdAt: new Date().toISOString(),
-      status: 'ACTIVE',
+      statusCode: 501,
+      code: 'NOT_IMPLEMENTED_IN_MOCK',
+      message: `El simulador todavía no cubre ${ruta}.`,
+      error: 'Not Implemented',
+      path: peticion.path,
     },
   };
 }

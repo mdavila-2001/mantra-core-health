@@ -19,6 +19,41 @@
     pantalla sólo quiera contar cuántas alergias hay.
     ========================================================================== */
 
+/** Decisión terminal de C3. Pendiente de backend P41. */
+export type DiagnosisOutcome = 'CONFIRMED' | 'REFUTED';
+
+/** Evidencia que respalda la decisión; C3 resuelve sus vínculos (P41). */
+export interface DiagnosisEvidence {
+  readonly kind: 'NOTE' | 'ANALYSIS';
+  readonly noteId?: string;
+  readonly encounterId?: string;
+  readonly serviceRequestId?: string;
+  readonly diagnosticReportId?: string;
+}
+
+/** Decisión registrada por C3; los instantes viajan como ISO (P41). */
+export interface DiagnosisVerification {
+  readonly outcome: DiagnosisOutcome;
+  readonly decidedAt: string;
+  readonly decidedByProfileId: string;
+  readonly reasonText: string | null;
+  readonly basedOn: DiagnosisEvidence | null;
+}
+
+/** Entrada de C3 para confirmar o rechazar; pendiente de backend P41. */
+export interface NewDiagnosisVerification {
+  readonly outcome: DiagnosisOutcome;
+  /** Hasta 500 caracteres; se exige motivo o evidencia. */
+  readonly reasonText?: string;
+  readonly basedOn?: DiagnosisEvidence;
+  /** Obligatorio al confirmar si el diagnóstico todavía no declara inicio. */
+  readonly onsetAt?: string;
+  /** Obligatorio al confirmar salvo curso crónico. */
+  readonly expectedResolutionAt?: string;
+  /** Un curso crónico se confirma sin fin esperado. */
+  readonly clinicalCourseConceptId?: string;
+}
+
 /** Un diagnóstico o problema del paciente. */
 export interface Condition {
   readonly id: string;
@@ -26,6 +61,8 @@ export interface Condition {
   readonly categoryConceptId?: string;
   readonly clinicalStatusConceptId?: string;
   readonly verificationStatusConceptId?: string;
+  /** Decisión y evidencia de C3; pendiente de backend P41. */
+  readonly verification?: DiagnosisVerification | null;
   readonly severityConceptId?: string;
   readonly encounterId?: string;
   /** Curso clínico: agudo/crónico/subagudo/recurrente (Patch v4.0.8). */
@@ -284,6 +321,12 @@ export interface CareEpisodeRegistration {
   readonly createdAt: Date;
 }
 
+/** Una fila de la nota médica de C1; pendiente de backend P39. */
+export interface MedicalNoteEntry {
+  readonly label: string;
+  readonly value: string;
+}
+
 /** Una nota del expediente, con su versión vigente. */
 export interface ChartNote {
   readonly noteId: string;
@@ -293,6 +336,8 @@ export interface ChartNote {
   readonly currentVersionId?: string;
   readonly versionNumber?: number;
   readonly authorProfileId?: string;
+  /** Filas estructuradas de C1; lectura y escritura reales pendientes de backend P39. */
+  readonly entries?: readonly MedicalNoteEntry[];
   readonly chiefComplaintText?: string;
   readonly subjectiveText?: string;
   readonly objectiveText?: string;
@@ -317,11 +362,30 @@ export interface CarePlan {
   readonly id: string;
   readonly statusConceptId: string;
   readonly intentConceptId?: string;
+  /** El diagnóstico del que cuelga, cuando el motivo es uno ya registrado. */
+  readonly conditionId?: string;
+  /**
+   * El motivo escrito a mano, cuando no cuelga de un diagnóstico.
+   *
+   * Todavía sólo lo devuelve la maqueta: la lectura real de `chart` no lo trae.
+   */
+  readonly reasonText?: string;
   readonly goalText?: string;
   readonly startDate?: Date;
   readonly endDate?: Date;
   readonly activities: readonly CarePlanActivity[];
   readonly createdAt: Date;
+}
+
+/**
+ * Un archivo gobernado de un documento del expediente (`ChartDocumentFileItemDto`
+ * de la API). Se descarga por `GET /charts/documents/:id/files/:fileId/content`.
+ */
+export interface ChartDocumentFile {
+  readonly fileId: string;
+  /** El documento en sí (`PRIMARY`) o lo que lo acompaña (`ATTACHMENT`). */
+  readonly contentRole: 'PRIMARY' | 'ATTACHMENT';
+  readonly ordinal?: number;
 }
 
 /** Un documento del expediente. */
@@ -333,6 +397,12 @@ export interface ChartDocument {
   readonly authorText?: string;
   readonly isExternal?: boolean;
   readonly documentDate?: Date;
+  /**
+   * Los archivos del documento, ordenados por `ordinal` (CL-27). Antes
+   * `toDocument` los descartaba y el expediente no podía volver a abrir lo que se
+   * había subido.
+   */
+  readonly files?: readonly ChartDocumentFile[];
   readonly createdAt: Date;
 }
 
@@ -390,6 +460,11 @@ export interface PatientChart {
 export interface NewMedicationRequest {
   readonly custodianTenantId: string;
   readonly patientProfileId: string;
+  /**
+   * La respuesta del formulario médico de la que sale (instancia de `forms`).
+   * En la cita es obligatoria; pendiente de backend (P43).
+   */
+  readonly formInstanceId?: string;
   /** El medicamento, como uuid de concepto. Nunca texto tecleado. */
   readonly medicationConceptId: string;
   readonly encounterId?: string;

@@ -5,6 +5,7 @@ import {
   DestroyRef,
   ErrorHandler,
   inject,
+  Injector,
   LOCALE_ID,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
@@ -18,12 +19,14 @@ import { ThemeService } from './core/tokens/theme.service';
 import { authInterceptor } from './core/http/auth.interceptor';
 import { timeoutInterceptor } from './core/http/timeout.interceptor';
 import { AuthService } from './core/auth/auth.service';
+import { SESSION_CLEANERS } from './core/auth/session-cleanup';
 import { IdleLogout } from './core/auth/idle-logout';
 import { SessionEndedRedirect } from './core/auth/session-ended-redirect';
 import { AppErrorHandler } from './core/errors/app-error-handler';
 import { tracingInterceptor } from './core/observability/http/tracing.interceptor';
 import { provideObservability } from './core/observability/observability.providers';
 import { mockBackendInterceptor } from './core/mock/mock-backend.interceptor';
+import { environment } from '../environments/environment';
 
 /**
  * Datos de formato del idioma de la aplicación.
@@ -85,8 +88,16 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withFetch(),
       // El simulado va último: la petición ya lleva trazas, tiempo de espera y
-      // credenciales cuando llega a él, igual que si fuera la red.
-      withInterceptors([tracingInterceptor, timeoutInterceptor, authInterceptor, mockBackendInterceptor]),
+      // credenciales cuando llega a él, igual que si fuera la red. Con la
+      // configuración real (`production-api`, `real-api`, `e2e-real`) no se
+      // registra: la petición sale a la red desde el interceptor anterior, sin
+      // pasar por un interceptor que existe sólo para la maqueta (H1.S2.M2).
+      withInterceptors([
+        tracingInterceptor,
+        timeoutInterceptor,
+        authInterceptor,
+        ...(environment.mockBackend ? [mockBackendInterceptor] : []),
+      ]),
     ),
     // Trazas del Router y de la estabilidad de la aplicación. No bloquea el
     // arranque y, con la telemetría apagada, no engancha nada.
@@ -95,6 +106,21 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       inject(ThemeService);
     }),
+    // Lo sensible que otras piezas dejan en el navegador se olvida al cerrar
+    // sesión (TX-31). Se trae con `import()` al cerrar sesión: importarlo de forma
+    // estática lo arrastraba al paquete inicial, que tiene presupuesto. Ver
+    // `session-cleanup.lazy.ts`.
+    {
+      provide: SESSION_CLEANERS,
+      multi: true,
+      useFactory: () => {
+        const injector = inject(Injector);
+        return () =>
+          void import('./session-cleanup.lazy').then((m) =>
+            m.olvidarLoSensibleDelNavegador(injector),
+          );
+      },
+    },
     // Se recupera la sesión ANTES de que el router evalúe el guard. Si no se
     // esperara, alguien con sesión válida vería un parpadeo al login mientras
     // el canje del refresh token está en vuelo. En el servidor no hay

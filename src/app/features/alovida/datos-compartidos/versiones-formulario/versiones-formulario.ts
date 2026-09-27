@@ -2,7 +2,7 @@
    Portada de V02-common/sesion-autenticada/V02-04-versiones-formulario.html en la bóveda. El marcado lo
    genera scripts/port-vistas-alovida.mjs; la lógica va acá, no en el generador. */
 
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 
@@ -10,5 +10,6 @@ import { RouterLink } from '@angular/router';
   selector: 'app-alovida-datos-compartidos-versiones-formulario',
   imports: [RouterLink],
   templateUrl: './versiones-formulario.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DatosCompartidosVersionesFormulario {}

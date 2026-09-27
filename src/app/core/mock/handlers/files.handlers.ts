@@ -1,7 +1,7 @@
 import { vitrinas } from '../fixtures/comunidad';
 import { ESTADO } from '../fixtures/conceptos';
 import { PACIENTES, PROFESIONALES } from '../fixtures/personas';
-import { noContent, type MockRouter } from '../mock-router';
+import { forbidden, noContent, reply, type MockRouter } from '../mock-router';
 import { ahora, avatarSvg, Coleccion, imagenSvg, iso, nuevoId, qrSvg, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -21,6 +21,14 @@ interface ArchivoSimulado {
   readonly ownerType?: string;
   readonly ownerId?: string;
   /**
+   * Quién **subió** el archivo (`createdByUserId` de la API). La vía genérica
+   * `GET /common/files/:id/content` es «lo tuyo o revisor»: el paciente no puede
+   * leer por acá el PDF que subió el laboratorio (CL-40) y por eso baja su
+   * resultado por la ruta del contexto. Las semillas sin uploader son públicas
+   * del simulador (fotos, logos).
+   */
+  readonly uploaderUserId?: string;
+  /**
    * Los bytes **de verdad** cuando el archivo lo subió alguien en esta sesión.
    *
    * Sin esto, `POST /common/files/upload` guardaba un dibujo con las dos
@@ -30,6 +38,21 @@ interface ArchivoSimulado {
    * lo llevan —no hay archivo detrás— y siguen con su `dataUrl` dibujado.
    */
   readonly bytes?: Blob;
+}
+
+/** La cuenta del laboratorio que sube los PDF de resultados del simulador. */
+const LABORATORIO_UPLOADER = uuid('user-laboratorio-central');
+
+/** `SECURITY_ADMIN` y `SUPERADMIN` revisan cualquier archivo (`FILE_REVIEWER_ROLES`). */
+function puedeLeerPorAutoria(archivo: ArchivoSimulado, user: { readonly id: string; readonly roles: readonly string[] } | null): boolean {
+  if (archivo.uploaderUserId === undefined) return true;
+  if (user === null) return false;
+  return archivo.uploaderUserId === user.id || user.roles.includes('SECURITY_ADMIN') || user.roles.includes('SUPERADMIN');
+}
+
+/** Un archivo subido hace menos de 5 s sigue «en análisis» (`SCAN_PENDING`). */
+function escaneoPendiente(archivo: ArchivoSimulado): boolean {
+  return archivo.bytes !== undefined && Date.now() - Date.parse(archivo.createdAt) < 5000;
 }
 
 const archivos = new Coleccion<ArchivoSimulado>([
@@ -71,8 +94,8 @@ const archivos = new Coleccion<ArchivoSimulado>([
     { id: v.coverFileId, currentVersionId: uuid(`version-${v.coverFileId}`), originalName: 'portada.svg', category: 'IMAGE' as const, sensitivity: 'NORMAL' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-200), dataUrl: v.coverUrl },
   ]),
   ...PACIENTES.flatMap((p) => [
-    { id: uuid(`file-lab-${p.id}`), currentVersionId: uuid(`v-file-lab-${p.id}`), originalName: 'laboratorio-completo.pdf', category: 'DOCUMENT' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-47), dataUrl: imagenSvg('Laboratorio completo (PDF)'), ownerType: 'PATIENT', ownerId: p.id },
-    { id: uuid(`file-ecg-${p.id}`), currentVersionId: uuid(`v-file-ecg-${p.id}`), originalName: 'electrocardiograma.png', category: 'IMAGE' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-2), dataUrl: imagenSvg('ECG de reposo', '#fff7ed', '#c2410c'), ownerType: 'PATIENT', ownerId: p.id },
+    { id: uuid(`file-lab-${p.id}`), currentVersionId: uuid(`v-file-lab-${p.id}`), originalName: 'laboratorio-completo.pdf', category: 'DOCUMENT' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-47), dataUrl: imagenSvg('Laboratorio completo (PDF)'), ownerType: 'PATIENT', ownerId: p.id, uploaderUserId: LABORATORIO_UPLOADER },
+    { id: uuid(`file-ecg-${p.id}`), currentVersionId: uuid(`v-file-ecg-${p.id}`), originalName: 'electrocardiograma.png', category: 'IMAGE' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-2), dataUrl: imagenSvg('ECG de reposo', '#fff7ed', '#c2410c'), ownerType: 'PATIENT', ownerId: p.id, uploaderUserId: LABORATORIO_UPLOADER },
   ]),
   { id: uuid('file-lunar'), currentVersionId: uuid('v-file-lunar'), originalName: 'lunar.jpg', category: 'IMAGE', sensitivity: 'PHI', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-12), dataUrl: imagenSvg('Foto del lunar', '#fdf2f8', '#9d174d') },
   { id: uuid('file-licencia'), currentVersionId: uuid('v-file-licencia'), originalName: 'licencia-funcionamiento.pdf', category: 'DOCUMENT', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-400), dataUrl: imagenSvg('Licencia de funcionamiento (PDF)') },
@@ -183,6 +206,7 @@ export function registrarArchivos(router: MockRouter): void {
       // que volver al pedir el contenido. El `dataUrl` dibujado queda como
       // respaldo para el navegador que no trae `File` en el `FormData`.
       ...(subido === null ? {} : { bytes: subido }),
+      ...(request.user === null ? {} : { uploaderUserId: request.user.id }),
     });
     const tipo = subido?.type ?? (categoria === 'IMAGE' ? 'image/svg+xml' : 'application/pdf');
     return { status: 201, body: { ...metadatos(nuevo), fileId: nuevo.id, versionId: nuevo.currentVersionId, size: subido?.size ?? 24_576, mimeType: tipo } };
@@ -209,14 +233,26 @@ export function registrarArchivos(router: MockRouter): void {
     };
   });
 
-  router.post('/common/files/:id/download-url', ({ params }) => {
+  router.post('/common/files/:id/download-url', ({ params, user }) => {
     const a = archivos.get(params['id']!);
+    if (a !== undefined && !puedeLeerPorAutoria(a, user)) return forbidden('No tiene acceso a este archivo');
+    // Recién subido y sin escaneo: 422 con el motivo, como la API (TX-33).
+    if (a !== undefined && escaneoPendiente(a)) {
+      return reply(422, {
+        statusCode: 422,
+        code: 'PRECONDITION_FAILED',
+        message: 'La versión vigente no ha superado el escaneo antimalware',
+        error: 'Unprocessable Entity',
+        details: { reason: 'SCAN_PENDING' },
+      });
+    }
     return { url: a?.dataUrl ?? imagenSvg('Archivo'), expiresAt: iso(0, 23, 59) };
   });
 
-  router.get('/common/files/:id/content', ({ params }) => {
+  router.get('/common/files/:id/content', ({ params, user }) => {
     const a = archivos.get(params['id']!);
     if (a === undefined) return avatarSvg('?', '#94a3b8');
+    if (!puedeLeerPorAutoria(a, user)) return forbidden('No tiene acceso a este archivo');
     // Lo que alguien subió vuelve tal cual, con su tipo. Ver `bytes`.
     if (a.bytes !== undefined) return a.bytes;
     // Un documento se entrega como un **PDF de verdad** (mínimo, con el nombre

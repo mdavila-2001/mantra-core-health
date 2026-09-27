@@ -30,7 +30,14 @@ import { entrar, estable, irA } from './support/sesion';
 
 const SALIDA = join('artifacts', 'playwright', 'mockup');
 const MAX_BOTONES_POR_RUTA = 14;
-const SALTAR = /cerrar sesión|salir de la cuenta|exportar|descargar|imprimir/i;
+// «Empezar/Continuar/Repetir: <título>» (único en tutorials-center.html) arranca
+// un recorrido guiado: un organismo montado fuera del router-outlet, que sigue
+// tapando la pantalla al navegar y sólo se cierra confirmando en su propio globo
+// (`Dejar el tutorial», por diseño — mismo patrón de descarte-con-confirmación
+// que el resto del repo). El «Escape»×3 genérico de `cerrarLoQueSeAbrio` no basta
+// para eso: HALL-M6 (91 botones «rotos» sólo en Médica) era este único tour,
+// trabado desde `/tutorials`, tapando cada ruta siguiente del barrido.
+const SALTAR = /cerrar sesión|salir de la cuenta|exportar|descargar|imprimir|^(empezar|continuar|repetir):/i;
 
 interface Clic {
   readonly cuenta: string;

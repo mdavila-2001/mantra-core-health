@@ -142,6 +142,11 @@ export interface MensajeDelHilo {
  * lo apaga al salir. Quien está en la agenda no tiene por qué estar pidiendo
  * conversaciones cada minuto.
  *
+ * El armazón sí necesita saber cuántos chats hay sin leer desde cualquier
+ * pantalla (N-01, 23/09/2026): para eso está `prepararContador()`, que lee la
+ * bandeja una vez y se une al socket, **sin** sondear y **sin** contar como
+ * «estar en Chats». El número sigue siendo uno solo: `sinLeer`.
+ *
  * ## El socket empuja, el sondeo confirma
  *
  * El socket es la entrega normal; el sondeo (60 s la bandeja, 30 s el hilo) es
@@ -229,6 +234,9 @@ export class ChatStore {
   private temporizadorBandeja: ReturnType<typeof setTimeout> | null = null;
   private temporizadorHilo: ReturnType<typeof setTimeout> | null = null;
   private encendido = false;
+  private contadorPreparado = false;
+  /** Quién espera a que se resuelva el perfil propio, pedido una sola vez. */
+  private esperandoPerfil: (() => void)[] | null = null;
   private hiloMarcado = new Set<string>();
 
   /**
@@ -358,22 +366,64 @@ export class ChatStore {
       return;
     }
     this.encendido = true;
+    this.conPerfil(() => this.arrancarConPerfil());
+  }
 
-    if (this.perfilResuelto()) {
-      this.arrancarConPerfil();
+  /**
+   * Deja `sinLeer` al día **sin entrar a Chats**: resuelve el perfil, lee la
+   * bandeja una vez y se une al socket, que desde ahí la mantiene (cada mensaje
+   * nuevo se aplica sobre su fila y relee). Lo llama el armazón para el número
+   * del ícono de Chats (N-01).
+   *
+   * No es `iniciar()` a medias, y la diferencia es el motivo de que exista:
+   * **no** marca actividad —quien está en la agenda no está leyendo chats, y
+   * marcarlo apagaría la respuesta automática— y **no** sondea cada minuto.
+   * Idempotente. Si `Messaging` ya encendió el store, no hace nada: la bandeja
+   * y el socket ya están.
+   */
+  prepararContador(): void {
+    if (this.contadorPreparado) {
       return;
     }
+    this.contadorPreparado = true;
+    this.conPerfil(() => {
+      const propio = this.perfil();
+      if (propio === null || this.encendido) {
+        return;
+      }
+      this.socket.joinInbox(propio);
+      this.recargarBandeja();
+    });
+  }
 
+  /**
+   * Corre `despues` con el perfil propio resuelto, pidiéndolo **una sola vez**
+   * aunque lo necesiten dos a la vez —el armazón con `prepararContador()` y
+   * `Messaging` con `iniciar()`, que montan casi juntos—: el segundo espera la
+   * respuesta del primero en vez de preguntar de nuevo.
+   */
+  private conPerfil(despues: () => void): void {
+    if (this.perfilResuelto()) {
+      despues();
+      return;
+    }
+    if (this.esperandoPerfil !== null) {
+      this.esperandoPerfil.push(despues);
+      return;
+    }
+    this.esperandoPerfil = [despues];
     this.community.getOwnProfile().subscribe({
       next: (propio) => {
         this.perfil.set(propio?.id ?? null);
         this.perfilResuelto.set(true);
-        if (propio) {
-          this.arrancarConPerfil();
-        }
+        const esperan = this.esperandoPerfil ?? [];
+        this.esperandoPerfil = null;
+        // Sin perfil no hay bandeja que leer: cada espera lo comprueba.
+        esperan.forEach((correr) => correr());
       },
       error: () => {
         this.perfilResuelto.set(true);
+        this.esperandoPerfil = null;
         this.error.set('No pudimos saber si tenés perfil público.');
       },
     });

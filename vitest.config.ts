@@ -12,6 +12,22 @@
  */
 export default defineConfig({
   test: {
+    /**
+     * Un `TestBed` de Angular por archivo es pesado (compila el módulo de
+     * pruebas entero). Con el pool por defecto —un worker por núcleo— la
+     * máquina se queda sin memoria a mitad de la suite y el proceso muere con
+     * `Worker exited unexpectedly` sin que ningún test lo reporte como
+     * fallado: parece una suite roja al azar y en realidad es un crash.
+     * Cuatro hilos concurrentes es el punto donde la suite completa termina
+     * sin crashear en esta máquina.
+     */
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        maxThreads: 4,
+        minThreads: 1,
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text-summary', 'json-summary', 'lcov'],

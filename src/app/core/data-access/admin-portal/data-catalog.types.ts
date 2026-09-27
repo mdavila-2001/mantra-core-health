@@ -311,6 +311,12 @@ export interface AnnotationPatch {
   readonly existenceRationale?: string | null;
   readonly rowGrain?: string | null;
   readonly alternativesRationale?: string | null;
+  // AG-44: el backend ya acepta estos tres campos en `UpsertAnnotationDto`;
+  // faltaban acá, así que ningún formulario podía editarlos sin que la API
+  // devolviera 400 por campo desconocido.
+  readonly processSupported?: string | null;
+  readonly sourceOfTruth?: string | null;
+  readonly producers?: readonly string[];
   readonly deletionImpact?: string | null;
   readonly businessOwner?: string | null;
   readonly dataSteward?: string | null;

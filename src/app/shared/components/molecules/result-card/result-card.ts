@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationCancel, NavigationEnd, NavigationError, Router } from '@angular/router';
 import { filter } from 'rxjs';
 
+import { AppButtonLink } from '../../atoms/button/button-link';
 import type { SearchResultItem } from '../search-result/search-result.types';
 
 /**
@@ -37,6 +38,7 @@ import type { SearchResultItem } from '../search-result/search-result.types';
  */
 @Component({
   selector: 'li[app-result-card]',
+  imports: [AppButtonLink],
   templateUrl: './result-card.html',
   styleUrl: './result-card.css',
   host: { class: 'tarjeta-resultado' },
@@ -112,7 +114,7 @@ export class ResultCard {
   }
 
   /** Inicia una navegación una sola vez; clic y Enter llegan por este mismo evento. */
-  protected navegar(event: MouseEvent): void {
+  protected navegar(event: MouseEvent, link = this.resultado().link, fragment?: string): void {
     if (!this.preventDuplicateNavigation()) {
       return;
     }
@@ -124,6 +126,6 @@ export class ResultCard {
       return;
     }
     this.navegando.set(true);
-    void this.router.navigateByUrl(this.resultado().link);
+    void this.router.navigateByUrl(fragment === undefined ? link : `${link}#${fragment}`);
   }
 }

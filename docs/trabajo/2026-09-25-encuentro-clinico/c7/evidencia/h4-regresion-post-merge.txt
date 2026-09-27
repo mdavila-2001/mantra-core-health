@@ -1,0 +1,106 @@
+Using Vitest configuration file: C:\Users\DELL\Documents\Github\Alovida\wt-clinica-c7\vitest.config.ts
+[33m❯[39m Building...
+[32m✔[39m Building...
+[1mInitial chunk files[22m                                                                   [2m | [22m[1mNames[22m                                                                              [2m | [22m [1mRaw size[22m
+[32mspec-app-core-mock-aviso-ficha-medica.js[39m                                              [2m | [22m[2mspec-app-core-mock-aviso-ficha-medica[22m                                              [2m | [22m  [36m4.38 MB[39m[2m | [22m
+[32mchunk-HXQBP62W.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m[36m649.22 kB[39m[2m | [22m
+[32mspec-app-features-progress-notes-progress-notes.js[39m                                    [2m | [22m[2mspec-app-features-progress-notes-progress-notes[22m                                    [2m | [22m[36m352.12 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-procedures-block-procedures-block.js[39m  [2m | [22m[2mspec-app-features-clinical-record-patient-chart-procedures-block-procedures-block[22m  [2m | [22m[36m239.71 kB[39m[2m | [22m
+[32mstyles.css[39m                                                                            [2m | [22m[2mstyles[22m                                                                             [2m | [22m[36m166.29 kB[39m[2m | [22m
+[32mchunk-6WMKRCH4.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m[36m119.64 kB[39m[2m | [22m
+[32mchunk-KWRQBDAH.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m[36m108.57 kB[39m[2m | [22m
+[32mchunk-WS5BRKKO.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m [36m85.59 kB[39m[2m | [22m
+[32mchunk-AWP6FG3X.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m [36m76.77 kB[39m[2m | [22m
+[32mchunk-MER5J5UV.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m [36m63.32 kB[39m[2m | [22m
+[32mchunk-ANKT3IFC.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m [36m55.74 kB[39m[2m | [22m
+[32mchunk-NNZ2FOUI.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m [36m48.67 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-care-plan-block-care-plan-block.js[39m    [2m | [22m[2mspec-app-features-clinical-record-patient-chart-care-plan-block-care-plan-block[22m    [2m | [22m [36m39.86 kB[39m[2m | [22m
+[32mchunk-OC6AK6SZ.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m [36m31.37 kB[39m[2m | [22m
+[32mchunk-HB7VZQU6.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m [36m27.92 kB[39m[2m | [22m
+[32mspec-app-core-navigation-navigation.service.js[39m                                        [2m | [22m[2mspec-app-core-navigation-navigation.service[22m                                        [2m | [22m [36m27.34 kB[39m[2m | [22m
+[32mchunk-Q6VKEXZE.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m [36m25.76 kB[39m[2m | [22m
+[32mchunk-NB35NQXF.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m [36m23.96 kB[39m[2m | [22m
+[32mchunk-JUVY6CY5.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m [36m17.39 kB[39m[2m | [22m
+[32mchunk-Y7OVIZ53.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m [36m12.37 kB[39m[2m | [22m
+[32mspec-app-core-navigation-access-tree.js[39m                                               [2m | [22m[2mspec-app-core-navigation-access-tree[22m                                               [2m | [22m [36m11.96 kB[39m[2m | [22m
+[32mspec-app-core-navigation-section-roles.guard.js[39m                                       [2m | [22m[2mspec-app-core-navigation-section-roles.guard[22m                                       [2m | [22m [36m10.67 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-measurement-grid-measurement-grid.js[39m  [2m | [22m[2mspec-app-features-clinical-record-patient-chart-measurement-grid-measurement-grid[22m  [2m | [22m [36m10.08 kB[39m[2m | [22m
+[32mchunk-2IKSQWUI.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m  [36m9.88 kB[39m[2m | [22m
+[32mspec-app-core-navigation-navigation.map.js[39m                                            [2m | [22m[2mspec-app-core-navigation-navigation.map[22m                                            [2m | [22m  [36m9.01 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-observation-block-observation-block.js[39m[2m | [22m[2mspec-app-features-clinical-record-patient-chart-observation-block-observation-block[22m[2m | [22m  [36m8.26 kB[39m[2m | [22m
+[32mchunk-TFHOLCMO.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m  [36m8.00 kB[39m[2m | [22m
+[32mspec-app-features-clinical-record-patient-chart-free-note-block-free-note-block.js[39m    [2m | [22m[2mspec-app-features-clinical-record-patient-chart-free-note-block-free-note-block[22m    [2m | [22m  [36m6.59 kB[39m[2m | [22m
+[32mspec-app-core-navigation-navigation-history.service.js[39m                                [2m | [22m[2mspec-app-core-navigation-navigation-history.service[22m                                [2m | [22m  [36m6.49 kB[39m[2m | [22m
+[32mspec-app-core-mock-faker-faker.js[39m                                                     [2m | [22m[2mspec-app-core-mock-faker-faker[22m                                                     [2m | [22m  [36m6.21 kB[39m[2m | [22m
+[32mchunk-HZXEPMDQ.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m  [36m5.27 kB[39m[2m | [22m
+[32mspec-app-core-mock-faker-props.js[39m                                                     [2m | [22m[2mspec-app-core-mock-faker-props[22m                                                     [2m | [22m  [36m3.90 kB[39m[2m | [22m
+[32mspec-app-core-navigation-navigation.subgroups.js[39m                                      [2m | [22m[2mspec-app-core-navigation-navigation.subgroups[22m                                      [2m | [22m  [36m3.17 kB[39m[2m | [22m
+[32minit-testbed.js[39m                                                                       [2m | [22m[2minit-testbed[22m                                                                       [2m | [22m  [36m1.21 kB[39m[2m | [22m
+[32mchunk-ZUB2YDBL.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m[36m995 bytes[39m[2m | [22m
+[32mvitest-mock-patch.js[39m                                                                  [2m | [22m[2mvitest-mock-patch[22m                                                                  [2m | [22m[36m974 bytes[39m[2m | [22m
+[32msetup-test-setup.js[39m                                                                   [2m | [22m[2msetup-test-setup[22m                                                                   [2m | [22m[36m911 bytes[39m[2m | [22m
+[32mchunk-GK6FIHK6.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m[36m795 bytes[39m[2m | [22m
+[32mchunk-JAZKRR66.js[39m                                                                     [2m | [22m[2m-[22m                                                                                  [2m | [22m[36m249 bytes[39m[2m | [22m
+
+[1m [22m                                                                                     [2m | [22m[1mInitial total[22m                                                                      [2m | [22m  [1m6.65 MB[22m
+
+Application bundle generation complete. [54.482 seconds] - 2026-09-25T16:08:12.064Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+[37m      75 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+[37m      85 │     [32mRouterLink[37m,
+         ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:119:39:
+[37m      119 │ ... [Alert, AppButton, BodyMap, [32mCard[37m, Chip, FormField, RouterLink...
+          ╵                                 [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:119:62:
+[37m      119 │ ...AppButton, BodyMap, Card, Chip, FormField, [32mRouterLink[37m, Textarea],
+          ╵                                               [32m~~~~~~~~~~[0m
+
+[39m[22m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mC:/Users/DELL/Documents/Github/Alovida/wt-clinica-c7[39m
+
+
+[2m Test Files [22m [1m[32m15 passed[39m[22m[90m (15)[39m
+[2m      Tests [22m [1m[32m235 passed[39m[22m[90m (235)[39m
+[2m   Start at [22m 12:08:12
+[2m   Duration [22m 11.12s[2m (transform 12.00s, setup 8.26s, import 22.73s, tests 9.12s, environment 35.54s)[22m
+

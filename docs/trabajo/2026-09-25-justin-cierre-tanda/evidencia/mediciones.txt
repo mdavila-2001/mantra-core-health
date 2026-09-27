@@ -1,0 +1,76 @@
+[A/H3.S1.M6] tienda 375 claro · resultados=1178 · scrollWidth=403 innerWidth=375 · desborda=true
+[A/H3.S1.M6] tienda 768 claro · resultados=1178 · scrollWidth=768 innerWidth=768 · desborda=false
+[A/H3.S1.M6] tienda 1440 claro · resultados=1178 · scrollWidth=1440 innerWidth=1440 · desborda=false
+[A/H3.S1.M6] tienda 1440 OSCURO · resultados=1178 · body background=rgb(8, 22, 28) (si fuera claro, la captura mentiría)
+[A/H4.S1.M5] recetas 375 · scrollWidth=403 innerWidth=375 · desborda=true
+[A/H4.S1.M5] recetas 1440 · scrollWidth=1440 innerWidth=1440 · desborda=false
+[A/H5.S2.M2] recetas con «dónde comprar» ofrecido: 3
+[A/H5.S2.M2] tras «Agregar», la insignia de la cabecera dice: (sin insignia)
+[A/H5.S2.M2] la cabecera ofrece el carrito: true
+[A/H5.S2.M2] el carrito ofrece «continuar»: false
+[B/H5.S1.M4] body background en oscuro = rgb(8, 22, 28)
+[B/H5.S1.M4] contraste título de la tarjeta (h1) = 13.69:1 · umbral AA texto normal 4,5:1 · CUMPLE
+[B/H5.S1.M4] contraste texto de ayuda (p) = 14.33:1 · umbral AA texto normal 4,5:1 · CUMPLE
+[B/H5.S1.M4] contraste etiqueta de campo (label) = 13.3:1 · umbral AA texto normal 4,5:1 · CUMPLE
+[B/H4.S3.M3] orden real del foco, 18 tabulaciones:
+      01. a «Saltar al contenido»
+      02. a «AloVida — ir al panel»
+      03. button[nav-recoger] «Recoger el menú»
+      04. a[nav-enlace] «Mi perfil»
+      05. a[nav-enlace] «Notificaciones»
+      06. a[nav-enlace] «Directorios»
+      07. a[nav-enlace] «Grupos y foros»
+      08. a[nav-enlace] «Consultas médicas»
+      09. a[nav-enlace] «Intervenciones»
+      10. a[nav-enlace] «Glosario»
+      11. summary «Administración»
+      12. a[nav-enlace] «Pacientes»
+      13. a[nav-enlace] «Usuarios»
+      14. a[nav-enlace] «Organizaciones»
+      15. a[nav-enlace] «Tu organización»
+      16. a[nav-enlace] «Aseguradora»
+      17. a[nav-enlace] «Brokers»
+      18. a[nav-enlace] «Solicitudes de seguro»
+[B/H4.S3.M3] «Importar» con aria-disabled=true · recibe foco: true
+[B/H1.S2.M4] el campo declara accept=.csv,.xlsx,.ndjson,.jsonl,.json,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/json,text/plain
+[B/H1.S2.M4] con el modelo elegido y el NDJSON puesto: «Validar» aria-disabled=false
+[B/H1.S2.M4] tras validar: ¿hay informe? true
+[B/H1.S2.M4] la pantalla dice: «Importar terminología Carga masiva de conceptos desde un archivo, para catálogos que no entran en una petición. 1 · Qué vas a cargar Qué vas a cargar Elegí qué vas a cargar Conceptos Fija qué columnas se esperan en el archivo. Sistema de codificación Elegí un sistema Catálogo AloVida · ALOVIDA CIE-10 · ICD10 Vademécum NDC · NDC Versión Elegí una versión 1.1.0 · borrador Sólo se ofrecen las que tod»
+[C6/H4.M2] historia 375 light · scrollWidth=403 innerWidth=375 · desborda=true
+[C6/H4.M2] historia 768 light · scrollWidth=768 innerWidth=768 · desborda=false
+[C6/H4.M2] Regla 8 en light · izq=40px der=40px · |izq-der|=0px (umbral ≤2) · tarjeta=1120px de área=1200px = 93.3% (umbral ≥85%)
+[C6/H4.M2] historia 1440 light · scrollWidth=1440 innerWidth=1440 · desborda=false
+[C6/H4.M2] historia 375 dark · scrollWidth=403 innerWidth=375 · desborda=true
+[C6/H4.M2] historia 768 dark · scrollWidth=768 innerWidth=768 · desborda=false
+[C6/H4.M2] Regla 8 en dark · izq=40px der=40px · |izq-der|=0px (umbral ≤2) · tarjeta=1120px de área=1200px = 93.3% (umbral ≥85%)
+[C6/H4.M2] historia 1440 dark · scrollWidth=1440 innerWidth=1440 · desborda=false
+[C6/H3.M4] botón de descarga presente: true
+[C6/H3.M4] PDF descargado: historia-quiroga-2026-09-25.pdf · 149577 bytes · cabecera=%PDF-
+[C4/H4.M2] «Mis citas» 375 light · sellos de reconsulta visibles: 2
+[C4/H4.M2] «Mis citas» 375 light · scrollWidth=403 innerWidth=375 · desborda=true
+[C4/H4.M2] «Mis citas» 768 light · sellos de reconsulta visibles: 3
+[C4/H4.M2] «Mis citas» 768 light · scrollWidth=768 innerWidth=768 · desborda=false
+[C4/H4.M2] «Mis citas» 1440 light · sellos de reconsulta visibles: 4
+[C4/H4.M2] «Mis citas» 1440 light · scrollWidth=1440 innerWidth=1440 · desborda=false
+[C4/H4.M2] «Mis citas» 375 dark · sellos de reconsulta visibles: 5
+[C4/H4.M2] «Mis citas» 375 dark · scrollWidth=403 innerWidth=375 · desborda=true
+[C4/H4.M2] «Mis citas» 768 dark · sellos de reconsulta visibles: 6
+[C4/H4.M2] «Mis citas» 768 dark · scrollWidth=768 innerWidth=768 · desborda=false
+[C4/H4.M2] «Mis citas» 1440 dark · sellos de reconsulta visibles: 7
+[C4/H4.M2] «Mis citas» 1440 dark · scrollWidth=1440 innerWidth=1440 · desborda=false
+[HALLAZGO] sellos de reconsulta en 4 cargas seguidas de «Mis citas»: 2, 3, 4, 5
+[HALLAZGO] ¿crece en cada carga, sin que nadie agende? true
+[HALLAZGO/carrito] botón: «Agregar la receta al carrito» · aria-disabled=false
+[HALLAZGO/carrito] ¿apareció el diálogo de conflicto de sede? false
+[HALLAZGO/carrito] aviso tras agregar: «(ninguno)»
+[HALLAZGO/carrito] insignia de la cabecera: (no existe en el DOM)
+[HALLAZGO/carrito] líneas en el carrito tras agregar: 0
+[HALLAZGO/carrito] el carrito dice: «Panel / Mi cuenta / Farmacia Tu carrito Revisá las líneas antes de continuar. Tu carrito está vacío Agregá medicamentos desde la tienda de una farmacia para armar tu pedido. Ir a la tienda»
+[A/H3.S1.M6] tienda 375 claro · resultados=1178 · scrollWidth=403 innerWidth=375 · desborda=true
+[A/H3.S1.M6] tienda 768 claro · resultados=1178 · scrollWidth=768 innerWidth=768 · desborda=false
+[A/H3.S1.M6] tienda 1440 claro · resultados=1178 · scrollWidth=1440 innerWidth=1440 · desborda=false
+[A/H3.S1.M6] tienda 1440 OSCURO · resultados=1178 · body background=rgb(8, 22, 28) (si fuera claro, la captura mentiría)
+[A/H5.S2.M2] recetas con «dónde comprar» ofrecido: 3
+[A/H5.S2.M2] tras «Agregar», la insignia de la cabecera dice: (sin insignia)
+[A/H5.S2.M2] la cabecera ofrece el carrito: true
+[A/H5.S2.M2] el carrito ofrece «continuar»: false

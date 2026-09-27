@@ -408,6 +408,99 @@ import type { NavIconName } from './nav-icon.types';
           <circle cx="12" cy="13" r="3.4" />
         }
 
+        <!-- ---- Acciones de desplegable --------------------------------- -->
+        @case ('eye') {
+          <!-- Ojo: «mirá el detalle» sin cambiar nada. -->
+          <path d="M2.6 12S6 5.6 12 5.6 21.4 12 21.4 12 18 18.4 12 18.4 2.6 12 2.6 12z" />
+          <circle cx="12" cy="12" r="2.8" />
+        }
+        @case ('eye-off') {
+          <!-- Ojo tachado: «no me muestres más esto». -->
+          <path d="M9.9 5.9A9.6 9.6 0 0 1 12 5.6c6 0 9.4 6.4 9.4 6.4a16 16 0 0 1-2.3 3.1" />
+          <path d="M6.3 7.2A15.6 15.6 0 0 0 2.6 12s3.4 6.4 9.4 6.4a9 9 0 0 0 4.6-1.3" />
+          <path d="M9.9 10a2.8 2.8 0 0 0 4 4" />
+          <path d="M3.6 3.6l16.8 16.8" />
+        }
+        @case ('check') {
+          <!-- Tilde suelta: aceptar, firmar. -->
+          <path d="m4.8 12.6 4.6 4.6 9.8-10.4" />
+        }
+        @case ('check-circle') {
+          <!-- Tilde en un aro: algo que se da por terminado —completar,
+               pagada—. El aro lo separa de «check», que acepta sin cerrar. -->
+          <circle cx="12" cy="12" r="8.6" />
+          <path d="m8.2 12.2 2.6 2.6 5-5.4" />
+        }
+        @case ('close') {
+          <!-- Cruz en un aro: rechazar. El aro la distingue de «cerrar» a
+               tamaño chico, igual que en «remove». -->
+          <circle cx="12" cy="12" r="8.6" />
+          <path d="m9 9 6 6M15 9l-6 6" />
+        }
+        @case ('arrive') {
+          <!-- Flecha que entra por una puerta: la persona llegó. -->
+          <path d="M14 3.6h3.8a2 2 0 0 1 2 2v12.8a2 2 0 0 1-2 2H14" />
+          <path d="M3.6 12h11" />
+          <path d="m10.6 8 4 4-4 4" />
+        }
+        @case ('logout') {
+          <!-- Flecha que sale por la puerta: cerrar sesión. Espejo de «arrive». -->
+          <path d="M10 3.6H6.2a2 2 0 0 0-2 2v12.8a2 2 0 0 0 2 2H10" />
+          <path d="M9.4 12h11" />
+          <path d="m16.4 8 4 4-4 4" />
+        }
+        @case ('paperclip') {
+          <!-- Clip: adjuntar un archivo. -->
+          <path d="m20 11.4-7.8 7.8a4.8 4.8 0 0 1-6.8-6.8l7.8-7.8a3.2 3.2 0 0 1 4.5 4.5l-7.8 7.8a1.6 1.6 0 0 1-2.3-2.3l7.2-7.2" />
+        }
+        @case ('refresh') {
+          <!-- Dos flechas en ronda: cambiar de un estado a otro. -->
+          <path d="M19.6 8.4A8 8 0 0 0 5 7.2L3.6 9" />
+          <path d="M3.6 4.4V9h4.6" />
+          <path d="M4.4 15.6A8 8 0 0 0 19 16.8l1.4-1.8" />
+          <path d="M20.4 19.6V15h-4.6" />
+        }
+        @case ('share') {
+          <!-- Tres nodos unidos: compartir. -->
+          <circle cx="17.6" cy="5.6" r="2.4" />
+          <circle cx="6.4" cy="12" r="2.4" />
+          <circle cx="17.6" cy="18.4" r="2.4" />
+          <path d="m8.5 10.8 7-4M8.5 13.2l7 4" />
+        }
+        @case ('qr') {
+          <!-- Tres marcas de esquina y puntos: un código QR. -->
+          <rect x="3.6" y="3.6" width="6" height="6" rx="1" />
+          <rect x="14.4" y="3.6" width="6" height="6" rx="1" />
+          <rect x="3.6" y="14.4" width="6" height="6" rx="1" />
+          <path d="M14.4 14.4h2.4v2.4M20.4 14.4v.01M14.4 20.4h.01M17.6 20.4h2.8v-3" />
+        }
+        @case ('print') {
+          <!-- Impresora con su hoja. -->
+          <path d="M6.8 8.6V3.6h10.4v5" />
+          <rect x="3.4" y="8.6" width="17.2" height="7.6" rx="1.8" />
+          <path d="M6.8 13.8h10.4v6.6H6.8z" />
+        }
+        @case ('download') {
+          <!-- Flecha que baja a una bandeja: exportar, descargar. -->
+          <path d="M12 3.6v11.2" />
+          <path d="m7.4 10.4 4.6 4.6 4.6-4.6" />
+          <path d="M4 16.8v1.6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.6" />
+        }
+        @case ('merge') {
+          <!-- Dos caminos que se juntan en uno: fusionar duplicados. -->
+          <circle cx="6.4" cy="5.2" r="2" />
+          <circle cx="6.4" cy="18.8" r="2" />
+          <circle cx="17.6" cy="12" r="2" />
+          <path d="M6.4 7.2v9.6" />
+          <path d="M6.4 7.2c0 3.4 3 4.8 9.2 4.8" />
+        }
+        @case ('clock') {
+          <!-- Reloj quieto: pendiente, algo que espera. No es «history», que
+               retrocede. -->
+          <circle cx="12" cy="12" r="8.6" />
+          <path d="M12 7.4V12l3 1.8" />
+        }
+
         @default {
           <!-- Casita con puerta: el punto de partida, y el que se dibuja
                cuando el nombre no está en el set. Nunca se deja un hueco donde

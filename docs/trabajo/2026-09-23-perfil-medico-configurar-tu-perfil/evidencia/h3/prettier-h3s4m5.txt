@@ -1,0 +1,5 @@
+prettier sobre los tres archivos de H3.S4.M5 (salida de prettier comparada con el archivo, finales de línea normalizados):
+work-history.ts: sin diferencias
+work-history.html: sin diferencias
+work-history.spec.ts: 24 bloques con diferencias, todos en líneas que no cambió este trabajo; el mismo archivo en HEAD tampoco pasa prettier. Los bloques tocados por H3.S4.M5 (líneas 1777-2026) no tienen diferencias.
+El CI del repo no corre prettier (.github/workflows/ci.yml).

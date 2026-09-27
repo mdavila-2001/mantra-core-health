@@ -1,0 +1,7 @@
+# Cada corrida del spec escribe acá su medición suelta. **No se publica**: una
+# corrida contra otra no prueba nada cuando los rangos se solapan, y la primera
+# versión de esta evidencia daba −36 % donde por medianas era −18 % justamente
+# por publicar una. Lo que se versiona son las diez muestras de cada escenario
+# y el `resumen.json` agregado.
+*/medicion.json
+*/medicion-sin-horarios.json

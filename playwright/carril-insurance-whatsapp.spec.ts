@@ -66,11 +66,6 @@ async function screenshotWithoutOverflow(page: Page, info: TestInfo, name: strin
   await page.screenshot({ path: info.outputPath(`${name}.png`), fullPage: true });
 }
 
-/** El ruido de CSP que `ng serve` inyecta en cualquier ruta (recarga en vivo). */
-function esRuidoDelServidorDeDesarrollo(texto: string): boolean {
-  return texto.includes('Content Security Policy') && texto.includes('inline script');
-}
-
 /**
  * Intercepta `wa.me` para no salir a Internet durante el E2E: la aserción es
  * sobre la URL con la que Chromium abrió el popup, no sobre lo que WhatsApp
@@ -221,7 +216,8 @@ test.describe('la tarjeta de cobertura en /my-account (maqueta)', () => {
       await interceptarWaMe(context);
       await entrarAlSimulador(page, 'paciente', '');
       await page.goto('/my-account');
-      await page.getByRole('tab', { name: 'Seguros y tutores' }).click();
+      // En `mockup` la pestaña se separo de "Seguros y tutores" (justin/perfil-seguro-tutor-separados):
+      await page.getByRole('tab', { name: 'Seguros', exact: true }).click();
 
       const whatsapp = page.getByTestId('btn-whatsapp-coverage').first();
       await expect(whatsapp).toBeVisible();

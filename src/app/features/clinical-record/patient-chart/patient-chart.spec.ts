@@ -7,6 +7,8 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { SessionStore } from '../../../core/auth/session.store';
 import type { ClinicalSummary } from '../../../core/data-access/clinical/clinical.types';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { FileDownloadService } from '../../../shared/utils/file-download/file-download.service';
 import {
   bloquesDeAtencion,
   bloquesDeReceta,
@@ -464,16 +466,21 @@ describe('PatientChart', () => {
     expect(observacion['secundario']).toBe('78.5 kg');
   });
 
-  /* ---- la banda de contexto --------------------------------------------- */
+  /* ---- el aviso de apertura ------------------------------------------------
+     Desde el 2026-09-25 se dice por toast y no por modal (ver el constructor
+     de patient-chart.ts): el toast es sólo texto, así que no hay más link
+     clicable para «Volver a la consulta» dentro del aviso — se avisa que hay
+     una consulta en curso y la persona navega por su cuenta. */
 
   /**
-   * Las alergias salen de la segunda pestaña y suben a la banda.
+   * Las alergias salen de la segunda pestaña y se dicen al entrar.
    *
    * Es el único bloque que cambia una conducta **antes** de leerlo: recetar sin
-   * haberlas visto es el error que la banda existe para evitar, y en una pestaña
+   * haberlas visto es el error que el aviso existe para evitar, y en una pestaña
    * había que acordarse de ir a mirarlas.
    */
-  it('destaca las alergias fuera de las pestañas', () => {
+  it('destaca las alergias en el aviso de apertura', () => {
+    const avisoDeAlergias = vi.spyOn(TestBed.inject(ToastService), 'warning');
     responderNombre();
     responderExpediente({
       resumen: {
@@ -488,56 +495,67 @@ describe('PatientChart', () => {
         ],
       },
     });
+    harness.fixture.detectChanges();
 
     const destacadas = interno<() => readonly Record<string, unknown>[]>('alergiasDestacadas')();
     expect(destacadas).toHaveLength(1);
     expect(destacadas[0]['principal']).toBe('Diabetes tipo 2');
+
+    expect(avisoDeAlergias).toHaveBeenCalledTimes(1);
+    expect(avisoDeAlergias.mock.calls[0]?.[0]).toContain('Diabetes tipo 2');
+    expect(avisoDeAlergias.mock.calls[0]?.[1]).toBe('Alergias');
   });
 
-  it('sin alergias no dibuja la banda de alergias', () => {
+  /** Sin alergias y sin consulta abierta no hay nada que avisar. */
+  it('sin nada que avisar no se muestra ningún toast', () => {
+    const avisoDeAlergias = vi.spyOn(TestBed.inject(ToastService), 'warning');
+    const avisoDeConsulta = vi.spyOn(TestBed.inject(ToastService), 'info');
     responderNombre();
     responderExpediente();
+    harness.fixture.detectChanges();
 
     expect(interno<() => readonly unknown[]>('alergiasDestacadas')()).toHaveLength(0);
+    expect(avisoDeAlergias).not.toHaveBeenCalled();
+    expect(avisoDeConsulta).not.toHaveBeenCalled();
   });
 
-  /** Cuánto expediente hay, sin abrir pestaña por pestaña. */
-  it('cuenta los bloques en la banda de contexto', () => {
-    responderNombre();
-    responderExpediente();
-
-    const cifras = interno<() => readonly { clave: string; valor: number }[]>('cifras')();
-    expect(cifras.find((c) => c.clave === 'diagnosticos')?.valor).toBe(1);
-    expect(cifras.find((c) => c.clave === 'observaciones')?.valor).toBe(1);
-    expect(cifras.find((c) => c.clave === 'medicacion')?.valor).toBe(0);
-  });
-
-  /**
-   * Sin encuentros no se afirma «sin atención previa»: el bloque puede venir
-   * recortado, o la atención puede constar en otra organización.
-   */
-  it('sin encuentros no inventa una última atención', () => {
-    responderNombre();
-    responderExpediente();
-
-    expect(interno<() => Date | null>('ultimaAtencion')()).toBeNull();
-  });
-
-  it('la última atención es la más reciente de los encuentros', () => {
+  /** Dicho una vez, no se repite: releer la pantalla no duplica el toast. */
+  it('el aviso no se repite en la misma visita', () => {
+    const avisoDeAlergias = vi.spyOn(TestBed.inject(ToastService), 'warning');
     responderNombre();
     responderExpediente({
       resumen: {
-        encounters: [
-          { id: 'e-1', classConceptId: 'st-activa', startAt: '2026-01-10T10:00:00.000Z' },
-          { id: 'e-2', classConceptId: 'st-activa', startAt: '2026-05-20T10:00:00.000Z' },
-          { id: 'e-3', classConceptId: 'st-activa', startAt: '2026-03-02T10:00:00.000Z' },
+        allergies: [
+          {
+            id: 'a-1',
+            substanceConceptId: 'con-diabetes',
+            clinicalStatusConceptId: 'st-activa',
+            criticalityConceptId: 'st-final',
+            createdAt: '2026-02-01T00:00:00.000Z',
+          },
         ],
       },
     });
+    harness.fixture.detectChanges();
+    harness.fixture.detectChanges();
+    harness.fixture.detectChanges();
 
-    expect(interno<() => Date | null>('ultimaAtencion')()?.toISOString()).toBe(
-      '2026-05-20T10:00:00.000Z',
-    );
+    expect(avisoDeAlergias).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * Las cifras de la banda —cuántos diagnósticos, cuánta medicación, la última
+   * atención— se fueron enteras: nadie las pidió y se comían la franja de
+   * arriba de las pestañas. Cada pestaña ya dice cuántos registros trae.
+   */
+  it('no dibuja la banda de cifras', () => {
+    responderNombre();
+    responderExpediente();
+    harness.fixture.detectChanges();
+
+    const html: string = harness.fixture.nativeElement.innerHTML;
+    expect(html).not.toContain('expediente__cifras');
+    expect(html).not.toContain('Última atención');
   });
 
   /* ---- el expediente dejó de ser un origen de la atención ----------------- */
@@ -557,10 +575,11 @@ describe('PatientChart', () => {
   });
 
   /**
-   * Lo que sí corresponde es la continuación: un encuentro sin `endAt` está
-   * abierto, y quien vino a consultar un antecedente tiene por dónde volver.
+   * Lo que sí corresponde es el aviso: un encuentro sin `endAt` está abierto, y
+   * quien vino a consultar un antecedente se entera por el toast de apertura.
    */
-  it('con un encuentro abierto ofrece volver a la consulta', () => {
+  it('con un encuentro abierto avisa que hay una consulta en curso', () => {
+    const avisoDeConsulta = vi.spyOn(TestBed.inject(ToastService), 'info');
     responderNombre();
     responderExpediente({
       resumen: {
@@ -572,11 +591,11 @@ describe('PatientChart', () => {
     harness.fixture.detectChanges();
 
     expect(interno<() => boolean>('atencionEnCurso')()).toBe(true);
-    const html: string = harness.fixture.nativeElement.innerHTML;
-    expect(html).toContain('expediente-volver-atencion');
+    expect(avisoDeConsulta).toHaveBeenCalledTimes(1);
   });
 
-  it('con todos los encuentros cerrados no ofrece volver a ninguna consulta', () => {
+  it('con todos los encuentros cerrados no avisa ninguna consulta en curso', () => {
+    const avisoDeConsulta = vi.spyOn(TestBed.inject(ToastService), 'info');
     responderNombre();
     responderExpediente({
       resumen: {
@@ -593,8 +612,7 @@ describe('PatientChart', () => {
     harness.fixture.detectChanges();
 
     expect(interno<() => boolean>('atencionEnCurso')()).toBe(false);
-    const html: string = harness.fixture.nativeElement.innerHTML;
-    expect(html).not.toContain('expediente-volver-atencion');
+    expect(avisoDeConsulta).not.toHaveBeenCalled();
   });
 
   /** Fase 3.1: era texto de arquitectura interna en la pantalla del médico. */
@@ -792,9 +810,7 @@ describe('PatientChart', () => {
   /** El texto entero de la receta que esta pantalla genera. */
   function papelDeLaReceta(): string {
     const contexto = interno<() => ContextoDelDocumento>('contextoDelDocumento')();
-    return bloquesDeReceta(
-      recetaDesdeResumen(INDICACION_GUARDADA, contexto, (id) => id ?? ''),
-    )
+    return bloquesDeReceta(recetaDesdeResumen(INDICACION_GUARDADA, contexto, (id) => id ?? ''))
       .map((bloque) => bloque.text)
       .join('\n');
   }
@@ -946,7 +962,12 @@ describe('PatientChart', () => {
     TestBed.tick();
     responderPerfilPropio(
       perfilConMatriculas([
-        { ...MATRICULA_VIGENTE, id: 'lic-0', licenseNumber: 'MP 1', validTo: '2025-01-01T00:00:00.000Z' },
+        {
+          ...MATRICULA_VIGENTE,
+          id: 'lic-0',
+          licenseNumber: 'MP 1',
+          validTo: '2025-01-01T00:00:00.000Z',
+        },
         { ...MATRICULA_VIGENTE, id: 'lic-1', licenseNumber: 'MP 4821' },
       ]),
     );
@@ -985,9 +1006,10 @@ describe('PatientChart', () => {
       responderNombre();
       responderExpediente();
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'diagnosticos',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
+          'diagnosticos',
+        )();
 
       expect(filas[0]?.vinculos).toEqual([
         { rotulo: 'Encuentro', valor: 'Sin encuentro registrado' },
@@ -1018,9 +1040,10 @@ describe('PatientChart', () => {
         },
       });
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'diagnosticos',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
+          'diagnosticos',
+        )();
 
       expect(filas[0]?.vinculos[0]?.valor).toContain('Activa');
       expect(filas[0]?.vinculos[0]?.valor).toContain('2026');
@@ -1047,9 +1070,8 @@ describe('PatientChart', () => {
         },
       });
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'medicacion',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>('medicacion')();
 
       expect(filas[0]?.vinculos[0]).toEqual({
         rotulo: 'Diagnóstico',
@@ -1072,9 +1094,8 @@ describe('PatientChart', () => {
         },
       });
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'medicacion',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>('medicacion')();
 
       expect(filas[0]?.vinculos[0]?.valor).toBe('Sin diagnóstico asociado');
     });
@@ -1099,9 +1120,8 @@ describe('PatientChart', () => {
         },
       });
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'alergias',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>('alergias')();
 
       expect(filas[0]?.vinculos[0]?.valor).toContain('no guarda encuentro ni diagnóstico');
     });
@@ -1126,9 +1146,8 @@ describe('PatientChart', () => {
         },
       });
 
-      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
-        'encuentros',
-      )();
+      const filas =
+        interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>('encuentros')();
 
       expect(filas[0]?.vinculos[0]).toEqual({
         rotulo: 'Diagnósticos del encuentro',
@@ -1205,9 +1224,8 @@ describe('PatientChart', () => {
       interno<(c: string) => void>('abrirAlta')('documentos');
       harness.fixture.detectChanges();
 
-      const bloque = interno<() => { tieneCambiosPendientes: () => boolean } | undefined>(
-        'bloqueDelAlta',
-      )();
+      const bloque =
+        interno<() => { tieneCambiosPendientes: () => boolean } | undefined>('bloqueDelAlta')();
       expect(bloque).toBeDefined();
 
       const titulo = (bloque as unknown as Record<string, { set(v: string): void }>)['titulo'];
@@ -1223,9 +1241,8 @@ describe('PatientChart', () => {
       interno<(c: string) => void>('abrirAlta')('documentos');
       harness.fixture.detectChanges();
 
-      const bloque = interno<() => { tieneCambiosPendientes: () => boolean } | undefined>(
-        'bloqueDelAlta',
-      )();
+      const bloque =
+        interno<() => { tieneCambiosPendientes: () => boolean } | undefined>('bloqueDelAlta')();
       const titulo = (bloque as unknown as Record<string, { set(v: string): void }>)['titulo'];
       titulo.set('Laboratorio completo');
       harness.fixture.detectChanges();
@@ -1243,9 +1260,8 @@ describe('PatientChart', () => {
       interno<(c: string) => void>('abrirAlta')('documentos');
       harness.fixture.detectChanges();
 
-      const bloque = interno<() => { tieneCambiosPendientes: () => boolean } | undefined>(
-        'bloqueDelAlta',
-      )();
+      const bloque =
+        interno<() => { tieneCambiosPendientes: () => boolean } | undefined>('bloqueDelAlta')();
       const titulo = (bloque as unknown as Record<string, { set(v: string): void }>)['titulo'];
       titulo.set('Laboratorio completo');
       harness.fixture.detectChanges();
@@ -1345,6 +1361,87 @@ describe('PatientChart', () => {
       interno<() => void>('cerrarCambioDeEstado')();
 
       expect(interno<(id: string) => string | null>('destinoEstadoDe')(fila.id)).toBeNull();
+    });
+  });
+
+  /**
+   * CL-27: `toDocument` descartaba `files` y el expediente no podía volver a
+   * abrir lo que se subió. Ahora cada archivo es un enlace que baja por
+   * `GET /charts/documents/:id/files/:fileId/content`, con la credencial.
+   */
+  describe('los archivos de un documento del expediente (CL-27)', () => {
+    const DOCUMENTO = {
+      id: 'd-1',
+      title: 'Laboratorio completo',
+      statusConceptId: 'st-final',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      files: [
+        { fileId: 'f-2', contentRole: 'ATTACHMENT', ordinal: 1 },
+        { fileId: 'f-1', contentRole: 'PRIMARY', ordinal: 0 },
+      ],
+    };
+
+    interface FilaConArchivos {
+      id: string;
+      archivos: readonly { fileId: string; rotulo: string }[];
+    }
+
+    it('la fila trae un archivo por cada uno, en orden y con rotulo legible', () => {
+      responderNombre();
+      responderExpediente({ chart: { documents: [DOCUMENTO] } });
+
+      const fila = interno<() => readonly FilaConArchivos[]>('documentos')()[0];
+
+      expect(fila?.archivos).toEqual([
+        { fileId: 'f-1', rotulo: 'Archivo 1 · Principal' },
+        { fileId: 'f-2', rotulo: 'Archivo 2' },
+      ]);
+    });
+
+    it('descargar pide los bytes a la ruta del documento y los entrega, sin window.open', () => {
+      responderNombre();
+      responderExpediente({ chart: { documents: [DOCUMENTO] } });
+      const guardar = vi
+        .spyOn(TestBed.inject(FileDownloadService), 'save')
+        .mockImplementation(() => undefined);
+      const abrir = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+      const fila = interno<() => readonly FilaConArchivos[]>('documentos')()[0]!;
+      interno<(f: unknown, a: unknown) => void>('descargarArchivo')(fila, fila.archivos[0]);
+
+      const pedido = http.expectOne('/charts/documents/d-1/files/f-1/content');
+      expect(pedido.request.responseType).toBe('blob');
+      pedido.flush(new Blob(['%PDF'], { type: 'application/pdf' }), {
+        headers: { 'Content-Disposition': "attachment; filename*=UTF-8''laboratorio.pdf" },
+      });
+
+      expect(guardar).toHaveBeenCalledWith(expect.any(Blob), 'laboratorio.pdf');
+      expect(abrir).not.toHaveBeenCalled();
+      abrir.mockRestore();
+      guardar.mockRestore();
+    });
+
+    it('un 403 (sin vinculo asistencial con el paciente) no entrega nada', async () => {
+      responderNombre();
+      responderExpediente({ chart: { documents: [DOCUMENTO] } });
+      const guardar = vi
+        .spyOn(TestBed.inject(FileDownloadService), 'save')
+        .mockImplementation(() => undefined);
+
+      const fila = interno<() => readonly FilaConArchivos[]>('documentos')()[0]!;
+      interno<(f: unknown, a: unknown) => void>('descargarArchivo')(fila, fila.archivos[0]);
+      http
+        .expectOne('/charts/documents/d-1/files/f-1/content')
+        .flush(new Blob([JSON.stringify({ code: 'FORBIDDEN', message: 'x' })]), {
+          status: 403,
+          statusText: 'Forbidden',
+        });
+
+      // El cuerpo del error llega como Blob y se relee de forma asincronica.
+      await vi.waitFor(() => expect(interno<() => string | null>('bajando')()).toBeNull());
+
+      expect(guardar).not.toHaveBeenCalled();
+      guardar.mockRestore();
     });
   });
 });

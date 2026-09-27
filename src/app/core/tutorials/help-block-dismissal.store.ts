@@ -29,9 +29,16 @@ export class HelpBlockDismissalStore {
 
   constructor() {
     effect(() => {
-      const usuario = this.auth.userId();
-      this.descartadas.set(this.storage.read(claveDe(usuario)));
+      this.descartadas.set(this.storage.read(claveDe(this.idDeUsuario())));
     });
+  }
+
+  /**
+   * `auth.userId()`, tolerando un doble de prueba incompleto (misma causa
+   * que `CartStore` — carril M6 H2, 2026-09-26).
+   */
+  private idDeUsuario(): string | null {
+    return typeof this.auth.userId === 'function' ? this.auth.userId() : null;
   }
 
   isDismissed(helpId: string): boolean {
@@ -44,7 +51,7 @@ export class HelpBlockDismissalStore {
     this.descartadas.set(siguiente);
 
     try {
-      this.storage.write(claveDe(this.auth.userId()), siguiente);
+      this.storage.write(claveDe(this.idDeUsuario()), siguiente);
     } catch (error) {
       console.warn('No se pudo guardar qué ayudas se cerraron.', error);
     }

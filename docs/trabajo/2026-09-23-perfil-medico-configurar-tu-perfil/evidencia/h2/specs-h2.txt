@@ -1,0 +1,247 @@
+inicio=17:30:07 memoria_libre_MB=2740
+Using Vitest configuration file: <repo>\vitest.config.ts
+[33m❯[39m Building...
+[32m✔[39m Building...
+[1mInitial chunk files[22m                                                                                                               [2m | [22m[1mNames[22m                                                                                                                          [2m | [22m [1mRaw size[22m
+[32mspec-app-features-auth-register-practitioner-register-practitioner.js[39m                                                             [2m | [22m[2mspec-app-features-auth-register-practitioner-register-practitioner[22m                                                             [2m | [22m[36m563.44 kB[39m[2m | [22m
+[32mchunk-HJAW6CEP.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m[36m375.82 kB[39m[2m | [22m
+[32mchunk-VNU7NVS7.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m[36m374.83 kB[39m[2m | [22m
+[32mspec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit.js[39m                                       [2m | [22m[2mspec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit[22m                                       [2m | [22m[36m317.47 kB[39m[2m | [22m
+[32mchunk-OGKI64XH.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m[36m290.38 kB[39m[2m | [22m
+[32mstyles.css[39m                                                                                                                        [2m | [22m[2mstyles[22m                                                                                                                         [2m | [22m[36m166.11 kB[39m[2m | [22m
+[32mchunk-CJMAFO2F.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m[36m111.94 kB[39m[2m | [22m
+[32mspec-app-features-directory-practitioner-detail-practitioner-detail.js[39m                                                            [2m | [22m[2mspec-app-features-directory-practitioner-detail-practitioner-detail[22m                                                            [2m | [22m [36m79.36 kB[39m[2m | [22m
+[32mchunk-OEMTXTUZ.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m59.95 kB[39m[2m | [22m
+[32mchunk-JCJMYU4O.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m57.52 kB[39m[2m | [22m
+[32mchunk-E7NNFHC3.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m44.50 kB[39m[2m | [22m
+[32mchunk-AOQ7ODTF.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m41.76 kB[39m[2m | [22m
+[32mchunk-56FY7YGL.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m39.99 kB[39m[2m | [22m
+[32mchunk-WOIOPG7S.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m39.33 kB[39m[2m | [22m
+[32mspec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practitioner-profile-view.js[39m                  [2m | [22m[2mspec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practitioner-profile-view[22m                  [2m | [22m [36m37.60 kB[39m[2m | [22m
+[32mchunk-TEH2RQOO.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m33.51 kB[39m[2m | [22m
+[32mchunk-VKRGN2UI.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m32.12 kB[39m[2m | [22m
+[32mchunk-SEFIUD6U.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m28.91 kB[39m[2m | [22m
+[32mchunk-D45T3PR7.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m27.80 kB[39m[2m | [22m
+[32mchunk-SOTNGF5F.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m22.65 kB[39m[2m | [22m
+[32mchunk-A65S56OM.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m22.64 kB[39m[2m | [22m
+[32mspec-app-features-account-my-profile-practitioner-profile-practitioner-profile.js[39m                                                 [2m | [22m[2mspec-app-features-account-my-profile-practitioner-profile-practitioner-profile[22m                                                 [2m | [22m [36m22.40 kB[39m[2m | [22m
+[32mchunk-KE4CEKQF.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m17.89 kB[39m[2m | [22m
+[32mchunk-OHAR7EI6.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m17.68 kB[39m[2m | [22m
+[32mchunk-IWGYNSG3.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m12.51 kB[39m[2m | [22m
+[32mchunk-4GJFC4NZ.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m [36m12.14 kB[39m[2m | [22m
+[32mchunk-2K37GGXZ.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m  [36m9.14 kB[39m[2m | [22m
+[32mchunk-MSOW33KK.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m  [36m8.68 kB[39m[2m | [22m
+[32mchunk-OX7IU7PB.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m  [36m8.07 kB[39m[2m | [22m
+[32mchunk-6XZ7MQDS.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m  [36m7.01 kB[39m[2m | [22m
+[32mchunk-HZXEPMDQ.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m  [36m5.27 kB[39m[2m | [22m
+[32mchunk-RSLECKZM.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m  [36m5.19 kB[39m[2m | [22m
+[32mchunk-QCLGNOKA.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m  [36m4.89 kB[39m[2m | [22m
+[32mspec-app-shared-components-organisms-specialty-badge-specialty-badge.js[39m                                                           [2m | [22m[2mspec-app-shared-components-organisms-specialty-badge-specialty-badge[22m                                                           [2m | [22m  [36m4.82 kB[39m[2m | [22m
+[32mspec-app-features-account-my-profile-pestanas-del-perfil-medico.js[39m                                                                [2m | [22m[2mspec-app-features-account-my-profile-pestanas-del-perfil-medico[22m                                                                [2m | [22m  [36m4.67 kB[39m[2m | [22m
+[32mspec-app-shared-components-organisms-specialty-badge-grid-specialty-badge-grid.js[39m                                                 [2m | [22m[2mspec-app-shared-components-organisms-specialty-badge-grid-specialty-badge-grid[22m                                                 [2m | [22m  [36m4.59 kB[39m[2m | [22m
+[32mspec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-credentials-panel-credentials-panel.js[39m        [2m | [22m[2mspec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-credentials-panel-credentials-panel[22m        [2m | [22m  [36m4.06 kB[39m[2m | [22m
+[32mchunk-3BKIIAWM.js[39m                                                                                                                 [2m | [22m[2m-[22m                                                                                                                              [2m | [22m  [36m3.96 kB[39m[2m | [22m
+[32mspec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practice-sites-map-practice-sites-map.js[39m      [2m | [22m[2mspec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practice-sites-map-practice-sites-map[22m      [2m | [22m  [36m3.83 kB[39m[2m | [22m
+[32mspec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practitioner-activity-practitioner-activity.js[39m[2m | [22m[2mspec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-practitioner-activity-practitioner-activity[22m[2m | [22m  [36m3.23 kB[39m[2m | [22m
+[32mspec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-quality-indicators-quality-indicators.js[39m      [2m | [22m[2mspec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-quality-indicators-quality-indicators[22m      [2m | [22m  [36m2.75 kB[39m[2m | [22m
+[32mspec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-activity-chart-activity-chart.js[39m              [2m | [22m[2mspec-app-features-account-my-profile-practitioner-profile-practitioner-profile-view-activity-chart-activity-chart[22m              [2m | [22m  [36m2.70 kB[39m[2m | [22m
+[32minit-testbed.js[39m                                                                                                                   [2m | [22m[2minit-testbed[22m                                                                                                                   [2m | [22m  [36m1.21 kB[39m[2m | [22m
+[32mvitest-mock-patch.js[39m                                                                                                              [2m | [22m[2mvitest-mock-patch[22m                                                                                                              [2m | [22m[36m974 bytes[39m[2m | [22m
+[32msetup-test-setup.js[39m                                                                                                               [2m | [22m[2msetup-test-setup[22m                                                                                                               [2m | [22m[36m911 bytes[39m[2m | [22m
+
+[1m [22m                                                                                                                                 [2m | [22m[1mInitial total[22m                                                                                                                  [2m | [22m  [1m2.94 MB[22m
+
+[1mLazy chunk files[22m                                                                                                                  [2m | [22m[1mNames[22m                                                                                                                          [2m | [22m [1mRaw size[22m
+[32mchunk-XUT3VXWI.js[39m                                                                                                                 [2m | [22m[2mindex[22m                                                                                                                          [2m | [22m  [36m4.95 MB[39m[2m | [22m
+[32mchunk-DR365NG6.js[39m                                                                                                                 [2m | [22m[2mpestanas-del-perfil[22m                                                                                                            [2m | [22m[36m372 bytes[39m[2m | [22m
+[32mchunk-ZTPBSJRC.js[39m                                                                                                                 [2m | [22m[2mmap[22m                                                                                                                            [2m | [22m[36m224 bytes[39m[2m | [22m
+[32mchunk-I4ET3CLY.js[39m                                                                                                                 [2m | [22m[2mlocation-picker[22m                                                                                                                [2m | [22m[36m218 bytes[39m[2m | [22m
+
+Application bundle generation complete. [85.061 seconds] - 2026-09-23T21:31:37.072Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+[37m      75 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+[37m      85 │     [32mRouterLink[37m,
+         ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButton is not used within the template of NearbyPlaces[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/nearby-places/nearby-places.ts:103:4:
+[37m      103 │     [32mAppButton[37m,
+          ╵     [32m~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:72:4:
+[37m      72 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:99:39:
+[37m      99 │ ...: [Alert, AppButton, BodyMap, [32mCard[37m, Chip, FormField, RouterLink...
+         ╵                                  [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:99:62:
+[37m      99 │ ... AppButton, BodyMap, Card, Chip, FormField, [32mRouterLink[37m, Textarea],
+         ╵                                                [32m~~~~~~~~~~[0m
+
+[39m[22m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m<repo>[39m
+
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts [2m([22m[2m80 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 2955[2mms[22m[39m
+[31m     [31m×[31m dibujada, la tabla de especialidades no dice «principal» en ninguna fila[39m[33m 417[2mms[22m[39m
+ [31m❯[39m [30m[46m mantra-core-health [49m[39m src/app/features/auth/register-practitioner/register-practitioner.spec.ts [2m([22m[2m95 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[33m 21494[2mms[22m[39m
+[31m       [31m×[31m filtra aunque las opciones ya se hayan leído antes de elegir profesión[39m[32m 85[2mms[22m[39m
+[31m       [31m×[31m un odontólogo ve las odontológicas y NO las médicas[39m[32m 66[2mms[22m[39m
+[31m       [31m×[31m un médico ve las médicas y NO las odontológicas[39m[33m 547[2mms[22m[39m
+[31m       [31m×[31m elegir en la lupa escribe en el control, y arrastra colegio y especialidades[39m[32m 50[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 5 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/auth/register-practitioner/register-practitioner.spec.ts[2m > [22mRegisterPractitioner[2m > [22mlas especialidades del alta[2m > [22mfiltra aunque las opciones ya se hayan leído antes de elegir profesión
+[31m[1mAssertionError[22m: expected [] to deeply equal [ 'e-cardio', 'e-pedia', …(2) ][39m
+
+- Expected
++ Received
+
+- [
+-   "e-cardio",
+-   "e-pedia",
+-   "e-endo",
+-   "e-orto",
+- ]
++ []
+
+[36m [2m❯[22m src/app/features/auth/register-practitioner/register-practitioner.spec.ts:[2m531:56[22m[39m
+    [90m529|[39m       // Se leen una vez, como al pintar el paso: acá el título está v…
+    [90m530|[39m       [90m// corresponde ofrecer todo.[39m
+    [90m531|[39m       [34mexpect[39m([34mopcionesDeLaPagina[39m()[33m.[39m[34mmap[39m((o) [33m=>[39m o[33m.[39mvalue))[33m.[39m[34mtoEqual[39m([
+    [90m   |[39m                                                        [31m^[39m
+    [90m532|[39m         [32m'e-cardio'[39m[33m,[39m
+    [90m533|[39m         [32m'e-pedia'[39m[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/auth/register-practitioner/register-practitioner.spec.ts[2m > [22mRegisterPractitioner[2m > [22mlas especialidades del alta[2m > [22mun odontólogo ve las odontológicas y NO las médicas
+[31m[1mAssertionError[22m: expected [] to deeply equal [ 'e-endo', 'e-orto' ][39m
+
+- Expected
++ Received
+
+- [
+-   "e-endo",
+-   "e-orto",
+- ]
++ []
+
+[36m [2m❯[22m src/app/features/auth/register-practitioner/register-practitioner.spec.ts:[2m550:23[22m[39m
+    [90m548|[39m
+    [90m549|[39m       [35mconst[39m valores [33m=[39m [34mopcionesDeLaPagina[39m()[33m.[39m[34mmap[39m((o) [33m=>[39m o[33m.[39mvalue)[33m;[39m
+    [90m550|[39m       [34mexpect[39m(valores)[33m.[39m[34mtoEqual[39m([[32m'e-endo'[39m[33m,[39m [32m'e-orto'[39m])[33m;[39m
+    [90m   |[39m                       [31m^[39m
+    [90m551|[39m     })[33m;[39m
+    [90m552|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/auth/register-practitioner/register-practitioner.spec.ts[2m > [22mRegisterPractitioner[2m > [22mlas especialidades del alta[2m > [22mun médico ve las médicas y NO las odontológicas
+[31m[1mAssertionError[22m: expected [] to deeply equal [ 'e-cardio', 'e-pedia' ][39m
+
+- Expected
++ Received
+
+- [
+-   "e-cardio",
+-   "e-pedia",
+- ]
++ []
+
+[36m [2m❯[22m src/app/features/auth/register-practitioner/register-practitioner.spec.ts:[2m559:23[22m[39m
+    [90m557|[39m
+    [90m558|[39m       [35mconst[39m valores [33m=[39m [34mopcionesDeLaPagina[39m()[33m.[39m[34mmap[39m((o) [33m=>[39m o[33m.[39mvalue)[33m;[39m
+    [90m559|[39m       [34mexpect[39m(valores)[33m.[39m[34mtoEqual[39m([[32m'e-cardio'[39m[33m,[39m [32m'e-pedia'[39m])[33m;[39m
+    [90m   |[39m                       [31m^[39m
+    [90m560|[39m     })[33m;[39m
+    [90m561|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/auth/register-practitioner/register-practitioner.spec.ts[2m > [22mRegisterPractitioner[2m > [22mlas especialidades del alta[2m > [22melegir en la lupa escribe en el control, y arrastra colegio y especialidades
+[31m[1mAssertionError[22m: expected [] to deeply equal [ 'Endodoncia', 'Ortodoncia' ][39m
+
+- Expected
++ Received
+
+- [
+-   "Endodoncia",
+-   "Ortodoncia",
+- ]
++ []
+
+[36m [2m❯[22m src/app/features/auth/register-practitioner/register-practitioner.spec.ts:[2m616:56[22m[39m
+    [90m614|[39m       [34mexpect[39m(titulo[33m.[39mvalue)[33m.[39m[34mtoBe[39m([32m'Odontólogo / Odontóloga'[39m)[33m;[39m
+    [90m615|[39m       expect(autoridad.value).toBe('Colegio de Odontólogos de Bolivia'…
+    [90m616|[39m       expect(opcionesDeLaPagina().map((o) => o.label)).toEqual(['Endod…
+    [90m   |[39m                                                        [31m^[39m
+    [90m617|[39m       // Y el rótulo vuelve al regresar al paso, que es para lo que ex…
+    [90m618|[39m       expect(component.tituloProfesionalSeleccionado()?.label).toBe('O…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m mantra-core-health [49m[39m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts[2m > [22mPractitionerProfileEdit[2m > [22mdibujada, la tabla de especialidades no dice «principal» en ninguna fila
+[31m[1mAssertionError[22m: expected '' to contain 'Cardiología'[39m
+
+- Expected
++ Received
+
+- Cardiología
+
+[36m [2m❯[22m src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts:[2m794:19[22m[39m
+    [90m792|[39m     )[33m;[39m
+    [90m793|[39m     [35mconst[39m texto [33m=[39m (tabla[33m?.[39mtextContent [33m??[39m [32m''[39m)[33m.[39m[34mreplace[39m([36m/\s+/g[39m[33m,[39m [32m' '[39m)[33m;[39m
+    [90m794|[39m     [34mexpect[39m(texto)[33m.[39m[34mtoContain[39m([32m'Cardiología'[39m)[33m;[39m
+    [90m   |[39m                   [31m^[39m
+    [90m795|[39m     [34mexpect[39m(texto)[33m.[39m[34mtoContain[39m([32m'Pediatría'[39m)[33m;[39m
+    [90m796|[39m     [34mexpect[39m(texto)[33m.[39mnot[33m.[39m[34mtoMatch[39m([36m/principal/i[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m11 passed[39m[22m[90m (13)[39m
+[2m      Tests [22m [1m[31m5 failed[39m[22m[2m | [22m[1m[32m334 passed[39m[22m[90m (339)[39m
+[2m   Start at [22m 17:31:44
+[2m   Duration [22m 50.88s[2m (transform 10.90s, setup 3.84s, import 11.78s, tests 35.11s, environment 329.99s)[22m
+
+exit=1

@@ -106,6 +106,20 @@ export interface Environment {
    */
   readonly apiBaseUrl: string;
 
+  /**
+   * Raíz del servicio de triage por IA (AlovidaAIService): convierte lo que el
+   * paciente escribe o dicta en síntomas, partes del cuerpo y especialistas.
+   *
+   * Relativa por defecto (`/ai`), igual que las trazas: el navegador le habla
+   * al mismo origen desde el que se sirvió, así la política de seguridad de
+   * contenido se queda en `connect-src 'self'` y no hay CORS que negociar. En
+   * el despliegue la resuelve Traefik; en `yarn start`, `proxy.conf.mjs`.
+   *
+   * Se define por entorno con `PUBLIC_AI_BASE_URL`. El servicio es público y
+   * no lleva credencial: no hay nada que filtrar desde acá.
+   */
+  readonly aiBaseUrl: string;
+
   /** Ver {@link TelemetryEnvironment}. */
   readonly telemetry: TelemetryEnvironment;
 
@@ -165,6 +179,18 @@ export interface Environment {
   readonly campaignsDemo: boolean;
 
   /**
+   * El refresh token viaja en una cookie `httpOnly` que pone y lee la API, y no
+   * en el cuerpo de las respuestas ni en `localStorage` (TX-10, decisión D-I).
+   *
+   * Es un **interruptor de despliegue que tiene que coincidir con el de la API**
+   * (`AUTH_REFRESH_COOKIE_ENABLED`): con uno solo encendido la sesión se pierde
+   * al recargar. Por eso vale `false` salvo que el despliegue lo pida con
+   * `PUBLIC_REFRESH_COOKIE=true`. No es un secreto: sólo dice cómo se pide el
+   * refresco. Exige mismo origen entre el front y la API (`apiBaseUrl` vacío).
+   */
+  readonly refreshCookie: boolean;
+
+  /**
    * Rama `mockup`: la aplicación no habla con ninguna API. Un interceptor
    * responde cada petición desde datos de prueba en memoria, con todas las
    * pantallas pobladas. Ver `src/app/core/mock/`.
@@ -182,10 +208,12 @@ export interface Environment {
  */
 export interface EnvironmentOverrides {
   readonly apiBaseUrl?: string;
+  readonly aiBaseUrl?: string;
   readonly telemetry?: Partial<TelemetryEnvironment>;
   readonly demoPresets?: boolean;
   readonly paymentDemo?: boolean;
   readonly loyaltyDemo?: boolean;
   readonly campaignsDemo?: boolean;
+  readonly refreshCookie?: boolean;
   readonly mockBackend?: boolean;
 }

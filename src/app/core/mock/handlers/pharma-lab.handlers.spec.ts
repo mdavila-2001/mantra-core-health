@@ -108,7 +108,7 @@ describe('handlers de laboratorio farmacéutico: duración de visita y límite d
       ).toBe(400);
     });
 
-    it('inválido — superar el tope de la política del doctor se rechaza con 422, no con silencio', () => {
+    it('inválido — superar el tope de la política del doctor se rechaza con 400, no con silencio', () => {
       expect(
         estado(
           pedir('POST', '/visit-requests', medica, {
@@ -119,7 +119,7 @@ describe('handlers de laboratorio farmacéutico: duración de visita y límite d
             modalityConceptId: 'x',
           }),
         ),
-      ).toBe(422);
+      ).toBe(400);
     });
   });
 

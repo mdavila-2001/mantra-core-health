@@ -1,7 +1,39 @@
-<app-page-header
-  title="Promociones"
-  subtitle="Las promociones que te mandaron las farmacias."
-  [breadcrumbs]="breadcrumbs()"
-/>
-
-<app-view-state-host [state]="state" />
+<!-- La misma anatomía que los directorios (`app-directory-page`): mapa,
+     buscador, chips y grilla por ciudad. Pedido del cliente, 25/09/2026. -->
+<app-directory-page
+  titulo="Promociones"
+  subtitulo="Las promociones de las farmacias. Tocá un departamento en el mapa y aparecen sus ciudades para acotar más."
+  etiquetaBusqueda="Buscar por promoción, farmacia o medicamento"
+  [filtros]="filtros()"
+  [estado]="estado()"
+  [grupos]="tramos()"
+  [sustantivo]="sustantivo"
+  [textoSinCoincidencias]="sinCoincidencias()"
+>
+  <div slot="antes-de-filtros">
+    @if (catalogoGeoCaido()) {
+      <p class="mapa-directorio__caido" role="status">
+        No pudimos leer el catálogo de departamentos, así que el mapa no está. El resto de las
+        promociones funciona igual.
+        <button app-button variant="ghost" size="sm" type="button" (click)="reintentarGeo()">
+          Reintentar
+        </button>
+      </p>
+    } @else if (departamentos().length > 0) {
+      <section class="mapa-directorio" aria-label="Filtrar por departamento">
+        <app-department-map
+          testId="promociones-mapa"
+          [departamentos]="departamentos()"
+          [value]="departamentoElegido()"
+          (valueChange)="elegirDepartamento($event)"
+          etiqueta="Mapa de Bolivia: elegí el departamento donde buscás"
+        />
+        @if (resumenDelMapa(); as resumen) {
+          <p class="mapa-directorio__resumen" data-testid="promociones-mapa-resumen">
+            {{ resumen }}
+          </p>
+        }
+      </section>
+    }
+  </div>
+</app-directory-page>

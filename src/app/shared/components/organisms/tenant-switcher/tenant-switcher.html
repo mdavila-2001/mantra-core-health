@@ -43,6 +43,8 @@
     <app-menu #menuTenants>
       @for (tenant of tenants(); track tenant.id) {
         <app-menu-item (selected)="select(tenant)">
+          <!-- La activa lleva el tilde: además de anunciarse, se ve. -->
+          <app-nav-icon slot="icon" [name]="tenant.id === activeTenantId() ? 'check' : 'building'" />
           {{ tenant.name }}
           @if (tenant.role) {
             <span class="tenant-switcher__role"> · {{ tenant.role }}</span>

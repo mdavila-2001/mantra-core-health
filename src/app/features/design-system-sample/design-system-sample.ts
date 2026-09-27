@@ -58,6 +58,7 @@ import { EmptyState } from '../../shared/components/molecules/empty-state/empty-
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
 import { Menu } from '../../shared/components/molecules/menu/menu';
 import { MenuItem } from '../../shared/components/molecules/menu/menu-item/menu-item';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { MenuTrigger } from '../../shared/components/molecules/menu/menu-trigger/menu-trigger';
 import { Pagination } from '../../shared/components/molecules/pagination/pagination';
 import { ReferenceCombobox } from '@shared/components/molecules/reference-combobox/reference-combobox';
@@ -114,6 +115,7 @@ const DEMO_UPLOAD_STEP = 12;
     Alert,
     Menu,
     MenuItem,
+    NavIcon,
     MenuTrigger,
     Tabs,
     Tab,

@@ -26,7 +26,18 @@ import {
   type PacienteSimulado,
   type ProfesionalSimulado,
 } from '../fixtures/personas';
-import { conflict, forbidden, noContent, notFound, type MockRequest, type MockRouter } from '../mock-router';
+import {
+  conflict,
+  forbidden,
+  noContent,
+  notFound,
+  preconditionFailed,
+  reply,
+  validation,
+  type MockRequest,
+  type MockRouter,
+} from '../mock-router';
+import { emitirNotificacion } from './notifications.handlers';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -149,6 +160,21 @@ function corregirDelPerfil(id: string, cambios: Record<string, unknown>): void {
  */
 function existeEnElPerfil(filas: readonly { readonly id: string }[], id: string): boolean {
   return !retiradasDelPerfil.has(id) && filas.some((fila) => fila.id === id);
+}
+
+/** Las claves del cuerpo que el DTO de la API no declara: con la lista blanca estricta, un 400. */
+function clavesFueraDeLaLista(cambios: Record<string, unknown>, permitidas: readonly string[]): string[] {
+  return Object.keys(cambios).filter((clave) => !permitidas.includes(clave));
+}
+
+/** La violación con la forma que `class-validator` da a una clave que sobra. */
+function propiedadSobrante(clave: string): { readonly field: string; readonly message: string } {
+  return { field: clave, message: 'should not exist' };
+}
+
+/** Si el estado de verificación de una fila del perfil es «pendiente»: lo único corregible o retirable. */
+function estaPendiente(estadoConceptId: string | undefined): boolean {
+  return estadoConceptId === ESTADO['ST-PENDING'];
 }
 
 /** La fila tal como la devuelve el perfil: sin el dueño, que es de la maqueta. */
@@ -347,42 +373,6 @@ export function perfilPropioDe(p: PacienteSimulado) {
   };
 }
 
-/**
- * Las doce cifras mensuales de la maqueta. Suman 312, que es el total de
- * `encounters`: dos cifras que hablan de lo mismo y no coinciden se leen como
- * un error del producto, no de los datos de ejemplo.
- */
-const ENCUENTROS_POR_MES = [18, 21, 24, 19, 26, 28, 23, 27, 31, 29, 30, 36] as const;
-
-/** La serie, anclada al mes en curso: el último punto es siempre «hoy». */
-function serieMensualDemo(): readonly { month: string; count: number }[] {
-  const hoy = new Date();
-  return ENCUENTROS_POR_MES.map((count, indice) => {
-    const mes = new Date(hoy.getFullYear(), hoy.getMonth() - (ENCUENTROS_POR_MES.length - 1 - indice), 1);
-    return { month: `${mes.getFullYear()}-${String(mes.getMonth() + 1).padStart(2, '0')}`, count };
-  });
-}
-
-/**
- * Los indicadores de calidad de la maqueta.
- *
- * Coherentes entre sí a propósito: las 312 citas atendidas son los 312
- * encuentros, y las 275 notas dentro de 24 h son las 275 notas clínicas. Un
- * juego de cifras que no cierra convierte la pantalla en un rompecabezas.
- */
-const CALIDAD_DEMO = {
-  uniquePatients: 187,
-  returningPatients: 96,
-  scheduledAppointments: 341,
-  attendedAppointments: 312,
-  onTimeAppointments: 268,
-  closedEncounters: 312,
-  notesWithin24h: 275,
-  averageDurationMinutes: 27,
-  ratingAverage: 4.7,
-  ratingCount: 128,
-} as const;
-
 /** Una corrección guardada del perfil profesional: su id y lo que se cambió. */
 type EdicionDeProfesional = { readonly id: string } & Record<string, string | boolean>;
 
@@ -463,8 +453,9 @@ function perfilProfesionalBase(p: ProfesionalSimulado) {
             medicationRequests: 208,
             clinicalNotes: 275,
             documents: 41,
-            monthlyEncounters: serieMensualDemo(),
-            quality: CALIDAD_DEMO,
+            // Sin `monthlyEncounters` ni `quality`: la API real no los envía, y el
+            // simulador no fabrica métricas que ella no calcula (ID-14). La
+            // ficha muestra entonces su estado vacío explícito.
           },
     createdAt: iso(-500),
   };
@@ -501,11 +492,42 @@ interface ApoderamientoSimulado {
   readonly relationshipConceptId: string;
 }
 
-const apoderamientos: ApoderamientoSimulado[] = [];
+/*
+ * Persistido para que aceptar una solicitud sobreviva al cambio de cuenta, que
+ * recarga la aplicación. Un apoderamiento cuyo dependiente ya no existe —el
+ * alta sin cuenta crea pacientes que no se persisten— se ignora al leer.
+ */
+const apoderamientos = new Coleccion<ApoderamientoSimulado>([]).persistirEn(
+  'mock.profiles.apoderamientos',
+);
+
+/**
+ * Un pedido de representar a alguien que ya tiene cuenta.
+ *
+ * Se persiste como las notificaciones: el aviso sobrevive a F5 y, si la
+ * solicitud no, tocarlo llevaría a una bandeja vacía.
+ */
+interface SolicitudDeVinculo {
+  readonly id: string;
+  readonly titularId: string;
+  readonly dependienteId: string;
+  readonly estado: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  readonly createdAt: string;
+}
+
+const solicitudes = new Coleccion<SolicitudDeVinculo>([]);
+solicitudes.persistirEn('mock.profiles.solicitudes-de-dependiente');
+
+/** Una cuenta registrada: el alta de un dependiente sin cuenta deja el correo vacío. */
+function cuentaConDocumento(documento: string): PacienteSimulado | undefined {
+  return pacientes.todos().find((p) => p.nationalId === documento && p.email !== '');
+}
 
 /** Los apoderamientos de un titular. */
 function dependientesDe(titularId: string): readonly ApoderamientoSimulado[] {
-  return apoderamientos.filter((a) => a.titularId === titularId);
+  return apoderamientos.filtrar(
+    (a) => a.titularId === titularId && pacientePorId(a.dependienteId) !== undefined,
+  );
 }
 
 /**
@@ -517,9 +539,9 @@ function dependientesDe(titularId: string): readonly ApoderamientoSimulado[] {
  */
 export function representaA(titularId: string | undefined, pacienteId: string): boolean {
   if (titularId === undefined) return false;
-  return apoderamientos.some(
-    (a) => a.titularId === titularId && a.dependienteId === pacienteId,
-  );
+  return apoderamientos
+    .todos()
+    .some((a) => a.titularId === titularId && a.dependienteId === pacienteId);
 }
 
 /**
@@ -822,15 +844,134 @@ export function registrarPerfiles(router: MockRouter): void {
       identityVerified: false,
     };
     pacientes.agregar(nuevo);
-    apoderamientos.push({
+    const apoderamiento = apoderamientos.agregar({
       id: nuevoId('proxy'),
       titularId: titular.id,
       dependienteId: id,
       relationshipConceptId: datos.relationshipConceptId ?? '',
     });
 
-    return { status: 201, body: resumenDeDependiente(apoderamientos.at(-1)!) };
+    return { status: 201, body: resumenDeDependiente(apoderamiento) };
   });
+
+  /* ---- dependientes que ya tienen cuenta: solicitud y aceptación ---------- */
+
+  /**
+   * Pide representar a quien ya tiene cuenta con ese CI.
+   *
+   * No crea el vínculo: le avisa a esa cuenta, que decide. La respuesta no dice
+   * de quién es el CI para no servir de buscador de personas por documento.
+   */
+  router.post('/profiles/patients/me/dependent-requests', (request) => {
+    const titular = pacienteDeSesion(request);
+    if (titular === undefined) {
+      return forbidden('Esta cuenta no tiene perfil de paciente');
+    }
+    const documento = (cuerpo<{ nationalId?: string }>(request).nationalId ?? '').trim();
+    if (documento === '') {
+      return reply(400, {
+        statusCode: 400,
+        code: 'VALIDATION_FAILED',
+        message: 'Escribí el CI de la persona.',
+        error: 'Bad Request',
+      });
+    }
+    const destinatario = cuentaConDocumento(documento);
+    const esElPropio = documento === request.user?.nationalId || destinatario?.id === titular.id;
+    if (esElPropio) {
+      return reply(422, {
+        statusCode: 422,
+        code: 'VALIDATION_FAILED',
+        message: 'Ese CI es el tuyo: no podés registrarte como tu propio dependiente.',
+        error: 'Unprocessable Entity',
+      });
+    }
+    if (destinatario === undefined) {
+      return notFound('No hay ninguna cuenta registrada con ese CI.');
+    }
+    if (representaA(titular.id, destinatario.id)) {
+      return conflict('Esa persona ya es tu dependiente.');
+    }
+    const pendiente = solicitudes.filtrar(
+      (s) => s.titularId === titular.id && s.dependienteId === destinatario.id && s.estado === 'PENDING',
+    )[0];
+    if (pendiente !== undefined) {
+      return conflict('Ya le enviaste una solicitud a esa persona. Falta que la acepte.');
+    }
+
+    const solicitud = solicitudes.agregar({
+      id: nuevoId('solicitud-dependiente'),
+      titularId: titular.id,
+      dependienteId: destinatario.id,
+      estado: 'PENDING',
+      createdAt: ahora(),
+    });
+    emitirNotificacion({
+      userId: destinatario.userId,
+      category: 'CLINICAL',
+      subject: 'Te quieren registrar como dependiente',
+      bodyText: `${titular.displayName} pide registrarte como su dependiente. Si aceptás, va a poder pedirte turnos y ver tu historia clínica.`,
+      destination: { type: 'DEPENDENT_LINK_REQUEST', id: solicitud.id },
+    });
+    return { status: 201, body: { id: solicitud.id, status: 'PENDING' } };
+  });
+
+  router.get('/profiles/patients/me/dependent-requests/incoming', (request) => {
+    const yo = pacienteDeSesion(request);
+    if (yo === undefined) return [];
+    return solicitudes
+      .filtrar((s) => s.dependienteId === yo.id && s.estado === 'PENDING')
+      .map((s) => ({
+        id: s.id,
+        requesterDisplayName: pacientePorId(s.titularId)?.displayName ?? '',
+        createdAt: s.createdAt,
+      }));
+  });
+
+  /** Sólo la persona a la que se le pidió puede responder, y una sola vez. */
+  function responderSolicitud(request: MockRequest, estado: 'ACCEPTED' | 'REJECTED') {
+    const yo = pacienteDeSesion(request);
+    const solicitud = solicitudes.get(request.params['id']!);
+    if (yo === undefined || solicitud === undefined || solicitud.dependienteId !== yo.id) {
+      return notFound('Solicitud no encontrada');
+    }
+    if (solicitud.estado !== 'PENDING') {
+      return conflict('Esa solicitud ya fue respondida.');
+    }
+    solicitudes.actualizar(solicitud.id, { estado });
+    const titular = pacientePorId(solicitud.titularId);
+    if (estado === 'ACCEPTED') {
+      apoderamientos.agregar({
+        id: nuevoId('proxy'),
+        titularId: solicitud.titularId,
+        dependienteId: yo.id,
+        relationshipConceptId: '',
+      });
+    }
+    if (titular !== undefined) {
+      emitirNotificacion({
+        userId: titular.userId,
+        category: 'CLINICAL',
+        subject:
+          estado === 'ACCEPTED'
+            ? `${yo.displayName} aceptó ser tu dependiente`
+            : `${yo.displayName} rechazó ser tu dependiente`,
+        bodyText:
+          estado === 'ACCEPTED'
+            ? 'Ya aparece en tu lista de dependientes.'
+            : 'No se creó ningún vínculo.',
+        destination: { type: 'DEPENDENT_LINK_REQUEST', id: solicitud.id },
+      });
+    }
+    return { id: solicitud.id, status: estado };
+  }
+
+  router.post('/profiles/patients/me/dependent-requests/:id/accept', (request) =>
+    responderSolicitud(request, 'ACCEPTED'),
+  );
+  router.post('/profiles/patients/me/dependent-requests/:id/reject', (request) =>
+    responderSolicitud(request, 'REJECTED'),
+  );
 
   router.post('/profiles/patients/:id/related-persons', ({ params }) => ({
     status: 201,
@@ -1021,14 +1162,12 @@ export function registrarPerfiles(router: MockRouter): void {
     return { status: 201, body: { id: nueva.id } };
   });
   /* ---- corregir y retirar lo cargado (propietario, 13/09/2026) ------------
-     De las seis rutas de acá abajo, **sólo el `DELETE` del título existe en la
-     API**. Las otras las sirve este simulador con la forma REST que le toca a
-     cada recurso, para que publicarlas del lado del servidor no obligue a tocar
-     la pantalla. El detalle de lo que falta está en
-     `docs/pendientes-backend-perfil-profesional.md`.
-
-     Todas responden `404` a la fila que no existe o no es propia —el mismo par
-     indistinguible que usa el resto del módulo— y `204` cuando aplicaron. */
+     Las seis rutas existen en la API (título, especialidad y matrícula propias)
+     y el simulador las sirve **con las mismas reglas**: `404` a la fila que no
+     existe o no es propia —el mismo par indistinguible del resto del módulo—,
+     `400` ante una clave que el DTO no declara (con la lista blanca estricta,
+     `isPrimary` incluido), `422` si la fila ya no está pendiente y `204` cuando
+     aplicó. Un recorrido en el simulador tiene que fallar donde falla la API. */
 
   router.patch('/profiles/practitioners/me/credentials/:id', (request) => {
     const p = profesionalDeSesion(request);
@@ -1056,7 +1195,13 @@ export function registrarPerfiles(router: MockRouter): void {
     if (p === undefined) return notFound();
     const id = request.params['id']!;
     if (!existeEnElPerfil(especialidadesPropiasDe(p), id)) return notFound();
-    corregirDelPerfil(id, cuerpo<Record<string, unknown>>(request));
+    const cambios = cuerpo<Record<string, unknown>>(request);
+    const sobrantes = clavesFueraDeLaLista(cambios, ['specialtyConceptId', 'boardCertified']);
+    if (sobrantes.length > 0) return validation('Cuerpo inválido', sobrantes.map(propiedadSobrante));
+    if (!estaPendiente(especialidadesPropiasDe(p).find((e) => e.id === id)?.verificationStatusConceptId)) {
+      return preconditionFailed('Esa especialidad ya no está pendiente de verificación; no se puede corregir');
+    }
+    corregirDelPerfil(id, cambios);
     return noContent();
   });
 
@@ -1065,6 +1210,9 @@ export function registrarPerfiles(router: MockRouter): void {
     if (p === undefined) return notFound();
     const id = request.params['id']!;
     if (!existeEnElPerfil(especialidadesPropiasDe(p), id)) return notFound();
+    if (!estaPendiente(especialidadesPropiasDe(p).find((e) => e.id === id)?.verificationStatusConceptId)) {
+      return preconditionFailed('Esa especialidad ya no está pendiente de verificación; no se puede retirar');
+    }
     especialidadesAgregadas.borrar(id);
     retiradasDelPerfil.agregar({ id });
     // Si la que se va era la principal, la elección deja de tener sujeto: se
@@ -1080,7 +1228,13 @@ export function registrarPerfiles(router: MockRouter): void {
     if (p === undefined) return notFound();
     const id = request.params['id']!;
     if (!existeEnElPerfil(matriculasPropiasDe(p), id)) return notFound();
-    corregirDelPerfil(id, cuerpo<Record<string, unknown>>(request));
+    const cambios = cuerpo<Record<string, unknown>>(request);
+    const sobrantes = clavesFueraDeLaLista(cambios, ['licenseNumber', 'regulatoryAuthority', 'validFrom', 'fileId']);
+    if (sobrantes.length > 0) return validation('Cuerpo inválido', sobrantes.map(propiedadSobrante));
+    if (!estaPendiente(matriculasPropiasDe(p).find((m) => m.id === id)?.stateConceptId)) {
+      return preconditionFailed('Esa matrícula ya no está pendiente; no se puede corregir');
+    }
+    corregirDelPerfil(id, cambios);
     return noContent();
   });
 
@@ -1089,6 +1243,9 @@ export function registrarPerfiles(router: MockRouter): void {
     if (p === undefined) return notFound();
     const id = request.params['id']!;
     if (!existeEnElPerfil(matriculasPropiasDe(p), id)) return notFound();
+    if (!estaPendiente(matriculasPropiasDe(p).find((m) => m.id === id)?.stateConceptId)) {
+      return preconditionFailed('Esa matrícula ya no está pendiente; no se puede retirar');
+    }
     matriculasAgregadas.borrar(id);
     retiradasDelPerfil.agregar({ id });
     return noContent();

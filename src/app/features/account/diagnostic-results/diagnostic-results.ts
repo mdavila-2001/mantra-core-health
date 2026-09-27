@@ -8,18 +8,20 @@ import {
   PLATFORM_ID,
   signal,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { ActivatedRoute } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { AuthzClient } from '../../../core/data-access/authz/authz.client';
 import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnostics.client';
 import type {
   DiagnosticResultShare,
   PatientDiagnosticResult,
 } from '../../../core/data-access/diagnostics/diagnostics.types';
-import { FilesClient } from '../../../core/data-access/files/files.client';
+import { isScanPending } from '../../../core/data-access/files/scan-status';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type {
   ConceptLabels,
@@ -31,13 +33,15 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
-import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { Select } from '../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+import { FileDownloadService } from '../../../shared/utils/file-download/file-download.service';
 
 /** Tope de resultados que se traen. Nadie tiene cien estudios liberados a la vez. */
 const TOPE_DE_RESULTADOS = 50;
@@ -138,9 +142,9 @@ interface ArchivoVisible {
     DatePicker,
     DatePipe,
     FormField,
-    Input,
     NavIcon,
     PageHeader,
+    Select,
   ],
   templateUrl: './diagnostic-results.html',
   styleUrl: './diagnostic-results.css',
@@ -149,8 +153,9 @@ interface ArchivoVisible {
 })
 export class DiagnosticResults {
   private readonly diagnostics = inject(DiagnosticsClient);
+  private readonly authz = inject(AuthzClient);
   private readonly terminology = inject(TerminologyClient);
-  private readonly files = inject(FilesClient);
+  private readonly downloads = inject(FileDownloadService);
   private readonly auth = inject(AuthService);
   private readonly ruta = inject(ActivatedRoute);
   private readonly documento = inject(DOCUMENT);
@@ -177,8 +182,16 @@ export class DiagnosticResults {
   /** Los compartidos del resultado abierto. */
   protected readonly compartidos = signal<readonly DiagnosticResultShare[]>([]);
 
-  /** Con quién se está por compartir: la cuenta del profesional. */
-  protected readonly destinatario = signal('');
+  /**
+   * Los profesionales con los que se puede compartir: las relaciones
+   * asistenciales vigentes del titular (CL-48). Nunca un buscador global — la
+   * lista sale de `GET /authz/me/access` (BR-20), la misma que ya usa «Quién
+   * ve mi historia».
+   */
+  protected readonly profesionales = signal<readonly SelectOption<string>[]>([]);
+
+  /** Con quién se está por compartir: el perfil del profesional elegido. */
+  protected readonly destinatario = signal<string | null>(null);
 
   /** Hasta cuándo vale el acceso que se está por dar. */
   protected readonly vence = signal<Date | null>(this.porDefectoVence());
@@ -260,33 +273,42 @@ export class DiagnosticResults {
   /* ---- descarga ------------------------------------------------------------ */
 
   /**
-   * Abre un archivo del informe pidiendo su URL firmada en el momento.
+   * Baja un archivo del informe por la ruta del **propio resultado** (CL-40).
    *
-   * Es el mismo camino que usan los adjuntos de la ficha clínica, y por la misma
-   * razón: la URL vence, y emitir una por archivo al pintar la lista dejaría
-   * varios enlaces vivos a datos clínicos que nadie llegó a usar. La
-   * autorización de la descarga la sigue decidiendo el backend.
+   * Antes pedía una URL firmada y la abría en otra pestaña con `window.open`: esa
+   * pestaña sale **sin `Authorization`**, y aunque llevara token la API le negaba
+   * el archivo al paciente porque lo subió el laboratorio. Ahora se bajan los
+   * bytes por `HttpClient` —con la credencial— desde
+   * `GET /diagnostic-results/me/:reportId/files/:fileId/content`, que autoriza
+   * por titularidad y versión liberada, y se entregan con un enlace temporal.
+   * Ninguna pestaña queda abierta sobre una URL de `/common/files/...`.
    */
-  protected descargar(archivo: ArchivoVisible): void {
+  protected descargar(resultado: ResultadoVisible, archivo: ArchivoVisible): void {
     if (this.operando() !== null) {
       return;
     }
     this.operando.set(archivo.id);
-    this.files.downloadUrl(archivo.fileId).subscribe({
-      next: ({ url }) => {
+    this.diagnostics.downloadOwnResultFile(resultado.reportId, archivo.fileId).subscribe({
+      next: ({ blob, fileName }) => {
         this.operando.set(null);
-        window.open(url, '_blank', 'noopener');
+        this.downloads.save(blob, fileName ?? `${resultado.titulo} - ${archivo.rotulo}.pdf`);
       },
       error: (error: unknown) => {
         this.operando.set(null);
+        if (isScanPending(error)) {
+          this.toast.info('El archivo todavía está en análisis. Probá de nuevo en un momento.', 'Resultado');
+          return;
+        }
         const estado = errorToViewState<null>(error);
         if (estado.status === 'forbidden') {
-          // Un 403 acá no es un fallo de la aplicación: el archivo puede estar
-          // marcado como PHI con una política que esta cuenta no cumple.
           this.toast.info('No tenés permiso para descargar este archivo.', 'Resultado');
           return;
         }
-        this.toast.error('No pudimos abrir el archivo. Reintentá en un momento.', 'Resultado');
+        if (error instanceof HttpErrorResponse && error.status === 404) {
+          this.toast.info('Este archivo todavía no está disponible para vos.', 'Resultado');
+          return;
+        }
+        this.toast.error('No pudimos bajar el archivo. Reintentá en un momento.', 'Resultado');
       },
     });
   }
@@ -302,7 +324,7 @@ export class DiagnosticResults {
     }
     this.abierto.set(resultado.reportId);
     this.compartidos.set([]);
-    this.destinatario.set('');
+    this.destinatario.set(null);
     this.vence.set(this.porDefectoVence());
     this.diagnostics.listResultShares(resultado.reportId).subscribe({
       next: (items) => this.compartidos.set(items),
@@ -310,28 +332,55 @@ export class DiagnosticResults {
       // sigue siendo cierta aunque el panel no haya podido abrirse.
       error: () => this.toast.info('No pudimos leer con quién está compartido.', 'Resultado'),
     });
+    this.cargarProfesionales();
+  }
+
+  /**
+   * Trae la lista de profesionales con relación asistencial vigente.
+   *
+   * Se pide cada vez que se abre el panel: es una lectura barata y así la
+   * lista nunca queda vieja si el paciente aceptó una relación nueva desde
+   * otra pestaña.
+   */
+  private cargarProfesionales(): void {
+    this.authz.getMyClinicalAccess().subscribe({
+      next: (acceso) => {
+        this.profesionales.set(
+          acceso.careRelationships
+            .filter((relacion) => relacion.state === 'ACTIVE')
+            .map((relacion) => ({
+              value: relacion.practitionerProfileId,
+              label: relacion.practitionerName ?? relacion.practitionerProfileId,
+            })),
+        );
+      },
+      // Sin relaciones vigentes el select queda vacío: la persona no puede
+      // compartir con nadie hasta que un profesional la vincule, y eso no es
+      // un error de esta pantalla.
+      error: () => this.profesionales.set([]),
+    });
   }
 
   /** Si el formulario de compartir está completo. */
   protected readonly puedeCompartir = computed(
-    () => this.destinatario().trim() !== '' && this.vence() !== null,
+    () => this.destinatario() !== null && this.vence() !== null,
   );
 
-  /** Comparte el resultado abierto con el profesional cargado. */
+  /** Comparte el resultado abierto con el profesional elegido. */
   protected compartir(reportId: string): void {
-    const destinatario = this.destinatario().trim();
+    const practitionerProfileId = this.destinatario();
     const hasta = finDelDia(this.vence());
-    if (destinatario === '' || hasta === null) {
+    if (practitionerProfileId === null || hasta === null) {
       return;
     }
 
     this.operando.set(reportId);
     this.diagnostics
-      .shareResult(reportId, { practitionerUserId: destinatario, validUntil: hasta })
+      .shareResult(reportId, { practitionerProfileId, validUntil: hasta })
       .subscribe({
         next: (share) => {
           this.operando.set(null);
-          this.destinatario.set('');
+          this.destinatario.set(null);
           this.compartidos.set([
             share,
             ...this.compartidos().filter((previo) => previo.id !== share.id),

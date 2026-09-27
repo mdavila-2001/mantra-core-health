@@ -41,7 +41,7 @@ export interface FormInstanceListItem {
   /** Concept id del estado de la instancia, si lo tiene. */
   readonly stateConceptId?: string;
   /** ISO; presente cuando la instancia ya se cerró. */
-  readonly closedAt?: string;
+  readonly closedAt?: string | null;
   /** ISO. */
   readonly createdAt: string;
 }

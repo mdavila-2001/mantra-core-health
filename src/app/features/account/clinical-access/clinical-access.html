@@ -1,0 +1,125 @@
+<app-page-header
+  title="Quién ve mi historia"
+  subtitle="Los profesionales vinculados y los accesos concedidos a tu historia clínica. Podés revocar cualquiera."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="acceso">
+  @if (cargando()) {
+    <p class="acceso__estado" role="status" data-testid="acceso-cargando">
+      Cargando quién ve tu historia…
+    </p>
+  } @else if (sinPermiso()) {
+    <app-alert tone="info" data-testid="acceso-sin-permiso">
+      Esta sección es para pacientes. Tu cuenta no tiene un perfil de paciente.
+    </app-alert>
+  } @else if (error(); as falla) {
+    <app-alert tone="error" data-testid="acceso-error">
+      {{ falla.mensaje }}
+      @if (falla.requestId) {
+        <span class="acceso__id">(ID de la petición: {{ falla.requestId }})</span>
+      }
+      <button app-button variant="secondary" size="sm" type="button" (click)="cargar()">
+        Reintentar
+      </button>
+    </app-alert>
+  } @else {
+    @if (cuantosDeEmergencia() > 0) {
+      <app-alert tone="warning" data-testid="acceso-aviso-emergencia">
+        Hay {{ cuantosDeEmergencia() }} acceso(s) de emergencia a tu historia. Los concede un
+        profesional sin tu consentimiento previo y quedan auditados.
+      </app-alert>
+    }
+
+    <app-card class="acceso__tarjeta">
+      <app-tabs appearance="browser">
+        <app-tab [label]="'Profesionales vinculados (' + relaciones().length + ')'">
+          @if (relaciones().length === 0) {
+            <app-empty-state
+              title="Ningún profesional está vinculado a tu historia"
+              description="Cuando aceptes la solicitud de un profesional, lo vas a ver acá."
+            />
+          } @else {
+            <ul class="acceso__lista" data-testid="acceso-relaciones">
+              @for (item of relaciones(); track item.id) {
+                <li class="registro" [attr.data-testid]="'relacion-' + item.id">
+                  <div class="registro__datos">
+                    <strong>{{ item.practitionerName ?? 'Profesional sin nombre' }}</strong>
+                    <span class="registro__detalle">
+                      Desde el {{ item.validFrom | date: 'dd/MM/yyyy' }}
+                      @if (item.validTo) {
+                        · Hasta el {{ item.validTo | date: 'dd/MM/yyyy' }}
+                      } @else {
+                        · Sin fecha de fin
+                      }
+                    </span>
+                  </div>
+                  <app-badge
+                    [variant]="item.state === 'ACTIVE' ? 'success' : 'secondary'"
+                    [value]="rotulo(item.state)"
+                  />
+                  @if (item.state === 'ACTIVE') {
+                    <button
+                      app-button
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      [isLoading]="revocando() === item.id"
+                      [attr.data-testid]="'relacion-revocar-' + item.id"
+                      (click)="revocarRelacion(item)"
+                    >
+                      Revocar
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </app-tab>
+
+        <app-tab [label]="'Accesos concedidos (' + accesos().length + ')'">
+          @if (accesos().length === 0) {
+            <app-empty-state
+              title="No hay accesos concedidos"
+              description="Los accesos que compartas o que un profesional pida en una emergencia figuran acá."
+            />
+          } @else {
+            <ul class="acceso__lista" data-testid="acceso-accesos">
+              @for (item of accesos(); track item.id) {
+                <li class="registro" [attr.data-testid]="'acceso-' + item.id">
+                  <div class="registro__datos">
+                    <strong>{{ item.grantedName ?? 'Persona sin nombre' }}</strong>
+                    <span class="registro__detalle">
+                      Desde el {{ item.validFrom | date: 'dd/MM/yyyy HH:mm' }} · Hasta el
+                      {{ item.validTo | date: 'dd/MM/yyyy HH:mm' }}
+                    </span>
+                  </div>
+                  @if (item.isEmergency) {
+                    <app-badge variant="warning" value="Emergencia" />
+                  }
+                  <app-badge
+                    [variant]="item.state === 'ACTIVE' ? 'success' : 'secondary'"
+                    [value]="rotulo(item.state)"
+                  />
+                  @if (item.state === 'ACTIVE') {
+                    <button
+                      app-button
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      [isLoading]="revocando() === item.id"
+                      [attr.data-testid]="'acceso-revocar-' + item.id"
+                      (click)="revocarAcceso(item)"
+                    >
+                      Revocar
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </app-tab>
+      </app-tabs>
+    </app-card>
+  }
+</div>

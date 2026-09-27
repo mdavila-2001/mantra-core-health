@@ -1,0 +1,10 @@
+Vitrina /design-system, menú «Acciones de la orden» abierto, viewport 1440x900, tras reiniciar ng serve.
+Medido con getBoundingClientRect sobre [role=menuitem] visibles:
+  Imprimir receta      alto 37  svg 16
+  Duplicar orden       alto 37  svg 16
+  Firmar digitalmente  alto 37  svg 16
+  Anular orden         alto 37  svg 16
+Antes de migrar el <svg slot="icon"> suelto a <app-nav-icon>, «Imprimir receta» medía alto 169 y svg 153
+(el CSS de menu-item sólo dimensiona `[slot=icon] svg`, no un svg que ES el slot).
+Consola: 2 errores de CSP por scripts inline del modo dev (presentes antes del cambio).
+Las capturas de pantalla de esta página salieron en blanco en 3 intentos (herramienta), por eso la evidencia es la medición.

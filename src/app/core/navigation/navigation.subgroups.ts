@@ -111,13 +111,9 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // «porque ya no hay desplegable» dejaría esa pantalla sin nodos, que es
     // justo la que ahora hace todo el trabajo.
     //
-    // `nearby-places` (FT-19) NO entra acá aunque sea "a dónde ir": esta
-    // lista la lee tal cual `DirectoriesOverview` para dibujar los nodos de
-    // «los cuatro directorios» (ver el comentario de esa pantalla), y
-    // `nearby-places` no es un directorio —sale de tu receta y tu ubicación,
-    // no de un catálogo—. Metida acá rompía esa pantalla: mostraba 5 nodos
-    // en vez de 4 (`directories-overview.spec.ts`). Tiene su propio bloque,
-    // más abajo.
+    // Esta lista la lee tal cual `DirectoriesOverview` para dibujar los nodos
+    // de «los cuatro directorios» (ver el comentario de esa pantalla): son
+    // exactamente los cuatro de abajo, ni uno más.
     paths: [
       'directories',
       'directory',
@@ -125,15 +121,6 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'clinics-directory',
       'pharmacies-directory',
     ],
-  },
-  {
-    label: 'Lugares cercanos',
-    group: 'General',
-    icon: 'pin',
-    // Un solo destino: el armazón lo dibuja suelto (ver la nota de arriba,
-    // «un bloque de uno no es un desplegable»). Va en su propio bloque y no
-    // en «Directorios» para no ensuciar la lista que lee `DirectoriesOverview`.
-    paths: ['nearby-places'],
   },
 
   /* -- Atención -----------------------------------------------------------
@@ -144,13 +131,10 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
 
      Ahora «Consultas médicas» cuelga directo de Atención. Un subgrupo se
      justifica cuando ordena varias secciones, no cuando envuelve una. */
-  {
-    label: 'Historia clínica',
-    group: 'Atención',
-    icon: 'folder',
-    // Lo que queda escrito del paciente: el archivo y lo que se le agrega hoy.
-    paths: ['medical-records', 'progress-notes'],
-  },
+  /* «Historia clínica» agrupaba el archivo clínico con «Notas médicas». Al
+     retirarse la segunda (25/09/2026) quedaba un subgrupo envolviendo una sola
+     sección, que es exactamente lo que el párrafo de arriba dice que no se
+     hace: «Archivo clínico» cuelga directo de Atención. */
   {
     label: 'Estudios y procedimientos',
     group: 'Atención',
@@ -299,7 +283,15 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     group: 'Mi cuenta',
     icon: 'patients',
     // Quién soy para la plataforma, y cómo lo demuestro.
-    paths: ['my-account', 'my-account/identity', 'my-account/dependents'],
+    paths: [
+      'my-account',
+      'my-account/identity',
+      'my-account/dependents',
+      'my-account/security',
+      // Quién ve mi historia y qué consentí: también es «quién soy» para la plataforma.
+      'my-account/privacy',
+      'my-account/clinical-access',
+    ],
   },
   {
     label: 'Mis gestiones',
@@ -310,6 +302,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // clínico, y en medio de las pantallas clínicas partía ese bloque.
     paths: [
       'my-account/appointments',
+      'my-account/pharmacy',
       'my-account/pharmacy-orders',
       'my-account/loyalty',
       'my-account/promotions',

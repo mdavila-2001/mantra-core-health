@@ -1,0 +1,83 @@
+exit=1
+    +   "/notification-center · «Marcar todas como leídas (4)» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/notification-center · «Todas» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/notification-center · «Sin leer (4)» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/notification-center · «Ana Lucía Pérez Quiroga te escribió Doctora, ya me llegaron los resultados del laboratorio… Mensajes · hace 4 h Nueva» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/notification-center · «Nueva solicitud de consulta Adela Beatriz Méndez Gamboa pidió turno: «Chequeo anual». Turnos · hace 5 h Nueva» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/notification-center · «Cita cancelada Jorge Luis Mamani Choque canceló su cita de mañana: «El paciente avisó que viajaba». Turnos · hace 20 h Nueva» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/notification-center · «Dra. Terrazas te escribió Le pedí un Holter, cuando lo tengas lo vemos juntas. Mensajes · ayer Nueva» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/notification-center · «Resultado crítico Laboratorio Central informa potasio 5,9 mmol/L en Ricardo Condori Apaza. Clínico · hace 2 días» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/identity · «Verificar» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/identity · «Mis trámites» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/administration/pharmacy-orders · «En preparación (3)» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/administration/pharmacy-orders · «Cerrados (2)» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/administration/pharmacy-profile · «Ver los documentos» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/administration/pharmacy-profile · «Empresa» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/administration/pharmacy-profile · «Documentos» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/administration/pharmacy-profile · «Representante y gerentes» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/administration/pharmacy-profile · «Editar» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/access-requests · «Rechazar» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/access-requests · «Autorizar lo elegido» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/edit · «Datos personales» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/edit · «Contacto» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/edit · «Facturación» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/edit · «Dónde atiendo» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/edit · «Trayectoria» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/edit · «Credenciales» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/edit · «Actividad» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/edit · «+ Agregar otro nombre» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/edit · «Abrir calendario» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/edit · «Guardar cambios» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/profile/edit · «Datos personales» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/profile/edit · «Contacto» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/profile/edit · «Facturación» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/profile/edit · «Seguros y tutores» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/profile/edit · «+ Agregar otro nombre» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/profile/edit · «Abrir calendario» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/profile/edit · «Limpiar selección» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/profile/edit · «Cancelar» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-account/profile/edit · «Guardar cambios» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-quotations/new · «Abrir calendario» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-quotations/new · «Elegir: Consulta cardiológica» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-quotations/new · «Elegir: Control cardiológico» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-quotations/new · «Elegir: Electrocardiograma» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-quotations/new · «Elegir: Ecocardiograma Doppler» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-quotations/new · «Elegir: Holter de 24 horas» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-quotations/new · «Elegir: Monitoreo ambulatorio de presión (MAPA)» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-quotations/new · «Elegir: Teleconsulta cardiológica» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-quotations/new · «Elegir: Certificado de aptitud cardiovascular» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-quotations/new · «Semanal» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-quotations/new · «Quincenal» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    +   "/my-quotations/new · «Mensual» → no se pudo pulsar locator.click: Timeout 4000ms exceeded.",
+    + ]
+
+      191 |       expect
+      192 |         .soft(rotos.map((c) => `${c.ruta} · «${c.boton}» → ${c.resultado} ${c.detalle}`))
+    > 193 |         .toEqual([]);
+          |          ^
+      194 |     });
+      195 |   }
+      196 |
+        at C:\Users\Usuario\Downloads\Entrypoint-GitHUb\alovida\mantra-core-health\playwright\mockup-click-sweep.spec.ts:193:10
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    artifacts\playwright\salida\mockup-click-sweep-mockup--11979--el-backend-simulado-Médica-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: artifacts\playwright\salida\mockup-click-sweep-mockup--11979--el-backend-simulado-Médica-chromium\error-context.md
+
+    Error Context: artifacts\playwright\salida\mockup-click-sweep-mockup--11979--el-backend-simulado-Médica-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    artifacts\playwright\salida\mockup-click-sweep-mockup--11979--el-backend-simulado-Médica-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace artifacts\playwright\salida\mockup-click-sweep-mockup--11979--el-backend-simulado-Médica-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › playwright\mockup-click-sweep.spec.ts:188:9 › mockup · barrido de clics con el backend simulado › Médica 
+  3 passed (10.7m)
+
+[exited with code 0]

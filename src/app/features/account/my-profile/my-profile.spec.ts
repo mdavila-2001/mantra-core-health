@@ -51,7 +51,7 @@ const RESUMEN_SIN_VERIFICAR = {
 };
 
 /**
- * Doble de la billetera: la quinta pestaña la monta y pediría `/loyalty/me`.
+ * Doble de la billetera: la última pestaña la monta y pediría `/loyalty/me`.
  *
  * Sin membresía, que es el estado más común y no llama a nada más. Lo que la
  * billetera hace con sus datos lo prueba su propio spec.
@@ -244,6 +244,52 @@ describe('MyProfile', () => {
       expect(texto).toContain('Carlos Mamani');
       expect(texto).toContain('+591 70055443');
       expect(texto).toContain('Tutor legal');
+    });
+
+    /**
+     * Pedido del propietario del 24/09/2026: separar el seguro del tutor en
+     * dos categorías. Antes eran una sola pestaña «Seguros y tutores» con dos
+     * listas adentro; ahora son dos pestañas, y cada una sólo dibuja lo suyo
+     * — no basta con que el texto junto de todas las pestañas contenga los dos
+     * datos, como prueban los dos casos de arriba.
+     */
+    it('«Seguros» y «Tutores» son pestañas separadas: cada una sólo muestra lo suyo', () => {
+      http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
+      http
+        .expectOne((r) => r.url === '/terminology/concepts')
+        .flush({ items: [], count: 0 });
+      const señal = (
+        fixture.componentInstance as unknown as Record<string, { set: (v: unknown) => void }>
+      )['perfil'];
+      señal.set({
+        personId: 'per-1',
+        patientProfileId: 'pp-1',
+        identityVerified: false,
+        coverages: [{ carrierName: 'Alianza Vida Seguros', isPublic: false, verified: false }],
+        guardians: [{ displayName: 'Carlos Mamani', isEmergencyContact: true, isLegalGuardian: true }],
+      });
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      const pestanas = [...raiz.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+      expect(pestanas.map((p) => p.textContent?.trim())).toEqual([
+        'Datos personales',
+        'Contacto',
+        'Facturación',
+        'Seguros',
+        'Tutores',
+        'Mis puntos',
+      ]);
+
+      pestanas[3].click();
+      fixture.detectChanges();
+      expect(raiz.textContent).toContain('Alianza Vida Seguros');
+      expect(raiz.textContent).not.toContain('Carlos Mamani');
+
+      pestanas[4].click();
+      fixture.detectChanges();
+      expect(raiz.textContent).toContain('Carlos Mamani');
+      expect(raiz.textContent).not.toContain('Alianza Vida Seguros');
     });
 
     /**
@@ -800,13 +846,14 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
 
   /**
    * N-03. «Mis puntos» deja de ser una pantalla aparte con su propia cabecera
-   * y pasa a ser la quinta pestaña de la tarjeta: la misma billetera, sin el
-   * título repetido.
+   * y pasa a ser una pestaña más de la tarjeta: la misma billetera, sin el
+   * título repetido. Desde el 24/09/2026, con «Seguros» y «Tutores» separadas,
+   * es la SEXTA y última.
    */
-  describe('«Mis puntos» como quinta pestaña', () => {
+  describe('«Mis puntos» como sexta pestaña', () => {
     const PACIENTE = { sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'], pid: 'pp-1' };
 
-    it('la ficha tiene cinco pestañas y la última es «Mis puntos»', () => {
+    it('la ficha tiene seis pestañas y la última es «Mis puntos»', () => {
       montar(PACIENTE);
       pintarLaFicha();
 
@@ -815,7 +862,8 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
         'Datos personales',
         'Contacto',
         'Facturación',
-        'Seguros y tutores',
+        'Seguros',
+        'Tutores',
         'Mis puntos',
       ]);
       // Se entra por «Datos personales», como siempre.
@@ -826,7 +874,7 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
       montar(PACIENTE);
       pintarLaFicha();
 
-      pestanasDeLaFicha()[4].click();
+      pestanasDeLaFicha()[5].click();
       fixture.detectChanges();
 
       const raiz = fixture.nativeElement as HTMLElement;
@@ -843,7 +891,7 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
       montar(PACIENTE);
       pintarLaFicha();
 
-      expect(pestanasDeLaFicha()[4].getAttribute('aria-selected')).toBe('true');
+      expect(pestanasDeLaFicha()[5].getAttribute('aria-selected')).toBe('true');
       expect(
         (fixture.nativeElement as HTMLElement).querySelector('[data-testid="mi-perfil-puntos"]'),
       ).not.toBeNull();

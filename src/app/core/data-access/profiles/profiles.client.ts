@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import type { BirthSexCode } from '../iam/iam.types';
 import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
   AccountLink,
@@ -42,7 +43,9 @@ import type {
   RelatedPerson,
   RelatedPersonCreated,
   Dependent,
+  DependentLinkRequestSent,
   DependentRelationshipCode,
+  IncomingDependentLinkRequest,
   NewDependent,
   PractitionerOnboarding,
   LinkableOrganizationPage,
@@ -334,6 +337,53 @@ export class ProfilesClient {
   }
 
   /**
+   * `POST /profiles/patients/me/dependent-requests` — pide representar a quien
+   * ya tiene cuenta con ese CI.
+   *
+   * No crea nada todavía: a esa cuenta le llega una notificación y el vínculo
+   * nace recién cuando la acepta. `404` es «no hay cuenta con ese CI».
+   *
+   * Hoy sólo la atiende el simulador de `mockup`; la API no la publica.
+   */
+  requestDependentLink(nationalId: string): Observable<DependentLinkRequestSent> {
+    return this.http.post<DependentLinkRequestSent>(
+      this.url('/profiles/patients/me/dependent-requests'),
+      { nationalId },
+    );
+  }
+
+  /** `GET /profiles/patients/me/dependent-requests/incoming` — las que esperan respuesta. */
+  listIncomingDependentLinkRequests(): Observable<readonly IncomingDependentLinkRequest[]> {
+    return this.http
+      .get<
+        { id: string; requesterDisplayName: string; createdAt: string }[]
+      >(this.url('/profiles/patients/me/dependent-requests/incoming'))
+      .pipe(
+        map((body) => body.map((fila) => ({ ...fila, createdAt: new Date(fila.createdAt) }))),
+      );
+  }
+
+  /** `POST …/dependent-requests/:id/accept` — quien pidió pasa a representar a esta cuenta. */
+  acceptDependentLinkRequest(requestId: string): Observable<void> {
+    return this.http
+      .post<unknown>(
+        this.url(`/profiles/patients/me/dependent-requests/${encodeURIComponent(requestId)}/accept`),
+        {},
+      )
+      .pipe(map(() => undefined));
+  }
+
+  /** `POST …/dependent-requests/:id/reject`. */
+  rejectDependentLinkRequest(requestId: string): Observable<void> {
+    return this.http
+      .post<unknown>(
+        this.url(`/profiles/patients/me/dependent-requests/${encodeURIComponent(requestId)}/reject`),
+        {},
+      )
+      .pipe(map(() => undefined));
+  }
+
+  /**
    * `GET /profiles/practitioners/me/summary` — el perfil profesional propio.
    *
    * Autoservicio, igual que el resumen del paciente: el sujeto lo resuelve el
@@ -480,6 +530,10 @@ export class ProfilesClient {
       readonly lastName: string;
       readonly motherLastName: string;
       readonly birthDate: string;
+      /* P28: el sexo al nacer y el departamento emisor se corrigen; el número
+         del documento no (tiene su circuito de verificación). */
+      readonly sexAtBirth: BirthSexCode;
+      readonly issuerAdministrativeAreaConceptId: string;
       readonly phone: string;
       /* Los cinco contactos que el alta declara por separado. El correo de
          trabajo es un contacto más: cambiarlo no cambia el correo de acceso,
@@ -748,6 +802,10 @@ export class ProfilesClient {
    * adicional para siempre; ver `docs/progress/BLOCKERS.md`.
    *
    * Es idempotente: marcar la que ya lo es devuelve la misma especialidad.
+   *
+   * Sin consumidor desde el 23/09/2026: el editor retiró «Marcar como
+   * principal» porque el médico pidió todas las especialidades iguales (D-01).
+   * Se conserva mientras la API lo exponga.
    *
    * @param specialtyId - La especialidad que pasa a ser la principal.
    * @returns La especialidad, ya primaria.

@@ -8,13 +8,26 @@ import {
   output,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
-import { of, switchMap } from 'rxjs';
+import { catchError, map, of, switchMap, tap, type Observable } from 'rxjs';
 
+import { AuthService } from '../../../../core/auth/auth.service';
 import { ChartTemplatesClient } from '../../../../core/data-access/chart-templates/chart-templates.client';
+import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
+import { DiagnosticsClient } from '../../../../core/data-access/diagnostics/diagnostics.client';
+import type { RespuestaDeFormulario } from '../../../../core/data-access/triage-ia/diagnosis-ia.types';
+import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
 import { DiagnosisBlock } from '../diagnosis-block/diagnosis-block';
+import { AdditionalFields } from '../additional-fields/additional-fields';
 import { AllergyBlock } from '../allergy-block/allergy-block';
-import { DiagnosticsBlock } from '../diagnostics-block/diagnostics-block';
+import { ChartNotesClient } from '../../../../core/data-access/chart-notes/chart-notes.client';
+import type { MedicalNoteEntry } from '../../../../core/data-access/clinical/clinical.types';
+import { AnalysisOrderBlock } from '../analysis-order-block/analysis-order-block';
+import {
+  FormConclusionBlock,
+  type CierreDelFormulario,
+} from '../form-conclusion-block/form-conclusion-block';
 import { FreeNoteBlock } from '../free-note-block/free-note-block';
 import { ProceduresBlock } from '../procedures-block/procedures-block';
 import type {
@@ -158,6 +171,21 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
   timeStyle: 'short',
 });
 
+/** Un cierre sin nada elegido: la ficha se completa sola, como siempre. */
+const SIN_CIERRE: CierreDelFormulario = { diagnostico: null, orden: null };
+
+/**
+ * Un alta del cierre (D4): qué se registra después de cerrar la ficha y cómo
+ * se nombra en los avisos.
+ */
+interface PasoDelCierre {
+  /** «el diagnóstico tentativo», «la orden de análisis». */
+  readonly nombre: string;
+  readonly titulo: string;
+  readonly exito: string;
+  readonly ejecutar: () => Observable<unknown>;
+}
+
 /**
  * **Formularios clínicos por especialidad**, dentro del encuentro — carril 2,
  * punto 1 del reclamo.
@@ -207,16 +235,30 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
  * y versión de esquema (`forms.form_instances` es única por recurso +
  * versión). Igual que el diagnóstico repetido: no es un fallo, es la
  * plantilla ya completada para este encuentro.
+ *
+ * ## La ficha termina en un cierre (D4)
+ *
+ * Con una plantilla de `forms` elegida, debajo de los campos va el **cierre**
+ * (`app-form-conclusion-block`): la IA sugiere diagnósticos tentativos y
+ * análisis a partir de lo respondido, y quien atiende elige —opcionalmente—
+ * un diagnóstico y una orden. Al completar se encadena, en este orden: cerrar
+ * la instancia → registrar el diagnóstico (nace presuntivo, dentro del
+ * encuentro, con el nombre de la ficha como nota) → pedir la orden. Cada paso
+ * avisa por su cuenta, y **un fallo no deshace el anterior**: la ficha ya
+ * quedó guardada, y lo que no se registró se dice con todas las letras para
+ * que se haga desde su casilla.
  */
 @Component({
   selector: 'app-specialty-form-block',
   imports: [
+    AdditionalFields,
     Alert,
     AppButton,
     Card,
     DiagnosisBlock,
     AllergyBlock,
-    DiagnosticsBlock,
+    AnalysisOrderBlock,
+    FormConclusionBlock,
     FreeNoteBlock,
     Checkbox,
     DatePicker,
@@ -238,6 +280,13 @@ export class SpecialtyFormBlock {
   private readonly chartTemplates = inject(ChartTemplatesClient);
   private readonly forms = inject(FormsClient);
   private readonly profiles = inject(ProfilesClient);
+  private readonly clinical = inject(ClinicalClient);
+  private readonly diagnostics = inject(DiagnosticsClient);
+  private readonly notes = inject(ChartNotesClient);
+
+  /** Los campos adicionales del doctor, al final de la ficha. */
+  private readonly adicionales = viewChild(AdditionalFields);
+  private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
 
   /**
@@ -409,9 +458,7 @@ export class SpecialtyFormBlock {
 
   protected readonly esCirugia = computed(() => this.plantillaId() === BLOQUE_CIRUGIA);
 
-  protected readonly esOdontologia = computed(
-    () => this.plantillaId() === BLOQUE_ODONTOLOGIA,
-  );
+  protected readonly esOdontologia = computed(() => this.plantillaId() === BLOQUE_ODONTOLOGIA);
 
   protected readonly esLaboratorio = computed(() => this.plantillaId() === BLOQUE_LABORATORIO);
 
@@ -425,11 +472,7 @@ export class SpecialtyFormBlock {
    * completar una ficha, que es cuando el modo lectura tapa el selector.
    */
   protected readonly bloquePropio = computed(
-    () =>
-      this.esDiagnostico() ||
-      this.esCirugia() ||
-      this.esOdontologia() ||
-      this.esLaboratorio(),
+    () => this.esDiagnostico() || this.esCirugia() || this.esOdontologia() || this.esLaboratorio(),
   );
 
   /**
@@ -651,6 +694,36 @@ export class SpecialtyFormBlock {
     return null;
   });
 
+  /**
+   * Los campos adicionales guardados con la respuesta: las filas de las notas
+   * médicas de este encuentro, y su texto libre. Se leen aparte porque viven
+   * en la nota y no en la instancia del formulario.
+   */
+  protected readonly adicionalesGuardados = signal<readonly MedicalNoteEntry[]>([]);
+
+  private consultarAdicionales(encounterId: string): void {
+    this.adicionalesGuardados.set([]);
+    this.notes
+      .listNotes({ patientProfileId: this.patientProfileId(), encounterId, limit: 50 })
+      .subscribe({
+        next: (pagina) => {
+          if (this.encounterId() !== encounterId) return;
+          this.adicionalesGuardados.set(
+            pagina.items
+              .filter((nota) => nota.encounterId === encounterId)
+              .flatMap((nota) => [
+                ...(nota.entries ?? []),
+                ...(nota.subjectiveText
+                  ? [{ label: 'Texto libre', value: nota.subjectiveText }]
+                  : []),
+              ]),
+          );
+        },
+        // Sin las notas la respuesta se lee igual: lo que falta es un agregado.
+        error: () => undefined,
+      });
+  }
+
   protected reconsultarRespuesta(): void {
     this.consultarRespuesta(this.encounterId());
   }
@@ -675,6 +748,7 @@ export class SpecialtyFormBlock {
           // El encuentro pudo cambiar mientras la respuesta viajaba.
           if (this.encounterId() !== encounterId) return;
           this.respondido.set(ready(detalle));
+          if (detalle !== null) this.consultarAdicionales(encounterId);
         },
         error: (error: unknown) => {
           if (this.encounterId() !== encounterId) return;
@@ -762,7 +836,7 @@ export class SpecialtyFormBlock {
   protected descargarPdf(): void {
     const detalle = this.formularioRespondido();
     if (detalle === null) return;
-    const cierre = detalle.closedAt === undefined ? undefined : new Date(detalle.closedAt);
+    const cierre = detalle.closedAt == null ? undefined : new Date(detalle.closedAt);
     downloadFormResponsePdf({
       id: detalle.id,
       titulo: this.tituloDeLaRespuesta(),
@@ -936,8 +1010,49 @@ export class SpecialtyFormBlock {
       !this.buscandoRespuesta() &&
       this.plantillaElegida() !== null &&
       this.camposObligatoriosCompletos() &&
+      // Los campos adicionales son opcionales, pero lo que se escribió ahí
+      // tiene que estar bien: se guardan con la ficha y no por separado.
+      !(this.adicionales()?.hayProblemas() ?? false) &&
+      (this.adicionales()?.impedimento() ?? null) === null &&
       !this.enviando(),
   );
+
+  /* -- El cierre de la ficha (D4) ------------------------------------------ */
+
+  /** Lo último que eligió quien atiende en el bloque de cierre. */
+  protected readonly cierre = signal<CierreDelFormulario>(SIN_CIERRE);
+
+  /**
+   * Lo que no se pudo registrar después de guardar la ficha, en palabras.
+   *
+   * Persiste más que el toast a propósito: la ficha ya quedó guardada y el
+   * bloque pasa a lectura; lo que faltó tiene que seguir a la vista para que
+   * se registre desde su casilla.
+   */
+  protected readonly fallosDelCierre = signal<readonly string[]>([]);
+
+  /**
+   * Las preguntas de la ficha con lo respondido, en palabras, para la IA.
+   *
+   * Sólo lo respondido, y nunca el odontograma: es un mapa de piezas, no una
+   * respuesta que se pueda leer.
+   */
+  protected readonly respuestasParaLaIa = computed<readonly RespuestaDeFormulario[]>(() => {
+    const plantilla = this.plantillaElegida();
+    if (plantilla === null) return [];
+    const valores = this.valores();
+    const deLaPlantilla = plantilla.fields.flatMap((campo) => {
+      const valor = valores[campo.fieldId];
+      if (esVacio(valor) || esMapa(valor)) return [];
+      return [{ question: campo.name, answer: textoDeValor(valor, campo.dataType) }];
+    });
+    // Lo que el doctor sumó a mano también es parte de lo observado.
+    const adicionales = (this.adicionales()?.entradas() ?? []).map((fila) => ({
+      question: fila.label,
+      answer: fila.value,
+    }));
+    return [...deLaPlantilla, ...adicionales];
+  });
 
   /* -- Completar ---------------------------------------------------------- */
 
@@ -989,25 +1104,66 @@ export class SpecialtyFormBlock {
 
     this.enviando.set(true);
     this.resultado.set(loading());
+    this.fallosDelCierre.set([]);
+    // Los pasos del cierre se arman después de cerrar la respuesta, con su
+    // id: la orden que sale del cierre queda asociada a esa respuesta.
+    const { diagnostico, orden } = this.cierre();
+    // `custodianTenantId` es obligatorio en los dos DTO y no se deduce del
+    // paciente: es quién responde por el registro, y eso lo eligió la sesión.
+    // Sin organización la ficha se guarda igual; el cierre no, y se dice.
+    const impedimento =
+      (diagnostico !== null || orden !== null) && this.auth.activeTenantId() === null
+        ? 'Elegí una organización en el encabezado para registrar el cierre.'
+        : null;
+    // Los campos adicionales van después del cierre y no dependen de él: un
+    // cierre frenado no se lleva puesta la nota ni los archivos.
+    const adicionales = this.adicionales()?.pasos(encounterId) ?? [];
 
     this.forms
       .openInstance({ resourceId: encounterId })
       .pipe(
         switchMap((instancia) =>
-          this.forms
-            .captureValues(instancia.id, values)
-            .pipe(switchMap(() => this.forms.closeInstance(instancia.id))),
+          this.forms.captureValues(instancia.id, values).pipe(
+            switchMap(() => this.forms.closeInstance(instancia.id)),
+            // Se avisa acá y no al final: la ficha ya está guardada aunque lo
+            // que sigue falle, y el orden de los avisos es el de los hechos.
+            tap(() =>
+              this.toasts.success(
+                `«${plantilla.name}» quedó guardada en la ficha.`,
+                'Formulario completado',
+              ),
+            ),
+            map(() => instancia.id),
+          ),
         ),
+        // Las altas del cierre corren después de cerrar la ficha; un fallo
+        // ahí no la deshace y no llega como error: llega como lista de lo
+        // que faltó.
+        switchMap((respuestaId) => {
+          const cierre = this.pasosDelCierre(plantilla, encounterId, respuestaId);
+          const delCierre =
+            impedimento === null
+              ? this.ejecutarEnOrden(cierre)
+              : of(this.frenados(cierre, impedimento));
+          // En dos filas separadas: un paso que falla frena a los que le
+          // siguen en su fila, y la nota no depende del diagnóstico.
+          return delCierre.pipe(
+            switchMap((fallosDelCierre) =>
+              this.ejecutarEnOrden(adicionales).pipe(
+                map((fallos) => [...fallosDelCierre, ...fallos]),
+              ),
+            ),
+          );
+        }),
       )
       .subscribe({
-        next: () => {
+        next: (fallos) => {
           this.enviando.set(false);
           this.resultado.set(ready(null));
           this.valores.set({});
-          this.toasts.success(
-            `«${plantilla.name}» quedó guardada en la ficha.`,
-            'Formulario completado',
-          );
+          this.cierre.set(SIN_CIERRE);
+          this.adicionales()?.limpiar();
+          this.fallosDelCierre.set(fallos);
           this.cambio.emit();
           // Lo recién guardado se relee del backend y el bloque pasa a lectura.
           this.consultarRespuesta(encounterId);
@@ -1017,6 +1173,106 @@ export class SpecialtyFormBlock {
           this.resultado.set(errorToViewState<null>(error));
         },
       });
+  }
+
+  /**
+   * Las altas que el cierre pide, en el orden en que se registran: primero el
+   * diagnóstico tentativo, después la orden de análisis. Ninguna es
+   * obligatoria; sin nada elegido la lista es vacía y la ficha se completa
+   * como siempre.
+   */
+  private pasosDelCierre(
+    plantilla: ChartTemplate,
+    encounterId: string,
+    respuestaId: string,
+  ): PasoDelCierre[] {
+    const { diagnostico, orden } = this.cierre();
+    const patientProfileId = this.patientProfileId();
+    // Sin organización ningún paso llega a ejecutarse (ver `completar`).
+    const custodianTenantId = this.auth.activeTenantId() ?? '';
+    const pasos: PasoDelCierre[] = [];
+
+    if (diagnostico !== null) {
+      pasos.push({
+        nombre: 'el diagnóstico tentativo',
+        titulo: 'Diagnóstico tentativo registrado',
+        exito: 'Nace presuntivo: confirmalo o rechazalo en la casilla «Diagnóstico».',
+        ejecutar: () =>
+          this.clinical.createCondition({
+            custodianTenantId,
+            patientProfileId,
+            codeConceptId: diagnostico,
+            encounterId,
+            noteText: `Del formulario «${plantilla.name}»`,
+          }),
+      });
+    }
+    if (orden !== null) {
+      pasos.push({
+        nombre: 'la orden de análisis',
+        titulo: 'Orden de análisis pedida',
+        exito: 'Quedó en la casilla «Orden de análisis» de esta consulta.',
+        ejecutar: () =>
+          this.diagnostics.requestStudy({
+            custodianTenantId,
+            patientProfileId,
+            codeConceptId: orden.codeConceptId,
+            encounterId,
+            formInstanceId: respuestaId,
+            category: orden.category,
+            ...(orden.categoryConceptId === undefined
+              ? {}
+              : { categoryConceptId: orden.categoryConceptId }),
+          }),
+      });
+    }
+    return pasos;
+  }
+
+  /** Nada del cierre se intentó, por un motivo que vale para todos los pasos. Avisado una vez. */
+  private frenados(pasos: readonly PasoDelCierre[], motivo: string): readonly string[] {
+    this.toasts.error(motivo, 'La ficha quedó guardada, pero no todo el cierre');
+    return pasos.map((paso) => `No se registró ${paso.nombre}: ${motivo}`);
+  }
+
+  /**
+   * Corre las altas una detrás de otra y devuelve lo que falló, en palabras.
+   *
+   * Un paso que falla **frena los siguientes** —pedir una orden cuando el
+   * diagnóstico que la motiva no se registró es escribir a medias— pero no
+   * deshace nada: lo hecho, hecho está, y cada cosa que faltó se nombra para
+   * que se registre desde su casilla. Nunca falla hacia arriba: la ficha ya
+   * quedó guardada y eso no se cuenta como error.
+   */
+  private ejecutarEnOrden(pasos: readonly PasoDelCierre[]): Observable<readonly string[]> {
+    const [primero, ...resto] = pasos;
+    if (primero === undefined) return of([]);
+    return primero.ejecutar().pipe(
+      tap(() => this.toasts.success(primero.exito, primero.titulo)),
+      switchMap(() => this.ejecutarEnOrden(resto)),
+      catchError((error: unknown) => of(this.fallosDesde(primero, resto, error))),
+    );
+  }
+
+  /** El fallo de un paso y los que no se intentaron por su culpa, ya avisados. */
+  private fallosDesde(
+    paso: PasoDelCierre,
+    siguientes: readonly PasoDelCierre[],
+    error: unknown,
+  ): readonly string[] {
+    const estado = errorToViewState<null>(error);
+    const motivo =
+      estado.status === 'validation'
+        ? estado.issues.map((issue) => issue.message).join(' ')
+        : (mensajeDeFalloDeEscritura(estado, { accion: `registrar ${paso.nombre}` }) ?? '');
+    const mensaje = `No se registró ${paso.nombre}${motivo === '' ? '.' : `: ${motivo}`}`;
+    this.toasts.error(mensaje, 'La ficha quedó guardada, pero no todo el cierre');
+    return [
+      mensaje,
+      ...siguientes.map(
+        (siguiente) => `No se registró ${siguiente.nombre}: se frenó por el fallo anterior.`,
+      ),
+    ];
   }
 
   private valoresParaEnviar(plantilla: ChartTemplate): FieldValueInput[] {

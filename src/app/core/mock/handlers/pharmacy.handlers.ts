@@ -271,17 +271,123 @@ export function registrarFarmacia(router: MockRouter): void {
     count: FARMACIAS.length,
   }));
 
+  // Carril A (Ola 0, 2026-09-25) · GET /pharmacy/pharmacies/:id — el perfil de
+  // una farmacia. `.filter`, NO `.find`: las 50 sucursales del corpus
+  // comparten `id` por cadena (35 Farmacorp con el mismo tenant), así que un
+  // id de cadena trae TODAS sus sedes, no una sola.
+  router.get('/pharmacy/pharmacies/:id', ({ params }) => {
+    const id = params['id']!;
+    const sedes = FARMACIAS.filter((f) => f.id === id);
+    if (sedes.length === 0) return notFound('Farmacia no encontrada');
+    const f0 = sedes[0]!;
+    return {
+      id: f0.id,
+      code: f0.code,
+      name: f0.name,
+      // Límite del doble: `VitrinaSimulada` no declara razón social (sólo 7
+      // farmacias de la planilla la tienen, embebida en `biography`); se usa
+      // el nombre comercial también como `legalName`.
+      legalName: f0.name,
+      type: null,
+      siteCount: sedes.length,
+      productCount: productos.filtrar((p) => p.pharmacyId === id).length,
+      homeDeliveryAvailable: sedes.some((f) => f.homeDelivery),
+      pickupAvailable: true,
+      sites: sedes.map((f) => ({
+        id: f.siteId,
+        code: f.code,
+        name: f.siteName,
+        addressText: f.addressText,
+        latitude: f.lat,
+        longitude: f.lng,
+      })),
+    };
+  });
+
   router.get('/pharmacy/products', ({ query }) => {
     const q = texto(query, 'search');
     const conceptId = texto(query, 'conceptId');
+    const pharmacyId = texto(query, 'pharmacyId');
     const limit = Number(query.get('limit') ?? 50) || 50;
     const items = productos
       .todos()
       .filter((p) => contiene(p.brandName, q) || contiene(p.genericName, q) || contiene(p.productCode, q))
       .filter((p) => conceptId === null || p.medicationConceptId === conceptId)
+      .filter((p) => pharmacyId === null || p.pharmacyId === pharmacyId)
       .slice(0, limit)
       .map(({ medicationConceptId: _m, price: _p, stock: _s, ...p }) => p);
     return { items, limit, truncated: items.length >= limit };
+  });
+
+  // «Farmacia» · pestaña Comprar (25/09/2026): sedes sueltas, con su
+  // ubicación, sin exigir productos de antemano. Reusa `FARMACIAS` y
+  // `distanciaKm` tal cual los usa `/pharmacy-inventory/availability` — es
+  // el mismo dato, sólo que acá se lista sin evaluarlo contra nada.
+  router.get('/pharmacy/sites', ({ query }) => {
+    const q = texto(query, 'search');
+    const latTexto = query.get('lat');
+    const lngTexto = query.get('lng');
+    const origen = latTexto === null || lngTexto === null ? null : { lat: Number(latTexto), lng: Number(lngTexto) };
+    const limit = Number(query.get('limit') ?? 50) || 50;
+    const items = FARMACIAS
+      .filter((f) => contiene(f.name, q) || contiene(f.siteName, q))
+      .map((f) => ({
+        siteId: f.siteId,
+        siteName: f.siteName,
+        pharmacyId: f.id,
+        pharmacyName: f.name,
+        addressText: f.addressText,
+        latitude: f.lat,
+        longitude: f.lng,
+        distanceKm: origen === null ? null : distanciaKm(origen.lat, origen.lng, f.lat, f.lng),
+        homeDeliveryAvailable: f.homeDelivery,
+        pickupAvailable: true,
+        productCount: productos.filtrar((p) => p.pharmacyId === f.id).length,
+      }))
+      .sort(
+        (a, b) =>
+          (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity) ||
+          a.pharmacyName.localeCompare(b.pharmacyName, 'es') ||
+          a.siteName.localeCompare(b.siteName, 'es'),
+      )
+      .slice(0, limit);
+    return { items, count: items.length };
+  });
+
+  // Carril A (Ola 0, 2026-09-25) · GET /pharmacy/sites/:siteId/prices — el
+  // catálogo con precio real de una sede. `?product=` acota a un producto.
+  // Cero números nuevos: todo sale de `productos`, igual que `/availability`.
+  router.get('/pharmacy/sites/:siteId/prices', ({ params, query }) => {
+    const siteId = params['siteId']!;
+    const farmacia = FARMACIAS.find((f) => f.siteId === siteId);
+    if (farmacia === undefined) return notFound('Sede de farmacia no encontrada');
+    const productId = texto(query, 'product');
+    const items = productos
+      .filtrar((p) => p.pharmacyId === farmacia.id && p.stock > 0)
+      .filter((p) => productId === null || p.id === productId)
+      .sort((a, b) => a.genericName.localeCompare(b.genericName, 'es'))
+      .map((p) => ({
+        productId: p.id,
+        productCode: p.productCode,
+        brandName: p.brandName,
+        genericName: p.genericName,
+        strengthText: p.strengthText,
+        packageSizeText: p.packageSizeText,
+        medication: p.medication,
+        requiresPrescription: p.requiresPrescription,
+        unitAmount: p.price,
+        patientAmount: p.price,
+        currency: BOB,
+        priceListCode: 'PUBLICO',
+      }));
+    return {
+      siteId: farmacia.siteId,
+      siteName: farmacia.siteName,
+      pharmacyId: farmacia.id,
+      pharmacyName: farmacia.name,
+      items,
+      count: items.length,
+    };
   });
 
   router.get('/pharmacy-inventory/availability', ({ query }) => {

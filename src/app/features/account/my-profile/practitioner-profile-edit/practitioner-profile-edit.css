@@ -32,9 +32,12 @@
   margin-inline: auto;
 }
 
-/* Dentro de «Credenciales» viven dos trámites —especialidades y matrículas—
-   separados por aire, no por otra tarjeta. */
-.edicion__seccion + .edicion__seccion {
+/* Dos trámites de una misma pestaña van separados por aire y una línea, no por
+   otra tarjeta. Las especialidades siguen a los datos fijos de «Datos
+   personales» desde el 24/09/2026: sin el mismo corte se leían como parte del
+   bloque de arriba. */
+.edicion__seccion + .edicion__seccion,
+.edicion__fijos + .edicion__seccion {
   border-block-start: 1px solid var(--border-subtle);
   margin-block-start: var(--sp-6);
   padding-block-start: var(--sp-5);
@@ -82,6 +85,31 @@
   .edicion__formulario {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+/* Dentro de un modal la grilla no pasa de dos columnas. Los escalones de arriba
+   miran el ancho de la ventana y no el del contenedor: con la ventana ancha, un
+   modal `md` quedaba partido en tres columnas de unos 195 px, donde no entran el
+   nombre de una universidad ni una especialidad con su «Quitar» al lado. */
+@media (min-width: 1120px) {
+  .edicion__formulario--modal {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* En un modal, `app-form-actions` va dentro del pie del diálogo, que ya pone la
+   línea de arriba, el aire y el lugar fijo. Sus estilos de barra de página
+   dibujaban una segunda línea y, en teléfono, la pegaban al fondo con fondo
+   propio y la estiraban 12 px por fuera del pie. Y baja de renglón, como el
+   propio pie del diálogo: con «Agregar especialidades» a 320 px, «Cancelar»
+   quedaba 37 px fuera de la pantalla. */
+.edicion__acciones-modal {
+  flex-wrap: wrap;
+  position: static;
+  margin-inline: 0;
+  padding: 0;
+  background: transparent;
+  border-block-start: 0;
 }
 
 /* Lo que no es una casilla corta ocupa el renglón entero: la biografía, el mapa,
@@ -145,25 +173,57 @@
   font-weight: 600;
 }
 
-/* El buscador va ARRIBA de la tabla, no al lado: en el teléfono un renglón
-   con los dos no entra sin apretar el campo de texto a un ancho inútil. */
-.edicion__buscador {
-  display: block;
-  max-width: 28rem;
-  margin-block-start: var(--sp-3);
-}
-
 .edicion__tabla {
   display: block;
   margin-block-start: var(--sp-3);
 }
 
-/* Misma regla que `glosario__paginacion`: una línea separa el paginador de
-   la tabla, así no se lee como una fila más. */
-.edicion__paginacion {
+/* La nota de una sección y su buscador: sin este aire, las letras que bajan de
+   la línea tocaban el borde de la caja. */
+.edicion__nota + app-filter-bar {
   margin-block-start: var(--sp-3);
-  padding-block-start: var(--sp-3);
-  border-block-start: 1px solid var(--border-default);
+}
+
+/* El historial laboral es otra tarjeta: va separado de la de títulos, que
+   termina en su paginador. */
+.edicion__historial {
+  margin-block-start: var(--sp-5);
+}
+
+/* El estado debajo del identificador, sólo mientras la columna «Estado» vive en
+   el detalle de la fila: por debajo de 780 px. Es el corte de `data-table`
+   (`MOBILE_DETAIL_PRIORITY`, `@media (min-width: 780px)` en su hoja), repetido
+   acá porque una propiedad personalizada no vale dentro de `@media`: si ese
+   corte cambia, este cambia con él. */
+.edicion__celda-principal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.edicion__estado-en-fila {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+@media (min-width: 780px) {
+  .edicion__estado-en-fila {
+    display: none;
+  }
+}
+
+/* El paginador de las tres tablas, abajo a la derecha (H4.S3). Se ciñe a su
+   contenido y se empuja al final del bloque; sin esto, el propio paginador
+   separa los botones de los selects a los dos extremos del renglón. Cuando
+   no entra en uno y baja de renglón (768 y menos), lo que baja también va a
+   la derecha. */
+.edicion__paginacion {
+  justify-content: flex-end;
+  width: fit-content;
+  max-width: 100%;
+  margin-block-start: var(--sp-3);
+  margin-inline-start: auto;
 }
 
 .edicion__vacio {
@@ -187,6 +247,34 @@
 
 /* Lo que ya no se puede corregir dice por qué, en vez de dejar la celda vacía:
    una celda en blanco se lee como una pantalla a medio cargar. */
+/* El sello de verificado, al estilo de las redes sociales: azul con el tilde
+   blanco. El azul es propio a propósito —ningún token de la paleta es ese azul—
+   y se aclara en oscuro para que no se pierda sobre el fondo petróleo. */
+.edicion__verificado {
+  --sello-verificado: #1877f2;
+  flex: none;
+  inline-size: 1.375rem;
+  block-size: 1.375rem;
+}
+
+.edicion__verificado-sello {
+  fill: var(--sello-verificado);
+}
+
+.edicion__verificado-tilde {
+  fill: #fff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .edicion__verificado {
+    --sello-verificado: #3b8ff5;
+  }
+}
+
+:root[data-theme='dark'] .edicion__verificado {
+  --sello-verificado: #3b8ff5;
+}
+
 .edicion__acciones-nota {
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);

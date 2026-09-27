@@ -146,7 +146,9 @@ export function avisoDeHorarioLiberado(hueco: HorarioLiberado) {
     category: 'SCHEDULING' as const,
     subject: 'Se liberó un horario',
     bodyText: `Un paciente no confirmó su cita del ${cuando(hueco.startAt)} con la ${MEDICA.professionalTitle} ${MEDICA.displayName}. Si te sirve mejor que la tuya, podés tomarla.`,
-    destination: { type: 'APPOINTMENT', id: hueco.bookableSlotId },
+    // Mismo literal que `RECURSO_CUPO` en la API real
+    // (`scheduling/notices/agenda-notices.ts`): AG-06, mock honesto.
+    destination: { type: 'scheduling.bookable_slots', id: hueco.bookableSlotId },
     payloadJson: {
       kind: 'SLOT_RELEASED',
       bookableSlotId: hueco.bookableSlotId,

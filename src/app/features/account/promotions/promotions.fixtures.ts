@@ -1,141 +1,259 @@
 /* ============================================================================
-    Las promociones recibidas de ejemplo (T-E7 · pantalla K, cara paciente).
+    Las promociones de la maqueta (rama `mockup`, sin API).
 
-    Ningún backend publica «las promociones que le llegaron a una persona»:
-    `promotions` y `marketing` sólo tienen escrituras (ver el README de
-    `core/data-access/pharmacy-campaigns`). Por eso la lista es de
-    demostración, con chip DEMO en pantalla y bajo `environment.campaignsDemo`.
-
-    Lo que **no** se inventa acá:
-    - Título, descuento y ventana salen de las plantillas sembradas del carril
-      FAR-I7 (`CAMPANAS_SEMBRADAS`), y el id del CTA se arma con `idSembrado`
-      para respetar la forma de URL del detalle público.
-
-    Lo que **no** funciona todavía: el detalle público sólo resuelve campañas
-    sembradas en la sesión (hoy lo hace «dónde comprar», contra el catálogo de
-    una farmacia real) y `FARMACIA_DE_EJEMPLO` no es una de ellas. Así que el
-    CTA navega a `/promotions/:campaignId` y ahí se ve «no encontrado». Queda
-    pendiente hasta que exista una lectura de campañas; no se siembra nada
-    desde acá para disimularlo.
-    - Precios: la tarjeta dice el porcentaje de la plantilla. Los importes de
-      una campaña salen del catálogo real de la farmacia, no de este archivo.
-    - Condición de salud: ninguna. La segmentación por diagnóstico está
-      decidida en contra hasta que exista consentimiento (mismo README), así
-      que el único motivo que se modela es el lote próximo a vencer.
+    Ningún backend publica todavía «las promociones que le llegaron a una
+    persona» (B-REAL-13). En `mockup` la pantalla se muestra con estos datos
+    para que el cliente la recorra con buscador y filtros como un directorio.
+    Medicamentos de venta libre a propósito: el nombre no debe insinuar un
+    diagnóstico.
     ========================================================================== */
 
-import {
-  CAMPANAS_SEMBRADAS,
-  UN_DIA,
-  idSembrado,
-  type PlantillaDeCampana,
-} from '../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.fixtures';
+export const UN_DIA = 24 * 60 * 60 * 1000;
 
-/** En qué quedó la promoción para quien la recibió. */
-export type EstadoDePromocionRecibida = 'nueva' | 'vista' | 'vencida';
+export type EstadoDePromocion = 'nueva' | 'vista' | 'vencida';
 
-/** Por qué la farmacia la mandó, cuando lo dice. */
-export type MotivoDePromocion = 'lote-proximo-a-vencer';
+export interface CategoriaDePromocion {
+  readonly code: string;
+  readonly label: string;
+}
 
-/** Una promoción tal como la recibe el paciente. */
-export interface PromocionRecibida {
-  /** Id de la tarjeta; no se pinta. */
+export interface Promocion {
   readonly id: string;
-  /** Id de la campaña que abre `/promotions/:campaignId`. */
-  readonly campaignId: string;
   readonly farmacia: string;
+  readonly farmaciaVerificada: boolean;
+  readonly ciudad: string;
   readonly titulo: string;
-  readonly motivo: MotivoDePromocion | null;
   readonly medicamento: string;
-  /** Porcentaje de descuento de la campaña, entero. */
+  readonly categoria: CategoriaDePromocion;
+  /** Porcentaje de descuento, entero. */
   readonly porcentaje: number;
   readonly desde: Date;
   readonly hasta: Date;
-  /**
-   * Por cuánto multiplica los puntos, o `null` si no suma extra. Texto exacto,
-   * como toda cifra de puntos; el rótulo lo arma `etiquetaDeMultiplicador`.
-   */
+  /** Multiplicador de puntos como texto exacto, o `null` si no suma extra. */
   readonly factorDePuntos: string | null;
-  readonly estado: EstadoDePromocionRecibida;
+  readonly estado: EstadoDePromocion;
 }
 
-/**
- * La farmacia de ejemplo. El nombre es el mismo de la compra simulada de
- * «Mis puntos» (`loyalty.fixtures.ts`), para que la demostración cuente una
- * sola historia.
- */
-export const FARMACIA_DE_EJEMPLO = {
-  id: 'c3a7f0d2-5e1b-4c8a-9d6f-000000000001',
-  nombre: 'Farmacia Central',
-} as const;
+const ANALGESICOS = { code: 'analgesicos', label: 'Analgésicos' } as const;
+const ANTIALERGICOS = { code: 'antialergicos', label: 'Antialérgicos' } as const;
+const VITAMINAS = { code: 'vitaminas', label: 'Vitaminas y suplementos' } as const;
+const CUIDADO = { code: 'cuidado-personal', label: 'Cuidado personal' } as const;
+const RESFRIO = { code: 'resfrio', label: 'Resfrío y gripe' } as const;
 
-/** La plantilla sembrada por su slug; si falta, el fixture está roto. */
-function plantilla(slug: string): PlantillaDeCampana {
-  const encontrada = CAMPANAS_SEMBRADAS.find((candidata) => candidata.slug === slug);
-  if (encontrada === undefined) {
-    throw new Error(`No hay campaña sembrada con slug «${slug}».`);
-  }
-  return encontrada;
-}
-
-/** Lo que cada tarjeta agrega a su plantilla. */
-interface Recepcion {
-  readonly slug: string;
+interface Semilla {
+  readonly farmacia: string;
+  readonly farmaciaVerificada: boolean;
+  readonly ciudad: string;
+  readonly titulo: string;
   readonly medicamento: string;
-  readonly motivo: MotivoDePromocion | null;
+  readonly categoria: CategoriaDePromocion;
+  readonly porcentaje: number;
+  readonly desdeEnDias: number;
+  readonly hastaEnDias: number;
   readonly factorDePuntos: string | null;
-  readonly estado: EstadoDePromocionRecibida;
+  readonly vista: boolean;
 }
 
-/**
- * Las tres recepciones: una nueva con puntos x2, una vista por lote próximo a
- * vencer y una vencida. Medicamentos de venta libre a propósito: el nombre del
- * medicamento tampoco debe insinuar un diagnóstico.
- */
-const RECEPCIONES: readonly Recepcion[] = [
+const SEMILLAS: readonly Semilla[] = [
   {
-    slug: 'cuidado-diario',
+    farmacia: 'Farmacia Central',
+    farmaciaVerificada: true,
+    ciudad: 'Santa Cruz de la Sierra',
+    titulo: 'Cuidado diario con 20 % menos',
     medicamento: 'Paracetamol 500 mg',
-    motivo: null,
+    categoria: ANALGESICOS,
+    porcentaje: 20,
+    desdeEnDias: -10,
+    hastaEnDias: 20,
     factorDePuntos: '2',
-    estado: 'nueva',
+    vista: false,
   },
   {
-    slug: 'proximos-a-vencer',
+    farmacia: 'Farmacia Central',
+    farmaciaVerificada: true,
+    ciudad: 'Santa Cruz de la Sierra',
+    titulo: 'Últimas unidades — vencimiento cercano',
     medicamento: 'Ibuprofeno 400 mg',
-    motivo: 'lote-proximo-a-vencer',
+    categoria: ANALGESICOS,
+    porcentaje: 35,
+    desdeEnDias: -2,
+    hastaEnDias: 5,
     factorDePuntos: null,
-    estado: 'vista',
+    vista: true,
   },
   {
-    slug: 'invierno-pasado',
-    medicamento: 'Loratadina 10 mg',
-    motivo: null,
+    farmacia: 'Farmacia Chávez',
+    farmaciaVerificada: true,
+    ciudad: 'Santa Cruz de la Sierra',
+    titulo: 'Vitamina C para toda la familia',
+    medicamento: 'Vitamina C 1 g efervescente',
+    categoria: VITAMINAS,
+    porcentaje: 25,
+    desdeEnDias: -5,
+    hastaEnDias: 25,
+    factorDePuntos: '3',
+    vista: false,
+  },
+  {
+    farmacia: 'Farmacia Chávez',
+    farmaciaVerificada: true,
+    ciudad: 'Montero',
+    titulo: 'Protector solar al 2x1',
+    medicamento: 'Protector solar FPS 50',
+    categoria: CUIDADO,
+    porcentaje: 50,
+    desdeEnDias: -1,
+    hastaEnDias: 14,
     factorDePuntos: null,
-    estado: 'vencida',
+    vista: false,
+  },
+  {
+    farmacia: 'Farmacia Bolivia',
+    farmaciaVerificada: true,
+    ciudad: 'La Paz',
+    titulo: 'Temporada de resfríos',
+    medicamento: 'Antigripal día y noche',
+    categoria: RESFRIO,
+    porcentaje: 15,
+    desdeEnDias: -7,
+    hastaEnDias: 30,
+    factorDePuntos: '2',
+    vista: true,
+  },
+  {
+    farmacia: 'Farmacia Bolivia',
+    farmaciaVerificada: true,
+    ciudad: 'El Alto',
+    titulo: 'Alergias de primavera',
+    medicamento: 'Loratadina 10 mg',
+    categoria: ANTIALERGICOS,
+    porcentaje: 30,
+    desdeEnDias: -3,
+    hastaEnDias: 18,
+    factorDePuntos: null,
+    vista: false,
+  },
+  {
+    farmacia: 'Farmacia San Pedro',
+    farmaciaVerificada: false,
+    ciudad: 'La Paz',
+    titulo: 'Multivitamínico del mes',
+    medicamento: 'Complejo B + zinc',
+    categoria: VITAMINAS,
+    porcentaje: 10,
+    desdeEnDias: -12,
+    hastaEnDias: 10,
+    factorDePuntos: null,
+    vista: true,
+  },
+  {
+    farmacia: 'Farmacia Valle',
+    farmaciaVerificada: true,
+    ciudad: 'Cochabamba',
+    titulo: 'Jarabe para la tos con descuento',
+    medicamento: 'Ambroxol jarabe 120 ml',
+    categoria: RESFRIO,
+    porcentaje: 20,
+    desdeEnDias: -4,
+    hastaEnDias: 12,
+    factorDePuntos: '2',
+    vista: false,
+  },
+  {
+    farmacia: 'Farmacia Valle',
+    farmaciaVerificada: true,
+    ciudad: 'Quillacollo',
+    titulo: 'Crema hidratante al 30 %',
+    medicamento: 'Crema hidratante corporal 200 ml',
+    categoria: CUIDADO,
+    porcentaje: 30,
+    desdeEnDias: -6,
+    hastaEnDias: 9,
+    factorDePuntos: null,
+    vista: true,
+  },
+  {
+    farmacia: 'Farmacia Sucre',
+    farmaciaVerificada: false,
+    ciudad: 'Sucre',
+    titulo: 'Analgésico para el dolor de cabeza',
+    medicamento: 'Ácido acetilsalicílico 500 mg',
+    categoria: ANALGESICOS,
+    porcentaje: 15,
+    desdeEnDias: -8,
+    hastaEnDias: 16,
+    factorDePuntos: null,
+    vista: false,
+  },
+  {
+    farmacia: 'Farmacia del Sur',
+    farmaciaVerificada: true,
+    ciudad: 'Tarija',
+    titulo: 'Suplemento de hierro',
+    medicamento: 'Sulfato ferroso 300 mg',
+    categoria: VITAMINAS,
+    porcentaje: 20,
+    desdeEnDias: -9,
+    hastaEnDias: 21,
+    factorDePuntos: '2',
+    vista: false,
+  },
+  {
+    farmacia: 'Farmacia Central',
+    farmaciaVerificada: true,
+    ciudad: 'Santa Cruz de la Sierra',
+    titulo: 'Campaña de invierno',
+    medicamento: 'Cetirizina 10 mg',
+    categoria: ANTIALERGICOS,
+    porcentaje: 15,
+    desdeEnDias: -60,
+    hastaEnDias: -15,
+    factorDePuntos: null,
+    vista: true,
+  },
+  {
+    farmacia: 'Farmacia Potosí',
+    farmaciaVerificada: false,
+    ciudad: 'Potosí',
+    titulo: 'Descongestionante nasal',
+    medicamento: 'Solución salina nasal 30 ml',
+    categoria: RESFRIO,
+    porcentaje: 25,
+    desdeEnDias: -40,
+    hastaEnDias: -2,
+    factorDePuntos: null,
+    vista: true,
   },
 ];
 
-/** Las promociones recibidas de ejemplo, en el orden en que se muestran. */
-export function promocionesRecibidasDeEjemplo(
-  ahora: Date = new Date(),
-): readonly PromocionRecibida[] {
+function slug(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+/** Las promociones de ejemplo, fechadas respecto de `ahora`. */
+export function promocionesDeEjemplo(ahora: Date = new Date()): readonly Promocion[] {
   const instante = ahora.getTime();
-  return RECEPCIONES.map((recepcion) => {
-    const base = plantilla(recepcion.slug);
-    const campaignId = idSembrado(base.slug, FARMACIA_DE_EJEMPLO.id);
+  return SEMILLAS.map((semilla, indice) => {
+    const hasta = new Date(instante + semilla.hastaEnDias * UN_DIA);
+    const vencida = hasta.getTime() < instante;
     return {
-      id: `recibida-${campaignId}`,
-      campaignId,
-      farmacia: FARMACIA_DE_EJEMPLO.nombre,
-      titulo: base.titulo,
-      motivo: recepcion.motivo,
-      medicamento: recepcion.medicamento,
-      porcentaje: base.porcentaje,
-      desde: new Date(instante + base.desdeEnDias * UN_DIA),
-      hasta: new Date(instante + base.hastaEnDias * UN_DIA),
-      factorDePuntos: recepcion.factorDePuntos,
-      estado: recepcion.estado,
+      id: `promo-${indice + 1}-${slug(semilla.titulo)}`,
+      farmacia: semilla.farmacia,
+      farmaciaVerificada: semilla.farmaciaVerificada,
+      ciudad: semilla.ciudad,
+      titulo: semilla.titulo,
+      medicamento: semilla.medicamento,
+      categoria: semilla.categoria,
+      porcentaje: semilla.porcentaje,
+      desde: new Date(instante + semilla.desdeEnDias * UN_DIA),
+      hasta,
+      factorDePuntos: semilla.factorDePuntos,
+      estado: vencida ? 'vencida' : semilla.vista ? 'vista' : 'nueva',
     };
   });
 }

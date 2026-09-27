@@ -1,0 +1,108 @@
+Using Vitest configuration file: <repo>\vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                                                               | Names                                                                                          |  Raw size
+spec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit.js       | spec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit       |   1.56 MB | 
+styles.css                                                                                        | styles                                                                                         | 166.29 kB | 
+chunk-FGXNNO3T.js                                                                                 | -                                                                                              | 121.26 kB | 
+chunk-SOTNGF5F.js                                                                                 | -                                                                                              |  22.65 kB | 
+chunk-56XX64PP.js                                                                                 | -                                                                                              |   7.75 kB | 
+spec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit.logic.js | spec-app-features-account-my-profile-practitioner-profile-edit-practitioner-profile-edit.logic |   6.55 kB | 
+chunk-JBWBLPNK.js                                                                                 | -                                                                                              |   5.19 kB | 
+init-testbed.js                                                                                   | init-testbed                                                                                   |   1.21 kB | 
+vitest-mock-patch.js                                                                              | vitest-mock-patch                                                                              | 974 bytes | 
+setup-test-setup.js                                                                               | setup-test-setup                                                                               | 911 bytes | 
+
+                                                                                                  | Initial total                                                                                  |   1.90 MB
+
+Lazy chunk files                                                                                  | Names                                                                                          |  Raw size
+chunk-QSRNX3GK.js                                                                                 | map                                                                                            | 224 bytes | 
+chunk-A6CZD63C.js                                                                                 | location-picker                                                                                | 158 bytes | 
+
+Application bundle generation complete. [122.326 seconds] - 2026-09-24T18:07:16.051Z
+
+▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:75:4:
+      75 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:85:4:
+      85 │     RouterLink,
+         ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButton is not used within the template of NearbyPlaces [plugin angular-compiler]
+
+    src/app/features/nearby-places/nearby-places.ts:103:4:
+      103 │     AppButton,
+          ╵     ~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:118:39:
+      118 │ ... [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink...
+          ╵                                 ~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:118:62:
+      118 │ ...AppButton, BodyMap, Card, Chip, FormField, RouterLink, Textarea],
+          ╵                                               ~~~~~~~~~~
+
+
+
+ RUN  v4.1.10 <repo>
+
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+ ❯  mantra-core-health  src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts (139 tests | 1 failed) 12543ms
+       × las dos barras de Credenciales escriben cada una en su clave 5600ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL   mantra-core-health  src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts > PractitionerProfileEdit > la barra de la tabla de especialidades > las dos barras de Credenciales escriben cada una en su clave
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.spec.ts:1352:5
+    1350|     });
+    1351|
+    1352|     it('las dos barras de Credenciales escriben cada una en su clave',…
+       |     ^
+    1353|       const fixture = montarConVista(CON_ESPECIALIDADES);
+    1354|       componente.pestana.set(5);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 159 passed (160)
+   Start at  14:07:25
+   Duration  50.43s (transform 8.52s, setup 3.47s, import 10.90s, tests 12.56s, environment 48.43s)
+

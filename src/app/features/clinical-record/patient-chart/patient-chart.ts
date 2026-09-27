@@ -12,13 +12,14 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { forkJoin, map, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
 import type {
+  CarePlan,
   ClinicalSummary,
   PatientChart as ExpedienteDePaciente,
 } from '../../../core/data-access/clinical/clinical.types';
@@ -34,9 +35,9 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import type { BreadcrumbItem } from '../../../shared/components/molecules/breadcrumb/breadcrumb.types';
-import { Link } from '../../../shared/components/atoms/link/link';
 import { Menu } from '../../../shared/components/molecules/menu/menu';
 import { MenuItem } from '../../../shared/components/molecules/menu/menu-item/menu-item';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { MenuTrigger } from '../../../shared/components/molecules/menu/menu-trigger/menu-trigger';
 import { AttachmentDialog } from '../../../shared/components/organisms/attachment-dialog/attachment-dialog';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
@@ -46,6 +47,10 @@ import { DialogService } from '../../../shared/components/molecules/dialog/dialo
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { AuthzClient } from '../../../core/data-access/authz/authz.client';
+import { ChartDocumentsClient } from '../../../core/data-access/chart-documents/chart-documents.client';
+import { isScanPending } from '../../../core/data-access/files/scan-status';
+import { FileDownloadService } from '../../../shared/utils/file-download/file-download.service';
 import {
   downloadPrescriptionPdf,
   downloadVisitPdf,
@@ -62,7 +67,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
-import { CLINICAL_RECORD_ROUTE, consultationRoute } from '../clinical-record.routes';
+import { CLINICAL_RECORD_ROUTE } from '../clinical-record.routes';
 import { AllergyBlock } from './allergy-block/allergy-block';
 import { CarePlanBlock } from './care-plan-block/care-plan-block';
 import type { DiagnosticoDelPlan } from './care-plan-block/care-plan-block';
@@ -72,10 +77,7 @@ import { DocumentBlock } from './document-block/document-block';
 import { DRAFT_BLOCK } from './draft-block';
 import { FreeNoteBlock } from './free-note-block/free-note-block';
 import { MedicationBlock } from './medication-block/medication-block';
-import type {
-  DiagnosticoEnFicha,
-  RecetaEnFicha,
-} from './medication-block/medication-block';
+import type { DiagnosticoEnFicha, RecetaEnFicha } from './medication-block/medication-block';
 import { ObservationBlock } from './observation-block/observation-block';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
 
@@ -240,6 +242,20 @@ export interface FilaClinica {
    * nota de P24.
    */
   readonly cita?: string;
+
+  /**
+   * Los archivos del registro (hoy sólo los documentos, CL-27): uno por
+   * archivo, con el `fileId` que se baja desde
+   * `GET /charts/documents/:id/files/:fileId/content`.
+   */
+  readonly archivos?: readonly ArchivoDeFila[];
+}
+
+/** Un archivo de una fila del expediente, listo para ofrecer su descarga. */
+export interface ArchivoDeFila {
+  readonly fileId: string;
+  /** «Archivo 1 · Principal», nunca el uuid. */
+  readonly rotulo: string;
 }
 
 /** Un vínculo clínico, ya resuelto a palabras. */
@@ -319,15 +335,14 @@ interface Expediente {
     DatePipe,
     DocumentBlock,
     FreeNoteBlock,
-    Link,
     MedicationBlock,
     Menu,
     MenuItem,
     MenuTrigger,
+    NavIcon,
     ObservationBlock,
     PdfExportButton,
     PageHeader,
-    RouterLink,
     Tab,
     Tabs,
     TutorialTarget,
@@ -359,6 +374,9 @@ export class PatientChart {
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
+  private readonly documentsClient = inject(ChartDocumentsClient);
+  private readonly authz = inject(AuthzClient);
+  private readonly downloads = inject(FileDownloadService);
   private readonly route = inject(ActivatedRoute);
 
   private readonly celdaPrincipal =
@@ -437,9 +455,6 @@ export class PatientChart {
   protected readonly atencionEnCurso = computed(() =>
     (this.datos()?.resumen.encounters ?? []).some((fila) => fila.endAt === undefined),
   );
-
-  /** A dónde vuelve «Volver a la consulta». */
-  protected readonly rutaDeLaAtencion = computed(() => consultationRoute(this.profileId()));
 
   /**
    * La ruta de navegación, con el paciente como último escalón.
@@ -602,15 +617,9 @@ export class PatientChart {
       secundario: `${fila.activities.length} actividad${fila.activities.length === 1 ? '' : 'es'}`,
       estado: this.label(fila.statusConceptId),
       cuando: fila.startDate ?? fila.createdAt,
-      detalle: this.label(fila.intentConceptId),
-      // `CarePlan` no trae encuentro ni condición en la lectura de `chart`, y
-      // tampoco hay alta: el plan de cuidados es hoy sólo de lectura.
-      vinculos: [
-        {
-          rotulo: 'Vínculos clínicos',
-          valor: 'El plan de cuidados no guarda encuentro ni diagnóstico.',
-        },
-      ],
+      detalle: this.motivoDelPlan(fila),
+      // `CarePlan` no trae encuentro en la lectura de `chart`.
+      vinculos: [{ rotulo: 'Motivo', valor: this.motivoDelPlan(fila) }],
     })),
   );
 
@@ -628,8 +637,119 @@ export class PatientChart {
           valor: 'El documento del expediente no guarda encuentro ni diagnóstico.',
         },
       ],
+      archivos: [...(fila.files ?? [])]
+        .sort((a, b) => (a.ordinal ?? 0) - (b.ordinal ?? 0))
+        .map((archivo, indice) => ({
+          fileId: archivo.fileId,
+          rotulo: `Archivo ${indice + 1}${archivo.contentRole === 'PRIMARY' ? ' · Principal' : ''}`,
+        })),
     })),
   );
+
+  /* -- Acceso de emergencia (BR-20 · CV-19) --------------------------------
+     Cuando la lectura da 403 y quien mira tiene el rol que la API deja usar
+     `break-the-glass` (`CLINICAL_APPROVER`, o `SECURITY_ADMIN`), se le ofrece la
+     acción de emergencia. No se «oculta» el 403: se ofrece una salida a quien
+     puede tomarla, con justificación obligatoria y una ventana acotada. La
+     autoridad sigue siendo la API; a quien no tiene el rol no se le ofrece. */
+
+  /** Si esta sesión puede pedir un acceso de emergencia. */
+  protected readonly puedeEmergencia = computed(() => {
+    const roles = this.auth.roles();
+    return roles.includes('CLINICAL_APPROVER') || roles.includes('SECURITY_ADMIN');
+  });
+
+  /** Mientras se pide el acceso, para no doblar el clic. */
+  protected readonly pidiendoEmergencia = signal(false);
+
+  /** El motivo escrito de una emergencia: la API exige al menos 10 caracteres. */
+  private static readonly MINIMO_DE_JUSTIFICACION = 10;
+
+  /**
+   * Pide el acceso de emergencia con la justificación, y **relee** el expediente.
+   *
+   * `POST /authz/patients/:id/break-the-glass`: la ventana es corta (60 minutos
+   * por defecto), queda auditado y el paciente lo ve en «Quién ve mi historia».
+   */
+  protected async pedirAccesoDeEmergencia(): Promise<void> {
+    const tenantId = this.auth.activeTenantId();
+    if (tenantId === null || this.pidiendoEmergencia()) {
+      this.toasts.warning('Elegí una organización antes de pedir el acceso de emergencia.', 'Acceso de emergencia');
+      return;
+    }
+    const justificacion = await this.dialogs.confirmWithReason(
+      {
+        title: 'Acceso de emergencia',
+        message:
+          'Vas a ver esta historia sin un vínculo ni un turno. Queda auditado, el acceso dura una hora y la persona lo ve en «Quién ve mi historia».',
+        confirmLabel: 'Pedir acceso',
+        destructive: true,
+      },
+      {
+        label: 'Justificación',
+        placeholder: 'Por qué necesitás ver esta historia ahora',
+        hint: 'Obligatoria: al menos 10 caracteres.',
+        minLength: PatientChart.MINIMO_DE_JUSTIFICACION,
+        maxLength: 1000,
+      },
+    );
+    if (justificacion === null) {
+      return;
+    }
+
+    this.pidiendoEmergencia.set(true);
+    this.authz
+      .breakTheGlass(this.pacienteDeLaFicha(), { tenantId, justification: justificacion })
+      .subscribe({
+        next: () => {
+          this.pidiendoEmergencia.set(false);
+          this.toasts.success('Acceso de emergencia concedido por una hora. Queda auditado.', 'Acceso de emergencia');
+          this.recargar();
+        },
+        error: () => {
+          this.pidiendoEmergencia.set(false);
+          this.toasts.warning('No pudimos conceder el acceso de emergencia.', 'Acceso de emergencia');
+        },
+      });
+  }
+
+  /** Qué archivo se está bajando ahora (para el spinner y para no doblar el clic). */
+  protected readonly bajando = signal<string | null>(null);
+
+  /**
+   * Baja un archivo de un documento del expediente (CL-27).
+   *
+   * Por `GET /charts/documents/:id/files/:fileId/content`, que autoriza por
+   * lectura de la historia del paciente y no por autoría: quien abre el
+   * expediente no es quien subió el papel. Sin `window.open`: los bytes vienen
+   * con la credencial y se entregan con un enlace temporal.
+   */
+  protected descargarArchivo(fila: FilaClinica, archivo: ArchivoDeFila): void {
+    if (this.bajando() !== null) {
+      return;
+    }
+    this.bajando.set(archivo.fileId);
+    this.documentsClient.downloadFile(fila.id, archivo.fileId).subscribe({
+      next: ({ blob, fileName }) => {
+        this.bajando.set(null);
+        this.downloads.save(blob, fileName ?? `${fila.principal} - ${archivo.rotulo}.pdf`);
+      },
+      error: (error: unknown) => {
+        this.bajando.set(null);
+        if (isScanPending(error)) {
+          this.toasts.info('El archivo todavía está en análisis. Probá de nuevo en un momento.', 'Documento');
+          return;
+        }
+        const estado = errorToViewState<null>(error);
+        this.toasts.warning(
+          estado.status === 'forbidden'
+            ? 'No tenés permiso para abrir este archivo.'
+            : 'No pudimos bajar el archivo. Reintentá en un momento.',
+          'Documento',
+        );
+      },
+    });
+  }
 
   /**
    * Los ocho bloques con su rótulo, para dibujar las pestañas de una pasada.
@@ -805,9 +925,22 @@ export class PatientChart {
     }),
   );
 
+  /**
+   * El motivo del plan: el diagnóstico del que cuelga, o lo que se escribió a
+   * mano cuando no había uno. Siempre hay uno de los dos en lo que se abre
+   * desde acá; los planes viejos de la semilla pueden no tener ninguno.
+   */
+  private motivoDelPlan(fila: CarePlan): string {
+    const dx = this.diagnosticosParaElPlan().find((d) => d.id === fila.conditionId);
+    if (dx !== undefined) {
+      return dx.etiqueta;
+    }
+    return fila.reasonText ?? 'Sin motivo registrado';
+  }
+
   /** Los mismos diagnósticos, para colgar de uno el plan de cuidados. */
-  protected readonly diagnosticosParaElPlan = computed<readonly DiagnosticoDelPlan[]>(
-    () => this.diagnosticosParaReceta(),
+  protected readonly diagnosticosParaElPlan = computed<readonly DiagnosticoDelPlan[]>(() =>
+    this.diagnosticosParaReceta(),
   );
 
   /**
@@ -914,7 +1047,9 @@ export class PatientChart {
     const codigos = (this.datos()?.resumen.conditions ?? [])
       .filter((fila) => fila.encounterId === encounterId)
       .map((fila) => this.label(fila.codeConceptId));
-    return codigos.length === 0 ? 'Sin diagnósticos documentados en este encuentro' : codigos.join(', ');
+    return codigos.length === 0
+      ? 'Sin diagnósticos documentados en este encuentro'
+      : codigos.join(', ');
   }
 
   /** Una fecha corta, sin depender del `DatePipe` de la plantilla. */
@@ -922,9 +1057,11 @@ export class PatientChart {
     if (fecha === undefined) {
       return '';
     }
-    return new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short', year: 'numeric' }).format(
-      fecha,
-    );
+    return new Intl.DateTimeFormat('es', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }).format(fecha);
   }
 
   /* -- El detalle de una fila, en modal ------------------------------------
@@ -987,44 +1124,45 @@ export class PatientChart {
     this.nombre() === '' ? `Paciente ${this.profileId()}` : this.nombre(),
   );
 
-  /* -- La banda de contexto ------------------------------------------------
-     Lo que hay que saber ANTES de abrir una pestaña. Antes esto no existía y la
-     pantalla abría en «Diagnósticos (2)»: para enterarse de que la persona es
-     alérgica a algo había que acordarse de ir a mirar. */
+  /* -- El aviso de apertura ------------------------------------------------
+     Lo que hay que saber ANTES de abrir una pestaña. Vivía en una banda fija
+     arriba de la página, y una banda que está siempre se deja de leer: ocupaba
+     media pantalla en cada visita y empujaba las pestañas abajo del pliegue.
+     Un modal tampoco: un cuadro que hay que cerrar con un clic para poder
+     seguir es la misma interrupción con otra forma. Ahora se dice una vez, por
+     toast, al abrir el expediente (2026-09-25). El toast es sólo texto: el
+     link «Volver a la consulta» que el modal tenía no tiene dónde ir en un
+     toast y se sacó — quien tiene una consulta en curso lo sabe por el aviso,
+     y navega por su cuenta. */
 
   /**
-   * Las alergias, arriba y a la vista, no en la segunda pestaña.
+   * Las alergias, de frente al entrar, no en la segunda pestaña.
    *
    * Es el único bloque del expediente que cambia una conducta **antes** de
-   * leerlo: recetar sin haberlas visto es el error que esta banda existe para
+   * leerlo: recetar sin haberlas visto es el error que este aviso existe para
    * evitar. No se filtra por criticidad —la criticidad llega como concepto y
    * deducirla del texto sería adivinar—: se muestran todas, que son pocas.
    */
   protected readonly alergiasDestacadas = this.alergias;
 
-  /** Las cifras del expediente, para dimensionarlo sin abrir pestaña por pestaña. */
-  protected readonly cifras = computed(() => [
-    { clave: 'diagnosticos', rotulo: 'Diagnósticos', valor: this.diagnosticos().length },
-    { clave: 'medicacion', rotulo: 'Medicación', valor: this.medicacion().length },
-    { clave: 'encuentros', rotulo: 'Encuentros', valor: this.encuentros().length },
-    { clave: 'observaciones', rotulo: 'Observaciones', valor: this.observaciones().length },
-  ]);
+  /** Ya se avisó una vez en esta visita del expediente: no se repite. */
+  private readonly avisosMostrados = signal(false);
 
-  /**
-   * Cuándo fue la última vez que se la atendió.
-   *
-   * De los encuentros, que es donde consta. `null` mientras no haya ninguno con
-   * fecha: inventar «sin atención previa» a partir de un bloque vacío diría algo
-   * que el expediente no dice.
-   */
-  protected readonly ultimaAtencion = computed<Date | null>(() => {
-    const fechas = this.encuentros()
-      .map((fila) => fila.cuando)
-      .filter((fecha): fecha is Date => fecha !== null);
-    return fechas.length === 0
-      ? null
-      : fechas.reduce((mayor, fecha) => (fecha > mayor ? fecha : mayor));
-  });
+  /** Junta alergias y consulta en curso en, como mucho, dos toasts. */
+  private avisarAlAbrir(alergias: readonly FilaClinica[], enCurso: boolean): void {
+    this.avisosMostrados.set(true);
+    if (alergias.length > 0) {
+      this.toasts.warning(
+        alergias
+          .map((alergia) => (alergia.detalle === '' ? alergia.principal : `${alergia.principal} (${alergia.detalle})`))
+          .join(' · '),
+        'Alergias',
+      );
+    }
+    if (enCurso) {
+      this.toasts.info('Tenés una consulta en curso con esta persona.', 'Consulta en curso');
+    }
+  }
 
   /**
    * Aviso de recorte, en palabras.
@@ -1282,7 +1420,13 @@ export class PatientChart {
       // se dibujan si alguna fila las llena: una columna vacía se lee como un
       // dato que no cargó, no como una columna que ese bloque no tiene.
       ...(clave === 'medicacion' && filas.some((fila) => (fila.diagnostico ?? '') !== '')
-        ? [{ key: 'diagnostico', header: 'Diagnóstico', priority: 2 } satisfies ColumnDef<FilaClinica>]
+        ? [
+            {
+              key: 'diagnostico',
+              header: 'Diagnóstico',
+              priority: 2,
+            } satisfies ColumnDef<FilaClinica>,
+          ]
         : []),
       ...(clave === 'medicacion' && filas.some((fila) => (fila.cita ?? '') !== '')
         ? [{ key: 'cita', header: 'Receta de', priority: 3 } satisfies ColumnDef<FilaClinica>]
@@ -1366,6 +1510,17 @@ export class PatientChart {
     effect(() => {
       const perfilId = this.auth.practitionerProfileId();
       untracked(() => this.resolverPerfilPropio(perfilId));
+    });
+
+    // El aviso de apertura: alergias y consulta en curso, por toast, una sola
+    // vez por visita. Ver el comentario de `avisosMostrados` arriba.
+    effect(() => {
+      const alergias = this.alergiasDestacadas();
+      const enCurso = this.atencionEnCurso();
+      if (this.avisosMostrados() || (alergias.length === 0 && !enCurso)) {
+        return;
+      }
+      untracked(() => this.avisarAlAbrir(alergias, enCurso));
     });
   }
 
@@ -1640,7 +1795,6 @@ export class PatientChart {
     return SIN_DATO;
   }
 }
-
 
 /**
  * Los identificadores de concepto del expediente, sin los ausentes.

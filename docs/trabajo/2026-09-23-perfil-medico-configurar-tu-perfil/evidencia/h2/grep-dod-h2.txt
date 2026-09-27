@@ -1,0 +1,17 @@
+$ git grep -n principal -- src/app/features/account/my-profile/practitioner-profile-edit/ (sin specs)
+src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.html:581:                <!-- Sin los dos interruptores («Es mi especialidad principal» y
+src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.html:585:                     pantalla distingue la especialidad principal (D-01): todas se
+src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.ts:557:   * es la especialidad principal.
+src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.ts:561:   * cuál guarda el backend como principal, y nadie declaró una certificación
+src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.ts:562:   * de junta. Desde el 23/09/2026 ninguna pantalla distingue la principal
+src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.ts:690:   * Sin columna «Tipo» desde el 23/09/2026: decía «Principal» o «Adicional» y
+src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.ts:691:   * ofrecía «Marcar como principal», y el médico pidió que todas las
+src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.ts:754:   * ser la principal (D-01, 23/09/2026).
+
+$ git grep -c "del trabajo" -- practitioner-profile-view.html
+0 (sin coincidencias)
+
+$ git grep -n trabajo -- practitioner-profile-edit.html
+src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.html:188:                   «Tu correo de trabajo»; pasó acá el 23/09/2026 (D-03). -->
+src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.html:300:              <!-- Sin celular, fijo ni correo del trabajo desde el 23/09/2026:
+src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.html:301:                   el médico pidió que «Contacto» no tenga datos del trabajo

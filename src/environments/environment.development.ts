@@ -20,6 +20,9 @@ import { envFromProcess } from './env.generated';
 export const environment: Environment = {
   apiBaseUrl: envFromProcess.apiBaseUrl ?? '',
 
+  /** Mismo origen: ver `aiBaseUrl` en `environment.types.ts`. */
+  aiBaseUrl: envFromProcess.aiBaseUrl ?? '/ai',
+
   /**
    * Encendida por defecto en desarrollo: quien levanta la app local ve la
    * barra de casos de demostración sin configurar nada. Se apaga con
@@ -49,6 +52,13 @@ export const environment: Environment = {
    * de quedar vacías.
    */
   campaignsDemo: envFromProcess.campaignsDemo ?? false,
+
+  /**
+   * Apagada por defecto: el refresh token sigue en el cuerpo y en `localStorage`
+   * hasta que el despliegue encienda **las dos puntas** —`PUBLIC_REFRESH_COOKIE`
+   * acá y `AUTH_REFRESH_COOKIE_ENABLED` en la API—. Ver `environment.types.ts`.
+   */
+  refreshCookie: envFromProcess.refreshCookie ?? false,
 
   /**
    * Apagado para trabajar directamente contra el backend real en desarrollo.

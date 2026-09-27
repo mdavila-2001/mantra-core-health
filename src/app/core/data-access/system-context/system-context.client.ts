@@ -1,5 +1,6 @@
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { map, Observable, of, shareReplay } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
@@ -45,6 +46,7 @@ import type { DynamicEnum } from './system-context.types';
 export class SystemContextClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   /** Un observable compartido por target. Ver la nota de memoización. */
   private readonly cache = new Map<string, Observable<DynamicEnum>>();
@@ -52,10 +54,23 @@ export class SystemContextClient {
   /**
    * `GET /system-context/dynamic-enums?target=…` — las opciones de un campo.
    *
+   * **Bajo SSR no se pide nada.** Mismo criterio que `BoDepartmentsCatalog`
+   * (H1.S1, 2026-09-26): varias pantallas que usan este cliente son rutas
+   * públicas prerenderizadas (`register-practitioner` entre ellas), y durante
+   * el prerender no hay API a la que preguntar — la petición quedaba colgada
+   * hasta tumbar `yarn build --configuration=production-api` con un
+   * `TimeoutError`. Devolver la enumeración vacía es correcto además de
+   * conveniente: los campos que la usan ya saben mostrar «no pudimos traer el
+   * catálogo» y reintentar. En el navegador, tras hidratar, se pide de verdad.
+   *
    * @param target - El campo a poblar, como `esquema.tabla.columna`.
    * @returns La enumeración con sus opciones ya ordenadas.
    */
   dynamicEnum(target: string): Observable<DynamicEnum> {
+    if (!this.isBrowser) {
+      return sinEnumeracion();
+    }
+
     const cacheado = this.cache.get(target);
     if (cacheado !== undefined) {
       return cacheado;

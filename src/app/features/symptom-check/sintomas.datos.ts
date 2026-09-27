@@ -91,6 +91,18 @@ export interface Sintoma {
   readonly generico?: boolean;
   /** Qué decirle a quien escribió una alarma, si el aviso general no alcanza. */
   readonly mensaje?: string;
+  /**
+   * Si el síntoma sólo corresponde a un sexo (P-04, 2026-09-25): próstata,
+   * testículos y erección son `'MALE'`; menstruación, embarazo y flujo
+   * vaginal son `'FEMALE'`. Sin esta marca, el síntoma es de cualquiera.
+   *
+   * `symptom-check` la usa para no ofrecer en «Salud íntima» —ni por
+   * pastilla, ni por texto reconocido, ni por sugerencia— lo que no
+   * corresponde al sexo del propio perfil. Sin ese dato (sin sesión, perfil
+   * `INTERSEX`/`UNKNOWN`, o todavía sin resolver) no se filtra nada: mejor
+   * mostrar de más que esconder un síntoma real.
+   */
+  readonly soloParaSexo?: 'MALE' | 'FEMALE';
   readonly especialidades: readonly EspecialidadSugerida[];
 }
 
@@ -1419,6 +1431,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'me levanto de noche a orinar',
       'psa alto',
     ],
+    soloParaSexo: 'MALE',
     especialidades: [
       { nombre: 'Urología', peso: 3 },
       { nombre: 'Medicina general', peso: 1 },
@@ -1429,6 +1442,7 @@ export const SINTOMAS: readonly Sintoma[] = [
     nombre: 'dolor o bulto en los testículos',
     sinonimos: ['bulto en el testiculo', 'varicocele', 'me duelen los testiculos'],
     partes: ['testiculo'],
+    soloParaSexo: 'MALE',
     especialidades: [{ nombre: 'Urología', peso: 3 }],
   },
   {
@@ -1441,6 +1455,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'impotencia',
       'eyaculacion precoz',
     ],
+    soloParaSexo: 'MALE',
     especialidades: [
       { nombre: 'Urología', peso: 3 },
       { nombre: 'Endocrinología', peso: 1 },
@@ -1460,6 +1475,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'dismenorrea',
     ],
     partes: ['menstruacion', 'regla', 'periodo', 'ovario'],
+    soloParaSexo: 'FEMALE',
     especialidades: [
       { nombre: 'Ginecología', peso: 3 },
       { nombre: 'Medicina general', peso: 1 },
@@ -1480,6 +1496,7 @@ export const SINTOMAS: readonly Sintoma[] = [
     // demás combinaciones solo.
     partes: ['regla', 'menstruacion', 'periodo'],
     gatillos: ['atraso', 'retraso'],
+    soloParaSexo: 'FEMALE',
     especialidades: [
       { nombre: 'Ginecología', peso: 3 },
       { nombre: 'Obstetricia', peso: 3 },
@@ -1496,6 +1513,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'sangro fuera de la regla',
       'me dura mucho la regla',
     ],
+    soloParaSexo: 'FEMALE',
     especialidades: [{ nombre: 'Ginecología', peso: 3 }],
   },
   {
@@ -1508,6 +1526,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'semanas de embarazo',
       'ecografia del embarazo',
     ],
+    soloParaSexo: 'FEMALE',
     especialidades: [
       { nombre: 'Obstetricia', peso: 3 },
       { nombre: 'Ginecología', peso: 2 },
@@ -1525,6 +1544,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'mal olor vaginal',
       'ardor vaginal',
     ],
+    soloParaSexo: 'FEMALE',
     especialidades: [{ nombre: 'Ginecología', peso: 3 }],
   },
   {
@@ -1568,6 +1588,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       // con eso se quedaba con cualquier consulta sobre la menstruación.
       'se me retiro la regla',
     ],
+    soloParaSexo: 'FEMALE',
     especialidades: [
       { nombre: 'Ginecología', peso: 3 },
       { nombre: 'Endocrinología', peso: 1 },

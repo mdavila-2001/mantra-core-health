@@ -92,21 +92,16 @@ export class Login {
   readonly isSubmitting = computed(() => this.state().status === 'loading');
 
   /**
-   * El campo de MFA **ya no se dibuja**, y el control se queda.
+   * El campo de MFA **se dibuja sólo cuando la API lo pide** (TX-29).
    *
-   * Estaba siempre a la vista, rotulado «Código de verificación (opcional)»,
-   * porque `LoginDto` acepta `mfaCode` y el backend no emite ninguna señal de
-   * cuándo hace falta: no hay código de error propio en el catálogo ni mención
-   * de MFA en el servicio de login. Mostrarlo siempre no inventaba nada, pero
-   * le pedía a todo el mundo un dato que casi nadie tiene — y en una pantalla
-   * de dos campos, un tercero que no te toca es el que te hace dudar de los
-   * otros dos.
-   *
-   * El control sigue declarado a propósito: `credentials()` lo omite mientras
-   * esté vacío, así que hoy no cambia nada de lo que viaja, y el día que el
-   * backend declare el caso vuelve el campo a la plantilla —pedido, no
-   * ofrecido— sin tocar el formulario ni el envío.
+   * Antes no había señal: `LoginDto` aceptaba `mfaCode` y nada decía cuándo hacía
+   * falta, así que se lo escondió. Ahora, con `AUTH_MFA_CHALLENGE_ENABLED` en la
+   * API, una cuenta con factor verificado responde `401 details.reason =
+   * MFA_REQUIRED` a un login sin código (y `MFA_INVALID` a uno que no valida): la
+   * pantalla pasa a pedir el código, **pedido y no ofrecido**, y reenvía el mismo
+   * formulario.
    */
+  readonly mfaRequired = signal(false);
 
   readonly errorMessage = computed<string | null>(() => {
     const state = this.state();
@@ -231,6 +226,19 @@ export class Login {
   private toState(error: unknown): ViewState<null> {
     if (error instanceof HttpErrorResponse) {
       const body = readApiError(error);
+      const reason = body?.details?.['reason'];
+      if (body?.code === 'UNAUTHENTICATED' && (reason === 'MFA_REQUIRED' || reason === 'MFA_INVALID')) {
+        this.mfaRequired.set(true);
+        return validation([
+          {
+            message:
+              reason === 'MFA_REQUIRED'
+                ? 'Ingresá el código de verificación de tu aplicación de autenticación.'
+                : 'El código de verificación no es válido. Revisalo y volvé a intentar.',
+            code: body.code,
+          },
+        ]);
+      }
       if (body?.code === 'UNAUTHENTICATED') {
         return validation([{ message: 'Las credenciales no son válidas.', code: body.code }]);
       }

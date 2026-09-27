@@ -523,6 +523,7 @@ export const ACTIVIDAD = definir('VS_ACTIVITY_TYPE', [
   ['ACT-PROCEDIMIENTO', 'Procedimiento'],
   ['ACT-TELECONSULTA', 'Teleconsulta'],
   ['ACT-EXAMEN', 'Examen'],
+  ['ACT-FOLLOW-UP', 'Reconsulta', 'Cita para continuar la atención de una consulta previa.'],
 ]);
 
 conjunto('VS_EXCEPTION_TYPE', 'Tipos de bloqueo', 'Por qué no se atiende.');
@@ -539,6 +540,7 @@ export const TIPO_CITA = definir('VS_APPOINTMENT_TYPE', [
   ['APT-PRIMERA', 'Primera consulta'],
   ['APT-CONTROL', 'Control'],
   ['APT-URGENCIA', 'Urgencia'],
+  ['APT-RECONSULTA', 'Reconsulta', 'Cita vinculada a su reserva y encuentro de origen.'],
 ]);
 
 conjunto('VS_BOOKING_STATUS', 'Estados de reserva', 'Ciclo de vida de una reserva.');
@@ -815,6 +817,7 @@ export const CATEGORIA_ORDEN = definir('VS_SERVICE_REQUEST_CATEGORY', [
   ['SRQ-IMAGING', 'Imagenología'],
   ['SRQ-REFERRAL', 'Interconsulta'],
   ['SRQ-PROCEDURE', 'Procedimiento'],
+  ['SRQ-OTHER', 'Otro', 'Orden de análisis que no pertenece a laboratorio ni imagenología.'],
 ]);
 
 conjunto('VS_PRIORITY', 'Prioridad', 'Prioridad de una orden.');

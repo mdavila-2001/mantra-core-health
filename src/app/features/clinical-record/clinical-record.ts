@@ -15,8 +15,6 @@ import { map } from 'rxjs';
 
 import { ProfilesClient } from '../../core/data-access/profiles/profiles.client';
 import type { PatientListItem } from '../../core/data-access/profiles/profiles.types';
-import { BoDepartmentsCatalog } from '../../core/data-access/terminology/bo-departments.service';
-import type { ValueSetOption } from '../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../core/view-state/view-state';
@@ -25,9 +23,7 @@ import { AppButton } from '../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Input } from '../../shared/components/atoms/input/input';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
-import { Select } from '../../shared/components/atoms/select/select';
 import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
-import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../shared/components/molecules/search-field/search-field';
 import { DataTable } from '../../shared/components/organisms/data-table/data-table';
@@ -78,6 +74,14 @@ const TOPE = 25;
  * Un `403` inesperado (un rol que esta pantalla no anticipa) lo sigue
  * mostrando `app-data-table` con el estado `forbidden` del M34: no hace falta
  * reimplementarlo acá.
+ *
+ * ## Sin desempate por departamento (P-07-3, cerrada 2026-09-24)
+ *
+ * AC-07-2 desempataba por departamento de expedición porque el número de
+ * carnet podía repetirse entre departamentos. El propietario confirmó que
+ * SEGIP no reemite un mismo número: no hay dos personas con el mismo
+ * documento, así que el filtro sobraba y se quitó junto con el catálogo de
+ * departamentos que lo alimentaba.
  */
 @Component({
   selector: 'app-clinical-record',
@@ -91,7 +95,6 @@ const TOPE = 25;
     PageHeader,
     RouterLink,
     SearchField,
-    Select,
     Tooltip,
   ],
   templateUrl: './clinical-record.html',
@@ -129,29 +132,8 @@ export class ClinicalRecord {
     { initialValue: '' },
   );
 
-  /**
-   * El departamento que lo expidió, leído de la URL (AC-07-2).
-   *
-   * Sólo tiene efecto junto al documento: un carnet sin departamento no es
-   * único en Bolivia, pero el campo del modelo es nullable, así que se ofrece
-   * como filtro opcional, no obligatorio (P-07-3 sigue abierta con el
-   * propietario; mientras tanto, se trata como desempate).
-   */
-  protected readonly departamento = toSignal(
-    this.route.queryParamMap.pipe(map((params) => params.get('issuerAdministrativeAreaConceptId'))),
-    { initialValue: null },
-  );
-
   /** Lo tecleado en el campo de documento. No viaja a la URL hasta enviarse. */
   protected readonly documentoTecleado = signal('');
-
-  /** Lo elegido en el desplegable de departamento. Mismo criterio. */
-  protected readonly departamentoElegido = signal<string | null>(null);
-
-  private readonly departamentos = inject(BoDepartmentsCatalog);
-
-  /** Los nueve departamentos de Bolivia, para el desplegable del documento. */
-  protected readonly opcionesDeDepartamento = signal<readonly SelectOption<string>[]>([]);
 
   protected readonly cargando = computed(() => this.resultados().status === 'loading');
 
@@ -197,15 +179,7 @@ export class ClinicalRecord {
     effect(() => {
       this.busqueda();
       this.documento();
-      this.departamento();
       untracked(() => this.cargar());
-    });
-
-    // El desplegable es opcional y no bloquea la búsqueda por nombre: si el
-    // catálogo tarda o falla, el campo de documento sigue usable sin él.
-    this.departamentos.listar().subscribe({
-      next: (opciones) => this.opcionesDeDepartamento.set(opciones.map(toSelectOption)),
-      error: () => this.opcionesDeDepartamento.set([]),
     });
   }
 
@@ -229,10 +203,7 @@ export class ClinicalRecord {
   protected buscar(texto: string): void {
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams:
-        texto === ''
-          ? { q: null }
-          : { q: texto, nationalId: null, issuerAdministrativeAreaConceptId: null },
+      queryParams: texto === '' ? { q: null } : { q: texto, nationalId: null },
       queryParamsHandling: 'merge',
       // Reemplaza en vez de apilar: cada tecleo no es un paso del historial.
       replaceUrl: true,
@@ -245,8 +216,8 @@ export class ClinicalRecord {
   }
 
   /**
-   * Publica el documento (y su departamento) en la URL. Es un envío explícito
-   * y no un filtro en vivo: un carnet a medio teclear no debe buscar.
+   * Publica el documento en la URL. Es un envío explícito y no un filtro en
+   * vivo: un carnet a medio teclear no debe buscar.
    *
    * Limpia `q` a propósito: documento y nombre son dos formas de encontrar a
    * la misma persona, no dos filtros que se combinan — combinarlos AND haría
@@ -257,14 +228,9 @@ export class ClinicalRecord {
     if (documento === '') {
       return;
     }
-    const area = this.departamentoElegido();
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: {
-        q: null,
-        nationalId: documento,
-        issuerAdministrativeAreaConceptId: area ?? null,
-      },
+      queryParams: { q: null, nationalId: documento },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
@@ -287,7 +253,6 @@ export class ClinicalRecord {
   private cargar(): void {
     const documento = this.documento();
     const texto = this.busqueda();
-    const area = this.departamento();
 
     // P-07-10: sin acotamiento por actividad, listar sin criterio sería
     // enumerar el padrón entero. Un rol clínico ya recibe 422 del backend
@@ -304,10 +269,7 @@ export class ClinicalRecord {
 
     this.resultados.set(loading());
 
-    const criterio =
-      documento !== ''
-        ? { nationalId: documento, ...(area ? { issuerAdministrativeAreaConceptId: area } : {}) }
-        : { query: texto };
+    const criterio = documento !== '' ? { nationalId: documento } : { query: texto };
 
     this.profiles.searchPatients({ limit: TOPE, ...criterio }).subscribe({
       next: (pagina) => {
@@ -323,8 +285,7 @@ export class ClinicalRecord {
           documento !== ''
             ? empty(
                 { label: 'Volver a buscar', route: CLINICAL_RECORD_ROUTE },
-                `Nadie tiene el documento «${documento}»` +
-                  (area ? ' expedido en ese departamento.' : '.'),
+                `Nadie tiene el documento «${documento}».`,
               )
             : empty(
                 { label: 'Volver a buscar', route: CLINICAL_RECORD_ROUTE },
@@ -336,9 +297,4 @@ export class ClinicalRecord {
         this.resultados.set(errorToViewState<readonly PatientListItem[]>(error)),
     });
   }
-}
-
-/** `ValueSetOption` → `SelectOption`, para el desplegable de departamento. */
-function toSelectOption(opcion: ValueSetOption): SelectOption<string> {
-  return { value: opcion.conceptId, label: opcion.display };
 }

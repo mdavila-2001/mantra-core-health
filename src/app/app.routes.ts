@@ -1,5 +1,5 @@
-import type { Type } from '@angular/core';
-import { Routes } from '@angular/router';
+import { inject, type Type } from '@angular/core';
+import { Router, type RedirectFunction, type Routes } from '@angular/router';
 import { Dashboard } from './features/dashboard/dashboard';
 import { ShellLayout } from './features/shell-layout/shell-layout';
 import { Login } from './features/auth/login/login';
@@ -92,9 +92,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
       (m) => m.PractitionersDirectory,
     ),
-  // FT-19 · farmacias, imagenología y centros médicos cerca del paciente.
-  'nearby-places': () =>
-    import('./features/nearby-places/nearby-places').then((m) => m.NearbyPlaces),
   'laboratory-directory': () =>
     import('./features/laboratory-directory/laboratory-directory').then(
       (m) => m.LaboratoryDirectory,
@@ -107,12 +104,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/public-directories/pharmacies-directory').then(
       (m) => m.PharmaciesDirectory,
     ),
-  // §4.H del plan de UX · las dos pantallas nuevas del panel del médico.
-  // Diferidas como el resto: sólo las alcanza quien atiende, y el presupuesto
-  // del bundle inicial está al límite —cargarlas de entrada lo pasaba por 4 kB
-  // y le costaba la descarga a todo el mundo, paciente incluido—.
-  'progress-notes': () =>
-    import('./features/progress-notes/progress-notes').then((m) => m.ProgressNotes),
+  // §4.H del plan de UX · la agenda del médico. Diferida como el resto: sólo
+  // la alcanza quien atiende, y el presupuesto del bundle inicial está al
+  // límite —cargarla de entrada lo pasaba por 4 kB y le costaba la descarga a
+  // todo el mundo, paciente incluido—.
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
   diagnostics: () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
   interventions: () =>
@@ -194,6 +189,14 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'my-account': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
   'my-account/dependents': () =>
     import('./features/account/dependents/dependents').then((m) => m.Dependents),
+  'my-account/security': () =>
+    import('./features/account/security/security').then((m) => m.AccountSecurity),
+  'my-account/privacy': () =>
+    import('./features/account/privacy/privacy').then((m) => m.AccountPrivacy),
+  'my-account/clinical-access': () =>
+    import('./features/account/clinical-access/clinical-access').then(
+      (m) => m.AccountClinicalAccess,
+    ),
   'my-account/appointments': () =>
     import('./features/account/appointments/appointments').then((m) => m.Appointments),
   'my-account/medical-record': () =>
@@ -210,8 +213,18 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/cotizaciones/cotizaciones').then((m) => m.Cotizaciones),
   'my-account/pharmacy-orders': () =>
     import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
-  'my-account/loyalty': () =>
-    import('./features/account/loyalty/loyalty').then((m) => m.Loyalty),
+  // «Farmacia»: el punto de entrada del menú desde el 24/09/2026 (pedido del
+  // propietario). Desde el 25/09/2026 es **la tienda** (`StoreFront`, carril
+  // 43) y no el hub de pestañas: buscador de productos y farmacias, con precio
+  // y distancia reales. «Mis pedidos» conserva su ruta propia (el detalle, el
+  // checkout y las notificaciones siguen apuntando ahí) y la tienda la enlaza;
+  // «Cotizaciones» también, con sus cuatro verticales. Los `?tab=` del hub
+  // viejo los redirige `StoreFront`; el hub lo borra Pablo en la Ola 3.
+  'my-account/pharmacy': () =>
+    import('./features/account/pharmacy/store-front/store-front').then((m) => m.StoreFront),
+  // 'my-account/loyalty' SALIÓ de acá (N-03/Q-17, 2026-09-22): la sección
+  // redirige en vez de pintar una pantalla — ver `SECCIONES_REDIRIGIDAS`,
+  // que `componenteDe()` consulta antes que esta tabla.
   'my-account/promotions': () =>
     import('./features/account/promotions/promotions').then((m) => m.Promotions),
   'administration/pharmacy-orders': () =>
@@ -425,6 +438,32 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/medical-record/where-to-buy/where-to-buy')
         .then((m) => m.WhereToBuy)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Elegir cuál de mis recetas comprar (carril 43, H4). Hija de «Farmacia»:
+    // la tienda la enlaza con «Buscar toda una receta», y cada tarjeta lleva a
+    // `medical-record/where-to-buy/:requestId`, que ya existe. Con
+    // `seccionRolesGuard` por la misma razón que `pharmacy-orders/new`: su
+    // sección declara roles y `app.routes.spec.ts` exige cumplirlos en la hija.
+    path: 'my-account/pharmacy/prescriptions',
+    title: `${APP_TITLE} - Mis recetas`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy/prescriptions/prescriptions-page')
+        .then((m) => m.PrescriptionsPage)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El carrito de farmacia (Ola 0, plan `04-farmacia-ecommerce-2026-09-25`
+    // §4.1). Hija de «Farmacia» (`my-account/pharmacy`), con `seccionRolesGuard`
+    // porque esa sección declara `roles: ['PATIENT']`.
+    path: 'my-account/pharmacy/cart',
+    title: `${APP_TITLE} - Tu carrito`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy/cart/cart-page')
+        .then((m) => m.CartPage)
         .catch(() => chunkFallido()),
   },
   {
@@ -1046,12 +1085,61 @@ function rutasDeSecciones(): Routes {
     // (carril 02). Filtrar el menú es cortesía; quien escribe la dirección a
     // mano llega igual, y la corrección #2 pide que la Guía de profesionales no
     // sea *accesible* para quien no es paciente, no sólo que no se vea.
-    canActivate: [seccionRolesGuard],
+    //
+    // Excepción: una sección de `SECCIONES_REDIRIGIDAS` no lleva `canActivate`
+    // — Angular lo rechaza en tiempo de configuración (`NG04014`): un
+    // `redirectTo` se resuelve antes que cualquier guard, así que combinarlos
+    // no es «más seguro», es una ruta inválida.
+    ...(SECCIONES_REDIRIGIDAS[section.path] === undefined
+      ? { canActivate: [seccionRolesGuard] }
+      : {}),
     // La sección viaja con la ruta: el placeholder la lee de acá y no necesita
     // saber cuál de todas es.
     data: { [SECTION_ROUTE_DATA]: section },
     ...componenteDe(section),
   }));
+}
+
+/**
+ * Secciones que siguen registradas (roles, menú, «Tus accesos») pero cuya
+ * pantalla se retiró: la ruta redirige en vez de pintar algo.
+ *
+ * `my-account/loyalty` (N-03/Q-17, 2026-09-22): «Mis puntos» es una pestaña
+ * del perfil del paciente desde el #606 (Itzan, 24/09/2026), y la ficha la
+ * abre por URL con `?pestana=puntos` (`indiceDePestana` en
+ * `pestanas-del-perfil.ts`). La dirección vieja va directo a esa pestaña; el
+ * destino provisorio a la primera pestaña, que la regla 65 dejó mientras la
+ * pestaña no existía, quedó reemplazado.
+ *
+ * La clave viaja con nombre y no con número: reordenar las pestañas no rompe
+ * esta redirección.
+ */
+export const SECCIONES_REDIRIGIDAS: Readonly<Record<string, DestinoRedirigido>> = {
+  'my-account/loyalty': { ruta: '/my-account', query: { pestana: 'puntos' } },
+};
+
+/** A dónde manda una sección redirigida: la ruta y el query que le suma. */
+export interface DestinoRedirigido {
+  readonly ruta: string;
+  readonly query?: Readonly<Record<string, string>>;
+}
+
+/**
+ * La redirección de una sección, **conservando el query que traía**.
+ *
+ * Un `redirectTo` de texto no alcanza: con texto, el router arma el query del
+ * destino sólo con el que declara el propio destino (`createQueryParams` en
+ * `@angular/router` 21), y `/my-account/loyalty?foo=bar` perdería `foo`. La
+ * función devuelve un `UrlTree` con el query entrante más el del destino; si
+ * los dos traen la misma clave gana el destino, porque es lo que la sección
+ * vieja significa —`/my-account/loyalty?pestana=contacto` sigue siendo «Mis
+ * puntos»—.
+ */
+export function redireccionConQuery(destino: DestinoRedirigido): RedirectFunction {
+  return ({ queryParams }) =>
+    inject(Router).createUrlTree([destino.ruta], {
+      queryParams: { ...queryParams, ...destino.query },
+    });
 }
 
 /**
@@ -1063,7 +1151,14 @@ function rutasDeSecciones(): Routes {
  * una pestaña vieja ya no existe—, que sin esto deja la navegación muerta y sin
  * avisar.
  */
-function componenteDe(section: AppSection): Pick<Routes[number], 'component' | 'loadComponent'> {
+function componenteDe(
+  section: AppSection,
+): Pick<Routes[number], 'component' | 'loadComponent' | 'redirectTo' | 'pathMatch'> {
+  const redirige = SECCIONES_REDIRIGIDAS[section.path];
+  if (redirige !== undefined) {
+    return { redirectTo: redireccionConQuery(redirige), pathMatch: 'full' };
+  }
+
   const pantalla = PANTALLAS[section.path];
   if (pantalla !== undefined) {
     return { component: pantalla };
@@ -1140,6 +1235,10 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   'administracion/proveedores-identidad': '/administration/identity-providers',
   'administracion/verificacion-identidad': '/administration/identity-assurance',
   'administracion/terminologia': '/administration/terminology',
+  // «Lugares cercanos» (FT-19) salió del registro (H6, 2026-09-25): la
+  // farmacia se elige ahora desde la tienda y el carrito, no desde una
+  // pantalla de "cerca de mí" aparte. Sigue en historiales y en favoritos.
+  'nearby-places': '/my-account/pharmacy',
 };
 
 /**
@@ -1948,8 +2047,9 @@ export const routes: Routes = [
   },
   {
     // El alta del laboratorio de sangre: los dieciocho puntos de datos legales
-    // del proceso 4.1 del stakeholder. Todavía sin endpoint —cierra con una
-    // solicitud, no con una cuenta—; ver el JSDoc de `RegisterLaboratory`.
+    // del proceso 4.1 del stakeholder. Sale a `POST /iam/auth/register-organization`
+    // con `tenantType: 'DIAGNOSTIC_CENTER'`: crea la cuenta del dueño y la unidad,
+    // pendientes de verificación; ver el JSDoc de `RegisterLaboratory`.
     path: 'auth/register/laboratory',
     // Diferida por lo mismo que las otras dos altas largas: arrastra el mapa,
     // que no tiene por qué viajar en el paquete inicial de toda visita.
@@ -1964,8 +2064,8 @@ export const routes: Routes = [
     // RESONANCIA, ETC.)» del registro del stakeholder. Los dieciocho puntos de
     // datos legales son los mismos que los del laboratorio de sangre —la fuente
     // los repite enteros—, y lo que cambia es qué estudios hace el centro; ver
-    // el JSDoc de `RegisterImagingCenter`. Tampoco tiene endpoint todavía:
-    // cierra con una solicitud, no con una cuenta.
+    // el JSDoc de `RegisterImagingCenter`. Sale al mismo endpoint que el
+    // laboratorio, con las modalidades como conceptos.
     //
     // La ruta dice `imaging-center` y no `imaging` a secas para no chocar con
     // `?kind=IMAGING`, que es la **categoría** del directorio de laboratorios:

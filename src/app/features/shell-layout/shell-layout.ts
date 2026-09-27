@@ -4,8 +4,10 @@ import {
   Component,
   computed,
   DOCUMENT,
+  effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
@@ -13,6 +15,7 @@ import { filter } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { esPaciente, etiquetasDeRoles } from '../../core/auth/role-labels';
+import { CartStore } from '../../core/data-access/pharmacy-cart/cart.store';
 import { LOGIN_ROUTE } from '../../core/http/auth.interceptor';
 import { Breakpoints } from '../../core/layout/breakpoints';
 import { NavigationService } from '../../core/navigation/navigation.service';
@@ -28,11 +31,15 @@ import { TutorialTarget } from '../../shared/components/organisms/tutorial-overl
 // exactamente una vez por sesión con interfaz.
 import { NotificationBell } from '../../shared/components/organisms/notification-bell/notification-bell';
 import { BackLink } from '../../shared/components/atoms/back-link/back-link';
+import { Badge } from '../../shared/components/atoms/badge/badge';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
 import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
 import { TUTORIALS } from '../../core/tutorials/definitions';
 import { AlovidaThemeToggleDirective } from '../../core/alovida/alovida-theme-toggle.directive';
+import { ChatStore } from '../../core/messaging/chat.store';
+import { PHARMACY_CART_ROUTE } from '../account/pharmacy/pharmacy.routes';
+import { PHARMACY_TESTIDS } from '../account/pharmacy/pharmacy.testids';
 
 /**
  * Si un destino de la barra queda debajo de la URL actual.
@@ -78,10 +85,12 @@ const PANEL = '/dashboard';
     TutorialTarget,
     NotificationBell,
     BackLink,
+    Badge,
     NavIcon,
     Tooltip,
   ],
   templateUrl: './shell-layout.html',
+  styleUrl: './shell-layout.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShellLayout {
@@ -131,6 +140,49 @@ export class ShellLayout {
 
   private readonly tutorials = inject(TutorialRegistry);
 
+  /**
+   * No leídos de Chats para el ícono de la cabecera (N-01, H4.S1.M2, Q-E4).
+   *
+   * Es **la misma cuenta** que el título de la pestaña de `Messaging`
+   * (`ChatStore.sinLeer`): el armazón no cuenta nada, la lee. Y **no enciende**
+   * Chats: `iniciar()` sondea cada minuto y marca actividad, y eso sigue siendo
+   * sólo de `/messaging` (`chat.store.ts`, «quien está en la agenda no tiene
+   * por qué estar pidiendo conversaciones cada minuto»). Para que el número
+   * esté desde la primera pantalla —y no en 0 hasta pasar por Chats— el
+   * armazón pide `prepararContador()`: una lectura de la bandeja y el socket,
+   * sin sondeo y sin marcar actividad (ver el constructor).
+   */
+  private readonly chats = inject(ChatStore);
+  protected readonly chatsSinLeer = this.chats.sinLeer;
+
+  /** El nombre accesible de Chats: el ícono solo no dice cuántos hay sin leer. */
+  protected readonly etiquetaChats = computed(() => {
+    const cuantos = this.chatsSinLeer();
+    if (cuantos === 0) return 'Chats';
+    return `Chats, ${cuantos} ${cuantos === 1 ? 'mensaje sin leer' : 'mensajes sin leer'}`;
+  });
+
+  /**
+   * El carrito de farmacia (H4.S1, carril 41/46): sólo el paciente lo ve — es
+   * su compra, no una herramienta de la médica ni del resto de los roles.
+   */
+  private readonly cart = inject(CartStore);
+  protected readonly unidadesDelCarrito = this.cart.unitCount;
+  protected readonly esPacienteDelCarrito = computed(() => esPaciente(this.auth.roles()));
+  protected readonly pharmacyCartRoute = PHARMACY_CART_ROUTE;
+  protected readonly pharmacyTestids = PHARMACY_TESTIDS;
+
+  /** El nombre accesible del carrito: el número y la farmacia, no sólo «Carrito». */
+  protected readonly etiquetaCarrito = computed(() => {
+    const unidades = this.unidadesDelCarrito();
+    const farmacia = this.cart.cart()?.site.pharmacyName;
+    if (unidades === 0 || farmacia === undefined) {
+      return 'Carrito';
+    }
+    const sustantivo = unidades === 1 ? 'unidad' : 'unidades';
+    return `Carrito, ${unidades} ${sustantivo} en ${farmacia}`;
+  });
+
   constructor() {
     // El catálogo de tutoriales se registra acá y no en un proveedor de arranque
     // porque el armazón es lo único que existe exactamente una vez por sesión
@@ -144,6 +196,17 @@ export class ShellLayout {
        desde cada pantalla los pediría cinco veces. El servicio no hace nada
        bajo SSR ni en una cuenta que no es de un paciente. */
     this.contextoDePaciente.loadDependents();
+
+    /* N-01 · el número de Chats de la cabecera tiene que estar desde cualquier
+       pantalla, no sólo después de pasar por `/messaging`. En cuanto hay sesión
+       se prepara el contador: una lectura de la bandeja y el socket, sin
+       sondeo y sin contar como «estar en Chats» (ver
+       `ChatStore.prepararContador`). Es idempotente. */
+    effect(() => {
+      if (this.user() !== null) {
+        untracked(() => this.chats.prepararContador());
+      }
+    });
 
     this.urlActual.set(this.rutaLimpia());
     this.router.events

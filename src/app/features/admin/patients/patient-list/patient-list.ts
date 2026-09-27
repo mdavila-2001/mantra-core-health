@@ -252,7 +252,7 @@ export class PatientList {
    * confusión que la pantalla de fusión se ocupa de evitar.
    */
   protected readonly accionesSecundarias: readonly PageHeaderAction[] = [
-    { code: 'fusionar', label: 'Fusionar duplicados' },
+    { code: 'fusionar', label: 'Fusionar duplicados', icon: 'merge' },
   ];
 
   protected ejecutarAccion(code: string): void {

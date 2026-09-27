@@ -155,6 +155,27 @@ export const NAV_ICON_NAMES = [
   'sun',
   'moon',
   'camera',
+
+  // Acciones de desplegable (2026-09-24). Pedido del propietario: **toda**
+  // opción de un desplegable lleva ícono, porque en una lista de cinco una sin
+  // dibujo se lee como un rótulo y no como algo que se puede tocar. Igual que
+  // `remove` y `edit`, responden «¿qué le hace este botón a lo que está al
+  // lado?» y nunca nombran una sección.
+  'eye',
+  'eye-off',
+  'check',
+  'check-circle',
+  'close',
+  'arrive',
+  'logout',
+  'paperclip',
+  'refresh',
+  'share',
+  'qr',
+  'print',
+  'download',
+  'merge',
+  'clock',
 ] as const;
 
 export type NavIconName = (typeof NAV_ICON_NAMES)[number];

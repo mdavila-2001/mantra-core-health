@@ -36,7 +36,6 @@ export interface FormacionVisible {
 export interface EspecialidadVisible {
   readonly id: string;
   readonly nombre: string;
-  readonly principal: boolean;
   readonly certificada: boolean;
   readonly alcance: string;
   readonly desde: Date | null;
@@ -237,8 +236,6 @@ export interface DatosPersonalesVisibles {
    * Vacío es «no lo declaró»: la ficha no dibuja el renglón.
    */
   readonly celularPersonal: string;
-  readonly celularTrabajo: string;
-  readonly fijoTrabajo: string;
   readonly correoPersonal: string;
   /** La calle del domicilio. El municipio sigue en `domicilio`. */
   readonly direccion: string;
@@ -251,4 +248,14 @@ export interface DatosPersonalesVisibles {
    * «Ubicación GPS» del domicilio y la ficha no la mostraba.
    */
   readonly mapaDomicilio: string | null;
+  /**
+   * Las coordenadas del domicilio, para dibujarlo en la pestaña «Contacto».
+   * `null` (o ausente) si no declaró la «Ubicación GPS» en el alta.
+   */
+  /**
+   * El `conceptId` del municipio de residencia, para mostrarlo en el mapa de
+   * departamentos y el select —bloqueados— igual que en el editor.
+   */
+  readonly municipioResidenciaId?: string | null;
+  readonly ubicacionDomicilio?: { readonly lat: number; readonly lng: number } | null;
 }

@@ -7,6 +7,7 @@ import { CommunityClient } from './community.client';
 import type {
   CommentThreadPage,
   ConversationPage,
+  DirectMessagePage,
   FeedPage,
   GroupDetail,
   GroupWallPage,
@@ -457,6 +458,80 @@ describe('CommunityClient', () => {
     expect(req.request.params.get('cursor')).toBe('c-2');
 
     req.flush(paginaVacia);
+  });
+
+  it('AG-20: un mensaje borrado trae deletedAt como Date, y uno vivo no trae la clave', () => {
+    let pagina: DirectMessagePage | undefined;
+    client.listMessages('conv-1', { profileId: 'p-1' }).subscribe((p) => (pagina = p));
+
+    http.expectOne((r) => r.url === '/community/conversations/conv-1/messages').flush({
+      items: [
+        {
+          id: 'm-1',
+          conversationId: 'conv-1',
+          senderProfileId: 'p-1',
+          contentTypeConceptId: 'c-text',
+          bodyText: null,
+          attachmentFileId: null,
+          isEdited: false,
+          sentAt: '2026-08-13T13:00:00.000Z',
+          deletedAt: '2026-08-13T13:05:00.000Z',
+        },
+        {
+          id: 'm-2',
+          conversationId: 'conv-1',
+          senderProfileId: 'p-1',
+          contentTypeConceptId: 'c-text',
+          bodyText: 'sigue vivo',
+          attachmentFileId: null,
+          isEdited: false,
+          sentAt: '2026-08-13T13:01:00.000Z',
+          deletedAt: null,
+        },
+      ],
+      count: 2,
+      limit: 20,
+      nextCursor: null,
+    });
+
+    const [borrado, vivo] = pagina!.items;
+    expect(borrado!.deletedAt).toEqual(new Date('2026-08-13T13:05:00.000Z'));
+    expect('deletedAt' in vivo!).toBe(false);
+  });
+
+  it('AG-18: listMyModerationDecisions manda profileId y convierte decidedAt', () => {
+    let pagina: import('./community.types').MyModerationDecisionPage | undefined;
+    client
+      .listMyModerationDecisions('pp-1', { cursor: 'c-1', limit: 10 })
+      .subscribe((p) => (pagina = p));
+
+    const req = http.expectOne(
+      (r) => r.url === '/community/moderation/decisions/mine',
+    );
+    expect(req.request.params.get('profileId')).toBe('pp-1');
+    expect(req.request.params.get('cursor')).toBe('c-1');
+    expect(req.request.params.get('limit')).toBe('10');
+
+    req.flush({
+      items: [
+        {
+          decisionId: 'dec-1',
+          policyConceptId: 'c-policy',
+          decisionConceptId: 'c-removed',
+          rationaleText: 'Viola las normas',
+          decidedAt: '2026-08-12T15:00:00.000Z',
+          appealable: true,
+        },
+      ],
+      count: 1,
+      limit: 10,
+      nextCursor: null,
+    });
+
+    expect(pagina!.items[0]!.decidedAt).toEqual(
+      new Date('2026-08-12T15:00:00.000Z'),
+    );
+    expect(pagina!.items[0]!.appealable).toBe(true);
   });
 
   it('listReviews conserva las dimensiones y las respuestas', () => {

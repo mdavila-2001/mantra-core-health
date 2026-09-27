@@ -1,0 +1,274 @@
+[
+  {
+    "cuenta": "Visitador",
+    "ruta": "/dashboard",
+    "componente": "Dashboard",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/tutorials",
+    "componente": "TutorialsCenter",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/messaging",
+    "componente": "Messaging",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/directories",
+    "componente": "DirectoriesOverview",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/groups",
+    "componente": "Groups",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/laboratory-directory",
+    "componente": "LaboratoryDirectory",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/clinics-directory",
+    "componente": "ClinicsDirectory",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/pharmacies-directory",
+    "componente": "PharmaciesDirectory",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/glossary",
+    "componente": "Glossary",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/my-services",
+    "componente": "MyServices",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/my-quotations",
+    "componente": "QuotationList",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/administration/insurance",
+    "componente": "InsuranceCatalog",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/administration/insurance-analytics",
+    "componente": "InsuranceAnalytics",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/my-account/dependents",
+    "componente": "Dependents",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/my-account",
+    "componente": "MyProfile",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/my-account/appointments",
+    "componente": "Appointments",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/my-account/medical-record",
+    "componente": "MedicalRecord",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/my-account/diagnostic-results",
+    "componente": "DiagnosticResults",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/my-account/diagnostic-orders",
+    "componente": "DiagnosticOrders",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/my-account/questionnaires",
+    "componente": "Questionnaires",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/settings",
+    "componente": "Settings",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/notification-center",
+    "componente": "NotificationCenter",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/my-account/identity",
+    "componente": "IdentityHub",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/administration/my-organization",
+    "componente": "OrganizationPanel",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/administration/pharmacy-orders",
+    "componente": "PharmacyInbox",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/administration/pharmacy-campaigns",
+    "componente": "PharmacyCampaigns",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/administration/pharmacy-profile",
+    "componente": "PharmacyProfile",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/administration/getting-started",
+    "componente": "GettingStarted",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/my-account/access-requests",
+    "componente": "AccessRequests",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/my-account/articles",
+    "componente": "MedicalArticles",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/my-account/edit",
+    "componente": "PractitionerProfileEdit",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/my-account/profile/edit",
+    "componente": "PatientProfileEdit",
+    "estado": "ok",
+    "detalle": "",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/my-quotations/new",
+    "componente": "QuotationForm",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  },
+  {
+    "cuenta": "Visitador",
+    "ruta": "/onboarding",
+    "componente": "OnboardingPractitioner",
+    "estado": "denegada",
+    "detalle": "terminó en /dashboard",
+    "sinManejador": []
+  }
+]
