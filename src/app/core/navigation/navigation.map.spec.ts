@@ -331,6 +331,52 @@ describe('isVisibleTo con `hiddenForTenantTypes`', () => {
 });
 
 /**
+ * `onlyForTenantTypes`: la contracara de `hiddenForTenantTypes`. Nace con la
+ * recepción de muestras del laboratorio, cuyo personal no tiene rol propio en
+ * el token: lo único que distingue su sesión es el tipo del tenant activo.
+ */
+describe('isVisibleTo con `onlyForTenantTypes`', () => {
+  const seccionDelLaboratorio = {
+    path: 'x',
+    label: 'X',
+    group: 'Atención',
+    icon: 'flask',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT'],
+    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
+    availability: 'disponible',
+    summary: 's',
+    module: 'M00',
+  } as const;
+
+  it('la ve el personal de un centro de diagnóstico, aunque sólo tenga `USER`', () => {
+    expect(isVisibleTo(seccionDelLaboratorio, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(true);
+    expect(apareceEnElMenu(seccionDelLaboratorio, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(true);
+  });
+
+  it('otro tipo de organización no la ve, ni con el comodín', () => {
+    expect(isVisibleTo(seccionDelLaboratorio, ['USER'], ['t-1'], 'PROVIDER')).toBe(false);
+    expect(isVisibleTo(seccionDelLaboratorio, ['SUPERADMIN'], ['t-1'], 'PAYER')).toBe(false);
+  });
+
+  it('sin tipo de organización activa, la duda oculta', () => {
+    expect(isVisibleTo(seccionDelLaboratorio, ['USER'], ['t-1'], null)).toBe(false);
+    expect(isVisibleTo(seccionDelLaboratorio, ['USER'], ['t-1'])).toBe(false);
+  });
+
+  it('el paciente no la ve aunque su organización activa fuera un laboratorio', () => {
+    expect(isVisibleTo(seccionDelLaboratorio, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
+  });
+
+  it('la sección real es la recepción de muestras, y nada más la usa', () => {
+    const conMarca = APP_SECTIONS.filter((s) => s.onlyForTenantTypes !== undefined);
+    expect(conMarca.map((s) => s.path)).toEqual(['laboratorio/recepcion']);
+    expect(conMarca[0]?.onlyForTenantTypes).toEqual(['DIAGNOSTIC_CENTER']);
+  });
+});
+
+/**
  * El registro de procesos del cliente (módulo «Aseguradora de salud») pide
  * tres pantallas: datos legales, qué aprueba/no aprueba, y siniestralidad —
  * «Tu organización», «Aseguradora» y «Siniestralidad y analítica», que ya

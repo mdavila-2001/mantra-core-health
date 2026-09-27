@@ -179,3 +179,71 @@ export interface ReleaseReportVersion {
   readonly reasonConceptId?: string;
   readonly policyVersion?: string;
 }
+
+/* ---- la recepción de muestras --------------------------------------------
+   La bandeja de órdenes que otras organizaciones le dirigieron al laboratorio
+   del tenant activo y que todavía no tienen acesión
+   (`POST /diagnostics/service-requests/inbox`). */
+
+/**
+ * El campo cuyo catálogo ofrece los tipos de espécimen
+ * (`GET /system-context/dynamic-enums?target=…`, enumeración `specimen-type`).
+ */
+export const SPECIMEN_TYPE_TARGET = 'diagnostics.specimens.specimen_type_concept_id';
+
+/**
+ * El campo cuyo catálogo ofrece los tipos de contenedor (enumeración
+ * `specimen-container-type`): tubos por color de tapa, frascos e hisopos.
+ */
+export const CONTAINER_TYPE_TARGET = 'diagnostics.specimen_containers.container_type_concept_id';
+
+/**
+ * Qué se le pide a la bandeja. Viaja en el **cuerpo**, no en la URL: la
+ * búsqueda por paciente es un nombre o un código de historia clínica, y en
+ * una query string terminaría en logs de acceso e historial del navegador.
+ */
+export interface LabInboxQuery {
+  /** Cursor opaco de la página anterior (`nextCursor`). */
+  readonly cursor?: string;
+  /** Tope de filas: 1 a 100, 25 por defecto. */
+  readonly limit?: number;
+  /** Nombre o código del paciente, 2 a 80 caracteres. */
+  readonly patientQuery?: string;
+}
+
+/** Una orden de la bandeja de recepción. */
+export interface LabInboxItem {
+  readonly serviceRequestId: string;
+  readonly patientProfileId: string;
+  readonly patientDisplayName: string | null;
+  readonly patientCode: string | null;
+  /** Estudio pedido (concept id) y su nombre de catálogo. */
+  readonly codeConceptId: string;
+  readonly codeDisplay: string | null;
+  readonly categoryConceptId: string | null;
+  readonly priorityConceptId: string | null;
+  readonly statusConceptId: string;
+  readonly requesterProfileId: string | null;
+  /** La organización que emitió la orden. */
+  readonly requestingTenantId: string;
+  readonly requestingTenantName: string | null;
+  readonly requestedAt: Date;
+  /**
+   * Muestras que este laboratorio ya recibió para la orden y todavía no
+   * acesionó —con sus contenedores y su cadena de custodia—. Un espécimen
+   * rechazado sigue acá con su estado.
+   */
+  readonly specimens: readonly SpecimenDetail[];
+}
+
+/**
+ * Una página de la bandeja. Puede traer menos filas que `limit` **y** un
+ * `nextCursor`: el servidor acota cuánto recorre por pedido, así que mientras
+ * haya cursor hay más para cargar.
+ */
+export interface LabInboxPage {
+  readonly items: readonly LabInboxItem[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
