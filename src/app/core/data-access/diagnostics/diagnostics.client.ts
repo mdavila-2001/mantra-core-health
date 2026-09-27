@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { sendIdempotent, SubmissionKeys } from '../idempotency';
 import { normalizePatientSettlement } from '../insurance/patient-insurance-settlement.types';
 import { sinNulos, type ConNulos } from '../wire';
 import type {
@@ -68,6 +69,8 @@ import type {
 export class DiagnosticsClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+  /** Claves `Idempotency-Key` por intento de envío (ver `../idempotency`). */
+  private readonly submissionKeys = new SubmissionKeys();
 
   /**
    * `GET /diagnostics/patients/:id/orders` — órdenes de laboratorio e
@@ -143,18 +146,19 @@ export class DiagnosticsClient {
    * vuelve de este circuito es `categoryConceptId`, y es la lectura de
    * `diagnostics` la que filtra por él.
    *
+   * Viaja con `Idempotency-Key`: reintentar el mismo envío no crea dos
+   * órdenes del mismo estudio.
+   *
    * @param orden - Paciente, organización, qué se pide y lo opcional que se haya cargado.
    * @returns La orden creada, con su identificador y su estado inicial.
    */
   requestStudy(orden: NewDiagnosticOrder): Observable<DiagnosticOrderCreated> {
-    return this.http
-      .post<WireOrderCreated>(
-        this.url('/clinical/service-requests'),
-        // Sin las claves ausentes: el backend valida con `forbidNonWhitelisted`
-        // y un opcional en `undefined` viaja como clave declarada.
-        sinAusentes(orden),
-      )
-      .pipe(map(toOrderCreated));
+    // Sin las claves ausentes: el backend valida con `forbidNonWhitelisted`
+    // y un opcional en `undefined` viaja como clave declarada.
+    const body = sinAusentes(orden);
+    return sendIdempotent(this.submissionKeys, 'service-request', body, (headers) =>
+      this.http.post<WireOrderCreated>(this.url('/clinical/service-requests'), body, { headers }),
+    ).pipe(map(toOrderCreated));
   }
 
   /**
