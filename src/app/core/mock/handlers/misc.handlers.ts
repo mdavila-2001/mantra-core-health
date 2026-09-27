@@ -29,6 +29,18 @@ import { ahora, Coleccion, cuerpo, iso, nuevoId, uuid } from '../mock-store';
 
 /** De `esquema.tabla.columna` al conjunto de valores que la gobierna. */
 const ENUMS: readonly (readonly [patron: RegExp, valueSet: string, name: string])[] = [
+  /*
+   * Los cuatro del alta pública de laboratorio y centro de imagenología
+   * (BR-09). Van PRIMERO y con la tabla en el patrón: sin ellos, el tipo de
+   * unidad y la modalidad casaban con `/unit/` —las unidades de dosis— y el
+   * país con nada, así que el alta no encontraba `DU_TYPE_LAB` ni `BO` y
+   * frenaba con «No pudimos cargar los catálogos del alta». La jurisdicción
+   * casaba con `/jurisdiction/`, cuyos códigos (`JUR-*`) no son los de la API.
+   */
+  [/diagnostic_units\.diagnostic_unit_type_concept_id/, 'VS_DIAGNOSTIC_UNIT_TYPE', 'Tipo de unidad diagnóstica'],
+  [/diagnostic_study_offerings\.modality_concept_id/, 'VS_DIAGNOSTIC_MODALITY', 'Modalidad diagnóstica'],
+  [/directory\.tenants\.country_concept_id/, 'VS_TENANT_COUNTRY', 'País de la organización'],
+  [/jurisdiction_authorizations\.jurisdiction_concept_id/, 'VS_LICENSE_JURISDICTION', 'Jurisdicción'],
   [/insurance_plans\.currency_concept_id/, 'VS_INSURANCE_PLAN_CURRENCY', 'Moneda'],
   [
     /insurance_plan_benefits\.benefit_category_concept_id/,

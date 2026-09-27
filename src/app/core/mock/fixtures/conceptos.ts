@@ -1091,6 +1091,100 @@ export const ESTADO_DE_CASO = definir('VS_IDENTITY_CASE_STATUS', [
   ['identity_assurance:CASE_EXPIRED', 'Case expired'],
 ]);
 
+/* ---- alta pública de laboratorio y centro de imagenología (BR-09) --------
+   Los cuatro catálogos que el alta lee por `dynamic-enums` y resuelve **por
+   código** (`registro-compartido/alta-de-centro-diagnostico.ts`). Los códigos
+   son los que publica la API —`diagnostic_units.concepts.ts`,
+   `CONCEPTS.COUNTRY_BO` y `PROF.JURISDICTION_*`—: con cualquier otro, el alta
+   de la maqueta frenaba en «No pudimos cargar los catálogos del alta» antes de
+   subir un solo PDF. */
+
+conjunto('VS_DIAGNOSTIC_UNIT_TYPE', 'Tipo de unidad diagnóstica', 'Laboratorio clínico o centro de imagenología.');
+export const DIAGNOSTIC_UNIT_TYPE = definir('VS_DIAGNOSTIC_UNIT_TYPE', [
+  ['DU_TYPE_LAB', 'Laboratorio clínico'],
+  ['DU_TYPE_IMAGING', 'Centro de imagenología'],
+]);
+
+conjunto('VS_DIAGNOSTIC_MODALITY', 'Modalidad diagnóstica', 'Las modalidades que un alta puede declarar.');
+export const DIAGNOSTIC_MODALITY = definir('VS_DIAGNOSTIC_MODALITY', [
+  ['DU_MODALITY_LAB', 'Laboratorio'],
+  ['DU_MODALITY_XRAY', 'Rayos X'],
+  ['DU_MODALITY_ULTRASOUND', 'Ecografía'],
+  ['DU_MODALITY_CT', 'Tomografía computarizada'],
+  ['DU_MODALITY_MRI', 'Resonancia magnética'],
+  ['DU_MODALITY_MAMMOGRAPHY', 'Mamografía'],
+  ['DU_MODALITY_BONE_DENSITOMETRY', 'Densitometría ósea'],
+]);
+
+// Hoy sólo Bolivia, igual que `tenant-country` en la API: no es el
+// `VS_COUNTRY` universal, que allá sigue sin miembros.
+conjunto('VS_TENANT_COUNTRY', 'País de la organización', 'País donde está constituida la organización.');
+export const TENANT_COUNTRY = definir('VS_TENANT_COUNTRY', [['BO', 'Bolivia']]);
+
+// El catálogo `jurisdiction` de la API, con sus dos códigos. No reemplaza a
+// `VS_JURISDICTION` (`JUR-*`), que siguen usando las matrículas sembradas de
+// la maqueta: sólo lo lee el alta de centros de diagnóstico.
+conjunto('VS_LICENSE_JURISDICTION', 'Jurisdicción', 'Ámbito territorial de la licencia para operar.');
+export const LICENSE_JURISDICTION = definir('VS_LICENSE_JURISDICTION', [
+  ['JURISDICTION_NATIONAL', 'Nacional'],
+  ['JURISDICTION_SEDES_SANTA_CRUZ', 'SEDES Santa Cruz'],
+]);
+
+/* ---- circuito de especímenes del laboratorio (BR-17, CL-47) --------------
+   Estados, custodia y rechazo con los códigos de `diagnostics.concepts.ts` de
+   la API. El **tipo de espécimen** y el **tipo de contenedor** no tienen
+   catálogo en la API todavía (el DTO pide un uuid y nada lo siembra): los de
+   acá son de la maqueta, con prefijo propio para que nadie los confunda con
+   un código real. */
+
+conjunto('VS_SPECIMEN_STATUS', 'Estado del espécimen', 'Ciclo de vida de un espécimen.');
+export const SPECIMEN_STATUS = definir('VS_SPECIMEN_STATUS', [
+  ['SPEC_COLLECTED', 'Recolectado'],
+  ['SPEC_RECEIVED', 'Recibido en el laboratorio'],
+  ['SPEC_REJECTED', 'Rechazado'],
+]);
+
+conjunto('VS_ACCESSION_STATUS', 'Estado de la acesión', 'Ciclo de vida de una acesión de laboratorio.');
+export const ACCESSION_STATUS = definir('VS_ACCESSION_STATUS', [
+  ['ACC_RECEIVED', 'Recibida'],
+  ['ACC_IN_PROCESS', 'En proceso'],
+  ['ACC_ITEM_RECEIVED', 'Espécimen recibido'],
+  ['ACC_ITEM_REJECTED', 'Espécimen rechazado'],
+]);
+
+conjunto('VS_CUSTODY_EVENT_TYPE', 'Evento de custodia', 'Qué pasó con el espécimen en la cadena de custodia.');
+export const CUSTODY_EVENT_TYPE = definir('VS_CUSTODY_EVENT_TYPE', [
+  ['CUSTODY_RECEPTION', 'Recepción'],
+  ['CUSTODY_TRANSFER', 'Traslado'],
+  ['CONTAINER_EVT_TRANSFER', 'Traslado del contenedor'],
+]);
+
+conjunto('VS_CONTAINER_STATUS', 'Estado del contenedor', 'Dónde está el contenedor del espécimen.');
+export const CONTAINER_STATUS = definir('VS_CONTAINER_STATUS', [
+  ['CONTAINER_ACTIVE', 'En uso'],
+  ['CONTAINER_IN_TRANSIT', 'En tránsito'],
+  ['CONTAINER_STORED', 'Almacenado'],
+]);
+
+conjunto('VS_SPECIMEN_REJECTION_REASON', 'Motivo de rechazo', 'Por qué el laboratorio rechaza un espécimen.');
+export const SPECIMEN_REJECTION_REASON = definir('VS_SPECIMEN_REJECTION_REASON', [
+  ['REJECTION_QUALITY', 'Calidad insuficiente (hemólisis o volumen)'],
+]);
+
+conjunto('VS_SPECIMEN_TYPE', 'Tipo de espécimen', 'Qué muestra se tomó (catálogo de la maqueta).');
+export const SPECIMEN_TYPE = definir('VS_SPECIMEN_TYPE', [
+  ['SPECIMEN-TYPE-WHOLE-BLOOD', 'Sangre total'],
+  ['SPECIMEN-TYPE-SERUM', 'Suero'],
+  ['SPECIMEN-TYPE-URINE', 'Orina'],
+]);
+
+conjunto('VS_SPECIMEN_CONTAINER_TYPE', 'Tipo de contenedor', 'Tubo o frasco del espécimen (catálogo de la maqueta).');
+export const SPECIMEN_CONTAINER_TYPE = definir('VS_SPECIMEN_CONTAINER_TYPE', [
+  ['CONTAINER-TYPE-EDTA', 'Tubo tapa lila (EDTA)'],
+  ['CONTAINER-TYPE-SST', 'Tubo tapa amarilla (gel separador)'],
+  ['CONTAINER-TYPE-URINE-CUP', 'Frasco estéril de orina'],
+]);
+
 /* ---- Catálogos administrativos de seguros -------------------------------- */
 conjunto(
   'VS_INSURANCE_PLAN_CURRENCY',
