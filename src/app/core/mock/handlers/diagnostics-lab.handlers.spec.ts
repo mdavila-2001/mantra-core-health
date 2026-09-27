@@ -85,7 +85,7 @@ describe('circuito de especímenes del laboratorio (diagnostics-lab)', () => {
     const created = call<Created>('POST', '/diagnostics/specimens', {
       patientProfileId: PACIENTE.id,
       custodianTenantId: TENANT_CLINICA,
-      specimenTypeConceptId: SPECIMEN_TYPE['SPECIMEN-TYPE-WHOLE-BLOOD'],
+      specimenTypeConceptId: SPECIMEN_TYPE['BLDV'],
     });
     expect(created.status).toBe(201);
     expect(created.body.status).toBe(SPECIMEN_STATUS['SPEC_COLLECTED']);
@@ -106,7 +106,7 @@ describe('circuito de especímenes del laboratorio (diagnostics-lab)', () => {
 
     const container = call<Created>('POST', `/diagnostics/specimens/${specimenId}/containers`, {
       containerIdentifier: 'TUBO-PRUEBA-1',
-      containerTypeConceptId: SPECIMEN_CONTAINER_TYPE['CONTAINER-TYPE-EDTA'],
+      containerTypeConceptId: SPECIMEN_CONTAINER_TYPE['TUBE_LAVENDER_EDTA'],
     });
     expect(container.status).toBe(201);
     expect(container.body.status).toBe(CONTAINER_STATUS['CONTAINER_ACTIVE']);
@@ -193,7 +193,7 @@ describe('circuito de especímenes del laboratorio (diagnostics-lab)', () => {
     expect(
       call('POST', '/diagnostics/specimens/no-existe/containers', {
         containerIdentifier: 'TUBO-X',
-        containerTypeConceptId: SPECIMEN_CONTAINER_TYPE['CONTAINER-TYPE-SST'],
+        containerTypeConceptId: SPECIMEN_CONTAINER_TYPE['TUBE_GOLD_SST'],
       }).status,
     ).toBe(404);
     expect(call('POST', '/diagnostics/containers/no-existe/custody-events', { specimenId: 'x' }).status).toBe(404);
