@@ -114,7 +114,11 @@
   /* Tinta */
   --tinta:        #242828;
   --tinta-2:      #4E5151;
-  --tinta-3:      #787B7B;
+  /* CORRECCIÓN DE CONTRASTE aplicada por sync-alovida.mjs (transformación 3).
+     La bóveda trae #787B7B: 3,86:1 sobre marfil y 4,27 sobre blanco, sin AA
+     para texto chico (era la excepción R1). #656768 —el ivory-800 de v1.0—
+     da 5,13 y 5,69. */
+  --tinta-3:      #656768;
   --tinta-nav:    #FFFFFF;
 
   /* Marca */
@@ -145,7 +149,13 @@
   --filete:       #CDD9D5;
   --filete-2:     #E3EAE7;
   --borde-ctrl:   #7D8786;
-  --anillo-foco:  rgba(79, 179, 169, .45);
+  /* CORRECCIÓN DE CONTRASTE (sync-alovida.mjs). La bóveda trae aguamarina al
+     45 %: 1,48:1 sobre blanco, lejos del 3:1 de un indicador de foco (WCAG
+     1.4.11). #33706C —el aqua-700 de v1.0— es sólido y da 5,71 sobre blanco
+     y 5,16 sobre marfil. Sobre el petróleo del nav no se vería (1,41), así
+     que ahí el anillo es menta: ver --anillo-foco-nav y .app-side-nav. */
+  --anillo-foco:  #33706C;
+  --anillo-foco-nav: #9FD8D0;
 
   /* Estados: fondo tintado claro + tinta oscura del mismo tono */
   --ok-bg:        #DFEDE9;  --ok-tinta:     #27725C;
@@ -513,6 +523,9 @@ app-shell-layout { display: block; }
    sobre las zonas claras de la imagen; sin él, la banda de luz se come las
    etiquetas. */
 .app-side-nav {
+  /* El anillo de foco del resto de la página es oscuro y sobre el petróleo
+     desaparece; en el nav se usa la menta (5,05:1 sobre #0B557E). */
+  --anillo-foco: var(--anillo-foco-nav);
   position: fixed; top: 0; left: 0; bottom: 56px; width: var(--w-nav); z-index: 30;
   overflow: hidden auto;
   background-color: var(--sup-nav);
@@ -2001,7 +2014,7 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
   --filete:       #1E3138;
   --filete-2:     #17272D;
   --borde-ctrl:   #4A5F64;
-  --anillo-foco:  rgba(87, 194, 183, .42);
+  --anillo-foco:  #57C2B7; /* sólido: la aguamarina nocturna, ≥6,5:1 (sync-alovida.mjs) */
 
   /* Estados: fondo tintado oscuro + tinta clara del mismo tono */
   --ok-bg:        #0E2E27;  --ok-tinta:     #79CFAF;

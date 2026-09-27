@@ -70,7 +70,7 @@ export type SurfaceToken = (typeof SURFACE)[keyof typeof SURFACE];
 export const TEXT = {
   primary: '--text-primary',
   secondary: '--text-secondary',
-  /** Terciario: excepción WCAG E1 — jamás para información clínica. */
+  /** Terciario (AA desde que cerró la excepción E1) — jamás para información clínica. */
   muted: '--text-muted',
   inverse: '--text-inverse',
 } as const;
