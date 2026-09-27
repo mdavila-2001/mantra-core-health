@@ -559,10 +559,10 @@ export const ESTADO_RESERVA = definir('VS_BOOKING_STATUS', [
 
 conjunto('VS_CONDITION_CLINICAL_STATUS', 'Estado clínico', 'Estado clínico de una condición.');
 export const ESTADO_CONDICION = definir('VS_CONDITION_CLINICAL_STATUS', [
-  ['COND-ACTIVE', 'Activa'],
-  ['COND-REMISSION', 'En remisión'],
-  ['COND-RESOLVED', 'Resuelta'],
-  ['COND-RECURRENCE', 'Recurrente'],
+  ['COND_ACTIVE', 'Activa'],
+  ['COND_REMISSION', 'En remisión'],
+  ['COND_RESOLVED', 'Resuelta'],
+  ['COND_RECURRENCE', 'Recurrente'],
 ]);
 
 /* Los tres catálogos del diagnóstico que faltaban, con **los códigos del
@@ -602,12 +602,17 @@ export const LATERALIDAD = definir('VS_CONDITION_LATERALITY', [
   ['COND_LAT_BILATERAL', 'Bilateral'],
 ]);
 
+/* Estado clínico y certeza con **los códigos del backend**
+   (`CLIN.CONDITION_*` de `clinical.concepts.ts`), por lo mismo que los
+   catálogos de arriba: `diagnosisStateOf` compara códigos, y con unos
+   inventados (`DXV-CONFIRMED`, `COND-ACTIVE`) el simulador daba la razón a un
+   front que contra la API real mostraba todo «En estudio». La API no siembra
+   el diferencial de HL7, así que el simulador tampoco. */
 conjunto('VS_CONDITION_VERIFICATION', 'Verificación diagnóstica', 'Certeza del diagnóstico.');
 export const VERIFICACION_DX = definir('VS_CONDITION_VERIFICATION', [
-  ['DXV-CONFIRMED', 'Confirmado'],
-  ['DXV-PROVISIONAL', 'Provisional'],
-  ['DXV-DIFFERENTIAL', 'Diferencial'],
-  ['DXV-REFUTED', 'Descartado'],
+  ['COND_CONFIRMED', 'Confirmado'],
+  ['COND_PROVISIONAL', 'Provisional'],
+  ['COND_REFUTED', 'Descartado'],
 ]);
 
 conjunto('VS_SEVERITY', 'Severidad', 'Gravedad de una condición o reacción.');

@@ -1,5 +1,13 @@
 import type { Condition } from '../../core/data-access/clinical/clinical.types';
-import { diagnosisStateOf } from './diagnosis-state';
+import { ESTADO_CONDICION, VERIFICACION_DX } from '../../core/mock/fixtures/conceptos';
+import {
+  CODIGO_ACTIVA,
+  CODIGO_CONFIRMADO,
+  CODIGO_DESCARTADO,
+  CODIGO_REMISION,
+  CODIGO_RESUELTA,
+  diagnosisStateOf,
+} from './diagnosis-state';
 
 /** Identificadores sintéticos: el helper recibe IDs, no etiquetas ni códigos fijos. */
 const CODES = { confirmed: 'confirmed-id', refuted: 'refuted-id', active: 'active-id' };
@@ -79,5 +87,49 @@ describe('diagnosisStateOf: ocho escenarios del contrato C0', () => {
     const chronic = condition({ clinicalCourseConceptId: 'chronic-id' });
 
     expect(diagnosisStateOf(chronic, CODES, NOW)).toBe('ACTIVE');
+  });
+});
+
+describe('códigos de estado: los de la API, y el simulador los mismos', () => {
+  it('son exactamente los `CLIN.CONDITION_*` que siembra la API', () => {
+    expect([
+      CODIGO_CONFIRMADO,
+      CODIGO_DESCARTADO,
+      CODIGO_ACTIVA,
+      CODIGO_RESUELTA,
+      CODIGO_REMISION,
+    ]).toEqual(['COND_CONFIRMED', 'COND_REFUTED', 'COND_ACTIVE', 'COND_RESOLVED', 'COND_REMISSION']);
+  });
+
+  it('un diagnóstico confirmado y activo con los códigos de la API es enfermedad activa, no «en estudio»', () => {
+    // La regresión: con `DXV-CONFIRMED` en el front, esto daba IN_STUDY.
+    expect(
+      diagnosisStateOf(
+        { verificationStatusConceptId: 'COND_CONFIRMED', clinicalStatusConceptId: 'COND_ACTIVE' },
+        { confirmed: CODIGO_CONFIRMADO, refuted: CODIGO_DESCARTADO, active: CODIGO_ACTIVA },
+        NOW,
+      ),
+    ).toBe('ACTIVE');
+  });
+
+  it('los códigos viejos del simulador ya no clasifican: quedan en estudio', () => {
+    expect(
+      diagnosisStateOf(
+        { verificationStatusConceptId: 'DXV-CONFIRMED', clinicalStatusConceptId: 'COND-ACTIVE' },
+        { confirmed: CODIGO_CONFIRMADO, refuted: CODIGO_DESCARTADO, active: CODIGO_ACTIVA },
+        NOW,
+      ),
+    ).toBe('IN_STUDY');
+  });
+
+  it('el simulador declara esos mismos códigos en sus catálogos', () => {
+    for (const codigo of [CODIGO_CONFIRMADO, CODIGO_DESCARTADO, 'COND_PROVISIONAL']) {
+      expect(VERIFICACION_DX[codigo]).toBeDefined();
+    }
+    for (const codigo of [CODIGO_ACTIVA, CODIGO_RESUELTA, CODIGO_REMISION]) {
+      expect(ESTADO_CONDICION[codigo]).toBeDefined();
+    }
+    expect(Object.keys(VERIFICACION_DX).some((codigo) => codigo.startsWith('DXV-'))).toBe(false);
+    expect(Object.keys(ESTADO_CONDICION).some((codigo) => codigo.startsWith('COND-'))).toBe(false);
   });
 });

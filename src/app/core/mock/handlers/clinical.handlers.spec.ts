@@ -165,7 +165,7 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
       codeConceptId: 'concept-faringitis',
       categoryConceptId: 'cat-dx',
       clinicalStatusConceptId: 'active',
-      verificationStatusConceptId: VERIFICACION_DX['DXV-CONFIRMED']!,
+      verificationStatusConceptId: VERIFICACION_DX['COND_CONFIRMED']!,
       severityConceptId: 'sev-mild',
       onsetAt: '2026-01-01T00:00:00.000Z',
       noteText: '',
@@ -184,7 +184,7 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
   });
 
   it('indicationConditionId de un diagnóstico presuntivo/provisional: 422', () => {
-    const presuntivo = condicion({ verificationStatusConceptId: VERIFICACION_DX['DXV-PROVISIONAL']! });
+    const presuntivo = condicion({ verificationStatusConceptId: VERIFICACION_DX['COND_PROVISIONAL']! });
     condiciones.agregar(presuntivo);
 
     const respuesta = call<MockReply>('POST', '/clinical/medication-requests', {

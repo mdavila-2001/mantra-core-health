@@ -94,8 +94,8 @@ describe('POST /clinical/conditions/:id/verification · C3', () => {
       patientProfileId,
       codeConceptId: DIAGNOSTICO['I10']!,
       categoryConceptId: CATEGORIA_DX,
-      clinicalStatusConceptId: ESTADO_CONDICION['COND-ACTIVE']!,
-      verificationStatusConceptId: VERIFICACION_DX['DXV-PROVISIONAL']!,
+      clinicalStatusConceptId: ESTADO_CONDICION['COND_ACTIVE']!,
+      verificationStatusConceptId: VERIFICACION_DX['COND_PROVISIONAL']!,
       severityConceptId: SEVERIDAD['SEV-MILD']!,
       onsetAt: '2026-09-01T10:00:00.000Z',
       noteText: 'Presuntivo de prueba',
@@ -169,8 +169,8 @@ describe('POST /clinical/conditions/:id/verification · C3', () => {
 
     expect(estado(respuesta)).toBe(200);
     const decidida = condicion(respuesta);
-    expect(decidida.verificationStatusConceptId).toBe(VERIFICACION_DX['DXV-CONFIRMED']);
-    expect(decidida.clinicalStatusConceptId).toBe(ESTADO_CONDICION['COND-ACTIVE']);
+    expect(decidida.verificationStatusConceptId).toBe(VERIFICACION_DX['COND_CONFIRMED']);
+    expect(decidida.clinicalStatusConceptId).toBe(ESTADO_CONDICION['COND_ACTIVE']);
     expect(decidida.onsetAt).toBe('2026-09-05T00:00:00.000Z');
     expect(decidida.expectedResolutionAt).toBe('2026-10-05T00:00:00.000Z');
     expect(decidida.verification?.outcome).toBe('CONFIRMED');
@@ -212,7 +212,7 @@ describe('POST /clinical/conditions/:id/verification · C3', () => {
 
     expect(estado(respuesta)).toBe(200);
     const decidida = condicion(respuesta);
-    expect(decidida.verificationStatusConceptId).toBe(VERIFICACION_DX['DXV-REFUTED']);
+    expect(decidida.verificationStatusConceptId).toBe(VERIFICACION_DX['COND_REFUTED']);
     expect(decidida.resolvedAt).toBeDefined();
     expect(decidida.verification?.basedOn).toEqual({
       kind: 'ANALYSIS',
