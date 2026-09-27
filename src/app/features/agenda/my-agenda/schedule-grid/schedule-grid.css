@@ -138,6 +138,48 @@
   color: var(--c-ivory-500);
 }
 
+/* La fila de la cabecera y las de la capa accesible no dibujan nada: sus
+   celdas se acomodan en la cuadrícula del padre como si la fila no estuviera. */
+.grilla__fila {
+  display: contents;
+}
+
+/* ---- la capa accesible ------------------------------------------------------ */
+
+/* Encima del cuerpo, del tamaño exacto de las columnas de los días: una celda
+   por día y por hora. Transparente y sin puntero, así que el mouse sigue
+   tocando los bloques de abajo; sólo se ve el anillo de la celda enfocada.
+   Absoluta en el área de la cuadrícula y no un ítem más: como ítem, empujaría
+   a las columnas dibujadas a otra fila. */
+.grilla__tabla {
+  position: relative;
+}
+
+.grilla__foco {
+  position: absolute;
+  inset: 0;
+  grid-row: 2;
+  grid-column: 2 / -1;
+  z-index: 4;
+  display: grid;
+  grid-auto-rows: var(--alto-hora);
+  pointer-events: none;
+}
+
+.grilla__celda-foco {
+  border-radius: var(--r-sm);
+  outline: none;
+  /* Que la cabecera fija y el carril de horas no la tapen al llegar. */
+  scroll-margin-block-start: 5.5rem;
+  scroll-margin-inline-start: var(--carril);
+}
+
+.grilla__celda-foco:focus-visible {
+  outline: 2px solid var(--st-primary-bd);
+  outline-offset: -2px;
+  background: color-mix(in srgb, var(--st-primary-bd) 12%, transparent);
+}
+
 /* ---- el cuerpo -------------------------------------------------------------- */
 
 /* El carril de las horas. El rótulo va montado sobre la línea, no dentro de la

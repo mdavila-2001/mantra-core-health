@@ -35,6 +35,7 @@ describe('ScheduleGrid', () => {
       slotMinutes: number;
       bloqueos: readonly BloqueoDelMes[];
       rango: RangoDeGrilla;
+      sede: string | null;
     }> = {},
   ): void {
     TestBed.resetTestingModule();
@@ -49,6 +50,7 @@ describe('ScheduleGrid', () => {
       'slotMinutes',
       'bloqueos',
       'rango',
+      'sede',
     ] as const) {
       if (entradas[clave] !== undefined) fixture.componentRef.setInput(clave, entradas[clave]);
     }
@@ -421,13 +423,189 @@ describe('ScheduleGrid', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('[data-testid="horario-globo"]')).toBeNull();
 
-    // Con teclado: el foco abre, Escape cierra.
-    bloques()[0].dispatchEvent(new Event('focus'));
+    // Con teclado: el foco en una celda de la franja abre, Escape cierra.
+    celda(9, 0).dispatchEvent(new FocusEvent('focus'));
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('[data-testid="horario-globo"]')).not.toBeNull();
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('[data-testid="horario-globo"]')).toBeNull();
+  });
+  /* ---- la grilla accesible (WCAG 2.1.1 · 1.3.1 · 4.1.2) ------------------- */
+
+  /** La celda de la hora `h` (en el rango completo, la fila es la hora) y el día `col` (0 = lunes). */
+  function celda(h: number, col: number): HTMLElement {
+    return fixture.nativeElement.querySelector(`[data-celda="${h - horas()[0]}-${col}"]`);
+  }
+
+  function celdas(): HTMLElement[] {
+    return Array.from(fixture.nativeElement.querySelectorAll('[data-testid="schedule-grid-cell"]'));
+  }
+
+  function tecla(desde: HTMLElement, key: string, extra: KeyboardEventInit = {}): void {
+    desde.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...extra }));
+    fixture.detectChanges();
+  }
+
+  describe('grilla accesible', () => {
+    it('es un `grid` de sólo lectura con una fila por hora y una celda por día', () => {
+      montar([regla(1, '09:00:00', '13:00:00')]);
+
+      const grilla = fixture.nativeElement.querySelector('[role="grid"]') as HTMLElement;
+      expect(grilla).not.toBeNull();
+      expect(grilla.getAttribute('aria-readonly')).toBe('true');
+      expect(grilla.getAttribute('aria-label')).toBe('Semana del 7 al 13 de septiembre');
+      // Cabecera + 24 horas; cada hora con su cabecera de fila y siete celdas.
+      expect(grilla.querySelectorAll('[role="row"]')).toHaveLength(25);
+      expect(grilla.querySelectorAll('[role="columnheader"]')).toHaveLength(8);
+      expect(grilla.querySelectorAll('[role="rowheader"]')).toHaveLength(24);
+      expect(celdas()).toHaveLength(24 * 7);
+      // El dibujo dice lo mismo con color: al lector no se le repite.
+      const columnas = Array.from(fixture.nativeElement.querySelectorAll('.grilla__columna')) as HTMLElement[];
+      expect(columnas.every((c) => c.getAttribute('aria-hidden') === 'true')).toBe(true);
+    });
+
+    it('cada celda dice día, hora, qué pasa ahí y dónde', () => {
+      montar([regla(1, '09:00:00', '13:00:00')], { sede: 'Sede Centro' });
+
+      expect(celda(9, 0).getAttribute('aria-label')).toBe(
+        'Lunes 7 de septiembre, 09:00, atendés de 09:00 a 13:00, Sede Centro',
+      );
+      // Una hora sin atención existe para el lector: antes era `aria-hidden`.
+      expect(celda(14, 0).getAttribute('aria-label')).toBe('Lunes 7 de septiembre, 14:00, sin atención');
+      expect(celda(9, 1).getAttribute('aria-label')).toBe('Martes 8 de septiembre, 09:00, sin atención');
+    });
+
+    it('sin sede registrada la etiqueta no la inventa', () => {
+      montar([regla(1, '09:00:00', '13:00:00')]);
+
+      expect(celda(9, 0).getAttribute('aria-label')).toBe(
+        'Lunes 7 de septiembre, 09:00, atendés de 09:00 a 13:00',
+      );
+      expect(bloques()[0].getAttribute('aria-label')).toBe('lunes de 09:00 a 13:00: atendés');
+    });
+
+    it('la franja dibujada también nombra la sede', () => {
+      montar([regla(1, '08:30:00', '12:30:00')], { sede: 'Consultorio Norte' });
+
+      expect(bloques()[0].getAttribute('aria-label')).toBe(
+        'lunes de 08:30 a 12:30: atendés en Consultorio Norte',
+      );
+    });
+
+    it('un bloqueo manda sobre la franja, con su motivo', () => {
+      montar([regla(3, '09:00:00', '13:00:00')], {
+        sede: 'Sede Centro',
+        bloqueos: [
+          { id: 'b', desde: new Date(2026, 8, 9, 12, 0), hasta: new Date(2026, 8, 9, 18, 0), motivo: 'Congreso' },
+        ],
+      });
+
+      expect(celda(12, 2).getAttribute('aria-label')).toBe(
+        'Miércoles 9 de septiembre, 12:00, bloqueado de 12:00 a 18:00 (Congreso)',
+      );
+      expect(celda(11, 2).getAttribute('aria-label')).toContain('atendés de 09:00 a 13:00, Sede Centro');
+    });
+
+    it('sin fechas —horario retirado— el día va sin número', () => {
+      montar([regla(1, '09:00:00', '13:00:00')], { conFechas: false });
+
+      expect(celda(9, 0).getAttribute('aria-label')).toBe('Lunes, 09:00, atendés de 09:00 a 13:00');
+    });
+
+    it('una sola parada de Tab, en la primera hora atendida del primer día que se atiende', () => {
+      montar([regla(3, '10:00:00', '12:00:00'), regla(1, '14:00:00', '16:00:00')]);
+
+      const tabStops = celdas().filter((c) => c.getAttribute('tabindex') === '0');
+      expect(tabStops).toHaveLength(1);
+      // Las 10 del miércoles: es la primera fila con atención, y en esa fila el primer día.
+      expect(tabStops[0]).toBe(celda(10, 2));
+    });
+
+    it('↑/↓ cambian de hora y ←/→ de día, moviendo el foco y la parada de Tab', () => {
+      montar([regla(1, '09:00:00', '13:00:00')]);
+      const inicio = celda(9, 0);
+      inicio.focus();
+
+      tecla(inicio, 'ArrowDown');
+      expect(document.activeElement).toBe(celda(10, 0));
+
+      tecla(celda(10, 0), 'ArrowRight');
+      expect(document.activeElement).toBe(celda(10, 1));
+
+      tecla(celda(10, 1), 'ArrowUp');
+      expect(document.activeElement).toBe(celda(9, 1));
+
+      tecla(celda(9, 1), 'ArrowLeft');
+      expect(document.activeElement).toBe(celda(9, 0));
+
+      // Roving tabindex: la parada sigue al foco, y sólo hay una.
+      expect(celda(9, 0).getAttribute('tabindex')).toBe('0');
+      expect(celdas().filter((c) => c.getAttribute('tabindex') === '0')).toHaveLength(1);
+    });
+
+    it('Inicio/Fin van al primer y al último día; con Ctrl, a la primera y la última celda', () => {
+      montar([regla(1, '09:00:00', '13:00:00')]);
+      celda(9, 3).focus();
+
+      tecla(celda(9, 3), 'End');
+      expect(document.activeElement).toBe(celda(9, 6));
+
+      tecla(celda(9, 6), 'Home');
+      expect(document.activeElement).toBe(celda(9, 0));
+
+      tecla(celda(9, 0), 'End', { ctrlKey: true });
+      expect(document.activeElement).toBe(celda(23, 6));
+
+      tecla(celda(23, 6), 'Home', { ctrlKey: true });
+      expect(document.activeElement).toBe(celda(0, 0));
+    });
+
+    it('en los bordes se queda quieta, sin dar la vuelta', () => {
+      montar([regla(1, '09:00:00', '13:00:00')]);
+      celda(0, 0).focus();
+
+      tecla(celda(0, 0), 'ArrowUp');
+      expect(document.activeElement).toBe(celda(0, 0));
+      tecla(celda(0, 0), 'ArrowLeft');
+      expect(document.activeElement).toBe(celda(0, 0));
+
+      celda(23, 6).focus();
+      tecla(celda(23, 6), 'ArrowDown');
+      expect(document.activeElement).toBe(celda(23, 6));
+      tecla(celda(23, 6), 'ArrowRight');
+      expect(document.activeElement).toBe(celda(23, 6));
+    });
+
+    it('otras teclas no se consumen: Tab sigue saliendo de la grilla', () => {
+      montar([regla(1, '09:00:00', '13:00:00')]);
+      const evento = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+      celda(9, 0).dispatchEvent(evento);
+
+      expect(evento.defaultPrevented).toBe(false);
+    });
+
+    it('enfocar una celda de la franja abre su globo y la describe con él', () => {
+      montar([regla(1, '09:00:00', '13:00:00')], { slotMinutes: 30 });
+
+      celda(10, 0).dispatchEvent(new FocusEvent('focus'));
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="horario-globo"]')).not.toBeNull();
+      expect(celda(10, 0).getAttribute('aria-describedby')).toBe('grilla-globo');
+
+      // Una celda sin atención no tiene globo que mostrar.
+      celda(15, 0).dispatchEvent(new FocusEvent('focus'));
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('[data-testid="horario-globo"]')).toBeNull();
+    });
+
+    it('con rango «atencion» las celdas siguen a las horas visibles', () => {
+      montar([regla(1, '09:00:00', '13:00:00')], { rango: 'atencion' });
+
+      expect(celdas()).toHaveLength(4 * 7);
+      expect(celda(9, 0).getAttribute('aria-label')).toContain('09:00, atendés');
+    });
   });
 });

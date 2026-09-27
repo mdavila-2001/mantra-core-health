@@ -191,7 +191,13 @@
       </button>
     </div>
   } @else {
-    <ol class="dia__linea">
+    <!-- Una sola parada de `Tab` para la línea (roving tabindex): el control
+         principal de cada rato. Ver «Con el teclado» en el componente. -->
+    <p class="solo-lectores" [id]="ayudaId">
+      Usá las flechas arriba y abajo para recorrer los ratos del día, e izquierda y derecha para
+      cambiar de día.
+    </p>
+    <ol class="dia__linea" [attr.aria-describedby]="ayudaId">
       @for (bloque of bloques(); track bloque.clave) {
         <!-- Cliqueable sólo lo que TIENE detalle: el aire entre bloques no es
              una actividad, y un clic que no hace nada enseña a no confiar en
@@ -211,8 +217,12 @@
               type="button"
               class="dia__detalle"
               data-testid="dia-detalle"
-              [attr.aria-label]="'Ver el detalle de ' + (bloque.paciente || bloque.motivo || 'este rato')"
+              [attr.aria-label]="'Ver el detalle de ' + (bloque.paciente || bloque.motivo || 'este rato') + ', ' + contextoDe(bloque)"
+              [attr.data-linea]="detalleEsPrincipal(bloque) ? bloque.clave : null"
+              [attr.tabindex]="detalleEsPrincipal(bloque) ? tabindexDe(bloque) : null"
               (click)="detallePedido.emit(bloque)"
+              (focus)="alEnfocarDetalle(bloque)"
+              (keydown)="alTeclearDetalle($event, bloque)"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -248,8 +258,12 @@
                   type="button"
                   class="dia__ir-a-atender"
                   data-testid="dia-ir-a-atender"
-                  [attr.aria-label]="'Atender a ' + bloque.paciente + ', ' + (bloque.desde | date: 'HH:mm')"
+                  [attr.aria-label]="'Atender a ' + bloque.paciente + ', ' + contextoDe(bloque)"
+                  [attr.data-linea]="bloque.clave"
+                  [attr.tabindex]="tabindexDe(bloque)"
                   (click)="citaActivada.emit(cita)"
+                  (focus)="alEnfocar(bloque)"
+                  (keydown)="alTeclear($event, bloque)"
                 ></button>
               }
               <span class="dia__hora">
@@ -386,8 +400,16 @@
                      alcanzable: acá está su puerta, que es lo que reemplaza al
                      botón que C-11 quitó del encabezado. -->
                 <p class="dia__visita-bandeja">
-                  <a routerLink="/lab-visits" data-testid="dia-ir-a-lab-visits"
-                    >Ver la bandeja de visitas</a
+                  <a
+                    routerLink="/lab-visits"
+                    data-testid="dia-ir-a-lab-visits"
+                    [attr.data-linea]="bloque.clave"
+                    [attr.tabindex]="tabindexDe(bloque)"
+                    (focus)="alEnfocar(bloque)"
+                    (keydown)="alTeclear($event, bloque)"
+                    >Ver la bandeja de visitas<span class="solo-lectores"
+                      >, {{ contextoDe(bloque) }}</span
+                    ></a
                   >
                 </p>
               </div>
@@ -438,13 +460,28 @@
                   size="sm"
                   type="button"
                   data-testid="dia-mover-aca"
+                  [attr.aria-label]="'Mover acá: ' + contextoDe(bloque, 'libre')"
+                  [attr.data-linea]="bloque.clave"
+                  [attr.tabindex]="tabindexDe(bloque)"
                   [isLoading]="ratoEnVuelo() === bloque.clave"
                   (clicked)="tocar(bloque)"
+                  (focus)="alEnfocar(bloque)"
+                  (keydown)="alTeclear($event, bloque)"
                 >
                   Mover acá
                 </button>
               } @else {
-                <button class="dia__libre" type="button" (click)="tocar(bloque)">
+                <button
+                  class="dia__libre"
+                  type="button"
+                  data-testid="day-view-free-slot"
+                  [attr.aria-label]="'Disponible: ' + contextoDe(bloque, 'libre')"
+                  [attr.data-linea]="bloque.clave"
+                  [attr.tabindex]="tabindexDe(bloque)"
+                  (click)="tocar(bloque)"
+                  (focus)="alEnfocar(bloque)"
+                  (keydown)="alTeclear($event, bloque)"
+                >
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
                   Disponible
                 </button>
@@ -461,6 +498,7 @@
                   size="sm"
                   type="button"
                   data-testid="dia-cerrar-rato"
+                  [attr.aria-label]="'Cerrar este rato: ' + contextoDe(bloque)"
                   (clicked)="cierrePedido.emit(bloque)"
                 >
                   Cerrar este rato
@@ -475,8 +513,12 @@
               <button
                 class="dia__aire"
                 type="button"
-                aria-label="Agregar algo en este hueco"
+                [attr.aria-label]="'Agregar algo en este hueco: ' + contextoDe(bloque, 'sin turnos')"
+                [attr.data-linea]="bloque.clave"
+                [attr.tabindex]="tabindexDe(bloque)"
                 (click)="tocar(bloque)"
+                (focus)="alEnfocar(bloque)"
+                (keydown)="alTeclear($event, bloque)"
               >
                 @if (rotuloDelHueco(bloque); as rotulo) {
                   <span class="dia__hueco" aria-hidden="true">{{ rotulo }}</span>

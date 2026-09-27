@@ -4,11 +4,13 @@ import {
   Component,
   computed,
   ElementRef,
+  inject,
   input,
   signal,
   viewChild,
 } from '@angular/core';
 
+import { nextControlId } from '@shared/forms/form-control.context';
 import type { PublishedRule } from '../../../../core/data-access/scheduling/scheduling.types';
 import type { BloqueoDelMes } from '../month-view/month-view';
 import { lunesDe } from '../week-view/week-view';
@@ -51,6 +53,32 @@ export interface BloqueoDelHorario {
   readonly alto: number;
   readonly motivo: string | null;
   readonly etiqueta: string;
+}
+
+/**
+ * Una celda de la grilla accesible: un día a una hora.
+ *
+ * Es lo que recorre el teclado y lo que lee el lector de pantalla. La capa
+ * que se ve —filas teñidas, bloques, bloqueos— queda `aria-hidden`: dice lo
+ * mismo con color y forma, y un lector no puede «ver» dónde cae un bloque de
+ * alto proporcional.
+ */
+export interface ScheduleCell {
+  /** `fila-columna`, para encontrarla en el DOM al moverse con las flechas. */
+  readonly id: string;
+  readonly row: number;
+  readonly col: number;
+  readonly dia: DiaDelHorario;
+  /** «Lunes 7 de septiembre, 09:00, atendés de 08:00 a 12:00, Sede Centro». */
+  readonly etiqueta: string;
+  /** La franja que la cubre, para abrir su globo al enfocarla. */
+  readonly bloque: BloqueDelHorario | null;
+}
+
+/** Una hora de la grilla accesible, con sus siete celdas. */
+export interface ScheduleRow {
+  readonly hora: number;
+  readonly celdas: readonly ScheduleCell[];
 }
 
 /**
@@ -177,6 +205,23 @@ const SEPARACION_GLOBO = 8;
  * Cada bloque escribe sus horas y lleva su `aria-label` con el día en
  * palabras. El pedido dice «resaltado con otro color», y el color es la
  * mitad: quien no lo distingue tiene que poder leer lo mismo.
+ *
+ * ## Para el teclado y el lector, una grilla de verdad (WCAG 2.1.1 y 1.3.1)
+ *
+ * Los bloques de alto proporcional no se pueden recorrer hora por hora, y
+ * las celdas horarias eran `aria-hidden`: una hora libre no existía para el
+ * lector. Encima del dibujo va una capa transparente con el patrón `grid` de
+ * ARIA —una fila por hora, una celda por día, cabeceras de columna y de fila—
+ * con *roving tabindex*: una sola parada de `Tab`, y adentro ↑/↓ cambian de
+ * hora, ←/→ de día, Inicio/Fin van al primer y al último día y
+ * Ctrl+Inicio/Ctrl+Fin a la primera y la última celda. Cada celda dice su día,
+ * su hora, qué pasa ahí y **dónde** (`sede`), y al enfocarla abre el mismo
+ * globo que el mouse. La capa no recibe el puntero (`pointer-events: none`):
+ * el mouse sigue viendo y tocando exactamente lo de antes.
+ *
+ * Es de sólo lectura (`aria-readonly`): esta grilla muestra el patrón
+ * semanal, no reserva ni crea nada. Donde sí se crea —el día de la agenda—
+ * los huecos libres son botones con su etiqueta completa (ver `DayView`).
  */
 @Component({
   selector: 'app-schedule-grid',
@@ -230,7 +275,18 @@ export class ScheduleGrid {
    */
   readonly rango = input<RangoDeGrilla>('completo');
 
+  /**
+   * Dónde se atiende —el nombre de la sede del recurso—, para las etiquetas.
+   * `null` cuando el recurso no tiene sede registrada: la etiqueta la omite en
+   * vez de decir «en null» o inventar un lugar.
+   */
+  readonly sede = input<string | null>(null);
+
   private readonly caja = viewChild<ElementRef<HTMLElement>>('caja');
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /** El id de la ayuda que describe la grilla; único, hay pantallas con dos. */
+  protected readonly ayudaId = nextControlId('schedule-grid-help');
 
   constructor() {
     // Abre en la primera hora atendida. Corre cuando cambian las reglas o el
@@ -283,6 +339,8 @@ export class ScheduleGrid {
     );
     return {
       plantilla: `var(--carril) ${anchos.join(' ')}`,
+      /** Las mismas columnas sin el carril: las de la capa accesible. */
+      dias: anchos.join(' '),
       conAtencion: anchos.filter((a) => a.startsWith('minmax')).length,
       vacios: anchos.filter((a) => !a.startsWith('minmax')).length,
     };
@@ -347,7 +405,9 @@ export class ScheduleGrid {
           hasta: hhmm(r.endTime),
           top: ((inicio - arranque) / total) * 100,
           alto: ((fin - inicio) / total) * 100,
-          etiqueta: `${LARGO[r.dayOfWeek]} de ${hhmm(r.startTime)} a ${hhmm(r.endTime)}: atendés`,
+          etiqueta:
+            `${LARGO[r.dayOfWeek]} de ${hhmm(r.startTime)} a ${hhmm(r.endTime)}: atendés` +
+            (this.sede() ? ` en ${this.sede()}` : ''),
           detalle: tamano ? `consultas de ${tamano} min` : 'tamaño libre',
           datos: datosDe(r, fin - inicio, tamano),
         };
@@ -433,6 +493,146 @@ export class ScheduleGrid {
   /** El globo abierto, si hay uno. */
   protected readonly globo = signal<Globo | null>(null);
 
+  /** La celda que abrió el globo con el foco, para describirla con él. */
+  protected readonly celdaConGlobo = signal<string | null>(null);
+
+  /**
+   * Las filas de la grilla accesible: una por hora dibujada, siete celdas cada
+   * una, en el orden en que se ven los días (de lunes a domingo).
+   */
+  protected readonly filas = computed<readonly ScheduleRow[]>(() => {
+    const dias = this.dias();
+    const bloques = this.bloques();
+    const bloqueos = this.bloqueosPintados();
+    return this.horas().map((h, row) => ({
+      hora: h,
+      celdas: dias.map((dia, col) => {
+        const bloque =
+          bloques.find((b) => b.dia === dia.numero && overlapsHour(b.desde, b.hasta, h)) ?? null;
+        const bloqueo =
+          bloqueos.find((b) => b.dia === dia.numero && overlapsHour(b.desde, b.hasta, h)) ?? null;
+        return {
+          id: `${row}-${col}`,
+          row,
+          col,
+          dia,
+          bloque,
+          etiqueta: this.etiquetaDeCelda(dia, h, bloque, bloqueo),
+        };
+      }),
+    }));
+  });
+
+  /** Dónde está la parada de `Tab` que el teclado movió, si la movió. */
+  private readonly foco = signal<{ readonly row: number; readonly col: number } | null>(null);
+
+  /**
+   * La celda que lleva `tabindex="0"`.
+   *
+   * Hasta que el teclado la mueva, la primera hora atendida del primer día que
+   * se atiende: la misma a la que abre la caja, así que entrar con `Tab` cae
+   * donde la vista ya está mirando. Se sujeta al rango visible, porque cambiar
+   * a «horario de atención» deja menos filas.
+   */
+  protected readonly celdaActiva = computed(() => {
+    const filas = this.filas();
+    if (filas.length === 0) return { row: 0, col: 0 };
+    const movida = this.foco();
+    if (movida !== null) {
+      return { row: Math.min(movida.row, filas.length - 1), col: Math.min(movida.col, 6) };
+    }
+    const row = Math.max(0, filas.findIndex((f) => f.celdas.some((c) => c.bloque !== null)));
+    const col = Math.max(0, filas[row].celdas.findIndex((c) => c.bloque !== null));
+    return { row, col };
+  });
+
+  protected esActiva(celda: ScheduleCell): boolean {
+    const activa = this.celdaActiva();
+    return activa.row === celda.row && activa.col === celda.col;
+  }
+
+  /**
+   * Las flechas de la grilla (patrón `grid` de ARIA).
+   *
+   * ↑/↓ una hora, ←/→ un día, Inicio/Fin el primer y el último día de esa
+   * hora, Ctrl+Inicio/Ctrl+Fin la primera y la última celda. En los bordes se
+   * queda quieta: dar la vuelta de domingo a lunes haría perder la hora.
+   */
+  protected alTeclearCelda(evento: KeyboardEvent, celda: ScheduleCell): void {
+    const ultimaFila = this.filas().length - 1;
+    let { row, col } = celda;
+    switch (evento.key) {
+      case 'ArrowUp':
+        row = Math.max(0, row - 1);
+        break;
+      case 'ArrowDown':
+        row = Math.min(ultimaFila, row + 1);
+        break;
+      case 'ArrowLeft':
+        col = Math.max(0, col - 1);
+        break;
+      case 'ArrowRight':
+        col = Math.min(6, col + 1);
+        break;
+      case 'Home':
+        col = 0;
+        if (evento.ctrlKey) row = 0;
+        break;
+      case 'End':
+        col = 6;
+        if (evento.ctrlKey) row = ultimaFila;
+        break;
+      default:
+        return;
+    }
+    evento.preventDefault();
+    this.foco.set({ row, col });
+    this.host.nativeElement.querySelector<HTMLElement>(`[data-celda="${row}-${col}"]`)?.focus();
+  }
+
+  /** Enfocar una celda la vuelve la parada de `Tab` y abre el globo de su franja. */
+  protected alEnfocarCelda(evento: FocusEvent, celda: ScheduleCell): void {
+    this.foco.set({ row: celda.row, col: celda.col });
+    if (celda.bloque === null) {
+      this.cerrarGlobo();
+      return;
+    }
+    this.abrirGlobo(evento, celda.bloque, celda.dia);
+    this.celdaConGlobo.set(celda.id);
+  }
+
+  /**
+   * «Lunes 7 de septiembre, 09:00, atendés de 08:00 a 12:00, Sede Centro».
+   *
+   * Sin fechas —un horario retirado o una vista previa— el día va sin número:
+   * «Lunes, 09:00, …». Un bloqueo manda sobre la franja, igual que en el dibujo.
+   */
+  private etiquetaDeCelda(
+    dia: DiaDelHorario,
+    h: number,
+    bloque: BloqueDelHorario | null,
+    bloqueo: BloqueoDelHorario | null,
+  ): string {
+    const dayName = dia.largo.charAt(0).toUpperCase() + dia.largo.slice(1);
+    const when = this.conFechas()
+      ? `${dayName} ${dia.fecha.getDate()} de ${MESES[dia.fecha.getMonth()]}`
+      : dayName;
+    const partes = [when, this.rotulo(h)];
+    if (bloqueo !== null) {
+      partes.push(
+        `bloqueado de ${bloqueo.desde} a ${bloqueo.hasta}` +
+          (bloqueo.motivo ? ` (${bloqueo.motivo})` : ''),
+      );
+    } else if (bloque !== null) {
+      partes.push(`atendés de ${bloque.desde} a ${bloque.hasta}`);
+      const sede = this.sede();
+      if (sede) partes.push(sede);
+    } else {
+      partes.push('sin atención');
+    }
+    return partes.join(', ');
+  }
+
   /** Los bloques de un día, para pintarlos dentro de su columna. */
   protected bloquesDe(dia: number): readonly BloqueDelHorario[] {
     return this.bloques().filter((b) => b.dia === dia);
@@ -480,6 +680,7 @@ export class ScheduleGrid {
 
   protected cerrarGlobo(): void {
     this.globo.set(null);
+    this.celdaConGlobo.set(null);
   }
 
   /** «Martes 8 de septiembre», el título del globo en la semana en curso. */
@@ -521,6 +722,11 @@ function enPalabras(minutos: number): string {
   const m = minutos % 60;
   if (h === 0) return `${m} min`;
   return m === 0 ? `${h} h` : `${h} h ${m} min`;
+}
+
+/** Si el rato `desde`–`hasta` (`HH:MM`) pisa la hora `h`, aunque sea una parte. */
+function overlapsHour(from: string, to: string, h: number): boolean {
+  return minutos(from) < (h + 1) * 60 && minutos(to) > h * 60;
 }
 
 /** La hora de un `HH:MM:SS`. */
