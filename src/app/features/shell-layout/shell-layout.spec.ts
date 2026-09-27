@@ -62,7 +62,7 @@ describe('ShellLayout', () => {
            comprobar. */
         provideRouter([
           { path: 'my-account', children: [] },
-          { path: 'my-account/questionnaires', children: [] },
+          { path: 'my-account/medical-record', children: [] },
           { path: 'my-account/appointments/book/:id', children: [] },
           { path: 'settings', children: [] },
           // N-01: los dos destinos que se mudaron a la cabecera.
@@ -205,9 +205,10 @@ describe('ShellLayout', () => {
       // Cotizaciones comparte el bloque de datos clínicos del paciente: se
       // consulta después de ver las órdenes y antes de los cuestionarios.
       '/my-account/cotizaciones',
-      // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
-      // perfil de paciente, que es un dato de la cuenta y no un rol.
-      '/my-account/questionnaires',
+      // «Mis cuestionarios» YA NO está (2026-09-25, dc790b01): el propietario
+      // la sacó del menú mientras decide qué hacer con la sección
+      // (`fueraDelMenuPara: [ANY_ROLE]`). La ruta y la pantalla siguen vivas
+      // y se llega por URL — ver docs/pendiente-decision-cuestionarios.md.
       // El centro de notificaciones tampoco aparece acá: es el otro destino
       // fijo. Sigue sin exigir rol —cualquiera con sesión tiene bandeja—; lo
       // que cambió es dónde se dibuja.
@@ -437,7 +438,9 @@ describe('ShellLayout', () => {
         expect(enlaces).not.toContain('/my-account/loyalty');
         expect(enlaces).toContain('/my-account/dependents');
         expect(enlaces).toContain('/my-account/medical-record');
-        expect(enlaces).toContain('/my-account/questionnaires');
+        // «Mis cuestionarios» salió del menú a propósito (dc790b01,
+        // 25/09/2026): la ruta sigue viva, sólo no ocupa renglón.
+        expect(enlaces).not.toContain('/my-account/questionnaires');
         // Chats no se perdió: desde N-01 (23/09/2026) está a un clic desde la
         // cabecera, no desde la barra.
         expect(enlaces).not.toContain('/messaging');
@@ -491,7 +494,8 @@ describe('ShellLayout', () => {
             '/my-account/diagnostic-results',
             '/my-account/diagnostic-orders',
             '/my-account/cotizaciones',
-            '/my-account/questionnaires',
+            // «Mis cuestionarios» cerraba el bloque hasta el 25/09/2026: salió
+            // del menú (dc790b01) y el bloque termina en cotizaciones.
           ]),
         ).toBe(true);
       });
@@ -953,9 +957,12 @@ describe('ShellLayout', () => {
       });
 
       it('en una hija que también está en el menú, gana la hija sobre su padre', async () => {
-        await ir('/my-account/questionnaires');
+        // Con «Mi historia» y no con «Mis cuestionarios», que era la hija de
+        // antes: salió del menú el 25/09/2026 (dc790b01) y ya no tiene
+        // renglón que marcar.
+        await ir('/my-account/medical-record');
 
-        expect(marcadas()).toEqual(['/my-account/questionnaires']);
+        expect(marcadas()).toEqual(['/my-account/medical-record']);
       });
 
       it('en Ajustes no se marca ningún renglón: no ocupa ninguno', async () => {
