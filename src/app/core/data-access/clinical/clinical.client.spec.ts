@@ -396,6 +396,31 @@ describe('ClinicalClient', () => {
     expect(receta?.createdAt).toBeInstanceOf(Date);
   });
 
+  /**
+   * `Idempotency-Key` por intento de envío: el reintento tras un error lleva
+   * la misma clave (el servidor no deja dos borradores) y, una vez creada, la
+   * receta siguiente lleva otra.
+   */
+  it('createMedicationRequest reutiliza la Idempotency-Key al reintentar y la renueva tras el éxito', () => {
+    const receta = { custodianTenantId: 't-1', patientProfileId: 'p-1', medicationConceptId: 'med-1' };
+
+    client.createMedicationRequest(receta).subscribe({ error: () => undefined });
+    const primera = http.expectOne('/clinical/medication-requests');
+    const clave = primera.request.headers.get('Idempotency-Key');
+    expect(clave).toBeTruthy();
+    primera.flush(null, { status: 503, statusText: 'Service Unavailable' });
+
+    client.createMedicationRequest(receta).subscribe();
+    const reintento = http.expectOne('/clinical/medication-requests');
+    expect(reintento.request.headers.get('Idempotency-Key')).toBe(clave);
+    reintento.flush(RECETA_BORRADOR);
+
+    client.createMedicationRequest(receta).subscribe();
+    const otra = http.expectOne('/clinical/medication-requests');
+    expect(otra.request.headers.get('Idempotency-Key')).not.toBe(clave);
+    otra.flush(RECETA_BORRADOR);
+  });
+
   it('signMedicationRequest va sin cuerpo: quién firma sale del token', () => {
     let receta: MedicationRequestRegistration | undefined;
     client.signMedicationRequest('rx-1').subscribe((r) => (receta = r));

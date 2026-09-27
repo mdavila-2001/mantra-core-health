@@ -38,7 +38,6 @@ import {
   type GrupoDeBandeja,
 } from './bandeja-status';
 import { entregaEnPantalla, type EntregaEnPantalla } from './entrega-status';
-import { NOTA_DE_DATOS_DE_EJEMPLO } from './pharmacy-inbox.fixtures';
 import { withDisplayCurrency } from '../../../core/money/display-currency';
 
 /**
@@ -135,7 +134,6 @@ export class PharmacyInbox {
   protected readonly alarma = inject(AlarmaDePedidos);
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly detalleRoute = DETALLE_ROUTE;
-  protected readonly notaDeEjemplo = NOTA_DE_DATOS_DE_EJEMPLO;
 
   protected readonly state = signal<ViewState<readonly PedidoFarmacia[]>>(loading());
 
@@ -210,7 +208,10 @@ export class PharmacyInbox {
     return toBandejaStatusPresentation(pedido.estado);
   }
 
-  /** Por qué medio se entrega, o `null` en los pedidos que no lo declaran. */
+  /**
+   * Por qué medio se entrega, o `null` en los pedidos que no lo declaran. Sale
+   * del contrato, como en el detalle.
+   */
   protected entregaDe(pedido: PedidoFarmacia): EntregaEnPantalla | null {
     return entregaEnPantalla(pedido);
   }

@@ -291,6 +291,22 @@ export function cuerpo<T extends object>(request: { readonly body: unknown }): P
   return (typeof request.body === 'object' && request.body !== null ? request.body : {}) as Partial<T>;
 }
 
+/**
+ * El cuerpo JSON de una búsqueda por `POST …/search` como si fuera su query
+ * string, para que el manejador del `GET` obsoleto y el del `POST` compartan
+ * el filtro y la paginación (`texto`, `paginar`) sin duplicarlos. Sólo pasan
+ * los valores escalares; un `null` o un objeto anidado no es un filtro.
+ */
+export function bodyAsQuery(request: { readonly body: unknown }): URLSearchParams {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(cuerpo<Record<string, unknown>>(request))) {
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      query.set(key, String(value));
+    }
+  }
+  return query;
+}
+
 /** Un SVG con iniciales, para avatares y logos sin archivo real. */
 export function avatarSvg(nombre: string, fondo = '#1f6f8b'): string {
   const iniciales = nombre

@@ -140,7 +140,9 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     group: 'Atención',
     icon: 'scan',
     // Lo que se le pide o se le hace al paciente fuera de la consulta.
-    paths: ['diagnostics', 'interventions'],
+    // La recepción de muestras va con ellas: es la puerta del laboratorio por
+    // la que entra lo que después aparece en «Laboratorio e imagen».
+    paths: ['diagnostics', 'laboratorio/recepcion', 'laboratorio/cola', 'interventions'],
   },
   {
     label: 'Visitas',
@@ -192,6 +194,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'administration/brokers',
       'administration/insurance-claims',
       'administration/insurance-analytics',
+      'administration/insurance-campaigns',
     ],
   },
   {

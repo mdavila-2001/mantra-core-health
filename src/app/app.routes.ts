@@ -12,7 +12,7 @@ import { ActivateAccount } from './features/auth/activate-account/activate-accou
 import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { NotFound } from './features/not-found/not-found';
-import { ALOVIDA_ROUTES } from './features/alovida/alovida.routes';
+import { designMockupRoutes, profileSlugRedirects } from './features/alovida/design-mockup-gate';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { environment } from '../environments/environment';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
@@ -110,6 +110,14 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // todo el mundo, paciente incluido—.
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
   diagnostics: () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
+  // La recepción de muestras del laboratorio. Diferida: sólo la alcanza el
+  // personal de un centro de diagnóstico.
+  'laboratorio/recepcion': () =>
+    import('./features/lab-reception/lab-reception').then((m) => m.LabReception),
+  // La cola de trabajo del laboratorio para su propio personal: la misma
+  // pantalla que «Laboratorio e imagen», bajo la sección que ve un centro de
+  // diagnóstico (ver `navigation.map.ts`).
+  'laboratorio/cola': () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
   interventions: () =>
     import('./features/interventions/interventions').then((m) => m.Interventions),
   'medical-records': () =>
@@ -154,6 +162,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'administration/insurance-analytics': () =>
     import('./features/insurance/insurance-analytics/insurance-analytics').then(
       (m) => m.InsuranceAnalytics,
+    ),
+  'administration/insurance-campaigns': () =>
+    import('./features/insurance/insurance-campaigns/insurance-campaigns').then(
+      (m) => m.InsuranceCampaigns,
     ),
   // Contabilidad abre en el **resumen llano**: cuánto entró hoy, esta semana y
   // este mes; en qué se va la plata; quién te debe y a quién le debés. Es lo
@@ -1518,7 +1530,12 @@ export const routes: Routes = [
   // primero y con segmento propio: no compiten con el armazón de abajo, que
   // vive en `path: ''`, así que ninguna de las dos depende de que el router
   // retroceda para encontrar a la otra.
-  ...ALOVIDA_ROUTES,
+  //
+  // Pasan por el gate `designMockups`: contra la API real (`production-api`,
+  // `real-api`) las maquetas con datos de ejemplo no se registran y sólo
+  // quedan redirecciones a la pantalla real equivalente. Ver
+  // `features/alovida/design-mockup-gate.ts`.
+  ...designMockupRoutes(environment.designMockups),
   // Las fichas públicas por slug. Van con el marco público y **sin guard**:
   // son la superficie anónima, y el enlace que alguien pega en un mensaje.
   //
@@ -2118,6 +2135,9 @@ export const routes: Routes = [
   // secas existe en las dos partes, y acá gana la que redirige sólo cuando
   // ninguna pantalla real coincidió.
   ...rutasHeredadas(RUTAS_HEREDADAS_DEL_BUSCADOR),
+  // Las fichas de la bóveda con slug abren la ficha pública real, con o sin
+  // maquetas. Ver `features/alovida/design-mockup-gate.ts`.
+  ...profileSlugRedirects(),
   {
     // Antes esto redirigía a `/`, que mandaba al panel —o al login, vía el
     // guard— a quien escribiera mal una dirección, sin decirle que se había

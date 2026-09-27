@@ -665,6 +665,50 @@ describe('SchedulingClient', () => {
   });
 });
 
+describe('SchedulingClient · walk-in idempotente', () => {
+  let client: SchedulingClient;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    client = TestBed.inject(SchedulingClient);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  const TURNO = {
+    patient: { name: 'Ana', lastName: 'Rojas', nationalId: '1234567', phone: '+59170000000' },
+    resourceId: 'r-1',
+    startAt: '2026-10-08T13:00:00.000Z',
+    durationMinutes: 30,
+  } as const;
+
+  /**
+   * El doble clic o el reintento tras un timeout no pueden registrar dos veces
+   * al paciente: el reintento del mismo envío viaja con la misma clave.
+   */
+  it('reintentar el mismo envío repite la Idempotency-Key; el siguiente turno lleva otra', () => {
+    client.createWalkInAppointment(TURNO).subscribe({ error: () => undefined });
+    const primera = http.expectOne('/scheduling/appointments/walk-in');
+    const clave = primera.request.headers.get('Idempotency-Key');
+    expect(clave).toBeTruthy();
+    primera.flush(null, { status: 502, statusText: 'Bad Gateway' });
+
+    client.createWalkInAppointment(TURNO).subscribe();
+    const reintento = http.expectOne('/scheduling/appointments/walk-in');
+    expect(reintento.request.headers.get('Idempotency-Key')).toBe(clave);
+    reintento.flush({ bookingId: 'b-1' });
+
+    client.createWalkInAppointment(TURNO).subscribe();
+    const siguiente = http.expectOne('/scheduling/appointments/walk-in');
+    expect(siguiente.request.headers.get('Idempotency-Key')).not.toBe(clave);
+    siguiente.flush({ bookingId: 'b-2' });
+  });
+});
+
 /**
  * `createDirectAppointment` con `followUpOf` (C4).
  *

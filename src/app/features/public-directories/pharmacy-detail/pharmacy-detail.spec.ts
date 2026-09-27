@@ -130,6 +130,7 @@ const CATALOGO = {
 const SUCURSALES = {
   items: [
     {
+      id: 'sede-centro',
       slug: SLUG,
       name: 'Farmacia Vida · Centro',
       siteName: 'Centro',
@@ -142,6 +143,7 @@ const SUCURSALES = {
       isCurrent: true,
     },
     {
+      id: 'sede-norte',
       slug: 'farmacia-vida-norte',
       name: 'Farmacia Vida · Norte',
       siteName: 'Norte',
@@ -155,6 +157,7 @@ const SUCURSALES = {
       isCurrent: false,
     },
     {
+      id: 'sede-sur',
       slug: 'farmacia-vida-sur',
       name: 'Farmacia Vida · Sur',
       siteName: 'Sur',
@@ -245,13 +248,13 @@ describe('PharmacyDetail', () => {
     fixture.detectChanges();
   }
 
-  function responder(): void {
+  function responder(sucursales: unknown = SUCURSALES): void {
     http.expectOne(`/public/profiles/f/${SLUG}`).flush(PERFIL);
     http.expectOne((pedido) => pedido.url === `/public/profiles/f/${SLUG}/products`).flush(
       CATALOGO,
     );
     http.expectOne((pedido) => pedido.url === `/public/profiles/f/${SLUG}/branches`).flush(
-      SUCURSALES,
+      sucursales as object,
     );
     fixture.detectChanges();
   }
@@ -470,6 +473,25 @@ describe('PharmacyDetail', () => {
     expect(texto).toContain('en línea recta');
     // El punto aproximado se rotula; el exacto no lleva renglón que sobre.
     expect(texto).toContain('Ubicación aproximada · centro de la ciudad');
+  });
+
+  it('dos sedes del mismo tenant comparten slug: se ven las dos y el distintivo va a una sola', () => {
+    // Así las sirve la API (#497): la ficha es del tenant, así que sus sedes
+    // comparten slug. Con el slug como clave, el distintivo caía en las dos.
+    const [centro, norte, sur] = SUCURSALES.items;
+    montar();
+    responder({
+      ...SUCURSALES,
+      items: [centro, norte, { ...sur, id: 'sede-sur-2', slug: norte.slug }],
+    });
+
+    conUbicacion(-17.8, -63.16);
+
+    expect(sucursalesVisibles()).toEqual(['Sur', 'Centro', 'Norte']);
+    const distintivos = [
+      ...(fixture.nativeElement.querySelectorAll('app-badge') as NodeListOf<HTMLElement>),
+    ].filter((badge) => (badge.textContent ?? '').includes('La más cercana'));
+    expect(distintivos.length).toBe(1);
   });
 
   it('dice que no pudo leer la ubicación sin llevarse puesta la sección', () => {

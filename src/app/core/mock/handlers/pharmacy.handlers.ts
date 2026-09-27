@@ -3,12 +3,16 @@ import { patientSettlementForItems } from '../fixtures/patient-settlements';
 import { vitrinas } from '../fixtures/comunidad';
 import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
 import { recetas } from '../fixtures/clinica';
-import { PACIENTE, pacientePorId } from '../fixtures/personas';
+import { PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/personas';
 // T-I3 · los identificadores de los pedidos de ejemplo de la bandeja viven en
 // un solo lugar, porque la pantalla también los usa.
-import { ID_PEDIDO_CON_DELIVERY, ID_PEDIDO_CON_SEGURO } from '../fixtures/pedidos-de-farmacia';
+import {
+  DELIVERY_ORDER_ADDRESS,
+  ID_PEDIDO_CON_DELIVERY,
+  ID_PEDIDO_CON_SEGURO,
+} from '../fixtures/pedidos-de-farmacia';
 import { notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
-import { ahora, Coleccion, contiene, cuerpo, iso, masMinutos, nuevoId, texto, uuid } from '../mock-store';
+import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
     Farmacias: el directorio, los productos publicados, la disponibilidad
@@ -32,6 +36,12 @@ interface FarmaciaSimulada {
   readonly lat: number;
   readonly lng: number;
   readonly homeDelivery: boolean;
+  /**
+   * Si es una de las 50 sucursales reales del corpus. A esas no se les
+   * inventa ficha legal —NIT, forma societaria, licencias, representante—:
+   * sería declarar datos de un negocio que existe.
+   */
+  readonly fromCorpus: boolean;
 }
 
 /** Las 50 sucursales del corpus, por su slug: da el nombre y el horario reales. */
@@ -63,8 +73,101 @@ const FARMACIAS: readonly FarmaciaSimulada[] = vitrinas
       lat: v.lat,
       lng: v.lng,
       homeDelivery: corpus === undefined && i === 0,
+      fromCorpus: corpus !== undefined,
     };
   });
+
+/* ---- la ficha legal de la farmacia (sólo las de la maqueta) --------------- */
+
+/** Lo que la ficha legal dice cuando no hay de dónde sacarla. */
+const LEGAL_PROFILE_NONE = {
+  taxId: null,
+  companyType: null,
+  legalAddressText: null,
+  headquarters: null,
+} as const;
+
+/**
+ * NIT, forma societaria y casa matriz de ejemplo, **sólo** para las farmacias
+ * de la maqueta. La casa matriz de la maqueta es la dirección de su sucursal:
+ * en el backend real sale de `common.addresses` de la organización.
+ */
+function legalProfileOf(f: FarmaciaSimulada) {
+  if (f.fromCorpus) return LEGAL_PROFILE_NONE;
+  const index = FARMACIAS.indexOf(f);
+  return {
+    taxId: String(1020304020 + index * 7),
+    companyType: c('SRL', 'Limited liability company (S.R.L.)'),
+    legalAddressText: f.addressText,
+    headquarters: { latitude: f.lat, longitude: f.lng },
+  };
+}
+
+/**
+ * La carpeta de licencias de ejemplo: una de la farmacia entera, vigente y
+ * verificada, y una de la sucursal, por vencer y pendiente — así el aviso de
+ * vencimiento se ve. Las fechas son relativas a hoy y los días hasta el
+ * vencimiento los declara el backend, como en el real.
+ */
+function licensesOf(f: FarmaciaSimulada) {
+  if (f.fromCorpus) return [];
+  const operating = c('PHARM_LICENSE_TYPE_OPERATING', 'Operating license');
+  return [
+    {
+      id: uuid(`pharmacy-license-${f.id}-general`),
+      type: operating,
+      number: `LF-${f.code.slice(0, 6)}-0187`,
+      siteId: null,
+      siteName: null,
+      jurisdiction: null,
+      validFrom: isoDia(-255),
+      validTo: isoDia(110),
+      daysToExpiry: 110,
+      verificationStatus: c('PHARM_VERIFICATION_VERIFIED', 'Verification verified'),
+      evidenceFileId: uuid(`pharmacy-license-file-${f.id}`),
+    },
+    {
+      id: uuid(`pharmacy-license-${f.id}-site`),
+      type: operating,
+      number: `SEDES-${f.code.slice(0, 6)}-4411`,
+      siteId: f.siteId,
+      siteName: f.siteName,
+      jurisdiction: null,
+      validFrom: isoDia(-352),
+      validTo: isoDia(13),
+      daysToExpiry: 13,
+      verificationStatus: c('PHARM_VERIFICATION_PENDING', 'Verification pending'),
+      evidenceFileId: null,
+    },
+  ];
+}
+
+/** Quién responde por la farmacia de ejemplo; nadie, para las del corpus. */
+function contactsOf(f: FarmaciaSimulada) {
+  if (f.fromCorpus) return { legalRepresentative: null, executives: [] };
+  return {
+    legalRepresentative: {
+      role: 'LEGAL_REPRESENTATIVE',
+      fullName: 'María Elena Ortiz Camacho',
+      email: 'legal@farmacia.mock',
+      phone: null,
+    },
+    executives: [
+      {
+        role: 'GENERAL_MANAGER',
+        fullName: 'Jorge Antonio Vaca Suárez',
+        email: 'gerencia@farmacia.mock',
+        phone: '+591 70011223',
+      },
+      {
+        role: 'COMMERCIAL_MANAGER',
+        fullName: 'Lucía Fernanda Roca Mendoza',
+        email: 'comercial@farmacia.mock',
+        phone: '+591 70011224',
+      },
+    ],
+  };
+}
 
 interface ProductoSimulado {
   readonly id: string;
@@ -155,6 +258,10 @@ interface PedidoSimulado {
   readonly rejectionReasonText: string | null;
   readonly lineas: readonly LineaSimulada[];
   readonly sustituciones: readonly { id: string; originalProductId: string; proposedProductId: string; status: 'PROPOSED' | 'ACCEPTED' | 'DECLINED'; decidedAt: string | null }[];
+  /** Sin declarar, el pedido se retira en la farmacia (`PINV_DELIVERY_RETIRO`). */
+  readonly deliveryMode?: 'DOMICILIO' | 'TRABAJO';
+  /** La dirección guardada del envío, en una línea; sólo con envío. */
+  readonly deliveryAddressText?: string;
 }
 
 function productoDe(pharmacyId: string, code: keyof typeof MEDICAMENTO): ProductoSimulado {
@@ -178,10 +285,10 @@ const pedidos = new Coleccion<PedidoSimulado>(
       // contrato de `pharmacy-orders` no la publica—, así que vive junto a la pantalla y se
       // reconoce por el identificador; acá sólo nace el pedido.
       { id: ID_PEDIDO_CON_SEGURO, estado: 'EN_REVISION' as const, createdAt: iso(0, 10, 15), expiresAt: iso(3, 10), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-quispe'), patientName: 'Rosa Elena Quispe Vargas', pickupCode: 'AV-6003', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-LEVOTIROXINA').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-SERTRALINA').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
-      // T-I3 · el pedido que sale a domicilio. `dto()` responde `RETIRO` para todos los pedidos
-      // (`:195`) y esa línea es compartida: el medio de entrega de este ejemplo también se lo
-      // pone la pantalla, por identificador, y se rotula como maqueta.
-      { id: ID_PEDIDO_CON_DELIVERY, estado: 'EN_REVISION' as const, createdAt: iso(0, 11, 40), expiresAt: iso(3, 11), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-gutierrez'), patientName: 'Vania Gutiérrez Peña', pickupCode: 'AV-6004', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-IBUPROFENO').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-OMEPRAZOL').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
+      // T-I3 · el pedido que sale a domicilio. El medio de entrega y la dirección son parte del
+      // contrato (`deliveryMode`, `deliveryAddressText`), así que los declara el backend simulado
+      // y la pantalla los lee de la respuesta, igual que con la API real.
+      { id: ID_PEDIDO_CON_DELIVERY, deliveryMode: 'DOMICILIO' as const, deliveryAddressText: DELIVERY_ORDER_ADDRESS, estado: 'EN_REVISION' as const, createdAt: iso(0, 11, 40), expiresAt: iso(3, 11), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-gutierrez'), patientName: 'Vania Gutiérrez Peña', pickupCode: 'AV-6004', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-IBUPROFENO').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-OMEPRAZOL').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
     ];
   })(),
 );
@@ -246,6 +353,22 @@ export function renglonesDePedidoSimulado(id: string): {
   };
 }
 
+/**
+ * Quién firmó la receta del pedido: el prescriptor de la receta sembrada, con
+ * su nombre y su primera especialidad. `null` sin receta o sin prescriptor.
+ */
+function prescriberOf(p: PedidoSimulado) {
+  if (p.medicationRequestId === null) return null;
+  const receta = recetas.get(p.medicationRequestId);
+  const profesional = receta === undefined ? undefined : profesionalPorId(receta.prescriberProfileId);
+  if (profesional === undefined) return null;
+  const especialidad = profesional.especialidades[0];
+  return {
+    name: profesional.displayName,
+    specialty: especialidad === undefined ? null : displayDe(especialidad),
+  };
+}
+
 function dto(p: PedidoSimulado, owner = false) {
   const farmacia = FARMACIAS.find((f) => f.id === p.pharmacyId) ?? FARMACIAS[0]!;
   const lineas = p.lineas.map((l) => {
@@ -278,8 +401,10 @@ function dto(p: PedidoSimulado, owner = false) {
     pharmacyId: farmacia.id,
     pharmacyName: farmacia.name,
     medicationRequestId: p.medicationRequestId,
+    prescriber: prescriberOf(p),
     patientName: p.patientName,
-    deliveryMode: c('PINV_DELIVERY_RETIRO', 'Retiro en farmacia'),
+    deliveryMode: p.deliveryMode === undefined ? c('PINV_DELIVERY_RETIRO', 'Retiro en farmacia') : c(`PINV_DELIVERY_${p.deliveryMode}`, p.deliveryMode === 'DOMICILIO' ? 'Entrega a domicilio' : 'Entrega en el trabajo'),
+    deliveryAddressText: p.deliveryAddressText ?? null,
     pickupCode: p.pickupCode,
     ...(owner ? settlementForOrder(p) : {}),
     totalAmount: total.toFixed(2),
@@ -342,7 +467,24 @@ export function registrarFarmacia(router: MockRouter): void {
         latitude: f.lat,
         longitude: f.lng,
       })),
+      ...legalProfileOf(f0),
     };
+  });
+
+  // GET /pharmacy/pharmacies/:id/licenses y /contacts — lo que de la ficha ve
+  // el personal de la farmacia. El doble no modela la membresía: el backend
+  // real responde 404 a quien no es de la organización dueña.
+  router.get('/pharmacy/pharmacies/:id/licenses', ({ params }) => {
+    const f = FARMACIAS.find((farmacia) => farmacia.id === params['id']);
+    if (f === undefined) return notFound('Farmacia no encontrada');
+    const items = licensesOf(f);
+    return { items, count: items.length };
+  });
+
+  router.get('/pharmacy/pharmacies/:id/contacts', ({ params }) => {
+    const f = FARMACIAS.find((farmacia) => farmacia.id === params['id']);
+    if (f === undefined) return notFound('Farmacia no encontrada');
+    return contactsOf(f);
   });
 
   router.get('/pharmacy/products', ({ query }) => {

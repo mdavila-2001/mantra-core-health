@@ -25,36 +25,11 @@
   box-shadow: var(--sombra-2);
 }
 
-.hilo__reenvio {
-  cursor: default;
-}
-
-.hilo__reenvio-caja {
-  inline-size: min(24rem, 100%);
-  max-block-size: 80vh;
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--r-menu);
-  background: var(--sup-tarjeta);
-  box-shadow: var(--sombra);
-  overflow: hidden;
-}
-
-.hilo__reenvio-titulo {
-  margin: 0;
-  padding: var(--e4) var(--e4) var(--e2);
-  font-family: var(--f-titulo);
-  font-size: var(--fs-body-lg);
-  font-weight: 700;
-  color: var(--tinta-marca);
-}
-
+/* La lista va dentro de `app-content-dialog`, que ya pone el título, el
+   padding y el botón de salida: acá sólo queda la fila de cada destino. */
 .hilo__reenvio-lista {
-  flex: 1 1 auto;
-  min-block-size: 0;
-  overflow-y: auto;
   margin: 0;
-  padding: 0 var(--e2);
+  padding: 0;
   list-style: none;
 }
 
@@ -78,18 +53,6 @@
   background: var(--sup-inset);
 }
 
-.hilo__reenvio-cancelar {
-  margin: var(--e2) var(--e4) var(--e4);
-  align-self: flex-end;
-  padding: var(--e2) var(--e4);
-  border: 1px solid var(--filete);
-  border-radius: var(--r-pill);
-  background: none;
-  color: var(--tinta-2);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
 /* --- El menú del mensaje ------------------------------------------------- */
 
 .hilo__mas-mensaje {
@@ -200,42 +163,13 @@
 
 /* --- El visor de imágenes ------------------------------------------------ */
 
-.hilo__visor {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--e6);
-  background: var(--velo);
-  cursor: zoom-out;
-}
-
-.hilo__visor img {
+/* La imagen entera dentro del modal del sistema: nunca más ancha que el panel
+   ni más alta que la pantalla, sin deformarse. */
+.hilo__visor-imagen {
+  display: block;
   max-inline-size: 100%;
-  max-block-size: 100%;
+  max-block-size: 70dvh;
+  margin-inline: auto;
   border-radius: var(--r-menu);
-  box-shadow: var(--sombra);
-}
-
-.hilo__visor-cerrar {
-  position: absolute;
-  inset-block-start: var(--e4);
-  inset-inline-end: var(--e4);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 40px;
-  block-size: 40px;
-  border: 0;
-  border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, .16);
-  color: #fff;
-  cursor: pointer;
-}
-
-.hilo__visor-cerrar svg {
-  inline-size: 20px;
-  block-size: 20px;
+  object-fit: contain;
 }

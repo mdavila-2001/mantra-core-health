@@ -13,12 +13,14 @@
     </div>
   }
 
-  <div class="contacto__dato">
-    <dt class="contacto__etiqueta">Correo</dt>
-    <dd class="contacto__valor">
-      <a app-link [href]="'mailto:' + contacto().correo">{{ contacto().correo }}</a>
-    </dd>
-  </div>
+  @if (contacto().correo; as correo) {
+    <div class="contacto__dato">
+      <dt class="contacto__etiqueta">Correo</dt>
+      <dd class="contacto__valor">
+        <a app-link [href]="'mailto:' + correo">{{ correo }}</a>
+      </dd>
+    </div>
+  }
 </dl>
 
 <!-- Lo que cada cargo agregue: el enlace al poder del representante vive acá. -->

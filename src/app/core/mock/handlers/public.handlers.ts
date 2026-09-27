@@ -141,6 +141,8 @@ function productosDeFarmacia(slug: string) {
 const SUCURSAL_POR_SLUG = new Map(FARMACIAS_DEL_CORPUS.map((f) => [f.slug, f]));
 
 interface SucursalPublica {
+  /** La sede, como la API: la clave de la sucursal, porque el slug puede repetirse. */
+  readonly id: string;
   readonly slug: string;
   readonly name: string;
   readonly siteName: string;
@@ -173,6 +175,7 @@ function sucursalesDe(vitrina: VitrinaSimulada): readonly SucursalPublica[] {
   if (propia === undefined) {
     return [
       {
+        id: uuid(`sede-farmacia-${vitrina.slug}`),
         slug: vitrina.slug,
         name: vitrina.displayName,
         siteName: vitrina.displayName,
@@ -189,6 +192,7 @@ function sucursalesDe(vitrina: VitrinaSimulada): readonly SucursalPublica[] {
 
   return FARMACIAS_DEL_CORPUS.filter((f) => f.chainId === propia.chainId)
     .map((f) => ({
+      id: f.siteId,
       slug: f.slug,
       name: f.name,
       siteName: f.siteName,
@@ -507,25 +511,29 @@ export function registrarPublico(router: MockRouter): void {
   };
   router.get('/public/posts/:id/reactions', reaccionesDe);
 
-  const comentariosDe = ({ params, query }: { params: Readonly<Record<string, string>>; query: URLSearchParams }) => {
-    const padre = params['commentId'] ?? null;
-    const items = comentarios
-      .filtrar((c) => c.postId === params['id'] && c.parentCommentId === padre)
-      .map((c) => {
-        const autor = vitrinas.get(c.authorProfileId);
-        return {
-          id: c.id,
-          bodyText: c.bodyText,
-          createdAt: c.createdAt,
-          replyCount: comentarios.filtrar((r) => r.parentCommentId === c.id).length,
-          author: autor === undefined ? { slug: 'anonimo', displayName: 'Usuario', headline: null, avatarUrl: null, kind: 'PRACTITIONER' as const } : actor(autor),
-          media: c.mediaUrl === undefined ? [] : [{ url: c.mediaUrl, kind: 'IMAGE' as const, altText: null }],
-        };
-      });
-    return paginaPublica(items, query);
+  const toPublicComment = (c: ReturnType<typeof comentarios.todos>[number]) => {
+    const author = vitrinas.get(c.authorProfileId);
+    return {
+      id: c.id,
+      bodyText: c.bodyText,
+      createdAt: c.createdAt,
+      replyCount: comentarios.filtrar((r) => r.parentCommentId === c.id).length,
+      author: author === undefined ? { slug: 'anonimo', displayName: 'Usuario', headline: null, avatarUrl: null, kind: 'PRACTITIONER' as const } : actor(author),
+      media: c.mediaUrl === undefined ? [] : [{ url: c.mediaUrl, kind: 'IMAGE' as const, altText: null }],
+    };
   };
-  router.get('/public/posts/:id/comments', comentariosDe);
-  router.get('/public/posts/:id/comments/:commentId/replies', comentariosDe);
+  router.get('/public/posts/:id/comments', ({ params, query }) =>
+    paginaPublica(comentarios.filtrar((c) => c.postId === params['id'] && c.parentCommentId === null).map(toPublicComment), query),
+  );
+  // «Ver N respuestas» (AC-01-12): la ruta corta de la API
+  // (`community-public.controller.ts`), sin el post en el camino. El mock la
+  // tenía anidada bajo `/public/posts/:id/comments/…`, una ruta que la API no
+  // declara, así que el cliente recibía 501 y el hilo no se abría.
+  router.get('/public/comments/:commentId/replies', ({ params, query }) => {
+    const parent = comentarios.get(params['commentId']!);
+    if (parent === undefined) return notFound('Comentario no encontrado');
+    return paginaPublica(comentarios.filtrar((c) => c.parentCommentId === parent.id).map(toPublicComment), query);
+  });
 
   router.get('/public/directory', ({ query }) => {
     const city = texto(query, 'city');

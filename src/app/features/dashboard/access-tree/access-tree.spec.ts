@@ -205,7 +205,9 @@ describe('AccessTree', () => {
     abrir('consulta');
 
     const rotulos = accesos().map((a) => a.querySelector('.arbol__acceso-nombre')?.textContent);
-    expect(rotulos).toContain('Evoluciones');
+    // «Archivo clínico» y no «Evoluciones»: ésa pasó a «Notas médicas»
+    // (8c7d7721) y salió de la zona y del producto el 25/09/2026 (e000f8ce).
+    expect(rotulos).toContain('Archivo clínico');
     // «Consultas médicas» desde ALV-016; era «Turnos».
     expect(rotulos).toContain('Consultas médicas');
   });
@@ -270,7 +272,7 @@ describe('AccessTree', () => {
     expect(zonas()).toHaveLength(0);
   });
 
-  it('la aseguradora ve exactamente dos zonas: Chats, y las tres de seguros (2026-09-25)', () => {
+  it('la aseguradora ve exactamente dos zonas: Chats, y las cuatro de seguros (2026-09-25)', () => {
     crear(['USER'], 'PAYER');
 
     const ids = zonas().map((z) => z.dataset['zona']);
@@ -283,6 +285,8 @@ describe('AccessTree', () => {
     abrir('organizacion');
     expect(accesos().map((a) => a.dataset['ruta'])).toEqual([
       '/administration/insurance-analytics',
+      // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
+      '/administration/insurance-campaigns',
       '/administration/my-organization',
       '/administration/insurance',
     ]);

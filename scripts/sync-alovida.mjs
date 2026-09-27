@@ -64,15 +64,45 @@ const CORRECCIONES = [
       'corrección que styles.css ya documenta para --st-warning-fg',
     ambito: 'claro',
   },
+  {
+    token: '--tinta-3',
+    de: '#787B7B', // 3,86:1 sobre marfil y 4,27 sobre blanco — era la excepción R1
+    a: '#656768', //  el ivory-800 de v1.0 · 5,13:1 y 5,69:1
+    porque:
+      'es el texto terciario (ayudas de campo, migas, «opcional»); styles.css ' +
+      'sube su gemelo --text-muted al mismo valor y check-contrast ya no lo exceptúa',
+    ambito: 'claro',
+  },
+  {
+    token: '--anillo-foco',
+    de: 'rgba(79, 179, 169, .45)', // compuesto sobre blanco da 1,48:1 — WCAG 1.4.11 pide 3:1
+    a: '#33706C', //                  el aqua-700 de v1.0, sólido · 5,71:1, y 5,16:1 sobre marfil
+    porque:
+      'es el anillo de foco de todo el marco; sobre el petróleo del nav manda ' +
+      '--anillo-foco-nav (menta), que vive en la parte de la hoja mantenida a mano',
+    ambito: 'claro',
+  },
+  {
+    token: '--anillo-foco',
+    de: 'rgba(87, 194, 183, .42)', // translúcido: su contraste depende de lo que haya debajo
+    a: '#57C2B7', //                  la aguamarina nocturna, sólida · ≥6,5:1 en toda superficie oscura
+    porque: 'el mismo anillo en oscuro, sin transparencia',
+    ambito: 'oscuro',
+  },
 ];
+
+/* Los valores de origen pueden traer paréntesis y puntos (`rgba(…, .45)`): se
+   escapan para que la expresión busque el texto literal. */
+const literal = (texto) => texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 let aplicadas = 0;
 const noEncontradas = [];
 for (const correccion of CORRECCIONES) {
-  // Sólo el bloque claro: el token vuelve a declararse en el bloque oscuro con
-  // otro valor, y ése sí cumple (7,83:1). Anclando a `de` no se toca.
+  // Se ancla al valor de origen (`de`) y no sólo al token: un token que se
+  // redeclara en el bloque oscuro con otro valor no se toca por accidente. Y
+  // no `\b` al final: tras el `)` de un `rgba(…)` no hay límite de palabra.
   const declaracion = new RegExp(
-    `(${correccion.token}\\s*:\\s*)${correccion.de}\\b`,
+    `(${correccion.token}\\s*:\\s*)${literal(correccion.de)}(?![0-9A-Fa-f])`,
     'i',
   );
   if (!declaracion.test(css)) {

@@ -28,6 +28,7 @@
     "test:e2e": "cypress run --e2e --browser chrome",
     "test:e2e:smoke": "cypress run --e2e --browser chrome --spec \"cypress/e2e/smoke/**/*.cy.ts\"",
     "test:e2e:critical": "cypress run --e2e --browser chrome --spec \"cypress/e2e/{smoke,authentication,navigation,forms}/**/*.cy.ts\"",
+    "test:e2e:a11y": "cypress run --e2e --browser chrome --spec \"cypress/e2e/regression/accesibilidad.cy.ts\"",
     "test:e2e:regression": "cypress run --e2e --browser chrome --spec \"cypress/e2e/regression/**/*.cy.ts\"",
     "test:e2e:responsive": "cypress run --e2e --browser chrome --spec \"cypress/e2e/responsive/**/*.cy.ts\"",
     "recorrido": "node scripts/run-recorrido.mjs",

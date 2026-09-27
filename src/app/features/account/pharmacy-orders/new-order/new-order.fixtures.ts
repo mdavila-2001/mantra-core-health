@@ -1,5 +1,7 @@
-import { InjectionToken } from '@angular/core';
+import { inject, InjectionToken } from '@angular/core';
 import { of, type Observable } from 'rxjs';
+
+import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 
 import {
   aCentavos,
@@ -30,6 +32,10 @@ import type {
  *
  * Reglas que este archivo respeta:
  *
+ * - **Sólo con el backend simulado.** Contra la API real
+ *   (`SAMPLE_DATA_ENABLED` apagado) la fuente no inventa nada: sin cabecera,
+ *   sin alternativas, sin aprobación del seguro, y el techo de la cantidad es
+ *   la del borrador ({@link sampleFreeDataFor}).
  * - **Nada de pedidos.** Ni `orderId`, ni respuesta de `POST /pharmacy/orders`,
  *   ni pedido persistido: el pedido real lo crea la confirmación final del
  *   checkout con el cliente real (D-FARMOCK-T-E1-01).
@@ -77,7 +83,12 @@ export interface RenglonDeEjemplo {
 }
 
 export interface DatosDeEjemploDeLaReceta {
-  readonly cabecera: CabeceraDeReceta;
+  /**
+   * Quién emitió la receta y cuándo, o `null` cuando no hay de dónde sacarlo:
+   * contra la API real, porque ni el borrador ni el resumen clínico traen el
+   * nombre y la especialidad de quien la firmó.
+   */
+  readonly cabecera: CabeceraDeReceta | null;
   /** Uno por renglón del borrador, en el mismo orden. */
   readonly renglones: readonly RenglonDeEjemplo[];
 }
@@ -156,16 +167,41 @@ export function datosDeEjemploPara(borrador: BorradorDePedido): DatosDeEjemploDe
 }
 
 /**
+ * Lo que la pantalla puede decir de un borrador **sin datos de ejemplo**:
+ * contra la API real. Ninguna de las tres cosas de arriba tiene contrato, así
+ * que no hay cabecera, ningún renglón trae alternativas ni aprobación del
+ * seguro, y la cantidad recetada es la del borrador — la persona puede pedir
+ * menos, nunca más de lo que la sede armó.
+ */
+export function sampleFreeDataFor(borrador: BorradorDePedido): DatosDeEjemploDeLaReceta {
+  return {
+    cabecera: null,
+    renglones: borrador.lineas.map((linea) => ({
+      cantidadRecetada: linea.cantidad,
+      aprobadoPorSeguro: false,
+      alternativas: [],
+    })),
+  };
+}
+
+/**
  * De dónde lee la pantalla los datos de ejemplo.
  *
  * Es asíncrono a propósito aunque hoy responda en el acto: la fuente real
  * (receta completa, búsqueda de alternativas) lo va a ser, y la pantalla ya
  * cubre cargando y error sobre esta costura. Las pruebas la sustituyen.
+ *
+ * Sobre la maqueta responde con los ejemplos; contra la API real, con
+ * {@link sampleFreeDataFor}: nada inventado.
  */
 export const DATOS_DE_EJEMPLO_DE_LA_RECETA = new InjectionToken<FuenteDeDatosDeEjemplo>(
   'DATOS_DE_EJEMPLO_DE_LA_RECETA',
   {
     providedIn: 'root',
-    factory: () => (borrador) => of(datosDeEjemploPara(borrador)),
+    factory: () => {
+      const sampleData = inject(SAMPLE_DATA_ENABLED);
+      return (borrador) =>
+        of(sampleData ? datosDeEjemploPara(borrador) : sampleFreeDataFor(borrador));
+    },
   },
 );

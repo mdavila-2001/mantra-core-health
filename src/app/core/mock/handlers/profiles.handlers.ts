@@ -28,7 +28,19 @@ import {
 } from '../fixtures/personas';
 import { conflict, forbidden, noContent, notFound, reply, type MockRequest, type MockRouter } from '../mock-router';
 import { emitirNotificacion } from './notifications.handlers';
-import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
+import {
+  ahora,
+  bodyAsQuery,
+  Coleccion,
+  contiene,
+  cuerpo,
+  iso,
+  isoDia,
+  nuevoId,
+  paginar,
+  texto,
+  uuid,
+} from '../mock-store';
 
 /* ============================================================================
     Perfiles: pacientes, profesionales, guía y afiliaciones.
@@ -608,7 +620,12 @@ function edadEnAnios(fecha: string): number {
 export function registrarPerfiles(router: MockRouter): void {
   /* ---- pacientes ---------------------------------------------------------- */
 
-  router.get('/profiles/patients', ({ query }) => {
+  /**
+   * La búsqueda de pacientes, común al `GET` obsoleto (filtros en la query) y
+   * al `POST …/search` que usa `ProfilesClient.searchPatients` (filtros en el
+   * cuerpo, para que el nombre y el documento no queden en la URL).
+   */
+  function searchPatients(query: URLSearchParams) {
     // `q`, no `query`: es como lo manda `ProfilesClient.searchPatients`. Leyendo
     // la clave equivocada el filtro nunca se aplicaba —`contiene(x, null)` es
     // `true`— y el buscador de pacientes devolvía la lista entera escribiera lo
@@ -627,7 +644,10 @@ export function registrarPerfiles(router: MockRouter): void {
       .filter((p) => idiomaClinico === null || p.idiomaClinicoId === idiomaClinico)
       .map(itemDeLista);
     return paginar(todos, query, 25);
-  });
+  }
+
+  router.get('/profiles/patients', ({ query }) => searchPatients(query));
+  router.post('/profiles/patients/search', (request) => searchPatients(bodyAsQuery(request)));
 
   router.get('/profiles/patients/me/summary', (request) => {
     const p = pacienteDeSesion(request);

@@ -9,14 +9,15 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { map } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, NavigationSkipped, Router, RouterLink } from '@angular/router';
+import { filter } from 'rxjs';
 
 import { ProfilesClient } from '../../core/data-access/profiles/profiles.client';
 import type { PatientListItem } from '../../core/data-access/profiles/profiles.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
+import { SearchMemoryService } from '../../core/navigation/search-memory.service';
 import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
@@ -37,6 +38,13 @@ import {
 
 /** Tope de filas del buscador. La API pagina por cursor; acá alcanza una página. */
 const TOPE = 25;
+
+/** Claves con las que lo buscado **viajaba** en la URL; sólo se leen para migrar. */
+const LEGACY_SEARCH_PARAM = 'q';
+const LEGACY_DOCUMENT_PARAM = 'nationalId';
+
+/** Entrada de esta pantalla en {@link SearchMemoryService}. */
+const SEARCH_MEMORY_SCREEN = 'clinical-record';
 
 /**
  * **Archivo clínico** (M08 + M15) — la puerta al expediente de una persona.
@@ -82,6 +90,19 @@ const TOPE = 25;
  * SEGIP no reemite un mismo número: no hay dos personas con el mismo
  * documento, así que el filtro sobraba y se quitó junto con el catálogo de
  * departamentos que lo alimentaba.
+ *
+ * ## Lo buscado no va en la URL (2026-09-26)
+ *
+ * El nombre o código (`q`) y el documento (`nationalId`) vivían en la URL de
+ * esta pantalla, y con ellos el dato de una persona quedaba en el historial
+ * del navegador, en el log del servidor que sirve la aplicación al recargar y
+ * en el `Referer`. Ahora viven en dos signals respaldados por
+ * `SearchMemoryService` (memoria de la pestaña, atada a la sesión): volver
+ * desde el expediente encuentra la búsqueda como estaba, sin escribirla en
+ * ningún lado. Un enlace viejo con `?q=`/`?nationalId=` se migra a memoria y
+ * se saca de la barra; «Volver a buscar» apunta a esta misma ruta, el router
+ * la descarta (`NavigationSkipped`) y la pantalla lo toma como «empezar de
+ * nuevo».
  */
 @Component({
   selector: 'app-clinical-record',
@@ -106,8 +127,12 @@ export class ClinicalRecord {
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly searchMemory = inject(SearchMemoryService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+
+  /** Lo buscado al entrar: la memoria, o un enlace viejo que lo traía en la URL. */
+  private readonly inicial = this.initialCriteria();
 
   private readonly celdaPaciente =
     viewChild.required<TemplateRef<{ $implicit: PatientListItem }>>('celdaPaciente');
@@ -120,20 +145,14 @@ export class ClinicalRecord {
 
   protected readonly resultados = signal<ViewState<readonly PatientListItem[]>>(loading());
 
-  /** El filtro por nombre o código, leído de la URL. Vacío es «sin filtro». */
-  protected readonly busqueda = toSignal(
-    this.route.queryParamMap.pipe(map((params) => params.get('q') ?? '')),
-    { initialValue: '' },
-  );
+  /** El filtro por nombre o código. Vacío es «sin filtro». */
+  protected readonly busqueda = signal(this.inicial.q);
 
-  /** El documento exacto, leído de la URL (AC-07-1). */
-  protected readonly documento = toSignal(
-    this.route.queryParamMap.pipe(map((params) => params.get('nationalId') ?? '')),
-    { initialValue: '' },
-  );
+  /** El documento exacto buscado (AC-07-1). */
+  protected readonly documento = signal(this.inicial.nationalId);
 
-  /** Lo tecleado en el campo de documento. No viaja a la URL hasta enviarse. */
-  protected readonly documentoTecleado = signal('');
+  /** Lo tecleado en el campo de documento. No busca hasta enviarse. */
+  protected readonly documentoTecleado = signal(this.inicial.nationalId);
 
   protected readonly cargando = computed(() => this.resultados().status === 'loading');
 
@@ -181,33 +200,35 @@ export class ClinicalRecord {
       this.documento();
       untracked(() => this.cargar());
     });
+
+    // «Volver a buscar» (y cualquier enlace a esta misma ruta) no cambia la
+    // URL: el router lo descarta, y es la señal de empezar de nuevo.
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationSkipped => event instanceof NavigationSkipped),
+        filter((event) => event.url.split('?')[0] === CLINICAL_RECORD_ROUTE),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => {
+        this.documentoTecleado.set('');
+        this.aplicar('', '');
+      });
   }
 
   /**
-   * La búsqueda por nombre se publica en la URL; el efecto hace el resto.
+   * La búsqueda por nombre; el efecto hace el resto.
    *
-   * ## Por qué fusiona en vez de reemplazar el mapa entero
+   * ## Por qué el texto vacío no toca el documento
    *
    * Porque si no, **la búsqueda por documento se deshacía sola** cuando antes
-   * se había buscado por nombre. La cadena era: el botón publica el documento
-   * y limpia `q` → el campo de nombre está atado a `q`, así que se vacía de
-   * rebote → al vaciarse avisa con texto vacío → y ese aviso llegaba acá y
-   * escribía el mapa de parámetros entero, borrando el `nationalId` recién
-   * puesto. Se veía como que el botón no hacía nada: la URL quedaba pelada y
-   * la tabla volvía al vacío inicial.
-   *
-   * Con `merge`, el eco sólo borra `q`, que ya estaba vacío, y el documento
-   * sobrevive. Buscar por nombre con texto sí limpia el documento: son dos
-   * formas de encontrar a la misma persona, no dos filtros que se suman.
+   * se había buscado por nombre: buscar por documento vacía el campo de
+   * nombre, el campo al vaciarse avisa con texto vacío, y ese aviso borraba
+   * el documento recién puesto. Buscar por nombre con texto sí limpia el
+   * documento: son dos formas de encontrar a la misma persona, no dos filtros
+   * que se suman.
    */
   protected buscar(texto: string): void {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: texto === '' ? { q: null } : { q: texto, nationalId: null },
-      queryParamsHandling: 'merge',
-      // Reemplaza en vez de apilar: cada tecleo no es un paso del historial.
-      replaceUrl: true,
-    });
+    this.aplicar(texto, texto === '' ? this.documento() : '');
   }
 
   /** El campo admite número por contrato; acá siempre es texto. */
@@ -228,12 +249,43 @@ export class ClinicalRecord {
     if (documento === '') {
       return;
     }
+    this.aplicar('', documento);
+  }
+
+  /** Fija los dos criterios y los deja en memoria, nunca en la URL. */
+  private aplicar(q: string, nationalId: string): void {
+    this.searchMemory.write(SEARCH_MEMORY_SCREEN, { q, nationalId });
+    this.busqueda.set(q);
+    this.documento.set(nationalId);
+  }
+
+  /**
+   * Los criterios de arranque. Un enlace viejo con `?q=` o `?nationalId=`
+   * gana sobre la memoria —es lo que la persona acaba de abrir— y se saca de
+   * la URL en el acto, con `replaceUrl` para que tampoco quede en el
+   * historial de la pestaña.
+   */
+  private initialCriteria(): { q: string; nationalId: string } {
+    const params = this.route.snapshot.queryParamMap;
+    const legacyQ = params.get(LEGACY_SEARCH_PARAM);
+    const legacyDocument = params.get(LEGACY_DOCUMENT_PARAM);
+    if (legacyQ === null && legacyDocument === null) {
+      const saved = this.searchMemory.read(SEARCH_MEMORY_SCREEN);
+      return { q: saved['q'] ?? '', nationalId: saved['nationalId'] ?? '' };
+    }
+    // Como antes en la URL: el documento gana sobre el nombre.
+    const criteria =
+      legacyDocument !== null && legacyDocument !== ''
+        ? { q: '', nationalId: legacyDocument }
+        : { q: legacyQ ?? '', nationalId: '' };
+    this.searchMemory.write(SEARCH_MEMORY_SCREEN, criteria);
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { q: null, nationalId: documento },
+      queryParams: { [LEGACY_SEARCH_PARAM]: null, [LEGACY_DOCUMENT_PARAM]: null },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
+    return criteria;
   }
 
   protected recargar(): void {

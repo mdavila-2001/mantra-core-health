@@ -18,8 +18,10 @@ import { TOAST_TYPE_LABEL, type ToastMessage } from './toast.types';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class]': 'hostClasses()',
-    // Un error interrumpe la lectura; una confirmación espera su turno.
-    '[attr.role]': 'toast().type === "error" ? "alert" : "status"',
+    /* Sin `role` propio: la región viva es el contenedor, que existe antes que
+       el aviso (`app-toast-container`). Un `status`/`alert` que nace junto con
+       su texto no siempre se anuncia, y dentro de la región del contenedor
+       sería un anuncio doble. */
   },
 })
 export class Toast {

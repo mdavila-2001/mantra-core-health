@@ -4,6 +4,7 @@ import { crearRouterSimulado } from './index';
 import { buscarUsuario, TENANT_FARMACIA } from '../mock-session';
 import { isMockReply, type MockMethod, type MockRequest } from '../mock-router';
 import { uuid } from '../mock-store';
+import { ID_PEDIDO_CON_DELIVERY, ID_PEDIDO_CON_SEGURO } from '../fixtures/pedidos-de-farmacia';
 
 /**
  * H3.S2 (carril A, 2026-09-25) — coherencia del mock de farmacia: el precio
@@ -169,6 +170,159 @@ describe('handlers de farmacia: coherencia de precio y disponibilidad', () => {
         pedir('GET', `/pharmacy/pharmacies/${uuid('corpus-tenant-farm_farmacorp')}`),
       );
       expect(detalle.sites.length).toBeGreaterThan(1);
+    });
+  });
+
+  /**
+   * El medio de entrega viaja en el contrato (`deliveryMode`), así que el
+   * pedido a domicilio de la bandeja lo declara el backend simulado y la
+   * pantalla ya no lo pisa por identificador.
+   */
+  describe('la modalidad de entrega viaja en el contrato', () => {
+    interface WithDeliveryMode {
+      readonly id: string;
+      readonly deliveryMode: { readonly code: string } | null;
+    }
+
+    it('correcto — el pedido de ejemplo a domicilio responde PINV_DELIVERY_DOMICILIO', () => {
+      const order = cuerpoDe<WithDeliveryMode>(
+        pedir('GET', `/pharmacy/orders/${ID_PEDIDO_CON_DELIVERY}`, undefined, {}, null),
+      );
+      expect(order.deliveryMode?.code).toBe('PINV_DELIVERY_DOMICILIO');
+    });
+
+    it('límite — el resto de los pedidos sigue siendo retiro en la farmacia', () => {
+      const order = cuerpoDe<WithDeliveryMode>(
+        pedir('GET', `/pharmacy/orders/${ID_PEDIDO_CON_SEGURO}`, undefined, {}, null),
+      );
+      expect(order.deliveryMode?.code).toBe('PINV_DELIVERY_RETIRO');
+
+      const bandeja = cuerpoDe<{ items: readonly WithDeliveryMode[] }>(
+        pedir('GET', '/pharmacy/orders', undefined, {}, null),
+      );
+      const aDomicilio = bandeja.items.filter(
+        (item) => item.deliveryMode?.code !== 'PINV_DELIVERY_RETIRO',
+      );
+      expect(aDomicilio.map((item) => item.id)).toEqual([ID_PEDIDO_CON_DELIVERY]);
+    });
+
+    it('inválido — un pedido inexistente responde 404, no un retiro inventado', () => {
+      const resultado = pedir('GET', `/pharmacy/orders/${uuid('pedido-inventado')}`, undefined, {}, null);
+      expect(estado(resultado)).toBe(404);
+    });
+  });
+
+  /**
+   * La ficha legal, la carpeta y la gente de la farmacia: lo que la API ya
+   * publica (`GET /pharmacy/pharmacies/:id`, `…/licenses`, `…/contacts`). A
+   * las sucursales reales del corpus no se les inventa nada.
+   */
+  describe('la ficha legal, la carpeta y la gente de la farmacia', () => {
+    const CORPUS_ID = uuid('corpus-tenant-farm_farmacorp');
+
+    interface LegalDetail {
+      readonly taxId: string | null;
+      readonly companyType: { readonly code: string } | null;
+      readonly legalAddressText: string | null;
+      readonly headquarters: { readonly latitude: number; readonly longitude: number } | null;
+    }
+
+    interface LicensePage {
+      readonly items: readonly { readonly validTo: string | null; readonly daysToExpiry: number | null; readonly siteId: string | null }[];
+      readonly count: number;
+    }
+
+    interface Contacts {
+      readonly legalRepresentative: { readonly role: string; readonly fullName: string } | null;
+      readonly executives: readonly { readonly role: string }[];
+    }
+
+    it('correcto — la farmacia de la maqueta trae NIT, forma societaria y casa matriz', () => {
+      const detalle = cuerpoDe<LegalDetail>(pedir('GET', `/pharmacy/pharmacies/${TENANT_FARMACIA}`));
+      expect(detalle.taxId).toMatch(/^\d{10}$/);
+      expect(detalle.companyType?.code).toBe('SRL');
+      expect(detalle.legalAddressText).not.toBeNull();
+      expect(detalle.headquarters).not.toBeNull();
+    });
+
+    it('correcto — la carpeta trae una licencia general y una de sede por vencer, con el plazo declarado', () => {
+      const carpeta = cuerpoDe<LicensePage>(pedir('GET', `/pharmacy/pharmacies/${TENANT_FARMACIA}/licenses`));
+      expect(carpeta.count).toBe(2);
+      expect(carpeta.items.map((licencia) => licencia.siteId === null)).toEqual([true, false]);
+      expect(carpeta.items.map((licencia) => licencia.daysToExpiry)).toEqual([110, 13]);
+      // El plazo y la fecha cuentan lo mismo: los dos son relativos a hoy.
+      const vence = new Date(`${carpeta.items[1]!.validTo!}T00:00:00`);
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      expect(Math.round((vence.getTime() - hoy.getTime()) / 86_400_000)).toBe(13);
+    });
+
+    it('correcto — la gente trae representante legal y gerencias con su rol canónico', () => {
+      const gente = cuerpoDe<Contacts>(pedir('GET', `/pharmacy/pharmacies/${TENANT_FARMACIA}/contacts`));
+      expect(gente.legalRepresentative?.role).toBe('LEGAL_REPRESENTATIVE');
+      expect(gente.executives.map((persona) => persona.role)).toEqual([
+        'GENERAL_MANAGER',
+        'COMMERCIAL_MANAGER',
+      ]);
+    });
+
+    it('límite — a una sucursal real del corpus no se le inventa ficha, carpeta ni gente', () => {
+      const detalle = cuerpoDe<LegalDetail>(pedir('GET', `/pharmacy/pharmacies/${CORPUS_ID}`));
+      expect(detalle).toMatchObject({
+        taxId: null,
+        companyType: null,
+        legalAddressText: null,
+        headquarters: null,
+      });
+      expect(cuerpoDe<LicensePage>(pedir('GET', `/pharmacy/pharmacies/${CORPUS_ID}/licenses`))).toEqual({
+        items: [],
+        count: 0,
+      });
+      expect(cuerpoDe<Contacts>(pedir('GET', `/pharmacy/pharmacies/${CORPUS_ID}/contacts`))).toEqual({
+        legalRepresentative: null,
+        executives: [],
+      });
+    });
+
+    it('inválido — una farmacia inexistente responde 404 en la carpeta y en la gente', () => {
+      const inventada = uuid('farmacia-inventada');
+      expect(estado(pedir('GET', `/pharmacy/pharmacies/${inventada}/licenses`))).toBe(404);
+      expect(estado(pedir('GET', `/pharmacy/pharmacies/${inventada}/contacts`))).toBe(404);
+    });
+  });
+
+  /** Quién prescribió y a dónde va el pedido: también del contrato. */
+  describe('el prescriptor y la dirección de entrega viajan en el pedido', () => {
+    interface OrderReads {
+      readonly id: string;
+      readonly medicationRequestId: string | null;
+      readonly prescriber: { readonly name: string | null; readonly specialty: string | null } | null;
+      readonly deliveryAddressText: string | null;
+    }
+
+    it('correcto — el pedido con receta nombra a quien la firmó, con su especialidad', () => {
+      const order = cuerpoDe<OrderReads>(
+        pedir('GET', `/pharmacy/orders/${uuid('pharmacy-order-1')}`, undefined, {}, null),
+      );
+      expect(order.medicationRequestId).not.toBeNull();
+      expect(order.prescriber?.name).toBeTruthy();
+      expect(order.prescriber?.specialty).toBeTruthy();
+    });
+
+    it('correcto — el pedido a domicilio trae su dirección guardada', () => {
+      const order = cuerpoDe<OrderReads>(
+        pedir('GET', `/pharmacy/orders/${ID_PEDIDO_CON_DELIVERY}`, undefined, {}, null),
+      );
+      expect(order.deliveryAddressText).toContain('Cristo Redentor');
+    });
+
+    it('límite — sin receta no hay prescriptor, y un retiro no trae dirección', () => {
+      const order = cuerpoDe<OrderReads>(
+        pedir('GET', `/pharmacy/orders/${ID_PEDIDO_CON_SEGURO}`, undefined, {}, null),
+      );
+      expect(order.medicationRequestId).toBeNull();
+      expect(order.prescriber).toBeNull();
+      expect(order.deliveryAddressText).toBeNull();
     });
   });
 });

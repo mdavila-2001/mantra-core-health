@@ -1,0 +1,81 @@
+@if (visible()) {
+  <section class="benefits" aria-labelledby="benefits-title" data-testid="campaigns-widget">
+    <h2 id="benefits-title" class="benefits__title">Beneficios preventivos de tu seguro</h2>
+
+    @if (campaigns().length > 0) {
+      <ul class="benefits__list">
+        @for (campaign of campaigns(); track campaign.id) {
+          <li>
+            <app-card
+              variant="outlined"
+              padding="lg"
+              class="benefit"
+              data-testid="campaign-card"
+              [attr.data-campaign-code]="campaign.code"
+            >
+              <div class="benefit__header">
+                <app-badge
+                  [variant]="badgeTone(campaign)"
+                  [value]="badgeLabel(campaign)"
+                  data-testid="campaign-badge-coverage"
+                />
+                <span class="benefit__carrier">{{ campaign.carrierName }}</span>
+              </div>
+
+              <h3 class="benefit__title">{{ campaign.title }}</h3>
+
+              @if (campaign.description) {
+                <p class="benefit__text">{{ campaign.description }}</p>
+              }
+
+              @if (campaign.targetCondition; as condition) {
+                <p class="benefit__fact">
+                  <span class="benefit__label">Ayuda a prevenir</span>
+                  {{ condition.display ?? condition.code }}
+                </p>
+              }
+
+              @if (providersOf(campaign).length > 0) {
+                <p class="benefit__fact" data-testid="campaign-providers">
+                  <span class="benefit__label">Dónde te atendés</span>
+                  {{ partnerNames(providersOf(campaign)) }}
+                </p>
+              }
+
+              @if (sponsorsOf(campaign).length > 0) {
+                <p class="benefit__fact">
+                  <span class="benefit__label">Junto a</span>
+                  {{ partnerNames(sponsorsOf(campaign)) }}
+                </p>
+              }
+
+              <p class="benefit__validity">
+                <span class="benefit__label">Vigente hasta</span>
+                {{ campaign.validTo | date: 'dd/MM/yyyy' }}
+                <span class="benefit__remaining">· {{ remainingText(campaign) }}</span>
+              </p>
+
+              <a
+                app-button
+                variant="primary"
+                class="benefit__action"
+                data-testid="btn-campaign-action"
+                [routerLink]="actionOf(campaign).route"
+                [queryParams]="actionOf(campaign).queryParams"
+              >
+                {{ actionOf(campaign).label }}
+              </a>
+            </app-card>
+          </li>
+        }
+      </ul>
+    } @else if (failed()) {
+      <p class="benefits__empty" role="status" data-testid="campaigns-error">
+        No pudimos traer las campañas de tu seguro.
+      </p>
+      <button app-button type="button" variant="secondary" (clicked)="retry()">Reintentar</button>
+    } @else {
+      <p class="benefits__empty" data-testid="campaigns-empty">{{ emptyMessage() }}</p>
+    }
+  </section>
+}

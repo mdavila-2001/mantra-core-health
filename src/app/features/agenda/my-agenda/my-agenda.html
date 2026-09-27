@@ -102,6 +102,7 @@
             @case ('week') {
               <app-week-view
                 [semana]="semanaVisible()"
+                [sede]="sede()"
                 [cupos]="cuposDelMes()"
                 [citas]="citasDeLaSemana()"
                 [etiquetas]="estadosResueltos()"
@@ -173,6 +174,7 @@
               @if (diaAbierto(); as dia) {
                 <app-day-view
                   [dia]="dia"
+                  [sede]="sede()"
                   [cupos]="cuposDelDia()"
                   [citas]="citasDelDia()"
                   [bloqueos]="bloqueosDelMes()"
@@ -417,6 +419,7 @@
 
           <app-schedule-grid
             [reglas]="reglasVigentes()"
+            [sede]="sede()"
             [slotMinutes]="slotDelHorario()"
             [bloqueos]="bloqueosDeLaSemana()"
             [rango]="rangoDeGrilla()"

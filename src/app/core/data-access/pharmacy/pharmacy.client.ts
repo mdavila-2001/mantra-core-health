@@ -6,8 +6,10 @@ import { API_BASE_URL, apiUrl } from '../api';
 import type {
   AvailabilityQuery,
   AvailabilityResult,
+  PharmacyContacts,
   PharmacyDetail,
   PharmacyDirectoryPage,
+  PharmacyLicensePage,
   PharmacyProductSearchPage,
   PharmacyProductSearchQuery,
   PharmacySitePage,
@@ -71,6 +73,23 @@ export class PharmacyClient {
    */
   getPharmacy(id: string): Observable<PharmacyDetail> {
     return this.http.get<PharmacyDetail>(this.url(`/pharmacy/pharmacies/${id}`));
+  }
+
+  /**
+   * `GET /pharmacy/pharmacies/:id/licenses` — la carpeta de licencias de la
+   * farmacia, con los días hasta el vencimiento ya contados por el servidor.
+   * Sólo la ve el personal de la farmacia: para cualquier otro es un 404.
+   */
+  listLicenses(id: string): Observable<PharmacyLicensePage> {
+    return this.http.get<PharmacyLicensePage>(this.url(`/pharmacy/pharmacies/${id}/licenses`));
+  }
+
+  /**
+   * `GET /pharmacy/pharmacies/:id/contacts` — el representante legal y las
+   * gerencias de la organización dueña. Mismo alcance que las licencias.
+   */
+  getContacts(id: string): Observable<PharmacyContacts> {
+    return this.http.get<PharmacyContacts>(this.url(`/pharmacy/pharmacies/${id}/contacts`));
   }
 
   /**

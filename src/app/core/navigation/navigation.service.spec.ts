@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -13,7 +13,7 @@ import { NavigationService } from './navigation.service';
  * del mismo registro, así que una prueba que las viera divergir es la señal de
  * que alguien duplicó la lista.
  */
-@Component({ template: '' })
+@Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
 class Vacio {}
 
 function jwt(payload: Record<string, unknown>): string {
@@ -314,7 +314,9 @@ describe('NavigationService', () => {
         'Directorios',
         'Consultas médicas',
         'Archivo clínico',
-        'Notas médicas',
+        // «Notas médicas» (antes «Evoluciones») YA NO entra: salió del menú y
+        // del producto el 25/09/2026 a pedido del propietario (e000f8ce). La
+        // nota se escribe y se lee desde la consulta y el expediente.
         'Glosario',
         'Formularios',
         'Mis servicios',
@@ -728,7 +730,7 @@ describe('NavigationService', () => {
     // señal es el tipo de la organización activa (`tenantTypes` del token,
     // claim nuevo de este mismo carril), no un rol: la cuenta sigue siendo
     // `USER` a secas.
-    it('sólo ve lo que el registro de procesos le pide: dos renglones fijos y tres de Administración', () => {
+    it('sólo ve lo que el registro de procesos le pide: dos renglones fijos y cuatro de Administración', () => {
       abrirSesion(['USER'], ['t-1'], { 't-1': 'PAYER' });
 
       expect(rutasDelMenu()).toEqual([
@@ -736,6 +738,8 @@ describe('NavigationService', () => {
         '/notification-center',
         '/administration/insurance',
         '/administration/insurance-analytics',
+        // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
+        '/administration/insurance-campaigns',
         '/administration/my-organization',
       ]);
       // Un solo dominio: sin «General» (Directorios, Chats) ni «Mi cuenta»

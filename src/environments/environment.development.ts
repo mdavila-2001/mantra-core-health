@@ -62,6 +62,14 @@ export const environment: Environment = {
   billingSiatDemo: envFromProcess.billingSiatDemo ?? true,
 
   /**
+   * Encendidas por defecto: en desarrollo se trabaja contra la maqueta y las
+   * pantallas de la bóveda son la referencia. Se apagan con
+   * `PUBLIC_DESIGN_MOCKUPS=false` — y ese apagado es la prueba de que ningún
+   * enlace visible lleva a una de ellas.
+   */
+  designMockups: envFromProcess.designMockups ?? true,
+
+  /**
    * Siempre encendido en la rama `mockup`: es lo que la define. No lee el
    * entorno del proceso a propósito, para que no haya forma de apuntar esta
    * rama a una API real por accidente. Contra la API real se corre con la

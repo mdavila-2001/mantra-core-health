@@ -143,6 +143,9 @@
                 ariaLabel="Cómo ordenar las sucursales"
                 (valueChange)="orden.set($event)"
               />
+              <!-- Contra la API real no se ofrece: ver `sampleData`. El bloque
+                   conserva su sangría para no reescribir sus identificadores. -->
+              @if (sampleData) {
               <div class="compra__seguro" data-testid="compra-variante-seguro">
                 <app-switch
                   label="Ver la variante con seguro"
@@ -156,6 +159,7 @@
                   Las sucursales, existencias y precios son los de la consulta.
                 </span>
               </div>
+              }
             </div>
 
             <app-view-state-host [state]="estadoDeSedes()" (retry)="consultar()">

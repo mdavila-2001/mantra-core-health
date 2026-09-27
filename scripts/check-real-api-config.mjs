@@ -26,7 +26,9 @@
  *   - `real-api` declara `mockBackend: false` y los otros dos entornos `true`;
  *   - `real-api` declara `campaignsDemo: false`, `paymentDemo: false` y
  *     `billingSiatDemo: false`: con la API real ninguna demo fabrica campañas,
- *     pagos ni facturas simuladas (MOCKS OFF).
+ *     pagos ni facturas simuladas (MOCKS OFF);
+ *   - `real-api` declara `designMockups: false`: las
+ *     pantallas de la bóveda con datos de ejemplo no se registran.
  *
  * Uso: node scripts/check-real-api-config.mjs
  */
@@ -83,7 +85,7 @@ exigir(
   /mockBackend:\s*false/.test(leer('src/environments/environment.real-api.ts')),
   'environment.real-api.ts tiene que declarar mockBackend: false',
 );
-for (const demo of ['campaignsDemo', 'paymentDemo', 'billingSiatDemo']) {
+for (const demo of ['campaignsDemo', 'paymentDemo', 'billingSiatDemo', 'designMockups']) {
   exigir(
     new RegExp(`\\b${demo}:\\s*false\\b`).test(leer('src/environments/environment.real-api.ts')),
     `environment.real-api.ts tiene que declarar ${demo}: false`,
@@ -99,5 +101,5 @@ if (errores.length > 0) {
   process.exit(1);
 }
 console.log(
-  '[check-real-api-config] ✓ real-api apaga la maqueta, las demos de campañas, pago y facturación simulada, y el SSR; development y production intactos.',
+  '[check-real-api-config] ✓ real-api apaga la maqueta, las demos de campañas, pago y facturación simulada, las pantallas de la bóveda y el SSR; development y production intactos.',
 );
