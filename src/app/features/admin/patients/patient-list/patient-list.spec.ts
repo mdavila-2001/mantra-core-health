@@ -8,7 +8,7 @@ import { PatientList } from './patient-list';
 
 /**
  * El listado es la primera vista de Fase 0 que se puede cerrar completa: el
- * backend ya expone `GET /profiles/patients`. Estas pruebas fijan lo que
+ * backend ya expone la búsqueda (`POST /profiles/patients/search`). Estas pruebas fijan lo que
  * distingue a esta pantalla de una tabla cualquiera.
  *
  * Se monta con `RouterTestingHarness` y no con `TestBed.createComponent`
@@ -92,7 +92,7 @@ describe('PatientList', () => {
 
   /** La petición en vuelo, sea la del arranque o la de un cambio de filtro. */
   function peticion() {
-    return http.expectOne((r) => r.url === '/profiles/patients');
+    return http.expectOne((r) => r.url === '/profiles/patients/search');
   }
 
   function responder(items: unknown[], nextCursor: string | null = null) {
@@ -111,8 +111,9 @@ describe('PatientList', () => {
   it('pide la primera página al entrar, con el tope de la pantalla', () => {
     const req = peticion();
 
-    expect(req.request.params.get('limit')).toBe('25');
-    expect(req.request.params.has('cursor')).toBe(false);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.limit).toBe(25);
+    expect(req.request.body).not.toHaveProperty('cursor');
 
     req.flush(pagina([FILA], null));
   });
@@ -188,8 +189,8 @@ describe('PatientList', () => {
     await harness.navigateByUrl(`${RUTA}?q=salas`);
 
     const req = peticion();
-    expect(req.request.params.get('q')).toBe('salas');
-    expect(req.request.params.has('cursor')).toBe(false);
+    expect(req.request.body.q).toBe('salas');
+    expect(req.request.body).not.toHaveProperty('cursor');
 
     req.flush(pagina([FILA], null));
   });
@@ -229,9 +230,9 @@ describe('PatientList', () => {
     await harness.navigateByUrl(`${RUTA}?aboGroupConceptId=abo-o&rhFactorConceptId=rh-pos&clinicalLanguageConceptId=lang-ay`);
 
     const req = peticion();
-    expect(req.request.params.get('aboGroupConceptId')).toBe('abo-o');
-    expect(req.request.params.get('rhFactorConceptId')).toBe('rh-pos');
-    expect(req.request.params.get('clinicalLanguageConceptId')).toBe('lang-ay');
+    expect(req.request.body.aboGroupConceptId).toBe('abo-o');
+    expect(req.request.body.rhFactorConceptId).toBe('rh-pos');
+    expect(req.request.body.clinicalLanguageConceptId).toBe('lang-ay');
 
     req.flush(pagina([FILA], null));
   });
@@ -242,7 +243,7 @@ describe('PatientList', () => {
     interno<(c: string) => void>('mover')('cur-2');
 
     const req = peticion();
-    expect(req.request.params.get('cursor')).toBe('cur-2');
+    expect(req.request.body.cursor).toBe('cur-2');
 
     req.flush(pagina([FILA], null));
   });
@@ -268,7 +269,7 @@ describe('PatientList', () => {
     interno<(c: string) => void>('mover')('anterior');
 
     const req = peticion();
-    expect(req.request.params.has('cursor')).toBe(false);
+    expect(req.request.body).not.toHaveProperty('cursor');
 
     req.flush(pagina([FILA], 'cur-2'));
   });
@@ -288,7 +289,7 @@ describe('PatientList', () => {
     interno<() => void>('recargar')();
 
     const req = peticion();
-    expect(req.request.params.get('cursor')).toBe('cur-2');
+    expect(req.request.body.cursor).toBe('cur-2');
 
     req.flush(pagina([FILA], null));
   });

@@ -758,7 +758,7 @@ export interface AssistedRegistrationResult {
 }
 
 /**
- * Una fila del listado de usuarios (`GET /iam/users`, UC-01-01 cara de
+ * Una fila del listado de usuarios (`POST /iam/users/search`, UC-01-01 cara de
  * lectura). La fila es angosta a propósito; la ficha completa vive en
  * `GET /iam/users/:id`.
  */
@@ -780,7 +780,7 @@ export interface UserPage {
   readonly nextCursor: string | null;
 }
 
-/** Parámetros de `GET /iam/users`. Todos opcionales. */
+/** Filtros de `POST /iam/users/search` (viajan en el cuerpo). Todos opcionales. */
 export interface UserSearchQuery {
   /** Texto sobre el nombre visible o el correo de acceso. */
   readonly query?: string;

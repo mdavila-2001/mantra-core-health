@@ -106,33 +106,54 @@ describe('ProfilesClient', () => {
 
   /* ---- lecturas (UC-05-13 y UC-05-14) ------------------------------------ */
 
-  it('searchPatients no manda los parámetros que no se pidieron', () => {
+  it('searchPatients va por POST /profiles/patients/search y sin filtros manda un cuerpo vacío', () => {
     client.searchPatients().subscribe();
 
-    const req = http.expectOne((r) => r.url === '/profiles/patients');
-    expect(req.request.method).toBe('GET');
+    const req = http.expectOne((r) => r.url === '/profiles/patients/search');
+    expect(req.request.method).toBe('POST');
     // El backend valida con `forbidNonWhitelisted`: una clave vacía vuelve 400.
-    expect(req.request.params.keys()).toEqual([]);
+    expect(req.request.body).toEqual({});
 
     req.flush({ items: [], count: 0, limit: 50, nextCursor: null });
   });
 
-  it('searchPatients manda el texto como `q`, con su cursor y su tope', () => {
+  it('searchPatients manda el texto como `q`, con su cursor y su tope, en el cuerpo', () => {
     client.searchPatients({ query: 'salas', cursor: 'cur-2', limit: 25 }).subscribe();
 
-    const req = http.expectOne((r) => r.url === '/profiles/patients');
-    expect(req.request.params.get('q')).toBe('salas');
-    expect(req.request.params.get('cursor')).toBe('cur-2');
-    expect(req.request.params.get('limit')).toBe('25');
+    const req = http.expectOne((r) => r.url === '/profiles/patients/search');
+    expect(req.request.body).toEqual({ q: 'salas', cursor: 'cur-2', limit: 25 });
 
     req.flush({ items: [], count: 0, limit: 25, nextCursor: null });
   });
 
-  it('searchPatients con texto vacío no filtra: no es lo mismo que buscar nada', () => {
-    client.searchPatients({ query: '' }).subscribe();
+  it('searchPatients no pone el nombre ni el documento en la URL', () => {
+    // Es la razón del POST: la URL queda en los logs de acceso de cada proxy.
+    client
+      .searchPatients({
+        query: 'Ana Quispe',
+        nationalId: '4455667',
+        issuerAdministrativeAreaConceptId: 'dep-lp',
+      })
+      .subscribe();
 
-    const req = http.expectOne((r) => r.url === '/profiles/patients');
-    expect(req.request.params.has('q')).toBe(false);
+    const req = http.expectOne((r) => r.url === '/profiles/patients/search');
+    expect(req.request.urlWithParams).toBe('/profiles/patients/search');
+    expect(req.request.params.keys()).toEqual([]);
+    expect(req.request.body).toEqual({
+      q: 'Ana Quispe',
+      nationalId: '4455667',
+      issuerAdministrativeAreaConceptId: 'dep-lp',
+    });
+
+    req.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+  });
+
+  it('searchPatients con texto o documento vacíos no filtra: no es lo mismo que buscar nada', () => {
+    client.searchPatients({ query: '', nationalId: '' }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/profiles/patients/search');
+    expect(req.request.body).not.toHaveProperty('q');
+    expect(req.request.body).not.toHaveProperty('nationalId');
 
     req.flush({ items: [], count: 0, limit: 50, nextCursor: null });
   });
@@ -142,7 +163,7 @@ describe('ProfilesClient', () => {
     client.searchPatients().subscribe((pagina) => (filas = pagina.items));
 
     http
-      .expectOne((r) => r.url === '/profiles/patients')
+      .expectOne((r) => r.url === '/profiles/patients/search')
       .flush({
         items: [
           {
@@ -198,7 +219,7 @@ describe('ProfilesClient', () => {
     client.searchPatients().subscribe((pagina) => (filas = pagina.items));
 
     http
-      .expectOne((r) => r.url === '/profiles/patients')
+      .expectOne((r) => r.url === '/profiles/patients/search')
       .flush({
         items: [
           {
@@ -625,7 +646,7 @@ describe('ProfilesClient', () => {
     client.searchPatients().subscribe((pagina) => (filas = pagina.items));
 
     http
-      .expectOne((r) => r.url === '/profiles/patients')
+      .expectOne((r) => r.url === '/profiles/patients/search')
       .flush({
         items: [
           {
