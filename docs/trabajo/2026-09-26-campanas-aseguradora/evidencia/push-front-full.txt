@@ -1,0 +1,12 @@
+
+pre-push: construyendo en modo producción antes de empujar…
+          (para saltearlo: git push --no-verify)
+
+[generate-env] src/environments/env.generated.ts · sin variables definidas (se usan los valores por defecto)
+error: failed to push some refs to 'https://github.com/mdavila-2001/mantra-core-health.git'
+✓ src/app/features/component-stock/component-index.generated.ts
+  549 componentes · 3 otros · 306 pantallas · 138 maquetas · 23 atomos · 45 moleculas · 34 organismos
+  202 con algo que mirar
+  relaciones: 2188 template-instantiates · 6 imports-available sin instanciar · 69 type-only · 209 dynamic-loads
+  nivel: 0 declarado · 549 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 549/549 · con escenario 3/549 · verificados visualmente 3/549 · bloqueados 70/549 · montó e interactuó: se miden en el banco (runtime)
