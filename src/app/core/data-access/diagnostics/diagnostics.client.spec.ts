@@ -252,6 +252,26 @@ describe('DiagnosticsClient', () => {
       expect(creada?.createdAt).toBeInstanceOf(Date);
       expect(creada?.id).toBe('sr-1');
     });
+
+    it('manda Idempotency-Key: la misma al reintentar, otra si cambian los datos', () => {
+      const orden = { custodianTenantId: 't-1', patientProfileId: 'p-1', codeConceptId: 'code-1' };
+
+      client.requestStudy(orden).subscribe({ error: () => undefined });
+      const primera = http.expectOne((r) => r.url === '/clinical/service-requests');
+      const clave = primera.request.headers.get('Idempotency-Key');
+      expect(clave).toBeTruthy();
+      primera.flush(null, { status: 504, statusText: 'Gateway Timeout' });
+
+      client.requestStudy(orden).subscribe({ error: () => undefined });
+      const reintento = http.expectOne((r) => r.url === '/clinical/service-requests');
+      expect(reintento.request.headers.get('Idempotency-Key')).toBe(clave);
+      reintento.flush(null, { status: 504, statusText: 'Gateway Timeout' });
+
+      client.requestStudy({ ...orden, codeConceptId: 'code-2' }).subscribe();
+      const corregida = http.expectOne((r) => r.url === '/clinical/service-requests');
+      expect(corregida.request.headers.get('Idempotency-Key')).not.toBe(clave);
+      corregida.flush(ORDEN_CREADA);
+    });
   });
 
   describe('shareResult (CL-48/CL-50)', () => {

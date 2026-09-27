@@ -23,3 +23,16 @@ export const MIS_TURNOS_ROUTE = '/my-account/appointments';
 export function reservaDelPortalRoute(slotId: string): string {
   return `${MIS_TURNOS_ROUTE}/book/${slotId}`;
 }
+
+/**
+ * Query param con el código de una campaña preventiva del seguro (Tarea 4).
+ *
+ * Lo pone el widget de beneficios (`patient-campaigns-widget`) y lo lee
+ * «Agendar una cita» para decir por qué se está agendando. Vive acá, en el
+ * archivo chico, y no en `appointments.ts`: el widget viaja en el bundle inicial
+ * del panel del paciente e importar el componente lo metería adentro.
+ */
+export const CAMPAIGN_PARAM = 'campaign';
+
+/** El título de esa campaña, sólo para mostrarlo: el código solo no le dice nada a quien agenda. */
+export const CAMPAIGN_TITLE_PARAM = 'campaignTitle';
