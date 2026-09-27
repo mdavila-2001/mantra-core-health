@@ -3,17 +3,11 @@ import type { PuntoGeo } from '../../../shared/components/organisms/map/pin-mapa
 /**
  * **La ficha legal de la farmacia** — las formas que la pantalla dibuja.
  *
- * Ninguna sale del contrato de farmacia: `core/data-access/pharmacy` describe
- * una farmacia con cinco campos —identificador, código, nombre, cuántas
- * sucursales y cuántos productos— y su propio comentario dice que el resto «se
- * agrega cuando alguien lo pida». No hay dato legal, ni documento con vigencia,
- * ni representante, ni gerentes. Así que se declaran **acá, junto a la pantalla
- * que los dibuja**, y no en `core/`: escribir el DTO allá sería declarar un
- * contrato que el backend no publica.
- *
- * TODO(API): cuando la API publique el perfil de la farmacia, estos tipos se
- * mudan al contrato y `pharmacy-profile.fixtures.ts` se queda sólo con los
- * ejemplos de las pruebas.
+ * Son formas **de la vista**, no del contrato: el contrato vive en
+ * `core/data-access/pharmacy` (`PharmacyDetail`, `PharmacyLicense`,
+ * `PharmacyContacts`) y `pharmacy-profile.ts` lo traduce a estas formas. Sobre
+ * la maqueta las llena `pharmacy-profile.fixtures.ts`, con edición en pantalla
+ * que no se guarda en ningún lado.
  */
 
 /* ─── La empresa ─────────────────────────────────────────────────────────── */
@@ -98,11 +92,12 @@ export const PAPELES_DEL_REGISTRO = [
  * tenía que elegir cuál de los dos hechos contar, y el otro se perdía. Cada
  * distintivo dice uno solo: el plazo lo dice el de al lado.
  *
- * Los dos son **provisionales**: la API todavía no publica este estado, así que
- * quién revisa y con qué criterio está sin definir. La pantalla lo dice en vez
- * de disimularlo.
+ * Sobre la maqueta los estados son **provisionales**: quién revisa y con qué
+ * criterio está sin definir, y la pantalla lo dice. Contra la API real sale del
+ * estado de verificación de cada licencia (`PHARM_VERIFICATION_*`), que además
+ * puede ser `RECHAZADO`.
  */
-export type EstadoDeVerificacion = 'PENDIENTE' | 'VERIFICADO';
+export type EstadoDeVerificacion = 'PENDIENTE' | 'VERIFICADO' | 'RECHAZADO';
 
 /** Un papel de la carpeta legal: el archivo, desde cuándo vale y hasta cuándo. */
 export interface DocumentoLegal {
@@ -150,7 +145,8 @@ export interface ContactoDeLaEmpresa {
   readonly nombre: string;
   /** Texto, y `null` cuando el cargo no declara celular. */
   readonly celular: string | null;
-  readonly correo: string;
+  /** `null` cuando la persona no tiene un correo vigente registrado. */
+  readonly correo: string | null;
 }
 
 /** La gente de la ficha: quien firma por la empresa y quienes la gestionan. */

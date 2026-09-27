@@ -38,63 +38,45 @@ describe('entrega-status', () => {
 });
 
 /**
- * La resolución de un pedido concreto: manda siempre la `modalidad` del
- * contrato, y la maqueta sólo completa la dirección que el contrato no trae —
- * rotulada, y nunca contra la API real.
+ * La resolución de un pedido concreto: la modalidad y la dirección salen del
+ * contrato, también sobre la maqueta (las declara el backend simulado).
  */
 describe('entregaEnPantalla', () => {
-  it('un pedido común usa la modalidad que devolvió la API y no se rotula', () => {
-    const entrega = entregaEnPantalla(PEDIDO_NUEVO, true);
+  it('un pedido común usa la modalidad que devolvió la API, sin dirección', () => {
+    const entrega = entregaEnPantalla(PEDIDO_NUEVO);
 
     expect(entrega?.modalidad).toBe('RETIRO');
     expect(entrega?.presentacion.label).toBe('Recojo en mostrador');
-    expect(entrega?.esEjemplo).toBe(false);
     expect(entrega?.direccion).toBeNull();
   });
 
-  it('sobre la maqueta, el pedido a domicilio suma la dirección de ejemplo, rotulada', () => {
-    const entrega = entregaEnPantalla(PEDIDO_CON_DELIVERY, true);
+  it('el pedido a domicilio trae su dirección del contrato', () => {
+    const entrega = entregaEnPantalla(PEDIDO_CON_DELIVERY);
 
-    // La modalidad la declara el contrato (el backend simulado la devuelve) …
     expect(PEDIDO_CON_DELIVERY.modalidad).toBe('DOMICILIO');
     expect(entrega?.modalidad).toBe('DOMICILIO');
     expect(entrega?.presentacion.label).toBe('Delivery');
-    // … y lo único de ejemplo es la dirección, que se dice como tal.
-    expect(entrega?.esEjemplo).toBe(true);
     expect(entrega?.direccion).toContain('Cristo Redentor');
   });
 
-  it('contra la API real no hay dirección de ejemplo: queda la modalidad del contrato', () => {
-    const entrega = entregaEnPantalla(PEDIDO_CON_DELIVERY, false);
+  it('un envío sin dirección guardada lo dice con null: no se inventa una', () => {
+    const entrega = entregaEnPantalla({ ...PEDIDO_CON_DELIVERY, direccionDeEntrega: null });
 
     expect(entrega?.modalidad).toBe('DOMICILIO');
-    expect(entrega?.presentacion.label).toBe('Delivery');
-    expect(entrega?.esEjemplo).toBe(false);
     expect(entrega?.direccion).toBeNull();
   });
 
-  it('la dirección del contrato gana sobre la de ejemplo', () => {
-    const entrega = entregaEnPantalla(
-      { ...PEDIDO_CON_DELIVERY, direccionDeEntrega: 'Calle Sucre 12' },
-      true,
-    );
-
-    expect(entrega?.direccion).toBe('Calle Sucre 12');
-    expect(entrega?.esEjemplo).toBe(false);
-  });
-
-  it('a un retiro no se le pone un domicilio, aunque sea el pedido de ejemplo', () => {
-    const entrega = entregaEnPantalla({ ...PEDIDO_CON_DELIVERY, modalidad: 'RETIRO' }, true);
+  it('a un retiro no se le pinta un domicilio, aunque el pedido traiga uno', () => {
+    const entrega = entregaEnPantalla({ ...PEDIDO_CON_DELIVERY, modalidad: 'RETIRO' });
 
     expect(entrega?.direccion).toBeNull();
-    expect(entrega?.esEjemplo).toBe(false);
   });
 
   it('la modalidad efectiva y la etiqueta salen de la misma respuesta', () => {
     // Una sola fuente: lo que la pantalla muestra y lo que ofrece hacer no
     // pueden discrepar porque no hay dos lecturas de dónde discrepar.
     for (const pedido of [PEDIDO_NUEVO, PEDIDO_CON_DELIVERY]) {
-      const entrega = entregaEnPantalla(pedido, true);
+      const entrega = entregaEnPantalla(pedido);
       expect(entrega?.presentacion, pedido.id).toBe(
         toEntregaPresentation(entrega?.modalidad ?? null),
       );
@@ -102,7 +84,7 @@ describe('entregaEnPantalla', () => {
   });
 
   it('sin modalidad no hay nada que mostrar', () => {
-    expect(entregaEnPantalla({ ...PEDIDO_NUEVO, modalidad: null }, true)).toBeNull();
-    expect(entregaEnPantalla({ ...PEDIDO_CON_DELIVERY, modalidad: null }, true)).toBeNull();
+    expect(entregaEnPantalla({ ...PEDIDO_NUEVO, modalidad: null })).toBeNull();
+    expect(entregaEnPantalla({ ...PEDIDO_CON_DELIVERY, modalidad: null })).toBeNull();
   });
 });
