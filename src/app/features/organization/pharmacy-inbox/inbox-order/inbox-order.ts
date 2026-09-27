@@ -176,7 +176,7 @@ export class InboxOrder {
    */
   protected readonly entrega = computed(() => {
     const abierto = this.pedido();
-    return abierto === null ? null : entregaEnPantalla(abierto, this.sampleData);
+    return abierto === null ? null : entregaEnPantalla(abierto);
   });
 
   /**

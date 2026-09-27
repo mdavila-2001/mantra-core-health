@@ -33,10 +33,6 @@
               {{ modo.presentacion.descripcion }}
               @if (modo.direccion !== null) {
                 — {{ modo.direccion }}
-                <!-- La dirección la puso la maqueta: se dice, no se disimula. -->
-                @if (modo.esEjemplo) {
-                  <app-chip size="sm" variant="neutral">{{ notaDeEjemplo }}</app-chip>
-                }
               }
             </p>
           }

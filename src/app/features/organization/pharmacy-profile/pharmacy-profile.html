@@ -47,36 +47,24 @@
   <!-- La referencia no se llama «documentos» a propósito: en una plantilla la
        referencia gana sobre la propiedad del componente, y taparía la señal
        `documentos()` que alimenta a esta misma pestaña. -->
-  <!-- Contra la API real la carpeta y la gente no se dibujan: la API no las
-       publica todavía, y una carpeta vacía con «Cargar el primer documento»
-       prometería un guardado que no existe. -->
+  <!-- Contra la API real las dos pestañas son de lectura: la carpeta son las
+       licencias de la farmacia y la gente, su representante y sus gerencias.
+       Todavía no hay dónde subir un papel ni guardar un cambio, así que no se
+       ofrece. -->
   <app-tab label="Documentos" #panelDeDocumentos>
-    @if (sampleData) {
-      <app-documentos-legales [state]="documentos()" (retry)="recargar()" />
-    } @else {
-      <app-empty-state
-        variant="empty"
-        data-testid="profile-documents-unavailable"
-        title="La carpeta legal todavía no está disponible"
-        description="Los documentos de tu farmacia —constitución, NIT, SEPREC, licencia, certificado SEDES y poder— todavía no se pueden ver ni cargar desde la app."
-      />
-    }
+    <app-documentos-legales
+      [state]="documentos()"
+      [readOnly]="!sampleData"
+      (retry)="recargar()"
+    />
   </app-tab>
 
   <app-tab label="Representante y gerentes">
-    @if (sampleData) {
-      <app-representante-y-gerentes
-        [state]="gente()"
-        (retry)="recargar()"
-        (poderPedido)="verDocumentos()"
-      />
-    } @else {
-      <app-empty-state
-        variant="empty"
-        data-testid="profile-people-unavailable"
-        title="El representante y los gerentes todavía no están disponibles"
-        description="Quién firma por tu farmacia y quiénes la gestionan todavía no se pueden ver desde la app."
-      />
-    }
+    <app-representante-y-gerentes
+      [state]="gente()"
+      [readOnly]="!sampleData"
+      (retry)="recargar()"
+      (poderPedido)="verDocumentos()"
+    />
   </app-tab>
 </app-tabs>

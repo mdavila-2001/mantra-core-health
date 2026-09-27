@@ -6,6 +6,8 @@ import { PharmacyClient } from './pharmacy.client';
 import {
   DISPONIBILIDAD_FIXTURE,
   FIXTURE_IDS,
+  PHARMACY_CONTACTS_FIXTURE,
+  PHARMACY_LICENSES_FIXTURE,
   productosDelConcepto,
 } from './pharmacy.fixtures';
 
@@ -141,6 +143,37 @@ describe('PharmacyClient', () => {
     });
 
     expect(sitios).toBe(1);
+  });
+
+  it('pide la carpeta de licencias de la farmacia, sin parámetros', () => {
+    let vencimientos: readonly (number | null)[] = [];
+    client
+      .listLicenses(FIXTURE_IDS.farmaciaAndina)
+      .subscribe((page) => (vencimientos = page.items.map((item) => item.daysToExpiry)));
+
+    const req = http.expectOne(
+      (r) => r.url === `/pharmacy/pharmacies/${FIXTURE_IDS.farmaciaAndina}/licenses`,
+    );
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.keys()).toEqual([]);
+    req.flush(PHARMACY_LICENSES_FIXTURE);
+
+    expect(vencimientos).toEqual([110, 13]);
+  });
+
+  it('pide el representante y las gerencias de la farmacia', () => {
+    let representante: string | null = null;
+    client
+      .getContacts(FIXTURE_IDS.farmaciaAndina)
+      .subscribe((contactos) => (representante = contactos.legalRepresentative?.fullName ?? null));
+
+    const req = http.expectOne(
+      (r) => r.url === `/pharmacy/pharmacies/${FIXTURE_IDS.farmaciaAndina}/contacts`,
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush(PHARMACY_CONTACTS_FIXTURE);
+
+    expect(representante).toBe('María Elena Ortiz Camacho');
   });
 
   it('pide los precios de una sede sin declarar `product` cuando no viene', () => {

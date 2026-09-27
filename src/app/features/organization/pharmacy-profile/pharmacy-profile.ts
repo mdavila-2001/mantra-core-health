@@ -11,18 +11,21 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { of, switchMap } from 'rxjs';
 
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Chip } from '../../../shared/components/atoms/chip/chip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import type { AlertTone } from '../../../shared/components/molecules/alert/alert.types';
-import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PharmacyClient } from '../../../core/data-access/pharmacy/pharmacy.client';
-import type { PharmacyDetail } from '../../../core/data-access/pharmacy/pharmacy.types';
+import type {
+  PharmacyContactPerson,
+  PharmacyContacts,
+  PharmacyDetail,
+  PharmacyLicense,
+} from '../../../core/data-access/pharmacy/pharmacy.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { SAMPLE_DATA_ENABLED } from '../../../core/mock/sample-data';
 import { NavigationService } from '../../../core/navigation/navigation.service';
@@ -39,9 +42,12 @@ import {
   NOTA_DE_DATOS_DE_EJEMPLO,
 } from './pharmacy-profile.fixtures';
 import type {
+  ContactoDeLaEmpresa,
   DatosLegalesDeLaEmpresa,
   DocumentoLegal,
+  EstadoDeVerificacion,
   GenteDeLaEmpresa,
+  TipoDeSociedad,
 } from './pharmacy-profile.types';
 
 /** Dónde está «Documentos» entre las pestañas: el aviso y el poder llevan ahí. */
@@ -51,23 +57,134 @@ const PESTANA_DE_DOCUMENTOS = 1;
 const ORGANIZATION_PANEL_ROUTE = '/administration/my-organization';
 
 /**
- * La parte de la ficha que el directorio de farmacias sí publica.
+ * La forma societaria del contrato (`companyType.code`, el diccionario de
+ * `directory`) en las palabras de la lista cerrada del registro.
  *
- * `GET /pharmacy/pharmacies/:id` trae la razón social (`legalName`) y nada
- * más de lo que esta pestaña pide: ni el tipo de sociedad —el `type` del DTO
- * es el tipo de farmacia, no la forma societaria—, ni el NIT, ni la dirección
- * legal de la central. Las sedes sí traen dirección y punto, pero una sede no
- * es «la central»: elegir una por su cuenta sería afirmar algo que el
- * contrato no dice. Lo que falta llega `null` y la pestaña lo dice.
+ * Una figura de otra jurisdicción (`US_LLC`, `BR_LTDA`…) no tiene lugar entre
+ * los ocho: queda `null` antes que forzarla a una que no es.
+ */
+const COMPANY_TYPE_BY_CODE: Readonly<Record<string, TipoDeSociedad>> = {
+  UNIPERSONAL: 'UNIPERSONAL',
+  SRL: 'SRL',
+  LTDA: 'LTDA',
+  SA: 'S.A.',
+  SOCIEDAD_COLECTIVA: 'SOCIEDAD COLECTIVA',
+  COMANDITA_SIMPLE: 'SOCIEDAD EN COMANDITA SIMPLE',
+  COMANDITA_ACCIONES: 'SOCIEDAD EN COMANDITA POR ACCIONES',
+  SUCURSAL_EXTRANJERA: 'SUCURSAL DE SOCIEDAD EXTRANJERA',
+};
+
+/**
+ * La empresa, desde `GET /pharmacy/pharmacies/:id`: razón social, forma
+ * societaria, NIT, dirección legal y punto de la central.
+ *
+ * El `type` del DTO es el tipo de farmacia, no la forma societaria: la forma
+ * viene aparte (`companyType`). Lo que la organización no registró llega
+ * `null` y la pestaña lo dice; las sedes no se usan como «la central».
  */
 export function companyFromPharmacyDetail(detail: PharmacyDetail): DatosLegalesDeLaEmpresa {
   return {
     razonSocial: detail.legalName,
-    tipoDeSociedad: null,
-    nit: null,
-    direccionLegal: null,
-    puntoCentral: null,
+    tipoDeSociedad:
+      detail.companyType === null
+        ? null
+        : (COMPANY_TYPE_BY_CODE[detail.companyType.code] ?? null),
+    nit: detail.taxId,
+    direccionLegal: detail.legalAddressText,
+    puntoCentral:
+      detail.headquarters === null
+        ? null
+        : { lat: detail.headquarters.latitude, lng: detail.headquarters.longitude },
   };
+}
+
+/** El nombre del tipo de licencia, en castellano cuando se lo conoce. */
+const LICENSE_NAME_BY_CODE: Readonly<Record<string, string>> = {
+  PHARM_LICENSE_TYPE_OPERATING: 'Licencia de funcionamiento',
+};
+
+/** La revisión de la licencia, desde `PHARM_VERIFICATION_*`. */
+const VERIFICATION_BY_CODE: Readonly<Record<string, EstadoDeVerificacion>> = {
+  PHARM_VERIFICATION_VERIFIED: 'VERIFICADO',
+  PHARM_VERIFICATION_REJECTED: 'RECHAZADO',
+};
+
+/** `AAAA-MM-DD` a fecha local, por componentes: no se corre de día por huso. */
+function parseDateOnly(value: string | null): Date | null {
+  if (value === null) return null;
+  const [year, month, day] = value.split('-').map(Number);
+  if (year === undefined || month === undefined || day === undefined) return null;
+  const date = new Date(year, month - 1, day);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * Las licencias de la farmacia como papeles de la carpeta.
+ *
+ * El número va en el nombre —es lo que se busca en el cajón—, y la sede
+ * cuando la licencia es de una sola. La clave es la posición: nada de esta
+ * pantalla filtra el identificador técnico de la licencia. Los días hasta el
+ * vencimiento los declara el servidor.
+ */
+export function documentsFromLicenses(
+  licenses: readonly PharmacyLicense[],
+): readonly DocumentoLegal[] {
+  return licenses.map((licencia, index) => {
+    const typeName = licencia.type
+      ? (LICENSE_NAME_BY_CODE[licencia.type.code] ?? licencia.type.display)
+      : 'Licencia';
+    const site = licencia.siteName === null ? '' : ` · ${licencia.siteName}`;
+    return {
+      clave: `licencia-${index + 1}`,
+      nombre: `${typeName} N.º ${licencia.number}${site}`,
+      archivo: licencia.evidenceFileId === null ? 'Sin respaldo cargado' : 'Respaldo cargado',
+      emitidoEl: parseDateOnly(licencia.validFrom),
+      venceEl: parseDateOnly(licencia.validTo),
+      diasParaVencer: licencia.daysToExpiry,
+      verificacion:
+        (licencia.verificationStatus &&
+          VERIFICATION_BY_CODE[licencia.verificationStatus.code]) ??
+        'PENDIENTE',
+    };
+  });
+}
+
+/** El cargo, en palabras, desde el rol canónico del contrato. */
+const POSITION_BY_ROLE: Readonly<Record<string, string>> = {
+  LEGAL_REPRESENTATIVE: 'Representante legal',
+  GENERAL_MANAGER: 'Gerente General',
+  COMMERCIAL_MANAGER: 'Gerente Comercial',
+  MARKETING_MANAGER: 'Gerente Marketing',
+};
+
+function contactFromPerson(person: PharmacyContactPerson): ContactoDeLaEmpresa {
+  return {
+    cargo: POSITION_BY_ROLE[person.role] ?? person.role,
+    nombre: person.fullName,
+    celular: person.phone,
+    correo: person.email,
+  };
+}
+
+/**
+ * Quién responde por la farmacia, desde `GET /pharmacy/pharmacies/:id/contacts`.
+ *
+ * Sin representante legal registrado no hay ficha que dibujar: eso es un
+ * vacío (la pestaña lo dice), no una ficha con el primer lugar en blanco.
+ */
+export function peopleFromContacts(
+  contacts: PharmacyContacts,
+): ViewState<GenteDeLaEmpresa> {
+  if (contacts.legalRepresentative === null) {
+    return empty(
+      { label: 'Ver tu organización', route: ORGANIZATION_PANEL_ROUTE },
+      'Tu organización todavía no registró a su representante legal.',
+    );
+  }
+  return ready({
+    representante: contactFromPerson(contacts.legalRepresentative),
+    gerentes: contacts.executives.map(contactFromPerson),
+  });
 }
 
 /** Lo que el aviso de la carpeta dice, cuando hay algo que avisar. */
@@ -155,14 +272,15 @@ export function avisoDeLaCarpeta(
  * carpeta. Sin la pestaña gobernada desde la página, los dos serían texto que
  * dice «andá a Documentos» sin llevar a nadie.
  *
- * ## Casi todo sigue sin contrato detrás
+ * ## De dónde sale cada pestaña
  *
- * De esta ficha la API sólo publica la razón social (el directorio de
- * farmacias); no hay NIT, ni tipo de sociedad, ni documento con vigencia, ni
- * representante, ni gerentes. Sobre la maqueta los datos son de ejemplo, la
- * pantalla lo rotula, y ni lo que se edite ni lo que se cargue se guarda en
- * ningún lado. Contra la API real (`SAMPLE_DATA_ENABLED` apagado) la empresa
- * sale del directorio y el resto se dice no disponible: nada inventado.
+ * Contra la API real (`SAMPLE_DATA_ENABLED` apagado) las tres pestañas leen el
+ * contrato: la empresa de `GET /pharmacy/pharmacies/:id`, la carpeta de
+ * `…/licenses` y la gente de `…/contacts` —estas dos, sólo para el personal de
+ * la farmacia—. Son de lectura: todavía no hay dónde guardar una edición ni
+ * subir un papel, así que no se ofrece. Sobre la maqueta los datos son de
+ * ejemplo, la pantalla lo rotula, y ni lo que se edite ni lo que se cargue se
+ * guarda en ningún lado.
  */
 @Component({
   selector: 'app-pharmacy-profile',
@@ -172,7 +290,6 @@ export function avisoDeLaCarpeta(
     Chip,
     DatosDeLaEmpresa,
     DocumentosLegales,
-    EmptyState,
     PageHeader,
     RepresentanteYGerentes,
     Tab,
@@ -190,9 +307,8 @@ export class PharmacyProfile {
 
   /**
    * Maqueta (`true`) o API real (`false`). Sobre la maqueta la ficha entera es
-   * de ejemplo y se rotula; contra la API real la empresa sale del directorio
-   * de farmacias, y la carpeta legal y la gente —que la API no publica— se
-   * dicen no disponibles. Ver `core/mock/sample-data.ts`.
+   * de ejemplo y se rotula; contra la API real cada pestaña lee su parte del
+   * contrato, en modo lectura. Ver `core/mock/sample-data.ts`.
    */
   protected readonly sampleData = inject(SAMPLE_DATA_ENABLED);
 
@@ -214,11 +330,9 @@ export class PharmacyProfile {
   protected readonly empresa = signal<ViewState<DatosLegalesDeLaEmpresa>>(
     this.sampleData ? ready(EMPRESA_DE_EJEMPLO) : loading(),
   );
-  /** Contra la API real queda vacía: no hay papeles que avisar ni que listar. */
   protected readonly documentos = signal<ViewState<readonly DocumentoLegal[]>>(
-    this.sampleData ? estadoDeLaCarpeta(DOCUMENTOS_DE_EJEMPLO) : ready([]),
+    this.sampleData ? estadoDeLaCarpeta(DOCUMENTOS_DE_EJEMPLO) : loading(),
   );
-  /** Contra la API real no se dibuja: la pestaña dice que no está disponible. */
   protected readonly gente = signal<ViewState<GenteDeLaEmpresa>>(
     this.sampleData ? ready(GENTE_DE_EJEMPLO) : loading(),
   );
@@ -227,18 +341,18 @@ export class PharmacyProfile {
 
   constructor() {
     if (!this.sampleData) {
-      this.cargarEmpresa();
+      this.loadProfile();
     }
   }
 
   /**
    * Vuelve a tomar la ficha. Sobre la maqueta el dato es local y llega
    * resuelto, así que esto repone las tres señales; contra la API real vuelve
-   * a pedir la empresa, que es lo único de la ficha que la API publica.
+   * a pedir las tres partes.
    */
   protected recargar(): void {
     if (!this.sampleData) {
-      this.cargarEmpresa();
+      this.loadProfile();
       return;
     }
     this.empresa.set(ready(EMPRESA_DE_EJEMPLO));
@@ -247,38 +361,79 @@ export class PharmacyProfile {
   }
 
   /**
-   * La empresa, desde el directorio de farmacias: `GET /pharmacy/pharmacies`
-   * dice cuál es la farmacia del tenant activo y `GET /pharmacy/pharmacies/:id`
-   * trae su perfil.
+   * La ficha, desde el contrato: `GET /pharmacy/pharmacies` dice cuál es la
+   * farmacia del tenant activo, y con ella se piden su perfil, su carpeta de
+   * licencias y su gente.
    *
    * El directorio lista **sólo lo publicado** (activa y verificada), así que
    * una farmacia recién registrada no aparece: eso es un vacío con salida, no
-   * un error. Si el tenant tuviera más de una, se muestra la primera que el
-   * directorio devuelve: la ficha es de una sola empresa.
+   * un error, y vale para las tres pestañas. Si el tenant tuviera más de una,
+   * se muestra la primera que el directorio devuelve: la ficha es de una sola
+   * empresa. Cada parte falla por su cuenta: que la carpeta no cargue no
+   * esconde la empresa.
    */
-  private cargarEmpresa(): void {
+  private loadProfile(): void {
     this.empresa.set(loading());
+    this.documentos.set(loading());
+    this.gente.set(loading());
     this.pharmacy
       .listPharmacies()
-      .pipe(
-        switchMap((page) => {
-          const first = page.items[0];
-          return first === undefined ? of(null) : this.pharmacy.getPharmacy(first.id);
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (detail) =>
-          this.empresa.set(
-            detail === null
-              ? empty(
-                  { label: 'Ver tu organización', route: ORGANIZATION_PANEL_ROUTE },
-                  'Tu farmacia todavía no figura en el directorio publicado. Cuando se verifique, sus datos van a aparecer acá.',
-                )
-              : ready(companyFromPharmacyDetail(detail)),
-          ),
+        next: (page) => {
+          const first = page.items[0];
+          if (first === undefined) {
+            const unpublished = empty(
+              { label: 'Ver tu organización', route: ORGANIZATION_PANEL_ROUTE },
+              'Tu farmacia todavía no figura en el directorio publicado. Cuando se verifique, sus datos van a aparecer acá.',
+            );
+            this.empresa.set(unpublished);
+            this.documentos.set(unpublished);
+            this.gente.set(unpublished);
+            return;
+          }
+          this.loadParts(first.id);
+        },
+        error: (error: unknown) => {
+          this.empresa.set(errorToViewState<DatosLegalesDeLaEmpresa>(error));
+          this.documentos.set(errorToViewState<readonly DocumentoLegal[]>(error));
+          this.gente.set(errorToViewState<GenteDeLaEmpresa>(error));
+        },
+      });
+  }
+
+  /** Las tres partes de la ficha de una farmacia, cada una por su lado. */
+  private loadParts(pharmacyId: string): void {
+    this.pharmacy
+      .getPharmacy(pharmacyId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (detail) => this.empresa.set(ready(companyFromPharmacyDetail(detail))),
         error: (error: unknown) =>
           this.empresa.set(errorToViewState<DatosLegalesDeLaEmpresa>(error)),
+      });
+    this.pharmacy
+      .listLicenses(pharmacyId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (page) =>
+          this.documentos.set(
+            page.items.length === 0
+              ? empty(
+                  { label: 'Ver tu organización', route: ORGANIZATION_PANEL_ROUTE },
+                  'Tu farmacia todavía no tiene licencias registradas.',
+                )
+              : ready(documentsFromLicenses(page.items)),
+          ),
+        error: (error: unknown) =>
+          this.documentos.set(errorToViewState<readonly DocumentoLegal[]>(error)),
+      });
+    this.pharmacy
+      .getContacts(pharmacyId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (contacts) => this.gente.set(peopleFromContacts(contacts)),
+        error: (error: unknown) => this.gente.set(errorToViewState<GenteDeLaEmpresa>(error)),
       });
   }
 

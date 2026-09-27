@@ -209,12 +209,11 @@ export class PharmacyInbox {
   }
 
   /**
-   * Por qué medio se entrega, o `null` en los pedidos que no lo declaran. La
-   * tarjeta sólo pinta la modalidad, que siempre es del contrato: por eso no
-   * depende de si hay datos de ejemplo.
+   * Por qué medio se entrega, o `null` en los pedidos que no lo declaran. Sale
+   * del contrato, como en el detalle.
    */
   protected entregaDe(pedido: PedidoFarmacia): EntregaEnPantalla | null {
-    return entregaEnPantalla(pedido, false);
+    return entregaEnPantalla(pedido);
   }
 
   /**

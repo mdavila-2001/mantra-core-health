@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
@@ -14,7 +16,8 @@ import { APP_SECTIONS } from '../../../core/navigation/navigation.map';
 import { NAV_SUBGROUPS } from '../../../core/navigation/navigation.subgroups';
 import { seccionRolesGuard } from '../../../core/navigation/section-roles.guard';
 import { SAMPLE_DATA_ENABLED } from '../../../core/mock/sample-data';
-import { Promotions } from './promotions';
+import type { MyPromotionDto } from '@core/data-access/promotions/promotions.dto';
+import { Promotions, promotionFromContract } from './promotions';
 import { promocionesDeEjemplo } from './promotions.fixtures';
 
 const RAMAS: readonly RamaDepartamento[] = [
@@ -51,6 +54,8 @@ describe('Promotions', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: ActivatedRoute, useValue: { queryParams: params } },
         {
           provide: BoMunicipalitiesCatalog,
@@ -156,15 +161,92 @@ describe('Promotions en la navegación', () => {
   });
 });
 
+/** Una promoción tal como la devuelve `GET /promotions/me`. */
+function promocionDelContrato(extra: Partial<MyPromotionDto> = {}): MyPromotionDto {
+  return {
+    id: '5b1f0c2e-0000-4000-8000-00000000d001',
+    code: 'PROMO-TEMPORADA',
+    name: 'Descuento de primavera',
+    description: null,
+    type: { code: 'PROMO_AUTO', display: 'Automatic promotion' },
+    validFrom: '2026-09-19T00:00:00.000Z',
+    validTo: '2026-10-19T00:00:00.000Z',
+    discounts: [
+      {
+        type: { code: 'DISC_PERCENT', display: 'Percentage discount' },
+        percentage: '15',
+        fixedAmount: null,
+        currency: null,
+        minPurchaseAmount: '50.00',
+        maxDiscountAmount: null,
+        appliesTo: { code: 'TARGET_ORDER', display: 'Whole order' },
+      },
+    ],
+    coupons: [],
+    ...extra,
+  };
+}
+
+describe('promotionFromContract', () => {
+  it('toma nombre, porcentaje y vigencia, y deja null lo que el contrato no relaciona', () => {
+    const promo = promotionFromContract(promocionDelContrato());
+
+    expect(promo).toMatchObject({
+      titulo: 'Descuento de primavera',
+      porcentaje: 15,
+      montoFijo: null,
+      farmacia: null,
+      ciudad: null,
+      medicamento: null,
+      farmaciaVerificada: false,
+      categoria: { code: 'toda-la-compra', label: 'En toda la compra' },
+      estado: 'vista',
+      cupones: [],
+    });
+    expect(promo.hasta?.toISOString()).toBe('2026-10-19T00:00:00.000Z');
+  });
+
+  it('un monto fijo va con su moneda, y el cupón propio viaja con la promoción', () => {
+    const promo = promotionFromContract(
+      promocionDelContrato({
+        validTo: null,
+        discounts: [
+          {
+            type: { code: 'DISC_FIXED', display: 'Fixed amount discount' },
+            percentage: null,
+            fixedAmount: '20.00',
+            currency: { code: 'BOB', display: 'Boliviano' },
+            minPurchaseAmount: null,
+            maxDiscountAmount: null,
+            appliesTo: null,
+          },
+        ],
+        coupons: [{ code: 'BIENV-7Q2X', validTo: null }],
+      }),
+    );
+
+    expect(promo.porcentaje).toBeNull();
+    expect(promo.montoFijo).toBe('20.00 BOB');
+    expect(promo.hasta).toBeNull();
+    expect(promo.categoria.label).toBe('Promoción');
+    expect(promo.cupones).toEqual(['BIENV-7Q2X']);
+  });
+});
+
 /**
- * Contra la API real (`production-api`): ninguna promoción de ejemplo, y el
- * vacío dice que la sección no está disponible, no que no te llegó nada.
+ * Contra la API real (`production-api`): las promociones salen de
+ * `GET /promotions/me`, y ninguna de ejemplo se asoma.
  */
 describe('Promotions contra la API real', () => {
-  it('no muestra promociones de ejemplo y dice que todavía no están disponibles', () => {
+  let fixture: ComponentFixture<Promotions>;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: ActivatedRoute, useValue: { queryParams: new BehaviorSubject({}) } },
         {
           provide: BoMunicipalitiesCatalog,
@@ -173,15 +255,65 @@ describe('Promotions contra la API real', () => {
         { provide: SAMPLE_DATA_ENABLED, useValue: false },
       ],
     });
-    const fixture = TestBed.createComponent(Promotions);
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(Promotions);
     fixture.detectChanges();
-    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+  });
 
-    expect(texto).toContain('todavía no se pueden ver desde la app');
-    expect(texto).toContain('Buscar farmacias');
-    for (const promo of promocionesDeEjemplo()) {
-      expect(texto).not.toContain(promo.titulo);
-    }
+  afterEach(() => {
     fixture.destroy();
+    http.verify();
+  });
+
+  function texto(): string {
+    return (fixture.nativeElement as HTMLElement).textContent ?? '';
+  }
+
+  it('muestra las vigentes del contrato, sin ninguna de ejemplo', () => {
+    const request = http.expectOne('/promotions/me');
+    expect(request.request.method).toBe('GET');
+    request.flush({
+      items: [
+        promocionDelContrato(),
+        promocionDelContrato({
+          id: '5b1f0c2e-0000-4000-8000-00000000d002',
+          name: 'Bienvenida a la app',
+          coupons: [{ code: 'BIENV-7Q2X', validTo: null }],
+        }),
+      ],
+      count: 2,
+    });
+    fixture.detectChanges();
+
+    expect(texto()).toContain('Descuento de primavera');
+    expect(texto()).toContain('Tu cupón: BIENV-7Q2X');
+    expect(texto()).toContain('Sin ciudad declarada');
+    for (const promo of promocionesDeEjemplo()) {
+      expect(texto()).not.toContain(promo.titulo);
+    }
+  });
+
+  it('sin vigentes, lo dice y ofrece buscar farmacias', () => {
+    http.expectOne('/promotions/me').flush({ items: [], count: 0 });
+    fixture.detectChanges();
+
+    expect(texto()).toContain('Por ahora no tenés promociones vigentes');
+    expect(texto()).toContain('Buscar farmacias');
+  });
+
+  it('si la lectura falla, ofrece reintentar y el reintento vuelve a pedir', () => {
+    http
+      .expectOne('/promotions/me')
+      .flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+
+    const reintentar = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('button'),
+    ).find((boton) => (boton.textContent ?? '').includes('Reintentar'));
+    expect(reintentar).toBeDefined();
+    reintentar?.click();
+    fixture.detectChanges();
+
+    http.expectOne('/promotions/me').flush({ items: [], count: 0 });
   });
 });
