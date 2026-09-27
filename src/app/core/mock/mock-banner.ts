@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { MOCK_USERS } from './mock-session';
+import { environment } from '../../../environments/environment';
 
 /**
  * El aviso de la rama `mockup`: recuerda que no hay API detrás y muestra las
@@ -11,43 +12,45 @@ import { MOCK_USERS } from './mock-session';
   selector: 'app-mock-banner',
   imports: [RouterLink],
   template: `
-    <aside class="mock" [class.mock--plegado]="plegado()" aria-label="Modo de demostración">
-      <div class="mock__botones">
-        <button
-          type="button"
-          class="mock__boton"
-          [attr.aria-label]="plegado() ? 'Datos de prueba' : 'Ocultar'"
-          (click)="plegado.set(!plegado())"
-        >
-          @if (plegado()) {
-            <span class="mock__largo">Datos de prueba</span><span class="mock__corto" aria-hidden="true">Demo</span>
-          } @else {
-            Ocultar
-          }
-        </button>
-        <!-- El acceso al stock de componentes. Vive acá y no en el menú porque
-             el panel ya está en todas las pantallas y no pide sesión: se llega
-             desde donde uno esté, que es como se usa una herramienta. -->
-        <a class="mock__boton mock__boton--stock" routerLink="/design-system/stock">
-          Ver componentes
-        </a>
-      </div>
-      @if (!plegado()) {
-        <p class="mock__texto">
-          <strong>Rama mockup:</strong> sin backend. Todo lo que ves sale de datos de prueba en memoria y
-          los cambios duran mientras dure la pestaña. Cualquier contraseña sirve.
-        </p>
-        <p class="mock__texto">
-          <strong>Ver componentes</strong> abre el stock: los 444 componentes del proyecto, uno por
-          uno, montados con datos generados y con lo que cada uno tiene mal.
-        </p>
-        <ul class="mock__cuentas">
-          @for (cuenta of cuentas; track cuenta.email) {
-            <li><code>{{ cuenta.email }}</code> · {{ cuenta.rol }}</li>
-          }
-        </ul>
-      }
-    </aside>
+    @if (activo) {
+      <aside class="mock" [class.mock--plegado]="plegado()" aria-label="Modo de demostración">
+        <div class="mock__botones">
+          <button
+            type="button"
+            class="mock__boton"
+            [attr.aria-label]="plegado() ? 'Datos de prueba' : 'Ocultar'"
+            (click)="plegado.set(!plegado())"
+          >
+            @if (plegado()) {
+              <span class="mock__largo">Datos de prueba</span><span class="mock__corto" aria-hidden="true">Demo</span>
+            } @else {
+              Ocultar
+            }
+          </button>
+          <!-- El acceso al stock de componentes. Vive acá y no en el menú porque
+               el panel ya está en todas las pantallas y no pide sesión: se llega
+               desde donde uno esté, que es como se usa una herramienta. -->
+          <a class="mock__boton mock__boton--stock" routerLink="/design-system/stock">
+            Ver componentes
+          </a>
+        </div>
+        @if (!plegado()) {
+          <p class="mock__texto">
+            <strong>Rama mockup:</strong> sin backend. Todo lo que ves sale de datos de prueba en memoria y
+            los cambios duran mientras dure la pestaña. Cualquier contraseña sirve.
+          </p>
+          <p class="mock__texto">
+            <strong>Ver componentes</strong> abre el stock: los 444 componentes del proyecto, uno por
+            uno, montados con datos generados y con lo que cada uno tiene mal.
+          </p>
+          <ul class="mock__cuentas">
+            @for (cuenta of cuentas; track cuenta.email) {
+              <li><code>{{ cuenta.email }}</code> · {{ cuenta.rol }}</li>
+            }
+          </ul>
+        }
+      </aside>
+    }
   `,
   styles: `
     /* Abajo a la IZQUIERDA, pegado al borde del contenido.
@@ -159,6 +162,7 @@ import { MOCK_USERS } from './mock-session';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MockBanner {
+  protected readonly activo = environment.mockBackend;
   protected readonly plegado = signal(true);
   protected readonly cuentas = MOCK_USERS.map((u) => ({
     email: u.email,
