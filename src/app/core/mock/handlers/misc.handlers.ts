@@ -30,6 +30,19 @@ import { ahora, Coleccion, cuerpo, iso, nuevoId, uuid } from '../mock-store';
 /** De `esquema.tabla.columna` al conjunto de valores que la gobierna. */
 const ENUMS: readonly (readonly [patron: RegExp, valueSet: string, name: string])[] = [
   /*
+   * La recepción de muestras del laboratorio: `specimen-type` y
+   * `specimen-container-type` de la API, que gobiernan estos tres campos. Van
+   * primero y con esquema y tabla en el patrón: `*_type_concept_id` casaría con
+   * cualquier genérico de abajo, y un catálogo equivocado se ve como un
+   * catálogo, no como un error.
+   */
+  [/diagnostics\.specimens\.specimen_type_concept_id/, 'VS_SPECIMEN_TYPE', 'Tipo de espécimen'],
+  [
+    /diagnostics\.(specimen_containers|specimens)\.container_type_concept_id/,
+    'VS_SPECIMEN_CONTAINER_TYPE',
+    'Tipo de contenedor de la muestra',
+  ],
+  /*
    * Los cuatro del alta pública de laboratorio y centro de imagenología
    * (BR-09). Van PRIMERO y con la tabla en el patrón: sin ellos, el tipo de
    * unidad y la modalidad casaban con `/unit/` —las unidades de dosis— y el

@@ -10,6 +10,7 @@ import {
   type TemplateRef,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
@@ -18,6 +19,7 @@ import type { LabWorkOrder } from '../../core/data-access/diagnostics/diagnostic
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
+import { AuthService } from '../../core/auth/auth.service';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
@@ -30,6 +32,9 @@ import { CLINICAL_RECORD_ROUTE } from '../clinical-record/clinical-record.routes
 
 /** Tope de filas de la cola. La API acota a 200; acá alcanza una pantalla. */
 const TOPE = 50;
+
+/** La recepción de muestras del laboratorio (`navigation.map.ts`). */
+const LAB_RECEPTION_ROUTE = '/laboratorio/recepcion';
 
 /** Lo que se muestra cuando un concepto no tiene etiqueta en el catálogo. */
 const SIN_DATO = '—';
@@ -66,7 +71,7 @@ const SIN_DATO = '—';
  */
 @Component({
   selector: 'app-diagnostics',
-  imports: [Alert, Card, DataTable, DatePipe, PageHeader],
+  imports: [Alert, Card, DataTable, DatePipe, PageHeader, RouterLink],
   templateUrl: './diagnostics.html',
   styleUrl: './diagnostics.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -75,6 +80,7 @@ export class Diagnostics {
   private readonly diagnostics = inject(DiagnosticsClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly navigation = inject(NavigationService);
+  private readonly auth = inject(AuthService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -91,6 +97,16 @@ export class Diagnostics {
   private readonly etiquetas = signal<ConceptLabels>(new Map());
 
   protected readonly cargando = computed(() => this.cola().status === 'loading');
+
+  /**
+   * Si quien mira es el personal de un centro de diagnóstico (la cola se le
+   * ofrece como `laboratorio/cola`). Esa sesión no tiene expediente de
+   * pacientes: la salida del vacío y la nota del pie apuntan a la recepción
+   * de muestras, que es de donde salen sus órdenes de trabajo.
+   */
+  protected readonly isLabSession = computed(
+    () => this.auth.activeTenantType() === 'DIAGNOSTIC_CENTER',
+  );
 
   protected readonly columnas = computed<readonly ColumnDef<LabWorkOrder>[]>(() => [
     { key: 'workOrderNumber', header: 'Orden', priority: 1, cell: this.celdaOrden() },
@@ -147,7 +163,9 @@ export class Diagnostics {
             // en la ficha del paciente.
             this.cola.set(
               empty(
-                { label: 'Ir al archivo clínico', route: CLINICAL_RECORD_ROUTE },
+                this.isLabSession()
+                  ? { label: 'Ir a la recepción de muestras', route: LAB_RECEPTION_ROUTE }
+                  : { label: 'Ir al archivo clínico', route: CLINICAL_RECORD_ROUTE },
                 'No hay órdenes de trabajo en la cola del laboratorio. Aparecen acá ' +
                   'cuando se acesionan los especímenes recibidos.',
               ),
