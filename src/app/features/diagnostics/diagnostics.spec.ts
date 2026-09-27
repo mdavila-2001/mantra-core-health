@@ -2,7 +2,10 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
+
+import { AuthService } from '../../core/auth/auth.service';
 
 import { Diagnostics } from './diagnostics';
 
@@ -132,5 +135,40 @@ describe('Diagnostics', () => {
     // Y reintentar vuelve a pedir la cola.
     componente['recargar']();
     http.expectOne((r) => r.url === '/diagnostics/work-orders').flush([]);
+  });
+
+  describe('para el personal de un centro de diagnóstico (`laboratorio/cola`)', () => {
+    beforeEach(() => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([]),
+          {
+            provide: AuthService,
+            useValue: { activeTenantType: signal<string | null>('DIAGNOSTIC_CENTER') },
+          },
+        ],
+      });
+      http = TestBed.inject(HttpTestingController);
+      fixture = TestBed.createComponent(Diagnostics);
+      componente = fixture.componentInstance;
+    });
+
+    it('la cola vacía lleva a la recepción de muestras, no al archivo clínico que no tiene', () => {
+      fixture.detectChanges();
+      http.expectOne((r) => r.url === '/diagnostics/work-orders').flush([]);
+      fixture.detectChanges();
+
+      const state = componente['cola']();
+      expect(state.status).toBe('empty');
+      if (state.status === 'empty') {
+        expect(state.nextAction.route).toBe('/laboratorio/recepcion');
+      }
+      const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(text).toContain('¿De dónde salen estas órdenes?');
+      expect(text).not.toContain('¿Buscás los estudios de un paciente?');
+    });
   });
 });

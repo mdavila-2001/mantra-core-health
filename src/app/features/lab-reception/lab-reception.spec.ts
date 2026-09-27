@@ -369,6 +369,74 @@ describe('LabReception', () => {
       expect(component['receiveError']()).toBe('Faltan datos del espécimen');
       expect(component['receiveOrder']()).not.toBeNull();
     });
+
+    /** Abre el diálogo, responde los catálogos y envía con lo elegido. */
+    function submitWithCatalogs(): void {
+      loadInbox([wireOrder('1')]);
+      component['openReceive'](rows()[0]!);
+      for (const req of http.match((r) => r.url === '/system-context/dynamic-enums')) {
+        req.flush(dynamicEnum('x', [['type-bldv', 'BLDV', 'Venous blood']]));
+      }
+      flushLabels();
+      component['specimenType'].set('type-bldv');
+      component['containerType'].set('ct-edta');
+      component['containerLabel'].set('TUBO-1');
+      component['submitReceive']();
+    }
+
+    function catalogRejection(reason: string) {
+      return [
+        {
+          statusCode: 422,
+          code: 'PRECONDITION_FAILED',
+          message: 'El tipo no pertenece al catálogo',
+          details: { reason },
+        },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      ] as const;
+    }
+
+    it('tipo de muestra fuera del catálogo (422 con motivo): lo dice en castellano y vuelve a pedir los catálogos', () => {
+      submitWithCatalogs();
+      http
+        .expectOne((r) => r.url === '/diagnostics/specimens')
+        .flush(...catalogRejection('SPECIMEN_TYPE_NOT_IN_CATALOG'));
+      fixture.detectChanges();
+
+      expect(component['receiveError']()).toBe(
+        'Ese tipo de muestra ya no está en el catálogo. Actualizamos la lista: elegí otro.',
+      );
+      expect(component['receiveOrder']()).not.toBeNull();
+      // Los dos catálogos se piden de nuevo; la bandeja no, porque no se creó nada.
+      expect(http.match((r) => r.url === '/system-context/dynamic-enums')).toHaveLength(2);
+      http.expectNone((r) => r.url === '/diagnostics/service-requests/inbox');
+    });
+
+    it('contenedor fuera del catálogo: la muestra ya quedó, así que además relee la bandeja', () => {
+      submitWithCatalogs();
+      http
+        .expectOne((r) => r.url === '/diagnostics/specimens')
+        .flush({ id: 's-new', status: STATUS_COLLECTED });
+      http
+        .expectOne((r) => r.url === '/diagnostics/specimens/s-new/containers')
+        .flush(...catalogRejection('CONTAINER_TYPE_NOT_IN_CATALOG'));
+      fixture.detectChanges();
+
+      expect(component['receiveError']()).toContain('La muestra quedó registrada');
+      expect(http.match((r) => r.url === '/system-context/dynamic-enums')).toHaveLength(2);
+      inboxRequest().flush({ items: [], count: 0, limit: 25, nextCursor: null });
+    });
+
+    it('un 422 sin motivo de catálogo conserva el mensaje de la API', () => {
+      submitWithCatalogs();
+      http
+        .expectOne((r) => r.url === '/diagnostics/specimens')
+        .flush(...catalogRejection('OTRA_COSA'));
+      fixture.detectChanges();
+
+      expect(component['receiveError']()).toBe('El tipo no pertenece al catálogo');
+      http.expectNone((r) => r.url === '/system-context/dynamic-enums');
+    });
   });
 
   describe('registrar accesión', () => {

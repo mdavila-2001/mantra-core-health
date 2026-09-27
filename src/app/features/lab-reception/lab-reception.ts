@@ -435,8 +435,29 @@ export class LabReception {
         },
         error: (error: unknown) => {
           this.receiving.set(false);
+          const reason = catalogReason(error);
+          if (reason !== null) {
+            // El catálogo de la pantalla quedó viejo respecto del de la API:
+            // se olvida lo memoizado y se vuelve a pedir para que la próxima
+            // elección sea válida.
+            this.systemContext.forget(SPECIMEN_TYPE_TARGET);
+            this.systemContext.forget(CONTAINER_TYPE_TARGET);
+            this.specimenTypeOptions.set([]);
+            this.containerTypeOptions.set([]);
+            this.loadCatalogs();
+            if (reason === CONTAINER_TYPE_NOT_IN_CATALOG) {
+              // El espécimen ya se dio de alta; lo que faltó es el contenedor.
+              // Se relee la bandeja para que la fila muestre lo que quedó.
+              this.load();
+            }
+          }
           this.receiveError.set(
-            apiMessage(error) ?? 'No pudimos registrar la muestra. Revisá los datos y probá de nuevo.',
+            reason === SPECIMEN_TYPE_NOT_IN_CATALOG
+              ? 'Ese tipo de muestra ya no está en el catálogo. Actualizamos la lista: elegí otro.'
+              : reason === CONTAINER_TYPE_NOT_IN_CATALOG
+                ? 'La muestra quedó registrada, pero ese tipo de contenedor ya no está en el catálogo. Actualizamos la lista: elegí otro contenedor.'
+                : (apiMessage(error) ??
+                  'No pudimos registrar la muestra. Revisá los datos y probá de nuevo.'),
           );
         },
       });
@@ -571,6 +592,24 @@ export class LabReception {
 /** El texto de la etiqueta, sin espacios de sobra. */
 function labelText(value: string | number | null): string {
   return value === null ? '' : String(value).trim();
+}
+
+/** Motivos estables del 422 de la API cuando un tipo no es de su catálogo. */
+const SPECIMEN_TYPE_NOT_IN_CATALOG = 'SPECIMEN_TYPE_NOT_IN_CATALOG';
+const CONTAINER_TYPE_NOT_IN_CATALOG = 'CONTAINER_TYPE_NOT_IN_CATALOG';
+
+/**
+ * El motivo de catálogo del error, si es uno de los dos que la API declara
+ * (`PRECONDITION_FAILED` con `details.reason`). Se ramifica por código, nunca
+ * por el texto del mensaje.
+ */
+function catalogReason(error: unknown): string | null {
+  if (!(error instanceof HttpErrorResponse)) return null;
+  const body = readApiError(error);
+  const reason = body?.code === 'PRECONDITION_FAILED' ? body.details?.['reason'] : undefined;
+  return reason === SPECIMEN_TYPE_NOT_IN_CATALOG || reason === CONTAINER_TYPE_NOT_IN_CATALOG
+    ? reason
+    : null;
 }
 
 /** El mensaje que la API explica, si vino uno legible. */
