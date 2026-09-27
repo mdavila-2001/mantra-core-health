@@ -11,4 +11,7 @@ import { environment as developmentEnvironment } from './environment.development
 export const environment: Environment = {
   ...developmentEnvironment,
   mockBackend: false,
+  // Contra la API real las pantallas de la bóveda (datos de ejemplo) no se
+  // registran, igual que en `real-api` y `production-api`.
+  designMockups: false,
 };

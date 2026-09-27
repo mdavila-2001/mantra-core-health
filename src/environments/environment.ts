@@ -58,6 +58,14 @@ export const environment: Environment = {
   campaignsDemo: envFromProcess.campaignsDemo ?? true,
 
   /**
+   * Encendidas por defecto: la rama `mockup` existe para recorrer las
+   * pantallas de la bóveda. Un despliegue que no las quiera las apaga con
+   * `PUBLIC_DESIGN_MOCKUPS=false`; contra la API real ya vienen apagadas
+   * (`environment.production-api.ts`).
+   */
+  designMockups: envFromProcess.designMockups ?? true,
+
+  /**
    * Apagada por defecto: el refresh token sigue en el cuerpo y en `localStorage`
    * hasta que el despliegue encienda **las dos puntas** —`PUBLIC_REFRESH_COOKIE`
    * acá y `AUTH_REFRESH_COOKIE_ENABLED` en la API—. Ver `environment.types.ts`.

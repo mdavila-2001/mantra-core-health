@@ -22,6 +22,10 @@ describe('environment.production-api', () => {
     expect(productionApi.campaignsDemo).toBe(false);
   });
 
+  it('no registra las pantallas de la bóveda con datos de ejemplo', () => {
+    expect(productionApi.designMockups).toBe(false);
+  });
+
   it('producción (la maqueta) sigue con el mock y las demos como estaban', () => {
     expect(produccion.mockBackend).toBe(true);
   });
