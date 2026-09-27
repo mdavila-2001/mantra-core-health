@@ -151,6 +151,39 @@ export function enlazarArchivo(datos: {
   };
 }
 
+/**
+ * Los bytes de un archivo, como los entrega `GET /common/files/:id/content`,
+ * **sin** la regla de autoría de esa ruta.
+ *
+ * Existe para las rutas de contexto que autorizan por otra cosa —la
+ * conversación en la que viaja un adjunto—: quien la llame ya decidió que el
+ * lector puede verlo. `undefined` si el archivo no existe.
+ */
+export function fileContent(fileId: string): unknown {
+  const a = archivos.get(fileId);
+  if (a === undefined) return undefined;
+  // Lo que alguien subió vuelve tal cual, con su tipo. Ver `bytes`.
+  if (a.bytes !== undefined) return a.bytes;
+  // Un documento se entrega como un **PDF de verdad** (mínimo, con el nombre
+  // del archivo como texto) y no como el dibujo SVG de las miniaturas: con el
+  // SVG, un PDF adjunto en el chat se pintaba como foto —el tipo decía
+  // `image/…`— y al abrirlo se veía un cartel, no un documento.
+  const body =
+    a.category === 'DOCUMENT' && typeof Blob !== 'undefined'
+      ? new Blob([pdfMinimo(a.originalName)], { type: 'application/pdf' })
+      : a.dataUrl;
+  // 5.2 · el nombre viaja donde lo pone la API real. Sin esta cabecera todo
+  // adjunto se guardaba con un nombre de reserva, y la paridad mock↔real se
+  // rompía justo en lo que 5.2 tiene que demostrar. Se codifica igual que el
+  // backend (`filename*=UTF-8''…`), acentos incluidos.
+  return {
+    body,
+    headers: {
+      'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(a.originalName)}`,
+    },
+  };
+}
+
 export function registrarArchivos(router: MockRouter): void {
   router.post('/common/files/upload', (request) => {
     const form = request.body;
@@ -217,26 +250,7 @@ export function registrarArchivos(router: MockRouter): void {
   router.get('/common/files/:id/content', ({ params }) => {
     const a = archivos.get(params['id']!);
     if (a === undefined) return avatarSvg('?', '#94a3b8');
-    // Lo que alguien subió vuelve tal cual, con su tipo. Ver `bytes`.
-    if (a.bytes !== undefined) return a.bytes;
-    // Un documento se entrega como un **PDF de verdad** (mínimo, con el nombre
-    // del archivo como texto) y no como el dibujo SVG de las miniaturas: con el
-    // SVG, un PDF adjunto en el chat se pintaba como foto —el tipo decía
-    // `image/…`— y al abrirlo se veía un cartel, no un documento.
-    const body =
-      a.category === 'DOCUMENT' && typeof Blob !== 'undefined'
-        ? new Blob([pdfMinimo(a.originalName)], { type: 'application/pdf' })
-        : a.dataUrl;
-    // 5.2 · el nombre viaja donde lo pone la API real. Sin esta cabecera todo
-    // adjunto se guardaba con un nombre de reserva, y la paridad mock↔real se
-    // rompía justo en lo que 5.2 tiene que demostrar. Se codifica igual que el
-    // backend (`filename*=UTF-8''…`), acentos incluidos.
-    return {
-      body,
-      headers: {
-        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(a.originalName)}`,
-      },
-    };
+    return fileContent(a.id);
   });
 
   router.delete('/common/files/:id', ({ params }) => {
