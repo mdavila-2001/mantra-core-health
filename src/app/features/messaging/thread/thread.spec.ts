@@ -367,6 +367,11 @@ describe('Thread', () => {
     consultar('hilo-reenviar')?.click();
     fixture.detectChanges();
 
+    // Un `<dialog>` nativo (`app-content-dialog`) y no un `div` con
+    // `aria-modal`: la trampa de foco y el fondo inerte los da `showModal()`.
+    const modal = consultar('thread-forward-dialog');
+    expect(modal?.querySelector('dialog')).not.toBeNull();
+
     const destinos = Array.from(
       fixture.nativeElement.querySelectorAll('[data-testid="hilo-reenviar-destino"]'),
     ) as HTMLElement[];
@@ -388,6 +393,36 @@ describe('Thread', () => {
     expect(consultar('hilo-aviso')?.textContent).toContain('Reenviado a Dr. Ortega');
     // El hilo abierto no cambió: el mensaje fue a otra conversación.
     expect(burbujas().length).toBe(1);
+    expect(consultar('thread-forward-dialog')).toBeNull();
+  });
+
+  it('el foco vuelve a «Opciones del mensaje» al cancelar el reenvío', async () => {
+    abrir([mensaje('m-1', 'pp-2', 'Te dejo la orden en la historia clínica')]);
+    store.conversaciones.update((lista) => [
+      ...lista,
+      {
+        id: 'c-2',
+        conversationTypeConceptId: 'c-direct',
+        unreadCount: 0,
+        peers: [{ profileId: 'pp-3', displayName: 'Dr. Ortega' }],
+      },
+    ]);
+    fixture.detectChanges();
+
+    const opciones = consultar('hilo-menu-mensaje') as HTMLElement;
+    opciones.click();
+    fixture.detectChanges();
+    consultar('hilo-reenviar')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // El ítem «Reenviar» ya no existe: sin el paso previo, el foco caería en
+    // `<body>` y el teclado arrancaría desde el principio de la página.
+    (consultar('content-dialog-close') as HTMLElement).click();
+    fixture.detectChanges();
+
+    expect(consultar('thread-forward-dialog')).toBeNull();
+    expect(document.activeElement).toBe(opciones);
   });
 
   /* --- Stickers ----------------------------------------------------------- */
@@ -611,6 +646,27 @@ describe('Thread', () => {
       expect(consultar('hilo-imagen')).not.toBeNull();
       expect(consultar('hilo-documento')).toBeNull();
       expect(consultar('hilo-documento-ver')).toBeNull();
+    });
+
+    it('la imagen a tamaño completo se abre en el modal del sistema y devuelve el foco', async () => {
+      abrir([conAdjunto('m-1', 'f-img')]);
+      await servir('f-img', bytes('image/png', 16));
+
+      const miniatura = consultar('hilo-imagen') as HTMLButtonElement;
+      miniatura.focus();
+      miniatura.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const visor = consultar('thread-image-viewer');
+      expect(visor?.querySelector('dialog')).not.toBeNull();
+      expect(visor?.querySelector('img')?.getAttribute('src')).toMatch(/^data:image\/png/);
+
+      (consultar('content-dialog-close') as HTMLElement).click();
+      fixture.detectChanges();
+
+      expect(consultar('thread-image-viewer')).toBeNull();
+      expect(document.activeElement).toBe(miniatura);
     });
 
     it('un PDF muestra su tipo y su tamaño reales y conserva la descarga', async () => {

@@ -21,7 +21,7 @@ interface IconoFalso {
 
 class MarcadorFalso {
   popup: HTMLElement | null = null;
-  private readonly manejadores = new Map<string, () => void>();
+  private readonly manejadores = new Map<string, (dato?: unknown) => void>();
   private readonly elemento = document.createElement('div');
 
   constructor(
@@ -36,7 +36,7 @@ class MarcadorFalso {
     return this;
   }
 
-  on(evento: string, manejador: () => void): this {
+  on(evento: string, manejador: (dato?: unknown) => void): this {
     this.manejadores.set(evento, manejador);
     return this;
   }
@@ -49,8 +49,15 @@ class MarcadorFalso {
     return this.elemento;
   }
 
-  simular(evento: string): void {
-    this.manejadores.get(evento)?.();
+  simular(evento: string, dato?: unknown): void {
+    this.manejadores.get(evento)?.(dato);
+  }
+
+  popupsAbiertos = 0;
+
+  openPopup(): this {
+    this.popupsAbiertos += 1;
+    return this;
   }
 }
 
@@ -187,8 +194,49 @@ describe('AppMap', () => {
     expect(primero.opciones.icon.html.textContent).toBe('A');
     expect(primero.opciones.icon.html.className).toContain('mapa__pin--success');
     expect(segundo.opciones.icon.html.className).toContain('mapa__pin--warning');
-    // El camino por teclado es la lista: el pin no entra al orden de tabulación.
-    expect(primero.opciones.keyboard).toBe(false);
+    // Un pin es un botón: entra al orden de tabulación (WCAG 2.1.1).
+    expect(primero.opciones.keyboard).toBe(true);
+  });
+
+  it('el pin se nombra con su título, su estado y su detalle; la letra es un dibujo', async () => {
+    const { registro } = await crearMontado();
+    const [primero, segundo] = registro.marcadores;
+
+    expect(primero.getElement().getAttribute('aria-label')).toBe(
+      'Farmacia Central · Sede Centro, Tiene todo, 1,2 km en línea recta',
+    );
+    expect(segundo.getElement().getAttribute('aria-label')).toBe(
+      'Farmacia Sur · Sede Parque, Le falta algo',
+    );
+    expect(primero.opciones.icon.html.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('Enter sobre un pin lo elige, igual que el clic; Espacio además abre su popup', async () => {
+    const { fixture, registro } = await crearMontado();
+    const tecla = (key: string) => ({
+      originalEvent: new KeyboardEvent('keydown', { key, cancelable: true }),
+    });
+
+    registro.marcadores[1].simular('keydown', tecla('Enter'));
+    expect(fixture.componentInstance.seleccionado()).toBe('B');
+
+    registro.marcadores[0].simular('keydown', tecla(' '));
+    expect(fixture.componentInstance.seleccionado()).toBe('A');
+    expect(registro.marcadores[0].popupsAbiertos).toBe(1);
+
+    // Otra tecla no elige nada.
+    registro.marcadores[1].simular('keydown', tecla('a'));
+    expect(fixture.componentInstance.seleccionado()).toBe('A');
+  });
+
+  it('el plano se nombra y describe qué hacen las teclas', async () => {
+    const { fixture } = await crearMontado();
+    const lienzo = fixture.nativeElement.querySelector('.mapa__lienzo') as HTMLElement;
+
+    expect(lienzo.getAttribute('role')).toBe('application');
+    expect(lienzo.getAttribute('aria-label')).toBe('Sucursales en el mapa; la lista está debajo.');
+    const ayuda = document.getElementById(lienzo.getAttribute('aria-describedby') ?? '');
+    expect(ayuda?.textContent).toContain('+ y − acercan o alejan');
   });
 
   it('pide los mosaicos a OpenStreetMap, sin clave y sin marca de agua', async () => {
@@ -311,6 +359,97 @@ describe('construirPopup', () => {
     expect(contenido.querySelector('.mapa__popup-cta')).toBeNull();
     expect(contenido.querySelector('.mapa__popup-estado')).toBeNull();
     expect(contenido.querySelector('.mapa__popup-detalle')).toBeNull();
+  });
+});
+
+/* ---- marcar un punto sin puntero --------------------------------------------- */
+
+/**
+ * Un plano de juguete: un grado son mil píxeles, y el eje `y` crece hacia el
+ * sur como en la pantalla. Alcanza para comprobar hacia dónde corre el pin.
+ */
+async function mountForPicking(
+  seleccionable: boolean,
+  centro: { lat: number; lng: number } | null,
+): Promise<{ fixture: ComponentFixture<AppMap>; lienzo: HTMLElement; puntos: { lat: number; lng: number }[] }> {
+  const base = leafletFalso(new RegistroLeaflet()) as Record<string, (...args: never[]) => unknown>;
+  const leaflet = {
+    ...base,
+    map: () => ({
+      ...(base['map']() as object),
+      getCenter: () => ({ lat: -17, lng: -63 }),
+      latLngToContainerPoint: ([lat, lng]: [number, number]) => ({ x: lng * 1000, y: -lat * 1000 }),
+      containerPointToLatLng: (p: { x: number; y: number }) => ({ lat: -p.y / 1000, lng: p.x / 1000 }),
+    }),
+    point: (x: number, y: number) => ({ x, y }),
+  };
+  TestBed.configureTestingModule({
+    imports: [AppMap],
+    providers: [{ provide: CARGADOR_DE_LEAFLET, useValue: () => Promise.resolve(leaflet) }],
+  });
+  const fixture = TestBed.createComponent(AppMap);
+  fixture.componentRef.setInput('pines', []);
+  fixture.componentRef.setInput('etiqueta', 'Tu ubicación en el mapa');
+  fixture.componentRef.setInput('seleccionable', seleccionable);
+  fixture.componentRef.setInput('centro', centro);
+  const puntos: { lat: number; lng: number }[] = [];
+  fixture.componentInstance.pointPicked.subscribe((p) => puntos.push(p));
+  await fixture.whenStable();
+  await Promise.resolve();
+  await Promise.resolve();
+  fixture.detectChanges();
+  const lienzo = fixture.nativeElement.querySelector('.mapa__lienzo') as HTMLElement;
+  return { fixture, lienzo, puntos };
+}
+
+function pressOn(lienzo: HTMLElement, key: string, shiftKey = false): KeyboardEvent {
+  const evento = new KeyboardEvent('keydown', { key, shiftKey, bubbles: true, cancelable: true });
+  lienzo.dispatchEvent(evento);
+  return evento;
+}
+
+describe('AppMap · marcar con el teclado', () => {
+  it('las flechas corren el pin desde donde está, y no mueven el plano', async () => {
+    const { lienzo, puntos } = await mountForPicking(true, { lat: -17.5, lng: -63.5 });
+
+    const evento = pressOn(lienzo, 'ArrowRight');
+    // Consumida: si no, Leaflet además arrastraría el plano.
+    expect(evento.defaultPrevented).toBe(true);
+    expect(puntos).toHaveLength(1);
+    expect(puntos[0].lat).toBeCloseTo(-17.5, 6);
+    expect(puntos[0].lng).toBeCloseTo(-63.49, 6);
+
+    pressOn(lienzo, 'ArrowUp');
+    // Arriba es al norte: la latitud crece.
+    expect(puntos[1].lat).toBeCloseTo(-17.49, 6);
+  });
+
+  it('con Mayúsculas el paso es cinco veces más largo', async () => {
+    const { lienzo, puntos } = await mountForPicking(true, { lat: -17.5, lng: -63.5 });
+
+    pressOn(lienzo, 'ArrowLeft', true);
+    expect(puntos[0].lng).toBeCloseTo(-63.55, 6);
+  });
+
+  it('sin pin todavía, Enter lo pone en el centro del plano', async () => {
+    const { lienzo, puntos } = await mountForPicking(true, null);
+
+    pressOn(lienzo, 'Enter');
+    expect(puntos).toEqual([{ lat: -17, lng: -63 }]);
+  });
+
+  it('en un mapa que no espera un punto, las flechas son del plano: no se emite nada', async () => {
+    const { lienzo, puntos } = await mountForPicking(false, { lat: -17.5, lng: -63.5 });
+
+    const evento = pressOn(lienzo, 'ArrowRight');
+    expect(evento.defaultPrevented).toBe(false);
+    expect(puntos).toHaveLength(0);
+  });
+
+  it('la ayuda cambia: dice que las flechas mueven el pin', async () => {
+    const { lienzo } = await mountForPicking(true, null);
+    const ayuda = document.getElementById(lienzo.getAttribute('aria-describedby') ?? '');
+    expect(ayuda?.textContent).toContain('las flechas mueven el pin');
   });
 });
 

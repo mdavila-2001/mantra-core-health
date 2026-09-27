@@ -325,6 +325,13 @@ export class MyAgenda implements OnInit {
   /** El recurso del profesional; sin él no hay agenda que mostrar. */
   protected readonly recurso = signal<AgendaResource | null>(null);
 
+  /**
+   * Dónde se atiende, para las etiquetas que lee el lector de pantalla en la
+   * grilla, la semana y el día. `null` si el recurso no tiene sede: las
+   * etiquetas la omiten en vez de inventarla.
+   */
+  protected readonly sede = computed(() => this.recurso()?.site?.name ?? null);
+
   protected readonly estado = signal<ViewState<PublishedTemplate>>(loading());
 
   /** Hasta cuándo llegan los cupos ya materializados. */
