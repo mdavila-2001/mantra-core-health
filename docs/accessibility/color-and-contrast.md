@@ -14,7 +14,7 @@ automáticamente**.
 |---|---|---:|---|
 | `--text-primary` | `--c-neutral-500` | 13,46:1 | AAA |
 | `--text-secondary` | `--c-neutral-400` | 7,24:1 | AAA |
-| `--text-muted` | `--c-neutral-300` | 3,86–4,27:1 | **E1 · no llega a AA** |
+| `--text-muted` | `--c-ivory-800` | 5,13–5,69:1 | AA (era `--c-neutral-300`, 3,86:1 · E1, cerrada el 2026-09-26) |
 | `--brand-primary` | `--c-petrol-500` | 7,25:1 | AAA |
 
 ### Bordes
@@ -52,7 +52,7 @@ sistema: no se cambia un token sin decir cuánto mide.
 
 | # | Qué | Regla |
 |---|---|---|
-| **E1** | `--text-muted` en claro, 3,86–4,27:1 | Solo texto terciario. **Jamás información clínica** |
+| ~~E1~~ | `--text-muted` en claro — **cerrada el 2026-09-26**: pasó a `--c-ivory-800` (5,13:1 en el peor caso) y `check-contrast.mjs` ya lo exige | Sigue siendo terciario: **jamás información clínica** |
 | **E2** | `--text-muted` en oscuro, 4,45:1 | Ídem |
 | **E3** | `--border-strong` en oscuro, <3:1 | Sin foco. Con foco manda el anillo |
 
@@ -80,6 +80,11 @@ secciones clínicas sería la mitigación natural — cuando esas secciones exis
   box-shadow: 0 0 0 4px var(--focus-ring);
 }
 ```
+
+`--focus-ring` es **sólido** desde el 2026-09-26: `--c-aqua-700` en claro
+(5,71:1 sobre blanco, 5,16:1 sobre marfil) y `--c-mint-500` en oscuro. Antes era
+aguamarina al 45 %, que compuesta sobre blanco daba 1,48:1 — por debajo del 3:1
+de WCAG 1.4.11. `check-contrast.mjs` mide el anillo contra todas las superficies.
 
 El `outline: 2px solid transparent` **no es decorativo**: en modo de contraste
 forzado (Windows) los colores se sustituyen y el `box-shadow` desaparece, pero el

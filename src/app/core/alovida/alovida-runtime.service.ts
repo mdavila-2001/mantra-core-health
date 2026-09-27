@@ -39,6 +39,13 @@ const ANCHO_CAJON = '(max-width: 900px)';
 const ANCHO_ORG = '(max-width: 640px)';
 
 /**
+ * Lo que el cajón abierto NO vuelve inerte aunque quede detrás: una región viva
+ * inerte deja de anunciar, y un aviso que llega con el menú abierto —un error
+ * de guardado, el cambio de ruta— se perdería en silencio.
+ */
+const REGIONES_VIVAS = "[aria-live], [role='status'], [role='alert'], [role='log'], output";
+
+/**
  * Opacidad del fondo reactivo mientras el puntero está activo, y a la que
  * cae tras quedarse quieto. `alovida.css` usa el mismo `.35` como valor de
  * respaldo de `var(--fondo-presencia, .35)`, para que el primer pintado
@@ -85,6 +92,8 @@ export class AlovidaRuntimeService {
   private ultimoEstado: string | null = null;
   /** La pantalla sobre la que ya se corrió el trabajo del marco. */
   private pantallaAtendida: Element | null = null;
+  /** Cierra el cajón de navegación de ancho chico, si hay uno montado. */
+  private cerrarCajon: (() => void) | null = null;
 
   private get ventana(): (Window & typeof globalThis) | null {
     return this.document.defaultView;
@@ -139,6 +148,10 @@ export class AlovidaRuntimeService {
     if (!this.isBrowser || !ventana) {
       return;
     }
+    /* Una navegación que no salió del propio menú —un redirect, un enlace del
+       contenido disparado por script— no puede dejar el cajón abierto y el
+       resto de la página inerte detrás. */
+    this.cerrarCajon?.();
     /* NavigationEnd llega con la ruta ya activada pero antes de que la vista
        del componente esté pintada: medir el pliegue o leer los `<th>` de una
        tabla ahora daría cero filas. Se espera al cuadro en el que el DOM de la
@@ -1135,6 +1148,47 @@ export class AlovidaRuntimeService {
        navegable con el teclado aunque siguiera a la vista. En escritorio ya no
        hay nada que anunciar: la barra está siempre, recogida o no, y el control
        que la recoge es el `»` que vive dentro de ella. */
+    /* Abierto en ancho chico, el cajón es un diálogo modal: el velo tapa todo
+       lo demás, y atrapar el Tab no alcanza — un lector de pantalla recorre el
+       documento con su propio cursor y seguía leyendo el header y el `<main>`
+       de atrás. Se anuncia como diálogo y se vuelve inerte el resto, que es lo
+       que ya hace el organismo `app-side-nav` con sus hermanos.
+
+       Se sube desde el nav hasta el `<body>` y en cada nivel se inertizan los
+       hermanos: el header y el `<main>` viven en otra rama que el nav, y el
+       enlace de salto y las capas de CDK, más arriba. Se anota qué se tocó
+       para devolver sólo eso: un `inert` que otro puso no es de este cajón. */
+    let inertizados: Element[] = [];
+    const modal = (activo: boolean) => {
+      if (!activo) {
+        nav.removeAttribute('role');
+        nav.removeAttribute('aria-modal');
+        inertizados.forEach((el) => el.removeAttribute('inert'));
+        inertizados = [];
+        return;
+      }
+      nav.setAttribute('role', 'dialog');
+      nav.setAttribute('aria-modal', 'true');
+      if (inertizados.length) {
+        return;
+      }
+      for (let rama: Element = nav; rama.parentElement; rama = rama.parentElement) {
+        for (const hermano of Array.from(rama.parentElement.children)) {
+          const esRegionViva =
+            hermano.matches(REGIONES_VIVAS) ||
+            Array.from(hermano.children).some((hijo) => hijo.matches(REGIONES_VIVAS));
+          if (hermano === rama || hermano === velo || esRegionViva || hermano.hasAttribute('inert')) {
+            continue;
+          }
+          hermano.setAttribute('inert', '');
+          inertizados.push(hermano);
+        }
+        if (rama.parentElement === this.document.body) {
+          break;
+        }
+      }
+    };
+
     const actualizarBoton = () => {
       const expandido = !esCajon() || raiz.classList.contains('nav-abierto');
       if (expandido) {
@@ -1142,6 +1196,7 @@ export class AlovidaRuntimeService {
       } else {
         nav.setAttribute('inert', '');
       }
+      modal(esCajon() && raiz.classList.contains('nav-abierto'));
       boton.setAttribute('aria-expanded', String(expandido));
       boton.setAttribute(
         'aria-label',
@@ -1185,6 +1240,7 @@ export class AlovidaRuntimeService {
       }
     });
     velo.addEventListener('click', () => cerrar(true));
+    this.cerrarCajon = () => cerrar(false);
 
     /* Elegir un ítem cierra el cajón: si el enlace navega, igual; si es la
        pantalla actual, el cajón no puede quedarse tapando lo que se eligió. */
@@ -1195,6 +1251,13 @@ export class AlovidaRuntimeService {
     });
 
     this.document.addEventListener('keydown', (evento) => {
+      /* Si el marco se rehízo, este oyente es de un nav que ya no está: el
+         cajón vivo tiene el suyo. Sin esto, su Escape quitaba `nav-abierto`
+         antes que el del cajón vivo, y ése ya no encontraba nada que cerrar:
+         el fondo se quedaba inerte con el menú escondido. */
+      if (!nav.isConnected) {
+        return;
+      }
       if (evento.key === 'Escape' && esCajon()) {
         cerrar(true);
       }
