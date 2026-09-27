@@ -1,10 +1,18 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import { comentarios, publicaciones, vitrinas } from '../fixtures/comunidad';
-import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
+import { MockRouter, isMockReply, validation, type MockMethod } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registrarComunidad } from './community.handlers';
 import { registrarPublico } from './public.handlers';
+
+/**
+ * El estado HTTP de cada familia de rechazo sale de los ayudantes del
+ * simulador y no se escribe a mano: `mockup` todavía responde las
+ * precondiciones con 412 y la validación con 422, y `test` ya con 422 y 400
+ * (H2.S1.M2). La prueba fija la familia, no el número de una rama.
+ */
+const INVALID = validation('').status;
 
 interface Result<T> {
   readonly status: number;
@@ -94,9 +102,9 @@ describe('GET /community/moderation/decisions/mine', () => {
     expect(page).toEqual({ status: 200, body: { items: [], count: 0, limit: 20, nextCursor: null } });
   });
 
-  it('inválido — el perfil de otra persona es 403, y sin profileId es 400', () => {
+  it('inválido — el perfil de otra persona es 403, y sin profileId no valida', () => {
     expect(call('GET', '/community/moderation/decisions/mine', { query: `profileId=${sanctioned.id}` }).status).toBe(403);
-    expect(call('GET', '/community/moderation/decisions/mine', { user: sanctionedUser }).status).toBe(400);
+    expect(call('GET', '/community/moderation/decisions/mine', { user: sanctionedUser }).status).toBe(INVALID);
   });
 });
 

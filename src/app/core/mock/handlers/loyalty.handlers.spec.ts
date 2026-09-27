@@ -1,9 +1,18 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import { PACIENTES } from '../fixtures/personas';
-import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
+import { MockRouter, isMockReply, preconditionFailed, validation, type MockMethod } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registerLoyalty } from './loyalty.handlers';
+
+/**
+ * El estado HTTP de cada familia de rechazo sale de los ayudantes del
+ * simulador y no se escribe a mano: `mockup` todavía responde las
+ * precondiciones con 412 y la validación con 422, y `test` ya con 422 y 400
+ * (H2.S1.M2). La prueba fija la familia, no el número de una rama.
+ */
+const PRECONDITION = preconditionFailed('').status;
+const INVALID = validation('').status;
 
 /**
  * El portal de lealtad del paciente (`/loyalty/me*`, R-T-E6B1).
@@ -116,22 +125,22 @@ describe('portal de lealtad del paciente (/loyalty/me)', () => {
     expect(redeemed.body.balanceAfter).toBe('0.00');
   });
 
-  it('inválido — saldo insuficiente es 422 con el saldo y lo pedido, que el cliente lee', () => {
+  it('inválido — saldo insuficiente es una precondición con el saldo y lo pedido, que el cliente lee', () => {
     const balance = call<Me>('GET', '/loyalty/me').body.membership!.pointsBalance;
 
     const refused = call<{ code: string; details: { pointsBalance: string; requested: string } }>('POST', '/loyalty/me/points/redeem', {
       body: { points: '999999', idempotencyKey: 'canje-imposible' },
     });
 
-    expect(refused.status).toBe(422);
+    expect(refused.status).toBe(PRECONDITION);
     expect(refused.body.code).toBe('PRECONDITION_FAILED');
     expect(refused.body.details).toEqual(expect.objectContaining({ pointsBalance: balance, requested: '999999' }));
   });
 
-  it('inválido — cero puntos es 422 y un cuerpo sin clave es 400', () => {
-    expect(call('POST', '/loyalty/me/points/redeem', { body: { points: '0', idempotencyKey: 'canje-cero' } }).status).toBe(422);
-    expect(call('POST', '/loyalty/me/points/redeem', { body: { points: '10' } }).status).toBe(400);
-    expect(call('POST', '/loyalty/me/points/redeem', { body: { points: 'diez', idempotencyKey: 'k' } }).status).toBe(400);
+  it('inválido — cero puntos es una precondición y un cuerpo sin clave no valida', () => {
+    expect(call('POST', '/loyalty/me/points/redeem', { body: { points: '0', idempotencyKey: 'canje-cero' } }).status).toBe(PRECONDITION);
+    expect(call('POST', '/loyalty/me/points/redeem', { body: { points: '10' } }).status).toBe(INVALID);
+    expect(call('POST', '/loyalty/me/points/redeem', { body: { points: 'diez', idempotencyKey: 'k' } }).status).toBe(INVALID);
   });
 
   it('inválido — otro paciente no está inscrito: 200 con enrolled false y ledger vacío', () => {
@@ -139,16 +148,16 @@ describe('portal de lealtad del paciente (/loyalty/me)', () => {
 
     expect(call<Me>('GET', '/loyalty/me', { user: other })).toEqual({ status: 200, body: { enrolled: false } });
     expect(call<LedgerPage>('GET', '/loyalty/me/points', { user: other }).body).toEqual({ entries: [] });
-    expect(call('POST', '/loyalty/me/points/redeem', { user: other, body: { points: '1', idempotencyKey: 'k-otro' } }).status).toBe(422);
+    expect(call('POST', '/loyalty/me/points/redeem', { user: other, body: { points: '1', idempotencyKey: 'k-otro' } }).status).toBe(PRECONDITION);
   });
 
-  it('inválido — una cuenta sin perfil de paciente es 422, no un 403', () => {
+  it('inválido — una cuenta sin perfil de paciente es una precondición, no un 403', () => {
     const medica = buscarUsuario('medica')!;
 
-    expect(call('GET', '/loyalty/me', { user: medica }).status).toBe(422);
+    expect(call('GET', '/loyalty/me', { user: medica }).status).toBe(PRECONDITION);
   });
 
-  it('inválido — un cursor que no emitió el servidor es 400', () => {
-    expect(call('GET', '/loyalty/me/points', { query: 'cursor=basura' }).status).toBe(400);
+  it('inválido — un cursor que no emitió el servidor no valida', () => {
+    expect(call('GET', '/loyalty/me/points', { query: 'cursor=basura' }).status).toBe(INVALID);
   });
 });
