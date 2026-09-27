@@ -1042,7 +1042,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'Facturación',
     icon: 'billing',
     roles: ['BILLING', 'FINANCE', 'CASHIER', 'PAYMENTS_ADMIN'],
-    availability: 'planificada',
+    // FACT-SIAT-MOCK: la pantalla existe; lo fiscal va contra el SIAT SIMULADO
+    // y, sin `billingSiatDemo`, dice que la facturación no está conectada.
+    availability: 'disponible',
     summary: 'Emití comprobantes y seguí los cobros de la organización.',
     module: 'M26 billing · M42 payments',
   },

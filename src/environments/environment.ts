@@ -58,6 +58,13 @@ export const environment: Environment = {
   campaignsDemo: envFromProcess.campaignsDemo ?? true,
 
   /**
+   * La facturación SIMULADA (FACT-SIAT-MOCK). Encendida en la maqueta, como
+   * las demás demos; todo lo que produce va marcado como simulado y sin validez
+   * fiscal. Se apaga con `PUBLIC_BILLING_SIAT_DEMO=false`.
+   */
+  billingSiatDemo: envFromProcess.billingSiatDemo ?? true,
+
+  /**
    * Siempre encendido en la rama `mockup`: es lo que la define. No lee el
    * entorno del proceso a propósito, para que no haya forma de apuntar esta
    * rama a una API real por accidente.

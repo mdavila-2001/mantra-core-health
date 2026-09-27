@@ -166,6 +166,16 @@ const MANIFEST = [
     literal: true,
     validate: validateBoolean,
   },
+
+  // Enciende la facturación SIMULADA (FACT-SIAT-MOCK): el motor fiscal del
+  // backend simulado. No es un secreto ni una credencial —el simulador no usa
+  // ninguna—: decide si las rutas `/billing/simulated/*` responden.
+  {
+    key: 'PUBLIC_BILLING_SIAT_DEMO',
+    field: 'billingSiatDemo',
+    literal: true,
+    validate: validateBoolean,
+  },
 ];
 
 /**

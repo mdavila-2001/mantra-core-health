@@ -54,6 +54,14 @@ export const environment: Environment = {
   campaignsDemo: envFromProcess.campaignsDemo ?? true,
 
   /**
+   * Encendida por defecto: sin ella no hay motor fiscal simulado que recorrer.
+   * Se apaga con `PUBLIC_BILLING_SIAT_DEMO=false` — y ese apagado es la prueba
+   * de que la pantalla dice que la facturación no está conectada, sin pedir
+   * nada.
+   */
+  billingSiatDemo: envFromProcess.billingSiatDemo ?? true,
+
+  /**
    * Siempre encendido en la rama `mockup`: es lo que la define. No lee el
    * entorno del proceso a propósito, para que no haya forma de apuntar esta
    * rama a una API real por accidente. Contra la API real se corre con la

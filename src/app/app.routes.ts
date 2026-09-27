@@ -303,6 +303,9 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/pharma-lab/visitor-visits/visitor-visits').then((m) => m.VisitorVisits),
   'lab-visits': () =>
     import('./features/pharma-lab/doctor-visits/doctor-visits').then((m) => m.DoctorVisits),
+  // FACT-SIAT-MOCK · facturación contra el SIAT SIMULADO. Diferida: sólo la
+  // alcanzan los roles de facturación y arrastra el motor fiscal simulado.
+  billing: () => import('./features/billing/billing').then((m) => m.Billing),
 };
 
 /**

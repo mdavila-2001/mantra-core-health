@@ -205,6 +205,47 @@ function settlementForOrder(order: PedidoSimulado) {
   return { insuranceSettlement: null, insuranceSettlementAvailability: order.estado === 'ENVIADO' ? 'PENDING_PUBLICATION' : 'NOT_AVAILABLE' };
 }
 
+/** Un renglón con precio, como lo necesita la facturación SIMULADA. */
+export interface RenglonDePedidoSimulado {
+  readonly productCode: string;
+  readonly descripcion: string;
+  readonly cantidad: number;
+  readonly precioUnitario: string;
+}
+
+/**
+ * Los renglones con precio de un pedido del simulador, para la facturación
+ * SIMULADA (FACT-SIAT-MOCK). Sólo lectura: el mismo precio unitario y la misma
+ * cantidad pedida con que `dto()` arma `totalAmount`, así el cobro facturado y
+ * el total que ve el paciente no se contradicen. No toca rutas ni datos.
+ */
+export function renglonesDePedidoSimulado(id: string): {
+  readonly patientProfileId: string;
+  readonly patientName: string;
+  readonly pickupCode: string;
+  readonly createdAt: string;
+  readonly lineas: readonly RenglonDePedidoSimulado[];
+} | null {
+  const pedido = pedidos.get(id);
+  if (pedido === undefined) return null;
+  return {
+    patientProfileId: pedido.patientProfileId,
+    patientName: pedido.patientName,
+    pickupCode: pedido.pickupCode,
+    createdAt: pedido.createdAt,
+    lineas: pedido.lineas.map((l) => {
+      const prod = productos.get(l.productId);
+      const nombre = prod?.brandName ?? prod?.genericName ?? prod?.productCode ?? 'Producto';
+      return {
+        productCode: prod?.productCode ?? l.productId,
+        descripcion: [nombre, prod?.strengthText].filter((parte) => parte !== null && parte !== undefined && parte !== '').join(' '),
+        cantidad: l.requestedQuantity,
+        precioUnitario: prod?.price ?? '0.00',
+      };
+    }),
+  };
+}
+
 function dto(p: PedidoSimulado, owner = false) {
   const farmacia = FARMACIAS.find((f) => f.id === p.pharmacyId) ?? FARMACIAS[0]!;
   const lineas = p.lineas.map((l) => {
