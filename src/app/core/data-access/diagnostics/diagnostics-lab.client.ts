@@ -7,6 +7,9 @@ import type {
   AccessionCreated,
   AccessionDetail,
   AccessionSpecimenDetail,
+  LabInboxItem,
+  LabInboxPage,
+  LabInboxQuery,
   NewAccession,
   NewContainer,
   NewCustodyEvent,
@@ -36,8 +39,10 @@ import type {
  *
  * ## Rol y tenant
  *
- * Todas exigen `CLINICIAN` o `PRACTITIONER`, declarado a nivel de controlador
- * en el backend. Las lecturas (`getAccession`, `getSpecimen`) se acotan al
+ * Las del circuito de especímenes y la bandeja de recepción las autoriza
+ * `LabStaffGuard` en el backend: `CLINICIAN` o `PRACTITIONER` del tenant
+ * activo, o personal (miembro activo) de un tenant `DIAGNOSTIC_CENTER`. Las
+ * de informes siguen exigiendo `CLINICIAN` o `PRACTITIONER`. Las lecturas (`getAccession`, `getSpecimen`) se acotan al
  * tenant del contexto **del lado del servidor**: este cliente nunca manda un
  * `tenantId` de acompañamiento, y una acesión de otro laboratorio responde
  * 404 sin decir que existe.
@@ -56,6 +61,21 @@ import type {
 export class DiagnosticsLabClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+
+  /**
+   * `POST /diagnostics/service-requests/inbox` — la bandeja de recepción: las
+   * órdenes de laboratorio dirigidas al laboratorio del tenant activo que
+   * todavía no tienen acesión, de la más vieja a la más nueva.
+   *
+   * Es un `POST` de lectura: el filtro por paciente es PHI y viaja en el
+   * cuerpo, nunca en la URL. El tenant no se manda: lo pone el interceptor
+   * (`X-Tenant-Id`) y el servidor acota con él.
+   */
+  listInbox(query: LabInboxQuery = {}): Observable<LabInboxPage> {
+    return this.http
+      .post<WireLabInboxPage>(this.url('/diagnostics/service-requests/inbox'), sinAusentes(query))
+      .pipe(map(toLabInboxPage));
+  }
 
   /** Soporte: da de alta un espécimen en estado recolectado. */
   createSpecimen(nuevo: NewSpecimen): Observable<ResourceCreated> {
@@ -169,6 +189,26 @@ type WireAccessionDetail = Omit<AccessionDetail, 'receivedAt' | 'specimens'> & {
   readonly receivedAt: string;
   readonly specimens: readonly WireAccessionSpecimenDetail[];
 };
+
+type WireLabInboxItem = Omit<LabInboxItem, 'requestedAt' | 'specimens'> & {
+  readonly requestedAt: string;
+  readonly specimens: readonly WireSpecimenDetail[];
+};
+
+type WireLabInboxPage = Omit<LabInboxPage, 'items'> & {
+  readonly items: readonly WireLabInboxItem[];
+};
+
+function toLabInboxPage(wire: WireLabInboxPage): LabInboxPage {
+  return {
+    ...wire,
+    items: wire.items.map((item) => ({
+      ...item,
+      requestedAt: new Date(item.requestedAt),
+      specimens: item.specimens.map(toSpecimenDetail),
+    })),
+  };
+}
 
 function toSpecimenDetail({
   collectedAt,

@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { DiagnosticsLabClient } from './diagnostics-lab.client';
-import type { AccessionDetail, SpecimenDetail } from './diagnostics-lab.types';
+import type { AccessionDetail, LabInboxPage, SpecimenDetail } from './diagnostics-lab.types';
 
 const ACCESSION_DETAIL_WIRE = {
   id: 'acc-1',
@@ -53,6 +53,58 @@ describe('DiagnosticsLabClient', () => {
   });
 
   afterEach(() => http.verify());
+
+  describe('listInbox (recepción de muestras)', () => {
+    it('aceptado: pide por POST con el filtro en el cuerpo y convierte las fechas', () => {
+      let pagina: LabInboxPage | undefined;
+      client.listInbox({ patientQuery: 'Pérez', limit: 10 }).subscribe((p) => (pagina = p));
+
+      const req = http.expectOne((r) => r.url === '/diagnostics/service-requests/inbox');
+      expect(req.request.method).toBe('POST');
+      // El nombre del paciente no viaja en la URL.
+      expect(req.request.urlWithParams).not.toContain('P%C3%A9rez');
+      expect(req.request.body).toEqual({ patientQuery: 'Pérez', limit: 10 });
+
+      req.flush({
+        items: [
+          {
+            serviceRequestId: 'sr-1',
+            patientProfileId: 'p-1',
+            patientDisplayName: 'Ana Pérez',
+            patientCode: 'HC-1',
+            codeConceptId: 'study-1',
+            codeDisplay: 'Hemograma',
+            categoryConceptId: 'cat-lab',
+            priorityConceptId: null,
+            statusConceptId: 'sr-active',
+            requesterProfileId: null,
+            requestingTenantId: 't-clinic',
+            requestingTenantName: 'Clínica',
+            requestedAt: '2026-09-20T08:00:00.000Z',
+            specimens: [ACCESSION_DETAIL_WIRE.specimens[0]!.specimen],
+          },
+        ],
+        count: 1,
+        limit: 10,
+        nextCursor: 'c-2',
+      });
+
+      expect(pagina?.nextCursor).toBe('c-2');
+      expect(pagina?.items[0]?.requestedAt).toEqual(new Date('2026-09-20T08:00:00.000Z'));
+      expect(pagina?.items[0]?.specimens[0]?.receivedAt).toEqual(
+        new Date('2026-08-14T10:00:00.000Z'),
+      );
+      expect(pagina?.items[0]?.specimens[0]?.custodyEvents[0]?.occurredAt).toBeInstanceOf(Date);
+    });
+
+    it('límite: sin argumentos manda el cuerpo vacío (tope por defecto del servidor)', () => {
+      client.listInbox().subscribe();
+
+      const req = http.expectOne((r) => r.url === '/diagnostics/service-requests/inbox');
+      expect(req.request.body).toEqual({});
+      req.flush({ items: [], count: 0, limit: 25, nextCursor: null });
+    });
+  });
 
   describe('accession (UC-20-01)', () => {
     it('aceptado: omite claves ausentes y devuelve los ids creados', () => {

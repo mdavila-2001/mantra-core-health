@@ -1,0 +1,117 @@
+/* Recepción de muestras: buscador, bandeja a lo ancho, «Cargar más» debajo y,
+   si se pidió, la cadena de custodia de una orden. Mismo reparto vertical que
+   «Laboratorio e imagen», que es la pantalla que sigue en el circuito. */
+
+:host {
+  display: block;
+}
+
+.recepcion {
+  display: grid;
+  gap: var(--sp-6);
+}
+
+.recepcion__buscar {
+  max-inline-size: 40rem;
+}
+
+.recepcion__mas {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-3);
+}
+
+.recepcion__mas:empty {
+  display: none;
+}
+
+/* Celdas: lo que identifica arriba, lo que acompaña abajo en tono menor. */
+.recepcion__paciente,
+.recepcion__estudio {
+  display: block;
+  font-weight: 600;
+}
+
+.recepcion__secundario {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.recepcion__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* La etiqueta del tubo se lee y se dicta: números tabulares y sin cortar. */
+.recepcion__etiqueta {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---- cadena de custodia -------------------------------------------------- */
+
+.recepcion__custodia {
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-3);
+}
+
+.recepcion__custodia-titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.recepcion__custodia-bajada,
+.recepcion__custodia-vacia {
+  margin: 0;
+  color: var(--text-secondary);
+  max-inline-size: 68ch;
+}
+
+.recepcion__muestras {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+}
+
+.recepcion__muestra {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.recepcion__muestra-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-weight: 600;
+}
+
+.recepcion__contenedores,
+.recepcion__eventos {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  color: var(--text-secondary);
+}
+
+/* ---- diálogos ------------------------------------------------------------ */
+
+.recepcion__formulario {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.recepcion__confirmar {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+}

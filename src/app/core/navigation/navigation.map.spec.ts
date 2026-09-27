@@ -331,6 +331,61 @@ describe('isVisibleTo con `hiddenForTenantTypes`', () => {
 });
 
 /**
+ * `onlyForTenantTypes`: la contracara de `hiddenForTenantTypes`. Nace con la
+ * recepción de muestras del laboratorio, cuyo personal no tiene rol propio en
+ * el token: lo único que distingue su sesión es el tipo del tenant activo.
+ */
+describe('isVisibleTo con `onlyForTenantTypes`', () => {
+  const labSection = {
+    path: 'x',
+    label: 'X',
+    group: 'Atención',
+    icon: 'flask',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT'],
+    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
+    availability: 'disponible',
+    summary: 's',
+    module: 'M00',
+  } as const;
+
+  it('la ve el personal de un centro de diagnóstico, aunque sólo tenga `USER`', () => {
+    expect(isVisibleTo(labSection, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(true);
+    expect(apareceEnElMenu(labSection, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(true);
+  });
+
+  it('otro tipo de organización no la ve, ni con el comodín', () => {
+    expect(isVisibleTo(labSection, ['USER'], ['t-1'], 'PROVIDER')).toBe(false);
+    expect(isVisibleTo(labSection, ['SUPERADMIN'], ['t-1'], 'PAYER')).toBe(false);
+  });
+
+  it('sin tipo de organización activa, la duda oculta', () => {
+    expect(isVisibleTo(labSection, ['USER'], ['t-1'], null)).toBe(false);
+    expect(isVisibleTo(labSection, ['USER'], ['t-1'])).toBe(false);
+  });
+
+  it('el paciente no la ve aunque su organización activa fuera un laboratorio', () => {
+    expect(isVisibleTo(labSection, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
+  });
+
+  it('las secciones reales son la recepción y la cola del laboratorio, y nada más la usa', () => {
+    const flagged = APP_SECTIONS.filter((s) => s.onlyForTenantTypes !== undefined);
+    expect(flagged.map((s) => s.path)).toEqual(['laboratorio/recepcion', 'laboratorio/cola']);
+    for (const labOnly of flagged) {
+      expect(labOnly.onlyForTenantTypes).toEqual(['DIAGNOSTIC_CENTER']);
+    }
+  });
+
+  it('la cola del laboratorio la ve su personal con sólo `USER`, y no el paciente ni otra organización', () => {
+    const queue = APP_SECTIONS.find((s) => s.path === 'laboratorio/cola')!;
+    expect(isVisibleTo(queue, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(true);
+    expect(isVisibleTo(queue, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
+    expect(isVisibleTo(queue, ['PRACTITIONER'], ['t-1'], 'PROVIDER')).toBe(false);
+  });
+});
+
+/**
  * El registro de procesos del cliente (módulo «Aseguradora de salud») pide
  * tres pantallas: datos legales, qué aprueba/no aprueba, y siniestralidad —
  * «Tu organización», «Aseguradora» y «Siniestralidad y analítica», que ya

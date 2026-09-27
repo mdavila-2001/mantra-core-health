@@ -1137,10 +1137,7 @@ export const LICENSE_JURISDICTION = definir('VS_LICENSE_JURISDICTION', [
 
 /* ---- circuito de especímenes del laboratorio (BR-17, CL-47) --------------
    Estados, custodia y rechazo con los códigos de `diagnostics.concepts.ts` de
-   la API. El **tipo de espécimen** y el **tipo de contenedor** no tienen
-   catálogo en la API todavía (el DTO pide un uuid y nada lo siembra): los de
-   acá son de la maqueta, con prefijo propio para que nadie los confunda con
-   un código real. */
+   la API. */
 
 conjunto('VS_SPECIMEN_STATUS', 'Estado del espécimen', 'Ciclo de vida de un espécimen.');
 export const SPECIMEN_STATUS = definir('VS_SPECIMEN_STATUS', [
@@ -1176,18 +1173,40 @@ export const SPECIMEN_REJECTION_REASON = definir('VS_SPECIMEN_REJECTION_REASON',
   ['REJECTION_QUALITY', 'Calidad insuficiente (hemólisis o volumen)'],
 ]);
 
-conjunto('VS_SPECIMEN_TYPE', 'Tipo de espécimen', 'Qué muestra se tomó (catálogo de la maqueta).');
+/* El tipo de espécimen y el de contenedor son los catálogos que la API publica
+   por `dynamic-enums` (`specimen-type`, `specimen-container-type`), con sus
+   mismos códigos: HL7 v2-0487 para la muestra y el color de tapa (ISO 6710)
+   para el tubo. El orden es el de la API. */
+
+conjunto('VS_SPECIMEN_TYPE', 'Tipo de espécimen', 'Qué muestra se tomó al paciente.');
 export const SPECIMEN_TYPE = definir('VS_SPECIMEN_TYPE', [
-  ['SPECIMEN-TYPE-WHOLE-BLOOD', 'Sangre total'],
-  ['SPECIMEN-TYPE-SERUM', 'Suero'],
-  ['SPECIMEN-TYPE-URINE', 'Orina'],
+  ['BLDV', 'Sangre venosa'],
+  ['SER', 'Suero'],
+  ['PLAS', 'Plasma'],
+  ['UR', 'Orina'],
+  ['UR24', 'Orina de 24 horas'],
+  ['BLDA', 'Sangre arterial'],
+  ['BLDC', 'Sangre capilar'],
+  ['STL', 'Heces'],
+  ['CSF', 'Líquido cefalorraquídeo'],
+  ['SPT', 'Esputo'],
+  ['THRT', 'Hisopado de garganta'],
 ]);
 
-conjunto('VS_SPECIMEN_CONTAINER_TYPE', 'Tipo de contenedor', 'Tubo o frasco del espécimen (catálogo de la maqueta).');
+conjunto('VS_SPECIMEN_CONTAINER_TYPE', 'Tipo de contenedor', 'Tubo o frasco en el que viaja la muestra.');
 export const SPECIMEN_CONTAINER_TYPE = definir('VS_SPECIMEN_CONTAINER_TYPE', [
-  ['CONTAINER-TYPE-EDTA', 'Tubo tapa lila (EDTA)'],
-  ['CONTAINER-TYPE-SST', 'Tubo tapa amarilla (gel separador)'],
-  ['CONTAINER-TYPE-URINE-CUP', 'Frasco estéril de orina'],
+  ['TUBE_LAVENDER_EDTA', 'Tubo tapa lila (EDTA)'],
+  ['TUBE_GOLD_SST', 'Tubo tapa amarilla (gel separador)'],
+  ['TUBE_RED_PLAIN', 'Tubo tapa roja'],
+  ['TUBE_LIGHT_BLUE_CITRATE', 'Tubo tapa celeste (citrato)'],
+  ['TUBE_GREEN_HEPARIN', 'Tubo tapa verde (heparina)'],
+  ['TUBE_GRAY_FLUORIDE', 'Tubo tapa gris (fluoruro)'],
+  ['SYRINGE_BLOOD_GAS', 'Jeringa de gasometría'],
+  ['CUP_URINE_STERILE', 'Frasco estéril de orina'],
+  ['JUG_URINE_24H', 'Bidón de orina de 24 horas'],
+  ['CUP_STOOL', 'Frasco para heces'],
+  ['TUBE_STERILE', 'Tubo estéril con tapa a rosca'],
+  ['SWAB_TRANSPORT', 'Hisopo con medio de transporte'],
 ]);
 
 /* ---- Catálogos administrativos de seguros -------------------------------- */

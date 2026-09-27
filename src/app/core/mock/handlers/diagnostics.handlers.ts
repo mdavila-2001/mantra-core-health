@@ -24,9 +24,9 @@ import {
   SPECIMEN_TYPE,
   displayDe,
 } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
+import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, pacientePorId, profesionalPorId } from '../fixtures/personas';
 import { conflict, forbidden, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
-import { TENANT_CLINICA, TENANT_LABORATORIO, TENANT_NAMES, type MockUser } from '../mock-session';
+import { TENANT_CLINICA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_NAMES, TENANT_TYPES, type MockUser } from '../mock-session';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -171,10 +171,10 @@ const LAB_ORDERS = ordenes.filtrar((o) => o.categoryConceptId === CATEGORIA_ORDE
 
 /** Qué muestra pide cada estudio, y en qué tubo viaja. El resto, suero. */
 const SPECIMEN_FOR_STUDY: Readonly<Record<string, readonly [specimenType: string, containerType: string]>> = {
-  [ESTUDIO['STUDY-HEMOGRAMA']!]: [SPECIMEN_TYPE['SPECIMEN-TYPE-WHOLE-BLOOD']!, SPECIMEN_CONTAINER_TYPE['CONTAINER-TYPE-EDTA']!],
-  [ESTUDIO['STUDY-ORINA']!]: [SPECIMEN_TYPE['SPECIMEN-TYPE-URINE']!, SPECIMEN_CONTAINER_TYPE['CONTAINER-TYPE-URINE-CUP']!],
+  [ESTUDIO['STUDY-HEMOGRAMA']!]: [SPECIMEN_TYPE['BLDV']!, SPECIMEN_CONTAINER_TYPE['TUBE_LAVENDER_EDTA']!],
+  [ESTUDIO['STUDY-ORINA']!]: [SPECIMEN_TYPE['UR']!, SPECIMEN_CONTAINER_TYPE['CUP_URINE_STERILE']!],
 };
-const SERUM: readonly [string, string] = [SPECIMEN_TYPE['SPECIMEN-TYPE-SERUM']!, SPECIMEN_CONTAINER_TYPE['CONTAINER-TYPE-SST']!];
+const SERUM: readonly [string, string] = [SPECIMEN_TYPE['SER']!, SPECIMEN_CONTAINER_TYPE['TUBE_GOLD_SST']!];
 
 /**
  * El laboratorio de la clínica de la maqueta (`LAB-OLIVOS`) es el custodio de
@@ -232,6 +232,81 @@ export const labAccessions = new Coleccion<LabAccessionRecord>(
     items: [{ accessionSpecimenId: uuid(`accession-item-${o.id}`), specimenId: uuid(`specimen-${o.id}`), sequenceNumber: 1, statusConceptId: ACCESSION_STATUS['ACC_ITEM_RECEIVED']! }],
   })),
 );
+
+/* ---- la bandeja de recepción del laboratorio -----------------------------
+
+   `POST /diagnostics/service-requests/inbox`: las órdenes de laboratorio que
+   otras organizaciones le dirigieron a `TENANT_LABORATORIO` (su
+   `performer_tenant_id`) y que todavía no tienen acesión. Son órdenes propias
+   de la bandeja y no filas de `ordenes`: aquéllas ya tienen su circuito
+   sembrado arriba (espécimen, acesión, orden de trabajo) y sumarles un
+   ejecutante movería lo que ven la ficha del paciente y sus pruebas.
+
+   Dos de ellas vienen avanzadas para que la maqueta muestre los tres estados
+   de la columna: una con la muestra ya recibida, otra con la muestra
+   rechazada y el resto esperando. */
+
+export interface LabInboxOrderRecord {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly codeConceptId: string;
+  readonly categoryConceptId: string;
+  readonly priorityConceptId: string;
+  readonly statusConceptId: string;
+  readonly requesterProfileId: string;
+  readonly requestingTenantId: string;
+  readonly performerTenantId: string;
+  readonly requestedAt: string;
+}
+
+const INBOX_STUDIES = ['STUDY-HEMOGRAMA', 'STUDY-GLUCOSA', 'STUDY-PERFIL-LIPIDICO', 'STUDY-TSH', 'STUDY-ORINA'] as const;
+
+export const labInboxOrders = new Coleccion<LabInboxOrderRecord>(
+  PACIENTES.slice(0, 8).map((p, i) => ({
+    id: uuid(`inbox-order-${p.id}`),
+    patientProfileId: p.id,
+    codeConceptId: ESTUDIO[INBOX_STUDIES[i % INBOX_STUDIES.length]!]!,
+    categoryConceptId: CATEGORIA_ORDEN['SRQ-LAB']!,
+    priorityConceptId: i === 2 ? PRIORIDAD['PRI-URGENT']! : PRIORIDAD['PRI-ROUTINE']!,
+    statusConceptId: ESTADO['ST-ACTIVE']!,
+    requesterProfileId: MEDICA.id,
+    requestingTenantId: i % 2 === 0 ? TENANT_CLINICA : TENANT_HOSPITAL,
+    performerTenantId: TENANT_LABORATORIO,
+    requestedAt: iso(-(8 - i), 8 + (i % 4), 15),
+  })),
+);
+
+/** Las muestras sembradas de la bandeja: una recibida y una rechazada. */
+function seedInboxSpecimens(): void {
+  const [, received, , rejected] = labInboxOrders.todos();
+  const seeds = [
+    { order: received, key: 'received', status: SPECIMEN_STATUS['SPEC_COLLECTED']!, container: 'TUBO-7001' },
+    { order: rejected, key: 'rejected', status: SPECIMEN_STATUS['SPEC_REJECTED']!, container: 'TUBO-7002' },
+  ];
+  for (const { order, key, status, container } of seeds) {
+    if (order === undefined) continue;
+    const specimenId = uuid(`inbox-specimen-${key}-${order.id}`);
+    if (labSpecimens.get(specimenId) !== undefined) continue;
+    labSpecimens.agregar({
+      id: specimenId,
+      patientProfileId: order.patientProfileId,
+      custodianTenantId: TENANT_LABORATORIO,
+      specimenTypeConceptId: SPECIMEN_TYPE['BLDV']!,
+      statusConceptId: status,
+      serviceRequestId: order.id,
+      collectedAt: iso(-1, 8, 40),
+      receivedAt: null,
+    });
+    labContainers.agregar({
+      id: uuid(`inbox-container-${key}-${order.id}`),
+      specimenId,
+      containerIdentifier: container,
+      containerTypeConceptId: SPECIMEN_CONTAINER_TYPE['TUBE_LAVENDER_EDTA']!,
+      statusConceptId: CONTAINER_STATUS['CONTAINER_ACTIVE']!,
+    });
+  }
+}
+seedInboxSpecimens();
 
 const ordenesDeTrabajo = new Coleccion<{ id: string; workOrderNumber: string; laboratoryAccessionId: string; statusConceptId: string; priorityConceptId: string; assignedProfileId: string | null; scheduledAt: string; completedAt: string | null }>(
   LAB_ORDERS.map((o, i) => ({
@@ -767,6 +842,52 @@ function specimenDetail(specimen: LabSpecimenRecord) {
   };
 }
 
+/**
+ * Los catálogos contra los que la API valida el alta de espécimen y de
+ * contenedor (422 `PRECONDITION_FAILED` con `details.reason`).
+ */
+const SPECIMEN_TYPE_IDS: ReadonlySet<string> = new Set(Object.values(SPECIMEN_TYPE));
+const CONTAINER_TYPE_IDS: ReadonlySet<string> = new Set(Object.values(SPECIMEN_CONTAINER_TYPE));
+
+/**
+ * Si quien pide es personal del laboratorio del tenant activo: la regla de
+ * `LabStaffGuard` en la API. `SUPERADMIN`; `CLINICIAN`/`PRACTITIONER` que
+ * valgan en ese tenant (los de `scopedRoles` sólo donde fueron concedidos); o
+ * miembro de un tenant `DIAGNOSTIC_CENTER`.
+ */
+function isLabStaff(user: MockUser | null, tenantId: string | null): boolean {
+  if (user === null || tenantId === null) return false;
+  if (user.roles.includes('SUPERADMIN')) return true;
+  const clinical = ['CLINICIAN', 'PRACTITIONER'].some((role) => {
+    if (!user.roles.includes(role)) return false;
+    const scoped = Object.entries(user.scopedRoles ?? {}).filter(([, codes]) => codes.includes(role));
+    return scoped.length === 0 || scoped.some(([tid]) => tid === tenantId);
+  });
+  if (clinical) return true;
+  return user.tenants.includes(tenantId) && TENANT_TYPES[tenantId] === 'DIAGNOSTIC_CENTER';
+}
+
+/** Minúsculas y sin tildes: la búsqueda por paciente no distingue ni una cosa ni la otra. */
+function normalizeText(value: string): string {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+/** Cursor opaco de la bandeja: la clave de la última fila devuelta. */
+function encodeInboxCursor(order: LabInboxOrderRecord): string {
+  return btoa(JSON.stringify({ requestedAt: order.requestedAt, id: order.id }));
+}
+
+function decodeInboxCursor(cursor: string): { requestedAt: string; id: string } | null {
+  try {
+    const parsed: unknown = JSON.parse(atob(cursor));
+    if (typeof parsed !== 'object' || parsed === null) return null;
+    const { requestedAt, id } = parsed as Record<string, unknown>;
+    return typeof requestedAt === 'string' && typeof id === 'string' ? { requestedAt, id } : null;
+  } catch {
+    return null;
+  }
+}
+
 export function registrarDiagnostico(router: MockRouter): void {
   // Cada centro publicado tiene agenda: desde Cotizaciones un análisis se
   // reserva como una cita, eligiendo un cupo del centro (25/09/2026).
@@ -924,7 +1045,14 @@ export function registrarDiagnostico(router: MockRouter): void {
       .map((o) => ({ id: uuid(`imaging-${o.id}`), patientProfileId: o.patientProfileId, serviceRequestId: o.id, statusConceptId: o.statusConceptId, studyInstanceUid: `1.2.826.0.1.${Math.abs(o.id.charCodeAt(0) * 7919)}` })),
   );
 
-  router.get('/diagnostics/work-orders', ({ query }) => {
+  // La cola de trabajo la autoriza `LabStaffGuard` en la API, igual que la
+  // recepción: el personal del laboratorio por su membresía, y
+  // CLINICIAN/PRACTITIONER como antes.
+  router.get('/diagnostics/work-orders', ({ query, headers, user }) => {
+    const tenantId = headers.get('X-Tenant-Id') ?? user?.tenants[0] ?? null;
+    if (!isLabStaff(user, tenantId)) {
+      return forbidden('Se requiere ser personal del laboratorio de la organización activa');
+    }
     const status = texto(query, 'statusConceptId');
     const assigned = texto(query, 'assignedProfileId');
     return ordenesDeTrabajo
@@ -945,6 +1073,14 @@ export function registrarDiagnostico(router: MockRouter): void {
     const data = cuerpo<{ patientProfileId: string; custodianTenantId: string; specimenTypeConceptId: string; serviceRequestId?: string }>(request);
     const missing = requiredFields(data, ['patientProfileId', 'custodianTenantId', 'specimenTypeConceptId']);
     if (missing.length > 0) return validation('Faltan datos del espécimen', missing);
+    if (!SPECIMEN_TYPE_IDS.has(data.specimenTypeConceptId!)) {
+      return preconditionFailed('El tipo de espécimen no pertenece al catálogo de tipos de espécimen', {
+        reason: 'SPECIMEN_TYPE_NOT_IN_CATALOG',
+        field: 'specimenTypeConceptId',
+        conceptId: data.specimenTypeConceptId,
+        catalog: 'specimen-type',
+      });
+    }
     const specimen: LabSpecimenRecord = {
       id: nuevoId('specimen'),
       patientProfileId: data.patientProfileId!,
@@ -1062,6 +1198,14 @@ export function registrarDiagnostico(router: MockRouter): void {
     const data = cuerpo<{ containerIdentifier: string; containerTypeConceptId: string }>(request);
     const missing = requiredFields(data, ['containerIdentifier', 'containerTypeConceptId']);
     if (missing.length > 0) return validation('Faltan datos del contenedor', missing);
+    if (!CONTAINER_TYPE_IDS.has(data.containerTypeConceptId!)) {
+      return preconditionFailed('El tipo de contenedor no pertenece al catálogo de contenedores de muestra', {
+        reason: 'CONTAINER_TYPE_NOT_IN_CATALOG',
+        field: 'containerTypeConceptId',
+        conceptId: data.containerTypeConceptId,
+        catalog: 'specimen-container-type',
+      });
+    }
     const specimen = labSpecimens.get(request.params['id']!);
     if (specimen === undefined) return notFound('Espécimen no encontrado');
     const container: LabContainerRecord = {
@@ -1076,6 +1220,90 @@ export function registrarDiagnostico(router: MockRouter): void {
   });
 
   /** UC-20-03: el traslado. Queda en la custodia del espécimen y mueve el estado del contenedor. */
+  /**
+   * La bandeja de recepción (`POST` de lectura: la búsqueda por paciente va en
+   * el cuerpo). Órdenes activas dirigidas al tenant activo, sin acesión, de la
+   * más vieja a la más nueva, con las muestras que el laboratorio ya recibió.
+   */
+  router.post('/diagnostics/service-requests/inbox', (request) => {
+    const tenantId = request.headers.get('X-Tenant-Id') ?? request.user?.tenants[0] ?? null;
+    if (!isLabStaff(request.user, tenantId)) {
+      return forbidden('Se requiere ser personal del laboratorio de la organización activa');
+    }
+    const data = cuerpo<{ cursor: unknown; limit: unknown; patientQuery: unknown }>(request);
+
+    const limit = data.limit === undefined ? 25 : data.limit;
+    if (typeof limit !== 'number' || !Number.isInteger(limit) || limit < 1 || limit > 100) {
+      return validation('El tope de la bandeja no es válido', [{ field: 'limit', message: 'must not be greater than 100' }]);
+    }
+    const query = typeof data.patientQuery === 'string' ? data.patientQuery.trim() : data.patientQuery;
+    if (query !== undefined && (typeof query !== 'string' || query.length < 2 || query.length > 80)) {
+      return validation('La búsqueda por paciente no es válida', [
+        { field: 'patientQuery', message: 'must be longer than or equal to 2 characters' },
+      ]);
+    }
+    let after: { requestedAt: string; id: string } | null = null;
+    if (data.cursor !== undefined) {
+      after = typeof data.cursor === 'string' && data.cursor.length <= 512 ? decodeInboxCursor(data.cursor) : null;
+      if (after === null) return validation('El cursor de paginación no es válido');
+    }
+    const cursorKey = after;
+
+    const accessioned = new Set(
+      labAccessions
+        .filtrar((a) => a.custodianTenantId === tenantId && a.serviceRequestId !== null)
+        .map((a) => a.serviceRequestId),
+    );
+    const needle = typeof query === 'string' ? normalizeText(query) : null;
+    const pending = labInboxOrders
+      .filtrar((o) => o.performerTenantId === tenantId && o.statusConceptId === ESTADO['ST-ACTIVE'] && !accessioned.has(o.id))
+      .filter((o) => {
+        if (needle === null) return true;
+        const patient = pacientePorId(o.patientProfileId);
+        return (
+          patient !== undefined &&
+          (normalizeText(patient.displayName).includes(needle) || normalizeText(patient.patientCode).includes(needle))
+        );
+      })
+      .sort((a, b) => a.requestedAt.localeCompare(b.requestedAt) || a.id.localeCompare(b.id))
+      .filter(
+        (o) =>
+          cursorKey === null ||
+          o.requestedAt > cursorKey.requestedAt ||
+          (o.requestedAt === cursorKey.requestedAt && o.id > cursorKey.id),
+      );
+
+    const page = pending.slice(0, limit);
+    const last = page.at(-1);
+    return {
+      items: page.map((o) => {
+        const patient = pacientePorId(o.patientProfileId);
+        return {
+          serviceRequestId: o.id,
+          patientProfileId: o.patientProfileId,
+          patientDisplayName: patient?.displayName ?? null,
+          patientCode: patient?.patientCode ?? null,
+          codeConceptId: o.codeConceptId,
+          codeDisplay: displayDe(o.codeConceptId) || null,
+          categoryConceptId: o.categoryConceptId,
+          priorityConceptId: o.priorityConceptId,
+          statusConceptId: o.statusConceptId,
+          requesterProfileId: o.requesterProfileId,
+          requestingTenantId: o.requestingTenantId,
+          requestingTenantName: TENANT_NAMES[o.requestingTenantId] ?? null,
+          requestedAt: o.requestedAt,
+          specimens: labSpecimens
+            .filtrar((sp) => sp.serviceRequestId === o.id && sp.custodianTenantId === tenantId)
+            .sort((a, b) => a.collectedAt.localeCompare(b.collectedAt))
+            .map(specimenDetail),
+        };
+      }),
+      count: page.length,
+      limit,
+      nextCursor: pending.length > limit && last !== undefined ? encodeInboxCursor(last) : null,
+    };
+  });
+
   router.post('/diagnostics/containers/:id/custody-events', (request) => {
     const data = cuerpo<{ specimenId: string; toPartyTypeConceptId?: string; sealIdentifier?: string; destinationStatusConceptId?: string }>(request);
     const missing = requiredFields(data, ['specimenId']);
@@ -1332,3 +1560,4 @@ labSpecimens.persistirEn('mock.diagnostics.labSpecimens');
 labContainers.persistirEn('mock.diagnostics.labContainers');
 labCustodyEvents.persistirEn('mock.diagnostics.labCustodyEvents');
 labAccessions.persistirEn('mock.diagnostics.labAccessions');
+labInboxOrders.persistirEn('mock.diagnostics.labInboxOrders');
