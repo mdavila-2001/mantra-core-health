@@ -336,7 +336,7 @@ describe('isVisibleTo con `hiddenForTenantTypes`', () => {
  * el token: lo único que distingue su sesión es el tipo del tenant activo.
  */
 describe('isVisibleTo con `onlyForTenantTypes`', () => {
-  const seccionDelLaboratorio = {
+  const labSection = {
     path: 'x',
     label: 'X',
     group: 'Atención',
@@ -351,28 +351,37 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
   } as const;
 
   it('la ve el personal de un centro de diagnóstico, aunque sólo tenga `USER`', () => {
-    expect(isVisibleTo(seccionDelLaboratorio, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(true);
-    expect(apareceEnElMenu(seccionDelLaboratorio, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(true);
+    expect(isVisibleTo(labSection, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(true);
+    expect(apareceEnElMenu(labSection, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(true);
   });
 
   it('otro tipo de organización no la ve, ni con el comodín', () => {
-    expect(isVisibleTo(seccionDelLaboratorio, ['USER'], ['t-1'], 'PROVIDER')).toBe(false);
-    expect(isVisibleTo(seccionDelLaboratorio, ['SUPERADMIN'], ['t-1'], 'PAYER')).toBe(false);
+    expect(isVisibleTo(labSection, ['USER'], ['t-1'], 'PROVIDER')).toBe(false);
+    expect(isVisibleTo(labSection, ['SUPERADMIN'], ['t-1'], 'PAYER')).toBe(false);
   });
 
   it('sin tipo de organización activa, la duda oculta', () => {
-    expect(isVisibleTo(seccionDelLaboratorio, ['USER'], ['t-1'], null)).toBe(false);
-    expect(isVisibleTo(seccionDelLaboratorio, ['USER'], ['t-1'])).toBe(false);
+    expect(isVisibleTo(labSection, ['USER'], ['t-1'], null)).toBe(false);
+    expect(isVisibleTo(labSection, ['USER'], ['t-1'])).toBe(false);
   });
 
   it('el paciente no la ve aunque su organización activa fuera un laboratorio', () => {
-    expect(isVisibleTo(seccionDelLaboratorio, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
+    expect(isVisibleTo(labSection, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
   });
 
-  it('la sección real es la recepción de muestras, y nada más la usa', () => {
-    const conMarca = APP_SECTIONS.filter((s) => s.onlyForTenantTypes !== undefined);
-    expect(conMarca.map((s) => s.path)).toEqual(['laboratorio/recepcion']);
-    expect(conMarca[0]?.onlyForTenantTypes).toEqual(['DIAGNOSTIC_CENTER']);
+  it('las secciones reales son la recepción y la cola del laboratorio, y nada más la usa', () => {
+    const flagged = APP_SECTIONS.filter((s) => s.onlyForTenantTypes !== undefined);
+    expect(flagged.map((s) => s.path)).toEqual(['laboratorio/recepcion', 'laboratorio/cola']);
+    for (const labOnly of flagged) {
+      expect(labOnly.onlyForTenantTypes).toEqual(['DIAGNOSTIC_CENTER']);
+    }
+  });
+
+  it('la cola del laboratorio la ve su personal con sólo `USER`, y no el paciente ni otra organización', () => {
+    const queue = APP_SECTIONS.find((s) => s.path === 'laboratorio/cola')!;
+    expect(isVisibleTo(queue, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(true);
+    expect(isVisibleTo(queue, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
+    expect(isVisibleTo(queue, ['PRACTITIONER'], ['t-1'], 'PROVIDER')).toBe(false);
   });
 });
 
