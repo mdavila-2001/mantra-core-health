@@ -39,8 +39,15 @@ import axe, { type AxeResults, type Result, type RunOptions } from 'axe-core';
  * El resto sigue siendo trabajo humano.
  */
 
-/** Las etiquetas que interesan: WCAG 2.0 y 2.1, niveles A y AA. */
-const NIVELES: readonly string[] = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
+/**
+ * Las etiquetas que interesan: WCAG 2.0, 2.1 y 2.2, niveles A y AA.
+ *
+ * `wcag22aa` hoy sólo agrupa `target-size` (2.5.8), que está apagada abajo
+ * porque necesita geometría; se declara igual para que una regla 2.2 nueva que
+ * traiga axe entre en la auditoría sin tocar este archivo. `wcag22a` no se
+ * lista: axe no tiene reglas con esa etiqueta y avisa por consola si se la pide.
+ */
+const NIVELES: readonly string[] = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 /**
  * Reglas que se apagan porque **el entorno no puede evaluarlas**, no porque no
@@ -154,6 +161,62 @@ export async function esperarSinViolaciones(elemento: Element): Promise<void> {
   if (violaciones.length > 0) {
     throw new Error(
       `axe encontró ${violaciones.length} violación(es) de accesibilidad:\n${describirViolaciones(violaciones)}`,
+    );
+  }
+}
+
+/**
+ * Los impactos que **bloquean** un pull request: `serious` y `critical`.
+ *
+ * Es el mismo umbral que usa el comando `cy.problemasGraves()` de Cypress, para
+ * que la unidad y el navegador digan lo mismo. `moderate` y `minor` no se
+ * esconden —{@link auditarA11y} los sigue devolviendo—, pero una prueba que usa
+ * {@link expectNoSeriousViolations} no se pone roja por ellos.
+ */
+export const BLOCKING_IMPACTS: ReadonlySet<string> = new Set(['serious', 'critical']);
+
+/** Opciones de la auditoría de violaciones graves. */
+export interface SeriousAuditOptions {
+  /**
+   * Reglas que se admiten **con motivo escrito** en la prueba que las pasa. Sin
+   * motivo al lado, una excepción es sólo una regla apagada.
+   */
+  readonly allowedRules?: readonly string[];
+}
+
+/**
+ * Audita y devuelve sólo las violaciones graves (`serious` o `critical`).
+ *
+ * @param element - Raíz del DOM a auditar; para un overlay fuera del fixture,
+ *   pasar el contenedor del overlay o `document.body`.
+ * @param options - Reglas admitidas, si las hay.
+ */
+export async function auditSeriousViolations(
+  element: Element,
+  options: SeriousAuditOptions = {},
+): Promise<readonly ViolacionA11y[]> {
+  const allowed = new Set(options.allowedRules ?? []);
+  const violations = await auditarA11y(element);
+  return violations.filter((v) => BLOCKING_IMPACTS.has(v.impacto) && !allowed.has(v.regla));
+}
+
+/**
+ * Falla si hay violaciones graves de WCAG 2.2 A/AA, con el detalle en el
+ * mensaje. Es el gate que corre en cada pull request.
+ *
+ * Evalúa **reglas**, no valores: no fija un color, un `role` ni un texto
+ * concreto, así que un cambio de tokens o de marcado que siga siendo accesible
+ * no la rompe.
+ */
+export async function expectNoSeriousViolations(
+  element: Element,
+  options: SeriousAuditOptions = {},
+): Promise<void> {
+  const violations = await auditSeriousViolations(element, options);
+  if (violations.length > 0) {
+    throw new Error(
+      `axe encontró ${violations.length} violación(es) grave(s) de accesibilidad:
+${describirViolaciones(violations)}`,
     );
   }
 }
