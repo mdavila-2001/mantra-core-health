@@ -882,6 +882,8 @@ describe('ShellLayout', () => {
         '/notification-center',
         '/administration/insurance',
         '/administration/insurance-analytics',
+        // Tarea 4 · M-06: el «Módulo de promociones» del registro de procesos.
+        '/administration/insurance-campaigns',
         '/administration/my-organization',
       ]);
       expect(raiz().querySelectorAll('.app-side-nav__group').length).toBe(1);

@@ -347,7 +347,8 @@ export const catalogoAdministrable = new Coleccion<DetalleAseguradoraSimulado>(
   'mock-insurance-administration',
 );
 
-function administraCatalogo(request: MockRequest): boolean {
+/** Exportado: es también la guarda de escritura de `insurance-campaigns.handlers.ts`. */
+export function administraCatalogo(request: MockRequest): boolean {
   const user = request.user;
   return (
     user !== null &&
@@ -616,7 +617,13 @@ const solicitudes = new Coleccion<SolicitudSimulada>(
       // "titular sin coberturas" con recordCount === 0 esperado
       // (insurance-portability.handlers.spec.ts:16) — usar el 1 rompía
       // exactamente esa aserción.
-      patientProfileId: PACIENTES[[0, 5, 2, 0, 8, 0, 3, 0][i]!]!.id,
+      //
+      // CLM-2026-0183 (el último, Tarea 3) va al índice 5 (`p-torrez`, también
+      // de Seguros Andina) y no a PACIENTE: el certificado de portabilidad de
+      // la titular de demostración suma exactamente sus 3 reclamos reales más
+      // el relleno histórico (14 reclamos / Bs 12 450, ver
+      // `insurance-portability.handlers.ts`), y un cuarto lo rompía.
+      patientProfileId: PACIENTES[[0, 5, 2, 0, 8, 0, 3, 5][i]!]!.id,
       carrierIndex: carrierIndex as number,
       policyIdentifier: `POL-${100200 + i * 17}`,
       billed: billed as string,

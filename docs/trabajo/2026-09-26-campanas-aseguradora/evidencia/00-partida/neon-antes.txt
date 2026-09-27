@@ -1,0 +1,4 @@
+2026-09-26 22:25:11.272603+00|18.6 (6569466)
+insurance.insurance_campaigns=NULL|insurance.insurance_campaign_partners=NULL
+tablas_insurance=29
+conceptos_insurance_CAMPAIGN=15
