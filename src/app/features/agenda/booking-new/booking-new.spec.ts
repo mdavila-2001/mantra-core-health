@@ -281,7 +281,7 @@ describe('BookingNew', () => {
     interno<(t: string) => void>('buscarPaciente')('ana');
 
     http
-      .expectOne((r) => r.url === '/profiles/patients')
+      .expectOne((r) => r.url === '/profiles/patients/search')
       .flush({
         items: [
           {
