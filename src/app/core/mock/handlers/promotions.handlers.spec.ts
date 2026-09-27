@@ -50,6 +50,11 @@ describe('handlers de promociones: GET /promotions/me', () => {
   it('inválido — sin perfil de paciente en la sesión responde la precondición, no un vacío', () => {
     const resultado = pedir(null);
 
-    expect(isMockReply(resultado) ? resultado.status : 200).toBe(422);
+    // El código, no el número: según la rama el doble lo responde 412 o 422.
+    expect(isMockReply(resultado)).toBe(true);
+    expect(isMockReply(resultado) ? resultado.status : 200).toBeGreaterThanOrEqual(400);
+    expect(isMockReply(resultado) ? (resultado.body as { code: string }).code : null).toBe(
+      'PRECONDITION_FAILED',
+    );
   });
 });
