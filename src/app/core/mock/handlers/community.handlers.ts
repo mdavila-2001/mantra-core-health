@@ -29,6 +29,7 @@ import { conflict, forbidden, notFound, validation, type MockRequest, type MockR
 // constante que la pantalla, para que no puedan separarse.
 import { VENTANA_DE_EDICION_MS } from '../../messaging/chat.store';
 import { ahora, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
+import { fileContent } from './files.handlers';
 
 /* ============================================================================
     Red social con sesión: vitrina propia, perfiles, publicaciones,
@@ -821,6 +822,31 @@ export function registrarComunidad(router: MockRouter): void {
       return validation('Pasaron más de 5 minutos: el mensaje ya no se puede editar');
     }
     return mensajes.actualizar(m.id, { bodyText: texto, isEdited: true });
+  });
+
+  /**
+   * El adjunto de una conversación, para quien participa en ella (5.1 ·
+   * FT-32-R02) — no sólo para quien lo subió, que es lo único que deja la ruta
+   * genérica de archivos.
+   *
+   * Como la API: el perfil tiene que ser el de la sesión, participar de la
+   * conversación, y el archivo tiene que viajar en un mensaje de **esa**
+   * conversación. Cualquier otra combinación es el mismo 404: un 403 diría que
+   * el archivo existe.
+   */
+  router.get('/community/conversations/:id/attachments/:fileId/content', (request) => {
+    const notFoundReply = () => notFound('Adjunto no encontrado');
+    const c = conversaciones.get(request.params['id']!);
+    const fileId = request.params['fileId']!;
+    const profileId = texto(request.query, 'profileId') ?? '';
+    const sessionProfile = vitrinaDeSesion(request);
+    if (c === undefined || sessionProfile === undefined || sessionProfile.id !== profileId) return notFoundReply();
+    if (!c.participantes.includes(profileId)) return notFoundReply();
+    const isAttachedHere = mensajes.filtrar(
+      (m) => m.conversationId === c.id && m.attachmentFileId === fileId,
+    ).length > 0;
+    if (!isAttachedHere) return notFoundReply();
+    return fileContent(fileId) ?? notFoundReply();
   });
 
   router.post('/community/conversations/:id/read', (request) => {
