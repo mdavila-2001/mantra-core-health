@@ -20,6 +20,7 @@ import type { CartState } from '../../../../core/data-access/pharmacy-cart/pharm
 import { CartStore } from '../../../../core/data-access/pharmacy-cart/cart.store';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import { SessionStore } from '../../../../core/auth/session.store';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { CARGADOR_DE_LEAFLET } from '../../../../shared/components/organisms/map/map';
 import type { CargadorDeLeaflet } from '../../../../shared/components/organisms/map/map';
@@ -253,8 +254,11 @@ describe('WhereToBuy', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
   let getCurrentPosition: ReturnType<typeof vi.fn>;
+  /** Maqueta (`true`) o API real (`false`); se lee al crear la pantalla. */
+  let sampleData: boolean;
 
   beforeEach(() => {
+    sampleData = true;
     // jsdom no trae geolocalización: se cuelga una espía para poder afirmar
     // que NADIE la llama hasta que se aprieta el botón.
     getCurrentPosition = vi.fn();
@@ -276,6 +280,7 @@ describe('WhereToBuy', () => {
           provide: CARGADOR_DE_LEAFLET,
           useValue: (() => Promise.resolve(leafletDoblado())) as CargadorDeLeaflet,
         },
+        { provide: SAMPLE_DATA_ENABLED, useFactory: () => sampleData },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -850,6 +855,23 @@ describe('WhereToBuy', () => {
     harness.detectChanges();
   }
 
+  it('contra la API real no ofrece la variante con seguro: la lista es la de la consulta', async () => {
+    sampleData = false;
+    await montarConTresSedes();
+
+    expect(consultar(byTestId('compra-variante-seguro'))).toBeNull();
+    expect(consultar(byTestId('compra-seguro'))).toBeNull();
+    expect(texto()).not.toContain('Demostración');
+    expect(todas(byTestId('compra-item-seguro'))).toHaveLength(0);
+    // Lo que sí es de la API sigue igual: las tres sedes y el orden.
+    expect(sedesEnPantalla()).toEqual([
+      'Farmacia Andina · Sucursal Centro',
+      'Farmacia del Sur · Sucursal Plan Tres Mil',
+      'Farmacia del Sur · Sucursal Norte',
+    ]);
+    expect(consultar('[data-testid="compra-orden"]')).not.toBeNull();
+  });
+
   it('sin seguro: abre con el orden del backend y la tarjeta no habla del seguro', async () => {
     await montarConTresSedes();
 
@@ -1413,3 +1435,8 @@ describe('el pedido lleva la receta (carril 43 · H5.S2)', () => {
     expect(cuerpo.medicationRequestId).toBeUndefined();
   });
 });
+
+/** El selector de un `data-testid` ya existente en la plantilla. */
+function byTestId(id: string): string {
+  return `[data-testid="${id}"]`;
+}
