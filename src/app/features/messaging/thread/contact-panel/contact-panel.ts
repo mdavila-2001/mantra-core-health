@@ -18,6 +18,7 @@ import { RouterLink } from '@angular/router';
 import { CommunityClient } from '../../../../core/data-access/community/community.client';
 import { publicProfileLink } from '../../../../core/data-access/community/public-profile-url';
 import type { PublicProfileDetail } from '../../../../core/data-access/community/community.types';
+import { inertBackground, trapTabKey } from '../../../../shared/a11y/modal-focus';
 import { Avatar } from '../../../../shared/components/atoms/avatar/avatar';
 
 /**
@@ -104,13 +105,42 @@ export class ContactPanel {
     // el foco seguía en el botón del menú, así que la tecla nunca llegaba acá.
     // Es lo que pide la regla de modales del proyecto —foco inicial, Escape y
     // restauración—, y se midió con el navegador, no leyendo el código.
+    //
+    // Y mientras está abierta, lo de atrás no existe (WCAG 2.4.3): el panel
+    // no puede ser un `<dialog>` con `showModal()` sin dejar de apoyarse en el
+    // hilo —la capa superior del navegador lo sacaría a toda la ventana y
+    // taparía la bandeja—, así que la inertización y la vuelta del `Tab` se
+    // hacen a mano, con las mismas piezas que el tutorial.
     const volverA = inject(DOCUMENT).activeElement;
-    afterNextRender(() => this.hoja()?.nativeElement.focus());
+    let restoreBackground: (() => void) | null = null;
+    afterNextRender(() => {
+      const sheet = this.hoja()?.nativeElement;
+      if (sheet === undefined) return;
+      restoreBackground = inertBackground(sheet);
+      sheet.focus();
+    });
     inject(DestroyRef).onDestroy(() => {
+      // Primero se devuelve el fondo: el foco no puede volver a algo inerte.
+      restoreBackground?.();
       if (volverA instanceof HTMLElement && volverA.isConnected) {
         volverA.focus();
       }
     });
+  }
+
+  /**
+   * `Escape` cierra y `Tab` da la vuelta dentro de la hoja.
+   *
+   * Un solo `keydown` y no dos: el `(keydown.escape)` de antes sigue siendo el
+   * mismo gesto, y el `Tab` necesita el mismo lugar de escucha.
+   */
+  protected handleKeydown(evento: KeyboardEvent): void {
+    if (evento.key === 'Escape') {
+      evento.preventDefault();
+      this.close();
+      return;
+    }
+    trapTabKey(evento, this.hoja()?.nativeElement.querySelector('.contacto__hoja'));
   }
 
   private read(profileId: string): void {
