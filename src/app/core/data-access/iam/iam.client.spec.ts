@@ -187,6 +187,58 @@ describe('IamClient', () => {
     req.flush({ userId: 'u', status: 'ACTIVE', activated: true });
   });
 
+  it('searchUsers va por POST /iam/users/search, con el texto en el cuerpo y no en la URL', () => {
+    client
+      .searchUsers({ query: 'ana@alovida.test', statusConceptId: 'c-activo', cursor: '25', limit: 10 })
+      .subscribe();
+
+    const req = http.expectOne('/iam/users/search');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.urlWithParams).toBe('/iam/users/search');
+    expect(req.request.body).toEqual({
+      q: 'ana@alovida.test',
+      status: 'c-activo',
+      cursor: '25',
+      limit: 10,
+    });
+
+    req.flush({ items: [], count: 0, limit: 10, nextCursor: null });
+  });
+
+  it('searchUsers sin filtros (o con texto vacío) manda un cuerpo vacío', () => {
+    client.searchUsers({ query: '' }).subscribe();
+
+    const req = http.expectOne('/iam/users/search');
+    // `forbidNonWhitelisted`: una clave vacía o en `undefined` vuelve 400.
+    expect(req.request.body).toEqual({});
+
+    req.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+  });
+
+  it('searchUsers convierte las fechas de cada fila', () => {
+    let filas: readonly { lastLoginAt?: Date; createdAt: Date }[] = [];
+    client.searchUsers().subscribe((pagina) => (filas = pagina.items));
+
+    http.expectOne('/iam/users/search').flush({
+      items: [
+        {
+          id: 'u-1',
+          displayName: 'Ana',
+          statusConceptId: 'c-activo',
+          emailVerified: true,
+          lastLoginAt: '2026-09-20T12:00:00.000Z',
+          createdAt: '2026-01-02T12:00:00.000Z',
+        },
+      ],
+      count: 1,
+      limit: 50,
+      nextCursor: null,
+    });
+
+    expect(filas[0]?.createdAt).toBeInstanceOf(Date);
+    expect(filas[0]?.lastLoginAt).toBeInstanceOf(Date);
+  });
+
   it('createUser va a /iam/users', () => {
     client
       .createUser({ displayName: 'Bruno', email: 'bruno@mantra.test', password: 'secreto12' })

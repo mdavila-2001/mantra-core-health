@@ -1,4 +1,4 @@
-import { HttpClient, HttpEvent, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpEvent } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
@@ -510,30 +510,25 @@ export class IamClient {
   }
 
   /**
-   * `GET /iam/users` — una página del listado (UC-01-01, cara de lectura).
+   * `POST /iam/users/search` — una página del listado (UC-01-01, cara de lectura).
    *
-   * Busca con `?q=` sobre el nombre visible o el correo de acceso; pagina por
-   * cursor, sin total. Exige `SECURITY_ADMIN`.
+   * Busca por `q` sobre el nombre visible o el correo de acceso; pagina por
+   * cursor, sin total. Exige `SECURITY_ADMIN`. El texto viaja en el cuerpo y
+   * no en la URL: un nombre o un correo en la query string queda en los logs
+   * de acceso de cualquier proxy. El `GET /iam/users?q=` de antes sigue vivo
+   * en la API pero obsoleto.
    */
   searchUsers(query: UserSearchQuery = {}): Observable<UserPage> {
-    // Parámetro a parámetro: el backend valida con `forbidNonWhitelisted` y un
-    // opcional en `undefined` viaja como clave declarada, que vuelve 400.
-    let params = new HttpParams();
-    if (query.query !== undefined && query.query !== '') {
-      params = params.set('q', query.query);
-    }
-    if (query.statusConceptId !== undefined) {
-      params = params.set('status', query.statusConceptId);
-    }
-    if (query.cursor !== undefined) {
-      params = params.set('cursor', query.cursor);
-    }
-    if (query.limit !== undefined) {
-      params = params.set('limit', String(query.limit));
-    }
+    // Clave a clave: el backend valida con `forbidNonWhitelisted` y un
+    // opcional en `undefined` o un texto vacío no deben viajar.
+    const filters: Record<string, string | number> = {};
+    if (query.query !== undefined && query.query !== '') filters['q'] = query.query;
+    if (query.statusConceptId !== undefined) filters['status'] = query.statusConceptId;
+    if (query.cursor !== undefined) filters['cursor'] = query.cursor;
+    if (query.limit !== undefined) filters['limit'] = query.limit;
 
     return this.http
-      .get<RespuestaPaginaUsuarios>(this.url('/iam/users'), { params })
+      .post<RespuestaPaginaUsuarios>(this.url('/iam/users/search'), filters)
       .pipe(
         map((body) => ({
           ...body,

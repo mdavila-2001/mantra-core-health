@@ -27,7 +27,7 @@ class ExpedienteDoble {}
  * 2. **Sin criterio no se pide nada.** Antes esta pantalla pedía la primera
  *    página al montar, con `q`/`nationalId` vacíos; ahora, sin acotamiento,
  *    eso sería enumerar el padrón. Al montar sin filtro no sale ninguna
- *    petición a `/profiles/patients`: se muestra un vacío que invita a
+ *    petición a `/profiles/patients/search`: se muestra un vacío que invita a
  *    escribir.
  * 3. **Un 403 lo resuelve `app-data-table` por su cuenta**, con el estado
  *    `forbidden` del M34 — no hay una rama especial en el componente.
@@ -74,7 +74,7 @@ describe('ClinicalRecord', () => {
   }
 
   function peticion() {
-    return http.expectOne((r) => r.url === '/profiles/patients');
+    return http.expectOne((r) => r.url === '/profiles/patients/search');
   }
 
   function estado() {
@@ -139,8 +139,8 @@ describe('ClinicalRecord', () => {
     await harness.fixture.whenStable();
 
     const req = peticion();
-    expect(req.request.params.get('q')).toBe('peña');
-    expect(req.request.params.get('limit')).toBe('25');
+    expect(req.request.body.q).toBe('peña');
+    expect(req.request.body.limit).toBe(25);
     req.flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
 
     expect(estado().status).toBe('ready');
@@ -181,11 +181,11 @@ describe('ClinicalRecord', () => {
     expect(router.url).toContain('nationalId=1234567');
     // El documento se recorta: un espacio pegado de más no cambia la búsqueda.
     const req = peticion();
-    expect(req.request.params.get('nationalId')).toBe('1234567');
-    expect(req.request.params.has('q')).toBe(false);
+    expect(req.request.body.nationalId).toBe('1234567');
+    expect(req.request.body).not.toHaveProperty('q');
     // P-07-3, cerrada: SEGIP no reemite un carnet ya expedido, así que no hay
     // departamento que desempate.
-    expect(req.request.params.has('issuerAdministrativeAreaConceptId')).toBe(false);
+    expect(req.request.body).not.toHaveProperty('issuerAdministrativeAreaConceptId');
     req.flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
   });
 
@@ -205,7 +205,7 @@ describe('ClinicalRecord', () => {
     const router = TestBed.inject(Router);
     expect(router.url).not.toContain('q=');
     const req = peticion();
-    expect(req.request.params.has('q')).toBe(false);
+    expect(req.request.body).not.toHaveProperty('q');
     req.flush({ items: [], count: 0, limit: 25, nextCursor: null });
   });
 
@@ -252,8 +252,8 @@ describe('ClinicalRecord', () => {
     const router = TestBed.inject(Router);
     expect(router.url).not.toContain('nationalId');
     const req = peticion();
-    expect(req.request.params.get('q')).toBe('peña');
-    expect(req.request.params.has('nationalId')).toBe(false);
+    expect(req.request.body.q).toBe('peña');
+    expect(req.request.body).not.toHaveProperty('nationalId');
     req.flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
   });
 

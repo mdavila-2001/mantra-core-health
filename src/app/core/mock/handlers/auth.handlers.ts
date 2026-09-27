@@ -13,7 +13,7 @@ import {
   usuarioDeRefreshToken,
   type MockUser,
 } from '../mock-session';
-import { ahora, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
+import { ahora, bodyAsQuery, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
 
 /* ============================================================================
     IAM: sesión, altas y usuarios.
@@ -395,9 +395,15 @@ export function registrarAuth(router: MockRouter): void {
 
   /* ---- usuarios (administración) ---------------------------------------- */
 
-  router.get('/iam/users', ({ query }) => {
-    const q = texto(query, 'query');
-    const status = texto(query, 'statusConceptId');
+  /**
+   * La búsqueda de usuarios, común al `GET` obsoleto y al `POST …/search` que
+   * usa `IamClient.searchUsers`. Lee `q` y `status`, que son las claves del
+   * contrato: antes leía `query` y `statusConceptId`, que el cliente nunca
+   * mandó, así que el filtro no filtraba.
+   */
+  function searchUsers(query: URLSearchParams) {
+    const q = texto(query, 'q');
+    const status = texto(query, 'status');
     const base: UsuarioListado[] = MOCK_USERS.map((u, i) => ({
       id: u.id,
       displayName: u.displayName,
@@ -410,7 +416,10 @@ export function registrarAuth(router: MockRouter): void {
       .filter((u) => contiene(u.displayName, q))
       .filter((u) => status === null || u.statusConceptId === status);
     return paginar(todos, query, 25);
-  });
+  }
+
+  router.get('/iam/users', ({ query }) => searchUsers(query));
+  router.post('/iam/users/search', (request) => searchUsers(bodyAsQuery(request)));
 
   router.post('/iam/users', ({ body }) => {
     const datos = cuerpo<{ displayName?: string; email?: string }>({ body });
