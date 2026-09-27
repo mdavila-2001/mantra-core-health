@@ -29,8 +29,8 @@ import {
  *    etiqueta es metadato de presentación y puede cambiar sin aviso; ramificar
  *    por ella haría que un retoque de redacción moviera una enfermedad de
  *    columna.
- * 2. **El kill-test**: `DXV-REFUTED` nunca es una enfermedad activa, ni
- *    siquiera cuando el estado clínico dice `COND-ACTIVE`.
+ * 2. **El kill-test**: `COND_REFUTED` nunca es una enfermedad activa, ni
+ *    siquiera cuando el estado clínico dice `COND_ACTIVE`.
  * 3. **La clasificación es total.** Un diagnóstico que no cayera en ningún
  *    bloque desaparecería de la historia, y nadie lo iría a buscar.
  * 4. **Lo que C1–C4 no dejaron se omite sin romper**, en los tres niveles del
@@ -41,8 +41,10 @@ import {
 const CODIGOS = new Map<string, string>([
   ['id-confirmado', CODIGO_CONFIRMADO],
   ['id-descartado', CODIGO_DESCARTADO],
-  ['id-provisional', 'DXV-PROVISIONAL'],
-  ['id-diferencial', 'DXV-DIFFERENTIAL'],
+  ['id-provisional', 'COND_PROVISIONAL'],
+  // El diferencial de HL7: la API no lo siembra, pero un código de certeza
+  // que no es «confirmado» tiene que quedar en estudio igual.
+  ['id-diferencial', 'COND_DIFFERENTIAL'],
   ['id-activa', CODIGO_ACTIVA],
   ['id-resuelta', CODIGO_RESUELTA],
   ['id-remision', CODIGO_REMISION],
