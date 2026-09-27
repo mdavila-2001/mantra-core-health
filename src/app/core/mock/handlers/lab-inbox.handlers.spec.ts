@@ -25,9 +25,9 @@ describe('bandeja de recepción del laboratorio (diagnostics inbox)', () => {
   const router = new MockRouter();
   registrarDiagnostico(router);
   const laboratorio = buscarUsuario('laboratorio')!;
-  const paciente = buscarUsuario('paciente')!;
+  const patient = buscarUsuario('paciente')!;
   const medica = buscarUsuario('medica')!;
-  const enElLaboratorio = new HttpHeaders({ 'X-Tenant-Id': TENANT_LABORATORIO });
+  const inTheLab = new HttpHeaders({ 'X-Tenant-Id': TENANT_LABORATORIO });
 
   interface Result<T> {
     readonly status: number;
@@ -63,7 +63,7 @@ describe('bandeja de recepción del laboratorio (diagnostics inbox)', () => {
     path: string,
     body: unknown,
     user: MockUser | null,
-    headers = enElLaboratorio,
+    headers = inTheLab,
   ): Result<T> {
     const match = router.match(method, path);
     if (match === null) throw new Error(`No existe ${method} ${path}`);
@@ -71,7 +71,7 @@ describe('bandeja de recepción del laboratorio (diagnostics inbox)', () => {
     return isMockReply(result) ? { status: result.status, body: result.body as T } : { status: 200, body: result as T };
   }
 
-  const inbox = (body: unknown = {}, user: MockUser | null = laboratorio, headers = enElLaboratorio) =>
+  const inbox = (body: unknown = {}, user: MockUser | null = laboratorio, headers = inTheLab) =>
     call<InboxPage>('POST', '/diagnostics/service-requests/inbox', body, user, headers);
 
   it('la cuenta de la maqueta es personal de un centro de diagnóstico, sin rol propio', () => {
@@ -91,20 +91,20 @@ describe('bandeja de recepción del laboratorio (diagnostics inbox)', () => {
       const fechas = body.items.map((i) => i.requestedAt);
       expect([...fechas].sort()).toEqual(fechas);
 
-      const primera = body.items[0]!;
-      expect(primera.patientDisplayName).toBe(pacientePorId(primera.patientProfileId)?.displayName);
-      expect(primera.patientCode).not.toBeNull();
-      expect(primera.codeDisplay).not.toBeNull();
-      expect(primera.requestingTenantName).not.toBeNull();
+      const first = body.items[0]!;
+      expect(first.patientDisplayName).toBe(pacientePorId(first.patientProfileId)?.displayName);
+      expect(first.patientCode).not.toBeNull();
+      expect(first.codeDisplay).not.toBeNull();
+      expect(first.requestingTenantName).not.toBeNull();
     });
 
     it('trae adentro las muestras ya recibidas, rechazadas incluidas, con su contenedor', () => {
       const { body } = inbox();
-      const conMuestra = body.items.filter((i) => i.specimens.length > 0);
-      const estados = conMuestra.flatMap((i) => i.specimens.map((s) => s.statusConceptId));
-      expect(estados).toContain(SPECIMEN_STATUS['SPEC_COLLECTED']);
-      expect(estados).toContain(SPECIMEN_STATUS['SPEC_REJECTED']);
-      expect(conMuestra[0]!.specimens[0]!.containers[0]!.containerIdentifier).toMatch(/^TUBO-/);
+      const withSpecimen = body.items.filter((i) => i.specimens.length > 0);
+      const statuses = withSpecimen.flatMap((i) => i.specimens.map((s) => s.statusConceptId));
+      expect(statuses).toContain(SPECIMEN_STATUS['SPEC_COLLECTED']);
+      expect(statuses).toContain(SPECIMEN_STATUS['SPEC_REJECTED']);
+      expect(withSpecimen[0]!.specimens[0]!.containers[0]!.containerIdentifier).toMatch(/^TUBO-/);
     });
 
     it('recibir la muestra y acesionarla saca la orden de la bandeja', () => {
@@ -169,17 +169,17 @@ describe('bandeja de recepción del laboratorio (diagnostics inbox)', () => {
     });
 
     it('la búsqueda por paciente no distingue tildes ni mayúsculas, y también busca por código', () => {
-      const primera = inbox().body.items[0]!;
-      const nombre = primera.patientDisplayName!;
-      const apellido = nombre.split(' ').at(-1)!;
-      const sinTildes = apellido.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+      const first = inbox().body.items[0]!;
+      const fullName = first.patientDisplayName!;
+      const surname = fullName.split(' ').at(-1)!;
+      const withoutAccents = surname.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
 
-      const porNombre = inbox({ patientQuery: `  ${sinTildes}  ` }).body.items;
-      expect(porNombre.map((i) => i.serviceRequestId)).toContain(primera.serviceRequestId);
-      expect(porNombre.every((i) => i.patientDisplayName !== null)).toBe(true);
+      const byName = inbox({ patientQuery: `  ${withoutAccents}  ` }).body.items;
+      expect(byName.map((i) => i.serviceRequestId)).toContain(first.serviceRequestId);
+      expect(byName.every((i) => i.patientDisplayName !== null)).toBe(true);
 
-      const porCodigo = inbox({ patientQuery: primera.patientCode! }).body.items;
-      expect(porCodigo.map((i) => i.patientProfileId)).toContain(primera.patientProfileId);
+      const byCode = inbox({ patientQuery: first.patientCode! }).body.items;
+      expect(byCode.map((i) => i.patientProfileId)).toContain(first.patientProfileId);
 
       expect(inbox({ patientQuery: 'zzzz-nadie' }).body.items).toEqual([]);
     });
@@ -194,7 +194,7 @@ describe('bandeja de recepción del laboratorio (diagnostics inbox)', () => {
 
   describe('inválido', () => {
     it('el paciente no es personal del laboratorio: 403', () => {
-      const { status, body } = inbox({}, paciente, new HttpHeaders());
+      const { status, body } = inbox({}, patient, new HttpHeaders());
       expect(status).toBe(403);
       expect((body as unknown as { message: string }).message).toBe(
         'Se requiere ser personal del laboratorio de la organización activa',
