@@ -73,16 +73,16 @@ describe('WalkInForm', () => {
     crear();
 
     instancia().buscarPaciente('8123456');
-    const porDocumento = http.expectOne((r) => r.url === '/profiles/patients');
-    expect(porDocumento.request.params.get('nationalId')).toBe('8123456');
-    expect(porDocumento.request.params.get('q')).toBeNull();
-    porDocumento.flush({ items: [], count: 0, limit: 10, nextCursor: null });
+    const byDocument = http.expectOne((r) => r.url === '/profiles/patients/search');
+    expect(byDocument.request.body.nationalId).toBe('8123456');
+    expect(byDocument.request.body).not.toHaveProperty('q');
+    byDocument.flush({ items: [], count: 0, limit: 10, nextCursor: null });
 
     instancia().buscarPaciente('Rosa Ticona');
-    const porNombre = http.expectOne((r) => r.url === '/profiles/patients');
-    expect(porNombre.request.params.get('q')).toBe('Rosa Ticona');
-    expect(porNombre.request.params.get('nationalId')).toBeNull();
-    porNombre.flush({ items: [], count: 0, limit: 10, nextCursor: null });
+    const byName = http.expectOne((r) => r.url === '/profiles/patients/search');
+    expect(byName.request.body.q).toBe('Rosa Ticona');
+    expect(byName.request.body).not.toHaveProperty('nationalId');
+    byName.flush({ items: [], count: 0, limit: 10, nextCursor: null });
   });
 
   it('si la búsqueda falla, el mostrador sigue pudiendo dar de alta', () => {
@@ -90,7 +90,7 @@ describe('WalkInForm', () => {
     crear();
     instancia().buscarPaciente('Rosa');
     http
-      .expectOne((r) => r.url === '/profiles/patients')
+      .expectOne((r) => r.url === '/profiles/patients/search')
       .flush({ message: 'x' }, { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
 
@@ -204,7 +204,7 @@ describe('WalkInForm', () => {
     crear();
     instancia().buscarPaciente('8123456');
     http
-      .expectOne((r) => r.url === '/profiles/patients')
+      .expectOne((r) => r.url === '/profiles/patients/search')
       .flush({ items: [], count: 0, limit: 10, nextCursor: null });
 
     instancia().registrarNuevo();

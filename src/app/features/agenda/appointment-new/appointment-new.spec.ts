@@ -408,7 +408,7 @@ describe('AppointmentNew', () => {
       };
       c.buscarPaciente('8123456');
       http
-        .expectOne((r) => r.url === '/profiles/patients')
+        .expectOne((r) => r.url === '/profiles/patients/search')
         .flush({ items: [], count: 0, limit: 10, nextCursor: null });
       c.registrarPacienteNuevo();
       conCatalogos();
@@ -612,9 +612,9 @@ describe('AppointmentNew', () => {
       conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
 
       buscar('8123456');
-      const peticion = http.expectOne((r) => r.url === '/profiles/patients');
-      expect(peticion.request.params.get('nationalId')).toBe('8123456');
-      expect(peticion.request.params.get('q')).toBeNull();
+      const peticion = http.expectOne((r) => r.url === '/profiles/patients/search');
+      expect(peticion.request.body.nationalId).toBe('8123456');
+      expect(peticion.request.body).not.toHaveProperty('q');
       peticion.flush({ items: [], count: 0, limit: 10, nextCursor: null });
     });
 
@@ -623,10 +623,10 @@ describe('AppointmentNew', () => {
       conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
 
       buscar('Ana');
-      const peticion = http.expectOne((r) => r.url === '/profiles/patients');
-      // El parámetro del cable se llama `q`, no `query`.
-      expect(peticion.request.params.get('q')).toBe('Ana');
-      expect(peticion.request.params.get('nationalId')).toBeNull();
+      const peticion = http.expectOne((r) => r.url === '/profiles/patients/search');
+      // La clave del cuerpo se llama `q`, no `query`.
+      expect(peticion.request.body.q).toBe('Ana');
+      expect(peticion.request.body).not.toHaveProperty('nationalId');
       peticion.flush({ items: [], count: 0, limit: 10, nextCursor: null });
     });
   });
