@@ -42,7 +42,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([{ path: 'administration/pharmacy-orders/:orderId', component: InboxOrder }]),
-        { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez' } },
+        { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez', userId: () => null } },
         {
           provide: DialogService,
           useValue: { confirm: vi.fn().mockResolvedValue(true), confirmWithReason },
