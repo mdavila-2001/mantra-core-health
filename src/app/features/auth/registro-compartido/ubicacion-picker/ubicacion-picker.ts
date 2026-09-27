@@ -10,8 +10,11 @@ import {
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 
+import { nextControlId } from '@shared/forms/form-control.context';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { Input } from '../../../../shared/components/atoms/input/input';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
+import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
 import { AppMap } from '../../../../shared/components/organisms/map/map';
 import type { PinMapa } from '../../../../shared/components/organisms/map/pin-mapa.types';
@@ -81,6 +84,23 @@ export const AVISO_SIN_GEOCODIFICACION =
 export const AVISO_REESCRIBIR_DIRECCION = 'Volvé a escribir la dirección para este punto.';
 
 /**
+ * Lee una coordenada escrita a mano: acepta coma o punto decimal («-17,7833»
+ * o «-17.7833») y el signo menos tipográfico que pegan algunos teclados.
+ * `null` si no es un número dentro de `[-limite, limite]`.
+ */
+export function parseCoordinate(texto: string, limite: number): number | null {
+  const limpio = texto.trim().replace(/−/g, '-').replace(',', '.');
+  if (!/^[-+]?\d+(\.\d+)?$/.test(limpio)) return null;
+  const valor = Number(limpio);
+  return Number.isFinite(valor) && Math.abs(valor) <= limite ? valor : null;
+}
+
+/** «-17,78330»: cinco decimales (un metro) y coma decimal, como se lee en castellano. */
+function formatCoordinate(valor: number): string {
+  return valor.toFixed(5).replace('.', ',');
+}
+
+/**
  * El punto de un lugar sobre el mapa, capturado del navegador **o marcado a
  * mano sobre el plano**, y confirmado por la persona.
  *
@@ -119,6 +139,16 @@ export const AVISO_REESCRIBIR_DIRECCION = 'Volvé a escribir la dirección para 
  * que haber alguien mirando el plano. Quien lo consume guarda lo que reciba,
  * sin volver a preguntarse si estaba confirmado.
  *
+ * ## Sin puntero también (WCAG 2.1.1 y 2.5.7)
+ *
+ * El mapa reemplazó a los campos de coordenadas, y con eso marcar un punto
+ * pasó a exigir un clic (o el GPS). Ahora hay dos caminos más, los dos por el
+ * mismo `fijarPunto` que el toque: con el plano enfocado, las flechas corren
+ * el pin y Enter lo pone en el centro (lo resuelve `app-map`); y «Escribir
+ * coordenadas» despliega latitud y longitud para quien las tiene anotadas o
+ * no puede apuntar. Cada punto nuevo se anuncia en una región viva: el pin se
+ * mueve en silencio para quien no lo ve.
+ *
  * Por `puntoElegido` sale **cada toque sobre el mapa**, confirmado o no. No
  * es un dato para guardar: es el aviso de que el pin ya no está donde decía
  * la dirección escrita (D-06, pedido del cliente del 22/09/2026: «si una toca
@@ -128,7 +158,7 @@ export const AVISO_REESCRIBIR_DIRECCION = 'Volvé a escribir la dirección para 
  */
 @Component({
   selector: 'app-ubicacion-picker',
-  imports: [AppButton, NavIcon, AppMap, AnnounceOnAppear],
+  imports: [AppButton, Input, FormField, NavIcon, AppMap, AnnounceOnAppear],
   templateUrl: './ubicacion-picker.html',
   styleUrl: './ubicacion-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -270,6 +300,64 @@ export class UbicacionPicker {
 
   protected readonly avisoSinGeocodificacion = AVISO_SIN_GEOCODIFICACION;
 
+  /** Si están a la vista los campos de latitud y longitud. */
+  protected readonly coordenadasAbiertas = signal(false);
+
+  /** Lo escrito, tal cual: se valida al aplicar, no a cada tecla. */
+  protected readonly latitudEscrita = signal('');
+  protected readonly longitudEscrita = signal('');
+
+  /** El error de cada campo al aplicar, o `''`. */
+  protected readonly errorLatitud = signal('');
+  protected readonly errorLongitud = signal('');
+
+  /** El id del bloque de campos, para el `aria-controls` de su botón. */
+  protected readonly coordenadasId = nextControlId('location-coordinates');
+
+  /** Lo que se anuncia al mover el pin; vive en una región `role="status"`. */
+  protected readonly anuncio = signal('');
+
+  /**
+   * Abre o cierra los campos. Al abrirlos con un pin ya puesto, llegan llenos
+   * con su punto: corregir un decimal no obliga a copiar el resto.
+   */
+  protected alternarCoordenadas(): void {
+    const abrir = !this.coordenadasAbiertas();
+    this.coordenadasAbiertas.set(abrir);
+    if (!abrir) return;
+    const punto = this.punto();
+    this.latitudEscrita.set(punto === null ? '' : formatCoordinate(punto.lat));
+    this.longitudEscrita.set(punto === null ? '' : formatCoordinate(punto.lng));
+    this.errorLatitud.set('');
+    this.errorLongitud.set('');
+  }
+
+  /**
+   * Pone el pin en las coordenadas escritas.
+   *
+   * Enter en un campo aplica y **no** envía el formulario de alta que rodea al
+   * selector: por eso el `preventDefault`.
+   */
+  protected aplicarCoordenadas(evento?: Event): void {
+    evento?.preventDefault();
+    const lat = parseCoordinate(this.latitudEscrita(), 90);
+    const lng = parseCoordinate(this.longitudEscrita(), 180);
+    this.errorLatitud.set(lat === null ? 'Escribí un número entre −90 y 90, por ejemplo −17,7833.' : '');
+    this.errorLongitud.set(
+      lng === null ? 'Escribí un número entre −180 y 180, por ejemplo −63,1821.' : '',
+    );
+    if (lat === null || lng === null) return;
+    this.fijarPunto({ lat, lng });
+  }
+
+  protected escribirLatitud(valor: string | number | null): void {
+    this.latitudEscrita.set(valor === null ? '' : String(valor));
+  }
+
+  protected escribirLongitud(valor: string | number | null): void {
+    this.longitudEscrita.set(valor === null ? '' : String(valor));
+  }
+
   /**
    * El pin, tal como lo espera `app-map`.
    *
@@ -355,6 +443,17 @@ export class UbicacionPicker {
     this.vieneDelNavegador.set(false);
     this.marcando.set(false);
     this.rechazado.set(false);
+    // Los campos, si están abiertos, siguen al pin: si lo corrió el teclado o
+    // un toque, lo escrito ya no describe dónde quedó.
+    if (this.coordenadasAbiertas()) {
+      this.latitudEscrita.set(formatCoordinate(elegido.lat));
+      this.longitudEscrita.set(formatCoordinate(elegido.lng));
+      this.errorLatitud.set('');
+      this.errorLongitud.set('');
+    }
+    this.anuncio.set(
+      `Pin en latitud ${formatCoordinate(elegido.lat)}, longitud ${formatCoordinate(elegido.lng)}. Falta confirmarlo.`,
+    );
     this.puntoElegido.emit(elegido);
   }
 
@@ -375,6 +474,8 @@ export class UbicacionPicker {
   quitarUbicacion(): void {
     this.punto.set(null);
     this.marcando.set(false);
+    this.coordenadasAbiertas.set(false);
+    this.anuncio.set('');
     this.desconfirmar();
   }
 
