@@ -67,7 +67,8 @@ import {
     la lista de modalidades (qué estudios hace el centro) y la autorización de
     radioprotección.
 
-    Es la MAQUETA: nada sale a la red. Ver `submit()`.
+    El envío llama a `POST /iam/auth/register-organization` con
+    `tenantType: 'DIAGNOSTIC_CENTER'`, igual que el laboratorio. Ver `submit()`.
     ========================================================================== */
 
 /**
@@ -94,9 +95,8 @@ export const TIPOS_DE_SOCIEDAD: readonly SelectOption<string>[] = [
   { value: 'SOCIEDAD_COLECTIVA', label: 'Sociedad colectiva' },
   { value: 'COMANDITA_SIMPLE', label: 'Sociedad en comandita simple' },
   // Corregido a `COMANDITA_ACCIONES` (subtarea 1.1): es el código real del
-  // diccionario compartido (`legal-entity-types.dictionary.ts`); esta pantalla
-  // es una maqueta que no sale a la red, pero el código debe coincidir para
-  // el día que se conecte.
+  // diccionario compartido (`legal-entity-types.dictionary.ts`), que es el que
+  // valida `register-organization` al recibir el alta.
   { value: 'COMANDITA_ACCIONES', label: 'Sociedad en comandita por acciones' },
   { value: 'SUCURSAL_EXTRANJERA', label: 'Sucursal de sociedad extranjera' },
 ];
@@ -340,11 +340,13 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
  *
  * ## Qué es y qué no es
  *
- * Es la maqueta visual del alta: **no hay endpoint detrás y no se llama a
- * ninguno**. La API tiene tres altas públicas —paciente, profesional y
- * aseguradora— y el centro de diagnóstico no es una de ellas, igual que no lo
- * es el laboratorio de sangre. Así que el envío se resuelve acá y la pantalla
- * lo dice: queda una solicitud, no una cuenta. Ver `submit()`.
+ * Es el alta institucional del centro, por el **mismo** endpoint que la
+ * aseguradora y el laboratorio: `POST /iam/auth/register-organization`, con
+ * `tenantType: 'DIAGNOSTIC_CENTER'` y el bloque `diagnosticUnit` (tipo
+ * `DU_TYPE_IMAGING` y las modalidades elegidas como conceptos). Crea el tenant,
+ * la cuenta del representante legal y la unidad diagnóstica, todo **pendiente
+ * de verificación**: por eso la pantalla dice que queda una solicitud, no una
+ * cuenta habilitada. Ver `submit()`.
  *
  * ## Por qué la pantalla dice «imagenología» y la fuente dice «análisis médicos»
  *

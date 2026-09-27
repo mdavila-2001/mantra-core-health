@@ -92,9 +92,8 @@ export const TIPOS_DE_SOCIEDAD: readonly SelectOption<string>[] = [
   { value: 'SOCIEDAD_COLECTIVA', label: 'Sociedad colectiva' },
   { value: 'COMANDITA_SIMPLE', label: 'Sociedad en comandita simple' },
   // Corregido a `COMANDITA_ACCIONES` (subtarea 1.1): es el código real del
-  // diccionario compartido (`legal-entity-types.dictionary.ts`); esta pantalla
-  // es una maqueta que no sale a la red, pero el código debe coincidir para
-  // el día que se conecte.
+  // diccionario compartido (`legal-entity-types.dictionary.ts`), que es el que
+  // valida `register-organization` al recibir el alta.
   { value: 'COMANDITA_ACCIONES', label: 'Sociedad en comandita por acciones' },
   { value: 'SUCURSAL_EXTRANJERA', label: 'Sucursal de sociedad extranjera' },
 ];
@@ -253,13 +252,15 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
  *
  * ## Qué es y qué no es
  *
- * Es la maqueta visual del alta: **no hay endpoint detrás y no se llama a
- * ninguno**. La API tiene tres altas públicas —paciente, profesional y
- * aseguradora— y el laboratorio no es una de ellas todavía. Mandar esto a
- * `register-organization` daría de alta una aseguradora, que es otra cosa;
- * apuntar a una ruta inventada dejaría un 404 esperando al primero que lo
- * pruebe contra la API de verdad. Así que el envío se resuelve acá y la
- * pantalla lo dice: queda una solicitud.
+ * Es el alta institucional del laboratorio, por el **mismo** endpoint que la
+ * aseguradora: `POST /iam/auth/register-organization`, con
+ * `tenantType: 'DIAGNOSTIC_CENTER'` y el bloque `diagnosticUnit` (tipo
+ * `DU_TYPE_LAB`, modalidad `DU_MODALITY_LAB`). Crea el tenant en
+ * `directory`, la cuenta del representante legal como dueño y la unidad
+ * diagnóstica, todo **pendiente de verificación**: por eso la pantalla dice
+ * que queda una solicitud y no una cuenta habilitada. Los PDF viajan antes,
+ * por `upload-registration-document`, y el alta los reclama por su `fileId`
+ * junto con el representante legal y las tres gerencias. Ver `submit()`.
  *
  * ## De dónde sale cada pregunta
  *
