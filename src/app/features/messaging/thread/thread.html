@@ -171,7 +171,7 @@
                       class="hilo__imagen"
                       type="button"
                       data-testid="hilo-imagen"
-                      (click)="abrirImagen(url)"
+                      (click)="abrirImagen(url, nombreDelAdjunto(linea.mensaje))"
                     >
                       <img [src]="url" [alt]="nombreDelAdjunto(linea.mensaje)" />
                     </button>
@@ -320,7 +320,7 @@
                     }
                     @if (destinosDeReenvio().length > 0) {
                       <li role="none">
-                        <button role="menuitem" type="button" data-testid="hilo-reenviar" (click)="reenviar(linea.mensaje)">
+                        <button role="menuitem" type="button" data-testid="hilo-reenviar" (click)="reenviar(linea.mensaje, $event)">
                           Reenviar
                         </button>
                       </li>
@@ -356,32 +356,33 @@
 
 <app-composer (enviado)="alEnviar()" />
 
-<!-- Elegir a quién reenviar: la misma lista de la bandeja, sin ésta. -->
+<!-- Elegir a quién reenviar: la misma lista de la bandeja, sin ésta.
+
+     En `app-content-dialog` y no en un `div role="dialog"` propio: aquél
+     declaraba `aria-modal` pero no lo cumplía —el `Tab` salía a la bandeja y
+     el hilo de atrás seguía tocable—. El `<dialog>` nativo con `showModal()`
+     trae la trampa de foco, el fondo inerte y `Escape`; el foco vuelve al
+     botón «Opciones del mensaje» (ver `reenviar`). -->
 @if (reenviando()) {
-  <div
-    class="hilo__visor hilo__reenvio"
-    role="dialog"
-    aria-modal="true"
-    aria-label="Reenviar mensaje"
-    tabindex="-1"
-    (click)="cerrarReenvioSiEsElFondo($event)"
-    (keydown.escape)="cancelarReenvio()"
+  <app-content-dialog
+    #forwardDialog
+    heading="Reenviar a…"
+    size="sm"
+    closeLabel="Cancelar"
+    data-testid="thread-forward-dialog"
+    (closed)="cancelarReenvio()"
   >
-    <div class="hilo__reenvio-caja" role="document">
-      <h2 class="hilo__reenvio-titulo">Reenviar a…</h2>
-      <ul class="hilo__reenvio-lista">
-        @for (destino of destinosDeReenvio(); track destino.id) {
-          <li>
-            <button type="button" data-testid="hilo-reenviar-destino" (click)="reenviarA(destino.id)">
-              <app-avatar [src]="avatarDeConversacion(destino)" [name]="nombreDeConversacion(destino)" size="md" />
-              <span>{{ nombreDeConversacion(destino) }}</span>
-            </button>
-          </li>
-        }
-      </ul>
-      <button type="button" class="hilo__reenvio-cancelar" (click)="cancelarReenvio()">Cancelar</button>
-    </div>
-  </div>
+    <ul class="hilo__reenvio-lista">
+      @for (destino of destinosDeReenvio(); track destino.id) {
+        <li>
+          <button type="button" data-testid="hilo-reenviar-destino" (click)="reenviarA(destino.id)">
+            <app-avatar [src]="avatarDeConversacion(destino)" [name]="nombreDeConversacion(destino)" size="md" />
+            <span>{{ nombreDeConversacion(destino) }}</span>
+          </button>
+        </li>
+      }
+    </ul>
+  </app-content-dialog>
 }
 
 <!-- «Información del contacto»: quién es el otro lado, sin salir del hilo. -->
@@ -394,21 +395,18 @@
   />
 }
 
-<!-- La imagen a tamaño completo. Un diálogo propio y no `app-dialog`: acá no
-     hay formulario ni acciones, sólo la foto y una cruz. -->
-@if (imagenAbierta(); as url) {
-  <div
-    class="hilo__visor"
-    role="dialog"
-    aria-modal="true"
-    aria-label="Imagen del mensaje"
-    (click)="cerrarImagen()"
-    (keydown.escape)="cerrarImagen()"
-    tabindex="-1"
+<!-- La imagen a tamaño completo, en el mismo modal del sistema que el
+     reenvío: antes era un `div` con `aria-modal` que no atrapaba el foco ni
+     dejaba inerte el fondo, y su cruz no tenía acción propia (cerraba por el
+     clic que subía al velo). Ahora `Escape`, el fondo y «Cerrar» son el mismo
+     gesto, y el foco vuelve a la miniatura que lo abrió. -->
+@if (imagenAbierta(); as imagen) {
+  <app-content-dialog
+    heading="Imagen del mensaje"
+    size="xl"
+    data-testid="thread-image-viewer"
+    (closed)="cerrarImagen()"
   >
-    <button class="hilo__visor-cerrar" type="button" aria-label="Cerrar la imagen">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
-    </button>
-    <img [src]="url" alt="Imagen del mensaje" />
-  </div>
+    <img class="hilo__visor-imagen" [src]="imagen.url" [alt]="imagen.nombre" />
+  </app-content-dialog>
 }

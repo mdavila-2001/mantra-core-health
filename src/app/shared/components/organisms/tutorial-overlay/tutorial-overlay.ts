@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 
 import { TutorialEngine } from '../../../../core/tutorials/tutorial.engine';
+import { trapTabKey } from '../../../a11y/modal-focus';
 import { AppButton } from '../../atoms/button/button';
 import { DialogService } from '../../molecules/dialog/dialog-service';
 
@@ -65,7 +66,10 @@ interface Geometria {
  * El globo es un `role="dialog"` con `aria-modal`, el foco entra al abrirse y se
  * devuelve al salir. `Escape` pregunta antes de abandonar —perder un recorrido a
  * mitad de camino por un tecleo es una molestia real— y las flechas avanzan y
- * retroceden. El progreso se dice con palabras («paso 3 de 8»), no sólo con la
+ * retroceden. `Tab` da la vuelta dentro del globo y, en los pasos que piden
+ * tocar el elemento resaltado, también pasa por él: es lo único de la página
+ * que el paso deja usar, y sin esa vuelta el tabulador se iba a la pantalla de
+ * atrás, tapada por el velo. El progreso se dice con palabras («paso 3 de 8»), no sólo con la
  * barra, porque una barra no se escucha.
  */
 @Component({
@@ -236,9 +240,19 @@ export class TutorialOverlay {
     if (this.paso() === null) {
       return;
     }
+    // Con la confirmación de «Dejar el tutorial» abierta, las teclas son de
+    // ella: es otro `<dialog>` con su propia trampa y su propio `Escape`.
+    if (this.focoEnOtroDialogo()) {
+      return;
+    }
     if (evento.key === 'Escape') {
       evento.preventDefault();
       void this.abandonar();
+      return;
+    }
+    if (evento.key === 'Tab') {
+      const resaltado = this.interactivo() ? (this.paso()?.element ?? null) : null;
+      trapTabKey(evento, resaltado, this.globo()?.nativeElement);
       return;
     }
     // Las flechas sólo mueven el recorrido cuando el foco está DENTRO del globo:
@@ -357,6 +371,20 @@ export class TutorialOverlay {
 
   private alto(): number {
     return this.document.defaultView?.innerHeight ?? 768;
+  }
+
+  /**
+   * Si el foco está dentro de un `<dialog>` abierto ajeno al paso.
+   *
+   * Ajeno: uno que no contiene el elemento resaltado. Un paso que señala algo
+   * dentro de un modal sigue manejando sus teclas como siempre.
+   */
+  private focoEnOtroDialogo(): boolean {
+    const activo = this.document.activeElement;
+    const dialogo = activo instanceof Element ? activo.closest('dialog[open]') : null;
+    if (dialogo === null) return false;
+    const resaltado = this.paso()?.element ?? null;
+    return resaltado === null || !dialogo.contains(resaltado);
   }
 
   private focoEnElGlobo(): boolean {

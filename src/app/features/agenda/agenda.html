@@ -643,6 +643,7 @@
         variant="primary"
         size="sm"
         data-testid="agenda-mover-aca"
+        [attr.aria-label]="'Mover acá: ' + (cupo.desde | date: 'EEEE d MMM, HH:mm') + (sedeDelRecurso() ? ', ' + sedeDelRecurso()?.name : '')"
         [isLoading]="cupoDestino() === cupo.id"
         (clicked)="reprogramarA(cupo)"
       >
@@ -659,7 +660,7 @@
       variant="primary"
       size="sm"
       data-testid="agenda-reservar"
-      [attr.aria-label]="'Reservar este cupo: ' + (cupo.desde | date: 'EEEE d MMM, HH:mm')"
+      [attr.aria-label]="'Reservar este cupo: ' + (cupo.desde | date: 'EEEE d MMM, HH:mm') + (sedeDelRecurso() ? ', ' + sedeDelRecurso()?.name : '')"
       appTooltip="Reservar este cupo"
       [routerLink]="rutaDeReserva(cupo)"
       [queryParams]="paramsDeReserva(cupo)"

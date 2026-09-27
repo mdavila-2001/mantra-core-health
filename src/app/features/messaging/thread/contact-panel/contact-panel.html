@@ -1,5 +1,7 @@
 <!-- El velo. Cierra al tocarlo y con Escape, como el resto de las capas del
-     hilo; el `tabindex` es lo que hace que Escape llegue sin haber tabulado. -->
+     hilo; el `tabindex` es lo que hace que Escape llegue sin haber tabulado.
+     `Tab` no sale de la hoja y lo de atrás queda inerte mientras está abierta
+     (ver `handleKeydown` y el constructor). -->
 <div
   #hoja
   class="contacto"
@@ -9,7 +11,7 @@
   tabindex="-1"
   data-testid="hilo-contacto"
   (click)="closeIfBackdrop($event)"
-  (keydown.escape)="close()"
+  (keydown)="handleKeydown($event)"
 >
   <section class="contacto__hoja" role="document">
     <header class="contacto__cabecera">
