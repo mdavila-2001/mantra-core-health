@@ -85,13 +85,23 @@ describe('ScheduleGrid · gate de accesibilidad (axe, WCAG 2.2 AA, graves)', () 
     'con el globo de detalle abierto por teclado',
     async () => {
       const root = await mount({ bloqueos: BLOCKS });
-      const block = root.querySelector<HTMLElement>('[data-testid="horario-bloque"]');
-      if (block === null) {
-        throw new Error('la grilla no dibujó ninguna franja');
+      // El foco de teclado lo recibe la celda de la grilla accesible cuando
+      // existe (roving tabindex); si no, la franja misma. Se enfoca la primera
+      // que abre el globo: una celda fuera de horario no tiene detalle.
+      const cells = root.querySelectorAll<HTMLElement>('[data-testid="schedule-grid-cell"]');
+      const targets =
+        cells.length > 0
+          ? Array.from(cells)
+          : Array.from(root.querySelectorAll<HTMLElement>('[data-testid="horario-bloque"]'));
+      if (targets.length === 0) {
+        throw new Error('la grilla no dibujó celdas ni franjas enfocables');
       }
-      block.dispatchEvent(new FocusEvent('focus'));
-      fixture.detectChanges();
-      await fixture.whenStable();
+      for (const target of targets) {
+        target.dispatchEvent(new FocusEvent('focus'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        if (root.querySelector('[data-testid="horario-globo"]') !== null) break;
+      }
       expect(root.querySelector('[data-testid="horario-globo"]')).not.toBeNull();
       await expectNoSeriousViolations(root);
     },
