@@ -118,6 +118,27 @@ export const NAV_ICON_NAMES = [
   'sun',
   'moon',
   'camera',
+
+  // Acciones de desplegable (2026-09-24, 99d6c1da): toda opción de un
+  // desplegable lleva ícono. Entraron al nav y faltaban acá, que es justo la
+  // separación que esta lista existe para impedir. Igual que `remove` y
+  // `edit`, no nombran una sección. El porqué está donde se dibujan:
+  // `atoms/nav-icon/nav-icon.types.ts`.
+  'eye',
+  'eye-off',
+  'check',
+  'check-circle',
+  'close',
+  'arrive',
+  'logout',
+  'paperclip',
+  'refresh',
+  'share',
+  'qr',
+  'print',
+  'download',
+  'merge',
+  'clock',
 ] as const;
 export type NavIconName = (typeof NAV_ICON_NAMES)[number];
 
