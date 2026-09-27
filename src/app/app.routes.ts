@@ -110,6 +110,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // todo el mundo, paciente incluido—.
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
   diagnostics: () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
+  // La recepción de muestras del laboratorio. Diferida: sólo la alcanza el
+  // personal de un centro de diagnóstico.
+  'laboratorio/recepcion': () =>
+    import('./features/lab-reception/lab-reception').then((m) => m.LabReception),
   interventions: () =>
     import('./features/interventions/interventions').then((m) => m.Interventions),
   'medical-records': () =>

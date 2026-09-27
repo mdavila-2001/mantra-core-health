@@ -464,6 +464,32 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M20 diagnostics · M08 clinical',
   },
   {
+    // La recepción de muestras del laboratorio: la bandeja de órdenes que
+    // otras organizaciones le dirigieron (`POST /diagnostics/service-requests/inbox`)
+    // y los dos actos que la vacían —recibir la muestra y acesionarla—. Es el
+    // paso que falta **antes** de «Laboratorio e imagen», cuya cola arranca
+    // cuando la acesión ya existe.
+    //
+    // Quien la opera es el personal de un centro de diagnóstico, que no tiene
+    // rol propio en el token: el dueño entra con `USER` y su autoridad es la
+    // membresía. La API decide con `LabStaffGuard` (miembro activo de un tenant
+    // `DIAGNOSTIC_CENTER`, o `CLINICIAN`/`PRACTITIONER` del tenant activo); el
+    // menú sólo puede mirar el tipo de la organización activa, y es lo que
+    // mira. El paciente queda afuera también por rol: su membresía en el
+    // tenant por defecto no lo vuelve personal de nadie.
+    path: 'laboratorio/recepcion',
+    label: 'Recepción de muestras',
+    group: 'Atención',
+    icon: 'flask',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT'],
+    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
+    availability: 'disponible',
+    summary: 'Recibí las muestras de las órdenes que te derivaron y registrá su acesión.',
+    module: 'M20 diagnostics',
+  },
+  {
     // Carril 12. Los cinco roles perioperatorios que declara `PeriopController`
     // en sus lecturas; `BILLING` queda afuera a propósito: figura sólo en el
     // endpoint de cargos, que es contabilidad del caso y no atención.
