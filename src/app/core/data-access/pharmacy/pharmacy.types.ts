@@ -216,6 +216,62 @@ export interface PharmacyDetail extends PharmacyDirectoryItem {
   readonly homeDeliveryAvailable: boolean | null;
   readonly pickupAvailable: boolean | null;
   readonly sites: readonly PharmacySiteRead[];
+  /**
+   * La ficha legal, leída de la organización dueña de la farmacia: el NIT de
+   * su alta institucional, su forma societaria (`SRL`, `SA`, `UNIPERSONAL`…,
+   * que **no** es el `type` de farmacia), y su casa matriz. `null` cuando la
+   * organización no lo registró, o cuando no es una organización de tipo
+   * farmacia —sus datos serían de otra entidad—.
+   */
+  readonly taxId: string | null;
+  readonly companyType: PharmacyConcept | null;
+  readonly legalAddressText: string | null;
+  readonly headquarters: { readonly latitude: number; readonly longitude: number } | null;
+}
+
+/**
+ * Una licencia de la farmacia, tal como la lista `GET
+ * /pharmacy/pharmacies/:id/licenses` (sólo para el personal de la farmacia).
+ * Espeja `PharmacyLicenseDto` del backend campo por campo.
+ */
+export interface PharmacyLicense {
+  readonly id: string;
+  readonly type: PharmacyConcept | null;
+  readonly number: string;
+  /** La sede, si la licencia es de una sola; `null` si es de la farmacia. */
+  readonly siteId: string | null;
+  readonly siteName: string | null;
+  readonly jurisdiction: PharmacyConcept | null;
+  /** Fechas sin hora (`AAAA-MM-DD`). */
+  readonly validFrom: string | null;
+  readonly validTo: string | null;
+  /** Días hasta el vencimiento, contados por el servidor; negativo si venció. */
+  readonly daysToExpiry: number | null;
+  readonly verificationStatus: PharmacyConcept | null;
+  readonly evidenceFileId: string | null;
+}
+
+export interface PharmacyLicensePage {
+  readonly items: readonly PharmacyLicense[];
+  readonly count: number;
+}
+
+/** Una persona que representa o gestiona la organización de la farmacia. */
+export interface PharmacyContactPerson {
+  /** `LEGAL_REPRESENTATIVE`, `GENERAL_MANAGER`, `COMMERCIAL_MANAGER` o `MARKETING_MANAGER`. */
+  readonly role: string;
+  readonly fullName: string;
+  readonly email: string | null;
+  readonly phone: string | null;
+}
+
+/**
+ * Quién responde por la farmacia, tal como lo trae `GET
+ * /pharmacy/pharmacies/:id/contacts` (sólo para su personal).
+ */
+export interface PharmacyContacts {
+  readonly legalRepresentative: PharmacyContactPerson | null;
+  readonly executives: readonly PharmacyContactPerson[];
 }
 
 /**

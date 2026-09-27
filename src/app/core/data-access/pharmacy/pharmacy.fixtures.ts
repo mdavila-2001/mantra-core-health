@@ -1,7 +1,9 @@
 import type {
   AvailabilityResult,
   AvailabilitySite,
+  PharmacyContacts,
   PharmacyDetail,
+  PharmacyLicensePage,
   PharmacyProduct,
   PharmacyProductSearchPage,
   PharmacySitePage,
@@ -189,6 +191,70 @@ export const FARMACIA_DETALLE: PharmacyDetail = {
       addressText: 'Calle Libertad 245, entre Ballivián y Sucre',
       latitude: -17.7833,
       longitude: -63.1821,
+    },
+  ],
+  taxId: '1020304025',
+  companyType: { code: 'SRL', display: 'Limited liability company (S.R.L.)' },
+  legalAddressText: 'Av. Cristo Redentor 1450, Santa Cruz de la Sierra',
+  headquarters: { latitude: -17.7652, longitude: -63.1826 },
+};
+
+/**
+ * La carpeta de licencias de la misma farmacia: una de toda la farmacia,
+ * vigente y verificada, y una de la sede, por vencer y pendiente.
+ */
+export const PHARMACY_LICENSES_FIXTURE: PharmacyLicensePage = {
+  items: [
+    {
+      id: '9e8d7c60-5b4a-4321-9876-0000000000a1',
+      type: { code: 'PHARM_LICENSE_TYPE_OPERATING', display: 'Operating license' },
+      number: 'LF-2026-0187',
+      siteId: null,
+      siteName: null,
+      jurisdiction: null,
+      validFrom: '2026-01-15',
+      validTo: '2027-01-14',
+      daysToExpiry: 110,
+      verificationStatus: { code: 'PHARM_VERIFICATION_VERIFIED', display: 'Verification verified' },
+      evidenceFileId: '9e8d7c60-5b4a-4321-9876-0000000000f1',
+    },
+    {
+      id: '9e8d7c60-5b4a-4321-9876-0000000000a2',
+      type: { code: 'PHARM_LICENSE_TYPE_OPERATING', display: 'Operating license' },
+      number: 'SEDES-SC-4411',
+      siteId: FIXTURE_IDS.sedeCentro,
+      siteName: 'Sucursal Centro',
+      jurisdiction: null,
+      validFrom: '2025-10-10',
+      validTo: '2026-10-09',
+      daysToExpiry: 13,
+      verificationStatus: { code: 'PHARM_VERIFICATION_PENDING', display: 'Verification pending' },
+      evidenceFileId: null,
+    },
+  ],
+  count: 2,
+};
+
+/** Quién responde por la misma farmacia: representante y dos gerencias. */
+export const PHARMACY_CONTACTS_FIXTURE: PharmacyContacts = {
+  legalRepresentative: {
+    role: 'LEGAL_REPRESENTATIVE',
+    fullName: 'María Elena Ortiz Camacho',
+    email: 'legal@farmaciaandina.bo',
+    phone: null,
+  },
+  executives: [
+    {
+      role: 'GENERAL_MANAGER',
+      fullName: 'Jorge Antonio Vaca Suárez',
+      email: 'gerencia@farmaciaandina.bo',
+      phone: '+591 70011223',
+    },
+    {
+      role: 'COMMERCIAL_MANAGER',
+      fullName: 'Lucía Fernanda Roca Mendoza',
+      email: null,
+      phone: '+591 70011224',
     },
   ],
 };

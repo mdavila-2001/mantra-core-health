@@ -404,6 +404,34 @@ describe('PharmacyOrdersClient real HTTP contract', () => {
     expect(received).toBeInstanceOf(HttpErrorResponse);
   });
 
+  it('names the prescriber with the specialty, or only the name, never a lone specialty', () => {
+    expect(
+      pharmacyOrder(
+        orderDto({ prescriber: { name: 'Dra. Mariana Suárez', specialty: 'Cardiología' } }),
+      ).prescriptor,
+    ).toBe('Dra. Mariana Suárez · Cardiología');
+    expect(
+      pharmacyOrder(orderDto({ prescriber: { name: 'Dr. Luis Paz', specialty: null } }))
+        .prescriptor,
+    ).toBe('Dr. Luis Paz');
+    expect(
+      pharmacyOrder(orderDto({ prescriber: { name: null, specialty: 'Cardiología' } }))
+        .prescriptor,
+    ).toBeNull();
+    expect(pharmacyOrder(orderDto({ prescriber: null })).prescriptor).toBeNull();
+  });
+
+  it('carries the stored delivery address, and tolerates a backend without the field', () => {
+    expect(
+      pharmacyOrder(orderDto({ deliveryAddressText: 'Calle Sucre 120, Cochabamba' }))
+        .direccionDeEntrega,
+    ).toBe('Calle Sucre 120, Cochabamba');
+    const { deliveryAddressText: _omitted, prescriber: _alsoOmitted, ...older } = orderDto();
+    const adapted = pharmacyOrder(older as PharmacyOrderDto);
+    expect(adapted.direccionDeEntrega).toBeNull();
+    expect(adapted.prescriptor).toBeNull();
+  });
+
   it('rejects an unknown backend state instead of inventing a visual state', () => {
     expect(() =>
       pharmacyOrder(orderDto({ status: { code: 'PINV_ORDER_NEW', display: 'New' } })),

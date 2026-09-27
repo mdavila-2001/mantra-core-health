@@ -36,6 +36,12 @@ export class RepresentanteYGerentes {
   /** Pidieron ver el poder del representante, que vive en «Documentos». */
   readonly poderPedido = output<void>();
 
+  /**
+   * De lectura (contra la API real): sin rótulo de ejemplo y sin el salto al
+   * poder, que no está entre las licencias de la carpeta.
+   */
+  readonly readOnly = input(false);
+
   protected readonly notaDeEjemplo = NOTA_DE_DATOS_DE_EJEMPLO;
 
   protected readonly gente = computed(() => dataOf(this.state()));

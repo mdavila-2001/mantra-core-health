@@ -13,8 +13,11 @@ import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
 } from '@core/data-access/terminology/bo-municipalities.service';
+import { PromotionsClient } from '@core/data-access/promotions/promotions.client';
+import type { MyPromotionDto } from '@core/data-access/promotions/promotions.dto';
+import { errorToViewState } from '@core/http/error-to-view-state';
 import { SAMPLE_DATA_ENABLED } from '@core/mock/sample-data';
-import { empty, ready } from '@core/view-state/view-state';
+import { empty, loading, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
 import { AppButton } from '@shared/components/atoms/button/button';
 import type { SearchResultItem } from '@shared/components/molecules/search-result/search-result.types';
@@ -48,13 +51,56 @@ const RUTA_DE_COMPRA = '/my-account/pharmacy';
 /** Lo que se ofrece mientras no haya promociones que mostrar. */
 const SEARCH_PHARMACIES_ACTION = { label: 'Buscar farmacias', route: '/search/medications' };
 
+/** El vacío contra la API real: la consulta se hizo y no hay ninguna vigente. */
+const NONE_CURRENT_MESSAGE =
+  'Por ahora no tenés promociones vigentes. Cuando haya una para vos, va a aparecer acá.';
+
 /**
- * El vacío contra la API real. No es «todavía no te llegó ninguna»: ninguna
- * ruta de la API publica las promociones que recibe una persona (B-REAL-13),
- * así que decir que no hay sería afirmar algo que nadie consultó.
+ * El grupo de las promociones que no declaran ciudad. El contrato no relaciona
+ * una promoción con un lugar, así que no se le inventa uno.
  */
-const NOT_AVAILABLE_MESSAGE =
-  'Las promociones de las farmacias todavía no se pueden ver desde la app. Mientras tanto, podés buscar farmacias y medicamentos.';
+const NO_CITY_GROUP = 'Sin ciudad declarada';
+
+/** Sobre qué aplica el descuento, en palabras (`appliesTo` del contrato). */
+const CATEGORY_BY_TARGET: Readonly<Record<string, { code: string; label: string }>> = {
+  TARGET_ORDER: { code: 'toda-la-compra', label: 'En toda la compra' },
+  TARGET_ITEM: { code: 'un-producto', label: 'En un producto' },
+  TARGET_CATEGORY: { code: 'una-categoria', label: 'En una categoría' },
+};
+
+const GENERIC_CATEGORY = { code: 'promocion', label: 'Promoción' };
+
+/**
+ * Una promoción del contrato (`GET /promotions/me`) en la forma que dibuja el
+ * directorio. Lo que el contrato no trae —farmacia, ciudad, medicamento,
+ * puntos— queda `null`; el descuento sale de su primera regla. Todas son
+ * vigentes (el backend no sirve otra cosa) y no hay registro de cuáles ya
+ * vio la persona, así que ninguna se marca «Nueva».
+ */
+export function promotionFromContract(promotion: MyPromotionDto): Promocion {
+  const discount = promotion.discounts[0];
+  const percentage = discount?.percentage == null ? null : Number(discount.percentage);
+  return {
+    id: promotion.id,
+    farmacia: null,
+    farmaciaVerificada: false,
+    ciudad: null,
+    titulo: promotion.name,
+    medicamento: null,
+    categoria:
+      (discount?.appliesTo && CATEGORY_BY_TARGET[discount.appliesTo.code]) ?? GENERIC_CATEGORY,
+    porcentaje: percentage === null || !Number.isFinite(percentage) ? null : Math.round(percentage),
+    montoFijo:
+      discount?.fixedAmount == null
+        ? null
+        : [discount.fixedAmount, discount.currency?.code].filter(Boolean).join(' '),
+    desde: promotion.validFrom === null ? null : new Date(promotion.validFrom),
+    hasta: promotion.validTo === null ? null : new Date(promotion.validTo),
+    factorDePuntos: null,
+    estado: 'vista',
+    cupones: promotion.coupons.map((coupon) => coupon.code),
+  };
+}
 
 const FECHA = new Intl.DateTimeFormat('es-BO', { day: 'numeric', month: 'short' });
 
@@ -64,10 +110,11 @@ const FECHA = new Intl.DateTimeFormat('es-BO', { day: 'numeric', month: 'short' 
  * ciudad. Los cortes viven en la URL, igual que en el directorio de farmacias
  * (`PublicDirectoryListing`), así que un enlace filtrado se puede compartir.
  *
- * En `mockup` los datos son de ejemplo: la API todavía no publica las
- * promociones recibidas (B-REAL-13). Contra la API real no se muestra ninguna
- * de ejemplo: la pantalla dice que la sección todavía no está disponible
- * (`SAMPLE_DATA_ENABLED`, ver `core/mock/sample-data.ts`).
+ * En `mockup` los datos son de ejemplo, con farmacia, ciudad y medicamento.
+ * Contra la API real (`SAMPLE_DATA_ENABLED` apagado, ver
+ * `core/mock/sample-data.ts`) salen de `GET /promotions/me` (B-REAL-13): las
+ * vigentes para la persona, sin lugar ni farmacia, porque el contrato no los
+ * relaciona con una promoción.
  */
 @Component({
   selector: 'app-promotions',
@@ -78,6 +125,7 @@ const FECHA = new Intl.DateTimeFormat('es-BO', { day: 'numeric', month: 'short' 
 })
 export class Promotions {
   private readonly router = inject(Router);
+  private readonly promotions = inject(PromotionsClient);
   private readonly ruta = inject(ActivatedRoute);
   private readonly municipios = inject(BoMunicipalitiesCatalog);
   private readonly destroyRef = inject(DestroyRef);
@@ -87,17 +135,19 @@ export class Promotions {
   /** Maqueta (`true`) o API real (`false`): ver la nota de la clase. */
   private readonly sampleData = inject(SAMPLE_DATA_ENABLED);
 
-  private readonly todas: readonly Promocion[] = this.sampleData ? promocionesDeEjemplo() : [];
+  private readonly todas = signal<readonly Promocion[]>(
+    this.sampleData ? promocionesDeEjemplo() : [],
+  );
 
   protected readonly estado = signal<ViewState<readonly Promocion[]>>(
     !this.sampleData
-      ? empty(SEARCH_PHARMACIES_ACTION, NOT_AVAILABLE_MESSAGE)
-      : this.todas.length === 0
+      ? loading()
+      : this.todas().length === 0
         ? empty(
             SEARCH_PHARMACIES_ACTION,
             'Cuando las farmacias te manden promociones, van a aparecer acá.',
           )
-        : ready(this.todas),
+        : ready(this.todas()),
   );
 
   /* ---- el mapa ------------------------------------------------------------ */
@@ -131,7 +181,7 @@ export class Promotions {
   private readonly termino = computed(() => normalizarLugar(this.parametro(SEARCH_PARAM) ?? ''));
 
   private departamentoDe(promo: Promocion): string | undefined {
-    return this.porCiudad().get(normalizarLugar(promo.ciudad));
+    return promo.ciudad === null ? undefined : this.porCiudad().get(normalizarLugar(promo.ciudad));
   }
 
   /** Texto, vigencia y categoría: los cortes que no dependen del lugar. */
@@ -139,7 +189,7 @@ export class Promotions {
     const termino = this.termino();
     const soloVigentes = this.soloVigentes();
     const categoria = this.categoria();
-    return this.todas.filter(
+    return this.todas().filter(
       (promo) =>
         (termino === '' || coincide(promo, termino)) &&
         (!soloVigentes || promo.estado !== 'vencida') &&
@@ -171,7 +221,7 @@ export class Promotions {
     const departamento = this.departamentoElegido();
     const termino = this.termino();
     const soloVigentes = this.soloVigentes();
-    return this.todas.filter(
+    return this.todas().filter(
       (promo) =>
         (departamento === null || this.departamentoDe(promo) === departamento) &&
         (termino === '' || coincide(promo, termino)) &&
@@ -192,7 +242,8 @@ export class Promotions {
   protected readonly tramos = computed<readonly GrupoDeDirectorio[]>(() => {
     const porCiudad = new Map<string, Promocion[]>();
     for (const promo of this.filtradas()) {
-      porCiudad.set(promo.ciudad, [...(porCiudad.get(promo.ciudad) ?? []), promo]);
+      const ciudad = promo.ciudad ?? NO_CITY_GROUP;
+      porCiudad.set(ciudad, [...(porCiudad.get(ciudad) ?? []), promo]);
     }
     return [...porCiudad.entries()]
       .map(([ciudad, promos]) => ({
@@ -227,7 +278,11 @@ export class Promotions {
     });
 
     if (this.departamentoElegido() !== null) {
-      const ciudades = contar(this.delDepartamento().map((promo) => [promo.ciudad, promo.ciudad]));
+      const ciudades = contar(
+        this.delDepartamento().flatMap((promo) =>
+          promo.ciudad === null ? [] : [[promo.ciudad, promo.ciudad] as const],
+        ),
+      );
       if (ciudades.length > 1) {
         filtros.unshift({ key: PARAM_CIUDAD, label: 'Ciudad', asChips: true, options: ciudades });
       }
@@ -244,6 +299,37 @@ export class Promotions {
 
   constructor() {
     this.leerGeografia();
+    if (!this.sampleData) {
+      this.loadMine();
+    }
+  }
+
+  /** Vuelve a pedir las promociones (el reintento del estado de error). */
+  protected reloadPromotions(): void {
+    if (!this.sampleData) {
+      this.loadMine();
+    }
+  }
+
+  /** Las vigentes para la persona, desde `GET /promotions/me`. */
+  private loadMine(): void {
+    this.estado.set(loading());
+    this.promotions
+      .listMine()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (page) => {
+          const promos = page.items.map(promotionFromContract);
+          this.todas.set(promos);
+          this.estado.set(
+            promos.length === 0
+              ? empty(SEARCH_PHARMACIES_ACTION, NONE_CURRENT_MESSAGE)
+              : ready(promos),
+          );
+        },
+        error: (error: unknown) =>
+          this.estado.set(errorToViewState<readonly Promocion[]>(error)),
+      });
   }
 
   protected elegirDepartamento(conceptId: string | null): void {
@@ -275,8 +361,8 @@ export class Promotions {
 }
 
 function coincide(promo: Promocion, termino: string): boolean {
-  return [promo.titulo, promo.farmacia, promo.medicamento, promo.categoria.label].some((campo) =>
-    normalizarLugar(campo).includes(termino),
+  return [promo.titulo, promo.farmacia, promo.medicamento, promo.categoria.label].some(
+    (campo) => campo !== null && normalizarLugar(campo).includes(termino),
   );
 }
 
@@ -294,7 +380,7 @@ function contar(pares: readonly (readonly [string, string])[]): { value: string;
 function porVigenciaYDescuento(a: Promocion, b: Promocion): number {
   const vencidaA = a.estado === 'vencida' ? 1 : 0;
   const vencidaB = b.estado === 'vencida' ? 1 : 0;
-  return vencidaA - vencidaB || b.porcentaje - a.porcentaje;
+  return vencidaA - vencidaB || (b.porcentaje ?? 0) - (a.porcentaje ?? 0);
 }
 
 function aTarjeta(promo: Promocion): SearchResultItem {
@@ -306,16 +392,36 @@ function aTarjeta(promo: Promocion): SearchResultItem {
     sellos.push({ label: `Puntos x${promo.factorDePuntos}`, tone: 'aviso' });
   if (promo.farmaciaVerificada) sellos.push({ label: 'Farmacia verificada', tone: 'ok' });
 
+  // La tarjeta muestra dos líneas de contexto: el cupón propio va en el
+  // subtítulo, que en una promoción del contrato queda libre (no trae farmacia
+  // ni medicamento).
+  const subtitle =
+    [promo.farmacia, promo.medicamento].filter(Boolean).join(' · ') ||
+    (promo.cupones.length === 0 ? '' : `Tu cupón: ${promo.cupones.join(', ')}`);
   return {
     id: promo.id,
     title: promo.titulo,
     link: RUTA_DE_COMPRA,
-    figureText: `-${promo.porcentaje}%`,
-    subtitle: `${promo.farmacia} · ${promo.medicamento}`,
+    ...(promo.porcentaje !== null
+      ? { figureText: `-${promo.porcentaje}%` }
+      : promo.montoFijo !== null
+        ? { figureText: `-${promo.montoFijo}` }
+        : {}),
+    ...(subtitle === '' ? {} : { subtitle }),
     meta: [
       { text: promo.categoria.label },
-      { text: `Del ${FECHA.format(promo.desde)} al ${FECHA.format(promo.hasta)}` },
+      { text: validityText(promo.desde, promo.hasta) },
     ],
     seals: sellos,
   };
+}
+
+/** La ventana de la promoción en palabras, diciendo lo que no declara. */
+function validityText(desde: Date | null, hasta: Date | null): string {
+  if (desde !== null && hasta !== null) {
+    return `Del ${FECHA.format(desde)} al ${FECHA.format(hasta)}`;
+  }
+  if (hasta !== null) return `Hasta el ${FECHA.format(hasta)}`;
+  if (desde !== null) return `Desde el ${FECHA.format(desde)}, sin fecha de fin`;
+  return 'Sin fecha de fin';
 }

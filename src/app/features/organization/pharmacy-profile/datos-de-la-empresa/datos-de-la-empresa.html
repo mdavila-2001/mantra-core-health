@@ -104,7 +104,7 @@
           <div class="empresa__campo">
             <dt class="empresa__etiqueta">Tipo de sociedad</dt>
             <dd class="empresa__valor">
-              {{ datos.tipoDeSociedad ?? (sampleData() ? 'Sin declarar' : 'No disponible') }}
+              {{ datos.tipoDeSociedad ?? (sampleData() ? 'Sin declarar' : 'Sin registrar') }}
             </dd>
             <!-- El porqué de la lista cerrada, también para quien sólo lee. -->
             <dd class="empresa__nota">{{ notaDelTipo }}</dd>
@@ -112,12 +112,12 @@
 
           <div class="empresa__campo">
             <dt class="empresa__etiqueta">NIT</dt>
-            <dd class="empresa__valor tabular-nums">{{ datos.nit ?? 'No disponible' }}</dd>
+            <dd class="empresa__valor tabular-nums">{{ datos.nit ?? 'Sin registrar' }}</dd>
           </div>
 
           <div class="empresa__campo">
             <dt class="empresa__etiqueta">Dirección legal de la central</dt>
-            <dd class="empresa__valor">{{ datos.direccionLegal ?? 'No disponible' }}</dd>
+            <dd class="empresa__valor">{{ datos.direccionLegal ?? 'Sin registrar' }}</dd>
           </div>
         </dl>
       }
@@ -140,7 +140,7 @@
             {{
               sampleData()
                 ? 'Todavía no está marcado el punto de la central.'
-                : 'El punto de la central no está disponible todavía.'
+                : 'Tu organización todavía no registró el punto de la central.'
             }}
           </p>
         }

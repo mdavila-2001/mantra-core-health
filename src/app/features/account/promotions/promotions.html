@@ -9,6 +9,7 @@
   [grupos]="tramos()"
   [sustantivo]="sustantivo"
   [textoSinCoincidencias]="sinCoincidencias()"
+  (reintentar)="reloadPromotions()"
 >
   <div slot="antes-de-filtros">
     @if (catalogoGeoCaido()) {
