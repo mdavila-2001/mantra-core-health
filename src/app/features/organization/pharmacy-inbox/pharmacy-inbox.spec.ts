@@ -288,12 +288,18 @@ describe('PharmacyInbox with the tenant API list', () => {
     fixture.destroy();
   });
 
-  it('el pedido de ejemplo se ve como delivery y se declara maqueta en la tarjeta', () => {
-    const fixture = mount([pharmacyOrderDtoFixture({ id: ID_PEDIDO_CON_DELIVERY })]);
+  it('un pedido a domicilio se ve como delivery por lo que dice el contrato, sin rótulo de maqueta', () => {
+    const fixture = mount([
+      pharmacyOrderDtoFixture({
+        id: ID_PEDIDO_CON_DELIVERY,
+        deliveryMode: { code: 'PINV_DELIVERY_DOMICILIO', display: 'Entrega a domicilio' },
+      }),
+    ]);
     const root = fixture.nativeElement as HTMLElement;
     const chips = [...root.querySelectorAll('.bandeja__entrega app-chip')];
 
-    expect(chips.map((nodo) => nodo.textContent?.trim())).toEqual(['Delivery', 'Datos de ejemplo']);
+    expect(chips.map((nodo) => nodo.textContent?.trim())).toEqual(['Delivery']);
+    expect(text(fixture)).not.toContain('Datos de ejemplo');
     expect(chips[0]?.classList.contains('tone--info')).toBe(true);
     fixture.destroy();
   });

@@ -13,6 +13,7 @@ import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
 } from '@core/data-access/terminology/bo-municipalities.service';
+import { SAMPLE_DATA_ENABLED } from '@core/mock/sample-data';
 import { empty, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
 import { AppButton } from '@shared/components/atoms/button/button';
@@ -44,6 +45,17 @@ const SUSTANTIVO: SustantivoDelDirectorio = {
 /** A dónde lleva una promoción: la pestaña «Comprar» de Farmacia. */
 const RUTA_DE_COMPRA = '/my-account/pharmacy';
 
+/** Lo que se ofrece mientras no haya promociones que mostrar. */
+const SEARCH_PHARMACIES_ACTION = { label: 'Buscar farmacias', route: '/search/medications' };
+
+/**
+ * El vacío contra la API real. No es «todavía no te llegó ninguna»: ninguna
+ * ruta de la API publica las promociones que recibe una persona (B-REAL-13),
+ * así que decir que no hay sería afirmar algo que nadie consultó.
+ */
+const NOT_AVAILABLE_MESSAGE =
+  'Las promociones de las farmacias todavía no se pueden ver desde la app. Mientras tanto, podés buscar farmacias y medicamentos.';
+
 const FECHA = new Intl.DateTimeFormat('es-BO', { day: 'numeric', month: 'short' });
 
 /**
@@ -53,7 +65,9 @@ const FECHA = new Intl.DateTimeFormat('es-BO', { day: 'numeric', month: 'short' 
  * (`PublicDirectoryListing`), así que un enlace filtrado se puede compartir.
  *
  * En `mockup` los datos son de ejemplo: la API todavía no publica las
- * promociones recibidas (B-REAL-13).
+ * promociones recibidas (B-REAL-13). Contra la API real no se muestra ninguna
+ * de ejemplo: la pantalla dice que la sección todavía no está disponible
+ * (`SAMPLE_DATA_ENABLED`, ver `core/mock/sample-data.ts`).
  */
 @Component({
   selector: 'app-promotions',
@@ -70,15 +84,20 @@ export class Promotions {
 
   protected readonly sustantivo = SUSTANTIVO;
 
-  private readonly todas = promocionesDeEjemplo();
+  /** Maqueta (`true`) o API real (`false`): ver la nota de la clase. */
+  private readonly sampleData = inject(SAMPLE_DATA_ENABLED);
+
+  private readonly todas: readonly Promocion[] = this.sampleData ? promocionesDeEjemplo() : [];
 
   protected readonly estado = signal<ViewState<readonly Promocion[]>>(
-    this.todas.length === 0
-      ? empty(
-          { label: 'Buscar farmacias', route: '/search/medications' },
-          'Cuando las farmacias te manden promociones, van a aparecer acá.',
-        )
-      : ready(this.todas),
+    !this.sampleData
+      ? empty(SEARCH_PHARMACIES_ACTION, NOT_AVAILABLE_MESSAGE)
+      : this.todas.length === 0
+        ? empty(
+            SEARCH_PHARMACIES_ACTION,
+            'Cuando las farmacias te manden promociones, van a aparecer acá.',
+          )
+        : ready(this.todas),
   );
 
   /* ---- el mapa ------------------------------------------------------------ */

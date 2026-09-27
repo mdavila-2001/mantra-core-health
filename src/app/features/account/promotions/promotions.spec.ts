@@ -13,6 +13,7 @@ import { routes } from '../../../app.routes';
 import { APP_SECTIONS } from '../../../core/navigation/navigation.map';
 import { NAV_SUBGROUPS } from '../../../core/navigation/navigation.subgroups';
 import { seccionRolesGuard } from '../../../core/navigation/section-roles.guard';
+import { SAMPLE_DATA_ENABLED } from '../../../core/mock/sample-data';
 import { Promotions } from './promotions';
 import { promocionesDeEjemplo } from './promotions.fixtures';
 
@@ -152,5 +153,35 @@ describe('Promotions en la navegación', () => {
     expect(ruta?.canActivate).toContain(seccionRolesGuard);
     const componente = await (ruta?.loadComponent as () => Promise<unknown>)();
     expect(componente).toBe(Promotions);
+  });
+});
+
+/**
+ * Contra la API real (`production-api`): ninguna promoción de ejemplo, y el
+ * vacío dice que la sección no está disponible, no que no te llegó nada.
+ */
+describe('Promotions contra la API real', () => {
+  it('no muestra promociones de ejemplo y dice que todavía no están disponibles', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { queryParams: new BehaviorSubject({}) } },
+        {
+          provide: BoMunicipalitiesCatalog,
+          useValue: { listar: () => of(RAMAS), olvidar: () => undefined },
+        },
+        { provide: SAMPLE_DATA_ENABLED, useValue: false },
+      ],
+    });
+    const fixture = TestBed.createComponent(Promotions);
+    fixture.detectChanges();
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(texto).toContain('todavía no se pueden ver desde la app');
+    expect(texto).toContain('Buscar farmacias');
+    for (const promo of promocionesDeEjemplo()) {
+      expect(texto).not.toContain(promo.titulo);
+    }
+    fixture.destroy();
   });
 });

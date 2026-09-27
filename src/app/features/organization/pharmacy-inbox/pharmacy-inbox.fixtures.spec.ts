@@ -109,18 +109,19 @@ describe('pharmacy-inbox.fixtures · la respuesta del seguro', () => {
   });
 });
 
-describe('pharmacy-inbox.fixtures · el medio de entrega de la maqueta', () => {
+describe('pharmacy-inbox.fixtures · la dirección de entrega de la maqueta', () => {
   it('sólo alcanza al pedido de ejemplo: el resto usa lo que devuelve la API', () => {
     expect(entregaDeEjemplo(PEDIDO_NUEVO)).toBeNull();
     expect(entregaDeEjemplo(PEDIDO_CON_SEGURO)).toBeNull();
     expect(entregaDeEjemplo(PEDIDO_ENTREGADO_CON_FACTURA)).toBeNull();
   });
 
-  it('el pedido de ejemplo sale a domicilio, con su dirección', () => {
+  it('el pedido de ejemplo trae sólo su dirección: la modalidad es del contrato', () => {
     const entrega = entregaDeEjemplo(PEDIDO_CON_DELIVERY);
 
     expect(PEDIDO_CON_DELIVERY.id).toBe(ID_PEDIDO_CON_DELIVERY);
-    expect(entrega?.modalidad).toBe('DOMICILIO');
+    expect(PEDIDO_CON_DELIVERY.modalidad).toBe('DOMICILIO');
+    expect(entrega).not.toHaveProperty('modalidad');
     expect((entrega?.direccion ?? '').length).toBeGreaterThan(10);
   });
 });

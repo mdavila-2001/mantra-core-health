@@ -17,20 +17,27 @@
       <!-- ─── La receta (T-E1): de ejemplo y rotulada ─────────────────────── -->
       <section class="confirmacion__bloque" aria-labelledby="confirmacion-receta" data-testid="pedido-receta">
         <h2 id="confirmacion-receta" class="confirmacion__titulo">Tu receta</h2>
-        @if (datos(); as ejemplo) {
-          <p class="confirmacion__principal">Emitida por {{ ejemplo.cabecera.emitidaPor }}</p>
+        @if (datos()?.cabecera; as cabecera) {
+          <p class="confirmacion__principal">Emitida por {{ cabecera.emitidaPor }}</p>
           <p class="confirmacion__secundario">
-            {{ ejemplo.cabecera.especialidad }} · el
-            {{ ejemplo.cabecera.emitidaEl | date: 'dd/MM/yyyy' }}
+            {{ cabecera.especialidad }} · el
+            {{ cabecera.emitidaEl | date: 'dd/MM/yyyy' }}
+          </p>
+        } @else {
+          <!-- Contra la API real: el borrador no trae quién firmó ni cuándo. -->
+          <p class="confirmacion__secundario" data-testid="order-prescription-without-header">
+            Receta electrónica. Quién la emitió y cuándo todavía no se muestra acá.
           </p>
         }
-        <p class="confirmacion__etiquetas">
-          <app-badge variant="info">{{ notaDeEjemplo }}</app-badge>
-          <span class="confirmacion__secundario">
-            Quién la emitió y cuándo, las cantidades recetadas, las alternativas y la variante con
-            seguro son de ejemplo.
-          </span>
-        </p>
+        @if (sampleData) {
+          <p class="confirmacion__etiquetas">
+            <app-badge variant="info">{{ notaDeEjemplo }}</app-badge>
+            <span class="confirmacion__secundario">
+              Quién la emitió y cuándo, las cantidades recetadas, las alternativas y la variante con
+              seguro son de ejemplo.
+            </span>
+          </p>
+        }
       </section>
 
       <!-- ─── La sede elegida ────────────────────────────────────────────── -->
@@ -46,7 +53,11 @@
       <section class="confirmacion__bloque" aria-labelledby="confirmacion-renglones">
         <h2 id="confirmacion-renglones" class="confirmacion__titulo">Qué pedís</h2>
 
-        <!-- T-E1 · F2.2.4: el conmutador es de demostración y lo dice. -->
+        <!-- T-E1 · F2.2.4: el conmutador es de demostración y lo dice. Contra la
+             API real no se ofrece: ningún contrato dice qué aprueba el seguro
+             antes de que el pedido exista. El bloque conserva su sangría para
+             no reescribir sus identificadores. -->
+        @if (sampleData) {
         <div class="confirmacion__seguro" data-testid="pedido-variante-seguro">
           <app-switch
             label="Ver la variante con seguro"
@@ -59,6 +70,7 @@
             Qué aprueba el seguro es un criterio de ejemplo, no la respuesta de tu aseguradora.
           </span>
         </div>
+        }
 
         <!-- FAR-I7: discreto y sólo si algo del pedido está en campaña. Sin
              promoción no aparece nada. -->
@@ -181,7 +193,11 @@
                     +
                   </button>
                   <span class="confirmacion__secundario">
-                    Recetado: hasta {{ renglon.cantidadRecetada }}
+                    @if (sampleData) {
+                      Recetado: hasta {{ renglon.cantidadRecetada }}
+                    } @else {
+                      Hasta {{ renglon.cantidadRecetada }}: la receta no declara cantidades
+                    }
                   </span>
                 </div>
                 @if (renglon.ofreceAlternativas) {
