@@ -179,6 +179,20 @@ export interface Environment {
   readonly campaignsDemo: boolean;
 
   /**
+   * Enciende la facturación SIMULADA (FACT-SIAT-MOCK): el motor fiscal del
+   * backend simulado que imita el flujo del SIAT —CUIS, CUFD, CUF, XML del
+   * documento sector, recepción con respuestas 908/904/902— sin hablar con el
+   * SIN ni con ninguna red.
+   *
+   * Mismo carácter que `loyaltyDemo`: **no decide si la pantalla existe**,
+   * decide si hay algo simulado que mostrar. Apagada, las rutas
+   * `/billing/simulated/*` no responden y la pantalla dice la verdad: que la
+   * facturación todavía no está conectada. Nada de lo que produce tiene
+   * validez fiscal, y cada objeto lo declara (`simulated: true`).
+   */
+  readonly billingSiatDemo: boolean;
+
+  /**
    * Registra las pantallas portadas de la bóveda que pintan **datos de
    * ejemplo** (`features/alovida/`: filas escritas a mano, una identidad de
    * mentira en el marco, botones que no llaman a nadie).
@@ -221,6 +235,7 @@ export interface EnvironmentOverrides {
   readonly paymentDemo?: boolean;
   readonly loyaltyDemo?: boolean;
   readonly campaignsDemo?: boolean;
+  readonly billingSiatDemo?: boolean;
   readonly designMockups?: boolean;
   readonly mockBackend?: boolean;
 }

@@ -11,6 +11,7 @@ import { registrarDirectorio } from './directory.handlers';
 import { registrarEncuestas } from './surveys-forms.handlers';
 import { registrarFarmacia } from './pharmacy.handlers';
 import { registrarFinanzas } from './finance.handlers';
+import { registrarFacturacionSimulada } from './billing-simulated.handlers';
 import { registrarIdentidad } from './identity.handlers';
 import { registrarLaboratorioFarmaceutico } from './pharma-lab.handlers';
 import { registerLoyalty } from './loyalty.handlers';
@@ -56,6 +57,9 @@ export function crearRouterSimulado(): MockRouter {
   registerInsuranceCampaigns(router);
   registrarEncuestas(router);
   registrarFinanzas(router);
+  // FACT-SIAT-MOCK · `/billing/simulated/*`, sin colisión con
+  // `/billing/service-catalog`, que es de `registrarPracticas`.
+  registrarFacturacionSimulada(router);
   registrarModulosAdministrativos(router);
   registrarFarmacia(router);
   registrarDiagnostico(router);

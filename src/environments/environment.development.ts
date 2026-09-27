@@ -54,6 +54,14 @@ export const environment: Environment = {
   campaignsDemo: envFromProcess.campaignsDemo ?? true,
 
   /**
+   * Encendida por defecto: sin ella no hay motor fiscal simulado que recorrer.
+   * Se apaga con `PUBLIC_BILLING_SIAT_DEMO=false` — y ese apagado es la prueba
+   * de que la pantalla dice que la facturación no está conectada, sin pedir
+   * nada.
+   */
+  billingSiatDemo: envFromProcess.billingSiatDemo ?? true,
+
+  /**
    * Encendidas por defecto: en desarrollo se trabaja contra la maqueta y las
    * pantallas de la bóveda son la referencia. Se apagan con
    * `PUBLIC_DESIGN_MOCKUPS=false` — y ese apagado es la prueba de que ningún
