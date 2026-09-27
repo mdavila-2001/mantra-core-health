@@ -264,6 +264,18 @@ jobs:
         env:
           E2E_SKIP_BUILD: 'true'
 
+      # Accesibilidad en cada pull request hacia `test` o `mockup`: los
+      # problemas `serious`/`critical` de axe sobre el login, el panel y el
+      # registro bloquean el merge. Es una sola spec de la regresión, con la
+      # misma API simulada del arnés y el artefacto que ya construyó el humo:
+      # no levanta nada nuevo. En `master` y a mano no se repite: ahí ya la
+      # corre la regresión completa de abajo.
+      - name: Accesibilidad
+        if: github.event_name == 'pull_request' && contains(fromJSON('["test", "mockup"]'), github.base_ref)
+        run: yarn test:e2e:a11y
+        env:
+          E2E_SKIP_BUILD: 'true'
+
       # La regresión completa solo en la rama principal y a mano: cubre casos de
       # borde y responsive, que son valiosos y no bloquean un pull request.
       - name: Regresión completa
