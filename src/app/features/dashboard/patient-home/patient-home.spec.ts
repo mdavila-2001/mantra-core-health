@@ -67,8 +67,8 @@ describe('PatientHome', () => {
     // el panel quede exactamente como estaba y `verify` siga exigiendo que no haya
     // ninguna otra petición suelta.
     await fixture?.whenStable();
-    for (const pedido of http.match((r) => r.url.startsWith('/insurance-campaigns/patient/'))) {
-      pedido.flush([]);
+    for (const pending of http.match((r) => r.url.startsWith('/insurance-campaigns/patient/'))) {
+      pending.flush([]);
     }
     http.verify();
   });
