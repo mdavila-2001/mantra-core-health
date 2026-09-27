@@ -443,3 +443,49 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
     });
   }
 });
+
+/**
+ * Los clientes mandan `Idempotency-Key` en la receta y en la orden de servicio.
+ * El doble no la interpreta (no repite respuestas: el deploy de mockup no tiene
+ * API que proteger), pero tiene que aceptarla sin cambiar lo que responde.
+ */
+describe('Idempotency-Key · el doble la tolera', () => {
+  const router = new MockRouter();
+  const medica = buscarUsuario('medica')!;
+  registrarClinica(router);
+  registrarDiagnostico(router);
+
+  function postWithKey(path: string, body: unknown): MockReply {
+    const match = router.match('POST', path);
+    if (match === null) throw new Error(`No existe POST ${path}`);
+    return match.handler({
+      method: 'POST',
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body,
+      headers: new HttpHeaders({ 'Idempotency-Key': 'k-123' }),
+      user: medica as MockUser,
+    }) as MockReply;
+  }
+
+  it('POST /clinical/medication-requests con la cabecera: 201', () => {
+    const respuesta = postWithKey('/clinical/medication-requests', {
+      patientProfileId: PACIENTE.id,
+      medicationConceptId: 'med-amoxi',
+      indicationText: 'Control de síntomas',
+    });
+
+    expect(respuesta.status).toBe(201);
+  });
+
+  it('POST /clinical/service-requests con la cabecera: 201', () => {
+    const respuesta = postWithKey('/clinical/service-requests', {
+      patientProfileId: PACIENTE.id,
+      codeConceptId: ESTUDIO['STUDY-TAC-CRANEO'],
+      categoryConceptId: 'cat-imaging',
+    });
+
+    expect(respuesta.status).toBe(201);
+  });
+});

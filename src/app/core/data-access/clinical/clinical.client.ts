@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { sendIdempotent, SubmissionKeys } from '../idempotency';
 import { nombreDeContentDisposition } from '../files/content-disposition';
 import type {
   Allergy,
@@ -95,6 +96,8 @@ import type {
 export class ClinicalClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+  /** Claves `Idempotency-Key` por intento de envío (ver `../idempotency`). */
+  private readonly submissionKeys = new SubmissionKeys();
 
   /**
    * `GET /clinical/patients/:id/summary` — condiciones, alergias, medicación,
@@ -267,20 +270,25 @@ export class ClinicalClient {
    * inmediato en el bloque «medicación» de `getSummary`, que es de donde la
    * pantalla la vuelve a leer.
    *
+   * Viaja con `Idempotency-Key`: reintentar el mismo envío no deja dos
+   * borradores de la misma receta.
+   *
    * @param receta - El medicamento y su indicación. Lo ausente no viaja.
    * @returns La receta en borrador, con `signedAt` en `null`.
    */
   createMedicationRequest(receta: NewMedicationRequest): Observable<MedicationRequestRegistration> {
-    return this.http
-      .post<WireMedicationRequestRegistration>(
+    const body = sinAusentes({
+      ...receta,
+      validFrom: instanteDe(receta.validFrom),
+      validTo: instanteDe(receta.validTo),
+    });
+    return sendIdempotent(this.submissionKeys, 'medication-request', body, (headers) =>
+      this.http.post<WireMedicationRequestRegistration>(
         this.url('/clinical/medication-requests'),
-        sinAusentes({
-          ...receta,
-          validFrom: instanteDe(receta.validFrom),
-          validTo: instanteDe(receta.validTo),
-        }),
-      )
-      .pipe(map(toMedicationRequestRegistration));
+        body,
+        { headers },
+      ),
+    ).pipe(map(toMedicationRequestRegistration));
   }
 
   /**
