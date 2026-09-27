@@ -110,6 +110,8 @@
 }
 
 .detalle {
+  /* Que el encabezado fijo del armazón no tape el título al bajar hasta acá. */
+  scroll-margin-top: var(--sp-16);
   margin-block: var(--sp-6);
   padding: var(--sp-4);
   border: 1px solid var(--border-default);
@@ -127,6 +129,7 @@
 .detalle__encabezado h2 {
   margin: 0;
   font-size: var(--fs-h3);
+  scroll-margin-top: var(--sp-16);
 }
 
 .bloque {

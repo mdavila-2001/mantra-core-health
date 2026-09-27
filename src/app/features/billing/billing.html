@@ -93,7 +93,16 @@
                   <app-chip size="sm" [variant]="tonoDeEstado[estadoDe(cobro)]">{{ rotuloDeEstado[estadoDe(cobro)] }}</app-chip>
                 </td>
                 <td>
-                  <button app-button variant="outline" size="sm" (clicked)="seleccionar(cobro)">Ver</button>
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    [attr.data-charge-id]="cobro.id"
+                    [attr.aria-label]="'Ver ' + cobro.description + ' de ' + cobro.patientName"
+                    (clicked)="seleccionar(cobro)"
+                  >
+                    Ver
+                  </button>
                 </td>
               </tr>
             } @empty {
@@ -108,7 +117,8 @@
       @if (seleccionado(); as cobro) {
         <section class="detalle" aria-labelledby="titulo-detalle" data-testid="detalle-de-cobro">
           <header class="detalle__encabezado">
-            <h2 id="titulo-detalle">{{ cobro.description }} · {{ cobro.patientName }}</h2>
+            <!-- tabindex -1: recibe el foco al abrir el detalle, sin entrar en el orden de tabulación. -->
+            <h2 id="titulo-detalle" tabindex="-1">{{ cobro.description }} · {{ cobro.patientName }}</h2>
             <button app-button variant="ghost" size="sm" (clicked)="cerrarDetalle()">Cerrar</button>
           </header>
 

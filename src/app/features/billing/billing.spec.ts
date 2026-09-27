@@ -193,6 +193,84 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
     expect(fixture.nativeElement.textContent).toContain('Revertir anulación (SIMULADO)');
   });
 
+  describe('abrir y cerrar el detalle (QA manual: «Ver» no mostraba nada a la vista)', () => {
+    let desplazar: ReturnType<typeof vi.fn>;
+    const original = Element.prototype.scrollIntoView;
+
+    beforeEach(() => {
+      // jsdom no implementa `scrollIntoView`.
+      desplazar = vi.fn();
+      Element.prototype.scrollIntoView = desplazar as unknown as typeof Element.prototype.scrollIntoView;
+    });
+
+    afterEach(() => {
+      Element.prototype.scrollIntoView = original;
+    });
+
+    function botonVer(fila = 0): HTMLButtonElement {
+      return fixture.nativeElement.querySelectorAll('[data-testid="fila-de-cobro"] button[data-charge-id]')[fila];
+    }
+
+    async function renderizar(): Promise<void> {
+      fixture.detectChanges();
+      await fixture.whenStable();
+    }
+
+    it('«Ver» baja hasta el detalle y le da el foco a su título', async () => {
+      montar(true);
+      responderLectura();
+      const ver = botonVer(0);
+      ver.click();
+      await renderizar();
+      const titulo = fixture.nativeElement.querySelector('#titulo-detalle') as HTMLElement;
+      expect(titulo).not.toBeNull();
+      expect(titulo.getAttribute('tabindex')).toBe('-1');
+      expect(document.activeElement).toBe(titulo);
+      expect(desplazar).toHaveBeenCalledWith(expect.objectContaining({ block: 'start' }));
+      expect(desplazar.mock.contexts[0]).toBe(titulo);
+    });
+
+    it('«Cerrar» devuelve el foco al «Ver» de la fila que abrió el detalle', async () => {
+      montar(true);
+      responderLectura();
+      const ver = botonVer(1);
+      const id = ver.dataset['chargeId'];
+      ver.click();
+      await renderizar();
+      const cerrar = Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>).find(
+        (b) => b.textContent?.trim() === 'Cerrar',
+      )!;
+      cerrar.click();
+      await renderizar();
+      expect(el('detalle-de-cobro')).toBeNull();
+      const activo = document.activeElement as HTMLElement;
+      expect(activo.dataset['chargeId']).toBe(id);
+      expect(desplazar.mock.contexts.at(-1)).toBe(activo);
+    });
+
+    it('sin animación cuando se pidió reducir movimiento', async () => {
+      const matchMedia = window.matchMedia;
+      window.matchMedia = ((consulta: string) =>
+        ({ matches: consulta.includes('reduce'), media: consulta }) as MediaQueryList) as typeof window.matchMedia;
+      try {
+        montar(true);
+        responderLectura();
+        botonVer(0).click();
+        await renderizar();
+        expect(desplazar).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'auto' }));
+      } finally {
+        window.matchMedia = matchMedia;
+      }
+    });
+
+    it('el botón «Ver» dice qué cobro abre', () => {
+      montar(true);
+      responderLectura();
+      const primero = motor.listarCobros()[0]!;
+      expect(botonVer(0).getAttribute('aria-label')).toBe(`Ver ${primero.description} de ${primero.patientName}`);
+    });
+  });
+
   it('un error del simulador llega como aviso, con el mensaje del contrato', () => {
     montar(true);
     responderLectura();

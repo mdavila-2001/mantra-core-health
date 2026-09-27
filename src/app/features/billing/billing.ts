@@ -1,5 +1,15 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  Injector,
+  afterNextRender,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin, type Observable } from 'rxjs';
@@ -87,6 +97,11 @@ export class Billing {
   private readonly client = inject(BillingSimulatedClient);
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly injector = inject(Injector);
+  private readonly document = inject(DOCUMENT);
+
+  /** El cobro cuyo «Ver» abrió el detalle: al cerrar, el foco vuelve a esa fila. */
+  private abiertoDesde: string | null = null;
 
   readonly disponible = inject(FACTURACION_SIMULADA_DISPONIBLE)();
 
@@ -183,6 +198,9 @@ export class Billing {
 
   seleccionar(cobro: SimulatedCharge): void {
     this.seleccionadoId.set(cobro.id);
+    this.abiertoDesde = cobro.id;
+    // Después del render: el panel es un `@if` y todavía no existe en el DOM.
+    afterNextRender(() => this.llevarAlDetalle(), { injector: this.injector });
     this.factura.set(null);
     this.formularioDePago.reset({ methodCode: null });
     this.formularioDeFactura.reset({
@@ -205,8 +223,13 @@ export class Billing {
   }
 
   cerrarDetalle(): void {
+    const origen = this.abiertoDesde;
     this.seleccionadoId.set(null);
     this.factura.set(null);
+    this.abiertoDesde = null;
+    if (origen !== null) {
+      afterNextRender(() => this.volverALaFila(origen), { injector: this.injector });
+    }
   }
 
   /** Se puede facturar: pagado y sin una factura vigente (validada u observada). */
@@ -318,6 +341,32 @@ export class Billing {
   }
 
   // ---- privados ----------------------------------------------------------------
+
+  private reducirMovimiento(): boolean {
+    return this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? true;
+  }
+
+  /**
+   * El detalle se abre debajo de la tabla: sin esto, «Ver» no mostraba nada a
+   * la vista (QA manual). Baja hasta el panel y deja el foco en su título, para
+   * que el lector de pantalla anuncie qué se abrió y el teclado siga desde ahí.
+   */
+  private llevarAlDetalle(): void {
+    const titulo = this.document.getElementById('titulo-detalle');
+    if (titulo === null) return;
+    titulo.scrollIntoView?.({ behavior: this.reducirMovimiento() ? 'auto' : 'smooth', block: 'start' });
+    titulo.focus({ preventScroll: true });
+  }
+
+  /** Al cerrar, el foco vuelve al «Ver» de la fila que abrió el detalle. */
+  private volverALaFila(cobroId: string): void {
+    const boton = Array.from(this.document.querySelectorAll<HTMLElement>('[data-charge-id]')).find(
+      (b) => b.dataset['chargeId'] === cobroId,
+    );
+    if (boton === undefined) return;
+    boton.scrollIntoView?.({ behavior: this.reducirMovimiento() ? 'auto' : 'smooth', block: 'center' });
+    boton.focus({ preventScroll: true });
+  }
 
   private ejecutar<T>(operacion: Operacion, peticion: Observable<T>, alTerminar: (valor: T) => void): void {
     this.operando.set(operacion);
