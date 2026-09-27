@@ -82,6 +82,15 @@ export class DatosDeLaEmpresa {
 
   readonly state = input.required<ViewState<DatosLegalesDeLaEmpresa>>();
 
+  /**
+   * `true` sobre la maqueta: la ficha es de ejemplo, se rotula y se puede
+   * editar en pantalla. Con la API real (`false`) la ficha es la que devolvió
+   * el directorio de farmacias: sin rótulo, y sin «Editar», porque no hay
+   * dónde guardar el cambio y un dato real corregido sólo en pantalla engaña
+   * más que uno que no se deja tocar.
+   */
+  readonly sampleData = input(true);
+
   /** La persona pidió reintentar; el dueño de los datos decide qué hacer. */
   readonly retry = output<void>();
 
@@ -137,7 +146,7 @@ export class DatosDeLaEmpresa {
         lat: punto.lat,
         lng: punto.lng,
         titulo: empresa.razonSocial,
-        subtitulo: empresa.direccionLegal,
+        subtitulo: empresa.direccionLegal ?? undefined,
       },
     ];
   });

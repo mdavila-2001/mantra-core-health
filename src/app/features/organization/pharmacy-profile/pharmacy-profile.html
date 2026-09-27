@@ -3,8 +3,10 @@
   subtitle="Lo que tu empresa es en los papeles: sus datos, su carpeta legal y quién responde por ella."
   [breadcrumbs]="breadcrumbs()"
 >
-  <!-- Toda la ficha es maqueta todavía: el cartel va arriba de todo. -->
-  <app-chip page-meta variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+  <!-- Sobre la maqueta toda la ficha es de ejemplo: el cartel va arriba de todo. -->
+  @if (sampleData) {
+    <app-chip page-meta variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+  }
 </app-page-header>
 
 <!-- El aviso vive fuera de las pestañas a propósito: un papel vencido no es
@@ -39,21 +41,42 @@
 
 <app-tabs [(selectedIndex)]="pestana">
   <app-tab label="Empresa">
-    <app-datos-de-la-empresa [state]="empresa()" (retry)="recargar()" />
+    <app-datos-de-la-empresa [state]="empresa()" [sampleData]="sampleData" (retry)="recargar()" />
   </app-tab>
 
   <!-- La referencia no se llama «documentos» a propósito: en una plantilla la
        referencia gana sobre la propiedad del componente, y taparía la señal
        `documentos()` que alimenta a esta misma pestaña. -->
+  <!-- Contra la API real la carpeta y la gente no se dibujan: la API no las
+       publica todavía, y una carpeta vacía con «Cargar el primer documento»
+       prometería un guardado que no existe. -->
   <app-tab label="Documentos" #panelDeDocumentos>
-    <app-documentos-legales [state]="documentos()" (retry)="recargar()" />
+    @if (sampleData) {
+      <app-documentos-legales [state]="documentos()" (retry)="recargar()" />
+    } @else {
+      <app-empty-state
+        variant="empty"
+        data-testid="profile-documents-unavailable"
+        title="La carpeta legal todavía no está disponible"
+        description="Los documentos de tu farmacia —constitución, NIT, SEPREC, licencia, certificado SEDES y poder— todavía no se pueden ver ni cargar desde la app."
+      />
+    }
   </app-tab>
 
   <app-tab label="Representante y gerentes">
-    <app-representante-y-gerentes
-      [state]="gente()"
-      (retry)="recargar()"
-      (poderPedido)="verDocumentos()"
-    />
+    @if (sampleData) {
+      <app-representante-y-gerentes
+        [state]="gente()"
+        (retry)="recargar()"
+        (poderPedido)="verDocumentos()"
+      />
+    } @else {
+      <app-empty-state
+        variant="empty"
+        data-testid="profile-people-unavailable"
+        title="El representante y los gerentes todavía no están disponibles"
+        description="Quién firma por tu farmacia y quiénes la gestionan todavía no se pueden ver desde la app."
+      />
+    }
   </app-tab>
 </app-tabs>

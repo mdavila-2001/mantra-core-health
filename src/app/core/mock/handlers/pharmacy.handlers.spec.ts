@@ -4,6 +4,7 @@ import { crearRouterSimulado } from './index';
 import { buscarUsuario, TENANT_FARMACIA } from '../mock-session';
 import { isMockReply, type MockMethod, type MockRequest } from '../mock-router';
 import { uuid } from '../mock-store';
+import { ID_PEDIDO_CON_DELIVERY, ID_PEDIDO_CON_SEGURO } from '../fixtures/pedidos-de-farmacia';
 
 /**
  * H3.S2 (carril A, 2026-09-25) — coherencia del mock de farmacia: el precio
@@ -169,6 +170,45 @@ describe('handlers de farmacia: coherencia de precio y disponibilidad', () => {
         pedir('GET', `/pharmacy/pharmacies/${uuid('corpus-tenant-farm_farmacorp')}`),
       );
       expect(detalle.sites.length).toBeGreaterThan(1);
+    });
+  });
+
+  /**
+   * El medio de entrega viaja en el contrato (`deliveryMode`), así que el
+   * pedido a domicilio de la bandeja lo declara el backend simulado y la
+   * pantalla ya no lo pisa por identificador.
+   */
+  describe('la modalidad de entrega viaja en el contrato', () => {
+    interface WithDeliveryMode {
+      readonly id: string;
+      readonly deliveryMode: { readonly code: string } | null;
+    }
+
+    it('correcto — el pedido de ejemplo a domicilio responde PINV_DELIVERY_DOMICILIO', () => {
+      const order = cuerpoDe<WithDeliveryMode>(
+        pedir('GET', `/pharmacy/orders/${ID_PEDIDO_CON_DELIVERY}`, undefined, {}, null),
+      );
+      expect(order.deliveryMode?.code).toBe('PINV_DELIVERY_DOMICILIO');
+    });
+
+    it('límite — el resto de los pedidos sigue siendo retiro en la farmacia', () => {
+      const order = cuerpoDe<WithDeliveryMode>(
+        pedir('GET', `/pharmacy/orders/${ID_PEDIDO_CON_SEGURO}`, undefined, {}, null),
+      );
+      expect(order.deliveryMode?.code).toBe('PINV_DELIVERY_RETIRO');
+
+      const bandeja = cuerpoDe<{ items: readonly WithDeliveryMode[] }>(
+        pedir('GET', '/pharmacy/orders', undefined, {}, null),
+      );
+      const aDomicilio = bandeja.items.filter(
+        (item) => item.deliveryMode?.code !== 'PINV_DELIVERY_RETIRO',
+      );
+      expect(aDomicilio.map((item) => item.id)).toEqual([ID_PEDIDO_CON_DELIVERY]);
+    });
+
+    it('inválido — un pedido inexistente responde 404, no un retiro inventado', () => {
+      const resultado = pedir('GET', `/pharmacy/orders/${uuid('pedido-inventado')}`, undefined, {}, null);
+      expect(estado(resultado)).toBe(404);
     });
   });
 });

@@ -14,17 +14,27 @@ import {
   ID_PEDIDO_CON_DELIVERY,
   ID_PEDIDO_CON_SEGURO,
 } from '../../../../core/mock/fixtures/pedidos-de-farmacia';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { InboxOrder } from './inbox-order';
+
+/** Lo que el contrato devuelve para un pedido que sale a domicilio. */
+const DOMICILIO = { code: 'PINV_DELIVERY_DOMICILIO', display: 'Entrega a domicilio' };
 
 describe('InboxOrder with the real pharmacy-orders contract', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
   let confirmWithReason: ReturnType<typeof vi.fn>;
   let toastInfo: ReturnType<typeof vi.fn>;
+  /**
+   * Maqueta (`true`) o API real (`false`). Se lee recién al crear la
+   * pantalla, así que un `beforeEach` anidado puede cambiarlo.
+   */
+  let sampleData: boolean;
 
   beforeEach(() => {
+    sampleData = true;
     confirmWithReason = vi.fn().mockResolvedValue('No trabajamos con esa presentación.');
     toastInfo = vi.fn();
     TestBed.configureTestingModule({
@@ -32,12 +42,13 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([{ path: 'administration/pharmacy-orders/:orderId', component: InboxOrder }]),
-        { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez' } },
+        { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez', userId: () => null } },
         {
           provide: DialogService,
           useValue: { confirm: vi.fn().mockResolvedValue(true), confirmWithReason },
         },
         { provide: ToastService, useValue: { info: toastInfo } },
+        { provide: SAMPLE_DATA_ENABLED, useFactory: () => sampleData },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -389,6 +400,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     await mount(
       pharmacyOrderDtoFixture({
         id: ID_PEDIDO_CON_DELIVERY,
+        deliveryMode: DOMICILIO,
         status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
       }),
     );
@@ -397,8 +409,8 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     const detalle = element('[data-testid="mostrador-entrega-detalle"]')?.textContent ?? '';
     expect(detalle).toContain('Sale a la dirección de domicilio');
     expect(detalle).toContain('Cristo Redentor');
-    // Y se declara maqueta, porque el medio lo puso la pantalla.
-    expect(text()).toContain('Datos de ejemplo');
+    // Y se declara maqueta, porque la dirección la puso la pantalla.
+    expect(detalle).toContain('Datos de ejemplo');
   });
 
   it('lo que sale a domicilio no ofrece prepararlo para retiro en mostrador', async () => {
@@ -407,6 +419,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     await mount(
       pharmacyOrderDtoFixture({
         id: ID_PEDIDO_CON_DELIVERY,
+        deliveryMode: DOMICILIO,
         status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' },
       }),
     );
@@ -499,6 +512,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     await mount(
       pharmacyOrderDtoFixture({
         id: ID_PEDIDO_CON_DELIVERY,
+        deliveryMode: DOMICILIO,
         status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
         pickupCode: null,
       }),
@@ -582,6 +596,49 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     expect(toastInfo.mock.calls[0]?.[0]).toContain('módulo de facturación');
   });
 
+  /* ─── Contra la API real: nada que la API no haya devuelto ──────────── */
+
+  describe('contra la API real (sin datos de ejemplo)', () => {
+    beforeEach(() => {
+      sampleData = false;
+    });
+
+    it('el pedido con seguro no dibuja cobertura: el contrato del mostrador no la trae', async () => {
+      await mount(pedidoConSeguro());
+
+      expect(element(byTestId('mostrador-seguro'))).toBeNull();
+      expect(element('.mostrador__cobertura')).toBeNull();
+      expect(text()).not.toContain('Aprobado por el seguro');
+      expect(text()).not.toContain('Datos de ejemplo');
+    });
+
+    it('el pedido entregado no muestra una factura que nadie emitió', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' } }),
+      );
+
+      expect(element('[data-testid="mostrador-factura"]')).toBeNull();
+      expect(text()).not.toContain('Enviada al paciente');
+      expect(text()).toContain('Volver a la bandeja');
+    });
+
+    it('un pedido a domicilio dice el medio del contrato, sin dirección inventada', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({
+          id: ID_PEDIDO_CON_DELIVERY,
+          deliveryMode: DOMICILIO,
+          status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+        }),
+      );
+
+      expect(element('[data-testid="mostrador-entrega"]')?.textContent?.trim()).toBe('Delivery');
+      const detalle = element('[data-testid="mostrador-entrega-detalle"]')?.textContent ?? '';
+      expect(detalle).toContain('Sale a la dirección de domicilio');
+      expect(detalle).not.toContain('Cristo Redentor');
+      expect(text()).not.toContain('Datos de ejemplo');
+    });
+  });
+
   /** `dd/MM/yyyy`, el formato con el que el comprobante pinta las fechas. */
   function comoLaPintaLaPantalla(fecha: Date): string {
     const dia = String(fecha.getDate()).padStart(2, '0');
@@ -609,3 +666,8 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     });
   }
 });
+
+/** El selector de un `data-testid` ya existente en la plantilla. */
+function byTestId(id: string): string {
+  return `[data-testid="${id}"]`;
+}

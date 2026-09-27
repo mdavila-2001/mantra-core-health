@@ -155,6 +155,8 @@ interface PedidoSimulado {
   readonly rejectionReasonText: string | null;
   readonly lineas: readonly LineaSimulada[];
   readonly sustituciones: readonly { id: string; originalProductId: string; proposedProductId: string; status: 'PROPOSED' | 'ACCEPTED' | 'DECLINED'; decidedAt: string | null }[];
+  /** Sin declarar, el pedido se retira en la farmacia (`PINV_DELIVERY_RETIRO`). */
+  readonly deliveryMode?: 'DOMICILIO' | 'TRABAJO';
 }
 
 function productoDe(pharmacyId: string, code: keyof typeof MEDICAMENTO): ProductoSimulado {
@@ -178,10 +180,11 @@ const pedidos = new Coleccion<PedidoSimulado>(
       // contrato de `pharmacy-orders` no la publica—, así que vive junto a la pantalla y se
       // reconoce por el identificador; acá sólo nace el pedido.
       { id: ID_PEDIDO_CON_SEGURO, estado: 'EN_REVISION' as const, createdAt: iso(0, 10, 15), expiresAt: iso(3, 10), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-quispe'), patientName: 'Rosa Elena Quispe Vargas', pickupCode: 'AV-6003', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-LEVOTIROXINA').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-SERTRALINA').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
-      // T-I3 · el pedido que sale a domicilio. `dto()` responde `RETIRO` para todos los pedidos
-      // (`:195`) y esa línea es compartida: el medio de entrega de este ejemplo también se lo
-      // pone la pantalla, por identificador, y se rotula como maqueta.
-      { id: ID_PEDIDO_CON_DELIVERY, estado: 'EN_REVISION' as const, createdAt: iso(0, 11, 40), expiresAt: iso(3, 11), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-gutierrez'), patientName: 'Vania Gutiérrez Peña', pickupCode: 'AV-6004', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-IBUPROFENO').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-OMEPRAZOL').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
+      // T-I3 · el pedido que sale a domicilio. El medio de entrega SÍ es parte del contrato
+      // (`deliveryMode`), así que lo declara el backend simulado y la pantalla lo lee de la
+      // respuesta, igual que con la API real. Lo que el contrato no trae es la dirección: esa
+      // la sigue poniendo la pantalla, rotulada, y sólo sobre la maqueta.
+      { id: ID_PEDIDO_CON_DELIVERY, deliveryMode: 'DOMICILIO' as const, estado: 'EN_REVISION' as const, createdAt: iso(0, 11, 40), expiresAt: iso(3, 11), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-gutierrez'), patientName: 'Vania Gutiérrez Peña', pickupCode: 'AV-6004', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-IBUPROFENO').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-OMEPRAZOL').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
     ];
   })(),
 );
@@ -238,7 +241,7 @@ function dto(p: PedidoSimulado, owner = false) {
     pharmacyName: farmacia.name,
     medicationRequestId: p.medicationRequestId,
     patientName: p.patientName,
-    deliveryMode: c('PINV_DELIVERY_RETIRO', 'Retiro en farmacia'),
+    deliveryMode: p.deliveryMode === undefined ? c('PINV_DELIVERY_RETIRO', 'Retiro en farmacia') : c(`PINV_DELIVERY_${p.deliveryMode}`, p.deliveryMode === 'DOMICILIO' ? 'Entrega a domicilio' : 'Entrega en el trabajo'),
     pickupCode: p.pickupCode,
     ...(owner ? settlementForOrder(p) : {}),
     totalAmount: total.toFixed(2),

@@ -31,6 +31,7 @@ import type {
   LineaDePedido,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { NO_SAVED_PLACES, savedPlacesOf, type SavedPlaces } from '../../../../core/data-access/profiles/saved-places';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
@@ -306,6 +307,15 @@ export class WhereToBuy {
   protected readonly ciudades = CIUDADES;
   protected readonly opcionesDeOrden = OPCIONES_DE_ORDEN;
   protected readonly notaDeDemostracion = NOTA_DE_DEMOSTRACION;
+
+  /**
+   * Maqueta (`true`) o API real (`false`). La variante con seguro es una
+   * demostración sobre un dato que ningún contrato publica —qué renglón
+   * aprueba el seguro antes de que exista el pedido—, así que contra la API
+   * real no se ofrece: `conSeguro` queda apagado y la lista es la de la
+   * consulta, sin más. Ver `core/mock/sample-data.ts`.
+   */
+  protected readonly sampleData = inject(SAMPLE_DATA_ENABLED);
 
   /**
    * El domicilio y el trabajo del paciente, como puntos de referencia
