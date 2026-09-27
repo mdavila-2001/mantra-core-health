@@ -40,7 +40,7 @@ const EVIDENCIA = join(
 );
 
 /** Dueña de Seguros Andina: administra la consola de campañas. */
-const ASEGURADORA_MOCK: Actor = {
+const INSURER_ACTOR: Actor = {
   rol: 'administrador',
   identificador: 'aseguradora@alovida.mock',
   clave: 'cualquiera',
@@ -48,7 +48,7 @@ const ASEGURADORA_MOCK: Actor = {
 };
 
 /** Afiliada de Seguros Andina, con «Plan Integral». */
-const PACIENTE_MOCK: Actor = {
+const PATIENT_ACTOR: Actor = {
   rol: 'paciente',
   identificador: 'paciente@alovida.mock',
   clave: 'cualquiera',
@@ -72,7 +72,7 @@ function altoMinimoTactil(width: number): number {
 }
 
 /** `dd/MM/yyyy` de hoy más `days`, en hora local: lo que pinta el `DatePipe` de la consola. */
-function fechaVisible(days: number): string {
+function visibleDate(days: number): string {
   const date = new Date();
   date.setDate(date.getDate() + days);
   const dd = String(date.getDate()).padStart(2, '0');
@@ -81,7 +81,7 @@ function fechaVisible(days: number): string {
 }
 
 /** El ruido de CSP que `ng serve` inyecta en cualquier ruta (recarga en vivo). */
-function esRuidoDelServidorDeDesarrollo(texto: string): boolean {
+function isDevServerNoise(texto: string): boolean {
   return texto.includes('Content Security Policy') && texto.includes('inline script');
 }
 
@@ -96,8 +96,8 @@ async function evidencia(page: Page, nombre: string): Promise<void> {
     content: '*, *::before, *::after { animation: none !important; transition: none !important; }',
   });
   await page.evaluate(() => {
-    for (const el of Array.from(document.querySelectorAll<HTMLElement>('*'))) {
-      if (getComputedStyle(el).position === 'sticky') el.style.position = 'static';
+    for (const element of Array.from(document.querySelectorAll<HTMLElement>('*'))) {
+      if (getComputedStyle(element).position === 'sticky') element.style.position = 'static';
     }
   });
   // Sin puntero ni foco residual: un tooltip de hover manchaba la captura.
@@ -109,7 +109,7 @@ async function evidencia(page: Page, nombre: string): Promise<void> {
   await page.screenshot({ path: join(EVIDENCIA, `${nombre}.png`), fullPage: true });
 }
 
-async function altoDe(page: Page, testId: string): Promise<number> {
+async function heightOf(page: Page, testId: string): Promise<number> {
   const caja = await page.getByTestId(testId).first().boundingBox();
   expect(caja, `${testId} tiene caja`).not.toBeNull();
   return caja!.height;
@@ -127,7 +127,7 @@ for (const viewport of VIEWPORTS) {
       await page.emulateMedia({ reducedMotion: 'reduce' });
       page.on('pageerror', (error) => errores.push(`pageerror: ${error.message}`));
       page.on('console', (mensaje) => {
-        if (mensaje.type() === 'error' && !esRuidoDelServidorDeDesarrollo(mensaje.text())) {
+        if (mensaje.type() === 'error' && !isDevServerNoise(mensaje.text())) {
           errores.push(`console: ${mensaje.text()}`);
         }
       });
@@ -140,15 +140,15 @@ for (const viewport of VIEWPORTS) {
     test('CA-4.1: la aseguradora crea CMP-CARDIO-E2E con sus aliados y queda Activa', async ({
       page,
     }) => {
-      await entrar(page, ASEGURADORA_MOCK);
+      await entrar(page, INSURER_ACTOR);
       await irA(page, CONSOLA);
       await expect(page.getByTestId('campaigns-table')).toBeVisible({ timeout: 30_000 });
 
-      const nueva = page.getByTestId('campaign-new');
-      expect(await altoDe(page, 'campaign-new')).toBeGreaterThanOrEqual(
+      const newButton = page.getByTestId('campaign-new');
+      expect(await heightOf(page, 'campaign-new')).toBeGreaterThanOrEqual(
         altoMinimoTactil(viewport.width),
       );
-      await nueva.click();
+      await newButton.click();
       await expect(page.getByTestId('campaign-form')).toBeVisible();
 
       await page.getByTestId('campaign-form-code').fill('CMP-CARDIO-E2E');
@@ -184,7 +184,7 @@ for (const viewport of VIEWPORTS) {
       await expect(page.getByTestId('campaign-form')).toBeHidden();
       await expect(page.getByTestId('campaign-row-CMP-CARDIO-E2E')).toBeVisible();
       await expect(page.getByTestId('campaign-status-CMP-CARDIO-E2E')).toContainText('Activa');
-      await expect(page.getByTestId('campaigns-table')).toContainText(fechaVisible(60));
+      await expect(page.getByTestId('campaigns-table')).toContainText(visibleDate(60));
       await expect(page.getByTestId('campaigns-table')).toContainText('Hipertensión esencial');
 
       await evidencia(page, `campanas-02-consola-${viewport.nombre}`);
@@ -193,7 +193,7 @@ for (const viewport of VIEWPORTS) {
     test('CA-4.6: el formulario avisa apenas se escribe algo inválido y no envía', async ({
       page,
     }) => {
-      await entrar(page, ASEGURADORA_MOCK);
+      await entrar(page, INSURER_ACTOR);
       await irA(page, CONSOLA);
       await expect(page.getByTestId('campaigns-table')).toBeVisible({ timeout: 30_000 });
       await page.getByTestId('campaign-new').click();
@@ -228,7 +228,7 @@ for (const viewport of VIEWPORTS) {
     test('CA-4.3/4.4: la consola muestra el estado de cada una y sólo las de su aseguradora', async ({
       page,
     }) => {
-      await entrar(page, ASEGURADORA_MOCK);
+      await entrar(page, INSURER_ACTOR);
       await irA(page, CONSOLA);
       await expect(page.getByTestId('campaigns-table')).toBeVisible({ timeout: 30_000 });
 
@@ -253,7 +253,7 @@ for (const viewport of VIEWPORTS) {
     test('CA-4.2 y CA-4.3: el afiliado ve la tarjeta «100% Cubierto» y ninguna que no le corresponde', async ({
       page,
     }) => {
-      await entrar(page, PACIENTE_MOCK);
+      await entrar(page, PATIENT_ACTOR);
       await irA(page, '/dashboard');
 
       const tarjeta = page.locator('[data-testid="campaign-card"][data-campaign-code="CMP-CARDIO-2026"]');
@@ -274,13 +274,13 @@ for (const viewport of VIEWPORTS) {
       expect(boton!.height).toBeGreaterThanOrEqual(altoMinimoTactil(viewport.width));
 
       // CA-4.3 y CA-4.4: borrador, pausada, vencida y de otra aseguradora no aparecen.
-      for (const codigo of [
+      for (const code of [
         'CMP-DIABETES-2026',
         'CMP-MAMA-2026',
         'CMP-FLU-2025',
         'CMP-VITALICIA-OSTEO',
       ]) {
-        await expect(page.locator(`[data-campaign-code="${codigo}"]`), codigo).toHaveCount(0);
+        await expect(page.locator(`[data-campaign-code="${code}"]`), code).toHaveCount(0);
       }
       await expect(page.getByTestId('campaign-card')).toHaveCount(1);
 
@@ -288,7 +288,7 @@ for (const viewport of VIEWPORTS) {
     });
 
     test('el botón lleva a agendar con la campaña como contexto', async ({ page }) => {
-      await entrar(page, PACIENTE_MOCK);
+      await entrar(page, PATIENT_ACTOR);
       await irA(page, '/dashboard');
 
       const boton = page.getByTestId('btn-campaign-action').first();
@@ -314,7 +314,7 @@ for (const viewport of VIEWPORTS) {
     });
 
     test('la pestaña de seguros de «Mi cuenta» muestra el mismo beneficio', async ({ page }) => {
-      await entrar(page, PACIENTE_MOCK);
+      await entrar(page, PATIENT_ACTOR);
       await irA(page, '/my-account?pestana=seguros');
 
       const tarjeta = page.locator('[data-testid="campaign-card"][data-campaign-code="CMP-CARDIO-2026"]');
@@ -324,11 +324,11 @@ for (const viewport of VIEWPORTS) {
       );
       await expect(page.locator('[data-campaign-code="CMP-VITALICIA-OSTEO"]')).toHaveCount(0);
 
-      await evidencia(page, `campanas-07-mi-cuenta-seguros-${viewport.nombre}`);
+      await evidencia(page, `campanas-07-my-account-insurance-${viewport.nombre}`);
     });
 
     test('CA-4.7: un paciente no llega a la consola de la aseguradora', async ({ page }) => {
-      await entrar(page, PACIENTE_MOCK);
+      await entrar(page, PATIENT_ACTOR);
       await irA(page, CONSOLA);
 
       // La sección está oculta para el paciente: ni su tabla ni su botón aparecen.
