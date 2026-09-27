@@ -860,15 +860,64 @@ export function registrarComunidad(router: MockRouter): void {
   });
   router.get('/community/moderation/appeals', ({ query }) => paginar(apelaciones, query, 20));
 
+  /*
+   * Los strikes: el único lugar donde queda a quién sancionó una decisión, igual
+   * que `moderation_strikes.subject_profile_id` en la API. El sembrado es el de
+   * la reseña retirada, contra la misma vitrina que la apeló —sólo el sancionado
+   * puede apelar—.
+   */
+  const strikes: { readonly id: string; readonly moderationDecisionId: string; readonly subjectProfileId: string }[] = [
+    { id: uuid('mod-s-1'), moderationDecisionId: uuid('mod-d-1'), subjectProfileId: vitrinas.todos()[4]!.id },
+  ];
+
+  /**
+   * «Mis sanciones» (AG-18, BR-27): las decisiones con strike contra el perfil,
+   * de la más reciente a la más vieja, con si todavía se pueden apelar. Nunca
+   * el denunciante ni notas del moderador. Un perfil ajeno es 403, salvo para
+   * la plataforma.
+   */
+  router.get('/community/moderation/decisions/mine', (request) => {
+    const profileId = texto(request.query, 'profileId');
+    if (profileId === null) {
+      return validation('Falta el perfil', [{ field: 'profileId', message: 'must be a UUID' }]);
+    }
+    const isPlatform = ['PLATFORM_ADMIN', 'SUPERADMIN'].some((role) => request.user?.roles.includes(role));
+    if (!isPlatform && vitrinaDeSesion(request)?.id !== profileId) {
+      return forbidden('Sólo podés ver las sanciones de tu propio perfil');
+    }
+    const decisionIds = new Set(strikes.filter((s) => s.subjectProfileId === profileId).map((s) => s.moderationDecisionId));
+    const own = decisiones
+      .filter((d) => decisionIds.has(d.id))
+      .sort((a, b) => b.decidedAt.localeCompare(a.decidedAt) || b.id.localeCompare(a.id))
+      .map((d) => ({
+        decisionId: d.id,
+        policyConceptId: d.policyConceptId,
+        decisionConceptId: d.decisionConceptId,
+        rationaleText: d.rationaleText === '' ? null : d.rationaleText,
+        decidedAt: d.decidedAt,
+        appealable: !apelaciones.some((a) => a.moderationDecisionId === d.id && a.statusConceptId === CONCEPTO.moderation.appealOpen),
+      }));
+    const page = paginar(own, request.query, 20);
+    // `count` es lo que trae ESTA página, como en la API; no el total.
+    return { ...page, count: page.items.length };
+  });
+
   router.post('/community/reports', () => ({ status: 201, body: { id: nuevoId('report'), queued: true } }));
 
   router.post('/community/moderation/queue/:id/decision', (request) => {
-    const datos = cuerpo<{ decision: string; rationaleText: string }>(request);
+    const datos = cuerpo<{ decision: string; rationaleText: string; subjectProfileId?: string; strikeSeverity?: string }>(request);
     const item = cola.find((q) => q.id === request.params['id']);
     if (item !== undefined) (item as { statusConceptId: string }).statusConceptId = CONCEPTO.moderation.resolved;
     const nueva = { id: nuevoId('mod-d'), moderationQueueId: request.params['id']!, decisionConceptId: datos.decision === 'REMOVED' ? CONCEPTO.moderation.decisionRemoved : datos.decision === 'WARNED' ? CONCEPTO.moderation.decisionWarned : CONCEPTO.moderation.decisionDismissed, policyConceptId: CONCEPTO.moderation.policy, rationaleText: datos.rationaleText ?? '', actionTakenConceptId: CONCEPTO.moderation.actionHide, decidedByUserId: request.user?.id ?? '', decidedAt: ahora() };
     decisiones.push(nueva);
-    return { status: 201, body: { id: nueva.id, strikeId: datos.decision === 'REMOVED' ? nuevoId('strike') : null, decision: datos.decision ?? 'DISMISSED' } };
+    // Como en la API: hay strike sólo si la decisión sanciona y trae sujeto y
+    // severidad. Sin él, la decisión no aparece en «Mis sanciones» de nadie.
+    const strike =
+      datos.subjectProfileId !== undefined && datos.strikeSeverity !== undefined && datos.decision !== 'DISMISSED'
+        ? { id: nuevoId('strike'), moderationDecisionId: nueva.id, subjectProfileId: datos.subjectProfileId }
+        : null;
+    if (strike !== null) strikes.push(strike);
+    return { status: 201, body: { id: nueva.id, strikeId: strike?.id ?? null, decision: datos.decision ?? 'DISMISSED' } };
   });
 
   router.post('/community/moderation/decisions/:id/appeal', (request) => {

@@ -10,9 +10,21 @@ import { patientSettlementFixture } from '../fixtures/patient-settlements';
 import { PHARMACIES_AND_LABS } from '../fixtures/markdown-institutions.generated';
 import { ordenes } from '../fixtures/clinica';
 import { vitrinas } from '../fixtures/comunidad';
-import { ESTADO, ESTUDIO, PRIORIDAD, displayDe } from '../fixtures/conceptos';
+import {
+  ACCESSION_STATUS,
+  CATEGORIA_ORDEN,
+  CONTAINER_STATUS,
+  CUSTODY_EVENT_TYPE,
+  ESTADO,
+  ESTUDIO,
+  PRIORIDAD,
+  SPECIMEN_CONTAINER_TYPE,
+  SPECIMEN_STATUS,
+  SPECIMEN_TYPE,
+  displayDe,
+} from '../fixtures/conceptos';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES } from '../fixtures/personas';
-import { forbidden, notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
+import { forbidden, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA, TENANT_LABORATORIO, TENANT_NAMES, type MockUser } from '../mock-session';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
 
@@ -87,11 +99,131 @@ const compartidos = new Coleccion<CompartidoSimulado>(
   informes.filtrar((r) => r.patientProfileId === PACIENTE.id && r.released).slice(0, 1).map((r) => ({ id: uuid(`share-${r.id}`), reportId: r.id, practitionerUserId: MEDICA.userId, validFrom: iso(-2), validTo: iso(28), active: true })),
 );
 
+/* ---- el circuito de especímenes del laboratorio (BR-17, CL-47) ------------
+
+   Espécimen → acesión → contenedor → cadena de custodia, con las reglas de
+   `DiagnosticsSpecimensService`. Las órdenes de trabajo de la cola cuelgan de
+   estas acesiones: `laboratoryAccessionId` es el id de una acesión que existe y
+   se puede abrir con `GET /diagnostics/accessions/:id`, no un número suelto.
+
+   Sólo las órdenes de **laboratorio** llegan a la cola: una orden de trabajo
+   nace de acesionar especímenes, y un electrocardiograma o una ecografía no
+   tienen espécimen que acesionar. */
+
+export interface LabSpecimenRecord {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly custodianTenantId: string;
+  readonly specimenTypeConceptId: string;
+  readonly statusConceptId: string;
+  readonly serviceRequestId: string | null;
+  readonly collectedAt: string;
+  readonly receivedAt: string | null;
+}
+
+export interface LabContainerRecord {
+  readonly id: string;
+  readonly specimenId: string;
+  readonly containerIdentifier: string;
+  readonly containerTypeConceptId: string;
+  readonly statusConceptId: string;
+}
+
+export interface LabCustodyEventRecord {
+  readonly id: string;
+  readonly specimenId: string;
+  readonly specimenContainerId: string | null;
+  readonly custodyEventTypeConceptId: string;
+  readonly occurredAt: string;
+  readonly toPartyTypeConceptId: string | null;
+  readonly sealIdentifier: string | null;
+  readonly signedByUserId: string | null;
+}
+
+export interface LabAccessionRecord {
+  readonly id: string;
+  readonly custodianTenantId: string;
+  readonly patientProfileId: string;
+  readonly accessionNumber: string;
+  readonly receivedAt: string;
+  readonly priorityConceptId: string;
+  readonly statusConceptId: string;
+  readonly serviceRequestId: string | null;
+  readonly items: readonly { readonly accessionSpecimenId: string; readonly specimenId: string; readonly sequenceNumber: number; readonly statusConceptId: string }[];
+}
+
+/** Las órdenes de laboratorio que ya pasaron por la recepción: las de la cola. */
+const LAB_ORDERS = ordenes.filtrar((o) => o.categoryConceptId === CATEGORIA_ORDEN['SRQ-LAB']).slice(0, 12);
+
+/** Qué muestra pide cada estudio, y en qué tubo viaja. El resto, suero. */
+const SPECIMEN_FOR_STUDY: Readonly<Record<string, readonly [specimenType: string, containerType: string]>> = {
+  [ESTUDIO['STUDY-HEMOGRAMA']!]: [SPECIMEN_TYPE['SPECIMEN-TYPE-WHOLE-BLOOD']!, SPECIMEN_CONTAINER_TYPE['CONTAINER-TYPE-EDTA']!],
+  [ESTUDIO['STUDY-ORINA']!]: [SPECIMEN_TYPE['SPECIMEN-TYPE-URINE']!, SPECIMEN_CONTAINER_TYPE['CONTAINER-TYPE-URINE-CUP']!],
+};
+const SERUM: readonly [string, string] = [SPECIMEN_TYPE['SPECIMEN-TYPE-SERUM']!, SPECIMEN_CONTAINER_TYPE['CONTAINER-TYPE-SST']!];
+
+/**
+ * El laboratorio de la clínica de la maqueta (`LAB-OLIVOS`) es el custodio de
+ * lo sembrado: es el tenant con el que inician sesión la médica y el
+ * administrador, así que sus acesiones se pueden abrir desde la cola.
+ */
+const LAB_CUSTODIAN_TENANT = TENANT_CLINICA;
+
+export const labSpecimens = new Coleccion<LabSpecimenRecord>(
+  LAB_ORDERS.map((o, i) => ({
+    id: uuid(`specimen-${o.id}`),
+    patientProfileId: o.patientProfileId,
+    custodianTenantId: LAB_CUSTODIAN_TENANT,
+    specimenTypeConceptId: (SPECIMEN_FOR_STUDY[o.codeConceptId] ?? SERUM)[0],
+    statusConceptId: SPECIMEN_STATUS['SPEC_RECEIVED']!,
+    serviceRequestId: o.id,
+    collectedAt: iso(-3 + (i % 3), 7, 30),
+    receivedAt: iso(-3 + (i % 3), 8, 10),
+  })),
+);
+
+export const labContainers = new Coleccion<LabContainerRecord>(
+  LAB_ORDERS.map((o, i) => ({
+    id: uuid(`container-${o.id}`),
+    specimenId: uuid(`specimen-${o.id}`),
+    containerIdentifier: `TUBO-${String(5000 + i)}`,
+    containerTypeConceptId: (SPECIMEN_FOR_STUDY[o.codeConceptId] ?? SERUM)[1],
+    statusConceptId: o.statusConceptId === ESTADO['ST-COMPLETED'] ? CONTAINER_STATUS['CONTAINER_STORED']! : CONTAINER_STATUS['CONTAINER_ACTIVE']!,
+  })),
+);
+
+export const labCustodyEvents = new Coleccion<LabCustodyEventRecord>(
+  LAB_ORDERS.map((o, i) => ({
+    id: uuid(`custody-reception-${o.id}`),
+    specimenId: uuid(`specimen-${o.id}`),
+    specimenContainerId: null,
+    custodyEventTypeConceptId: CUSTODY_EVENT_TYPE['CUSTODY_RECEPTION']!,
+    occurredAt: iso(-3 + (i % 3), 8, 10),
+    toPartyTypeConceptId: null,
+    sealIdentifier: null,
+    signedByUserId: null,
+  })),
+);
+
+export const labAccessions = new Coleccion<LabAccessionRecord>(
+  LAB_ORDERS.map((o, i) => ({
+    id: uuid(`accession-${o.id}`),
+    custodianTenantId: LAB_CUSTODIAN_TENANT,
+    patientProfileId: o.patientProfileId,
+    accessionNumber: `ACC-${String(9000 + i)}`,
+    receivedAt: iso(-3 + (i % 3), 8, 10),
+    priorityConceptId: o.priorityConceptId,
+    statusConceptId: o.statusConceptId === ESTADO['ST-PENDING'] ? ACCESSION_STATUS['ACC_RECEIVED']! : ACCESSION_STATUS['ACC_IN_PROCESS']!,
+    serviceRequestId: o.id,
+    items: [{ accessionSpecimenId: uuid(`accession-item-${o.id}`), specimenId: uuid(`specimen-${o.id}`), sequenceNumber: 1, statusConceptId: ACCESSION_STATUS['ACC_ITEM_RECEIVED']! }],
+  })),
+);
+
 const ordenesDeTrabajo = new Coleccion<{ id: string; workOrderNumber: string; laboratoryAccessionId: string; statusConceptId: string; priorityConceptId: string; assignedProfileId: string | null; scheduledAt: string; completedAt: string | null }>(
-  ordenes.todos().slice(0, 12).map((o, i) => ({
+  LAB_ORDERS.map((o, i) => ({
     id: uuid(`work-order-${o.id}`),
     workOrderNumber: `OT-2026-${String(400 + i).padStart(4, '0')}`,
-    laboratoryAccessionId: `ACC-${String(9000 + i)}`,
+    laboratoryAccessionId: uuid(`accession-${o.id}`),
     statusConceptId: o.statusConceptId,
     priorityConceptId: o.priorityConceptId,
     assignedProfileId: i % 3 === 0 ? null : PROFESIONALES[12]!.id,
@@ -553,6 +685,55 @@ export function estudioPrevio(
   };
 }
 
+/* ---- apoyo del circuito de especímenes ------------------------------------ */
+
+/** Los campos obligatorios que faltan, con el texto de `class-validator`. */
+function requiredFields<T extends object>(data: Partial<T>, fields: readonly (keyof T & string)[]) {
+  return fields
+    .filter((field) => {
+      const value = data[field];
+      return typeof value !== 'string' || value.trim() === '';
+    })
+    .map((field) => ({ field, message: 'should not be empty' }));
+}
+
+/**
+ * Si el recurso es del tenant del contexto. Sin `X-Tenant-Id` no hay contexto
+ * que comparar —pasa en las pruebas del simulador, no en la maqueta, donde el
+ * interceptor de autenticación siempre la manda con sesión—.
+ */
+function inTenantContext(request: MockRequest, custodianTenantId: string): boolean {
+  const context = request.headers.get('X-Tenant-Id');
+  return context === null || context === custodianTenantId;
+}
+
+/** El detalle de un espécimen como lo devuelve la API: los opcionales ausentes no viajan. */
+function specimenDetail(specimen: LabSpecimenRecord) {
+  return {
+    id: specimen.id,
+    patientProfileId: specimen.patientProfileId,
+    specimenTypeConceptId: specimen.specimenTypeConceptId,
+    statusConceptId: specimen.statusConceptId,
+    collectedAt: specimen.collectedAt,
+    ...(specimen.receivedAt === null ? {} : { receivedAt: specimen.receivedAt }),
+    containers: labContainers
+      .filtrar((c) => c.specimenId === specimen.id)
+      .map(({ id, containerIdentifier, containerTypeConceptId, statusConceptId }) => ({ id, containerIdentifier, containerTypeConceptId, statusConceptId })),
+    custodyEvents: labCustodyEvents
+      .filtrar((e) => e.specimenId === specimen.id)
+      .sort((a, b) => a.occurredAt.localeCompare(b.occurredAt))
+      .map((e) => ({
+        id: e.id,
+        ...(e.specimenContainerId === null ? {} : { specimenContainerId: e.specimenContainerId }),
+        custodyEventTypeConceptId: e.custodyEventTypeConceptId,
+        occurredAt: e.occurredAt,
+        ...(e.toPartyTypeConceptId === null ? {} : { toPartyTypeConceptId: e.toPartyTypeConceptId }),
+        ...(e.sealIdentifier === null ? {} : { sealIdentifier: e.sealIdentifier }),
+        ...(e.signedByUserId === null ? {} : { signedByUserId: e.signedByUserId }),
+      })),
+  };
+}
+
 export function registrarDiagnostico(router: MockRouter): void {
   // Cada centro publicado tiene agenda: desde Cotizaciones un análisis se
   // reserva como una cita, eligiendo un cupo del centro (25/09/2026).
@@ -706,6 +887,170 @@ export function registrarDiagnostico(router: MockRouter): void {
       .filter((w) => status === null || w.statusConceptId === status)
       .filter((w) => assigned === null || w.assignedProfileId === assigned)
       .slice(Number(query.get('offset') ?? 0), Number(query.get('offset') ?? 0) + (Number(query.get('limit') ?? 50) || 50));
+  });
+
+  /* ---- especímenes, acesiones y custodia (BR-17, CL-47) ------------------
+     Las reglas de `DiagnosticsSpecimensService`, en el mismo orden. Las dos
+     lecturas se acotan al tenant del contexto (`X-Tenant-Id`): una acesión de
+     otro laboratorio responde 404, sin confirmar que existe. Sin la cabecera
+     —las pruebas unitarias del simulador— no hay contexto que comparar y se
+     lee igual. */
+
+  router.post('/diagnostics/specimens', (request) => {
+    const data = cuerpo<{ patientProfileId: string; custodianTenantId: string; specimenTypeConceptId: string; serviceRequestId?: string }>(request);
+    const missing = requiredFields(data, ['patientProfileId', 'custodianTenantId', 'specimenTypeConceptId']);
+    if (missing.length > 0) return validation('Faltan datos del espécimen', missing);
+    const specimen: LabSpecimenRecord = {
+      id: nuevoId('specimen'),
+      patientProfileId: data.patientProfileId!,
+      custodianTenantId: data.custodianTenantId!,
+      specimenTypeConceptId: data.specimenTypeConceptId!,
+      statusConceptId: SPECIMEN_STATUS['SPEC_COLLECTED']!,
+      serviceRequestId: data.serviceRequestId ?? null,
+      collectedAt: ahora(),
+      receivedAt: null,
+    };
+    labSpecimens.agregar(specimen);
+    return reply(201, { id: specimen.id, status: specimen.statusConceptId });
+  });
+
+  /** UC-20-01: la recepción. Marca cada espécimen recibido y firma la recepción en la custodia. */
+  router.post('/diagnostics/accessions', (request) => {
+    const data = cuerpo<{ patientProfileId: string; custodianTenantId?: string; specimenIds: readonly string[]; accessionNumber?: string; priorityConceptId?: string; serviceRequestId?: string }>(request);
+    const missing = [
+      ...requiredFields(data, ['patientProfileId']),
+      ...(Array.isArray(data.specimenIds) && data.specimenIds.length > 0 ? [] : [{ field: 'specimenIds', message: 'must contain at least 1 elements' }]),
+    ];
+    if (missing.length > 0) return validation('Faltan datos de la acesión', missing);
+
+    const specimens: LabSpecimenRecord[] = [];
+    for (const specimenId of data.specimenIds!) {
+      const specimen = labSpecimens.get(specimenId);
+      if (specimen === undefined) return notFound('Espécimen no encontrado');
+      if (specimen.statusConceptId === SPECIMEN_STATUS['SPEC_REJECTED']) {
+        return preconditionFailed('El espécimen está rechazado y no puede acesionarse', { specimenId });
+      }
+      specimens.push(specimen);
+    }
+
+    const receivedAt = ahora();
+    const accessionId = nuevoId('accession');
+    const items = specimens.map((specimen, index) => {
+      labSpecimens.actualizar(specimen.id, { statusConceptId: SPECIMEN_STATUS['SPEC_RECEIVED']!, receivedAt });
+      labCustodyEvents.agregar({
+        id: nuevoId('custody'),
+        specimenId: specimen.id,
+        specimenContainerId: null,
+        custodyEventTypeConceptId: CUSTODY_EVENT_TYPE['CUSTODY_RECEPTION']!,
+        occurredAt: receivedAt,
+        toPartyTypeConceptId: null,
+        sealIdentifier: null,
+        signedByUserId: request.user?.id ?? null,
+      });
+      return {
+        accessionSpecimenId: nuevoId('accession-item'),
+        specimenId: specimen.id,
+        sequenceNumber: index + 1,
+        statusConceptId: ACCESSION_STATUS['ACC_ITEM_RECEIVED']!,
+      };
+    });
+    const accession: LabAccessionRecord = {
+      id: accessionId,
+      custodianTenantId: data.custodianTenantId ?? specimens[0]!.custodianTenantId,
+      patientProfileId: data.patientProfileId!,
+      accessionNumber: data.accessionNumber ?? `ACC-${Date.now()}`,
+      receivedAt,
+      priorityConceptId: data.priorityConceptId ?? PRIORIDAD['PRI-ROUTINE']!,
+      statusConceptId: ACCESSION_STATUS['ACC_RECEIVED']!,
+      serviceRequestId: data.serviceRequestId ?? null,
+      items,
+    };
+    labAccessions.agregar(accession);
+    return reply(201, { id: accession.id, status: accession.statusConceptId, accessionSpecimenIds: items.map((item) => item.accessionSpecimenId) });
+  });
+
+  router.get('/diagnostics/accessions/:id', (request) => {
+    const accession = labAccessions.get(request.params['id']!);
+    if (accession === undefined || !inTenantContext(request, accession.custodianTenantId)) {
+      return notFound('Acesión no encontrada');
+    }
+    return {
+      id: accession.id,
+      custodianTenantId: accession.custodianTenantId,
+      patientProfileId: accession.patientProfileId,
+      accessionNumber: accession.accessionNumber,
+      receivedAt: accession.receivedAt,
+      priorityConceptId: accession.priorityConceptId,
+      statusConceptId: accession.statusConceptId,
+      specimens: accession.items.flatMap((item) => {
+        const specimen = labSpecimens.get(item.specimenId);
+        return specimen === undefined
+          ? []
+          : [{ accessionSpecimenId: item.accessionSpecimenId, sequenceNumber: item.sequenceNumber, statusConceptId: item.statusConceptId, specimen: specimenDetail(specimen) }];
+      }),
+    };
+  });
+
+  router.get('/diagnostics/specimens/:id', (request) => {
+    const specimen = labSpecimens.get(request.params['id']!);
+    if (specimen === undefined || !inTenantContext(request, specimen.custodianTenantId)) {
+      return notFound('Espécimen no encontrado');
+    }
+    return specimenDetail(specimen);
+  });
+
+  /** UC-20-02: rechazar. Un espécimen rechazado ya no se puede acesionar ni volver a rechazar. */
+  router.post('/diagnostics/specimens/:id/rejection', (request) => {
+    const data = cuerpo<{ rejectionReasonConceptId: string; notes?: string; recollectionRequired?: boolean }>(request);
+    const missing = requiredFields(data, ['rejectionReasonConceptId']);
+    if (missing.length > 0) return validation('Falta el motivo del rechazo', missing);
+    const specimen = labSpecimens.get(request.params['id']!);
+    if (specimen === undefined) return notFound('Espécimen no encontrado');
+    if (specimen.statusConceptId === SPECIMEN_STATUS['SPEC_REJECTED']) {
+      return preconditionFailed('El espécimen ya está rechazado', { specimenId: specimen.id });
+    }
+    labSpecimens.actualizar(specimen.id, { statusConceptId: SPECIMEN_STATUS['SPEC_REJECTED']! });
+    return reply(201, { id: nuevoId('specimen-rejection'), status: SPECIMEN_STATUS['SPEC_REJECTED']! });
+  });
+
+  router.post('/diagnostics/specimens/:id/containers', (request) => {
+    const data = cuerpo<{ containerIdentifier: string; containerTypeConceptId: string }>(request);
+    const missing = requiredFields(data, ['containerIdentifier', 'containerTypeConceptId']);
+    if (missing.length > 0) return validation('Faltan datos del contenedor', missing);
+    const specimen = labSpecimens.get(request.params['id']!);
+    if (specimen === undefined) return notFound('Espécimen no encontrado');
+    const container: LabContainerRecord = {
+      id: nuevoId('container'),
+      specimenId: specimen.id,
+      containerIdentifier: data.containerIdentifier!.trim(),
+      containerTypeConceptId: data.containerTypeConceptId!,
+      statusConceptId: CONTAINER_STATUS['CONTAINER_ACTIVE']!,
+    };
+    labContainers.agregar(container);
+    return reply(201, { id: container.id, status: container.statusConceptId });
+  });
+
+  /** UC-20-03: el traslado. Queda en la custodia del espécimen y mueve el estado del contenedor. */
+  router.post('/diagnostics/containers/:id/custody-events', (request) => {
+    const data = cuerpo<{ specimenId: string; toPartyTypeConceptId?: string; sealIdentifier?: string; destinationStatusConceptId?: string }>(request);
+    const missing = requiredFields(data, ['specimenId']);
+    if (missing.length > 0) return validation('Falta el espécimen del traslado', missing);
+    const container = labContainers.get(request.params['id']!);
+    if (container === undefined) return notFound('Contenedor no encontrado');
+    const event: LabCustodyEventRecord = {
+      id: nuevoId('custody'),
+      specimenId: data.specimenId!,
+      specimenContainerId: container.id,
+      custodyEventTypeConceptId: CUSTODY_EVENT_TYPE['CUSTODY_TRANSFER']!,
+      occurredAt: ahora(),
+      toPartyTypeConceptId: data.toPartyTypeConceptId ?? null,
+      sealIdentifier: data.sealIdentifier ?? null,
+      signedByUserId: request.user?.id ?? null,
+    };
+    labCustodyEvents.agregar(event);
+    const status = data.destinationStatusConceptId ?? CONTAINER_STATUS['CONTAINER_STORED']!;
+    labContainers.actualizar(container.id, { statusConceptId: status });
+    return reply(201, { id: event.id, status });
   });
 
   /* ---- resultados de la persona ------------------------------------------- */
@@ -862,3 +1207,7 @@ export function registrarDiagnostico(router: MockRouter): void {
 informes.persistirEn('mock.diagnostics.informes');
 compartidos.persistirEn('mock.diagnostics.compartidos');
 ordenesDeTrabajo.persistirEn('mock.diagnostics.ordenesDeTrabajo');
+labSpecimens.persistirEn('mock.diagnostics.labSpecimens');
+labContainers.persistirEn('mock.diagnostics.labContainers');
+labCustodyEvents.persistirEn('mock.diagnostics.labCustodyEvents');
+labAccessions.persistirEn('mock.diagnostics.labAccessions');
