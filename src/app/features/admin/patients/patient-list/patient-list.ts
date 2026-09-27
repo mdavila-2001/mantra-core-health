@@ -10,9 +10,9 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, forkJoin, map, of } from 'rxjs';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, NavigationSkipped, Router, RouterLink } from '@angular/router';
+import { catchError, filter, forkJoin, map, of } from 'rxjs';
 
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import type {
@@ -23,6 +23,7 @@ import { SystemContextClient } from '../../../../core/data-access/system-context
 import type { DynamicEnum } from '../../../../core/data-access/system-context/system-context.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
+import { SearchMemoryService } from '../../../../core/navigation/search-memory.service';
 import { empty, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
@@ -44,6 +45,13 @@ import {
 
 /** Claves de filtro en la URL — las mismas que manda `PatientSearchQuery`. */
 const FILTRO_ABO = 'aboGroupConceptId';
+/**
+ * La clave con la que el texto buscado **viajaba** en la URL. Ya no se
+ * escribe; sólo se lee para migrar un enlace viejo y sacarla de la barra.
+ */
+const LEGACY_SEARCH_PARAM = 'q';
+/** Entrada de esta pantalla en {@link SearchMemoryService}. */
+const SEARCH_MEMORY_SCREEN = 'admin-patients';
 const FILTRO_RH = 'rhFactorConceptId';
 const FILTRO_IDIOMA = 'clinicalLanguageConceptId';
 
@@ -97,12 +105,24 @@ const TAMANO_DE_PAGINA = 25;
  * llega derivada como booleano — que es exactamente por qué el backend la
  * manda así.
  *
- * ## La búsqueda vive en la URL
+ * ## La búsqueda NO vive en la URL (2026-09-26)
  *
- * `?q=` y no un signal interno, por tres cosas que se obtienen gratis: el
- * enlace se comparte con el filtro puesto, el botón «atrás» del navegador
- * deshace la búsqueda, y el estado vacío por filtro puede ofrecer una salida
- * que de verdad funciona — un enlace a la lista sin filtrar.
+ * Vivía en `?q=`, y lo que se tipea acá es el nombre, el código o el
+ * documento de un paciente: en la URL quedaba en el historial del navegador,
+ * en el log de acceso del servidor que sirve la aplicación al recargar y en
+ * el `Referer`. Ahora el texto vive en un signal respaldado por
+ * `SearchMemoryService` (memoria de la pestaña, atada a la sesión), así que
+ * volver desde la ficha encuentra la búsqueda como estaba sin escribirla en
+ * ningún lado. Lo que se pierde, a sabiendas: compartir el enlace con la
+ * búsqueda puesta y que un `F5` la conserve.
+ *
+ * Los tres filtros de catálogo (ABO, Rh, idioma) **sí** siguen en la URL: un
+ * código de catálogo no identifica a nadie.
+ *
+ * Un enlace viejo con `?q=` sigue funcionando: se toma el texto, se guarda en
+ * memoria y se saca de la barra. Y la salida del vacío por filtro («Ver todos
+ * los pacientes») apunta a esta misma ruta: el router ignora esa navegación
+ * (`NavigationSkipped`) y la pantalla la toma como «empezar de nuevo».
  */
 @Component({
   selector: 'app-patient-list',
@@ -117,6 +137,7 @@ export class PatientList {
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly searchMemory = inject(SearchMemoryService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly rutaDeLaFicha = patientDetailRoute;
@@ -140,11 +161,11 @@ export class PatientList {
 
   protected readonly listado = signal<ViewState<readonly PatientListItem[]>>(loading());
 
-  /** El filtro vigente, leído de la URL. Vacío es «sin filtro», no «buscar nada». */
-  protected readonly busqueda = toSignal(
-    this.route.queryParamMap.pipe(map((params) => params.get('q') ?? '')),
-    { initialValue: '' },
-  );
+  /**
+   * El texto buscado. Vacío es «sin filtro», no «buscar nada». Arranca con lo
+   * que había en memoria o, si llegó un enlace viejo, con su `?q=`.
+   */
+  protected readonly busqueda = signal(this.initialSearch());
 
   private readonly filtroAbo = toSignal(
     this.route.queryParamMap.pipe(map((params) => params.get(FILTRO_ABO) ?? '')),
@@ -276,6 +297,42 @@ export class PatientList {
     });
 
     this.cargarCatalogos();
+
+    // «Ver todos los pacientes» (y cualquier enlace a esta misma ruta) no
+    // cambia la URL: el router lo descarta. Es la única señal de que la
+    // persona pidió empezar de nuevo.
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationSkipped => event instanceof NavigationSkipped),
+        filter((event) => event.url.split('?')[0] === PATIENTS_ROUTE),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.buscar(''));
+  }
+
+  /** Lo que publica `app-filter-bar` al buscar: se guarda, no se navega. */
+  protected buscar(texto: string): void {
+    this.searchMemory.write(SEARCH_MEMORY_SCREEN, { q: texto });
+    this.busqueda.set(texto);
+  }
+
+  /**
+   * El texto de arranque. Un `?q=` de un enlace viejo gana sobre la memoria
+   * —es lo que la persona acaba de abrir— y se saca de la URL en el acto.
+   */
+  private initialSearch(): string {
+    const legacy = this.route.snapshot.queryParamMap.get(LEGACY_SEARCH_PARAM);
+    if (legacy === null) {
+      return this.searchMemory.read(SEARCH_MEMORY_SCREEN)['q'] ?? '';
+    }
+    this.searchMemory.write(SEARCH_MEMORY_SCREEN, { q: legacy });
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { [LEGACY_SEARCH_PARAM]: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    return legacy;
   }
 
   /**

@@ -90,6 +90,32 @@ class HostComponentConDosBarras {
   readonly matriculas: Readonly<Record<string, string>>[] = [];
 }
 
+/** Búsqueda fuera de la URL: el término lo guarda quien consume. */
+@Component({
+  imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <app-filter-bar
+      [filters]="filtros()"
+      [searchInUrl]="false"
+      [searchValue]="termino()"
+      (searchChanged)="alBuscar($event)"
+      (filtersChanged)="emisiones.push($event)"
+    />
+  `,
+})
+class HostComponentWithoutUrl {
+  readonly filtros = signal<readonly FilterDef[]>(FILTROS);
+  readonly termino = signal('');
+  readonly avisos: string[] = [];
+  readonly emisiones: Readonly<Record<string, string>>[] = [];
+
+  alBuscar(term: string): void {
+    this.avisos.push(term);
+    this.termino.set(term);
+  }
+}
+
 describe('FilterBar', () => {
   let fixture: ComponentFixture<HostComponent>;
   let host: HostComponent;
@@ -119,6 +145,7 @@ describe('FilterBar', () => {
         HostComponentConProyeccion,
         HostComponentConDosProyecciones,
         HostComponentConDosBarras,
+        HostComponentWithoutUrl,
       ],
       providers: [provideRouter([{ path: 'listado', component: VistaListado }])],
     }).compileComponents();
@@ -322,6 +349,76 @@ describe('FilterBar', () => {
       expect(parametros().has('qTitulos')).toBe(false);
       expect(parametros().get('qMatriculas')).toBe('lp-12');
       dos.destroy();
+    });
+  });
+
+  /**
+   * `searchInUrl=false`: lo tecleado es el nombre o el documento de una
+   * persona, y la URL lo dejaría en el historial y en los logs del servidor.
+   */
+  describe('búsqueda fuera de la URL (searchInUrl=false)', () => {
+    function buscador(de: ComponentFixture<unknown>): SearchField {
+      return de.debugElement.query(By.directive(SearchField)).componentInstance as SearchField;
+    }
+
+    async function montar(): Promise<ComponentFixture<HostComponentWithoutUrl>> {
+      const withoutUrl = TestBed.createComponent(HostComponentWithoutUrl);
+      await withoutUrl.whenStable();
+      return withoutUrl;
+    }
+
+    it('correcto — buscar avisa el término y no lo escribe en la URL', async () => {
+      const withoutUrl = await montar();
+
+      buscador(withoutUrl).searched.emit('Ana Quispe');
+      await withoutUrl.whenStable();
+
+      expect(withoutUrl.componentInstance.avisos).toEqual(['Ana Quispe']);
+      expect(router.url).toBe('/listado');
+      expect(withoutUrl.componentInstance.emisiones.at(-1)).toEqual({ [SEARCH_PARAM]: 'Ana Quispe' });
+      withoutUrl.destroy();
+    });
+
+    it('correcto — el campo muestra `searchValue`, no lo que diga la URL', async () => {
+      await irA({ [SEARCH_PARAM]: 'de-la-url' });
+      const withoutUrl = await montar();
+      withoutUrl.componentInstance.termino.set('guardado');
+      await withoutUrl.whenStable();
+
+      expect(buscador(withoutUrl).value()).toBe('guardado');
+      withoutUrl.destroy();
+    });
+
+    it('límite — los filtros de catálogo siguen en la URL, junto al término guardado', async () => {
+      const withoutUrl = await montar();
+      withoutUrl.componentInstance.termino.set('Ana');
+      await withoutUrl.whenStable();
+
+      const select = (withoutUrl.nativeElement as HTMLElement).querySelector('select')!;
+      select.value = '0';
+      select.dispatchEvent(new Event('change'));
+      await withoutUrl.whenStable();
+
+      expect(router.url).toContain('servicio=card');
+      expect(router.url).not.toContain('Ana');
+      expect(withoutUrl.componentInstance.emisiones.at(-1)?.[SEARCH_PARAM]).toBe('Ana');
+      withoutUrl.destroy();
+    });
+
+    it('inválido — «limpiar todo» avisa un término vacío y además saca una `q` vieja de la URL', async () => {
+      await irA({ [SEARCH_PARAM]: 'enlace-viejo', servicio: 'card' });
+      const withoutUrl = await montar();
+      withoutUrl.componentInstance.termino.set('Ana');
+      await withoutUrl.whenStable();
+
+      [...(withoutUrl.nativeElement as HTMLElement).querySelectorAll('button')]
+        .find((boton) => boton.textContent?.trim() === 'Limpiar todo')
+        ?.click();
+      await withoutUrl.whenStable();
+
+      expect(withoutUrl.componentInstance.avisos.at(-1)).toBe('');
+      expect(router.url).toBe('/listado');
+      withoutUrl.destroy();
     });
   });
 });
