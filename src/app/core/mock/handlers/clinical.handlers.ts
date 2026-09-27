@@ -424,8 +424,8 @@ export function registrarClinica(router: MockRouter): void {
       patientProfileId: datos.patientProfileId ?? '',
       codeConceptId: datos.codeConceptId ?? '',
       categoryConceptId: datos.categoryConceptId ?? CATEGORIA_DX,
-      clinicalStatusConceptId: ESTADO_CONDICION['COND-ACTIVE']!,
-      verificationStatusConceptId: VERIFICACION_DX['DXV-PROVISIONAL']!,
+      clinicalStatusConceptId: ESTADO_CONDICION['COND_ACTIVE']!,
+      verificationStatusConceptId: VERIFICACION_DX['COND_PROVISIONAL']!,
       severityConceptId: datos.severityConceptId ?? SEVERIDAD['SEV-MILD']!,
       // El curso y la fecha esperada **se guardan**: el contrato los declara
       // desde el patch v4.0.8 y el simulador los descartaba, así que registrar
@@ -454,7 +454,7 @@ export function registrarClinica(router: MockRouter): void {
     const datos = cuerpo<{ newClinicalStatusConceptId: string }>(request);
     const actualizada = condiciones.actualizar(c.id, {
       clinicalStatusConceptId: datos.newClinicalStatusConceptId ?? c.clinicalStatusConceptId,
-      ...(datos.newClinicalStatusConceptId === ESTADO_CONDICION['COND-RESOLVED'] ? { resolvedAt: ahora() } : {}),
+      ...(datos.newClinicalStatusConceptId === ESTADO_CONDICION['COND_RESOLVED'] ? { resolvedAt: ahora() } : {}),
     })!;
     return sinPaciente(actualizada);
   });
@@ -510,7 +510,7 @@ export function registrarClinica(router: MockRouter): void {
       typeConceptId: datos.typeConceptId ?? TIPO_ALERGIA,
       categoryConceptId: datos.categoryConceptId ?? '',
       criticalityConceptId: datos.criticalityConceptId ?? '',
-      clinicalStatusConceptId: ESTADO_CONDICION['COND-ACTIVE']!,
+      clinicalStatusConceptId: ESTADO_CONDICION['COND_ACTIVE']!,
       ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
       ...(reacciones.length === 0 ? {} : { reactions: reacciones }),
       createdAt: ahora(),
@@ -751,7 +751,7 @@ export function plantillasVigentes(): readonly ReturnType<typeof plantilla>[] {
  * Las reglas de "¿para qué es esta receta?" (C5, pedido literal del
  * propietario): siempre un diagnóstico **confirmado**, o un motivo escrito.
  * Nunca los dos vacíos, y un `indicationConditionId` que no apunte a un
- * `DXV-CONFIRMED` real es tan inválido como no mandar nada — se comparte
+ * `COND_CONFIRMED` real es tan inválido como no mandar nada — se comparte
  * entre el alta y `/:id/edit` para que las dos rutas exijan lo mismo.
  */
 function falloDeIndicacion(
@@ -765,7 +765,7 @@ function falloDeIndicacion(
   }
   if (indicationConditionId !== undefined) {
     const condicion = condiciones.get(indicationConditionId);
-    if (condicion === undefined || condicion.verificationStatusConceptId !== VERIFICACION_DX['DXV-CONFIRMED']) {
+    if (condicion === undefined || condicion.verificationStatusConceptId !== VERIFICACION_DX['COND_CONFIRMED']) {
       return validation('La receta sólo se liga a un diagnóstico confirmado.', [
         { field: 'indicationConditionId', message: 'El diagnóstico no está confirmado.' },
       ]);

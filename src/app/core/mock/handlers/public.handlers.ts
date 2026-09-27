@@ -141,6 +141,8 @@ function productosDeFarmacia(slug: string) {
 const SUCURSAL_POR_SLUG = new Map(FARMACIAS_DEL_CORPUS.map((f) => [f.slug, f]));
 
 interface SucursalPublica {
+  /** La sede, como la API: la clave de la sucursal, porque el slug puede repetirse. */
+  readonly id: string;
   readonly slug: string;
   readonly name: string;
   readonly siteName: string;
@@ -173,6 +175,7 @@ function sucursalesDe(vitrina: VitrinaSimulada): readonly SucursalPublica[] {
   if (propia === undefined) {
     return [
       {
+        id: uuid(`sede-farmacia-${vitrina.slug}`),
         slug: vitrina.slug,
         name: vitrina.displayName,
         siteName: vitrina.displayName,
@@ -189,6 +192,7 @@ function sucursalesDe(vitrina: VitrinaSimulada): readonly SucursalPublica[] {
 
   return FARMACIAS_DEL_CORPUS.filter((f) => f.chainId === propia.chainId)
     .map((f) => ({
+      id: f.siteId,
       slug: f.slug,
       name: f.name,
       siteName: f.siteName,

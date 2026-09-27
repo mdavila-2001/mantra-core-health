@@ -243,7 +243,7 @@ describe('Consultation', () => {
     { conceptId: 'con-dm', code: 'DM2', display: 'Diabetes tipo 2', codeSystemVersionId: 'v1' },
     {
       conceptId: 'ver-confirmado',
-      code: 'DXV-CONFIRMED',
+      code: 'COND_CONFIRMED',
       display: 'Diagnóstico confirmado',
       codeSystemVersionId: 'v1',
     },
