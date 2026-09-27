@@ -111,18 +111,15 @@ describe('backend simulado', () => {
     }
   });
 
-  it('la verificación reservada para C3 responde 404 con su mensaje contractual', () => {
+  it('la verificación de un diagnóstico que no existe responde 404', () => {
+    // C3 ya implementó la verificación (y la API la publica en #495): la ruta
+    // dejó de ser una reserva y ahora busca el diagnóstico por id.
     const request = peticion('POST', '/clinical/conditions/:id/verification', buscarUsuario('medica')!);
     const match = router.match('POST', request.path);
     expect(match).not.toBeNull();
-    expect(match!.handler(request)).toEqual({
+    expect(match!.handler(request)).toMatchObject({
       status: 404,
-      body: {
-        statusCode: 404,
-        code: 'NOT_FOUND',
-        message: 'Pendiente: carril C3',
-        error: 'Not Found',
-      },
+      body: { statusCode: 404, code: 'NOT_FOUND' },
     });
   });
 
