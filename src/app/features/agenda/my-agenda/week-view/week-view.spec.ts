@@ -275,4 +275,116 @@ describe('WeekView', () => {
     expect(vistas[0].getDate()).toBe(31);
     expect(vistas[1].getDate()).toBe(14);
   });
+  /* ---- el teclado y el lector (WCAG 2.1.1 · 1.3.1) ----------------------- */
+
+  describe('recorrido con el teclado', () => {
+    function boton(clave: string): HTMLElement {
+      return fixture.nativeElement.querySelector(`[data-semana="${clave}"]`);
+    }
+
+    function tecla(key: string, extra: KeyboardEventInit = {}): void {
+      (document.activeElement as HTMLElement).dispatchEvent(
+        new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...extra }),
+      );
+      fixture.detectChanges();
+    }
+
+    function tabStops(): HTMLElement[] {
+      return Array.from(fixture.nativeElement.querySelectorAll('[data-semana]')).filter(
+        (b) => (b as HTMLElement).getAttribute('tabindex') === '0',
+      ) as HTMLElement[];
+    }
+
+    beforeEach(() => {
+      montar(
+        [cupo(7, 9, 0), cupo(7, 11, 0), cupo(8, 10, 0)],
+        [],
+        [cita(7, 9, 'Ana Paz'), cita(7, 11, 'Rosa Vargas'), cita(8, 10, 'Luis Rojas')],
+        ETIQUETAS,
+      );
+    });
+
+    it('la semana entera es UNA parada de Tab', () => {
+      // Antes eran siete días más cada cita: treinta tabulaciones para cruzarla.
+      expect(tabStops()).toEqual([boton('0-0')]);
+    });
+
+    it('←/→ cambian de día y ↑/↓ recorren sus turnos en orden de hora', () => {
+      boton('0-0').focus();
+
+      tecla('ArrowDown');
+      expect(document.activeElement).toBe(boton('0-1'));
+      expect(document.activeElement?.textContent).toContain('Ana Paz');
+
+      tecla('ArrowDown');
+      expect(document.activeElement?.textContent).toContain('Rosa Vargas');
+
+      // Al martes, que tiene un solo turno: cae en el último que tiene.
+      tecla('ArrowRight');
+      expect(document.activeElement).toBe(boton('1-1'));
+      expect(document.activeElement?.textContent).toContain('Luis Rojas');
+
+      tecla('ArrowDown');
+      expect(document.activeElement).toBe(boton('1-1'));
+
+      tecla('ArrowUp');
+      expect(document.activeElement).toBe(boton('1-0'));
+
+      tecla('ArrowLeft');
+      expect(document.activeElement).toBe(boton('0-0'));
+
+      // La parada de Tab sigue al foco.
+      expect(tabStops()).toEqual([boton('0-0')]);
+    });
+
+    it('Inicio y Fin van al lunes y al domingo; en los bordes se queda quieta', () => {
+      boton('0-0').focus();
+
+      tecla('End');
+      expect(document.activeElement).toBe(boton('6-0'));
+      tecla('ArrowRight');
+      expect(document.activeElement).toBe(boton('6-0'));
+
+      tecla('Home', { ctrlKey: true });
+      expect(document.activeElement).toBe(boton('0-0'));
+      tecla('ArrowLeft');
+      expect(document.activeElement).toBe(boton('0-0'));
+    });
+
+    it('el clic sigue funcionando y mueve la parada al botón tocado', () => {
+      const abiertos: Date[] = [];
+      fixture.componentInstance.diaElegido.subscribe((d: Date) => abiertos.push(d));
+
+      const martes = boton('1-0');
+      martes.focus();
+      martes.click();
+      fixture.detectChanges();
+
+      expect(abiertos[0].getTime()).toBe(new Date(2026, 8, 8).getTime());
+      expect(tabStops()).toEqual([martes]);
+    });
+  });
+
+  describe('lo que lee el lector', () => {
+    it('el día dice su mes y la sede; la cita, su día', () => {
+      montar([cupo(7, 9, 0)], [], [cita(7, 9, 'Ana Paz')], ETIQUETAS);
+      fixture.componentRef.setInput('sede', 'Sede Centro');
+      fixture.detectChanges();
+
+      const lunes = fixture.nativeElement.querySelector('[data-semana="0-0"]') as HTMLElement;
+      expect(lunes.textContent).toContain('de septiembre');
+      expect(lunes.textContent).toContain('Sede Centro');
+
+      const appointment = fixture.nativeElement.querySelector('[data-testid="semana-cita"]') as HTMLElement;
+      expect(appointment.textContent).toContain('lunes 7 de septiembre');
+    });
+
+    it('sin sede no la inventa', () => {
+      montar([cupo(7, 9, 0)]);
+
+      const lunes = fixture.nativeElement.querySelector('[data-semana="0-0"]') as HTMLElement;
+      expect(lunes.textContent).not.toContain('null');
+      expect(lunes.textContent).not.toContain('Sede');
+    });
+  });
 });
