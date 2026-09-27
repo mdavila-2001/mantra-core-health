@@ -1,16 +1,8 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { MockRouter, isMockReply, preconditionFailed, type MockMethod } from '../mock-router';
-import { registrarAuth } from './auth.handlers';
+import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
 import { registrarVarios } from './misc.handlers';
 
-/**
- * El estado HTTP de cada familia de rechazo sale de los ayudantes del
- * simulador y no se escribe a mano: `mockup` todavía responde las
- * precondiciones con 412 y la validación con 422, y `test` ya con 422 y 400
- * (H2.S1.M2). La prueba fija la familia, no el número de una rama.
- */
-const PRECONDITION = preconditionFailed('').status;
 
 /**
  * El alta pública de laboratorio y de centro de imagenología (BR-09) contra el
@@ -24,7 +16,6 @@ const PRECONDITION = preconditionFailed('').status;
  */
 describe('alta de laboratorio y centro de imagenología en el simulador', () => {
   const router = new MockRouter();
-  registrarAuth(router);
   registrarVarios(router);
 
   function call(method: MockMethod, path: string, options: { body?: unknown; query?: string } = {}) {
@@ -81,63 +72,15 @@ describe('alta de laboratorio y centro de imagenología en el simulador', () => 
     expect([...catalog(TARGETS.jurisdiction).keys()].some((code) => code.startsWith('JUR-'))).toBe(false);
   });
 
-  it('correcto — el alta del centro de imagenología con esos conceptos da 201 pendiente de verificación', () => {
-    const unitType = catalog(TARGETS.unitType);
-    const modality = catalog(TARGETS.modality);
+  it('inválido — un destino que no es del alta no trae los códigos de diagnóstico', () => {
+    const codes = [...catalog('diagnostic_units.diagnostic_units.otra_columna_concept_id').keys()];
 
-    const result = call('POST', '/iam/auth/register-organization', {
-      body: {
-        organization: {
-          code: 'IMG_PRUEBA',
-          legalName: 'Imágenes de Prueba S.R.L.',
-          legalEntityType: 'SRL',
-          tenantType: 'DIAGNOSTIC_CENTER',
-          timeZone: 'America/La_Paz',
-          countryConceptId: catalog(TARGETS.country).get('BO'),
-          jurisdictionConceptId: catalog(TARGETS.jurisdiction).get('JURISDICTION_NATIONAL'),
-          diagnosticUnit: {
-            diagnosticUnitTypeConceptId: unitType.get('DU_TYPE_IMAGING'),
-            modalityConceptIds: [modality.get('DU_MODALITY_XRAY'), modality.get('DU_MODALITY_MRI')],
-          },
-          legalDocuments: {
-            constitutionFileId: 'f1',
-            taxIdentifierFileId: 'f2',
-            commerceRegistryFileId: 'f3',
-            operatingLicenseFileId: 'f4',
-            healthAuthorityCertificateFileId: 'f5',
-          },
-          legalRepresentative: { fullName: 'Ana Rojas', idNumber: '4455667', email: 'ana@imagenes.test', powerOfAttorneyFileId: 'f6' },
-        },
-        owner: { email: 'ana@imagenes.test', password: 'secreto12', displayName: 'Ana Rojas' },
-      },
-    });
-
-    expect(result.status).toBe(200);
-    expect(result.body).toEqual(
-      expect.objectContaining({
-        status: 'PENDING_VERIFICATION',
-        diagnosticUnitId: expect.any(String),
-        legalDocumentsRegistered: 5,
-        representativesRegistered: 1,
-      }),
-    );
+    expect(codes.some((code) => code.startsWith('DU_'))).toBe(false);
   });
 
-  it('inválido — sin jurisdicción el centro responde una precondición nombrando lo que falta', () => {
-    const result = call('POST', '/iam/auth/register-organization', {
-      body: {
-        organization: {
-          code: 'LAB_PRUEBA',
-          legalName: 'Lab de Prueba',
-          legalEntityType: 'UNIPERSONAL',
-          tenantType: 'DIAGNOSTIC_CENTER',
-          countryConceptId: catalog(TARGETS.country).get('BO'),
-        },
-        owner: { email: 'x@lab.test', password: 'secreto12', displayName: 'X' },
-      },
-    });
-
-    expect(result.status).toBe(PRECONDITION);
-    expect(JSON.stringify(result.body)).toContain('jurisdictionConceptId');
-  });
+  // En `mockup` las pantallas del alta todavía no llaman a
+  // `register-organization` (BR-09, cbfce9ee, sólo está en `test`), y el
+  // manejador del alta no admite `DIAGNOSTIC_CENTER`: las dos pruebas del alta
+  // viven sólo en `test`. Los catálogos sí van, para que el día que llegue BR-09
+  // el alta no frene en «No pudimos cargar los catálogos del alta».
 });
