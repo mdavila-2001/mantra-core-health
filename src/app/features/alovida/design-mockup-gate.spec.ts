@@ -7,6 +7,7 @@ import {
   designMockupRoutes,
   mockupPaths,
   PROFILE_SLUG_PREFIXES,
+  profileSlugRedirects,
   REAL_EQUIVALENTS,
 } from './design-mockup-gate';
 
@@ -42,19 +43,18 @@ describe('designMockupRoutes', () => {
     const tree = designMockupRoutes(true);
 
     it('monta las pantallas del archivo generado tal cual, sin tocarlas', () => {
-      for (const route of ALOVIDA_ROUTES) {
-        expect(tree).toContain(route);
-      }
+      expect(tree).toBe(ALOVIDA_ROUTES);
     });
+  });
 
-    it('además, la ficha de la bóveda con slug abre la ficha pública real', () => {
-      expect(tree).toContainEqual(
-        expect.objectContaining({
-          path: 'buscar/perfil-farmacia-detalle/:slug',
-          redirectTo: '/f/:slug',
-        }),
-      );
-    });
+  it('la ficha de la bóveda con slug abre la ficha pública real (en los dos modos)', () => {
+    expect(profileSlugRedirects()).toContainEqual(
+      expect.objectContaining({
+        path: 'buscar/perfil-farmacia-detalle/:slug',
+        pathMatch: 'full',
+        redirectTo: '/f/:slug',
+      }),
+    );
   });
 
   describe('apagado (API real)', () => {

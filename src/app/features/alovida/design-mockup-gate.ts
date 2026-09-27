@@ -104,7 +104,8 @@ export const REAL_EQUIVALENTS: Readonly<Record<string, string>> = {
  * plantillas estáticas con el mismo `GET /public/profiles/:prefijo/:slug` que
  * `PublicProfile` ya consume —cinco copias del mismo defecto—, la dirección de
  * la bóveda con un slug abre la ficha que ya lo hace. Existe en los dos modos:
- * es una redirección a una pantalla real, no una maqueta.
+ * es una redirección a una pantalla real, no una maqueta. Se monta con
+ * {@link profileSlugRedirects}, entre las direcciones heredadas del final.
  */
 export const PROFILE_SLUG_PREFIXES: Readonly<Record<string, string>> = {
   'buscar/perfil-profesional-detalle': 'p',
@@ -124,22 +125,28 @@ export const PROFILE_SLUG_PREFIXES: Readonly<Record<string, string>> = {
  * `canMatch` implícito: la ruta no existe, en vez de existir prohibida.
  */
 export function designMockupRoutes(designMockups: boolean): Routes {
-  const slugRedirects = Object.entries(PROFILE_SLUG_PREFIXES).map(
+  if (designMockups) return ALOVIDA_ROUTES;
+
+  return Object.entries({ ...CONNECTED_CANONICAL_URLS, ...REAL_EQUIVALENTS }).map(
+    ([legacyPath, target]) => redirectKeepingQuery(legacyPath, target),
+  );
+}
+
+/**
+ * `/buscar/perfil-*-detalle/:slug` → la ficha pública real, en los dos modos.
+ *
+ * Van aparte y no dentro de {@link designMockupRoutes} porque son direcciones
+ * heredadas: `app.routes.ts` las declara con las demás, después de toda
+ * pantalla y antes del comodín, para que nunca puedan tapar a una pantalla.
+ */
+export function profileSlugRedirects(): Routes {
+  return Object.entries(PROFILE_SLUG_PREFIXES).map(
     ([legacyPath, prefix]): Route => ({
       path: `${legacyPath}/:slug`,
       pathMatch: 'full',
       redirectTo: `/${prefix}/:slug`,
     }),
   );
-
-  if (designMockups) return [...slugRedirects, ...ALOVIDA_ROUTES];
-
-  return [
-    ...slugRedirects,
-    ...Object.entries({ ...CONNECTED_CANONICAL_URLS, ...REAL_EQUIVALENTS }).map(([legacyPath, target]) =>
-      redirectKeepingQuery(legacyPath, target),
-    ),
-  ];
 }
 
 /**

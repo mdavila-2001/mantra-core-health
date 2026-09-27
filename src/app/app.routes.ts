@@ -12,7 +12,7 @@ import { ActivateAccount } from './features/auth/activate-account/activate-accou
 import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { NotFound } from './features/not-found/not-found';
-import { designMockupRoutes } from './features/alovida/design-mockup-gate';
+import { designMockupRoutes, profileSlugRedirects } from './features/alovida/design-mockup-gate';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { environment } from '../environments/environment';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
@@ -2120,6 +2120,9 @@ export const routes: Routes = [
   // secas existe en las dos partes, y acá gana la que redirige sólo cuando
   // ninguna pantalla real coincidió.
   ...rutasHeredadas(RUTAS_HEREDADAS_DEL_BUSCADOR),
+  // Las fichas de la bóveda con slug abren la ficha pública real, con o sin
+  // maquetas. Ver `features/alovida/design-mockup-gate.ts`.
+  ...profileSlugRedirects(),
   {
     // Antes esto redirigía a `/`, que mandaba al panel —o al login, vía el
     // guard— a quien escribiera mal una dirección, sin decirle que se había
