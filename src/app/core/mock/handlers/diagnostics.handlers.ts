@@ -811,19 +811,14 @@ function specimenDetail(specimen: LabSpecimenRecord) {
 
 /**
  * Si quien pide es personal del laboratorio del tenant activo: la regla de
- * `LabStaffGuard` en la API. `SUPERADMIN`; `CLINICIAN`/`PRACTITIONER` que
- * valgan en ese tenant (los de `scopedRoles` sólo donde fueron concedidos); o
- * miembro de un tenant `DIAGNOSTIC_CENTER`.
+ * `LabStaffGuard` en la API. `SUPERADMIN`; `CLINICIAN`/`PRACTITIONER`; o
+ * miembro de un tenant `DIAGNOSTIC_CENTER`. En `mockup` las cuentas no tienen
+ * `scopedRoles`, así que el rol clínico vale en cualquier organización.
  */
 function isLabStaff(user: MockUser | null, tenantId: string | null): boolean {
   if (user === null || tenantId === null) return false;
   if (user.roles.includes('SUPERADMIN')) return true;
-  const clinical = ['CLINICIAN', 'PRACTITIONER'].some((role) => {
-    if (!user.roles.includes(role)) return false;
-    const scoped = Object.entries(user.scopedRoles ?? {}).filter(([, codes]) => codes.includes(role));
-    return scoped.length === 0 || scoped.some(([tid]) => tid === tenantId);
-  });
-  if (clinical) return true;
+  if (['CLINICIAN', 'PRACTITIONER'].some((role) => user.roles.includes(role))) return true;
   return user.tenants.includes(tenantId) && TENANT_TYPES[tenantId] === 'DIAGNOSTIC_CENTER';
 }
 
