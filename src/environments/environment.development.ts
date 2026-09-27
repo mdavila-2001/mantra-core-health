@@ -28,14 +28,14 @@ export const environment: Environment = {
    * barra de casos de demostración sin configurar nada. Se apaga con
    * `PUBLIC_DEMO_PRESETS=false` en el `.env`.
    */
-  demoPresets: envFromProcess.demoPresets ?? true,
+  demoPresets: envFromProcess.demoPresets ?? false,
 
   /**
    * Encendida por defecto en desarrollo, como `demoPresets`: la demo de dos
    * ventanas muestra el ciclo del QR completo. Se apaga con
    * `PUBLIC_PAYMENT_DEMO=false` en el `.env`.
    */
-  paymentDemo: envFromProcess.paymentDemo ?? true,
+  paymentDemo: envFromProcess.paymentDemo ?? false,
 
   /**
    * Encendida por defecto: sin ella la billetera de puntos se ve vacía en
@@ -43,7 +43,7 @@ export const environment: Environment = {
    * `PUBLIC_LOYALTY_DEMO=false` — y ese apagado es justamente la prueba de que
    * el estado vacío está bien hecho.
    */
-  loyaltyDemo: envFromProcess.loyaltyDemo ?? true,
+  loyaltyDemo: envFromProcess.loyaltyDemo ?? false,
 
   /**
    * Encendida por defecto: sin campañas sembradas no hay nada que recorrer en
@@ -51,7 +51,7 @@ export const environment: Environment = {
    * ese apagado es la prueba de que las secciones desaparecen enteras en vez
    * de quedar vacías.
    */
-  campaignsDemo: envFromProcess.campaignsDemo ?? true,
+  campaignsDemo: envFromProcess.campaignsDemo ?? false,
 
   /**
    * Apagada por defecto: el refresh token sigue en el cuerpo y en `localStorage`
@@ -61,13 +61,10 @@ export const environment: Environment = {
   refreshCookie: envFromProcess.refreshCookie ?? false,
 
   /**
-   * Siempre encendido en la rama `mockup`: es lo que la define. No lee el
-   * entorno del proceso a propósito, para que no haya forma de apuntar esta
-   * rama a una API real por accidente. Contra la API real se corre con la
-   * configuración explícita `real-api` (`yarn start:real-api`), que lo apaga
-   * sin tocar este archivo: ver `environment.real-api.ts`.
+   * Apagado para trabajar directamente contra el backend real en desarrollo.
    */
-  mockBackend: true,
+  mockBackend: false,
+
 
   /**
    * También apagada por defecto en desarrollo, y por un motivo práctico: sin un

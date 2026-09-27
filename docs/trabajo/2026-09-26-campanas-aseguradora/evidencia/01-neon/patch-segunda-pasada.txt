@@ -1,0 +1,47 @@
+BEGIN
+psql:../mantra-core-health-model/SQL/patches/2026-09-25_v4223_insurance_preventive_campaigns.sql:61: NOTICE:  relation "insurance_campaigns" already exists, skipping
+CREATE TABLE
+psql:../mantra-core-health-model/SQL/patches/2026-09-25_v4223_insurance_preventive_campaigns.sql:77: NOTICE:  relation "insurance_campaign_partners" already exists, skipping
+CREATE TABLE
+psql:../mantra-core-health-model/SQL/patches/2026-09-25_v4223_insurance_preventive_campaigns.sql:80: NOTICE:  relation "uq_insurance_campaigns_carrier_code" already exists, skipping
+CREATE INDEX
+psql:../mantra-core-health-model/SQL/patches/2026-09-25_v4223_insurance_preventive_campaigns.sql:81: NOTICE:  relation "ix_insurance_campaigns_carrier_status_validity" already exists, skipping
+CREATE INDEX
+psql:../mantra-core-health-model/SQL/patches/2026-09-25_v4223_insurance_preventive_campaigns.sql:82: NOTICE:  relation "ix_insurance_campaigns_campaign_type_concept_id" already exists, skipping
+CREATE INDEX
+psql:../mantra-core-health-model/SQL/patches/2026-09-25_v4223_insurance_preventive_campaigns.sql:83: NOTICE:  relation "ix_insurance_campaigns_target_condition_concept_id" already exists, skipping
+CREATE INDEX
+psql:../mantra-core-health-model/SQL/patches/2026-09-25_v4223_insurance_preventive_campaigns.sql:84: NOTICE:  relation "ix_insurance_campaigns_created_by_user_id" already exists, skipping
+CREATE INDEX
+psql:../mantra-core-health-model/SQL/patches/2026-09-25_v4223_insurance_preventive_campaigns.sql:85: NOTICE:  relation "ix_insurance_campaigns_updated_by_user_id" already exists, skipping
+CREATE INDEX
+psql:../mantra-core-health-model/SQL/patches/2026-09-25_v4223_insurance_preventive_campaigns.sql:86: NOTICE:  relation "ix_insurance_campaign_partners_insurance_campaign_id" already exists, skipping
+CREATE INDEX
+psql:../mantra-core-health-model/SQL/patches/2026-09-25_v4223_insurance_preventive_campaigns.sql:87: NOTICE:  relation "ix_insurance_campaign_partners_partner_role_concept_id" already exists, skipping
+CREATE INDEX
+psql:../mantra-core-health-model/SQL/patches/2026-09-25_v4223_insurance_preventive_campaigns.sql:88: NOTICE:  relation "ix_insurance_campaign_partners_partner_type_concept_id" already exists, skipping
+CREATE INDEX
+psql:../mantra-core-health-model/SQL/patches/2026-09-25_v4223_insurance_preventive_campaigns.sql:89: NOTICE:  relation "ix_insurance_campaign_partners_network_provider_membership_id" already exists, skipping
+CREATE INDEX
+psql:../mantra-core-health-model/SQL/patches/2026-09-25_v4223_insurance_preventive_campaigns.sql:90: NOTICE:  relation "ix_insurance_campaign_partners_created_by_user_id" already exists, skipping
+CREATE INDEX
+psql:../mantra-core-health-model/SQL/patches/2026-09-25_v4223_insurance_preventive_campaigns.sql:91: NOTICE:  relation "ix_insurance_campaign_partners_updated_by_user_id" already exists, skipping
+CREATE INDEX
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+DO
+COMMIT

@@ -1,0 +1,7 @@
+insurance.insurance_campaigns=insurance.insurance_campaigns
+insurance.insurance_campaign_partners=insurance.insurance_campaign_partners
+tablas_insurance=31
+indices=14
+fks=12
+checks=2
+conceptos_campaign_antes_de_arrancar_api=15

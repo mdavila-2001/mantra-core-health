@@ -33,14 +33,14 @@ export const environment: Environment = {
    * salvo que el despliegue la pida (`PUBLIC_DEMO_PRESETS=true`, pensado para
    * el staging de una demo).
    */
-  demoPresets: envFromProcess.demoPresets ?? true,
+  demoPresets: envFromProcess.demoPresets ?? false,
 
   /**
    * Apagada por defecto: sin pasarela real, en producción sólo existe el
    * camino del mostrador. El staging de una demo la enciende con
    * `PUBLIC_PAYMENT_DEMO=true`.
    */
-  paymentDemo: envFromProcess.paymentDemo ?? true,
+  paymentDemo: envFromProcess.paymentDemo ?? false,
 
   /**
    * Apagada por defecto: en producción no hay de dónde leer una membresía
@@ -48,14 +48,14 @@ export const environment: Environment = {
    * mostrar un saldo sembrado. El staging de una demo la enciende con
    * `PUBLIC_LOYALTY_DEMO=true`.
    */
-  loyaltyDemo: envFromProcess.loyaltyDemo ?? true,
+  loyaltyDemo: envFromProcess.loyaltyDemo ?? false,
 
   /**
    * Apagada por defecto: en producción no hay lecturas de campañas, así que
    * sembrarlas sería anunciar descuentos que ningún backend puede honrar. El
    * staging de una demo la enciende con `PUBLIC_CAMPAIGNS_DEMO=true`.
    */
-  campaignsDemo: envFromProcess.campaignsDemo ?? true,
+  campaignsDemo: envFromProcess.campaignsDemo ?? false,
 
   /**
    * Apagada por defecto: el refresh token sigue en el cuerpo y en `localStorage`
@@ -65,11 +65,10 @@ export const environment: Environment = {
   refreshCookie: envFromProcess.refreshCookie ?? false,
 
   /**
-   * Siempre encendido en la rama `mockup`: es lo que la define. No lee el
-   * entorno del proceso a propósito, para que no haya forma de apuntar esta
-   * rama a una API real por accidente.
+   * Apagado para trabajar directamente contra el backend real.
    */
-  mockBackend: true,
+  mockBackend: false,
+
 
   /**
    * Telemetría **apagada** salvo que el despliegue la encienda.

@@ -70,6 +70,11 @@ describe('PatientHome', () => {
     for (const pending of http.match((r) => r.url.startsWith('/insurance-campaigns/patient/'))) {
       pending.flush([]);
     }
+    // El `@defer` de síntomas (C5) pide `GET /profiles/patients/me` al abrir
+    // (P-04, 2026-09-25) — mismo drenaje que usa `symptom-check.spec.ts`.
+    for (const pending of http.match((r) => r.url === '/profiles/patients/me')) {
+      pending.flush({});
+    }
     http.verify();
   });
 
