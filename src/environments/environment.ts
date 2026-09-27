@@ -58,6 +58,14 @@ export const environment: Environment = {
   campaignsDemo: envFromProcess.campaignsDemo ?? true,
 
   /**
+   * Encendidas por defecto: la rama `mockup` existe para recorrer las
+   * pantallas de la bóveda. Un despliegue que no las quiera las apaga con
+   * `PUBLIC_DESIGN_MOCKUPS=false`; contra la API real ya vienen apagadas
+   * (`environment.real-api.ts`).
+   */
+  designMockups: envFromProcess.designMockups ?? true,
+
+  /**
    * Siempre encendido en la rama `mockup`: es lo que la define. No lee el
    * entorno del proceso a propósito, para que no haya forma de apuntar esta
    * rama a una API real por accidente.
