@@ -68,14 +68,16 @@ export interface EntregaEnPantalla {
   readonly presentacion: EntregaPresentation;
   /** La dirección, cuando la hay. Hoy sólo la trae el pedido de ejemplo. */
   readonly direccion: string | null;
-  /** El medio lo puso la maqueta, no el contrato: la pantalla lo rotula. */
+  /** La dirección la puso la maqueta, no el contrato: la pantalla lo rotula. */
   readonly esEjemplo: boolean;
 }
 
 /**
  * Cómo se entrega un pedido concreto. **La `modalidad` del contrato manda
- * siempre**; sólo el pedido de ejemplo de la maqueta —uno, reconocido por su
- * identificador— aporta el suyo, y entonces sale rotulado.
+ * siempre**, también sobre la maqueta: el pedido a domicilio de ejemplo la
+ * trae declarada por el backend simulado. Lo único que la maqueta aporta es la
+ * dirección de ese pedido —el contrato no la publica—, y sólo con
+ * `sampleData` encendido; entonces sale rotulada.
  *
  * Vive acá y no en cada pantalla porque la bandeja y el detalle tienen que
  * decir lo mismo del mismo pedido. Y devuelve la modalidad, no sólo cómo
@@ -84,13 +86,22 @@ export interface EntregaEnPantalla {
  * domicilio y el botón ofreciendo prepararlo para retiro en mostrador. Lo que
  * la pantalla muestra y lo que ofrece hacer salen de la misma respuesta.
  */
-export function entregaEnPantalla(pedido: PedidoFarmacia): EntregaEnPantalla | null {
-  const ejemplo = entregaDeEjemplo(pedido);
-  const modalidad = ejemplo?.modalidad ?? pedido.modalidad;
+export function entregaEnPantalla(
+  pedido: PedidoFarmacia,
+  sampleData: boolean,
+): EntregaEnPantalla | null {
+  const modalidad = pedido.modalidad;
   const presentacion = toEntregaPresentation(modalidad);
   if (modalidad === null || presentacion === null) {
     return null;
   }
+  // Una dirección de ejemplo sólo completa lo que el contrato dejó vacío, y
+  // sólo en un pedido que sale de la farmacia: a un retiro no se le inventa
+  // un domicilio.
+  const ejemplo =
+    sampleData && modalidad !== 'RETIRO' && pedido.direccionDeEntrega === null
+      ? entregaDeEjemplo(pedido)
+      : null;
   return {
     modalidad,
     presentacion,

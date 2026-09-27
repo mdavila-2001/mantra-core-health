@@ -3,22 +3,30 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   ElementRef,
   inject,
   Injector,
   signal,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { of, switchMap } from 'rxjs';
 
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Chip } from '../../../shared/components/atoms/chip/chip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import type { AlertTone } from '../../../shared/components/molecules/alert/alert.types';
+import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { PharmacyClient } from '../../../core/data-access/pharmacy/pharmacy.client';
+import type { PharmacyDetail } from '../../../core/data-access/pharmacy/pharmacy.types';
+import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { SAMPLE_DATA_ENABLED } from '../../../core/mock/sample-data';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { dataOf, empty, ready } from '../../../core/view-state/view-state';
+import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AVISO_DE_VENCIMIENTO_DIAS } from '../../../shared/utils/vencimiento/vencimiento';
 import { DatosDeLaEmpresa } from './datos-de-la-empresa/datos-de-la-empresa';
@@ -38,6 +46,29 @@ import type {
 
 /** Dónde está «Documentos» entre las pestañas: el aviso y el poder llevan ahí. */
 const PESTANA_DE_DOCUMENTOS = 1;
+
+/** La salida de cualquier parte de la ficha que no tiene datos que mostrar. */
+const ORGANIZATION_PANEL_ROUTE = '/administration/my-organization';
+
+/**
+ * La parte de la ficha que el directorio de farmacias sí publica.
+ *
+ * `GET /pharmacy/pharmacies/:id` trae la razón social (`legalName`) y nada
+ * más de lo que esta pestaña pide: ni el tipo de sociedad —el `type` del DTO
+ * es el tipo de farmacia, no la forma societaria—, ni el NIT, ni la dirección
+ * legal de la central. Las sedes sí traen dirección y punto, pero una sede no
+ * es «la central»: elegir una por su cuenta sería afirmar algo que el
+ * contrato no dice. Lo que falta llega `null` y la pestaña lo dice.
+ */
+export function companyFromPharmacyDetail(detail: PharmacyDetail): DatosLegalesDeLaEmpresa {
+  return {
+    razonSocial: detail.legalName,
+    tipoDeSociedad: null,
+    nit: null,
+    direccionLegal: null,
+    puntoCentral: null,
+  };
+}
 
 /** Lo que el aviso de la carpeta dice, cuando hay algo que avisar. */
 export interface AvisoDeLaCarpeta {
@@ -124,13 +155,14 @@ export function avisoDeLaCarpeta(
  * carpeta. Sin la pestaña gobernada desde la página, los dos serían texto que
  * dice «andá a Documentos» sin llevar a nadie.
  *
- * ## Todavía no hay contrato detrás
+ * ## Casi todo sigue sin contrato detrás
  *
- * Nada de esta ficha existe en la API: no hay dato legal de la farmacia, ni
- * documento con vigencia, ni representante, ni gerentes. Los datos son de
- * ejemplo, la pantalla lo rotula, y ni lo que se edite ni lo que se cargue se
- * guarda en ningún lado. Cuando el backend publique el perfil, lo que cambia es
- * de dónde salen estas tres señales.
+ * De esta ficha la API sólo publica la razón social (el directorio de
+ * farmacias); no hay NIT, ni tipo de sociedad, ni documento con vigencia, ni
+ * representante, ni gerentes. Sobre la maqueta los datos son de ejemplo, la
+ * pantalla lo rotula, y ni lo que se edite ni lo que se cargue se guarda en
+ * ningún lado. Contra la API real (`SAMPLE_DATA_ENABLED` apagado) la empresa
+ * sale del directorio y el resto se dice no disponible: nada inventado.
  */
 @Component({
   selector: 'app-pharmacy-profile',
@@ -140,6 +172,7 @@ export function avisoDeLaCarpeta(
     Chip,
     DatosDeLaEmpresa,
     DocumentosLegales,
+    EmptyState,
     PageHeader,
     RepresentanteYGerentes,
     Tab,
@@ -152,6 +185,16 @@ export function avisoDeLaCarpeta(
 export class PharmacyProfile {
   private readonly navigation = inject(NavigationService);
   private readonly injector = inject(Injector);
+  private readonly pharmacy = inject(PharmacyClient);
+  private readonly destroyRef = inject(DestroyRef);
+
+  /**
+   * Maqueta (`true`) o API real (`false`). Sobre la maqueta la ficha entera es
+   * de ejemplo y se rotula; contra la API real la empresa sale del directorio
+   * de farmacias, y la carpeta legal y la gente —que la API no publica— se
+   * dicen no disponibles. Ver `core/mock/sample-data.ts`.
+   */
+  protected readonly sampleData = inject(SAMPLE_DATA_ENABLED);
 
   /** El panel de «Documentos», para llevarle el foco cuando se salta hasta él. */
   private readonly panelDeDocumentos = viewChild.required<Tab, ElementRef<HTMLElement>>(
@@ -169,24 +212,74 @@ export class PharmacyProfile {
   protected readonly enDocumentos = computed(() => this.pestana() === PESTANA_DE_DOCUMENTOS);
 
   protected readonly empresa = signal<ViewState<DatosLegalesDeLaEmpresa>>(
-    ready(EMPRESA_DE_EJEMPLO),
+    this.sampleData ? ready(EMPRESA_DE_EJEMPLO) : loading(),
   );
+  /** Contra la API real queda vacía: no hay papeles que avisar ni que listar. */
   protected readonly documentos = signal<ViewState<readonly DocumentoLegal[]>>(
-    estadoDeLaCarpeta(DOCUMENTOS_DE_EJEMPLO),
+    this.sampleData ? estadoDeLaCarpeta(DOCUMENTOS_DE_EJEMPLO) : ready([]),
   );
-  protected readonly gente = signal<ViewState<GenteDeLaEmpresa>>(ready(GENTE_DE_EJEMPLO));
+  /** Contra la API real no se dibuja: la pestaña dice que no está disponible. */
+  protected readonly gente = signal<ViewState<GenteDeLaEmpresa>>(
+    this.sampleData ? ready(GENTE_DE_EJEMPLO) : loading(),
+  );
 
   protected readonly aviso = computed(() => avisoDeLaCarpeta(dataOf(this.documentos()) ?? []));
 
+  constructor() {
+    if (!this.sampleData) {
+      this.cargarEmpresa();
+    }
+  }
+
   /**
-   * Vuelve a tomar la ficha. Hoy el dato es local y llega resuelto, así que
-   * esto repone las tres señales; el organismo de estados ya está cableado para
-   * cuando la ficha la traiga la API y haya algo que reintentar de verdad.
+   * Vuelve a tomar la ficha. Sobre la maqueta el dato es local y llega
+   * resuelto, así que esto repone las tres señales; contra la API real vuelve
+   * a pedir la empresa, que es lo único de la ficha que la API publica.
    */
   protected recargar(): void {
+    if (!this.sampleData) {
+      this.cargarEmpresa();
+      return;
+    }
     this.empresa.set(ready(EMPRESA_DE_EJEMPLO));
     this.documentos.set(estadoDeLaCarpeta(DOCUMENTOS_DE_EJEMPLO));
     this.gente.set(ready(GENTE_DE_EJEMPLO));
+  }
+
+  /**
+   * La empresa, desde el directorio de farmacias: `GET /pharmacy/pharmacies`
+   * dice cuál es la farmacia del tenant activo y `GET /pharmacy/pharmacies/:id`
+   * trae su perfil.
+   *
+   * El directorio lista **sólo lo publicado** (activa y verificada), así que
+   * una farmacia recién registrada no aparece: eso es un vacío con salida, no
+   * un error. Si el tenant tuviera más de una, se muestra la primera que el
+   * directorio devuelve: la ficha es de una sola empresa.
+   */
+  private cargarEmpresa(): void {
+    this.empresa.set(loading());
+    this.pharmacy
+      .listPharmacies()
+      .pipe(
+        switchMap((page) => {
+          const first = page.items[0];
+          return first === undefined ? of(null) : this.pharmacy.getPharmacy(first.id);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (detail) =>
+          this.empresa.set(
+            detail === null
+              ? empty(
+                  { label: 'Ver tu organización', route: ORGANIZATION_PANEL_ROUTE },
+                  'Tu farmacia todavía no figura en el directorio publicado. Cuando se verifique, sus datos van a aparecer acá.',
+                )
+              : ready(companyFromPharmacyDetail(detail)),
+          ),
+        error: (error: unknown) =>
+          this.empresa.set(errorToViewState<DatosLegalesDeLaEmpresa>(error)),
+      });
   }
 
   /**

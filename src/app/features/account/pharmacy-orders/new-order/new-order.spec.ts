@@ -10,7 +10,12 @@ import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orde
 import { pharmacyOrderDtoFixture } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
 import type { BorradorDePedido } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { NewOrder } from './new-order';
-import { DATOS_DE_EJEMPLO_DE_LA_RECETA, datosDeEjemploPara } from './new-order.fixtures';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
+import {
+  DATOS_DE_EJEMPLO_DE_LA_RECETA,
+  datosDeEjemploPara,
+  sampleFreeDataFor,
+} from './new-order.fixtures';
 import {
   CLAVE_DEL_TRASPASO,
   RUTA_DEL_CHECKOUT,
@@ -585,6 +590,61 @@ describe('NewOrder', () => {
       fixture.destroy();
 
       expect(client.borradorPreparado()).toBeNull();
+    });
+  });
+
+  /* ── Contra la API real: nada de ejemplo ───────────────────────────────── */
+
+  describe('contra la API real (sin datos de ejemplo)', () => {
+    function configureAgainstRealApi(): void {
+      configurar([{ provide: SAMPLE_DATA_ENABLED, useValue: false }]);
+      client.prepararBorrador(BORRADOR_COMPLETO);
+      montar();
+    }
+
+    it('la receta no tiene cabecera inventada ni rótulo de ejemplo', () => {
+      configureAgainstRealApi();
+
+      const prescription = uno('pedido-receta');
+      expect(prescription?.textContent).not.toContain('Dra. Mariana Suárez Rivero');
+      expect(uno('order-prescription-without-header')).not.toBeNull();
+      expect(texto()).not.toContain('Datos de ejemplo');
+    });
+
+    it('no ofrece la variante con seguro ni alternativas', () => {
+      configureAgainstRealApi();
+
+      expect(uno('pedido-variante-seguro')).toBeNull();
+      expect(uno('pedido-seguro')).toBeNull();
+      expect(todos('pedido-ver-alternativas')).toHaveLength(0);
+      expect(texto()).not.toContain('Demostración');
+    });
+
+    it('la cantidad no pasa de la del borrador y se dice por qué', () => {
+      configureAgainstRealApi();
+      const primero = renglon(0);
+
+      expect(uno('pedido-cantidad-mas', primero)?.getAttribute('aria-disabled')).toBe('true');
+      expect(primero.textContent).toContain('la receta no declara cantidades');
+      expect(primero.textContent).not.toContain('Recetado: hasta');
+    });
+
+    it('los renglones, el total y los precios siguen siendo los del borrador', () => {
+      configureAgainstRealApi();
+
+      expect(texto()).toContain('Amoxicilina 500 mg');
+      expect(texto()).toContain('Losartán 50 mg');
+      expect(uno('pedido-total')?.textContent).toContain('108.00 Bs');
+    });
+
+    it('sampleFreeDataFor: un renglón por línea, sin alternativas ni seguro', () => {
+      const datos = sampleFreeDataFor(BORRADOR_COMPLETO);
+
+      expect(datos.cabecera).toBeNull();
+      expect(datos.renglones).toEqual([
+        { cantidadRecetada: 1, aprobadoPorSeguro: false, alternativas: [] },
+        { cantidadRecetada: 1, aprobadoPorSeguro: false, alternativas: [] },
+      ]);
     });
   });
 

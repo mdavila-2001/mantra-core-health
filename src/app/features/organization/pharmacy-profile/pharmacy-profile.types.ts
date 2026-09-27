@@ -54,10 +54,16 @@ export interface DatosLegalesDeLaEmpresa {
   readonly razonSocial: string;
   /** `null` mientras nadie haya elegido uno de los ocho. */
   readonly tipoDeSociedad: TipoDeSociedad | null;
-  /** Texto y no número: un NIT es un identificador, no una cifra que se sume. */
-  readonly nit: string;
-  /** La dirección legal de la central, tal como figura en el registro. */
-  readonly direccionLegal: string;
+  /**
+   * Texto y no número: un NIT es un identificador, no una cifra que se sume.
+   * `null` cuando el dato no llegó: la API de farmacia todavía no lo publica.
+   */
+  readonly nit: string | null;
+  /**
+   * La dirección legal de la central, tal como figura en el registro. `null`
+   * cuando el dato no llegó (mismo caso que el NIT).
+   */
+  readonly direccionLegal: string | null;
   /** El punto de la central en el mapa; `null` mientras no se haya marcado. */
   readonly puntoCentral: PuntoGeo | null;
 }
