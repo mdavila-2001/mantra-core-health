@@ -3,7 +3,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { expectNoSeriousViolations } from '../../../../../testing/a11y';
 import type { PublishedRule } from '../../../../core/data-access/scheduling/scheduling.types';
 import type { BloqueoDelMes } from '../month-view/month-view';
-import { ScheduleGrid, type RangoDeGrilla } from './schedule-grid';
+import { ScheduleGrid } from './schedule-grid';
 
 /**
  * Gate de accesibilidad de la grilla semanal (axe, WCAG 2.2 A/AA): bloquea el
@@ -43,7 +43,8 @@ describe('ScheduleGrid · gate de accesibilidad (axe, WCAG 2.2 AA, graves)', () 
   async function mount(
     inputs: Partial<{
       conFechas: boolean;
-      rango: RangoDeGrilla;
+      // Los dos valores de `RangoDeGrilla`.
+      rango: 'atencion' | 'completo';
       bloqueos: readonly BloqueoDelMes[];
     }> = {},
   ): Promise<Element> {
